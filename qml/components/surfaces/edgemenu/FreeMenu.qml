@@ -19,7 +19,9 @@ import qs.components.hosts.popout
 // its widget's side or the nearest screen edge). The box is a detached
 // EdgeSurface (SurfaceContext.free), with a submenu (SubmenuHost) for its
 // Submenu rows. Like the edge hosts it follows EdgeMenuManager
-// (EdgeMenuSync) and holds a PopoutClaim, ranked as it was opened.
+// (EdgeMenuSync) and holds a PopoutClaim, ranked as it was opened. There
+// is one on every screen (EdgeMenu); only the one on the screen the menu
+// opened on shows it (`shows`).
 // With `draggable` on its box moves while dragged by its top padding (its
 // header); dropped, opened on its own, that spot is its session spot
 // (EdgeMenuManager.positions), where a bind or IPC opens it again until
@@ -38,6 +40,12 @@ PopoutWrapperBase {
 
   required property var menu
   required property ShellScreen screen
+  // This screen's host shows the menu: the one it opened on (EdgeMenu
+  // keeps a free host on every screen, FreeMenuPlace.shownOn)
+  property bool shows: true
+  // The cursor in global px as the menu opened (`freeAnchor.at: cursor`,
+  // asked for by EdgeMenu before it picks the screen), else null
+  property var cursorAt: null
   readonly property string menuId: root.menu.id
   // A popped-out edge menu's spot as it popped out ({ screen, x, y }),
   // else null (a free menu)
@@ -85,13 +93,14 @@ PopoutWrapperBase {
   readonly property real maxLength: root.vertical ? (root.screen?.height ?? 0) - root.insets.top - root.insets.bottom - root.contentPadding * 2 : (root.screen?.width ?? 0) - root.insets.left - root.insets.right - root.contentPadding * 2
 
   // What opened it, taken as it opens: a bar widget on its screen
-  // (PopoutAnchor.screenRect, its bar's edge as a name), and the cursor
-  // for `freeAnchor.at: cursor` (asked for first: `_locating` holds the
-  // claim back until it's known). A close (no data) keeps them until the
-  // box has gone.
+  // (PopoutAnchor.screenRect, its bar's edge as a name). A close (no
+  // data) keeps it until the box has gone.
   property var _opener: null
-  property var _cursor: null
-  property bool _locating: false
+  // The cursor on this screen (`freeAnchor.at: cursor`), else null
+  readonly property var _cursor: root.cursorAt && root.screen ? {
+    "x": root.cursorAt.x - root.screen.x,
+    "y": root.cursorAt.y - root.screen.y
+  } : null
   // Opened by a bar widget (its popout, a Button): it goes to the widget,
   // and a drag of it is for the moment (FreeMenuPlace.keepsDrag)
   property bool _fromWidget: false
@@ -112,19 +121,6 @@ PopoutWrapperBase {
       "height": rect.height,
       "edge": ScreenEdge.name(rect.edge)
     } : null;
-    root._cursor = null;
-    root._locating = !root._opener && !root.spot && root.menu.freeAnchor.at === "cursor";
-    if (!root._locating)
-      return;
-    CompositorManager.withCursorPos(pos => {
-      if (root.currentData !== data)
-        return;
-      root._cursor = pos && root.screen ? {
-        "x": pos.x - root.screen.x,
-        "y": pos.y - root.screen.y
-      } : null;
-      root._locating = false;
-    });
   }
 
   // The spot it takes over its anchor: where it was dragged, else its
@@ -233,7 +229,7 @@ PopoutWrapperBase {
     resident: sync.held
     occupied: root.occupied
     closing: root.isClosing
-    wanted: root.isOpen && root.contentItem !== null && placeOnScreen.settled && !root._locating
+    wanted: root.isOpen && root.contentItem !== null && placeOnScreen.settled
     footprint: PopoutGeometry.offset(surface.footprint, Qt.point(placeOnScreen.placed.x + surface.x, placeOnScreen.placed.y + surface.y))
     onEvicted: root.hide()
     onRefused: root.hide()
@@ -264,6 +260,7 @@ PopoutWrapperBase {
     menu: root.menu
     screen: root.screen
     window: panel
+    shows: root.shows
     onWarpRequested: CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2)
   }
 
@@ -532,6 +529,7 @@ PopoutWrapperBase {
 
         sourceComponent: EdgeMenuBody {
           menu: root.menu
+          screen: root.screen
           tiles: root.tiled ? panel.tiles : null
           free: true
           vertical: root.vertical

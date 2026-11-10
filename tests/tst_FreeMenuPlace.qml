@@ -372,4 +372,94 @@ TestCase {
       "free": true
     });
   }
+
+  // Two screens side by side: DP-1 at 0,0 and HDMI-A-1 to its right
+  function screens() {
+    return [
+      {
+        "name": "DP-1",
+        "x": 0,
+        "y": 0,
+        "width": 1000,
+        "height": 600
+      },
+      {
+        "name": "HDMI-A-1",
+        "x": 1000,
+        "y": 0,
+        "width": 800,
+        "height": 600
+      }
+    ];
+  }
+
+  function test_openedOn() {
+    const base = {
+      "opener": "",
+      "at": "centre",
+      "cursor": {
+        "x": 1200,
+        "y": 300
+      },
+      "screens": screens(),
+      "configured": "DP-1"
+    };
+    compare(FreeMenuPlace.openedOn(Object.assign({}, base, {
+      "opener": "HDMI-A-1"
+    })), "HDMI-A-1", "opened by a widget: the widget's screen");
+    compare(FreeMenuPlace.openedOn(Object.assign({}, base, {
+      "opener": "HDMI-A-1",
+      "at": "point"
+    })), "HDMI-A-1", "a widget wins over the anchor's screen");
+    compare(FreeMenuPlace.openedOn(base), "DP-1", "centre: its configured screen, wherever the cursor is");
+    compare(FreeMenuPlace.openedOn(Object.assign({}, base, {
+      "at": "point"
+    })), "DP-1", "point: its configured screen");
+    compare(FreeMenuPlace.openedOn(Object.assign({}, base, {
+      "at": "cursor"
+    })), "HDMI-A-1", "cursor: the screen under it");
+    compare(FreeMenuPlace.openedOn(Object.assign({}, base, {
+      "at": "cursor",
+      "cursor": null
+    })), "DP-1", "the cursor unknown: its configured screen");
+    compare(FreeMenuPlace.openedOn(Object.assign({}, base, {
+      "at": "cursor",
+      "cursor": {
+        "x": 1800,
+        "y": 300
+      }
+    })), "DP-1", "off every screen (right edges are outside): its configured screen");
+  }
+
+  function test_shownOn() {
+    const names = ["DP-1", "HDMI-A-1"];
+    compare(FreeMenuPlace.shownOn({
+      "popOut": null,
+      "opened": "",
+      "screens": names,
+      "configured": "DP-1"
+    }), "", "not decided: no screen yet");
+    compare(FreeMenuPlace.shownOn({
+      "popOut": null,
+      "opened": "HDMI-A-1",
+      "screens": names,
+      "configured": "DP-1"
+    }), "HDMI-A-1", "where it opened");
+    compare(FreeMenuPlace.shownOn({
+      "popOut": null,
+      "opened": "DP-2",
+      "screens": names,
+      "configured": "DP-1"
+    }), "DP-1", "that screen gone: its configured one");
+    compare(FreeMenuPlace.shownOn({
+      "popOut": {
+        "screen": "HDMI-A-1",
+        "x": 0,
+        "y": 0
+      },
+      "opened": "",
+      "screens": names,
+      "configured": "DP-1"
+    }), "HDMI-A-1", "popped out: where it popped out");
+  }
 }

@@ -3,13 +3,18 @@ import QtQuick
 import Quickshell
 
 import qs.config
+import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 
 // One edge menu from EdgeMenusConfig, on its screen, at its placement. Only the
 // host in use is created (FreeMenuPlace.hosts): a popped-out edge menu
 // shows in the free host, its edge host kept until the free one has
-// shown, so the box hands over with no gap.
+// shown, so the box hands over with no gap. The free host is one per
+// screen; only the one on the screen the menu opened on shows it
+// (FreeMenuPlace.openedOn, decided as it opens: its widget's screen, the
+// cursor's for `at: cursor`, else its `screen`), so an open menu never
+// moves to another screen.
 Scope {
   id: root
 
@@ -22,7 +27,11 @@ Scope {
       root.menu = root._live;
   }
   on_LiveChanged: root._follow()
-  Component.onCompleted: root._follow()
+  Component.onCompleted: {
+    root._follow();
+    if (root._wanted)
+      root._locate();
+  }
   readonly property ShellScreen screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
   // Popped out (EdgeMenuManager.popOut), and once the free host has shown
   // it (kept until it docks: a fullscreen window hiding the free host
@@ -33,12 +42,68 @@ Scope {
     if (!root.poppedOut)
       root._handedOver = false;
   }
-  readonly property bool _freeShown: (freeLoader.item as FreeMenu)?.boxShown ?? false
+  // The free hosts (one per screen, a var: FreeHosts' members)
+  readonly property var _freeHosts: freeLoader.item
+  readonly property bool _freeShown: root._freeHosts?.boxShown ?? false
   on_FreeShownChanged: {
     if (root._freeShown && root.poppedOut)
       root._handedOver = true;
   }
   readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root._handedOver)
+
+  // ---- The free host's screen ----
+  // Where a free menu opened (FreeMenuPlace.openedOn), "" while closed or
+  // while the cursor is asked for; and the cursor in global px (`at:
+  // cursor`), for the box's place
+  property string _openedOn: ""
+  property var _cursor: null
+  readonly property bool _wanted: EdgeMenuManager.isOpen(root.menuId)
+  on_WantedChanged: {
+    if (root._wanted)
+      root._locate();
+    else
+      root._openedOn = "";
+  }
+  // Decides where it opens, as it opens: its widget's screen
+  // (PopoutAnchor.screenRect), else the cursor's (asked for first), else
+  // its configured one
+  function _locate() {
+    if (!EdgeMenusConfig.isFree(root.menu))
+      return;
+    const rect = EdgeMenuManager.anchors[root.menuId]?.screenRect?.() ?? null;
+    const decide = cursor => {
+      root._cursor = cursor;
+      root._openedOn = FreeMenuPlace.openedOn({
+        "opener": rect?.screen?.name ?? "",
+        "at": root.menu.freeAnchor.at,
+        "cursor": cursor,
+        "screens": General.outputs.map(s => ({
+              "name": s.name,
+              "x": s.x,
+              "y": s.y,
+              "width": s.width,
+              "height": s.height
+            })),
+        "configured": root.screen?.name ?? ""
+      });
+    };
+    root._openedOn = "";
+    if (rect || root.menu.freeAnchor.at !== "cursor") {
+      decide(null);
+      return;
+    }
+    CompositorManager.withCursorPos(pos => {
+      if (root._wanted && root._openedOn === "")
+        decide(pos ?? null);
+    });
+  }
+  // The screen whose free host shows it, "" for none yet
+  readonly property string freeScreen: FreeMenuPlace.shownOn({
+    "popOut": EdgeMenuManager.poppedOut[root.menuId] ?? null,
+    "opened": root._openedOn,
+    "screens": General.outputs.map(s => s.name),
+    "configured": root.screen?.name ?? ""
+  })
 
   LazyLoader {
     active: !!root._live && !!root.screen && root.hosts.edge
@@ -58,13 +123,30 @@ Scope {
     }
   }
 
+  // A free host on every screen, built up front (where layers stack by
+  // map order each keeps its place: FreeMenu's LayerSlot is held)
   LazyLoader {
     id: freeLoader
     active: !!root._live && !!root.screen && root.hosts.free
 
-    FreeMenu {
-      menu: root.menu
-      screen: root.screen
+    Scope {
+      id: freeHosts
+      // Its box drawn on some screen (instances is a list object, not a
+      // JS Array)
+      readonly property bool boxShown: Array.prototype.some.call(freeVariants.instances, host => host?.boxShown === true)
+
+      Variants {
+        id: freeVariants
+        model: General.outputs
+
+        delegate: FreeMenu {
+          required property ShellScreen modelData
+          menu: root.menu
+          screen: modelData
+          shows: root.freeScreen !== "" && root.freeScreen === modelData.name
+          cursorAt: root._cursor
+        }
+      }
     }
   }
 }

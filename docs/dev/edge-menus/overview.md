@@ -13,6 +13,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 
 ### An entry's fields
 - `id`, `name`, `monitor`, `edge`, `placement` (`edge` | `strip` | `free`; until config v103 `mode`: `floating` | `integrated` | `submenu`).
+- `screen` (a `ScreenTarget`, the primary monitor by default): where an edge or strip menu lives. A free menu opens there only at `centre` or a `point`; opened by a bar widget it opens on the widget's monitor, and at the cursor on the cursor's (the setting is hidden then); [Free menus](free-menus.md) › Which screen.
 - Free menus: `freeAnchor`, `freeAnimation` and `draggable` ([Free menus](free-menus.md)); their edge, length, offsets and hover opening hide.
 - `popOutButton` (`edge` menus only) and, with it on, `draggable`: a pop-out toggle beside the pin ([Free menus](free-menus.md) › A popped-out edge menu).
 - `offset` / `gridOffset`: where the modules sit along the edge (see [Hosts](hosts.md)).

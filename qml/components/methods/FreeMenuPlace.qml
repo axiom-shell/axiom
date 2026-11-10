@@ -148,6 +148,47 @@ QtObject {
     return !!pinned || !!poppedOut;
   }
 
+  // The screen a free menu opens on (its name), decided as it opens
+  // (surfaces/edgemenu/EdgeMenu) and kept while it's open: an open menu
+  // never moves to another screen. `p`:
+  //   opener       the screen of the bar widget that opened it (its
+  //                popout, a Button), or ""
+  //   at           its freeAnchor's `at`
+  //   cursor       { x, y }: the cursor in global px, or null (unknown)
+  //   screens      the connected screens: [{ name, x, y, width, height }]
+  //   configured   its `screen` setting's screen
+  // Its widget's screen; else, opening at the cursor, the screen under
+  // it; else its configured screen (for `centre` and `point`, or the
+  // cursor unknown or off every screen)
+  function openedOn(p) {
+    if (p.opener)
+      return p.opener;
+    const cursor = p.cursor ?? null;
+    if (p.at === "cursor" && cursor) {
+      const under = (p.screens ?? []).find(s => cursor.x >= s.x && cursor.x < s.x + s.width && cursor.y >= s.y && cursor.y < s.y + s.height);
+      if (under)
+        return under.name;
+    }
+    return p.configured ?? "";
+  }
+
+  // The screen whose free host shows the menu (its name), or "" for none
+  // yet. `p`:
+  //   popOut       a popped-out edge menu's spot ({ screen, x, y }), or
+  //                null
+  //   opened       openedOn()'s answer as it opened, "" until decided
+  //                (closed, or asking where the cursor is)
+  //   screens      the connected screens' names
+  //   configured   its `screen` setting's screen
+  // A popped-out menu stays on the screen it popped out on, a free menu
+  // on the one it opened on; either gone (unplugged), its configured one
+  function shownOn(p) {
+    const wanted = p.popOut ? p.popOut.screen : (p.opened ?? "");
+    if (wanted === "")
+      return "";
+    return (p.screens ?? []).includes(wanted) ? wanted : (p.configured ?? "");
+  }
+
   // Which hosts a menu has loaded (surfaces/edgemenu/EdgeMenu): { edge,
   // strip, free }. Its placement's, but a popped-out edge menu shows in
   // the free host; its edge host stays until the free one has shown

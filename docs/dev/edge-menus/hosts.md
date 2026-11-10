@@ -7,7 +7,7 @@
 How an edge menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two edge hosts, `FloatingEdgeMenu` (placement `edge`) and `IntegratedEdgeMenu` (placement `strip`). A `free` menu's host, `FreeMenu`, is in [Free menus](free-menus.md).
 
 ### Building (`surfaces/edgemenu/`)
-- `qml/shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement (`FreeMenuPlace.hosts`: a popped-out edge menu is in the free host, [Free menus](free-menus.md) › A popped-out edge menu).
+- `qml/shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement (`FreeMenuPlace.hosts`: a popped-out edge menu is in the free host, [Free menus](free-menus.md) › A popped-out edge menu). The edge and strip hosts are on the menu's screen; the free host is one per screen, shown on the one the menu opened on ([Free menus](free-menus.md) › Which screen).
 - `EdgeMenu` keeps the last live entry, so the hosts read its (schema-defaulted) fields directly.
 
 ### The body (`EdgeMenuBody`)

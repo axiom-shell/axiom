@@ -34,7 +34,10 @@ QtObject {
   readonly property string menuId: root.menu.id
   // Pinned, or held open by the editor
   readonly property bool held: EdgeMenuManager.isHeld(root.menuId)
-  readonly property bool wanted: EdgeMenuManager.openMenus[root.menuId] === true
+  // Whether this host shows the menu at all: a free menu has a host on
+  // every screen, and only the one it opened on shows it (EdgeMenu)
+  property bool shows: true
+  readonly property bool wanted: EdgeMenuManager.openMenus[root.menuId] === true && root.shows
   readonly property bool revealing: EdgeMenuManager.revealing[root.menuId] === true
   // Closes when the pointer leaves, unless held or being revealed
   readonly property bool autoDismiss: root.menu.close.onLeave && !root.held && !root.revealing

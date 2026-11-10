@@ -8,17 +8,26 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 
 ### Opening it
 - **As a bar widget's popout.** A widget's `popout.menu` can name a free menu (`EdgeMenusConfig.popoutMenuOf`). Its `PopoutAnchor` opens the menu after the popouts' open delay (`Popouts.timing.openDelay`), as for every menu. The menu ranks as a bar popout (claim kind `bar`).
-- **By a bind, IPC, the launcher or a bar Button.** `EdgeMenuManager.open` / `toggle` / `reveal`, as for every menu. It opens at its `freeAnchor` on its `screen`, or at its session spot (Dragging). A bar Button passes itself as the anchor, so it opens at the Button. A reveal warps the cursor into its box.
+- **By a bind, IPC, the launcher or a bar Button.** `EdgeMenuManager.open` / `toggle` / `reveal`, as for every menu. It opens at its `freeAnchor`, or at its session spot (Dragging). A bar Button passes itself as the anchor, so it opens at the Button. A reveal warps the cursor into its box.
 - **The layouts editor's "Show on screen".** If an `edge` menu has a Submenu row opening the free menu, the editor opens it there, beside that menu. Otherwise it opens the free menu on its own (`EdgeMenuEditor.canPreview`).
+
+### Which screen (decided 2026-11-10, review round 2)
+- `EdgeMenu` builds a free host on every screen (`General.outputs`, a `Variants`; each window's `LayerSlot` is held from the start, as before). Only the one on the menu's screen shows it (`FreeMenu.shows`, `EdgeMenuSync.shows`: the others' `wanted` stays false).
+- **Decided as it opens** (`FreeMenuPlace.openedOn`, when `EdgeMenuManager` turns it open), first that applies:
+  - opened by a bar widget (its popout, a Button): the widget's screen (`PopoutAnchor.screenRect`);
+  - `freeAnchor.at: cursor`: the screen under the cursor (`CompositorManager.withCursorPos`, asked for first; no host shows it until the answer);
+  - else (`centre`, `point`, or the cursor unknown or off every screen) its `screen` setting. The settings hide `screen` for a free menu opening at the cursor (`x-showIf`).
+- **An open menu never moves to another screen** ("An open menu moving to another screen is out of scope (i.e. set it differently, or pop at a different widget)"): asked for again while open, it stays; the screen is forgotten once it closes. A drag stays clamped to its screen.
+- **Where it shows** (`FreeMenuPlace.shownOn`): a popped-out edge menu on the screen it popped out on; a free menu on the one it opened on; either unplugged, its configured screen.
 
 ### Where it goes (`FreeMenuPlace`)
 - Pure. The host hands it:
   - the screen's size;
   - what is kept clear at each edge: `ScreenEdgeManager.reservedWithMenusOn` plus the compositor's `gapsOut` there;
   - the box (its content plus padding);
-  - the opener: `PopoutAnchor.screenRect`, taken as it opens, only when it is on the menu's screen;
+  - the opener: `PopoutAnchor.screenRect`, taken as it opens (on the menu's screen: it opened there);
   - the `freeAnchor`;
-  - the cursor (`CompositorManager.withCursorPos`, asked for as it opens; the claim waits for the answer, `_locating`);
+  - the cursor on its screen (`FreeMenu.cursorAt`, the global position `EdgeMenu` asked for as it opened);
   - a spot, from `FreeMenuPlace.spot` (below), or none.
 - **With a spot**, the box's top-left goes there. It slides in from the nearest screen edge.
 - **The spot** (`FreeMenuPlace.spot`), first that applies:
@@ -30,7 +39,6 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - **Otherwise** it is centred on the cursor, on the point (`x` / `y` % of the screen), or on the free area. It slides in from the screen edge nearest its centre (`nearestEdge`).
 - Either way it is clamped into the free area. A box that is too big keeps its start.
 - The host reads the result and never re-derives it. The slide edge is latched once the box shows (`ClosedLatch`), so a growing box doesn't turn round.
-- A widget on another screen opens the menu at its anchor on its own screen, as a floating edge menu's `popoutAtWidget` does.
 
 ### The window
 - **Its own full-screen window.** A `PanelWindow` on layer Top, namespace `axiom-menu`, anchored to every side, with `ExclusionMode.Ignore`.
@@ -90,8 +98,8 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - A fullscreen window only hides it (its window is on Top).
 
 ### Sharing with the edge hosts
-- **`EdgeMenuSync`.** It follows `EdgeMenuManager` and reports a self-close. Its `triggerWindow` is optional: a free menu has no hover strip. It reports no frame (`placementOf` is null for a free menu).
-- **`EdgeMenuBody`.** Its `edge` is `""` for a free menu or a submenu: the pin sits at the top right and growing modules grow downward. `GridPlacement.menuFillsEdge` is false for a free menu, whatever its kept `length`.
+- **`EdgeMenuSync`.** It follows `EdgeMenuManager` and reports a self-close. Its `triggerWindow` is optional: a free menu has no hover strip. `shows` (default true) is false in the free hosts on the other screens (Which screen). It reports no frame (`placementOf` is null for a free menu).
+- **`EdgeMenuBody`.** Its cards are sized on the screen it shows on (`screen`). Its `edge` is `""` for a free menu or a submenu: the pin sits at the top right and growing modules grow downward. `GridPlacement.menuFillsEdge` is false for a free menu, whatever its kept `length`.
 - **Layer stack.** `axiom-menu` has order 7, beside the integrated menus (the two never meet), under the popouts that slide out from under the bars, and below the Overlay layer (popouts, the overlay). It is in `blurBacked` and `blurChrome`.
 
 ### Testing
