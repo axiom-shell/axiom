@@ -157,7 +157,7 @@ properties:
       x-order: [name, icon, text]
       properties:
         id: {$ref: '#/definitions/ItemId'}
-        name: {type: string, title: Name, default: '', description: 'The name its bind uses: magic for Super + V.'}
-        icon: {type: string, x-control: icon, title: Icon, default: ''}
+        name: {type: string, x-options: specialWorkspaces, title: Name, default: '', description: 'The name its bind uses: magic for Super + V. Lists the scratchpads that exist now and those your binds name.'}
+        icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: 'An icon (a Material Symbols name or a pasted glyph) and a text; which of them the cell shows is the scratchpad label setting.'}
         text: {type: string, title: Label, default: ''}
       required: [id]

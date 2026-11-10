@@ -121,6 +121,9 @@ Loader {
           leadPlain: _content ? _content.leadPlain : false
           tailPaths: _content ? _content.tail : []
           tailLength: _content ? _content.tailLength : 0
+          tailEdge: _content ? _content.tailEdge : 0
+          tailShift: _content ? _content.tailShift : 0
+          dividerAlong: _content ? _content.dividerAlong : 0
           iconPaths: _content ? _content.icons : []
           iconLayout: contents.iconLayout
           iconSlots: contents.iconSlots

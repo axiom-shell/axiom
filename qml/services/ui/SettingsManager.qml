@@ -430,6 +430,10 @@ QtObject {
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":
       return ["", ...NotesManager.allNotes];
+    case "specialWorkspaces":
+      // Those that exist (Hyprland lists one only while it has windows) and
+      // those the binds and Workspaces.scratchpads name
+      return CompositorManager.specials.map(special => special.name).concat(CompositorManager.specialNames).filter((name, i, all) => name !== "" && all.indexOf(name) === i);
     case "calendars":
       // Those new events can go to
       return ["", ...CalendarManager.calendars.filter(calendar => calendar.writable).map(calendar => calendar.id)];

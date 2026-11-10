@@ -51,6 +51,9 @@ Loader {
     const placements = fieldSchema["x-menuPlacements"];
     if (all && placements)
       all = all.filter(value => value === "" || value === root.current || MenusConfig.offeredIn(value, placements));
+    // A scratchpad's name that's no longer listed stays, so an entry never shows blank
+    if (all && fieldSchema["x-options"] === "specialWorkspaces" && root.current && !all.includes(root.current))
+      all = all.concat(root.current);
     const conditions = fieldSchema["x-enumShowIf"];
     if (!all || !conditions)
       return all;
@@ -533,8 +536,8 @@ Loader {
       readonly property var iconText: root.fieldSchema["x-iconText"] ?? null
       readonly property string modeKey: iconColumn.iconText?.mode ?? ""
       readonly property string textKey: iconColumn.iconText?.text ?? ""
-      // "icon", "text" or "both" (just "icon" without `x-iconText`)
-      readonly property string mode: iconColumn.modeKey !== "" ? (root._valueOf(iconColumn.modeKey) ?? "icon") : "icon"
+      // "icon", "text" or "both" (without a mode key: both with a text key, else just "icon")
+      readonly property string mode: iconColumn.modeKey !== "" ? (root._valueOf(iconColumn.modeKey) ?? "icon") : iconColumn.textKey !== "" ? "both" : "icon"
       readonly property bool showsIcon: iconColumn.mode !== "text"
       readonly property bool showsText: iconColumn.textKey !== "" && iconColumn.mode !== "icon"
       readonly property bool drawsIcon: Utils.isSymbolName(iconColumn.value) ? IconManager.isKnown(iconColumn.value) : Array.from(iconColumn.value).length === 1

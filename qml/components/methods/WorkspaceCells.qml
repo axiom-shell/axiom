@@ -80,23 +80,60 @@ QtObject {
     return Math.max(rest, Math.ceil(along));
   }
 
-  // How much longer a cell is for a divider and `count` app icons after its
-  // label (a scratchpad's `scratchpadSplit`): a gap, the divider, a gap, then
-  // the icons side by side. 0 for none.
-  function splitTail(count, thickness) {
+  // A split cell (a scratchpad with `scratchpadSplit`) along the bar is
+  // [pad][label][gap][divider][gap][icons][pad]: the same gap each side of
+  // the divider, and the end padding mirroring the start's. `label` is the
+  // label's own length, `count` the app icons, `along` the divider's
+  // (dividerAlong). The functions below give each part; WorkspaceCell and
+  // CellContents only read them.
+
+  // The padding at each end of a split cell
+  function splitPad(thickness) {
+    return Math.round(thickness * 0.25);
+  }
+
+  // How far the divider reaches across the bar in a cell `thickness` thick
+  // (a chevron's is shorter than a line's for its slant): the strip's
+  // divider (StripDivider) too
+  function dividerLength(style, thickness) {
+    return thickness * (style === "chevron" ? 0.6 : 0.5);
+  }
+
+  // The divider's size along the bar, of the bar's separator `style` and
+  // `sepThickness` (look.separators; none draws a line): a line or dot's
+  // own, a slash's with its lean, a chevron's glyph
+  function dividerAlong(thickness, style, sepThickness) {
+    const across = root.dividerLength(style, thickness);
+    switch (style) {
+    case "dot":
+      return Math.ceil(sepThickness * 2);
+    case "slash":
+      return Math.ceil(sepThickness + across * 0.35);
+    case "chevron":
+      return Math.ceil(across);
+    }
+    return Math.ceil(sepThickness);
+  }
+
+  // What follows the label: a gap, the divider, a gap, then `count` app
+  // icons side by side. 0 for none.
+  function splitTail(count, thickness, along) {
     if (count <= 0)
       return 0;
     const gap = root.iconGap(thickness);
-    return 2 * gap + root.splitDivider(thickness).thickness + count * root.iconSize(thickness) + (count - 1) * gap;
+    return 2 * gap + along + count * root.iconSize(thickness) + (count - 1) * gap;
   }
 
-  // The divider's size { thickness, length }: a hairline across the cell,
-  // short of its full thickness
-  function splitDivider(thickness) {
-    return {
-      "thickness": Math.max(1, Math.round(thickness / 14)),
-      "length": Math.round(thickness * 0.5)
-    };
+  // A split cell's whole length along the bar
+  function splitLength(label, count, thickness, along) {
+    return 2 * root.splitPad(thickness) + label + root.splitTail(count, thickness, along);
+  }
+
+  // Where the label's centre sits from the cell's centre along the bar
+  // (negative: towards the start): the tail's half, as the label's padding
+  // is the end's
+  function splitShift(count, thickness, along) {
+    return -root.splitTail(count, thickness, along) / 2;
   }
 
   // Of `windows` (biggest first), one per app (by app id, a window without

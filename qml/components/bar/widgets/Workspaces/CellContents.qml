@@ -107,6 +107,8 @@ QtObject {
     const shown = Scratchpads.content(entry, special.name, mode, icons.length > 0, split);
     shown.written = mode !== "icon" && shown.kind === "text";
     const tail = shown.tail ? icons : [];
+    const sep = root.barConfig.look.separators;
+    const along = WorkspaceCells.dividerAlong(root.thickness, sep.style, sep.thickness);
     return {
       "kind": shown.kind,
       "text": shown.text,
@@ -115,9 +117,12 @@ QtObject {
       "leadPlain": !root._drawsIcon(shown.lead),
       "icons": shown.kind === "icons" ? icons : [],
       "tail": tail,
-      "tailLength": WorkspaceCells.splitTail(tail.length, root.thickness),
+      "tailLength": WorkspaceCells.splitTail(tail.length, root.thickness, along),
+      "tailEdge": WorkspaceCells.splitPad(root.thickness),
+      "tailShift": WorkspaceCells.splitShift(tail.length, root.thickness, along),
+      "dividerAlong": along,
       "number": "",
-      "length": root._length(shown, icons) + WorkspaceCells.splitTail(tail.length, root.thickness),
+      "length": tail.length > 0 ? WorkspaceCells.splitLength(root._labelLength(shown), tail.length, root.thickness, along) : root._length(shown, icons),
       "occupied": special.windowCount > 0,
       "urgent": special.urgent === true
     };
@@ -157,6 +162,21 @@ QtObject {
       return root.restLength;
     const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
     return Math.max(root.restLength, Math.ceil(root._metrics.advanceWidth(shown.text) + lead) + Math.round(root.thickness * 0.5));
+  }
+
+  // A label's own length along the bar, no room around it (a split cell's
+  // label): an icon at the size a cell draws it, or words measured; with its
+  // leading icon and a gap. A label that doesn't turn on a vertical bar is
+  // as tall as it is.
+  function _labelLength(shown) {
+    const size = Math.round(root.barConfig.fontSize * 1.2);
+    const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
+    if (!root._plain(shown))
+      return size + lead;
+    if (root._metrics.font.pixelSize <= 0)
+      return size + lead;
+    const words = Math.ceil(root._metrics.advanceWidth(shown.text) + lead);
+    return root.barConfig.vertical && words <= root.thickness * 0.8 ? Math.ceil(root._metrics.height) : words;
   }
 
   // A label's leading icon along the bar: an icon at the size a cell

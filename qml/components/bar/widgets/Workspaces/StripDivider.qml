@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // The divider a switcher's after-parts (ActiveStrip, ScratchpadCells) start
 // with: the bar's separator style (a line when that's none), across the
@@ -18,7 +19,7 @@ SeparatorMark {
   style: root.barConfig.look.separators.style === "none" ? "line" : root.barConfig.look.separators.style
   color: Theme.resolveColor(root.barConfig.look.separators.color)
   thickness: root.barConfig.look.separators.thickness
-  length: root.cell * (style === "chevron" ? 0.6 : 0.5)
+  length: WorkspaceCells.dividerLength(style, root.cell)
   vertical: root.barConfig.vertical
   width: root.barConfig.vertical ? root.cell : implicitWidth
   height: root.barConfig.vertical ? implicitHeight : root.cell

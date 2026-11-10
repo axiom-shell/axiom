@@ -66,11 +66,16 @@ Item {
   property string glyph: ""
   // App icons after a short divider at the end of a glyph or text label (a
   // scratchpad with `scratchpadSplit`), `tailLength` along the bar of
-  // `length` (WorkspaceCells.splitTail); the label sits in the rest
+  // `length` (WorkspaceCells.splitTail); `tailEdge` the padding after it,
+  // `tailShift` how far the label sits off the centre, `dividerAlong` the
+  // divider's size along the bar (all CellContents.ofScratchpad's)
   property var tailPaths: []
   property real tailLength: 0
+  property real tailEdge: 0
+  property real tailShift: 0
+  property real dividerAlong: 0
   readonly property bool _tailed: tailPaths.length > 0 && (_shows === "glyph" || _shows === "text")
-  readonly property real _shift: _tailed ? -tailLength / 2 : 0
+  readonly property real _shift: _tailed ? tailShift : 0
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
   // A window on it asks for attention (its `look` is the urgent one)
@@ -252,35 +257,36 @@ Item {
       }
     }
 
-    // A short divider, then the app icons, ending the content (`tailPaths`).
-    // The divider is the cell's own content color, dimmed, so it reads on
-    // any fill
+    // The bar's divider, then the app icons, ending the content before its
+    // padding (`tailPaths`). Everything centres on the cell's thickness
     Item {
       id: tail
-      readonly property var _divider: WorkspaceCells.splitDivider(root.thickness)
 
       visible: root._tailed
-      x: root.isVertical ? 0 : parent.width - width
-      y: root.isVertical ? parent.height - height : 0
+      x: root.isVertical ? 0 : parent.width - root.tailEdge - width
+      y: root.isVertical ? parent.height - root.tailEdge - height : 0
       width: root.isVertical ? root.thickness : root.tailLength
       height: root.isVertical ? root.tailLength : root.thickness
 
       Grid {
-        anchors.centerIn: parent
+        anchors.right: root.isVertical ? undefined : parent.right
+        anchors.bottom: root.isVertical ? parent.bottom : undefined
         flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
         rows: root.isVertical ? -1 : 1
         columns: root.isVertical ? 1 : -1
         spacing: WorkspaceCells.iconGap(root.thickness)
+        verticalItemAlignment: Grid.AlignVCenter
+        horizontalItemAlignment: Grid.AlignHCenter
 
-        Rectangle {
-          width: root.isVertical ? tail._divider.length : tail._divider.thickness
-          height: root.isVertical ? tail._divider.thickness : tail._divider.length
-          radius: tail._divider.thickness / 2
-          antialiasing: true
-          color: Qt.alpha(root.look.content, 0.6)
+        // A box the cell's whole thickness across the bar
+        Item {
+          width: root.isVertical ? root.thickness : root.dividerAlong
+          height: root.isVertical ? root.dividerAlong : root.thickness
 
-          ColorGlide on color {
-            enabled: root.animated
+          StripDivider {
+            anchors.centerIn: parent
+            barConfig: root.barConfig
+            cell: root.thickness
           }
         }
 

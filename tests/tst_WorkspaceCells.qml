@@ -65,13 +65,45 @@ TestCase {
   }
 
   function test_splitTail() {
-    compare(WorkspaceCells.splitTail(0, 20), 0, "no icons, no divider");
-    compare(WorkspaceCells.splitTail(1, 20), 17, "gap, divider, gap, one icon");
-    compare(WorkspaceCells.splitTail(2, 20), 31, "a gap between icons");
-    compare(WorkspaceCells.splitDivider(20), {
-      "thickness": 1,
-      "length": 10
-    });
+    // thickness 20: gap 2, icon 12; a line divider 1 along
+    compare(WorkspaceCells.splitTail(0, 20, 1), 0, "no icons, no divider");
+    compare(WorkspaceCells.splitTail(1, 20, 1), 17, "gap, divider, gap, one icon");
+    compare(WorkspaceCells.splitTail(2, 20, 1), 31, "a gap between icons");
+    compare(WorkspaceCells.splitTail(1, 20, 4), 20, "a wider divider");
+  }
+
+  function test_dividerAlong() {
+    compare(WorkspaceCells.dividerAlong(28, "line", 1), 1);
+    compare(WorkspaceCells.dividerAlong(28, "none", 2), 2, "none draws a line");
+    compare(WorkspaceCells.dividerAlong(28, "dot", 2), 4);
+    compare(WorkspaceCells.dividerAlong(28, "slash", 2), 7, "its lean: 14 across at 0.35");
+    compare(WorkspaceCells.dividerAlong(28, "chevron", 2), 17, "the glyph, 0.6 of the cell");
+    compare(WorkspaceCells.dividerLength("line", 28), 14);
+    compare(WorkspaceCells.dividerLength("chevron", 20), 12);
+  }
+
+  // [pad][label][gap][divider][gap][icons][pad]: the label's side of the
+  // divider as far from it as the icons' side, the ends alike
+  function test_splitGeometry() {
+    // [label length, icons, thickness, divider along, what]; the helper is the
+    // same along either axis (the vertical bar's text and glyph lengths are
+    // CellContents' own), so a vertical bar's rows are the same sums
+    const rows = [[17, 1, 28, 1, "a glyph label, horizontal bar"], [40, 2, 28, 2, "a text label, horizontal bar"], [17, 1, 28, 1, "a glyph label, vertical bar"], [31, 3, 20, 4, "a text label, vertical bar"]];
+    for (const [label, count, thickness, along, what] of rows) {
+      const pad = WorkspaceCells.splitPad(thickness);
+      const gap = WorkspaceCells.iconGap(thickness);
+      const icons = count * WorkspaceCells.iconSize(thickness) + (count - 1) * gap;
+      const length = WorkspaceCells.splitLength(label, count, thickness, along);
+      compare(length, 2 * pad + label + 2 * gap + along + icons, what + ": the whole");
+      // Where each part sits, from the cell's start: the label centred by the shift
+      const labelStart = length / 2 + WorkspaceCells.splitShift(count, thickness, along) - label / 2;
+      compare(labelStart, pad, what + ": the label starts after the padding");
+      const dividerStart = labelStart + label + gap;
+      const iconsEnd = dividerStart + along + gap + icons;
+      compare(length - iconsEnd, pad, what + ": the end padding mirrors the start");
+      // The tail the cell draws ends the icons before that padding
+      compare(length - pad - WorkspaceCells.splitTail(count, thickness, along) + gap, dividerStart, what + ": the divider starts a gap after the label");
+    }
   }
 
   function test_rowLength() {
