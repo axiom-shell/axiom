@@ -264,7 +264,7 @@ Singleton {
     const plan = SwayState.specialToggle(adopt.windows, adopt.marks, name, target);
     const shown = plan.ids.filter(id => adopt.windows.some(w => w.id === id));
     const changes = adopt.lines.concat(plan.show ? plan.ids.filter(id => !adopt.windows.some(w => w.id === id && w.output === target)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`));
-    const lines = changes.length > 0 ? focus.concat(changes) : [];
+    const lines = changes.length > 0 ? (plan.show || adopt.lines.length > 0 ? focus : []).concat(changes) : [];
     if (lines.length > 0)
       SwayIpcManager.command(lines.join("; "), () => root._debounce.restart());
   }

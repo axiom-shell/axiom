@@ -4299,7 +4299,7 @@
     "Your own icon and label for a special workspace (scratchpad), by its name. The workspace switcher finds them by itself; this only changes how they look, and adds one to its All list.": "",
     "Scratchpads": "",
     "The name its bind uses: magic for Super + V.": "",
-    "Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any. All: also every one your Toggle special workspace binds or the Workspaces settings name.": "",
-    "With windows": ""
+    "With windows": "",
+    "Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.": ""
   }
 }

@@ -425,7 +425,7 @@ QtObject {
       let output = "";
       if (ws)
         output = (outputs ?? []).find(o => o.activeWorkspaceId === ws.id)?.name ?? "";
-      if (output === "")
+      if (output === "" && !ws)
         output = all.find(win => marked(win) && win.output !== "")?.output ?? "";
       return {
         "name": name,

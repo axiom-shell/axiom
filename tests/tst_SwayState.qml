@@ -598,6 +598,21 @@ TestCase {
     compare(open.urgent, true);
   }
 
+  function test_specialsWorkspaceModeIgnoresMarkedWindowFallback() {
+    const tree = specialTree();
+    const info = SwayState.tree(tree);
+    const marks = SwayState.marks(tree);
+    marks[info.windows[0].id] = ["axiom-special-notes-" + info.windows[0].id];
+    const notes = SwayState.specials(info, marks, [
+      {
+        "name": "WL-1",
+        "activeWorkspaceId": 1
+      }
+    ]).find(s => s.name === "notes");
+    compare(notes.open, false);
+    compare(notes.output, "");
+  }
+
   function test_specialsListMarkedAndWorkspaceWindows() {
     const tree = specialTree();
     tree.nodes[1].nodes[0].nodes[0].marks = ["axiom-special-notes-30"];

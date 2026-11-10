@@ -101,7 +101,7 @@ Loader {
           barConfig: root.barConfig
           cellLook: root.cellLook
           hitArea: root.hitArea
-          isActive: special?.output === root.monitorName
+          isActive: root.monitorName !== "" && special?.output === root.monitorName
           look: root.cellLook.workspaceColorsOf(root, isActive, _content?.occupied ?? false, _content?.urgent ?? false, {
             "hovered": cell.lit
           })

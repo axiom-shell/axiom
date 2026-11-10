@@ -165,7 +165,7 @@ settings:
     x-enumLabels: {'off': 'Off', occupied: With windows, all: All}
     default: 'off'
     x-showIf: {/$supports.namedSpecial: true}
-    description: 'Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any. All: also every one your Toggle special workspace binds or the Workspaces settings name.'
+    description: 'Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.'
   scratchpadLabel:
     type: string
     title: Scratchpad labels
