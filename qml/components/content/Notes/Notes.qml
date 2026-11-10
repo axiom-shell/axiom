@@ -21,7 +21,7 @@ Card {
   readonly property string configuredNote: NotesManager.clean(root.properties.note)
   readonly property bool locked: root.properties.lockNote && root.configuredNote !== ""
   // The last note is remembered per place the module is shown
-  readonly property string placeKey: root.host.kind === "edgeMenu" ? "edgeMenu:" + root.host.id : root.host.kind === "desktop" ? "desktop:" + root.host.screen : "overlay"
+  readonly property string placeKey: root.host.kind === "menu" ? "menu:" + root.host.id : root.host.kind === "desktop" ? "desktop:" + root.host.screen : "overlay"
 
   // The note shown, and its NotesManager document
   property string path: ""

@@ -19,6 +19,6 @@ BarIconWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "Todo"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
   }
 }

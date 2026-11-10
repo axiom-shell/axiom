@@ -25,7 +25,7 @@ Item {
     })
 
   // What each module is drawn at: laid out at its slot's size over this,
-  // then scaled to fill it (an edge menu's, EdgeMenusConfig.zoomOf). The
+  // then scaled to fill it (an edge menu's, MenusConfig.zoomOf). The
   // grid itself is laid out at `grid`'s card size, drawn
   property real zoom: 1
 
@@ -39,7 +39,7 @@ Item {
   // Not on a bounded grid (the lock screen's, the greeter's). `growth` is
   // the rows each has now, set a tick after what they want changes, so a
   // module's size never feeds back into itself in one pass
-  readonly property bool growable: root.extent === null && (root.host?.kind === "overlay" || root.host?.kind === "edgeMenu")
+  readonly property bool growable: root.extent === null && (root.host?.kind === "overlay" || root.host?.kind === "menu")
   property var growth: []
   // Where the grid's edge is (GridPlacement.grown): -1 at its top (a page,
   // a top or side menu), 1 at its bottom (a bottom menu). Growing takes the
@@ -128,7 +128,7 @@ Item {
   // overlay pages and edge menus, and only types allowed on the host
   // (`x-hosts`)
   property var expanded: null
-  readonly property bool expandable: root.host?.kind === "overlay" || root.host?.kind === "edgeMenu"
+  readonly property bool expandable: root.host?.kind === "overlay" || root.host?.kind === "menu"
   function canExpand(type) {
     return root.expandable && OverlayConfig.moduleInfo(type) !== null && OverlayConfig.allowedIn(type, root.host.kind);
   }

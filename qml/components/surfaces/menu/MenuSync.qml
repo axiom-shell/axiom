@@ -8,12 +8,12 @@ import qs.components.methods
 import qs.components.hosts.popout
 
 // What the edge menu hosts (FloatingEdgeMenu, IntegratedEdgeMenu, FreeMenu) share:
-// following EdgeMenuManager (opening and closing when it says, telling it
+// following MenuManager (opening and closing when it says, telling it
 // when the menu closes by itself), being held open (pinned, or by the
-// editor), and a reveal (EdgeMenuManager.reveal): held open until hovered,
+// editor), and a reveal (MenuManager.reveal): held open until hovered,
 // the cursor moved into it once shown (`warpRequested`; never into a free
 // menu, which waits for the pointer to arrive). Also reports
-// where the host's modules can sit (`frame`, EdgeMenuManager.frames).
+// where the host's modules can sit (`frame`, MenuManager.frames).
 QtObject {
   id: root
 
@@ -26,7 +26,7 @@ QtObject {
   // the overlay holds the grab (none for a free menu, which has no edge)
   property var triggerWindow: null
 
-  // Where the host's modules can sit on its screen (EdgeMenuManager.frames)
+  // Where the host's modules can sit on its screen (MenuManager.frames)
   property var frame: null
 
   // The cursor should move into the menu (it's being revealed and shown)
@@ -37,12 +37,12 @@ QtObject {
 
   readonly property string menuId: root.menu.id
   // Pinned, or held open by the editor
-  readonly property bool held: EdgeMenuManager.isHeld(root.menuId)
+  readonly property bool held: MenuManager.isHeld(root.menuId)
   // Whether this host shows the menu at all: a free menu has a host on
-  // every screen, and only the one it opened on shows it (EdgeMenu)
+  // every screen, and only the one it opened on shows it (MenuHosts)
   property bool shows: true
-  readonly property bool wanted: EdgeMenuManager.openMenus[root.menuId] === true && root.shows
-  readonly property bool revealing: EdgeMenuManager.revealing[root.menuId] === true
+  readonly property bool wanted: MenuManager.openMenus[root.menuId] === true && root.shows
+  readonly property bool revealing: MenuManager.revealing[root.menuId] === true
   // Closes when the pointer leaves, unless held or being revealed
   readonly property bool autoDismiss: root.menu.close.onLeave && !root.held && !root.revealing
 
@@ -53,14 +53,14 @@ QtObject {
   function triggerLength(vertical, pad, room) {
     if (GridPlacement.menuFillsEdge(root.menu))
       return room;
-    return Math.min(room, EdgeMenusConfig.gridLengthOf(root.menu, vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu)) + pad * 2);
+    return Math.min(room, MenusConfig.gridLengthOf(root.menu, vertical, MenusConfig.cardUnitOf(root.menu), MenusConfig.gapOf(root.menu)) + pad * 2);
   }
 
   function _sync() {
     if (root.wanted && !root.host.isOpen)
       root.host.show({
-        "anchorItem": EdgeMenuManager.anchors[root.menuId] ?? null,
-        "claimKind": EdgeMenuManager.claimKinds[root.menuId] ?? "menu"
+        "anchorItem": MenuManager.anchors[root.menuId] ?? null,
+        "claimKind": MenuManager.claimKinds[root.menuId] ?? "menu"
       });
     else if (!root.wanted)
       root.host.hide();
@@ -80,16 +80,16 @@ QtObject {
 
     function onIsOpenChanged() {
       if (!root.host.isOpen)
-        EdgeMenuManager.revealDone(root.menuId);
+        MenuManager.revealDone(root.menuId);
       if (!root.host.isOpen && root.wanted && !root.host.hasPendingOpen)
-        EdgeMenuManager.close(root.menuId);
+        MenuManager.close(root.menuId);
       else if (root.host.isOpen && !root.wanted)
-        EdgeMenuManager.open(root.menuId, null);
+        MenuManager.open(root.menuId, null);
     }
 
     function onContentHoveredChanged() {
       if (root.host.contentHovered)
-        EdgeMenuManager.revealDone(root.menuId);
+        MenuManager.revealDone(root.menuId);
     }
   }
 
@@ -103,10 +103,10 @@ QtObject {
   property string _frameId: ""
   function _publishFrame() {
     if (root._frameId !== root.menuId)
-      EdgeMenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
+      MenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
     root._frameId = root.menuId;
     if (root.frame)
-      EdgeMenuManager.setFrame(root._frameId, root.frame);
+      MenuManager.setFrame(root._frameId, root.frame);
   }
   onFrameChanged: root._publishFrame()
   onMenuIdChanged: root._publishFrame()
@@ -122,6 +122,6 @@ QtObject {
     SurfaceManager.unregisterGrabPartner(root.window);
     if (root.triggerWindow)
       SurfaceManager.unregisterGrabPartner(root.triggerWindow);
-    EdgeMenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
+    MenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
   }
 }

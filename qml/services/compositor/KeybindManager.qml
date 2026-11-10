@@ -160,8 +160,8 @@ QtObject {
       }, (_, i) => String(i + 1));
     case "screenshot":
       return ["region", "window", "screen"];
-    case "edgeMenu":
-      return EdgeMenusConfig.menus.map(menu => menu.id).filter(id => id);
+    case "menu":
+      return MenusConfig.menus.map(menu => menu.id).filter(id => id);
     case "dock":
       return DockConfig.docks.map(dock => dock.id);
     case "bar":

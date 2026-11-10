@@ -126,7 +126,7 @@ QtObject {
     return bar.kind === "transparent" || (!!bar.island && mode === "plain");
   }
 
-  // A box floating free of the edges (a free menu, surfaces/edgemenu/
+  // A box floating free of the edges (a free menu, surfaces/menu/
   // FreeMenu): a box of its own that meets nothing, joins and runs flush
   // to nothing and runs straight off no edge (with no bar, it casts
   // BarStyle's shadow). Its `place` is the part of EdgeAttach.place's

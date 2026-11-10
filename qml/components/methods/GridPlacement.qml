@@ -922,7 +922,7 @@ QtObject {
 
   // Where a menu's modules (reaching `bounds`, at card size `unit`) sit on
   // a `screenWidth` × `screenHeight` screen, `gap` px between its cards,
-  // its `frame` (EdgeMenuManager's frames) around them, in px: { along (from the edge's start), across
+  // its `frame` (MenuManager's frames) around them, in px: { along (from the edge's start), across
   // (from the edge), length, depth (the grid along and across the edge),
   // edgeLength, lattice (latticeOf), units (cells along the edge), cell
   // (where they start on the lattice: null when the menu takes its whole
@@ -952,7 +952,7 @@ QtObject {
   // A menu as it sits on its screen (`place`, from menuPlacement), in
   // screen px: { rect (its box: the modules plus the frame's `after` all
   // round), modules: [{ type, rect }] } (rects { x, y, width, height }),
-  // fitted to its edge when it takes the whole edge (as EdgeMenuBody:
+  // fitted to its edge when it takes the whole edge (as MenuBody:
   // menuFillsEdge, menuModules), `gap` px between its cards
   function menuOnScreen(menu, place, unit, gap) {
     const vertical = menu.edge === "left" || menu.edge === "right";

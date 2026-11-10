@@ -138,7 +138,7 @@ ValueStyleWidget {
         "symbols": root.properties.symbols,
         "showPortfolio": root.properties.showPortfolio
       })
-    active: EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: MenusConfig.opensOwnPopout(root.properties)
   }
 
   // With no price at all, why, on the bar's inner side

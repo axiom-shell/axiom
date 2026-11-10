@@ -40,8 +40,8 @@ BarIconWidget {
     case "overlayPage":
       ShellManager.openOverlayPage(properties.page);
       break;
-    case "edgeMenu":
-      EdgeMenuManager.toggle(properties.menu, root);
+    case "menu":
+      MenuManager.toggle(properties.menu, root);
       break;
     case "command":
       runCommand(properties.command);

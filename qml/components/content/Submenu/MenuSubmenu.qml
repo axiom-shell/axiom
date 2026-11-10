@@ -3,10 +3,10 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
-import qs.components.surfaces.edgemenu
+import qs.components.surfaces.menu
 
 // An edge menu's modules in another menu's submenu (SubPopout, loaded as
-// "Submenu/MenuSubmenu" by a Submenu module): its EdgeMenuBody, at the card
+// "Submenu/MenuSubmenu" by a Submenu module): its MenuBody, at the card
 // size of the menu it opens from, scaled by this one's moduleScale. Its
 // modules' host is this menu's, marked `submenu`.
 Item {
@@ -17,8 +17,8 @@ Item {
   // The menu it opens from: its screen sizes the cards
   property string parentId: ""
 
-  readonly property var menu: EdgeMenusConfig.menuById(root.menuId)
-  readonly property var parentMenu: EdgeMenusConfig.menuById(root.parentId)
+  readonly property var menu: MenusConfig.menuById(root.menuId)
+  readonly property var parentMenu: MenusConfig.menuById(root.parentId)
   readonly property bool empty: (root.menu?.layout?.modules ?? []).length === 0
 
   implicitWidth: root.empty ? emptyText.implicitWidth : body.implicitWidth
@@ -34,11 +34,11 @@ Item {
     id: body
     anchors.fill: parent
     active: !root.empty
-    sourceComponent: EdgeMenuBody {
+    sourceComponent: MenuBody {
       menu: root.menu
       vertical: true
       submenu: true
-      screen: root.parentMenu ? EdgeMenusConfig.screenFor(root.parentMenu) : null
+      screen: root.parentMenu ? MenusConfig.screenFor(root.parentMenu) : null
       // Kept on the screen: past its room, it scrolls (SubPopout.maxContentHeight)
       maxLength: root.wrapper?.maxContentHeight ?? 0
     }

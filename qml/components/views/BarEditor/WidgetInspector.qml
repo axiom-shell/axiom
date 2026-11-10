@@ -225,7 +225,7 @@ Item {
               changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
               // An edge menu picker (its popout's menu, a Button's click
               // menu) can open a new menu, made and saved at once
-              fieldAction: (path, schema) => schema?.["x-options"] === "edgeMenus" ? {
+              fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
                   "text": I18n.tr("New menu…"),
                   "icon": "add",
                   "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)

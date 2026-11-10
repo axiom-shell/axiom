@@ -170,9 +170,9 @@ QtObject {
       }
     }
     for (const type of types) {
-      const menu = EdgeMenusConfig.menuWithModule(type);
+      const menu = MenusConfig.menuWithModule(type);
       if (menu) {
-        EdgeMenuManager.reveal(menu.id);
+        MenuManager.reveal(menu.id);
         return true;
       }
     }

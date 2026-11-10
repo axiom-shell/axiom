@@ -12,9 +12,9 @@ EditTarget {
 
   readonly property var menu: OverlayManager.menus.selectedMenu()
   // A free menu has no edge: just its grid
-  readonly property bool free: EdgeMenusConfig.isFree(root.menu)
+  readonly property bool free: MenusConfig.isFree(root.menu)
   readonly property bool vertical: root.menu?.edge === "left" || root.menu?.edge === "right"
-  readonly property var screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
+  readonly property var screen: root.menu ? MenusConfig.screenFor(root.menu) : null
   // Where the menu's modules sit on its screen (OverlayManager.menus.placementOf)
   readonly property var place: root.menu ? OverlayManager.menus.placementOf(root.menu) : null
   // Longer than its room on the edge: no cell on its lattice
@@ -30,8 +30,8 @@ EditTarget {
   editor: OverlayManager.menus.layout
   modules: root.menu ? root.menu.layout.modules : null
   icon: root.free ? "menu_open" : root.menu ? Utils.edgeArrow(root.menu.edge) : "side_navigation"
-  title: root.menu ? OverlayManager.menus.menuLabel(root.menu, OverlayManager.menus.selectedMenuIndex) : I18n.tr("No edge menus")
-  emptyText: I18n.tr("No edge menus yet: add one with New menu.")
+  title: root.menu ? OverlayManager.menus.menuLabel(root.menu, OverlayManager.menus.selectedMenuIndex) : I18n.tr("No menus")
+  emptyText: I18n.tr("No menus yet: add one with New menu.")
   edge: root.menu && !root.free ? root.menu.edge : ""
   screenBox: root.editor.screenBox
   screenSize: root.screen && !root.free ? ({

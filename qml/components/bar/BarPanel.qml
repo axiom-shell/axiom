@@ -136,7 +136,7 @@ PanelWindow {
   // What holds it shown: an open popout of its own, an edge menu opened
   // from it, the bar editor with this bar selected
   readonly property bool _popoutOpen: barPopouts.occupied
-  readonly property bool _menuOpen: Object.keys(EdgeMenuManager.openMenus).some(id => root._holds(EdgeMenuManager.anchors[id] ?? null))
+  readonly property bool _menuOpen: Object.keys(MenuManager.openMenus).some(id => root._holds(MenuManager.anchors[id] ?? null))
   readonly property bool _editorHeld: BarManager.editing && BarManager.selectedBar()?.id === root.barConfig.sourceId
   on_PopoutOpenChanged: BarRevealManager.hold(root.barConfig.id, "popout", root._popoutOpen)
   on_MenuOpenChanged: BarRevealManager.hold(root.barConfig.id, "menu", root._menuOpen)

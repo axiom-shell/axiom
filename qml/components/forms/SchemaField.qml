@@ -51,7 +51,7 @@ Loader {
     let all = SettingsManager.optionsFor(fieldSchema);
     const placements = fieldSchema["x-menuPlacements"];
     if (all && placements)
-      all = all.filter(value => value === "" || value === root.current || EdgeMenusConfig.offeredIn(value, placements));
+      all = all.filter(value => value === "" || value === root.current || MenusConfig.offeredIn(value, placements));
     const conditions = fieldSchema["x-enumShowIf"];
     if (!all || !conditions)
       return all;
@@ -75,9 +75,9 @@ Loader {
       });
     // A menu by its name and placement ("Tools · Free"); the value stays
     // its id
-    if (fieldSchema["x-options"] === "edgeMenus")
-      return EdgeMenusConfig.menus.reduce((labels, menu) => {
-        labels[menu.id] = I18n.tr("{0} · {1}", menu.name || menu.id, I18n.tr(EdgeMenusConfig.placementLabels[menu.placement] ?? menu.placement));
+    if (fieldSchema["x-options"] === "menus")
+      return MenusConfig.menus.reduce((labels, menu) => {
+        labels[menu.id] = I18n.tr("{0} · {1}", menu.name || menu.id, I18n.tr(MenusConfig.placementLabels[menu.placement] ?? menu.placement));
         return labels;
       }, {});
     if (fieldSchema["x-options"] === "customWidgets")

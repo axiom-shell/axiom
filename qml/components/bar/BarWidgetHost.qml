@@ -305,7 +305,7 @@ Item {
   // (PopoutAnchor.screenRect) centres on the module
   PopoutAnchor {
     hitArea: root._hitArea
-    menu: EdgeMenusConfig.popoutMenuOf(root.properties)
+    menu: MenusConfig.popoutMenuOf(root.properties)
     active: menu !== "" && !root.preview
   }
 

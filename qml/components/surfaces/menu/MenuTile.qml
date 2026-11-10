@@ -7,7 +7,7 @@ import qs.components.reusable
 import qs.components.hosts.popout
 
 // One card's tile in a tiled menu (`background: none`, MenuTiles), under
-// the card in EdgeMenuBody: the menu's fill at the card's shape, with the
+// the card in MenuBody: the menu's fill at the card's shape, with the
 // shadow the menu's box would cast. While the blur window backs the menu
 // (`tiles.backed`) it draws the tile there instead (a BlurShape), which
 // blurs behind it and casts its shadow; otherwise it fills itself, its
@@ -20,7 +20,7 @@ Item {
 
   // The card in the grid ({ x, y, width, height }), or null for none
   required property var card
-  // The host's drawing (EdgeMenuBody.tiles)
+  // The host's drawing (MenuBody.tiles)
   required property var tiles
   property point scroll: Qt.point(0, 0)
   property size viewSize: Qt.size(0, 0)

@@ -3,23 +3,23 @@ import QtQuick
 import qs.services.core
 import qs.components.methods
 
-// EdgeMenus: menus that pop out of a screen edge, holding overlay modules.
-// While the edge menu editor has unsaved edits, the running menus show
-// those (ConfigManager.live). Named with a Config suffix so the shell
-// entry can be `EdgeMenus`.
+// Menus: menus of overlay modules, on a screen edge, in a strip beside the
+// windows or in a window of their own. While the menu editor has unsaved
+// edits, the running menus show those (ConfigManager.live). Named with a
+// Config suffix so the shell entry can be `Menus`.
 QtObject {
   id: root
 
-  // EdgeMenus.items: [EdgeMenu], each { id, name, enabled, screen, edge,
+  // Menus.items: [Menu], each { id, name, enabled, screen, edge,
   // placement, …, layout: { grid, moduleScale, moduleBorders, modules }, open,
   // close }
-  readonly property var menus: ConfigManager.live.EdgeMenus.items
+  readonly property var menus: ConfigManager.live.Menus.items
   readonly property var enabledMenus: root.menus.filter(menu => menu.enabled && menu.id)
   // A menu's own fields in groups (`x-group`), for the edge menu editor
-  readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.EdgeMenu, ["layout.modules"])
+  readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.Menu, ["layout.modules"])
 
   // A menu with no edge of its own (`placement` free): it opens in a window
-  // of its own (surfaces/edgemenu/FreeMenu) at the bar widget that opens
+  // of its own (surfaces/menu/FreeMenu) at the bar widget that opens
   // it as its popout or at its `freeAnchor`, or beside another menu from
   // a Submenu module there (content/Submenu/MenuSubmenu)
   function isFree(menu) {
@@ -32,7 +32,7 @@ QtObject {
 
   // Each placement's label (the schema's `x-enumLabels`: English, shown
   // through I18n.tr), for the menu pickers
-  readonly property var placementLabels: ConfigManager.configSchema.definitions.EdgeMenu.properties.placement["x-enumLabels"]
+  readonly property var placementLabels: ConfigManager.configSchema.definitions.Menu.properties.placement["x-enumLabels"]
 
   // Whether a menu picker limited to `placements` (its `x-menuPlacements`:
   // a widget's hover popout takes no strip, which pushes the bars
@@ -57,7 +57,7 @@ QtObject {
   function menusOpenedBy(widget) {
     const props = widget?.properties;
     const ids = [props?.popout?.enabled ? (props.popout.menu ?? "") : ""];
-    if (widget?.type === "Button" && props?.action === "edgeMenu")
+    if (widget?.type === "Button" && props?.action === "menu")
       ids.push(props.menu ?? "");
     return ids.filter((id, i) => id !== "" && ids.indexOf(id) === i);
   }
@@ -86,7 +86,7 @@ QtObject {
 
   // Whether an edge menu can pop out (`popOutButton`, an `edge` menu's
   // alone: never a strip, and a free menu is out already): its button
-  // lifts it into the free host, at its box (EdgeMenuManager.popOut)
+  // lifts it into the free host, at its box (MenuManager.popOut)
   function canPopOut(menu) {
     return menu?.placement === "edge" && !!menu.popOutButton;
   }
@@ -145,7 +145,7 @@ QtObject {
   // modules' depth across its edge (a submenu's width) fits its screen
   // less its padding (GridPlacement.fitModuleScale), as a screen layout's cards
   // shrink to fit its screen. Along its edge it scrolls or is fitted
-  // instead (EdgeMenuBody)
+  // instead (MenuBody)
   function scaleOf(menu, screen) {
     screen = screen ?? root.screenFor(menu);
     const scale = menu.layout.moduleScale / 100;

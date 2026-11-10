@@ -27,7 +27,7 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "WeatherForecast"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && WeatherManager.weather !== null
+    active: MenusConfig.opensOwnPopout(root.properties) && WeatherManager.weather !== null
   }
 
   // With no weather, why, on the bar's inner side

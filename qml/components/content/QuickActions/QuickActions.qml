@@ -30,8 +30,8 @@ import qs.components.content.base
 Card {
   id: root
 
-  readonly property bool inMenu: EdgeMenuManager.canPin(root.host)
-  readonly property bool pinned: root.inMenu && EdgeMenuManager.isPinned(root.host.id)
+  readonly property bool inMenu: MenuManager.canPin(root.host)
+  readonly property bool pinned: root.inMenu && MenuManager.isPinned(root.host.id)
 
   // The tiles of its own (not catalogue actions)
   readonly property var ownTiles: ["brightness", "volume", "themePicker", "wallpaperPicker", "pin"]
@@ -204,7 +204,7 @@ Card {
   // run), behind a second click where it asks for one
   function run(name) {
     if (name === "pin") {
-      EdgeMenuManager.togglePinned(root.host.id);
+      MenuManager.togglePinned(root.host.id);
       return;
     }
     if (gate.pass(name, ActionsManager.destructive(name)))

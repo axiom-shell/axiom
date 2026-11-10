@@ -6,8 +6,8 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 
-// Which edge menus (EdgeMenusConfig) are open and which are pinned. The
-// menus themselves (shell/EdgeMenus) follow this and report back when they
+// Which menus (MenusConfig) are open and which are pinned. The
+// menus themselves (shell/Menus) follow this and report back when they
 // close on their own. Kept across QML reloads, so a reload doesn't close an
 // integrated menu and reflow the windows. Pins are also saved to
 // $XDG_STATE_HOME/axiom/ui/edgemenus.json, and a pinned menu opens again when qs starts.
@@ -15,10 +15,10 @@ import qs.services.core
 // free host where its box was, held open as if pinned, until it closes,
 // which docks it (dock); nothing of it is kept, and a reload docks it
 // closed.
-// The layouts editor's working copy of EdgeMenus is OverlayManager.menus
-// (EdgeMenuEditor).
+// The layouts editor's working copy of Menus is OverlayManager.menus
+// (MenuEditor).
 //
-//   axiom ipc edgeMenu toggle <id>
+//   axiom ipc menu toggle <id>
 Singleton {
   id: root
 
@@ -61,26 +61,26 @@ Singleton {
   // menu, or one not yet reported) its stroke (an integrated one's frame,
   // as IntegratedEdgeMenu's) and padding all round
   function frameOf(menu) {
-    const screenName = EdgeMenusConfig.screenFor(menu)?.name ?? "";
+    const screenName = MenusConfig.screenFor(menu)?.name ?? "";
     const live = root.frames[menu?.id ?? ""];
     if (live && live.screen === screenName)
       return live;
     const integrated = menu?.placement === "strip";
-    const pad = (integrated ? EdgeMenusConfig.outerPadOf(menu) : Appearance.borderWidth) + PopoutsConfig.padding;
+    const pad = (integrated ? MenusConfig.outerPadOf(menu) : Appearance.borderWidth) + PopoutsConfig.padding;
     return {
       "screen": screenName,
       "startPad": pad,
       "endPad": pad,
       "across": pad,
       "before": 0,
-      "after": pad + (integrated ? EdgeMenusConfig.innerStroke : 0),
+      "after": pad + (integrated ? MenusConfig.innerStroke : 0),
       "reserves": integrated
     };
   }
 
   PersistentProperties {
     id: _run
-    reloadableId: "axiomEdgeMenus"
+    reloadableId: "axiomMenus"
     // JSON lists of ids
     property string open: "[]"
     property string pinned: "[]"
@@ -105,7 +105,7 @@ Singleton {
       const pinned = root._state.load({}).pinned;
       if (!Array.isArray(pinned))
         return;
-      const ids = pinned.filter(id => EdgeMenusConfig.menuById(id));
+      const ids = pinned.filter(id => MenusConfig.menuById(id));
       _run.pinned = JSON.stringify(ids);
       _run.open = JSON.stringify(ids);
     }
@@ -131,8 +131,8 @@ Singleton {
   // A free menu's box was dropped at `spot` ({ screen, x, y }), opened on
   // its own (FreeMenuPlace.keepsDrag): it opens there this session
   function storePosition(id, spot) {
-    const menu = EdgeMenusConfig.menuById(id);
-    if (!EdgeMenusConfig.isFree(menu) || !spot)
+    const menu = MenusConfig.menuById(id);
+    if (!MenusConfig.isFree(menu) || !spot)
       return;
     root._savePositions(Utils.withEntry(root.positions, id, {
       "screen": spot.screen,
@@ -208,12 +208,12 @@ Singleton {
   signal popOutRequested(string id)
 
   // The pop-out button: an open edge menu that can pop out
-  // (EdgeMenusConfig.canPopOut) asks its host to; a popped-out one docks,
+  // (MenusConfig.canPopOut) asks its host to; a popped-out one docks,
   // closed
   function togglePoppedOut(id) {
     if (root.isPoppedOut(id))
       root.dock(id);
-    else if (root.isOpen(id) && EdgeMenusConfig.canPopOut(EdgeMenusConfig.menuById(id)))
+    else if (root.isOpen(id) && MenusConfig.canPopOut(MenusConfig.menuById(id)))
       root.popOutRequested(id);
   }
 
@@ -221,7 +221,7 @@ Singleton {
   // ({ screen, x, y }): its edge host goes once the free one has shown
   // (FreeMenuPlace.hosts)
   function popOut(id, spot) {
-    if (!root.isOpen(id) || !spot || !EdgeMenusConfig.canPopOut(EdgeMenusConfig.menuById(id)))
+    if (!root.isOpen(id) || !spot || !MenusConfig.canPopOut(MenusConfig.menuById(id)))
       return;
     _run.poppedOut = JSON.stringify(Utils.withEntry(root.poppedOut, id, {
       "screen": spot.screen,
@@ -245,13 +245,13 @@ Singleton {
   // edge, strip or free menu in its own host, not one shown in another
   // menu's submenu
   function canPin(host) {
-    return host?.kind === "edgeMenu" && !!host.id && !host.submenu;
+    return host?.kind === "menu" && !!host.id && !host.submenu;
   }
 
   function _exists(id) {
-    if (EdgeMenusConfig.menuById(id))
+    if (MenusConfig.menuById(id))
       return true;
-    console.warn("[EdgeMenuManager] No edge menu with id", id);
+    console.warn("[MenuManager] No menu with id", id);
     return false;
   }
 
@@ -349,7 +349,7 @@ Singleton {
 
   property IpcTarget _ipc: IpcTarget {
     id: ipc
-    target: "edgeMenu"
+    target: "menu"
 
     // Opened from outside it (a bind, a script), a closed menu is revealed,
     // so one that closes when the pointer leaves stays open
@@ -385,14 +385,14 @@ Singleton {
       root.setPinned(id, false);
     }
 
-    // Opens the layouts editor on the edge menus
+    // Opens the layouts editor on the menus
     function edit(): void {
       OverlayManager.editMenus();
       ShellManager.openOverlayPage("Layouts");
     }
 
     function list(): string {
-      return EdgeMenusConfig.menus.map(menu => `${menu.id}${root.isOpen(menu.id) ? " (open)" : ""}${root.isPinned(menu.id) ? " (pinned)" : ""}${root.isPoppedOut(menu.id) ? " (popped out)" : ""}`).join("\n");
+      return MenusConfig.menus.map(menu => `${menu.id}${root.isOpen(menu.id) ? " (open)" : ""}${root.isPinned(menu.id) ? " (pinned)" : ""}${root.isPoppedOut(menu.id) ? " (popped out)" : ""}`).join("\n");
     }
   }
 }

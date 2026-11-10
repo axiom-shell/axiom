@@ -125,7 +125,7 @@ PopoutWrapperBase {
   property string overNamespace: "axiom-edge-popout"
   // The surface's window, its layer namespace, and the box within it
   window: surfaceWindow
-  // The hover strip's window (a focus grab's partner, see EdgeMenuSync)
+  // The hover strip's window (a focus grab's partner, see MenuSync)
   readonly property var triggerWindow: trigger
   readonly property string layerNamespace: root.slidesUnder ? "axiom-popout-under" : root.overNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
@@ -136,7 +136,7 @@ PopoutWrapperBase {
   readonly property AttachedSurface surfaceItem: surface
   // Its content's top-left on the screen as it's drawn now (a submenu's
   // stretch above it left out): where a popped-out edge menu's free box
-  // puts its content (EdgeMenuManager.popOut)
+  // puts its content (MenuManager.popOut)
   function contentOnScreen() {
     const at = loader.mapToItem(null, 0, slot.shownStretchTop);
     return Qt.point(placeOnScreen.placed.x + at.x, placeOnScreen.placed.y + at.y);

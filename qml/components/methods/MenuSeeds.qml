@@ -3,8 +3,8 @@ import QtQuick
 
 // What a new edge menu starts as, by what it's made for (the layouts
 // editor's New menu, a Submenu module's New submenu…, the bar editor's
-// New menu…): its own fields, set over the EdgeMenu schema's defaults by
-// the editor (EdgeMenuEditor). Pure.
+// New menu…): its own fields, set over the Menu schema's defaults by
+// the editor (MenuEditor). Pure.
 QtObject {
   id: root
 

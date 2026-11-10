@@ -14,7 +14,7 @@ import qs.services.session
  *
  * Also keeps the page's own state, since the page is unloaded whenever the
  * overlay closes: whether it's editing a page, an edge menu or the lock
- * screen (`editTarget`; the menus are `menus`' (EdgeMenuEditor) and the lock
+ * screen (`editTarget`; the menus are `menus`' (MenuEditor) and the lock
  * screen LockManager's), the selected
  * page, and each overlay's room (for the canvas's "fits" line). The
  * selected page's modules are edited through `layout` (GridEditor, which
@@ -44,7 +44,7 @@ QtObject {
   readonly property bool greeterEditable: GreeterConfig.enabled
 
   // The edge menus' working copy (editTarget "menu")
-  property EdgeMenuEditor menus: EdgeMenuEditor {}
+  property MenuEditor menus: MenuEditor {}
 
   property GridEditor layout: GridEditor {
     host: "overlay"
@@ -417,7 +417,7 @@ QtObject {
   // passed over
   function openedBy(widget) {
     const props = widget?.type === "Button" ? widget.properties ?? {} : {};
-    const menus = root.menus.localMenus ?? EdgeMenusConfig.menus;
+    const menus = root.menus.localMenus ?? MenusConfig.menus;
     const menuTarget = id => {
       const index = id ? menus.findIndex(menu => menu.id === id) : -1;
       return index < 0 ? null : {
@@ -435,8 +435,8 @@ QtObject {
         "label": OverlayConfig.viewLabel(views[index], index)
       };
     };
-    const click = props.action === "edgeMenu" ? menuTarget(props.menu) : props.action === "overlayPage" ? pageTarget(props.page) : null;
-    return click ?? EdgeMenusConfig.menusOpenedBy(widget).map(menuTarget).find(target => target !== null) ?? null;
+    const click = props.action === "menu" ? menuTarget(props.menu) : props.action === "overlayPage" ? pageTarget(props.page) : null;
+    return click ?? MenusConfig.menusOpenedBy(widget).map(menuTarget).find(target => target !== null) ?? null;
   }
 
   // Shows what a bar widget opens in this editor
@@ -457,7 +457,7 @@ QtObject {
   // selected bar), set in its field at `path` (its popout's ["popout",
   // "menu"], or a Button's click ["menu"]), then edited here as
   // editOpenedBy does. The menu is saved at once (the bar draft may only
-  // point at a saved menu: EdgeMenuEditor.isSaved); the widget's change
+  // point at a saved menu: MenuEditor.isSaved); the widget's change
   // stays in the bar draft, undoable
   function newMenuFor(zone, index, path) {
     const widget = BarManager.selectedBar()?.widgets?.[zone]?.[index];

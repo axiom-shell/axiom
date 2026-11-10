@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// Where a free menu's box goes on its screen (surfaces/edgemenu/FreeMenu),
+// Where a free menu's box goes on its screen (surfaces/menu/FreeMenu),
 // and the side its slide comes in from. Pure: the host passes the screen,
 // what's kept clear at each edge, the box, what opened it and its anchor.
 // Also which spot it takes over its anchor (a drag, a pop-out, the
@@ -89,9 +89,9 @@ QtObject {
   // its top-left in px on its screen, or null (opener or anchor). `p`:
   //   dragged      where it was dragged to since it opened, or null
   //   popOut       the docked box's spot it popped out at
-  //                (EdgeMenuManager.poppedOut: { screen, x, y }), or null
+  //                (MenuManager.poppedOut: { screen, x, y }), or null
   //   fromWidget   opened by a bar widget (its popout, a Button)
-  //   session      its session spot (EdgeMenuManager.positions:
+  //   session      its session spot (MenuManager.positions:
   //                { screen, x, y, anchor }), or null
   //   screen       its screen's name
   //   anchor       its freeAnchor
@@ -150,7 +150,7 @@ QtObject {
   }
 
   // The screen a free menu opens on (its name), decided as it opens
-  // (surfaces/edgemenu/EdgeMenu) and kept while it's open: an open menu
+  // (surfaces/menu/MenuHosts) and kept while it's open: an open menu
   // never moves to another screen. `p`:
   //   opener       the screen of the bar widget that opened it (its
   //                popout, a Button), or ""
@@ -190,7 +190,7 @@ QtObject {
     return (p.screens ?? []).includes(wanted) ? wanted : (p.configured ?? "");
   }
 
-  // Which hosts a menu has loaded (surfaces/edgemenu/EdgeMenu): { edge,
+  // Which hosts a menu has loaded (surfaces/menu/MenuHosts): { edge,
   // strip, free }. Its placement's, but a popped-out edge menu shows in
   // the free host; its edge host stays until the free one has shown
   // (`freeShown`), so the box hands over with no gap
