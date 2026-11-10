@@ -4,7 +4,7 @@
 > **Config:** `ThemeIntegrations.*`
 > **Related:** [Themes](themes.md), [Schema annotations](../core/schema-annotations.md), [Hyprland config modes](../hyprland/config-modes.md)
 
-How axiom themes other apps: the daemon writes each app's own `axiom.*` file, and the hookup makes the app load it. (Rule: AGENTS.md › Config, Theme.)
+How axiom themes other apps: the daemon writes each app's own `axiom.*` file, and the hookup makes the app load it. (Rule: CLAUDE.md › Theme, animation, text.)
 
 ### Running the integrations (ThemeManager)
 - `themeIntegrations()` asks the daemon's `theme.integrate` (`{ theme, keys }`: the theme file, the switched-on `ThemeIntegrations` keys to run) and logs each integration's `error` or `warnings` as a warning.
@@ -138,4 +138,4 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - `backend/internal/theme`: the writer in a scratch home (only axiom's files and the missing main configs written, links written through, kdeglobals kept in step only once chosen, the missing-target errors, runs joining one going).
 - `backend/internal/hookup`: each place's edit, done/skipped/conflict decisions, resolving (candidates, shells, profiles). `backend/internal/compositor/edit` (`hookup_test.go`): every schema hookup applied to empty configs in a scratch home, links followed and backed up, read-only links skipped or wrapped, profiles, kdeglobals' two targets, conflicts, `requires`, copies, the compositor's given targets.
 - `tests/scripts/test_scripts.py` checks the Neovim module (`NvimModule`).
-- Never apply a hookup to the real configs: the Go tests run in a scratch home; `hookup.apply` goes only to a scratch daemon (AGENTS.md › Never, while testing; `guard.py` refuses it by hand against the live one).
+- Never apply a hookup to the real configs: the Go tests run in a scratch home; `hookup.apply` goes only to a scratch daemon (CLAUDE.md › Never; `guard.py` refuses it by hand against the live one).

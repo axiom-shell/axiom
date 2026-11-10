@@ -59,10 +59,10 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - Weather comes from `WeatherManager` (`acquire(owner)`, read `weather`, `current`, `condition`, `place`, …).
   - Fetched by axiom (the `weather` topic, `backend/internal/weather`) for the Weather settings' location, units and refresh interval (`WeatherConfig`), shared by every bar widget, module and forecast popout; the greeter's axiom serves the topic too.
   - It fetches only while acquired and keeps its last data when released or when a fetch fails.
-- Acquire in `Component.onCompleted`, release in `onDestruction`: modules only exist while their page is shown. (Rule: AGENTS.md › Services, polled data.)
+- Acquire in `Component.onCompleted`, release in `onDestruction`: modules only exist while their page is shown. (Rule: CLAUDE.md › Services, polled data.)
 
 ### Repeater models
-(Rule: AGENTS.md › UI conventions.)
+(Rule: CLAUDE.md › UI.)
 - For a derived set, use `model: rows.length` with the delegate reading `rows[index] ?? fallback`.
 - An `int` / `string` only notifies when it actually changes, so delegates (and Canvases) survive each sample or keystroke.
 - `check_structure` refuses a model reading a polled service's member (one polling through a `ConsumerRegistry` or `DeadlineTicker`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.

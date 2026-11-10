@@ -45,5 +45,5 @@ One prompt for every password, PIN or confirmation the system asks for. **The ru
 - English text inline through `I18n.tr` with placeholders, as everywhere.
 
 ### Testing
-- Never trigger a real polkit prompt or a real pairing on the live shell from an agent session (AGENTS.md › Never); the pairing agent's Go side is tested on the fake BlueZ (`go test ./internal/bluez`).
+- Never trigger a real polkit prompt or a real pairing on the live shell from an agent session (CLAUDE.md › Never); the pairing agent's Go side is tested on the fake BlueZ (`go test ./internal/bluez`).
 - On a nested shell, a request can be queued from a scratch QML file or a temporary `IpcTarget` calling `PromptManager.request`.

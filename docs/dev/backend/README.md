@@ -3,7 +3,7 @@
 > **Files:** `backend/`, `qml/services/core/BackendManager.qml`, `qml/services/core/DevManager.qml`, `qml/components/views/Settings/DeveloperOptionsCard.qml`, `qml/components/views/Settings/DevTreeCard.qml`, `qml/components/views/Settings/DevConfigDiffCard.qml`, `qml/components/bar/widgets/DevMode/DevMode.qml`, `qml/config/json/backend.json`, `scripts/check_go.sh`, `scripts/generate.sh`, `scripts/dev/fixtures.py`
 > **Related:** [Config manager](../core/config-manager.md), [Packaging](../packaging.md), [Testing](../testing.md)
 
-`axiom` is one Go binary (source in `backend/`, rules in `backend/AGENTS.md`). It is being brought in in stages; this page says what exists now and grows with it.
+`axiom` is one Go binary (source in `backend/`, rules in `.claude/rules/backend.md`). It is being brought in in stages; this page says what exists now and grows with it.
 
 ### What it is for
 - The **parent process** of the shell (`axiom run`) and the greeter (`axiom greeter`): it starts quickshell, restarts it when it crashes, and keeps one instance per display.

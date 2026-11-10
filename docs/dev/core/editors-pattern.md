@@ -4,7 +4,7 @@
 > **Config:** whichever path the editor drafts; layout prefs in `~/.local/state/axiom/ui/editors.json`
 > **Related:** [Config manager](config-manager.md), [Bar editor](../bar/bar-editor.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Monitors](../hyprland/monitors.md), [Keybinds](../hyprland/keybinds.md), [Shared UI pieces](shared-ui-pieces.md)
 
-The settings, bar, layouts, keybinds and monitors editors share one shape; a new editor follows it. (Rule: AGENTS.md › Services, "Editors".)
+The settings, bar, layouts, keybinds and monitors editors share one shape; a new editor follows it. (Rule: CLAUDE.md › Services, "Editors".)
 
 ### Draft
 - The manager owns a `ConfigDraft` of its config path.

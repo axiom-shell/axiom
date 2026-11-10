@@ -21,7 +21,7 @@ Item {
   readonly property bool streaming: message?.state === "streaming"
   readonly property string text: streaming ? ChatManager.streamingText : (message?.text ?? "")
   readonly property string thinking: streaming ? ChatManager.streamingThinking : (message?.thinking ?? "")
-  // Modelled by count (see AGENTS.md): streaming text edits the last
+  // Modelled by count (see CLAUDE.md › UI): streaming text edits the last
   // segment in place instead of rebuilding every block on each flush
   readonly property var segments: ChatConfig.renderMarkdown ? ChatMarkdown.segments(root.text) : [
     {

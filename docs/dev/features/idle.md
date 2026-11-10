@@ -7,7 +7,7 @@
 What happens when you step away is the axiom daemon's (`internal/idle`), in place of hypridle, which isn't a dependency anymore. The shell keeps the caffeine switch and shows the state; the daemon applies caffeine.
 
 ### Turning it on
-- `Idle.enabled` (off by default; the onboarder's System page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: AGENTS.md › Never, while testing). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
+- `Idle.enabled` (off by default; the onboarder's System page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: CLAUDE.md › Never). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
 - Off, the daemon does nothing about idle: no listeners, no D-Bus connections, no hypridle started or stopped. Only caffeine still acts: its logind idle inhibitor (below).
 - The managed mode's autostart (`Session.autostart`) no longer has a `hypridle` entry by default (the v78 step drops the old default's from saved configs), and still skips a plain `hypridle` one the user added while Idle is on, so it doesn't run beside it.
 

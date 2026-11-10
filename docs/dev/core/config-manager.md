@@ -53,7 +53,7 @@ In axiom (`config.Pipeline.Load`), for config.json, saved configs and imports al
 Editors create new entries at their definition's defaults with `withDefaults(value, "Bar" | "BarWidget" | "Menu" | "OverlayView" | "OverlayModule")`.
 
 ### Writes
-(Rule: AGENTS.md › Services, "Config writes".)
+(Rule: CLAUDE.md › Services, "Config writes".)
 - All writes go through `setTheme()` / `setWallpaper(s)()` / `commit(object)`, or `SettingsManager.setValue(path, value)` from settings UI.
 - `commit(object)` (the draft services) fills defaults and returns false, changing nothing, only while saves can't be made (`savesBlocked`, the greeter, no axiom), so drafts stay dirty; it doesn't validate (axiom does, above). A save sends `takeover` only from a takeover setting's own control: `commit(object, takeover)` defaults to false, so axiom keeps the `x-takeover` settings as it has them, and `SettingsManager`'s `commitValues` and `saveChanges` pass true only when they write one (`_takesOver`); `commitValue` (the launcher's `/config`) refuses one. So a save made from a config predating a takeover write of axiom's can't put the stale value back.
 - Never mutate `ConfigManager.config` fields from UI code and expect persistence.

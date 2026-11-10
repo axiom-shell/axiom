@@ -24,7 +24,7 @@ Wi-Fi and wired state, built on Quickshell's Networking module, and Bluetooth, w
   - The one exception is the IPv4 address, which Quickshell.Networking lacks. It comes from axiom (`net.addresses`, the interface's addresses read in Go; the greeter's `axiom greeter` answers it too) whenever the connection changes, or on `refreshIp()`; an answer for a lookup since replaced is dropped.
 - **Scanning:** the scanner runs only while something holds `acquireScan(owner)`.
 - **Connection notes:** with `Notifications.quiet.connectivity`, the primary connection coming and going (by its name), and in BluetoothManager each device connecting and disconnecting (by address), are noted silently through a `ConnectionNotes` child ([Notifications](notifications.md) › What the shell sends).
-- Not named `Networking`, which is Quickshell's singleton. (Rule: AGENTS.md › Services.)
+- Not named `Networking`, which is Quickshell's singleton. (Rule: CLAUDE.md › Services.)
 
 ### nmnet (axiom)
 What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the system bus (a new connection per call; nothing here is followed):
@@ -93,4 +93,4 @@ BlueZ runs a `Device1.Pair` against the calling connection's agent, so the agent
 - **Nobody to ask:** with no shell connected (subscribed to `bluetooth`) a request is rejected at once, so the pairing fails fast instead of timing out; the last shell leaving rejects those held (`RejectAgents`, from the daemon's `lastShellGone`), as a shell that comes back isn't asked them again.
 - **`AXIOM_BLUETOOTH_AGENT=off`** keeps a daemon's agent off whatever the setting: a scratch daemon on the machine's system bus would otherwise be a second agent beside the live one's (the guard refuses a scratch `axiom run` without it or a scratch bus).
 - Only BlueZ (the bus name's owner) may call it: anything else is rejected.
-- **Testing:** never against the live BlueZ (AGENTS.md › Never): the fake in `bluez_test.go` exports `AgentManager1`, and `agent_test.go` calls each method as BlueZ would. The daemon's tests point `DBUS_SYSTEM_BUS_ADDRESS` at nothing, so they never reach the machine's BlueZ.
+- **Testing:** never against the live BlueZ (CLAUDE.md › Never): the fake in `bluez_test.go` exports `AgentManager1`, and `agent_test.go` calls each method as BlueZ would. The daemon's tests point `DBUS_SYSTEM_BUS_ADDRESS` at nothing, so they never reach the machine's BlueZ.

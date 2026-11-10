@@ -1,96 +1,43 @@
-# Recipe: a new overlay view type (incl. tool pages)
+# Adding an overlay page type
 
-> **Use when:** adding a page type to the overlay. A *tool page* (`x-tool: true`: Settings, BarEditor, Themes, Keybinds, Monitors, CalendarPage) is a hand-built page that is always in config.
-> **Copy from:** `qml/components/views/Settings/Settings.qml` (a small `BaseView` page), `qml/components/views/Themes/Themes.qml`; schema `qml/components/views/CalendarPage/schema.yaml`.
-> **Docs:** [overlay/pages-and-grid](../dev/overlay/pages-and-grid.md), [core/streamed-building](../dev/core/streamed-building.md), [core/editors-pattern](../dev/core/editors-pattern.md) (for an editor page), rules in `qml/components/views/AGENTS.md`; generated: [config/OverlayViews](../dev/config/OverlayViews.md).
+An overlay page type is a whole page of the overlay (the full-screen layer with the navigator at the bottom). A *tool page* is the hand-built kind (Settings, Themes, the bar editor, Keybinds, Calendar): it is always in the config and shows as an icon after the user's own pages. At the end you have a page that opens from the overlay, and for a tool page from the launcher, and that streams in without a hitch.
 
-## Files to touch
-1. `qml/components/views/<Type>/<Type>.qml`: the page; its pieces beside it.
-2. `qml/components/views/<Type>/schema.yaml`: the type's schema, beside it. The build finds it (index.yaml's `kinds`), expands it over `definitions/kinds/ViewBase.yaml` into `<Type>OverlayView` and adds it to `OverlayView`'s `oneOf`: nothing else to list.
-3. Tool page only:
-   - `qml/config/schema/sections/Overlay.yaml`'s `items` `default` array: append `{ type: <Type>, id: <type> }`;
-   - a format-2 step appending it to existing configs, with its test and the `version` bump ([migration](migration.md));
-   - `qml/services/ui/LauncherCommands.qml`: a way to open it (below);
-   - `docs/usage.md`: the **Pages** row of the launcher command table.
-4. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
+**Copy from:** `qml/components/views/Themes/Themes.qml` + `schema.yaml` (a tool page made of streamed panels), `qml/components/views/CalendarPage/CalendarPage.qml` (a tool page that pops out into a window and keeps its state in a manager); the migration step `Version: 80` in `backend/internal/migrate/steps/steps.go` (it appends a tool page to existing configs), with `TestV80AddsTheCustomWidgetsPage` in `steps_test.go`.
+**Background:** [pages and grid](../dev/overlay/pages-and-grid.md), [streamed building](../dev/core/streamed-building.md), [editors pattern](../dev/core/editors-pattern.md) (for an editor page), [page windows](../dev/overlay/page-windows.md), [migration recipe](migration.md); generated: [config/OverlayViews](../dev/config/OverlayViews.md)
 
-## Skeleton
-```qml
-pragma ComponentBehavior: Bound
-import QtQuick
-import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
-import qs.components.views.FooPage
+## Files
+1. `qml/components/views/<Type>/<Type>.qml`: the page, on `BaseView`, with its pieces beside it. The type is the file name.
+2. `qml/components/views/<Type>/schema.yaml`: `label` and `icon`, plus `tool: true` and `window: true` where they apply. The schema build finds it and adds `<Type>OverlayView` to `OverlayView`; there is nothing to list by hand.
+3. For a tool page only:
+   - an entry in the `items` default of `qml/config/schema/sections/Overlay.yaml` (`{id: …, type: <Type>}`), which `check_structure` insists on;
+   - a format-2 migration step that appends the same entry to existing configs, its test, and the `version` bump ([migration](migration.md));
+   - a launcher command in `qml/services/ui/LauncherCommands.qml`;
+   - the **Pages** row of the launcher table in `docs/usage.md`.
+4. For a tool page that can pop out (`window: true`): `data/applications/axiom-<type>.desktop` (copy `axiom-themes.desktop`) and the type in the `pages` row of the IPC table in `docs/usage.md`.
 
-// <What the page is for and where its state lives (FooManager).>
-BaseView {
-  id: root
-
-  Component.onCompleted: FooManager.ensureLoaded()
-
-  // Each panel streamed in as the page opens, at its size from the start
-  StreamedLoader {
-    Layout.preferredWidth: root.sideWidth
-    Layout.preferredHeight: root.pageHeight
-    label: "foo sidebar"
-    sourceComponent: FooSidebar {}
-  }
-
-  StreamedLoader {
-    Layout.preferredWidth: root.editorWidth
-    Layout.preferredHeight: root.pageHeight
-    label: "foo editor"
-    sourceComponent: FooEditor {}
-  }
-}
-```
-(`import QtQuick.Layouts` and `qs.components.reusable` too.) The page shows at once and its panels fill in over the next frames: wrap long or repeated parts inside them the same way, build nothing hidden, and check it with `scripts/dev/bench_overlay.sh FooPage` (no `Built … in` line over a frame or two). See [streamed-building](../dev/core/streamed-building.md).
-Schema (`schema.yaml` beside `FooPage.qml`):
-```yaml
-label: Foo
-icon: build
-tool: true
-```
-Migration step (tool page; [migration](migration.md)):
-```go
-// v<N> added the Foo page: every config gets it once
-{Version: <N>, Run: func(cfg *jsonx.Object) []string {
-	overlay, _ := cfg.Value("Overlay").(*jsonx.Object)
-	if overlay == nil {
-		return nil
-	}
-	items, _ := overlay.Value("items").(*jsonx.Array)
-	if items == nil {
-		return nil
-	}
-	for _, item := range items.Items {
-		if view, _ := item.(*jsonx.Object); view != nil && view.Value("type") == "FooPage" {
-			return nil
-		}
-	}
-	items.Append(jsonx.Obj("type", "FooPage", "id", "fooPage"))
-	return []string{"Overlay.items: added the Foo page"}
-}},
-```
+Translation files need nothing: the pre-commit hook adds new strings to every language.
 
 ## Steps
-1. Schema first: `schema.yaml`, and for a tool page the `Overlay.items` default entry. Then the migration step and version bump, then its test.
-2. Pick a type const that's the file name and doesn't collide with a content type (`CalendarPage`, not `Calendar`).
-3. Write the view on `BaseView`: size from `grid`, `pageHeight`, `sideWidth`, `editorWidth`, `cardPageWidth`; `viewConfig` is its entry in `Overlay.items`.
-4. Opening it from the launcher: add `root._page("<name>", [aliases], "<Type>", "<Description>")` to `LauncherCommands.list`, and add `I18n.tr("<Description>")` to the declaration comment in `_page`. If the page should open on something chosen first, pass `before`; or give it its own command calling a service, as `/calendar` does (`CalendarManager.openPage()`, which falls back to a page holding the Calendar module).
-5. A tool page that's useful beside the desktop (an editor, a calendar): `window: true` in its `schema.yaml` lets it pop out into a window of its own. Add `data/applications/axiom-<type>.desktop` (copy `axiom-themes.desktop`) and its name to the `pages` row in `docs/usage.md`. Its state must live in its manager, as only one host builds it at a time ([page windows](../dev/overlay/page-windows.md)).
-6. Verify.
+1. Write `schema.yaml` and, for a tool page, the `Overlay.items` default entry. Then the migration step, its test and the version bump.
+2. Choose a type name that is the file name and doesn't collide with a module type (`CalendarPage`, not `Calendar`).
+3. Write the page on `BaseView`. Size everything from it: `pageHeight`, `sideWidth`, `editorWidth`, `cardPageWidth` and `grid`; `viewConfig` is the page's entry in `Overlay.items`. Put each panel in a `StreamedLoader` with a size from the start, as `Themes.qml` does, so the page appears at once and fills in over the next frames.
+4. Add the launcher command: `root._page("<name>", [aliases], "<Type>", "<Description>")` in the list in `LauncherCommands.qml`, and the description in the `I18n.tr("…")` comment inside `_page` (the translation check reads that comment). A page that needs something chosen first passes a `before` function. A page with its own opener service gets its own command instead, as `/calendar` does with `CalendarManager.openPage()`.
+5. If the page pops out, keep its state in its manager and not in the page: only one host builds the page at a time, and the window and the overlay swap ([page windows](../dev/overlay/page-windows.md)).
 
-## Gotchas
-- A new subfolder imported only from URL-loaded files isn't scanned until qs restarts (`module "qs.components.views.FooPage" is not installed`): ask the user to restart.
-- Editor pages: the manager owns the draft and the selection (`select*()`); the page never assigns them ([core/editors-pattern](../dev/core/editors-pattern.md)).
-- The page exists only while it or a neighbour is shown: lasting state goes in a service.
-- Its `icon` is also the launcher command's glyph (`OverlayConfig.viewIcon(type)`).
-- The migration step must be idempotent and must check its input's shape.
+## Watch out for
+- A new folder under `views/` that is only imported from files loaded by URL isn't scanned until qs restarts (`module "qs.components.views.<Type>" is not installed`). Ask the user to restart.
+- An editor page never assigns the draft or the selection; the manager owns them (`select*()`), see the editors pattern.
+- The page only exists while it or a neighbour is shown. Anything that must last goes in a service.
+- Nothing is built hidden. A part shown in one mode only is a `StreamedLoader` with `wanted:` the mode's condition, not `visible: false`.
+- The page's `icon` is also the launcher command's glyph (`OverlayConfig.viewIcon`).
+- A migration step runs on any config of any older version, so it must check the shape of what it reads and do nothing the second time. `Version: 80` shows both.
 
-## Verify
+## Check it
 - `scripts/dev/verify.sh`
-- `scripts/run_tests.sh Config` (defaults, the migration test, `test_migration_is_idempotent`)
-- `scripts/dev/shot.sh page <Type>`
+- `go -C backend test ./internal/migrate/steps` (the new step's cases and `TestSchemaVersionIsCurrent`), and `scripts/run_tests.sh Config` for the schema defaults.
+- `scripts/dev/shot.sh page <Type>` opens the page, takes a screenshot and closes it; then read `scripts/log.sh`. A page's QML errors only reach the log once it has been opened.
+- `scripts/dev/bench_overlay.sh <Type>`: no `Built … in` line should be longer than a frame or two.
 
 ## Docs to update
-- [overlay/pages-and-grid](../dev/overlay/pages-and-grid.md) (the tool page list), the feature's doc, `docs/usage.md`.
+- [pages and grid](../dev/overlay/pages-and-grid.md): its list of tool pages. If the page can pop out, the list in [page windows](../dev/overlay/page-windows.md) too.
+- The doc of the feature the page belongs to, and `docs/features.md` (Built-in pages).

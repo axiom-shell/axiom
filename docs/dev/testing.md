@@ -2,9 +2,9 @@
 
 > **Files:** `scripts/dev/verify.sh`, `scripts/dev/shot.sh`, `scripts/dev/bench_overlay.sh`, `scripts/dev/mem.sh`, `scripts/log.sh`, `backend/internal/buginfo/buginfo.go`, `backend/internal/cli/buginfo.go`, `scripts/check_all.sh`, `scripts/run_tests.sh`
 > **Config:** none
-> **Related:** [Developer docs](README.md), [AGENTS.md](../../AGENTS.md) (Running / reloading, Never while testing, Checks)
+> **Related:** [Developer docs](README.md), [CLAUDE.md](../../CLAUDE.md) (Working here, Never)
 
-How to look at, exercise and debug the live shell without breaking the user's session, plus where every feature's own testing notes live. What you must never do while testing is in AGENTS.md › "Never, while testing".
+How to look at, exercise and debug the live shell without breaking the user's session, plus where every feature's own testing notes live. What you must never do while testing is in CLAUDE.md › "Never".
 
 ### The loop
 - `scripts/dev/verify.sh` after every change: formats the changed QML in place (keeping the inode), runs `check_structure`, `check_sizes`, `check_icons`, `check_docs` and `check_packages` on every change, lints changed QML, checks changed JSON files parse, runs the affected unit tests (a changed `methods/<Name>` runs `tst_<Name>`, a schema change runs `Config`, a changed script its `tests/scripts/test_scripts.py` classes, mapped in verify.sh), shellchecks changed scripts (and `.githooks/`), counts a deleted file (a rename's old path too) and a changed check script as changes to what they cover, builds the generated files first (`scripts/generate.sh`: the schema from `qml/config/schema/` and the reference docs in `docs/dev/config/` and `docs/dev/generated/`), through the Go checks (`scripts/check_go.sh --fix`, which add the shared fixtures) when `backend/`, a file it embeds, the schema or what the fixtures are recorded from changed, checks and replays the shared fixtures, and prints the shell's log since the reload (waiting for one only when it formatted a file: a save's reload came before it started). `--all` runs `check_all.sh`.
@@ -14,13 +14,13 @@ How to look at, exercise and debug the live shell without breaking the user's se
 - `scripts/dev/shot.sh` takes a screenshot of a surface and closes it again, printing the PNG's path: `page <ViewType>`, `launcher [text]`, `ipc <target> <open> [close]`, `screen`; `-m MONITOR` (default the focused one), `-w SECONDS`.
 
 ### The checks
-All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs every one. None runs the shell, so still read the log. (The rules they hold: AGENTS.md › Checks.)
-- `scripts/check_structure.py`: folders, imports, layering gates, the Quickshell.Io allowlist, and the AGENTS.md rules a pattern can hold (live Repeater models, `duration:` literals, `Qt.formatDateTime`, `Quickshell.screens`). Run it after adding, renaming or moving QML files. It fails a singleton over 800 lines (bar `qml/components/methods/` and the compositor backends): split it.
+All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs every one. None runs the shell, so still read the log. (The rules they hold: CLAUDE.md.)
+- `scripts/check_structure.py`: folders, imports, layering gates, the Quickshell.Io allowlist, and the CLAUDE.md rules a pattern can hold (live Repeater models, `duration:` literals, `Qt.formatDateTime`, `Quickshell.screens`). Run it after adding, renaming or moving QML files. It fails a singleton over 800 lines (bar `qml/components/methods/` and the compositor backends): split it.
 - `scripts/run_tests.sh [Name…]` runs `tests/tst_<Name>.qml` (schema defaults are `tst_Config`); a migration step's tests are Go (`scripts/check_go.sh`).
 - `scripts/check_qmllint.py` fails on warnings not in `scripts/qmllint-baseline.json`, and on baselined ones gone. `--update-baseline` only for Quickshell type-info gaps or baselined warnings gone.
 - `scripts/check_i18n.py`: the pre-commit hook (`git config core.hooksPath .githooks`; verify.sh warns if it isn't set up) adds new keys empty (shown in English) to every `qml/config/i18n/<code>.json` and drops unused ones ([i18n](core/i18n.md)). Edit i18n files only in the checker's format (2-space JSON; `--format` fixes it).
 - `scripts/check_docs.py` fails on a hand-written doc citing a path or `Singleton.member` that's gone (fix the doc with the code), and on an `x-*` annotation missing from [schema-annotations](core/schema-annotations.md).
-- `scripts/check_go.sh`: the Go checks for `backend/` (`--fix` regenerates and formats); rules in `backend/AGENTS.md`.
+- `scripts/check_go.sh`: the Go checks for `backend/` (`--fix` regenerates and formats); rules in `.claude/rules/backend.md`.
 - `scripts/check_packages.py`: a new dependency goes in install.sh's table, `Packages.packages` and the AUR PKGBUILDs ([packaging](packaging.md)).
 - `scripts/check_sizes.py`: literal pixel sizes outside the bars ([shared-ui-pieces](core/shared-ui-pieces.md) › Sizes).
 - `scripts/check_icons.py`: an icon name the bundled font doesn't have, in the schema or a QML literal ([icons](core/icons.md) › The check).
@@ -32,7 +32,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
 ### Reloads and logs
 - The shell runs under `axiom run` and hot-reloads QML files it has loaded. Never start, stop or restart it (or the daemon) yourself; ask the user to restart. A second axiom runs only nested: `scripts/dev/nested.sh <sway|niri|hyprland>`.
 - A scratch environment in zsh: `E="XDG_RUNTIME_DIR=/x XDG_CONFIG_HOME=/y"; env $E …` passes one argument, so the command falls back to the live folders (two test writes once landed in the real config.json this way). Put the assignments inline, use `env ${=E}`, or source a file in `bash -c`, and check `axiom config path` resolves to the scratch folder before any write.
-- `~/.config/axiom/config.json` belongs to the settings UI but may be edited to test (with Edit or Write, never from Bash: AGENTS.md › Never). An invalid file never replaces the running config (`savesBlocked` refuses saves until it's fixed).
+- `~/.config/axiom/config.json` belongs to the settings UI but may be edited to test (with Edit or Write, never from Bash: CLAUDE.md › Never). An invalid file never replaces the running config (`savesBlocked` refuses saves until it's fixed).
 - `console.log` is for tracing (`scripts/log.sh --debug` shows it), `console.warn` only for real problems.
 - Outside dev mode the daemon reads the schema once, at its start: after a schema change, the live shell keeps the old schema until the user restarts axiom, on a binary rebuilt with the new one (`scripts/generate.sh`, then `go -C backend build -o ~/.local/bin/axiom ./cmd/axiom` or wherever theirs lives). Test a schema change in `scripts/dev/nested.sh`, or with `axiom config validate`.
 - **Which tree runs** (`axiom dev status`): the live shell runs the install tree (`~/.local/share/axiom-shell`, never edited by hand), or, while dev mode runs it, the dev tree (`axiom dev set <clone>`) on the dev config (`~/.config/axiom/dev/config.json`). A QML edit reaches the live shell only in the tree it runs: an edit in another worktree is checked by verify.sh and seen in a nested shell, not the live one.
@@ -73,7 +73,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
 - Adding a module to the live config: [writing-modules.md › Testing](overlay/writing-modules.md). Confirm the schema reloaded (the latest `Loading config schema` line in the instance's `log.log` is newer than the schema file's mtime), back up config.json to a scratch dir and restore it afterwards, add one module at a time, and watch qs's RSS.
 
 ### Machine settings
-Settings › General's Account and Default apps and System's System info and Date & time change the machine itself: its clock, time zone and hostname (timedated, hostnamed), the user's password, picture and real name (AccountsService, `passwd`) and their default apps (`mimeapps.list`, `xdg-terminals.list`). None of it is undone by a reload, so the guard refuses it on the live system (AGENTS.md › Never):
+Settings › General's Account and Default apps and System's System info and Date & time change the machine itself: its clock, time zone and hostname (timedated, hostnamed), the user's password, picture and real name (AccountsService, `passwd`) and their default apps (`mimeapps.list`, `xdg-terminals.list`). None of it is undone by a reload, so the guard refuses it on the live system (CLAUDE.md › Never):
 - **Go:** each service's package tests it against a fake on a `dbustest` bus (`backend/internal/sysinfo` and the packages beside it), `passwd` against a scripted fake in a pty, and `mimeapps` in `t.TempDir()` folders. They check the calls carry `FlagAllowInteractiveAuthorization` (polkit asks the user through axiom's agent, `PolkitManager`).
 - **A scratch daemon:** `XDG_RUNTIME_DIR=<scratch> XDG_CONFIG_HOME=<scratch>/config DBUS_SYSTEM_BUS_ADDRESS=<a dbus-run-session's>`, where the setters reach nothing real. Reading (`system.info`, `datetime.get`, `account.get`, `apps.roles`, `apps.handlers`) is fine against the live one.
 - **What only the user can check** (a real time zone change, a password change, a picture showing on the lock screen) is said in the pull request, for the maintainer to try.

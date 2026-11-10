@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for .claude/hooks/guard.py, the PreToolUse guard enforcing
-AGENTS.md › "Never, while testing". Run: python3 tests/scripts/test_guard.py"""
+CLAUDE.md › "Never". Run: python3 tests/scripts/test_guard.py"""
 import importlib.util
 import json
 import os
@@ -66,7 +66,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "go test ./... 2>&1 | tail -3")
 
     def test_every_rule_holds_in_compound_forms(self):
-        """Each AGENTS.md › Never rule's plain form, inside a group, after &&,
+        """Each CLAUDE.md › Never rule's plain form, inside a group, after &&,
         in a substitution or an if, behind a wrapper or an assignment."""
         call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
         rules = ["loginctl lock-session", "hyprlock", "ydotool mousemove 1 1", "hyprctl dispatch movecursor 1 1",
@@ -646,7 +646,7 @@ class Hook(unittest.TestCase):
                              input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "qs kill"}}))
         decision = json.loads(out.stdout)["hookSpecificOutput"]
         self.assertEqual(decision["permissionDecision"], "deny")
-        self.assertIn("AGENTS.md", decision["permissionDecisionReason"])
+        self.assertIn("CLAUDE.md › Never", decision["permissionDecisionReason"])
         allowed = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True,
                                  input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "ls"}}))
         self.assertEqual(allowed.stdout, "")

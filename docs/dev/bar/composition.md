@@ -60,7 +60,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - `StyledIcon` draws anything that isn't a name (a glyph, or text typed into an icon field) in the text font.
 - Services, schema defaults (`x-icon`, icon fields) and launcher `glyph`s hold names.
 - `DependencyManager` warns once when the font is missing.
-- (Rule: AGENTS.md › UI conventions, Icons.)
+- (Rule: CLAUDE.md › UI, Icons.)
 
 ### Auto-hide (`autoHide`, `BarRevealManager`)
 - `autoHide`: `never` (default), `always`, or `whenCovered` (hidden only while a window covers its slot, or a fullscreen window is on its screen: `CompositorManager.windowsCover` over its whole edge, `hasFullscreen`).
@@ -85,4 +85,4 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Backgrounds and separator marks follow the hosts as drawn.
 - A widget that is going keeps its last place and colors while its host still fades or shrinks out, going with it. A host that stays drawn (a delegate reused for another widget, a widget dropping its background) lets go once its size settles.
 - Colors (`WidgetBackground`, `IconTextWidget`) fade with ColorAnimations. The tray's icons grow in (Grid `add`/`move`).
-- (Rule: AGENTS.md › Config, Animation.)
+- (Rule: CLAUDE.md › Theme, animation, text.)

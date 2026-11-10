@@ -269,12 +269,12 @@ def main():
             if kind not in used.get(path, []):
                 errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
 
-    # Services live in their group's folder (services/AGENTS.md › Folders):
+    # Services live in their group's folder (.claude/rules/services.md › Folders):
     # one directly in services/ would escape the singleton checks below,
     # check_docs and the API pages, which all read services/*/
     for path in sources:
         if re.fullmatch(r"qml/services/[^/]+\.qml", path):
-            errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
+            errors.append(f"{path}: directly in services/ (put it in its group's folder: .claude/rules/services.md)")
 
     # IPC targets are IpcTargets (registered with axiom, which calls them
     # over the shell's connection): an IpcHandler is out of `axiom ipc`'s
@@ -592,7 +592,7 @@ def main():
                 errors.append(f"{path}: {name} — did you mean {close[0]}?")
 
     # Repeater models and acquire() requests never come from live values
-    # (AGENTS.md › UI conventions): a model re-evaluated per sample once
+    # (CLAUDE.md › UI): a model re-evaluated per sample once
     # pushed qs past 25 GB. Live means a member of a polled service (one
     # polling through a ConsumerRegistry or DeadlineTicker, not
     # BackendManager's or NotesManager's acquire()), read in the expression
@@ -631,8 +631,8 @@ def main():
                 errors.append(f"{path}:{code.count(chr(10), 0, at) + 1}: an acquire() request from live values ({', '.join(found)}): build it from config")
 
     # Motion follows the animation speed setting: a `duration:` is
-    # Appearance.animFast / animNormal / animSlow (AGENTS.md › Config,
-    # Animation). A bare number is only a behaviour timing (a blink, a
+    # Appearance.animFast / animNormal / animSlow (CLAUDE.md › Theme,
+    # animation, text). A bare number is only a behaviour timing (a blink, a
     # pause), marked on its line
     for path, text in sources.items():
         for n, line in enumerate(text.split("\n"), 1):
@@ -640,7 +640,7 @@ def main():
                 errors.append(f"{path}:{n}: a duration in ms: use Appearance.animFast / animNormal / animSlow (or mark a blink or pause `// behaviour timing: <reason>`)")
 
     # Dates the user reads follow the language: I18n.formatDate(date,
-    # I18n.dateFormat(name)), never Qt.formatDateTime (AGENTS.md › Translation).
+    # I18n.dateFormat(name)), never Qt.formatDateTime (CLAUDE.md › Theme, animation, text).
     # Surfaces go on General.outputs / screensFor(target): Quickshell.screens
     # holds stand-ins while no monitor is connected, and a window left on
     # one can crash qs when they come back (General filters them). A use
@@ -670,7 +670,7 @@ def main():
                 errors.append(f"{path}:{n}: {m.group(0)[:-1]}: run the action through ActionsManager.run(id, {{fromScreen: true}}) (or mark a use that must stay `// allowed: <reason>`)")
 
     # What a bar widget style is lives in BarLook's trait table alone
-    # (qml/components/bar/AGENTS.md, docs/dev/bar/widget-style.md): nothing
+    # (.claude/rules/bar.md, docs/dev/bar/widget-style.md): nothing
     # else reads the style's name, the saved `widgetStyle` or the resolved
     # look's `style`, to compare it; it reads the look's traits. (Comparing
     # a name like "outline" can't be told from other uses of the word, so

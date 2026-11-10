@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse guard: refuses the tool calls AGENTS.md › "Never, while testing"
+"""PreToolUse guard: refuses the tool calls CLAUDE.md › "Never"
 forbids, so they're enforced rather than only written down.
 
 Claude Code runs it before every Bash, Edit and Write call (.claude/settings.json
@@ -63,7 +63,7 @@ class Denied(Exception):
 
 
 def deny(rule, why):
-    raise Denied(f"Blocked by AGENTS.md › {rule}: {why}")
+    raise Denied(f"Blocked by CLAUDE.md › {rule}: {why}")
 
 
 # --------------------------------------------------------------- parsing
@@ -349,46 +349,46 @@ def check_axiom(env, args, cwd):
     live = axiom_live_display(env, args)
     sub = words[0]
     if live and sub in {"run", "quit", "restart"}:
-        deny("Never, while testing", f"`axiom {sub}` starts or stops the live shell; never from this session (test with a scratch XDG_RUNTIME_DIR, or nested.sh).")
+        deny("Never", f"`axiom {sub}` starts or stops the live shell; never from this session (test with a scratch XDG_RUNTIME_DIR, or nested.sh).")
     # A scratch daemon on the machine's system bus is BlueZ's pairing agent
     # beside the live one (Bluetooth.pairingAgent defaults on): it takes the
     # pairings a device starts and rejects them with no shell to ask
     if not live and sub == "run" and not scratch_system_bus(env) and env.get("AXIOM_BLUETOOTH_AGENT") != "off":
-        deny("Never, while testing", "a scratch `axiom run` on the machine's system bus registers a second Bluetooth pairing agent with the live BlueZ; run it with AXIOM_BLUETOOTH_AGENT=off, or on a scratch system bus (DBUS_SYSTEM_BUS_ADDRESS=<a dbus-run-session's>), or use nested.sh.")
+        deny("Never", "a scratch `axiom run` on the machine's system bus registers a second Bluetooth pairing agent with the live BlueZ; run it with AXIOM_BLUETOOTH_AGENT=off, or on a scratch system bus (DBUS_SYSTEM_BUS_ADDRESS=<a dbus-run-session's>), or use nested.sh.")
     if live and sub == "daemon" and words[1:2] and words[1] in {"stop", "restart", "reexec"}:
-        deny("Never, while testing", f"`axiom daemon {words[1]}` stops or replaces the live daemon; never from this session.")
+        deny("Never", f"`axiom daemon {words[1]}` stops or replaces the live daemon; never from this session.")
     # Dev mode: switching it, its tree or options, or copying the dev config
     # over the live one (status and `dev config diff` only read)
     if live and sub == "dev" and (words[1:2] and words[1] in {"on", "off", "rebuild", "set", "options"}
                                   or words[1:3] in (["config", "copy"], ["config", "pull"])):
         verb = " ".join(words[1:3] if words[1] == "config" else words[1:2])
-        deny("Never, while testing", f"`axiom dev {verb}` changes the live daemon's dev mode or config; ask the user, or drive a nested daemon (--socket $XDG_RUNTIME_DIR/axiom/<nested display>/axiom.sock). `axiom dev status` and `dev config diff` read it.")
+        deny("Never", f"`axiom dev {verb}` changes the live daemon's dev mode or config; ask the user, or drive a nested daemon (--socket $XDG_RUNTIME_DIR/axiom/<nested display>/axiom.sock). `axiom dev status` and `dev config diff` read it.")
     if live and (sub == "lock" or sub == "ipc" and words[1:2] == ["lockscreen"]):
-        deny("Never, while testing", "don't lock the session; only the user can type the password (lock a scratch instance: XDG_RUNTIME_DIR=<scratch>).")
+        deny("Never", "don't lock the session; only the user can type the password (lock a scratch instance: XDG_RUNTIME_DIR=<scratch>).")
     if live and sub == "ipc" and words[1:3] in (["monitors", "keep"], ["selfUpdate", "update"]):
-        deny("Never, while testing", f"`{' '.join(words[1:3])}` changes the live system; ask the user.")
+        deny("Never", f"`{' '.join(words[1:3])}` changes the live system; ask the user.")
     if sub == "greeter":
         gdir = axiom_flag(args, "--dir") or env.get("AXIOM_GREETER_DIR", "")
         installed = gdir and "$" not in gdir and resolve(gdir, "/") == Path("/var/lib/axiom-greeter")
         shown = env.get("AXIOM_GREETER_WINDOWED") == "1" or "--no-shell" in args
         if not shown or not scratch(gdir) or installed:
-            deny("Never, while testing", "run the greeter only windowed on a scratch folder: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch> (or --no-shell).")
+            deny("Never", "run the greeter only windowed on a scratch folder: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch> (or --no-shell).")
     # The greeter installer's root side, which greeter_install.sh runs
     if sub == "greeter-install" and words[1:2] and words[1] in {"install", "update", "uninstall"}:
         if not scratch(env.get("AXIOM_GREETER_ROOT", "")):
-            deny("Never, while testing", "axiom greeter-install install/update/uninstall only with a scratch AXIOM_GREETER_ROOT=<dir>.")
+            deny("Never", "axiom greeter-install install/update/uninstall only with a scratch AXIOM_GREETER_ROOT=<dir>.")
     # A compositor claim (managed mode) on the live config, or moving binds
     # out of its files (the bind merge's remove)
     if sub == "compositor" and words[1:2] and words[1] in {"claim", "release"} and words[2:3]:
         if live_config_path(words[2], cwd, env):
-            deny("Never, while testing", f"`axiom compositor {words[1]}` only on a scratch dir, never the live compositor config.")
+            deny("Never", f"`axiom compositor {words[1]}` only on a scratch dir, never the live compositor config.")
     if sub == "compositor" and words[1:3] == ["binds", "remove"] and words[3:4]:
         if live_config_path(words[3], cwd, env):
-            deny("Never, while testing", "`axiom compositor binds remove` only on a scratch dir, never the live compositor config.")
+            deny("Never", "`axiom compositor binds remove` only on a scratch dir, never the live compositor config.")
     if sub == "config" and "--takeover" in args:
         config_dir = axiom_flag(args, "--config-dir") or env.get("XDG_CONFIG_HOME", "")
         if not scratch(config_dir) or live:
-            deny("Never, while testing", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.")
+            deny("Never", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.")
 
 
 # The gh commands an agent may run: every read, and these writes. Anything else is refused,
@@ -404,7 +404,7 @@ GH_ALLOWED = {
     "discussion list", "discussion view", "agent-task list", "agent-task view", "codespace list", "codespace view",
     "attestation verify", "attestation trusted-root", "extension list", "extension search", "alias list",
     "config get", "config list", "gpg-key list", "ssh-key list", "skill list", "skill search", "skill preview", "version",
-    # Issue management (`issue create` only when the maintainer asks for an issue: AGENTS.md › Never)
+    # Issue management (`issue create` only when the maintainer asks for an issue)
     "issue create", "issue edit", "issue comment", "issue close", "issue reopen", "issue lock", "issue unlock",
     # Re-running and starting actions
     "run rerun", "run cancel", "workflow run",
@@ -455,7 +455,7 @@ def check_git(args):
     i = 0
     while i < len(args) and args[i].startswith("-"):
         i += 2 if args[i] in GIT_VALUE_OPTS else 1
-    rule = "Never, while testing"
+    rule = "Never"
     if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
         deny(rule, "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).")
     if args[i:i + 1] == ["push"] and not push_allowed(args[i + 1:]):
@@ -468,13 +468,13 @@ def check_argv(env, argv, cwd, guarded):
 
     # Lock the built-in locker
     if name == "loginctl" and any(a.startswith("lock-session") for a in args):
-        deny("Never, while testing", "don't lock the session; only the user can type the password. Test LockSurface in a hidden window.")
+        deny("Never", "don't lock the session; only the user can type the password. Test LockSurface in a hidden window.")
     if name == "hyprlock":
-        deny("Never, while testing", "don't lock the screen; only the user can type the password.")
+        deny("Never", "don't lock the screen; only the user can type the password.")
 
     # Simulate cursor movement
     if name in {"ydotool", "dotool", "dotoolc", "wlrctl"} or any("movecursor" in a or "cursor.move" in a for a in argv):
-        deny("Never, while testing", "don't simulate cursor movement; check logs and reason through bindings, or ask the user to look.")
+        deny("Never", "don't simulate cursor movement; check logs and reason through bindings, or ask the user to look.")
 
     # The shell itself, and its IPC
     if name in QS:
@@ -486,7 +486,7 @@ def check_argv(env, argv, cwd, guarded):
 
     # gh beyond its allowlist
     if name == "gh" and not gh_allowed(args):
-        deny("Never, while testing", f"`gh {' '.join(args[:2])}` isn't on guard.py's GH_ALLOWED (no `gh api`); ask the user.")
+        deny("Never", f"`gh {' '.join(args[:2])}` isn't on guard.py's GH_ALLOWED (no `gh api`); ask the user.")
 
     # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":
@@ -495,12 +495,12 @@ def check_argv(env, argv, cwd, guarded):
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):
         if name in {"pkill", "killall"} or any(a in {"restart", "stop", "start", "reload", "kill", "disable", "enable", "mask", "try-restart", "reload-or-restart"} for a in args):
-            deny("Never, while testing", "don't restart or stop greetd: it ends the session.")
+            deny("Never", "don't restart or stop greetd: it ends the session.")
 
     # Greeter install / update / uninstall
     if name == "greeter_install.sh" and args and args[0] in {"install", "update", "uninstall"}:
         if not scratch(env.get("AXIOM_GREETER_ROOT", "")):
-            deny("Never, while testing", "greeter_install.sh install/update/uninstall only with a scratch AXIOM_GREETER_ROOT=<dir>.")
+            deny("Never", "greeter_install.sh install/update/uninstall only with a scratch AXIOM_GREETER_ROOT=<dir>.")
 
     # Ending, reconfiguring or swapping the config of the niri session
     # itself: only a nested niri (NIRI_SOCKET aimed at another one than the
@@ -510,32 +510,32 @@ def check_argv(env, argv, cwd, guarded):
         changes = rest[:1] == ["output"] or (rest[:1] == ["action"] and rest[1:2] in (["quit"], ["load-config-file"]))
         socket = env.get("NIRI_SOCKET", os.environ.get("NIRI_SOCKET", ""))
         if changes and (not socket or socket == os.environ.get("NIRI_SOCKET", "")):
-            deny("Never, while testing", "niri msg output / action quit / load-config-file only on a nested niri (NIRI_SOCKET=<its socket>), never the live session.")
+            deny("Never", "niri msg output / action quit / load-config-file only on a nested niri (NIRI_SOCKET=<its socket>), never the live session.")
 
     # A hookup's Apply (the daemon's hookup.apply, which edits the configs
     # of the HOME the daemon runs with) sent to the live daemon by hand:
     # only to a scratch one (XDG_RUNTIME_DIR / AXIOM_SOCKET)
     sends = name in {"socat", "nc", "ncat", "websocat", "echo", "printf", "axiom"} or name.startswith("python")
     if sends and any("hookup.apply" in a for a in args) and axiom_live_display(env, args):
-        deny("Never, while testing", "hookup.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it edits the real configs (test it with go test ./internal/compositor/edit).")
+        deny("Never", "hookup.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it edits the real configs (test it with go test ./internal/compositor/edit).")
 
     # A self-update (the daemon's selfupdate.apply, which updates the tree
     # the daemon runs from: the live repo) sent to the live daemon by hand
     if sends and any("selfupdate.apply" in a for a in args) and axiom_live_display(env, args):
-        deny("Never, while testing", "selfupdate.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it updates the live repo (test it with go test ./internal/selfupdate).")
+        deny("Never", "selfupdate.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it updates the live repo (test it with go test ./internal/selfupdate).")
 
     # The login screen's install, update or uninstall (the daemon's
     # greeter.apply, which runs the installer as root through pkexec) sent
     # to the live daemon by hand
     if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
-        deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
+        deny("Never", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
 
     # Dev mode's writes (the daemon's dev.set, dev.rebuild, dev.config.copy
     # and dev.config.pull: switching its image or tree, or writing a config)
     # sent to the live daemon by hand, past the axiom dev verbs' rule
     dev_writes = ("dev.set", "dev.rebuild", "dev.config.copy", "dev.config.pull")
     if sends and any(m in a for a in args for m in dev_writes) and axiom_live_display(env, args):
-        deny("Never, while testing", "dev.set / dev.rebuild / dev.config.copy|pull only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket), never the live one.")
+        deny("Never", "dev.set / dev.rebuild / dev.config.copy|pull only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket), never the live one.")
 
     # The live input method's settings: fcitx5's Controller1 writes and
     # restarts, ibus's gsettings / dconf keys, and the daemon's inputMethod
@@ -543,17 +543,17 @@ def check_argv(env, argv, cwd, guarded):
     # DBUS_SESSION_BUS_ADDRESS) or a scratch daemon
     if name in {"busctl", "dbus-send", "gdbus"} and any("org.fcitx.Fcitx" in a for a in args) \
             and any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in FCITX_WRITES) and live_bus(env, args):
-        deny("Never, while testing", "don't change the live fcitx5 (SetInputMethodGroupInfo, SetConfig, Save, Restart, Exit, …); use a scratch session bus (dbus-run-session) or go test ./internal/inputmethod.")
+        deny("Never", "don't change the live fcitx5 (SetInputMethodGroupInfo, SetConfig, Save, Restart, Exit, …); use a scratch session bus (dbus-run-session) or go test ./internal/inputmethod.")
     ibus_keys = any(a.startswith(("org.freedesktop.ibus", "/desktop/ibus")) for a in args)
     writes_setting = name == "gsettings" and args[:1] and args[0] in {"set", "reset", "reset-recursively"} or \
         name == "dconf" and args[:1] and args[0] in {"write", "reset", "load"}
     if writes_setting and ibus_keys and env.get("GSETTINGS_BACKEND", "") != "memory" and live_bus(env, args):
-        deny("Never, while testing", "don't change the live ibus settings (gsettings set org.freedesktop.ibus.*); use GSETTINGS_BACKEND=memory or a scratch session bus.")
+        deny("Never", "don't change the live ibus settings (gsettings set org.freedesktop.ibus.*); use GSETTINGS_BACKEND=memory or a scratch session bus.")
     im_writes = ("inputMethod.push", "inputMethod.options", "inputMethod.framework")
     words = [a for a in args if not a.startswith("-")]
     by_ipc = name == "axiom" and any(words[i:i + 2] == ["inputMethod", w] for i in range(len(words)) for w in ("push", "options", "framework"))
     if sends and (by_ipc or any(m in a for a in args for m in im_writes)) and axiom_live_display(env, args):
-        deny("Never, while testing", "inputMethod.push / options / framework only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket): they rewrite the live IME's settings.")
+        deny("Never", "inputMethod.push / options / framework only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket): they rewrite the live IME's settings.")
 
     # The machine's own settings: its clock and time zone, hostname, the
     # user's account (password, picture, name) and default apps. Only
@@ -567,18 +567,18 @@ def check_argv(env, argv, cwd, guarded):
 
     # Another claude loads the settings of the folder it starts in: without this guard
     if name == "claude" or name in {"npx", "bunx"} and any(a.startswith("@anthropic-ai/claude-code") for a in args):
-        deny("Never, while testing", "don't start another `claude` from Bash: it runs without this guard; ask the user (or use a subagent, which runs this session's).")
+        deny("Never", "don't start another `claude` from Bash: it runs without this guard; ask the user (or use a subagent, which runs this session's).")
 
     # The real config.json: deleted or moved (the file or a folder above it)
     if any(resolve(a, cwd, env) in {LIVE_CONFIG, *LIVE_CONFIG.parents} for a in removed):
-        deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}) or a folder holding it; use `axiom ipc onboarding goTo <n>`.")
+        deny("Never", f"don't delete or move the real config.json ({LIVE_CONFIG}) or a folder holding it; use `axiom ipc onboarding goTo <n>`.")
     # ... or written by Bash, which skips the x-takeover check Edit and Write get
     if any(resolve(a, cwd, env) == LIVE_CONFIG for a in written):
-        deny("Never, while testing", f"don't write the real config.json ({LIVE_CONFIG}) from Bash, which skips the x-takeover check; use Edit/Write or `axiom config set`.")
+        deny("Never", f"don't write the real config.json ({LIVE_CONFIG}) from Bash, which skips the x-takeover check; use Edit/Write or `axiom config set`.")
 
     # qmlformat -i replaces the inode
     if name == "qmlformat" and any(a in {"-i", "--inplace"} for a in args):
-        deny("Formatting", "qmlformat -i replaces the file's inode, so qs stops reloading it; verify.sh formats in place.")
+        deny("Formatting and layout", "qmlformat -i replaces the file's inode, so qs stops reloading it; verify.sh formats in place.")
 
 
 
@@ -614,21 +614,21 @@ def live_default_apps_file(path, cwd, env):
 
 def check_system_settings(env, name, args, cwd, sends, touched):
     if name == "timedatectl" and any(a.startswith("set-") for a in args):
-        deny("Never, while testing", "don't change the machine's clock or time zone; test datetime against a scratch system bus (tests in backend/internal/timedate).")
+        deny("Never", "don't change the machine's clock or time zone; test datetime against a scratch system bus (tests in backend/internal/timedate).")
     if name == "hostnamectl" and len([a for a in args if not a.startswith("-")]) > 1:
-        deny("Never, while testing", "don't rename the machine or change its hostname1 settings; test against a scratch system bus.")
+        deny("Never", "don't rename the machine or change its hostname1 settings; test against a scratch system bus.")
     if name in ACCOUNT_PROGRAMS:
-        deny("Never, while testing", f"`{name}` changes the user's account; only the user changes their password or account (test with the fakes in backend/internal/account).")
+        deny("Never", f"`{name}` changes the user's account; only the user changes their password or account (test with the fakes in backend/internal/account).")
     if name in BUS_CALLERS and any(s in a for a in args for s in SYSTEM_BUS_SERVICES):
         writes = any(re.match(r"Set[A-Z]", a) or ".Set" in a for a in args) or "set-property" in args
         if writes and not scratch_system_bus(env):
-            deny("Never, while testing", "don't call timedate1 / hostname1 / Accounts setters on the machine's bus; use a scratch one (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
+            deny("Never", "don't call timedate1 / hostname1 / Accounts setters on the machine's bus; use a scratch one (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
     if sends and any(m in a for a in args for m in SYSTEM_WRITES) and axiom_live_display(env, args):
-        deny("Never, while testing", "datetime.set* / system.setHostname / account.* / apps.setDefault only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: they change the machine's settings.")
+        deny("Never", "datetime.set* / system.setHostname / account.* / apps.setDefault only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: they change the machine's settings.")
     if (name == "xdg-mime" and args[:1] == ["default"] or name == "xdg-settings" and args[:1] == ["set"]) and not scratch(env.get("XDG_CONFIG_HOME", "")):
-        deny("Never, while testing", f"`{name} {args[0]}` changes the user's default apps; only with a scratch XDG_CONFIG_HOME=<dir>.")
+        deny("Never", f"`{name} {args[0]}` changes the user's default apps; only with a scratch XDG_CONFIG_HOME=<dir>.")
     if any(live_default_apps_file(a, cwd, env) for a in touched):
-        deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
+        deny("Never", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
 
 
 # bluetoothctl's commands that drop, block or pair a real device, turn the
@@ -657,24 +657,24 @@ def check_bluetooth(env, name, args, sends):
     if name == "bluetoothctl" and not scratch and not set(args) & {"-v", "--version", "-h", "--help"}:
         command = [a for i, a in enumerate(args) if not a.startswith("-") and (not i or args[i - 1] not in BLUETOOTHCTL_VALUED)]
         if any(a.split("=")[0] in BLUETOOTHCTL_REFUSED for a in args):
-            deny("Never, while testing", "bluetoothctl's --agent registers a second agent and --init-script runs a file's commands against the live BlueZ; use the fake BlueZ (go test ./internal/bluez).")
+            deny("Never", "bluetoothctl's --agent registers a second agent and --init-script runs a file's commands against the live BlueZ; use the fake BlueZ (go test ./internal/bluez).")
         if not command:
-            deny("Never, while testing", "bluetoothctl with no command reads its commands from stdin (a pipe, a here-string), which can't be checked; give it one command as arguments (`bluetoothctl show`).")
+            deny("Never", "bluetoothctl with no command reads its commands from stdin (a pipe, a here-string), which can't be checked; give it one command as arguments (`bluetoothctl show`).")
         # power takes on / off / yes / no …: only on passes
         if command[0] in BLUETOOTHCTL_WRITES or command[0] == "power" and command[1:2] != ["on"]:
-            deny("Never, while testing", f"`bluetoothctl {' '.join(command[:2])}` changes a real Bluetooth device or the live adapter; test with the fake BlueZ (go test ./internal/bluez).")
+            deny("Never", f"`bluetoothctl {' '.join(command[:2])}` changes a real Bluetooth device or the live adapter; test with the fake BlueZ (go test ./internal/bluez).")
     if name == "rfkill" and ("block" in words or "toggle" in words):
-        deny("Never, while testing", "don't rfkill-block the live radios: a Bluetooth mouse or keyboard could drop out.")
+        deny("Never", "don't rfkill-block the live radios: a Bluetooth mouse or keyboard could drop out.")
     if name in BUS_CALLERS and not scratch and any("org.bluez" in a for a in args):
         # Powered off turns the adapter off, Blocked disconnects a device
         powered = any("Powered" in a or "Blocked" in a for a in args) and ("set-property" in args or any(a.endswith("Properties.Set") or a == "Set" for a in args))
         if powered or any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in BLUEZ_WRITES):
-            deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered / Blocked on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
+            deny("Never", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered / Blocked on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
     # `axiom bluetooth off` is the named form of `ipc bluetooth disable`;
     # airplane mode powers the adapter off too
     by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "off"], ["bluetooth", "toggle"], ["airplane", "enable"], ["airplane", "toggle"]) for i in range(len(words)))
     if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)) and (not scratch or axiom_live_display(env, args)):
-        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`, `axiom bluetooth off|toggle`, `airplane enable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
+        deny("Never", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`, `axiom bluetooth off|toggle`, `airplane enable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
 
 
 REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}
@@ -728,7 +728,7 @@ def check_guard_paths(written, removed, cwd, env, guarded):
     for path, removes in [(a, False) for a in written] + [(a, True) for a in removed]:
         forms = [t for t in path_forms(path, cwd, env) if not any(t == f or f in t.parents for f in free)]
         if any(t == g or g in t.parents or removes and t in g.parents for t in forms for g in guarded):
-            deny("Never, while testing", "don't edit the running guard or Claude's settings (.claude/ where the session runs, the user's settings.json): ask the user; the guard changes through a PR.")
+            deny("Never", "don't edit the running guard or Claude's settings (.claude/ where the session runs, the user's settings.json): ask the user; the guard changes through a PR.")
 
 
 def portal_config_name(path):
@@ -748,22 +748,22 @@ def check_portal(name, args, touched, cwd, env):
     # Restarting or stopping the portal ends every share running
     if name in {"systemctl", "service", "pkill", "killall", "kill"} and any("xdg-desktop-portal" in a for a in args):
         if name in {"pkill", "killall", "kill"} or any(a in {"restart", "stop", "kill", "reload", "try-restart", "reload-or-restart", "mask", "disable"} for a in args):
-            deny("Never, while testing", "don't restart or stop the live xdg-desktop-portal (or its backends): it ends the shares running; ask the user (the Screen sharing card's Restart does it on a click).")
+            deny("Never", "don't restart or stop the live xdg-desktop-portal (or its backends): it ends the shares running; ask the user (the Screen sharing card's Restart does it on a click).")
     for a in touched:
         if live_portal_config(a, cwd, env):
-            deny("Never, while testing", "don't write the real screen-share portal configs (hypr/xdph.conf, xdg-desktop-portal-wlr/, xdg-desktop-portal/*portals.conf): only the Screen sharing card's Apply does; test with a scratch XDG_CONFIG_HOME=<dir>.")
+            deny("Never", "don't write the real screen-share portal configs (hypr/xdph.conf, xdg-desktop-portal-wlr/, xdg-desktop-portal/*portals.conf): only the Screen sharing card's Apply does; test with a scratch XDG_CONFIG_HOME=<dir>.")
 
 
 def check_portal_config_edit(tool_input):
     path = tool_input.get("file_path", "")
     if path and live_portal_config(path, "/", {}):
-        deny("Never, while testing", "don't edit the real screen-share portal configs; only the Screen sharing card's Apply does (test with a scratch XDG_CONFIG_HOME=<dir>).")
+        deny("Never", "don't edit the real screen-share portal configs; only the Screen sharing card's Apply does (test with a scratch XDG_CONFIG_HOME=<dir>).")
 
 
 def check_default_apps_edit(tool_input):
     path = tool_input.get("file_path", "")
     if path and live_default_apps_file(path, "/", {}):
-        deny("Never, while testing", "don't edit the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
+        deny("Never", "don't edit the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
 
 
 def check_qs(env, args):
@@ -786,11 +786,11 @@ def check_qs(env, args):
         flags = options + rest
         if any(o in {"-i", "--id", "--pid"} for o in flags) or any(o.endswith("greeter.qml") for o in flags):
             return
-        deny("Running / reloading", "the shell runs detached; never stop it from this session (`qs kill` only the greeter instance you started: `qs kill -p <…>/greeter.qml` or `-i <id>`).")
+        deny("Never", "the shell runs detached; never stop it from this session (`qs kill` only the greeter instance you started: `qs kill -p <…>/greeter.qml` or `-i <id>`).")
     if sub is None:
         if greeter:
             return
-        deny("Running / reloading", "the shell runs detached; never start another from this session (the windowed greeter: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch>).")
+        deny("Never", "the shell runs detached; never start another from this session (the windowed greeter: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch>).")
 
 
 # ---------------------------------------------------- Edit/Write config.json
@@ -838,7 +838,7 @@ def check_config_edit(tool, tool_input):
         return  # an invalid file never replaces the running config: nothing to guard
     for path in takeover_paths(schema):
         if value_at(before, path) != value_at(after, path):
-            deny("Never, while testing", f"`{'.'.join(path)}` takes something over on this PC (x-takeover: compositor mode, locker, idle, polkit, greeter). Ask the user before changing it in the live config.")
+            deny("Never", f"`{'.'.join(path)}` takes something over on this PC (x-takeover: compositor mode, locker, idle, polkit, greeter). Ask the user before changing it in the live config.")
 
 
 # ------------------------------------------- Edit/Write generated or frozen
@@ -865,12 +865,12 @@ def check_generated_edit(tool_input):
         return
     resolved = Path(path).resolve()
     if resolved in GENERATED:
-        deny("Checks", f"`{resolved.relative_to(REPO)}` is generated: {GENERATED[resolved]}.")
+        deny("Never", f"`{resolved.relative_to(REPO)}` is generated: {GENERATED[resolved]}.")
     if resolved in FROZEN:
         deny("Config", f"`{resolved.relative_to(REPO)}` is frozen: {FROZEN[resolved]}.")
     for generated, why in GENERATED_DIRS.items():
         if resolved.is_relative_to(generated):
-            deny("Checks", f"`{resolved.relative_to(REPO)}` is generated: {why}.")
+            deny("Never", f"`{resolved.relative_to(REPO)}` is generated: {why}.")
 
 
 # ------------------------------------------------------------------ main

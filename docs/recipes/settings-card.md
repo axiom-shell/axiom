@@ -1,68 +1,46 @@
-# Recipe: a hand-built settings card or intro
+# Adding a hand-built settings card
 
-> **Use when:** a settings section needs more than generated rows: a status card with actions, a list of entries, or a status line above the fields.
-> **Copy from:** `qml/components/views/Settings/DependenciesCard.qml` (`FieldGroup` with a header chip and button), `qml/components/views/Settings/PolkitStatusCard.qml` (status), `qml/components/views/Settings/OSDListCard.qml` (an entry list via `EntryListCard`, folding), `qml/components/views/Settings/CalendarAccountsCard.qml` (a `FoldingCard`), `qml/components/views/Settings/NightLightStatus.qml` (an `x-intro`).
-> **Docs:** [core/settings-page](../dev/core/settings-page.md), [core/schema-annotations](../dev/core/schema-annotations.md).
+Most of the settings page is generated from the schema. When a section needs more than rows (a status card with actions, a list of entries, a status line above the fields) you write a card by hand and attach it to the section with an annotation. At the end the section shows your card first, or your intro at the top of its own card.
 
-## The three annotations
-- `x-card: "<Name>"` on a section: loads `qml/components/views/Settings/<Name>Card.qml` as the section's first card (`SettingsContent` adds the `Card` suffix).
-- `x-cardTitle: "<Title>"` with it (required): the card's title, which `SettingsContent` passes in as `title` and the sidebar lists; the card's QML sets none. Set `x-cardWide: true` when it holds a list or a form that needs the room.
-- `x-cardFolds: true` with it: the card folds like the generated cards and is given `foldKey` (`"<Section>:<Name>"`).
-- `x-intro: "<Name>"` on a section or an object property: loads `qml/components/views/Settings/<Name>.qml` at the top of that group's card, above its fields; it hides while its `shown` (if it declares one) is false.
+**Copy from:** `qml/components/views/Settings/PolkitStatusCard.qml` (a status card, the simplest), `qml/components/views/Settings/DependenciesCard.qml` (a `FieldGroup` with a header button), `qml/components/views/Settings/CalendarAccountsCard.qml` (a `FoldingCard`, wide), `qml/components/views/Settings/OSDListCard.qml` (an entry list via `EntryListCard`), `qml/components/views/Settings/NightLightStatus.qml` (an `x-intro`). The sections that use them are in `qml/config/schema/sections/` (`Polkit.yaml`, `Calendar.yaml`, `OSD.yaml`; the intro: the NightLight section's file).
+**Background:** [core/settings-page](../dev/core/settings-page.md), [core/schema-annotations](../dev/core/schema-annotations.md) › Hand-built parts
 
-## Files to touch
-1. `qml/config/schema/sections/<Section>.yaml`: the annotation on the section (or property).
-2. `qml/components/views/Settings/<Name>Card.qml` (or `<Name>.qml` for an intro).
-3. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
+## Files
+1. `qml/config/schema/sections/<Section>.yaml`: the annotation on the section.
+2. `qml/components/views/Settings/<File>Card.qml` for an `x-card`, or `<Name>.qml` for an `x-intro`, with a purpose comment above the root.
 
-## Skeleton
-A status card:
-```qml
-pragma ComponentBehavior: Bound
-import QtQuick
-import qs.config
-import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
-import qs.components.reusable
+New translation keys are added by the pre-commit hook.
 
-// The Foo section's first card (its `x-card`): <what it shows and does>
-FieldGroup {
-  id: root
-
-  description: FooManager.available ? "" : I18n.tr("Foo isn't installed.")
-  headerExtras: StyledTextButton {
-    text: I18n.tr("Check again")
-    iconText: "refresh"
-    onClicked: FooManager.check()
-  }
-}
-```
-A folding card (`x-cardFolds: true`):
-```qml
-FoldingCard {
-  id: root
-
-  // The settings group key it folds under, from SettingsContent
-  property string foldKey
-
-  collapsed: SettingsManager.isCollapsed(root.foldKey)
-  onToggled: SettingsManager.setCollapsed(root.foldKey, !root.collapsed)
-}
-```
+## The annotations
+- `x-card: {file, title, wide, folds, perField}` on a section: loads `views/Settings/<file>Card.qml` (the `Card` suffix is added) as the section's first card.
+  - `title` is required and is what the card and the sidebar show; the card's own QML sets none.
+  - `wide: true` spans both columns, for a list or a form that needs the room.
+  - `folds: true` makes it fold like the generated cards and gives it `foldKey` (`<Section>:<file>`).
+  - `perField: true` instead makes each direct field its own card (`ThemeIntegrations`).
+- `x-intro: <Name>` on a section or an object property: loads `views/Settings/<Name>.qml` at the top of that group's card, above its fields. It hides while its own `shown` property, if it declares one, is false.
+- `x-row: <Name>` on a field: a hand-built row in place of the control its type would get; see schema-annotations.
 
 ## Steps
-1. Add the annotation; write the file under the exact name (`<Name>Card.qml` for `x-card`, `<Name>.qml` for `x-intro`).
-2. **Check the file exists yourself**: `check_structure.py` doesn't check `x-card`/`x-intro`, and a typo only shows in `scripts/log.sh` once the category is opened.
-3. Edits go through the settings draft (`SettingsManager.setValue` / `commitValue(s)`; read unsaved values from `SettingsManager.localConfig`), never `ConfigManager.config` directly.
-4. Verify.
+1. Add the annotation, for example `x-card: {file: PolkitStatus, title: polkit agent}`, and write the file under the exact name.
+2. Build the card from the pieces the settings page already uses: `FieldGroup` for a plain card, `FoldingCard` for one that folds (it needs `foldKey` and these two lines, as in `CalendarAccountsCard.qml`):
+   ```qml
+   property string foldKey
+   collapsed: SettingsManager.isCollapsed(root.foldKey)
+   onToggled: SettingsManager.setCollapsed(root.foldKey, !root.collapsed)
+   ```
+   and `EntryListCard` for a list of entries.
+3. Edit settings only through the settings draft: `SettingsManager.setValue` / `commitValue(s)`, reading unsaved values from `SettingsManager.localConfig`. Never write `ConfigManager.config`.
+4. Run `scripts/dev/verify.sh`. `check_structure` fails an `x-card`, `x-intro` or `x-row` whose file doesn't exist.
 
-## Gotchas
-- Text fields follow the push pattern (`StyledTextEntry`: push values in unless focused, act on `textEdited`); see `docs/dev/core/qml-pitfalls.md`.
-- A card that takes over something on this PC (Hyprland mode, locker, idle, polkit, greeter) belongs to an `x-takeover` setting: only its own card changes it.
-- Secrets typed in a card go to `SecretsManager`, never the draft (`CalendarAccountsCard`).
+## Watch out for
+- **Text fields** follow the push pattern (`StyledTextEntry`: push values in unless focused, act on `textEdited`); see [qml-pitfalls](../dev/core/qml-pitfalls.md).
+- **Takeovers.** A card that takes over something on this PC (compositor mode, locker, idle, polkit, greeter) belongs to an `x-takeover` setting, and only that card changes it.
+- **Secrets** typed in a card go to `SecretsManager`, never the draft (`CalendarAccountsCard`).
+- **Reuse.** Check [shared-ui-pieces](../dev/core/shared-ui-pieces.md) before drawing anything; a second copy of a pattern becomes a shared piece.
 
-## Verify
+## Check it
 - `scripts/dev/verify.sh`
-- Settings categories have no IPC: add a temporary `IpcTarget` to `qml/shell.qml` calling `SettingsManager.openCategory("<Category>")`, look with `scripts/dev/shot.sh`, then remove it in place ([testing](../dev/testing.md)).
+- Settings categories have no IPC. Add a temporary `IpcTarget` to `qml/shell.qml` that calls `SettingsManager.openCategory("<Category>")`, look with `scripts/dev/shot.sh`, then remove it ([testing](../dev/testing.md)).
 
 ## Docs to update
-- [core/settings-page](../dev/core/settings-page.md) if it adds a new kind of card; the feature's doc.
+- [core/settings-page](../dev/core/settings-page.md), if it adds a new kind of card, and the feature's doc.

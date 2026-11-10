@@ -1,14 +1,14 @@
 # Developer docs
 
-How every service and surface of axiom works. The rules are in [AGENTS.md](../../AGENTS.md); these docs hold the mechanics. Each doc opens with the files it covers, the config it reads and related docs, so you can jump to the code or stop reading early. `grep -n '^###' <doc>` gives its outline.
+How every service and surface of axiom works. The rules are in [CLAUDE.md](../../CLAUDE.md); these docs hold the mechanics. Each doc opens with the files it covers, the config it reads and related docs, so you can jump to the code or stop reading early. `grep -n '^###' <doc>` gives its outline.
 
-Local rules for a directory are in its own `AGENTS.md` (`qml/components/bar/`, `qml/components/bar/widgets/`, `qml/components/content/`, `qml/components/views/`, `qml/components/methods/`, `qml/components/hosts/popout/`, `qml/services/`, `qml/config/`, `scripts/`).
+Rules for an area are in `.claude/rules/` (one file per area, scoped by path).
 
 Read the doc for a feature before changing it, and update it when you change how the feature works. One fact has one home: link to it rather than restating it.
 
 ## Layering
 
-Dependencies point one way, methods → data owners → readers → services → UI: [AGENTS.md › Layering](../../AGENTS.md).
+Dependencies point one way, methods → data owners → readers → services → UI: [CLAUDE.md › Layering](../../CLAUDE.md).
 
 ## Where to look
 
@@ -48,18 +48,18 @@ qml/              the QML tree quickshell runs (`qs -p <tree>/qml`); `qs.` impor
   shell/          top-level pieces, one per surface
   components/
     methods/      pure singleton helpers (unit-tested)
-    reusable/     generic Styled* widgets, no feature logic (AGENTS.md › Layout names the few that read services)
+    reusable/     generic Styled* widgets, no feature logic (only the plumbing pieces read services: `check_structure`)
     forms/        schema-driven form widgets
     content/      loadable panels by name: overlay module types, bar popouts (base/, parts/)
     hosts/        where content appears: popout/, overlay/, window/ (page windows)
     views/        overlay pages by view type
     bar/          the bar; widgets/ = bar widget types
     surfaces/     standalone windows (launcher, lockscreen, toasts, dock, onboarding, …)
-  services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ (qml/services/AGENTS.md › Folders)
+  services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ (`.claude/rules/services.md`)
   config/         reader singletons; schema/ (the schema's YAML), json/ (the built schema, theme defaults), themes/, i18n/
   assets/         fonts/, icons/
 data/             runtime files that aren't QML: greeter/ (session scripts, polkit policy), templates/ (theme integrations), examples/ (example setups)
-backend/          the axiom binary (Go): its own AGENTS.md
+backend/          the axiom binary (Go): rules in .claude/rules/backend.md
 scripts/          dev tooling only: the checks, generators, scripts/dev/
 tests/            qmltestrunner tests, fixtures, tests/scripts/
 docs/             user docs; dev/ developer docs, recipes/, screenshots/
@@ -67,7 +67,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 ```
 
 - Imports use the `qs.` namespace (`import qs.services.core`); no qmldir files. Every file starts with `pragma ComponentBehavior: Bound` or `pragma Singleton` (`check_structure`).
-- Types are loaded by name (under `qml/components/`): `bar/widgets/<type>/<type>.qml`, `content/<Name>/<Name>.qml`, `views/<type>/<type>.qml`; a new one is the file plus its schema `oneOf` entry (those folders' `AGENTS.md`).
+- Types are loaded by name (under `qml/components/`): `bar/widgets/<type>/<type>.qml`, `content/<Name>/<Name>.qml`, `views/<type>/<type>.qml`; a new one is the file plus its `schema.yaml` beside it (their `.claude/rules/` files).
 - Naming: services `*Manager`, the non-singleton parts beside them named for what they are (`ConfigDraft`, `ConsumerRegistry`, `DeadlineTicker`); readers per section, `Config`-suffixed where the name is a type (`OSDConfig`), and one exposing the saved config says so (`BarsConfig.savedBars`); hosts say what they host (`BarWidgetHost`, `OverlaySlot`); content by module type or popout name; Qt control stand-ins `Styled*`; composites named for what they are. A surface window gets a `Window` suffix when its shell entry shares the name (`qml/shell/PowerMenu` → `PowerMenuWindow`). Root ids are `root`. Bar widget and content names may overlap, but no file may see both.
 
 ## Index

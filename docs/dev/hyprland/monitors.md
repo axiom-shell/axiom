@@ -75,7 +75,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - Launcher: `/monitors`.
 
 ### Testing
-- Never Keep a layout while testing. (Rule: AGENTS.md › Never, while testing.)
+- Never Keep a layout while testing. (Rule: CLAUDE.md › Never.)
 - Test the profile picker through `render`'s `TestProfiles` (and Hyprland's rules, `TestHyprlandRules`) and the switch through `manager`'s `TestHotplugsApplyTheSavedProfile`.
 - Hotplugs on a nested Hyprland (`scripts/dev/nested.sh hyprland`, its own `HYPRLAND_INSTANCE_SIGNATURE`): `hyprctl output create headless <name>` plugs a monitor in, `hyprctl output remove <name>` unplugs it; the nested daemon's `axiom --socket <its socket> config set --value-json Monitors.items '[…]'` sets the profiles. An undock: a profile turning `<laptop>` off and `<external>` on, another turning `<laptop>` on; plug `<external>`, then unplug it.
 - Use only harmless evals: re-applying the current settings, or moving a lone monitor's origin and back.

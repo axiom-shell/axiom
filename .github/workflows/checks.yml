@@ -235,6 +235,6 @@ jobs:
 
       # The generated files the script tests read, shellcheck, the script
       # tests (themes, the Neovim module, the dev scripts) and the agent
-      # guard's tests (.claude/hooks/guard.py, AGENTS.md's "Never" rules)
+      # guard's tests (.claude/hooks/guard.py, CLAUDE.md's "Never" rules)
       - name: Checks (scripts/check_all.sh scripts)
         run: scripts/check_all.sh --ci scripts

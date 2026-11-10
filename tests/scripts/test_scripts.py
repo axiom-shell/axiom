@@ -671,7 +671,7 @@ class CheckDocs(unittest.TestCase):
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs", "qml", "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            root = fixture_root(tmp, "docs", "qml", "CLAUDE.md", "AGENTS.md", "README.md", "CONTRIBUTING.md")
             edit_json(root / "qml/config/json/config.schema.json", lambda s: s.update({"x-ghost": True}))
             code, out = run_check(root, "check_docs.py", files=self.FILES)
         self.assertEqual(code, 1)

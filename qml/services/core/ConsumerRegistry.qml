@@ -16,7 +16,7 @@ QtObject {
   // Registers or replaces `owner`'s request. Re-registering an identical
   // request is a no-op, so a consumer that re-registers often can't churn
   // every binding derived from the requests (see the 25 GB note in
-  // AGENTS.md).
+  // CLAUDE.md › UI).
   function acquire(owner, request) {
     const existing = root.consumers.find(c => c.owner === owner);
     if (existing && JSON.stringify(existing.request) === JSON.stringify(request))

@@ -74,6 +74,6 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
 - The daemon makes Hyprland's writer when it runs under Hyprland (`HYPRLAND_INSTANCE_SIGNATURE`).
 
 ### Testing
-- Never switch the user's real config to `managed` to test it. (Rule: AGENTS.md › Never, while testing.)
+- Never switch the user's real config to `managed` to test it. (Rule: CLAUDE.md › Never.)
 - Test the takeover on scratch dirs, as `backend/internal/compositor/takeover/takeover_test.go` does.
 - The Lua comes from `render` (pure): its frozen cases replay every text the JS made, and `TestCompositorsReadTheFiles` has `luac -p` read the included, managed and given-back files, and Hyprland itself (`Hyprland --verify-config`, where it's installed: not in CI) the managed file with every look and input part on, every default bind and a monitor profile, which catches an option Hyprland refuses.

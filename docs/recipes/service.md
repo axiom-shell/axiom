@@ -1,22 +1,32 @@
-# Recipe: a new service (`*Manager`)
+# Adding a service (`*Manager`)
 
-> **Use when:** a feature needs state, a process, polling, file writes or Hyprland dispatches. UI never does those itself.
-> **Copy from:**
-> - `qml/services/apps/TailscaleManager.qml` with `backend/internal/tailscale/`: polled state through a `ConsumerRegistry`, fetched by axiom (a polled topic); its consumer is `qml/components/bar/widgets/Tailscale/Tailscale.qml`. The preferred shape for anything polled.
-> - The skeleton below: the same API polled in QML, its command through `CommandManager.run`, for what can't move to the daemon yet.
-> - `qml/services/session/IdleManager.qml`: an IPC handler, state kept across reloads in `PersistentProperties`, and a daemon push (`idle.state`).
-> **Docs:** [services-pattern](../dev/core/services-pattern.md), `qml/services/AGENTS.md`, generated API `docs/dev/generated/api/<Name>.md`
+A service is a singleton that owns one domain's state and every side effect that goes with it: running commands, polling, writing files, answering IPC. The UI reads a service and never does those things itself. At the end you have `qml/services/<group>/<Name>Manager.qml` and whatever uses it.
 
-## Files to touch
-1. `qml/services/<group>/<Name>Manager.qml` (the group by `qml/services/AGENTS.md` › Folders): a `pragma Singleton` (`QtObject`, or Quickshell's `Singleton` when it holds child objects like `PersistentProperties`).
+**Copy from:**
+- `qml/services/apps/TailscaleManager.qml` with `backend/internal/tailscale/`: state polled by the axiom daemon through a `ConsumerRegistry`; the consumer is `qml/components/bar/widgets/Tailscale/Tailscale.qml`. This is the preferred shape for anything polled.
+- `qml/services/session/IdleManager.qml`: an `IpcTarget`, state kept across reloads in `PersistentProperties`, and a daemon push (`idle.state`).
+- The skeleton below: the same API polled in QML, with its command through `CommandManager.run`, for what the daemon doesn't poll.
+
+**Background:** [services-pattern](../dev/core/services-pattern.md), generated API in `docs/dev/generated/api/<Name>.md`
+
+## Files
+1. `qml/services/<group>/<Name>Manager.qml`: a `pragma Singleton` `QtObject`, or Quickshell's `Singleton` when it holds child objects such as `PersistentProperties`. Each folder is its own QML module:
+   - `core/`: what everything stands on (config, theme, the daemon bridge and its `CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `ConsumerRegistry`, secrets).
+   - `compositor/`: `CompositorManager` and each backend's files.
+   - `session/`: locking, auth, greeter, polkit, idle, session actions.
+   - `system/`: the machine's basics (audio, network, Bluetooth, battery, media, notifications, updates).
+   - `ui/`: state of the shell's own surfaces and editors.
+   - `apps/`: optional features and outside integrations (calendar, weather, Tailscale).
 2. Its consumers: widgets, modules, other services.
-3. `qml/shell.qml` → `_services`: only if nothing else references it (e.g. it exists only for IPC or a background job).
+3. `qml/shell.qml` → `_services`, only if nothing else references it (it exists for IPC or a background job); otherwise it is never created.
 4. `docs/usage.md` → the IPC targets table, if it has an `IpcTarget`.
 
 ## Skeleton
 ```qml
 pragma Singleton
 import QtQuick
+
+import qs.services.core
 
 // One or two sentences: what this owns and who uses it.
 QtObject {
@@ -49,7 +59,7 @@ QtObject {
         status = JSON.parse(out);
       } catch (e) {}
       root.state = status?.State ?? "";
-    });
+    }, undefined, true);
   }
 
   // -- Private --
@@ -79,7 +89,7 @@ QtObject {
   }
 }
 ```
-Consumer (the request comes from config only, never from live values):
+The consumer builds its request from config only, never from live values:
 ```qml
   readonly property var fooRequest: ({
       "interval": root.properties.interval
@@ -90,34 +100,33 @@ Consumer (the request comes from config only, never from live values):
 ```
 
 ## Steps
-1. Name it `<Domain>Manager`. Never shadow a Quickshell singleton (`NetworkingManager`, not `Networking`).
+1. Name it `<Domain>Manager`, and don't shadow a Quickshell singleton (`NetworkingManager`, not `Networking`).
 2. Put the public API first (state, functions, signals) and the private parts after `// -- Private --`, prefixed `_`.
-3. **Polled data:** use a private `ConsumerRegistry`.
-   - **Polled by axiom** (preferred): a `topics.Source{Name, Floor, Default, Fetch}` in a package of its own under `backend/internal/`, listed in `backend/internal/daemon/topics.go`. The service sends the merged request with `BackendManager.acquire(topic, …)` while `_registry.active` (`release(topic)` once not) and fills its state from `BackendManager.listen("<topic>.state", …)`: copy `TailscaleManager.qml`. The floor lives in Go: `topics.MinInterval` when a setting gives the interval ([protocol](../dev/backend/protocol.md) › Polled topics).
-   - **Polled in QML** (the skeleton): the interval is the shortest one asked for, with a floor; the timer runs only while `_registry.active`, so nothing is fetched with no consumers.
-4. **IPC:** a `property IpcTarget _ipc` with typed functions (`(): void`, `(): string`, `(text: string): void`); parameters are `string`, since arguments arrive as text (`check_structure`), and a number is read through `_int(text)`, which refuses a word with `bad_request`. Per-screen handlers live on the surface instead, `enabled: ShellManager.isTarget(…)`.
-5. **Processes and files:** no `Process`, `FileView`, `Socket` or `Quickshell.execDetached` of its own (`check_structure` refuses them outside `scripts/quickshell-io-allowlist.json`, a list that only shrinks as these move to the axiom daemon). Use `CommandManager.run` / `runDetached`, `FileManager.read` / `write` / `watch`, `StateManager` for small state, and a daemon method for anything else (a socket).
-6. **Persistence:**
-   - State that must survive a QML reload goes in `PersistentProperties` (needs a `Singleton` root, see `IdleManager`).
-   - Small state that must survive a restart goes in `StateManager` (`~/.local/state/axiom/ui/*.json`) or `Paths.userStatePath`, written atomically (temp file + rename).
-7. **Config:** read it through readers. Write it only through `ConfigManager` / `SettingsManager`.
-8. Add it to `qml/shell.qml`'s `_services` if nothing else references it, or it never gets created.
+3. Polled data uses a private `ConsumerRegistry`:
+   - Polled by the daemon (preferred): a `topics.Source{Name, Floor, Default, Fetch}` in a package of its own under `backend/internal/`, listed in `backend/internal/daemon/topics.go`. The service sends the merged request with `BackendManager.acquire(topic, …)` while `_registry.active` (and `release(topic)` when not) and fills its state from `BackendManager.listen("<topic>.state", …)`. Copy `TailscaleManager.qml`. The floor lives in Go ([protocol](../dev/backend/protocol.md) › Polled topics).
+   - Polled in QML (the skeleton): the interval is the shortest one asked for, with a floor, and the timer runs only while `_registry.active`, so nothing is fetched with no consumer.
+4. IPC is a `property IpcTarget _ipc` with typed functions (`(): void`, `(): string`). Parameters are `string`, since arguments arrive as text (`check_structure` enforces it); read a number through `_int(text)`, which answers a word with `bad_request`. A handler that belongs to one screen lives on that surface instead, with `enabled: ShellManager.isTarget(…)`.
+5. Processes and files go through the daemon's helpers: `CommandManager.run` / `runDetached`, `FileManager.read` / `write` / `watch`, `StateManager` for small state. A socket or anything else is a daemon method. Only the four files in `scripts/quickshell-io-allowlist.json` may use `Process`, `FileView`, `Socket` or `Quickshell.execDetached` directly, and the check fails a use anywhere else.
+6. Persistence:
+   - State that must survive a QML reload goes in `PersistentProperties`, as a default child of a `Singleton` root (see `IdleManager`).
+   - Small state that must survive a restart goes in `StateManager` (`~/.local/state/axiom/ui/*.json`) or `Paths.userStatePath`, written atomically (temp file and rename).
+7. Config is read through the readers and written only through `ConfigManager` or `SettingsManager`.
+8. Add it to `_services` if nothing else references it.
 
-## Gotchas
-- **Greeter:** a side effect reachable from the greeter (writes, integrations, network) checks `Paths.greeter` first, as `CalendarManager` does.
+## Watch out for
+- **The greeter.** A side effect it can reach (writes, integrations, network) checks `Paths.greeter` first, as `CalendarManager` does. The greeter runs data, never code.
 - **Secrets** go through `SecretsManager` (stdin), never argv or config.json.
-- **Hyprland:** only the `Hyprland*` services talk to it; anything else asks `HyprlandManager` (workspace and window focus through its functions). See [IPC](../dev/hyprland/ipc.md).
-- **Requests:**
-  - An identical re-`acquire` is a no-op, but a new object every sample churns every binding on `requests`.
-  - Build requests from config only. Never key a Repeater model on live values (the 25 GB lesson).
-- **`check_structure.py`** errors on a `<Name>Manager.` reference with no `qml/services/*/<Name>Manager.qml`, and on near-miss names.
-- **Hot reload:** a new singleton is picked up on reload, and its timer starts again, so make `refresh()` idempotent (the skeleton's `_checking`).
+- **The compositor** is reached only through `CompositorManager`, in neutral shapes: workspace and window focus through its `goToWorkspace`, `stepWorkspace`, `nthWorkspace` and `focusWindow`. Only the `Hyprland*`, `Niri*` and `Sway*` backend files talk to a compositor ([compositor/README](../dev/compositor/README.md)). Gate on `CompositorManager.supports.<key>`, never on which compositor it is.
+- **Requests.** An identical re-`acquire` is a no-op, but a new object on every sample churns every binding on `requests`. Build requests from config only, and never key a Repeater model on live values: that once pushed qs past 25 GB.
+- **Names are checked.** `check_structure` errors on a `<Name>Manager.` reference with no matching file and on near-miss names.
+- **Reloads** pick up a new singleton and start its timer again, so make `refresh()` idempotent (the skeleton's `_checking`).
+- **One-tap actions** (toggles, session actions) are rows of the action catalogue, and the UI runs them through `ActionsManager.run`. A service that adds one also adds its table row ([actions](../dev/core/actions.md)).
 
-## Verify
-- `scripts/dev/verify.sh`: structure, formatting, generated API and IPC docs, and the log since the reload.
-- `axiom ipc <target> <function>` for each IPC function. `docs/dev/generated/ipc.md` lists it after `scripts/gen_docs.py`.
-- `scripts/log.sh --debug` while a consumer is shown: the process runs at the expected interval and stops when the consumer goes.
+## Check it
+- `scripts/dev/verify.sh`: structure, formatting, the generated API and IPC docs, and the log since the reload.
+- `axiom ipc <target> <function>` for each IPC function; `docs/dev/generated/ipc.md` lists them after `scripts/gen_docs.py`.
+- `scripts/log.sh --debug` while a consumer is shown: the process should run at the expected interval and stop when the consumer goes.
 
 ## Docs to update
-- `docs/dev/features/<feature>.md` (new or existing) and its line in `docs/dev/README.md`. If it's polled, add it to the polled list in `docs/dev/core/services-pattern.md`.
-- `docs/usage.md` → IPC targets table, for a new IPC target.
+- `docs/dev/features/<feature>.md` (new or existing) and its line in `docs/dev/README.md`. If it is polled, add it to the polled list in [services-pattern](../dev/core/services-pattern.md).
+- `docs/usage.md` → the IPC targets table, for a new IPC target.

@@ -4,7 +4,7 @@
 > **Config:** `Keybinds.binds[].action`, `HotCorners.items[].action`, a QuickActions module's `actions`, a Button widget's `action`
 > **Related:** [Keybinds](../hyprland/keybinds.md), [Hot corners](../features/hot-corners.md), [OSD](../features/osd.md), [Launcher](../features/launcher.md), [Schema annotations](schema-annotations.md)
 
-Every one-tap thing the shell does (Wi-Fi, Bluetooth, airplane mode, the VPN, do not disturb, caffeine, night light, dark mode, the power saver, the mutes, a recording, the session actions, opening a surface, …) is one action of one catalogue, offered in many places and run the same way from each. (Rule: AGENTS.md › Services.)
+Every one-tap thing the shell does (Wi-Fi, Bluetooth, airplane mode, the VPN, do not disturb, caffeine, night light, dark mode, the power saver, the mutes, a recording, the session actions, opening a surface, …) is one action of one catalogue, offered in many places and run the same way from each. (Rule: CLAUDE.md › Services.)
 
 ### What an action is
 - **Its definition** is a row of the keybind table, `table.json`'s `ipcActions`: `[IPC call, label, section]`, with its icon in `icons`, its open/close functions in `calls`, its argument kind in `argumentKinds`. The daemon sends the table to the shell (`compositor.bindActions`, `KeybindManager.actionTable`), so the Go writers, the Keybinds page and every UI read one list.

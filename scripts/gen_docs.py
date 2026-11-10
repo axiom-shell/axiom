@@ -716,7 +716,7 @@ IPC_BLOCK = re.compile(r"\bIpcTarget\s*\{")
 def ipc_page():
     out = [NOTICE, "# IPC targets", "",
            "Every `IpcTarget` (registered with axiom over the shell's connection): call with `axiom ipc <target> <function> [args]`. "
-           "`enabled` targets answer only on their target instance (AGENTS.md › UI conventions, Screen targeting).", ""]
+           "`enabled` targets answer only on their target instance (CLAUDE.md › UI).", ""]
     rows = []
     for path in qml_files():
         text = path.read_text()

@@ -69,4 +69,4 @@ What it will and won't do:
 
 ### Testing
 - `go test ./internal/selfupdate` runs on scratch clones (upstream and clone in a temp dir); `TestReplaceInstalled` (daemon) on a served release and a fake go.
-- Never `selfupdate.apply` (or IPC `selfUpdate update`) on the live daemon: it updates the live repo. (Rule: AGENTS.md › Never, while testing; the guard refuses it.)
+- Never `selfupdate.apply` (or IPC `selfUpdate update`) on the live daemon: it updates the live repo. (Rule: CLAUDE.md › Never; the guard refuses it.)

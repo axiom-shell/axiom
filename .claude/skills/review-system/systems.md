@@ -1,6 +1,6 @@
 # Systems
 
-The systems `/review-system` knows. Each `## <name>` entry's **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member). **Checks** are what's most worth verifying here, beyond the lenses. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
+The systems `/review-system` knows. Each `## <name>` entry: **Scope** in a line; **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member); **Checks** are what's most worth verifying, beyond the lenses; **Seams** are where the rest of axiom uses it. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
 
 ## compositor
 Scope: the neutral compositor layer: the contract, `supports`, layers and their order, config modes, window look.
@@ -126,7 +126,7 @@ Checks:
 Seams: CommandManager and exec streams, the bar editor and module libraries (`CustomWidget:<id>` keys), the layouts editor's canvas, popouts.
 
 ## menus
-Scope: menus (edge, strip and free), their hosts, editing and submenus.
+Scope: menus (edge, strip and free), their hosts, tiles, editing and submenus.
 Docs: menus/*.md
 Checks:
 - Placement and claims go through the popout system, not their own rules.
@@ -215,7 +215,7 @@ Checks:
 - Only `LockManager.lock()` locks; only PAM success unlocks; no IPC path unlocks.
 - What the lock screen shows and lets you do: modules with `lockscreen` in `x-hosts` launch, dispatch and write nothing and show nothing private.
 - Secrets never in argv, config.json or logs; passwords cleared after use.
-- A reload while locked keeps the session locked (known issue on niri: check its status).
+- A reload while locked keeps the session locked, on every backend (niri included).
 Seams: idle, the power menu, the lock screen modules.
 
 ## greeter
@@ -252,7 +252,7 @@ Scope: the axiom binary's core: the daemon and its parts, the RPC protocol and t
 Docs: backend/README.md backend/protocol.md core/memory.md
 Extra: backend/cmd/axiom/ backend/internal/cli/ backend/internal/command/ backend/internal/daemon/{dev,devbuild,devstart,devsync,exec,files,reexec,tasks}.go backend/internal/{devconfig,files,fsx,xdg,axerr,buildinfo,logfile,assets,tree,shellcmd,deps,netif,testkit}/ backend/tools/syncassets/ qml/shell/NoParentNotice.qml
 Checks:
-- The tiers and rules in `backend/AGENTS.md` hold (pure → edge → `daemon` → `cli`; no globals; `axerr` kinds across every boundary); `archtest` enforces what it claims to.
+- The tiers and rules in `.claude/rules/backend.md` hold (pure → edge → `daemon` → `cli`; no globals; `axerr` kinds across every boundary); `archtest` enforces what it claims to.
 - Every method and topic is in `methodSets` and the generated contract; whole-state pushes are latest-wins; a polled topic runs only while a connection subscribes.
 - Every goroutine starts through `tasks.Go` and stops with its context; a re-exec or a shell crash loses no state and leaks no descriptor or child.
 - The security rules in `docs/dev/backend/README.md` (sockets, locks, runtime dirs, atomic writes, the child's environment) each have a test.
@@ -271,13 +271,13 @@ Seams: idle, night light, clipboard, polkit and every feature using them; the da
 ## guardrails
 Scope: the checks, the tests' runners, CI and the agent rules: what stops a bad change before it merges.
 Docs: testing.md
-Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/ci_summary.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml AGENTS.md */AGENTS.md qml/*/AGENTS.md .claude/skills/*/SKILL.md docs/recipes/*.md
+Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/ci_summary.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md */AGENTS.md qml/*/AGENTS.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
 Checks:
 - Every check in `docs/dev/testing.md` › The checks runs in CI (`checks.yml`) and in `check_all.sh`, with the same arguments; the order lives in one place.
 - Each check fails on what its doc says it catches (try a bad input against it), and a check that can't fail is a finding.
 - Every baseline only shrinks (qmllint, the allowlist, sizes): growth fails CI, not only a local run.
-- The guard covers every rule in AGENTS.md › "Never, while testing", with a test each in `test_guard.py`; a refusal can't be dodged by a trivial rewording (another flag order, `env`, a subshell).
+- The guard covers every "Never, while testing" rule, with a test each in `test_guard.py`; a refusal can't be dodged by a trivial rewording (another flag order, `env`, a subshell).
 - verify.sh runs what a change touches (its maps from file to test or check are complete), and a skipped step says so rather than printing `verify ok`.
-- The rules in AGENTS.md, the skills and the recipes name files, members and steps that still exist and agree with each other.
+- The project rules, the agents, the skills and the recipes name files, members and steps that still exist and agree with each other.
 - CI caches and path filters can't skip a check a change needs.
-Seams: every system (each is held by these checks); packaging (`check_packages.py`); the Go checks' own rules in `backend/AGENTS.md`.
+Seams: every system (each is held by these checks); packaging (`check_packages.py`); the Go checks' own rules in `.claude/rules/backend.md`.
