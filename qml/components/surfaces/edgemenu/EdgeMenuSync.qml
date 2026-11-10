@@ -11,7 +11,8 @@ import qs.components.hosts.popout
 // following EdgeMenuManager (opening and closing when it says, telling it
 // when the menu closes by itself), being held open (pinned, or by the
 // editor), and a reveal (EdgeMenuManager.reveal): held open until hovered,
-// the cursor moved into it once shown (`warpRequested`). Also reports
+// the cursor moved into it once shown (`warpRequested`; never into a free
+// menu, which waits for the pointer to arrive). Also reports
 // where the host's modules can sit (`frame`, EdgeMenuManager.frames).
 QtObject {
   id: root
@@ -30,6 +31,9 @@ QtObject {
 
   // The cursor should move into the menu (it's being revealed and shown)
   signal warpRequested
+  // Whether a reveal moves the cursor into it: not a free menu's
+  // (FreeMenu), opened by a bind or IPC with the pointer left where it is
+  property bool warps: true
 
   readonly property string menuId: root.menu.id
   // Pinned, or held open by the editor
@@ -91,7 +95,7 @@ QtObject {
 
   property Timer _warp: Timer {
     interval: 150
-    running: root.revealing && root.host.isOpen && root.window.visible
+    running: root.warps && root.revealing && root.host.isOpen && root.window.visible
     onTriggered: root.warpRequested()
   }
 

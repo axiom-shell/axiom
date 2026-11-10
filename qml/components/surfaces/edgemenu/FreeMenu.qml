@@ -261,7 +261,9 @@ PopoutWrapperBase {
     screen: root.screen
     window: panel
     shows: root.shows
-    onWarpRequested: CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2)
+    // Opened by a bind or IPC (a reveal), the pointer stays where it is:
+    // closing on leave waits until it has first come in (revealing)
+    warps: false
   }
 
   // What its box meets (SurfaceContext.free), as an EdgeSurface and its

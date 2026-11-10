@@ -14,8 +14,9 @@ QtObject {
   // A new menu's own fields for `purpose` (one of `purposes`; anything
   // else is "edge"), with its `id` and `name` and no modules yet: an edge
   // menu opens on hovering its edge; a bar widget's popout, a submenu and a
-  // floating menu are free (no edge), a floating one opening at the
-  // screen's centre
+  // floating menu are free (no edge). A floating one opens at the screen's
+  // centre, mostly by a bind or a script, with the pointer elsewhere: it
+  // stays open when the pointer leaves, and a click outside closes it
   function seed(purpose, id, name) {
     const menu = {
       "id": id,
@@ -32,10 +33,15 @@ QtObject {
       return menu;
     }
     menu.placement = "free";
-    if (purpose === "free")
+    if (purpose === "free") {
       menu.freeAnchor = {
         "at": "centre"
       };
+      menu.close = {
+        "onLeave": false,
+        "onOutsideClick": true
+      };
+    }
     return menu;
   }
 }

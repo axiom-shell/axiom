@@ -34,7 +34,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   | `edge` (the default: `addMenu()`) | `placement: edge`, `open.onHover: true` |
   | `popout` | `placement: free` |
   | `submenu` | `placement: free` |
-  | `free` | `placement: free`, `freeAnchor.at: centre` |
+  | `free` | `placement: free`, `freeAnchor.at: centre`, `close.onLeave: false`, `close.onOutsideClick: true` (opened by a bind with the pointer elsewhere, it stays until a click outside or Escape) |
 - **Layouts' New menu** (`MenusSection`) opens a `StyledContextMenu` of the four purposes, then `addMenu(purpose)`.
   - Each adds the menu to the draft, unsaved. `free` (Free, a floating menu) replaced "Opened by a keybind" (decided 2026-11-10: "opened by a keybind option needs to be replaced by free when adding new menus"): no keybind is recorded; once saved, a bind is added from its Opening section as for any menu.
 - **A Submenu module's New submenu…** (a link under its `menu` field in `EditorInspector`, through `OptionsGroup.fieldAction`): `addSubmenu(moduleIndex)` adds a free menu to the same draft, sets the module's `menu` to it, then selects it and holds it open beside its parent (selecting it clears the parent's undo history, as any change of menu does: the `GridEditor`'s `scopeKey`). Everything stays in one draft, so nothing points at an unsaved menu from another editor.

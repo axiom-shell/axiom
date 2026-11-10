@@ -8,7 +8,10 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 
 ### Opening it
 - **As a bar widget's popout.** A widget's `popout.menu` can name a free menu (`EdgeMenusConfig.popoutMenuOf`). Its `PopoutAnchor` opens the menu after the popouts' open delay (`Popouts.timing.openDelay`), as for every menu. The menu ranks as a bar popout (claim kind `bar`).
-- **By a bind, IPC, the launcher or a bar Button.** `EdgeMenuManager.open` / `toggle` / `reveal`, as for every menu. It opens at its `freeAnchor`, or at its session spot (Dragging). A bar Button passes itself as the anchor, so it opens at the Button. A reveal warps the cursor into its box.
+- **By a bind, IPC, the launcher or a bar Button.** `EdgeMenuManager.open` / `toggle` / `reveal`, as for every menu. It opens at its `freeAnchor`, or at its session spot (Dragging). A bar Button passes itself as the anchor, so it opens at the Button.
+  - **No warp** (decided 2026-11-10, review round 2: "No warp, click/Esc closes, if mouse pointer leave closes is enabled, it waits for that logic until the first time the mouse arrives to make leaving close it"). A reveal (a bind, IPC, the launcher) leaves the pointer where it is (`EdgeMenuSync.warps` false); an edge menu's reveal still warps.
+  - With `close.onLeave` on, a revealed menu doesn't close on leave until the pointer has first come into its box (`EdgeMenuManager.revealing`, ended by `revealDone` once hovered); then leaving closes it as usual. A click outside (with `close.onOutsideClick`) or Escape (once it has the keyboard) closes it meanwhile.
+  - New menu's Free (`MenuSeeds`' `free` purpose) starts with `close.onLeave` off and `close.onOutsideClick` on.
 - **The layouts editor's "Show on screen".** If an `edge` menu has a Submenu row opening the free menu, the editor opens it there, beside that menu. Otherwise it opens the free menu on its own (`EdgeMenuEditor.canPreview`).
 
 ### Which screen (decided 2026-11-10, review round 2)

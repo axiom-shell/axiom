@@ -26,6 +26,7 @@ TestCase {
       compare(menu.placement, "free", purpose);
       compare(menu.open, undefined, purpose + " leaves opening at the defaults");
       compare(menu.freeAnchor, undefined, purpose + " opens where its opener puts it");
+      compare(menu.close, undefined, purpose + " closes as the defaults say");
     }
   }
 
@@ -35,6 +36,10 @@ TestCase {
     compare(menu.freeAnchor, {
       "at": "centre"
     }, "a floating one opens at the screen's centre");
+    compare(menu.close, {
+      "onLeave": false,
+      "onOutsideClick": true
+    }, "it stays open when the pointer leaves, and a click outside closes it");
     compare(MenuSeeds.seed("key", "m", "M").placement, "edge", "no keybind purpose any more");
   }
 

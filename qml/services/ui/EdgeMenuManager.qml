@@ -285,14 +285,15 @@ Singleton {
     return PopoutManager.entry("menu:" + id)?.phase === "yielded";
   }
 
-  // Menus opened for something outside them (the launcher, IPC) that take
-  // the cursor: the menu warps it into its box once shown
-  // (CompositorManager.warpCursorToLayer), and doesn't close on leave until
-  // it has been hovered. Not kept across reloads.
+  // Menus opened for something outside them (the launcher, IPC): an edge
+  // or strip menu warps the cursor into its box once shown
+  // (CompositorManager.warpCursorToLayer; a free menu leaves it be), and
+  // none closes on leave until it has been hovered. Not kept across
+  // reloads.
   property var revealing: ({})
 
-  // Opens a menu and moves the cursor into it, so one that closes when the
-  // pointer leaves stays open
+  // Opens a menu and moves the cursor into it (not a free menu's), so one
+  // that closes when the pointer leaves stays open until it's hovered
   function reveal(id) {
     if (!root._exists(id) || root.isPoppedOut(id))
       return;
