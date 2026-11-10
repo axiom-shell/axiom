@@ -52,7 +52,7 @@ properties:
     description: 'The config file''s format: 2. A file without it is format 1, which axiom converts once.'
   version:
     type: integer
-    default: 103
+    default: 104
     x-settings: false
     description: Config version within format 2, used for migration.
   meta:
@@ -113,7 +113,7 @@ sections:
   - SelfUpdate
   - CommunitySetups
   - Bars
-  - EdgeMenus
+  - Menus
   - Desktop
 kinds:
   BarWidget: {root: components/bar/widgets, suffix: Widget, base: WidgetBase}

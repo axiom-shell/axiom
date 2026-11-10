@@ -360,7 +360,7 @@ func TestHyprMappingAndRawLua(t *testing.T) {
 		`hl.bind(mod .. " + M", hl.dsp.window.move({ workspace = "special:scratch" }))`,
 		`hl.bind(mod .. " + N", hl.dsp.window.tag({ tag = "a\nb", list = { 1, 2 } }))`,
 		`hl.bind(mod .. " + D", hl.dsp.exec_cmd("axiom ipc appLauncher toggle"))`,
-		`hl.bind(mod .. " + E", hl.dsp.exec_cmd("axiom ipc edgeMenu show 'left'"))`,
+		`hl.bind(mod .. " + E", hl.dsp.exec_cmd("axiom ipc menu show 'left'"))`,
 		"",
 	}, "\n"))
 	binds := byKey(f.extract())
@@ -376,7 +376,7 @@ func TestHyprMappingAndRawLua(t *testing.T) {
 	eq(t, strings.Contains(binds["SUPER + N"], `"argument":"hl.dsp.window.tag({ list = { 1, 2 }, tag = \"a\\nb\" })"`), true)
 	// A command calling axiom is its action, with the call it names
 	eq(t, binds["SUPER + D"], `{"key":"SUPER + D","action":"launcher","argument":"","call":"toggle","locked":false,"repeating":false,"release":false,"description":""}`)
-	eq(t, strings.Contains(binds["SUPER + E"], `"action":"edgeMenu","argument":"left","call":"open"`), true)
+	eq(t, strings.Contains(binds["SUPER + E"], `"action":"menu","argument":"left","call":"open"`), true)
 }
 
 func TestHyprWhatCantMoveStays(t *testing.T) {

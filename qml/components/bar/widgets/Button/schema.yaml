@@ -6,7 +6,7 @@ popout:
   variant: menu
   enabled:
     title: Hover popout
-    description: Open an edge menu while the button is hovered, as other widgets' popouts do.
+    description: Open a menu while the button is hovered, as other widgets' popouts do.
   menu:
     title: Popout menu
     description: Can differ from the one a click opens.
@@ -30,10 +30,10 @@ settings:
     title: Click action
     default: powerMenu
     description: Any action a key can run that needs no argument, or one of the button's own.
-    x-axiomActions: {noArgument: true, except: [clipboard, emoji, calculator, fileSearch], extra: [overlayPage, edgeMenu, command, none]}
+    x-axiomActions: {noArgument: true, except: [clipboard, emoji, calculator, fileSearch], extra: [overlayPage, menu, command, none]}
     x-enumLabels:
       overlayPage: Overlay page
-      edgeMenu: Edge menu
+      menu: Menu
       command: Run a command
       none: Nothing
   page:
@@ -44,11 +44,11 @@ settings:
     x-showIf: {action: overlayPage}
   menu:
     type: string
-    title: Edge menu
+    title: Menu
     default: ''
-    description: The edge menu a click opens and closes.
-    x-options: edgeMenus
-    x-showIf: {action: edgeMenu}
+    description: The menu a click opens and closes.
+    x-options: menus
+    x-showIf: {action: menu}
   command:
     x-scope: commands
     type: string

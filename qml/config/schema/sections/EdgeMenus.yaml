@@ -1,9 +1,0 @@
-# The EdgeMenus section of the config (config.json's "EdgeMenus").
-
-type: object
-x-scope: look
-x-settings: false
-title: Edge menus
-additionalProperties: false
-properties:
-  items: {type: array, x-settings: false, default: [], items: {$ref: '#/definitions/EdgeMenu'}}

@@ -177,7 +177,12 @@ func frozenCases(t *testing.T) []frozenCase {
 		}
 		var args []any
 		for _, a := range items(raw) {
-			args = append(args, replayed(a))
+			a = replayed(a)
+			// An action asked about by name has the name it has now
+			if name, ok := a.(string); ok && strings.HasPrefix(c.Op, "BindActions.") && renamedActions[name] != "" {
+				a = renamedActions[name]
+			}
+			args = append(args, a)
 		}
 		out = append(out, frozenCase{c.Name, c.Op, c.Expected, args})
 	}
@@ -186,6 +191,10 @@ func frozenCases(t *testing.T) []frozenCase {
 	}
 	return out
 }
+
+// The bind actions renamed since the cases were recorded, old to new: the
+// edge menu action became menu (config v104)
+var renamedActions = map[string]string{"edgeMenu": "menu"}
 
 // arg is args[i], nil past the end (an argument left out)
 func arg(a []any, i int) any {

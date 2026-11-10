@@ -34,7 +34,7 @@ x-group: puts a field on a card of that name, or an object editor's or `EntryLis
 x-hintedIf: 'as `x-enabledIf` for a compositor condition, but a field whose condition fails is hidden, unless every failing key is a `/$supports.<capability>` the backend names an upgrade for (`CompositorManager.unsupportedHint`, SwayFX on sway): then it''s greyed out with that note.'
 x-hookup: how the integration hooks into its app (targets, place, text).
 x-hookupNote: a note shown with it.
-x-hosts: '`overlay`, `edgeMenu`, `lockscreen`, `greeter`, `desktop`.'
+x-hosts: '`overlay`, `menu`, `lockscreen`, `greeter`, `desktop`.'
 x-icon: a Material Symbols name on bar widget, overlay module and view definitions.
 x-iconText: 'on an icon field (`x-control: icon`): `{ mode, text }`, the keys of two siblings it draws in its own row: `mode` a string of `icon`, `text` or `both` that an Icon / Text / Both switch at the row''s right sets, `text` a string typed in a box beside the icon''s (each box shown while the mode shows its part); the siblings'' own rows hide.'
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
@@ -47,7 +47,7 @@ x-libraryGroups: "(root) the groups, in order, the bar editor's, layouts editor'
 x-link: where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition.
 x-links: 'pages its category''s header links to: a view type (`Themes`, `BarEditor`), `Layouts`, or the layouts editor on a screen (`Layouts:lockscreen`, `Layouts:greeter`, `Layouts:desktop`).'
 x-lockActions: 'what an overlay module does on the lock screen: `session`, `media`, `volume`, `layout`, `unlock` (`check_structure` fails any other service call there but a read).'
-x-menuPlacements: 'on an `edgeMenus` picker, the placements whose menus it offers (the value it holds stays listed): a bar widget''s hover popout takes `edge` and `free`, never a strip, which pushes the bars inwards (`EdgeMenusConfig.offeredIn`).'
+x-menuPlacements: 'on a `menus` picker, the placements whose menus it offers (the value it holds stays listed): a bar widget''s hover popout takes `edge` and `free`, never a strip, which pushes the bars inwards (`EdgeMenusConfig.offeredIn`).'
 x-minSize: the least a drop into a gap shrinks it to; half the default when left out (`OverlayConfig.minSize`).
 x-monitorRef: a shared file names the monitor by its place, and a part for a place the user has no monitor for is turned off or left out (`share.Apply`).
 x-multiline: a growing text area.

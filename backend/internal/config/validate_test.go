@@ -119,5 +119,5 @@ func TestSchemaDefaultsAreValid(t *testing.T) {
 			check(union, jsonx.Obj("type", typ, "id", "test"))
 		}
 	}
-	check("EdgeMenu", jsonx.Obj("id", "test"))
+	check("Menu", jsonx.Obj("id", "test"))
 }

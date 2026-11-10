@@ -1,4 +1,4 @@
-# The EdgeMenu definition (#/definitions/EdgeMenu).
+# The Menu definition (#/definitions/Menu): one menu of the Menus section.
 
 type: object
 required: [id]

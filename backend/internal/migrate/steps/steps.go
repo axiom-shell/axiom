@@ -214,6 +214,9 @@ var all = []Step{
 	// integrated → strip, submenu → free), and its `open.delay` dropped
 	// (v103.go)
 	{Version: 103, Run: v103},
+	// v104: EdgeMenus became Menus, and the edgeMenu action (keybinds, hot
+	// corners, Button widgets) menu (v104.go)
+	{Version: 104, Run: v104},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.
