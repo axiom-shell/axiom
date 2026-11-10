@@ -215,6 +215,20 @@ TestCase {
     verify(PopoutGeometry.resolve([free, entry("osd:vol:DP-1", "osd", [rect(950, 300, 300, 60)])], sub).allowed);
   }
 
+  // A popped-out edge menu (in the free host, held as if pinned, though
+  // not pinned) holds an underlay claim: a bar popout opens over it and
+  // it stays
+  function test_popped_out_underlay() {
+    const popped = entry("menu:tools", "menu", [rect(400, 300, 500, 400)], {
+      "resident": true,
+      "underlay": true
+    });
+    const over = PopoutGeometry.resolve([popped], entry("bar:clock", "bar", [rect(600, 40, 400, 300)]));
+    verify(over.allowed);
+    compare(over.evict, []);
+    compare(over.yield, []);
+  }
+
   // Unpinned, a free menu (a widget's popout, ranked bar) covered by
   // another bar popout closes, as before; and pinned but no underlay (a
   // floating edge menu) it yields

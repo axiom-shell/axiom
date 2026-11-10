@@ -171,4 +171,200 @@ TestCase {
     compare(FreeMenuPlace.nearestEdge(995, 300, 1000, 600), "right");
     compare(FreeMenuPlace.nearestEdge(300, 300, 600, 600), "top", "ties go to the first");
   }
+
+  function test_spot_clamped() {
+    const at = FreeMenuPlace.place(params({
+      "spot": {
+        "x": 120,
+        "y": 200
+      }
+    }));
+    compare(at.x, 120, "a spot puts its top-left there");
+    compare(at.y, 200);
+    compare(at.slideFrom, "left", "sliding from the edge nearest its centre");
+    const off = FreeMenuPlace.place(params({
+      "spot": {
+        "x": 950,
+        "y": 0
+      }
+    }));
+    compare(off.x, 790, "off screen (a smaller screen now), clamped back");
+    compare(off.y, 50, "clear of the bar");
+  }
+
+  function test_spot_over_opener() {
+    const at = FreeMenuPlace.place(params({
+      "opener": {
+        "x": 500,
+        "y": 0,
+        "width": 30,
+        "height": 40,
+        "edge": "top"
+      },
+      "spot": {
+        "x": 300,
+        "y": 300
+      }
+    }));
+    compare(at.x, 300, "a widget's copy dragged stays where it was dragged");
+    compare(at.y, 300);
+  }
+
+  function spotParams(extra) {
+    return Object.assign({
+      "dragged": null,
+      "popOut": null,
+      "fromWidget": false,
+      "session": null,
+      "screen": "DP-1",
+      "anchor": {
+        "at": "centre",
+        "x": 50,
+        "y": 50
+      }
+    }, extra);
+  }
+
+  function session(extra) {
+    return Object.assign({
+      "screen": "DP-1",
+      "x": 40,
+      "y": 60,
+      "anchor": FreeMenuPlace.anchorKey({
+        "at": "centre",
+        "x": 50,
+        "y": 50
+      })
+    }, extra);
+  }
+
+  function test_spot_choice() {
+    compare(FreeMenuPlace.spot(spotParams({})), null, "nothing: its anchor");
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({})
+    })), {
+      "x": 40,
+      "y": 60
+    }, "a bind or IPC open: its session spot");
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({}),
+      "fromWidget": true
+    })), null, "a widget's open: at the widget");
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({}),
+      "fromWidget": true,
+      "dragged": {
+        "x": 5,
+        "y": 6
+      }
+    })), {
+      "x": 5,
+      "y": 6
+    }, "dragged since it opened: where it was dragged");
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({}),
+      "popOut": {
+        "screen": "DP-1",
+        "x": 7,
+        "y": 8
+      }
+    })), {
+      "x": 7,
+      "y": 8
+    }, "popped out: the docked box's spot");
+  }
+
+  function test_session_spot_dropped() {
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({
+        "screen": "HDMI-A-1"
+      })
+    })), null, "its screen is gone (or the menu moved screens)");
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({}),
+      "anchor": {
+        "at": "point",
+        "x": 50,
+        "y": 50
+      }
+    })), null, "its freeAnchor changed");
+  }
+
+  function test_keepsDrag() {
+    verify(FreeMenuPlace.keepsDrag({
+      "free": true,
+      "poppedOut": false,
+      "fromWidget": false
+    }), "a free menu opened on its own");
+    verify(!FreeMenuPlace.keepsDrag({
+      "free": true,
+      "poppedOut": false,
+      "fromWidget": true
+    }), "a widget's copy");
+    verify(!FreeMenuPlace.keepsDrag({
+      "free": false,
+      "poppedOut": true,
+      "fromWidget": false
+    }), "a popped-out edge menu");
+  }
+
+  function test_canDrag() {
+    verify(FreeMenuPlace.canDrag({
+      "placement": "free",
+      "draggable": true
+    }, false));
+    verify(!FreeMenuPlace.canDrag({
+      "placement": "free",
+      "draggable": false
+    }, false));
+    verify(!FreeMenuPlace.canDrag({
+      "placement": "edge",
+      "draggable": true,
+      "popOutButton": true
+    }, false), "docked");
+    verify(FreeMenuPlace.canDrag({
+      "placement": "edge",
+      "draggable": true,
+      "popOutButton": true
+    }, true), "popped out");
+    verify(!FreeMenuPlace.canDrag({
+      "placement": "strip",
+      "draggable": true,
+      "popOutButton": true
+    }, true), "never a strip");
+  }
+
+  function test_underlay() {
+    verify(FreeMenuPlace.underlay(true, false), "pinned");
+    verify(FreeMenuPlace.underlay(false, true), "popped out holds an underlay claim");
+    verify(!FreeMenuPlace.underlay(false, false));
+  }
+
+  function test_hosts() {
+    compare(FreeMenuPlace.hosts("edge", false, false), {
+      "edge": true,
+      "strip": false,
+      "free": false
+    });
+    compare(FreeMenuPlace.hosts("edge", true, false), {
+      "edge": true,
+      "strip": false,
+      "free": true
+    }, "popping out: both, until the free host shows");
+    compare(FreeMenuPlace.hosts("edge", true, true), {
+      "edge": false,
+      "strip": false,
+      "free": true
+    }, "popped out: the free host alone");
+    compare(FreeMenuPlace.hosts("strip", true, true), {
+      "edge": false,
+      "strip": true,
+      "free": false
+    }, "a strip never pops out");
+    compare(FreeMenuPlace.hosts("free", false, false), {
+      "edge": false,
+      "strip": false,
+      "free": true
+    });
+  }
 }
