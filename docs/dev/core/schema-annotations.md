@@ -88,6 +88,8 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `BarsConfig.expandBars`, docks, edge menus). Docks and OSDs pick all monitors through `monitors` instead.
   - On an array's `items` (strings), `"marketSymbols"`'s options become toggle chips, committed in the options' order (a `"screens"` list stays free text: it may name monitors not plugged in): `"marketSymbols"` (the Markets watchlist's ids, labelled by label or symbol: a markets widget's or module's `symbols`).
   - Others: `"languages"`, `"edgeMenus"`, `"customWidgets"`, `"marketSymbols"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"regions"` (Qt locale codes, `DateFormats.regions`, labelled by their own language and country), `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
+  - `"edgeMenus"` labels each menu by its name and placement (`"{0} · {1}"`, the placement's `x-enumLabels` through `EdgeMenusConfig.placementLabels`); the value stays its id.
+- `x-menuPlacements` (on an `"edgeMenus"` picker): only menus of those placements are offered (`EdgeMenusConfig.offeredIn`); the value the field holds stays listed, so a config pointing at another placement still shows it. A bar widget's popout menu (`popout.menu`) takes `[edge, free]`: a strip pushes the bars inwards, moving them as the pointer hovers a widget. A Button's click menu and a Submenu module's menu offer every placement.
 - `x-emptyLabel`: offers or renames the empty value under that label.
   - On a color: automatic (a bar's `widgetTextColor`).
   - A color without it lists its `default` first, labelled as the default, so an override can be undone.

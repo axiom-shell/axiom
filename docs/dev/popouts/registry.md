@@ -55,7 +55,11 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
 - **Showing only once granted:** a host shows only once granted (`PopoutClaim.held`: granted, or closing after it was). The pill it stands on therefore draws back only after its box has slid away.
 - **Same-frame handover:** the evicted popouts start closing in the same frame the new one starts opening.
 - **The overlay opening** closes the `bar` and `menu` claims on its screen, pinned or yielded ones too (`closeOn`): they'd be latched under it. Their submenus close with them.
+- **One claim per key:** a second claim under a key takes the entry over (a popped-out edge menu's free host taking over from its edge host). `update` then ignores the first one, as `release` does.
 - **Footprint changes:** if a claim's footprint changes while it shows (a resize, a switch in place, its window's real place arriving), it re-resolves as a claim does: it closes anything below it that it now covers, and gives way itself (refused, or yielded if resident) to anything above it. A popout never stays open over a higher one.
+
+### Free menus
+- A free menu ([Free menus](../edge-menus/free-menus.md) › Its claim) takes part like any popout, so a bar never moves or redraws for one (decided 2026-11-10, review round 1). Unpinned it ranks as its opener's kind: a higher popout over it (the launcher) closes it, and a lower one it covers is refused. Pinned, or a popped-out edge menu, it ranks as a pinned menu (`FreeMenuPlace.ranksPinned`): it gives way to a popout over it and comes back. Rows: `tst_PopoutGeometry`'s `test_free_menu`.
 
 ### An open popout never moves
 - A bar popout keeps the anchor rect it opened at; a widget moving or growing meanwhile doesn't drag it.

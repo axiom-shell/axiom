@@ -245,6 +245,12 @@ Item {
           order: OverlayConfig.moduleInfo(root.moduleType)?.propertiesOrder ?? []
           values: root.module?.properties ?? ({})
           emptyText: I18n.tr("This module has no options")
+          // A Submenu module's menu can be a new one, made here
+          fieldAction: (path, schema) => root.moduleType === "Submenu" && path[0] === "menu" && OverlayManager.editTarget === "menu" ? {
+              "text": I18n.tr("New submenu…"),
+              "icon": "add",
+              "run": () => OverlayManager.menus.addSubmenu(root.index)
+            } : null
           onEdited: (path, value) => root.editor.updateModuleProperty(root.index, path[0], value)
         }
       }

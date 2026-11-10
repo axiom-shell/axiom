@@ -18,6 +18,7 @@ x-parts:
             title: Open instead
             default: ''
             x-options: edgeMenus
+            x-menuPlacements: [edge, free]
             x-emptyLabel: Its own popout
             description: An edge menu to open in place of the popout.
             x-showIf: {enabled: true}
@@ -37,6 +38,7 @@ x-parts:
             title: Menu
             default: ''
             x-options: edgeMenus
+            x-menuPlacements: [edge, free]
             x-emptyLabel: None
             x-showIf: {enabled: true}
     plain:

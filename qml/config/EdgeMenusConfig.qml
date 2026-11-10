@@ -11,30 +11,45 @@ QtObject {
   id: root
 
   // EdgeMenus.items: [EdgeMenu], each { id, name, enabled, screen, edge,
-  // mode, …, layout: { grid, moduleScale, moduleBorders, modules }, open,
+  // placement, …, layout: { grid, moduleScale, moduleBorders, modules }, open,
   // close }
   readonly property var menus: ConfigManager.live.EdgeMenus.items
   readonly property var enabledMenus: root.menus.filter(menu => menu.enabled && menu.id)
   // A menu's own fields in groups (`x-group`), for the edge menu editor
   readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.EdgeMenu, ["layout.modules"])
 
-  // A menu with no edge of its own: it opens only beside another, from a
-  // Submenu module there (content/Submenu/MenuSubmenu)
-  function isSubmenu(menu) {
-    return menu?.mode === "submenu";
+  // A menu with no edge of its own (`placement` free): it opens in a window
+  // of its own (surfaces/edgemenu/FreeMenu) at the bar widget that opens
+  // it as its popout or at its `freeAnchor`, or beside another menu from
+  // a Submenu module there (content/Submenu/MenuSubmenu)
+  function isFree(menu) {
+    return menu?.placement === "free";
   }
 
   function menuById(id) {
     return root.menus.find(menu => menu.id === id) ?? null;
   }
 
+  // Each placement's label (the schema's `x-enumLabels`: English, shown
+  // through I18n.tr), for the menu pickers
+  readonly property var placementLabels: ConfigManager.configSchema.definitions.EdgeMenu.properties.placement["x-enumLabels"]
+
+  // Whether a menu picker limited to `placements` (its `x-menuPlacements`:
+  // a widget's hover popout takes no strip, which pushes the bars
+  // inwards) offers menu `id`
+  function offeredIn(id, placements) {
+    const menu = root.menuById(id);
+    return menu !== null && Array.prototype.includes.call(placements, menu.placement);
+  }
+
   // The menu a bar widget opens as its popout (its `popout.menu`, with
   // `popout.enabled` on), else "": it opens its own popout, if any. A menu
   // that's gone or disabled leaves it its own. Widgets without the fields
   // (Separator, the tray) have none; a Button has no popout of its own.
+  // A free menu opens at the widget (FreeMenuPlace)
   function popoutMenuOf(properties) {
     const id = properties?.popout?.enabled ? (properties.popout.menu ?? "") : "";
-    return id !== "" && root.enabledMenus.some(menu => menu.id === id && !root.isSubmenu(menu)) ? id : "";
+    return id !== "" && root.enabledMenus.some(menu => menu.id === id) ? id : "";
   }
 
   // The ids of the menus a bar widget entry opens, as configured (gone or
@@ -67,6 +82,27 @@ QtObject {
   // The menu's edge as a ScreenEdge
   function edgeOf(menu) {
     return ScreenEdge.fromConfig(menu.edge);
+  }
+
+  // Whether an edge menu can pop out (`popOutButton`, an `edge` menu's
+  // alone: never a strip, and a free menu is out already): its button
+  // lifts it into the free host, at its box (EdgeMenuManager.popOut)
+  function canPopOut(menu) {
+    return menu?.placement === "edge" && !!menu.popOutButton;
+  }
+
+  // Whether a menu is drawn as tiles (`background: none` on an edge or
+  // free menu, MenuTiles.tiled): no box of its own, its cards each a tile
+  // with its own shadow and blur
+  function tiledOf(menu) {
+    return MenuTiles.tiled(menu);
+  }
+
+  // Whether an edge menu is held off its edge: `detached`, or tiled
+  // (MenuTiles.detached). Every read of a menu's detached state goes
+  // through here
+  function detachedOf(menu) {
+    return MenuTiles.detached(menu);
   }
 
   // The menu's box colours
@@ -115,7 +151,7 @@ QtObject {
     const scale = menu.layout.moduleScale / 100;
     if (!screen)
       return scale;
-    const wide = root.isSubmenu(menu) || menu.edge === "left" || menu.edge === "right";
+    const wide = root.isFree(menu) || menu.edge === "left" || menu.edge === "right";
     const bounds = GridPlacement.bounds(menu.layout.modules);
     return GridPlacement.fitModuleScale(scale, wide ? bounds.cols : bounds.rows, OverlayConfig.cardUnitOn(screen.width, screen.height), menu.layout.grid.fine, (wide ? screen.width : screen.height) - PopoutsConfig.padding * 2);
   }

@@ -14,7 +14,13 @@ import qs.components.hosts.overlay
 // (or columns) growing or shrinking evenly to `maxLength` (scrolling only
 // past half a unit); otherwise it's capped there and scrolls past that.
 // In another menu's submenu (`submenu`, MenuSubmenu) it's only capped, with
-// no pin or Escape of its own.
+// no pin or Escape of its own. In the free host (`free`: a free menu, or a
+// popped-out edge menu) it has no edge either: capped, its buttons at the
+// top right, growing modules growing downward (a popped-out edge menu's
+// buttons stay in its edge's corner, so its pop-out toggle doesn't move).
+// Its buttons: the pop-out toggle (an edge menu's `popOutButton`, which
+// docks it again), the pin (`pinButton`) and, last, a free menu's close
+// (`closeButton`).
 Item {
   id: root
 
@@ -23,9 +29,28 @@ Item {
   // Room along the edge
   property real maxLength: 0
   property bool submenu: false
+  // In the free host (FreeMenu)
+  property bool free: false
   // The screen its cards are sized on (EdgeMenusConfig.cardUnitOf): a
   // submenu's, that of the menu it opens from; null for the menu's own
   property var screen: null
+  // Tiled (`background: none`), how its host draws the tiles under its
+  // cards (MenuTile), else null: {
+  //   backed        the blur window draws them (fill, blur and shadow)
+  //   opaque        filled solid (blur paused for a fullscreen window)
+  //   screen        its screen's name
+  //   origin        this body's top-left on the screen as drawn (slid),
+  //                 or null while unknown
+  //   clip          its window on the screen (BlurShape.clipRect)
+  //   overlayLayer  its window is on the Overlay layer
+  //   opacity       how far it has faded in
+  //   look          the shadow's look
+  // }
+  property var tiles: null
+
+  // The menu's edge as it lays out ("" with none: a submenu's or a free
+  // menu's kept `edge` is hidden)
+  readonly property string edge: root.submenu || root.free ? "" : root.menu.edge
 
   // Modules re-read only when they actually change, so an unrelated config
   // save doesn't rebuild every module. As the menu lays them out
@@ -84,7 +109,27 @@ Item {
   implicitWidth: root.vertical ? moduleGrid.implicitWidth : root.length
   implicitHeight: root.vertical ? root.length : moduleGrid.implicitHeight
 
+  // Under each card, its tile: tiled, with card boxes (moduleBorders; a
+  // bare module has none to sit on), never in another menu's submenu
+  readonly property bool _tiled: EdgeMenusConfig.tiledOf(root.menu) && root.menu.layout.moduleBorders && !root.submenu
+  Repeater {
+    model: root._tiled ? root.modules.length : 0
+
+    MenuTile {
+      required property int index
+      card: moduleGrid.cardRects[index] ?? null
+      tiles: root.tiles
+      scroll: Qt.point(view.contentX, view.contentY)
+      viewSize: Qt.size(root.width, root.height)
+      fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
+      // At the card's drawn size (ModuleGrid.zoom)
+      radius: Widget.radius * moduleGrid.zoom
+      animate: moduleGrid.settled
+    }
+  }
+
   Flickable {
+    id: view
     anchors.fill: parent
     contentWidth: moduleGrid.implicitWidth
     contentHeight: moduleGrid.implicitHeight
@@ -100,30 +145,65 @@ Item {
       stretch: root._stretch
       host: root.host
       zoom: EdgeMenusConfig.zoomOf(root.menu, root.screen)
-      // A bottom menu's edge is under its modules (a submenu has no edge:
-      // its kept `edge` is hidden)
-      growTowards: !root.submenu && root.menu.edge === "bottom" ? 1 : -1
+      // A bottom menu's edge is under its modules
+      growTowards: root.edge === "bottom" ? 1 : -1
     }
   }
 
-  // The menu's pin (pinButton): in the corner away from its edge, at the
-  // end, over the modules' corner
+  // The menu's buttons: in the corner away from its edge, at the end,
+  // over the modules' corner (with no edge, the top right). Popped out,
+  // still its edge's corner: the toggle stays where it was clicked
   readonly property bool pinned: EdgeMenuManager.isPinned(root.menu.id)
-  StyledIconButton {
-    visible: root.menu.pinButton && !root.submenu
+  readonly property bool poppedOut: EdgeMenuManager.isPoppedOut(root.menu.id)
+  readonly property string _buttonsEdge: root.free && root.poppedOut ? root.menu.edge : root.edge
+  Row {
+    id: buttons
     z: 2
-    size: Widget.height
-    anchors.top: root.menu.edge === "top" ? undefined : parent.top
-    anchors.bottom: root.menu.edge === "top" ? parent.bottom : undefined
-    anchors.right: root.menu.edge === "right" ? undefined : parent.right
-    anchors.left: root.menu.edge === "right" ? parent.left : undefined
+    spacing: Widget.spacing / 4
+    anchors.top: root._buttonsEdge === "top" ? undefined : parent.top
+    anchors.bottom: root._buttonsEdge === "top" ? parent.bottom : undefined
+    anchors.right: root._buttonsEdge === "right" ? undefined : parent.right
+    anchors.left: root._buttonsEdge === "right" ? parent.left : undefined
     anchors.margins: Widget.spacing / 4
-    iconText: "push_pin"
-    iconColor: root.pinned ? Theme.background : Theme.foreground
-    backgroundColor: root.pinned ? Theme.accent : Qt.alpha(Theme.background, 0.85)
-    hoverColor: root.pinned ? Theme.accent : Theme.backgroundHighlight
-    borderColor: Theme.border
-    tooltipText: root.pinned ? I18n.tr("Unpin: close as usual") : I18n.tr("Pin: keep this menu open")
-    onClicked: EdgeMenuManager.togglePinned(root.menu.id)
+    visible: !root.submenu
+
+    // Pop out (EdgeMenuManager.togglePoppedOut): off its edge where it
+    // is, held open until it closes; on again, it docks, closed (the only
+    // button a popped-out menu adds)
+    StyledIconButton {
+      visible: EdgeMenusConfig.canPopOut(root.menu)
+      size: Widget.height
+      iconText: "open_in_new"
+      iconColor: root.poppedOut ? Theme.background : Theme.foreground
+      backgroundColor: root.poppedOut ? Theme.accent : Qt.alpha(Theme.background, 0.85)
+      hoverColor: root.poppedOut ? Theme.accent : Theme.backgroundHighlight
+      borderColor: Theme.border
+      tooltipText: root.poppedOut ? I18n.tr("Dock: close it back onto its edge") : I18n.tr("Pop out: keep it open off its edge")
+      onClicked: EdgeMenuManager.togglePoppedOut(root.menu.id)
+    }
+
+    StyledIconButton {
+      visible: root.menu.pinButton
+      size: Widget.height
+      iconText: "push_pin"
+      iconColor: root.pinned ? Theme.background : Theme.foreground
+      backgroundColor: root.pinned ? Theme.accent : Qt.alpha(Theme.background, 0.85)
+      hoverColor: root.pinned ? Theme.accent : Theme.backgroundHighlight
+      borderColor: Theme.border
+      tooltipText: root.pinned ? I18n.tr("Unpin: close as usual") : I18n.tr("Pin: keep this menu open")
+      onClicked: EdgeMenuManager.togglePinned(root.menu.id)
+    }
+
+    // A free menu's `closeButton`: closes it, unpinned
+    StyledIconButton {
+      visible: EdgeMenusConfig.isFree(root.menu) && root.menu.closeButton
+      size: Widget.height
+      iconText: "close"
+      backgroundColor: Qt.alpha(Theme.background, 0.85)
+      hoverColor: Theme.backgroundHighlight
+      borderColor: Theme.border
+      tooltipText: I18n.tr("Close")
+      onClicked: EdgeMenuManager.closeUnpinned(root.menu.id)
+    }
   }
 }

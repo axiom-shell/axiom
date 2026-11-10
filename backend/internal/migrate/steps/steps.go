@@ -210,6 +210,10 @@ var all = []Step{
 	// v102: every bar of an OSD's Audio got a stable id, so an App bar is
 	// keyed by it and an OSD's barOrder can name it (v102.go)
 	{Version: 102, Run: v102},
+	// v103: an edge menu's `mode` became `placement` (floating → edge,
+	// integrated → strip, submenu → free), and its `open.delay` dropped
+	// (v103.go)
+	{Version: 103, Run: v103},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

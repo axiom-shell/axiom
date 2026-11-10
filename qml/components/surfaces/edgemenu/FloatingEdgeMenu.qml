@@ -23,7 +23,7 @@ EdgePopout {
 
   // Held off the edge, `distance` across the free screen from it
   // (EdgePlacement.gaps)
-  held: root.menu.detached
+  held: EdgeMenusConfig.detachedOf(root.menu)
   distance: root.menu.distance / 100
   fade: root.menu.animation === "fade"
 
@@ -102,7 +102,6 @@ EdgePopout {
   fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
   strokeColor: EdgeMenusConfig.colorsOf(root.menu).stroke
   triggerEnabled: root.menu.open.onHover
-  hoverDelay: root.menu.open.delay
   triggerLength: sync.triggerLength(root.vertical, root.contentPadding, root.screenLength - root.startPad - root.endPad + root.contentPadding * 2)
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
@@ -129,9 +128,30 @@ EdgePopout {
     }
   }
 
+  // No box (`background: none`): its cards are tiles, held off its edge
+  // (detachedOf); its input is still the whole box, so the gaps between
+  // the cards are the menu's (hovering one keeps it open, a click there
+  // is inside it)
+  readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
+  hollow: root.tiled
+  // How its cards' tiles are drawn (EdgeMenuBody.tiles): by the blur
+  // window as its box would be, from where its content is on the screen
+  // as drawn
+  readonly property var _origin: root.window?.screenOrigin ?? null
+  readonly property var _tiles: root.tiled ? ({
+      "backed": root.surfaceItem.backed,
+      "opaque": root.surfaceItem.opaque,
+      "screen": root.screen?.name ?? "",
+      "origin": root._origin ? Qt.point(root._origin.x + root.contentInWindow.x + root.surfaceItem.slideX, root._origin.y + root.contentInWindow.y + root.surfaceItem.slideY) : null,
+      "clip": root._origin ? Qt.rect(root._origin.x, root._origin.y, root.window.width, root.window.height) : null,
+      "overlayLayer": root.onOverlayLayer,
+      "opacity": root.surfaceItem.shownOpacity,
+      "look": root.surfaceItem.shadowLook
+    }) : null
   // Asked for again while open (EdgeMenuManager.engageRequested): it comes
   // forward (EdgePopout.engage). The integrated host holds no popout
-  // claim, so it has no rank to raise
+  // claim, so it has no rank to raise. Asked to pop out, it hands its spot
+  // to the free host (EdgeMenuManager.popOut)
   Connections {
     target: EdgeMenuManager
 
@@ -139,11 +159,25 @@ EdgePopout {
       if (id === root.menuId)
         root.engage();
     }
+
+    // Its pop-out button: the free host takes it where its content is
+    // now (its box there, the content inside the same padding)
+    function onPopOutRequested(id) {
+      if (id !== root.menuId || !root.isOpen)
+        return;
+      const at = root.contentOnScreen();
+      EdgeMenuManager.popOut(id, {
+        "screen": root.screen?.name ?? "",
+        "x": at.x - root.contentPadding,
+        "y": at.y - root.contentPadding
+      });
+    }
   }
 
   content: Component {
     EdgeMenuBody {
       menu: root.menu
+      tiles: root._tiles
       vertical: root.vertical
       maxLength: root.maxBoxLength - root.contentPadding * 2
     }

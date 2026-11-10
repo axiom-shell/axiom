@@ -11,8 +11,9 @@ import qs.components.reusable
 // overlay page (`page`, a view type, or "Layouts:lockscreen": see
 // OverlayManager.followPageLink), or what a bar widget opens (`widget`:
 // its edge menu or page, selected in the layouts editor; see
-// OverlayManager.openedBy). Named from what it leads to unless `text` is
-// set. Followed as a link, so the navigator offers the way back.
+// OverlayManager.openedBy), or anything else (`run`, a function, named by
+// `text` with `icon`: a form field's action, SchemaPropertiesForm's
+// fieldAction). Named from what it leads to unless `text` is set. Followed as a link, so the navigator offers the way back.
 // Hidden when the setting has no card (hidden by the compositor, say), the
 // page isn't in the overlay or the widget opens nothing (`available`).
 Item {
@@ -24,7 +25,11 @@ Item {
   property string page: ""
   // Or a bar widget's config: what it opens
   property var widget: null
+  // Or a function run on a click
+  property var run: null
   property string text: ""
+  // Its icon, over the one for what it leads to
+  property string icon: ""
 
   readonly property var target: root.setting !== "" ? SettingsManager.locate(root.setting) : null
   readonly property var opens: root.widget !== null ? OverlayManager.openedBy(root.widget) : null
@@ -41,7 +46,9 @@ Item {
   signal followed
 
   function follow() {
-    if (root.target)
+    if (root.run)
+      root.run();
+    else if (root.target)
       SettingsManager.openSetting(root.setting, true);
     else if (root.opens)
       OverlayManager.editOpenedBy(root.widget);
@@ -52,7 +59,7 @@ Item {
 
   // Whether it leads anywhere (a host that hides it on a condition of its
   // own binds `visible` to this as well)
-  readonly property bool available: root.target !== null || root.opens !== null || (root.setting === "" && root.page !== "" && OverlayManager.pageLinkAvailable(root.page))
+  readonly property bool available: root.run !== null || root.target !== null || root.opens !== null || (root.setting === "" && root.page !== "" && OverlayManager.pageLinkAvailable(root.page))
 
   visible: root.available
   implicitWidth: content.implicitWidth
@@ -63,7 +70,7 @@ Item {
     spacing: Widget.spacing / 2
 
     StyledIcon {
-      text: root.target ? "settings" : root.opens ? "edit" : OverlayManager.pageLinkIcon(root.page)
+      text: root.icon !== "" ? root.icon : root.target ? "settings" : root.opens ? "edit" : OverlayManager.pageLinkIcon(root.page)
       textColor: Theme.accent
       textSize: Appearance.fontSizeBy(-1)
     }

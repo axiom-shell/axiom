@@ -5,7 +5,9 @@ import qs.config
 // Small JSON state files in Paths.statePath: createStateHandler(name)
 // gives a shared save/load handler per name. Written through axiom
 // (FileManager.write), which makes the folder, 0700 (the clipboard pins
-// are kept here).
+// are kept here). createSessionHandler(name) is the same for state that
+// lasts the login session alone, in Paths.runtimePath (on
+// $XDG_RUNTIME_DIR, gone at logout): it survives qs reloads and restarts.
 QtObject {
   id: root
 
@@ -16,9 +18,19 @@ QtObject {
      *   asking for the same name
      */
   function createStateHandler(serviceName) {
-    if (_handlers[serviceName])
-      return _handlers[serviceName];
-    const filepath = Paths.statePath + serviceName + ".json";
+    return root._handler(serviceName, Paths.statePath);
+  }
+
+  // The same, kept for the login session alone (Paths.runtimePath +
+  // "state/")
+  function createSessionHandler(serviceName) {
+    return root._handler(serviceName, Paths.runtimePath + "state/");
+  }
+
+  function _handler(serviceName, dir) {
+    const filepath = dir + serviceName + ".json";
+    if (_handlers[filepath])
+      return _handlers[filepath];
     const handler = {
       save: data => FileManager.write(filepath, JSON.stringify(data, null, 2)),
       load: function (defaultValue) {
@@ -40,7 +52,7 @@ QtObject {
         }
       }
     };
-    _handlers[serviceName] = handler;
+    _handlers[filepath] = handler;
     return handler;
   }
 

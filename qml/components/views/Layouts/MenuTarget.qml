@@ -11,8 +11,8 @@ EditTarget {
   id: root
 
   readonly property var menu: OverlayManager.menus.selectedMenu()
-  // A submenu menu has no edge: just its grid
-  readonly property bool submenu: EdgeMenusConfig.isSubmenu(root.menu)
+  // A free menu has no edge: just its grid
+  readonly property bool free: EdgeMenusConfig.isFree(root.menu)
   readonly property bool vertical: root.menu?.edge === "left" || root.menu?.edge === "right"
   readonly property var screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
   // Where the menu's modules sit on its screen (OverlayManager.menus.placementOf)
@@ -29,12 +29,12 @@ EditTarget {
 
   editor: OverlayManager.menus.layout
   modules: root.menu ? root.menu.layout.modules : null
-  icon: root.submenu ? "menu_open" : root.menu ? Utils.edgeArrow(root.menu.edge) : "side_navigation"
+  icon: root.free ? "menu_open" : root.menu ? Utils.edgeArrow(root.menu.edge) : "side_navigation"
   title: root.menu ? OverlayManager.menus.menuLabel(root.menu, OverlayManager.menus.selectedMenuIndex) : I18n.tr("No edge menus")
   emptyText: I18n.tr("No edge menus yet: add one with New menu.")
-  edge: root.menu && !root.submenu ? root.menu.edge : ""
+  edge: root.menu && !root.free ? root.menu.edge : ""
   screenBox: root.editor.screenBox
-  screenSize: root.screen && !root.submenu ? ({
+  screenSize: root.screen && !root.free ? ({
       "width": root.screen.width,
       "height": root.screen.height
     }) : null
@@ -45,15 +45,15 @@ EditTarget {
   fitText: {
     if (!root.menu)
       return "";
-    if (root.submenu)
-      return I18n.tr("Opens beside a floating menu, from its Submenu module");
+    if (root.free)
+      return I18n.tr("No edge: it opens at its widget or anchor, or beside a menu from its Submenu module");
     if (GridPlacement.menuFillsEdge(root.menu))
       return I18n.tr("Takes its whole edge");
     if (root.tooLong)
       return I18n.tr("Longer than its edge: it scrolls");
     return root.place ? I18n.tr("{0} px along its edge", Math.round(root.place.length)) : "";
   }
-  fitWarning: root.tooLong && !root.submenu
+  fitWarning: root.tooLong && !root.free
   nudgeText: {
     const range = root.offsetRange;
     if (!range)

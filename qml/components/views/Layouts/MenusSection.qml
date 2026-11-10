@@ -7,7 +7,7 @@ import qs.components.methods
 import qs.components.reusable
 
 // Layouts editor, left: the edge menus (drag to reorder, click to edit),
-// and New menu
+// and New menu, asking what the menu is for
 ColumnLayout {
   id: root
 
@@ -70,10 +70,39 @@ ColumnLayout {
   }
 
   AddEntryButton {
+    id: addButton
     Layout.topMargin: Widget.spacing / 2
     text: I18n.tr("New menu")
-    onClicked: {
-      OverlayManager.menus.addMenu();
+    onClicked: purposeMenu.openAt(addButton, 0, addButton.height)
+  }
+
+  // What the new menu is for (MenuSeeds.purposes): how it starts out
+  StyledContextMenu {
+    id: purposeMenu
+    items: [
+      {
+        "id": "edge",
+        "icon": "border_outer",
+        "text": I18n.tr("On a screen edge")
+      },
+      {
+        "id": "popout",
+        "icon": "web_asset",
+        "text": I18n.tr("A bar widget's popout")
+      },
+      {
+        "id": "submenu",
+        "icon": "menu_open",
+        "text": I18n.tr("A submenu")
+      },
+      {
+        "id": "free",
+        "icon": "picture_in_picture",
+        "text": I18n.tr("Free")
+      }
+    ]
+    onTriggered: id => {
+      OverlayManager.menus.addMenu(id);
       OverlayManager.editMenu(OverlayManager.menus.selectedMenuIndex);
     }
   }

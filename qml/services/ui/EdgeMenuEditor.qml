@@ -22,7 +22,7 @@ QtObject {
   // before it).
   function placementOf(menu, bounds) {
     const screen = EdgeMenusConfig.screenFor(menu);
-    if (!menu || !screen || EdgeMenusConfig.isSubmenu(menu))
+    if (!menu || !screen || EdgeMenusConfig.isFree(menu))
       return null;
     const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), EdgeMenusConfig.cardUnitOf(menu), EdgeMenuManager.frameOf(menu), screen.width, screen.height, EdgeMenusConfig.gapOf(menu));
     place.screen = screen;
@@ -125,8 +125,8 @@ QtObject {
     host: "edgeMenu"
     sizeScale: root.localMenus?.[root.selectedMenuIndex]?.layout?.grid?.fine ? 2 : 1
     modulesOf: () => root.selectedMenu()?.layout.modules ?? null
-    // A submenu has no edge: just its grid
-    readonly property var _onEdge: EdgeMenusConfig.isSubmenu(root.selectedMenu()) ? null : root.selectedMenu()
+    // A free menu has no edge: just its grid
+    readonly property var _onEdge: EdgeMenusConfig.isFree(root.selectedMenu()) ? null : root.selectedMenu()
     edge: _onEdge?.edge ?? ""
     screenBox: _onEdge ? root.screenBoxOf(_onEdge) : null
     shifted: (shift, boundsBefore) => root._keepPlace(root.selectedMenu(), shift, boundsBefore)
@@ -165,18 +165,19 @@ QtObject {
   }
 
   // The menu the editor holds open to try edits on ("" for none). A
-  // submenu menu (EdgeMenusConfig.isSubmenu) shows beside the first
-  // floating menu with a Submenu module opening it (`previewParent`, held
-  // open too), whose module opens it and holds it (content/Submenu)
+  // free menu (EdgeMenusConfig.isFree) shows beside the first edge-placed
+  // menu with a Submenu module opening it (`previewParent`, held
+  // open too), whose module opens it and holds it (content/Submenu);
+  // with none, on its own, at its freeAnchor (FreeMenu)
   readonly property string previewing: root._previewing
   property string _previewing: ""
   readonly property string previewParent: root._previewParent
   property string _previewParent: ""
 
-  // The first enabled floating menu (in the draft, else saved) with a
+  // The first enabled edge-placed menu (in the draft, else saved) with a
   // Submenu module opening menu `id`, else null
   function submenuParentOf(id) {
-    return (root.localMenus ?? EdgeMenusConfig.menus).find(menu => menu.id !== id && menu.enabled && menu.mode === "floating" && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id)) ?? null;
+    return (root.localMenus ?? EdgeMenusConfig.menus).find(menu => menu.id !== id && menu.enabled && menu.placement === "edge" && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id)) ?? null;
   }
 
   // Why the draft can't be saved as is (empty = savable)
@@ -248,8 +249,10 @@ QtObject {
     root._followPreview();
   }
 
+  // Unique among the draft's menus and the saved ones (a new menu may be
+  // saved at once: _commitNew)
   function _uniqueId(base) {
-    const taken = (root.localMenus ?? []).map(menu => menu.id);
+    const taken = [...(root.localMenus ?? []), ...(root.savedMenus ?? [])].map(menu => menu.id);
     let n = 1;
     while (taken.includes(`${base}-${n}`))
       n++;
@@ -261,24 +264,63 @@ QtObject {
     return key.split(".").reduce((value, part) => value?.[part], menu);
   }
 
-  // A new menu at the schema defaults, opening on hover, and held open on
-  // screen so edits show as they're made
-  function addMenu() {
+  // A new menu for `purpose` (MenuSeeds.purposes), at the schema defaults
+  function _newMenu(purpose) {
     const id = root._uniqueId("menu");
-    const menu = ConfigManager.withDefaults({
-      "id": id,
-      "name": I18n.tr("Menu {0}", id.split("-").pop()),
-      "open": {
-        "onHover": true
-      },
-      "layout": {
-        "modules": []
-      }
-    }, "EdgeMenu");
-    root.localMenus.push(menu);
-    root.applyChanges();
+    return ConfigManager.withDefaults(MenuSeeds.seed(purpose, id, I18n.tr("Menu {0}", id.split("-").pop())), "EdgeMenu");
+  }
+
+  // Selects the last menu and holds it open on screen, so edits show as
+  // they're made
+  function _selectNew() {
     root.selectMenu(root.localMenus.length - 1);
     root.startPreviewing();
+  }
+
+  // Saves new menu `menu` at once: the config as saved plus it (the
+  // draft's other edits stay unsaved), and holds it in the draft as saved
+  // (ConfigDraft.adopt). False if the save is refused
+  function _commitNew(menu) {
+    const next = Utils.clone(ConfigManager.config);
+    next.EdgeMenus.items.push(Utils.clone(menu));
+    if (!ConfigManager.commit(next))
+      return false;
+    draft.adopt(menu);
+    root.applyChanges();
+    return true;
+  }
+
+  // A new menu (MenuSeeds.seed) for `purpose`: "edge" (the default),
+  // "popout", "submenu" or "free", selected and held open, in the draft
+  function addMenu(purpose = "edge") {
+    root.localMenus.push(root._newMenu(purpose));
+    root.applyChanges();
+    root._selectNew();
+  }
+
+  // A new menu for `purpose`, saved at once (_commitNew), selected and
+  // held open: for an opener another editor saves (a bar widget).
+  // Returns it, or null if the save was refused
+  function addSavedMenu(purpose) {
+    const menu = root._newMenu(purpose);
+    if (!root._commitNew(menu))
+      return null;
+    root._selectNew();
+    return menu;
+  }
+
+  // A new free menu for the selected menu's Submenu module at
+  // `moduleIndex` to open: added to the draft, set as the module's `menu`,
+  // then selected and held open beside it (selecting it clears the
+  // parent's undo history, as any change of menu does: scopeKey)
+  function addSubmenu(moduleIndex) {
+    if (!root.layout.module(moduleIndex))
+      return;
+    const menu = root._newMenu("submenu");
+    root.layout.updateModuleProperty(moduleIndex, "menu", menu.id);
+    root.localMenus.push(menu);
+    root.applyChanges();
+    root._selectNew();
   }
 
   function duplicateMenu(index) {
@@ -469,9 +511,7 @@ QtObject {
   property bool _wantPreview: false
 
   function canPreview(menu) {
-    if (!menu?.id || menu.enabled === false)
-      return false;
-    return !EdgeMenusConfig.isSubmenu(menu) || root.submenuParentOf(menu.id) !== null;
+    return !!menu?.id && menu.enabled !== false;
   }
 
   function startPreviewing() {
@@ -500,7 +540,7 @@ QtObject {
 
   function _showPreview(id) {
     const menu = id !== "" ? EdgeMenusConfig.menuById(id) ?? root.localMenus?.find(m => m.id === id) : null;
-    const parentId = menu && EdgeMenusConfig.isSubmenu(menu) ? (root.submenuParentOf(id)?.id ?? "") : "";
+    const parentId = menu && EdgeMenusConfig.isFree(menu) ? (root.submenuParentOf(id)?.id ?? "") : "";
     if (root.previewing === id && root.previewParent === parentId)
       return;
     // What was shown closes: a submenu with the menu it opened from

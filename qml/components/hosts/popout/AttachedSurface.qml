@@ -68,6 +68,10 @@ Item {
   property bool fade: false
   // How far it has faded in (1 unless it fades)
   readonly property real shownOpacity: slideContainer.shownOpacity
+  // Where its content is from its place as it slides (what's drawn for
+  // it elsewhere follows: a tiled menu's tiles' blur shapes)
+  readonly property real slideX: slideContainer.slideX
+  readonly property real slideY: slideContainer.slideY
   // The opacity its host draws it at, fading it itself (a detached dock
   // fading in): its copies (the blur window's fill) draw at it too
   property real hostOpacity: 1
@@ -120,8 +124,11 @@ Item {
   // Filled solid while unbacked (BlurManager.opaqueOn: blur paused for a
   // fullscreen window on its screen)
   property bool opaque: false
+  // Draws no box (fill, stroke or shadow) of its own, only its content,
+  // which keeps the room a shadow would take (a tiled menu: MenuTiles)
+  property bool hollow: false
   // Casting its own shadow, in its own window
-  readonly property bool _ownShadow: root.castShadow && !root.backed
+  readonly property bool _ownShadow: root.castShadow && !root.backed && !root.hollow
   // Where its shape runs on past its outline, for a shadow `reach` long
   // cast from it (rects in this item's coordinates, at rest): the shadow
   // beside a wall that carries on past it then runs on at full strength
@@ -189,8 +196,8 @@ Item {
   property color mirrorStroke: "transparent"
   // (a copy is drawn opaque: the blur window applies the opacity to all
   // of them at once, so where they overlap they don't stack)
-  readonly property color _fill: root.mirror ? root.fillColor : root.backed ? "transparent" : root.opaque ? root.fillColor : Appearance.fill(root.fillColor)
-  readonly property color _stroke: root.mirror ? root.mirrorStroke : root.strokeColor
+  readonly property color _fill: root.mirror ? root.fillColor : root.backed || root.hollow ? "transparent" : root.opaque ? root.fillColor : Appearance.fill(root.fillColor)
+  readonly property color _stroke: root.mirror ? root.mirrorStroke : root.hollow ? "transparent" : root.strokeColor
   // Rects (in this item's coordinates) where its outline is left open:
   // what's joined to it over them (a submenu on its side, a popout on
   // a pill's far stroke) carries on there, its fill no longer hiding it

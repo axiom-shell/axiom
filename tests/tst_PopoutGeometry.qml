@@ -188,4 +188,30 @@ TestCase {
     verify(PopoutGeometry.resolve([dock], toasts).allowed, "a dock and toasts never collide");
     compare(PopoutGeometry.resolve([toasts], dock).yield, []);
   }
+  // A free menu ranks as any popout (no underlay): unpinned, as its
+  // opener's kind, so a higher popout over it (the launcher) closes it and
+  // a lower one it covers is refused; pinned or popped out (held as if
+  // pinned), lowest, giving way to a bar popout over it and coming back
+  function test_free_menu() {
+    const free = entry("menu:tools", "menu", [rect(400, 300, 500, 400)]);
+    const bar = entry("bar:clock", "bar", [rect(600, 40, 400, 300)]);
+    const refused = PopoutGeometry.resolve([free], bar);
+    verify(!refused.allowed, "a bar popout over it is refused");
+    compare(refused.blockedBy, "menu:tools");
+    compare(PopoutGeometry.resolve([free], entry("launcher:DP-1", "launcher", [rect(500, 200, 600, 400)])).evict, ["menu:tools"], "the launcher closes it");
+    const asBar = Object.assign({}, free, {
+      "kind": "bar"
+    });
+    compare(PopoutGeometry.resolve([asBar], bar).evict, ["menu:tools"], "a widget's, a neighbour's popout replaces it");
+    const pinned = Object.assign({}, free, {
+      "pinned": true,
+      "resident": true
+    });
+    const over = PopoutGeometry.resolve([pinned], bar);
+    verify(over.allowed);
+    compare(over.yield, ["menu:tools"], "pinned (or popped out), it gives way");
+    compare(PopoutGeometry.resumable([Object.assign({}, pinned, {
+        "phase": "yielded"
+      })]), ["menu:tools"], "and comes back once uncovered");
+  }
 }

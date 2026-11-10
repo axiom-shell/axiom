@@ -160,6 +160,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [overview](edge-menus/overview.md): entry fields, open/pinned state, pin, module hosts.
 - [hosts](edge-menus/hosts.md): floating and integrated hosts, the lattice, sync.
 - [editing-submenus](edge-menus/editing-submenus.md): editing on the Layouts page, Submenu modules.
+- [free-menus](edge-menus/free-menus.md): free menus' own window, where it opens, its claim and layer.
 
 ### compositor/
 - [README](compositor/README.md): `CompositorManager`, detection, capabilities, gating what a compositor can't do, `FocusGrab`.

@@ -114,6 +114,9 @@ PopoutWrapperBase {
   readonly property bool onOverlayLayer: root.windowLayer === WlrLayer.Overlay
   property color fillColor: Theme.background
   property color strokeColor: Theme.foreground
+  // No box of its own drawn, only its content (AttachedSurface.hollow: a
+  // tiled edge menu, whose cards draw their own tiles)
+  property bool hollow: false
   // Off leaves the focus grab to another window (see SurfaceGroup)
   property bool grabEnabled: true
   // Other windows the grab lets input through to
@@ -126,6 +129,18 @@ PopoutWrapperBase {
   readonly property var triggerWindow: trigger
   readonly property string layerNamespace: root.slidesUnder ? "axiom-popout-under" : root.overNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
+  // ...its content's top-left in the window where it rests
+  readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
+  // Its surface (where it slides, how far it has faded in, whether the
+  // blur window backs it): what a tiled edge menu's tiles follow
+  readonly property AttachedSurface surfaceItem: surface
+  // Its content's top-left on the screen as it's drawn now (a submenu's
+  // stretch above it left out): where a popped-out edge menu's free box
+  // puts its content (EdgeMenuManager.popOut)
+  function contentOnScreen() {
+    const at = loader.mapToItem(null, 0, slot.shownStretchTop);
+    return Qt.point(placeOnScreen.placed.x + at.x, placeOnScreen.placed.y + at.y);
+  }
 
   // Its place among the popouts (PopoutManager), under `claimKey` (none:
   // it takes no part): it shows once granted, closes when a higher popout
@@ -556,6 +571,7 @@ PopoutWrapperBase {
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor
       strokeColor: root.strokeColor
+      hollow: root.hollow
 
       Loader {
         id: loader

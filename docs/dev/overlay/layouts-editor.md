@@ -41,7 +41,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
   - Then the tool pages as a dimmed group with only show/hide. Every tool page is always in config (a migration put back any that were removed, hidden).
   - Each group is dragged to reorder within itself.
   - Then the Desktop, Lock screen and Login screen rows (not pages, not dragged).
-- **`MenusSection`**: the edge menus, dragged to reorder, duplicate/remove, New menu.
+- **`MenusSection`**: the edge menus, dragged to reorder, duplicate/remove, New menu (a `StyledContextMenu` of what it's for: [editing and submenus](../edge-menus/editing-submenus.md) › Creating a menu from what opens it).
 - Then the selection's fields:
   - A page's name, icon and Double grid.
   - A tool page's Show in the navigator.

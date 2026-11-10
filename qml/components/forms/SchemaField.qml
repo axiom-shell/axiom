@@ -44,10 +44,14 @@ Loader {
     return own !== "" ? notes + "\n" + I18n.tr(own) : notes;
   }
   readonly property bool isColor: fieldSchema["x-options"] === "colors"
-  // `x-enumShowIf` hides options whose condition doesn't hold (the current
-  // value stays listed)
+  // `x-enumShowIf` hides options whose condition doesn't hold, and
+  // `x-menuPlacements` the menus of other placements (the current value
+  // stays listed)
   readonly property var options: {
-    const all = SettingsManager.optionsFor(fieldSchema);
+    let all = SettingsManager.optionsFor(fieldSchema);
+    const placements = fieldSchema["x-menuPlacements"];
+    if (all && placements)
+      all = all.filter(value => value === "" || value === root.current || EdgeMenusConfig.offeredIn(value, placements));
     const conditions = fieldSchema["x-enumShowIf"];
     if (!all || !conditions)
       return all;
@@ -69,9 +73,11 @@ Loader {
       }, {
         "": I18n.tr(fieldSchema["x-emptyLabel"] ?? "Same as the language")
       });
+    // A menu by its name and placement ("Tools · Free"); the value stays
+    // its id
     if (fieldSchema["x-options"] === "edgeMenus")
       return EdgeMenusConfig.menus.reduce((labels, menu) => {
-        labels[menu.id] = menu.name || menu.id;
+        labels[menu.id] = I18n.tr("{0} · {1}", menu.name || menu.id, I18n.tr(EdgeMenusConfig.placementLabels[menu.placement] ?? menu.placement));
         return labels;
       }, {});
     if (fieldSchema["x-options"] === "customWidgets")

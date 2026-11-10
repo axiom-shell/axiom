@@ -104,7 +104,6 @@ PopoutWrapperBase {
     startInset: 0
     endInset: 0
     triggerLength: sync.triggerLength(root.vertical, root.pad, root.edgeLength)
-    hoverDelay: root.menu.open.delay
     onTriggered: root.show()
   }
 

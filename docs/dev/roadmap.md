@@ -249,6 +249,7 @@ Found meanwhile:
 - [A theme can't be generated from an avif or jxl wallpaper](issues.md#a-theme-cant-be-generated-from-an-avif-or-jxl-wallpaper) (a choice: a Go decoder dependency, or the shell handing over the image Qt decoded)
 - [Peripherals only UPower sees aren't in the Battery widget or module](issues.md#peripherals-only-upower-sees-arent-in-the-battery-widget-or-module) (Full Bluetooth)
 - [Ctrl+C on a file row copies its path, not the file](issues.md#ctrlc-on-a-file-row-copies-its-path-not-the-file) (file search, left out of v1)
+- [An edge menu picker shows a blank for no menu](issues.md#an-edge-menu-picker-shows-a-blank-for-no-menu) (menus rework)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
@@ -257,6 +258,7 @@ Needs a plan:
 - [Quick actions can't hold custom toggles or commands](issues.md#quick-actions-cant-hold-custom-toggles-or-commands) (set aside from the unified-actions branch, 2026-11-06)
 - [File search crawls what .gitignore leaves out](issues.md#file-search-crawls-what-gitignore-leaves-out) (file search, left out of v1)
 - [File search matches names only, not what files hold](issues.md#file-search-matches-names-only-not-what-files-hold) (file search: full-text search, deferred from v1)
+- [Menus rework](issues.md#menus-rework) (decided 2026-11-09: [plans/menus-rework.md](plans/menus-rework.md), six stages)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
