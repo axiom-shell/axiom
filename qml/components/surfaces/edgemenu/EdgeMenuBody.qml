@@ -16,9 +16,10 @@ import qs.components.hosts.overlay
 // In another menu's submenu (`submenu`, MenuSubmenu) it's only capped, with
 // no pin or Escape of its own. In the free host (`free`: a free menu, or a
 // popped-out edge menu) it has no edge either: capped, its buttons at the
-// top right, growing modules growing downward. Its buttons: the pop-out
-// toggle (an edge menu's `popOutButton`), the pin (`pinButton`), and a
-// close while popped out (which docks it).
+// top right, growing modules growing downward (a popped-out edge menu's
+// buttons stay in its edge's corner, so its pop-out toggle doesn't move).
+// Its buttons: the pop-out toggle (an edge menu's `popOutButton`, which
+// docks it again) and the pin (`pinButton`).
 Item {
   id: root
 
@@ -149,22 +150,25 @@ Item {
   }
 
   // The menu's buttons: in the corner away from its edge, at the end,
-  // over the modules' corner (with no edge, the top right)
+  // over the modules' corner (with no edge, the top right). Popped out,
+  // still its edge's corner: the toggle stays where it was clicked
   readonly property bool pinned: EdgeMenuManager.isPinned(root.menu.id)
   readonly property bool poppedOut: EdgeMenuManager.isPoppedOut(root.menu.id)
+  readonly property string _buttonsEdge: root.free && root.poppedOut ? root.menu.edge : root.edge
   Row {
     id: buttons
     z: 2
     spacing: Widget.spacing / 4
-    anchors.top: root.edge === "top" ? undefined : parent.top
-    anchors.bottom: root.edge === "top" ? parent.bottom : undefined
-    anchors.right: root.edge === "right" ? undefined : parent.right
-    anchors.left: root.edge === "right" ? parent.left : undefined
+    anchors.top: root._buttonsEdge === "top" ? undefined : parent.top
+    anchors.bottom: root._buttonsEdge === "top" ? parent.bottom : undefined
+    anchors.right: root._buttonsEdge === "right" ? undefined : parent.right
+    anchors.left: root._buttonsEdge === "right" ? parent.left : undefined
     anchors.margins: Widget.spacing / 4
     visible: !root.submenu
 
     // Pop out (EdgeMenuManager.togglePoppedOut): off its edge where it
-    // is, held open until it closes; on again, it docks, closed
+    // is, held open until it closes; on again, it docks, closed (the only
+    // button a popped-out menu adds)
     StyledIconButton {
       visible: EdgeMenusConfig.canPopOut(root.menu)
       size: Widget.height
@@ -187,18 +191,6 @@ Item {
       borderColor: Theme.border
       tooltipText: root.pinned ? I18n.tr("Unpin: close as usual") : I18n.tr("Pin: keep this menu open")
       onClicked: EdgeMenuManager.togglePinned(root.menu.id)
-    }
-
-    // Popped out only: closes it, docked
-    StyledIconButton {
-      visible: root.poppedOut && root.free
-      size: Widget.height
-      iconText: "close"
-      backgroundColor: Qt.alpha(Theme.background, 0.85)
-      hoverColor: Theme.backgroundHighlight
-      borderColor: Theme.border
-      tooltipText: I18n.tr("Close")
-      onClicked: EdgeMenuManager.dock(root.menu.id)
     }
   }
 }

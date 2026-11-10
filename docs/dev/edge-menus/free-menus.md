@@ -83,9 +83,9 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
   - The free box comes up with no animation (`animationDuration` 0) at that spot, clamped into the free area. So a box attached to its edge moves inwards by the edge's gap.
   - Both hosts' claims are keyed `menu:<id>`. The free one's replaces the edge one's entry, and `PopoutManager.update` ignores the edge one from then on.
   - It keeps its edge's layout: a top or bottom menu's modules along a row (`vertical`), its whole-edge stretch along that axis.
-- **While out**, it is held as if pinned (`EdgeMenuManager.isHeld`): it doesn't close on leave or on an outside click, and its claim ranks as a pinned menu's (`FreeMenuPlace.ranksPinned`). A close button shows beside the pin. Dragged, it moves for the moment only.
+- **While out**, it is held as if pinned (`EdgeMenuManager.isHeld`): it doesn't close on leave or on an outside click, and its claim ranks as a pinned menu's (`FreeMenuPlace.ranksPinned`). Its only button of its own is the pop-out toggle, which now docks it (decided 2026-11-10: "it can just keep the dock button (close is unecessary)"); the buttons stay in its edge's corner, so the toggle doesn't move under the pointer as it pops out ("The button" stays put). Dragged, it moves for the moment only.
 - `EdgeMenuManager.open` and `reveal` do nothing to it (no second copy), and its edge host, with its hover strip, isn't loaded.
-- **Closed = docked.** `EdgeMenuManager.close` docks a popped-out menu (`dock`), closed: the close button, the pop-out toggle, a bind or bar Button toggle, `edgeMenu close`, Escape. The next open is on its edge.
+- **Closed = docked.** `EdgeMenuManager.close` docks a popped-out menu (`dock`), closed: the pop-out toggle, a bind or bar Button toggle, `edgeMenu close`, Escape. The next open is on its edge.
 - **Nothing is kept.** `poppedOut` is in the `PersistentProperties` only so a reload can dock it, closed (`_run.onLoaded`). It is never in `ui/edgemenus.json`.
 - A fullscreen window only hides it (its window is on Top).
 

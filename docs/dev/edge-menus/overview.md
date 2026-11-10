@@ -51,8 +51,8 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 - While pinned, a menu ignores `closeOnLeave` and outside clicks.
 
 ### Pop out
-- `popOutButton` (an `edge` menu's) puts a pop-out toggle beside the pin. It lifts the open menu into the free host where its box is, held open as if pinned (ranked as a pinned menu).
-- Every close docks it, closed: the close button, the toggle, a bind or bar Button toggle, `edgeMenu close`, Escape. While it's out, opening it and hovering its edge do nothing.
+- `popOutButton` (an `edge` menu's) puts a pop-out toggle beside the pin. It lifts the open menu into the free host where its box is, held open as if pinned (ranked as a pinned menu); the toggle, in the same place, docks it again.
+- Every close docks it, closed: the toggle, a bind or bar Button toggle, `edgeMenu close`, Escape. While it's out, opening it and hovering its edge do nothing.
 - Nothing of it is kept: a reload docks it, closed. A fullscreen window only hides it. Details: [Free menus](free-menus.md) › A popped-out edge menu.
 - A pinned edge or free menu, and a popped-out one, give way when covered and come back ([Free menus](free-menus.md) › Its claim).
 
