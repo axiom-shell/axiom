@@ -12,6 +12,7 @@ properties:
     x-scope: machine
     type: boolean
     x-takeover: true
+    x-recommended: true
     title: Handle idle
     default: false
     description: 'Replaces an idle daemon such as hypridle: remove yours while this is on.'

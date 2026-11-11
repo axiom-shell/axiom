@@ -10,6 +10,7 @@ x-order: [enabled, reuseFor, remember]
 properties:
   enabled:
     type: boolean
+    x-recommended: true
     title: Use axiom's picker
     default: false
     description: Apps sharing a screen ask axiom's picker instead of the compositor portal's own. The card above sets the portal up once.

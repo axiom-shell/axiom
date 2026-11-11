@@ -62,6 +62,7 @@ properties:
     description: A saved or exported config's title, description and source. A live config.json has none.
     additionalProperties: {type: string}
 sections:
+  - Compositor
   - Lockscreen
   - Greeter
   - Idle
@@ -75,7 +76,6 @@ sections:
   - Screenshots
   - Battery
   - Notifications
-  - Compositor
   - Keybinds
   - Monitors
   - WindowBehaviour
