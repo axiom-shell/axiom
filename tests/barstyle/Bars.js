@@ -113,6 +113,11 @@ function themeEnv(colors) {
   };
 }
 
+// The Auto color fields of the schema's widget types (BarEnrich's)
+function autoColorFields() {
+  return BarEnrich.autoColorFields(schema());
+}
+
 function env(over) {
   return Object.assign({
     "barStyle": defaults("BarStyle"),
@@ -126,7 +131,7 @@ function env(over) {
     "foreground": resolve("foreground"),
     "background": resolve("background"),
     "outputs": [],
-    "autoColorFields": {},
+    "autoColorFields": autoColorFields(),
     "baseColorNames": ["base00", "base01", "base02", "base03", "base04", "base05", "base06", "base07", "base08", "base09", "base0A", "base0B", "base0C", "base0D", "base0E", "base0F"]
   }, over);
 }
@@ -141,7 +146,6 @@ function bar(rawOver, envOver) {
     "id": "test",
     "monitor": "",
     "style": {},
-    "timing": {},
     "widgets": {
       "left": [],
       "center": [],

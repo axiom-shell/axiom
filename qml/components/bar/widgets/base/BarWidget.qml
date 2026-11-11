@@ -210,8 +210,9 @@ Item {
 
   // What it draws, from the data it was given: "own" (its own content or
   // a head), "segments", "row" (an icon and a label, or a spinner) or
-  // "none". Read from data only, never from what it draws.
-  readonly property string _mode: root.ownContent !== null || root.headItem !== null || root.headIcon !== "" || root.headText !== "" ? "own" : root.segmentData !== null && root.shownItems.length > 0 ? "segments" : root._rowShown ? "row" : "none"
+  // "none" (also while `hidden`). Read from data only, never from what it
+  // draws.
+  readonly property string _mode: root.hidden ? "none" : root.ownContent !== null || root.headItem !== null || root.headIcon !== "" || root.headText !== "" ? "own" : root.segmentData !== null && root.shownItems.length > 0 ? "segments" : root._rowShown ? "row" : "none"
   property bool _rowShown: root.icon !== "" || root.iconSource !== "" || root.text !== "" || root.busy
 
   // Whether its WidgetGroup draws a background under it

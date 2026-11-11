@@ -7,16 +7,16 @@ import QtQuick
 // gradient, …) is the look's traits; this only colors.
 //
 // `palette` is the look's colors resolved once (palette(),
-// barConfig.palette): barText (what reads on the bar itself: the theme's
-// foreground), background (the theme's background), override
-// (the bar's text color, replacing the automatic one, or null),
-// labelColor (split's label color, or null), group and groupStroke (a
-// merged run's background and outline), gradientStops (the bar
-// gradient's colors, or null), and the bar's other colors resolved once:
-// separator (the dividers between widgets), accentLine ({ from, to }, the
-// bar's accent line, or null), hoverOutline (a hovered widget's outline)
-// cellHover (a hovered cell's box) and highlight (the bar editor's
-// highlight of the selected widget: the theme's accent). A user's color is taken as set,
+// barConfig.palette): barText (what reads on the bar itself: the
+// theme's foreground), background (the theme's background), override (the
+// bar's text color, replacing the automatic one, or null), labelColor
+// (split's label color, or null), group and groupStroke (a merged run's
+// background and outline), gradientStops (the bar gradient's colors, or
+// null), and the bar's other colors resolved once: separator (the
+// dividers between widgets), accentLine ({ from, to }, the bar's accent
+// line, or null), hoverOutline (a hovered widget's outline), cellHover (a
+// hovered cell's box) and highlight (the bar editor's highlight of the
+// selected widget: the theme's accent). A user's color is taken as set,
 // never graded.
 //
 // `state` is what of the widget itself its colors depend on (state()):
@@ -151,7 +151,7 @@ QtObject {
       return a;
     if (t >= 1)
       return b;
-    const isColor = v => (typeof v === "string" && /^(#[0-9a-fA-F]+|transparent)$/.test(v)) || (typeof v === "object" && v !== null && typeof v === "object" && v.r !== undefined);
+    const isColor = v => (typeof v === "string" && /^(#[0-9a-fA-F]+|transparent)$/.test(v)) || (typeof v === "object" && v !== null && v.r !== undefined);
     const out = {};
     for (const key in a) {
       const x = a[key];
@@ -175,6 +175,8 @@ QtObject {
     for (const key in backs)
       if (key in out && out[backs[key]] && !Qt.colorEqual(out[key], a[key]) && !Qt.colorEqual(out[key], b[key]))
         out[key] = root.nudged(out[backs[key]], out[key], root.mutedContrast);
+    if (a.gradient && b.gradient)
+      out.gradient = root._part(a.gradient.part, a.gradient.alpha + (b.gradient.alpha - a.gradient.alpha) * t);
     if (out.graphic && out.iconBack) {
       out.graphic.line = root.nudged(out.iconBack, out.graphic.line, root.mutedContrast);
       out.graphic.subcaption = root.nudged(out.iconBack, out.graphic.subcaption, root.mutedContrast);
@@ -271,7 +273,7 @@ QtObject {
     const base = graded ? state.gradient : accent;
     const color = state.muted ? root._toward(base, root._opaque(palette.background), root.mutedMix) : base;
     const result = root._widget(look, palette, state, color, root._readable(palette, color, own), graded);
-    result.gradient = graded ? root._widgetGradient(look, state) : null;
+    result.gradient = graded ? root._dimmedGradient(state, root._widgetGradient(look, state)) : null;
     result.accent = color;
     return root._finish(palette, state, result);
   }
@@ -325,9 +327,9 @@ QtObject {
   // `color` as content that sits on `backs` (opaque): at least `min`
   // contrast on all of them. The bar's text color (`flags.override`) is
   // never nudged, but for a muted or pressed one. Muted (`flags.muted`),
-  // content not on the widget's own fill (`onFill`; one on a run's is) is dimmed (muted(), floor
-  // mutedContrast); pressed, mixed pressMix toward the first backdrop and
-  // nudged back to its floor.
+  // content not on the widget's own fill (`onFill`; one on a run's is) is
+  // dimmed (muted(), floor mutedContrast); pressed, mixed pressMix toward
+  // the first backdrop and nudged back to its floor.
   function _read(flags, backs, color, min, onFill) {
     const fixed = flags.override !== null && Qt.colorEqual(color, flags.override);
     const dimmed = flags.muted && !onFill;
@@ -438,11 +440,18 @@ QtObject {
     const base = graded ? state.gradient : color;
     const fill = state.muted ? root._toward(base, root._opaque(palette.background), root.mutedMix) : base;
     const result = root._cell(look, palette, state, fill, root._readable(palette, fill, own), cellState);
-    result.gradient = graded ? root._cellGradient(look, state, result) : null;
+    result.gradient = graded ? root._dimmedGradient(state, root._cellGradient(look, state, result)) : null;
     result.hover = state.hover ?? palette.cellHover;
     if (state.muted && !result.onFill)
       result.content = root.muted(result.back, result.content);
     return result;
+  }
+
+  // `gradient` (a { part, alpha } or null) as a muted widget draws it: its
+  // alpha cut by mutedMix, which over the opaque background is the
+  // gradient's color mixed that far toward it
+  function _dimmedGradient(state, gradient) {
+    return gradient && state.muted ? root._part(gradient.part, gradient.alpha * (1 - root.mutedMix)) : gradient;
   }
 
   // The traits a widget draws in: its look's, or its style's `fallback`'s
@@ -700,8 +709,7 @@ QtObject {
       "content": content,
       "showsHover": showsHover,
       "onFill": onFill,
-      "back": back,
-      "hover": "transparent"
+      "back": back
     };
   }
 

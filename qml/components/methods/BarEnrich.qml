@@ -288,6 +288,25 @@ QtObject {
     return result;
   }
 
+  // Each widget type's Auto color fields from the config schema (the
+  // built config.schema.json): { type: { key: { role, gradient } } }: its
+  // `x-autoColor` role, and whether it gives way to the bar's gradient
+  // while Auto (an `accent` always, else `x-autoGradient`)
+  function autoColorFields(schema) {
+    return (schema?.definitions?.BarWidget?.oneOf ?? []).reduce((result, refObj) => {
+      const def = schema.definitions[refObj.$ref.replace("#/definitions/", "")];
+      const properties = def?.properties?.properties?.properties ?? {};
+      result[def?.properties?.type?.const] = Object.keys(properties).filter(key => properties[key]["x-autoColor"]).reduce((roles, key) => {
+        roles[key] = {
+          "role": properties[key]["x-autoColor"],
+          "gradient": properties[key]["x-autoColor"] === "accent" || properties[key]["x-autoGradient"] === true
+        };
+        return roles;
+      }, {});
+      return result;
+    }, {});
+  }
+
   // The thickness a bar's inner sizes (text scale, inner padding and gap)
   // are set at: they scale with the bar's thickness from there
   readonly property int referenceThickness: 26

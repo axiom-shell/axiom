@@ -266,6 +266,153 @@ TestCase {
     compare(run("outline").gradient, null, "no gradient");
   }
 
+  // ---- Hover and backdrops ----
+
+  // A widget's colors on a look (BarStyle keys), accent #fb4934 over the
+  // dark theme's #282828, `widget` its state
+  function colorsOf(over, widget) {
+    const bar = Bars.bar(Object.assign({
+      "tintOpacity": 25
+    }, over));
+    return BarWidgetStyle.widgetColors(bar, "#fb4934", "#282828", widget);
+  }
+
+  // Fill on hover: a hovered tinted or outlined widget draws filled in its
+  // state color (an outline keeps its stroke, not in a run), its text and
+  // icon reading on it; a filled one already is, a split one never fills
+  // and without the setting nothing does. [look, BarStyle keys, widget,
+  // fill, stroke, textOnFill]
+  readonly property var hoverRows: [["tinted", "widgetStyle=tinted",
+      {},
+      "#fb4934", "transparent", true], ["tinted, no fill on hover", "widgetStyle=tinted;hoverFill=false",
+      {},
+      "tint", "transparent", false], ["outline", "widgetStyle=outline",
+      {},
+      "#fb4934", "#fb4934", true], ["filled", "widgetStyle=filled",
+      {},
+      "#fb4934", "transparent", true], ["split icon part", "widgetStyle=split;splitIcon=joined;splitLabelFill=tint",
+      {
+        "splits": true
+      },
+      "tint", "transparent", false], ["split label color", "widgetStyle=split;splitIcon=joined;splitLabelFill=color",
+      {
+        "splits": true
+      },
+      "labelColor", "transparent", true], ["split without parts", "widgetStyle=split",
+      {
+        "splits": false
+      },
+      "#fb4934", "transparent", true], ["merged tinted", "widgetStyle=tinted;widgetGrouping=merged",
+      {},
+      "#fb4934", "transparent", true], ["merged outline", "widgetStyle=outline;widgetGrouping=merged",
+      {},
+      "#fb4934", "transparent", true]]
+
+  function parse(keys) {
+    return keys.split(";").reduce((o, kv) => Object.assign(o, {
+        [kv.split("=")[0]]: kv.split("=")[1] === "false" ? false : kv.split("=")[1] === "true" ? true : kv.split("=")[1]
+      }), {});
+  }
+
+  function test_hover_rows() {
+    const fails = [];
+    for (const [name, keys, widget, fill, stroke, onFill] of root.hoverRows) {
+      const over = Object.assign({
+        "hoverFill": true
+      }, root.parse(keys));
+      const c = root.colorsOf(over, Object.assign({
+        "hovered": true
+      }, widget));
+      const labelColor = Bars.bar(over).palette.labelColor;
+      const want = fill === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : fill === "labelColor" ? labelColor : fill;
+      if (!Qt.colorEqual(c.fill, want))
+        fails.push(`${name}: fill ${c.fill}, not ${want}`);
+      if (!Qt.colorEqual(c.stroke, stroke))
+        fails.push(`${name}: stroke ${c.stroke}, not ${stroke}`);
+      if (c.textOnFill !== onFill)
+        fails.push(`${name}: textOnFill ${c.textOnFill}`);
+      // What a split never does: fill the widget in the accent as a whole
+      if (name.startsWith("split icon") && Qt.colorEqual(c.fill, "#fb4934"))
+        fails.push(`${name}: filled on hover`);
+      c.textBack.forEach(b => {
+        if (Utils.contrast(b, c.text) < 4.5)
+          fails.push(`${name}: text ${c.text} under 4.5 on ${b}`);
+      });
+    }
+    verify(fails.length === 0, fails.join("\n"));
+  }
+
+  // What the text and the icon sit on (opaque; two with a pill level) and
+  // whether the text sits on a fill it must read on. [look, BarStyle keys,
+  // widget, textBack, iconBack, textOnFill]; a color name is a palette key,
+  // `tint` the accent's tint over the bar, `accent` the accent over it
+  readonly property var backdropRows: [["filled", "widgetStyle=filled",
+      {},
+      "accent", "accent", true], ["tinted", "widgetStyle=tinted",
+      {},
+      "tint", "tint", false], ["plain", "widgetStyle=plain",
+      {},
+      "bar", "bar", false], ["split label tint", "widgetStyle=split;splitIcon=joined;splitLabelFill=tint",
+      {
+        "splits": true
+      },
+      "tint", "accent", false], ["split label color", "widgetStyle=split;splitIcon=joined;splitLabelFill=color",
+      {
+        "splits": true
+      },
+      "labelColor", "accent", true], ["split label none", "widgetStyle=split;splitIcon=joined;splitLabelFill=none",
+      {
+        "splits": true
+      },
+      "bar", "accent", false], ["split, no parts", "widgetStyle=split",
+      {
+        "splits": false
+      },
+      "accent", "accent", true], ["merged filled", "widgetStyle=filled;widgetGrouping=merged;groupColor=base02",
+      {},
+      "group", "group", true], ["merged plain", "widgetStyle=plain;widgetGrouping=merged;groupColor=base02",
+      {},
+      "bar", "bar", false], ["tinted hovered", "widgetStyle=tinted;hoverFill=true",
+      {
+        "hovered": true
+      },
+      "accent", "accent", true]]
+
+  function test_backdrop_rows() {
+    const fails = [];
+    const bg = Bars.theme.background;
+    for (const [name, keys, widget, text, icon, onFill] of root.backdropRows) {
+      const over = root.parse(keys);
+      const palette = Bars.bar(over).palette;
+      const c = root.colorsOf(over, widget);
+      const named = (key, back) => key === "accent" ? BarWidgetStyle.over("#fb4934", back) : key === "tint" ? BarWidgetStyle.over(BarWidgetStyle.faded("#fb4934", 0.25), back) : key === "bar" ? back : BarWidgetStyle.over(palette[key], back);
+      if (c.textBack.length !== 1 || !root.close2(c.textBack[0], named(text, bg)))
+        fails.push(`${name}: textBack ${c.textBack}, not ${text}`);
+      if (c.iconBack.length !== 1 || !root.close2(c.iconBack[0], named(icon, bg)))
+        fails.push(`${name}: iconBack ${c.iconBack}, not ${icon}`);
+      if (c.textOnFill !== onFill)
+        fails.push(`${name}: textOnFill ${c.textOnFill}, not ${onFill}`);
+    }
+    // A pill level adds a second backdrop: the level over each
+    const level = root.colorsOf({
+      "widgetStyle": "filled"
+    }, {
+      "level": true
+    });
+    compare(level.textBack.length, 2, "level: two text backdrops");
+    compare(level.iconBack.length, 2, "level: two icon backdrops");
+    if (!root.close2(level.textBack[1], BarWidgetStyle.over(level.level, level.textBack[0])))
+      fails.push("level: the second textBack is not the level over the first");
+    if (!root.close2(level.iconBack[1], BarWidgetStyle.over(level.level, level.iconBack[0])))
+      fails.push("level: the second iconBack is not the level over the first");
+    verify(fails.length === 0, fails.join("\n"));
+  }
+
+  function close2(a, b) {
+    const x = Qt.color(a), y = Qt.color(b);
+    return Math.abs(x.r - y.r) < 0.01 && Math.abs(x.g - y.g) < 0.01 && Math.abs(x.b - y.b) < 0.01;
+  }
+
   // ---- One row per look ----
 
   // Each look, split as each of its kinds: where its state color shows
@@ -338,12 +485,19 @@ TestCase {
           "auto": true
         });
         const want = look.merged ? "-" : !split && look.split ? "fill@1" : look.part;
-        const got = look.key === "accentText" || look.key === "plain" ? "-" : root.part(c.gradient).replace("@0.25", "@tint");
+        const got = root.part(c.gradient).replace("@0.25", "@tint");
         if (look.merged) {
           if (c.gradient !== null)
             fails.push(`${look.key}: a merged widget draws no gradient of its own`);
         } else if (got !== want) {
           fails.push(`${look.key}${split ? " split" : ""}: gradient ${got}, not ${want}`);
+        }
+        // A split label's fill per splitLabelFill: a tint of the slice, the label color, or none
+        if (split && look.split) {
+          const label = look.key.startsWith("split.joined.") ? look.key.split(".")[2] : "none";
+          const fill = label === "tint" ? BarWidgetStyle.faded(c.accent, 0.25) : label === "color" ? bar.palette.labelColor : "transparent";
+          if (!Qt.colorEqual(c.fill, fill))
+            fails.push(`${look.key}: label fill ${c.fill}, not ${fill}`);
         }
       }
     }
@@ -407,10 +561,9 @@ TestCase {
     }
     root.checkColorText(fails, tag, c, muted, ctx);
     root.checkBadge(fails, tag, c, ctx);
-    if (ctx.override)
-      return;
     // The state color shows where it is asked to: the gradient's slice
-    // exactly where it gives way, the widget's own else
+    // exactly where it gives way, the widget's own else (under the bar's
+    // text color too: it replaces content only)
     const stops = ctx.bar.palette.gradientStops;
     const slice = stops ? BarGradient.gradientAt(stops, 0.3) : null;
     const gives = ctx.gradient && ctx.auto && stops !== null;
@@ -418,6 +571,23 @@ TestCase {
     const want = muted ? BarWidgetStyle.mix(base, ctx.bar.palette.background, BarWidgetStyle.mutedMix) : base;
     if (Math.abs(Qt.color(c.accent).r - Qt.color(want).r) > 0.01 || Math.abs(Qt.color(c.accent).g - Qt.color(want).g) > 0.01 || Math.abs(Qt.color(c.accent).b - Qt.color(want).b) > 0.01)
       fails.push(`${tag}: accent ${c.accent} is not ${gives ? "the slice" : "its own"} ${want}`);
+  }
+
+  // A muted widget's gradient is (1 - mutedMix) as strong, which over the
+  // opaque background is its color mixed mutedMix toward it; the pulse's
+  // mid-point is between
+  function checkMutedGradient(fails, tag, rest, dim, mid) {
+    if ((rest.gradient === null) !== (dim.gradient === null)) {
+      fails.push(`${tag}: muted gradient ${root.part(dim.gradient)}, unmuted ${root.part(rest.gradient)}`);
+      return;
+    }
+    if (rest.gradient === null)
+      return;
+    const want = rest.gradient.alpha * (1 - BarWidgetStyle.mutedMix);
+    if (dim.gradient.part !== rest.gradient.part || Math.abs(dim.gradient.alpha - want) > 1e-6)
+      fails.push(`${tag}: muted gradient ${root.part(dim.gradient)}, not ${rest.gradient.part}@${want}`);
+    if (mid && Math.abs(mid.gradient.alpha - (rest.gradient.alpha + dim.gradient.alpha) / 2) > 1e-6)
+      fails.push(`${tag}: pulse mid-point gradient ${root.part(mid.gradient)}`);
   }
 
   // colorText: the state color replaces the text color, nudged, off a fill
@@ -481,6 +651,7 @@ TestCase {
     if (widget.level && Qt.color(rest.level).a > 0.35 + 1e-6)
       fails.push(`${tag}: level stronger than 35%`);
     const mid = BarWidgetStyle.mixColors(rest, dim, 0.5);
+    root.checkMutedGradient(fails, tag, rest, dim, mid);
     if (!ctx.override)
       for (const [name, color, backs] of [["text", mid.text, mid.textBack], ["icon", mid.icon, mid.iconBack], ["headText", mid.headText, mid.iconBack], ["mark", mid.mark, mid.iconBack], ["graphic.line", mid.graphic.line, mid.iconBack], ["graphic.subcaption", mid.graphic.subcaption, mid.iconBack]])
         if (!root.reads(backs, color, BarWidgetStyle.mutedContrast))
@@ -587,6 +758,7 @@ TestCase {
                       root.checkCell(fails, tag + " muted", dim, true, cellState, ctx);
                       if (!root.differs(rest, dim, keys))
                         fails.push(`${tag}: muted looks as unmuted`);
+                      root.checkMutedGradient(fails, tag, rest, dim, null);
                       // Under the text color, occupied plain text still differs from the active's
                       const active = BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, state), color, ownColor, "active");
                       if (override && cellState === "occupied" && look.key === "plain" && !solid && Qt.colorEqual(rest.content, active.content))

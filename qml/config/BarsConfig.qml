@@ -167,18 +167,7 @@ QtObject {
   // Each widget type's Auto color fields: { type: { key: { role, gradient } } }: its
   // `x-autoColor` role, and whether it gives way to the bar's gradient
   // while Auto (an `accent` always, else `x-autoGradient`)
-  readonly property var autoColorFields: (ConfigManager.configSchema?.definitions?.BarWidget?.oneOf ?? []).reduce((result, refObj) => {
-    const def = ConfigManager.configSchema.definitions[refObj.$ref.replace("#/definitions/", "")];
-    const properties = def?.properties?.properties?.properties ?? {};
-    result[def?.properties?.type?.const] = Object.keys(properties).filter(key => properties[key]["x-autoColor"]).reduce((roles, key) => {
-      roles[key] = {
-        "role": properties[key]["x-autoColor"],
-        "gradient": properties[key]["x-autoColor"] === "accent" || properties[key]["x-autoGradient"] === true
-      };
-      return roles;
-    }, {});
-    return result;
-  }, {})
+  readonly property var autoColorFields: BarEnrich.autoColorFields(ConfigManager.configSchema)
 
   // The color of a shadow: `shadowColor` as a bar's look or the BarStyle
   // section has it. Automatic is the accent.
