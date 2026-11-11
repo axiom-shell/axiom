@@ -29,6 +29,14 @@ QtObject {
   // over it (Fill on hover)
   property bool splits: false
   property bool hovered: false
+  // It draws a pill level (its background filled to its value)
+  property bool level: false
+  // "Colour the text by state" (BarWidgetStyle.stateContent): the display
+  // `appearance` ({ colorText }) or null for none, the color of its state
+  // and whether it has one now
+  property var appearance: null
+  property color stateColor: root.accentColor
+  property bool hasState: true
   // Its text color's name: a widget with no field for it (the tray,
   // Workspaces: their heads, SplitLead) the field's default
   readonly property string _foreground: root.properties?.foregroundColor ?? "base00"
@@ -40,6 +48,29 @@ QtObject {
     "splits": root.splits,
     "hovered": root.hovered,
     "spot": root.barSpot,
-    "auto": root.accentAuto
+    "auto": root.accentAuto,
+    "level": root.level
   })
+  // What its text and its icon draw in: its colors', or its state's
+  // where its appearance colours by state
+  readonly property var content: BarWidgetStyle.stateContent(root.colors, root.appearance, root.stateColor, root.hasState)
+
+  // A color of the widget's own on its content, nudged to read where
+  // `part` ("text" | "icon") sits
+  function contentColor(color, part) {
+    return BarWidgetStyle.content(root.colors, color, part);
+  }
+
+  // The Auto field roles that give way to the bar's gradient
+  readonly property var _gradedRoles: ["accent"]
+
+  // `field`'s color as this widget draws it here: the gradient's where it
+  // sits when the field is Auto in a role that gives way, else its own
+  function drawnColor(field) {
+    const own = Theme.resolveColor(root.properties?.[field] ?? "");
+    if (root.barSpot < 0 || !root._gradedRoles.includes(root.autoColors[field]))
+      return own;
+    const stops = root.barConfig.palette.gradientStops;
+    return stops ? BarGradient.gradientAt(stops, root.barSpot) : own;
+  }
 }

@@ -222,7 +222,7 @@ QtObject {
   // text, icon, iconFill, gradient }, see BarWidgetStyle): `accent` is
   // its color for its state, `foregroundName` the text color it's
   // configured with, `widget` what of the widget itself its look depends
-  // on (BarWidgetStyle.state's: splits, hovered, spot, auto; left out,
+  // on (BarWidgetStyle.state's: splits, hovered, spot, auto, level; left out,
   // none of it). In a merged run on a merged bar.
   function widgetColors(barConfig, accent, foregroundName, widget) {
     const palette = barConfig.palette;
@@ -231,6 +231,7 @@ QtObject {
       "hovered": widget?.hovered,
       "spot": widget?.spot,
       "auto": widget?.auto,
+      "level": widget?.level,
       "group": barConfig.look.grouping === "merged"
     }), accent, Theme.resolveColor(foregroundName));
   }
@@ -239,7 +240,7 @@ QtObject {
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
   // active/occupied/urgent/empty, `cell` what of the cell its look depends
-  // on (BarWidgetStyle.state's hovered and spot: where the middle of a cell whose
+  // on (BarWidgetStyle.state's hovered, spot and under: where the middle of a cell whose
   // color is Auto sits along the bar, for the bar's gradient to take its
   // place; `solid`: a filled box whatever the bar's style, Workspaces'
   // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
@@ -251,6 +252,7 @@ QtObject {
       "spot": cell?.spot,
       "auto": (cell?.spot ?? -1) >= 0,
       "solid": cell?.solid,
+      "under": cell?.under,
       "group": cell?.onBar === true && barConfig.look.grouping === "merged"
     }), color, own, state);
   }

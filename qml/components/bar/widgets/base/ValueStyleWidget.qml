@@ -11,8 +11,8 @@ import qs.components.methods
 BarIconWidget {
   id: root
 
-  // {style, segments, width, colorText}
-  property var appearance: properties.appearance
+  // {style, segments, width, colorText} (the base's, WidgetLook's)
+  appearance: properties.appearance
   // Its value, 0-1, for ring, fill, segments and pill; below 0 while it
   // has none (those draw as a label then)
   property real ratio: -1
@@ -27,10 +27,9 @@ BarIconWidget {
   // Whether its label shows beside a graphic (its own "show the value"
   // setting): ticker and stacked are the label, icon has none
   property bool labelShown: true
-  // The colour of its state, for "Colour the text by state"; hasState:
-  // whether it has one right now
-  property color stateColor: root.accentColor
-  property bool hasState: true
+  // The colour of its state, for "Colour the text by state" (the base's
+  // stateColor, hasState: whether it has one right now)
+  stateColor: root.accentColor
 
   readonly property string style: ValueGraphics.resolvedStyle(root.appearance.style, root.isVertical, root.history !== null, root.ratio)
   // Its icon's or label's line, or its graphic where that reaches further
@@ -45,11 +44,6 @@ BarIconWidget {
   // draws it, so it takes the bar's caps and radius)
   backgroundLevel: root.style === "pill" && !root.hidden ? Math.min(1, root.ratio) : -1
   backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
-
-  // Colour the text by state, while it has one
-  readonly property bool _textByState: root.hasState && BarWidgetStyle.textByState(root.colors, root.appearance)
-  foregroundColor: root._textByState ? root.stateColor : root.colors.text
-  iconColor: root._textByState ? root.stateColor : root.colors.icon
 
   // Graphics draw in the icon's colour for this bar's style: the state's
   // on a tint, outline or plain bar, what reads on it when it's the fill
@@ -74,6 +68,6 @@ BarIconWidget {
     fontSize: root.fontSize
     middle: root.iconMiddle
     color: root.colors.icon
-    textColor: root.foregroundColor
+    textColor: root.contentColors.text
   }
 }

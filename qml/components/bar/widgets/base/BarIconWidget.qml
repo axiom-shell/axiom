@@ -65,6 +65,20 @@ IconTextWidget {
   readonly property alias accentAuto: look.accentAuto
   readonly property alias barSpot: look.barSpot
   readonly property alias colors: look.colors
+  readonly property alias contentColors: look.content
+  // "Colour the text by state" (display styles): the appearance, the color
+  // of its state and whether it has one now (WidgetLook)
+  property alias appearance: look.appearance
+  property alias stateColor: look.stateColor
+  property alias hasState: look.hasState
+  // A color of its own on its content, nudged to read (WidgetLook), and
+  // another field's color as it draws it
+  function contentColor(color, part) {
+    return look.contentColor(color, part);
+  }
+  function drawnColor(field) {
+    return look.drawnColor(field);
+  }
   // On a split bar, its icon part and label set apart (BarShapes.splitRoom)
   splitRoom: barConfig.splitRoom
   // Whether its WidgetGroup draws a background under it, and an outline
@@ -83,8 +97,11 @@ IconTextWidget {
   property real backgroundLevel: -1
   property color backgroundLevelColor: "transparent"
 
-  foregroundColor: colors.text
-  iconColor: colors.icon
+  // A color of its own for its icon (a failure's, DND's), nudged to read;
+  // clear: its colors'
+  property color iconOwnColor: "transparent"
+  foregroundColor: contentColors.text
+  iconColor: iconOwnColor.a > 0 ? look.contentColor(iconOwnColor, "icon") : contentColors.icon
   opacity: (root.pressed ? 0.8 : 1) * root.dim
 
   readonly property WidgetLook _look: WidgetLook {
@@ -95,6 +112,7 @@ IconTextWidget {
     length: root.isVertical ? root.height : root.width
     splits: root.splits
     hovered: root.hitArea?.hovered ?? false
+    level: root.backgroundLevel >= 0
   }
 
   HoverHandler {

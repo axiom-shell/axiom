@@ -90,7 +90,6 @@ BarWidget {
       "disk": "Disk"
     })
 
-  readonly property var appearance: properties.appearance
   // Pill fills the whole widget's background: only with one metric
   readonly property string style: appearance.style === "pill" && segments.length !== 1 ? "fill" : appearance.style
   readonly property bool pill: style === "pill"
@@ -160,8 +159,8 @@ BarWidget {
   accentField: warning ? "warnColor" : "backgroundColor"
   backgroundLevel: root.pill ? Math.min(1, root.segmentData(root.segments[0]).level / 100) : -1
   backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
-  readonly property bool _textByState: BarWidgetStyle.textByState(root.colors, root.appearance)
-  readonly property color textColor: root._textByState ? root.accentColor : root.colors.text
+  appearance: properties.appearance
+  stateColor: root.accentColor
 
   implicitWidth: stack.implicitWidth
   implicitHeight: stack.implicitHeight
@@ -248,8 +247,8 @@ BarWidget {
           text: segment.stat.value
           minimumText: segment.stat.widest
           showText: segment.style !== "icon" && segment.style !== "stacked"
-          foregroundColor: root.textColor
-          iconColor: root._textByState ? root.accentColor : root.colors.icon
+          foregroundColor: root.contentColors.text
+          iconColor: root.contentColors.icon
           leadLength: graphic.drawn ? graphic.length : 0
           leadAfterIcon: graphic.afterIcon
 
@@ -274,7 +273,7 @@ BarWidget {
             fontSize: root.barConfig.fontSize
             middle: segment.iconMiddle
             color: root.colors.icon
-            textColor: root.textColor
+            textColor: root.contentColors.text
           }
         }
       }

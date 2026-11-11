@@ -43,8 +43,8 @@ Item {
   // stacked's two lines fit in; the whole crossSize by default
   property real room: crossSize
   property int fontSize: 0
-  property color color: "white"
-  property color textColor: "white"
+  required property color color
+  required property color textColor
   // Across a bar, where the icon beside it has its middle (IconTextWidget's
   // iconMiddle), in this item's coordinates; below 0, its own middle
   property real middle: -1

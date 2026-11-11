@@ -21,7 +21,7 @@ Item {
   property Item ownHead: null
   property string icon: ""
   property string text: ""
-  property color iconColor: Theme.background
+  required property color iconColor
   property color textColor: iconColor
   readonly property Item head: ownHead ?? (icon !== "" ? iconHead : text !== "" ? textHead : null)
   // Where it starts along the widget

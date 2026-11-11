@@ -55,6 +55,7 @@ BarWidget {
     onBar: root.hitArea !== null
     run: root._run
     inset: root.inset
+    under: root.colors.textBack
   }
   // Its cells fill on hover, each on its own
   fillsOnHover: false

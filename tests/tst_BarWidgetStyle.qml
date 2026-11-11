@@ -19,13 +19,19 @@ TestCase {
     root.schema = files.json("qml/config/json/config.schema.json");
   }
 
-  readonly property color accent: "#ff0000"
+  readonly property color accent: "#ff8080"
   readonly property color own: "#000000"
   readonly property color barText: "#ffffff"
   readonly property color custom: "#00ff00"
 
   function same(actual, expected, message) {
     verify(Qt.colorEqual(actual, expected), `${message}: ${actual} != ${expected}`);
+  }
+
+  // Equal to within 8-bit rounding (a composite is computed in floats)
+  function close(actual, expected, message) {
+    const a = Qt.color(actual), e = Qt.color(expected);
+    verify(Math.abs(a.r - e.r) < 0.01 && Math.abs(a.g - e.g) < 0.01 && Math.abs(a.b - e.b) < 0.01, `${message}: ${actual} != ${expected}`);
   }
 
   // The shared BarStyle: the schema's defaults (shadow as its object)
@@ -137,7 +143,7 @@ TestCase {
     fuzzyCompare(Qt.color(cell("tinted", "active").fill).a, 0.25, 0.01, "a color's tint keeps its strength");
     fuzzyCompare(Qt.color(BarWidgetStyle.faded("#80ff0000", 0.5)).a, 0.25, 0.01, "a part-clear color fades from its own");
     compare(Qt.color(BarWidgetStyle.levelColor({
-      "icon": "transparent"
+      "level": "transparent"
     })).a, 0, "a level in a clear color");
   }
 
@@ -186,7 +192,8 @@ TestCase {
     const light = "#eeeeee", dark = "#222222";
     const c = styled("filled", null, light);
     same(c.fill, "transparent", "fill");
-    same(c.icon, accent, "the icon keeps the state");
+    // (nudged to read on the light run)
+    same(c.icon, BarWidgetStyle.nudged([light], accent, 3), "the icon keeps the state");
     // White bar text can't be read on a light run: black instead
     same(c.text, "#000000", "text on a light run");
     same(styled("filled", null, dark).text, barText, "bar text where it reads");
@@ -279,8 +286,10 @@ TestCase {
       const c = mergedCell(style, "active", light);
       compare(Qt.color(c.fill).a, 0, style + " no box");
       same(c.stroke, "transparent", style + " no border");
-      same(c.content, accent, style + " content in its color");
-      same(mergedCell(style, "occupied", light).content, accent, style + " occupied");
+      // Read where it sits: on a filled run's color, else on the bar
+      const read = style === "filled" ? BarWidgetStyle.nudged([light], accent, 4.5) : accent;
+      same(c.content, read, style + " content in its color");
+      same(mergedCell(style, "occupied", light).content, read, style + " occupied");
     });
     // An empty one faded, reading on what it sits on: a filled run's color,
     // else the bar through the tint or outline
@@ -413,21 +422,58 @@ TestCase {
     same(BarWidgetStyle.levelColor(c), Qt.alpha(c.icon, 0.35), "level");
   }
 
-  function test_text_by_state_only_off_a_fill() {
+  function test_state_content_by_backdrop() {
     const on = {
       "colorText": true
     };
-    verify(BarWidgetStyle.textByState(styled("tinted"), on), "tinted");
-    verify(!BarWidgetStyle.textByState(styled("filled"), on), "filled");
-    verify(!BarWidgetStyle.textByState(styled("tinted"), {
+    const state = "#ff8080";
+    // Off a fill both take the state's color; on one, the colors' own
+    for (const style of ["tinted", "outline", "underline", "accentText", "plain"]) {
+      const c = styled(style);
+      const content = BarWidgetStyle.stateContent(c, on, state, true);
+      same(content.text, BarWidgetStyle.nudged(c.textBack, state, 4.5), style + " text");
+      same(content.icon, BarWidgetStyle.nudged(c.iconBack, state, 3), style + " icon");
+    }
+    const filled = styled("filled");
+    const both = BarWidgetStyle.stateContent(filled, on, state, true);
+    same(both.text, filled.text, "filled text");
+    same(both.icon, filled.icon, "filled icon");
+    // No colorText, or no state: the colors'
+    const tinted = styled("tinted");
+    same(BarWidgetStyle.stateContent(tinted, {
       "colorText": false
-    }), "off");
-    // An unfilled style's fill is the string "transparent": its text
-    // still takes the state's colour
-    for (const style of ["outline", "underline", "accentText", "plain"])
-      verify(BarWidgetStyle.textByState(styled(style), on), style);
-    verify(BarWidgetStyle.textByState(styled("outline", null, "#222222"), on), "an outline run's text");
-    verify(!BarWidgetStyle.textByState(styled("filled", null, "#222222"), on), "a filled run's fill counts");
+    }, state, true).text, tinted.text, "off");
+    same(BarWidgetStyle.stateContent(tinted, on, state, false).icon, tinted.icon, "no state");
+    const run = styled("outline", null, "#222222");
+    same(BarWidgetStyle.stateContent(run, on, state, true).text, BarWidgetStyle.nudged(run.textBack, state, 4.5), "an outline run's text");
+    same(BarWidgetStyle.stateContent(styled("filled", null, "#222222"), on, state, true).text, styled("filled", null, "#222222").text, "a filled run's fill counts");
+  }
+
+  // The bug: split's icon part is filled in the state's color, so its icon
+  // stays the colors' while the label takes the state's
+  function test_state_content_on_split() {
+    const bar = {
+      "widgetStyle": "split",
+      "splitIcon": "joined",
+      "splitLabelFill": "tint"
+    };
+    const c = root.paint(bar, {
+      "splits": true
+    });
+    const content = BarWidgetStyle.stateContent(c, {
+      "colorText": true
+    }, "#ff8080", true);
+    same(content.icon, c.icon, "icon stays");
+    same(content.text, BarWidgetStyle.nudged(c.textBack, "#ff8080", 4.5), "text takes the state");
+    // The bar's text color of its own doesn't stop the state's color
+    const set = root.paint(bar, {
+      "splits": true
+    }, {
+      "override": "#123456"
+    });
+    same(BarWidgetStyle.stateContent(set, {
+      "colorText": true
+    }, "#ff8080", true).text, BarWidgetStyle.nudged(set.textBack, "#ff8080", 4.5), "override");
   }
 
   // Whether a widget's text sits on a fill it must read on (textOnFill):
@@ -558,9 +604,9 @@ TestCase {
       "labelColor": "#eeeeee"
     });
     compare(c.textOnFill, data.onFill, "textOnFill");
-    compare(BarWidgetStyle.textByState(c, {
+    same(BarWidgetStyle.stateContent(c, {
       "colorText": true
-    }), !data.onFill, "textByState");
+    }, "#ff8080", true).text, data.onFill ? c.text : BarWidgetStyle.nudged(c.textBack, "#ff8080", 4.5), "stateContent");
   }
 
   // The bar's gradient where a widget sits: a light color, which the
@@ -624,7 +670,7 @@ TestCase {
     same(c.text, "#000000", "label");
     same(c.icon, "#000000", "Auto icon");
     // A set color keeps it on its icon
-    same(gradientStyled("filled", false, "#222222").icon, accent, "set icon");
+    same(gradientStyled("filled", false, "#222222").icon, BarWidgetStyle.nudged([graded], accent, 3), "set icon, nudged to read on the strip");
     // Through a tint the icon takes the gradient's color
     same(gradientStyled("tinted", true, "#222222").icon, graded, "tinted icon");
   }
@@ -754,17 +800,18 @@ TestCase {
     same(widget("filled").icon, "#000000", "filled icon");
     same(widget("tinted").text, "#000000", "filled on hover");
     same(widget("split").icon, "#000000", "split's icon part");
-    same(widget("outline").text, red, "outline keeps its color");
+    same(widget("outline").text, BarWidgetStyle.nudged([dark], red, 4.5), "outline keeps its color, nudged to read on the bar");
     const cellOf = (style, cellState, given) => root.paintCell({
         "widgetStyle": style
       }, given ?? {}, onDark, cellState, red, dark);
     same(cellOf("filled", "active").content, "#000000", "a filled cell");
     same(cellOf("filled", "occupied", solid).content, "#000000", "a solid cell");
-    same(cellOf("tinted", "active").content, red, "a tinted cell's content is its color");
+    // (nudged to read on its tint)
+    same(cellOf("tinted", "active").content, BarWidgetStyle.nudged([BarWidgetStyle.over(BarWidgetStyle.faded(red, 0.25), "#282828")], red, 4.5), "a tinted cell's content is its color");
     // A clear fill is no fill: the text is on the bar
     same(root.paint({
       "widgetStyle": "filled"
-    }, {}, onDark, "transparent", dark).text, dark, "a clear fill");
+    }, {}, onDark, "transparent", dark).text, BarWidgetStyle.nudged([dark], dark, 4.5), "a clear fill: the text is on the bar, nudged to read there");
   }
 
   // A widget on a split bar whose label sits on `labelFill`, splitting
@@ -951,6 +998,299 @@ TestCase {
   }
 
   // The look's colors resolved once
+  // ---- Backdrops and the nudge ----
+
+  function test_over_composites_opaque() {
+    same(BarWidgetStyle.over("#ffffff", "#000000"), "#ffffff", "opaque top");
+    same(BarWidgetStyle.over("transparent", "#336699"), "#336699", "clear top");
+    close(BarWidgetStyle.over(Qt.rgba(1, 1, 1, 0.5), "#000000"), Qt.rgba(0.5, 0.5, 0.5, 1), "half");
+    // The under color is taken opaque
+    compare(BarWidgetStyle.over(Qt.rgba(1, 0, 0, 0.5), Qt.rgba(0, 0, 0, 0.2)).a, 1, "alpha");
+  }
+
+  function test_nudged_keeps_a_readable_color() {
+    same(BarWidgetStyle.nudged(["#000000"], "#ffffff", 4.5), "#ffffff", "white on black");
+    same(BarWidgetStyle.nudged(["#000000"], "transparent", 4.5), "transparent", "clear");
+  }
+
+  function test_nudged_reaches_the_threshold_by_the_least() {
+    const back = BarWidgetStyle.over(BarWidgetStyle.faded("#31748f", 0.2), "#191724");
+    const out = BarWidgetStyle.nudged([back], "#31748f", 4.5);
+    verify(Utils.contrast(back, "#31748f") < 4.5, "the live case is unreadable");
+    verify(Utils.contrast(back, out) >= 4.5, "reads: " + Utils.contrast(back, out));
+    verify(Utils.contrast(back, out) < 4.8, "by the least: " + Utils.contrast(back, out));
+    verify(Qt.color(out).r > Qt.color("#31748f").r && Qt.color(out).b > Qt.color("#31748f").b, "lighter");
+    verify(Qt.color(out).b > Qt.color(out).r, "hue kept");
+    // A light backdrop goes darker
+    const dark = BarWidgetStyle.nudged(["#f0f0f0"], "#7090a0", 4.5);
+    verify(Utils.contrast("#f0f0f0", dark) >= 4.5, "reads on light");
+    verify(Qt.color(dark).r < Qt.color("#7090a0").r, "darker");
+  }
+
+  function test_nudged_reads_on_every_back() {
+    const backs = ["#202020", "#808080"];
+    const out = BarWidgetStyle.nudged(backs, "#909090", 3);
+    verify(Utils.contrast(backs[0], out) >= 3 && Utils.contrast(backs[1], out) >= 3, "both");
+  }
+
+  function test_nudged_unreachable_is_the_pole() {
+    // Mid grey on mid grey at 7: no mix reaches it
+    const out = BarWidgetStyle.nudged(["#777777"], "#777777", 21);
+    verify(Qt.colorEqual(out, "#000000") || Qt.colorEqual(out, "#ffffff"), "a pole");
+  }
+
+  function test_nudged_keeps_alpha() {
+    fuzzyCompare(Qt.color(BarWidgetStyle.nudged(["#000000"], Qt.rgba(0.1, 0.1, 0.1, 0.5), 4.5)).a, 0.5, 0.01);
+  }
+
+  // The backdrops each content part is checked against, row by row of the
+  // table in BarWidgetStyle: bar black here
+  function test_backdrops_data() {
+    const bar = "#000000";
+    const acc = accent;
+    const tintOf = c => BarWidgetStyle.over(BarWidgetStyle.faded(c, 0.25), bar);
+    const split = fill => ({
+          "widgetStyle": "split",
+          "splitIcon": "joined",
+          "splitLabelFill": fill
+        });
+    const merged = style => ({
+          "widgetStyle": style,
+          "widgetGrouping": "merged"
+        });
+    return [
+      {
+        "tag": "hovered fill",
+        "bar": {
+          "widgetStyle": "tinted",
+          "hoverFill": true
+        },
+        "given": {
+          "hovered": true
+        },
+        "text": [acc],
+        "icon": [acc]
+      },
+      {
+        "tag": "filled",
+        "bar": {
+          "widgetStyle": "filled"
+        },
+        "given": {},
+        "text": [acc],
+        "icon": [acc]
+      },
+      {
+        "tag": "tinted",
+        "bar": {
+          "widgetStyle": "tinted"
+        },
+        "given": {},
+        "text": [tintOf(acc)],
+        "icon": [tintOf(acc)]
+      },
+      {
+        "tag": "outline",
+        "bar": {
+          "widgetStyle": "outline"
+        },
+        "given": {},
+        "text": [bar],
+        "icon": [bar]
+      },
+      {
+        "tag": "split label on a tint",
+        "bar": split("tint"),
+        "given": {
+          "splits": true
+        },
+        "text": [tintOf(acc)],
+        "icon": [acc]
+      },
+      {
+        "tag": "split label on its own color",
+        "bar": split("color"),
+        "given": {
+          "splits": true
+        },
+        "colors": {
+          "labelColor": "#333333"
+        },
+        "text": ["#333333"],
+        "icon": [acc]
+      },
+      {
+        "tag": "split label on the bar",
+        "bar": split("none"),
+        "given": {
+          "splits": true
+        },
+        "text": [bar],
+        "icon": [acc]
+      },
+      {
+        "tag": "merged split, icon part",
+        "bar": Object.assign(split("tint"), {
+          "widgetGrouping": "merged"
+        }),
+        "given": {
+          "splits": true,
+          "group": true
+        },
+        "colors": {
+          "group": "#222222"
+        },
+        "text": ["#222222"],
+        "icon": [acc]
+      },
+      {
+        "tag": "merged filled run",
+        "bar": merged("filled"),
+        "given": {
+          "group": true
+        },
+        "colors": {
+          "group": "#222222"
+        },
+        "text": ["#222222"],
+        "icon": ["#222222"]
+      },
+      {
+        "tag": "merged tinted run",
+        "bar": merged("tinted"),
+        "given": {
+          "group": true
+        },
+        "colors": {
+          "group": "#222222"
+        },
+        "text": [bar],
+        "icon": [bar]
+      }
+    ].map(row => Object.assign({}, row, {
+        "text": row.text.map(c => Qt.color(c)),
+        "icon": row.icon.map(c => Qt.color(c))
+      }));
+  }
+
+  function test_backdrops(data) {
+    const c = root.paint(data.bar, data.given, data.colors);
+    compare(c.textBack.length, data.text.length, "text backs");
+    for (let i = 0; i < data.text.length; i++)
+      close(c.textBack[i], data.text[i], "textBack " + i);
+    for (let i = 0; i < data.icon.length; i++)
+      close(c.iconBack[i], data.icon[i], "iconBack " + i);
+  }
+
+  function test_iconOnFill() {
+    verify(styled("filled").iconOnFill, "filled");
+    verify(!styled("tinted").iconOnFill, "tinted");
+    verify(!styled("outline").iconOnFill, "outline");
+    verify(root.paint({
+      "widgetStyle": "split"
+    }, {
+      "splits": true
+    }).iconOnFill, "split's icon part");
+  }
+
+  function test_a_pill_level_is_a_second_backdrop() {
+    const c = root.paint({
+      "widgetStyle": "tinted"
+    }, {
+      "level": true
+    });
+    compare(c.textBack.length, 2, "text");
+    compare(c.iconBack.length, 2, "icon");
+    same(c.textBack[1], BarWidgetStyle.over(c.level, c.textBack[0]), "over the level");
+    compare(styled("tinted").textBack.length, 1, "none without");
+    same(c.level, BarWidgetStyle.faded(styled("tinted").icon, 0.35), "level from the icon");
+  }
+
+  // An accent too dark for its tint: the live split label
+  readonly property color dim: "#31748f"
+
+  function test_split_label_on_a_tint_is_nudged() {
+    const bar = {
+      "widgetStyle": "split",
+      "splitIcon": "joined",
+      "splitLabelFill": "tint"
+    };
+    const c = root.paint(bar, {
+      "splits": true
+    }, {
+      "background": "#191724"
+    }, dim);
+    verify(Utils.contrast(c.textBack[0], c.text) >= 4.5, "label reads on its tint");
+    same(c.fill, BarWidgetStyle.faded(dim, 0.25), "the tint itself is not nudged");
+    verify(Utils.contrast(c.iconBack[0], c.icon) >= 3, "icon reads");
+    // Outline text and a tinted widget's likewise
+    for (const style of ["tinted", "outline", "accentText"]) {
+      const o = root.paint({
+        "widgetStyle": style
+      }, {}, {
+        "background": "#191724"
+      }, dim);
+      verify(Utils.contrast(o.textBack[0], o.text) >= 4.5 || style === "accentText", style);
+    }
+  }
+
+  function test_override_is_never_nudged() {
+    const unreadable = "#101010";
+    for (const style of ["filled", "tinted", "outline", "plain"]) {
+      const c = styled(style, unreadable);
+      same(c.text, unreadable, style + " text");
+      same(c.icon, unreadable, style + " icon");
+    }
+  }
+
+  function test_state_content_with_hasState_false_is_the_colors() {
+    const c = styled("tinted");
+    const on = {
+      "colorText": true
+    };
+    same(BarWidgetStyle.stateContent(c, on, "#ff0000", false).text, c.text, "text");
+    same(BarWidgetStyle.stateContent(c, null, "#ff0000", true).icon, c.icon, "no appearance");
+  }
+
+  function test_content_is_nudged_where_the_part_sits() {
+    // A dim neutral on a split icon part (its fill the accent) and on a tint
+    const part = root.paint({
+      "widgetStyle": "split"
+    }, {
+      "splits": true
+    });
+    const neutral = "#ff9090";
+    same(BarWidgetStyle.content(part, neutral, "icon"), BarWidgetStyle.nudged(part.iconBack, neutral, 3), "on the icon part");
+    const tint = styled("tinted");
+    same(BarWidgetStyle.content(tint, "#111111", "text"), BarWidgetStyle.nudged(tint.textBack, "#111111", 4.5), "text on a tint");
+  }
+
+  function test_cell_content_reads_on_what_it_sits_on() {
+    const under = [Qt.color("#c0c0c0")];
+    const own = style => root.paintCell({
+        "widgetStyle": style
+      }, {
+        "under": under
+      }, {}, "active", "#ff8080");
+    // Outline: on what the widget's text sits on
+    same(own("outline").content, BarWidgetStyle.nudged(under, "#ff8080", 4.5), "outline on the widget's backdrop");
+    // Empty and plain's fading states are left as they are
+    same(root.paintCell({
+      "widgetStyle": "outline"
+    }, {
+      "under": under
+    }, {}, "empty", "#ff8080").content, Qt.alpha(barText, 0.4), "empty");
+    same(root.paintCell({
+      "widgetStyle": "plain"
+    }, {
+      "under": under
+    }, {}, "occupied", "#ff8080").content, Qt.alpha(barText, 0.7), "plain occupied");
+    // Without `under`, the bar
+    same(root.paintCell({
+      "widgetStyle": "outline"
+    }, {}, {}, "active", "#101010").content, BarWidgetStyle.nudged([Qt.color("#000000")], "#101010", 4.5), "the bar");
+  }
+
   function test_palette() {
     const names = {
       "accent": "#ff0000",

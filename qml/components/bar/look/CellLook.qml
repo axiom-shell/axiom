@@ -27,6 +27,9 @@ QtObject {
   property var run: null
   // The bar's inner side, where its cells' tooltips show
   readonly property int innerEdges: BarCells.innerEdges(barConfig)
+  // What the widget's text sits on (its colors' `textBack`), which a
+  // cell's content reads on; null: the bar (a popout's)
+  property var under: null
   // Room kept to the widget's box across, and a cell's thickness inside it
   property real inset: 0
   property real thickness: barConfig ? barConfig.thickness - inset * 2 : 0
@@ -78,7 +81,8 @@ QtObject {
   function colorsOf(color, own, state, cell) {
     return BarsConfig.cellColors(root.barConfig, color, own, state, Object.assign({}, cell, {
       "solid": root.solid,
-      "onBar": root.onBar
+      "onBar": root.onBar,
+      "under": root.under
     }));
   }
   // A workspace's cell colors by its state (BarsConfig.workspaceCellColors)
@@ -93,7 +97,8 @@ QtObject {
       "textColor": colors.textColor,
       "solidBoxes": root.solid
     }, active, occupied, urgent, Object.assign({}, cell, {
-      "onBar": root.onBar
+      "onBar": root.onBar,
+      "under": root.under
     }));
   }
 }
