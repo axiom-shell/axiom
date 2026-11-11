@@ -74,8 +74,6 @@ ColumnLayout {
 
   Component.onCompleted: ScreenShareManager.checkPortal()
 
-  Component.onCompleted: ScreenShareManager.checkPortal()
-
   StyledText {
     text: root.detail
     textColor: root.status === "missing" ? Theme.error : Theme.foreground
