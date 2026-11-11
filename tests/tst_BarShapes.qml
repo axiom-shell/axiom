@@ -218,6 +218,30 @@ TestCase {
     compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 8, 12, 20]);
   }
 
+  function test_icon_text_split() {
+    // hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom
+    const row = (a, b, c, d, e) => BarShapes.iconTextSplit(a, b, c, d, e).splits;
+    // An icon and a label
+    verify(row(true, true, 0, false, 10));
+    // A ring before the icon, and a label
+    verify(row(true, true, 20, false, 10));
+    // Ticker or stacked after the icon, no text: the label part
+    verify(row(true, false, 20, true, 10));
+    verify(row(true, false, 30, true, 4));
+    // Icon only, text only
+    verify(!row(true, false, 0, false, 10));
+    verify(!row(false, true, 0, false, 10));
+    // An after-icon graphic and no icon
+    verify(!row(false, false, 20, true, 10));
+    // A graphic before the icon and nothing to set apart from it
+    verify(!row(true, false, 20, false, 10));
+    // No room for a split
+    verify(!row(true, true, 0, false, -1));
+    verify(!row(true, false, 20, true, -1));
+    compare(BarShapes.iconTextSplit(true, false, 20, true, 10).iconPartEnd, "icon");
+    compare(BarShapes.iconTextSplit(true, true, 0, false, 10).iconPartEnd, "label");
+  }
+
   function test_tab_caps_keep_no_room() {
     const lone = BarShapes.segment({
       "name": "tab",

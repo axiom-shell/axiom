@@ -63,10 +63,11 @@ BaseWidget {
   // Where that graphic goes: the run's start, leadLength long, across the
   // bar's whole cross size
   readonly property alias lead: leadSlot
-  // The graphic after the icon instead, where a label would be (a custom
-  // widget's ticker or stacked text)
+  // The graphic after the icon instead, where a label would be (a display
+  // style's ticker or stacked text): on a split bar it is the label part,
+  // the icon alone the icon part
   property bool leadAfterIcon: false
-  readonly property real _leadStart: leadAfterIcon ? iconLength + (_hasIcon ? spacing : 0) : 0
+  readonly property real _leadStart: leadAfterIcon ? iconLength + (_hasIcon ? spacing + _splitExtra : 0) : 0
   readonly property real _iconStart: leadAfterIcon ? 0 : _leadRoom
 
   // Across a bar, where the icon's middle is (the run's, with none): what
@@ -83,9 +84,10 @@ BaseWidget {
   // label when they're set apart (a split bar's widget), instead of
   // `spacing`; -1 for none
   property real splitRoom: -1
-  // It shows an icon part and a label apart: it has a splitRoom, an icon
-  // or a lead graphic, and a label
-  readonly property bool splits: splitRoom >= 0 && _hasText && (_hasIcon || _leadRoom > 0)
+  // It shows an icon part and a label apart (BarShapes.iconTextSplit): it
+  // has a splitRoom, an icon part (the icon, or a lead graphic before it)
+  // and a label part (the text, or a lead graphic after the icon)
+  readonly property bool splits: BarShapes.iconTextSplit(_hasIcon, _hasText, _leadRoom, leadAfterIcon, splitRoom).splits
   readonly property real _splitExtra: splits ? splitRoom - spacing : 0
   // Where the middle of the gap between the two parts is along the bar
   // (splitAt, -1 when it doesn't split), and what the icon part holds
@@ -96,7 +98,7 @@ BaseWidget {
     // Across, the icon's middle (the run's, with none), in the run's
     // coordinates
     const middle = _hasIcon ? (isVertical ? iconLabel.x + iconLabel.width / 2 : iconLabel.y + iconLabel.height / 2) : (isVertical ? run.width : run.height) / 2;
-    return BarShapes.splitPart(isVertical, isVertical ? run.y : run.x, textSlot.start - splitRoom, splitRoom, (isVertical ? run.x : run.y) + middle, fontSize * iconScale);
+    return BarShapes.splitPart(isVertical, isVertical ? run.y : run.x, leadAfterIcon ? _iconStart + iconLength : textSlot.start - splitRoom, splitRoom, (isVertical ? run.x : run.y) + middle, fontSize * iconScale);
   }
   readonly property real splitAt: _splitPlace?.at ?? -1
   // What the icon part holds (the lead graphic and the icon) in the

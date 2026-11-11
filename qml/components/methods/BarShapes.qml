@@ -62,6 +62,22 @@ QtObject {
     return icon === "badge" ? spacing + badgePad : padding * 2 + root.depth(cap, across);
   }
 
+  // Whether an icon-and-label widget shows an icon part and a label part
+  // apart: it has a `splitRoom` (>= 0, -1 for none) and both parts. The
+  // icon part is the icon, or a lead graphic drawn before it; the label part
+  // is the text, or a lead graphic drawn after the icon (`leadAfterIcon`:
+  // ticker and stacked text). `leadRoom` is the lead graphic's room (0 for
+  // none). iconPartEnd says where the icon part ends: "icon" (the icon's
+  // end, a graphic after it) or "label" (the gap before the label starts).
+  function iconTextSplit(hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom) {
+    const hasIconPart = hasIcon || (leadRoom > 0 && !leadAfterIcon);
+    const hasLabelPart = hasText || (leadRoom > 0 && leadAfterIcon);
+    return {
+      "splits": splitRoom >= 0 && hasLabelPart && hasIconPart,
+      "iconPartEnd": leadAfterIcon ? "icon" : "label"
+    };
+  }
+
   // A split widget's icon part, `head` long from `start` along it, and
   // the gap of `room` after it: { at: the gap's middle along the bar,
   // part: what the icon part holds, `size` across round `middle` }, in the
