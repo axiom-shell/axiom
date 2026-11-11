@@ -119,7 +119,8 @@ QtObject {
 
   // What a widget draws in: { fill, stroke, indicator, text, icon,
   // iconFill, gradient, textOnFill, textBack, iconBack, iconOnFill,
-  // level }. `accent` is its own color for its
+  // level, accent }. `accent`: its color for its state as drawn: the
+  // gradient's where it gives way, else its own. `accent` is its own color for its
   // state (its background while filled), `own` its text color (picked to
   // read on that background). `iconFill` is split's icon part (its icon or
   // badge), else transparent; `gradient` what of its background draws the
@@ -136,6 +137,7 @@ QtObject {
     const color = graded ? state.gradient : accent;
     const result = root._widget(look, palette, state, color, root._readable(palette, color, own), graded);
     result.gradient = graded ? root._widgetGradient(look, state) : null;
+    result.accent = color;
     return root._finish(palette, state, result);
   }
 
@@ -452,7 +454,8 @@ QtObject {
       "textBack": textBack,
       "iconBack": iconBack,
       "iconOnFill": iconOnFill,
-      "level": "transparent"
+      "level": "transparent",
+      "accent": "transparent"
     };
   }
 }

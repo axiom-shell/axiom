@@ -27,9 +27,6 @@ BarIconWidget {
   // Whether its label shows beside a graphic (its own "show the value"
   // setting): ticker and stacked are the label, icon has none
   property bool labelShown: true
-  // The colour of its state, for "Colour the text by state" (the base's
-  // stateColor, hasState: whether it has one right now)
-  stateColor: root.accentColor
 
   readonly property string style: ValueGraphics.resolvedStyle(root.appearance.style, root.isVertical, root.history !== null, root.ratio)
   // Its icon's or label's line, or its graphic where that reaches further

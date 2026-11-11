@@ -35,7 +35,8 @@ QtObject {
   // `appearance` ({ colorText }) or null for none, the color of its state
   // and whether it has one now
   property var appearance: null
-  property color stateColor: root.accentColor
+  // (the colour of its state as drawn: colors.accent)
+  property color stateColor: root.colors.accent
   property bool hasState: true
   // Its text color's name: a widget with no field for it (the tray,
   // Workspaces: their heads, SplitLead) the field's default

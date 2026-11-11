@@ -160,7 +160,6 @@ BarWidget {
   backgroundLevel: root.pill ? Math.min(1, root.segmentData(root.segments[0]).level / 100) : -1
   backgroundLevelColor: root.colors.level
   appearance: properties.appearance
-  stateColor: root.accentColor
 
   implicitWidth: stack.implicitWidth
   implicitHeight: stack.implicitHeight

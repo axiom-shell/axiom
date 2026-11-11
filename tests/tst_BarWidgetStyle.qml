@@ -628,6 +628,33 @@ TestCase {
     }, accent, "#ffffff");
   }
 
+  // colors().accent: its state's color as drawn
+  function test_accent_is_the_color_drawn() {
+    same(gradientStyled("filled", true).accent, graded, "the gradient's slice");
+    same(gradientStyled("filled", false).accent, accent, "not auto");
+    same(styled("filled").accent, accent, "no gradient");
+    same(root.paint({
+      "widgetStyle": "filled"
+    }, {
+      "gradient": null,
+      "auto": true
+    }).accent, accent, "spot -1");
+  }
+
+  function test_color_text_follows_the_graded_color() {
+    const c = gradientStyled("split", true, null, {
+      "splitIcon": "joined",
+      "splitLabelFill": "tint"
+    }, {
+      "splits": true
+    });
+    const content = BarWidgetStyle.stateContent(c, {
+      "colorText": true
+    }, c.accent, true);
+    same(content.text, BarWidgetStyle.nudged(c.textBack, graded, 4.5), "text takes the slice");
+    verify(!Qt.colorEqual(content.text, BarWidgetStyle.nudged(c.textBack, accent, 4.5)), "not the raw accent");
+  }
+
   function test_gradient_takes_the_place_of_an_auto_color() {
     const c = gradientStyled("filled", true);
     same(c.fill, graded, "fill");
