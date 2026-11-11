@@ -74,7 +74,7 @@ ValueStyleWidget {
     const price = MarketMath.formatPrice(f.price, f.currency);
     const percent = MarketMath.formatPercent(f.percent);
     const change = root.properties.value === "change" ? MarketMath.formatChange(f.change, f.currency) : percent;
-    const colored = rich && root.properties.colorize ? `<font color="${MarketsManager.trendColor(f.trend)}">${change}</font>` : change;
+    const colored = rich && root.properties.colorize ? `<font color="${root.contentColor(MarketsManager.trendColor(f.trend), "text")}">${change}</font>` : change;
     switch (root.properties.value) {
     case "price":
       return price;

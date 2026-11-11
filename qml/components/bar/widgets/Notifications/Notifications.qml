@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 import qs.services.system
 import qs.services.ui
 import qs.components.reusable
@@ -23,7 +24,7 @@ BarIconWidget {
   showText: labelKind !== "none" && text !== ""
   minimumText: labelKind === "count" ? "00" : ""
   textFormat: Text.PlainText
-  iconColor: NotificationManager.dnd ? Theme.resolveColor(properties.dndColor) : colors.icon
+  iconOwnColor: NotificationManager.dnd ? Theme.resolveColor(properties.dndColor) : "transparent"
 
   // News: the unread count rose, with do-not-disturb off
   attentionLevel: NotificationManager.count
@@ -49,7 +50,8 @@ BarIconWidget {
     shown: root.properties.showCount && root.labelKind !== "count" && NotificationManager.count > 0
     x: Math.round(root.iconRect.x + root.iconRect.width - width / 2)
     y: 1
-    color: Theme.resolveColor(root.properties.badgeColor)
+    color: root.contentColor(Theme.resolveColor(root.properties.badgeColor), "icon")
+    textColor: BarWidgetStyle.readableOn(color, Theme.background, [Theme.foreground])
     text: NotificationManager.countLabel
     // The bar's own text size, not the Interface scale
     textSize: Math.round(root.fontSize * 0.7)

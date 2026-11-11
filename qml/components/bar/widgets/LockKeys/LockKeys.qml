@@ -55,12 +55,10 @@ BarIconWidget {
   leadLength: root._single ? 0 : root.isVertical ? glyphs.implicitHeight : glyphs.implicitWidth
 
   accentField: anyOn ? "activeColor" : "inactiveColor"
-  // What an off key draws in: the inactive color's, whatever the others,
-  // so a key turning on never tints the ones still off (filled as the
-  // widget is on hover)
-  readonly property color _offColor: BarsConfig.widgetColors(barConfig, Theme.resolveColor(properties.inactiveColor), properties.foregroundColor, {
-    "hovered": root.hitArea?.hovered ?? false
-  }).icon
+  // What an off key draws in: the inactive color's as drawn here (the
+  // gradient's, where it gives way), whatever the others, so a key turning
+  // on never tints the ones still off
+  readonly property color _offColor: root.contentColor(root.drawnColor("inactiveColor"), "icon")
 
   Grid {
     id: glyphs

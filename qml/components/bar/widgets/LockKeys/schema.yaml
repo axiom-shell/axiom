@@ -16,7 +16,7 @@ settings:
     default: true
     description: Show only while one of the keys is on.
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning}
-  inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
+  inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: rest}
   foregroundColor:
     type: string
     title: Text color

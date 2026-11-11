@@ -16,7 +16,7 @@ settings:
     description: Show only while a session or break runs.
   workColor: {$ref: '#/definitions/WidgetColor', title: Focus color}
   breakColor: {$ref: '#/definitions/WidgetColor', title: Break color, x-autoColor: alt}
-  idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}
+  idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: rest}
   foregroundColor:
     type: string
     title: Text color

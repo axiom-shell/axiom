@@ -18,6 +18,8 @@ import QtQuick
 //   alt       a second state: as unlike its accent as the palette allows
 //   warning, critical   the palette's
 //   off       the subtlest neutral that still stands out
+//   rest      the same, for a widget's usual idle state: it gives way to
+//             the bar's gradient like an accent (WidgetLook)
 //   neutral   the same, for a box whose content brings its own colors
 //             (tray icons, workspace cells)
 // Returns one { key: name } per widget, for its fields not in `set`.
@@ -62,7 +64,7 @@ QtObject {
           out[k] = palette[roles[k]].name;
           break;
         default:
-          // off, neutral
+          // off, rest, neutral
           out[k] = off.name;
         }
       });

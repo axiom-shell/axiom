@@ -41,7 +41,7 @@ QtObject {
   // Workspaces: their heads, SplitLead) the field's default
   readonly property string _foreground: root.properties?.foregroundColor ?? "base00"
 
-  readonly property bool accentAuto: root.autoColors[root.accentField] === "accent"
+  readonly property bool accentAuto: root._gradedRoles.includes(root.autoColors[root.accentField])
   // Where its middle sits along the bar (0-1), or -1 without a gradient
   readonly property real barSpot: BarGradient.spot(0, root.length, root.barOffset, root.barLength)
   readonly property var colors: BarsConfig.widgetColors(root.barConfig, root.accentColor, root._foreground, {
@@ -61,8 +61,9 @@ QtObject {
     return BarWidgetStyle.content(root.colors, color, part);
   }
 
-  // The Auto field roles that give way to the bar's gradient
-  readonly property var _gradedRoles: ["accent"]
+  // The Auto field roles that give way to the bar's gradient: a widget's
+  // own color and its usual resting state
+  readonly property var _gradedRoles: ["accent", "rest"]
 
   // `field`'s color as this widget draws it here: the gradient's where it
   // sits when the field is Auto in a role that gives way, else its own

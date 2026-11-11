@@ -87,7 +87,7 @@ ValueStyleWidget {
     text: "lock"
     fill: 1
     textSize: Math.round(root.fontSize * 0.65)
-    textColor: Theme.resolveColor(root.properties.vpnColor)
+    textColor: root.contentColor(Theme.resolveColor(root.properties.vpnColor), "icon")
 
     Glide on opacity {}
   }

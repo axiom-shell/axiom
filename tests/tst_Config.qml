@@ -75,4 +75,15 @@ TestCase {
         verify(settings.foregroundColor !== undefined, name + " has no foregroundColor");
     }
   }
+
+  // One Auto accent role per widget type: the bar picks a widget's accent
+  // from the first, so a second would fall to a neutral (Network's VPN lock)
+  function test_widgets_have_one_accent_role() {
+    for (const option of schema.definitions.BarWidget.oneOf) {
+      const name = option.$ref.split("/").pop();
+      const settings = schema.definitions[name].properties.properties.properties;
+      const accents = Object.keys(settings).filter(key => settings[key]["x-autoColor"] === "accent");
+      verify(accents.length <= 1, name + " has several accent roles: " + accents.join(", "));
+    }
+  }
 }
