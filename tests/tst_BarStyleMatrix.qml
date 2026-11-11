@@ -4,15 +4,13 @@ import qs.components.methods
 import "barstyle/Bars.js" as Bars
 import "barstyle/Matrix.js" as Matrix
 
-// The bar widget style system's characterization: every widget style,
-// grouping, shape, split, Fill on hover, gradient and cell state run
-// through the style helpers, and what they give recorded
-// (barstyle/Matrix.js): main's behaviour before the style rework, plus
-// the rework's intended changes, each re-recorded in the commit that made
-// it (text on a fill by WCAG contrast; the room at a run's ends). The
-// expected data is never edited by hand: otherwise only the adapters below
-// change, to reach the same results through a new API. Colour the text by
-// state (textByState) is left out: the rework changes it on purpose.
+// The bar widget style system's geometry characterization: every look,
+// shape, run, cell shape, outline and tab run through the helpers, and
+// what they give recorded (barstyle/Matrix.js): main's behaviour before
+// the style rework, plus its intended changes, each re-recorded in the
+// commit that made it. The expected data is never edited by hand:
+// otherwise only the adapters below change, to reach the same results
+// through a new API. What colours draw is tst_BarWidgetStyle's sweep.
 TestCase {
   id: root
 
@@ -174,28 +172,6 @@ TestCase {
     }, {});
   }
 
-  // A widget's colors (BarsConfig.widgetColors)
-  function widgetColors(bar, accent, foregroundName, widget) {
-    return BarWidgetStyle.widgetColors(bar, accent, root.resolve(foregroundName), widget);
-  }
-
-  // A cell's colors (BarsConfig.cellColors)
-  function cellColors(bar, color, own, state, cell) {
-    const palette = bar.palette;
-    return BarWidgetStyle.cell(bar.look, palette, BarWidgetStyle.state(palette, {
-      "hovered": cell?.hovered,
-      "spot": cell?.spot,
-      "auto": (cell?.spot ?? -1) >= 0,
-      "solid": cell?.solid,
-      "group": cell?.onBar === true && bar.look.grouping === "merged"
-    }), color, own, state);
-  }
-
-  // A merged run's own background (BarsConfig.groupColors)
-  function groupColors(bar, spot) {
-    return BarWidgetStyle.runColors(bar.look, bar.palette, spot);
-  }
-
   function cellFlags(bar, solid) {
     const traits = BarLook.cellTraits(bar.look, solid);
     return [traits.cellOpaque, traits.boxedInRun];
@@ -282,138 +258,6 @@ TestCase {
             "widgetStyle": style
           }
         ]]));
-  }
-
-  function hex(c) {
-    if (c === "transparent")
-      return "T";
-    const q = Qt.color(c);
-    return [q.a, q.r, q.g, q.b].map(x => Math.round(x * 255).toString(16).padStart(2, "0")).join("");
-  }
-
-  function part(g) {
-    return g ? `${g.part}@${g.alpha}` : "-";
-  }
-
-  // Widget colors: fill stroke indicator text icon iconFill gradient
-  function colorsRow(c) {
-    return [root.hex(c.fill), root.hex(c.stroke), root.hex(c.indicator), root.hex(c.text), root.hex(c.icon), root.hex(c.iconFill), root.part(c.gradient)].join(" ");
-  }
-
-  // Cell colors: fill stroke indicator content showsHover gradient
-  function cellRow(c) {
-    return [root.hex(c.fill), root.hex(c.stroke), root.hex(c.indicator), root.hex(c.content), c.showsHover ? 1 : 0, root.part(c.gradient)].join(" ");
-  }
-
-  // Gradient and override cases: [key, raw over, widget over]
-  readonly property var gradientCases: [["g0",
-      {},
-      {}
-    ], ["g1-nospot",
-      {
-        "gradient": true
-      },
-      {}
-    ], ["g1-set",
-      {
-        "gradient": true
-      },
-      {
-        "spot": 0.3
-      }
-    ], ["g1-auto",
-      {
-        "gradient": true
-      },
-      {
-        "spot": 0.3,
-        "auto": true
-      }
-    ]]
-  readonly property var hoverCases: [["h00", false, false], ["h01", false, true], ["h10", true, false], ["h11", true, true]]
-
-  function colorCases() {
-    const out = {};
-    for (const [styleKey, styleOver] of root.styleLooks())
-      for (const grouping of ["separate", "merged"])
-        for (const [gKey, gOver, gWidget] of root.gradientCases)
-          for (const [hKey, hoverFill, hovered] of root.hoverCases)
-            for (const textColor of ["", "base0D"])
-              for (const splits of styleOver.widgetStyle === "split" ? [false, true] : [false]) {
-                const raw = root.rawLook(Object.assign({
-                  "widgetGrouping": grouping,
-                  "hoverFill": hoverFill,
-                  "widgetTextColor": textColor
-                }, styleOver, gOver));
-                const bar = root.enrich(raw, root.geometry({}));
-                const widget = Object.assign({
-                  "hovered": hovered,
-                  "splits": splits
-                }, gWidget);
-                const key = [styleKey, grouping, gKey, hKey, textColor ? "ovr" : "auto", splits ? "splits" : "whole"].join("/");
-                out[key] = root.colorsRow(root.widgetColors(bar, Qt.color("#fb4934"), "base00", widget));
-              }
-    // A tab bar's grouping as drawn, and a light accent, on a few looks
-    for (const [styleKey, styleOver] of root.styleLooks())
-      for (const grouping of ["merged", "powerline"]) {
-        const raw = root.rawLook(Object.assign({
-          "widgetGrouping": grouping,
-          "widgetShape": "tab"
-        }, styleOver));
-        const bar = root.enrich(raw, root.geometry({}));
-        out[`${styleKey}/tab/${grouping}/light`] = root.colorsRow(root.widgetColors(bar, Qt.color("#fabd2f"), "base00", {
-          "splits": true
-        }));
-      }
-    return out;
-  }
-
-  readonly property var cellStates: [["active", "#83a598"], ["occupied", "#b8bb26"], ["urgent", "#fb4934"], ["empty", "#665c54"]]
-
-  function cellCases() {
-    const out = {};
-    const groupCases = [["separate", true], ["merged", true], ["merged", false]];
-    const gradients = [["g0", false, -1], ["g1-nospot", true, -1], ["g1-spot", true, 0.3]];
-    const hovers = [["h00", false, false], ["h10", true, false], ["h11", true, true]];
-    for (const style of root.styles)
-      for (const solid of [false, true])
-        for (const [grouping, onBar] of groupCases)
-          for (const [gKey, gradient, spot] of gradients)
-            for (const [hKey, hoverFill, hovered] of hovers)
-              for (const [state, color] of root.cellStates)
-                for (const textColor of gKey === "g0" && hKey === "h00" ? ["", "base0D"] : [""]) {
-                  const bar = root.enrich(root.rawLook({
-                    "widgetStyle": style,
-                    "widgetGrouping": grouping,
-                    "gradient": gradient,
-                    "hoverFill": hoverFill,
-                    "widgetTextColor": textColor
-                  }), root.geometry({}));
-                  const own = state === "empty" ? root.resolve("foreground") : root.resolve("base00");
-                  const key = [style, solid ? "solid" : "own", grouping, onBar ? "onBar" : "popout", gKey, hKey, state, textColor ? "ovr" : "auto"].join("/");
-                  out[key] = root.cellRow(root.cellColors(bar, Qt.color(color), own, state, {
-                    "hovered": hovered,
-                    "spot": spot,
-                    "solid": solid,
-                    "onBar": onBar
-                  }));
-                }
-    return out;
-  }
-
-  function runCases() {
-    const out = {};
-    for (const [styleKey, styleOver] of root.styleLooks())
-      for (const [gKey, gradient, spot] of [["g0", false, -1], ["g1-nospot", true, -1], ["g1-spot", true, 0.5]])
-        for (const textColor of ["", "base0D"]) {
-          const bar = root.enrich(root.rawLook(Object.assign({
-            "widgetGrouping": "merged",
-            "gradient": gradient,
-            "widgetTextColor": textColor
-          }, styleOver)), root.geometry({}));
-          out[[styleKey, gKey, textColor ? "ovr" : "auto"].join("/")] = root.colorsRow(root.groupColors(bar, spot));
-        }
-    return out;
   }
 
   function lookCases() {
@@ -712,9 +556,6 @@ TestCase {
 
   function groups() {
     return {
-      "colors": root.colorCases(),
-      "cells": root.cellCases(),
-      "runs": root.runCases(),
       "looks": root.lookCases(),
       "segments": root.segmentCases(),
       "cellShapes": root.cellShapeCases(),

@@ -36,11 +36,13 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
 
-  readonly property color activeColor: Theme.resolveColor(properties.activeColor)
-  readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
-  readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
-  readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
-  readonly property color textColor: Theme.resolveColor(properties.textColor)
+  // The widget's colors resolved (BarsConfig.workspaceColors)
+  readonly property var _colors: BarsConfig.workspaceColors(properties)
+  readonly property color activeColor: root._colors.activeColor
+  readonly property color occupiedColor: root._colors.occupiedColor
+  readonly property color urgentColor: root._colors.urgentColor
+  readonly property color emptyColor: root._colors.emptyColor
+  readonly property color textColor: root._colors.textColor
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""

@@ -70,19 +70,24 @@ QtObject {
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
   // active/occupied/urgent/empty, `cell` what of the cell its look depends
-  // on (BarWidgetStyle.state's hovered, spot and under: where the middle of a cell whose
-  // color is Auto sits along the bar, for the bar's gradient to take its
-  // place; `solid`: a filled box whatever the bar's style, Workspaces'
-  // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
-  // popout, so in a merged run on a merged bar)
+  // on (BarWidgetStyle.state's hovered, spot, under, auto, muted, pulse
+  // and hover: where the middle of a cell whose color is Auto sits along
+  // the bar, for the bar's gradient to take its place, `auto` saying it
+  // gives way to it (left out: when it has a place); `solid`: a filled
+  // box whatever the bar's style, Workspaces' `solidBoxes`; and `onBar`:
+  // drawn in its widget on the bar, not a popout, so in a merged run on a
+  // merged bar)
   function cellColors(barConfig, color, own, state, cell) {
     const palette = barConfig.palette;
     return BarWidgetStyle.cell(barConfig.look, palette, BarWidgetStyle.state(palette, {
       "hovered": cell?.hovered,
       "spot": cell?.spot,
-      "auto": (cell?.spot ?? -1) >= 0,
+      "auto": cell?.auto ?? (cell?.spot ?? -1) >= 0,
       "solid": cell?.solid,
       "under": cell?.under,
+      "muted": cell?.muted,
+      "pulse": cell?.pulse,
+      "hover": cell?.hover,
       "group": cell?.onBar === true && barConfig.look.grouping === "merged"
     }), color, own, state);
   }
@@ -99,7 +104,7 @@ QtObject {
       "occupied": colors.occupiedColor,
       "empty": colors.emptyColor
     }[state];
-    return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state, Object.assign({}, cell, {
+    return BarsConfig.cellColors(barConfig, color, state === "empty" ? barConfig.palette.barText : colors.textColor, state, Object.assign({}, cell, {
       "solid": colors.solidBoxes === true
     }));
   }
@@ -119,9 +124,24 @@ QtObject {
   }
 
   // A Workspaces cell's box while hovered: its `hoverColor`, or for Auto
-  // (empty) the theme's highlight
-  function cellHoverColor(properties) {
-    return properties?.hoverColor ? Theme.resolveColor(properties.hoverColor) : Theme.backgroundHighlight;
+  // (empty) the bar's cell hover (palette.cellHover: the theme's
+  // highlight; `barConfig` null, a popout's before its payload: the theme's)
+  function cellHoverColor(properties, barConfig = null) {
+    const own = properties?.hoverColor ? Theme.resolveColor(properties.hoverColor) : null;
+    return own ?? barConfig?.palette.cellHover ?? Theme.backgroundHighlight;
+  }
+
+  // A Workspaces widget's colors from its options (`properties`), resolved:
+  // { activeColor, occupiedColor, urgentColor, emptyColor, textColor }, as
+  // workspaceCellColors takes them
+  function workspaceColors(properties) {
+    return {
+      "activeColor": Theme.resolveColor(properties.activeColor),
+      "occupiedColor": Theme.resolveColor(properties.occupiedColor),
+      "urgentColor": Theme.resolveColor(properties.urgentColor),
+      "emptyColor": Theme.resolveColor(properties.emptyColor),
+      "textColor": Theme.resolveColor(properties.textColor)
+    };
   }
 
   // What a merged run of widgets draws its shared background in: with a

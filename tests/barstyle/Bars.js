@@ -63,11 +63,54 @@ var theme = {
   "base0E": "#d3869b",
   "base0F": "#d65d0e",
   "warning": "#fabd2f",
-  "error": "#fb4934"
+  "error": "#fb4934",
+  "border": "#665c54"
 };
+
+// The same names in a light theme (a base16 light scheme)
+var lightTheme = {
+  "foreground": "#3c3836",
+  "background": "#fbf1c7",
+  "backgroundAlt": "#ebdbb2",
+  "backgroundHighlight": "#d5c4a1",
+  "accent": "#076678",
+  "accentAlt": "#8f3f71",
+  "base00": "#fbf1c7",
+  "base01": "#ebdbb2",
+  "base02": "#d5c4a1",
+  "base03": "#bdae93",
+  "base04": "#665c54",
+  "base05": "#504945",
+  "base06": "#3c3836",
+  "base07": "#282828",
+  "base08": "#9d0006",
+  "base09": "#af3a03",
+  "base0A": "#b57614",
+  "base0B": "#79740e",
+  "base0C": "#427b58",
+  "base0D": "#076678",
+  "base0E": "#8f3f71",
+  "base0F": "#d65d0e",
+  "warning": "#b57614",
+  "error": "#9d0006",
+  "border": "#bdae93"
+};
+
+function resolverOf(colors) {
+  return name => Qt.color(colors[name] ?? name);
+}
 
 function resolve(name) {
   return Qt.color(theme[name] ?? name);
+}
+
+// The env keys that make a theme: its resolver, foreground and background
+function themeEnv(colors) {
+  return {
+    "resolve": resolverOf(colors),
+    "foreground": Qt.color(colors.foreground),
+    "background": Qt.color(colors.background)
+  };
 }
 
 function env(over) {
