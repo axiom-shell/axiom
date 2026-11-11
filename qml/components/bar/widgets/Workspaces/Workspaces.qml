@@ -130,7 +130,7 @@ BarWidget {
   // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
   // Not in a merged run: that's a strip of the gradient itself, which the
   // cell would vanish into, so it keeps its own.
-  readonly property var _activeSpotOf: root.autoColors.activeColor === "accent" && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
+  readonly property var _activeSpotOf: root.autoColors.activeColor?.gradient === true && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
 
   Component {
     id: strip

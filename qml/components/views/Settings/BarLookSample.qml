@@ -140,7 +140,10 @@ Item {
         })
       accentField: "backgroundColor"
       autoColors: ({
-          "backgroundColor": "accent"
+          "backgroundColor": {
+            "role": "accent",
+            "gradient": true
+          }
         })
       length: sample.implicitWidth
       barOffset: sample.box.x + sample.box.lead

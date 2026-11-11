@@ -20,7 +20,7 @@ QtObject {
   // (`accentAuto`) gives way to the bar's gradient.
   property string accentField: ""
   property color accentColor: Theme.resolveColor(root.properties?.[root.accentField] ?? "")
-  // Its Auto fields' roles (BarsConfig.withAutoColors), and where it sits
+  // Its Auto fields ({ key: { role, gradient } }, BarsConfig.withAutoColors), and where it sits
   // along its bar as laid out, for the bar's gradient (set by its host)
   property var autoColors: ({})
   property real barOffset: 0
@@ -42,7 +42,7 @@ QtObject {
   // Workspaces: their heads, SplitLead) the field's default
   readonly property string _foreground: root.properties?.foregroundColor ?? "base00"
 
-  readonly property bool accentAuto: root._gradedRoles.includes(root.autoColors[root.accentField])
+  readonly property bool accentAuto: root.autoColors[root.accentField]?.gradient === true
   // Where its middle sits along the bar (0-1), or -1 without a gradient
   readonly property real barSpot: BarGradient.spot(0, root.length, root.barOffset, root.barLength)
   readonly property var colors: BarsConfig.widgetColors(root.barConfig, root.accentColor, root._foreground, {
@@ -62,15 +62,11 @@ QtObject {
     return BarWidgetStyle.content(root.colors, color, part);
   }
 
-  // The Auto field roles that give way to the bar's gradient: a widget's
-  // own color and its usual resting state
-  readonly property var _gradedRoles: ["accent", "rest"]
-
   // `field`'s color as this widget draws it here: the gradient's where it
-  // sits when the field is Auto in a role that gives way, else its own
+  // sits when the field is Auto and gives way to it (an own color or an active state), else its own
   function drawnColor(field) {
     const own = Theme.resolveColor(root.properties?.[field] ?? "");
-    if (root.barSpot < 0 || !root._gradedRoles.includes(root.autoColors[field]))
+    if (root.barSpot < 0 || root.autoColors[field]?.gradient !== true)
       return own;
     const stops = root.barConfig.palette.gradientStops;
     return stops ? BarGradient.gradientAt(stops, root.barSpot) : own;

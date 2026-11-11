@@ -22,10 +22,10 @@ import QtQuick
 //             widget then draws as filled (Fill on hover)
 //   gradient  the bar gradient's color where it sits (its middle), or
 //             null: no gradient (or no place on a bar, a preview)
-//   auto      its color is its Auto own color (its `accent` role left
-//             empty, BarsConfig.withAutoColors): only that gives way to
-//             the bar's gradient. A color set on the widget and its state
-//             colors keep theirs.
+//   auto      its color is an Auto field that gives way to the bar's
+//             gradient (`x-autoGradient`, `accent` implied;
+//             BarsConfig.withAutoColors). A color set on the widget and
+//             the state colors that don't give way keep theirs.
 //   run       it's a merged run's own background (runColors)
 //   group     it sits in a merged run, which draws its background
 //   solid     (a cell) a filled box whatever the bar's style
@@ -119,9 +119,10 @@ QtObject {
 
   // What a widget draws in: { fill, stroke, indicator, text, icon,
   // iconFill, gradient, textOnFill, textBack, iconBack, iconOnFill,
-  // level, accent }. `accent`: its color for its state as drawn: the
-  // gradient's where it gives way, else its own. `accent` is its own color for its
-  // state (its background while filled), `own` its text color (picked to
+  // level, accent }. `accent` (the result's): its color for its state as
+  // drawn: the gradient's where it gives way, else its own. The
+  // `accent` argument is its own color for its state (its background
+  // while filled), `own` its text color (picked to
   // read on that background). `iconFill` is split's icon part (its icon or
   // badge), else transparent; `gradient` what of its background draws the
   // bar's gradient ({ part, alpha }: the look's `gradientPart` trait), else

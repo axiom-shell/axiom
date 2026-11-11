@@ -19,7 +19,7 @@ settings:
     default: ['30m', '1h', '4h']
     description: Comma-separated, e.g. 30m, 1h30m, 4h.
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color}
-  inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: rest}
+  inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
   foregroundColor:
     type: string
     title: Text color

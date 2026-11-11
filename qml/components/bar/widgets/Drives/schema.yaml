@@ -23,7 +23,7 @@ settings:
   idleColor:
     $ref: '#/definitions/WidgetColor'
     title: Not mounted color
-    x-autoColor: rest
+    x-autoColor: 'off'
   foregroundColor:
     type: string
     title: Text color

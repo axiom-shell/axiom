@@ -77,13 +77,35 @@ TestCase {
   }
 
   // One Auto accent role per widget type: the bar picks a widget's accent
-  // from the first, so a second would fall to a neutral (Network's VPN lock)
+  // from the first, so a second would fall to a neutral (Network's VPN lock).
+  // LockKeys grades its warning-role active state by `x-autoGradient`, not
+  // by a second accent.
   function test_widgets_have_one_accent_role() {
     for (const option of schema.definitions.BarWidget.oneOf) {
       const name = option.$ref.split("/").pop();
       const settings = schema.definitions[name].properties.properties.properties;
       const accents = Object.keys(settings).filter(key => settings[key]["x-autoColor"] === "accent");
       verify(accents.length <= 1, name + " has several accent roles: " + accents.join(", "));
+    }
+  }
+
+  // Which Auto fields give way to the bar's gradient: an accent always, any
+  // other role only by `x-autoGradient`; idle and off states never
+  function test_auto_gradient_fields() {
+    for (const option of schema.definitions.BarWidget.oneOf) {
+      const name = option.$ref.split("/").pop();
+      const settings = schema.definitions[name].properties.properties.properties;
+      for (const key of Object.keys(settings)) {
+        const field = settings[key];
+        const where = name + "." + key;
+        verify(field["x-autoColor"] !== "rest", where + " has the removed role rest");
+        if ("x-autoGradient" in field) {
+          verify("x-autoColor" in field, where + ": x-autoGradient without x-autoColor");
+          verify(field["x-autoColor"] !== "off" && field["x-autoColor"] !== "neutral", where + ": an " + field["x-autoColor"] + " field never grades");
+        }
+        if (field["x-autoColor"] === "accent")
+          verify(field["x-autoGradient"] !== false, where + ": an accent field always grades");
+      }
     }
   }
 }

@@ -34,6 +34,7 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: In-use color
     x-autoColor: alt
+    x-autoGradient: true
     description: While an app records from the microphone.
   hideWhenIdle:
     type: boolean

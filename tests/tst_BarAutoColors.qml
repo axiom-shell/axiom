@@ -161,15 +161,6 @@ TestCase {
     compare(picks[0].backgroundColor, "n2");
   }
 
-  // A resting state is picked like an off one
-  function test_rest_is_picked_like_off() {
-    const picks = BarAutoColors.assign([widget({
-        "inactiveColor": "rest",
-        "mutedColor": "off"
-      })], palette());
-    compare(picks[0].inactiveColor, picks[0].mutedColor);
-  }
-
   function test_fixed_fields_are_left_alone() {
     const picks = BarAutoColors.assign([widget({
         "backgroundColor": "accent",

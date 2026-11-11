@@ -305,7 +305,7 @@ QtObject {
   // left empty) set to the color BarAutoColors picks for it among its shown
   // neighbours, seen against the bar or, filled and merged, the run
   // (`look`'s autoContrast trait, BarLook), and those fields' roles as the
-  // widget's `autoColors`
+  // widget's `autoColors` ({ key: { role, gradient } })
   function withAutoColors(widgets, look) {
     const shown = [].concat(...BarsConfig.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
             "section": section,
@@ -316,7 +316,11 @@ QtObject {
       const roles = BarsConfig.autoColorFields[entry.widget.type] ?? {};
       const properties = entry.widget.properties ?? {};
       return {
-        "roles": roles,
+        "roles": Object.keys(roles).reduce((byKey, key) => {
+          byKey[key] = roles[key].role;
+          return byKey;
+        }, {}),
+        "gradient": roles,
         "set": Object.keys(roles).filter(key => properties[key]).reduce((set, key) => {
           set[key] = Theme.resolveColor(properties[key]);
           return set;
@@ -345,11 +349,14 @@ QtObject {
         result[entry.section] = widgets[entry.section].slice();
       result[entry.section][entry.index] = Object.assign({}, entry.widget, {
         "properties": Object.assign({}, entry.widget.properties, picks[n]),
-        // Which of its fields are Auto, by role ({ key: role }): only an
-        // Auto own color (`accent`) gives way to the bar's gradient
-        "autoColors": Object.keys(picks[n]).reduce((roles, key) => {
-          roles[key] = fields[n].roles[key];
-          return roles;
+        // Which of its fields are Auto ({ key: { role, gradient } }):
+        // whether each gives way to the bar's gradient
+        "autoColors": Object.keys(picks[n]).reduce((auto, key) => {
+          auto[key] = {
+            "role": fields[n].roles[key],
+            "gradient": fields[n].gradient[key].gradient
+          };
+          return auto;
         }, {})
       });
     });
@@ -362,12 +369,17 @@ QtObject {
 
   // The bar's sections, start to end
   readonly property var sectionNames: ["left", "center", "right"]
-  // Each widget type's Auto color fields: { type: { key: role } }
+  // Each widget type's Auto color fields: { type: { key: { role, gradient } } }: its
+  // `x-autoColor` role, and whether it gives way to the bar's gradient
+  // while Auto (an `accent` always, else `x-autoGradient`)
   readonly property var autoColorFields: (ConfigManager.configSchema?.definitions?.BarWidget?.oneOf ?? []).reduce((result, refObj) => {
     const def = ConfigManager.configSchema.definitions[refObj.$ref.replace("#/definitions/", "")];
     const properties = def?.properties?.properties?.properties ?? {};
     result[def?.properties?.type?.const] = Object.keys(properties).filter(key => properties[key]["x-autoColor"]).reduce((roles, key) => {
-      roles[key] = properties[key]["x-autoColor"];
+      roles[key] = {
+        "role": properties[key]["x-autoColor"],
+        "gradient": properties[key]["x-autoColor"] === "accent" || properties[key]["x-autoGradient"] === true
+      };
       return roles;
     }, {});
     return result;

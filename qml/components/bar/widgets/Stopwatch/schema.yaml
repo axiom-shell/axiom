@@ -17,8 +17,8 @@ settings:
     default: false
     description: Show only while the timer or stopwatch runs or is paused.
   timerColor: {$ref: '#/definitions/WidgetColor', title: Timer color}
-  stopwatchColor: {$ref: '#/definitions/WidgetColor', title: Stopwatch color, x-autoColor: alt}
-  idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: rest}
+  stopwatchColor: {$ref: '#/definitions/WidgetColor', title: Stopwatch color, x-autoColor: alt, x-autoGradient: true}
+  idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}
   foregroundColor:
     type: string
     title: Text color
