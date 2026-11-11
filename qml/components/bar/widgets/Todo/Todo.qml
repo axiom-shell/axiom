@@ -8,7 +8,7 @@ import qs.components.bar.widgets.base
 
 // How many todos are open (TodoManager). Hovering opens the list, to add
 // to and tick off.
-BarIconWidget {
+BarWidget {
   id: root
 
   hidden: properties.hideWhenEmpty && TodoManager.openCount === 0

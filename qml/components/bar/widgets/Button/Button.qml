@@ -10,7 +10,7 @@ import qs.components.bar.widgets.base
 // An icon (and optional label) that runs a built-in shell action or a
 // shell command. Right and middle click can run their own commands, and
 // the label can come from a command re-run on an interval.
-BarIconWidget {
+BarWidget {
   id: root
 
   // First line of the label command's output (CommandManager runs it)

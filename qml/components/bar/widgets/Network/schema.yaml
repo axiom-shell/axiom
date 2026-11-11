@@ -38,4 +38,5 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: VPN lock color
     x-autoColor: alt
+    x-autoGradient: true
     x-showIf: {showVpn: true}

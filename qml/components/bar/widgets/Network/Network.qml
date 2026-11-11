@@ -4,7 +4,6 @@ import QtQuick
 import qs.config
 import qs.services.core
 import qs.services.system
-import qs.components.reusable
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
@@ -12,7 +11,7 @@ import qs.components.bar.widgets.base
 // a VPN is up (showVpn). Hovering opens the Wi-Fi menu, middle click runs
 // a command. Its display style draws the Wi-Fi signal, the download speed
 // (sparkline) or the network's name (and the VPN's).
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property string iface: NetworkingManager.netInfo.device
@@ -74,23 +73,11 @@ ValueStyleWidget {
   acceptedButtons: Qt.MiddleButton
   onClicked: CommandManager.runDetached(root.properties.middleCommand)
 
-  // On the icon's bottom-right corner (wherever the label and style put
-  // the icon), drawn in its host (where the widget sits at 0, 0) as the
-  // widget clips to its box (BaseWidget), like the notification bell's
-  // badge. None while the icon isn't shown.
-  StyledIcon {
-    parent: root.parent
-    visible: opacity > 0
-    opacity: root.vpn !== null && root.iconRect.width > 0 ? 1 : 0
-    x: Math.round(root.iconRect.x + root.iconRect.width - width * 0.6)
-    y: Math.round(root.iconRect.y + root.iconRect.height - height * 0.8)
-    text: "lock"
-    fill: 1
-    textSize: Math.round(root.fontSize * 0.65)
-    textColor: root.contentColor(Theme.resolveColor(root.properties.vpnColor), "icon")
-
-    Glide on opacity {}
-  }
+  // A lock on the icon while a VPN is up (showVpn)
+  mark: root.vpn !== null ? ({
+      "icon": "lock",
+      "field": "vpnColor"
+    }) : null
 
   PopoutAnchor {
     hitArea: root.hitArea

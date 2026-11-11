@@ -26,3 +26,4 @@ settings:
     maximum: 1000
     description: At or above this count, the widget uses the many-updates background.
   manyColor: {$ref: '#/definitions/WidgetColor', title: Many-updates color, x-autoColor: warning}
+  failedColor: {$ref: '#/definitions/WidgetColor', title: Failed check color, x-autoColor: critical, description: While the update check fails.}

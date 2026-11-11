@@ -31,3 +31,4 @@ settings:
     minimum: 4
     maximum: 100
     description: In characters.
+  soonColor: {$ref: '#/definitions/WidgetColor', title: Soon color, x-autoColor: warning, description: An event starting within 15 minutes.}

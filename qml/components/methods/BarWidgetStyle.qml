@@ -187,11 +187,12 @@ QtObject {
   // A color of a widget's own field as it is drawn (a state color, a
   // mark's, a part's): the gradient's color at `spot` (0-1, -1 for none)
   // where it `givesWay` to it (an Auto field, active) and the bar has
-  // one, else `color`. Under the bar's text color (palette.override) a
-  // neutral or active field (`role`) takes it; a warning or critical one
-  // keeps its own. The caller nudges it (content()).
+  // one, else `color`. Under the bar's text color (palette.override) an
+  // Auto field (its `role`: accent, alt, off or neutral) takes it; a warning
+  // or critical one, and one the user set (role ""), keeps its own. The
+  // caller nudges it (content()).
   function fieldColor(palette, spot, color, givesWay, role) {
-    if (palette.override !== null && (role === "neutral" || role === "active"))
+    if (palette.override !== null && role !== "" && role !== "warning" && role !== "critical")
       return palette.override;
     if (givesWay && spot >= 0 && palette.gradientStops)
       return BarGradient.gradientAt(palette.gradientStops, spot);

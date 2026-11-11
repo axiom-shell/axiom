@@ -12,7 +12,7 @@ import qs.components.hosts.popout
 // the value of its display style (full at 100%, above it too).
 // Scroll changes its volume (up to the configured maximum), click mutes,
 // middle click runs a command; hovering opens the mixer on its side.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   // The default sink or source

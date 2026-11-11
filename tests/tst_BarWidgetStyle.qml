@@ -151,25 +151,25 @@ TestCase {
   }
 
   // A field's color: the gradient's where it gives way; under the bar's
-  // text color a neutral or active one takes it
+  // text color an Auto one takes it unless it is warning or critical
   function test_field_color() {
     const stops = {
       "override": null,
       "gradientStops": ["#000000", "#ffffff"]
     };
-    same(BarWidgetStyle.fieldColor(stops, 0.5, "#ff0000", true, "active"), Qt.rgba(0.5, 0.5, 0.5, 1), "on the fade");
-    same(BarWidgetStyle.fieldColor(stops, 0.5, "#ff0000", false, "active"), "#ff0000", "not giving way");
-    same(BarWidgetStyle.fieldColor(stops, -1, "#ff0000", true, "active"), "#ff0000", "no place on the bar");
+    same(BarWidgetStyle.fieldColor(stops, 0.5, "#ff0000", true, "accent"), Qt.rgba(0.5, 0.5, 0.5, 1), "on the fade");
+    same(BarWidgetStyle.fieldColor(stops, 0.5, "#ff0000", false, "accent"), "#ff0000", "not giving way");
+    same(BarWidgetStyle.fieldColor(stops, -1, "#ff0000", true, "accent"), "#ff0000", "no place on the bar");
     same(BarWidgetStyle.fieldColor({
       "override": null,
       "gradientStops": null
-    }, 0.5, "#ff0000", true, "active"), "#ff0000", "no gradient");
+    }, 0.5, "#ff0000", true, "accent"), "#ff0000", "no gradient");
     const set = {
       "override": Qt.color("#00ff00"),
       "gradientStops": null
     };
-    ["neutral", "active"].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#00ff00", role + " takes the override"));
-    ["warning", "critical"].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#ff0000", role + " keeps its own"));
+    ["accent", "alt", "off", "neutral"].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#00ff00", role + " takes the override"));
+    ["warning", "critical", ""].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#ff0000", (role || "a set colour") + " keeps its own"));
   }
 
   function test_press_mixes_content_toward_its_back_and_still_reads() {

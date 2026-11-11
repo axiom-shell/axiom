@@ -5,3 +5,5 @@ popout:
   variant: own
   enabled: {description: 'On hover: rebuild, open Development settings or turn dev mode off.'}
 colors: standard
+settings:
+  failedColor: {$ref: '#/definitions/WidgetColor', title: Failed build color, x-autoColor: critical, description: After a failed dev build.}

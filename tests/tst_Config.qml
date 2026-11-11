@@ -108,4 +108,48 @@ TestCase {
       }
     }
   }
+
+  // The state fields P1 and the Network lock rely on: their Auto role and
+  // whether they follow the bar's gradient
+  function test_state_fields_data() {
+    return [
+      {
+        "tag": "DevMode.failedColor",
+        "type": "DevMode",
+        "key": "failedColor",
+        "role": "critical",
+        "grades": false
+      },
+      {
+        "tag": "Updates.failedColor",
+        "type": "Updates",
+        "key": "failedColor",
+        "role": "critical",
+        "grades": false
+      },
+      {
+        "tag": "NextEvent.soonColor",
+        "type": "NextEvent",
+        "key": "soonColor",
+        "role": "warning",
+        "grades": false
+      },
+      {
+        "tag": "Network.vpnColor",
+        "type": "Network",
+        "key": "vpnColor",
+        "role": "alt",
+        "grades": true
+      }
+    ];
+  }
+
+  function test_state_fields(row) {
+    const name = row.type + "Widget";
+    verify(schema.definitions.BarWidget.oneOf.some(o => o.$ref.split("/").pop() === name), row.type + " is a widget type");
+    const field = schema.definitions[name].properties.properties.properties[row.key];
+    verify(field !== undefined, row.tag + " exists");
+    compare(field["x-autoColor"], row.role);
+    compare(field["x-autoGradient"] === true, row.grades);
+  }
 }

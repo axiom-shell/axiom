@@ -4333,6 +4333,12 @@
     "How axiom fits into the rest of your system: updates, idle, locking, password prompts, screen sharing and the login screen.": "",
     "Apps sharing a screen or window pick it in axiom's picker, in your theme.": "",
     "Use the portal's own": "",
-    "Leaves the choice to {0}'s own picker.": ""
+    "Leaves the choice to {0}'s own picker.": "",
+    "An event starting within 15 minutes.": "",
+    "While the update check fails.": "",
+    "Soon color": "",
+    "Failed check color": "",
+    "After a failed dev build.": "",
+    "Failed build color": ""
   }
 }

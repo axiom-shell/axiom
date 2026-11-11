@@ -117,6 +117,8 @@ Item {
   property var items: []
   readonly property var shownItems: root.box !== "" ? root.items.filter(k => k === root.box) : root.items
   property var segmentData: null
+  // Drawn as one item's box of its own (Boxes: One per item)
+  readonly property bool ownBox: root.box !== ""
 
   // Its own content: a head (an icon, a short text or an item of its own)
   // and the content after it, its extent across (-1: a line)
