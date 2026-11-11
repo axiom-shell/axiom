@@ -32,7 +32,10 @@ New translation keys (titles, descriptions, the library label) are added to the 
 - **Resizing.** Digits are equal width and measured as zeros, so a ticking clock never moves the bar. A value that gains or loses digits (a percent, a count) sets `minimumText` to its widest usual form with two digits (`"00%"` in `Battery.qml`; 100% may widen it).
 - **Sizes come from the bar** (`barConfig.thickness`, `innerPadding`, `innerGap`, `fontSize`, `radius`), never `Widget.*`, so the widget scales with the bar. The base classes already do this.
 - **Content taller than one line** (two lines, a graphic, cells) declares `contentAcross` from config, never measured, so a capsule's end keeps clear of it ([widget shapes and runs](../dev/bar/widget-shapes-runs.md#backgrounds-and-shapes)).
-- **Colors.** A color the bar should pick when empty is a `WidgetColor` with an `x-autoColor` role (`tst_Config` checks them). Show a color field only in the looks it does something in, with `$bar.<trait>` conditions in `x-showIf`, never a list of widget styles ([which color fields show](../dev/bar/widget-style.md#which-color-fields-show)).
+- **Colours.** Draw in `colors` and `content` (`WidgetLook`); never set `iconColor` or `foregroundColor` (the base does) and never call `BarsConfig.widgetColors`.
+  - A colour of the widget's own on its content goes through `contentColor(color, "icon"|"text")` (or `iconOwnColor` for the icon), which nudges it to read on what it sits on; another field's colour as drawn here (the gradient's) through `drawnColor(field)`.
+  - colorText is `appearance` plus `stateColor`/`hasState`.
+  - One `x-autoColor: accent` per widget type (`tst_Config` checks); a usual idle state is `rest`, a second state `alt`. A colour the bar picks when empty is a `WidgetColor` with an `x-autoColor` role. Show a color field only in the looks it does something in, with `$bar.<trait>` conditions in `x-showIf`, never a list of widget styles ([which color fields show](../dev/bar/widget-style.md#which-color-fields-show)).
 - **Never ask which style the bar has.** Draw in `colors` (`WidgetLook`) and read the look's traits; `check_structure` fails a read of `widgetStyle` or `look.style` outside `BarLook`.
 - **Name clash.** The type name must not match a file in `qml/components/content/` (a `Battery` widget and `Battery` content): `check_structure` errors, because both would resolve in the same scope.
 - **`hidden: true`** hides the widget and disables its clicks; use it for "hide when empty" settings.
@@ -42,6 +45,9 @@ New translation keys (titles, descriptions, the library label) are added to the 
 - `scripts/dev/verify.sh`
 - `scripts/run_tests.sh Config`: every default is valid and the auto colors resolve.
 - Add the widget to a bar in the bar editor and look: `scripts/dev/shot.sh page BarEditor`. Hovering can't be simulated, so for a popout read the anchor's `active` and the log.
+
+## Check it in every style
+Colours and split have gone wrong in styles nobody looked at. In a nested shell (`docs/dev/testing.md`), look at the widget in each of the eight widget styles, split joined and badge, merged and powerline, the gradient on, and each display style it lists. Set them with `axiom config set --socket <nested> --config-dir <scratch>/config/axiom Bars.items.<id>.widgets.<section>.<widget id>.properties…` (always both flags, or it writes the live config). Text and icons must read, a split widget must show its icon part, and a state colour must not vanish on its own fill.
 
 ## Docs to update
 - [bar/widget-style](../dev/bar/widget-style.md), only if the widget introduces a new base class or color rule.

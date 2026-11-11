@@ -138,7 +138,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
 - `x-window: true` on a tool page that can also open as a window of its own (`OverlayConfig.isWindowable`, `windowTypes`; [page windows](../overlay/page-windows.md)).
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
-- `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
+- `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `rest`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
 
 ### Compositor config (`x-compositor`)
 A setting a compositor's config takes says how, per compositor: `x-compositor: { hyprland: {…}, sway: {…}, niri: {…} }`. `render.CompositorFields` in the daemon collects a section's annotated fields (inside its objects too) with their spec. Each is written, under a gated part (the input), only while its `if` switch is on, else once changed from its default; a managed config's options every one (`render.AnnotatedFields`).
