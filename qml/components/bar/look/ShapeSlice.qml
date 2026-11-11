@@ -4,7 +4,8 @@ import QtQuick.Shapes
 
 // A shape's slice of the bar's gradient (BarGradient.gradientSlice's
 // three stops, null for none), along the bar: a ShapePath's fillGradient
-// or strokeGradient over an item `length` long (down a vertical bar)
+// (a stroke's through SliceMasked) over an item `length` long (down a
+// vertical bar)
 LinearGradient {
   id: root
 
