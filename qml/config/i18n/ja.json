@@ -4320,6 +4320,12 @@
     "Couldn't restart the portal: {0}": "",
     "Settings can't be saved right now": "",
     "Another install is running": "",
-    "axiom refused the change": ""
+    "axiom refused the change": "",
+    "{0} isn't installed": "",
+    "Takes effect after the portal restarts or next login.": "",
+    "On for {0}": "",
+    "Recommended setup": "",
+    "Managed mode is on. Turn on the rest of what axiom can run for you: untick what you'd rather keep your own, then Apply.": "",
+    "Not now": ""
   }
 }

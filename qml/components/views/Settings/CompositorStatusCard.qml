@@ -3,9 +3,11 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.compositor
+import qs.services.session
 import qs.services.system
 import qs.services.ui
 import qs.components.reusable
+import qs.components.forms
 
 // The Compositor section's first card (its `x-card`): whether
 // the mode is in effect and what it needs, and, while a new mode waits for
@@ -113,6 +115,13 @@ FieldGroup {
       steps.push(I18n.tr("Reloads {0}", compositor));
     return steps;
   }
+
+  // The Recommended setup list is offered once after a save into managed
+  // mode (RecommendedSetupManager.offered); its button reads Close once an
+  // Apply has finished
+  readonly property bool offersRecommended: RecommendedSetupManager.offered && root.mode === "managed" && !root.pending
+  readonly property var _recommendedStates: RecommendedSetupManager.ids.map(id => RecommendedSetupManager.rows[id].state)
+  readonly property bool recommendedRan: root._recommendedStates.some(state => state !== "idle") && !root._recommendedStates.some(state => state === "pending" || state === "running")
 
   readonly property bool blocked: root.pendingMode === "managed" && CompositorConfigManager.managedCheck === "blocked"
 
@@ -271,6 +280,49 @@ FieldGroup {
         implicitHeight: Widget.height - Widget.px(4)
         text: I18n.tr("Allow takeover")
         onClicked: CompositorConfigManager.allowTakeover()
+      }
+    }
+  }
+
+  // The Recommended setup, once, after a save into managed mode
+  StyledContainer {
+    visible: root.offersRecommended
+    Layout.fillWidth: true
+    implicitHeight: recommendedColumn.implicitHeight + Widget.padding * 2
+    backgroundColor: Theme.background
+    borderColor: Theme.accent
+
+    ColumnLayout {
+      id: recommendedColumn
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.margins: Widget.padding
+      spacing: Widget.spacing
+
+      StyledText {
+        wrapMode: Text.WordWrap
+        text: I18n.tr("Recommended setup")
+        textColor: Theme.accent
+        font.bold: true
+        Layout.fillWidth: true
+      }
+
+      StyledText {
+        text: I18n.tr("Managed mode is on. Turn on the rest of what axiom can run for you: untick what you'd rather keep your own, then Apply.")
+        textSize: Appearance.fontSizeBy(-1)
+        wrapMode: Text.WordWrap
+        Layout.fillWidth: true
+      }
+
+      RecommendedSetupList {
+        visible: root.offersRecommended
+      }
+
+      StyledTextButton {
+        implicitHeight: Widget.height - Widget.px(4)
+        text: root.recommendedRan ? I18n.tr("Close") : I18n.tr("Not now")
+        onClicked: RecommendedSetupManager.dismiss()
       }
     }
   }
