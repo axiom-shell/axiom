@@ -218,6 +218,24 @@ TestCase {
     compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 8, 12, 20]);
   }
 
+  function test_inner_split_part() {
+    // As splitPart, plus the gap's middle before it
+    const flat = BarShapes.innerSplitPart(false, 40, 48, 20, 10, 15, 12);
+    compare(flat.from, 40);
+    compare(flat.at, 73);
+    compare([flat.part.x, flat.part.y, flat.part.width, flat.part.height], [48, 9, 20, 12]);
+    const tall = BarShapes.innerSplitPart(true, 40, 48, 20, 10, 15, 12);
+    compare([tall.from, tall.at], [40, 73]);
+    compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 48, 12, 20]);
+  }
+
+  function test_following_cap() {
+    compare(BarShapes.followingCap("arrowOut"), "arrowIn");
+    compare(BarShapes.followingCap("slant"), "slant");
+    compare(BarShapes.followingCap("curve"), "curve");
+    compare(BarShapes.followingCap("flat"), "flat");
+  }
+
   function test_icon_text_split() {
     // hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom
     const row = (a, b, c, d, e) => BarShapes.iconTextSplit(a, b, c, d, e).splits;

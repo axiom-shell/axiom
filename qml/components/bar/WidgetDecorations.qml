@@ -172,6 +172,11 @@ Item {
       splitAt: _split ? _split.at + segment.back : -1
       // (and across, past a tab's reach on the near side)
       splitPart: _split ? Qt.rect(_split.part.x + (root._vertical ? root.reachAcross.near : segment.back), _split.part.y + (root._vertical ? segment.back : root.reachAcross.near), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
+      splitInner: _split ? _split.inner.map(s => ({
+            "from": s.from + segment.back,
+            "at": s.at + segment.back,
+            "part": Qt.rect(s.part.x + (root._vertical ? root.reachAcross.near : segment.back), s.part.y + (root._vertical ? segment.back : root.reachAcross.near), s.part.width, s.part.height)
+          })) : []
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
       // A tab reaches out past the widget (tabReach)

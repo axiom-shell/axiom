@@ -55,6 +55,8 @@ Item {
   // what the icon part holds, in its coordinates
   property real splitAt: -1
   property rect splitPart: Qt.rect(0, 0, 0, 0)
+  // The parts after the first (BarWidgetHost.split's `inner`)
+  property var splitInner: []
 
   // What bounds a tab's ends along the bar (BarTabs.tabLimits)
   property var tabLimits: [null, null]
@@ -124,6 +126,7 @@ Item {
     bar: root.barConfig
     at: root.splitAt
     part: root.splitPart
+    inner: root.splitInner
     startCap: root.startCap
     tab: root._tab
     color: root.colors?.iconFill ?? "transparent"

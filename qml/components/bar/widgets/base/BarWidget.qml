@@ -97,6 +97,10 @@ Item {
   property bool splits: false
   property real splitAt: -1
   property rect splitPart: Qt.rect(0, 0, 0, 0)
+  // Parts after the first, each from its own start divider ({ from: the
+  // middle of the gap before it, at, part }, in its coordinates like
+  // splitAt/splitPart): System Stats' metrics in one box
+  property var innerSplits: []
 
   readonly property WidgetLook _look: WidgetLook {
     id: look

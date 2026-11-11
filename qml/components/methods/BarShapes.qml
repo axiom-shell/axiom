@@ -89,6 +89,24 @@ QtObject {
     };
   }
 
+  // A later metric's icon part in a box of several (System Stats, Boxes:
+  // One): as splitPart, plus `from`, the middle of the gap before it,
+  // where its box starts: { from, at, part }
+  function innerSplitPart(vertical, from, start, head, room, middle, size) {
+    const placed = root.splitPart(vertical, start, head, room, middle, size);
+    return {
+      "from": from,
+      "at": placed.at,
+      "part": placed.part
+    };
+  }
+
+  // The cap a box starting where one ended in `cap` (a split divider)
+  // starts with: an arrow's point is notched, the others fit the same
+  function followingCap(cap) {
+    return cap === "arrowOut" ? "arrowIn" : cap;
+  }
+
   // A run's own ends by `shape` (the look's: its name, and a slant's or
   // arrow's `ends`: shaped, pointed (an arrow's alone), rounded), [start,
   // end] (a lone widget's in separate)

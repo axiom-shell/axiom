@@ -92,15 +92,22 @@ Item {
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
   // A split bar's widget showing its icon part and label apart
   // (IconTextWidget.splits): along it, the middle of the gap between them
-  // (`at`), and what the icon part holds (`part`), in its own coordinates;
+  // (`at`), and what the icon part holds (`part`), in its own coordinates,
+  // and `inner`, the same for the parts after it (BarWidget.innerSplits);
   // null otherwise
   readonly property var split: {
     if (!(_item?.splits ?? false))
       return null;
     const part = _item.splitPart;
+    const shift = isVertical ? contentLoader.y : contentLoader.x;
     return {
-      "at": (isVertical ? contentLoader.y : contentLoader.x) + _item.splitAt,
-      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height)
+      "at": shift + _item.splitAt,
+      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height),
+      "inner": (_item.innerSplits ?? []).map(s => ({
+            "from": shift + s.from,
+            "at": shift + s.at,
+            "part": Qt.rect(contentLoader.x + s.part.x, contentLoader.y + s.part.y, s.part.width, s.part.height)
+          }))
     };
   }
   // A divider of its own (Separator): the group draws none beside it

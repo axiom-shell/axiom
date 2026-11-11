@@ -165,19 +165,44 @@ BarWidget {
   implicitWidth: stack.implicitWidth
   implicitHeight: stack.implicitHeight
 
-  // With one metric, its icon part and label set apart on a split bar, as
-  // the metric's segment reports them (IconTextWidget.splits), moved from
-  // the segment into the widget: the box's padding, centred in it
-  // (Its first segment registers itself: the segments are in a component
-  // of their own, out of reach of an id)
-  property IconTextWidget _first: null
-  readonly property IconTextWidget _single: root.segments.length === 1 ? root._first : null
-  readonly property real _singleStart: root._single ? Math.round(((root.isVertical ? root.height : root.width) - (root.isVertical ? root._single.height : root._single.width)) / 2) : 0
-  readonly property real _singleAcross: root._single ? Math.round(((root.isVertical ? root.width : root.height) - (root.isVertical ? root._single.width : root._single.height)) / 2) : 0
-  splits: root._single?.splits ?? false
-  // `_single` itself tested: it goes null before `splits` follows
-  splitAt: root._single?.splits ? root._singleStart + root._single.splitAt : -1
-  splitPart: root._single?.splits ? (root.isVertical ? Qt.rect(root._singleAcross + root._single.splitPart.x, root._singleStart + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height) : Qt.rect(root._singleStart + root._single.splitPart.x, root._singleAcross + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height)) : Qt.rect(0, 0, 0, 0)
+  // Each metric's icon part and label set apart on a split bar, as its
+  // segment reports them (IconTextWidget.splits), moved from the segment
+  // into the widget: where the segment sits in the box (the grid centred in
+  // it, the segment centred across), by the segments' sizes and the grid's
+  // gap. The first part starts at the box's start; each later one is an
+  // inner part from the middle of the gap before it. (The segments register
+  // themselves: they're in a component of their own, out of reach of an id)
+  property var _items: []
+  // The gap the grid keeps between segments along the bar: a split bar's
+  // room for a divider between metrics, else the usual
+  readonly property real _gap: root.barConfig.splitRoom >= 0 && root.segments.length > 1 ? root.barConfig.splitRoom : (root.isVertical ? root.barConfig.innerGap : root.barConfig.innerPadding)
+  // Per segment, null when it doesn't split: { from, at, part } in the widget
+  readonly property var _placed: {
+    const items = root._items.filter(item => item !== null && item !== undefined);
+    const lengthOf = item => root.isVertical ? item.height : item.width;
+    const total = items.reduce((sum, item) => sum + lengthOf(item), 0) + Math.max(0, items.length - 1) * root._gap;
+    let start = Math.round(((root.isVertical ? root.height : root.width) - total) / 2);
+    const placed = [];
+    for (const item of items) {
+      if (item.splits) {
+        const across = Math.round(((root.isVertical ? root.width : root.height) - (root.isVertical ? item.width : item.height)) / 2);
+        const part = item.splitPart;
+        placed.push({
+          "from": start - root._gap / 2,
+          "at": start + item.splitAt,
+          "part": root.isVertical ? Qt.rect(across + part.x, start + part.y, part.width, part.height) : Qt.rect(start + part.x, across + part.y, part.width, part.height)
+        });
+      } else {
+        placed.push(null);
+      }
+      start += lengthOf(item) + root._gap;
+    }
+    return placed;
+  }
+  splits: root._placed.some(p => p !== null)
+  splitAt: root._placed[0]?.at ?? -1
+  splitPart: root._placed[0]?.part ?? Qt.rect(0, 0, 0, 0)
+  innerSplits: root._placed.slice(1).filter(p => p !== null)
 
   // Ask only for what's shown; re-acquiring replaces the old request
   readonly property var statsRequest: ({
@@ -213,7 +238,7 @@ BarWidget {
 
     content: Grid {
       columns: root.isVertical ? 1 : Math.max(1, root.segments.length)
-      spacing: root.isVertical ? root.barConfig.innerGap : root.barConfig.innerPadding
+      spacing: root._gap
       horizontalItemAlignment: Grid.AlignHCenter
       verticalItemAlignment: Grid.AlignVCenter
 
@@ -226,10 +251,18 @@ BarWidget {
           id: segment
           required property var modelData
           required property int index
-          Component.onCompleted: if (segment.index === 0)
-            root._first = segment
-          Component.onDestruction: if (root._first === segment)
-            root._first = null
+          Component.onCompleted: {
+            const items = root._items.slice();
+            items[segment.index] = segment;
+            root._items = items;
+          }
+          Component.onDestruction: {
+            const items = root._items.slice();
+            if (items[segment.index] === segment) {
+              items[segment.index] = null;
+              root._items = items;
+            }
+          }
           readonly property var stat: root.segmentData(modelData)
           readonly property var metric: root._metrics.find(m => m.key === segment.modelData)
           readonly property string style: root.segmentStyle(segment.modelData)
@@ -241,8 +274,8 @@ BarWidget {
           spacing: root.isVertical ? 0 : root.barConfig.innerGap * 1.5
           textScale: root.isVertical ? 0.7 : 0.9
           uprightLabel: true
-          // Its icon part and label apart on a split bar, alone in its box
-          splitRoom: root.segments.length === 1 ? root.barConfig.splitRoom : -1
+          // Its icon part and label apart on a split bar
+          splitRoom: root.barConfig.splitRoom
           icon: segment.stat.icon
           text: segment.stat.value
           minimumText: segment.stat.widest
