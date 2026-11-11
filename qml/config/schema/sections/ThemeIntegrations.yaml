@@ -3,6 +3,7 @@
 type: object
 x-category: Theme integrations
 x-card: {perField: true}
+x-recommended: installed
 x-links: [Themes]
 title: Theme integrations
 description: Re-theme other apps when the shell theme changes. Each writes its own axiom file; turned on, it shows the line that loads it.
@@ -11,6 +12,7 @@ properties:
   gtk:
     type: boolean
     title: GTK
+    x-recommended: false
     default: false
     description: Writes axiom.css for GTK 3 and 4, and follows light/dark. GTK 3 apps need the adw-gtk3 theme.
     # every desktop has GTK
@@ -28,6 +30,7 @@ properties:
   qt:
     type: boolean
     title: Qt and KDE apps
+    x-recommended: false
     default: false
     description: Writes an "axiom" color scheme for qt5ct and qt6ct, and an "Axiom" KDE color scheme.
     # qt*ct, or a KDE app (which reads the KDE scheme without them)

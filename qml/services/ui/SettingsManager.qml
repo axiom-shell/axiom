@@ -578,11 +578,12 @@ QtObject {
   // Sets config values by dotted path ({ "Apps.commands.terminal": "foot" }) and
   // saves them at once; false if saves can't be made. For pages
   // that apply as they go (SettingRows), not the settings page's draft.
-  function commitValues(values) {
+  // `done(ok)` (optional) as ConfigManager.commit's
+  function commitValues(values, done) {
     const next = Utils.clone(ConfigManager.config);
     for (const dottedPath of Object.keys(values))
       _setAt(next, dottedPath.split("."), values[dottedPath]);
-    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split(".")))))
+    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split("."))), done))
       return false;
     ensureLoaded();
     return true;
@@ -637,9 +638,14 @@ QtObject {
     // Diffed now, not `changedPaths`: Save first commits typed text, an
     // edit in place that `changedPaths` sees only next tick
     const changed = _diff(draft.local, draft.saved, []).map(path => path.split("."));
+    // This save switches the compositor into managed mode: the Compositor
+    // card then offers the Recommended setup, once per switch
+    const intoManaged = changed.some(path => path.join(".") === "Compositor.mode") && Utils.valueAt(draft.local, ["Compositor", "mode"]) === "managed" && Utils.valueAt(draft.saved, ["Compositor", "mode"]) !== "managed";
     if (!ConfigManager.commit(_merged(changed), _takesOver(changed)))
       return false;
     draft.load();
+    if (intoManaged)
+      RecommendedSetupManager.offer();
     return true;
   }
 

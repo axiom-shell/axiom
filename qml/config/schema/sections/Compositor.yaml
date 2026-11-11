@@ -11,6 +11,7 @@ additionalProperties: false
 properties:
   mode:
     x-takeover: true
+    x-recommended: managed
     type: string
     title: Mode
     x-group: Compositor setup

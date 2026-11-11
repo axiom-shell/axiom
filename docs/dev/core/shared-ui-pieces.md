@@ -117,6 +117,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `SettingsLink`: an accent text link to where something else is set: a `setting` (a key path: `SettingsManager.openSetting`, which opens its card and outlines its row) a `page` (a view type, `Layouts:lockscreen` / `greeter` / `desktop`, or `BarEditor:<key>`, a bar's own setting, whose tab it shows: `OverlayManager.followPageLink`), or a bar `widget` (the edge menu or page it opens, selected in the layouts editor: `OverlayManager.openedBy` / `editOpenedBy`), or a `run` function with its `text` and `icon` (a field's action: `SchemaPropertiesForm.fieldAction`, which draws one under a field, as the edge menu pickers' New menu… and New submenu…). Named from its target unless `text` is set, and followed as a link, so the navigator offers the way back. It hides itself when its target isn't there; a host hiding it on its own condition binds `visible` to `available` and that.
 - `FieldLinks`: a schema's `x-link` (one or a list) as `SettingsLink`s, hidden while none shows. Form rows (`SettingsField`, `SchemaPropertiesForm`) put one under each field; the bar widget and module inspectors one for the type's own.
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
+- `RecommendedSetupList`: the Recommended setup list (a switch per row, why a row can't be ticked, how each apply went, Apply, the greeter's form after its step); reads `RecommendedSetupManager`. Used by Settings' `CompositorStatusCard` and the onboarder's Welcome page.
+- `ScreenSharingSetup`: screen sharing set up (which portal, the hookup line, restart the portal, try the picker). Used by Settings' `ScreenSharingStatusCard` and the onboarder's System page.
 
 ### Bar pieces (`bar/`)
 - `bar/widgets/base/BaseWidget`: the sizing wrapper a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
@@ -211,6 +213,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `methods/ChipRows.split(count, fit)`: a set of equal chips spread evenly over as few rows as `fit` allows (5 at 3 a row: 3 + 2), so each row can fill its width; `starts(sizes)`.
 - `methods/GridPosition`: the workspace grid's shown row or column: `line(activeId, base, columns, rows, vertical)` (`{ line, count }`), `glyph(position, count, vertical)`, `head(count, active, vertical, across, fontSize)` (the position head's dots, or the arrow).
 - `methods/ColorTemperature.color(kelvin)`: light's color at a temperature (the night light's button).
+- `methods/RecommendedSetup`: the Recommended setup list from the schema's `x-recommended`: its entries, rows (available, done, ticked by default, why not), the ordered plan of an Apply and the portal's defer-or-restart choice.
 - `KeybindFilter.columns(sections, count)`: the masonry split of the Keybinds page and the Cheatsheet module.
 - **Utils** (`methods/Utils`):
   - `clone`, `freeId(base, taken, sep)` (`dock2` → `dock3`)
