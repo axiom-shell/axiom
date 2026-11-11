@@ -123,7 +123,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 ### Bar pieces (`bar/`)
 - `bar/widgets/base/BaseWidget`: the sizing wrapper a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
 - **The drawing kit** (`bar/look/`): what draws a bar's look, from paint (`BarWidgetStyle`) and shape (`BarShapes` and its kin), deciding nothing a methods helper decides.
-  - `ShapedBox`: a box in the widget shape, from an outline spec and a paint; `OutlineStroke` (a stroke other than solid), `ShapeSlice` / `RectSlice` (a slice of the bar's gradient).
+  - `ShapedBox`: a box in the widget shape, from an outline spec and a paint; `OutlineStroke` (a stroke other than solid), `ShapeSlice` / `RectSlice` (a slice of the bar's gradient), `SliceMasked` (a gradient stroke: the slice masked by the stroke).
   - `LookBox`: what the look draws for a box (its box and stroke, and its line: `StyleLine`), a widget's background and a Workspaces cell alike.
   - `SplitPart` (split's icon part or badge), `LevelFill` (a widget's level), `ShapeOverlay` (a press, the editor highlight, the hover outline).
   - `WidgetBackground`: a widget's or merged run's background, composed of them. `WidgetLook`: the colors a widget draws in.
