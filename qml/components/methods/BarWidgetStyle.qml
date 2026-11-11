@@ -38,8 +38,9 @@ import QtQuick
 // toward white or black by the least that reaches 4.5 for text and 3 for
 // the rest, against what it sits on (`textBack`, `iconBack`: opaque
 // colors, a tint or translucent fill composited over the bar's
-// background). A bar text color of its own (palette.override) is never
-// checked. Fills, strokes and lines are never nudged.
+// background). A state colour that replaces the override (colorText) and a
+// widget's own content colours are still nudged; the override itself
+// (palette.override) never is. Fills, strokes and lines are never nudged.
 QtObject {
   id: root
 
@@ -117,7 +118,8 @@ QtObject {
   }
 
   // What a widget draws in: { fill, stroke, indicator, text, icon,
-  // iconFill, gradient, textOnFill, textBack, iconBack, iconOnFill, level }. `accent` is its own color for its
+  // iconFill, gradient, textOnFill, textBack, iconBack, iconOnFill,
+  // level }. `accent` is its own color for its
   // state (its background while filled), `own` its text color (picked to
   // read on that background). `iconFill` is split's icon part (its icon or
   // badge), else transparent; `gradient` what of its background draws the
@@ -361,12 +363,6 @@ QtObject {
     if (state.group && BarLook.cellTraits(look, state.solid).groupCell)
       return null;
     return root._cellDrawn(look, state).gradientPart;
-  }
-
-  // A value widget's pill (its background filled to its value) in its
-  // `colors` (colors())
-  function levelColor(colors) {
-    return colors.level;
   }
 
   // What a value widget with "Colour the text by state" (its display

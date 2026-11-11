@@ -218,17 +218,6 @@ TestCase {
     compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 8, 12, 20]);
   }
 
-  function test_inner_split_part() {
-    // As splitPart, plus the gap's middle before it
-    const flat = BarShapes.innerSplitPart(false, 40, 48, 20, 10, 15, 12);
-    compare(flat.from, 40);
-    compare(flat.at, 73);
-    compare([flat.part.x, flat.part.y, flat.part.width, flat.part.height], [48, 9, 20, 12]);
-    const tall = BarShapes.innerSplitPart(true, 40, 48, 20, 10, 15, 12);
-    compare([tall.from, tall.at], [40, 73]);
-    compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 48, 12, 20]);
-  }
-
   function test_following_cap() {
     compare(BarShapes.followingCap("arrowOut"), "arrowIn");
     compare(BarShapes.followingCap("slant"), "slant");
@@ -238,7 +227,7 @@ TestCase {
 
   function test_icon_text_split() {
     // hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom
-    const row = (a, b, c, d, e) => BarShapes.iconTextSplit(a, b, c, d, e).splits;
+    const row = (a, b, c, d, e) => BarShapes.iconTextSplit(a, b, c, d, e);
     // An icon and a label
     verify(row(true, true, 0, false, 10));
     // A ring before the icon, and a label
@@ -256,8 +245,6 @@ TestCase {
     // No room for a split
     verify(!row(true, true, 0, false, -1));
     verify(!row(true, false, 20, true, -1));
-    compare(BarShapes.iconTextSplit(true, false, 20, true, 10).iconPartEnd, "icon");
-    compare(BarShapes.iconTextSplit(true, true, 0, false, 10).iconPartEnd, "label");
   }
 
   function test_tab_caps_keep_no_room() {

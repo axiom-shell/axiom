@@ -218,8 +218,7 @@ QtObject {
     };
   }
 
-  // What a bar widget draws in on its bar ({ fill, stroke, indicator,
-  // text, icon, iconFill, gradient }, see BarWidgetStyle): `accent` is
+  // What a bar widget draws in on its bar (BarWidgetStyle.colors()): `accent` is
   // its color for its state, `foregroundName` the text color it's
   // configured with, `widget` what of the widget itself its look depends
   // on (BarWidgetStyle.state's: splits, hovered, spot, auto, level; left out,

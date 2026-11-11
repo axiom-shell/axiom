@@ -43,7 +43,7 @@ BarIconWidget {
   // The pill: its background's shape filled to the value (WidgetGroup
   // draws it, so it takes the bar's caps and radius)
   backgroundLevel: root.style === "pill" && !root.hidden ? Math.min(1, root.ratio) : -1
-  backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
+  backgroundLevelColor: root.colors.level
 
   // Graphics draw in the icon's colour for this bar's style: the state's
   // on a tint, outline or plain bar, what reads on it when it's the fill

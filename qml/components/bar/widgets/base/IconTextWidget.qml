@@ -87,7 +87,7 @@ BaseWidget {
   // It shows an icon part and a label apart (BarShapes.iconTextSplit): it
   // has a splitRoom, an icon part (the icon, or a lead graphic before it)
   // and a label part (the text, or a lead graphic after the icon)
-  readonly property bool splits: BarShapes.iconTextSplit(_hasIcon, _hasText, _leadRoom, leadAfterIcon, splitRoom).splits
+  readonly property bool splits: BarShapes.iconTextSplit(_hasIcon, _hasText, _leadRoom, leadAfterIcon, splitRoom)
   readonly property real _splitExtra: splits ? splitRoom - spacing : 0
   // Where the middle of the gap between the two parts is along the bar
   // (splitAt, -1 when it doesn't split), and what the icon part holds

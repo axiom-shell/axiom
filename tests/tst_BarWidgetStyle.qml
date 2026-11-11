@@ -142,9 +142,7 @@ TestCase {
     compare(Qt.color(clear("split").fill).a, 0, "split's label tint");
     fuzzyCompare(Qt.color(cell("tinted", "active").fill).a, 0.25, 0.01, "a color's tint keeps its strength");
     fuzzyCompare(Qt.color(BarWidgetStyle.faded("#80ff0000", 0.5)).a, 0.25, 0.01, "a part-clear color fades from its own");
-    compare(Qt.color(BarWidgetStyle.levelColor({
-      "level": "transparent"
-    })).a, 0, "a level in a clear color");
+    compare(Qt.color(clear("tinted").level).a, 0, "a level in a clear color");
   }
 
   function test_outline_strokes_in_the_accent() {
@@ -419,7 +417,7 @@ TestCase {
 
   function test_level_color_is_the_icon_faded() {
     const c = styled("filled");
-    same(BarWidgetStyle.levelColor(c), Qt.alpha(c.icon, 0.35), "level");
+    same(c.level, Qt.alpha(c.icon, 0.35), "level");
   }
 
   function test_state_content_by_backdrop() {

@@ -158,7 +158,7 @@ BarWidget {
   hasBackground: segments.length > 0
   accentField: warning ? "warnColor" : "backgroundColor"
   backgroundLevel: root.pill ? Math.min(1, root.segmentData(root.segments[0]).level / 100) : -1
-  backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
+  backgroundLevelColor: root.colors.level
   appearance: properties.appearance
   stateColor: root.accentColor
 
@@ -175,7 +175,7 @@ BarWidget {
   property var _items: []
   // The gap the grid keeps between segments along the bar: a split bar's
   // room for a divider between metrics, else the usual
-  readonly property real _gap: root.barConfig.splitRoom >= 0 && root.segments.length > 1 ? root.barConfig.splitRoom : (root.isVertical ? root.barConfig.innerGap : root.barConfig.innerPadding)
+  readonly property real _gap: root.barConfig.splitRoom >= 0 ? root.barConfig.splitRoom : (root.isVertical ? root.barConfig.innerGap : root.barConfig.innerPadding)
   // Per segment, null when it doesn't split: { from, at, part } in the widget
   readonly property var _placed: {
     const items = root._items.filter(item => item !== null && item !== undefined);

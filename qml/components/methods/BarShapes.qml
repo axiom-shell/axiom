@@ -67,15 +67,11 @@ QtObject {
   // icon part is the icon, or a lead graphic drawn before it; the label part
   // is the text, or a lead graphic drawn after the icon (`leadAfterIcon`:
   // ticker and stacked text). `leadRoom` is the lead graphic's room (0 for
-  // none). iconPartEnd says where the icon part ends: "icon" (the icon's
-  // end, a graphic after it) or "label" (the gap before the label starts).
+  // none).
   function iconTextSplit(hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom) {
     const hasIconPart = hasIcon || (leadRoom > 0 && !leadAfterIcon);
     const hasLabelPart = hasText || (leadRoom > 0 && leadAfterIcon);
-    return {
-      "splits": splitRoom >= 0 && hasLabelPart && hasIconPart,
-      "iconPartEnd": leadAfterIcon ? "icon" : "label"
-    };
+    return splitRoom >= 0 && hasLabelPart && hasIconPart;
   }
 
   // A split widget's icon part, `head` long from `start` along it, and
@@ -86,18 +82,6 @@ QtObject {
     return {
       "at": start + head + room / 2,
       "part": vertical ? Qt.rect(middle - size / 2, start, size, head) : Qt.rect(start, middle - size / 2, head, size)
-    };
-  }
-
-  // A later metric's icon part in a box of several (System Stats, Boxes:
-  // One): as splitPart, plus `from`, the middle of the gap before it,
-  // where its box starts: { from, at, part }
-  function innerSplitPart(vertical, from, start, head, room, middle, size) {
-    const placed = root.splitPart(vertical, start, head, room, middle, size);
-    return {
-      "from": from,
-      "at": placed.at,
-      "part": placed.part
     };
   }
 

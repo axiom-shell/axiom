@@ -47,7 +47,7 @@ New translation keys (titles, descriptions, the library label) are added to the 
 - Add the widget to a bar in the bar editor and look: `scripts/dev/shot.sh page BarEditor`. Hovering can't be simulated, so for a popout read the anchor's `active` and the log.
 
 ## Check it in every style
-Colours and split have gone wrong in styles nobody looked at. In a nested shell (`docs/dev/testing.md`), look at the widget in each of the eight widget styles, split joined and badge, merged and powerline, the gradient on, and each display style it lists. Set them with `axiom config set --socket <nested> --config-dir <scratch>/config/axiom Bars.items.<id>.widgets.<section>.<widget id>.properties…` (always both flags, or it writes the live config). Text and icons must read, a split widget must show its icon part, and a state colour must not vanish on its own fill.
+Colours and split have gone wrong in styles nobody looked at. In a nested shell (`docs/dev/testing.md`), look at the widget in each of the seven widget styles, split joined and badge, merged and powerline, the gradient on, and each display style it lists. Set them with `axiom config set --socket <nested> --config-dir <scratch>/config/axiom Bars.items.<id>.widgets.<section>.<widget id>.properties…` (always both flags, or it writes the live config). Text and icons must read, a split widget must show its icon part, and a state colour must not vanish on its own fill.
 
 ## Docs to update
 - [bar/widget-style](../dev/bar/widget-style.md), only if the widget introduces a new base class or color rule.
