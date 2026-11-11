@@ -142,6 +142,24 @@ QtObject {
     return root._finish(palette, state, result);
   }
 
+  // What a bar widget draws in on its bar (colors() on the bar's look and
+  // palette, `barConfig`: an enriched bar): `accent` is its color for its
+  // state, `own` the text color it's configured with (resolved), `widget`
+  // what of the widget itself its look depends on (state()'s: splits,
+  // hovered, spot, auto, level; left out, none of it). In a merged run on
+  // a merged bar.
+  function widgetColors(barConfig, accent, own, widget) {
+    const palette = barConfig.palette;
+    return root.colors(barConfig.look, palette, root.state(palette, {
+      "splits": widget?.splits,
+      "hovered": widget?.hovered,
+      "spot": widget?.spot,
+      "auto": widget?.auto,
+      "level": widget?.level,
+      "group": barConfig.look.grouping === "merged"
+    }), accent, own);
+  }
+
   // `result` (_widget's) with its level color from its icon, its
   // backdrops under the level where it draws one, and its text and icon
   // nudged to read on them (not those the bar's text color sets)

@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import "barstyle/Bars.js" as Bars
 import "barstyle/Matrix.js" as Matrix
 
 // The bar widget style system's characterization: every widget style,
@@ -40,8 +41,6 @@ TestCase {
       "warning": "#fabd2f",
       "error": "#fb4934"
     })
-  // Widget.radius's stand-in, for a look with no widgetRadius
-  readonly property int widgetRadius: 8
   // Appearance.baseFontSize's stand-in (the schema's default)
   readonly property int baseFontSize: 14
 
@@ -120,39 +119,20 @@ TestCase {
     return section;
   }
 
-  // A bar's look as enrichBarConfig resolves it (a pure copy of its look
-  // block: BarsConfig needs Theme and the config). The returned bar is
-  // what the other adapters take.
+  // A bar as BarsConfig.enrichBarConfig makes it (BarEnrich, through the
+  // Bars.js fixture): the raw look is the Bars section's style, the
+  // geometry the bar's own. A pills bar's `endRoom` is its edge padding
+  // and the border's stroke (BarEnds.tabEndRoom). The returned bar is what
+  // the other adapters take.
   function enrich(raw, geo) {
-    const thickness = geo.thickness;
-    const scale = thickness / 26;
-    const innerPadding = Math.round(geo.innerPadding * scale);
-    const innerGap = Math.round(geo.innerGap * scale);
-    const far = geo.location === "right" || geo.location === "bottom";
-    const look = BarLook.resolve(root.sectionOf(raw), {}, {
-      "thickness": thickness,
-      "innerPadding": innerPadding,
-      "innerGap": innerGap,
-      "radius": root.widgetRadius,
-      "far": far
-    });
-    const separators = look.separators;
-    const groupSpacing = look.grouping === "powerline" ? 0 : separators.style !== "none" ? BarLayout.dividerGap(separators.style, separators.thickness, thickness, separators.gap) : geo.widgetGap;
-    const bar = {
-      "thickness": thickness,
-      "innerPadding": innerPadding,
-      "innerGap": innerGap,
-      "fontSize": Math.round(root.baseFontSize * scale * look.textScale / 100),
-      "groupSpacing": groupSpacing,
-      "radius": look.radius,
-      "right": geo.location === "right",
-      "bottom": geo.location === "bottom",
-      "vertical": geo.location === "left" || geo.location === "right",
-      "look": look,
-      "splitRoom": look.split ? look.split.room : -1
-    };
-    look.shape.tabFillet = BarTabs.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, geo.endRoom);
-    return bar;
+    return Bars.bar(Object.assign({}, root.sectionOf(raw), {
+      "thickness": geo.thickness,
+      "innerPadding": geo.innerPadding,
+      "innerGap": geo.innerGap,
+      "widgetGap": geo.widgetGap,
+      "location": geo.location,
+      "edgePadding": geo.endRoom - 1
+    }));
   }
 
   // What the matrix records of an enriched bar, by the old flat names. A
@@ -194,26 +174,14 @@ TestCase {
     }, {});
   }
 
-  // The bar's palette (enrichBarConfig's)
-  function palette(bar) {
-    return BarWidgetStyle.palette(bar.look, name => root.resolve(name), root.resolve("foreground"), root.resolve("background"));
-  }
-
   // A widget's colors (BarsConfig.widgetColors)
   function widgetColors(bar, accent, foregroundName, widget) {
-    const palette = root.palette(bar);
-    return BarWidgetStyle.colors(bar.look, palette, BarWidgetStyle.state(palette, {
-      "splits": widget?.splits,
-      "hovered": widget?.hovered,
-      "spot": widget?.spot,
-      "auto": widget?.auto,
-      "group": bar.look.grouping === "merged"
-    }), accent, root.resolve(foregroundName));
+    return BarWidgetStyle.widgetColors(bar, accent, root.resolve(foregroundName), widget);
   }
 
   // A cell's colors (BarsConfig.cellColors)
   function cellColors(bar, color, own, state, cell) {
-    const palette = root.palette(bar);
+    const palette = bar.palette;
     return BarWidgetStyle.cell(bar.look, palette, BarWidgetStyle.state(palette, {
       "hovered": cell?.hovered,
       "spot": cell?.spot,
@@ -225,7 +193,7 @@ TestCase {
 
   // A merged run's own background (BarsConfig.groupColors)
   function groupColors(bar, spot) {
-    return BarWidgetStyle.runColors(bar.look, root.palette(bar), spot);
+    return BarWidgetStyle.runColors(bar.look, bar.palette, spot);
   }
 
   function cellFlags(bar, solid) {
