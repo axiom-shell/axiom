@@ -23,7 +23,7 @@ Item {
   // key -> its data (above)
   required property var dataOf
   // The widget's paint (WidgetLook.paint) and its display appearance
-  // ({ style, segments, width, colorText })
+  // ({ style, segments, width })
   required property var paint
   required property var appearance
   required property bool isVertical

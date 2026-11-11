@@ -78,7 +78,7 @@ ColumnLayout {
     SchemaPropertiesForm {
       Layout.fillWidth: true
       propertiesSchema: root.schema.bar.properties
-      order: ["style", "icon", "segments", "width", "colorText", "popout"]
+      order: ["style", "icon", "segments", "width", "popout"]
       values: root.definition?.bar ?? ({})
       onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
     }

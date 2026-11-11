@@ -218,6 +218,10 @@ var all = []Step{
 	// corners, Button widgets) menu; a free menu's freeAnimation became its
 	// animation (v104.go)
 	{Version: 104, Run: v104},
+	// v105: the per-widget colorText option went: a bar widget's
+	// appearance.colorText and a custom widget's bar.colorText dropped
+	// (v105.go)
+	{Version: 105, Run: v105},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

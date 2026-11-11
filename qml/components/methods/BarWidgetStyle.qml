@@ -52,8 +52,7 @@ import QtQuick
 // toward white or black by the least that reaches 4.5 for text and 3 for
 // the rest, against what it sits on (`textBack`, `iconBack`: opaque
 // colors, a tint or translucent fill composited over the bar's
-// background). A state colour that replaces the override (colorText) and a
-// widget's own content colours are still nudged; the override itself
+// background). A widget's own content colours are still nudged; the override itself
 // (palette.override) never is, unless it is muted or pressed. Fills,
 // strokes and lines are never nudged.
 QtObject {
@@ -626,29 +625,6 @@ QtObject {
     if (state.group && BarLook.cellTraits(look, state.solid).groupCell)
       return null;
     return root._cellDrawn(look, state).gradientPart;
-  }
-
-  // What a value widget with "Colour the text by state" (its display
-  // `appearance`) draws its text, its icon and its graphics in, { text,
-  // icon, graphic }, given `colors` (colors()), its `stateColor` and
-  // whether it `hasState` now: the state's color read where each sits
-  // (content()), each where it doesn't sit on a fill it must read on
-  // (`textOnFill`, `iconOnFill`: those keep theirs). The icon of a split
-  // bar's icon part, on the state's own fill, never takes it.
-  function stateContent(colors, appearance, stateColor, hasState) {
-    if (!appearance?.colorText || !hasState)
-      return {
-        "text": colors.text,
-        "icon": colors.icon,
-        "graphic": colors.graphic
-      };
-    const text = colors.textOnFill ? colors.text : root.content(colors, stateColor, "text");
-    const icon = colors.iconOnFill ? colors.icon : root.content(colors, stateColor, "icon");
-    return {
-      "text": text,
-      "icon": icon,
-      "graphic": colors.iconOnFill ? colors.graphic : root._graphic(colors.iconBack, icon, text)
-    };
   }
 
   // A color of a widget's own on its `part` ("text" | "icon" | "mark" |

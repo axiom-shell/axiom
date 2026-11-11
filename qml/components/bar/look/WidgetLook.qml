@@ -42,12 +42,6 @@ QtObject {
   property bool pressed: false
   property bool pulsing: false
   property real pulse: 0
-  // "Colour the text by state" (BarWidgetStyle.stateContent): the display
-  // `appearance` ({ colorText }) or null for none, and whether it has a
-  // state now (its color: the drawn accent)
-  property var appearance: null
-  property bool hasState: true
-  property color stateColor: root.drawnColors.accent
   // Its text color's name: a widget with no field for it (the tray,
   // Workspaces: their heads) the field's default
   readonly property string _foreground: root.properties?.foregroundColor ?? "base00"
@@ -80,10 +74,6 @@ QtObject {
   }) : null
   // `colors` as drawn: a pulse's mix of them
   readonly property var drawnColors: root.pulse <= 0 || root.mutedColors === null ? root.colors : BarWidgetStyle.mixColors(root.colors, root.mutedColors, root.pulse)
-  // What its text and its icon draw in: its colors', or its state's
-  // where its appearance colours by state
-  readonly property var content: BarWidgetStyle.stateContent(root.drawnColors, root.appearance, root.stateColor, root.hasState)
-
   // `name`'s color as set on the widget (resolved, "" for none)
   function own(name) {
     return Theme.resolveColor(root.properties?.[name] ?? "");
@@ -112,13 +102,13 @@ QtObject {
   // ring's or bar's line, track, caption), and the functions that read a
   // color of its own on them (field, muted) or give one as set (line)
   readonly property var paint: ({
-      "text": root.content.text,
-      "icon": root.content.icon,
+      "text": root.drawnColors.text,
+      "icon": root.drawnColors.icon,
       "headText": root.drawnColors.headText,
-      "graphic": root.content.graphic,
+      "graphic": root.drawnColors.graphic,
       "muted": (part, color) => root.mutedOf(part, color ?? ({
-            "text": root.content.text,
-            "icon": root.content.icon,
+            "text": root.drawnColors.text,
+            "icon": root.drawnColors.icon,
             "headText": root.drawnColors.headText
           })[part]),
       "field": (name, part) => root.field(name, part),

@@ -18,7 +18,6 @@ BarWidget {
   _rowIconColor: root.iconOwnColor.a > 0 ? root.contentColor(root.iconOwnColor, "icon") : root.paint.icon
   readonly property color iconColor: root._rowIconColor
   readonly property color foregroundColor: root.paint.text
-  readonly property var contentColors: root._look.content
   readonly property int fontSize: root.barConfig.fontSize
   readonly property Item lead: root._row.lead
   readonly property real iconLength: root._row.iconLength

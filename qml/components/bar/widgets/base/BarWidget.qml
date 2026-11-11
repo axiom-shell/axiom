@@ -83,7 +83,7 @@ Item {
   property string styleText: root.text
   property string subtext: ""
   property bool labelShown: true
-  // {style, segments, width, colorText}: the display style, or null for a
+  // {style, segments, width}: the display style, or null for a
   // plain label
   property var appearance: root.properties?.appearance ?? null
 
@@ -95,11 +95,8 @@ Item {
   property string stateColorName: ""
   property bool muted: false
   property bool pulsing: false
-  // Legacy (removed with the aliases): a widget's color for its state, the
-  // colour its text takes by state and whether it has one
+  // Legacy (removed with the alias): a widget's color for its state
   property alias accentColor: look.accentColor
-  property alias stateColor: look.stateColor
-  property alias hasState: look.hasState
 
   // A count over its icon's corner ({ text, field }: the color field its
   // fill reads in), a mark on its icon's other corner ({ icon, field }),
@@ -261,7 +258,6 @@ Item {
     pressed: root.pressed
     pulsing: root.pulsing
     pulse: root.pulse
-    appearance: root.appearance
     splits: root.splits
     level: root.backgroundLevel >= 0
     length: root.isVertical ? root.height : root.width

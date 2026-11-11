@@ -8,9 +8,9 @@ import "barstyle/Bars.js" as Bars
 // BarStyle keys, on enriched bars (barstyle/Bars.js). Three blocks: exact
 // rows for the small functions, one row per look for where its state color
 // shows, and the invariant sweep: every look × grouping × hover × gradient
-// × split × level × muted × colorText on a dark and a light theme and
+// × split × level × muted on a dark and a light theme and
 // three accents, and the same for cells, asserting what must hold of every
-// one (contrast floors, colorText never on a fill, the gradient's slice,
+// one (contrast floors, the gradient's slice,
 // muted differing). The sweep never asks the core's `_widget` for an
 // expected value: it compares only with the pure helpers.
 TestCase {
@@ -198,26 +198,6 @@ TestCase {
     same(Qt.rgba(c.level.r, c.level.g, c.level.b, 1), "#ffffff", "a white sheen on a mid fill");
     fuzzyCompare(c.level.a, 0.35, 0.01, "at the same strength");
     c.textBack.forEach(back => verify(Utils.contrast(back, c.text) >= 4.5, "text reads on each: " + back));
-  }
-
-  function test_state_content_by_backdrop() {
-    const bar = Bars.bar({
-      "widgetStyle": "filled"
-    });
-    const filled = BarWidgetStyle.widgetColors(bar, "#458588", "#282828", {});
-    const tinted = BarWidgetStyle.widgetColors(Bars.bar({
-      "widgetStyle": "tinted"
-    }), "#458588", "#282828", {});
-    const on = {
-      "colorText": true
-    };
-    const state = "#fb4934";
-    compare(BarWidgetStyle.stateContent(tinted, on, state, false).text, tinted.text, "no state");
-    compare(BarWidgetStyle.stateContent(tinted, null, state, true).text, tinted.text, "not colouring");
-    same(BarWidgetStyle.stateContent(tinted, on, state, true).text, BarWidgetStyle.nudged(tinted.textBack, state, 4.5), "off a fill: the nudged state color");
-    same(BarWidgetStyle.stateContent(filled, on, state, true).text, filled.text, "on a fill: its own");
-    same(BarWidgetStyle.stateContent(filled, on, state, true).icon, filled.icon, "icon on a fill");
-    same(BarWidgetStyle.stateContent(tinted, on, state, true).graphic.line, BarWidgetStyle.over(BarWidgetStyle.stateContent(tinted, on, state, true).icon, tinted.iconBack[0]), "the graphic's line follows the icon");
   }
 
   // A cell's content in an empty cell is mixed emptyMix toward what it
@@ -559,7 +539,6 @@ TestCase {
       if (!onAFill && name !== "graphic.line" && root.pole(color) && ["#ffffff", "#000000"].some(p => root.reads(backs, p, floor)))
         fails.push(`${tag}: ${name} is a pole (${color})`);
     }
-    root.checkColorText(fails, tag, c, muted, ctx);
     root.checkBadge(fails, tag, c, ctx);
     // The state color shows where it is asked to: the gradient's slice
     // exactly where it gives way, the widget's own else (under the bar's
@@ -588,27 +567,6 @@ TestCase {
       fails.push(`${tag}: muted gradient ${root.part(dim.gradient)}, not ${rest.gradient.part}@${want}`);
     if (mid && Math.abs(mid.gradient.alpha - (rest.gradient.alpha + dim.gradient.alpha) / 2) > 1e-6)
       fails.push(`${tag}: pulse mid-point gradient ${root.part(mid.gradient)}`);
-  }
-
-  // colorText: the state color replaces the text color, nudged, off a fill
-  function checkColorText(fails, tag, c, muted, ctx) {
-    if (!ctx.colorText)
-      return;
-    // colorText: the nudged state color off a fill, never on one
-    const sc = BarWidgetStyle.stateContent(c, {
-      "colorText": true
-    }, c.accent, true);
-    const read = (backs, min) => muted ? BarWidgetStyle.muted(backs, c.accent) : BarWidgetStyle.nudged(backs, c.accent, min);
-    const wantText = c.textOnFill ? c.text : read(c.textBack, 4.5);
-    const wantIcon = c.iconOnFill ? c.icon : read(c.iconBack, 3);
-    if (!Qt.colorEqual(sc.text, wantText))
-      fails.push(`${tag}: colorText text ${sc.text}, not ${wantText}`);
-    if (!Qt.colorEqual(sc.icon, wantIcon))
-      fails.push(`${tag}: colorText icon ${sc.icon}, not ${wantIcon}`);
-    if (!Qt.colorEqual(sc.graphic.line, BarWidgetStyle.over(wantIcon, c.iconBack[0])))
-      fails.push(`${tag}: colorText graphic line ${sc.graphic.line}`);
-    if (!root.reads(c.iconBack, sc.graphic.line, 3 - 1e-6) && !c.iconOnFill)
-      fails.push(`${tag}: colorText graphic line under 3`);
   }
 
   // A badge in the accent shows on the bar and on the icon part (3), its
@@ -667,8 +625,7 @@ TestCase {
     for (const [themeKey, theme] of root.themes) {
       const own = Bars.resolverOf(theme).call(null, "base00");
       const set = Bars.resolverOf(theme).call(null, "base0D");
-      // The bar's text color set: on a subset (no level, one accent), with
-      // and without colorText
+      // The bar's text color set: on a subset (no level, one accent)
       for (const override of ["", "base0D"])
         for (const look of root.looks)
           for (const grouping of root.groupings)
@@ -677,23 +634,21 @@ TestCase {
                 const bar = root.barOf(themeKey, theme, look, grouping, hoverFill, gradient, override);
                 for (const split of look.split ? [false, true] : [false])
                   for (const level of override ? [false] : [false, true])
-                    for (const colorText of [false, true])
-                      for (const accent of override ? [root.accents[0]] : root.accents) {
-                        const tag = [themeKey, override ? "override" : "", look.key + (split ? "+split" : ""), grouping, hoverFill ? (hovered ? "hovered" : "hover") : "nohover", gradient ? (auto ? "auto" : "set") : "flat", level ? "level" : "", colorText ? "colorText" : "", accent].join(" ");
-                        cases += root.widgetCase(fails, bar, tag, accent, own, {
-                          "splits": split,
-                          "hovered": hovered,
-                          "spot": 0.3,
-                          "auto": auto,
-                          "level": level
-                        }, {
-                          "gradient": gradient,
-                          "auto": auto,
-                          "colorText": colorText,
-                          "override": override ? set : null,
-                          "poles": poles
-                        });
-                      }
+                    for (const accent of override ? [root.accents[0]] : root.accents) {
+                      const tag = [themeKey, override ? "override" : "", look.key + (split ? "+split" : ""), grouping, hoverFill ? (hovered ? "hovered" : "hover") : "nohover", gradient ? (auto ? "auto" : "set") : "flat", level ? "level" : "", accent].join(" ");
+                      cases += root.widgetCase(fails, bar, tag, accent, own, {
+                        "splits": split,
+                        "hovered": hovered,
+                        "spot": 0.3,
+                        "auto": auto,
+                        "level": level
+                      }, {
+                        "gradient": gradient,
+                        "auto": auto,
+                        "override": override ? set : null,
+                        "poles": poles
+                      });
+                    }
               }
     }
     console.info(`sweep: ${cases} widget cases in ${Date.now() - started} ms; badge poles: ${Object.keys(poles).join(", ")}`);

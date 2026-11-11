@@ -71,7 +71,7 @@ properties:
     x-enabledIf: {bar.popout: false}
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, icon, segments, width, colorText, popout]
+    x-order: [style, icon, segments, width, popout]
     x-properties:
       icon:
         type: string

@@ -25,7 +25,6 @@ ValueStyleWidget {
       "icon": "material",
       "segments": 5,
       "width": 0,
-      "colorText": false,
       "popout": false
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
@@ -43,8 +42,6 @@ ValueStyleWidget {
   graphMax: root.graphRange.max
   styleText: root.fields?.plain ?? ""
   subtext: root.fields?.subtext || root.fields?.alt || ""
-  hasState: !!root.fields?.color
-  stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : "transparent"
 
   // News: its state went to warning, or to critical (its colour's
   // name, CustomWidgetData.stateColor), from a calmer one
@@ -54,7 +51,7 @@ ValueStyleWidget {
   icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
   accentField: root.fields?.color ? "" : "backgroundColor"
-  accentColor: root.fields?.color ? root.stateColor : Theme.resolveColor(properties.backgroundColor)
+  accentColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : Theme.resolveColor(properties.backgroundColor)
 
   // Urgent: a slow pulse (as Battery's charging one), back to full when
   // it stops

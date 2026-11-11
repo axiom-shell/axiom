@@ -1,7 +1,7 @@
 # Display styles
 
 > **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/components/methods/ValueGraphics.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
-> **Config:** a bar widget's `properties.appearance` (`style`, `segments`, `width`, `colorText`); a custom widget's `bar`
+> **Config:** a bar widget's `properties.appearance` (`style`, `segments`, `width`); a custom widget's `bar`
 > **Related:** [Widget base classes](widget-style.md), [Custom widgets](../features/custom-widgets.md) › The bar widget, [Config manager](../core/config-manager.md#the-shape-of-configjson-format-2)
 
 How a bar widget with a value, a time or a long text draws it: one set of styles shared by the built-in widgets and custom widgets, drawn by the same code.
@@ -13,7 +13,7 @@ How a bar widget with a value, a time or a long text draws it: one set of styles
 - `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its background's `LevelFill` in the background's own shape).
 - `ticker`: the text, up to `width` long, scrolling past that and centred in its room while it fits; `stacked`: the text over a caption. Both sit after the icon, where the label goes (`leadAfterIcon`); a vertical bar turns the ticker along it and draws stacked as a label.
 - The ring is drawn on whole pixels, centred exactly on the icon's middle beside it (`IconTextWidget.iconMiddle`, passed as `ValueGraphic.middle`), its side's parity following whether that's on a whole or a half pixel. IconTextWidget centres the label's letters on the same middle (`TextBandPadding`), so ring, icon and label line up; the ticker centres on its letters the same way.
-- `colorText` colours the text and the icon in the widget's state colour (`stateColor`, default `accentColor`) separately, each only where it sits off a fill: the text where `colors.textOnFill` is false, the icon where `iconOnFill` is false (`BarWidgetStyle.stateContent`). So on split the label is coloured (on its tint or none) while the icon, on its part's fill, keeps `colors.icon`; filled and hovered fills colour neither. The colour is nudged to read on its backdrop (4.5 text, 3 icon). The pill's colour is `colors.level`, shared with SystemStats. The graphics draw in `colors.icon`.
+- The pill's colour is `colors.level`, shared with SystemStats. The graphics draw in `colors.icon`.
 
 ### The schema
 `BarDisplay` holds the four settings (an `x-inline` definition). A custom widget's `bar` extends it (`x-properties`: its icon and popout). A built-in widget picks WidgetBase's `appearance` part and names the styles it can draw (the default stays `label` unless it overrides `default` too):
@@ -32,8 +32,7 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 - `ratio`, 0–1, below 0 while there's no value (ring, fill, segments and pill then draw as a label);
 - `history` with `graphMin`/`graphMax` (null: none kept, the sparkline draws as a fill);
 - `styleText` (the ticker's text and stacked's first line, default `text`) and `subtext` (stacked's caption);
-- `labelShown` in place of `showText` (the widget's own "show the value" setting; the style hides the label where it's the graphic);
-- `stateColor` / `hasState`, for `colorText` (default the accent colour; a custom widget's only when its script gives a state).
+- `labelShown` in place of `showText` (the widget's own "show the value" setting; the style hides the label where it's the graphic).
 
 `style` is the style it draws now, after those fallbacks (`ValueGraphics.resolvedStyle`, which SystemStats' segments read too). The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric in its box, ticker and stacked split like a label on a split bar, and with Boxes: One each metric gets its own icon part there (Boxes: One per item gives each metric its own box and pill: [widget style](widget-style.md#boxes-one-per-item)), and a disk's sparkline as a fill (SystemManager keeps no disk history).
 

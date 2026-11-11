@@ -92,8 +92,7 @@ ValueStyleWidget {
 
   readonly property var current: root.figures(root.shown)
   // The change coloured inline only where the text doesn't sit on a fill
-  // (`textOnFill`: it must read on it; there `colorText` colours it all,
-  // or not)
+  // (`textOnFill`: it must read on it)
   readonly property bool rich: root.properties.colorize && !root.colors.textOnFill
 
   icon: {
@@ -114,9 +113,6 @@ ValueStyleWidget {
   readonly property var _span: MarketMath.priceSpan(root.current?.points ?? [], 0)
   graphMin: root._span.min
   graphMax: root._span.max
-
-  stateColor: MarketsManager.trendColor(root.current?.trend ?? "flat")
-  hasState: root.properties.colorize && !!root.current && !isNaN(root.current.price)
 
   // Cycling through the entries, while animations are on (off, the first
   // stays)
