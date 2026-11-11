@@ -37,7 +37,9 @@ properties:
   enabled:
     type: boolean
     x-takeover: true
+    x-recommended: true
     x-settings: false
+    title: Use axiom's login screen
     default: false
     description: Set by the card's Install and Remove.
   layout:

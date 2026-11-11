@@ -75,6 +75,7 @@ axiom ipc <target> <function> [args]
 | `wallpaper` | `next`, `random`, `preview <transition>` (the next wallpaper, played with that transition: `fade`, `wipe`, `slide`, `grow`, `shrink`, `wave`, `dissolve`, `pixelate`, `blinds`, `tiles`, `zoom`, `ripple`, `swirl`, `blur`, `clock`) |
 | `monitors` | `open`, `keep`, `revert`, `identify` |
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
+| `recommendedSetup` | `rows` (JSON), `check <id> <on\|off>`, `apply` |
 | `lockscreen` | `lock` |
 | `session` | `suspend`, `hibernate`, `logout`, `reboot`, `poweroff` (at once, with no second click) |
 | `greeter` | `open` (its settings), `preview` (the login screen's layout, on screen) |

@@ -26,7 +26,7 @@ Singleton {
   id: root
 
   // Bump when the onboarding gains a page worth showing to existing users
-  readonly property int version: 1
+  readonly property int version: 2
 
   // The pages, in order: { id, title, icon }
   // I18n.tr("Welcome") I18n.tr("Compositor") I18n.tr("Monitors") I18n.tr("Apps & keys")

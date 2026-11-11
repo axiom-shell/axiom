@@ -118,14 +118,14 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go. On p
 ### IntegrationHookupManager and the UI
 - `IntegrationHookupManager` calls the daemon; nothing is polled:
   - `check(key)` → `status[key]`;
-  - `apply(key)` → `results[key]`, then checks again, and runs the integration for the current theme when Apply changed something.
+  - `apply(key, done)` → `results[key]`, then checks again, and runs the integration for the current theme when Apply changed something. `done(ok, error)` is optional: false and the message on a call error, false and the first result's error when a result failed, else true (the Recommended setup list's run).
 - `forms/IntegrationHookup` shows it under a switched-on integration:
   - the status;
   - per target, the text with a copy button and an outline of what Apply will do (backup, link, where it goes, lines commented out);
   - then Apply.
 - `SettingsField` adds it under any field with `x-hookup`.
 - In settings they are their own category, one folding card per app (`x-card`'s `perField` on `ThemeIntegrations`).
-- The onboarder's App colors page lists the switched-on ones under "Finish setting up".
+- The onboarder's App colors page lists the switched-on ones under "Finish setting up". Its "Turn on for installed apps" turns on `RecommendedSetupManager.appKeys`: the installed ones the schema recommends (`x-recommended: installed` on the section, `false` on gtk and qt). The Recommended setup list does the same, then applies each hookup.
 - Only Apply, on the user's click, edits a user's config.
 
 ### Adding an integration

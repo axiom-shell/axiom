@@ -6,6 +6,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 
 /*
  * axiom's screen-share picker: the daemon's screenshare.request (a portal
@@ -165,13 +166,20 @@ Singleton {
       root._pickingRegion = false;
   }
 
+  // A share is running (PipeWire links, no polling): a live binding, since a
+  // PrivacyManager first read at the restart step would still see the links
+  // Unlinked and miss it
+  readonly property bool shareActive: !Paths.greeter && PrivacyManager.screenCaptures.length > 0
+
   // Restarts the portal services, so a hookup applied takes effect (a
-  // share running ends)
-  function restartPortal() {
+  // share running ends). `done` (optional) is called with (ok, stderr).
+  function restartPortal(done) {
     const services = ["xdg-desktop-portal.service"].concat((root.portal?.services ?? []).map(s => s + ".service"));
     CommandManager.run(["systemctl", "--user", "restart"].concat(services), (code, stdout, stderr) => {
       if (code !== 0)
         console.warn("[ScreenShareManager] restarting the portal:", stderr.trim());
+      if (done)
+        done(code === 0, stderr.trim());
     });
   }
 
