@@ -3022,7 +3022,6 @@
     "To lock after some idle time with your own idle daemon, have it lock with this command, also before the computer sleeps:": "",
     "The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent you run.": "",
     "Leaves the prompt to the agent you start yourself.": "",
-    "How axiom fits into the rest of your system: updates, idle, locking, password prompts and the login screen.": "",
     "App colors": "",
     "That folder doesn't exist yet. Create it and put some images in it, or use {0}'s wallpapers for now.": "",
     "Use {0}'s wallpapers": "",
@@ -4326,6 +4325,14 @@
     "On for {0}": "",
     "Recommended setup": "",
     "Managed mode is on. Turn on the rest of what axiom can run for you: untick what you'd rather keep your own, then Apply.": "",
-    "Not now": ""
+    "Not now": "",
+    "Turns on what axiom can run for you, in one go. Untick what you'd rather keep your own under What this turns on. The login screen comes last and asks for your password.": "",
+    "Use recommended": "",
+    "{0} failed": "",
+    "What this turns on": "",
+    "How axiom fits into the rest of your system: updates, idle, locking, password prompts, screen sharing and the login screen.": "",
+    "Apps sharing a screen or window pick it in axiom's picker, in your theme.": "",
+    "Use the portal's own": "",
+    "Leaves the choice to {0}'s own picker.": ""
   }
 }
