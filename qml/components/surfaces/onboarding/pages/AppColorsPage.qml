@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.core
+import qs.services.session
 import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
@@ -31,7 +32,7 @@ OnboardingPage {
   StyledTextButton {
     text: I18n.tr("Turn on for installed apps")
     iconText: "done_all"
-    onClicked: SettingsManager.commitValues(ThemeManager.integrations.filter(key => root.installed(key) && key !== "gtk" && key !== "qt").reduce((values, key) => {
+    onClicked: SettingsManager.commitValues(RecommendedSetupManager.appKeys.reduce((values, key) => {
       values["ThemeIntegrations." + key] = true;
       return values;
     }, {}))

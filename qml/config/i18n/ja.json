@@ -4304,6 +4304,22 @@
     "Divide labels from apps": "",
     "In each scratchpad: its label, a short divider, then its windows' app icons. The label never falls back to the apps' icons.": "",
     "The name its bind uses: magic for Super + V. Lists the scratchpads that exist now and those your binds name.": "",
-    "An icon (a Material Symbols name or a pasted glyph) and a text; which of them the cell shows is the scratchpad label setting.": ""
+    "An icon (a Material Symbols name or a pasted glyph) and a text; which of them the cell shows is the scratchpad label setting.": "",
+    "Your compositor can't do this": "",
+    "axiom won't take over this config": "",
+    "None of the apps axiom colors is installed": "",
+    "greetd or agreety isn't installed": "",
+    "Needs sway or Hyprland to run in": "",
+    "Nothing to install from: axiom isn't a git clone or a package": "",
+    "Checking...": "",
+    "Applying...": "",
+    "Done": "",
+    "Skipped": "",
+    "Already on": "",
+    "Applies when you finish": "",
+    "Couldn't restart the portal: {0}": "",
+    "Settings can't be saved right now": "",
+    "Another install is running": "",
+    "axiom refused the change": ""
   }
 }
