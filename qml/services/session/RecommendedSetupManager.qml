@@ -53,6 +53,7 @@ Singleton {
   // ("idle" | "pending" | "running" | "later" | "done" | "skipped" |
   // "failed"), `note` ("later" | "deferred" | "") and `error` (translated)
   // I18n.tr("Your compositor can't do this") I18n.tr("axiom won't take over this config")
+  // I18n.tr("axiom's own portal file (axiom.portal) isn't installed: run axiom's install.sh again, or reinstall its package.")
   // I18n.tr("None of the apps axiom colors is installed") I18n.tr("greetd or agreety isn't installed")
   // I18n.tr("Needs sway or Hyprland to run in") I18n.tr("Nothing to install from: axiom isn't a git clone or a package")
   // I18n.tr("Checking...") I18n.tr("Waiting") I18n.tr("Applying...") I18n.tr("Done") I18n.tr("Skipped") I18n.tr("Failed")
@@ -90,7 +91,8 @@ Singleton {
       "managedBlocked": CompositorConfigManager.managedCheck === "blocked",
       "portal": {
         "known": !!ScreenShareManager.portal,
-        "installed": ScreenShareManager.portalInstalled && ScreenShareManager.axiomPortalInstalled,
+        "installed": ScreenShareManager.portalInstalled,
+        "axiomInstalled": ScreenShareManager.axiomPortalInstalled,
         "hookedUp": IntegrationHookupManager.isDone("screenSharing")
       },
       "apps": {
@@ -165,9 +167,16 @@ Singleton {
 
   // --- The run ---
 
-  function apply() {
+  // `options` ({ later, choose }, optional) are the caller's own, as
+  // begin's: another host's begin since can't make this Apply commit or
+  // choose what that host's list had
+  function apply(options) {
     if (root._running)
       return;
+    if (options) {
+      root._later = options.later ?? [];
+      root._choose = options.choose ?? null;
+    }
     const rows = root.rows;
     const checked = {};
     for (const id in rows)
@@ -254,7 +263,7 @@ Singleton {
     const before = root._runState[id];
     root._setRow(id, {
       "state": "failed",
-      "error": before?.state === "failed" && before.error ? before.error + ", " + error : error
+      "error": before?.error ? before.error + ", " + error : error
     });
   }
 
@@ -283,6 +292,9 @@ Singleton {
     }
     root._plan = [];
     root._running = false;
+    // The greeter install must not start after a stop
+    root._waitingForPolkit = false;
+    _polkitWait.stop();
   }
 
   function _next() {
@@ -322,20 +334,32 @@ Singleton {
         "state": "running"
       });
     root._commitRows = step.rows;
-    if (!SettingsManager.commitValues(step.values)) {
+    const run = root._runId;
+    // The step goes on once axiom has answered: a refusal fails its rows
+    if (!SettingsManager.commitValues(step.values, ok => {
+      if (run !== root._runId || !root._running)
+        return;
+      if (ok) {
+        root._next();
+        return;
+      }
+      for (const id of step.rows)
+        root._fail(id, I18n.tr("axiom refused the change"));
+      root._stop();
+    })) {
       for (const id of step.rows)
         root._fail(id, I18n.tr("Settings can't be saved right now"));
       root._stop();
-      return;
     }
-    root._next();
   }
 
   function _runHookup(step) {
     const id = root._runId;
-    root._setRow(step.row, {
-      "state": "running"
-    });
+    // Several app hookups share a row: a failed one stays failed
+    if (root._runState[step.row]?.state !== "failed")
+      root._setRow(step.row, {
+        "state": "running"
+      });
     IntegrationHookupManager.apply(step.key, (ok, error) => {
       if (id !== root._runId || !root._running)
         return;
@@ -434,20 +458,6 @@ Singleton {
     function onStatusChanged() {
       if (PolkitManager.status !== "starting")
         root._installGreeter();
-    }
-  }
-
-  // The save was refused after the daemon looked at it: the commit's rows
-  // fail and the run stops
-  property Connections _refused: Connections {
-    target: ConfigManager
-
-    function onSaveRefused() {
-      if (!root._running)
-        return;
-      for (const id of root._commitRows)
-        root._fail(id, I18n.tr("axiom refused the change"));
-      root._stop();
     }
   }
 

@@ -125,6 +125,7 @@ TestCase {
       "portal": {
         "known": true,
         "installed": true,
+        "axiomInstalled": true,
         "hookedUp": false
       },
       "apps": {
@@ -155,6 +156,7 @@ TestCase {
 
   function test_entries_of_the_built_schema() {
     const entries = RecommendedSetup.entries(tc.builtSchema);
+    verify(Object.keys(tc.builtSchema.properties).indexOf("Compositor") > Object.keys(tc.builtSchema.properties).indexOf("Lockscreen"), "the schema itself has Compositor after Lockscreen");
     const commits = entries.filter(e => e.step === "commit");
     compare(tc._ids(commits), ["Compositor.mode", "Lockscreen.mode", "Idle.enabled", "Polkit.enabled"]);
     compare(tc._ids(entries).slice(-3), ["ScreenSharing.enabled", "ThemeIntegrations", "Greeter.enabled"]);
@@ -264,6 +266,7 @@ TestCase {
       "portal": {
         "known": true,
         "installed": true,
+        "axiomInstalled": true,
         "hookedUp": true
       }
     });
@@ -334,10 +337,21 @@ TestCase {
       "portal": {
         "known": true,
         "installed": false,
+        "axiomInstalled": true,
         "hookedUp": false
       }
     });
     compare(rows["ScreenSharing.enabled"].reason, "missing");
+    rows = tc._rows({
+      "portal": {
+        "known": true,
+        "installed": true,
+        "axiomInstalled": false,
+        "hookedUp": false
+      }
+    });
+    compare(rows["ScreenSharing.enabled"].reason, "noAxiomPortal", "the package is there, axiom.portal isn't");
+    verify(!rows["ScreenSharing.enabled"].available);
     rows = tc._rows({
       "apps": {
         "installed": [],

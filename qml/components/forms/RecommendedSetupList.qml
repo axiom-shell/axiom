@@ -48,6 +48,8 @@ ColumnLayout {
       return I18n.tr("axiom won't take over this config");
     case "missing":
       return I18n.tr("{0} isn't installed", ScreenShareManager.portal?.package ?? "");
+    case "noAxiomPortal":
+      return I18n.tr("axiom's own portal file (axiom.portal) isn't installed: run axiom's install.sh again, or reinstall its package.");
     case "noApps":
       return I18n.tr("None of the apps axiom colors is installed");
     case "noGreetd":
@@ -154,6 +156,16 @@ ColumnLayout {
           visible: item.restartable && item.problem !== ""
           Layout.fillWidth: true
           text: I18n.tr("Takes effect after the portal restarts or next login.")
+          textColor: Theme.foregroundInactive
+          textSize: Appearance.fontSizeBy(-1)
+          wrapMode: Text.WordWrap
+        }
+
+        // What restarting costs
+        StyledText {
+          visible: item.restartable
+          Layout.fillWidth: true
+          text: I18n.tr("The portal reads its config as it starts: restart it once after applying. A share running now stops.")
           textColor: Theme.foregroundInactive
           textSize: Appearance.fontSizeBy(-1)
           wrapMode: Text.WordWrap

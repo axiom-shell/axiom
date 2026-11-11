@@ -578,11 +578,12 @@ QtObject {
   // Sets config values by dotted path ({ "Apps.commands.terminal": "foot" }) and
   // saves them at once; false if saves can't be made. For pages
   // that apply as they go (SettingRows), not the settings page's draft.
-  function commitValues(values) {
+  // `done(ok)` (optional) as ConfigManager.commit's
+  function commitValues(values, done) {
     const next = Utils.clone(ConfigManager.config);
     for (const dottedPath of Object.keys(values))
       _setAt(next, dottedPath.split("."), values[dottedPath]);
-    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split(".")))))
+    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split("."))), done))
       return false;
     ensureLoaded();
     return true;

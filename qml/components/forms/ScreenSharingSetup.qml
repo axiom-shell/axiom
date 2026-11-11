@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.apps
 import qs.services.ui
-import qs.components.forms
 import qs.components.reusable
 
 // Screen sharing set up: which portal shares the screen under this

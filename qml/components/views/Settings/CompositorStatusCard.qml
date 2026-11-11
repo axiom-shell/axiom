@@ -315,8 +315,11 @@ FieldGroup {
         Layout.fillWidth: true
       }
 
-      RecommendedSetupList {
-        visible: root.offersRecommended
+      // Built only while offered: its begin() resets the shared state
+      StreamedLoader {
+        Layout.fillWidth: true
+        wanted: root.offersRecommended
+        sourceComponent: RecommendedSetupList {}
       }
 
       StyledTextButton {

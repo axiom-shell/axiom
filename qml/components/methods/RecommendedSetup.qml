@@ -18,6 +18,9 @@ QtObject {
       "ScreenSharing.enabled": "portal",
       "Greeter.enabled": "greeter"
     })
+  // Rows that come first of their step, in this order, however the schema
+  // is ordered
+  readonly property var leadPaths: ["Compositor.mode"]
   // Rows are listed commit, portal, apps, greeter
   readonly property var stepOrder: ({
       "commit": 0,
@@ -82,10 +85,14 @@ QtObject {
       }
     }
     // Stable by step: the sort key carries the index
+    const lead = item => {
+      const at = root.leadPaths.indexOf(item.entry.path);
+      return at < 0 ? root.leadPaths.length : at;
+    };
     return found.map((entry, index) => ({
           "entry": entry,
           "index": index
-        })).sort((a, b) => (root.stepOrder[a.entry.step] - root.stepOrder[b.entry.step]) || a.index - b.index).map(item => item.entry);
+        })).sort((a, b) => (root.stepOrder[a.entry.step] - root.stepOrder[b.entry.step]) || (lead(a) - lead(b)) || a.index - b.index).map(item => item.entry);
   }
 
   // The keys of `section` (the ThemeIntegrations schema node) that are
@@ -104,10 +111,10 @@ QtObject {
   // Every row by id: { id, path, step, label, detail, value, keys,
   // hookupKeys, done, available, reason, later, checkedByDefault }.
   // `facts`: { config, schema, valueOf, later: [paths], modeAllowed,
-  // modeDefault, managedBlocked, portal: { known, installed, hookedUp },
+  // modeDefault, managedBlocked, portal: { known, installed, axiomInstalled, hookedUp },
   // apps: { installed: [keys], hookups: { key: "done" | "todo" | "none" } },
   // greeter: GreeterManager.status }. `reason` is a code ("" when
-  // available or done): unsupported, blocked, missing, noApps, noGreetd,
+  // available or done): unsupported, blocked, missing, noAxiomPortal, noApps, noGreetd,
   // noCompositor, noClone, unknown.
   function rows(entries, facts) {
     const result = {};
@@ -166,6 +173,9 @@ QtObject {
     } else if (!portal.installed) {
       row.available = false;
       row.reason = "missing";
+    } else if (!portal.axiomInstalled) {
+      row.available = false;
+      row.reason = "noAxiomPortal";
     }
   }
 

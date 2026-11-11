@@ -25,6 +25,9 @@ OnboardingPage {
   readonly property bool applied: root.rowList.some(row => row.state === "done" || row.state === "later")
   // The fold opens by itself when a row fails, so the error shows
   property bool foldOpen: false
+  // The compositor mode row applies on Finish (chooseMode)
+  readonly property var later: ["Compositor.mode"]
+  readonly property var choose: (path, value) => OnboardingManager.chooseMode(value)
 
   SettingRows {
     Layout.fillWidth: true
@@ -66,7 +69,11 @@ OnboardingPage {
         iconText: "verified"
         text: I18n.tr("Use recommended")
         enabled: !RecommendedSetupManager.running && !root.rowList.some(row => row.reason === "unknown")
-        onClicked: RecommendedSetupManager.apply()
+        // Its own later and choose, whatever another host's list set since
+        onClicked: RecommendedSetupManager.apply({
+          "later": root.later,
+          "choose": root.choose
+        })
       }
 
       StyledText {
@@ -83,8 +90,8 @@ OnboardingPage {
       Layout.fillWidth: true
 
       RecommendedSetupList {
-        later: ["Compositor.mode"]
-        choose: (path, value) => OnboardingManager.chooseMode(value)
+        later: root.later
+        choose: root.choose
         showApply: false
       }
     }
