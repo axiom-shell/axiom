@@ -65,9 +65,9 @@ Item {
 
   readonly property var _item: contentLoader.item
   // What WidgetGroup draws under the module: its colors on this bar
-  // (BarsConfig.widgetColors), or null when it has no background
+  // (WidgetLook's drawnColors), or null when it has no background
   readonly property bool hasBackground: _item?.hasBackground ?? false
-  readonly property var background: hasBackground ? _item.colors : null
+  readonly property var background: hasBackground ? _item.drawnColors : null
   // It draws its own parts as segments of the bar's run (BarWidget's
   // `segmented`), and its place there (set by WidgetGroup: { sized, drawn,
   // tabLimits }), which its module gets with how far its parts reach past
@@ -82,16 +82,13 @@ Item {
     "reachEnd": _reach.far - _tabShift
   }) : null
   // The module's own fade, which its background follows: its `dim` when
-  // it has one (a press fades only its content; the background shows it
-  // by `pressed`, as a fade would let a powerline neighbour's square start
-  // show through), else its opacity
+  // it has one, else its opacity
   readonly property real contentOpacity: _item ? ("dim" in _item ? _item.dim : _item.opacity) : 1
-  readonly property bool pressed: _item?.pressed ?? false
   // A level filling its background's shape (the module's `backgroundLevel`), -1 none
   readonly property real backgroundLevel: _item?.backgroundLevel ?? -1
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
   // A split bar's widget showing its icon part and label apart
-  // (IconTextWidget.splits): along it, the middle of the gap between them
+  // (IconTextRow.splits): along it, the middle of the gap between them
   // (`at`), and what the icon part holds (`part`), in its own coordinates,
   // and `inner`, the same for the parts after it (BarWidget.innerSplits);
   // null otherwise
@@ -118,7 +115,7 @@ Item {
   // Hovered, on a module that shows an outline then (its hoverOutline)
   readonly property bool outlined: (_item?.hoverOutline ?? false) && (_item?.hovered ?? false)
   // Its content's extent across the bar, in px: the module's
-  // `contentAcross` (BarWidget's, BarIconWidget's: from config, never
+  // `contentAcross` (BarWidget's: from config, never
   // measured from the live item, so it can't feed back into the layout).
   // A module declaring none is taken to fill the bar's thickness. Its
   // caps' room is kept clear of content that tall (BarRuns.insets).
@@ -381,8 +378,8 @@ Item {
   ShapeOverlay {
     shown: root.editorOutlined && !root.hasBackground
     bar: root.barConfig
-    fill: Qt.alpha(Theme.accent, 0.15)
-    stroke: Theme.accent
+    fill: BarWidgetStyle.faded(root.barConfig.palette.highlight, 0.15)
+    stroke: root.barConfig.palette.highlight
     strokeWidth: 2
     glides: false
   }

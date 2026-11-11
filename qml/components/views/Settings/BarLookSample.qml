@@ -188,7 +188,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: Widget.radius
-    color: Theme.background
+    color: root._barConfig.palette.background
   }
 
   // The strip, shrunk to fit a narrow tile
@@ -260,7 +260,7 @@ Item {
 
         visible: root._look.separators.style !== "none"
         style: root._look.separators.style
-        color: Theme.resolveColor(root._look.separators.color)
+        color: root._barConfig.palette.separator
         thickness: root._look.separators.thickness
         length: BarLayout.dividerLength(mark.style, root._thickness)
         x: mark.center - width / 2

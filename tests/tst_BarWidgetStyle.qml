@@ -141,6 +141,7 @@ TestCase {
     same(p.accentLine.to, resolve("base0D"), "accent line fades to");
     same(p.hoverOutline, Bars.theme.border, "hover outline");
     same(p.cellHover, Bars.theme.backgroundHighlight, "cell hover");
+    same(p.highlight, Bars.theme.accent, "editor highlight");
     const plain = Bars.bar({}).palette;
     compare([plain.override, plain.gradientStops, plain.accentLine], [null, null, null], "Auto text, no gradient, no line");
     same(Bars.bar({
@@ -388,7 +389,7 @@ TestCase {
   // What must hold of the colors() of a widget in `ctx`, whether `muted`
   // or not: pushes what doesn't to `fails`
   function checkWidget(fails, tag, c, muted, ctx) {
-    const parts = [["text", c.text, c.textBack, c.textOwnFill, 4.5, c.textOnFill], ["icon", c.icon, c.iconBack, c.iconOwnFill, 3, c.iconOnFill], ["headText", c.headText, c.iconBack, c.iconOwnFill, 4.5, c.iconOnFill], ["mark", c.mark, c.iconBack, c.iconOwnFill, 3, c.iconOnFill], ["graphic.line", c.graphic.line, c.iconBack, c.iconOwnFill, 3, c.iconOnFill]];
+    const parts = [["text", c.text, c.textBack, c.textOwnFill, 4.5, c.textOnFill], ["icon", c.icon, c.iconBack, c.iconOwnFill, 3, c.iconOnFill], ["headText", c.headText, c.iconBack, c.iconOwnFill, 4.5, c.iconOnFill], ["mark", c.mark, c.iconBack, c.iconOwnFill, 3, c.iconOnFill], ["graphic.line", c.graphic.line, c.iconBack, c.iconOwnFill, 3, c.iconOnFill], ["graphic.subcaption", c.graphic.subcaption, c.iconBack, c.iconOwnFill, 3, c.iconOnFill]];
     for (const [name, color, backs, onFill, min, onAFill] of parts) {
       const floor = muted && !onFill ? BarWidgetStyle.mutedContrast : min;
       if (ctx.override) {
@@ -481,7 +482,7 @@ TestCase {
       fails.push(`${tag}: level stronger than 35%`);
     const mid = BarWidgetStyle.mixColors(rest, dim, 0.5);
     if (!ctx.override)
-      for (const [name, color, backs] of [["text", mid.text, mid.textBack], ["icon", mid.icon, mid.iconBack], ["headText", mid.headText, mid.iconBack], ["mark", mid.mark, mid.iconBack], ["graphic.line", mid.graphic.line, mid.iconBack]])
+      for (const [name, color, backs] of [["text", mid.text, mid.textBack], ["icon", mid.icon, mid.iconBack], ["headText", mid.headText, mid.iconBack], ["mark", mid.mark, mid.iconBack], ["graphic.line", mid.graphic.line, mid.iconBack], ["graphic.subcaption", mid.graphic.subcaption, mid.iconBack]])
         if (!root.reads(backs, color, BarWidgetStyle.mutedContrast))
           fails.push(`${tag}: pulse mid-point ${name} ${color} under 3 on ${backs}`);
     return 3;

@@ -20,17 +20,17 @@ BarWidget {
   readonly property real spacing: barConfig.innerGap * 1.5
   // No item showing (none, or only passive ones while those are hidden):
   // a zero natural size, which the bar skips, as IconTextWidget's `hidden`
-  readonly property bool hidden: items.implicitWidth <= 0
+  hidden: trayGrid.implicitWidth <= 0
 
   hasBackground: !hidden
   accentField: "backgroundColor"
 
-  readonly property real _itemsLength: isVertical ? items.implicitHeight : items.implicitWidth
+  readonly property real _itemsLength: isVertical ? trayGrid.implicitHeight : trayGrid.implicitWidth
   // Where the head and the items after it start, centred in the widget
   readonly property real _start: Math.round(((isVertical ? height : width) - lead.length - _itemsLength) / 2)
 
-  implicitWidth: isVertical ? barConfig.thickness : hidden ? 0 : lead.length + items.implicitWidth + padding * 2
-  implicitHeight: isVertical ? (hidden ? 0 : lead.length + items.implicitHeight + padding * 2) : barConfig.thickness
+  implicitWidth: isVertical ? barConfig.thickness : hidden ? 0 : lead.length + trayGrid.implicitWidth + padding * 2
+  implicitHeight: isVertical ? (hidden ? 0 : lead.length + trayGrid.implicitHeight + padding * 2) : barConfig.thickness
 
   splits: lead.splits
   splitAt: lead.splitAt
@@ -45,7 +45,7 @@ BarWidget {
   }
 
   Grid {
-    id: items
+    id: trayGrid
     x: root.isVertical ? Math.round((root.width - width) / 2) : root._start + lead.length
     y: root.isVertical ? root._start + lead.length : Math.round((root.height - height) / 2)
     // One line of the shown icons (-1: counted by the Grid); each 1 waits

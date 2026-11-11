@@ -8,7 +8,7 @@ A widget drawn one box per item is one host per item, so its boxes are run membe
 
 ### The layers here
 - **Shape** (`qml/components/methods/`, pure, each with its `tst_<Name>`): what's drawn where, from the look's resolved fields (`look.shape`, `look.grouping`, `look.traits`), never its style's name.
-  - `BarShapes`: caps (`capPoints`, `depth`, `dividerCap`), `segment` (a widget's caps and room in a run), `contains` (hit tests), `splitRoom`, `splitPart` (where a split widget's gap and icon part are: `IconTextWidget`'s and `SplitLead`'s), `strokeBand`, `pressCaps`, the outline spec and where a box lies (`outline`, `boxRect`).
+  - `BarShapes`: caps (`capPoints`, `depth`, `dividerCap`), `segment` (a widget's caps and room in a run), `contains` (hit tests), `splitRoom`, `splitPart` (where a split widget's gap and icon part are: `IconTextWidget`'s and `SplitLead`'s), `strokeBand`, the outline spec and where a box lies (`outline`, `boxRect`).
   - `BarTabs`: `tab`, `tabFillet`, `tabLimits`, `tabShift`, `reachAcross`, `sides`, `barTab`.
   - `BarOutlines`: SVG outlines from one spec (`BarShapes.outline({ length, across, radius, startCap, endCap, vertical, seamStart, seamEnd, tab, openStart, openEnd })`), as `path(o, inset, open)`, `offsetPath`, `dashPath`, `marks`, `fillets`.
   - `BarCells`: a widget's parts as segments (`cellSegment`, `cellGap`, `cellTab`, `cellShape`, `cellRoom`, `cellMargins`, `runDraws`, `cellContains`), a cell's box and stroke (`cellBox`, `cellOutline`) and the cell look's rules (`cellLook`, `cellLength`).
@@ -107,7 +107,7 @@ A widget drawn one box per item is one host per item, so its boxes are run membe
 ### Background states
 - The background follows a widget's `dim`, not its press fade. A press fade would show a powerline neighbour's square start through it.
 - It draws the following, each in the widget's shape as it shows and inset all round (a `ShapeOverlay` each, built only while shown):
-  - **A press:** a tint of its text color (`pressed`), in a merged run in the caps the widget has alone where it fills its own part (`BarShapes.pressCaps`).
+  - **A press:** colour only: the widget's content mixed toward its backdrop (`pressed` in its colors), no overlay.
   - **The hover outline:** for `hoverOutline` widgets (Button).
   - **The bar editor's highlight.** (A host with no background draws its highlight itself, in its own bounds.)
 - A widget's `backgroundLevel` (0–1, -1 for none; the pill display style) is drawn by its `WidgetBackground`'s `LevelFill` as the background's own shape in `backgroundLevelColor`, seen along the bar (up a vertical one) through a `ClippingRectangle` window: the background's cap where it starts, a rounded edge (a capsule's, else the bar's radius) where it stops, and full, the background's own end unless that's flat, so a level never stops square. The window overhangs the start by the bar's thickness, so a low level keeps inside the background's cap rather than squeezing its corners square. Its caps are `BarShapes.segment`'s `levelStartCap` / `levelEndCap`: the widget's own, except in a merged run, where they're the caps it would have alone (not the run's flat middle), so a pill looks the same merged as separate.

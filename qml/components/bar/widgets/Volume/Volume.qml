@@ -9,6 +9,6 @@ import qs.components.bar.widgets.base
 AudioLevelWidget {
   node: AudioManager.defaultSink
   mode: "output"
-  icon: AudioManager.outputIcon(AudioManager.deviceKind(node), muted, level)
-  accentField: muted ? "mutedColor" : "backgroundColor"
+  icon: AudioManager.outputIcon(AudioManager.deviceKind(node), deviceMuted, level)
+  accentField: deviceMuted ? "mutedColor" : "backgroundColor"
 }

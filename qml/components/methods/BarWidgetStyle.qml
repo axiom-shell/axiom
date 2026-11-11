@@ -15,7 +15,8 @@ import QtQuick
 // gradient's colors, or null), and the bar's other colors resolved once:
 // separator (the dividers between widgets), accentLine ({ from, to }, the
 // bar's accent line, or null), hoverOutline (a hovered widget's outline)
-// and cellHover (a hovered cell's box). A user's color is taken as set,
+// cellHover (a hovered cell's box) and highlight (the bar editor's
+// highlight of the selected widget: the theme's accent). A user's color is taken as set,
 // never graded.
 //
 // `state` is what of the widget itself its colors depend on (state()):
@@ -88,7 +89,8 @@ QtObject {
         "to": line.fade ? resolve(line.fade) : resolve(line.color)
       } : null,
       "hoverOutline": resolve("border"),
-      "cellHover": resolve("backgroundHighlight")
+      "cellHover": resolve("backgroundHighlight"),
+      "highlight": resolve("accent")
     };
   }
 
@@ -173,8 +175,10 @@ QtObject {
     for (const key in backs)
       if (key in out && out[backs[key]] && !Qt.colorEqual(out[key], a[key]) && !Qt.colorEqual(out[key], b[key]))
         out[key] = root.nudged(out[backs[key]], out[key], root.mutedContrast);
-    if (out.graphic && out.iconBack)
+    if (out.graphic && out.iconBack) {
       out.graphic.line = root.nudged(out.iconBack, out.graphic.line, root.mutedContrast);
+      out.graphic.subcaption = root.nudged(out.iconBack, out.graphic.subcaption, root.mutedContrast);
+    }
     return out;
   }
 
@@ -369,14 +373,17 @@ QtObject {
   }
 
   // What a ring, bar or sparkline draws in, all opaque: its `line` (on
-  // `backs`), a `track` and an `area` of it faded over them, and its
-  // `caption` (text over it, `text`'s)
+  // `backs`), a `track` and an `area` of it faded over them, its
+  // `caption` (text over it, `text`'s) and a `subcaption` (the caption
+  // dimmed 30% toward the first backdrop, floored at mutedContrast)
   function _graphic(backs, line, text) {
+    const caption = root.over(text, backs[0]);
     return {
       "line": root.over(line, backs[0]),
       "track": root.over(root.faded(line, 0.2), backs[0]),
       "area": root.over(root.faded(line, 0.35), backs[0]),
-      "caption": root.over(text, backs[0])
+      "caption": caption,
+      "subcaption": root.nudged(backs, root._toward(caption, backs[0], 0.3), root.mutedContrast)
     };
   }
 

@@ -109,7 +109,7 @@ Item {
 
       visible: _slot.shown
       style: root.barConfig.look.separators.style
-      color: Theme.resolveColor(root.barConfig.look.separators.color)
+      color: root.barConfig.palette.separator
       thickness: root.barConfig.look.separators.thickness
       length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root._vertical
@@ -156,7 +156,6 @@ Item {
       seamEnd: segment.seamEnd
       shownStart: segment.shownStart
       hovered: host?.outlined ?? false
-      pressed: host?.pressed ?? false
       backgroundLevel: host?.backgroundLevel ?? -1
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       levelStartCap: segment.levelStartCap

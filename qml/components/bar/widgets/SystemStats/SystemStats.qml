@@ -105,7 +105,7 @@ BarWidget {
   contentAcross: Math.max(root.barConfig.fontSize, ...root.segments.map(key => ValueGraphics.across(root.segmentStyle(key), root.isVertical, root.barConfig.thickness, root.barConfig.fontSize, root._boxRoom)))
 
   // Live icon/value/level for one segment key
-  function segmentData(key) {
+  function _metricData(key) {
     const p = properties;
     switch (key) {
     case "cpu":
@@ -153,11 +153,11 @@ BarWidget {
       }
     }
   }
-  readonly property bool warning: segments.some(key => segmentData(key).level >= properties.warnThreshold)
+  readonly property bool warning: segments.some(key => _metricData(key).level >= properties.warnThreshold)
 
   hasBackground: segments.length > 0
   accentField: warning ? "warnColor" : "backgroundColor"
-  backgroundLevel: root.pill ? Math.min(1, root.segmentData(root.segments[0]).level / 100) : -1
+  backgroundLevel: root.pill ? Math.min(1, root._metricData(root.segments[0]).level / 100) : -1
   backgroundLevelColor: root.colors.level
   appearance: properties.appearance
 
@@ -262,7 +262,7 @@ BarWidget {
               root._items = items;
             }
           }
-          readonly property var stat: root.segmentData(modelData)
+          readonly property var stat: root._metricData(modelData)
           readonly property var metric: root._metrics.find(m => m.key === segment.modelData)
           readonly property string style: root.segmentStyle(segment.modelData)
 
@@ -279,8 +279,8 @@ BarWidget {
           text: segment.stat.value
           minimumText: segment.stat.widest
           showText: segment.style !== "icon" && segment.style !== "stacked"
-          foregroundColor: root.contentColors.text
-          iconColor: root.contentColors.icon
+          foregroundColor: root.paint.text
+          iconColor: root.paint.icon
           leadLength: graphic.drawn ? graphic.length : 0
           leadAfterIcon: graphic.afterIcon
 
@@ -304,8 +304,7 @@ BarWidget {
             room: root._boxRoom
             fontSize: root.barConfig.fontSize
             middle: segment.iconMiddle
-            color: root.colors.icon
-            textColor: root.contentColors.text
+            paint: root.paint.graphic
           }
         }
       }

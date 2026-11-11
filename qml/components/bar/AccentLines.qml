@@ -46,7 +46,7 @@ Item {
     readonly property real thickness: line.accent?.width ?? 0
     readonly property bool far: line.bar.barConfig.right || line.bar.barConfig.bottom
     readonly property real across: line.far ? (line.vertical ? line.bar.width : line.bar.height) - line.inset - line.thickness : line.inset
-    readonly property color from: line.accent ? Theme.resolveColor(line.accent.color) : "transparent"
+    readonly property color from: line.accent ? line.bar.barConfig.palette.accentLine.from : "transparent"
 
     x: line.vertical ? line.across : line.start
     y: line.vertical ? line.start : line.across
@@ -60,7 +60,7 @@ Item {
       }
       GradientStop {
         position: 1
-        color: line.accent?.fade ? Theme.resolveColor(line.accent.fade) : line.from
+        color: line.accent ? line.bar.barConfig.palette.accentLine.to : "transparent"
       }
     }
   }
