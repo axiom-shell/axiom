@@ -348,7 +348,8 @@ func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
 		for _, line := range strings.Split(string(data), "\n") {
 			trimmed := strings.TrimSpace(line)
 			if conf {
-				if strings.HasPrefix(trimmed, "#") {
+				// exec-once never runs again on a reload (hyprlang)
+				if strings.HasPrefix(trimmed, "#") || hyprExecOnce.MatchString(line) {
 					continue
 				}
 				if m := hyprSource.FindStringSubmatch(line); m != nil {
@@ -439,8 +440,9 @@ func (w *hyprWriter) luaTarget(name string, require bool) string {
 }
 
 var (
-	hyprSource  = regexp.MustCompile(`^\s*source\s*=\s*(.+?)\s*$`)
-	hyprRequire = regexp.MustCompile(`\b(require|dofile)\s*\(?\s*["']([^"']+)["']`)
+	hyprExecOnce = regexp.MustCompile(`^\s*exec-once\s*=`)
+	hyprSource   = regexp.MustCompile(`^\s*source\s*=\s*(.+?)\s*$`)
+	hyprRequire  = regexp.MustCompile(`\b(require|dofile)\s*\(?\s*["']([^"']+)["']`)
 	// a require or dofile whose argument isn't a literal
 	hyprComputedLoad = regexp.MustCompile(`\b(require|dofile)\s*\(\s*[^"'\s)]`)
 	// axiom's own autostart line (hyprWriter.autostartLines)

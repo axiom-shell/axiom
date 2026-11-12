@@ -121,13 +121,17 @@ func TestHyprTopLevelExecAxiomMeansPartialTeardown(t *testing.T) {
 		t.Fatalf("partial: %+v", got)
 	}
 	conf := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "exec-once = axiom run\nexec = axiom run\n"}, nil), nil)
-	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec-once = axiom run" {
-		t.Fatalf("conf: %v %q (the first match, any exec)", starts, line)
+	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec = axiom run" {
+		t.Fatalf("conf: %v %q (exec-once doesn't count, exec does)", starts, line)
 	}
-	// any match outside a comment counts, exec-once too (the safe side)
-	once := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "# exec = axiom run\nexec-once = axiom run\n"}, nil), nil)
-	if starts, _ := once.reloadStartsAxiom(startIn()); !starts {
-		t.Fatal("a start line outside a comment wasn't seen")
+	// exec-once never re-runs on a reload: a full reload
+	once := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "# exec = axiom run\nexec-once = axiom run\n", "hypr/x.conf": ""}, nil), nil)
+	if starts, _ := once.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("exec-once counted as a start on reload")
+	}
+	sourced := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "source = ./a.conf\n", "hypr/a.conf": "exec-once = axiom run\n"}, nil), nil)
+	if starts, _ := sourced.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a sourced exec-once counted")
 	}
 	commented := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "# exec = axiom run\n"}, nil), nil)
 	if starts, _ := commented.reloadStartsAxiom(startIn()); starts {
