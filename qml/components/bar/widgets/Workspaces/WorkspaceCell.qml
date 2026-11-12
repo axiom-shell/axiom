@@ -14,7 +14,7 @@ import qs.components.bar.look
 // the text, or a name: a Material Symbols name the font has draws as that
 // icon, anything else as text) or app icons show instead
 // when given, in that order (CellContents picks one). An urgent one pulses
-// toward its muted self (its `look`'s pulse: the core's cell()), with a dot
+// from its `look` toward its `mutedLook` by `pulse` (the core's cell() pulse, composed here), with a dot
 // at its corner where an app icon would otherwise hide it. A row with a sliding ActiveCellIndicator draws its
 // cells twice, the boxes (`part: "background"`) under the indicator and
 // the labels (`"content"`) over it. As a segment of the bar's run (the
@@ -78,10 +78,16 @@ Item {
   readonly property real _shift: _tailed ? tailShift : 0
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
-  // A window on it asks for attention (its `look` is the urgent one)
+  // A window on it asks for attention (its `look` is the urgent one at rest)
   property bool urgent: false
-  // Its look pulses (UrgentPulse): its colors follow it each frame, not gliding
+  // Its look pulses (UrgentPulse): from `look` toward `mutedLook` by `pulse`,
+  // each frame, not gliding
   property bool pulsing: false
+  // Its muted self (set only while it pulses) and how far toward it (0-1)
+  property var mutedLook: null
+  property real pulse: 0
+  // Its look as shown: the pulse mix while pulsing, else `look`
+  readonly property var _shown: root.pulsing && root.mutedLook !== null && root.pulse > 0 ? BarWidgetStyle.mixColors(root.look, root.mutedLook, root.pulse) : root.look
   // Its slice of the bar's gradient for the part `look.gradient` names
   // (CellLook.sliceOf), or null
   property var slice: null
@@ -105,7 +111,7 @@ Item {
   // indicator, unless its tint would show through
   readonly property bool _clearActive: root.isActive && root.indicated && root.cellLook.clearsActive
   // Its look as its box draws it: cleared under the indicator
-  readonly property var _drawn: root._clearActive ? root.cellLook.cleared(root.look) : root.look
+  readonly property var _drawn: root._clearActive ? root.cellLook.cleared(root._shown) : root._shown
 
   signal clicked
 
@@ -137,12 +143,12 @@ Item {
     reach: _box.reach
     strokeWidth: _box.strokeWidth
     strokeStyle: _box.strokeStyle
-    fill: root.lit && !root.isActive && !root.look.showsHover ? root.look.hover : root._drawn.fill
+    fill: root.lit && !root.isActive && !root._shown.showsHover ? root._shown.hover : root._drawn.fill
     stroke: root._drawn.stroke
     line: root._drawn.indicator
-    fillSlice: !root._clearActive && root.look.gradient?.part === "fill" ? root.slice : null
-    strokeSlice: !root._clearActive && root.look.gradient?.part === "stroke" ? root.slice : null
-    lineSlice: !root._clearActive && root.look.gradient?.part === "indicator" ? root.slice : null
+    fillSlice: !root._clearActive && root._shown.gradient?.part === "fill" ? root.slice : null
+    strokeSlice: !root._clearActive && root._shown.gradient?.part === "stroke" ? root.slice : null
+    lineSlice: !root._clearActive && root._shown.gradient?.part === "indicator" ? root.slice : null
     animated: root.animated && !root.pulsing
   }
 
@@ -168,7 +174,7 @@ Item {
       width: root.isVertical ? size : along
       height: root.isVertical ? along : size
       radius: size / 2
-      color: root.look.content
+      color: root._shown.content
 
       ColorGlide on color {
         enabled: root.animated && !root.pulsing
@@ -182,7 +188,7 @@ Item {
       visible: root._shows === "glyph"
       text: root.glyph
       font.pixelSize: root.barConfig.fontSize * 1.2
-      color: root.look.content
+      color: root._shown.content
     }
 
     // A label of one's own or a name: an icon at the glyph's size, text at
@@ -222,7 +228,7 @@ Item {
         text: root.leadIcon
         textFamily: leadLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
         textSize: leadLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
-        textColor: root.look.content
+        textColor: root._shown.content
         font.bold: !leadLabel.symbol && root.isActive && !root.boxed
 
         ColorGlide on color {
@@ -247,7 +253,7 @@ Item {
         text: root.text
         textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
         textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
-        textColor: root.look.content
+        textColor: root._shown.content
         font.bold: !textLabel.symbol && root.isActive && !root.boxed
 
         ColorGlide on color {
@@ -377,7 +383,7 @@ Item {
       anchors.centerIn: parent
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
-      textColor: root.look.content
+      textColor: root._shown.content
       textSize: root.barConfig.fontSize - 1
       font.bold: root.isActive && !root.boxed
 
@@ -396,7 +402,7 @@ Item {
       width: size
       height: size
       radius: size / 2
-      color: root.look.content
+      color: root._shown.content
     }
   }
 

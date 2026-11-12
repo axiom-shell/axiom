@@ -99,9 +99,13 @@ Loader {
           isActive: root.monitorName !== "" && special?.output === root.monitorName
           look: root.cellLook.workspaceColorsOf(isActive, _content?.occupied ?? false, _content?.urgent ?? false, {
             "hovered": cell.lit,
-            "spot": isActive ? root.cellLook.spotAt(cell, cell.length / 2, cell.x + cell.y + root.x + root.y) : -1,
-            "pulse": (_content?.urgent ?? false) && !isActive ? urgentPulse.value : 0
+            "spot": isActive ? root.cellLook.spotAt(cell, cell.length / 2, cell.x + cell.y + root.x + root.y) : -1
           })
+          pulse: pulsing ? urgentPulse.value : 0
+          mutedLook: pulsing ? root.cellLook.workspaceColorsOf(false, _content?.occupied ?? false, true, {
+            "hovered": cell.lit,
+            "muted": true
+          }) : null
           slice: isActive ? root.cellLook.sliceOf(cell.look, cell, -(cell.shape?.segment.back ?? 0), cell.length, cell.x + cell.y + root.x + root.y) : null
           urgent: _content?.urgent ?? false
           pulsing: (_content?.urgent ?? false) && !isActive && urgentPulse.pulsing

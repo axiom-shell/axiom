@@ -92,14 +92,14 @@ Item {
   }
 
   // The cell look's colors for cell `index`'s, active or at rest, and lit
-  // (the pointer over it)
-  function _look(index, active, lit) {
+  // (the pointer over it), or its muted self (`muted`: what it pulses toward)
+  function _look(index, active, lit, muted) {
     if (active)
       return root._activeLook(index, lit);
     const content = root._contents[index];
     return root.cellLook.workspaceColorsOf(false, content?.occupied ?? false, content?.urgent ?? false, {
       "hovered": lit === true,
-      "pulse": content?.urgent ? urgentPulse.value : 0
+      "muted": muted === true
     });
   }
 
@@ -163,6 +163,8 @@ Item {
           look: root._look(index, isActive && !indicator.slides, backgroundCell.lit)
           urgent: root._contents[index]?.urgent ?? false
           pulsing: (root._contents[index]?.urgent ?? false) && !isActive && urgentPulse.pulsing
+          pulse: pulsing ? urgentPulse.value : 0
+          mutedLook: pulsing ? root._look(index, false, backgroundCell.lit, true) : null
           thickness: root.cellLook.thickness
           restLength: root._lengths[index] ?? root.cellLook.length
           length: root._layout.lengths[index] ?? root.cellLook.length
@@ -212,6 +214,8 @@ Item {
           look: root._look(index, isActive, contentCell.lit)
           urgent: _content?.urgent ?? false
           pulsing: (_content?.urgent ?? false) && !isActive && urgentPulse.pulsing
+          pulse: pulsing ? urgentPulse.value : 0
+          mutedLook: pulsing ? root._look(index, false, contentCell.lit, true) : null
           thickness: root.cellLook.thickness
           restLength: root._lengths[index] ?? root.cellLook.length
           length: root._layout.lengths[index] ?? root.cellLook.length

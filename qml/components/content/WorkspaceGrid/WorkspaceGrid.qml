@@ -59,11 +59,15 @@ WorkspacePopoutPanel {
         look: root.cellLook.workspaceColorsOf(isActive, hasWindows, shows.urgent, {
           "hovered": wsCell.lit,
           // The rows the bar doesn't show read muted
-          "muted": !inBar,
-          "pulse": shows.urgent && !isActive ? root.pulse.value : 0
+          "muted": !inBar
         })
         urgent: shows.urgent
         pulsing: shows.urgent && !isActive && root.pulse.pulsing
+        pulse: pulsing ? root.pulse.value : 0
+        mutedLook: pulsing ? root.cellLook.workspaceColorsOf(false, hasWindows, true, {
+          "hovered": wsCell.lit,
+          "muted": true
+        }) : null
         thickness: root.cellSize
         length: shows.length
         labels: root.properties.labels
