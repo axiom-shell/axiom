@@ -132,6 +132,13 @@ bindsym $mod+space exec axiom ipc appLauncher toggle
 | `axiom markets search <text>` | Finds symbols, with the command adding each |
 | `axiom markets refresh` | Fetches every watched price now |
 
+`axiom footprint` lists what axiom changed outside its own folders (files, app configs, gsettings, default apps) and takes it out again, without a daemon:
+
+| Command | What it does |
+|---|---|
+| `axiom footprint list [--json]` | The changes, each present, changed since or gone |
+| `axiom footprint undo (<id>...\|--owner <path>\|--all) [--force] [--include-system] [--dry-run] [--json]` | Takes out only axiom's own change; `--all` leaves the system's own choices (`--include-system`) and inferred rows (`--force`) |
+
 ```bash
 # a weekly buy of 0.01 BTC, kept in the portfolio
 axiom markets hold BTC-USD +0.01

@@ -333,7 +333,8 @@ QtObject {
     root._lastGroup = key;
     BackendManager.call("inputMethod.push", {
       "defaultLayout": group.defaultLayout,
-      "items": group.items
+      "items": group.items,
+      "owner": "Input.keyboard.method.enabled"
     }, error => {
       if (error && error.kind !== "unavailable")
         console.warn("[InputSourceManager] Could not give", root.framework, "the input sources:", error.message);
@@ -356,7 +357,8 @@ QtObject {
       "verticalCandidates": options.verticalCandidates,
       "candidateFont": options.candidateFont,
       "showSwitchPopup": options.showSwitchPopup,
-      "triggerKeys": []
+      "triggerKeys": [],
+      "owner": "Input.keyboard.method.enabled"
     }, error => {
       if (error && error.kind !== "unavailable")
         console.warn("[InputSourceManager] Could not set", root.framework + "'s options:", error.message);

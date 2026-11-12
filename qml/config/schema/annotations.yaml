@@ -30,6 +30,7 @@ x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s 
 x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'
 x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn''t hold.'
 x-fold: 'a nested object whose rows fold behind its title on its settings card, closed until opened (`SettingsField`; the Keyboard card''s Input method options).'
+x-footprint: 'writes outside axiom''s folders (a file, gsettings, an app''s config): true, a condition as x-showIf takes, or on a section, every field of it; x-hookup implies it (Footprint.persistent; the badge while detached).'
 x-greeter: the greeter's compositor takes it (`methods/GreeterBundle`).
 x-group: puts a field on a card of that name, or an object editor's or `EntryListCard`'s fold of that name (`SchemaLayout.objectGroups`).
 x-hintedIf: 'as `x-enabledIf` for a compositor condition, but a field whose condition fails is hidden, unless every failing key is a `/$supports.<capability>` the backend names an upgrade for (`CompositorManager.unsupportedHint`, SwayFX on sway): then it''s greyed out with that note.'

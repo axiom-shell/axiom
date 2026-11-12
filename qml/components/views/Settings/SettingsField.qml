@@ -1,8 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services.ui
+import qs.services.system
 import qs.components.forms
+import qs.components.methods
 import qs.components.reusable
 
 // One settings row: the SchemaField, with a dot while it has an unsaved
@@ -16,7 +20,10 @@ import qs.components.reusable
 // its rows shown only while it's open (SettingsManager.isFoldOpen), and
 // always in a search. A card with an `x-intro` `setup` has one too, a
 // `Settings` row (`foldRows`: the rows behind it) hidden while none of them
-// shows, its rows `foldedBy` it (`foldedIn` when also inside an `x-fold`)
+// shows, its rows `foldedBy` it (`foldedIn` when also inside an `x-fold`).
+// A field that writes outside axiom's folders (`Footprint.persistent`) says
+// so while the compositor mode is detached (axiom stopping leaves its
+// changes), and, off with changes recorded, offers to remove them
 FormRow {
   id: root
 
@@ -42,7 +49,15 @@ FormRow {
   // A row shown by a sibling's value (Night light's times, under "On a
   // schedule")
   indented: root.isValue && field.followsSibling
-  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0)
+  // `x-footprint` (Footprint.persistent): the setting writes outside axiom's folders
+  readonly property bool footprinted: root.isValue && Footprint.persistent(root.row.schema, SettingsManager.schemaAt([root.row.path[0]]), key => SettingsManager.configValueAt(key.startsWith("/") ? key.slice(1) : key))
+  readonly property string ownerPath: root.row.path.join(".")
+  readonly property bool badged: root.footprinted && CompositorConfig.mode === "detached"
+  // Off, with changes the ledger still holds
+  readonly property bool removable: root.footprinted && field.current === Footprint.offValue(root.row.schema) && FootprintManager.rowsFor(root.ownerPath).length > 0
+  readonly property real footprintHeight: root.badged || root.removable ? footprintRow.implicitHeight + Widget.spacing : 0
+
+  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
   railHeight: root.custom !== "" ? 0 : field.implicitHeight
 
   // Outlines the row for a moment (a link to this setting)
@@ -115,6 +130,55 @@ FormRow {
     y: field.implicitHeight + hookup.shownHeight + Widget.spacing
     width: parent.width
     links: root.isValue ? root.row.schema?.["x-link"] : undefined
+  }
+
+  // The footprint's chip and button, under the field
+  RowLayout {
+    id: footprintRow
+    visible: root.badged || root.removable
+    y: field.implicitHeight + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + Widget.spacing
+    width: parent.width
+    spacing: Widget.spacing
+
+    Item {
+      visible: root.badged
+      implicitWidth: chip.implicitWidth
+      implicitHeight: chip.implicitHeight
+
+      // I18n.tr("Stays after axiom stops")
+      StatusChip {
+        id: chip
+        text: I18n.tr("Stays after axiom stops")
+        color: Theme.warning
+      }
+
+      MouseArea {
+        id: chipHover
+        anchors.fill: parent
+        hoverEnabled: true
+      }
+
+      LazyLoader {
+        active: chipHover.containsMouse
+        StyledToolTip {
+          target: chip
+          maxWidth: Widget.px(320)
+          // I18n.tr("This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.")
+          text: I18n.tr("This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.")
+        }
+      }
+    }
+
+    StyledTextButton {
+      visible: root.removable
+      implicitHeight: Widget.height - Widget.px(4)
+      text: I18n.tr("Remove its changes")
+      onClicked: FootprintManager.undoOwner(root.ownerPath)
+    }
+
+    Item {
+      Layout.fillWidth: true
+    }
   }
 
   // After the label, on its line

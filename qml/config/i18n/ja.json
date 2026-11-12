@@ -4177,6 +4177,21 @@
     "Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).": "",
     "Detached: axiom changes none of your compositor's files and takes its binds and look away when it stops. Great for trying it out; for full-time use, pick Included or Managed.": "",
     "You're in detached mode!": "",
-    "Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed.": ""
+    "Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed.": "",
+    "Stays after axiom stops": "",
+    "This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.": "",
+    "Remove its changes": "",
+    "{0} changes": "",
+    "Compositor lines": "",
+    "Changed since: left as it is": "",
+    "Start fcitx5 to undo this": "",
+    "Files and settings axiom changed outside its own folders. Undo takes out only axiom's own change.": "",
+    "Undo all skips the system's own choices and what axiom only inferred. Undo all?": "",
+    "Undo all": "",
+    "Inferred": "",
+    "Changed since": "",
+    "Gone": "",
+    "axiom found this without a record of writing it. Undo anyway?": "",
+    "Changes outside axiom": ""
   }
 }
