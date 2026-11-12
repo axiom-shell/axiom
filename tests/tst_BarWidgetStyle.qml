@@ -451,6 +451,21 @@ TestCase {
     verify(fails.length === 0, fails.join("\n"));
   }
 
+  // Which parts sit on the widget's own fill (a cool System Stats metric in
+  // a warning box reads in the widget's colors there, its own field off
+  // it): [BarStyle keys, text, icon]
+  function test_parts_on_the_own_fill() {
+    const rows = [["widgetStyle=filled", true, true], ["widgetStyle=plain", false, false], ["widgetStyle=underline", false, false], ["widgetStyle=outline", false, false], ["widgetStyle=split;splitIcon=joined;splitLabelFill=none", false, true]];
+    for (const [keys, text, icon] of rows) {
+      const c = BarWidgetStyle.widgetColors(Bars.bar(parse(keys)), "#fb4934", "#282828", {
+        "splits": keys.indexOf("split") >= 0
+      });
+      compare(BarWidgetStyle.onOwnFill(c, "text"), text, keys + " text");
+      compare(BarWidgetStyle.onOwnFill(c, "icon"), icon, keys + " icon");
+      compare(BarWidgetStyle.onOwnFill(c, "headText"), icon, keys + " headText");
+    }
+  }
+
   // graphic() is what colors() draws its own graphic with
   function test_graphic_of_own_colors() {
     for (const over of [

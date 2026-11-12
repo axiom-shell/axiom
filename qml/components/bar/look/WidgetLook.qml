@@ -115,6 +115,8 @@ QtObject {
       // field of its own)
       "graphicOf": (icon, text) => BarWidgetStyle.graphic(root.drawnColors.iconBack, icon, text),
       "field": (name, part) => root.field(name, part),
+      // whether `part` sits on the widget's own fill
+      "onFill": part => BarWidgetStyle.onOwnFill(root.drawnColors, part),
       "line": name => root.own(name)
     })
 }

@@ -173,9 +173,10 @@ BarWidget {
       "graphMin": 0,
       "graphMax": 100,
       "caption": I18n.tr(root._captions[key]),
-      // In the box's colours where it matches the box's state, else in the
-      // usual colour: a cool metric in a warning box
+      // A cool metric in a warning box: the usual colour off the box's fill,
+      // the fill's own content colours on it (as the hot one's)
       "field": root.warning && !root._hot(key) ? "backgroundColor" : "",
+      "offFill": true,
       "hidden": !root._reportable(key)
     };
   }

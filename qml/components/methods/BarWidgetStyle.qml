@@ -647,6 +647,12 @@ QtObject {
     return root._read(colors, backs, color, text || part === "headText" ? root.textContrast : root.iconContrast, text ? colors.textOwnFill : colors.iconOwnFill);
   }
 
+  // Whether `part` ("text" | "icon" | "headText" | "mark") sits on the
+  // widget's own fill (`colors`, colors())
+  function onOwnFill(colors, part) {
+    return part === "text" ? colors.textOwnFill : colors.iconOwnFill;
+  }
+
   // `color` taken opaque
   function _opaque(color) {
     return Qt.alpha(color, 1);
