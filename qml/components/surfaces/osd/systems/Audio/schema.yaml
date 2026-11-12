@@ -10,12 +10,13 @@ card: standard
 # list, it starts with no icons and no cards; one bar per kind but App.
 # A bar's key (exposes, an OSD's barOrder) is its kind, the microphone's
 # micLevel (its tile keeps microphone), an App bar's app:<its id>
-barNames: {from: bars, by: type, named: apps, repeats: [app], keys: {microphone: micLevel}, barOnly: {tiles: [], card: false}}
+barNames: {from: bars, by: type, named: apps, repeats: [app], keys: {microphone: micLevel}, barOnly: {shows: [], card: false}}
+order: [tile, bars, card, shows, quiet]
 settings:
   bars:
     type: array
     title: Bars
-    description: In order, one bar per kind but App; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.
+    description: 'In order, one bar per kind but App. Other apps: the first stream no App bar matches.'
     x-link: {setting: OSD.scrollToChange}
     default:
       - {id: other, type: other, icon: music_note}
@@ -50,22 +51,22 @@ settings:
           default: []
           x-showIf: {type: app}
           x-suggestions: audioApps
-          description: Comma-separated; matched against a stream's binary or name.
+          description: Matched against a stream's binary or name.
         icon:
           type: string
           x-control: icon
           title: Icon
           default: ''
-          description: A Material Symbols name, or text. Empty follows what it shows.
+          description: 'A Material Symbols name, or text. Empty: automatic.'
         showOsd:
           type: boolean
-          title: Opens the OSD
+          title: Opens OSD
           default: true
-          description: Off, it still shows while the OSD is open.
+          description: 'Off: shows only while the OSD is open.'
     x-showIf: {tile: true}
-  tiles:
+  shows:
     type: array
-    title: Status icons
+    title: Shows
     items: {type: string, enum: [audio, microphone]}
     x-enumLabels: {audio: Output, microphone: Input}
     x-enumIcons: {audio: volume_up, microphone: mic}

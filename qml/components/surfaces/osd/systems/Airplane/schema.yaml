@@ -2,3 +2,4 @@ label: Airplane mode
 icon: airplanemode_active
 group: Connections
 tile: standard
+order: [tile, quiet]

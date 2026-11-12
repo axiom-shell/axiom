@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.surfaces.osd.engine
 
-// The battery and charger on the OSD, each a tile its `tiles` picks: the
+// The battery and charger on the OSD, each a tile its `shows` picks: the
 // charger (unusual on battery; plugging in is its card: the level,
 // Charging / Fully charged / Plugged in, the time to full; it folds back
 // as it's unplugged) and the battery dropping to low, then critical (its
@@ -27,7 +27,7 @@ OSDSystem {
         "model": "event"
       }
     })
-  exposes: (options.tiles ?? ["charger", "battery"]).filter(key => _keys[key]).map(key => Object.assign({
+  exposes: (options.shows ?? ["charger", "battery"]).filter(key => _keys[key]).map(key => Object.assign({
       "key": key,
       "part": "tile"
     }, _keys[key]))

@@ -14,7 +14,7 @@ QtObject {
   // (`floatGaps`: ScreenEdgeManager.floatGaps), which a floating bar's
   // islands keep from the screen edges as windows do.
   function enrichBarConfig(barConfig, gapsOut, floatGaps) {
-    const loc = ScreenEdge.fromConfig(barConfig.location);
+    const loc = ScreenEdge.fromConfig(barConfig.edge);
     // The bar is sized by its widgets, never the other way round, so no
     // setting can leave them cut off
     const thickness = barConfig.thickness;

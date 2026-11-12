@@ -44,29 +44,23 @@ properties:
   detached:
     x-scope: look
     type: boolean
-    title: Detach from edge
+    title: Detached
     default: true
     description: A separate box held off the edge, instead of growing out of it.
   distance:
     x-scope: look
     type: integer
-    title: Distance from edge
+    title: Distance
     x-unit: '%'
     default: 30
     minimum: 0
     maximum: 50
-    description: 0 lines it up with your window border, 50 centres it.
+    description: '0: in line with the window border. 50: centered.'
     x-showIf: {detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
     x-scope: look
     x-showIf: {detached: true}
-  reverse:
-    x-scope: look
-    type: boolean
-    title: Search bar at the bottom
-    default: false
-    description: The best match sits nearest the field. Suits the bottom edge.
   width:
     x-scope: look
     type: integer
@@ -75,16 +69,12 @@ properties:
     default: 680
     minimum: 400
     maximum: 1200
-  maxResults:
+  reverse:
     x-scope: look
-    x-group: Launcher look
-    type: integer
-    x-control: stepper
-    title: Results shown
-    default: 8
-    minimum: 3
-    maximum: 20
-    description: Rows shown before the list scrolls.
+    type: boolean
+    title: Search bar at the bottom
+    default: false
+    description: The best match sits nearest the field.
   iconSize:
     x-scope: look
     x-group: Launcher look
@@ -95,43 +85,50 @@ properties:
     default: 32
     minimum: 16
     maximum: 64
-  showBackdrop:
-    x-scope: look
-    x-group: Launcher look
-    type: boolean
-    title: Dim background
-    default: true
-    description: Dim the screen behind the launcher.
-  backdrop:
+  maxResults:
     x-scope: look
     x-group: Launcher look
     type: integer
-    title: Backdrop darkness
-    x-unit: '%'
-    default: 25
-    minimum: 0
-    maximum: 90
-    x-showIf: {showBackdrop: true}
+    x-control: stepper
+    title: Results shown
+    default: 8
+    minimum: 3
+    maximum: 20
   showDescriptions:
     x-scope: look
     x-group: Launcher look
     type: boolean
     title: Descriptions
     default: true
-    description: A second line under each result.
-  showRecent:
-    x-group: Launcher look
-    type: boolean
-    title: Frequent apps when empty
-    default: true
-    description: List your most used apps before you type.
   showHint:
     x-scope: look
     x-group: Launcher look
     type: boolean
-    title: Controls hint
+    title: Hints
     default: true
-    description: Show search prefixes and keys under the results.
+    description: Search prefixes and keys under the results.
+  showBackdrop:
+    x-scope: look
+    x-group: Launcher look
+    type: boolean
+    title: Backdrop
+    default: true
+  backdrop:
+    x-scope: look
+    x-group: Launcher look
+    type: integer
+    title: Darkness
+    x-unit: '%'
+    default: 25
+    minimum: 0
+    maximum: 90
+    x-showIf: {showBackdrop: true}
+  showRecent:
+    x-group: Launcher search
+    type: boolean
+    title: Frequent apps
+    default: true
+    description: Listed before you type.
   hiddenApps:
     x-group: Launcher search
     type: array
@@ -146,24 +143,35 @@ properties:
     properties:
       windows:
         type: boolean
-        title: Open windows
+        title: Windows
         default: true
-        description: Match windows by title and class; picking one focuses it.
+        description: Matched by title and class.
       calculator:
         type: boolean
         title: Calculator
         default: true
-        description: Show the result of math as you type, using qalc. Enter copies it.
+        description: Math results as you type (needs qalc). Enter copies.
       commands:
         type: boolean
         title: Shell commands (/)
         default: true
-        description: Type / for commands that control the shell.
+        description: Type / for shell commands.
       run:
         type: boolean
         title: Run commands (>)
         default: true
-        description: Type > and a command to run it. Shift+Enter runs it in a terminal.
+        description: 'Type > and a command. Shift+Enter: in a terminal.'
+      chat:
+        x-link: {setting: Chat}
+        type: boolean
+        title: Ask chat (@)
+        default: true
+        description: Type @ and a question for Chat.
+      emoji:
+        type: boolean
+        title: Emoji (;)
+        default: true
+        description: Type ; for emoji. Enter copies, Shift+Enter types.
       web:
         type: object
         title: Web search
@@ -173,19 +181,13 @@ properties:
             type: boolean
             title: Web search (?)
             default: true
-            description: Offer a web search for what you typed (first after ?).
+            description: Search the web for what you typed.
           engine:
             type: string
-            title: Search engine URL
+            title: Search URL
             default: 'https://duckduckgo.com/?q={}'
-            description: '{} is replaced by the search terms.'
+            description: '{} marks the search terms.'
             x-showIf: {enabled: true}
-      chat:
-        x-link: {setting: Chat}
-        type: boolean
-        title: Ask chat (@)
-        default: true
-        description: Type @ and a question to ask the Chat module.
       clipboard:
         type: object
         title: Clipboard history
@@ -195,19 +197,14 @@ properties:
             type: boolean
             title: 'Clipboard history (:)'
             default: true
-            description: 'Type : to search what you''ve copied. Kept in memory only, skipping items marked sensitive; turning this off clears it.'
+            description: 'Type : to search what you copied. Turning off clears it.'
           maxEntries:
             type: integer
-            title: Clipboard history size
+            title: History size
             default: 100
             minimum: 10
             maximum: 1000
             x-showIf: {enabled: true}
-      emoji:
-        type: boolean
-        title: Emoji (;)
-        default: true
-        description: Type ; to search emoji. Enter copies one, Shift+Enter types it.
       files:
         type: object
         title: Files
@@ -217,27 +214,26 @@ properties:
             type: boolean
             title: 'Files (~)'
             default: true
-            description: 'Type ~ to search your files, ~/ to browse folders. axiom keeps its own index of the folders below, built in the background at idle priority.'
+            description: Type ~ to search files, ~/ to browse.
           inSearch:
             type: integer
             x-control: stepper
-            title: Files in the main search
+            title: Files in search
             default: 3
             minimum: 0
             maximum: 5
-            description: The best matching files shown below the apps. 0 shows them only after ~.
+            description: 'Best matches below the apps. 0: only after ~.'
             x-showIf: {enabled: true}
           thumbnails:
             type: boolean
             title: Image thumbnails
             default: true
-            description: Show pictures as thumbnails, shared with your file manager's.
             x-showIf: {enabled: true}
           showHidden:
             type: boolean
             title: Hidden files
             default: false
-            description: Index files and folders whose name starts with a dot. Typing a dot finds them either way while browsing.
+            description: Dotfiles and dot folders.
             x-showIf: {enabled: true}
           roots:
             x-scope: machine
@@ -245,12 +241,12 @@ properties:
             title: Folders searched
             default: ['~']
             items: {type: string}
-            description: Folders indexed with everything below them, comma-separated.
+            description: Indexed with everything below.
             x-showIf: {enabled: true}
           excludes:
             type: array
             title: Skipped names
             default: [.git, node_modules, .cache, __pycache__, .venv, venv, target, build, dist, .gradle, .npm, .cargo, .rustup, go/pkg, .local/share/Trash, .local/share/Steam, .steam, .var/app, '*.o', '*.pyc']
             items: {type: string}
-            description: 'Names or paths below a folder searched, comma-separated; * matches any text.'
+            description: Names or paths below the folders; * matches any text.
             x-showIf: {enabled: true}

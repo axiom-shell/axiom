@@ -7,8 +7,8 @@
 //   `available` LockKeysManager.available (false: no LEDs read yet, or
 //   gone), the same for every key
 
-var opts = { "keys": ["capsLock", "numLock"] };
-var all = { "keys": ["capsLock", "numLock", "scrollLock"] };
+var opts = { "shows": ["capsLock", "numLock"] };
+var all = { "shows": ["capsLock", "numLock", "scrollLock"] };
 
 function led(on, available) {
   return { "available": available !== false, "value": on };
@@ -127,7 +127,7 @@ var rows = [
   },
   {
     "name": "quiet: judged the same (the host doesn't open the OSD for it)",
-    "options": { "keys": ["capsLock", "numLock"], "quiet": true },
+    "options": { "shows": ["capsLock", "numLock"], "quiet": true },
     "steps": [
       { "at": 0, "state": { "capsLock": led(false), "numLock": led(false) } },
       { "at": 3000, "state": { "capsLock": led(true) },

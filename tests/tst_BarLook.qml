@@ -427,7 +427,7 @@ TestCase {
   // filled in its color, or one filled while hovered (Fill on hover on a
   // tinted or outline bar), and only while the bar's text color is Auto
   function test_workspaces_text_color_shows_where_it_draws() {
-    const condition = root.schema.definitions.WorkspacesWidget.properties.properties.properties.textColor["x-showIf"];
+    const condition = root.schema.definitions.WorkspacesWidget.properties.properties.properties.foregroundColor["x-showIf"];
     const shows = (own, options) => {
       const context = BarLook.context(root.look(own, null));
       return SchemaLayout.showIfHolds(condition, key => key.startsWith("$bar.") ? context[key] : (options ?? {

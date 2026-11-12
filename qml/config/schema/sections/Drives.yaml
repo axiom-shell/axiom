@@ -5,35 +5,32 @@ x-category: Modules
 title: Removable drives
 description: How removable drives are announced and handled.
 additionalProperties: false
-x-order: [notify, onInsert, warnUnplugged, ignore]
+x-order: [onInsert, warnUnplugged, notify, ignore]
 properties:
-  notify:
-    type: boolean
-    title: Drive event notifications
-    default: true
-    description: Notify when a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails.
-    x-link: {setting: OSD}
   onInsert:
     type: string
-    title: When a drive is plugged in
+    title: When plugged in
     x-control: toggle
     enum: [ask, mount, nothing]
-    x-enumLabels:
-      ask: Ask
-      mount: Mount it
-      nothing: Do nothing
+    x-enumLabels: {ask: Ask, mount: Mount, nothing: Nothing}
     default: ask
-    description: Ask offers to mount or open it. Mount it mounts it at once, once unlocked. Do nothing leaves it to the Drives widget and module.
+    description: 'Ask: offer to mount or open. Nothing: leave it to the Drives widget.'
     x-link: {setting: Apps}
   warnUnplugged:
     type: boolean
-    title: Warn when unplugged without ejecting
+    title: Warn on unplug
     default: true
     description: Files still being written can be lost.
+  notify:
+    type: boolean
+    title: Notifications
+    default: true
+    description: Plugged in, mounted, unmounted, safe to remove, unplugged, failed.
+    x-link: {setting: OSD}
   ignore:
     x-scope: machine
     type: array
     items: {type: string}
     title: Ignored drives
     default: []
-    description: Volume UUIDs or labels to leave alone (see `lsblk -f`).
+    description: Volume UUIDs or labels (see `lsblk -f`).

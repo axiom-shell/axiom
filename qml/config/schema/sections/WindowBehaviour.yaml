@@ -18,29 +18,40 @@ properties:
       niri: {key: input.focus-follows-mouse, value: flag}
   focusOnActivate:
     type: boolean
-    title: Focus windows that ask for it
+    title: Focus on activation
     default: true
-    description: e.g. a browser window opened from a link.
+    description: Windows that ask for focus get it, e.g. a link opened in a browser.
     x-enabledIf: {/$supports.focusOnActivate: true}
     x-compositor:
       hyprland: {key: misc.focus_on_activate, always: true}
       sway: {key: 'focus_on_window_activation {}', map: {'true': focus, 'false': urgent}}
   workspaceBackAndForth:
     type: boolean
-    title: Toggle back to last workspace
+    title: Back and forth
     default: false
     description: Pressing the current workspace's key returns to the previous one.
     x-compositor:
       hyprland: {key: binds.workspace_back_and_forth}
       sway: {key: 'workspace_auto_back_and_forth {}', value: yesNo}
       niri: {key: input.workspace-auto-back-and-forth}
+  warpCursor:
+    type: boolean
+    title: Cursor follows focus
+    x-group: Cursor
+    default: true
+    x-compositor:
+      hyprland: {key: cursor.no_warps, value: not}
+      sway: {key: 'mouse_warping {}', map: {'true': container, 'false': none}}
+      niri: {key: input.warp-mouse-to-focus, value: flag}
   cursorHideTimeout:
     type: integer
-    title: Hide the cursor after
+    title: Hide cursor after
+    x-group: Cursor
     x-unit: s
     default: 0
     minimum: 0
     maximum: 600000
+    multipleOf: 1000
     description: 0 never hides it.
     x-compositor:
       hyprland: {key: cursor.inactive_timeout, scale: 0.001}
@@ -48,17 +59,10 @@ properties:
       niri: {key: cursor.hide-after-inactive-ms, skip: 0}
   hideCursorOnKeyPress:
     type: boolean
-    title: Hide the cursor while typing
+    title: Hide cursor while typing
+    x-group: Cursor
     default: false
     x-compositor:
       hyprland: {key: cursor.hide_on_key_press}
       sway: {key: 'seat * hide_cursor when-typing {}', value: enableDisable}
       niri: {key: cursor.hide-when-typing}
-  noWarps:
-    type: boolean
-    title: Never move the cursor
-    default: false
-    x-compositor:
-      hyprland: {key: cursor.no_warps}
-      sway: {key: 'mouse_warping {}', map: {'true': none, 'false': container}}
-      niri: {key: input.warp-mouse-to-focus, value: offFlag}

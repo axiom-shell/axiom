@@ -373,7 +373,7 @@ QtObject {
 
   // What a setting marked `x-inherit` (a dotted path) is while it's null:
   // the setting it follows, followed on while that is null too
-  // (widgetRadius → Interface.radius → Appearance.shape.radius); null if
+  // (widgetRadius → Appearance.shape.innerRadius → Appearance.shape.radius); null if
   // none is set
   function inheritedValue(fieldSchema) {
     let follows = fieldSchema?.["x-inherit"];
@@ -395,7 +395,8 @@ QtObject {
       // `x-allScreens`: "*" puts the thing on every screen (bars)
       return ["", ...(fieldSchema["x-allScreens"] ? ["*"] : []), ...General.outputs.map(screen => screen.name)];
     case "chatProviders":
-      return ChatConfig.providers.map(provider => provider.id);
+      // An empty default is the default provider (`x-emptyLabel`)
+      return (fieldSchema.default === "" ? [""] : []).concat(ChatConfig.providers.map(provider => provider.id));
     case "chatPresets":
       return ChatConfig.presets.map(preset => preset.name);
     case "colors":
@@ -461,6 +462,9 @@ QtObject {
     case "wallpaperCollections":
       // The wallpaper folder's subfolders holding images
       return WallpaperManager.collections;
+    case "currencies":
+      // The usual portfolio currencies (any code can still be typed)
+      return ["USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY", "KRW", "INR"];
     }
     return [];
   }

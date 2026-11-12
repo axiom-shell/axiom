@@ -21,7 +21,7 @@ properties:
     type: boolean
     title: Module borders
     default: false
-    description: Draw each module's card box. Off shows modules on the wallpaper.
+    description: 'Off: modules sit on the wallpaper.'
   modules:
     type: array
     default: []

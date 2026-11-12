@@ -10,7 +10,6 @@ properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
-    description: Where the overlay opens.
     x-properties:
       mode:
         x-scope: look
@@ -25,35 +24,15 @@ properties:
           all: Every monitor
         x-link: {setting: General.screen}
       names: null
-  moduleScale:
-    x-link: {setting: Interface.cardSize}
-    x-scope: look
-    x-group: Size
-    type: integer
-    x-control: stepper
-    title: Module size
-    default: 100
-    minimum: 50
-    maximum: 100
-    x-unit: '%'
-    description: Relative to the card size in Look & Feel.
-  moduleBorders:
-    x-scope: look
-    x-group: Look
-    type: boolean
-    title: Module borders
-    default: true
-    description: Draw each module's card box.
   navigator:
     x-scope: look
     x-group: Page switcher
     type: string
-    title: Position
+    title: Screen edge
     x-control: toggle
     enum: [bottom, top]
     x-enumLabels: {bottom: Bottom, top: Top}
     default: bottom
-    description: The screen edge the page switcher sits on.
   navigatorLabels:
     x-scope: look
     x-group: Page switcher
@@ -62,7 +41,27 @@ properties:
     enum: [auto, current, icons]
     x-enumLabels: {auto: 'All, while they fit', current: Current page only, icons: Icons only}
     default: auto
-    description: Which pages show their name beside their icon.
+  moduleScale:
+    x-link: {setting: Interface.cardSize}
+    x-scope: look
+    x-group: Size
+    type: integer
+    title: Module size
+    default: 100
+    minimum: 50
+    maximum: 100
+    x-unit: '%'
+    description: Relative to the card size in Look & Feel.
+  closeOnEscape:
+    x-group: Closing
+    type: boolean
+    title: Close on Escape
+    default: false
+  closeOnOutsideClick:
+    x-group: Closing
+    type: boolean
+    title: Close on outside click
+    default: false
   animation:
     x-scope: look
     x-group: Look
@@ -71,32 +70,29 @@ properties:
     enum: [top, bottom, fade]
     x-enumLabels: {top: Slide from the top, bottom: Slide from the bottom, fade: Fade}
     default: top
+  moduleBorders:
+    x-scope: look
+    x-group: Look
+    type: boolean
+    title: Module borders
+    default: true
+    description: Draw each module's card box.
   showBackdrop:
     x-scope: look
     x-group: Look
     type: boolean
-    title: Dim background
+    title: Backdrop
     default: true
-    description: Dim the screen behind the overlay.
   backdrop:
     x-scope: look
     x-group: Look
     type: integer
-    title: Backdrop darkness
+    title: Darkness
     x-unit: '%'
     default: 85
     minimum: 0
     maximum: 90
     x-showIf: {showBackdrop: true}
-  closeOnEscape:
-    type: boolean
-    title: Close on Escape
-    default: false
-  closeOnOutsideClick:
-    type: boolean
-    title: Close on outside click
-    default: false
-    description: Close when you click the background around the page.
   items:
     x-scope: look
     type: array

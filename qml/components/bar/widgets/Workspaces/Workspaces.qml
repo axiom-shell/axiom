@@ -18,10 +18,10 @@ import qs.components.bar.look
 // (`segmented`), each in the bar's widget shape, chaining on in a powerline
 // and sitting in a merged run as widgets do (BarCells.cellShape). Without
 // a box the cells sit straight on the bar, each underlined itself for
-// underline. A head (`lead`: an icon, or the active workspace's label as
-// its cell shows it, or in the grid its row's dots: GridPositionHead)
-// before the cells, in their box, is its icon part on a split bar
-// (SplitLead); with no box (`segmented`) it sits on the bar all the same.
+// underline. A head (`leadIcon`, or in the grid its row's dots:
+// GridPositionHead) before the cells, in their box, is its icon part on a
+// split bar (SplitLead); with no box (`segmented`) it sits on the bar all
+// the same.
 BarWidget {
   id: root
 
@@ -76,34 +76,22 @@ BarWidget {
   splitAt: lead.splitAt
   splitPart: lead.splitPart
 
-  // The monitor's active workspace, as its cell shows it (no app icons):
-  // a label's icon or text, the compositor's name, else its number
   readonly property var _monitor: CompositorManager.outputFor(root.screen)
-  readonly property var _active: root.properties.lead === "active" ? activeContents.of(root._monitor?.activeWorkspaceId ?? -1, "", false) : null
-  CellContents {
-    id: activeContents
-    barConfig: root.barConfig
-    properties: root.properties
-    base: CompositorManager.workspaceBase(root._monitor?.name ?? "")
-    thickness: root.barConfig.thickness
-    restLength: root.barConfig.thickness
-  }
 
   SplitLead {
     id: lead
     barConfig: root.barConfig
     start: root._start - root.inset + root.barConfig.innerPadding
-    icon: root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
-    text: !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
+    icon: root._grid ? "" : root.properties.leadIcon
     iconColor: root.colors.icon
     ownHead: positionHead.active ? positionHead : null
   }
 
-  // The grid's position head (`lead: position`): dots for the shown row
-  // (column on a vertical bar), else an arrow
-  readonly property bool _positionLead: properties.lead === "position" && CompositorManager.workspaceGrid
-  readonly property var _position: _positionLead ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
-  readonly property var _positionHead: _positionLead ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
+  // The grid's position head: dots for the shown row (column on a
+  // vertical bar), else an arrow
+  readonly property bool _grid: CompositorManager.workspaceGrid
+  readonly property var _position: _grid ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
+  readonly property var _positionHead: _grid ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
   Loader {
     id: positionHead
     active: root._positionHead !== null && root._positionHead.kind !== "none"

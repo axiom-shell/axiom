@@ -1107,7 +1107,7 @@ TestCase {
     }, "Message"), null);
   }
 
-  // An event's key against an item whose `tiles` pick what it shows (a
+  // An event's key against an item whose `shows` pick what it shows (a
   // low battery only where Battery shows its battery icon)
   function test_opensCard_key() {
     const osd = tiles => ({
@@ -1116,12 +1116,12 @@ TestCase {
           "systems": [
             {
               "type": "Battery",
-              "tiles": tiles
+              "shows": tiles
             }
           ]
         });
     verify(OSDEngine.opensCard(osd(["charger", "battery"]), "Battery", "battery"), "picked");
-    verify(!OSDEngine.opensCard(osd(["charger"]), "Battery", "battery"), "its tiles leave it out");
+    verify(!OSDEngine.opensCard(osd(["charger"]), "Battery", "battery"), "its shows leave it out");
     verify(OSDEngine.opensCard(osd(["charger"]), "Battery"), "no key: the system alone");
     verify(OSDEngine.opensCard({
       "enabled": true,
@@ -1131,7 +1131,7 @@ TestCase {
           "type": "Drives"
         }
       ]
-    }, "Drives", "drive"), "an item with no tiles setting");
+    }, "Drives", "drive"), "an item with no shows setting");
     compare(OSDEngine.cardRoute([osd(["charger"])], "Battery", true, "battery"), "notification");
     compare(OSDEngine.cardRoute([osd(["charger"]), osd(["battery"])], "Battery", false, "battery"), "osd");
   }

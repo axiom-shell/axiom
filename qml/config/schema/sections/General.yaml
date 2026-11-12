@@ -6,6 +6,27 @@ x-card: {file: Account, title: Account, wide: true}
 title: General
 additionalProperties: false
 properties:
+  primaryMonitor:
+    type: string
+    title: Primary monitor
+    default: ''
+    description: Where the lock password and single-monitor surfaces go.
+    x-options: screens
+    x-emptyLabel: First screen
+  screen:
+    $ref: '#/definitions/ScreenTarget'
+    title: Monitors
+    description: Default monitors for overlay, launcher, power menu and OSD.
+    x-properties:
+      mode:
+        x-scope: look
+        type: string
+        title: Monitors
+        x-control: toggle
+        enum: [primary, focused, all]
+        default: primary
+        x-enumLabels: {primary: Primary, focused: Focused, all: All}
+      names: null
   language:
     x-scope: personal
     type: string
@@ -16,27 +37,4 @@ properties:
     type: string
     title: Display name
     default: ''
-    description: Shown on the lock screen and in chat. Empty uses your login name.
-  primaryMonitor:
-    type: string
-    title: Primary monitor
-    default: ''
-    description: Hosts the lock screen's password field and single-monitor surfaces. Empty uses the first screen.
-    x-options: screens
-    x-emptyLabel: First screen
-  screen:
-    $ref: '#/definitions/ScreenTarget'
-    title: Monitors
-    description: Where the overlay, launcher, power menu and OSD appear, unless they set their own.
-    x-properties:
-      mode:
-        x-scope: look
-        type: string
-        title: Monitors
-        enum: [primary, focused, all]
-        default: primary
-        x-enumLabels:
-          primary: Primary monitor only
-          focused: Focused monitor only
-          all: Every monitor
-      names: null
+    description: 'Empty: your login name.'

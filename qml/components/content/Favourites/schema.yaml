@@ -3,11 +3,11 @@ icon: star
 group: Tools
 defaultSize: [4, 2]
 settings:
+  showLabels: {type: boolean, title: Names, default: true}
   apps:
     x-scope: personal
     type: array
     title: Apps
     default: []
     items: {type: string}
-    description: Desktop entry ids, comma-separated. Empty shows recent apps.
-  showLabels: {type: boolean, title: Show names, default: true}
+    description: 'Desktop entry ids. Empty: recent apps.'

@@ -2,17 +2,11 @@ label: Wi-Fi networks
 keyboard: true
 icon: wifi
 group: Network & devices
+grow: standard
+order: [showVpn, grow]
 settings:
-  grow:
-    type: integer
-    title: Grow by up to
-    default: 0
-    minimum: 0
-    maximum: 16
-    x-unit: rows
-    description: Extra rows it takes while its list needs them. 0 keeps its size.
   showVpn:
     type: boolean
-    title: Show VPNs
+    title: VPNs
     default: true
     description: The VPN section and the Import VPN action.

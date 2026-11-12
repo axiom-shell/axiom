@@ -54,7 +54,7 @@ Item {
           required property int index
           readonly property var entryBar: BarManager.localConfig[index] ?? ({})
 
-          icon: Utils.edgeArrow(entry.entryBar.location)
+          icon: Utils.edgeArrow(entry.entryBar.edge)
           label: BarManager.barLabel(entry.index)
           selected: BarManager.selectedBarIndex === entry.index
           dimmed: entry.entryBar.enabled === false

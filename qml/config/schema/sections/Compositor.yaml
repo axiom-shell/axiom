@@ -22,13 +22,12 @@ properties:
       managed: Managed by axiom
     default: detached
     x-applyOnSave: true
-    description: Applies on Save.
   requiredSettings:
     type: boolean
     title: Required settings
     x-group: Compositor setup
     default: true
-    description: Lock restore after a shell restart, ignoring apps' maximize requests, and a workspace slide animation.
+    description: Lock restore, ignoring apps' maximize requests, a workspace slide animation.
     x-showIf: {/$compositor: hyprland}
   hyprland:
     x-scope: personal
@@ -42,40 +41,36 @@ properties:
         x-link: {setting: Workspaces}
         type: string
         title: Layout
-        x-group: Hyprland layout
+        x-group: Layout
         enum: [dwindle, master]
         x-enumLabels: {dwindle: Dwindle (binary splits), master: Master and stack}
         default: dwindle
-        description: How windows tile.
         x-compositor: {hyprland: {key: general.layout, always: true}}
       preserveSplit:
         type: boolean
         title: Keep split direction
-        x-group: Hyprland layout
+        x-group: Layout
         default: true
-        description: Keep a split's direction when a window is resized or moved.
         x-showIf: {layout: dwindle}
         x-compositor: {hyprland: {key: dwindle.preserve_split, always: true}}
       smartSplit:
         type: boolean
         title: Split by cursor position
-        x-group: Hyprland layout
+        x-group: Layout
         default: false
-        description: Split towards the side the cursor is on.
         x-showIf: {layout: dwindle}
         x-compositor: {hyprland: {key: dwindle.smart_split}}
       smartResizing:
         type: boolean
         title: Resize by cursor position
-        x-group: Hyprland layout
+        x-group: Layout
         default: true
-        description: Resizing moves the edge nearest the cursor.
         x-showIf: {layout: dwindle}
         x-compositor: {hyprland: {key: dwindle.smart_resizing}}
       forceSplit:
         type: string
         title: New windows go
-        x-group: Hyprland layout
+        x-group: Layout
         enum: ['0', '1', '2']
         x-enumLabels: {'0': Towards the cursor, '1': Left or above, '2': Right or below}
         default: '0'
@@ -85,18 +80,18 @@ properties:
         type: integer
         title: Split ratio
         x-unit: '%'
-        x-group: Hyprland layout
+        x-group: Layout
         default: 100
         minimum: 10
         maximum: 190
-        description: The first window's share of a new split; 100 splits evenly.
+        description: '100: even split.'
         x-showIf: {layout: dwindle}
         x-compositor: {hyprland: {key: dwindle.default_split_ratio, scale: 0.01}}
       masterSize:
         type: integer
         title: Master size
         x-unit: '%'
-        x-group: Hyprland layout
+        x-group: Layout
         default: 55
         minimum: 5
         maximum: 95
@@ -105,15 +100,16 @@ properties:
       masterOrientation:
         type: string
         title: Master side
-        x-group: Hyprland layout
+        x-group: Layout
         enum: [left, right, top, bottom, center]
+        x-enumLabels: {left: Left, right: Right, top: Top, bottom: Bottom, center: Center}
         default: left
         x-showIf: {layout: master}
         x-compositor: {hyprland: {key: master.orientation}}
       masterNewStatus:
         type: string
         title: New windows become
-        x-group: Hyprland layout
+        x-group: Layout
         enum: [slave, master, inherit]
         x-enumLabels:
           slave: Part of the stack
@@ -124,17 +120,64 @@ properties:
         x-compositor: {hyprland: {key: master.new_status}}
       snap:
         type: boolean
-        title: Snap floating windows
-        x-group: Hyprland layout
+        title: Window snapping
+        x-group: Windows
         default: false
-        description: Floating windows snap to each other and the screen edges.
+        description: To each other and the screen edges.
         x-compositor: {hyprland: {key: general.snap.enabled}}
+      resizeOnBorder:
+        type: boolean
+        title: Resize by dragging borders
+        x-group: Windows
+        default: true
+        x-compositor: {hyprland: {key: general.resize_on_border, always: true}}
+      floatSwitchOverrideFocus:
+        type: string
+        title: Focus across tiled/floating
+        x-link: {setting: WindowBehaviour.followMouse}
+        x-group: Windows
+        enum: ['0', '1', '2']
+        x-enumLabels:
+          '0': Leaves focus alone
+          '1': Moves focus
+          '2': Moves focus, also floating to floating
+        default: '1'
+        x-showIf: {/WindowBehaviour.followMouse: true}
+        x-compositor: {hyprland: {key: input.float_switch_override_focus, value: number}}
+      swallow:
+        type: boolean
+        title: Window swallowing
+        x-group: Windows
+        default: true
+        description: A GUI app started from a terminal takes its place until it closes.
+        x-compositor: {hyprland: {key: misc.enable_swallow, always: true}}
+      swallowRegex:
+        type: string
+        title: Swallowing terminals
+        x-group: Windows
+        default: '^(kitty|foot|Alacritty|com\.mitchellh\.ghostty|org\.wezfurlong\.wezterm)$'
+        description: A regex of terminal window classes.
+        x-showIf: {swallow: true}
+        x-compositor: {hyprland: {key: misc.swallow_regex, if: swallow}}
+      closeSpecialOnEmpty:
+        type: boolean
+        title: Close when empty
+        x-group: Special workspaces
+        default: true
+        x-compositor: {hyprland: {key: misc.close_special_on_empty}}
+      hideSpecialOnWorkspaceChange:
+        type: boolean
+        title: Hide on switching
+        x-group: Special workspaces
+        default: false
+        x-compositor: {hyprland: {key: binds.hide_special_on_workspace_change}}
       dimSpecial:
         x-scope: look
         type: integer
-        title: Dim behind special workspaces
+        title: Dim behind
+        description: '0: no dimming.'
         x-unit: '%'
-        x-group: Hyprland behaviour
+        x-group: Special workspaces
         default: 20
         minimum: 0
         maximum: 100
@@ -143,7 +186,7 @@ properties:
         x-scope: look
         type: boolean
         title: Animations
-        x-group: Hyprland animations
+        x-group: Animations
         default: true
         x-compositor: {hyprland: {key: animations.enabled, always: true}}
       animationPreset:
@@ -151,7 +194,7 @@ properties:
         x-scope: look
         type: string
         title: Style
-        x-group: Hyprland animations
+        x-group: Animations
         enum: [hyprland, axiom, instant, snappy, bouncy, lightning, custom]
         x-enumLabels:
           hyprland: Hyprland's defaults
@@ -162,12 +205,11 @@ properties:
           lightning: Lightning
           custom: Custom
         default: axiom
-        description: Follow axiom's motion uses axiom's animation speed and switch.
         x-showIf: {animations: true}
       workspaceWraparound:
         type: boolean
-        title: Wrap workspace animations
-        x-group: Hyprland animations
+        title: Workspace wrap-around
+        x-group: Animations
         default: false
         description: Going from the last workspace to the first slides forward.
         x-showIf: {animations: true}
@@ -177,10 +219,10 @@ properties:
         x-wide: true
         type: array
         title: Curves
-        x-group: Hyprland animations
+        x-group: Animations
         default: []
-        description: Named bezier curves for the custom animations.
-        x-showIf: {animationPreset: custom}
+        description: Named bezier curves.
+        x-showIf: {animations: true, animationPreset: custom}
         items:
           type: object
           additionalProperties: false
@@ -196,11 +238,11 @@ properties:
       customAnimations:
         x-scope: look
         type: array
-        title: Animations
-        x-group: Hyprland animations
+        title: Custom animations
+        x-group: Animations
         default: []
         description: One entry per animation; a parent (windows) covers its children.
-        x-showIf: {animationPreset: custom}
+        x-showIf: {animations: true, animationPreset: custom}
         items:
           type: object
           additionalProperties: false
@@ -252,32 +294,13 @@ properties:
               type: string
               title: Style
               default: ''
-              description: Optional, e.g. popin 80%, slide, slidefade 20%, fade.
+              description: 'e.g. popin 80%, slidefade 20%, fade. Empty: none.'
           required: [id]
-      floatSwitchOverrideFocus:
-        type: string
-        title: Crossing tiled/floating
-        x-group: Hyprland windows
-        enum: ['0', '1', '2']
-        x-enumLabels:
-          '0': Leaves focus alone
-          '1': Moves focus
-          '2': Moves focus, also floating to floating
-        default: '1'
-        description: What moving the cursor between tiled and floating windows does.
-        x-showIf: {/WindowBehaviour.followMouse: true}
-        x-compositor: {hyprland: {key: input.float_switch_override_focus, value: number}}
-      resizeOnBorder:
-        type: boolean
-        title: Resize by dragging borders
-        x-group: Hyprland windows
-        default: true
-        x-compositor: {hyprland: {key: general.resize_on_border, always: true}}
       hideLogo:
         x-scope: look
         type: boolean
-        title: Hide Hyprland's logo and splash
-        x-group: Hyprland behaviour
+        title: Hide logo and splash
+        x-group: Look
         default: true
         x-compositor:
           hyprland: {key: [misc.disable_hyprland_logo, misc.disable_splash_rendering], always: true}
@@ -285,64 +308,37 @@ properties:
         x-scope: look
         type: boolean
         title: Background in a theme color
-        x-group: Hyprland behaviour
+        x-group: Look
         default: false
         description: What shows where there's no wallpaper.
       backgroundColor:
         x-scope: look
         type: string
         title: Background color
-        x-group: Hyprland behaviour
+        x-group: Look
         x-options: colors
         default: base00
         x-showIf: {backgroundThemed: true}
         x-compositor: {hyprland: {key: misc.background_color, value: color, if: backgroundThemed}}
-      swallow:
-        type: boolean
-        title: Terminals swallow what they open
-        x-group: Hyprland behaviour
-        default: true
-        description: A GUI app started from a terminal takes its place until it closes.
-        x-compositor: {hyprland: {key: misc.enable_swallow, always: true}}
-      swallowRegex:
-        type: string
-        title: Swallowing terminals
-        x-group: Hyprland behaviour
-        default: '^(kitty|foot|Alacritty|com\.mitchellh\.ghostty|org\.wezfurlong\.wezterm)$'
-        description: A regex of terminal window classes.
-        x-showIf: {swallow: true}
-        x-compositor: {hyprland: {key: misc.swallow_regex, if: swallow}}
-      closeSpecialOnEmpty:
-        type: boolean
-        title: Close empty special workspaces
-        x-group: Hyprland behaviour
-        default: true
-        x-compositor: {hyprland: {key: misc.close_special_on_empty}}
-      hideSpecialOnWorkspaceChange:
-        type: boolean
-        title: Hide special workspaces on switching
-        x-group: Hyprland behaviour
-        default: false
-        x-compositor: {hyprland: {key: binds.hide_special_on_workspace_change}}
       mouseWakesScreen:
         x-scope: machine
         type: boolean
         title: Mouse wakes the screen
-        x-group: Hyprland behaviour
+        x-group: Screen and input
         default: true
         x-compositor: {hyprland: {key: misc.mouse_move_enables_dpms, always: true}}
       keyWakesScreen:
         x-scope: machine
         type: boolean
         title: Keys wake the screen
-        x-group: Hyprland behaviour
+        x-group: Screen and input
         default: false
         x-compositor: {hyprland: {key: misc.key_press_enables_dpms}}
       vrr:
         x-scope: machine
         type: string
         title: Variable refresh rate
-        x-group: Hyprland behaviour
+        x-group: Screen and input
         enum: ['0', '1', '2']
         x-enumLabels: {'0': 'Off', '1': 'On', '2': Fullscreen only}
         default: '0'
@@ -352,7 +348,7 @@ properties:
         type: integer
         title: Scroll bind delay
         x-unit: ms
-        x-group: Hyprland behaviour
+        x-group: Screen and input
         default: 300
         minimum: 0
         maximum: 2000
@@ -362,49 +358,26 @@ properties:
         x-scope: machine
         type: boolean
         title: Unscaled X11 apps
-        x-group: Hyprland behaviour
+        x-group: Screen and input
         default: true
         description: X11 apps draw at native resolution on scaled monitors.
         x-compositor: {hyprland: {key: xwayland.force_zero_scaling, always: true}}
   sway:
     x-scope: personal
     type: object
-    x-showIf: {/$compositor: sway}
-    title: Sway
-    description: Written while axiom manages sway's config. Anything else goes in ~/.config/sway/user/.
+    x-showIf: {/$compositor: sway, /Compositor.mode: managed}
+    title: Managed config
+    description: Written into the managed config. Anything else goes in ~/.config/sway/user/.
     additionalProperties: false
     properties:
-      specialWorkspaces:
-        type: string
-        title: Special workspaces
-        enum: [scratchpad, workspace]
-        x-enumLabels: {scratchpad: Scratchpad windows, workspace: A workspace of their own}
-        default: scratchpad
-        description: Scratchpad windows float over the current workspace; a workspace of their own tiles them.
       workspaceLayout:
         type: string
-        title: New workspaces
+        title: New workspace layout
         x-control: toggle
         enum: [default, stacking, tabbed]
         x-enumLabels: {default: Tiled, stacking: Stacked, tabbed: Tabbed}
         default: default
         x-compositor: {sway: {key: 'workspace_layout {}'}}
-        x-showIf: {/Compositor.mode: managed}
-      hideEdgeBorders:
-        x-scope: look
-        type: string
-        title: Hide borders at the screen edges
-        enum: [none, vertical, horizontal, both, smart, smart_no_gaps]
-        x-enumLabels:
-          none: Never
-          vertical: Left and right
-          horizontal: Top and bottom
-          both: All
-          smart: With one window
-          smart_no_gaps: With one window and no gaps
-        default: none
-        x-compositor: {sway: {key: 'hide_edge_borders {}'}}
-        x-showIf: {/Compositor.mode: managed}
       smartGaps:
         x-scope: look
         type: string
@@ -416,10 +389,23 @@ properties:
           inverse_outer: Outer gaps only around a lone window
         default: 'off'
         x-compositor: {sway: {key: 'smart_gaps {}'}}
-        x-showIf: {/Compositor.mode: managed}
+      hideEdgeBorders:
+        x-scope: look
+        type: string
+        title: Hide edge borders
+        enum: [none, vertical, horizontal, both, smart, smart_no_gaps]
+        x-enumLabels:
+          none: Never
+          vertical: Left and right
+          horizontal: Top and bottom
+          both: All
+          smart: With one window
+          smart_no_gaps: With one window and no gaps
+        default: none
+        x-compositor: {sway: {key: 'hide_edge_borders {}'}}
       focusWrapping:
         type: string
-        title: Focus wraps around
+        title: Focus wrapping
         enum: ['yes', 'no', force, workspace]
         x-enumLabels:
           'yes': Within a container
@@ -428,43 +414,39 @@ properties:
           workspace: Within the workspace
         default: 'yes'
         x-compositor: {sway: {key: 'focus_wrapping {}'}}
-        x-showIf: {/Compositor.mode: managed}
       popupDuringFullscreen:
         type: string
-        title: Popups over a fullscreen window
+        title: Popups in fullscreen
         enum: [smart, ignore, leave_fullscreen]
         x-enumLabels: {smart: Show its own, ignore: Never show, leave_fullscreen: Leave fullscreen}
         default: smart
         x-compositor: {sway: {key: 'popup_during_fullscreen {}'}}
-        x-showIf: {/Compositor.mode: managed}
-      xwayland:
-        x-scope: machine
-        type: string
-        title: X11 apps (Xwayland)
-        enum: [enable, disable, force]
-        x-enumLabels: {enable: When one starts, disable: 'Off', force: Always running}
-        default: enable
-        x-compositor: {sway: {key: 'xwayland {}'}}
-        x-showIf: {/Compositor.mode: managed}
       font:
         x-scope: look
         type: string
         title: Title bar font
         default: ''
-        description: A Pango font, e.g. pango:Inter 10. Empty keeps sway's.
+        description: 'e.g. pango:Inter 10. Empty: sway''s.'
         x-compositor: {sway: {key: 'font {}', value: raw, skip: ''}}
-        x-showIf: {/Compositor.mode: managed}
+      xwayland:
+        x-scope: machine
+        type: string
+        title: X11 apps
+        enum: [enable, disable, force]
+        x-enumLabels: {enable: When one starts, disable: 'Off', force: Always running}
+        default: enable
+        x-compositor: {sway: {key: 'xwayland {}'}}
   niri:
     x-scope: personal
     type: object
     x-showIf: {/$compositor: niri, /Compositor.mode: managed}
-    title: niri
-    description: Written while axiom manages niri's config. Anything else goes in ~/.config/niri/user/.
+    title: Managed config
+    description: Written into the managed config. Anything else goes in ~/.config/niri/user/.
     additionalProperties: false
     properties:
       centerFocusedColumn:
         type: string
-        title: Center the focused column
+        title: Center focused column
         enum: [never, always, on-overflow]
         x-enumLabels:
           never: Never
@@ -477,19 +459,13 @@ properties:
         title: Center a lone column
         default: false
         x-compositor: {niri: {key: layout.always-center-single-column}}
-      emptyWorkspaceAboveFirst:
-        type: boolean
-        title: Empty workspace above the first
-        default: false
-        description: Also keep an empty workspace above the first.
-        x-compositor: {niri: {key: layout.empty-workspace-above-first}}
       defaultColumnDisplay:
         x-scope: look
         type: string
-        title: New columns show
+        title: New column display
         x-control: toggle
         enum: [normal, tabbed]
-        x-enumLabels: {normal: Windows stacked, tabbed: Windows as tabs}
+        x-enumLabels: {normal: Stacked, tabbed: Tabs}
         default: normal
         x-compositor: {niri: {key: layout.default-column-display}}
       tabIndicator:
@@ -499,12 +475,11 @@ properties:
         default: true
         description: A bar beside a tabbed column, a segment per tab.
         x-compositor: {niri: {key: layout.tab-indicator, value: onOff}}
-      preferNoCsd:
+      emptyWorkspaceAboveFirst:
         type: boolean
-        title: No title bars on windows
+        title: Empty workspace above first
         default: false
-        description: Ask apps to drop their own title bar and shadow. Open apps change once restarted.
-        x-compositor: {niri: {key: prefer-no-csd}}
+        x-compositor: {niri: {key: layout.empty-workspace-above-first}}
       overviewZoom:
         x-scope: look
         type: integer
@@ -514,6 +489,12 @@ properties:
         minimum: 10
         maximum: 75
         x-compositor: {niri: {key: overview.zoom, scale: 0.01, value: float}}
+      preferNoCsd:
+        type: boolean
+        title: No title bars on windows
+        default: false
+        description: Ask apps to drop their own title bar and shadow. Open apps change once restarted.
+        x-compositor: {niri: {key: prefer-no-csd}}
       animations:
         x-scope: look
         type: boolean
@@ -534,7 +515,7 @@ properties:
           niri: {key: animations.slowdown, scale: 0.01, value: float, skip: 100}
       skipHotkeyOverlay:
         type: boolean
-        title: Skip the hotkey help at start
+        title: Skip hotkey help at start
         default: true
         x-compositor: {niri: {key: hotkey-overlay.skip-at-startup}}
       primaryClipboard:
@@ -545,7 +526,7 @@ properties:
       xwayland:
         x-scope: machine
         type: boolean
-        title: X11 apps (xwayland-satellite)
+        title: X11 apps
         default: true
         description: Runs X11 apps when xwayland-satellite is installed.
         x-compositor: {niri: {key: xwayland-satellite, value: onOff}}

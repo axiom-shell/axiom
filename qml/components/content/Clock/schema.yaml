@@ -12,17 +12,18 @@ settings:
     enum: [digital, stacked, analog]
     x-enumLabels: {digital: Digital, stacked: Stacked, analog: Analog}
     default: stacked
-    description: 'Digital: one large line. Stacked: hours over minutes. Analog: a clock face.'
+    description: 'Stacked: hours over minutes.'
   hourFormat:
     type: string
-    title: Clock
+    title: Hour format
+    x-control: toggle
     enum: [default, '12', '24']
-    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
     default: default
-    description: Default follows Date & time settings.
+    x-link: {setting: DateTime.hourFormat}
     x-showIf: {style: {not: analog}}
-  showSeconds: {type: boolean, title: Show seconds, default: false}
-  showDate: {type: boolean, title: Show the date, default: true}
+  showSeconds: {type: boolean, title: Seconds, default: false}
+  showDate: {type: boolean, title: Date, default: true}
   timezone:
     x-scope: personal
     type: string
@@ -31,17 +32,17 @@ settings:
     x-control: search
     x-emptyLabel: System
     default: ''
-    description: e.g. Asia/Tokyo. Empty follows the system.
+    description: e.g. Asia/Tokyo.
   label:
     type: string
     title: Label
     default: ''
     description: A caption under the clock.
-  color: {type: string, title: Color, x-options: colors, x-emptyLabel: Text, default: ''}
+  color: {type: string, title: Text color, x-options: colors, x-emptyLabel: Text, default: ''}
   accentColor:
     type: string
     title: Accent color
     x-options: colors
     x-emptyLabel: Accent
     default: ''
-    description: The stacked clock's minutes and the analog clock's second hand.
+    description: Minutes, seconds and the label.

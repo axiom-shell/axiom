@@ -1190,12 +1190,6 @@
       "inactive": 80,
       "fullscreen": 100
     },
-    "surfaceBlur": {
-      "enabled": true,
-      "throughWindows": true,
-      "backdrops": true,
-      "pauseFullscreen": true
-    },
     "shadow": {
       "enabled": true,
       "matchShell": true,
@@ -1491,7 +1485,7 @@
     "workspaceBackAndForth": false,
     "cursorHideTimeout": 0,
     "hideCursorOnKeyPress": false,
-    "noWarps": false
+    "warpCursor": true
   },
   "Idle": {
     "enabled": true

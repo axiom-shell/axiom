@@ -10,8 +10,7 @@ properties:
   binds:
     x-scope: personal
     type: array
-    title: Keybinds
-    description: Edited on the Keybinds page.
+    title: Binds
     default:
       - {id: super-space, key: SUPER + space, action: launcher}
       - {id: super-tab, key: SUPER + Tab, action: overlay}
@@ -129,7 +128,7 @@ properties:
   presets:
     x-scope: personal
     type: array
-    title: Saved keybind presets
+    title: Presets
     description: Saved from the Keybinds page, to restore or merge later.
     default: []
     items:

@@ -9,19 +9,19 @@ appearance:
     enum: [label, icon, ticker, stacked]
     description: Ticker scrolls a long title; stacked puts it over the app id.
 colors: standard
+order: [appearance, appIcon, icon, emptyText, popout, backgroundColor, foregroundColor]
 settings:
   appIcon:
     type: boolean
     title: App icon
     default: false
-    description: The focused window's app icon in place of the icon.
+    description: The window's app icon instead of the icon.
   icon:
-    x-showIf: {appIcon: false}
     type: string
     x-control: icon
     title: Icon
     default: ''
-    description: A Material Symbols name, or text. Empty shows none.
+    description: 'Empty: none.'
   emptyText:
     type: string
     title: Empty text

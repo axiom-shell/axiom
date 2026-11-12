@@ -4,9 +4,9 @@ group: Audio
 settings:
   onTrackChange:
     type: boolean
-    title: On a new track
+    title: New track
     default: true
   onPlayPause:
     type: boolean
-    title: On play and pause
+    title: Play and pause
     default: false

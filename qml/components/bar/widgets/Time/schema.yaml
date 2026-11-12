@@ -3,7 +3,7 @@ keywords: ['Time', 'Date']
 icon: schedule
 priority: 5
 group: Time & weather
-popout: {variant: own, enabled: {description: Open the calendar when hovered.}}
+popout: {variant: own, enabled: {description: Calendar on hover.}}
 colors:
   variant: standard
   backgroundColor:
@@ -11,25 +11,28 @@ colors:
       anyOf:
         - {$bar.boxed: true, $bar.merged: false}
         - {$bar.underlined: true}
+order: [lead, leadIcon, timeFormat, hourFormat, showSeconds, timezone, showDate, dateFormat, verticalDate, popout, backgroundColor, foregroundColor]
 settings:
   hourFormat:
     type: string
-    title: Clock
+    title: Hour format
+    x-control: toggle
     enum: [default, '12', '24']
-    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
     default: default
-    description: Default follows Date & time settings.
-  showSeconds: {type: boolean, title: Seconds, default: true}
+    x-link: {setting: DateTime.hourFormat}
+    x-showIf: {timeFormat: ''}
+  showSeconds: {type: boolean, title: Seconds, default: true, x-showIf: {timeFormat: ''}}
   showDate: {type: boolean, title: Date, default: true}
   lead:
     type: string
     title: Head
-    enum: [none, icon, date]
-    x-enumLabels: {none: None, icon: Icon, date: Date}
+    enum: [auto, none, icon, date]
+    x-enumLabels: {auto: Auto, none: None, icon: Icon, date: Date}
     x-enumShowIf:
       date: {showDate: true}
-    default: none
-    description: Drawn before the time; a split bar sets it apart as the icon part.
+    default: auto
+    description: 'Auto: the date on a split bar, else none.'
   leadIcon:
     type: string
     x-control: icon
@@ -49,12 +52,13 @@ settings:
     type: string
     title: Time format
     default: ''
-    description: A Qt time format, e.g. HH:mm. Empty uses the language's.
+    description: 'A Qt time format, e.g. HH:mm. Empty: the language''s.'
   dateFormat:
     type: string
     title: Date format
     default: ''
-    description: A Qt date format, e.g. ddd d MMM. Empty uses the language's.
+    description: 'A Qt date format, e.g. ddd d MMM. Empty: the language''s.'
+    x-showIf: {showDate: true}
   verticalDate:
     type: string
     title: Vertical date
@@ -64,5 +68,5 @@ settings:
       day: Day and weekday
       monthDay: Month, day and weekday
       numeric: Day over month number
-    description: The date's lines on a vertical bar, without a date format.
-    x-showIf: {showDate: true}
+    description: Date lines on a vertical bar.
+    x-showIf: {showDate: true, dateFormat: ''}

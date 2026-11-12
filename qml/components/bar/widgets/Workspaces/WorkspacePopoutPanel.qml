@@ -34,7 +34,7 @@ Panel {
   readonly property color occupiedColor: Theme.resolveColor(root.properties.occupiedColor)
   readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
-  readonly property color textColor: Theme.resolveColor(root.properties.textColor)
+  readonly property color textColor: Theme.resolveColor(root.properties.foregroundColor)
   // How its cells draw: as the bar's row, off the bar (no run), at the
   // bar's cell size and corners
   readonly property CellLook cellLook: CellLook {

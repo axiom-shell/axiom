@@ -1,14 +1,14 @@
 # Translucency and blur
 
 > **Files:** `qml/config/Appearance.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/reusable/BlurRegion.qml`, `qml/components/reusable/BoxBlurRegion.qml`, `backend/internal/compositor/render/niri.go`, `qml/services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `qml/components/views/Settings/TranslucencyStatus.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`
-> **Config:** `Appearance.surface.opacity`, `WindowLook.surfaceBlur*` (`surfaceBlur`, `surfaceBlurThroughWindows`, `surfaceBlurBackdrops`, `surfaceBlurPauseFullscreen`)
+> **Config:** `Appearance.surface.opacity`, `Appearance.surface.blur` (`enabled`, `throughWindows`, `backdrops`, `pauseFullscreen`)
 > **Related:** [Blur window and openings](blur-window-openings.md), [Window look](../compositor/window-look.md), [Popout registry](../popouts/registry.md)
 
 The translucency setting, how fills apply it, the Hyprland layer rules axiom writes for blur, and per-screen and fullscreen behaviour. How chrome surfaces share one blurred backing window is in [Blur window and openings](blur-window-openings.md).
 
 ### The setting
 - Look & Feel → Translucency, `Appearance.surface.opacity`: 60–100%. 100 is solid and blurs nothing.
-- Compositor → Window look → Blur (`WindowLook`, since config version 63): `surfaceBlur`, `surfaceBlurThroughWindows`, `surfaceBlurBackdrops`, `surfaceBlurPauseFullscreen` (`x-scope: machine`), above the compositor's own blur. Shown while the opacity isn't 100.
+- Appearance → Translucency → Blur (`Appearance.surface.blur`, from `WindowLook.surfaceBlur` before config version 105): `enabled`, `throughWindows`, `backdrops`, `pauseFullscreen` (`x-scope: machine`). Shown while the opacity isn't 100.
 - **Without `supports.blur`** (plain sway) the surfaces are solid: `Appearance.surfaceAlpha` is 1 whatever the opacity says, which stays set but greyed out, as are the blur settings (`x-hintedIf`, "SwayFX can."). A translucent surface over another would show it through unblurred. `Appearance.compositorBlurs` is handed over by `CompositorManager` (a `Binding`): a reader reads no service, and building `CompositorManager` reads `Appearance` (reading it directly aborted the shell's start in a creation loop).
 - The strength isn't axiom's. Hyprland has one blur, for windows and layers alike, set by the window look's blur part (Compositor → Window look, see [Window look](../compositor/window-look.md)) or the user's own config.
 - The card's intro (`TranslucencyStatus`):
@@ -30,7 +30,7 @@ The translucency setting, how fills apply it, the Hyprland layer rules axiom wri
 Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones SwayFX's `layer_effects` and niri's xray rules are written from too), handed `spec.surfaces` (`M.blur()` in the module). The named layer rules are always written, `enabled` or not, since a rule is taken back by redefining it (no reload).
 - `axiom-blur`, on the namespaces that blur themselves (`LayerStack.blurSurfaces`: the blur window, the overlay, the floating launcher and switcher, …):
   - `blur_popups`, and `ignore_alpha` at the threshold. The big transparent windows need it; shadows are capped under the threshold while blurring (`BarsConfig.shadowColor`).
-  - `xray` is always written, off with `surfaceBlurThroughWindows`. Left out, a layer takes `decoration.blur.xray`, which the window look turns on.
+  - `xray` is always written, off with `blur.throughWindows`. Left out, a layer takes `decoration.blur.xray`, which the window look turns on.
 - `axiom-blur-popups`, on the chrome's own namespaces (`LayerStack.blurChrome`), for their popups alone (tooltips, the dock's menu):
   - Hyprland blurs a layer's popups whether or not the layer blurs, never with xray, and with its `ignore_alpha`. The group says `xray = false` anyway, for niri's rule (below).
   - So a bar popout, a popup drawn transparent over the blur window, blurs only under its content.
@@ -49,7 +49,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - Backdrops and polkit's dim send their whole rect while `blurBackdrops` (at any alpha, `threshold` 0.01).
 - They do while `BlurManager.regionsOn(screen)` (`backdropRegionsOn`): the pause, per screen there, never touches niri's config.
 - `BackgroundEffect` is attached only where `supports.blurRegion`, from `Component.onCompleted` (`BackgroundEffect.blurRegion = Qt.binding(…)`), never as a binding: attached at all, even with a null region, Quickshell creates the window's ext-background-effect object, and Hyprland (which speaks the protocol too) then blurs only what it asks, ignoring the layer rules.
-- The module holds only xray: a `layer-rule` per `render.SurfaceBlur` group that blurs or whose popups do (`render.NiriSurfaceBlurNodes`), xray off with `surfaceBlurThroughWindows`, always off over the overlay and for the chrome's popups (as Hyprland, which never blurs a popup with xray). niri marks non-xray blur experimental: it can vanish during open and close animations.
+- The module holds only xray: a `layer-rule` per `render.SurfaceBlur` group that blurs or whose popups do (`render.NiriSurfaceBlurNodes`), xray off with `blur.throughWindows`, always off over the overlay and for the chrome's popups (as Hyprland, which never blurs a popup with xray). niri marks non-xray blur experimental: it can vanish during open and close animations.
 - The strength is niri's `blur {}` (the window look's blur part writes it); `NiriManager.blur` reads it back from `axiom compositor niri info` (its offset as the size) for the Translucency card and the lock screen's frost.
 
 ### No reload per step
@@ -65,7 +65,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
   - The blur window itself then rises to the Overlay layer on that screen (`overFullscreen`, order 9 keeping it under the surfaces there), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager.reportSlot`; [layer arrangement](../compositor/layer-arrangement.md)).
 
 ### Paused over fullscreen
-- `surfaceBlurPauseFullscreen` (on by default): while a screen shows a fullscreen window, the blur pauses (`BlurManager.pausedOn(screen)`):
+- `blur.pauseFullscreen` (on by default): while a screen shows a fullscreen window, the blur pauses (`BlurManager.pausedOn(screen)`):
   - where the compositor's rules are compositor-wide (Hyprland's layer rules, SwayFX's `layer_effects`), on every screen: `BlurManager.paused`, and `active` is false;
     - the rules are taken back at runtime, as is Hyprland's blur where the window look kept it on for the surfaces alone (the module file keeps the saved setting);
   - where each window asks for its own blur (niri, `supports.blurRegion`), only on that screen: its windows send no region (`regionsOn`), and `active` stays on;

@@ -40,7 +40,7 @@ Item {
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
   readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
-  readonly property color textColor: Theme.resolveColor(properties.textColor)
+  readonly property color textColor: Theme.resolveColor(properties.foregroundColor)
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""
@@ -133,7 +133,7 @@ Item {
       textColor: root.textColor
       hitArea: root.hitArea
       barSpotOf: root.barSpotOf
-      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
       chainCount: root._chainCells
     }
 

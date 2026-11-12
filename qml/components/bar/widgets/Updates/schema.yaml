@@ -2,27 +2,20 @@ label: Updates
 keywords: ['Package Updates']
 icon: package_2
 group: System
-popout: {variant: own, enabled: {description: List pending packages when hovered.}}
+popout: {variant: own, enabled: {description: Pending packages on hover.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, stacked]
-    description: Stacked puts the count over the AUR's share.
+    description: 'Stacked: the count over the AUR''s share.'
 colors: standard
+order: [appearance, hideWhenEmpty, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
 settings:
-  interval:
-    type: integer
-    title: Check interval
-    x-unit: min
-    default: 1800000
-    minimum: 300000
-    maximum: 86400000
   hideWhenEmpty: {type: boolean, title: Hide when up to date, default: true}
-  manyThreshold:
+  warnThreshold:
     type: integer
-    title: Many updates
+    title: Warning at
     default: 50
     minimum: 1
     maximum: 1000
-    description: At or above this count, the widget uses the many-updates background.
-  manyColor: {$ref: '#/definitions/WidgetColor', title: Many-updates color, x-autoColor: warning}
+  warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}

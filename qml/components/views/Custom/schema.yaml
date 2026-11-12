@@ -7,5 +7,5 @@ settings:
     x-control: icon
     title: Icon
     default: ''
-    description: 'Shown in the page navigator: a Material Symbols name. Empty shows the default.'
+    description: 'Empty: the default icon.'
   layout: {$ref: '#/definitions/Layout', x-properties: {moduleScale: null, moduleBorders: null}}

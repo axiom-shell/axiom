@@ -10,17 +10,18 @@ additionalProperties: false
 properties:
   mode:
     type: string
-    title: Updates
+    title: Mode
+    x-control: toggle
     enum: [auto, notify, 'off']
-    x-enumLabels: {auto: Update automatically, notify: Notify me, 'off': 'Off'}
+    x-enumLabels: {auto: Auto, notify: Notify, 'off': 'Off'}
     default: notify
-    description: Checked at start and once a day. Off never checks.
+    description: Checked at start and daily.
   channel:
     type: string
-    title: Follow
+    title: Channel
     x-control: toggle
     enum: [tags, main]
-    x-enumLabels: {tags: Releases, main: Main branch}
+    x-enumLabels: {tags: Releases, main: Main}
     default: tags
     x-showIf: {mode: {not: 'off'}}
-    description: Main branch is newer, but less tested.
+    description: 'Main: newer, less tested.'
