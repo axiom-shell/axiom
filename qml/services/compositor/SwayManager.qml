@@ -143,7 +143,7 @@ Singleton {
     const hidden = root._info.scratch.some(w => w.id === String(id));
     const grouped = (root._marks[String(id)] ?? []).some(mark => SwayState.specialGroup(mark) !== "");
     if (hidden || grouped)
-      lines.push(...SwayState.specialLeave(root._marks, id, hidden, true));
+      lines.push(...SwayState.specialLeave(root._marks, id, hidden));
     if (floatAt) {
       if (!reinsert)
         lines.push(`${win} move container to workspace number ${workspaceId}`);

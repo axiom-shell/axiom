@@ -425,16 +425,14 @@ QtObject {
 
   // The commands taking window `id` out of its special group (`marks`, every
   // window's): its axiom marks come off (a user's own stay). A scratchpad
-  // one (`scratch`: marked by axiom, or the user's own scratchpad window) also
+  // one (marked by axiom, or the user's own scratchpad window) also
   // stops being the scratchpad's: shown first when `hidden`, then floated off
   // and on again (sway refuses to float a hidden one), so it is an ordinary
   // floating window.
-  function specialLeave(marks, id, hidden, scratch) {
+  function specialLeave(marks, id, hidden) {
     const con = `[con_id=${Number(id)}]`;
     const lines = root._unmarkLines(marks, id);
-    if (scratch === true)
-      return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
-    return lines;
+    return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
   }
 
   // The marks of every window in a get_tree reply: { [id]: [marks] }, for
