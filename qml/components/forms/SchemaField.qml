@@ -42,6 +42,10 @@ Loader {
       return own;
     return own !== "" ? notes + "\n" + I18n.tr(own) : notes;
   }
+  // What the field refers to (`x-ref`: "specialWorkspace"), or "" while its
+  // `when` doesn't hold: a dropdown of those that exist, which also takes
+  // typed text
+  readonly property string refKind: SchemaLayout.refKind(fieldSchema, root._valueOf)
   readonly property bool isColor: fieldSchema["x-options"] === "colors"
   // `x-enumShowIf` hides options whose condition doesn't hold, and
   // `x-menuPlacements` the menus of other placements (the current value
@@ -51,9 +55,6 @@ Loader {
     const placements = fieldSchema["x-menuPlacements"];
     if (all && placements)
       all = all.filter(value => value === "" || value === root.current || MenusConfig.offeredIn(value, placements));
-    // A special workspace's id that's no longer listed stays, so an entry never shows blank
-    if (all && fieldSchema["x-options"] === "specialWorkspaces" && root.current && !all.includes(root.current))
-      all = all.concat(root.current);
     const conditions = fieldSchema["x-enumShowIf"];
     if (!all || !conditions)
       return all;
@@ -305,6 +306,9 @@ Loader {
     case "number":
       return decimalField;
     default:
+      // The id of something defined elsewhere (`x-ref`)
+      if (root.refKind !== "")
+        return refField;
       // A long list (`x-control: "search"`) is typed into to filter it
       if (root.options && fieldSchema["x-control"] === "search")
         return searchField;
@@ -513,6 +517,26 @@ Loader {
           if (root.options.includes(value))
             root.commit(value);
         }
+      }
+    }
+  }
+
+  // A field that refers to something defined elsewhere (`x-ref`): the ones
+  // that exist to pick from, or a new valid id typed (RefEntry)
+  Component {
+    id: refField
+    ColumnLayout {
+      spacing: Widget.spacing
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
+      }
+      RefEntry {
+        Layout.fillWidth: true
+        kind: root.refKind
+        value: root.current ?? ""
+        onCommitted: value => root.commit(value)
       }
     }
   }

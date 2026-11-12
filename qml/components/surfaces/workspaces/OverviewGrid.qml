@@ -66,8 +66,8 @@ Item {
   // A string, so the cells and their Repeater are rebuilt only when the set
   // of names changes
   // (each name led by a newline, so the unnamed one, "", still makes a key)
-  readonly property string _specialKey: (root._frozenNames ?? root._liveCells.map(c => c.name)).map(name => "\n" + name).join("")
-  readonly property var specialIds: root._specialKey === "" ? [] : root._specialKey.slice(1).split("\n")
+  readonly property string _specialKey: SpecialWorkspaces.keyOf(root._frozenNames ?? root._liveCells.map(c => c.name))
+  readonly property var specialIds: SpecialWorkspaces.namesOf(root._specialKey)
   readonly property int specialCount: root.specialIds.length
   // The cells and their column together, so one never pairs with a stale other
   readonly property var specialSet: {

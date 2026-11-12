@@ -79,6 +79,32 @@ QtObject {
   // config's is CompositorManager.knownSpecials
   readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
 
+  // What an `x-ref` field of `kind` can be set to: the ids of the things that
+  // exist, as edited, for the dropdown beside the typed text; the unnamed
+  // special workspace is never among them (knownSpecials leaves it out) nor
+  // an id no field could hold
+  function refOptions(kind) {
+    if (kind === "specialWorkspace")
+      return root.knownSpecials.filter(row => row.editable).map(row => row.id);
+    return [];
+  }
+
+  // Each of refOptions' ids with the name it was given, where it has one
+  function refLabels(kind) {
+    if (kind !== "specialWorkspace")
+      return ({});
+    return root.knownSpecials.reduce((labels, row) => {
+      if (row.label !== "")
+        labels[row.id] = row.label;
+      return labels;
+    }, {});
+  }
+
+  // Whether `value` may be set on an `x-ref` field of `kind`
+  function refValid(kind, value) {
+    return kind === "specialWorkspace" && SpecialWorkspaces.validId(value);
+  }
+
   // Sets the icon and text of special workspace `id`'s entry in the draft,
   // making the entry when it has none (a valid id only)
   function setSpecialWorkspace(id, icon, text) {
@@ -476,10 +502,6 @@ QtObject {
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":
       return ["", ...NotesManager.allNotes];
-    case "specialWorkspaces":
-      // Those that exist (Hyprland lists one only while it has windows), have
-      // an entry or are referred to, as edited (`knownSpecials`)
-      return root.knownSpecials.map(row => row.id);
     case "calendars":
       // Those new events can go to
       return ["", ...CalendarManager.calendars.filter(calendar => calendar.writable).map(calendar => calendar.id)];

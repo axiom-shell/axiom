@@ -818,7 +818,6 @@
     "Window management": "ウィンドウ管理",
     "Window shadows": "ウィンドウの影",
     "Works while locked": "ロック中も有効",
-    "Workspace name": "ワークスペース名",
     "XKB options": "XKB オプション",
     "e.g. caps:escape,grp:alt_shift_toggle.": "例: caps:escape,grp:alt_shift_toggle。",
     "x1, y1, x2, y2, as in CSS cubic-bezier().": "x1, y1, x2, y2 (CSS の cubic-bezier() と同じ)。",
