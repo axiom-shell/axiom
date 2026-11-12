@@ -24,6 +24,10 @@ func (d *Daemon) hookupPart() part {
 type HookupRequest struct {
 	Key     string          `json:"key"`
 	Targets []hookup.Target `json:"targets,omitempty"`
+	// Owner is the setting that asks (the footprint rows' owner): the
+	// integration's path, ScreenSharing.enabled, or "" for the compositor's
+	// include and autostart lines
+	Owner string `json:"owner,omitempty"`
 }
 
 // HookupStatus is what Apply would do to each target.
@@ -39,7 +43,7 @@ type HookupApplied struct {
 }
 
 func (d *Daemon) hookupMethods(reg *rpc.Registry) {
-	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, DataDir: filepath.Join(d.opts.Tree, "data")})
+	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, DataDir: filepath.Join(d.opts.Tree, "data"), Ledger: d.footprint})
 	// The targets asked for, and the profiles.ini files of a browser's
 	targets := func(p HookupRequest) ([]hookup.Target, []string, error) {
 		if p.Targets != nil {
@@ -68,6 +72,6 @@ func (d *Daemon) hookupMethods(reg *rpc.Registry) {
 		if err != nil {
 			return HookupApplied{}, err
 		}
-		return HookupApplied{Key: p.Key, Results: h.Apply(ts, profiles)}, nil
+		return HookupApplied{Key: p.Key, Results: h.Apply(ts, profiles, p.Owner)}, nil
 	})
 }

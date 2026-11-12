@@ -38,6 +38,7 @@ func Root() *Command {
 			screenSharePickCommand(),
 			portalWaitCommand(),
 			guardCommand(),
+			footprintCommand(),
 			indexCrawlCommand(),
 			thumbnailCommand(),
 			versionCommand(),
