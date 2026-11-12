@@ -45,6 +45,64 @@ type PortalEnv struct {
 	DataDirs []string // where xdg-desktop-portal looks for portals/*.portal
 	// Write replaces a file with a mode (default edit.WriteMode)
 	Write func(path string, data []byte, mode os.FileMode) error
+	// Alive says whether a display's daemon runs (nil: every display does)
+	Alive func(display string) bool
+}
+
+func (p PortalEnv) alive(display string) bool { return p.Alive == nil || p.Alive(display) }
+
+// DisplayAlive: the daemon of display holds its instance lock
+// ($XDG_RUNTIME_DIR/axiom/<display>/daemon.lock).
+func DisplayAlive(runtimeDir, display string) bool {
+	f, err := os.Open(filepath.Join(runtimeDir, "axiom", display, "daemon.lock"))
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	if err := unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+		return errors.Is(err, unix.EWOULDBLOCK)
+	}
+	unix.Flock(int(f.Fd()), unix.LOCK_UN)
+	return false
+}
+
+// sharedWith: another display whose daemon runs has a line in the same file
+func (p PortalEnv) sharedWith(st *State, display, path string) bool {
+	return slices.ContainsFunc(st.Lines, func(x PortalLine) bool {
+		return x.Display != display && x.Path == path && p.alive(x.Display)
+	})
+}
+
+// Prune drops the entries of displays whose daemon is gone (the state is
+// read at a daemon's start), undoing their lines unless a live display still
+// has one in the same file; true when a file changed. Display is this
+// daemon's own, never pruned.
+func (p PortalEnv) Prune(store Store, display string, log Logf) bool {
+	changed := false
+	err := store.Update(func(st *State) error {
+		var kept []PortalLine
+		for _, l := range st.Lines {
+			if l.Display == display || p.alive(l.Display) {
+				kept = append(kept, l)
+				continue
+			}
+			if !p.sharedWith(st, l.Display, l.Path) {
+				c, err := p.Remove(l)
+				if err != nil {
+					log.log("session: taking a dead display's line out of %s: %v", l.Path, err)
+					kept = append(kept, l)
+					continue
+				}
+				changed = changed || c
+			}
+		}
+		st.Lines = kept
+		return nil
+	})
+	if err != nil {
+		log.log("session: pruning the portal lines: %v", err)
+	}
+	return changed
 }
 
 // Path is the config file.
@@ -118,7 +176,7 @@ func (p PortalEnv) Sync(store Store, display string, want bool) (state string, c
 			if i := entryFor(st, display, path); i >= 0 {
 				l := st.Lines[i]
 				line = &l
-				shared = slices.ContainsFunc(st.Lines, func(x PortalLine) bool { return x.Display != display && x.Path == path })
+				shared = p.sharedWith(st, display, path)
 			}
 		}
 		if line == nil {

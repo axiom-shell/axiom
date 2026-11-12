@@ -1,6 +1,7 @@
 package session
 
 import (
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"os"
 	"path/filepath"
 	"strings"
@@ -125,6 +126,7 @@ func contains(s, sub string) bool { return len(s) >= len(sub) && strings.Contain
 // another display's line in the same file keeps the file as it is
 func TestPortalLineLeftWhileAnotherDisplayHasIt(t *testing.T) {
 	env, store := portalSetup(t)
+	env.Alive = func(string) bool { return true }
 	if _, _, err := env.Sync(store, "d1", true); err != nil {
 		t.Fatal(err)
 	}
@@ -167,5 +169,65 @@ func TestPortalLineRecordStaysWhenTheUndoFails(t *testing.T) {
 	}
 	if len(store.Read().Lines) != 1 {
 		t.Fatal("the record was dropped with the line still in")
+	}
+}
+
+// a display whose daemon is gone doesn't hold a file: its entry blocks no
+// undo, and pruning takes its line out when no live display has one
+func TestPortalLineDeadDisplayBlocksNothing(t *testing.T) {
+	env, store := portalSetup(t)
+	alive := map[string]bool{"d1": true, "d2": true}
+	env.Alive = func(d string) bool { return alive[d] }
+	env.Sync(store, "d1", true)
+	store.Update(func(st *State) error {
+		st.Lines = append(st.Lines, PortalLine{Display: "d2", Path: env.Path(), Line: PortalText})
+		return nil
+	})
+	alive["d2"] = false
+	if _, changed, err := env.Sync(store, "d1", false); err != nil || !changed {
+		t.Fatalf("off with only a dead display's entry: %v %v", changed, err)
+	}
+	// pruning: d2's entry alone, d2 dead: the line goes
+	env.Sync(store, "d1", true)
+	store.Update(func(st *State) error {
+		st.Lines = []PortalLine{{Display: "d2", Path: env.Path(), Line: PortalText}}
+		return nil
+	})
+	if !env.Prune(store, "d1", nil) {
+		t.Fatal("the dead display's line wasn't taken out")
+	}
+	if data, _ := os.ReadFile(env.Path()); contains(string(data), PortalText) || len(store.Read().Lines) != 0 {
+		t.Fatalf("file %q, record %+v", data, store.Read().Lines)
+	}
+	// a live display holding the same file keeps it
+	env.Sync(store, "d1", true)
+	store.Update(func(st *State) error {
+		st.Lines = []PortalLine{{Display: "d2", Path: env.Path(), Line: PortalText}, {Display: "d1", Path: env.Path(), Line: PortalText}}
+		return nil
+	})
+	if env.Prune(store, "d3", nil) {
+		t.Fatal("a file a live display has a line in was changed")
+	}
+	if len(store.Read().Lines) != 1 || store.Read().Lines[0].Display != "d1" {
+		t.Fatalf("record %+v", store.Read().Lines)
+	}
+}
+
+func TestDisplayAliveFollowsTheInstanceLock(t *testing.T) {
+	rt := t.TempDir()
+	os.MkdirAll(filepath.Join(rt, "axiom", "w1"), 0o755)
+	if DisplayAlive(rt, "w1") {
+		t.Fatal("alive without a lock")
+	}
+	l, err := fsx.TryLock(filepath.Join(rt, "axiom", "w1", "daemon.lock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !DisplayAlive(rt, "w1") {
+		t.Fatal("a held lock isn't alive")
+	}
+	l.Release()
+	if DisplayAlive(rt, "w1") {
+		t.Fatal("a released lock is alive")
 	}
 }

@@ -35,7 +35,7 @@ func (p *fakeProc) add(pid int, argv []string, env ...string) {
 }
 
 func (p *fakeProc) scope() Scope {
-	return Scope{WaylandDisplay: "wayland-1", RuntimeDir: "/run/u", Bus: "unix:path=/run/u/bus", ProcRoot: p.root, UserRuntime: "/run/u"}
+	return Scope{WaylandDisplay: "wayland-1", RuntimeDir: "/run/u", Bus: "unix:path=/run/u/bus", ProcRoot: p.root}
 }
 
 var inScope = []string{"WAYLAND_DISPLAY=wayland-1", "XDG_RUNTIME_DIR=/run/u", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/u/bus"}

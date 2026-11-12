@@ -50,6 +50,10 @@ func TestMain(m *testing.M) {
 	if os.Getenv("CTR_FAKESHELL") == "1" {
 		os.Exit(fakeShell())
 	}
+	if sleeperNames[filepath.Base(os.Args[0])] {
+		time.Sleep(10 * time.Minute)
+		os.Exit(0)
+	}
 	if os.Getenv("CTR_FAKEPORTAL") == "1" {
 		os.Exit(fakePortal())
 	}
@@ -332,9 +336,6 @@ func NewSessionWith(t *testing.T, extra ...string) *Session {
 		"PATH": filepath.Join(s.Home, "bin") + ":" + os.Getenv("PATH"), "HOME": s.Home, "LANG": "C.UTF-8",
 		"XDG_CONFIG_HOME": s.Config, "XDG_STATE_HOME": s.State, "XDG_DATA_HOME": s.Data,
 		"XDG_CACHE_HOME": s.Cache, "XDG_RUNTIME_DIR": s.Runtime,
-		// This scratch folder stands for the user manager's: the daemon
-		// runs the systemctl stub only for it (session.Scope.UnitsAllowed)
-		"AXIOM_USER_RUNTIME_DIR":   s.Runtime,
 		"DBUS_SESSION_BUS_ADDRESS": "unix:path=" + filepath.Join(s.Runtime, "bus"),
 	}
 	for _, kv := range extra {
@@ -645,28 +646,45 @@ func (s *Session) ShellCall(method string, params any) (json.RawMessage, error) 
 }
 
 // FakeProgram writes a program named name into ~/bin (on the session's
-// PATH), a bash script. A program meant to be found by its command line
-// starts with `exec -a "$0" …`, so its argv[0] is its own path.
+// PATH), a bash script (FakeSleeper for one found by its command line).
 func (s *Session) FakeProgram(name, script string) string {
 	s.t.Helper()
 	path := s.WriteFile("bin/"+name, "#!/bin/bash\n"+script+"\n")
 	if err := os.Chmod(path, 0o755); err != nil {
 		s.t.Fatal(err)
 	}
-	// What it started (the daemon starts programs of its own, too) goes
-	// with the test
+	return path
+}
+
+// FakeSleeper installs a program named name into ~/bin: a link to this test
+// binary, which runs as a process that only sleeps (TestMain), whatever
+// arguments it gets, so its argv is exactly what it was started with.
+func (s *Session) FakeSleeper(name string) string {
+	s.t.Helper()
+	self, err := os.Executable()
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	path := filepath.Join(s.Home, "bin", name)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		s.t.Fatal(err)
+	}
+	if err := os.Symlink(self, path); err != nil {
+		s.t.Fatal(err)
+	}
 	s.t.Cleanup(func() {
-		for _, p := range Procs(func(p ProcInfo) bool { return p.Argv[0] == path }) {
+		for _, p := range Procs(func(p ProcInfo) bool {
+			return filepath.Base(p.Argv[0]) == name && p.HasEnv("XDG_RUNTIME_DIR="+s.Runtime)
+		}) {
 			syscall.Kill(p.PID, syscall.SIGKILL)
 		}
 	})
 	return path
 }
 
-// Sleeper is the script of a program that only runs, under its own name
-// (argv[0] is its path); its numeric arguments become the durations it
-// sleeps, so they show in its argv and nothing else does (`-t 3000` is 3000).
-const Sleeper = `n=(); for a in "$@"; do [[ $a =~ ^[0-9]+$ ]] && n+=("$a"); done; exec -a "$0" sleep "${n[@]:-600}"`
+// sleeperNames are the programs this binary stands in for when it is run
+// under their name (FakeSleeper)
+var sleeperNames = map[string]bool{"hyprpolkitagent": true, "wlsunset": true}
 
 // SecondDisplayEnv is an environment that is out of the session's scope: a
 // Wayland display of another session, the rest the session's.

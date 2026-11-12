@@ -216,7 +216,7 @@ func (o TeardownOptions) undoLines(display string) bool {
 				kept = append(kept, l)
 				continue
 			}
-			if slices.ContainsFunc(st.Lines, func(x PortalLine) bool { return x.Display != display && x.Path == l.Path }) {
+			if o.Portal.sharedWith(st, display, l.Path) {
 				continue
 			}
 			c, err := o.Portal.Remove(l)

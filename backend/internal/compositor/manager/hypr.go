@@ -288,13 +288,6 @@ func strs(list []string) *jsonx.Array {
 
 func (w *hyprWriter) seenReload() { w.runtime.reloads.Add(1) }
 
-// hyprStartHandlerFiresOnReload: whether hl.on("hyprland.start", …) runs
-// again on `hyprctl reload`: it doesn't (docs/dev/hyprland/config-modes.md ›
-// HY1, a nested Hyprland: the handler ran once, the top level at each
-// reload), so a start line inside the handler doesn't make a reload start
-// axiom. Were it to fire, such a line would count too.
-const hyprStartHandlerFiresOnReload = false
-
 // teardownSteps: a reload takes the binds, the look and the input out, and
 // the cursor is set back by hand (a runtime setcursor outlives a reload);
 // partial: the layer's binds only.
@@ -319,13 +312,18 @@ func (w *hyprWriter) teardownSteps(in Inputs, partial bool) []session.Step {
 }
 
 // reloadStartsAxiom reads the user's hyprland.lua (or hyprland.conf) and
-// the files it loads: a line matching in's startPattern that runs at every
-// reload. In Lua that is any line outside a "hyprland.start" handler
-// (comments don't count), unless the handler fires on reload too; in the
-// conf, an exec line. Followed: `source =` in the conf, a literal
-// require/dofile under the config folder in Lua; a match at the top level of
-// any of them counts (whether a reload runs them again isn't checked: the
-// safe side).
+// the files it loads, and says whether a reload may start axiom: any line
+// matching in's startPattern that isn't a comment, in the main file or any
+// followed one. Parsing the config's own structure would always have holes,
+// and the costs are lopsided: missing a start launches a second axiom on
+// quit, an extra match only leaves the look until the next reload. So it
+// takes the safe side:
+//   - a user's own `hyprland.start` handler that starts axiom counts too
+//     (a partial teardown), except axiom's own one-line form (autostartLines);
+//   - `source =` is followed, globs too; a `source`, `require` or `dofile`
+//     whose target can't be resolved (a $variable, a missing or unreadable
+//     file, a Lua module outside the config folder, a computed one) counts
+//     as starting axiom.
 func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
 	pattern := startPatternOf(in)
 	if pattern == nil {
@@ -339,45 +337,56 @@ func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
 	var scan func(path string, conf bool, depth int) (bool, string)
 	scan = func(path string, conf bool, depth int) (bool, string) {
 		path = filepath.Clean(path)
-		if seen[path] || depth > 6 {
+		if seen[path] || depth > 8 {
 			return false, ""
 		}
 		seen[path] = true
-		inHandler := false
-		for _, line := range strings.Split(readFile(path), "\n") {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return true, "can't read " + path
+		}
+		for _, line := range strings.Split(string(data), "\n") {
 			trimmed := strings.TrimSpace(line)
 			if conf {
+				if strings.HasPrefix(trimmed, "#") {
+					continue
+				}
 				if m := hyprSource.FindStringSubmatch(line); m != nil {
-					if ok, l := scan(w.followPath(path, m[1]), true, depth+1); ok {
-						return true, l
+					for _, target := range w.sourceTargets(path, m[1]) {
+						if target == "" {
+							return true, "source = " + m[1] + " (can't be resolved)"
+						}
+						if ok, l := scan(target, true, depth+1); ok {
+							return true, l
+						}
 					}
+					continue
 				}
-				if pattern.MatchString(line) && hyprConfExec.MatchString(line) {
-					return true, trimmed
+			} else {
+				if strings.HasPrefix(trimmed, "--") {
+					continue
 				}
-				continue
-			}
-			if strings.HasPrefix(trimmed, "--") {
-				continue
-			}
-			opens := strings.Contains(line, `hl.on("hyprland.start"`) || strings.Contains(line, `hl.on('hyprland.start'`)
-			if pattern.MatchString(line) && (hyprStartHandlerFiresOnReload || !(inHandler || opens)) {
-				return true, trimmed
-			}
-			if opens && !strings.Contains(line, "end)") {
-				inHandler = true
-			} else if inHandler && hyprHandlerEnd.MatchString(line) {
-				inHandler = false
-			}
-			if inHandler || opens {
-				continue
-			}
-			for _, m := range hyprRequire.FindAllStringSubmatch(line, -1) {
-				if target := w.luaTarget(path, m[2], m[1] == "require"); target != "" {
+				for _, m := range hyprRequire.FindAllStringSubmatch(line, -1) {
+					target := w.luaTarget(m[2], m[1] == "require")
+					if target == "" {
+						if filepath.Clean(m[2]) == filepath.Clean(w.includePath()) {
+							continue // axiom's own module
+						}
+						return true, trimmed + " (can't be resolved)"
+					}
 					if ok, l := scan(target, false, depth+1); ok {
 						return true, l
 					}
 				}
+				if hyprComputedLoad.MatchString(line) {
+					return true, trimmed + " (can't be resolved)"
+				}
+				if hyprOwnStart.MatchString(line) {
+					continue
+				}
+			}
+			if pattern.MatchString(line) {
+				return true, trimmed
 			}
 		}
 		return false, ""
@@ -385,30 +394,42 @@ func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
 	return scan(main, conf, 0)
 }
 
-// followPath is where a conf's `source =` names, relative to the file
-func (w *hyprWriter) followPath(from, name string) string {
+// sourceTargets are the files a conf's `source =` names, a glob expanded; a
+// "" is a target that can't be resolved
+func (w *hyprWriter) sourceTargets(from, name string) []string {
 	name = strings.TrimSpace(name)
+	if strings.Contains(name, "$") {
+		return []string{""}
+	}
 	if rest, ok := strings.CutPrefix(name, "~/"); ok {
-		return filepath.Join(w.getenv("HOME"), rest)
+		name = filepath.Join(w.getenv("HOME"), rest)
+	} else if !filepath.IsAbs(name) {
+		name = filepath.Join(filepath.Dir(from), name)
 	}
-	if filepath.IsAbs(name) {
-		return name
+	if !strings.ContainsAny(name, "*?[") {
+		return []string{name}
 	}
-	return filepath.Join(filepath.Dir(from), name)
+	matches, err := filepath.Glob(name)
+	if err != nil {
+		return []string{""}
+	}
+	return matches
 }
 
 // luaTarget is the file a literal dofile/require names, under the config
-// folder ("" for any other)
-func (w *hyprWriter) luaTarget(from, name string, require bool) string {
+// folder ("" for any other, or one that isn't there)
+func (w *hyprWriter) luaTarget(name string, require bool) string {
 	var candidates []string
 	if require {
 		rel := strings.ReplaceAll(name, ".", "/")
 		candidates = []string{filepath.Join(w.dir(), rel+".lua"), filepath.Join(w.dir(), rel, "init.lua")}
+	} else if filepath.IsAbs(name) {
+		candidates = []string{name}
 	} else {
-		candidates = []string{w.followPath(from, name)}
+		candidates = []string{filepath.Join(w.dir(), name)}
 	}
 	for _, c := range candidates {
-		if rel, err := filepath.Rel(filepath.Clean(w.dir()), c); err == nil && !strings.HasPrefix(rel, "..") {
+		if rel, err := filepath.Rel(filepath.Clean(w.dir()), filepath.Clean(c)); err == nil && !strings.HasPrefix(rel, "..") {
 			if _, err := os.Stat(c); err == nil {
 				return c
 			}
@@ -418,9 +439,10 @@ func (w *hyprWriter) luaTarget(from, name string, require bool) string {
 }
 
 var (
-	hyprSource     = regexp.MustCompile(`^\s*source\s*=\s*(.+?)\s*$`)
-	hyprHandlerEnd = regexp.MustCompile(`^\s*end\s*\)`)
-	hyprRequire    = regexp.MustCompile(`\b(require|dofile)\s*\(?\s*["']([^"']+)["']`)
+	hyprSource  = regexp.MustCompile(`^\s*source\s*=\s*(.+?)\s*$`)
+	hyprRequire = regexp.MustCompile(`\b(require|dofile)\s*\(?\s*["']([^"']+)["']`)
+	// a require or dofile whose argument isn't a literal
+	hyprComputedLoad = regexp.MustCompile(`\b(require|dofile)\s*\(\s*[^"'\s)]`)
+	// axiom's own autostart line (hyprWriter.autostartLines)
+	hyprOwnStart = regexp.MustCompile(`^\s*hl\.on\(["']hyprland\.start["'],\s*function\(\)\s*hl\.exec_cmd\(.*\)\s*end\)\s*--\s*axiom\s*$`)
 )
-
-var hyprConfExec = regexp.MustCompile(`^\s*exec\s*=`)

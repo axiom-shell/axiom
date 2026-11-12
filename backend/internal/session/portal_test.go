@@ -84,14 +84,23 @@ func TestRestartPortalLeavesAnOwnerOfAnotherRuntimeFolder(t *testing.T) {
 	}
 }
 
-func TestUnitsNeedTheUserManagersRuntimeFolder(t *testing.T) {
+func TestUnitsNeedTheBusOfTheRuntimeFolder(t *testing.T) {
 	bus := fakeBus{owners: map[string]uint32{systemd: 1}}
-	scope := Scope{RuntimeDir: "/run/u", UserRuntime: "/run/u"}
-	if !UnitsAllowed(context.Background(), bus, scope) {
-		t.Fatal("the user manager's own runtime folder is refused")
+	for addr, want := range map[string]bool{
+		"unix:path=/run/u/bus":          true,
+		"unix:path=/run/u/bus,guid=abc": true,
+		"unix:guid=abc,path=/run/u/bus": true,
+		"unix:path=/run/user/1000/bus":  false, // the live bus, from a scratch runtime folder
+		"unix:path=/tmp/dbus-XYZ/bus":   false, // dbus-run-session
+		"unix:abstract=/tmp/dbus-XYZ":   false,
+		"":                              false,
+	} {
+		scope := Scope{RuntimeDir: "/run/u", Bus: addr}
+		if got := UnitsAllowed(context.Background(), bus, scope); got != want {
+			t.Errorf("%q: allowed = %v, want %v", addr, got, want)
+		}
 	}
-	scope.RuntimeDir = "/tmp/scratch"
-	if UnitsAllowed(context.Background(), bus, scope) {
-		t.Fatal("a scratch daemon on the live bus reaches the live units")
+	if UnitsAllowed(context.Background(), fakeBus{owners: map[string]uint32{}}, Scope{RuntimeDir: "/run/u", Bus: "unix:path=/run/u/bus"}) {
+		t.Error("allowed without systemd1 on the bus")
 	}
 }

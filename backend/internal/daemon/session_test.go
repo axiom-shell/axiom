@@ -407,10 +407,33 @@ func TestRestartPortalRPCIsShellOnly(t *testing.T) {
 func TestUnitsLeftAloneForAScratchRuntimeFolder(t *testing.T) {
 	sd := newSessionDaemon(t, false)
 	sd.bus[systemdName] = 1
-	sd.td.env["AXIOM_USER_RUNTIME_DIR"] = "/run/user/12345"
+	sd.td.env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/tmp/live/bus"
 	addProc(t, sd.proc, 800, []string{"/usr/bin/hyprpolkitagent"}, sd.scope...)
 	res := sd.d.stopOthers(context.Background(), agents, []string{"hyprpolkitagent.service"})
 	if len(res.Units) != 0 || strings.Contains(sd.fx.got(), "systemctl") {
 		t.Fatalf("calls %q, result %+v", sd.fx.got(), res)
+	}
+}
+
+// an entry that couldn't be written is not kept: the next save would persist
+// a ghost, which teardown would start as a duplicate
+func TestRecordIsRolledBackWhenItCannotBeSaved(t *testing.T) {
+	sd := newSessionDaemon(t, false)
+	rec := &sessionRec{path: filepath.Join(t.TempDir(), "missing", "dir", "session.json"), log: sd.d.sessionLog}
+	rec.rec.DaemonPID = 7
+	err := rec.with(func(rt *sessx.Runtime) {
+		rt.Stopped = append(rt.Stopped, sessx.Process{Kind: "polkit", Argv: []string{"x"}})
+	})
+	if err == nil {
+		t.Fatal("saved into a folder that isn't there")
+	}
+	if len(rec.rec.Stopped) != 0 || rec.rec.DaemonPID != 7 {
+		t.Fatalf("not rolled back: %+v", rec.rec)
+	}
+	// and once it can be saved, no ghost comes with the next change
+	os.MkdirAll(filepath.Dir(rec.path), 0o755)
+	rec.with(func(rt *sessx.Runtime) { rt.Clean = true })
+	if got := sessx.ReadRuntime(rec.path, nil); got == nil || len(got.Stopped) != 0 {
+		t.Fatalf("saved %+v", got)
 	}
 }

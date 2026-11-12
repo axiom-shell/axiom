@@ -121,21 +121,91 @@ func TestHyprTopLevelExecAxiomMeansPartialTeardown(t *testing.T) {
 		t.Fatalf("partial: %+v", got)
 	}
 	conf := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "exec-once = axiom run\nexec = axiom run\n"}, nil), nil)
-	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec = axiom run" {
-		t.Fatalf("conf: %v %q (exec-once runs once)", starts, line)
+	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec-once = axiom run" {
+		t.Fatalf("conf: %v %q (the first match, any exec)", starts, line)
 	}
-	none := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "exec-once = axiom run\n"}, nil), nil)
-	if starts, _ := none.reloadStartsAxiom(startIn()); starts {
-		t.Fatal("exec-once isn't run by a reload")
+	// any match outside a comment counts, exec-once too (the safe side)
+	once := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "# exec = axiom run\nexec-once = axiom run\n"}, nil), nil)
+	if starts, _ := once.reloadStartsAxiom(startIn()); !starts {
+		t.Fatal("a start line outside a comment wasn't seen")
+	}
+	commented := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "# exec = axiom run\n"}, nil), nil)
+	if starts, _ := commented.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a comment counted")
 	}
 }
 
-// follows HY1 (docs/dev/hyprland/config-modes.md)
+// axiom's own one-line handler (the autostart line) isn't a start on reload;
+// a user's own handler is taken for one, multi-line or not: the safe side
 func TestHyprStartHandlerAxiom(t *testing.T) {
 	t.Parallel()
-	w := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": "hl.on(\"hyprland.start\", function() hl.exec_cmd(\"axiom run\") end) -- axiom\n"}, nil), nil)
-	if starts, _ := w.reloadStartsAxiom(startIn()); starts != hyprStartHandlerFiresOnReload {
-		t.Fatalf("a start handler counts = %v, but the handler fires on reload = %v", starts, hyprStartHandlerFiresOnReload)
+	own := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": "hl.on(\"hyprland.start\", function() hl.exec_cmd(\"/usr/bin/axiom run\") end) -- axiom\n"}, nil), nil)
+	if starts, _ := own.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("axiom's own autostart line counted")
+	}
+	for name, lua := range map[string]string{
+		"multi-line":        "hl.on(\"hyprland.start\", function()\n  hl.exec_cmd(\"axiom run\")\nend)\n",
+		"end) mid-line":     "hl.on(\"hyprland.start\", function() if x then hl.exec_cmd(\"axiom run\") end end)\n",
+		"end with options":  "hl.on(\"hyprland.start\", function()\n  hl.exec_cmd(\"axiom run\")\nend, { once = true })\n",
+		"after the handler": "hl.on(\"hyprland.start\", function() end)\nhl.exec_cmd(\"axiom run\")\n",
+	} {
+		w := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": lua}, nil), nil)
+		if starts, _ := w.reloadStartsAxiom(startIn()); !starts {
+			t.Errorf("%s: a user's start line wasn't seen", name)
+		}
+	}
+	comment := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": "-- hl.exec_cmd(\"axiom run\")\n"}, nil), nil)
+	if starts, _ := comment.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a comment counted")
+	}
+}
+
+func TestHyprFollowsSourceAndRequire(t *testing.T) {
+	t.Parallel()
+	conf := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.conf": "source = ./extra.conf\n",
+		"hypr/extra.conf":    "exec = axiom run\n",
+	}, nil), nil)
+	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec = axiom run" {
+		t.Fatalf("source: %v %q", starts, line)
+	}
+	glob := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.conf": "source = ./conf.d/*.conf\n",
+		"hypr/conf.d/a.conf": "bind = SUPER, A, exec, foo\n",
+		"hypr/conf.d/b.conf": "exec = axiom run\n",
+	}, nil), nil)
+	if starts, _ := glob.reloadStartsAxiom(startIn()); !starts {
+		t.Fatal("a glob source wasn't followed")
+	}
+	emptyGlob := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "source = ./none.d/*.conf\n"}, nil), nil)
+	if starts, _ := emptyGlob.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a glob matching nothing counted")
+	}
+	for name, files := range map[string]map[string]string{
+		"$var source":        {"hypr/hyprland.conf": "source = $HOME/x.conf\n"},
+		"missing source":     {"hypr/hyprland.conf": "source = ./gone.conf\n"},
+		"lua require":        {"hypr/hyprland.lua": "require(\"startup\")\n", "hypr/startup.lua": "hl.exec_cmd(\"axiom run\")\n"},
+		"unresolved require": {"hypr/hyprland.lua": "require(\"nowhere\")\n"},
+		"outside dofile":     {"hypr/hyprland.lua": "dofile(\"/etc/nowhere/start.lua\")\n"},
+		"computed dofile":    {"hypr/hyprland.lua": "dofile(path .. \"/x.lua\")\n"},
+	} {
+		w := newHypr(writerEnv(t, files, nil), nil)
+		if starts, _ := w.reloadStartsAxiom(startIn()); !starts {
+			t.Errorf("%s: not counted as a start", name)
+		}
+	}
+	harmless := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": "require(\"opts\")\n", "hypr/opts.lua": "hl.config({})\n"}, nil), nil)
+	if starts, _ := harmless.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a followed file with no start line counted")
+	}
+}
+
+func TestHyprCursorRestoreTakesHyprcursorFirst(t *testing.T) {
+	t.Parallel()
+	w := newHypr(writerEnv(t, nil, map[string]string{"HYPRCURSOR_THEME": "Hypr", "HYPRCURSOR_SIZE": "40", "XCURSOR_THEME": "X", "XCURSOR_SIZE": "32"}), nil)
+	w.state.LiveCursor = "x"
+	if got := w.teardownSteps(Inputs{}, false); got[1].Theme != "Hypr" || got[1].Size != 40 {
+		t.Fatalf("%+v", got)
 	}
 }
 
@@ -214,53 +284,6 @@ func TestTeardownAfterRunSendsStepsAndResetsState(t *testing.T) {
 	}
 	if st := h.m.st; st.RuntimeOn || st.LiveCursor != "" || st.SwayUnbinds != nil || st.NiriWrapper {
 		t.Fatalf("state: %+v", st)
-	}
-}
-
-func TestHyprStartLineInsideAHandlerOrAComment(t *testing.T) {
-	t.Parallel()
-	handler := "hl.on(\"hyprland.start\", function()\n  hl.exec_cmd(\"axiom run\")\nend)\n"
-	w := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": "-- hl.exec_cmd(\"axiom run\")\n" + handler}, nil), nil)
-	if starts, _ := w.reloadStartsAxiom(startIn()); starts != hyprStartHandlerFiresOnReload {
-		t.Fatalf("a multi-line handler counts = %v (fires on reload: %v)", starts, hyprStartHandlerFiresOnReload)
-	}
-	// after the handler's end, the top level is the top level again
-	after := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": handler + "hl.exec_cmd(\"axiom run\")\n"}, nil), nil)
-	if starts, _ := after.reloadStartsAxiom(startIn()); !starts {
-		t.Fatal("a top-level line after the handler wasn't seen")
-	}
-}
-
-func TestHyprFollowsSourceAndRequire(t *testing.T) {
-	t.Parallel()
-	conf := newHypr(writerEnv(t, map[string]string{
-		"hypr/hyprland.conf": "source = ./extra.conf\n",
-		"hypr/extra.conf":    "exec = axiom run\n",
-	}, nil), nil)
-	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec = axiom run" {
-		t.Fatalf("source: %v %q", starts, line)
-	}
-	lua := newHypr(writerEnv(t, map[string]string{
-		"hypr/hyprland.lua": "require(\"startup\")\n",
-		"hypr/startup.lua":  "hl.exec_cmd(\"axiom run\")\n",
-	}, nil), nil)
-	if starts, _ := lua.reloadStartsAxiom(startIn()); !starts {
-		t.Fatal("require wasn't followed")
-	}
-	outside := newHypr(writerEnv(t, map[string]string{
-		"hypr/hyprland.lua": "dofile(\"/etc/nowhere/start.lua\")\n",
-	}, nil), nil)
-	if starts, _ := outside.reloadStartsAxiom(startIn()); starts {
-		t.Fatal("a file outside the config folder was followed")
-	}
-}
-
-func TestHyprCursorRestoreTakesHyprcursorFirst(t *testing.T) {
-	t.Parallel()
-	w := newHypr(writerEnv(t, nil, map[string]string{"HYPRCURSOR_THEME": "Hypr", "HYPRCURSOR_SIZE": "40", "XCURSOR_THEME": "X", "XCURSOR_SIZE": "32"}), nil)
-	w.state.LiveCursor = "x"
-	if got := w.teardownSteps(Inputs{}, false); got[1].Theme != "Hypr" || got[1].Size != 40 {
-		t.Fatalf("%+v", got)
 	}
 }
 

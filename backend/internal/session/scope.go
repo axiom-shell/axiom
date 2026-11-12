@@ -23,17 +23,32 @@ type Bus interface {
 const systemd = "org.freedesktop.systemd1"
 
 // UnitsAllowed: the session bus has an owner of org.freedesktop.systemd1
-// and this session's runtime folder is the user manager's
-// (/run/user/<uid>), so `systemctl --user` reaches the user manager of
-// this session. False under a bus of its own (dbus-run-session, a nested
-// shell), and for a scratch daemon on the live bus (a runtime folder of
-// its own): its units aren't this session's.
+// and is the bus of this session's runtime folder (our bus address is
+// unix:path=<RuntimeDir>/bus, as the user manager's is, and a container's
+// is in its own), so `systemctl --user` reaches the user manager of this
+// session. False under a bus of its own (dbus-run-session, a nested shell)
+// and for a scratch daemon on the live bus: its units aren't this session's.
 func UnitsAllowed(ctx context.Context, bus Bus, scope Scope) bool {
-	if bus == nil || scope.RuntimeDir != scope.userRuntime() {
+	if bus == nil || !scope.busInRuntime() {
 		return false
 	}
 	owner, err := bus.NameOwner(ctx, systemd)
 	return err == nil && owner != ""
+}
+
+// busInRuntime: Scope.Bus is unix:path=<RuntimeDir>/bus (more ,key=value
+// parts allowed).
+func (s Scope) busInRuntime() bool {
+	rest, ok := strings.CutPrefix(s.Bus, "unix:")
+	if !ok || s.RuntimeDir == "" {
+		return false
+	}
+	for _, part := range strings.Split(rest, ",") {
+		if path, ok := strings.CutPrefix(part, "path="); ok {
+			return path == filepath.Join(s.RuntimeDir, "bus")
+		}
+	}
+	return false
 }
 
 // Scope is this session: the processes axiom may stop, signal or restart
@@ -44,17 +59,6 @@ type Scope struct {
 	WaylandDisplay, RuntimeDir, Bus string
 	// ProcRoot is "/proc" (tests: a fixture folder)
 	ProcRoot string
-	// UserRuntime is the runtime folder of the user manager ("": the
-	// real one, /run/user/<uid>); AXIOM_USER_RUNTIME_DIR sets it for tests
-	// and containers, where the session's folder is a scratch one
-	UserRuntime string
-}
-
-func (s Scope) userRuntime() string {
-	if s.UserRuntime != "" {
-		return s.UserRuntime
-	}
-	return "/run/user/" + strconv.Itoa(os.Getuid())
 }
 
 // SameRuntime: the process's XDG_RUNTIME_DIR is ours, or it has none (a

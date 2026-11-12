@@ -60,12 +60,21 @@ func (r *sessionRec) saveLocked() error {
 	return err
 }
 
-// with changes the record under the lock, then saves it.
+// with changes the record under the lock, then saves it; a record that can't
+// be saved is put back as it was (the state record, read and written whole
+// by session.Store.Update, never holds what it couldn't write).
 func (r *sessionRec) with(fn func(*sessx.Runtime)) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	before := r.rec
 	fn(&r.rec)
-	return r.saveLocked()
+	err := r.saveLocked()
+	if err != nil {
+		// Not recorded, so not kept: a ghost entry would be saved by the
+		// next change, and teardown would start what was never stopped
+		r.rec = before
+	}
+	return err
 }
 
 func (r *sessionRec) setSteps(steps []sessx.Step) {
@@ -224,6 +233,10 @@ func (d *Daemon) heal(path, instance string) {
 	}
 	if err := sessx.Teardown(ctx, o); err != nil {
 		d.sessionLog("healing: %v", err)
+	}
+	// Other displays' lines whose daemon is gone
+	if o.Portal.Prune(o.State, o.Scope.WaylandDisplay, d.sessionLog) && o.RestartPortal != nil {
+		o.RestartPortal(ctx)
 	}
 }
 

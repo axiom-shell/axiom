@@ -177,7 +177,7 @@ func agentsOf(path string) []ProcInfo {
 
 func TestContainerPolkitStopAndRespawn(t *testing.T) {
 	s, p := swaySession(t, swayMinimal)
-	agent := s.FakeProgram("hyprpolkitagent", Sleeper)
+	agent := s.FakeSleeper("hyprpolkitagent")
 	s.FakeProgram("systemctl", `echo "$@" >> "$HOME/systemctl.log"`)
 	mine := s.StartProgram(nil, agent, "4000")
 	theirs := s.StartProgram(s.SecondDisplayEnv(), agent, "5000")
@@ -236,7 +236,7 @@ func TestContainerPolkitStopAndRespawn(t *testing.T) {
 
 func TestContainerWlsunsetTheirsBackOursGone(t *testing.T) {
 	s, p := swaySession(t, swayMinimal)
-	prog := s.FakeProgram("wlsunset", Sleeper)
+	prog := s.FakeSleeper("wlsunset")
 	theirs := s.StartProgram(nil, prog, "-t", "3000")
 	if !testkit.Eventually(func() bool { return len(agentsOf(prog)) == 1 }) {
 		t.Fatal("their wlsunset didn't start")
@@ -265,7 +265,7 @@ func TestContainerWlsunsetTheirsBackOursGone(t *testing.T) {
 	if !testkit.Eventually(func() bool {
 		// theirs again: a wlsunset without the marker
 		return len(ours()) == 0 && len(Procs(func(p ProcInfo) bool {
-			return filepath.Base(p.Argv[0]) == "wlsunset" && !p.HasEnv(marker) && slices.Equal(p.Argv[1:], []string{"3000"})
+			return filepath.Base(p.Argv[0]) == "wlsunset" && !p.HasEnv(marker) && slices.Equal(p.Argv[1:], []string{"-t", "3000"})
 		})) == 1
 	}) {
 		t.Fatalf("axiom's wlsunset should be gone and theirs back; daemon log:\n%s", s.Tail(daemonLog, 20))
