@@ -652,10 +652,10 @@ func TestSecretsNeverPrinted(t *testing.T) {
 		t.Fatalf("count %d: %v", plan.Counts.Secrets, err)
 	}
 	askedMu.Lock()
-	defer askedMu.Unlock()
 	if asked["service"] != "axiom" || len(asked) != 1 {
 		t.Errorf("asked %v", asked)
 	}
+	askedMu.Unlock()
 	r := f.run(Answers{UndoInferred: true})
 	data, _ := json.Marshal([]any{plan, r})
 	if strings.Contains(string(data), "SECRET-VALUE-12345") {
