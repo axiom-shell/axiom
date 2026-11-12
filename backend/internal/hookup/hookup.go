@@ -317,25 +317,61 @@ func Decide(r Resolved, f Facts) (Plan, error) {
 	return p, nil
 }
 
-// Edit is the file's lines with a Pending plan applied. A line setting a
-// key the text sets is commented out unless Replace says otherwise;
-// nothing is deleted. A wrapped link's new file is WrapLink, then the text.
-func Edit(r Resolved, p Plan, lines []string) []string {
+// EditRecord is exactly what an Edit changed, so Undo can take out only
+// that (a whole-file backup is never put back).
+type EditRecord struct {
+	Comment string `json:"comment"` // r.comment()
+	// Inserted are the lines added, in order (the blank line set before a
+	// new section or text included), with their index in the edited file
+	Inserted []Inserted `json:"inserted"`
+	// Commented are the original lines now "<comment> axiom: <orig>"
+	Commented      []string `json:"commented"`
+	CreatedSection string   `json:"createdSection,omitempty"`
+	// Wrapped: a WrapLink file, its first line the wrap (WrapLine)
+	Wrapped  bool   `json:"wrapped,omitempty"`
+	WrapLine string `json:"wrapLine,omitempty"`
+}
+
+// Inserted is one line an Edit added.
+type Inserted struct {
+	Text  string `json:"text"`
+	Index int    `json:"index"` // in the edited file
+}
+
+func inserted(texts []string, at int) []Inserted {
+	out := make([]Inserted, len(texts))
+	for i, t := range texts {
+		out[i] = Inserted{Text: t, Index: at + i}
+	}
+	return out
+}
+
+// Edit is the file's lines with a Pending plan applied, and what it
+// changed. A line setting a key the text sets is commented out unless
+// Replace says otherwise; nothing is deleted. A wrapped link's new file is
+// WrapLink, then the text.
+func Edit(r Resolved, p Plan, lines []string) ([]string, EditRecord) {
+	rec := EditRecord{Comment: r.comment(), Inserted: []Inserted{}, Commented: []string{}}
 	if p.Wraps {
-		return append([]string{strings.ReplaceAll(r.WrapLink, "{link}", p.Resolved)}, p.missing...)
+		rec.Wrapped = true
+		rec.WrapLine = strings.ReplaceAll(r.WrapLink, "{link}", p.Resolved)
+		rec.Inserted = inserted(p.missing, 1)
+		return append([]string{rec.WrapLine}, p.missing...), rec
 	}
 	lines = slices.Clone(lines)
 	if r.Replace == "" || r.Replace == "comment" {
 		keys := r.keys(p.missing)
 		for i := p.start; i < p.end; i++ {
 			if !isComment(lines[i], r.comment()) && slices.Contains(keys, keyOf(lines[i], r.Place)) {
+				rec.Commented = append(rec.Commented, lines[i])
 				lines[i] = r.comment() + " axiom: " + lines[i]
 			}
 		}
 	}
 	switch {
 	case r.Place == Start:
-		return slices.Insert(lines, 0, p.missing...)
+		rec.Inserted = inserted(p.missing, 0)
+		return slices.Insert(lines, 0, p.missing...), rec
 	case r.Place == Top || r.Place == Section && !p.CreatesSection:
 		// After any blank lines ending the block, so the text reads as
 		// part of it, not of the section below
@@ -343,15 +379,93 @@ func Edit(r Resolved, p Plan, lines []string) []string {
 		for at > p.start && strings.TrimSpace(lines[at-1]) == "" {
 			at--
 		}
-		return slices.Insert(lines, at, p.missing...)
+		rec.Inserted = inserted(p.missing, at)
+		return slices.Insert(lines, at, p.missing...), rec
 	}
 	if len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) != "" {
+		rec.Inserted = append(rec.Inserted, Inserted{Text: "", Index: len(lines)})
 		lines = append(lines, "")
 	}
 	if r.Place == Section {
+		rec.CreatedSection = r.Section
 		lines = append(lines, "["+r.Section+"]")
 	}
-	return append(lines, p.missing...)
+	rec.Inserted = append(rec.Inserted, inserted(p.missing, len(lines))...)
+	return append(lines, p.missing...), rec
+}
+
+// Undo takes out what an Edit recorded and nothing else: each inserted
+// line (the one equal to its text nearest its index; one found nowhere is
+// in gone, which is as good as removed), each commented line back as it
+// was, and a created section's header when it holds only blank lines.
+// Every other line, \r included, stays.
+func Undo(lines []string, rec EditRecord) (out []string, gone []string) {
+	out = slices.Clone(lines)
+	gone = []string{}
+	remove := func(in Inserted) {
+		best := -1
+		for i, l := range out {
+			if l == in.Text && (best < 0 || abs(i-in.Index) < abs(best-in.Index)) {
+				best = i
+			}
+		}
+		if best < 0 {
+			gone = append(gone, in.Text)
+			return
+		}
+		out = slices.Delete(out, best, best+1)
+	}
+	// The text lines first, the blank lines set before them after the
+	// section header (a section the user added to keeps its blank)
+	for i := len(rec.Inserted) - 1; i >= 0; i-- {
+		if rec.Inserted[i].Text != "" {
+			remove(rec.Inserted[i])
+		}
+	}
+	for i, l := range out {
+		for _, orig := range rec.Commented {
+			if l == rec.Comment+" axiom: "+orig {
+				out[i] = orig
+				break
+			}
+		}
+	}
+	if rec.CreatedSection != "" {
+		out = dropEmptySection(out, rec.CreatedSection)
+	}
+	for i := len(rec.Inserted) - 1; i >= 0; i-- {
+		if rec.Inserted[i].Text == "" {
+			remove(rec.Inserted[i])
+		}
+	}
+	return out, gone
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
+// dropEmptySection removes the section's header and its blank lines when
+// they're all it holds.
+func dropEmptySection(lines []string, section string) []string {
+	for i, line := range lines {
+		m := namedHeader.FindStringSubmatch(line)
+		if m == nil || m[1] != section {
+			continue
+		}
+		end := i + 1
+		for end < len(lines) && strings.TrimSpace(lines[end]) == "" {
+			end++
+		}
+		if end < len(lines) && header.MatchString(lines[end]) || end == len(lines) {
+			return slices.Delete(slices.Clone(lines), i, end)
+		}
+		return lines
+	}
+	return lines
 }
 
 // Lines splits a file's text into lines (a last newline ends the last

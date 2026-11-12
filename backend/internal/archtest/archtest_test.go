@@ -78,6 +78,7 @@ var tiers = map[string]int{
 	"internal/dbus":                 tierEdge,
 	"internal/deps":                 tierEdge,
 	"internal/devconfig":            tierEdge,
+	"internal/footprint":            tierEdge,
 	"internal/fsx":                  tierEdge,
 	"internal/greeter":              tierEdge,
 	"internal/greeterinstall":       tierEdge,

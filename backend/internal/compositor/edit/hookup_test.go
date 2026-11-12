@@ -80,7 +80,7 @@ func (s *scratch) status(key string) []hookup.Row {
 }
 
 func (s *scratch) apply(key string) []HookupResult {
-	return s.h.Apply(s.schema[key].Hookup, s.schema[key].Profiles)
+	return s.h.Apply(s.schema[key].Hookup, s.schema[key].Profiles, "")
 }
 
 func (s *scratch) write(rel, text string) string {
@@ -333,7 +333,7 @@ func TestApplyCases(t *testing.T) {
 	if rows, _ := s.h.Status(requires, nil); rows[0].Skipped != hookup.SkipRequires {
 		t.Errorf("requires: %+v", rows[0])
 	}
-	s.h.Apply(requires, nil)
+	s.h.Apply(requires, nil, "")
 	if _, err := os.Stat(filepath.Join(s.config, "x.conf")); err == nil {
 		t.Error("a target without its command was applied")
 	}
@@ -371,7 +371,7 @@ func TestGivenTargets(t *testing.T) {
 	autostart := hookup.Target{File: hookup.Files{path}, Place: hookup.End, Comment: "--", Accept: `(^|[\s'"/])axiom['"]? +run\b`,
 		Text: `hl.on("hyprland.start", function() hl.exec_cmd("'/x/axiom' run") end) -- axiom`}
 	targets := []hookup.Target{include, autostart}
-	s.h.Apply(targets, nil)
+	s.h.Apply(targets, nil, "")
 	lines := strings.Split(strings.TrimSuffix(read(t, path), "\n"), "\n")
 	if strings.Join(lines[:2], "\n") != include.Text || lines[len(lines)-1] != autostart.Text {
 		t.Errorf("%q", lines)
