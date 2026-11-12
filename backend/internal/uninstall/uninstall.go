@@ -284,7 +284,8 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 	files := o.lineFiles()
 	for _, f := range files {
 		data, err := os.ReadFile(f.Path)
-		if err != nil {
+		if err != nil || o.managed(f, data) {
+			// (a managed config is given back above: its lines are gone then)
 			continue
 		}
 		s := scanFile(f.Kind, f.Path, data)
@@ -360,6 +361,13 @@ func coverLines(covered map[string]bool, r footprint.Row) {
 	for _, in := range r.Hookup.Edit.Inserted {
 		covered[r.Target+"\x00"+strings.TrimSpace(in.Text)] = true
 	}
+}
+
+// managed: the file is axiom's own managed config (its first line is the
+// header), which the release gives back
+func (o Options) managed(f lineFile, data []byte) bool {
+	w := o.offline(f.Kind)
+	return w != nil && strings.HasPrefix(string(data), w.Takeover().Header)
 }
 
 func isOurs(path, header string) bool {

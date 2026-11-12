@@ -345,6 +345,30 @@
         "what": "Delete the file axiom made"
       },
       {
+        "detail": "present, ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/theme.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim/lua",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim/lua/axiom_theme.lua",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
         "detail": "present, ThemeIntegrations.gtk",
         "path": "$HOME/.config/gtk-3.0/gtk.css",
         "step": "ledger",
@@ -357,56 +381,26 @@
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.yazi",
-        "path": "$HOME/.config/yazi/theme.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.bat",
-        "path": "$HOME/.config/bat/config",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.alacritty",
-        "path": "$HOME/.config/alacritty/alacritty.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.btop",
-        "path": "$HOME/.config/btop/btop.conf",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.ncspot",
-        "path": "$HOME/.config/ncspot/config.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.qt",
-        "path": "$HOME/.config/kdeglobals",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
         "detail": "present, ThemeIntegrations.zathura",
         "path": "$HOME/.config/zathura/zathurarc",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.ghostty",
-        "path": "$HOME/.config/ghostty/config",
+        "detail": "present, ThemeIntegrations.lazygit",
+        "path": "$HOME/.bashrc",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.fzf",
-        "path": "$HOME/.bashrc",
+        "detail": "present, ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/config.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/btop.conf",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -429,8 +423,32 @@
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.helix",
-        "path": "$HOME/.config/helix/config.toml",
+        "detail": "present, ThemeIntegrations.ncspot",
+        "path": "$HOME/.config/ncspot/config.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "path": "$HOME/.config/kdeglobals",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/config",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.alacritty",
+        "path": "$HOME/.config/alacritty/alacritty.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat/config",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -443,24 +461,6 @@
       {
         "detail": "present, ThemeIntegrations.foot",
         "path": "$HOME/.config/foot/foot.ini",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.nvim",
-        "path": "$HOME/.config/nvim",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.nvim",
-        "path": "$HOME/.config/nvim/lua",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.nvim",
-        "path": "$HOME/.config/nvim/lua/axiom_theme.lua",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -514,7 +514,7 @@
         "what": "Take axiom's lines out of"
       },
       {
-        "path": "",
+        "path": "$DISPLAY",
         "step": "session",
         "what": "Undo what an unclean stop of axiom left (units, portal lines, processes)"
       },
@@ -609,16 +609,9 @@
       "secrets": 1,
       "system": 1
     },
-    "manual": [
-      {
-        "file": "$HOME/.config/sway/config",
-        "line": 105,
-        "reason": "starts axiom, in a shape that isn't the one axiom writes",
-        "text": "exec \"env GDK_BACKEND='wayland,x11,*' QT_QPA_PLATFORM='wayland;xcb' CLUTTER_BACKEND='wayland' ELECTRON_OZONE_PLATFORM_HINT='auto' QT_AUTO_SCREEN_SCALE_FACTOR='1' QT_WAYLAND_DISABLE_WINDOWDECORATION='1' '/home/user/.local/bin/axiom' run\""
-      }
-    ],
+    "manual": [],
     "running": [
-      ""
+      "$DISPLAY"
     ]
   }
 }

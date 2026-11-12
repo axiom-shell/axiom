@@ -203,7 +203,7 @@ func (s *Session) normalize(text string) string {
 	text = strings.ReplaceAll(text, s.Runtime, "$RUNTIME")
 	text = strings.ReplaceAll(text, s.Home, "$HOME")
 	text = strings.ReplaceAll(text, "/"+display, "/$DISPLAY")
-	text = regexp.MustCompile(`"`+regexp.QuoteMeta(display)+`"`).ReplaceAllString(text, `"$DISPLAY"`)
+	text = strings.ReplaceAll(text, `"`+display+`"`, `"$DISPLAY"`)
 	return regexp.MustCompile(`\d{8}-\d{6}`).ReplaceAllString(text, "<stamp>")
 }
 
