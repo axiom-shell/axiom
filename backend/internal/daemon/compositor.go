@@ -72,6 +72,7 @@ func (d *Daemon) newCompositor(carried bool) *manager.Manager {
 			}
 			p.Send(d.server, json.RawMessage(jsonx.MarshalCompact(params)), subscribedTo(topicCompositor))
 		},
+		OnSteps: d.sess.setSteps,
 		// This image, even once the file it came from is replaced
 		Bin: "/proc/self/exe",
 		Log: d.opts.Log.With("part", "compositor"),

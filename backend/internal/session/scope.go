@@ -211,3 +211,28 @@ func (s Scope) Same(pid int, start uint64) bool {
 	f, ok := s.inspect(pid)
 	return ok && (start == 0 || f.Start == start)
 }
+
+// Elsewhere is the pids of processes whose command line matches re that
+// are not in scope (another session's, a nested shell's): left alone.
+func (s Scope) Elsewhere(re *regexp.Regexp) []int {
+	entries, err := os.ReadDir(s.root())
+	if err != nil {
+		return nil
+	}
+	var out []int
+	for _, e := range entries {
+		pid, err := strconv.Atoi(e.Name())
+		if err != nil || pid == os.Getpid() || s.Owns(pid) {
+			continue
+		}
+		cmdline, err := os.ReadFile(filepath.Join(s.root(), e.Name(), "cmdline"))
+		if err != nil {
+			continue
+		}
+		argv := strings.Join(strings.Split(strings.TrimSuffix(string(cmdline), "\x00"), "\x00"), " ")
+		if re.MatchString(argv) {
+			out = append(out, pid)
+		}
+	}
+	return out
+}

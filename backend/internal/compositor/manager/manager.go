@@ -156,7 +156,7 @@ func New(o Options) *Manager {
 	o.Getenv = ipc.LiveEnv(o.Getenv)
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
 	m.kind = ipc.Detect(o.Getenv)
-	m.st = loadState(o.RuntimeFile, m.kind+":"+o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")+o.Getenv("SWAYSOCK")+o.Getenv("NIRI_SOCKET"))
+	m.st = loadState(o.RuntimeFile, Instance(o.Getenv))
 	m.runtimeOn = m.st.RuntimeOn
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
 	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st, carried: o.Carried}
@@ -178,6 +178,14 @@ func New(o Options) *Manager {
 	m.releaseRetry = m.timer(func(ctx context.Context) { m.apply(ctx) })
 	m.hotplug = m.timer(m.outputsChanged)
 	return m
+}
+
+// Instance names the compositor instance running (its kind and socket
+// variables): what a record of the runtime layer is for, and the session
+// record's Instance.
+func Instance(getenv func(string) string) string {
+	getenv = ipc.LiveEnv(getenv)
+	return ipc.Detect(getenv) + ":" + getenv("HYPRLAND_INSTANCE_SIGNATURE") + getenv("SWAYSOCK") + getenv("NIRI_SOCKET")
 }
 
 // Kind is the compositor ("hyprland", "sway", "niri" or "").

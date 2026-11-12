@@ -41,6 +41,8 @@ type testDaemon struct {
 	// The file search's settings and tuning ("": the config's)
 	fileSearch        *fileindex.Settings
 	fileSearchOptions func(*fileindex.Options)
+	// session replaces the session effects
+	session *sessionTest
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -127,7 +129,7 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
 	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered, Go: td.goBin,
-		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions}
+		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions, session: td.session}
 }
 
 // connect dials the daemon and says hello as client; the connection's

@@ -59,6 +59,12 @@ func (s Seams) withDefaults() Seams {
 	return s
 }
 
+// SystemctlOrDefault, SignalOrDefault and SpawnOrDefault are the seam, or
+// the real effect.
+func (s Seams) SystemctlOrDefault() SystemctlFunc { return s.withDefaults().Systemctl }
+func (s Seams) SignalOrDefault() SignalFunc       { return s.withDefaults().Signal }
+func (s Seams) SpawnOrDefault() SpawnFunc         { return s.withDefaults().Spawn }
+
 // TeardownOptions say what to undo and how.
 type TeardownOptions struct {
 	// Runtime is the record in memory (changed, and saved to RuntimePath)
