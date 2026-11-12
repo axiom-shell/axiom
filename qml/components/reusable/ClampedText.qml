@@ -14,6 +14,13 @@ ColumnLayout {
   property real textOpacity: 0.65
   property bool expanded: false
 
+  // Whether More shows is decided from the text's width alone (the hidden
+  // `measure` below), never from `body.truncated`: that depends on the size the
+  // layouts hand the body, and showing More changes this item's size, which
+  // re-polishes those layouts, which flips `truncated` again - a polish loop
+  // that freezes the shell.
+  readonly property bool _long: measure.lineCount > root.maxLines
+
   Layout.fillWidth: true
   spacing: 0
   visible: root.text !== ""
@@ -27,11 +34,21 @@ ColumnLayout {
     wrapMode: Text.WordWrap
     maximumLineCount: root.expanded ? 100000 : root.maxLines
     elide: Text.ElideRight
+
+    // Hidden measurer: width bound to the body's, a child of the body so the layout doesn't manage it
+    StyledText {
+      id: measure
+      visible: false
+      width: body.width
+      text: root.text
+      textSize: root.textSize
+      wrapMode: Text.WordWrap
+    }
   }
 
   StyledText {
     id: toggle
-    visible: body.truncated || root.expanded
+    visible: root._long || root.expanded
     text: root.expanded ? I18n.tr("Less") : I18n.tr("More")
     // In the accent, so it stands out from the muted text above
     textColor: Theme.accent
