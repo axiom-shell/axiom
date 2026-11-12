@@ -24,6 +24,24 @@ func TestV106DropsColorText(t *testing.T) {
 	})
 }
 
+func TestV106SystemStatsBoxes(t *testing.T) {
+	t.Parallel()
+	runStepCases(t, 106, []stepCase{
+		{"each in a bar section",
+			`{"Bars":{"items":[{"left":[{"type":"SystemStats","properties":{"boxes":"each","showCpu":true}}]}]}}`,
+			`{"Bars":{"items":[{"left":[{"type":"SystemStats","properties":{"showCpu":true}}]}]}}`, true},
+		{"one in a group",
+			`{"Bars":{"items":[{"left":[{"type":"Group","properties":{"widgets":[{"type":"SystemStats","properties":{"boxes":"one"}}]}}]}]}}`,
+			`{"Bars":{"items":[{"left":[{"type":"Group","properties":{"widgets":[{"type":"SystemStats","properties":{}}]}}]}]}}`, true},
+		{"other widgets keep theirs",
+			`{"Bars":{"items":[{"left":[{"type":"LockKeys","properties":{"boxes":"each"}},{"type":"Privacy","properties":{"boxes":"each"}},{"type":"Markets","properties":{"boxes":"each"}}]}]}}`,
+			`{"Bars":{"items":[{"left":[{"type":"LockKeys","properties":{"boxes":"each"}},{"type":"Privacy","properties":{"boxes":"each"}},{"type":"Markets","properties":{"boxes":"each"}}]}]}}`, false},
+		{"no boxes key",
+			`{"Bars":{"items":[{"left":[{"type":"SystemStats","properties":{"showCpu":true}}]}]}}`,
+			`{"Bars":{"items":[{"left":[{"type":"SystemStats","properties":{"showCpu":true}}]}]}}`, false},
+	})
+}
+
 // A config of version 104 goes through main's v105 and then v106: the
 // config audit's renames and the dropped colorText compose, and a second
 // run reports nothing.

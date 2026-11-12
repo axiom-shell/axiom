@@ -2447,7 +2447,7 @@
     "Pick your monitor's resolution, refresh rate and scale. Apply tries it, and asks you to keep it: if the picture goes wrong, it goes back by itself after 15 seconds.": "",
     "Picture": "",
     "Pill": "",
-    "Pill: one metric per box. Disk: fill, not sparkline.": "",
+    "Pill: with one metric shown, else fill. Disk: fill, not sparkline.": "",
     "Pills": "",
     "Pills: wide, with a status line beside the icon.": "",
     "Pin": "",

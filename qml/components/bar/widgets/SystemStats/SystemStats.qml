@@ -11,8 +11,8 @@ import qs.components.bar.widgets.base
 // segment per metric switched on (`items`, WidgetSegments) in the display
 // style (docs/dev/bar/display-styles.md). The box takes the worst state and
 // only a hot metric is in the warning colour; a metric the machine can't
-// report (no GPU, no CPU sensor) is hidden. Drawn one box per metric (Boxes:
-// One per item), each box is its one metric.
+// report (no GPU, no CPU sensor) is hidden. One box, each metric a
+// segment (its own icon part on a split bar).
 BarWidget {
   id: root
 
@@ -134,14 +134,13 @@ BarWidget {
       }
     }
   }
-  // Its metrics from config, the ones switched on (BarBoxes' ids:
-  // x-boxItems): the template counts them. One the machine can't
-  // report is a hidden segment, never left out, so the count stays config's.
+  // Its metrics from config, the ones switched on: the template counts
+  // them. One the machine can't report is a hidden segment, never left out, so the count stays config's.
   items: root._metrics.filter(m => root.properties[m.option]).map(m => m.key)
 
   // The shown ones this machine reports, as a string: it notifies only when
   // the set changes, not on every sample (disk reads the live disks map)
-  readonly property string _reported: root.shownItems.filter(k => root._reportable(k)).join(",")
+  readonly property string _reported: root.items.filter(k => root._reportable(k)).join(",")
   readonly property var _reportedKeys: root._reported === "" ? [] : root._reported.split(",")
 
   hidden: root._reported === ""
@@ -184,8 +183,8 @@ BarWidget {
   // Ask only for what's shown; re-acquiring replaces the old request
   readonly property var statsRequest: ({
       "interval": root.properties.interval,
-      "metrics": root.shownItems.map(k => root._metric(k).metric),
-      "diskPaths": root.shownItems.includes("disk") ? [root.properties.diskPath] : [],
+      "metrics": root.items.map(k => root._metric(k).metric),
+      "diskPaths": root.items.includes("disk") ? [root.properties.diskPath] : [],
       "history": root.properties.appearance.style === "sparkline"
     })
   onStatsRequestChanged: SystemManager.acquire(root, statsRequest)
@@ -195,7 +194,7 @@ BarWidget {
   // The popout graphs what the bar shows. `graphed` is checked first, so
   // this never reads the disks map and stays from config and what the
   // machine can report only
-  readonly property var graphMetrics: root.shownItems.filter(k => root._metric(k).graphed && root._reportable(k)).map(k => root._metric(k).metric)
+  readonly property var graphMetrics: root.items.filter(k => root._metric(k).graphed && root._reportable(k)).map(k => root._metric(k).metric)
 
   PopoutAnchor {
     hitArea: root.hitArea

@@ -9,7 +9,8 @@ import (
 // v106: the per-widget "Colour the text by state" option went: a bar
 // widget's `properties.appearance.colorText` (wherever the widget sits,
 // matched by the `properties.appearance` object) and a custom widget's
-// `bar.colorText` (`CustomWidgets.items[]`) are dropped.
+// `bar.colorText` (`CustomWidgets.items[]`) are dropped. A SystemStats
+// widget's `boxes` goes too: it always draws one box.
 func v106(cfg *jsonx.Object) []string {
 	widgets, custom := 0, 0
 	var walk func(v any)
@@ -48,12 +49,22 @@ func v106(cfg *jsonx.Object) []string {
 			}
 		}
 	}
+	boxes := eachTyped(cfg.Value("Bars"), "SystemStats", func(p *jsonx.Object) bool {
+		if !p.Has("boxes") {
+			return false
+		}
+		p.Delete("boxes")
+		return true
+	})
 	var changes []string
 	if widgets > 0 {
 		changes = append(changes, fmt.Sprintf("%d bar widget(s): appearance.colorText dropped", widgets))
 	}
 	if custom > 0 {
 		changes = append(changes, fmt.Sprintf("%d custom widget(s): bar.colorText dropped", custom))
+	}
+	if boxes > 0 {
+		changes = append(changes, fmt.Sprintf("%d SystemStats widget(s): boxes dropped (always one box)", boxes))
 	}
 	return changes
 }

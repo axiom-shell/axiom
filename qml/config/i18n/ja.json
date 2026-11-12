@@ -3654,7 +3654,6 @@
     "Peripherals": "",
     "Percentage": "",
     "Color by trend": "",
-    "Pill: one metric per box. Disk: fill, not sparkline.": "",
     "The window's app icon instead of the icon.": "",
     "One color for all widgets' text and icons.": "",
     "Click menu": "",
@@ -4174,6 +4173,7 @@
     "Fall color": "",
     "The change and the widget while a symbol is up.": "",
     "The change and the widget while a symbol is down.": "",
-    "Failed color": ""
+    "Failed color": "",
+    "Pill: with one metric shown, else fill. Disk: fill, not sparkline.": ""
   }
 }
