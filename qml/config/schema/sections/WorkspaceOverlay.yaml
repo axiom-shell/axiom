@@ -39,7 +39,7 @@ properties:
     title: Hint
     x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     default: true
-    description: Mouse controls under the grid.
+    description: Mouse and key controls under the grid.
   scratchpads:
     type: string
     title: Scratchpads

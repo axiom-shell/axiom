@@ -3878,7 +3878,6 @@
     "New column display": "",
     "0: in line with the window border. 50: centered.": "",
     "Dimming": "",
-    "Mouse controls under the grid.": "",
     "Type @ and a question for Chat.": "",
     "Relative": "",
     "Focused": "",
@@ -4170,6 +4169,7 @@
     "Arrows to select · Enter to go · 1-9 to jump to a workspace": "",
     "Border and label of their cells.": "",
     "Scratchpad color": "",
-    "Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.": ""
+    "Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.": "",
+    "Mouse and key controls under the grid.": ""
   }
 }

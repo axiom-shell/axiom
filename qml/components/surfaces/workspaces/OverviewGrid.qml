@@ -248,8 +248,8 @@ Rectangle {
       return true;
     }
     if (key >= Qt.Key_1 && key <= Qt.Key_9) {
-      CompositorManager.nthWorkspace(key - Qt.Key_0, "go", root.monitor?.name ?? "");
-      root.closeRequested();
+      if (CompositorManager.nthWorkspace(key - Qt.Key_0, "go", root.monitor?.name ?? ""))
+        root.closeRequested();
       return true;
     }
     return false;
