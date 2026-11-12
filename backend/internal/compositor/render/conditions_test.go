@@ -15,4 +15,8 @@ func TestBindUnmetRawCompositor(t *testing.T) {
 	if got := BindUnmet(bind, facts); got != "" {
 		t.Errorf("BindUnmet(raw sway, niri) = %q, want empty", got)
 	}
+	hidden := jsonx.Obj("action", "raw", "whenCompositors", []any{"hyprland"})
+	if got := BindUnmet(hidden, facts); got != "" {
+		t.Errorf("BindUnmet(raw, whenCompositors hyprland, niri) = %q, want empty", got)
+	}
 }

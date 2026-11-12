@@ -76,6 +76,10 @@ TestCase {
       "action": "raw",
       "compositor": "sway"
     }, test.niri), "");
+    compare(_unmet({
+      "action": "raw",
+      "whenCompositors": ["hyprland"]
+    }, test.niri), "", "a raw bind's hidden whenCompositors is ignored");
   }
 
   // A strip action needs strips whatever its own layout says; Hyprland
