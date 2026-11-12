@@ -6,17 +6,6 @@ title: Weather
 description: Weather from Open-Meteo (no account needed).
 additionalProperties: false
 properties:
-  location:
-    type: string
-    title: Location
-    default: ''
-    description: City name. Empty uses your IP's location.
-  latitude:
-    type: string
-    title: Latitude
-    default: ''
-    description: With longitude, overrides the location.
-  longitude: {type: string, title: Longitude, default: ''}
   units:
     x-scope: personal
     type: string
@@ -24,9 +13,21 @@ properties:
     default: celsius
     x-control: toggle
     enum: [celsius, fahrenheit]
+    x-enumLabels: {celsius: °C, fahrenheit: °F}
+  location:
+    type: string
+    title: Location
+    default: ''
+    description: 'City name. Empty: your IP''s location.'
+  latitude:
+    type: string
+    title: Latitude
+    default: ''
+    description: Used with longitude instead of the location.
+  longitude: {type: string, title: Longitude, default: '', x-beside: true}
   interval:
     type: integer
-    title: Refresh interval
+    title: Interval
     x-unit: min
     default: 900000
     minimum: 300000

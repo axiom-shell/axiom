@@ -8,29 +8,28 @@ additionalProperties: false
 properties:
   pairingAgent:
     type: boolean
-    title: Answer pairing requests
+    title: Pairing prompts
     default: true
-    description: Ask for a device's PIN or passkey, or to confirm its code, in axiom's prompt. Turn off to leave pairing to another agent, such as blueman.
-  notify:
-    type: boolean
-    title: Device battery notifications
-    default: true
-    description: Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).
-    x-link: {setting: OSD}
+    description: 'Off: leave pairing to another agent (blueman).'
   lowThreshold:
     type: integer
-    title: Device battery low at
+    title: Low at
     x-unit: '%'
     default: 20
     minimum: 0
     maximum: 100
-    description: Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).
+    description: Headphones, mice and other devices.
     x-link: {setting: OSD}
   criticalThreshold:
     type: integer
-    title: Device battery critical at
+    title: Critical at
     x-unit: '%'
     default: 5
     minimum: 0
     maximum: 100
-    description: Say it again when the battery drops to this level.
+  notify:
+    type: boolean
+    title: Battery notifications
+    default: true
+    description: A connected device's battery is low, then critical.
+    x-link: {setting: OSD}

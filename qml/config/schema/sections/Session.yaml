@@ -9,15 +9,15 @@ additionalProperties: false
 properties:
   recommendedEnv:
     type: boolean
-    title: Recommended environment
+    title: Recommended variables
     default: true
-    description: Variables that make apps run on Wayland. Yours below win over them.
+    description: Wayland variables for apps. Yours below win.
   env:
     x-wide: true
     type: array
     title: Environment
     default: []
-    description: Set before anything starts. Changes apply to apps started afterwards.
+    description: Changes apply to apps started afterwards.
     items:
       type: object
       additionalProperties: false
@@ -27,6 +27,7 @@ properties:
         value: {type: string, title: Value, default: ''}
       required: [id]
   autostart:
+    x-scope: commands
     type: array
     title: Autostart
     default:

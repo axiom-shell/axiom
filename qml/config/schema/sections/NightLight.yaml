@@ -10,21 +10,21 @@ additionalProperties: false
 properties:
   schedule:
     type: boolean
-    title: On a schedule
+    title: Schedule
     default: false
   startAt:
     type: string
     title: Turn on at
     default: '20:00'
     pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
-    description: 24-hour time, e.g. 20:00.
+    description: 24-hour, e.g. 20:00.
     x-showIf: {schedule: true}
   endAt:
     type: string
     title: Turn off at
     default: '07:00'
     pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
-    description: 24-hour time, e.g. 07:00. Earlier than the start runs past midnight.
+    description: 24-hour, e.g. 07:00. Earlier than the start runs past midnight.
     x-showIf: {schedule: true}
   temperature:
     type: integer
@@ -34,7 +34,7 @@ properties:
     minimum: 1000
     maximum: 6500
     multipleOf: 100
-    description: Lower is warmer. 6500 K is neutral.
+    description: Lower is warmer.
   gamma:
     type: integer
     title: Gamma
@@ -42,4 +42,4 @@ properties:
     default: 100
     minimum: 20
     maximum: 100
-    description: Dims the screens further while on. 100% leaves them as they are.
+    description: Dims further while on.

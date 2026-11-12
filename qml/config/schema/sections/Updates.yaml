@@ -16,7 +16,7 @@ properties:
     description: How often to check for updates.
   includeAur:
     type: boolean
-    title: Include AUR
+    title: AUR packages
     default: false
     x-showIf: {/$distro: arch}
   aurHelper:
@@ -26,16 +26,16 @@ properties:
     x-control: toggle
     enum: [paru, yay]
     x-showIf: {includeAur: true, /$distro: arch}
+  upgradeCommand:
+    x-scope: commands
+    type: string
+    title: Upgrade command
+    default: ''
+    description: 'Run on click. Empty: your distribution''s upgrade.'
   terminal:
     x-link: {setting: Apps}
     x-scope: commands
     type: string
     title: Terminal
     default: ''
-    description: Empty uses the default terminal.
-  upgradeCommand:
-    x-scope: commands
-    type: string
-    title: Upgrade command
-    default: ''
-    description: Run on click. Empty uses your distribution's upgrade.
+    description: 'Empty: the default terminal.'
