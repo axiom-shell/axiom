@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.config
 import qs.components.reusable
 import qs.components.methods
 
@@ -17,7 +16,7 @@ SeparatorMark {
   required property real cell
 
   style: root.barConfig.look.separators.style === "none" ? "line" : root.barConfig.look.separators.style
-  color: Theme.resolveColor(root.barConfig.look.separators.color)
+  color: root.barConfig.palette.separator
   thickness: root.barConfig.look.separators.thickness
   length: WorkspaceCells.dividerLength(style, root.cell)
   vertical: root.barConfig.vertical

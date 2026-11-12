@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import "barstyle/Bars.js" as Bars
 
 // Where a bar section's backgrounds and marks go, and the room its widgets
 // keep (BarRuns)
@@ -10,23 +11,13 @@ TestCase {
   // A bar's context: its look's shape, grouping and opaque trait, its
   // sizes, the loose gap of a powerline
   function ctx(name, grouping, opaque, thickness) {
-    return BarRuns.context({
+    return BarRuns.context(Bars.bar({
+      "widgetShape": name,
+      "widgetGrouping": grouping,
+      "widgetStyle": opaque ? "filled" : "tinted",
       "thickness": thickness ?? 30,
-      "fontSize": 14,
-      "widgetGap": 6,
-      "look": {
-        "shape": {
-          "name": name,
-          "ends": "shaped",
-          "radius": 8,
-          "outline": null
-        },
-        "grouping": grouping,
-        "traits": {
-          "opaque": opaque ?? false
-        }
-      }
-    });
+      "widgetGap": 6
+    }));
   }
 
   function test_context() {
@@ -193,7 +184,7 @@ TestCase {
       "trail": 3
     }, "a vertical bar's label: a horizontal one's room, not the thickness's");
     // A display style's graphic reaching further across than a line
-    // (ValueGraphics.across, as ValueStyleWidget's contentAcross takes it)
+    // (ValueGraphics.across, as BarWidget's contentAcross takes it)
     // keeps its caps' room at its extent: 26 px bars at a 14 px font
     const graphic = style => Object.assign({}, label, {
         "contentAcross": Math.max(14, ValueGraphics.across(style, false, 26, 14, 26))

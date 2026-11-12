@@ -22,9 +22,6 @@ Item {
   property var screen
   // The widget's (BarWidget.hitArea), which its popout reads hover from
   property var hitArea: null
-  // Where a point of its active cell sits along the bar, for the bar's
-  // gradient (BarWidget.barSpotOf), or null
-  property var barSpotOf: null
   property var barConfig
   property var properties
   // How the widget's cells draw on this bar (Workspaces'): their size
@@ -37,12 +34,6 @@ Item {
   readonly property int _scratchCells: scratchpads.visible ? scratchpads.cells : 0
 
   readonly property bool isVertical: barConfig.vertical
-
-  readonly property color activeColor: Theme.resolveColor(properties.activeColor)
-  readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
-  readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
-  readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
-  readonly property color iconColor: Theme.resolveColor(properties.foregroundColor)
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""
@@ -122,9 +113,6 @@ Item {
       stripDirection: root.stripDirection
       shownCount: root.lineIds(root.activeLine, root.activeId).length
       windows: root.properties.stripWindows
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      textColor: root.iconColor
       clickable: root.properties.clickToSwitch
       hitArea: root.hitArea
       chainFirst: activeStrip.stripOnly ? 0 : root.lineIds(root.activeLine, root.activeId).length
@@ -137,11 +125,6 @@ Item {
       properties: root.properties
       cellLook: root.cellLook
       monitorName: root.output
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      urgentColor: root.urgentColor
-      emptyColor: root.emptyColor
-      textColor: root.iconColor
       hitArea: root.hitArea
       chainFirst: activeStrip.chainFirst + root._stripCells
       chainCount: chainFirst + root._scratchCells
@@ -176,13 +159,7 @@ Item {
       base: root.base
       ids: line._idsKey === "" ? [] : line._idsKey.split(",").map(Number)
       activeId: _activeHere
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      urgentColor: root.urgentColor
-      emptyColor: root.emptyColor
-      textColor: root.iconColor
       hitArea: root.hitArea
-      barSpotOf: root.barSpotOf
       activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
       chainCount: line.ids.length + root._stripCells + root._scratchCells
 

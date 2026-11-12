@@ -40,7 +40,7 @@ properties:
     description: 'Empty: its id.'
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, segments, width, colorText, icon, popout]
+    x-order: [style, segments, width, icon, popout]
     x-properties:
       icon:
         type: string

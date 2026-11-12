@@ -9,6 +9,7 @@ import QtQuick
 //   neutrals     [{ name, color }] from subtle to strong, for "off" states
 //   warning      { name, color }
 //   critical     { name, color }
+//   rise, fall   { name, color } (Markets' trend colors)
 //   backdrop     what the colors are seen against (the bar, or a merged
 //                run's background)
 //   minContrast  how far (WCAG ratio) a color must stand out from it
@@ -17,6 +18,8 @@ import QtQuick
 //             included), and every accent used before one repeats
 //   alt       a second state: as unlike its accent as the palette allows
 //   warning, critical   the palette's
+//   rise, fall   a rise's and a fall's (success and error, swapped under
+//             Red for gains)
 //   off       the subtlest neutral that still stands out
 //   neutral   the same, for a box whose content brings its own colors
 //             (tray icons, workspace cells)
@@ -44,7 +47,7 @@ QtObject {
       const key = root._accentKey(w);
       if (key !== null && !(key in w.set)) {
         // Its own state colors stay distinguishable from it
-        const states = Object.keys(roles).filter(k => roles[k] === "warning" || roles[k] === "critical").map(k => w.set[k] ?? palette[roles[k]].color);
+        const states = Object.keys(roles).filter(k => roles[k] === "warning" || roles[k] === "critical" || roles[k] === "rise" || roles[k] === "fall").map(k => w.set[k] ?? palette[roles[k]].color);
         const pick = root._best(usable, at, c => 8 * (root.similarity(c, near(-1)) + root.similarity(c, near(1)) + Math.max(0, ...states.map(s => root.similarity(c, s)))) + 3 * (root.similarity(c, near(-2)) + root.similarity(c, near(2))) + used.reduce((sum, u) => sum + root.similarity(c, u), 0));
         out[key] = pick.name;
         accents[i] = pick.color;
@@ -59,6 +62,8 @@ QtObject {
           break;
         case "warning":
         case "critical":
+        case "rise":
+        case "fall":
           out[k] = palette[roles[k]].name;
           break;
         default:

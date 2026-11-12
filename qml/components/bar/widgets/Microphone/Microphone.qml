@@ -10,7 +10,7 @@ import qs.components.bar.widgets.base
 AudioLevelWidget {
   node: AudioManager.defaultSource
   mode: "input"
-  hidden: properties.hideWhenIdle && !AudioManager.micInUse && !muted
-  icon: AudioManager.inputIcon(AudioManager.deviceKind(node), muted)
-  accentField: muted ? "mutedColor" : AudioManager.micInUse ? "activeColor" : "backgroundColor"
+  hidden: properties.hideWhenIdle && !AudioManager.micInUse && !deviceMuted
+  icon: AudioManager.inputIcon(AudioManager.deviceKind(node), deviceMuted)
+  accentField: deviceMuted ? "mutedColor" : AudioManager.micInUse ? "activeColor" : "backgroundColor"
 }

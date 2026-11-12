@@ -3608,7 +3608,6 @@
     "Your own icon or text per workspace number; beats app icons and names.": "",
     "Hover shows the name.": "",
     "Every monitor: one bar on each.": "",
-    "Color text by state": "",
     "Gap between items in a widget; scales with thickness.": "",
     "Urgent color": "",
     "Empty workspaces": "",
@@ -3648,7 +3647,6 @@
     "Peripherals": "",
     "Percentage": "",
     "Color by trend": "",
-    "Pill: one metric per box. Disk: fill, not sparkline.": "",
     "The window's app icon instead of the icon.": "",
     "One color for all widgets' text and icons.": "",
     "Click menu": "",
@@ -4164,6 +4162,16 @@
     "Scratchpad color": "",
     "Mouse and key controls under the grid.": "",
     "Border and label of their cells.": "",
-    "Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.": ""
+    "Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.": "",
+    "Failed color": "",
+    "Fall color": "",
+    "An event starting within 15 minutes.": "",
+    "Rise color": "",
+    "The change and the widget while a symbol is down.": "",
+    "After a failed build.": "",
+    "Soon color": "",
+    "While the check fails.": "",
+    "Pill: with one metric shown, else fill. Disk: fill, not sparkline.": "",
+    "The change and the widget while a symbol is up.": ""
   }
 }

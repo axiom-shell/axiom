@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import "barstyle/Bars.js" as Bars
 
 // A widget's parts laid out as cells of the bar's run (BarCells)
 TestCase {
@@ -135,21 +136,14 @@ TestCase {
   // An enriched bar as cellShape reads it: its look's shape and grouping,
   // its radius, thickness and side
   function cellBar(shape, grouping, fillet, extra) {
-    return Object.assign({
-      "look": {
-        "shape": {
-          "name": shape,
-          "ends": "shaped",
-          "tabFillet": fillet
-        },
-        "grouping": grouping
-      },
-      "radius": 6,
+    const bar = Bars.bar({
+      "widgetShape": shape,
+      "widgetGrouping": grouping,
       "thickness": 30,
-      "right": false,
-      "bottom": false,
-      "vertical": false
-    }, extra ?? {});
+      "widgetRadius": 6
+    });
+    bar.look.shape.tabFillet = fillet;
+    return Object.assign(bar, extra ?? {});
   }
 
   // A cell's shape and room on a bar's look, from where its widget is

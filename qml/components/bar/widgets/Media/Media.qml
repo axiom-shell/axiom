@@ -13,7 +13,7 @@ import qs.components.bar.widgets.base
 // when it opens and stays put while open, so a resize doesn't move it. Its
 // display style draws the track's position (fill, pill), scrolls it
 // (ticker) or puts the title over the artist (stacked).
-ValueStyleWidget {
+BarWidget {
   id: root
 
   // The artist shown before the title, or "" when there's none to show
@@ -24,11 +24,11 @@ ValueStyleWidget {
 
   // The artist icon goes with the state icon, before the label (stacked
   // shows the artist under the title instead)
-  icon: (MediaManager.isPlaying ? "music_note" : "pause") + (root.artist && root.style !== "stacked" ? "\nartist" : "")
+  icon: (MediaManager.isPlaying ? "music_note" : "pause") + (root.artist && root.valueStyle !== "stacked" ? "\nartist" : "")
   text: !MediaManager.activePlayer ? root._idleText : root.artist ? root.artist + " - " + MediaManager.trackTitle : MediaManager.trackTitle
   ratio: MediaManager.activePlayer && MediaManager.length > 0 ? MediaManager.progress : -1
-  styleText: !MediaManager.activePlayer ? root._idleText : root.style === "stacked" ? MediaManager.trackTitle : root.text
-  subtext: root.style === "stacked" ? root.artist : ""
+  styleText: !MediaManager.activePlayer ? root._idleText : root.valueStyle === "stacked" ? MediaManager.trackTitle : root.text
+  subtext: root.valueStyle === "stacked" ? root.artist : ""
   // A track title is any player's: never styled text or a remote image
   textFormat: Text.PlainText
   accentField: MediaManager.isPlaying ? "playingColor" : "pausedColor"

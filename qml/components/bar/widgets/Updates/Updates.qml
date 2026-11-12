@@ -12,9 +12,9 @@ import qs.components.bar.widgets.base
 // paru/yay when enabled on Arch (UpdatesConfig). Left click opens a
 // terminal to upgrade, right click checks again now; hovering lists the
 // packages, or why the check failed. Stacked: the count over the AUR's share.
-// A failed check shows an error icon in place of the count, in the error
+// A failed check shows an error icon in place of the count, in its failed
 // colour, and its reason in the popout (the tooltip with the popout off).
-ValueStyleWidget {
+BarWidget {
   id: root
 
   // [{ name, from, to }], checked by the shared UpdatesManager
@@ -47,8 +47,7 @@ ValueStyleWidget {
   minimumText: "00"
 
   subtext: aurPackages.length > 0 ? I18n.tr("{0} AUR", aurPackages.length) : I18n.tr("updates")
-  accentField: failed ? "" : count >= properties.warnThreshold ? "warnColor" : "backgroundColor"
-  accentColor: failed ? Theme.error : Theme.resolveColor(properties[accentField])
+  accentField: failed ? "failedColor" : count >= properties.warnThreshold ? "warnColor" : "backgroundColor"
 
   // Re-acquiring replaces the old request
   readonly property var updatesRequest: ({

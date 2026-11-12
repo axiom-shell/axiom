@@ -14,8 +14,10 @@ import qs.components.bar.widgets.base
 // `dateFormat` (Qt format strings) overrides that. On a vertical bar each
 // is stacked into short lines. A `timezone` shows another zone's time
 // (TimeZoneManager), the system's until its offset is read. A head
-// (`lead`: an icon, or the date moved before the time, by default on a
-// split bar) is its icon part on a split bar (SplitLead).
+// (`lead`: an icon, or the date moved before the time; Auto: the date where
+// the bar draws an icon part apart) is its icon part on a split bar
+// (BarWidget's head). The clock is its own content; the lines after the
+// first on a vertical bar and the divider are muted colors.
 BarWidget {
   id: root
 
@@ -24,54 +26,26 @@ BarWidget {
   readonly property bool use24Hour: I18n.hours24(properties.hourFormat)
   readonly property bool showSeconds: properties.showSeconds
   readonly property bool showDate: properties.showDate
-  readonly property color foregroundColor: colors.text
-
-  hasBackground: true
-  accentField: "backgroundColor"
 
   // The date as the head (only while it shows; Auto: where the bar's look
   // draws an icon part apart), else after the time
   readonly property bool dateLeads: (properties.lead === "date" || (properties.lead === "auto" && barConfig.look.traits.iconPart)) && showDate
   readonly property bool dateAfter: showDate && !dateLeads
-  readonly property real _contentLength: layoutLoader.item ? (isVertical ? layoutLoader.item.implicitHeight : layoutLoader.item.implicitWidth) : 0
-  // Where the head and the clock after it start, centred in the widget
-  readonly property real _start: Math.round(((isVertical ? height : width) - lead.length - _contentLength) / 2)
 
-  implicitWidth: isVertical ? root.barConfig.thickness : (layoutLoader.item ? lead.length + _contentLength + root.barConfig.innerPadding * 2 : 0)
-  implicitHeight: isVertical ? (layoutLoader.item ? lead.length + _contentLength + root.barConfig.innerPadding * 2 : 0) : root.barConfig.thickness
+  headIcon: root.properties.lead === "icon" ? root.properties.leadIcon : ""
+  headText: root.dateLeads && !root.isVertical ? root.dateText : ""
+  headItem: root.dateLeads && root.isVertical ? dateHead : null
+  ownContent: root.isVertical ? verticalClock : horizontalClock
 
-  splits: lead.splits
-  splitAt: lead.splitAt
-  splitPart: lead.splitPart
-
-  SplitLead {
-    id: lead
-    barConfig: root.barConfig
-    start: root._start
-    icon: root.properties.lead === "icon" ? root.properties.leadIcon : ""
-    iconColor: root.colors.icon
-    ownHead: root.dateLeads ? dateHead : null
-  }
-
-  // The date as the head: a line, or its stacked lines on a vertical
-  // bar
+  // The date's stacked lines as the head on a vertical bar
   Loader {
     id: dateHead
-    active: root.dateLeads
-    sourceComponent: root.isVertical ? dateLinesHead : dateLineHead
-
-    Component {
-      id: dateLineHead
-      ClockText {
-        text: root.dateText
-        color: root.colors.icon
-      }
-    }
-    Component {
-      id: dateLinesHead
+    active: root.dateLeads && root.isVertical
+    sourceComponent: Component {
       LineStack {
         lines: root.dateLines
-        color: root.colors.icon
+        color: root.paint.headText
+        mutedColor: root.paint.muted("headText")
       }
     }
   }
@@ -97,7 +71,7 @@ BarWidget {
   }
   readonly property string dateText: I18n.formatDate(root.now, properties.dateFormat || I18n.dateFormat("mediumDate"))
 
-  // Stacked lines for a vertical bar: [{ text, scale, bold, opacity }]
+  // Stacked lines for a vertical bar: [{ text, scale, bold, muted, caps }]
   readonly property var timeLines: {
     const date = root.now;
     if (properties.timeFormat)
@@ -105,7 +79,7 @@ BarWidget {
     if (japanese) {
       const lines = [];
       if (!use24Hour)
-        lines.push(_line(I18n.meridiem(date), 0.7, false, 0.9));
+        lines.push(_line(I18n.meridiem(date), 0.7));
       // Number over its unit; the units are dictionary entries
       lines.push(_line(I18n.formatHour(date, use24Hour, false) + "\n" + I18n.tr("hour")));
       lines.push(_line(I18n.formatDate(date, "mm") + "\n" + I18n.tr("minute")));
@@ -116,9 +90,9 @@ BarWidget {
     // Hours and minutes alike, the rest smaller and muted
     const lines = [_line(I18n.formatHour(date, use24Hour, true), 1, true), _line(I18n.formatDate(date, "mm"), 1, true)];
     if (showSeconds)
-      lines.push(_line(I18n.formatDate(date, "ss"), 0.75, false, 0.75));
+      lines.push(_line(I18n.formatDate(date, "ss"), 0.75, false, true));
     if (!use24Hour)
-      lines.push(_line(I18n.formatDate(date, "ap"), 0.6, false, 0.75, true));
+      lines.push(_line(I18n.formatDate(date, "ap"), 0.6, false, true, true));
     return lines;
   }
   readonly property var dateLines: {
@@ -127,24 +101,24 @@ BarWidget {
       return _split(dateText);
     if (japanese)
       return [_line(I18n.formatDate(date, "M") + "\n" + I18n.tr("month")), _line(I18n.formatDate(date, "d") + "\n" + I18n.tr("day")), _line(I18n.locale.dayName(date.getDay(), Locale.NarrowFormat))];
-    const day = _line(I18n.formatDate(date, "dd"), 0.75, true, 0.75);
-    const weekday = _line(I18n.formatDate(date, "ddd"), 0.6, false, 0.75, true);
+    const day = _line(I18n.formatDate(date, "dd"), 0.75, true, true);
+    const weekday = _line(I18n.formatDate(date, "ddd"), 0.6, false, true, true);
     switch (properties.verticalDate) {
     case "monthDay":
-      return [_line(I18n.formatDate(date, "MMM"), 0.6, false, 0.75, true), day, weekday];
+      return [_line(I18n.formatDate(date, "MMM"), 0.6, false, true, true), day, weekday];
     case "numeric":
-      return [day, _line(I18n.formatDate(date, "MM"), 0.75, true, 0.75)];
+      return [day, _line(I18n.formatDate(date, "MM"), 0.75, true, true)];
     default:
       return [day, weekday];
     }
   }
 
-  function _line(text, scale = 1, bold = false, opacity = 1, caps = false) {
+  function _line(text, scale = 1, bold = false, muted = false, caps = false) {
     return {
       "text": text,
       "scale": scale,
       "bold": bold,
-      "opacity": opacity,
+      "muted": muted,
       "caps": caps
     };
   }
@@ -157,7 +131,7 @@ BarWidget {
   }
 
   component ClockText: Text {
-    color: root.foregroundColor
+    color: root.paint.text
     font.family: Appearance.fontFamily
     font.pixelSize: root.barConfig.fontSize
     // Same-width digits, so the clock doesn't shift as it ticks
@@ -169,7 +143,8 @@ BarWidget {
   component LineStack: Column {
     id: stack
     required property var lines
-    property color color: root.foregroundColor
+    property color color: root.paint.text
+    property color mutedColor: root.paint.muted("text")
     spacing: root.japanese ? 2 : 0
 
     // Modelled by count, not by the line objects: those are rebuilt on
@@ -180,7 +155,7 @@ BarWidget {
       delegate: ClockText {
         required property int index
         readonly property var line: stack.lines[index] ?? root._line("")
-        color: stack.color
+        color: line.muted ? stack.mutedColor : stack.color
         x: Math.round((stack.width - width) / 2)
         horizontalAlignment: Text.AlignHCenter
         lineHeight: 0.9
@@ -189,58 +164,49 @@ BarWidget {
         font.bold: line.bold
         font.capitalization: line.caps ? Font.AllUppercase : Font.MixedCase
         font.letterSpacing: line.caps ? 0.5 : 0
-        opacity: line.opacity
       }
     }
   }
 
-  Loader {
-    id: layoutLoader
-    x: root.isVertical ? Math.round((root.width - width) / 2) : root._start + lead.length
-    y: root.isVertical ? root._start + lead.length : Math.round((root.height - height) / 2)
-    sourceComponent: root.isVertical ? verticalComponent : horizontalComponent
+  Component {
+    id: horizontalClock
+    Row {
+      spacing: root.barConfig.innerGap * 2
 
-    Component {
-      id: horizontalComponent
-      Row {
-        spacing: root.barConfig.innerGap * 2
+      ClockText {
+        text: root.dateText
+        visible: root.dateAfter
+      }
 
-        ClockText {
-          text: root.dateText
-          visible: root.dateAfter
-        }
+      Rectangle {
+        width: 1
+        height: root.barConfig.fontSize
+        color: root.paint.muted("text")
+        visible: root.dateAfter
+        anchors.verticalCenter: parent.verticalCenter
+      }
 
-        Rectangle {
-          width: 1
-          height: root.barConfig.fontSize
-          color: root.foregroundColor
-          opacity: 0.5
-          visible: root.dateAfter
-          anchors.verticalCenter: parent.verticalCenter
-        }
-
-        ClockText {
-          text: root.timeText
-        }
+      ClockText {
+        text: root.timeText
       }
     }
+  }
 
-    Component {
-      id: verticalComponent
-      // A gap, not a rule, between the time and the date
-      Column {
-        spacing: root.barConfig.innerGap * 2
+  // A gap, not a rule, between the time and the date
+  Component {
+    id: verticalClock
+    Column {
+      spacing: root.barConfig.innerGap * 2
 
-        LineStack {
-          lines: root.timeLines
-          anchors.horizontalCenter: parent.horizontalCenter
-        }
+      LineStack {
+        lines: root.timeLines
+        anchors.horizontalCenter: parent.horizontalCenter
+      }
 
-        LineStack {
-          lines: root.dateLines
-          visible: root.dateAfter
-          anchors.horizontalCenter: parent.horizontalCenter
-        }
+      LineStack {
+        lines: root.dateLines
+        visible: root.dateAfter
+        anchors.horizontalCenter: parent.horizontalCenter
       }
     }
   }

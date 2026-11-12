@@ -35,6 +35,7 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: Active color
     x-autoColor: alt
+    x-autoGradient: true
     description: While an app records.
   hideWhenIdle:
     type: boolean

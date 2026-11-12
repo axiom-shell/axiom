@@ -113,7 +113,7 @@ for f in "${changed[@]}"; do
   data/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
-  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json) script_tests+=(CheckStructure) ;;
+  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;

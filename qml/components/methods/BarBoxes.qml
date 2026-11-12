@@ -1,12 +1,12 @@
 pragma Singleton
 import QtQuick
 
-// A bar widget showing several items (SystemStats' metrics, Lock keys'
-// keys, Markets' symbols, …) drawn one box per item (its Boxes: One per
-// item): its section's entry expanded into one entry per item, each hosted
-// as a widget of its own (BarWidgetHost), so each takes the bar's style,
-// pill, split and place in a run. The items come from config only
-// (BarsConfig.boxItems), never from live values.
+// A bar widget showing several items (Lock keys' keys, Markets' symbols, …)
+// drawn one box per item (its Boxes: One per item): its section's entry
+// expanded into one entry per item, each hosted as a widget of its own
+// (BarWidgetHost), so each takes the bar's style, pill, split and place in
+// a run. The items come from config only (BarsConfig.boxItems), never from
+// live values.
 QtObject {
   id: root
 

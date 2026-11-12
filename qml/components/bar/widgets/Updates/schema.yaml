@@ -9,7 +9,7 @@ appearance:
     enum: [label, icon, stacked]
     description: 'Stacked: the count over the AUR''s share.'
 colors: standard
-order: [appearance, hideWhenEmpty, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
+order: [appearance, hideWhenEmpty, warnThreshold, popout, backgroundColor, foregroundColor, warnColor, failedColor]
 settings:
   hideWhenEmpty: {type: boolean, title: Hide when up to date, default: true}
   warnThreshold:
@@ -19,3 +19,4 @@ settings:
     minimum: 1
     maximum: 1000
   warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}
+  failedColor: {$ref: '#/definitions/WidgetColor', title: Failed color, x-autoColor: critical, description: While the check fails.}

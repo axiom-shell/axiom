@@ -16,5 +16,5 @@ settings:
     type: boolean
     title: Hide when off
     default: true
-  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning}
+  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning, x-autoGradient: true}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}

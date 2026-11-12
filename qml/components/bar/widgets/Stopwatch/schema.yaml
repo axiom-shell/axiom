@@ -19,5 +19,5 @@ settings:
     default: false
     description: Hidden while neither is running or paused.
   timerColor: {$ref: '#/definitions/WidgetColor', title: Timer color}
-  stopwatchColor: {$ref: '#/definitions/WidgetColor', title: Stopwatch color, x-autoColor: alt}
+  stopwatchColor: {$ref: '#/definitions/WidgetColor', title: Stopwatch color, x-autoColor: alt, x-autoGradient: true}
   idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}

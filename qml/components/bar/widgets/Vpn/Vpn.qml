@@ -12,7 +12,7 @@ import qs.components.bar.widgets.base
 // and Tailscale). Hovering opens the VPN popout; left click connects or
 // disconnects the VPN used last, middle click runs a command. Stacked:
 // the name over its address.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property var vpn: VpnManager.primary

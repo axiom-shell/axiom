@@ -12,7 +12,7 @@ import qs.components.bar.widgets.base
 // TailscaleManager (acquired at the Tailscale section's interval). Hovering
 // opens the Tailscale popout; left click runs the click command, right
 // click checks again now. Stacked: the label over this machine's address.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property bool isConnected: TailscaleManager.connected

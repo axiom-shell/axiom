@@ -16,5 +16,5 @@ settings:
     title: Hide when stopped
     default: false
   workColor: {$ref: '#/definitions/WidgetColor', title: Focus color}
-  breakColor: {$ref: '#/definitions/WidgetColor', title: Break color, x-autoColor: alt}
+  breakColor: {$ref: '#/definitions/WidgetColor', title: Break color, x-autoColor: alt, x-autoGradient: true}
   idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}

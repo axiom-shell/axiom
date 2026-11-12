@@ -8,7 +8,7 @@ import qs.components.reusable
 // A head at the start of a BarWidget that draws its own content (Time,
 // the tray, Workspaces): an icon, a short text or an item of the widget's
 // own (`ownHead`). On a split bar it's the widget's icon part, the rest its
-// label, as an IconTextWidget's icon and label (BarShapes.splitPart).
+// label, as an IconTextRow's icon and label (BarShapes.splitPart).
 // The widget places it at `start` along itself (its padding, or where its
 // centred content starts), adds `length` to its size and starts its
 // content after it, and passes on `splits`, `splitAt` and `splitPart`.
@@ -21,8 +21,11 @@ Item {
   property Item ownHead: null
   property string icon: ""
   property string text: ""
-  property color iconColor: Theme.background
-  property color textColor: iconColor
+  required property color iconColor
+  required property color textColor
+  // The colors follow a change by gliding unless `glides` is off (a pulse
+  // sets them each frame)
+  property bool glides: true
   readonly property Item head: ownHead ?? (icon !== "" ? iconHead : text !== "" ? textHead : null)
   // Where it starts along the widget
   property real start: barConfig.innerPadding
@@ -35,8 +38,8 @@ Item {
   readonly property real headLength: shown ? Math.ceil(vertical ? head.implicitHeight : head.implicitWidth) : 0
   readonly property bool splits: shown && hasLabel && barConfig.splitRoom >= 0
   // The gap before the content: a split bar's room, else an icon's gap to
-  // its label (BarIconWidget's spacing)
-  readonly property real gap: !shown || !hasLabel ? 0 : splits ? barConfig.splitRoom : barConfig.innerGap * 1.5
+  // its label (BarWidget's row spacing)
+  readonly property real gap: !shown || !hasLabel ? 0 : splits ? barConfig.splitRoom : barConfig.iconGap
   // The room it takes along the widget, its gap included
   readonly property real length: headLength + gap
   readonly property var _place: splits ? BarShapes.splitPart(vertical, start, headLength, gap, barConfig.thickness / 2, barConfig.fontSize) : null
@@ -76,7 +79,9 @@ Item {
     textColor: root.iconColor
     textSize: root.barConfig.fontSize
 
-    ColorGlide on color {}
+    ColorGlide on color {
+      enabled: root.glides
+    }
   }
 
   Text {
@@ -91,6 +96,8 @@ Item {
       "tnum": 1
     }
 
-    ColorGlide on color {}
+    ColorGlide on color {
+      enabled: root.glides
+    }
   }
 }

@@ -28,5 +28,5 @@ settings:
     title: Middle-click command
     default: ''
     description: 'Empty: nothing.'
-  connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color, x-autoColor: alt}
+  connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color, x-autoColor: alt, x-autoGradient: true}
   disabledColor: {$ref: '#/definitions/WidgetColor', title: Off color, x-autoColor: 'off'}

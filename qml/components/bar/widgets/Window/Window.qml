@@ -10,7 +10,7 @@ import qs.components.bar.widgets.base
 // crowded, as Media does; `layout.maxSize` caps it. Its display style scrolls
 // it (ticker) or puts it over the app (stacked). `appIcon` shows the
 // window's app icon in the icon's place.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property var focused: ToplevelManager.activeToplevel

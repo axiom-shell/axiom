@@ -12,7 +12,7 @@ import qs.components.hosts.popout
 // the value of its display style (full at 100%, above it too).
 // Scroll changes its volume (up to the configured maximum), click mutes,
 // middle click runs a command; hovering opens the mixer on its side.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   // The default sink or source
@@ -22,7 +22,7 @@ ValueStyleWidget {
   // What the OSD calls its changes (ShellManager.onScreen)
   readonly property string osdKind: root.mode === "input" ? "microphone" : "audio"
   readonly property real level: root.node?.audio?.volume ?? 0
-  readonly property bool muted: root.node?.audio?.muted ?? false
+  readonly property bool deviceMuted: root.node?.audio?.muted ?? false
   readonly property real maxVolume: properties.maxVolume / 100
 
   readonly property string percentText: `${Math.round(root.level * 100)}%`

@@ -6,13 +6,9 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
-    description: 'Pill: one metric per box. Disk: fill, not sparkline.'
+    description: 'Pill: with one metric shown, else fill. Disk: fill, not sparkline.'
 colors: standard
-order: [appearance, showCpu, showMemory, memoryFormat, showTemp, showGpu, showDisk, diskPath, boxes, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
-boxes:
-  variant: each
-  boxes:
-    x-boxItems: {options: {cpu: showCpu, mem: showMemory, temp: showTemp, gpu: showGpu, disk: showDisk}}
+order: [appearance, showCpu, showMemory, memoryFormat, showTemp, showGpu, showDisk, diskPath, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
 settings:
   showCpu: {type: boolean, title: CPU usage, default: true}
   showMemory: {type: boolean, title: Memory, default: true}

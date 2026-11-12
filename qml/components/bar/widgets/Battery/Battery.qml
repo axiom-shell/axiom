@@ -11,7 +11,7 @@ import qs.components.bar.widgets.base
 // showPeripherals) are listed in its tooltip and status; with no laptop
 // battery it shows the lowest of them, and with none of those either it
 // hides.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   // Peripherals to list (showPeripherals, and some connected)
@@ -67,33 +67,8 @@ ValueStyleWidget {
     text: root.peripheralLines().join("\n")
   }
 
-  // Charging: a slow pulse, back to full when it stops
-  SequentialAnimation {
-    running: root.isCharging && !root.hidden && Appearance.animations
-    loops: Animation.Infinite
-    onRunningChanged: {
-      if (!running)
-        root.dim = 1;
-    }
-
-    PropertyAnimation {
-      target: root
-      property: "dim"
-      from: 1.0
-      to: 0.7
-      duration: Appearance.animSlow * 5
-      easing.type: Easing.InOutQuad
-    }
-
-    PropertyAnimation {
-      target: root
-      property: "dim"
-      from: 0.7
-      to: 1.0
-      duration: Appearance.animSlow * 5
-      easing.type: Easing.InOutQuad
-    }
-  }
+  // Charging: a slow colour pulse
+  pulsing: root.isCharging
 
   clickable: true
   // An answer: a toast that isn't kept

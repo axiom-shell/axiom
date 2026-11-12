@@ -26,6 +26,8 @@ CustomElementBase {
     anchors.horizontalCenter: glyph.right
     anchors.verticalCenter: glyph.top
     text: root.badge
+    color: Theme.error
+    textColor: Theme.background
     shown: root.badge !== "" && root.badge !== "0"
   }
 }

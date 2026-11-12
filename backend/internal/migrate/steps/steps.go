@@ -224,6 +224,10 @@ var all = []Step{
 	// the Workspaces head gone, OSD pick lists → shows, …), and values
 	// rounded to the steps they now take (v105.go)
 	{Version: 105, Run: v105},
+	// v106: the per-widget colorText option went: a bar widget's
+	// appearance.colorText and a custom widget's bar.colorText dropped
+	// (v106.go)
+	{Version: 106, Run: v106},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

@@ -9,7 +9,7 @@ appearance:
     enum: [label, icon, ticker, stacked, sparkline]
     description: 'Ticker: scrolls every symbol. Stacked: price under the name. Sparkline: the day''s line.'
 colors: standard
-order: [appearance, symbols, showPortfolio, value, colorize, boxes, rotate, rotateInterval, popout, backgroundColor, foregroundColor]
+order: [appearance, symbols, showPortfolio, value, colorize, upColor, downColor, boxes, rotate, rotateInterval, popout, backgroundColor, foregroundColor]
 boxes:
   variant: each
   boxes:
@@ -35,6 +35,8 @@ settings:
     title: Color by trend
     default: true
     x-link: {setting: Markets.redForGains}
+  upColor: {$ref: '#/definitions/WidgetColor', title: Rise color, x-autoColor: rise, x-link: {setting: Markets.redForGains}, x-showIf: {colorize: true}, description: The change and the widget while a symbol is up.}
+  downColor: {$ref: '#/definitions/WidgetColor', title: Fall color, x-autoColor: fall, x-link: {setting: Markets.redForGains}, x-showIf: {colorize: true}, description: The change and the widget while a symbol is down.}
   rotate:
     type: boolean
     title: Cycle symbols
