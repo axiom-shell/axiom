@@ -25,11 +25,11 @@ FoldingCard {
   section: root.showSection && root.group.section !== root.group.title ? I18n.tr(root.group.section) : ""
   foldable: !root.showSection
   collapsed: !root.showSection && SettingsManager.isCollapsed(root.group.key)
-  // Unsaved edits inside: Discard shows, and folded the dot, so they
-  // aren't forgotten
   // The `x-intro`'s own status, when it has one (read, not worked out here)
   status: introLoader.intro?.status ?? ""
   statusColor: introLoader.intro?.statusColor ?? Theme.foregroundAlt
+  // Unsaved edits inside: Discard shows, and folded the dot, so they
+  // aren't forgotten
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
   onToggled: SettingsManager.setCollapsed(root.group.key, !root.collapsed)
 

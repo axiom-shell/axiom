@@ -8,7 +8,7 @@ import qs.components.reusable
 import qs.components.content.parts
 
 // Setting axiom up as the login screen (GreeterManager), shared by
-// Settings → Login screen (GreeterStatusCard) and the onboarder: what
+// Settings → Login screen (GreeterStatus) and the onboarder: what
 // Install changes, Install / Update / Remove (one password prompt each),
 // what's left for the user to run, and what went wrong.
 ColumnLayout {

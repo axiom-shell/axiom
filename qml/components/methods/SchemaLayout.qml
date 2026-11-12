@@ -675,9 +675,9 @@ QtObject {
   // holding it in page order (`key` its group key, `title` the setting's
   // or card's, `row` the exact row's path, or null for a section or
   // object; the row drawing it for one another row draws, `drawnBy`;
-  // `fold` the `x-fold` it's inside (`foldedBy`) or else the fold of the
-  // card's settings behind its `x-intro` (`foldedIn`), or null), or null when
-  // no card shows it. `valueOf` as `categories`
+  // `folds` every fold it's inside to open: the `x-fold` (`foldedBy`) and
+  // the fold of the card's settings behind its `x-intro` (`foldedIn`), [] for
+  // none), or null when no card shows it. `valueOf` as `categories`
   function locate(schema, path, valueOf) {
     const target = Array.isArray(path) ? path : String(path).split(".");
     const within = p => target.length <= p.length && target.every((key, i) => p[i] === key);
@@ -692,7 +692,7 @@ QtObject {
           "key": group.key,
           "title": exact ? exact.title : group.title,
           "row": exact ? (exact.drawnBy ? exact.drawnBy.split(".") : exact.path) : null,
-          "fold": exact?.foldedBy ?? exact?.foldedIn ?? null
+          "folds": [exact?.foldedBy, exact?.foldedIn].filter(Boolean)
         };
       }
     }

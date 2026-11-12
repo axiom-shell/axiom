@@ -382,7 +382,10 @@ def main():
                     found.append((key, value["file"]))
                 elif key == "x-intro" and isinstance(value, dict):
                     # { file, setup: [keys] }: every key is a property of the object
-                    found.append((key, value.get("file")))
+                    if not value.get("file"):
+                        errors.append("schema x-intro object needs `file`")
+                    else:
+                        found.append((key, value["file"]))
                     for setup in value.get("setup", []):
                         if setup not in node.get("properties", {}):
                             errors.append(f"schema x-intro {value.get('file')!r}: setup key {setup!r} isn't a property of its object")

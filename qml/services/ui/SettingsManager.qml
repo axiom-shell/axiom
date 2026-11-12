@@ -111,8 +111,8 @@ QtObject {
     root.changedOnly = false;
     root.category = found.category;
     // A row inside a shut `x-fold` shows once it's open
-    if (found.fold)
-      root.setFoldOpen(found.fold, true);
+    for (const f of found.folds)
+      root.setFoldOpen(f, true);
     if (link === true)
       ShellManager.followLink("Settings");
     else
