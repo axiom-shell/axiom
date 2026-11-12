@@ -107,6 +107,40 @@ QtObject {
     };
   }
 
+  // The cell a key press moves the keyboard focus to: `index` in the board's
+  // cells (the `count` workspaces in `cols` columns, then `scratchCount`
+  // scratch cells in one column), `key` "left" | "right" | "up" | "down".
+  // Right of a grid row's last cell is the scratch cell at that row's height,
+  // and left of a scratch cell the grid's last cell at its. No wrap; an
+  // impossible step stays put.
+  function navigate(index, key, cols, count, scratchCount) {
+    const rows = Math.ceil(count / cols);
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    if (index < count) {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      if (key === "left")
+        return col > 0 ? index - 1 : index;
+      if (key === "up")
+        return row > 0 ? index - cols : index;
+      if (key === "down")
+        return index + cols < count ? index + cols : index;
+      if (col < cols - 1 && index + 1 < count)
+        return index + 1;
+      return scratchCount > 0 ? count + clamp(Math.floor((row + 0.5) * scratchCount / rows), 0, scratchCount - 1) : index;
+    }
+    const s = index - count;
+    if (key === "up")
+      return s > 0 ? index - 1 : index;
+    if (key === "down")
+      return s < scratchCount - 1 ? index + 1 : index;
+    if (key === "left" && count > 0) {
+      const row = clamp(Math.floor((s + 0.5) * rows / scratchCount), 0, rows - 1);
+      return Math.min(count - 1, row * cols + cols - 1);
+    }
+    return index;
+  }
+
   // The cell index under a point, or -1 (gaps, outside the board, and the
   // unused end of a last row: `count` cells in all)
   function cellAt(x, y, cellW, cellH, gap, cols, count) {

@@ -147,6 +147,31 @@ TestCase {
     compare(WorkspaceGeometry.scratchCellAt(null, 150, 5), -1);
   }
 
+  function test_navigate() {
+    const nav = (i, key, cols, count, scratch) => WorkspaceGeometry.navigate(i, key, cols ?? 3, count ?? 6, scratch ?? 2);
+    compare(nav(0, "right"), 1);
+    compare(nav(2, "right"), 6);
+    compare(nav(5, "right"), 7);
+    compare(nav(0, "left"), 0);
+    compare(nav(7, "left"), 5);
+    compare(nav(6, "left"), 2);
+    compare(nav(7, "up"), 6);
+    compare(nav(4, "up"), 1);
+    compare(nav(1, "up"), 1);
+    compare(nav(7, "down"), 7);
+    compare(nav(4, "down"), 4);
+    compare(nav(2, "right", 3, 6, 0), 2);
+    compare(nav(4, "right", 3, 5, 2), 6);
+    compare(nav(6, "left", 3, 5, 2), 4);
+    compare(nav(5, "left", 3, 5, 2), 2);
+    compare(nav(2, "right", 3, 6, 4), 7);
+    compare(nav(5, "right", 3, 6, 4), 9);
+    compare(nav(0, "down", 1, 4, 0), 1);
+    compare(nav(3, "down", 1, 4, 0), 3);
+    compare(nav(3, "up", 1, 4, 0), 2);
+    compare(nav(0, "up", 1, 4, 0), 0);
+  }
+
   function test_cellRect_and_cellAt_agree() {
     for (let i = 0; i < 5; i++) {
       const r = WorkspaceGeometry.cellRect(i, 40, 30, 5, 3);

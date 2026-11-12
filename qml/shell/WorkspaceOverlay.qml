@@ -153,6 +153,11 @@ Scope {
           duration: Appearance.animNormal
         }
 
+        Keys.onPressed: event => {
+          if (overview.handleKey(event.key))
+            event.accepted = true;
+        }
+
         Keys.onEscapePressed: {
           if (!overview.cancelInteraction())
             root.overlayVisible = false;
@@ -179,15 +184,26 @@ Scope {
           onCloseRequested: root.overlayVisible = false
         }
 
-        StyledText {
+        Column {
           id: hint
           visible: WorkspaceOverlayConfig.showHint
           anchors.top: overview.bottom
           anchors.topMargin: Widget.spacing
           anchors.horizontalCenter: parent.horizontalCenter
-          text: I18n.tr("Click to go · Drag to move · Right-drag to resize · Middle-click to close")
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-1)
+
+          StyledText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: I18n.tr("Click to go · Drag to move · Right-drag to resize · Middle-click to close")
+            textColor: Theme.foregroundAlt
+            textSize: Appearance.fontSizeBy(-1)
+          }
+
+          StyledText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: I18n.tr("Arrows to select · Enter to go · 1-9 to jump to a workspace")
+            textColor: Theme.foregroundAlt
+            textSize: Appearance.fontSizeBy(-1)
+          }
         }
       }
     }

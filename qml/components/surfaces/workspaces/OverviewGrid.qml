@@ -78,7 +78,10 @@ Rectangle {
       "column": WorkspaceGeometry.scratchColumn(cells.length, root.cellW, root.cellH, root.gap, root.columns, root.rows, root.sideGap)
     };
   }
-  onActiveChanged: root._frozenNames = root.active ? root._liveCells.map(c => c.name) : null
+  onActiveChanged: {
+    root._frozenNames = root.active ? root._liveCells.map(c => c.name) : null;
+    root.keyIndex = -1;
+  }
   Component.onCompleted: root._frozenNames = root.active ? root._liveCells.map(c => c.name) : null
 
   // The windows in the scratch cells, tagged with their cell (`scratch`) and
@@ -204,6 +207,51 @@ Rectangle {
   property real _lastAction: 0
   function recentAction() {
     return Date.now() - root._lastAction < 1000;
+  }
+
+  // The cell the keyboard has (the board's indices), -1 for none: no ring
+  // shows until the first arrow key
+  property int keyIndex: -1
+  readonly property int cellCount: root.ids.length + root.scratchCount
+  onCellCountChanged: {
+    if (root.keyIndex >= root.cellCount)
+      root.keyIndex = -1;
+  }
+
+  // A key press: arrows move the ring (from the active workspace on the
+  // first), Enter goes to the ringed cell, a digit to that workspace id.
+  // False when it isn't ours, or while a drag or resize is on.
+  function handleKey(key) {
+    if (input.mode !== "")
+      return false;
+    const names = {
+      [Qt.Key_Left]: "left",
+      [Qt.Key_Right]: "right",
+      [Qt.Key_Up]: "up",
+      [Qt.Key_Down]: "down"
+    };
+    const direction = names[key];
+    if (direction !== undefined) {
+      if (root.keyIndex < 0)
+        root.keyIndex = Math.max(0, root.ids.indexOf(root.activeId));
+      else
+        root.keyIndex = WorkspaceGeometry.navigate(root.keyIndex, direction, root.columns, root.ids.length, root.scratchCount);
+      return true;
+    }
+    if (key === Qt.Key_Return || key === Qt.Key_Enter) {
+      if (root.keyIndex < 0)
+        return false;
+      root.goTo(root.keyIndex);
+      return true;
+    }
+    if (key >= Qt.Key_1 && key <= Qt.Key_9) {
+      const cell = root.ids.indexOf(key - Qt.Key_0);
+      if (cell < 0)
+        return false;
+      root.goTo(cell);
+      return true;
+    }
+    return false;
   }
 
   // Esc: stop a drag or resize. False when there was none.
@@ -428,7 +476,7 @@ Rectangle {
         y: rect.y + margin
         z: 3
         cornerRadius: root.cellRadius
-        text: String(index + 1)
+        text: WorkspaceCells.badgeText(root.ids[index], index + 1, CompositorManager.workspaces.find(ws => ws.id === root.ids[index])?.name ?? "", CompositorManager.dynamicWorkspaces)
         current: root.ids[index] === root.activeId
       }
     }
@@ -458,6 +506,27 @@ Rectangle {
         maxWidth: rect.w - 2 * margin
         current: special?.open === true && special.output === root.monitor?.name
       }
+    }
+
+    // The keyboard's cell
+    Rectangle {
+      readonly property var rect: root.cellRectOf(root.keyIndex)
+      readonly property real outset: Appearance.borderWidth * 2
+      visible: root.keyIndex >= 0 && root.keyIndex < root.cellCount
+      x: rect.x - outset
+      y: rect.y - outset
+      width: rect.w + outset * 2
+      height: rect.h + outset * 2
+      z: 3
+      radius: root.cellRadius + outset
+      color: "transparent"
+      border.width: Appearance.borderWidth * 2
+      border.color: Theme.foreground
+
+      Glide on x {}
+      Glide on y {}
+      Glide on width {}
+      Glide on height {}
     }
 
     // Where a dragged tiled window will land
