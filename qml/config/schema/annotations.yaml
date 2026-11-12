@@ -39,7 +39,7 @@ x-hosts: '`overlay`, `menu`, `lockscreen`, `greeter`, `desktop`.'
 x-icon: a Material Symbols name on bar widget, overlay module and view definitions.
 x-iconText: 'on an icon field (`x-control: icon`): `{ mode, text }`, the keys of two siblings it draws in its own row: `mode` a string of `icon`, `text` or `both` that an Icon / Text / Both switch at the row''s right sets, `text` a string typed in a box beside the icon''s (each box shown while the mode shows its part); the siblings'' own rows hide.'
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Appearance.shape.innerRadius` from `Appearance.shape.radius`).'
-x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
+x-intro: 'puts `views/Settings/<Name>.qml` at the top of the section''s own card, above its fields (NightLight''s `NightLightStatus`), or `{file, setup: [keys]}`: the `setup` rows stay under it and the card''s other rows fold behind `Settings`; it may expose `status`/`statusColor` for the header chip.'
 x-keepsPlace: 'stays in its place in a form that keeps its place (`keepsPlace`, the Bar style block): greyed, saying why on hover (`x-tileHint`), while its `x-showIf` fails, instead of hidden (the style, shape and grouping rows).'
 x-keyboard: the module takes typing.
 x-keywords: more words a bar widget type is found by in the bar editor's library (`LibraryOrder.filtered`), such as its old label.

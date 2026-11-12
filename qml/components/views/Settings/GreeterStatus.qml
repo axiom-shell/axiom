@@ -6,15 +6,16 @@ import qs.services.session
 import qs.components.forms
 import qs.components.reusable
 
-// The Greeter section's first card (its `x-card`): whether axiom is the
-// login screen, and setting it up, updating or removing it (GreeterSetup)
-FieldGroup {
+// The top of the Login screen card (the section's `x-intro`): whether axiom
+// is the login screen, and setting it up, updating or removing it
+// (GreeterSetup). `status` and `statusColor` are the card's header chip
+ColumnLayout {
   id: root
 
-  readonly property string status: GreeterManager.status
+  readonly property string stage: GreeterManager.status
 
   readonly property color statusColor: {
-    switch (root.status) {
+    switch (root.stage) {
     case "installed":
       return Theme.success;
     case "outdated":
@@ -29,8 +30,8 @@ FieldGroup {
     return Theme.foregroundAlt;
   }
 
-  readonly property string statusLabel: {
-    switch (root.status) {
+  readonly property string status: {
+    switch (root.stage) {
     case "installed":
       return I18n.tr("Set up");
     case "outdated":
@@ -51,24 +52,19 @@ FieldGroup {
     return I18n.tr("Off");
   }
 
-  headerExtras: [
-    StatusChip {
-      text: root.statusLabel
-      color: root.statusColor
-    }
-  ]
+  spacing: Widget.spacing * 1.5
 
   Component.onCompleted: GreeterManager.check()
 
   StyledText {
-    visible: root.status === "off"
+    visible: root.stage === "off"
     text: I18n.tr("Your display manager shows its own login screen. Axiom's runs under greetd, laid out on the Layouts page like the lock screen.")
     wrapMode: Text.WordWrap
     Layout.fillWidth: true
   }
 
   StyledText {
-    visible: root.status === "installed" || root.status === "outdated"
+    visible: root.stage === "installed" || root.stage === "outdated"
     text: I18n.tr("Axiom is greetd's login screen. Lay it out on the Layouts page; it shows your theme, wallpapers and monitor layout as they are when you save.")
     wrapMode: Text.WordWrap
     Layout.fillWidth: true

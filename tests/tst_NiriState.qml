@@ -120,6 +120,30 @@ TestCase {
     compare(NiriState.focusedWindowId(loaded()), "5");
   }
 
+  // Tiled windows sit in niri's working area, past the reserved edges
+  function test_windows_reserved() {
+    const outputs = NiriState.outputs(fixture("outputs"), loaded(), bases, 10, {
+      "winit": {
+        "top": 69,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    });
+    const windows = NiriState.windows(loaded(), outputs, bases, 10, 16);
+    const byId = id => windows.find(w => w.id === id);
+    compare(byId("2").x, 16);
+    compare(byId("2").y, 69 + 16);
+    compare(byId("3").y, 69 + 16 + 602 + 16);
+    compare(byId("5").x, 870);
+    compare(byId("3").cover, {
+      "x": 16,
+      "y": 0,
+      "w": 810,
+      "h": outputs[0].height
+    });
+  }
+
   // A strip wider than its output fills the view wherever niri scrolled it
   function test_wideStripCoversTheOutput() {
     let state = loaded();

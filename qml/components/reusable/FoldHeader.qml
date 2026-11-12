@@ -5,7 +5,8 @@ import qs.config
 
 // A fold's clickable header (FoldingCard, FoldingSection): a SectionHeading
 // with its description only while unfolded, an optional line above it, the
-// unsaved-edits dot while folded with `marked`, and a chevron. A click
+// unsaved-edits dot while folded with `marked`, a status chip (`status`,
+// kept while folded) before the chevron, and the chevron. A click
 // emits `toggled`, unless it isn't `foldable`.
 Item {
   id: root
@@ -17,6 +18,9 @@ Item {
   property bool collapsed: false
   property bool foldable: true
   property bool marked: false
+  // A StatusChip's word and color; no chip while empty
+  property string status
+  property color statusColor: Theme.foregroundAlt
 
   signal toggled
 
@@ -61,6 +65,13 @@ Item {
       shown: root.collapsed && root.marked
       Layout.alignment: Qt.AlignTop
       Layout.topMargin: Appearance.fontSize / 2
+    }
+
+    StatusChip {
+      visible: root.status !== ""
+      text: root.status
+      color: root.statusColor
+      Layout.alignment: Qt.AlignTop
     }
 
     StyledIcon {

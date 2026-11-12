@@ -7,18 +7,19 @@ import qs.services.system
 import qs.components.reusable
 import qs.components.forms
 
-// Settings page, System › Date & time (the DateTime section's `x-card`):
+// Settings page, System › Date & time (the DateTime section's `x-intro`):
 // the machine's clock (DateTimeManager, timedated): the time now in the
 // formats below, the time zone, network time and setting the time by
-// hand while it's off. Each change asks polkit
-FieldGroup {
+// hand while it's off. Each change asks polkit. `status` and `statusColor`
+// are the card's header chip
+ColumnLayout {
   id: root
 
   // The time typed while network time is off, "" until edited
   property string typedDate: ""
   property string typedTime: ""
 
-  readonly property string syncLabel: {
+  readonly property string status: {
     if (!DateTimeManager.available)
       return I18n.tr("No timedated");
     if (DateTimeManager.ntp)
@@ -56,12 +57,9 @@ FieldGroup {
     precision: SystemClock.Seconds
   }
 
-  headerExtras: [
-    StatusChip {
-      text: root.syncLabel
-      color: !DateTimeManager.available ? Theme.foregroundAlt : DateTimeManager.ntp ? (DateTimeManager.ntpSynchronized ? Theme.success : Theme.warning) : Theme.accent
-    }
-  ]
+  readonly property color statusColor: !DateTimeManager.available ? Theme.foregroundAlt : DateTimeManager.ntp ? (DateTimeManager.ntpSynchronized ? Theme.success : Theme.warning) : Theme.accent
+
+  spacing: Widget.spacing * 1.5
 
   // --- Now ---
 

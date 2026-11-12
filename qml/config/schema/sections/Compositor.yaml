@@ -4,7 +4,7 @@ type: object
 x-category: Compositor
 x-showIf: {/$supports.configModes: true}
 x-links: [Keybinds, Monitors]
-x-card: {file: CompositorStatus, title: Compositor status}
+x-intro: {file: CompositorStatus, setup: [mode]}
 title: Compositor
 description: How axiom sets up your compositor.
 additionalProperties: false
@@ -14,7 +14,6 @@ properties:
     x-recommended: managed
     type: string
     title: Mode
-    x-group: Compositor setup
     enum: [detached, included, managed]
     x-enumLabels:
       detached: Detached (nothing to set up)
@@ -25,7 +24,6 @@ properties:
   requiredSettings:
     type: boolean
     title: Required settings
-    x-group: Compositor setup
     default: true
     description: Lock restore, ignoring apps' maximize requests, a workspace slide animation.
     x-showIf: {/$compositor: hyprland}

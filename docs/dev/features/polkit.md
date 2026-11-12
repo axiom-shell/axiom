@@ -1,6 +1,6 @@
 # Polkit agent
 
-> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatusCard.qml`
+> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatus.qml`
 > **Config:** `Polkit.*` (reader `PolkitConfig`)
 > **Related:** [Prompts](prompts.md), [Lockscreen](lockscreen.md) (shared password field), [Shell manager and targeting](../core/shell-manager-targeting.md), [Greeter install](greeter-install.md)
 
@@ -42,7 +42,7 @@ A session has one agent, and Quickshell never retries a failed registration. So:
 - **`SurfaceManager.modalWindows`:** it is registered there while shown, so a prompt over the overlay clears no focus grab. One case is the greeter's install started from Settings. Without a native grab (sway, niri) the grabbing surface stops asking for exclusive keyboard meanwhile (`SurfaceManager.modalShown`), or it would keep the keyboard from the prompt.
 - **The card:** with exclusive keyboard, on the picked screen (`General.screensNamed`).
 - **The field:** `reusable/PasswordEntry`, shared with the lock screen's `PasswordField`. It takes no keys for 400 ms after it opens.
-- Settings → Authentication prompts starts with `PolkitStatusCard`.
+- Settings → Authentication prompts is one card: `PolkitStatus` on top (its status chip in the header) over the switch.
 - Created from `qml/shell.qml`'s `_services`.
 
 ### Testing

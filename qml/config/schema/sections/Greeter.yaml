@@ -2,7 +2,7 @@
 
 type: object
 x-category: Screen & Power
-x-card: {file: GreeterStatus, title: greetd}
+x-intro: {file: GreeterStatus}
 x-links: ['Layouts:greeter']
 title: Login screen
 description: Axiom as your login screen (a greetd greeter), laid out on the Layouts page.
@@ -10,6 +10,7 @@ additionalProperties: false
 properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
+    x-group: Login screen
     title: Login monitor
     description: Login box on one monitor; others show the layout or only the background.
     x-properties:

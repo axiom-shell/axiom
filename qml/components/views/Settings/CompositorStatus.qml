@@ -9,14 +9,15 @@ import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
 
-// The Compositor section's first card (its `x-card`): whether
-// the mode is in effect and what it needs, and, while a new mode waits for
-// Save (`x-applyOnSave`), what saving will do
-FieldGroup {
+// The top of the Compositor card (the section's `x-intro`, its `mode` the
+// setup row under it): the mode in effect and what it needs, and, while a
+// new mode waits for Save (`x-applyOnSave`), what saving will do. `status`
+// and `statusColor` are the card's header chip
+ColumnLayout {
   id: root
 
   readonly property string mode: CompositorConfigManager.mode
-  readonly property string status: CompositorConfigManager.status
+  readonly property string stage: CompositorConfigManager.status
   // The mode picked in the settings draft (the defaults' while the mode is
   // the daemon's: config.json doesn't load, so nothing was picked)
   readonly property string pendingMode: CompositorConfigManager.modeFromDaemon ? root.mode : (SettingsManager.localConfig?.Compositor?.mode ?? root.mode)
@@ -49,7 +50,7 @@ FieldGroup {
   }
 
   readonly property color statusColor: {
-    switch (root.status) {
+    switch (root.stage) {
     case "loaded":
     case "runtime":
       return Theme.success;
@@ -59,8 +60,8 @@ FieldGroup {
     return Theme.foregroundAlt;
   }
 
-  readonly property string statusLabel: {
-    switch (root.status) {
+  readonly property string status: {
+    switch (root.stage) {
     case "runtime":
       return I18n.tr("Applied at runtime");
     case "loaded":
@@ -185,16 +186,12 @@ FieldGroup {
     }
   }
 
-  headerExtras: [
-    StyledText {
-      text: root._modeLabel(root.mode)
-      opacity: 0.7
-    },
-    StatusChip {
-      text: root.statusLabel
-      color: root.statusColor
-    }
-  ]
+  spacing: Widget.spacing * 1.5
+
+  StyledText {
+    text: I18n.tr("In effect: {0}", root._modeLabel(root.mode))
+    opacity: 0.7
+  }
 
   // --- A mode change waiting for Save ---
 
@@ -341,8 +338,8 @@ FieldGroup {
 
   StyledText {
     // Detached, a problem is only the runtime layer's (its binds went on unread)
-    visible: (root.status === "fallback" || root.mode === "detached" && CompositorConfigManager.problem !== "") && !CompositorConfigManager.takeoverPending
-    text: CompositorConfigManager.problem + (root.status === "fallback" ? "\n" + I18n.tr("Until then, axiom applies its layer at runtime.") : "")
+    visible: (root.stage === "fallback" || root.mode === "detached" && CompositorConfigManager.problem !== "") && !CompositorConfigManager.takeoverPending
+    text: CompositorConfigManager.problem + (root.stage === "fallback" ? "\n" + I18n.tr("Until then, axiom applies its layer at runtime.") : "")
     textColor: Theme.warning
     textSize: Appearance.fontSizeBy(-1)
     wrapMode: Text.WordWrap
@@ -371,7 +368,7 @@ FieldGroup {
     lines: CompositorConfigManager.includeLines
     // While it isn't loaded: adds the lines (with a backup), as the
     // notification's Add it for me does
-    canAdd: root.status !== "loaded" && CompositorConfigManager.includeTarget !== null
+    canAdd: root.stage !== "loaded" && CompositorConfigManager.includeTarget !== null
     adding: IntegrationHookupManager.busy.compositorModule > 0
     onCopyClicked: ClipboardManager.copyText(CompositorConfigManager.includeLines)
     onAddClicked: CompositorConfigManager.addIncludeLines()

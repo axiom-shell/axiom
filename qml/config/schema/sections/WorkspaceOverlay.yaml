@@ -39,7 +39,23 @@ properties:
     title: Hint
     x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     default: true
-    description: Mouse controls under the grid.
+    description: Mouse and key controls under the grid.
+  scratchpads:
+    type: string
+    title: Scratchpads
+    x-control: toggle
+    enum: ['off', occupied, all]
+    x-enumLabels: {'off': 'Off', occupied: Occupied, all: All}
+    default: occupied
+    x-showIf: {/$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    description: Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.
+  scratchpadColor:
+    type: string
+    title: Scratchpad color
+    x-options: colors
+    default: base0E
+    x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    description: Border and label of their cells.
   dimInactive:
     type: integer
     title: Dim inactive
