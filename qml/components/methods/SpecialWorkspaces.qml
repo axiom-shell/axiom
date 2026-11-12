@@ -142,6 +142,21 @@ QtObject {
     return out;
   }
 
+  // The ids an `x-ref` dropdown offers, from list()'s `rows`: those with a
+  // valid id (the unnamed one is never a row)
+  function refOptions(rows) {
+    return (rows ?? []).filter(row => row.editable).map(row => row.id);
+  }
+
+  // The name each of those ids was given, where it has one: { id: label }
+  function refLabels(rows) {
+    return (rows ?? []).reduce((labels, row) => {
+      if (row.label !== "")
+        labels[row.id] = row.label;
+      return labels;
+    }, {});
+  }
+
   // The names of cells as one string, so a Repeater keyed on it is rebuilt
   // only when the set changes (each name led by a newline: the unnamed one,
   // "", alone still makes a key), and back

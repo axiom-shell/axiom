@@ -20,7 +20,14 @@ StyledComboEntry {
   signal committed(string value)
 
   editable: true
-  placeholderText: I18n.tr("New special workspace id")
+  typedFirst: true
+  placeholderText: {
+    switch (root.kind) {
+    case "specialWorkspace":
+      return I18n.tr("New special workspace id");
+    }
+    return "";
+  }
   options: {
     const labels = SettingsManager.refLabels(root.kind);
     return SettingsManager.refOptions(root.kind).map(id => ({

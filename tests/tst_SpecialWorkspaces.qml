@@ -420,4 +420,35 @@ TestCase {
     compare(SpecialWorkspaces.keyOf([]), "");
     compare(SpecialWorkspaces.keyOf(null), "");
   }
+
+  // What an x-ref dropdown offers: valid ids only, with their labels
+  function test_refOptionsLabels() {
+    const rows = [
+      {
+        "id": "magic",
+        "label": "Magic",
+        "editable": true
+      },
+      {
+        "id": "bad id",
+        "label": "",
+        "editable": false
+      },
+      {
+        "id": "notes",
+        "label": "",
+        "editable": true
+      }
+    ];
+    compare(SpecialWorkspaces.refOptions(rows), ["magic", "notes"]);
+    compare(SpecialWorkspaces.refLabels(rows), {
+      "magic": "Magic"
+    });
+    compare(SpecialWorkspaces.refOptions(null), []);
+    compare(SpecialWorkspaces.refOptions(SpecialWorkspaces.list([], [
+      {
+        "name": ""
+      }
+    ], [])), [], "the unnamed one is never offered");
+  }
 }

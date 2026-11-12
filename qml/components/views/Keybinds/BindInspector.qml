@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
@@ -26,7 +25,7 @@ ColumnLayout {
   readonly property bool idle: !root.paused && KeybindManager.editor.held[root.bindIndex] !== true
   readonly property bool needed: KeybindManager.needsArgument(root.bind.action)
   // What the argument refers to (Keybind.argument's `x-ref`), or ""
-  readonly property string argumentRef: SchemaLayout.refKind(SchemaValidation.resolveRef(SettingsManager.schemaAt(["Keybinds", "binds"])?.items, ConfigManager.configSchema)?.properties?.argument, key => root.bind[key])
+  readonly property string argumentRef: SettingsManager.refKindAt(["Keybinds", "binds"], "argument", root.bind)
   readonly property var callOptions: KeybindManager.callOptions(root.bind.action)
   readonly property var argumentOptions: {
     const options = KeybindManager.argumentOptions(root.bind.action);
@@ -123,7 +122,8 @@ ColumnLayout {
     }
 
     // The id of something defined elsewhere: a dropdown that also takes a
-    // new one
+    // new one. It lists the ids of the settings draft, so one typed on another
+    // bind appears once the keybinds are saved
     RefEntry {
       visible: root.needed && root.argumentOptions === null && root.argumentRef !== ""
       kind: root.argumentRef

@@ -160,12 +160,14 @@ properties:
       closeSpecialOnEmpty:
         type: boolean
         title: Close when empty
+        description: Hides a special workspace when its last window closes.
         x-group: Special workspaces
         default: true
         x-compositor: {hyprland: {key: misc.close_special_on_empty}}
       hideSpecialOnWorkspaceChange:
         type: boolean
         title: Hide on switching
+        description: Switching to another workspace hides a shown special workspace.
         x-group: Special workspaces
         default: false
         x-compositor: {hyprland: {key: binds.hide_special_on_workspace_change}}
@@ -173,7 +175,7 @@ properties:
         x-scope: look
         type: integer
         title: Dim behind
-        description: '0: no dimming.'
+        description: 'How much the workspace behind a shown special workspace is darkened. 0: no dimming.'
         x-unit: '%'
         x-group: Special workspaces
         default: 20

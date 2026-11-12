@@ -18,8 +18,8 @@ import (
 //   - compositor: [...] named compositorActions to add (only those named: the
 //     rest stay keybind-only), gated by the table's `needs` (x-enumShowIf)
 //
-// Its enum is the table's ipcActions less those left out, then the compositor ones, then exec (but
-// with noArgument), then the extras; labelled as the Keybind definition
+// Its enum is the table's ipcActions less those left out, then the
+// compositor ones, then exec (but with noArgument), then the extras; labelled as the Keybind definition
 // labels them, with the table's icons (x-enumIcons) and sections
 // (x-enumGroups), an extra's from the field's own. On an `action` property, a sibling `argument` shows for the
 // actions whose IPC call takes {0} (and exec), a sibling `call` for those

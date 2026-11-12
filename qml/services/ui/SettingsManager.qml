@@ -80,24 +80,22 @@ QtObject {
   readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
 
   // What an `x-ref` field of `kind` can be set to: the ids of the things that
-  // exist, as edited, for the dropdown beside the typed text; the unnamed
-  // special workspace is never among them (knownSpecials leaves it out) nor
-  // an id no field could hold
+  // exist, as edited, for the dropdown beside the typed text
   function refOptions(kind) {
-    if (kind === "specialWorkspace")
-      return root.knownSpecials.filter(row => row.editable).map(row => row.id);
-    return [];
+    return kind === "specialWorkspace" ? SpecialWorkspaces.refOptions(root.knownSpecials) : [];
   }
 
   // Each of refOptions' ids with the name it was given, where it has one
   function refLabels(kind) {
-    if (kind !== "specialWorkspace")
-      return ({});
-    return root.knownSpecials.reduce((labels, row) => {
-      if (row.label !== "")
-        labels[row.id] = row.label;
-      return labels;
-    }, {});
+    return kind === "specialWorkspace" ? SpecialWorkspaces.refLabels(root.knownSpecials) : ({});
+  }
+
+  // What the field `key` of the items of the array at `path` (["Keybinds",
+  // "binds"]) refers to for `item` (an item's keys: its `x-ref`'s `when`
+  // reads them), or ""
+  function refKindAt(path, key, item) {
+    const items = SchemaValidation.resolveRef(root.schemaAt(path)?.items, ConfigManager.configSchema);
+    return SchemaLayout.refKind(items?.properties?.[key], k => item[k]);
   }
 
   // Whether `value` may be set on an `x-ref` field of `kind`

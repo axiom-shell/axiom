@@ -32,6 +32,9 @@ Item {
   property string value: ""
   // Anything may be typed, not only the options
   property bool editable: false
+  // Typing highlights no match unless one is exactly what was typed, so
+  // Enter takes the typed text (the arrows still pick a match)
+  property bool typedFirst: false
   // Shown but not changeable
   property bool readOnly: false
   property alias placeholderText: entry.placeholderText
@@ -196,7 +199,7 @@ Item {
       if (!root.editable)
         return;
       root.query = entry.text;
-      root.highlighted = 0;
+      root.highlighted = root.typedFirst && !root.matches.some(option => option.value === root.query.trim()) ? -1 : 0;
       if (!root.listOpen && root.matches.length > 0)
         root.openList();
     }

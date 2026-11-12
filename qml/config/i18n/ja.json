@@ -3869,7 +3869,6 @@
     "Focused": "",
     "Bars, popouts, menus and panels.": "",
     "Share of the screen, end to end.": "",
-    "0: no dimming.": "",
     "Workspaces spanned": "",
     "Apps' windows. Off: your config's applies.": "",
     "An XKB layout (us, de). For an input method, the layout it types on. Empty: the first.": "",
@@ -4242,6 +4241,9 @@
     "Every special workspace, with its own label and icon.": "",
     "Special workspace labels": "",
     "An icon name or glyph, and text. The widget's Special workspace labels picks which shows.": "",
-    "Search text, id, direction, workspace, special workspace, kind, theme, timer length or command.": ""
+    "Search text, id, direction, workspace, special workspace, kind, theme, timer length or command.": "",
+    "Hides a special workspace when its last window closes.": "",
+    "How much the workspace behind a shown special workspace is darkened. 0: no dimming.": "",
+    "Switching to another workspace hides a shown special workspace.": ""
   }
 }
