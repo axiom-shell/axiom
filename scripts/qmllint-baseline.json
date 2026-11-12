@@ -9,10 +9,6 @@
     "missing-property: Member \"panel\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1,
     "missing-property: Member \"screen\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1
   },
-  "components/bar/widgets/Time/Time.qml": {
-    "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
-    "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
-  },
   "components/bar/widgets/base/BaseWidget.qml": {
     "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
     "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1

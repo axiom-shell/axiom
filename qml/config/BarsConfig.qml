@@ -33,7 +33,8 @@ QtObject {
       "background": Theme.background,
       "outputs": General.outputs,
       "autoColorFields": root.autoColorFields,
-      "baseColorNames": Theme.baseColorNames
+      "baseColorNames": Theme.baseColorNames,
+      "redForGains": MarketsConfig.redForGains
     };
   }
 

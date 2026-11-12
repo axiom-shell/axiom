@@ -47,6 +47,8 @@ TestCase {
       ],
       "warning": accents[2],
       "critical": accents[0],
+      "rise": accents[1],
+      "fall": accents[0],
       "backdrop": "#1e2127",
       "minContrast": 1.3
     }, overrides);
@@ -140,6 +142,17 @@ TestCase {
       compare(p.criticalColor, "red");
       verify(!["yellow", "red"].includes(p.backgroundColor), p.backgroundColor);
     });
+  }
+
+  function test_rise_and_fall_take_the_palettes() {
+    const picks = BarAutoColors.assign([widget({
+        "backgroundColor": "accent",
+        "upColor": "rise",
+        "downColor": "fall"
+      })], palette());
+    compare(picks[0].upColor, accents[1].name);
+    compare(picks[0].downColor, accents[0].name);
+    verify(![picks[0].upColor, picks[0].downColor].includes(picks[0].backgroundColor), "the accent stays unlike them");
   }
 
   function test_off_is_the_subtlest_neutral_that_shows() {

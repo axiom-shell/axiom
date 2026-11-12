@@ -11,6 +11,8 @@ import qs.components.bar.widgets.base
 BarWidget {
   id: root
 
+  // Room, not content: no background of its own
+  hasBackground: false
   // Room, not a widget: its WidgetGroup draws no divider beside it
   readonly property bool divides: true
   // It fills the room its section is given past its widgets

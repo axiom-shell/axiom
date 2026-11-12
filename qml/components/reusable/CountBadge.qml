@@ -12,6 +12,11 @@ PopInRectangle {
   required property color textColor
   // Its size follows: a bar's badge takes the bar's text size
   property int textSize: Appearance.fontSizeBy(-4)
+  // A ring cut out of the fill it sits on (a bar badge on a filled icon
+  // part); clear for none
+  property color ringColor: "transparent"
+  border.color: root.ringColor
+  border.width: root.ringColor.a > 0 ? Math.max(1, Math.round(root.textSize / 9)) : 0
 
   // Each side a pixel longer when its parity differs from the ink's, so
   // the ink's centre lands on a whole pixel (half a pixel off leans the

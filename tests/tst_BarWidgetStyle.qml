@@ -151,7 +151,7 @@ TestCase {
   }
 
   // A field's color: the gradient's where it gives way; under the bar's
-  // text color an Auto one takes it unless it is warning or critical
+  // text color an Auto one takes it unless it is a state color (warning, critical, rise, fall)
   function test_field_color() {
     const stops = {
       "override": null,
@@ -169,7 +169,7 @@ TestCase {
       "gradientStops": null
     };
     ["accent", "alt", "off", "neutral"].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#00ff00", role + " takes the override"));
-    ["warning", "critical", ""].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#ff0000", (role || "a set colour") + " keeps its own"));
+    ["warning", "critical", "rise", "fall", ""].forEach(role => same(BarWidgetStyle.fieldColor(set, 0.5, "#ff0000", true, role), "#ff0000", (role || "a set colour") + " keeps its own"));
   }
 
   function test_press_mixes_content_toward_its_back_and_still_reads() {
@@ -569,23 +569,40 @@ TestCase {
       fails.push(`${tag}: pulse mid-point gradient ${root.part(mid.gradient)}`);
   }
 
-  // A badge in the accent shows on the bar and on the icon part (3), its
-  // text reads on it (4.5); a pole only where neither pole shows (a dark
-  // accent on a light bar), noted in ctx.poles
+  // A badge reads (3) where it sits, its text 4.5, and a fill gives it a ring
   function checkBadge(fails, tag, c, ctx) {
     if (ctx.override !== null && ctx.override !== undefined)
       return;
     const palette = ctx.bar.palette;
     const badge = BarWidgetStyle.badge(palette, c, ctx.accent);
-    const backs = c.iconBack.concat([BarWidgetStyle.over(palette.background, palette.background)]);
-    if (!root.reads(backs, badge.fill, 3)) {
-      if (root.pole(badge.fill) && !["#ffffff", "#000000"].some(p => root.reads(backs, p, 3)))
-        ctx.poles[tag.split(/ +/).slice(0, 4).join(" ") + " " + ctx.accent] = true;
-      else
-        fails.push(`${tag}: badge fill ${badge.fill} under 3 on ${backs}`);
-    }
+    const backs = c.iconOnFill ? c.iconBack : c.iconBack.concat([BarWidgetStyle.over(palette.background, palette.background)]);
+    if (!root.reads(backs, badge.fill, 3))
+      fails.push(`${tag}: badge fill ${badge.fill} under 3 on ${backs}`);
     if (Utils.contrast(BarWidgetStyle.over(badge.fill, palette.background), badge.text) < 4.5)
       fails.push(`${tag}: badge text ${badge.text} under 4.5`);
+    if (!Qt.colorEqual(badge.ring, c.iconOnFill ? c.iconBack[0] : "transparent"))
+      fails.push(`${tag}: badge ring ${badge.ring}`);
+  }
+
+  // [tag, bar keys, widget state (JSON), light bar, accent, ring (a colors() key)]
+  readonly property var badgeRows: [["filled, a dark accent on a light bar", '{"widgetStyle":"filled"}', "{}", true, "#458588", "fill"], ["split icon part", '{"widgetStyle":"split"}', '{"splits":true}', false, "#fabd2f", "iconFill"], ["tinted", '{"widgetStyle":"tinted"}', "{}", true, "#458588", ""], ["tinted, hovered", '{"widgetStyle":"tinted","hoverFill":true}', '{"hovered":true}', false, "#fb4934", "fill"]]
+
+  function test_badge_data() {
+    return root.badgeRows.map(r => ({
+          "tag": r[0],
+          "row": r
+        }));
+  }
+
+  // On a fill a badge has a ring and reads on that alone, its hue kept
+  function test_badge(data) {
+    const r = data.row;
+    const bar = Bars.bar(JSON.parse(r[1]), Bars.themeEnv(r[3] ? Bars.lightTheme : Bars.theme));
+    const c = BarWidgetStyle.widgetColors(bar, r[4], "#282828", JSON.parse(r[2]));
+    const b = BarWidgetStyle.badge(bar.palette, c, r[4]);
+    verify(root.reads(r[5] ? c.iconBack : c.iconBack.concat([bar.palette.background]), b.fill, 3), "the fill reads");
+    verify(!r[5] || !root.pole(b.fill), "its hue is kept");
+    same(b.ring, r[5] ? c[r[5]] : "transparent", "the ring");
   }
 
   // Muted shows: some color of the widget differs from its unmuted self
@@ -620,7 +637,6 @@ TestCase {
   function test_the_sweep_holds_for_every_widget() {
     const started = Date.now();
     const fails = [];
-    const poles = {};
     let cases = 0;
     for (const [themeKey, theme] of root.themes) {
       const own = Bars.resolverOf(theme).call(null, "base00");
@@ -645,13 +661,12 @@ TestCase {
                       }, {
                         "gradient": gradient,
                         "auto": auto,
-                        "override": override ? set : null,
-                        "poles": poles
+                        "override": override ? set : null
                       });
                     }
               }
     }
-    console.info(`sweep: ${cases} widget cases in ${Date.now() - started} ms; badge poles: ${Object.keys(poles).join(", ")}`);
+    console.info(`sweep: ${cases} widget cases in ${Date.now() - started} ms`);
     verify(fails.length === 0, `${fails.length} of ${cases} cases fail:\n` + fails.slice(0, 12).join("\n"));
   }
 

@@ -9,11 +9,11 @@ import qs.components.bar.widgets.base
 
 // A custom widget on the bar (docs/dev/features/custom-widgets.md): its
 // script's output (CustomWidgetsManager) in the definition's bar style
-// (ValueStyleWidget's: label is Waybar's look). Clicks and scrolls run its
+// (BarWidget's display styles: label is Waybar's look). Clicks and scrolls run its
 // actions; hovering opens its module, else shows the output's tooltip
 // (Waybar's; the definition's Tooltip switch). Hidden while the script
 // says so (empty text, as Waybar).
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property string widgetId: properties.definition
@@ -44,42 +44,17 @@ ValueStyleWidget {
   subtext: root.fields?.subtext || root.fields?.alt || ""
 
   // News: its state went to warning, or to critical (its colour's
-  // name, CustomWidgetData.stateColor), from a calmer one
+  // name, CustomWidgetData's state color), from a calmer one
   attentionLevel: root.fields === null ? -1 : root.fields.color === "error" ? 2 : root.fields.color === "warning" ? 1 : 0
 
   hidden: root.fields?.hidden ?? false
   icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
-  accentField: root.fields?.color ? "" : "backgroundColor"
-  accentColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : Theme.resolveColor(properties.backgroundColor)
-
-  // Urgent: a slow pulse (as Battery's charging one), back to full when
-  // it stops
-  SequentialAnimation {
-    running: (root.fields?.urgent ?? false) && !root.hidden && Appearance.animations
-    loops: Animation.Infinite
-    onRunningChanged: {
-      if (!running)
-        root.dim = 1;
-    }
-
-    PropertyAnimation {
-      target: root
-      property: "dim"
-      from: 1.0
-      to: 0.45
-      duration: Appearance.animSlow * 2
-      easing.type: Appearance.easing
-    }
-    PropertyAnimation {
-      target: root
-      property: "dim"
-      from: 0.45
-      to: 1.0
-      duration: Appearance.animSlow * 2
-      easing.type: Appearance.easing
-    }
-  }
+  // The script's state color (a theme color's name), which the base
+  // resolves; none: the widget's own color
+  stateColorName: root.fields?.color ?? ""
+  // Urgent: a slow colour pulse
+  pulsing: root.fields?.urgent ?? false
 
   readonly property var actions: root.definition?.actions ?? ({})
   clickable: !!(root.actions.click || root.actions.rightClick || root.actions.middleClick)

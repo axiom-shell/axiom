@@ -32,7 +32,9 @@ settings:
     type: boolean
     title: Colour by trend
     default: true
-    description: Rises in the success colour and falls in the error one.
+    description: Rises in the rise color and falls in the fall color.
+  upColor: {$ref: '#/definitions/WidgetColor', title: Rise color, x-autoColor: rise, x-showIf: {colorize: true}, description: "A rise's change, and the widget's color while its symbol is up. Auto follows Red for gains."}
+  downColor: {$ref: '#/definitions/WidgetColor', title: Fall color, x-autoColor: fall, x-showIf: {colorize: true}, description: "A fall's change, and the widget's color while its symbol is down. Auto follows Red for gains."}
   rotate:
     type: boolean
     title: Cycle through symbols

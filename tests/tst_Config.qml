@@ -135,6 +135,34 @@ TestCase {
         "grades": false
       },
       {
+        "tag": "Markets.upColor",
+        "type": "Markets",
+        "key": "upColor",
+        "role": "rise",
+        "grades": false
+      },
+      {
+        "tag": "Markets.downColor",
+        "type": "Markets",
+        "key": "downColor",
+        "role": "fall",
+        "grades": false
+      },
+      {
+        "tag": "Notifications.badgeColor",
+        "type": "Notifications",
+        "key": "badgeColor",
+        "role": "critical",
+        "grades": false
+      },
+      {
+        "tag": "Notifications.dndColor",
+        "type": "Notifications",
+        "key": "dndColor",
+        "role": "off",
+        "grades": false
+      },
+      {
         "tag": "Network.vpnColor",
         "type": "Network",
         "key": "vpnColor",

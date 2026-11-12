@@ -8,7 +8,8 @@ import QtQuick
 // widgetRadius (Widget.radius), baseFontSize, borderWidth, screenBorder,
 // screenMargin, resolve (a color name to a color), foreground, background,
 // outputs (the screens: name, width, height), autoColorFields
-// (BarsConfig's), baseColorNames (Theme's) }.
+// (BarsConfig's), baseColorNames (Theme's), redForGains (Markets' Red for gains,
+// which swaps the rise and fall roles) }.
 QtObject {
   id: root
 
@@ -262,6 +263,8 @@ QtObject {
       "neutrals": env.baseColorNames.slice(1, 5).map(named),
       "warning": named("warning"),
       "critical": named("error"),
+      "rise": named(env.redForGains ? "error" : "success"),
+      "fall": named(env.redForGains ? "success" : "error"),
       "backdrop": seen.onRun ? env.resolve(look.group.color) : env.background,
       // A fill need only show on the bar; otherwise the color is text or a stroke
       "minContrast": seen.minContrast

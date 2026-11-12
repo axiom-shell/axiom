@@ -110,7 +110,7 @@ Item {
   // Segments: the ids it shows (a box of a widget drawn one box per item
   // shows its one), and their data: `segmentData` a function (key -> {
   // icon, text, minimumText, ratio, history, graphMin, graphMax, caption,
-  // field, muted }, WidgetSegments)
+  // field, muted, hidden, small }, WidgetSegments)
   property var items: []
   readonly property var shownItems: root.box !== "" ? root.items.filter(k => k === root.box) : root.items
   property var segmentData: null
@@ -371,15 +371,16 @@ Item {
   }
 
   // On the icon's top-right corner, which on a narrow bar reaches past
-  // the widget's box
+  // the widget's box; a ring on a fill. None while the icon isn't shown.
   CountBadge {
     readonly property var _colors: root.badge ? BarWidgetStyle.badge(root.barConfig.palette, root.drawnColors, look.fieldColor(root.badge.field)) : null
-    shown: root.badge !== null && root.badge.text !== "" && !root.hidden
+    shown: root.badge !== null && root.badge.text !== "" && !root.hidden && root.iconRect.width > 0
     x: Math.round(root.iconRect.x + root.iconRect.width - width / 2)
     y: 1
     text: root.badge?.text ?? ""
     color: _colors?.fill ?? "transparent"
     textColor: _colors?.text ?? "transparent"
+    ringColor: _colors?.ring ?? "transparent"
     // The bar's own text size, not the Interface scale
     textSize: Math.round(root.barConfig.fontSize * 0.7)
   }

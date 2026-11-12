@@ -11,10 +11,11 @@ import qs.components.bar.widgets.base
 // or the symbols this widget picks), with the portfolio first when asked.
 // Label and stacked show one symbol at a time, cycling (or, label, all side
 // by side), ticker scrolls them all, sparkline draws the shown one's day.
-// The change is coloured by its trend. Hovering opens the watchlist. Drawn
-// one box per symbol (Boxes: One per item), each box is this widget
-// showing its one symbol (or the portfolio): `box`, its id.
-ValueStyleWidget {
+// The change is coloured by its trend (the rise and fall colors, and the
+// widget's own color while colorize is on). Hovering opens the watchlist.
+// Drawn one box per symbol (Boxes: One per item), each box is this widget
+// showing its one symbol (or the portfolio): `shownItems`.
+BarWidget {
   id: root
 
   Component.onCompleted: MarketsManager.acquire(root)
@@ -23,9 +24,10 @@ ValueStyleWidget {
   // What it shows, from config only: { item } per symbol, a { portfolio }
   // first when asked
   readonly property var _all: MarketMath.entries(MarketsConfig.symbols, root.properties.symbols, root.properties.showPortfolio)
+  items: root._all.map(entry => entry.portfolio ? "portfolio" : entry.item.id)
   // Its one entry in a box of its own
-  readonly property var entries: root.box === "" ? root._all : root._all.filter(entry => root.box === "portfolio" ? entry.portfolio === true : entry.item?.id === root.box)
-  readonly property bool cycles: root.properties.rotate && root.style !== "ticker" && root.entries.length > 1
+  readonly property var entries: root._all.filter(entry => root.shownItems.includes(entry.portfolio ? "portfolio" : entry.item.id))
+  readonly property bool cycles: root.properties.rotate && root.valueStyle !== "ticker" && root.entries.length > 1
   property int _index: 0
   readonly property var shown: root.entries.length > 0 ? root.entries[root._index % root.entries.length] : null
 
@@ -66,6 +68,11 @@ ValueStyleWidget {
     };
   }
 
+  // A trend's color field, "" for a flat one
+  function trendField(trend) {
+    return trend === "up" ? "upColor" : trend === "down" ? "downColor" : "";
+  }
+
   // The value part (price, change or both), the change in its trend's
   // colour when `rich`
   function valueText(f, rich) {
@@ -74,7 +81,9 @@ ValueStyleWidget {
     const price = MarketMath.formatPrice(f.price, f.currency);
     const percent = MarketMath.formatPercent(f.percent);
     const change = root.properties.value === "change" ? MarketMath.formatChange(f.change, f.currency) : percent;
-    const colored = rich && root.properties.colorize ? `<font color="${root.contentColor(MarketsManager.trendColor(f.trend), "text")}">${change}</font>` : change;
+    const field = root.trendField(f.trend);
+    const color = field !== "" ? root.paint.field(field, "text") : root.paint.muted("text");
+    const colored = rich && root.properties.colorize ? `<font color="${color}">${change}</font>` : change;
     switch (root.properties.value) {
     case "price":
       return price;
@@ -95,6 +104,9 @@ ValueStyleWidget {
   // (`textOnFill`: it must read on it)
   readonly property bool rich: root.properties.colorize && !root.colors.textOnFill
 
+  // Colorize: its box or tint is the trend's color while its symbol moves
+  accentField: root.properties.colorize && root.current && !isNaN(root.current.price) && root.trendField(root.current.trend) !== "" ? root.trendField(root.current.trend) : "backgroundColor"
+
   icon: {
     if (MarketsManager.error !== "" && !root.current)
       return "error";
@@ -106,7 +118,7 @@ ValueStyleWidget {
   // The widest entry, so cycling never resizes it
   minimumText: root.cycles ? root.entries.map(entry => root.entryText(entry, false)).reduce((a, b) => b.length > a.length ? b : a, "") : ""
 
-  styleText: root.style === "ticker" ? root.entries.map(entry => root.entryText(entry, root.rich)).join("     ") : (root.current?.name ?? "")
+  styleText: root.valueStyle === "ticker" ? root.entries.map(entry => root.entryText(entry, root.rich)).join("     ") : (root.current?.name ?? "")
   subtext: root.valueText(root.current, false)
 
   history: root.current?.points?.length > 1 ? MarketMath.closes(root.current.points, 48) : null

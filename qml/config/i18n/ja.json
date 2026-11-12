@@ -3937,7 +3937,6 @@
     "A closed market's prices are checked only hourly. Crypto never closes.": "",
     "Symbol": "",
     "Price": "",
-    "Rises in the success colour and falls in the error one.": "",
     "The watchlist's symbols it shows. None picked shows them all; focus shows the first.": "",
     "What you paid for each, in its own currency, for the total gain. 0 leaves it out.": "",
     "Coingecko": "",
@@ -4338,6 +4337,11 @@
     "Soon color": "",
     "Failed check color": "",
     "After a failed dev build.": "",
-    "Failed build color": ""
+    "Failed build color": "",
+    "Rises in the rise color and falls in the fall color.": "",
+    "A fall's change, and the widget's color while its symbol is down. Auto follows Red for gains.": "",
+    "Rise color": "",
+    "Fall color": "",
+    "A rise's change, and the widget's color while its symbol is up. Auto follows Red for gains.": ""
   }
 }

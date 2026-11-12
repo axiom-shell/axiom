@@ -64,6 +64,39 @@ TestCase {
     verify(first.properties.stateColor !== "" && first.properties.offColor !== "", "colors picked");
   }
 
+  // A trend's Auto colors are success and error, swapped under Red for gains
+  function test_with_auto_colors_gives_rise_and_fall_their_colors() {
+    const raw = {
+      "left": [
+        {
+          "type": "Markets",
+          "properties": {}
+        }
+      ]
+    };
+    const fields = {
+      "Markets": {
+        "upColor": {
+          "role": "rise",
+          "gradient": false
+        },
+        "downColor": {
+          "role": "fall",
+          "gradient": false
+        }
+      }
+    };
+    const picked = over => BarEnrich.withAutoColors(raw, Bars.bar({}).look, Bars.env(Object.assign({
+        "autoColorFields": fields
+      }, over))).left[0].properties;
+    compare([picked({}).upColor, picked({}).downColor], ["success", "error"]);
+    compare([picked({
+        "redForGains": true
+      }).upColor, picked({
+        "redForGains": true
+      }).downColor], ["error", "success"]);
+  }
+
   function test_with_auto_colors_skips_hidden_widgets_and_unknown_types() {
     const raw = widgets();
     const out = BarEnrich.withAutoColors(raw, Bars.bar({}).look, Bars.env({

@@ -187,25 +187,33 @@ QtObject {
   // mark's, a part's): the gradient's color at `spot` (0-1, -1 for none)
   // where it `givesWay` to it (an Auto field, active) and the bar has
   // one, else `color`. Under the bar's text color (palette.override) an
-  // Auto field (its `role`: accent, alt, off or neutral) takes it; a warning
-  // or critical one, and one the user set (role ""), keeps its own. The
-  // caller nudges it (content()).
+  // Auto field (its `role`: accent, alt, off or neutral) takes it; a state
+  // color (warning, critical, rise, fall: P12, keep state meaning) and one
+  // the user set (role "") keep their own. The caller nudges it (content()).
   function fieldColor(palette, spot, color, givesWay, role) {
-    if (palette.override !== null && role !== "" && role !== "warning" && role !== "critical")
+    if (palette.override !== null && role !== "" && role !== "warning" && role !== "critical" && role !== "rise" && role !== "fall")
       return palette.override;
     if (givesWay && spot >= 0 && palette.gradientStops)
       return BarGradient.gradientAt(palette.gradientStops, spot);
     return color;
   }
 
-  // A badge's { fill, text } in `color`: the fill read on what the icon
-  // part sits on and the bar (`colors`, colors(); contrast iconContrast),
-  // its text what reads on it (readableOn, the palette's colors)
+  // A badge's { fill, text, ring } in `color`. On a fill (`colors.iconOnFill`:
+  // filled, split's icon parts, a merged run's fill, filled on hover) the
+  // badge is cut out of it: a ring in the fill's color (iconBack[0]) round
+  // it, and its own fill read on that backdrop alone (contrast iconContrast,
+  // which a mix of white or black always reaches on one opaque backdrop, so
+  // its hue is kept). Elsewhere there is no ring and the fill reads on
+  // iconBack and the bar. The text is what reads on the fill (readableOn,
+  // the palette's colors).
   function badge(palette, colors, color) {
-    const fill = root.nudged(colors.iconBack.concat([root._opaque(palette.background)]), color, root.iconContrast);
+    const cut = colors.iconOnFill === true;
+    const backs = cut ? colors.iconBack : colors.iconBack.concat([root._opaque(palette.background)]);
+    const fill = root.nudged(backs, color, root.iconContrast);
     return {
       "fill": fill,
-      "text": root.readableOn(root.over(fill, palette.background), palette.barText, [palette.background])
+      "text": root.readableOn(root.over(fill, palette.background), palette.barText, [palette.background]),
+      "ring": cut ? colors.iconBack[0] : "transparent"
     };
   }
 
@@ -255,8 +263,7 @@ QtObject {
   // bar's gradient ({ part, alpha }: the look's `gradientPart` trait), else
   // null. `textOnFill`: its text sits on a fill it must read on (filled; in
   // a merged run on a filled or split bar, the run's; split's label on a
-  // color of its own; filled on hover), so it never takes a state's color
-  // (stateContent). `textBack` and `iconBack` are the opaque colors the
+  // color of its own; filled on hover). `textBack` and `iconBack` are the opaque colors the
   // text and the icon sit on (lists: a pill's level adds a second), which
   // `text` and `icon` are nudged to read on; `iconOnFill`: the icon sits on
   // a fill it must read on too; `level`: the pill's color, from the icon's.
