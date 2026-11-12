@@ -28,6 +28,7 @@ TestCase {
     }
   ]
 
+  // BarAutoColors' own input (a palette), not a bar, so not Bars.bar
   function palette(overrides = {}) {
     return Object.assign({
       "accents": accents,

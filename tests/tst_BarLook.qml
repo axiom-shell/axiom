@@ -34,10 +34,13 @@ TestCase {
       "thickness": 26,
       "innerPadding": 6,
       "innerGap": 4,
+      "iconGap": 6,
       "radius": 8,
       "far": false
     })
 
+  // BarLook.resolve itself is what's tested here, so its geometry is given
+  // by hand, not through Bars.bar
   function look(own, bar) {
     return BarLook.resolve(root.section(), own, bar === undefined ? root.geometry : bar);
   }

@@ -78,7 +78,7 @@ QtObject {
   }
 
   // A workspace's cell colors by its state (BarsConfig.workspaceCellColors)
-  // in the widget's `colors`, with `cell`'s hovered, spot, pulse (as
+  // in the widget's `colors`, with `cell`'s hovered, spot (as
   // BarsConfig.cellColors takes them)
   function workspaceColorsOf(active, occupied, urgent, cell) {
     return BarsConfig.workspaceCellColors(root.barConfig, Object.assign({}, root.colors, {

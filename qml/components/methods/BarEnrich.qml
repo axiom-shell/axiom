@@ -36,6 +36,7 @@ QtObject {
       "thickness": thickness,
       "innerPadding": innerPadding,
       "innerGap": innerGap,
+      "iconGap": iconGap,
       "radius": env.widgetRadius,
       "far": loc === ScreenEdge.Right || loc === ScreenEdge.Bottom
     });

@@ -4,8 +4,8 @@ import qs.components.methods
 import "barstyle/Bars.js" as Bars
 import "barstyle/Matrix.js" as Matrix
 
-// The bar widget style system's geometry characterization: every look,
-// shape, run, cell shape, outline and tab run through the helpers, and
+// The bar widget style system's geometry characterization of looks, cell
+// shapes and outlines (the rest is in the dedicated tests), run through the helpers, and
 // what they give recorded (barstyle/Matrix.js): main's behaviour before
 // the style rework, plus its intended changes, each re-recorded in the
 // commit that made it. The expected data is never edited by hand:
@@ -39,9 +39,6 @@ TestCase {
       "warning": "#fabd2f",
       "error": "#fb4934"
     })
-  // Appearance.baseFontSize's stand-in (the schema's default)
-  readonly property int baseFontSize: 14
-
   function resolve(name) {
     return Qt.color(root.theme[name] ?? name);
   }
@@ -177,15 +174,6 @@ TestCase {
     return [traits.cellOpaque, traits.boxedInRun];
   }
 
-  // A widget's content across: an icon or a label at the bar's font size
-  // (a 26 px bar's at 100%: the base font's)
-  function segment(shape, ends, grouping, opaque, index, count, across) {
-    return BarShapes.segment({
-      "name": shape,
-      "ends": ends
-    }, grouping, opaque, index, count, across, root.baseFontSize * across / 26);
-  }
-
   // A cell's content across: its label (no app icons)
   function cellShape(bar, run, boxed, opaque, gap, cell, cells) {
     return BarCells.cellShape(bar, run, boxed, opaque, gap, cell, cells, WorkspaceCells.contentSize(bar.thickness, bar.fontSize, false));
@@ -220,14 +208,6 @@ TestCase {
 
   function tab(radius, thickness, fillet, outerStart, limits) {
     return BarTabs.tab(radius, thickness, fillet, outerStart, limits);
-  }
-
-  function tabLimits(start, end, bounds) {
-    return BarTabs.tabLimits(start, end, bounds);
-  }
-
-  function contains(u, v, length, across, startCap, endCap) {
-    return BarShapes.contains(u, v, length, across, startCap, endCap);
   }
 
   // ---- Inputs ----
@@ -354,17 +334,6 @@ TestCase {
 
   function segmentRow(s) {
     return JSON.stringify([s.startCap, s.shownStart, s.endCap, s.levelStartCap, s.levelEndCap, s.back, s.lead, s.trail, s.seamStart, s.seamEnd]);
-  }
-
-  function segmentCases() {
-    const out = {};
-    for (const [shape, ends] of root.shapeEnds)
-      for (const grouping of ["separate", "merged", "powerline"])
-        for (const opaque of [false, true])
-          for (let count = 1; count <= 3; count++)
-            for (let index = 0; index < count; index++)
-              out[[shape, ends, grouping, opaque ? "opaque" : "clear", `${index}of${count}`].join("/")] = root.segmentRow(root.segment(shape, ends, grouping, opaque, index, count, 26));
-    return out;
   }
 
   function cellShapeCases() {
@@ -510,58 +479,11 @@ TestCase {
     return out;
   }
 
-  function tabCases() {
-    const out = {};
-    for (const radius of [0, 8, 20])
-      for (const fillet of [0, 4])
-        for (const outerStart of [true, false])
-          for (const [lKey, limits] of [["none", [null, null]], ["start", [
-                {
-                  "gap": 2,
-                  "radius": 8
-                },
-                null]], ["both-far", [
-                {
-                  "gap": 12,
-                  "radius": 8
-                },
-                {
-                  "gap": 0,
-                  "radius": 8
-                }
-              ]]])
-            out[["tab", radius, fillet, outerStart, lKey].join("/")] = JSON.stringify(root.tab(radius, 26, fillet, outerStart, limits));
-    const bounds = [
-      {
-        "start": 0,
-        "end": 300,
-        "startRadius": 10,
-        "endRadius": 6
-      }
-    ];
-    for (const [start, end] of [[2, 40], [20, 60], [250, 296], [120, 160], [310, 330]])
-      out[["limits", start, end].join("/")] = JSON.stringify(root.tabLimits(start, end, bounds));
-    out["limits/none"] = JSON.stringify(root.tabLimits(2, 40, null));
-    return out;
-  }
-
-  function containsCases() {
-    const out = {};
-    const us = [0, 1, 3, 6, 10, 20, 40, 60, 70, 74, 77, 79, 80];
-    const vs = [0, 3, 7, 13, 19, 23, 26];
-    for (const caps of root.capPairs.concat([["tab", "tab"], ["curve", "curve"], ["arrowIn", "arrowIn"]]))
-      out[caps.join("-")] = vs.map(v => us.map(u => root.contains(u, v, 80, 26, caps[0], caps[1]) ? "1" : "0").join("")).join(" ");
-    return out;
-  }
-
   function groups() {
     return {
       "looks": root.lookCases(),
-      "segments": root.segmentCases(),
       "cellShapes": root.cellShapeCases(),
-      "outlines": root.outlineCases(),
-      "tabs": root.tabCases(),
-      "contains": root.containsCases()
+      "outlines": root.outlineCases()
     };
   }
 

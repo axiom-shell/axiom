@@ -42,7 +42,6 @@ import QtQuick
 //             place of any opacity (an off lock key, a paused timer)
 //   pressed   it is pressed: its content mixed pressMix toward its
 //             backdrop, then nudged back to its floor
-//   pulse     (a cell) 0-1, how far it is toward its muted self (cell)
 //   hover     (a cell) the color of its hover box, or null: the
 //             palette's cellHover
 //   under     (a cell) what the widget's text sits on (its `textBack`), the
@@ -112,7 +111,6 @@ QtObject {
       "under": widget?.under ?? null,
       "muted": widget?.muted === true,
       "pressed": widget?.pressed === true,
-      "pulse": widget?.pulse ?? 0,
       "hover": widget?.hover ?? null
     };
   }
@@ -435,18 +433,7 @@ QtObject {
   // box's color (state.hover, else the palette's cellHover). A muted cell
   // (`state.muted`) is dimmed as a widget is; an empty one's content is
   // always mixed emptyMix toward its backdrop, floored at mutedContrast.
-  // With a `state.pulse`, it is that far between itself and its muted self.
   function cell(look, palette, state, color, own, cellState) {
-    if (state.pulse > 0) {
-      const rest = root.cell(look, palette, Object.assign({}, state, {
-        "pulse": 0
-      }), color, own, cellState);
-      const dimmed = root.cell(look, palette, Object.assign({}, state, {
-        "pulse": 0,
-        "muted": true
-      }), color, own, cellState);
-      return root.mixColors(rest, dimmed, state.pulse);
-    }
     const graded = state.gradient !== null && state.auto;
     const base = graded ? state.gradient : color;
     const fill = state.muted ? root._toward(base, root._opaque(palette.background), root.mutedMix) : base;

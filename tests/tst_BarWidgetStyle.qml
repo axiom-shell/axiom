@@ -117,11 +117,10 @@ TestCase {
     const s = BarWidgetStyle.state(palette, {
       "spot": 0.5,
       "auto": true,
-      "muted": true,
-      "pulse": 0.3
+      "muted": true
     });
     same(s.gradient, Qt.rgba(0.5, 0.5, 0.5, 1), "the gradient at its spot");
-    compare([s.auto, s.muted, s.pulse, s.splits, s.hovered, s.pressed, s.run, s.group, s.solid, s.level, s.hover], [true, true, 0.3, false, false, false, false, false, false, false, null]);
+    compare([s.auto, s.muted, s.splits, s.hovered, s.pressed, s.run, s.group, s.solid, s.level, s.hover], [true, true, false, false, false, false, false, false, false, null]);
     compare(BarWidgetStyle.state(palette, {}).gradient, null, "no spot");
     compare(BarWidgetStyle.state({
       "gradientStops": null
@@ -225,20 +224,20 @@ TestCase {
     same(c.content, want, "mixed toward the bar");
   }
 
+  // WidgetCell pulses with mixColors of the cell and its muted self
   function test_cell_pulse_goes_between_the_cell_and_its_muted_self() {
     const bar = Bars.bar({
       "widgetStyle": "filled"
     });
-    const cell = (muted, pulse) => BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {
-        "muted": muted,
-        "pulse": pulse
+    const cell = muted => BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {
+        "muted": muted
       }), "#fb4934", "#282828", "urgent");
-    same(cell(false, 0).fill, "#fb4934", "at rest");
-    same(cell(false, 1).fill, cell(true, 0).fill, "fully pulsed is muted");
-    const mid = cell(false, 0.5);
-    close(mid.fill, BarWidgetStyle.mix(cell(false, 0).fill, cell(true, 0).fill, 0.5), "between");
+    same(cell(false).fill, "#fb4934", "at rest");
+    same(BarWidgetStyle.mixColors(cell(false), cell(true), 1).fill, cell(true).fill, "fully pulsed is muted");
+    const mid = BarWidgetStyle.mixColors(cell(false), cell(true), 0.5);
+    close(mid.fill, BarWidgetStyle.mix(cell(false).fill, cell(true).fill, 0.5), "between");
     mid.back.forEach(back => verify(Utils.contrast(back, mid.content) >= 3, "the mid-point reads"));
-    compare(cell(false, 0).hover.toString(), Bars.theme.backgroundHighlight, "a cell's hover is the palette's");
+    compare(cell(false).hover.toString(), Bars.theme.backgroundHighlight, "a cell's hover is the palette's");
     same(BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {
       "hover": "#123456"
     }), "#fb4934", "#282828", "active").hover, "#123456", "or its own");
@@ -257,6 +256,15 @@ TestCase {
     same(run("filled").fill, Bars.theme.base02, "filled run");
     same(run("outline").stroke, Bars.theme.base08, "an outline run's line");
     compare(run("outline").gradient, null, "no gradient");
+    const merged = BarWidgetStyle.widgetColors(Bars.bar({
+      "widgetStyle": "filled",
+      "widgetGrouping": "merged",
+      "gradient": true
+    }), "#fb4934", "#282828", {
+      "spot": 0.3,
+      "auto": true
+    });
+    compare(merged.gradient, null, "a merged widget draws no gradient of its own");
   }
 
   // ---- Hover and backdrops ----
@@ -413,7 +421,7 @@ TestCase {
   // as the icon) and what of it the bar's gradient takes (`part`, and
   // `whole` for a widget that doesn't split: the style's fallback)
   // [key, BarStyle keys ("k=v;…"), show, as, part, flags: s(plit) or m(erged)]
-  readonly property var lookRows: [["filled", "widgetStyle=filled", "fill", "color", "fill@1", ""], ["tinted", "widgetStyle=tinted", "fill", "tint", "fill@tint", ""], ["outline", "widgetStyle=outline", "stroke", "color", "stroke@1", ""], ["underline", "widgetStyle=underline", "indicator", "color", "indicator@1", ""], ["accentText", "widgetStyle=accentText", "icon", "icon", "-", ""], ["plain", "widgetStyle=plain", "", "none", "-", ""], ["split.joined.tint", "widgetStyle=split;splitIcon=joined;splitLabelFill=tint", "iconFill", "color", "iconFill@1", "s"], ["split.joined.color", "widgetStyle=split;splitIcon=joined;splitLabelFill=color", "iconFill", "color", "iconFill@1", "s"], ["split.joined.none", "widgetStyle=split;splitIcon=joined;splitLabelFill=none", "iconFill", "color", "iconFill@1", "s"], ["split.badge.tint", "widgetStyle=split;splitIcon=badge;splitLabelFill=tint", "iconFill", "color", "iconFill@1", "s"], ["split.badge.color", "widgetStyle=split;splitIcon=badge;splitLabelFill=color", "iconFill", "color", "iconFill@1", "s"], ["tab.merged.filled", "widgetStyle=filled;widgetShape=tab;widgetGrouping=merged", "fill", "color", "fill@1", "m"]]
+  readonly property var lookRows: [["filled", "widgetStyle=filled", "fill", "color", "fill@1", ""], ["tinted", "widgetStyle=tinted", "fill", "tint", "fill@tint", ""], ["outline", "widgetStyle=outline", "stroke", "color", "stroke@1", ""], ["underline", "widgetStyle=underline", "indicator", "color", "indicator@1", ""], ["accentText", "widgetStyle=accentText", "icon", "icon", "-", ""], ["plain", "widgetStyle=plain", "", "none", "-", ""], ["split.joined.tint", "widgetStyle=split;splitIcon=joined;splitLabelFill=tint", "iconFill", "color", "iconFill@1", "s"], ["split.joined.color", "widgetStyle=split;splitIcon=joined;splitLabelFill=color", "iconFill", "color", "iconFill@1", "s"], ["split.joined.none", "widgetStyle=split;splitIcon=joined;splitLabelFill=none", "iconFill", "color", "iconFill@1", "s"], ["split.badge.tint", "widgetStyle=split;splitIcon=badge;splitLabelFill=tint", "iconFill", "color", "iconFill@1", "s"], ["split.badge.color", "widgetStyle=split;splitIcon=badge;splitLabelFill=color", "iconFill", "color", "iconFill@1", "s"]]
 
   readonly property var looks: lookRows.map(r => ({
         "key": r[0],
@@ -423,8 +431,7 @@ TestCase {
         "show": r[2] || null,
         "as": r[3],
         "part": r[4],
-        "split": r[5] === "s",
-        "merged": r[5] === "m"
+        "split": r[5] === "s"
       }))
 
   readonly property var accents: ["#fb4934", "#fabd2f", "#458588"]
@@ -446,11 +453,7 @@ TestCase {
           "splits": split
         });
         const tag = `${look.key}${split ? " split" : ""}`;
-        // A merged run's widgets leave the box to the run: the row is the
-        // look's own
         const key = !split && look.split ? "fill" : look.show;
-        if (look.merged)
-          continue;
         const expected = look.as === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : look.as === "icon" ? BarWidgetStyle.nudged(c.iconBack, "#fb4934", 3) : "#fb4934";
         if (key === null) {
           const other = BarWidgetStyle.widgetColors(bar, "#458588", "#282828", {});
@@ -479,23 +482,6 @@ TestCase {
     }
   }
 
-  // graphic() is what colors() draws its own graphic with
-  function test_graphic_of_own_colors() {
-    for (const over of [
-      {
-        "widgetStyle": "tinted"
-      },
-      {
-        "widgetStyle": "filled"
-      }
-    ]) {
-      const c = BarWidgetStyle.widgetColors(Bars.bar(over), "#fb4934", "#282828", {});
-      const g = BarWidgetStyle.graphic(c.iconBack, c.icon, c.text);
-      for (const key of Object.keys(c.graphic))
-        same(g[key], c.graphic[key], `${over.widgetStyle}: ${key}`);
-    }
-  }
-
   function test_each_look_gradient_takes_its_part() {
     const fails = [];
     for (const look of root.looks) {
@@ -509,12 +495,9 @@ TestCase {
           "spot": 0.3,
           "auto": true
         });
-        const want = look.merged ? "-" : !split && look.split ? "fill@1" : look.part;
+        const want = !split && look.split ? "fill@1" : look.part;
         const got = root.part(c.gradient).replace("@0.25", "@tint");
-        if (look.merged) {
-          if (c.gradient !== null)
-            fails.push(`${look.key}: a merged widget draws no gradient of its own`);
-        } else if (got !== want) {
+        if (got !== want) {
           fails.push(`${look.key}${split ? " split" : ""}: gradient ${got}, not ${want}`);
         }
         // A split label's fill per splitLabelFill: a tint of the slice, the label color, or none
@@ -535,8 +518,6 @@ TestCase {
   function test_each_look_cell_shows_its_state_color() {
     const fails = [];
     for (const look of root.looks) {
-      if (look.merged)
-        continue;
       const bar = Bars.bar(Object.assign({
         "tintOpacity": 25
       }, look.over));
@@ -565,8 +546,6 @@ TestCase {
   function test_each_look_cell_gradient_takes_its_part() {
     const fails = [];
     for (const look of root.looks) {
-      if (look.merged)
-        continue;
       const bar = Bars.bar(Object.assign({
         "gradient": true,
         "tintOpacity": 25
@@ -724,7 +703,7 @@ TestCase {
   }
 
   // One widget case, at rest and muted, and the pulse's mid-point between
-  // them: what must hold of it. Returns how many it ran.
+  // them: what must hold of it
   function widgetCase(fails, bar, tag, accent, own, widget, ctx) {
     const rest = BarWidgetStyle.widgetColors(bar, accent, own, widget);
     const dim = BarWidgetStyle.widgetColors(bar, accent, own, Object.assign({
@@ -744,7 +723,6 @@ TestCase {
       for (const [name, color, backs] of [["text", mid.text, mid.textBack], ["icon", mid.icon, mid.iconBack], ["headText", mid.headText, mid.iconBack], ["mark", mid.mark, mid.iconBack], ["graphic.line", mid.graphic.line, mid.iconBack], ["graphic.subcaption", mid.graphic.subcaption, mid.iconBack]])
         if (!root.reads(backs, color, BarWidgetStyle.mutedContrast))
           fails.push(`${tag}: pulse mid-point ${name} ${color} under 3 on ${backs}`);
-    return 3;
   }
 
   function test_the_sweep_holds_for_every_widget() {
@@ -765,7 +743,8 @@ TestCase {
                   for (const level of override ? [false] : [false, true])
                     for (const accent of override ? [root.accents[0]] : root.accents) {
                       const tag = [themeKey, override ? "override" : "", look.key + (split ? "+split" : ""), grouping, hoverFill ? (hovered ? "hovered" : "hover") : "nohover", gradient ? (auto ? "auto" : "set") : "flat", level ? "level" : "", accent].join(" ");
-                      cases += root.widgetCase(fails, bar, tag, accent, own, {
+                      cases += 1;
+                      root.widgetCase(fails, bar, tag, accent, own, {
                         "splits": split,
                         "hovered": hovered,
                         "spot": 0.3,
@@ -841,7 +820,13 @@ TestCase {
                       root.checkCell(fails, tag + " muted", dim, true, cellState, ctx);
                       if (!root.differs(rest, dim, keys))
                         fails.push(`${tag}: muted looks as unmuted`);
-                      root.checkMutedGradient(fails, tag, rest, dim, null);
+                      const mid = BarWidgetStyle.mixColors(rest, dim, 0.5);
+                      if (!ctx.override)
+                        mid.back.forEach(b => {
+                          if (Utils.contrast(b, BarWidgetStyle.over(mid.content, b)) < BarWidgetStyle.mutedContrast - 1e-6)
+                            fails.push(`${tag}: pulse mid-point content ${mid.content} under 3 on ${b}`);
+                        });
+                      root.checkMutedGradient(fails, tag, rest, dim, mid);
                       // Under the text color, occupied plain text still differs from the active's
                       const active = BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, state), color, ownColor, "active");
                       if (override && cellState === "occupied" && look.key === "plain" && !solid && Qt.colorEqual(rest.content, active.content))

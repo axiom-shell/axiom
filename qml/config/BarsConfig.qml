@@ -71,7 +71,7 @@ QtObject {
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
   // active/occupied/urgent/empty, `cell` what of the cell its look depends
-  // on (BarWidgetStyle.state's hovered, spot, under, auto, muted, pulse
+  // on (BarWidgetStyle.state's hovered, spot, under, auto, muted
   // and hover: where the middle of a cell whose color is Auto sits along
   // the bar, for the bar's gradient to take its place, `auto` saying it
   // gives way to it; `solid`: a filled
@@ -87,7 +87,6 @@ QtObject {
       "solid": cell?.solid,
       "under": cell?.under,
       "muted": cell?.muted,
-      "pulse": cell?.pulse,
       "hover": cell?.hover,
       "group": cell?.onBar === true && barConfig.look.grouping === "merged"
     }), color, own, state);
