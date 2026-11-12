@@ -265,7 +265,7 @@ func applyEverything(t *testing.T, s *Session) {
 	t.Helper()
 	keys := integrationKeys()
 	s.integrate(keys)
-	for key := range schemaHookups(t, s) {
+	for _, key := range slices.Sorted(maps.Keys(schemaHookups(t, s))) {
 		if _, err := s.ShellCall("hookup.apply", map[string]any{"key": key, "owner": "ThemeIntegrations." + key}); err != nil {
 			t.Fatalf("hookup.apply %s: %v", key, err)
 		}
