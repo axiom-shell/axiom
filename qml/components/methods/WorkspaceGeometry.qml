@@ -2,8 +2,8 @@ pragma Singleton
 
 import QtQuick
 
-// Pure geometry for the workspace overview: a cols×rows board of monitor
-// miniatures. Grid coordinates have (0, 0) at the first cell's corner; rects
+// Pure geometry for the workspace overview: a cols×rows board of miniatures
+// of each monitor's usable area (the monitor less its bars' reserved edges). Grid coordinates have (0, 0) at the first cell's corner; rects
 // are { x, y, w, h } (actions live in CompositorManager).
 QtObject {
   id: root
@@ -16,6 +16,44 @@ QtObject {
     const sx = (availW - gap * (cols - 1)) / (monW * cols);
     const sy = (availH - gap * (rows - 1)) / (monH * rows);
     return Math.max(0.01, Math.min(sx, sy));
+  }
+
+  // The usable part of a monitor's W×H, from its `reserved` edges (null or
+  // missing sides count as 0, a negative one too)
+  function usableRect(monitorW, monitorH, reserved) {
+    const side = v => Math.max(0, v ?? 0);
+    const left = side(reserved?.left);
+    const top = side(reserved?.top);
+    return {
+      x: left,
+      y: top,
+      w: Math.max(1, monitorW - left - side(reserved?.right)),
+      h: Math.max(1, monitorH - top - side(reserved?.bottom))
+    };
+  }
+
+  // The global origin of an output's usable area ({ x: 0, y: 0 } for none)
+  function usableOrigin(output) {
+    if (!output)
+      return {
+        x: 0,
+        y: 0
+      };
+    return {
+      x: (output.x ?? 0) + Math.max(0, output.reserved?.left ?? 0),
+      y: (output.y ?? 0) + Math.max(0, output.reserved?.top ?? 0)
+    };
+  }
+
+  // The full monitor's wallpaper inside a cell cropped to `usable` (from
+  // usableRect), at `scale`
+  function wallpaperRect(usable, monitorW, monitorH, scale) {
+    return {
+      x: -usable.x * scale,
+      y: -usable.y * scale,
+      w: monitorW * scale,
+      h: monitorH * scale
+    };
   }
 
   function cellRect(index, cellW, cellH, gap, cols) {

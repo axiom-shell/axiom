@@ -21,7 +21,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
   - Optional `cover` (`{ x, y, w, h }`, with `windowCover`): where a window whose geometry isn't exact surely is while its workspace shows; `DockLayout.covered` uses it over the geometry.
 - **Output**: `{ name, description, x, y, width, height, scale, focused, activeWorkspaceId, specialWorkspaceId, reserved: { top, right, bottom, left } }`.
   - `width`/`height` are logical.
-  - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`).
+  - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`). The workspace overview reads it: its cells show the usable area (the output less `reserved`), so a window's global `x`/`y` must already include it (niri's tiled ones do, `NiriState.windows`).
   - `activeWorkspaceId` is -1 while unknown.
   - `specialWorkspaceId` is 0 when none is open.
   - Optional `specialWorkspaceName` (Hyprland's: `special:magic`, `""` when none is open): Hyprland 0.57 gives a special workspace no id, so `HyprState.specials` matches by name.

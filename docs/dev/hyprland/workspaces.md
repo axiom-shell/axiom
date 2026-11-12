@@ -1,6 +1,6 @@
 # Workspaces (layout, navigation, the bar widget)
 
-> **Files:** `qml/config/WorkspacesConfig.qml`, `qml/services/compositor/CompositorManager.qml`, `qml/services/compositor/WorkspaceRemap.qml`, `qml/services/compositor/HyprlandManager.qml`, `qml/components/methods/WorkspaceGeometry.qml`, `qml/components/methods/WorkspaceCells.qml`, `qml/components/bar/widgets/Workspaces/Workspaces.qml`, `qml/components/bar/widgets/Workspaces/`, `qml/components/surfaces/workspaces/`, `qml/components/views/Settings/WorkspacesStatus.qml`
+> **Files:** `qml/config/WorkspacesConfig.qml`, `qml/config/WorkspaceOverlayConfig.qml`, `qml/services/compositor/CompositorManager.qml`, `qml/services/compositor/WorkspaceRemap.qml`, `qml/services/compositor/HyprlandManager.qml`, `qml/components/methods/WorkspaceGeometry.qml`, `qml/components/methods/WorkspaceCells.qml`, `qml/components/bar/widgets/Workspaces/Workspaces.qml`, `qml/components/bar/widgets/Workspaces/`, `qml/components/surfaces/workspaces/`, `qml/components/views/Settings/WorkspacesStatus.qml`
 > **Config:** `Workspaces.*` (`layout`, `count`, `columns`, `rows`, …)
 > **Related:** [Workspace strips](workspace-strips.md), [Keybinds](keybinds.md), [Bar composition](../bar/composition.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
@@ -24,6 +24,9 @@ One workspace layout serves everything that shows workspaces or moves between th
 ### Ids
 - `CompositorManager.workspaceBase(output)` / `workspaceIds(output)` give an output's ids (by its name).
 - The overview lays them out `boardColumns × boardRows`. In the standard layout it shows windows from every monitor, each placed against its own monitor's origin.
+
+### The overview
+- **Usable area.** A cell shows the monitor's usable area, not the whole monitor: `WorkspaceGeometry.usableRect` (the monitor less `Output.reserved`) sets the cell's size and the scale, and `usableOrigin` (the output's origin plus `reserved.left/top`) is each window's origin in its own output (`OverviewGrid.originOf`, so a floating drop's inverse position follows). The wallpaper is the full monitor's, offset by `wallpaperRect` inside the cropped cell. niri's tiled windows are placed by `NiriState.windows` past `reserved`, so the overview has one rule and no compositor branch.
 
 ### Navigation
 - Everything goes through `CompositorManager`, so every switch slides the same way, on every compositor:

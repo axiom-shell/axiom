@@ -14,6 +14,11 @@ Item {
 
   // A wallpaper URL, or "" for a plain `color`
   property string wallpaper: ""
+  // Where the wallpaper image sits in the cell, { x, y, w, h } (the full
+  // monitor's, so a cell cropped to the usable area shows the right part);
+  // null fills the cell
+  property var wallpaperRect: null
+  property size wallpaperSize: Qt.size(0, 0)
   property color color: Theme.backgroundAlt
   // 0-1: how dark it is drawn when it isn't the active workspace
   property real dim: 0.5
@@ -33,11 +38,14 @@ Item {
     color: root.color
 
     Image {
-      anchors.fill: parent
+      x: root.wallpaperRect?.x ?? 0
+      y: root.wallpaperRect?.y ?? 0
+      width: root.wallpaperRect?.w ?? root.width
+      height: root.wallpaperRect?.h ?? root.height
       visible: root.wallpaper !== ""
       source: root.wallpaper
       // Every cell asks for the same size, so they share one decoded image
-      sourceSize: Qt.size(Math.round(root.width), Math.round(root.height))
+      sourceSize: root.wallpaperSize.width > 0 ? root.wallpaperSize : Qt.size(Math.round(root.width), Math.round(root.height))
       fillMode: WallpaperFill.fillMode(Appearance.wallpaperFill)
       asynchronous: true
       cache: true

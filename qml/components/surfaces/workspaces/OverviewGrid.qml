@@ -37,9 +37,11 @@ Rectangle {
 
   readonly property real gap: Widget.spacing * 1.5
   readonly property real pad: Widget.spacing * 2
-  readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, monitorW, monitorH, gap, columns, rows)
-  readonly property real cellW: Math.floor(monitorW * miniScale)
-  readonly property real cellH: Math.floor(monitorH * miniScale)
+  // The monitor less its bars' reserved edges: what a cell shows
+  readonly property var usable: WorkspaceGeometry.usableRect(monitorW, monitorH, root.monitor?.reserved)
+  readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, usable.w, usable.h, gap, columns, rows)
+  readonly property real cellW: Math.floor(usable.w * miniScale)
+  readonly property real cellH: Math.floor(usable.h * miniScale)
   readonly property real cellRadius: Math.max(2, Widget.radius * 0.75)
   // A window preview's (and the drop box's), inside its cell's
   readonly property real previewRadius: Math.max(2, root.cellRadius * 0.6)
@@ -90,16 +92,10 @@ Rectangle {
   // adds or removes only its own preview (and capture)
   readonly property string _addressKey: root.windows.map(w => w.id).join(",")
 
-  // An output's global layout origin, by name (this one's if unknown)
+  // The global origin of an output's usable area (the layout origin plus its
+  // reserved left and top edges), by name (this monitor's if unknown)
   function originOf(output) {
-    const m = CompositorManager.output(output);
-    return m ? {
-      x: m.x,
-      y: m.y
-    } : {
-      x: root.monitorX,
-      y: root.monitorY
-    };
+    return WorkspaceGeometry.usableOrigin(CompositorManager.output(output) ?? root.monitor);
   }
 
   // The origin of the monitor a workspace is on (this one if it doesn't
@@ -229,6 +225,8 @@ Rectangle {
         width: root.cellW
         height: root.cellH
         wallpaper: WorkspaceOverlayConfig.wallpaper ? ThemeManager.wallpaperFor(root.screen?.name ?? "") : ""
+        wallpaperRect: WorkspaceGeometry.wallpaperRect(root.usable, root.monitorW, root.monitorH, root.miniScale)
+        wallpaperSize: Qt.size(Math.round(root.monitorW * root.miniScale), Math.round(root.monitorH * root.miniScale))
         color: WorkspaceOverlayConfig.color
         dim: WorkspaceOverlayConfig.dimInactive
         radius: root.cellRadius

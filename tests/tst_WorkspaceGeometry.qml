@@ -12,6 +12,99 @@ TestCase {
     compare(WorkspaceGeometry.fitScale(10, 10, 0, 50, 0, 1, 1), 0.1);
   }
 
+  function test_usableRect() {
+    compare(WorkspaceGeometry.usableRect(1920, 1080, {
+      "top": 40
+    }), {
+      "x": 0,
+      "y": 40,
+      "w": 1920,
+      "h": 1040
+    });
+    const left = WorkspaceGeometry.usableRect(1920, 1080, {
+      "left": 50
+    });
+    compare(left.x, 50);
+    compare(left.w, 1870);
+    compare(WorkspaceGeometry.usableRect(1920, 1080, null), {
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1080
+    });
+    compare(WorkspaceGeometry.usableRect(1920, 1080, {
+      "left": 1000,
+      "right": 1000
+    }).w, 1);
+    compare(WorkspaceGeometry.usableRect(1920, 1080, {
+      "top": -5,
+      "left": -5
+    }), {
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1080
+    });
+  }
+
+  function test_usableOrigin() {
+    compare(WorkspaceGeometry.usableOrigin({
+      "x": 1920,
+      "y": 0,
+      "reserved": {
+        "left": 0,
+        "top": 40,
+        "right": 0,
+        "bottom": 0
+      }
+    }), {
+      "x": 1920,
+      "y": 40
+    });
+    compare(WorkspaceGeometry.usableOrigin(null), {
+      "x": 0,
+      "y": 0
+    });
+    compare(WorkspaceGeometry.usableOrigin({
+      "x": 5,
+      "y": 7
+    }), {
+      "x": 5,
+      "y": 7
+    });
+  }
+
+  function test_windowRect_cropped() {
+    // A window 10 px below a 40 px top bar's edge, the origin the usable area's
+    const top = WorkspaceGeometry.windowRect({
+      "x": 0,
+      "y": 50,
+      "w": 400,
+      "h": 300
+    }, 0, 40, 0.1, 192, 104);
+    compare(top.y, 1);
+    const side = WorkspaceGeometry.windowRect({
+      "x": 60,
+      "y": 0,
+      "w": 400,
+      "h": 300
+    }, 50, 0, 0.1, 192, 108);
+    compare(side.x, 1);
+  }
+
+  function test_wallpaperRect() {
+    const r = WorkspaceGeometry.wallpaperRect({
+      "x": 0,
+      "y": 40,
+      "w": 1920,
+      "h": 1040
+    }, 1920, 1080, 0.1);
+    compare(r.x, 0);
+    compare(r.y, -4);
+    compare(r.w, 192);
+    compare(r.h, 108);
+  }
+
   function test_cellRect_and_cellAt_agree() {
     for (let i = 0; i < 5; i++) {
       const r = WorkspaceGeometry.cellRect(i, 40, 30, 5, 3);
