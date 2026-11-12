@@ -26,7 +26,8 @@ QtObject {
   // (SchemaRefs.sites): [{ id, usedBy, name }] for each item of `config`
   // that a site's `when` matches and whose field holds a non-empty string.
   // `usedBy` is the source text of the reason, `name` what it names (the
-  // item's bind key or hot corner).
+  // item's bind key, or the title of its hot corner: the field's
+  // `x-enumLabels` entry, `translate` then true, as source text).
   function references(config, sites) {
     const out = [];
     (sites ?? []).forEach(site => {
@@ -39,10 +40,13 @@ QtObject {
         const id = item?.[site.key];
         if (typeof id !== "string" || id === "" || !SchemaLayout.showIfHolds(site.when, key => item[key]))
           return;
+        const raw = String(item[site.name] ?? "");
+        const label = site.nameLabels?.[raw];
         out.push({
           "id": id,
           "usedBy": site.usedBy,
-          "name": String(item[site.name] ?? "")
+          "name": label ?? raw,
+          "translate": label !== undefined
         });
       });
     });
@@ -95,7 +99,8 @@ QtObject {
     (row?.refs ?? []).forEach(ref => out.push({
         "kind": "ref",
         "usedBy": ref.usedBy,
-        "name": ref.name
+        "name": ref.name,
+        "translate": ref.translate === true
       }));
     return out;
   }

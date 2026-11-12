@@ -95,7 +95,8 @@ TestCase {
           "action": ["toggleSpecial"]
         },
         "usedBy": "Used by keybind {0}",
-        "name": "key"
+        "name": "key",
+        "nameLabels": {}
       }
     ], "a $ref'd item, not the lists inside lists");
     compare(SchemaRefs.sites(schema, "other").map(s => s.path), [["Nested", "inner", "list"]], "through nested objects");
@@ -107,5 +108,6 @@ TestCase {
   function test_builtSchema() {
     const built = repo.json("qml/config/json/config.schema.json");
     compare(SchemaRefs.sites(built, "specialWorkspace").map(s => s.path.join(".") + ":" + s.key), ["Keybinds.binds:argument", "HotCorners.items:argument"]);
+    compare(SchemaRefs.sites(built, "specialWorkspace").map(s => s.nameLabels.topLeft ?? ""), ["", "Top left"], "the hot corner's titles, not its raw key");
   }
 }

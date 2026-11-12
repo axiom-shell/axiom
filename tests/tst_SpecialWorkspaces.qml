@@ -108,7 +108,10 @@ TestCase {
         "action": ["toggleSpecial"]
       },
       "usedBy": "Used by hot corner {0}",
-      "name": "corner"
+      "name": "corner",
+      "nameLabels": {
+        "topLeft": "Top left"
+      }
     }
   ]
 
@@ -161,19 +164,22 @@ TestCase {
       {
         "id": "magic",
         "usedBy": "Used by keybind {0}",
-        "name": "SUPER + V"
+        "name": "SUPER + V",
+        "translate": false
       },
       {
         "id": "notes",
         "usedBy": "Used by keybind {0}",
-        "name": "SUPER + M"
+        "name": "SUPER + M",
+        "translate": false
       },
       {
         "id": "magic",
         "usedBy": "Used by hot corner {0}",
-        "name": "topLeft"
+        "name": "Top left",
+        "translate": true
       }
-    ], "only the actions `when` names, with a non-empty id");
+    ], "a hot corner by its title; only the actions `when` names, with a non-empty id");
     compare(SpecialWorkspaces.references({}, sites), [], "no sections");
     compare(SpecialWorkspaces.references({
       "Keybinds": {
@@ -266,7 +272,8 @@ TestCase {
       {
         "kind": "ref",
         "usedBy": "Used by keybind {0}",
-        "name": "SUPER + V"
+        "name": "SUPER + V",
+        "translate": false
       }
     ], "windows first, then each reference");
     compare(SpecialWorkspaces.deletable(busy), false);

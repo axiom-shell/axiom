@@ -8,7 +8,7 @@ QtObject {
   id: root
 
   // The fields of kind `kind` in `schema` (the built config schema):
-  // [{ path, key, when, usedBy, name }], `path` the keys from the config's
+  // [{ path, key, when, usedBy, name, nameLabels }], `path` the keys from the config's
   // root to the list of items (["Keybinds", "binds"]), `key` the field of
   // each item, the rest the `x-ref`'s. Found in the lists directly under a
   // section or a nested object (not in lists inside lists, so Keybinds'
@@ -36,7 +36,8 @@ QtObject {
                 "key": field,
                 "when": ref.when ?? ({}),
                 "usedBy": ref.usedBy ?? "",
-                "name": ref.name ?? ""
+                "name": ref.name ?? "",
+                "nameLabels": fields[ref.name]?.["x-enumLabels"] ?? ({})
               });
           });
         } else if (prop?.properties) {

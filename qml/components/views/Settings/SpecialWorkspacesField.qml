@@ -19,6 +19,10 @@ import qs.components.reusable
 // settings draft.
 // I18n.tr("Used by keybind {0}")
 // I18n.tr("Used by hot corner {0}")
+// I18n.tr("Top left")
+// I18n.tr("Top right")
+// I18n.tr("Bottom left")
+// I18n.tr("Bottom right")
 ColumnLayout {
   id: root
 
@@ -37,7 +41,7 @@ ColumnLayout {
 
   // Why a row can't be deleted, one reason a line
   function reasonsOf(special) {
-    return SpecialWorkspaces.blockers(special).map(b => b.kind === "windows" ? (b.count === 1 ? I18n.tr("1 window open") : I18n.tr("{0} windows open", b.count)) : I18n.tr(b.usedBy, b.name)).join("\n");
+    return SpecialWorkspaces.blockers(special).map(b => b.kind === "windows" ? (b.count === 1 ? I18n.tr("1 window open") : I18n.tr("{0} windows open", b.count)) : I18n.tr(b.usedBy, b.translate ? I18n.tr(b.name) : b.name)).join("\n");
   }
 
   FieldHeader {
