@@ -1,14 +1,19 @@
 package manager
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
 // hyprWriter is Hyprland's config writer: axiom's layer as Hyprland's Lua
@@ -282,3 +287,177 @@ func strs(list []string) *jsonx.Array {
 }
 
 func (w *hyprWriter) seenReload() { w.runtime.reloads.Add(1) }
+
+// teardownSteps: a reload takes the binds, the look and the input out, and
+// the cursor is set back by hand (a runtime setcursor outlives a reload);
+// partial: the layer's binds only.
+func (w *hyprWriter) teardownSteps(in Inputs, partial bool) []session.Step {
+	var steps []session.Step
+	if partial {
+		steps = append(steps, session.Step{Op: "eval", Lines: []string{hyprUnbindLua}})
+	} else {
+		steps = append(steps, session.Step{Op: "reload"})
+	}
+	if w.state.LiveCursor != "" {
+		// What is in force can't be queried: Hyprland's own variables first,
+		// then the session's XCursor ones
+		size, _ := strconv.Atoi(cmp.Or(w.getenv("HYPRCURSOR_SIZE"), w.getenv("XCURSOR_SIZE")))
+		if size <= 0 {
+			size = 24
+		}
+		theme := cmp.Or(w.getenv("HYPRCURSOR_THEME"), w.getenv("XCURSOR_THEME"), "default")
+		steps = append(steps, session.Step{Op: "setcursor", Theme: theme, Size: size})
+	}
+	return steps
+}
+
+// reloadStartsAxiom reads the user's hyprland.lua (or hyprland.conf) and
+// the files it loads, and says whether a reload may start axiom: any line
+// matching in's startPattern that isn't a comment, in the main file or any
+// followed one. Parsing the config's own structure would always have holes,
+// and the costs are lopsided: missing a start launches a second axiom on
+// quit, an extra match only leaves the look until the next reload. So it
+// takes the safe side:
+//   - a user's own `hyprland.start` handler that starts axiom counts too
+//     (a partial teardown), except axiom's own one-line form (autostartLines);
+//   - `source =` is followed, globs too; a `source`, `require` or `dofile`
+//     whose target can't be resolved (a $variable, a missing or unreadable
+//     file, a Lua module outside the config folder, a computed one) counts
+//     as starting axiom.
+func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
+	pattern := startPatternOf(in)
+	if pattern == nil {
+		return false, ""
+	}
+	main, conf := w.dir()+"hyprland.lua", false
+	if _, err := os.Stat(main); err != nil {
+		main, conf = w.dir()+"hyprland.conf", true
+	}
+	seen := map[string]bool{}
+	var scan func(path string, conf bool, depth int) (bool, string)
+	scan = func(path string, conf bool, depth int) (bool, string) {
+		path = filepath.Clean(path)
+		if seen[path] || depth > 8 {
+			return false, ""
+		}
+		seen[path] = true
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return true, "can't read " + path
+		}
+		for _, line := range strings.Split(string(data), "\n") {
+			trimmed := strings.TrimSpace(line)
+			if conf {
+				// exec-once never runs again on a reload (hyprlang)
+				if strings.HasPrefix(trimmed, "#") || hyprExecOnce.MatchString(line) {
+					continue
+				}
+				if m := hyprSource.FindStringSubmatch(line); m != nil {
+					for _, target := range w.sourceTargets(path, m[1]) {
+						if target == "" {
+							return true, "source = " + m[1] + " (can't be resolved)"
+						}
+						if ok, l := scan(target, true, depth+1); ok {
+							return true, l
+						}
+					}
+					continue
+				}
+			} else {
+				if strings.HasPrefix(trimmed, "--") {
+					continue
+				}
+				for _, m := range hyprRequire.FindAllStringSubmatch(line, -1) {
+					target := w.luaTarget(m[2], m[1] == "require")
+					if target == "" {
+						if filepath.Clean(m[2]) == filepath.Clean(w.includePath()) {
+							continue // axiom's own module
+						}
+						return true, trimmed + " (can't be resolved)"
+					}
+					if ok, l := scan(target, false, depth+1); ok {
+						return true, l
+					}
+				}
+				if hyprComputedLoad.MatchString(line) {
+					return true, trimmed + " (can't be resolved)"
+				}
+				if hyprOwnStart.MatchString(line) {
+					continue
+				}
+			}
+			if pattern.MatchString(line) {
+				return true, trimmed
+			}
+		}
+		return false, ""
+	}
+	if ok, l := scan(main, conf, 0); ok {
+		return true, l
+	}
+	// A managed or released config loads user/*.lua through
+	// pcall(require, "user." .. name), which no literal require names
+	if !conf {
+		files, _ := filepath.Glob(filepath.Join(w.dir(), "user", "*.lua"))
+		for _, f := range files {
+			if ok, l := scan(f, false, 1); ok {
+				return true, l
+			}
+		}
+	}
+	return false, ""
+}
+
+// sourceTargets are the files a conf's `source =` names, a glob expanded; a
+// "" is a target that can't be resolved
+func (w *hyprWriter) sourceTargets(from, name string) []string {
+	name = strings.TrimSpace(name)
+	if strings.Contains(name, "$") {
+		return []string{""}
+	}
+	if rest, ok := strings.CutPrefix(name, "~/"); ok {
+		name = filepath.Join(w.getenv("HOME"), rest)
+	} else if !filepath.IsAbs(name) {
+		name = filepath.Join(filepath.Dir(from), name)
+	}
+	if !strings.ContainsAny(name, "*?[") {
+		return []string{name}
+	}
+	matches, err := filepath.Glob(name)
+	if err != nil {
+		return []string{""}
+	}
+	return matches
+}
+
+// luaTarget is the file a literal dofile/require names, under the config
+// folder ("" for any other, or one that isn't there)
+func (w *hyprWriter) luaTarget(name string, require bool) string {
+	var candidates []string
+	if require {
+		rel := strings.ReplaceAll(name, ".", "/")
+		candidates = []string{filepath.Join(w.dir(), rel+".lua"), filepath.Join(w.dir(), rel, "init.lua")}
+	} else if filepath.IsAbs(name) {
+		candidates = []string{name}
+	} else {
+		candidates = []string{filepath.Join(w.dir(), name)}
+	}
+	for _, c := range candidates {
+		if rel, err := filepath.Rel(filepath.Clean(w.dir()), filepath.Clean(c)); err == nil && !strings.HasPrefix(rel, "..") {
+			if _, err := os.Stat(c); err == nil {
+				return c
+			}
+		}
+	}
+	return ""
+}
+
+var (
+	hyprExecOnce = regexp.MustCompile(`^\s*exec-once\s*=`)
+	hyprSource   = regexp.MustCompile(`^\s*source\s*=\s*(.+?)\s*$`)
+	hyprRequire  = regexp.MustCompile(`\b(require|dofile)\s*\(?\s*["']([^"']+)["']`)
+	// a require or dofile whose argument isn't a literal
+	hyprComputedLoad = regexp.MustCompile(`\b(require|dofile)\s*\(\s*[^"'\s)]`)
+	// axiom's own autostart line (hyprWriter.autostartLines)
+	hyprOwnStart = regexp.MustCompile(`^\s*hl\.on\(["']hyprland\.start["'],\s*function\(\)\s*hl\.exec_cmd\(.*\)\s*end\)\s*--\s*axiom\s*$`)
+)

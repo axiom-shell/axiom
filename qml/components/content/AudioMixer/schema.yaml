@@ -1,13 +1,7 @@
 label: Audio mixer
 icon: tune
 group: Media & audio
+grow: standard
+order: [mode, grow]
 settings:
-  grow:
-    type: integer
-    title: Grow by up to
-    default: 0
-    minimum: 0
-    maximum: 16
-    x-unit: rows
-    description: Extra rows it takes while its list needs them. 0 keeps its size.
-  mode: {type: string, title: Start on, default: output, x-control: toggle, enum: [output, input]}
+  mode: {type: string, title: Start on, default: output, x-control: toggle, enum: [output, input], x-enumLabels: {output: Output, input: Input}}

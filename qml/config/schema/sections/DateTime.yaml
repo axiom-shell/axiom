@@ -2,43 +2,11 @@
 
 type: object
 x-category: System
-x-card: {file: DateTimeStatus, title: Clock}
-title: Date & time formats
+x-intro: {file: DateTimeStatus, setup: []}
+title: Date & time
 description: How times and dates read across the shell.
 additionalProperties: false
 properties:
-  hourFormat:
-    x-scope: personal
-    type: string
-    title: Clock
-    enum: [auto, '12', '24']
-    x-enumLabels:
-      auto: Follow the region
-      '12': '12-hour (1:30 PM)'
-      '24': '24-hour (13:30)'
-    default: auto
-    description: Every clock that doesn't set its own.
-  dateStyle:
-    x-scope: personal
-    type: string
-    title: Dates
-    enum: [region, language, dmy, mdy, ymd, iso]
-    x-enumLabels:
-      region: Follow the region
-      language: "The language's"
-      dmy: Day first (5 Nov 2026)
-      mdy: 'Month first (Nov 5, 2026)'
-      ymd: Year first (2026 Nov 5)
-      iso: ISO 8601 (2026-11-05)
-    default: region
-    description: The order dates read in.
-  firstDayOfWeek:
-    x-scope: personal
-    type: string
-    title: First day of the week
-    enum: [region, monday, sunday, saturday]
-    x-enumLabels: {region: Follow the region, monday: Monday, sunday: Sunday, saturday: Saturday}
-    default: region
   region:
     x-scope: personal
     type: string
@@ -46,4 +14,33 @@ properties:
     default: ''
     x-options: regions
     x-emptyLabel: Same as the language
-    description: Use another country's formats than the language's.
+    description: Other country's formats.
+  hourFormat:
+    x-scope: personal
+    type: string
+    title: Hour format
+    x-control: toggle
+    enum: [auto, '12', '24']
+    x-enumLabels: {auto: Auto, '12': 12h, '24': 24h}
+    default: auto
+    description: 'Auto: the region''s.'
+  dateStyle:
+    x-scope: personal
+    type: string
+    title: Date format
+    enum: [region, language, dmy, mdy, ymd, iso]
+    x-enumLabels:
+      region: Follow the region
+      language: Language's
+      dmy: Day first (5 Nov 2026)
+      mdy: 'Month first (Nov 5, 2026)'
+      ymd: Year first (2026 Nov 5)
+      iso: ISO 8601 (2026-11-05)
+    default: region
+  firstDayOfWeek:
+    x-scope: personal
+    type: string
+    title: First day of the week
+    enum: [region, monday, sunday, saturday]
+    x-enumLabels: {region: Follow the region, monday: Monday, sunday: Sunday, saturday: Saturday}
+    default: region

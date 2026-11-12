@@ -27,7 +27,7 @@ properties:
         title: Layouts
         default:
           - {id: us, kind: xkb, layout: us, variant: '', engine: ''}
-        description: Layouts and input method engines, switched between in order. The first is the one you start on.
+        description: Switched between in order. The first is the one you start on.
         x-compositor:
           hyprland:
             - {key: input.kb_layout, from: xkbLayout, if: enabled}
@@ -53,84 +53,19 @@ properties:
               type: string
               title: Layout
               default: ''
-              description: An XKB layout (us, de). For an input method, the layout it types on; empty, the first.
+              description: 'An XKB layout (us, de). For an input method, the layout it types on. Empty: the first.'
             variant:
               type: string
               title: Variant
               default: ''
-              description: The layout's XKB variant (colemak), or empty.
+              description: 'The XKB variant (colemak). Empty: none.'
             engine:
               type: string
               title: Engine
               default: ''
-              description: The input method's engine (e.g. pinyin, hangul).
+              description: e.g. pinyin, hangul.
               x-showIf: {kind: ime}
           required: [id]
-      method:
-        type: object
-        title: Input method options
-        x-fold: true
-        x-showIf: {/$supports.inputMethod: true, method.enabled: true}
-        additionalProperties: false
-        properties:
-          enabled:
-            x-scope: personal
-            type: boolean
-            title: Type other languages with an input method
-            default: false
-            description: Let axiom manage fcitx5 or ibus, to type Japanese, Chinese, Korean and more.
-          framework:
-            x-scope: personal
-            type: string
-            title: Input method framework
-            enum: [auto, none, fcitx5, ibus]
-            x-enumLabels: {auto: Whichever is running, none: None, fcitx5: fcitx5 (recommended), ibus: ibus}
-            default: fcitx5
-            x-showIf: {enabled: true}
-            description: fcitx5 supports every option below; ibus only listing and switching engines.
-          autostart:
-            x-scope: commands
-            type: boolean
-            title: Start the input method
-            default: true
-            description: Start the framework with the compositor and set the environment apps need.
-            x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
-          legacyApps:
-            type: boolean
-            title: Older and X11 apps
-            default: false
-            description: Also set GTK_IM_MODULE and QT_IM_MODULE for X11 apps. Can break typing in GTK apps on Wayland.
-            x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
-          shareState:
-            x-scope: personal
-            type: string
-            title: Share the input method between windows
-            enum: ['No', All, Program]
-            x-enumLabels: {'No': 'No', All: Every window, Program: Windows of the same app}
-            default: 'No'
-            description: Switching in one window switches it in others too. fcitx5 only.
-            x-showIf: {enabled: true, framework: [auto, fcitx5]}
-          verticalCandidates:
-            x-scope: personal
-            type: boolean
-            title: Candidates in a column
-            default: false
-            description: List candidates top to bottom instead of in a row. fcitx5 only.
-            x-showIf: {enabled: true, framework: [auto, fcitx5]}
-          candidateFont:
-            x-scope: look
-            type: string
-            title: Candidate font
-            default: ''
-            description: Font and size, e.g. "Noto Sans CJK JP 12". Empty keeps the framework's.
-            x-showIf: {enabled: true, framework: {not: none}}
-          showSwitchPopup:
-            x-scope: personal
-            type: boolean
-            title: fcitx5's switch popup
-            default: false
-            description: Off, axiom's OSD shows the switch. fcitx5 only.
-            x-showIf: {enabled: true, framework: [auto, fcitx5]}
       options:
         x-scope: personal
         x-greeter: true
@@ -143,12 +78,23 @@ properties:
           sway: {key: 'input type:keyboard xkb_options {}', if: enabled}
           niri: {key: input.keyboard.xkb.options, if: enabled}
         x-showIf: {enabled: true, /$supports.inputConfig: true}
+      numlock:
+        x-scope: personal
+        x-greeter: true
+        type: boolean
+        title: Num Lock on at start
+        default: true
+        x-compositor:
+          hyprland: {key: input.numlock_by_default, if: enabled}
+          sway: {key: 'input type:keyboard xkb_numlock {}', value: enabled, configOnly: true, if: enabled}
+          niri: {key: input.keyboard.numlock, if: enabled}
+        x-showIf: {enabled: true, /$supports.inputConfig: true}
       repeatRate:
         x-scope: personal
         x-greeter: true
         type: integer
         x-control: stepper
-        title: Key repeat rate
+        title: Repeat rate
         default: 50
         minimum: 1
         maximum: 100
@@ -161,7 +107,8 @@ properties:
         x-scope: personal
         x-greeter: true
         type: integer
-        title: Key repeat delay
+        title: Repeat delay
+        x-unit: ms
         default: 300
         minimum: 100
         maximum: 2000
@@ -170,17 +117,71 @@ properties:
           sway: {key: 'input type:keyboard repeat_delay {}', if: enabled}
           niri: {key: input.keyboard.repeat-delay, if: enabled}
         x-showIf: {enabled: true, /$supports.inputConfig: true}
-      numlock:
-        x-scope: personal
-        x-greeter: true
-        type: boolean
-        title: Num Lock on at start
-        default: true
-        x-compositor:
-          hyprland: {key: input.numlock_by_default, if: enabled}
-          sway: {key: 'input type:keyboard xkb_numlock {}', value: enabled, configOnly: true, if: enabled}
-          niri: {key: input.keyboard.numlock, if: enabled}
-        x-showIf: {enabled: true, /$supports.inputConfig: true}
+      method:
+        type: object
+        title: Input method options
+        x-fold: true
+        x-showIf: {/$supports.inputMethod: true, method.enabled: true}
+        additionalProperties: false
+        properties:
+          enabled:
+            x-scope: personal
+            type: boolean
+            title: Input method
+            x-footprint: true
+            default: false
+            description: Axiom manages fcitx5 or ibus, for Japanese, Chinese, Korean and more.
+          framework:
+            x-scope: personal
+            type: string
+            title: Framework
+            enum: [auto, none, fcitx5, ibus]
+            x-enumLabels: {auto: Whichever is running, none: None, fcitx5: fcitx5 (recommended), ibus: ibus}
+            default: fcitx5
+            x-showIf: {enabled: true}
+            description: ibus only lists and switches engines.
+          autostart:
+            x-scope: commands
+            type: boolean
+            title: Autostart
+            default: true
+            description: Starts with the compositor and sets the environment apps need.
+            x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
+          legacyApps:
+            type: boolean
+            title: Legacy apps
+            default: false
+            description: Also sets GTK_IM_MODULE and QT_IM_MODULE. Can break typing in GTK apps on Wayland.
+            x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
+          shareState:
+            x-scope: personal
+            type: string
+            title: Share between windows
+            enum: ['No', All, Program]
+            x-enumLabels: {'No': 'No', All: Every window, Program: Windows of the same app}
+            default: 'No'
+            description: Switching in one window switches the others.
+            x-showIf: {enabled: true, framework: [auto, fcitx5]}
+          verticalCandidates:
+            x-scope: personal
+            type: boolean
+            title: Candidates in a column
+            default: false
+            x-showIf: {enabled: true, framework: [auto, fcitx5]}
+          showSwitchPopup:
+            x-scope: personal
+            type: boolean
+            title: Switch popup
+            default: false
+            description: 'Off: axiom''s OSD shows the switch.'
+            x-showIf: {enabled: true, framework: [auto, fcitx5]}
+          candidateFont:
+            x-scope: look
+            type: string
+            title: Candidate font
+            default: ''
+            description: 'Font and size, e.g. "Noto Sans CJK JP 12". Empty: the framework''s.'
+            x-showIf: {enabled: true, framework: {not: none}}
     x-group: Keyboard
   mouse:
     type: object
@@ -212,7 +213,7 @@ properties:
         default: 0
         minimum: -100
         maximum: 100
-        description: '-100 to 100; 0 leaves it as the device reports.'
+        description: '0: as the device reports.'
         x-compositor:
           hyprland: {key: input.sensitivity, scale: 0.01, if: enabled}
           sway: {key: 'input type:pointer pointer_accel {}', scale: 0.01, if: enabled}
@@ -242,6 +243,44 @@ properties:
         title: Set the touchpad
         default: false
         description: Off, your compositor's config applies.
+      accel:
+        x-greeter: true
+        type: string
+        title: Pointer acceleration
+        enum: [default, flat, adaptive]
+        x-enumLabels: {default: Device default, flat: Flat (none), adaptive: Adaptive}
+        default: default
+        x-compositor:
+          hyprland: {device: touchpad, key: accel_profile, skip: default, if: enabled}
+          sway: {key: 'input type:touchpad accel_profile {}', skip: default, if: enabled}
+          niri: {key: input.touchpad.accel-profile, skip: default, if: enabled}
+        x-showIf: {enabled: true}
+      sensitivity:
+        x-greeter: true
+        type: integer
+        title: Pointer speed
+        default: 0
+        minimum: -100
+        maximum: 100
+        description: '0: as the device reports.'
+        x-compositor:
+          hyprland: {device: touchpad, key: sensitivity, scale: 0.01, if: enabled}
+          sway: {key: 'input type:touchpad pointer_accel {}', scale: 0.01, if: enabled}
+          niri: {key: input.touchpad.accel-speed, scale: 0.01, value: float, if: enabled}
+        x-showIf: {enabled: true}
+      scrollFactor:
+        x-greeter: true
+        type: integer
+        title: Scroll speed
+        x-unit: '%'
+        default: 100
+        minimum: 10
+        maximum: 500
+        x-compositor:
+          hyprland: {key: input.touchpad.scroll_factor, scale: 0.01, if: enabled}
+          sway: {key: 'input type:touchpad scroll_factor {}', scale: 0.01, if: enabled}
+          niri: {key: input.touchpad.scroll-factor, scale: 0.01, value: float, if: enabled}
+        x-showIf: {enabled: true}
       naturalScroll:
         x-scope: personal
         x-greeter: true
@@ -268,50 +307,12 @@ properties:
         x-scope: personal
         x-greeter: true
         type: boolean
-        title: Off while typing
+        title: Disable while typing
         default: true
         x-compositor:
           hyprland: {key: input.touchpad.disable_while_typing, if: enabled}
           sway: {key: 'input type:touchpad dwt {}', value: enabled, if: enabled}
           niri: {key: input.touchpad.dwt, value: flag, if: enabled}
-        x-showIf: {enabled: true}
-      scrollFactor:
-        x-greeter: true
-        type: integer
-        title: Scroll speed
-        x-unit: '%'
-        default: 100
-        minimum: 10
-        maximum: 500
-        x-compositor:
-          hyprland: {key: input.touchpad.scroll_factor, scale: 0.01, if: enabled}
-          sway: {key: 'input type:touchpad scroll_factor {}', scale: 0.01, if: enabled}
-          niri: {key: input.touchpad.scroll-factor, scale: 0.01, value: float, if: enabled}
-        x-showIf: {enabled: true}
-      accel:
-        x-greeter: true
-        type: string
-        title: Pointer acceleration
-        enum: [default, flat, adaptive]
-        x-enumLabels: {default: Device default, flat: Flat (none), adaptive: Adaptive}
-        default: default
-        x-compositor:
-          hyprland: {device: touchpad, key: accel_profile, skip: default, if: enabled}
-          sway: {key: 'input type:touchpad accel_profile {}', skip: default, if: enabled}
-          niri: {key: input.touchpad.accel-profile, skip: default, if: enabled}
-        x-showIf: {enabled: true}
-      sensitivity:
-        x-greeter: true
-        type: integer
-        title: Pointer speed
-        default: 0
-        minimum: -100
-        maximum: 100
-        description: '-100 to 100; 0 leaves it as the device reports.'
-        x-compositor:
-          hyprland: {device: touchpad, key: sensitivity, scale: 0.01, if: enabled}
-          sway: {key: 'input type:touchpad pointer_accel {}', scale: 0.01, if: enabled}
-          niri: {key: input.touchpad.accel-speed, scale: 0.01, value: float, if: enabled}
         x-showIf: {enabled: true}
       leftHanded:
         x-scope: personal
@@ -335,13 +336,14 @@ properties:
         x-greeter: true
         type: boolean
         title: Set the cursor
+        x-footprint: true
         default: false
         description: Off, the cursor is left alone.
       theme:
         x-scope: look
         x-greeter: true
         type: string
-        title: Cursor theme
+        title: Theme
         x-options: cursorThemes
         x-enumLabels: {'': None}
         default: ''
@@ -351,7 +353,8 @@ properties:
         x-greeter: true
         type: integer
         x-control: stepper
-        title: Cursor size
+        title: Size
+        x-unit: px
         default: 24
         minimum: 8
         maximum: 128

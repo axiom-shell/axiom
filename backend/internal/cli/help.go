@@ -41,6 +41,10 @@ func writeHelp(w io.Writer, cmd *Command, trail []string) {
 	fmt.Fprintln(w, "\nflags:")
 	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
 	fs.VisitAll(func(f *flag.Flag) {
+		// No usage text: a flag only a program passes, not listed
+		if f.Usage == "" {
+			return
+		}
 		arg := ""
 		if _, isBool := f.Value.(interface{ IsBoolFlag() bool }); !isBool {
 			arg = " " + valueName(f)

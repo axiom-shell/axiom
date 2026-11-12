@@ -11,7 +11,7 @@ import qs.components.bar.widgets.base
 // name, an input method's own label), with its kind's icon. Left click
 // switches to the next source, right click to the previous one, the wheel
 // steps through them; hovering lists them (the InputSources popout).
-BarIconWidget {
+BarWidget {
   id: root
 
   readonly property string current: InputSourceManager.current

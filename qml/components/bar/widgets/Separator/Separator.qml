@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.config
 import qs.components.reusable
 import qs.components.bar.widgets.base
 
@@ -10,14 +9,15 @@ import qs.components.bar.widgets.base
 BarWidget {
   id: root
 
-  readonly property color color: Theme.resolveColor(properties.color)
+  // Layout, not content: no background of its own
+  hasBackground: false
 
   // Already a divider: its WidgetGroup draws none beside it
-  readonly property bool divides: true
+  divides: true
 
   // BarWidgetHost sizing contract
-  readonly property string sizePolicy: "fixed"
-  readonly property real preferredSize: properties.size
+  sizePolicy: "fixed"
+  preferredSize: properties.size
 
   implicitWidth: isVertical ? root.barConfig.thickness : properties.size
   implicitHeight: isVertical ? properties.size : root.barConfig.thickness
@@ -26,7 +26,7 @@ BarWidget {
   SeparatorMark {
     anchors.centerIn: parent
     style: root.properties.style
-    color: root.color
+    color: root.paint.line("color")
     thickness: root.properties.thickness
     length: root.barConfig.thickness * root.properties.length / 100
     vertical: root.isVertical

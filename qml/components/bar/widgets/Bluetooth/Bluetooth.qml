@@ -13,7 +13,7 @@ import qs.components.bar.widgets.base
 // command; hovering opens the Bluetooth menu. (Reads BluetoothManager
 // only: inside this file `Bluetooth` would mean this component.) Its
 // display style draws a lone device's battery.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property var connected: BluetoothManager.connectedDevices

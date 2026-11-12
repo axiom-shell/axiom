@@ -135,23 +135,36 @@ QtObject {
   // axiom keeps the `x-takeover` settings as it has them unless
   // `takeover`: only a save from a takeover setting's own control sends it
   // (SettingsManager._takesOver), so a save made from a config that
-  // predates a takeover write axiom made can't put the stale value back
-  function commit(object, takeover = false) {
+  // predates a takeover write axiom made can't put the stale value back.
+  // `done(ok)` (optional) is called once axiom has answered: true when it
+  // took the change, false after a refusal (once its config is read back,
+  // as saveRefused); at once, true, when nothing differs
+  function commit(object, takeover = false, done = null) {
     if (!_maySave())
       return false;
     const filled = SchemaValidation.applyDefaults(Utils.clone(object), root._configSchema);
     const ops = ConfigOps.diff(root._config, filled);
-    if (ops.length === 0)
+    if (ops.length === 0) {
+      if (done)
+        done(true);
       return true;
+    }
     root._config = filled;
     BackendManager.call("config.set", {
       "ops": ops,
       "takeover": takeover
     }, (error, result) => {
-      if (!error)
+      if (!error) {
+        if (done)
+          done(true);
         return;
+      }
       console.error("[ConfigManager] axiom refused the config:", error.message, (error.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
-      root.hardResetConfig(() => root.saveRefused(filled));
+      root.hardResetConfig(() => {
+        root.saveRefused(filled);
+        if (done)
+          done(false);
+      });
     });
     return true;
   }

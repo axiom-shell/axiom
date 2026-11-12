@@ -13,8 +13,9 @@ import qs.components.bar.look
 // glyph, text (a label of one's own, an icon, text or the icon before
 // the text, or a name: a Material Symbols name the font has draws as that
 // icon, anything else as text) or app icons show instead
-// when given, in that order (CellContents picks one). An urgent one fades
-// in and out (`pulse`), with a dot at its corner where an app icon would
+// when given, in that order (CellContents picks one). An urgent one pulses
+// from its `look` toward its `mutedLook` by `pulse` (the core's cell()
+// pulse, composed here), with a dot at its corner where an app icon would
 // otherwise hide it. A row with a sliding ActiveCellIndicator draws its
 // cells twice, the boxes (`part: "background"`) under the indicator and
 // the labels (`"content"`) over it. As a segment of the bar's run (the
@@ -26,7 +27,7 @@ Item {
   required property var barConfig
   // How its widget's cells draw on this bar or popout
   required property CellLook cellLook
-  // BarsConfig.cellColors for its state (CellLook.colorsOf)
+  // BarsConfig.cellColors for its state (CellLook.workspaceColorsOf)
   required property var look
   required property bool isActive
   // Across the bar, and along it (`restLength` when not widened)
@@ -78,14 +79,22 @@ Item {
   readonly property real _shift: _tailed ? tailShift : 0
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
-  // A window on it asks for attention (its `look` is the urgent one)
+  // A window on it asks for attention (its `look` is the urgent one at rest)
   property bool urgent: false
-  // The urgent fade's opacity (UrgentPulse.value), 1 while still
-  property real pulse: 1
-  // The corner dot an urgent cell with neither box nor line shows over
-  // an app icon
-  property color urgentColor: "transparent"
-  readonly property real _pulse: urgent && !isActive ? pulse : 1
+  // Its look pulses (UrgentPulse): from `look` toward `mutedLook` by `pulse`,
+  // each frame, not gliding
+  property bool pulsing: false
+  // Its muted self (set only while it pulses) and how far toward it (0-1)
+  property var mutedLook: null
+  property real pulse: 0
+  // What each part mixes per frame while it pulses: the fields it draws
+  // (null: all of them)
+  readonly property var _mixKeys: root.part === "content" ? ["content", "back"] : root.part === "background" ? ["fill", "stroke", "indicator", "hover", "gradient"] : null
+  // Its look as shown: the pulse mix while pulsing, else `look`
+  readonly property var _shown: root.pulsing && root.mutedLook !== null && root.pulse > 0 ? root._mixed() : root.look
+  // Its slice of the bar's gradient for the part `look.gradient` names
+  // (CellLook.sliceOf), or null
+  property var slice: null
   property bool clickable: true
   // Off until its inputs have settled (a popout's payload lands after
   // creation), so it doesn't animate from fallbacks
@@ -96,19 +105,25 @@ Item {
   // "all", or only its box and underline ("background") or its label, dot
   // or icon and pointer area ("content")
   property string part: "all"
-  // Its box in the hover color (or, with "Fill on hover", filled: its
-  // `look` passes it to BarsConfig.cellColors): when hovered, or for a
-  // background layer, when its content layer is
+  // Its box in the look's hover color (`look.hover`; or, with "Fill on
+  // hover", filled: its `look` passes it to BarsConfig.cellColors): when
+  // hovered, or for a background layer, when its content layer is
   property bool lit: hovered
-  // Its box while lit
-  property color hoverColor: cellLook.hoverColor
   readonly property bool _drawsBox: part !== "content"
   readonly property bool _drawsContent: part !== "background"
   // Its box while the indicator stands for it stays at rest under the
   // indicator, unless its tint would show through
   readonly property bool _clearActive: root.isActive && root.indicated && root.cellLook.clearsActive
+  // Its look as its box draws it: cleared under the indicator
+  readonly property var _drawn: root._clearActive ? root.cellLook.cleared(root._shown) : root._shown
 
   signal clicked
+
+  // `look` mixed toward `mutedLook` by `pulse`, in the fields this part draws
+  function _mixed() {
+    const mixed = root.cellLook.pulsed(root.look, root.mutedLook, root.pulse, root._mixKeys);
+    return root._mixKeys === null ? mixed : Object.assign({}, root.look, mixed);
+  }
 
   readonly property bool isVertical: barConfig.vertical
   // A box of its own (in a merged run, which draws its box, only where it
@@ -128,7 +143,7 @@ Item {
 
   // Its box (BarCells.cellBox) and the look's line. Lit, in the hover
   // color, unless its look is filled for the hover already ("Fill on
-  // hover": BarWidgetStyle.cell's showsHover)
+  // hover": the core's cell() `showsHover`)
   LookBox {
     readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
 
@@ -138,15 +153,16 @@ Item {
     reach: _box.reach
     strokeWidth: _box.strokeWidth
     strokeStyle: _box.strokeStyle
-    opacity: root._pulse
-    fill: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    stroke: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
-    line: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
-    animated: root.animated
+    fill: root.lit && !root.isActive && !root._shown.showsHover ? root._shown.hover : root._drawn.fill
+    stroke: root._drawn.stroke
+    line: root._drawn.indicator
+    fillSlice: !root._clearActive && root._shown.gradient?.part === "fill" ? root.slice : null
+    strokeSlice: !root._clearActive && root._shown.gradient?.part === "stroke" ? root.slice : null
+    lineSlice: !root._clearActive && root._shown.gradient?.part === "indicator" ? root.slice : null
+    animated: root.animated && !root.pulsing
   }
 
-  // What it shows, fading with an urgent one's pulse where nothing else
-  // carries its state, centred clear of its caps
+  // What it shows, centred clear of its caps
   Item {
     readonly property real _lead: root.room?.lead ?? 0
     readonly property real _trail: root.room?.trail ?? 0
@@ -157,7 +173,6 @@ Item {
     anchors.topMargin: root.isVertical ? _lead : 0
     anchors.bottomMargin: root.isVertical ? _trail : 0
     visible: root._drawsContent
-    opacity: root._framed ? 1 : root._pulse
 
     // A dot (a pill when widened), smaller inside a box
     Rectangle {
@@ -169,10 +184,10 @@ Item {
       width: root.isVertical ? size : along
       height: root.isVertical ? along : size
       radius: size / 2
-      color: root.look.content
+      color: root._shown.content
 
       ColorGlide on color {
-        enabled: root.animated
+        enabled: root.animated && !root.pulsing
       }
     }
 
@@ -183,7 +198,7 @@ Item {
       visible: root._shows === "glyph"
       text: root.glyph
       font.pixelSize: root.barConfig.fontSize * 1.2
-      color: root.look.content
+      color: root._shown.content
     }
 
     // A label of one's own or a name: an icon at the glyph's size, text at
@@ -223,11 +238,11 @@ Item {
         text: root.leadIcon
         textFamily: leadLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
         textSize: leadLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
-        textColor: root.look.content
+        textColor: root._shown.content
         font.bold: !leadLabel.symbol && root.isActive && !root.boxed
 
         ColorGlide on color {
-          enabled: root.animated
+          enabled: root.animated && !root.pulsing
         }
       }
 
@@ -248,11 +263,11 @@ Item {
         text: root.text
         textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
         textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
-        textColor: root.look.content
+        textColor: root._shown.content
         font.bold: !textLabel.symbol && root.isActive && !root.boxed
 
         ColorGlide on color {
-          enabled: root.animated
+          enabled: root.animated && !root.pulsing
         }
       }
     }
@@ -378,12 +393,12 @@ Item {
       anchors.centerIn: parent
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
-      textColor: root.look.content
+      textColor: root._shown.content
       textSize: root.barConfig.fontSize - 1
       font.bold: root.isActive && !root.boxed
 
       ColorGlide on color {
-        enabled: root.animated
+        enabled: root.animated && !root.pulsing
       }
     }
 
@@ -397,7 +412,7 @@ Item {
       width: size
       height: size
       radius: size / 2
-      color: root.urgentColor
+      color: root._shown.content
     }
   }
 

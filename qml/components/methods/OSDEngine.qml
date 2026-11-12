@@ -576,7 +576,7 @@ QtObject {
   // Whether `osd` shows `type`'s change as its card the moment it comes:
   // enabled, its cards on, and the system listed with its cards on and
   // not quiet (a quiet one never opens it). With `key` (the event's: a
-  // low battery's `battery`), an item whose `tiles` setting picks the
+  // low battery's `battery`), an item whose `shows` setting picks the
   // keys it shows (Audio's, Battery's) must pick it. Where none does, an
   // event is a notification instead (cardRoute)
   function opensCard(osd, type, key) {
@@ -585,7 +585,7 @@ QtObject {
     const item = root.itemOf(osd, type);
     if (item === null || item.card === false || item.quiet === true)
       return false;
-    return !key || !Array.isArray(item.tiles) || item.tiles.includes(key);
+    return !key || !Array.isArray(item.shows) || item.shows.includes(key);
   }
 
   // Where an event of `type` (a system: a drive's, the battery's, a

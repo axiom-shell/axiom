@@ -2,6 +2,7 @@ label: Spacer
 keywords: ['Space', 'Gap']
 icon: space_bar
 group: Look & layout
+order: [minGap]
 settings:
   minGap:
     type: integer
@@ -10,4 +11,4 @@ settings:
     minimum: 0
     maximum: 500
     x-unit: px
-    description: Room it keeps when the bar is crowded (px).
+    description: Room it keeps when the bar is crowded.

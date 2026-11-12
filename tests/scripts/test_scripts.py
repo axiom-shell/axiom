@@ -83,6 +83,19 @@ def qml(body="", imports="", head="pragma ComponentBehavior: Bound", purpose="//
     return f"{head}\nimport QtQuick\n{imports}\n{purpose}\nItem {{\n    {body}\n}}\n"
 
 
+def widget(body):
+    return f"pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.components.bar.widgets.base\n// A fixture.\nBarWidget {{\n  {body}\n}}\n"
+
+
+def planted(path, line):
+    """The real file's text with `line` after its root's opening line, and
+    the number that line gets."""
+    text = (ROOT / path).read_text()
+    marker = "BarWidget {\n"
+    at = text.index(marker) + len(marker)
+    return text[:at] + line + text[at:], text.count("\n", 0, at) + 1
+
+
 def missed(out, fragments):
     """The fragments no line of a check's output contains."""
     return [f for f in fragments if not any(f in line for line in out.splitlines())]
@@ -301,8 +314,8 @@ class ConfigUsage(unittest.TestCase):
         self.assertIn("`barConfig.thickness`", read("Bars.items[].thickness"))
 
     def test_alias_of_a_section(self):
-        # `_look: ConfigManager.live.WindowLook` stands for that section
-        self.assertIn("WindowLook.surfaceBlur.throughWindows",
+        # `_c: ConfigManager.live.Appearance` stands for that section
+        self.assertIn("Appearance.surface.blur.throughWindows",
                       self.readers["Appearance"]["members"]["blurThroughWindows"]["paths"])
 
     def test_used_inside_the_reader(self):
@@ -327,6 +340,10 @@ class ConfigUsage(unittest.TestCase):
         usage = Usage()
         usage.files = {"a.qml": 'f(R.x, R.gone)\n/* R.prose */\nset("R.path", `R.tpl ${R.inTpl}`)'}
         self.assertEqual(usage.missing({"R": {"members": {"x": {}}}}), ["a.qml: R.gone", "a.qml: R.inTpl"])
+
+
+DEV_MODE, DEV_MODE_AT = planted("qml/components/bar/widgets/DevMode/DevMode.qml", "  property color planted: Theme.error\n")
+LOCK_KEYS, LOCK_KEYS_AT = planted("qml/components/bar/widgets/LockKeys/LockKeys.qml", "  opacity: .4\n")
 
 
 class CheckStructure(unittest.TestCase):
@@ -395,6 +412,20 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
+        # The bar widget template (check_structure.bar_widget_template): T2 and T3 are
+        # planted in copies of real widgets
+        ("qml/components/bar/widgets/Tone/Tone.qml", qml(), "Tone/Tone.qml: T1"),
+        ("qml/components/bar/widgets/DevMode/DevMode.qml", DEV_MODE, f"DevMode/DevMode.qml:{DEV_MODE_AT}: T2"),
+        ("qml/components/bar/widgets/LockKeys/LockKeys.qml", LOCK_KEYS, f"LockKeys/LockKeys.qml:{LOCK_KEYS_AT}: T3"),
+        ("qml/components/bar/widgets/Tfive/Tfive.qml", widget("colors: ({})"), "Tfive/Tfive.qml:6: T5"),
+        ("qml/components/bar/widgets/Button/Helper.qml", qml(), "Button/: T6"),
+        ("qml/components/bar/widgets/Tseven/Tseven.qml", widget("id: root\n  text: root.box"), "Tseven/Tseven.qml:7: T7"),
+        ("qml/components/bar/widgets/Ttwoa/Ttwoa.qml", widget("property var c: '#fff'"), "Ttwoa/Ttwoa.qml:6: T2"),
+        ("qml/components/bar/widgets/Ttwob/Ttwob.qml", widget('property var c: "red"'), "Ttwob/Ttwob.qml:6: T2"),
+        ("qml/components/bar/widgets/Ttwoc/Ttwoc.qml", widget("property var c: Qt.rgba (1, 0, 0, 1)"), "Ttwoc/Ttwoc.qml:6: T2"),
+        ("qml/components/bar/widgets/Tfiveb/Tfiveb.qml", widget("onClicked: pulse = 1"), "Tfiveb/Tfiveb.qml:6: T5"),
+        ("qml/components/bar/widgets/Tsevenb/Tsevenb.qml", widget("text: box"), "Tsevenb/Tsevenb.qml:6: T7"),
+        ("qml/components/bar/widgets/Teight/Teight.qml", widget('stateColorName: "error"'), "Teight/Teight.qml:6: T8"),
     ]
     # What the check must say about the schema and the allowlist edits below (and Reach)
     EDITS = [
@@ -410,6 +441,13 @@ class CheckStructure(unittest.TestCase):
         "qml/services/core/Gone.qml no longer uses Socket",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
+        "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
+        "Updates/Updates.qml:",
+        "T4 names failedColor, not a colour field of Updates",
+        "Button lists T8, which it no longer breaks",
+        "Spacer has no reason",
+        "Time names T9, not a rule",
+        "Weather lists fieldsReadIn, which supplies none of its otherwise-unused colour fields",
     ]
 
     def test_each_rule_fails(self):
@@ -425,11 +463,26 @@ class CheckStructure(unittest.TestCase):
                 s["x-showIf"] = {"/$supports.ghostCapability": True}
                 items = s["properties"]["Overlay"]["properties"]["items"]
                 items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
+                fields = defs["DevModeWidget"]["properties"]["properties"]["properties"]
+                fields["ghostColor"] = {"x-options": "colors"}
+                del defs["UpdatesWidget"]["properties"]["properties"]["properties"]["failedColor"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
+                "Button": {"reason": "planted", "rules": ["T8"]},
+                "Spacer": {"reason": "", "rules": ["T5"]},
+                "Time": {"reason": "planted", "rules": ["T9"]},
+                "Weather": {"reason": "planted", "rules": [], "fieldsReadIn": ["qml/config/BarsConfig.qml"]}}))
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
+
+    def test_live_tree_passes(self):
+        # The real widgets break no template rule, so each plant above is what fails
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            _, out = run_check(root, "check_structure.py")
+        self.assertEqual([line for line in out.splitlines() if ": T" in line or "bar-widget-exceptions" in line], [], out)
 
 
 class CheckI18n(unittest.TestCase):

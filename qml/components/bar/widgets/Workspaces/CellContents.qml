@@ -38,13 +38,12 @@ QtObject {
     return root.properties.relativeNumbers ? wsId - root.base + 1 : wsId;
   }
 
-  // What workspace `wsId`'s cell shows, `glyph` taking its place (the
-  // grid's arrow, or ""), app icons only with `withIcons`: { kind
+  // What workspace `wsId`'s cell shows, app icons only with `withIcons`: { kind
   // (WorkspaceCells.pick), text, plain (text drawn as words, not an
   // icon), lead (a label's icon before its text, or ""), leadPlain (that
   // icon drawn in the text font), icons (icon paths), number, length
   // (along the bar, at rest), occupied, urgent }
-  function of(wsId, glyph, withIcons) {
+  function of(wsId, withIcons) {
     const ws = CompositorManager.workspaces.find(w => w.id === wsId);
     const number = root.numberOf(wsId);
     // An entry names the number shown; where the compositor makes the
@@ -55,7 +54,7 @@ QtObject {
     // A label's text where it has one (its icon then leading it), else
     // its icon
     const label = WorkspaceCells.labelFor(root.properties.workspaceLabels, labelNumber);
-    const shown = WorkspaceCells.pick(glyph, label.text !== "" ? label.text : label.icon, icons, name);
+    const shown = WorkspaceCells.pick(label.text !== "" ? label.text : label.icon, icons, name);
     shown.written = shown.kind === "text" && label.text !== "";
     shown.lead = shown.written ? label.icon : "";
     return {

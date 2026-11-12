@@ -2,3 +2,4 @@ label: Caffeine
 icon: coffee
 group: Power
 tile: standard
+order: [tile, quiet]

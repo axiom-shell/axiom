@@ -97,3 +97,48 @@ func TestSwayLookGapsEdge(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+// SwayUnbinds are SwayUnbindLines' lines, each with the key it frees.
+func TestSwayUnbindsMatchUnbindLines(t *testing.T) {
+	t.Parallel()
+	tab := repoTables(t)
+	ctx := jsonx.Obj("shellCommand", "axiom")
+	binds := jsonx.Arr(
+		jsonx.Obj("key", "SUPER + S", "action", "launcherSearch", "argument", "x"),
+		jsonx.Obj("key", "SUPER + Return", "action", "closeWindow"),
+		jsonx.Obj("key", "SUPER + D", "action", "closeWindow", "release", true),
+		jsonx.Obj("key", "SUPER + mouse:272", "action", "mouseDrag"),
+		jsonx.Obj("key", "SUPER + mouse:273", "action", "mouseResize"),
+	)
+	entries := SwayConfigBinds("floating_modifier Mod1 inverse")
+	got := tab.SwayUnbinds(binds, ctx, entries)
+	lines := tab.SwayUnbindLines(binds, ctx, entries)
+	if len(got) != len(lines) || len(got) < 5 {
+		t.Fatalf("%d unbinds, %d lines: %v", len(got), len(lines), got)
+	}
+	keys := map[string]bool{}
+	for _, b := range binds.Items {
+		keys[KeyID(get(b, "key"))] = true
+	}
+	for i, u := range got {
+		if u.Line != lines[i] {
+			t.Errorf("line %d = %q, want %q", i, u.Line, lines[i])
+		}
+		if i < len(got)-1 && !keys[u.Key] {
+			t.Errorf("%q frees key %q, not one of the binds'", u.Line, u.Key)
+		}
+	}
+	if last := got[len(got)-1]; last.Key != "" || last.Line != "floating_modifier Mod1 inverse" {
+		t.Errorf("last = %+v, want the floating restore", last)
+	}
+}
+
+func TestSwayFloatingRestore(t *testing.T) {
+	t.Parallel()
+	if got := SwayFloatingRestore(SwayConfigBinds("bindsym Mod4+x exec true")); got != "floating_modifier none" {
+		t.Errorf("none: %q", got)
+	}
+	if got := SwayFloatingRestore(SwayConfigBinds("floating_modifier Mod1\nfloating_modifier Mod5 normal")); got != "floating_modifier Mod5 normal" {
+		t.Errorf("last wins: %q", got)
+	}
+}

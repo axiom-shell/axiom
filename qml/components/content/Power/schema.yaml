@@ -8,7 +8,7 @@ lockActions: [session]
 settings:
   actions:
     type: array
-    title: Buttons
+    title: Actions
     items: {type: string, enum: [suspend, hibernate, reboot, poweroff]}
     x-ordered: true
     x-enumLabels: {suspend: Suspend, hibernate: Hibernate, reboot: Restart, poweroff: Shut down}

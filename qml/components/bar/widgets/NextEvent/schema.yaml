@@ -9,6 +9,7 @@ appearance:
     enum: [label, icon, fill, ticker, stacked]
     description: Fill shows an ongoing event's progress; stacked puts the time over the title.
 colors: standard
+order: [appearance, showAllDay, maxLength, lookahead, popout, backgroundColor, foregroundColor, soonColor]
 settings:
   lookahead:
     type: integer
@@ -17,17 +18,18 @@ settings:
     default: 43200000
     minimum: 900000
     maximum: 604800000
-    description: Show the next event starting within this time. Hidden when there's none.
+    multipleOf: 60000
+    description: Hidden when nothing starts within this time.
   showAllDay:
     type: boolean
     title: All-day events
     default: false
-    description: Count all-day events as the next event.
   maxLength:
     type: integer
-    x-control: stepper
     title: Title length
     default: 24
     minimum: 4
     maximum: 100
-    description: In characters.
+    x-unit: chars
+    x-showIf: {appearance.style: [label, fill, ticker, stacked]}
+  soonColor: {$ref: '#/definitions/WidgetColor', title: Soon color, x-autoColor: warning, description: An event starting within 15 minutes.}

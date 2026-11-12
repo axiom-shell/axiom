@@ -2,23 +2,22 @@ label: Keyboard layout
 link: {setting: Input}
 icon: keyboard
 group: System
-popout: {variant: own, enabled: {description: List the input sources on hover; a click picks one.}}
+popout: {variant: own, enabled: {description: Input sources; a click picks one.}}
 colors: standard
+order: [showIcon, format, hideSingle, popout, backgroundColor, foregroundColor]
 settings:
   format:
     type: string
-    title: Format
+    title: Layout name
     default: short
     x-control: toggle
     enum: [short, full]
-    x-enumLabels: {short: Short, full: Full name}
-    description: A layout's code (DE) or full name (German).
+    x-enumLabels: {short: Code, full: Name}
   showIcon:
     type: boolean
-    title: Show icon
+    title: Icon
     default: true
   hideSingle:
     type: boolean
-    title: Hide single layout
+    title: Hide with one layout
     default: false
-    description: Hide when there's only one input source.

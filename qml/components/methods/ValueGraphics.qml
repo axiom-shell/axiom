@@ -4,7 +4,7 @@ import QtQuick
 // A bar widget's display-style graphic (ValueGraphic,
 // docs/dev/bar/display-styles.md): the style it draws as, and its extent
 // across the bar, from config, for the room at a run's end
-// (BarIconWidget.contentAcross)
+// (BarWidget.contentAcross)
 QtObject {
   id: root
 

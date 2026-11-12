@@ -343,20 +343,20 @@ input {
             variant ",neo"
             options ""
         }
+        numlock true
         repeat-rate 50
         repeat-delay 300
-        numlock true
     }
     mouse {
         accel-profile "flat"
         accel-speed 0.0
     }
     touchpad {
-        tap
-        dwt
-        scroll-factor 0.99
         accel-profile "adaptive"
         accel-speed 0.25
+        scroll-factor 0.99
+        tap
+        dwt
     }
 }
 cursor {

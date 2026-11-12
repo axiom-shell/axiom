@@ -6,12 +6,20 @@ title: Claude usage
 description: The Claude Code logins the usage widgets report on.
 additionalProperties: false
 properties:
+  interval:
+    type: integer
+    title: Interval
+    x-unit: min
+    default: 300000
+    minimum: 120000
+    maximum: 3600000
+    multipleOf: 60000
   items:
     type: array
     title: Accounts
     default:
       - {id: personal, label: Personal, configDir: '~/.claude'}
-    description: One per Claude Code login, by its CLAUDE_CONFIG_DIR (~/.claude when unset).
+    description: One per Claude Code login.
     items:
       type: object
       additionalProperties: false
@@ -22,12 +30,5 @@ properties:
           title: Label
           default: ''
           description: Its first letter tells accounts apart on the bar.
-        configDir: {type: string, title: Config directory, x-control: folder, default: '~/.claude'}
+        configDir: {type: string, title: Config folder, x-control: folder, default: '~/.claude', description: 'Empty: ~/.claude.'}
       required: [id]
-  interval:
-    type: integer
-    title: Check interval
-    x-unit: min
-    default: 300000
-    minimum: 120000
-    maximum: 3600000

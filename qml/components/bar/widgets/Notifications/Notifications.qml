@@ -5,15 +5,14 @@ import QtQuick
 import qs.config
 import qs.services.system
 import qs.services.ui
-import qs.components.reusable
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
-// The notification bell: a badge with the count (or the count or the
-// newest alert's app as its label), the do-not-disturb icon
-// while it's on. Click toggles do-not-disturb, middle click clears every
-// notification; hovering opens the notification list.
-BarIconWidget {
+// The notification bell: a count badge on the icon's corner (the base's, a
+// ring on a fill) or the count / newest alert's app as the label; the
+// do-not-disturb icon while it's on. Click toggles do-not-disturb, middle
+// click clears every notification; hovering opens the notification list.
+BarWidget {
   id: root
 
   icon: NotificationManager.dnd ? "notifications_off" : "notifications"
@@ -23,7 +22,7 @@ BarIconWidget {
   showText: labelKind !== "none" && text !== ""
   minimumText: labelKind === "count" ? "00" : ""
   textFormat: Text.PlainText
-  iconColor: NotificationManager.dnd ? Theme.resolveColor(properties.dndColor) : colors.icon
+  iconField: NotificationManager.dnd ? "dndColor" : ""
 
   // News: the unread count rose, with do-not-disturb off
   attentionLevel: NotificationManager.count
@@ -41,19 +40,10 @@ BarIconWidget {
     }
   }
 
-  // On the icon's top-right corner, which on a narrow bar reaches past
-  // the widget's box: drawn in its host (where the widget sits at 0, 0),
-  // as the widget clips to its box (BaseWidget)
-  CountBadge {
-    parent: root.parent
-    shown: root.properties.showCount && root.labelKind !== "count" && NotificationManager.count > 0
-    x: Math.round(root.iconRect.x + root.iconRect.width - width / 2)
-    y: 1
-    color: Theme.resolveColor(root.properties.badgeColor)
-    text: NotificationManager.countLabel
-    // The bar's own text size, not the Interface scale
-    textSize: Math.round(root.fontSize * 0.7)
-  }
+  badge: root.properties.showCount && root.labelKind !== "count" && NotificationManager.count > 0 ? ({
+      "text": NotificationManager.countLabel,
+      "field": "badgeColor"
+    }) : null
 
   PopoutAnchor {
     hitArea: root.hitArea

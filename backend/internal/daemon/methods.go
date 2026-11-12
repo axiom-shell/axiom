@@ -52,6 +52,8 @@ const (
 	topicInputMethod = "inputMethod"
 	// filesearch.state
 	topicFileSearch = "fileSearch"
+	// footprint.changed
+	topicFootprint = "footprint"
 )
 
 // Pushes, each declared once with the type of its params and sent to the
@@ -95,6 +97,10 @@ var (
 	pushBluetoothEvent        = rpc.Push[bluez.Event]{Method: "bluetooth.event"}
 
 	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
+
+	// The footprint ledger changed (a row recorded, applied or undone):
+	// the rows are asked for again (footprint.list)
+	pushFootprintChanged = rpc.Push[struct{}]{Method: "footprint.changed", Latest: true}
 
 	pushCameraState = rpc.Push[camera.State]{Method: "camera.state", Latest: true}
 
@@ -177,6 +183,15 @@ func fromShell(c *rpc.Conn) bool {
 	return s != nil && s.Client == "shell"
 }
 
+// shellOnly refuses a call that isn't the shell's (what stops or restarts
+// the session's processes).
+func shellOnly(c *rpc.Conn) error {
+	if !fromShell(c) {
+		return axerr.New(axerr.Refused, "only the shell stops the session's processes")
+	}
+	return nil
+}
+
 // subscribedTo keeps the connections that asked for topic.
 func subscribedTo(topic string) func(*rpc.Conn) bool {
 	return func(c *rpc.Conn) bool {
@@ -231,10 +246,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare, topicFileSearch:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare, topicFileSearch, topicFootprint:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare, fileSearch)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare, fileSearch, footprint)", t)
 		}
 	}
 	return false, topics, nil

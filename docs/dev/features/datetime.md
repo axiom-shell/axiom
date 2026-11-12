@@ -1,10 +1,10 @@
 # Date and time
 
-> **Files:** `backend/internal/timedate/`, `backend/internal/daemon/machine.go`, `qml/services/system/DateTimeManager.qml`, `qml/components/views/Settings/DateTimeStatusCard.qml`, `qml/config/DateTimeConfig.qml`, `qml/config/I18n.qml`, `qml/components/methods/DateFormats.qml`
+> **Files:** `backend/internal/timedate/`, `backend/internal/daemon/machine.go`, `qml/services/system/DateTimeManager.qml`, `qml/components/views/Settings/DateTimeStatus.qml`, `qml/config/DateTimeConfig.qml`, `qml/config/I18n.qml`, `qml/components/methods/DateFormats.qml`
 > **Config:** `DateTime.*` (reader `DateTimeConfig`); the machine's time zone, network time and clock are timedated's, not config
 > **Related:** [Clocks and time zones](clock-timezones.md), [i18n](../core/i18n.md), [System info](system-info.md), [Polkit](polkit.md), [Testing](../testing.md) › Machine settings
 
-Settings › System › Date & time: the machine's clock (its first card, `DateTimeStatusCard`) and how every time and date in the shell reads (the section's fields). Tests: `tst_DateFormats`, `backend/internal/timedate`'s Go tests.
+Settings › System › Date & time: the machine's clock (`DateTimeStatus`, the top of the one Date & time card, its status in the header) and how every time and date in the shell reads (the section's fields). Tests: `tst_DateFormats`, `backend/internal/timedate`'s Go tests.
 
 ### The machine's clock (`datetime.*`)
 - `timedate.Clock` talks to systemd-timedated on the system bus: `datetime.get` reads `Timezone`, `LocalRTC`, `CanNTP`, `NTP` and `NTPSynchronized` (`available` false without timedated: no systemd, no bus); `datetime.setTimezone`, `setNtp` and `setTime` (ms since the epoch) answer the state after the change.

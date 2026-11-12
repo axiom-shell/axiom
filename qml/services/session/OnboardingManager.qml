@@ -5,8 +5,10 @@ import QtQuick
 import Quickshell
 
 import qs.config
+import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 import qs.services.ui
 
 /*
@@ -20,13 +22,17 @@ import qs.services.ui
  * ui/onboarding.json (Paths.statePath) keeps { completedVersion, step }. Existing
  * setups (a config, no state file) are never prompted. IPC `onboarding`
  * (open, close, reset) and the launcher's /welcome run it again.
+ *
+ * In detached mode it also nudges, once per qs launch, toward Included or
+ * Managed (a notification: DetachedNudge): right after the onboarder ends
+ * on detached, and at every launch while detached.
  * Created from shell.qml's `_services`.
  */
 Singleton {
   id: root
 
   // Bump when the onboarding gains a page worth showing to existing users
-  readonly property int version: 1
+  readonly property int version: 2
 
   // The pages, in order: { id, title, icon }
   // I18n.tr("Welcome") I18n.tr("Compositor") I18n.tr("Monitors") I18n.tr("Apps & keys")
@@ -201,15 +207,19 @@ Singleton {
 
   // Applies the compositor mode (which may take over its config) and closes
   function finish() {
-    if (pages.some(page => page.id === "compositor") && compositorSupported && modeAllowed && chosenMode !== CompositorConfig.mode)
+    if (pages.some(page => page.id === "compositor") && compositorSupported && modeAllowed && chosenMode !== CompositorConfig.mode) {
       SettingsManager.commitValues({
         "Compositor.mode": chosenMode
       });
+      // Picked just now: the config reads detached until the daemon answers
+      _run.nudged = true;
+    }
     close();
   }
 
   // Closes for good (until /welcome): finishing and skipping alike
   function close() {
+    _run.closedOnce = true;
     _run.shown = false;
     _run.step = 0;
     _run.chosenMode = "";
@@ -238,13 +248,49 @@ Singleton {
 
   property var _saved: ({})
 
-  // Survives hot reloads (a theme, config or compositor change mid-way)
+  // Survives hot reloads (a theme, config or compositor change mid-way);
+  // nudged resets with a qs start, which is what "every launch" means
   PersistentProperties {
     id: _run
     reloadableId: "axiomOnboarding"
     property bool shown: false
     property int step: 0
     property string chosenMode: ""
+    property bool nudged: false
+    property bool closedOnce: false
+  }
+
+  // --- The detached nudge ---
+
+  readonly property bool _nudgeDue: BackendManager.ready && DetachedNudge.shouldNudge({
+    "mode": CompositorConfig.mode,
+    "supported": CompositorManager.supports.configModes === true,
+    "onboardingShown": root.shown,
+    "greeter": Paths.greeter,
+    "nudged": _run.nudged,
+    // The hello says a first run before ConfigManager does and the onboarder
+    // opens: not until it has been closed once
+    "firstRunPending": BackendManager.hello?.state?.firstRun === true && !_run.closedOnce
+  })
+  on_NudgeDueChanged: if (_nudgeDue)
+    _nudge()
+
+  function _nudge() {
+    _run.nudged = true;
+    NotificationManager.sendNotification("axiom", I18n.tr("You're in detached mode!"), I18n.tr("Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed."), {
+      "icon": "dialog-information",
+      "actions": [
+        {
+          "id": "setup",
+          "label": I18n.tr("Set up")
+        },
+        {
+          "id": "later",
+          "label": I18n.tr("Not now")
+        }
+      ],
+      "onAction": id => id === "setup" && SettingsManager.openSetting("Compositor.mode")
+    });
   }
 
   // The compositor's example config on a first run: no fractional scales
@@ -273,6 +319,8 @@ Singleton {
     } else if (_run.shown) {
       root.detectCompositor();
     }
+    if (root._nudgeDue)
+      root._nudge();
   }
 
   IpcTarget {

@@ -51,7 +51,7 @@ WorkspacePopoutPanel {
         readonly property bool isActive: wsId === root.activeId
         // What its cell shows, as on the bar, less app icons: its windows
         // follow it
-        readonly property var shows: contents.of(wsId, "", false)
+        readonly property var shows: contents.of(wsId, false)
         readonly property bool _text: shows.kind === "text" || shows.kind === "name"
 
         rows: root.vertical ? 2 : 1
@@ -64,11 +64,16 @@ WorkspacePopoutPanel {
           cellLook: root.cellLook
           isActive: line.isActive
           // Every workspace shown has windows or is the active one
-          look: root.cellLook.workspaceColorsOf(root, line.isActive, true, line.shows.urgent, {
+          look: root.cellLook.workspaceColorsOf(line.isActive, true, line.shows.urgent, {
             "hovered": stripCell.lit
           })
           urgent: line.shows.urgent
-          pulse: root.pulse.value
+          pulsing: line.shows.urgent && !line.isActive && root.pulse.pulsing
+          pulse: pulsing ? root.pulse.value : 0
+          mutedLook: pulsing ? root.cellLook.workspaceColorsOf(false, true, true, {
+            "hovered": stripCell.lit,
+            "muted": true
+          }) : null
           thickness: root.cellSize
           length: line._text ? line.shows.length : root.cellLength
           labels: root.properties.labels
@@ -88,9 +93,6 @@ WorkspacePopoutPanel {
           workspaceId: line.wsId
           stripVertical: root.stripVertical
           isVertical: root.vertical
-          activeColor: root.activeColor
-          occupiedColor: root.occupiedColor
-          textColor: root.textColor
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
         }

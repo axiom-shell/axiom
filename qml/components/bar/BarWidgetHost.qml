@@ -6,24 +6,20 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.bar.look
 // Imported (though widgets load by URL) so qs scans what they import and
-// the folders whose files see each other (scripts/check_structure.py)
+// the folders whose files see each other (scripts/check_structure.py), and
+// its modules' type (BarWidget)
 import qs.components.bar.widgets.base // qmllint disable unused-imports
 import qs.components.bar.widgets.Workspaces // qmllint disable unused-imports
 import qs.components.hosts.popout
 
-// Hosts one bar module and turns its sizing contract into the numbers the
-// bar layout works with. A module may declare any of these on its root item:
-//
-//   sizePolicy:    "content" (default) - exactly its implicit size
-//                  "fixed"             - exactly preferredSize, whatever it shows
-// A type marked `x-elastic` in its schema is "elastic" instead: its
-// implicit size capped at preferredSize, shrinking towards minimumSize
-// when crowded (BarsConfig.isElastic, the one place it's stated).
-//   preferredSize: main-axis size (fixed: the size; elastic: the cap)
-//   minimumSize:   smallest main-axis size an elastic module accepts
-// Its priority (when a section can't fit even the minimum sizes, the
-// lowest-priority modules are hidden first) is its type's (`x-priority`,
-// default 0: `defaultPriority`)
+// Hosts one bar module (a BarWidget) and turns its sizing contract into the
+// numbers the bar layout works with: its `sizePolicy`, `preferredSize` and
+// `minimumSize` (BarWidget.sizePolicy). A type marked `x-elastic` in its
+// schema is "elastic" instead: its implicit size capped at preferredSize,
+// shrinking towards minimumSize when crowded (BarsConfig.isElastic, the one
+// place it's stated). Its priority (when a section can't fit even the
+// minimum sizes, the lowest-priority modules are hidden first) is its
+// type's (`x-priority`, default 0: `defaultPriority`)
 //
 // The widget's `layout` config (`layoutOverrides`: priority, and on an
 // elastic module minSize and maxSize, its cap) wins over the module's own
@@ -63,16 +59,16 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
 
-  readonly property var _item: contentLoader.item
+  readonly property BarWidget _item: contentLoader.item as BarWidget
   // What WidgetGroup draws under the module: its colors on this bar
-  // (BarsConfig.widgetColors), or null when it has no background
-  readonly property bool hasBackground: _item?.hasBackground ?? false
-  readonly property var background: hasBackground ? _item.colors : null
+  // (WidgetLook's drawnColors), or null when it has no background
+  readonly property bool hasBackground: _item ? _item.hasBackground : false
+  readonly property var background: hasBackground ? _item.drawnColors : null
   // It draws its own parts as segments of the bar's run (BarWidget's
   // `segmented`), and its place there (set by WidgetGroup: { sized, drawn,
   // tabLimits }), which its module gets with how far its parts reach past
   // it across (BarWidget.runPlace)
-  readonly property bool segments: hasBackground && (_item?.segmented ?? false)
+  readonly property bool segments: hasBackground && _item.segmented
   property var runPlace: null
   // Its run place as the module sees it: how far its parts reach past it
   // across, a tab's from the background's near side (in from the outer
@@ -81,41 +77,42 @@ Item {
     "reachStart": _tabShift + _reach.near,
     "reachEnd": _reach.far - _tabShift
   }) : null
-  // The module's own fade, which its background follows: its `dim` when
-  // it has one (a press fades only its content; the background shows it
-  // by `pressed`, as a fade would let a powerline neighbour's square start
-  // show through), else its opacity
-  readonly property real contentOpacity: _item ? ("dim" in _item ? _item.dim : _item.opacity) : 1
-  readonly property bool pressed: _item?.pressed ?? false
   // A level filling its background's shape (the module's `backgroundLevel`), -1 none
-  readonly property real backgroundLevel: _item?.backgroundLevel ?? -1
-  readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
+  readonly property real backgroundLevel: _item ? _item.backgroundLevel : -1
+  readonly property color backgroundLevelColor: _item ? _item.backgroundLevelColor : "transparent"
   // A split bar's widget showing its icon part and label apart
-  // (IconTextWidget.splits): along it, the middle of the gap between them
-  // (`at`), and what the icon part holds (`part`), in its own coordinates;
+  // (IconTextRow.splits): along it, the middle of the gap between them
+  // (`at`), and what the icon part holds (`part`), in its own coordinates,
+  // and `inner`, the same for the parts after it (BarWidget.innerSplits);
   // null otherwise
   readonly property var split: {
-    if (!(_item?.splits ?? false))
+    if (!_item || !_item.splits)
       return null;
     const part = _item.splitPart;
+    const shift = isVertical ? contentLoader.y : contentLoader.x;
     return {
-      "at": (isVertical ? contentLoader.y : contentLoader.x) + _item.splitAt,
-      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height)
+      "at": shift + _item.splitAt,
+      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height),
+      "inner": _item.innerSplits.map(s => ({
+            "from": shift + s.from,
+            "at": shift + s.at,
+            "part": Qt.rect(contentLoader.x + s.part.x, contentLoader.y + s.part.y, s.part.width, s.part.height)
+          }))
     };
   }
   // A divider of its own (Separator): the group draws none beside it
-  readonly property bool divides: _item?.divides ?? false
+  readonly property bool divides: _item ? _item.divides : false
   // Room that takes the free space on its side of the bar (Spacer): it
   // keeps its preferredSize at least (BarLayout.allocate)
-  readonly property bool fills: _item?.fills ?? false
+  readonly property bool fills: _item ? _item.fills : false
   // Hovered, on a module that shows an outline then (its hoverOutline)
-  readonly property bool outlined: (_item?.hoverOutline ?? false) && (_item?.hovered ?? false)
+  readonly property bool outlined: _item !== null && _item.hoverOutline && _item.hovered
   // Its content's extent across the bar, in px: the module's
-  // `contentAcross` (BarWidget's, BarIconWidget's: from config, never
+  // `contentAcross` (BarWidget's: from config, never
   // measured from the live item, so it can't feed back into the layout).
   // A module declaring none is taken to fill the bar's thickness. Its
   // caps' room is kept clear of content that tall (BarRuns.insets).
-  readonly property real contentAcross: _item?.contentAcross ?? barConfig.thickness
+  readonly property real contentAcross: _item ? _item.contentAcross : barConfig.thickness
   // Room along the bar kept clear of its background's caps, at its start
   // and end (set by WidgetGroup): added to its sizes, the module inside
   property real leadInset: 0
@@ -142,19 +139,19 @@ Item {
   // elide its label
   readonly property real _insets: naturalSize > 0 ? Math.ceil(leadInset + trailInset) : 0
   readonly property real naturalSize: _item ? Math.ceil(isVertical ? _item.implicitHeight : _item.implicitWidth) : 0
-  readonly property string sizePolicy: BarsConfig.isElastic(root.widget.type ?? "") ? "elastic" : _item?.sizePolicy ?? "content"
+  readonly property string sizePolicy: BarsConfig.isElastic(root.widget.type ?? "") ? "elastic" : _item ? _item.sizePolicy : "content"
 
   // The module's own sizes, then with the insets
   readonly property real _preferred: {
     if (sizePolicy === "fixed")
-      return _item?.preferredSize ?? naturalSize;
+      return _item ? _item.preferredSize : naturalSize;
     if (sizePolicy === "elastic")
-      return Math.min(naturalSize, layoutOverrides?.maxSize ?? _item?.preferredSize ?? naturalSize);
+      return Math.min(naturalSize, layoutOverrides?.maxSize ?? (_item && _item.preferredSize >= 0 ? _item.preferredSize : naturalSize));
     return naturalSize;
   }
   readonly property real preferredSize: _preferred + _insets
   readonly property real minimumSize: {
-    const min = sizePolicy === "elastic" ? layoutOverrides?.minSize ?? _item?.minimumSize : undefined;
+    const min = sizePolicy === "elastic" ? layoutOverrides?.minSize ?? (_item ? _item.minimumSize : undefined) : undefined;
     return (min === undefined ? _preferred : Math.min(min, _preferred)) + _insets;
   }
   // Its type's own priority (BarsConfig.defaultPriority, the schema's
@@ -335,35 +332,35 @@ Item {
     Loader {
       id: contentLoader
       readonly property real length: Math.max(0, root.mainSize - root.leadInset - root.trailInset)
-      readonly property real start: (root._item?.pinStart ? 0 : Math.round((root._drawnMain - root.mainSize) / 2)) + root.leadInset
+      readonly property real start: (root._item && root._item.pinStart ? 0 : Math.round((root._drawnMain - root.mainSize) / 2)) + root.leadInset
       x: root.isVertical ? root._tabShift : start
       y: root.isVertical ? start : root._tabShift
       width: root.isVertical ? root.width : length
       height: root.isVertical ? length : root.height
       onLoaded: {
-        if (item) {
-          item.barConfig = Qt.binding(() => root.barConfig);
-          item.panel = Qt.binding(() => root.panel);
-          item.screen = Qt.binding(() => root.screen);
-          // Where it sits along the bar, for the bar's gradient: its
-          // module starts past its lead inset (at rest)
-          root._item.barOffset = Qt.binding(() => root.barStart + root.leadInset);
-          root._item.barLength = Qt.binding(() => root.barLength);
-          if ("hitArea" in item)
-            item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
-          if ("runPlace" in item)
-            root._item.runPlace = Qt.binding(() => root._moduleRun);
+        const w = item as BarWidget;
+        if (!w) {
+          console.warn(`BarWidgetHost: ${root._type} isn't a BarWidget`);
+          return;
         }
+        w.barConfig = Qt.binding(() => root.barConfig);
+        w.panel = Qt.binding(() => root.panel);
+        w.screen = Qt.binding(() => root.screen);
+        // Where it sits along the bar, for the bar's gradient: its
+        // module starts past its lead inset (at rest)
+        w.barOffset = Qt.binding(() => root.barStart + root.leadInset);
+        w.barLength = Qt.binding(() => root.barLength);
+        w.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
+        w.runPlace = Qt.binding(() => root._moduleRun);
       }
     }
   }
 
-  // A module's news (BaseWidget.attention) shows its bar while hidden
+  // A module's news (BarWidget.attention) shows its bar while hidden
   // (an auto-hiding bar with revealOnActivity); a preview's goes nowhere
   Connections {
     target: root._item
     enabled: !root.preview
-    ignoreUnknownSignals: true
     function onAttention() {
       BarRevealManager.attention(root.barConfig.id);
     }
@@ -374,8 +371,8 @@ Item {
   ShapeOverlay {
     shown: root.editorOutlined && !root.hasBackground
     bar: root.barConfig
-    fill: Qt.alpha(Theme.accent, 0.15)
-    stroke: Theme.accent
+    fill: BarWidgetStyle.faded(root.barConfig.palette.highlight, 0.15)
+    stroke: root.barConfig.palette.highlight
     strokeWidth: 2
     glides: false
   }

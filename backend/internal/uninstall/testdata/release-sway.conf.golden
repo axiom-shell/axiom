@@ -1,0 +1,6 @@
+# Given back by axiom when it stopped managing sway: this file is yours now,
+# and axiom won't write it again. It includes
+# /nonexistent/home/.config/sway/user/, as axiom's managed one did.
+
+
+include /nonexistent/home/.config/sway/user/*

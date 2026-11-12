@@ -16,7 +16,7 @@ DragLayer {
   // The section under the pointer
   readonly property string hoverZone: root.hoverTarget?.zone ?? ""
 
-  readonly property string location: BarManager.selectedBar()?.location ?? "top"
+  readonly property string location: BarManager.selectedBar()?.edge ?? "top"
   // The bar runs down a side of the screen (its sections are then named
   // Top, Center, Bottom)
   readonly property bool barVertical: root.location === "left" || root.location === "right"

@@ -46,7 +46,7 @@ func writeFile(path string, data []byte, perm fs.FileMode) error {
 // writeWith is WriteFile's work, with what to write as fill and sync
 // whether to fsync.
 func writeWith(path string, perm fs.FileMode, sync bool, fill func(io.Writer) error) error {
-	target, err := resolve(path)
+	target, err := Resolve(path)
 	if err != nil {
 		return err
 	}
@@ -133,9 +133,9 @@ func replaceWith(target string, mode fs.FileMode, sync bool, fill func(io.Writer
 	return syncDir(dir)
 }
 
-// resolve follows a symlink at path to the file it names (relative links
+// Resolve follows a symlink at path to the file it names (relative links
 // from the link's directory); any other path is itself.
-func resolve(path string) (string, error) {
+func Resolve(path string) (string, error) {
 	info, err := os.Lstat(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return path, nil

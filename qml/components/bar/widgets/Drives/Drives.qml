@@ -10,7 +10,7 @@ import qs.components.bar.widgets.base
 // count, hidden with none (hideWhenEmpty). Hovering opens the Drives
 // popout; left click opens the first drive (mounting it first), middle
 // click ejects them all. Stacked: the count over how many are mounted.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   readonly property int count: DrivesManager.count

@@ -78,7 +78,7 @@ OnboardingPage {
 
   // --- Bar ---
 
-  // As saved (ScreenEdgeManager.bars turns `location` into an edge enum)
+  // As saved (ScreenEdgeManager.bars turns `edge` into an edge enum)
   readonly property var bar: BarsConfig.savedBars?.[0] ?? null
 
   function setBar(key, value) {
@@ -177,9 +177,9 @@ OnboardingPage {
         required property string modelData
         // I18n.tr("Top") I18n.tr("Bottom") I18n.tr("Left") I18n.tr("Right")
         text: I18n.tr(modelData[0].toUpperCase() + modelData.slice(1))
-        backgroundColor: root.bar?.location === modelData ? Theme.accent : Theme.backgroundHighlight
-        textColor: root.bar?.location === modelData ? Theme.background : Theme.foreground
-        onClicked: root.setBar("location", modelData)
+        backgroundColor: root.bar?.edge === modelData ? Theme.accent : Theme.backgroundHighlight
+        textColor: root.bar?.edge === modelData ? Theme.background : Theme.foreground
+        onClicked: root.setBar("edge", modelData)
       }
     }
   }

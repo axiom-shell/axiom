@@ -6,11 +6,11 @@ defaultSize: [4, 4]
 settings:
   showKeypad:
     type: boolean
-    title: Show the keypad
+    title: Keypad
     default: true
-    description: Shown when the card is tall enough.
+    description: Only when the card is tall enough.
   showHistory:
     type: boolean
-    title: Show the history
+    title: History
     default: true
-    description: Answers you copied or finished with =, when there's room.
+    description: Answers you copied or finished with =. Only when there is room.

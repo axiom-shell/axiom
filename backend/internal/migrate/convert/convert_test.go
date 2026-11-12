@@ -167,6 +167,12 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	detachedPlaceFields(converted)
 	detachedPlaceFields(defaults.(*jsonx.Object))
 	dropModuleKeys(defaults)
+	// The overlay pages' visible (ViewBase's default, true), filled at load
+	overlay, _ := defaults.(*jsonx.Object).Value("Overlay").(*jsonx.Object)
+	pages, _ := overlay.Value("items").(*jsonx.Array)
+	for _, page := range pages.Items {
+		page.(*jsonx.Object).Delete("visible")
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {
@@ -183,7 +189,7 @@ var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFil
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load (the Bars
 // section's style's: barStyleKeysAddedSinceV1)
-var addedSinceV1 = []string{"Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method", "Launcher.providers.files", "Workspaces.scratchpads"}
+var addedSinceV1 = []string{"Appearance.shape.innerRadius", "Updates.interval", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method", "Launcher.providers.files", "Workspaces.scratchpads", "WorkspaceOverlay.scratchpads", "WorkspaceOverlay.scratchpadColor"}
 
 // prefixed puts prefix before each of keys
 func prefixed(prefix string, keys []string) []string {

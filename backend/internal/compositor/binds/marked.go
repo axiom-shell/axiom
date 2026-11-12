@@ -18,7 +18,42 @@ const (
 	swayMark = "# (moved into axiom) "
 	// KDL's /- takes the whole node out, its block too
 	niriMark = "/* (moved into axiom) */ /-"
+	// Hyprland's: a line comment at each line of the call (the space after
+	// -- keeps a line from ever opening a long comment, --[[)
+	hyprMark = "-- (moved into axiom) "
 )
+
+// markLines puts mark at the start of each line of text
+func markLines(text, mark string) string {
+	var b strings.Builder
+	for _, l := range splitKeepEnds(text) {
+		b.WriteString(mark + l)
+	}
+	return b.String()
+}
+
+// UnmarkMoved takes the merge's marks out of text (a compositor config's
+// file of kind "sway", "niri" or "hyprland"), giving the binds back: the
+// inverse of what removing them did. Pure; any other kind is returned as it
+// is.
+func UnmarkMoved(kind, text string) string {
+	var cut func(string) string
+	switch kind {
+	case "sway":
+		cut = func(l string) string { return strings.TrimPrefix(l, swayMark) }
+	case "niri":
+		cut = func(l string) string { return strings.ReplaceAll(l, niriMark, "") }
+	case "hyprland":
+		cut = func(l string) string { return strings.TrimPrefix(l, hyprMark) }
+	default:
+		return text
+	}
+	var b strings.Builder
+	for _, l := range splitKeepEnds(text) {
+		b.WriteString(cut(l))
+	}
+	return b.String()
+}
 
 // removeMarked comments the sites' lines out (sway's, niri's): the mark at
 // the line's start, or at the bind's column (atCol), after a dated backup

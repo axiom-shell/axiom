@@ -4,19 +4,14 @@ keyboard: true
 icon: event_note
 group: Time & weather
 defaultSize: [4, 4]
+grow: standard
+order: [days, maxEvents, grow]
 settings:
-  grow:
-    type: integer
-    title: Grow by up to
-    default: 0
-    minimum: 0
-    maximum: 16
-    x-unit: rows
-    description: Extra rows it takes while its list needs them. 0 keeps its size.
   days:
     type: integer
     title: Days ahead
     default: 7
     minimum: 1
     maximum: 60
-  maxEvents: {type: integer, title: Most events, default: 20, minimum: 1, maximum: 100}
+    x-unit: days
+  maxEvents: {type: integer, title: Max events, default: 20, minimum: 1, maximum: 100}

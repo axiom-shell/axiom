@@ -7,8 +7,8 @@ import qs.components.content.base
 import qs.components.bar.look
 
 // The root of the Workspaces widget's popouts (WorkspaceStrips,
-// WorkspaceGrid): the widget's payload and the colours its cells take, as
-// the bar's row has them, and their urgent fade (`pulse`).
+// WorkspaceGrid): the widget's payload and its cells' look (CellLook: their
+// colours), and their urgent pulse (`pulse`).
 Panel {
   id: root
 
@@ -30,11 +30,6 @@ Panel {
   // The bar's, so the cells match its row
   property real radius: Widget.radius
 
-  readonly property color activeColor: Theme.resolveColor(root.properties.activeColor)
-  readonly property color occupiedColor: Theme.resolveColor(root.properties.occupiedColor)
-  readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor)
-  readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
-  readonly property color textColor: Theme.resolveColor(root.properties.textColor)
   // How its cells draw: as the bar's row, off the bar (no run), at the
   // bar's cell size and corners
   readonly property CellLook cellLook: CellLook {
@@ -51,7 +46,7 @@ Panel {
   // they've settled, or the opening cells fade in from the wrong color
   property bool _settled: false
 
-  // Every urgent cell's fade, in step
+  // Every urgent cell's pulse, in step
   readonly property UrgentPulse pulse: UrgentPulse {
     running: (root.properties.urgentPulse ?? false) && CompositorManager.workspaces.some(ws => ws.urgent)
   }

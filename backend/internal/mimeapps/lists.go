@@ -1,8 +1,10 @@
 package mimeapps
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
@@ -164,4 +166,81 @@ func contains(list []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func jsonUnmarshal(data []byte, v any) error { return json.Unmarshal(data, v) }
+
+// groupRange is the lines [start, end) of group's keys in lines (start is
+// the first line after its header), ok false when it isn't there.
+func groupRange(lines []string, group string) (start, end int, ok bool) {
+	start = -1
+	end = len(lines)
+	for i, line := range lines {
+		t := strings.TrimSpace(line)
+		if strings.HasPrefix(t, "[") {
+			if start >= 0 {
+				end = i
+				break
+			}
+			if strings.Trim(t, "[]") == group {
+				start = i + 1
+			}
+		}
+	}
+	return start, end, start >= 0
+}
+
+// listGroup says whether the text has the group.
+func listGroup(text, group string) (int, bool) {
+	start, _, ok := groupRange(linesOf(text), group)
+	return start, ok
+}
+
+// listValue is the value of mime's line in the group, as written.
+func listValue(text, group, mime string) (string, bool) {
+	lines := linesOf(text)
+	start, end, ok := groupRange(lines, group)
+	if !ok {
+		return "", false
+	}
+	for _, line := range lines[start:end] {
+		if k, v, found := strings.Cut(line, "="); found && strings.TrimSpace(k) == mime {
+			return v, true
+		}
+	}
+	return "", false
+}
+
+// setListValue sets mime's line in the group to value (nil: removes it),
+// and removes the group too when axiom made it (groupMade) and nothing but
+// blank lines is left in it, with the blank line before it. Every other
+// line stays.
+func setListValue(text, group, mime string, value *string, groupMade bool) string {
+	lines := linesOf(text)
+	start, end, ok := groupRange(lines, group)
+	if !ok {
+		return text
+	}
+	for i := start; i < end; i++ {
+		if k, _, found := strings.Cut(lines[i], "="); found && strings.TrimSpace(k) == mime {
+			if value != nil {
+				lines[i] = k + "=" + *value
+			} else {
+				lines = slices.Delete(lines, i, i+1)
+				end--
+			}
+			break
+		}
+	}
+	if groupMade && value == nil && !slices.ContainsFunc(lines[start:end], func(l string) bool { return strings.TrimSpace(l) != "" }) {
+		from := start - 1
+		if from > 0 && strings.TrimSpace(lines[from-1]) == "" {
+			from--
+		}
+		lines = slices.Delete(lines, from, end)
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	return strings.Join(lines, "\n") + "\n"
 }

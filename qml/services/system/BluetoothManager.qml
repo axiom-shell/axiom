@@ -248,7 +248,7 @@ QtObject {
   property var _levels: null
 
   function _checkLevels(devices) {
-    const step = DeviceBatteries.step(root._levels, devices, BluetoothConfig.lowBattery, BluetoothConfig.criticalBattery);
+    const step = DeviceBatteries.step(root._levels, devices, BluetoothConfig.lowThreshold, BluetoothConfig.criticalThreshold);
     root._levels = step.last;
     for (const drop of step.drops) {
       const d = devices.find(x => x.address === drop.address);

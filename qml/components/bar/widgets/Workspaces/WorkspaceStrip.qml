@@ -21,9 +21,6 @@ Item {
   property var screen
   // The widget's (BarWidget.hitArea), which its popout reads hover from
   property var hitArea: null
-  // Where a point of its active cell sits along the bar, for the bar's
-  // gradient (BarWidget.barSpotOf), or null
-  property var barSpotOf: null
   property var barConfig
   property var properties
   // How the widget's cells draw on this bar (Workspaces'): their size
@@ -35,12 +32,6 @@ Item {
   readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0) + (scratchpads.visible ? scratchpads.cells : 0)
 
   readonly property bool isVertical: barConfig.vertical
-
-  readonly property color activeColor: Theme.resolveColor(properties.activeColor)
-  readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
-  readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
-  readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
-  readonly property color textColor: Theme.resolveColor(properties.textColor)
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""
@@ -126,14 +117,8 @@ Item {
       base: root.base
       ids: root.ids
       activeId: root.activeId
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      urgentColor: root.urgentColor
-      emptyColor: root.emptyColor
-      textColor: root.textColor
       hitArea: root.hitArea
-      barSpotOf: root.barSpotOf
-      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
       chainCount: root._chainCells
     }
 
@@ -145,9 +130,6 @@ Item {
       stripDirection: root.stripDirection
       shownCount: root.ids.length
       windows: root.properties.stripWindows
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      textColor: root.textColor
       clickable: root.properties.clickToSwitch
       hitArea: root.hitArea
       chainFirst: root._rowCells
@@ -160,11 +142,6 @@ Item {
       properties: root.properties
       cellLook: root.cellLook
       monitorName: root.output
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      urgentColor: root.urgentColor
-      emptyColor: root.emptyColor
-      textColor: root.textColor
       hitArea: root.hitArea
       chainFirst: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0)
       chainCount: root._chainCells

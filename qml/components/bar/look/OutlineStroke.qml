@@ -38,73 +38,91 @@ Item {
     return BarOutlines.offsetPath(root.outline, inset, root.outline.seamStart ? inset - root._half : inset, root.outline.seamEnd ? inset - root._half : inset);
   }
 
-  Loader {
-    anchors.fill: parent
-    active: root.visible && root.width > 0 && root.height > 0
-    sourceComponent: Shape {
-      preferredRendererType: Shape.CurveRenderer
+  // The strokes, in `ink`
+  component Strokes: Shape {
+    id: strokes
+    property color ink: "transparent"
 
-      ShapeSlice {
-        id: strokePaint
-        slice: root.slice
-        vertical: root._vertical
-        length: root._length
-      }
+    preferredRendererType: Shape.CurveRenderer
 
-      ShapePath {
-        fillColor: "transparent"
-        strokeColor: root.color
-        strokeGradient: root.slice !== null ? strokePaint : null
-        strokeWidth: root.lineWidth
-        strokeStyle: root._dashed ? ShapePath.DashLine : ShapePath.SolidLine
-        // In line widths: dashes three long two apart, dots square ones
-        // one and a half apart (the curve renderer draws nothing for a
-        // zero-length dash, so a dot can't be a round cap alone). Each
-        // part of dashPath starts half a dash in, so two halves meeting
-        // at their start make one dash centred there.
-        dashPattern: root.stroke === "dotted" ? [1, 1.5] : [3, 2]
-        dashOffset: root.stroke === "dotted" ? 0.5 : 1.5
-        capStyle: root.stroke === "ends" ? ShapePath.RoundCap : ShapePath.FlatCap
-        joinStyle: root.stroke === "ends" ? ShapePath.RoundJoin : ShapePath.MiterJoin
+    ShapePath {
+      fillColor: "transparent"
+      strokeColor: strokes.ink
+      strokeWidth: root.lineWidth
+      strokeStyle: root._dashed ? ShapePath.DashLine : ShapePath.SolidLine
+      // In line widths: dashes three long two apart, dots square ones
+      // one and a half apart (the curve renderer draws nothing for a
+      // zero-length dash, so a dot can't be a round cap alone). Each
+      // part of dashPath starts half a dash in, so two halves meeting
+      // at their start make one dash centred there.
+      dashPattern: root.stroke === "dotted" ? [1, 1.5] : [3, 2]
+      dashOffset: root.stroke === "dotted" ? 0.5 : 1.5
+      capStyle: root.stroke === "ends" ? ShapePath.RoundCap : ShapePath.FlatCap
+      joinStyle: root.stroke === "ends" ? ShapePath.RoundJoin : ShapePath.MiterJoin
 
-        PathSvg {
-          path: {
-            switch (root.stroke) {
-            case "ends":
-              return BarOutlines.marks(root.outline, root._half);
-            case "double":
-              return root._offset(root._half);
-            default:
-              return BarOutlines.dashPath(root.outline, root._half);
-            }
+      PathSvg {
+        path: {
+          switch (root.stroke) {
+          case "ends":
+            return BarOutlines.marks(root.outline, root._half);
+          case "double":
+            return root._offset(root._half);
+          default:
+            return BarOutlines.dashPath(root.outline, root._half);
           }
         }
       }
+    }
 
-      // A dashed or dotted flared tab's fillets, solid
-      ShapePath {
-        fillColor: "transparent"
-        strokeColor: root._dashed && root._tab ? root.color : "transparent"
-        strokeGradient: root.slice !== null && root._dashed && root._tab ? strokePaint : null
-        strokeWidth: root.lineWidth
-        capStyle: ShapePath.FlatCap
+    // A dashed or dotted flared tab's fillets, solid
+    ShapePath {
+      fillColor: "transparent"
+      strokeColor: root._dashed && root._tab ? strokes.ink : "transparent"
+      strokeWidth: root.lineWidth
+      capStyle: ShapePath.FlatCap
 
-        PathSvg {
-          path: root._dashed && root._tab ? BarOutlines.fillets(root.outline, root._half) : ""
-        }
+      PathSvg {
+        path: root._dashed && root._tab ? BarOutlines.fillets(root.outline, root._half) : ""
       }
+    }
 
-      // A double outline's inner line, a line's width in from the outer
-      ShapePath {
-        fillColor: "transparent"
-        strokeColor: root.stroke === "double" ? root.color : "transparent"
-        strokeGradient: root.slice !== null && root.stroke === "double" ? strokePaint : null
-        strokeWidth: root.lineWidth
-        joinStyle: ShapePath.MiterJoin
+    // A double outline's inner line, a line's width in from the outer
+    ShapePath {
+      fillColor: "transparent"
+      strokeColor: root.stroke === "double" ? strokes.ink : "transparent"
+      strokeWidth: root.lineWidth
+      joinStyle: ShapePath.MiterJoin
 
-        PathSvg {
-          path: root.stroke === "double" ? root._offset(root._half + root.lineWidth * 2) : ""
-        }
+      PathSvg {
+        path: root.stroke === "double" ? root._offset(root._half + root.lineWidth * 2) : ""
+      }
+    }
+  }
+
+  Loader {
+    anchors.fill: parent
+    active: root.visible && root.width > 0 && root.height > 0
+    sourceComponent: root.slice !== null ? masked : plain
+  }
+
+  Component {
+    id: plain
+    Strokes {
+      ink: root.color
+    }
+  }
+
+  // The strokes' shape takes the slice of the bar's gradient
+  Component {
+    id: masked
+    SliceMasked {
+      slice: root.slice
+      vertical: root._vertical
+      length: root._length
+
+      Strokes {
+        anchors.fill: parent
+        ink: "white"
       }
     }
   }

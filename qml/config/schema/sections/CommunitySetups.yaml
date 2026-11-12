@@ -9,12 +9,12 @@ additionalProperties: false
 properties:
   enabled:
     type: boolean
-    title: Browse community setups
+    title: Gallery
     default: true
     description: Nothing is downloaded until you open the gallery.
   indexUrl:
     type: string
-    title: Catalog
+    title: Catalog URL
     default: 'https://raw.githubusercontent.com/axiom-shell/community-setups/catalog/index.json'
     x-showIf: {enabled: true}
-    description: The catalog's index.json. Change it only for a mirror or fork.
+    description: The catalog's index.json. Mirror or fork only.

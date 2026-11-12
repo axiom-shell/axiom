@@ -300,6 +300,14 @@ TestCase {
     compare(WorkspaceCells.labelFor(undefined, 1), label("", "", "icon"));
   }
 
+  function test_badgeText() {
+    compare(WorkspaceCells.badgeText(3, 3, "3", false), "3");
+    compare(WorkspaceCells.badgeText(13, 3, "", false), "13");
+    compare(WorkspaceCells.badgeText(102, 2, "", true), "2");
+    compare(WorkspaceCells.badgeText(5, 5, "mail", false), "mail");
+    compare(WorkspaceCells.badgeText(5, 5, " ", false), "5");
+  }
+
   function test_nameShown() {
     compare(WorkspaceCells.nameShown("3", 3, 3), "", "Hyprland's default name is its id");
     compare(WorkspaceCells.nameShown("1", 11, 1), "", "or the relative number shown");
@@ -334,16 +342,15 @@ TestCase {
   }
 
   function test_pick_in_priority_order() {
-    compare(WorkspaceCells.pick("circle", "web", ["a"], "mail").kind, "glyph", "the grid's arrow first");
-    compare(WorkspaceCells.pick("", "web", ["a"], "mail"), {
+    compare(WorkspaceCells.pick("web", ["a"], "mail"), {
       "kind": "text",
       "text": "web"
     }, "a label of one's own before app icons");
-    compare(WorkspaceCells.pick("", "", ["a"], "mail").kind, "icons", "app icons before the name");
-    compare(WorkspaceCells.pick("", "", [], "mail"), {
+    compare(WorkspaceCells.pick("", ["a"], "mail").kind, "icons", "app icons before the name");
+    compare(WorkspaceCells.pick("", [], "mail"), {
       "kind": "name",
       "text": "mail"
     }, "a name, drawn as words even where it's an icon's name");
-    compare(WorkspaceCells.pick("", "", [], "").kind, "labels");
+    compare(WorkspaceCells.pick("", [], "").kind, "labels");
   }
 }

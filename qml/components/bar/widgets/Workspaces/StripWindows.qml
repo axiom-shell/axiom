@@ -25,9 +25,8 @@ Grid {
   required property bool stripVertical
   // Along the bar's direction, which lays the cells out
   required property bool isVertical
-  required property color activeColor
-  required property color occupiedColor
-  required property color textColor
+  // Its part's place in the switcher: spot reads re-read when it moves
+  property real placed: 0
   property bool clickable: true
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
@@ -64,9 +63,11 @@ Grid {
       barConfig: root.barConfig
       cellLook: root.cellLook
       isActive: address === root.focused
-      look: root.cellLook.colorsOf(isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied", {
-        "hovered": windowCell.lit
+      look: root.cellLook.workspaceColorsOf(isActive, true, false, {
+        "hovered": windowCell.lit,
+        "spot": isActive ? root.cellLook.spotAt(windowCell, windowCell.length / 2, windowCell.x + windowCell.y + root.placed) : -1
       })
+      slice: isActive ? root.cellLook.sliceOf(windowCell.look, windowCell, -(windowCell.shape?.segment.back ?? 0), windowCell.length, windowCell.x + windowCell.y + root.placed) : null
       thickness: root.cellLook.thickness
       // Drawn over the next, which may start beneath it (BarCells.cellSegment)
       z: -index

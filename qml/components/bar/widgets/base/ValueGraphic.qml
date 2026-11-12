@@ -8,7 +8,7 @@ import qs.components.content.parts
 
 // The graphic of a bar widget's display style (docs/dev/bar/display-styles.md):
 // ring, fill, segments, sparkline, ticker or stacked, the length along the
-// bar it wants in `length`. Placed by ValueStyleWidget in its lead slot, or
+// bar it wants in `length`. Placed by BarWidget in its lead slot, or
 // by a widget drawing several values (SystemStats) once per value. Sizes
 // from the bar's font, as a bar's pieces are. Other styles draw nothing.
 Item {
@@ -26,7 +26,7 @@ Item {
   property string subtext: ""
   // The widget's textFormat
   property int textFormat: Text.AutoText
-  // The value's widest (IconTextWidget's minimumText): ticker and stacked
+  // The value's widest (IconTextRow's minimumText): ticker and stacked
   // never take less room, so a changing one doesn't resize the widget
   property string minimumText: ""
   // What they're measured by: the longer of the value and its minimum,
@@ -43,14 +43,12 @@ Item {
   // stacked's two lines fit in; the whole crossSize by default
   property real room: crossSize
   property int fontSize: 0
-  property color color: "white"
-  property color textColor: "white"
-  // Across a bar, where the icon beside it has its middle (IconTextWidget's
+  // What it draws in ({ line, track, area, caption, subcaption }, all
+  // opaque: the widget's `paint.graphic`, from BarWidgetStyle)
+  required property var paint
+  // Across a bar, where the icon beside it has its middle (IconTextRow's
   // iconMiddle), in this item's coordinates; below 0, its own middle
   property real middle: -1
-  // The unlit part, its graphic's color faded: on a split bar the graphic
-  // sits in the icon part, which the text color isn't picked for
-  readonly property color trackColor: Qt.alpha(root.color, 0.2)
 
   // Whether this style draws anything here
   readonly property bool drawn: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)
@@ -111,8 +109,8 @@ Item {
         height: ringBox.side
         percentage: root.ratio * 100
         thickness: Math.max(2, width * 0.16)
-        trackColor: root.trackColor
-        fillColor: root.color
+        trackColor: root.paint.track
+        fillColor: root.paint.line
         iconText: ""
       }
     }
@@ -124,8 +122,8 @@ Item {
       share: root.ratio
       vertical: root.vertical
       thickness: Math.max(3, root.fontSize * 0.35)
-      trackColor: root.trackColor
-      fillColor: root.color
+      trackColor: root.paint.track
+      fillColor: root.paint.line
     }
   }
 
@@ -138,8 +136,8 @@ Item {
       across: root.fontSize * 0.7
       gap: Math.max(1, Math.round(root.fontSize * 0.15))
       cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))
-      litColor: root.color
-      offColor: root.trackColor
+      litColor: root.paint.line
+      offColor: root.paint.track
     }
   }
 
@@ -153,7 +151,7 @@ Item {
         values: root.history
         minValue: root.graphMin
         maxValue: root.graphMax
-        lineColor: root.color
+        lineColor: root.paint.line
         showBaseline: false
       }
     }
@@ -195,7 +193,7 @@ Item {
           bottomPadding: _band.bottom
           text: root.text
           textFormat: root.textFormat
-          color: root.textColor
+          color: root.paint.caption
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize
           font.features: {
@@ -265,7 +263,7 @@ Item {
           anchors.horizontalCenter: parent.horizontalCenter
           text: root.text
           textFormat: root.textFormat
-          color: root.textColor
+          color: root.paint.caption
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize * ValueGraphics.stackedValueScale * stack.fit
           font.bold: true
@@ -278,7 +276,7 @@ Item {
           visible: text !== ""
           text: root.subtext
           textFormat: root.textFormat
-          color: Qt.alpha(root.textColor, 0.7)
+          color: root.paint.subcaption
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize * ValueGraphics.stackedCaptionScale * stack.fit
         }

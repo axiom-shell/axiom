@@ -10,7 +10,8 @@ import qs.components.methods
 // cell's own) in its `paint`. One fill and stroke between two caps: a
 // Rectangle when both ends are alike and rounded (or square) and nothing
 // takes a slice of the bar's gradient, else a path (BarOutlines); a stroke
-// other than solid over it (OutlineStroke). LookBox, SplitPart, LevelFill
+// taking a gradient slice is drawn through SliceMasked; a stroke other
+// than solid over it (OutlineStroke). LookBox, SplitPart, LevelFill
 // and ShapeOverlay draw in it.
 Item {
   id: box
@@ -83,8 +84,7 @@ Item {
       ShapePath {
         fillColor: box._fill
         fillGradient: box._fillSlice !== null ? fillPaint : null
-        strokeColor: box._solidWidth > 0 && !box._openStroke ? box._stroke : "transparent"
-        strokeGradient: box._strokeSlice !== null && box._solidWidth > 0 && !box._openStroke ? strokePaint : null
+        strokeColor: box._solidWidth > 0 && !box._openStroke && box._strokeSlice === null ? box._stroke : "transparent"
         strokeWidth: box._solidWidth
         joinStyle: ShapePath.MiterJoin
 
@@ -98,8 +98,7 @@ Item {
       // open end
       ShapePath {
         fillColor: "transparent"
-        strokeColor: box._solidWidth > 0 && box._openStroke ? box._stroke : "transparent"
-        strokeGradient: box._strokeSlice !== null && box._solidWidth > 0 && box._openStroke ? strokePaint : null
+        strokeColor: box._solidWidth > 0 && box._openStroke && box._strokeSlice === null ? box._stroke : "transparent"
         strokeWidth: box._solidWidth
         joinStyle: ShapePath.MiterJoin
 
@@ -115,11 +114,43 @@ Item {
         vertical: box.vertical
         length: box.length
       }
-      ShapeSlice {
-        id: strokePaint
-        slice: box._strokeSlice
-        vertical: box.vertical
-        length: box.length
+    }
+  }
+
+  // A stroke taking a slice of the bar's gradient
+  Loader {
+    anchors.fill: parent
+    active: box.visible && box.rectRadius < 0 && box._strokeSlice !== null && box._solidWidth > 0 && box.width > 0 && box.height > 0
+    sourceComponent: SliceMasked {
+      slice: box._strokeSlice
+      vertical: box.vertical
+      length: box.length
+
+      Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+          fillColor: "transparent"
+          strokeColor: box._solidWidth > 0 && !box._openStroke ? "white" : "transparent"
+          strokeWidth: box._solidWidth
+          joinStyle: ShapePath.MiterJoin
+
+          PathSvg {
+            path: BarOutlines.path(box._outline, box._solidWidth / 2, false)
+          }
+        }
+
+        ShapePath {
+          fillColor: "transparent"
+          strokeColor: box._solidWidth > 0 && box._openStroke ? "white" : "transparent"
+          strokeWidth: box._solidWidth
+          joinStyle: ShapePath.MiterJoin
+
+          PathSvg {
+            path: box._openStroke ? BarOutlines.path(box._outline, box._solidWidth / 2, true) : ""
+          }
+        }
       }
     }
   }

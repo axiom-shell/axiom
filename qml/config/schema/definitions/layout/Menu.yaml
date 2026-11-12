@@ -7,51 +7,22 @@ properties:
   id: {$ref: '#/definitions/ItemId'}
   name: {x-group: General, type: string, title: Name, default: ''}
   enabled: {x-group: General, type: boolean, title: Enabled, default: true}
-  screen:
-    $ref: '#/definitions/ScreenTarget'
-    x-group: General
-    title: Monitor
-    description: Empty uses the primary monitor. A free menu opened by a bar widget opens on that widget's monitor.
-    x-showIf:
-      anyOf:
-        - {placement: {not: free}}
-        - {freeAnchor.at: {not: cursor}}
-    x-properties:
-      mode:
-        x-scope: look
-        type: string
-        title: Monitors
-        enum: [primary, named]
-        default: primary
-        x-enumLabels: {primary: Primary monitor, named: These monitors}
-        x-link: {setting: General.screen}
-  open:
-    type: object
-    title: Opening
-    additionalProperties: false
-    properties:
-      onHover:
-        x-group: Opening
-        type: boolean
-        title: Open on hover
-        default: false
-        description: Open when the pointer rests on the screen edge.
-        x-showIf: {../placement: {not: free}}
-  edge:
-    x-group: Placement
-    type: string
-    title: Edge
-    default: left
-    enum: [top, bottom, left, right]
-    x-showIf: {placement: {not: free}}
   placement:
     x-group: Placement
     type: string
     title: Placement
     default: edge
     enum: [edge, strip, free]
+    x-control: toggle
     x-enumLabels: {edge: Edge, strip: Strip, free: Free}
-    description: Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens where it's asked for, at the bar widget that opens it, or beside a menu from its Submenu module.
+    description: 'Edge: over windows. Strip: pushes bars and windows in. Free: floats, no edge.'
+  edge:
+    x-group: Placement
+    type: string
+    title: Screen edge
+    default: left
+    enum: [top, bottom, left, right]
+    x-showIf: {placement: {not: free}}
   freeAnchor:
     type: object
     title: Opens at
@@ -64,11 +35,10 @@ properties:
         title: Opens at
         default: centre
         enum: [centre, cursor, point]
-        x-control: tiles
-        x-enumLabels: {centre: Centre, cursor: Cursor, point: A point}
+        x-control: toggle
+        x-enumLabels: {centre: Center, cursor: Cursor, point: Point}
         x-enumShowIf: {cursor: {/$supports.cursorPos: true}}
-        x-tileHint: {cursor: Your compositor can't say where the cursor is.}
-        description: Where a bind or a script opens it. Opened by a bar widget, it opens at that widget. Cursor opens on the monitor the cursor is on.
+        description: Bind or script opens it here; a bar widget's opens at the widget.
       x:
         x-group: Placement
         type: integer
@@ -90,21 +60,24 @@ properties:
         description: Its centre, from the screen's top edge.
         x-showIf: {at: point}
         x-beside: true
-  offset:
-    x-settings: false
-    type: integer
-    default: 0
-    minimum: -200
-    maximum: 200
-    description: Grid cells from centred along its edge. Set on the layouts editor's grid.
-  gridOffset:
-    x-settings: false
-    type: integer
-    default: 0
-    minimum: -200
-    maximum: 200
-    x-unit: px
-    description: Shifts the menu's grid along its edge (px). Set on the layouts editor's grid.
+  screen:
+    $ref: '#/definitions/ScreenTarget'
+    x-group: General
+    title: Monitors
+    description: A free menu opened by a bar widget uses that widget's monitor.
+    x-showIf:
+      anyOf:
+        - {placement: {not: free}}
+        - {freeAnchor.at: {not: cursor}}
+    x-properties:
+      mode:
+        x-scope: look
+        type: string
+        title: Monitors
+        enum: [primary, named]
+        default: primary
+        x-enumLabels: {primary: Primary monitor, named: These monitors}
+        x-link: {setting: General.screen}
   length:
     x-group: Placement
     type: string
@@ -112,41 +85,29 @@ properties:
     default: content
     x-control: toggle
     enum: [content, edge]
-    x-enumLabels: {content: Fit its modules, edge: Whole edge}
-    description: Whole edge stretches the menu along its edge.
+    x-enumLabels: {content: Fit, edge: Full}
     x-showIf: {placement: edge}
   popoutAtWidget:
     x-group: Placement
     type: boolean
-    title: Popout at its widget
+    title: At its widget
     default: false
-    description: Opened as a bar widget's popout, it opens at that widget. For a menu meant mainly as a widget's popout, set Placement to Free instead.
+    description: Opened as a bar widget's popout, it opens centered on that widget.
     x-showIf: {placement: edge, length: content}
-  layout:
-    $ref: '#/definitions/Layout'
-    x-properties:
-      grid: {$ref: '#/definitions/Grid', x-group: Placement}
-      moduleScale:
-        x-link: {setting: Interface.cardSize}
-        x-group: Placement
-        type: integer
-        x-control: stepper
-        title: Module size
-        default: 100
-        minimum: 50
-        maximum: 200
-        x-unit: '%'
-        description: Relative to the card size in Look & Feel.
-      moduleBorders:
-        x-group: Style
-        type: boolean
-        title: Module borders
-        default: true
-        description: Draw each module's card box.
+  background:
+    x-group: Placement
+    type: string
+    title: Box
+    default: panel
+    enum: [panel, none]
+    x-control: toggle
+    x-enumLabels: {panel: Panel, none: None}
+    description: 'None: cards float as tiles. An edge menu is then held off its edge.'
+    x-showIf: {placement: [edge, free]}
   detached:
     x-group: Placement
     type: boolean
-    title: Detach from edge
+    title: Detached
     default: false
     description: A separate box held off the edge, instead of growing out of it.
     x-showIf: {placement: edge, background: panel}
@@ -158,33 +119,58 @@ properties:
     default: 0
     minimum: 0
     maximum: 50
-    description: 0 lines it up with your window border, 50 centres it.
+    description: '0: at the window border. 50: centered.'
     x-showIf:
       anyOf:
         - {placement: edge, detached: true}
         - {placement: edge, background: none}
-  animation:
-    x-group: Placement
-    type: string
-    title: Animation
-    default: slide
-    enum: [slide, fade, scale]
-    x-control: toggle
-    x-enumLabels: {slide: Slide, fade: Fade, scale: Scale}
-    x-enumShowIf: {scale: {placement: free}}
-    description: Slide comes in from off the screen, or for a free menu from the bar widget that opened it or the nearest screen edge. Fade fades in place; Scale, for a free menu, grows in place.
-    x-showIf:
-      anyOf:
-        - {placement: free}
-        - {placement: edge, detached: true}
-        - {placement: edge, background: none}
-  frame:
-    x-group: Style
-    type: boolean
-    title: Frame
-    default: true
-    description: A rounded box along the whole edge around the modules.
-    x-showIf: {placement: strip}
+  layout:
+    $ref: '#/definitions/Layout'
+    x-properties:
+      grid: {$ref: '#/definitions/Grid', x-group: Size}
+      moduleScale:
+        x-link: {setting: Interface.cardSize}
+        x-group: Size
+        type: integer
+        title: Module size
+        default: 100
+        minimum: 50
+        maximum: 200
+        x-unit: '%'
+        description: Relative to the card size in Look & Feel.
+      moduleBorders:
+        x-group: Look
+        type: boolean
+        title: Module borders
+        default: true
+        description: Draw each module's card box.
+  offset:
+    x-settings: false
+    type: integer
+    default: 0
+    minimum: -200
+    maximum: 200
+    description: Grid cells from centered along its edge.
+  gridOffset:
+    x-settings: false
+    type: integer
+    default: 0
+    minimum: -200
+    maximum: 200
+    x-unit: px
+    description: Grid shift along its edge.
+  open:
+    type: object
+    title: Opening
+    additionalProperties: false
+    properties:
+      onHover:
+        x-group: Behaviour
+        type: boolean
+        title: Open on hover
+        default: false
+        description: At the screen edge.
+        x-showIf: {../placement: {not: free}}
   pinButton:
     x-group: Behaviour
     type: boolean
@@ -202,45 +188,18 @@ properties:
     type: boolean
     title: Pop-out button
     default: false
-    description: Lifts the open menu off its edge where it is, staying open like a pinned one. Closed, it's back on its edge.
+    description: Lifts the open menu off its edge, staying open like a pinned one.
     x-showIf: {placement: edge}
   draggable:
     x-group: Behaviour
     type: boolean
     title: Draggable
     default: true
-    description: Drag it by its top to move it. A free menu then opens there again when a bind or a script opens it, until you log out.
+    description: Drag it by the top. A free menu reopens there until you log out.
     x-showIf:
       anyOf:
         - {placement: free}
         - {placement: edge, popOutButton: true}
-  background:
-    x-group: Style
-    type: string
-    title: Box
-    default: panel
-    enum: [panel, none]
-    x-control: toggle
-    x-enumLabels: {panel: Panel, none: None}
-    description: None leaves out the menu's box, so its cards float as tiles of their own. An edge menu is then held off its edge.
-    x-showIf: {placement: [edge, free]}
-  backgroundColor:
-    x-group: Style
-    type: string
-    title: Background
-    x-options: colors
-    default: base00
-    description: The menu's box, or with Box set to None, the tile under each card.
-  borderColor:
-    x-group: Style
-    type: string
-    title: Border
-    x-options: colors
-    default: base05
-    x-showIf:
-      anyOf:
-        - {placement: strip}
-        - {background: panel}
   close:
     type: object
     title: Closing
@@ -249,7 +208,7 @@ properties:
       onLeave:
         x-group: Closing
         type: boolean
-        title: Close when the pointer leaves
+        title: Close on leave
         default: true
         description: A pinned menu stays open.
       delay:
@@ -266,5 +225,43 @@ properties:
         type: boolean
         title: Close on outside click
         default: false
-        description: While the menu is open, it holds the keyboard, so the windows behind can't be typed in.
+        description: Holds the keyboard while open, so windows behind can't be typed in.
         x-showIf: {../placement: [edge, free]}
+  animation:
+    x-group: Motion
+    type: string
+    title: Animation
+    default: slide
+    enum: [slide, fade, scale]
+    x-control: toggle
+    x-enumLabels: {slide: Slide, fade: Fade, scale: Scale}
+    x-enumShowIf: {scale: {placement: free}}
+    x-showIf:
+      anyOf:
+        - {placement: free}
+        - {placement: edge, detached: true}
+        - {placement: edge, background: none}
+  frame:
+    x-group: Look
+    type: boolean
+    title: Frame
+    default: true
+    description: A rounded box along the whole edge around the modules.
+    x-showIf: {placement: strip}
+  backgroundColor:
+    x-group: Look
+    type: string
+    title: Background color
+    x-options: colors
+    default: base00
+    description: The menu's box, or with Box set to None, the tile under each card.
+  borderColor:
+    x-group: Look
+    type: string
+    title: Border color
+    x-options: colors
+    default: base05
+    x-showIf:
+      anyOf:
+        - {placement: strip}
+        - {background: panel}

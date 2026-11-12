@@ -65,6 +65,23 @@ TestCase {
     compare(_unmet(either, test.niri), "compositor");
   }
 
+  // A raw command's own compositor is BindActions.appliesUnder's, so
+  // unmet doesn't turn it down for another compositor
+  function test_rawCompositorNotHere() {
+    verify(_holds({
+      "action": "raw",
+      "compositor": "sway"
+    }, test.niri));
+    compare(_unmet({
+      "action": "raw",
+      "compositor": "sway"
+    }, test.niri), "");
+    compare(_unmet({
+      "action": "raw",
+      "whenCompositors": ["hyprland"]
+    }, test.niri), "", "a raw bind's hidden whenCompositors is ignored");
+  }
+
   // A strip action needs strips whatever its own layout says; Hyprland
   // only supporting them isn't enough
   function test_layouts() {

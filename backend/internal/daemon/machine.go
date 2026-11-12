@@ -246,7 +246,11 @@ func (d *Daemon) accountPart() part {
 // entries and mimeapps lists are read again for every call, so a change
 // made anywhere is seen.
 func (d *Daemon) appsPart() part {
-	load := func() *mimeapps.Apps { return mimeapps.Load(mimeapps.FromEnv(d.opts.Getenv)) }
+	load := func() *mimeapps.Apps {
+		o := mimeapps.FromEnv(d.opts.Getenv)
+		o.Ledger = d.footprint
+		return mimeapps.Load(o)
+	}
 	type typeParams struct {
 		Mime string `json:"mime"`
 	}

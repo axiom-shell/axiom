@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
 )
 
 // secretTool is one fake secret-tool for every test, written by TestMain
@@ -162,5 +164,23 @@ func TestRefusals(t *testing.T) {
 		if err := s.Clear(ctx, c[0], c[1]); axerr.KindOf(err) != axerr.BadRequest {
 			t.Errorf("Clear %v: %v", c, err)
 		}
+	}
+}
+
+// No Secret Service on the bus: nothing is counted, and nothing fails
+func TestCountWithoutAKeyring(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	ctx := context.Background()
+	conn, err := dbus.Dial(ctx, bus.Address, dbus.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if n, err := Count(ctx, conn); n != 0 || err != nil {
+		t.Errorf("%d %v", n, err)
+	}
+	if n, err := Count(ctx, nil); n != 0 || err != nil {
+		t.Errorf("no bus: %d %v", n, err)
 	}
 }

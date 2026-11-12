@@ -13,7 +13,7 @@ import qs.components.bar.widgets.base
 // Hovering opens the calendar; a click opens the Calendar page on its day.
 // Its display style fills with an event under way, or puts when over the
 // title (stacked).
-ValueStyleWidget {
+BarWidget {
   id: root
 
   Component.onCompleted: CalendarManager.acquire(root)
@@ -54,12 +54,11 @@ ValueStyleWidget {
   readonly property string title: root.event ? Utils.truncate(root.event.title || I18n.tr("(No title)"), root.properties.maxLength, "…") : ""
   // How far through an event under way (not an all-day one) it is
   ratio: root.event && !root.event.allDay && root.event.start <= root.now && root.event.end > root.event.start ? Math.min(1, (root.now - root.event.start) / (root.event.end - root.event.start)) : -1
-  styleText: root.style === "stacked" ? root.when : root.text
+  styleText: root.valueStyle === "stacked" ? root.when : root.text
   subtext: root.title
-  // Soon (a quarter hour or less): the warning color
+  // Soon (a quarter hour or less): its soon colour
   readonly property bool _soon: root.event && !root.event.allDay && root.minutesAway <= 15
-  accentField: root._soon ? "" : "backgroundColor"
-  accentColor: root._soon ? Theme.warning : Theme.resolveColor(properties.backgroundColor)
+  accentField: root._soon ? "soonColor" : "backgroundColor"
 
   clickable: true
   onClicked: CalendarManager.openPage({

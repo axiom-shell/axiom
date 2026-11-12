@@ -83,7 +83,8 @@ Singleton {
       "pseudoTile": true,
       "splitToggle": true,
       "pin": true,
-      "windowGroups": true
+      "windowGroups": true,
+      "shareRestore": true
     })
 
   // Whether the workspaces are niri's, kept by axiom (the scrolling layout,
@@ -481,10 +482,15 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       root._eval(`hl.dispatch(hl.dsp.focus({ monitor = ${JSON.stringify(output)} }))\nhl.dispatch(${toggle})`);
   }
 
-  // Moves the focused window to special workspace `name` (what the
-  // generated binds send, render/hyprconfig.go)
-  function moveToSpecial(name) {
-    root._dispatch(`hl.dsp.window.move({ workspace = ${JSON.stringify("special:" + name)} })`);
+  // Moves window `id` to special workspace `name`, leaving it as it was
+  // (shown or not), or the focused window (what the generated binds send,
+  // render/hyprconfig.go) when `id` is "" or left out
+  function moveToSpecial(name, id) {
+    const target = JSON.stringify("special:" + name);
+    if (id)
+      root._dispatch(`hl.dsp.window.move({ workspace = ${target}, follow = false, window = ${_window(id)} })`);
+    else
+      root._dispatch(`hl.dsp.window.move({ workspace = ${target} })`);
   }
 
   // Moves the focused window to the workspace output `name` shows, going

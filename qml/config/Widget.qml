@@ -81,6 +81,6 @@ QtObject {
   }
   // Corners of what sits inside something (cards, controls, rows, bar
   // widgets); outer edges use Appearance.borderRadius
-  // (null: the main radius, Appearance's: x-inherit)
-  readonly property int radius: _c.radius !== null ? _c.radius : Appearance.borderRadius
+  // (Appearance.innerRadius)
+  readonly property int radius: Appearance.innerRadius
 }

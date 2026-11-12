@@ -8,7 +8,7 @@ $schema: 'http://json-schema.org/draft-07/schema#'
 title: Axiom Configuration Schema
 type: object
 x-categories:
-  - {name: General, icon: home, cards: [{card: DeveloperOptions, title: Developer options}]}
+  - {name: General, icon: home, cards: [{card: OutsideChanges, title: Changes outside axiom}, {card: DeveloperOptions, title: Developer options}]}
   - {name: Look & Feel, icon: palette}
   - {name: Compositor, icon: desktop_windows}
   - {name: Workspaces, icon: grid_view}
@@ -52,7 +52,7 @@ properties:
     description: 'The config file''s format: 2. A file without it is format 1, which axiom converts once.'
   version:
     type: integer
-    default: 105
+    default: 107
     x-settings: false
     description: Config version within format 2, used for migration.
   meta:

@@ -314,15 +314,16 @@ Singleton {
     root.backend.toggleSpecial(id, output || "");
   }
 
-  // Moves the focused window to special workspace `id` (a valid one)
-  function moveToSpecial(id) {
+  // Moves window `windowId` (the focused one when "" or left out) to
+  // special workspace `id` (a valid one); a special shown or hidden stays so
+  function moveToSpecial(id, windowId) {
     if (!root.supports.namedSpecial)
       return;
     if (!SpecialWorkspaces.validId(id)) {
       console.warn("[CompositorManager] moveToSpecial: not a special workspace id:", JSON.stringify(id));
       return;
     }
-    root.backend.moveToSpecial(id);
+    root.backend.moveToSpecial(id, windowId || "");
   }
 
   // A workspace's windows, the biggest (by area) first, ties in the

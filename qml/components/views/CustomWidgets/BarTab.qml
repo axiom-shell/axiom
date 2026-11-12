@@ -78,7 +78,7 @@ ColumnLayout {
     SchemaPropertiesForm {
       Layout.fillWidth: true
       propertiesSchema: root.schema.bar.properties
-      order: ["style", "icon", "segments", "width", "colorText", "popout"]
+      order: ["style", "icon", "segments", "width", "popout"]
       values: root.definition?.bar ?? ({})
       onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
     }
@@ -130,7 +130,7 @@ ColumnLayout {
     readonly property bool vertical: preview.barConfig?.vertical ?? false
     readonly property var item: widget.item
     readonly property var segment: preview.barConfig ? BarShapes.segment(preview.barConfig.look.shape, "separate", true, 0, 1, preview.barConfig.thickness, preview.item?.contentAcross) : null
-    // The room its caps keep clear of its content (BarIconWidget's
+    // The room its caps keep clear of its content (BarWidget's
     // contentAcross), as its BarWidgetHost adds
     readonly property real ends: preview.segment ? preview.segment.lead + preview.segment.trail : 0
     implicitWidth: preview.vertical ? (preview.barConfig?.thickness ?? 0) + Widget.padding * 2 : Math.max(Appearance.fontSize * 10, (preview.item?.implicitWidth ?? 0) + preview.ends + Widget.padding * 2)

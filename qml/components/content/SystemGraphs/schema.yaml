@@ -11,3 +11,4 @@ settings:
     items:
       type: string
       enum: [cpu, mem, gpu, cpuTemp, net]
+    x-enumLabels: {cpu: CPU, mem: Memory, gpu: GPU, cpuTemp: CPU temperature, net: Network}

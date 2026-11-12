@@ -30,6 +30,9 @@ Package chat reads a key for `chat.send` and `chat.models`, and package calendar
 - `refreshSecrets("calendar", ids)`: for a card showing them.
 - Provider wrappers: `status` (plus `unneeded`), `setKey`, `clearKey`, `refresh` (asks `secrets.status`; also at start).
 
+### Uninstall
+`secrets.Count(ctx, conn)` counts axiom's items in the Secret Service (`SearchItems` with `service=axiom`: object paths only, never a value) and `Store.ClearAll` runs `secret-tool clear service axiom` (15 s at most; it returns the failure, and the uninstall counts again to say what stayed); the uninstall asks before it clears them ([Uninstall](../backend/uninstall.md)).
+
 ### Where they're entered
 - Keys: `views/Settings/ChatProvidersCard` (the Chat section's `x-card`, with Test and Fetch models).
 - Passwords: `CalendarAccountsCard`; a removed account's is cleared by `CalendarManager` once the removal is saved.

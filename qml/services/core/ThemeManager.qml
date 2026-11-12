@@ -338,9 +338,14 @@ QtObject {
       root._themed = root._enabledIntegrations;
     if (run.length === 0)
       return;
+    // The setting of each key, the footprint ledger's owner of what it writes
+    const owners = {};
+    for (const key of run)
+      owners[key] = "ThemeIntegrations." + key;
     BackendManager.call("theme.integrate", {
       "theme": Paths.themeFile(themeName),
-      "keys": run
+      "keys": run,
+      "owners": owners
     }, (error, result) => {
       if (error) {
         console.warn("[ThemeManager] Theme integrations failed:", error.message);

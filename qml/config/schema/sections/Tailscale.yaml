@@ -7,21 +7,20 @@ title: Tailscale
 description: How Tailscale widgets and modules show the tailnet.
 additionalProperties: false
 properties:
-  interval:
-    type: integer
-    title: Check interval
-    x-unit: ms
-    default: 10000
-    minimum: 1000
-    maximum: 60000
-    description: How often `tailscale status` is read.
-  showOffline:
-    type: boolean
-    title: Show offline devices
-    default: true
-    description: List offline devices after the online ones.
   actions:
     type: boolean
     title: Actions
     default: true
-    description: 'Connect, switch accounts, the exit node and node options. Needs operator rights once: the popout''s Grant access asks for them.'
+    description: 'Connect, switch accounts, exit node. Needs operator rights: the popout''s Grant access asks.'
+  showOffline:
+    type: boolean
+    title: Offline devices
+    default: true
+    description: After the online ones.
+  interval:
+    type: integer
+    title: Interval
+    x-unit: ms
+    default: 10000
+    minimum: 1000
+    maximum: 60000

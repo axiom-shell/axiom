@@ -8,7 +8,7 @@ import qs.components.bar.widgets.base
 
 // A screen recording in progress (ScreenshotManager): a red dot and the
 // time recorded; a click stops it. Hidden entirely while not recording.
-BarIconWidget {
+BarWidget {
   id: root
 
   hidden: !ScreenshotManager.recording

@@ -9,17 +9,19 @@ additionalProperties: false
 properties:
   mode:
     x-takeover: true
+    x-recommended: quickshell
     type: string
     title: Locker
     enum: [quickshell, none]
-    x-enumLabels: {quickshell: Built-in (Quickshell), none: None (bring your own)}
+    x-enumLabels: {quickshell: Built-in, none: Own}
     default: quickshell
-    description: Built-in uses the session-lock protocol with PAM. None leaves locking to your own locker.
+    description: 'Built-in: session lock with PAM. Own: your own locker.'
   lockCommand:
+    x-scope: commands
     type: string
     title: Lock command
     default: loginctl lock-session
-    description: Run by axiom's lock buttons when the locker is your own.
+    description: Used by axiom's lock actions.
     x-showIf: {mode: none}
   layout:
     x-scope: look

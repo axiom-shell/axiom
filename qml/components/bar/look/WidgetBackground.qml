@@ -6,9 +6,9 @@ import qs.components.methods
 
 // What a bar widget sits on, in its bar's look (barConfig.look), composed of
 // the look's pieces: its box and line (LookBox), split's icon part
-// (SplitPart), a level (LevelFill), and over them a press's tint, the bar
-// editor's highlight and the hover outline (ShapeOverlay), each in the
-// shape its caps give (BarShapes). A tab (the look's shape tab) is set
+// (SplitPart), a level (LevelFill), and over them the bar editor's
+// highlight and the hover outline (ShapeOverlay), each in the shape its
+// caps give (BarShapes). A tab (the look's shape tab) is set
 // reaching out to the edge it hangs from by WidgetDecorations, which hands
 // it what bounds its ends (`tabLimits`). WidgetDecorations draws one under
 // each widget with a background, and one under each merged run.
@@ -33,8 +33,6 @@ Item {
   property bool openEnd: false
   // A clickable widget under the pointer (its hoverOutline)
   property bool hovered: false
-  // A clickable widget being pressed: a tint in its shape
-  property bool pressed: false
   // The bar editor's selected widget
   property bool highlighted: false
   // A level (0-1) filled in its shape along the bar, up a vertical one
@@ -55,26 +53,20 @@ Item {
   // what the icon part holds, in its coordinates
   property real splitAt: -1
   property rect splitPart: Qt.rect(0, 0, 0, 0)
+  // The parts after the first (BarWidgetHost.split's `inner`)
+  property var splitInner: []
 
   // What bounds a tab's ends along the bar (BarTabs.tabLimits)
   property var tabLimits: [null, null]
 
   // Its widget draws its own parts as segments of the run (BarWidget's
   // `segmented`: Workspaces' cells with its Background off): no box of its
-  // own, only its states (the press, the hover outline, the highlight)
+  // own, only its states (the hover outline, the highlight)
   property bool bare: false
 
   readonly property var _look: barConfig.look
   // A tab's shape (BarTabs.tab), or null
   readonly property var _tab: BarTabs.barTab(barConfig, tabLimits)
-  // What a press tints: in a merged run, a widget filling its own part
-  // (on hover) in the caps it has alone
-  readonly property var _pressCaps: BarShapes.pressCaps({
-    "shownStart": root.shownStart,
-    "endCap": root.endCap,
-    "levelStartCap": root.levelStartCap,
-    "levelEndCap": root.levelEndCap
-  }, root._look.grouping, root.colors !== null && Qt.color(root.colors.fill).a > 0)
   // What of it draws the bar's gradient (its colors' `gradient`: its fill,
   // stroke, line or split's icon part), and the slice of it from `from`
   // to `to` along it (0-1), else null
@@ -124,6 +116,7 @@ Item {
     bar: root.barConfig
     at: root.splitAt
     part: root.splitPart
+    inner: root.splitInner
     startCap: root.startCap
     tab: root._tab
     color: root.colors?.iconFill ?? "transparent"
@@ -142,16 +135,6 @@ Item {
     tab: root._tab
   }
 
-  // A press
-  ShapeOverlay {
-    shown: root._look.traits.boxed
-    bar: root.barConfig
-    tab: root._tab
-    startCap: root._pressCaps.start
-    endCap: root._pressCaps.end
-    fill: Qt.alpha(root.colors?.text ?? Theme.foreground, root.pressed && root.colors !== null ? 0.2 : 0)
-  }
-
   // The bar editor's highlight
   ShapeOverlay {
     shown: root.highlighted
@@ -159,8 +142,8 @@ Item {
     tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
-    fill: Qt.alpha(Theme.accent, 0.15)
-    stroke: Theme.accent
+    fill: BarWidgetStyle.faded(root.barConfig.palette.highlight, 0.15)
+    stroke: root.barConfig.palette.highlight
     strokeWidth: 2
     glides: false
   }
@@ -171,7 +154,7 @@ Item {
     tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
-    stroke: root.hovered ? Theme.border : Qt.alpha(Theme.border, 0)
+    stroke: root.hovered ? root.barConfig.palette.hoverOutline : BarWidgetStyle.faded(root.barConfig.palette.hoverOutline, 0)
     strokeWidth: Appearance.borderWidth
     duration: Appearance.animNormal
   }

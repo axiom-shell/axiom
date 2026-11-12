@@ -622,6 +622,144 @@ TestCase {
     compare(groups[1].intro, "");
   }
 
+  // `x-intro: { file, setup }`: the setup rows stay under the intro, the
+  // rest sits behind one fold row (`<card key>:settings`) on the same card
+  function test_intro_setup_and_its_fold() {
+    const object = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "Sec",
+          "x-intro": {
+            "file": "Status",
+            "setup": ["on"]
+          },
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "title": "On"
+            },
+            "a": {
+              "type": "string",
+              "title": "A"
+            },
+            "n": {
+              "type": "object",
+              "title": "Nested",
+              "x-group": "Sec",
+              "properties": {
+                "b": {
+                  "type": "boolean",
+                  "title": "B"
+                }
+              }
+            },
+            "other": {
+              "type": "boolean",
+              "title": "Other",
+              "x-group": "Elsewhere"
+            }
+          }
+        }
+      }
+    };
+    const groups = SchemaLayout.groups(object, "S");
+    compare(groups.map(group => group.title), ["Sec", "Elsewhere"], "one card, the intro's");
+    compare(groups[0].intro, "Status");
+    const rows = groups[0].rows;
+    compare(rows.map(row => row.path.join(".")), ["S.on", "S:settings", "S.a", "S.n", "S.n.b"]);
+    compare(rows.map(row => row.kind), ["field", "group", "field", "group", "field"]);
+    compare(rows[1].fold, true);
+    compare(rows[1].foldRows.map(row => row.path.join(".")), ["S.a", "S.n", "S.n.b"]);
+    compare(rows.map(row => row.foldedBy ?? ""), ["", "", "S:settings", "S:settings", "S:settings"], "the setup row and the fold row stay out");
+    compare(groups[1].rows.length, 1, "another card has no fold");
+    // The string form is unchanged, and no row left over means no fold
+    object.properties.S["x-intro"] = "Status";
+    compare(SchemaLayout.groups(object, "S")[0].rows.map(row => row.path.join(".")), ["S.on", "S.a", "S.n", "S.n.b"]);
+    object.properties.S["x-intro"] = {
+      "file": "Status",
+      "setup": ["on", "a"]
+    };
+    object.properties.S.properties.n["x-settings"] = false;
+    compare(SchemaLayout.groups(object, "S")[0].rows.map(row => row.path.join(".")), ["S.on", "S.a"]);
+  }
+
+  // A row inside the fold is located with the fold to open; the setup row
+  // and the card itself are not
+  function test_locate_a_row_in_an_intros_fold() {
+    const object = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "Sec",
+          "x-intro": {
+            "file": "Status",
+            "setup": ["on"]
+          },
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "title": "On"
+            },
+            "a": {
+              "type": "string",
+              "title": "A"
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.locate(object, "S.a"), {
+      "category": "Sec",
+      "key": "S",
+      "title": "A",
+      "row": ["S", "a"],
+      "folds": ["S:settings"]
+    });
+    compare(SchemaLayout.locate(object, "S.on").folds, []);
+    compare(SchemaLayout.locate(object, "S").folds, []);
+  }
+
+  // A row inside an `x-fold` of a card with an intro fold names both folds
+  function test_locate_a_row_in_both_folds() {
+    const object = {
+      "properties": {
+        "Sec": {
+          "type": "object",
+          "title": "Sec",
+          "properties": {
+            "S": {
+              "type": "object",
+              "title": "S",
+              "x-intro": {
+                "file": "Status",
+                "setup": ["on"]
+              },
+              "properties": {
+                "on": {
+                  "type": "boolean",
+                  "title": "On"
+                },
+                "o": {
+                  "type": "object",
+                  "title": "Opts",
+                  "x-fold": true,
+                  "properties": {
+                    "b": {
+                      "type": "string",
+                      "title": "B"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.locate(object, "Sec.S.o.b").folds, ["Sec.S.o", "Sec.S:settings"]);
+  }
+
   function test_intro_on_a_nested_objects_own_card() {
     const groups = SchemaLayout.groups({
       "properties": {
@@ -898,7 +1036,7 @@ TestCase {
   // every style setting
   function test_real_schema_bar_style_block() {
     const groups = SchemaLayout.groups(schema, "Bars");
-    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Bar style", false]]);
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Widget style", false]]);
     compare(groups[0].rows[0].kind, "object");
     compare(groups[0].rows[0].schema["x-row"], "BarStyleBlock");
     compare(groups[0].rows.slice(1).filter(row => row.drawnBy !== "Bars.style"), [], "every row under it is drawn by it");
@@ -1039,14 +1177,15 @@ TestCase {
     const style = SchemaLayout.objectGroups(schema.definitions.BarStyle, []);
     compare(style.map(g => g.title), ["Size", "Look", "Colors", "Accents", "Shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.Menu, ["layout.modules"]);
-    compare(menu.map(g => g.title), ["General", "Opening", "Placement", "Style", "Behaviour", "Closing"]);
+    compare(menu.map(g => g.title), ["General", "Placement", "Size", "Look", "Behaviour", "Closing", "Motion"]);
     const osd = SchemaLayout.objectGroups(schema.definitions.OSDEntry, ["systems", "barLayout"]);
-    compare(osd.slice(0, 2).map(g => g.title), ["Placement", "Timing and behaviour"]);
+    compare(osd.slice(0, 2).map(g => g.title), ["Placement", "Content"]);
   }
 
   function test_real_schema_intros_exist() {
     for (const key in schema.properties) {
-      const intro = schema.properties[key]["x-intro"];
+      const declared = schema.properties[key]["x-intro"];
+      const intro = declared?.file ?? declared;
       if (intro)
         verify(files.text("qml/components/views/Settings/" + intro + ".qml").includes("x-intro"), intro);
     }
@@ -1499,7 +1638,7 @@ TestCase {
       "key": "Style",
       "title": "Size",
       "row": ["Style", "size"],
-      "fold": null
+      "folds": []
     });
     compare(SchemaLayout.locate(schema, ["Style", "shadow"]).key, "Style:Shadows");
     compare(SchemaLayout.locate(schema, "Style.font.family").key, "Style.font");
@@ -1509,7 +1648,7 @@ TestCase {
       "key": "Style.font",
       "title": "Font",
       "row": null,
-      "fold": null
+      "folds": []
     });
     // A section: its first card, the hand-built one when it has one
     compare(SchemaLayout.locate(schema, "Style").key, "Style");
@@ -1525,8 +1664,8 @@ TestCase {
     const drawn = SchemaLayout.locate(schema, "Input.keyboard.method.enabled");
     compare(drawn.row, ["Input", "keyboard", "sources"]);
     const folded = SchemaLayout.locate(schema, "Input.keyboard.method.framework");
-    compare([folded.row, folded.fold], [["Input", "keyboard", "method", "framework"], "Input.keyboard.method"]);
-    compare(SchemaLayout.locate(schema, "Input.keyboard.options").fold, null);
+    compare([folded.row, folded.folds], [["Input", "keyboard", "method", "framework"], ["Input.keyboard.method"]]);
+    compare(SchemaLayout.locate(schema, "Input.keyboard.options").folds, []);
   }
 
   // A jump to a setting, or an object, inside an `x-row` object lands on
@@ -1569,14 +1708,14 @@ TestCase {
       "key": "S.style",
       "title": "A",
       "row": ["S", "style"],
-      "fold": null
+      "folds": []
     });
     compare(SchemaLayout.locate(schema, "S.style.inner.b"), {
       "category": "S",
       "key": "S.style",
       "title": "B",
       "row": ["S", "style"],
-      "fold": null
+      "folds": []
     });
     compare(SchemaLayout.locate(schema, "S.style.inner").row, ["S", "style"]);
     compare(SchemaLayout.locate(schema, "S.style"), {
@@ -1584,7 +1723,7 @@ TestCase {
       "key": "S.style",
       "title": "Style",
       "row": ["S", "style"],
-      "fold": null
+      "folds": []
     });
     compare(SchemaLayout.locate(schema, "S").key, "S.style", "the section: its card");
     // The real Bar style block

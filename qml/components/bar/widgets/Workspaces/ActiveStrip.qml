@@ -31,9 +31,6 @@ Loader {
   required property int shownCount
   // The widget's `stripWindows`: "off", "each" or "one"
   required property string windows
-  required property color activeColor
-  required property color occupiedColor
-  required property color textColor
   property bool clickable: true
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
@@ -110,9 +107,7 @@ Loader {
       workspaceId: value
       stripVertical: root.stripVertical
       isVertical: root.isVertical
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      textColor: root.textColor
+      placed: root.x + root.y
       clickable: root.clickable
       hitArea: root.hitArea
       chainFirst: root.chainFirst
@@ -130,9 +125,7 @@ Loader {
       workspaceId: value
       stripVertical: root.stripVertical
       isVertical: root.isVertical
-      activeColor: root.activeColor
-      occupiedColor: root.occupiedColor
-      textColor: root.textColor
+      placed: root.x + root.y
       clickable: root.clickable
       hitArea: root.hitArea
       chainFirst: root.chainFirst

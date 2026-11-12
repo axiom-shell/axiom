@@ -9,7 +9,6 @@ properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
-    description: Where the power menu opens.
     x-properties:
       mode:
         x-scope: look
@@ -24,6 +23,14 @@ properties:
           all: Every monitor
         x-link: {setting: General.screen}
       names: null
+  tileSize:
+    x-scope: look
+    type: integer
+    title: Tile size
+    x-unit: px
+    default: 120
+    minimum: 80
+    maximum: 200
   actions:
     x-scope: look
     type: array
@@ -35,43 +42,32 @@ properties:
     x-ordered: true
     x-enumLabels: {lock: Lock, suspend: Suspend, hibernate: Hibernate, logout: Log out, reboot: Restart, poweroff: Shut down}
     x-enumIcons: {lock: lock, suspend: bedtime, hibernate: ac_unit, logout: logout, reboot: restart_alt, poweroff: power_settings_new}
-    description: In the order shown.
+  showHeader:
+    x-scope: look
+    type: boolean
+    title: Greeting and uptime
+    default: true
+  showHint:
+    x-scope: look
+    type: boolean
+    title: Controls hint
+    default: true
+    description: The keys, under the actions.
   confirm:
     x-scope: look
     type: boolean
     title: Confirm destructive actions
     default: true
     description: Log out, restart and shut down ask for a second click first.
-  tileSize:
-    x-scope: look
-    type: integer
-    title: Tile size
-    x-unit: px
-    default: 120
-    minimum: 80
-    maximum: 200
-  showHeader:
-    x-scope: look
-    type: boolean
-    title: Greeting and uptime
-    default: true
-    description: Show a greeting and uptime above the actions.
-  showHint:
-    x-scope: look
-    type: boolean
-    title: Controls hint
-    default: true
-    description: Show the keys under the actions.
   showBackdrop:
     x-scope: look
     type: boolean
-    title: Dim background
+    title: Backdrop
     default: true
-    description: Dim the screen behind the power menu.
   backdrop:
     x-scope: look
     type: integer
-    title: Backdrop darkness
+    title: Darkness
     x-unit: '%'
     default: 36
     minimum: 0

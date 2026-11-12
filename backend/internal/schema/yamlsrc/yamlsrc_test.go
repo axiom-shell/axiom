@@ -342,6 +342,57 @@ func TestOrderKeysKeepsAnAuthorsOrder(t *testing.T) {
 	}
 }
 
+// A type's `order:` sets the final order of its settings, interleaving its
+// own with its parts'; an unknown, repeated or missing key fails the build.
+func TestTypeOrder(t *testing.T) {
+	t.Parallel()
+	build := func(order string) (*jsonx.Object, error) {
+		fsys := fstest.MapFS{
+			IndexFile:                   {Data: []byte("type: object\nproperties: {}\nsections: [Clock]\nkinds:\n  Widget: {root: w, suffix: W, base: WBase}\n")},
+			SectionsDir + "/Clock.yaml": {Data: []byte("type: object\n")},
+			AnnotationsFile:             {Data: []byte("x-order: \"\"\nx-link: \"\"\n")},
+			DefinitionsDir + "/WBase.yaml": {Data: []byte(`type: object
+x-settingsAt: /properties/properties/properties
+x-parts:
+  popout:
+    own:
+      showPopout: {type: boolean, default: true}
+properties:
+  properties:
+    type: object
+    properties: {}
+`)},
+			"w/Clock/schema.yaml": {Data: []byte("label: Clock\npopout: own\n" + order + "settings:\n  seconds: {type: boolean, default: false}\n  format: {type: string, default: ''}\n")},
+		}
+		root, err := Assemble(fsys)
+		if err != nil {
+			return nil, err
+		}
+		return root.Value("definitions").(*jsonx.Object).Value("ClockW").(*jsonx.Object), nil
+	}
+	def, err := build("order: [format, showPopout, seconds]\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	inner := def.Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object)
+	if got, want := string(jsonx.MarshalCompact(inner.Value("x-order"))), `["format","showPopout","seconds"]`; got != want {
+		t.Errorf("x-order = %s, want %s", got, want)
+	}
+	if def.Has("x-order") && strings.Contains(string(jsonx.MarshalCompact(def.Value("x-order"))), "format") {
+		t.Error("order leaked into the type's own x-order")
+	}
+	for order, want := range map[string]string{
+		"order: [format, nope, showPopout, seconds]\n":   "nope",
+		"order: [format, seconds, format, showPopout]\n": "twice",
+		"order: [format, seconds]\n":                     "leaves out showPopout",
+		"order: [type, format, seconds, showPopout]\n":   "type",
+	} {
+		if _, err := build(order); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("order %q: error %v, want one naming %q", order, err, want)
+		}
+	}
+}
+
 // x-axiomActions fills a hot corner's action from the bind actions table:
 // its ipcActions less those left out, then exec, with the Keybinds page's
 // labels and the table's icons and sections, and where its argument and

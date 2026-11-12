@@ -69,7 +69,7 @@ QtObject {
       return null;
     const config = BarsConfig.enrichBarConfig(Object.assign({}, bar, {
       "thickness": Math.round(Widget.px(BarsConfig.referenceThickness)),
-      "location": "top"
+      "edge": "top"
     }), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps);
     const end = {
       "kind": "bare",
@@ -320,7 +320,7 @@ QtObject {
     const copy = Utils.clone(bar);
     copy.id = _uniqueId(`${bar.id}-copy`);
     if (bar.screen.mode !== "all") {
-      const onEdge = root.localConfig.filter(b => b.location === bar.location);
+      const onEdge = root.localConfig.filter(b => b.edge === bar.edge);
       const taken = name => onEdge.some(b => b.screen.mode === "all" || General.screensFor(b.screen).some(s => s.name === name));
       const free = General.outputs.find(s => !taken(s.name));
       if (free)

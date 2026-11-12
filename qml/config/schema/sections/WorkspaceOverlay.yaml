@@ -9,57 +9,80 @@ additionalProperties: false
 properties:
   compositorOverview:
     type: boolean
-    title: Use the compositor's overview
+    title: Compositor overview
     x-scope: personal
     x-showIf: {/$supports.overview: true}
     default: true
-    description: Open the compositor's own overview instead.
-  background:
-    type: string
-    title: Workspace background
-    enum: [wallpaper, color]
-    x-enumLabels: {wallpaper: Monitor's wallpaper, color: Theme color}
-    default: color
-  color:
-    type: string
-    title: Background color
-    x-options: colors
-    default: base01
-    x-showIf: {background: color}
-  dimInactive:
-    type: integer
-    title: Dim other workspaces
-    x-unit: '%'
-    default: 50
-    minimum: 0
-    maximum: 90
-    description: How much darker inactive workspaces are drawn.
+    description: Replaces this overview.
   size:
     type: integer
     title: Size
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     x-unit: '%'
     default: 85
     minimum: 40
     maximum: 100
-    description: How much of the screen the grid takes.
+    description: Share of the screen.
+  showNumbers:
+    type: boolean
+    title: Numbers
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    default: true
+  showTitles:
+    type: boolean
+    title: Titles
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    default: true
+    description: On hover.
+  showHint:
+    type: boolean
+    title: Hint
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    default: true
+    description: Mouse and key controls under the grid.
+  scratchpads:
+    type: string
+    title: Scratchpads
+    x-control: toggle
+    enum: ['off', occupied, all]
+    x-enumLabels: {'off': 'Off', occupied: Occupied, all: All}
+    default: occupied
+    x-showIf: {/$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    description: Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.
+  scratchpadColor:
+    type: string
+    title: Scratchpad color
+    x-options: colors
+    default: base0E
+    x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    description: Border and label of their cells.
+  dimInactive:
+    type: integer
+    title: Dim inactive
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    x-unit: '%'
+    default: 50
+    minimum: 0
+    maximum: 90
   backdrop:
     type: integer
-    title: Backdrop darkness
+    title: Darkness
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     x-unit: '%'
     default: 70
     minimum: 0
     maximum: 100
-  showNumbers:
-    type: boolean
-    title: Workspace numbers
-    default: true
-  showTitles:
-    type: boolean
-    title: Window titles
-    default: true
-    description: Show a window's title when hovered.
-  showHint:
-    type: boolean
-    title: Controls hint
-    default: true
-    description: Show the mouse controls under the grid.
+  background:
+    type: string
+    title: Background
+    x-control: toggle
+    x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    enum: [wallpaper, color]
+    x-enumLabels: {wallpaper: Wallpaper, color: Color}
+    default: color
+  color:
+    type: string
+    title: Color
+    x-options: colors
+    default: base01
+    x-showIf: {background: color, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}

@@ -26,7 +26,9 @@ TestCase {
     "border": false
   })
 
-  // An enriched bar, as far as BarEnds reads it
+  // An enriched bar, as far as BarEnds reads it: built by hand, not through
+  // Bars.bar, since the per-case extent and trim are BarEnds' own inputs
+  // and deriving them through enrich would couple every row to its arithmetic
   function bar(location, background, extra) {
     const vertical = location === "left" || location === "right";
     const solid = background === "solid";

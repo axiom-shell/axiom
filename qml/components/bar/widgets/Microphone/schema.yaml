@@ -7,9 +7,10 @@ appearance:
   style:
     enum: [label, icon, ring, fill, pill, segments]
 colors: standard
+order: [appearance, showPercentage, showDevice, maxVolume, scrollStep, hideWhenIdle, middleCommand, popout, backgroundColor, foregroundColor, activeColor, mutedColor]
 settings:
-  showPercentage: {type: boolean, title: Show percentage, default: false}
-  showDevice: {type: boolean, title: Show device, default: false}
+  showPercentage: {type: boolean, title: Percentage, default: false, x-showIf: {appearance.style: [label, ring, fill, pill, segments]}}
+  showDevice: {type: boolean, title: Device, default: false, x-showIf: {appearance.style: [label, ring, fill, pill, segments]}}
   scrollStep:
     type: integer
     title: Scroll step
@@ -29,12 +30,13 @@ settings:
     type: string
     title: Middle-click command
     default: pavucontrol
-    description: Empty does nothing.
+    description: 'Empty: nothing.'
   activeColor:
     $ref: '#/definitions/WidgetColor'
-    title: In-use color
+    title: Active color
     x-autoColor: alt
-    description: While an app records from the microphone.
+    x-autoGradient: true
+    description: While an app records.
   hideWhenIdle:
     type: boolean
     title: Hide when idle

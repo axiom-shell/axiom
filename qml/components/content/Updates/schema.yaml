@@ -1,11 +1,3 @@
 label: Package updates
 icon: upload
 group: System
-settings:
-  interval:
-    type: integer
-    title: Check interval
-    x-unit: min
-    default: 3600000
-    minimum: 300000
-    maximum: 86400000

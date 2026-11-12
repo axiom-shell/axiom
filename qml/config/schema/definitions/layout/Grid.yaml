@@ -9,4 +9,4 @@ properties:
     type: boolean
     title: Double grid
     default: false
-    description: Split each grid unit in two for finer placement.
+    description: Finer placement.

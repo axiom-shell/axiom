@@ -11,7 +11,6 @@ settings:
     minimum: 1
     maximum: 10
     x-unit: px
-    description: Line width (px).
     x-showIf: {style: {not: space}}
   length:
     type: integer
@@ -24,9 +23,9 @@ settings:
     x-showIf: {style: [line, slash, chevron]}
   color:
     type: string
-    title: Colour
+    title: Color
     x-options: colors
     default: ''
     x-emptyLabel: Auto
-    description: 'Auto: the border colour.'
+    description: 'Auto: the border color.'
     x-showIf: {style: {not: space}}

@@ -59,7 +59,7 @@ func read(t *testing.T, path string) string {
 
 func runAll(t *testing.T, in *Integrator, theme string) map[string]IntegrationResult {
 	t.Helper()
-	results, err := in.Run(context.Background(), themes+theme+".json", slices.Sorted(maps.Keys(integrations.Table)))
+	results, err := in.Run(context.Background(), themes+theme+".json", slices.Sorted(maps.Keys(integrations.Table)), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func files(t *testing.T, root string) []string {
 func TestIntegrateSaysWhereItCantWrite(t *testing.T) {
 	t.Parallel()
 	_, in := scratch(t)
-	results, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"vesktop", "vscode", "firefox", "ncspot"})
+	results, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"vesktop", "vscode", "firefox", "ncspot"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,10 +154,10 @@ func TestIntegrateSaysWhereItCantWrite(t *testing.T) {
 			t.Errorf("%s: %+v", r.Key, r)
 		}
 	}
-	if _, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"nope"}); err == nil {
+	if _, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"nope"}, nil); err == nil {
 		t.Error("an unknown key ran")
 	}
-	if results, _ := in.Run(context.Background(), themes+"missing.json", []string{"kitty"}); results[0].Error == "" {
+	if results, _ := in.Run(context.Background(), themes+"missing.json", []string{"kitty"}, nil); results[0].Error == "" {
 		t.Error("a missing theme wasn't said")
 	}
 }
@@ -174,7 +174,7 @@ func TestIntegrateFollowsLinks(t *testing.T) {
 	if err := os.Symlink(real, home+"/.config/kitty/axiom.conf"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"kitty"}); err != nil {
+	if _, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"kitty"}, nil); err != nil {
 		t.Fatal(err)
 	}
 	if info, err := os.Lstat(home + "/.config/kitty/axiom.conf"); err != nil || info.Mode()&fs.ModeSymlink == 0 {
@@ -192,7 +192,7 @@ func TestIntegrateKeepsKdeglobalsOnceChosen(t *testing.T) {
 	mine := "[Colors:View]\nBackgroundNormal=1,2,3\nCustom=x\n\n[General]\nColorScheme=BreezeDark\n"
 	put(t, kdeglobals, mine)
 	run := func() IntegrationResult {
-		results, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"qt"})
+		results, err := in.Run(context.Background(), themes+"ayu-dark.json", []string{"qt"}, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -223,11 +223,11 @@ func TestIntegrateQueuesDuringARun(t *testing.T) {
 	t.Parallel()
 	home, in := scratch(t)
 	in.running = true
-	if results, err := in.Run(context.Background(), themes+"ayu-light.json", []string{"kitty"}); err != nil || results == nil || len(results) != 0 {
+	if results, err := in.Run(context.Background(), themes+"ayu-light.json", []string{"kitty"}, nil); err != nil || results == nil || len(results) != 0 {
 		t.Fatalf("%v %v", results, err)
 	}
 	in.running = false
-	results, _ := in.Run(context.Background(), themes+"ayu-dark.json", []string{"alacritty"})
+	results, _ := in.Run(context.Background(), themes+"ayu-dark.json", []string{"alacritty"}, nil)
 	if len(results) != 2 || !strings.Contains(read(t, home+"/.config/kitty/axiom.conf"), "Ayu Light") {
 		t.Errorf("%+v", results)
 	}
@@ -247,7 +247,7 @@ func TestIntegrateConcurrentCalls(t *testing.T) {
 			if i%2 == 1 {
 				theme, key = "ayu-light", "alacritty"
 			}
-			results, err := in.Run(context.Background(), themes+theme+".json", []string{key})
+			results, err := in.Run(context.Background(), themes+theme+".json", []string{key}, nil)
 			if err != nil || results == nil {
 				t.Errorf("%v %v", results, err)
 			}

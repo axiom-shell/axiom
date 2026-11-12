@@ -618,7 +618,7 @@ func summarize(e *Example, cfg *jsonx.Object) {
 		for _, item := range bars.Items {
 			if bar, ok := item.(*jsonx.Object); ok && shown(bar) {
 				floating, _ := bar.Value("floating").(bool)
-				e.Bars = append(e.Bars, ExampleBar{Location: str(bar, "location"), Surface: str(bar, "surface"), Floating: floating})
+				e.Bars = append(e.Bars, ExampleBar{Location: str(bar, "edge"), Surface: str(bar, "surface"), Floating: floating})
 			}
 		}
 	}

@@ -83,8 +83,8 @@ func TestFormat1IsConvertedAndKept(t *testing.T) {
 	if st.Blocked || cfg.Value("version") != float64(steps.Current()) || cfg.Value("format") != 2.0 {
 		t.Fatalf("version %v format %v state %+v", cfg.Value("version"), cfg.Value("format"), st)
 	}
-	if r := cfg.Value("Interface").(*jsonx.Object).Value("radius"); r != 9.0 {
-		t.Errorf("Interface.radius %v", r)
+	if r := cfg.Value("Appearance").(*jsonx.Object).Value("shape").(*jsonx.Object).Value("innerRadius"); r != 9.0 {
+		t.Errorf("Appearance.shape.innerRadius %v", r)
 	}
 	data, _ := os.ReadFile(filepath.Join(dir, FileName))
 	if !strings.Contains(string(data), `"format": 2`) {

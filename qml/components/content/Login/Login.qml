@@ -9,7 +9,7 @@ import qs.components.content.parts
 // greeter layout has one): who logs in and their password. It only logs
 // in on the screen the greeter makes the target, in the real greeter: in
 // the layouts editor's preview it's an inert box.
-// properties: { userField, showAvatar, placeholder, centered, showMessages }
+// properties: { userField, showPicture, placeholder, centered, showMessages }
 Card {
   id: root
 
@@ -58,7 +58,7 @@ Card {
       anchors.margins: root.boxed ? Widget.padding : 0
       active: root.live
       userField: root.properties.userField
-      showAvatar: root.properties.showAvatar
+      showAvatar: root.properties.showPicture
       placeholder: root.properties.placeholder
       centered: root.properties.centered
       showMessages: root.properties.showMessages

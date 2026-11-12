@@ -7,11 +7,14 @@ import qs.services.compositor
 import qs.config
 import qs.components.methods
 import qs.components.reusable
+import qs.services.ui
 
 // One monitor's workspace board (laid out by WorkspacesConfig): wallpaper
-// cells with their windows as live previews. Input is all OverviewInput's; this lays out, and turns its
-// drops and resizes into CompositorManager actions.
-Rectangle {
+// cells with their windows as live previews, in a box (`gridBox`), and the
+// scratchpads in a box of their own beside it (`scratchBox`). Input is all
+// OverviewInput's; this lays out, and turns its drops and resizes into
+// CompositorManager actions.
+Item {
   id: root
 
   required property var screen
@@ -36,46 +39,120 @@ Rectangle {
   readonly property real monitorH: root.screen?.height ?? 1080
 
   readonly property real gap: Widget.spacing * 1.5
-  readonly property real pad: Widget.spacing * 2
-  readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, monitorW, monitorH, gap, columns, rows)
-  readonly property real cellW: Math.floor(monitorW * miniScale)
-  readonly property real cellH: Math.floor(monitorH * miniScale)
+  // The boxes' padding, widened when a big outer radius would meet a cell's
+  // corner: its margin is the box's stroke, the cell's widest stroke (the
+  // current one's) and a spacing of air
+  readonly property real pad: WorkspaceGeometry.boxPad(Widget.spacing * 2, Appearance.borderRadius, root.cellRadius, Appearance.borderWidth * 3 + Widget.spacing)
+  // The monitor less its bars' reserved edges: what a cell shows
+  readonly property var usable: WorkspaceGeometry.usableRect(monitorW, monitorH, root.monitor?.reserved)
+  // Between the grid's cells and the scratchpads' column: both boxes'
+  // padding and the room between the boxes
+  readonly property real boxGap: root.gap * 2
+  readonly property real sideGap: root.pad * 2 + root.boxGap
+  readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, usable.w, usable.h, gap, columns, rows, root.scratchCount > 0 ? root.sideGap : 0)
+  readonly property real cellW: Math.floor(usable.w * miniScale)
+  readonly property real cellH: Math.floor(usable.h * miniScale)
   readonly property real cellRadius: Math.max(2, Widget.radius * 0.75)
   // A window preview's (and the drop box's), inside its cell's
   readonly property real previewRadius: Math.max(2, root.cellRadius * 0.6)
 
+  // The scratchpads (special workspaces) shown as a column in a box right of the grid.
+  // Their names are fixed while the overview is open (`_frozenNames`), so the
+  // column keeps its size as windows come and go: an emptied one stays as an
+  // empty cell. `scratchCount` comes from the names only, never from the
+  // cells' size, which it decides (fitScale).
+  property var _frozenNames: null
+  readonly property var _liveCells: CompositorManager.supports.namedSpecial === true ? Scratchpads.cells(CompositorManager.specials, CompositorManager.specialNames, WorkspaceOverlayConfig.scratchpads) : []
+  // A string, so the cells and their Repeater are rebuilt only when the set
+  // of names changes
+  // (each name led by a newline, so the unnamed one, "", still makes a key)
+  readonly property string _scratchKey: (root._frozenNames ?? root._liveCells.map(c => c.name)).map(name => "\n" + name).join("")
+  readonly property var scratchNames: root._scratchKey === "" ? [] : root._scratchKey.slice(1).split("\n")
+  readonly property int scratchCount: root.scratchNames.length
+  // The cells and their column together, so one never pairs with a stale other
+  readonly property var scratch: {
+    const cells = root.scratchNames.map(name => root._liveCells.find(c => c.name === name) ?? ({
+          "name": name,
+          "id": 0,
+          "open": false,
+          "output": "",
+          "windowCount": 0,
+          "urgent": false,
+          "windows": []
+        }));
+    return {
+      "cells": cells,
+      "names": root.scratchNames,
+      "column": WorkspaceGeometry.scratchColumn(cells.length, root.cellW, root.cellH, root.gap, root.columns, root.rows, root.sideGap)
+    };
+  }
+  // The scratch cells' names kept while the overview is open, null otherwise
+  function _freeze() {
+    return root.active ? root._liveCells.map(c => c.name) : null;
+  }
+  onActiveChanged: {
+    root._frozenNames = root._freeze();
+    root.keyIndex = -1;
+  }
+  Component.onCompleted: root._frozenNames = root._freeze()
+
+  // The windows in the scratch cells, tagged with their cell (`scratch`) and
+  // special's name; sway's hidden scratchpad windows too (no output), not a
+  // Hyprland group's hidden ones
+  readonly property var specialWindows: {
+    const list = [];
+    root.scratch.cells.forEach((special, s) => {
+      (special.windows ?? []).filter(w => !w.hidden || w.output === "").forEach(w => list.push(Object.assign({}, w, {
+          "scratch": s,
+          "special": special.name
+        })));
+    });
+    return list;
+  }
   // The windows on the board's workspaces: this monitor's in a grid or
   // perMonitor layout; in the standard layout workspaces are shared, so
-  // any monitor's
-  readonly property var windows: CompositorManager.windows.filter(w => (!CompositorManager.perMonitorBlocks || w.output === root.monitor?.name) && root.ids.includes(w.workspaceId) && !w.hidden)
+  // any monitor's; and the scratch cells' (a shown scratchpad's window sits
+  // on a workspace on sway too: one preview per id, in its scratch cell)
+  readonly property var windows: CompositorManager.windows.filter(w => (!CompositorManager.perMonitorBlocks || w.output === root.monitor?.name) && root.ids.includes(w.workspaceId) && !w.hidden && !root.specialWindows.some(sw => sw.id === w.id)).concat(root.specialWindows)
   readonly property var byAddress: root.windows.reduce((map, w) => {
     map[w.id] = w;
     return map;
   }, {})
-  // Hit-testing and layout: [{ id, floating, cell, rect (board coords) }]
+  // Hit-testing and layout: [{ id, floating, cell, scale, rect (board coords) }].
+  // Cell indices: the workspaces first, then the scratch cells.
   readonly property var items: {
     const rects = {};
-    for (const w of root.windows) {
+    const grid = root.windows.filter(w => w.scratch === undefined);
+    for (const w of grid) {
       const at = root.originOf(w.output);
       rects[w.id] = WorkspaceGeometry.windowRect(w, at.x, at.y, root.miniScale, root.cellW, root.cellH);
     }
     // A strip's tiled windows squeezed to fit, columns off the monitor too
     for (const id of root.ids) {
       const direction = root.stripOn(id);
-      const tiled = direction === "" ? [] : root.windows.filter(w => w.workspaceId === id && !w.floating);
+      const tiled = direction === "" ? [] : grid.filter(w => w.workspaceId === id && !w.floating);
       if (tiled.length === 0)
         continue;
       const at = root.originOf(tiled[0].output);
       WorkspaceGeometry.stripRects(tiled, at.x, at.y, root.miniScale, root.cellW, root.cellH, direction === "vertical").forEach((r, i) => rects[tiled[i].id] = r);
     }
+    const column = root.scratch.column;
     return root.windows.map(w => {
-      const cell = root.ids.indexOf(w.workspaceId);
-      const origin = WorkspaceGeometry.cellRect(cell, root.cellW, root.cellH, root.gap, root.columns);
-      const r = rects[w.id];
+      const special = w.scratch !== undefined;
+      const cell = special ? root.ids.length + w.scratch : root.ids.indexOf(w.workspaceId);
+      const origin = root.cellRectOf(cell);
+      const scale = special ? root.miniScale * column.scale : root.miniScale;
+      let r = rects[w.id];
+      if (special) {
+        // Its own output's usable origin; no strip squeeze in a scratch cell
+        const at = root.originOf(w.output || root.scratch.cells[w.scratch].output || root.monitor?.name);
+        r = WorkspaceGeometry.windowRect(w, at.x, at.y, scale, origin.w, origin.h);
+      }
       return {
         id: w.id,
         floating: w.floating,
         cell: cell,
+        scale: scale,
         rect: {
           x: origin.x + r.x,
           y: origin.y + r.y,
@@ -90,16 +167,10 @@ Rectangle {
   // adds or removes only its own preview (and capture)
   readonly property string _addressKey: root.windows.map(w => w.id).join(",")
 
-  // An output's global layout origin, by name (this one's if unknown)
+  // The global origin of an output's usable area (the layout origin plus its
+  // reserved left and top edges), by name (this monitor's if unknown)
   function originOf(output) {
-    const m = CompositorManager.output(output);
-    return m ? {
-      x: m.x,
-      y: m.y
-    } : {
-      x: root.monitorX,
-      y: root.monitorY
-    };
+    return WorkspaceGeometry.usableOrigin(CompositorManager.output(output) ?? root.monitor);
   }
 
   // The origin of the monitor a workspace is on (this one if it doesn't
@@ -116,6 +187,28 @@ Rectangle {
     return CompositorManager.stripDirection(ws?.output || root.screen?.name || "");
   }
 
+  // The cell under a board point, or -1: a workspace's index, or the
+  // workspaces' count plus a scratch cell's
+  function cellAt(x, y) {
+    const cell = WorkspaceGeometry.cellAt(x, y, root.cellW, root.cellH, root.gap, root.columns, root.ids.length);
+    if (cell >= 0)
+      return cell;
+    const s = WorkspaceGeometry.scratchCellAt(root.scratch.column, x, y);
+    return s >= 0 ? root.ids.length + s : -1;
+  }
+
+  // A cell's rect (board coords), by the same indices
+  function cellRectOf(cell) {
+    if (cell >= root.ids.length)
+      return root.scratch.column?.rects[cell - root.ids.length] ?? ({
+          x: 0,
+          y: 0,
+          w: 0,
+          h: 0
+        });
+    return WorkspaceGeometry.cellRect(cell, root.cellW, root.cellH, root.gap, root.columns);
+  }
+
   function itemFor(address) {
     return root.items.find(item => item.id === address) ?? null;
   }
@@ -127,13 +220,62 @@ Rectangle {
     return Date.now() - root._lastAction < 1000;
   }
 
+  // The cell the keyboard has (the board's indices), -1 for none: no ring
+  // shows until the first arrow key
+  property int keyIndex: -1
+  readonly property int cellCount: root.ids.length + root.scratchCount
+  onCellCountChanged: {
+    if (root.keyIndex >= root.cellCount)
+      root.keyIndex = -1;
+  }
+
+  // A key press: arrows move the ring (from the active workspace on the
+  // first), Enter goes to the ringed cell, a digit to the board's n-th workspace.
+  // False when it isn't ours, or while a drag or resize is on.
+  function handleKey(key) {
+    if (input.mode !== "")
+      return false;
+    const names = {
+      [Qt.Key_Left]: "left",
+      [Qt.Key_Right]: "right",
+      [Qt.Key_Up]: "up",
+      [Qt.Key_Down]: "down"
+    };
+    const direction = names[key];
+    if (direction !== undefined) {
+      if (root.keyIndex < 0)
+        root.keyIndex = Math.max(0, root.ids.indexOf(root.activeId));
+      else
+        root.keyIndex = WorkspaceGeometry.navigate(root.keyIndex, direction, root.columns, root.ids.length, root.scratchCount);
+      return true;
+    }
+    if (key === Qt.Key_Return || key === Qt.Key_Enter) {
+      if (root.keyIndex < 0)
+        return false;
+      root.goTo(root.keyIndex);
+      return true;
+    }
+    // A digit n is the board's n-th cell in reading order; none, nothing
+    if (key >= Qt.Key_1 && key <= Qt.Key_9) {
+      const cell = WorkspaceGeometry.digitCell(key - Qt.Key_0, root.ids.length);
+      if (cell >= 0)
+        root.goTo(cell);
+      return true;
+    }
+    return false;
+  }
+
   // Esc: stop a drag or resize. False when there was none.
   function cancelInteraction() {
     return input.cancel();
   }
 
+  // A workspace, or a scratch cell's special shown or hidden on this monitor
   function goTo(cell) {
-    CompositorManager.goToWorkspace(root.ids[cell], "go", root.monitor?.name ?? "");
+    if (cell >= root.ids.length)
+      CompositorManager.toggleSpecial(root.scratchNames[cell - root.ids.length], root.monitor?.name ?? "");
+    else
+      CompositorManager.goToWorkspace(root.ids[cell], "go", root.monitor?.name ?? "");
     root.closeRequested();
   }
 
@@ -153,15 +295,28 @@ Rectangle {
     const win = root.byAddress[address];
     if (!win || cell < 0)
       return;
+    // Onto a scratch cell: into that special, the position ignored. The
+    // unnamed one ("") takes no drops: nothing in axiom fills it
+    if (cell >= root.ids.length) {
+      const name = root.scratchNames[cell - root.ids.length];
+      if (win.special === name || name === "")
+        return;
+      root._lastAction = Date.now();
+      CompositorManager.moveToSpecial(name, address);
+      return;
+    }
     const workspaceId = root.ids[cell];
     const same = win.workspaceId === workspaceId;
     root._lastAction = Date.now();
     if (win.floating) {
       const origin = WorkspaceGeometry.cellRect(cell, root.cellW, root.cellH, root.gap, root.columns);
       const at = root.workspaceOrigin(workspaceId);
-      const size = root.itemFor(address)?.rect ?? {
-        w: 0,
-        h: 0
+      // The preview's size at grid scale (a scratch cell's is scaled down)
+      const item = root.itemFor(address);
+      const k = item ? root.miniScale / item.scale : 1;
+      const size = {
+        w: (item?.rect.w ?? 0) * k,
+        h: (item?.rect.h ?? 0) * k
       };
       const x = Math.min(Math.max(corner.x - origin.x, 0), root.cellW - size.w);
       const y = Math.min(Math.max(corner.y - origin.y, 0), root.cellH - size.h);
@@ -183,6 +338,8 @@ Rectangle {
 
   // Where a tiled window dropped at a point lands (see WorkspaceGeometry)
   function dropTargetAt(cell, point, address) {
+    if (cell >= root.ids.length)
+      return null;
     const others = root.items.filter(item => item.cell === cell && !item.floating && item.id !== address);
     const direction = root.stripOn(root.ids[cell]);
     if (direction !== "")
@@ -193,28 +350,58 @@ Rectangle {
   // A resize step, in board pixels
   function resizeWindow(address, dw, dh, dx, dy) {
     root._lastAction = Date.now();
-    const s = root.miniScale;
+    const s = root.itemFor(address)?.scale ?? root.miniScale;
     CompositorManager.resizeWindow(address, dw / s, dh / s, dx / s, dy / s);
   }
 
+  // The grid's box, as the one board has always been; the scratchpads' is
+  // beside it
+  readonly property alias gridBox: gridBox
+  readonly property alias scratchBox: scratchBox
   implicitWidth: board.width + root.pad * 2
-  implicitHeight: board.height + root.pad * 2
-  radius: Appearance.borderRadius
-  color: Appearance.fill(Theme.background)
-  border.color: Theme.foreground
-  border.width: Appearance.borderWidth
+  implicitHeight: gridBox.height
 
-  // Clicks on the panel's margin don't reach the backdrop (which closes)
-  MouseArea {
-    anchors.fill: parent
-    acceptedButtons: Qt.AllButtons
+  Rectangle {
+    id: gridBox
+    width: root.cellW * root.columns + root.gap * (root.columns - 1) + root.pad * 2
+    height: board.height + root.pad * 2
+    radius: Appearance.borderRadius
+    color: Appearance.fill(Theme.background)
+    border.color: Theme.foreground
+    border.width: Appearance.borderWidth
+
+    // Clicks on the panel's margin don't reach the backdrop (which closes)
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.AllButtons
+    }
+  }
+
+  // The scratchpads' box, the grid's own style, centred on the grid's centre
+  Rectangle {
+    id: scratchBox
+    readonly property var column: root.scratch.column
+    visible: column !== null
+    x: column?.x ?? 0
+    y: column?.stackY ?? 0
+    width: root.cellW + root.pad * 2
+    height: (column?.stackH ?? 0) + root.pad * 2
+    radius: Appearance.borderRadius
+    color: gridBox.color
+    border.color: gridBox.border.color
+    border.width: gridBox.border.width
+
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.AllButtons
+    }
   }
 
   Item {
     id: board
     x: root.pad
     y: root.pad
-    width: root.cellW * root.columns + root.gap * (root.columns - 1)
+    width: root.scratch.column?.boardWidth ?? root.cellW * root.columns + root.gap * (root.columns - 1)
     height: root.cellH * root.rows + root.gap * (root.rows - 1)
 
     Repeater {
@@ -229,6 +416,8 @@ Rectangle {
         width: root.cellW
         height: root.cellH
         wallpaper: WorkspaceOverlayConfig.wallpaper ? ThemeManager.wallpaperFor(root.screen?.name ?? "") : ""
+        wallpaperRect: WorkspaceGeometry.wallpaperRect(root.usable, root.monitorW, root.monitorH, root.miniScale)
+        wallpaperSize: Qt.size(Math.round(root.monitorW * root.miniScale), Math.round(root.monitorH * root.miniScale))
         color: WorkspaceOverlayConfig.color
         dim: WorkspaceOverlayConfig.dimInactive
         radius: root.cellRadius
@@ -236,6 +425,34 @@ Rectangle {
         hovered: input.hoveredCell === index && input.mode === ""
         dropTarget: input.mode === "drag" && input.dropCell === index
         // An empty workspace takes the whole cell
+        dropFill: dropTarget && input.dropHint === null
+      }
+    }
+
+    Repeater {
+      model: root.scratchCount
+
+      WorkspaceCell {
+        id: scratchCell
+        required property int index
+        readonly property int cell: root.ids.length + index
+        readonly property var rect: root.cellRectOf(cell)
+        readonly property var special: root.scratch.cells[index] ?? null
+
+        x: rect.x
+        y: rect.y
+        width: rect.w
+        height: rect.h
+        wallpaper: WorkspaceOverlayConfig.wallpaper ? ThemeManager.wallpaperFor(root.screen?.name ?? "") : ""
+        wallpaperRect: WorkspaceGeometry.wallpaperRect(root.usable, root.monitorW, root.monitorH, root.miniScale * (root.scratch.column?.scale ?? 1))
+        wallpaperSize: Qt.size(Math.round(root.monitorW * root.miniScale), Math.round(root.monitorH * root.miniScale))
+        color: WorkspaceOverlayConfig.color
+        dim: WorkspaceOverlayConfig.dimInactive
+        radius: root.cellRadius
+        tint: WorkspaceOverlayConfig.scratchpadColor
+        current: special?.open === true && special.output === root.monitor?.name
+        hovered: input.hoveredCell === cell && input.mode === ""
+        dropTarget: input.mode === "drag" && input.dropCell === cell && special?.name !== ""
         dropFill: dropTarget && input.dropHint === null
       }
     }
@@ -297,9 +514,59 @@ Rectangle {
         y: rect.y + margin
         z: 3
         cornerRadius: root.cellRadius
-        number: index + 1
+        text: WorkspaceCells.badgeText(root.ids[index], index + 1, CompositorManager.workspaces.find(ws => ws.id === root.ids[index])?.name ?? "", CompositorManager.dynamicWorkspaces)
         current: root.ids[index] === root.activeId
       }
+    }
+
+    // Scratchpads' icons and titles. Shown with the numbers off too: it is
+    // all that names one.
+    Repeater {
+      model: root.scratchCount
+
+      WorkspaceNumber {
+        id: scratchBadge
+        required property int index
+        readonly property var rect: root.cellRectOf(root.ids.length + index)
+        readonly property var special: root.scratch.cells[index] ?? null
+        readonly property var entry: Scratchpads.entryFor(WorkspacesConfig.scratchpads, root.scratchNames[index] ?? "")
+        readonly property var shown: Scratchpads.content(entry, root.scratchNames[index] ?? "", "both", false, false)
+
+        x: rect.x + margin
+        y: rect.y + margin
+        z: 3
+        cornerRadius: root.cellRadius
+        // The unnamed one is a star with no title (kind "glyph")
+        readonly property bool starOnly: shown.kind === "glyph"
+        text: starOnly ? "" : shown.text
+        icon: starOnly ? shown.text : shown.lead
+        iconPlain: !(Utils.isSymbolName(icon) && IconManager.isKnown(icon))
+        tint: WorkspaceOverlayConfig.scratchpadColor
+        tintText: true
+        maxWidth: rect.w - 2 * margin
+        current: special?.open === true && special.output === root.monitor?.name
+      }
+    }
+
+    // The keyboard's cell
+    Rectangle {
+      readonly property var rect: root.cellRectOf(root.keyIndex)
+      readonly property real outset: Appearance.borderWidth * 2
+      visible: root.keyIndex >= 0 && root.keyIndex < root.cellCount
+      x: rect.x - outset
+      y: rect.y - outset
+      width: rect.w + outset * 2
+      height: rect.h + outset * 2
+      z: 3
+      radius: root.cellRadius + outset
+      color: "transparent"
+      border.width: Appearance.borderWidth * 2
+      border.color: Theme.foreground
+
+      Glide on x {}
+      Glide on y {}
+      Glide on width {}
+      Glide on height {}
     }
 
     // Where a dragged tiled window will land

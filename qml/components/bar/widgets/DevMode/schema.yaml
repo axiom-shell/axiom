@@ -3,5 +3,8 @@ icon: code
 group: System
 popout:
   variant: own
-  enabled: {description: 'On hover: rebuild, open Development settings or turn dev mode off.'}
+  enabled: {description: 'Menu with rebuild, Development settings and off.'}
 colors: standard
+order: [popout, backgroundColor, foregroundColor, failedColor]
+settings:
+  failedColor: {$ref: '#/definitions/WidgetColor', title: Failed color, x-autoColor: critical, description: After a failed build.}

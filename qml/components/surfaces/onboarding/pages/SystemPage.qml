@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
+import qs.services.apps
 import qs.services.session
 import qs.services.ui
 import qs.components.reusable
@@ -13,7 +14,9 @@ import qs.components.forms
 // history, whether axiom handles idle (Idle.enabled), whether axiom's
 // lock screen locks (Lockscreen.mode), and whether it's the
 // polkit agent (Polkit.enabled): idle and polkit off by default,
-// recommended on. Last, the login screen (GreeterManager): off by default,
+// recommended on. Then which picker shows for screen sharing
+// (ScreenSharing.enabled, set up by ScreenSharingSetup), off by default,
+// recommended on, where the compositor's portal is known. Last, the login screen (GreeterManager): off by default,
 // and set up only from its Install button (a password prompt), never by
 // picking its card. Other apps in axiom's colors are the next page's
 // (AppColorsPage)
@@ -26,7 +29,7 @@ OnboardingPage {
   property bool greeterChosen: false
 
   title: I18n.tr("System")
-  intro: I18n.tr("How axiom fits into the rest of your system: updates, idle, locking, password prompts and the login screen.")
+  intro: I18n.tr("How axiom fits into the rest of your system: updates, idle, locking, password prompts, screen sharing and the login screen.")
 
   Component.onCompleted: GreeterManager.check()
 
@@ -207,6 +210,51 @@ OnboardingPage {
         "Polkit.enabled": false
       })
     }
+  }
+
+  StyledText {
+    Layout.topMargin: Widget.spacing
+    visible: !!ScreenShareManager.portal
+    text: I18n.tr("Screen sharing")
+    font.bold: true
+  }
+
+  RowLayout {
+    visible: !!ScreenShareManager.portal
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    OptionCard {
+      // Equal halves, as tall as the taller one
+      Layout.preferredWidth: 1
+      Layout.fillHeight: true
+      icon: "screen_share"
+      title: I18n.tr("Use axiom's picker")
+      description: I18n.tr("Apps sharing a screen or window pick it in axiom's picker, in your theme.")
+      selected: ScreenSharingConfig.enabled
+      recommended: true
+      onClicked: SettingsManager.commitValues({
+        "ScreenSharing.enabled": true
+      })
+    }
+
+    OptionCard {
+      // Equal halves, as tall as the taller one
+      Layout.preferredWidth: 1
+      Layout.fillHeight: true
+      icon: "tune"
+      title: I18n.tr("Use the portal's own")
+      description: I18n.tr("Leaves the choice to {0}'s own picker.", ScreenShareManager.portal?.package ?? "")
+      selected: !ScreenSharingConfig.enabled
+      onClicked: SettingsManager.commitValues({
+        "ScreenSharing.enabled": false
+      })
+    }
+  }
+
+  ScreenSharingSetup {
+    visible: ScreenSharingConfig.enabled && !!ScreenShareManager.portal
+    Layout.fillWidth: true
   }
 
   StyledText {

@@ -1,0 +1,9 @@
+[
+  {
+    "title": "xdg-desktop-portal-wlr",
+    "file": "{config}/xdg-desktop-portal-wlr/config",
+    "place": "section",
+    "section": "screencast",
+    "text": "chooser_type = dmenu\nchooser_cmd = '/usr/bin/axiom' screenshare-pick --for xdpw"
+  }
+]

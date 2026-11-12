@@ -7,12 +7,13 @@ hosts: [lockscreen, greeter]
 settings:
   hourFormat:
     type: string
-    title: Clock
+    title: Hour format
+    x-control: toggle
     enum: [default, '12', '24']
-    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
     default: default
-    description: Default follows Date & time settings.
-  showSeconds: {type: boolean, title: Show seconds, default: false}
+    x-link: {setting: DateTime.hourFormat}
+  showSeconds: {type: boolean, title: Seconds, default: false}
   showEvents:
     type: boolean
     title: Events
