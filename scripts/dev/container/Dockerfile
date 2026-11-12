@@ -1,8 +1,8 @@
 # The container tests' image (scripts/dev/container-test.sh): the packages
-# the daemon and the compositors need, a user to run as. Later tests append
-# their packages (xdg-desktop-portal, glib2, gsettings-desktop-schemas).
+# the daemon and the compositors need (hyprland for the nested Hyprland check,
+# xdg-desktop-portal for the niri portal line), a user to run as.
 FROM archlinux:latest
-RUN pacman -Syu --noconfirm --needed go gcc git python lua qt6-declarative quickshell sway niri mesa dbus \
+RUN pacman -Syu --noconfirm --needed go gcc git python lua qt6-declarative quickshell sway niri hyprland mesa dbus xdg-desktop-portal glib2 gsettings-desktop-schemas \
     && pacman -Scc --noconfirm
 # sway ships with file capabilities a container without them can't exec
 RUN setcap -r /usr/bin/sway
