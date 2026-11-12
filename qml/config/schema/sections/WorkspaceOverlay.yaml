@@ -78,4 +78,4 @@ properties:
     type: boolean
     title: Controls hint
     default: true
-    description: Show the mouse controls under the grid.
+    description: Show the mouse and key controls under the grid.

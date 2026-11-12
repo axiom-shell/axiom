@@ -3,8 +3,9 @@ pragma Singleton
 import QtQuick
 
 // Pure geometry for the workspace overview: a cols×rows board of miniatures
-// of each monitor's usable area (the monitor less its bars' reserved edges). Grid coordinates have (0, 0) at the first cell's corner; rects
-// are { x, y, w, h } (actions live in CompositorManager).
+// of each monitor's usable area (the monitor less its bars' reserved
+// edges). Grid coordinates have (0, 0) at the first cell's corner; rects are
+// { x, y, w, h } (actions live in CompositorManager).
 QtObject {
   id: root
 
@@ -23,18 +24,18 @@ QtObject {
 
   // The scratchpads' column right of a cols×rows grid of cellW×cellH cells,
   // `side` px from it: null for no cells, else { x, dividerX, boardWidth,
-  // boardHeight, scale, rects } with one rect per cell, stacked and centred
-  // in the column. The cells shrink (scale < 1) to fit the grid's height,
-  // never the grid.
+  // boardHeight, scale, rects } with one rect per cell, stacked from the
+  // top, each centred across the column. The cells shrink (0.01 ≤ scale < 1)
+  // to fit the grid's height, never the grid; none is under 1 px.
   function scratchColumn(count, cellW, cellH, gap, cols, rows, side) {
     if (!(count > 0))
       return null;
     const gridW = cols * cellW + (cols - 1) * gap;
     const boardHeight = rows * cellH + (rows - 1) * gap;
     const x = gridW + side;
-    const scale = Math.min(1, (boardHeight - gap * (count - 1)) / (count * cellH));
-    const w = Math.floor(cellW * scale);
-    const h = Math.floor(cellH * scale);
+    const scale = Math.max(0.01, Math.min(1, (boardHeight - gap * (count - 1)) / (count * cellH)));
+    const w = Math.max(1, Math.floor(cellW * scale));
+    const h = Math.max(1, Math.floor(cellH * scale));
     const rects = [];
     for (let i = 0; i < count; i++)
       rects.push({
@@ -60,17 +61,21 @@ QtObject {
     return column.rects.findIndex(r => contains(r, x, y));
   }
 
+  // A reserved edge's size: a missing or negative one is 0
+  function _reservedSide(v) {
+    return Math.max(0, v ?? 0);
+  }
+
   // The usable part of a monitor's W×H, from its `reserved` edges (null or
   // missing sides count as 0, a negative one too)
   function usableRect(monitorW, monitorH, reserved) {
-    const side = v => Math.max(0, v ?? 0);
-    const left = side(reserved?.left);
-    const top = side(reserved?.top);
+    const left = _reservedSide(reserved?.left);
+    const top = _reservedSide(reserved?.top);
     return {
       x: left,
       y: top,
-      w: Math.max(1, monitorW - left - side(reserved?.right)),
-      h: Math.max(1, monitorH - top - side(reserved?.bottom))
+      w: Math.max(1, monitorW - left - _reservedSide(reserved?.right)),
+      h: Math.max(1, monitorH - top - _reservedSide(reserved?.bottom))
     };
   }
 
@@ -82,8 +87,8 @@ QtObject {
         y: 0
       };
     return {
-      x: (output.x ?? 0) + Math.max(0, output.reserved?.left ?? 0),
-      y: (output.y ?? 0) + Math.max(0, output.reserved?.top ?? 0)
+      x: (output.x ?? 0) + _reservedSide(output.reserved?.left),
+      y: (output.y ?? 0) + _reservedSide(output.reserved?.top)
     };
   }
 

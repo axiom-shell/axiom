@@ -78,11 +78,15 @@ Rectangle {
       "column": WorkspaceGeometry.scratchColumn(cells.length, root.cellW, root.cellH, root.gap, root.columns, root.rows, root.sideGap)
     };
   }
+  // The scratch cells' names kept while the overview is open, null otherwise
+  function _freeze() {
+    return root.active ? root._liveCells.map(c => c.name) : null;
+  }
   onActiveChanged: {
-    root._frozenNames = root.active ? root._liveCells.map(c => c.name) : null;
+    root._frozenNames = root._freeze();
     root.keyIndex = -1;
   }
-  Component.onCompleted: root._frozenNames = root.active ? root._liveCells.map(c => c.name) : null
+  Component.onCompleted: root._frozenNames = root._freeze()
 
   // The windows in the scratch cells, tagged with their cell (`scratch`) and
   // special's name; sway's hidden scratchpad windows too (no output), not a
@@ -99,9 +103,8 @@ Rectangle {
   }
   // The windows on the board's workspaces: this monitor's in a grid or
   // perMonitor layout; in the standard layout workspaces are shared, so
-  // any monitor's
-  // and the scratch cells' (a shown scratchpad's window sits on a
-  // workspace on sway too: one preview per id, in its scratch cell)
+  // any monitor's; and the scratch cells' (a shown scratchpad's window sits
+  // on a workspace on sway too: one preview per id, in its scratch cell)
   readonly property var windows: CompositorManager.windows.filter(w => (!CompositorManager.perMonitorBlocks || w.output === root.monitor?.name) && root.ids.includes(w.workspaceId) && !w.hidden && !root.specialWindows.some(sw => sw.id === w.id)).concat(root.specialWindows)
   readonly property var byAddress: root.windows.reduce((map, w) => {
     map[w.id] = w;
@@ -219,7 +222,7 @@ Rectangle {
   }
 
   // A key press: arrows move the ring (from the active workspace on the
-  // first), Enter goes to the ringed cell, a digit to that workspace id.
+  // first), Enter goes to the ringed cell, a digit to the workspace SUPER+digit reaches on this monitor.
   // False when it isn't ours, or while a drag or resize is on.
   function handleKey(key) {
     if (input.mode !== "")
@@ -245,10 +248,8 @@ Rectangle {
       return true;
     }
     if (key >= Qt.Key_1 && key <= Qt.Key_9) {
-      const cell = root.ids.indexOf(key - Qt.Key_0);
-      if (cell < 0)
-        return false;
-      root.goTo(cell);
+      CompositorManager.nthWorkspace(key - Qt.Key_0, "go", root.monitor?.name ?? "");
+      root.closeRequested();
       return true;
     }
     return false;
@@ -299,9 +300,12 @@ Rectangle {
     if (win.floating) {
       const origin = WorkspaceGeometry.cellRect(cell, root.cellW, root.cellH, root.gap, root.columns);
       const at = root.workspaceOrigin(workspaceId);
-      const size = root.itemFor(address)?.rect ?? {
-        w: 0,
-        h: 0
+      // The preview's size at grid scale (a scratch cell's is scaled down)
+      const item = root.itemFor(address);
+      const k = item ? root.miniScale / item.scale : 1;
+      const size = {
+        w: (item?.rect.w ?? 0) * k,
+        h: (item?.rect.h ?? 0) * k
       };
       const x = Math.min(Math.max(corner.x - origin.x, 0), root.cellW - size.w);
       const y = Math.min(Math.max(corner.y - origin.y, 0), root.cellH - size.h);

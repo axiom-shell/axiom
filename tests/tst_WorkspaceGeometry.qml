@@ -138,6 +138,14 @@ TestCase {
     });
   }
 
+  function test_scratchColumn_manyCells() {
+    // 15 cells in one 30 px row: the scale stays positive, cells at least 1 px
+    const column = WorkspaceGeometry.scratchColumn(15, 40, 30, 5, 3, 1, 10);
+    compare(column.scale, 0.01);
+    column.rects.forEach(r => verify(r.w >= 1 && r.h >= 1));
+    column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x, r.y), i));
+  }
+
   function test_scratchCellAt() {
     const column = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
     column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x + r.w / 2, r.y + r.h / 2), i));

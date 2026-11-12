@@ -452,24 +452,29 @@ QtObject {
     return [previous ? `workspace ${root.quote(previous)}` : "workspace back_and_forth"];
   }
 
+  // The commands removing window `id`'s axiom special-group marks
+  function _unmarkLines(marks, id) {
+    return (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `[con_id=${Number(id)}] unmark ${root.quote(mark)}`);
+  }
+
   // The commands moving window `id` into special group `name` kept as
   // `kind` ("scratchpad", marked and hidden, or "workspace"), out of any
   // group it's in (`marks`, every window's): a window is in one at a time
   function specialMove(marks, id, name, kind) {
     const con = `[con_id=${Number(id)}]`;
-    const leave = (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `${con} unmark ${root.quote(mark)}`);
-    return leave.concat(kind === "workspace" ? [`${con} move container to workspace ${root.quote(root.specialWorkspace(name))}`] : [`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
+    return root._unmarkLines(marks, id).concat(kind === "workspace" ? [`${con} move container to workspace ${root.quote(root.specialWorkspace(name))}`] : [`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
   }
 
   // The commands taking window `id` out of its special group (`marks`, every
   // window's): its axiom marks come off (a user's own stay). A scratchpad
-  // one (`scratch`) also stops being the scratchpad's: shown first when
+  // one (`scratch`: marked by axiom, or the user's own scratchpad window) also
+  // stops being the scratchpad's: shown first when
   // `hidden`, then floated off and on again (sway refuses to float a hidden
   // one), so it is an ordinary floating window. A workspace group's is just
   // on a named workspace: the unmarks are all it takes.
   function specialLeave(marks, id, hidden, scratch) {
     const con = `[con_id=${Number(id)}]`;
-    const lines = (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `${con} unmark ${root.quote(mark)}`);
+    const lines = root._unmarkLines(marks, id);
     if (scratch === true)
       return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
     return lines;

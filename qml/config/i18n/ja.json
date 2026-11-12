@@ -423,7 +423,6 @@
     "Click to go · Drag to move · Right-drag to resize · Middle-click to close": "クリックで切替 · ドラッグで移動 · 右ドラッグでサイズ変更 · 中クリックで閉じる",
     "Monitor's wallpaper": "モニターの壁紙",
     "Workspace numbers": "ワークスペース番号",
-    "Show the mouse controls under the grid.": "グリッドの下にマウス操作を表示します。",
     "Workspace background": "ワークスペースの背景",
     "Window titles": "ウィンドウのタイトル",
     "Background color": "背景色",
@@ -4337,6 +4336,7 @@
     "The border and label color of scratchpad cells.": "",
     "Special workspaces in a column right of the workspaces; click one to show or hide it, drag windows in and out. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.": "",
     "Scratchpad color": "",
-    "Arrows to select · Enter to go · 1-9 to jump to a workspace": ""
+    "Arrows to select · Enter to go · 1-9 to jump to a workspace": "",
+    "Show the mouse and key controls under the grid.": ""
   }
 }

@@ -70,7 +70,7 @@ Item {
     radius: root.radius
     color: root.dropFill ? Qt.alpha(root.tinted ? root.tint : Theme.accent, 0.3) : "transparent"
     border.width: root.current || root.dropTarget ? Appearance.borderWidth * 2 : Appearance.borderWidth
-    border.color: root.tinted ? root.tint : root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
+    border.color: root.tinted ? (root.hovered || root.dropTarget ? Qt.lighter(root.tint, 1.4) : root.tint) : root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
 
     ColorGlide on border.color {}
   }

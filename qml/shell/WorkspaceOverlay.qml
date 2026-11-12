@@ -154,7 +154,8 @@ Scope {
         }
 
         Keys.onPressed: event => {
-          if (overview.handleKey(event.key))
+          // Keys with a modifier are not ours (a keypad's digits carry one)
+          if ((event.modifiers & ~Qt.KeypadModifier) === 0 && overview.handleKey(event.key))
             event.accepted = true;
         }
 
