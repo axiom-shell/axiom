@@ -3,13 +3,17 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
+import qs.services.compositor
+import qs.services.system
 import qs.services.ui
 import qs.components.reusable
 
 // Screen sharing set up: which portal shares the screen under this
 // compositor and whether it's installed, the line that points it at axiom's
 // picker (applied once, on a click), a restart of the portal so it takes
-// effect, and a try of the picker. The body of the ScreenSharing card
+// effect, and a try of the picker. Under niri there is no hookup and no
+// restart: the daemon adds the portal's line while axiom runs and takes it
+// out when it stops (a link as the file: the user adds the line by hand). The body of the ScreenSharing card
 // (ScreenSharingStatus, whose card shows `statusLabel` in its header) and
 // of the onboarder's System page.
 ColumnLayout {
@@ -18,7 +22,8 @@ ColumnLayout {
   spacing: Widget.spacing * 1.5
 
   readonly property var portal: ScreenShareManager.portal
-  readonly property bool hookedUp: IntegrationHookupManager.isDone("screenSharing")
+  readonly property bool niri: CompositorManager.kind === "niri"
+  readonly property bool hookedUp: root.niri ? ScreenShareManager.portalLine.state === "on" : IntegrationHookupManager.isDone("screenSharing")
 
   // "unsupported" | "off" | "missing" | "todo" | "ready"
   readonly property string status: {
@@ -66,12 +71,31 @@ ColumnLayout {
     case "missing":
       return !ScreenShareManager.portalInstalled ? I18n.tr("Install {0}: apps share the screen through it.", root.portal.package) : I18n.tr("axiom's own portal file (axiom.portal) isn't installed: run axiom's install.sh again, or reinstall its package.");
     case "todo":
+      if (root.niri)
+        return ScreenShareManager.portalLine.state === "link" ? I18n.tr("{0} is a link (dotfiles?), so axiom won't change it every session: add this line under [preferred] yourself:", Paths.shortenHome(ScreenShareManager.portalLine.path)) : ScreenShareManager.portalLine.error !== "" ? ScreenShareManager.portalLine.error : I18n.tr("Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).");
       return I18n.tr("Point the portal at axiom's picker once: Apply below, then restart the portal.");
     }
+    if (root.niri)
+      return I18n.tr("Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).");
     return I18n.tr("Apps ask axiom's picker what to share. Restart the portal if you just applied the change.");
   }
 
   Component.onCompleted: ScreenShareManager.checkPortal()
+
+  // The daemon edits the portal's file as the switch changes: looked at once
+  // when it has had a moment
+  Connections {
+    target: ScreenSharingConfig
+    function onEnabledChanged() {
+      _recheck.restart();
+    }
+  }
+
+  Timer {
+    id: _recheck
+    interval: 1000
+    onTriggered: ScreenShareManager.checkPortal()
+  }
 
   StyledText {
     text: root.detail
@@ -80,7 +104,15 @@ ColumnLayout {
     Layout.fillWidth: true
   }
 
+  SetupLines {
+    visible: root.niri && ScreenSharingConfig.enabled && ScreenShareManager.portalLine.state === "link"
+    hint: Paths.shortenHome(ScreenShareManager.portalLine.path)
+    lines: ScreenShareManager.portalLine.line
+    onCopyClicked: ClipboardManager.copyText(ScreenShareManager.portalLine.line)
+  }
+
   IntegrationHookup {
+    visible: !root.niri
     Layout.fillWidth: true
     integration: "screenSharing"
     active: ScreenSharingConfig.enabled && root.status !== "missing" && root.status !== "unsupported"
@@ -89,7 +121,7 @@ ColumnLayout {
   }
 
   RowLayout {
-    visible: ScreenSharingConfig.enabled && root.hookedUp
+    visible: !root.niri && ScreenSharingConfig.enabled && root.hookedUp
     Layout.fillWidth: true
     spacing: Widget.spacing
 

@@ -119,7 +119,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `FieldLinks`: a schema's `x-link` (one or a list) as `SettingsLink`s, hidden while none shows. Form rows (`SettingsField`, `SchemaPropertiesForm`) put one under each field; the bar widget and module inspectors one for the type's own.
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatus` and the onboarder.
 - `RecommendedSetupList`: the Recommended setup list (a switch per row, why a row can't be ticked, how each apply went, Apply, the greeter's form after its step); reads `RecommendedSetupManager`. Used by Settings' `CompositorStatus` and the onboarder's Welcome page.
-- `ScreenSharingSetup`: screen sharing set up (which portal, the hookup line, restart the portal, try the picker). Used by Settings' `ScreenSharingStatus` and the onboarder's System page.
+- `ScreenSharingSetup`: screen sharing set up (which portal, the hookup line, restart the portal, try the picker; under niri the daemon's portal line instead). Used by Settings' `ScreenSharingStatus` and the onboarder's System page.
+- `SetupLines`: lines for the user's config (where they go, the text, Copy, Add it for me). Used by `CompositorStatus` and `ScreenSharingSetup` (niri's linked portal config).
 
 ### Bar pieces (`bar/`)
 - `bar/widgets/base/BarWidget`: the base every bar widget is data on (its row, segments or own content, colours, clicks); `base/IconTextRow`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`). `base/WidgetHead`: the head (icon, short text or item) of a widget with its own content; `base/WidgetSegments`: `items` as rows side by side.

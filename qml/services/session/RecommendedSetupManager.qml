@@ -93,7 +93,8 @@ Singleton {
         "known": !!ScreenShareManager.portal,
         "installed": ScreenShareManager.portalInstalled,
         "axiomInstalled": ScreenShareManager.axiomPortalInstalled,
-        "hookedUp": IntegrationHookupManager.isDone("screenSharing")
+        "hookedUp": IntegrationHookupManager.isDone("screenSharing"),
+        "automatic": CompositorManager.kind === "niri"
       },
       "apps": {
         "installed": root.appKeys,

@@ -126,66 +126,6 @@ ColumnLayout {
 
   readonly property bool blocked: root.pendingMode === "managed" && CompositorConfigManager.managedCheck === "blocked"
 
-  // Lines for the user's config: where they go, the text, Copy, and Add it
-  // for me (with a backup) while `canAdd`
-  component SetupLines: ColumnLayout {
-    id: block
-
-    property string hint
-    property string lines
-    property bool canAdd
-    property bool adding
-    property bool added
-
-    signal copyClicked
-    signal addClicked
-
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StyledText {
-      text: block.hint
-      opacity: 0.7
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
-      Layout.fillWidth: true
-    }
-
-    StyledContainer {
-      Layout.fillWidth: true
-      implicitHeight: linesText.implicitHeight + Widget.padding * 2
-      backgroundColor: Theme.background
-
-      StyledText {
-        id: linesText
-        anchors.fill: parent
-        anchors.margins: Widget.padding
-        text: block.lines
-        textFamily: "monospace"
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.WrapAnywhere
-      }
-    }
-
-    RowLayout {
-      spacing: Widget.spacing
-
-      StyledTextButton {
-        implicitHeight: Widget.height - Widget.px(4)
-        text: I18n.tr("Copy")
-        onClicked: block.copyClicked()
-      }
-
-      StyledTextButton {
-        visible: block.canAdd
-        enabled: !block.adding && !block.added
-        implicitHeight: Widget.height - Widget.px(4)
-        text: block.added ? I18n.tr("Added") : block.adding ? I18n.tr("Adding…") : I18n.tr("Add it for me")
-        onClicked: block.addClicked()
-      }
-    }
-  }
-
   spacing: Widget.spacing * 1.5
 
   StyledText {
@@ -341,6 +281,14 @@ ColumnLayout {
     visible: (root.stage === "fallback" || root.mode === "detached" && CompositorConfigManager.problem !== "") && !CompositorConfigManager.takeoverPending
     text: CompositorConfigManager.problem + (root.stage === "fallback" ? "\n" + I18n.tr("Until then, axiom applies its layer at runtime.") : "")
     textColor: Theme.warning
+    textSize: Appearance.fontSizeBy(-1)
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
+  }
+
+  StyledText {
+    visible: root.mode === "detached"
+    text: I18n.tr("Detached: axiom changes none of your compositor's files and takes its binds and look away when it stops. Great for trying it out; for full-time use, pick Included or Managed.")
     textSize: Appearance.fontSizeBy(-1)
     wrapMode: Text.WordWrap
     Layout.fillWidth: true

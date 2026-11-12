@@ -11,24 +11,28 @@ QtObject {
   id: root
 
   // The portal backend each compositor shares through: its package, its
-  // .portal file (in xdg-desktop-portal/portals/: installed), and the user
-  // services to restart for a hookup to take (besides xdg-desktop-portal).
-  // Under niri, axiom's own backend (axiom.portal) shares, GNOME's
-  // answering with axiom's picker off
+  // .portal file (in xdg-desktop-portal/portals/: installed), its D-Bus name
+  // (busName, the owner of which the daemon restarts, in this session only,
+  // for a hookup to take) and the user services to restart besides
+  // xdg-desktop-portal. Under niri, axiom's own backend (axiom.portal)
+  // shares, GNOME's answering with axiom's picker off
   readonly property var portals: ({
       "hyprland": {
         "package": "xdg-desktop-portal-hyprland",
         "portalFile": "hyprland.portal",
+        "busName": "org.freedesktop.impl.portal.desktop.hyprland",
         "services": ["xdg-desktop-portal-hyprland"]
       },
       "sway": {
         "package": "xdg-desktop-portal-wlr",
         "portalFile": "wlr.portal",
+        "busName": "org.freedesktop.impl.portal.desktop.wlr",
         "services": ["xdg-desktop-portal-wlr"]
       },
       "niri": {
         "package": "xdg-desktop-portal-gnome",
         "portalFile": "gnome.portal",
+        "busName": "org.freedesktop.impl.portal.desktop.gnome",
         "axiomPortalFile": "axiom.portal",
         "services": []
       }
@@ -42,7 +46,8 @@ QtObject {
   // The hookup targets that point `kind`'s portal at axiom's picker, the
   // binary at `bin`. xdph runs its picker binary with no arguments (axiom
   // knows it by xdph's environment); xdpw runs its chooser through sh;
-  // niri's portal config names axiom's own ScreenCast backend.
+  // niri has none: the daemon adds its portal line itself while axiom runs
+  // (screenShare.portalLine).
   function hookupTargets(kind, bin) {
     switch (kind) {
     case "hyprland":
@@ -64,17 +69,6 @@ QtObject {
           "section": "screencast",
           "text": `chooser_type = dmenu\nchooser_cmd = '${bin}' screenshare-pick --for xdpw`,
           "note": "Sets the [screencast] chooser: wlroots' portal asks axiom what to share."
-        }
-      ];
-    case "niri":
-      return [
-        {
-          "title": "xdg-desktop-portal",
-          "file": "{config}/xdg-desktop-portal/niri-portals.conf",
-          "place": "section",
-          "section": "preferred",
-          "text": "org.freedesktop.impl.portal.ScreenCast=axiom",
-          "note": "Under niri, screen sharing goes to axiom's own portal; everything else stays with GNOME's."
         }
       ];
     }
