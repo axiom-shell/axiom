@@ -222,7 +222,7 @@ Rectangle {
   }
 
   // A key press: arrows move the ring (from the active workspace on the
-  // first), Enter goes to the ringed cell, a digit to the workspace SUPER+digit reaches on this monitor.
+  // first), Enter goes to the ringed cell, a digit to the board's n-th workspace.
   // False when it isn't ours, or while a drag or resize is on.
   function handleKey(key) {
     if (input.mode !== "")
@@ -247,9 +247,11 @@ Rectangle {
       root.goTo(root.keyIndex);
       return true;
     }
+    // A digit n is the board's n-th cell in reading order; none, nothing
     if (key >= Qt.Key_1 && key <= Qt.Key_9) {
-      if (CompositorManager.nthWorkspace(key - Qt.Key_0, "go", root.monitor?.name ?? ""))
-        root.closeRequested();
+      const cell = WorkspaceGeometry.digitCell(key - Qt.Key_0, root.ids.length);
+      if (cell >= 0)
+        root.goTo(cell);
       return true;
     }
     return false;

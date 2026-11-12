@@ -616,30 +616,25 @@ Singleton {
   }
 
   // The n-th workspace (1-based) of the current row in a grid or perMonitor
-  // layout, or workspace n in the standard layout (number keybinds), on
-  // `output` (the focused one when empty). True when it went somewhere.
-  function nthWorkspace(n, mode, output) {
-    output = output || root.focusedOutput;
+  // layout, or workspace n in the standard layout (number keybinds)
+  function nthWorkspace(n, mode) {
     // The n-th of the output's list, its last (the empty one) past its end
     if (root.dynamicWorkspaces) {
-      const ids = workspaceIds(output);
-      if (n < 1 || ids.length === 0)
-        return false;
-      goToWorkspace(ids[Math.min(n, ids.length) - 1], mode, output);
-      return true;
+      const ids = workspaceIds(root.focusedOutput);
+      if (n >= 1 && ids.length > 0)
+        goToWorkspace(ids[Math.min(n, ids.length) - 1], mode);
+      return;
     }
     if (!root.perMonitorBlocks) {
-      goToWorkspace(n, mode, output);
-      return true;
+      goToWorkspace(n, mode);
+      return;
     }
     const cols = WorkspacesConfig.columns;
     if (n < 1 || n > cols)
-      return false;
-    const base = workspaceBase(output);
-    const current = output === root.focusedOutput ? _currentWorkspaceId() : (root.output(output)?.activeWorkspaceId ?? -1);
-    const index = Math.min(Math.max(current - base, 0), WorkspacesConfig.size - 1);
-    goToWorkspace(base + Math.floor(index / cols) * cols + n - 1, mode, output);
-    return true;
+      return;
+    const base = workspaceBase(root.focusedOutput);
+    const index = Math.min(Math.max(_currentWorkspaceId() - base, 0), WorkspacesConfig.size - 1);
+    goToWorkspace(base + Math.floor(index / cols) * cols + n - 1, mode);
   }
 
   // "horizontal" | "vertical" on a strip monitor (its name), else "",

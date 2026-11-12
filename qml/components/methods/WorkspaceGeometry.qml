@@ -22,6 +22,12 @@ QtObject {
     return Math.max(0.01, Math.min(sx, sy));
   }
 
+  // The cell a digit key (1-based) reaches on a board of `count` cells in
+  // reading order: n's index, or -1 when there is no n-th cell
+  function digitCell(n, count) {
+    return n >= 1 && n <= count ? n - 1 : -1;
+  }
+
   // The scratchpads' column right of a cols×rows grid of cellW×cellH cells,
   // `side` px from it: null for no cells, else { x, dividerX, boardWidth,
   // boardHeight, scale, rects } with one rect per cell, stacked from the

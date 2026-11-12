@@ -155,6 +155,19 @@ TestCase {
     compare(WorkspaceGeometry.scratchCellAt(null, 150, 5), -1);
   }
 
+  function test_digitCell() {
+    // A 3x3 grid, nine cells in reading order
+    compare(WorkspaceGeometry.digitCell(1, 9), 0);
+    compare(WorkspaceGeometry.digitCell(5, 9), 4);
+    compare(WorkspaceGeometry.digitCell(9, 9), 8);
+    compare(WorkspaceGeometry.digitCell(7, 6), -1, "no seventh cell");
+    compare(WorkspaceGeometry.digitCell(0, 9), -1);
+    // A per-monitor block 11-19: digit 1 is its first cell, workspace 11
+    const ids = [11, 12, 13, 14, 15, 16, 17, 18, 19];
+    compare(ids[WorkspaceGeometry.digitCell(1, ids.length)], 11);
+    compare(ids[WorkspaceGeometry.digitCell(9, ids.length)], 19);
+  }
+
   function test_navigate() {
     const nav = (i, key, cols, count, scratch) => WorkspaceGeometry.navigate(i, key, cols ?? 3, count ?? 6, scratch ?? 2);
     compare(nav(0, "right"), 1);
