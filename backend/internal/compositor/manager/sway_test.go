@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 )
 
 // A sway config file that's there but can't be read (here an include) is
@@ -110,9 +111,9 @@ func TestSwayUnbindListFollowsSway(t *testing.T) {
 	t.Parallel()
 	tables, schema := repo(t)
 	w := newSway(env2(tables, schema, func(string) string { return "" }), &ipc.Sway{Path: filepath.Join(t.TempDir(), "none.sock")})
-	w.setUnbind([]string{"unbindsym Mod4+x"})
+	w.setUnbind([]render.SwayUnbind{{Key: "k", Line: "unbindsym Mod4+x"}})
 	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
-	if got := w.unbinds(); len(got) != 1 || got[0] != "unbindsym Mod4+x" {
+	if got := w.unbinds(); len(got) != 1 || got[0].Line != "unbindsym Mod4+x" {
 		t.Fatalf("an apply sway never got dropped the list: %v", got)
 	}
 	w.runtimeClear(context.Background())
@@ -124,7 +125,92 @@ func TestSwayUnbindListFollowsSway(t *testing.T) {
 		t.Fatalf("a reload since left the list to send: %v", got)
 	}
 	w.configReloaded(context.Background(), Inputs{})
-	if w.state.SwayUnbind != nil {
-		t.Fatalf("the stale list kept for a re-exec: %v", w.state.SwayUnbind)
+	if w.state.SwayUnbinds != nil {
+		t.Fatalf("the stale list kept for a re-exec: %v", w.state.SwayUnbinds)
+	}
+}
+
+// swayWith is a sway writer whose user config is text, its saved unbinds
+// list, carried or fresh, and no sway to talk to
+func swayWith(t *testing.T, config string, carried bool, saved []render.SwayUnbind) *swayWriter {
+	t.Helper()
+	tables, schema := repo(t)
+	home := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(home, "sway"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, "sway", "config"), []byte(config), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	vars := map[string]string{"HOME": home, "XDG_CONFIG_HOME": home}
+	e := env2(tables, schema, func(k string) string { return vars[k] })
+	e.carried = carried
+	w := newSway(e, &ipc.Sway{Path: filepath.Join(t.TempDir(), "none.sock")})
+	w.state.SwayUnbinds = saved
+	return w
+}
+
+func swayKeys(list []render.SwayUnbind) []string {
+	var out []string
+	for _, u := range list {
+		out = append(out, u.Key)
+	}
+	return out
+}
+
+var swaySaved = func() []render.SwayUnbind {
+	return []render.SwayUnbind{
+		{Key: render.KeyID("SUPER + x"), Line: "unbindsym Mod4+x"},
+		{Key: render.KeyID("SUPER + y"), Line: "unbindsym Mod4+y"},
+	}
+}
+
+// A daemon that isn't carried over trusts no saved unbind: one of a key the
+// user's config binds now would take their bind out
+func TestSwayFreshDaemonDropsUnbindsOfKeysTheUserNowBinds(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+x exec true\n", false, swaySaved())
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "unbindsym Mod4+y" {
+		t.Fatalf("unbinds = %v, want only y's", got)
+	}
+}
+
+func TestSwayCarriedDaemonKeepsTheSavedUnbinds(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+x exec true\n", true, swaySaved())
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.state.SwayUnbinds; len(got) != 2 {
+		t.Fatalf("unbinds = %v, want both kept", got)
+	}
+}
+
+func TestSwayFreshDaemonRecomputesTheFloatingModifierLine(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "floating_modifier Mod4 normal\n", false, []render.SwayUnbind{{Key: "", Line: "floating_modifier Mod1 normal"}})
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "floating_modifier Mod4 normal" {
+		t.Fatalf("unbinds = %v, want the user's floating line", got)
+	}
+}
+
+func TestSwayOldFormatUnbindListIsDropped(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "compositor.json")
+	if err := os.WriteFile(path, []byte(`{"instance":"sway:a","swayUnbind":["unbindsym Mod4+x"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadState(path, "sway:a"); got.Instance != "sway:a" || got.SwayUnbinds != nil {
+		t.Fatalf("state = %+v, want the old list dropped", got)
+	}
+}
+
+func TestSwayFreshClearDropsTakenKeys(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+x exec true\n", false, swaySaved())
+	w.runtimeClear(context.Background())
+	// sway isn't there, so the list stays, less the key the user binds
+	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "unbindsym Mod4+y" {
+		t.Fatalf("unbinds = %v, want only y's", got)
 	}
 }

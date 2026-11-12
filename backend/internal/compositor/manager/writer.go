@@ -134,6 +134,8 @@ type env struct {
 	schema   func() any
 	logf     func(format string, args ...any)
 	state    *runtimeState
+	// carried: see Options.Carried
+	carried bool
 }
 
 func (e env) configHome() string {

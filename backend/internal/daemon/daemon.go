@@ -401,7 +401,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	// delivery, since an apply may hold the service meanwhile
 	d.savedKick = newKicker(func(context.Context) { d.saved.Changed() })
 
-	d.compositor = d.newCompositor()
+	d.compositor = d.newCompositor(h.carried())
 	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
 	if d.compositor != nil {
 		// The saved monitor profile follows hotplugs

@@ -114,7 +114,7 @@ func env2(tables *render.Tables, schema any, getenv func(string) string) env {
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return env{getenv: getenv, stateDir: "/nonexistent/home/.local/state/axiom/", tables: tables,
 		schema: func() any { return schema }, logf: func(f string, a ...any) { log.Info(fmt.Sprintf(f, a...)) },
-		state: &runtimeState{}}
+		state: &runtimeState{}, carried: true}
 }
 
 // The whole files each writer makes from one shell's inputs, byte for byte
