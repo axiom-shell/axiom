@@ -622,11 +622,14 @@ func TestSecretsNeverPrinted(t *testing.T) {
 	t.Cleanup(func() { svc.Close() })
 	svc.RequestName(context.Background(), "org.freedesktop.secrets", 0)
 	asked := map[string]string{}
+	var askedMu sync.Mutex
 	svc.Export("/org/freedesktop/secrets", dbus.Interface{Name: "org.freedesktop.Secret.Service", Methods: map[string]dbus.Method{
 		"SearchItems": {In: "a{ss}", Out: "aoao", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
+			askedMu.Lock()
 			for k, v := range m.Body[0].(map[any]any) {
 				asked[k.(string)] = v.(string)
 			}
+			askedMu.Unlock()
 			return []any{[]dbus.ObjectPath{"/org/freedesktop/secrets/collection/login/1"}, []dbus.ObjectPath{"/org/freedesktop/secrets/collection/login/2", "/org/freedesktop/secrets/collection/login/3"}}, nil
 		}},
 	}})
@@ -648,6 +651,8 @@ func TestSecretsNeverPrinted(t *testing.T) {
 	if err != nil || plan.Counts.Secrets != 3 {
 		t.Fatalf("count %d: %v", plan.Counts.Secrets, err)
 	}
+	askedMu.Lock()
+	defer askedMu.Unlock()
 	if asked["service"] != "axiom" || len(asked) != 1 {
 		t.Errorf("asked %v", asked)
 	}

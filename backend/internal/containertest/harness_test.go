@@ -295,6 +295,9 @@ type Session struct {
 	Out  string
 	vars map[string]string
 	sway *Proc
+	// bin and tree are the axiom and the tree to run: the built ones
+	// ($AXIOM_BIN, $AXIOM_SRC) until UseInstalled
+	bin, tree string
 }
 
 // NewSession makes the directories and starts the session bus.
@@ -428,6 +431,12 @@ func (s *Session) WriteFile(rel, text string) string {
 func (s *Session) StartSway(config string) {
 	s.t.Helper()
 	s.WriteFile(".config/sway/config", config)
+	s.startSwayAsIs()
+}
+
+// startSwayAsIs starts sway on the config as it is.
+func (s *Session) startSwayAsIs() {
+	s.t.Helper()
 	cmd := exec.Command("sway", "-d")
 	cmd.Env = s.env("WLR_BACKENDS=headless", "WLR_RENDERER=pixman", "WLR_LIBINPUT_NO_DEVICES=1")
 	p := s.run("sway.log", cmd)
@@ -560,9 +569,13 @@ func (s *Session) StartAxiom(kind string) *Proc { return s.StartAxiomWith(kind, 
 // arguments to `axiom run`.
 func (s *Session) StartAxiomWith(kind string, env, args []string) *Proc {
 	s.t.Helper()
-	bin, src := os.Getenv("AXIOM_BIN"), os.Getenv("AXIOM_SRC")
+	bin, src := s.axiomBin(), os.Getenv("AXIOM_SRC")
 	if bin == "" || src == "" {
 		s.t.Fatal("AXIOM_BIN and AXIOM_SRC name the built axiom and its tree")
+	}
+	tree := s.tree
+	if tree == "" {
+		tree = src
 	}
 	self, err := os.Executable()
 	if err != nil {
@@ -571,7 +584,7 @@ func (s *Session) StartAxiomWith(kind string, env, args []string) *Proc {
 	s.set("AXIOM_SRC", src)
 	marker := filepath.Join(s.Runtime, "fakeshell-hello")
 	os.Remove(marker)
-	cmd := exec.Command(bin, append([]string{"run", "--tree", src, "--qs", self}, args...)...)
+	cmd := exec.Command(bin, append([]string{"run", "--tree", tree, "--qs", self}, args...)...)
 	cmd.Env = s.env(append([]string{"CTR_FAKESHELL=1", "CTR_KIND=" + kind, "AXIOM_BLUETOOTH_AGENT=off", "CTR_SRC=" + src, "CTR_LOG=" + filepath.Join(s.Out, "fakeshell.log")}, env...)...)
 	p := s.run("axiom.out", cmd)
 	sock := s.axiomSock()
@@ -582,6 +595,15 @@ func (s *Session) StartAxiomWith(kind string, env, args []string) *Proc {
 		s.t.Fatalf("the fake shell never said hello; log tail:\n%s%s", s.Tail("axiom.out", 30), s.Tail(daemonLog, 30))
 	}
 	return p
+}
+
+// axiomBin is the axiom the session runs and asks: the built one, or the
+// installed one after UseInstalled
+func (s *Session) axiomBin() string {
+	if s.bin != "" {
+		return s.bin
+	}
+	return os.Getenv("AXIOM_BIN")
 }
 
 func (s *Session) axiomSock() string {
@@ -600,7 +622,7 @@ func (s *Session) Axiom(args ...string) string {
 
 // AxiomTry is Axiom, with the error returned.
 func (s *Session) AxiomTry(args ...string) (string, error) {
-	cmd := exec.Command(os.Getenv("AXIOM_BIN"), append([]string{"--socket", s.axiomSock()}, args...)...)
+	cmd := exec.Command(s.axiomBin(), append([]string{"--socket", s.axiomSock()}, args...)...)
 	cmd.Env = s.env()
 	out, err := cmd.CombinedOutput()
 	return string(out), err

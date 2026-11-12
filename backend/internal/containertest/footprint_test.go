@@ -107,7 +107,10 @@ func (s *Session) GSettings(args ...string) string {
 
 // Snapshot is the home's files (type, mode, content or link target) and
 // GNOME's interface settings.
-func (s *Session) Snapshot() Snapshot {
+func (s *Session) Snapshot() Snapshot { return s.snapshotSkipping(skipped) }
+
+// snapshotSkipping is Snapshot, leaving out the places skip names.
+func (s *Session) snapshotSkipping(skip []string) Snapshot {
 	s.t.Helper()
 	snap := Snapshot{Files: map[string]Entry{}}
 	err := filepath.WalkDir(s.Home, func(path string, d fs.DirEntry, err error) error {
@@ -118,8 +121,8 @@ func (s *Session) Snapshot() Snapshot {
 		if rel == "." {
 			return nil
 		}
-		for _, skip := range skipped {
-			if rel == skip || strings.HasPrefix(rel, skip+"/") {
+		for _, name := range skip {
+			if rel == name || strings.HasPrefix(rel, name+"/") {
 				return filepath.SkipDir
 			}
 		}
