@@ -2,6 +2,7 @@ package theme
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/theme/integrations"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
@@ -33,6 +35,11 @@ type IntegrateOptions struct {
 	// bat's cache); tests leave it off, so they never reach the session
 	Live bool
 	Log  *slog.Logger
+	// Ledger records what's written outside axiom's folders (nil: none)
+	Ledger *footprint.Ledger
+	// GSettings runs gsettings and returns its output (the gtk integration's
+	// color-scheme and theme); nil runs the installed gsettings
+	GSettings func(ctx context.Context, args ...string) (string, error)
 }
 
 // Integrator runs the theme integrations (ThemeManager.themeIntegrations):
@@ -43,6 +50,7 @@ type Integrator struct {
 	mu      sync.Mutex
 	running bool
 	pending map[string]string // key: the theme file it's wanted for
+	owners  map[string]string // key: the setting that turned it on (the footprint's owner)
 }
 
 // NewIntegrator makes an Integrator.
@@ -56,7 +64,7 @@ func NewIntegrator(opts IntegrateOptions) *Integrator {
 	if opts.Profiles == nil {
 		opts.Profiles = func(string) []string { return nil }
 	}
-	return &Integrator{opts: opts, pending: map[string]string{}}
+	return &Integrator{opts: opts, pending: map[string]string{}, owners: map[string]string{}}
 }
 
 // IntegrationResult is how one integration's run went.
@@ -73,8 +81,10 @@ type IntegrationResult struct {
 // While a run is going, a call only queues its keys for it (each runs for
 // the latest theme asked) and returns no results (an empty list, as JSON
 // [] for the shell to loop over): a quick light-dark-light never ends on
-// the middle one. An unknown key is axerr.BadRequest.
-func (in *Integrator) Run(ctx context.Context, themePath string, keys []string) ([]IntegrationResult, error) {
+// the middle one. An unknown key is axerr.BadRequest. owners names, per
+// key, the setting that turned it on: the owner of the footprint rows of
+// what it writes.
+func (in *Integrator) Run(ctx context.Context, themePath string, keys []string, owners map[string]string) ([]IntegrationResult, error) {
 	for _, k := range keys {
 		if _, ok := integrations.Table[k]; !ok {
 			return nil, axerr.New(axerr.BadRequest, "no theme integration %q", k)
@@ -85,6 +95,7 @@ func (in *Integrator) Run(ctx context.Context, themePath string, keys []string) 
 	in.mu.Lock()
 	for _, k := range keys {
 		in.pending[k] = themePath
+		in.owners[k] = owners[k]
 	}
 	if in.running {
 		in.mu.Unlock()
@@ -149,6 +160,7 @@ type run struct {
 	*Integrator
 	ctx    context.Context
 	key    string
+	owner  string
 	dirs   integrations.Dirs
 	theme  *integrations.Theme
 	files  map[string][]byte // path: what was written
@@ -164,7 +176,10 @@ func (r *run) has(cmd string) bool { _, err := r.opts.LookPath(cmd); return err 
 func (in *Integrator) one(ctx context.Context, key string, l loadedTheme) IntegrationResult {
 	result := IntegrationResult{Key: key, Files: []string{}, Warnings: []string{}}
 	b := xdg.ResolveBases(in.opts.Getenv)
-	r := &run{Integrator: in, ctx: ctx, key: key, result: &result, files: map[string][]byte{},
+	in.mu.Lock()
+	owner := in.owners[key]
+	in.mu.Unlock()
+	r := &run{Integrator: in, ctx: ctx, key: key, owner: owner, result: &result, files: map[string][]byte{},
 		dirs: integrations.Dirs{Home: b.Home, Config: b.Config, State: b.State, Data: b.Data}, theme: l.theme}
 	err := l.err
 	if err == nil {
@@ -210,7 +225,7 @@ func (r *run) write() error {
 			if fx, ok := effects[r.key]; ok && fx.adjust != nil {
 				out = fx.adjust(r, out)
 			}
-			if err := writeFile(path, out); err != nil {
+			if err := r.writeFile(path, out, f.IfMissing); err != nil {
 				return err
 			}
 			r.files[path] = out
@@ -220,11 +235,31 @@ func (r *run) write() error {
 	return nil
 }
 
-func writeFile(path string, data []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return axerr.Wrap(axerr.Unavailable, err, "can't make %s", filepath.Dir(path))
+// writeFile writes an integration's file, the folder it makes and the file
+// recorded in the ledger first (a path under axiom's own folders isn't).
+func (r *run) writeFile(path string, data []byte, userOwned bool) error {
+	dir := filepath.Dir(path)
+	dirsDone, err := r.opts.Ledger.BeginDirs(dir, r.owner)
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "can't record the folders of %s", path)
 	}
-	return fsx.WriteFile(path, data, 0o644)
+	fileID, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindFile, Target: path, Owner: r.owner}, r.opts.Ledger.PriorFile(path))
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "can't record %s", path)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "can't make %s", dir)
+	}
+	dirsDone()
+	if err := fsx.WriteFile(path, data, 0o644); err != nil {
+		return err
+	}
+	var wrote json.RawMessage
+	if userOwned {
+		wrote = footprint.SHA256Of(data)
+	}
+	r.opts.Ledger.Done(fileID, wrote)
+	return nil
 }
 
 // places are the folders an Each or Profiles integration writes into.

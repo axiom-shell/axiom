@@ -12,6 +12,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 )
 
 // ibus-daemon's names, on its own bus (bus/ibusimpl.c)
@@ -133,6 +134,7 @@ func parseIBusAddressFile(data []byte) (addr string, pid int) {
 type ibus struct {
 	conn      *dbus.Conn
 	gsettings func(ctx context.Context, args ...string) (string, error)
+	ledger    *footprint.Ledger
 }
 
 // followIBus follows ibus-daemon at addr until it stops (again), the
@@ -164,7 +166,7 @@ func (s *Service) followIBus(ctx context.Context, addr string, owners *dbus.Subs
 	signals := merge(append(subs, owners)...)
 	defer signals.stop()
 
-	b := &ibus{conn: conn, gsettings: s.o.GSettings}
+	b := &ibus{conn: conn, gsettings: s.o.GSettings, ledger: s.o.Ledger}
 	s.setActive(b)
 	read := func(list bool) error {
 		st, err := b.read(ctx, list, s.State())
@@ -329,7 +331,7 @@ func (b *ibus) set(ctx context.Context, name string) error {
 // show the push as an outside edit. An engine ibus doesn't have is
 // refused before either (as the property would). ibus engines carry
 // their layouts: defaultLayout and the items' layouts aren't ibus's.
-func (b *ibus) push(ctx context.Context, _ string, items []Item) error {
+func (b *ibus) push(ctx context.Context, _ string, items []Item, owner string) error {
 	engines, err := b.engines(ctx, "Engines")
 	if err != nil {
 		return err
@@ -341,7 +343,8 @@ func (b *ibus) push(ctx context.Context, _ string, items []Item) error {
 		}
 		names = append(names, it.Name)
 	}
-	if err := b.setting(ctx, ibusGeneral, "preload-engines", gvariantStrings(names)); err != nil {
+	// preload-engines is the system's own choice (the engines it offers)
+	if err := b.setting(ctx, ibusGeneral, "preload-engines", gvariantStrings(names), owner, true); err != nil {
 		return err
 	}
 	return mapError(b.conn.SetProperty(ctx, ibusName, ibusPath, ibusIface, "PreloadEngines", dbus.MakeVariant(names)))
@@ -353,21 +356,29 @@ func (b *ibus) settings(ctx context.Context, s Settings) error {
 		return nil
 	}
 	if *s.CandidateFont == "" {
-		return b.setting(ctx, ibusPanel, "use-custom-font", "false")
+		return b.setting(ctx, ibusPanel, "use-custom-font", "false", s.Owner, false)
 	}
-	if err := b.setting(ctx, ibusPanel, "custom-font", gvariantString(*s.CandidateFont)); err != nil {
+	if err := b.setting(ctx, ibusPanel, "custom-font", gvariantString(*s.CandidateFont), s.Owner, false); err != nil {
 		return err
 	}
-	return b.setting(ctx, ibusPanel, "use-custom-font", "true")
+	return b.setting(ctx, ibusPanel, "use-custom-font", "true", s.Owner, false)
 }
 
-func (b *ibus) setting(ctx context.Context, schema, key, value string) error {
+// setting sets an ibus gsettings key, recorded first (what it held, what
+// it's set to).
+func (b *ibus) setting(ctx context.Context, schema, key, value, owner string, system bool) error {
 	if b.gsettings == nil {
 		return nil
+	}
+	id, err := b.ledger.Begin(footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(schema, key), Owner: owner, System: system},
+		footprint.PriorGSetting(ctx, b.gsettings, schema, key))
+	if err != nil {
+		return axerr.Wrap(axerr.Failed, err, "recording gsettings %s %s", schema, key)
 	}
 	if _, err := b.gsettings(ctx, "set", schema, key, value); err != nil {
 		return axerr.Wrap(axerr.Failed, err, "gsettings set %s %s", schema, key)
 	}
+	b.ledger.Done(id, footprint.Raw(value))
 	return nil
 }
 

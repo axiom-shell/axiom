@@ -36,6 +36,7 @@ type fakeFcitx struct {
 	group         []Item
 	calls         []string
 	configs       map[string]dbus.Variant
+	initial       map[string]map[string]dbus.Variant
 }
 
 func newFakeFcitx(t *testing.T, bus *dbustest.Bus) *fakeFcitx {
@@ -93,6 +94,10 @@ func newFakeFcitx(t *testing.T, bus *dbustest.Bus) *fakeFcitx {
 			f.configs[m.Body[0].(string)] = m.Body[1].(dbus.Variant)
 			return nil
 		})},
+		// What fcitx5 holds: the last SetConfig laid over f.initial
+		"GetConfig": {In: "s", Out: "va{sv}", Fn: none(func(m *dbus.Message) []any {
+			return []any{dbus.MakeVariant(f.get(m.Body[0].(string))), map[string]dbus.Variant{}}
+		})},
 	}}); err != nil {
 		t.Fatal(err)
 	}
@@ -100,6 +105,37 @@ func newFakeFcitx(t *testing.T, bus *dbustest.Bus) *fakeFcitx {
 		t.Fatal(err)
 	}
 	return f
+}
+
+// get is the config at uri: initial, with what SetConfig loaded over it.
+func (f *fakeFcitx) get(uri string) map[string]dbus.Variant {
+	out := map[string]dbus.Variant{}
+	mergeVariants(out, f.initial[uri])
+	if v, ok := f.configs[uri]; ok {
+		mergeVariants(out, v.Value.(map[string]dbus.Variant))
+	}
+	return out
+}
+
+func mergeVariants(dst, src map[string]dbus.Variant) {
+	for k, v := range src {
+		if m, ok := v.Value.(map[string]dbus.Variant); ok {
+			// As fcitx5: an empty list empties it
+			if len(m) == 0 {
+				dst[k] = v
+				continue
+			}
+			if cur, ok := dst[k].Value.(map[string]dbus.Variant); ok {
+				mergeVariants(cur, m)
+				continue
+			}
+			cp := map[string]dbus.Variant{}
+			mergeVariants(cp, m)
+			dst[k] = dbus.MakeVariant(cp)
+			continue
+		}
+		dst[k] = v
+	}
 }
 
 // editOutside changes the group as fcitx5-configtool would.
@@ -150,11 +186,17 @@ func (h *harness) settingsRun() [][]string {
 
 func start(t *testing.T, session *dbustest.Bus, ibusAddr func() string) *harness {
 	t.Helper()
+	return startWith(t, session, ibusAddr, nil)
+}
+
+// startWith is start with tweak changing the service's options first.
+func startWith(t *testing.T, session *dbustest.Bus, ibusAddr func() string, tweak func(*Options)) *harness {
+	t.Helper()
 	h := &harness{stored: map[string]string{ibusGeneral + " preload-engines": "['xkb:us::eng']"}}
 	if ibusAddr == nil {
 		ibusAddr = func() string { return "" }
 	}
-	h.s = New(Options{
+	opts := Options{
 		SessionBus: func(ctx context.Context) (*dbus.Conn, error) {
 			return dbus.Dial(ctx, session.Address, dbus.Options{})
 		},
@@ -182,7 +224,11 @@ func start(t *testing.T, session *dbustest.Bus, ibusAddr func() string) *harness
 		},
 		Retry: 20 * time.Millisecond,
 		Log:   slog.New(slog.NewTextHandler(testLog{t}, &slog.HandlerOptions{Level: slog.LevelDebug})),
-	})
+	}
+	if tweak != nil {
+		tweak(&opts)
+	}
+	h.s = New(opts)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
@@ -243,7 +289,7 @@ func TestFcitx(t *testing.T) {
 	h.await(t, "the group read again", func(st State) bool { return len(st.Group) == 1 && !st.OutsideEdit })
 
 	items := []Item{{"keyboard-de", ""}, {"mozc", "de"}}
-	if err := h.s.Push(t.Context(), "de", items); err != nil {
+	if err := h.s.Push(t.Context(), "de", items, ""); err != nil {
 		t.Fatal(err)
 	}
 	st = h.await(t, "the push", func(st State) bool { return st.DefaultLayout == "de" })
@@ -255,7 +301,7 @@ func TestFcitx(t *testing.T) {
 	}
 	f.editOutside([]Item{{"keyboard-de", ""}})
 	h.await(t, "an outside edit", func(st State) bool { return st.OutsideEdit })
-	if err := h.s.Push(t.Context(), "de", items); err != nil {
+	if err := h.s.Push(t.Context(), "de", items, ""); err != nil {
 		t.Fatal(err)
 	}
 	h.await(t, "pushed again", func(st State) bool { return !st.OutsideEdit && len(st.Group) == 2 })
@@ -374,7 +420,7 @@ func TestPushRefusesBadLists(t *testing.T) {
 	t.Parallel()
 	s := New(Options{})
 	for _, items := range [][]Item{nil, {{"", "us"}}, {{"mozc", ""}, {"mozc", "de"}}} {
-		if err := s.Push(t.Context(), "us", items); axerr.KindOf(err) != axerr.BadRequest {
+		if err := s.Push(t.Context(), "us", items, ""); axerr.KindOf(err) != axerr.BadRequest {
 			t.Errorf("%v: %v", items, err)
 		}
 	}
@@ -505,7 +551,7 @@ func TestIBus(t *testing.T) {
 	}
 	h.await(t, "the switch", func(st State) bool { return st.Current == "mozc-jp" })
 
-	if err := h.s.Push(t.Context(), "us", []Item{{"xkb:us::eng", ""}, {"mozc-jp", ""}}); err != nil {
+	if err := h.s.Push(t.Context(), "us", []Item{{"xkb:us::eng", ""}, {"mozc-jp", ""}}, ""); err != nil {
 		t.Fatal(err)
 	}
 	st = h.await(t, "the push", func(st State) bool { return len(st.Group) == 2 })
@@ -530,7 +576,7 @@ func TestIBus(t *testing.T) {
 	h.mu.Unlock()
 	f.conn.Emit(ibusPath, "org.freedesktop.DBus.Properties", "PropertiesChanged", "sa{sv}as", ibusIface, map[string]dbus.Variant{}, []string{"PreloadEngines"})
 	h.await(t, "the outside edit", func(st State) bool { return st.OutsideEdit && len(st.Group) == 1 })
-	if err := h.s.Push(t.Context(), "us", []Item{{"pinyin", ""}}); axerr.KindOf(err) != axerr.Failed {
+	if err := h.s.Push(t.Context(), "us", []Item{{"pinyin", ""}}, ""); axerr.KindOf(err) != axerr.Failed {
 		t.Errorf("an engine ibus lacks: %v", err)
 	}
 

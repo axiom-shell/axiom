@@ -30,6 +30,7 @@ import (
 	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
@@ -94,6 +95,9 @@ type Options struct {
 	// leaves GTK's settings alone. An error (gsettings missing, or without
 	// GNOME's schema) skips them.
 	GSettings func(ctx context.Context, args ...string) (string, error)
+	// Ledger records the companion folder and GTK's settings before they're
+	// changed (nil: none)
+	Ledger *footprint.Ledger
 }
 
 // Resolver writes companion themes, one call at a time.
@@ -109,8 +113,9 @@ func New(opts Options) *Resolver { return &Resolver{opts: opts} }
 // left as it is when it already is), removes other themes' companions,
 // sets GTK's cursor-theme (and cursor-size, when size > 0) to the result,
 // and returns it. A folder at the companion's place that isn't axiom's is
-// left alone: a Conflict.
-func (r *Resolver) Resolve(ctx context.Context, theme string, size int) (Result, error) {
+// left alone: a Conflict. owner is the setting that asked (the owner of the
+// footprint rows).
+func (r *Resolver) Resolve(ctx context.Context, theme string, size int, owner string) (Result, error) {
 	if theme == "" || theme == "." || theme == ".." || strings.Contains(theme, "/") || strings.HasPrefix(theme, Prefix) {
 		return Result{}, axerr.New(axerr.BadRequest, "not a cursor theme to wrap: %q", theme)
 	}
@@ -126,9 +131,14 @@ func (r *Resolver) Resolve(ctx context.Context, theme string, size int) (Result,
 				if _, err := os.Lstat(dest); err == nil && !ours(dest) {
 					return Result{}, axerr.New(axerr.Conflict, "%s isn't axiom's: left as it is", dest)
 				}
+				done, err := r.record(dest, owner)
+				if err != nil {
+					return Result{}, axerr.Wrap(axerr.Unavailable, err, "recording %s", dest)
+				}
 				if err := write(dest, theme, links); err != nil {
 					return Result{}, axerr.Wrap(axerr.Unavailable, err, "writing %s", dest)
 				}
+				done()
 			}
 			result = Result{Theme: filepath.Base(dest), Filled: len(links)}
 		}
@@ -138,9 +148,10 @@ func (r *Resolver) Resolve(ctx context.Context, theme string, size int) (Result,
 	for _, other := range others {
 		if filepath.Base(other) != result.Theme && ours(other) {
 			_ = os.RemoveAll(other)
+			r.opts.Ledger.Drop(footprint.ID(footprint.KindDir, other, ""))
 		}
 	}
-	r.setGTK(ctx, result.Theme, size)
+	r.setGTK(ctx, result.Theme, size, owner)
 	return result, nil
 }
 
@@ -200,7 +211,7 @@ func (r *Resolver) cursors(theme string, walked map[string]bool) map[string]stri
 
 // setGTK sets GTK's cursor settings where gsettings knows them, only what
 // differs.
-func (r *Resolver) setGTK(ctx context.Context, theme string, size int) {
+func (r *Resolver) setGTK(ctx context.Context, theme string, size int, owner string) {
 	if r.opts.GSettings == nil {
 		return
 	}
@@ -215,9 +226,36 @@ func (r *Resolver) setGTK(ctx context.Context, theme string, size int) {
 			return
 		}
 		if strings.Trim(strings.TrimSpace(got), "'") != kv[1] {
-			_, _ = r.opts.GSettings(ctx, "set", schema, kv[0], kv[1])
+			id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(schema, kv[0]), Owner: owner},
+				footprint.PriorGSetting(ctx, r.opts.GSettings, schema, kv[0]))
+			if err != nil {
+				return
+			}
+			if _, err := r.opts.GSettings(ctx, "set", schema, kv[0], kv[1]); err == nil {
+				r.opts.Ledger.Done(id, footprint.Raw(kv[1]))
+			}
 		}
 	}
+}
+
+// record writes the companion's folder into the ledger before it's made
+// (the folders made for it too); done marks them made. The companion's tree
+// is axiom's whole (its index.theme says so), so an undo takes it out with
+// what it holds.
+func (r *Resolver) record(dest, owner string) (done func(), err error) {
+	parents, err := r.opts.Ledger.BeginDirs(filepath.Dir(dest), owner)
+	if err != nil {
+		return nil, err
+	}
+	id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindDir, Target: dest, Owner: owner,
+		Wrote: footprint.Raw(footprint.DirWrote{MarkerFile: "index.theme", Marker: marker})}, footprint.PriorAbsent)
+	if err != nil {
+		return nil, err
+	}
+	return func() {
+		parents()
+		r.opts.Ledger.Done(id, nil)
+	}, nil
 }
 
 // holds: dest is the companion of theme with exactly links.
@@ -344,4 +382,30 @@ func inherits(index string) []string {
 		return themes
 	}
 	return nil
+}
+
+// Existing are rows for what an earlier axiom left: the companion folders in
+// $XDG_DATA_HOME/icons (dir rows) and a cursor-theme setting naming one (a
+// gsetting row with nothing prior: an undo resets it). owner is the
+// setting that asks for the cursor theme.
+func (r *Resolver) Existing(ctx context.Context, owner string) []footprint.Row {
+	var rows []footprint.Row
+	icons := filepath.Join(xdg.ResolveBases(r.opts.Getenv).Data, "icons")
+	found, _ := filepath.Glob(filepath.Join(icons, Prefix+"*"))
+	for _, dir := range found {
+		if ours(dir) {
+			rows = append(rows, footprint.Row{Kind: footprint.KindDir, Target: dir, Owner: owner, Prior: footprint.Absent(),
+				Wrote: footprint.Raw(footprint.DirWrote{MarkerFile: "index.theme", Marker: marker})})
+		}
+	}
+	if r.opts.GSettings != nil {
+		const schema = "org.gnome.desktop.interface"
+		if got, err := r.opts.GSettings(ctx, "get", schema, "cursor-theme"); err == nil {
+			if v := strings.Trim(strings.TrimSpace(got), "'"); strings.HasPrefix(v, Prefix+"-") {
+				rows = append(rows, footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(schema, "cursor-theme"), Owner: owner,
+					Prior: footprint.Absent(), Wrote: footprint.Raw(v)})
+			}
+		}
+	}
+	return rows
 }

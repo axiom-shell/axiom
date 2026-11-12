@@ -3,6 +3,7 @@ package theme
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/theme/integrations"
 )
@@ -27,7 +29,7 @@ type effect struct {
 
 var effects = map[string]effect{
 	// bat (and delta) only see themes from bat's cache
-	"bat":     {after: live(func(r *run) { r.command("bat", "cache", "--build") })},
+	"bat":     {after: live(bat)},
 	"cava":    {after: live(func(r *run) { signalAll("cava", syscall.SIGUSR2) })},
 	"fcitx5":  {after: live(reloadFcitx5)},
 	"foot":    {adjust: footStyle},
@@ -175,21 +177,62 @@ func gtk(r *run) {
 			r.warn("'%s' doesn't import the colors: add '%s' at its top.", path, integrations.GTKImport)
 		}
 	}
-	if !r.opts.Live || !r.has("gsettings") {
+	if !r.opts.Live || r.opts.GSettings == nil && !r.has("gsettings") {
 		return
 	}
 	scheme, theme := "prefer-dark", "adw-gtk3-dark"
 	if r.theme.Light {
 		scheme, theme = "prefer-light", "adw-gtk3"
 	}
-	r.command("gsettings", "set", "org.gnome.desktop.interface", "color-scheme", scheme)
+	r.setting("color-scheme", scheme)
 	// adw-gtk3 comes as a light and a dark theme, and apps that judge the
 	// mode by the theme (Firefox and its forks) follow its name, not
 	// color-scheme. Any other theme is the user's to pick.
-	current, _ := r.output("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
+	current, _ := r.gsettings("get", gnomeInterface, "gtk-theme")
 	if current = strings.Trim(strings.TrimSpace(current), "'"); current == "adw-gtk3" || current == "adw-gtk3-dark" {
-		r.command("gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", theme)
+		r.setting("gtk-theme", theme)
 	}
+}
+
+const gnomeInterface = "org.gnome.desktop.interface"
+
+// gsettings runs gsettings (the options' seam, else the installed one).
+func (r *run) gsettings(args ...string) (string, error) {
+	if r.opts.GSettings != nil {
+		return r.opts.GSettings(r.ctx, args...)
+	}
+	return r.output("gsettings", args...)
+}
+
+// setting sets a key of GNOME's interface schema, recorded in the ledger
+// first (what it held, what it's set to); a failure is a warning.
+func (r *run) setting(key, value string) {
+	id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(gnomeInterface, key), Owner: r.owner},
+		footprint.PriorGSetting(r.ctx, func(ctx context.Context, args ...string) (string, error) { return r.gsettings(args...) }, gnomeInterface, key))
+	if err != nil {
+		r.warn("gsettings %s %s: not set (%v)", gnomeInterface, key, err)
+		return
+	}
+	if _, err := r.gsettings("set", gnomeInterface, key, value); err != nil {
+		r.warn("gsettings set %s %s: %v", gnomeInterface, key, err)
+		return
+	}
+	r.opts.Ledger.Done(id, footprint.Raw(value))
+}
+
+// bat: its cache is built again (and, undone, once more without the files).
+func bat(r *run) {
+	argv := []string{"bat", "cache", "--build"}
+	if !r.has("bat") {
+		return
+	}
+	id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindRebuild, Target: "bat", Owner: r.owner, Wrote: footprint.Raw(argv)}, footprint.PriorAbsent)
+	if err != nil {
+		r.warn("bat's cache isn't built (%v)", err)
+		return
+	}
+	r.command(argv[0], argv[1:]...)
+	r.opts.Ledger.Done(id, footprint.Raw(argv))
 }
 
 // ncspot: copies the colors between the markers in its config.toml (it
@@ -211,7 +254,15 @@ func ncspot(r *run) {
 		r.opts.Log.Info("ncspot: left to your config.toml", "keys", own)
 	}
 	if !bytes.Equal(out, data) {
-		if err := fsx.WriteFile(config, out, 0o644); err != nil {
+		id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindMarkedBlock, Target: config, Owner: r.owner,
+			Wrote: footprint.Raw(footprint.BlockWrote{Begin: integrations.NcspotBegin, End: integrations.NcspotEnd})}, footprint.PriorAbsent)
+		if err == nil {
+			err = fsx.WriteFile(config, out, 0o644)
+		}
+		if err == nil {
+			r.opts.Ledger.Done(id, nil)
+		}
+		if err != nil {
 			r.warn("can't change '%s' (%v): copy axiom's [theme] block from its state file into a config.toml of your own.", config, err)
 			return
 		}
@@ -343,7 +394,7 @@ func kde(r *run) {
 	if bytes.Equal(merged, kdeglobals) {
 		return
 	}
-	if err := fsx.WriteFile(path, merged, 0o644); err != nil {
+	if err := r.mergeKDE(path, kdeglobals, merged); err != nil {
 		r.warn("can't change '%s' (%v): KDE apps keep its colors.", path, err)
 		return
 	}
@@ -353,4 +404,31 @@ func kde(r *run) {
 			_ = c.Emit("/KGlobalSettings", "org.kde.KGlobalSettings", "notifyChange", "ii", int32(0), int32(0))
 		})
 	}
+}
+
+// mergeKDE writes kdeglobals with the scheme merged in, recording per key
+// what each changed key held before and holds now (ini-groups): an undo
+// puts back exactly those keys, each only while it's still as written.
+func (r *run) mergeKDE(path string, before, merged []byte) error {
+	prior, wrote := integrations.KeysChanged(before, merged)
+	id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindINIGroups, Target: path, Owner: r.owner}, func() (json.RawMessage, error) {
+		return footprint.Raw(prior), nil
+	})
+	if err != nil {
+		return err
+	}
+	// A later merge's changes join the first's: what the file held before
+	// axiom stays the prior
+	if old, ok := r.opts.Ledger.Get(id); ok {
+		var was, wasWrote integrations.Keys
+		_ = json.Unmarshal(old.Prior, &was)
+		_ = json.Unmarshal(old.Wrote, &wasWrote)
+		prior, wrote = integrations.MergeKeys(was, prior), integrations.MergeWrote(wasWrote, wrote)
+		_ = r.opts.Ledger.Amend(id, func(row *footprint.Row) { row.Prior = footprint.Raw(prior) })
+	}
+	if err := fsx.WriteFile(path, merged, 0o644); err != nil {
+		return err
+	}
+	r.opts.Ledger.Done(id, footprint.Raw(wrote))
+	return nil
 }

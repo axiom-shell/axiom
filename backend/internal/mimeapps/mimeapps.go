@@ -12,12 +12,14 @@ package mimeapps
 
 import (
 	"cmp"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 )
 
 // Role is a kind of app the settings offer as one choice: the MIME types
@@ -61,6 +63,9 @@ type Options struct {
 	DataHome   string
 	DataDirs   []string
 	Desktops   []string
+	// Ledger records each default set before it's written, with what the
+	// list held (nil: none)
+	Ledger *footprint.Ledger
 }
 
 // FromEnv is Options from the environment, the spec's defaults filling in.
@@ -374,8 +379,20 @@ func (a *Apps) SetDefault(roleID, id string) error {
 			return axerr.New(axerr.BadRequest, "%s isn't a terminal", id)
 		}
 		path := a.userList("xdg-terminals.list")
-		data, _ := os.ReadFile(path)
-		return writeText(path, setTerminal(string(data), id))
+		data, readErr := os.ReadFile(path)
+		text := setTerminal(string(data), id)
+		rec, err := a.o.Ledger.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: path, Key: terminalKey, System: true},
+			func() (json.RawMessage, error) {
+				return footprint.Raw(listPrior{Absent: readErr != nil, Lines: linesOf(string(data))}), nil
+			})
+		if err != nil {
+			return err
+		}
+		if err := writeText(path, text); err != nil {
+			return err
+		}
+		a.o.Ledger.Done(rec, footprint.Raw(listWrote{Lines: linesOf(text)}))
+		return nil
 	}
 	mimes := []string{r.Types[0]}
 	for _, mime := range r.Types[1:] {
@@ -404,8 +421,34 @@ func (a *Apps) SetTypes(mimes []string, id string) error {
 		names[i] = a.mimeDB().Canonical(m)
 	}
 	path := a.userList("mimeapps.list")
-	data, _ := os.ReadFile(path)
-	return writeText(path, setDefaults(string(data), names, id))
+	data, readErr := os.ReadFile(path)
+	text := setDefaults(string(data), names, id)
+	// Each type's line is recorded first, with what it held
+	type recorded struct{ id, value string }
+	var rows []recorded
+	for _, mime := range names {
+		before, had := listValue(string(data), groupDefault, mime)
+		after, _ := listValue(text, groupDefault, mime)
+		if had && before == after {
+			continue
+		}
+		_, groupHad := listGroup(string(data), groupDefault)
+		rec, err := a.o.Ledger.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: path, Key: groupDefault + "/" + mime, System: true},
+			func() (json.RawMessage, error) {
+				return footprint.Raw(listPrior{Absent: !had, Value: before, GroupAbsent: !groupHad, FileAbsent: readErr != nil}), nil
+			})
+		if err != nil {
+			return err
+		}
+		rows = append(rows, recorded{rec, after})
+	}
+	if err := writeText(path, text); err != nil {
+		return err
+	}
+	for _, r := range rows {
+		a.o.Ledger.Done(r.id, footprint.Raw(listWrote{Value: r.value}))
+	}
+	return nil
 }
 
 // userList is the user's list called name in their config home: a
