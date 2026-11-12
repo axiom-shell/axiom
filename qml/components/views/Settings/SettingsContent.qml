@@ -77,7 +77,13 @@ Item {
   function _groupShown(group) {
     if (!root.conditionHolds(group.showIf, group.showIfParent))
       return false;
-    return group.kind !== "rows" || group.rows.length === 0 || group.rows.some(row => row.kind === "group" || (root.conditionHolds(row.schema?.["x-showIf"], row.path.slice(0, -1)) && !root._hintHides(row) && (row.groupShowIf ?? []).every(outer => root.conditionHolds(outer.condition, outer.path))));
+    return group.kind !== "rows" || group.rows.length === 0 || group.rows.some(row => root.rowShown(row));
+  }
+
+  // Whether a row's own conditions hold (a nested object's heading always
+  // does)
+  function rowShown(row) {
+    return row.kind === "group" || (root.conditionHolds(row.schema?.["x-showIf"], row.path.slice(0, -1)) && !root._hintHides(row) && (row.groupShowIf ?? []).every(outer => root.conditionHolds(outer.condition, outer.path)));
   }
 
   // A row's `x-hintedIf` hides it (SchemaLayout.hintedHides)

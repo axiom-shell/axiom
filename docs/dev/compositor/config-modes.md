@@ -1,6 +1,6 @@
 # Config modes (detached / included / managed)
 
-> **Files:** `qml/services/session/RecommendedSetupManager.qml`, `backend/internal/compositor/manager/`, `backend/internal/compositor/render/`, `backend/internal/compositor/ipc/`, `backend/internal/compositor/takeover/`, `backend/internal/compositor/binds/`, `backend/internal/compositor/userconf/`, `backend/internal/daemon/compositor.go`, `qml/services/compositor/CompositorConfigManager.qml`, `qml/config/CompositorConfig.qml`, `qml/components/views/Settings/CompositorStatusCard.qml`, `qml/services/ui/IntegrationHookupManager.qml`, `qml/services/ui/CursorThemeManager.qml`, `backend/internal/cursortheme/`, `backend/internal/daemon/cursor.go`
+> **Files:** `qml/services/session/RecommendedSetupManager.qml`, `backend/internal/compositor/manager/`, `backend/internal/compositor/render/`, `backend/internal/compositor/ipc/`, `backend/internal/compositor/takeover/`, `backend/internal/compositor/binds/`, `backend/internal/compositor/userconf/`, `backend/internal/daemon/compositor.go`, `qml/services/compositor/CompositorConfigManager.qml`, `qml/config/CompositorConfig.qml`, `qml/components/views/Settings/CompositorStatus.qml`, `qml/services/ui/IntegrationHookupManager.qml`, `qml/services/ui/CursorThemeManager.qml`, `backend/internal/cursortheme/`, `backend/internal/daemon/cursor.go`
 > **Config:** `Compositor.mode`, `Compositor.requiredSettings`, `WindowBehaviour.*`, `Keybinds.binds`, `Monitors.items`, `WindowLook`, `Input`, `Session`, `Workspaces.strips`
 > **Related:** [Contract](contract.md), [Window look](window-look.md), [Hyprland's writer](../hyprland/config-modes.md), [Managed takeover](../hyprland/managed-takeover.md), [Sway backend](sway-backend.md), [niri backend](niri-backend.md), [The axiom binary](../backend/README.md)
 
@@ -50,7 +50,7 @@ How axiom sets the compositor up, the same on every compositor with `supports.co
 - Goldens: `manager/testdata/golden/<kind>/managed.*` with fcitx5 installed, `managed-no-im.*` without.
 
 ### Status card and saving
-- The settings page's Compositor section starts with `CompositorStatusCard`, built from `status` (`runtime` | `loaded` | `fallback` | `pending`) and `problem`.
+- The settings page's Compositor section's first card has `CompositorStatus` on top (its status chip in the header), then the Mode row (`x-intro` `setup`) and the other settings in its fold, built from `status` (`runtime` | `loaded` | `fallback` | `pending`) and `problem`.
 - A mode picked there waits for Save (`x-applyOnSave`). The card predicts a takeover with `checkManaged()`: `ours` | `adopt` | `stock` | `released` | `new` | `blocked` (`managedBlockedBy` `link` or `git`, or `elsewhere`: the compositor runs another config of the user's than the one managed mode writes, `files().RunsElsewhere`, so the takeover's file would never load; sway's, from `userconf.SwayMain`).
 - After a save that switches into managed mode, the card shows the Recommended setup list once (`RecommendedSetupManager.offered`, set by `SettingsManager.saveChanges`): [Onboarding](../features/onboarding.md#recommended-setup).
 

@@ -2,7 +2,7 @@
 
 type: object
 x-category: System
-x-card: {file: SelfUpdateStatus, title: Update status}
+x-intro: {file: SelfUpdateStatus, setup: [mode, channel]}
 x-showIf: {/$packaged: false}
 title: axiom updates
 description: Updates come from the repository axiom was cloned from. A clone with changes of its own is never touched.

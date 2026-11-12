@@ -3,7 +3,7 @@
 x-scope: personal
 type: object
 x-category: Screen & Power
-x-card: {file: IdleStatus, title: Idle}
+x-intro: {file: IdleStatus, setup: [enabled]}
 title: Idle
 description: Dimming, locking, turning screens off and suspending when you step away.
 additionalProperties: false
@@ -56,7 +56,7 @@ properties:
         description: 50% takes 80% down to 40%.
         x-showIf: {mode: by}
     x-showIf: {enabled: true}
-    x-group: Timeouts
+    x-group: Idle
   lock:
     type: object
     title: Lock
@@ -72,7 +72,7 @@ properties:
         multipleOf: 1000
         description: '0: never locks on idle.'
     x-showIf: {enabled: true}
-    x-group: Timeouts
+    x-group: Idle
   screenOff:
     type: object
     title: Screen off
@@ -88,7 +88,7 @@ properties:
         multipleOf: 1000
         description: '0: stays on.'
     x-showIf: {enabled: true}
-    x-group: Timeouts
+    x-group: Idle
   suspend:
     type: object
     title: Suspend
@@ -104,7 +104,7 @@ properties:
         multipleOf: 1000
         description: '0: never suspends on idle.'
     x-showIf: {enabled: true}
-    x-group: Timeouts
+    x-group: Idle
   lockBeforeSleep:
     type: boolean
     title: Lock before sleep

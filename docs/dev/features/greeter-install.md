@@ -1,6 +1,6 @@
 # Greeter: install, update, status
 
-> **Files:** `qml/services/session/RecommendedSetupManager.qml`, `qml/services/session/GreeterManager.qml`, `qml/config/GreeterConfig.qml`, `backend/internal/greeterinstall/`, `backend/internal/release/`, `backend/internal/daemon/greeterinstall.go`, `data/greeter/greeter_install.sh`, `data/greeter/org.axiom.greeter.policy`, `qml/components/views/Settings/GreeterStatusCard.qml`, `qml/components/forms/GreeterSetup.qml`
+> **Files:** `qml/services/session/RecommendedSetupManager.qml`, `qml/services/session/GreeterManager.qml`, `qml/config/GreeterConfig.qml`, `backend/internal/greeterinstall/`, `backend/internal/release/`, `backend/internal/daemon/greeterinstall.go`, `data/greeter/greeter_install.sh`, `data/greeter/org.axiom.greeter.policy`, `qml/components/views/Settings/GreeterStatus.qml`, `qml/components/forms/GreeterSetup.qml`
 > **Config:** `Greeter.enabled`, `Greeter.source`, `SelfUpdate.channel` (reader `GreeterConfig`)
 > **Related:** [Greeter runtime](greeter-runtime.md), [Lockscreen](lockscreen.md), [Self-update](self-update.md), [Polkit](polkit.md), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -8,7 +8,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 
 ### Overview
 - Off by default.
-- Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatusCard`) or from the onboarder's System page. Both go through `forms/GreeterSetup`.
+- Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatus`) or from the onboarder's System page. Both go through `forms/GreeterSetup`.
 - The greeter runs as greetd's user, who can't read the user's home, so it runs from a copy and reads an export (the [bundle](greeter-runtime.md#the-bundle)).
 - `GreeterManager` is created from `qml/shell.qml`'s `_services`.
 
