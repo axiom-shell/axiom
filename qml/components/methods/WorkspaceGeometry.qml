@@ -9,6 +9,15 @@ import QtQuick
 QtObject {
   id: root
 
+  // A box's padding: `base`, or more when an inner corner of radius `inner`
+  // would come within `margin` px of the box's corner arc of radius `outer`
+  // (the strokes and some air)
+  // (a corner circle inside an arc needs (R - r)(1 - 1/sqrt2) of padding).
+  function boxPad(base, outer, inner, margin) {
+    const need = (outer - inner) * (1 - Math.SQRT1_2) + margin;
+    return Math.max(base, outer > inner ? need : 0);
+  }
+
   // The largest scale at which cols×rows monitors of monW×monH, `gap` apart,
   // fit in availW×availH. With `side` > 0 there is also a column of one more
   // cell's width right of them, `side` px from the grid (the scratchpads'

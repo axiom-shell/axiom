@@ -12,6 +12,15 @@ TestCase {
     compare(WorkspaceGeometry.fitScale(10, 10, 0, 50, 0, 1, 1), 0.1);
   }
 
+  function test_boxPad() {
+    compare(WorkspaceGeometry.boxPad(16, 8, 8, 10), 16);
+    // (40 - 4)(1 - 1/sqrt2) + 10 = 20.5 > 16; (20 - 2) gives 15.3 < 16 stays
+    fuzzyCompare(WorkspaceGeometry.boxPad(16, 40, 4, 10), 36 * (1 - Math.SQRT1_2) + 10, 0.001);
+    compare(WorkspaceGeometry.boxPad(16, 20, 2, 10), 16);
+    fuzzyCompare(WorkspaceGeometry.boxPad(16, 100, 4, 10), 96 * (1 - Math.SQRT1_2) + 10, 0.001);
+    compare(WorkspaceGeometry.boxPad(16, 4, 20, 10), 16);
+  }
+
   function test_usableRect() {
     compare(WorkspaceGeometry.usableRect(1920, 1080, {
       "top": 40

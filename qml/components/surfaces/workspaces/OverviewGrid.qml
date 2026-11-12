@@ -39,7 +39,10 @@ Item {
   readonly property real monitorH: root.screen?.height ?? 1080
 
   readonly property real gap: Widget.spacing * 1.5
-  readonly property real pad: Widget.spacing * 2
+  // The boxes' padding, widened when a big outer radius would meet a cell's
+  // corner: its margin is the box's stroke, the cell's widest stroke (the
+  // current one's) and a spacing of air
+  readonly property real pad: WorkspaceGeometry.boxPad(Widget.spacing * 2, Appearance.borderRadius, root.cellRadius, Appearance.borderWidth * 3 + Widget.spacing)
   // The monitor less its bars' reserved edges: what a cell shows
   readonly property var usable: WorkspaceGeometry.usableRect(monitorW, monitorH, root.monitor?.reserved)
   // Between the grid's cells and the scratchpads' column: both boxes'
