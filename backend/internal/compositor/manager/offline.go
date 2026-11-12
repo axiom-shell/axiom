@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/takeover"
@@ -82,6 +83,8 @@ func (o *Offline) Takeover() takeover.Options {
 	case *niriWriter:
 		fallback = render.NiriReleasedText(w.userDir(), strs(userconf.NiriUserFiles(w.userDir())), jsonx.Arr(), jsonx.Arr())
 	}
+	// Nothing starts axiom in it any more: its header doesn't say it does
+	fallback = strings.NewReplacer("It starts axiom and loads", "It loads", "It starts axiom and includes", "It includes").Replace(fallback)
 	return takeover.Options{Kind: kind, Dir: f.ConfigDir, Header: o.w.header(), Fallback: fallback,
 		Getenv: o.getenv, Elsewhere: f.RunsElsewhere}
 }

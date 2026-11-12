@@ -790,3 +790,53 @@ func (l *Ledger) Amend(id string, fn func(*Row)) error {
 		return true, nil
 	})
 }
+
+// Snapshot is the ledger as a read that changes nothing sees it.
+type Snapshot struct {
+	Rows []RowStatus
+	// Hookups and Files say whether each backfill ran
+	Hookups, Files bool
+}
+
+// Peek reads the ledger without its lock and without changing anything (no
+// lock file is made, a file that isn't JSON is not moved aside): for a
+// command that only looks. A missing file is an empty ledger; one that
+// can't be read is an error, its rows unknown. Rows are with their status.
+func (l *Ledger) Peek(ctx context.Context) (Snapshot, error) {
+	if l == nil {
+		return Snapshot{}, errors.New("no ledger")
+	}
+	data, err := os.ReadFile(l.path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return Snapshot{}, nil
+	}
+	if err != nil {
+		return Snapshot{}, err
+	}
+	var got file
+	if err := json.Unmarshal(data, &got); err != nil {
+		return Snapshot{}, err
+	}
+	s := Snapshot{Hookups: got.Backfilled != 0, Files: got.BackfilledFiles != 0}
+	for _, r := range got.Rows {
+		s.Rows = append(s.Rows, RowStatus{Row: r, Status: l.status(ctx, r)})
+	}
+	return s, nil
+}
+
+// RowsErr is Rows, with the reason when the rows are unknown (the file can't
+// be read). A ledger that's nil has no rows to know.
+func (l *Ledger) RowsErr() ([]Row, error) {
+	if l == nil {
+		return nil, nil
+	}
+	release, err := l.lock()
+	if err == nil {
+		defer release()
+	}
+	f, _, err := l.read()
+	if err != nil {
+		return nil, err
+	}
+	return f.Rows, nil
+}

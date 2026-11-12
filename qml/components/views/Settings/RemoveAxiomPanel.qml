@@ -67,14 +67,87 @@ ColumnLayout {
     }
   }
 
+  // What an action does, worded here from its step and kind (the daemon
+  // sends those and the data, never a sentence)
+  function actionText(action) {
+    switch (action.step) {
+    case "managed":
+      return I18n.tr("Give back the config axiom manages");
+    case "ledger":
+      switch (action.kind) {
+      case "file":
+        return I18n.tr("Delete the file axiom made");
+      case "dir":
+        return I18n.tr("Remove the folder axiom made");
+      case "hookup":
+        return I18n.tr("Take axiom's lines out of");
+      case "gsetting":
+        return I18n.tr("Put back the setting");
+      case "ini-groups":
+        return I18n.tr("Put back the keys in");
+      case "marked-block":
+        return I18n.tr("Remove axiom's block from");
+      case "fcitx-config":
+        return I18n.tr("Put back the fcitx5 option");
+      case "fcitx-group":
+        return I18n.tr("Put back the fcitx5 input methods");
+      case "mimeapps":
+        return I18n.tr("Put back the default app");
+      case "rebuild":
+        return I18n.tr("Rebuild once the files are out");
+      default:
+        return I18n.tr("Leave the record of axiom's changes: it can't be read, so nothing is undone from it");
+      }
+    case "lines":
+      return I18n.tr("Remove axiom's line from");
+    case "session":
+      return I18n.tr("Undo what an unclean stop of axiom left");
+    case "files":
+      return I18n.tr("Delete");
+    case "portal":
+      return I18n.tr("Restart the screen-share portal (a share running ends)");
+    case "secrets":
+      return action.kind === "keyring" ? I18n.tr("Remove axiom's {0} items from the keyring", action.count) : I18n.tr("Delete the saved passwords file");
+    default:
+      switch (action.kind) {
+      case "cache":
+        return I18n.tr("Delete the cache");
+      case "runtime":
+        return I18n.tr("Delete the runtime files");
+      case "data":
+        return I18n.tr("Delete your notes, to-dos, themes, downloaded wallpapers and calendars");
+      case "config":
+        return I18n.tr("Delete the settings and saved setups");
+      default:
+        return I18n.tr("Delete the state (logs, dev builds, approvals)");
+      }
+    }
+  }
+
+  // A ledger row's status and owner, as a line
+  function statusLine(action) {
+    const parts = [];
+    if (action.status === "present")
+      parts.push(I18n.tr("Present"));
+    else if (action.status === "changed")
+      parts.push(I18n.tr("Changed since"));
+    else if (action.status === "gone")
+      parts.push(I18n.tr("Gone"));
+    if ((action.owner ?? "") !== "")
+      parts.push(action.owner);
+    if (action.kind === "unreadable")
+      parts.push(action.detail ?? "");
+    return parts.join(", ");
+  }
+
   function questionText(q) {
     switch (q.field) {
     case "KeepConfig":
       return I18n.tr("Keep your axiom settings (config.json, saved setups) in case you come back?");
     case "KeepUserContent":
-      return I18n.tr("Keep axiom's downloaded wallpapers and calendars in {0}?", Paths.shortenHome(Paths.userDataPath.replace(/\/$/, "")));
+      return I18n.tr("Keep your notes, to-dos, themes, downloaded wallpapers and calendars in {0}?", Paths.shortenHome(Paths.userDataPath.replace(/\/$/, "")));
     case "KeepSecrets":
-      return I18n.tr("Keep axiom's saved passwords and API keys in your keyring ({0})?", q.count);
+      return q.count > 0 ? I18n.tr("Keep axiom's saved passwords and API keys in your keyring ({0})?", q.count) : I18n.tr("Keep axiom's saved passwords and API keys?");
     case "UndoInferred":
       return I18n.tr("Also undo {0} changes axiom found without a record of making them?", q.count);
     case "RestoreSystem":
@@ -192,14 +265,14 @@ ColumnLayout {
           width: list.width
 
           StyledText {
-            text: entry.modelData.action.what + (entry.modelData.action.path ? " " + Paths.shortenHome(entry.modelData.action.path) : "")
+            text: root.actionText(entry.modelData.action) + (entry.modelData.action.path ? " " + Paths.shortenHome(entry.modelData.action.path) : "")
             elide: Text.ElideMiddle
             Layout.fillWidth: true
           }
 
           StyledText {
-            visible: (entry.modelData.action.detail ?? "") !== ""
-            text: entry.modelData.action.detail ?? ""
+            visible: root.statusLine(entry.modelData.action) !== ""
+            text: root.statusLine(entry.modelData.action)
             color: Theme.foregroundAlt
             textSize: Appearance.fontSizeBy(-1)
             elide: Text.ElideMiddle

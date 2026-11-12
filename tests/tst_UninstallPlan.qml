@@ -59,6 +59,12 @@ TestCase {
     compare(all.map(q => q.field), ["KeepConfig", "KeepUserContent", "KeepSecrets", "UndoInferred", "RestoreSystem", "RestartPortal"], "the order they are asked in");
     compare(all[2].count, 4);
     compare(UninstallPlan.questions(null).length, 2, "no plan: the two that are always asked");
+    compare(UninstallPlan.questions({
+      "counts": {
+        "secrets": 0,
+        "secretsFile": true
+      }
+    }).map(q => q.field), ["KeepConfig", "KeepUserContent", "KeepSecrets"], "a secrets file alone asks about passwords");
   }
 
   function test_answers_are_the_defaults_over_the_choices() {

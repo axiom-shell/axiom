@@ -203,3 +203,30 @@ func waitFor(t *testing.T, path string) string {
 	}
 	return string(data)
 }
+
+// Output takes the program's stdout and stderr, appended, with no shell; a
+// link in its place is refused.
+func TestSpawnOutput(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	out := filepath.Join(dir, "log")
+	for range 2 {
+		if err := Spawn(testCtx(t), Options{Output: out}, []string{"sh", "-c", "echo out; echo err >&2"}, ""); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	waitFor(t, out)
+	data, _ := os.ReadFile(out)
+	if got := strings.Count(string(data), "out\n") + strings.Count(string(data), "err\n"); got < 2 || !strings.Contains(string(data), "err") {
+		t.Errorf("log: %q", data)
+	}
+	if info, _ := os.Stat(out); info.Mode().Perm() != 0o600 {
+		t.Errorf("mode %v", info.Mode().Perm())
+	}
+	link := filepath.Join(dir, "link")
+	os.Symlink(out, link)
+	if err := Spawn(testCtx(t), Options{Output: link}, []string{"true"}, ""); err == nil {
+		t.Error("a link was followed")
+	}
+}

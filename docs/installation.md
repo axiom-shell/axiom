@@ -196,20 +196,20 @@ With **Lockscreen → Mode** set to `none`, axiom doesn't register the `lockscre
 
 ## Uninstall
 
-Run `install.sh --uninstall` (or `axiom uninstall`, then your package manager for a package: `sudo pacman -R axiom-shell`; the package's removal note says to run `axiom uninstall` first, as each user who used axiom). Or use **Settings → General → Changes outside axiom → Remove axiom from this system…**, which shows what will go, asks the same questions as switches, and runs it after axiom closes (a summary is saved in `$XDG_RUNTIME_DIR/axiom-uninstall.log`).
+Run `install.sh --uninstall` (a curl install keeps the script at `~/.local/share/axiom-shell/install.sh --uninstall`, or run `curl … | bash -s -- --uninstall` again; or `axiom uninstall`, then your package manager for a package: `sudo pacman -R axiom-shell`; the package's removal note says to run `axiom uninstall` first, as each user who used axiom). Or use **Settings → General → Changes outside axiom → Remove axiom from this system…**, which shows what will go, asks the same questions as switches, and runs it after axiom closes (a summary is saved in `$XDG_RUNTIME_DIR/axiom-uninstall.log`).
 
-It quits axiom, gives back the config axiom manages (your own comes back, with the binds it took), undoes everything axiom changed outside its own folders (the **Changes outside axiom** list), takes install.sh's start-up lines out of your compositor configs, deletes the desktop entries and portal files install.sh put in `~/.local/share`, then the binary and the install. Your compositor configs are never deleted. It asks, each time with a default:
+It quits axiom, gives back the config axiom manages (your own comes back, with the binds it took), undoes everything axiom changed outside its own folders (the **Changes outside axiom** list), takes install.sh's start-up lines out of your compositor configs, deletes the desktop entries and portal files install.sh put in `~/.local/share`, then the binary and the install (the default install folder, or the tree the script runs from; a git clone with changes of your own, or of another repository, is left and the command to remove it is listed). Your compositor configs are never deleted. It asks, each time with a default:
 
 | Question | Default |
 |---|---|
 | Keep your axiom settings (`config.json`, saved setups) in case you come back? | yes |
-| Keep downloaded wallpapers and calendars (`~/.local/share/axiom`)? | yes |
-| Keep saved passwords and API keys in your keyring? | yes |
-| Also undo changes axiom found without a record of making them? | yes |
+| Keep your notes, to-dos, themes, downloaded wallpapers and calendars (`~/.local/share/axiom`)? | yes |
+| Keep saved passwords and API keys (in your keyring, or `secrets.json`)? | yes |
+| Also undo changes axiom found without a record of making them (listed first)? | yes |
 | Also put back the default apps and input-method engines you set through axiom? | no |
 | Restart the screen-share portal (a share running ends)? | yes |
 
-`--yes` takes the defaults, `--purge-all` gets rid of everything (settings, content, passwords; it still asks about the default apps, and `--restore-system` answers yes), `--dry-run` only prints what would happen, `--stop` quits a running axiom first (install.sh always does). Without a terminal it needs `--yes`.
+`--yes` takes the defaults (and `--yes`, `--dry-run`, `--purge-all`, `--restore-system` and `--no-portal-restart` are passed on by `install.sh --uninstall`; they are refused without `--uninstall`), `--purge-all` gets rid of everything (settings, notes, to-dos, themes, wallpapers, calendars, passwords; it still asks about the default apps, and `--restore-system` answers yes), `--dry-run` only prints what would happen, `--stop` quits a running axiom first (install.sh always does). Without a terminal it needs `--yes`.
 
 The copies of your files from before axiom changed them (`*.axiom-bak-*`, `<config>.bak-<date>`, `*.axiom-backup-*`, `user/.backups/`) are kept and listed with their size: delete them when you're sure. A line it can't be sure is axiom's own (an `exec_always`, an extra argument, a comment) stays and is listed for you to remove by hand. The login screen is installed for the whole system: remove it first, in **Settings → Login screen**, or as root with the greeter-install command's `uninstall`.
 

@@ -1,5 +1,5 @@
 -- Given back by axiom when it stopped managing Hyprland: this file is yours
--- now, and axiom won't write it again. It starts axiom and loads
+-- now, and axiom won't write it again. It loads
 -- /nonexistent/home/.config/hypr/user/*.lua, as axiom's managed one did.
 
 

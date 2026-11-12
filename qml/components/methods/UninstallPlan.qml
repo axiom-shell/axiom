@@ -26,7 +26,7 @@ QtObject {
     })
 
   // The plan's actions by step, in run order, empty steps left out:
-  // [{ step, actions: [{ what, path, detail, asks }] }]
+  // [{ step, actions: [{ kind, path, status, owner, count, asks, ... }] }]
   function groups(plan) {
     const out = [];
     for (const step of root.steps) {
@@ -58,11 +58,11 @@ QtObject {
         "count": 0
       }
     ];
-    if ((counts.secrets ?? 0) > 0)
+    if ((counts.secrets ?? 0) > 0 || counts.secretsFile === true)
       out.push({
         "field": "KeepSecrets",
         "answer": "keepSecrets",
-        "count": counts.secrets
+        "count": counts.secrets ?? 0
       });
     if ((counts.inferred ?? 0) > 0)
       out.push({

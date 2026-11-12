@@ -375,3 +375,38 @@ func TestDryRunChangesNothing(t *testing.T) {
 		t.Error("deleted")
 	}
 }
+
+// Peek reads without a lock file and without moving a bad file aside: a
+// missing ledger is empty, one that isn't JSON is an error and stays as it is.
+func TestPeekChangesNothing(t *testing.T) {
+	l, _, _ := newLedger(t)
+	snap, err := l.Peek(context.Background())
+	if err != nil || len(snap.Rows) != 0 {
+		t.Fatalf("a missing ledger: %+v %v", snap, err)
+	}
+	if _, err := os.Stat(l.path); err == nil {
+		t.Error("Peek made the ledger file")
+	}
+	dir := filepath.Dir(l.path)
+	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+		t.Errorf("Peek made %v", entries)
+	}
+	os.MkdirAll(dir, 0o755)
+	os.WriteFile(l.path, []byte("{nope"), 0o600)
+	if _, err := l.Peek(context.Background()); err == nil {
+		t.Error("a ledger that isn't JSON read as empty")
+	}
+	if data, _ := os.ReadFile(l.path); string(data) != "{nope" {
+		t.Errorf("Peek changed the file: %q", data)
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 1 {
+		t.Errorf("Peek left %v", entries)
+	}
+	var none *Ledger
+	if _, err := none.Peek(context.Background()); err == nil {
+		t.Error("no ledger: no error")
+	}
+	if rows, err := none.RowsErr(); rows != nil || err != nil {
+		t.Errorf("RowsErr of no ledger: %v %v", rows, err)
+	}
+}

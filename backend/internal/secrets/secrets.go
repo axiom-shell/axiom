@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/command"
@@ -167,12 +168,32 @@ func Count(ctx context.Context, conn *dbus.Conn) (int, error) {
 	return len(unlocked) + len(locked), nil
 }
 
+// clearAllBound is how long `secret-tool clear` may take: a locked keyring
+// may ask for its password, which a detached run can't be given.
+const clearAllBound = 15 * time.Second
+
 // ClearAll removes every item axiom saved in the keyring (`secret-tool
-// clear service axiom`, which prints nothing). A keyring that doesn't
-// answer, or no secret-tool, holds nothing to clear.
+// clear service axiom`, which prints nothing) within clearAllBound. It
+// returns the command's failure: it couldn't run, took too long, or exited
+// with a status (the message is its own, secret-tool prints no value). The
+// caller counts again to know what is left.
 func (s *Store) ClearAll(ctx context.Context) error {
-	s.run(ctx, nil, "clear", "service", "axiom")
-	return ctx.Err()
+	ctx, cancel := context.WithTimeout(ctx, clearAllBound)
+	defer cancel()
+	o := s.o.Command()
+	o.Stop = true
+	res, err := command.Run(ctx, o, []string{s.o.SecretTool, "clear", "service", "axiom"}, nil)
+	if err != nil {
+		return err
+	}
+	if res.ExitCode != 0 {
+		msg := strings.TrimSpace(res.Stderr)
+		if msg == "" {
+			msg = "no message"
+		}
+		return axerr.New(axerr.Failed, "secret-tool clear exited %d: %s", res.ExitCode, msg)
+	}
+	return nil
 }
 
 func check(scope, id string) error {

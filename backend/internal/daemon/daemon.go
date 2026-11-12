@@ -158,6 +158,8 @@ type Daemon struct {
 	// store runs on: dirs.Config, or devConfigDir in the dev image
 	installTree string
 	configDir   string
+	// uninstalling: an uninstall was started (one at a time)
+	uninstalling atomic.Bool
 	// upgradesTried: the binaries (path, inode, time) a newer client's
 	// hello already re-exec'd into or found wanting, never tried again;
 	// upgrading the one it is re-executing into

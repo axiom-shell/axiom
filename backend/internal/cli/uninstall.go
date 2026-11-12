@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -40,8 +41,9 @@ func uninstallCommand() *Command {
 outside its own folders (axiom footprint list), takes out the lines
 install.sh added to your compositor config, deletes the files install.sh
 put in your data folder, and removes axiom's own folders. It asks what to
-keep (your settings, downloaded wallpapers and calendars, saved passwords),
-each with a default of keeping it; --purge-all gets rid of everything
+keep (your settings; your notes, to-dos, themes, downloaded wallpapers and
+calendars in ~/.local/share/axiom; saved passwords), each with a default of
+keeping it; --purge-all gets rid of everything
 instead. Your compositor configs and the backups it made (*.axiom-bak-*,
 *.bak-<date>, *.axiom-backup-*) are never deleted: they are listed.
 Lines it can't be sure are its own are left and listed to remove by hand.
@@ -67,6 +69,9 @@ Settings → Login screen, or with axiom greeter-install uninstall as root.
 				if err != nil {
 					return err
 				}
+				if *answersFile != "" && (*purge || *restore) {
+					return usageError(trail, "--answers carries the answers: don't combine it with --purge-all or --restore-system")
+				}
 				flags := uninstall.Flags{Yes: *yes, PurgeAll: *purge, RestoreSystem: *restore, NoPortalRestart: *noPortal}
 				if *dry {
 					defaults, _ := uninstall.Answer(uninstall.Flags{Yes: true, PurgeAll: *purge, RestoreSystem: *restore, NoPortalRestart: *noPortal}, plan.Counts, false, nil)
@@ -75,9 +80,15 @@ Settings → Login screen, or with axiom greeter-install uninstall as root.
 						fmt.Fprintf(w, "\nAnswers (the defaults): %s\n", describeAnswers(defaults))
 					})
 				}
+				// Axiom running is said before any question is asked
+				if len(plan.Running) > 0 && !*stop {
+					return uninstall.RunningError(plan.Running)
+				}
 				var answers uninstall.Answers
 				if *answersFile != "" {
-					if answers, err = readAnswers(e, *answersFile); err != nil {
+					// (the daemon's file in the runtime folder is gone once read)
+					defer removeAnswers(e, *answersFile)
+					if answers, err = readAnswers(*answersFile); err != nil {
 						return err
 					}
 				} else {
@@ -196,21 +207,41 @@ func packagedTree(getenv func(string) string) bool {
 	return false
 }
 
-// readAnswers reads the Settings button's answers file; one in the runtime
-// folder (the daemon's) is removed once read.
-func readAnswers(e *Env, path string) (uninstall.Answers, error) {
+// answersPrefix names the answers file the daemon makes in the runtime folder
+const answersPrefix = "axiom-uninstall-answers-"
+
+// readAnswers reads the answers file of the Settings button: every one of
+// the answers, none else (a file that's missing one or carries another is
+// refused, so a half-written file never decides what is deleted).
+func readAnswers(path string) (uninstall.Answers, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return uninstall.Answers{}, axerr.Wrap(axerr.BadRequest, err, "reading the answers")
 	}
-	var a uninstall.Answers
-	if err := json.Unmarshal(data, &a); err != nil {
+	var keys map[string]json.RawMessage
+	if err := json.Unmarshal(data, &keys); err != nil {
 		return uninstall.Answers{}, axerr.Wrap(axerr.BadRequest, err, "the answers in %s", path)
 	}
-	if rt := e.Getenv("XDG_RUNTIME_DIR"); rt != "" && filepath.Dir(path) == filepath.Clean(rt) && strings.HasPrefix(filepath.Base(path), "axiom-uninstall-answers-") {
-		os.Remove(path)
+	for _, k := range []string{"keepConfig", "keepUserContent", "keepSecrets", "undoInferred", "restoreSystem", "restartPortal"} {
+		if _, ok := keys[k]; !ok {
+			return uninstall.Answers{}, axerr.New(axerr.BadRequest, "the answers in %s lack %s", path, k)
+		}
+	}
+	a := uninstall.Answers{KeepConfig: true, KeepUserContent: true, KeepSecrets: true, UndoInferred: true, RestartPortal: true}
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&a); err != nil {
+		return uninstall.Answers{}, axerr.Wrap(axerr.BadRequest, err, "the answers in %s", path)
 	}
 	return a, nil
+}
+
+// removeAnswers removes the daemon's answers file once it's been read (or
+// refused): a file of the user's own is never touched.
+func removeAnswers(e *Env, path string) {
+	if rt := e.Getenv("XDG_RUNTIME_DIR"); rt != "" && filepath.Dir(path) == filepath.Clean(rt) && strings.HasPrefix(filepath.Base(path), answersPrefix) {
+		os.Remove(path)
+	}
 }
 
 // isTTY: the questions can be asked on the standard input.
@@ -228,6 +259,7 @@ func (e *Env) isTTY() bool {
 
 // asker asks a question on the terminal, its default on Enter.
 func asker(e *Env, o uninstall.Options, plan uninstall.Plan) func(q uninstall.Question, def bool) bool {
+	// The questions go to stderr: --json's output stays one value
 	in := bufio.NewReader(e.Stdin)
 	home := e.Getenv("HOME")
 	short := func(p string) string {
@@ -242,14 +274,18 @@ func asker(e *Env, o uninstall.Options, plan uninstall.Plan) func(q uninstall.Qu
 		case uninstall.FieldKeepConfig:
 			text = "Keep your axiom settings (config.json, saved setups) in case you come back?"
 		case uninstall.FieldKeepUserContent:
-			text = fmt.Sprintf("Keep axiom's downloaded wallpapers and calendars in %s?", short(strings.TrimRight(o.Dirs.Data, "/")))
+			text = fmt.Sprintf("Keep your notes, to-dos, themes, downloaded wallpapers and calendars in %s?", short(strings.TrimRight(o.Dirs.Data, "/")))
 		case uninstall.FieldKeepSecrets:
-			text = fmt.Sprintf("Keep axiom's saved passwords and API keys in your keyring (%d)?", q.N)
+			text = "Keep axiom's saved passwords and API keys?"
+			if q.N > 0 {
+				text = fmt.Sprintf("Keep axiom's saved passwords and API keys in your keyring (%d)?", q.N)
+			}
 		case uninstall.FieldUndoInferred:
-			fmt.Fprintln(e.Stdout, "Changes axiom found without a record of making them:")
+			// The list first, then the question
+			fmt.Fprintln(e.Stderr, "Changes axiom found without a record of making them:")
 			for _, a := range plan.Actions {
 				if a.Asks == uninstall.FieldUndoInferred {
-					fmt.Fprintf(e.Stdout, "  %s %s\n", a.What, short(a.Path))
+					fmt.Fprintf(e.Stderr, "  %s %s\n", a.What, short(a.Path))
 				}
 			}
 			text = fmt.Sprintf("Also undo %d changes axiom found without a record of making them?", q.N)
@@ -262,7 +298,7 @@ func asker(e *Env, o uninstall.Options, plan uninstall.Plan) func(q uninstall.Qu
 		if !def {
 			hint = "[y/N]"
 		}
-		fmt.Fprintf(e.Stdout, "%s %s ", text, hint)
+		fmt.Fprintf(e.Stderr, "%s %s ", text, hint)
 		line, _ := in.ReadString('\n')
 		switch strings.ToLower(strings.TrimSpace(line)) {
 		case "y", "yes":

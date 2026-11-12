@@ -15,13 +15,12 @@ import (
 // stopBound is how long Stop waits for a daemon and its guard to end.
 const stopBound = 15 * time.Second
 
-// runtimeRoot is $XDG_RUNTIME_DIR/axiom ("" without a runtime folder).
+// runtimeRoot is <runtime folder>/axiom ("" without a runtime folder).
 func (o Options) runtimeRoot() string {
-	rt := o.Getenv("XDG_RUNTIME_DIR")
-	if !filepath.IsAbs(rt) {
-		return ""
+	if rt := o.runtimeDir(); rt != "" {
+		return filepath.Join(rt, "axiom")
 	}
-	return filepath.Join(rt, "axiom")
+	return ""
 }
 
 // displays are the names of the display folders in the runtime root.
@@ -44,21 +43,21 @@ func (o Options) displays() []string {
 }
 
 // running are the displays a daemon runs on (it holds the display's
-// daemon.lock), but the one the plan is made by.
+// daemon.lock), or a guard still runs for (guard.lock), but the one the plan
+// is made by.
 func (o Options) running() []string {
-	var out []string
-	for _, d := range o.displays() {
-		if d != o.ExcludeDisplay && fsx.Held(filepath.Join(o.runtimeRoot(), d, "daemon.lock")) {
-			out = append(out, d)
-		}
-	}
-	return out
+	return o.stillHeldBut(o.displays(), o.ExcludeDisplay)
 }
 
 // stillHeld are the displays whose daemon.lock or guard.lock is held.
-func (o Options) stillHeld(displays []string) []string {
+func (o Options) stillHeld(displays []string) []string { return o.stillHeldBut(displays, "") }
+
+func (o Options) stillHeldBut(displays []string, but string) []string {
 	var out []string
 	for _, d := range displays {
+		if d == but {
+			continue
+		}
 		dir := filepath.Join(o.runtimeRoot(), d)
 		if fsx.Held(filepath.Join(dir, "daemon.lock")) || fsx.Held(filepath.Join(dir, "guard.lock")) {
 			out = append(out, d)
@@ -66,6 +65,9 @@ func (o Options) stillHeld(displays []string) []string {
 	}
 	return out
 }
+
+// RunningError is the refusal when axiom runs.
+func RunningError(displays []string) error { return runningError(displays) }
 
 func runningError(displays []string) error {
 	return axerr.New(axerr.Running, "axiom runs on %s: quit it, or pass --stop", strings.Join(displays, ", "))

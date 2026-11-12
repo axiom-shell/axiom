@@ -555,54 +555,130 @@ func TestStopWaitsForLocks(t *testing.T) {
 	}
 }
 
+// every folder is removed through the guard, which knows the bases
 func TestRemoveAllGuard(t *testing.T) {
 	t.Parallel()
-	home := t.TempDir()
-	base := filepath.Join(home, ".config")
-	ok := filepath.Join(base, "axiom")
-	os.MkdirAll(filepath.Join(ok, "x"), 0o755)
-	for name, c := range map[string]struct{ base, path string }{
-		"home itself":         {base, home},
-		"not called axiom":    {base, filepath.Join(base, "kitty")},
-		"too deep":            {base, filepath.Join(ok, "axiom")},
-		"another base":        {filepath.Join(home, ".local"), ok},
-		"root":                {"/", "/axiom"},
-		"the base":            {base, base},
-		"empty":               {base, ""},
-		"home called axiom":   {filepath.Dir(home), home},
-		"outside via dotdots": {base, filepath.Join(base, "..", "axiom")},
-	} {
-		h := home
-		if name == "home called axiom" {
-			h = home
-			c.path = home
+	refused := func(t *testing.T, o Options, what string) {
+		t.Helper()
+		for _, f := range o.folders() {
+			if err := o.guard(f); axerr.KindOf(err) != axerr.Refused {
+				t.Errorf("%s: %s (%s under %s): %v", what, f.Kind, f.Path, f.Base, err)
+			}
 		}
-		if err := removeAxiomDir(h, c.base, c.path); axerr.KindOf(err) != axerr.Refused {
+	}
+	f := newFixture(t)
+	for _, folder := range f.o.folders() {
+		if err := f.o.guard(folder); err != nil {
+			t.Errorf("%s: %v", folder.Kind, err)
+		}
+	}
+	// a folder that isn't axiom's, or isn't under the base it names
+	for name, bad := range map[string]folder{
+		"home itself":      {Path: f.home, Kind: "config", Base: filepath.Dir(f.home)},
+		"not axiom":        {Path: filepath.Join(f.home, ".config/kitty"), Kind: "config", Base: filepath.Join(f.home, ".config")},
+		"too deep":         {Path: filepath.Join(f.home, ".config/axiom/axiom"), Kind: "config", Base: filepath.Join(f.home, ".config")},
+		"another base":     {Path: filepath.Join(f.home, ".config/axiom"), Kind: "state", Base: filepath.Join(f.home, ".config")},
+		"root":             {Path: "/axiom", Kind: "config", Base: "/"},
+		"relative":         {Path: "axiom", Kind: "config", Base: "."},
+		"dotdots":          {Path: filepath.Join(f.home, ".config/../axiom"), Kind: "config", Base: filepath.Join(f.home, ".config/..")},
+		"a base not known": {Path: "/opt/axiom", Kind: "data", Base: "/opt"},
+	} {
+		if err := f.o.guard(bad); axerr.KindOf(err) != axerr.Refused {
 			t.Errorf("%s: %v", name, err)
 		}
 	}
-	if _, err := os.Stat(home); err != nil {
+	// XDG_RUNTIME_DIR=$HOME: the runtime folder would be ~/axiom
+	g := newFixture(t)
+	g.env["XDG_RUNTIME_DIR"] = g.home
+	os.MkdirAll(filepath.Join(g.home, "axiom"), 0o755)
+	var runtime *folder
+	for _, fo := range g.o.folders() {
+		if fo.Kind == "runtime" {
+			runtime = &fo
+		}
+	}
+	if runtime == nil || axerr.KindOf(g.o.guard(*runtime)) != axerr.Refused {
+		t.Errorf("a runtime folder that is the home: %+v", runtime)
+	}
+	// XDG_DATA_HOME=$HOME is no better
+	h := newFixture(t)
+	h.env["XDG_DATA_HOME"] = h.home
+	for _, fo := range h.o.folders() {
+		if fo.Kind == "data" && axerr.KindOf(h.o.guard(fo)) != axerr.Refused {
+			t.Errorf("a data folder under the home: %+v", fo)
+		}
+	}
+	// A relative HOME
+	r := newFixture(t)
+	r.env["HOME"] = "relative/home"
+	for _, k := range []string{"XDG_CONFIG_HOME", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"} {
+		delete(r.env, k)
+	}
+	r.o.Dirs = xdg.Resolve(r.o.Getenv)
+	refused(t, r.o, "a relative HOME")
+	if _, err := os.Stat(f.home); err != nil {
 		t.Fatal("the home folder is gone")
-	}
-	if err := removeAxiomDir(home, base, ok); err != nil {
-		t.Fatal(err)
-	}
-	if exists(ok) {
-		t.Error("axiom's folder stayed")
 	}
 }
 
-// the uninstall's own HOME can be named axiom and still never goes
-func TestRemoveAllNeverHome(t *testing.T) {
+func TestRuntimeFolderRemovedOnlyWhenPrivate(t *testing.T) {
 	t.Parallel()
-	parent := t.TempDir()
-	home := filepath.Join(parent, "axiom")
-	os.MkdirAll(home, 0o755)
-	if err := removeAxiomDir(home, parent, home); axerr.KindOf(err) != axerr.Refused {
-		t.Errorf("%v", err)
+	f := newFixture(t)
+	root := filepath.Join(f.runtime, "axiom")
+	os.MkdirAll(filepath.Join(root, "wayland-1"), 0o700)
+	os.WriteFile(filepath.Join(root, "stray-file"), []byte("x"), 0o600)
+	var rt folder
+	for _, fo := range f.o.folders() {
+		if fo.Kind == "runtime" {
+			rt = fo
+		}
 	}
-	if !exists(home) {
-		t.Fatal("gone")
+	os.Chmod(root, 0o755)
+	if err := f.o.removeAxiomDir(rt); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("a runtime folder with mode 755: %v", err)
+	}
+	os.Chmod(root, 0o700)
+	// Display folders go; a file that isn't one keeps the folder
+	if err := f.o.removeAxiomDir(rt); err == nil {
+		t.Log("(the stray file kept the folder)")
+	}
+	if exists(filepath.Join(root, "wayland-1")) {
+		t.Error("a display folder stayed")
+	}
+	if !exists(filepath.Join(root, "stray-file")) {
+		t.Error("a file that isn't a display folder was removed")
+	}
+	// A link in its place is refused
+	os.RemoveAll(root)
+	other := t.TempDir()
+	os.Symlink(other, root)
+	if err := f.o.removeAxiomDir(rt); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("a link: %v", err)
+	}
+	if !exists(other) {
+		t.Fatal("the link's target is gone")
+	}
+}
+
+func TestFoldersThatAreLinksAreLeft(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	target := t.TempDir()
+	os.WriteFile(filepath.Join(target, "keep"), []byte("x"), 0o644)
+	os.MkdirAll(filepath.Join(f.home, ".config"), 0o755)
+	if err := os.Symlink(target, filepath.Join(f.home, ".config/axiom")); err != nil {
+		t.Fatal(err)
+	}
+	r := f.run(Answers{UndoInferred: true})
+	if !exists(filepath.Join(target, "keep")) || !exists(filepath.Join(f.home, ".config/axiom")) {
+		t.Error("a linked config folder was followed or removed")
+	}
+	found := false
+	for _, i := range r.Left {
+		found = found || strings.Contains(i.Detail, "a link to "+target)
+	}
+	if !found {
+		t.Errorf("not said: %+v", r.Left)
 	}
 }
 
@@ -783,5 +859,194 @@ func TestLinesNearMissesListedNotRemoved(t *testing.T) {
 	}
 	if !slices.Equal(listed, []int{2, 3, 4}) {
 		t.Errorf("listed lines %v: %+v", listed, r.Manual)
+	}
+}
+
+// A managed config that the release couldn't give back (a link into
+// dotfiles, a git repository) is axiom's still: nothing edits it
+func TestBlockedManagedConfigIsNotEdited(t *testing.T) {
+	t.Parallel()
+	managed := "# Generated by axiom\nset $mod Mod4\nexec '/x/axiom' run\n"
+	t.Run("a link", func(t *testing.T) {
+		t.Parallel()
+		f := newFixture(t)
+		real := f.write("dotfiles/sway.conf", managed)
+		link := filepath.Join(f.home, ".config/sway/config")
+		os.MkdirAll(filepath.Dir(link), 0o755)
+		if err := os.Symlink(real, link); err != nil {
+			t.Fatal(err)
+		}
+		r := f.run(keepAll)
+		if got, _ := os.ReadFile(real); string(got) != managed {
+			t.Errorf("edited through its link:\n%s", got)
+		}
+		if len(r.Left) == 0 || !slices.ContainsFunc(r.Left, func(i Item) bool { return i.Step == "managed" }) {
+			t.Errorf("the failed release isn't in Left: %+v", r.Left)
+		}
+	})
+	t.Run("a git repository", func(t *testing.T) {
+		t.Parallel()
+		f := newFixture(t)
+		path := f.write(".config/hypr/hyprland.lua", "-- Generated by axiom\nhl.config({})\nhl.on(\"hyprland.start\", function() hl.exec_cmd(\"'/x/axiom' run\") end) -- axiom\n")
+		want, _ := os.ReadFile(path)
+		if out, err := exec.Command("git", "-C", filepath.Dir(path), "init", "-q").CombinedOutput(); err != nil {
+			t.Skipf("no git: %v %s", err, out)
+		}
+		r := f.run(keepAll)
+		if got, _ := os.ReadFile(path); string(got) != string(want) {
+			t.Errorf("edited in a git repository:\n%s", got)
+		}
+		if !slices.ContainsFunc(r.Left, func(i Item) bool { return i.Step == "managed" }) {
+			t.Errorf("the failed release isn't in Left: %+v", r.Left)
+		}
+	})
+}
+
+// A ledger that can't be read is left whole, with what the state folder
+// keeps of it, and said
+func TestUnreadableLedgerIsKept(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.write(".local/state/axiom/footprint.json", "{not json")
+	f.write(".local/state/axiom/footprint.json.bad-20260101-000000", "old")
+	f.write(".local/state/axiom/ui/x.json", "{}")
+	plan, err := Build(context.Background(), f.o)
+	if err != nil || !slices.ContainsFunc(plan.Actions, func(a Action) bool { return a.Kind == "unreadable" }) {
+		t.Fatalf("%v %+v", err, plan.Actions)
+	}
+	if got := f.read(".local/state/axiom/footprint.json"); got != "{not json" {
+		t.Fatal("Build changed the ledger")
+	}
+	r := f.run(Answers{UndoInferred: true})
+	if f.read(".local/state/axiom/footprint.json") != "{not json" || !f.exists(".local/state/axiom/footprint.json.bad-20260101-000000") {
+		t.Error("an unreadable ledger or its aside copy was removed")
+	}
+	if f.exists(".local/state/axiom/ui") {
+		t.Error("the rest of the state stayed")
+	}
+	kept := 0
+	for _, i := range r.Left {
+		if strings.Contains(i.Detail, "can't be read") || strings.Contains(i.Detail, "couldn't be read") {
+			kept++
+		}
+	}
+	if kept < 2 {
+		t.Errorf("Left: %+v", r.Left)
+	}
+}
+
+// Without a ledger object at all (nil) the files stay too
+func TestNoLedgerKeepsItsFiles(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.o.Ledger = nil
+	f.write(".local/state/axiom/footprint.json", `{"version":1,"rows":[]}`)
+	f.run(Answers{UndoInferred: true})
+	if !f.exists(".local/state/axiom/footprint.json") {
+		t.Error("the ledger went with nobody to read it")
+	}
+}
+
+// A secrets.json is something to ask about and to say when kept
+func TestSecretsFileIsAskedAboutAndSaidWhenKept(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.write(".local/state/axiom/secrets.json", `{"k":"v"}`)
+	plan, _ := Build(context.Background(), f.o)
+	if !plan.Counts.SecretsFile {
+		t.Fatalf("%+v", plan.Counts)
+	}
+	got, _ := Answer(Flags{}, plan.Counts, true, func(q Question, def bool) bool { return def })
+	if !got.KeepSecrets {
+		t.Error("the default isn't to keep")
+	}
+	asked := false
+	Answer(Flags{}, plan.Counts, true, func(q Question, def bool) bool { asked = asked || q.Field == FieldKeepSecrets; return def })
+	if !asked {
+		t.Error("a secrets.json alone didn't ask the question")
+	}
+	r := f.run(keepAll)
+	if !slices.ContainsFunc(r.Left, func(i Item) bool {
+		return strings.HasSuffix(i.Path, "secrets.json") && strings.Contains(i.Detail, "kept")
+	}) {
+		t.Errorf("not said: %+v", r.Left)
+	}
+}
+
+// Items still in the keyring after the clear are said, and a clear that
+// failed with nothing left is no failure
+func TestKeyringLeftoversAreSaid(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name  string
+		clear error
+		left  int
+		want  string
+	}{
+		{"all gone", nil, 0, "done"},
+		{"some stayed", nil, 2, "left"},
+		{"failed, items stayed", errors.New("locked"), 1, "left"},
+		{"failed, nothing left", errors.New("exit 1"), 0, "done"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newFixture(t)
+			f.o.Secrets = SecretsSeam{
+				Count:    func(context.Context) (int, error) { return c.left, nil },
+				ClearAll: func(context.Context) error { return c.clear },
+			}
+			r := f.run(Answers{UndoInferred: true})
+			var done, left bool
+			for _, i := range r.Done {
+				done = done || i.Step == "secrets"
+			}
+			for _, i := range r.Left {
+				left = left || i.Step == "secrets"
+			}
+			if (c.want == "done") != done || (c.want == "left") != left {
+				t.Errorf("done %v left %v: %+v", done, left, r)
+			}
+		})
+	}
+}
+
+// Without a runtime folder, nobody can say whether axiom runs
+func TestRefusesWithoutARuntimeFolder(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	delete(f.env, "XDG_RUNTIME_DIR")
+	f.o.RunUserDir = t.TempDir()
+	if _, err := Run(context.Background(), f.o, Plan{}, keepAll); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("%v", err)
+	}
+}
+
+// A guard.lock held (a guard still at work) counts as running
+func TestGuardLockCountsAsRunning(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	dir := filepath.Join(f.runtime, "axiom", "wayland-t")
+	os.MkdirAll(dir, 0o700)
+	lock, err := fsx.TryLock(filepath.Join(dir, "guard.lock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	if got := f.o.running(); !slices.Equal(got, []string{"wayland-t"}) {
+		t.Errorf("%v", got)
+	}
+}
+
+func TestDesktopExecIsReadWithItsQuoting(t *testing.T) {
+	t.Parallel()
+	for in, want := range map[string]string{
+		"[Desktop Entry]\nExec=/usr/bin/axiom open x\n": "/usr/bin/axiom",
+		"Exec=\"/home/my dir/bin/axiom\" open\n":        "/home/my dir/bin/axiom",
+		"Exec=\"/h/a \\\"x\\\"/axiom\" open\n":          `/h/a "x"/axiom`,
+		"Exec=true %f\nExec=axiom\n":                    "true",
+		"[Desktop Entry]\nName=x\n":                     "",
+	} {
+		if got := execBinary([]byte(in)); got != want {
+			t.Errorf("%q: %q, want %q", in, got, want)
+		}
 	}
 }

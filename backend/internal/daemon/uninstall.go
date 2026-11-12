@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -66,9 +67,9 @@ func (d *Daemon) packaged() bool {
 // counted as running.
 func (d *Daemon) uninstallOptions() uninstall.Options {
 	return uninstall.Options{
-		Dirs: d.dirs, Getenv: d.opts.Getenv, Bin: d.executable, Ledger: d.footprint,
+		Dirs: d.dirs, Getenv: d.opts.Getenv, Bin: d.installed, Ledger: d.footprint,
 		Inferred: func(ctx context.Context) ([]footprint.Row, []footprint.Row) {
-			return OfflineInferred(ctx, d.opts.Getenv, d.opts.Tree, d.executable)
+			return OfflineInferred(ctx, d.opts.Getenv, d.installTree, d.installed)
 		},
 		Session: d.sessionSeams(),
 		Secrets: uninstall.SecretsSeam{Count: func(ctx context.Context) (int, error) {
@@ -103,8 +104,18 @@ func (d *Daemon) uninstallMethods(reg *rpc.Registry) {
 // runtime folder) and starts the uninstall detached, its output in the
 // log: install.sh --uninstall for a script install, which also takes the
 // install and the binary away, else `axiom uninstall` (a package's files
-// are the package manager's). Either quits this daemon first (--stop).
+// are the package manager's). Either quits this daemon first (--stop). One
+// at a time: a second start while one runs is refused.
 func (d *Daemon) startUninstall(ctx context.Context, a uninstall.Answers) (UninstallStartResult, error) {
+	if !d.uninstalling.CompareAndSwap(false, true) {
+		return UninstallStartResult{}, axerr.New(axerr.Conflict, "an uninstall is already running")
+	}
+	started := false
+	defer func() {
+		if !started {
+			d.uninstalling.Store(false)
+		}
+	}()
 	rt := d.opts.Getenv("XDG_RUNTIME_DIR")
 	if !filepath.IsAbs(rt) {
 		return UninstallStartResult{}, axerr.New(axerr.Unavailable, "no runtime folder to keep the answers in")
@@ -117,24 +128,28 @@ func (d *Daemon) startUninstall(ctx context.Context, a uninstall.Answers) (Unins
 	if err != nil {
 		return UninstallStartResult{}, axerr.Wrap(axerr.Unavailable, err, "saving the answers")
 	}
-	if _, err := f.Write(data); err != nil {
-		f.Close()
-		os.Remove(f.Name())
-		return UninstallStartResult{}, axerr.Wrap(axerr.Unavailable, err, "saving the answers")
-	}
+	_, werr := f.Write(data)
 	f.Close()
-	argv := []string{d.executable, "uninstall", "--stop", "--yes", "--answers", f.Name()}
+	if werr != nil {
+		os.Remove(f.Name())
+		return UninstallStartResult{}, axerr.Wrap(axerr.Unavailable, werr, "saving the answers")
+	}
+	argv := []string{d.installed, "uninstall", "--stop", "--yes", "--answers", f.Name()}
 	if script := filepath.Join(d.installTree, "install.sh"); !d.packaged() && fsx.IsFile(script) {
 		argv = []string{"bash", script, "--uninstall", "--yes", "--answers", f.Name()}
 	}
-	// Its output goes to the log: sh opens it, then becomes the command
-	// (the arguments are the script's own, never put in its text)
+	// Looked for here: a program that doesn't start can't be told by the
+	// detached start
+	if _, err := exec.LookPath(argv[0]); err != nil {
+		os.Remove(f.Name())
+		return UninstallStartResult{}, axerr.Wrap(axerr.Unavailable, err, "starting %s", argv[0])
+	}
 	log := d.uninstallLog()
-	wrapped := append([]string{"sh", "-c", `exec >>"$0" 2>&1; exec "$@"`, log}, argv...)
-	if err := d.sessionSeams().Spawn(ctx, wrapped, nil, ""); err != nil {
+	if err := d.sessionSeams().SpawnTo(ctx, argv, nil, "", log); err != nil {
 		os.Remove(f.Name())
 		return UninstallStartResult{}, err
 	}
+	started = true
 	d.opts.Log.Info("uninstall: started", "argv", argv, "log", log)
 	return UninstallStartResult{Log: log}, nil
 }

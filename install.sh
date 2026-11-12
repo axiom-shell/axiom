@@ -21,13 +21,16 @@
 #                --dry-run      print every command it would run; change
 #                               nothing
 #                --uninstall    take axiom out again: `axiom uninstall` (it
-#                               asks what to keep: your settings, downloaded
-#                               content and saved passwords, by default
-#                               all), then the binary and the install. A
-#                               package is removed with its package manager.
-#                               With it: --yes --dry-run --purge-all (keep
-#                               nothing) --restore-system (put back the
-#                               default apps and input methods axiom set)
+#                               asks what to keep: your settings; notes,
+#                               to-dos, themes, wallpapers and calendars;
+#                               saved passwords: by default all), then the
+#                               binary and the install (a clone with changes
+#                               of your own is left). A package is removed
+#                               with its package manager. With it: --yes
+#                               --dry-run --purge-all (keep nothing)
+#                               --restore-system (put back the default apps
+#                               and input methods axiom set)
+#                               --no-portal-restart --answers <file>
 #              AXIOM_REPO and AXIOM_DIR override the install's source and
 #              folder. Safe to run again: nothing is installed or added twice.
 #              sudo runs only for the package manager (and on Fedora to
@@ -150,15 +153,19 @@ autostart_line() {
 STARTS_AXIOM="(^|[[:space:]'\"/])axiom['\"]? +run([^[:alnum:]_-]|\$)"
 
 mode=ask dry_run=0 compositor_flag=""
-uninstall=0 uninstall_args=()
+uninstall=0 uninstall_args=() uninstall_only=()
 while (($#)); do
   case "$1" in
   --yes | -y) mode=yes ;;
   --minimal) mode=minimal ;;
   --dry-run) dry_run=1 ;;
   --uninstall) uninstall=1 ;;
-  --purge-all | --restore-system) uninstall_args+=("$1") ;;
+  --purge-all | --restore-system | --no-portal-restart)
+    uninstall_args+=("$1")
+    uninstall_only+=("$1")
+    ;;
   --answers | --answers=*)
+    uninstall_only+=("${1%%=*}")
     if [[ "$1" == *=* ]]; then
       uninstall_args+=("$1")
     else
@@ -182,7 +189,7 @@ while (($#)); do
     esac
     ;;
   --help | -h)
-    sed -n '3,33p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,37p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
   *)
@@ -192,6 +199,11 @@ while (($#)); do
   esac
   shift
 done
+
+if ((!uninstall && ${#uninstall_only[@]})); then
+  echo "${uninstall_only[0]} only goes with --uninstall (try --help)" >&2
+  exit 2
+fi
 
 if [[ -t 1 ]]; then
   bold=$'\e[1m' blue=$'\e[34m' yellow=$'\e[33m' red=$'\e[31m' green=$'\e[32m' reset=$'\e[0m'
@@ -278,7 +290,7 @@ do_uninstall() {
   local script_dir="" default_dir=${XDG_DATA_HOME:-$HOME/.local/share}/axiom-shell
   [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]] && script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
   local is_package=0
-  [[ -f "$PACKAGED_DIR/.packaged" ]] && ! is_axiom_clone "$AXIOM_DIR" && [[ ! -f "$AXIOM_DIR/qml/shell.qml" ]] && is_package=1
+  [[ -f "$PACKAGED_DIR/.packaged" ]] && [[ ! -f "$AXIOM_DIR/qml/shell.qml" ]] && is_package=1
   local bin=$bin_home/axiom
   ((is_package)) && bin=/usr/bin/axiom
   [[ -x "$bin" ]] || bin=$(command -v axiom || true)
@@ -311,14 +323,27 @@ do_uninstall() {
       ((dry_run)) || ok "Removed $bin"
     fi
   fi
-  # The install: a tree (qml/shell.qml) or a clone of axiom's. Not the clone
-  # this runs from, unless it is the install's own folder
-  if [[ -f "$AXIOM_DIR/qml/shell.qml" ]] || is_axiom_clone "$AXIOM_DIR"; then
-    if [[ -n "$script_dir" ]] && same_dir "$AXIOM_DIR" "$script_dir" && ! same_dir "$AXIOM_DIR" "$default_dir"; then
-      info "Left $AXIOM_DIR: this runs from it, and it isn't the install's own folder"
+  # The install: its default folder, or the tree this runs from, when it is
+  # a tree of axiom's (qml/shell.qml). A clone with changes of its own, or of
+  # another repository, is never removed: the command is listed instead
+  if [[ -f "$AXIOM_DIR/qml/shell.qml" ]]; then
+    if { same_dir "$AXIOM_DIR" "$default_dir" || { [[ -n "$script_dir" ]] && same_dir "$AXIOM_DIR" "$script_dir"; }; }; then
+      local why=""
+      if git -C "$AXIOM_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+        if [[ -n "$(git -C "$AXIOM_DIR" status --porcelain 2>/dev/null)" ]]; then
+          why="it has changes of your own"
+        elif [[ "$(git -C "$AXIOM_DIR" remote get-url origin 2>/dev/null)" != "$AXIOM_REPO" ]]; then
+          why="its origin isn't $AXIOM_REPO"
+        fi
+      fi
+      if [[ -n "$why" ]]; then
+        info "Left $AXIOM_DIR ($why). Remove it yourself when you're sure: rm -rf '$AXIOM_DIR'"
+      else
+        run rm -rf -- "$AXIOM_DIR"
+        ((dry_run)) || ok "Removed $AXIOM_DIR"
+      fi
     else
-      run rm -rf -- "$AXIOM_DIR"
-      ((dry_run)) || ok "Removed $AXIOM_DIR"
+      info "Left $AXIOM_DIR: it isn't the install's default folder or the tree this runs from. Remove it yourself if you want: rm -rf '$AXIOM_DIR'"
     fi
   fi
   return 0

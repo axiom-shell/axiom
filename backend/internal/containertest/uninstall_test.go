@@ -3,10 +3,8 @@
 package containertest
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
-	"flag"
 	"maps"
 	"os"
 	"os/exec"
@@ -15,6 +13,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/config"
@@ -27,11 +26,9 @@ import (
 // everything applied, then `install.sh --uninstall --yes --purge-all
 // --restore-system`, and the home compared with what it was.
 
-var updateGolden = flag.Bool("update", false, "rewrite testdata/uninstall-plan.golden.json")
-
 // uninstallSnapshotSkips are what the harness itself puts in the home (the
-// bin of its fake programs, glib's keyfile settings, the keyring it starts). Everything else is
-// compared, axiom's own folders and the cache included.
+// bin of its fake programs, glib's keyfile settings, the keyring it starts).
+// Everything else is compared, axiom's own folders and the cache included.
 var uninstallSnapshotSkips = []string{"bin", ".config/glib-2.0", ".local/share/keyrings"}
 
 // sudoStub refuses: nothing here escalates (the image has every package
@@ -258,6 +255,48 @@ func goConfig(line string) bool {
 	return path == ".config/go" || strings.HasPrefix(path, ".config/go/")
 }
 
+// diffPath is the path a Diff line is about (a plus or a tilde line: added
+// or changed; others come back as they are)
+func diffPath(line string) string {
+	path := strings.TrimPrefix(strings.TrimPrefix(line, "+ "), "~ ")
+	return strings.SplitN(path, ":", 2)[0]
+}
+
+// under: path is x or inside it
+func under(path, x string) bool { return path == x || strings.HasPrefix(path, x+"/") }
+
+// checkPlan runs `axiom --json uninstall --dry-run args…` and compares its
+// plan with testdata/<name> (container-test.sh -update writes it, into the
+// logs folder).
+func (s *Session) checkPlan(t *testing.T, name string, args ...string) {
+	t.Helper()
+	plan := s.normalize(s.Axiom(append([]string{"--json", "uninstall", "--dry-run"}, args...)...))
+	var pretty any
+	if err := json.Unmarshal([]byte(plan), &pretty); err != nil {
+		t.Fatalf("the plan isn't JSON: %v\n%s", err, plan)
+	}
+	// Two backups made in different seconds are one name once the stamp is
+	// <stamp>: which it is depends on timing, so each is listed once
+	if m, ok := pretty.(map[string]any); ok {
+		if p, ok := m["plan"].(map[string]any); ok {
+			if list, ok := p["backups"].([]any); ok {
+				p["backups"] = slices.Compact(list)
+			}
+		}
+	}
+	data, _ := json.MarshalIndent(pretty, "", "  ")
+	golden := filepath.Join("testdata", name)
+	if os.Getenv("AXIOM_CTR_UPDATE") == "1" {
+		os.WriteFile(golden, append(data, '\n'), 0o644)
+		os.WriteFile(filepath.Join(os.Getenv("AXIOM_CTR_OUT"), name), append(data, '\n'), 0o644)
+	} else if want, err := os.ReadFile(golden); err != nil {
+		t.Fatalf("%v (container-test.sh -update writes it into the logs folder)", err)
+	} else if strings.TrimSpace(string(want)) != strings.TrimSpace(string(data)) {
+		os.WriteFile(filepath.Join(s.Out, name+".got"), data, 0o644)
+		t.Errorf("the plan differs from %s (got it in the logs: %s.got):\n%s", golden, name, data)
+	}
+}
+
 func (s *Session) noAxiomProcesses() []ProcInfo {
 	return Procs(func(p ProcInfo) bool {
 		return filepath.Base(p.Argv[0]) == "axiom" && p.HasEnv("XDG_RUNTIME_DIR="+s.Runtime)
@@ -288,28 +327,24 @@ func TestContainerUninstallRoundTrip(t *testing.T) {
 	s.startInstalled()
 	secret := setupInstalled(t, s, true)
 
+	// The daemon is still saving what the setup changed: wait until the home
+	// holds still, so that a change after this is the plan's
 	beforePlan := s.snapshotSkipping(uninstallSnapshotSkips)
-	plan := s.normalize(s.Axiom("--json", "uninstall", "--dry-run"))
-	var pretty any
-	if err := json.Unmarshal([]byte(plan), &pretty); err != nil {
-		t.Fatalf("the plan isn't JSON: %v\n%s", err, plan)
-	}
-	data, _ := json.MarshalIndent(pretty, "", "  ")
-	golden := "testdata/uninstall-plan.golden.json"
-	if *updateGolden || os.Getenv("AXIOM_CTR_UPDATE") == "1" {
-		os.WriteFile(golden, append(data, '\n'), 0o644)
-		os.WriteFile(filepath.Join(os.Getenv("AXIOM_CTR_OUT"), "uninstall-plan.golden.json"), append(data, '\n'), 0o644)
-	} else if want, err := os.ReadFile(golden); err != nil {
-		t.Fatalf("%v (container-test.sh -update writes it into the logs folder)", err)
-	} else if strings.TrimSpace(string(want)) != strings.TrimSpace(string(data)) {
-		os.WriteFile(filepath.Join(s.Out, "uninstall-plan.got.json"), data, 0o644)
-		t.Errorf("the plan differs from %s (got it in the logs: uninstall-plan.got.json):\n%s", golden, data)
-	}
-	// (the daemon's own folders and the claim's user/ folder change meanwhile)
+	testkit.Eventually(func() bool {
+		time.Sleep(300 * time.Millisecond)
+		next := s.snapshotSkipping(uninstallSnapshotSkips)
+		still := len(Diff(beforePlan, next)) == 0
+		beforePlan = next
+		return still
+	})
+	s.checkPlan(t, "uninstall-plan.golden.json")
+	s.checkPlan(t, "uninstall-plan-purge.golden.json", "--purge-all", "--restore-system")
+	// Axiom's own folders are compared too: only the running daemon's log
+	// changes meanwhile, and the claim's user/ folder is sway's
 	var changedByPlan []string
 	for _, line := range Diff(beforePlan, s.snapshotSkipping(uninstallSnapshotSkips)) {
-		path := strings.TrimLeft(strings.TrimPrefix(strings.TrimPrefix(line, "+ "), "~ "), " ")
-		if !strings.HasPrefix(path, ".config/axiom") && !strings.HasPrefix(path, ".local/state/axiom") && !strings.HasPrefix(path, ".config/sway/user") {
+		path := diffPath(line)
+		if !under(path, ".local/state/axiom/log") && !under(path, ".config/sway/user") {
 			changedByPlan = append(changedByPlan, line)
 		}
 	}
@@ -317,18 +352,10 @@ func TestContainerUninstallRoundTrip(t *testing.T) {
 		t.Errorf("--dry-run changed the home:\n%s", strings.Join(d, "\n"))
 	}
 
-	for _, r := range s.footprintRows() {
-		if strings.Contains(r.Target, "cava") {
-			t.Logf("row before: %s %s state=%s status=%s wrote=%s hookup=%+v", r.Kind, r.Target, r.State, r.Status, r.Wrote, r.Hookup)
-		}
-	}
-	cava, _ := os.ReadFile(filepath.Join(s.Config, "cava/config"))
-	t.Logf("cava/config before (sha %x):\n%s", sha256.Sum256(cava), cava)
 	out, err := s.RunInstallSh(repo, "--uninstall", "--purge-all", "--restore-system")
 	if err != nil {
 		t.Fatalf("install.sh --uninstall: %v\n%s", err, out)
 	}
-	t.Logf("uninstall:\n%s", out)
 	b := s.snapshotSkipping(uninstallSnapshotSkips)
 	rest, taken := s.withoutListed(Diff(a, b), reportedBackups(out))
 	var left []string
@@ -355,7 +382,6 @@ func TestContainerUninstallRoundTrip(t *testing.T) {
 	if secret && s.secretFound() {
 		t.Error("the keyring item stayed")
 	}
-	t.Logf("allowlist used: %v; backups listed: %v", allowed, reportedBackups(out))
 }
 
 func TestContainerUninstallDefaultsKeepConfig(t *testing.T) {
@@ -369,19 +395,34 @@ func TestContainerUninstallDefaultsKeepConfig(t *testing.T) {
 		t.Fatalf("install.sh: %v\n%s", err, out)
 	}
 	s.startInstalled()
-	setupInstalled(t, s, false)
+	// With the system's own choice recorded too (a System row): the defaults
+	// keep it, and the ledger with it
+	secret := setupInstalled(t, s, true)
 	if _, err := os.Stat(filepath.Join(s.State, "axiom/ui/takeover.json")); err != nil {
 		t.Fatalf("no approval to remove: %v", err)
 	}
+	// Something of the user's in the data folder
+	todo := filepath.Join(s.Data, "axiom/todo.json")
+	os.MkdirAll(filepath.Dir(todo), 0o755)
+	os.WriteFile(todo, []byte("[]\n"), 0o644)
+	mimeapps := filepath.Join(s.Config, "mimeapps.list")
+	mimeBefore, _ := os.ReadFile(mimeapps)
 
 	out, err := s.RunInstallSh(repo, "--uninstall")
 	if err != nil {
 		t.Fatalf("install.sh --uninstall: %v\n%s", err, out)
 	}
-	for _, rel := range []string{".config/axiom/config.json", ".local/share/axiom"} {
-		if _, err := os.Stat(filepath.Join(s.Home, rel)); err != nil && rel != ".local/share/axiom" {
-			t.Errorf("%s was removed: %v", rel, err)
+	// Each thing kept
+	for _, p := range []string{filepath.Join(s.Config, "axiom/config.json"), todo, filepath.Join(s.State, "axiom/footprint.json")} {
+		if _, err := os.Stat(p); err != nil {
+			t.Errorf("%s was removed: %v", p, err)
 		}
+	}
+	if got, _ := os.ReadFile(mimeapps); string(got) != string(mimeBefore) {
+		t.Errorf("the default apps were put back without being asked:\n%s\n->\n%s", mimeBefore, got)
+	}
+	if secret && !s.secretFound() {
+		t.Error("the keyring item went though the defaults keep it")
 	}
 	if _, err := os.Stat(filepath.Join(s.State, "axiom/ui/takeover.json")); err == nil {
 		t.Error("the approval stayed")
@@ -390,10 +431,11 @@ func TestContainerUninstallDefaultsKeepConfig(t *testing.T) {
 	rest, _ := s.withoutListed(Diff(a, b), reportedBackups(out))
 	var left []string
 	for _, line := range rest {
-		path := strings.TrimPrefix(strings.TrimPrefix(line, "+ "), "~ ")
+		path := diffPath(line)
 		// What the defaults keep: the settings, the content, the state of
-		// the rest of axiom
-		if slices.Contains(allowed, line) || goConfig(line) || strings.HasPrefix(path, ".config/axiom") || strings.HasPrefix(path, ".local/share/axiom") || strings.HasPrefix(path, ".local/state/axiom") {
+		// the rest of axiom, and the system's default apps
+		if slices.Contains(allowed, line) || goConfig(line) || path == ".config/mimeapps.list" ||
+			under(path, ".config/axiom") || under(path, ".local/share/axiom") || under(path, ".local/state/axiom") {
 			continue
 		}
 		left = append(left, line)
@@ -424,7 +466,20 @@ func TestContainerUninstallRefusesWhileRunning(t *testing.T) {
 	if !strings.Contains(out, "quit it, or pass --stop") {
 		t.Errorf("%s", out)
 	}
-	if d := Diff(before, s.snapshotSkipping(uninstallSnapshotSkips)); len(d) > 0 {
-		t.Errorf("something changed:\n%s", strings.Join(d, "\n"))
+	// Nothing outside axiom's own folders (which the running daemon writes
+	// to) changed, and what an uninstall would touch is all still there
+	for _, line := range Diff(before, s.snapshotSkipping(uninstallSnapshotSkips)) {
+		path := diffPath(line)
+		if !under(path, ".config/axiom") && !under(path, ".local/state/axiom") && !under(path, ".local/share/axiom") && !under(path, ".cache/axiom") {
+			t.Errorf("something changed: %s", line)
+		}
+	}
+	for _, rel := range []string{".local/bin/axiom", ".local/share/axiom-shell/qml/shell.qml", ".local/share/xdg-desktop-portal/portals/axiom.portal", ".config/sway/config", ".config/axiom/config.json"} {
+		if _, err := os.Stat(filepath.Join(s.Home, rel)); err != nil {
+			t.Errorf("%s: %v", rel, err)
+		}
+	}
+	if got, _ := os.ReadFile(filepath.Join(s.Config, "sway/config")); !strings.Contains(string(got), "' run") {
+		t.Errorf("sway's config lost install.sh's line:\n%s", got)
 	}
 }

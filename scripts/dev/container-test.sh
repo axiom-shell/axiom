@@ -9,8 +9,8 @@
 #   --keep     keep the snapshot of the tree
 #   --shell    a bash in the container instead of the tests
 #   -run RE    only the tests matching RE (go test -run)
-#   -update    rewrite the uninstall plan's golden; the new file lands in the
-#              logs folder (<snapshot>.out/uninstall-plan.golden.json)
+#   -update    rewrite the uninstall plan's goldens; the new files land in the
+#              logs folder (<snapshot>.out/uninstall-plan*.golden.json)
 #
 # The exit code is the tests'. Logs are in <snapshot>.out/<TestName>/.
 set -euo pipefail

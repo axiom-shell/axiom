@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/uninstall"
 )
 
@@ -140,5 +141,81 @@ func TestUninstallAnswersFile(t *testing.T) {
 	writeHelp(&help, uninstallCommand(), []string{"axiom", "uninstall"})
 	if strings.Contains(help.String(), "--answers") || !strings.Contains(help.String(), "--purge-all") {
 		t.Errorf("help:\n%s", help.String())
+	}
+}
+
+func TestUninstallAnswersAreStrict(t *testing.T) {
+	t.Parallel()
+	env, config := uninstallHome(t)
+	before, _ := os.ReadFile(config)
+	dir := t.TempDir()
+	write := func(name, text string) string {
+		p := filepath.Join(dir, name)
+		os.WriteFile(p, []byte(text), 0o600)
+		return p
+	}
+	full := `{"keepConfig":true,"keepUserContent":true,"keepSecrets":true,"undoInferred":true,"restoreSystem":false,"restartPortal":true`
+	for name, c := range map[string]struct {
+		args []string
+		file string
+	}{
+		"a missing key":         {file: `{"keepConfig":false}`},
+		"an unknown key":        {file: full + `,"deleteEverything":true}`},
+		"not JSON":              {file: `{`},
+		"with --purge-all":      {file: full + `}`, args: []string{"--purge-all"}},
+		"with --restore-system": {file: full + `}`, args: []string{"--restore-system"}},
+	} {
+		code, _, errOut := runUninstall(t, env, append([]string{"--answers", write("a.json", c.file)}, c.args...)...)
+		if code != 2 {
+			t.Errorf("%s: exit %d: %s", name, code, errOut)
+		}
+	}
+	if after, _ := os.ReadFile(config); string(after) != string(before) {
+		t.Error("a refused answers file changed the config")
+	}
+	if code, out, errOut := runUninstall(t, env, "--answers", write("ok.json", full+`}`)); code != 0 {
+		t.Errorf("a whole file: %d %s %s", code, out, errOut)
+	}
+}
+
+// axiom running is said before any question; the questions go to stderr
+func TestUninstallRunningIsSaidBeforeQuestions(t *testing.T) {
+	t.Parallel()
+	env, config := uninstallHome(t)
+	before, _ := os.ReadFile(config)
+	dir := filepath.Join(env["XDG_RUNTIME_DIR"], "axiom", "wayland-t")
+	os.MkdirAll(dir, 0o700)
+	lock, err := fsx.TryLock(filepath.Join(dir, "daemon.lock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	var out, errOut bytes.Buffer
+	e := &Env{Stdin: strings.NewReader("n\nn\nn\n"), Stdout: &out, Stderr: &errOut, Getenv: func(k string) string { return env[k] }, TTY: func() bool { return true }}
+	code := Run(context.Background(), Root(), []string{"--offline", "uninstall"}, e)
+	if code != 3 || strings.Contains(errOut.String(), "[Y/n]") || !strings.Contains(errOut.String(), "quit it, or pass --stop") {
+		t.Errorf("exit %d: %s", code, errOut.String())
+	}
+	if after, _ := os.ReadFile(config); string(after) != string(before) {
+		t.Error("it changed the config")
+	}
+}
+
+func TestUninstallQuestionsGoToStderrWithTheListFirst(t *testing.T) {
+	t.Parallel()
+	env, _ := uninstallHome(t)
+	var out, errOut bytes.Buffer
+	e := &Env{Stdin: strings.NewReader("\n\n\n"), Stdout: &out, Stderr: &errOut, Getenv: func(k string) string { return env[k] }}
+	plan := uninstall.Plan{Actions: []uninstall.Action{{Step: "ledger", What: "Delete the file axiom made", Path: "/h/x", Asks: uninstall.FieldUndoInferred}}}
+	ask := asker(e, uninstall.Options{}, plan)
+	ask(uninstall.Question{Field: uninstall.FieldUndoInferred, N: 1}, true)
+	ask(uninstall.Question{Field: uninstall.FieldKeepUserContent}, true)
+	got := errOut.String()
+	list, question := strings.Index(got, "Delete the file axiom made /h/x"), strings.Index(got, "Also undo 1 changes")
+	if list < 0 || question < list || out.Len() != 0 {
+		t.Errorf("stdout %q, stderr %q", out.String(), got)
+	}
+	if !strings.Contains(got, "notes, to-dos, themes, downloaded wallpapers and calendars") {
+		t.Errorf("the data question doesn't say what it holds: %q", got)
 	}
 }

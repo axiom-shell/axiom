@@ -18,31 +18,40 @@ QtObject {
   property var plan: null
   // Where the detached uninstall writes its summary
   property string logPath: ""
-  // axiom is installed as a package: its files are the package manager's
-  property bool packaged: false
   // A refresh is waiting for the daemon
   property bool busy: false
   // Why the last refresh or start failed ("" when it didn't)
   property string error: ""
 
+  // Asks for the plan again (a refresh that comes while one waits is run
+  // after it); the old plan is dropped first, so a failure never shows a
+  // plan that no longer holds
   // rpc: uninstall.plan
   function refresh() {
-    if (root.busy)
+    if (root.busy) {
+      root._again = true;
       return;
+    }
     root.busy = true;
+    root.plan = null;
     BackendManager.call("uninstall.plan", {}, (error, result) => {
       root.busy = false;
       if (error) {
+        root.plan = null;
         root.error = error.message;
         console.warn("[UninstallManager] uninstall.plan:", error.message);
-        return;
+      } else {
+        root.error = "";
+        root.plan = result.plan;
+        root.logPath = result.log;
       }
-      root.error = "";
-      root.plan = result.plan;
-      root.logPath = result.log;
-      root.packaged = result.packaged;
+      if (root._again) {
+        root._again = false;
+        root.refresh();
+      }
     });
   }
+  property bool _again: false
 
   // Starts the uninstall with the answers ({ keepConfig, keepUserContent,
   // keepSecrets, undoInferred, restoreSystem, restartPortal }); done(ok)

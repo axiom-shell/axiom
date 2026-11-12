@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/takeover"
 	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/session"
@@ -54,6 +55,9 @@ type Options struct {
 	Secrets SecretsSeam
 	// Shutdown asks the daemon at socket to quit (Stop)
 	Shutdown func(ctx context.Context, socket string) error
+	// RunUserDir is where /run/user/<uid> is looked for when $XDG_RUNTIME_DIR
+	// isn't set ("": /run/user)
+	RunUserDir string
 	// ExcludeDisplay is the display of the daemon that makes the plan: it
 	// isn't counted as running
 	ExcludeDisplay string
@@ -84,10 +88,19 @@ func (o Options) withDefaults() Options {
 // Action is one thing the uninstall does: its Step, what it does to Path,
 // and Asks, the Answers field deciding it ("" for one that always goes).
 type Action struct {
-	Step   string `json:"step"`
+	Step string `json:"step"`
+	// Kind says what kind of thing it is within the step (a ledger row's
+	// kind, "line", "folder"…): the shell words each from Step and Kind;
+	// What, Detail are the command line's English
+	Kind   string `json:"kind,omitempty"`
 	What   string `json:"what"`
 	Path   string `json:"path,omitempty"`
 	Detail string `json:"detail,omitempty"`
+	// Status and Owner are a ledger row's (present, changed, gone; the
+	// setting that caused it), Count a number the action is about
+	Status string `json:"status,omitempty"`
+	Owner  string `json:"owner,omitempty"`
+	Count  int    `json:"count,omitempty"`
 	Asks   string `json:"asks,omitempty"`
 }
 
@@ -167,7 +180,7 @@ var rowWhat = map[string]string{
 // rowAction describes a ledger row (status: present, changed or gone, ""
 // for one a backfill would add).
 func rowAction(r footprint.Row, status string) Action {
-	a := Action{Step: "ledger", What: rowWhat[r.Kind], Path: r.Target}
+	a := Action{Step: "ledger", Kind: r.Kind, What: rowWhat[r.Kind], Path: r.Target, Status: status, Owner: r.Owner}
 	if r.Key != "" {
 		a.Path += " [" + r.Key + "]"
 	}
@@ -190,17 +203,18 @@ func rowAction(r footprint.Row, status string) Action {
 
 // ledgerRows are the rows the plan is about: the recorded ones with their
 // status, and the ones the backfill would add. Nothing is created to read
-// them: without a ledger file there are none recorded.
-func (o Options) ledgerRows(ctx context.Context) (rows []footprint.RowStatus, candidates []footprint.Row) {
+// them (Ledger.Peek). A ledger that can't be read is an error: its rows are
+// unknown.
+func (o Options) ledgerRows(ctx context.Context) (rows []footprint.RowStatus, candidates []footprint.Row, err error) {
 	if o.Ledger == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
-	recorded := false
-	if _, err := os.Stat(filepath.Join(o.Dirs.State, "footprint.json")); err == nil {
-		recorded = true
-		rows = o.Ledger.List(ctx)
+	snap, err := o.Ledger.Peek(ctx)
+	if err != nil {
+		return nil, nil, err
 	}
-	hooksDone, filesDone := recorded && o.Ledger.Backfilled(), recorded && o.Ledger.BackfilledFiles()
+	rows = snap.Rows
+	hooksDone, filesDone := snap.Hookups, snap.Files
 	if o.Inferred != nil && (!hooksDone || !filesDone) {
 		have := map[string]bool{}
 		for _, r := range rows {
@@ -223,7 +237,7 @@ func (o Options) ledgerRows(ctx context.Context) (rows []footprint.RowStatus, ca
 			}
 		}
 	}
-	return rows, candidates
+	return rows, candidates, nil
 }
 
 // unowned are the inferred rows for a target no recorded row is about: a
@@ -250,13 +264,12 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 	// 2. the managed configs
 	for _, kind := range kinds {
 		w := o.offline(kind)
-		opts := w.Takeover()
-		opts.Elsewhere = ""
+		opts := withoutElsewhere(w.Takeover())
 		switch result, err := takeover.Check(ctx, opts); {
 		case err != nil:
 			o.Log.Warn("uninstall: checking the "+kind+" config", "err", err)
 		case result == "ours":
-			p.Actions = append(p.Actions, Action{Step: "managed", What: "Give back the config axiom manages", Path: w.ManagedPath()})
+			p.Actions = append(p.Actions, Action{Step: "managed", Kind: "managed", What: "Give back the config axiom manages", Path: w.ManagedPath()})
 		case strings.HasPrefix(result, "blocked") && isOurs(w.ManagedPath(), opts.Header):
 			p.Manual = append(p.Manual, Manual{File: w.ManagedPath(), Text: opts.Header,
 				Reason: "axiom's managed config, which is a symlink or in a git repository, so axiom can't give it back: replace it with your own"})
@@ -264,7 +277,10 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 	}
 
 	// 3. the ledger
-	rows, candidates := o.ledgerRows(ctx)
+	rows, candidates, lerr := o.ledgerRows(ctx)
+	if lerr != nil {
+		p.Actions = append(p.Actions, Action{Step: "ledger", Kind: "unreadable", What: "Leave the record of axiom's changes: it can't be read, so nothing is undone from it", Detail: lerr.Error()})
+	}
 	// In a fixed order (the order the rows were recorded in follows how the
 	// changes were made)
 	slices.SortFunc(rows, func(a, b footprint.RowStatus) int { return strings.Compare(a.ID, b.ID) })
@@ -288,7 +304,7 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 	files := o.lineFiles()
 	for _, f := range files {
 		data, err := os.ReadFile(f.Path)
-		if err != nil || o.managed(f, data) {
+		if err != nil || o.isManagedFile(f, data) {
 			// (a managed config is given back above: its lines are gone then)
 			continue
 		}
@@ -297,7 +313,7 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 		for _, i := range s.Remove {
 			text := strings.TrimSpace(lines[i])
 			if !covered[f.Path+"\x00"+text] {
-				p.Actions = append(p.Actions, Action{Step: "lines", What: "Remove axiom's line from", Path: f.Path, Detail: text})
+				p.Actions = append(p.Actions, Action{Step: "lines", Kind: "line", What: "Remove axiom's line from", Path: f.Path, Detail: text})
 			}
 		}
 		p.Manual = append(p.Manual, s.Manual...)
@@ -308,7 +324,7 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 
 	// 6. installed files
 	for _, f := range o.installedFiles() {
-		p.Actions = append(p.Actions, Action{Step: "files", What: "Delete", Path: f.Path})
+		p.Actions = append(p.Actions, Action{Step: "files", Kind: "installed", What: "Delete", Path: f.Path})
 	}
 
 	// 7. the portal
@@ -318,7 +334,7 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 		}
 	}
 	if p.Counts.Portal {
-		p.Actions = append(p.Actions, Action{Step: "portal", What: "Restart the screen-share portal (a share running ends)", Asks: FieldRestartPortal})
+		p.Actions = append(p.Actions, Action{Step: "portal", Kind: "portal", What: "Restart the screen-share portal (a share running ends)", Asks: FieldRestartPortal})
 	}
 
 	// 8. the keyring
@@ -330,16 +346,17 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 		p.Counts.Secrets = n
 	}
 	if p.Counts.Secrets > 0 {
-		p.Actions = append(p.Actions, Action{Step: "secrets", What: "Remove axiom's items from the keyring", Detail: fmt.Sprint(p.Counts.Secrets), Asks: FieldKeepSecrets})
+		p.Actions = append(p.Actions, Action{Step: "secrets", Kind: "keyring", What: "Remove axiom's items from the keyring", Detail: fmt.Sprint(p.Counts.Secrets), Count: p.Counts.Secrets, Asks: FieldKeepSecrets})
 	}
 	if isFile(filepath.Join(o.Dirs.State, "secrets.json")) {
-		p.Actions = append(p.Actions, Action{Step: "secrets", What: "Delete the saved passwords file", Path: filepath.Join(o.Dirs.State, "secrets.json"), Asks: FieldKeepSecrets})
+		p.Counts.SecretsFile = true
+		p.Actions = append(p.Actions, Action{Step: "secrets", Kind: "file", What: "Delete the saved passwords file", Path: filepath.Join(o.Dirs.State, "secrets.json"), Asks: FieldKeepSecrets})
 	}
 
 	// 9. the folders
 	for _, f := range o.folders() {
 		if exists(f.Path) {
-			p.Actions = append(p.Actions, Action{Step: "folders", What: f.What, Path: f.Path, Asks: f.Asks})
+			p.Actions = append(p.Actions, Action{Step: "folders", Kind: f.Kind, What: f.What, Path: f.Path, Asks: f.Asks})
 		}
 	}
 
@@ -367,9 +384,9 @@ func coverLines(covered map[string]bool, r footprint.Row) {
 	}
 }
 
-// managed: the file is axiom's own managed config (its first line is the
+// isManagedFile: the file is axiom's own managed config (its first line is the
 // header), which the release gives back
-func (o Options) managed(f lineFile, data []byte) bool {
+func (o Options) isManagedFile(f lineFile, data []byte) bool {
 	w := o.offline(f.Kind)
 	return w != nil && strings.HasPrefix(string(data), w.Takeover().Header)
 }
@@ -391,8 +408,10 @@ type run struct {
 	report Report
 	// portal: a portal file or line changed
 	portal bool
-	// kept: rows the ledger still has after its undo
-	kept int
+	// rows are the rows the ledger still has after its undo, ledgerKnown
+	// whether they are known (it could be read)
+	rows        int
+	ledgerKnown bool
 }
 
 func (r *run) done(step, what, path, detail string) {
@@ -408,7 +427,10 @@ func (r *run) left(step, what, path, detail string) {
 // on when an item fails: the item is in Report.Left.
 func Run(ctx context.Context, o Options, p Plan, a Answers) (Report, error) {
 	o = o.withDefaults()
-	// 0. nothing may run
+	// 0. nothing may run (and it can't be told without a runtime folder)
+	if o.runtimeDir() == "" {
+		return Report{}, axerr.New(axerr.Unavailable, "no runtime folder ($XDG_RUNTIME_DIR, /run/user/<uid>): can't tell whether axiom runs")
+	}
 	if running := o.running(); len(running) > 0 {
 		return Report{}, runningError(running)
 	}
@@ -418,7 +440,7 @@ func Run(ctx context.Context, o Options, p Plan, a Answers) (Report, error) {
 		r.report.Greeter = o.greeter()
 	}
 	// What the ledger holds now, before its undo takes the rows away
-	rows, candidates := o.ledgerRows(ctx)
+	rows, candidates, _ := o.ledgerRows(ctx)
 	var before []footprint.Row
 	for _, x := range rows {
 		before = append(before, x.Row)
@@ -464,10 +486,15 @@ func (r *run) managed(ctx context.Context) {
 		w := r.offline(kind)
 		opts := w.Takeover()
 		opts.Logf = func(format string, args ...any) { r.Log.Info(fmt.Sprintf(format, args...), "part", "uninstall") }
-		if result, err := takeover.Check(ctx, withoutElsewhere(opts)); err != nil || result != "ours" {
+		result, err := takeover.Check(ctx, withoutElsewhere(opts))
+		if err == nil && strings.HasPrefix(result, "blocked") && isOurs(w.ManagedPath(), opts.Header) {
+			r.left("managed", "Give back the config axiom manages", w.ManagedPath(), "it is a symlink or in a git repository: replace it with your own")
 			continue
 		}
-		result, err := takeover.Release(ctx, opts)
+		if err != nil || result != "ours" {
+			continue
+		}
+		result, err = takeover.Release(ctx, opts)
 		word, rest, _ := strings.Cut(result, ":")
 		switch {
 		case err != nil:
@@ -485,29 +512,38 @@ func withoutElsewhere(o takeover.Options) takeover.Options {
 	return o
 }
 
-// 3. the ledger: the backfill of what an earlier axiom left, then the undo
+// 3. the ledger: the backfill of what an earlier axiom left, then the undo.
+// A ledger that can't be read (or isn't there to ask) is left whole, with
+// the changes it recorded unknown: nothing of axiom's state goes with it.
 func (r *run) ledger(ctx context.Context) {
 	l := r.Ledger
 	if l == nil {
 		return
 	}
-	if r.Inferred != nil && (!l.Backfilled() || !l.BackfilledFiles()) {
+	snap, err := l.Peek(ctx)
+	if err != nil {
+		r.left("ledger", "Undo what axiom changed", filepath.Join(r.Dirs.State, "footprint.json"), "the record can't be read ("+err.Error()+"): kept, nothing was undone from it")
+		return
+	}
+	r.ledgerKnown = true
+	if r.Inferred != nil && (!snap.Hookups || !snap.Files) {
 		hooks, files := r.Inferred(ctx)
-		hooks = unowned(hooks, l.List(ctx))
-		if !l.BackfilledFiles() {
+		hooks = unowned(hooks, snap.Rows)
+		if !snap.Files {
 			if _, _, err := l.BackfillFiles(files); err != nil {
 				r.left("ledger", "Look for files axiom made without a record", "", err.Error())
 			}
 		}
-		if !l.Backfilled() {
+		if !snap.Hookups {
 			if _, _, err := l.Backfill(hooks); err != nil {
 				r.left("ledger", "Look for changes axiom made without a record", "", err.Error())
 			}
 		}
 	}
 	ids := l.Select(footprint.UndoOptions{Force: r.a.UndoInferred, IncludeSystem: r.a.RestoreSystem})
+	before, _ := l.RowsErr()
 	byID := map[string]footprint.Row{}
-	for _, row := range l.Rows() {
+	for _, row := range before {
 		byID[row.ID] = row
 	}
 	asked := map[string]bool{}
@@ -525,8 +561,14 @@ func (r *run) ledger(ctx context.Context) {
 			r.left("ledger", what, row.Target, strings.TrimSpace(res.Outcome+" "+res.Detail))
 		}
 	}
-	for _, row := range l.Rows() {
-		r.kept++
+	rest, rerr := l.RowsErr()
+	if rerr != nil {
+		r.ledgerKnown = false
+		r.left("ledger", "Undo what axiom changed", filepath.Join(r.Dirs.State, "footprint.json"), "the record can't be read now ("+rerr.Error()+"): kept")
+		return
+	}
+	r.rows = len(rest)
+	for _, row := range rest {
 		if !asked[row.ID] {
 			r.left("ledger", rowWhat[row.Kind], row.Target, "kept, as you chose")
 		}
@@ -537,6 +579,11 @@ func (r *run) ledger(ctx context.Context) {
 // ledger
 func (r *run) lines() {
 	for _, f := range r.lineFiles() {
+		// A managed config is the release's: when that couldn't give it back
+		// (a link, a git repository), it isn't edited here either
+		if data, err := os.ReadFile(f.Path); err == nil && r.isManagedFile(f, data) {
+			continue
+		}
 		removed, _, err := removeLines(f.Kind, f.Path)
 		if err != nil {
 			r.left("lines", "Remove axiom's lines from", f.Path, err.Error())
@@ -601,14 +648,37 @@ func (r *run) restartPortal(ctx context.Context) {
 	r.done("portal", "Restarted the screen-share portal", "", "")
 }
 
-// 8. the keyring
+// 8. the keyring: cleared unless kept, then counted again, so what stayed
+// is said
 func (r *run) secrets(ctx context.Context) {
-	if r.a.KeepSecrets || r.Secrets.ClearAll == nil {
+	count := func() (int, bool) {
+		if r.Secrets.Count == nil {
+			return 0, false
+		}
+		n, err := r.Secrets.Count(ctx)
+		return n, err == nil
+	}
+	if r.a.KeepSecrets {
+		if n, ok := count(); ok && n > 0 {
+			r.left("secrets", "Keep axiom's items in the keyring", "", fmt.Sprintf("%d kept, as you chose", n))
+		}
 		return
 	}
-	if err := r.Secrets.ClearAll(ctx); err != nil {
+	if r.Secrets.ClearAll == nil {
+		return
+	}
+	err := r.Secrets.ClearAll(ctx)
+	n, known := count()
+	switch {
+	case known && n > 0:
+		detail := fmt.Sprintf("%d are still there", n)
+		if err != nil {
+			detail += ": " + err.Error()
+		}
+		r.left("secrets", "Remove axiom's items from the keyring", "", detail)
+	case err != nil && !known:
 		r.left("secrets", "Remove axiom's items from the keyring", "", err.Error())
-		return
+	default:
+		r.done("secrets", "Removed axiom's items from the keyring", "", "")
 	}
-	r.done("secrets", "Removed axiom's items from the keyring", "", "")
 }

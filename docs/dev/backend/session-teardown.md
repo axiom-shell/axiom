@@ -38,4 +38,4 @@ The shell stops nothing itself: `polkit.probe`, `polkit.stopOthers`, `polkit.han
 `session.Store.Peek` reads the state record without taking `session.lock` (which would create it): the uninstall's read-only plan uses it, and its `Run` calls `Teardown` for the leftover records ([Uninstall](uninstall.md)).
 
 ### Tests
-`backend/internal/session` (records, scope, teardown order, portal lines, guard with a child process and its pidfd), `manager/teardown_test.go`, `daemon/session_test.go` (seams: `Systemctl`, `Spawn`, `Signal`, `ProcRoot`, the bus); nothing in them runs a real systemctl, kill or portal restart. Real ones run in the container: [Testing › Container tests](../testing.md).
+`backend/internal/session` (records, scope, teardown order, portal lines, guard with a child process and its pidfd), `manager/teardown_test.go`, `daemon/session_test.go` (seams: `Systemctl`, `Spawn`, `SpawnTo` (Spawn with a file the output is appended to), `Signal`, `ProcRoot`, the bus); nothing in them runs a real systemctl, kill or portal restart. Real ones run in the container: [Testing › Container tests](../testing.md).

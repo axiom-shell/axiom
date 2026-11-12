@@ -79,7 +79,7 @@ func TestUninstallStartSpawnsDetached(t *testing.T) {
 	spawn := ""
 	testkit.Eventually(func() bool {
 		for _, l := range strings.Split(fx.got(), "\n") {
-			if strings.HasPrefix(l, "spawn sh -c ") {
+			if strings.HasPrefix(l, "spawn bash ") {
 				spawn = l
 			}
 		}
@@ -87,7 +87,7 @@ func TestUninstallStartSpawnsDetached(t *testing.T) {
 	})
 	// Output to the log, then the command (the tree has its install.sh: it
 	// runs it), with the answers in a file
-	for _, want := range []string{`exec >>"$0" 2>&1; exec "$@"`, res.Log, " bash ", "install.sh --uninstall --yes --answers " + rt + "/axiom-uninstall-answers-"} {
+	for _, want := range []string{" >" + res.Log, "install.sh --uninstall --yes --answers " + rt + "/axiom-uninstall-answers-"} {
 		if !strings.Contains(spawn, want) {
 			t.Errorf("spawn %q lacks %q", spawn, want)
 		}
@@ -103,6 +103,10 @@ func TestUninstallStartSpawnsDetached(t *testing.T) {
 	data, _ := os.ReadFile(files[0])
 	if err := json.Unmarshal(data, &got); err != nil || got != answers {
 		t.Errorf("answers %+v %v", got, err)
+	}
+	// One at a time
+	if err := shell.Call(context.Background(), "uninstall.start", UninstallStartRequest{Answers: answers}, nil); axerr.KindOf(err) != axerr.Conflict {
+		t.Errorf("a second start: %v", err)
 	}
 	// Only the shell starts one
 	cli, err := td.connect(t, "cli", nil, nil)
@@ -125,16 +129,18 @@ func TestUninstallStartRunsTheInstallScript(t *testing.T) {
 	if _, err := sd.d.startUninstall(context.Background(), uninstall.Answers{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := sd.fx.got(); !strings.Contains(got, " bash "+filepath.Join(tree, "install.sh")+" --uninstall --yes --answers ") {
+	if got := sd.fx.got(); !strings.Contains(got, "spawn bash "+filepath.Join(tree, "install.sh")+" --uninstall --yes --answers ") {
 		t.Errorf("%q", got)
 	}
 	// A package: the binary's own uninstall (the package manager removes it)
 	os.WriteFile(filepath.Join(tree, ".packaged"), []byte("1.0\n"), 0o644)
 	sd.fx.list = nil
+	sd.d.uninstalling.Store(false)
+	sd.d.installed = "/bin/sh"
 	if _, err := sd.d.startUninstall(context.Background(), uninstall.Answers{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := sd.fx.got(); strings.Contains(got, "install.sh") || !strings.Contains(got, " uninstall --stop --yes --answers ") {
+	if got := sd.fx.got(); strings.Contains(got, "install.sh") || !strings.Contains(got, "spawn /bin/sh uninstall --stop --yes --answers ") {
 		t.Errorf("%q", got)
 	}
 }

@@ -25,6 +25,8 @@ type Counts struct {
 	Inferred int `json:"inferred"`
 	System   int `json:"system"`
 	Secrets  int `json:"secrets"`
+	// SecretsFile: a secrets.json holds some too (where no keyring answers)
+	SecretsFile bool `json:"secretsFile"`
 	// Portal: a portal file or line is among the changes
 	Portal bool `json:"portal"`
 }
@@ -64,7 +66,7 @@ type Question struct {
 // question has its default). With --yes every default is taken, and the
 // flags still say what they say. ask is called, in this order, for each
 // question that remains: KeepConfig, KeepUserContent, KeepSecrets (only
-// with secrets saved), UndoInferred (only with some found), RestoreSystem
+// with secrets saved, in the keyring or a file), UndoInferred (only with some found), RestoreSystem
 // (only with some recorded, and not already by --restore-system) and
 // RestartPortal (only when a portal file changed, and not --no-portal-restart).
 func Answer(f Flags, c Counts, tty bool, ask func(q Question, def bool) bool) (Answers, error) {
@@ -85,7 +87,7 @@ func Answer(f Flags, c Counts, tty bool, ask func(q Question, def bool) bool) (A
 	} else {
 		a.KeepConfig = choose(Question{Field: FieldKeepConfig}, true)
 		a.KeepUserContent = choose(Question{Field: FieldKeepUserContent}, true)
-		if c.Secrets > 0 {
+		if c.Secrets > 0 || c.SecretsFile {
 			a.KeepSecrets = choose(Question{Field: FieldKeepSecrets, N: c.Secrets}, true)
 		}
 		if c.Inferred > 0 {

@@ -70,6 +70,10 @@ func (e *effects) seams(before func(call string)) sessx.Seams {
 			note("spawn " + strings.Join(argv, " ") + marker)
 			return nil
 		},
+		SpawnTo: func(_ context.Context, argv, _ []string, _, output string) error {
+			note("spawn " + strings.Join(argv, " ") + " >" + output)
+			return nil
+		},
 		Signal: func(pid int, sig syscall.Signal) error {
 			note("signal " + strconv.Itoa(pid))
 			// the process ends
