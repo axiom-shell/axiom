@@ -137,10 +137,17 @@ Scope {
       // Hyprland's layer rules no longer blur it)
       Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
         BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(overlayWindow.modelData) ? overviewBlur : null)
-      BoxBlurRegion {
+      Region {
         id: overviewBlur
-        target: overview
-        opacity: content.opacity
+
+        BoxBlurRegion {
+          target: overview.gridBox
+          opacity: content.opacity
+        }
+        BoxBlurRegion {
+          target: overview.scratchBox
+          opacity: content.opacity
+        }
       }
 
       Item {

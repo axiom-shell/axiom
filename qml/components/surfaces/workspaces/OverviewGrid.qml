@@ -10,9 +10,11 @@ import qs.components.reusable
 import qs.services.ui
 
 // One monitor's workspace board (laid out by WorkspacesConfig): wallpaper
-// cells with their windows as live previews. Input is all OverviewInput's; this lays out, and turns its
-// drops and resizes into CompositorManager actions.
-Rectangle {
+// cells with their windows as live previews, in a box (`gridBox`), and the
+// scratchpads in a box of their own beside it (`scratchBox`). Input is all
+// OverviewInput's; this lays out, and turns its drops and resizes into
+// CompositorManager actions.
+Item {
   id: root
 
   required property var screen
@@ -40,8 +42,10 @@ Rectangle {
   readonly property real pad: Widget.spacing * 2
   // The monitor less its bars' reserved edges: what a cell shows
   readonly property var usable: WorkspaceGeometry.usableRect(monitorW, monitorH, root.monitor?.reserved)
-  // The room between the grid and the scratchpads' column, which holds the divider
-  readonly property real sideGap: root.gap * 2
+  // Between the grid's cells and the scratchpads' column: both boxes'
+  // padding and the room between the boxes
+  readonly property real boxGap: root.gap * 2
+  readonly property real sideGap: root.pad * 2 + root.boxGap
   readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, usable.w, usable.h, gap, columns, rows, root.scratchCount > 0 ? root.sideGap : 0)
   readonly property real cellW: Math.floor(usable.w * miniScale)
   readonly property real cellH: Math.floor(usable.h * miniScale)
@@ -49,7 +53,7 @@ Rectangle {
   // A window preview's (and the drop box's), inside its cell's
   readonly property real previewRadius: Math.max(2, root.cellRadius * 0.6)
 
-  // The scratchpads (special workspaces) shown as a column right of the grid.
+  // The scratchpads (special workspaces) shown as a column in a box right of the grid.
   // Their names are fixed while the overview is open (`_frozenNames`), so the
   // column keeps its size as windows come and go: an emptied one stays as an
   // empty cell. `scratchCount` comes from the names only, never from the
@@ -345,17 +349,47 @@ Rectangle {
     CompositorManager.resizeWindow(address, dw / s, dh / s, dx / s, dy / s);
   }
 
+  // The grid's box, as the one board has always been; the scratchpads' is
+  // beside it
+  readonly property alias gridBox: gridBox
+  readonly property alias scratchBox: scratchBox
   implicitWidth: board.width + root.pad * 2
-  implicitHeight: board.height + root.pad * 2
-  radius: Appearance.borderRadius
-  color: Appearance.fill(Theme.background)
-  border.color: Theme.foreground
-  border.width: Appearance.borderWidth
+  implicitHeight: gridBox.height
 
-  // Clicks on the panel's margin don't reach the backdrop (which closes)
-  MouseArea {
-    anchors.fill: parent
-    acceptedButtons: Qt.AllButtons
+  Rectangle {
+    id: gridBox
+    width: root.cellW * root.columns + root.gap * (root.columns - 1) + root.pad * 2
+    height: board.height + root.pad * 2
+    radius: Appearance.borderRadius
+    color: Appearance.fill(Theme.background)
+    border.color: Theme.foreground
+    border.width: Appearance.borderWidth
+
+    // Clicks on the panel's margin don't reach the backdrop (which closes)
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.AllButtons
+    }
+  }
+
+  // The scratchpads' box, the grid's own style, centred on the grid's centre
+  Rectangle {
+    id: scratchBox
+    readonly property var column: root.scratch.column
+    visible: column !== null
+    x: column?.x ?? 0
+    y: column?.stackY ?? 0
+    width: root.cellW + root.pad * 2
+    height: (column?.stackH ?? 0) + root.pad * 2
+    radius: Appearance.borderRadius
+    color: gridBox.color
+    border.color: gridBox.border.color
+    border.width: gridBox.border.width
+
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.AllButtons
+    }
   }
 
   Item {
@@ -388,13 +422,6 @@ Rectangle {
         // An empty workspace takes the whole cell
         dropFill: dropTarget && input.dropHint === null
       }
-    }
-
-    StyledSeparator {
-      visible: root.scratch.column !== null
-      x: (root.scratch.column?.dividerX ?? 0) - width / 2
-      width: Appearance.borderWidth
-      separatorHeight: board.height
     }
 
     Repeater {

@@ -112,27 +112,33 @@ TestCase {
   }
 
   function test_scratchColumn() {
-    compare(WorkspaceGeometry.scratchColumn(0, 40, 30, 5, 3, 2, 10), null);
-    const one = WorkspaceGeometry.scratchColumn(1, 40, 30, 5, 3, 2, 10);
+    // 3 rows of 30 px cells, 5 px gaps: the grid is 100 px high, centre 50
+    compare(WorkspaceGeometry.scratchColumn(0, 40, 30, 5, 3, 3, 10), null);
+    const one = WorkspaceGeometry.scratchColumn(1, 40, 30, 5, 3, 3, 10);
     compare(one.x, 140);
-    compare(one.dividerX, 135);
     compare(one.boardWidth, 180);
     compare(one.scale, 1);
     compare(one.rects[0], {
       "x": 140,
-      "y": 0,
+      "y": 35,
       "w": 40,
       "h": 30
     });
-    const two = WorkspaceGeometry.scratchColumn(2, 40, 30, 5, 3, 2, 10);
+    compare(one.rects[0].y + one.rects[0].h / 2, 50, "one special lines up with the middle row");
+    compare(one.stackY, 35);
+    compare(one.stackH, 30);
+    const two = WorkspaceGeometry.scratchColumn(2, 40, 30, 5, 3, 3, 10);
     compare(two.scale, 1);
-    compare(two.rects[0].y, 0);
-    compare(two.rects[1].y, 35);
+    compare(two.rects[0].y, 18);
+    compare(two.rects[1].y, 53);
+    // (a whole pixel's rounding at most)
+    verify(Math.abs((two.rects[0].y + two.rects[1].y + two.rects[1].h) / 2 - 50) <= 0.5, "two straddle the centre");
     const four = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
     compare(four.scale, 50 / 120);
+    compare(four.stackY, 1);
     compare(four.rects[1], {
       "x": 152,
-      "y": 17,
+      "y": 18,
       "w": 16,
       "h": 12
     });
@@ -144,6 +150,13 @@ TestCase {
     compare(column.scale, 0.01);
     column.rects.forEach(r => verify(r.w >= 1 && r.h >= 1));
     column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x, r.y), i));
+    // Many in 3 rows shrink to the grid's height, centred on it
+    const many = WorkspaceGeometry.scratchColumn(6, 40, 30, 5, 3, 3, 10);
+    verify(many.scale < 1);
+    verify(many.stackH <= 100);
+    const last = many.rects[5];
+    verify(last.y + last.h <= 100);
+    verify(Math.abs(many.stackY * 2 + many.stackH - 100) <= 1, "centred on the grid");
   }
 
   function test_scratchCellAt() {

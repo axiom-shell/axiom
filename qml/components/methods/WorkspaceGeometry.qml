@@ -11,8 +11,9 @@ QtObject {
 
   // The largest scale at which cols×rows monitors of monW×monH, `gap` apart,
   // fit in availW×availH. With `side` > 0 there is also a column of one more
-  // cell's width right of them, `side` px from the grid (the scratchpads'),
-  // inside the same width; missing or ≤ 0 is the grid alone.
+  // cell's width right of them, `side` px from the grid (the scratchpads'
+  // box, its padding and the room between the boxes), inside the same width;
+  // missing or ≤ 0 is the grid alone.
   function fitScale(availW, availH, monW, monH, gap, cols, rows, side) {
     if (monW <= 0 || monH <= 0)
       return 0.1;
@@ -28,11 +29,12 @@ QtObject {
     return n >= 1 && n <= count ? n - 1 : -1;
   }
 
-  // The scratchpads' column right of a cols×rows grid of cellW×cellH cells,
-  // `side` px from it: null for no cells, else { x, dividerX, boardWidth,
-  // boardHeight, scale, rects } with one rect per cell, stacked from the
-  // top, each centred across the column. The cells shrink (0.01 ≤ scale < 1)
-  // to fit the grid's height, never the grid; none is under 1 px.
+  // The scratchpads' column beside a cols×rows grid of cellW×cellH cells,
+  // `side` px from it: null for no cells, else { x, stackY, stackH,
+  // boardWidth, boardHeight, scale, rects } with one rect per cell, stacked
+  // and centred vertically on the grid's centre, each centred across the
+  // column. The cells shrink (0.01 ≤ scale < 1) to fit the grid's height,
+  // never the grid; none is under 1 px.
   function scratchColumn(count, cellW, cellH, gap, cols, rows, side) {
     if (!(count > 0))
       return null;
@@ -42,17 +44,20 @@ QtObject {
     const scale = Math.max(0.01, Math.min(1, (boardHeight - gap * (count - 1)) / (count * cellH)));
     const w = Math.max(1, Math.floor(cellW * scale));
     const h = Math.max(1, Math.floor(cellH * scale));
+    const stackH = count * h + (count - 1) * gap;
+    const stackY = Math.max(0, Math.round((boardHeight - stackH) / 2));
     const rects = [];
     for (let i = 0; i < count; i++)
       rects.push({
         x: x + Math.floor((cellW - w) / 2),
-        y: i * (h + gap),
+        y: stackY + i * (h + gap),
         w: w,
         h: h
       });
     return {
       x: x,
-      dividerX: gridW + side / 2,
+      stackY: stackY,
+      stackH: stackH,
       boardWidth: x + cellW,
       boardHeight: boardHeight,
       scale: scale,
