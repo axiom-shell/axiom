@@ -75,7 +75,11 @@ type Options struct {
 	// reads Hyprland's files in, a child with its memory limited
 	// (binds.Options.Isolate); "" reads them in this process
 	Bin string
-	Log *slog.Logger
+	// Carried: the daemon was re-exec'd from a running image, so
+	// RuntimeFile holds what that image applied and is trusted; false means
+	// it may be stale (an earlier daemon stopped or crashed)
+	Carried bool
+	Log     *slog.Logger
 }
 
 // Manager drives the layer for the compositor axiom runs under.
@@ -142,7 +146,7 @@ func New(o Options) *Manager {
 	m.kind = ipc.Detect(o.Getenv)
 	m.st = loadState(o.RuntimeFile, m.kind+":"+o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")+o.Getenv("SWAYSOCK")+o.Getenv("NIRI_SOCKET"))
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
-	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st}
+	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st, carried: o.Carried}
 	switch m.kind {
 	case "hyprland":
 		m.w = newHypr(e, ipc.HyprFromEnv(o.Getenv))
@@ -804,7 +808,7 @@ func (m *Manager) takeoverOptions(mode string) takeover.Options {
 	kind, _ := takeover.KindNamed(m.w.takeoverKind())
 	f := m.files()
 	return takeover.Options{Kind: kind, Dir: f.ConfigDir, Header: m.w.header(),
-		Fallback: m.w.releasedText(m.in, mode), Getenv: m.o.Getenv, Elsewhere: f.RunsElsewhere}
+		Fallback: m.w.releasedText(m.in, mode), Getenv: m.o.Getenv, Elsewhere: f.RunsElsewhere, Logf: m.logf}
 }
 
 // configIsOurs: the compositor's config is the one axiom wrote (its first
@@ -1194,6 +1198,10 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 		// on its own): said now
 		if r.Initial && r.Failed {
 			m.checkLoaded(ctx)
+		}
+		// A failed load of the wrapper can be the stream's first state too
+		if !r.Initial || (r.Failed && n.pending == "wrapper") {
+			n.loadResult(r.Failed)
 		}
 		if r.Failed || r.Initial {
 			return

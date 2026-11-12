@@ -137,6 +137,7 @@ var tiers = map[string]int{
 var testOnly = map[string]bool{
 	"internal/archtest":              true,
 	"internal/testkit":               true,
+	"internal/containertest":         true,
 	"internal/dbus/dbustest":         true,
 	"internal/logind/logindtest":     true,
 	"internal/wayland/wire/wiretest": true,

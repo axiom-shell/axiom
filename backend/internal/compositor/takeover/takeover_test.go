@@ -3,6 +3,7 @@ package takeover
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,9 +14,11 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/binds"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
 // fx is one scratch config dir of a kind, with its example stubbed
@@ -780,5 +783,171 @@ func TestElsewhereBlocksOnlyClaiming(t *testing.T) {
 	got, err := Release(context.Background(), o)
 	if err != nil || got != "written" {
 		t.Fatalf("release: %q %v", got, err)
+	}
+}
+
+// merge moves the binds of user/<name> into axiom as the shell's merge
+// does (extract, then remove), returning how many sites it took out
+func (f *fx) merge(name string) {
+	f.t.Helper()
+	o := binds.Options{Kind: f.kind.Name, Dir: f.dir, Only: name, Lua: f.lua,
+		Getenv:  func(k string) string { return f.env[k] },
+		Now:     func() time.Time { f.clock = f.clock.Add(time.Second); return f.clock },
+		Tracked: func(context.Context, string) bool { return false }}
+	found, err := binds.Extract(context.Background(), o)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	sites, _ := found.Value("sites").(*jsonx.Array)
+	if sites == nil || len(sites.Items) == 0 {
+		f.t.Fatalf("nothing to merge in %s: %s", name, jsonx.MarshalCompact(found))
+	}
+	done, err := binds.Remove(context.Background(), o, sites)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if failed := jsonx.MarshalCompact(done.Value("failed")); string(failed) != "[]" {
+		f.t.Fatalf("remove failed: %s", failed)
+	}
+}
+
+// What a merge moved into axiom is back when the config is given back
+func TestHyprlandReleaseGivesMergedBindsBack(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	mine := "hl.on(\"hyprland.start\", function() hl.exec_cmd(\"axiom run\") end) -- axiom\nhl.bind(\"SUPER + Q\", hl.dsp.window.close())\nhl.env(\"A\", \"b\")\n"
+	f.write("hyprland.lua", mine)
+	f.run("claim")
+	f.merge("00-previous.lua")
+	eq(t, strings.Contains(f.read("user/00-previous.lua"), "-- (moved into axiom) hl.bind("), true)
+	f.ours()
+	eq(t, f.run("release"), "restored:user/00-previous.lua:0")
+	eq(t, f.read("hyprland.lua"), mine)
+}
+
+func TestSwayReleaseGivesMergedBindsBack(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "sway")
+	mine := "set $mod Mod4\nexec axiom run\nbindsym $mod+q kill\n"
+	f.write("config", mine)
+	f.run("claim")
+	f.merge("00-previous.conf")
+	eq(t, strings.Contains(f.read("user/00-previous.conf"), "# (moved into axiom) bindsym"), true)
+	f.ours()
+	f.run("release")
+	eq(t, f.read("config"), mine)
+}
+
+func TestNiriReleaseGivesMergedBindsBack(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "niri")
+	mine := "spawn-sh-at-startup \"'/opt/axiom/axiom' run\"\nbinds {\n    Mod+Q { close-window; }\n}\n"
+	f.write("config.kdl", mine)
+	f.run("claim")
+	f.merge("00-previous.kdl")
+	eq(t, strings.Contains(f.read("user/00-previous.kdl"), "/* (moved into axiom) */ /-Mod+Q"), true)
+	f.ours()
+	f.run("release")
+	eq(t, f.read("config.kdl"), mine)
+}
+
+// The other files of user/ get their marks out too, but not the backups
+// beside them nor the dot folders
+func TestReleaseUnmarksTheOtherUserFiles(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "sway")
+	f.write("config", "exec axiom run\n")
+	f.run("claim")
+	marked := "# (moved into axiom) bindsym Mod4+w kill\n"
+	f.write("user/10-mine.conf", marked)
+	f.write("user/10-mine.conf.axiom-backup-20261024", marked)
+	f.write("user/.backups/10-mine.conf.axiom-backup-20261024", marked)
+	f.write("user/.hidden", marked)
+	f.ours()
+	f.run("release")
+	eq(t, f.read("user/10-mine.conf"), "bindsym Mod4+w kill\n")
+	for _, name := range []string{"user/10-mine.conf.axiom-backup-20261024", "user/.backups/10-mine.conf.axiom-backup-20261024", "user/.hidden"} {
+		eq(t, f.read(name), marked)
+	}
+}
+
+// A file whose unmarking wouldn't parse keeps its marks
+func TestReleaseKeepsMarksWhoseRemovalWouldntParse(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("hyprland.lua", "hl.env(\"A\", \"b\")\n")
+	f.run("claim")
+	// Unmarked, the line is half a statement
+	broken := "if true then\n-- (moved into axiom) x = 1 +\nend\n"
+	f.write("user/10-mine.lua", broken)
+	f.ours()
+	logged := f.releaseLogged()
+	eq(t, f.read("user/10-mine.lua"), broken)
+	if len(logged) != 1 || !strings.Contains(logged[0], "10-mine.lua") || !strings.Contains(logged[0], "wouldn't parse") {
+		t.Fatalf("logged %q, want the file named", logged)
+	}
+}
+
+// releaseLogged releases and returns what it logged
+func (f *fx) releaseLogged() []string {
+	f.t.Helper()
+	var logged []string
+	o := f.options(f.dir + "/")
+	o.Logf = func(format string, args ...any) { logged = append(logged, fmt.Sprintf(format, args...)) }
+	if _, err := Release(context.Background(), o); err != nil {
+		f.t.Fatal(err)
+	}
+	return logged
+}
+
+// A symlinked user/ file is unmarked through its link
+func TestReleaseUnmarksASymlinkedUserFile(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "sway")
+	f.write("config", "exec axiom run\n")
+	f.run("claim")
+	f.write("elsewhere/keys.conf", "# (moved into axiom) bindsym Mod4+w kill\n")
+	if err := os.Symlink(f.path("elsewhere/keys.conf"), f.path("user/10-keys.conf")); err != nil {
+		t.Fatal(err)
+	}
+	f.ours()
+	f.run("release")
+	eq(t, f.read("elsewhere/keys.conf"), "bindsym Mod4+w kill\n")
+}
+
+// A merge (new style), a release and a claim again: the old backup holds
+// nothing the config lacks, so release has nothing to report
+func TestHyprlandReleaseAfterAMergeLogsNothing(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("hyprland.lua", "hl.on(\"hyprland.start\", function() hl.exec_cmd(\"axiom run\") end) -- axiom\nhl.bind(\"SUPER + Q\", hl.dsp.window.close())\nhl.env(\"A\", \"b\")\n")
+	f.run("claim")
+	f.merge("00-previous.lua")
+	f.ours()
+	eq(t, len(f.releaseLogged()), 0)
+	f.run("claim")
+	f.ours()
+	if logged := f.releaseLogged(); len(logged) != 0 {
+		t.Fatalf("logged %q, want nothing", logged)
+	}
+}
+
+// A Hyprland merge from before marks deleted the calls: release says where
+// the copy from before the move is
+func TestHyprlandReleaseLogsTheBackupOfAnOldMerge(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("hyprland.lua", "hl.env(\"A\", \"b\")\n")
+	f.run("claim")
+	f.write("user/00-previous.lua.axiom-backup-20261024-120000", "hl.bind(\"SUPER + Q\", hl.dsp.window.close())\nhl.env(\"A\", \"b\")\n")
+	f.ours()
+	var logged []string
+	o := f.options(f.dir + "/")
+	o.Logf = func(format string, args ...any) { logged = append(logged, fmt.Sprintf(format, args...)) }
+	if _, err := Release(context.Background(), o); err != nil {
+		t.Fatal(err)
+	}
+	if len(logged) != 1 || !strings.Contains(logged[0], "00-previous.lua.axiom-backup-20261024-120000") {
+		t.Fatalf("logged %q, want the backup's path", logged)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
 
@@ -23,9 +24,13 @@ type runtimeState struct {
 	// ("borders,gaps,input:keyboard"); LiveCursor the cursor last set
 	LiveApplied string `json:"liveApplied"`
 	LiveCursor  string `json:"liveCursor"`
-	// SwayUnbind: the commands taking out what sway's runtime layer bound
-	SwayUnbind []string `json:"swayUnbind"`
-	// NiriWrapper: whether niri runs the detached wrapper
+	// SwayUnbinds: the commands taking out what sway's runtime layer bound,
+	// each with the key it frees. An old file's list (key "swayUnbind", plain
+	// commands) is untrusted and not read: the binds an older image made stay
+	// until sway reloads (bindsym overwrites anyway).
+	SwayUnbinds []render.SwayUnbind `json:"swayUnbinds"`
+	// NiriWrapper: whether niri runs the detached wrapper. A fresh daemon
+	// (Options.Carried false) re-checks it: it loads the wrapper once
 	NiriWrapper bool `json:"niriWrapper"`
 }
 
