@@ -234,7 +234,7 @@ TestCase {
     verify(!shared.calls.BindActions.supported(test.table, "stripWider", {}));
     verify(shared.calls.BindActions.supported(test.table, "toggleSpecial", {
       "namedSpecial": true
-    }), "any one of its capabilities");
+    }), "its capability");
     for (const action in test.table.needs)
       verify(_schemaActions().includes(action), action + " is an action");
   }

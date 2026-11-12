@@ -84,6 +84,10 @@ TestCase {
   function test_entryFor() {
     const listed = [
       {
+        "name": "",
+        "text": "Notes"
+      },
+      {
         "name": "a",
         "icon": "x"
       },
@@ -94,6 +98,7 @@ TestCase {
     ];
     compare(Scratchpads.entryFor(listed, "a").icon, "x");
     compare(Scratchpads.entryFor(listed, "b"), null);
+    compare(Scratchpads.entryFor(listed, ""), null, "a blank-named row never labels the unnamed one");
   }
 
   function shown(kind, text, lead, tail) {

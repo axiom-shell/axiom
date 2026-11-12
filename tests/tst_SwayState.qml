@@ -417,10 +417,10 @@ TestCase {
     const marks = {
       "7": ["axiom-special-term-7", "keep"]
     };
-    compare(SwayState.specialLeave(marks, "7", true, true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] scratchpad show", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
-    compare(SwayState.specialLeave(marks, "7", false, true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
-    compare(SwayState.specialLeave({}, "8", false, false), []);
-    compare(SwayState.specialLeave(marks, "7", false, false), ["[con_id=7] unmark axiom-special-term-7"]);
+    compare(SwayState.specialLeave(marks, "7", true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] scratchpad show", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
+    compare(SwayState.specialLeave(marks, "7", false), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
+    // The user's own shown scratchpad window (the unnamed special workspace, no marks): floated off and on again
+    compare(SwayState.specialLeave({}, "9", false), ["[con_id=9] floating disable", "[con_id=9] floating enable"]);
   }
 
   // A group's name may hold "-": another group whose name it starts with

@@ -57,8 +57,11 @@ QtObject {
     });
   }
 
-  // The first of `listed` with that name, or null
+  // The first of `listed` with that name, or null (always for the unnamed
+  // one: a blank-named row doesn't label it)
   function entryFor(listed, name) {
+    if (name === "")
+      return null;
     return (listed ?? []).find(entry => String(entry?.name ?? "").trim() === name) ?? null;
   }
 

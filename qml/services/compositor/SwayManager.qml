@@ -142,8 +142,11 @@ Singleton {
     // flag when moved)
     const hidden = root._info.scratch.some(w => w.id === String(id));
     const grouped = (root._marks[String(id)] ?? []).some(mark => SwayState.specialGroup(mark) !== "");
-    if (hidden || grouped)
-      lines.push(...SwayState.specialLeave(root._marks, id, hidden, true));
+    // The user's own shown scratchpad window (the unnamed special workspace)
+    // counts too: it would otherwise stay in the scratchpad
+    const scratch = root._info.scratchIds.includes(String(id));
+    if (hidden || grouped || scratch)
+      lines.push(...SwayState.specialLeave(root._marks, id, hidden));
     if (floatAt) {
       if (!reinsert)
         lines.push(`${win} move container to workspace number ${workspaceId}`);
