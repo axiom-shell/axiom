@@ -76,6 +76,19 @@ TestCase {
     }
   }
 
+  // A colour field is `color` or ends in `Color`: check_structure's T4 tells
+  // a colour name from a state word by that
+  function test_widget_color_fields_are_named_color() {
+    for (const option of schema.definitions.BarWidget.oneOf) {
+      const name = option.$ref.split("/").pop();
+      const settings = schema.definitions[name].properties.properties.properties;
+      for (const key of Object.keys(settings)) {
+        if (settings[key]["x-options"] === "colors")
+          verify(/^(color|\w+Color)$/.test(key), name + "." + key + " is a colour field not named color or *Color");
+      }
+    }
+  }
+
   // One Auto accent role per widget type: the bar picks a widget's accent
   // from the first, so a second would fall to a neutral (Network's VPN lock).
   // LockKeys grades its warning-role active state by `x-autoGradient`, not

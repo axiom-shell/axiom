@@ -115,6 +115,12 @@ QtObject {
     return BarGradient.gradientSlice(root.barConfig.palette.gradientStops, root.spotOf(item, from), root.spotOf(item, to), part.alpha);
   }
 
+  // `look` mixed toward `muted` by `pulse` (0-1), in the fields `keys`
+  // names (null: all of them), as a pulsing cell draws it
+  function pulsed(look, muted, pulse, keys) {
+    return BarWidgetStyle.mixColors(look, muted, pulse, keys);
+  }
+
   // `look` with its box, outline and line cleared (the active cell's box at
   // rest under the sliding indicator), each its own color at no alpha so it
   // fades from it

@@ -120,7 +120,7 @@ Item {
 
   // `look` mixed toward `mutedLook` by `pulse`, in the fields this part draws
   function _mixed() {
-    const mixed = BarWidgetStyle.mixColors(root.look, root.mutedLook, root.pulse, root._mixKeys);
+    const mixed = root.cellLook.pulsed(root.look, root.mutedLook, root.pulse, root._mixKeys);
     return root._mixKeys === null ? mixed : Object.assign({}, root.look, mixed);
   }
 
