@@ -150,14 +150,6 @@ func swayWith(t *testing.T, config string, carried bool, saved []render.SwayUnbi
 	return w
 }
 
-func swayKeys(list []render.SwayUnbind) []string {
-	var out []string
-	for _, u := range list {
-		out = append(out, u.Key)
-	}
-	return out
-}
-
 var swaySaved = func() []render.SwayUnbind {
 	return []render.SwayUnbind{
 		{Key: render.KeyID("SUPER + x"), Line: "unbindsym Mod4+x"},
