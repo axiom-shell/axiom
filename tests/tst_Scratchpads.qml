@@ -71,6 +71,16 @@ TestCase {
     }, "a configured name with no state");
   }
 
+  function test_cellsUnnamed() {
+    const unnamed = (count, open) => special("", count, open);
+    const idle = [special("a", 0), unnamed(0)];
+    compare(Scratchpads.cells(idle, ["term"], "all").map(c => c.name), ["term", "a"], "not padded into all");
+    compare(Scratchpads.cells([special("a", 1), unnamed(2)], [], "occupied").map(c => c.name), ["a", ""], "shown with windows, last");
+    compare(Scratchpads.cells(idle, [], "occupied").map(c => c.name), [], "occupied needs windows or open");
+    compare(Scratchpads.cells([unnamed(0, true)], [], "all").map(c => c.name), [""], "shown while open");
+    compare(Scratchpads.cells([unnamed(1), special("a", 0)], ["a"], "all").map(c => c.name), ["a", ""], "last in all too");
+  }
+
   function test_entryFor() {
     const listed = [
       {
@@ -106,6 +116,13 @@ TestCase {
     compare(Scratchpads.content(null, "m", "icon", false, false), shown("glyph", "star", "", false));
     compare(Scratchpads.content(entry, "m", "name", false, false), shown("text", "Magic", "", false));
     compare(Scratchpads.content(null, "m", "name", false, false), shown("name", "m", "", false));
+  }
+
+  function test_contentUnnamed() {
+    compare(Scratchpads.content(null, "", "name", false, false), shown("glyph", "star", "", false), "a star, never empty text");
+    compare(Scratchpads.content(null, "", "both", true, false), shown("glyph", "star", "", false));
+    compare(Scratchpads.content(null, "", "icon", true, false), shown("icons", "", "", false), "the apps' icons as for any");
+    compare(Scratchpads.content(null, "", "icon", false, false), shown("glyph", "star", "", false));
   }
 
   function test_contentBoth() {

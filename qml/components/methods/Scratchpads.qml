@@ -25,11 +25,13 @@ QtObject {
   // The specials (contract.md › Shapes) to show for `mode` ("off",
   // "occupied" or "all"): occupied are those with windows or open; all adds
   // each `configured` name no special has, as an empty closed one. The
-  // configured names come first in their order, the rest by name.
+  // configured names come first in their order, the rest by name. The
+  // unnamed one (name "") shows only while it has windows or is open, never
+  // as `all`'s padding, and comes last.
   function cells(specials, configured, mode) {
     if (mode !== "occupied" && mode !== "all")
       return [];
-    let shown = (specials ?? []).filter(s => mode === "all" || s.windowCount > 0 || s.open);
+    let shown = (specials ?? []).filter(s => mode === "all" ? s.name !== "" || s.windowCount > 0 || s.open : s.windowCount > 0 || s.open);
     if (mode === "all") {
       const missing = (configured ?? []).filter(name => !shown.some(s => s.name === name)).map(name => ({
             "name": name,
@@ -44,7 +46,7 @@ QtObject {
     }
     const rank = s => {
       const i = (configured ?? []).indexOf(s.name);
-      return i < 0 ? Infinity : i;
+      return s.name === "" ? Infinity : i < 0 ? 1e9 : i;
     };
     return shown.slice().sort((a, b) => {
       const ra = rank(a);
@@ -67,7 +69,8 @@ QtObject {
   // as `lead` before the text (the entry's label, else the name); app icons
   // only after a divider. With `split` the label is never the app icons: the
   // cell shows it, a short divider, then the apps' icons (`tail`, true only
-  // with `hasIcons`).
+  // with `hasIcons`). The unnamed one (name "") has no name to show: without
+  // a label its name and both modes show a star, never an empty text.
   function content(entry, name, mode, hasIcons, split) {
     const tail = split === true && hasIcons;
     const make = (kind, text, lead) => ({
@@ -77,6 +80,8 @@ QtObject {
           "tail": tail
         });
     const label = entry?.text ?? "";
+    if (name === "" && label === "" && mode !== "icon")
+      return make("glyph", "star");
     if (mode === "name")
       return label !== "" ? make("text", label) : make("name", name);
     const icon = entry?.icon ?? "";

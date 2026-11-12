@@ -45,6 +45,38 @@ TestCase {
     compare(HyprState.keyboard(null), null);
   }
 
+  function test_specialsUnnamed() {
+    const workspaces = [
+      {
+        "id": -98,
+        "name": "special:special"
+      },
+      {
+        "id": -99,
+        "name": "special:magic"
+      }
+    ];
+    const outputs = [
+      {
+        "name": "DP-1",
+        "specialWorkspaceId": -98,
+        "specialWorkspaceName": "special:special"
+      }
+    ];
+    const windows = [
+      {
+        "id": "a",
+        "workspaceId": -98,
+        "workspaceName": "special:special"
+      }
+    ];
+    const result = HyprState.specials(workspaces, outputs, windows);
+    compare(result.map(s => s.name), ["", "magic"], "special:special is the unnamed one");
+    compare(result[0].open, true);
+    compare(result[0].output, "DP-1");
+    compare(result[0].windowCount, 1);
+  }
+
   function test_specials() {
     const workspaces = [
       {

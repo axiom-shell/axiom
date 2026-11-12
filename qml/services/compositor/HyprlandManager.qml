@@ -471,9 +471,10 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
 
   // Toggles special workspace `name` on `output` (the focused one when ""
   // or already focused). On another output one chunk focuses it first: two
-  // dispatches aren't ordered.
+  // dispatches aren't ordered. "" is the bare special workspace
+  // (`special:special`), toggled with no argument.
   function toggleSpecial(name, output) {
-    const toggle = `hl.dsp.workspace.toggle_special(${JSON.stringify(name)})`;
+    const toggle = name === "" ? "hl.dsp.workspace.toggle_special()" : `hl.dsp.workspace.toggle_special(${JSON.stringify(name)})`;
     if (!output || output === root.focusedOutput)
       root._dispatch(toggle);
     else

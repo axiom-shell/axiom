@@ -505,6 +505,92 @@ TestCase {
     compare(b.output, "WL-1");
   }
 
+  // Scratchpad windows with and without a group's mark; the state is what
+  // tells a window shown from the scratchpad
+  function unnamedTree() {
+    const leaf = (id, title, marks, state) => ({
+          "id": id,
+          "name": title,
+          "pid": id,
+          "nodes": [],
+          "floating_nodes": [],
+          "marks": marks ?? [],
+          "scratchpad_state": state ?? "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 10,
+            "height": 10
+          }
+        });
+    return {
+      "id": 1,
+      "nodes": [
+        {
+          "type": "output",
+          "name": "__i3",
+          "nodes": [
+            {
+              "type": "workspace",
+              "name": "__i3_scratch",
+              "num": -1,
+              "id": 2,
+              "nodes": [],
+              "floating_nodes": [leaf(20, "hidden", [], "fresh"), leaf(21, "grouped", ["axiom-special-a-21"], "fresh")]
+            }
+          ]
+        },
+        {
+          "type": "output",
+          "name": "WL-1",
+          "nodes": [
+            {
+              "type": "workspace",
+              "name": "1",
+              "num": 1,
+              "id": 3,
+              "nodes": [leaf(30, "plain")],
+              "floating_nodes": [leaf(31, "shown", [], "changed"), leaf(32, "shown marked", ["axiom-special-a-32"], "changed")]
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  function test_specialsUnnamed() {
+    const tree = unnamedTree();
+    const info = SwayState.tree(tree);
+    const marks = SwayState.marks(tree);
+    compare(info.scratchIds.sort(), ["20", "21", "31", "32"], "every window that came from the scratchpad");
+    const result = SwayState.specials(info, marks, []);
+    compare(result.map(s => s.name), ["", "a"], "the unnamed group first, listed because it has windows");
+    const unnamed = result[0];
+    compare(unnamed.windows.map(w => w.title).sort(), ["hidden", "shown"], "a marked window is not in it");
+    compare(unnamed.windowCount, 2);
+    compare(unnamed.open, true);
+    compare(unnamed.output, "WL-1");
+    const bare = SwayState.tree({
+      "id": 1,
+      "nodes": []
+    });
+    compare(SwayState.specials(bare, {}, []), [], "no scratchpad windows, no unnamed group");
+  }
+
+  function test_specialToggleUnnamed() {
+    const tree = unnamedTree();
+    const info = SwayState.tree(tree);
+    const marks = SwayState.marks(tree);
+    // Shown on WL-1 (31): hide
+    compare(SwayState.specialToggle(info.windows, marks, "", "WL-1", info.scratchIds), {
+      "ids": ["20", "31"],
+      "show": false
+    });
+    // None shown there: show every one
+    compare(SwayState.specialToggle([], marks, "", "WL-1", info.scratchIds).show, true);
+    compare(SwayState.specialToggle(info.windows, marks, "a", "WL-1", info.scratchIds).ids.sort(), ["21", "32"], "a group is unchanged");
+  }
+
   function test_windowCommands() {
     const windows = [
       {

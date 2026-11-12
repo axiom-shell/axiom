@@ -131,7 +131,8 @@ Loader {
           onClicked: CompositorManager.toggleSpecial(name, root.monitorName)
 
           LazyLoader {
-            active: cell.hovered
+            // The unnamed one has nothing to call it by
+            active: cell.hovered && cell.name !== ""
 
             StyledToolTip {
               target: cell

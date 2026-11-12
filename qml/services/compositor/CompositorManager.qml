@@ -301,20 +301,28 @@ Singleton {
     }, windows);
   }
 
-  // Toggles special workspace `name` on `output` ("" is the focused one)
-  function toggleSpecial(name, output) {
-    const trimmed = String(name ?? "").trim();
-    if (!root.supports.namedSpecial || trimmed === "")
+  // Toggles special workspace `id` on `output` (the focused one when ""). The
+  // id must be valid (SpecialWorkspaces.validId) or "", the unnamed special
+  // workspace (the switcher's cell for it).
+  function toggleSpecial(id, output) {
+    if (!root.supports.namedSpecial)
       return;
-    root.backend.toggleSpecial(trimmed, output || "");
+    if (id !== "" && !SpecialWorkspaces.validId(id)) {
+      console.warn("[CompositorManager] toggleSpecial: not a special workspace id:", JSON.stringify(id));
+      return;
+    }
+    root.backend.toggleSpecial(id, output || "");
   }
 
-  // Moves the focused window to special workspace `name`
-  function moveToSpecial(name) {
-    const trimmed = String(name ?? "").trim();
-    if (!root.supports.namedSpecial || trimmed === "")
+  // Moves the focused window to special workspace `id` (a valid one)
+  function moveToSpecial(id) {
+    if (!root.supports.namedSpecial)
       return;
-    root.backend.moveToSpecial(trimmed);
+    if (!SpecialWorkspaces.validId(id)) {
+      console.warn("[CompositorManager] moveToSpecial: not a special workspace id:", JSON.stringify(id));
+      return;
+    }
+    root.backend.moveToSpecial(id);
   }
 
   // A workspace's windows, the biggest (by area) first, ties in the

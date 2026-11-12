@@ -98,6 +98,7 @@ One workspace layout serves everything that shows workspaces or moves between th
   - A special open on this monitor draws active; open elsewhere or closed, it draws as occupied with windows, else empty. An urgent one draws urgent.
   - A click toggles it on this monitor (`CompositorManager.toggleSpecial(name, output)`). Scrolling skips them.
   - `occupied` lists those with windows or open; `all` also the names the `toggleSpecial` binds and `Workspaces.scratchpads` give, as empty cells (`Scratchpads.cells`). Order: the global list's names, then binds', then the rest by name.
+  - The unnamed special workspace (Hyprland's bare `special:special`, sway's scratchpad windows no group claims; `name` ""): a cell only while it has windows or is open (also in `all`, never as padding), last, with no tooltip. Without an entry its name mode shows a star glyph. A click toggles it (`toggleSpecial("")`).
 - **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`. `StripDivider` is the divider `ActiveStrip` and `ScratchpadCells` share.
   - It holds every shown workspace, or one grid row.
   - Its cells are `spacing` apart (`BarsConfig.workspaceCellSpacing`: tight 0, bar the bar's `innerGap`, wide twice it), as are the popouts' cells (the payload's `cellSpacing`); the strip's window cells (`StripWindows`) take the same spacing and `solidBoxes`, but the gap between the row and the strip after it stays the bar's.

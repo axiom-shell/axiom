@@ -115,12 +115,14 @@ QtObject {
   // `windows` (the contract's). Matched by name, never id: named workspaces
   // have negative ids too, and Hyprland 0.57 gives a special workspace no id
   // at all (Quickshell reads -1 for it, its monitor's `specialWorkspace` 0).
+  // The bare special workspace (`special:special`, what togglespecialworkspace
+  // with no name opens) is the unnamed one: name "".
   function specials(workspaces, outputs, windows) {
     return (workspaces ?? []).filter(ws => String(ws.name).startsWith("special:")).map(ws => {
       const shown = (outputs ?? []).find(o => o.specialWorkspaceName === ws.name);
       const own = (windows ?? []).filter(win => win.workspaceName === ws.name);
       return {
-        "name": String(ws.name).slice("special:".length),
+        "name": ws.name === "special:special" ? "" : String(ws.name).slice("special:".length),
         "id": ws.id,
         "open": shown !== undefined,
         "output": shown?.name ?? "",
