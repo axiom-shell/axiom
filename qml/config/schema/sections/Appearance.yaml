@@ -6,6 +6,71 @@ x-links: [Themes]
 title: Appearance
 additionalProperties: false
 properties:
+  font:
+    x-scope: look
+    type: object
+    title: Font
+    additionalProperties: false
+    properties:
+      family:
+        type: string
+        title: Family
+        default: monospace
+      size:
+        type: integer
+        x-control: stepper
+        title: Size
+        default: 14
+        minimum: 8
+        maximum: 32
+        x-unit: px
+  shape:
+    x-scope: look
+    type: object
+    title: Shape
+    additionalProperties: false
+    properties:
+      radius:
+        type: integer
+        x-control: stepper
+        title: Corner radius
+        default: 6
+        minimum: 0
+        maximum: 50
+        x-unit: px
+        description: 'Outer edges: screen border, bars, popouts, windows.'
+      innerRadius:
+        type: integer
+        x-control: stepper
+        title: Inner radius
+        default: null
+        minimum: 0
+        maximum: 50
+        x-unit: px
+        description: Buttons, fields, rows and bar widgets. Outer edges keep the main radius.
+        x-inherit: Appearance.shape.radius
+      borderWidth:
+        type: integer
+        x-control: stepper
+        title: Border width
+        default: 1
+        minimum: 0
+        maximum: 10
+        x-unit: px
+        description: Every outline.
+      screenBorder:
+        type: boolean
+        title: Screen border
+        default: true
+      screenMargin:
+        type: integer
+        x-control: stepper
+        title: Screen margin
+        default: 8
+        minimum: 0
+        maximum: 100
+        x-unit: px
+        description: Frame width and gap from the screen edges.
   theme:
     type: object
     title: Theme
@@ -24,22 +89,22 @@ properties:
         properties:
           enabled:
             type: boolean
-            title: Switch by time of day
+            title: Switch by time
             default: false
-            description: Light variant by day, dark at night. Switching by hand lasts until the next change.
+            description: Light by day, dark at night.
           lightAt:
             type: string
             title: Light from
             default: '07:00'
             pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
-            description: '24-hour time, like 07:00.'
+            description: e.g. 07:00.
             x-showIf: {enabled: true}
           darkAt:
             type: string
             title: Dark from
             default: '19:00'
             pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
-            description: '24-hour time, like 19:00.'
+            description: e.g. 19:00.
             x-showIf: {enabled: true}
   wallpaper:
     type: object
@@ -49,52 +114,17 @@ properties:
       mode:
         type: string
         x-snapshot: true
-        title: Wallpaper mode
+        title: Mode
         enum: [fixed, rotate, variant]
         x-enumLabels:
           fixed: Fixed
           rotate: Rotate on a timer
           variant: One for light, one for dark
         default: fixed
-        description: Fixed keeps the wallpaper you pick. Rotate changes it on a timer. One for light, one for dark follows the theme's variant.
-      file:
-        type: string
-        x-snapshot: true
-        default: ''
-        description: The primary monitor's wallpaper file URL (set on the Themes page).
-        x-settings: false
-      perScreen:
-        type: object
-        x-snapshot: true
-        default: {}
-        description: Monitor name → wallpaper file URL (set on the Themes page).
-        additionalProperties: {type: string}
-        x-settings: false
-      folder:
-        type: string
-        x-snapshot: true
-        title: Wallpaper folder
-        x-control: folder
-        default: '~/Pictures/wallpapers'
-        pattern: '\S'
-        description: Images the pickers list (jpg, png and bmp, and webp, avif and jxl where their Qt image plugin is installed).
-      collection:
-        type: string
-        x-snapshot: true
-        title: Collection
-        default: ''
-        x-suggestions: wallpaperCollections
-        description: A subfolder to pick and rotate from. Empty uses the folder itself.
-      subfolders:
-        type: boolean
-        x-snapshot: true
-        title: Include subfolders
-        default: false
-        description: Also list images in subfolders.
       rotation:
         type: object
         x-snapshot: true
-        title: Wallpaper rotation
+        title: Rotation
         additionalProperties: false
         x-showIf: {mode: rotate}
         properties:
@@ -105,22 +135,23 @@ properties:
             default: 1800000
             minimum: 60000
             maximum: 86400000
+            multipleOf: 60000
           order:
             type: string
             title: Order
             x-control: toggle
             enum: [random, sequential]
-            x-enumLabels: {random: Random, sequential: 'In order, by name'}
+            x-enumLabels: {random: Random, sequential: Sorted}
             default: random
             description: Random shows every wallpaper once before repeating.
           sameOnAll:
             type: boolean
             title: Same on every monitor
             default: false
-            description: Off, each monitor gets its own.
+            description: 'Off: each monitor gets its own.'
           pause:
             type: object
-            title: Hold the rotation
+            title: Pause rotation
             additionalProperties: false
             description: The wallpaper stays while any of these holds.
             properties:
@@ -145,6 +176,26 @@ properties:
         additionalProperties: false
         properties: {dark: {type: string, default: ''}, light: {type: string, default: ''}}
         x-settings: false
+      file:
+        type: string
+        x-snapshot: true
+        default: ''
+        description: The primary monitor's wallpaper file URL (set on the Themes page).
+        x-settings: false
+      perScreen:
+        type: object
+        x-snapshot: true
+        default: {}
+        description: Monitor name → wallpaper file URL (set on the Themes page).
+        additionalProperties: {type: string}
+        x-settings: false
+      fill:
+        x-scope: look
+        type: string
+        title: Fit
+        enum: [crop, fit, stretch, center]
+        x-enumLabels: {crop: Fill the screen, fit: Show it whole, stretch: Stretch, center: Center at its own size}
+        default: crop
       transition:
         x-scope: look
         type: object
@@ -153,14 +204,14 @@ properties:
         properties:
           type:
             type: string
-            title: Transition
+            title: Effect
             enum: [random, none, fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
             x-enumLabels: {random: Random, none: None, fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, tiles: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur, clock: Clock}
             default: random
-            description: Random picks one from the list below each time.
+            description: 'Random: picks from the list below.'
           pool:
             type: array
-            title: Random picks from
+            title: Random pool
             default: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
             items:
               type: string
@@ -194,19 +245,12 @@ properties:
             description: Smooth starts and ends gently; Snappy covers most of the way at once.
           duration:
             type: integer
-            title: Length
+            title: Duration
             x-unit: ms
             default: 1000
             minimum: 100
             maximum: 5000
-      fill:
-        x-scope: look
-        type: string
-        title: Wallpaper fit
-        enum: [crop, fit, stretch, center]
-        x-enumLabels: {crop: Fill the screen, fit: Show it whole, stretch: Stretch, center: Center at its own size}
-        default: crop
-        description: How a wallpaper that isn't the screen's shape is drawn.
+            x-showIf: {type: {not: none}}
       parallax:
         x-scope: look
         type: object
@@ -215,144 +259,45 @@ properties:
         properties:
           enabled:
             type: boolean
-            title: Move with the workspaces
+            title: Slide with workspaces
             default: false
-            description: The wallpaper slides a step with each workspace.
           strength:
             type: integer
-            title: How far
+            title: Distance
             x-unit: '%'
             default: 4
             minimum: 1
             maximum: 15
             x-showIf: {enabled: true}
-            description: How far it slides end to end, as a share of the screen.
+            description: Share of the screen, end to end.
           workspaces:
             type: integer
-            title: Workspaces it spans
+            title: Workspaces spanned
             default: 5
             minimum: 2
             maximum: 20
             x-showIf: {enabled: true, /$supports.dynamicWorkspaces: true}
-            description: Where workspaces are made as needed, how many it takes to slide end to end.
-  font:
-    x-scope: look
-    type: object
-    title: Font
-    additionalProperties: false
-    properties:
-      family:
+            description: Slides end to end across this many.
+      folder:
         type: string
-        title: Family
-        default: monospace
-      size:
-        type: integer
-        x-control: stepper
-        title: Size
-        default: 14
-        minimum: 8
-        maximum: 32
-        x-unit: px
-        description: Base font size (px).
-  shape:
-    x-scope: look
-    type: object
-    title: Shape
-    additionalProperties: false
-    properties:
-      radius:
-        type: integer
-        x-control: stepper
-        title: Corner radius
-        default: 6
-        minimum: 0
-        maximum: 50
-        x-unit: px
-        description: 'Outer edges: the screen border, bars, popouts and windows (px).'
-      innerRadius:
-        type: integer
-        x-control: stepper
-        title: Inner radius
-        default: null
-        minimum: 0
-        maximum: 50
-        x-unit: px
-        description: Buttons, fields, rows and bar widgets. Outer edges keep the main radius.
-        x-inherit: Appearance.shape.radius
-      borderWidth:
-        type: integer
-        x-control: stepper
-        title: Border width
-        default: 1
-        minimum: 0
-        maximum: 10
-        x-unit: px
-        description: Every outline (px).
-      screenBorder:
+        x-snapshot: true
+        title: Folder
+        x-control: folder
+        default: '~/Pictures/wallpapers'
+        pattern: '\S'
+        description: Where the pickers look for images.
+      collection:
+        type: string
+        x-snapshot: true
+        title: Collection
+        default: ''
+        x-suggestions: wallpaperCollections
+        description: 'A subfolder to pick and rotate from. Empty: the folder itself.'
+      subfolders:
         type: boolean
-        title: Screen border
-        default: true
-        description: A frame around the screen edges.
-      screenMargin:
-        type: integer
-        x-control: stepper
-        title: Screen margin
-        default: 8
-        minimum: 0
-        maximum: 100
-        x-unit: px
-        description: Width of the screen frame and the gap from the screen edges (px).
-  surface:
-    x-scope: look
-    type: object
-    title: Translucency
-    x-intro: TranslucencyStatus
-    additionalProperties: false
-    properties:
-      opacity:
-        x-link: {setting: WindowLook.opacity}
-        type: integer
-        title: Surface opacity
-        x-unit: '%'
-        default: 100
-        minimum: 60
-        maximum: 100
-        description: How solid bars, popouts, menus and panels are. 100 is fully solid. Translucency needs the compositor's blur.
-        x-hintedIf: {/$supports.blur: true}
-      blur:
-        type: object
-        title: Blur behind axiom
-        additionalProperties: false
-        properties:
-          enabled:
-            type: boolean
-            title: Blur behind axiom's surfaces
-            default: true
-            description: Blur what shows through axiom's translucent surfaces. Costs GPU time.
-            x-showIf: {/Appearance.surface.opacity: {not: 100}}
-            x-hintedIf: {/$supports.blur: true}
-          throughWindows:
-            type: boolean
-            title: Blur windows behind surfaces
-            default: true
-            description: Off, surfaces blur only the wallpaper, which is cheaper.
-            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-            x-hintedIf: {/$supports.blur: true}
-          backdrops:
-            type: boolean
-            title: Blur backdrops
-            default: false
-            description: Also blur the screen behind the overlay, launcher, power menu and overview.
-            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-            x-hintedIf: {/$supports.blur: true}
-          pauseFullscreen:
-            x-scope: machine
-            type: boolean
-            title: Pause blur over fullscreen apps
-            default: true
-            description: No blur on a monitor showing a fullscreen window; its surfaces turn opaque.
-            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-            x-hintedIf: {/$supports.blur: true}
+        x-snapshot: true
+        title: Subfolders
+        default: false
   motion:
     x-scope: look
     type: object
@@ -365,9 +310,61 @@ properties:
         default: true
       speed:
         type: integer
-        title: Animation speed
+        title: Speed
         x-unit: '%'
         default: 100
         minimum: 25
         maximum: 400
-        description: 100 is normal, 200 twice as fast, 50 half speed.
+        description: '100: normal. 200: twice as fast.'
+        x-showIf: {enabled: true}
+  surface:
+    x-scope: look
+    type: object
+    title: Translucency
+    x-intro: TranslucencyStatus
+    additionalProperties: false
+    properties:
+      opacity:
+        x-link: {setting: WindowLook.opacity}
+        type: integer
+        title: Opacity
+        x-unit: '%'
+        default: 100
+        minimum: 60
+        maximum: 100
+        description: Bars, popouts, menus and panels.
+        x-hintedIf: {/$supports.blur: true}
+      blur:
+        type: object
+        title: Blur behind axiom
+        additionalProperties: false
+        properties:
+          enabled:
+            type: boolean
+            title: Surface blur
+            default: true
+            description: Blur what shows through axiom's translucent surfaces. Costs GPU time.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}}
+            x-hintedIf: {/$supports.blur: true}
+          throughWindows:
+            type: boolean
+            title: Blur windows too
+            default: true
+            description: 'Off: only the wallpaper blurs, cheaper.'
+            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
+            x-hintedIf: {/$supports.blur: true}
+          backdrops:
+            type: boolean
+            title: Blur overlay backdrops
+            default: false
+            description: Also behind the launcher, power menu and overview.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
+            x-hintedIf: {/$supports.blur: true}
+          pauseFullscreen:
+            x-scope: machine
+            type: boolean
+            title: Pause over fullscreen
+            default: true
+            description: Surfaces turn opaque on a monitor with a fullscreen window.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
+            x-hintedIf: {/$supports.blur: true}

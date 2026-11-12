@@ -11,21 +11,12 @@ properties:
     x-scope: personal
     type: integer
     x-control: stepper
-    title: Interface scale
+    title: Scale
     default: 100
     minimum: 75
     maximum: 150
     x-unit: '%'
     description: Size of text and controls outside the bars.
-  cardSize:
-    x-scope: personal
-    type: integer
-    title: Card size
-    default: 100
-    minimum: 50
-    maximum: 150
-    x-unit: '%'
-    description: 'Module card size, as a share of the screen: at 100 two cards fill its shorter side.'
   density:
     x-scope: personal
     type: string
@@ -35,3 +26,12 @@ properties:
     x-enumLabels: {compact: Compact, normal: Normal, roomy: Roomy}
     default: normal
     description: How tightly controls are packed.
+  cardSize:
+    x-scope: personal
+    type: integer
+    title: Card size
+    default: 100
+    minimum: 50
+    maximum: 150
+    x-unit: '%'
+    description: 'Share of the screen: at 100 two cards fill its shorter side.'

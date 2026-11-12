@@ -62,6 +62,7 @@ properties:
     x-compositor: {hyprland: {key: decoration.blur.size, if: enabled}}
   passes:
     type: integer
+    x-control: stepper
     title: Passes
     default: 3
     minimum: 1
