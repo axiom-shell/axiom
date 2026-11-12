@@ -373,12 +373,19 @@ def main():
 
     # Hand-built settings parts: x-card's `file` loads
     # views/Settings/<file>Card.qml, x-intro and x-row views/Settings/
-    # <Name>.qml (by URL, so a typo only shows in the log)
+    # <Name>.qml (by URL, so a typo only shows in the log); x-intro is a name
+    # or { file, setup }
     def annotated(node, found):
         if isinstance(node, dict):
             for key, value in node.items():
                 if key == "x-card" and isinstance(value, dict) and value.get("file"):
                     found.append((key, value["file"]))
+                elif key == "x-intro" and isinstance(value, dict):
+                    # { file, setup: [keys] }: every key is a property of the object
+                    found.append((key, value.get("file")))
+                    for setup in value.get("setup", []):
+                        if setup not in node.get("properties", {}):
+                            errors.append(f"schema x-intro {value.get('file')!r}: setup key {setup!r} isn't a property of its object")
                 elif key in ("x-intro", "x-row"):
                     found.append((key, value))
                 annotated(value, found)

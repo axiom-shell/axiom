@@ -5,15 +5,16 @@ import qs.config
 import qs.services.session
 import qs.components.reusable
 
-// The Polkit section's first card (its `x-card`): whether axiom is the
-// session's polkit agent, and which other agents it stopped
-FieldGroup {
+// The top of the Polkit card (the section's `x-intro`): whether axiom is the
+// session's polkit agent, and which other agents it stopped. `status` and
+// `statusColor` are the card's header chip
+ColumnLayout {
   id: root
 
-  readonly property string status: PolkitManager.status
+  readonly property string stage: PolkitManager.status
 
   readonly property color statusColor: {
-    switch (root.status) {
+    switch (root.stage) {
     case "running":
       return Theme.success;
     case "starting":
@@ -24,8 +25,8 @@ FieldGroup {
     return Theme.foregroundAlt;
   }
 
-  readonly property string statusLabel: {
-    switch (root.status) {
+  readonly property string status: {
+    switch (root.stage) {
     case "running":
       return I18n.tr("Running");
     case "starting":
@@ -37,7 +38,7 @@ FieldGroup {
   }
 
   readonly property string detail: {
-    switch (root.status) {
+    switch (root.stage) {
     case "off":
       return I18n.tr("Another polkit agent answers apps' password requests, if you run one (hyprpolkitagent, KDE's, GNOME's).");
     case "starting":
@@ -48,16 +49,11 @@ FieldGroup {
     return I18n.tr("axiom answers apps' password requests.");
   }
 
-  headerExtras: [
-    StatusChip {
-      text: root.statusLabel
-      color: root.statusColor
-    }
-  ]
+  spacing: Widget.spacing * 1.5
 
   StyledText {
     text: root.detail
-    textColor: root.status === "blocked" ? Theme.error : Theme.foreground
+    textColor: root.stage === "blocked" ? Theme.error : Theme.foreground
     wrapMode: Text.WordWrap
     Layout.fillWidth: true
   }

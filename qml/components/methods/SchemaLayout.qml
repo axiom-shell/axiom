@@ -591,14 +591,51 @@ QtObject {
     }
     const own = cards.find(card => card.path.length === 1 && card.title === sectionTitle);
     if (own && section["x-intro"])
-      own.intro = section["x-intro"];
+      root.withIntro(own, section["x-intro"]);
     for (const key of nested) {
       const prop = section.properties[key];
       const card = prop["x-intro"] ? cards.find(card => card.path.join(".") === sectionKey + "." + key && card.title === (prop.title ?? key)) : null;
       if (card)
-        card.intro = prop["x-intro"];
+        root.withIntro(card, prop["x-intro"]);
     }
     return result.concat(cards);
+  }
+
+  // Gives a card its `x-intro`: the name, or `{ file, setup: [keys] }`.
+  // With `setup` (keys relative to the card's object), the rows named stay
+  // under the intro and every other row goes behind a fold: a `Settings`
+  // group row (`fold: true`, `foldRows` the rows behind it, its path
+  // `<card key>:settings` so the open state is kept like an `x-fold`'s)
+  // and each row behind it `foldedBy` that path (`foldedIn` where it
+  // already has an `x-fold` of its own). No row left over: no fold
+  function withIntro(card, intro) {
+    if (typeof intro === "string") {
+      card.intro = intro;
+      return;
+    }
+    card.intro = intro.file;
+    const setup = intro.setup ?? [];
+    const head = card.rows.filter(row => row.kind !== "group" && setup.includes(row.path.slice(card.path.length).join(".")));
+    const rest = card.rows.filter(row => !head.includes(row));
+    if (!rest.some(row => row.kind !== "group"))
+      return;
+    const fold = card.key + ":settings";
+    for (const row of rest) {
+      if (row.foldedBy || row.fold === true)
+        row.foldedIn = fold;
+      else
+        row.foldedBy = fold;
+    }
+    card.rows = head.concat([
+      {
+        "kind": "group",
+        "title": "Settings",
+        "path": [fold],
+        "showIf": null,
+        "fold": true,
+        "foldRows": rest
+      }
+    ], rest);
   }
 
   // A category's cards in page order: its own `cards` marked `first`, its
@@ -638,7 +675,8 @@ QtObject {
   // holding it in page order (`key` its group key, `title` the setting's
   // or card's, `row` the exact row's path, or null for a section or
   // object; the row drawing it for one another row draws, `drawnBy`;
-  // `fold` the `x-fold` it's inside, `foldedBy`, or null), or null when
+  // `fold` the `x-fold` it's inside (`foldedBy`) or else the fold of the
+  // card's settings behind its `x-intro` (`foldedIn`), or null), or null when
   // no card shows it. `valueOf` as `categories`
   function locate(schema, path, valueOf) {
     const target = Array.isArray(path) ? path : String(path).split(".");
@@ -654,7 +692,7 @@ QtObject {
           "key": group.key,
           "title": exact ? exact.title : group.title,
           "row": exact ? (exact.drawnBy ? exact.drawnBy.split(".") : exact.path) : null,
-          "fold": exact?.foldedBy ?? null
+          "fold": exact?.foldedBy ?? exact?.foldedIn ?? null
         };
       }
     }

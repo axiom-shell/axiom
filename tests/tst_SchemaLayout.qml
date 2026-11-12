@@ -622,6 +622,104 @@ TestCase {
     compare(groups[1].intro, "");
   }
 
+  // `x-intro: { file, setup }`: the setup rows stay under the intro, the
+  // rest sits behind one fold row (`<card key>:settings`) on the same card
+  function test_intro_setup_and_its_fold() {
+    const object = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "Sec",
+          "x-intro": {
+            "file": "Status",
+            "setup": ["on"]
+          },
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "title": "On"
+            },
+            "a": {
+              "type": "string",
+              "title": "A"
+            },
+            "n": {
+              "type": "object",
+              "title": "Nested",
+              "x-group": "Sec",
+              "properties": {
+                "b": {
+                  "type": "boolean",
+                  "title": "B"
+                }
+              }
+            },
+            "other": {
+              "type": "boolean",
+              "title": "Other",
+              "x-group": "Elsewhere"
+            }
+          }
+        }
+      }
+    };
+    const groups = SchemaLayout.groups(object, "S");
+    compare(groups.map(group => group.title), ["Sec", "Elsewhere"], "one card, the intro's");
+    compare(groups[0].intro, "Status");
+    const rows = groups[0].rows;
+    compare(rows.map(row => row.path.join(".")), ["S.on", "S:settings", "S.a", "S.n", "S.n.b"]);
+    compare(rows.map(row => row.kind), ["field", "group", "field", "group", "field"]);
+    compare(rows[1].fold, true);
+    compare(rows[1].foldRows.map(row => row.path.join(".")), ["S.a", "S.n", "S.n.b"]);
+    compare(rows.map(row => row.foldedBy ?? ""), ["", "", "S:settings", "S:settings", "S:settings"], "the setup row and the fold row stay out");
+    compare(groups[1].rows.length, 1, "another card has no fold");
+    // The string form is unchanged, and no row left over means no fold
+    object.properties.S["x-intro"] = "Status";
+    compare(SchemaLayout.groups(object, "S")[0].rows.map(row => row.path.join(".")), ["S.on", "S.a", "S.n", "S.n.b"]);
+    object.properties.S["x-intro"] = {
+      "file": "Status",
+      "setup": ["on", "a"]
+    };
+    object.properties.S.properties.n["x-settings"] = false;
+    compare(SchemaLayout.groups(object, "S")[0].rows.map(row => row.path.join(".")), ["S.on", "S.a"]);
+  }
+
+  // A row inside the fold is located with the fold to open; the setup row
+  // and the card itself are not
+  function test_locate_a_row_in_an_intros_fold() {
+    const object = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "Sec",
+          "x-intro": {
+            "file": "Status",
+            "setup": ["on"]
+          },
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "title": "On"
+            },
+            "a": {
+              "type": "string",
+              "title": "A"
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.locate(object, "S.a"), {
+      "category": "Sec",
+      "key": "S",
+      "title": "A",
+      "row": ["S", "a"],
+      "fold": "S:settings"
+    });
+    compare(SchemaLayout.locate(object, "S.on").fold, null);
+    compare(SchemaLayout.locate(object, "S").fold, null);
+  }
+
   function test_intro_on_a_nested_objects_own_card() {
     const groups = SchemaLayout.groups({
       "properties": {
@@ -1046,7 +1144,8 @@ TestCase {
 
   function test_real_schema_intros_exist() {
     for (const key in schema.properties) {
-      const intro = schema.properties[key]["x-intro"];
+      const declared = schema.properties[key]["x-intro"];
+      const intro = declared?.file ?? declared;
       if (intro)
         verify(files.text("qml/components/views/Settings/" + intro + ".qml").includes("x-intro"), intro);
     }

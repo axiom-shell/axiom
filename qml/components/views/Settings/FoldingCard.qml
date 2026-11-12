@@ -6,7 +6,8 @@ import qs.components.reusable
 
 // A settings card that folds: clicking its header (title, help text,
 // chevron) emits `toggled`, and the body below animates shut while
-// `collapsed`. Folded with `marked` set, it shows the unsaved-edits dot.
+// `collapsed`. Folded with `marked` set, it shows the unsaved-edits dot;
+// with a `status` its chip sits by the chevron, folded or not.
 // The generated cards (SettingsGroupCard) and the list cards
 // (EntryListCard) are built on it.
 StyledContainer {
@@ -21,6 +22,10 @@ StyledContainer {
   // False: the header doesn't fold it (search results)
   property bool foldable: true
   property bool marked: false
+  // A status chip in the header, kept while folded (StatusChip's word and
+  // color; none while empty)
+  property string status
+  property color statusColor: Theme.foregroundAlt
   // Beside the header, while unfolded (an Add button)
   property alias headerExtras: extras.data
   default property alias content: body.content
@@ -52,6 +57,8 @@ StyledContainer {
         collapsed: root.collapsed
         foldable: root.foldable
         marked: root.marked
+        status: root.status
+        statusColor: root.statusColor
         onToggled: root.toggled()
       }
 

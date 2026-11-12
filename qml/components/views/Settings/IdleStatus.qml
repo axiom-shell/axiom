@@ -5,16 +5,17 @@ import qs.config
 import qs.services.session
 import qs.components.reusable
 
-// The Idle section's first card (its `x-card`): whether axiom is watching
-// for idle, what holds it off now, and a warning when another program
-// answers apps' requests to keep the screen on
-FieldGroup {
+// The top of the Idle card (the section's `x-intro`): whether axiom is
+// watching for idle, what holds it off now, and a warning when another
+// program answers apps' requests to keep the screen on. `status` and
+// `statusColor` are the card's header chip
+ColumnLayout {
   id: root
 
-  readonly property string status: IdleManager.status
+  readonly property string stage: IdleManager.status
 
   readonly property color statusColor: {
-    switch (root.status) {
+    switch (root.stage) {
     case "running":
       return Theme.success;
     case "inhibited":
@@ -27,8 +28,8 @@ FieldGroup {
     return Theme.foregroundAlt;
   }
 
-  readonly property string statusLabel: {
-    switch (root.status) {
+  readonly property string status: {
+    switch (root.stage) {
     case "running":
       return I18n.tr("Watching");
     case "inhibited":
@@ -44,7 +45,7 @@ FieldGroup {
   }
 
   readonly property string detail: {
-    switch (root.status) {
+    switch (root.stage) {
     case "off":
       return I18n.tr("axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.");
     case "unsupported":
@@ -61,12 +62,7 @@ FieldGroup {
     return I18n.tr("axiom dims, locks and turns the screens off on these settings, and locks before the computer sleeps.");
   }
 
-  headerExtras: [
-    StatusChip {
-      text: root.statusLabel
-      color: root.statusColor
-    }
-  ]
+  spacing: Widget.spacing * 1.5
 
   StyledText {
     text: root.detail

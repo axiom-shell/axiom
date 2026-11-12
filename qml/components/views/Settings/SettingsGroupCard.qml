@@ -27,6 +27,9 @@ FoldingCard {
   collapsed: !root.showSection && SettingsManager.isCollapsed(root.group.key)
   // Unsaved edits inside: Discard shows, and folded the dot, so they
   // aren't forgotten
+  // The `x-intro`'s own status, when it has one (read, not worked out here)
+  status: introLoader.intro?.status ?? ""
+  statusColor: introLoader.intro?.statusColor ?? Theme.foregroundAlt
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
   onToggled: SettingsManager.setCollapsed(root.group.key, !root.collapsed)
 
@@ -58,6 +61,7 @@ FoldingCard {
   // The section's `x-intro` (settings/<name>.qml): status and actions
   // above the fields, gone while its `shown` (if it has one) is false
   Loader {
+    id: introLoader
     readonly property var intro: item
     active: !!root.group.intro
     visible: active && intro?.shown !== false

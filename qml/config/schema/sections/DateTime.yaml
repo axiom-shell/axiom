@@ -2,8 +2,8 @@
 
 type: object
 x-category: System
-x-card: {file: DateTimeStatus, title: Clock}
-title: Date & time formats
+x-intro: {file: DateTimeStatus, setup: []}
+title: Date & time
 description: How times and dates read across the shell.
 additionalProperties: false
 properties:
