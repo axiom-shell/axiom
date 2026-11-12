@@ -12,6 +12,209 @@ TestCase {
     compare(WorkspaceGeometry.fitScale(10, 10, 0, 50, 0, 1, 1), 0.1);
   }
 
+  function test_boxPad() {
+    compare(WorkspaceGeometry.boxPad(16, 8, 8, 10), 16);
+    // (40 - 4)(1 - 1/sqrt2) + 10 = 20.5 > 16; (20 - 2) gives 15.3 < 16 stays
+    fuzzyCompare(WorkspaceGeometry.boxPad(16, 40, 4, 10), 36 * (1 - Math.SQRT1_2) + 10, 0.001);
+    compare(WorkspaceGeometry.boxPad(16, 20, 2, 10), 16);
+    fuzzyCompare(WorkspaceGeometry.boxPad(16, 100, 4, 10), 96 * (1 - Math.SQRT1_2) + 10, 0.001);
+    compare(WorkspaceGeometry.boxPad(16, 4, 20, 10), 16);
+  }
+
+  function test_usableRect() {
+    compare(WorkspaceGeometry.usableRect(1920, 1080, {
+      "top": 40
+    }), {
+      "x": 0,
+      "y": 40,
+      "w": 1920,
+      "h": 1040
+    });
+    const left = WorkspaceGeometry.usableRect(1920, 1080, {
+      "left": 50
+    });
+    compare(left.x, 50);
+    compare(left.w, 1870);
+    compare(WorkspaceGeometry.usableRect(1920, 1080, null), {
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1080
+    });
+    compare(WorkspaceGeometry.usableRect(1920, 1080, {
+      "left": 1000,
+      "right": 1000
+    }).w, 1);
+    compare(WorkspaceGeometry.usableRect(1920, 1080, {
+      "top": -5,
+      "left": -5
+    }), {
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1080
+    });
+  }
+
+  function test_usableOrigin() {
+    compare(WorkspaceGeometry.usableOrigin({
+      "x": 1920,
+      "y": 0,
+      "reserved": {
+        "left": 0,
+        "top": 40,
+        "right": 0,
+        "bottom": 0
+      }
+    }), {
+      "x": 1920,
+      "y": 40
+    });
+    compare(WorkspaceGeometry.usableOrigin(null), {
+      "x": 0,
+      "y": 0
+    });
+    compare(WorkspaceGeometry.usableOrigin({
+      "x": 5,
+      "y": 7
+    }), {
+      "x": 5,
+      "y": 7
+    });
+  }
+
+  function test_windowRect_cropped() {
+    // A window 10 px below a 40 px top bar's edge, the origin the usable area's
+    const top = WorkspaceGeometry.windowRect({
+      "x": 0,
+      "y": 50,
+      "w": 400,
+      "h": 300
+    }, 0, 40, 0.1, 192, 104);
+    compare(top.y, 1);
+    const side = WorkspaceGeometry.windowRect({
+      "x": 60,
+      "y": 0,
+      "w": 400,
+      "h": 300
+    }, 50, 0, 0.1, 192, 108);
+    compare(side.x, 1);
+  }
+
+  function test_wallpaperRect() {
+    const r = WorkspaceGeometry.wallpaperRect({
+      "x": 0,
+      "y": 40,
+      "w": 1920,
+      "h": 1040
+    }, 1920, 1080, 0.1);
+    compare(r.x, 0);
+    compare(r.y, -4);
+    compare(r.w, 192);
+    compare(r.h, 108);
+  }
+
+  function test_fitScale_side() {
+    compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 20), 1);
+    compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1), 1.6);
+    compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 0), 1.6);
+  }
+
+  function test_scratchColumn() {
+    // 3 rows of 30 px cells, 5 px gaps: the grid is 100 px high, centre 50
+    compare(WorkspaceGeometry.scratchColumn(0, 40, 30, 5, 3, 3, 10), null);
+    const one = WorkspaceGeometry.scratchColumn(1, 40, 30, 5, 3, 3, 10);
+    compare(one.x, 140);
+    compare(one.boardWidth, 180);
+    compare(one.scale, 1);
+    compare(one.rects[0], {
+      "x": 140,
+      "y": 35,
+      "w": 40,
+      "h": 30
+    });
+    compare(one.rects[0].y + one.rects[0].h / 2, 50, "one special lines up with the middle row");
+    compare(one.stackY, 35);
+    compare(one.stackH, 30);
+    const two = WorkspaceGeometry.scratchColumn(2, 40, 30, 5, 3, 3, 10);
+    compare(two.scale, 1);
+    compare(two.rects[0].y, 18);
+    compare(two.rects[1].y, 53);
+    // (a whole pixel's rounding at most)
+    verify(Math.abs((two.rects[0].y + two.rects[1].y + two.rects[1].h) / 2 - 50) <= 0.5, "two straddle the centre");
+    const four = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
+    compare(four.scale, 50 / 120);
+    compare(four.stackY, 1);
+    compare(four.rects[1], {
+      "x": 152,
+      "y": 18,
+      "w": 16,
+      "h": 12
+    });
+  }
+
+  function test_scratchColumn_manyCells() {
+    // 15 cells in one 30 px row: the scale stays positive, cells at least 1 px
+    const column = WorkspaceGeometry.scratchColumn(15, 40, 30, 5, 3, 1, 10);
+    compare(column.scale, 0.01);
+    column.rects.forEach(r => verify(r.w >= 1 && r.h >= 1));
+    column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x, r.y), i));
+    // Many in 3 rows shrink to the grid's height, centred on it
+    const many = WorkspaceGeometry.scratchColumn(6, 40, 30, 5, 3, 3, 10);
+    verify(many.scale < 1);
+    verify(many.stackH <= 100);
+    const last = many.rects[5];
+    verify(last.y + last.h <= 100);
+    verify(Math.abs(many.stackY * 2 + many.stackH - 100) <= 1, "centred on the grid");
+  }
+
+  function test_scratchCellAt() {
+    const column = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
+    column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x + r.w / 2, r.y + r.h / 2), i));
+    compare(WorkspaceGeometry.scratchCellAt(column, 137, 5), -1);
+    const last = column.rects[3];
+    compare(WorkspaceGeometry.scratchCellAt(column, last.x + 1, last.y + last.h + 3), -1);
+    compare(WorkspaceGeometry.scratchCellAt(null, 150, 5), -1);
+  }
+
+  function test_digitCell() {
+    // A 3x3 grid, nine cells in reading order
+    compare(WorkspaceGeometry.digitCell(1, 9), 0);
+    compare(WorkspaceGeometry.digitCell(5, 9), 4);
+    compare(WorkspaceGeometry.digitCell(9, 9), 8);
+    compare(WorkspaceGeometry.digitCell(7, 6), -1, "no seventh cell");
+    compare(WorkspaceGeometry.digitCell(0, 9), -1);
+    // A per-monitor block 11-19: digit 1 is its first cell, workspace 11
+    const ids = [11, 12, 13, 14, 15, 16, 17, 18, 19];
+    compare(ids[WorkspaceGeometry.digitCell(1, ids.length)], 11);
+    compare(ids[WorkspaceGeometry.digitCell(9, ids.length)], 19);
+  }
+
+  function test_navigate() {
+    const nav = (i, key, cols, count, scratch) => WorkspaceGeometry.navigate(i, key, cols ?? 3, count ?? 6, scratch ?? 2);
+    compare(nav(0, "right"), 1);
+    compare(nav(2, "right"), 6);
+    compare(nav(5, "right"), 7);
+    compare(nav(0, "left"), 0);
+    compare(nav(7, "left"), 5);
+    compare(nav(6, "left"), 2);
+    compare(nav(7, "up"), 6);
+    compare(nav(4, "up"), 1);
+    compare(nav(1, "up"), 1);
+    compare(nav(7, "down"), 7);
+    compare(nav(4, "down"), 4);
+    compare(nav(2, "right", 3, 6, 0), 2);
+    compare(nav(4, "right", 3, 5, 2), 6);
+    compare(nav(6, "left", 3, 5, 2), 4);
+    compare(nav(5, "left", 3, 5, 2), 2);
+    compare(nav(2, "right", 3, 6, 4), 7);
+    compare(nav(5, "right", 3, 6, 4), 9);
+    compare(nav(0, "down", 1, 4, 0), 1);
+    compare(nav(3, "down", 1, 4, 0), 3);
+    compare(nav(3, "up", 1, 4, 0), 2);
+    compare(nav(0, "up", 1, 4, 0), 0);
+  }
+
   function test_cellRect_and_cellAt_agree() {
     for (let i = 0; i < 5; i++) {
       const r = WorkspaceGeometry.cellRect(i, 40, 30, 5, 3);

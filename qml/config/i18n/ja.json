@@ -3871,7 +3871,6 @@
     "New column display": "",
     "0: in line with the window border. 50: centered.": "",
     "Dimming": "",
-    "Mouse controls under the grid.": "",
     "Type @ and a question for Chat.": "",
     "Relative": "",
     "Focused": "",
@@ -4160,6 +4159,11 @@
     "Off: start with an empty user field.": "",
     "Where the status icons go beside the bars. Inner: by the screen edge; Outer: past the bars.": "",
     "In effect: {0}": "",
-    "Date & time": ""
+    "Date & time": "",
+    "Arrows to select · Enter to go · 1-9 to jump to a workspace": "",
+    "Scratchpad color": "",
+    "Mouse and key controls under the grid.": "",
+    "Border and label of their cells.": "",
+    "Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.": ""
   }
 }

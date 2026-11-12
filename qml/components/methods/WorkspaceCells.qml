@@ -235,6 +235,14 @@ QtObject {
     return text === "" || text === String(id) || text === String(number) ? "" : text;
   }
 
+  // What a workspace's badge on the overview says: its number (its `id`, or
+  // its `place` on the monitor where workspaces are dynamic) or, where the
+  // compositor's `name` says more than that, the name
+  function badgeText(id, place, name, dynamic) {
+    const number = dynamic ? place : id;
+    return root.nameShown(name, id, number) || String(number);
+  }
+
   // `windows` (the contract's), the biggest (by area) first, ties in their
   // order
   function bySize(windows) {

@@ -21,7 +21,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
   - Optional `cover` (`{ x, y, w, h }`, with `windowCover`): where a window whose geometry isn't exact surely is while its workspace shows; `DockLayout.covered` uses it over the geometry.
 - **Output**: `{ name, description, x, y, width, height, scale, focused, activeWorkspaceId, specialWorkspaceId, reserved: { top, right, bottom, left } }`.
   - `width`/`height` are logical.
-  - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`).
+  - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`). The workspace overview reads it (and `Special.windows` for its scratch cells): its cells show the usable area (the output less `reserved`), so a window's global `x`/`y` must already include it (niri's tiled ones do, `NiriState.windows`).
   - `activeWorkspaceId` is -1 while unknown.
   - `specialWorkspaceId` is 0 when none is open.
   - Optional `specialWorkspaceName` (Hyprland's: `special:magic`, `""` when none is open): Hyprland 0.57 gives a special workspace no id, so `HyprState.specials` matches by name.
@@ -48,7 +48,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
     - A backend that can't slide goes straight to the last leg.
     - The facade only asks for legs with `supports.workspaceSlide`.
   - `sendWindowToWorkspace(id)` (moveSilent)
-  - `specials` (optional, `[]` when left out), `toggleSpecial(name, output)` (`output` "" is the focused one) and `moveToSpecial(name)` (with `namedSpecial`)
+  - `specials` (optional, `[]` when left out), `toggleSpecial(name, output)` (`output` "" is the focused one) and `moveToSpecial(name, id)` (with `namedSpecial`; `id` "" or left out is the focused window, else that window, leaving the special shown or hidden as it was)
   - `scrollStrip(direction)` (with `strips`)
   - `applyRemap(plan, outputNames)` (without `outputWorkspaces`): a layout change's remap, and after a hotplug the re-homing of an unplugged output's workspaces, which the compositor must itself have moved to an output still connected (Hyprland's and sway's do; [workspaces › Hotplugs](../hyprland/workspaces.md#hotplugs-an-unplugged-monitors-windows))
   - `returnWorkspaces(plan)` (where `applyRemap` is): puts re-homed windows back once their monitor is back (`WorkspaceGeometry.returnWindows`' `{ moves: [{ id, to, monitor }], workspaces: [{ id, monitor }], show: [{ monitor, id }] }`): each window to its workspace, each of `workspaces` onto its monitor, each monitor of `show` to that workspace, with the focus and the focused monitor's workspace left as they were ([workspaces › Hotplugs](../hyprland/workspaces.md#hotplugs-an-unplugged-monitors-windows))

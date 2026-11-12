@@ -14,6 +14,11 @@ Item {
 
   // A wallpaper URL, or "" for a plain `color`
   property string wallpaper: ""
+  // Where the wallpaper image sits in the cell, { x, y, w, h } (the full
+  // monitor's, so a cell cropped to the usable area shows the right part);
+  // null fills the cell
+  property var wallpaperRect: null
+  property size wallpaperSize: Qt.size(0, 0)
   property color color: Theme.backgroundAlt
   // 0-1: how dark it is drawn when it isn't the active workspace
   property real dim: 0.5
@@ -25,6 +30,10 @@ Item {
   // has no tiled windows to split)
   property bool dropTarget: false
   property bool dropFill: false
+  // A color for the borders and the drop fill (a scratchpad's); transparent
+  // keeps the usual ones
+  property color tint: "transparent"
+  readonly property bool tinted: root.tint.a > 0
 
   ClippingRectangle {
     id: desktop
@@ -33,11 +42,14 @@ Item {
     color: root.color
 
     Image {
-      anchors.fill: parent
+      x: root.wallpaperRect?.x ?? 0
+      y: root.wallpaperRect?.y ?? 0
+      width: root.wallpaperRect?.w ?? root.width
+      height: root.wallpaperRect?.h ?? root.height
       visible: root.wallpaper !== ""
       source: root.wallpaper
       // Every cell asks for the same size, so they share one decoded image
-      sourceSize: Qt.size(Math.round(root.width), Math.round(root.height))
+      sourceSize: root.wallpaperSize.width > 0 ? root.wallpaperSize : Qt.size(Math.round(root.width), Math.round(root.height))
       fillMode: WallpaperFill.fillMode(Appearance.wallpaperFill)
       asynchronous: true
       cache: true
@@ -56,9 +68,9 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: root.radius
-    color: root.dropFill ? Qt.alpha(Theme.accent, 0.3) : "transparent"
+    color: root.dropFill ? Qt.alpha(root.tinted ? root.tint : Theme.accent, 0.3) : "transparent"
     border.width: root.current || root.dropTarget ? Appearance.borderWidth * 2 : Appearance.borderWidth
-    border.color: root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
+    border.color: root.tinted ? (root.hovered || root.dropTarget ? Qt.lighter(root.tint, 1.4) : root.tint) : root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
 
     ColorGlide on border.color {}
   }
