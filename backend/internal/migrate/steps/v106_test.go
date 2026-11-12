@@ -1,6 +1,11 @@
 package steps
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+)
 
 func TestV106DropsColorText(t *testing.T) {
 	t.Parallel()
@@ -17,4 +22,34 @@ func TestV106DropsColorText(t *testing.T) {
 			`{"X":[{"properties":{"appearance":"colorText"}},{"properties":[1]}],"CustomWidgets":{"items":["x",{"bar":3}]}}`, false},
 		{"nothing", `{"General":{}}`, `{"General":{}}`, false},
 	})
+}
+
+// A config of version 104 goes through main's v105 and then v106: the
+// config audit's renames and the dropped colorText compose, and a second
+// run reports nothing.
+func TestV105ThenV106FromV104(t *testing.T) {
+	t.Parallel()
+	in := `{"format":2,"version":104,"Bars":{"items":[{"id":"top","location":"left","widgets":{"left":[{"type":"Updates","properties":{"manyColor":"base08","appearance":{"style":"label","colorText":true,"width":0}}},{"type":"Workspaces","properties":{"lead":"position","textColor":"base06"}}]}}]},"CustomWidgets":{"items":[{"id":"c","bar":{"style":"label","colorText":true,"width":0}}]}}`
+	want := `{"format":2,"version":106,"Bars":{"items":[{"id":"top","edge":"left","widgets":{"left":[{"type":"Updates","properties":{"warnColor":"base08","appearance":{"style":"label","width":null}}},{"type":"Workspaces","properties":{"foregroundColor":"base06","leadIcon":""}}]}}]},"CustomWidgets":{"items":[{"id":"c","bar":{"style":"label","width":null}}]}}`
+	v, err := jsonx.Unmarshal([]byte(in))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := v.(*jsonx.Object)
+	changes, migrated := Migrate(cfg)
+	if !migrated {
+		t.Error("not migrated")
+	}
+	if got := string(jsonx.MarshalCompact(cfg)); got != want {
+		t.Errorf("got  %s\nwant %s", got, want)
+	}
+	joined := strings.Join(changes, "\n")
+	for _, part := range []string{"location became edge", "appearance.colorText dropped"} {
+		if !strings.Contains(joined, part) {
+			t.Errorf("changes lack %q: %v", part, changes)
+		}
+	}
+	if again, migrated := Migrate(cfg); migrated || len(again) > 0 {
+		t.Errorf("a second run: %v (migrated %v)", again, migrated)
+	}
 }
