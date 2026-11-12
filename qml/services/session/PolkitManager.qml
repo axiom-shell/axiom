@@ -16,11 +16,15 @@ import qs.services.ui
  * administrator rights, and each one goes through the shared prompt's
  * queue (PromptManager), which draws its card (prompt/PolkitCard). A session has one agent, so registering fails while another holds
  * it: axiom then stops the known ones (methods/PolkitAgents), their
- * systemd user units included, and registers again. 15 s after it starts
- * it looks once more, for an agent a user's own autostart launched after
- * qs. Turned off, the units it stopped start again. Requests queue in
- * Quickshell, one flow at a time; a reload keeps the registration and the
- * open flow.
+ * systemd user units included, and registers again. The daemon does the
+ * looking and the stopping (polkit.probe, polkit.stopOthers), only in
+ * this session, and records what it stopped: it starts them again when the
+ * Polkit switch goes off (polkit.handBack), when axiom quits, and after a
+ * crash. 15 s after it starts it looks once more, for an agent a user's own
+ * autostart launched after qs. Requests queue in Quickshell, one flow at a
+ * time; a reload keeps the registration and the open flow.
+ *
+ * rpc: polkit.probe, polkit.stopOthers, polkit.handBack
  *
  * Nothing is polled. Created from shell.qml's `_services`.
  */
@@ -65,15 +69,13 @@ Singleton {
   // generation the old listener as it is, so one that never registered
   // never retries
   property int _remakes: 0
-  // Units axiom stopped (started again when it's turned off) and the
-  // agents it stopped, as JSON: kept across a reload, as the agent is
+  // The agents axiom stopped, as JSON: kept across a reload, as the agent is
+  // (the daemon keeps what to start again)
   PersistentProperties {
     id: _state
     reloadableId: "axiomPolkit"
-    property string stoppedUnits: "[]"
     property string replaced: "[]"
   }
-  readonly property var _stoppedUnits: JSON.parse(_state.stoppedUnits)
 
   property LazyLoader _loader: LazyLoader {
     id: loader
@@ -153,7 +155,7 @@ Singleton {
       if (!root.agent || root.registered)
         return;
       root._probe(names => {
-        // Turned off (or registered) while pgrep ran
+        // Turned off (or registered) while the daemon looked
         if (!root.agent || root.registered)
           return;
         if (root._remakes < 3) {
@@ -200,57 +202,58 @@ Singleton {
       root._remakes = 0;
       if (PolkitConfig.enabled) {
         root._lateCheck.restart();
-      } else if (root._stoppedUnits.length > 0) {
-        CommandManager.run(["systemctl", "--user", "start"].concat(root._stoppedUnits));
-        _state.stoppedUnits = "[]";
+      } else {
+        BackendManager.call("polkit.handBack", {}, error => {
+          if (error)
+            console.warn("[PolkitManager] Could not hand the agents back:", error.message);
+        });
       }
     }
   }
 
-  // Calls `then` with the known agents running, by process name
+  // Calls `then` with the known agents running in this session, by process name
   function _probe(then) {
     root._probeWaiting.push(then);
     if (root._probeWaiting.length > 1)
       return;
-    CommandManager.run(["pgrep", "-af", PolkitAgents.processPattern], (code, stdout) => {
+    BackendManager.call("polkit.probe", {
+      "pattern": PolkitAgents.processPattern
+    }, (error, result) => {
       const waiting = root._probeWaiting;
       root._probeWaiting = [];
-      const names = root._agentNames(stdout);
+      const names = error ? [] : root._agentNames(result.names);
       for (const then of waiting)
         then(names);
-    }, null, true);
+    });
   }
 
   property var _probeWaiting: []
 
-  function _agentNames(text) {
-    const names = [];
-    for (const line of text.split("\n")) {
-      const executable = line.trim().split(/\s+/)[1] ?? "";
-      const name = executable.replace(/^.*\//, "");
-      if (PolkitAgents.agents.some(agent => agent.process === name) && !names.includes(name))
-        names.push(name);
-    }
-    return names;
+  function _agentNames(names) {
+    return names.filter((name, i) => names.indexOf(name) === i && PolkitAgents.agents.some(agent => agent.process === name));
   }
-
-  // Stop the running units, then any agent process left; prints
-  // "unit <name>" for each unit stopped, and the processes it stops
-  readonly property string _stopScript: 'pattern=$1; shift; for unit in "$@"; do systemctl --user -q is-active "$unit" 2>/dev/null && systemctl --user stop "$unit" && echo "unit $unit"; done; pgrep -af "$pattern"; pkill -f "$pattern"; true'
 
   property bool _stopping: false
 
+  // The daemon stops the running units, then any agent process left, in
+  // this session only, recording each to start again
   function _stopOthers(register) {
     if (root._stopping)
       return;
     root._stopping = true;
-    CommandManager.run(["sh", "-c", root._stopScript, "sh", PolkitAgents.processPattern].concat(PolkitAgents.units), (code, text) => {
+    BackendManager.call("polkit.stopOthers", {
+      "pattern": PolkitAgents.processPattern,
+      "units": PolkitAgents.units
+    }, (error, result) => {
       root._stopping = false;
-      const units = text.split("\n").filter(line => line.startsWith("unit ")).map(line => line.slice(5).trim());
-      const names = root._agentNames(text.split("\n").filter(line => !line.startsWith("unit ")).join("\n"));
-      _state.stoppedUnits = JSON.stringify(root._stoppedUnits.concat(units.filter(unit => !root._stoppedUnits.includes(unit))));
-      // A unit's agent is gone by the time its process would print
-      const stopped = names.concat(units.map(unit => PolkitAgents.agents.find(agent => agent.unit === unit)?.process ?? unit.replace(/\.service$/, "")));
+      if (error) {
+        console.warn("[PolkitManager] Could not stop the other agents:", error.message);
+        if (register)
+          root._remake();
+        return;
+      }
+      // A unit's agent is gone by the time its process would be listed
+      const stopped = root._agentNames(result.names).concat(result.units.map(unit => PolkitAgents.agents.find(agent => agent.unit === unit)?.process ?? unit.replace(/\.service$/, "")));
       _state.replaced = JSON.stringify(root.replaced.concat(stopped.filter((name, i) => stopped.indexOf(name) === i && !root.replaced.includes(name))));
       if (stopped.length > 0)
         console.log("[PolkitManager] Stopped", stopped.join(", "));

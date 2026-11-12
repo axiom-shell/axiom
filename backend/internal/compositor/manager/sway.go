@@ -12,6 +12,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
 // swayWriter is sway's config writer: axiom's layer as sway's commands
@@ -422,3 +423,32 @@ func (w *swayWriter) entries(ctx context.Context, in Inputs) *jsonx.Array {
 }
 
 func (w *swayWriter) seenReload() { w.runtime.reloads.Add(1) }
+
+// teardownSteps: a reload takes the binds, the look and the input out; when
+// the user's config starts axiom at every reload (partial), only the binds
+// the layer made go, by their unbinds.
+func (w *swayWriter) teardownSteps(in Inputs, partial bool) []session.Step {
+	if !partial {
+		return []session.Step{{Op: "reload"}}
+	}
+	return []session.Step{{Op: "commands", Lines: unbindLines(w.unbinds())}}
+}
+
+var execAlways = regexp.MustCompile(`^\s*exec_always\s`)
+
+// reloadStartsAxiom: a line of the user's config (its includes in) that
+// runs at every reload (exec_always) matches in's startPattern.
+func (w *swayWriter) reloadStartsAxiom(in Inputs) (bool, string) {
+	pattern := startPatternOf(in)
+	main := userconf.SwayMain(w.getenv)
+	if pattern == nil || main == "" {
+		return false, ""
+	}
+	text, _ := userconf.SwayText(main, []string{w.includePath()}, swayHeader, w.getenv)
+	for _, line := range strings.Split(text, "\n") {
+		if execAlways.MatchString(line) && pattern.MatchString(line) {
+			return true, strings.TrimSpace(line)
+		}
+	}
+	return false, ""
+}

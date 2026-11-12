@@ -11,6 +11,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
 // Inputs are what the layer is made of (buildInputs: the config's binds,
@@ -88,6 +89,13 @@ type writer interface {
 	// The runtime layer
 	runtimeApply(ctx context.Context, in Inputs, live func() []string)
 	runtimeClear(ctx context.Context)
+	// teardownSteps are what takes the runtime layer out when axiom stops
+	// (session.Step); partial: the user's config starts axiom on every
+	// reload, so only the layer's binds (and the cursor) are taken out
+	teardownSteps(in Inputs, partial bool) []session.Step
+	// reloadStartsAxiom: a reload would start axiom again (the user's config
+	// runs a line matching in's startPattern at every load), and which line
+	reloadStartsAxiom(in Inputs) (bool, string)
 	skippedKeys() []string
 	// checkLoaded: whether the mode's file is in effect; failed when the
 	// compositor couldn't load its config at all
@@ -214,4 +222,18 @@ func startCommand(in Inputs) string {
 
 func sessionEnv(in Inputs, spec any) any {
 	return render.SessionEnv(in.get("session"), getAny(getAny(spec, "input"), "cursor"), jsonx.Obj("qt", in.flag("qt"), "inputMethod", in.get("inputMethod")))
+}
+
+// startPatternOf is the regexp matching a line that starts axiom (nil: none
+// given, or it isn't one)
+func startPatternOf(in Inputs) *regexp.Regexp {
+	pattern := in.str("startPattern")
+	if pattern == "" {
+		return nil
+	}
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil
+	}
+	return re
 }

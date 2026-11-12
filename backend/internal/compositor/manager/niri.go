@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
 // niriWriter is niri's config writer: axiom's layer as niri's KDL
@@ -356,3 +357,15 @@ func (w *niriWriter) runningConfig(Inputs) string {
 }
 
 func (w *niriWriter) seenReload() {}
+
+// teardownSteps: loading the user's own config takes the wrapper (the
+// runtime layer) out; none while it isn't loaded.
+func (w *niriWriter) teardownSteps(_ Inputs, _ bool) []session.Step {
+	if !w.state.NiriWrapper {
+		return nil
+	}
+	return []session.Step{{Op: "load", Path: w.mainConfig}}
+}
+
+// reloadStartsAxiom: load-config-file doesn't run spawn-at-startup again.
+func (w *niriWriter) reloadStartsAxiom(Inputs) (bool, string) { return false, "" }

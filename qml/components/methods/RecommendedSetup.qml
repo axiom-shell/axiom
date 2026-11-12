@@ -111,7 +111,7 @@ QtObject {
   // Every row by id: { id, path, step, label, detail, value, keys,
   // hookupKeys, done, available, reason, later, checkedByDefault }.
   // `facts`: { config, schema, valueOf, later: [paths], modeAllowed,
-  // modeDefault, managedBlocked, portal: { known, installed, axiomInstalled, hookedUp },
+  // modeDefault, managedBlocked, portal: { known, installed, axiomInstalled, hookedUp, automatic },
   // apps: { installed: [keys], hookups: { key: "done" | "todo" | "none" } },
   // greeter: GreeterManager.status }. `reason` is a code ("" when
   // available or done): unsupported, blocked, missing, noAxiomPortal, noApps, noGreetd,
@@ -166,7 +166,10 @@ QtObject {
 
   function _portalRow(row, keys, facts) {
     const portal = facts.portal ?? {};
-    row.done = Utils.valueAt(facts.config, keys) === true && portal.hookedUp === true;
+    // automatic (niri): the daemon adds the portal line while axiom runs, so
+    // there is no hookup to apply and no portal restart of ours
+    row.automatic = portal.automatic === true;
+    row.done = Utils.valueAt(facts.config, keys) === true && (portal.hookedUp === true || row.automatic);
     if (!portal.known) {
       row.available = false;
       row.reason = "unsupported";
@@ -256,7 +259,7 @@ QtObject {
         "rows": commitRows
       });
     for (const entry of entries) {
-      if (entry.step === "portal" && on(entry.id)) {
+      if (entry.step === "portal" && on(entry.id) && !rows[entry.id].automatic) {
         plan.push({
           "step": "hookup",
           "key": "screenSharing",

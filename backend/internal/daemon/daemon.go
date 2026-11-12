@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -74,11 +75,14 @@ type Options struct {
 	// TreeOverride: the tree was given (--tree, $AXIOM_TREE), and wins
 	// over dev mode's at the session start
 	TreeOverride bool
-	NoShell      bool   // don't start quickshell (tests, headless use)
-	QS           string // the quickshell binary (default "qs")
-	Go           string // the go binary dev mode builds with (default "go")
-	Getenv       func(string) string
-	Log          *slog.Logger
+	NoShell      bool // don't start quickshell (tests, headless use)
+	// Guard runs the session guard and heals what an earlier daemon left
+	// (only `axiom run`: tests leave it off)
+	Guard  bool
+	QS     string // the quickshell binary (default "qs")
+	Go     string // the go binary dev mode builds with (default "go")
+	Getenv func(string) string
+	Log    *slog.Logger
 	// LogLevel, when set, follows dev mode: debug while it's on
 	LogLevel *slog.LevelVar
 	// ShellOutput gets the shell's stdout and stderr (nil: discarded)
@@ -101,6 +105,9 @@ type Options struct {
 	// fileSearchOptions tunes the index (tests)
 	fileSearch        *fileindex.Settings
 	fileSearchOptions func(*fileindex.Options)
+	// session replaces the session effects (systemctl, kill, spawn, the
+	// bus, /proc) and turns the teardown on without the guard (tests)
+	session *sessionTest
 }
 
 // Files in the runtime directory
@@ -222,6 +229,16 @@ type Daemon struct {
 	children command.Children
 	tasks    *tasks
 	stop     context.CancelFunc
+	// sess is the session record (session.go); compositorGone: the
+	// compositor ended, so nothing of it is undone; portalLine the niri
+	// portal line's state (screenshare.go)
+	sess           *sessionRec
+	compositorGone atomic.Bool
+	// carriedStart: this image was re-exec'd from a running one
+	carriedStart bool
+	// wlsunsetMu serializes nightlight.wlsunset
+	wlsunsetMu sync.Mutex
+	portalLine portalLineState
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)
@@ -401,6 +418,8 @@ func Run(ctx context.Context, opts Options) (err error) {
 	// delivery, since an apply may hold the service meanwhile
 	d.savedKick = newKicker(func(context.Context) { d.saved.Changed() })
 
+	d.carriedStart = h.carried()
+	d.startSession(h)
 	d.compositor = d.newCompositor(h.carried())
 	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
 	if d.compositor != nil {
@@ -431,7 +450,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.cameraPart(), d.fileSearchPart(), d.screenSharePart(), d.netPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.cameraPart(), d.fileSearchPart(), d.screenSharePart(), d.sessionPart(), d.netPart(), d.dev.part()}
 	parts = append(parts, d.machineParts()...)
 	reg := d.registry(parts)
 	if opts.registered != nil {
@@ -530,6 +549,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	opts.Log.Info("axiom is running", "display", runtime.Display, "tree", opts.Tree, "socket", runtime.Socket(), "version", buildinfo.Get().Version, "config", d.store.Path(), "reexec", h != nil, "dev", d.dev.Enabled(), "devActive", d.dev.active())
 	<-ctx.Done()
 	d.tasks.Wait()
+	d.sessionTeardown()
 	opts.Log.Info("axiom stopped")
 	return nil
 }
@@ -612,6 +632,7 @@ func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	}
 	if errors.Is(err, wire.ErrGone) {
 		log.Info("the compositor is gone: stopping")
+		d.compositorGone.Store(true)
 		d.stop()
 	} else if err != nil {
 		log.Warn("not watching the compositor", "err", err)

@@ -18,7 +18,12 @@ import qs.services.system
  * screenshot picker (ScreenshotManager.pickArea).
  * The hookup (ScreenShareSources.hookupTargets) points the compositor's
  * portal at axiom once; the ScreenSharing settings decide, at each request,
- * whether axiom's picker or the portal's own answers.
+ * whether axiom's picker or the portal's own answers. Under niri there is
+ * no hookup: the daemon puts the portal's line in its config while axiom
+ * runs and takes it out when it stops (portalLine). The daemon restarts
+ * the portal too, in this session only.
+ *
+ * rpc: screenshare.answer, screenshare.restartPortal, screenshare.portalLine
  */
 Singleton {
   id: root
@@ -48,6 +53,17 @@ Singleton {
   property bool _portalInstalled: false
   property bool _axiomPortalInstalled: false
 
+  // The niri portal line as the daemon keeps it ({ state: "on" | "off" |
+  // "link" | "missing" | "failed", path, line, error }), as checkPortal()
+  // last found; state "" until it has
+  readonly property var portalLine: root._portalLine
+  property var _portalLine: ({
+      "state": "",
+      "path": "",
+      "line": "",
+      "error": ""
+    })
+
   // Where xdg-desktop-portal finds .portal files: the XDG data dirs, then
   // its own datadir
   function _portalDirs() {
@@ -62,6 +78,11 @@ Singleton {
   function checkPortal() {
     root._portalInstalled = root._hasPortalFile(root.portal?.portalFile);
     root._axiomPortalInstalled = !root.portal?.axiomPortalFile || root._hasPortalFile(root.portal.axiomPortalFile);
+    if (CompositorManager.kind === "niri")
+      BackendManager.call("screenshare.portalLine", {}, (error, line) => {
+        if (!error)
+          root._portalLine = line;
+      });
   }
 
   property var _request: null
@@ -171,15 +192,20 @@ Singleton {
   // Unlinked and miss it
   readonly property bool shareActive: !Paths.greeter && PrivacyManager.screenCaptures.length > 0
 
-  // Restarts the portal services, so a hookup applied takes effect (a
-  // share running ends). `done` (optional) is called with (ok, stderr).
+  // Restarts the portal, so a hookup applied takes effect (a share running
+  // ends): the daemon restarts the frontend and this compositor's backend,
+  // in this session only. `done` (optional) is called with (ok, message).
   function restartPortal(done) {
-    const services = ["xdg-desktop-portal.service"].concat((root.portal?.services ?? []).map(s => s + ".service"));
-    CommandManager.run(["systemctl", "--user", "restart"].concat(services), (code, stdout, stderr) => {
-      if (code !== 0)
-        console.warn("[ScreenShareManager] restarting the portal:", stderr.trim());
+    BackendManager.call("screenshare.restartPortal", {
+      "backends": (root.portal?.services ?? []).map(service => ({
+            "bus": root.portal.busName,
+            "unit": service + ".service"
+          }))
+    }, error => {
+      if (error)
+        console.warn("[ScreenShareManager] restarting the portal:", error.message);
       if (done)
-        done(code === 0, stderr.trim());
+        done(!error, error ? error.message : "");
     });
   }
 

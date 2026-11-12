@@ -4172,6 +4172,11 @@
     "Soon color": "",
     "While the check fails.": "",
     "Pill: with one metric shown, else fill. Disk: fill, not sparkline.": "",
-    "The change and the widget while a symbol is up.": ""
+    "The change and the widget while a symbol is up.": "",
+    "{0} is a link (dotfiles?), so axiom won't change it every session: add this line under [preferred] yourself:": "",
+    "Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).": "",
+    "Detached: axiom changes none of your compositor's files and takes its binds and look away when it stops. Great for trying it out; for full-time use, pick Included or Managed.": "",
+    "You're in detached mode!": "",
+    "Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed.": ""
   }
 }

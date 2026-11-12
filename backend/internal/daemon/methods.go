@@ -177,6 +177,15 @@ func fromShell(c *rpc.Conn) bool {
 	return s != nil && s.Client == "shell"
 }
 
+// shellOnly refuses a call that isn't the shell's (what stops or restarts
+// the session's processes).
+func shellOnly(c *rpc.Conn) error {
+	if !fromShell(c) {
+		return axerr.New(axerr.Refused, "only the shell stops the session's processes")
+	}
+	return nil
+}
+
 // subscribedTo keeps the connections that asked for topic.
 func subscribedTo(topic string) func(*rpc.Conn) bool {
 	return func(c *rpc.Conn) bool {

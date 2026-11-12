@@ -41,6 +41,8 @@ type testDaemon struct {
 	// The file search's settings and tuning ("": the config's)
 	fileSearch        *fileindex.Settings
 	fileSearchOptions func(*fileindex.Options)
+	// session replaces the session effects
+	session *sessionTest
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -65,13 +67,14 @@ func newTestDaemon(t *testing.T) *testDaemon {
 	t.Cleanup(func() { os.RemoveAll(runtimeDir) })
 	home := t.TempDir()
 	td := &testDaemon{env: map[string]string{
-		"HOME":            home,
-		"XDG_RUNTIME_DIR": runtimeDir,
-		"WAYLAND_DISPLAY": "wayland-test",
-		"XDG_CONFIG_HOME": filepath.Join(home, "config"),
-		"XDG_STATE_HOME":  filepath.Join(home, "state"),
-		"XDG_DATA_HOME":   filepath.Join(home, "data"),
-		"XDG_CACHE_HOME":  filepath.Join(home, "cache"),
+		"HOME":                     home,
+		"XDG_RUNTIME_DIR":          runtimeDir,
+		"WAYLAND_DISPLAY":          "wayland-test",
+		"DBUS_SESSION_BUS_ADDRESS": "unix:path=" + filepath.Join(runtimeDir, "bus"),
+		"XDG_CONFIG_HOME":          filepath.Join(home, "config"),
+		"XDG_STATE_HOME":           filepath.Join(home, "state"),
+		"XDG_DATA_HOME":            filepath.Join(home, "data"),
+		"XDG_CACHE_HOME":           filepath.Join(home, "cache"),
 		// Never the live system bus: the Bluetooth part would register a
 		// pairing agent with the machine's BlueZ
 		"DBUS_SYSTEM_BUS_ADDRESS": "unix:path=" + filepath.Join(home, "no-system-bus"),
@@ -127,7 +130,7 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
 	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered, Go: td.goBin,
-		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions}
+		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions, session: td.session}
 }
 
 // connect dials the daemon and says hello as client; the connection's
