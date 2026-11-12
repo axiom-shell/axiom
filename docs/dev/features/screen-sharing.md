@@ -35,6 +35,9 @@ axiom's picker for what an app shares (a call, a stream), on every compositor, i
 - Window highlight in the region drag: the screenshot picker's own (`supports.windowGeometry`: Hyprland and sway); nothing turns it off for `pickArea`.
 - IPC `screenshare`: `test` opens the picker on what the compositor shows, its answer only logged (never over a real request); `share` shares what the picker opened on; `cancel`.
 
+### Footprint
+- Under Hyprland and sway the portal hookup is a persistent edit (`hookup.apply` with owner `ScreenSharing.enabled`, a `hookup` row); under niri it is a session effect, removed at teardown. `ScreenSharing.enabled` has `x-footprint: {/$compositor: [hyprland, sway]}`.
+
 ### Testing
 - Go: the broker (`screenshare_test.go`), the xdph and xdpw formats (`backends_test.go`), the niri portal on `dbustest` with a fake niri and a fake xdg-desktop-portal-gnome (`portal_test.go`), the command and its fallback (`cli/screensharepick_test.go`), `portal-wait`.
 - The picker: `axiom ipc screenshare test` (live is fine: nothing is shared), or in a nested shell (`scripts/dev/nested.sh`) end to end: with `ScreenSharing.enabled` on in its scratch config, run its `axiom` with `AXIOM_SOCKET=<nested socket>` and `XDPH_OUTPUT_SHARING_LIST='<len>:<name>:0:0:<w>:<h>;'` and answer with `axiom --socket <nested socket> ipc screenshare share`.

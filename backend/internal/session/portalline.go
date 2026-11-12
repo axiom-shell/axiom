@@ -249,7 +249,7 @@ func (p PortalEnv) Sync(store Store, display string, want bool) (state string, c
 	if plan.CreatesSection && len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) != "" {
 		e.BlankAdded = true
 	}
-	edited := hookup.Edit(r, plan, lines)
+	edited, _ := hookup.Edit(r, plan, lines)
 	if crlf(lines) {
 		for i, l := range edited {
 			if !strings.HasSuffix(l, "\r") {

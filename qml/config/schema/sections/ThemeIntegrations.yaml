@@ -3,6 +3,7 @@
 type: object
 x-category: Theme integrations
 x-card: {perField: true}
+x-footprint: true
 x-recommended: installed
 x-links: [Themes]
 title: Theme integrations

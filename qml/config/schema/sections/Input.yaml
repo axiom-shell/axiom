@@ -128,6 +128,7 @@ properties:
             x-scope: personal
             type: boolean
             title: Input method
+            x-footprint: true
             default: false
             description: Axiom manages fcitx5 or ibus, for Japanese, Chinese, Korean and more.
           framework:
@@ -335,6 +336,7 @@ properties:
         x-greeter: true
         type: boolean
         title: Set the cursor
+        x-footprint: true
         default: false
         description: Off, the cursor is left alone.
       theme:

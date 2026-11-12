@@ -1,6 +1,8 @@
 package edit
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io/fs"
 	"os"
@@ -12,6 +14,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/hookup"
 	"github.com/axiom-shell/axiom/backend/internal/theme/integrations"
@@ -26,6 +29,8 @@ type HookupOptions struct {
 	// relative to
 	DataDir string
 	Now     func() time.Time
+	// Ledger records the changes before they're made (nil: none)
+	Ledger *footprint.Ledger
 }
 
 // Hookups check and apply hookup targets (package hookup) on the user's
@@ -73,13 +78,14 @@ func (h *Hookups) Status(targets []hookup.Target, profiles []string) ([]hookup.R
 // Apply does each target that isn't done: the file changed is backed up
 // beside it as <name>.axiom-bak-<date> (a link is followed and kept; a
 // wrapped link is the backup), then replaced atomically. A file that can't
-// be written is never touched, and nothing is deleted.
-func (h *Hookups) Apply(targets []hookup.Target, profiles []string) []HookupResult {
+// be written is never touched, and nothing is deleted. Each change is
+// recorded in the ledger first, with owner (the setting that asked for it).
+func (h *Hookups) Apply(targets []hookup.Target, profiles []string, owner string) []HookupResult {
 	home := h.env().Dirs.Home
 	suffix := ".axiom-bak-" + h.opts.Now().Format(Stamp)
 	results := []HookupResult{}
 	for _, r := range h.resolve(targets, profiles) {
-		result, err := h.apply(r, suffix)
+		result, err := h.apply(r, suffix, owner)
 		if err != nil {
 			result.Error = err.Error()
 		}
@@ -89,7 +95,7 @@ func (h *Hookups) Apply(targets []hookup.Target, profiles []string) []HookupResu
 	return results
 }
 
-func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) {
+func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, error) {
 	p, lines, err := h.plan(r)
 	result := HookupResult{Path: p.Path}
 	if err != nil || !p.Pending() {
@@ -98,6 +104,12 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 		}
 		return result, err
 	}
+	// Folders made for it are recorded first
+	dirsDone, err := h.opts.Ledger.BeginDirs(filepath.Dir(p.Resolved), owner)
+	if err != nil {
+		return result, err
+	}
+	defer dirsDone()
 	if err := os.MkdirAll(filepath.Dir(p.Resolved), 0o755); err != nil {
 		return result, err
 	}
@@ -107,8 +119,16 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 		if err != nil {
 			return result, err
 		}
+		sum := sha256.Sum256(data)
+		prev, had := h.opts.Ledger.Get(footprint.ID(footprint.KindHookup, p.Resolved, ""))
+		id, err := h.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindHookup, Target: p.Resolved, Owner: owner,
+			Hookup: &footprint.HookupRec{CreatedFile: !p.Exists, CopiedSHA256: hex.EncodeToString(sum[:])}}, footprint.PriorAbsent)
+		if err != nil {
+			return result, err
+		}
 		err = Replace(p.Resolved, data)
 		result.Changed = err == nil
+		h.finish(id, prev, had, err)
 		return result, err
 	case p.Wraps:
 		// The link becomes the backup (still pointing where it did), and a
@@ -117,28 +137,66 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 		if err != nil {
 			return result, err
 		}
+		out, rec := hookup.Edit(r, p, lines)
+		prev, had := h.opts.Ledger.Get(footprint.ID(footprint.KindHookup, p.Path, ""))
+		id, err := h.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindHookup, Target: p.Path, Owner: owner,
+			Hookup: &footprint.HookupRec{Edit: rec, LinkTarget: link, Backup: p.Path + suffix}}, footprint.PriorAbsent)
+		if err != nil {
+			return result, err
+		}
 		if err := os.Symlink(link, p.Path+suffix); err != nil {
+			h.finish(id, prev, had, err)
 			return result, err
 		}
 		result.Backup = p.Path + suffix
-		err = fsx.ReplaceLink(p.Path, []byte(hookup.Text(hookup.Edit(r, p, lines))), 0o644)
+		err = fsx.ReplaceLink(p.Path, []byte(hookup.Text(out)), 0o644)
 		result.Changed = err == nil
+		h.finish(id, prev, had, err)
+		return result, err
+	}
+	out, rec := hookup.Edit(r, p, lines)
+	row := footprint.Row{Kind: footprint.KindHookup, Target: p.Resolved, Owner: owner, Hookup: &footprint.HookupRec{Edit: rec, CreatedFile: !p.Exists}}
+	// One backup per file and Apply, taken before its first target
+	// (kdeglobals has two): one already there is never overwritten
+	backup := p.Resolved + suffix
+	if p.Exists {
+		row.Hookup.Backup = backup
+		if data, err := os.ReadFile(p.Resolved); err == nil && len(data) > 0 && data[len(data)-1] != '\n' {
+			row.Hookup.NoFinalNewline = true
+			row.Hookup.LastLine = lines[len(lines)-1]
+		}
+	}
+	prev, had := h.opts.Ledger.Get(footprint.ID(footprint.KindHookup, p.Resolved, ""))
+	id, err := h.opts.Ledger.Begin(row, footprint.PriorAbsent)
+	if err != nil {
 		return result, err
 	}
 	if p.Exists {
-		// One backup per file and Apply, taken before its first target
-		// (kdeglobals has two): one already there is never overwritten
-		backup := p.Resolved + suffix
 		if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
 			if err := Copy(p.Resolved, backup); err != nil {
+				h.finish(id, prev, had, err)
 				return result, err
 			}
 		}
 		result.Backup = backup
 	}
-	err = Replace(p.Resolved, []byte(hookup.Text(hookup.Edit(r, p, lines))))
+	err = Replace(p.Resolved, []byte(hookup.Text(out)))
 	result.Changed = err == nil
+	h.finish(id, prev, had, err)
 	return result, err
+}
+
+// finish closes a row's write-ahead: done when the write was made; when it
+// failed, a row Begin merged this edit's lines into goes back to what it
+// held (a new row stays pending: its undo finds nothing to take out).
+func (h *Hookups) finish(id string, prev footprint.Row, had bool, err error) {
+	if err == nil {
+		h.opts.Ledger.Done(id, nil)
+		return
+	}
+	if had {
+		_ = h.opts.Ledger.Amend(id, func(r *footprint.Row) { r.Hookup, r.State = prev.Hookup, prev.State })
+	}
 }
 
 func (h *Hookups) env() hookup.Env {

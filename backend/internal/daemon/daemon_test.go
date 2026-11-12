@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -130,7 +131,8 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
 	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered, Go: td.goBin,
-		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions, session: td.session}
+		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions, session: td.session,
+		GSettings: func(context.Context, ...string) (string, error) { return "", errors.New("no gsettings in tests") }}
 }
 
 // connect dials the daemon and says hello as client; the connection's

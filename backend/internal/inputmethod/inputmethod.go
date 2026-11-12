@@ -21,6 +21,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
@@ -94,6 +95,8 @@ type Settings struct {
 	// "Control+space"): the shell sends none, so axiom's binds alone
 	// switch
 	TriggerKeys *[]string `json:"triggerKeys,omitempty"`
+	// Owner is the setting that asks (the owner of the footprint rows)
+	Owner string `json:"owner,omitempty"`
 }
 
 // Options configure the service.
@@ -108,6 +111,9 @@ type Options struct {
 	// GSettings runs gsettings with args and returns its output (ibus
 	// keeps its engine list and font there); nil leaves them alone
 	GSettings func(ctx context.Context, args ...string) (string, error)
+	// Ledger records what's set in the framework before it's set (fcitx5's
+	// config and group, ibus's gsettings keys); nil: none
+	Ledger *footprint.Ledger
 	// OnChange is told of every new state
 	OnChange func(State)
 	// Retry is how often to look again for an ibus-daemon that isn't
@@ -121,7 +127,7 @@ type backend interface {
 	// name is the framework's (FrameworkFcitx, FrameworkIBus)
 	name() string
 	set(ctx context.Context, name string) error
-	push(ctx context.Context, defaultLayout string, items []Item) error
+	push(ctx context.Context, defaultLayout string, items []Item, owner string) error
 	settings(ctx context.Context, s Settings) error
 }
 
@@ -231,8 +237,8 @@ func (s *Service) Set(ctx context.Context, name string) error {
 
 // Push makes items the framework's list (fcitx5's current group, with
 // defaultLayout; ibus's preloaded engines), remembered as axiom's so an
-// edit elsewhere shows as OutsideEdit.
-func (s *Service) Push(ctx context.Context, defaultLayout string, items []Item) error {
+// edit elsewhere shows as OutsideEdit. owner is the setting that asks.
+func (s *Service) Push(ctx context.Context, defaultLayout string, items []Item, owner string) error {
 	if len(items) == 0 {
 		return axerr.New(axerr.BadRequest, "an empty list (the framework needs one input method)")
 	}
@@ -257,7 +263,7 @@ func (s *Service) Push(ctx context.Context, defaultLayout string, items []Item) 
 	s.last = &pushed{framework: b.name(), defaultLayout: defaultLayout, items: slices.Clone(items)}
 	s.pushing++
 	s.mu.Unlock()
-	err = b.push(ctx, defaultLayout, items)
+	err = b.push(ctx, defaultLayout, items, owner)
 	s.mu.Lock()
 	s.pushing--
 	if err != nil {

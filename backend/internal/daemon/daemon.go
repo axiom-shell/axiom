@@ -32,6 +32,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/devconfig"
 	"github.com/axiom-shell/axiom/backend/internal/fileindex"
 	"github.com/axiom-shell/axiom/backend/internal/files"
+	"github.com/axiom-shell/axiom/backend/internal/footprint"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/inputmethod"
@@ -68,6 +69,10 @@ import (
 
 // Options configure a daemon.
 type Options struct {
+	// GSettings runs gsettings (default: the installed one); tests give a
+	// fake, so nothing reads the machine's
+	GSettings func(ctx context.Context, args ...string) (string, error)
+
 	Tree string // the axiom tree the shell runs from
 	// Dev starts in dev mode whatever the saved choice ($XDG_STATE_HOME/
 	// axiom/dev.json, which `axiom dev on|off` sets)
@@ -201,6 +206,8 @@ type Daemon struct {
 	bluetooth *bluez.Service
 	// inputMethod is the input method framework (fcitx5 or ibus)
 	inputMethod *inputmethod.Service
+	// footprint is the ledger of what axiom changed outside its folders
+	footprint *footprint.Ledger
 	// camera is who holds a camera's device open
 	camera *camera.Service
 	// fileSearch is the launcher's file index and thumbnails
@@ -440,6 +447,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.newVPN()
 	d.newDrives()
 	d.newBluetooth()
+	d.newFootprint()
 	d.newInputMethod()
 	d.newCamera()
 	d.newFileSearch()
@@ -450,7 +458,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.cameraPart(), d.fileSearchPart(), d.screenSharePart(), d.sessionPart(), d.netPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.footprintPart(), d.cameraPart(), d.fileSearchPart(), d.screenSharePart(), d.sessionPart(), d.netPart(), d.dev.part()}
 	parts = append(parts, d.machineParts()...)
 	reg := d.registry(parts)
 	if opts.registered != nil {

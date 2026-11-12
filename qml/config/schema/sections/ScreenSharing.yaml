@@ -12,6 +12,7 @@ properties:
     type: boolean
     x-recommended: true
     title: Axiom's picker
+    x-footprint: {/$compositor: [hyprland, sway]}
     default: false
     description: Apps ask it instead of the compositor portal's own.
   remember:

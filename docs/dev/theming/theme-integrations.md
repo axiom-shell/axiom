@@ -115,6 +115,9 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go. On p
   - does nothing for a target already done.
 - `targets` passes the targets instead of a schema key, with `title` (naming a target above its path) and `note` (replacing the line about where it goes). Used for the compositor's include and autostart lines (CompositorConfigManager; see [Config modes](../compositor/config-modes.md)).
 
+### What is recorded (the footprint ledger)
+- Every file an integration writes is a `file` row (and a `dir` row for each folder it makes), owned by `ThemeIntegrations.<key>` (`theme.integrate`'s `owners`); the effects record `gsetting` rows (GTK's `color-scheme` and, for adw-gtk3, `gtk-theme`), an `ini-groups` row per key MergeKDE changed in kdeglobals, a `marked-block` row for ncspot's colors and a `rebuild` row for bat's cache. `hookup.apply` records a `hookup` row with the exact `EditRecord` (`hookup.Edit` returns it; `hookup.Undo` takes out only that). Signals and D-Bus notifies to running apps aren't recorded. See [Footprint ledger](../backend/footprint.md).
+
 ### IntegrationHookupManager and the UI
 - `IntegrationHookupManager` calls the daemon; nothing is polled:
   - `check(key)` → `status[key]`;

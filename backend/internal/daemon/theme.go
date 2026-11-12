@@ -40,6 +40,9 @@ func (d *Daemon) themeMethods(reg *rpc.Registry) {
 type ThemeIntegrateRequest struct {
 	Theme string   `json:"theme"`
 	Keys  []string `json:"keys"`
+	// Owners names, per key, the setting that turned it on (the footprint
+	// rows' owner: "ThemeIntegrations.<key>")
+	Owners map[string]string `json:"owners,omitempty"`
 }
 
 // ThemeIntegrateResult is each integration's run (none while another run
@@ -50,13 +53,15 @@ type ThemeIntegrateResult struct {
 
 func (d *Daemon) themeIntegrateMethods(reg *rpc.Registry) {
 	in := theme.NewIntegrator(theme.IntegrateOptions{
-		Getenv:   d.opts.Getenv,
-		Profiles: func(key string) []string { e, _ := d.integrationEntry(key); return e.Profiles },
-		Live:     true,
-		Log:      d.opts.Log.With("part", "theme"),
+		Getenv:    d.opts.Getenv,
+		Profiles:  func(key string) []string { e, _ := d.integrationEntry(key); return e.Profiles },
+		Live:      true,
+		Log:       d.opts.Log.With("part", "theme"),
+		Ledger:    d.footprint,
+		GSettings: d.gsettings(),
 	})
 	rpc.Handle(reg, "theme.integrate", func(ctx context.Context, c *rpc.Conn, p ThemeIntegrateRequest) (ThemeIntegrateResult, error) {
-		results, err := in.Run(ctx, p.Theme, p.Keys)
+		results, err := in.Run(ctx, p.Theme, p.Keys, p.Owners)
 		return ThemeIntegrateResult{Results: results}, err
 	})
 }

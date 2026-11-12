@@ -13,6 +13,7 @@ Dependencies point one way: pure helpers (`qml/components/methods/`) at the bott
 | **Writing any QML** (JS engine gaps, binding traps) | `docs/dev/core/qml-pitfalls.md` |
 | Services, polling, `acquire`/`release` | `docs/dev/core/services-pattern.md` |
 | A toggle or one-tap action (tile, OSD icon, command, keybind, hot corner) | `docs/dev/core/actions.md` |
+| What axiom changed outside its folders (ledger, undo, `axiom footprint`) | `docs/dev/backend/footprint.md` |
 | Config loading, writes, drafts, previews, XDG paths | `docs/dev/core/config-manager.md`, `config-readers.md` |
 | Schema `x-*` annotations (complete list) | `docs/dev/core/schema-annotations.md` |
 | Settings page, saved configs, import/export | `docs/dev/core/settings-page.md`, `saved-configs-sharing.md` |

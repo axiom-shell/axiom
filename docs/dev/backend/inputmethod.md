@@ -40,6 +40,9 @@ The service remembers the list it pushed last and the framework it went to (in m
 - **`inputMethod.framework {name}`** (shell only).
 - With no framework running, the writes answer `unavailable`.
 
+### The footprint
+- `inputMethod.push` and `inputMethod.options` take an `owner` (`Input.keyboard.method.enabled`). fcitx5's `SetConfig` is an `fcitx-config` row per URI (the options it changes, read with `GetConfig` first), `SetInputMethodGroupInfo` an `fcitx-group` row; ibus's `gsettings set` a `gsetting` row (`preload-engines` is `system`). Undoing fcitx5's rows goes over D-Bus and needs it running (`needsRunning`) ([Footprint ledger](footprint.md)).
+
 ### The capability
 `supports.inputMethod` is whether the compositor offers `zwp_input_method_manager_v2`, the protocol fcitx5 and ibus type through on Wayland: `wayland.state`'s `inputMethod` flag. The daemon's Wayland connection only watches the global (`waylandSession`, which binds nothing), so a compositor adding or removing it later is told.
 

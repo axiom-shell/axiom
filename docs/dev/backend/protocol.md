@@ -53,6 +53,7 @@ A hello's `subscribe` is `true`, `false` or a list of topics:
 - `drives`: `drives.state` (latest-wins), `drives.event` (a drive plugged in or pulled out, one message each)
 - `bluetooth`: `bluetooth.state` (latest-wins), `bluetooth.agentRequest` (the pairing agent's requests, to the shell's connection only, answered by its `bluetooth.agentReply`) and `bluetooth.agentDone` (one ended, to every connection subscribed, as `vpn.secretDone`; [Bluetooth](../features/networking-bluetooth.md) › The pairing agent), `bluetooth.event` (devices connecting or disconnecting, one message each: those within a second of each other joined, the radio's own disconnects dropped, never from a resync; [Bluetooth](../features/networking-bluetooth.md) › Connection events)
 - `inputMethod`: `inputMethod.state` (latest-wins; [input methods](inputmethod.md))
+- `footprint`: `footprint.changed` (latest-wins; [footprint ledger](footprint.md))
 - `camera`: `camera.state` (latest-wins): the apps holding a camera's V4L2 device open themselves (`backend/internal/camera`, inotify on `/dev/video*`; `camera.get` reads it), which `PrivacyManager.cameraCaptures` adds to PipeWire's camera streams
 - `fileSearch`: `filesearch.state` (latest-wins, at most every 500 ms while it changes; [file search](../features/file-search.md))
 - `screenshare`: `screenshare.request` (what a portal offers to share, for the picker; answered by the shell's `screenshare.answer`), `screenshare.done` (its asker gave up) ([screen sharing](../features/screen-sharing.md))

@@ -2,7 +2,7 @@
 # the daemon and the compositors need (hyprland for the nested Hyprland check,
 # xdg-desktop-portal for the niri portal line), a user to run as.
 FROM archlinux:latest
-RUN pacman -Syu --noconfirm --needed go gcc git python lua qt6-declarative quickshell sway niri hyprland mesa dbus xdg-desktop-portal glib2 gsettings-desktop-schemas \
+RUN pacman -Syu --noconfirm --needed go gcc git python lua qt6-declarative quickshell sway niri hyprland mesa dbus xdg-desktop-portal glib2 gsettings-desktop-schemas xcursor-themes fcitx5 \
     && pacman -Scc --noconfirm
 # sway ships with file capabilities a container without them can't exec
 RUN setcap -r /usr/bin/sway
