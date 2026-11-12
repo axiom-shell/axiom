@@ -34,7 +34,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `SlashedIcon`: an icon struck through while `slashed`, one drawn slash (top left to bottom right, Material's direction) over a `cutout` line in what it sits on. Every off state is the base icon slashed, never an icon's own `_off` form, so they all look the same (the OSD's bars and status icons).
 - `SectionHeading`: accent title + muted description, folded past three lines.
 - `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, shown only when it's longer. Field and card descriptions use it.
-- `FoldHeader` / `FoldingCard`: `status` and `statusColor` put a `StatusChip` before the chevron, kept while folded (a settings card's `x-intro` supplies them).
+- `FoldHeader` / `FoldingCard`: `status` and `statusColor` put a `StatusChip` centred on the chevron, kept while folded (a settings card's `x-intro` supplies them).
 - `FieldGroup`: a titled card of fields, with a faint border (as `FoldingCard`'s); `headerExtras` beside the heading.
 - `StyledContainer`: a themed box (surface opacity or solid, optional border and radius).
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar.
@@ -114,7 +114,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `SchemaPropertiesForm`: a flat object; `order`. `keepsPlace` greys a field marked `x-keepsPlace` whose `x-showIf` fails instead of hiding it, saying why on hover; `tilePreview` gives its tiles fields' previews (the [Bar style block](../bar/style-block.md)).
 - `SettingRows`: dotted config paths as rows, saved debounced.
 - `OptionsGroup`: an inspector's Options card (problem, form, empty text).
-- `IntegrationHookup`: a theme integration's hookup (text to copy, what Apply does, Apply).
+- `IntegrationHookup`: a theme integration's hookup (text to copy, what Apply does, Apply; its status chip is `methods/HookupStatus`).
 - `SettingsLink`: an accent text link to where something else is set: a `setting` (a key path: `SettingsManager.openSetting`, which opens its card and outlines its row) a `page` (a view type, `Layouts:lockscreen` / `greeter` / `desktop`, or `BarEditor:<key>`, a bar's own setting, whose tab it shows: `OverlayManager.followPageLink`), or a bar `widget` (the edge menu or page it opens, selected in the layouts editor: `OverlayManager.openedBy` / `editOpenedBy`), or a `run` function with its `text` and `icon` (a field's action: `SchemaPropertiesForm.fieldAction`, which draws one under a field, as the edge menu pickers' New menu… and New submenu…). Named from its target unless `text` is set, and followed as a link, so the navigator offers the way back. It hides itself when its target isn't there; a host hiding it on its own condition binds `visible` to `available` and that.
 - `FieldLinks`: a schema's `x-link` (one or a list) as `SettingsLink`s, hidden while none shows. Form rows (`SettingsField`, `SchemaPropertiesForm`) put one under each field; the bar widget and module inspectors one for the type's own.
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatus` and the onboarder.

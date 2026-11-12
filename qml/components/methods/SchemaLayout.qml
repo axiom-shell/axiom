@@ -477,6 +477,10 @@ QtObject {
           const title = prop.title ?? key;
           const card = cardFor(title, base);
           card.description = prop.description ?? "";
+          // A theme integration's card header shows its hookup status
+          // (SettingsGroupCard reads `hookup`)
+          if (prop["x-hookup"])
+            card.hookup = key;
           // A switch's own title would repeat the card's: I18n.tr("Enabled")
           card.rows.push(...fieldRows.map(row => Object.assign(row, prop.type === "boolean" ? {
               "label": "Enabled",

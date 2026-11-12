@@ -4177,7 +4177,6 @@
     "Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).": "",
     "Detached: axiom changes none of your compositor's files and takes its binds and look away when it stops. Great for trying it out; for full-time use, pick Included or Managed.": "",
     "You're in detached mode!": "",
-    "Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed.": "",
     "Stays after axiom stops": "",
     "This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.": "",
     "Remove its changes": "",
@@ -4241,6 +4240,8 @@
     "Delete the state (logs, dev builds, approvals)": "",
     "Present": "",
     "Keep your notes, to-dos, themes, downloaded wallpapers and calendars in {0}?": "",
-    "Keep axiom's saved passwords and API keys?": ""
+    "Keep axiom's saved passwords and API keys?": "",
+    "axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.": "",
+    "Thanks for trying axiom! Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed.": ""
   }
 }

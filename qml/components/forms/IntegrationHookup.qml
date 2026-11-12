@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.system
 import qs.services.ui
+import qs.components.methods
 import qs.components.reusable
 
 // Hooking a theme integration up to its app (its schema `x-hookup`): per
@@ -97,8 +98,9 @@ Rectangle {
       spacing: Widget.spacing
 
       StatusChip {
-        text: root.rows.length === 0 ? I18n.tr("Checking") : root.allDone ? I18n.tr("Set up") : root.applicable ? I18n.tr("Not set up") : I18n.tr("Copy the text")
-        color: root.allDone ? Theme.success : root.pending.length > 0 ? Theme.warning : Theme.foregroundAlt
+        readonly property var s: HookupStatus.of(true, root.rows)
+        text: I18n.tr(s.word)
+        color: s.tone === "success" ? Theme.success : s.tone === "warning" ? Theme.warning : Theme.foregroundAlt
       }
 
       StyledText {

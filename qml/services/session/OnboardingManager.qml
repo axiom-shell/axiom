@@ -277,7 +277,7 @@ Singleton {
 
   function _nudge() {
     _run.nudged = true;
-    NotificationManager.sendNotification("axiom", I18n.tr("You're in detached mode!"), I18n.tr("Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed."), {
+    NotificationManager.sendNotification("axiom", I18n.tr("You're in detached mode!"), I18n.tr("Thanks for trying axiom! Feel free to play around for a few days. To use axiom full time, we recommend Included or Managed."), {
       "icon": "dialog-information",
       "actions": [
         {

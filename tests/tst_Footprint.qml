@@ -117,4 +117,45 @@ TestCase {
       "key": "Default Applications/text/html"
     }, "/home/u"), "~/.config/mimeapps.list (text/html)");
   }
+
+  function test_ownerRows() {
+    const rows = [
+      {
+        "id": "a",
+        "owner": "S.x"
+      },
+      {
+        "id": "b",
+        "owner": "S.x",
+        "inferred": true
+      },
+      {
+        "id": "c",
+        "owner": "S.x",
+        "system": true
+      },
+      {
+        "id": "d",
+        "owner": "S.x",
+        "inferred": true,
+        "system": true
+      },
+      {
+        "id": "e",
+        "owner": "S.y"
+      },
+      {
+        "id": "f",
+        "owner": ""
+      }
+    ];
+    const x = Footprint.ownerRows(rows, "S.x");
+    compare(x.recorded.map(r => r.id), ["a"]);
+    compare(x.inferred.map(r => r.id), ["b"]);
+    compare(x.system.map(r => r.id), ["c", "d"], "inferred + system is system only");
+    compare(Footprint.ownerRows(rows, "S.y").recorded.map(r => r.id), ["e"], "another owner excluded");
+    compare(Footprint.ownerRows(rows, "").recorded.map(r => r.id), ["f"]);
+    compare(Footprint.ownerRows(rows, "").inferred.length, 0);
+    compare(Footprint.ownerRows(null, "S.x").recorded.length, 0);
+  }
 }

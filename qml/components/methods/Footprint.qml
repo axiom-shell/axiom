@@ -90,4 +90,26 @@ QtObject {
       path = parts[0] + "/…/" + parts.slice(-3).join("/");
     return path + suffix;
   }
+
+  // One owner's rows by kind: `recorded` (axiom made them), `inferred`
+  // (found by the backfill, no record), `system` (the system's own choices,
+  // inferred or not): { recorded, inferred, system }
+  function ownerRows(rows, owner) {
+    const out = {
+      "recorded": [],
+      "inferred": [],
+      "system": []
+    };
+    for (const row of rows ?? []) {
+      if ((row.owner ?? "") !== owner)
+        continue;
+      if (row.system)
+        out.system.push(row);
+      else if (row.inferred)
+        out.inferred.push(row);
+      else
+        out.recorded.push(row);
+    }
+    return out;
+  }
 }

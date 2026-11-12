@@ -6,7 +6,7 @@ import qs.config
 // A fold's clickable header (FoldingCard, FoldingSection): a SectionHeading
 // with its description only while unfolded, an optional line above it, the
 // unsaved-edits dot while folded with `marked`, a status chip (`status`,
-// kept while folded) before the chevron, and the chevron. A click
+// kept while folded) centred on the chevron, and the chevron. A click
 // emits `toggled`, unless it isn't `foldable`.
 Item {
   id: root
@@ -67,22 +67,31 @@ Item {
       Layout.topMargin: Appearance.fontSize / 2
     }
 
-    StatusChip {
-      visible: root.status !== ""
-      text: root.status
-      color: root.statusColor
+    // One row, so the chip is centred on the chevron's box (separately
+    // top-aligned, the taller chevron sat lower)
+    RowLayout {
+      visible: root.foldable || root.status !== ""
+      spacing: Widget.spacing
       Layout.alignment: Qt.AlignTop
-    }
+      Layout.fillWidth: false
 
-    StyledIcon {
-      visible: root.foldable
-      text: "expand_more"
-      textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(4)
-      rotation: root.collapsed ? -90 : 0
-      Layout.alignment: Qt.AlignTop
+      StatusChip {
+        visible: root.status !== ""
+        text: root.status
+        color: root.statusColor
+        Layout.alignment: Qt.AlignVCenter
+      }
 
-      Glide on rotation {}
+      StyledIcon {
+        visible: root.foldable
+        text: "expand_more"
+        textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
+        textSize: Appearance.fontSizeBy(4)
+        rotation: root.collapsed ? -90 : 0
+        Layout.alignment: Qt.AlignVCenter
+
+        Glide on rotation {}
+      }
     }
   }
 }

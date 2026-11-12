@@ -26,12 +26,25 @@ FoldingCard {
   foldable: !root.showSection
   collapsed: !root.showSection && SettingsManager.isCollapsed(root.group.key)
   // The `x-intro`'s own status, when it has one (read, not worked out here)
-  status: introLoader.intro?.status ?? ""
-  statusColor: introLoader.intro?.statusColor ?? Theme.foregroundAlt
+  // or, on a theme integration's card, its hookup's (HookupStatus decides)
+  status: introLoader.intro?.status ?? root._hookup?.word ?? ""
+  statusColor: introLoader.intro ? introLoader.intro.statusColor ?? Theme.foregroundAlt : root._hookup?.tone === "success" ? Theme.success : root._hookup?.tone === "warning" ? Theme.warning : Theme.foregroundAlt
   // Unsaved edits inside: Discard shows, and folded the dot, so they
   // aren't forgotten
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
   onToggled: SettingsManager.setCollapsed(root.group.key, !root.collapsed)
+
+  // The hookup chip of a theme integration's card (its unsaved switch value)
+  // I18n.tr("Off") I18n.tr("Checking") I18n.tr("Set up") I18n.tr("Not set up") I18n.tr("Copy the text")
+  readonly property var _hookup: {
+    if (!root.group.hookup)
+      return null;
+    const s = HookupStatus.of(root.form.valueAt(root.group.path.concat([root.group.hookup])) === true, IntegrationHookupManager.status[root.group.hookup]?.targets ?? []);
+    return {
+      "word": I18n.tr(s.word),
+      "tone": s.tone
+    };
+  }
 
   // The row showing a setting (a key path), or null (a jump flashes it)
   function rowItem(path) {
@@ -90,8 +103,10 @@ FoldingCard {
         required property var modelData
         required property int index
         readonly property bool half: modelData.schema?.["x-beside"] === true || root.group.rows[index + 1]?.schema?.["x-beside"] === true
-        // Beside the top row, it's on the top line too
-        first: index === root._firstRow || (modelData.schema?.["x-beside"] === true && index - 1 === root._firstRow)
+        // Beside the top row, it's on the top line too. The `Settings` fold
+        // under an intro keeps its divider, also as the top row (the intro
+        // isn't a row)
+        first: (index === root._firstRow && !(modelData.foldRows && introLoader.visible)) || (modelData.schema?.["x-beside"] === true && index - 1 === root._firstRow)
         row: modelData
         form: root.form
         Layout.columnSpan: half ? 1 : 2
