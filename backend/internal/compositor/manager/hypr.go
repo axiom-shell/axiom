@@ -286,10 +286,11 @@ func strs(list []string) *jsonx.Array {
 func (w *hyprWriter) seenReload() { w.runtime.reloads.Add(1) }
 
 // hyprStartHandlerFiresOnReload: whether hl.on("hyprland.start", …) runs
-// again on `hyprctl reload` (docs/dev/hyprland/config-modes.md › HY1). While
-// it isn't settled it counts as firing: a start line in the handler then
-// also means a reload starts axiom.
-const hyprStartHandlerFiresOnReload = true
+// again on `hyprctl reload`: it doesn't (docs/dev/hyprland/config-modes.md ›
+// HY1, a nested Hyprland: the handler ran once, the top level at each
+// reload), so a start line inside the handler doesn't make a reload start
+// axiom. Were it to fire, such a line would count too.
+const hyprStartHandlerFiresOnReload = false
 
 // teardownSteps: a reload takes the binds, the look and the input out, and
 // the cursor is set back by hand (a runtime setcursor outlives a reload);

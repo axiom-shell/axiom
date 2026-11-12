@@ -758,8 +758,10 @@ func (m *Manager) StepEnv() map[string]string {
 }
 
 func (m *Manager) runtimeApply(ctx context.Context) {
-	m.w.runtimeApply(ctx, m.in, func() []string { return m.liveLines(ctx) })
+	// Recorded ahead of the effect, so a crash in the middle of it is undone
 	m.setRuntimeOn(true)
+	m.w.runtimeApply(ctx, m.in, func() []string { return m.liveLines(ctx) })
+	m.updateSteps()
 	// The layer isn't as axiom made it: the card says so (a file mode's own
 	// problem comes first), until it is
 	p := m.w.problems(m.in).Runtime
