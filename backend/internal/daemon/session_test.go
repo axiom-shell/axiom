@@ -43,8 +43,6 @@ type effects struct {
 	mu   sync.Mutex
 	list []string
 	proc string
-	// signalHook runs at each signal (the fixture's process ends)
-	started int
 }
 
 func (e *effects) add(s string) { e.mu.Lock(); e.list = append(e.list, s); e.mu.Unlock() }
