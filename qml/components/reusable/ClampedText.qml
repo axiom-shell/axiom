@@ -19,7 +19,7 @@ ColumnLayout {
   // layouts hand the body, and showing More changes this item's size, which
   // re-polishes those layouts, which flips `truncated` again - a polish loop
   // that freezes the shell.
-  readonly property bool _long: measure.lineCount > root.maxLines
+  readonly property bool _long: body.width > 0 && measure.lineCount > root.maxLines
 
   Layout.fillWidth: true
   spacing: 0
