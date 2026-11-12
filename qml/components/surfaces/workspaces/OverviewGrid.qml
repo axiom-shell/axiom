@@ -234,8 +234,17 @@ Rectangle {
   // `cursor` is the pointer in overlay coordinates
   function dropWindow(address, cell, point, corner, cursor) {
     const win = root.byAddress[address];
-    if (!win || cell < 0 || cell >= root.ids.length)
+    if (!win || cell < 0)
       return;
+    // Onto a scratch cell: into that special, the position ignored
+    if (cell >= root.ids.length) {
+      const name = root.scratchNames[cell - root.ids.length];
+      if (win.special === name)
+        return;
+      root._lastAction = Date.now();
+      CompositorManager.moveToSpecial(name, address);
+      return;
+    }
     const workspaceId = root.ids[cell];
     const same = win.workspaceId === workspaceId;
     root._lastAction = Date.now();

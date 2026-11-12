@@ -309,12 +309,13 @@ Singleton {
     root.backend.toggleSpecial(trimmed, output || "");
   }
 
-  // Moves the focused window to special workspace `name`
-  function moveToSpecial(name) {
+  // Moves window `id` (the focused one when "" or left out) to special
+  // workspace `name`; a special shown or hidden stays so
+  function moveToSpecial(name, id) {
     const trimmed = String(name ?? "").trim();
     if (!root.supports.namedSpecial || trimmed === "")
       return;
-    root.backend.moveToSpecial(trimmed);
+    root.backend.moveToSpecial(trimmed, id || "");
   }
 
   // A workspace's windows, the biggest (by area) first, ties in the

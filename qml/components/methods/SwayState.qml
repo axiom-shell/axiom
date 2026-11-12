@@ -461,6 +461,20 @@ QtObject {
     return leave.concat(kind === "workspace" ? [`${con} move container to workspace ${root.quote(root.specialWorkspace(name))}`] : [`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
   }
 
+  // The commands taking window `id` out of its special group (`marks`, every
+  // window's): its axiom marks come off (a user's own stay). A scratchpad
+  // one (`scratch`) also stops being the scratchpad's: shown first when
+  // `hidden`, then floated off and on again (sway refuses to float a hidden
+  // one), so it is an ordinary floating window. A workspace group's is just
+  // on a named workspace: the unmarks are all it takes.
+  function specialLeave(marks, id, hidden, scratch) {
+    const con = `[con_id=${Number(id)}]`;
+    const lines = (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `${con} unmark ${root.quote(mark)}`);
+    if (scratch === true)
+      return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
+    return lines;
+  }
+
   // Special group `name`'s windows the other kind keeps, moved over to
   // `kind` ("scratchpad" or "workspace") after Compositor.sway.specialWorkspaces
   // changed: { lines (the commands), windows and marks (`windows` and

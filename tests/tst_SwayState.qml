@@ -424,6 +424,17 @@ TestCase {
     compare(SwayState.specialMove({}, "16", "my games", "workspace"), ["[con_id=16] move container to workspace \"axiom-special-my games\""]);
   }
 
+  // A window leaving its special group on a drop
+  function test_specialLeave() {
+    const marks = {
+      "7": ["axiom-special-term-7", "keep"]
+    };
+    compare(SwayState.specialLeave(marks, "7", true, true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] scratchpad show", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
+    compare(SwayState.specialLeave(marks, "7", false, true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
+    compare(SwayState.specialLeave({}, "8", false, false), []);
+    compare(SwayState.specialLeave(marks, "7", false, false), ["[con_id=7] unmark axiom-special-term-7"]);
+  }
+
   // After the kind changed, the other kind's windows move over
   function test_specialAdopt() {
     const marks = {
