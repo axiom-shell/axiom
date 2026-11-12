@@ -23,7 +23,7 @@ func TestResolveRecordsCompanionAndGSettings(t *testing.T) {
 		GSettings: r.opts.GSettings,
 	})
 	r.opts.Ledger = l
-	if _, err := r.Resolve(context.Background(), "Old", 32, "Input.cursor.theme"); err != nil {
+	if _, err := r.Resolve(context.Background(), "Old", 32, "Input.cursor.enabled"); err != nil {
 		t.Fatal(err)
 	}
 	var got []string
@@ -35,11 +35,11 @@ func TestResolveRecordsCompanionAndGSettings(t *testing.T) {
 	}
 	// The icons folder was made for it too (the scratch data dir is empty)
 	want := []string{
-		"dir " + s.data + " Input.cursor.theme",
-		"dir " + s.data + "/icons Input.cursor.theme",
-		"dir " + s.companion("Old") + " Input.cursor.theme",
-		"gsetting org.gnome.desktop.interface cursor-theme Input.cursor.theme",
-		"gsetting org.gnome.desktop.interface cursor-size Input.cursor.theme",
+		"dir " + s.data + " Input.cursor.enabled",
+		"dir " + s.data + "/icons Input.cursor.enabled",
+		"dir " + s.companion("Old") + " Input.cursor.enabled",
+		"gsetting org.gnome.desktop.interface cursor-theme Input.cursor.enabled",
+		"gsetting org.gnome.desktop.interface cursor-size Input.cursor.enabled",
 	}
 	if !slices.Equal(got, want) {
 		t.Fatalf("rows %q, want %q", got, want)

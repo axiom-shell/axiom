@@ -149,3 +149,31 @@ func TestEditRecordsAWrap(t *testing.T) {
 		t.Errorf("%q", out)
 	}
 }
+
+// A blank line axiom set goes only before a line it removed: one a
+// formatter stripped isn't replaced by taking the user's away
+func TestUndoKeepsTheUsersBlankLines(t *testing.T) {
+	t.Parallel()
+	// axiom added a blank line (index 3) and its text
+	rec := EditRecord{Comment: "#", Inserted: []Inserted{{"", 3}, {"include axiom.conf", 4}}}
+	after := []string{"font_size 12", "", "other 1", "", "include axiom.conf"}
+	// a formatter stripped axiom's blank: the one above stays
+	stripped := []string{"font_size 12", "", "other 1", "include axiom.conf"}
+	if out, _ := Undo(stripped, rec); !slices.Equal(out, []string{"font_size 12", "", "other 1"}) {
+		t.Errorf("%q", out)
+	}
+	if out, _ := Undo(after, rec); !slices.Equal(out, []string{"font_size 12", "", "other 1"}) {
+		t.Errorf("%q", out)
+	}
+}
+
+// A section the user added to keeps its header and the blank line before it
+func TestUndoKeepsTheBlankBeforeAKeptSection(t *testing.T) {
+	t.Parallel()
+	after, rec := edited(t, Target{File: Files{"{config}/theme.toml"}, Place: Section, Section: "flavor", Text: "dark = \"axiom\""}, "[mgr]\nfoo = 1\n")
+	after = append(after, "mine = 1")
+	out, _ := Undo(after, rec)
+	if want := []string{"[mgr]", "foo = 1", "", "[flavor]", "mine = 1"}; !slices.Equal(out, want) {
+		t.Errorf("%q, want %q", out, want)
+	}
+}

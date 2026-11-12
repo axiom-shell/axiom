@@ -25,6 +25,9 @@ type fakeGSettings struct {
 func (f *fakeGSettings) run(_ context.Context, args ...string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if args[0] == "list-schemas" {
+		return "", nil
+	}
 	key := args[1] + " " + args[2]
 	switch args[0] {
 	case "get":
@@ -200,3 +203,35 @@ func TestNcspotRecordsTheMarkedBlock(t *testing.T) {
 }
 
 func jsonUnmarshal(data []byte, v any) error { return json.Unmarshal(data, v) }
+
+// A dangling link gets its target created: that file is the row, and an
+// undo removes it and leaves the link
+func TestDanglingLinkRecordsItsTarget(t *testing.T) {
+	t.Parallel()
+	home, in, l := recorded(t, false, &fakeGSettings{})
+	os.MkdirAll(home+"/.config/kitty", 0o755)
+	target := home + "/dotfiles/kitty/axiom.conf"
+	if err := os.Symlink(target, home+"/.config/kitty/axiom.conf"); err != nil {
+		t.Fatal(err)
+	}
+	runKeys(t, in, nil, "kitty")
+	var row *footprint.Row
+	for _, r := range l.Rows() {
+		if r.Kind == footprint.KindFile {
+			row = &r
+		}
+	}
+	if row == nil || row.Target != target || string(row.Prior) != `{"absent":true}` {
+		t.Fatalf("%+v", l.Rows())
+	}
+	undoAll(t, l)
+	if _, err := os.Stat(target); err == nil {
+		t.Error("the file the link names stayed")
+	}
+	if _, err := os.Stat(home + "/dotfiles"); err == nil {
+		t.Error("the folder made for it stayed")
+	}
+	if to, err := os.Readlink(home + "/.config/kitty/axiom.conf"); err != nil || to != target {
+		t.Errorf("the link: %q %v", to, err)
+	}
+}

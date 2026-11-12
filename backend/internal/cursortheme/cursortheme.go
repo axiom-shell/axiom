@@ -227,7 +227,7 @@ func (r *Resolver) setGTK(ctx context.Context, theme string, size int, owner str
 		}
 		if strings.Trim(strings.TrimSpace(got), "'") != kv[1] {
 			id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(schema, kv[0]), Owner: owner},
-				footprint.PriorGSetting(ctx, r.opts.GSettings, schema, kv[0]))
+				r.opts.Ledger.PriorGSetting(ctx, r.opts.GSettings, schema, kv[0]))
 			if err != nil {
 				return
 			}

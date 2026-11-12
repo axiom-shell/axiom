@@ -467,6 +467,20 @@ func variantOf(v any) dbus.Variant {
 	return dbus.MakeVariant(v)
 }
 
+// isList says whether a table is fcitx5's list option: its items keyed "0",
+// "1", … (one leaf: its entries are never merged key by key).
+func isList(m map[string]any) bool {
+	if len(m) == 0 {
+		return false
+	}
+	for k := range m {
+		if _, err := strconv.Atoi(k); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
 // pick is the part of have that want names (every key of want, as have
 // holds it; one it doesn't hold, left out).
 func pick(have, want map[string]any) map[string]any {
@@ -476,7 +490,7 @@ func pick(have, want map[string]any) map[string]any {
 		if !ok {
 			continue
 		}
-		if wm, isMap := w.(map[string]any); isMap {
+		if wm, isMap := w.(map[string]any); isMap && !isList(wm) {
 			if hm, ok := h.(map[string]any); ok && len(wm) > 0 {
 				out[k] = pick(hm, wm)
 				continue
@@ -498,7 +512,7 @@ func mergeTree(a, b map[string]any, keepOld bool) map[string]any {
 		bm, bIsMap := v.(map[string]any)
 		am, aIsMap := old.(map[string]any)
 		switch {
-		case had && bIsMap && aIsMap:
+		case had && bIsMap && aIsMap && !isList(am) && !isList(bm):
 			out[k] = mergeTree(am, bm, keepOld)
 		case had && keepOld:
 		default:

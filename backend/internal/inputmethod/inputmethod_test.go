@@ -202,6 +202,9 @@ func startWith(t *testing.T, session *dbustest.Bus, ibusAddr func() string, twea
 		},
 		IBusAddress: ibusAddr,
 		GSettings: func(_ context.Context, args ...string) (string, error) {
+			if args[0] == "list-schemas" {
+				return "", nil
+			}
 			if args[0] == "set" {
 				// A process: slower than a D-Bus round trip
 				time.Sleep(20 * time.Millisecond)

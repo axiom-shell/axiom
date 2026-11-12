@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 	"path/filepath"
+	"slices"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
@@ -38,6 +40,7 @@ func NewLedger(getenv func(string) string, log *slog.Logger, onChange func()) *f
 	l := footprint.New(footprint.Options{
 		Dirs:      xdg.Resolve(getenv),
 		GSettings: gsettings,
+		Getenv:    getenv,
 		Log:       func(format string, args ...any) { log.Info(fmt.Sprintf(format, args...), "part", "footprint") },
 		OnChange:  onChange,
 	})
@@ -54,13 +57,27 @@ func NewLedger(getenv func(string) string, log *slog.Logger, onChange func()) *f
 	return l
 }
 
-// newFootprint makes the daemon's ledger; its changes are pushed.
+// newFootprint makes the daemon's ledger; its changes are pushed. Before
+// anything is served, the backfill that needs nothing of the shell runs
+// (once per ledger): the files an earlier axiom's integrations left and the
+// cursor's folders and setting. Run later, a write could take such a file
+// for one that wasn't there, and an undo would put the old output back.
 func (d *Daemon) newFootprint() {
 	d.footprint = NewLedger(d.opts.Getenv, d.opts.Log, func() {
 		if d.server != nil {
 			pushFootprintChanged.Send(d.server, struct{}{}, subscribedTo(topicFootprint))
 		}
 	})
+	if d.footprint.BackfilledFiles() {
+		return
+	}
+	in := theme.NewIntegrator(theme.IntegrateOptions{Getenv: d.opts.Getenv,
+		Profiles: func(key string) []string { e, _ := d.integrationEntry(key); return e.Profiles }})
+	rows := in.Existing()
+	rows = append(rows, cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: gsettings}).Existing(context.Background(), cursorOwner)...)
+	if _, _, err := d.footprint.BackfillFiles(rows); err != nil {
+		d.opts.Log.Warn("footprint: the backfill of files failed", "err", err)
+	}
 }
 
 // FootprintListResult is the ledger's rows with their status.
@@ -101,7 +118,7 @@ type FootprintBackfillResult struct {
 }
 
 // cursorOwner is the setting asking for the cursor theme.
-const cursorOwner = "Input.cursor.theme"
+const cursorOwner = "Input.cursor.enabled"
 
 func (d *Daemon) footprintMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "footprint.list", func(ctx context.Context, c *rpc.Conn, _ struct{}) (FootprintListResult, error) {
@@ -126,7 +143,7 @@ func (d *Daemon) footprintMethods(reg *rpc.Registry) {
 		if d.footprint.Backfilled() {
 			return FootprintBackfillResult{Added: []string{}}, nil
 		}
-		added, ran, err := d.footprint.Backfill(d.inferredRows(ctx, p))
+		added, ran, err := d.footprint.Backfill(d.inferredRows(p))
 		if added == nil {
 			added = []string{}
 		}
@@ -134,19 +151,25 @@ func (d *Daemon) footprintMethods(reg *rpc.Registry) {
 	})
 }
 
-// inferredRows are what an earlier axiom left that the ledger has no row
-// of: hookup lines (with a comment of ours or a backup beside them), the
-// integrations' files, the cursor's companion folders and setting. Not
-// backfilled, as nothing tells them apart from the user's own: kdeglobals,
-// fcitx5, ibus, default apps and color-scheme.
-func (d *Daemon) inferredRows(ctx context.Context, p FootprintBackfillRequest) []footprint.Row {
+// inferredRows are the hookup lines an earlier axiom left (with a comment of
+// ours or a backup beside them) that the ledger has no row of: the targets
+// come from the shell. The integrations' files and the cursor's folders and
+// setting are found when the daemon starts (newFootprint). Not backfilled,
+// as nothing tells them apart from the user's own: kdeglobals, fcitx5, ibus,
+// default apps and color-scheme.
+func (d *Daemon) inferredRows(p FootprintBackfillRequest) []footprint.Row {
 	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, DataDir: filepath.Join(d.opts.Tree, "data")})
 	var rows []footprint.Row
-	for _, e := range p.Targets {
-		rows = append(rows, h.Inferred(e.Targets, e.Profiles, e.Owner)...)
+	for _, key := range slices.Sorted(maps.Keys(p.Targets)) {
+		e := p.Targets[key]
+		for _, row := range h.Inferred(e.Targets, e.Profiles, e.Owner) {
+			// A file two keys have lines in is one row
+			if i := slices.IndexFunc(rows, func(have footprint.Row) bool { return have.Kind == row.Kind && have.Target == row.Target }); i >= 0 {
+				rows[i] = edit.MergeInferred(rows[i], row)
+				continue
+			}
+			rows = append(rows, row)
+		}
 	}
-	in := theme.NewIntegrator(theme.IntegrateOptions{Getenv: d.opts.Getenv})
-	rows = append(rows, in.Existing()...)
-	rows = append(rows, cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: gsettings}).Existing(ctx, cursorOwner)...)
 	return rows
 }

@@ -51,6 +51,8 @@ FoldingCard {
     if (owner === "")
       // I18n.tr("Compositor lines")
       return I18n.tr("Compositor lines");
+    if (owner === "DefaultApps")
+      return I18n.tr("Default apps");
     const schema = SettingsManager.schemaAt(owner.split("."));
     return schema?.title ? I18n.tr(schema.title) : owner;
   }
@@ -183,7 +185,7 @@ FoldingCard {
               implicitHeight: Widget.height - Widget.px(4)
               text: I18n.tr("Undo")
               onClicked: {
-                if (line.row.inferred === true) {
+                if (line.row.inferred === true || line.row.system === true) {
                   root.confirming = line.row.id;
                   return;
                 }
@@ -198,7 +200,7 @@ FoldingCard {
             spacing: Widget.spacing
 
             StyledText {
-              text: I18n.tr("axiom found this without a record of writing it. Undo anyway?")
+              text: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
               wrapMode: Text.WordWrap
               Layout.fillWidth: true
             }

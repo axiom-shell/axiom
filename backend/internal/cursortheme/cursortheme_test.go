@@ -53,6 +53,8 @@ func (s *scratch) resolver() *Resolver {
 	if s.gsettings != nil {
 		opts.GSettings = func(_ context.Context, args ...string) (string, error) {
 			switch args[0] {
+			case "list-schemas":
+				return "", nil
 			case "get":
 				v, ok := s.gsettings[args[2]]
 				if !ok {

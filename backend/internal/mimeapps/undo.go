@@ -54,8 +54,13 @@ func check(_ context.Context, r footprint.Row) string {
 	}
 	if r.Key == terminalKey {
 		var w listWrote
+		var p listPrior
 		_ = jsonUnmarshal(r.Wrote, &w)
-		if !slices.Equal(linesOf(string(data)), w.Lines) {
+		_ = jsonUnmarshal(r.Prior, &p)
+		switch {
+		case r.Wrote == nil && slices.Equal(linesOf(string(data)), p.Lines):
+			return footprint.StatusGone
+		case r.Wrote == nil, !slices.Equal(linesOf(string(data)), w.Lines):
 			return footprint.StatusChanged
 		}
 		return footprint.StatusPresent
@@ -63,11 +68,15 @@ func check(_ context.Context, r footprint.Row) string {
 	group, mime, _ := strings.Cut(r.Key, "/")
 	var w listWrote
 	_ = jsonUnmarshal(r.Wrote, &w)
+	var p listPrior
+	_ = jsonUnmarshal(r.Prior, &p)
 	v, ok := listValue(string(data), group, mime)
 	switch {
 	case !ok:
 		return footprint.StatusGone
-	case r.Wrote != nil && v != w.Value:
+	case r.Wrote == nil && !p.Absent && v == p.Value:
+		return footprint.StatusGone
+	case r.Wrote == nil, v != w.Value:
 		return footprint.StatusChanged
 	}
 	return footprint.StatusPresent
@@ -88,7 +97,14 @@ func undo(_ context.Context, r *footprint.Row) (string, string) {
 	text := string(data)
 	var out string
 	if r.Key == terminalKey {
-		if r.Wrote != nil && !slices.Equal(linesOf(text), wrote.Lines) {
+		// A row with nothing written yet is compared with what was there
+		if r.Wrote == nil {
+			if slices.Equal(linesOf(text), prior.Lines) {
+				return footprint.OutcomeGone, ""
+			}
+			return footprint.OutcomeChanged, "the list differs from what was there: left as it is"
+		}
+		if !slices.Equal(linesOf(text), wrote.Lines) {
 			return footprint.OutcomeChanged, "the list was changed since: left as it is"
 		}
 		if prior.Absent {
@@ -97,14 +113,22 @@ func undo(_ context.Context, r *footprint.Row) (string, string) {
 			}
 			return footprint.OutcomeDone, ""
 		}
-		out = strings.Join(prior.Lines, "\n") + "\n"
+		if len(prior.Lines) > 0 {
+			out = strings.Join(prior.Lines, "\n") + "\n"
+		}
 	} else {
 		group, mime, _ := strings.Cut(r.Key, "/")
 		v, ok := listValue(text, group, mime)
 		if !ok {
 			return footprint.OutcomeGone, ""
 		}
-		if r.Wrote != nil && v != wrote.Value {
+		if r.Wrote == nil {
+			if !prior.Absent && v == prior.Value {
+				return footprint.OutcomeGone, ""
+			}
+			return footprint.OutcomeChanged, "the line differs from what was there: left as it is"
+		}
+		if v != wrote.Value {
 			return footprint.OutcomeChanged, "the line was changed since: left as it is"
 		}
 		var back *string

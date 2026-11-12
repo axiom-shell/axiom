@@ -238,14 +238,20 @@ func (r *run) write() error {
 // writeFile writes an integration's file, the folder it makes and the file
 // recorded in the ledger first (a path under axiom's own folders isn't).
 func (r *run) writeFile(path string, data []byte, userOwned bool) error {
-	dir := filepath.Dir(path)
+	// What fsx.WriteFile would write: through a link, a dangling one's
+	// target created (the row, the folders and the prior are that file's)
+	target, err := fsx.Resolve(path)
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "can't resolve %s", path)
+	}
+	dir := filepath.Dir(target)
 	dirsDone, err := r.opts.Ledger.BeginDirs(dir, r.owner)
 	if err != nil {
-		return axerr.Wrap(axerr.Unavailable, err, "can't record the folders of %s", path)
+		return axerr.Wrap(axerr.Unavailable, err, "can't record the folders of %s", target)
 	}
-	fileID, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindFile, Target: path, Owner: r.owner}, r.opts.Ledger.PriorFile(path))
+	fileID, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindFile, Target: target, Owner: r.owner}, r.opts.Ledger.PriorFile(target))
 	if err != nil {
-		return axerr.Wrap(axerr.Unavailable, err, "can't record %s", path)
+		return axerr.Wrap(axerr.Unavailable, err, "can't record %s", target)
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "can't make %s", dir)

@@ -27,6 +27,8 @@ func ledgerFor(t *testing.T, h *harness, session *dbustest.Bus) *footprint.Ledge
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			switch args[0] {
+			case "list-schemas":
+				return "", nil
 			case "get":
 				return h.stored[args[1]+" "+args[2]] + "\n", nil
 			case "set":
@@ -141,5 +143,59 @@ func TestFcitxUndoNeedsRunning(t *testing.T) {
 	res := l.Undo(t.Context(), []string{id}, footprint.UndoOptions{})
 	if res[0].Outcome != footprint.OutcomeNeedsRunning || len(l.Rows()) != 1 {
 		t.Errorf("%+v %+v", res, l.Rows())
+	}
+}
+
+// A list option (items keyed "0", "1", …) is a leaf: it's taken and merged
+// whole, never key by key
+func TestFcitxListOptionsAreLeaves(t *testing.T) {
+	t.Parallel()
+	have := map[string]any{"Hotkey": map[string]any{"TriggerKeys": map[string]any{"0": "Control+space", "1": "Zenkaku_Hankaku"}}}
+	want := map[string]any{"Hotkey": map[string]any{"TriggerKeys": map[string]any{"0": "x"}}}
+	if got := pick(have, want); !reflect.DeepEqual(got, have) {
+		t.Errorf("pick %v", got)
+	}
+	old := map[string]any{"TriggerKeys": map[string]any{"0": "a", "1": "b"}}
+	now := map[string]any{"TriggerKeys": map[string]any{"0": "c"}}
+	if got := mergeTree(old, now, false); !reflect.DeepEqual(got, now) {
+		t.Errorf("mergeTree %v", got)
+	}
+	if got := mergeTree(old, now, true); !reflect.DeepEqual(got, old) {
+		t.Errorf("mergeTree keeping the old %v", got)
+	}
+}
+
+// A row with nothing written yet is compared with what fcitx5 held before:
+// the same is gone (the write never happened), another value is changed
+func TestFcitxPendingRowsAreComparedWithPrior(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := newFakeFcitx(t, bus)
+	f.mu.Lock()
+	f.initial = map[string]map[string]dbus.Variant{
+		fcitxGlobalConfig: {"Behavior": dbus.MakeVariant(map[string]dbus.Variant{"ShareInputState": dbus.MakeVariant("No")})},
+	}
+	f.mu.Unlock()
+	l := ledgerFor(t, &harness{stored: map[string]string{}}, bus)
+	prior := func(share string) func() (json.RawMessage, error) {
+		return func() (json.RawMessage, error) {
+			return footprint.Raw(map[string]any{"Behavior": map[string]any{"ShareInputState": share}}), nil
+		}
+	}
+	id, err := l.Begin(footprint.Row{Kind: footprint.KindFcitxConfig, Target: fcitxGlobalConfig}, prior("No"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res := l.Undo(t.Context(), []string{id}, footprint.UndoOptions{}); res[0].Outcome != footprint.OutcomeGone {
+		t.Errorf("%+v", res)
+	}
+	id, _ = l.Begin(footprint.Row{Kind: footprint.KindFcitxConfig, Target: fcitxGlobalConfig}, prior("All"))
+	if res := l.Undo(t.Context(), []string{id}, footprint.UndoOptions{}); res[0].Outcome != footprint.OutcomeChanged {
+		t.Errorf("%+v", res)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.configs) != 0 {
+		t.Errorf("fcitx5 was written to: %v", f.configs)
 	}
 }

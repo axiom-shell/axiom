@@ -2,6 +2,7 @@ package mimeapps
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,5 +88,55 @@ func TestSetDefaultUndoIsExact(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(tr.config, "xdg-terminals.list")); err == nil {
 		t.Error("the terminal list axiom made stayed")
+	}
+}
+
+// A row with nothing written yet is compared with what the list held;
+// an empty terminal list that was there comes back empty
+func TestPendingRowsAndAnEmptyTerminalList(t *testing.T) {
+	t.Parallel()
+	tr := newTree(t)
+	tr.standard()
+	user := filepath.Join(tr.config, "mimeapps.list")
+	tr.write(user, "[Default Applications]\ntext/plain=old.desktop;\n")
+	state := filepath.Join(filepath.Dir(tr.config), "state")
+	l := footprint.New(footprint.Options{Dirs: xdg.Resolve(func(k string) string {
+		return map[string]string{"HOME": tr.config, "XDG_STATE_HOME": state, "XDG_CONFIG_HOME": filepath.Join(state, "c"), "XDG_CACHE_HOME": filepath.Join(state, "ca")}[k]
+	})})
+	RegisterUndo(l)
+	ctx := context.Background()
+	prior := func() (json.RawMessage, error) {
+		return footprint.Raw(listPrior{Value: "old.desktop;"}), nil
+	}
+	id, err := l.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: user, Key: groupDefault + "/text/plain", Owner: Owner, System: true}, prior)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The write never happened: the line is what it was
+	if res := l.Undo(ctx, []string{id}, footprint.UndoOptions{}); res[0].Outcome != footprint.OutcomeGone {
+		t.Errorf("%+v", res)
+	}
+	id, _ = l.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: user, Key: groupDefault + "/text/plain", Owner: Owner, System: true}, prior)
+	tr.write(user, "[Default Applications]\ntext/plain=theirs.desktop;\n")
+	if res := l.Undo(ctx, []string{id}, footprint.UndoOptions{}); res[0].Outcome != footprint.OutcomeChanged {
+		t.Errorf("%+v", res)
+	}
+	if data, _ := os.ReadFile(user); string(data) != "[Default Applications]\ntext/plain=theirs.desktop;\n" {
+		t.Errorf("a changed line was touched: %q", data)
+	}
+	// An empty terminal list that existed
+	terminals := filepath.Join(tr.config, "xdg-terminals.list")
+	tr.write(terminals, "")
+	a := Load(Options{ConfigHome: tr.config, ConfigDirs: []string{tr.sysConfig}, DataHome: tr.data, DataDirs: []string{tr.sysData}, Ledger: l})
+	if err := a.SetDefault("terminal", "kitty.desktop"); err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range l.Undo(ctx, l.SelectOwner(Owner), footprint.UndoOptions{}) {
+		if r.Outcome == footprint.OutcomeFailed {
+			t.Errorf("%+v", r)
+		}
+	}
+	if data, err := os.ReadFile(terminals); err != nil || len(data) != 0 {
+		t.Errorf("the empty list: %q %v", data, err)
 	}
 }

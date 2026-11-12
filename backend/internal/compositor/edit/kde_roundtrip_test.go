@@ -2,7 +2,6 @@ package edit
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/footprint"
@@ -26,14 +25,10 @@ func TestKdeglobalsRoundTrip(t *testing.T) {
 	run()
 	s.apply("qt")
 	run()
-	merged, _ := os.ReadFile(path)
-	t.Logf("merged:\n%s", merged)
-	l.Undo(context.Background(), []string{"ini-groups:" + path}, footprint.UndoOptions{})
-	mid, _ := os.ReadFile(path)
-	t.Logf("after the ini undo: %q", mid)
-	for _, r := range l.Undo(context.Background(), l.Select(footprint.UndoOptions{}), footprint.UndoOptions{}) {
-		t.Logf("%+v", r)
+	if got := read(t, path); got == seed {
+		t.Fatal("nothing was merged")
 	}
+	l.Undo(context.Background(), l.Select(footprint.UndoOptions{}), footprint.UndoOptions{})
 	if got := read(t, path); got != seed {
 		t.Errorf("after undo:\n%q\nwant\n%q", got, seed)
 	}

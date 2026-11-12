@@ -70,8 +70,8 @@ func checkINIGroups(_ context.Context, r footprint.Row) string {
 	if err != nil {
 		return footprint.StatusGone
 	}
-	_, wrote := keysOf(r)
-	if len(integrations.KeysAre(data, wrote)) > 0 {
+	prior, wrote := keysOf(r)
+	if len(integrations.KeysAre(data, wrote, prior)) > 0 {
 		return footprint.StatusChanged
 	}
 	return footprint.StatusPresent

@@ -4192,6 +4192,9 @@
     "Changed since": "",
     "Gone": "",
     "axiom found this without a record of writing it. Undo anyway?": "",
-    "Changes outside axiom": ""
+    "Changes outside axiom": "",
+    "Also put back the system defaults axiom changed here ({0})? Keep leaves them as they are.": "",
+    "Put back": "",
+    "axiom changed this system default. Put it back?": ""
   }
 }

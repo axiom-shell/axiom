@@ -208,7 +208,7 @@ func (r *run) gsettings(args ...string) (string, error) {
 // first (what it held, what it's set to); a failure is a warning.
 func (r *run) setting(key, value string) {
 	id, err := r.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(gnomeInterface, key), Owner: r.owner},
-		footprint.PriorGSetting(r.ctx, func(ctx context.Context, args ...string) (string, error) { return r.gsettings(args...) }, gnomeInterface, key))
+		r.opts.Ledger.PriorGSetting(r.ctx, func(ctx context.Context, args ...string) (string, error) { return r.gsettings(args...) }, gnomeInterface, key))
 	if err != nil {
 		r.warn("gsettings %s %s: not set (%v)", gnomeInterface, key, err)
 		return

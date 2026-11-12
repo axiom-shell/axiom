@@ -94,7 +94,7 @@ func undoHookup(_ context.Context, row *footprint.Row) (string, string) {
 	text := ""
 	if len(out) > 0 {
 		text = hookup.Text(out)
-		if rec.NoFinalNewline {
+		if rec.NoFinalNewline && out[len(out)-1] == rec.LastLine {
 			text = strings.TrimSuffix(text, "\n")
 		}
 	}

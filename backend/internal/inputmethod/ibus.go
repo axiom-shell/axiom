@@ -371,7 +371,7 @@ func (b *ibus) setting(ctx context.Context, schema, key, value, owner string, sy
 		return nil
 	}
 	id, err := b.ledger.Begin(footprint.Row{Kind: footprint.KindGSetting, Target: footprint.GSettingTarget(schema, key), Owner: owner, System: system},
-		footprint.PriorGSetting(ctx, b.gsettings, schema, key))
+		b.ledger.PriorGSetting(ctx, b.gsettings, schema, key))
 	if err != nil {
 		return axerr.Wrap(axerr.Failed, err, "recording gsettings %s %s", schema, key)
 	}

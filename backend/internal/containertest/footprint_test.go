@@ -42,9 +42,10 @@ type Snapshot struct {
 	GSettings string
 }
 
-// skipped are the places a snapshot leaves out: axiom's own folders, glib's
-// keyfile, and what the harness itself puts in the home.
-var skipped = []string{".config/axiom", ".local/state/axiom", ".local/share/axiom", ".cache", ".config/glib-2.0", ".config/sway", "bin"}
+// skipped are the places a snapshot leaves out: axiom's own folders and what
+// the harness itself puts in the home. (glib's keyfile is in: a key reset
+// must leave no trace.)
+var skipped = []string{".config/axiom", ".local/state/axiom", ".local/share/axiom", ".cache", ".config/sway", "bin"}
 
 // SeedHome copies dir (testdata/home-seed) into the session's home, keeping
 // links and modes. dotfiles/ is then made read-only, so Apply wraps the link
@@ -280,7 +281,7 @@ func applyEverything(t *testing.T, s *Session) {
 	}
 	// ncspot's block exists now: the colors go into it (as Apply does)
 	s.integrate(keys)
-	if _, err := s.ShellCall("cursor.theme", map[string]any{"theme": "whiteglass", "size": 24, "owner": "Input.cursor.theme"}); err != nil {
+	if _, err := s.ShellCall("cursor.theme", map[string]any{"theme": "whiteglass", "size": 24, "owner": "Input.cursor.enabled"}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.ShellCall("apps.setDefault", map[string]any{"role": "textEditor", "id": "axiom-test.desktop"}); err != nil {
@@ -405,9 +406,12 @@ func TestContainerFootprintBackfillInfersOldHookups(t *testing.T) {
 	if len(found) < 2 {
 		t.Fatalf("the backfill found %v", found)
 	}
-	// Inferred rows aren't undone without force
+	// Inferred rows aren't undone without force, and are still there
 	if out := s.Axiom("footprint", "undo", "--all"); strings.Contains(out, "done:") {
 		t.Errorf("undo --all took inferred rows:\n%s", out)
+	}
+	if again := s.footprintRows(); len(again) != len(found) {
+		t.Errorf("the unforced undo changed the rows: %d, was %d", len(again), len(found))
 	}
 	t.Logf("undo --force:\n%s", s.Axiom("footprint", "undo", "--all", "--force"))
 	stopAxiom(t, p)
@@ -466,18 +470,46 @@ func TestContainerFcitxRoundTrip(t *testing.T) {
 		t.Skip("the daemon doesn't follow fcitx5 here")
 	}
 	owner := "Input.keyboard.method.enabled"
+	before := s.fcitxState()
 	if _, err := s.ShellCall("inputMethod.options", map[string]any{"shareState": "All", "owner": owner}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ShellCall("inputMethod.push", map[string]any{"defaultLayout": "us", "owner": owner,
+		"items": []map[string]string{{"name": "keyboard-us", "layout": ""}, {"name": "keyboard-de", "layout": ""}}}); err != nil {
 		t.Fatal(err)
 	}
 	kinds := map[string]bool{}
 	for _, r := range s.footprintRows() {
 		kinds[r.Kind] = true
 	}
-	if !kinds[footprint.KindFcitxConfig] {
-		t.Errorf("no fcitx-config row: %v", kinds)
+	if !kinds[footprint.KindFcitxConfig] || !kinds[footprint.KindFcitxGroup] {
+		t.Errorf("rows of %v", kinds)
+	}
+	if s.fcitxState() == before {
+		t.Error("fcitx5 wasn't changed")
 	}
 	t.Logf("undo:\n%s", s.Axiom("footprint", "undo", "--all", "--include-system"))
 	if rows := s.footprintRows(); len(rows) != 0 {
 		t.Errorf("rows left: %+v", rows)
 	}
+	if after := s.fcitxState(); after != before {
+		t.Errorf("fcitx5 isn't as it was:\n%s\nwas\n%s", after, before)
+	}
+}
+
+// fcitxState is fcitx5's global config and its default group, as busctl
+// prints them.
+func (s *Session) fcitxState() string {
+	s.t.Helper()
+	var out strings.Builder
+	for _, call := range [][]string{{"GetConfig", "s", "fcitx://config/global"}, {"FullInputMethodGroupInfo", "s", "Default"}} {
+		cmd := exec.Command("busctl", append([]string{"--user", "call", "org.fcitx.Fcitx5", "/controller", "org.fcitx.Fcitx.Controller1"}, call...)...)
+		cmd.Env = s.env()
+		data, err := cmd.CombinedOutput()
+		if err != nil {
+			s.t.Fatalf("busctl %v: %v\n%s", call, err, data)
+		}
+		out.Write(data)
+	}
+	return out.String()
 }

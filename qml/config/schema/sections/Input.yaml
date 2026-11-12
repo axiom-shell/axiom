@@ -336,6 +336,7 @@ properties:
         x-greeter: true
         type: boolean
         title: Set the cursor
+        x-footprint: true
         default: false
         description: Off, the cursor is left alone.
       theme:
@@ -344,7 +345,6 @@ properties:
         type: string
         title: Theme
         x-options: cursorThemes
-        x-footprint: true
         x-enumLabels: {'': None}
         default: ''
         x-showIf: {enabled: true}

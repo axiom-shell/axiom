@@ -73,7 +73,15 @@ func (u *undoer) config(ctx context.Context, r *footprint.Row) (string, string) 
 	if err != nil {
 		return footprint.OutcomeFailed, err.Error()
 	}
-	if r.Wrote != nil && !same(pick(current, wrote), wrote) {
+	// A row with nothing written yet (the write may never have been made)
+	// is compared with what was there before
+	if r.Wrote == nil {
+		if same(pick(current, prior), prior) {
+			return footprint.OutcomeGone, ""
+		}
+		return footprint.OutcomeChanged, "fcitx5's options differ from what was there: left as they are"
+	}
+	if !same(pick(current, wrote), wrote) {
 		return footprint.OutcomeChanged, "fcitx5's options were changed since: left as they are"
 	}
 	if len(prior) == 0 {
@@ -93,7 +101,14 @@ func (u *undoer) checkConfig(ctx context.Context, r footprint.Row) string {
 	defer closeConn()
 	var wrote map[string]any
 	_ = json.Unmarshal(r.Wrote, &wrote)
-	if current, err := f.getConfig(ctx, r.Target); err == nil && r.Wrote != nil && !same(pick(current, wrote), wrote) {
+	var prior map[string]any
+	_ = json.Unmarshal(r.Prior, &prior)
+	current, err := f.getConfig(ctx, r.Target)
+	switch {
+	case err != nil:
+	case r.Wrote == nil && same(pick(current, prior), prior):
+		return footprint.StatusGone
+	case r.Wrote == nil, !same(pick(current, wrote), wrote):
 		return footprint.StatusChanged
 	}
 	return footprint.StatusPresent
@@ -113,7 +128,13 @@ func (u *undoer) group(ctx context.Context, r *footprint.Row) (string, string) {
 	if err != nil {
 		return footprint.OutcomeFailed, err.Error()
 	}
-	if r.Wrote != nil && !reflect.DeepEqual(current, wrote) {
+	if r.Wrote == nil {
+		if reflect.DeepEqual(current, prior) {
+			return footprint.OutcomeGone, ""
+		}
+		return footprint.OutcomeChanged, "fcitx5's group differs from what was there: left as it is"
+	}
+	if !reflect.DeepEqual(current, wrote) {
 		return footprint.OutcomeChanged, "fcitx5's group was changed since: left as it is"
 	}
 	list := make([]any, 0, len(prior.Items))
@@ -135,9 +156,15 @@ func (u *undoer) checkGroup(ctx context.Context, r footprint.Row) string {
 		return footprint.StatusPresent
 	}
 	defer closeConn()
-	var wrote groupRec
+	var prior, wrote groupRec
+	_ = json.Unmarshal(r.Prior, &prior)
 	_ = json.Unmarshal(r.Wrote, &wrote)
-	if current, err := f.group(ctx, strings.TrimPrefix(r.Target, "fcitx://group/")); err == nil && r.Wrote != nil && !reflect.DeepEqual(current, wrote) {
+	current, err := f.group(ctx, strings.TrimPrefix(r.Target, "fcitx://group/"))
+	switch {
+	case err != nil:
+	case r.Wrote == nil && reflect.DeepEqual(current, prior):
+		return footprint.StatusGone
+	case r.Wrote == nil, !reflect.DeepEqual(current, wrote):
 		return footprint.StatusChanged
 	}
 	return footprint.StatusPresent

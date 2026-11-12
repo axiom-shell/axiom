@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -94,6 +95,9 @@ type HookupRec struct {
 	CopiedSHA256 string `json:"copiedSha256,omitempty"`
 	// NoFinalNewline: the file had no newline ending it (Apply adds one)
 	NoFinalNewline bool `json:"noFinalNewline,omitempty"`
+	// LastLine is that file's last line: the newline comes off again when
+	// it's the last line left (not when the user wrote after it)
+	LastLine string `json:"lastLine,omitempty"`
 	// Backup is the .axiom-bak-<stamp> beside the file: listed, never put back
 	Backup string `json:"backup,omitempty"`
 	// Backups are the later backups of the same file (each Apply makes its
@@ -158,6 +162,13 @@ type Options struct {
 	// GSettings runs gsettings (the gsetting kind); nil: a gsetting row is
 	// failed
 	GSettings func(ctx context.Context, args ...string) (string, error)
+	// Getenv reads the environment (the gsettings backend, the config home;
+	// default: the process's)
+	Getenv func(string) string
+	// UserValue says whether a gsettings key has a value of the user's own
+	// (known false: can't tell); default: the keyfile backend's file, or
+	// dconf
+	UserValue func(ctx context.Context, schema, key string) (set, known bool)
 	// Run runs a rebuild's command; default runs it
 	Run func(ctx context.Context, argv []string) error
 	// OnChange is called after a row changed or was removed
@@ -177,9 +188,13 @@ type Ledger struct {
 }
 
 type file struct {
-	Version    int   `json:"version"`
-	Backfilled int   `json:"backfilled"`
-	Rows       []Row `json:"rows"`
+	Version int `json:"version"`
+	// Backfilled: the hookup backfill ran (it needs the shell's targets);
+	// BackfilledFiles: the one that needs nothing of the shell did (the
+	// integration files and the cursor), run when the daemon starts
+	Backfilled      int   `json:"backfilled"`
+	BackfilledFiles int   `json:"backfilledFiles"`
+	Rows            []Row `json:"rows"`
 }
 
 // New makes a Ledger with the generic kinds registered.
@@ -208,6 +223,9 @@ func (l *Ledger) log(format string, args ...any) {
 
 // Register sets the Undoer and Checker of a kind.
 func (l *Ledger) Register(kind string, u Undoer, c Checker) {
+	if l == nil {
+		return
+	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.undoers[kind], l.checkers[kind] = u, c
@@ -249,23 +267,32 @@ func (l *Ledger) lock() (release func(), err error) {
 }
 
 // read is the file; readOnly is true for one of another version (its rows
-// are still listed).
-func (l *Ledger) read() (f *file, readOnly bool) {
+// are still listed). A file that isn't JSON is moved aside as
+// footprint.json.bad-<stamp> (logged) and the ledger starts fresh; any other
+// read error is returned, so nothing is written over what couldn't be read.
+func (l *Ledger) read() (f *file, readOnly bool, err error) {
 	f = &file{Version: Version}
 	data, err := os.ReadFile(l.path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return f, false, nil
+	}
 	if err != nil {
-		return f, false
+		return nil, false, err
 	}
 	var got file
 	if err := json.Unmarshal(data, &got); err != nil {
-		l.log("footprint: %s isn't readable: %v", l.path, err)
-		return f, false
+		bad := l.path + ".bad-" + l.o.Now().Format("20060102-150405")
+		if rerr := os.Rename(l.path, bad); rerr != nil {
+			return nil, false, rerr
+		}
+		l.log("footprint: %s isn't readable (%v): moved to %s, starting fresh", l.path, err, bad)
+		return f, false, nil
 	}
 	if got.Version != Version {
 		l.log("footprint: %s is version %d, not %d: read only", l.path, got.Version, Version)
-		return &got, true
+		return &got, true, nil
 	}
-	return &got, false
+	return &got, false, nil
 }
 
 func (l *Ledger) write(f *file) error {
@@ -285,7 +312,10 @@ func (l *Ledger) update(fn func(f *file) (changed bool, err error)) error {
 		return axerr.Wrap(axerr.Unavailable, err, "the footprint ledger")
 	}
 	defer release()
-	f, readOnly := l.read()
+	f, readOnly, err := l.read()
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "reading the footprint ledger")
+	}
 	if readOnly {
 		return axerr.New(axerr.Refused, "the footprint ledger is of another version: left as it is")
 	}
@@ -379,7 +409,9 @@ func mergeHookup(old, now *HookupRec) *HookupRec {
 	}
 	out := *now
 	out.CreatedFile = old.CreatedFile || now.CreatedFile
-	out.NoFinalNewline = old.NoFinalNewline || now.NoFinalNewline
+	if old.NoFinalNewline {
+		out.NoFinalNewline, out.LastLine = true, old.LastLine
+	}
 	if old.LinkTarget != "" {
 		out.LinkTarget = old.LinkTarget
 	}
@@ -443,12 +475,19 @@ func (l *Ledger) Drop(id string) {
 	if l == nil || id == "" {
 		return
 	}
-	_ = l.update(func(f *file) (bool, error) {
+	removed := false
+	if err := l.update(func(f *file) (bool, error) {
 		n := len(f.Rows)
 		f.Rows = slices.DeleteFunc(f.Rows, func(r Row) bool { return r.ID == id })
-		return len(f.Rows) != n, nil
-	})
-	l.changed()
+		removed = len(f.Rows) != n
+		return removed, nil
+	}); err != nil {
+		l.log("footprint: dropping %s: %v", id, err)
+		return
+	}
+	if removed {
+		l.changed()
+	}
 }
 
 // Rows are the recorded rows, as read (no status).
@@ -460,7 +499,11 @@ func (l *Ledger) Rows() []Row {
 	if err == nil {
 		defer release()
 	}
-	f, _ := l.read()
+	f, _, err := l.read()
+	if err != nil {
+		l.log("footprint: %v", err)
+		return nil
+	}
 	return f.Rows
 }
 
@@ -508,8 +551,7 @@ func (l *Ledger) SelectOwner(owner string) []string {
 	return ids
 }
 
-// Backfilled says whether the backfill ran.
-func (l *Ledger) Backfilled() bool {
+func (l *Ledger) flag(pick func(*file) *int) bool {
 	if l == nil {
 		return true
 	}
@@ -517,16 +559,41 @@ func (l *Ledger) Backfilled() bool {
 	if err == nil {
 		defer release()
 	}
-	f, _ := l.read()
-	return f.Backfilled != 0
+	f, _, err := l.read()
+	return err != nil || *pick(f) != 0
+}
+
+// Backfilled says whether the hookup backfill ran.
+func (l *Ledger) Backfilled() bool { return l.flag(func(f *file) *int { return &f.Backfilled }) }
+
+// BackfilledFiles says whether the backfill of the integration files and
+// the cursor ran.
+func (l *Ledger) BackfilledFiles() bool {
+	return l.flag(func(f *file) *int { return &f.BackfilledFiles })
 }
 
 // Backfill adds rows found without a record of writing them (each marked
 // inferred, applied) where no row with their id exists, once: it returns
-// ran false when the ledger was backfilled already.
+// ran false when the ledger was backfilled already. These are the hookup
+// rows, which need the targets the shell knows.
 func (l *Ledger) Backfill(rows []Row) (added []string, ran bool, err error) {
+	return l.backfill(func(f *file) *int { return &f.Backfilled }, rows)
+}
+
+// BackfillFiles is Backfill's other half, once too: the files of the
+// integrations and the cursor's folders and setting, which the daemon finds
+// by itself when it starts, before any write could make them look like its
+// own.
+func (l *Ledger) BackfillFiles(rows []Row) (added []string, ran bool, err error) {
+	return l.backfill(func(f *file) *int { return &f.BackfilledFiles }, rows)
+}
+
+func (l *Ledger) backfill(pick func(*file) *int, rows []Row) (added []string, ran bool, err error) {
+	if l == nil {
+		return nil, false, nil
+	}
 	err = l.update(func(f *file) (bool, error) {
-		if f.Backfilled != 0 {
+		if *pick(f) != 0 {
 			return false, nil
 		}
 		ran = true
@@ -540,7 +607,7 @@ func (l *Ledger) Backfill(rows []Row) (added []string, ran bool, err error) {
 			f.Rows = append(f.Rows, r)
 			added = append(added, r.ID)
 		}
-		f.Backfilled = 1
+		*pick(f) = 1
 		return true, nil
 	})
 	if err == nil && len(added) > 0 {
@@ -555,20 +622,30 @@ func (l *Ledger) Backfill(rows []Row) (added []string, ran bool, err error) {
 // refused. DryRun reports and changes nothing.
 func (l *Ledger) Undo(ctx context.Context, ids []string, o UndoOptions) []Result {
 	results := []Result{}
-	var rows []Row
+	if l == nil {
+		return results
+	}
+	// Rebuilds run after the lock is released (a command may take a while)
+	var rebuilds []Row
 	err := func() error {
 		release, err := l.lock()
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "the footprint ledger")
 		}
 		defer release()
-		f, readOnly := l.read()
+		f, readOnly, err := l.read()
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "reading the footprint ledger")
+		}
 		if readOnly && !o.DryRun {
 			return axerr.New(axerr.Refused, "the footprint ledger is of another version: left as it is")
 		}
-		rows = l.picked(f.Rows, ids)
 		var removed []string
-		for _, r := range rows {
+		for _, r := range l.picked(f.Rows, ids) {
+			if r.Kind == KindRebuild && !o.DryRun && (!r.Inferred || o.Force) {
+				rebuilds = append(rebuilds, r)
+				continue
+			}
 			res := l.undoOne(ctx, &r, o)
 			results = append(results, res)
 			switch {
@@ -580,7 +657,8 @@ func (l *Ledger) Undo(ctx context.Context, ids []string, o UndoOptions) []Result
 					return err
 				}
 			default:
-				// A row the undoer shrank to what it left is kept so
+				// A row the undoer shrank to what it left is kept, so a
+				// repeated undo handles only that
 				if i := slices.IndexFunc(f.Rows, func(have Row) bool { return have.ID == r.ID }); i >= 0 &&
 					(!bytes.Equal(f.Rows[i].Prior, r.Prior) || !bytes.Equal(f.Rows[i].Wrote, r.Wrote)) {
 					f.Rows[i] = r
@@ -595,6 +673,21 @@ func (l *Ledger) Undo(ctx context.Context, ids []string, o UndoOptions) []Result
 		}
 		return nil
 	}()
+	if err == nil && len(rebuilds) > 0 {
+		var done []string
+		for _, r := range rebuilds {
+			res := l.undoOne(ctx, &r, o)
+			results = append(results, res)
+			if res.Outcome == OutcomeDone || res.Outcome == OutcomeGone {
+				done = append(done, r.ID)
+			}
+		}
+		err = l.update(func(f *file) (bool, error) {
+			n := len(f.Rows)
+			f.Rows = slices.DeleteFunc(f.Rows, func(have Row) bool { return slices.Contains(done, have.ID) })
+			return len(f.Rows) != n, nil
+		})
+	}
 	if err != nil {
 		results = append(results, Result{Outcome: OutcomeFailed, Detail: err.Error()})
 		if ae := (*axerr.Error)(nil); errors.As(err, &ae) && ae.Kind == axerr.Refused {

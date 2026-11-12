@@ -90,7 +90,7 @@ TestCase {
     const groups = Footprint.groups(rows);
     compare(groups.map(g => g.owner), ["ThemeIntegrations.gtk", "ThemeIntegrations.kitty", ""]);
     compare(groups[0].rows.map(r => r.id), ["b", "d"]);
-    compare(groups[2].title, "Compositor lines");
+    compare(groups[2].owner, "", "the compositor's lines last");
     compare(Footprint.groups([]).length, 0);
   }
 

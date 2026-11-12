@@ -46,7 +46,7 @@ QtObject {
   }
 
   // Rows by owner, in first-seen order, the compositor's own lines (owner
-  // "") last as "Compositor lines": [{ owner, title, rows }]
+  // "") last: [{ owner, rows }] (the card names each)
   function groups(rows) {
     const order = [];
     const by = {};
@@ -61,13 +61,11 @@ QtObject {
     }
     const out = order.map(owner => ({
           "owner": owner,
-          "title": owner,
           "rows": by[owner]
         }));
     if (by[""])
       out.push({
         "owner": "",
-        "title": "Compositor lines",
         "rows": by[""]
       });
     return out;

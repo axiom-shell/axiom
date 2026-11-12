@@ -98,14 +98,20 @@ func MergeWrote(old, now Keys) Keys {
 }
 
 // KeysAre says which of wrote's keys the text still has as written: all
-// of them (changed is empty), or those that differ.
-func KeysAre(text []byte, wrote Keys) (changed []string) {
+// of them (changed is empty), or those that differ. A key that's gone and
+// that wasn't there before axiom (a nil prior) is as good as restored.
+func KeysAre(text []byte, wrote, prior Keys) (changed []string) {
 	have, _ := iniValues(text)
 	for g, keys := range wrote.Groups {
 		for k, v := range keys {
-			if cur, ok := have[g][k]; v != nil && (!ok || cur != *v) {
-				changed = append(changed, g+"/"+k)
+			cur, ok := have[g][k]
+			if v == nil || ok && cur == *v {
+				continue
 			}
+			if p, had := prior.Groups[g][k]; !ok && had && p == nil {
+				continue
+			}
+			changed = append(changed, g+"/"+k)
 		}
 	}
 	slices.Sort(changed)
@@ -136,6 +142,9 @@ func RestoreKeys(text []byte, prior, wrote Keys) (out []byte, changed []string) 
 		if m == nil {
 			continue
 		}
+		if _, left := remaining.Groups[cur][m[1]]; !left {
+			continue
+		}
 		w, ok := wrote.Groups[cur][m[1]]
 		if !ok || w == nil || *w != m[2] {
 			continue
@@ -148,7 +157,7 @@ func RestoreKeys(text []byte, prior, wrote Keys) (out []byte, changed []string) 
 		// each key once: a repeated one stays
 		delete(remaining.Groups[cur], m[1])
 	}
-	changed = KeysAre(text, remaining)
+	changed = KeysAre(text, remaining, prior)
 	for j := len(drop) - 1; j >= 0; j-- {
 		lines = slices.Delete(lines, drop[j], drop[j]+1)
 	}

@@ -22,6 +22,10 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/footprint"
 )
 
+// Owner is the footprint owner of the defaults axiom sets (no setting asks
+// for them; the card names it Default apps).
+const Owner = "DefaultApps"
+
 // Role is a kind of app the settings offer as one choice: the MIME types
 // it covers, its first the one whose default it shows.
 type Role struct {
@@ -381,7 +385,7 @@ func (a *Apps) SetDefault(roleID, id string) error {
 		path := a.userList("xdg-terminals.list")
 		data, readErr := os.ReadFile(path)
 		text := setTerminal(string(data), id)
-		rec, err := a.o.Ledger.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: path, Key: terminalKey, System: true},
+		rec, err := a.o.Ledger.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: path, Key: terminalKey, Owner: Owner, System: true},
 			func() (json.RawMessage, error) {
 				return footprint.Raw(listPrior{Absent: readErr != nil, Lines: linesOf(string(data))}), nil
 			})
@@ -433,7 +437,7 @@ func (a *Apps) SetTypes(mimes []string, id string) error {
 			continue
 		}
 		_, groupHad := listGroup(string(data), groupDefault)
-		rec, err := a.o.Ledger.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: path, Key: groupDefault + "/" + mime, System: true},
+		rec, err := a.o.Ledger.Begin(footprint.Row{Kind: footprint.KindMimeapps, Target: path, Key: groupDefault + "/" + mime, Owner: Owner, System: true},
 			func() (json.RawMessage, error) {
 				return footprint.Raw(listPrior{Absent: !had, Value: before, GroupAbsent: !groupHad, FileAbsent: readErr != nil}), nil
 			})

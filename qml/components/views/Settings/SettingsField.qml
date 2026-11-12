@@ -54,8 +54,12 @@ FormRow {
   readonly property string ownerPath: root.row.path.join(".")
   readonly property bool badged: root.footprinted && CompositorConfig.mode === "detached"
   // Off, with changes the ledger still holds
-  readonly property bool removable: root.footprinted && field.current === Footprint.offValue(root.row.schema) && FootprintManager.rowsFor(root.ownerPath).length > 0
-  readonly property real footprintHeight: root.badged || root.removable ? footprintRow.implicitHeight + Widget.spacing : 0
+  readonly property bool removable: root.footprinted && field.current === Footprint.offValue(root.row.schema) && FootprintManager.undoableFor(root.ownerPath).length > 0
+  // The system defaults it changed, asked about once the rest is undone
+  readonly property int systemCount: FootprintManager.systemFor(root.ownerPath).length
+  property bool askedSystem: false
+  readonly property bool confirmSystem: root.askedSystem && !root.removable && root.systemCount > 0
+  readonly property real footprintHeight: root.badged || root.removable || root.confirmSystem ? footprintRow.implicitHeight + Widget.spacing : 0
 
   bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
   railHeight: root.custom !== "" ? 0 : field.implicitHeight
@@ -135,7 +139,7 @@ FormRow {
   // The footprint's chip and button, under the field
   RowLayout {
     id: footprintRow
-    visible: root.badged || root.removable
+    visible: root.badged || root.removable || root.confirmSystem
     y: field.implicitHeight + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + Widget.spacing
     width: parent.width
     spacing: Widget.spacing
@@ -173,10 +177,39 @@ FormRow {
       visible: root.removable
       implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove its changes")
-      onClicked: FootprintManager.undoOwner(root.ownerPath)
+      onClicked: {
+        root.askedSystem = true;
+        FootprintManager.undoOwner(root.ownerPath);
+      }
+    }
+
+    StyledText {
+      visible: root.confirmSystem
+      text: I18n.tr("Also put back the system defaults axiom changed here ({0})? Keep leaves them as they are.", root.systemCount)
+      wrapMode: Text.WordWrap
+      Layout.fillWidth: true
+    }
+
+    // Keep is the default: nothing happens unless Put back is clicked
+    StyledTextButton {
+      visible: root.confirmSystem
+      implicitHeight: Widget.height - Widget.px(4)
+      text: I18n.tr("Keep")
+      onClicked: root.askedSystem = false
+    }
+
+    StyledTextButton {
+      visible: root.confirmSystem
+      implicitHeight: Widget.height - Widget.px(4)
+      text: I18n.tr("Put back")
+      onClicked: {
+        root.askedSystem = false;
+        FootprintManager.undo(FootprintManager.systemFor(root.ownerPath).map(row => row.id));
+      }
     }
 
     Item {
+      visible: !root.confirmSystem
       Layout.fillWidth: true
     }
   }

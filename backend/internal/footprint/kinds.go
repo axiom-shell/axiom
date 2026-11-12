@@ -9,9 +9,11 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
@@ -39,7 +41,7 @@ type FilePrior struct {
 // PriorFile is the prior func of a file row for path.
 func (l *Ledger) PriorFile(path string) func() (json.RawMessage, error) {
 	return func() (json.RawMessage, error) {
-		info, err := os.Lstat(path)
+		info, err := os.Stat(path)
 		if errors.Is(err, fs.ErrNotExist) {
 			return Absent(), nil
 		}
@@ -247,22 +249,136 @@ func GSettingNormal(v string) string {
 	return v
 }
 
-// PriorGSetting is the prior func of a gsetting row: what gsettings holds
-// now; a key it can't read is an error (nothing is recorded or set).
-func PriorGSetting(ctx context.Context, run func(ctx context.Context, args ...string) (string, error), schema, key string) func() (json.RawMessage, error) {
+// PriorGSetting is the prior func of a gsetting row: absent when the key
+// has no value of the user's own (an undo then resets it), else what
+// gsettings holds now; a key it can't read is an error (nothing is
+// recorded or set).
+func (l *Ledger) PriorGSetting(ctx context.Context, run func(ctx context.Context, args ...string) (string, error), schema, key string) func() (json.RawMessage, error) {
 	return func() (json.RawMessage, error) {
 		out, err := run(ctx, "get", schema, key)
 		if err != nil {
 			return nil, err
 		}
+		if set, known := l.userValue(ctx, run, schema, key); known && !set {
+			return Absent(), nil
+		}
 		return Raw(GSettingPrior{Value: strings.TrimSpace(out)}), nil
 	}
 }
 
+// userValue says whether a key has a value of the user's own (not the
+// schema's default); known is false when that can't be told: the keyfile
+// backend's file is read, dconf is asked (`dconf read`), nothing else.
+func (l *Ledger) userValue(ctx context.Context, run func(ctx context.Context, args ...string) (string, error), schema, key string) (set, known bool) {
+	if l == nil {
+		return false, false
+	}
+	if l.o.UserValue != nil {
+		return l.o.UserValue(ctx, schema, key)
+	}
+	getenv := l.o.Getenv
+	if getenv == nil {
+		getenv = os.Getenv
+	}
+	path := schemaPath(ctx, run, schema)
+	if path == "" {
+		return false, false
+	}
+	switch backend := getenv("GSETTINGS_BACKEND"); backend {
+	case "keyfile":
+		config := getenv("XDG_CONFIG_HOME")
+		if !filepath.IsAbs(config) {
+			config = filepath.Join(getenv("HOME"), ".config")
+		}
+		data, err := os.ReadFile(filepath.Join(config, "glib-2.0", "settings", "keyfile"))
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, true
+		}
+		if err != nil {
+			return false, false
+		}
+		return keyfileHas(string(data), strings.Trim(path, "/"), key), true
+	case "", "dconf":
+		if _, err := exec.LookPath("dconf"); err != nil {
+			return false, false
+		}
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		out, err := exec.CommandContext(ctx, "dconf", "read", path+key).Output()
+		if err != nil {
+			return false, false
+		}
+		return strings.TrimSpace(string(out)) != "", true
+	}
+	return false, false
+}
+
+// schemaPath is the dconf path of a schema ("/org/gnome/desktop/interface/"),
+// from gsettings list-schemas --print-paths ("" for none: a relocatable one).
+func schemaPath(ctx context.Context, run func(ctx context.Context, args ...string) (string, error), schema string) string {
+	out, err := run(ctx, "list-schemas", "--print-paths")
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if id, path, ok := strings.Cut(strings.TrimSpace(line), " "); ok && id == schema {
+			return strings.TrimSpace(path)
+		}
+	}
+	return ""
+}
+
+// keyfileHas says whether a glib keyfile (the keyfile backend's) sets key
+// in the group.
+func keyfileHas(text, group, key string) bool {
+	in := false
+	for _, line := range strings.Split(text, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "[") {
+			in = strings.Trim(line, "[]") == group
+			continue
+		}
+		if k, _, ok := strings.Cut(line, "="); in && ok && strings.TrimSpace(k) == key {
+			return true
+		}
+	}
+	return false
+}
+
 func (l *Ledger) current(ctx context.Context, r Row) (string, error) {
 	schema, key, _ := strings.Cut(r.Target, " ")
-	out, err := l.o.GSettings(ctx, "get", schema, key)
-	return out, err
+	return l.o.GSettings(ctx, "get", schema, key)
+}
+
+// gsettingState says how a gsetting row's key stands: gone (nothing of
+// axiom's to take out), changed (it's no longer what axiom wrote; a row
+// with no Wrote yet, the write maybe never made, is compared with Prior
+// instead), or present.
+func (l *Ledger) gsettingState(ctx context.Context, r Row) (state, now string, err error) {
+	got, err := l.current(ctx, r)
+	if err != nil {
+		return "", "", err
+	}
+	now = strings.TrimSpace(got)
+	var p GSettingPrior
+	_ = json.Unmarshal(r.Prior, &p)
+	if r.Wrote == nil {
+		if p.Absent {
+			schema, key, _ := strings.Cut(r.Target, " ")
+			if set, known := l.userValue(ctx, l.o.GSettings, schema, key); known && !set {
+				return StatusGone, now, nil
+			}
+		} else if GSettingNormal(got) == GSettingNormal(p.Value) {
+			return StatusGone, now, nil
+		}
+		return StatusChanged, now, nil
+	}
+	var wrote string
+	_ = json.Unmarshal(r.Wrote, &wrote)
+	if GSettingNormal(got) != GSettingNormal(wrote) {
+		return StatusChanged, now, nil
+	}
+	return StatusPresent, now, nil
 }
 
 // gsetting: set back to what it held, or reset when nothing was set, only
@@ -271,14 +387,15 @@ func (l *Ledger) undoGSetting(ctx context.Context, r *Row) (string, string) {
 	if l.o.GSettings == nil {
 		return OutcomeFailed, "no gsettings"
 	}
-	got, err := l.current(ctx, *r)
+	state, now, err := l.gsettingState(ctx, *r)
 	if err != nil {
 		return OutcomeFailed, err.Error()
 	}
-	var wrote string
-	_ = json.Unmarshal(r.Wrote, &wrote)
-	if r.Wrote != nil && GSettingNormal(got) != GSettingNormal(wrote) {
-		return OutcomeChanged, "now " + strings.TrimSpace(got)
+	switch state {
+	case StatusGone:
+		return OutcomeGone, ""
+	case StatusChanged:
+		return OutcomeChanged, "now " + now
 	}
 	var p GSettingPrior
 	_ = json.Unmarshal(r.Prior, &p)
@@ -297,16 +414,11 @@ func (l *Ledger) checkGSetting(ctx context.Context, r Row) string {
 	if l.o.GSettings == nil {
 		return StatusPresent
 	}
-	got, err := l.current(ctx, r)
+	state, _, err := l.gsettingState(ctx, r)
 	if err != nil {
 		return StatusGone
 	}
-	var wrote string
-	_ = json.Unmarshal(r.Wrote, &wrote)
-	if r.Wrote != nil && GSettingNormal(got) != GSettingNormal(wrote) {
-		return StatusChanged
-	}
-	return StatusPresent
+	return state
 }
 
 // BlockWrote is the markers of a marked-block row.

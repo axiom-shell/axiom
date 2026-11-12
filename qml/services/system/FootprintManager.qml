@@ -4,6 +4,8 @@ import Quickshell
 
 import qs.config
 import qs.services.core
+import qs.services.compositor
+import qs.services.apps
 import qs.services.ui
 import qs.components.methods
 
@@ -28,6 +30,17 @@ Singleton {
   // The rows an owner (a setting path) caused
   function rowsFor(owner) {
     return root.rows.filter(row => row.owner === owner);
+  }
+
+  // Those "Remove its changes" undoes: not the system's own choices
+  // (default apps, input method groups), not what axiom only inferred
+  function undoableFor(owner) {
+    return root.rows.filter(row => row.owner === owner && !row.system && !row.inferred);
+  }
+
+  // The owner's rows that are the system's own choices
+  function systemFor(owner) {
+    return root.rows.filter(row => row.owner === owner && row.system);
   }
 
   // A row's name
@@ -80,8 +93,9 @@ Singleton {
   }
 
   // Turns a setting off (its off value saved at once, Footprint.offValue),
-  // then undoes what it caused. Owner "" (the compositor's include and
-  // autostart lines) commits nothing.
+  // then undoes what it caused, but the system's own choices (the field
+  // asks about those: systemFor, then undo) and inferred rows. Owner ""
+  // (the compositor's include and autostart lines) commits nothing.
   function undoOwner(path) {
     if (path !== "") {
       const schema = SettingsManager.schemaAt(path.split("."));
@@ -90,15 +104,27 @@ Singleton {
         return;
       }
     }
-    root.undo(root.rowsFor(path).map(row => row.id), false);
+    root.undo(root.undoableFor(path).map(row => row.id), false);
+  }
+
+  // The hookup backfill needs every target the shell alone knows: the
+  // compositor's include and autostart lines and the screen-sharing line
+  readonly property bool _targetsKnown: CompositorManager.kind !== "" && CompositorConfigManager.includeTarget !== null && ScreenShareManager.pickerBinary !== ""
+  property bool _backfilled: false
+  on_TargetsKnownChanged: root._maybeBackfill()
+
+  function _maybeBackfill() {
+    if (root._backfilled || !root._targetsKnown || !BackendManager.ready || Paths.greeter)
+      return;
+    root._backfilled = true;
+    root._backfill();
   }
 
   // The hookup targets the ledger looks for evidence of, per key and its
-  // owner (the compositor's include covers its autostart line)
+  // owner (the compositor's include covers its autostart line); the daemon
+  // does it once per ledger
   // rpc: footprint.backfill
   function _backfill() {
-    if (Paths.greeter)
-      return;
     const targets = {};
     const keys = Object.keys(ConfigManager.configSchema.properties.ThemeIntegrations.properties);
     for (const key of keys.concat(["compositorInclude", "screenSharing"])) {
@@ -130,7 +156,7 @@ Singleton {
 
   function _onReady() {
     root.refresh();
-    root._backfill();
+    root._maybeBackfill();
   }
 
   Connections {

@@ -61,8 +61,18 @@ func TestFootprintRPCs(t *testing.T) {
 	}
 	ctx := context.Background()
 	var list FootprintListResult
-	if err := cli.Call(ctx, "footprint.list", struct{}{}, &list); err != nil || len(list.Rows) != 1 || list.Rows[0].Status != footprint.StatusPresent || list.Rows[0].Owner != "ThemeIntegrations.kitty" {
-		t.Fatalf("list %+v %v", list, err)
+	if err := cli.Call(ctx, "footprint.list", struct{}{}, &list); err != nil {
+		t.Fatal(err)
+	}
+	var mine []footprint.RowStatus
+	for _, r := range list.Rows {
+		// (the backfill at start reads the machine's gsettings too)
+		if r.Kind == footprint.KindFile {
+			mine = append(mine, r)
+		}
+	}
+	if len(mine) != 1 || mine[0].Status != footprint.StatusPresent || mine[0].Owner != "ThemeIntegrations.kitty" {
+		t.Fatalf("list %+v", list)
 	}
 	// Only the shell undoes
 	if err := cli.Call(ctx, "footprint.undo", map[string]any{"ids": []string{id}}, nil); axerr.KindOf(err) != axerr.Refused {
@@ -101,7 +111,6 @@ func TestFootprintRPCs(t *testing.T) {
 func TestBackfillOnceAndInferred(t *testing.T) {
 	t.Parallel()
 	td := newTestDaemon(t)
-	td.start(t, asShell)
 	home := td.env["HOME"]
 	kitty := filepath.Join(td.env["XDG_CONFIG_HOME"], "kitty")
 	os.MkdirAll(kitty, 0o755)
@@ -116,6 +125,7 @@ func TestBackfillOnceAndInferred(t *testing.T) {
 	os.MkdirAll(cursor, 0o755)
 	os.WriteFile(filepath.Join(cursor, "index.theme"), []byte("[Icon Theme]\nX-Axiom-Generated=true\n"), 0o644)
 
+	td.start(t, asShell)
 	shell, err := td.connect(t, "shell", nil, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -124,12 +134,16 @@ func TestBackfillOnceAndInferred(t *testing.T) {
 		"kitty":     {Owner: "ThemeIntegrations.kitty", Targets: []hookup.Target{{File: hookup.Files{"{config}/kitty/kitty.conf"}, Place: hookup.End, Text: "include axiom.conf"}}},
 		"alacritty": {Owner: "ThemeIntegrations.alacritty", Targets: []hookup.Target{{File: hookup.Files{"{config}/alacritty/alacritty.toml"}, Place: hookup.Top, Text: `import = ["axiom.toml"]`}}},
 	}}
+	// The files an earlier axiom left were found when the daemon started
+	l := NewLedger(td.getenv, nil, nil)
+	if !l.BackfilledFiles() {
+		t.Error("the backfill of files didn't run at start")
+	}
 	var res FootprintBackfillResult
 	ctx := context.Background()
 	if err := shell.Call(ctx, "footprint.backfill", req, &res); err != nil || !res.Ran {
 		t.Fatalf("%+v %v", res, err)
 	}
-	l := NewLedger(td.getenv, nil, nil)
 	got := map[string]footprint.Row{}
 	for _, r := range l.Rows() {
 		got[r.ID] = r
@@ -174,3 +188,36 @@ func TestBackfillOnceAndInferred(t *testing.T) {
 }
 
 func after(t *testing.T) <-chan time.Time { return time.After(testkit.Bound(5 * time.Second)) }
+
+// A file an old axiom wrote is found when the daemon starts, so a theme
+// write afterwards can't take the old output for what was there before
+// axiom: an undo deletes the file
+func TestBackfillFilesAtStart(t *testing.T) {
+	t.Parallel()
+	td := newTestDaemon(t)
+	kitty := filepath.Join(td.env["XDG_CONFIG_HOME"], "kitty")
+	os.MkdirAll(kitty, 0o755)
+	old := filepath.Join(kitty, "axiom.conf")
+	os.WriteFile(old, []byte("# old colors\n"), 0o644)
+	td.start(t, asShell)
+	shell, err := td.connect(t, "shell", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	theme := filepath.Join(testkit.RepoRoot(), "qml/config/themes/ayu-dark.json")
+	var res ThemeIntegrateResult
+	if err := shell.Call(context.Background(), "theme.integrate", ThemeIntegrateRequest{Theme: theme, Keys: []string{"kitty"}, Owners: map[string]string{"kitty": "ThemeIntegrations.kitty"}}, &res); err != nil {
+		t.Fatal(err)
+	}
+	l := NewLedger(td.getenv, nil, nil)
+	row, ok := l.Get(footprint.ID(footprint.KindFile, old, ""))
+	if !ok || string(row.Prior) != `{"absent":true}` || !row.Inferred {
+		t.Fatalf("%+v", row)
+	}
+	if r := l.Undo(context.Background(), []string{row.ID}, footprint.UndoOptions{Force: true}); r[0].Outcome != footprint.OutcomeDone {
+		t.Fatalf("%+v", r)
+	}
+	if _, err := os.Stat(old); err == nil {
+		t.Error("the old file stayed")
+	}
+}

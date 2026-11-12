@@ -3,6 +3,7 @@ package footprint
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -26,6 +27,9 @@ func (f *fake) gsettings(_ context.Context, args ...string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.log = append(f.log, strings.Join(args, " "))
+	if args[0] == "list-schemas" {
+		return "", nil
+	}
 	key := args[1] + " " + args[2]
 	switch args[0] {
 	case "get":
@@ -125,13 +129,14 @@ func TestUndoOrderByKind(t *testing.T) {
 		{Kind: KindFile, Target: file},
 		{Kind: KindGSetting, Target: "s k", Wrote: Raw("'a'")},
 	} {
-		id := begin(t, l, r, func() (json.RawMessage, error) { return Raw(GSettingPrior{Value: "'old'"}), nil })
+		prior := PriorAbsent
+		if r.Kind == KindGSetting {
+			prior = func() (json.RawMessage, error) { return Raw(GSettingPrior{Value: "'old'"}), nil }
+		}
+		id := begin(t, l, r, prior)
 		l.Done(id, r.Wrote)
 	}
 	f.vals["s k"] = "'a'"
-	// The file row's prior is a gsetting's: make it absent
-	rows := l.Rows()
-	_ = rows
 	res := l.Undo(context.Background(), l.Select(UndoOptions{}), UndoOptions{})
 	var order []string
 	for _, r := range res {
@@ -153,7 +158,7 @@ func TestGSettingUndoOnlyWhenUnchanged(t *testing.T) {
 	l, f, _ := newLedger(t)
 	f.vals["s k"] = "'default'"
 	ctx := context.Background()
-	id := begin(t, l, Row{Kind: KindGSetting, Target: "s k"}, PriorGSetting(ctx, f.gsettings, "s", "k"))
+	id := begin(t, l, Row{Kind: KindGSetting, Target: "s k"}, l.PriorGSetting(ctx, f.gsettings, "s", "k"))
 	f.vals["s k"] = "dark"
 	l.Done(id, Raw("dark"))
 	f.vals["s k"] = "'prefer-light'"
@@ -290,6 +295,8 @@ func TestSystemSkippedByUndoAll(t *testing.T) {
 	t.Parallel()
 	l, _, root := newLedger(t)
 	a, b := filepath.Join(root, "a"), filepath.Join(root, "b")
+	os.WriteFile(a, nil, 0o644)
+	os.WriteFile(b, nil, 0o644)
 	begin(t, l, Row{Kind: KindFile, Target: a}, PriorAbsent)
 	sys := begin(t, l, Row{Kind: KindFile, Target: b, System: true}, PriorAbsent)
 	if ids := l.Select(UndoOptions{}); len(ids) != 1 || ids[0] == sys {
@@ -299,7 +306,7 @@ func TestSystemSkippedByUndoAll(t *testing.T) {
 		t.Errorf("%v", ids)
 	}
 	// Picked, it's undone
-	if res := l.Undo(context.Background(), []string{sys}, UndoOptions{}); res[0].Outcome != OutcomeGone {
+	if res := l.Undo(context.Background(), []string{sys}, UndoOptions{}); res[0].Outcome != OutcomeDone {
 		t.Errorf("%+v", res)
 	}
 }
@@ -309,23 +316,24 @@ func TestLockSerializesWriters(t *testing.T) {
 	l, _, root := newLedger(t)
 	other := New(l.o)
 	var wg sync.WaitGroup
-	for _, led := range []*Ledger{l, other} {
+	for n, led := range []*Ledger{l, other} {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for i := range 25 {
-				if _, err := led.Begin(Row{Kind: KindFile, Target: filepath.Join(root, "f", string(rune('a'+i)), strings.Repeat("x", len(led.path)%3))}, PriorAbsent); err != nil {
+				if _, err := led.Begin(Row{Kind: KindFile, Target: filepath.Join(root, "f", fmt.Sprintf("w%d-%d", n, i))}, PriorAbsent); err != nil {
 					t.Error(err)
 				}
 			}
 		}()
 	}
 	wg.Wait()
-	if n := len(l.Rows()); n < 25 {
-		t.Errorf("rows lost: %d", n)
+	rows := l.Rows()
+	if len(rows) != 50 {
+		t.Errorf("rows: %d, want 50", len(rows))
 	}
 	seen := map[string]bool{}
-	for _, r := range l.Rows() {
+	for _, r := range rows {
 		if seen[r.ID] {
 			t.Errorf("duplicate %s", r.ID)
 		}

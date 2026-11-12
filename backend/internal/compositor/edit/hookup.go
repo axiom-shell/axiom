@@ -120,6 +120,7 @@ func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, 
 			return result, err
 		}
 		sum := sha256.Sum256(data)
+		prev, had := h.opts.Ledger.Get(footprint.ID(footprint.KindHookup, p.Resolved, ""))
 		id, err := h.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindHookup, Target: p.Resolved, Owner: owner,
 			Hookup: &footprint.HookupRec{CreatedFile: !p.Exists, CopiedSHA256: hex.EncodeToString(sum[:])}}, footprint.PriorAbsent)
 		if err != nil {
@@ -127,9 +128,7 @@ func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, 
 		}
 		err = Replace(p.Resolved, data)
 		result.Changed = err == nil
-		if err == nil {
-			h.opts.Ledger.Done(id, nil)
-		}
+		h.finish(id, prev, had, err)
 		return result, err
 	case p.Wraps:
 		// The link becomes the backup (still pointing where it did), and a
@@ -139,20 +138,20 @@ func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, 
 			return result, err
 		}
 		out, rec := hookup.Edit(r, p, lines)
+		prev, had := h.opts.Ledger.Get(footprint.ID(footprint.KindHookup, p.Path, ""))
 		id, err := h.opts.Ledger.Begin(footprint.Row{Kind: footprint.KindHookup, Target: p.Path, Owner: owner,
 			Hookup: &footprint.HookupRec{Edit: rec, LinkTarget: link, Backup: p.Path + suffix}}, footprint.PriorAbsent)
 		if err != nil {
 			return result, err
 		}
 		if err := os.Symlink(link, p.Path+suffix); err != nil {
+			h.finish(id, prev, had, err)
 			return result, err
 		}
 		result.Backup = p.Path + suffix
 		err = fsx.ReplaceLink(p.Path, []byte(hookup.Text(out)), 0o644)
 		result.Changed = err == nil
-		if err == nil {
-			h.opts.Ledger.Done(id, nil)
-		}
+		h.finish(id, prev, had, err)
 		return result, err
 	}
 	out, rec := hookup.Edit(r, p, lines)
@@ -162,10 +161,12 @@ func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, 
 	backup := p.Resolved + suffix
 	if p.Exists {
 		row.Hookup.Backup = backup
-		if data, err := os.ReadFile(p.Resolved); err == nil {
-			row.Hookup.NoFinalNewline = len(data) > 0 && data[len(data)-1] != '\n'
+		if data, err := os.ReadFile(p.Resolved); err == nil && len(data) > 0 && data[len(data)-1] != '\n' {
+			row.Hookup.NoFinalNewline = true
+			row.Hookup.LastLine = lines[len(lines)-1]
 		}
 	}
+	prev, had := h.opts.Ledger.Get(footprint.ID(footprint.KindHookup, p.Resolved, ""))
 	id, err := h.opts.Ledger.Begin(row, footprint.PriorAbsent)
 	if err != nil {
 		return result, err
@@ -173,6 +174,7 @@ func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, 
 	if p.Exists {
 		if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
 			if err := Copy(p.Resolved, backup); err != nil {
+				h.finish(id, prev, had, err)
 				return result, err
 			}
 		}
@@ -180,10 +182,21 @@ func (h *Hookups) apply(r hookup.Resolved, suffix, owner string) (HookupResult, 
 	}
 	err = Replace(p.Resolved, []byte(hookup.Text(out)))
 	result.Changed = err == nil
+	h.finish(id, prev, had, err)
+	return result, err
+}
+
+// finish closes a row's write-ahead: done when the write was made; when it
+// failed, a row Begin merged this edit's lines into goes back to what it
+// held (a new row stays pending: its undo finds nothing to take out).
+func (h *Hookups) finish(id string, prev footprint.Row, had bool, err error) {
 	if err == nil {
 		h.opts.Ledger.Done(id, nil)
+		return
 	}
-	return result, err
+	if had {
+		_ = h.opts.Ledger.Amend(id, func(r *footprint.Row) { r.Hookup, r.State = prev.Hookup, prev.State })
+	}
 }
 
 func (h *Hookups) env() hookup.Env {
