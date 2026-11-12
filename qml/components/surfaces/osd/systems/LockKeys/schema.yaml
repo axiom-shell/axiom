@@ -2,6 +2,7 @@ label: Lock keys
 icon: keyboard_capslock
 group: Keys & input
 tile: standard
+order: [tile, shows, quiet]
 settings:
   shows:
     type: array

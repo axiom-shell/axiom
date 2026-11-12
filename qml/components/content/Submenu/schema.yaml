@@ -13,14 +13,15 @@ settings:
     x-options: menus
     x-emptyLabel: None
     description: The menu that opens beside this one.
-  label: {type: string, title: Label, default: '', description: Empty shows none.}
+  label: {type: string, title: Label, default: '', description: 'Empty: none.'}
   icon:
     type: string
     title: Icon
+    x-control: icon
     default: menu_open
-    description: A Material Symbols name. Empty shows none.
+    description: 'Empty: none.'
   openOnHover:
     type: boolean
     title: Open on hover
     default: true
-    description: Off, it opens on click.
+    description: 'Off: opens on click.'

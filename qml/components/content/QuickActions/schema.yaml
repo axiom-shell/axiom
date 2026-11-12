@@ -2,12 +2,29 @@ label: Quick actions
 icon: toggle_on
 group: Tools
 defaultSize: [4, 2]
+order: [style, labels, actions]
 settings:
+  style:
+    type: string
+    title: Style
+    default: tiles
+    x-control: toggle
+    enum: [tiles, pills]
+    x-enumLabels: {tiles: Tiles, pills: Pills}
+    description: 'Pills: wide, with a status line beside the icon.'
+  labels:
+    type: string
+    title: Names
+    default: auto
+    x-control: toggle
+    enum: [auto, show, hide]
+    x-enumLabels: {auto: Auto, show: Show, hide: Hide}
+    description: 'Auto: only when every tile fits its name.'
   actions:
     type: array
     title: Actions
     default: [wifi, bluetooth, idleInhibit, toggleDnd, darkMode]
-    description: Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.
+    description: Tiles that can't work here are hidden.
     x-ordered: true
     items:
       type: string
@@ -35,19 +52,3 @@ settings:
         themePicker: Tiles
         wallpaperPicker: Tiles
         pin: Tiles
-  labels:
-    type: string
-    title: Names
-    default: auto
-    x-control: toggle
-    enum: [auto, show, hide]
-    x-enumLabels: {auto: Auto, show: Show, hide: Hide}
-    description: Auto shows names only when every tile fits its name.
-  style:
-    type: string
-    title: Style
-    default: tiles
-    x-control: toggle
-    enum: [tiles, pills]
-    x-enumLabels: {tiles: Tiles, pills: Pills}
-    description: Pills are wide, with a status line beside the icon.

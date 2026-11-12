@@ -3,6 +3,7 @@ icon: videocam
 group: Privacy
 tile: standard
 card: standard
+order: [tile, card, quiet, shows]
 settings:
   shows:
     type: array

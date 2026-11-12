@@ -8,5 +8,7 @@ settings:
     type: string
     title: Opens on
     default: auto
+    x-control: toggle
     enum: [auto, timer, stopwatch]
-    x-enumLabels: {auto: Whichever is running, timer: Timer, stopwatch: Stopwatch}
+    x-enumLabels: {auto: Auto, timer: Timer, stopwatch: Stopwatch}
+    description: 'Auto: whichever is running.'

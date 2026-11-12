@@ -1039,9 +1039,9 @@ TestCase {
     const style = SchemaLayout.objectGroups(schema.definitions.BarStyle, []);
     compare(style.map(g => g.title), ["Size", "Look", "Colors", "Accents", "Shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.Menu, ["layout.modules"]);
-    compare(menu.map(g => g.title), ["General", "Opening", "Placement", "Style", "Behaviour", "Closing"]);
+    compare(menu.map(g => g.title), ["General", "Placement", "Size", "Look", "Behaviour", "Closing", "Motion"]);
     const osd = SchemaLayout.objectGroups(schema.definitions.OSDEntry, ["systems", "barLayout"]);
-    compare(osd.slice(0, 2).map(g => g.title), ["Placement", "Timing and behaviour"]);
+    compare(osd.slice(0, 2).map(g => g.title), ["Placement", "Content"]);
   }
 
   function test_real_schema_intros_exist() {

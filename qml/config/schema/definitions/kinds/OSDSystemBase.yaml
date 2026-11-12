@@ -13,20 +13,19 @@ x-parts:
     standard:
       tile:
         type: boolean
-        title: Icon
+        title: Status icon
         default: true
-        description: Its status icon in the OSD's row.
   card:
     standard:
       card:
         type: boolean
         title: Card
         default: true
-        description: A card saying what changed, where its change needs one.
+        description: A card saying what changed, for changes that need one.
 properties:
   type: {}
   quiet:
     type: boolean
     title: Quiet
     default: false
-    description: Its changes don't open the OSD; they still show on an open one.
+    description: Changes don't open the OSD; they still show on an open one.

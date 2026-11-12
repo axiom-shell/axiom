@@ -16,7 +16,7 @@ x-parts:
         minimum: 0
         maximum: 16
         x-unit: rows
-        description: Extra rows while its list needs them. 0 keeps its size.
+        description: 'Extra rows while its list needs them. 0: keeps its size.'
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}

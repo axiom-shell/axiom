@@ -1,12 +1,4 @@
 label: VPN connections
 icon: vpn_lock
 group: Network & devices
-settings:
-  grow:
-    type: integer
-    title: Grow by up to
-    default: 0
-    minimum: 0
-    maximum: 16
-    x-unit: rows
-    description: Extra rows it takes while its list needs them. 0 keeps its size.
+grow: standard

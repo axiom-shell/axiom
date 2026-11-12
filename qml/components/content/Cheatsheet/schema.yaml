@@ -4,6 +4,7 @@ keyboard: true
 icon: keyboard
 group: Tools
 defaultSize: [8, 6]
+order: [view, mods, sections, showUndescribed]
 settings:
   sections:
     type: array
@@ -13,7 +14,7 @@ settings:
     description: Comma-separated section titles. Empty shows them all.
   showUndescribed:
     type: boolean
-    title: Show undescribed binds
+    title: Undescribed binds
     default: false
     description: Listed by their dispatcher.
   view:
@@ -23,13 +24,13 @@ settings:
     enum: [list, keyboard]
     x-enumLabels: {list: List, keyboard: Keyboard}
     default: list
-    description: The binds by section, or a keyboard showing what each key does.
+    description: 'Keyboard: what each key does.'
   mods:
     type: array
-    title: Keyboard modifiers
+    title: Modifiers
     default: [SUPER]
     items:
       type: string
       enum: [SUPER, CTRL, ALT, SHIFT]
     x-showIf: {view: keyboard}
-    description: Held on the keyboard view.
+    description: Held down on the keyboard.

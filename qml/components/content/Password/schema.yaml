@@ -6,15 +6,16 @@ defaultSize: [6, 1]
 required: true
 hosts: {only: [lockscreen]}
 lockActions: [unlock]
+order: [centered, placeholder, showMessages]
 settings:
+  centered: {type: boolean, title: Centered text, default: true}
   placeholder:
     type: string
     title: Placeholder
     default: ''
-    description: Empty says Enter password...
-  centered: {type: boolean, title: Centre the text, default: true}
+    description: 'Empty: Enter password...'
   showMessages:
     type: boolean
     title: Messages
     default: true
-    description: Show login prompts, failures and errors under the field.
+    description: Prompts, failures and errors under the field.

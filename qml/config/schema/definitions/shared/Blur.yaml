@@ -7,37 +7,18 @@ additionalProperties: false
 properties:
   enabled:
     type: boolean
-    title: Set the compositor's blur
+    title: Compositor blur
     default: false
-    description: The compositor has one blur, for windows and axiom alike. Off, your own config's applies.
+    description: 'One blur for windows and axiom alike. Off: your own config''s applies.'
     x-hintedIf: {/$supports.windowBlur: true}
   windowBlur:
     type: boolean
     title: Blur transparent windows
     default: true
-    description: Off, only axiom's surfaces blur.
+    description: 'Off: only axiom''s surfaces blur.'
     x-showIf: {enabled: true}
     x-hintedIf: {/$supports.windowBlur: true}
     x-compositor: {hyprland: {key: decoration.blur.enabled, if: enabled}}
-  size:
-    type: integer
-    x-control: stepper
-    title: Blur size
-    default: 4
-    minimum: 1
-    maximum: 20
-    x-showIf: {enabled: true}
-    x-hintedIf: {/$supports.windowBlur: true}
-    x-compositor: {hyprland: {key: decoration.blur.size, if: enabled}}
-  passes:
-    type: integer
-    title: Blur passes
-    default: 3
-    minimum: 1
-    maximum: 6
-    x-showIf: {enabled: true}
-    x-hintedIf: {/$supports.windowBlur: true}
-    x-compositor: {hyprland: {key: decoration.blur.passes, if: enabled}}
   xray:
     type: boolean
     title: See-through blur
@@ -48,18 +29,46 @@ properties:
     x-compositor: {hyprland: {key: decoration.blur.xray, if: enabled}}
   ignoreOpacity:
     type: boolean
-    title: Full blur behind any transparency
+    title: Full-strength blur
     default: true
+    description: Blur ignores a window's opacity.
     x-showIf: {enabled: true, windowBlur: true, /$compositor: hyprland}
     x-hintedIf: {/$supports.windowBlur: true}
     x-compositor: {hyprland: {key: decoration.blur.ignore_opacity, if: enabled}}
-  newOptimizations:
+  popups:
     type: boolean
-    title: Blur optimizations
-    default: true
+    title: Menus and popups
+    default: false
+    x-showIf: {enabled: true, windowBlur: true, /$compositor: hyprland}
+    x-hintedIf: {/$supports.windowBlur: true}
+    x-compositor: {hyprland: {key: decoration.blur.popups, if: enabled}}
+  special:
+    type: boolean
+    title: Behind special workspaces
+    default: false
+    description: 'Expensive: redraws the blur every frame.'
     x-showIf: {enabled: true, /$compositor: hyprland}
     x-hintedIf: {/$supports.windowBlur: true}
-    x-compositor: {hyprland: {key: decoration.blur.new_optimizations, if: enabled}}
+    x-compositor: {hyprland: {key: decoration.blur.special, if: enabled}}
+  size:
+    type: integer
+    x-control: stepper
+    title: Size
+    default: 4
+    minimum: 1
+    maximum: 20
+    x-showIf: {enabled: true}
+    x-hintedIf: {/$supports.windowBlur: true}
+    x-compositor: {hyprland: {key: decoration.blur.size, if: enabled}}
+  passes:
+    type: integer
+    title: Passes
+    default: 3
+    minimum: 1
+    maximum: 6
+    x-showIf: {enabled: true}
+    x-hintedIf: {/$supports.windowBlur: true}
+    x-compositor: {hyprland: {key: decoration.blur.passes, if: enabled}}
   noise:
     type: integer
     title: Noise
@@ -90,18 +99,10 @@ properties:
     x-showIf: {enabled: true, /$compositor: hyprland}
     x-hintedIf: {/$supports.windowBlur: true}
     x-compositor: {hyprland: {key: decoration.blur.vibrancy, scale: 0.01, if: enabled}}
-  popups:
+  newOptimizations:
     type: boolean
-    title: Blur menus and popups
-    default: false
-    x-showIf: {enabled: true, windowBlur: true, /$compositor: hyprland}
-    x-hintedIf: {/$supports.windowBlur: true}
-    x-compositor: {hyprland: {key: decoration.blur.popups, if: enabled}}
-  special:
-    type: boolean
-    title: Blur behind special workspaces
-    default: false
-    description: 'Expensive: redraws the blur every frame.'
+    title: Optimizations
+    default: true
     x-showIf: {enabled: true, /$compositor: hyprland}
     x-hintedIf: {/$supports.windowBlur: true}
-    x-compositor: {hyprland: {key: decoration.blur.special, if: enabled}}
+    x-compositor: {hyprland: {key: decoration.blur.new_optimizations, if: enabled}}

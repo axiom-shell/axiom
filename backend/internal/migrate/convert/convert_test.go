@@ -167,6 +167,12 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	detachedPlaceFields(converted)
 	detachedPlaceFields(defaults.(*jsonx.Object))
 	dropModuleKeys(defaults)
+	// The overlay pages' visible (ViewBase's default, true), filled at load
+	overlay, _ := defaults.(*jsonx.Object).Value("Overlay").(*jsonx.Object)
+	pages, _ := overlay.Value("items").(*jsonx.Array)
+	for _, page := range pages.Items {
+		page.(*jsonx.Object).Delete("visible")
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {

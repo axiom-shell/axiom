@@ -8,7 +8,7 @@ additionalProperties: false
 properties:
   notify:
     type: boolean
-    title: Monitor notifications
+    title: Notifications
     default: false
     description: Notify when a monitor is connected or removed.
     x-link: {setting: OSD}
