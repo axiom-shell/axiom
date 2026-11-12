@@ -162,6 +162,8 @@ func TestUninstallAnswersAreStrict(t *testing.T) {
 		"a missing key":         {file: `{"keepConfig":false}`},
 		"an unknown key":        {file: full + `,"deleteEverything":true}`},
 		"not JSON":              {file: `{`},
+		"a null answer":         {file: `{"keepConfig":null,"keepUserContent":true,"keepSecrets":true,"undoInferred":true,"restoreSystem":false,"restartPortal":true}`},
+		"a non-boolean answer":  {file: `{"keepConfig":"yes","keepUserContent":true,"keepSecrets":true,"undoInferred":true,"restoreSystem":false,"restartPortal":true}`},
 		"with --purge-all":      {file: full + `}`, args: []string{"--purge-all"}},
 		"with --restore-system": {file: full + `}`, args: []string{"--restore-system"}},
 	} {
@@ -217,5 +219,18 @@ func TestUninstallQuestionsGoToStderrWithTheListFirst(t *testing.T) {
 	}
 	if !strings.Contains(got, "notes, to-dos, themes, downloaded wallpapers and calendars") {
 		t.Errorf("the data question doesn't say what it holds: %q", got)
+	}
+}
+
+func TestReadAnswersFalseStaysFalse(t *testing.T) {
+	t.Parallel()
+	p := filepath.Join(t.TempDir(), "a.json")
+	os.WriteFile(p, []byte(`{"keepConfig":false,"keepUserContent":false,"keepSecrets":false,"undoInferred":false,"restoreSystem":false,"restartPortal":false}`), 0o600)
+	a, err := readAnswers(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a != (uninstall.Answers{}) {
+		t.Errorf("answers %+v", a)
 	}
 }

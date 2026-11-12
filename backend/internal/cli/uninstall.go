@@ -223,11 +223,15 @@ func readAnswers(path string) (uninstall.Answers, error) {
 		return uninstall.Answers{}, axerr.Wrap(axerr.BadRequest, err, "the answers in %s", path)
 	}
 	for _, k := range []string{"keepConfig", "keepUserContent", "keepSecrets", "undoInferred", "restoreSystem", "restartPortal"} {
-		if _, ok := keys[k]; !ok {
+		v, ok := keys[k]
+		if !ok {
 			return uninstall.Answers{}, axerr.New(axerr.BadRequest, "the answers in %s lack %s", path, k)
 		}
+		if t := bytes.TrimSpace(v); !bytes.Equal(t, []byte("true")) && !bytes.Equal(t, []byte("false")) {
+			return uninstall.Answers{}, axerr.New(axerr.BadRequest, "the answers in %s: %s isn't true or false", path, k)
+		}
 	}
-	a := uninstall.Answers{KeepConfig: true, KeepUserContent: true, KeepSecrets: true, UndoInferred: true, RestartPortal: true}
+	a := uninstall.Answers{KeepConfig: true, KeepUserContent: true, KeepSecrets: true, UndoInferred: false, RestartPortal: true}
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&a); err != nil {

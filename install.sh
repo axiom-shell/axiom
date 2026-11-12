@@ -323,18 +323,24 @@ do_uninstall() {
       ((dry_run)) || ok "Removed $bin"
     fi
   fi
-  # The install: its default folder, or the tree this runs from, when it is
-  # a tree of axiom's (qml/shell.qml). A clone with changes of its own, or of
-  # another repository, is never removed: the command is listed instead
+  # The install: only the installer's own clone (the default folder) is ever
+  # removed, and only when git can say nothing of yours is in it. Any other
+  # folder, the tree this runs from included, is left and listed
   if [[ -f "$AXIOM_DIR/qml/shell.qml" ]]; then
-    if { same_dir "$AXIOM_DIR" "$default_dir" || { [[ -n "$script_dir" ]] && same_dir "$AXIOM_DIR" "$script_dir"; }; }; then
-      local why=""
-      if git -C "$AXIOM_DIR" rev-parse --git-dir >/dev/null 2>&1; then
-        if [[ -n "$(git -C "$AXIOM_DIR" status --porcelain 2>/dev/null)" ]]; then
-          why="it has changes of your own"
-        elif [[ "$(git -C "$AXIOM_DIR" remote get-url origin 2>/dev/null)" != "$AXIOM_REPO" ]]; then
-          why="its origin isn't $AXIOM_REPO"
-        fi
+    if same_dir "$AXIOM_DIR" "$default_dir"; then
+      local why="" st
+      if ! git -C "$AXIOM_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+        why="its git state can't be read"
+      elif ! st="$(git -C "$AXIOM_DIR" status --porcelain 2>/dev/null)"; then
+        why="its git state can't be read"
+      elif [[ -n "$st" ]]; then
+        why="it has changes of your own"
+      elif ! st="$(git -C "$AXIOM_DIR" stash list 2>/dev/null)" || [[ -n "$st" ]]; then
+        why="it has stashed changes"
+      elif ! st="$(git -C "$AXIOM_DIR" rev-list '@{u}..HEAD' 2>/dev/null)" || [[ -n "$st" ]]; then
+        why="it has commits that aren't pushed (or no upstream to compare with)"
+      elif [[ "$(git -C "$AXIOM_DIR" remote get-url origin 2>/dev/null)" != "$AXIOM_REPO" ]]; then
+        why="its origin isn't $AXIOM_REPO"
       fi
       if [[ -n "$why" ]]; then
         info "Left $AXIOM_DIR ($why). Remove it yourself when you're sure: rm -rf '$AXIOM_DIR'"
@@ -343,7 +349,7 @@ do_uninstall() {
         ((dry_run)) || ok "Removed $AXIOM_DIR"
       fi
     else
-      info "Left $AXIOM_DIR: it isn't the install's default folder or the tree this runs from. Remove it yourself if you want: rm -rf '$AXIOM_DIR'"
+      info "Left $AXIOM_DIR: it isn't the installer's own clone ($default_dir). Remove it yourself if you want: rm -rf '$AXIOM_DIR'"
     fi
   fi
   return 0
