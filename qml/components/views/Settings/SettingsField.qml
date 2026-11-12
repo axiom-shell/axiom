@@ -14,7 +14,9 @@ import qs.components.reusable
 // `form`), and the rows its `x-rowDraws` names hide (an object with
 // `x-row`: every row under it); an object with `x-fold` is a fold header,
 // its rows shown only while it's open (SettingsManager.isFoldOpen), and
-// always in a search
+// always in a search. A card with an `x-intro` `setup` has one too, a
+// `Settings` row (`foldRows`: the rows behind it) hidden while none of them
+// shows, its rows `foldedBy` it (`foldedIn` when also inside an `x-fold`)
 FormRow {
   id: root
 
@@ -32,7 +34,11 @@ FormRow {
   readonly property bool foldOpen: root.listing || SettingsManager.isFoldOpen(root.foldHeader ? root.row.path.join(".") : (root.row.foldedBy ?? ""))
 
   // A row another field's `x-row` draws (`drawnBy`) is drawn there
-  shown: field.shown && (!root.row.foldedBy || root.foldOpen) && !root.row.drawnBy
+  readonly property bool foldedInOpen: root.listing || !root.row.foldedIn || SettingsManager.isFoldOpen(root.row.foldedIn)
+  // A card's settings fold with nothing shown behind it isn't drawn
+  readonly property bool foldHasRows: !root.row.foldRows || root.row.foldRows.some(inner => inner.kind !== "group" && root.form.rowShown(inner))
+
+  shown: field.shown && (!root.row.foldedBy || root.foldOpen) && root.foldedInOpen && root.foldHasRows && !root.row.drawnBy
   // A row shown by a sibling's value (Night light's times, under "On a
   // schedule")
   indented: root.isValue && field.followsSibling
@@ -79,10 +85,11 @@ FormRow {
     id: foldTitle
     visible: root.foldHeader
     width: parent.width
+    // I18n.tr("Settings") (a card's fold behind its `x-intro`)
     title: I18n.tr(root.row.title)
     collapsed: !root.foldOpen
     foldable: !root.listing
-    marked: root.foldHeader && SettingsManager.hasChangesUnder(root.row.path.join("."))
+    marked: root.foldHeader && (root.row.foldRows ? root.row.foldRows.some(inner => SettingsManager.hasChangesUnder(inner.path.join("."))) : SettingsManager.hasChangesUnder(root.row.path.join(".")))
     onToggled: SettingsManager.setFoldOpen(root.row.path.join("."), !root.foldOpen)
   }
 

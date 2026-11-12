@@ -2,7 +2,7 @@
 
 type: object
 x-category: Screen & Power
-x-card: {file: PolkitStatus, title: polkit agent}
+x-intro: {file: PolkitStatus, setup: [enabled]}
 title: Authentication prompts
 description: The password prompt apps show for administrator rights (polkit).
 additionalProperties: false

@@ -2,7 +2,7 @@
 
 type: object
 x-category: Screen & Power
-x-card: {file: ScreenSharingStatus, title: screen sharing}
+x-intro: {file: ScreenSharingStatus, setup: [enabled]}
 title: Screen sharing
 description: The picker apps show to share a screen or window (a call, a stream).
 additionalProperties: false

@@ -5,12 +5,13 @@ import qs.config
 import qs.services.core
 import qs.components.reusable
 
-// The Updates category's first card (the section's `x-card`): the
-// installed and newest release, what's new, and Check / Update
-FieldGroup {
+// The top of the axiom updates card (the section's `x-intro`): the
+// installed and newest release, what's new, and Check / Update. `status` and
+// `statusColor` are the card's header chip
+ColumnLayout {
   id: root
 
-  readonly property string status: {
+  readonly property string stage: {
     if (SelfUpdateManager.managed)
       return "managed";
     if (SelfUpdateManager.applying)
@@ -25,7 +26,7 @@ FieldGroup {
   }
 
   readonly property color statusColor: {
-    switch (root.status) {
+    switch (root.stage) {
     case "uptodate":
       return Theme.success;
     case "available":
@@ -38,8 +39,8 @@ FieldGroup {
     return Theme.foregroundAlt;
   }
 
-  readonly property string statusLabel: {
-    switch (root.status) {
+  readonly property string status: {
+    switch (root.stage) {
     case "managed":
       return I18n.tr("Package manager");
     case "applying":
@@ -68,12 +69,7 @@ FieldGroup {
     return SelfUpdateManager.ahead ? I18n.tr("{0} + development ({1})", tag, commit) : tag;
   }
 
-  headerExtras: [
-    StatusChip {
-      text: root.statusLabel
-      color: root.statusColor
-    }
-  ]
+  spacing: Widget.spacing * 1.5
 
   GridLayout {
     visible: !SelfUpdateManager.managed
@@ -116,7 +112,7 @@ FieldGroup {
   }
 
   StyledText {
-    visible: root.status === "managed"
+    visible: root.stage === "managed"
     text: I18n.tr("This copy of axiom isn't a git clone: its updates come from your package manager.")
     opacity: 0.7
     textSize: Appearance.fontSizeBy(-1)
@@ -125,7 +121,7 @@ FieldGroup {
   }
 
   StyledText {
-    visible: root.status === "error"
+    visible: root.stage === "error"
     text: SelfUpdateManager.error
     textColor: Theme.error
     textSize: Appearance.fontSizeBy(-1)
@@ -134,7 +130,7 @@ FieldGroup {
   }
 
   StyledText {
-    visible: root.status === "blocked"
+    visible: root.stage === "blocked"
     text: I18n.tr("{0} is available, but your copy of axiom can't update: {1}", SelfUpdateManager.latest, SelfUpdateManager.blockedReason(SelfUpdateManager.blocked))
     textColor: Theme.warning
     textSize: Appearance.fontSizeBy(-1)

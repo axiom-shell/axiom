@@ -10,7 +10,7 @@ import qs.components.reusable
 // compositor and whether it's installed, the line that points it at axiom's
 // picker (applied once, on a click), a restart of the portal so it takes
 // effect, and a try of the picker. The body of the ScreenSharing card
-// (ScreenSharingStatusCard, which shows `statusLabel` in its header) and
+// (ScreenSharingStatus, whose card shows `statusLabel` in its header) and
 // of the onboarder's System page.
 ColumnLayout {
   id: root

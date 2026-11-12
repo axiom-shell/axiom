@@ -1,6 +1,6 @@
 # Screen sharing
 
-> **Files:** `qml/components/forms/ScreenSharingSetup.qml`, `backend/internal/screenshare/` (`screenshare.go` the broker, `xdph.go`, `xdpw.go`, `portal.go`), `backend/internal/daemon/screenshare.go`, `backend/internal/cli/screensharepick.go`, `backend/internal/cli/portalwait.go`, `data/portal/`, `qml/services/apps/ScreenShareManager.qml`, `qml/components/methods/ScreenShareSources.qml`, `qml/shell/ScreenSharePicker.qml`, `qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml`, `qml/components/views/Settings/ScreenSharingStatusCard.qml`
+> **Files:** `qml/components/forms/ScreenSharingSetup.qml`, `backend/internal/screenshare/` (`screenshare.go` the broker, `xdph.go`, `xdpw.go`, `portal.go`), `backend/internal/daemon/screenshare.go`, `backend/internal/cli/screensharepick.go`, `backend/internal/cli/portalwait.go`, `data/portal/`, `qml/services/apps/ScreenShareManager.qml`, `qml/components/methods/ScreenShareSources.qml`, `qml/shell/ScreenSharePicker.qml`, `qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml`, `qml/components/views/Settings/ScreenSharingStatus.qml`
 > **Config:** `ScreenSharing.*` (reader `ScreenSharingConfig`; the daemon reads `enabled`, `reuseFor` and `remember` itself)
 > **Related:** [Screenshots and recording](screenshots-recording.md) (the region drag), [Theme integrations](../theming/theme-integrations.md) (the hookup), [Polkit](polkit.md) (the modal it's drawn like), [Privacy](../../usage.md) (the OSD's screen-sharing status, from PipeWire)
 
