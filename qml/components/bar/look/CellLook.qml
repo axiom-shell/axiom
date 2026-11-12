@@ -16,8 +16,7 @@ QtObject {
   id: root
 
   required property var barConfig
-  // The widget's options: solidBoxes, labels, showAppIcons, spacing,
-  // hoverColor
+  // The widget's options: solidBoxes, labels, showAppIcons, spacing
   property var properties: ({})
   // Drawn in its widget on the bar, not a popout: in a merged run on a
   // merged bar
@@ -36,6 +35,9 @@ QtObject {
 
   // Every cell a filled box (`solidBoxes`)
   readonly property bool solid: properties?.solidBoxes ?? false
+  // The widget's colors resolved (BarsConfig.workspaceColors): activeColor,
+  // occupiedColor, urgentColor, emptyColor, textColor, hoverColor (null: Auto)
+  readonly property var colors: BarsConfig.workspaceColors(properties)
   readonly property var _look: barConfig?.look ?? null
   readonly property var _flags: BarCells.cellLook(_look, solid, onBar)
   // BarCells.cellLook's
@@ -57,8 +59,6 @@ QtObject {
   readonly property real spacing: barConfig ? BarsConfig.workspaceCellSpacing(barConfig, properties?.spacing) : 0
   readonly property real gap: run ? BarCells.cellGap(_look.grouping, spacing) : spacing
   readonly property real partGap: !barConfig ? 0 : run ? BarCells.cellGap(_look.grouping, barConfig.innerGap) : barConfig.innerGap
-  // A cell's box while hovered (BarsConfig.cellHoverColor)
-  readonly property color hoverColor: BarsConfig.cellHoverColor(properties)
   // The tallest a workspace cell shows across (its label, or an app
   // icon), and a strip window's (its app icon): the room it keeps clear
   // of its caps (WorkspaceCells)
@@ -76,29 +76,59 @@ QtObject {
     return root.run ? BarCells.cellRoom(root.barConfig, root.run, root.boxedInRun, cell, cells, content) : null;
   }
 
-  // A cell's colors (BarsConfig.cellColors) in its state's `color`, `own`
-  // reading on it filled, for `state`, with `cell`'s hovered and spot
-  function colorsOf(color, own, state, cell) {
-    return BarsConfig.cellColors(root.barConfig, color, own, state, Object.assign({}, cell, {
-      "solid": root.solid,
+  // A workspace's cell colors by its state (BarsConfig.workspaceCellColors)
+  // in the widget's `colors`, with `cell`'s hovered, spot, pulse (as
+  // BarsConfig.cellColors takes them)
+  function workspaceColorsOf(active, occupied, urgent, cell) {
+    return BarsConfig.workspaceCellColors(root.barConfig, Object.assign({}, root.colors, {
+      "solidBoxes": root.solid
+    }), active, occupied, urgent, Object.assign({}, cell, {
       "onBar": root.onBar,
-      "under": root.under
+      "under": root.under,
+      "hover": root.colors.hoverColor,
+      // a spot is handed only where the active color is Auto and gives way
+      // (CellLook.spotOf, Workspaces._activeSpotOf)
+      "auto": (cell?.spot ?? -1) >= 0
     }));
   }
-  // A workspace's cell colors by its state (BarsConfig.workspaceCellColors)
-  // in the widget's `colors` ({ activeColor, occupiedColor, urgentColor,
-  // emptyColor, textColor })
-  function workspaceColorsOf(colors, active, occupied, urgent, cell) {
-    return BarsConfig.workspaceCellColors(root.barConfig, {
-      "activeColor": colors.activeColor,
-      "occupiedColor": colors.occupiedColor,
-      "urgentColor": colors.urgentColor,
-      "emptyColor": colors.emptyColor,
-      "textColor": colors.textColor,
-      "solidBoxes": root.solid
-    }, active, occupied, urgent, Object.assign({}, cell, {
-      "onBar": root.onBar,
-      "under": root.under
-    }));
+
+  // Where a point of an item of the widget sits along the bar (its
+  // BarWidget.barSpotOf), set only where its active color is Auto and gives
+  // way to the bar's gradient (Workspaces._activeSpotOf); null: none (a popout)
+  property var spotOf: null
+
+  // Where `along` of `item` sits along the bar, or -1. `moved` is unused:
+  // callers pass their place so a binding re-reads when they move (mapping
+  // isn't a binding)
+  function spotAt(item, along, moved) {
+    return root.spotOf ? root.spotOf(item, along) : -1;
+  }
+
+  // A cell's slice of the bar's gradient from `from` to `to` along `item`,
+  // for the part `look.gradient` names: in the bar's run any part, else only
+  // a line (an underline follows the gradient as a widget's does); else null
+  function sliceOf(look, item, from, to, moved) {
+    const part = look?.gradient ?? null;
+    if (part === null || !root.spotOf || !(root.run || part.part === "indicator"))
+      return null;
+    return BarGradient.gradientSlice(root.barConfig.palette.gradientStops, root.spotOf(item, from), root.spotOf(item, to), part.alpha);
+  }
+
+  // `look` with its box, outline and line cleared (the active cell's box at
+  // rest under the sliding indicator), each its own color at no alpha so it
+  // fades from it
+  function cleared(look) {
+    return Object.assign({}, look, {
+      "fill": BarWidgetStyle.faded(look.fill, 0),
+      "stroke": BarWidgetStyle.faded(look.stroke, 0),
+      "indicator": BarWidgetStyle.faded(look.indicator, 0)
+    });
+  }
+
+  // The active color as a line at `along` of `item` (the one strip box's
+  // focus mark): the gradient's there where it gives way, else its own; a
+  // line, never nudged or overridden
+  function activeAt(item, along, moved) {
+    return BarWidgetStyle.fieldColor(root.barConfig.palette, root.spotAt(item, along), root.colors.activeColor, true, "");
   }
 }

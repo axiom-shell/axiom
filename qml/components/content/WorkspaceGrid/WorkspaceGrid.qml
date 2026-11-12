@@ -4,13 +4,12 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.bar.widgets.Workspaces
-import qs.components.reusable
 
 // The Workspaces bar widget's popout in the grid layout: the monitor's
 // whole columns × rows grid, with the row (or column, on a vertical bar)
-// the bar shows at full strength. Cells are the bar's (WorkspaceCell, in its
-// widget style, with the widget's colors, labels, app icons and click to
-// switch), so it reads as the bar row expanded.
+// the bar shows at full strength, the rest muted. Cells are the bar's
+// (WorkspaceCell, in its widget style, with the widget's colors, labels,
+// app icons and click to switch), so it reads as the bar row expanded.
 WorkspacePopoutPanel {
   id: root
 
@@ -57,12 +56,14 @@ WorkspacePopoutPanel {
         barConfig: root.barConfig
         cellLook: root.cellLook
         isActive: wsId === root.activeId
-        look: root.cellLook.workspaceColorsOf(root, isActive, hasWindows, shows.urgent, {
-          "hovered": wsCell.lit
+        look: root.cellLook.workspaceColorsOf(isActive, hasWindows, shows.urgent, {
+          "hovered": wsCell.lit,
+          // The rows the bar doesn't show read muted
+          "muted": !inBar,
+          "pulse": shows.urgent && !isActive ? root.pulse.value : 0
         })
         urgent: shows.urgent
-        pulse: root.pulse.value
-        urgentColor: root.urgentColor
+        pulsing: shows.urgent && !isActive && root.pulse.pulsing
         thickness: root.cellSize
         length: shows.length
         labels: root.properties.labels
@@ -76,13 +77,7 @@ WorkspacePopoutPanel {
         iconSlots: contents.iconSlots
         clickable: root.properties.clickToSwitch ?? false
         animated: root._settled
-        opacity: inBar ? 1.0 : 0.85
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.output)
-
-        Glide on opacity {
-          enabled: root._settled
-          duration: Appearance.animNormal
-        }
       }
     }
   }

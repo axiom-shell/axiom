@@ -64,11 +64,12 @@ WorkspacePopoutPanel {
           cellLook: root.cellLook
           isActive: line.isActive
           // Every workspace shown has windows or is the active one
-          look: root.cellLook.workspaceColorsOf(root, line.isActive, true, line.shows.urgent, {
-            "hovered": stripCell.lit
+          look: root.cellLook.workspaceColorsOf(line.isActive, true, line.shows.urgent, {
+            "hovered": stripCell.lit,
+            "pulse": line.shows.urgent && !line.isActive ? root.pulse.value : 0
           })
           urgent: line.shows.urgent
-          pulse: root.pulse.value
+          pulsing: line.shows.urgent && !line.isActive && root.pulse.pulsing
           thickness: root.cellSize
           length: line._text ? line.shows.length : root.cellLength
           labels: root.properties.labels
@@ -88,9 +89,6 @@ WorkspacePopoutPanel {
           workspaceId: line.wsId
           stripVertical: root.stripVertical
           isVertical: root.vertical
-          activeColor: root.activeColor
-          occupiedColor: root.occupiedColor
-          textColor: root.textColor
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
         }

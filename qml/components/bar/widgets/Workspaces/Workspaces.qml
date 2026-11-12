@@ -22,6 +22,7 @@ import qs.components.bar.look
 // its cell shows it, or in the grid its row's dots: GridPositionHead)
 // before the cells, in their box, is its icon part on a split bar
 // (WidgetHead); with no box (`segmented`) it sits on the bar all the same.
+// Its colors are the core's (paint, CellLook).
 BarWidget {
   id: root
 
@@ -47,6 +48,12 @@ BarWidget {
       "reachEnd": 0,
       "tabLimits": [null, null]
     }) : null
+  // Where its active cell sits along the bar, for an Auto active color to
+  // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
+  // Not in a merged run: that's a strip of the gradient itself, which the
+  // cell would vanish into, so it keeps its own.
+  readonly property var _activeSpotOf: root.autoColors.activeColor?.gradient === true && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
+
   // How its cells draw on this bar, handed to its switcher, its rows and
   // strips: inside its box, in its place in the bar's run
   readonly property CellLook _cellLook: CellLook {
@@ -56,6 +63,7 @@ BarWidget {
     run: root._run
     inset: root.inset
     under: root.colors.textBack
+    spotOf: root._activeSpotOf
   }
   // Its cells fill on hover, each on its own
   fillsOnHover: false
@@ -96,8 +104,8 @@ BarWidget {
     start: root._start - root.inset + root.barConfig.innerPadding
     icon: root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
     text: !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
-    iconColor: root.colors.icon
-    textColor: root.colors.icon
+    iconColor: root.paint.icon
+    textColor: root.paint.headText
     ownHead: positionHead.active ? positionHead : null
   }
 
@@ -112,7 +120,8 @@ BarWidget {
     sourceComponent: GridPositionHead {
       barConfig: root.barConfig
       properties: root.properties
-      color: root.colors.icon
+      color: root.paint.icon
+      dimColor: root.paint.muted("icon")
       vertical: root.isVertical
       line: root._position.line
       count: root._position.count
@@ -127,18 +136,11 @@ BarWidget {
     sourceComponent: CompositorManager.workspaceGrid ? gridStrip : strip
   }
 
-  // Where its active cell sits along the bar, for an Auto active color to
-  // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
-  // Not in a merged run: that's a strip of the gradient itself, which the
-  // cell would vanish into, so it keeps its own.
-  readonly property var _activeSpotOf: root.autoColors.activeColor?.gradient === true && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
-
   Component {
     id: strip
     WorkspaceStrip {
       screen: root.screen
       hitArea: root.hitArea
-      barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
       cellLook: root._cellLook
@@ -150,7 +152,6 @@ BarWidget {
     WorkspaceGridStrip {
       screen: root.screen
       hitArea: root.hitArea
-      barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
       cellLook: root._cellLook

@@ -28,20 +28,11 @@ Item {
   required property var ids
   // The workspace shown active; none of `ids` for none
   required property int activeId
-  required property color activeColor
-  required property color occupiedColor
-  required property color urgentColor
-  required property color emptyColor
-  required property color textColor
   // A hook: the glyph a cell shows instead of its label and app icon (the
   // grid's position arrow), or ""
   property var glyphOf: (id, active) => ""
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
-  // Where a point of an item of it sits along the bar (BarWidget.barSpotOf):
-  // the active cell's Auto color gives way to the bar's gradient there.
-  // Null to keep it.
-  property var barSpotOf: null
   // Whether the active workspace's cell may show app icons (off: its
   // label instead, while the strip windows after the row show them:
   // `activeWorkspaceIcons`)
@@ -94,7 +85,7 @@ Item {
     restLength: root.cellLook.length
   }
 
-  // Every urgent cell's fade, in step
+  // Every urgent cell's pulse, in step
   UrgentPulse {
     id: urgentPulse
     running: root.properties.urgentPulse && root._contents.some(c => c.urgent)
@@ -106,8 +97,9 @@ Item {
     if (active)
       return root._activeLook(index, lit);
     const content = root._contents[index];
-    return root.cellLook.workspaceColorsOf(root, false, content?.occupied ?? false, content?.urgent ?? false, {
-      "hovered": lit === true
+    return root.cellLook.workspaceColorsOf(false, content?.occupied ?? false, content?.urgent ?? false, {
+      "hovered": lit === true,
+      "pulse": content?.urgent ? urgentPulse.value : 0
     });
   }
 
@@ -115,23 +107,23 @@ Item {
   // the bar's gradient where its middle sits, its color Auto
   function _activeLook(index, lit) {
     const middle = (root._layout.starts[index] ?? 0) + (root._layout.lengths[index] ?? 0) / 2;
-    const spot = root.barSpotOf && index >= 0 ? root.barSpotOf(root, middle) : -1;
-    return root.cellLook.workspaceColorsOf(root, true, false, false, {
+    const spot = index >= 0 ? root.cellLook.spotAt(root, middle, 0) : -1;
+    return root.cellLook.workspaceColorsOf(true, false, false, {
       "hovered": lit === true,
       "spot": spot
     });
   }
 
-  // As segments, the active box's slice of the bar's gradient in `look`
-  // (its `gradient`), from where it starts (back under the cell before)
-  // to its end, at rest at cell `index`; else null (a flat color)
+  // The active box's slice of the bar's gradient in `look` (its `gradient`),
+  // from where it starts (back under the cell before, as segments) to its
+  // end, at rest at cell `index`: a box's in the bar's run, an underline's
+  // anywhere (CellLook.sliceOf); else null (a flat color)
   function _activeSlice(look, index) {
-    const part = look.gradient ?? null;
-    if (!root.cellLook.run || part === null || !root.barSpotOf || index < 0)
+    if (index < 0)
       return null;
-    const start = (root._layout.starts[index] ?? 0) - (root._shapes[index]?.segment.back ?? 0);
+    const start = (root._layout.starts[index] ?? 0) - (root._shapes?.[index]?.segment.back ?? 0);
     const end = (root._layout.starts[index] ?? 0) + (root._layout.lengths[index] ?? 0);
-    return BarGradient.gradientSlice(root.barConfig.palette.gradientStops, root.barSpotOf(root, start), root.barSpotOf(root, end), part.alpha);
+    return root.cellLook.sliceOf(look, root, start, end, 0);
   }
 
   // Clipped (a cell that left the active state still shrinking, the active
@@ -170,7 +162,7 @@ Item {
           lit: wsId === root.hoveredId
           look: root._look(index, isActive && !indicator.slides, backgroundCell.lit)
           urgent: root._contents[index]?.urgent ?? false
-          pulse: urgentPulse.value
+          pulsing: (root._contents[index]?.urgent ?? false) && !isActive && urgentPulse.pulsing
           thickness: root.cellLook.thickness
           restLength: root._lengths[index] ?? root.cellLook.length
           length: root._layout.lengths[index] ?? root.cellLook.length
@@ -219,8 +211,7 @@ Item {
           isActive: wsId === root.activeId
           look: root._look(index, isActive, contentCell.lit)
           urgent: _content?.urgent ?? false
-          pulse: urgentPulse.value
-          urgentColor: root.urgentColor
+          pulsing: (_content?.urgent ?? false) && !isActive && urgentPulse.pulsing
           thickness: root.cellLook.thickness
           restLength: root._lengths[index] ?? root.cellLook.length
           length: root._layout.lengths[index] ?? root.cellLook.length

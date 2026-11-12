@@ -135,7 +135,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - Lives in `WorkspaceCellRow`; cells it stands in for set `indicated`.
   - Dots-only bars keep the cells' own recolour.
 - **Strip windows** (`bar/widgets/Workspaces/StripWindows`): a workspace's windows in strip order as bar `WorkspaceCell`s (app icons, the last focused active, click focuses). Used by `ActiveStrip` (both switchers: a `Loader` that loads only on a strip monitor with `stripWindows` on, shows only with windows, and says when the strip shows alone, `stripOnly`; with `stripWindows: one` it shows `StripWindowsBox` instead, every window's icon in one cell) and the `WorkspaceStrips` popout.
-- **Workspace popout root** (`bar/widgets/Workspaces/WorkspacePopoutPanel`): the `Panel` both workspace popouts (`WorkspaceGrid`, `WorkspaceStrips`) are, with the widget's payload (output, cell size and spacing, the bar's config) and the cells' colours. A cell's colours by state are `BarsConfig.workspaceCellColors`, which the bar's row reads too.
+- **Workspace popout root** (`bar/widgets/Workspaces/WorkspacePopoutPanel`): the `Panel` both workspace popouts (`WorkspaceGrid`, `WorkspaceStrips`) are, with the widget's payload (output, cell size and spacing, the bar's config) and the cells' look (`CellLook`, which holds the widget's colours). A cell's colours by state are `BarsConfig.workspaceCellColors`, which the bar's row reads too.
 - **Window previews** (`surfaces/workspaces/WindowPreview`): a Hyprland client's capture, rounded.
   - Shows the app icon until it gives a frame.
   - One frame per open unless `live` (or `hovered` / `resizing`).

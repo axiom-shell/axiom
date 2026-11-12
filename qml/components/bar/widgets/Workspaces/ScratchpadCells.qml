@@ -26,11 +26,6 @@ Loader {
   required property CellLook cellLook
   // The bar's monitor, where a click shows its special
   required property string monitorName
-  required property color activeColor
-  required property color occupiedColor
-  required property color urgentColor
-  required property color emptyColor
-  required property color textColor
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
   // Where its cells start among the widget's chained ones, and how many
@@ -81,7 +76,7 @@ Loader {
         restLength: root.cellLook.length
       }
 
-      // Every urgent cell's fade, in step
+      // Every urgent cell's pulse, in step
       UrgentPulse {
         id: urgentPulse
         running: root.properties.urgentPulse && root._cells.some(c => c.urgent)
@@ -102,12 +97,14 @@ Loader {
           cellLook: root.cellLook
           hitArea: root.hitArea
           isActive: root.monitorName !== "" && special?.output === root.monitorName
-          look: root.cellLook.workspaceColorsOf(root, isActive, _content?.occupied ?? false, _content?.urgent ?? false, {
-            "hovered": cell.lit
+          look: root.cellLook.workspaceColorsOf(isActive, _content?.occupied ?? false, _content?.urgent ?? false, {
+            "hovered": cell.lit,
+            "spot": isActive ? root.cellLook.spotAt(cell, cell.length / 2, cell.x + cell.y + root.x + root.y) : -1,
+            "pulse": (_content?.urgent ?? false) && !isActive ? urgentPulse.value : 0
           })
+          slice: isActive ? root.cellLook.sliceOf(cell.look, cell, -(cell.shape?.segment.back ?? 0), cell.length, cell.x + cell.y + root.x + root.y) : null
           urgent: _content?.urgent ?? false
-          pulse: urgentPulse.value
-          urgentColor: root.urgentColor
+          pulsing: (_content?.urgent ?? false) && !isActive && urgentPulse.pulsing
           thickness: root.cellLook.thickness
           // Drawn over the next, which may start beneath it
           z: -index

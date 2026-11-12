@@ -108,7 +108,7 @@ One workspace layout serves everything that shows workspaces or moves between th
   - It sits where the active cell starts at rest (`WorkspaceCells.startOf`: only cells after the active one move when it widens) and is as long as that cell widened, gliding to a new length as it moves.
   - It is drawn between the cells' two parts (`WorkspaceCell`'s `part`): the boxes at rest are under it, the labels and icons over it.
   - A step past an end (`CompositorManager.workspaceWrapped`, or the strip's own wheel wrap) sends it out of that end and in at the other.
-  - With a bar gradient its Auto color is the gradient's where the active cell rests (`WorkspaceCellRow._activeLook`, the widget's `barSpotOf` handed down as `barSpotOf`), never where it glides ([Widget style › Bar gradient](../bar/widget-style.md#bar-gradient)).
+  - With a bar gradient its Auto color is the gradient's where the active cell rests (`WorkspaceCellRow._activeLook`, the widget's `barSpotOf` handed to the cells as `CellLook.spotOf`), never where it glides ([Widget style › Bar gradient](../bar/widget-style.md#bar-gradient)).
 - **Cross-fades.**
   - The grid strip cross-fades (`CrossFade`) to another row or column; the old one keeps its active cell while it fades.
   - `ActiveStrip` cross-fades to the windows of the next workspace.

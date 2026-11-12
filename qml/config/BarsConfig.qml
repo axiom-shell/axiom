@@ -74,7 +74,7 @@ QtObject {
   // on (BarWidgetStyle.state's hovered, spot, under, auto, muted, pulse
   // and hover: where the middle of a cell whose color is Auto sits along
   // the bar, for the bar's gradient to take its place, `auto` saying it
-  // gives way to it (left out: when it has a place); `solid`: a filled
+  // gives way to it; `solid`: a filled
   // box whatever the bar's style, Workspaces' `solidBoxes`; and `onBar`:
   // drawn in its widget on the bar, not a popout, so in a merged run on a
   // merged bar)
@@ -83,7 +83,7 @@ QtObject {
     return BarWidgetStyle.cell(barConfig.look, palette, BarWidgetStyle.state(palette, {
       "hovered": cell?.hovered,
       "spot": cell?.spot,
-      "auto": cell?.auto ?? (cell?.spot ?? -1) >= 0,
+      "auto": cell?.auto === true,
       "solid": cell?.solid,
       "under": cell?.under,
       "muted": cell?.muted,
@@ -124,24 +124,18 @@ QtObject {
     return barConfig.look.shape.name === "capsule" ? cell / 2 : Math.max(0, barConfig.radius - inset);
   }
 
-  // A Workspaces cell's box while hovered: its `hoverColor`, or for Auto
-  // (empty) the bar's cell hover (palette.cellHover: the theme's
-  // highlight; `barConfig` null, a popout's before its payload: the theme's)
-  function cellHoverColor(properties, barConfig = null) {
-    const own = properties?.hoverColor ? Theme.resolveColor(properties.hoverColor) : null;
-    return own ?? barConfig?.palette.cellHover ?? Theme.backgroundHighlight;
-  }
-
   // A Workspaces widget's colors from its options (`properties`), resolved:
-  // { activeColor, occupiedColor, urgentColor, emptyColor, textColor }, as
-  // workspaceCellColors takes them
+  // { activeColor, occupiedColor, urgentColor, emptyColor, textColor,
+  // hoverColor }, as workspaceCellColors takes them (hoverColor: a cell's
+  // hover box, null for Auto: the palette's cellHover, BarWidgetStyle.cell)
   function workspaceColors(properties) {
     return {
       "activeColor": Theme.resolveColor(properties.activeColor),
       "occupiedColor": Theme.resolveColor(properties.occupiedColor),
       "urgentColor": Theme.resolveColor(properties.urgentColor),
       "emptyColor": Theme.resolveColor(properties.emptyColor),
-      "textColor": Theme.resolveColor(properties.textColor)
+      "textColor": Theme.resolveColor(properties.textColor),
+      "hoverColor": properties.hoverColor ? Theme.resolveColor(properties.hoverColor) : null
     };
   }
 

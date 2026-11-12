@@ -516,6 +516,74 @@ TestCase {
     verify(fails.length === 0, fails.join("\n"));
   }
 
+  // A cell's own row (a non-solid one at rest): its state color shows where
+  // the look draws it, mapped for a cell (iconFill is a filled box; icon the
+  // content, read at 4.5), the text and the plain look's states as colors
+  function test_each_look_cell_shows_its_state_color() {
+    const fails = [];
+    for (const look of root.looks) {
+      if (look.merged)
+        continue;
+      const bar = Bars.bar(Object.assign({
+        "tintOpacity": 25
+      }, look.over));
+      for (const state of ["active", "urgent"]) {
+        const c = BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {}), "#fb4934", "#282828", state);
+        const tag = `${look.key} ${state}`;
+        const key = look.show === "iconFill" ? "fill" : look.show === "icon" ? "content" : look.show;
+        const read = BarWidgetStyle.nudged(c.back, "#fb4934", 4.5);
+        if (key === null) {
+          const want = state === "active" ? bar.palette.barText : read;
+          if (!Qt.colorEqual(c.content, want))
+            fails.push(`${tag}: content ${c.content}, not ${want}`);
+        } else {
+          const want = look.as === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : key === "content" ? read : "#fb4934";
+          if (!Qt.colorEqual(c[key], want))
+            fails.push(`${tag}: ${key} is ${c[key]}, not ${want}`);
+        }
+      }
+    }
+    verify(fails.length === 0, fails.join("\n"));
+  }
+
+  // A cell's `auto` is given, never read from its spot: with it the cell's
+  // gradient is the look's part and its color the gradient's; without it, a
+  // spot changes nothing
+  function test_each_look_cell_gradient_takes_its_part() {
+    const fails = [];
+    for (const look of root.looks) {
+      if (look.merged)
+        continue;
+      const bar = Bars.bar(Object.assign({
+        "gradient": true,
+        "tintOpacity": 25
+      }, look.over));
+      const key = look.show === "iconFill" ? "fill" : look.show === "icon" ? "content" : look.show;
+      const cellOf = auto => BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {
+          "spot": 0.3,
+          "auto": auto
+        }), "#fb4934", "#282828", "active");
+      const on = cellOf(true);
+      const off = cellOf(false);
+      const want = look.part === "-" ? "-" : look.part === "iconFill@1" ? "fill@1" : look.part;
+      const got = root.part(on.gradient).replace("@0.25", "@tint");
+      if (got !== want)
+        fails.push(`${look.key}: gradient ${got}, not ${want}`);
+      if (off.gradient !== null)
+        fails.push(`${look.key}: a spot alone grades the cell`);
+      if (key !== null && key !== "content") {
+        const at = BarGradient.gradientAt(bar.palette.gradientStops, 0.3);
+        const wantOn = look.as === "tint" ? BarWidgetStyle.faded(at, 0.25) : at;
+        if (!Qt.colorEqual(on[key], wantOn))
+          fails.push(`${look.key}: ${key} ${on[key]}, not the gradient's ${wantOn}`);
+        const wantOff = look.as === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : "#fb4934";
+        if (!Qt.colorEqual(off[key], wantOff))
+          fails.push(`${look.key}: ${key} ${off[key]} with auto off, not ${wantOff}`);
+      }
+    }
+    verify(fails.length === 0, fails.join("\n"));
+  }
+
   // ---- The invariant sweep ----
 
   readonly property var themes: [["dark", Bars.theme], ["light", Bars.lightTheme]]
