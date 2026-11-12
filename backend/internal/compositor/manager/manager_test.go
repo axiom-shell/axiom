@@ -16,6 +16,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
@@ -77,8 +78,12 @@ func (f *fakeWriter) runtimeApply(_ context.Context, in Inputs, live func() []st
 	f.note("runtime:" + strings.Join(live(), ";"))
 }
 func (f *fakeWriter) runtimeClear(context.Context) { f.note("clear") }
-func (f *fakeWriter) seenReload()                  {}
-func (f *fakeWriter) skippedKeys() []string        { return nil }
+func (f *fakeWriter) teardownSteps(Inputs, bool) []session.Step {
+	return []session.Step{{Op: "reload"}}
+}
+func (f *fakeWriter) reloadStartsAxiom(Inputs) (bool, string) { return false, "" }
+func (f *fakeWriter) seenReload()                             {}
+func (f *fakeWriter) skippedKeys() []string                   { return nil }
 func (f *fakeWriter) checkLoaded(context.Context, Inputs, string) (bool, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -129,12 +134,14 @@ type harness struct {
 	config *jsonx.Object // under modeMu
 	modeMu sync.Mutex
 	pushes chan string
+	steps  chan []session.Step
+	stop   func()
 }
 
 func newHarness(t *testing.T, mode string) *harness {
 	t.Helper()
 	dir := t.TempDir()
-	h := &harness{t: t, mode: mode, config: jsonx.NewObject(), pushes: make(chan string, 64)}
+	h := &harness{t: t, mode: mode, config: jsonx.NewObject(), pushes: make(chan string, 64), steps: make(chan []session.Step, 16)}
 	env := map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "test", "XDG_RUNTIME_DIR": dir}
 	h.m = New(Options{
 		Getenv:      func(k string) string { return env[k] },
@@ -153,6 +160,12 @@ func newHarness(t *testing.T, mode string) *harness {
 		},
 		Binds:       func() any { return jsonx.Arr() },
 		CommitBinds: func(*jsonx.Array) error { return nil },
+		OnSteps: func(steps []session.Step) {
+			select {
+			case h.steps <- steps:
+			default:
+			}
+		},
 		Push: func(method string, params any) {
 			if method != "compositor.state" {
 				select {
@@ -173,10 +186,14 @@ func newHarness(t *testing.T, mode string) *harness {
 	}()
 	// Ended before t.TempDir's cleanup: a write still running would race
 	// the folder's removal
-	t.Cleanup(func() {
-		cancel()
-		<-ran
-	})
+	var once sync.Once
+	h.stop = func() {
+		once.Do(func() {
+			cancel()
+			<-ran
+		})
+	}
+	t.Cleanup(h.stop)
 	return h
 }
 

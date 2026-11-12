@@ -298,8 +298,12 @@ func RunSteps(ctx context.Context, kind string, env map[string]string, steps []S
 				return
 			}
 			if s.Op == "load" {
+				var path any = s.Path
+				if s.Path == "" {
+					path = nil // niri's own default path
+				}
 				do(func(c context.Context) error {
-					return n.Action(c, map[string]any{"LoadConfigFile": map[string]any{"path": s.Path}})
+					return n.Action(c, map[string]any{"LoadConfigFile": map[string]any{"path": path}})
 				}, "load "+s.Path)
 			}
 		}

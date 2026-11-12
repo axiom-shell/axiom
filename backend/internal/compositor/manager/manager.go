@@ -30,6 +30,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -45,6 +46,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/takeover"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
 // Options configure a manager.
@@ -79,6 +81,10 @@ type Options struct {
 	// RuntimeFile holds what that image applied and is trusted; false means
 	// it may be stale (an earlier daemon stopped or crashed)
 	Carried bool
+	// OnSteps is told, on the manager's goroutine, what takes the runtime
+	// layer out whenever that changes (empty: nothing is applied): the
+	// session record's compositor steps
+	OnSteps func([]session.Step)
 	Log     *slog.Logger
 }
 
@@ -108,6 +114,12 @@ type Manager struct {
 	// liveRest: the liveRestKey whose live lines were sent last
 	liveRest string
 
+	// runtimeOn: the runtime layer is applied (kept in the runtime state
+	// too, for a carried image); steps the OnSteps last got, and whether
+	// the partial teardown was said once
+	runtimeOn       bool
+	steps           []session.Step
+	partialNoted    bool
 	problem         string
 	runtimeProblem  string // the last runtimeApply's problems().Runtime
 	loaded          bool
@@ -145,6 +157,7 @@ func New(o Options) *Manager {
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
 	m.kind = ipc.Detect(o.Getenv)
 	m.st = loadState(o.RuntimeFile, m.kind+":"+o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")+o.Getenv("SWAYSOCK")+o.Getenv("NIRI_SOCKET"))
+	m.runtimeOn = m.st.RuntimeOn
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
 	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st, carried: o.Carried}
 	switch m.kind {
@@ -286,6 +299,7 @@ func (m *Manager) Run(ctx context.Context) error {
 			for fn := m.next(); fn != nil && ctx.Err() == nil; fn = m.next() {
 				fn(ctx)
 			}
+			m.updateSteps()
 			m.push()
 		case r := <-reloads:
 			m.configReloaded(ctx, r)
@@ -495,7 +509,7 @@ func (m *Manager) applyHolding(ctx context.Context) {
 		// A layer applied before axiom's file loaded comes off, as
 		// checkLoaded takes it off (niri's wrapper would load it twice)
 		if loaded {
-			m.w.runtimeClear(ctx)
+			m.runtimeClear(ctx)
 		}
 		return
 	}
@@ -650,7 +664,7 @@ func (m *Manager) checkLoaded(ctx context.Context) {
 	}
 	if loaded {
 		m.problem = ""
-		m.w.runtimeClear(ctx)
+		m.runtimeClear(ctx)
 		return
 	}
 	if m.mode == "included" {
@@ -662,8 +676,82 @@ func (m *Manager) checkLoaded(ctx context.Context) {
 	m.runtimeApply(ctx)
 }
 
+// runtimeClear takes the runtime layer out
+func (m *Manager) runtimeClear(ctx context.Context) {
+	m.w.runtimeClear(ctx)
+	m.setRuntimeOn(false)
+}
+
+func (m *Manager) setRuntimeOn(on bool) {
+	m.runtimeOn = on
+	if m.st.RuntimeOn != on {
+		m.st.RuntimeOn = on
+		m.st.save()
+	}
+	m.updateSteps()
+}
+
+// updateSteps tells OnSteps what takes the layer out now, when it changed
+func (m *Manager) updateSteps() {
+	if m.o.OnSteps == nil {
+		return
+	}
+	steps := m.teardownSteps()
+	if reflect.DeepEqual(steps, m.steps) {
+		return
+	}
+	m.steps = steps
+	m.o.OnSteps(steps)
+}
+
+// teardownSteps are what takes the runtime layer out of the compositor when
+// axiom stops: none while it isn't applied. A user's config that starts
+// axiom at every reload would start another with a reload, so only the
+// layer's binds go (said once).
+func (m *Manager) teardownSteps() []session.Step {
+	if !m.runtimeOn || !m.live() {
+		return nil
+	}
+	starts, line := m.w.reloadStartsAxiom(m.in)
+	if starts && !m.partialNoted {
+		m.partialNoted = true
+		m.logf("your config starts axiom on every reload (%s): on quit axiom only takes its binds out", line)
+	}
+	return m.w.teardownSteps(m.in, starts)
+}
+
+// Teardown takes the runtime layer out of the compositor (the session
+// record's steps, run now) and gives the state back, as the daemon stops
+// cleanly. Only valid after Run has returned: its event stream is gone, so
+// the reload can't set off a re-apply. Never called when the compositor is
+// gone, nor before a re-exec (the next image carries the layer on).
+func (m *Manager) Teardown(ctx context.Context) {
+	if m.w == nil {
+		return
+	}
+	if steps := m.teardownSteps(); len(steps) > 0 {
+		session.RunSteps(context.WithoutCancel(ctx), m.kind, m.StepEnv(), steps, func(f string, a ...any) { m.logf(f, a...) })
+	}
+	m.st.NiriWrapper, m.st.SwayUnbinds, m.st.LiveApplied, m.st.LiveCursor, m.st.RuntimeOn = false, nil, "", "", false
+	m.runtimeOn = false
+	m.st.save()
+}
+
+// StepEnv is the compositor's variables, as the session record keeps them
+// (the guard reaches the compositor with them).
+func (m *Manager) StepEnv() map[string]string {
+	env := map[string]string{}
+	for _, k := range []string{"HYPRLAND_INSTANCE_SIGNATURE", "SWAYSOCK", "NIRI_SOCKET", "XDG_RUNTIME_DIR", "WAYLAND_DISPLAY"} {
+		if v := m.o.Getenv(k); v != "" {
+			env[k] = v
+		}
+	}
+	return env
+}
+
 func (m *Manager) runtimeApply(ctx context.Context) {
 	m.w.runtimeApply(ctx, m.in, func() []string { return m.liveLines(ctx) })
+	m.setRuntimeOn(true)
 	// The layer isn't as axiom made it: the card says so (a file mode's own
 	// problem comes first), until it is
 	p := m.w.problems(m.in).Runtime
@@ -697,6 +785,7 @@ func (m *Manager) notify(what string) {
 // --- Driving it ---
 
 func (m *Manager) apply(ctx context.Context) {
+	defer m.updateSteps()
 	if !m.live() {
 		return
 	}
@@ -1185,6 +1274,7 @@ func (m *Manager) syncFile(ctx context.Context) {
 // configReloaded: a reload drops runtime binds, rules, the look and the
 // input
 func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
+	defer m.updateSteps()
 	// Hyprland drops the layer rules a reload doesn't load, which the
 	// detached mode's files don't hold and a broken include loses
 	if h, ok := m.w.(*hyprWriter); ok {

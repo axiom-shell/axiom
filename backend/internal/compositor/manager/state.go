@@ -32,6 +32,9 @@ type runtimeState struct {
 	// NiriWrapper: whether niri runs the detached wrapper. A fresh daemon
 	// (Options.Carried false) re-checks it: it loads the wrapper once
 	NiriWrapper bool `json:"niriWrapper"`
+	// RuntimeOn: the runtime layer is applied (Manager.runtimeOn), so a
+	// carried image knows what a teardown takes out
+	RuntimeOn bool `json:"runtimeOn"`
 }
 
 func loadState(path, instance string) *runtimeState {

@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
 // hyprWriter is Hyprland's config writer: axiom's layer as Hyprland's Lua
@@ -282,3 +284,64 @@ func strs(list []string) *jsonx.Array {
 }
 
 func (w *hyprWriter) seenReload() { w.runtime.reloads.Add(1) }
+
+// hyprStartHandlerFiresOnReload: whether hl.on("hyprland.start", …) runs
+// again on `hyprctl reload` (docs/dev/hyprland/config-modes.md › HY1). While
+// it isn't settled it counts as firing: a start line in the handler then
+// also means a reload starts axiom.
+const hyprStartHandlerFiresOnReload = true
+
+// teardownSteps: a reload takes the binds, the look and the input out, and
+// the cursor is set back by hand (a runtime setcursor outlives a reload);
+// partial: the layer's binds only.
+func (w *hyprWriter) teardownSteps(in Inputs, partial bool) []session.Step {
+	var steps []session.Step
+	if partial {
+		steps = append(steps, session.Step{Op: "eval", Lines: []string{hyprUnbindLua}})
+	} else {
+		steps = append(steps, session.Step{Op: "reload"})
+	}
+	if w.state.LiveCursor != "" {
+		size, _ := strconv.Atoi(w.getenv("XCURSOR_SIZE"))
+		if size <= 0 {
+			size = 24
+		}
+		theme := w.getenv("XCURSOR_THEME")
+		if theme == "" {
+			theme = "default"
+		}
+		steps = append(steps, session.Step{Op: "setcursor", Theme: theme, Size: size})
+	}
+	return steps
+}
+
+// reloadStartsAxiom reads the user's hyprland.lua (or hyprland.conf): a
+// line matching in's startPattern that runs at every reload. In Lua that is
+// any line outside a "hyprland.start" handler, unless the handler fires on
+// reload too; in the conf, an exec line.
+func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
+	pattern := startPatternOf(in)
+	if pattern == nil {
+		return false, ""
+	}
+	text, conf := readFile(w.dir()+"hyprland.lua"), false
+	if text == "" {
+		text, conf = readFile(w.dir()+"hyprland.conf"), true
+	}
+	for _, line := range strings.Split(text, "\n") {
+		if !pattern.MatchString(line) {
+			continue
+		}
+		switch {
+		case conf:
+			if hyprConfExec.MatchString(line) {
+				return true, strings.TrimSpace(line)
+			}
+		case hyprStartHandlerFiresOnReload || (!strings.Contains(line, `hl.on("hyprland.start"`) && !strings.Contains(line, `hl.on('hyprland.start'`)):
+			return true, strings.TrimSpace(line)
+		}
+	}
+	return false, ""
+}
+
+var hyprConfExec = regexp.MustCompile(`^\s*exec\s*=`)
