@@ -97,6 +97,19 @@ TestCase {
     verify(Utils.contrast(mid.iconBack[0], mid.icon) >= 3, "the mid-point's icon reads");
   }
 
+  function test_mix_colors_keys_match_the_full_mix() {
+    const bar = Bars.bar({});
+    const rest = BarWidgetStyle.widgetColors(bar, "#fb4934", "#282828", {});
+    const dim = BarWidgetStyle.widgetColors(bar, "#fb4934", "#282828", {
+      "muted": true
+    });
+    const full = BarWidgetStyle.mixColors(rest, dim, 0.4);
+    const part = BarWidgetStyle.mixColors(rest, dim, 0.4, ["text", "textBack", "fill"]);
+    compare(Object.keys(part).sort(), ["fill", "text", "textBack"], "only its keys");
+    for (const key of ["fill", "text", "textBack"])
+      compare(part[key], full[key], key);
+  }
+
   function test_state() {
     const palette = {
       "gradientStops": ["#000000", "#ffffff"]

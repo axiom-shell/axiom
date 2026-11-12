@@ -86,8 +86,11 @@ Item {
   // Its muted self (set only while it pulses) and how far toward it (0-1)
   property var mutedLook: null
   property real pulse: 0
+  // What each part mixes per frame while it pulses: the fields it draws
+  // (null: all of them)
+  readonly property var _mixKeys: root.part === "content" ? ["content", "back"] : root.part === "background" ? ["fill", "stroke", "indicator", "hover", "gradient"] : null
   // Its look as shown: the pulse mix while pulsing, else `look`
-  readonly property var _shown: root.pulsing && root.mutedLook !== null && root.pulse > 0 ? BarWidgetStyle.mixColors(root.look, root.mutedLook, root.pulse) : root.look
+  readonly property var _shown: root.pulsing && root.mutedLook !== null && root.pulse > 0 ? root._mixed() : root.look
   // Its slice of the bar's gradient for the part `look.gradient` names
   // (CellLook.sliceOf), or null
   property var slice: null
@@ -114,6 +117,12 @@ Item {
   readonly property var _drawn: root._clearActive ? root.cellLook.cleared(root._shown) : root._shown
 
   signal clicked
+
+  // `look` mixed toward `mutedLook` by `pulse`, in the fields this part draws
+  function _mixed() {
+    const mixed = BarWidgetStyle.mixColors(root.look, root.mutedLook, root.pulse, root._mixKeys);
+    return root._mixKeys === null ? mixed : Object.assign({}, root.look, mixed);
+  }
 
   readonly property bool isVertical: barConfig.vertical
   // A box of its own (in a merged run, which draws its box, only where it

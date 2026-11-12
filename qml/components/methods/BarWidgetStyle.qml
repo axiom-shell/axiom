@@ -144,15 +144,17 @@ QtObject {
   // cell() results: a pulse between a widget and its muted self); the
   // rest of `a` kept. Their backdrops (lists of colors) are mixed too.
   // Content that differs is nudged again to mutedContrast on those, as a
-  // mix of two colors that read can fall short.
-  function mixColors(a, b, t) {
+  // mix of two colors that read can fall short. `keys` (a list, or null for
+  // all of them) limits it to those fields of `a`, which a caller drawing
+  // only some of them mixes each frame without the rest's cost.
+  function mixColors(a, b, t, keys = null) {
     if (t <= 0)
       return a;
     if (t >= 1)
       return b;
     const isColor = v => (typeof v === "string" && /^(#[0-9a-fA-F]+|transparent)$/.test(v)) || (typeof v === "object" && v !== null && v.r !== undefined);
     const out = {};
-    for (const key in a) {
+    for (const key of keys ?? Object.keys(a)) {
       const x = a[key];
       const y = b[key];
       if (isColor(x) && isColor(y))
@@ -160,7 +162,7 @@ QtObject {
       else if (Array.isArray(x) && Array.isArray(y) && x.length === y.length && x.every(isColor))
         out[key] = x.map((c, i) => root.mix(c, y[i], t));
       else if (x !== null && typeof x === "object" && !Array.isArray(x) && y !== null && typeof y === "object" && x.r === undefined)
-        out[key] = root.mixColors(x, y, t);
+        out[key] = root.mixColors(x, y, t, null);
       else
         out[key] = x;
     }
@@ -174,7 +176,7 @@ QtObject {
     for (const key in backs)
       if (key in out && out[backs[key]] && !Qt.colorEqual(out[key], a[key]) && !Qt.colorEqual(out[key], b[key]))
         out[key] = root.nudged(out[backs[key]], out[key], root.mutedContrast);
-    if (a.gradient && b.gradient)
+    if (a.gradient && b.gradient && (keys === null || "gradient" in out))
       out.gradient = root._part(a.gradient.part, a.gradient.alpha + (b.gradient.alpha - a.gradient.alpha) * t);
     if (out.graphic && out.iconBack) {
       out.graphic.line = root.nudged(out.iconBack, out.graphic.line, root.mutedContrast);
