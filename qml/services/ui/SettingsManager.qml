@@ -79,12 +79,18 @@ QtObject {
   // config's is CompositorManager.knownSpecials
   readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
 
-  // Sets the icon and text of the special workspace `id`'s entry in the draft
+  // Sets the icon and text of special workspace `id`'s entry in the draft,
+  // making the entry when it has none (a valid id only)
   function setSpecialWorkspace(id, icon, text) {
-    root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.map(entry => entry.id === id ? Object.assign({}, entry, {
-        "icon": icon,
-        "text": text
-      }) : entry));
+    const entry = {
+      "id": id,
+      "icon": icon,
+      "text": text
+    };
+    if (root.specialEntries.some(e => e.id === id))
+      root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.map(e => e.id === id ? Object.assign({}, e, entry) : e));
+    else if (SpecialWorkspaces.validId(id))
+      root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.concat([entry]));
   }
 
   // Adds an entry for special workspace `id` to the draft; false when it is

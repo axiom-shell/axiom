@@ -11,9 +11,10 @@ import qs.components.reusable
 // The Special workspaces card's list (Workspaces.specialWorkspaces' `x-row`):
 // every special workspace that exists, as edited (SettingsManager.knownSpecials:
 // one with an entry, one live, one a bind or hot corner holds), each with its
-// id, an icon and a label (entries only), and an X: enabled to delete the
-// entry, greyed with the reasons while something uses it (windows open, a
-// bind or hot corner naming it), absent for one with no entry. A last row
+// id, an icon and a label (setting one makes the entry; an invalid id shows
+// as it is), and an X: enabled to delete the entry, greyed with the reasons
+// while something uses it (windows open, a bind or hot corner naming it),
+// absent for one with no entry. A last row
 // adds an entry by its id (SpecialWorkspaces.validId). Edits go through the
 // settings draft.
 // I18n.tr("Used by keybind {0}")
@@ -53,6 +54,8 @@ ColumnLayout {
       required property string modelData
       readonly property var special: root.rows.find(r => r.id === entry.modelData) ?? null
       readonly property bool configured: entry.special?.configured === true
+      // A valid id: it takes an icon and a label (an entry made as one is set)
+      readonly property bool editable: entry.special?.editable === true
       readonly property bool deletable: SpecialWorkspaces.deletable(entry.special)
 
       Layout.fillWidth: true
@@ -69,14 +72,14 @@ ColumnLayout {
         spacing: Widget.spacing
 
         StyledLabel {
-          Layout.fillWidth: !entry.configured
-          Layout.preferredWidth: entry.configured ? Widget.px(120) : -1
+          Layout.fillWidth: !entry.editable
+          Layout.preferredWidth: entry.editable ? Widget.px(120) : -1
           elide: Text.ElideRight
           text: entry.modelData
         }
 
         IconEntry {
-          visible: entry.configured
+          visible: entry.editable
           Layout.fillWidth: true
           Layout.preferredWidth: 1
           Layout.alignment: Qt.AlignTop
@@ -85,7 +88,7 @@ ColumnLayout {
         }
 
         SchemaTextField {
-          visible: entry.configured
+          visible: entry.editable
           Layout.fillWidth: true
           Layout.preferredWidth: 1
           Layout.alignment: Qt.AlignTop
