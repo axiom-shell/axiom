@@ -3,3 +3,4 @@ icon: wifi
 group: Connections
 tile: standard
 card: standard
+order: [tile, card, quiet]

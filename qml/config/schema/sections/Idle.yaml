@@ -23,18 +23,20 @@ properties:
     properties:
       timeout:
         type: integer
-        title: Dim the screens after
+        title: Dim after
         x-unit: s
         default: 150000
         minimum: 0
         maximum: 7200000
-        description: 0 never dims.
+        multipleOf: 1000
+        description: '0: never dims.'
       mode:
         type: string
-        title: Dim
+        title: Mode
+        x-control: toggle
         default: to
         enum: [to, by]
-        x-enumLabels: {to: To a set brightness, by: By a share of the current brightness}
+        x-enumLabels: {to: Fixed, by: Relative}
         description: A set level leaves darker screens alone; a share always dims.
       level:
         type: integer
@@ -54,7 +56,7 @@ properties:
         description: 50% takes 80% down to 40%.
         x-showIf: {mode: by}
     x-showIf: {enabled: true}
-    x-group: Idle
+    x-group: Timeouts
   lock:
     type: object
     title: Lock
@@ -67,9 +69,10 @@ properties:
         default: 300000
         minimum: 0
         maximum: 7200000
-        description: 0 never locks on idle.
+        multipleOf: 1000
+        description: '0: never locks on idle.'
     x-showIf: {enabled: true}
-    x-group: Idle
+    x-group: Timeouts
   screenOff:
     type: object
     title: Screen off
@@ -77,14 +80,15 @@ properties:
     properties:
       timeout:
         type: integer
-        title: Turn the screens off after
+        title: Screens off after
         x-unit: s
         default: 330000
         minimum: 0
         maximum: 7200000
-        description: 0 keeps them on.
+        multipleOf: 1000
+        description: '0: stays on.'
     x-showIf: {enabled: true}
-    x-group: Idle
+    x-group: Timeouts
   suspend:
     type: object
     title: Suspend
@@ -97,9 +101,10 @@ properties:
         default: 0
         minimum: 0
         maximum: 14400000
-        description: 0 never suspends on idle.
+        multipleOf: 1000
+        description: '0: never suspends on idle.'
     x-showIf: {enabled: true}
-    x-group: Idle
+    x-group: Timeouts
   lockBeforeSleep:
     type: boolean
     title: Lock before sleep
@@ -114,24 +119,24 @@ properties:
     x-showIf: {enabled: true}
   respectInhibitors:
     type: boolean
-    title: Respect apps that keep the screen on
+    title: Let apps keep it on
     x-group: Sleep
     default: true
-    description: Let video players and browsers keep the screen awake.
+    description: Video players and browsers can hold idle off.
     x-showIf: {enabled: true}
   caffeineWarning:
     type: boolean
     title: Warn before caffeine ends
     x-group: Caffeine
     default: true
-    description: A notification 5 minutes before a caffeine timer ends.
+    description: A notification 5 minutes before the timer ends.
   items:
     x-scope: commands
     type: array
     title: Extra listeners
     x-group: Idle listeners
     default: []
-    description: Commands of your own to run after a time idle, and when you return.
+    description: Your own commands after a time idle, and on return.
     x-showIf: {enabled: true}
     items:
       type: object
@@ -145,6 +150,7 @@ properties:
           default: 600000
           minimum: 1000
           maximum: 14400000
+          multipleOf: 1000
         onTimeout: {type: string, title: Run, default: ''}
         onResume: {type: string, title: On return, default: ''}
         enabled: {type: boolean, title: 'On', default: true}

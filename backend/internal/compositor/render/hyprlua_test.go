@@ -302,3 +302,19 @@ func TestIsAgentCommand(t *testing.T) {
 		}
 	}
 }
+
+// A boolean written negated (`value: not`): Cursor follows focus off is
+// cursor.no_warps on, and left at its default nothing is written
+func TestConfigTableNot(t *testing.T) {
+	t.Parallel()
+	schema := parse(t, `{"properties": {"warpCursor": {"type": "boolean", "default": true, "x-compositor": {"hyprland": {"key": "cursor.no_warps", "value": "not"}}}}}`)
+	for _, c := range []struct{ values, want string }{
+		{`{"warpCursor": false}`, `{"cursor":{"no_warps":true}}`},
+		{`{"warpCursor": true}`, `{}`},
+	} {
+		got := string(jsonx.MarshalCompact(ConfigTable(schema, parse(t, c.values), nil, nil)))
+		if got != c.want {
+			t.Errorf("%s: got %s, want %s", c.values, got, c.want)
+		}
+	}
+}

@@ -4,25 +4,26 @@ icon: coffee
 group: System
 popout:
   variant: own
-  enabled: {description: Caffeine presets on hover.}
+  enabled: {description: Caffeine presets.}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill]
-    description: "Ring and fill show the time left on a timed caffeine."
+    description: 'Ring, fill: show the time left on a timed caffeine.'
+colors: text
+order: [appearance, showLabel, popout, presets, foregroundColor, activeColor, inactiveColor]
 settings:
-  showLabel: {type: boolean, title: Show label, default: false}
+  showLabel:
+    type: boolean
+    title: Label
+    default: false
+    x-showIf: {appearance.style: [label, ring, fill]}
   presets:
     type: array
     items: {type: string}
     title: Presets
     default: ['30m', '1h', '4h']
-    description: Comma-separated, e.g. 30m, 1h30m, 4h.
+    description: e.g. 30m, 1h30m, 4h.
+    x-showIf: {popout.enabled: true, popout.menu: ''}
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}

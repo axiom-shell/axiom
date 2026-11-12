@@ -22,7 +22,7 @@ OSDSystem {
         "label": "Scroll Lock"
       }
     })
-  exposes: (options.keys ?? ["capsLock", "numLock"]).filter(key => _keys[key]).map(key => Object.assign({
+  exposes: (options.shows ?? ["capsLock", "numLock"]).filter(key => _keys[key]).map(key => Object.assign({
       "key": key,
       "part": "tile"
     }, _keys[key]))

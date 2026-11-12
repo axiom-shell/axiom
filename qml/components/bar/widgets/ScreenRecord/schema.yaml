@@ -3,12 +3,8 @@ link: {setting: Screenshots}
 icon: radio_button_checked
 group: Tools
 popout: menu
+colors: text
+order: [showTimer, popout, foregroundColor, activeColor]
 settings:
-  showTimer: {type: boolean, title: Show time recorded, default: true}
-  activeColor: {$ref: '#/definitions/WidgetColor', x-autoColor: critical}
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}
+  showTimer: {type: boolean, title: Elapsed time, default: true}
+  activeColor: {$ref: '#/definitions/WidgetColor', title: Recording color, x-autoColor: critical}

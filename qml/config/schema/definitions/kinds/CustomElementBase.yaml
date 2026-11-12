@@ -12,23 +12,23 @@ x-parts:
     state:
       color:
         type: string
-        title: Colour
+        title: Color
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-        description: 'Auto: the state''s colour if given, else the accent.'
+        description: 'Empty: the state''s color, else the accent.'
     # Text: the text colour, or the state's when asked
     text:
       color:
         type: string
-        title: Colour
+        title: Text color
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-        description: 'Auto: the text colour.'
+
       stateColor:
         type: boolean
-        title: Colour by state
+        title: Color by state
         default: false
         description: The state's colour, when the script gives one.
 properties:
@@ -47,14 +47,14 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: Each slot → a key ("percentage"), a path ("data.temp"), a format ("{text}%") or a number. Empty reads the output's own key.
+    description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key.'
   options: {type: object, additionalProperties: false, properties: {}}
   actions:
     type: object
     additionalProperties: false
     description: Commands it runs; {value} is filled in.
     properties:
-      click: {x-scope: commands, type: string, title: On click, default: '', description: '{value} is the label, or the row''s text.'}
-      change: {x-scope: commands, type: string, title: On change, default: '', description: '{value} is the new value.'}
-      'on': {x-scope: commands, type: string, title: Turning it on, default: ''}
-      'off': {x-scope: commands, type: string, title: Turning it off, default: ''}
+      click: {x-scope: commands, type: string, title: Click command, default: '', description: '{value}: the label, or the row''s text.'}
+      change: {x-scope: commands, type: string, title: Change command, default: '', description: '{value} is the new value.'}
+      'on': {x-scope: commands, type: string, title: Turn-on command, default: ''}
+      'off': {x-scope: commands, type: string, title: Turn-off command, default: ''}

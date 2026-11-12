@@ -24,7 +24,7 @@ ValueStyleWidget {
       "style": "label",
       "icon": "material",
       "segments": 5,
-      "width": 0,
+      "width": null,
       "colorText": false,
       "popout": false
     })

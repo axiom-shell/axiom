@@ -61,7 +61,7 @@ OSDSystem {
         }
       }
     })
-  exposes: (options.kinds ?? ["camera", "micUse", "screenShare"]).filter(key => _kinds[key]).map(key => Object.assign({
+  exposes: (options.shows ?? ["camera", "micUse", "screenShare"]).filter(key => _kinds[key]).map(key => Object.assign({
       "key": key,
       "part": "tile"
     }, _kinds[key]))

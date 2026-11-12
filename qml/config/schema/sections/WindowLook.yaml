@@ -4,38 +4,41 @@ x-scope: look
 type: object
 x-category: Compositor
 title: Window look
-description: While on, these win over your compositor's own config.
+description: Each part that is on wins over your compositor's own config.
 additionalProperties: false
 properties:
-  borders:
+  gaps:
     type: object
-    title: Borders
+    title: Gaps
     additionalProperties: false
     properties:
       enabled:
         type: boolean
-        title: Themed borders
+        title: Window gaps
         default: false
-        x-hintedIf: {/$supports.windowBorders: true}
-      activeColor:
-        type: string
-        title: Focused border
-        x-options: colors
-        x-emptyLabel: Theme
-        default: ''
-        description: Empty follows the theme.
+        description: Also the automatic gap of floating bars and detached surfaces.
+        x-hintedIf: {/$supports.windowGaps: true}
+      inner:
+        type: integer
+        x-control: stepper
+        title: Gap between windows
+        x-unit: px
+        default: 3
+        minimum: 0
+        maximum: 50
         x-showIf: {enabled: true}
-        x-hintedIf: {/$supports.windowBorders: true}
-      inactiveColor:
-        type: string
-        title: Unfocused border
-        x-options: colors
-        x-emptyLabel: Theme
-        default: ''
-        description: Empty follows the theme.
+        x-hintedIf: {/$supports.windowGaps: true}
+      outer:
+        type: integer
+        x-control: stepper
+        title: Gap to screen edges
+        x-unit: px
+        default: 6
+        minimum: 0
+        maximum: 100
         x-showIf: {enabled: true}
-        x-hintedIf: {/$supports.windowBorders: true}
-    x-group: Window look
+        x-hintedIf: {/$supports.windowGaps: true}
+    x-group: Frame
   shape:
     type: object
     title: Shape
@@ -43,9 +46,8 @@ properties:
     properties:
       enabled:
         type: boolean
-        title: Set border width and corners
+        title: Border width and corners
         default: false
-        description: 'Sway draws square corners: only the width applies there.'
         x-hintedIf: {/$supports.windowShape: true}
       matchShell:
         x-link: {setting: Appearance.shape}
@@ -68,7 +70,7 @@ properties:
       rounding:
         type: integer
         x-control: stepper
-        title: Corner rounding
+        title: Corner radius
         x-unit: px
         default: 8
         description: On SwayFX, open windows keep their rounding until sway reloads.
@@ -76,83 +78,41 @@ properties:
         maximum: 50
         x-showIf: {enabled: true, matchShell: false}
         x-hintedIf: {/$supports.windowShape: true, /$supports.windowRounding: true}
-    x-group: Window look
-  gaps:
+    x-group: Frame
+  borders:
     type: object
-    title: Gaps
+    title: Borders
     additionalProperties: false
     properties:
       enabled:
         type: boolean
-        title: Set window gaps
+        title: Themed borders
         default: false
-        description: Floating bars and detached surfaces set to Automatic use these gaps too.
-        x-hintedIf: {/$supports.windowGaps: true}
-      inner:
-        type: integer
-        x-control: stepper
-        title: Gaps between windows
-        x-unit: px
-        default: 3
-        minimum: 0
-        maximum: 50
+        x-hintedIf: {/$supports.windowBorders: true}
+      activeColor:
+        type: string
+        title: Focused border
+        x-options: colors
+        x-emptyLabel: Theme
+        default: ''
         x-showIf: {enabled: true}
-        x-hintedIf: {/$supports.windowGaps: true}
-      outer:
-        type: integer
-        x-control: stepper
-        title: Gaps to the edges
-        x-unit: px
-        default: 6
-        minimum: 0
-        maximum: 100
+        x-hintedIf: {/$supports.windowBorders: true}
+      inactiveColor:
+        type: string
+        title: Unfocused border
+        x-options: colors
+        x-emptyLabel: Theme
+        default: ''
         x-showIf: {enabled: true}
-        x-hintedIf: {/$supports.windowGaps: true}
-    x-group: Window look
-  surfaceBlur:
-    type: object
-    title: Blur behind axiom
-    additionalProperties: false
-    properties:
-      enabled:
-        x-link: {setting: Appearance.surface}
-        type: boolean
-        title: Blur behind axiom's surfaces
-        default: true
-        description: Blur what shows through axiom's translucent surfaces. Costs GPU time.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}}
-        x-hintedIf: {/$supports.blur: true}
-      throughWindows:
-        type: boolean
-        title: Blur windows behind surfaces
-        default: true
-        description: Off, surfaces blur only the wallpaper, which is cheaper.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-        x-hintedIf: {/$supports.blur: true}
-      backdrops:
-        type: boolean
-        title: Blur backdrops
-        default: false
-        description: Also blur the screen behind the overlay, launcher, power menu and overview.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-        x-hintedIf: {/$supports.blur: true}
-      pauseFullscreen:
-        x-scope: machine
-        type: boolean
-        title: Pause blur over fullscreen apps
-        default: true
-        description: No blur on a monitor showing a fullscreen window; its surfaces turn opaque.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-        x-hintedIf: {/$supports.blur: true}
-    x-group: Blur
-  blur: {$ref: '#/definitions/Blur', x-group: Blur}
+        x-hintedIf: {/$supports.windowBorders: true}
+    x-group: Frame
   shadow:
     $ref: '#/definitions/Shadow'
     title: Window shadows
     x-properties:
       enabled:
         type: boolean
-        title: Window shadows
+        title: Shadows
         default: false
         x-hintedIf: {/$supports.windowShadow: true}
       matchShell:
@@ -160,48 +120,47 @@ properties:
         type: boolean
         title: Match axiom's shadow
         default: true
-        description: Use Look & Feel's shadow color and size.
+        description: Color and size from Look & Feel.
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowShadow: true}
       size:
         type: integer
         x-control: stepper
-        title: Shadow size
+        title: Size
         x-unit: px
         default: 10
         minimum: 0
         maximum: 100
         x-showIf: {enabled: true, matchShell: false}
         x-hintedIf: {/$supports.windowShadow: true}
-      power:
-        type: integer
-        title: Shadow falloff
-        default: 3
-        minimum: 1
-        maximum: 4
-        description: 1 fades slowly, 4 ends sharply.
-        x-showIf: {enabled: true, matchShell: false, /$compositor: hyprland}
-        x-hintedIf: {/$supports.windowShadow: true}
       color:
         type: string
-        title: Shadow color
+        title: Color
         x-options: colors
         x-emptyLabel: Compositor's
         default: ''
-        description: Unfocused windows cast it too.
         x-showIf: {enabled: true, matchShell: false}
         x-hintedIf: {/$supports.windowShadow: true}
       strength:
         type: integer
-        x-control: stepper
-        title: Shadow strength
+        title: Strength
         x-unit: '%'
         default: 100
         minimum: 10
         maximum: 400
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowShadow: true}
-    x-group: Window shadows
+      power:
+        type: integer
+        title: Falloff
+        x-control: stepper
+        default: 3
+        minimum: 1
+        maximum: 4
+        description: 1 fades slowly, 4 ends sharply.
+        x-showIf: {enabled: true, matchShell: false, /$compositor: hyprland}
+        x-hintedIf: {/$supports.windowShadow: true}
+    x-group: Shadows
   dim:
     type: object
     title: Window dimming
@@ -214,14 +173,14 @@ properties:
         x-hintedIf: {/$supports.windowDim: true}
       strength:
         type: integer
-        title: Dim strength
+        title: Strength
         x-unit: '%'
         default: 8
         minimum: 0
         maximum: 100
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowDim: true}
-    x-group: Window dimming
+    x-group: Dimming
   opacity:
     type: object
     title: Window opacity
@@ -230,13 +189,13 @@ properties:
       enabled:
         x-link: {setting: Appearance.surface.opacity}
         type: boolean
-        title: Set window opacity
+        title: Window opacity
         default: false
-        description: Your apps' windows. Off, your own config's applies.
+        description: 'Apps'' windows. Off: your config''s applies.'
         x-hintedIf: {/$supports.windowOpacity: true}
       active:
         type: integer
-        title: Focused window opacity
+        title: Focused
         x-unit: '%'
         default: 100
         minimum: 10
@@ -246,7 +205,7 @@ properties:
         x-compositor: {hyprland: {key: decoration.active_opacity, scale: 0.01, if: enabled}}
       inactive:
         type: integer
-        title: Unfocused window opacity
+        title: Unfocused
         x-unit: '%'
         default: 100
         minimum: 10
@@ -256,7 +215,7 @@ properties:
         x-compositor: {hyprland: {key: decoration.inactive_opacity, scale: 0.01, if: enabled}}
       fullscreen:
         type: integer
-        title: Fullscreen opacity
+        title: Fullscreen
         x-unit: '%'
         default: 100
         minimum: 10
@@ -264,4 +223,5 @@ properties:
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.fullscreenOpacity: true}
         x-compositor: {hyprland: {key: decoration.fullscreen_opacity, scale: 0.01, if: enabled}}
-    x-group: Window opacity
+    x-group: Opacity
+  blur: {$ref: '#/definitions/Blur', x-group: Blur}

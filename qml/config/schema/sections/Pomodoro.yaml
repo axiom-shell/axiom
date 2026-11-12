@@ -3,16 +3,17 @@
 type: object
 x-category: Modules
 x-scope: personal
-title: Pomodoro timer
-description: Shared by every pomodoro widget and module.
+title: Pomodoro
+description: Shared by every Pomodoro widget and module.
 additionalProperties: false
 properties:
   work:
     type: integer
-    title: Focus session
+    title: Focus
     x-unit: min
     default: 1500000
     minimum: 60000
+    multipleOf: 60000
     maximum: 10800000
   shortBreak:
     type: integer
@@ -20,6 +21,7 @@ properties:
     x-unit: min
     default: 300000
     minimum: 60000
+    multipleOf: 60000
     maximum: 3600000
   longBreak:
     type: integer
@@ -27,21 +29,22 @@ properties:
     x-unit: min
     default: 900000
     minimum: 60000
+    multipleOf: 60000
     maximum: 7200000
   longBreakEvery:
     type: integer
     title: Long break every
     x-unit: sessions
+    x-control: stepper
     default: 4
     minimum: 1
     maximum: 12
-    description: A long break follows this many focus sessions.
-  autoStartBreaks: {type: boolean, title: Start breaks by themselves, default: true}
+  autoStartBreaks: {type: boolean, title: Auto-start breaks, default: true}
   autoStartWork:
     type: boolean
-    title: Start focus sessions by themselves
+    title: Auto-start focus
     default: false
-    description: Off, a break waits for you to start the next session.
+    description: 'Off: a break waits for you.'
   notify:
     type: boolean
     title: Notify

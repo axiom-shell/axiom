@@ -44,7 +44,7 @@ OSDSystem {
   // The bars in `bars` order (keys unique: the microphone's bar is
   // `micLevel`, its tile keeping `microphone`; an App bar is
   // `app:<its id>`, as its schema's x-barNames says), then the tiles in
-  // `tiles` order; a bar whose showOsd is off never opens the OSD shut. A
+  // `shows` order; a bar whose showOsd is off never opens the OSD shut. A
   // bar is drawn by its `design`, design/VolumeBar.qml
   // (Paths.osdDesignUrl), given its entry (`bar`: its item in `bars`),
   // which reads and sets PipeWire itself; a tile's click mutes its device
@@ -90,7 +90,7 @@ OSDSystem {
         "opens": bar.showOsd !== false,
         "design": "VolumeBar",
         "bar": bar
-      })).filter((e, i, all) => all.findIndex(o => o.key === e.key) === i).concat((options.tiles ?? ["audio", "microphone"]).map(key => Object.assign({
+      })).filter((e, i, all) => all.findIndex(o => o.key === e.key) === i).concat((options.shows ?? ["audio", "microphone"]).map(key => Object.assign({
       "key": key,
       "part": "tile"
     }, _tiles[key])))

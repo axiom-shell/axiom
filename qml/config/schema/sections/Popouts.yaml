@@ -20,7 +20,6 @@ properties:
         maximum: 5000
   padding:
     type: integer
-    x-control: stepper
     title: Padding
     x-unit: px
     default: 16

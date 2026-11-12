@@ -11,7 +11,6 @@ properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
-    description: Where toasts appear.
     x-properties:
       mode:
         x-scope: look
@@ -46,7 +45,7 @@ properties:
   detached:
     x-scope: look
     type: boolean
-    title: Detach from edge
+    title: Detached
     default: true
     description: Separate cards held off the edge, instead of one box growing out of it.
   gap:
@@ -60,8 +59,7 @@ properties:
     minimum: 0
     maximum: 200
     x-unit: px
-    description: Space from the border or bar on their edge. Auto lines them up with your windows.
-    x-showIf: {detached: true}
+    description: From the border or bar on their edge.
   motion:
     type: object
     title: Motion
@@ -83,8 +81,27 @@ properties:
         default: auto
         enum: [auto, top, bottom, left, right]
         x-enumLabels: {auto: Auto, top: Top, bottom: Bottom, left: Left, right: Right}
-        description: Auto slides from their own edge, or the nearest screen edge when detached.
+        description: 'Auto: from their own edge, or the nearest screen edge when detached.'
         x-showIf: {style: slide}
+  width:
+    x-scope: look
+    type: integer
+    title: Toast width
+    x-unit: px
+    x-group: Toasts
+    default: 360
+    minimum: 240
+    maximum: 600
+  maxToasts:
+    x-scope: look
+    type: integer
+    x-control: stepper
+    title: Visible toasts
+    x-group: Toasts
+    default: 5
+    minimum: 1
+    maximum: 10
+    description: A new one pushes out the oldest.
   timeout:
     type: integer
     x-control: stepper
@@ -97,59 +114,44 @@ properties:
     description: Hovering a toast pauses it.
   followApps:
     type: boolean
-    title: Let apps manage their notifications
+    title: Follow apps
     x-group: Toasts
     default: true
-    description: Use an app's own duration, and remove notifications it withdraws.
+    description: Use an app's own duration; drop ones it withdraws.
   criticalStays:
     type: boolean
     title: Critical toasts stay
     x-group: Toasts
     default: true
     description: Stay up until you dismiss them.
-  maxToasts:
-    x-scope: look
-    type: integer
-    x-control: stepper
-    title: Visible toasts
-    x-group: Toasts
-    default: 5
-    minimum: 1
-    maximum: 10
-    description: A new one pushes out the oldest.
-  width:
-    x-scope: look
-    type: integer
-    title: Toast width
-    x-unit: px
-    x-group: Toasts
-    default: 360
-    minimum: 240
-    maximum: 600
   quietFullscreen:
     type: boolean
     title: Quiet over fullscreen
     x-group: Toasts
     default: true
-    description: No toasts on a monitor showing a fullscreen window. Critical ones still show.
+    description: No toasts over a fullscreen window. Critical ones still show.
   devNotifications:
     type: boolean
-    title: Dev mode notifications
+    title: Dev notifications
     x-group: Toasts
     default: true
     x-showIf: {/$devOptions: true}
-    description: Notify when a dev build fails or recovers, and when the live config changed.
+    description: Dev build failures and recoveries, live config changes.
   dnd:
     type: object
     title: Do not disturb
     x-group: Do not disturb
     additionalProperties: false
     properties:
+      allowCritical:
+        type: boolean
+        title: Critical still toast
+        default: true
       schedule:
         type: boolean
-        title: On a schedule
+        title: Schedule
         default: false
-        description: Turn do not disturb on and off at set times. Switching by hand lasts until the next change.
+        description: Switching by hand lasts until the next change.
       startAt:
         type: string
         title: Turn on at
@@ -164,11 +166,6 @@ properties:
         pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
         description: 24-hour time, e.g. 07:00. Earlier than the start runs past midnight.
         x-showIf: {schedule: true}
-      allowCritical:
-        type: boolean
-        title: Critical ones still show
-        default: true
-        description: Critical notifications still toast while do not disturb is on.
   lowUrgency:
     type: string
     title: Low-urgency notifications
@@ -177,14 +174,14 @@ properties:
     x-control: toggle
     enum: [silent, alert]
     x-enumLabels: {silent: Silent, alert: Alert}
-    description: For apps no rule below names. Silent files them in the Quiet section.
+    description: 'Apps no rule names. Silent: Quiet section.'
   apps:
     type: array
-    title: Per-app rules
+    title: Rules
     x-group: Per-app rules
     x-wide: true
     default: []
-    description: 'Per app: whether they alert, go quietly, only toast or are blocked, and how long they stay.'
+    description: 'Per app: alert level, urgency, duration.'
     items:
       type: object
       additionalProperties: false
@@ -202,14 +199,13 @@ properties:
           default: alert
           enum: [alert, silent, toast, 'off']
           x-enumLabels: {alert: Alert, silent: Silent, toast: Toast only, 'off': Block}
-          description: Alert toasts and keeps it. Silent keeps it in the Quiet section only. Toast only forgets it once closed. Block drops it.
+          description: 'Alert: toast and keep. Silent: Quiet section only. Toast only: not kept. Block: dropped.'
         urgency:
           type: string
           title: Urgency
           default: app
           enum: [app, low, normal, critical]
           x-enumLabels: {app: As the app sends it, low: Low, normal: Normal, critical: Critical}
-          description: Treat its notifications as this urgent.
         timeout:
           type: integer
           x-control: stepper
@@ -217,13 +213,12 @@ properties:
           title: Toast duration
           x-unit: s
           default: null
-          minimum: 0
+          minimum: 1000
           maximum: 60000
-          description: Auto follows the duration above.
       required: [id]
   clearOnFocus:
     type: boolean
-    title: Clear when the app is focused
+    title: Clear on focus
     x-group: Notification history
     default: false
     description: Focusing an app removes its notifications from the history.
@@ -244,7 +239,7 @@ properties:
     title: Closing a toast removes it
     x-group: Notification history
     default: false
-    description: Off, closing only hides the toast.
+    description: 'Off: closing only hides the toast.'
   maxEntries:
     type: integer
     title: History size
@@ -261,7 +256,7 @@ properties:
     default: 0
     minimum: 0
     maximum: 31536000000
-    description: Days. 0 keeps them until removed.
+    description: '0: until removed.'
   quiet:
     type: object
     title: Quiet section
@@ -269,23 +264,23 @@ properties:
     additionalProperties: false
     description: Silent notifications, kept apart under the list and never counted on the badge.
     properties:
+      connectivity:
+        type: boolean
+        title: Connection notes
+        default: false
+        description: A silent note when the network or a Bluetooth device connects or drops.
       maxEntries:
         type: integer
-        title: Quiet size
+        title: Size
         default: 50
         minimum: 5
         maximum: 500
         description: The oldest go first.
       maxAge:
         type: integer
-        title: Keep quiet ones for
+        title: Keep for
         x-unit: d
         default: 604800000
         minimum: 0
         maximum: 31536000000
-        description: Days. 0 keeps them until removed.
-      connectivity:
-        type: boolean
-        title: Note connection changes
-        default: false
-        description: A silent note when the network or a Bluetooth device connects or disconnects.
+        description: '0: until removed.'

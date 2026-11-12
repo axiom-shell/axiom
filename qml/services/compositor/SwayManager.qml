@@ -144,7 +144,7 @@ Singleton {
     const hidden = root._info.scratch.some(w => w.id === String(id));
     const grouped = (root._marks[String(id)] ?? []).some(mark => SwayState.specialGroup(mark) !== "");
     if (hidden || grouped)
-      lines.push(...SwayState.specialLeave(root._marks, id, hidden, hidden || CompositorConfig.swaySpecial === "scratchpad"));
+      lines.push(...SwayState.specialLeave(root._marks, id, hidden, hidden || WorkspacesConfig.specialWorkspaces === "scratchpad"));
     if (floatAt) {
       if (!reinsert)
         lines.push(`${win} move container to workspace number ${workspaceId}`);
@@ -249,7 +249,7 @@ Singleton {
   }
 
   // --- Special workspaces: groups of scratchpad windows, or a workspace
-  // each (CompositorConfig.swaySpecial) ---
+  // each (WorkspacesConfig.specialWorkspaces) ---
 
   // Shows the windows of special group `name` on the focused output, or
   // hides them when any is shown there (SwayState.specialToggle); as a
@@ -259,9 +259,9 @@ Singleton {
   function toggleSpecial(name, output) {
     const target = output || root.focusedOutput;
     const active = I3.monitors.values.find(m => m.name === target)?.activeWorkspace?.name ?? "";
-    const adopt = SwayState.specialAdopt(root.windows, root._marks, name, CompositorConfig.swaySpecial, active);
+    const adopt = SwayState.specialAdopt(root.windows, root._marks, name, WorkspacesConfig.specialWorkspaces, active);
     const focus = target !== root.focusedOutput ? [`focus output ${SwayState.quote(target)}`] : [];
-    if (CompositorConfig.swaySpecial === "workspace") {
+    if (WorkspacesConfig.specialWorkspaces === "workspace") {
       SwayIpcManager.dispatch(focus.concat(adopt.lines, SwayState.specialWorkspaceToggle(name, active, target, root._specialFrom[target] ?? "")).join("; "));
       if (active !== SwayState.specialWorkspace(name))
         root._specialFrom = Object.assign({}, root._specialFrom, {
@@ -284,7 +284,7 @@ Singleton {
     id = id || root.activeWindowId;
     if (!id)
       return;
-    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, CompositorConfig.swaySpecial).join("; "), () => root._debounce.restart());
+    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, WorkspacesConfig.specialWorkspaces).join("; "), () => root._debounce.restart());
   }
 
   // --- axiom's config layer (the daemon's: CompositorConfigManager) ---

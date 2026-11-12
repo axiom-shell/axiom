@@ -52,7 +52,7 @@ WorkspacePopoutPanel {
         readonly property bool inBar: root.vertical ? index % root.gridColumns === root.activeIndex % root.gridColumns : Math.floor(index / root.gridColumns) === Math.floor(root.activeIndex / root.gridColumns)
         // What it shows, as on the bar (its number is its place in the
         // grid counted from 1 with relative numbers)
-        readonly property var shows: contents.of(wsId, "", true)
+        readonly property var shows: contents.of(wsId, true)
 
         barConfig: root.barConfig
         cellLook: root.cellLook

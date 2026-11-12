@@ -267,7 +267,7 @@ BarWidget {
             // Stacked: the value over its name, where the value goes
             subtext: I18n.tr(root._captions[segment.modelData])
             segmentCount: root.appearance.segments
-            preferredLength: root.appearance.width
+            preferredLength: root.appearance.width ?? 0
             vertical: root.isVertical
             crossSize: root.barConfig.thickness
             room: root._boxRoom

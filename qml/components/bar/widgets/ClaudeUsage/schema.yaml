@@ -1,13 +1,14 @@
 label: Claude usage
 icon: data_usage
 group: System
-popout: {variant: own, enabled: {description: List every limit per account when hovered.}}
+popout: {variant: own, enabled: {description: Lists every limit per account.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments, stacked]
     description: The fullest account's percent, or the first's; stacked puts it over the limit's name.
 colors: standard
+order: [appearance, metric, icon, boxes, display, warnThreshold, criticalThreshold, clickCommand, popout, backgroundColor, foregroundColor, warnColor, criticalColor]
 boxes:
   variant: each
   boxes:
@@ -15,14 +16,14 @@ boxes:
 settings:
   metric:
     type: string
-    title: Limit shown
+    title: Limit
     default: session
     x-control: toggle
     enum: [session, weekly]
-    x-enumLabels: {session: Current session, weekly: Weekly}
+    x-enumLabels: {session: Session, weekly: Weekly}
   display:
     type: string
-    title: Accounts shown
+    title: Accounts
     default: max
     x-control: toggle
     enum: [max, all, first]
@@ -54,6 +55,6 @@ settings:
     type: string
     title: Click command
     default: ''
-    description: Run on left click. Right click checks again.
+    description: 'Empty: nothing. Right click refreshes.'
   warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}
   criticalColor: {$ref: '#/definitions/WidgetColor', title: Critical color, x-autoColor: critical}

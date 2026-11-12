@@ -47,7 +47,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 
 ### Menu popouts
 - Every widget except Separator has a `popout`: `enabled` and `menu`, a menu id (`x-options: menus`) shown under the switch. Button's is a menu only (its click action is separate).
-  - A widget with a popout of its own opens that menu in its place. A widget without one gets a "Menu popout" switch.
+  - A widget with a popout of its own opens that menu in its place. A widget without one gets an "Open on hover" switch.
 - `BarWidgetHost` holds the one anchor for the menu:
   - It is a `PopoutAnchor` with `menu`, hovered through the host's `hitArea` but sized to the module (not the hit area's powerline reach back), so a menu opened at its widget (`popoutAtWidget`) centres on it.
   - It calls `MenuManager.open(id, anchor)` on hover.

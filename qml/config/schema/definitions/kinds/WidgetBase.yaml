@@ -30,9 +30,8 @@ x-parts:
         properties:
           enabled:
             type: boolean
-            title: Menu popout
+            title: Open on hover
             default: false
-            description: Open a menu when hovered.
           menu:
             type: string
             title: Menu
@@ -61,12 +60,20 @@ x-parts:
         title: Boxes
         x-control: toggle
         enum: [one, each]
-        x-enumLabels: {one: One, each: One per item}
+        x-enumLabels: {one: One, each: Each}
         default: one
-        description: One per item takes the bar's widget style, pill and split for each.
+        description: Each item gets the bar's widget style.
   colors:
     standard:
-      backgroundColor: {$ref: '#/definitions/WidgetColor'}
+      backgroundColor: {$ref: '#/definitions/WidgetColor', title: Background color}
+      foregroundColor:
+        type: string
+        title: Text color
+        x-options: colors
+        default: base00
+        x-showIf: {$bar.textColorShows: true}
+    # The Text color only, for a widget with no background color of its own
+    text:
       foregroundColor:
         type: string
         title: Text color

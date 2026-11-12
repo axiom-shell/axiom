@@ -3,14 +3,16 @@ keywords: ['Media Player']
 elastic: true
 icon: music_note
 group: Media & audio
-popout: {variant: own, enabled: {description: Open the media controls when hovered.}}
+popout: {variant: own, enabled: {description: Media controls.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, fill, pill, ticker, stacked]
-    description: Fill and pill show the track's position; ticker scrolls the title; stacked puts the title over the artist.
+    description: 'Fill, pill: track position. Ticker: scrolls the title. Stacked: title over artist.'
+colors: text
+order: [appearance, showArtist, artistLength, idleText, popout, foregroundColor, playingColor, pausedColor]
 settings:
-  showArtist: {type: boolean, title: Show artist, default: true}
+  showArtist: {type: boolean, title: Artist, default: true}
   artistLength:
     type: integer
     x-control: stepper
@@ -18,17 +20,12 @@ settings:
     default: 10
     minimum: 0
     maximum: 100
-    description: In characters.
+    x-unit: chars
+    x-showIf: {showArtist: true}
   idleText:
     type: string
     title: Idle text
-    default: No player
-    description: Shown when nothing is playing.
+    default: ''
+    description: 'Shown with no player. Empty: "No player".'
   playingColor: {$ref: '#/definitions/WidgetColor', title: Playing color}
   pausedColor: {$ref: '#/definitions/WidgetColor', title: Paused color, x-autoColor: 'off'}
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}

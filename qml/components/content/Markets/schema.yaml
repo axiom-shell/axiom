@@ -6,36 +6,39 @@ defaultSize: [4, 6]
 minSize: [2, 2]
 canvasDetail: layout
 hosts: [lockscreen]
+order: [layout, showChart, range, symbols, showHoldings]
 settings:
+  layout:
+    type: string
+    title: Layout
+    default: list
+    x-control: toggle
+    enum: [list, tiles, focus]
+    x-enumLabels: {list: List, tiles: Tiles, focus: Chart}
+  showChart:
+    type: boolean
+    title: Charts
+    default: true
+    description: Each symbol's line for the day.
+    x-showIf: {layout: [list, tiles]}
+  range:
+    type: string
+    title: Range
+    default: 1d
+    enum: [1d, 5d, 1mo, 6mo, 1y]
+    x-enumLabels: {1d: Day, 5d: 5 days, 1mo: Month, 6mo: 6 months, 1y: Year}
+    x-showIf: {layout: focus}
   symbols:
     # Ids from the user's watchlist: personal, as the watchlist is
     x-scope: personal
     type: array
     title: Symbols
     default: []
-    description: The watchlist's symbols it shows. None picked shows them all; focus shows the first.
+    description: 'Empty: the whole watchlist. Focus shows the first.'
     items: {type: string, x-options: marketSymbols}
-  layout:
-    type: string
-    title: Layout
-    default: list
-    enum: [list, tiles, focus]
-    x-enumLabels: {list: List, tiles: Tiles, focus: One large chart}
-  showChart:
-    type: boolean
-    title: Day charts
-    default: true
-    description: Each symbol's line for the day.
-    x-showIf: {layout: [list, tiles]}
   showHoldings:
     type: boolean
     title: Holdings
     default: false
-    description: What each holding is worth and the portfolio's total. On the lock screen only with Markets' Holdings on the lock screen.
-  range:
-    type: string
-    title: Chart range
-    default: 1d
-    enum: [1d, 5d, 1mo, 6mo, 1y]
-    x-enumLabels: {1d: Day, 5d: 5 days, 1mo: Month, 6mo: 6 months, 1y: Year}
-    x-showIf: {layout: focus}
+    description: Holding values and the portfolio total.
+    x-link: {setting: Markets.holdingsOnLockscreen}

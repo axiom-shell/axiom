@@ -42,7 +42,7 @@ Item {
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
   readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
-  readonly property color iconColor: Theme.resolveColor(properties.textColor)
+  readonly property color iconColor: Theme.resolveColor(properties.foregroundColor)
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""
@@ -183,10 +183,8 @@ Item {
       textColor: root.iconColor
       hitArea: root.hitArea
       barSpotOf: root.barSpotOf
-      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
       chainCount: line.ids.length + root._stripCells + root._scratchCells
-      // The active arrow takes the active cell's place
-      glyphOf: (id, active) => active && root.properties.showActiveIcon && root.properties.lead !== "position" ? GridPosition.glyph(line.value, root.isVertical ? root.columns : root.rows, root.isVertical) : ""
 
       Connections {
         target: CompositorManager

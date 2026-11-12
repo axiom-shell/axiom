@@ -342,16 +342,15 @@ TestCase {
   }
 
   function test_pick_in_priority_order() {
-    compare(WorkspaceCells.pick("circle", "web", ["a"], "mail").kind, "glyph", "the grid's arrow first");
-    compare(WorkspaceCells.pick("", "web", ["a"], "mail"), {
+    compare(WorkspaceCells.pick("web", ["a"], "mail"), {
       "kind": "text",
       "text": "web"
     }, "a label of one's own before app icons");
-    compare(WorkspaceCells.pick("", "", ["a"], "mail").kind, "icons", "app icons before the name");
-    compare(WorkspaceCells.pick("", "", [], "mail"), {
+    compare(WorkspaceCells.pick("", ["a"], "mail").kind, "icons", "app icons before the name");
+    compare(WorkspaceCells.pick("", [], "mail"), {
       "kind": "name",
       "text": "mail"
     }, "a name, drawn as words even where it's an icon's name");
-    compare(WorkspaceCells.pick("", "", [], "").kind, "labels");
+    compare(WorkspaceCells.pick("", [], "").kind, "labels");
   }
 }

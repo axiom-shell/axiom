@@ -13,7 +13,7 @@ properties:
     x-settings: false
     type: object
     title: Custom commands
-    description: Commands axiom starts in place of a default app. Empty uses the default app.
+    description: 'Empty: the default app.'
     additionalProperties: false
     properties:
       browser:
@@ -58,7 +58,7 @@ properties:
         description: Given the files.
       pdf:
         type: string
-        title: Documents (PDF)
+        title: PDF
         default: ''
         description: Given the files.
       archives:
@@ -71,7 +71,7 @@ properties:
     type: string
     title: Network editor
     default: nm-connection-editor
-    description: Opened to edit network connections and VPNs. Empty hides its buttons.
+    description: 'Edits connections and VPNs. Empty: no edit buttons.'
   pinned:
     x-scope: personal
     type: array

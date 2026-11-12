@@ -4,29 +4,33 @@ icon: notifications
 group: Desktop
 popout: {variant: own, enabled: {description: Open the notification list when hovered.}}
 colors: standard
+order: [label, showCount, badgeColor, popout, backgroundColor, foregroundColor, dndColor]
 settings:
   showCount:
     type: boolean
-    title: Show count
+    title: Badge
     default: true
+    x-showIf: {label: [none, lastApp]}
   label:
     type: string
     title: Label
+    x-control: toggle
     enum: [none, count, lastApp]
-    x-enumLabels: {none: None, count: Count, lastApp: Last app}
+    x-enumLabels: {none: None, count: Count, lastApp: App}
     default: none
-    description: Beside the bell. The count as the label hides the badge.
+    description: Text beside the bell.
   dndColor:
     type: string
-    title: Do-not-disturb icon
+    title: Do-not-disturb color
     x-options: colors
     default: ''
     x-emptyLabel: Auto
     x-autoColor: 'off'
   badgeColor:
     type: string
-    title: Badge
+    title: Badge color
     x-options: colors
     default: ''
     x-emptyLabel: Auto
     x-autoColor: critical
+    x-showIf: {showCount: true, label: [none, lastApp]}

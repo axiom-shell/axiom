@@ -44,7 +44,7 @@ Item {
   Component.onCompleted: root._barConfig = root._enriched()
   function _enriched() {
     return BarsConfig.enrichBarConfig(Object.assign({}, root.bar ?? {}, {
-      "location": "top",
+      "edge": "top",
       "thickness": root._thickness,
       "widgets": {},
       "style": root._style

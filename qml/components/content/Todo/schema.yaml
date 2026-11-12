@@ -8,4 +8,4 @@ settings:
     type: boolean
     title: Header
     default: true
-    description: The title, open count and Clear completed.
+    description: Title, open count and Clear completed.

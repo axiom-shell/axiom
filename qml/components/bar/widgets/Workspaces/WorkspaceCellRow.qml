@@ -33,9 +33,6 @@ Item {
   required property color urgentColor
   required property color emptyColor
   required property color textColor
-  // A hook: the glyph a cell shows instead of its label and app icon (the
-  // grid's position arrow), or ""
-  property var glyphOf: (id, active) => ""
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
   // Where a point of an item of it sits along the bar (BarWidget.barSpotOf):
@@ -69,7 +66,7 @@ Item {
   // widened by one normal cell's length (`wideActive`: WorkspaceCells)
   readonly property int _activeIndex: ids.indexOf(activeId)
   // What each cell shows (CellContents.of), in `ids` order
-  readonly property var _contents: ids.map(id => contents.of(id, root.glyphOf(id, id === root.activeId), id !== root.activeId || root.activeIcons))
+  readonly property var _contents: ids.map(id => contents.of(id, id !== root.activeId || root.activeIcons))
   readonly property var _lengths: WorkspaceCells.roomed(_contents.map(c => c.length), _rooms)
   readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLook.length : 0)
   // Measured from the cells' lengths to be, never their gliding ones

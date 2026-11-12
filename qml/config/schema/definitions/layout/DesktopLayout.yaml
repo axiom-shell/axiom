@@ -17,9 +17,10 @@ x-properties:
         x-scope: look
         type: string
         title: Monitors
+        x-control: toggle
         enum: [all, primary, named]
         default: primary
-        x-enumLabels: {primary: Primary monitor, all: Every monitor, named: These monitors}
+        x-enumLabels: {primary: Primary, all: All, named: Named}
         x-link: {setting: General.screen}
       names:
         x-scope: machine

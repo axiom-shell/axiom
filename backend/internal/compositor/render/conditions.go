@@ -59,7 +59,11 @@ func monitorsHold(monitors string, outputs any) bool {
 // that doesn't hold under facts ({ kind, strips, grid, dynamic, outputs }),
 // "" when it holds.
 func BindUnmet(bind, facts any) string {
-	if list := items(get(bind, "whenCompositors")); len(list) > 0 {
+	var list []any
+	if str(or(get(bind, "action"), "")) != "raw" {
+		list = items(get(bind, "whenCompositors"))
+	}
+	if len(list) > 0 {
 		kind, found := str(or(get(facts, "kind"), "")), false
 		for _, c := range list {
 			found = found || str(c) == kind

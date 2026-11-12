@@ -5,12 +5,11 @@ additionalProperties: false
 properties:
   id: {$ref: '#/definitions/ItemId'}
   name:
-    x-group: Placement
     type: string
     title: Name
     default: ''
-    description: Shown on its tab here. Empty names it by what it shows.
-  enabled: {x-group: Placement, type: boolean, title: Enabled, default: true}
+    description: 'The tab''s name. Empty: what it shows.'
+  enabled: {type: boolean, title: Enabled, default: true}
   screen:
     x-group: Placement
     $ref: '#/definitions/ScreenTarget'
@@ -47,7 +46,7 @@ properties:
   detached:
     x-group: Placement
     type: boolean
-    title: Detach from edge
+    title: Detached
     default: false
     description: A separate box held off the edge, instead of growing out of it.
   distance:
@@ -58,63 +57,25 @@ properties:
     default: 0
     minimum: 0
     maximum: 50
-    description: 0 lines it up with your window border, 50 centres it.
+    description: '0: in line with your window border. 50: centered.'
     x-showIf: {detached: true}
   animation:
     x-group: Placement
     $ref: '#/definitions/DetachedAnimation'
     x-showIf: {detached: true}
-  openOnHover:
-    x-group: Timing and behaviour
-    type: boolean
-    title: Open on hover
-    default: false
-    description: Also open when the pointer touches its screen edge.
-  timeout:
-    x-group: Timing and behaviour
-    type: integer
-    title: Timeout
-    x-unit: ms
-    default: 1000
-    minimum: 250
-    maximum: 10000
-    description: How long the bars and status icons stay out after the last change.
-  openTogether:
-    x-group: Timing and behaviour
-    type: boolean
-    title: Bars and status icons together
-    default: false
-    description: A change to either brings out both.
-  iconsPlace:
-    x-group: Timing and behaviour
-    type: string
-    title: Status icons
-    default: outside
-    x-control: toggle
-    enum: [outside, inside]
-    x-enumLabels:
-      outside: Past the bars
-      inside: By the edge
-    description: Where the status icons go when shown with the bars.
-  holdStill:
-    x-group: Timing and behaviour
-    type: boolean
-    title: Hold still under the mouse
-    default: true
-    description: While the pointer is on the OSD, nothing under it moves.
   barLayout:
     type: object
     title: Bars
-    description: How the levels are laid out, for the systems that show bars.
+    description: For the systems that show bars.
     additionalProperties: false
     properties:
       orientation:
         type: string
-        title: Bar orientation
+        title: Orientation
         default: vertical
         x-control: toggle
         enum: [vertical, horizontal]
-        description: Vertical bars sit side by side; horizontal bars stack as rows.
+        description: 'Vertical: side by side. Horizontal: stacked rows.'
       alongEdge:
         type: boolean
         title: Line up along the edge
@@ -126,40 +87,13 @@ properties:
         description: Bars end to end along the edge instead of stacked away from it.
       showPercent:
         type: boolean
-        title: Show percentages
+        title: Percentages
         default: true
-        description: Show each level as a percentage.
-  row:
-    x-group: Timing and behaviour
-    type: string
-    title: Icons shown
-    default: notable
-    enum: [notable, all, changed]
-    x-enumLabels:
-      notable: What's unusual
-      all: Every one picked
-      changed: Only the one that changed
-    description: What's unusual shows only states out of the ordinary, plus the one that changed.
-  cardsEnabled:
-    x-group: Timing and behaviour
-    type: boolean
-    title: Show cards
-    default: true
-    description: Off, statuses show as icons, and the rest as notifications.
-  cardTimeout:
-    x-group: Timing and behaviour
-    type: integer
-    title: Card timeout
-    x-unit: ms
-    default: 4000
-    minimum: 1000
-    maximum: 15000
-    x-showIf: {cardsEnabled: true}
-    description: How long a card stays out. Hovering keeps it out.
   systems:
+    x-group: Content
     type: array
     title: Shows
-    description: What the OSD shows, in order (its icons' and its bars' order). A change to one opens the OSD, unless it's quiet.
+    description: In order (icons and bars). A change to one opens the OSD, unless quiet.
     default:
       - {type: Audio}
       - {type: LockKeys}
@@ -171,11 +105,74 @@ properties:
       - {type: Drives}
       - {type: Message}
     items: {$ref: '#/definitions/OSDSystem'}
+  row:
+    x-group: Content
+    type: string
+    title: Icons shown
+    default: notable
+    enum: [notable, all, changed]
+    x-enumLabels:
+      notable: What's unusual
+      all: Every one picked
+      changed: Only the one that changed
+    description: 'What''s unusual: out-of-the-ordinary states, plus the one that changed.'
+  cardsEnabled:
+    x-group: Content
+    type: boolean
+    title: Cards
+    default: true
+    description: 'Off: statuses show as icons, the rest as notifications.'
+  cardTimeout:
+    x-group: Content
+    type: integer
+    title: Card timeout
+    x-unit: ms
+    default: 4000
+    minimum: 1000
+    maximum: 15000
+    x-showIf: {cardsEnabled: true}
+    description: How long a card stays out. Hovering keeps it out.
   barOrder:
     type: array
     title: Bar order
     x-settings: false
     default: []
     items: {type: string}
-    description: The bars' order, by key ("<System>/<its bar key>", e.g. Audio/master, Audio/app:<id>, Brightness/brightness), set by dragging them in the Bars part. Bars it doesn't name follow in their systems' order; empty, all do.
+    description: 'Bar keys ("Audio/master"), set by dragging in the Bars part. Unnamed bars follow.'
+  timeout:
+    x-group: Timing and behaviour
+    type: integer
+    title: Timeout
+    x-unit: ms
+    default: 1000
+    minimum: 250
+    maximum: 10000
+    description: How long the bars and status icons stay out after the last change.
+  openOnHover:
+    x-group: Timing and behaviour
+    type: boolean
+    title: Open on hover
+    default: false
+    description: Also open when the pointer touches its screen edge.
+  holdStill:
+    x-group: Timing and behaviour
+    type: boolean
+    title: Hold still under the mouse
+    default: true
+    description: While the pointer is on the OSD, nothing under it moves.
+  openTogether:
+    x-group: Timing and behaviour
+    type: boolean
+    title: Open together
+    default: false
+    description: A change to the bars or the status icons brings out both.
+  iconsPlace:
+    x-group: Timing and behaviour
+    type: string
+    title: Icon position
+    description: "Where the status icons go beside the bars. Inner: by the screen edge; Outer: past the bars."
+    default: outside
+    x-control: toggle
+    enum: [inside, outside]
+    x-enumLabels: {inside: Inner, outside: Outer}
 required: [id]

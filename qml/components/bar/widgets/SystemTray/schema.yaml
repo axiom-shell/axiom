@@ -3,16 +3,17 @@ icon: apps
 group: Desktop
 popout:
   variant: plain
-  enabled: {title: Menus, description: Open an item's menu when it's hovered.}
+  enabled: {title: Menus, description: An item's menu opens on hover.}
+order: [showPassive, leadIcon, popout, backgroundColor]
 settings:
   showPassive:
     type: boolean
-    title: Show passive
+    title: Passive items
     default: true
-    description: Also show idle items.
+    description: Idle items too.
   backgroundColor:
     type: string
-    title: Background
+    title: Background color
     x-options: colors
     default: ''
     x-emptyLabel: Auto
@@ -24,6 +25,6 @@ settings:
   leadIcon:
     type: string
     x-control: icon
-    title: Head icon
+    title: Icon
     default: ''
-    description: Drawn before the items; a split bar sets it apart as the icon part. Empty shows none.
+    description: 'Shown before the items. Empty: none.'

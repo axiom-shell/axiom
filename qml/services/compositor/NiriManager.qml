@@ -117,7 +117,8 @@ Singleton {
       "keyCapture": true,
       "bindMerge": true,
       "overview": true,
-      "compositorSwitcher": true
+      "compositorSwitcher": true,
+      "shareRestore": true
     })
 
   // --- Events ---

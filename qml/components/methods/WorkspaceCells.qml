@@ -253,19 +253,17 @@ QtObject {
         })).sort((a, b) => area(b.w) - area(a.w) || a.i - b.i).map(e => e.w);
   }
 
-  // What a cell shows, highest first: the grid's arrow (`glyph`), a label
+  // What a cell shows, highest first: a label
   // of one's own (`label`), app icons (`icons`, given only for a workspace
   // with windows), the compositor's name (`name`, given only with names
-  // on), else its number, dot or nothing: { kind: "glyph" | "text" |
+  // on), else its number, dot or nothing: { kind: "text" |
   // "icons" | "name" | "labels", text } (a name is always words, never
   // an icon, where a label of one's own is an icon field's value)
-  function pick(glyph, label, icons, name) {
+  function pick(label, icons, name) {
     const make = (kind, text) => ({
           "kind": kind,
           "text": text
         });
-    if (glyph !== "")
-      return make("glyph", glyph);
     if (label !== "")
       return make("text", label);
     if (icons.length > 0)
