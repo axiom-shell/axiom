@@ -109,42 +109,6 @@ properties:
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowGaps: true}
     x-group: Window look
-  surfaceBlur:
-    type: object
-    title: Blur behind axiom
-    additionalProperties: false
-    properties:
-      enabled:
-        x-link: {setting: Appearance.surface}
-        type: boolean
-        title: Blur behind axiom's surfaces
-        default: true
-        description: Blur what shows through axiom's translucent surfaces. Costs GPU time.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}}
-        x-hintedIf: {/$supports.blur: true}
-      throughWindows:
-        type: boolean
-        title: Blur windows behind surfaces
-        default: true
-        description: Off, surfaces blur only the wallpaper, which is cheaper.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-        x-hintedIf: {/$supports.blur: true}
-      backdrops:
-        type: boolean
-        title: Blur backdrops
-        default: false
-        description: Also blur the screen behind the overlay, launcher, power menu and overview.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-        x-hintedIf: {/$supports.blur: true}
-      pauseFullscreen:
-        x-scope: machine
-        type: boolean
-        title: Pause blur over fullscreen apps
-        default: true
-        description: No blur on a monitor showing a fullscreen window; its surfaces turn opaque.
-        x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
-        x-hintedIf: {/$supports.blur: true}
-    x-group: Blur
   blur: {$ref: '#/definitions/Blur', x-group: Blur}
   shadow:
     $ref: '#/definitions/Shadow'

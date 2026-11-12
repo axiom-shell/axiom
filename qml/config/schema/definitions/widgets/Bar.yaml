@@ -21,10 +21,10 @@ properties:
         default: primary
         x-enumLabels: {primary: Primary monitor, all: Every monitor, named: These monitors}
         x-link: {setting: General.screen}
-  location:
+  edge:
     x-group: Placement
     type: string
-    title: Location
+    title: Screen edge
     default: top
     enum: [top, bottom, left, right]
     description: Bars can share an edge, stacked one inside the other.

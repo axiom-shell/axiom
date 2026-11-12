@@ -301,8 +301,8 @@ class ConfigUsage(unittest.TestCase):
         self.assertIn("`barConfig.thickness`", read("Bars.items[].thickness"))
 
     def test_alias_of_a_section(self):
-        # `_look: ConfigManager.live.WindowLook` stands for that section
-        self.assertIn("WindowLook.surfaceBlur.throughWindows",
+        # `_c: ConfigManager.live.Appearance` stands for that section
+        self.assertIn("Appearance.surface.blur.throughWindows",
                       self.readers["Appearance"]["members"]["blurThroughWindows"]["paths"])
 
     def test_used_inside_the_reader(self):

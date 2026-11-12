@@ -93,6 +93,9 @@ QtObject {
 
   // --- Shape ---
   readonly property int borderRadius: _c.shape.radius
+  // The radius of what sits inside something (cards, controls, rows, bar
+  // widgets; Widget.radius): null in the config follows the main radius
+  readonly property int innerRadius: _c.shape.innerRadius !== null ? _c.shape.innerRadius : _c.shape.radius
   // The gap a surface growing out of an edge keeps between its box and
   // that edge, which its fillets curve across (AttachedSurface, EdgeAttach)
   readonly property int connectorGap: borderRadius * 2
@@ -118,16 +121,14 @@ QtObject {
   // The compositor blurs behind them (Hyprland's layer rules, which leave
   // out pixels under blurThreshold: shadows, dims, fades; SwayFX's layer
   // effects), with its own blur (the window look's blur part, or the
-  // user's config). The options are the window look's (Compositor ›
-  // Window look › Blur)
-  readonly property var _look: ConfigManager.live.WindowLook
-  readonly property bool blur: translucent && _look.surfaceBlur.enabled
-  readonly property bool blurBackdrops: blur && _look.surfaceBlur.backdrops
+  // user's config). The options are Appearance › Translucency's
+  readonly property bool blur: translucent && _c.surface.blur.enabled
+  readonly property bool blurBackdrops: blur && _c.surface.blur.backdrops
   // Blurring what's under each surface, windows included, rather than the
   // wallpaper alone (xray), which every surface shares
-  readonly property bool blurThroughWindows: _look.surfaceBlur.throughWindows
+  readonly property bool blurThroughWindows: _c.surface.blur.throughWindows
   // The blur pauses while a fullscreen window is open (BlurManager.pausedOn)
-  readonly property bool blurPauseFullscreen: _look.surfaceBlur.pauseFullscreen
+  readonly property bool blurPauseFullscreen: _c.surface.blur.pauseFullscreen
   readonly property real blurThreshold: 0.5
   // A shadow's darkest alpha while blurring: under the threshold, so its
   // halo isn't blurred (the blur window casts the chrome's, and Hyprland

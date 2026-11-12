@@ -22,8 +22,8 @@ settings:
   idleText:
     type: string
     title: Idle text
-    default: No player
-    description: Shown when nothing is playing.
+    default: ''
+    description: Shown when nothing is playing. Empty says No player.
   playingColor: {$ref: '#/definitions/WidgetColor', title: Playing color}
   pausedColor: {$ref: '#/definitions/WidgetColor', title: Paused color, x-autoColor: 'off'}
   foregroundColor:

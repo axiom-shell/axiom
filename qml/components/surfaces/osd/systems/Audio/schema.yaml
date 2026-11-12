@@ -10,7 +10,7 @@ card: standard
 # list, it starts with no icons and no cards; one bar per kind but App.
 # A bar's key (exposes, an OSD's barOrder) is its kind, the microphone's
 # micLevel (its tile keeps microphone), an App bar's app:<its id>
-barNames: {from: bars, by: type, named: apps, repeats: [app], keys: {microphone: micLevel}, barOnly: {tiles: [], card: false}}
+barNames: {from: bars, by: type, named: apps, repeats: [app], keys: {microphone: micLevel}, barOnly: {shows: [], card: false}}
 settings:
   bars:
     type: array
@@ -63,7 +63,7 @@ settings:
           default: true
           description: Off, it still shows while the OSD is open.
     x-showIf: {tile: true}
-  tiles:
+  shows:
     type: array
     title: Status icons
     items: {type: string, enum: [audio, microphone]}

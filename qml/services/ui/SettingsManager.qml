@@ -373,7 +373,7 @@ QtObject {
 
   // What a setting marked `x-inherit` (a dotted path) is while it's null:
   // the setting it follows, followed on while that is null too
-  // (widgetRadius → Interface.radius → Appearance.shape.radius); null if
+  // (widgetRadius → Appearance.shape.innerRadius → Appearance.shape.radius); null if
   // none is set
   function inheritedValue(fieldSchema) {
     let follows = fieldSchema?.["x-inherit"];

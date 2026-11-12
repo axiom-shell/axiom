@@ -35,13 +35,3 @@ properties:
     x-enumLabels: {compact: Compact, normal: Normal, roomy: Roomy}
     default: normal
     description: How tightly controls are packed.
-  radius:
-    type: integer
-    x-control: stepper
-    title: Interior corner radius
-    default: null
-    minimum: 0
-    maximum: 50
-    x-unit: px
-    description: Buttons, fields, rows and bar widgets. Outer edges keep the main radius.
-    x-inherit: Appearance.shape.radius

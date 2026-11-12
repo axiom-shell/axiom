@@ -8,7 +8,7 @@
 
 var audioOpts = {
   "bars": [{ "type": "other" }, { "type": "master" }, { "type": "microphone" }],
-  "tiles": ["audio", "microphone"]
+  "shows": ["audio", "microphone"]
 };
 var speakers = { "value": "52", "address": "", "name": "Speakers", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
 var builtInMic = { "value": "53", "address": "", "name": "Microphone", "detail": "Analog Stereo", "icon": "mic", "muted": false };
@@ -118,7 +118,7 @@ var rows = [
   {
     "name": "airplane mode ringed, then an unrelated key: it takes the ring",
     "systems": ["Airplane", "LockKeys"],
-    "options": { "LockKeys": { "keys": ["capsLock", "numLock"] }, "Airplane": {} },
+    "options": { "LockKeys": { "shows": ["capsLock", "numLock"] }, "Airplane": {} },
     "steps": [
       { "system": "Airplane", "at": 0, "state": { "airplane": { "value": false } } },
       { "system": "LockKeys", "at": 0, "state": { "capsLock": { "available": true, "value": false }, "numLock": { "available": true, "value": true } } },
@@ -158,7 +158,7 @@ var rows = [
   {
     "name": "an unrelated toggle beside the charger's card",
     "systems": ["Battery", "Caffeine"],
-    "options": { "Battery": { "tiles": ["charger", "battery"] }, "Caffeine": {} },
+    "options": { "Battery": { "shows": ["charger", "battery"] }, "Caffeine": {} },
     "steps": [
       { "system": "Battery", "at": 0, "state": { "charger": { "available": true, "value": false, "percent": 50, "charging": false, "full": false, "untilFull": "" } } },
       { "system": "Caffeine", "at": 0, "state": { "caffeine": { "value": false } } },
@@ -225,7 +225,7 @@ var rows = [
   {
     "name": "the system volume beside a capture's card: beside it",
     "systems": ["Privacy", "Audio"],
-    "options": { "Audio": audioOpts, "Privacy": { "kinds": ["camera", "micUse", "screenShare"] } },
+    "options": { "Audio": audioOpts, "Privacy": { "shows": ["camera", "micUse", "screenShare"] } },
     "steps": [
       { "system": "Privacy", "at": 0, "state": { "camera": { "members": [] }, "micUse": { "members": [] }, "screenShare": { "members": [] } } },
       { "system": "Audio", "at": 0, "state": audioStart() },
@@ -239,7 +239,7 @@ var rows = [
   {
     "name": "a microphone mute beside a capture's card: not a device switch, beside it",
     "systems": ["Privacy", "Audio"],
-    "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Privacy": { "kinds": ["camera", "micUse", "screenShare"] } },
+    "options": { "Audio": { "bars": [], "shows": ["audio", "microphone"] }, "Privacy": { "shows": ["camera", "micUse", "screenShare"] } },
     "steps": [
       { "system": "Privacy", "at": 0, "state": { "camera": { "members": [] }, "micUse": { "members": [] }, "screenShare": { "members": [] } } },
       { "system": "Audio", "at": 0, "state": audioStart() },
@@ -252,7 +252,7 @@ var rows = [
   {
     "name": "an input switch just after an app's microphone card: it replaces",
     "systems": ["Privacy", "Audio"],
-    "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Privacy": { "kinds": ["camera", "micUse", "screenShare"] } },
+    "options": { "Audio": { "bars": [], "shows": ["audio", "microphone"] }, "Privacy": { "shows": ["camera", "micUse", "screenShare"] } },
     "steps": [
       { "system": "Privacy", "at": 0, "state": { "camera": { "members": [] }, "micUse": { "members": [] }, "screenShare": { "members": [] } } },
       { "system": "Audio", "at": 0, "state": audioStart() },
@@ -333,7 +333,7 @@ var rows = [
   {
     "name": "the headset's own mute just after its card: beside it (only a switch is taken in)",
     "systems": ["Bluetooth", "Audio"],
-    "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Bluetooth": {} },
+    "options": { "Audio": { "bars": [], "shows": ["audio", "microphone"] }, "Bluetooth": {} },
     "steps": [
       { "system": "Bluetooth", "at": 0, "state": { "bluetooth": bt(null) } },
       { "system": "Audio", "at": 0, "state": Object.assign(audioStart(), { "audio": headphones }) },
@@ -376,7 +376,7 @@ var rows = [
   {
     "name": "a message's card: a tile shows beside it, even just after",
     "systems": ["Message", "LockKeys"],
-    "options": { "LockKeys": { "keys": ["capsLock", "numLock"] }, "Message": {} },
+    "options": { "LockKeys": { "shows": ["capsLock", "numLock"] }, "Message": {} },
     "steps": [
       { "system": "Message", "at": 0, "state": { "message": { "event": null, "seq": 0 } } },
       { "system": "LockKeys", "at": 0, "state": { "capsLock": { "available": true, "value": false }, "numLock": { "available": true, "value": true } } },

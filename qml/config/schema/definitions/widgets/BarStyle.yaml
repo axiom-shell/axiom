@@ -24,7 +24,7 @@ properties:
     minimum: 0
     maximum: 50
     x-unit: px
-    x-inherit: Interface.radius
+    x-inherit: Appearance.shape.innerRadius
   widgetStyle:
     x-group: Look
     type: string

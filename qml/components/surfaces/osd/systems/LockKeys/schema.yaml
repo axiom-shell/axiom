@@ -3,9 +3,9 @@ icon: keyboard_capslock
 group: Keys & input
 tile: standard
 settings:
-  keys:
+  shows:
     type: array
-    title: Keys
+    title: Shows
     items: {type: string, enum: [capsLock, numLock, scrollLock]}
     x-enumLabels: {capsLock: Caps Lock, numLock: Num Lock, scrollLock: Scroll Lock}
     x-enumIcons: {capsLock: keyboard_capslock, numLock: dialpad, scrollLock: swap_vert}

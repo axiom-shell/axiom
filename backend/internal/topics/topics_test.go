@@ -393,12 +393,11 @@ func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 		t.Fatal(err)
 	}
 	feeds := map[string]bool{
-		"/properties/Tailscale.interval":                                   false, // tailscale, tailscaledetails
-		"/definitions/SystemStatsWidget/properties/properties.interval":    false, // system
-		"/definitions/UpdatesWidget/properties/properties.interval":        false, // updates
-		"/definitions/UpdatesOverlayModule/properties/properties.interval": false, // updates
-		"/properties/ClaudeUsage.interval":                                 false, // claudeUsage's every
-		"/properties/Weather.interval":                                     false, // weather
+		"/properties/Tailscale.interval":                                false, // tailscale, tailscaledetails
+		"/definitions/SystemStatsWidget/properties/properties.interval": false, // system
+		"/properties/Updates.interval":                                  false, // updates
+		"/properties/ClaudeUsage.interval":                              false, // claudeUsage's every
+		"/properties/Weather.interval":                                  false, // weather
 	}
 	var walk func(node any, path string)
 	walk = func(node any, path string) {

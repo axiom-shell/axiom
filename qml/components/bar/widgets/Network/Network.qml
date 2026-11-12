@@ -22,7 +22,7 @@ ValueStyleWidget {
   accentField: connected ? "backgroundColor" : "disconnectedColor"
   icon: getIcon()
   text: iface
-  labelShown: properties.showName && iface !== ""
+  labelShown: properties.showDevice && iface !== ""
   // The Wi-Fi signal; none on a wire
   ratio: kind === "wifi" ? NetworkingManager.primarySignal / 100 : -1
   // The download speed, kept by SystemManager only while it's drawn

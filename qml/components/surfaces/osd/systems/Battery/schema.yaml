@@ -4,7 +4,7 @@ group: Power
 tile: standard
 card: standard
 settings:
-  tiles:
+  shows:
     type: array
     title: Shows
     items: {type: string, enum: [charger, battery]}

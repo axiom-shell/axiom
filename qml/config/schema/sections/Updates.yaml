@@ -6,6 +6,14 @@ title: Package updates
 description: How updates widgets and modules check for and install updates.
 additionalProperties: false
 properties:
+  interval:
+    type: integer
+    title: Interval
+    x-unit: min
+    default: 1800000
+    minimum: 300000
+    maximum: 86400000
+    description: How often to check for updates.
   includeAur:
     type: boolean
     title: Include AUR

@@ -41,7 +41,7 @@ QtObject {
       "name": BluetoothManager.deviceLabel(d),
       "glyph": BluetoothManager.deviceIcon(d),
       "percentage": percentage,
-      "level": DeviceBatteries.level(percentage, BluetoothConfig.lowBattery, BluetoothConfig.criticalBattery)
+      "level": DeviceBatteries.level(percentage, BluetoothConfig.lowThreshold, BluetoothConfig.criticalThreshold)
     };
   })
   // The one lowest, else null: what the Battery widget shows with no

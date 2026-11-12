@@ -143,12 +143,9 @@ settings:
         - {/$supports.stripsAlways: true}
     description: 'On a strip monitor, the active workspace''s windows after its cells. One box: every window''s icon in one cell, the focused one marked. The popout shows a box each whatever this says.'
   activeWorkspaceIcons:
-    type: string
+    type: boolean
     title: Active workspace icons
-    x-control: toggle
-    enum: [keep, hide]
-    x-enumLabels: {keep: Show, hide: Hide}
-    default: keep
+    default: true
     x-showIf:
       showAppIcons: true
       stripWindows: {not: 'off'}
@@ -156,7 +153,7 @@ settings:
         - {/Workspaces.strips: {notEmpty: true}, /$supports.strips: true}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
-    description: 'Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.'
+    description: 'Off: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.'
   scratchpads:
     type: string
     title: Scratchpads
@@ -194,12 +191,6 @@ settings:
     title: Wide active
     default: true
     description: Make the active workspace one cell longer.
-  showActiveIcon:
-    type: boolean
-    title: Active icon
-    default: true
-    x-showIf: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
-    description: An arrow on the active workspace pointing to the shown grid row. Hidden while the Head is Grid position, which shows it instead.
   clickToSwitch:
     type: boolean
     title: Click to switch
@@ -221,21 +212,16 @@ settings:
     default: true
     description: A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.
     x-showIf: {$bar.boxed: true}
-  lead:
-    type: string
-    title: Head
-    enum: [none, icon, active, position]
-    x-enumLabels: {none: None, icon: Icon, active: Active workspace, position: Grid position}
-    x-enumShowIf:
-      position: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
-    default: position
-    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position (the default) - in a grid layout, which row (column on a vertical bar) is shown, a dot each; other layouts show no head. While it shows, the active cell's arrow is hidden.
   leadIcon:
     type: string
     x-control: icon
-    title: Head icon
-    default: grid_view
-    x-showIf: {lead: icon}
+    title: Icon
+    default: ''
+    x-showIf:
+      anyOf:
+        - {/Workspaces.layout: [standard, perMonitor, scrolling]}
+        - {/$supports.dynamicWorkspaces: true}
+    description: 'Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Empty: none. A grid layout shows which row (column on a vertical bar) is shown instead, a dot each.'
   backgroundColor:
     type: string
     title: Background color
@@ -289,12 +275,12 @@ settings:
         - {$bar.boxed: true}
         - {$bar.underlined: true}
         - {solidBoxes: true}
-  textColor:
+  foregroundColor:
     type: string
     title: Text color
     x-options: colors
     default: base00
-    description: Numbers, dots and labels in boxes, and the grid's active arrow.
+    description: Numbers, dots and labels in boxes.
     x-showIf:
       $bar.widgetTextColor: ''
       anyOf:
@@ -302,7 +288,6 @@ settings:
         - {$bar.cellsFilled: true, labels: [numbers, dots]}
         - {$bar.cellsFilled: true, workspaceLabels: {notEmpty: true}}
         - {$bar.cellsFilled: true, useNames: true}
-        - {$bar.cellsFilled: true, showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
   hoverColor:
     type: string
     title: Hover

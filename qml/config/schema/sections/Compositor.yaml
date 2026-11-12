@@ -369,18 +369,11 @@ properties:
   sway:
     x-scope: personal
     type: object
-    x-showIf: {/$compositor: sway}
+    x-showIf: {/$compositor: sway, /Compositor.mode: managed}
     title: Sway
     description: Written while axiom manages sway's config. Anything else goes in ~/.config/sway/user/.
     additionalProperties: false
     properties:
-      specialWorkspaces:
-        type: string
-        title: Special workspaces
-        enum: [scratchpad, workspace]
-        x-enumLabels: {scratchpad: Scratchpad windows, workspace: A workspace of their own}
-        default: scratchpad
-        description: Scratchpad windows float over the current workspace; a workspace of their own tiles them.
       workspaceLayout:
         type: string
         title: New workspaces

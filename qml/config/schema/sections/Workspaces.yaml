@@ -161,3 +161,13 @@ properties:
         icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: 'An icon (a Material Symbols name or a pasted glyph) and a text; which of them the cell shows is the scratchpad label setting.'}
         text: {type: string, title: Label, default: ''}
       required: [id]
+  specialWorkspaces:
+    type: string
+    x-group: Scratchpads
+    title: Special workspaces
+    x-control: toggle
+    enum: [scratchpad, workspace]
+    x-enumLabels: {scratchpad: Scratchpad, workspace: Workspace}
+    default: scratchpad
+    x-showIf: {/$supports.scratchpad: true}
+    description: Scratchpad windows float over the current workspace; a workspace of their own tiles them.

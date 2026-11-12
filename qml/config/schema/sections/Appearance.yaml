@@ -261,7 +261,6 @@ properties:
     additionalProperties: false
     properties:
       radius:
-        x-link: {setting: Interface.radius}
         type: integer
         x-control: stepper
         title: Corner radius
@@ -270,6 +269,16 @@ properties:
         maximum: 50
         x-unit: px
         description: 'Outer edges: the screen border, bars, popouts and windows (px).'
+      innerRadius:
+        type: integer
+        x-control: stepper
+        title: Inner radius
+        default: null
+        minimum: 0
+        maximum: 50
+        x-unit: px
+        description: Buttons, fields, rows and bar widgets. Outer edges keep the main radius.
+        x-inherit: Appearance.shape.radius
       borderWidth:
         type: integer
         x-control: stepper
@@ -301,9 +310,7 @@ properties:
     additionalProperties: false
     properties:
       opacity:
-        x-link:
-          - {setting: WindowLook.opacity}
-          - {setting: WindowLook.surfaceBlur}
+        x-link: {setting: WindowLook.opacity}
         type: integer
         title: Surface opacity
         x-unit: '%'
@@ -312,6 +319,40 @@ properties:
         maximum: 100
         description: How solid bars, popouts, menus and panels are. 100 is fully solid. Translucency needs the compositor's blur.
         x-hintedIf: {/$supports.blur: true}
+      blur:
+        type: object
+        title: Blur behind axiom
+        additionalProperties: false
+        properties:
+          enabled:
+            type: boolean
+            title: Blur behind axiom's surfaces
+            default: true
+            description: Blur what shows through axiom's translucent surfaces. Costs GPU time.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}}
+            x-hintedIf: {/$supports.blur: true}
+          throughWindows:
+            type: boolean
+            title: Blur windows behind surfaces
+            default: true
+            description: Off, surfaces blur only the wallpaper, which is cheaper.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
+            x-hintedIf: {/$supports.blur: true}
+          backdrops:
+            type: boolean
+            title: Blur backdrops
+            default: false
+            description: Also blur the screen behind the overlay, launcher, power menu and overview.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
+            x-hintedIf: {/$supports.blur: true}
+          pauseFullscreen:
+            x-scope: machine
+            type: boolean
+            title: Pause blur over fullscreen apps
+            default: true
+            description: No blur on a monitor showing a fullscreen window; its surfaces turn opaque.
+            x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
+            x-hintedIf: {/$supports.blur: true}
   motion:
     x-scope: look
     type: object

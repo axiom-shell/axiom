@@ -67,7 +67,7 @@ BarIconWidget {
     textFormat: root.textFormat
     minimumText: root.minimumText
     segmentCount: root.appearance.segments
-    preferredLength: root.appearance.width
+    preferredLength: root.appearance.width ?? 0
     vertical: root.isVertical
     crossSize: root.crossSize
     room: ValueGraphics.boxRoom(root.crossSize, root.barConfig.look.shape)

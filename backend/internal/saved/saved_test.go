@@ -127,8 +127,8 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if applied.Kept != "My setup" || applied.Saved != "example-tall" {
 		t.Errorf("applied %+v", applied)
 	}
-	if v := get(t, f.store, "Bars.items[primary].location"); v != "left" {
-		t.Errorf("location %v", v)
+	if v := get(t, f.store, "Bars.items[primary].edge"); v != "left" {
+		t.Errorf("edge %v", v)
 	}
 	if v := get(t, f.store, "Compositor.mode"); v != "detached" {
 		t.Errorf("a takeover changed: %v", v)

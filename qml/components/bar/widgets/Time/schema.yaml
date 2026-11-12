@@ -24,12 +24,12 @@ settings:
   lead:
     type: string
     title: Head
-    enum: [none, icon, date]
-    x-enumLabels: {none: None, icon: Icon, date: Date}
+    enum: [auto, none, icon, date]
+    x-enumLabels: {auto: Auto, none: None, icon: Icon, date: Date}
     x-enumShowIf:
       date: {showDate: true}
-    default: none
-    description: Drawn before the time; a split bar sets it apart as the icon part.
+    default: auto
+    description: Drawn before the time; a split bar sets it apart as the icon part. Auto puts the date there on a split bar.
   leadIcon:
     type: string
     x-control: icon

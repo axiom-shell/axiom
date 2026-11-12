@@ -10,19 +10,12 @@ appearance:
     description: Stacked puts the count over the AUR's share.
 colors: standard
 settings:
-  interval:
-    type: integer
-    title: Check interval
-    x-unit: min
-    default: 1800000
-    minimum: 300000
-    maximum: 86400000
   hideWhenEmpty: {type: boolean, title: Hide when up to date, default: true}
-  manyThreshold:
+  warnThreshold:
     type: integer
-    title: Many updates
+    title: Warning at
     default: 50
     minimum: 1
     maximum: 1000
-    description: At or above this count, the widget uses the many-updates background.
-  manyColor: {$ref: '#/definitions/WidgetColor', title: Many-updates color, x-autoColor: warning}
+    description: At or above this count, the widget uses the warning background.
+  warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}

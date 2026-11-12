@@ -4,7 +4,7 @@ group: Privacy
 tile: standard
 card: standard
 settings:
-  kinds:
+  shows:
     type: array
     title: Shows
     items: {type: string, enum: [camera, micUse, screenShare]}

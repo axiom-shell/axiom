@@ -54,11 +54,12 @@ properties:
       hyprland: {key: cursor.hide_on_key_press}
       sway: {key: 'seat * hide_cursor when-typing {}', value: enableDisable}
       niri: {key: cursor.hide-when-typing}
-  noWarps:
+  warpCursor:
     type: boolean
-    title: Never move the cursor
-    default: false
+    title: Cursor follows focus
+    default: true
+    description: The compositor moves the cursor to a window it focuses.
     x-compositor:
-      hyprland: {key: cursor.no_warps}
-      sway: {key: 'mouse_warping {}', map: {'true': none, 'false': container}}
-      niri: {key: input.warp-mouse-to-focus, value: offFlag}
+      hyprland: {key: cursor.no_warps, value: not}
+      sway: {key: 'mouse_warping {}', map: {'true': container, 'false': none}}
+      niri: {key: input.warp-mouse-to-focus, value: flag}
