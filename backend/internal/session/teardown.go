@@ -34,11 +34,15 @@ type SignalFunc func(pid int, sig syscall.Signal) error
 // SpawnFunc starts a program detached.
 type SpawnFunc func(ctx context.Context, argv, env []string, cwd string) error
 
+// SpawnToFunc is SpawnFunc with a file the program's output is appended to.
+type SpawnToFunc func(ctx context.Context, argv, env []string, cwd, output string) error
+
 // Seams are the effects a teardown has, replaced in tests (the defaults
 // are real: systemctl, kill, setsid).
 type Seams struct {
 	Systemctl SystemctlFunc
 	Spawn     SpawnFunc
+	SpawnTo   SpawnToFunc
 	Signal    SignalFunc
 }
 
@@ -53,6 +57,11 @@ func (s Seams) WithDefaults() Seams {
 	if s.Spawn == nil {
 		s.Spawn = func(ctx context.Context, argv, env []string, cwd string) error {
 			return command.Spawn(ctx, command.Options{Env: env}, argv, cwd)
+		}
+	}
+	if s.SpawnTo == nil {
+		s.SpawnTo = func(ctx context.Context, argv, env []string, cwd, output string) error {
+			return command.Spawn(ctx, command.Options{Env: env, Output: output}, argv, cwd)
 		}
 	}
 	if s.Signal == nil {

@@ -13,7 +13,9 @@ import qs.components.methods
 // each with its status and an Undo that takes out only axiom's own change,
 // and Undo all (not the system's own choices, not what axiom only inferred).
 // Its chip says how many, in the warning color while the compositor mode is
-// detached (axiom stopping leaves them).
+// detached (axiom stopping leaves them). At the bottom, "Remove axiom from
+// this system…" opens the uninstall's confirm step (RemoveAxiomPanel,
+// docs/dev/backend/uninstall.md).
 FoldingCard {
   id: root
 
@@ -38,6 +40,8 @@ FoldingCard {
   }
   // id of the row (or "all") waiting for its confirmation
   property string confirming: ""
+  // The uninstall's confirm step is open
+  property bool removing: false
 
   // I18n.tr("None")
   // I18n.tr("{0} changes", count)
@@ -230,6 +234,39 @@ FoldingCard {
           }
         }
       }
+    }
+  }
+
+  StyledSeparator {
+    separatorColor: Theme.border
+    Layout.fillWidth: true
+  }
+
+  RowLayout {
+    visible: !root.removing
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    Item {
+      Layout.fillWidth: true
+    }
+
+    StyledTextButton {
+      implicitHeight: Widget.height - Widget.px(4)
+      iconText: "delete_forever"
+      text: I18n.tr("Remove axiom from this system…")
+      hoverColor: Theme.error
+      onClicked: root.removing = true
+    }
+  }
+
+  // Built only while open
+  StreamedLoader {
+    Layout.fillWidth: true
+    wanted: root.removing
+    always: true
+    sourceComponent: RemoveAxiomPanel {
+      onClosed: root.removing = false
     }
   }
 }

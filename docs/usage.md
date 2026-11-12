@@ -137,6 +137,7 @@ bindsym $mod+space exec axiom ipc appLauncher toggle
 | Command | What it does |
 |---|---|
 | `axiom footprint list [--json]` | The changes, each present, changed since or gone |
+| `axiom uninstall [--dry-run] [--yes] [--purge-all] [--restore-system] [--stop] [--no-portal-restart] [--json]` | Takes axiom out of your home and session: gives back the managed compositor config, undoes its changes, removes install.sh's lines and files, asks what to keep (settings, downloaded content, saved passwords); lists the backups it keeps ([Uninstall](installation.md#uninstall)) |
 | `axiom footprint undo (<id>...\|--owner <path>\|--all) [--force] [--include-system] [--dry-run] [--json]` | Takes out only axiom's own change; `--all` leaves the system's own choices (`--include-system`) and inferred rows (`--force`) |
 
 ```bash

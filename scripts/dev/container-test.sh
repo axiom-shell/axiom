@@ -3,30 +3,33 @@
 # shell, run in a docker container (docs/dev/testing.md › Container tests).
 # Dev-only; never run on CI or inside a container.
 #
-#   scripts/dev/container-test.sh [--rebuild] [--keep] [--shell] [-run REGEX]
+#   scripts/dev/container-test.sh [--rebuild] [--keep] [--shell] [-update] [-run REGEX]
 #
 #   --rebuild  build the image again
 #   --keep     keep the snapshot of the tree
 #   --shell    a bash in the container instead of the tests
 #   -run RE    only the tests matching RE (go test -run)
+#   -update    rewrite the uninstall plan's goldens; the new files land in the
+#              logs folder (<snapshot>.out/uninstall-plan*.golden.json)
 #
 # The exit code is the tests'. Logs are in <snapshot>.out/<TestName>/.
 set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-rebuild=0 keep=0 shell=0 run=.
+rebuild=0 keep=0 shell=0 update=0 run=.
 while [ $# -gt 0 ]; do
 	case $1 in
 	--rebuild) rebuild=1 ;;
 	--keep) keep=1 ;;
 	--shell) shell=1 ;;
+	-update) update=1 ;;
 	-run)
 		[ $# -ge 2 ] || { echo "container-test: -run needs a regex" >&2; exit 2; }
 		run=$2
 		shift
 		;;
 	-h | --help)
-		sed -n '2,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+		sed -n '2,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 		exit 0
 		;;
 	*)
@@ -73,7 +76,7 @@ tty=()
 [ "$shell" = 1 ] && tty=(-it)
 
 set +e
-docker run --rm --init "${tty[@]}" --user tester -e HOME=/home/tester -e AXIOM_TEST_WAIT_FACTOR=3 \
+docker run --rm --init "${tty[@]}" --user tester -e HOME=/home/tester -e AXIOM_TEST_WAIT_FACTOR=3 -e AXIOM_CTR_UPDATE=$update \
 	-v "$snap:/src:ro" -v "$out:/out" -v axiom-ctr-cache:/home/tester/.cache \
 	"$image" "${cmd[@]}"
 code=$?

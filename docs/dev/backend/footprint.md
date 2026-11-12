@@ -27,12 +27,16 @@ Every persistent change axiom makes outside its own folders is recorded before i
 
 Undo order: `gsetting`, `fcitx-*`, `mimeapps`, `ini-groups`, `marked-block`, `hookup`, `file`, `dir`, `rebuild` (settings first: a cursor theme is restored before its companion folder is deleted). A row is removed on `done` or `gone`; an undoer that put back part of a row (kdeglobals) shrinks it to the rest. `rebuild` rows run after the ledger's lock is released. A row with nothing written yet (`Wrote` nil: the change may never have happened) is compared with its prior: equal is `gone`, anything else `changed` and left.
 
+`Ledger.Peek` reads without the lock file and without moving a bad file aside (a missing file is an empty ledger, one that isn't JSON an error): for the commands that only look (the uninstall's plan). `RowsErr` is `Rows` with the reason when they are unknown.
+
 ### Backfill
 Two halves, each once per ledger, each adding rows (all `inferred`) only where there is evidence and no row. The files and the cursor (`backfilledFiles`) are found by the daemon when it starts, before anything is served, so no write can take an old file for one that wasn't there; the hookups (`backfilled`) by `footprint.backfill`, called by `FootprintManager` (a service built at shell start) once the compositor's and the screen-sharing targets are known.
 - **Hookups:** targets on one file are one row (their lines together). A target that is done, whose file has a `<comment> axiom: ` line commenting out what the target's text sets, a sibling `<file>.axiom-bak-*`, or a line equal to the target text. The inserted lines are the target's lines present now (and absent from the newest backup, with the blank line and new section header an edit adds); a backup that is a link marks a wrapped file.
 - **Integration files:** each existing file of the integrations table (not the `IfMissing` main configs).
 - **Cursor:** `axiom-cursor-*` folders, and a `cursor-theme` gsetting naming one (prior absent).
 - **Not backfilled** (nothing tells them from the user's own): kdeglobals, fcitx5, ibus, default apps, `color-scheme`.
+
+The uninstall runs the same backfill offline (`daemon.OfflineInferred`: the hookups of the built schema's `x-hookup`, each compositor writer's include and autostart lines (`manager.Offline`) and the screen-share picker's shapes, and the files and cursor folders, each set through `Ledger.Backfill` and `BackfillFiles` once) before it undoes everything ([Uninstall](uninstall.md)).
 
 ### RPCs, push and CLI
 - `footprint.list {}` → `{rows: [row + status]}` (`present`, `changed`, `gone`); `footprint.undo {ids, force, includeSystem, dryRun}` (shell only) → `{results: [{id, outcome, detail}]}` with outcomes `done`, `gone`, `changed`, `needsRunning`, `refused`, `failed`; `footprint.backfill {targets: {key: {owner, targets, profiles}}}` (shell only); `footprint.notify {}` (a client that changed the ledger by itself); the push `footprint.changed` (topic `footprint`).

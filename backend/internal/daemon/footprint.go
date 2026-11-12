@@ -162,7 +162,13 @@ func (d *Daemon) footprintMethods(reg *rpc.Registry) {
 // as nothing tells them apart from the user's own: kdeglobals, fcitx5, ibus,
 // default apps and color-scheme.
 func (d *Daemon) inferredRows(p FootprintBackfillRequest) []footprint.Row {
-	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, DataDir: filepath.Join(d.opts.Tree, "data")})
+	return inferredHookups(d.opts.Getenv, d.opts.Tree, p)
+}
+
+// inferredHookups is that, for the environment getenv names and the tree
+// whose data/ the hookups copy from (the uninstall's too, without a daemon).
+func inferredHookups(getenv func(string) string, treeDir string, p FootprintBackfillRequest) []footprint.Row {
+	h := edit.NewHookups(edit.HookupOptions{Getenv: getenv, DataDir: filepath.Join(treeDir, "data")})
 	var rows []footprint.Row
 	for _, key := range slices.Sorted(maps.Keys(p.Targets)) {
 		e := p.Targets[key]

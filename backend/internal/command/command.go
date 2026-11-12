@@ -65,6 +65,9 @@ type Options struct {
 	Env []string
 	// Children, when not nil, holds what runs, for a re-exec to hand on
 	Children *Children
+	// Output is a file Spawn appends the program's stdout and stderr to
+	// (made 0600, never through a link): without a shell. Empty: /dev/null
+	Output string
 	// Stop kills the command's group once ctx ends (the daemon's own
 	// commands, each with a time limit) rather than letting it run on
 	Stop bool
@@ -116,7 +119,7 @@ func Run(ctx context.Context, o Options, argv []string, input *string) (Result, 
 // setsid -f, which forks it into a session of its own and exits, so it's
 // never this process's child (no zombie after a re-exec, nothing tying
 // it to the daemon's life) and keeps the signal handling it's given. Its
-// stdio is /dev/null; it starts in cwd (a desktop entry's Path=; empty:
+// stdio is /dev/null (or Options.Output); it starts in cwd (a desktop entry's Path=; empty:
 // the daemon's).
 func Spawn(ctx context.Context, o Options, argv []string, cwd string) error {
 	if len(argv) == 0 {
@@ -129,6 +132,14 @@ func Spawn(ctx context.Context, o Options, argv []string, cwd string) error {
 	cmd := exec.CommandContext(ctx, "setsid", append([]string{"-f", "--"}, argv...)...)
 	cmd.Env = o.Env
 	cmd.Dir = cwd
+	if o.Output != "" {
+		out, err := os.OpenFile(o.Output, os.O_WRONLY|os.O_CREATE|os.O_APPEND|syscall.O_NOFOLLOW|syscall.O_CLOEXEC, 0o600)
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "opening %s for %s's output", o.Output, argv[0])
+		}
+		defer out.Close()
+		cmd.Stdout, cmd.Stderr = out, out
+	}
 	// No pipes: the program inherits setsid's stdio, and a pipe would
 	// keep this waiting for as long as the program lives
 	if err := cmd.Run(); err != nil {

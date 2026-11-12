@@ -158,6 +158,8 @@ type Daemon struct {
 	// store runs on: dirs.Config, or devConfigDir in the dev image
 	installTree string
 	configDir   string
+	// uninstalling: an uninstall was started (one at a time)
+	uninstalling atomic.Bool
 	// upgradesTried: the binaries (path, inode, time) a newer client's
 	// hello already re-exec'd into or found wanting, never tried again;
 	// upgrading the one it is re-executing into
@@ -458,7 +460,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.footprintPart(), d.cameraPart(), d.fileSearchPart(), d.screenSharePart(), d.sessionPart(), d.netPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.footprintPart(), d.uninstallPart(), d.cameraPart(), d.fileSearchPart(), d.screenSharePart(), d.sessionPart(), d.netPart(), d.dev.part()}
 	parts = append(parts, d.machineParts()...)
 	reg := d.registry(parts)
 	if opts.registered != nil {

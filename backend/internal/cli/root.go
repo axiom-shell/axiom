@@ -39,6 +39,7 @@ func Root() *Command {
 			portalWaitCommand(),
 			guardCommand(),
 			footprintCommand(),
+			uninstallCommand(),
 			indexCrawlCommand(),
 			thumbnailCommand(),
 			versionCommand(),

@@ -27,3 +27,13 @@ EOF
 EOF
   fi
 }
+
+pre_remove() {
+  cat <<'EOF'
+==> Before removing axiom: run `axiom uninstall` as each user who used it.
+    It takes axiom's lines out of your compositor and app configs and puts
+    back what it changed; pacman can't reach your home folder. Your backups
+    (*.axiom-bak-*, *.bak-<date>) are kept and listed.
+    The login screen, if installed, is removed in Settings → Login screen first.
+EOF
+}
