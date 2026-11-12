@@ -218,6 +218,15 @@ var all = []Step{
 	// corners, Button widgets) menu; a free menu's freeAnimation became its
 	// animation (v104.go)
 	{Version: 104, Run: v104},
+	// v105: sway's "workspace of their own" mode for special workspaces
+	// went: Compositor.sway.specialWorkspaces is dropped
+	{Version: 105, Run: func(cfg *jsonx.Object) []string {
+		sway := object(cfg, "Compositor", "sway")
+		if sway == nil || !sway.Delete("specialWorkspaces") {
+			return nil
+		}
+		return []string{"Compositor.sway.specialWorkspaces removed"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

@@ -251,7 +251,7 @@ TestCase {
     compare(SwayState.window(leaf, {
       "id": 13,
       "num": -1,
-      "name": "axiom-special-scratch"
+      "name": "scratch"
     }, "WL-1", false, false).workspaceId, -13, "each named workspace has its own id");
     compare(SwayState.window(leaf, {
       "id": 5,
@@ -403,61 +403,13 @@ TestCase {
     compare(SwayState.specialToggle(info.windows, marks, "music", "WL-1").ids, []);
   }
 
-  // As a workspace of its own: to it on the focused output, or back
-  function test_specialWorkspaceToggle() {
-    compare(SwayState.specialWorkspace("gaming"), "axiom-special-gaming");
-    compare(SwayState.specialWorkspaceToggle("gaming", "1", "WL-1", ""), ["workspace axiom-special-gaming", "move workspace to output WL-1"]);
-    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-1", ""), ["workspace back_and_forth"]);
-    // Back to the workspace that output showed before, not sway's last one
-    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-2", "2"), ["workspace 2"]);
-    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-2", "3: web"), ["workspace \"3: web\""]);
-    compare(SwayState.specialWorkspaceToggle("my games", "1", "HDMI-A-1", ""), ["workspace \"axiom-special-my games\"", "move workspace to output HDMI-A-1"]);
-  }
-
   // Into a group, out of any other
   function test_specialMove() {
     const marks = {
       "15": ["axiom-special-music-15", "keep"]
     };
-    compare(SwayState.specialMove(marks, "15", "gaming", "scratchpad"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] mark --add axiom-special-gaming-15", "[con_id=15] move scratchpad"]);
-    compare(SwayState.specialMove(marks, "15", "gaming", "workspace"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] move container to workspace axiom-special-gaming"]);
-    compare(SwayState.specialMove({}, "16", "my games", "workspace"), ["[con_id=16] move container to workspace \"axiom-special-my games\""]);
-  }
-
-  // After the kind changed, the other kind's windows move over
-  function test_specialAdopt() {
-    const marks = {
-      "15": ["axiom-special-gaming-15", "keep"],
-      "16": ["axiom-special-music-16"]
-    };
-    const windows = [
-      {
-        "id": "20",
-        "workspaceName": "axiom-special-gaming"
-      },
-      {
-        "id": "21",
-        "workspaceName": "1"
-      }
-    ];
-    // To the workspace: the group's marked windows, unmarked
-    const toWs = SwayState.specialAdopt(windows, marks, "gaming", "workspace", "1");
-    compare(toWs.lines, ["[con_id=15] unmark axiom-special-gaming-15", "[con_id=15] move container to workspace axiom-special-gaming"]);
-    // To the scratchpad: the windows on the group's workspace, marked
-    const toPad = SwayState.specialAdopt(windows, {
-      "20": ["axiom-special-music-20"]
-    }, "gaming", "scratchpad", "1");
-    // ...and back to the workspace shown, which sway leaves for the group's
-    compare(toPad.lines, ["[con_id=20] unmark axiom-special-music-20", "[con_id=20] mark --add axiom-special-gaming-20", "[con_id=20] move scratchpad", "workspace --no-auto-back-and-forth 1"]);
-    compare(toPad.windows.map(w => w.id), ["21"]);
-    compare(toPad.marks["20"], ["axiom-special-gaming-20"]);
-    // Then hidden in the scratchpad: the toggle shows it
-    compare(SwayState.specialToggle(toPad.windows, toPad.marks, "gaming", "WL-1"), {
-      "ids": ["20"],
-      "show": true
-    });
-    // Nothing of the other kind: nothing to do
-    compare(SwayState.specialAdopt(windows, marks, "music", "scratchpad", "1").lines, []);
+    compare(SwayState.specialMove(marks, "15", "gaming"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] mark --add axiom-special-gaming-15", "[con_id=15] move scratchpad"]);
+    compare(SwayState.specialMove({}, "16", "my games"), ["[con_id=16] mark --add \"axiom-special-my games-16\"", "[con_id=16] move scratchpad"]);
   }
 
   // A group's name may hold "-": another group whose name it starts with
@@ -518,14 +470,6 @@ TestCase {
               "id": 3,
               "nodes": [leaf(30, "plain"), leaf(31, "shown", ["axiom-special-b-31"])],
               "floating_nodes": []
-            },
-            {
-              "type": "workspace",
-              "name": "axiom-special-notes",
-              "id": 40,
-              "urgent": true,
-              "nodes": [leaf(41, "note")],
-              "floating_nodes": []
             }
           ]
         }
@@ -541,20 +485,7 @@ TestCase {
     verify(!info.windows.some(w => w.title === "scratchy"));
   }
 
-  function test_treeListsSpecialWorkspaces() {
-    compare(SwayState.tree(specialTree()).specialWorkspaces, [
-      {
-        "name": "notes",
-        "id": -40,
-        "output": "WL-1",
-        "urgent": true
-      }
-    ]);
-    compare(SwayState.specialWorkspaceName("axiom-special-notes"), "notes");
-    compare(SwayState.specialWorkspaceName("1"), "");
-  }
-
-  function test_specialsInScratchpadMode() {
+  function test_specials() {
     const tree = specialTree();
     const info = SwayState.tree(tree);
     const marks = SwayState.marks(tree);
@@ -572,53 +503,6 @@ TestCase {
     const b = result.find(s => s.name === "b");
     compare(b.open, true);
     compare(b.output, "WL-1");
-  }
-
-  function test_specialsInWorkspaceMode() {
-    const tree = specialTree();
-    const info = SwayState.tree(tree);
-    const marks = SwayState.marks(tree);
-    const closed = SwayState.specials(info, marks, [
-      {
-        "name": "WL-1",
-        "activeWorkspaceId": 1
-      }
-    ]).find(s => s.name === "notes");
-    compare(closed.open, false);
-    compare(closed.id, -40);
-    compare(closed.windows.map(w => w.title), ["note"]);
-    const open = SwayState.specials(info, marks, [
-      {
-        "name": "WL-1",
-        "activeWorkspaceId": -40
-      }
-    ]).find(s => s.name === "notes");
-    compare(open.open, true);
-    compare(open.output, "WL-1");
-    compare(open.urgent, true);
-  }
-
-  function test_specialsWorkspaceModeIgnoresMarkedWindowFallback() {
-    const tree = specialTree();
-    const info = SwayState.tree(tree);
-    const marks = SwayState.marks(tree);
-    marks[info.windows[0].id] = ["axiom-special-notes-" + info.windows[0].id];
-    const notes = SwayState.specials(info, marks, [
-      {
-        "name": "WL-1",
-        "activeWorkspaceId": 1
-      }
-    ]).find(s => s.name === "notes");
-    compare(notes.open, false);
-    compare(notes.output, "");
-  }
-
-  function test_specialsListMarkedAndWorkspaceWindows() {
-    const tree = specialTree();
-    tree.nodes[1].nodes[0].nodes[0].marks = ["axiom-special-notes-30"];
-    const info = SwayState.tree(tree);
-    const notes = SwayState.specials(info, SwayState.marks(tree), []).find(s => s.name === "notes");
-    compare(notes.windows.map(w => w.title).sort(), ["note", "plain"]);
   }
 
   function test_windowCommands() {

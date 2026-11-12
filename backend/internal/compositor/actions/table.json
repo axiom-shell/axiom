@@ -137,8 +137,8 @@
     "windowSwitcherReverse": ["switcher"],
     "mouseDrag": ["mouseBinds"],
     "mouseResize": ["mouseBinds"],
-    "toggleSpecial": ["namedSpecial", "scratchpad"],
-    "moveToSpecial": ["namedSpecial", "scratchpad"]
+    "toggleSpecial": ["namedSpecial"],
+    "moveToSpecial": ["namedSpecial"]
   },
   "actionFlags": {
     "resizeWindow": ["repeating"],
