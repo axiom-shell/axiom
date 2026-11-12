@@ -23,6 +23,5 @@ properties:
     default: null
     minimum: 0
     maximum: 600
-    description: Length along the bar. Auto picks one.
     x-showIf: {style: [fill, segments, sparkline, ticker]}
-  colorText: {type: boolean, title: Colour the text by state, default: false}
+  colorText: {type: boolean, title: Color text by state, default: false}

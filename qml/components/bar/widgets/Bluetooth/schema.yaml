@@ -1,31 +1,32 @@
 label: Bluetooth
 icon: bluetooth
 group: Network & devices
-popout: {variant: own, enabled: {description: Open the Bluetooth menu when hovered.}}
+popout: {variant: own, enabled: {description: Opens the Bluetooth menu.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, stacked]
     description: Ring and fill show the device's battery; stacked puts the device over it.
 colors: standard
+order: [appearance, showDevice, showBattery, hideWhenOff, middleCommand, popout, backgroundColor, foregroundColor, connectedColor, disabledColor]
 settings:
   showDevice:
     type: boolean
-    title: Show device
+    title: Device
     default: true
-    description: Show the connected device's name (or count).
+    description: Connected device's name (or count).
+    x-showIf: {appearance.style: [label, ring, fill]}
   showBattery:
     type: boolean
-    title: Show battery
+    title: Battery
     default: true
-    description: Show the connected device's battery level.
-    x-showIf: {showDevice: true}
+    x-showIf: {showDevice: true, appearance.style: [label, ring, fill]}
   hideWhenOff: {type: boolean, title: Hide when off, default: false}
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: ''
-    description: Empty does nothing.
+    description: 'Empty: nothing.'
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color, x-autoColor: alt}
   disabledColor: {$ref: '#/definitions/WidgetColor', title: Off color, x-autoColor: 'off'}

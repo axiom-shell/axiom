@@ -10,8 +10,9 @@ properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     x-group: Placement
-    title: Monitor
-    description: Every monitor puts a copy on each.
+    title: Monitors
+    description: 'Every monitor: one bar on each.'
+    x-showIf: {enabled: true}
     x-properties:
       mode:
         x-scope: look
@@ -28,6 +29,7 @@ properties:
     default: top
     enum: [top, bottom, left, right]
     description: Bars can share an edge, stacked one inside the other.
+    x-showIf: {enabled: true}
   thickness:
     x-group: Size
     type: integer
@@ -38,6 +40,7 @@ properties:
     maximum: 150
     x-unit: px
     description: How thick the widgets are; text and icons scale with it.
+    x-showIf: {enabled: true}
   edgePadding:
     x-group: Size
     type: integer
@@ -48,6 +51,7 @@ properties:
     maximum: 50
     x-unit: px
     description: Space between the widgets and the bar's ends.
+    x-showIf: {enabled: true}
   widgetGap:
     x-group: Size
     type: integer
@@ -57,7 +61,8 @@ properties:
     minimum: 0
     maximum: 50
     x-unit: px
-    description: Pills this close or closer join into one.
+    description: Space between widgets. Pills this close join into one.
+    x-showIf: {enabled: true}
   innerPadding:
     x-group: Size
     type: integer
@@ -67,7 +72,8 @@ properties:
     minimum: 0
     maximum: 40
     x-unit: px
-    description: Space inside each widget at 26 px thickness; scales with it.
+    description: Space inside each widget; scales with thickness.
+    x-showIf: {enabled: true}
   innerGap:
     x-group: Size
     type: integer
@@ -77,21 +83,24 @@ properties:
     minimum: 0
     maximum: 20
     x-unit: px
-    description: Gap between items in a widget at 26 px thickness; scales with it.
+    description: Gap between items in a widget; scales with thickness.
+    x-showIf: {enabled: true}
   surface:
     x-group: Surface
     type: string
     title: Surface
     default: pills
+    x-control: toggle
     enum: [bar, pills, none]
-    x-enumLabels: {bar: One bar, pills: A pill per group, none: None (widgets on the wallpaper)}
-    description: What the widgets sit on.
+    x-enumLabels: {bar: Bar, pills: Pills, none: None}
+    description: 'What the widgets sit on. None: straight on the wallpaper.'
+    x-showIf: {enabled: true}
   floating:
     x-group: Surface
     type: boolean
     title: Floating
     default: false
-    x-showIf: {surface: {not: none}}
+    x-showIf: {enabled: true, surface: {not: none}}
     description: Hold the bar away from the screen border, as windows are.
   floatingGap:
     x-link: {setting: WindowLook.gaps.outer}
@@ -104,7 +113,7 @@ properties:
     minimum: 0
     maximum: 60
     x-unit: px
-    x-showIf: {floating: true, surface: {not: none}}
+    x-showIf: {enabled: true, floating: true, surface: {not: none}}
     description: Distance from the screen border. Auto uses the compositor's gap.
   lockCenter:
     x-group: Behaviour
@@ -112,6 +121,7 @@ properties:
     title: Lock center
     default: true
     description: Keep the center section centered; the other sections shrink instead.
+    x-showIf: {enabled: true}
   autoHide:
     x-group: Behaviour
     type: string
@@ -120,28 +130,28 @@ properties:
     enum: [never, always, whenCovered]
     x-enumLabels: {never: Never, always: Always, whenCovered: When a window covers it}
     description: Hide until the pointer reaches its edge.
+    x-showIf: {enabled: true}
   reserveSpace:
     x-group: Behaviour
     type: boolean
     title: Reserve space
     default: true
-    x-showIf: {autoHide: never}
+    x-showIf: {enabled: true, autoHide: never}
     description: Keep windows from tiling under the bar.
   revealOnWorkspace:
     x-group: Behaviour
     type: boolean
     title: Show on workspace change
     default: true
-    x-showIf: {autoHide: {not: never}}
-    description: Show the hidden bar briefly on workspace change.
+    x-showIf: {enabled: true, autoHide: {not: never}}
   revealOnActivity:
     x-group: Behaviour
     type: boolean
     title: Show on activity
     default: true
     x-beside: true
-    x-showIf: {autoHide: {not: never}}
-    description: Show the hidden bar briefly when a widget has news.
+    x-showIf: {enabled: true, autoHide: {not: never}}
+    description: A widget has news.
   revealFor:
     x-group: Behaviour
     type: integer
@@ -150,11 +160,11 @@ properties:
     minimum: 250
     maximum: 10000
     x-unit: ms
-    x-showIf: {autoHide: {not: never}}
+    x-showIf: {enabled: true, autoHide: {not: never}}
   timing:
     $ref: '#/definitions/Timing'
     x-group: Behaviour
-    x-showIf: {autoHide: {not: never}}
+    x-showIf: {enabled: true, autoHide: {not: never}}
     x-properties:
       openDelay:
         type: integer
@@ -170,7 +180,7 @@ properties:
         default: 400
         minimum: 0
         maximum: 5000
-  style: {$ref: '#/definitions/BarStyle', x-inherit: Bars.style, title: Widget style}
+  style: {$ref: '#/definitions/BarStyle', x-inherit: Bars.style, title: Widget style, x-showIf: {enabled: true}}
   widgets:
     type: object
     additionalProperties: false

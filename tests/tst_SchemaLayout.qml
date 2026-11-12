@@ -898,7 +898,7 @@ TestCase {
   // every style setting
   function test_real_schema_bar_style_block() {
     const groups = SchemaLayout.groups(schema, "Bars");
-    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Bar style", false]]);
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Widget style", false]]);
     compare(groups[0].rows[0].kind, "object");
     compare(groups[0].rows[0].schema["x-row"], "BarStyleBlock");
     compare(groups[0].rows.slice(1).filter(row => row.drawnBy !== "Bars.style"), [], "every row under it is drawn by it");

@@ -11,7 +11,7 @@ popout:
         - {/Workspaces.layout: grid}
         - {/Workspaces.strips: {notEmpty: true}}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
-    description: Open the whole grid, or on a strip monitor every workspace with its windows.
+    description: The whole grid, or each strip workspace with its windows.
   menu:
     x-showIf:
       enabled: true
@@ -19,19 +19,20 @@ popout:
         - {/Workspaces.layout: grid}
         - {/Workspaces.strips: {notEmpty: true}}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
+order: [showBackground, backgroundColor, solidBoxes, leadIcon, showEmpty, monitorOnly, labels, relativeNumbers, workspaceLabels, useNames, showAppIcons, appIconsLayout, appIconsCount, appIconsMax, stripWindows, activeWorkspaceIcons, scratchpads, scratchpadLabel, scratchpadSplit, spacing, wideActive, urgentPulse, clickToSwitch, scrollToSwitch, scrollReverse, popout, foregroundColor, hoverColor, activeColor, occupiedColor, emptyColor, urgentColor]
 settings:
   showEmpty:
     type: boolean
-    title: Show empty workspaces
+    title: Empty workspaces
     default: true
     x-showIf: {/$supports.dynamicWorkspaces: false}
-    description: 'Off: only workspaces with windows, plus the active one.'
+    description: 'Off: only those with windows, and the active one.'
   monitorOnly:
     type: boolean
     title: Only this monitor
     default: false
     x-showIf: {/Workspaces.layout: standard, /$supports.dynamicWorkspaces: false}
-    description: Hide workspaces on another monitor.
+    description: Hide workspaces on other monitors.
   labels:
     type: string
     title: Labels
@@ -47,7 +48,6 @@ settings:
           - {$bar.underlined: true}
           - {solidBoxes: true}
     default: numbers
-    description: 'What each workspace shows. None: just its box or line.'
   relativeNumbers:
     type: boolean
     title: Relative numbers
@@ -62,7 +62,7 @@ settings:
     type: array
     title: Workspace labels
     default: []
-    description: 'Your own label for a workspace, by the number its cell shows: an icon, text or both. It wins over app icons and names.'
+    description: Your own icon or text per workspace number; beats app icons and names.
     items:
       type: object
       additionalProperties: false
@@ -87,39 +87,39 @@ settings:
           x-iconText: {mode: show, text: text}
           title: Label
           default: ''
-          description: 'An icon (a Material Symbols name or a pasted glyph), text drawn as written, or both: the icon, then the text.'
+          description: An icon, text, or both.
         text:
           type: string
           title: Text
           default: ''
   useNames:
     type: boolean
-    title: Use workspace names
+    title: Workspace names
     default: false
-    description: Show a workspace's name from the compositor where it says more than its number.
+    description: The compositor's name where it says more than the number.
   showAppIcons:
     type: boolean
     title: App icons
     default: false
-    description: Workspaces with windows show their apps' icons instead.
+    description: Workspaces with windows show their apps' icons.
   appIconsLayout:
     type: string
-    title: Icons
+    title: Icon layout
     x-control: toggle
     enum: [largest, row, square]
     x-enumLabels: {largest: Largest, row: Row, square: Square}
     default: largest
     x-showIf: {showAppIcons: true}
-    description: 'Largest: the biggest window''s icon. Row: side by side, the cell growing to fit. Square: up to four in a block the size of a cell.'
+    description: 'Square: up to four in a cell.'
   appIconsCount:
     type: string
-    title: Count
+    title: Icon count
     x-control: toggle
     enum: [apps, windows]
     x-enumLabels: {apps: Apps, windows: Windows}
     default: apps
     x-showIf: {showAppIcons: true, appIconsLayout: [row, square]}
-    description: 'Apps: each app once. Windows: an icon per window, so three terminals show three.'
+    description: 'Apps: each app once. Windows: an icon per window.'
   appIconsMax:
     type: integer
     title: Icons in a row
@@ -128,23 +128,22 @@ settings:
     maximum: 8
     x-control: stepper
     x-showIf: {showAppIcons: true, appIconsLayout: row}
-    description: The most icons a workspace shows, for its biggest windows, in their order on screen.
   stripWindows:
     type: string
     title: Strip windows
     x-control: toggle
     enum: ['off', each, one]
-    x-enumLabels: {'off': 'Off', each: A box each, one: One box}
+    x-enumLabels: {'off': 'Off', each: Each, one: One}
     default: each
     x-showIf:
       anyOf:
         - {/Workspaces.strips: {notEmpty: true}, /$supports.strips: true}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
-    description: 'On a strip monitor, the active workspace''s windows after its cells. One box: every window''s icon in one cell, the focused one marked. The popout shows a box each whatever this says.'
+    description: The active workspace's windows, after its cells.
   activeWorkspaceIcons:
     type: boolean
-    title: Active workspace icons
+    title: Icons on active workspace
     default: true
     x-showIf:
       showAppIcons: true
@@ -153,16 +152,16 @@ settings:
         - {/Workspaces.strips: {notEmpty: true}, /$supports.strips: true}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
-    description: 'Off: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.'
+    description: 'Off: it shows its number, dot or label instead.'
   scratchpads:
     type: string
     title: Scratchpads
     x-control: toggle
     enum: ['off', occupied, all]
-    x-enumLabels: {'off': 'Off', occupied: With windows, all: All}
+    x-enumLabels: {'off': 'Off', occupied: Occupied, all: All}
     default: 'off'
     x-showIf: {/$supports.namedSpecial: true}
-    description: 'Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.'
+    description: Special workspaces after the cells, behind a divider; click to show or hide.
   scratchpadLabel:
     type: string
     title: Scratchpad labels
@@ -171,13 +170,13 @@ settings:
     x-enumLabels: {icon: Icon, name: Name, both: Both}
     default: icon
     x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true}
-    description: 'Icon: its icon from the Workspaces settings, else its apps'' icons (with App icons on), else a star. Name: its label from there, else its name. Both: its icon (or a star) before its label (or name). Hovering one shows its name.'
+    description: Hover shows the name.
   scratchpadSplit:
     type: boolean
-    title: Divide labels from apps
+    title: Split label from apps
     default: false
     x-showIf: {scratchpads: {not: 'off'}, showAppIcons: true, /$supports.namedSpecial: true}
-    description: 'In each scratchpad: its label, a short divider, then its windows'' app icons. The label never falls back to the apps'' icons.'
+    description: Label, divider, then app icons.
   spacing:
     type: string
     title: Spacing
@@ -185,12 +184,11 @@ settings:
     enum: [tight, bar, wide]
     x-enumLabels: {tight: Tight, bar: Bar, wide: Wide}
     default: bar
-    description: 'The gap between workspaces. Tight: none. Bar: the bar''s own gap between items. Wide: twice that.'
+    description: Gap between workspaces.
   wideActive:
     type: boolean
-    title: Wide active
+    title: Wide active cell
     default: true
-    description: Make the active workspace one cell longer.
   clickToSwitch:
     type: boolean
     title: Click to switch
@@ -199,18 +197,18 @@ settings:
     type: boolean
     title: Scroll to switch
     default: true
-    description: Step through workspaces by scrolling over the widget.
+    description: Scroll over the widget to step through workspaces.
   scrollReverse:
     type: boolean
     title: Reverse scrolling
     default: false
     x-showIf: {scrollToSwitch: true}
-    description: Scrolling down goes back instead of on, for workspaces and a strip's windows alike.
+    description: Scroll down goes back.
   showBackground:
     type: boolean
     title: Background
     default: true
-    description: A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.
+    description: 'A box around the workspaces. Off: each takes the bar''s widget shape.'
     x-showIf: {$bar.boxed: true}
   leadIcon:
     type: string
@@ -221,7 +219,7 @@ settings:
       anyOf:
         - {/Workspaces.layout: [standard, perMonitor, scrolling]}
         - {/$supports.dynamicWorkspaces: true}
-    description: 'Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Empty: none. A grid layout shows which row (column on a vertical bar) is shown instead, a dot each.'
+    description: 'Empty: none.'
   backgroundColor:
     type: string
     title: Background color
@@ -237,17 +235,17 @@ settings:
     type: boolean
     title: Solid boxes
     default: false
-    description: Every workspace a box filled with its state's color, whatever the bar's widget style.
+    description: Fill every workspace box with its state's color.
   activeColor:
     $ref: '#/definitions/WidgetColor'
-    title: Active
+    title: Active color
     x-showIf:
       anyOf:
         - {$bar.ownColorShows: true}
         - {solidBoxes: true}
   occupiedColor:
     type: string
-    title: Occupied
+    title: Occupied color
     x-options: colors
     default: base04
     x-showIf:
@@ -256,10 +254,10 @@ settings:
         - {solidBoxes: true}
   urgentColor:
     type: string
-    title: Urgent
+    title: Urgent color
     x-options: colors
     default: base08
-    description: A workspace with a window asking for attention. The active one keeps its own color.
+    description: A workspace asking for attention.
   urgentPulse:
     type: boolean
     title: Pulse urgent workspaces
@@ -267,7 +265,7 @@ settings:
     description: Fade urgent workspaces in and out until you visit them.
   emptyColor:
     type: string
-    title: Empty
+    title: Empty color
     x-options: colors
     default: base01
     x-showIf:
@@ -290,8 +288,8 @@ settings:
         - {$bar.cellsFilled: true, useNames: true}
   hoverColor:
     type: string
-    title: Hover
+    title: Hover color
     x-options: colors
     default: ''
     x-emptyLabel: Auto
-    description: 'A cell under the pointer. Auto: the theme''s highlight.'
+    description: 'Empty: the theme''s highlight.'

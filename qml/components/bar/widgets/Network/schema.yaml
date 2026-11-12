@@ -7,33 +7,35 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ring, segments, sparkline, ticker, stacked]
-    description: Ring and segments show the signal; sparkline the download speed; ticker and stacked the network's name.
+    description: 'Ring, segments: signal. Sparkline: download speed. Ticker, stacked: network name.'
 colors: {variant: standard, backgroundColor: {title: Connected color}}
+order: [appearance, showDevice, showVpn, vpnColor, middleCommand, popout, popoutVpn, backgroundColor, foregroundColor, disconnectedColor]
 settings:
   showDevice:
     type: boolean
-    title: Show device
+    title: Device
     default: false
+    x-showIf: {appearance.style: [label, ring, segments, sparkline]}
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: ''
-    description: Empty does nothing.
+    description: 'Empty: nothing.'
   disconnectedColor:
     $ref: '#/definitions/WidgetColor'
     title: Disconnected color
     x-autoColor: critical
   showVpn:
     type: boolean
-    title: Show VPN
+    title: VPN lock
     default: true
-    description: A lock on the icon while a VPN is up.
   popoutVpn:
     type: boolean
-    title: VPNs in the popout
+    title: VPNs
     default: true
-    description: The VPN section and the Import VPN action in the Wi-Fi menu.
+    description: With the Import VPN action.
+    x-showIf: {popout.enabled: true, popout.menu: ''}
   vpnColor:
     $ref: '#/definitions/WidgetColor'
     title: VPN lock color

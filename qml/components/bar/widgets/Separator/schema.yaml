@@ -2,6 +2,7 @@ label: Separator
 keywords: ['Divider']
 icon: more_vert
 group: Look & layout
+order: [style, thickness, length, size, color]
 settings:
   style: {$ref: '#/definitions/SeparatorStyle', enum: [line, dot, slash, chevron]}
   size:
@@ -11,7 +12,6 @@ settings:
     minimum: 0
     maximum: 500
     x-unit: px
-    description: Space along the bar (px).
   thickness:
     type: integer
     x-control: stepper
@@ -20,15 +20,14 @@ settings:
     minimum: 1
     maximum: 10
     x-unit: px
-    description: Line width (px).
   length:
     type: integer
-    title: Line length
+    title: Length
     x-unit: '%'
     default: 60
     minimum: 10
     maximum: 100
-    description: Share of the widget height the line spans.
+    description: Share of the bar's thickness.
     x-showIf: {style: [line, slash, chevron]}
   color:
     type: string
