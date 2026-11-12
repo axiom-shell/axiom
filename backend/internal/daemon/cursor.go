@@ -28,7 +28,7 @@ type CursorThemeRequest struct {
 }
 
 func (d *Daemon) cursorMethods(reg *rpc.Registry) {
-	r := cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: gsettings, Ledger: d.footprint})
+	r := cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: d.gsettings(), Ledger: d.footprint})
 	rpc.Handle(reg, "cursor.theme", func(ctx context.Context, c *rpc.Conn, p CursorThemeRequest) (cursortheme.Result, error) {
 		return r.Resolve(ctx, p.Theme, p.Size, p.Owner)
 	})

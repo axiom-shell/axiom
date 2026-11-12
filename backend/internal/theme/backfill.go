@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/footprint"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/theme/integrations"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
@@ -34,6 +35,13 @@ func (in *Integrator) Existing() []footprint.Row {
 				}
 				path := d.Expand(f.Path)
 				if _, err := os.Lstat(path); err == nil {
+					// The file a write would reach, as writeFile records it
+					if target, err := fsx.Resolve(path); err == nil {
+						path = target
+					}
+					if slices.ContainsFunc(rows, func(r footprint.Row) bool { return r.Target == path }) {
+						continue
+					}
 					rows = append(rows, footprint.Row{Kind: footprint.KindFile, Target: path, Owner: "ThemeIntegrations." + key, Prior: footprint.Absent()})
 				}
 			}

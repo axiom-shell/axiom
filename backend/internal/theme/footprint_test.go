@@ -235,3 +235,38 @@ func TestDanglingLinkRecordsItsTarget(t *testing.T) {
 		t.Errorf("the link: %q %v", to, err)
 	}
 }
+
+// A symlinked integration file is one row, the file the link names: the
+// backfill and a later write agree on it
+func TestExistingRecordsTheResolvedPath(t *testing.T) {
+	t.Parallel()
+	home, in, l := recorded(t, false, &fakeGSettings{})
+	os.MkdirAll(home+"/.config/kitty", 0o755)
+	target := home + "/dotfiles/kitty-axiom.conf"
+	put(t, target, "old\n")
+	if err := os.Symlink(target, home+"/.config/kitty/axiom.conf"); err != nil {
+		t.Fatal(err)
+	}
+	var rows []footprint.Row
+	for _, r := range in.Existing() {
+		if r.Owner == "ThemeIntegrations.kitty" {
+			rows = append(rows, r)
+		}
+	}
+	if len(rows) != 1 || rows[0].Target != target {
+		t.Fatalf("%+v", rows)
+	}
+	if _, _, err := l.BackfillFiles(rows); err != nil {
+		t.Fatal(err)
+	}
+	runKeys(t, in, nil, "kitty")
+	n := 0
+	for _, r := range l.Rows() {
+		if r.Kind == footprint.KindFile {
+			n++
+		}
+	}
+	if n != 1 {
+		t.Errorf("%d file rows: %+v", n, l.Rows())
+	}
+}

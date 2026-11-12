@@ -109,7 +109,9 @@ Singleton {
 
   // The hookup backfill needs every target the shell alone knows: the
   // compositor's include and autostart lines and the screen-sharing line
-  readonly property bool _targetsKnown: CompositorManager.kind !== "" && CompositorConfigManager.includeTarget !== null && ScreenShareManager.pickerBinary !== ""
+  // (known too: no compositor kind at all, or one with no include target
+  // to find, once the compositor has settled)
+  readonly property bool _targetsKnown: CompositorManager.ready && ScreenShareManager.pickerBinary !== "" && (CompositorManager.kind === "" || !CompositorManager.supports.configModes || CompositorConfigManager.includeTarget !== null)
   property bool _backfilled: false
   on_TargetsKnownChanged: root._maybeBackfill()
 

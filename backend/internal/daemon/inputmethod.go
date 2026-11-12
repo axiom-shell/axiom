@@ -22,7 +22,7 @@ func (d *Daemon) newInputMethod() {
 			return dbus.Dial(ctx, addr, dbus.Options{Log: log})
 		},
 		Getenv:    d.opts.Getenv,
-		GSettings: gsettings,
+		GSettings: d.gsettings(),
 		Ledger:    d.footprint,
 		OnChange: func(st inputmethod.State) {
 			if d.server != nil {

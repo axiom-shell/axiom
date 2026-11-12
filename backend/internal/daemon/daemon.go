@@ -69,6 +69,10 @@ import (
 
 // Options configure a daemon.
 type Options struct {
+	// GSettings runs gsettings (default: the installed one); tests give a
+	// fake, so nothing reads the machine's
+	GSettings func(ctx context.Context, args ...string) (string, error)
+
 	Tree string // the axiom tree the shell runs from
 	// Dev starts in dev mode whatever the saved choice ($XDG_STATE_HOME/
 	// axiom/dev.json, which `axiom dev on|off` sets)

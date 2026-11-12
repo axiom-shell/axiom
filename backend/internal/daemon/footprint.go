@@ -34,12 +34,16 @@ func (d *Daemon) footprintPart() part {
 // on the file directly, so it runs without a daemon). onChange is called
 // after a row changes.
 func NewLedger(getenv func(string) string, log *slog.Logger, onChange func()) *footprint.Ledger {
+	return newLedger(getenv, log, onChange, gsettings)
+}
+
+func newLedger(getenv func(string) string, log *slog.Logger, onChange func(), gs func(context.Context, ...string) (string, error)) *footprint.Ledger {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
 	}
 	l := footprint.New(footprint.Options{
 		Dirs:      xdg.Resolve(getenv),
-		GSettings: gsettings,
+		GSettings: gs,
 		Getenv:    getenv,
 		Log:       func(format string, args ...any) { log.Info(fmt.Sprintf(format, args...), "part", "footprint") },
 		OnChange:  onChange,
@@ -63,18 +67,18 @@ func NewLedger(getenv func(string) string, log *slog.Logger, onChange func()) *f
 // cursor's folders and setting. Run later, a write could take such a file
 // for one that wasn't there, and an undo would put the old output back.
 func (d *Daemon) newFootprint() {
-	d.footprint = NewLedger(d.opts.Getenv, d.opts.Log, func() {
+	d.footprint = newLedger(d.opts.Getenv, d.opts.Log, func() {
 		if d.server != nil {
 			pushFootprintChanged.Send(d.server, struct{}{}, subscribedTo(topicFootprint))
 		}
-	})
+	}, d.gsettings())
 	if d.footprint.BackfilledFiles() {
 		return
 	}
 	in := theme.NewIntegrator(theme.IntegrateOptions{Getenv: d.opts.Getenv,
 		Profiles: func(key string) []string { e, _ := d.integrationEntry(key); return e.Profiles }})
 	rows := in.Existing()
-	rows = append(rows, cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: gsettings}).Existing(context.Background(), cursorOwner)...)
+	rows = append(rows, cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: d.gsettings()}).Existing(context.Background(), cursorOwner)...)
 	if _, _, err := d.footprint.BackfillFiles(rows); err != nil {
 		d.opts.Log.Warn("footprint: the backfill of files failed", "err", err)
 	}
@@ -172,4 +176,12 @@ func (d *Daemon) inferredRows(p FootprintBackfillRequest) []footprint.Row {
 		}
 	}
 	return rows
+}
+
+// gsettings is the gsettings runner: Options.GSettings, else the installed one.
+func (d *Daemon) gsettings() func(ctx context.Context, args ...string) (string, error) {
+	if d.opts.GSettings != nil {
+		return d.opts.GSettings
+	}
+	return gsettings
 }

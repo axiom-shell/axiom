@@ -54,11 +54,18 @@ FormRow {
   readonly property string ownerPath: root.row.path.join(".")
   readonly property bool badged: root.footprinted && CompositorConfig.mode === "detached"
   // Off, with changes the ledger still holds
-  readonly property bool removable: root.footprinted && field.current === Footprint.offValue(root.row.schema) && FootprintManager.undoableFor(root.ownerPath).length > 0
+  readonly property bool isOff: field.current === Footprint.offValue(root.row.schema)
+  readonly property bool removable: root.footprinted && root.isOff && FootprintManager.undoableFor(root.ownerPath).length > 0
   // The system defaults it changed, asked about once the rest is undone
   readonly property int systemCount: FootprintManager.systemFor(root.ownerPath).length
   property bool askedSystem: false
-  readonly property bool confirmSystem: root.askedSystem && !root.removable && root.systemCount > 0
+  readonly property bool confirmSystem: root.askedSystem && root.isOff && !root.removable && root.systemCount > 0
+  // The question is for the click it followed: gone once there is nothing
+  // to ask about or the setting is on again
+  onSystemCountChanged: if (root.systemCount === 0)
+    root.askedSystem = false
+  onIsOffChanged: if (!root.isOff)
+    root.askedSystem = false
   readonly property real footprintHeight: root.badged || root.removable || root.confirmSystem ? footprintRow.implicitHeight + Widget.spacing : 0
 
   bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
