@@ -30,8 +30,13 @@
 //	notours              the config isn't axiom's (or is missing): nothing written
 //	restored:<from>:<n>  what the claim set aside is back (user/<name>, its
 //	                     lines enabled again, or the backup); <n> files in
-//	                     user/ it doesn't load
+//	                     user/ it doesn't load. The binds a merge moved into
+//	                     axiom (marked "(moved into axiom)") are given back
+//	                     too, in that file and in the others of user/
 //	written              nothing was set aside: the config is the fallback
+//
+// Either way the other files of user/ get their merge marks taken out
+// (binds.UnmarkMoved).
 package takeover
 
 import (
@@ -45,6 +50,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/binds"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
@@ -68,6 +74,8 @@ type Options struct {
 	// manager does across a claim and the managed write after it; else
 	// each verb takes it
 	Locked bool
+	// Logf says what release couldn't do or found (nil: nothing)
+	Logf func(format string, args ...any)
 }
 
 // lock takes Dir's lock unless the caller holds it; a missing Dir is made
@@ -264,6 +272,7 @@ func Release(ctx context.Context, o Options) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		c.logOldMerge(previous, string(data))
 		if err := edit.WriteMode(c.file, []byte(c.enable(ctx, string(data))), info.Mode().Perm()); err != nil {
 			return "", err
 		}
@@ -281,9 +290,11 @@ func Release(ctx context.Context, o Options) (string, error) {
 			return "", err
 		}
 		c.forget()
+		c.unmarkUserFiles(ctx)
 		return "written", nil
 	}
 	c.forget()
+	c.unmarkUserFiles(ctx)
 	text, err := os.ReadFile(c.file)
 	if err != nil {
 		return "", err
@@ -387,9 +398,10 @@ func (c *call) adopt(ctx context.Context, path string) error {
 	return edit.WriteMode(path, []byte(edited), modeOf(path))
 }
 
-// enable undoes adopt's commenting out, unless that leaves it unparsable
+// enable undoes adopt's commenting out, and a bind merge's, unless that
+// leaves it unparsable
 func (c *call) enable(ctx context.Context, text string) string {
-	enabled := mapLines(text, func(line string) string { return strings.TrimPrefix(line, c.Kind.marker) })
+	enabled := binds.UnmarkMoved(c.Kind.Name, mapLines(text, func(line string) string { return strings.TrimPrefix(line, c.Kind.marker) }))
 	if enabled == text || !c.keepsParsing(ctx, text, enabled, text) {
 		return text
 	}
@@ -448,6 +460,51 @@ func mapLines(text string, fn func(string) string) string {
 		out += "\n"
 	}
 	return out
+}
+
+// unmarkUserFiles gives the binds a merge moved into axiom back in user/'s
+// files (not its dot folders, nor the backups beside them). One that can't
+// be done is logged and left: it never fails the release.
+func (c *call) unmarkUserFiles(ctx context.Context) {
+	list, _ := os.ReadDir(c.user)
+	for _, e := range list {
+		name := e.Name()
+		if !e.Type().IsRegular() || strings.HasPrefix(name, ".") || strings.Contains(name, ".axiom-backup-") {
+			continue
+		}
+		path := filepath.Join(c.user, name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			c.logf("Can't read %s to give its moved binds back: %v", path, err)
+			continue
+		}
+		text := string(data)
+		out := binds.UnmarkMoved(c.Kind.Name, text)
+		if out == text || !c.keepsParsing(ctx, text, out, text) {
+			continue
+		}
+		if err := edit.WriteMode(path, []byte(out), modeOf(path)); err != nil {
+			c.logf("Can't give %s its moved binds back: %v", path, err)
+		}
+	}
+}
+
+// logOldMerge: a Hyprland merge from before binds were commented out
+// deleted them, so there's nothing to give back; its backup is the copy
+// from before the move
+func (c *call) logOldMerge(previous, text string) {
+	if c.Kind.Name != "hyprland" || binds.UnmarkMoved("hyprland", text) != text {
+		return
+	}
+	if b := newest(c.user, previous+".axiom-backup-*"); b != "" {
+		c.logf("binds moved into axiom from %s before this version were taken out of it; its copy from before the move is %s", previous, filepath.Join(c.user, b))
+	}
+}
+
+func (c *call) logf(format string, args ...any) {
+	if c.Logf != nil {
+		c.Logf(format, args...)
+	}
 }
 
 // --- What was set aside ---

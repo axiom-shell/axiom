@@ -479,8 +479,8 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	return result, nil
 }
 
-// removeHypr deletes the sites' calls (each whole statement, with its line
-// when nothing else is on it), after a dated backup of each file it changes
+// removeHypr comments the sites' calls out (each whole statement's lines,
+// marked with hyprMark: UnmarkMoved gives them back), after a dated backup of each file it changes
 // beside it (<file>.axiom-backup-<date>, which Hyprland doesn't load). A
 // file whose result doesn't parse is left alone (failed with line 0); a
 // call that isn't found any more is failed on its line; a file that can't
@@ -557,8 +557,8 @@ func removeHypr(ctx context.Context, o Options, sites *jsonx.Array) (*jsonx.Obje
 	return done, nil
 }
 
-// hyprPlan is one file's edit: its text without the calls that go (spans
-// of them), and the sites that stay
+// hyprPlan is one file's edit: its text with the calls that go (spans of
+// them) commented out, and the sites that stay
 type hyprPlan struct {
 	edited string
 	spans  int
@@ -604,7 +604,7 @@ func planHypr(ctx context.Context, o Options, file string, fileSites []site, all
 	sort.Slice(spans, func(i, j int) bool { return spans[i].start > spans[j].start })
 	edited := text
 	for _, s := range spans {
-		edited = edited[:s.start] + edited[s.end:]
+		edited = edited[:s.start] + markLines(edited[s.start:s.end], hyprMark) + edited[s.end:]
 	}
 	if len(spans) > 0 {
 		if err := o.Lua.Check(ctx, edited); err != nil {

@@ -808,7 +808,7 @@ func (m *Manager) takeoverOptions(mode string) takeover.Options {
 	kind, _ := takeover.KindNamed(m.w.takeoverKind())
 	f := m.files()
 	return takeover.Options{Kind: kind, Dir: f.ConfigDir, Header: m.w.header(),
-		Fallback: m.w.releasedText(m.in, mode), Getenv: m.o.Getenv, Elsewhere: f.RunsElsewhere}
+		Fallback: m.w.releasedText(m.in, mode), Getenv: m.o.Getenv, Elsewhere: f.RunsElsewhere, Logf: m.logf}
 }
 
 // configIsOurs: the compositor's config is the one axiom wrote (its first
