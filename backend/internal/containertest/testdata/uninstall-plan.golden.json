@@ -15,12 +15,6 @@
         "what": "Give back the config axiom manages"
       },
       {
-        "detail": "present, ThemeIntegrations.alacritty",
-        "path": "$HOME/.config/alacritty/axiom.toml",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
         "detail": "present, ThemeIntegrations.bat",
         "path": "$HOME/.config/bat",
         "step": "ledger",
@@ -31,18 +25,6 @@
         "path": "$HOME/.config/bat/themes",
         "step": "ledger",
         "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.bat",
-        "path": "$HOME/.config/bat/themes/axiom.tmTheme",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.bat",
-        "path": "bat",
-        "step": "ledger",
-        "what": "Rebuild once the files are out"
       },
       {
         "detail": "present, ThemeIntegrations.btop",
@@ -57,12 +39,6 @@
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.btop",
-        "path": "$HOME/.config/btop/themes/axiom.theme",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
         "detail": "present, ThemeIntegrations.cava",
         "path": "$HOME/.config/cava",
         "step": "ledger",
@@ -75,88 +51,16 @@
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.cava",
-        "path": "$HOME/.config/cava/colors/axiom.conf",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.cava",
-        "path": "$HOME/.config/cava/config",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
         "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5",
+        "path": "$HOME/.config/fcitx5",
         "step": "ledger",
         "what": "Remove the folder axiom made"
       },
       {
         "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes",
+        "path": "$HOME/.config/fcitx5/conf",
         "step": "ledger",
         "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/theme.conf",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/panel.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/highlight.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/menu-highlight.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/prev.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/next.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/arrow.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.local/share/fcitx5/themes/axiom/radio.svg",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.foot",
-        "path": "$HOME/.config/foot/axiom.ini",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
       },
       {
         "detail": "present, ThemeIntegrations.ghostty",
@@ -171,36 +75,6 @@
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.ghostty",
-        "path": "$HOME/.config/ghostty/themes/axiom",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "$HOME/.config/gtk-3.0/axiom.css",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "$HOME/.config/gtk-4.0/axiom.css",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "org.gnome.desktop.interface color-scheme",
-        "step": "ledger",
-        "what": "Put back the setting"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "org.gnome.desktop.interface gtk-theme",
-        "step": "ledger",
-        "what": "Put back the setting"
-      },
-      {
         "detail": "present, ThemeIntegrations.helix",
         "path": "$HOME/.config/helix",
         "step": "ledger",
@@ -211,12 +85,6 @@
         "path": "$HOME/.config/helix/themes",
         "step": "ledger",
         "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.helix",
-        "path": "$HOME/.config/helix/themes/axiom.toml",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
       },
       {
         "detail": "present, ThemeIntegrations.k9s",
@@ -231,46 +99,22 @@
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.k9s",
-        "path": "$HOME/.config/k9s/skins/axiom.yaml",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.kitty",
-        "path": "$HOME/.config/kitty/axiom.conf",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
         "detail": "present, ThemeIntegrations.lazygit",
         "path": "$HOME/.config/lazygit",
         "step": "ledger",
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.lazygit",
-        "path": "$HOME/.config/lazygit/axiom.yml",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.qt",
-        "path": "$HOME/.local/share/color-schemes",
+        "detail": "present, ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim",
         "step": "ledger",
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.qt",
-        "path": "$HOME/.local/share/color-schemes/Axiom.colors",
+        "detail": "present, ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim/lua",
         "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.qt",
-        "path": "$HOME/.config/kdeglobals",
-        "step": "ledger",
-        "what": "Put back the keys in"
+        "what": "Remove the folder axiom made"
       },
       {
         "detail": "present, ThemeIntegrations.wezterm",
@@ -283,12 +127,6 @@
         "path": "$HOME/.config/wezterm/colors",
         "step": "ledger",
         "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.wezterm",
-        "path": "$HOME/.config/wezterm/colors/axiom.toml",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
       },
       {
         "detail": "present, ThemeIntegrations.yazi",
@@ -309,22 +147,10 @@
         "what": "Remove the folder axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.yazi",
-        "path": "$HOME/.config/yazi/flavors/axiom.yazi/flavor.toml",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
-      },
-      {
         "detail": "present, ThemeIntegrations.zathura",
         "path": "$HOME/.config/zathura",
         "step": "ledger",
         "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.zathura",
-        "path": "$HOME/.config/zathura/axiom",
-        "step": "ledger",
-        "what": "Delete the file axiom made"
       },
       {
         "detail": "present, ThemeIntegrations.zed",
@@ -339,104 +165,218 @@
         "what": "Remove the folder axiom made"
       },
       {
+        "detail": "present, ThemeIntegrations.qt",
+        "path": "$HOME/.local/share/color-schemes",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, Input.cursor.enabled",
+        "path": "$HOME/.local/share/icons",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, Input.cursor.enabled",
+        "path": "$HOME/.local/share/icons/axiom-cursor-whiteglass",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.alacritty",
+        "path": "$HOME/.config/alacritty/axiom.toml",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat/themes/axiom.tmTheme",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/themes/axiom.theme",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.cava",
+        "path": "$HOME/.config/cava/colors/axiom.conf",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.cava",
+        "path": "$HOME/.config/cava/config",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.foot",
+        "path": "$HOME/.config/foot/axiom.ini",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/themes/axiom",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-3.0/axiom.css",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-4.0/axiom.css",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/themes/axiom.toml",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.k9s",
+        "path": "$HOME/.config/k9s/skins/axiom.yaml",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.kitty",
+        "path": "$HOME/.config/kitty/axiom.conf",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.lazygit",
+        "path": "$HOME/.config/lazygit/axiom.yml",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.wezterm",
+        "path": "$HOME/.config/wezterm/colors/axiom.toml",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/flavors/axiom.yazi/flavor.toml",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zathura",
+        "path": "$HOME/.config/zathura/axiom",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
         "detail": "present, ThemeIntegrations.zed",
         "path": "$HOME/.config/zed/themes/axiom.json",
         "step": "ledger",
         "what": "Delete the file axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.yazi",
-        "path": "$HOME/.config/yazi/theme.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.nvim",
-        "path": "$HOME/.config/nvim",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.nvim",
-        "path": "$HOME/.config/nvim/lua",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.nvim",
-        "path": "$HOME/.config/nvim/lua/axiom_theme.lua",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "$HOME/.config/gtk-3.0/gtk.css",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "$HOME/.config/gtk-4.0/gtk.css",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.zathura",
-        "path": "$HOME/.config/zathura/zathurarc",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.lazygit",
-        "path": "$HOME/.bashrc",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.helix",
-        "path": "$HOME/.config/helix/config.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.btop",
-        "path": "$HOME/.config/btop/btop.conf",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.config/fcitx5",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.config/fcitx5/conf",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, ThemeIntegrations.fcitx5",
-        "path": "$HOME/.config/fcitx5/conf/classicui.conf",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.ncspot",
-        "path": "$HOME/.config/ncspot/config.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
         "detail": "present, ThemeIntegrations.qt",
-        "path": "$HOME/.config/kdeglobals",
+        "path": "$HOME/.local/share/color-schemes/Axiom.colors",
         "step": "ledger",
-        "what": "Take axiom's lines out of"
+        "what": "Delete the file axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.ghostty",
-        "path": "$HOME/.config/ghostty/config",
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/arrow.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/highlight.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/menu-highlight.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/next.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/panel.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/prev.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/radio.svg",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/theme.conf",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "org.gnome.desktop.interface color-scheme",
+        "step": "ledger",
+        "what": "Put back the setting"
+      },
+      {
+        "detail": "present, Input.cursor.enabled",
+        "path": "org.gnome.desktop.interface cursor-theme",
+        "step": "ledger",
+        "what": "Put back the setting"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "org.gnome.desktop.interface gtk-theme",
+        "step": "ledger",
+        "what": "Put back the setting"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fzf",
+        "path": "$HOME/.bashrc",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -453,8 +393,14 @@
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.kitty",
-        "path": "$HOME/.config/kitty/kitty.conf",
+        "detail": "present, ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/btop.conf",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "path": "$HOME/.config/fcitx5/conf/classicui.conf",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -465,10 +411,76 @@
         "what": "Take axiom's lines out of"
       },
       {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/config",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-3.0/gtk.css",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-4.0/gtk.css",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/config.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "path": "$HOME/.config/kdeglobals",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.kitty",
+        "path": "$HOME/.config/kitty/kitty.conf",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ncspot",
+        "path": "$HOME/.config/ncspot/config.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim/lua/axiom_theme.lua",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
         "detail": "present, ScreenSharing.enabled",
         "path": "$HOME/.config/xdg-desktop-portal-wlr/config",
         "step": "ledger",
         "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/theme.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zathura",
+        "path": "$HOME/.config/zathura/zathurarc",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "path": "$HOME/.config/kdeglobals",
+        "step": "ledger",
+        "what": "Put back the keys in"
       },
       {
         "detail": "present, ThemeIntegrations.ncspot",
@@ -477,29 +489,17 @@
         "what": "Remove axiom's block from"
       },
       {
-        "detail": "present, Input.cursor.enabled",
-        "path": "$HOME/.local/share/icons",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, Input.cursor.enabled",
-        "path": "$HOME/.local/share/icons/axiom-cursor-whiteglass",
-        "step": "ledger",
-        "what": "Remove the folder axiom made"
-      },
-      {
-        "detail": "present, Input.cursor.enabled",
-        "path": "org.gnome.desktop.interface cursor-theme",
-        "step": "ledger",
-        "what": "Put back the setting"
-      },
-      {
         "asks": "RestoreSystem",
         "detail": "present, DefaultApps",
         "path": "$HOME/.config/mimeapps.list [Default Applications/text/plain]",
         "step": "ledger",
         "what": "Put back the default app"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "path": "bat",
+        "step": "ledger",
+        "what": "Rebuild once the files are out"
       },
       {
         "asks": "UndoInferred",

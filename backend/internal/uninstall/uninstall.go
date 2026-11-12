@@ -265,6 +265,10 @@ func Build(ctx context.Context, o Options) (Plan, error) {
 
 	// 3. the ledger
 	rows, candidates := o.ledgerRows(ctx)
+	// In a fixed order (the order the rows were recorded in follows how the
+	// changes were made)
+	slices.SortFunc(rows, func(a, b footprint.RowStatus) int { return strings.Compare(a.ID, b.ID) })
+	slices.SortFunc(candidates, func(a, b footprint.Row) int { return strings.Compare(a.ID, b.ID) })
 	var all []footprint.Row
 	covered := map[string]bool{}
 	for _, r := range rows {
