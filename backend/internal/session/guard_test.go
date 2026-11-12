@@ -167,3 +167,41 @@ func TestGuardLockHeldMeansExit(t *testing.T) {
 		t.Fatal("acted")
 	}
 }
+
+func TestGuardRefusesADescriptorThatIsNoPidfdOfTheDaemon(t *testing.T) {
+	r := newGuardRig(t, false)
+	// a plain file, not a pidfd
+	f, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	o := r.opts()
+	o.Pidfd = int(f.Fd())
+	if err := RunGuard(context.Background(), o); err == nil {
+		t.Fatal("took /dev/null for the daemon's pidfd")
+	}
+	// a pidfd of another process
+	other := exec.Command("sleep", "60")
+	other.Start()
+	defer func() { other.Process.Kill(); other.Wait() }()
+	fd, err := unix.PidfdOpen(other.Process.Pid, 0)
+	if err != nil {
+		t.Skip("no pidfd")
+	}
+	defer unix.Close(fd)
+	o.Pidfd = fd
+	if err := RunGuard(context.Background(), o); err == nil {
+		t.Fatal("took another process's pidfd for the daemon's")
+	}
+	if rec := r.record(); rec.GuardPID != 0 {
+		t.Fatalf("the guard wrote its pid: %+v", rec)
+	}
+}
+
+func TestWaitPidfdAnInvalidDescriptorIsAnErrorNotAnExit(t *testing.T) {
+	exited, err := waitPidfd(context.Background(), 987)
+	if exited || err == nil {
+		t.Fatalf("exited %v, err %v", exited, err)
+	}
+}

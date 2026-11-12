@@ -23,7 +23,7 @@ import qs.services.system
  * runs and takes it out when it stops (portalLine). The daemon restarts
  * the portal too, in this session only.
  *
- * rpc: screenshare.answer, screenShare.restartPortal, screenShare.portalLine
+ * rpc: screenshare.answer, screenshare.restartPortal, screenshare.portalLine
  */
 Singleton {
   id: root
@@ -55,10 +55,10 @@ Singleton {
 
   // The niri portal line as the daemon keeps it ({ state: "on" | "off" |
   // "link" | "missing" | "failed", path, line, error }), as checkPortal()
-  // last found
+  // last found; state "" until it has
   readonly property var portalLine: root._portalLine
   property var _portalLine: ({
-      "state": "off",
+      "state": "",
       "path": "",
       "line": "",
       "error": ""
@@ -79,7 +79,7 @@ Singleton {
     root._portalInstalled = root._hasPortalFile(root.portal?.portalFile);
     root._axiomPortalInstalled = !root.portal?.axiomPortalFile || root._hasPortalFile(root.portal.axiomPortalFile);
     if (CompositorManager.kind === "niri")
-      BackendManager.call("screenShare.portalLine", {}, (error, line) => {
+      BackendManager.call("screenshare.portalLine", {}, (error, line) => {
         if (!error)
           root._portalLine = line;
       });
@@ -196,7 +196,7 @@ Singleton {
   // ends): the daemon restarts the frontend and this compositor's backend,
   // in this session only. `done` (optional) is called with (ok, message).
   function restartPortal(done) {
-    BackendManager.call("screenShare.restartPortal", {
+    BackendManager.call("screenshare.restartPortal", {
       "backends": (root.portal?.services ?? []).map(service => ({
             "bus": root.portal.busName,
             "unit": service + ".service"

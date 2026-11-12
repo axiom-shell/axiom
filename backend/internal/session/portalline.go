@@ -26,7 +26,7 @@ const (
 	PortalDescriptor = "axiom.portal"
 )
 
-// Portal line states (screenShare.portalLine)
+// Portal line states (screenshare.portalLine)
 const (
 	LineOn      = "on"
 	LineOff     = "off"
@@ -113,18 +113,30 @@ func (p PortalEnv) Sync(store Store, display string, want bool) (state string, c
 	path := p.Path()
 	if !want {
 		var line *PortalLine
-		err = store.Update(func(st *State) error {
+		shared := false
+		if st := store.Read(); st != nil {
 			if i := entryFor(st, display, path); i >= 0 {
 				l := st.Lines[i]
 				line = &l
+				shared = slices.ContainsFunc(st.Lines, func(x PortalLine) bool { return x.Display != display && x.Path == path })
+			}
+		}
+		if line == nil {
+			return LineOff, false, nil
+		}
+		// A file another display still has its line in stays as it is
+		if !shared {
+			if changed, err = p.Remove(*line); err != nil {
+				return LineOff, changed, err
+			}
+		}
+		// The record goes only once the line is out
+		err = store.Update(func(st *State) error {
+			if i := entryFor(st, display, path); i >= 0 {
 				st.Lines = slices.Delete(st.Lines, i, i+1)
 			}
 			return nil
 		})
-		if err != nil || line == nil {
-			return LineOff, false, err
-		}
-		changed, err = p.Remove(*line)
 		return LineOff, changed, err
 	}
 	if !p.Available() {
@@ -172,7 +184,7 @@ func (p PortalEnv) Sync(store Store, display string, want bool) (state string, c
 		return LineFailed, false, errors.New("the portal config can't be edited: " + strings.Join(plan.Conflicts, "; "))
 	}
 	e := PortalLine{Display: display, Path: path, Line: PortalText, Commented: plan.Replaces,
-		CreatedSection: plan.CreatesSection, CreatedFile: !exists}
+		CreatedSection: plan.CreatesSection, CreatedFile: !exists, NoFinalNewline: exists && text != "" && !strings.HasSuffix(text, "\n")}
 	if plan.CreatesSection && len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) != "" {
 		e.BlankAdded = true
 	}
@@ -305,6 +317,9 @@ func (p PortalEnv) Remove(l PortalLine) (changed bool, err error) {
 	text := ""
 	if len(lines) > 0 {
 		text = hookup.Text(lines)
+		if l.NoFinalNewline {
+			text = strings.TrimSuffix(text, "\n")
+		}
 	}
 	return true, p.write(l.Path, []byte(text), mode)
 }

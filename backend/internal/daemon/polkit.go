@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"regexp"
+	"slices"
 	"syscall"
 	"time"
 
@@ -15,12 +16,6 @@ import (
 // shell's way of taking the session's polkit agent (PolkitManager): the
 // daemon looks and stops in this session only, and records what it stops.
 func (d *Daemon) polkitMethods(reg *rpc.Registry) {
-	shellOnly := func(c *rpc.Conn) error {
-		if !fromShell(c) {
-			return axerr.New(axerr.Refused, "only the shell stops the session's processes")
-		}
-		return nil
-	}
 	type patternParams struct {
 		Pattern string `json:"pattern"`
 	}
@@ -63,12 +58,7 @@ func (d *Daemon) polkitMethods(reg *rpc.Registry) {
 func namesOf(found []sessx.Found) []string {
 	names := []string{}
 	for _, f := range found {
-		n := f.Basename()
-		dup := false
-		for _, x := range names {
-			dup = dup || x == n
-		}
-		if !dup {
+		if n := f.Basename(); !slices.Contains(names, n) {
 			names = append(names, n)
 		}
 	}
@@ -84,13 +74,13 @@ func (d *Daemon) stopOthers(ctx context.Context, re *regexp.Regexp, units []stri
 	defer closeBus()
 	seams := o.Seams
 	res := stopOthersResult{Units: []string{}, Names: []string{}}
-	if sessx.UnitsAllowed(ctx, o.Bus) {
+	if sessx.UnitsAllowed(ctx, o.Bus, scope) {
 		for _, unit := range units {
-			if _, err := seams.SystemctlOrDefault()(ctx, "-q", "is-active", unit); err != nil {
+			if _, err := seams.Systemctl(ctx, "-q", "is-active", unit); err != nil {
 				continue
 			}
-			store := d.sessionStore()
-			store.Update(func(st *sessx.State) error {
+			// Written ahead: a unit that can't be recorded isn't stopped
+			err := d.sessionStore().Update(func(st *sessx.State) error {
 				for _, u := range st.Units {
 					if u.Name == unit && u.Display == scope.WaylandDisplay {
 						return nil
@@ -99,7 +89,11 @@ func (d *Daemon) stopOthers(ctx context.Context, re *regexp.Regexp, units []stri
 				st.Units = append(st.Units, sessx.Unit{Name: unit, Display: scope.WaylandDisplay})
 				return nil
 			})
-			if _, err := seams.SystemctlOrDefault()(ctx, "stop", unit); err != nil {
+			if err != nil {
+				d.sessionLog("not stopping %s: it couldn't be recorded: %v", unit, err)
+				continue
+			}
+			if _, err := seams.Systemctl(ctx, "stop", unit); err != nil {
 				d.sessionLog("stopping %s: %v", unit, err)
 				continue
 			}
@@ -109,10 +103,14 @@ func (d *Daemon) stopOthers(ctx context.Context, re *regexp.Regexp, units []stri
 		d.sessionLog("left units alone: this daemon's bus isn't the user manager's")
 	}
 	for _, f := range scope.Find(re) {
-		d.sess.with(func(rt *sessx.Runtime) {
+		err := d.sess.with(func(rt *sessx.Runtime) {
 			rt.Stopped = append(rt.Stopped, sessx.Process{Kind: "polkit", Argv: f.Argv, Env: f.Env, Cwd: f.Cwd, PID: f.PID, Start: f.Start})
 		})
-		if err := seams.SignalOrDefault()(f.PID, syscall.SIGTERM); err != nil {
+		if err != nil {
+			d.sessionLog("not stopping %s: it couldn't be recorded: %v", f.Basename(), err)
+			continue
+		}
+		if err := seams.Signal(f.PID, syscall.SIGTERM); err != nil {
 			d.sessionLog("stopping %s: %v", f.Basename(), err)
 			continue
 		}

@@ -10,7 +10,8 @@ TestCase {
       "supported": true,
       "onboardingShown": false,
       "greeter": false,
-      "nudged": false
+      "nudged": false,
+      "firstRunPending": false
     })
 
   function with_(key, value) {
@@ -39,6 +40,10 @@ TestCase {
 
   function test_notOnTheGreeter() {
     verify(!DetachedNudge.shouldNudge(with_("greeter", true)));
+  }
+
+  function test_notBeforeAFirstRunsOnboarderHasClosed() {
+    verify(!DetachedNudge.shouldNudge(with_("firstRunPending", true)));
   }
 
   function test_onlyOncePerLaunch() {

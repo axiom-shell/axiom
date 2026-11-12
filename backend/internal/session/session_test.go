@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -34,7 +35,7 @@ func (p *fakeProc) add(pid int, argv []string, env ...string) {
 }
 
 func (p *fakeProc) scope() Scope {
-	return Scope{WaylandDisplay: "wayland-1", RuntimeDir: "/run/u", Bus: "unix:path=/run/u/bus", ProcRoot: p.root}
+	return Scope{WaylandDisplay: "wayland-1", RuntimeDir: "/run/u", Bus: "unix:path=/run/u/bus", ProcRoot: p.root, UserRuntime: "/run/u"}
 }
 
 var inScope = []string{"WAYLAND_DISPLAY=wayland-1", "XDG_RUNTIME_DIR=/run/u", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/u/bus"}
@@ -314,5 +315,86 @@ func TestUnitsSkippedWithoutTheUserManagersBus(t *testing.T) {
 	}
 	if !strings.Contains(strings.Join(logged, "\n"), "left units alone") {
 		t.Fatalf("not logged: %v", logged)
+	}
+}
+
+// axiom's own wlsunset, signalled a moment ago, still shows: it must not stop
+// the user's from starting again
+func TestRespawnIgnoresAxiomsOwnDyingWlsunset(t *testing.T) {
+	p := newProc(t)
+	p.add(60, []string{"/usr/bin/wlsunset"}, append([]string{Marker("wayland-1")}, inScope...)...)
+	c := &calls{}
+	o := baseOpts(t, c, p)
+	o.Seams.Signal = func(pid int, sig syscall.Signal) error { c.add("signal " + strconv.Itoa(pid)); return nil }
+	o.Runtime.Stopped = []Process{{Kind: "wlsunset", Argv: []string{"/usr/bin/wlsunset", "-t", "3000"}}}
+	if err := Teardown(context.Background(), o); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.got(); got != "signal 60\nspawn /usr/bin/wlsunset -t 3000 in " {
+		t.Fatalf("calls: %q", got)
+	}
+}
+
+// systemctl runs outside session.lock, and only this display's units are
+// counted or dropped
+func TestUnitsStartOutsideTheLockAndOnlyThisDisplays(t *testing.T) {
+	p := newProc(t)
+	c := &calls{}
+	o := baseOpts(t, c, p)
+	o.Bus = fakeBus{owners: map[string]uint32{systemd: 1}}
+	o.State.Update(func(st *State) error {
+		st.Units = []Unit{{Name: "a.service", Display: "wayland-1"}, {Name: "b.service", Display: "wayland-2"}}
+		return nil
+	})
+	var lockErr error
+	base := o.Seams.Systemctl
+	o.Seams.Systemctl = func(ctx context.Context, args ...string) (string, error) {
+		lockErr = o.State.Update(func(*State) error { return nil })
+		return base(ctx, args...)
+	}
+	o.Runtime.Stopped = nil
+	Teardown(context.Background(), o)
+	if lockErr != nil {
+		t.Fatalf("the lock was held during systemctl: %v", lockErr)
+	}
+	if got := c.got(); got != "systemctl start a.service" {
+		t.Fatalf("calls: %q", got)
+	}
+	if st := o.State.Read(); len(st.Units) != 1 || st.Units[0].Name != "b.service" {
+		t.Fatalf("units %+v", st.Units)
+	}
+}
+
+func TestUnitsMessagePerCause(t *testing.T) {
+	for name, tc := range map[string]struct {
+		alive bool
+		bus   Bus
+		want  string
+	}{
+		"gone":   {false, fakeBus{owners: map[string]uint32{systemd: 1}}, "the compositor is gone"},
+		"no bus": {true, fakeBus{owners: map[string]uint32{}}, "isn't the user manager's"},
+	} {
+		p := newProc(t)
+		o := baseOpts(t, &calls{}, p)
+		o.CompositorAlive, o.Bus = tc.alive, tc.bus
+		o.State.Update(func(st *State) error {
+			st.Units = []Unit{{Name: "a.service", Display: "wayland-1"}}
+			return nil
+		})
+		var logged []string
+		o.Log = func(f string, a ...any) { logged = append(logged, fmt.Sprintf(f, a...)) }
+		Teardown(context.Background(), o)
+		if !strings.Contains(strings.Join(logged, "\n"), tc.want) {
+			t.Errorf("%s: logged %v", name, logged)
+		}
+	}
+	// no units of this display: nothing to say
+	o := baseOpts(t, &calls{}, newProc(t))
+	var logged []string
+	o.Log = func(f string, a ...any) { logged = append(logged, f) }
+	o.CompositorAlive = false
+	Teardown(context.Background(), o)
+	if len(logged) != 0 {
+		t.Errorf("logged %v", logged)
 	}
 }

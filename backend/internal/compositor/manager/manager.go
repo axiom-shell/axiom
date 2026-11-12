@@ -117,8 +117,12 @@ type Manager struct {
 	// runtimeOn: the runtime layer is applied (kept in the runtime state
 	// too, for a carried image); steps the OnSteps last got, and whether
 	// the partial teardown was said once
-	runtimeOn       bool
-	steps           []session.Step
+	runtimeOn bool
+	steps     []session.Step
+	starts    struct {
+		valid, on bool
+		line      string
+	}
 	partialNoted    bool
 	problem         string
 	runtimeProblem  string // the last runtimeApply's problems().Runtime
@@ -372,6 +376,7 @@ func (m *Manager) SetFacts(f Facts) {
 func (m *Manager) setInputs(in Inputs) {
 	wasLive := m.live()
 	m.in = in
+	m.starts.valid = false
 	if !m.live() {
 		return
 	}
@@ -720,12 +725,23 @@ func (m *Manager) teardownSteps() []session.Step {
 	if !m.runtimeOn || !m.live() {
 		return nil
 	}
-	starts, line := m.w.reloadStartsAxiom(m.in)
+	starts, line := m.startsAxiom()
 	if starts && !m.partialNoted {
 		m.partialNoted = true
 		m.logf("your config starts axiom on every reload (%s): on quit axiom only takes its binds out", line)
 	}
 	return m.w.teardownSteps(m.in, starts)
+}
+
+// startsAxiom is the writer's reloadStartsAxiom, read again only after the
+// inputs or the compositor's config changed (the files it reads are the
+// user's)
+func (m *Manager) startsAxiom() (bool, string) {
+	if !m.starts.valid {
+		m.starts.on, m.starts.line = m.w.reloadStartsAxiom(m.in)
+		m.starts.valid = true
+	}
+	return m.starts.on, m.starts.line
 }
 
 // Teardown takes the runtime layer out of the compositor (the session
@@ -735,6 +751,11 @@ func (m *Manager) teardownSteps() []session.Step {
 // gone, nor before a re-exec (the next image carries the layer on).
 func (m *Manager) Teardown(ctx context.Context) {
 	if m.w == nil {
+		return
+	}
+	if m.runtimeOn && !m.live() {
+		// What it applied is unknown now: the next start deals with it
+		m.logf("the layer was applied but its inputs are gone: leaving the compositor as it is")
 		return
 	}
 	if steps := m.teardownSteps(); len(steps) > 0 {
@@ -1132,6 +1153,10 @@ func (m *Manager) liveLines(ctx context.Context) []string {
 		key = jsonx.ToString(getAny(cursor, "theme")) + "|" + jsonx.ToString(getAny(cursor, "xcursor")) + "|" + jsonx.ToString(getAny(cursor, "size"))
 	}
 	if key != "" && key != m.st.LiveCursor {
+		// Recorded first: a crash after the cursor was set is undone
+		m.st.LiveCursor = key
+		m.st.save()
+		m.updateSteps()
 		m.w.setCursor(ctx, cursor)
 	}
 	m.st.LiveCursor = key
@@ -1284,6 +1309,7 @@ func (m *Manager) syncFile(ctx context.Context) {
 // configReloaded: a reload drops runtime binds, rules, the look and the
 // input
 func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
+	m.starts.valid = false
 	defer m.updateSteps()
 	// Hyprland drops the layer rules a reload doesn't load, which the
 	// detached mode's files don't hold and a broken include loses

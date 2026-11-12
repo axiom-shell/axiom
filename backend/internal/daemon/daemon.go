@@ -236,7 +236,9 @@ type Daemon struct {
 	compositorGone atomic.Bool
 	// carriedStart: this image was re-exec'd from a running one
 	carriedStart bool
-	portalLine   portalLineState
+	// wlsunsetMu serializes nightlight.wlsunset
+	wlsunsetMu sync.Mutex
+	portalLine portalLineState
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)

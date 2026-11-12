@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -76,12 +77,12 @@ func TestContainerSwayExecAlwaysAxiomGetsPartialTeardown(t *testing.T) {
 	if !s.WaitLog("sway.log", swayUnbind, offset) {
 		t.Fatalf("the binds weren't taken out; log tail:\n%s", s.Tail("sway.log", 20))
 	}
-	time.Sleep(testkit.Bound(time.Second))
-	if swayReload.MatchString(s.LogSince("sway.log", offset)) {
-		t.Fatal("sway was told to reload")
-	}
+	// the teardown is over once the record is clean: nothing came after
 	if !testkit.Eventually(recordClean(s)) {
 		t.Fatal("the record isn't clean")
+	}
+	if swayReload.MatchString(s.LogSince("sway.log", offset)) {
+		t.Fatal("sway was told to reload")
 	}
 }
 
@@ -178,8 +179,8 @@ func TestContainerPolkitStopAndRespawn(t *testing.T) {
 	s, p := swaySession(t, swayMinimal)
 	agent := s.FakeProgram("hyprpolkitagent", Sleeper)
 	s.FakeProgram("systemctl", `echo "$@" >> "$HOME/systemctl.log"`)
-	mine := s.StartProgram(nil, agent)
-	theirs := s.StartProgram(s.SecondDisplayEnv(), agent)
+	mine := s.StartProgram(nil, agent, "4000")
+	theirs := s.StartProgram(s.SecondDisplayEnv(), agent, "5000")
 	if !testkit.Eventually(func() bool { return len(agentsOf(agent)) == 2 }) {
 		t.Fatal("the fake agents didn't start")
 	}
@@ -202,12 +203,12 @@ func TestContainerPolkitStopAndRespawn(t *testing.T) {
 		t.Fatalf("systemctl ran without the user manager's bus: %q", got)
 	}
 	rec := s.Record()
-	if rec == nil || len(rec.Stopped) != 1 || rec.Stopped[0].Argv[0] != agent {
+	if rec == nil || len(rec.Stopped) != 1 || !slices.Equal(rec.Stopped[0].Argv, []string{agent, "4000"}) {
 		t.Fatalf("the record: %+v", rec)
 	}
 	// with systemd on the bus: its unit is stopped, and started on quit
 	s.OwnBusName("org.freedesktop.systemd1")
-	again := s.StartProgram(nil, agent)
+	again := s.StartProgram(nil, agent, "4000")
 	if !testkit.Eventually(func() bool { return Alive(again.cmd.Process.Pid) }) {
 		t.Fatal("no second agent")
 	}
@@ -220,7 +221,7 @@ func TestContainerPolkitStopAndRespawn(t *testing.T) {
 	stopAxiom(t, p)
 	if !testkit.Eventually(func() bool {
 		for _, a := range agentsOf(agent) {
-			if !known[a.PID] {
+			if !known[a.PID] && slices.Equal(a.Argv, []string{agent, "4000"}) {
 				return true
 			}
 		}
@@ -264,7 +265,7 @@ func TestContainerWlsunsetTheirsBackOursGone(t *testing.T) {
 	if !testkit.Eventually(func() bool {
 		// theirs again: a wlsunset without the marker
 		return len(ours()) == 0 && len(Procs(func(p ProcInfo) bool {
-			return filepath.Base(p.Argv[0]) == "wlsunset" && !p.HasEnv(marker)
+			return filepath.Base(p.Argv[0]) == "wlsunset" && !p.HasEnv(marker) && slices.Equal(p.Argv[1:], []string{"3000"})
 		})) == 1
 	}) {
 		t.Fatalf("axiom's wlsunset should be gone and theirs back; daemon log:\n%s", s.Tail(daemonLog, 20))
@@ -277,13 +278,15 @@ func TestContainerPortalRestartIsScopedToTheBus(t *testing.T) {
 	const name = "org.freedesktop.portal.Desktop"
 	mine := s.StartFakePortal("", name)
 	other := s.StartFakePortal(s.StartSecondBus(), name)
-	if _, err := s.ShellCall("screenShare.restartPortal", map[string]any{"backends": []any{}}); err != nil {
+	if _, err := s.ShellCall("screenshare.restartPortal", map[string]any{"backends": []any{}}); err != nil {
 		t.Fatal(err)
 	}
 	if !testkit.Eventually(mine.Termed) {
 		t.Fatal("the portal of this session's bus wasn't told to stop")
 	}
-	if other.Termed() {
+	// given the time the other one would have needed
+	time.Sleep(testkit.Bound(500 * time.Millisecond))
+	if other.Termed() || !Alive(other.cmd.Process.Pid) {
 		t.Fatal("the portal of another bus was signalled")
 	}
 	if _, err := os.Stat(filepath.Join(s.Home, "systemctl.log")); err == nil {

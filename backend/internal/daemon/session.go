@@ -46,24 +46,26 @@ type sessionRec struct {
 	log  sessx.Logf
 }
 
-func (r *sessionRec) saveLocked() {
+func (r *sessionRec) saveLocked() error {
 	// The guard's pid is the guard's to write: keep what is on disk
 	if r.rec.GuardPID == 0 {
 		if cur := sessx.ReadRuntime(r.path, nil); cur != nil {
 			r.rec.GuardPID = cur.GuardPID
 		}
 	}
-	if err := r.rec.Write(r.path); err != nil {
+	err := r.rec.Write(r.path)
+	if err != nil {
 		r.log("session: saving the record: %v", err)
 	}
+	return err
 }
 
 // with changes the record under the lock, then saves it.
-func (r *sessionRec) with(fn func(*sessx.Runtime)) {
+func (r *sessionRec) with(fn func(*sessx.Runtime)) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	fn(&r.rec)
-	r.saveLocked()
+	return r.saveLocked()
 }
 
 func (r *sessionRec) setSteps(steps []sessx.Step) {
@@ -77,9 +79,9 @@ func (d *Daemon) sessionLog(format string, args ...any) {
 // seams are the effects of a teardown: real, or a test's
 func (d *Daemon) sessionSeams() sessx.Seams {
 	if t := d.opts.session; t != nil {
-		return t.Seams
+		return t.Seams.WithDefaults()
 	}
-	return sessx.Seams{}
+	return sessx.Seams{}.WithDefaults()
 }
 
 func (d *Daemon) sessionScope() sessx.Scope {
@@ -119,7 +121,7 @@ func (d *Daemon) teardownOptions(ctx context.Context, rt *sessx.Runtime) (sessx.
 		CompositorAlive: !d.compositorGone.Load(), SameInstance: true,
 		Bus: bus, Seams: seams, Portal: sessx.PortalEnvFrom(d.opts.Getenv), Log: d.sessionLog,
 	}
-	o.RestartPortal = sessx.RestartPortalFunc(bus, seams)
+	o.RestartPortal = sessx.RestartPortalFunc(bus, o.Scope, seams, d.sessionLog)
 	return o, closeBus
 }
 
@@ -188,7 +190,7 @@ func (d *Daemon) waitForGuard(path string) {
 		if time.Now().After(deadline) {
 			if rec := sessx.ReadRuntime(path, nil); rec != nil && rec.GuardPID > 0 && d.sessionScope().Owns(rec.GuardPID) {
 				d.sessionLog("the old guard %d didn't finish: killing it", rec.GuardPID)
-				syscall.Kill(rec.GuardPID, syscall.SIGKILL)
+				d.sessionSeams().Signal(rec.GuardPID, syscall.SIGKILL)
 			} else {
 				d.sessionLog("the old guard didn't finish in time")
 			}
@@ -275,21 +277,15 @@ func (d *Daemon) sessionPart() part {
 
 // sessionMethods are the daemon's RPCs that stop or restart processes of
 // the session, each only in this session's scope: polkit.* (polkit.go),
-// nightlight.wlsunset* (wlsunset.go), screenShare.restartPortal. Only the
+// nightlight.wlsunset* (wlsunset.go), screenshare.restartPortal. Only the
 // shell asks.
 func (d *Daemon) sessionMethods(reg *rpc.Registry) {
 	d.polkitMethods(reg)
 	d.wlsunsetMethods(reg)
-	shellOnly := func(c *rpc.Conn) error {
-		if !fromShell(c) {
-			return axerr.New(axerr.Refused, "only the shell stops the session's processes")
-		}
-		return nil
-	}
 	type restartParams struct {
 		Backends []sessx.BusUnit `json:"backends"`
 	}
-	rpc.Handle(reg, "screenShare.restartPortal", func(ctx context.Context, c *rpc.Conn, p restartParams) (struct{}, error) {
+	rpc.Handle(reg, "screenshare.restartPortal", func(ctx context.Context, c *rpc.Conn, p restartParams) (struct{}, error) {
 		if err := shellOnly(c); err != nil {
 			return struct{}{}, err
 		}
@@ -306,5 +302,5 @@ func (d *Daemon) restartPortal(ctx context.Context, backends []sessx.BusUnit) er
 		return axerr.New(axerr.Unavailable, "no session bus")
 	}
 	seams := d.sessionSeams()
-	return sessx.RestartPortal(ctx, bus, seams.SystemctlOrDefault(), seams.SignalOrDefault(), backends)
+	return sessx.RestartPortal(ctx, bus, d.sessionScope(), seams.Systemctl, seams.Signal, backends, d.sessionLog)
 }

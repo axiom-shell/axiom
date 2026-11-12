@@ -9,7 +9,7 @@ import (
 // ScopeFrom is the session the environment names.
 func ScopeFrom(getenv func(string) string) Scope {
 	return Scope{WaylandDisplay: xdg.DisplayName(getenv("WAYLAND_DISPLAY")), RuntimeDir: getenv("XDG_RUNTIME_DIR"),
-		Bus: getenv("DBUS_SESSION_BUS_ADDRESS"), ProcRoot: "/proc"}
+		Bus: getenv("DBUS_SESSION_BUS_ADDRESS"), ProcRoot: "/proc", UserRuntime: getenv("AXIOM_USER_RUNTIME_DIR")}
 }
 
 // PortalEnvFrom is the portal config the environment names.

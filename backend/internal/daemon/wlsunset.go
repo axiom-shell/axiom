@@ -15,12 +15,6 @@ import (
 // night light where the compositor offers neither a color transform nor
 // gamma ramps (NightLightManager).
 func (d *Daemon) wlsunsetMethods(reg *rpc.Registry) {
-	shellOnly := func(c *rpc.Conn) error {
-		if !fromShell(c) {
-			return axerr.New(axerr.Refused, "only the shell stops the session's processes")
-		}
-		return nil
-	}
 	type wlsunsetParams struct {
 		On   bool     `json:"on"`
 		Argv []string `json:"argv"`
@@ -43,10 +37,13 @@ func (d *Daemon) wlsunsetMethods(reg *rpc.Registry) {
 // this session is recorded and stopped first (teardown starts it again);
 // axiom's, marked in its environment, is replaced.
 func (d *Daemon) wlsunset(ctx context.Context, on bool, argv []string) error {
+	// One at a time: two calls in flight would each start one
+	d.wlsunsetMu.Lock()
+	defer d.wlsunsetMu.Unlock()
 	scope := d.sessionScope()
 	seams := d.sessionSeams()
 	marker := sessx.Marker(scope.WaylandDisplay)
-	signal := seams.SignalOrDefault()
+	signal := seams.Signal
 	if on {
 		ours := map[int]bool{}
 		for _, f := range scope.FindEnv(marker) {
@@ -56,9 +53,13 @@ func (d *Daemon) wlsunset(ctx context.Context, on bool, argv []string) error {
 			if ours[f.PID] {
 				continue
 			}
-			d.sess.with(func(rt *sessx.Runtime) {
+			err := d.sess.with(func(rt *sessx.Runtime) {
 				rt.Stopped = append(rt.Stopped, sessx.Process{Kind: "wlsunset", Argv: f.Argv, Env: f.Env, Cwd: f.Cwd, PID: f.PID, Start: f.Start})
 			})
+			if err != nil {
+				d.sessionLog("not stopping %s: it couldn't be recorded: %v", f.Basename(), err)
+				continue
+			}
 			signal(f.PID, syscall.SIGTERM)
 			waitGone(scope, f)
 		}
@@ -74,5 +75,5 @@ func (d *Daemon) wlsunset(ctx context.Context, on bool, argv []string) error {
 	if env == nil {
 		env = os.Environ()
 	}
-	return seams.SpawnOrDefault()(ctx, argv, append(append([]string{}, env...), marker), "")
+	return seams.Spawn(ctx, argv, append(append([]string{}, env...), marker), "")
 }

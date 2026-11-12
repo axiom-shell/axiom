@@ -3,11 +3,14 @@ package session
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -84,14 +87,14 @@ func (o GuardOptions) alive() bool {
 }
 
 // RestartPortalFunc is a teardown's RestartPortal: the frontend, through
-// bus, with seams.
-func RestartPortalFunc(bus Bus, s Seams) func(ctx context.Context) error {
-	s = s.withDefaults()
+// bus, in scope, with seams.
+func RestartPortalFunc(bus Bus, scope Scope, s Seams, log Logf) func(ctx context.Context) error {
+	s = s.WithDefaults()
 	return func(ctx context.Context) error {
 		if bus == nil {
 			return nil
 		}
-		return RestartPortal(ctx, bus, s.Systemctl, s.Signal, nil)
+		return RestartPortal(ctx, bus, scope, s.Systemctl, s.Signal, nil, log)
 	}
 }
 
@@ -115,6 +118,10 @@ func RunGuard(ctx context.Context, o GuardOptions) error {
 		o.Log.log("guard: no session record: nothing to guard")
 		return nil
 	}
+	if err := checkPidfd(o.Pidfd, rec.DaemonPID); err != nil {
+		o.Log.log("guard: refusing: %v", err)
+		return err
+	}
 	rec.GuardPID = os.Getpid()
 	if err := rec.Write(path); err != nil {
 		return err
@@ -123,7 +130,11 @@ func RunGuard(ctx context.Context, o GuardOptions) error {
 	defer cancel()
 	events := make(chan string, 3)
 	go func() {
-		if waitPidfd(ctx, o.Pidfd) {
+		exited, err := waitPidfd(ctx, o.Pidfd)
+		switch {
+		case err != nil:
+			o.Log.log("guard: the daemon's pidfd: %v", err)
+		case exited:
 			events <- "daemon"
 		}
 	}()
@@ -174,7 +185,7 @@ func RunGuard(ctx context.Context, o GuardOptions) error {
 		}
 		to.Bus = bus
 	}
-	to.RestartPortal = RestartPortalFunc(to.Bus, to.Seams)
+	to.RestartPortal = RestartPortalFunc(to.Bus, to.Scope, to.Seams, o.Log)
 	if err := Teardown(context.WithoutCancel(ctx), to); err != nil {
 		o.Log.log("guard: %v", err)
 	}
@@ -182,18 +193,47 @@ func RunGuard(ctx context.Context, o GuardOptions) error {
 	return nil
 }
 
-// waitPidfd waits until the pidfd is readable (the process exited): false
-// when ctx ended first.
-func waitPidfd(ctx context.Context, fd int) bool {
+// checkPidfd: fd is a pidfd of the daemon (pid): what stage 1 hands down as
+// descriptor 3, and nothing else may be taken for it.
+func checkPidfd(fd, pid int) error {
+	link, err := os.Readlink("/proc/self/fd/" + strconv.Itoa(fd))
+	if err != nil || link != "anon_inode:[pidfd]" {
+		return fmt.Errorf("descriptor %d isn't a pidfd (%q)", fd, link)
+	}
+	info, err := os.ReadFile("/proc/self/fdinfo/" + strconv.Itoa(fd))
+	if err != nil {
+		return err
+	}
+	for _, line := range strings.Split(string(info), "\n") {
+		if v, ok := strings.CutPrefix(line, "Pid:"); ok {
+			// -1: it exited already (a valid pidfd, readable at once)
+			if got, _ := strconv.Atoi(strings.TrimSpace(v)); got != pid && got != -1 {
+				return fmt.Errorf("the pidfd is of process %d, not the daemon %d", got, pid)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("no Pid in the pidfd's info")
+}
+
+// waitPidfd waits until the pidfd is readable (the process exited); false
+// when ctx ended first. An invalid descriptor or a poll error is an error,
+// never "exited".
+func waitPidfd(ctx context.Context, fd int) (bool, error) {
 	for ctx.Err() == nil {
 		fds := []unix.PollFd{{Fd: int32(fd), Events: unix.POLLIN}}
 		n, err := unix.Poll(fds, 250)
 		if err != nil && !errors.Is(err, unix.EINTR) {
-			return false
+			return false, err
 		}
 		if n > 0 {
-			return true
+			if fds[0].Revents&(unix.POLLNVAL|unix.POLLERR) != 0 {
+				return false, fmt.Errorf("poll revents %#x", fds[0].Revents)
+			}
+			if fds[0].Revents&unix.POLLIN != 0 {
+				return true, nil
+			}
 		}
 	}
-	return false
+	return false, nil
 }

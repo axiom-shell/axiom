@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -41,7 +42,8 @@ type Seams struct {
 	Signal    SignalFunc
 }
 
-func (s Seams) withDefaults() Seams {
+// WithDefaults is the seams with the real effect where one isn't set.
+func (s Seams) WithDefaults() Seams {
 	if s.Systemctl == nil {
 		s.Systemctl = func(ctx context.Context, args ...string) (string, error) {
 			out, err := exec.CommandContext(ctx, "systemctl", append([]string{"--user"}, args...)...).Output()
@@ -58,12 +60,6 @@ func (s Seams) withDefaults() Seams {
 	}
 	return s
 }
-
-// SystemctlOrDefault, SignalOrDefault and SpawnOrDefault are the seam, or
-// the real effect.
-func (s Seams) SystemctlOrDefault() SystemctlFunc { return s.withDefaults().Systemctl }
-func (s Seams) SignalOrDefault() SignalFunc       { return s.withDefaults().Signal }
-func (s Seams) SpawnOrDefault() SpawnFunc         { return s.withDefaults().Spawn }
 
 // TeardownOptions say what to undo and how.
 type TeardownOptions struct {
@@ -93,7 +89,7 @@ type TeardownOptions struct {
 // the same); the units it stopped; the portal lines. Each part logs its
 // failure and the rest goes on. It sets Clean and saves the records.
 func Teardown(ctx context.Context, o TeardownOptions) error {
-	o.Seams = o.Seams.withDefaults()
+	o.Seams = o.Seams.WithDefaults()
 	ctx, cancel := context.WithTimeout(ctx, TeardownBound)
 	defer cancel()
 	display := o.Scope.WaylandDisplay
@@ -163,50 +159,54 @@ func (o TeardownOptions) respawn(ctx context.Context, rt *Runtime, kind string) 
 // StartUnits starts this display's units that axiom stopped, and drops
 // them from the record: only when the user manager is this session's.
 func (o TeardownOptions) StartUnits(ctx context.Context) {
-	o.Seams = o.Seams.withDefaults()
+	o.Seams = o.Seams.WithDefaults()
 	o.startUnits(ctx)
 }
 
 // Respawn is the polkit hand-back's: the polkit entries start again.
 func (o TeardownOptions) Respawn(ctx context.Context, kind string) {
-	o.Seams = o.Seams.withDefaults()
+	o.Seams = o.Seams.WithDefaults()
 	o.respawn(ctx, o.Runtime, kind)
 }
 
 func (o TeardownOptions) startUnits(ctx context.Context) {
 	display := o.Scope.WaylandDisplay
-	if !o.CompositorAlive || !UnitsAllowed(ctx, o.Bus) {
-		if st := o.State.Read(); st != nil && len(st.Units) > 0 {
-			o.Log.log("session: left units alone: this daemon's bus isn't the user manager's")
-		}
-		return
-	}
+	// Only this display's units count
 	var names []string
-	err := o.State.Update(func(st *State) error {
-		var kept []Unit
+	if st := o.State.Read(); st != nil {
 		for _, u := range st.Units {
 			if u.Display == display {
 				names = append(names, u.Name)
-			} else {
-				kept = append(kept, u)
 			}
 		}
-		if len(names) == 0 {
-			return nil
-		}
-		if _, err := o.Systemctl(ctx, append([]string{"start"}, names...)...); err != nil {
-			o.Log.log("session: starting %s: %v", strings.Join(names, ", "), err)
-			return fmt.Errorf("start failed")
-		}
-		st.Units = kept
+	}
+	if len(names) == 0 {
+		return
+	}
+	switch {
+	case !o.CompositorAlive:
+		o.Log.log("session: left units alone: the compositor is gone (the next start starts them)")
+		return
+	case !UnitsAllowed(ctx, o.Bus, o.Scope):
+		o.Log.log("session: left units alone: this daemon's bus isn't the user manager's")
+		return
+	}
+	// systemctl runs outside the record's lock
+	if _, err := o.Systemctl(ctx, append([]string{"start"}, names...)...); err != nil {
+		o.Log.log("session: starting %s: %v", strings.Join(names, ", "), err)
+		return
+	}
+	err := o.State.Update(func(st *State) error {
+		st.Units = slices.DeleteFunc(st.Units, func(u Unit) bool { return u.Display == display && slices.Contains(names, u.Name) })
 		return nil
 	})
-	if err != nil && len(names) == 0 {
+	if err != nil {
 		o.Log.log("session: the units: %v", err)
 	}
 }
 
-// undoLines takes out this display's portal lines, true when a file changed.
+// undoLines takes out this display's portal lines, true when a file
+// changed. A file another display still has a line in is left as it is.
 func (o TeardownOptions) undoLines(display string) bool {
 	changed := false
 	err := o.State.Update(func(st *State) error {
@@ -214,6 +214,9 @@ func (o TeardownOptions) undoLines(display string) bool {
 		for _, l := range st.Lines {
 			if l.Display != display {
 				kept = append(kept, l)
+				continue
+			}
+			if slices.ContainsFunc(st.Lines, func(x PortalLine) bool { return x.Display != display && x.Path == l.Path }) {
 				continue
 			}
 			c, err := o.Portal.Remove(l)

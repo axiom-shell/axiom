@@ -332,6 +332,9 @@ func NewSessionWith(t *testing.T, extra ...string) *Session {
 		"PATH": filepath.Join(s.Home, "bin") + ":" + os.Getenv("PATH"), "HOME": s.Home, "LANG": "C.UTF-8",
 		"XDG_CONFIG_HOME": s.Config, "XDG_STATE_HOME": s.State, "XDG_DATA_HOME": s.Data,
 		"XDG_CACHE_HOME": s.Cache, "XDG_RUNTIME_DIR": s.Runtime,
+		// This scratch folder stands for the user manager's: the daemon
+		// runs the systemctl stub only for it (session.Scope.UnitsAllowed)
+		"AXIOM_USER_RUNTIME_DIR":   s.Runtime,
 		"DBUS_SESSION_BUS_ADDRESS": "unix:path=" + filepath.Join(s.Runtime, "bus"),
 	}
 	for _, kv := range extra {
@@ -611,7 +614,7 @@ func (s *Session) SwaymsgTry(args ...string) (string, error) {
 }
 
 // ShellCall makes a call as the shell would, through the fake shell (the
-// shell-only methods: polkit.stopOthers, screenShare.restartPortal, …).
+// shell-only methods: polkit.stopOthers, screenshare.restartPortal, …).
 func (s *Session) ShellCall(method string, params any) (json.RawMessage, error) {
 	s.t.Helper()
 	nc, err := net.DialTimeout("unix", filepath.Join(s.Runtime, relaySock), 5*time.Second)
@@ -650,11 +653,20 @@ func (s *Session) FakeProgram(name, script string) string {
 	if err := os.Chmod(path, 0o755); err != nil {
 		s.t.Fatal(err)
 	}
+	// What it started (the daemon starts programs of its own, too) goes
+	// with the test
+	s.t.Cleanup(func() {
+		for _, p := range Procs(func(p ProcInfo) bool { return p.Argv[0] == path }) {
+			syscall.Kill(p.PID, syscall.SIGKILL)
+		}
+	})
 	return path
 }
 
-// Sleeper is the script of a program that only runs, under its own name.
-const Sleeper = `exec -a "$0" sleep 600`
+// Sleeper is the script of a program that only runs, under its own name
+// (argv[0] is its path); its numeric arguments become the durations it
+// sleeps, so they show in its argv and nothing else does (`-t 3000` is 3000).
+const Sleeper = `n=(); for a in "$@"; do [[ $a =~ ^[0-9]+$ ]] && n+=("$a"); done; exec -a "$0" sleep "${n[@]:-600}"`
 
 // SecondDisplayEnv is an environment that is out of the session's scope: a
 // Wayland display of another session, the rest the session's.

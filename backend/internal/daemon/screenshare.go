@@ -78,7 +78,7 @@ func (d *Daemon) screenSharePart() part {
 	}
 }
 
-// portalLineState is the niri portal line's state (screenShare.portalLine):
+// portalLineState is the niri portal line's state (screenshare.portalLine):
 // the line `ScreenCast=axiom` in xdg-desktop-portal's niri-portals.conf is a
 // session effect, added while ScreenSharing is on and taken out when axiom
 // stops (session.PortalEnv).
@@ -90,7 +90,7 @@ type portalLineState struct {
 	want    bool
 }
 
-// portalLineResult is screenShare.portalLine's answer.
+// portalLineResult is screenshare.portalLine's answer.
 type portalLineResult struct {
 	State string `json:"state"` // "on" | "off" | "link" | "missing" | "failed"
 	Path  string `json:"path"`
@@ -106,12 +106,24 @@ func (d *Daemon) syncPortalLine(ctx context.Context, initial bool) {
 	if ipc.NiriFromEnv(d.opts.Getenv) == nil {
 		return
 	}
+	changed := d.syncPortalLineState(initial)
+	// Restarted with the lock let go: the RPC's answer never waits for it
+	if changed {
+		if err := d.restartPortal(ctx, nil); err != nil {
+			d.opts.Log.Warn("screen share: restarting the portal", "err", err)
+		}
+	}
+}
+
+// syncPortalLineState edits the file and sets the state, true when the file
+// changed.
+func (d *Daemon) syncPortalLineState(initial bool) bool {
 	l := &d.portalLine
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	want := d.screenShare.Settings().Enabled
 	if l.started && want == l.want && l.state != sessx.LineFailed {
-		return
+		return false
 	}
 	display := d.sessionScope().WaylandDisplay
 	env := sessx.PortalEnvFrom(d.opts.Getenv)
@@ -123,7 +135,7 @@ func (d *Daemon) syncPortalLine(ctx context.Context, initial bool) {
 		if want && env.Has(store, display) {
 			l.state = sessx.LineOn
 		}
-		return
+		return false
 	}
 	state, changed, err := env.Sync(store, display, want)
 	l.state, l.err = state, ""
@@ -133,10 +145,8 @@ func (d *Daemon) syncPortalLine(ctx context.Context, initial bool) {
 	}
 	if changed {
 		d.opts.Log.Info("screen share: the niri portal line changed", "state", state)
-		if err := d.restartPortal(ctx, nil); err != nil {
-			d.opts.Log.Warn("screen share: restarting the portal", "err", err)
-		}
 	}
+	return changed
 }
 
 // runPortal serves the ScreenCast portal while niri runs, through session
@@ -240,7 +250,7 @@ func (d *Daemon) screenShareMethods(reg *rpc.Registry) {
 		Choice *screenshare.Choice `json:"choice"`
 		Cancel bool                `json:"cancel"`
 	}
-	rpc.Handle(reg, "screenShare.portalLine", func(ctx context.Context, c *rpc.Conn, _ struct{}) (portalLineResult, error) {
+	rpc.Handle(reg, "screenshare.portalLine", func(ctx context.Context, c *rpc.Conn, _ struct{}) (portalLineResult, error) {
 		l := &d.portalLine
 		l.mu.Lock()
 		defer l.mu.Unlock()

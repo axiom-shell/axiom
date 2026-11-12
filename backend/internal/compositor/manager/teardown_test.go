@@ -216,3 +216,63 @@ func TestTeardownAfterRunSendsStepsAndResetsState(t *testing.T) {
 		t.Fatalf("state: %+v", st)
 	}
 }
+
+func TestHyprStartLineInsideAHandlerOrAComment(t *testing.T) {
+	t.Parallel()
+	handler := "hl.on(\"hyprland.start\", function()\n  hl.exec_cmd(\"axiom run\")\nend)\n"
+	w := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": "-- hl.exec_cmd(\"axiom run\")\n" + handler}, nil), nil)
+	if starts, _ := w.reloadStartsAxiom(startIn()); starts != hyprStartHandlerFiresOnReload {
+		t.Fatalf("a multi-line handler counts = %v (fires on reload: %v)", starts, hyprStartHandlerFiresOnReload)
+	}
+	// after the handler's end, the top level is the top level again
+	after := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.lua": handler + "hl.exec_cmd(\"axiom run\")\n"}, nil), nil)
+	if starts, _ := after.reloadStartsAxiom(startIn()); !starts {
+		t.Fatal("a top-level line after the handler wasn't seen")
+	}
+}
+
+func TestHyprFollowsSourceAndRequire(t *testing.T) {
+	t.Parallel()
+	conf := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.conf": "source = ./extra.conf\n",
+		"hypr/extra.conf":    "exec = axiom run\n",
+	}, nil), nil)
+	if starts, line := conf.reloadStartsAxiom(startIn()); !starts || line != "exec = axiom run" {
+		t.Fatalf("source: %v %q", starts, line)
+	}
+	lua := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.lua": "require(\"startup\")\n",
+		"hypr/startup.lua":  "hl.exec_cmd(\"axiom run\")\n",
+	}, nil), nil)
+	if starts, _ := lua.reloadStartsAxiom(startIn()); !starts {
+		t.Fatal("require wasn't followed")
+	}
+	outside := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.lua": "dofile(\"/etc/nowhere/start.lua\")\n",
+	}, nil), nil)
+	if starts, _ := outside.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a file outside the config folder was followed")
+	}
+}
+
+func TestHyprCursorRestoreTakesHyprcursorFirst(t *testing.T) {
+	t.Parallel()
+	w := newHypr(writerEnv(t, nil, map[string]string{"HYPRCURSOR_THEME": "Hypr", "HYPRCURSOR_SIZE": "40", "XCURSOR_THEME": "X", "XCURSOR_SIZE": "32"}), nil)
+	w.state.LiveCursor = "x"
+	if got := w.teardownSteps(Inputs{}, false); got[1].Theme != "Hypr" || got[1].Size != 40 {
+		t.Fatalf("%+v", got)
+	}
+}
+
+// with the layer applied but no inputs to know what it was, nothing is sent
+// and the state stays for the next start
+func TestTeardownWithoutInputsLeavesTheState(t *testing.T) {
+	h := newHarness(t, "detached")
+	h.stop()
+	h.m.runtimeOn = true
+	h.m.st.NiriWrapper = true
+	h.m.Teardown(context.Background())
+	if !h.m.st.NiriWrapper || !h.m.runtimeOn {
+		t.Fatalf("state was given back: %+v", h.m.st)
+	}
+}

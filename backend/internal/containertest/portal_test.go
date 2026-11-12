@@ -42,6 +42,16 @@ func TestContainerNiriPortalLineIsASessionEffect(t *testing.T) {
 	}
 
 	p := s.StartAxiom("niri")
+	// control: with sharing off the file and the portal are left alone
+	if raw, err := s.ShellCall("screenshare.portalLine", map[string]any{}); err != nil || !strings.Contains(string(raw), `"off"`) {
+		t.Fatalf("portalLine = %s, %v", raw, err)
+	}
+	if read() != portalSeed {
+		t.Fatalf("the file changed with sharing off:\n%s", read())
+	}
+	if pid, err := s.PingPortal(); err != nil || pid != pid0 {
+		t.Fatalf("the portal changed with sharing off: %d (was %d), %v", pid, pid0, err)
+	}
 	s.Axiom("config", "set", "ScreenSharing.enabled", "true")
 	if !testkit.Eventually(hasLine) {
 		t.Fatalf("no line after enabling; file:\n%s\ndaemon log:\n%s", read(), s.Tail(daemonLog, 20))
@@ -68,11 +78,16 @@ func TestContainerNiriPortalLineIsASessionEffect(t *testing.T) {
 	if !testkit.Eventually(hasLine) {
 		t.Fatalf("no line after the restart; daemon log:\n%s", s.Tail(daemonLog, 20))
 	}
-	s.Guard()
+	guard := s.Guard()
 	p.Signal(syscall.SIGKILL)
 	p.Wait()
 	if !testkit.Eventually(func() bool { return read() == portalSeed }) {
 		t.Fatalf("the guard didn't restore the file:\n%s\nguard log:\n%s", read(), s.GuardLog())
+	}
+
+	// the guard restarts the portal after the file: let it finish
+	if !WaitGone(guard) {
+		t.Fatal("the guard is still running")
 	}
 
 	// a link (dotfiles): never touched, the state says so
@@ -81,12 +96,19 @@ func TestContainerNiriPortalLineIsASessionEffect(t *testing.T) {
 	if err := os.Symlink(target, conf); err != nil {
 		t.Fatal(err)
 	}
+	pidL, _ := s.PingPortal()
 	p = s.StartAxiom("niri")
-	raw, err := s.ShellCall("screenShare.portalLine", map[string]any{})
+	raw, err := s.ShellCall("screenshare.portalLine", map[string]any{})
 	if err != nil || !strings.Contains(string(raw), `"link"`) {
 		t.Fatalf("portalLine = %s, %v", raw, err)
 	}
 	stopAxiom(t, p)
+	if info, err := os.Lstat(conf); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Fatalf("the link was replaced: %v %v", info, err)
+	}
+	if pid, err := s.PingPortal(); err != nil || pid != pidL {
+		t.Fatalf("the portal was restarted for a link: %d (was %d), %v", pid, pidL, err)
+	}
 	if data, _ := os.ReadFile(target); string(data) != portalSeed {
 		t.Fatalf("the link's target changed:\n%s", data)
 	}

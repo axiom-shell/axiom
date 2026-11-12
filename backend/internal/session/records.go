@@ -106,6 +106,8 @@ type PortalLine struct {
 	CreatedFile    bool     `json:"createdFile,omitempty"`
 	// BlankAdded: a blank line went in before the new section
 	BlankAdded bool `json:"blankAdded,omitempty"`
+	// NoFinalNewline: the file didn't end in a newline before
+	NoFinalNewline bool `json:"noFinalNewline,omitempty"`
 	// Adopted: the line was there already, from an earlier persistent hookup
 	Adopted bool `json:"adopted,omitempty"`
 }

@@ -1,8 +1,11 @@
 package manager
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -303,46 +306,121 @@ func (w *hyprWriter) teardownSteps(in Inputs, partial bool) []session.Step {
 		steps = append(steps, session.Step{Op: "reload"})
 	}
 	if w.state.LiveCursor != "" {
-		size, _ := strconv.Atoi(w.getenv("XCURSOR_SIZE"))
+		// What is in force can't be queried: Hyprland's own variables first,
+		// then the session's XCursor ones
+		size, _ := strconv.Atoi(cmp.Or(w.getenv("HYPRCURSOR_SIZE"), w.getenv("XCURSOR_SIZE")))
 		if size <= 0 {
 			size = 24
 		}
-		theme := w.getenv("XCURSOR_THEME")
-		if theme == "" {
-			theme = "default"
-		}
+		theme := cmp.Or(w.getenv("HYPRCURSOR_THEME"), w.getenv("XCURSOR_THEME"), "default")
 		steps = append(steps, session.Step{Op: "setcursor", Theme: theme, Size: size})
 	}
 	return steps
 }
 
-// reloadStartsAxiom reads the user's hyprland.lua (or hyprland.conf): a
-// line matching in's startPattern that runs at every reload. In Lua that is
-// any line outside a "hyprland.start" handler, unless the handler fires on
-// reload too; in the conf, an exec line.
+// reloadStartsAxiom reads the user's hyprland.lua (or hyprland.conf) and
+// the files it loads: a line matching in's startPattern that runs at every
+// reload. In Lua that is any line outside a "hyprland.start" handler
+// (comments don't count), unless the handler fires on reload too; in the
+// conf, an exec line. Followed: `source =` in the conf, a literal
+// require/dofile under the config folder in Lua; a match at the top level of
+// any of them counts (whether a reload runs them again isn't checked: the
+// safe side).
 func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
 	pattern := startPatternOf(in)
 	if pattern == nil {
 		return false, ""
 	}
-	text, conf := readFile(w.dir()+"hyprland.lua"), false
-	if text == "" {
-		text, conf = readFile(w.dir()+"hyprland.conf"), true
+	main, conf := w.dir()+"hyprland.lua", false
+	if _, err := os.Stat(main); err != nil {
+		main, conf = w.dir()+"hyprland.conf", true
 	}
-	for _, line := range strings.Split(text, "\n") {
-		if !pattern.MatchString(line) {
-			continue
+	seen := map[string]bool{}
+	var scan func(path string, conf bool, depth int) (bool, string)
+	scan = func(path string, conf bool, depth int) (bool, string) {
+		path = filepath.Clean(path)
+		if seen[path] || depth > 6 {
+			return false, ""
 		}
-		switch {
-		case conf:
-			if hyprConfExec.MatchString(line) {
-				return true, strings.TrimSpace(line)
+		seen[path] = true
+		inHandler := false
+		for _, line := range strings.Split(readFile(path), "\n") {
+			trimmed := strings.TrimSpace(line)
+			if conf {
+				if m := hyprSource.FindStringSubmatch(line); m != nil {
+					if ok, l := scan(w.followPath(path, m[1]), true, depth+1); ok {
+						return true, l
+					}
+				}
+				if pattern.MatchString(line) && hyprConfExec.MatchString(line) {
+					return true, trimmed
+				}
+				continue
 			}
-		case hyprStartHandlerFiresOnReload || (!strings.Contains(line, `hl.on("hyprland.start"`) && !strings.Contains(line, `hl.on('hyprland.start'`)):
-			return true, strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "--") {
+				continue
+			}
+			opens := strings.Contains(line, `hl.on("hyprland.start"`) || strings.Contains(line, `hl.on('hyprland.start'`)
+			if pattern.MatchString(line) && (hyprStartHandlerFiresOnReload || !(inHandler || opens)) {
+				return true, trimmed
+			}
+			if opens && !strings.Contains(line, "end)") {
+				inHandler = true
+			} else if inHandler && hyprHandlerEnd.MatchString(line) {
+				inHandler = false
+			}
+			if inHandler || opens {
+				continue
+			}
+			for _, m := range hyprRequire.FindAllStringSubmatch(line, -1) {
+				if target := w.luaTarget(path, m[2], m[1] == "require"); target != "" {
+					if ok, l := scan(target, false, depth+1); ok {
+						return true, l
+					}
+				}
+			}
+		}
+		return false, ""
+	}
+	return scan(main, conf, 0)
+}
+
+// followPath is where a conf's `source =` names, relative to the file
+func (w *hyprWriter) followPath(from, name string) string {
+	name = strings.TrimSpace(name)
+	if rest, ok := strings.CutPrefix(name, "~/"); ok {
+		return filepath.Join(w.getenv("HOME"), rest)
+	}
+	if filepath.IsAbs(name) {
+		return name
+	}
+	return filepath.Join(filepath.Dir(from), name)
+}
+
+// luaTarget is the file a literal dofile/require names, under the config
+// folder ("" for any other)
+func (w *hyprWriter) luaTarget(from, name string, require bool) string {
+	var candidates []string
+	if require {
+		rel := strings.ReplaceAll(name, ".", "/")
+		candidates = []string{filepath.Join(w.dir(), rel+".lua"), filepath.Join(w.dir(), rel, "init.lua")}
+	} else {
+		candidates = []string{w.followPath(from, name)}
+	}
+	for _, c := range candidates {
+		if rel, err := filepath.Rel(filepath.Clean(w.dir()), c); err == nil && !strings.HasPrefix(rel, "..") {
+			if _, err := os.Stat(c); err == nil {
+				return c
+			}
 		}
 	}
-	return false, ""
+	return ""
 }
+
+var (
+	hyprSource     = regexp.MustCompile(`^\s*source\s*=\s*(.+?)\s*$`)
+	hyprHandlerEnd = regexp.MustCompile(`^\s*end\s*\)`)
+	hyprRequire    = regexp.MustCompile(`\b(require|dofile)\s*\(?\s*["']([^"']+)["']`)
+)
 
 var hyprConfExec = regexp.MustCompile(`^\s*exec\s*=`)

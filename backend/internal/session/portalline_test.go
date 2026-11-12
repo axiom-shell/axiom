@@ -121,3 +121,51 @@ func TestPortalLineMissingPortal(t *testing.T) {
 func ptr(s string) *string { return &s }
 
 func contains(s, sub string) bool { return len(s) >= len(sub) && strings.Contains(s, sub) }
+
+// another display's line in the same file keeps the file as it is
+func TestPortalLineLeftWhileAnotherDisplayHasIt(t *testing.T) {
+	env, store := portalSetup(t)
+	if _, _, err := env.Sync(store, "d1", true); err != nil {
+		t.Fatal(err)
+	}
+	store.Update(func(st *State) error {
+		st.Lines = append(st.Lines, PortalLine{Display: "d2", Path: env.Path(), Line: PortalText})
+		return nil
+	})
+	if _, changed, err := env.Sync(store, "d1", false); err != nil || changed {
+		t.Fatalf("off while d2 has it: %v %v", changed, err)
+	}
+	if data, _ := os.ReadFile(env.Path()); !contains(string(data), PortalText) {
+		t.Fatal("the line was taken out from under the other display")
+	}
+	if st := store.Read(); len(st.Lines) != 1 || st.Lines[0].Display != "d2" {
+		t.Fatalf("record %+v", st.Lines)
+	}
+	// teardown does the same
+	if _, _, err := env.Sync(store, "d1", true); err != nil {
+		t.Fatal(err)
+	}
+	o := TeardownOptions{State: store, Portal: env, Scope: Scope{WaylandDisplay: "d1"}}
+	if o.undoLines("d1") {
+		t.Fatal("teardown changed a file another display has a line in")
+	}
+	if data, _ := os.ReadFile(env.Path()); !contains(string(data), PortalText) {
+		t.Fatal("teardown took the line out from under the other display")
+	}
+}
+
+// the record goes only once the line is out
+func TestPortalLineRecordStaysWhenTheUndoFails(t *testing.T) {
+	env, store := portalSetup(t)
+	os.MkdirAll(filepath.Dir(env.Path()), 0o755)
+	os.WriteFile(env.Path(), []byte("[preferred]\ndefault=gtk\n"), 0o644)
+	env.Sync(store, "d", true)
+	env.Write = func(string, []byte, os.FileMode) error { return os.ErrPermission }
+	state, _, err := env.Sync(store, "d", false)
+	if err == nil || state != LineOff {
+		t.Fatalf("= %q %v", state, err)
+	}
+	if len(store.Read().Lines) != 1 {
+		t.Fatal("the record was dropped with the line still in")
+	}
+}

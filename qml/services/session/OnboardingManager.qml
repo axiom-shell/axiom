@@ -219,6 +219,7 @@ Singleton {
 
   // Closes for good (until /welcome): finishing and skipping alike
   function close() {
+    _run.closedOnce = true;
     _run.shown = false;
     _run.step = 0;
     _run.chosenMode = "";
@@ -256,6 +257,7 @@ Singleton {
     property int step: 0
     property string chosenMode: ""
     property bool nudged: false
+    property bool closedOnce: false
   }
 
   // --- The detached nudge ---
@@ -265,7 +267,10 @@ Singleton {
     "supported": CompositorManager.supports.configModes === true,
     "onboardingShown": root.shown,
     "greeter": Paths.greeter,
-    "nudged": _run.nudged
+    "nudged": _run.nudged,
+    // The hello says a first run before ConfigManager does and the onboarder
+    // opens: not until it has been closed once
+    "firstRunPending": BackendManager.hello?.state?.firstRun === true && !_run.closedOnce
   })
   on_NudgeDueChanged: if (_nudgeDue)
     _nudge()

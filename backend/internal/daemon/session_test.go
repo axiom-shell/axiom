@@ -342,6 +342,7 @@ func TestPortalLineFollowsScreenSharingEnabled(t *testing.T) {
 	os.MkdirAll(filepath.Join(data, "xdg-desktop-portal/portals"), 0o755)
 	os.WriteFile(filepath.Join(data, "xdg-desktop-portal/portals/axiom.portal"), nil, 0o644)
 	sd.bus["org.freedesktop.portal.Desktop"] = 321
+	addProc(t, sd.proc, 321, []string{"xdg-desktop-portal"}, "XDG_RUNTIME_DIR="+sd.td.env["XDG_RUNTIME_DIR"])
 	d.newScreenShare()
 	path := sessx.PortalEnvFrom(sd.td.getenv).Path()
 	has := func() bool {
@@ -360,6 +361,8 @@ func TestPortalLineFollowsScreenSharingEnabled(t *testing.T) {
 	if sd.fx.got() != "signal 321" {
 		t.Fatal("restarted again for nothing")
 	}
+	// the portal came back (the signal ended the fixture's)
+	addProc(t, sd.proc, 321, []string{"xdg-desktop-portal"}, "XDG_RUNTIME_DIR="+sd.td.env["XDG_RUNTIME_DIR"])
 	d.screenShare.Configure(screenshare.Settings{Enabled: false})
 	d.syncPortalLine(context.Background(), false)
 	if has() {
@@ -376,13 +379,14 @@ func TestPortalLineFollowsScreenSharingEnabled(t *testing.T) {
 func TestRestartPortalRPCIsShellOnly(t *testing.T) {
 	td := newTestDaemon(t)
 	fx := &effects{proc: t.TempDir()}
+	addProc(t, fx.proc, 77, []string{"xdg-desktop-portal"}, "XDG_RUNTIME_DIR="+td.env["XDG_RUNTIME_DIR"])
 	td.session = &sessionTest{Seams: fx.seams(nil), ProcRoot: fx.proc, Bus: fakeBus{"org.freedesktop.portal.Desktop": 77}}
 	td.start(t, func(int) bool { return true })
 	shell, err := td.connect(t, "shell", nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := shell.Call(context.Background(), "screenShare.restartPortal", map[string]any{"backends": []any{}}, nil); err != nil {
+	if err := shell.Call(context.Background(), "screenshare.restartPortal", map[string]any{"backends": []any{}}, nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := fx.got(); got != "signal 77" {
@@ -392,8 +396,21 @@ func TestRestartPortalRPCIsShellOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = other.Call(context.Background(), "screenShare.restartPortal", map[string]any{"backends": []any{}}, nil)
+	err = other.Call(context.Background(), "screenshare.restartPortal", map[string]any{"backends": []any{}}, nil)
 	if axerr.KindOf(err) != axerr.Refused {
 		t.Fatalf("a non-shell restarted the portal: %v", err)
+	}
+}
+
+// units are left alone for a runtime folder that isn't the user manager's
+// (a scratch daemon on the live bus), even with systemd on the bus
+func TestUnitsLeftAloneForAScratchRuntimeFolder(t *testing.T) {
+	sd := newSessionDaemon(t, false)
+	sd.bus[systemdName] = 1
+	sd.td.env["AXIOM_USER_RUNTIME_DIR"] = "/run/user/12345"
+	addProc(t, sd.proc, 800, []string{"/usr/bin/hyprpolkitagent"}, sd.scope...)
+	res := sd.d.stopOthers(context.Background(), agents, []string{"hyprpolkitagent.service"})
+	if len(res.Units) != 0 || strings.Contains(sd.fx.got(), "systemctl") {
+		t.Fatalf("calls %q, result %+v", sd.fx.got(), res)
 	}
 }

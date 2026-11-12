@@ -47,7 +47,7 @@ QtObject {
   // binary at `bin`. xdph runs its picker binary with no arguments (axiom
   // knows it by xdph's environment); xdpw runs its chooser through sh;
   // niri has none: the daemon adds its portal line itself while axiom runs
-  // (screenShare.portalLine).
+  // (screenshare.portalLine).
   function hookupTargets(kind, bin) {
     switch (kind) {
     case "hyprland":

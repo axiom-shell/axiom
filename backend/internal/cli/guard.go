@@ -31,9 +31,6 @@ and returns; never run it by hand.`,
 			display := fs.String("display", "", "the Wayland display it guards")
 			return func(ctx context.Context, e *Env, args []string) error {
 				pidfd := os.NewFile(uintptr(session.PidfdFD), "pidfd")
-				if pidfd == nil {
-					return usageError([]string{"axiom", "guard"}, "needs the daemon's pidfd as descriptor 3")
-				}
 				if *stage1 {
 					exe, err := os.Executable()
 					if err != nil {

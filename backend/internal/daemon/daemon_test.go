@@ -70,10 +70,12 @@ func newTestDaemon(t *testing.T) *testDaemon {
 		"HOME":            home,
 		"XDG_RUNTIME_DIR": runtimeDir,
 		"WAYLAND_DISPLAY": "wayland-test",
-		"XDG_CONFIG_HOME": filepath.Join(home, "config"),
-		"XDG_STATE_HOME":  filepath.Join(home, "state"),
-		"XDG_DATA_HOME":   filepath.Join(home, "data"),
-		"XDG_CACHE_HOME":  filepath.Join(home, "cache"),
+		// This scratch folder stands for the user manager's (session.Scope)
+		"AXIOM_USER_RUNTIME_DIR": runtimeDir,
+		"XDG_CONFIG_HOME":        filepath.Join(home, "config"),
+		"XDG_STATE_HOME":         filepath.Join(home, "state"),
+		"XDG_DATA_HOME":          filepath.Join(home, "data"),
+		"XDG_CACHE_HOME":         filepath.Join(home, "cache"),
 		// Never the live system bus: the Bluetooth part would register a
 		// pairing agent with the machine's BlueZ
 		"DBUS_SYSTEM_BUS_ADDRESS": "unix:path=" + filepath.Join(home, "no-system-bus"),

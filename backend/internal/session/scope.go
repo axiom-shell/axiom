@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -21,12 +22,14 @@ type Bus interface {
 // systemd is the user manager's name on the session bus
 const systemd = "org.freedesktop.systemd1"
 
-// UnitsAllowed: the session bus has an owner of org.freedesktop.systemd1,
-// so `systemctl --user` reaches the user manager of this bus's session.
-// False under a bus of its own (dbus-run-session, a nested shell): its
-// units aren't this session's.
-func UnitsAllowed(ctx context.Context, bus Bus) bool {
-	if bus == nil {
+// UnitsAllowed: the session bus has an owner of org.freedesktop.systemd1
+// and this session's runtime folder is the user manager's
+// (/run/user/<uid>), so `systemctl --user` reaches the user manager of
+// this session. False under a bus of its own (dbus-run-session, a nested
+// shell), and for a scratch daemon on the live bus (a runtime folder of
+// its own): its units aren't this session's.
+func UnitsAllowed(ctx context.Context, bus Bus, scope Scope) bool {
+	if bus == nil || scope.RuntimeDir != scope.userRuntime() {
 		return false
 	}
 	owner, err := bus.NameOwner(ctx, systemd)
@@ -41,6 +44,29 @@ type Scope struct {
 	WaylandDisplay, RuntimeDir, Bus string
 	// ProcRoot is "/proc" (tests: a fixture folder)
 	ProcRoot string
+	// UserRuntime is the runtime folder of the user manager ("": the
+	// real one, /run/user/<uid>); AXIOM_USER_RUNTIME_DIR sets it for tests
+	// and containers, where the session's folder is a scratch one
+	UserRuntime string
+}
+
+func (s Scope) userRuntime() string {
+	if s.UserRuntime != "" {
+		return s.UserRuntime
+	}
+	return "/run/user/" + strconv.Itoa(os.Getuid())
+}
+
+// SameRuntime: the process's XDG_RUNTIME_DIR is ours, or it has none (a
+// D-Bus-activated portal may lack the rest of the session's variables).
+// False when its environment can't be read.
+func (s Scope) SameRuntime(pid int) bool {
+	environ, err := os.ReadFile(filepath.Join(s.root(), strconv.Itoa(pid), "environ"))
+	if err != nil {
+		return false
+	}
+	rt, ok := lookup(environOf(environ), "XDG_RUNTIME_DIR")
+	return !ok || rt == s.RuntimeDir
 }
 
 // Found is a process in scope.
@@ -118,15 +144,21 @@ func (s Scope) inspect(pid int) (Found, bool) {
 		return Found{}, false
 	}
 	cmdline, _ := os.ReadFile(filepath.Join(dir, "cmdline"))
+	argv := argvOf(cmdline)
+	cwd, _ := os.Readlink(filepath.Join(dir, "cwd"))
+	return Found{PID: pid, Argv: argv, Env: env, Cwd: cwd, Start: startTime(dir)}, true
+}
+
+// argvOf splits a cmdline (NUL-separated).
+func argvOf(cmdline []byte) []string {
+	if len(cmdline) == 0 {
+		return nil
+	}
 	var argv []string
 	for _, a := range bytes.Split(bytes.TrimSuffix(cmdline, []byte{0}), []byte{0}) {
 		argv = append(argv, string(a))
 	}
-	if len(cmdline) == 0 {
-		argv = nil
-	}
-	cwd, _ := os.Readlink(filepath.Join(dir, "cwd"))
-	return Found{PID: pid, Argv: argv, Env: env, Cwd: cwd, Start: startTime(dir)}, true
+	return argv
 }
 
 // startTime is field 22 of dir/stat: when the process started, in ticks
@@ -196,10 +228,15 @@ func (s Scope) FindEnv(entry string) []Found {
 	return out
 }
 
-// Running: an in-scope process runs a program of that base name.
+// Running: an in-scope process runs a program of that base name, axiom's
+// own wlsunset (marked) not counting: it is on its way out.
 func (s Scope) Running(name string) bool {
+	marker := Marker(s.WaylandDisplay)
 	for _, f := range s.all() {
-		if f.Basename() == name {
+		if f.Basename() != name {
+			continue
+		}
+		if !slices.Contains(f.Env, marker) {
 			return true
 		}
 	}
@@ -229,8 +266,7 @@ func (s Scope) Elsewhere(re *regexp.Regexp) []int {
 		if err != nil {
 			continue
 		}
-		argv := strings.Join(strings.Split(strings.TrimSuffix(string(cmdline), "\x00"), "\x00"), " ")
-		if re.MatchString(argv) {
+		if re.MatchString(strings.Join(argvOf(cmdline), " ")) {
 			out = append(out, pid)
 		}
 	}

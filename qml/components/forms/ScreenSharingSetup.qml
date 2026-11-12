@@ -25,7 +25,7 @@ ColumnLayout {
   readonly property bool niri: CompositorManager.kind === "niri"
   readonly property bool hookedUp: root.niri ? ScreenShareManager.portalLine.state === "on" : IntegrationHookupManager.isDone("screenSharing")
 
-  // "unsupported" | "off" | "missing" | "todo" | "ready"
+  // "unsupported" | "off" | "missing" | "checking" (niri's line, not read yet) | "todo" | "ready"
   readonly property string status: {
     if (!root.portal)
       return "unsupported";
@@ -33,8 +33,12 @@ ColumnLayout {
       return "off";
     if (!ScreenShareManager.portalInstalled || !ScreenShareManager.axiomPortalInstalled)
       return "missing";
+    if (root.niri && ScreenShareManager.portalLine.state === "")
+      return "checking";
     return root.hookedUp ? "ready" : "todo";
   }
+
+  readonly property string _automaticText: I18n.tr("Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).")
 
   readonly property color statusColor: {
     switch (root.status) {
@@ -58,6 +62,8 @@ ColumnLayout {
       return I18n.tr("Not installed");
     case "unsupported":
       return I18n.tr("Unavailable");
+    case "checking":
+      return I18n.tr("Checking…");
     }
     return I18n.tr("Off");
   }
@@ -72,11 +78,11 @@ ColumnLayout {
       return !ScreenShareManager.portalInstalled ? I18n.tr("Install {0}: apps share the screen through it.", root.portal.package) : I18n.tr("axiom's own portal file (axiom.portal) isn't installed: run axiom's install.sh again, or reinstall its package.");
     case "todo":
       if (root.niri)
-        return ScreenShareManager.portalLine.state === "link" ? I18n.tr("{0} is a link (dotfiles?), so axiom won't change it every session: add this line under [preferred] yourself:", Paths.shortenHome(ScreenShareManager.portalLine.path)) : ScreenShareManager.portalLine.error !== "" ? ScreenShareManager.portalLine.error : I18n.tr("Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).");
+        return ScreenShareManager.portalLine.state === "link" ? I18n.tr("{0} is a link (dotfiles?), so axiom won't change it every session: add this line under [preferred] yourself:", Paths.shortenHome(ScreenShareManager.portalLine.path)) : ScreenShareManager.portalLine.error !== "" ? ScreenShareManager.portalLine.error : root._automaticText;
       return I18n.tr("Point the portal at axiom's picker once: Apply below, then restart the portal.");
     }
     if (root.niri)
-      return I18n.tr("Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).");
+      return root._automaticText;
     return I18n.tr("Apps ask axiom's picker what to share. Restart the portal if you just applied the change.");
   }
 

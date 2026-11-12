@@ -26,9 +26,9 @@ const (
 // (UnitsAllowed) and its unit's MainPID is that process, the unit is
 // restarted; otherwise the process gets SIGTERM, and the bus starts it
 // again at the next call.
-func RestartPortal(ctx context.Context, bus Bus, systemctl SystemctlFunc, signal SignalFunc, names []BusUnit) error {
+func RestartPortal(ctx context.Context, bus Bus, scope Scope, systemctl SystemctlFunc, signal SignalFunc, names []BusUnit, log Logf) error {
 	all := append([]BusUnit{{Bus: portalBus, Unit: portalUnit}}, names...)
-	allowed := UnitsAllowed(ctx, bus)
+	allowed := UnitsAllowed(ctx, bus, scope)
 	var failed []string
 	seen := map[string]bool{}
 	for _, n := range all {
@@ -38,6 +38,11 @@ func RestartPortal(ctx context.Context, bus Bus, systemctl SystemctlFunc, signal
 		seen[n.Bus] = true
 		pid, err := bus.ConnectionPID(ctx, n.Bus)
 		if err != nil || pid == 0 {
+			continue
+		}
+		// A scratch daemon on the live bus must not reach the live portal
+		if !scope.SameRuntime(int(pid)) {
+			log.log("session: %s (pid %d) isn't of this session's runtime folder: left alone", n.Bus, pid)
 			continue
 		}
 		if allowed && systemctl != nil {
