@@ -12,13 +12,13 @@ import qs.components.methods
 // graphMax (1), caption, field ("": the widget's colors, else the name of
 // the color field it reads in), offFill (false: the field applies only to a
 // part off the widget's own fill; on it the part reads in the widget's
-// colors, as System Stats' cool metrics in a warning box), muted (false), hidden (false: not drawn, in
-// no length or gap), small (true: the value small and upright under its icon
-// on a vertical bar, as System Stats' is) }. `appearance` may be null (a
-// plain label). A segment with no text is its icon alone. `across` is how
-// far its segments reach across the bar. Where the segments split
-// into an icon part and a label each (a split bar), it reports their
-// places: the first as `splitAt` / `splitPart` and the rest as
+// colors, as System Stats' cool metrics in a warning box), muted (false),
+// hidden (false: not drawn, in no length or gap), small (true: the value
+// small and upright under its icon on a vertical bar, as System Stats' is) }.
+// `appearance` may be null (a plain label). A segment with no text is its
+// icon alone. `across` is how far its segments reach across the bar. Where
+// the segments split into an icon part and a label each (a split bar), it
+// reports their places: the first as `splitAt` / `splitPart` and the rest as
 // `innerSplits`, in its own coordinates (as WidgetBackground reads them).
 Item {
   id: root
@@ -136,7 +136,7 @@ Item {
         }
         readonly property var seg: root._seg(root.keys[segment.index])
         readonly property string style: root._styleOf(segment.seg)
-        // Its own color field's, else the widget's, dimmed where it is
+        // Its own color field's, else the widget's (the dimming for `muted` is in textColor/iconColor below)
         readonly property color _text: segment._own("text") ? root.paint.field(segment.seg.field, "text") : root.paint.text
         readonly property color _icon: segment._own("icon") ? root.paint.field(segment.seg.field, "icon") : root.paint.icon
         function _own(part) {

@@ -8,10 +8,10 @@ import qs.services.ui
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
-// The notification bell: a badge with the count (the base's, over the
-// icon's corner, a ring on a fill; or the count or the newest alert's app as
-// its label), the do-not-disturb icon (an icon field) while it's on. Click toggles do-not-disturb, middle click clears every
-// notification; hovering opens the notification list.
+// The notification bell: a count badge on the icon's corner (the base's, a
+// ring on a fill) or the count / newest alert's app as the label; the
+// do-not-disturb icon while it's on. Click toggles do-not-disturb, middle
+// click clears every notification; hovering opens the notification list.
 BarWidget {
   id: root
 

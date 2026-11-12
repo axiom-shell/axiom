@@ -110,7 +110,7 @@ Item {
   // icon, text, minimumText, ratio, history, graphMin, graphMax, caption,
   // field, muted, hidden, small }, WidgetSegments)
   property var items: []
-  readonly property var shownItems: root.box !== "" ? root.items.filter(k => k === root.box) : root.items
+  readonly property var shownItems: root.ownBox ? root.items.filter(k => k === root.box) : root.items
   property var segmentData: null
   // Drawn as one item's box of its own (Boxes: One per item)
   readonly property bool ownBox: root.box !== ""

@@ -81,9 +81,12 @@ BarWidget {
     const price = MarketMath.formatPrice(f.price, f.currency);
     const percent = MarketMath.formatPercent(f.percent);
     const change = root.properties.value === "change" ? MarketMath.formatChange(f.change, f.currency) : percent;
-    const field = root.trendField(f.trend);
-    const color = field !== "" ? root.paint.field(field, "text") : root.paint.muted("text");
-    const colored = rich && root.properties.colorize ? `<font color="${color}">${change}</font>` : change;
+    let colored = change;
+    if (rich && root.properties.colorize) {
+      const field = root.trendField(f.trend);
+      const color = field !== "" ? root.paint.field(field, "text") : root.paint.muted("text");
+      colored = `<font color="${color}">${change}</font>`;
+    }
     switch (root.properties.value) {
     case "price":
       return price;

@@ -7,20 +7,18 @@
 The base classes bar widgets extend, where their sizes come from, and how a bar's widget style is built: its five layers, the trait table where a style is defined, the colors (Auto colors, Split, Fill on hover, the bar gradient), which color fields show, the shared and per-bar style, and the Workspaces cells.
 
 ### Widget base classes
-- **`bar/widgets/base/BarIconWidget.qml`** is the base for icon + label widgets.
-  - It takes the `BarWidgetHost` inputs `barConfig`/`panel`/`screen`/`properties`, orientation and the configured colors.
-  - Override `backgroundColor` for states. `hidden` collapses a widget with nothing to show.
-  - It owns their pointer handling:
-    - `clickable` + `acceptedButtons` → `clicked(button)`. The widget dims while pressed, and clicking is off while it is hidden.
-    - `scrollable` → `scrolled(steps)`.
-    - `hovered` is what a menu opened by a Button stays open for, and what a tooltip opens on. A widget taking no clicks or scrolls reads it from its hit area (or its own HoverHandler without one).
-    - `dim` is for fades of the widget's own.
-  - A widget's hover tooltip is a `BarToolTip` (`widget`, `text`, `shown`, `rich`): a `StyledToolTip` on the bar's inner side, built only while hovered.
-- **`ValueStyleWidget`** (a `BarIconWidget`) draws a widget's value in its display style, and `ValueGraphic` is that graphic alone ([Display styles](display-styles.md)).
-- **`AudioLevelWidget`** (a `ValueStyleWidget`) is shared by Volume and Microphone.
-- **`bar/widgets/base/BarWidget.qml`** is the base for widgets that draw their own content. It has the same inputs plus `isVertical`.
-- **`base/BaseWidget`** is the sizing wrapper under both.
-- **`base/IconTextWidget`** (under `BarIconWidget`) lays the icon and label along the bar (an icon of several glyphs is one per line, stacked on a vertical bar and side by side `iconSpacing` apart on a horizontal one: the icon font's space is a whole icon wide), the label's letters centred on the icon's middle (`iconMiddle`) on a whole pixel rather than its box, which holds the descent and sat lowercase low (`TextBandPadding`: on the x-height with lowercase in it, a digit's height without, the font's bands so it moves only when lowercase comes or goes; upright under the icon, unpadded; turned along a vertical bar, it centres across it the same way); on a vertical bar the label is turned along it, or with `uprightLabel` small and upright under the icon (SystemStats' metrics, each one an IconTextWidget); a graphic of `leadLength` goes in its `lead` slot before the icon, or after it, where the label would be, with `leadAfterIcon` (a display style's ring, meters, ticker). Its label's digits are of equal width and it is measured with them as zeros, never under `minimumText` (a value's widest usual value, `"00%"`: only 100% widens it) and centred in that room, so a changing number never resizes the bar; the ticker and stacked's value (`ValueGraphic`) likewise. `textFormat` (Text.AutoText) is set to Text.PlainText by a widget showing text from outside (Next event's title), for the label, the ticker and both stacked lines. `iconScale` (Battery's and Tailscale's 1.1) draws the icon larger; the room at a run's end is kept at that height (`BarIconWidget.contentAcross`, [Shapes and runs](widget-shapes-runs.md#backgrounds-and-shapes)).
+- **`bar/widgets/base/BarWidget.qml`** is the base of every bar widget. It takes the `BarWidgetHost` inputs (`barConfig`, `panel`, `screen`, `properties`, orientation) and draws in the colors of its `WidgetLook` (`colors`, `paint`). A widget sets data and the base draws it, in one of three modes read from that data:
+  - a **row**: `icon`, `text` (and `minimumText`), with the display style's graphic (`ratio`, `history`, from `appearance`) before or after the icon, or a spinner while `busy`;
+  - **segments**: the `items` shown, each a row of its own from `segmentData` (System Stats' metrics, Lock keys' keys);
+  - **its own content**: `ownContent` after a head (`headIcon`, `headText` or `headItem`), as Time and the tray do.
+  - Also data: `accentField`, `muted`, `pulsing`, a `badge` and a `mark`, `hidden` (nothing to show: no room taken).
+  - Pointer handling is the base's: `clickable` + `acceptedButtons` → `clicked(button)` (dims while pressed, off while `hidden`), `scrollable` → `scrolled(steps)`, `hovered` (what a menu opened by a Button stays open for and a tooltip opens on).
+  - A hover tooltip is a `BarToolTip` (`widget`, `text`, `shown`, `rich`): a `StyledToolTip` on the bar's inner side, built only while hovered.
+- **`AudioLevelWidget`** (a `BarWidget`) is shared by Volume and Microphone: a device's level as its display style's value ([Display styles](display-styles.md)).
+- **`IconTextRow`** only draws: an icon and a label along the bar (a vertical bar turns the label, or with `uprightLabel` sets it small under the icon), a graphic of `leadLength` in its `lead` slot before the icon or after it (`leadAfterIcon`). The label's digits are of equal width and it is measured with them as zeros, never under `minimumText` (a value's widest usual value, `"00%"`: only 100% widens it), so a changing number never resizes the bar. `textFormat` is Text.PlainText for text from outside (Next event's title); `iconScale` draws the icon larger and the room at a run's end is kept at that height (`BarWidget.contentAcross`, [Shapes and runs](widget-shapes-runs.md#backgrounds-and-shapes)).
+- **`WidgetHead`** is the head of a widget with its own content: an icon, a short text or an item of its own, which on a split bar is the icon part.
+- **`WidgetSegments`** draws `items` as rows side by side from `segmentData`, in the display style.
+- **`ValueGraphic`** is the display style's graphic alone: ring, fill, segments, sparkline, ticker or stacked.
 
 ### Sizes come from the bar
 - `BarsConfig.enrichBarConfig` hands the shell's values to the pure `BarEnrich.enrich` (`env`, `BarsConfig.enrichEnv`; tests run the same path through `tests/barstyle/Bars.js`), which derives `extent` and where the widgets sit across (`crossStart`) from `thickness` and `edgePadding` (`BarEnds.crossGeometry`: solid and pill bars alike).
