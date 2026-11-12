@@ -1791,5 +1791,8 @@ TestCase {
     compare(SchemaLayout.refKind(corner, key => ({
           "action": "exec"
         })[key]), "");
+    compare(SchemaLayout.refKind(corner, key => ({
+          "action": "moveToSpecial"
+        })[key]), "");
   }
 }

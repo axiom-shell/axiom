@@ -3858,7 +3858,6 @@
     "Window gaps": "",
     "0: never dims.": "",
     "Also the automatic gap of floating bars and detached surfaces.": "",
-    "Search text, id, direction, workspace, kind, theme, timer length or command.": "",
     "A notification 5 minutes before the timer ends.": "",
     "Share between windows": "",
     "Math results as you type (needs qalc). Enter copies.": "",
@@ -4242,6 +4241,7 @@
     "Special workspace color": "",
     "Every special workspace, with its own label and icon.": "",
     "Special workspace labels": "",
-    "An icon name or glyph, and text. The widget's Special workspace labels picks which shows.": ""
+    "An icon name or glyph, and text. The widget's Special workspace labels picks which shows.": "",
+    "Search text, id, direction, workspace, special workspace, kind, theme, timer length or command.": ""
   }
 }

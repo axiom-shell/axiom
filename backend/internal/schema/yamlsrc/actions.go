@@ -1,6 +1,7 @@
 package yamlsrc
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
@@ -14,8 +15,10 @@ import (
 //     in their IPC call), and no exec
 //   - extra: [...] values of the field's own, after the table's, labelled
 //     by its own x-enumLabels
+//   - compositor: [...] named compositorActions to add (only those named: the
+//     rest stay keybind-only), gated by the table's `needs` (x-enumShowIf)
 //
-// Its enum is the table's ipcActions less those left out, then exec (but
+// Its enum is the table's ipcActions less those left out, then the compositor ones, then exec (but
 // with noArgument), then the extras; labelled as the Keybind definition
 // labels them, with the table's icons (x-enumIcons) and sections
 // (x-enumGroups), an extra's from the field's own. On an `action` property, a sibling `argument` shows for the
@@ -53,7 +56,7 @@ func (a *assembler) fillAxiomActions(root *jsonx.Object) {
 }
 
 // The keys an x-axiomActions mark may have
-var actionsMarkKeys = map[string]bool{"except": true, "noArgument": true, "extra": true}
+var actionsMarkKeys = map[string]bool{"except": true, "noArgument": true, "extra": true, "compositor": true}
 
 func (a *assembler) fillActions(props, action, labels *jsonx.Object, where string) {
 	fail := func(msg string) { a.errs = append(a.errs, &Error{File: where, Msg: "x-axiomActions: " + msg}) }
@@ -111,6 +114,17 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		row, ok := ipc.Value(name).(*jsonx.Array)
 		return name == "exec" || ok && strings.Contains(jsonx.ToString(row.Items[0]), "{0}")
 	}
+	compositorRows, _ := tables.Value("compositorActions").(*jsonx.Object)
+	argumentKinds, _ := tables.Value("argumentKinds").(*jsonx.Object)
+	needs, _ := tables.Value("needs").(*jsonx.Object)
+	var compositor []string
+	for _, name := range list("compositor") {
+		if compositorRows == nil || !compositorRows.Has(name) {
+			fail("compositor names " + name + ", which isn't one of the table's compositorActions")
+			continue
+		}
+		compositor = append(compositor, name)
+	}
 	ownLabels, _ := action.Value("x-enumLabels").(*jsonx.Object)
 	ownIcons, _ := action.Value("x-enumIcons").(*jsonx.Object)
 	ownGroups, _ := action.Value("x-enumGroups").(*jsonx.Object)
@@ -129,8 +143,14 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 			}
 		}
 	}
-	for _, name := range append(ipc.Keys(), "exec") {
-		if except[name] || noArgument && takesArgument(name) {
+	enumShowIf := jsonx.NewObject()
+	if own, ok := action.Value("x-enumShowIf").(*jsonx.Object); ok {
+		enumShowIf = own
+	}
+	order := append(append(ipc.Keys(), compositor...), "exec")
+	for _, name := range order {
+		isCompositor := slices.Contains(compositor, name)
+		if except[name] || noArgument && !isCompositor && takesArgument(name) {
 			continue
 		}
 		label, ok := labels.Value(name).(string)
@@ -142,12 +162,31 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		if row, ok := ipc.Value(name).(*jsonx.Array); ok && len(row.Items) > 2 {
 			groups.Set(name, jsonx.ToString(row.Items[2]))
 		}
+		if isCompositor {
+			// Only where the compositor can do it (the table's `needs`)
+			if row, ok := compositorRows.Value(name).(*jsonx.Array); ok && len(row.Items) > 1 {
+				groups.Set(name, jsonx.ToString(row.Items[1]))
+			}
+			var conds []any
+			if caps, ok := needs.Value(name).(*jsonx.Array); ok {
+				for _, c := range caps.Items {
+					conds = append(conds, jsonx.Obj("/$supports."+jsonx.ToString(c), true))
+				}
+			}
+			switch len(conds) {
+			case 0:
+			case 1:
+				enumShowIf.Set(name, conds[0])
+			default:
+				enumShowIf.Set(name, jsonx.Obj("anyOf", jsonx.Arr(conds...)))
+			}
+		}
 		if icon, ok := tableIcons.Value(name).(string); ok {
 			icons.Set(name, icon)
 		} else {
 			own(name)
 		}
-		if takesArgument(name) {
+		if isCompositor && argumentKinds != nil && argumentKinds.Has(name) || !isCompositor && takesArgument(name) {
 			argument.Append(name)
 		}
 		if calls.Has(name) {
@@ -166,6 +205,9 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		enum.Append(name)
 		names.Set(name, label)
 		own(name)
+	}
+	if enumShowIf.Len() > 0 {
+		action.Set("x-enumShowIf", enumShowIf)
 	}
 	action.Set("enum", enum)
 	action.Set("x-enumLabels", names)

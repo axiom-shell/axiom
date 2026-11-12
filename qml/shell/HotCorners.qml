@@ -69,7 +69,8 @@ Scope {
               if (area.containsMouse && entry.item)
                 ActionsManager.run(entry.item.action, {
                   "argument": entry.item.argument,
-                  "call": entry.item.call
+                  "call": entry.item.call,
+                  "output": corner.modelData.name
                 });
             }
           }
