@@ -3,6 +3,7 @@
 package containertest
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -12,7 +13,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -29,9 +29,9 @@ import (
 var updateGolden = flag.Bool("update", false, "rewrite testdata/uninstall-plan.golden.json")
 
 // uninstallSnapshotSkips are what the harness itself puts in the home (the
-// bin of its fake programs, glib's keyfile settings). Everything else is
+// bin of its fake programs, glib's keyfile settings, the keyring it starts). Everything else is
 // compared, axiom's own folders and the cache included.
-var uninstallSnapshotSkips = []string{"bin", ".config/glib-2.0"}
+var uninstallSnapshotSkips = []string{"bin", ".config/glib-2.0", ".local/share/keyrings"}
 
 // sudoStub refuses: nothing here escalates (the image has every package
 // install.sh would ask for)
@@ -104,27 +104,19 @@ func uninstallSession(t *testing.T) *Session {
 	return s
 }
 
-// startInstalled starts the installed axiom on the running sway. install.sh
-// has started one already (--yes answers "Start axiom now?", with the real
-// quickshell): it is quit first.
+// startInstalled starts the installed axiom on the running sway.
 func (s *Session) startInstalled() *Proc {
 	s.t.Helper()
 	s.UseInstalled()
-	if !testkit.Eventually(func() bool {
-		if len(s.noAxiomProcesses()) == 0 {
-			return true
-		}
-		s.AxiomTry("quit")
-		return false
-	}) {
-		s.t.Fatalf("the axiom install.sh started didn't quit: %+v", s.noAxiomProcesses())
-	}
-	for _, p := range Procs(func(p ProcInfo) bool {
-		return (filepath.Base(p.Argv[0]) == "qs" || filepath.Base(p.Argv[0]) == "quickshell") && p.HasEnv("XDG_RUNTIME_DIR="+s.Runtime)
-	}) {
-		syscall.Kill(p.PID, syscall.SIGKILL)
-	}
 	return s.StartAxiom("sway")
+}
+
+// decoyRunning is a process whose command line is `axiom run`, so that
+// install.sh finds axiom running and doesn't start the real one (with the
+// real quickshell) after installing.
+func (s *Session) decoyRunning() {
+	s.t.Helper()
+	s.run("decoy.log", exec.Command("bash", "-c", `exec -a "axiom run" sleep 3000`))
 }
 
 // keyring starts a Secret Service on the session bus, or says why it can't
@@ -258,6 +250,13 @@ func (s *Session) withoutListed(diff, listed []string) (rest, taken []string) {
 // user's, and stays), and the shell history a bash leaves.
 var allowed = []string{"+ .config/sway/user", "+ .bash_history"}
 
+// goConfig is the go tool's own (install.sh builds axiom with it: telemetry
+// counters in ~/.config/go)
+func goConfig(line string) bool {
+	path := strings.TrimPrefix(line, "+ ")
+	return path == ".config/go" || strings.HasPrefix(path, ".config/go/")
+}
+
 func (s *Session) noAxiomProcesses() []ProcInfo {
 	return Procs(func(p ProcInfo) bool {
 		return filepath.Base(p.Argv[0]) == "axiom" && p.HasEnv("XDG_RUNTIME_DIR="+s.Runtime)
@@ -271,6 +270,7 @@ func TestContainerUninstallRoundTrip(t *testing.T) {
 	// sway runs the user's config first: install.sh's autostart line then
 	// starts nothing (a reload runs no `exec`), and the harness starts axiom
 	s.StartSway(userSway)
+	s.decoyRunning()
 	a := s.snapshotSkipping(uninstallSnapshotSkips)
 
 	if out, err := s.RunInstallSh(repo); err != nil {
@@ -304,10 +304,25 @@ func TestContainerUninstallRoundTrip(t *testing.T) {
 		os.WriteFile(filepath.Join(s.Out, "uninstall-plan.got.json"), data, 0o644)
 		t.Errorf("the plan differs from %s (got it in the logs: uninstall-plan.got.json):\n%s", golden, data)
 	}
-	if d := Diff(beforePlan, s.snapshotSkipping(uninstallSnapshotSkips)); len(d) > 0 {
+	// (the daemon's own folders and the claim's user/ folder change meanwhile)
+	var changedByPlan []string
+	for _, line := range Diff(beforePlan, s.snapshotSkipping(uninstallSnapshotSkips)) {
+		path := strings.TrimLeft(strings.TrimPrefix(strings.TrimPrefix(line, "+ "), "~ "), " ")
+		if !strings.HasPrefix(path, ".config/axiom") && !strings.HasPrefix(path, ".local/state/axiom") && !strings.HasPrefix(path, ".config/sway/user") {
+			changedByPlan = append(changedByPlan, line)
+		}
+	}
+	if d := changedByPlan; len(d) > 0 {
 		t.Errorf("--dry-run changed the home:\n%s", strings.Join(d, "\n"))
 	}
 
+	for _, r := range s.footprintRows() {
+		if strings.Contains(r.Target, "cava") {
+			t.Logf("row before: %s %s state=%s status=%s wrote=%s hookup=%+v", r.Kind, r.Target, r.State, r.Status, r.Wrote, r.Hookup)
+		}
+	}
+	cava, _ := os.ReadFile(filepath.Join(s.Config, "cava/config"))
+	t.Logf("cava/config before (sha %x):\n%s", sha256.Sum256(cava), cava)
 	out, err := s.RunInstallSh(repo, "--uninstall", "--purge-all", "--restore-system")
 	if err != nil {
 		t.Fatalf("install.sh --uninstall: %v\n%s", err, out)
@@ -317,7 +332,7 @@ func TestContainerUninstallRoundTrip(t *testing.T) {
 	rest, taken := s.withoutListed(Diff(a, b), reportedBackups(out))
 	var left []string
 	for _, line := range rest {
-		if !slices.Contains(allowed, line) {
+		if !slices.Contains(allowed, line) && !goConfig(line) {
 			left = append(left, line)
 		}
 	}
@@ -347,6 +362,7 @@ func TestContainerUninstallDefaultsKeepConfig(t *testing.T) {
 	s := uninstallSession(t)
 	userSway := swayMinimal + "bindsym $mod+Return exec true\n"
 	s.StartSway(userSway)
+	s.decoyRunning()
 	a := s.snapshotSkipping(uninstallSnapshotSkips)
 	if out, err := s.RunInstallSh(repo); err != nil {
 		t.Fatalf("install.sh: %v\n%s", err, out)
@@ -376,7 +392,7 @@ func TestContainerUninstallDefaultsKeepConfig(t *testing.T) {
 		path := strings.TrimPrefix(strings.TrimPrefix(line, "+ "), "~ ")
 		// What the defaults keep: the settings, the content, the state of
 		// the rest of axiom
-		if slices.Contains(allowed, line) || strings.HasPrefix(path, ".config/axiom") || strings.HasPrefix(path, ".local/share/axiom") || strings.HasPrefix(path, ".local/state/axiom") {
+		if slices.Contains(allowed, line) || goConfig(line) || strings.HasPrefix(path, ".config/axiom") || strings.HasPrefix(path, ".local/share/axiom") || strings.HasPrefix(path, ".local/state/axiom") {
 			continue
 		}
 		left = append(left, line)
@@ -393,6 +409,7 @@ func TestContainerUninstallRefusesWhileRunning(t *testing.T) {
 	repo := installRepo(t)
 	s := uninstallSession(t)
 	s.StartSway(swayMinimal)
+	s.decoyRunning()
 	if out, err := s.RunInstallSh(repo); err != nil {
 		t.Fatalf("install.sh: %v\n%s", err, out)
 	}

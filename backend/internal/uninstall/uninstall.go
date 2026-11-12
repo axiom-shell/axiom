@@ -207,6 +207,7 @@ func (o Options) ledgerRows(ctx context.Context) (rows []footprint.RowStatus, ca
 			have[r.ID] = true
 		}
 		hooks, files := o.Inferred(ctx)
+		hooks = unowned(hooks, rows)
 		var all []footprint.Row
 		if !hooksDone {
 			all = append(all, hooks...)
@@ -223,6 +224,20 @@ func (o Options) ledgerRows(ctx context.Context) (rows []footprint.RowStatus, ca
 		}
 	}
 	return rows, candidates
+}
+
+// unowned are the inferred rows for a target no recorded row is about: a
+// file axiom made (and recorded) with its lines in already is deleted by its
+// own row, and a hookup row inferred for it would take the lines out first
+// and leave the file "changed since".
+func unowned(inferred []footprint.Row, recorded []footprint.RowStatus) []footprint.Row {
+	var out []footprint.Row
+	for _, r := range inferred {
+		if !slices.ContainsFunc(recorded, func(have footprint.RowStatus) bool { return have.Target == r.Target }) {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // Build says what an uninstall would do. It reads, and changes nothing.
@@ -466,6 +481,7 @@ func (r *run) ledger(ctx context.Context) {
 	}
 	if r.Inferred != nil && (!l.Backfilled() || !l.BackfilledFiles()) {
 		hooks, files := r.Inferred(ctx)
+		hooks = unowned(hooks, l.List(ctx))
 		if !l.BackfilledFiles() {
 			if _, _, err := l.BackfillFiles(files); err != nil {
 				r.left("ledger", "Look for files axiom made without a record", "", err.Error())

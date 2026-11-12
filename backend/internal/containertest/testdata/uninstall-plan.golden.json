@@ -345,14 +345,68 @@
         "what": "Delete the file axiom made"
       },
       {
-        "detail": "present, ThemeIntegrations.qt",
-        "path": "$HOME/.config/kdeglobals",
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-3.0/gtk.css",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-4.0/gtk.css",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
       {
         "detail": "present, ThemeIntegrations.yazi",
         "path": "$HOME/.config/yazi/theme.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat/config",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.alacritty",
+        "path": "$HOME/.config/alacritty/alacritty.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/btop.conf",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ncspot",
+        "path": "$HOME/.config/ncspot/config.toml",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "path": "$HOME/.config/kdeglobals",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zathura",
+        "path": "$HOME/.config/zathura/zathurarc",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/config",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fzf",
+        "path": "$HOME/.bashrc",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -375,14 +429,8 @@
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.ghostty",
-        "path": "$HOME/.config/ghostty/config",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.bat",
-        "path": "$HOME/.config/bat/config",
+        "detail": "present, ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/config.toml",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -393,50 +441,8 @@
         "what": "Take axiom's lines out of"
       },
       {
-        "detail": "present, ThemeIntegrations.btop",
-        "path": "$HOME/.config/btop/btop.conf",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "$HOME/.config/gtk-3.0/gtk.css",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.gtk",
-        "path": "$HOME/.config/gtk-4.0/gtk.css",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.lazygit",
-        "path": "$HOME/.bashrc",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.helix",
-        "path": "$HOME/.config/helix/config.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
         "detail": "present, ThemeIntegrations.foot",
         "path": "$HOME/.config/foot/foot.ini",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.ncspot",
-        "path": "$HOME/.config/ncspot/config.toml",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.zathura",
-        "path": "$HOME/.config/zathura/zathurarc",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -455,12 +461,6 @@
       {
         "detail": "present, ThemeIntegrations.nvim",
         "path": "$HOME/.config/nvim/lua/axiom_theme.lua",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
-      },
-      {
-        "detail": "present, ThemeIntegrations.alacritty",
-        "path": "$HOME/.config/alacritty/alacritty.toml",
         "step": "ledger",
         "what": "Take axiom's lines out of"
       },
@@ -500,13 +500,6 @@
         "path": "$HOME/.config/mimeapps.list [Default Applications/text/plain]",
         "step": "ledger",
         "what": "Put back the default app"
-      },
-      {
-        "asks": "UndoInferred",
-        "detail": "ThemeIntegrations.cava",
-        "path": "$HOME/.config/cava/config",
-        "step": "ledger",
-        "what": "Take axiom's lines out of"
       },
       {
         "asks": "UndoInferred",
@@ -611,7 +604,7 @@
       "$HOME/.config/xdg-desktop-portal-wlr/config.axiom-bak-\u003cstamp\u003e"
     ],
     "counts": {
-      "inferred": 3,
+      "inferred": 2,
       "portal": true,
       "secrets": 1,
       "system": 1
