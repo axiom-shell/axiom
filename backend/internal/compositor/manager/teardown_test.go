@@ -303,3 +303,22 @@ func TestTeardownWithoutInputsLeavesTheState(t *testing.T) {
 		t.Fatalf("state was given back: %+v", h.m.st)
 	}
 }
+
+// a managed or released config loads user/*.lua through pcall(require, …)
+func TestHypr_UserLuaFilesAreScanned(t *testing.T) {
+	t.Parallel()
+	w := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.lua": "for _, f in ipairs(files) do pcall(require, \"user.\" .. f) end\n",
+		"hypr/user/x.lua":   "hl.exec_cmd(\"axiom run\")\n",
+	}, nil), nil)
+	if starts, _ := w.reloadStartsAxiom(startIn()); !starts {
+		t.Fatal("user/x.lua wasn't scanned")
+	}
+	clean := newHypr(writerEnv(t, map[string]string{
+		"hypr/hyprland.lua": "pcall(require, \"user.\" .. name)\n",
+		"hypr/user/x.lua":   "hl.config({})\n",
+	}, nil), nil)
+	if starts, _ := clean.reloadStartsAxiom(startIn()); starts {
+		t.Fatal("a user file without a start counted")
+	}
+}

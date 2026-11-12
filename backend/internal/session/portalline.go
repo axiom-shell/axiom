@@ -59,7 +59,10 @@ func DisplayAlive(runtimeDir, display string) bool {
 		return false
 	}
 	defer f.Close()
-	if err := unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+	// A shared lock: it conflicts with the daemon's exclusive one, and fails
+	// another daemon's TryLock only while this probe holds it (the
+	// microseconds between the two calls)
+	if err := unix.Flock(int(f.Fd()), unix.LOCK_SH|unix.LOCK_NB); err != nil {
 		return errors.Is(err, unix.EWOULDBLOCK)
 	}
 	unix.Flock(int(f.Fd()), unix.LOCK_UN)

@@ -398,3 +398,24 @@ func TestUnitsMessagePerCause(t *testing.T) {
 		t.Errorf("logged %v", logged)
 	}
 }
+
+// an unset session bus address is the bus in the runtime folder, on either side
+func TestScopeTakesAnUnsetBusAsTheRuntimeFoldersBus(t *testing.T) {
+	get := func(m map[string]string) func(string) string { return func(k string) string { return m[k] } }
+	if got := ScopeFrom(get(map[string]string{"XDG_RUNTIME_DIR": "/run/u", "WAYLAND_DISPLAY": "w"})).Bus; got != "unix:path=/run/u/bus" {
+		t.Fatalf("Bus = %q", got)
+	}
+	p := newProc(t)
+	// no address in its environment, nor in ours
+	p.add(70, []string{"x"}, "WAYLAND_DISPLAY=wayland-1", "XDG_RUNTIME_DIR=/run/u")
+	// the address spelled out, ours unset
+	p.add(71, []string{"x"}, "WAYLAND_DISPLAY=wayland-1", "XDG_RUNTIME_DIR=/run/u", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/u/bus")
+	p.add(72, []string{"x"}, "WAYLAND_DISPLAY=wayland-1", "XDG_RUNTIME_DIR=/run/u", "DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/other/bus")
+	for _, bus := range []string{"", "unix:path=/run/u/bus"} {
+		s := p.scope()
+		s.Bus = bus
+		if !s.Owns(70) || !s.Owns(71) || s.Owns(72) {
+			t.Errorf("our bus %q: owns 70 %v, 71 %v, 72 %v", bus, s.Owns(70), s.Owns(71), s.Owns(72))
+		}
+	}
+}

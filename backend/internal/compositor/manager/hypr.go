@@ -392,7 +392,20 @@ func (w *hyprWriter) reloadStartsAxiom(in Inputs) (bool, string) {
 		}
 		return false, ""
 	}
-	return scan(main, conf, 0)
+	if ok, l := scan(main, conf, 0); ok {
+		return true, l
+	}
+	// A managed or released config loads user/*.lua through
+	// pcall(require, "user." .. name), which no literal require names
+	if !conf {
+		files, _ := filepath.Glob(filepath.Join(w.dir(), "user", "*.lua"))
+		for _, f := range files {
+			if ok, l := scan(f, false, 1); ok {
+				return true, l
+			}
+		}
+	}
+	return false, ""
 }
 
 // sourceTargets are the files a conf's `source =` names, a glob expanded; a

@@ -144,7 +144,13 @@ func (s Scope) inspect(pid int) (Found, bool) {
 	if rt, ok := lookup(env, "XDG_RUNTIME_DIR"); ok && rt != s.RuntimeDir {
 		return Found{}, false
 	}
-	if bus, ok := lookup(env, "DBUS_SESSION_BUS_ADDRESS"); ok && bus != s.Bus {
+	// An unset address on either side is the bus in its runtime folder
+	procRuntime, _ := lookup(env, "XDG_RUNTIME_DIR")
+	if procRuntime == "" {
+		procRuntime = s.RuntimeDir
+	}
+	bus, _ := lookup(env, "DBUS_SESSION_BUS_ADDRESS")
+	if busOrDefault(bus, procRuntime) != busOrDefault(s.Bus, s.RuntimeDir) {
 		return Found{}, false
 	}
 	cmdline, _ := os.ReadFile(filepath.Join(dir, "cmdline"))
