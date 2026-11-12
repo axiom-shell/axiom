@@ -73,6 +73,14 @@ x-parts:
         x-options: colors
         default: base00
         x-showIf: {$bar.textColorShows: true}
+    # The Text color only, for a widget with no background color of its own
+    text:
+      foregroundColor:
+        type: string
+        title: Text color
+        x-options: colors
+        default: base00
+        x-showIf: {$bar.textColorShows: true}
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}
