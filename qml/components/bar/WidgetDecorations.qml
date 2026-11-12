@@ -177,7 +177,7 @@ Item {
             "part": Qt.rect(s.part.x + (root._vertical ? root.reachAcross.near : segment.back), s.part.y + (root._vertical ? segment.back : root.reachAcross.near), s.part.width, s.part.height)
           })) : []
       visible: place !== null
-      opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
+      opacity: host?.opacity ?? 1
       // A tab reaches out past the widget (tabReach)
       readonly property var _box: BarShapes.boxRect({
         "x": host?.x ?? 0,

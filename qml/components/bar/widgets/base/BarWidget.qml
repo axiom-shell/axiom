@@ -14,7 +14,7 @@ import qs.components.bar.look
 //     before or after the icon (`ratio`, `history`, from its `appearance`)
 //     or a spinner while `busy`, laid out by IconTextRow;
 //   - segments: `items` shown, each as a row of its own from `segmentData`
-//     (WidgetSegments);
+//     (WidgetSegments: System Stats' metrics, Lock keys' keys);
 //   - its own content (`ownContent`, with a head: `headIcon`, `headText` or
 //     `headItem`, WidgetHead), as Time and the tray do.
 // A badge, a mark, a pulse (`pulsing`) and the press, hover and click
@@ -95,8 +95,6 @@ Item {
   property string stateColorName: ""
   property bool muted: false
   property bool pulsing: false
-  // Legacy (removed with the alias): a widget's color for its state
-  property alias accentColor: look.accentColor
 
   // A count over its icon's corner ({ text, field }: the color field its
   // fill reads in), a mark on its icon's other corner ({ icon, field }),
@@ -212,7 +210,17 @@ Item {
   // "none" (also while `hidden`). Read from data only, never from what it
   // draws.
   readonly property string _mode: root.hidden ? "none" : root.ownContent !== null || root.headItem !== null || root.headIcon !== "" || root.headText !== "" ? "own" : root.segmentData !== null && root.shownItems.length > 0 ? "segments" : root._rowShown ? "row" : "none"
-  property bool _rowShown: root.icon !== "" || root.iconSource !== "" || root.text !== "" || root.busy
+  readonly property bool _rowShown: root.icon !== "" || root.iconSource !== "" || root.text !== "" || root.busy
+
+  // Its sizing on the bar (BarWidgetHost): "content" (its implicit size) or
+  // "fixed" (preferredSize, whatever it shows); an elastic type (x-elastic)
+  // is capped at preferredSize (-1: none). A divider of its own (the group
+  // draws none beside it: Separator, Spacer), and room taking its side's
+  // free space (Spacer)
+  property string sizePolicy: "content"
+  property real preferredSize: -1
+  property bool divides: false
+  property bool fills: false
 
   // Whether its WidgetGroup draws a background under it
   property bool hasBackground: !root.hidden && root._mode !== "none"
@@ -220,8 +228,9 @@ Item {
   // keep clear of (BarWidgetHost.contentAcross): from config, never
   // measured. Its icon at the bar's font size, at its scale where its type
   // draws it larger (iconScale), or the graphic reaching further across (a
-  // ring, a sparkline, stacked's two lines); its own content's.
-  property real contentAcross: root._mode === "row" ? Math.max(root.barConfig.fontSize * Math.max(1, root.iconScale), graphic.across) : root._mode === "own" ? (root.ownAcross >= 0 ? root.ownAcross : root.barConfig.fontSize) : root.barConfig.fontSize
+  // ring, a sparkline, stacked's two lines); its own content's; its
+  // segments' (the furthest graphic of their styles).
+  property real contentAcross: root._mode === "row" ? Math.max(root.barConfig.fontSize * Math.max(1, root.iconScale), graphic.across) : root._mode === "own" ? (root.ownAcross >= 0 ? root.ownAcross : root.barConfig.fontSize) : root._mode === "segments" ? ((segments.item as WidgetSegments)?.across ?? root.barConfig.fontSize) : root.barConfig.fontSize
   // A level (0-1) its WidgetGroup fills its background's shape to, along
   // the bar (up a vertical one), in backgroundLevelColor; -1 for none (the
   // pill style fills it to its value)
@@ -275,7 +284,7 @@ Item {
     isVertical: root.isVertical
     fontSize: root.barConfig.fontSize
     // The icon's gap to its label (6 px at the default inner spacing of 4)
-    spacing: root.barConfig.innerGap * 1.5
+    spacing: root.barConfig.iconGap
     iconSpacing: root.barConfig.innerGap
     splitRoom: root.barConfig.splitRoom
     icon: root.icon

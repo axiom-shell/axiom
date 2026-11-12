@@ -326,7 +326,7 @@ QtObject {
     result.headText = root._read(flags, result.iconBack, head, root.textContrast, result.iconOwnFill);
     result.icon = root._read(flags, result.iconBack, result.icon, root.iconContrast, result.iconOwnFill);
     result.mark = result.icon;
-    result.graphic = root._graphic(result.iconBack, result.icon, result.text);
+    result.graphic = root.graphic(result.iconBack, result.icon, result.text);
     Object.assign(result, flags);
     return result;
   }
@@ -384,8 +384,10 @@ QtObject {
   // What a ring, bar or sparkline draws in, all opaque: its `line` (on
   // `backs`), a `track` and an `area` of it faded over them, its
   // `caption` (text over it, `text`'s) and a `subcaption` (the caption
-  // dimmed 30% toward the first backdrop, floored at mutedContrast)
-  function _graphic(backs, line, text) {
+  // dimmed 30% toward the first backdrop, floored at mutedContrast); also a
+  // part's own colours (WidgetLook.paint.graphicOf: a segment in a field of
+  // its own)
+  function graphic(backs, line, text) {
     const caption = root.over(text, backs[0]);
     return {
       "line": root.over(line, backs[0]),

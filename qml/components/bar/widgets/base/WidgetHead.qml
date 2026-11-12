@@ -39,7 +39,7 @@ Item {
   readonly property bool splits: shown && hasLabel && barConfig.splitRoom >= 0
   // The gap before the content: a split bar's room, else an icon's gap to
   // its label (BarWidget's row spacing)
-  readonly property real gap: !shown || !hasLabel ? 0 : splits ? barConfig.splitRoom : barConfig.innerGap * 1.5
+  readonly property real gap: !shown || !hasLabel ? 0 : splits ? barConfig.splitRoom : barConfig.iconGap
   // The room it takes along the widget, its gap included
   readonly property real length: headLength + gap
   readonly property var _place: splits ? BarShapes.splitPart(vertical, start, headLength, gap, barConfig.thickness / 2, barConfig.fontSize) : null

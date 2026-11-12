@@ -4,7 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.components.reusable
 
-// The workspace grid's position head, handed to SplitLead as `ownHead`:
+// The workspace grid's position head, handed to WidgetHead as `ownHead`:
 // one dot per row (column on a vertical bar) stacked across the bar with
 // the shown one filled, or, where the dots don't fit, the arrow glyph for
 // that position (GridPosition.head decides). Its wheel steps along its own

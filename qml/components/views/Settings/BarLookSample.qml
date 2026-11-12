@@ -114,7 +114,7 @@ Item {
     readonly property bool both: sample.icon !== "" && sample.text !== ""
     // An icon part and a label apart (a split look)
     readonly property bool splits: root._barConfig.splitRoom >= 0 && sample.both
-    readonly property real gap: sample.splits ? root._barConfig.splitRoom : sample.both ? root._barConfig.innerGap * 1.5 : 0
+    readonly property real gap: sample.splits ? root._barConfig.splitRoom : sample.both ? root._barConfig.iconGap : 0
     // Measured from the fonts, not the drawn items (their colors follow
     // where the box sits, which follows its length)
     readonly property real iconLength: sample.icon !== "" ? Math.ceil(iconMetrics.advanceWidth) : 0

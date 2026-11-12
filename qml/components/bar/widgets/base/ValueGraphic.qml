@@ -26,7 +26,7 @@ Item {
   property string subtext: ""
   // The widget's textFormat
   property int textFormat: Text.AutoText
-  // The value's widest (IconTextWidget's minimumText): ticker and stacked
+  // The value's widest (IconTextRow's minimumText): ticker and stacked
   // never take less room, so a changing one doesn't resize the widget
   property string minimumText: ""
   // What they're measured by: the longer of the value and its minimum,
@@ -46,7 +46,7 @@ Item {
   // What it draws in ({ line, track, area, caption, subcaption }, all
   // opaque: the widget's `paint.graphic`, from BarWidgetStyle)
   required property var paint
-  // Across a bar, where the icon beside it has its middle (IconTextWidget's
+  // Across a bar, where the icon beside it has its middle (IconTextRow's
   // iconMiddle), in this item's coordinates; below 0, its own middle
   property real middle: -1
 

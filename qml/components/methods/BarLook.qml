@@ -378,6 +378,7 @@ QtObject {
         "label": values.splitIcon === "badge" ? "none" : values.splitLabelFill,
         "labelColor": values.splitLabelColor,
         "cap": splitCap,
+        // (the bar's iconGap, BarEnrich)
         "room": bar ? BarShapes.splitRoom(values.splitIcon, splitCap, thickness, bar.innerPadding, bar.innerGap * 1.5, bar.innerGap) : -1,
         "badgePad": bar?.innerGap ?? null
       } : null,

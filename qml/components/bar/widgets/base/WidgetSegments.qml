@@ -13,7 +13,8 @@ import qs.components.methods
 // the color field it reads in), muted (false), hidden (false: not drawn, in
 // no length or gap), small (true: the value small and upright under its icon
 // on a vertical bar, as System Stats' is) }. `appearance` may be null (a
-// plain label). A segment with no text is its icon alone. Where the segments split
+// plain label). A segment with no text is its icon alone. `across` is how
+// far its segments reach across the bar. Where the segments split
 // into an icon part and a label each (a split bar), it reports their
 // places: the first as `splitAt` / `splitPart` and the rest as
 // `innerSplits`, in its own coordinates (as WidgetBackground reads them).
@@ -70,103 +71,115 @@ Item {
   readonly property rect splitPart: root._placed[0]?.part ?? Qt.rect(0, 0, 0, 0)
   readonly property var innerSplits: root._placed.slice(1).filter(p => p !== null)
 
-  implicitWidth: stack.implicitWidth
-  implicitHeight: stack.implicitHeight
+  // A segment's data over its defaults, and the style it draws in
+  function _seg(key) {
+    return Object.assign({
+      "icon": "",
+      "text": "",
+      "minimumText": "",
+      "ratio": -1,
+      "history": null,
+      "graphMin": 0,
+      "graphMax": 1,
+      "caption": "",
+      "field": "",
+      "muted": false,
+      "hidden": false,
+      "small": true
+    }, root.dataOf(key));
+  }
+  function _styleOf(seg) {
+    return ValueGraphics.resolvedStyle(root.appearance?.style ?? "label", root.isVertical, seg.history !== null, seg.ratio);
+  }
+  // The room across inside its box, which stacked's lines fit in
+  readonly property real _room: ValueGraphics.boxRoom(root.barConfig.thickness, root.barConfig.look.shape)
+  // How far across the bar its segments reach (BarWidget.contentAcross): a
+  // line, or the furthest graphic of their styles; from config and the
+  // styles, never measured
+  readonly property real across: Math.max(root.barConfig.fontSize, ...root.keys.map(k => root._seg(k)).filter(s => !s.hidden).map(s => ValueGraphics.across(root._styleOf(s), root.isVertical, root.barConfig.thickness, root.barConfig.fontSize, root._room)))
 
-  BaseWidget {
-    id: stack
-    anchors.fill: parent
-    isVertical: root.isVertical
-    crossSize: root.barConfig.thickness
-    padding: root.keys.length > 0 ? root.barConfig.innerPadding : 0
+  readonly property real _padding: root.keys.length > 0 ? root.barConfig.innerPadding : 0
+  clip: true
+  implicitWidth: root.isVertical ? root.barConfig.thickness : grid.implicitWidth + root._padding * 2
+  implicitHeight: root.isVertical ? grid.implicitHeight + root._padding * 2 : root.barConfig.thickness
 
-    content: Grid {
-      columns: root.isVertical ? 1 : Math.max(1, root.keys.length)
-      spacing: root._gap
-      horizontalItemAlignment: Grid.AlignHCenter
-      verticalItemAlignment: Grid.AlignVCenter
+  Grid {
+    id: grid
+    anchors.centerIn: parent
+    columns: root.isVertical ? 1 : Math.max(1, root.keys.length)
+    spacing: root._gap
+    horizontalItemAlignment: Grid.AlignHCenter
+    verticalItemAlignment: Grid.AlignVCenter
 
-      Repeater {
-        model: root.keys.length
+    Repeater {
+      model: root.keys.length
 
-        // One icon + label each, laid out as every bar widget's is; on a
-        // vertical bar the value small and upright under the icon
-        delegate: IconTextRow {
-          id: segment
-          required property int index
-          Component.onCompleted: {
-            const items = root._items.slice();
-            items[segment.index] = segment;
+      // One icon + label each, laid out as every bar widget's is; on a
+      // vertical bar the value small and upright under the icon
+      delegate: IconTextRow {
+        id: segment
+        required property int index
+        Component.onCompleted: {
+          const items = root._items.slice();
+          items[segment.index] = segment;
+          root._items = items;
+        }
+        Component.onDestruction: {
+          const items = root._items.slice();
+          if (items[segment.index] === segment) {
+            items[segment.index] = null;
             root._items = items;
           }
-          Component.onDestruction: {
-            const items = root._items.slice();
-            if (items[segment.index] === segment) {
-              items[segment.index] = null;
-              root._items = items;
-            }
-          }
-          readonly property var seg: Object.assign({
-            "icon": "",
-            "text": "",
-            "minimumText": "",
-            "ratio": -1,
-            "history": null,
-            "graphMin": 0,
-            "graphMax": 1,
-            "caption": "",
-            "field": "",
-            "muted": false,
-            "hidden": false,
-            "small": true
-          }, root.dataOf(root.keys[segment.index]))
-          readonly property string style: ValueGraphics.resolvedStyle(root.appearance?.style ?? "label", root.isVertical, segment.seg.history !== null, segment.seg.ratio)
-          // Its own color field's, else the widget's, dimmed where it is
-          readonly property color _text: segment.seg.field !== "" ? root.paint.field(segment.seg.field, "text") : root.paint.text
-          readonly property color _icon: segment.seg.field !== "" ? root.paint.field(segment.seg.field, "icon") : root.paint.icon
+        }
+        readonly property var seg: root._seg(root.keys[segment.index])
+        readonly property string style: root._styleOf(segment.seg)
+        // Its own color field's, else the widget's, dimmed where it is
+        readonly property color _text: segment.seg.field !== "" ? root.paint.field(segment.seg.field, "text") : root.paint.text
+        readonly property color _icon: segment.seg.field !== "" ? root.paint.field(segment.seg.field, "icon") : root.paint.icon
 
-          hidden: segment.seg.hidden
-          visible: !segment.seg.hidden
-          isVertical: root.isVertical
-          crossSize: root.barConfig.thickness
-          padding: 0
-          fontSize: root.barConfig.fontSize
-          spacing: root.isVertical && segment.seg.small ? 0 : root.barConfig.innerGap * 1.5
-          textScale: !segment.seg.small ? 1 : root.isVertical ? 0.7 : 0.9
-          uprightLabel: segment.seg.small
-          // Its icon part and label apart on a split bar
-          splitRoom: root.barConfig.splitRoom
-          icon: segment.seg.icon
+        hidden: segment.seg.hidden
+        visible: !segment.seg.hidden
+        isVertical: root.isVertical
+        crossSize: root.barConfig.thickness
+        padding: 0
+        fontSize: root.barConfig.fontSize
+        spacing: root.isVertical && segment.seg.small ? 0 : root.barConfig.iconGap
+        textScale: !segment.seg.small ? 1 : root.isVertical ? 0.7 : 0.9
+        uprightLabel: segment.seg.small
+        // Its icon part and label apart on a split bar
+        splitRoom: root.barConfig.splitRoom
+        icon: segment.seg.icon
+        text: segment.seg.text
+        minimumText: segment.seg.minimumText
+        showText: segment.style !== "icon" && segment.style !== "stacked" && segment.seg.text !== ""
+        textColor: segment.seg.muted ? root.paint.muted("text", segment._text) : segment._text
+        iconColor: segment.seg.muted ? root.paint.muted("icon", segment._icon) : segment._icon
+        leadLength: graphic.drawn ? graphic.length : 0
+        leadAfterIcon: graphic.afterIcon
+
+        ValueGraphic {
+          id: graphic
+          parent: segment.lead
+          anchors.fill: parent
+          style: segment.style
+          ratio: Math.max(0, Math.min(1, segment.seg.ratio))
+          history: segment.seg.history ?? []
+          graphMin: segment.seg.graphMin
+          graphMax: segment.seg.graphMax
           text: segment.seg.text
           minimumText: segment.seg.minimumText
-          showText: segment.style !== "icon" && segment.style !== "stacked" && segment.seg.text !== ""
-          textColor: segment.seg.muted ? root.paint.muted("text", segment._text) : segment._text
-          iconColor: segment.seg.muted ? root.paint.muted("icon", segment._icon) : segment._icon
-          leadLength: graphic.drawn ? graphic.length : 0
-          leadAfterIcon: graphic.afterIcon
-
-          ValueGraphic {
-            id: graphic
-            parent: segment.lead
-            anchors.fill: parent
-            style: segment.style
-            ratio: Math.max(0, Math.min(1, segment.seg.ratio))
-            history: segment.seg.history ?? []
-            graphMin: segment.seg.graphMin
-            graphMax: segment.seg.graphMax
-            text: segment.seg.text
-            minimumText: segment.seg.minimumText
-            // Stacked: the value over its name, where the value goes
-            subtext: segment.seg.caption
-            segmentCount: root.appearance?.segments ?? 5
-            preferredLength: root.appearance?.width ?? 0
-            vertical: root.isVertical
-            crossSize: root.barConfig.thickness
-            room: ValueGraphics.boxRoom(root.barConfig.thickness, root.barConfig.look.shape)
-            fontSize: root.barConfig.fontSize
-            middle: segment.iconMiddle
-            paint: root.paint.graphic
-          }
+          // Stacked: the value over its name, where the value goes
+          subtext: segment.seg.caption
+          segmentCount: root.appearance?.segments ?? 5
+          preferredLength: root.appearance?.width ?? 0
+          vertical: root.isVertical
+          crossSize: root.barConfig.thickness
+          room: root._room
+          fontSize: root.barConfig.fontSize
+          middle: segment.iconMiddle
+          // In the part's own colours where it reads in a field of its own
+          // (a segment in the box's state keeps the widget's graphic)
+          paint: segment.seg.field === "" && !segment.seg.muted ? root.paint.graphic : root.paint.graphicOf(segment.iconColor, segment.textColor)
         }
       }
     }

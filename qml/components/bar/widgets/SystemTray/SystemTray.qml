@@ -15,7 +15,7 @@ BarWidget {
   // Each icon the size of every other bar widget's
   readonly property int iconSize: Math.round(barConfig.fontSize)
   readonly property bool showPassive: properties.showPassive
-  readonly property real spacing: barConfig.innerGap * 1.5
+  readonly property real spacing: barConfig.iconGap
   // No item showing (none, or only passive ones while those are hidden): it
   // draws nothing and takes no room
   hidden: !SystemTray.items.values.some(item => root.showPassive || item.status !== Status.Passive)

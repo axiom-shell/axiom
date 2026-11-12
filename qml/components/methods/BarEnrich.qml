@@ -29,6 +29,7 @@ QtObject {
     const edgePadding = barConfig.edgePadding;
     const innerPadding = Math.round(barConfig.innerPadding * scale);
     const innerGap = Math.round(barConfig.innerGap * scale);
+    const iconGap = innerGap * 1.5;
     // Its widget style, accents and shadow resolved (BarLook): its own
     // style's, each key it leaves null the Bars section's
     const look = BarLook.resolve(env.barStyle, barConfig.style ?? {}, {
@@ -130,6 +131,8 @@ QtObject {
       // text scale of Appearance's font size there)
       "innerPadding": innerPadding,
       "innerGap": innerGap,
+      // The gap between an icon and its label (6 px at the default inner spacing of 4)
+      "iconGap": iconGap,
       "fontSize": Math.round(env.baseFontSize * scale * look.textScale / 100),
       // Widget chips only, else the interior radius: pills and fillets keep
       // Appearance's, to meet the border

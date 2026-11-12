@@ -193,7 +193,7 @@ TestCase {
       "trail": 3
     }, "a vertical bar's label: a horizontal one's room, not the thickness's");
     // A display style's graphic reaching further across than a line
-    // (ValueGraphics.across, as ValueStyleWidget's contentAcross takes it)
+    // (ValueGraphics.across, as BarWidget's contentAcross takes it)
     // keeps its caps' room at its extent: 26 px bars at a 14 px font
     const graphic = style => Object.assign({}, label, {
         "contentAcross": Math.max(14, ValueGraphics.across(style, false, 26, 14, 26))

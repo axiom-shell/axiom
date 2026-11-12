@@ -177,4 +177,14 @@ TestCase {
     compare(BarEnrich.reserveTrim(bar("transparent", "inner"), 10), 0, "an inner line is the edge");
     compare(BarEnrich.reserveTrim(bar("solid", ""), 10), 0, "a surface reserves its extent");
   }
+
+  function test_icon_gap_is_one_and_a_half_inner_gaps() {
+    const plain = Bars.bar({});
+    compare(plain.iconGap, plain.innerGap * 1.5);
+    const tall = Bars.bar({
+      "thickness": 40
+    });
+    verify(tall.innerGap > plain.innerGap, "a taller bar scales its gap");
+    compare(tall.iconGap, tall.innerGap * 1.5);
+  }
 }

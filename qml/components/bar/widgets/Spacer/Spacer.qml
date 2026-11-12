@@ -14,13 +14,13 @@ BarWidget {
   // Room, not content: no background of its own
   hasBackground: false
   // Room, not a widget: its WidgetGroup draws no divider beside it
-  readonly property bool divides: true
+  divides: true
   // It fills the room its section is given past its widgets
-  readonly property bool fills: true
+  fills: true
 
   // BarWidgetHost sizing contract
-  readonly property string sizePolicy: "fixed"
-  readonly property real preferredSize: properties.minGap
+  sizePolicy: "fixed"
+  preferredSize: properties.minGap
 
   implicitWidth: isVertical ? root.barConfig.thickness : properties.minGap
   implicitHeight: isVertical ? properties.minGap : root.barConfig.thickness

@@ -111,6 +111,9 @@ QtObject {
             "icon": root.drawnColors.icon,
             "headText": root.drawnColors.headText
           })[part]),
+      // a graphic in a part's own icon and text colours (a segment in a
+      // field of its own)
+      "graphicOf": (icon, text) => BarWidgetStyle.graphic(root.drawnColors.iconBack, icon, text),
       "field": (name, part) => root.field(name, part),
       "line": name => root.own(name)
     })

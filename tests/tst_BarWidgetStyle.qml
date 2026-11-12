@@ -451,6 +451,23 @@ TestCase {
     verify(fails.length === 0, fails.join("\n"));
   }
 
+  // graphic() is what colors() draws its own graphic with
+  function test_graphic_of_own_colors() {
+    for (const over of [
+      {
+        "widgetStyle": "tinted"
+      },
+      {
+        "widgetStyle": "filled"
+      }
+    ]) {
+      const c = BarWidgetStyle.widgetColors(Bars.bar(over), "#fb4934", "#282828", {});
+      const g = BarWidgetStyle.graphic(c.iconBack, c.icon, c.text);
+      for (const key of Object.keys(c.graphic))
+        same(g[key], c.graphic[key], `${over.widgetStyle}: ${key}`);
+    }
+  }
+
   function test_each_look_gradient_takes_its_part() {
     const fails = [];
     for (const look of root.looks) {

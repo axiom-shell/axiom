@@ -13,11 +13,11 @@ BarWidget {
   hasBackground: false
 
   // Already a divider: its WidgetGroup draws none beside it
-  readonly property bool divides: true
+  divides: true
 
   // BarWidgetHost sizing contract
-  readonly property string sizePolicy: "fixed"
-  readonly property real preferredSize: properties.size
+  sizePolicy: "fixed"
+  preferredSize: properties.size
 
   implicitWidth: isVertical ? root.barConfig.thickness : properties.size
   implicitHeight: isVertical ? properties.size : root.barConfig.thickness

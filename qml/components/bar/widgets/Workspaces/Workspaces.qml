@@ -21,7 +21,7 @@ import qs.components.bar.look
 // underline. A head (`lead`: an icon, or the active workspace's label as
 // its cell shows it, or in the grid its row's dots: GridPositionHead)
 // before the cells, in their box, is its icon part on a split bar
-// (SplitLead); with no box (`segmented`) it sits on the bar all the same.
+// (WidgetHead); with no box (`segmented`) it sits on the bar all the same.
 BarWidget {
   id: root
 
@@ -90,13 +90,14 @@ BarWidget {
     restLength: root.barConfig.thickness
   }
 
-  SplitLead {
+  WidgetHead {
     id: lead
     barConfig: root.barConfig
     start: root._start - root.inset + root.barConfig.innerPadding
     icon: root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
     text: !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
     iconColor: root.colors.icon
+    textColor: root.colors.icon
     ownHead: positionHead.active ? positionHead : null
   }
 

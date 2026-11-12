@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
-// Base for overlay modules (what BaseWidget is for bar modules): the card
+// Base for overlay modules (what BarWidget is for bar modules): the card
 // box filling its slot. Modules set only what differs, e.g. `color`,
 // and pick their internal layout from `shape` / `compact` (see
 // OverlaySlot, which sets `slotRect`).
