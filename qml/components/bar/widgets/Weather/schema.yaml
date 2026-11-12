@@ -14,4 +14,4 @@ settings:
     type: boolean
     title: Condition
     default: false
-    x-showIf: {appearance.style: label}
+    x-showIf: {appearance.style: [label, stacked]}

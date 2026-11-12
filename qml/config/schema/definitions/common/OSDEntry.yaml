@@ -170,6 +170,7 @@ properties:
     x-group: Timing and behaviour
     type: string
     title: Icon position
+    description: "Where the status icons go beside the bars. Inner: by the screen edge; Outer: past the bars."
     default: outside
     x-control: toggle
     enum: [inside, outside]

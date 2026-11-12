@@ -15,7 +15,7 @@ settings:
     type: boolean
     title: Percentage
     default: true
-    x-showIf: {appearance.style: [label, ring, fill, pill, segments]}
+    x-showIf: {appearance.style: [label, stacked, ring, fill, pill, segments]}
   showPeripherals:
     type: boolean
     title: Peripherals

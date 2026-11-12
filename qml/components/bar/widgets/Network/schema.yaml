@@ -15,7 +15,7 @@ settings:
     type: boolean
     title: Device
     default: false
-    x-showIf: {appearance.style: [label, ring, segments, sparkline]}
+    x-showIf: {appearance.style: [label, stacked, ring, segments, sparkline]}
   middleCommand:
     x-scope: commands
     type: string

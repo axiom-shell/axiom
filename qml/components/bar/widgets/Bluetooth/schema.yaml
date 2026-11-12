@@ -15,12 +15,12 @@ settings:
     title: Device
     default: true
     description: Connected device's name (or count).
-    x-showIf: {appearance.style: [label, ring, fill]}
+    x-showIf: {appearance.style: [label, stacked, ring, fill]}
   showBattery:
     type: boolean
     title: Battery
     default: true
-    x-showIf: {showDevice: true, appearance.style: [label, ring, fill]}
+    x-showIf: {showDevice: true, appearance.style: [label, stacked, ring, fill]}
   hideWhenOff: {type: boolean, title: Hide when off, default: false}
   middleCommand:
     x-scope: commands

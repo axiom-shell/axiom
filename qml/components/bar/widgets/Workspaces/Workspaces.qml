@@ -82,16 +82,16 @@ BarWidget {
     id: lead
     barConfig: root.barConfig
     start: root._start - root.inset + root.barConfig.innerPadding
-    icon: root._positionLead ? "" : root.properties.leadIcon
+    icon: root._grid ? "" : root.properties.leadIcon
     iconColor: root.colors.icon
     ownHead: positionHead.active ? positionHead : null
   }
 
   // The grid's position head: dots for the shown row (column on a
   // vertical bar), else an arrow
-  readonly property bool _positionLead: CompositorManager.workspaceGrid
-  readonly property var _position: _positionLead ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
-  readonly property var _positionHead: _positionLead ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
+  readonly property bool _grid: CompositorManager.workspaceGrid
+  readonly property var _position: _grid ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
+  readonly property var _positionHead: _grid ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
   Loader {
     id: positionHead
     active: root._positionHead !== null && root._positionHead.kind !== "none"

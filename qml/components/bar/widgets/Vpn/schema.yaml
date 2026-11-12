@@ -15,7 +15,7 @@ settings:
     type: boolean
     title: Name
     default: true
-    x-showIf: {appearance.style: label}
+    x-showIf: {appearance.style: [label, stacked]}
   hideWhenOff:
     type: boolean
     title: Hide when disconnected

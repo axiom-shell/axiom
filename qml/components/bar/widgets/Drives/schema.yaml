@@ -15,7 +15,7 @@ settings:
     type: boolean
     title: Count
     default: true
-    x-showIf: {appearance.style: label}
+    x-showIf: {appearance.style: [label, stacked]}
   hideWhenEmpty:
     type: boolean
     title: Hide when empty

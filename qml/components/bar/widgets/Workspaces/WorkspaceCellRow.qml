@@ -66,7 +66,7 @@ Item {
   // widened by one normal cell's length (`wideActive`: WorkspaceCells)
   readonly property int _activeIndex: ids.indexOf(activeId)
   // What each cell shows (CellContents.of), in `ids` order
-  readonly property var _contents: ids.map(id => contents.of(id, "", id !== root.activeId || root.activeIcons))
+  readonly property var _contents: ids.map(id => contents.of(id, id !== root.activeId || root.activeIcons))
   readonly property var _lengths: WorkspaceCells.roomed(_contents.map(c => c.length), _rooms)
   readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLook.length : 0)
   // Measured from the cells' lengths to be, never their gliding ones
