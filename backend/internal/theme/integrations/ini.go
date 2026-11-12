@@ -175,11 +175,13 @@ func dropEmptyGroup(lines []string, group string) []string {
 		if end < len(lines) && !iniGroup.MatchString(lines[end]) {
 			return lines
 		}
+		// The header and the blank line before it; the blank lines after
+		// belong to what follows (another section's separator)
 		start := i
 		if start > 0 && blank.MatchString(lines[start-1]) {
 			start--
 		}
-		return slices.Delete(slices.Clone(lines), start, end)
+		return slices.Delete(slices.Clone(lines), start, i+1)
 	}
 	return lines
 }

@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom test editor
+Exec=true %f
+MimeType=text/plain;

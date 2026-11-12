@@ -96,6 +96,9 @@ type HookupRec struct {
 	NoFinalNewline bool `json:"noFinalNewline,omitempty"`
 	// Backup is the .axiom-bak-<stamp> beside the file: listed, never put back
 	Backup string `json:"backup,omitempty"`
+	// Backups are the later backups of the same file (each Apply makes its
+	// own, of the file as the one before left it): listed too
+	Backups []string `json:"backups,omitempty"`
 }
 
 // Status of a row against the system.
@@ -382,6 +385,10 @@ func mergeHookup(old, now *HookupRec) *HookupRec {
 	}
 	if old.Backup != "" {
 		out.Backup = old.Backup
+		out.Backups = slices.Clone(old.Backups)
+		if now.Backup != "" && now.Backup != old.Backup && !slices.Contains(out.Backups, now.Backup) {
+			out.Backups = append(out.Backups, now.Backup)
+		}
 	}
 	out.Edit.Wrapped = old.Edit.Wrapped || now.Edit.Wrapped
 	if old.Edit.WrapLine != "" {
