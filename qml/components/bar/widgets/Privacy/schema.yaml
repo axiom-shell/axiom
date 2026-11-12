@@ -3,6 +3,8 @@ keywords: ['Privacy Indicators']
 icon: visibility
 group: System
 popout: menu
+colors: text
+order: [showMic, showScreen, showCamera, boxes, ignoreApps, popout, foregroundColor, activeColor]
 boxes:
   variant: each
   boxes:
@@ -17,11 +19,5 @@ settings:
     items: {type: string}
     title: Ignored apps
     default: [cava]
-    description: Comma-separated.
-  activeColor: {$ref: '#/definitions/WidgetColor', x-autoColor: critical}
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}
+    description: Not shown as using the mic, screen or camera. Comma-separated.
+  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: critical}

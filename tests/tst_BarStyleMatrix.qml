@@ -1,17 +1,16 @@
 import QtQuick
 import QtTest
 import qs.components.methods
+import "barstyle/Bars.js" as Bars
 import "barstyle/Matrix.js" as Matrix
 
-// The bar widget style system's characterization: every widget style,
-// grouping, shape, split, Fill on hover, gradient and cell state run
-// through the style helpers, and what they give recorded
-// (barstyle/Matrix.js): main's behaviour before the style rework, plus
-// the rework's intended changes, each re-recorded in the commit that made
-// it (text on a fill by WCAG contrast; the room at a run's ends). The
-// expected data is never edited by hand: otherwise only the adapters below
-// change, to reach the same results through a new API. Colour the text by
-// state (textByState) is left out: the rework changes it on purpose.
+// Characterization of the bar widget style system's three groups of
+// results, looks, cellShapes and outlines, run through the helpers and
+// recorded (barstyle/Matrix.js): main's behaviour before the style rework,
+// plus its intended changes, each re-recorded in the commit that made it.
+// The expected data is never edited by hand: otherwise only the adapters
+// below change, to reach the same results through a new API. What colours
+// draw is tst_BarWidgetStyle's sweep.
 TestCase {
   id: root
 
@@ -40,11 +39,6 @@ TestCase {
       "warning": "#fabd2f",
       "error": "#fb4934"
     })
-  // Widget.radius's stand-in, for a look with no widgetRadius
-  readonly property int widgetRadius: 8
-  // Appearance.baseFontSize's stand-in (the schema's default)
-  readonly property int baseFontSize: 14
-
   function resolve(name) {
     return Qt.color(root.theme[name] ?? name);
   }
@@ -120,39 +114,20 @@ TestCase {
     return section;
   }
 
-  // A bar's look as enrichBarConfig resolves it (a pure copy of its look
-  // block: BarsConfig needs Theme and the config). The returned bar is
-  // what the other adapters take.
+  // A bar as BarsConfig.enrichBarConfig makes it (BarEnrich, through the
+  // Bars.js fixture): the raw look is the Bars section's style, the
+  // geometry the bar's own. A pills bar's `endRoom` is its edge padding
+  // and the border's stroke (BarEnds.tabEndRoom). The returned bar is what
+  // the other adapters take.
   function enrich(raw, geo) {
-    const thickness = geo.thickness;
-    const scale = thickness / 26;
-    const innerPadding = Math.round(geo.innerPadding * scale);
-    const innerGap = Math.round(geo.innerGap * scale);
-    const far = geo.location === "right" || geo.location === "bottom";
-    const look = BarLook.resolve(root.sectionOf(raw), {}, {
-      "thickness": thickness,
-      "innerPadding": innerPadding,
-      "innerGap": innerGap,
-      "radius": root.widgetRadius,
-      "far": far
-    });
-    const separators = look.separators;
-    const groupSpacing = look.grouping === "powerline" ? 0 : separators.style !== "none" ? BarLayout.dividerGap(separators.style, separators.thickness, thickness, separators.gap) : geo.widgetGap;
-    const bar = {
-      "thickness": thickness,
-      "innerPadding": innerPadding,
-      "innerGap": innerGap,
-      "fontSize": Math.round(root.baseFontSize * scale * look.textScale / 100),
-      "groupSpacing": groupSpacing,
-      "radius": look.radius,
-      "right": geo.location === "right",
-      "bottom": geo.location === "bottom",
-      "vertical": geo.location === "left" || geo.location === "right",
-      "look": look,
-      "splitRoom": look.split ? look.split.room : -1
-    };
-    look.shape.tabFillet = BarTabs.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, geo.endRoom);
-    return bar;
+    return Bars.bar(Object.assign({}, root.sectionOf(raw), {
+      "thickness": geo.thickness,
+      "innerPadding": geo.innerPadding,
+      "innerGap": geo.innerGap,
+      "widgetGap": geo.widgetGap,
+      "edge": geo.location,
+      "edgePadding": geo.endRoom - 1
+    }));
   }
 
   // What the matrix records of an enriched bar, by the old flat names. A
@@ -194,52 +169,9 @@ TestCase {
     }, {});
   }
 
-  // The bar's palette (enrichBarConfig's)
-  function palette(bar) {
-    return BarWidgetStyle.palette(bar.look, name => root.resolve(name), root.resolve("foreground"), root.resolve("background"));
-  }
-
-  // A widget's colors (BarsConfig.widgetColors)
-  function widgetColors(bar, accent, foregroundName, widget) {
-    const palette = root.palette(bar);
-    return BarWidgetStyle.colors(bar.look, palette, BarWidgetStyle.state(palette, {
-      "splits": widget?.splits,
-      "hovered": widget?.hovered,
-      "spot": widget?.spot,
-      "auto": widget?.auto,
-      "group": bar.look.grouping === "merged"
-    }), accent, root.resolve(foregroundName));
-  }
-
-  // A cell's colors (BarsConfig.cellColors)
-  function cellColors(bar, color, own, state, cell) {
-    const palette = root.palette(bar);
-    return BarWidgetStyle.cell(bar.look, palette, BarWidgetStyle.state(palette, {
-      "hovered": cell?.hovered,
-      "spot": cell?.spot,
-      "auto": (cell?.spot ?? -1) >= 0,
-      "solid": cell?.solid,
-      "group": cell?.onBar === true && bar.look.grouping === "merged"
-    }), color, own, state);
-  }
-
-  // A merged run's own background (BarsConfig.groupColors)
-  function groupColors(bar, spot) {
-    return BarWidgetStyle.runColors(bar.look, root.palette(bar), spot);
-  }
-
   function cellFlags(bar, solid) {
     const traits = BarLook.cellTraits(bar.look, solid);
     return [traits.cellOpaque, traits.boxedInRun];
-  }
-
-  // A widget's content across: an icon or a label at the bar's font size
-  // (a 26 px bar's at 100%: the base font's)
-  function segment(shape, ends, grouping, opaque, index, count, across) {
-    return BarShapes.segment({
-      "name": shape,
-      "ends": ends
-    }, grouping, opaque, index, count, across, root.baseFontSize * across / 26);
   }
 
   // A cell's content across: its label (no app icons)
@@ -278,14 +210,6 @@ TestCase {
     return BarTabs.tab(radius, thickness, fillet, outerStart, limits);
   }
 
-  function tabLimits(start, end, bounds) {
-    return BarTabs.tabLimits(start, end, bounds);
-  }
-
-  function contains(u, v, length, across, startCap, endCap) {
-    return BarShapes.contains(u, v, length, across, startCap, endCap);
-  }
-
   // ---- Inputs ----
 
   // The BarStyle keys, from the built schema
@@ -314,138 +238,6 @@ TestCase {
             "widgetStyle": style
           }
         ]]));
-  }
-
-  function hex(c) {
-    if (c === "transparent")
-      return "T";
-    const q = Qt.color(c);
-    return [q.a, q.r, q.g, q.b].map(x => Math.round(x * 255).toString(16).padStart(2, "0")).join("");
-  }
-
-  function part(g) {
-    return g ? `${g.part}@${g.alpha}` : "-";
-  }
-
-  // Widget colors: fill stroke indicator text icon iconFill gradient
-  function colorsRow(c) {
-    return [root.hex(c.fill), root.hex(c.stroke), root.hex(c.indicator), root.hex(c.text), root.hex(c.icon), root.hex(c.iconFill), root.part(c.gradient)].join(" ");
-  }
-
-  // Cell colors: fill stroke indicator content showsHover gradient
-  function cellRow(c) {
-    return [root.hex(c.fill), root.hex(c.stroke), root.hex(c.indicator), root.hex(c.content), c.showsHover ? 1 : 0, root.part(c.gradient)].join(" ");
-  }
-
-  // Gradient and override cases: [key, raw over, widget over]
-  readonly property var gradientCases: [["g0",
-      {},
-      {}
-    ], ["g1-nospot",
-      {
-        "gradient": true
-      },
-      {}
-    ], ["g1-set",
-      {
-        "gradient": true
-      },
-      {
-        "spot": 0.3
-      }
-    ], ["g1-auto",
-      {
-        "gradient": true
-      },
-      {
-        "spot": 0.3,
-        "auto": true
-      }
-    ]]
-  readonly property var hoverCases: [["h00", false, false], ["h01", false, true], ["h10", true, false], ["h11", true, true]]
-
-  function colorCases() {
-    const out = {};
-    for (const [styleKey, styleOver] of root.styleLooks())
-      for (const grouping of ["separate", "merged"])
-        for (const [gKey, gOver, gWidget] of root.gradientCases)
-          for (const [hKey, hoverFill, hovered] of root.hoverCases)
-            for (const textColor of ["", "base0D"])
-              for (const splits of styleOver.widgetStyle === "split" ? [false, true] : [false]) {
-                const raw = root.rawLook(Object.assign({
-                  "widgetGrouping": grouping,
-                  "hoverFill": hoverFill,
-                  "widgetTextColor": textColor
-                }, styleOver, gOver));
-                const bar = root.enrich(raw, root.geometry({}));
-                const widget = Object.assign({
-                  "hovered": hovered,
-                  "splits": splits
-                }, gWidget);
-                const key = [styleKey, grouping, gKey, hKey, textColor ? "ovr" : "auto", splits ? "splits" : "whole"].join("/");
-                out[key] = root.colorsRow(root.widgetColors(bar, Qt.color("#fb4934"), "base00", widget));
-              }
-    // A tab bar's grouping as drawn, and a light accent, on a few looks
-    for (const [styleKey, styleOver] of root.styleLooks())
-      for (const grouping of ["merged", "powerline"]) {
-        const raw = root.rawLook(Object.assign({
-          "widgetGrouping": grouping,
-          "widgetShape": "tab"
-        }, styleOver));
-        const bar = root.enrich(raw, root.geometry({}));
-        out[`${styleKey}/tab/${grouping}/light`] = root.colorsRow(root.widgetColors(bar, Qt.color("#fabd2f"), "base00", {
-          "splits": true
-        }));
-      }
-    return out;
-  }
-
-  readonly property var cellStates: [["active", "#83a598"], ["occupied", "#b8bb26"], ["urgent", "#fb4934"], ["empty", "#665c54"]]
-
-  function cellCases() {
-    const out = {};
-    const groupCases = [["separate", true], ["merged", true], ["merged", false]];
-    const gradients = [["g0", false, -1], ["g1-nospot", true, -1], ["g1-spot", true, 0.3]];
-    const hovers = [["h00", false, false], ["h10", true, false], ["h11", true, true]];
-    for (const style of root.styles)
-      for (const solid of [false, true])
-        for (const [grouping, onBar] of groupCases)
-          for (const [gKey, gradient, spot] of gradients)
-            for (const [hKey, hoverFill, hovered] of hovers)
-              for (const [state, color] of root.cellStates)
-                for (const textColor of gKey === "g0" && hKey === "h00" ? ["", "base0D"] : [""]) {
-                  const bar = root.enrich(root.rawLook({
-                    "widgetStyle": style,
-                    "widgetGrouping": grouping,
-                    "gradient": gradient,
-                    "hoverFill": hoverFill,
-                    "widgetTextColor": textColor
-                  }), root.geometry({}));
-                  const own = state === "empty" ? root.resolve("foreground") : root.resolve("base00");
-                  const key = [style, solid ? "solid" : "own", grouping, onBar ? "onBar" : "popout", gKey, hKey, state, textColor ? "ovr" : "auto"].join("/");
-                  out[key] = root.cellRow(root.cellColors(bar, Qt.color(color), own, state, {
-                    "hovered": hovered,
-                    "spot": spot,
-                    "solid": solid,
-                    "onBar": onBar
-                  }));
-                }
-    return out;
-  }
-
-  function runCases() {
-    const out = {};
-    for (const [styleKey, styleOver] of root.styleLooks())
-      for (const [gKey, gradient, spot] of [["g0", false, -1], ["g1-nospot", true, -1], ["g1-spot", true, 0.5]])
-        for (const textColor of ["", "base0D"]) {
-          const bar = root.enrich(root.rawLook(Object.assign({
-            "widgetGrouping": "merged",
-            "gradient": gradient,
-            "widgetTextColor": textColor
-          }, styleOver)), root.geometry({}));
-          out[[styleKey, gKey, textColor ? "ovr" : "auto"].join("/")] = root.colorsRow(root.groupColors(bar, spot));
-        }
-    return out;
   }
 
   function lookCases() {
@@ -542,17 +334,6 @@ TestCase {
 
   function segmentRow(s) {
     return JSON.stringify([s.startCap, s.shownStart, s.endCap, s.levelStartCap, s.levelEndCap, s.back, s.lead, s.trail, s.seamStart, s.seamEnd]);
-  }
-
-  function segmentCases() {
-    const out = {};
-    for (const [shape, ends] of root.shapeEnds)
-      for (const grouping of ["separate", "merged", "powerline"])
-        for (const opaque of [false, true])
-          for (let count = 1; count <= 3; count++)
-            for (let index = 0; index < count; index++)
-              out[[shape, ends, grouping, opaque ? "opaque" : "clear", `${index}of${count}`].join("/")] = root.segmentRow(root.segment(shape, ends, grouping, opaque, index, count, 26));
-    return out;
   }
 
   function cellShapeCases() {
@@ -698,61 +479,11 @@ TestCase {
     return out;
   }
 
-  function tabCases() {
-    const out = {};
-    for (const radius of [0, 8, 20])
-      for (const fillet of [0, 4])
-        for (const outerStart of [true, false])
-          for (const [lKey, limits] of [["none", [null, null]], ["start", [
-                {
-                  "gap": 2,
-                  "radius": 8
-                },
-                null]], ["both-far", [
-                {
-                  "gap": 12,
-                  "radius": 8
-                },
-                {
-                  "gap": 0,
-                  "radius": 8
-                }
-              ]]])
-            out[["tab", radius, fillet, outerStart, lKey].join("/")] = JSON.stringify(root.tab(radius, 26, fillet, outerStart, limits));
-    const bounds = [
-      {
-        "start": 0,
-        "end": 300,
-        "startRadius": 10,
-        "endRadius": 6
-      }
-    ];
-    for (const [start, end] of [[2, 40], [20, 60], [250, 296], [120, 160], [310, 330]])
-      out[["limits", start, end].join("/")] = JSON.stringify(root.tabLimits(start, end, bounds));
-    out["limits/none"] = JSON.stringify(root.tabLimits(2, 40, null));
-    return out;
-  }
-
-  function containsCases() {
-    const out = {};
-    const us = [0, 1, 3, 6, 10, 20, 40, 60, 70, 74, 77, 79, 80];
-    const vs = [0, 3, 7, 13, 19, 23, 26];
-    for (const caps of root.capPairs.concat([["tab", "tab"], ["curve", "curve"], ["arrowIn", "arrowIn"]]))
-      out[caps.join("-")] = vs.map(v => us.map(u => root.contains(u, v, 80, 26, caps[0], caps[1]) ? "1" : "0").join("")).join(" ");
-    return out;
-  }
-
   function groups() {
     return {
-      "colors": root.colorCases(),
-      "cells": root.cellCases(),
-      "runs": root.runCases(),
       "looks": root.lookCases(),
-      "segments": root.segmentCases(),
       "cellShapes": root.cellShapeCases(),
-      "outlines": root.outlineCases(),
-      "tabs": root.tabCases(),
-      "contains": root.containsCases()
+      "outlines": root.outlineCases()
     };
   }
 

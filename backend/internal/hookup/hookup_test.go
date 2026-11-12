@@ -75,7 +75,8 @@ func TestEdit(t *testing.T) {
 			if !p.Pending() {
 				t.Fatalf("nothing to do: %+v", p.Row)
 			}
-			if got := Text(Edit(r, p, lines)); got != c.after {
+			got, _ := Edit(r, p, lines)
+			if got := Text(got); got != c.after {
 				t.Errorf("wrote %q, want %q", got, c.after)
 			}
 			for _, k := range []struct {
@@ -150,7 +151,8 @@ func TestWrap(t *testing.T) {
 	t.Parallel()
 	r := Resolve([]Target{{File: Files{"{config}/gtk.css"}, Place: Start, Text: `@import url("axiom.css");`, WrapLink: `@import url("file://{link}");`}}, nil, env())[0]
 	p, _ := Decide(r, Facts{Exists: true, CanWrap: true, Link: true, Real: "/usr/share/t.css", Lines: []string{"a {}"}})
-	if got := Text(Edit(r, p, []string{"a {}"})); got != "@import url(\"file:///usr/share/t.css\");\n@import url(\"axiom.css\");\n" {
+	got, _ := Edit(r, p, []string{"a {}"})
+	if got := Text(got); got != "@import url(\"file:///usr/share/t.css\");\n@import url(\"axiom.css\");\n" {
 		t.Errorf("%q", got)
 	}
 }

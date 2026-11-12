@@ -3,8 +3,9 @@ icon: battery_alert
 group: Power
 tile: standard
 card: standard
+order: [tile, card, quiet, shows]
 settings:
-  tiles:
+  shows:
     type: array
     title: Shows
     items: {type: string, enum: [charger, battery]}

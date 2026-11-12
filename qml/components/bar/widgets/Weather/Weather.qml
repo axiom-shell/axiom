@@ -9,7 +9,7 @@ import qs.components.bar.widgets.base
 // Current conditions (from WeatherManager, for the Weather settings). Hovering opens a 5-day forecast,
 // or says why there's no weather.
 // Stacked: the temperature over the condition.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   Component.onCompleted: WeatherManager.acquire(root)

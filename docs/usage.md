@@ -75,6 +75,7 @@ axiom ipc <target> <function> [args]
 | `wallpaper` | `next`, `random`, `preview <transition>` (the next wallpaper, played with that transition: `fade`, `wipe`, `slide`, `grow`, `shrink`, `wave`, `dissolve`, `pixelate`, `blinds`, `tiles`, `zoom`, `ripple`, `swirl`, `blur`, `clock`) |
 | `monitors` | `open`, `keep`, `revert`, `identify` |
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
+| `recommendedSetup` | `rows` (JSON), `check <id> <on\|off>`, `apply` |
 | `lockscreen` | `lock` |
 | `session` | `suspend`, `hibernate`, `logout`, `reboot`, `poweroff` (at once, with no second click) |
 | `greeter` | `open` (its settings), `preview` (the login screen's layout, on screen) |
@@ -130,6 +131,14 @@ bindsym $mod+space exec axiom ipc appLauncher toggle
 | `axiom markets move <symbol> <position>` | Moves it in the watchlist (1 is first) |
 | `axiom markets search <text>` | Finds symbols, with the command adding each |
 | `axiom markets refresh` | Fetches every watched price now |
+
+`axiom footprint` lists what axiom changed outside its own folders (files, app configs, gsettings, default apps) and takes it out again, without a daemon:
+
+| Command | What it does |
+|---|---|
+| `axiom footprint list [--json]` | The changes, each present, changed since or gone |
+| `axiom uninstall [--dry-run] [--yes] [--purge-all] [--restore-system] [--stop] [--no-portal-restart] [--json]` | Takes axiom out of your home and session: gives back the managed compositor config, undoes its changes, removes install.sh's lines and files, asks what to keep (settings, downloaded content, saved passwords); lists the backups it keeps ([Uninstall](installation.md#uninstall)) |
+| `axiom footprint undo (<id>...\|--owner <path>\|--all) [--force] [--include-system] [--dry-run] [--json]` | Takes out only axiom's own change; `--all` leaves the system's own choices (`--include-system`) and inferred rows (`--force`) |
 
 ```bash
 # a weekly buy of 0.01 BTC, kept in the portfolio

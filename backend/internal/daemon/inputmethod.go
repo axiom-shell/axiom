@@ -22,7 +22,8 @@ func (d *Daemon) newInputMethod() {
 			return dbus.Dial(ctx, addr, dbus.Options{Log: log})
 		},
 		Getenv:    d.opts.Getenv,
-		GSettings: gsettings,
+		GSettings: d.gsettings(),
+		Ledger:    d.footprint,
 		OnChange: func(st inputmethod.State) {
 			if d.server != nil {
 				pushInputMethodState.Send(d.server, st, subscribedTo(topicInputMethod))
@@ -50,6 +51,8 @@ func (d *Daemon) inputMethodMethods(reg *rpc.Registry) {
 		// The list's default xkb layout (fcitx5's group's; ibus has none)
 		DefaultLayout string             `json:"defaultLayout"`
 		Items         []inputmethod.Item `json:"items"`
+		// The setting that asks (the footprint rows' owner)
+		Owner string `json:"owner,omitempty"`
 	}
 	// Only the shell changes what the framework keeps: it owns the list
 	// (Input.keyboard.sources) and the settings
@@ -69,7 +72,7 @@ func (d *Daemon) inputMethodMethods(reg *rpc.Registry) {
 		if err := refuse(c); err != nil {
 			return struct{}{}, err
 		}
-		return struct{}{}, d.inputMethod.Push(ctx, p.DefaultLayout, p.Items)
+		return struct{}{}, d.inputMethod.Push(ctx, p.DefaultLayout, p.Items, p.Owner)
 	})
 	rpc.Handle(reg, "inputMethod.options", func(ctx context.Context, c *rpc.Conn, p inputmethod.Settings) (struct{}, error) {
 		if err := refuse(c); err != nil {

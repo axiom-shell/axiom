@@ -14,7 +14,7 @@ properties:
     minimum: 50
     maximum: 200
     x-unit: '%'
-    description: Relative to the font size at 26 px thickness; scales with thickness.
+    description: Scales with thickness.
   widgetRadius:
     x-group: Size
     type: integer
@@ -24,7 +24,7 @@ properties:
     minimum: 0
     maximum: 50
     x-unit: px
-    x-inherit: Interface.radius
+    x-inherit: Appearance.shape.innerRadius
   widgetStyle:
     x-group: Look
     type: string
@@ -65,7 +65,6 @@ properties:
   tintOpacity:
     x-group: Look
     type: integer
-    x-control: slider
     title: Tint strength
     default: 20
     minimum: 5
@@ -135,8 +134,10 @@ properties:
     type: string
     title: Line side
     default: inner
+    x-control: toggle
     enum: [inner, outer]
-    x-enumLabels: {inner: Toward the windows, outer: Toward the screen edge}
+    x-enumLabels: {inner: Inner, outer: Outer}
+    description: 'Inner: toward the windows.'
     x-beside: true
     x-showIf: {widgetStyle: underline}
   widgetShape:
@@ -184,13 +185,19 @@ properties:
     x-group: Look
     x-placeUnder: widgetShape
     type: string
-    title: Tab sides
+    title: Tab corners
     default: square
     x-control: tiles
     enum: [square, flared]
     x-enumLabels: {square: Square, flared: Flared}
-    x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetShape: tab}
-    description: Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.
+    x-showIf:
+      widgetStyle: [filled, tinted, outline, split]
+      widgetShape: tab
+      anyOf:
+        - {widgetStyle: {not: split}}
+        - {splitIcon: joined}
+        - {widgetGrouping: merged}
+    description: 'Flared: curves out into the edge.'
     x-link: {page: 'BarEditor:widgetGap'}
   widgetEnds:
     x-group: Look
@@ -226,7 +233,7 @@ properties:
     x-options: colors
     default: accent
     x-showIf: {widgetStyle: outline, widgetGrouping: merged, gradient: false}
-    description: The line round each merged run. Widget colors show on their icons instead.
+    description: Widget colors show on their icons instead.
   widgetTextColor:
     x-group: Colors
     type: string
@@ -234,14 +241,14 @@ properties:
     x-options: colors
     x-emptyLabel: Auto
     default: ''
-    description: One color for every widget's text and icons. Auto picks one per widget.
+    description: One color for all widgets' text and icons.
   gradient:
     x-group: Colors
     type: boolean
     title: Gradient
     default: false
     x-showIf: {widgetStyle: {not: plain}}
-    description: One gradient along the whole bar, each widget showing its part. It takes the place of Auto widget colors; a color set on a widget, and state colors, stay.
+    description: One gradient along the bar, each widget showing its part. Replaces Auto widget colors.
   gradientFrom:
     x-group: Colors
     type: string
@@ -265,7 +272,7 @@ properties:
     x-emptyLabel: None
     default: ''
     x-showIf: {widgetStyle: {not: plain}, gradient: true}
-    description: A color it passes through halfway along the bar.
+    description: Passes through this halfway.
   separatorStyle:
     x-group: Accents
     type: string
@@ -274,7 +281,7 @@ properties:
     default: none
     enum: [none, line, dot, slash, chevron]
     x-enumLabels: {none: None, line: Line, dot: Dot, slash: Slash, chevron: Chevron}
-    description: Drawn between neighbouring widgets.
+    description: Drawn between widgets.
     x-showIf:
       anyOf:
         - {widgetGrouping: {not: powerline}}
@@ -311,7 +318,7 @@ properties:
     x-group: Accents
     type: integer
     x-control: stepper
-    title: Separator margin
+    title: Separator gap
     default: 2
     minimum: 0
     maximum: 24
@@ -330,8 +337,7 @@ properties:
     default: none
     x-control: toggle
     enum: [none, inner, outer]
-    x-enumLabels: {none: None, inner: Inner edge, outer: Outer edge}
-    description: A line along the bar's inner or outer edge.
+    x-enumLabels: {none: None, inner: Inner, outer: Outer}
   accentLineColor:
     x-group: Accents
     type: string
@@ -348,7 +354,6 @@ properties:
     default: ''
     x-beside: true
     x-showIf: {accentLine: {not: none}}
-    description: Fades the line into this color along the bar.
   accentLineWidth:
     x-group: Accents
     type: integer
@@ -372,7 +377,7 @@ properties:
       color:
         x-group: Shadow
         type: string
-        title: Shadow color
+        title: Color
         x-options: colors
         x-emptyLabel: Auto
         default: ''
@@ -382,7 +387,7 @@ properties:
         x-group: Shadow
         type: integer
         x-control: stepper
-        title: Shadow size
+        title: Size
         default: 12
         minimum: 2
         maximum: 64

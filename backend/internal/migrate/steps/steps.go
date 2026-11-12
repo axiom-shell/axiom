@@ -218,14 +218,29 @@ var all = []Step{
 	// corners, Button widgets) menu; a free menu's freeAnimation became its
 	// animation (v104.go)
 	{Version: 104, Run: v104},
-	// v105: sway's "workspace of their own" mode for special workspaces
-	// went: Compositor.sway.specialWorkspaces is dropped
-	{Version: 105, Run: func(cfg *jsonx.Object) []string {
-		sway := object(cfg, "Compositor", "sway")
-		if sway == nil || !sway.Delete("specialWorkspaces") {
+	// v105: the config audit's renames and moves (bar location → edge,
+	// Updates' interval → Updates.interval, Interface.radius → Appearance
+	// shape's innerRadius, WindowLook.surfaceBlur → Appearance.surface.blur,
+	// the Workspaces head gone, OSD pick lists → shows, …), and values
+	// rounded to the steps they now take (v105.go)
+	{Version: 105, Run: v105},
+	// v106: the per-widget colorText option went: a bar widget's
+	// appearance.colorText and a custom widget's bar.colorText dropped
+	// (v106.go)
+	{Version: 106, Run: v106},
+	// v107: sway's "workspace of their own" mode for special workspaces
+	// went: Workspaces.specialWorkspaces is dropped when it is the old
+	// string (a later step reuses the key for a list)
+	{Version: 107, Run: func(cfg *jsonx.Object) []string {
+		ws := object(cfg, "Workspaces")
+		if ws == nil {
 			return nil
 		}
-		return []string{"Compositor.sway.specialWorkspaces removed"}
+		if _, isString := ws.Value("specialWorkspaces").(string); !isString {
+			return nil
+		}
+		ws.Delete("specialWorkspaces")
+		return []string{"Workspaces.specialWorkspaces removed (sway now always uses the scratchpad)"}
 	}},
 }
 

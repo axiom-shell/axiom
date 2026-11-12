@@ -137,10 +137,17 @@ Scope {
       // Hyprland's layer rules no longer blur it)
       Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
         BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(overlayWindow.modelData) ? overviewBlur : null)
-      BoxBlurRegion {
+      Region {
         id: overviewBlur
-        target: overview
-        opacity: content.opacity
+
+        BoxBlurRegion {
+          target: overview.gridBox
+          opacity: content.opacity
+        }
+        BoxBlurRegion {
+          target: overview.scratchBox
+          opacity: content.opacity
+        }
       }
 
       Item {
@@ -151,6 +158,12 @@ Scope {
 
         Glide on opacity {
           duration: Appearance.animNormal
+        }
+
+        Keys.onPressed: event => {
+          // Keys with a modifier are not ours (a keypad's digits carry one)
+          if ((event.modifiers & ~Qt.KeypadModifier) === 0 && overview.handleKey(event.key))
+            event.accepted = true;
         }
 
         Keys.onEscapePressed: {
@@ -179,15 +192,26 @@ Scope {
           onCloseRequested: root.overlayVisible = false
         }
 
-        StyledText {
+        Column {
           id: hint
           visible: WorkspaceOverlayConfig.showHint
           anchors.top: overview.bottom
           anchors.topMargin: Widget.spacing
           anchors.horizontalCenter: parent.horizontalCenter
-          text: I18n.tr("Click to go · Drag to move · Right-drag to resize · Middle-click to close")
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-1)
+
+          StyledText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: I18n.tr("Click to go · Drag to move · Right-drag to resize · Middle-click to close")
+            textColor: Theme.foregroundAlt
+            textSize: Appearance.fontSizeBy(-1)
+          }
+
+          StyledText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: I18n.tr("Arrows to select · Enter to go · 1-9 to jump to a workspace")
+            textColor: Theme.foregroundAlt
+            textSize: Appearance.fontSizeBy(-1)
+          }
         }
       }
     }

@@ -13,10 +13,15 @@ TestCase {
     const sway = ScreenShareSources.hookupTargets("sway", "/usr/bin/axiom");
     compare(sway[0].section, "screencast");
     compare(sway[0].text, "chooser_type = dmenu\nchooser_cmd = '/usr/bin/axiom' screenshare-pick --for xdpw");
-    const niri = ScreenShareSources.hookupTargets("niri", "/usr/bin/axiom");
-    compare(niri[0].section, "preferred");
-    compare(niri[0].text, "org.freedesktop.impl.portal.ScreenCast=axiom");
+    // niri has no hookup: the daemon adds its portal line while axiom runs
+    compare(ScreenShareSources.hookupTargets("niri", "/usr/bin/axiom"), []);
     compare(ScreenShareSources.hookupTargets("", "/usr/bin/axiom"), []);
+  }
+
+  function test_busNames() {
+    compare(ScreenShareSources.portal("hyprland").busName, "org.freedesktop.impl.portal.desktop.hyprland");
+    compare(ScreenShareSources.portal("sway").busName, "org.freedesktop.impl.portal.desktop.wlr");
+    compare(ScreenShareSources.portal("niri").busName, "org.freedesktop.impl.portal.desktop.gnome");
   }
 
   function test_portal() {

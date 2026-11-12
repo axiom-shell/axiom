@@ -338,8 +338,9 @@ func TestHyprExampleConfigMovesCompletelyOntoAxiomActions(t *testing.T) {
 	eq(t, got["XF86AudioRaiseVolume"].Value("repeating"), true)
 	done := f.remove(found.Value("sites"))
 	eq(t, js(done.Value("failed")), "[]")
-	text := f.read("00-previous.lua")
+	text := live(f.read("00-previous.lua"))
 	eq(t, strings.Contains(text, "hl.bind("), false)
+	eq(t, strings.Contains(f.read("00-previous.lua"), hyprMark+"hl.bind("), true)
 	eq(t, strings.Contains(text, "hl.window_rule("), true)
 	backups, _ := filepath.Glob(f.user("*.axiom-backup-*"))
 	eq(t, len(backups), 1)
@@ -406,7 +407,7 @@ func TestHyprWhatCantMoveStays(t *testing.T) {
 	}
 	eq(t, strings.Join(reasons, ", "), "SUPER + A function, SUPER + B options, SUPER + C used, SUPER + D notOnly, SUPER + E notOnly, SUPER + F function, SUPER + G function")
 	f.remove(found.Value("sites"))
-	text := f.read("binds.lua")
+	text := live(f.read("binds.lua"))
 	eq(t, strings.Contains(text, "SUPER + H"), false)
 	eq(t, strings.Contains(text, "SUPER + C"), true)
 }
@@ -420,7 +421,7 @@ func TestHyprUnbindOfAMovedKeyGoesToo(t *testing.T) {
 	found := f.extract()
 	eq(t, len(list(found, "sites")), 2)
 	f.remove(found.Value("sites"))
-	eq(t, f.read("binds.lua"), "hl.unbind(\"SUPER + W\")\n")
+	eq(t, f.read("binds.lua"), hyprMark+"hl.unbind(\"WIN + q\")\n"+hyprMark+"hl.bind(\"SUPER + Q\", hl.dsp.exec_cmd(\"foot\"))\nhl.unbind(\"SUPER + W\")\n")
 }
 
 // A moved key's hl.unbind and its bind go together or stay together, in
@@ -443,8 +444,8 @@ func TestHyprUnbindAndItsBindStayTogether(t *testing.T) {
 			"binds.lua": "binds.lua:1 changed, unbinds.lua:1 paired"}[changed]
 		eq(t, strings.Join(failed, ", "), want)
 		eq(t, js(done.Value("removed")), "1")
-		eq(t, strings.Contains(f.read("binds.lua"), "SUPER + W"), false)
-		eq(t, strings.Contains(f.read("unbinds.lua"), "hl.unbind"), true)
+		eq(t, strings.Contains(live(f.read("binds.lua")), "SUPER + W"), false)
+		eq(t, strings.Contains(live(f.read("unbinds.lua")), "hl.unbind"), true)
 	}
 }
 
@@ -484,7 +485,8 @@ func TestHyprMultilineCallAndTrailingComment(t *testing.T) {
 	found := f.extract()
 	eq(t, list(found, "binds")[0].Value("locked"), true)
 	f.remove(found.Value("sites"))
-	eq(t, f.read("binds.lua"), "hl.env(\"A\", \"b\")\n")
+	eq(t, f.read("binds.lua"), hyprMark+"hl.bind(\n"+hyprMark+"  \"SUPER + Q\",\n"+hyprMark+"  hl.dsp.exec_cmd(\"a )\"), -- (\n"+
+		hyprMark+"  { locked = true }\n"+hyprMark+") -- done\nhl.env(\"A\", \"b\")\n")
 }
 
 func TestHyprSharedModulesAreLeftAlone(t *testing.T) {
@@ -631,7 +633,7 @@ func TestHyprRemoveTakesAStatementWithAnInvalidByte(t *testing.T) {
 	f.write("binds.lua", "hl.bind(\"SUPER + Y\", hl.dsp.window.close()) -- \xff\n")
 	done := f.remove(f.extract().Value("sites"))
 	eq(t, js(done.Value("failed"))+js(done.Value("removed")), "[]1")
-	eq(t, f.read("binds.lua"), "")
+	eq(t, f.read("binds.lua"), hyprMark+"hl.bind(\"SUPER + Y\", hl.dsp.window.close()) -- \xff\n")
 }
 
 // A helper's hl.bind stays: it also makes binds extract never sees (in a
@@ -659,7 +661,7 @@ func TestHyprABindMadeInAFunctionStays(t *testing.T) {
 	eq(t, strings.Join(kept, ", "), "SUPER + A inFunction")
 	eq(t, len(list(found, "binds")), 2)
 	f.remove(found.Value("sites"))
-	text := f.read("binds.lua")
+	text := live(f.read("binds.lua"))
 	eq(t, strings.Contains(text, "hl.bind(k, hl.dsp.exec_cmd(c))"), true)
 	eq(t, strings.Contains(text, "window.close"), false)
 }
@@ -855,4 +857,67 @@ func TestAnUnwritableFileFailsAlone(t *testing.T) {
 	done = f.remove(found.Value("sites"))
 	// Neither file can be replaced in a read-only user/: both fail, alone
 	eq(t, len(list(done, "failed")), 2)
+}
+
+// live is text without the lines a merge commented out
+func live(text string) string {
+	var out []string
+	for _, l := range splitKeepEnds(text) {
+		if !strings.HasPrefix(l, hyprMark) {
+			out = append(out, l)
+		}
+	}
+	return strings.Join(out, "")
+}
+
+func TestHyprRemoveMarksEveryLineOfAMultilineCall(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", "hl.bind(\"SUPER + Q\", hl.dsp.exec_cmd([[\nfoo\n]]))\nhl.env(\"A\", \"b\")\n")
+	done := f.remove(f.extract().Value("sites"))
+	eq(t, js(done.Value("failed")), "[]")
+	for _, l := range strings.Split(strings.TrimSuffix(f.read("binds.lua"), "hl.env(\"A\", \"b\")\n"), "\n")[:3] {
+		eq(t, strings.HasPrefix(l, hyprMark), true)
+	}
+	eq(t, strings.HasSuffix(f.read("binds.lua"), "\nhl.env(\"A\", \"b\")\n"), true)
+}
+
+func TestHyprMarkedBindIsNotExtractedAgain(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", "hl.bind(\"SUPER + Q\", hl.dsp.exec_cmd(\"foot\"))\n")
+	f.remove(f.extract().Value("sites"))
+	again := f.extract()
+	eq(t, js(again.Value("binds")), "[]")
+	eq(t, js(again.Value("sites")), "[]")
+}
+
+// UnmarkMoved gives back what removing marked, byte for byte
+func TestUnmarkMovedUndoesRemove(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ kind, name, text string }{
+		{"sway", "a.conf", "set $m Mod4\nbindsym Mod4+q kill\nbindsym Mod4+w exec foot\n"},
+		{"niri", "a.kdl", "binds {\n    Mod+Q { close-window; }\n    Mod+W { spawn \"a\"; } Mod+E { spawn \"b\"; }\n}\n"},
+		{"hyprland", "a.lua", "hl.bind(\"SUPER + Q\", hl.dsp.window.close())\r\nhl.bind(\"SUPER + W\", hl.dsp.exec_cmd([[\r\nfoo\r\n]]))\r\nhl.env(\"A\", \"b\")\r\n"},
+	} {
+		f := newFx(t, c.kind)
+		f.write(c.name, c.text)
+		done := f.remove(f.extract().Value("sites"))
+		eq(t, js(done.Value("failed")), "[]")
+		marked := f.read(c.name)
+		eq(t, marked != c.text, true)
+		eq(t, UnmarkMoved(c.kind, marked), c.text)
+	}
+}
+
+func TestUnmarkMovedLeavesOtherComments(t *testing.T) {
+	t.Parallel()
+	for kind, text := range map[string]string{
+		"sway":     "# a comment\n#(moved into axiom)\nbindsym Mod4+q kill\n",
+		"niri":     "// a comment\n/* other */ binds {}\n",
+		"hyprland": "-- a comment\n--[[ long ]]\nhl.env(\"A\", \"b\")\n",
+		"other":    "# (moved into axiom) x\n",
+	} {
+		eq(t, UnmarkMoved(kind, text), text)
+	}
 }

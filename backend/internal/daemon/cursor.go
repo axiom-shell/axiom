@@ -23,12 +23,14 @@ func (d *Daemon) cursorPart() part {
 type CursorThemeRequest struct {
 	Theme string `json:"theme"`
 	Size  int    `json:"size"`
+	// Owner is the setting that asks (the footprint rows' owner)
+	Owner string `json:"owner,omitempty"`
 }
 
 func (d *Daemon) cursorMethods(reg *rpc.Registry) {
-	r := cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: gsettings})
+	r := cursortheme.New(cursortheme.Options{Getenv: d.opts.Getenv, GSettings: d.gsettings(), Ledger: d.footprint})
 	rpc.Handle(reg, "cursor.theme", func(ctx context.Context, c *rpc.Conn, p CursorThemeRequest) (cursortheme.Result, error) {
-		return r.Resolve(ctx, p.Theme, p.Size)
+		return r.Resolve(ctx, p.Theme, p.Size, p.Owner)
 	})
 }
 

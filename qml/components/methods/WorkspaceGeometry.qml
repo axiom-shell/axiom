@@ -2,20 +2,125 @@ pragma Singleton
 
 import QtQuick
 
-// Pure geometry for the workspace overview: a cols×rows board of monitor
-// miniatures. Grid coordinates have (0, 0) at the first cell's corner; rects
-// are { x, y, w, h } (actions live in CompositorManager).
+// Pure geometry for the workspace overview: a cols×rows board of miniatures
+// of each monitor's usable area (the monitor less its bars' reserved
+// edges). Grid coordinates have (0, 0) at the first cell's corner; rects are
+// { x, y, w, h } (actions live in CompositorManager).
 QtObject {
   id: root
 
+  // A box's padding: `base`, or more when an inner corner of radius `inner`
+  // would come within `margin` px of the box's corner arc of radius `outer`
+  // (the strokes and some air)
+  // (a corner circle inside an arc needs (R - r)(1 - 1/sqrt2) of padding).
+  function boxPad(base, outer, inner, margin) {
+    const need = (outer - inner) * (1 - Math.SQRT1_2) + margin;
+    return Math.max(base, outer > inner ? need : 0);
+  }
+
   // The largest scale at which cols×rows monitors of monW×monH, `gap` apart,
-  // fit in availW×availH
-  function fitScale(availW, availH, monW, monH, gap, cols, rows) {
+  // fit in availW×availH. With `side` > 0 there is also a column of one more
+  // cell's width right of them, `side` px from the grid (the scratchpads'
+  // box, its padding and the room between the boxes), inside the same width;
+  // missing or ≤ 0 is the grid alone.
+  function fitScale(availW, availH, monW, monH, gap, cols, rows, side) {
     if (monW <= 0 || monH <= 0)
       return 0.1;
-    const sx = (availW - gap * (cols - 1)) / (monW * cols);
+    const extra = side > 0 ? 1 : 0;
+    const sx = (availW - gap * (cols - 1) - (side > 0 ? side : 0)) / (monW * (cols + extra));
     const sy = (availH - gap * (rows - 1)) / (monH * rows);
     return Math.max(0.01, Math.min(sx, sy));
+  }
+
+  // The cell a digit key (1-based) reaches on a board of `count` cells in
+  // reading order: n's index, or -1 when there is no n-th cell
+  function digitCell(n, count) {
+    return n >= 1 && n <= count ? n - 1 : -1;
+  }
+
+  // The scratchpads' column beside a cols×rows grid of cellW×cellH cells,
+  // `side` px from it: null for no cells, else { x, stackY, stackH,
+  // boardWidth, boardHeight, scale, rects } with one rect per cell, stacked
+  // and centred vertically on the grid's centre, each centred across the
+  // column. The cells shrink (0.01 ≤ scale < 1) to fit the grid's height,
+  // never the grid; none is under 1 px.
+  function scratchColumn(count, cellW, cellH, gap, cols, rows, side) {
+    if (!(count > 0))
+      return null;
+    const gridW = cols * cellW + (cols - 1) * gap;
+    const boardHeight = rows * cellH + (rows - 1) * gap;
+    const x = gridW + side;
+    const scale = Math.max(0.01, Math.min(1, (boardHeight - gap * (count - 1)) / (count * cellH)));
+    const w = Math.max(1, Math.floor(cellW * scale));
+    const h = Math.max(1, Math.floor(cellH * scale));
+    const stackH = count * h + (count - 1) * gap;
+    const stackY = Math.max(0, Math.round((boardHeight - stackH) / 2));
+    const rects = [];
+    for (let i = 0; i < count; i++)
+      rects.push({
+        x: x + Math.floor((cellW - w) / 2),
+        y: stackY + i * (h + gap),
+        w: w,
+        h: h
+      });
+    return {
+      x: x,
+      stackY: stackY,
+      stackH: stackH,
+      boardWidth: x + cellW,
+      boardHeight: boardHeight,
+      scale: scale,
+      rects: rects
+    };
+  }
+
+  // The index of the column's rect under a point, or -1 (a null column too)
+  function scratchCellAt(column, x, y) {
+    if (!column)
+      return -1;
+    return column.rects.findIndex(r => contains(r, x, y));
+  }
+
+  // A reserved edge's size: a missing or negative one is 0
+  function _reservedSide(v) {
+    return Math.max(0, v ?? 0);
+  }
+
+  // The usable part of a monitor's W×H, from its `reserved` edges (null or
+  // missing sides count as 0, a negative one too)
+  function usableRect(monitorW, monitorH, reserved) {
+    const left = _reservedSide(reserved?.left);
+    const top = _reservedSide(reserved?.top);
+    return {
+      x: left,
+      y: top,
+      w: Math.max(1, monitorW - left - _reservedSide(reserved?.right)),
+      h: Math.max(1, monitorH - top - _reservedSide(reserved?.bottom))
+    };
+  }
+
+  // The global origin of an output's usable area ({ x: 0, y: 0 } for none)
+  function usableOrigin(output) {
+    if (!output)
+      return {
+        x: 0,
+        y: 0
+      };
+    return {
+      x: (output.x ?? 0) + _reservedSide(output.reserved?.left),
+      y: (output.y ?? 0) + _reservedSide(output.reserved?.top)
+    };
+  }
+
+  // The full monitor's wallpaper inside a cell cropped to `usable` (from
+  // usableRect), at `scale`
+  function wallpaperRect(usable, monitorW, monitorH, scale) {
+    return {
+      x: -usable.x * scale,
+      y: -usable.y * scale,
+      w: monitorW * scale,
+      h: monitorH * scale
+    };
   }
 
   function cellRect(index, cellW, cellH, gap, cols) {
@@ -25,6 +130,40 @@ QtObject {
       w: cellW,
       h: cellH
     };
+  }
+
+  // The cell a key press moves the keyboard focus to: `index` in the board's
+  // cells (the `count` workspaces in `cols` columns, then `scratchCount`
+  // scratch cells in one column), `key` "left" | "right" | "up" | "down".
+  // Right of a grid row's last cell is the scratch cell at that row's height,
+  // and left of a scratch cell the grid's last cell at its. No wrap; an
+  // impossible step stays put.
+  function navigate(index, key, cols, count, scratchCount) {
+    const rows = Math.ceil(count / cols);
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    if (index < count) {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      if (key === "left")
+        return col > 0 ? index - 1 : index;
+      if (key === "up")
+        return row > 0 ? index - cols : index;
+      if (key === "down")
+        return index + cols < count ? index + cols : index;
+      if (col < cols - 1 && index + 1 < count)
+        return index + 1;
+      return scratchCount > 0 ? count + clamp(Math.floor((row + 0.5) * scratchCount / rows), 0, scratchCount - 1) : index;
+    }
+    const s = index - count;
+    if (key === "up")
+      return s > 0 ? index - 1 : index;
+    if (key === "down")
+      return s < scratchCount - 1 ? index + 1 : index;
+    if (key === "left" && count > 0) {
+      const row = clamp(Math.floor((s + 0.5) * rows / scratchCount), 0, rows - 1);
+      return Math.min(count - 1, row * cols + cols - 1);
+    }
+    return index;
   }
 
   // The cell index under a point, or -1 (gaps, outside the board, and the

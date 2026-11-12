@@ -1,12 +1,16 @@
 package manager
 
 import (
+	"bufio"
 	"context"
+	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -146,5 +150,178 @@ func TestNiriMaximizeRuleBeforeTheUsers(t *testing.T) {
 	}
 	if module == "" || strings.Contains(module, rule) {
 		t.Fatalf("detached module: missing, or has the rule after the user's config")
+	}
+}
+
+// fakeNiri answers every request on its socket with {"Ok":"Handled"},
+// sending what it was asked (one JSON line) on the returned channel
+func fakeNiri(t *testing.T) (string, <-chan string) {
+	t.Helper()
+	// Unix socket paths are short: t.TempDir can be too long
+	dir, err := os.MkdirTemp("", "axniri")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	path := filepath.Join(dir, "niri.sock")
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { l.Close() })
+	asked := make(chan string, 16)
+	go func() {
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				return
+			}
+			line, _ := bufio.NewReader(c).ReadString('\n')
+			asked <- strings.TrimSpace(line)
+			io.WriteString(c, `{"Ok":"Handled"}`+"\n")
+			c.Close()
+		}
+	}()
+	return path, asked
+}
+
+// niriWith is a niri writer for the detached module (its validator a stub
+// that accepts it), niri answered by fakeNiri, the saved wrapper flag as
+// given, its daemon carried or fresh
+func niriWith(t *testing.T, carried, flag bool) (*niriWriter, Inputs, <-chan string) {
+	t.Helper()
+	tables, schema := repo(t)
+	e := env2(tables, schema, func(k string) string {
+		return map[string]string{"HOME": "/nonexistent/home", "XDG_CONFIG_HOME": "/nonexistent/home/.config"}[k]
+	})
+	e.carried = carried
+	path, asked := fakeNiri(t)
+	w := newNiri(e, &ipc.Niri{Path: path})
+	dir := t.TempDir()
+	w.stateDir = dir + "/"
+	w.niri = filepath.Join(dir, "niri")
+	if err := os.WriteFile(w.niri, []byte("#!/bin/sh\ncat >/dev/null\nexit 0\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	w.state.NiriWrapper = flag
+	return w, goldenInputs(t, "niri"), asked
+}
+
+// sent is what's been asked so far, without waiting
+func sent(asked <-chan string) []string {
+	var out []string
+	for {
+		select {
+		case l := <-asked:
+			out = append(out, l)
+		default:
+			return out
+		}
+	}
+}
+
+// A daemon that isn't carried over loads the wrapper once, though the saved
+// flag says niri runs it: an earlier daemon's word
+func TestNiriFreshDaemonLoadsTheWrapperDespiteTheSavedFlag(t *testing.T) {
+	t.Parallel()
+	w, in, asked := niriWith(t, false, true)
+	w.runtimeApply(context.Background(), in, nil)
+	got := sent(asked)
+	if len(got) != 1 || !strings.Contains(got[0], "LoadConfigFile") || !strings.Contains(got[0], w.wrapperPath()) {
+		t.Fatalf("first apply sent %q, want one load of %s", got, w.wrapperPath())
+	}
+	w.runtimeApply(context.Background(), in, nil)
+	if got := sent(asked); len(got) != 0 {
+		t.Fatalf("second apply sent %q, want none", got)
+	}
+}
+
+func TestNiriCarriedDaemonTrustsTheSavedFlag(t *testing.T) {
+	t.Parallel()
+	w, in, asked := niriWith(t, true, true)
+	w.runtimeApply(context.Background(), in, nil)
+	if got := sent(asked); len(got) != 0 {
+		t.Fatalf("sent %q, want none", got)
+	}
+}
+
+// niri keeps its old config when it can't load the wrapper (and watches the
+// wrapper's path from then on: E2 of the container probe), so the flag stays
+// and the next apply loads it again
+func TestNiriFailedWrapperLoadRetriesOnTheNextApply(t *testing.T) {
+	t.Parallel()
+	w, in, asked := niriWith(t, false, false)
+	w.runtimeApply(context.Background(), in, nil)
+	sent(asked)
+	w.loadResult(true)
+	if !w.state.NiriWrapper {
+		t.Fatal("the wrapper flag was cleared: niri watches the wrapper's path after a failed load")
+	}
+	w.runtimeApply(context.Background(), in, nil)
+	if got := sent(asked); len(got) != 1 || !strings.Contains(got[0], w.wrapperPath()) {
+		t.Fatalf("the next apply sent %q, want the wrapper loaded again", got)
+	}
+}
+
+func TestNiriFailedLoadOfTheUsersConfigKeepsTheWrapperChecked(t *testing.T) {
+	t.Parallel()
+	w, _, asked := niriWith(t, true, true)
+	w.loadConfig(context.Background(), w.mainConfig, false)
+	sent(asked)
+	if w.pending != "main" {
+		t.Fatalf("pending = %q, want main", w.pending)
+	}
+	w.loadResult(true)
+	if !w.wrapperChecked {
+		t.Fatal("a failed load of the user's config cleared wrapperChecked")
+	}
+}
+
+// niri's ConfigLoaded events reach loadResult through the manager: a failed
+// one after a wrapper load is retried by the next apply, also as the
+// stream's first state; a successful initial one answers nothing
+func TestManagerConfigReloadedAnswersTheWrapperLoad(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name          string
+		r             ipc.Reload
+		checked       bool
+		pending, want string
+	}{
+		{"failed", ipc.Reload{Failed: true}, false, "", "retried"},
+		{"failed initial", ipc.Reload{Failed: true, Initial: true}, false, "", "retried"},
+		{"loaded initial", ipc.Reload{Initial: true}, true, "wrapper", "kept"},
+		{"loaded", ipc.Reload{}, true, "", "kept"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			w, in, asked := niriWith(t, false, false)
+			ctx := context.Background()
+			w.runtimeApply(ctx, in, nil)
+			sent(asked)
+			m := &Manager{w: w}
+			m.configReloaded(ctx, c.r)
+			if w.wrapperChecked != c.checked || w.pending != c.pending {
+				t.Fatalf("checked %v, pending %q; want %v, %q", w.wrapperChecked, w.pending, c.checked, c.pending)
+			}
+			w.runtimeApply(ctx, in, nil)
+			if got := len(sent(asked)); (got == 1) != (c.want == "retried") {
+				t.Fatalf("the next apply sent %d loads, want %s", got, c.want)
+			}
+		})
+	}
+}
+
+func TestNiriSuccessfulLoadClearsPending(t *testing.T) {
+	t.Parallel()
+	w, _, asked := niriWith(t, false, false)
+	w.loadConfig(context.Background(), w.wrapperPath(), true)
+	sent(asked)
+	if w.pending != "wrapper" || !w.wrapperChecked {
+		t.Fatalf("after the load: pending %q, checked %v", w.pending, w.wrapperChecked)
+	}
+	w.loadResult(false)
+	if w.pending != "" || !w.wrapperChecked || !w.state.NiriWrapper {
+		t.Fatalf("after the answer: pending %q, checked %v, flag %v", w.pending, w.wrapperChecked, w.state.NiriWrapper)
 	}
 }

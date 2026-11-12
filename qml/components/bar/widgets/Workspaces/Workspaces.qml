@@ -18,10 +18,10 @@ import qs.components.bar.look
 // (`segmented`), each in the bar's widget shape, chaining on in a powerline
 // and sitting in a merged run as widgets do (BarCells.cellShape). Without
 // a box the cells sit straight on the bar, each underlined itself for
-// underline. A head (`lead`: an icon, or the active workspace's label as
-// its cell shows it, or in the grid its row's dots: GridPositionHead)
-// before the cells, in their box, is its icon part on a split bar
-// (SplitLead); with no box (`segmented`) it sits on the bar all the same.
+// underline. A head (`leadIcon` outside a grid, or in the grid its row's
+// dots: GridPositionHead) before the cells, in their box, is its icon part
+// on a split bar (WidgetHead); with no box (`segmented`) it sits on the bar
+// all the same. Its colors are the core's (paint, CellLook).
 BarWidget {
   id: root
 
@@ -47,6 +47,12 @@ BarWidget {
       "reachEnd": 0,
       "tabLimits": [null, null]
     }) : null
+  // Where its active cell sits along the bar, for an Auto active color to
+  // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
+  // Not in a merged run: that's a strip of the gradient itself, which the
+  // cell would vanish into, so it keeps its own.
+  readonly property var _activeSpotOf: root.autoColors.activeColor?.gradient === true && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
+
   // How its cells draw on this bar, handed to its switcher, its rows and
   // strips: inside its box, in its place in the bar's run
   readonly property CellLook _cellLook: CellLook {
@@ -55,6 +61,8 @@ BarWidget {
     onBar: root.hitArea !== null
     run: root._run
     inset: root.inset
+    under: root.colors.textBack
+    spotOf: root._activeSpotOf
   }
   // Its cells fill on hover, each on its own
   fillsOnHover: false
@@ -76,41 +84,31 @@ BarWidget {
   splitAt: lead.splitAt
   splitPart: lead.splitPart
 
-  // The monitor's active workspace, as its cell shows it (no app icons):
-  // a label's icon or text, the compositor's name, else its number
   readonly property var _monitor: CompositorManager.outputFor(root.screen)
-  readonly property var _active: root.properties.lead === "active" ? activeContents.of(root._monitor?.activeWorkspaceId ?? -1, "", false) : null
-  CellContents {
-    id: activeContents
-    barConfig: root.barConfig
-    properties: root.properties
-    base: CompositorManager.workspaceBase(root._monitor?.name ?? "")
-    thickness: root.barConfig.thickness
-    restLength: root.barConfig.thickness
-  }
 
-  SplitLead {
+  WidgetHead {
     id: lead
     barConfig: root.barConfig
     start: root._start - root.inset + root.barConfig.innerPadding
-    icon: root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
-    text: !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
-    iconColor: root.colors.icon
+    icon: root._grid ? "" : root.properties.leadIcon
+    iconColor: root.paint.icon
+    textColor: root.paint.headText
     ownHead: positionHead.active ? positionHead : null
   }
 
-  // The grid's position head (`lead: position`): dots for the shown row
-  // (column on a vertical bar), else an arrow
-  readonly property bool _positionLead: properties.lead === "position" && CompositorManager.workspaceGrid
-  readonly property var _position: _positionLead ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
-  readonly property var _positionHead: _positionLead ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
+  // The grid's position head: dots for the shown row (column on a
+  // vertical bar), else an arrow
+  readonly property bool _grid: CompositorManager.workspaceGrid
+  readonly property var _position: _grid ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
+  readonly property var _positionHead: _grid ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
   Loader {
     id: positionHead
     active: root._positionHead !== null && root._positionHead.kind !== "none"
     sourceComponent: GridPositionHead {
       barConfig: root.barConfig
       properties: root.properties
-      color: root.colors.icon
+      color: root.paint.icon
+      dimColor: root.paint.muted("icon")
       vertical: root.isVertical
       line: root._position.line
       count: root._position.count
@@ -125,18 +123,11 @@ BarWidget {
     sourceComponent: CompositorManager.workspaceGrid ? gridStrip : strip
   }
 
-  // Where its active cell sits along the bar, for an Auto active color to
-  // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
-  // Not in a merged run: that's a strip of the gradient itself, which the
-  // cell would vanish into, so it keeps its own.
-  readonly property var _activeSpotOf: root.autoColors.activeColor === "accent" && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
-
   Component {
     id: strip
     WorkspaceStrip {
       screen: root.screen
       hitArea: root.hitArea
-      barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
       cellLook: root._cellLook
@@ -148,7 +139,6 @@ BarWidget {
     WorkspaceGridStrip {
       screen: root.screen
       hitArea: root.hitArea
-      barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
       cellLook: root._cellLook

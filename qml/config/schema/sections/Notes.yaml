@@ -6,12 +6,6 @@ title: Notes
 description: Notes are plain Markdown files, one per note, in folders of your own.
 additionalProperties: false
 properties:
-  directory:
-    type: string
-    title: Notes folder
-    x-control: folder
-    default: ''
-    description: An absolute path (~/ works). Empty uses ~/.local/share/axiom/notes.
   extensions:
     x-scope: personal
     type: array
@@ -22,11 +16,17 @@ properties:
   showHidden:
     x-scope: personal
     type: boolean
-    title: Show hidden files
+    title: Hidden files
     default: false
   confirmDelete:
     x-scope: personal
     type: boolean
-    title: Confirm before deleting
+    title: Confirm delete
     default: true
     description: Deleted notes go to the trash.
+  directory:
+    type: string
+    title: Folder
+    x-control: folder
+    default: ''
+    description: 'Empty: ~/.local/share/axiom/notes.'

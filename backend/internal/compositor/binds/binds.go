@@ -1,7 +1,8 @@
 // Package binds moves the binds in a managed compositor config's user/
 // files into axiom (docs/dev/hyprland/bind-merge.md): extract reads what
-// can move (as Keybinds.binds entries) and what stays and why; remove takes
-// the moved ones out of the files after a dated backup. Every compositor
+// can move (as Keybinds.binds entries) and what stays and why; remove
+// comments the moved ones out of the files after a dated backup (marks
+// UnmarkMoved takes out again, when the takeover is released). Every compositor
 // answers the same JSON, so the compositor manager drives any of them:
 //
 //	extract: { binds, sites, kept, remapped, tracked, errors }

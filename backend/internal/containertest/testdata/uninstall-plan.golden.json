@@ -1,0 +1,878 @@
+{
+  "answers": {
+    "keepConfig": true,
+    "keepSecrets": true,
+    "keepUserContent": true,
+    "restartPortal": true,
+    "restoreSystem": false,
+    "undoInferred": true
+  },
+  "plan": {
+    "actions": [
+      {
+        "kind": "managed",
+        "path": "$HOME/.config/sway/config",
+        "step": "managed",
+        "what": "Give back the config axiom manages"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat/themes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/themes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.cava",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.cava",
+        "path": "$HOME/.config/cava",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.cava",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.cava",
+        "path": "$HOME/.config/cava/colors",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.config/fcitx5",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.config/fcitx5/conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/themes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.helix",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.helix",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/themes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.k9s",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.k9s",
+        "path": "$HOME/.config/k9s",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.k9s",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.k9s",
+        "path": "$HOME/.config/k9s/skins",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.lazygit",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.lazygit",
+        "path": "$HOME/.config/lazygit",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim/lua",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.wezterm",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.wezterm",
+        "path": "$HOME/.config/wezterm",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.wezterm",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.wezterm",
+        "path": "$HOME/.config/wezterm/colors",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/flavors",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/flavors/axiom.yazi",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zathura",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.zathura",
+        "path": "$HOME/.config/zathura",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zed",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.zed",
+        "path": "$HOME/.config/zed",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zed",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.zed",
+        "path": "$HOME/.config/zed/themes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.qt",
+        "path": "$HOME/.local/share/color-schemes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "dir",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, Input.cursor.enabled",
+        "kind": "dir",
+        "owner": "Input.cursor.enabled",
+        "path": "$HOME/.local/share/icons",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, Input.cursor.enabled",
+        "kind": "dir",
+        "owner": "Input.cursor.enabled",
+        "path": "$HOME/.local/share/icons/axiom-cursor-whiteglass",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove the folder axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.alacritty",
+        "kind": "file",
+        "owner": "ThemeIntegrations.alacritty",
+        "path": "$HOME/.config/alacritty/axiom.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "kind": "file",
+        "owner": "ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat/themes/axiom.tmTheme",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "kind": "file",
+        "owner": "ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/themes/axiom.theme",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.cava",
+        "kind": "file",
+        "owner": "ThemeIntegrations.cava",
+        "path": "$HOME/.config/cava/colors/axiom.conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.cava",
+        "kind": "file",
+        "owner": "ThemeIntegrations.cava",
+        "path": "$HOME/.config/cava/config",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.foot",
+        "kind": "file",
+        "owner": "ThemeIntegrations.foot",
+        "path": "$HOME/.config/foot/axiom.ini",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "kind": "file",
+        "owner": "ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/themes/axiom",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "kind": "file",
+        "owner": "ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-3.0/axiom.css",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "kind": "file",
+        "owner": "ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-4.0/axiom.css",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.helix",
+        "kind": "file",
+        "owner": "ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/themes/axiom.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.k9s",
+        "kind": "file",
+        "owner": "ThemeIntegrations.k9s",
+        "path": "$HOME/.config/k9s/skins/axiom.yaml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.kitty",
+        "kind": "file",
+        "owner": "ThemeIntegrations.kitty",
+        "path": "$HOME/.config/kitty/axiom.conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.lazygit",
+        "kind": "file",
+        "owner": "ThemeIntegrations.lazygit",
+        "path": "$HOME/.config/lazygit/axiom.yml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.wezterm",
+        "kind": "file",
+        "owner": "ThemeIntegrations.wezterm",
+        "path": "$HOME/.config/wezterm/colors/axiom.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "kind": "file",
+        "owner": "ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/flavors/axiom.yazi/flavor.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zathura",
+        "kind": "file",
+        "owner": "ThemeIntegrations.zathura",
+        "path": "$HOME/.config/zathura/axiom",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zed",
+        "kind": "file",
+        "owner": "ThemeIntegrations.zed",
+        "path": "$HOME/.config/zed/themes/axiom.json",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "kind": "file",
+        "owner": "ThemeIntegrations.qt",
+        "path": "$HOME/.local/share/color-schemes/Axiom.colors",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/arrow.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/highlight.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/menu-highlight.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/next.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/panel.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/prev.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/radio.svg",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "file",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.local/share/fcitx5/themes/axiom/theme.conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Delete the file axiom made"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "kind": "gsetting",
+        "owner": "ThemeIntegrations.gtk",
+        "path": "org.gnome.desktop.interface color-scheme",
+        "status": "present",
+        "step": "ledger",
+        "what": "Put back the setting"
+      },
+      {
+        "detail": "present, Input.cursor.enabled",
+        "kind": "gsetting",
+        "owner": "Input.cursor.enabled",
+        "path": "org.gnome.desktop.interface cursor-theme",
+        "status": "present",
+        "step": "ledger",
+        "what": "Put back the setting"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "kind": "gsetting",
+        "owner": "ThemeIntegrations.gtk",
+        "path": "org.gnome.desktop.interface gtk-theme",
+        "status": "present",
+        "step": "ledger",
+        "what": "Put back the setting"
+      },
+      {
+        "detail": "present, ThemeIntegrations.lazygit",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.lazygit",
+        "path": "$HOME/.bashrc",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.alacritty",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.alacritty",
+        "path": "$HOME/.config/alacritty/alacritty.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.bat",
+        "path": "$HOME/.config/bat/config",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.btop",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.btop",
+        "path": "$HOME/.config/btop/btop.conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.fcitx5",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.fcitx5",
+        "path": "$HOME/.config/fcitx5/conf/classicui.conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.foot",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.foot",
+        "path": "$HOME/.config/foot/foot.ini",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ghostty",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.ghostty",
+        "path": "$HOME/.config/ghostty/config",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-3.0/gtk.css",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.gtk",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.gtk",
+        "path": "$HOME/.config/gtk-4.0/gtk.css",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.helix",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.helix",
+        "path": "$HOME/.config/helix/config.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.qt",
+        "path": "$HOME/.config/kdeglobals",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.kitty",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.kitty",
+        "path": "$HOME/.config/kitty/kitty.conf",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ncspot",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.ncspot",
+        "path": "$HOME/.config/ncspot/config.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.nvim",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.nvim",
+        "path": "$HOME/.config/nvim/lua/axiom_theme.lua",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ScreenSharing.enabled",
+        "kind": "hookup",
+        "owner": "ScreenSharing.enabled",
+        "path": "$HOME/.config/xdg-desktop-portal-wlr/config",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.yazi",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.yazi",
+        "path": "$HOME/.config/yazi/theme.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.zathura",
+        "kind": "hookup",
+        "owner": "ThemeIntegrations.zathura",
+        "path": "$HOME/.config/zathura/zathurarc",
+        "status": "present",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "detail": "present, ThemeIntegrations.qt",
+        "kind": "ini-groups",
+        "owner": "ThemeIntegrations.qt",
+        "path": "$HOME/.config/kdeglobals",
+        "status": "present",
+        "step": "ledger",
+        "what": "Put back the keys in"
+      },
+      {
+        "detail": "present, ThemeIntegrations.ncspot",
+        "kind": "marked-block",
+        "owner": "ThemeIntegrations.ncspot",
+        "path": "$HOME/.config/ncspot/config.toml",
+        "status": "present",
+        "step": "ledger",
+        "what": "Remove axiom's block from"
+      },
+      {
+        "asks": "RestoreSystem",
+        "detail": "present, DefaultApps",
+        "kind": "mimeapps",
+        "owner": "DefaultApps",
+        "path": "$HOME/.config/mimeapps.list [Default Applications/text/plain]",
+        "status": "present",
+        "step": "ledger",
+        "what": "Put back the default app"
+      },
+      {
+        "detail": "present, ThemeIntegrations.bat",
+        "kind": "rebuild",
+        "owner": "ThemeIntegrations.bat",
+        "path": "bat",
+        "status": "present",
+        "step": "ledger",
+        "what": "Rebuild once the files are out"
+      },
+      {
+        "asks": "UndoInferred",
+        "kind": "hookup",
+        "path": "$HOME/.config/hypr/hyprland.lua",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "asks": "UndoInferred",
+        "kind": "hookup",
+        "path": "$HOME/.config/niri/config.kdl",
+        "step": "ledger",
+        "what": "Take axiom's lines out of"
+      },
+      {
+        "path": "$DISPLAY",
+        "step": "session",
+        "what": "Undo what an unclean stop of axiom left (units, portal lines, processes)"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-bareditor.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-calendarpage.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-customwidgets.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-keybinds.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-settings.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-themes.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/xdg-desktop-portal/portals/axiom.portal",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
+        "path": "$HOME/.local/share/dbus-1/services/org.freedesktop.impl.portal.desktop.axiom.service",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "asks": "RestartPortal",
+        "kind": "portal",
+        "step": "portal",
+        "what": "Restart the screen-share portal (a share running ends)"
+      },
+      {
+        "asks": "KeepSecrets",
+        "count": 1,
+        "detail": "1",
+        "kind": "keyring",
+        "step": "secrets",
+        "what": "Remove axiom's items from the keyring"
+      },
+      {
+        "kind": "runtime",
+        "path": "$RUNTIME/axiom",
+        "step": "folders",
+        "what": "Delete the runtime files"
+      },
+      {
+        "asks": "KeepConfig",
+        "kind": "config",
+        "path": "$HOME/.config/axiom",
+        "step": "folders",
+        "what": "Delete the settings and saved setups"
+      },
+      {
+        "kind": "state",
+        "path": "$HOME/.local/state/axiom",
+        "step": "folders",
+        "what": "Delete the state (logs, dev builds, approvals; all of it without your settings kept)"
+      }
+    ],
+    "backups": [
+      "$HOME/.bashrc.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/alacritty/alacritty.toml.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/foot/foot.ini.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/gtk-3.0/gtk.css.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/gtk-4.0/gtk.css.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/hypr/hyprland.lua.bak-\u003cstamp\u003e",
+      "$HOME/.config/kdeglobals.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/kitty/kitty.conf.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/ncspot/config.toml.axiom-bak-\u003cstamp\u003e",
+      "$HOME/.config/niri/config.kdl.bak-\u003cstamp\u003e",
+      "$HOME/.config/sway/.axiom-claimed",
+      "$HOME/.config/sway/config.axiom-backup-\u003cstamp\u003e",
+      "$HOME/.config/sway/config.bak-\u003cstamp\u003e",
+      "$HOME/.config/sway/user/.backups",
+      "$HOME/.config/xdg-desktop-portal-wlr/config.axiom-bak-\u003cstamp\u003e"
+    ],
+    "counts": {
+      "inferred": 2,
+      "portal": true,
+      "secrets": 1,
+      "secretsFile": false,
+      "system": 1
+    },
+    "manual": [],
+    "running": [
+      "$DISPLAY"
+    ]
+  }
+}

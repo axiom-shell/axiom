@@ -184,6 +184,21 @@ TestCase {
     verify(BarShapes.contains(1, 1, 100, 30, "arrowIn", "arrowOut"));
     verify(BarShapes.contains(50, 15, 100, 30, "flat", "flat"));
     verify(!BarShapes.contains(50, 31, 100, 30, "flat", "flat"));
+    // Round caps, 100 by 30 (a half circle of radius 15): capsule and
+    // roundOut cut the corners (15 in at the top and bottom edge, 0 at the
+    // middle), roundIn bites the middle (15 in) and keeps the corners
+    for (const cap of ["capsule", "roundOut"]) {
+      verify(!BarShapes.contains(5, 0, 100, 30, cap, cap));
+      verify(BarShapes.contains(20, 0, 100, 30, cap, cap));
+      verify(BarShapes.contains(1, 15, 100, 30, cap, cap));
+      verify(!BarShapes.contains(95, 0, 100, 30, cap, cap));
+      verify(BarShapes.contains(99, 15, 100, 30, cap, cap));
+    }
+    verify(BarShapes.contains(1, 0, 100, 30, "roundIn", "roundIn"));
+    verify(!BarShapes.contains(10, 15, 100, 30, "roundIn", "roundIn"));
+    verify(BarShapes.contains(20, 15, 100, 30, "roundIn", "roundIn"));
+    verify(BarShapes.contains(99, 0, 100, 30, "roundIn", "roundIn"));
+    verify(!BarShapes.contains(90, 15, 100, 30, "roundIn", "roundIn"));
   }
 
   function test_divider_cap_matches_the_shape_or_is_chosen() {
@@ -216,6 +231,35 @@ TestCase {
     const tall = BarShapes.splitPart(true, 8, 20, 10, 15, 12);
     compare(tall.at, 33);
     compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 8, 12, 20]);
+  }
+
+  function test_following_cap() {
+    compare(BarShapes.followingCap("arrowOut"), "arrowIn");
+    compare(BarShapes.followingCap("slant"), "slant");
+    compare(BarShapes.followingCap("curve"), "curve");
+    compare(BarShapes.followingCap("flat"), "flat");
+  }
+
+  function test_icon_text_split() {
+    // hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom
+    const row = (a, b, c, d, e) => BarShapes.iconTextSplit(a, b, c, d, e);
+    // An icon and a label
+    verify(row(true, true, 0, false, 10));
+    // A ring before the icon, and a label
+    verify(row(true, true, 20, false, 10));
+    // Ticker or stacked after the icon, no text: the label part
+    verify(row(true, false, 20, true, 10));
+    verify(row(true, false, 30, true, 4));
+    // Icon only, text only
+    verify(!row(true, false, 0, false, 10));
+    verify(!row(false, true, 0, false, 10));
+    // An after-icon graphic and no icon
+    verify(!row(false, false, 20, true, 10));
+    // A graphic before the icon and nothing to set apart from it
+    verify(!row(true, false, 20, false, 10));
+    // No room for a split
+    verify(!row(true, true, 0, false, -1));
+    verify(!row(true, false, 20, true, -1));
   }
 
   function test_tab_caps_keep_no_room() {
@@ -432,28 +476,5 @@ TestCase {
       "capped": false
     }, "separate", false, 0, 1, 30, 20);
     compare([s.startCap, s.lead, s.trail], ["slant", 0, 0]);
-  }
-
-  // A press tints what shows of a widget, but its own part of a merged
-  // run (filled on hover) in the caps it has alone
-  function test_press_caps() {
-    const caps = {
-      "shownStart": "flat",
-      "endCap": "flat",
-      "levelStartCap": "round",
-      "levelEndCap": "round"
-    };
-    compare(BarShapes.pressCaps(caps, "merged", true), {
-      "start": "round",
-      "end": "round"
-    });
-    compare(BarShapes.pressCaps(caps, "merged", false), {
-      "start": "flat",
-      "end": "flat"
-    }, "the run's colors: what shows");
-    compare(BarShapes.pressCaps(caps, "powerline", true), {
-      "start": "flat",
-      "end": "flat"
-    }, "not merged: what shows");
   }
 }

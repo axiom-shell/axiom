@@ -6,9 +6,10 @@ actions: ['on', 'off']
 settings:
   look:
     type: string
-    title: Drawn as
+    title: Style
     default: switch
+    x-control: toggle
     enum: [switch, pill]
-    x-enumLabels: {switch: A switch beside the label, pill: A quick-settings pill}
-  label: {type: string, title: Label, default: '', description: Shown unless the label slot is bound.}
+    x-enumLabels: {switch: Switch, pill: Pill}
   icon: {type: string, x-control: icon, title: Icon, default: toggle_on, x-showIf: {look: pill}}
+  label: {type: string, title: Label, default: ''}

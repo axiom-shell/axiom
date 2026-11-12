@@ -14,14 +14,15 @@ import qs.components.bar.widgets.base
 // again, left click runs the click command. Its display style draws the
 // fullest account's percent (the first's with Accounts shown: first).
 // Drawn one box per account (Boxes: One per item), each box is this
-// widget showing its one account (`box`, its id), its name
+// widget showing its one account (`shownItems`), its name
 // before its percent.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   // One state per configured account, in the configured order, labelled as
   // configured
-  readonly property var rows: ClaudeUsageConfig.accounts.filter(a => root.box === "" || a.id === root.box).map(a => Object.assign({}, ClaudeUsageManager.stateFor(a.configDir) ?? {
+  items: ClaudeUsageConfig.accounts.map(a => a.id)
+  readonly property var rows: ClaudeUsageConfig.accounts.filter(a => root.shownItems.includes(a.id)).map(a => Object.assign({}, ClaudeUsageManager.stateFor(a.configDir) ?? {
       "status": "pending"
     }, {
       "label": a.label || a.configDir
@@ -32,7 +33,7 @@ ValueStyleWidget {
   }
   // Its initial among several accounts; in a box of its own, its name
   function abbreviation(row) {
-    if (root.box !== "")
+    if (root.ownBox)
       return row.label + " ";
     return rows.length > 1 ? String(row.label).charAt(0).toUpperCase() + " " : "";
   }
@@ -62,7 +63,7 @@ ValueStyleWidget {
   subtext: properties.metric === "weekly" ? I18n.tr("Weekly") : I18n.tr("Session")
 
   accentField: maxPercent >= properties.criticalThreshold ? "criticalColor" : maxPercent >= properties.warnThreshold ? "warnColor" : "backgroundColor"
-  dim: stale ? 0.6 : 1
+  muted: root.stale
 
   // Re-acquiring replaces the old request
   readonly property var usageRequest: ({

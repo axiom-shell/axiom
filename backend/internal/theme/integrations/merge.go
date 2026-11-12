@@ -171,6 +171,8 @@ func MergeKDE(scheme, kdeglobals []byte) []byte {
 		b.WriteString(line + "\n")
 	}
 	flush()
+	// Blank lines ending the file stay
+	blankLines()
 	for _, name := range order {
 		if present[name] {
 			continue

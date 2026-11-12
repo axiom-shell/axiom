@@ -1,6 +1,6 @@
 # Polkit agent
 
-> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatusCard.qml`
+> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatus.qml`
 > **Config:** `Polkit.*` (reader `PolkitConfig`)
 > **Related:** [Prompts](prompts.md), [Lockscreen](lockscreen.md) (shared password field), [Shell manager and targeting](../core/shell-manager-targeting.md), [Greeter install](greeter-install.md)
 
@@ -18,13 +18,13 @@ A session has one agent, and Quickshell never retries a failed registration. So:
 - **After 2 s:** if the agent is still unregistered, it looks for the agents `qml/components/methods/PolkitAgents` knows.
   - `PolkitAgents` is pure: process names, systemd user units, `processPattern`. The managed mode's autostart matches agent commands in Go against the same table (`Tables.IsAgentCommand`).
   - Matches are anchored to the executable, so a command whose argument names an agent is never killed.
-- **Stopping them:** `systemctl --user stop` for the active units, `pkill -f` for the rest.
+- **Stopping them** is the daemon's (`polkit.probe`, `polkit.stopOthers`, `daemon/polkit.go`'s `stopOthers`; the shell passes `PolkitAgents.processPattern` and the units): only this session's (`session.Scope`: the same `WAYLAND_DISPLAY`, runtime dir and bus; another session's agents are logged and left alone), the active units through `systemctl --user stop` when the session bus is the user manager's, then the processes with SIGTERM (up to 1 s). Each is recorded (the unit in the state record, the process's argv, environment and cwd in the runtime record) before it is stopped, so the same agent can be started again.
 - **Remaking:** it then remakes the agent after a 300 ms pause, even when it found no agent to stop (a stopped agent can hold the session for a moment after its kill). The old agent is deleted later, and a new one made before then doesn't register.
   - Deleting the agent deletes its listener, so the new one registers afresh.
   - At most 3 remakes; still unregistered, `status` is `blocked` and it warns `Could not register as the polkit agent`.
 - **After 15 s:** it looks again and stops any agent started after qs (`replaced`).
-- **Turned off:** the units it stopped start again.
-  - Those units and `replaced` are kept in a `PersistentProperties`, so a reload keeps them.
+- **Turned off:** `polkit.handBack`: the units start again and the agents are respawned with their recorded argv. The same happens when axiom quits and, from the guard or the next start's heal, after a crash ([session teardown](../backend/session-teardown.md)).
+  - `replaced` (display only: the names stopped) is kept in a `PersistentProperties`, so a reload keeps it; what to start again is the daemon's.
 - **Reloads:** a hot reload keeps the registration and the open request, because Quickshell hands the listener to the new generation.
   - It hands it over as it is: one that never registered stays unregistered and never retries, so the 2 s check remakes it in the new generation too.
 - The managed mode's autostart (`Session.autostart`) skips agent commands while this is on.
@@ -42,7 +42,7 @@ A session has one agent, and Quickshell never retries a failed registration. So:
 - **`SurfaceManager.modalWindows`:** it is registered there while shown, so a prompt over the overlay clears no focus grab. One case is the greeter's install started from Settings. Without a native grab (sway, niri) the grabbing surface stops asking for exclusive keyboard meanwhile (`SurfaceManager.modalShown`), or it would keep the keyboard from the prompt.
 - **The card:** with exclusive keyboard, on the picked screen (`General.screensNamed`).
 - **The field:** `reusable/PasswordEntry`, shared with the lock screen's `PasswordField`. It takes no keys for 400 ms after it opens.
-- Settings → Authentication prompts starts with `PolkitStatusCard`.
+- Settings → Authentication prompts is one card: `PolkitStatus` on top (its status chip in the header) over the switch.
 - Created from `qml/shell.qml`'s `_services`.
 
 ### Testing

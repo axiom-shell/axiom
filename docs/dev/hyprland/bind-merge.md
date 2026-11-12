@@ -51,13 +51,14 @@
 
 ### Committing and removing
 1. The daemon saves the binds first (`Keybinds.binds`, through the store; refused while the config is read-only, `saveFailed`). The `compositor.bindsMerged` push lets `KeybindEditor` add them to a dirty draft.
-2. `remove` then deletes those calls, plus any `hl.unbind` of a moved key, its modifiers compared by `render.KeyID` (WIN is SUPER; it would unbind the moved bind too).
+2. `remove` then comments those calls out, each line of them with `-- (moved into axiom) ` (sway's and niri's marks are `# (moved into axiom) ` and `/* (moved into axiom) */ /-`), plus any `hl.unbind` of a moved key, its modifiers compared by `render.KeyID` (WIN is SUPER; it would unbind the moved bind too).
    - A moved key's `hl.unbind` and its binds go together or stay together, in whichever files they are (`paired`): each site carries its `keys`, and every file is planned before any is written, so only a failed write can still split them.
    - It first writes a dated `<file>.axiom-backup-<date>` copy, keeping the file's mode.
    - A site carries its statement's text as extract read it: a call on that line now that differs (the file changed in between) is left (`changed`).
+   - The marks are what releasing the takeover takes out again (`binds.UnmarkMoved`: [managed takeover](managed-takeover.md#release)); the space after `--` keeps a line from opening a long comment, and a marked call is never extracted again.
    - It leaves a file alone if the result doesn't parse (`luacheck`: `luac -p` where it's installed, else gopher-lua).
-   - A file it can't read, back up or write is failed (`io`) and the others go on, so what was deleted is always known.
-3. Whatever it couldn't delete (`failed`, per file or per call) is taken back out.
+   - A file it can't read, back up or write is failed (`io`) and the others go on, so what was commented out is always known.
+3. Whatever it couldn't comment out (`failed`, per file or per call) is taken back out.
    - The binds are committed again as `mergeBinds(before, binds from the sites that went)`, so no key is bound twice.
    - Only the binds that went are sent to `bindsMerged`.
 

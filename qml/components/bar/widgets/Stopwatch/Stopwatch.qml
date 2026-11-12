@@ -13,7 +13,7 @@ import qs.components.bar.widgets.base
 // stopwatch), right click resets it, middle click marks a lap; hovering
 // opens both, to set a timer. Its display style draws the timer's
 // progress, or the stopwatch's way round the current minute.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   Component.onCompleted: StopwatchManager.acquire(root, 1000)
@@ -33,8 +33,8 @@ ValueStyleWidget {
   ratio: root.showsTimer ? StopwatchManager.timerProgress : root.showsStopwatch ? (StopwatchManager.elapsed % 60000) / 60000 : -1
   subtext: root.showsTimer ? I18n.tr("Timer") : root.showsStopwatch ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
   accentField: root.showsTimer ? "timerColor" : root.showsStopwatch ? "stopwatchColor" : "idleColor"
-  // Paused: faded
-  dim: (root.showsTimer || root.showsStopwatch) && !root.running ? 0.6 : 1
+  // Paused: muted
+  muted: (root.showsTimer || root.showsStopwatch) && !root.running
 
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton

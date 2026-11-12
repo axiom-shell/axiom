@@ -24,11 +24,11 @@ properties:
       scrolling: Scrolling (niri style)
     x-enumShowIf: {scrolling: {/$supports.strips: true, /$supports.stripsAlways: false}}
     default: perMonitor
-    description: 'Standard: shared by every monitor. Per monitor: each has its own. Grid: columns × rows per monitor. Scrolling: made as you fill them, on horizontal strips.'
+    description: 'Standard: one set for all monitors. Per monitor: each its own. Grid: columns × rows each. Scrolling: made as you fill them.'
   count:
     type: integer
     x-control: stepper
-    title: Workspaces
+    title: Count
     x-enabledIf: {/$supports.dynamicWorkspaces: false}
     x-disabledNote: false
     default: 10
@@ -80,7 +80,7 @@ properties:
     title: Strips
     x-showIf: {layout: {not: scrolling}, /$supports.strips: true, /$supports.stripsAlways: false}
     default: []
-    description: Monitors whose windows sit side by side on a scrolling strip instead of tiling.
+    description: Monitors whose windows sit side by side on a scrolling strip.
     items:
       type: object
       additionalProperties: false
@@ -89,15 +89,15 @@ properties:
         screen:
           $ref: '#/definitions/ScreenTarget'
           title: Monitor
-          description: Empty uses the primary monitor.
           x-properties:
             mode:
               x-scope: personal
               type: string
               title: Monitors
+              x-control: toggle
               enum: [primary, all, named]
               default: primary
-              x-enumLabels: {primary: Primary monitor, all: Every monitor, named: These monitors}
+              x-enumLabels: {primary: Primary, all: All, named: Named}
               x-link: {setting: General.screen}
             names:
               x-scope: machine
@@ -150,14 +150,14 @@ properties:
     title: Scratchpads
     x-showIf: {/$supports.namedSpecial: true}
     default: []
-    description: Your own icon and label for a special workspace (scratchpad), by its name. The workspace switcher finds them by itself; this only changes how they look, and adds one to its All list.
+    description: Own icon and label for a special workspace, by name. Also adds it to the switcher's All list.
     items:
       type: object
       additionalProperties: false
       x-order: [name, icon, text]
       properties:
         id: {$ref: '#/definitions/ItemId'}
-        name: {type: string, x-options: specialWorkspaces, title: Name, default: '', description: 'The name its bind uses: magic for Super + V. Lists the scratchpads that exist now and those your binds name.'}
-        icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: 'An icon (a Material Symbols name or a pasted glyph) and a text; which of them the cell shows is the scratchpad label setting.'}
+        name: {type: string, x-options: specialWorkspaces, title: Name, default: '', description: "Its bind's name, e.g. magic."}
+        icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: "An icon name or glyph, and text. The widget's Scratchpad labels picks which shows."}
         text: {type: string, title: Label, default: ''}
       required: [id]

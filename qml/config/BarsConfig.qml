@@ -7,192 +7,41 @@ import qs.components.methods
 // Reader for the Bars section and the bar look helpers: derived layout
 // values (enrichBarConfig), widget colors, look groups and autoColor fields.
 QtObject {
+  id: root
+
   // Adds derived orientation flags to a bar entry from the Bars section
-  // (whose keys are always filled in from the schema defaults). Laid out
+  // (whose keys are always filled in from the schema defaults), laid out
   // with the compositor's outer gaps (`gapsOut`: per edge name,
   // CompositorManager's) and the gaps an Automatic floating gap keeps
-  // (`floatGaps`: ScreenEdgeManager.floatGaps), which a floating bar's
-  // islands keep from the screen edges as windows do.
+  // (`floatGaps`: ScreenEdgeManager.floatGaps). BarEnrich.enrich does it.
   function enrichBarConfig(barConfig, gapsOut, floatGaps) {
-    const loc = ScreenEdge.fromConfig(barConfig.location);
-    // The bar is sized by its widgets, never the other way round, so no
-    // setting can leave them cut off
-    const thickness = barConfig.thickness;
-    // How much bigger than a 26 px bar it is: what's inside it scales so
-    const scale = thickness / BarsConfig.referenceThickness;
-    const edgePadding = barConfig.edgePadding;
-    const innerPadding = Math.round(barConfig.innerPadding * scale);
-    const innerGap = Math.round(barConfig.innerGap * scale);
-    // Its widget style, accents and shadow resolved (BarLook): its own
-    // style's, each key it leaves null the Bars section's
-    const look = BarLook.resolve(BarStyle.values, barConfig.style ?? {}, {
-      "thickness": thickness,
-      "innerPadding": innerPadding,
-      "innerGap": innerGap,
-      "radius": Widget.radius,
-      "far": loc === ScreenEdge.Right || loc === ScreenEdge.Bottom
-    });
-    // What it draws as: its surface (one bar, a pill per group, none) and
-    // whether that floats. With no surface it doesn't float.
-    const kind = BarsConfig.kindOf(barConfig);
-    const pills = kind === "pills";
-    const solid = kind === "solid";
-    // Floating bars are islands held off the edge: one along the bar, or
-    // one per group of widgets
-    const island = kind === "floating" || kind === "floatingPills";
-    // Every bar but a solid one sits inside the screen border
-    const insideBorder = !solid && Appearance.screenBorder;
-    // What covers the bar's own pixels: the outer edge of a bar inside the
-    // border lies on the border's stroke.
-    const outerCover = insideBorder ? Appearance.borderWidth : 0;
-    // Across: a full bar's extent, where its widgets start and how deep
-    // its pills reach (BarEnds.crossGeometry: pills and solid alike; an
-    // island's are its own, below)
-    const cross = BarEnds.crossGeometry(kind, thickness, edgePadding, BarsConfig.endsOptions({}, {}));
-    // A pill covers the screen border's stroke where it joins it
-    const overlap = Appearance.screenBorder ? Appearance.borderWidth : 0;
-    // A pill's free ends sit the padding and its stroke out from its
-    // widgets, as its far side does
-    const pillGap = edgePadding + Appearance.borderWidth;
-    // Laid out like a tiled window: an island sits its floating gap in
-    // from the border's stroke (or the bare screen edge), across the bar
-    // and from both its ends (Automatic, null: the compositor's gaps_out on
-    // its edge, as windows keep, or the screen margin with no backend; the
-    // ends take the same, so a gaps_out differing per side leaves them off
-    // the windows' edges), and holds the widgets and
-    // their padding inside a stroke. Windows keep gaps_out from it, as from
-    // a screen edge: gaps_in is only between windows.
-    const edge = ScreenEdge.name(loc);
-    const floatingGapAuto = barConfig.floatingGap === null;
-    const floatingGap = floatingGapAuto ? floatGaps[edge] ?? 0 : barConfig.floatingGap;
-    const islandStart = outerCover + floatingGap;
-    const islandDepth = Appearance.borderWidth + edgePadding + thickness + edgePadding + Appearance.borderWidth;
-    // An auto-hiding bar reserves nothing unless pinned (ScreenEdgeManager
-    // sets `pinned`; BarEnds zones it by reserveSpace || pinned)
-    const autoHiding = barConfig.autoHide !== "never";
-    const reserves = barConfig.reserveSpace && !autoHiding;
-    const borderShadowed = solid && Appearance.screenBorder && reserves;
-    // Between the widgets within a section: a powerline's touch, and
-    // dividers drawn between them take their own room and margins
-    const separators = look.separators;
-    const groupSpacing = look.grouping === "powerline" ? 0 : separators.style !== "none" ? BarLayout.dividerGap(separators.style, separators.thickness, thickness, separators.gap) : barConfig.widgetGap;
+    return BarEnrich.enrich(barConfig, gapsOut, floatGaps, root.enrichEnv());
+  }
 
-    const vertical = loc === ScreenEdge.Left || loc === ScreenEdge.Right;
-    const screen = General.outputs.find(s => s.name === barConfig.monitor) ?? null;
-    const bar = {
-      "id": barConfig.id,
-      // The config entry's id: a bar on every monitor has one per screen
-      "sourceId": barConfig.sourceId ?? barConfig.id,
-      "enabled": barConfig.enabled,
-      "monitor": barConfig.monitor,
-      // A pill bar is as thick as its pills, so the padding always fits
-      // and nothing is left between them and the windows
-      "extent": island ? islandStart + islandDepth : cross.extent,
-      "thickness": thickness,
-      "edgePadding": edgePadding,
-      // How far the widgets sit in from the bar's outer edge: an island's
-      // past its gap, stroke and padding, else BarEnds.crossGeometry's
-      // (centred in a solid or pill bar, past the padding with no surface)
-      "crossStart": island ? islandStart + Appearance.borderWidth + edgePadding : cross.crossStart,
-      // solid, pills, transparent (no surface), floating, floatingPills
-      "kind": kind,
-      "solid": solid,
-      "pills": pills,
-      "island": island,
-      "islandPills": kind === "floatingPills",
-      // Where islands start, in from the bar window's outer edge and both
-      // its ends, and the gap from their widgets to their ends
-      "islandStart": islandStart,
-      "floatingGap": island ? floatingGap : 0,
-      // Its floating gap is Automatic (the compositor's gaps_out)
-      "floatingGapAuto": floatingGapAuto,
-      "islandGap": Appearance.borderWidth + edgePadding,
-      "insideBorder": insideBorder,
-      // A solid bar's inner stroke is the border strip's; with the border
-      // off it draws its own, on its innermost pixels
-      "innerStroke": solid && !Appearance.screenBorder,
-      "overlap": overlap,
-      "pillGap": pillGap,
-      "pillDepth": cross.pillDepth,
-      "widgetGap": barConfig.widgetGap,
-      "groupSpacing": groupSpacing,
-      // Neighbouring groups closer than this share a pill (or an island)
-      "joinGap": Math.max(barConfig.widgetGap, groupSpacing),
-      // What's drawn inside the bar follows the bar, never the Widget
-      // section (that's for panels, popouts and controls): its text, icons
-      // and inner spacing scale with its thickness, as set at 26 px (its
-      // text scale of Appearance's font size there)
-      "innerPadding": innerPadding,
-      "innerGap": innerGap,
-      "fontSize": Math.round(Appearance.baseFontSize * scale * look.textScale / 100),
-      // Widget chips only, else the interior radius: pills and fillets keep
-      // Appearance's, to meet the border
-      "radius": look.radius,
-      // How its widgets are drawn: their style, shapes, runs, split, the
-      // gradient, separators and accent line (BarLook.resolve)
-      "look": look,
-      // The look's colors, resolved (BarWidgetStyle.palette)
-      "palette": BarWidgetStyle.palette(look, name => Theme.resolveColor(name), Theme.foreground, Theme.background),
-      // The gap a split widget keeps between its parts
-      // (BarShapes.splitRoom), -1 on other styles
-      "splitRoom": look.split ? look.split.room : -1,
-      // Cast by what the bar paints: a transparent one paints nothing. A
-      // solid bar reserving its edge under the border leaves it to the
-      // border, whose stroke is its inner edge (RoundedBorders)
-      "shadow": kind !== "transparent" && !borderShadowed && look.values.shadow,
-      "shadowColor": look.values.shadowColor,
-      "shadowSize": look.values.shadowSize,
-      // How far past the bar a shadow reaches (its blur and offset), which
-      // the bar window takes on its inner side
-      "shadowReach": kind !== "transparent" && !borderShadowed && look.values.shadow ? Math.ceil(look.values.shadowSize * 1.25) : 0,
-      "lockCenter": barConfig.lockCenter,
-      // never, always, whenCovered; what shows a hidden bar, and how long
-      "autoHide": barConfig.autoHide,
-      "autoHiding": autoHiding,
-      // Pinned shown by the `bar` IPC toggle: it then reserves its space
-      // (BarRevealManager; ScreenEdgeManager sets it)
-      "pinned": false,
-      "revealOnWorkspace": barConfig.revealOnWorkspace,
-      "revealOnActivity": barConfig.revealOnActivity,
-      "revealFor": barConfig.revealFor,
-      "timing": barConfig.timing,
-      "location": loc,
-      // As configured: never for an auto-hiding bar (what its stack slot
-      // and corners go by, so hiding, showing and pinning never move them)
-      "reserveSpace": reserves,
-      // Each Auto color picked for its place on this bar
-      "widgets": BarsConfig.withAutoColors(barConfig.widgets, look),
-      "vertical": vertical,
-      // Along its screen's shorter edge: of two bars of a kind meeting at a
-      // corner, it takes the corner (BarEnds)
-      "shortEdge": screen ? BarEnds.onShortEdge(vertical, screen.width, screen.height) : vertical,
-      "left": loc === ScreenEdge.Left,
-      "right": loc === ScreenEdge.Right,
-      "top": loc === ScreenEdge.Top,
-      "bottom": loc === ScreenEdge.Bottom
+  // What BarEnrich reads of the shell (its `env`)
+  function enrichEnv() {
+    return {
+      "barStyle": BarStyle.values,
+      "radius": Appearance.borderRadius,
+      "widgetRadius": Widget.radius,
+      "baseFontSize": Appearance.baseFontSize,
+      "borderWidth": Appearance.borderWidth,
+      "screenBorder": Appearance.screenBorder,
+      "screenMargin": Appearance.screenMargin,
+      "resolve": name => Theme.resolveColor(name),
+      "foreground": Theme.foreground,
+      "background": Theme.background,
+      "outputs": General.outputs,
+      "autoColorFields": root.autoColorFields,
+      "baseColorNames": Theme.baseColorNames,
+      "redForGains": MarketsConfig.redForGains
     };
-    // How much less than its extent it reserves alone on its edge
-    // (reserveTrim). Where it lies among the other bars on its edge, what
-    // it reserves there and what its ends meet depend on the other bars on
-    // its screen: ScreenEdgeManager.bars adds them (BarEnds.withEnds).
-    bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0);
-    // The one fillet radius its flared tabs share (BarTabs.tabFillet):
-    // within the gap between widgets and the room at its ends
-    look.shape.tabFillet = BarTabs.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, BarEnds.tabEndRoom(bar, Object.assign(BarsConfig.endsOptions(gapsOut, floatGaps), {
-      "radius": Appearance.borderRadius
-    })));
-    return bar;
   }
 
   // What a bar draws as, from its surface and floating: solid, pills,
-  // transparent (no surface: a bar with none never floats), floating or
-  // floatingPills
+  // transparent, floating or floatingPills (BarEnrich.kindOf)
   function kindOf(barConfig) {
-    if (barConfig.surface === "none")
-      return "transparent";
-    if (barConfig.surface === "pills")
-      return barConfig.floating ? "floatingPills" : "pills";
-    return barConfig.floating ? "floating" : "solid";
+    return BarEnrich.kindOf(barConfig);
   }
 
   // A bar window's layer namespace, whose rule's `order` decides where
@@ -207,50 +56,38 @@ QtObject {
   }
 
   // BarEnds' options, from Appearance, the compositor's gaps_out and the
-  // gaps an Automatic floating gap keeps (enrichBarConfig)
+  // gaps an Automatic floating gap keeps (BarEnrich.endsOptions)
   function endsOptions(gapsOut, floatGaps) {
-    return {
-      "border": Appearance.screenBorder,
-      "borderWidth": Appearance.borderWidth,
-      "margin": Appearance.screenMargin,
-      "gapsOut": gapsOut,
-      "floatGaps": floatGaps
-    };
+    return BarEnrich.endsOptions(gapsOut, floatGaps, root.enrichEnv());
   }
 
-  // What a bar widget draws in on its bar ({ fill, stroke, indicator,
-  // text, icon, iconFill, gradient }, see BarWidgetStyle): `accent` is
-  // its color for its state, `foregroundName` the text color it's
-  // configured with, `widget` what of the widget itself its look depends
-  // on (BarWidgetStyle.state's: splits, hovered, spot, auto; left out,
-  // none of it). In a merged run on a merged bar.
+  // What a bar widget draws in on its bar (BarWidgetStyle.widgetColors):
+  // `foregroundName` is the text color it's configured with.
   function widgetColors(barConfig, accent, foregroundName, widget) {
-    const palette = barConfig.palette;
-    return BarWidgetStyle.colors(barConfig.look, palette, BarWidgetStyle.state(palette, {
-      "splits": widget?.splits,
-      "hovered": widget?.hovered,
-      "spot": widget?.spot,
-      "auto": widget?.auto,
-      "group": barConfig.look.grouping === "merged"
-    }), accent, Theme.resolveColor(foregroundName));
+    return BarWidgetStyle.widgetColors(barConfig, accent, Theme.resolveColor(foregroundName), widget);
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
   // active/occupied/urgent/empty, `cell` what of the cell its look depends
-  // on (BarWidgetStyle.state's hovered and spot: where the middle of a cell whose
-  // color is Auto sits along the bar, for the bar's gradient to take its
-  // place; `solid`: a filled box whatever the bar's style, Workspaces'
-  // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
-  // popout, so in a merged run on a merged bar)
+  // on (BarWidgetStyle.state's hovered, spot, under, auto, muted
+  // and hover: where the middle of a cell whose color is Auto sits along
+  // the bar, for the bar's gradient to take its place, `auto` saying it
+  // gives way to it; `solid`: a filled
+  // box whatever the bar's style, Workspaces' `solidBoxes`; and `onBar`:
+  // drawn in its widget on the bar, not a popout, so in a merged run on a
+  // merged bar)
   function cellColors(barConfig, color, own, state, cell) {
     const palette = barConfig.palette;
     return BarWidgetStyle.cell(barConfig.look, palette, BarWidgetStyle.state(palette, {
       "hovered": cell?.hovered,
       "spot": cell?.spot,
-      "auto": (cell?.spot ?? -1) >= 0,
+      "auto": cell?.auto === true,
       "solid": cell?.solid,
+      "under": cell?.under,
+      "muted": cell?.muted,
+      "hover": cell?.hover,
       "group": cell?.onBar === true && barConfig.look.grouping === "merged"
     }), color, own, state);
   }
@@ -267,7 +104,7 @@ QtObject {
       "occupied": colors.occupiedColor,
       "empty": colors.emptyColor
     }[state];
-    return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state, Object.assign({}, cell, {
+    return BarsConfig.cellColors(barConfig, color, state === "empty" ? barConfig.palette.barText : colors.textColor, state, Object.assign({}, cell, {
       "solid": colors.solidBoxes === true
     }));
   }
@@ -286,10 +123,19 @@ QtObject {
     return barConfig.look.shape.name === "capsule" ? cell / 2 : Math.max(0, barConfig.radius - inset);
   }
 
-  // A Workspaces cell's box while hovered: its `hoverColor`, or for Auto
-  // (empty) the theme's highlight
-  function cellHoverColor(properties) {
-    return properties?.hoverColor ? Theme.resolveColor(properties.hoverColor) : Theme.backgroundHighlight;
+  // A Workspaces widget's colors from its options (`properties`), resolved:
+  // { activeColor, occupiedColor, urgentColor, emptyColor, textColor,
+  // hoverColor }, as workspaceCellColors takes them (hoverColor: a cell's
+  // hover box, null for Auto: the palette's cellHover, BarWidgetStyle.cell)
+  function workspaceColors(properties) {
+    return {
+      "activeColor": Theme.resolveColor(properties.activeColor),
+      "occupiedColor": Theme.resolveColor(properties.occupiedColor),
+      "urgentColor": Theme.resolveColor(properties.urgentColor),
+      "emptyColor": Theme.resolveColor(properties.emptyColor),
+      "textColor": Theme.resolveColor(properties.foregroundColor),
+      "hoverColor": properties.hoverColor ? Theme.resolveColor(properties.hoverColor) : null
+    };
   }
 
   // What a merged run of widgets draws its shared background in: with a
@@ -300,77 +146,22 @@ QtObject {
     return BarWidgetStyle.runColors(barConfig.look, barConfig.palette, spot);
   }
 
-  // A bar's widgets (by section) with each Auto color field (`x-autoColor`,
-  // left empty) set to the color BarAutoColors picks for it among its shown
-  // neighbours, seen against the bar or, filled and merged, the run
-  // (`look`'s autoContrast trait, BarLook), and those fields' roles as the
-  // widget's `autoColors`
+  // A bar's widgets with each Auto color field set to the color picked for
+  // it (BarEnrich.withAutoColors)
   function withAutoColors(widgets, look) {
-    const shown = [].concat(...BarsConfig.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
-            "section": section,
-            "index": index,
-            "widget": widget
-          })))).filter(entry => entry.widget.visible !== false);
-    const fields = shown.map(entry => {
-      const roles = BarsConfig.autoColorFields[entry.widget.type] ?? {};
-      const properties = entry.widget.properties ?? {};
-      return {
-        "roles": roles,
-        "set": Object.keys(roles).filter(key => properties[key]).reduce((set, key) => {
-          set[key] = Theme.resolveColor(properties[key]);
-          return set;
-        }, {})
-      };
-    });
-    const seen = look.traits.autoContrast;
-    const named = name => ({
-          "name": name,
-          "color": Theme.resolveColor(name)
-        });
-    const picks = BarAutoColors.assign(fields, {
-      "accents": Theme.baseColorNames.slice(8).map(named),
-      "neutrals": Theme.baseColorNames.slice(1, 5).map(named),
-      "warning": named("warning"),
-      "critical": named("error"),
-      "backdrop": seen.onRun ? Theme.resolveColor(look.group.color) : Theme.background,
-      // A fill need only show on the bar; otherwise the color is text or a stroke
-      "minContrast": seen.minContrast
-    });
-    const result = Object.assign({}, widgets);
-    shown.forEach((entry, n) => {
-      if (Object.keys(picks[n]).length === 0)
-        return;
-      if (result[entry.section] === widgets[entry.section])
-        result[entry.section] = widgets[entry.section].slice();
-      result[entry.section][entry.index] = Object.assign({}, entry.widget, {
-        "properties": Object.assign({}, entry.widget.properties, picks[n]),
-        // Which of its fields are Auto, by role ({ key: role }): only an
-        // Auto own color (`accent`) gives way to the bar's gradient
-        "autoColors": Object.keys(picks[n]).reduce((roles, key) => {
-          roles[key] = fields[n].roles[key];
-          return roles;
-        }, {})
-      });
-    });
-    return result;
+    return BarEnrich.withAutoColors(widgets, look, root.enrichEnv());
   }
 
   // The thickness a bar's inner sizes (text scale, inner padding and gap)
   // are set at: they scale with the bar's thickness from there
-  readonly property int referenceThickness: 26
+  readonly property int referenceThickness: BarEnrich.referenceThickness
 
   // The bar's sections, start to end
-  readonly property var sectionNames: ["left", "center", "right"]
-  // Each widget type's Auto color fields: { type: { key: role } }
-  readonly property var autoColorFields: (ConfigManager.configSchema?.definitions?.BarWidget?.oneOf ?? []).reduce((result, refObj) => {
-    const def = ConfigManager.configSchema.definitions[refObj.$ref.replace("#/definitions/", "")];
-    const properties = def?.properties?.properties?.properties ?? {};
-    result[def?.properties?.type?.const] = Object.keys(properties).filter(key => properties[key]["x-autoColor"]).reduce((roles, key) => {
-      roles[key] = properties[key]["x-autoColor"];
-      return roles;
-    }, {});
-    return result;
-  }, {})
+  readonly property var sectionNames: BarEnrich.sectionNames
+  // Each widget type's Auto color fields: { type: { key: { role, gradient } } }: its
+  // `x-autoColor` role, and whether it gives way to the bar's gradient
+  // while Auto (an `accent` always, else `x-autoGradient`)
+  readonly property var autoColorFields: BarEnrich.autoColorFields(ConfigManager.configSchema)
 
   // The color of a shadow: `shadowColor` as a bar's look or the BarStyle
   // section has it. Automatic is the accent.
@@ -388,19 +179,6 @@ QtObject {
     const color = shadowBaseColor(look);
     const a = Math.min(color.a, Appearance.shadowAlphaMax);
     return Qt.rgba(color.r * a, color.g * a, color.b * a, a);
-  }
-
-  // How much less than its extent a bar reserves, given Hyprland's
-  // gaps_out on its edge. A transparent bar has no inner edge to see:
-  // windows start where it would be, so the gap from the widgets to them
-  // (padding + gaps_out, taken off here) matches the gap to the screen
-  // edge. An inner accent line gives it one, on its innermost pixels:
-  // windows keep gaps_out from it, as from a solid bar's stroke or a
-  // floating bar's islands.
-  function reserveTrim(barConfig, gapsOut) {
-    if (barConfig.kind === "transparent" && barConfig.look.accentLine?.side !== "inner")
-      return gapsOut;
-    return 0;
   }
 
   // How much further than half a connector gap past a transparent bar's

@@ -53,6 +53,8 @@ func (s *scratch) resolver() *Resolver {
 	if s.gsettings != nil {
 		opts.GSettings = func(_ context.Context, args ...string) (string, error) {
 			switch args[0] {
+			case "list-schemas":
+				return "", nil
 			case "get":
 				v, ok := s.gsettings[args[2]]
 				if !ok {
@@ -71,7 +73,7 @@ func (s *scratch) resolver() *Resolver {
 
 func (s *scratch) resolve(theme string, size int) Result {
 	s.t.Helper()
-	r, err := s.resolver().Resolve(context.Background(), theme, size)
+	r, err := s.resolver().Resolve(context.Background(), theme, size, "")
 	if err != nil {
 		s.t.Fatal(err)
 	}
@@ -206,7 +208,7 @@ func TestLeavesAFolderNotItsOwn(t *testing.T) {
 	if err := os.MkdirAll(mine, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.resolver().Resolve(context.Background(), "Old", 0); axerr.KindOf(err) != axerr.Conflict {
+	if _, err := s.resolver().Resolve(context.Background(), "Old", 0, ""); axerr.KindOf(err) != axerr.Conflict {
 		t.Fatalf("got %v, want a conflict", err)
 	}
 	// Nor is it removed as another theme's companion
@@ -220,7 +222,7 @@ func TestRefusesNames(t *testing.T) {
 	t.Parallel()
 	s := newScratch(t)
 	for _, theme := range []string{"", ".", "..", "a/b", "axiom-cursor-Old"} {
-		if _, err := s.resolver().Resolve(context.Background(), theme, 0); axerr.KindOf(err) != axerr.BadRequest {
+		if _, err := s.resolver().Resolve(context.Background(), theme, 0, ""); axerr.KindOf(err) != axerr.BadRequest {
 			t.Errorf("%q: got %v", theme, err)
 		}
 	}

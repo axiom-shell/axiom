@@ -10,7 +10,7 @@ import qs.components.reusable
 LazyLoader {
   id: root
 
-  required property BarIconWidget widget
+  required property BarWidget widget
   property string text: ""
   property bool shown: true
   // The text is rich text (StyledToolTip.rich)

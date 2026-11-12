@@ -44,7 +44,7 @@ Item {
   Component.onCompleted: root._barConfig = root._enriched()
   function _enriched() {
     return BarsConfig.enrichBarConfig(Object.assign({}, root.bar ?? {}, {
-      "location": "top",
+      "edge": "top",
       "thickness": root._thickness,
       "widgets": {},
       "style": root._style
@@ -114,7 +114,7 @@ Item {
     readonly property bool both: sample.icon !== "" && sample.text !== ""
     // An icon part and a label apart (a split look)
     readonly property bool splits: root._barConfig.splitRoom >= 0 && sample.both
-    readonly property real gap: sample.splits ? root._barConfig.splitRoom : sample.both ? root._barConfig.innerGap * 1.5 : 0
+    readonly property real gap: sample.splits ? root._barConfig.splitRoom : sample.both ? root._barConfig.iconGap : 0
     // Measured from the fonts, not the drawn items (their colors follow
     // where the box sits, which follows its length)
     readonly property real iconLength: sample.icon !== "" ? Math.ceil(iconMetrics.advanceWidth) : 0
@@ -140,7 +140,10 @@ Item {
         })
       accentField: "backgroundColor"
       autoColors: ({
-          "backgroundColor": "accent"
+          "backgroundColor": {
+            "role": "accent",
+            "gradient": true
+          }
         })
       length: sample.implicitWidth
       barOffset: sample.box.x + sample.box.lead
@@ -185,7 +188,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: Widget.radius
-    color: Theme.background
+    color: root._barConfig.palette.background
   }
 
   // The strip, shrunk to fit a narrow tile
@@ -257,7 +260,7 @@ Item {
 
         visible: root._look.separators.style !== "none"
         style: root._look.separators.style
-        color: Theme.resolveColor(root._look.separators.color)
+        color: root._barConfig.palette.separator
         thickness: root._look.separators.thickness
         length: BarLayout.dividerLength(mark.style, root._thickness)
         x: mark.center - width / 2

@@ -5,6 +5,18 @@ required: [type, id]
 additionalProperties: false
 x-hosts: [overlay, menu, desktop]
 x-settingsAt: /properties/properties/properties
+x-parts:
+  # Extra rows while a list module's list needs them (`grow: standard`)
+  grow:
+    standard:
+      grow:
+        type: integer
+        title: Grow by up to
+        default: 0
+        minimum: 0
+        maximum: 16
+        x-unit: rows
+        description: 'Extra rows while its list needs them. 0: keeps its size.'
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}

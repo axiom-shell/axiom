@@ -6,12 +6,9 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
-    description: Pill only with one metric in a box; the disk shows a fill instead of a sparkline.
+    description: 'Pill: with one metric shown, else fill. Disk: fill, not sparkline.'
 colors: standard
-boxes:
-  variant: each
-  boxes:
-    x-boxItems: {options: {cpu: showCpu, mem: showMemory, temp: showTemp, gpu: showGpu, disk: showDisk}}
+order: [appearance, showCpu, showMemory, memoryFormat, showTemp, showGpu, showDisk, diskPath, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
 settings:
   showCpu: {type: boolean, title: CPU usage, default: true}
   showMemory: {type: boolean, title: Memory, default: true}
@@ -39,11 +36,11 @@ settings:
     title: Disk path
     x-control: folder
     default: /
-    description: Any path on the filesystem.
+    description: The disk holding this path.
     x-showIf: {showDisk: true}
   interval:
     type: integer
-    title: Poll interval
+    title: Interval
     x-unit: ms
     default: 2000
     minimum: 1000
@@ -54,5 +51,5 @@ settings:
     default: 90
     minimum: 1
     maximum: 100
-    description: Usage (%) or temperature (°C) at or above this shows the warning background.
+    description: Usage or temperature at or above this turns on the warning color.
   warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}

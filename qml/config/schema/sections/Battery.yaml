@@ -6,12 +6,6 @@ title: Battery
 description: Low and critical battery levels, on laptops.
 additionalProperties: false
 properties:
-  notify:
-    type: boolean
-    title: Low battery notifications
-    default: true
-    description: Notify when the battery becomes low, and again when critical.
-    x-link: {setting: OSD}
   lowThreshold: {type: integer, title: Low at, x-unit: '%', default: 20, minimum: 0, maximum: 100}
   criticalThreshold:
     type: integer
@@ -20,3 +14,9 @@ properties:
     default: 10
     minimum: 0
     maximum: 100
+  notify:
+    type: boolean
+    title: Notifications
+    default: true
+    description: When the battery is low, and again when critical.
+    x-link: {setting: OSD}

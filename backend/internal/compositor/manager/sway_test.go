@@ -2,12 +2,17 @@ package manager
 
 import (
 	"context"
+	"encoding/binary"
+	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
 // A sway config file that's there but can't be read (here an include) is
@@ -110,9 +115,9 @@ func TestSwayUnbindListFollowsSway(t *testing.T) {
 	t.Parallel()
 	tables, schema := repo(t)
 	w := newSway(env2(tables, schema, func(string) string { return "" }), &ipc.Sway{Path: filepath.Join(t.TempDir(), "none.sock")})
-	w.setUnbind([]string{"unbindsym Mod4+x"})
+	w.setUnbind([]render.SwayUnbind{{Key: "k", Line: "unbindsym Mod4+x"}})
 	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
-	if got := w.unbinds(); len(got) != 1 || got[0] != "unbindsym Mod4+x" {
+	if got := w.unbinds(); len(got) != 1 || got[0].Line != "unbindsym Mod4+x" {
 		t.Fatalf("an apply sway never got dropped the list: %v", got)
 	}
 	w.runtimeClear(context.Background())
@@ -124,7 +129,172 @@ func TestSwayUnbindListFollowsSway(t *testing.T) {
 		t.Fatalf("a reload since left the list to send: %v", got)
 	}
 	w.configReloaded(context.Background(), Inputs{})
-	if w.state.SwayUnbind != nil {
-		t.Fatalf("the stale list kept for a re-exec: %v", w.state.SwayUnbind)
+	if w.state.SwayUnbinds != nil {
+		t.Fatalf("the stale list kept for a re-exec: %v", w.state.SwayUnbinds)
+	}
+}
+
+// swayWith is a sway writer whose user config is text, its saved unbinds
+// list, carried or fresh, and no sway to talk to
+func swayWith(t *testing.T, config string, carried bool, saved []render.SwayUnbind) *swayWriter {
+	t.Helper()
+	tables, schema := repo(t)
+	home := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(home, "sway"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, "sway", "config"), []byte(config), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	vars := map[string]string{"HOME": home, "XDG_CONFIG_HOME": home}
+	e := env2(tables, schema, func(k string) string { return vars[k] })
+	e.carried = carried
+	w := newSway(e, &ipc.Sway{Path: filepath.Join(t.TempDir(), "none.sock")})
+	w.state.SwayUnbinds = saved
+	return w
+}
+
+var swaySaved = func() []render.SwayUnbind {
+	return []render.SwayUnbind{
+		{Key: render.KeyID("SUPER + x"), Line: "unbindsym Mod4+x"},
+		{Key: render.KeyID("SUPER + y"), Line: "unbindsym Mod4+y"},
+	}
+}
+
+// A daemon that isn't carried over trusts no saved unbind: one of a key the
+// user's config binds now would take their bind out
+func TestSwayFreshDaemonDropsUnbindsOfKeysTheUserNowBinds(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+x exec true\n", false, swaySaved())
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "unbindsym Mod4+y" {
+		t.Fatalf("unbinds = %v, want only y's", got)
+	}
+}
+
+func TestSwayCarriedDaemonKeepsTheSavedUnbinds(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+x exec true\n", true, swaySaved())
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.state.SwayUnbinds; len(got) != 2 {
+		t.Fatalf("unbinds = %v, want both kept", got)
+	}
+}
+
+func TestSwayFreshDaemonRecomputesTheFloatingModifierLine(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "floating_modifier Mod4 normal\n", false, []render.SwayUnbind{{Key: "", Line: "floating_modifier Mod1 normal"}})
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "floating_modifier Mod4 normal" {
+		t.Fatalf("unbinds = %v, want the user's floating line", got)
+	}
+}
+
+func TestSwayOldFormatUnbindListIsDropped(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "compositor.json")
+	if err := os.WriteFile(path, []byte(`{"instance":"sway:a","swayUnbind":["unbindsym Mod4+x"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadState(path, "sway:a"); got.Instance != "sway:a" || got.SwayUnbinds != nil {
+		t.Fatalf("state = %+v, want the old list dropped", got)
+	}
+}
+
+func TestSwayFreshClearDropsTakenKeys(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+x exec true\n", false, swaySaved())
+	w.runtimeClear(context.Background())
+	// sway isn't there, so the list stays, less the key the user binds
+	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "unbindsym Mod4+y" {
+		t.Fatalf("unbinds = %v, want only y's", got)
+	}
+}
+
+// With the user's config not wholly read, a fresh daemon drops nothing and
+// stays fresh: the saved floating line is kept, the next call tries again
+func TestSwayFreshDaemonWaitsForAReadableConfig(t *testing.T) {
+	t.Parallel()
+	saved := []render.SwayUnbind{{Key: "", Line: "floating_modifier Mod1 normal"}, {Key: render.KeyID("SUPER + x"), Line: "unbindsym Mod4+x"}}
+	w := swayWith(t, "include keys.conf\nfloating_modifier Mod4 normal\n", false, saved)
+	path, asked := fakeSway(t)
+	w.ipc = &ipc.Sway{Path: path}
+	keys := filepath.Join(w.getenv("XDG_CONFIG_HOME"), "sway", "keys.conf")
+	if err := os.WriteFile(keys, []byte("bindsym Mod4+x exec true\n"), 0); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.ReadFile(keys); err == nil {
+		t.Skip("running as root: every file is readable")
+	}
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if w.unread == "" {
+		t.Fatal("the config should be unreadable")
+	}
+	if !w.fresh {
+		t.Fatal("fresh was cleared without a readable config")
+	}
+	got := w.state.SwayUnbinds
+	if len(got) != 2 || got[0].Line != "floating_modifier Mod1 normal" {
+		t.Fatalf("unbinds = %v, want the saved ones", got)
+	}
+	w.runtimeClear(context.Background())
+	if !w.fresh || len(w.state.SwayUnbinds) != 2 {
+		t.Fatalf("a clear touched the list: fresh %v, %v", w.fresh, w.state.SwayUnbinds)
+	}
+	// None of the saved unbinds went to sway: the user's include may bind them
+	for _, cmd := range sent(asked) {
+		if strings.Contains(cmd, "unbindsym") || strings.Contains(cmd, "floating_modifier Mod1") {
+			t.Fatalf("sway was sent %q", cmd)
+		}
+	}
+}
+
+// fakeSway answers every command list on its socket with one success,
+// sending the commands on the returned channel
+func fakeSway(t *testing.T) (string, <-chan string) {
+	t.Helper()
+	dir, err := os.MkdirTemp("", "axsway")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	path := filepath.Join(dir, "sway.sock")
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { l.Close() })
+	asked := make(chan string, 32)
+	go func() {
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				return
+			}
+			head := make([]byte, 14)
+			if _, err := io.ReadFull(c, head); err == nil {
+				body := make([]byte, binary.LittleEndian.Uint32(head[6:]))
+				io.ReadFull(c, body)
+				asked <- string(body)
+				reply := []byte(`[{"success":true}]`)
+				out := make([]byte, 14)
+				copy(out, "i3-ipc")
+				binary.LittleEndian.PutUint32(out[6:], uint32(len(reply)))
+				c.Write(append(out, reply...))
+			}
+			c.Close()
+		}
+	}()
+	return path, asked
+}
+
+// A list a reload made stale isn't stamped current again by the filter
+func TestSwayFreshDaemonLeavesAStaleListStale(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+y exec true\n", false, swaySaved())
+	w.seenReload()
+	w.dropTaken(jsonx.Arr(), true)
+	if w.unbinds() != nil || w.unbindAt != 0 || len(w.state.SwayUnbinds) != 2 {
+		t.Fatalf("the stale list was touched: at %d, %v", w.unbindAt, w.state.SwayUnbinds)
 	}
 }

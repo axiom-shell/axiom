@@ -4,7 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.components.reusable
 
-// The workspace grid's position head, handed to SplitLead as `ownHead`:
+// The workspace grid's position head, handed to WidgetHead as `ownHead`:
 // one dot per row (column on a vertical bar) stacked across the bar with
 // the shown one filled, or, where the dots don't fit, the arrow glyph for
 // that position (GridPosition.head decides). Its wheel steps along its own
@@ -15,6 +15,8 @@ Item {
   property var barConfig
   property var properties
   property color color
+  // The other rows' dots: the color muted (paint.muted)
+  property color dimColor
   property bool vertical: false
   // The shown row (column) and how many there are (config)
   property int line: 0
@@ -67,7 +69,7 @@ Item {
     width: root.head.dot
     height: root.head.dot
     radius: root.head.dot / 2
-    color: index === root.line ? root.color : Qt.alpha(root.color, 0.35)
+    color: index === root.line ? root.color : root.dimColor
 
     ColorGlide on color {}
   }

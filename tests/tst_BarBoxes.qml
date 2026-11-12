@@ -33,13 +33,13 @@ TestCase {
       },
       {
         "id": "stats",
-        "type": "SystemStats",
+        "type": "LockKeys",
         "configIndex": 1
       }
     ];
-    const out = BarBoxes.expand(entries, e => e.type === "SystemStats" ? ["cpu", "mem"] : []);
-    compare(out.map(e => e.type), ["Time", "SystemStats", "SystemStats"]);
-    compare(out.map(e => e.box ?? ""), ["", "cpu", "mem"]);
+    const out = BarBoxes.expand(entries, e => e.type === "LockKeys" ? ["caps", "num"] : []);
+    compare(out.map(e => e.type), ["Time", "LockKeys", "LockKeys"]);
+    compare(out.map(e => e.box ?? ""), ["", "caps", "num"]);
     // Still one widget to the bar editor
     compare(out.map(e => e.configIndex), [0, 1, 1]);
     // The entry itself is left as it was

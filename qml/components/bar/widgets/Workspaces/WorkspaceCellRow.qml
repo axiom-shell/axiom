@@ -28,20 +28,8 @@ Item {
   required property var ids
   // The workspace shown active; none of `ids` for none
   required property int activeId
-  required property color activeColor
-  required property color occupiedColor
-  required property color urgentColor
-  required property color emptyColor
-  required property color textColor
-  // A hook: the glyph a cell shows instead of its label and app icon (the
-  // grid's position arrow), or ""
-  property var glyphOf: (id, active) => ""
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
-  // Where a point of an item of it sits along the bar (BarWidget.barSpotOf):
-  // the active cell's Auto color gives way to the bar's gradient there.
-  // Null to keep it.
-  property var barSpotOf: null
   // Whether the active workspace's cell may show app icons (off: its
   // label instead, while the strip windows after the row show them:
   // `activeWorkspaceIcons`)
@@ -69,7 +57,7 @@ Item {
   // widened by one normal cell's length (`wideActive`: WorkspaceCells)
   readonly property int _activeIndex: ids.indexOf(activeId)
   // What each cell shows (CellContents.of), in `ids` order
-  readonly property var _contents: ids.map(id => contents.of(id, root.glyphOf(id, id === root.activeId), id !== root.activeId || root.activeIcons))
+  readonly property var _contents: ids.map(id => contents.of(id, id !== root.activeId || root.activeIcons))
   readonly property var _lengths: WorkspaceCells.roomed(_contents.map(c => c.length), _rooms)
   readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLook.length : 0)
   // Measured from the cells' lengths to be, never their gliding ones
@@ -94,20 +82,21 @@ Item {
     restLength: root.cellLook.length
   }
 
-  // Every urgent cell's fade, in step
+  // Every urgent cell's pulse, in step
   UrgentPulse {
     id: urgentPulse
     running: root.properties.urgentPulse && root._contents.some(c => c.urgent)
   }
 
   // The cell look's colors for cell `index`'s, active or at rest, and lit
-  // (the pointer over it)
-  function _look(index, active, lit) {
+  // (the pointer over it), or its muted self (`muted`: what it pulses toward)
+  function _look(index, active, lit, muted) {
     if (active)
       return root._activeLook(index, lit);
     const content = root._contents[index];
-    return root.cellLook.workspaceColorsOf(root, false, content?.occupied ?? false, content?.urgent ?? false, {
-      "hovered": lit === true
+    return root.cellLook.workspaceColorsOf(false, content?.occupied ?? false, content?.urgent ?? false, {
+      "hovered": lit === true,
+      "muted": muted === true
     });
   }
 
@@ -115,23 +104,23 @@ Item {
   // the bar's gradient where its middle sits, its color Auto
   function _activeLook(index, lit) {
     const middle = (root._layout.starts[index] ?? 0) + (root._layout.lengths[index] ?? 0) / 2;
-    const spot = root.barSpotOf && index >= 0 ? root.barSpotOf(root, middle) : -1;
-    return root.cellLook.workspaceColorsOf(root, true, false, false, {
+    const spot = index >= 0 ? root.cellLook.spotAt(root, middle, 0) : -1;
+    return root.cellLook.workspaceColorsOf(true, false, false, {
       "hovered": lit === true,
       "spot": spot
     });
   }
 
-  // As segments, the active box's slice of the bar's gradient in `look`
-  // (its `gradient`), from where it starts (back under the cell before)
-  // to its end, at rest at cell `index`; else null (a flat color)
+  // The active box's slice of the bar's gradient in `look` (its `gradient`),
+  // from where it starts (back under the cell before, as segments) to its
+  // end, at rest at cell `index`: a box's in the bar's run, an underline's
+  // anywhere (CellLook.sliceOf); else null (a flat color)
   function _activeSlice(look, index) {
-    const part = look.gradient ?? null;
-    if (!root.cellLook.run || part === null || !root.barSpotOf || index < 0)
+    if (index < 0)
       return null;
-    const start = (root._layout.starts[index] ?? 0) - (root._shapes[index]?.segment.back ?? 0);
+    const start = (root._layout.starts[index] ?? 0) - (root._shapes?.[index]?.segment.back ?? 0);
     const end = (root._layout.starts[index] ?? 0) + (root._layout.lengths[index] ?? 0);
-    return BarGradient.gradientSlice(root.barConfig.palette.gradientStops, root.barSpotOf(root, start), root.barSpotOf(root, end), part.alpha);
+    return root.cellLook.sliceOf(look, root, start, end, 0);
   }
 
   // Clipped (a cell that left the active state still shrinking, the active
@@ -170,7 +159,9 @@ Item {
           lit: wsId === root.hoveredId
           look: root._look(index, isActive && !indicator.slides, backgroundCell.lit)
           urgent: root._contents[index]?.urgent ?? false
-          pulse: urgentPulse.value
+          pulsing: (root._contents[index]?.urgent ?? false) && !isActive && urgentPulse.pulsing
+          pulse: pulsing ? urgentPulse.value : 0
+          mutedLook: pulsing ? root._look(index, false, backgroundCell.lit, true) : null
           thickness: root.cellLook.thickness
           restLength: root._lengths[index] ?? root.cellLook.length
           length: root._layout.lengths[index] ?? root.cellLook.length
@@ -219,8 +210,9 @@ Item {
           isActive: wsId === root.activeId
           look: root._look(index, isActive, contentCell.lit)
           urgent: _content?.urgent ?? false
-          pulse: urgentPulse.value
-          urgentColor: root.urgentColor
+          pulsing: (_content?.urgent ?? false) && !isActive && urgentPulse.pulsing
+          pulse: pulsing ? urgentPulse.value : 0
+          mutedLook: pulsing ? root._look(index, false, contentCell.lit, true) : null
           thickness: root.cellLook.thickness
           restLength: root._lengths[index] ?? root.cellLook.length
           length: root._layout.lengths[index] ?? root.cellLook.length

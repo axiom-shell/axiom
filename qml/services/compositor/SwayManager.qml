@@ -137,10 +137,18 @@ Singleton {
   function placeWindow(id, workspaceId, targetId, side, restore, reinsert, floatAt) {
     const win = _con(id);
     const lines = [];
+    // A window in a special group leaves it first, or it stays a scratchpad
+    // window (sway refuses to float a hidden one, and a shown one keeps the
+    // flag when moved)
+    const hidden = root._info.scratch.some(w => w.id === String(id));
+    const grouped = (root._marks[String(id)] ?? []).some(mark => SwayState.specialGroup(mark) !== "");
+    if (hidden || grouped)
+      lines.push(...SwayState.specialLeave(root._marks, id, hidden, true));
     if (floatAt) {
       if (!reinsert)
         lines.push(`${win} move container to workspace number ${workspaceId}`);
-      if (root.windows.find(w => w.id === String(id))?.floating)
+      // A scratchpad window is floating, hidden ones in `scratch` only
+      if ((root.windows.find(w => w.id === String(id)) ?? root._info.scratch.find(w => w.id === String(id)))?.floating)
         lines.push(`${win} move absolute position ${Math.round(floatAt.x)} ${Math.round(floatAt.y)}`);
     } else if (targetId) {
       const target = _con(targetId);
@@ -254,10 +262,11 @@ Singleton {
       SwayIpcManager.command(lines.join("; "), () => root._debounce.restart());
   }
 
-  // Puts the focused window in special group `name` (hidden until shown),
-  // out of any other: a window is on one special workspace at a time
-  function moveToSpecial(name) {
-    const id = root.activeWindowId;
+  // Puts window `id` (the focused one when "" or left out) in special group
+  // `name` (hidden until shown), out of any other: a window is on one
+  // special workspace at a time
+  function moveToSpecial(name, id) {
+    id = id || root.activeWindowId;
     if (!id)
       return;
     SwayIpcManager.command(SwayState.specialMove(root._marks, id, name).join("; "), () => root._debounce.restart());

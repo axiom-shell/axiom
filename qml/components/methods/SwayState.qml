@@ -410,13 +410,31 @@ QtObject {
     });
   }
 
+  // The commands removing window `id`'s axiom special-group marks
+  function _unmarkLines(marks, id) {
+    return (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `[con_id=${Number(id)}] unmark ${root.quote(mark)}`);
+  }
+
   // The commands moving window `id` into special group `name` (marked and
   // hidden in the scratchpad), out of any group it's in (`marks`, every
   // window's): a window is in one at a time
   function specialMove(marks, id, name) {
     const con = `[con_id=${Number(id)}]`;
-    const leave = (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `${con} unmark ${root.quote(mark)}`);
-    return leave.concat([`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
+    return root._unmarkLines(marks, id).concat([`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
+  }
+
+  // The commands taking window `id` out of its special group (`marks`, every
+  // window's): its axiom marks come off (a user's own stay). A scratchpad
+  // one (`scratch`: marked by axiom, or the user's own scratchpad window) also
+  // stops being the scratchpad's: shown first when `hidden`, then floated off
+  // and on again (sway refuses to float a hidden one), so it is an ordinary
+  // floating window.
+  function specialLeave(marks, id, hidden, scratch) {
+    const con = `[con_id=${Number(id)}]`;
+    const lines = root._unmarkLines(marks, id);
+    if (scratch === true)
+      return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
+    return lines;
   }
 
   // The marks of every window in a get_tree reply: { [id]: [marks] }, for

@@ -8,6 +8,7 @@ settings:
     type: string
     title: Source
     default: material
+    x-control: toggle
     enum: [material, glyph]
-    x-enumLabels: {material: Material Symbols, glyph: Format icon}
-  badge: {type: boolean, title: Show the badge, default: false}
+    x-enumLabels: {material: Material, glyph: Format}
+  badge: {type: boolean, title: Badge, default: false}

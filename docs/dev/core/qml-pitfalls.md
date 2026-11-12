@@ -38,3 +38,4 @@ Bar widgets, content and views are loaded by URL.
 ### Effects
 - A `MultiEffect` handed a visible item's own layer (`layer.enabled` source) pads that layer and redraws the item shrunk and offset; handed a `ShaderEffectSource` with `autoPaddingEnabled`, it stretches it. Shadows of visible surfaces go through `OutsideShadow` (explicit padding).
 - Rounded clipping is Quickshell.Widgets' `ClippingRectangle`, never a `MultiEffect` mask; set its `color`, which defaults to white.
+- `ShapePath.strokeGradient` is Qt 6.12; Fedora 44/45 ship 6.11, where an unknown property fails the whole file. Gradient strokes go through `SliceMasked`; axiom supports Fedora's current Qt (6.11) and later, so use no newer API.

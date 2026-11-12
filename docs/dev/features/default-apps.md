@@ -24,6 +24,9 @@ Which app opens each kind of link and file, and which terminal starts, kept the 
 - The daemon starts it as the shell's commands start (`command.Spawn`). `axiom open TARGET [ARG…]` asks the daemon, or works it out itself when none runs; `--print` prints the command and starts nothing. The keybinds run it (`Apps.terminalCommand` is `axiom open terminal`, …), so a new default needs no new compositor config. Binds call the installed binary, which in dev mode is built from the install tree and may predate `open`: each bind falls back to the freedesktop opener (`|| exec xdg-terminal-exec`, `xdg-open`). `Apps.inTerminal` runs a command in `axiom open terminal --` by `Paths.toolBin` (the daemon's own binary, so the dev build's in dev mode).
 - Everything the shell opened with `xdg-open` before goes through `DefaultAppsManager.open`: notification links, screenshots, the wallpaper and compositor config folders, drives.
 
+### The footprint
+- `SetDefault` and `SetTypes` record a `mimeapps` row per `(path, group, mime)` (the terminal's list as one row), `system` rows left by Undo all: the prior line's value or absent (with the group and file made). An undo puts the line back only while it is what axiom wrote ([Footprint ledger](../backend/footprint.md)).
+
 ### The settings
 - Settings › General › Default apps (`DefaultAppsCard`): `DefaultAppPickers` (a picker per role, app icons from `AppIconManager`), then Other file types. A pick is saved at once (not a config edit). Every picker ends with Custom command…, which opens a field for the role's `Apps.commands.<role>` (`x-settings: false`: edited only here), saved at once (`SettingsManager.commitValues`); picking an app clears it. Other apps (the Apps section: the network editor) follows.
 - The onboarder's Apps page shows the browser, files, terminal and mail pickers.

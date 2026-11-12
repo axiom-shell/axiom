@@ -43,7 +43,7 @@
 
 var opts = {
   "bars": [{ "type": "other" }, { "type": "master" }, { "type": "microphone" }],
-  "tiles": ["audio", "microphone"]
+  "shows": ["audio", "microphone"]
 };
 
 var speakers = { "value": "52", "address": "", "name": "Speakers", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
@@ -200,7 +200,7 @@ var rows = [
   },
   {
     "name": "an App bar: its streams' level, keyed by its id",
-    "options": { "bars": [{ "id": "master", "type": "master" }, { "id": "fx", "type": "app", "apps": ["firefox"] }], "tiles": ["audio", "microphone"] },
+    "options": { "bars": [{ "id": "master", "type": "master" }, { "id": "fx", "type": "app", "apps": ["firefox"] }], "shows": ["audio", "microphone"] },
     "steps": [
       { "at": 0, "state": start({ "app:fx": { "level": 0.3, "muted": false, "streams": "88" } }) },
       { "at": 3000, "state": { "app:fx": { "level": 0.35, "muted": false, "streams": "88" } },
@@ -210,7 +210,7 @@ var rows = [
   },
   {
     "name": "a bar not listed changes nothing",
-    "options": { "bars": [{ "type": "master" }], "tiles": ["audio", "microphone"] },
+    "options": { "bars": [{ "type": "master" }], "shows": ["audio", "microphone"] },
     "steps": [
       { "at": 0, "state": start() },
       { "at": 3000, "state": { "micLevel": { "level": 0.1, "muted": false }, "other": { "level": 0.2, "muted": false, "streams": "" } } }
@@ -371,7 +371,7 @@ var rows = [
   },
   {
     "name": "the microphone's tile not listed: the card says Output though the input holds the same device",
-    "options": { "bars": [{ "type": "master" }], "tiles": ["audio"] },
+    "options": { "bars": [{ "type": "master" }], "shows": ["audio"] },
     "steps": [
       { "at": 0, "state": start() },
       { "at": 3000, "settled": false, "state": { "audio": headphones, "microphone": headsetMic },
@@ -427,7 +427,7 @@ var rows = [
   },
   {
     "name": "quiet: judged the same (the host doesn't open the OSD for it)",
-    "options": { "bars": opts.bars, "tiles": opts.tiles, "quiet": true },
+    "options": { "bars": opts.bars, "shows": opts.shows, "quiet": true },
     "steps": [
       { "at": 0, "state": start() },
       { "at": 3000, "settled": false, "state": { "audio": audioBox },

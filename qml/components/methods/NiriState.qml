@@ -262,8 +262,10 @@ QtObject {
         x += shown[0];
         y += shown[1];
       } else if (place) {
-        x += lefts[`${w.workspace_id}:${place[0]}`] ?? gap;
-        y += root._tileTop(raw, w, gap);
+        // niri lays tiles out in its working area, inside the exclusive
+        // zones (`reserved`), so the contract's global coordinates include them
+        x += (lefts[`${w.workspace_id}:${place[0]}`] ?? gap) + (output?.reserved?.left ?? 0);
+        y += root._tileTop(raw, w, gap) + (output?.reserved?.top ?? 0);
       }
       const win = {
         "id": String(w.id),
@@ -288,6 +290,7 @@ QtObject {
         win.tile = place[1];
         const left = lefts[`${w.workspace_id}:${place[0]}`] ?? gap;
         const fits = (lefts[`${w.workspace_id}:end`] ?? 0) <= (output?.width ?? 0);
+        // Unchanged by `reserved`: where it surely is, the full output's height
         win.cover = {
           "x": fits ? ox + left : ox,
           "y": oy,

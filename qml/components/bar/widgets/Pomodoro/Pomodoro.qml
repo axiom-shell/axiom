@@ -11,7 +11,7 @@ import qs.components.bar.widgets.base
 // break is on, colored by which. Left click starts or pauses, right click
 // skips to the next phase, middle click stops; hovering opens the timer.
 // Its display style draws how far through the phase it is.
-ValueStyleWidget {
+BarWidget {
   id: root
 
   Component.onCompleted: PomodoroManager.acquire(root)
@@ -27,8 +27,8 @@ ValueStyleWidget {
   styleText: PomodoroManager.idle ? "" : root.text
   subtext: PomodoroManager.idle ? "" : PomodoroManager.isBreak ? I18n.tr("Break") : I18n.tr("Focus")
   accentField: PomodoroManager.idle ? "idleColor" : PomodoroManager.isBreak ? "breakColor" : "workColor"
-  // Paused part way: faded
-  dim: !PomodoroManager.running && !PomodoroManager.idle ? 0.6 : 1
+  // Paused part way: muted
+  muted: !PomodoroManager.running && !PomodoroManager.idle
 
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton

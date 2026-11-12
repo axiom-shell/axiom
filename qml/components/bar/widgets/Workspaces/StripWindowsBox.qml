@@ -30,9 +30,8 @@ Item {
   required property bool stripVertical
   // Along the bar's direction, which lays the icons out
   required property bool isVertical
-  required property color activeColor
-  required property color occupiedColor
-  required property color textColor
+  // Its part's place in the switcher: spot reads re-read when it moves
+  property real placed: 0
   property bool clickable: true
   // The widget's (BarWidget.hitArea), which the box reads hover from
   property var hitArea: null
@@ -94,7 +93,7 @@ Item {
     barConfig: root.barConfig
     cellLook: root.cellLook
     isActive: false
-    look: root.cellLook.colorsOf(root.occupiedColor, root.textColor, "occupied", {})
+    look: root.cellLook.workspaceColorsOf(false, true, false, {})
     thickness: root.thickness
     length: root._along
     shape: root._shape
@@ -135,7 +134,7 @@ Item {
           anchors.fill: parent
           anchors.margins: inset
           radius: Math.max(0, root.cellLook.radius - inset)
-          color: root.cellLook.hoverColor
+          color: boxCell.look.hover
           opacity: slot.hovered ? 1 : 0
 
           Behavior on opacity {
@@ -174,7 +173,7 @@ Item {
 
           visible: slot.isFocused
           radius: size / 2
-          color: root.activeColor
+          color: root.cellLook.activeAt(slot, (root.isVertical ? slot.height : slot.width) / 2, slot.x + slot.y + root.placed)
           width: root.isVertical ? size : span
           height: root.isVertical ? span : size
           x: root.isVertical ? (root.barConfig.right ? (room - size) / 2 : root.thickness - room + (room - size) / 2) : (parent.width - width) / 2
@@ -187,7 +186,7 @@ Item {
           id: slotArea
           shape: root._shape
           vertical: root.isVertical
-          box: boxCell
+          boxItem: boxCell
           margins: root._slotMargins(slot.index)
           enabled: root.clickable
           hoverEnabled: true

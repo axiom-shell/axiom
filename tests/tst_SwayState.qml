@@ -412,6 +412,17 @@ TestCase {
     compare(SwayState.specialMove({}, "16", "my games"), ["[con_id=16] mark --add \"axiom-special-my games-16\"", "[con_id=16] move scratchpad"]);
   }
 
+  // A window leaving its special group on a drop
+  function test_specialLeave() {
+    const marks = {
+      "7": ["axiom-special-term-7", "keep"]
+    };
+    compare(SwayState.specialLeave(marks, "7", true, true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] scratchpad show", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
+    compare(SwayState.specialLeave(marks, "7", false, true), ["[con_id=7] unmark axiom-special-term-7", "[con_id=7] floating disable", "[con_id=7] floating enable"]);
+    compare(SwayState.specialLeave({}, "8", false, false), []);
+    compare(SwayState.specialLeave(marks, "7", false, false), ["[con_id=7] unmark axiom-special-term-7"]);
+  }
+
   // A group's name may hold "-": another group whose name it starts with
   // isn't it
   function test_specialGroup() {

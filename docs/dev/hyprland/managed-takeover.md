@@ -44,6 +44,8 @@ How `managed` mode takes `~/.config/hypr/hyprland.lua` over (`claim`), and how l
 - Leaving managed runs the takeover's `release`. hyprland.lua goes back to what `claim` set aside (as its record names it):
   - the adopted `user/00-previous*.lua`, with its commented-out lines that start or load axiom enabled again
   - else the example config's backup.
+- A bind merge's marks (`-- (moved into axiom) `, [bind merge](bind-merge.md#committing-and-removing)) come out of the restored file, so the merged binds are back in it, and out of every other file in `user/` (`binds.UnmarkMoved`; not dot folders such as `.backups/`, nor `*.axiom-backup-*`). A symlinked file is unmarked through its link. A file whose unmarking wouldn't parse keeps its marks (logged); a failure is logged and never fails the release.
+- An old merge deleted the calls instead: nothing to give back, so the release only logs the backup of that file from before the move (`<file>.axiom-backup-*`), and only when the backup holds a line the restored file lacks.
 - It prints `restored:<from>:<n>`, with a warning when `<n>` files in `user/` are no longer loaded.
 - With nothing set aside it writes `releasedLua()`. That file starts axiom, loads the module in included mode, and loads `user/*.lua` as the managed file does (`render.userFilesLua()`).
 - A symlinked or git-tracked file is refused, as `claim` refuses it.

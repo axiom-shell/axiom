@@ -12,11 +12,14 @@ import qs.components.reusable
 // window look's blur part or the user's own config. With its blur off
 // nothing blurs, and it offers to set it. Where the compositor can't blur
 // behind them, the opacity is greyed out and the surfaces are solid
-// (Appearance.surfaceAlpha).
+// (Appearance.surfaceAlpha). `status` and `statusColor` are the card's
+// header chip, only where the compositor blurs
 ColumnLayout {
   id: root
 
   readonly property bool off: !CompositorManager.blur.enabled
+  readonly property string status: Appearance.blur ? (root.off ? I18n.tr("Off") : I18n.tr("Blur")) : ""
+  readonly property color statusColor: root.off ? Theme.error : Theme.success
 
   spacing: Widget.spacing
 
@@ -35,11 +38,6 @@ ColumnLayout {
     // hidden elsewhere)
     visible: Appearance.blur
     spacing: Widget.spacing
-
-    StatusChip {
-      text: root.off ? I18n.tr("Off") : I18n.tr("Blur")
-      color: root.off ? Theme.error : Theme.success
-    }
 
     StyledText {
       Layout.fillWidth: true

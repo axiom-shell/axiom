@@ -5,31 +5,33 @@ additionalProperties: false
 properties:
   output: {type: string, default: '', description: 'desc:<description>, or a connector name (DP-1).'}
   label: {type: string, default: '', description: 'The connector it was last seen on, for display.'}
+  disabled: {type: boolean, default: false}
   mode: {type: string, default: preferred, description: 'WIDTHxHEIGHT@HZ, or preferred.'}
-  x: {type: integer, default: 0}
-  'y': {type: integer, default: 0}
   scale: {type: number, default: 1, exclusiveMinimum: 0, maximum: 8}
   transform:
     type: integer
     default: 0
-    minimum: 0
-    maximum: 7
+    enum: [0, 1, 2, 3, 4, 5, 6, 7]
+    x-enumLabels: {'0': Normal, '1': 90°, '2': 180°, '3': 270°, '4': Flipped, '5': Flipped 90°, '6': Flipped 180°, '7': Flipped 270°}
     description: Rotation in quarter turns, plus 4 when flipped.
-  disabled: {type: boolean, default: false}
   mirror:
     type: string
     default: ''
     description: The output (as in `output`) this one mirrors, or empty.
+    x-showIf: {/$supports.monitorMirror: true}
+  x: {type: integer, default: 0, x-unit: px}
+  'y': {type: integer, default: 0, x-unit: px}
   vrr:
     type: integer
     default: 0
-    minimum: 0
-    maximum: 3
-    description: '0 off, 1 on, 2 fullscreen only, 3 fullscreen games and video.'
-  bitdepth: {type: integer, enum: [8, 10], default: 8}
+    enum: [0, 1, 2, 3]
+    x-enumLabels: {'0': 'Off', '1': 'On', '2': Fullscreen only, '3': Fullscreen games and video}
+  bitdepth: {type: integer, enum: [8, 10], default: 8, x-showIf: {/$supports.monitorColor: true}}
   cm:
     type: string
     enum: [auto, srgb, dcip3, dp3, adobe, wide, edid, hdr, hdredid]
     default: auto
-  sdrBrightness: {type: number, default: 1, minimum: 0.5, maximum: 2}
-  sdrSaturation: {type: number, default: 1, minimum: 0.5, maximum: 2}
+    x-enumLabels: {auto: Automatic, srgb: sRGB, dcip3: DCI-P3, dp3: Display P3, adobe: Adobe RGB, wide: Wide gamut (BT2020), edid: From the monitor (EDID), hdr: HDR, hdredid: HDR from the monitor (EDID)}
+    x-showIf: {/$supports.monitorColor: true}
+  sdrBrightness: {type: number, default: 1, minimum: 0.5, maximum: 2, x-showIf: {/$supports.monitorColor: true, cm: [hdr, hdredid]}}
+  sdrSaturation: {type: number, default: 1, minimum: 0.5, maximum: 2, x-showIf: {/$supports.monitorColor: true, cm: [hdr, hdredid]}}

@@ -22,14 +22,14 @@ properties:
     x-showIf: {scrollToChange: true}
   onScreenChanges:
     type: boolean
-    title: Show for changes made on screen
+    title: On-screen changes
     default: false
-    description: Open the OSD for changes made in axiom's bar and panels. Keys and apps always open it.
+    description: Open for changes made in axiom's bar and panels. Keys and apps always open it.
   cardsToHistory:
     type: boolean
-    title: Keep event cards in notifications
+    title: Cards in history
     default: true
-    description: Also keep event cards in the notification history, without a popup.
+    description: Also filed in the notification history, without a popup.
     x-link: {setting: Notifications}
   items:
     type: array

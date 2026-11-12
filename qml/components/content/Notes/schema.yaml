@@ -10,12 +10,12 @@ settings:
     title: Note
     default: ''
     x-options: notes
-    description: A path in the notes folder, e.g. work/ideas.md. Empty opens the last one shown.
+    description: 'Path in the notes folder, e.g. work/ideas.md. Empty: the last one shown.'
   lockNote:
     type: boolean
     title: Only this note
     default: false
-    description: Always show this note, with no note list.
+    description: Hides the note list.
     x-showIf: {note: {not: ''}}
   showHeader:
     type: boolean
@@ -29,6 +29,6 @@ settings:
     description: Checklist and bullet buttons.
   showCompleted:
     type: boolean
-    title: Show completed items
+    title: Completed items
     default: true
     description: Hidden items stay in the note.

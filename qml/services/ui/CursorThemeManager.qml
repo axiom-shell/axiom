@@ -66,7 +66,8 @@ Singleton {
       return;
     BackendManager.call("cursor.theme", {
       "theme": theme,
-      "size": root._size
+      "size": root._size,
+      "owner": "Input.cursor.enabled"
     }, (error, result) => {
       let name = theme;
       if (error)

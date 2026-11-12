@@ -16,7 +16,8 @@ import qs.components.bar.look
 // past one end (`expectWrap`) leaves that end and comes in at the other
 // rather than sliding back across. As a segment of the bar's run (the
 // widget's Background off) it takes the active cell's shape (`shape`), and
-// an Auto color its slice of the bar's gradient (`slice`).
+// an Auto color its slice of the bar's gradient (`slice`): a box's in the
+// bar's run, an underline's anywhere.
 Item {
   id: root
 
@@ -200,6 +201,7 @@ Item {
         line: root.look.indicator
         fillSlice: root.look.gradient?.part === "fill" ? root.slice : null
         strokeSlice: root.look.gradient?.part === "stroke" ? root.slice : null
+        lineSlice: root.look.gradient?.part === "indicator" ? root.slice : null
       }
     }
   }

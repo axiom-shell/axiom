@@ -8,9 +8,8 @@ additionalProperties: false
 properties:
   style:
     $ref: '#/definitions/BarStyle'
-    title: Bar style
+    title: Widget style
     x-row: BarStyleBlock
-    description: How every bar draws its widgets. A bar can override any of these in the bar editor.
   items:
     type: array
     x-settings: false

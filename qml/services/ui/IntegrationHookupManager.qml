@@ -44,6 +44,17 @@ Singleton {
       "screenSharing": ScreenShareManager.hookupTargets
     })
 
+  // The setting that asks for an integration's hookup (the footprint ledger's
+  // owner of what Apply writes): its path, ScreenSharing.enabled, "" for the
+  // compositor's lines
+  function ownerOf(key) {
+    if (key === "screenSharing")
+      return "ScreenSharing.enabled";
+    if (root._given[key] !== undefined)
+      return "";
+    return "ThemeIntegrations." + key;
+  }
+
   // The x-hookup targets of an integration, as the schema has them
   function targets(key) {
     return root._given[key] ?? ConfigManager.configSchema.properties.ThemeIntegrations.properties[key]?.["x-hookup"] ?? [];
@@ -80,17 +91,27 @@ Singleton {
     });
   }
 
-  function apply(key) {
-    if (root.targets(key).length === 0)
+  // `done` (optional) is called with (ok, error) once it's applied:
+  // false and the message on a call error, false and the first result's
+  // error when a result failed, else true (after the results are stored)
+  // rpc: hookup.apply
+  function apply(key, done) {
+    if (root.targets(key).length === 0) {
+      if (done)
+        done(true, "");
       return;
+    }
     root._setBusy(key, 1);
     BackendManager.call("hookup.apply", {
       "key": key,
-      "targets": root._given[key]
+      "targets": root._given[key],
+      "owner": root.ownerOf(key)
     }, (error, result) => {
       if (error) {
         root._setBusy(key, -1);
         console.warn("[IntegrationHookupManager] applying", key, "failed:", error.message);
+        if (done)
+          done(false, error.message);
         return;
       }
       const next = Object.assign({}, root.results);
@@ -106,6 +127,10 @@ Singleton {
       // What it looks like now (busy until that's back)
       root.check(key);
       root._setBusy(key, -1);
+      if (done) {
+        const failed = result.results.find(r => r.error);
+        done(!failed, failed?.error ?? "");
+      }
     });
   }
 

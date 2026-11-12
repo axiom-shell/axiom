@@ -2,3 +2,4 @@ label: Night light
 icon: nightlight
 group: Power
 tile: standard
+order: [tile, quiet]

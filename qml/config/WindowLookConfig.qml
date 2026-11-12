@@ -3,7 +3,7 @@ import QtQuick
 import qs.services.core
 
 // Reader for the WindowLook section: settings that make windows match
-// axiom ({ borders, shape, gaps, surfaceBlur, blur, shadow, dim, opacity },
+// axiom ({ borders, shape, gaps, blur, shadow, dim, opacity },
 // each an object with its `enabled`), applied by the compositor's backend
 // (its config writer's look layer, render.Look). Named
 // WindowLookConfig as the section is a whole object.

@@ -4,4 +4,4 @@ type: object
 required: [type, id]
 additionalProperties: false
 x-settingsAt: /properties
-properties: {type: {}, id: {$ref: '#/definitions/ItemId'}, visible: {type: boolean}}
+properties: {type: {}, id: {$ref: '#/definitions/ItemId'}, visible: {type: boolean, default: true, x-settings: false}}

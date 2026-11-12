@@ -12,6 +12,6 @@ QtObject {
   readonly property bool notify: _c.notify
   // Percentages at or below which a connected device's battery is low /
   // critical (BluetoothManager says each drop once)
-  readonly property int lowBattery: _c.lowBattery
-  readonly property int criticalBattery: _c.criticalBattery
+  readonly property int lowThreshold: _c.lowThreshold
+  readonly property int criticalThreshold: _c.criticalThreshold
 }

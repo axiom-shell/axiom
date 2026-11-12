@@ -2,6 +2,7 @@ package yamlsrc
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -29,7 +30,12 @@ import (
 
 // Keys of a type's schema.yaml the builder reads itself (the rest become
 // annotations)
-var typeKeys = map[string]bool{"label": true, "settings": true}
+var typeKeys = map[string]bool{"label": true, "settings": true, "order": true}
+
+// Keys every type has outside its own settings: a kind whose slot holds
+// them (a view's, an OSD system's) keeps them ahead of an `order:` list,
+// which may not name them.
+var plumbingKeys = []string{"type", "id", "place", "visible"}
 
 func (a *assembler) expandKinds(kinds []Kind, defs, sections *jsonx.Object) {
 	for _, k := range kinds {
@@ -144,6 +150,10 @@ func (a *assembler) expand(file, typeName string, src, base, sections, defs *jso
 		a.addPart(file, src, part, parts.Value(part).(*jsonx.Object), slot, defs)
 	}
 
+	if src.Has("order") {
+		a.applyOrder(file, src, slot)
+	}
+
 	if !src.Has("link") && sections != nil && onSettingsPage(sections.Value(typeName)) && !def.Has("x-link") {
 		def.Set("x-link", jsonx.Obj("setting", typeName))
 	}
@@ -158,6 +168,91 @@ func (a *assembler) expand(file, typeName string, src, base, sections, defs *jso
 		}
 	}
 	return def
+}
+
+// applyOrder rebuilds the slot in the type's `order:` list: the final
+// order of its settings, its own interleaved with its parts'. It names
+// every setting of the slot once (`type`, `id`, `place` and `visible`
+// stay ahead of them and aren't named).
+func (a *assembler) applyOrder(file string, src, slot *jsonx.Object) {
+	fail := func(format string, args ...any) {
+		a.errs = append(a.errs, a.pos.At(src, "order", file, fmt.Sprintf(format, args...)))
+	}
+	list, ok := src.Value("order").(*jsonx.Array)
+	if !ok {
+		fail("order is a list of setting names")
+		return
+	}
+	if slot == nil {
+		fail("this kind's base has no x-settingsAt for order")
+		return
+	}
+	plumbing := map[string]bool{}
+	for _, k := range plumbingKeys {
+		plumbing[k] = true
+	}
+	seen := map[string]bool{}
+	var names []string
+	bad := false
+	for _, item := range list.Items {
+		key, ok := item.(string)
+		switch {
+		case !ok:
+			fail("order is a list of setting names")
+			bad = true
+		case plumbing[key]:
+			fail("order names %s, which every type has and keeps first", key)
+			bad = true
+		case !slot.Has(key):
+			fail("order names %s, which isn't one of its settings (it has %s)", key, strings.Join(settingKeys(slot), ", "))
+			bad = true
+		case seen[key]:
+			fail("order names %s twice", key)
+			bad = true
+		default:
+			seen[key] = true
+			names = append(names, key)
+		}
+	}
+	var missing []string
+	for _, k := range settingKeys(slot) {
+		if !seen[k] {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) > 0 {
+		fail("order leaves out %s", strings.Join(missing, ", "))
+		bad = true
+	}
+	if bad {
+		return
+	}
+	// Plumbing keys first, as the base has them
+	var head []string
+	for _, k := range slot.Keys() {
+		if plumbing[k] {
+			head = append(head, k)
+		}
+	}
+	vals := map[string]any{}
+	for _, k := range slot.Keys() {
+		vals[k] = slot.Value(k)
+		slot.Delete(k)
+	}
+	for _, k := range append(head, names...) {
+		slot.Set(k, vals[k])
+	}
+}
+
+// settingKeys: the slot's keys that are settings (not plumbing)
+func settingKeys(slot *jsonx.Object) []string {
+	var out []string
+	for _, k := range slot.Keys() {
+		if !slices.Contains(plumbingKeys, k) {
+			out = append(out, k)
+		}
+	}
+	return out
 }
 
 func orderedParts(parts *jsonx.Object, used []string) []string {

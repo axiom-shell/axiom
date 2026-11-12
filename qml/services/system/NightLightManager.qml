@@ -10,7 +10,9 @@ import qs.services.ui
  * The night light (the NightLight section): warmer colors, set by the
  * axiom daemon on the compositor's color transform or gamma ramps
  * (nightlight.set: internal/nightlight), or, where the compositor offers
- * neither (niri), by wlsunset, started and stopped by axiom. On a
+ * neither (niri), by wlsunset, started and stopped by the daemon
+ * (nightlight.wlsunset: it stops the user's own, records it and starts it
+ * again when axiom quits, and marks axiom's). On a
  * schedule it turns on at `startAt` and off at `endAt` (DailySchedule); a
  * switch by hand (the quick action, /nightlight, the `nightLight` IPC
  * target or bind) lasts until the next of those. A new temperature or
@@ -19,6 +21,8 @@ import qs.services.ui
  * `active` is what axiom last set, kept across QML reloads; at startup
  * it's what the daemon holds, or whether wlsunset already runs. Created
  * from shell.qml's `_services`.
+ *
+ * rpc: nightlight.set, nightlight.get, nightlight.wlsunset, nightlight.wlsunsetState
  *
  *   axiom ipc nightLight toggle
  */
@@ -72,10 +76,6 @@ Singleton {
   readonly property var _command: ["wlsunset", "-t", String(NightLight.temperature), "-T", String(NightLight.temperature + 1), "-S", "06:00", "-s", "18:00", "-g", String(NightLight.gamma / 100)]
   readonly property string _settings: root.tool === "wlsunset" ? root._command.join(" ") : `${NightLight.temperature}|${NightLight.gamma}`
 
-  // Stop any running one (waiting up to a second), then start ours
-  readonly property string _startScript: 'pkill -x "$1"; for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -x "$1" >/dev/null || break; sleep 0.1; done; shift; setsid -f "$@" >/dev/null 2>&1'
-  readonly property string _stopScript: 'pkill -x "$1"; true'
-
   function _apply() {
     if (!root.available)
       return;
@@ -97,7 +97,12 @@ Singleton {
     }
     console.log("[NightLightManager]", _run.active ? "On:" : "Off", _run.active ? root._settings : "");
     root._applying = true;
-    CommandManager.run(_run.active ? ["sh", "-c", root._startScript, "sh", "wlsunset"].concat(root._command) : ["sh", "-c", root._stopScript, "sh", "wlsunset"], () => {
+    BackendManager.call("nightlight.wlsunset", {
+      "on": _run.active,
+      "argv": root._command
+    }, error => {
+      if (error)
+        console.warn("[NightLightManager] Could not run wlsunset:", error.message);
       root._applying = false;
       if (root._again) {
         root._again = false;
@@ -109,8 +114,7 @@ Singleton {
   property bool _applying: false
   property bool _again: false
 
-  // Whether it's already on (a restart of qs; wlsunset started before
-  // axiom managed it), once per qs launch; the schedule waits for it
+  // Whether axiom's wlsunset is already on (a restart of qs), once per qs launch; the schedule waits for it
   property bool _probing: false
   function _probeOnce() {
     if (!root.available || _run.probed || root._probing)
@@ -124,12 +128,13 @@ Singleton {
       return;
     }
     root._probing = true;
-    CommandManager.run(["pgrep", "-x", "wlsunset"], exitCode => {
+    BackendManager.call("nightlight.wlsunsetState", {}, (error, state) => {
       root._probing = false;
-      console.log("[NightLightManager] Probed wlsunset running:", exitCode === 0);
-      _run.active = exitCode === 0;
+      const running = !error && state.running === true;
+      console.log("[NightLightManager] Probed wlsunset running:", running);
+      _run.active = running;
       _run.probed = true;
-    }, null, true);
+    });
   }
   onAvailableChanged: root._probeOnce()
 

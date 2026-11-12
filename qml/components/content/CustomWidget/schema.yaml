@@ -6,7 +6,7 @@ hosts: [lockscreen]
 settings:
   definition:
     type: string
-    title: Custom widget
+    title: Definition
     default: ''
     x-options: customWidgets
-    description: Make them on the Custom widgets page.
+    x-link: {page: CustomWidgets}

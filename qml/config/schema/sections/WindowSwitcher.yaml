@@ -10,29 +10,21 @@ additionalProperties: false
 properties:
   compositorSwitcher:
     type: boolean
-    title: Use the compositor's switcher
-    x-showIf: {/$supports.compositorSwitcher: true}
+    title: Compositor's switcher
+    x-showIf: {/$supports.compositorSwitcher: true, /Compositor.mode: [included, managed]}
     default: true
-    description: Open the compositor's own switcher instead. Only while axiom writes its config.
-  scope:
-    type: string
-    title: Windows listed
-    default: all
-    enum: [all, monitor, workspace]
-    x-enumLabels:
-      all: Every window
-      monitor: Windows on the focused monitor
-      workspace: Windows on the focused workspace
   edge:
     x-scope: look
     type: string
     title: Screen edge
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
     default: top
     enum: [top, bottom, left, right]
   position:
     x-scope: look
     type: integer
     title: Position along edge
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
     x-unit: '%'
     default: 50
     minimum: 0
@@ -41,27 +33,56 @@ properties:
   detached:
     x-scope: look
     type: boolean
-    title: Detach from edge
+    title: Detached
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
     default: true
     description: A separate box held off the edge, instead of growing out of it.
   distance:
     x-scope: look
     type: integer
-    title: Distance from edge
+    title: Distance
     x-unit: '%'
     default: 50
     minimum: 0
     maximum: 50
-    description: 0 lines it up with your window border, 50 centres it.
-    x-showIf: {detached: true}
+    description: '0: in line with the window border. 50: centered.'
+    x-showIf: {detached: true, anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
   animation:
     $ref: '#/definitions/DetachedAnimation'
     x-scope: look
-    x-showIf: {detached: true}
+    x-showIf: {detached: true, anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
+  tileSize:
+    x-scope: look
+    type: integer
+    x-control: stepper
+    title: Tile size
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
+    x-unit: px
+    default: 200
+    minimum: 64
+    maximum: 480
+  scope:
+    type: string
+    title: Windows listed
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
+    default: all
+    enum: [all, monitor, workspace]
+    x-enumLabels:
+      all: Every window
+      monitor: Windows on the focused monitor
+      workspace: Windows on the focused workspace
+  previews:
+    x-scope: look
+    type: boolean
+    title: Window previews
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
+    default: true
+    description: 'Off: app icons.'
   order:
     x-scope: look
     type: string
     title: Tile order
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
     default: leftToRight
     enum: [leftToRight, rightToLeft, topToBottom, bottomToTop]
     x-enumLabels:
@@ -69,28 +90,14 @@ properties:
       rightToLeft: Right to left
       topToBottom: Top to bottom
       bottomToTop: Bottom to top
-    description: Which way the windows run, most recent first.
-  previews:
-    x-scope: look
-    type: boolean
-    title: Window previews
-    default: true
-    description: Off shows app icons.
-  tileSize:
-    x-scope: look
-    type: integer
-    x-control: stepper
-    title: Tile size
-    x-unit: px
-    default: 200
-    minimum: 64
-    maximum: 480
+    description: Direction the windows run, most recent first.
   showDelay:
     type: integer
     x-control: stepper
-    title: Show after
+    title: Show delay
+    x-showIf: {anyOf: [{compositorSwitcher: false}, {/$supports.compositorSwitcher: false}, {/Compositor.mode: detached}]}
     x-unit: ms
     default: 120
     minimum: 0
     maximum: 1000
-    description: A quicker tap swaps to the last window without showing it.
+    description: A quick tap swaps to the last window without showing the switcher.

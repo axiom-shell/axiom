@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -12,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/screenshare"
+	sessx "github.com/axiom-shell/axiom/backend/internal/session"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 )
 
@@ -63,11 +65,88 @@ func (d *Daemon) screenSharePart() part {
 	}
 	configure()
 	return part{
-		name:     "screenshare",
-		methods:  d.screenShareMethods,
-		run:      d.runPortal,
-		onConfig: func(store.Event) { configure() },
+		name:    "screenshare",
+		methods: d.screenShareMethods,
+		run: func(ctx context.Context) error {
+			d.syncPortalLine(ctx, true)
+			return d.runPortal(ctx)
+		},
+		onConfig: func(store.Event) {
+			configure()
+			d.tasks.Go(func(ctx context.Context) { d.syncPortalLine(ctx, false) })
+		},
 	}
+}
+
+// portalLineState is the niri portal line's state (screenshare.portalLine):
+// the line `ScreenCast=axiom` in xdg-desktop-portal's niri-portals.conf is a
+// session effect, added while ScreenSharing is on and taken out when axiom
+// stops (session.PortalEnv).
+type portalLineState struct {
+	mu      sync.Mutex
+	state   string
+	err     string
+	started bool
+	want    bool
+}
+
+// portalLineResult is screenshare.portalLine's answer.
+type portalLineResult struct {
+	State string `json:"state"` // "on" | "off" | "link" | "missing" | "failed"
+	Path  string `json:"path"`
+	Line  string `json:"line"`
+	Error string `json:"error"`
+}
+
+// syncPortalLine makes the line follow ScreenSharing.enabled, under niri
+// only. initial: the daemon just started; a re-exec'd image (carried)
+// adopts the record as it is, and only the next change edits the file. The
+// portal is restarted only when the file changed and it runs.
+func (d *Daemon) syncPortalLine(ctx context.Context, initial bool) {
+	if ipc.NiriFromEnv(d.opts.Getenv) == nil {
+		return
+	}
+	changed := d.syncPortalLineState(initial)
+	// Restarted with the lock let go: the RPC's answer never waits for it
+	if changed {
+		if err := d.restartPortal(ctx, nil); err != nil {
+			d.opts.Log.Warn("screen share: restarting the portal", "err", err)
+		}
+	}
+}
+
+// syncPortalLineState edits the file and sets the state, true when the file
+// changed.
+func (d *Daemon) syncPortalLineState(initial bool) bool {
+	l := &d.portalLine
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	want := d.screenShare.Settings().Enabled
+	if l.started && want == l.want && l.state != sessx.LineFailed {
+		return false
+	}
+	display := d.sessionScope().WaylandDisplay
+	env := sessx.PortalEnvFrom(d.opts.Getenv)
+	store := d.sessionStore()
+	l.started, l.want = true, want
+	if initial && d.carriedStart {
+		// Adopted as it is: the record says whether the line is in
+		l.state = sessx.LineOff
+		if want && env.Has(store, display) {
+			l.state = sessx.LineOn
+		}
+		return false
+	}
+	state, changed, err := env.Sync(store, display, want)
+	l.state, l.err = state, ""
+	if err != nil {
+		l.err = err.Error()
+		d.opts.Log.Warn("screen share: the niri portal line", "state", state, "err", err)
+	}
+	if changed {
+		d.opts.Log.Info("screen share: the niri portal line changed", "state", state)
+	}
+	return changed
 }
 
 // runPortal serves the ScreenCast portal while niri runs, through session
@@ -171,6 +250,16 @@ func (d *Daemon) screenShareMethods(reg *rpc.Registry) {
 		Choice *screenshare.Choice `json:"choice"`
 		Cancel bool                `json:"cancel"`
 	}
+	rpc.Handle(reg, "screenshare.portalLine", func(ctx context.Context, c *rpc.Conn, _ struct{}) (portalLineResult, error) {
+		l := &d.portalLine
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		state := l.state
+		if state == "" {
+			state = sessx.LineOff
+		}
+		return portalLineResult{State: state, Path: sessx.PortalEnvFrom(d.opts.Getenv).Path(), Line: sessx.PortalText, Error: l.err}, nil
+	})
 	rpc.Handle(reg, "screenshare.answer", func(ctx context.Context, c *rpc.Conn, p answerParams) (struct{}, error) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell answers a screen share request")

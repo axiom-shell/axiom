@@ -111,8 +111,8 @@ QtObject {
     root.changedOnly = false;
     root.category = found.category;
     // A row inside a shut `x-fold` shows once it's open
-    if (found.fold)
-      root.setFoldOpen(found.fold, true);
+    for (const f of found.folds)
+      root.setFoldOpen(f, true);
     if (link === true)
       ShellManager.followLink("Settings");
     else
@@ -373,7 +373,7 @@ QtObject {
 
   // What a setting marked `x-inherit` (a dotted path) is while it's null:
   // the setting it follows, followed on while that is null too
-  // (widgetRadius → Interface.radius → Appearance.shape.radius); null if
+  // (widgetRadius → Appearance.shape.innerRadius → Appearance.shape.radius); null if
   // none is set
   function inheritedValue(fieldSchema) {
     let follows = fieldSchema?.["x-inherit"];
@@ -395,7 +395,8 @@ QtObject {
       // `x-allScreens`: "*" puts the thing on every screen (bars)
       return ["", ...(fieldSchema["x-allScreens"] ? ["*"] : []), ...General.outputs.map(screen => screen.name)];
     case "chatProviders":
-      return ChatConfig.providers.map(provider => provider.id);
+      // An empty default is the default provider (`x-emptyLabel`)
+      return (fieldSchema.default === "" ? [""] : []).concat(ChatConfig.providers.map(provider => provider.id));
     case "chatPresets":
       return ChatConfig.presets.map(preset => preset.name);
     case "colors":
@@ -461,6 +462,9 @@ QtObject {
     case "wallpaperCollections":
       // The wallpaper folder's subfolders holding images
       return WallpaperManager.collections;
+    case "currencies":
+      // The usual portfolio currencies (any code can still be typed)
+      return ["USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY", "KRW", "INR"];
     }
     return [];
   }
@@ -578,11 +582,12 @@ QtObject {
   // Sets config values by dotted path ({ "Apps.commands.terminal": "foot" }) and
   // saves them at once; false if saves can't be made. For pages
   // that apply as they go (SettingRows), not the settings page's draft.
-  function commitValues(values) {
+  // `done(ok)` (optional) as ConfigManager.commit's
+  function commitValues(values, done) {
     const next = Utils.clone(ConfigManager.config);
     for (const dottedPath of Object.keys(values))
       _setAt(next, dottedPath.split("."), values[dottedPath]);
-    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split(".")))))
+    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split("."))), done))
       return false;
     ensureLoaded();
     return true;
@@ -637,9 +642,14 @@ QtObject {
     // Diffed now, not `changedPaths`: Save first commits typed text, an
     // edit in place that `changedPaths` sees only next tick
     const changed = _diff(draft.local, draft.saved, []).map(path => path.split("."));
+    // This save switches the compositor into managed mode: the Compositor
+    // card then offers the Recommended setup, once per switch
+    const intoManaged = changed.some(path => path.join(".") === "Compositor.mode") && Utils.valueAt(draft.local, ["Compositor", "mode"]) === "managed" && Utils.valueAt(draft.saved, ["Compositor", "mode"]) !== "managed";
     if (!ConfigManager.commit(_merged(changed), _takesOver(changed)))
       return false;
     draft.load();
+    if (intoManaged)
+      RecommendedSetupManager.offer();
     return true;
   }
 

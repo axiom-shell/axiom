@@ -2,6 +2,8 @@ label: Lock keys
 icon: keyboard_capslock
 group: System
 popout: menu
+colors: text
+order: [showCaps, showNum, showScroll, boxes, hideWhenOff, popout, foregroundColor, activeColor, inactiveColor]
 boxes:
   variant: each
   boxes:
@@ -14,12 +16,5 @@ settings:
     type: boolean
     title: Hide when off
     default: true
-    description: Show only while one of the keys is on.
-  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning}
+  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning, x-autoGradient: true}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}

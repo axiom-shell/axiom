@@ -14,10 +14,10 @@ The night light: a screen color temperature, set by the axiom daemon (wlsunset w
   - `ctm`: Hyprland's `hyprland_ctm_control_manager_v1` (what hyprsunset used), a diagonal matrix per output. Bound only while it's on, since holding it keeps every other client out; letting it go puts the identity back.
   - `gamma`: `zwlr_gamma_control_manager_v1` (sway), ramps per output, held only while on.
   - Either follows output hotplug. Another program holding the colors (CTM's `blocked` event; a gamma control's `failed`, which also means an output without gamma tables, as a nested sway's) shows as `NightLightManager.blocked` on the card.
-- **wlsunset**, where the compositor offers neither (niri, so far): wlsunset pinned to one temperature, started detached, stopped with `pkill`.
+- **wlsunset**, where the compositor offers neither (niri, so far): wlsunset pinned to one temperature, started and stopped by the daemon (`nightlight.wlsunset {on, argv}`, `daemon/session.go`): a user's own wlsunset of this session is recorded and stopped first, axiom's is marked in its environment (`AXIOM_SPAWNED=nightlight:<display>`) and killed by that mark; quitting, a crash and the next start's heal kill axiom's and start the user's again ([session teardown](../backend/session-teardown.md)).
 - `tool` is "axiom", "wlsunset" or "" (neither); undefined until the daemon's Wayland connection is ready (`WaylandManager.known`), so wlsunset is never picked, and started, where the daemon is about to say it warms the screens itself.
 - `active` is a `PersistentProperties`:
-  - probed once per launch (`_probeOnce`): `nightlight.get` from the daemon, or `pgrep` for wlsunset;
+  - probed once per launch (`_probeOnce`): `nightlight.get` from the daemon, or `nightlight.wlsunsetState` (axiom's own wlsunset runs);
   - the schedule waits for the probe.
 - A `DailySchedule` turns it on at `startAt` and off at `endAt` (edge-triggered, see [Wallpaper and schedules](wallpaper-and-schedules.md)).
 - A new temperature or gamma applies while on (wlsunset restarts, debounced).

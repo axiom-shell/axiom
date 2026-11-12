@@ -1,6 +1,6 @@
 # Onboarding
 
-> **Files:** `qml/services/session/OnboardingManager.qml`, `qml/shell/Onboarding.qml`, `qml/components/surfaces/onboarding/OnboardingWindow.qml`, `qml/components/surfaces/onboarding/pages/CompositorPage.qml`, `qml/components/surfaces/onboarding/pages/SystemPage.qml`, `qml/components/surfaces/onboarding/pages/AppColorsPage.qml`, `qml/components/surfaces/onboarding/pages/ChecksPage.qml`, `qml/components/surfaces/onboarding/pages/ExampleCard.qml`, `qml/services/core/DependencyManager.qml`, `qml/components/methods/Packages.qml`, `qml/components/views/Settings/AccountCard.qml`
+> **Files:** `qml/services/session/OnboardingManager.qml`, `qml/shell/Onboarding.qml`, `qml/components/surfaces/onboarding/OnboardingWindow.qml`, `qml/components/surfaces/onboarding/pages/CompositorPage.qml`, `qml/components/surfaces/onboarding/pages/SystemPage.qml`, `qml/components/surfaces/onboarding/pages/WelcomePage.qml`, `qml/services/session/RecommendedSetupManager.qml`, `qml/components/methods/RecommendedSetup.qml`, `qml/components/forms/RecommendedSetupList.qml`, `qml/components/forms/ScreenSharingSetup.qml`, `qml/components/surfaces/onboarding/pages/AppColorsPage.qml`, `qml/components/surfaces/onboarding/pages/ChecksPage.qml`, `qml/components/surfaces/onboarding/pages/ExampleCard.qml`, `qml/services/core/DependencyManager.qml`, `qml/components/methods/Packages.qml`, `qml/components/views/Settings/AccountCard.qml`
 > **Config:** none of its own (pages write other sections); state in `~/.local/state/axiom/ui/onboarding.json`
 > **Related:** [Config modes](../compositor/config-modes.md), [Hyprland's writer](../hyprland/config-modes.md), [Monitors](../hyprland/monitors.md), [Greeter install](greeter-install.md), [Pages and grid](../overlay/pages-and-grid.md)
 
@@ -11,8 +11,9 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - After a restart, until the user finishes or skips it.
 - State lives in `~/.local/state/axiom/ui/onboarding.json`: `{ completedVersion, step }`.
   - A config with no state file is never prompted.
-  - Bump `version` when a page is worth showing to existing users.
+  - Bump `version` when a page is worth showing to existing users. It is 2: the Welcome page's Use recommended, which reopens the onboarder once for everyone who finished version 1.
 - The step and the chosen compositor mode live in a `PersistentProperties`.
+- **The detached nudge** (`OnboardingManager._nudge`, `methods/DetachedNudge.shouldNudge`): while the mode is detached and the compositor has config modes, outside the onboarder and the greeter, one notification per qs launch (`_run.nudged`, a `PersistentProperties` that survives reloads and resets on a qs start): "You're in detached mode!" with Set up (opens `Compositor.mode` in the settings) and Not now. It fires once the backend is ready, right after the onboarder ends on detached (a mode picked in Finish counts as nudged), and at every launch while detached. Not on a first run before the onboarder has opened and closed once (`firstRunPending`: the hello says it before ConfigManager does). The Compositor card says the same in a line.
 
 ### Window
 - `qml/shell/Onboarding` → `surfaces/onboarding/OnboardingWindow`, with pages in `onboarding/pages/`.
@@ -58,11 +59,28 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - Below its screen border, the [example setups](../core/saved-configs-sharing.md) are `pages/ExampleCard`s: a small screen drawn in the example's theme (`ThemeFamilies.previewOf`) with its bars, docks and screen border (`share.examples`' summary), then its palette, title and description. A click applies it at once (`SavedConfigsManager.applyExample`, keeping the running config first as every apply does); the applied one is marked. `Workspaces` is `personal` scope, so one doesn't undo the Workspaces step.
 - `DependencyManager.check(commands)` / `found` / `tools` say what's installed. The Checks page shows each tool's `purpose` through `I18n.tr`, so the comment above `tools` declares exactly the purposes it holds, one `I18n.tr("…")` each: a new or reworded purpose gets its line there, a dropped one loses it. Calls made together are batched into one `deps.check` to axiom (`backend/internal/deps`: `$PATH` through `exec.LookPath`), and without axiom the commands stay unknown.
 - The Apps page shows the main modifier and the keys to know only where axiom binds keys (`CompositorManager.supports.keybinds`); elsewhere it's just the apps.
-- The System page, top to bottom: updates, clipboard history, [Idle](idle.md), the lock screen, [Polkit](polkit.md), the login screen.
+- The System page, top to bottom: updates, clipboard history, [Idle](idle.md), the lock screen, [Polkit](polkit.md), screen sharing, the login screen.
   - Idle, the lock screen, polkit and the login screen are `OptionCard` choices. The lock screen has two (`Lockscreen.mode`): axiom's, or your own.
   - It names no compositor's tools (hypridle, hyprpolkitagent): "any idle daemon you start yourself", "any other agent you run", and `axiom lock` as the command your own idle daemon locks with. With Idle off it also says caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.
+  - Screen sharing (where the compositor's portal is known) has two `OptionCard`s: axiom's picker (recommended) and the portal's own (`ScreenSharing.enabled`), then `forms/ScreenSharingSetup` (the portal, the hookup line, restart the portal, try the picker) while axiom's is chosen. It is the body of Settings' `ScreenSharingStatus` too ([Screen sharing](screen-sharing.md)).
   - The login screen (`forms/GreeterSetup`, see [Greeter install](greeter-install.md)) is set up only from its Install button.
 - The App colors page, right after it (the last before Checks), holds the [theme integrations](../theming/theme-integrations.md) and the switched-on ones' hookups: optional, needing no decision, so they don't lengthen the System page's choices.
+
+### Recommended setup
+- The list of what axiom can run for the user in managed mode: managed mode, the lock screen, Idle, Polkit, the screen-sharing picker, App colors for installed apps and the login screen. One pre-ticked list, one Apply.
+- **Entries** come from the schema's `x-recommended` ([annotations](../core/schema-annotations.md)): a field's value is the one recommended, a section with `installed` is an apps row (its booleans for installed apps; gtk and qt carry `false` and drop out). `methods/RecommendedSetup` works out the rows (`available`, `done`, `checkedByDefault`, and a `reason` code that the hosts translate) from facts the manager passes in. Its `steps` is the ordered plan.
+- **The manager**, `RecommendedSetupManager`, owns the facts, the ticks and the run, so a run outlives the page or card showing it. A row's `state` is `idle`, `pending`, `running`, `later`, `done`, `skipped` or `failed`.
+- **Order of an Apply:**
+  1. the `later` rows (the host's `choose`);
+  2. one `SettingsManager.commitValues` of every ticked setting, `ScreenSharing.enabled` and the app switches (a takeover save: an explicit user action, as the onboarder's Finish `commitValues` of `Compositor.mode` already is); the step goes on when axiom has answered (`commitValues(values, done)`, `ConfigManager.commit`'s `done(ok)`): a commit that can't be made, or a refusal, fails every row in it and stops the run;
+  3. the screen-sharing hookup, then the portal step (`shareActive`, a live `PrivacyManager.screenCaptures` binding, defers the restart so a running share isn't ended: "Takes effect after the portal restarts or next login", with a Restart button and the card's "A share running now stops" line);
+  4. the app hookups (`IntegrationHookupManager.apply(key, done)`); a hookup or portal failure marks only its own row;
+  5. the login screen last (`GreeterManager.install()`, its root prompt, `forms/GreeterSetup` under the list afterwards); it waits up to 10 s while Polkit, turned on in this run, is still `starting`, and fails with "busy" if another install is running. Earlier steps stay applied.
+- **Welcome page:** where the Compositor page is shown (`supports.configModes`), a **Use recommended** button runs the Apply at once (`apply({ later, choose })`: its own, whatever another host's list set since), like every page here applies as you go, with a summary line ("Applying...", "Done", "{0} failed") and the rows under a "What this turns on" fold, closed unless a row fails. It is disabled while a row's check is out (`reason` `unknown`). The compositor mode row is a `later` row: ticked, it calls `OnboardingManager.chooseMode("managed")`, and `finish()` still commits the mode ("Applies when you finish"). It starts unticked for a config of the user's own (`recommendedMode` is not managed), tickable by hand. No warning if the button isn't pressed.
+- **Compositor card:** `CompositorStatus` shows the list once after a save into managed mode (`RecommendedSetupManager.offered`, set by `SettingsManager.saveChanges` when it changes `Compositor.mode` to managed from something else; kept in `PersistentProperties`; cleared by Not now or Close, or when the mode leaves managed). The onboarder's Finish uses `commitValues`, so it never sets it.
+- The list's Repeater model is `RecommendedSetupManager.ids` (the entry ids, which never change), each delegate reading `rows[id]`.
+- IPC `recommendedSetup`: `rows` (JSON), `check <id> <on|off>`, `apply`, so a nested shell can untick rows and apply.
+- Not covered by tests and not run in a nested shell: the portal restart, the hookups on real files and the greeter install (they reach the real user bus, home and root). Covered by the `steps` and `portalAction` rows of `tst_RecommendedSetup` and the existing greeter and hookup tests.
 
 ### Package hints
 - `DependencyManager.distro` is `Packages.distroFamily` of `/etc/os-release`: `arch`, `fedora`, or `""` (unknown).
@@ -73,6 +91,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - **Adding a distribution:** one column in every `Packages.packages` entry (`tst_Packages` fails on a missing one), one `Packages.distros` entry (with `updates`, and a format in `backend/internal/updates` if its output is new), and test rows; then install.sh's column for it ([packaging.md](../packaging.md): `check_packages.py` compares the two).
 
 ### Entry points
+- IPC `recommendedSetup`: `rows`, `check`, `apply` ([Recommended setup](#recommended-setup)).
 - IPC `onboarding`:
   - `open`, `close`;
   - `reset`, which opens it at the next start;

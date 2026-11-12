@@ -4,18 +4,18 @@ defaultSize: [6, 1]
 slots: [text]
 color: text
 settings:
+  bold: {type: boolean, title: Bold, default: false}
+  monospace: {type: boolean, title: Monospace, default: false}
+  align:
+    type: string
+    title: Alignment
+    default: center
+    x-control: toggle
+    enum: [left, center, right]
+    x-enumLabels: {left: Left, center: Center, right: Right}
   size:
     type: string
     title: Size
     default: auto
     enum: [auto, small, normal, large, huge]
     x-enumLabels: {auto: Fit the box, small: Small, normal: Normal, large: Large, huge: Huge}
-  align:
-    type: string
-    title: Align
-    default: center
-    x-control: toggle
-    enum: [left, center, right]
-    x-enumLabels: {left: Left, center: Centre, right: Right}
-  bold: {type: boolean, title: Bold, default: false}
-  monospace: {type: boolean, title: Monospace, default: false}

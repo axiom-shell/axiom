@@ -20,7 +20,7 @@ import (
 // manager) for the compositor this daemon runs under: nil when the tree's
 // tables can't be read (logged), and inert under a compositor without
 // config modes.
-func (d *Daemon) newCompositor() *manager.Manager {
+func (d *Daemon) newCompositor(carried bool) *manager.Manager {
 	tables, err := render.ParseTables(func(p string) (string, error) {
 		data, err := os.ReadFile(filepath.Join(d.opts.Tree, p))
 		return string(data), err
@@ -36,6 +36,7 @@ func (d *Daemon) newCompositor() *manager.Manager {
 	}
 	return manager.New(manager.Options{
 		Getenv:      d.opts.Getenv,
+		Carried:     carried,
 		StateDir:    d.dirs.State,
 		RuntimeFile: d.runtime.File("compositor.json"),
 		Tables:      tables,
@@ -71,6 +72,7 @@ func (d *Daemon) newCompositor() *manager.Manager {
 			}
 			p.Send(d.server, json.RawMessage(jsonx.MarshalCompact(params)), subscribedTo(topicCompositor))
 		},
+		OnSteps: d.sess.setSteps,
 		// This image, even once the file it came from is replaced
 		Bin: "/proc/self/exe",
 		Log: d.opts.Log.With("part", "compositor"),

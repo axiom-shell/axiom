@@ -324,6 +324,21 @@ func swayPress(bind any, k *SwayKey) string {
 // keeps them (an input method's virtual keyboard would fire the release
 // once per keyboard otherwise)
 func (t *Tables) swayKeptPresses(binds, ctx any) []string {
+	var out []string
+	for _, p := range t.swayKeptPressesOf(binds, ctx) {
+		out = append(out, p.press)
+	}
+	return out
+}
+
+// swayKeptPress is a kept press and the bind it came from (the first, when
+// several release binds share it)
+type swayKeptPress struct {
+	press string
+	bind  any
+}
+
+func (t *Tables) swayKeptPressesOf(binds, ctx any) []swayKeptPress {
 	type entry struct {
 		bind any
 		k    *SwayKey
@@ -338,7 +353,8 @@ func (t *Tables) swayKeptPresses(binds, ctx any) []string {
 		}
 	}
 	released := func(e entry) bool { return isTrue(get(e.bind, "release")) || e.k.Tap }
-	var own, out []string
+	var own []string
+	var out []swayKeptPress
 	for _, e := range complete {
 		if !released(e) {
 			own = append(own, swayPress(e.bind, e.k))
@@ -348,9 +364,11 @@ func (t *Tables) swayKeptPresses(binds, ctx any) []string {
 		if !released(e) {
 			continue
 		}
-		if p := swayPress(e.bind, e.k); !slices.Contains(own, p) && !slices.Contains(out, p) {
-			out = append(out, p)
+		p := swayPress(e.bind, e.k)
+		if slices.Contains(own, p) || slices.ContainsFunc(out, func(o swayKeptPress) bool { return o.press == p }) {
+			continue
 		}
+		out = append(out, swayKeptPress{p, e.bind})
 	}
 	return out
 }
@@ -391,30 +409,52 @@ func (t *Tables) SwayBindEntries(binds, ctx any) *jsonx.Array {
 	return out
 }
 
-// SwayUnbindLines is SwayConf.unbindLines: the commands taking binds' lines
-// back out, the floating modifier put back to the user's own (entries are
-// SwayConfigBinds') or sway's default.
-func (t *Tables) SwayUnbindLines(binds, ctx, entries any) []string {
-	out := []string{}
+// SwayUnbind is one command taking out what the runtime layer bound, and
+// the key (KeyID) it frees: "" for the floating modifier's restore.
+type SwayUnbind struct {
+	Key  string `json:"key"`
+	Line string `json:"line"`
+}
+
+// SwayUnbinds are the commands taking binds' lines back out, the floating
+// modifier put back to the user's own (entries are SwayConfigBinds') or
+// sway's default, each with the key it frees.
+func (t *Tables) SwayUnbinds(binds, ctx, entries any) []SwayUnbind {
+	out := []SwayUnbind{}
 	for _, b := range items(binds) {
 		k := SwayKeyOf(get(b, "key"))
 		if k == nil || t.SwayBindLine(b, ctx, false) == "" {
 			continue
 		}
-		out = append(out, strings.Join(append(append([]string{"un" + k.Command}, swayConflictFlags(b, k)...), k.Spec), " "))
+		out = append(out, SwayUnbind{KeyID(get(b, "key")),
+			strings.Join(append(append([]string{"un" + k.Command}, swayConflictFlags(b, k)...), k.Spec), " ")})
 	}
-	for _, p := range t.swayKeptPresses(binds, ctx) {
-		out = append(out, "un"+p)
+	for _, p := range t.swayKeptPressesOf(binds, ctx) {
+		out = append(out, SwayUnbind{KeyID(get(p.bind, "key")), "un" + p.press})
 	}
 	if SwayFloatingModifier(binds) != "" {
-		// The last of the user's lines, as sway takes it
-		restore := "floating_modifier none"
-		for _, e := range items(entries) {
-			if d := str(get(e, "description")); strings.HasPrefix(d, "floating_modifier ") {
-				restore = d
-			}
+		out = append(out, SwayUnbind{"", SwayFloatingRestore(entries)})
+	}
+	return out
+}
+
+// SwayFloatingRestore is the command putting the floating modifier back:
+// the last of the user's lines, as sway takes it, else none.
+func SwayFloatingRestore(entries any) string {
+	restore := "floating_modifier none"
+	for _, e := range items(entries) {
+		if d := str(get(e, "description")); strings.HasPrefix(d, "floating_modifier ") {
+			restore = d
 		}
-		out = append(out, restore)
+	}
+	return restore
+}
+
+// SwayUnbindLines is SwayConf.unbindLines: SwayUnbinds' commands.
+func (t *Tables) SwayUnbindLines(binds, ctx, entries any) []string {
+	out := []string{}
+	for _, u := range t.SwayUnbinds(binds, ctx, entries) {
+		out = append(out, u.Line)
 	}
 	return out
 }

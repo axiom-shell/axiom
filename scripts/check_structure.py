@@ -39,6 +39,10 @@ running anything:
     while no monitor is connected), but a line marked
     `// allowed: <reason>` (a file name, a window that must exist with no
     monitor)
+  - every bar widget is data on BarWidget: rules T1-T8 of
+    bar_widget_template (the root, no colour resolved, no opacity fade, no
+    base output written, no unused or unknown colour field), its exceptions
+    in scripts/bar-widget-exceptions.json
   - no UI switches one of the shell's actions through its service's own
     toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
     light, dark mode, the mutes, the VPN, a recording, a session action,
@@ -102,6 +106,21 @@ IO_KINDS = {
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
 
+# Bar widgets allowed to break a rule of the bar widget template, each with
+# its reason; an entry no longer needed is an error
+WIDGET_EXCEPTIONS = ROOT / "scripts" / "bar-widget-exceptions.json"
+WIDGETS_DIR = "qml/components/bar/widgets"
+WIDGET_RULES = {f"T{n}" for n in range(1, 9)}
+WIDGET_ROOTS = {"BarWidget", "AudioLevelWidget"}
+# What the base computes: a widget declares data, never these (T5)
+WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroundLevelColor splits splitAt "
+                  "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
+                  "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
+WIDGET_COLOR_CALLS = re.compile(
+    r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\s*\(|\bBarWidgetStyle\.|"
+    r"\bBarsConfig\.\w*Colors?\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"
+    r"[\"'](?:white|black|red|green|blue|yellow|orange|purple|gray|grey|cyan|magenta)[\"']")
+
 errors, warnings = [], []
 
 
@@ -146,6 +165,159 @@ def binding(code, start):
             break
         i += 1
     return code[start:i]
+
+
+def blank_strings(code):
+    """`code` with each string literal emptied (same lines)."""
+    return re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
+
+
+def bar_widget_template(schema, sources, errors):
+    """Every bar widget is data on BarWidget (docs/dev/bar/widget-style.md ›
+    The widget template): rules T1-T8, but for the listed exceptions."""
+    root = ROOT / WIDGETS_DIR
+    exceptions = json.loads(WIDGET_EXCEPTIONS.read_text()).get("types", {}) if WIDGET_EXCEPTIONS.exists() else {}
+    found = {}  # type -> [(rule, message)]
+    colour_fields = {}
+    for t in schema_types(schema, "BarWidget"):
+        props = schema["definitions"].get(f"{t}Widget", {}).get("properties", {}).get("properties", {}).get("properties", {})
+        colour_fields[t] = {k for k, v in props.items() if v.get("x-options") == "colors"}
+
+    def lines_of(code, pattern):
+        for m in re.finditer(pattern, code):
+            yield code.count("\n", 0, m.start()) + 1, m
+
+    for folder in sorted(p for p in root.iterdir() if p.is_dir() and p.name != "base"):
+        t = folder.name
+        out = found.setdefault(t, [])
+
+        def add(rule, message):
+            out.append((rule, f"{message}"))
+        files = sorted(folder.rglob("*.qml"))
+        raw = {f: f.read_text() for f in files}
+        code = {f: re.sub(r"//[^\n]*", "", text) for f, text in raw.items()}
+        plain = {f: blank_strings(c) for f, c in code.items()}
+        main_file = folder / f"{t}.qml"
+
+        if main_file in raw:
+            lines = raw[main_file].split("\n")
+            start = next((i for i, line in enumerate(lines) if re.match(r"[A-Z][\w.]*\s*\{", line)), None)
+            name = re.match(r"[A-Z][\w.]*", lines[start]).group(0) if start is not None else None
+            if name not in WIDGET_ROOTS:
+                add("T1", f"{rel(folder)}/{t}.qml: T1 its root is {name}, not BarWidget or AudioLevelWidget")
+
+        for f in files:
+            path = rel(f)
+            short = f"{t}/{f.relative_to(folder).as_posix()}"
+            for n, m in lines_of(code[f], WIDGET_COLOR_CALLS):
+                add("T2", f"{short}:{n}: T2 resolves a colour ({m.group(0).strip()}): name a colour field, the base resolves it")
+            # opacity: only an Image fades; else a switch of 0 or 1
+            stack = []
+            for n, line in enumerate(plain[f].split("\n"), 1):
+                events = [(m.start(), "push", m.group(1).split(".")[-1] if m.group(1) else None)
+                          for m in re.finditer(r"(?:([A-Z][\w.]*)\s*)?\{", line)]
+                events += [(m.start(), "pop", None) for m in re.finditer(r"\}", line)]
+                events += [(m.start(), "opacity", m.end()) for m in re.finditer(r"\bopacity\s*:", line)]
+                for at, kind, arg in sorted(events, key=lambda e: (e[0], {"push": 0, "opacity": 1, "pop": 2}[e[1]])):
+                    if kind == "push":
+                        stack.append(arg)
+                    elif kind == "pop":
+                        if stack:
+                            stack.pop()
+                    else:
+                        owner = next((x for x in reversed(stack) if x), None)
+                        if owner in ("Image", "IconImage"):
+                            continue
+                        offset = sum(len(x) + 1 for x in plain[f].split("\n")[:n - 1]) + arg
+                        expr = binding(plain[f], offset)
+                        if any(float(x) not in (0, 1) for x in re.findall(r"(?<![\w.])(?:\d+(?:\.\d*)?|\.\d+)", expr)):
+                            add("T3", f"{short}:{n}: T3 fades by opacity ({expr.strip()}): an opacity is 0 or 1, a dim is a colour")
+            for n, _ in lines_of(plain[f], r"\bdim\b"):
+                add("T3", f"{short}:{n}: T3 dims by a `dim`: a dim is a colour the base draws")
+            for n, _ in lines_of(plain[f], r"\.box\b"):
+                add("T7", f"{short}:{n}: T7 reads .box: read shownItems")
+            if f == main_file:
+                for n, _ in lines_of(plain[f], r"(?<![\w.$])(?<!let )(?<!const )(?<!var )(?<!id: )(?<!id:)box\b(?!\s*:)"):
+                    add("T7", f"{short}:{n}: T7 reads box: read shownItems")
+            for n, _ in lines_of(plain[f], r"\bstateColorName\b"):
+                add("T8", f"{short}:{n}: T8 names stateColorName: a state names its colour field (accentField)")
+
+        if main_file in raw:
+            body = plain[main_file]
+            depth = 0
+            names = "|".join(WIDGET_OUTPUTS)
+            binding_re = re.compile(r"^\s*(?:(?:readonly\s+|required\s+|default\s+)*property\s+[\w<>.]+\s+)?(" + names + r")\s*:")
+            for n, line in enumerate(body.split("\n"), 1):
+                if depth == 1 and binding_re.match(line):
+                    add("T5", f"{t}/{t}.qml:{n}: T5 sets {binding_re.match(line).group(1)}: it is the base's output")
+                depth += line.count("{") - line.count("}")
+            for n, m in lines_of(body, r"(?<![\w.])(?<!let )(?<!var )(?<!const )(?:root\.)?(" + names + r")\s*=(?!=)"):
+                add("T5", f"{t}/{t}.qml:{n}: T5 writes {m.group(1)}: it is the base's output")
+
+        for f in sorted(folder.iterdir()):
+            if f.name not in (f"{t}.qml", "schema.yaml"):
+                add("T6", f"{rel(folder)}/: T6 holds {f.name}: only {t}.qml and schema.yaml")
+
+    # T4: a colour field nothing uses, a colour named that isn't one
+    unused_without = {}
+    for t, fields in colour_fields.items():
+        folder = root / t
+        if not folder.is_dir():
+            continue
+        out = found.setdefault(t, [])
+        texts = {f: re.sub(r"//[^\n]*", "", f.read_text()) for f in folder.glob("*.qml")}
+        allcode = "\n".join(texts.values())
+        used = set(re.findall(r'"([^"\\\n]*)"', allcode))
+        used |= set(re.findall(r"\bautoColors\.(\w+)", allcode))
+        used |= set(re.findall(r"\bproperties\??\.(\w+)", allcode))
+        used.add("foregroundColor")
+        main_code = texts.get(folder / f"{t}.qml", "")
+        if not re.search(r"\baccentField\s*:", main_code):
+            used.add("backgroundColor")
+        unused_without[t] = fields - used
+        extra = set()
+        for path in exceptions.get(t, {}).get("fieldsReadIn", []):
+            extra |= set(re.findall(r"\bproperties\??\.(\w+)", sources.get(path, "")))
+        for field in sorted(fields - used - extra):
+            out.append(("T4", f"{t}/: T4 {field} is a colour field of {t} that nothing uses"))
+        for f, c in texts.items():
+            asks = [(m.end(), binding(c, m.end())) for m in re.finditer(r"\b(?:accentField|iconField)\s*:", c)]
+            asks += [(m.end(), binding(c, m.end())) for m in re.finditer(r'(?<![\w.])"?field"?\s*:', c)]
+            asks += [(m.end(), binding(c, m.end()).split(",")[0]) for m in re.finditer(r"\bpaint\.(?:field|line)\(", c)]
+            for at, expr in asks:
+                for name in re.findall(r'"(color|\w+Color)"', expr):
+                    if name not in fields:
+                        n = c.count("\n", 0, at) + 1
+                        out.append(("T4", f"{t}/{f.name}:{n}: T4 names {name}, not a colour field of {t}"))
+
+    name = rel(WIDGET_EXCEPTIONS)
+    for t, entry in exceptions.items():
+        if not (root / t).is_dir():
+            errors.append(f"{name}: {t} has no folder under {WIDGETS_DIR}")
+            continue
+        if not str(entry.get("reason", "")).strip():
+            errors.append(f"{name}: {t} has no reason")
+        listed = entry.get("rules", [])
+        for rule in listed:
+            if rule not in WIDGET_RULES:
+                errors.append(f"{name}: {t} names {rule}, not a rule (T1-T8)")
+            elif not any(r == rule for r, _ in found.get(t, [])):
+                errors.append(f"{name}: {t} lists {rule}, which it no longer breaks")
+        read_in = entry.get("fieldsReadIn", [])
+        if read_in:
+            supplied = set()
+            for path in read_in:
+                if path not in sources:
+                    errors.append(f"{name}: {t} reads fields in {path}, which doesn't exist")
+                supplied |= set(re.findall(r"\bproperties\??\.(\w+)", sources.get(path, "")))
+            if not (unused_without.get(t, set()) & supplied):
+                errors.append(f"{name}: {t} lists fieldsReadIn, which supplies none of its otherwise-unused colour fields")
+
+    for t, items in found.items():
+        skip = set(exceptions.get(t, {}).get("rules", []))
+        for rule, message in items:
+            if rule not in skip:
+                errors.append(message)
 
 
 def main():
@@ -373,12 +545,22 @@ def main():
 
     # Hand-built settings parts: x-card's `file` loads
     # views/Settings/<file>Card.qml, x-intro and x-row views/Settings/
-    # <Name>.qml (by URL, so a typo only shows in the log)
+    # <Name>.qml (by URL, so a typo only shows in the log); x-intro is a name
+    # or { file, setup }
     def annotated(node, found):
         if isinstance(node, dict):
             for key, value in node.items():
                 if key == "x-card" and isinstance(value, dict) and value.get("file"):
                     found.append((key, value["file"]))
+                elif key == "x-intro" and isinstance(value, dict):
+                    # { file, setup: [keys] }: every key is a property of the object
+                    if not value.get("file"):
+                        errors.append("schema x-intro object needs `file`")
+                    else:
+                        found.append((key, value["file"]))
+                    for setup in value.get("setup", []):
+                        if setup not in node.get("properties", {}):
+                            errors.append(f"schema x-intro {value.get('file')!r}: setup key {setup!r} isn't a property of its object")
                 elif key in ("x-intro", "x-row"):
                     found.append((key, value))
                 annotated(value, found)
@@ -637,6 +819,8 @@ def main():
             m = re.search(r"\bwidgetStyle\b|\blook\.style\b", line.split("//")[0])
             if m and "// allowed:" not in line:
                 errors.append(f"{path}:{n}: reads `{m.group(0)}`: a style is BarLook's alone; read the look's traits (or mark a use that must stay `// allowed: <reason>`)")
+
+    bar_widget_template(schema, sources, errors)
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

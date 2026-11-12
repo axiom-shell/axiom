@@ -62,6 +62,18 @@ QtObject {
     return icon === "badge" ? spacing + badgePad : padding * 2 + root.depth(cap, across);
   }
 
+  // Whether an icon-and-label widget shows an icon part and a label part
+  // apart: it has a `splitRoom` (>= 0, -1 for none) and both parts. The
+  // icon part is the icon, or a lead graphic drawn before it; the label part
+  // is the text, or a lead graphic drawn after the icon (`leadAfterIcon`:
+  // ticker and stacked text). `leadRoom` is the lead graphic's room (0 for
+  // none).
+  function iconTextSplit(hasIcon, hasText, leadRoom, leadAfterIcon, splitRoom) {
+    const hasIconPart = hasIcon || (leadRoom > 0 && !leadAfterIcon);
+    const hasLabelPart = hasText || (leadRoom > 0 && leadAfterIcon);
+    return splitRoom >= 0 && hasLabelPart && hasIconPart;
+  }
+
   // A split widget's icon part, `head` long from `start` along it, and
   // the gap of `room` after it: { at: the gap's middle along the bar,
   // part: what the icon part holds, `size` across round `middle` }, in the
@@ -71,6 +83,12 @@ QtObject {
       "at": start + head + room / 2,
       "part": vertical ? Qt.rect(middle - size / 2, start, size, head) : Qt.rect(start, middle - size / 2, head, size)
     };
+  }
+
+  // The cap a box starting where one ended in `cap` (a split divider)
+  // starts with: an arrow's point is notched, the others fit the same
+  function followingCap(cap) {
+    return cap === "arrowOut" ? "arrowIn" : cap;
   }
 
   // A run's own ends by `shape` (the look's: its name, and a slant's or
@@ -211,19 +229,6 @@ QtObject {
       "trail": (last ? clear(ends[1]) : 0) + shift,
       "seamStart": !first && powerline && !opaque,
       "seamEnd": !last && powerline && !opaque
-    };
-  }
-
-  // The caps a press tints a widget's background in (`caps`: segment's
-  // shownStart, endCap, levelStartCap, levelEndCap): what shows of it, but
-  // where it fills its own part of a merged run (`ownFill`: filled on
-  // hover), the caps it has alone, not the run's square middle:
-  // { start, end }
-  function pressCaps(caps, grouping, ownFill) {
-    const own = grouping === "merged" && ownFill;
-    return {
-      "start": own ? caps.levelStartCap : caps.shownStart,
-      "end": own ? caps.levelEndCap : caps.endCap
     };
   }
 
