@@ -156,10 +156,10 @@ func TestContainerNiriLoadConfigProbe(t *testing.T) {
 		}
 		t.Logf("%s: scale %s", what, want)
 	}
-	// stays: a wait that nothing happens, short and unstretched
+	// stays: a wait that nothing happens
 	stays := func(what, want string) {
 		t.Helper()
-		time.Sleep(time.Second)
+		time.Sleep(testkit.Bound(time.Second))
 		if got := scale(); got != want {
 			t.Fatalf("%s: scale is %s, want it to stay %s", what, got, want)
 		}

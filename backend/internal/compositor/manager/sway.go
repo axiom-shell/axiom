@@ -274,7 +274,9 @@ func (w *swayWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 	w.setUnbind(append(slices.Clone(unbind), next...))
 	// Sent apart, in order: sway stops a command list at an invalid command,
 	// so a bind it refuses would take the look with it
-	if w.sendEach(ctx, unbindLines(unbind)) == nil {
+	// A fresh daemon that can't tell which saved keys the user binds now
+	// sends none of them and keeps the list, to filter once it can
+	if !w.fresh && w.sendEach(ctx, unbindLines(unbind)) == nil {
 		w.setUnbind(next)
 	}
 	w.sendEach(ctx, w.tables.SwayBindLines(binds, in.get("ctx"), true))
@@ -288,6 +290,10 @@ func (w *swayWriter) runtimeClear(ctx context.Context) {
 		if user := w.userBinds(); user != nil {
 			w.dropTaken(user, w.unread == "")
 		}
+	}
+	if w.fresh {
+		// The user's binds aren't known: the saved list is kept unsent
+		return
 	}
 	if w.sendEach(ctx, unbindLines(w.unbinds())) == nil {
 		w.setUnbind(nil)

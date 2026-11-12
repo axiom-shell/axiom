@@ -2,6 +2,9 @@ package manager
 
 import (
 	"context"
+	"encoding/binary"
+	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -214,6 +217,8 @@ func TestSwayFreshDaemonWaitsForAReadableConfig(t *testing.T) {
 	t.Parallel()
 	saved := []render.SwayUnbind{{Key: "", Line: "floating_modifier Mod1 normal"}, {Key: render.KeyID("SUPER + x"), Line: "unbindsym Mod4+x"}}
 	w := swayWith(t, "include keys.conf\nfloating_modifier Mod4 normal\n", false, saved)
+	path, asked := fakeSway(t)
+	w.ipc = &ipc.Sway{Path: path}
 	keys := filepath.Join(w.getenv("XDG_CONFIG_HOME"), "sway", "keys.conf")
 	if err := os.WriteFile(keys, []byte("bindsym Mod4+x exec true\n"), 0); err != nil {
 		t.Fatal(err)
@@ -236,6 +241,51 @@ func TestSwayFreshDaemonWaitsForAReadableConfig(t *testing.T) {
 	if !w.fresh || len(w.state.SwayUnbinds) != 2 {
 		t.Fatalf("a clear touched the list: fresh %v, %v", w.fresh, w.state.SwayUnbinds)
 	}
+	// None of the saved unbinds went to sway: the user's include may bind them
+	for _, cmd := range sent(asked) {
+		if strings.Contains(cmd, "unbindsym") || strings.Contains(cmd, "floating_modifier Mod1") {
+			t.Fatalf("sway was sent %q", cmd)
+		}
+	}
+}
+
+// fakeSway answers every command list on its socket with one success,
+// sending the commands on the returned channel
+func fakeSway(t *testing.T) (string, <-chan string) {
+	t.Helper()
+	dir, err := os.MkdirTemp("", "axsway")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	path := filepath.Join(dir, "sway.sock")
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { l.Close() })
+	asked := make(chan string, 32)
+	go func() {
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				return
+			}
+			head := make([]byte, 14)
+			if _, err := io.ReadFull(c, head); err == nil {
+				body := make([]byte, binary.LittleEndian.Uint32(head[6:]))
+				io.ReadFull(c, body)
+				asked <- string(body)
+				reply := []byte(`[{"success":true}]`)
+				out := make([]byte, 14)
+				copy(out, "i3-ipc")
+				binary.LittleEndian.PutUint32(out[6:], uint32(len(reply)))
+				c.Write(append(out, reply...))
+			}
+			c.Close()
+		}
+	}()
+	return path, asked
 }
 
 // A list a reload made stale isn't stamped current again by the filter
