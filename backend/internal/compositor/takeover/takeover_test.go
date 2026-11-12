@@ -881,8 +881,55 @@ func TestReleaseKeepsMarksWhoseRemovalWouldntParse(t *testing.T) {
 	broken := "if true then\n-- (moved into axiom) x = 1 +\nend\n"
 	f.write("user/10-mine.lua", broken)
 	f.ours()
-	f.run("release")
+	logged := f.releaseLogged()
 	eq(t, f.read("user/10-mine.lua"), broken)
+	if len(logged) != 1 || !strings.Contains(logged[0], "10-mine.lua") || !strings.Contains(logged[0], "wouldn't parse") {
+		t.Fatalf("logged %q, want the file named", logged)
+	}
+}
+
+// releaseLogged releases and returns what it logged
+func (f *fx) releaseLogged() []string {
+	f.t.Helper()
+	var logged []string
+	o := f.options(f.dir + "/")
+	o.Logf = func(format string, args ...any) { logged = append(logged, fmt.Sprintf(format, args...)) }
+	if _, err := Release(context.Background(), o); err != nil {
+		f.t.Fatal(err)
+	}
+	return logged
+}
+
+// A symlinked user/ file is unmarked through its link
+func TestReleaseUnmarksASymlinkedUserFile(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "sway")
+	f.write("config", "exec axiom run\n")
+	f.run("claim")
+	f.write("elsewhere/keys.conf", "# (moved into axiom) bindsym Mod4+w kill\n")
+	if err := os.Symlink(f.path("elsewhere/keys.conf"), f.path("user/10-keys.conf")); err != nil {
+		t.Fatal(err)
+	}
+	f.ours()
+	f.run("release")
+	eq(t, f.read("elsewhere/keys.conf"), "bindsym Mod4+w kill\n")
+}
+
+// A merge (new style), a release and a claim again: the old backup holds
+// nothing the config lacks, so release has nothing to report
+func TestHyprlandReleaseAfterAMergeLogsNothing(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("hyprland.lua", "hl.on(\"hyprland.start\", function() hl.exec_cmd(\"axiom run\") end) -- axiom\nhl.bind(\"SUPER + Q\", hl.dsp.window.close())\nhl.env(\"A\", \"b\")\n")
+	f.run("claim")
+	f.merge("00-previous.lua")
+	f.ours()
+	eq(t, len(f.releaseLogged()), 0)
+	f.run("claim")
+	f.ours()
+	if logged := f.releaseLogged(); len(logged) != 0 {
+		t.Fatalf("logged %q, want nothing", logged)
+	}
 }
 
 // A Hyprland merge from before marks deleted the calls: release says where

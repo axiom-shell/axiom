@@ -62,7 +62,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-(cd "$root" && git ls-files -co --exclude-standard -z | tar --null -T - -c) | tar -x -C "$snap"
+(cd "$root" && git ls-files -co --exclude-standard -z | tar --null --ignore-failed-read -T - -c) | tar -x -C "$snap"
 # The container's tester must read and write them (a mount is its own uid)
 chmod -R a+rX "$snap"
 chmod a+rwx "$out"

@@ -263,7 +263,7 @@ func TestNiriFailedWrapperLoadRetriesOnTheNextApply(t *testing.T) {
 	}
 }
 
-func TestNiriFailedLoadOfTheUsersConfigKeepsTheWrapperFlag(t *testing.T) {
+func TestNiriFailedLoadOfTheUsersConfigKeepsTheWrapperChecked(t *testing.T) {
 	t.Parallel()
 	w, _, asked := niriWith(t, true, true)
 	w.loadConfig(context.Background(), w.mainConfig, false)
@@ -271,10 +271,44 @@ func TestNiriFailedLoadOfTheUsersConfigKeepsTheWrapperFlag(t *testing.T) {
 	if w.pending != "main" {
 		t.Fatalf("pending = %q, want main", w.pending)
 	}
-	w.state.NiriWrapper = true
 	w.loadResult(true)
-	if !w.state.NiriWrapper || !w.wrapperChecked {
-		t.Fatalf("a failed load of the user's config changed the wrapper state: flag %v, checked %v", w.state.NiriWrapper, w.wrapperChecked)
+	if !w.wrapperChecked {
+		t.Fatal("a failed load of the user's config cleared wrapperChecked")
+	}
+}
+
+// niri's ConfigLoaded events reach loadResult through the manager: a failed
+// one after a wrapper load is retried by the next apply, also as the
+// stream's first state; a successful initial one answers nothing
+func TestManagerConfigReloadedAnswersTheWrapperLoad(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name          string
+		r             ipc.Reload
+		checked       bool
+		pending, want string
+	}{
+		{"failed", ipc.Reload{Failed: true}, false, "", "retried"},
+		{"failed initial", ipc.Reload{Failed: true, Initial: true}, false, "", "retried"},
+		{"loaded initial", ipc.Reload{Initial: true}, true, "wrapper", "kept"},
+		{"loaded", ipc.Reload{}, true, "", "kept"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			w, in, asked := niriWith(t, false, false)
+			ctx := context.Background()
+			w.runtimeApply(ctx, in, nil)
+			sent(asked)
+			m := &Manager{w: w}
+			m.configReloaded(ctx, c.r)
+			if w.wrapperChecked != c.checked || w.pending != c.pending {
+				t.Fatalf("checked %v, pending %q; want %v, %q", w.wrapperChecked, w.pending, c.checked, c.pending)
+			}
+			w.runtimeApply(ctx, in, nil)
+			if got := len(sent(asked)); (got == 1) != (c.want == "retried") {
+				t.Fatalf("the next apply sent %d loads, want %s", got, c.want)
+			}
+		})
 	}
 }
 

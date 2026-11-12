@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -64,20 +66,28 @@ func TestContainerSwayFreshDaemonKeepsAUsersNewBind(t *testing.T) {
 	if !swayHandled(s, 0) {
 		t.Fatalf("sway never handled axiom's binds; sway log tail:\n%s\naxiom log tail:\n%s", s.Tail("sway.log", 20), s.Tail(daemonLog, 30))
 	}
+	// The binds go in more than one command list: wait until the count
+	// holds still
 	var keys []string
-	for _, c := range swayCommands(s, 0) {
-		if k := swayKey(c, "bindsym"); k != "" && k != "Mod4+Shift+F12" {
-			keys = append(keys, k)
+	last := -1
+	if !testkit.Eventually(func() bool {
+		keys = nil
+		for _, c := range swayCommands(s, 0) {
+			if k := swayKey(c, "bindsym"); k != "" && k != "Mod4+Shift+F12" {
+				keys = append(keys, k)
+			}
 		}
-	}
-	if len(keys) < 2 {
-		t.Fatalf("axiom bound %v: want at least two keys", keys)
+		stable := len(keys) >= 2 && len(keys) == last
+		last = len(keys)
+		return stable
+	}) {
+		t.Fatalf("axiom bound %v: want at least two keys, settled", keys)
 	}
 	taken, control := keys[0], keys[len(keys)-1]
 	t.Logf("the user will bind %s; control %s", taken, control)
 
 	// No teardown yet: the binds stay in sway when axiom stops
-	first.Signal(sigterm)
+	first.Signal(syscall.SIGTERM)
 	if !first.Wait() {
 		t.Fatal("axiom didn't stop")
 	}
@@ -109,15 +119,17 @@ func TestContainerSwayFreshDaemonKeepsAUsersNewBind(t *testing.T) {
 	}
 }
 
+// What niri does with load-config-file (docs/dev/compositor/niri-backend.md
+// records it; the writer's choices rest on it). The output's scale tells
+// which config niri runs.
 func TestContainerNiriLoadConfigProbe(t *testing.T) {
 	s := NewSession(t)
 	s.StartSway("")
 	const output = "winit"
-	conf := func(workspace, extra string) string {
-		return "workspace \"" + workspace + "\"\noutput \"" + output + "\" {\n    scale " + extra + "\n}\n"
+	conf := func(workspace, scale string) string {
+		return "workspace \"" + workspace + "\"\noutput \"" + output + "\" {\n    scale " + scale + "\n}\n"
 	}
-	a := conf("probe-a", "1")
-	s.StartNiriNested(a)
+	s.StartNiriNested(conf("probe-a", "1"))
 	pathB := s.WriteFile("b.kdl", conf("probe-b", "2"))
 	pathC := s.WriteFile("c.kdl", "this is not { valid kdl\n")
 
@@ -135,63 +147,54 @@ func TestContainerNiriLoadConfigProbe(t *testing.T) {
 		if o.Logical == nil {
 			return "no logical output: " + out
 		}
-		return strings.TrimRight(strings.TrimRight(strings.TrimSpace(formatFloat(o.Logical.Scale)), "0"), ".")
+		return strconv.FormatFloat(o.Logical.Scale, 'f', -1, 64)
 	}
-	settle := func() { time.Sleep(testkit.Bound(time.Second)) }
-	workspaces := func() string {
-		var names []string
-		var list []struct {
-			Name *string `json:"name"`
+	becomes := func(what, want string) {
+		t.Helper()
+		if !testkit.Eventually(func() bool { return scale() == want }) {
+			t.Fatalf("%s: scale is %s, want %s; niri log tail:\n%s", what, scale(), want, s.Tail("niri.log", 20))
 		}
-		json.Unmarshal([]byte(s.NiriMsg("-j", "workspaces")), &list)
-		for _, w := range list {
-			if w.Name != nil {
-				names = append(names, *w.Name)
-			}
-		}
-		return strings.Join(names, ",")
+		t.Logf("%s: scale %s", what, want)
 	}
-	load := func(args ...string) string {
-		out, err := s.NiriMsgTry(append([]string{"action", "load-config-file"}, args...)...)
-		settle()
-		if err != nil {
-			return "error: " + strings.TrimSpace(out)
+	// stays: a wait that nothing happens, short and unstretched
+	stays := func(what, want string) {
+		t.Helper()
+		time.Sleep(time.Second)
+		if got := scale(); got != want {
+			t.Fatalf("%s: scale is %s, want it to stay %s", what, got, want)
 		}
-		return "ok"
+		t.Logf("%s: scale stays %s", what, want)
 	}
-	t.Logf("start: scale %s, named workspaces [%s]", scale(), workspaces())
+	load := func(args ...string) {
+		t.Helper()
+		if out, err := s.NiriMsgTry(append([]string{"action", "load-config-file"}, args...)...); err != nil {
+			t.Fatalf("load-config-file %v: %v\n%s", args, err, out)
+		}
+	}
+	becomes("started on A", "1")
 
-	// E1: does a load with no path go to niri's default path, or reload the
-	// config it loaded last?
-	t.Logf("E1: load B: %s; scale %s, workspaces [%s]", load("--path", pathB), scale(), workspaces())
-	t.Logf("E1: load no path: %s; scale %s (1 = A, the default path; 2 = B, the current one), workspaces [%s]", load(), scale(), workspaces())
+	// E1: a load with no path reloads the config loaded last, not the
+	// default path (A)
+	load("--path", pathB)
+	becomes("E1: loaded B", "2")
+	load()
+	stays("E1: load with no path", "2")
 
-	// E3: an IPC output change, then a load
-	t.Logf("E3: output scale 1.5: %s", firstLine(s.NiriMsg("output", output, "scale", "1.5")))
-	settle()
-	t.Logf("E3: after it, scale %s", scale())
-	t.Logf("E3: load B: %s; scale %s (1.5 = the IPC change stayed, 2 = reverted to B's)", load("--path", pathB), scale())
-	t.Logf("E3: output scale 1.5 again, then load B again (same file): %s", firstLine(s.NiriMsg("output", output, "scale", "1.5")))
-	settle()
-	t.Logf("E3: load B: %s; scale %s", load("--path", pathB), scale())
+	// E3: an IPC output change survives a load of a config whose output is
+	// unchanged
+	s.NiriMsg("output", output, "scale", "1.5")
+	becomes("E3: IPC scale change", "1.5")
+	load("--path", pathB)
+	stays("E3: load of B again", "1.5")
 
-	// E2: a failed load
-	t.Logf("E2: running B: scale %s", scale())
-	t.Logf("E2: load invalid C: %s; scale %s, workspaces [%s]", load("--path", pathC), scale(), workspaces())
+	// E2: a refused config leaves niri running the old one (the load is
+	// still answered Ok), and its watcher moves to the refused file
+	load("--path", pathC)
+	stays("E2: load of invalid C", "1.5")
 	s.WriteFile("b.kdl", conf("probe-b", "3"))
-	settle()
-	t.Logf("E2: B edited to scale 3 after the failed load: scale %s (3 = niri still watches B, 2 = it doesn't)", scale())
+	stays("E2: B edited after the failed load", "1.5")
 	s.WriteFile("c.kdl", conf("probe-c", "1.25"))
-	settle()
-	t.Logf("E2: C fixed to scale 1.25: scale %s (1.25 = niri watches C now)", scale())
+	becomes("E2: C fixed", "1.25")
 	s.WriteFile("b.kdl", conf("probe-b", "4"))
-	settle()
-	t.Logf("E2: B edited to scale 4: scale %s", scale())
-	t.Logf("E2: load no path: %s; scale %s", load(), scale())
-	t.Logf("niri log tail:\n%s", s.Tail("niri.log", 40))
-}
-
-func firstLine(s string) string {
-	l, _, _ := strings.Cut(strings.TrimSpace(s), "\n")
-	return l
+	stays("E2: B edited again", "1.25")
 }

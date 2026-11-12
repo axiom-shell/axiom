@@ -267,14 +267,14 @@ func (w *swayWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 		entries = jsonx.Arr()
 	}
 	binds := jsonx.Arr(w.runtime.plan(in, func(b any) bool { return w.complete(in, b) }, entries)...)
-	w.dropTaken(entries)
+	w.dropTaken(entries, ok && w.unread == "")
 	unbind := w.unbinds()
 	next := w.tables.SwayUnbinds(binds, in.get("ctx"), entries)
 	// Recorded before anything is sent, the old list too until sway took it
 	w.setUnbind(append(slices.Clone(unbind), next...))
 	// Sent apart, in order: sway stops a command list at an invalid command,
 	// so a bind it refuses would take the look with it
-	if w.sendEach(ctx, lines(unbind)) == nil {
+	if w.sendEach(ctx, unbindLines(unbind)) == nil {
 		w.setUnbind(next)
 	}
 	w.sendEach(ctx, w.tables.SwayBindLines(binds, in.get("ctx"), true))
@@ -285,13 +285,11 @@ func (w *swayWriter) runtimeClear(ctx context.Context) {
 	w.runtimeOn = false
 	w.runtime.clear()
 	if w.fresh {
-		user := w.userBinds()
-		if user == nil {
-			user = jsonx.Arr()
+		if user := w.userBinds(); user != nil {
+			w.dropTaken(user, w.unread == "")
 		}
-		w.dropTaken(user)
 	}
-	if w.sendEach(ctx, lines(w.unbinds())) == nil {
+	if w.sendEach(ctx, unbindLines(w.unbinds())) == nil {
 		w.setUnbind(nil)
 	}
 }
@@ -312,8 +310,8 @@ func (w *swayWriter) setUnbind(list []render.SwayUnbind) {
 	w.state.save()
 }
 
-// lines are the unbinds' commands
-func lines(list []render.SwayUnbind) []string {
+// unbindLines are the unbinds' commands
+func unbindLines(list []render.SwayUnbind) []string {
 	var out []string
 	for _, u := range list {
 		out = append(out, u.Line)
@@ -325,12 +323,16 @@ func lines(list []render.SwayUnbind) []string {
 // daemon saved, it drops those of keys the user's config binds now (entries
 // are its binds; a key of a submap isn't taken, as RuntimeBinds has it) and
 // takes the floating modifier's restore from it, not from the saved line.
-// With no entries known nothing is dropped.
-func (w *swayWriter) dropTaken(entries any) {
-	if !w.fresh {
+// Unless the user's binds are wholly known (known) nothing is touched, and
+// the next call tries again. A list a reload made stale is left as it is.
+func (w *swayWriter) dropTaken(entries any, known bool) {
+	if !w.fresh || !known {
 		return
 	}
 	w.fresh = false
+	if w.unbinds() == nil {
+		return
+	}
 	taken := map[string]bool{}
 	for _, e := range itemsOf(entries) {
 		if jsonx.ToString(getAny(e, "submap")) == "" {

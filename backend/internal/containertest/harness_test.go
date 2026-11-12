@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -168,7 +167,6 @@ type Session struct {
 	// Out is where this test's logs go: $AXIOM_CTR_OUT/<test>/
 	Out  string
 	vars map[string]string
-	mu   sync.Mutex
 }
 
 // NewSession makes the directories and starts the session bus.
@@ -208,14 +206,18 @@ func NewSession(t *testing.T) *Session {
 		"XDG_CACHE_HOME": s.Cache, "XDG_RUNTIME_DIR": s.Runtime,
 		"DBUS_SESSION_BUS_ADDRESS": "unix:path=" + filepath.Join(s.Runtime, "bus"),
 	}
+	// Registered first, so it runs after every process has stopped
+	t.Cleanup(func() {
+		if data, err := os.ReadFile(s.logPath(daemonLog)); err == nil {
+			os.WriteFile(filepath.Join(s.Out, daemonLog), data, 0o644)
+		}
+	})
 	s.startDBus()
 	return s
 }
 
 // env is the session's environment, plus extra (KEY=value).
 func (s *Session) env(extra ...string) []string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	var out []string
 	for k, v := range s.vars {
 		out = append(out, k+"="+v)
@@ -224,9 +226,7 @@ func (s *Session) env(extra ...string) []string {
 }
 
 func (s *Session) set(k, v string) {
-	s.mu.Lock()
 	s.vars[k] = v
-	s.mu.Unlock()
 }
 
 // logFile opens a log in the test's output folder.
@@ -380,7 +380,6 @@ func (s *Session) StartAxiom(kind string) *Proc {
 	cmd := exec.Command(bin, "run", "--tree", src, "--qs", self)
 	cmd.Env = s.env("CTR_FAKESHELL=1", "CTR_KIND="+kind, "AXIOM_BLUETOOTH_AGENT=off", "CTR_SRC="+src, "CTR_LOG="+filepath.Join(s.Out, "fakeshell.log"))
 	p := s.run("axiom.out", cmd)
-	s.keepDaemonLog()
 	sock := filepath.Join(s.Runtime, "axiom", s.vars["WAYLAND_DISPLAY"], "axiom.sock")
 	if !testkit.Eventually(func() bool { _, err := os.Stat(sock); return err == nil }) {
 		s.t.Fatalf("axiom's socket didn't appear; log tail:\n%s%s", s.Tail("axiom.out", 30), s.Tail(daemonLog, 30))
@@ -415,14 +414,6 @@ func (s *Session) logPath(name string) string {
 	return filepath.Join(s.Out, name)
 }
 
-func (s *Session) keepDaemonLog() {
-	s.t.Cleanup(func() {
-		if data, err := os.ReadFile(s.logPath(daemonLog)); err == nil {
-			os.WriteFile(filepath.Join(s.Out, daemonLog), data, 0o644)
-		}
-	})
-}
-
 // LogSince is the log's text from byte offset on.
 func (s *Session) LogSince(name string, offset int) string {
 	data, _ := os.ReadFile(s.logPath(name))
@@ -445,7 +436,3 @@ func (s *Session) Tail(name string, n int) string {
 func (s *Session) WaitLog(name string, re *regexp.Regexp, offset int) bool {
 	return testkit.Eventually(func() bool { return re.MatchString(s.LogSince(name, offset)) })
 }
-
-var sigterm = syscall.SIGTERM
-
-func formatFloat(f float64) string { return fmt.Sprintf("%.2f", f) }

@@ -272,8 +272,9 @@ func Release(ctx context.Context, o Options) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		c.logOldMerge(previous, string(data))
-		if err := edit.WriteMode(c.file, []byte(c.enable(ctx, string(data))), info.Mode().Perm()); err != nil {
+		restored := c.enable(ctx, string(data), c.file)
+		c.logOldMerge(previous, restored)
+		if err := edit.WriteMode(c.file, []byte(restored), info.Mode().Perm()); err != nil {
 			return "", err
 		}
 		if err := os.Remove(path); err != nil {
@@ -400,9 +401,13 @@ func (c *call) adopt(ctx context.Context, path string) error {
 
 // enable undoes adopt's commenting out, and a bind merge's, unless that
 // leaves it unparsable
-func (c *call) enable(ctx context.Context, text string) string {
+func (c *call) enable(ctx context.Context, text, path string) string {
 	enabled := binds.UnmarkMoved(c.Kind.Name, mapLines(text, func(line string) string { return strings.TrimPrefix(line, c.Kind.marker) }))
-	if enabled == text || !c.keepsParsing(ctx, text, enabled, text) {
+	if enabled == text {
+		return text
+	}
+	if !c.keepsParsing(ctx, text, enabled, text) {
+		c.logf("Left the moved binds marked in %s: unmarked it wouldn't parse", path)
 		return text
 	}
 	return enabled
@@ -469,10 +474,10 @@ func (c *call) unmarkUserFiles(ctx context.Context) {
 	list, _ := os.ReadDir(c.user)
 	for _, e := range list {
 		name := e.Name()
-		if !e.Type().IsRegular() || strings.HasPrefix(name, ".") || strings.Contains(name, ".axiom-backup-") {
+		path := filepath.Join(c.user, name)
+		if !fsx.IsFile(path) || strings.HasPrefix(name, ".") || strings.Contains(name, ".axiom-backup-") {
 			continue
 		}
-		path := filepath.Join(c.user, name)
 		data, err := os.ReadFile(path)
 		if err != nil {
 			c.logf("Can't read %s to give its moved binds back: %v", path, err)
@@ -480,7 +485,11 @@ func (c *call) unmarkUserFiles(ctx context.Context) {
 		}
 		text := string(data)
 		out := binds.UnmarkMoved(c.Kind.Name, text)
-		if out == text || !c.keepsParsing(ctx, text, out, text) {
+		if out == text {
+			continue
+		}
+		if !c.keepsParsing(ctx, text, out, text) {
+			c.logf("Left the moved binds marked in %s: unmarked it wouldn't parse", path)
 			continue
 		}
 		if err := edit.WriteMode(path, []byte(out), modeOf(path)); err != nil {
@@ -490,14 +499,32 @@ func (c *call) unmarkUserFiles(ctx context.Context) {
 }
 
 // logOldMerge: a Hyprland merge from before binds were commented out
-// deleted them, so there's nothing to give back; its backup is the copy
-// from before the move
-func (c *call) logOldMerge(previous, text string) {
-	if c.Kind.Name != "hyprland" || binds.UnmarkMoved("hyprland", text) != text {
+// deleted them, so there's nothing to give back; the file's newest backup
+// is the copy from before the move. Logged when that backup holds a line
+// the restored text lacks (one a merge since gave back, or none ever
+// removed, leaves nothing to report).
+func (c *call) logOldMerge(previous, restored string) {
+	if c.Kind.Name != "hyprland" {
 		return
 	}
-	if b := newest(c.user, previous+".axiom-backup-*"); b != "" {
-		c.logf("binds moved into axiom from %s before this version were taken out of it; its copy from before the move is %s", previous, filepath.Join(c.user, b))
+	b := newest(c.user, previous+".axiom-backup-*")
+	if b == "" {
+		return
+	}
+	data, err := os.ReadFile(filepath.Join(c.user, b))
+	if err != nil {
+		return
+	}
+	have := map[string]bool{}
+	for _, l := range splitLines(restored) {
+		have[strings.TrimSpace(l)] = true
+	}
+	for _, l := range splitLines(string(data)) {
+		l = strings.TrimSpace(strings.TrimPrefix(l, c.Kind.marker))
+		if l != "" && !have[l] {
+			c.logf("binds moved into axiom from %s before this version were taken out of it; its copy from before the move is %s", previous, filepath.Join(c.user, b))
+			return
+		}
 	}
 }
 

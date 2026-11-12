@@ -8,3 +8,5 @@ RUN pacman -Syu --noconfirm --needed go gcc git python lua qt6-declarative quick
 RUN setcap -r /usr/bin/sway
 RUN useradd -m tester && install -d -o tester -g tester /home/tester/.cache
 ENV AXIOM_CONTAINER=1
+# the cache volume is the only writable place that outlives a run
+ENV GOMODCACHE=/home/tester/.cache/go-mod

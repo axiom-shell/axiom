@@ -9,6 +9,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
 // A sway config file that's there but can't be read (here an include) is
@@ -204,5 +205,46 @@ func TestSwayFreshClearDropsTakenKeys(t *testing.T) {
 	// sway isn't there, so the list stays, less the key the user binds
 	if got := w.state.SwayUnbinds; len(got) != 1 || got[0].Line != "unbindsym Mod4+y" {
 		t.Fatalf("unbinds = %v, want only y's", got)
+	}
+}
+
+// With the user's config not wholly read, a fresh daemon drops nothing and
+// stays fresh: the saved floating line is kept, the next call tries again
+func TestSwayFreshDaemonWaitsForAReadableConfig(t *testing.T) {
+	t.Parallel()
+	saved := []render.SwayUnbind{{Key: "", Line: "floating_modifier Mod1 normal"}, {Key: render.KeyID("SUPER + x"), Line: "unbindsym Mod4+x"}}
+	w := swayWith(t, "include keys.conf\nfloating_modifier Mod4 normal\n", false, saved)
+	keys := filepath.Join(w.getenv("XDG_CONFIG_HOME"), "sway", "keys.conf")
+	if err := os.WriteFile(keys, []byte("bindsym Mod4+x exec true\n"), 0); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.ReadFile(keys); err == nil {
+		t.Skip("running as root: every file is readable")
+	}
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if w.unread == "" {
+		t.Fatal("the config should be unreadable")
+	}
+	if !w.fresh {
+		t.Fatal("fresh was cleared without a readable config")
+	}
+	got := w.state.SwayUnbinds
+	if len(got) != 2 || got[0].Line != "floating_modifier Mod1 normal" {
+		t.Fatalf("unbinds = %v, want the saved ones", got)
+	}
+	w.runtimeClear(context.Background())
+	if !w.fresh || len(w.state.SwayUnbinds) != 2 {
+		t.Fatalf("a clear touched the list: fresh %v, %v", w.fresh, w.state.SwayUnbinds)
+	}
+}
+
+// A list a reload made stale isn't stamped current again by the filter
+func TestSwayFreshDaemonLeavesAStaleListStale(t *testing.T) {
+	t.Parallel()
+	w := swayWith(t, "bindsym Mod4+y exec true\n", false, swaySaved())
+	w.seenReload()
+	w.dropTaken(jsonx.Arr(), true)
+	if w.unbinds() != nil || w.unbindAt != 0 || len(w.state.SwayUnbinds) != 2 {
+		t.Fatalf("the stale list was touched: at %d, %v", w.unbindAt, w.state.SwayUnbinds)
 	}
 }

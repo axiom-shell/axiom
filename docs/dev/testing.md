@@ -107,7 +107,7 @@ Settings › General's Account and Default apps and System's System info and Dat
 
 ### CI locally
 - To dry-run the CI `qt` job in a clean container:
-  1. Copy the tracked and new files (`git ls-files -co --exclude-standard -z | tar …`) into a scratch dir and `git init` + commit there.
+  1. Copy the tracked and new files (`git ls-files -co --exclude-standard -z | tar --null --ignore-failed-read -T - -c`; a tracked file deleted in the work tree would otherwise fail the archive) into a scratch dir and `git init` + commit there.
   2. Mount it read-only into `docker run --rm -e CI=true archlinux:latest`.
   3. Run the workflow's pacman line, then copy to a writable dir and run the steps.
 - This catches dependencies only the dev machine has (e.g. `Qt5Compat.GraphicalEffects`).
@@ -115,7 +115,7 @@ Settings › General's Account and Default apps and System's System info and Dat
 ### Container tests
 - `scripts/dev/container-test.sh [--rebuild] [--keep] [--shell] [-run REGEX]` runs the tests in `backend/internal/containertest` in a docker container (image `scripts/dev/container/Dockerfile`, tagged by its hash; the tree is snapshotted as in CI locally, read-only, built and tested by `scripts/dev/container/inside.sh`). Logs are kept in `<snapshot>.out/<TestName>/` (printed at the end). It refuses to run inside a container or without docker; the exit code is the tests'.
 - The tests are built with `-tags container`, call `Require(t)` first (skips unless `AXIOM_CONTAINER=1`, which the image sets, and refuses without `/.dockerenv`), and never run on the host: never `go test -tags container` outside the script.
-- `NewSession(t)` is one scratch desktop: its own `HOME` and XDG dirs, runtime dir and session bus, an environment built from scratch (no `SWAYSOCK`, `NIRI_SOCKET`, `WAYLAND_DISPLAY`, `HYPRLAND_INSTANCE_SIGNATURE` of the host's). `StartSway(config)` (headless), `StartNiriNested(config)` (inside that sway; skips when niri doesn't start), `StartAxiom(kind)` (`axiom run` with the test binary as its shell: it says hello and sends `testdata/facts.json` as the inputs), `Swaymsg`, `NiriMsg`, `Axiom` (the CLI), `LogSince`, `WaitLog` and `WriteFile`; each process stops when the test ends.
+- `NewSession(t)` is one scratch desktop: its own `HOME` and XDG dirs, runtime dir and session bus, an environment built from scratch (no `SWAYSOCK`, `NIRI_SOCKET`, `WAYLAND_DISPLAY`, `HYPRLAND_INSTANCE_SIGNATURE` of the host's). `StartSway(config)` (headless), `StartNiriNested(config)` (inside that sway; skips when niri doesn't start), `StartAxiom(kind)` (`axiom run` with the test binary as its shell: it says hello and sends `backend/internal/compositor/manager/testdata/facts.json` as the inputs), `Swaymsg`, `NiriMsg`, `Axiom` (the CLI), `LogSince`, `WaitLog` and `WriteFile`; each process stops when the test ends.
 - The daemon drops `AXIOM_*` variables from its shell's environment, so the fake shell's own are `CTR_*`.
 
 ### Mutation runs

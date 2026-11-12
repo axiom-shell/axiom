@@ -1199,7 +1199,8 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 		if r.Initial && r.Failed {
 			m.checkLoaded(ctx)
 		}
-		if !r.Initial {
+		// A failed load of the wrapper can be the stream's first state too
+		if !r.Initial || (r.Failed && n.pending == "wrapper") {
 			n.loadResult(r.Failed)
 		}
 		if r.Failed || r.Initial {
