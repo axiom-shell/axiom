@@ -37,8 +37,8 @@ Loader {
   readonly property var _cells: SpecialWorkspaces.cells(CompositorManager.knownSpecials, CompositorManager.specials, root.properties.specialWorkspaces)
   // A string, so the cells are only rebuilt when the set of names changes,
   // not on every compositor event
-  readonly property string _key: root._cells.map(c => c.name).join("\n")
-  readonly property var names: root._key === "" ? [] : root._key.split("\n")
+  readonly property string _key: SpecialWorkspaces.keyOf(root._cells.map(c => c.name))
+  readonly property var names: SpecialWorkspaces.namesOf(root._key)
   readonly property int cells: root.names.length
   // A powerline's segments chain on from the ones before, with no divider
   readonly property bool _chained: cellLook.run !== null && barConfig.look.grouping === "powerline"

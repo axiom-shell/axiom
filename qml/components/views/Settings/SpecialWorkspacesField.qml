@@ -34,10 +34,11 @@ ColumnLayout {
   spacing: Widget.spacing
 
   readonly property var rows: SettingsManager.knownSpecials
-  // The rows' ids joined, so the rows are rebuilt only when the set of
-  // special workspaces changes, not as windows come and go
-  readonly property string _key: root.rows.map(r => r.id).join("\n")
-  readonly property var ids: root._key === "" ? [] : root._key.split("\n")
+  // The Repeater's model is deliberately live (the list must show the live
+  // special workspaces), bounded by keying it on the set of ids: the rows are
+  // rebuilt only when that changes, not as windows come and go
+  readonly property string _key: JSON.stringify(root.rows.map(r => r.id))
+  readonly property var ids: JSON.parse(root._key)
 
   // Why a row can't be deleted, one reason a line
   function reasonsOf(special) {

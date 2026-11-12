@@ -66,11 +66,11 @@ Item {
   // A string, so the cells and their Repeater are rebuilt only when the set
   // of names changes
   // (each name led by a newline, so the unnamed one, "", still makes a key)
-  readonly property string _scratchKey: (root._frozenNames ?? root._liveCells.map(c => c.name)).map(name => "\n" + name).join("")
-  readonly property var specialIds: root._scratchKey === "" ? [] : root._scratchKey.slice(1).split("\n")
+  readonly property string _specialKey: (root._frozenNames ?? root._liveCells.map(c => c.name)).map(name => "\n" + name).join("")
+  readonly property var specialIds: root._specialKey === "" ? [] : root._specialKey.slice(1).split("\n")
   readonly property int specialCount: root.specialIds.length
   // The cells and their column together, so one never pairs with a stale other
-  readonly property var scratch: {
+  readonly property var specialSet: {
     const cells = root.specialIds.map(name => root._liveCells.find(c => c.name === name) ?? ({
           "name": name,
           "id": 0,
@@ -83,7 +83,7 @@ Item {
     return {
       "cells": cells,
       "names": root.specialIds,
-      "column": WorkspaceGeometry.scratchColumn(cells.length, root.cellW, root.cellH, root.gap, root.columns, root.rows, root.sideGap)
+      "column": WorkspaceGeometry.specialColumn(cells.length, root.cellW, root.cellH, root.gap, root.columns, root.rows, root.sideGap)
     };
   }
   // The special cells' names kept while the overview is open, null otherwise
@@ -96,14 +96,14 @@ Item {
   }
   Component.onCompleted: root._frozenNames = root._freeze()
 
-  // The windows in the special cells, tagged with their cell (`scratch`) and
+  // The windows in the special cells, tagged with their cell (`specialCell`) and
   // special's id; sway's hidden scratchpad windows too (no output), not a
   // Hyprland group's hidden ones
   readonly property var specialWindows: {
     const list = [];
-    root.scratch.cells.forEach((special, s) => {
+    root.specialSet.cells.forEach((special, s) => {
       (special.windows ?? []).filter(w => !w.hidden || w.output === "").forEach(w => list.push(Object.assign({}, w, {
-          "scratch": s,
+          "specialCell": s,
           "special": special.name
         })));
     });
@@ -122,7 +122,7 @@ Item {
   // Cell indices: the workspaces first, then the special cells.
   readonly property var items: {
     const rects = {};
-    const grid = root.windows.filter(w => w.scratch === undefined);
+    const grid = root.windows.filter(w => w.specialCell === undefined);
     for (const w of grid) {
       const at = root.originOf(w.output);
       rects[w.id] = WorkspaceGeometry.windowRect(w, at.x, at.y, root.miniScale, root.cellW, root.cellH);
@@ -136,16 +136,16 @@ Item {
       const at = root.originOf(tiled[0].output);
       WorkspaceGeometry.stripRects(tiled, at.x, at.y, root.miniScale, root.cellW, root.cellH, direction === "vertical").forEach((r, i) => rects[tiled[i].id] = r);
     }
-    const column = root.scratch.column;
+    const column = root.specialSet.column;
     return root.windows.map(w => {
-      const special = w.scratch !== undefined;
-      const cell = special ? root.ids.length + w.scratch : root.ids.indexOf(w.workspaceId);
+      const special = w.specialCell !== undefined;
+      const cell = special ? root.ids.length + w.specialCell : root.ids.indexOf(w.workspaceId);
       const origin = root.cellRectOf(cell);
       const scale = special ? root.miniScale * column.scale : root.miniScale;
       let r = rects[w.id];
       if (special) {
         // Its own output's usable origin; no strip squeeze in a special cell
-        const at = root.originOf(w.output || root.scratch.cells[w.scratch].output || root.monitor?.name);
+        const at = root.originOf(w.output || root.specialSet.cells[w.specialCell].output || root.monitor?.name);
         r = WorkspaceGeometry.windowRect(w, at.x, at.y, scale, origin.w, origin.h);
       }
       return {
@@ -193,14 +193,14 @@ Item {
     const cell = WorkspaceGeometry.cellAt(x, y, root.cellW, root.cellH, root.gap, root.columns, root.ids.length);
     if (cell >= 0)
       return cell;
-    const s = WorkspaceGeometry.scratchCellAt(root.scratch.column, x, y);
+    const s = WorkspaceGeometry.specialCellAt(root.specialSet.column, x, y);
     return s >= 0 ? root.ids.length + s : -1;
   }
 
   // A cell's rect (board coords), by the same indices
   function cellRectOf(cell) {
     if (cell >= root.ids.length)
-      return root.scratch.column?.rects[cell - root.ids.length] ?? ({
+      return root.specialSet.column?.rects[cell - root.ids.length] ?? ({
           x: 0,
           y: 0,
           w: 0,
@@ -380,7 +380,7 @@ Item {
   // The special workspaces' box, the grid's own style, centred on the grid's centre
   Rectangle {
     id: specialBox
-    readonly property var column: root.scratch.column
+    readonly property var column: root.specialSet.column
     visible: column !== null
     x: column?.x ?? 0
     y: column?.stackY ?? 0
@@ -401,7 +401,7 @@ Item {
     id: board
     x: root.pad
     y: root.pad
-    width: root.scratch.column?.boardWidth ?? root.cellW * root.columns + root.gap * (root.columns - 1)
+    width: root.specialSet.column?.boardWidth ?? root.cellW * root.columns + root.gap * (root.columns - 1)
     height: root.cellH * root.rows + root.gap * (root.rows - 1)
 
     Repeater {
@@ -433,18 +433,18 @@ Item {
       model: root.specialCount
 
       WorkspaceCell {
-        id: scratchCell
+        id: specialCellItem
         required property int index
         readonly property int cell: root.ids.length + index
         readonly property var rect: root.cellRectOf(cell)
-        readonly property var special: root.scratch.cells[index] ?? null
+        readonly property var special: root.specialSet.cells[index] ?? null
 
         x: rect.x
         y: rect.y
         width: rect.w
         height: rect.h
         wallpaper: WorkspaceOverlayConfig.wallpaper ? ThemeManager.wallpaperFor(root.screen?.name ?? "") : ""
-        wallpaperRect: WorkspaceGeometry.wallpaperRect(root.usable, root.monitorW, root.monitorH, root.miniScale * (root.scratch.column?.scale ?? 1))
+        wallpaperRect: WorkspaceGeometry.wallpaperRect(root.usable, root.monitorW, root.monitorH, root.miniScale * (root.specialSet.column?.scale ?? 1))
         wallpaperSize: Qt.size(Math.round(root.monitorW * root.miniScale), Math.round(root.monitorH * root.miniScale))
         color: WorkspaceOverlayConfig.color
         dim: WorkspaceOverlayConfig.dimInactive
@@ -525,10 +525,10 @@ Item {
       model: root.specialCount
 
       WorkspaceNumber {
-        id: scratchBadge
+        id: specialBadge
         required property int index
         readonly property var rect: root.cellRectOf(root.ids.length + index)
-        readonly property var special: root.scratch.cells[index] ?? null
+        readonly property var special: root.specialSet.cells[index] ?? null
         readonly property var entry: SpecialWorkspaces.entryFor(WorkspacesConfig.specialWorkspaces, root.specialIds[index] ?? "")
         readonly property var shown: SpecialWorkspaces.content(entry, root.specialIds[index] ?? "", "both", false, false)
 

@@ -412,4 +412,12 @@ TestCase {
     compare(SpecialWorkspaces.content(entry, "m", "both", true, true), shown("text", "Magic", "ico", true));
     compare(SpecialWorkspaces.content(null, "m", "name", true, true), shown("name", "m", "", true));
   }
+
+  function test_keyOfNamesOf() {
+    compare(SpecialWorkspaces.namesOf(SpecialWorkspaces.keyOf([""])), [""], "the unnamed cell alone is a cell");
+    compare(SpecialWorkspaces.namesOf(SpecialWorkspaces.keyOf(["a", "", "b"])), ["a", "", "b"]);
+    compare(SpecialWorkspaces.namesOf(SpecialWorkspaces.keyOf([])), []);
+    compare(SpecialWorkspaces.keyOf([]), "");
+    compare(SpecialWorkspaces.keyOf(null), "");
+  }
 }

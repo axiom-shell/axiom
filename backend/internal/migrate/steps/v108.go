@@ -57,6 +57,7 @@ func v108(cfg *jsonx.Object) []string {
 					}
 					list.Append(out)
 				}
+				// Set the list at the old key, then rename it, so it keeps the key's position
 				ws.Delete("specialWorkspaces")
 				ws.Set("scratchpads", list)
 				renameInPlace(ws, "scratchpads", "specialWorkspaces")

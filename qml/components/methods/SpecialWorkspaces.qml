@@ -142,6 +142,17 @@ QtObject {
     return out;
   }
 
+  // The names of cells as one string, so a Repeater keyed on it is rebuilt
+  // only when the set changes (each name led by a newline: the unnamed one,
+  // "", alone still makes a key), and back
+  function keyOf(names) {
+    return (names ?? []).map(name => "\n" + name).join("");
+  }
+
+  function namesOf(key) {
+    return key === "" ? [] : key.slice(1).split("\n");
+  }
+
   // The entry (of the Workspaces.specialWorkspaces list) for special
   // workspace `id`, or null (always for the unnamed one: "" is no id)
   function entryFor(entries, id) {

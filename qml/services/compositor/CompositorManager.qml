@@ -137,8 +137,8 @@ Singleton {
   // schema's `x-ref`s of that kind: SchemaRefs.sites)
   readonly property var specialRefSites: SchemaRefs.sites(ConfigManager.configSchema, "specialWorkspace")
   // Every special workspace that exists, as SpecialWorkspaces.list's rows:
-  // those with an entry (Workspaces.specialWorkspaces), the ids the saved
-  // config refers to and the live ones; [] without namedSpecial
+  // those with an entry (Workspaces.specialWorkspaces), the ids the shown
+  // (live) config refers to and the live ones; [] without namedSpecial
   // reads: Workspaces.specialWorkspaces, Keybinds.binds, HotCorners.items
   readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SpecialWorkspaces.references(ConfigManager.live, root.specialRefSites)) : []
   // The focused monitor's name, or "" with none
