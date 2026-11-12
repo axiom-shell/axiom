@@ -112,6 +112,22 @@ MouseArea {
       flushTimer.start();
   }
 
+  // Only the two boxes take the pointer: a press on the gap or the empty
+  // strip beside a short stack falls through to the backdrop (closes).
+  // A held press keeps its grab wherever it goes.
+  containmentMask: QtObject {
+    function contains(point: point): bool {
+      for (const box of [root.overview.gridBox, root.overview.scratchBox]) {
+        if (!box.visible)
+          continue;
+        const p = root.mapToItem(box, point.x, point.y);
+        if (p.x >= 0 && p.y >= 0 && p.x < box.width && p.y < box.height)
+          return true;
+      }
+      return false;
+    }
+  }
+
   hoverEnabled: true
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
   preventStealing: true
