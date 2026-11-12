@@ -20,7 +20,7 @@ QtObject {
 
   // The largest scale at which cols×rows monitors of monW×monH, `gap` apart,
   // fit in availW×availH. With `side` > 0 there is also a column of one more
-  // cell's width right of them, `side` px from the grid (the scratchpads'
+  // cell's width right of them, `side` px from the grid (the special workspaces'
   // box, its padding and the room between the boxes), inside the same width;
   // missing or ≤ 0 is the grid alone.
   function fitScale(availW, availH, monW, monH, gap, cols, rows, side) {
@@ -38,7 +38,7 @@ QtObject {
     return n >= 1 && n <= count ? n - 1 : -1;
   }
 
-  // The scratchpads' column beside a cols×rows grid of cellW×cellH cells,
+  // The special workspaces' column beside a cols×rows grid of cellW×cellH cells,
   // `side` px from it: null for no cells, else { x, stackY, stackH,
   // boardWidth, boardHeight, scale, rects } with one rect per cell, stacked
   // and centred vertically on the grid's centre, each centred across the
@@ -134,9 +134,9 @@ QtObject {
 
   // The cell a key press moves the keyboard focus to: `index` in the board's
   // cells (the `count` workspaces in `cols` columns, then `scratchCount`
-  // scratch cells in one column), `key` "left" | "right" | "up" | "down".
-  // Right of a grid row's last cell is the scratch cell at that row's height,
-  // and left of a scratch cell the grid's last cell at its. No wrap; an
+  // special cells in one column), `key` "left" | "right" | "up" | "down".
+  // Right of a grid row's last cell is the special cell at that row's height,
+  // and left of a special cell the grid's last cell at its. No wrap; an
   // impossible step stays put.
   function navigate(index, key, cols, count, scratchCount) {
     const rows = Math.ceil(count / cols);

@@ -117,7 +117,7 @@ MouseArea {
   // A held press keeps its grab wherever it goes.
   containmentMask: QtObject {
     function contains(point: point): bool {
-      for (const box of [root.overview.gridBox, root.overview.scratchBox]) {
+      for (const box of [root.overview.gridBox, root.overview.specialBox]) {
         if (!box.visible)
           continue;
         const p = root.mapToItem(box, point.x, point.y);

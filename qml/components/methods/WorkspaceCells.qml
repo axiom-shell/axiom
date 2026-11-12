@@ -80,7 +80,7 @@ QtObject {
     return Math.max(rest, Math.ceil(along));
   }
 
-  // A split cell (a scratchpad with `scratchpadSplit`) along the bar is
+  // A split cell (a special workspace with `specialWorkspaceSplit`) along the bar is
   // [pad][label ink][pad] divider [pad][icons ink][pad]: the divider splits
   // it into two compartments, each content centred in its own, the same pad
   // on all four sides. `label` is the label's ink length, `count` the app

@@ -133,9 +133,14 @@ Singleton {
   // The special workspaces (contract.md › Shapes, Special), [] without
   // namedSpecial
   readonly property var specials: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
-  // The special workspace names configured: Workspaces.scratchpads', then
-  // the toggleSpecial binds'
-  readonly property var specialNames: root.supports.namedSpecial ? Scratchpads.configuredNames(WorkspacesConfig.scratchpads, KeybindsConfig.activeBinds) : []
+  // The fields of the config that hold a special workspace's id (the
+  // schema's `x-ref`s of that kind: SchemaRefs.sites)
+  readonly property var specialRefSites: SchemaRefs.sites(ConfigManager.configSchema, "specialWorkspace")
+  // Every special workspace that exists, as SpecialWorkspaces.list's rows:
+  // those with an entry (Workspaces.specialWorkspaces), the ids the saved
+  // config refers to and the live ones; [] without namedSpecial
+  // reads: Workspaces.specialWorkspaces, Keybinds.binds, HotCorners.items
+  readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SpecialWorkspaces.references(ConfigManager.live, root.specialRefSites)) : []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
   // The focused monitor's name while it's connected (a screen surfaces are

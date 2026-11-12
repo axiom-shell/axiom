@@ -30,8 +30,8 @@ Item {
   required property CellLook cellLook
   // The strip's windows chained after a row's cells
   readonly property int _stripCells: activeStrip.visible ? activeStrip.cells : 0
-  // The scratchpads' cells chained after those
-  readonly property int _scratchCells: scratchpads.visible ? scratchpads.cells : 0
+  // The special workspaces' cells chained after those
+  readonly property int _specialCells: specialCells.visible ? specialCells.cells : 0
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -91,7 +91,7 @@ Item {
   Grid {
     id: layout
     // Only what's shown: a Grid keeps spacing for an empty column or row
-    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0) + (scratchpads.visible ? 1 : 0))
+    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0) + (specialCells.visible ? 1 : 0))
     rows: root.isVertical ? shown : 1
     columns: root.isVertical ? 1 : shown
     spacing: root.spacing
@@ -116,18 +116,18 @@ Item {
       clickable: root.properties.clickToSwitch
       hitArea: root.hitArea
       chainFirst: activeStrip.stripOnly ? 0 : root.lineIds(root.activeLine, root.activeId).length
-      chainCount: chainFirst + root._stripCells + root._scratchCells
+      chainCount: chainFirst + root._stripCells + root._specialCells
     }
 
-    ScratchpadCells {
-      id: scratchpads
+    SpecialCells {
+      id: specialCells
       barConfig: root.barConfig
       properties: root.properties
       cellLook: root.cellLook
       monitorName: root.output
       hitArea: root.hitArea
       chainFirst: activeStrip.chainFirst + root._stripCells
-      chainCount: chainFirst + root._scratchCells
+      chainCount: chainFirst + root._specialCells
     }
   }
 
@@ -161,7 +161,7 @@ Item {
       activeId: _activeHere
       hitArea: root.hitArea
       activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
-      chainCount: line.ids.length + root._stripCells + root._scratchCells
+      chainCount: line.ids.length + root._stripCells + root._specialCells
 
       Connections {
         target: CompositorManager

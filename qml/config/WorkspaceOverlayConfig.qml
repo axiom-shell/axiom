@@ -20,10 +20,10 @@ QtObject {
   readonly property bool showNumbers: _c.showNumbers
   readonly property bool showTitles: _c.showTitles
   // Special workspaces as a column right of the grid: "off", "occupied"
-  // (those with windows, or shown) or "all" (Scratchpads.cells)
-  readonly property string scratchpads: _c.scratchpads
-  // The border and label color of a scratchpad cell
-  readonly property color scratchpadColor: Theme.resolveColor(_c.scratchpadColor)
+  // (those with windows, or shown) or "all" (SpecialWorkspaces.cells)
+  readonly property string specialWorkspaces: _c.specialWorkspaces
+  // The border and label color of a special workspace's cell
+  readonly property color specialWorkspaceColor: Theme.resolveColor(_c.specialWorkspaceColor)
   readonly property bool showHint: _c.showHint
   // Open the compositor's own overview instead, where it has one
   // (CompositorManager.supports.overview)

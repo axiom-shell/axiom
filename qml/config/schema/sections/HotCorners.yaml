@@ -58,6 +58,7 @@ properties:
           title: Argument
           default: ''
           description: Search text, id, direction, workspace, kind, theme, timer length or command.
+          x-ref: {kind: specialWorkspace, when: {action: [toggleSpecial, moveToSpecial]}, usedBy: 'Used by hot corner {0}', name: corner}
         call:
           type: string
           title: Call

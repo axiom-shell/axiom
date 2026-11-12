@@ -94,16 +94,16 @@ QtObject {
     return windows.map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
   }
 
-  // What the cell of scratchpad `special` (CompositorManager.specials) shows,
-  // `entry` being its Workspaces.scratchpads entry or null: the fields of
-  // of(), with app icons only in icon mode (`scratchpadLabel`) or, with
-  // `scratchpadSplit`, after the label and a divider (`tail`: their paths,
+  // What the cell of special workspace `special` (CompositorManager.specials)
+  // shows, `entry` being its Workspaces.specialWorkspaces entry or null: the
+  // fields of of(), with app icons only in icon mode (`specialWorkspaceLabel`)
+  // or, with `specialWorkspaceSplit`, after the label and a divider (`tail`: their paths,
   // `tailLength` how much longer they make the cell)
-  function ofScratchpad(special, entry) {
-    const mode = root.properties.scratchpadLabel;
-    const split = root.properties.scratchpadSplit === true;
+  function ofSpecial(special, entry) {
+    const mode = root.properties.specialWorkspaceLabel;
+    const split = root.properties.specialWorkspaceSplit === true;
     const icons = (mode === "icon" || split) && root.properties.showAppIcons && special.windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(special.windows), WorkspaceCells.byPosition(special.windows)) : [];
-    const shown = Scratchpads.content(entry, special.name, mode, icons.length > 0, split);
+    const shown = SpecialWorkspaces.content(entry, special.name, mode, icons.length > 0, split);
     shown.written = mode !== "icon" && shown.kind === "text";
     const tail = shown.tail ? icons : [];
     const sep = root.barConfig.look.separators;

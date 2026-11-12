@@ -30,7 +30,7 @@ Item {
   // has no tiled windows to split)
   property bool dropTarget: false
   property bool dropFill: false
-  // A color for the borders and the drop fill (a scratchpad's); transparent
+  // A color for the borders and the drop fill (a special workspace's); transparent
   // keeps the usual ones
   property color tint: "transparent"
   readonly property bool tinted: root.tint.a > 0

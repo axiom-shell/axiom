@@ -70,6 +70,45 @@ QtObject {
 
   // Every default filled in, from the schema alone
   readonly property var defaults: SchemaValidation.applyDefaults({}, ConfigManager.configSchema)
+  // The special workspaces' entries as edited (Workspaces.specialWorkspaces
+  // of the draft)
+  readonly property var specialEntries: root.localConfig?.Workspaces?.specialWorkspaces ?? WorkspacesConfig.specialWorkspaces
+  // Every special workspace that exists, as SpecialWorkspaces.list's rows,
+  // over the draft: its entries and the ids its binds and hot corners hold,
+  // unsaved or not, and the live ones; [] without namedSpecial. The saved
+  // config's is CompositorManager.knownSpecials
+  readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
+
+  // Sets the icon and text of the special workspace `id`'s entry in the draft
+  function setSpecialWorkspace(id, icon, text) {
+    root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.map(entry => entry.id === id ? Object.assign({}, entry, {
+        "icon": icon,
+        "text": text
+      }) : entry));
+  }
+
+  // Adds an entry for special workspace `id` to the draft; false when it is
+  // not a valid id or has one already
+  function addSpecialWorkspace(id) {
+    if (!SpecialWorkspaces.validId(id) || root.specialEntries.some(entry => entry.id === id))
+      return false;
+    root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.concat([
+      {
+        "id": id,
+        "icon": "",
+        "text": ""
+      }
+    ]));
+    return true;
+  }
+
+  // Removes `id`'s entry from the draft, unless something uses it
+  // (SpecialWorkspaces.deletable)
+  function removeSpecialWorkspace(id) {
+    if (SpecialWorkspaces.deletable(root.knownSpecials.find(row => row.id === id)))
+      root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.filter(entry => entry.id !== id));
+  }
+
   // The schema with Bars.style's `$ref` resolved, which `rows` and
   // `compositorAllows` walk (SchemaLayout.resolved)
   readonly property var _resolvedSchema: SchemaLayout.resolved(ConfigManager.configSchema, ConfigManager.configSchema)
@@ -432,9 +471,9 @@ QtObject {
     case "notes":
       return ["", ...NotesManager.allNotes];
     case "specialWorkspaces":
-      // Those that exist (Hyprland lists one only while it has windows) and
-      // those the binds and Workspaces.scratchpads name
-      return CompositorManager.specials.map(special => special.name).concat(CompositorManager.specialNames).filter((name, i, all) => name !== "" && all.indexOf(name) === i);
+      // Those that exist (Hyprland lists one only while it has windows), have
+      // an entry or are referred to, as edited (`knownSpecials`)
+      return root.knownSpecials.map(row => row.id);
     case "calendars":
       // Those new events can go to
       return ["", ...CalendarManager.calendars.filter(calendar => calendar.writable).map(calendar => calendar.id)];
