@@ -122,3 +122,19 @@ func LockDir(ctx context.Context, dir string) (*Lock, error) {
 		}
 	}
 }
+
+// Held says whether another process holds the lock file at path, without
+// taking it or changing the file (a missing file is not held). A shared
+// flock conflicts with the exclusive one a daemon or guard holds.
+func Held(path string) bool {
+	f, err := os.OpenFile(path, os.O_RDONLY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	if err := unix.Flock(int(f.Fd()), unix.LOCK_SH|unix.LOCK_NB); err != nil {
+		return errors.Is(err, unix.EWOULDBLOCK)
+	}
+	unix.Flock(int(f.Fd()), unix.LOCK_UN)
+	return false
+}

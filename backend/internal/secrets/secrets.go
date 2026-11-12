@@ -24,6 +24,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/command"
+	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
 
@@ -135,6 +136,43 @@ func (s *Store) Clear(ctx context.Context, scope, id string) error {
 		return ctx.Err()
 	}
 	return s.write(slot(scope, id), "")
+}
+
+// Secret Service's names, for Count
+const (
+	serviceBus   = "org.freedesktop.secrets"
+	servicePath  = dbus.ObjectPath("/org/freedesktop/secrets")
+	serviceIface = "org.freedesktop.Secret.Service"
+)
+
+// Count is how many items axiom has in the keyring (the Secret Service on
+// conn: every item with the attribute service=axiom, locked or not). It
+// asks for their object paths only: no value is ever read. A keyring that
+// doesn't answer holds none.
+func Count(ctx context.Context, conn *dbus.Conn) (int, error) {
+	if conn == nil {
+		return 0, nil
+	}
+	if owner, err := conn.NameOwner(ctx, serviceBus); err != nil || owner == "" {
+		return 0, nil
+	}
+	m, err := conn.Call(ctx, serviceBus, servicePath, serviceIface, "SearchItems", "a{ss}", map[string]string{"service": "axiom"})
+	if err != nil {
+		return 0, axerr.Wrap(axerr.Unavailable, err, "asking the keyring what axiom saved")
+	}
+	var unlocked, locked []dbus.ObjectPath
+	if err := m.Store(&unlocked, &locked); err != nil {
+		return 0, axerr.Wrap(axerr.BadReply, err, "the keyring's answer")
+	}
+	return len(unlocked) + len(locked), nil
+}
+
+// ClearAll removes every item axiom saved in the keyring (`secret-tool
+// clear service axiom`, which prints nothing). A keyring that doesn't
+// answer, or no secret-tool, holds nothing to clear.
+func (s *Store) ClearAll(ctx context.Context) error {
+	s.run(ctx, nil, "clear", "service", "axiom")
+	return ctx.Err()
 }
 
 func check(scope, id string) error {

@@ -1,0 +1,4 @@
+// Given back by axiom when it stopped managing niri: this file is yours now,
+// and axiom won't write it again. It starts axiom and includes the files in
+// /nonexistent/home/.config/niri/user/, as axiom's managed one did.
+

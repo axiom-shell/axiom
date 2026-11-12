@@ -31,6 +31,9 @@ type Env struct {
 	// Exec runs this command again with another axiom binary (the dev
 	// build, when the daemon speaks another protocol); nil in tests
 	Exec func(exe string) error
+	// TTY says whether questions can be asked (nil: whether Stdin is a
+	// terminal); tests set it
+	TTY func() bool
 
 	Globals Globals
 }

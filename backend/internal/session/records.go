@@ -203,6 +203,11 @@ func (s Store) Read() *State {
 	return s.read()
 }
 
+// Peek is Read without session.lock, which it would create: the record is
+// replaced atomically, so what it reads is whole. For a command that must
+// change nothing.
+func (s Store) Peek() *State { return s.read() }
+
 // Update reads the record, lets fn change it, and writes it, all under
 // session.lock. A record of another version is left as it is (an error).
 func (s Store) Update(fn func(*State) error) error {

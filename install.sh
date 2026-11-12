@@ -20,6 +20,14 @@
 #                               from, without asking (none: neither)
 #                --dry-run      print every command it would run; change
 #                               nothing
+#                --uninstall    take axiom out again: `axiom uninstall` (it
+#                               asks what to keep: your settings, downloaded
+#                               content and saved passwords, by default
+#                               all), then the binary and the install. A
+#                               package is removed with its package manager.
+#                               With it: --yes --dry-run --purge-all (keep
+#                               nothing) --restore-system (put back the
+#                               default apps and input methods axiom set)
 #              AXIOM_REPO and AXIOM_DIR override the install's source and
 #              folder. Safe to run again: nothing is installed or added twice.
 #              sudo runs only for the package manager (and on Fedora to
@@ -142,11 +150,22 @@ autostart_line() {
 STARTS_AXIOM="(^|[[:space:]'\"/])axiom['\"]? +run([^[:alnum:]_-]|\$)"
 
 mode=ask dry_run=0 compositor_flag=""
+uninstall=0 uninstall_args=()
 while (($#)); do
   case "$1" in
   --yes | -y) mode=yes ;;
   --minimal) mode=minimal ;;
   --dry-run) dry_run=1 ;;
+  --uninstall) uninstall=1 ;;
+  --purge-all | --restore-system) uninstall_args+=("$1") ;;
+  --answers | --answers=*)
+    if [[ "$1" == *=* ]]; then
+      uninstall_args+=("$1")
+    else
+      uninstall_args+=("$1" "${2:?--answers takes a file}")
+      shift
+    fi
+    ;;
   --compositor | --compositor=*)
     if [[ "$1" == *=* ]]; then
       compositor_flag=${1#*=}
@@ -163,7 +182,7 @@ while (($#)); do
     esac
     ;;
   --help | -h)
-    sed -n '3,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,33p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
   *)
@@ -242,6 +261,73 @@ version_at_least() {
 }
 
 first_version() { grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1; }
+
+is_axiom_clone() { [[ -f "$1/qml/shell.qml" && -f "$1/backend/go.mod" ]] && git -C "$1" rev-parse --git-dir >/dev/null 2>&1; }
+same_dir() { [[ "$(readlink -f "$1" 2>/dev/null)" == "$(readlink -f "$2" 2>/dev/null)" ]]; }
+
+# ─── Uninstall ───────────────────────────────────────────────────────────────
+
+# --uninstall: `axiom uninstall` takes axiom's footprint out of your home and
+# session (asking what to keep, unless --yes; docs/dev/backend/uninstall.md);
+# then, unless axiom is a package, this takes away what only this script
+# put there: the binary and the install. Nothing here needs a package
+# manager, and nothing runs as root
+do_uninstall() {
+  ((EUID != 0)) || die "Run this as your own user, not root: axiom's files are in your home."
+  local bin_home=${XDG_BIN_HOME:-$HOME/.local/bin}
+  local script_dir="" default_dir=${XDG_DATA_HOME:-$HOME/.local/share}/axiom-shell
+  [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]] && script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+  local is_package=0
+  [[ -f "$PACKAGED_DIR/.packaged" ]] && ! is_axiom_clone "$AXIOM_DIR" && [[ ! -f "$AXIOM_DIR/qml/shell.qml" ]] && is_package=1
+  local bin=$bin_home/axiom
+  ((is_package)) && bin=/usr/bin/axiom
+  [[ -x "$bin" ]] || bin=$(command -v axiom || true)
+  [[ -n "$bin" ]] || die "axiom's binary isn't at $bin_home/axiom or on your PATH: there is nothing to run \`axiom uninstall\` with. Remove $AXIOM_DIR by hand."
+
+  local args=(uninstall --stop)
+  [[ "$mode" == yes ]] && args+=(--yes)
+  ((dry_run)) && args+=(--dry-run)
+  args+=("${uninstall_args[@]}")
+  if ((dry_run)); then
+    info "Running axiom uninstall --dry-run: nothing is changed"
+  else
+    info "Running axiom uninstall"
+  fi
+  # Its questions are asked on the terminal, also under curl | bash
+  if [[ "$mode" != yes ]] && ((have_tty)); then
+    "$bin" "${args[@]}" </dev/tty || die "axiom uninstall failed: nothing else was removed."
+  else
+    "$bin" "${args[@]}" || die "axiom uninstall failed: nothing else was removed."
+  fi
+
+  if ((is_package)); then
+    info "Remove the package: sudo pacman -R axiom-shell (or axiom-shell-git)"
+    return 0
+  fi
+  # The binary this script installed, when it is axiom's
+  if [[ "$bin" == "$bin_home/axiom" && -e "$bin" ]]; then
+    if "$bin" version 2>/dev/null | grep -q '^axiom '; then
+      run rm -f -- "$bin"
+      ((dry_run)) || ok "Removed $bin"
+    fi
+  fi
+  # The install: a tree (qml/shell.qml) or a clone of axiom's. Not the clone
+  # this runs from, unless it is the install's own folder
+  if [[ -f "$AXIOM_DIR/qml/shell.qml" ]] || is_axiom_clone "$AXIOM_DIR"; then
+    if [[ -n "$script_dir" ]] && same_dir "$AXIOM_DIR" "$script_dir" && ! same_dir "$AXIOM_DIR" "$default_dir"; then
+      info "Left $AXIOM_DIR: this runs from it, and it isn't the install's own folder"
+    else
+      run rm -rf -- "$AXIOM_DIR"
+      ((dry_run)) || ok "Removed $AXIOM_DIR"
+    fi
+  fi
+  return 0
+}
+
+if ((uninstall)); then
+  do_uninstall
+  exit 0
+fi
 
 # ─── The distribution ────────────────────────────────────────────────────────
 
@@ -489,9 +575,6 @@ if [[ -n "$primary" ]]; then
 fi
 
 # ─── The clone ───────────────────────────────────────────────────────────────
-
-is_axiom_clone() { [[ -f "$1/qml/shell.qml" && -f "$1/backend/go.mod" ]] && git -C "$1" rev-parse --git-dir >/dev/null 2>&1; }
-same_dir() { [[ "$(readlink -f "$1" 2>/dev/null)" == "$(readlink -f "$2" 2>/dev/null)" ]]; }
 
 # Run from a clone (not curl | bash): the install is still a fresh clone of
 # the latest release, and this one is offered as the dev tree (`axiom dev
