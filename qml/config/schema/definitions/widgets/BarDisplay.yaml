@@ -15,4 +15,12 @@ properties:
     default: label
     x-enumLabels: {label: Label, icon: Icon only, ring: Ring, fill: Fill, pill: Pill, segments: Segments, sparkline: Sparkline, ticker: Ticker, stacked: Stacked}
   segments: {type: integer, title: Segments, default: 5, minimum: 2, maximum: 12, x-showIf: {style: segments}}
-  width: {type: integer, title: Width, x-unit: px, default: 0, minimum: 0, maximum: 600, description: Length along the bar; 0 picks one., x-showIf: {style: [fill, segments, sparkline, ticker]}}
+  width:
+    type: integer
+    title: Width
+    x-unit: px
+    x-auto: {value: null, start: 80}
+    default: null
+    minimum: 0
+    maximum: 600
+    x-showIf: {style: [fill, segments, sparkline, ticker]}

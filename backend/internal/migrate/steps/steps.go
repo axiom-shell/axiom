@@ -218,10 +218,16 @@ var all = []Step{
 	// corners, Button widgets) menu; a free menu's freeAnimation became its
 	// animation (v104.go)
 	{Version: 104, Run: v104},
-	// v105: the per-widget colorText option went: a bar widget's
-	// appearance.colorText and a custom widget's bar.colorText dropped
-	// (v105.go)
+	// v105: the config audit's renames and moves (bar location → edge,
+	// Updates' interval → Updates.interval, Interface.radius → Appearance
+	// shape's innerRadius, WindowLook.surfaceBlur → Appearance.surface.blur,
+	// the Workspaces head gone, OSD pick lists → shows, …), and values
+	// rounded to the steps they now take (v105.go)
 	{Version: 105, Run: v105},
+	// v106: the per-widget colorText option went: a bar widget's
+	// appearance.colorText and a custom widget's bar.colorText dropped
+	// (v106.go)
+	{Version: 106, Run: v106},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

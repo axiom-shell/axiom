@@ -42,7 +42,7 @@ QtObject {
   // Where an event of the OSD system `system` and its key `key` (the
   // caller's: Drives' drive, Battery's battery, …) goes
   // (OSDEngine.cardRoute): "osd" (an OSD opens its card:
-  // OSDEngine.opensCard; the low battery's only where Battery's `tiles`
+  // OSDEngine.opensCard; the low battery's only where Battery's `shows`
   // pick `battery`), else "notification" with `notify` (its section's
   // switch: Battery.notify, Drives.notify, Monitors.notify,
   // Screenshots.notify), else "" (nowhere)

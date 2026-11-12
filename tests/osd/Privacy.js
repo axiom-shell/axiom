@@ -29,7 +29,7 @@
 //   keeping the other is a "still" card on the dropped key (kind "remove",
 //   still: true) naming that app, with the kept one's role ("Vesktop" /
 //   "Still using the microphone") and the kept one's icon; only while the
-//   OSD lists the kept kind (`kinds`). The engine makes it from the group.
+//   OSD lists the kept kind (`shows`). The engine makes it from the group.
 // decided: a "still" card against a still card of the same key within the
 //   quiet window "keep"s it (several stopping one after another: one card);
 //   the card out is read anew from the state (as today's card is bound to
@@ -41,7 +41,7 @@
 //   the change's `members` (the card out re-read as its capture stops,
 //   today's preview case).
 
-var opts = { "kinds": ["camera", "micUse", "screenShare"] };
+var opts = { "shows": ["camera", "micUse", "screenShare"] };
 
 function cap(members) {
   return { "members": members };
@@ -132,7 +132,7 @@ var rows = [
   },
   {
     "name": "a kind not listed changes nothing",
-    "options": { "kinds": ["camera"] },
+    "options": { "shows": ["camera"] },
     "steps": [
       { "at": 0, "state": start() },
       { "at": 3000, "state": { "screenShare": cap([m(80, "Firefox")]), "micUse": cap([m(70, "OBS")]) } }
@@ -212,7 +212,7 @@ var rows = [
   },
   {
     "name": "a call app dropping its camera, the microphone's kind not listed: just the icon",
-    "options": { "kinds": ["camera"] },
+    "options": { "shows": ["camera"] },
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "Vesktop")]) }) },
       { "at": 3000, "state": { "camera": cap([]) },
@@ -365,7 +365,7 @@ var rows = [
   },
   {
     "name": "the microphone's kind not listed: the camera card says the camera alone",
-    "options": { "kinds": ["camera"] },
+    "options": { "shows": ["camera"] },
     "steps": [
       { "at": 0, "state": start({ "micUse": cap([m(70, "Vesktop")]) }) },
       { "at": 3000, "state": { "camera": cap([m(61, "Vesktop")]) },

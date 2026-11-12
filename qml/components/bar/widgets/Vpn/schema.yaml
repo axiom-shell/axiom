@@ -2,37 +2,32 @@ label: VPN
 keywords: ['VPN Status']
 icon: vpn_lock
 group: Network & devices
-popout: {variant: own, enabled: {description: 'Every VPN on hover, to connect or disconnect one.'}}
+popout: {variant: own, enabled: {description: Every VPN on hover.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, stacked]
     description: "Stacked puts the VPN's name over its address."
+colors: text
+order: [appearance, showName, hideWhenOff, middleCommand, popout, foregroundColor, connectedColor, disconnectedColor]
 settings:
   showName:
     type: boolean
-    title: Show name
+    title: Name
     default: true
-    description: Show the active VPN's name.
+    x-showIf: {appearance.style: [label, stacked]}
   hideWhenOff:
     type: boolean
-    title: Hide when off
+    title: Hide when disconnected
     default: false
-    description: Show only while a VPN is up.
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: ''
-    description: Empty does nothing. A left click toggles the last VPN.
+    description: 'Empty: nothing.'
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color}
   disconnectedColor:
     $ref: '#/definitions/WidgetColor'
     title: Disconnected color
     x-autoColor: 'off'
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}

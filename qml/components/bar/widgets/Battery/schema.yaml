@@ -9,23 +9,28 @@ appearance:
     enum: [label, icon, ring, fill, pill, segments, stacked]
     description: Stacked puts the charge over the time to full or left.
 colors: standard
+order: [appearance, showPercentage, showPeripherals, popout, backgroundColor, foregroundColor, chargingColor, lowColor, criticalColor]
 settings:
-  showPercentage: {type: boolean, title: Show percentage, default: true}
+  showPercentage:
+    type: boolean
+    title: Percentage
+    default: true
+    x-showIf: {appearance.style: [label, stacked, ring, fill, pill, segments]}
   showPeripherals:
     type: boolean
-    title: Show peripherals
+    title: Peripherals
     default: true
-    description: Connected Bluetooth devices' batteries, in the tooltip and status. With no laptop battery, the widget shows the lowest of them.
+    description: Bluetooth device batteries too. With no laptop battery, shows the lowest.
   chargingColor: {$ref: '#/definitions/WidgetColor', title: Charging color, x-autoColor: alt, x-autoGradient: true}
   lowColor:
     $ref: '#/definitions/WidgetColor'
     x-link: {setting: Battery.lowThreshold}
     title: Low color
     x-autoColor: warning
-    description: At or below Battery's low level.
+    description: At or below the low level.
   criticalColor:
     $ref: '#/definitions/WidgetColor'
     x-link: {setting: Battery.criticalThreshold}
     title: Critical color
     x-autoColor: critical
-    description: At or below Battery's critical level.
+    description: At or below the critical level.

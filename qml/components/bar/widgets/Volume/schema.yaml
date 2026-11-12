@@ -1,15 +1,16 @@
 label: Volume
 icon: volume_up
 group: Media & audio
-popout: {variant: own, enabled: {description: Open the output mixer when hovered.}}
+popout: {variant: own, enabled: {description: The output mixer on hover.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments]
 colors: standard
+order: [appearance, showPercentage, showDevice, maxVolume, scrollStep, middleCommand, popout, backgroundColor, foregroundColor, mutedColor]
 settings:
-  showPercentage: {type: boolean, title: Show percentage, default: false}
-  showDevice: {type: boolean, title: Show device, default: false}
+  showPercentage: {type: boolean, title: Percentage, default: false, x-showIf: {appearance.style: [label, ring, fill, pill, segments]}}
+  showDevice: {type: boolean, title: Device, default: false, x-showIf: {appearance.style: [label, ring, fill, pill, segments]}}
   scrollStep:
     type: integer
     title: Scroll step
@@ -19,7 +20,7 @@ settings:
     maximum: 25
   maxVolume:
     type: integer
-    title: Maximum volume
+    title: Maximum
     x-unit: '%'
     default: 100
     minimum: 100
@@ -29,5 +30,5 @@ settings:
     type: string
     title: Middle-click command
     default: pavucontrol
-    description: Empty does nothing.
+    description: 'Empty: nothing.'
   mutedColor: {$ref: '#/definitions/WidgetColor', title: Muted color, x-autoColor: 'off'}

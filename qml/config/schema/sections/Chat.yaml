@@ -10,7 +10,7 @@ properties:
   defaultProvider:
     type: string
     title: Default provider
-    x-group: Chat conversations
+    x-group: Conversations
     default: anthropic
     x-options: chatProviders
     description: Used by presets that name no provider.
@@ -18,14 +18,14 @@ properties:
     x-scope: personal
     type: string
     title: Default preset
-    x-group: Chat conversations
+    x-group: Conversations
     default: Default
     x-options: chatPresets
   maxTokens:
     type: integer
     title: Longest reply
     x-unit: tokens
-    x-group: Chat conversations
+    x-group: Conversations
     default: 16000
     minimum: 256
     maximum: 128000
@@ -34,40 +34,40 @@ properties:
     x-scope: personal
     type: integer
     title: Conversations kept
-    x-group: Chat conversations
+    x-group: Conversations
     default: 50
     minimum: 0
     maximum: 500
-    description: Older ones are deleted. 0 keeps none past a restart.
+    description: 'Older ones are deleted. 0: none are saved.'
   showThinking:
     x-scope: personal
     type: boolean
-    title: Show thinking
-    x-group: Chat display
+    title: Thinking
+    x-group: Display
     default: true
-    description: Show a summary of a reasoning model's thinking above the reply.
+    description: A reasoning model's thinking summary, above the reply.
   renderMarkdown:
     x-scope: personal
     type: boolean
-    title: Format replies
-    x-group: Chat display
+    title: Markdown
+    x-group: Display
     default: true
-    description: Render Markdown instead of raw text.
+    description: Render replies as Markdown, not raw text.
   sendKey:
     x-scope: personal
     type: string
     title: Send with
-    x-group: Chat display
+    x-group: Display
+    x-control: toggle
     enum: [enter, ctrlEnter]
-    x-enumLabels:
-      enter: Enter (Shift+Enter for a new line)
-      ctrlEnter: Ctrl+Enter (Enter for a new line)
+    x-enumLabels: {enter: Enter, ctrlEnter: Ctrl+Enter}
     default: enter
+    description: The other key makes a new line.
   providers:
     x-wide: true
     type: array
     title: Providers
-    description: 'Where chats are sent. The OpenAI kind covers any OpenAI-style API: set its address.'
+    description: Where chats are sent. OpenAI-compatible covers any OpenAI-style API.
     default:
       - id: anthropic
         name: Anthropic
@@ -127,15 +127,16 @@ properties:
           description: The API's base URL, including its version (e.g. http://localhost:11434/v1).
         auth:
           type: string
-          title: Key
+          title: Authentication
+          x-control: toggle
           enum: [key, none]
-          x-enumLabels: {key: Needs an API key, none: No key (local server)}
+          x-enumLabels: {key: Key, none: None}
           default: key
         keyEnv:
           type: string
           title: Key variable
           default: ''
-          description: An environment variable holding the key. It wins over a stored key.
+          description: An environment variable holding the key. It wins over a stored one.
           x-showIf: {auth: key}
         models:
           type: array
@@ -147,12 +148,12 @@ properties:
           type: string
           title: Default model
           default: ''
-          description: Empty uses the first model.
+          description: 'Empty: the first model.'
         fallbacks:
           type: boolean
           title: Refusal fallback
           default: true
-          description: Retry on another model when one declines a request.
+          description: Retry on another model when one declines.
           x-showIf: {kind: anthropic}
       required: [id]
   presets:
@@ -186,18 +187,18 @@ properties:
           x-control: icon
           title: Icon
           default: chat
-          description: A Material Symbols name.
-        systemPrompt: {type: string, title: System prompt, default: '', x-multiline: true}
         provider:
           type: string
           title: Provider
           default: ''
-          description: Empty uses the default provider.
+          x-options: chatProviders
+          x-emptyLabel: Default provider
+          description: 'Empty: the default provider.'
         model:
           type: string
           title: Model
           default: ''
-          description: Empty uses the provider's default model.
+          description: 'Empty: the provider''s default model.'
         effort:
           type: string
           title: Effort
@@ -211,4 +212,5 @@ properties:
             max: Max
           default: default
           description: How hard a reasoning model thinks.
+        systemPrompt: {type: string, title: System prompt, default: '', x-multiline: true}
       required: [id]

@@ -8,18 +8,13 @@ appearance:
   style:
     enum: [label, icon, ring, fill, pill, stacked]
     description: The value is the session's progress; stacked puts the time over its name.
+colors: text
+order: [appearance, hideWhenIdle, popout, foregroundColor, workColor, breakColor, idleColor]
 settings:
   hideWhenIdle:
     type: boolean
     title: Hide when stopped
     default: false
-    description: Show only while a session or break runs.
   workColor: {$ref: '#/definitions/WidgetColor', title: Focus color}
   breakColor: {$ref: '#/definitions/WidgetColor', title: Break color, x-autoColor: alt, x-autoGradient: true}
   idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}
-  foregroundColor:
-    type: string
-    title: Text color
-    x-options: colors
-    default: base00
-    x-showIf: {$bar.textColorShows: true}

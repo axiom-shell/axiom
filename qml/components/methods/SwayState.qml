@@ -462,7 +462,7 @@ QtObject {
   }
 
   // Special group `name`'s windows the other kind keeps, moved over to
-  // `kind` ("scratchpad" or "workspace") after Compositor.sway.specialWorkspaces
+  // `kind` ("scratchpad" or "workspace") after Workspaces.specialWorkspaces
   // changed: { lines (the commands), windows and marks (`windows` and
   // `marks` as they are after them, for the scratchpad's toggle) }. To the
   // workspace, marked windows lose the mark and move there; to the

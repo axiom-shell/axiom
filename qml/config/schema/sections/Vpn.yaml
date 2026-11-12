@@ -7,18 +7,18 @@ title: VPN
 description: How VPN widgets, modules and the Wi-Fi menu show NetworkManager's VPNs.
 additionalProperties: false
 properties:
-  notifyOnDrop:
-    type: boolean
-    title: Notify when a VPN drops
-    default: true
-    description: Notify when a VPN goes down unasked.
   showTailscale:
     type: boolean
-    title: List Tailscale
+    title: Tailscale
     default: true
-    description: Show Tailscale with the other VPNs when it's installed.
+    description: Listed with the other VPNs, when installed.
   publicIpUrl:
     type: string
-    title: Public IP lookup
+    title: Public IP URL
     default: https://api.ipify.org
-    description: Asked for your public IP when you click Check. Empty hides the check.
+    description: 'Asked for your public IP on Check. Empty: no check.'
+  notifyOnDrop:
+    type: boolean
+    title: Drop notifications
+    default: true
+    description: Notify when a VPN goes down unasked.

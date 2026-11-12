@@ -5,10 +5,10 @@ keyboard: true
 defaultSize: [8, 8]
 minSize: [4, 6]
 settings:
-  showTimer: {type: boolean, title: Pomodoro timer, default: true}
+  showTimer: {type: boolean, title: Timer, default: true}
   showTodos: {type: boolean, title: Todo list, default: true}
   showAgenda:
     type: boolean
-    title: Today's events
+    title: Agenda
     default: true
-    description: Today's events, with + to add one.
+    description: With + to add one.

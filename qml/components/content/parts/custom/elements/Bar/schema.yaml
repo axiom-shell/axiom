@@ -5,4 +5,4 @@ slots: [value, min, max]
 actions: [change]
 color: state
 settings:
-  step: {type: integer, x-control: stepper, title: Step, default: 1, minimum: 0, maximum: 1000, description: 'What a dragged value rounds to (0: none).'}
+  step: {type: integer, x-control: stepper, title: Step, default: 1, minimum: 0, maximum: 1000, description: 'Dragged values round to this. 0: none.'}

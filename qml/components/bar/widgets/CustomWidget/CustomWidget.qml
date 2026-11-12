@@ -24,7 +24,7 @@ BarWidget {
       "style": "label",
       "icon": "material",
       "segments": 5,
-      "width": 0,
+      "width": null,
       "popout": false
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null

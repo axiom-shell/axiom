@@ -41,6 +41,8 @@ func convert(spec, v any, resolveHex any) any {
 			return 1.0
 		}
 		return 0.0
+	case "not":
+		return !truthy(v)
 	case "number":
 		return num(v)
 	case "color":

@@ -14,9 +14,10 @@ import qs.components.bar.widgets.base
 // `dateFormat` (Qt format strings) overrides that. On a vertical bar each
 // is stacked into short lines. A `timezone` shows another zone's time
 // (TimeZoneManager), the system's until its offset is read. A head
-// (`lead`: an icon, or the date moved before the time) is its icon part on
-// a split bar (BarWidget's head). The clock is its own content; the lines
-// after the first on a vertical bar and the divider are muted colors.
+// (`lead`: an icon, or the date moved before the time; Auto: the date where
+// the bar draws an icon part apart) is its icon part on a split bar
+// (BarWidget's head). The clock is its own content; the lines after the
+// first on a vertical bar and the divider are muted colors.
 BarWidget {
   id: root
 
@@ -26,8 +27,9 @@ BarWidget {
   readonly property bool showSeconds: properties.showSeconds
   readonly property bool showDate: properties.showDate
 
-  // The date as the head (only while it shows), else after the time
-  readonly property bool dateLeads: properties.lead === "date" && showDate
+  // The date as the head (only while it shows; Auto: where the bar's look
+  // draws an icon part apart), else after the time
+  readonly property bool dateLeads: (properties.lead === "date" || (properties.lead === "auto" && barConfig.look.traits.iconPart)) && showDate
   readonly property bool dateAfter: showDate && !dateLeads
 
   headIcon: root.properties.lead === "icon" ? root.properties.leadIcon : ""

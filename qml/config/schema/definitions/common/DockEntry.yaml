@@ -8,7 +8,7 @@ properties:
     type: string
     title: Name
     default: ''
-    description: Shown on its tab here. Empty names it by its edge.
+    description: 'The tab''s name. Empty: named by its edge.'
   enabled: {type: boolean, title: Enabled, default: true}
   screen:
     $ref: '#/definitions/ScreenTarget'
@@ -39,10 +39,10 @@ properties:
     default: 50
     minimum: 0
     maximum: 100
-    description: 'Where its centre sits: 0 is the start (left/top), 100 the end.'
+    description: 0 is the start (left/top), 100 the end.
   detached:
     type: boolean
-    title: Detach from edge
+    title: Detached
     default: true
     description: A separate box held off the edge, instead of growing out of it.
   distance:
@@ -52,11 +52,95 @@ properties:
     default: 0
     minimum: 0
     maximum: 50
-    description: 0 lines it up with your window border, 50 centres it.
+    description: '0: in line with your window border. 50: centered.'
     x-showIf: {detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
     x-showIf: {detached: true}
+  iconSize: {type: integer, title: Icon size, default: 48, minimum: 16, maximum: 128, x-unit: px}
+  spacing:
+    type: integer
+    x-control: stepper
+    title: Icon spacing
+    default: 6
+    minimum: 0
+    maximum: 48
+    x-unit: px
+  padding:
+    type: integer
+    x-control: stepper
+    title: Padding
+    default: 8
+    minimum: 0
+    maximum: 48
+    x-unit: px
+    description: Space between the dock's box and its icons.
+  magnify:
+    type: object
+    title: Magnify
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        title: Under the pointer
+        default: false
+        description: Grow the icons near the pointer.
+      size:
+        type: integer
+        title: Size
+        default: 80
+        minimum: 16
+        maximum: 256
+        x-unit: px
+        x-showIf: {enabled: true}
+        description: Size of the icon under the pointer.
+      range:
+        type: integer
+        x-control: stepper
+        title: Range
+        x-unit: icons
+        default: 3
+        minimum: 1
+        maximum: 8
+        x-showIf: {enabled: true}
+        description: How many icons on each side grow with it.
+  running:
+    type: object
+    title: Running apps
+    additionalProperties: false
+    properties:
+      show:
+        type: boolean
+        title: Unpinned apps
+        default: true
+        description: Also show unpinned apps with open windows, after the pinned ones.
+      scope:
+        type: string
+        title: Windows counted
+        default: all
+        enum: [all, monitor, workspace]
+        x-enumLabels:
+          all: Every window
+          monitor: Windows on this monitor
+          workspace: Windows on this monitor's workspace
+      indicator:
+        type: string
+        title: Indicator
+        default: dots
+        x-control: toggle
+        enum: [dots, line, none]
+        x-enumLabels: {dots: Dots, line: Line, none: None}
+        description: 'Dots: one per window, up to 3.'
+      separator:
+        type: boolean
+        title: Separator
+        default: true
+        description: A line between pinned and running apps.
+        x-showIf: {show: true}
+  showLabels:
+    type: boolean
+    title: Names on hover
+    default: true
   visibility:
     type: string
     title: Visibility
@@ -66,7 +150,6 @@ properties:
       always: Always shown
       hover: Show on hover
       intellihide: Hide when a window overlaps
-    description: Show on hover slides it in when the pointer reaches the edge.
   reserveSpace:
     type: boolean
     title: Reserve space
@@ -93,91 +176,8 @@ properties:
         default: 400
         minimum: 0
         maximum: 5000
-  iconSize: {type: integer, title: Icon size, default: 48, minimum: 16, maximum: 128, x-unit: px}
-  spacing:
-    type: integer
-    x-control: stepper
-    title: Icon spacing
-    default: 6
-    minimum: 0
-    maximum: 48
-    x-unit: px
-  padding:
-    type: integer
-    x-control: stepper
-    title: Padding
-    default: 8
-    minimum: 0
-    maximum: 48
-    x-unit: px
-    description: Space between the dock's box and its icons.
-  magnify:
-    type: object
-    title: Magnify
-    additionalProperties: false
-    properties:
-      enabled:
-        type: boolean
-        title: Magnify under the pointer
-        default: false
-        description: Grow the icons near the pointer.
-      size:
-        type: integer
-        title: Magnified size
-        default: 80
-        minimum: 16
-        maximum: 256
-        x-unit: px
-        x-showIf: {enabled: true}
-        description: Size of the icon under the pointer.
-      range:
-        type: integer
-        x-control: stepper
-        title: Magnify range
-        default: 3
-        minimum: 1
-        maximum: 8
-        x-showIf: {enabled: true}
-        description: How many icons on each side grow with it.
-  running:
-    type: object
-    title: Running apps
-    additionalProperties: false
-    properties:
-      show:
-        type: boolean
-        title: Show running apps
-        default: true
-        description: Also show unpinned apps with open windows, after the pinned ones.
-      scope:
-        type: string
-        title: Windows counted
-        default: all
-        enum: [all, monitor, workspace]
-        x-enumLabels:
-          all: Every window
-          monitor: Windows on this monitor
-          workspace: Windows on this monitor's workspace
-        description: Which windows make an app count as running.
-      indicator:
-        type: string
-        title: Running indicator
-        default: dots
-        enum: [dots, line, none]
-        x-enumLabels: {dots: A dot per window (up to 3), line: A line, none: None}
-      separator:
-        type: boolean
-        title: Separator
-        default: true
-        description: A line between pinned and other running apps.
-        x-showIf: {show: true}
-  showLabels:
-    type: boolean
-    title: Names on hover
-    default: true
-    description: Show an app's name when hovered.
-  backgroundColor: {type: string, title: Background, x-options: colors, default: base00}
-  borderColor: {type: string, title: Border, x-options: colors, default: base05}
+  backgroundColor: {type: string, title: Background color, x-options: colors, default: base00}
+  borderColor: {type: string, title: Border color, x-options: colors, default: base05}
   pinnedOwn:
     type: boolean
     title: Own pinned apps

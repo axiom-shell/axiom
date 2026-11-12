@@ -9,10 +9,10 @@ import qs.services.core
 // `updates` topic, which runs this distribution's check (Packages.updates:
 // checkupdates on Arch, dnf on Fedora; nothing on one it doesn't know,
 // `supported` false) and an AUR helper's -Qua, one check at a time.
-// Widgets register with acquire(owner, {interval (ms), aurHelper})
-// (aurHelper "" for no AUR) and drop it with release(owner); checks run at
-// the shortest requested interval, and the AUR is checked if any widget
-// asks for it and the distribution has one.
+// Widgets register with acquire(owner, {aurHelper}) (aurHelper "" for no
+// AUR) and drop it with release(owner); checks run at UpdatesConfig.interval
+// while any widget is registered, and the AUR is checked if any widget asks
+// for it and the distribution has one.
 QtObject {
   id: root
 
@@ -34,7 +34,6 @@ QtObject {
 
   function acquire(owner, request) {
     _registry.acquire(owner, {
-      "interval": request?.interval ?? 1800000,
       "aurHelper": request?.aurHelper ?? ""
     });
   }
@@ -78,7 +77,7 @@ QtObject {
   property bool _upgrading: false
 
   readonly property bool _subscribed: _registry.active && root.supported
-  readonly property int _interval: _registry.active ? Math.min(..._requests.map(r => r.interval)) : 0
+  readonly property int _interval: _registry.active ? UpdatesConfig.interval : 0
   readonly property string _aurHelper: root.hasAur ? (_requests.find(r => r.aurHelper !== "")?.aurHelper ?? "") : ""
   // The request as one value, so a change resubscribes once. axiom checks
   // at once for a request it hasn't seen (another AUR helper), and only

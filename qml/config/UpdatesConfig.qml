@@ -9,6 +9,8 @@ QtObject {
 
   readonly property var _c: ConfigManager.live.Updates
 
+  // How often every updates widget and module checks (ms)
+  readonly property int interval: _c.interval
   readonly property bool includeAur: _c.includeAur
   // "paru" | "yay"
   readonly property string aurHelper: _c.aurHelper

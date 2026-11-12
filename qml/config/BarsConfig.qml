@@ -134,7 +134,7 @@ QtObject {
       "occupiedColor": Theme.resolveColor(properties.occupiedColor),
       "urgentColor": Theme.resolveColor(properties.urgentColor),
       "emptyColor": Theme.resolveColor(properties.emptyColor),
-      "textColor": Theme.resolveColor(properties.textColor),
+      "textColor": Theme.resolveColor(properties.foregroundColor),
       "hoverColor": properties.hoverColor ? Theme.resolveColor(properties.hoverColor) : null
     };
   }

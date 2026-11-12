@@ -6,6 +6,6 @@ hosts: [lockscreen, greeter]
 settings:
   showPeripherals:
     type: boolean
-    title: Show peripherals
+    title: Peripherals
     default: true
-    description: Connected Bluetooth devices' batteries, under the laptop's. With no laptop battery, only them.
+    description: Bluetooth device batteries too. With no laptop battery, only them.

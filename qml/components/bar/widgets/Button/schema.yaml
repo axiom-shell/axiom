@@ -4,14 +4,12 @@ icon: terminal
 group: Tools
 popout:
   variant: menu
-  enabled:
-    title: Hover popout
-    description: Open a menu while the button is hovered, as other widgets' popouts do.
   menu:
-    title: Popout menu
-    description: Can differ from the one a click opens.
+    title: Menu
+    description: Can differ from the click menu.
     x-emptyLabel: null
 colors: standard
+order: [icon, label, tooltip, action, page, menu, command, hoverActivate, rightCommand, middleCommand, labelCommand, labelInterval, popout, backgroundColor, foregroundColor]
 settings:
   icon:
     type: string
@@ -23,8 +21,8 @@ settings:
     type: string
     title: Label
     default: ''
-    description: Replaced by the label command's output when set.
-  tooltip: {type: string, title: Tooltip, default: '', description: Shown when hovering the button.}
+    description: Overridden by the label command.
+  tooltip: {type: string, title: Tooltip, default: ''}
   action:
     type: string
     title: Click action
@@ -44,9 +42,9 @@ settings:
     x-showIf: {action: overlayPage}
   menu:
     type: string
-    title: Menu
+    title: Click menu
     default: ''
-    description: The menu a click opens and closes.
+    description: Opens and closes on click.
     x-options: menus
     x-showIf: {action: menu}
   command:
@@ -60,18 +58,18 @@ settings:
     type: string
     title: Right-click command
     default: ''
-    description: Empty does nothing.
+    description: 'Empty: nothing.'
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: ''
-    description: Empty does nothing.
+    description: 'Empty: nothing.'
   hoverActivate:
     type: boolean
     title: Activate on hover
     default: false
-    description: Run the click action after hovering for the popout delay.
+    description: Runs the click action after the hover delay.
     x-showIf:
       action: [powerMenu, launcher, overlay, overlayPage, workspaceOverview, command]
   labelCommand:
@@ -79,7 +77,7 @@ settings:
     type: string
     title: Label command
     default: ''
-    description: Its first line of output is shown as the label.
+    description: First line of output is the label.
   labelInterval:
     type: integer
     title: Label interval

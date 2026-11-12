@@ -267,20 +267,20 @@ input {
             variant ",neo"
             options ""
         }
+        numlock true
         repeat-rate 50
         repeat-delay 300
-        numlock true
     }
     mouse {
         accel-profile "flat"
         accel-speed 0.0
     }
     touchpad {
-        tap
-        dwt
-        scroll-factor 0.99
         accel-profile "adaptive"
         accel-speed 0.25
+        scroll-factor 0.99
+        tap
+        dwt
     }
 }
 cursor {
@@ -291,11 +291,11 @@ cursor {
 layout {
     center-focused-column "never"
     always-center-single-column true
-    empty-workspace-above-first false
     default-column-display "tabbed"
     tab-indicator {
         off
     }
+    empty-workspace-above-first false
     default-column-width {
         proportion 0.5
     }
@@ -326,10 +326,10 @@ layout {
     }
     background-color "transparent"
 }
-prefer-no-csd true
 overview {
     zoom 0.5
 }
+prefer-no-csd true
 animations {
     on
     slowdown 0.6

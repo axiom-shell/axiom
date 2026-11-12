@@ -128,7 +128,7 @@ TestCase {
       "innerPadding": geo.innerPadding,
       "innerGap": geo.innerGap,
       "widgetGap": geo.widgetGap,
-      "location": geo.location,
+      "edge": geo.location,
       "edgePadding": geo.endRoom - 1
     }));
   }

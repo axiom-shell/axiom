@@ -8,32 +8,33 @@ title: Login screen
 description: Axiom as your login screen (a greetd greeter), laid out on the Layouts page.
 additionalProperties: false
 properties:
-  source:
-    type: string
-    title: Code from
-    x-showIf: {/$packaged: false, /$clone: true}
-    enum: [git, local]
-    x-enumLabels: {git: Git (axiom's repository), local: Local (your clone)}
-    default: git
-    description: 'Git installs the newest official release, checked against its checksums. Local copies your clone as it is: anything running as you could change it.'
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Login monitor
-    description: The others show the layout without it, or only the background.
+    description: Login box on one monitor; others show the layout or only the background.
     x-properties:
       mode:
         x-scope: look
         type: string
         title: Monitors
+        x-control: toggle
         enum: [primary, named]
         default: primary
-        x-enumLabels: {primary: Primary monitor, named: These monitors}
-        x-link: {setting: General.screen}
+        x-enumLabels: {primary: Primary, named: Chosen}
   rememberUser:
     type: boolean
-    title: Remember the last user
+    title: Remember user
     default: true
-    description: Start on the last user and session. Off starts with an empty user field.
+    description: 'Off: start with an empty user field.'
+  source:
+    type: string
+    title: Source
+    x-showIf: {/$packaged: false, /$clone: true}
+    x-control: toggle
+    enum: [git, local]
+    x-enumLabels: {git: Git, local: Local}
+    default: git
+    description: 'Git: newest official release, checksum-verified. Local: your clone as is; anything running as you can change it.'
   enabled:
     type: boolean
     x-takeover: true

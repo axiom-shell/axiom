@@ -3,8 +3,9 @@ icon: videocam
 group: Privacy
 tile: standard
 card: standard
+order: [tile, card, quiet, shows]
 settings:
-  kinds:
+  shows:
     type: array
     title: Shows
     items: {type: string, enum: [camera, micUse, screenShare]}

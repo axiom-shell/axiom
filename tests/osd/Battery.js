@@ -17,7 +17,7 @@
 //   levelEvent, never from `level` alone), its tile reading `level` from
 //   the same state; `charger` is a scalar on `value` (plugged).
 
-var opts = { "tiles": ["charger", "battery"] };
+var opts = { "shows": ["charger", "battery"] };
 
 function ch(plugged, extra) {
   return Object.assign({ "available": true, "value": plugged, "percent": 64, "charging": false, "full": false, "untilFull": "" }, extra || {});
@@ -120,7 +120,7 @@ var rows = [
   },
   {
     "name": "the charger's tile not listed: nothing",
-    "options": { "tiles": ["battery"] },
+    "options": { "shows": ["battery"] },
     "steps": [
       { "at": 0, "state": { "charger": ch(false), "battery": bat("none", 64) } },
       { "at": 3000, "state": { "charger": ch(true) } }
@@ -179,7 +179,7 @@ var rows = [
   },
   {
     "name": "the battery's tile not listed: nothing",
-    "options": { "tiles": ["charger"] },
+    "options": { "shows": ["charger"] },
     "steps": [
       { "at": 0, "state": { "charger": ch(false), "battery": bat("none", 21) } },
       { "at": 3000, "state": { "battery": bat("low", 18, "", { "level": "low", "serial": 1 }, 1) } }

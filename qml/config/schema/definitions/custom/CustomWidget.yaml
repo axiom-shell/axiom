@@ -13,14 +13,14 @@ properties:
     type: string
     title: Command
     default: ''
-    description: A script's path or a command line, run by sh. Its output is the widget.
+    description: A script's path or a command line. Its output is the widget.
   mode:
     type: string
-    title: Runs
+    title: Run mode
     enum: [poll, stream, once]
     default: poll
     x-enumLabels: {poll: Every interval, stream: Continuously (one sample a line), once: Once (then on refresh)}
-  interval: {type: integer, title: Run every, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
+  interval: {type: integer, title: Interval, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
   output:
     type: string
     title: Output
@@ -32,46 +32,15 @@ properties:
     type: string
     title: Run only if
     default: ''
-    description: A command that must succeed before the script runs (Waybar's exec-if).
+    description: Command that must succeed first (Waybar's exec-if).
   refreshName:
     type: string
     title: Refresh name
     default: ''
-    description: '`axiom ipc customWidgets refresh <name>` runs it again.'
-  actions:
-    type: object
-    additionalProperties: false
-    description: Commands run on click and scroll. Never on the lock screen.
-    properties:
-      click: {x-scope: commands, type: string, title: On click, default: ''}
-      rightClick: {x-scope: commands, type: string, title: On right click, default: ''}
-      middleClick: {x-scope: commands, type: string, title: On middle click, default: ''}
-      scrollUp: {x-scope: commands, type: string, title: On scroll up, default: ''}
-      scrollDown: {x-scope: commands, type: string, title: On scroll down, default: ''}
-      refreshAfter: {type: boolean, title: Run the script again after one, default: true}
-  format: {type: string, title: Format, default: '{}', description: '{} is the text, {icon} the icon below, plus {percentage}, {alt} or any key in the output.'}
-  formatIcons:
-    title: Icons
-    default: {}
-    description: Shown as {icon} in the format. A list is picked by percentage; an object by alt, else its "default".
-  states:
-    type: object
-    title: State colours
-    default: {}
-    additionalProperties: {type: string}
-    description: A class or state → a theme colour name.
-  maxLength: {type: integer, title: Longest text, default: 0, minimum: 0, maximum: 500, description: 0 is no limit.}
-  escape: {type: boolean, title: Text is plain, default: false, description: Show markup as typed instead of drawing it.}
-  hideEmpty: {type: boolean, title: Hide when empty, default: true}
-  tooltip:
-    type: boolean
-    title: Tooltip
-    default: true
-    description: The output's tooltip, shown when hovering doesn't open the module.
-    x-enabledIf: {bar.popout: false}
+    description: 'Empty: its id.'
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, icon, segments, width, popout]
+    x-order: [style, segments, width, icon, popout]
     x-properties:
       icon:
         type: string
@@ -79,8 +48,39 @@ properties:
         x-control: toggle
         enum: [none, glyph, material]
         default: material
-        description: Before the text, the format's icon is drawn in the text itself.
-      popout: {type: boolean, title: Open the module on hover, default: true}
+        x-enumLabels: {none: None, glyph: Inline, material: Icon}
+        description: 'Inline: the format''s {icon}, drawn with the text.'
+      popout: {type: boolean, title: Module on hover, default: true}
+  tooltip:
+    type: boolean
+    title: Tooltip
+    default: true
+    description: Shown when hovering doesn't open the module.
+  format: {type: string, title: Format, default: '{}', description: '{} is the text, {icon} the icon, plus {percentage}, {alt} or any output key.'}
+  formatIcons:
+    title: Format icons
+    default: {}
+    description: Shown as {icon} in the format. A list is picked by percentage, an object by alt.
+  maxLength: {type: integer, title: Max length, default: 0, minimum: 0, maximum: 500, x-unit: chars, description: '0: no limit.'}
+  escape: {type: boolean, title: Plain text, default: false, description: Show markup as typed instead of drawing it.}
+  hideEmpty: {type: boolean, title: Hide when empty, default: true}
+  actions:
+    type: object
+    additionalProperties: false
+    description: Commands run on click and scroll. Never on the lock screen.
+    properties:
+      click: {x-scope: commands, type: string, title: Click command, default: ''}
+      rightClick: {x-scope: commands, type: string, title: Right-click command, default: ''}
+      middleClick: {x-scope: commands, type: string, title: Middle-click command, default: ''}
+      scrollUp: {x-scope: commands, type: string, title: Scroll up command, default: ''}
+      scrollDown: {x-scope: commands, type: string, title: Scroll down command, default: ''}
+      refreshAfter: {type: boolean, title: Rerun after actions, default: true}
+  states:
+    type: object
+    title: State colors
+    default: {}
+    additionalProperties: {type: string}
+    description: A class or state → a theme color.
   module:
     type: object
     additionalProperties: false
@@ -95,9 +95,9 @@ properties:
         items: {type: integer, minimum: 1, maximum: 8}
       lockscreen:
         type: boolean
-        title: Offer on the lock screen
+        title: Lock screen
         default: false
-        description: It keeps running while locked and shows to anyone at the screen. Clicks never run there.
+        description: Runs while locked and shows to anyone at the screen.
       elements:
         type: array
         default: []

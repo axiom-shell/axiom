@@ -36,7 +36,8 @@ QtObject {
   // Every cell a filled box (`solidBoxes`)
   readonly property bool solid: properties?.solidBoxes ?? false
   // The widget's colors resolved (BarsConfig.workspaceColors): activeColor,
-  // occupiedColor, urgentColor, emptyColor, textColor, hoverColor (null: Auto)
+  // occupiedColor, urgentColor, emptyColor, textColor (its foregroundColor),
+  // hoverColor (null: Auto)
   readonly property var colors: BarsConfig.workspaceColors(properties)
   readonly property var _look: barConfig?.look ?? null
   readonly property var _flags: BarCells.cellLook(_look, solid, onBar)

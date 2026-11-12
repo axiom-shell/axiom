@@ -8,9 +8,15 @@ title: Calendar
 description: Events from CalDAV accounts and .ics subscriptions. Passwords go to your keyring, never here.
 additionalProperties: false
 properties:
+  items:
+    type: array
+    title: Accounts
+    x-settings: false
+    default: []
+    items: {$ref: '#/definitions/CalendarAccount'}
   defaultCalendar:
     type: string
-    title: New events go to
+    title: Default calendar
     x-group: Events
     default: ''
     x-options: calendars
@@ -38,23 +44,40 @@ properties:
   reminders:
     x-scope: personal
     type: boolean
-    title: Notify reminders
+    title: Notify when due
     x-group: Events
     default: true
     description: Notify when an event's reminder is due.
-  syncInterval:
+  hourFormat:
+    x-scope: look
+    type: string
+    title: Hour format
+    x-group: Display
+    x-control: toggle
+    enum: [default, '12', '24']
+    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
+    default: default
+    x-link: {setting: DateTime.hourFormat}
+  maxDots:
+    x-scope: look
     type: integer
-    title: Sync every
-    x-unit: min
-    x-group: Sync
-    default: 900000
-    minimum: 60000
-    maximum: 86400000
-    description: How often calendars are checked for changes.
+    title: Most dots
+    x-group: Display
+    default: 3
+    minimum: 1
+    maximum: 6
+    description: Per day in the month grids.
+  showOnLockscreen:
+    type: boolean
+    title: Events on lock screen
+    x-group: Display
+    default: false
+    description: Anyone at the locked screen can read them.
   pastMonths:
     x-scope: personal
     type: integer
-    title: Months back
+    title: Past
+    x-unit: months
     x-group: Sync
     default: 2
     minimum: 0
@@ -63,38 +86,20 @@ properties:
   futureMonths:
     x-scope: personal
     type: integer
-    title: Months ahead
+    title: Ahead
+    x-unit: months
+    x-beside: true
     x-group: Sync
     default: 12
     minimum: 1
     maximum: 60
-  hourFormat:
-    x-scope: look
-    type: string
-    title: Event times
-    x-group: Display
-    enum: [default, '12', '24']
-    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
-    default: default
-    description: Default follows Date & time settings.
-  maxDots:
-    x-scope: look
+    description: How far ahead events are kept.
+  syncInterval:
     type: integer
-    title: Dots per day
-    x-group: Display
-    default: 3
-    minimum: 1
-    maximum: 6
-    description: Most dots under a day in the month grids.
-  showOnLockscreen:
-    type: boolean
-    title: Events on the lock screen
-    x-group: Display
-    default: false
-    description: Anyone at the locked screen can read them.
-  items:
-    type: array
-    title: Accounts
-    x-settings: false
-    default: []
-    items: {$ref: '#/definitions/CalendarAccount'}
+    title: Interval
+    x-unit: min
+    x-group: Sync
+    default: 900000
+    minimum: 60000
+    maximum: 86400000
+    description: How often calendars are checked.

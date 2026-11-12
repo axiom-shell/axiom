@@ -11,7 +11,7 @@ properties:
     type: string
     title: Key
     default: ''
-    description: Modifiers and key joined by +, e.g. SUPER + SHIFT + space. A modifier alone fires when tapped, where supported.
+    description: e.g. SUPER + SHIFT + space. A modifier alone fires on tap.
   action:
     type: string
     title: Action
@@ -218,7 +218,7 @@ properties:
     type: string
     title: Argument
     default: ''
-    description: 'Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.'
+    description: 'Per action: a direction, workspace, page, menu id, theme, command or search text.'
     x-showIf:
       action:
         - launcherSearch
@@ -245,12 +245,11 @@ properties:
         - raw
   call:
     type: string
-    title: Call
+    title: Does
     default: toggle
     x-control: toggle
     enum: [toggle, open, close]
     x-enumLabels: {toggle: Toggle, open: Open, close: Close}
-    description: Toggle it, only open it, or only close it.
     x-showIf:
       action:
         - launcher
@@ -278,9 +277,35 @@ properties:
     default: hyprland
     description: The bind does nothing under another compositor.
     x-showIf: {action: raw}
+  description:
+    type: string
+    title: Label
+    default: ''
+    description: 'Empty: the action''s name. "Section: Label" files it under a section.'
   repeating: {type: boolean, title: Repeat while held, default: false}
   locked: {type: boolean, title: Works while locked, default: false}
-  release: {type: boolean, title: On release, default: false}
+  release: {type: boolean, title: Fire on release, default: false, x-showIf: {/$supports.releaseBinds: true}}
+  whenCompositors:
+    type: array
+    title: Only under
+    items: {type: string, enum: [hyprland, sway, niri]}
+    x-enumLabels: {hyprland: Hyprland, sway: Sway, niri: niri}
+    default: []
+    description: 'Empty: every compositor.'
+    x-showIf: {action: {not: raw}}
+  whenLayout:
+    type: string
+    title: Only with
+    enum: ['', strips, tiling, grid, dynamic]
+    x-enumLabels: {'': Any layout, strips: Strips, tiling: Tiling (no strips), grid: Grid workspaces, dynamic: Dynamic workspaces}
+    default: ''
+    description: Strip actions need strips whatever this says.
+  whenMonitors:
+    type: string
+    title: Only while
+    enum: ['', external, laptopOnly]
+    x-enumLabels: {'': Any monitors, external: External monitor, laptopOnly: Laptop panel only}
+    default: ''
   paused:
     type: boolean
     title: Paused
@@ -288,30 +313,4 @@ properties:
     description: Kept in the list but not bound.
   # Only when: every part set must hold for the bind to be bound
   # (BindConditions.holds, the daemon's render.BindHolds)
-  whenCompositors:
-    type: array
-    title: Only under
-    items: {type: string, enum: [hyprland, sway, niri]}
-    x-enumLabels: {hyprland: Hyprland, sway: Sway, niri: niri}
-    default: []
-    description: Bound only under these compositors. None picked is every compositor.
-  whenLayout:
-    type: string
-    title: Only with
-    enum: ['', strips, tiling, grid, dynamic]
-    x-enumLabels: {'': Any layout, strips: Strips, tiling: Tiling (no strips), grid: Grid workspaces, dynamic: Dynamic workspaces}
-    default: ''
-    description: Bound only with this workspace layout. Strip actions are bound only with strips whatever this says.
-  whenMonitors:
-    type: string
-    title: Only while
-    enum: ['', external, laptopOnly]
-    x-enumLabels: {'': Any monitors, external: External monitor, laptopOnly: Laptop panel only}
-    default: ''
-    description: 'Bound only while an external monitor is connected, or while the laptop''s own panel is the only one.'
-  description:
-    type: string
-    title: Description
-    default: ''
-    description: 'Label on the Keybinds page. Empty uses the action''s name. Write "Section: Label" to pick its section.'
 required: [id]

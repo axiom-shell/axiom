@@ -5,15 +5,18 @@ group: Session
 defaultSize: [6, 3]
 required: true
 hosts: {only: [greeter]}
+order: [centered, userField, showPicture, placeholder, showMessages]
 settings:
+  centered: {type: boolean, title: Centered text, default: true}
   userField:
     type: string
     title: User
+    x-control: toggle
     enum: [list, typed]
-    x-enumLabels: {list: 'Pick from a list, or type', typed: Type the name}
+    x-enumLabels: {list: List, typed: Typed}
     default: list
-    description: Typed shows no name until one is typed.
-  showAvatar:
+    description: 'Typed: no name shown until one is typed.'
+  showPicture:
     type: boolean
     title: Picture
     default: true
@@ -21,10 +24,9 @@ settings:
     type: string
     title: Placeholder
     default: ''
-    description: Empty says Enter password...
-  centered: {type: boolean, title: Centre the text, default: true}
+    description: 'Empty: Enter password...'
   showMessages:
     type: boolean
     title: Messages
     default: true
-    description: Show login prompts, failures and errors under the field.
+    description: Prompts, failures and errors under the field.

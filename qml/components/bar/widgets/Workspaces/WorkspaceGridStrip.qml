@@ -160,10 +160,8 @@ Item {
       ids: line._idsKey === "" ? [] : line._idsKey.split(",").map(Number)
       activeId: _activeHere
       hitArea: root.hitArea
-      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
       chainCount: line.ids.length + root._stripCells + root._scratchCells
-      // The active arrow takes the active cell's place
-      glyphOf: (id, active) => active && root.properties.showActiveIcon && root.properties.lead !== "position" ? GridPosition.glyph(line.value, root.isVertical ? root.columns : root.rows, root.isVertical) : ""
 
       Connections {
         target: CompositorManager

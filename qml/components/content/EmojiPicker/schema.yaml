@@ -6,6 +6,6 @@ defaultSize: [4, 6]
 settings:
   showGroups:
     type: boolean
-    title: Show the groups
+    title: Groups
     default: true
-    description: Group tabs over the grid, when there's room.
+    description: Tabs over the grid, when there's room.

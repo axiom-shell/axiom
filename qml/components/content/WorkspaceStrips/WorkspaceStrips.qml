@@ -51,7 +51,7 @@ WorkspacePopoutPanel {
         readonly property bool isActive: wsId === root.activeId
         // What its cell shows, as on the bar, less app icons: its windows
         // follow it
-        readonly property var shows: contents.of(wsId, "", false)
+        readonly property var shows: contents.of(wsId, false)
         readonly property bool _text: shows.kind === "text" || shows.kind === "name"
 
         rows: root.vertical ? 2 : 1

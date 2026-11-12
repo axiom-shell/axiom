@@ -241,7 +241,7 @@ Singleton {
   }
 
   // --- Special workspaces: groups of scratchpad windows, or a workspace
-  // each (CompositorConfig.swaySpecial) ---
+  // each (WorkspacesConfig.specialWorkspaces) ---
 
   // Shows the windows of special group `name` on the focused output, or
   // hides them when any is shown there (SwayState.specialToggle); as a
@@ -251,9 +251,9 @@ Singleton {
   function toggleSpecial(name, output) {
     const target = output || root.focusedOutput;
     const active = I3.monitors.values.find(m => m.name === target)?.activeWorkspace?.name ?? "";
-    const adopt = SwayState.specialAdopt(root.windows, root._marks, name, CompositorConfig.swaySpecial, active);
+    const adopt = SwayState.specialAdopt(root.windows, root._marks, name, WorkspacesConfig.specialWorkspaces, active);
     const focus = target !== root.focusedOutput ? [`focus output ${SwayState.quote(target)}`] : [];
-    if (CompositorConfig.swaySpecial === "workspace") {
+    if (WorkspacesConfig.specialWorkspaces === "workspace") {
       SwayIpcManager.dispatch(focus.concat(adopt.lines, SwayState.specialWorkspaceToggle(name, active, target, root._specialFrom[target] ?? "")).join("; "));
       if (active !== SwayState.specialWorkspace(name))
         root._specialFrom = Object.assign({}, root._specialFrom, {
@@ -275,7 +275,7 @@ Singleton {
     const id = root.activeWindowId;
     if (!id)
       return;
-    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, CompositorConfig.swaySpecial).join("; "), () => root._debounce.restart());
+    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, WorkspacesConfig.specialWorkspaces).join("; "), () => root._debounce.restart());
   }
 
   // --- axiom's config layer (the daemon's: CompositorConfigManager) ---

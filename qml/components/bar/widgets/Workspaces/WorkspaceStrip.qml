@@ -118,7 +118,7 @@ Item {
       ids: root.ids
       activeId: root.activeId
       hitArea: root.hitArea
-      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      activeIcons: root.properties.activeWorkspaceIcons || !activeStrip.visible
       chainCount: root._chainCells
     }
 

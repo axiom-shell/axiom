@@ -5,7 +5,7 @@
 // built schema, as RepoFiles does.
 //
 //   Bars.bar(rawOver, envOver)
-//     rawOver  a bar entry's keys (thickness, location, surface, …); its
+//     rawOver  a bar entry's keys (thickness, edge, surface, …); its
 //              BarStyle keys (textScale, widgetStyle, …, shadow as
 //              { enabled, color, size }) are the Bars section's style, the
 //              bar's own `style` left to inherit it

@@ -3,3 +3,4 @@ icon: bluetooth
 group: Connections
 tile: standard
 card: standard
+order: [tile, card, quiet]

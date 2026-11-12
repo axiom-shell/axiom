@@ -47,11 +47,10 @@ BarWidget {
   minimumText: "00"
 
   subtext: aurPackages.length > 0 ? I18n.tr("{0} AUR", aurPackages.length) : I18n.tr("updates")
-  accentField: failed ? "failedColor" : count >= properties.manyThreshold ? "manyColor" : "backgroundColor"
+  accentField: failed ? "failedColor" : count >= properties.warnThreshold ? "warnColor" : "backgroundColor"
 
   // Re-acquiring replaces the old request
   readonly property var updatesRequest: ({
-      "interval": root.properties.interval,
       "aurHelper": UpdatesConfig.activeAurHelper
     })
   onUpdatesRequestChanged: UpdatesManager.acquire(root, updatesRequest)

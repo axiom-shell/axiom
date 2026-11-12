@@ -58,9 +58,10 @@ QtObject {
   // The first part of a bind's condition that doesn't hold: "compositor",
   // a layout ("strips", "tiling", "grid", "dynamic") or monitors
   // ("external", "laptopOnly"); "" when it holds. A raw command's own
-  // compositor is BindActions.appliesUnder's, not this.
+  // compositor is BindActions.appliesUnder's, not this: a raw bind's
+  // whenCompositors (hidden in the editor) is ignored.
   function unmet(bind, facts) {
-    const compositors = bind?.whenCompositors ?? [];
+    const compositors = bind?.action === "raw" ? [] : (bind?.whenCompositors ?? []);
     if (compositors.length > 0 && !compositors.includes(facts?.kind))
       return "compositor";
     for (const layout of root.layoutsOf(bind))
