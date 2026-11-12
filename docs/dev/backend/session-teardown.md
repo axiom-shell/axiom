@@ -1,0 +1,39 @@
+# Session teardown
+
+> **Files:** `backend/internal/session/`, `backend/internal/daemon/session.go`, `backend/internal/daemon/polkit.go`, `backend/internal/daemon/wlsunset.go`, `backend/internal/daemon/screenshare.go`, `backend/internal/cli/guard.go`, `backend/internal/compositor/manager/manager.go`
+> **Related:** [Config modes](../compositor/config-modes.md), [The axiom binary](README.md), [Polkit](../features/polkit.md), [Night light](../theming/night-light.md), [Screen sharing](../features/screen-sharing.md), [Testing](../testing.md)
+
+When axiom stops, however it stops, it leaves no session effect behind: the compositor's runtime layer, the polkit agents and units it stopped, a user's wlsunset, axiom's own wlsunset, the niri portal line. A nested or scratch daemon never reaches the live session's processes, units or portal.
+
+### The records
+Both are versioned (`session.Version`, 1), written atomically, and read as absent (logged, never acted on) when their version is another.
+- **Runtime** (`$XDG_RUNTIME_DIR/axiom/<display>/session.json`, `session.Runtime`): the compositor instance, the daemon's pid, the guard's, `Clean` (the daemon finished its teardown), what takes the runtime layer out (`Compositor.Steps`, with the kind and the environment to reach the compositor), and `Stopped`: the processes of the user's axiom stopped (polkit agents, wlsunset) with their argv, environment, cwd, pid and start time. The daemon keeps it in memory and writes it on every change (`sessionRec`); a step or a process is recorded before the effect it undoes.
+- **State** (`$XDG_STATE_HOME/axiom/session.json`, `session.State`): what outlives a session: the systemd units stopped (per display) and the portal lines (per display, exactly what was changed). Every read-modify-write holds a flock on `session.lock` beside it (`session.Store`).
+
+### Scope
+A process is axiom's to stop, signal or restart only when it runs in this session (`session.Scope.Owns`): this user's, with `WAYLAND_DISPLAY` equal to ours (one without it is out), `XDG_RUNTIME_DIR` equal when it has one, and `DBUS_SESSION_BUS_ADDRESS` equal when it has one. `Scope.Find` matches a regexp against the command line as pgrep -f sees it (argv joined with spaces) and returns argv, environment, cwd and the start time (field 22 of `/proc/<pid>/stat`, against a reused pid). Out-of-scope matches are logged and left alone.
+
+`systemctl --user` is used only when `UnitsAllowed`: our session bus has an owner of `org.freedesktop.systemd1`, so the user manager is this session's. Under a bus of its own (`dbus-run-session`: `nested.sh`) units are left alone ("left units alone: this daemon's bus isn't the user manager's").
+
+### Teardown
+`session.Teardown`, within 5 s and 2 s per compositor request, in this order, each part logging its failure and the rest going on:
+1. The compositor's steps (`compositor/ipc`, through the environment in the record): hyprland `reload`, `eval`, `setcursor`; sway `reload` or `commands`; niri `load` (the user's config). Only when asked (`Compositor`) and the compositor answers.
+2. Processes: SIGTERM to axiom's own wlsunset (in scope, `AXIOM_SPAWNED=nightlight:<display>` in its environment; also without a compositor), then, for the same compositor instance, the `Stopped` entries started again unless a process in scope already runs that program. `Stopped` is cleared.
+3. Units: this display's units started (`systemctl --user start`) and dropped from the state; otherwise they stay for the next start's heal.
+4. The portal lines of this display are undone (a file edit: also without a compositor), then the portal is restarted when a file changed and the compositor answers.
+5. `Clean` is set and the record saved.
+
+### Clean stop and crashes
+- **A clean stop** (`Daemon.sessionTeardown`, after the shell and the parts stopped): `Manager.Teardown` (its steps, then the runtime state given back) unless the compositor is gone (`followCompositor` sets `compositorGone` before stopping), then `session.Teardown`. A re-exec never gets here (`syscall.Exec`).
+- **The guard** (`axiom guard`, hidden): the daemon runs `axiom guard --stage1` with its pidfd as descriptor 3 (os/exec's fork lock keeps the lock descriptors from leaking); stage 1 starts stage 2 in a session of its own and exits, so nothing is a zombie of the daemon's. Stage 2 (`session.RunGuard`) takes `guard.lock` (held: it exits), writes its pid into the record, logs to `$XDG_STATE_HOME/axiom/log/guard.log` and waits for: the pidfd (the daemon exited), `wire.Watch` of the Wayland socket (the compositor is gone), or SIGTERM/SIGINT (a logout: it exits, the daemon tears down itself). When the daemon exited it reloads the record: clean or another daemon's means nothing to do; else the full teardown. When the compositor went: only the file undo and wlsunset's end, the process records dropped. The guard never outlives its compositor.
+- **A re-exec keeps its guard** (the pidfd outlives the exec): a carried image finds `guard.lock` held and the record's `DaemonPID` its own, and starts no other; a free lock (the guard died) starts a new one.
+- **A fresh start** waits up to 10 s for another guard's lock (killing a guard of ours that doesn't finish), heals, writes its record, starts its guard. Heal: a record that isn't clean, of the same instance, has its processes started and its units started again; of another instance, its processes are dropped (they were the old session's). The state record is always healed: units started, portal lines undone. The compositor's own layer is not: a fresh manager re-checks it. `Options.Guard` is set only by `axiom run`; tests leave it off and replace the effects (`sessionTest`).
+
+### Where things are stopped
+The shell stops nothing itself: `polkit.probe`, `polkit.stopOthers`, `polkit.handBack`, `nightlight.wlsunset`, `nightlight.wlsunsetState` and `screenShare.restartPortal` are shell-only daemon methods that work in scope and record what they stop. `session.RestartPortal` restarts the portal frontend and the backends the shell names, only those owning their name on this session's bus: with `UnitsAllowed` and the unit's `MainPID` equal to the owner's `systemctl --user restart`, otherwise SIGTERM (the bus starts it again at the next call), and none when there is no owner.
+
+### The niri portal line
+`ScreenCast=axiom` under `[preferred]` in `$XDG_CONFIG_HOME/xdg-desktop-portal/niri-portals.conf` is added while `ScreenSharing.enabled` is on and taken out when axiom stops (`session.PortalEnv.Sync`, through the pure `hookup` package). The entry in the state record is written before the file (a crash is healed by the undo, which counts "already gone" as done) and holds exactly what was changed: the commented-out lines (`# axiom: …`), whether the section and the file were made, whether a blank line went in. Undo restores the bytes. An earlier persistent hookup's line is adopted (`Adopted`). Never toggled: a file or folder that is a link (state `link`: the card shows the line to add by hand), a folder that can't be written, `axiom.portal` not installed (`missing`). `screenShare.portalLine` reports `on|off|link|missing|failed`. A re-exec'd image adopts the record as it is.
+
+### Tests
+`backend/internal/session` (records, scope, teardown order, portal lines, guard with a child process and its pidfd), `manager/teardown_test.go`, `daemon/session_test.go` (seams: `Systemctl`, `Spawn`, `Signal`, `ProcRoot`, the bus); nothing in them runs a real systemctl, kill or portal restart. Real ones run in the container: [Testing › Container tests](../testing.md).

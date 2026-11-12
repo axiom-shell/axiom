@@ -22,6 +22,7 @@ Dependencies point one way: pure helpers (`qml/components/methods/`) at the bott
 | Compositor: windows, outputs, workspaces, capabilities, sway/niri | `docs/dev/compositor/` |
 | Config modes (detached / included / managed), the config writer | `docs/dev/compositor/config-modes.md` |
 | Where the tree is found and installed; dev mode, dev trees, the dev config | `docs/dev/backend/README.md` (What exists now, Dev mode), `docs/dev/packaging.md` |
+| What axiom takes out of the session when it stops (the runtime layer, stopped agents, the portal line), the guard | `docs/dev/backend/session-teardown.md` |
 | The shell ↔ axiom binary connection (env, socket, methods, pushes) | `docs/dev/backend/protocol.md`; every method and push: `docs/dev/generated/rpc.md` (generated) |
 | Hyprland's writer, binds, monitors, workspaces | `docs/dev/hyprland/` |
 | Themes, integrations, wallpaper, blur | `docs/dev/theming/` |
@@ -90,6 +91,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [inputmethod](backend/inputmethod.md): the input method framework (fcitx5, ibus) from the daemon: finding it, following and switching its input method, pushing axiom's list, its options, outside edits, the `inputMethod` topic and `supports.inputMethod`.
 - [dbus](backend/dbus.md): the daemon's own D-Bus client (pure Go): connection, calls and signals, descriptors, what uses it.
 - [wayland](backend/wayland.md): the daemon's own Wayland connection and what each compositor offers for idle, gamma, clipboard and typing.
+- [session-teardown](backend/session-teardown.md): what axiom leaves in the session and takes out when it stops however it stops: the session records, scope, the teardown order, the guard process, heal, the niri portal line.
 - [protocol](backend/protocol.md): how the shell and the binary talk: the environment, runtime files, the socket's calls and pushes, a session, topics, guards, and when to bump the protocol (every method and push: [generated/rpc.md](generated/rpc.md)).
 
 ### core/: config, services, schema, shared UI
