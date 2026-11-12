@@ -34,6 +34,8 @@ Two halves, each once per ledger, each adding rows (all `inferred`) only where t
 - **Cursor:** `axiom-cursor-*` folders, and a `cursor-theme` gsetting naming one (prior absent).
 - **Not backfilled** (nothing tells them from the user's own): kdeglobals, fcitx5, ibus, default apps, `color-scheme`.
 
+The uninstall runs the same backfill offline (`daemon.OfflineInferred`: the hookups of the built schema's `x-hookup`, each compositor writer's include and autostart lines (`manager.Offline`) and the screen-share picker's shapes, and the files and cursor folders, each set through `Ledger.Backfill` and `BackfillFiles` once) before it undoes everything ([Uninstall](uninstall.md)).
+
 ### RPCs, push and CLI
 - `footprint.list {}` → `{rows: [row + status]}` (`present`, `changed`, `gone`); `footprint.undo {ids, force, includeSystem, dryRun}` (shell only) → `{results: [{id, outcome, detail}]}` with outcomes `done`, `gone`, `changed`, `needsRunning`, `refused`, `failed`; `footprint.backfill {targets: {key: {owner, targets, profiles}}}` (shell only); `footprint.notify {}` (a client that changed the ledger by itself); the push `footprint.changed` (topic `footprint`).
 - `axiom footprint list [--json]` and `axiom footprint undo (<id>...|--owner <path>|--all) [--force] [--include-system] [--dry-run] [--json]` work on the file directly (no daemon needed; the uninstall reuses them) and tell a daemon that answers. `--all` skips system rows (unless `--include-system`) and inferred rows (unless `--force`).

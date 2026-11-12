@@ -4,7 +4,7 @@
 > **Config:** none
 > **Related:** [Self-update](features/self-update.md), [Greeter install](features/greeter-install.md), [Onboarding](features/onboarding.md), [Config manager](core/config-manager.md)
 
-How axiom gets onto a machine: the installer (a clone of the latest release in `~/.local/share/axiom-shell`) or a distribution package (root's copy in `/usr/share/axiom-shell`). Either is the **install tree**; a clone to work on is a dev tree beside it ([The axiom binary](backend/README.md) › Dev mode). Nothing goes in `~/.config/quickshell`, and nothing looks in an older install's place there: its user runs install.sh again and deletes `~/.config/quickshell/axiom`. The user-facing side is `docs/installation.md`.
+How axiom gets onto a machine: the installer (a clone of the latest release in `~/.local/share/axiom-shell`) or a distribution package (root's copy in `/usr/share/axiom-shell`). Either is the **install tree**; a clone to work on is a dev tree beside it ([The axiom binary](backend/README.md) › Dev mode). Nothing goes in `~/.config/quickshell`, and nothing looks in an older install's place there: its user runs install.sh again and deletes `~/.config/quickshell/axiom`. The user-facing side is `docs/installation.md`. `install.sh --uninstall` runs `axiom uninstall --stop` and then removes the binary and the install folder (not for a package); the AUR packages' `pre_remove()` tells the user to run `axiom uninstall` first ([Uninstall](backend/uninstall.md)).
 
 ### Three package lists, kept in step
 - `Packages.packages` (the onboarder's install hints), install.sh's `PACKAGES` table and the PKGBUILDs' `depends`/`optdepends` all say what installs a dependency.
