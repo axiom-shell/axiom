@@ -138,11 +138,18 @@ type harness struct {
 	stop   func()
 }
 
-func newHarness(t *testing.T, mode string) *harness {
+func newHarness(t *testing.T, mode string) *harness { return newHarnessEnv(t, mode, nil) }
+
+// newHarnessEnv is newHarness with more environment for the manager, set
+// before its goroutine starts
+func newHarnessEnv(t *testing.T, mode string, extra map[string]string) *harness {
 	t.Helper()
 	dir := t.TempDir()
 	h := &harness{t: t, mode: mode, config: jsonx.NewObject(), pushes: make(chan string, 64), steps: make(chan []session.Step, 16)}
 	env := map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "test", "XDG_RUNTIME_DIR": dir}
+	for k, v := range extra {
+		env[k] = v
+	}
 	h.m = New(Options{
 		Getenv:      func(k string) string { return env[k] },
 		StateDir:    filepath.Join(dir, "state"),

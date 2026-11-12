@@ -269,14 +269,13 @@ func TestTeardownAfterRunSendsStepsAndResetsState(t *testing.T) {
 			c.Close()
 		}
 	}()
-	h := newHarness(t, "detached")
-	vars := map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "sig", "XDG_RUNTIME_DIR": dir}
-	h.m.o.Getenv = func(k string) string { return vars[k] }
+	h := newHarnessEnv(t, "detached", map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "sig", "XDG_RUNTIME_DIR": dir})
 	h.inputs("f1", "l1", "k1")
 	h.eventually("the layer", h.called("runtime:live l1"))
-	h.m.st.LiveCursor, h.m.st.SwayUnbinds = "x", []render.SwayUnbind{{Key: "k"}}
-	// Run has returned once the harness is stopped
+	// Run has returned once the harness is stopped: only then is the
+	// manager's state the test's to touch
 	h.stop()
+	h.m.st.LiveCursor, h.m.st.SwayUnbinds = "x", []render.SwayUnbind{{Key: "k"}}
 	h.m.Teardown(context.Background())
 	select {
 	case got := <-asked:
