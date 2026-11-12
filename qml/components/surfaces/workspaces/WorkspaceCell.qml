@@ -30,6 +30,10 @@ Item {
   // has no tiled windows to split)
   property bool dropTarget: false
   property bool dropFill: false
+  // A color for the borders and the drop fill (a scratchpad's); transparent
+  // keeps the usual ones
+  property color tint: "transparent"
+  readonly property bool tinted: root.tint.a > 0
 
   ClippingRectangle {
     id: desktop
@@ -64,9 +68,9 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: root.radius
-    color: root.dropFill ? Qt.alpha(Theme.accent, 0.3) : "transparent"
+    color: root.dropFill ? Qt.alpha(root.tinted ? root.tint : Theme.accent, 0.3) : "transparent"
     border.width: root.current || root.dropTarget ? Appearance.borderWidth * 2 : Appearance.borderWidth
-    border.color: root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
+    border.color: root.tinted ? root.tint : root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
 
     ColorGlide on border.color {}
   }

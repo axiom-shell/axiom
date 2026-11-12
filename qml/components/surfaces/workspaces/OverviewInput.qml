@@ -61,7 +61,7 @@ MouseArea {
 
   function _hover(x, y) {
     root.hoveredAddress = WorkspaceGeometry.windowAt(root.overview.items, x, y);
-    root.hoveredCell = WorkspaceGeometry.cellAt(x, y, root.overview.cellW, root.overview.cellH, root.overview.gap, root.overview.columns, root.overview.ids.length);
+    root.hoveredCell = root.overview.cellAt(x, y);
   }
 
   function _updateDrop(x, y) {

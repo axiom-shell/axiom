@@ -4333,6 +4333,9 @@
     "How axiom fits into the rest of your system: updates, idle, locking, password prompts, screen sharing and the login screen.": "",
     "Apps sharing a screen or window pick it in axiom's picker, in your theme.": "",
     "Use the portal's own": "",
-    "Leaves the choice to {0}'s own picker.": ""
+    "Leaves the choice to {0}'s own picker.": "",
+    "The border and label color of scratchpad cells.": "",
+    "Special workspaces in a column right of the workspaces; click one to show or hide it, drag windows in and out. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.": "",
+    "Scratchpad color": ""
   }
 }

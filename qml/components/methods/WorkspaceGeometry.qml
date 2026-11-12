@@ -9,13 +9,55 @@ QtObject {
   id: root
 
   // The largest scale at which cols×rows monitors of monW×monH, `gap` apart,
-  // fit in availW×availH
-  function fitScale(availW, availH, monW, monH, gap, cols, rows) {
+  // fit in availW×availH. With `side` > 0 there is also a column of one more
+  // cell's width right of them, `side` px from the grid (the scratchpads'),
+  // inside the same width; missing or ≤ 0 is the grid alone.
+  function fitScale(availW, availH, monW, monH, gap, cols, rows, side) {
     if (monW <= 0 || monH <= 0)
       return 0.1;
-    const sx = (availW - gap * (cols - 1)) / (monW * cols);
+    const extra = side > 0 ? 1 : 0;
+    const sx = (availW - gap * (cols - 1) - (side > 0 ? side : 0)) / (monW * (cols + extra));
     const sy = (availH - gap * (rows - 1)) / (monH * rows);
     return Math.max(0.01, Math.min(sx, sy));
+  }
+
+  // The scratchpads' column right of a cols×rows grid of cellW×cellH cells,
+  // `side` px from it: null for no cells, else { x, dividerX, boardWidth,
+  // boardHeight, scale, rects } with one rect per cell, stacked and centred
+  // in the column. The cells shrink (scale < 1) to fit the grid's height,
+  // never the grid.
+  function scratchColumn(count, cellW, cellH, gap, cols, rows, side) {
+    if (!(count > 0))
+      return null;
+    const gridW = cols * cellW + (cols - 1) * gap;
+    const boardHeight = rows * cellH + (rows - 1) * gap;
+    const x = gridW + side;
+    const scale = Math.min(1, (boardHeight - gap * (count - 1)) / (count * cellH));
+    const w = Math.floor(cellW * scale);
+    const h = Math.floor(cellH * scale);
+    const rects = [];
+    for (let i = 0; i < count; i++)
+      rects.push({
+        x: x + Math.floor((cellW - w) / 2),
+        y: i * (h + gap),
+        w: w,
+        h: h
+      });
+    return {
+      x: x,
+      dividerX: gridW + side / 2,
+      boardWidth: x + cellW,
+      boardHeight: boardHeight,
+      scale: scale,
+      rects: rects
+    };
+  }
+
+  // The index of the column's rect under a point, or -1 (a null column too)
+  function scratchCellAt(column, x, y) {
+    if (!column)
+      return -1;
+    return column.rects.findIndex(r => contains(r, x, y));
   }
 
   // The usable part of a monitor's W×H, from its `reserved` edges (null or

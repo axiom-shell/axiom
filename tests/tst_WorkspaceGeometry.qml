@@ -105,6 +105,48 @@ TestCase {
     compare(r.h, 108);
   }
 
+  function test_fitScale_side() {
+    compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 20), 1);
+    compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1), 1.6);
+    compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 0), 1.6);
+  }
+
+  function test_scratchColumn() {
+    compare(WorkspaceGeometry.scratchColumn(0, 40, 30, 5, 3, 2, 10), null);
+    const one = WorkspaceGeometry.scratchColumn(1, 40, 30, 5, 3, 2, 10);
+    compare(one.x, 140);
+    compare(one.dividerX, 135);
+    compare(one.boardWidth, 180);
+    compare(one.scale, 1);
+    compare(one.rects[0], {
+      "x": 140,
+      "y": 0,
+      "w": 40,
+      "h": 30
+    });
+    const two = WorkspaceGeometry.scratchColumn(2, 40, 30, 5, 3, 2, 10);
+    compare(two.scale, 1);
+    compare(two.rects[0].y, 0);
+    compare(two.rects[1].y, 35);
+    const four = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
+    compare(four.scale, 50 / 120);
+    compare(four.rects[1], {
+      "x": 152,
+      "y": 17,
+      "w": 16,
+      "h": 12
+    });
+  }
+
+  function test_scratchCellAt() {
+    const column = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
+    column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x + r.w / 2, r.y + r.h / 2), i));
+    compare(WorkspaceGeometry.scratchCellAt(column, 137, 5), -1);
+    const last = column.rects[3];
+    compare(WorkspaceGeometry.scratchCellAt(column, last.x + 1, last.y + last.h + 3), -1);
+    compare(WorkspaceGeometry.scratchCellAt(null, 150, 5), -1);
+  }
+
   function test_cellRect_and_cellAt_agree() {
     for (let i = 0; i < 5; i++) {
       const r = WorkspaceGeometry.cellRect(i, 40, 30, 5, 3);

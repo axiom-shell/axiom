@@ -58,6 +58,22 @@ properties:
     title: Window titles
     default: true
     description: Show a window's title when hovered.
+  scratchpads:
+    type: string
+    title: Scratchpads
+    x-control: toggle
+    enum: ['off', occupied, all]
+    x-enumLabels: {'off': 'Off', occupied: With windows, all: All}
+    default: occupied
+    x-showIf: {/$supports.namedSpecial: true}
+    description: 'Special workspaces in a column right of the workspaces; click one to show or hide it, drag windows in and out. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.'
+  scratchpadColor:
+    type: string
+    title: Scratchpad color
+    x-options: colors
+    default: base0E
+    x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true}
+    description: The border and label color of scratchpad cells.
   showHint:
     type: boolean
     title: Controls hint
