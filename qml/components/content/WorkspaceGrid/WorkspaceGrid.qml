@@ -58,8 +58,9 @@ WorkspacePopoutPanel {
         isActive: wsId === root.activeId
         look: root.cellLook.workspaceColorsOf(isActive, hasWindows, shows.urgent, {
           "hovered": wsCell.lit,
-          // The rows the bar doesn't show read muted
-          "muted": !inBar
+          // The rows the bar doesn't show read muted, except an urgent cell
+          // (full urgent colour and pulse, as on the bar)
+          "muted": !inBar && !shows.urgent
         })
         urgent: shows.urgent
         pulsing: shows.urgent && !isActive && root.pulse.pulsing

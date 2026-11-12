@@ -188,8 +188,8 @@ QtObject {
   // where it `givesWay` to it (an Auto field, active) and the bar has
   // one, else `color`. Under the bar's text color (palette.override) an
   // Auto field (its `role`: accent, alt, off or neutral) takes it; a state
-  // color (warning, critical, rise, fall: P12, keep state meaning) and one
-  // the user set (role "") keep their own. The caller nudges it (content()).
+  // color (warning, critical, rise, fall), which keeps its state meaning,
+  // and one the user set (role "") keep their own. The caller nudges it (content()).
   function fieldColor(palette, spot, color, givesWay, role) {
     if (palette.override !== null && role !== "" && role !== "warning" && role !== "critical" && role !== "rise" && role !== "fall")
       return palette.override;

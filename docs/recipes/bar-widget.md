@@ -23,7 +23,7 @@ A bar widget is a type users add to a bar from the bar editor's library. You wri
    | own content | `headIcon`/`headText`/`headItem`, `ownContent` drawn with `paint` |
    | interaction | `clickable`/`onClicked(button)`, `acceptedButtons`, `scrollable` |
 
-   A widget names colour fields and never resolves a colour. Clicks run through `ActionsManager.run`; polled data acquires and releases a request built from `properties` only (`Component.onCompleted` / `onDestruction`).
+   A widget names colour fields and never resolves a colour. One-tap actions run through `ActionsManager.run`; polled data acquires and releases a request built from `properties` only (`Component.onCompleted` / `onDestruction`).
 3. **`scripts/dev/verify.sh`:** the `bar_widget_template` guard and `tst_Config` catch colour and field mistakes. Add an exception (`scripts/bar-widget-exceptions.json`, with a reason) only when the widget really isn't icon plus label: [widget-style › The widget template](../dev/bar/widget-style.md#the-widget-template).
 4. One nested screenshot of the widget on a bar (`docs/dev/testing.md`).
 

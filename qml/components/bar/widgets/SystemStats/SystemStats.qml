@@ -145,8 +145,8 @@ BarWidget {
 
   hidden: root._reported === ""
 
-  // Hot: at or above the warning threshold. The box takes the worst state
-  // (P6: "SystemStats colours only the hot metric (the box takes the worst state).")
+  // Hot: at or above the warning threshold. Only the hot metric is coloured;
+  // the box takes the worst state.
   function _hot(key) {
     return root._metricData(key).level >= root.properties.warnThreshold;
   }

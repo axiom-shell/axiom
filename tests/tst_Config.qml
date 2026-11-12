@@ -122,7 +122,7 @@ TestCase {
     }
   }
 
-  // The state fields P1 and the Network lock rely on: their Auto role and
+  // The state fields the bar widgets and the Network lock rely on: their Auto role and
   // whether they follow the bar's gradient
   function test_state_fields_data() {
     return [

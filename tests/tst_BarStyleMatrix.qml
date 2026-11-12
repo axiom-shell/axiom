@@ -4,13 +4,13 @@ import qs.components.methods
 import "barstyle/Bars.js" as Bars
 import "barstyle/Matrix.js" as Matrix
 
-// The bar widget style system's geometry characterization of looks, cell
-// shapes and outlines (the rest is in the dedicated tests), run through the helpers, and
-// what they give recorded (barstyle/Matrix.js): main's behaviour before
-// the style rework, plus its intended changes, each re-recorded in the
-// commit that made it. The expected data is never edited by hand:
-// otherwise only the adapters below change, to reach the same results
-// through a new API. What colours draw is tst_BarWidgetStyle's sweep.
+// Characterization of the bar widget style system's three groups of
+// results, looks, cellShapes and outlines, run through the helpers and
+// recorded (barstyle/Matrix.js): main's behaviour before the style rework,
+// plus its intended changes, each re-recorded in the commit that made it.
+// The expected data is never edited by hand: otherwise only the adapters
+// below change, to reach the same results through a new API. What colours
+// draw is tst_BarWidgetStyle's sweep.
 TestCase {
   id: root
 

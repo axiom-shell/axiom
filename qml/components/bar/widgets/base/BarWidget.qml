@@ -190,8 +190,6 @@ Item {
   readonly property var colors: look.colors
   readonly property var drawnColors: look.drawnColors
   readonly property var paint: look.paint
-  readonly property bool accentAuto: look.accentAuto
-  readonly property real barSpot: look.barSpot
   // How its value is drawn: the display style of `appearance` as it can
   // draw it now (ValueGraphics.resolvedStyle), "label" with none
   readonly property string valueStyle: root.appearance ? ValueGraphics.resolvedStyle(root.appearance.style, root.isVertical, root.history !== null, root.ratio) : "label"
@@ -200,8 +198,6 @@ Item {
   readonly property alias iconRect: row.iconRect
   readonly property alias iconMiddle: row.iconMiddle
   readonly property real minimumSize: root._mode === "row" ? row.minimumSize : root.isVertical ? root.implicitHeight : root.implicitWidth
-  readonly property IconTextRow _row: row
-  readonly property WidgetLook _look: look
   // 0-1, how far it has pulsed toward its muted self (while `pulsing`)
   property real pulse: 0
 
@@ -345,6 +341,7 @@ Item {
   // Its own content's head, then the content, centred as a whole across
   WidgetHead {
     id: head
+    visible: root._mode === "own" && shown
     barConfig: root.barConfig
     start: root._ownStart
     icon: root.headIcon

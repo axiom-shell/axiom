@@ -117,8 +117,9 @@ WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroun
                   "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
                   "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
 WIDGET_COLOR_CALLS = re.compile(
-    r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\(|\bBarWidgetStyle\.|"
-    r"\bBarsConfig\.\w*Colors?\(|\"#[0-9a-fA-F]{3,8}\"|\"(?:white|black)\"")
+    r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\s*\(|\bBarWidgetStyle\.|"
+    r"\bBarsConfig\.\w*Colors?\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"
+    r"[\"'](?:white|black|red|green|blue|yellow|orange|purple|gray|grey|cyan|magenta)[\"']")
 
 errors, warnings = [], []
 
@@ -192,7 +193,7 @@ def bar_widget_template(schema, sources, errors):
 
         def add(rule, message):
             out.append((rule, f"{message}"))
-        files = sorted(folder.glob("*.qml"))
+        files = sorted(folder.rglob("*.qml"))
         raw = {f: f.read_text() for f in files}
         code = {f: re.sub(r"//[^\n]*", "", text) for f, text in raw.items()}
         plain = {f: blank_strings(c) for f, c in code.items()}
@@ -207,7 +208,7 @@ def bar_widget_template(schema, sources, errors):
 
         for f in files:
             path = rel(f)
-            short = f"{t}/{f.name}"
+            short = f"{t}/{f.relative_to(folder).as_posix()}"
             for n, m in lines_of(code[f], WIDGET_COLOR_CALLS):
                 add("T2", f"{short}:{n}: T2 resolves a colour ({m.group(0).strip()}): name a colour field, the base resolves it")
             # opacity: only an Image fades; else a switch of 0 or 1
@@ -229,12 +230,15 @@ def bar_widget_template(schema, sources, errors):
                             continue
                         offset = sum(len(x) + 1 for x in plain[f].split("\n")[:n - 1]) + arg
                         expr = binding(plain[f], offset)
-                        if any(float(x) not in (0, 1) for x in re.findall(r"(?<![\w.])\d+(?:\.\d+)?", expr)):
+                        if any(float(x) not in (0, 1) for x in re.findall(r"(?<![\w.])(?:\d+(?:\.\d*)?|\.\d+)", expr)):
                             add("T3", f"{short}:{n}: T3 fades by opacity ({expr.strip()}): an opacity is 0 or 1, a dim is a colour")
             for n, _ in lines_of(plain[f], r"\bdim\b"):
                 add("T3", f"{short}:{n}: T3 dims by a `dim`: a dim is a colour the base draws")
             for n, _ in lines_of(plain[f], r"\.box\b"):
                 add("T7", f"{short}:{n}: T7 reads .box: read shownItems")
+            if f == main_file:
+                for n, _ in lines_of(plain[f], r"(?<![\w.$])(?<!let )(?<!const )(?<!var )(?<!id: )(?<!id:)box\b(?!\s*:)"):
+                    add("T7", f"{short}:{n}: T7 reads box: read shownItems")
             for n, _ in lines_of(plain[f], r"\bstateColorName\b"):
                 add("T8", f"{short}:{n}: T8 names stateColorName: a state names its colour field (accentField)")
 
@@ -247,8 +251,8 @@ def bar_widget_template(schema, sources, errors):
                 if depth == 1 and binding_re.match(line):
                     add("T5", f"{t}/{t}.qml:{n}: T5 sets {binding_re.match(line).group(1)}: it is the base's output")
                 depth += line.count("{") - line.count("}")
-            for n, m in lines_of(body, r"\broot\.(" + names + r")\s*=(?!=)"):
-                add("T5", f"{t}/{t}.qml:{n}: T5 writes root.{m.group(1)}: it is the base's output")
+            for n, m in lines_of(body, r"(?<![\w.])(?<!let )(?<!var )(?<!const )(?:root\.)?(" + names + r")\s*=(?!=)"):
+                add("T5", f"{t}/{t}.qml:{n}: T5 writes {m.group(1)}: it is the base's output")
 
         for f in sorted(folder.iterdir()):
             if f.name not in (f"{t}.qml", "schema.yaml"):

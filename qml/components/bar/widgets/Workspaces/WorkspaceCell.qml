@@ -14,8 +14,9 @@ import qs.components.bar.look
 // the text, or a name: a Material Symbols name the font has draws as that
 // icon, anything else as text) or app icons show instead
 // when given, in that order (CellContents picks one). An urgent one pulses
-// from its `look` toward its `mutedLook` by `pulse` (the core's cell() pulse, composed here), with a dot
-// at its corner where an app icon would otherwise hide it. A row with a sliding ActiveCellIndicator draws its
+// from its `look` toward its `mutedLook` by `pulse` (the core's cell()
+// pulse, composed here), with a dot at its corner where an app icon would
+// otherwise hide it. A row with a sliding ActiveCellIndicator draws its
 // cells twice, the boxes (`part: "background"`) under the indicator and
 // the labels (`"content"`) over it. As a segment of the bar's run (the
 // widget's Background off) its box takes the bar's widget shape (`shape`)

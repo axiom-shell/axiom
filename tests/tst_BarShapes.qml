@@ -184,6 +184,21 @@ TestCase {
     verify(BarShapes.contains(1, 1, 100, 30, "arrowIn", "arrowOut"));
     verify(BarShapes.contains(50, 15, 100, 30, "flat", "flat"));
     verify(!BarShapes.contains(50, 31, 100, 30, "flat", "flat"));
+    // Round caps, 100 by 30 (a half circle of radius 15): capsule and
+    // roundOut cut the corners (15 in at the top and bottom edge, 0 at the
+    // middle), roundIn bites the middle (15 in) and keeps the corners
+    for (const cap of ["capsule", "roundOut"]) {
+      verify(!BarShapes.contains(5, 0, 100, 30, cap, cap));
+      verify(BarShapes.contains(20, 0, 100, 30, cap, cap));
+      verify(BarShapes.contains(1, 15, 100, 30, cap, cap));
+      verify(!BarShapes.contains(95, 0, 100, 30, cap, cap));
+      verify(BarShapes.contains(99, 15, 100, 30, cap, cap));
+    }
+    verify(BarShapes.contains(1, 0, 100, 30, "roundIn", "roundIn"));
+    verify(!BarShapes.contains(10, 15, 100, 30, "roundIn", "roundIn"));
+    verify(BarShapes.contains(20, 15, 100, 30, "roundIn", "roundIn"));
+    verify(BarShapes.contains(99, 0, 100, 30, "roundIn", "roundIn"));
+    verify(!BarShapes.contains(90, 15, 100, 30, "roundIn", "roundIn"));
   }
 
   function test_divider_cap_matches_the_shape_or_is_chosen() {
