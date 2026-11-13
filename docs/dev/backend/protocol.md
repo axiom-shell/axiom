@@ -63,6 +63,7 @@ The CLI subscribes to nothing. `exec.outputs` is no topic: it goes only to a con
 ### Polled topics
 Data the daemon polls for the shell (`backend/internal/topics`) is not a hello topic: `subscribe: true` doesn't include it. A connection asks for it:
 - `<topic>.subscribe` with `{ interval }` (ms) plus whatever the topic's own request carries; called again, it replaces that connection's request. `<topic>.unsubscribe` drops it, and closing the connection drops all of them.
+- A connection's subscribes, unsubscribes and refreshes apply in the order sent (`InOrder`, like `config.set`), so a stale request sent just before the right one can't land after it. An `interval` missing or <= 0 means the topic's `Default`, never its floor.
 - The daemon fetches once for every subscriber, at the shortest interval asked (never below the topic's floor), and not at all with none. A topic whose last subscriber left forgets its state.
 - It pushes `<topic>.state` to the subscribers when the state changes (latest-wins, below), and to a new subscriber at once when it has one. `<topic>.refresh` fetches now.
 - The shell: `BackendManager.acquire(topic, request)` / `release(topic)` / `refresh(topic)`, subscribed again after every hello (a reconnect or re-exec forgets them). The service owning the topic merges its consumers (`ConsumerRegistry`) into one request and listens to `<topic>.state`.

@@ -128,6 +128,10 @@ func Register(reg *rpc.Registry, h *Hub, src Source) {
 	rpc.Handle(reg, name+".refresh", func(ctx context.Context, c *rpc.Conn, p struct{}) (struct{}, error) {
 		return struct{}{}, h.Refresh(name)
 	})
+	// A connection's calls apply in the order sent: the shell can send a
+	// stale subscribe just before the right one, and the last to arrive
+	// must be the last sent. None of them blocks.
+	reg.InOrder(name+".subscribe", name+".unsubscribe", name+".refresh")
 }
 
 func (h *Hub) add(src Source) {
@@ -165,8 +169,9 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 	if err := checkRequest(t.src.Request, request); err != nil {
 		return axerr.Wrap(axerr.BadRequest, err, "%s.subscribe: bad params", name)
 	}
+	// Missing or <= 0 is the Default (0 is never "as fast as possible")
 	interval := t.src.Default
-	if p.Interval != nil {
+	if p.Interval != nil && *p.Interval > 0 {
 		interval = time.Duration(*p.Interval * float64(time.Millisecond))
 	}
 	sub := subscription{request: request, interval: max(interval, t.src.Floor), what: what(request)}

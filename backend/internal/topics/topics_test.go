@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
 	"reflect"
 	"strings"
 	"sync"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
@@ -224,6 +227,60 @@ func TestShortestIntervalAndFloor(t *testing.T) {
 			h.clock.Advance(tc.at - tc.short)
 			fetched(t, h)
 		})
+	}
+}
+
+// An interval of 0, below 0 or missing is the source's Default, never its
+// Floor (the shell once sent 0 ahead of the right one: 650 fetches/s).
+func TestNonPositiveIntervalUsesDefault(t *testing.T) {
+	t.Parallel()
+	for name, request := range map[string]string{"zero": `{"interval":0}`, "negative": `{"interval":-5}`, "missing": `{}`} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, func(s *Source) { s.Floor = time.Millisecond })
+			subscribe(t, h, newSub(), request)
+			fetched(t, h)
+			settle(t, h)
+			h.clock.Advance(9 * time.Second)
+			notFetched(t, h)
+			h.clock.Advance(time.Second)
+			fetched(t, h)
+		})
+	}
+}
+
+// Over a real connection, a stale subscribe sent just before the right
+// one never lands after it.
+func TestSubscribesApplyInOrder(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	reg := rpc.NewRegistry()
+	Register(reg, h.hub, Source{Name: "u", Floor: time.Millisecond, Default: 10 * time.Second,
+		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) { return 0, nil }})
+	a, b := net.Pipe()
+	c := rpc.NewConn(a, reg, rpc.DefaultLimits(), nil)
+	t.Cleanup(func() { c.Close(); b.Close() })
+	go io.Copy(io.Discard, b)
+	for i := 0; i < 200; i++ {
+		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":0}}`+"\n", 2*i)
+		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":2000}}`+"\n", 2*i+1)
+	}
+	intervals := func() []time.Duration {
+		h.hub.mu.Lock()
+		defer h.hub.mu.Unlock()
+		var out []time.Duration
+		for _, s := range h.hub.sources["u"].subs {
+			out = append(out, s.interval)
+		}
+		return out
+	}
+	if !testkit.Eventually(func() bool { got := intervals(); return len(got) == 1 && got[0] == 2*time.Second }) {
+		t.Fatalf("the hub's intervals %v, want 2s", intervals())
+	}
+	// ...and it never drifts back to the stale one
+	time.Sleep(50 * time.Millisecond)
+	if got := intervals(); len(got) != 1 || got[0] != 2*time.Second {
+		t.Errorf("intervals %v", got)
 	}
 }
 

@@ -84,7 +84,10 @@ Item {
       }))
   // Spacers (`fill`) are shown at any size: they take the free room
   readonly property var _fills: root.measures.map(m => m.fill)
-  readonly property var _shown: root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i))
+  // (a string key and back, so what follows it recomputes only when a
+  // widget is shown or hidden, not for each new size)
+  readonly property string _shownKey: JSON.stringify(root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i)))
+  readonly property var _shown: JSON.parse(root._shownKey)
   // How many spacers it has: a side with any stretches to the center
   // (BarLayout.layoutSections)
   readonly property int fillCount: root._fills.filter(f => f).length
