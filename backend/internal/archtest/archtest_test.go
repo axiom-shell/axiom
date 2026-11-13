@@ -72,6 +72,7 @@ var tiers = map[string]int{
 	"internal/compositor/binds":     tierEdge,
 	"internal/compositor/edit":      tierEdge,
 	"internal/compositor/ipc":       tierEdge,
+	"internal/compositor/windows":   tierEdge,
 	"internal/compositor/luacheck":  tierEdge,
 	"internal/compositor/manager":   tierEdge,
 	"internal/compositor/takeover":  tierEdge,
