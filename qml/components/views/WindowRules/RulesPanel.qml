@@ -108,30 +108,27 @@ Item {
       wrapMode: Text.WordWrap
     }
 
-    RowLayout {
+    AddEntryButton {
       Layout.topMargin: Widget.spacing
       Layout.fillWidth: true
-      spacing: Widget.spacing
+      text: I18n.tr("New rule")
+      onClicked: root.editor.add()
+    }
 
-      AddEntryButton {
-        text: I18n.tr("New rule")
-        onClicked: root.editor.add()
-      }
+    // Applies the saved rules, so it waits for the draft to be saved. The
+    // button stays hoverable while it waits, to say why
+    StyledTextButton {
+      readonly property bool ready: WindowRulesManager.state?.running === true && !root.editor.isDirty
 
-      // Applies the saved rules, so it waits for the draft to be saved. The
-      // button stays hoverable while it waits, to say why
-      StyledTextButton {
-        readonly property bool ready: WindowRulesManager.state?.running === true && !root.editor.isDirty
-
-        implicitHeight: Widget.height
-        opacity: ready ? 1 : 0.5
-        iconText: "select_window"
-        text: I18n.tr("Apply to open windows")
-        tooltipText: root.editor.isDirty ? I18n.tr("Save your changes first.") : I18n.tr("Moves the open windows as your saved rules say.")
-        onClicked: {
-          if (ready)
-            WindowRulesManager.applyNow();
-        }
+      Layout.fillWidth: true
+      implicitHeight: Widget.height
+      opacity: ready ? 1 : 0.5
+      iconText: "select_window"
+      text: I18n.tr("Apply to open windows")
+      tooltipText: root.editor.isDirty ? I18n.tr("Save your changes first.") : I18n.tr("Moves the open windows as your saved rules say.")
+      onClicked: {
+        if (ready)
+          WindowRulesManager.applyNow();
       }
     }
   }
