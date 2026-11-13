@@ -194,6 +194,8 @@ func New(o Options) *Manager {
 		m.w = newNiri(e, ipc.NiriFromEnv(o.Getenv))
 		m.profiles = &profileSwitch{io: Outputs{Niri: ipc.NiriFromEnv(o.Getenv)}}
 	}
+	// Unknown until the first send: a pause the last image left is given back
+	m.paused = windowrules.Pause{AllExcept: true}
 	m.debounce = m.timer(func(ctx context.Context) { m.apply(ctx) })
 	m.liveDebounce = m.timer(m.liveChanged)
 	m.fileSync = m.timer(m.syncFile)
@@ -423,7 +425,12 @@ func (m *Manager) applyPause(ctx context.Context, force bool) {
 		m.pauseKey = key
 		return
 	}
-	m.w.pause(ctx, m.in)
+	if !m.w.pause(ctx, m.in) {
+		// Unknown what took: teardown still gives back, the next inputs retry
+		m.pauseKey, m.paused = "", windowrules.Pause{AllExcept: true}
+		m.updateSteps()
+		return
+	}
 	m.pauseKey, m.paused = key, now
 	m.updateSteps()
 }
@@ -874,6 +881,13 @@ func (m *Manager) Teardown(ctx context.Context) {
 		// What it applied is unknown now: the next start deals with it
 		m.logf("the layer was applied but its inputs are gone: leaving the compositor as it is")
 		return
+	}
+	// niri takes its binds from the files: a pause left in them is given back
+	// by writing them again (no step does it)
+	if m.w.liveByFile() && len(m.hold.Rules) > 0 && m.live() && m.mode != "detached" && m.mode != "" {
+		m.hold = windowrules.BindsHold{}
+		m.in = m.buildInputs()
+		m.apply(ctx)
 	}
 	if steps := m.teardownSteps(); len(steps) > 0 {
 		session.RunSteps(context.WithoutCancel(ctx), m.kind, m.StepEnv(), steps, func(f string, a ...any) { m.logf(f, a...) })

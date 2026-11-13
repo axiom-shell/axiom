@@ -44,6 +44,9 @@ func (in Inputs) pause() windowrules.Pause {
 // isPaused: something is paused, or every bind but the kept ones
 func isPaused(p windowrules.Pause) bool { return p.AllExcept || len(p.Paused) > 0 }
 
+// bindID is a bind's id, "" when it has none
+func bindID(b any) string { return jsonx.ToString(orNil(getAny(b, "id"), "")) }
+
 func orNil(v, def any) any {
 	if v == nil {
 		return def

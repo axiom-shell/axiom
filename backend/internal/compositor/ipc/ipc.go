@@ -70,7 +70,8 @@ func dial(ctx context.Context, path string) (net.Conn, error) {
 }
 
 // Reloads is a compositor's event stream as what the layer needs from it:
-// one value per config reload (Failed when it couldn't load the config).
+// one value per config reload or bind mode change (Failed when it couldn't
+// load the config).
 // Initial is niri's state as the stream starts (whether the config it
 // runs loaded), not a reload. ModeChanged is instead a change of the bind
 // mode (Hyprland's submap, sway's mode) to Mode, "" the default.

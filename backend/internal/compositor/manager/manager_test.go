@@ -36,6 +36,10 @@ type fakeWriter struct {
 	reloaded int
 	// rulesGone is what runtimeRulesGone answers
 	rulesGone bool
+	// pauseFails: pause answers false; byFile: liveByFile (niri's)
+	pauseFails, byFile bool
+	// bindsInText: the texts list the binds (the file holds them out, niri's)
+	bindsInText bool
 }
 
 func (f *fakeWriter) note(c string) {
@@ -54,11 +58,17 @@ func (f *fakeWriter) files(in Inputs) files {
 	return files{ConfigDir: f.dir + "/conf/", IncludePath: f.dir + "/state/module", ManagedPath: f.dir + "/conf/hyprland.lua",
 		UserDir: f.dir + "/conf/user", UserFiles: f.dir + "/conf/user/*.lua", IncludeLines: "load it", RunsElsewhere: f.elsewhere}
 }
+func (f *fakeWriter) bindsText(in Inputs) string {
+	if !f.bindsInText {
+		return ""
+	}
+	return " " + string(jsonx.MarshalCompact(in.get("binds")))
+}
 func (f *fakeWriter) moduleText(in Inputs, spec any) string {
-	return "-- module " + jsonx.ToString(getAny(spec, "tag")) + "\n"
+	return "-- module " + jsonx.ToString(getAny(spec, "tag")) + f.bindsText(in) + "\n"
 }
 func (f *fakeWriter) managedText(in Inputs, spec any) string {
-	return hyprHeader + " managed " + jsonx.ToString(getAny(spec, "tag")) + "\n"
+	return hyprHeader + " managed " + jsonx.ToString(getAny(spec, "tag")) + f.bindsText(in) + "\n"
 }
 func (f *fakeWriter) emptyModuleText() string                    { return "-- empty\n" }
 func (f *fakeWriter) releasedText(in Inputs, mode string) string { return "-- given back" }
@@ -68,7 +78,7 @@ func (f *fakeWriter) liveLines(in Inputs, spec any) []string {
 func (f *fakeWriter) blurLines(in Inputs, spec any) []string {
 	return []string{"blur " + jsonx.ToString(getAny(spec, "tag"))}
 }
-func (f *fakeWriter) liveByFile() bool                        { return false }
+func (f *fakeWriter) liveByFile() bool                        { return f.byFile }
 func (f *fakeWriter) takesBack(part string) bool              { return part == "opacity" }
 func (f *fakeWriter) validate(context.Context, string) string { return f.invalid }
 func (f *fakeWriter) runLive(_ context.Context, lines []string) bool {
@@ -90,7 +100,9 @@ func (f *fakeWriter) teardownSteps(Inputs, bool) []session.Step {
 }
 func (f *fakeWriter) pause(_ context.Context, in Inputs) bool {
 	f.note("pause:" + in.str("pauseKey"))
-	return true
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return !f.pauseFails
 }
 func (f *fakeWriter) unpauseSteps(Inputs) []session.Step      { return []session.Step{{Op: "unpause"}} }
 func (f *fakeWriter) reloadStartsAxiom(Inputs) (bool, string) { return false, "" }

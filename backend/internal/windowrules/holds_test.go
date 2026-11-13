@@ -232,13 +232,18 @@ func TestPause(t *testing.T) {
 		hold BindsHold
 		want Pause
 	}{
-		"zero":       {BindsHold{}, Pause{Keep: strs(), Paused: strs()}},
-		"these":      {BindsHold{Rules: strs("r"), These: strs("d", "x", "b")}, Pause{Keep: strs(), Paused: strs("b", "d")}},
-		"all except": {BindsHold{Rules: strs("r"), AllExcept: true, Keep: strs("c", "x")}, Pause{AllExcept: true, Keep: strs("c"), Paused: strs("a", "b", "d")}},
+		"zero":           {BindsHold{}, Pause{Keep: strs(), Paused: strs()}},
+		"these":          {BindsHold{Rules: strs("r"), These: strs("d", "x", "b")}, Pause{Keep: strs(), Paused: strs("b", "d")}},
+		"all except":     {BindsHold{Rules: strs("r"), AllExcept: true, Keep: strs("c", "x")}, Pause{AllExcept: true, Keep: strs("c"), Paused: strs("a", "b", "d")}},
+		"kept not bound": {BindsHold{Rules: strs("r"), AllExcept: true, Keep: strs("x")}, Pause{Keep: strs(), Paused: strs()}},
+		"no keep":        {BindsHold{Rules: strs("r"), AllExcept: true}, Pause{Keep: strs(), Paused: strs()}},
 	} {
 		got := tc.hold.Pause(bound)
 		if !reflect.DeepEqual(got, tc.want) {
 			t.Errorf("%s: got %+v, want %+v", name, got, tc.want)
+		}
+		if got := tc.hold.Pause(nil); got.AllExcept || len(got.Paused) > 0 {
+			t.Errorf("%s: nothing bound paused %+v", name, got)
 		}
 		if b, _ := json.Marshal(got); strings.Contains(string(b), "null") {
 			t.Errorf("%s: null in %s", name, b)

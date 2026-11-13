@@ -261,7 +261,7 @@ func (w *hyprWriter) pauseLua(in Inputs) string {
 	var lines, keys []string
 	if p.AllExcept {
 		for _, b := range itemsOf(activeBinds(in)) {
-			if line := w.tables.BindLua(b, in.get("ctx")); line != "" && slices.Contains(p.Keep, jsonx.ToString(orNil(getAny(b, "id"), ""))) {
+			if line := w.tables.BindLua(b, in.get("ctx")); line != "" && slices.Contains(p.Keep, bindID(b)) {
 				lines = append(lines, line)
 				keys = append(keys, render.BindKey(getAny(b, "key")))
 			}
