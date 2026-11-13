@@ -21,8 +21,8 @@ The user's window rules: the model, its validation, the renderers that compile i
 
 ### Processes and games
 - `procinfo.Reader.Lookup` gives a window's process name (`comm`, with the kernel's 15-byte cut undone), the names of the processes above it and its game signals. It reads only the user's own processes, cached by pid and start time; the facts are taken at the first lookup and kept.
-- Only signal names leave the package: environment and command line are scanned for a fixed list of names and dropped.
-- The signals and where each looks (the window's process, the processes above it, its environment) are the table in `procinfo/game.go`. Steam counts through what it launches (`reaper SteamLaunch` or a Steam game id), so Steam's own windows are not games.
+- Only process names and signal names leave the package; argument and environment values never do: environment and command line are scanned for a fixed list of names and dropped. A non-dumpable process reads as not ours.
+- The signals and where each looks (the window's process, the processes above it, its environment) are the table in `procinfo/game.go`. Steam counts through what it launches (`reaper SteamLaunch` or a Steam game id), so Steam's own windows are not games. Lutris and Heroic count only through what runs the game (`lutris-wrapper`, `legendary`, `gogdl`, `nile`, or `LUTRIS_GAME_UUID` / `HEROIC_APP_NAME` in the environment), not their UI process. Wine and gamescope count only together with a launcher signal (Steam, Proton, Lutris, Heroic, umu): a bare `wine notepad` is not a game.
 - An X11 bridge (`xwayland-satellite`, `Xwayland`) stands for many windows, so its windows have no process facts: on niri, X11 games are recognised only by their `steam_app_N` app id. `procinfo.Detect` adds that app id signal.
 
 ### Patterns

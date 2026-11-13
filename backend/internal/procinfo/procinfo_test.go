@@ -86,6 +86,7 @@ func TestName(t *testing.T) {
 		{"exe", "gnome-calculato", "calc", "gnome-calculator", "gnome-calculator"},
 		{"neither", "gnome-calculato", "calc", "other", "gnome-calculato"},
 		{"script", "lutris", "/usr/bin/python3", "python3", "lutris"},
+		{"setproctitle", "gnome-calculato", "/usr/bin/gnome-calculator --token=abc", "", "gnome-calculato"},
 		{"short", "foo", "/usr/bin/foobar", "foobar", "foo"},
 	}
 	for _, c := range cases {
@@ -193,16 +194,20 @@ func TestCacheByStart(t *testing.T) {
 	if p, _ := r.Lookup(20); p.Name != "old" {
 		t.Fatal(p)
 	}
-	f.add(20, 10, 2, "new", []string{"new"}, "")
+	f.add(20, 10, 2, "old", []string{"changed"}, "")
 	if p, _ := r.Lookup(20); p.Name != "old" {
 		t.Fatalf("not cached: %+v", p)
+	}
+	f.add(20, 10, 2, "exec", []string{"exec"}, "")
+	if p, _ := r.Lookup(20); p.Name != "exec" {
+		t.Fatalf("exec (same pid and start, new comm) kept: %+v", p)
 	}
 	f.add(20, 10, 4, "new", []string{"new"}, "")
 	if p, _ := r.Lookup(20); p.Name != "new" {
 		t.Fatalf("reused pid kept: %+v", p)
 	}
 	// the parent's node is read once for both windows
-	f.add(10, 0, 1, "changed", []string{"changed"}, "")
+	f.add(10, 0, 1, "parent", []string{"changed"}, "")
 	if p, _ := r.Lookup(21); !reflect.DeepEqual(p.Ancestors, []string{"parent"}) {
 		t.Fatalf("parent node re-read: %+v", p)
 	}

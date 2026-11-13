@@ -22,15 +22,18 @@ const (
 
 // The signal table. Steam counts only through `reaper SteamLaunch` or a
 // game id, never a bare `steam` above the window (its own windows are not
-// games); a launcher's own window is not a game either.
+// games); a launcher's own window is not a game either, so Lutris and Heroic
+// count only through what runs the game (lutris-wrapper, legendary, gogdl,
+// nile), not their UI process. Wine and gamescope count only together with
+// a launcher signal: a bare `wine notepad` is not a game.
 var (
 	// signalOrder is the order signals come out in.
 	signalOrder = []Signal{SignalSteam, SignalProton, SignalLutris, SignalHeroic, SignalUmu, SignalGamescope, SignalWine}
 
 	// aboveNames: a process above the window named so gives the signal.
 	aboveNames = map[string]Signal{
-		"proton": SignalProton, "lutris": SignalLutris, "lutris-wrapper": SignalLutris,
-		"heroic": SignalHeroic, "umu-run": SignalUmu,
+		"proton": SignalProton, "lutris-wrapper": SignalLutris,
+		"legendary": SignalHeroic, "gogdl": SignalHeroic, "nile": SignalHeroic, "umu-run": SignalUmu,
 		"gamescope": SignalGamescope, "gamescope-wl": SignalGamescope,
 	}
 	// ownNames: the window's own process named so gives the signal (also above).
@@ -44,6 +47,7 @@ var (
 	envNames = map[string]Signal{
 		"SteamGameId": SignalSteam, "SteamAppId": SignalSteam,
 		"STEAM_COMPAT_DATA_PATH": SignalProton, "LUTRIS_GAME_UUID": SignalLutris, "UMU_ID": SignalUmu,
+		"HEROIC_APP_NAME": SignalHeroic,
 	}
 	// bridgeNames stand for many X11 windows at once.
 	bridgeNames = map[string]bool{"xwayland-satellite": true, "Xwayland": true}
@@ -76,6 +80,9 @@ func signalsOf(self node, above []node, environ []byte) []Signal {
 		if s, hit := envNames[k]; ok && hit && v != "" && v != "0" {
 			got[s] = true
 		}
+	}
+	if !got[SignalSteam] && !got[SignalProton] && !got[SignalLutris] && !got[SignalHeroic] && !got[SignalUmu] {
+		return []Signal{} // wine and gamescope alone are not a game
 	}
 	out := []Signal{}
 	for _, s := range signalOrder {

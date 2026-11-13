@@ -1,4 +1,10 @@
-// Package procinfo is what the window rules engine knows of a window's process: its name, the names of the processes above it, and the game signals of its process tree (game.go). It reads only the user's own processes under /proc, keeps facts per process (pid and start time, so a reused pid reads afresh), and never keeps or returns an environment value or an argument: only signal names.
+// Package procinfo is what the window rules engine knows of a window's
+// process: its name, the names of the processes above it, and the game
+// signals of its process tree (game.go). It reads only the user's own
+// processes under /proc (non-dumpable processes read as not ours), keeps
+// facts per process (pid and start time, so a reused pid reads afresh), and
+// only process names and signal names leave the package; argument and
+// environment values never do.
 package procinfo
 
 import (
@@ -10,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"unicode"
 )
 
 const (
@@ -30,6 +37,7 @@ type Options struct {
 // environment or arguments).
 type Process struct {
 	PID       int      `json:"pid"`
+	comm      string   // stat's comm when read: an exec keeps pid and start but changes it
 	Start     uint64   `json:"-"`         // field 22 of stat: with PID, which process this is
 	Name      string   `json:"name"`      // the `process` condition; "" for a bridge
 	Ancestors []string `json:"ancestors"` // the `startedFrom` condition: nearest first, our own processes only, never nil
@@ -39,6 +47,7 @@ type Process struct {
 
 // node is one process as the walk needs it.
 type node struct {
+	comm        string
 	start       uint64
 	ppid        int
 	name        string
@@ -75,7 +84,8 @@ func mineByOwner(dir string) bool {
 }
 
 // Lookup is pid's process. False when pid is 0 or less, gone, or not
-// ours. Cached by pid and start time.
+// ours. Cached by pid and start time. Ancestors and Signals are shared with
+// the cache: read-only.
 func (r *Reader) Lookup(pid int) (Process, bool) {
 	if pid <= 0 {
 		return Process{}, false
@@ -87,14 +97,14 @@ func (r *Reader) Lookup(pid int) (Process, bool) {
 	if !ok {
 		return Process{}, false
 	}
-	if p, ok := r.procs[pid]; ok && p.Start == start {
+	if p, ok := r.procs[pid]; ok && p.Start == start && p.comm == comm {
 		return p, true
 	}
 	if !r.o.Mine(dir) {
 		return Process{}, false
 	}
 	self := r.nodeFor(pid, comm, ppid, start)
-	p := Process{PID: pid, Start: start, Ancestors: []string{}, Signals: []Signal{}}
+	p := Process{PID: pid, Start: start, comm: comm, Ancestors: []string{}, Signals: []Signal{}}
 	if bridgeNames[self.name] {
 		p.Bridge = true
 		r.store(pid, p)
@@ -137,7 +147,7 @@ func (r *Reader) stat(pid int) (comm string, ppid int, start uint64, ok bool) {
 
 // nodeFor is pid's node, read afresh when its start time is not the cached one.
 func (r *Reader) nodeFor(pid int, comm string, ppid int, start uint64) node {
-	if n, ok := r.nodes[pid]; ok && n.start == start {
+	if n, ok := r.nodes[pid]; ok && n.start == start && n.comm == comm {
 		return n
 	}
 	dir := r.dir(pid)
@@ -148,7 +158,7 @@ func (r *Reader) nodeFor(pid int, comm string, ppid int, start uint64) node {
 	if exe == "." || exe == "/" {
 		exe = ""
 	}
-	n := node{start: start, ppid: ppid, name: name(comm, argv0, exe), exe: exe}
+	n := node{comm: comm, start: start, ppid: ppid, name: name(comm, argv0, exe), exe: exe}
 	if n.name == "reaper" {
 		for _, a := range argv[1:] {
 			if string(a) == "SteamLaunch" {
@@ -214,7 +224,8 @@ func name(comm, argv0, exe string) string {
 		return comm
 	}
 	for _, c := range []string{filepath.Base(argv0), exe} {
-		if len(c) > len(comm) && strings.HasPrefix(c, comm) {
+		if len(c) > len(comm) && strings.HasPrefix(c, comm) &&
+			!strings.ContainsFunc(c, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
 			return c
 		}
 	}
