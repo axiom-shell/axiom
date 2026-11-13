@@ -29,7 +29,7 @@ Item {
   required property CellLook cellLook
   // The cells chained in it: the row's, then the strip's windows'
   readonly property int _rowCells: activeStrip.stripOnly ? 0 : root.ids.length
-  readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0) + (scratchpads.visible ? scratchpads.cells : 0)
+  readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0) + (specialCells.visible ? specialCells.cells : 0)
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -136,8 +136,8 @@ Item {
       chainCount: root._chainCells
     }
 
-    ScratchpadCells {
-      id: scratchpads
+    SpecialCells {
+      id: specialCells
       barConfig: root.barConfig
       properties: root.properties
       cellLook: root.cellLook

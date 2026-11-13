@@ -69,9 +69,10 @@ QtObject {
     return Math.ceil(n / Math.floor(Math.sqrt(n)));
   }
 
-  // Own icon and label per special workspace (scratchpad): [{ id, name,
-  // icon, text }]
-  readonly property var scratchpads: _c.scratchpads
+  // The special workspaces with an entry: [{ id, icon, text }], `id` the
+  // special workspace's id (SpecialWorkspaces.validId), `icon` and `text` its
+  // own label
+  readonly property var specialWorkspaces: _c.specialWorkspaces
 
   // The strip direction of the monitor named `screenName`, "" when it tiles
   function stripDirection(screenName) {

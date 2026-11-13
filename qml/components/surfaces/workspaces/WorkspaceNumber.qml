@@ -5,7 +5,7 @@ import qs.config
 import qs.components.reusable
 
 // A badge on the overview board, drawn over its cell's windows: a workspace's
-// number or name, or a scratchpad's icon and title
+// number or name, or a special workspace's icon and title
 Rectangle {
   id: root
 
@@ -20,7 +20,7 @@ Rectangle {
   property bool tintText: false
   // The text elides to fit this; 0 means no limit
   property real maxWidth: 0
-  // The monitor's active workspace (or the scratchpad shown)
+  // The monitor's active workspace (or the special workspace shown)
   property bool current: false
   // The cell's corner radius; the badge sits clear of its border (the
   // thicker, active one) and of the corner's curve

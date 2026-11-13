@@ -172,7 +172,7 @@ Then:
   - The mouse wheel scrolls the strip.
   - The overview shows the whole strip, off-screen columns included.
   - The **Strips** keybind preset adds swapping columns, resizing them and fitting the visible ones.
-- **The overview** shows live window previews on Hyprland, and app icons elsewhere. Drag a window onto another workspace or onto a side of another window, right-drag to resize it, and middle-click to close it. Special workspaces (scratchpads) get a column of their own on the right, which windows can be dragged into and out of (not on niri, which has no named special workspaces). Arrow keys, Enter and the digits drive it from the keyboard.
+- **The overview** shows live window previews on Hyprland, and app icons elsewhere. Drag a window onto another workspace or onto a side of another window, right-drag to resize it, and middle-click to close it. Special workspaces get a column of their own on the right, which windows can be dragged into and out of (not on niri, which has no named special workspaces). Arrow keys, Enter and the digits drive it from the keyboard.
 - **Keybinds included.** Presets for the grid with WASD or the arrows (add <kbd>Shift</kbd> to take the window along), or previous and next.
 
 <p align="center"><img src="screenshots/workspace-overlay.webp" alt="The workspace overview: a 5×5 grid of workspaces with live window previews" width="900"></p>

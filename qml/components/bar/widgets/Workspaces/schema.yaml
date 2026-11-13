@@ -19,7 +19,7 @@ popout:
         - {/Workspaces.layout: grid}
         - {/Workspaces.strips: {notEmpty: true}}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
-order: [showBackground, backgroundColor, solidBoxes, leadIcon, showEmpty, monitorOnly, labels, relativeNumbers, workspaceLabels, useNames, showAppIcons, appIconsLayout, appIconsCount, appIconsMax, stripWindows, activeWorkspaceIcons, scratchpads, scratchpadLabel, scratchpadSplit, spacing, wideActive, urgentPulse, clickToSwitch, scrollToSwitch, scrollReverse, popout, foregroundColor, hoverColor, activeColor, occupiedColor, emptyColor, urgentColor]
+order: [showBackground, backgroundColor, solidBoxes, leadIcon, showEmpty, monitorOnly, labels, relativeNumbers, workspaceLabels, useNames, showAppIcons, appIconsLayout, appIconsCount, appIconsMax, stripWindows, activeWorkspaceIcons, specialWorkspaces, specialWorkspaceLabel, specialWorkspaceSplit, spacing, wideActive, urgentPulse, clickToSwitch, scrollToSwitch, scrollReverse, popout, foregroundColor, hoverColor, activeColor, occupiedColor, emptyColor, urgentColor]
 settings:
   showEmpty:
     type: boolean
@@ -153,29 +153,29 @@ settings:
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
     description: 'Off: it shows its number, dot or label instead.'
-  scratchpads:
+  specialWorkspaces:
     type: string
-    title: Scratchpads
+    title: Special workspaces
     x-control: toggle
     enum: ['off', occupied, all]
     x-enumLabels: {'off': 'Off', occupied: Occupied, all: All}
     default: 'off'
     x-showIf: {/$supports.namedSpecial: true}
     description: Special workspaces after the cells, behind a divider; click to show or hide.
-  scratchpadLabel:
+  specialWorkspaceLabel:
     type: string
-    title: Scratchpad labels
+    title: Special workspace labels
     x-control: toggle
     enum: [icon, name, both]
     x-enumLabels: {icon: Icon, name: Name, both: Both}
     default: icon
-    x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true}
+    x-showIf: {specialWorkspaces: {not: 'off'}, /$supports.namedSpecial: true}
     description: Hover shows the name.
-  scratchpadSplit:
+  specialWorkspaceSplit:
     type: boolean
     title: Split label from apps
     default: false
-    x-showIf: {scratchpads: {not: 'off'}, showAppIcons: true, /$supports.namedSpecial: true}
+    x-showIf: {specialWorkspaces: {not: 'off'}, showAppIcons: true, /$supports.namedSpecial: true}
     description: Label, divider, then app icons.
   spacing:
     type: string

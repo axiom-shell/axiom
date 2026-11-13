@@ -92,6 +92,8 @@ def schema_strings(node, out):
                 out.add(node[key])
         if isinstance(node.get("x-card"), dict) and isinstance(node["x-card"].get("title"), str):
             out.add(node["x-card"]["title"])
+        if isinstance(node.get("x-ref"), dict) and isinstance(node["x-ref"].get("usedBy"), str):
+            out.add(node["x-ref"]["usedBy"])
         if isinstance(node.get("x-categories"), list):
             out.update(c["name"] for c in node["x-categories"] if isinstance(c, dict) and isinstance(c.get("name"), str))
         if isinstance(node.get("x-libraryGroups"), list):

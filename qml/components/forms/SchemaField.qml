@@ -51,7 +51,7 @@ Loader {
     const placements = fieldSchema["x-menuPlacements"];
     if (all && placements)
       all = all.filter(value => value === "" || value === root.current || MenusConfig.offeredIn(value, placements));
-    // A scratchpad's name that's no longer listed stays, so an entry never shows blank
+    // A special workspace's id that's no longer listed stays, so an entry never shows blank
     if (all && fieldSchema["x-options"] === "specialWorkspaces" && root.current && !all.includes(root.current))
       all = all.concat(root.current);
     const conditions = fieldSchema["x-enumShowIf"];
@@ -540,7 +540,6 @@ Loader {
       readonly property string mode: iconColumn.modeKey !== "" ? (root._valueOf(iconColumn.modeKey) ?? "icon") : iconColumn.textKey !== "" ? "both" : "icon"
       readonly property bool showsIcon: iconColumn.mode !== "text"
       readonly property bool showsText: iconColumn.textKey !== "" && iconColumn.mode !== "icon"
-      readonly property bool drawsIcon: Utils.isSymbolName(iconColumn.value) ? IconManager.isKnown(iconColumn.value) : Array.from(iconColumn.value).length === 1
 
       // A sibling's path, for the form's edits
       function siblingPath(key) {
@@ -557,18 +556,11 @@ Loader {
         spacing: Widget.spacing
 
         // Sharing the row evenly with the text box when both show
-        StyledComboEntry {
+        IconEntry {
           Layout.fillWidth: true
           Layout.preferredWidth: 1
+          Layout.alignment: Qt.AlignTop
           visible: iconColumn.showsIcon
-          editable: true
-          icon: iconColumn.drawsIcon ? iconColumn.value : ""
-          placeholderText: I18n.tr("Search icons, or paste a glyph")
-          search: query => IconManager.search(query, 60).map(name => ({
-                  "value": name,
-                  "label": name,
-                  "icon": name
-                }))
           value: iconColumn.value
           onPicked: value => root.commit(value)
         }
@@ -609,15 +601,6 @@ Loader {
               root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
           }
         }
-      }
-      StyledText {
-        // Reads as a name, but the font has none by it: drawn as text
-        visible: iconColumn.showsIcon && Utils.isSymbolName(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
-        text: I18n.tr("No icon is named \"{0}\": it shows as text", iconColumn.value)
-        color: Theme.warning
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.WordWrap
-        Layout.fillWidth: true
       }
     }
   }

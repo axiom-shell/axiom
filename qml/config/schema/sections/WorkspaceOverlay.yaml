@@ -40,21 +40,21 @@ properties:
     x-showIf: {anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     default: true
     description: Mouse and key controls under the grid.
-  scratchpads:
+  specialWorkspaces:
     type: string
-    title: Scratchpads
+    title: Special workspaces
     x-control: toggle
     enum: ['off', occupied, all]
     x-enumLabels: {'off': 'Off', occupied: Occupied, all: All}
     default: occupied
     x-showIf: {/$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     description: Special workspaces in a column beside the workspaces; click one to show or hide it, drag windows in and out.
-  scratchpadColor:
+  specialWorkspaceColor:
     type: string
-    title: Scratchpad color
+    title: Special workspace color
     x-options: colors
     default: base0E
-    x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
+    x-showIf: {specialWorkspaces: {not: 'off'}, /$supports.namedSpecial: true, anyOf: [{compositorOverview: false}, {/$supports.overview: false}]}
     description: Border and label of their cells.
   dimInactive:
     type: integer

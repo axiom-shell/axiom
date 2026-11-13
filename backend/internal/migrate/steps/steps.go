@@ -242,6 +242,9 @@ var all = []Step{
 		ws.Delete("specialWorkspaces")
 		return []string{"Workspaces.specialWorkspaces removed (sway now always uses the scratchpad)"}
 	}},
+	// v108: scratchpads became special workspaces: the list, the widget's
+	// and the overview's keys renamed, invalid names rewritten (v108.go)
+	{Version: 108, Run: v108},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.
