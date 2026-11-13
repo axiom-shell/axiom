@@ -438,15 +438,16 @@ func (m *Manager) frameworks() []string {
 // config would apply of each usable rule, as compositor.state's
 // windowRules. Only the issues under a compositor with no writer.
 func (m *Manager) CheckRules(ctx context.Context, section any) *jsonx.Object {
-	var report *jsonx.Object
-	check := func(f *Facts) {
+	check := func(f *Facts) *jsonx.Object {
 		keybinds, _ := config.Lookup(m.o.Config(), config.Keys("Keybinds"))
-		_, report = windowRules(section, keybinds, f)
-	}
-	if m.w == nil {
-		check(&Facts{})
+		_, report := windowRules(section, keybinds, f)
 		return report
 	}
+	if m.w == nil {
+		return check(&Facts{})
+	}
+	// Buffered: a return on ctx.Done must not race the closure's write
+	got := make(chan *jsonx.Object, 1)
 	m.do(ctx, func(context.Context) {
 		f := &Facts{}
 		if m.facts != nil {
@@ -454,9 +455,15 @@ func (m *Manager) CheckRules(ctx context.Context, section any) *jsonx.Object {
 			f = &copied
 		}
 		f.AppIDs = m.o.AppIDs
-		check(f)
+		got <- check(f)
 	})
-	return report
+	select {
+	case report := <-got:
+		return report
+	default:
+		// The closure never ran (stopped, or ctx done first)
+		return jsonx.Obj("issues", jsonx.Arr(), "rules", jsonx.Arr())
+	}
 }
 
 // OutputsChanged tells of an output connected or gone (the daemon's

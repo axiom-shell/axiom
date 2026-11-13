@@ -38,6 +38,9 @@ func TestFillWindowRules(t *testing.T) {
 	if usable := windowrules.Usable(cfg, issues); len(usable) != 1 || !usable[0].Enabled || usable[0].Kinds[0].Conditions[0].Op != "is" {
 		t.Errorf("usable: %+v", usable)
 	}
+	if _, err := fillWindowRules(s, json.RawMessage(`null`)); err != nil {
+		t.Errorf("a null section: %v", err)
+	}
 	if _, err := fillWindowRules(s, json.RawMessage(`{`)); err == nil {
 		t.Error("a broken section was taken")
 	}

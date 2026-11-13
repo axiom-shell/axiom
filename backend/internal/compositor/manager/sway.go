@@ -471,7 +471,8 @@ func (w *swayWriter) seenReload() { w.runtime.reloads.Add(1) }
 
 // teardownSteps: a reload takes the binds, the look and the input out; when
 // the user's config starts axiom at every reload (partial), only the binds
-// the layer made go, by their unbinds.
+// the layer made go, by their unbinds. Window rules sent at runtime stay
+// until sway next reloads (a partial teardown can't reload).
 func (w *swayWriter) teardownSteps(in Inputs, partial bool) []session.Step {
 	if !partial {
 		return []session.Step{{Op: "reload"}}

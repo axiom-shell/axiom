@@ -907,6 +907,17 @@ func TestUndoLiveReloadsForGoneRules(t *testing.T) {
 	}
 }
 
+// A stopped manager still answers CheckRules, with empty lists
+func TestCheckRulesStopped(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	h.m.stop.Do(func() { close(h.m.stopped) })
+	got := h.m.CheckRules(context.Background(), jsonx.NewObject())
+	if s := string(jsonx.MarshalCompact(got)); s != `{"issues":[],"rules":[]}` {
+		t.Errorf("report: %s", s)
+	}
+}
+
 // CheckRules shows a draft as compositor.state does the saved rules: the
 // issues, and the rows by the facts' supports; only the issues with no
 // writer

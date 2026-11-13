@@ -272,7 +272,7 @@ func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.O
 	for _, r := range usable {
 		u := byRule[r.ID]
 		row := ruleRow{Rule: r.ID, Written: []string{}, Placed: orEmpty(u.Placed), Dropped: orEmpty(u.Dropped),
-			Live: orEmptyInts(u.Live), Skipped: orEmptyInts(u.Skipped)}
+			Live: orEmpty(u.Live), Skipped: orEmpty(u.Skipped)}
 		// Nothing is printed for a rule none of whose kinds is written
 		if len(u.Live)+len(u.Skipped) < len(r.Kinds) {
 			for _, key := range render.RuleEffects(r.Window) {
@@ -286,16 +286,9 @@ func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.O
 	return compiled, jsonx.Obj("issues", tree(issues), "rules", tree(rows))
 }
 
-func orEmpty(s []string) []string {
+func orEmpty[T any](s []T) []T {
 	if s == nil {
-		return []string{}
-	}
-	return s
-}
-
-func orEmptyInts(s []int) []int {
-	if s == nil {
-		return []int{}
+		return []T{}
 	}
 	return s
 }

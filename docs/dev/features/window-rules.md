@@ -1,10 +1,10 @@
 # Window rules
 
 > **Files:** `backend/internal/windowrules/`, `backend/internal/compositor/render/windowrules.go`, `qml/config/schema/sections/WindowRules.yaml`, `qml/config/schema/definitions/common/WindowRule.yaml`, `qml/config/schema/definitions/common/WindowRuleCondition.yaml`, `qml/config/schema/definitions/shared/WindowRuleWhen.yaml`, `tests/fixtures/windowrules/regex.json`
-> **Config:** `WindowRules.*` (no reader yet: only the daemon's package reads it)
+> **Config:** `WindowRules.*` (no shell reader yet: the daemon compiles and writes it)
 > **Related:** [Config modes](../compositor/config-modes.md), [Keybinds](../hyprland/keybinds.md), [Schema annotations](../core/schema-annotations.md), [Saved configs and sharing](../core/saved-configs-sharing.md)
 
-The user's window rules: what exists is the model, its validation and the renderers that compile it; nothing reads the section at runtime yet.
+The user's window rules: what exists is the model, its validation, the renderers that compile it, and the writers that put the rules in each compositor's config.
 
 ### The model
 - `WindowRules.rules` is an id'd list whose order is the priority: the higher a rule, the more it counts when two set the same thing. `Parse` turns the section into `Config`.

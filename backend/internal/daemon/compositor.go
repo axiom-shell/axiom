@@ -113,8 +113,7 @@ func fillWindowRules(s *schema.Schema, section json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, axerr.New(axerr.BadRequest, "the section isn't JSON: %v", err)
 	}
-	props, _ := s.Root().(*jsonx.Object).Value("properties").(*jsonx.Object)
-	filled, _ := config.ApplyDefaults(s, v, true, props.Value("WindowRules"))
+	filled, _ := config.ApplyDefaults(s, v, true, schema.Get(schema.Get(s.Root(), "properties"), "WindowRules"))
 	return filled, nil
 }
 
