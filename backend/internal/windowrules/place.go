@@ -10,6 +10,7 @@ type Report struct {
 	Dropped []string `json:"dropped"`
 	Live    []int    `json:"live"`
 	Skipped []int    `json:"skipped"`
+	Missing []int    `json:"missing"`
 }
 
 // RuleMatch is a usable rule matching a window, with the kinds that matched
@@ -43,7 +44,7 @@ const liveLook = "ruleLiveLook"
 // opens" means nothing after open, and the look needs the capability.
 func effectsOf(m RuleMatch, rep Report, supports map[string]bool, apply bool) (keys []string, written bool) {
 	written = !apply && slices.ContainsFunc(m.Kinds, func(k int) bool {
-		return !slices.Contains(rep.Live, k) && !slices.Contains(rep.Skipped, k)
+		return !slices.Contains(rep.Live, k) && !slices.Contains(rep.Skipped, k) && !slices.Contains(rep.Missing, k)
 	})
 	if written {
 		return rep.Placed, true

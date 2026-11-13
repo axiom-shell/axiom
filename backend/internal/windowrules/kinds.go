@@ -2,8 +2,12 @@ package windowrules
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
+
+// ErrNoApp is Lower's error for an `app` condition whose app isn't installed.
+var ErrNoApp = errors.New("windowrules: no installed app")
 
 // Live: only the daemon can test it (process, startedFrom, game).
 func (f Field) Live() bool {
@@ -92,7 +96,7 @@ func Lower(k Kind, apps AppIDs) (Lowered, error) {
 				ids = apps(c.Value)
 			}
 			if len(ids) == 0 {
-				return Lowered{}, errors.New("windowrules: no app ids for " + c.Value)
+				return Lowered{}, fmt.Errorf("%w: %s", ErrNoApp, c.Value)
 			}
 			if c.Op == OpIsNot {
 				for _, id := range ids {

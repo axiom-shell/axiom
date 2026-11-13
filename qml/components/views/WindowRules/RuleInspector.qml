@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
@@ -27,6 +28,17 @@ ColumnLayout {
         "level": "info",
         "text": I18n.tr("{0}: applied just after the window opens.", I18n.tr(root.schema.window.properties[key]?.title ?? key))
       }))
+  // "Don't focus when it opens" isn't applied to the kinds axiom matches
+  // after the window opens
+  readonly property var noFocusNotes: root.rule.window?.noFocus === true && (root.row?.live ?? []).length > 0 ? [
+    {
+      "level": "info",
+      "text": I18n.tr("Don't focus when it opens: not applied to the kinds axiom matches just after the window opens.")
+    }
+  ] : []
+  // The open windows the picker lists, taken when it opens
+  property var windowTypes: []
+  property var appTypes: []
   readonly property var generalNotes: root.general.map(issue => ({
         "level": "error",
         "text": root.editor.issueText(issue)
@@ -68,11 +80,49 @@ ColumnLayout {
       }
     }
 
-    StyledTextButton {
-      implicitHeight: Widget.height
-      iconText: "add"
-      text: I18n.tr("Add another kind")
-      onClicked: root.editor.addKind()
+    Flow {
+      Layout.fillWidth: true
+      spacing: Widget.spacing
+
+      StyledTextButton {
+        implicitHeight: Widget.height
+        iconText: "add"
+        text: I18n.tr("Add another kind")
+        onClicked: root.editor.addKind()
+      }
+
+      StyledTextButton {
+        id: fromWindowButton
+        visible: WindowRulesManager.state?.running === true
+        implicitHeight: Widget.height
+        iconText: "select_window"
+        text: I18n.tr("Add from open window")
+        onClicked: WindowRulesManager.windows(list => {
+          root.windowTypes = list.map(w => ({
+                "type": w.id,
+                "label": w.title || w.appId || w.id,
+                "image": AppIconManager.resolveWindowIcon(w.appId, w.title),
+                "detail": WindowRulesManager.windowDetail(w),
+                "keywords": [w.appId, w.process?.name ?? ""]
+              }));
+          windowPicker.openAt(fromWindowButton);
+        })
+      }
+
+      StyledTextButton {
+        id: addAppButton
+        implicitHeight: Widget.height
+        iconText: "apps"
+        text: I18n.tr("Add app")
+        onClicked: {
+          root.appTypes = WindowRulesManager.apps("").map(o => ({
+                "type": o.value,
+                "label": o.label,
+                "image": o.image
+              }));
+          appPicker.openAt(addAppButton);
+        }
+      }
     }
   }
 
@@ -89,7 +139,7 @@ ColumnLayout {
     }
 
     IssueList {
-      issues: root.placedNotes
+      issues: root.placedNotes.concat(root.noFocusNotes)
     }
   }
 
@@ -101,5 +151,25 @@ ColumnLayout {
     IssueList {
       issues: root.generalNotes
     }
+  }
+
+  // Names and titles aren't translation keys
+  TypePickerPopup {
+    id: windowPicker
+    parent: root
+    implicitWidth: Widget.px(420)
+    types: root.windowTypes
+    labelOf: type => type.label
+    placeholderText: I18n.tr("Search open windows")
+    onTypeSelected: type => root.editor.addKindFromWindow(type)
+  }
+
+  TypePickerPopup {
+    id: appPicker
+    parent: root
+    types: root.appTypes
+    labelOf: type => type.label
+    placeholderText: I18n.tr("Search apps")
+    onTypeSelected: type => root.editor.addApp(type)
   }
 }

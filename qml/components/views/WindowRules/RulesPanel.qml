@@ -59,12 +59,22 @@ Item {
           changed: root.editor.changed(ruleRow.index)
           onClicked: root.editor.select(ruleRow.index)
 
-          badges: IssueIcon {
-            visible: ruleRow.problems > 0
-            level: "error"
-            textSize: Appearance.fontSizeBy(-1)
-            tip: I18n.tr("{0} problems", ruleRow.problems)
-          }
+          badges: [
+            StyledText {
+              // How many open windows its conditions match now, on or off
+              readonly property int open: root.editor.openCount(ruleRow.index)
+              visible: open > 0
+              text: I18n.tr("{0} open", open)
+              opacity: 0.6
+              textSize: Appearance.fontSizeBy(-1)
+            },
+            IssueIcon {
+              visible: ruleRow.problems > 0
+              level: "error"
+              textSize: Appearance.fontSizeBy(-1)
+              tip: I18n.tr("{0} problems", ruleRow.problems)
+            }
+          ]
 
           RowAction {
             row: ruleRow

@@ -935,7 +935,7 @@ func TestCheckRules(t *testing.T) {
 	if s := string(jsonx.MarshalCompact(got.Value("issues"))); !strings.Contains(s, `"rule":"b"`) {
 		t.Errorf("issues: %s", s)
 	}
-	if s := string(jsonx.MarshalCompact(got.Value("rules"))); s != `[{"rule":"a","written":["float"],"placed":[],"dropped":["pin"],"live":[],"skipped":[]}]` {
+	if s := string(jsonx.MarshalCompact(got.Value("rules"))); s != `[{"rule":"a","written":["float"],"placed":[],"dropped":["pin"],"live":[],"skipped":[],"missing":[]}]` {
 		t.Errorf("rows: %s", s)
 	}
 	bare := &Manager{o: Options{Config: func() *jsonx.Object { return jsonx.NewObject() }}}

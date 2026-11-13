@@ -1,6 +1,7 @@
 package windowrules
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -28,6 +29,18 @@ func TestLive(t *testing.T) {
 	}
 	if got := r.LiveKinds(); !reflect.DeepEqual(got, []Kind{b}) {
 		t.Errorf("LiveKinds = %v", got)
+	}
+}
+
+func TestLowerNoApp(t *testing.T) {
+	t.Parallel()
+	_, err := Lower(Kind{[]Condition{{FieldApp, OpIs, "gone.desktop"}}}, func(string) []string { return nil })
+	if !errors.Is(err, ErrNoApp) {
+		t.Errorf("a missing app: %v", err)
+	}
+	_, err = Lower(Kind{[]Condition{{FieldAppID, OpMatches, "("}}}, nil)
+	if err == nil || errors.Is(err, ErrNoApp) {
+		t.Errorf("a bad pattern: %v", err)
 	}
 }
 

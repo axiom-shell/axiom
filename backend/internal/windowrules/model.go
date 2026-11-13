@@ -55,13 +55,15 @@ type Rule struct {
 }
 
 // Kind is one kind of window: every condition must hold.
-type Kind struct{ Conditions []Condition }
+type Kind struct {
+	Conditions []Condition `json:"conditions"`
+}
 
 // Condition is one test of a window.
 type Condition struct {
-	Field Field
-	Op    Op
-	Value string
+	Field Field  `json:"field"`
+	Op    Op     `json:"op"`
+	Value string `json:"value"`
 }
 
 // WindowEffects are what the compositor's config does when a window opens;

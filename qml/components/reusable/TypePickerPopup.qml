@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell.Widgets
 import qs.config
 import qs.components.methods
 
@@ -9,7 +10,9 @@ import qs.components.methods
 // with a search field: typing filters the types as the editors' libraries
 // do (LibraryOrder.filtered: by label, type, group heading or keyword),
 // Up/Down move, Enter picks, Escape closes. `types` is a list of
-// { type, label, icon?, group?, keywords? }, shown in the order given, or
+// { type, label, icon?, image?, detail?, group?, keywords? } (image: a
+// picture drawn in place of the glyph, an app's icon; detail: a faint
+// second text after the label, elided), shown in the order given, or
 // with `groups` (the schema's `x-libraryGroups`) under a heading per
 // group (LibraryOrder.grouped). The caller tracks what it opened this
 // for. `openAt(item)` opens it under `item` (or above it when there's no
@@ -196,10 +199,26 @@ Popup {
               textColor: Theme.accent
             }
 
+            IconImage {
+              visible: (rowDelegate.entry?.image ?? "") !== ""
+              source: rowDelegate.entry?.image ?? ""
+              implicitSize: Appearance.fontSizeLarge
+              asynchronous: true
+            }
+
             StyledLabel {
               Layout.fillWidth: true
               elide: Text.ElideRight
               text: rowDelegate.entry ? root.labelOf(rowDelegate.entry) : ""
+            }
+
+            StyledText {
+              visible: (rowDelegate.entry?.detail ?? "") !== ""
+              Layout.maximumWidth: rowDelegate.width * 0.45
+              elide: Text.ElideRight
+              text: rowDelegate.entry?.detail ?? ""
+              opacity: 0.6
+              textSize: Appearance.fontSizeBy(-1)
             }
           }
 

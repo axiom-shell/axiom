@@ -43,6 +43,7 @@ type Options struct {
 type State struct {
 	Running bool              `json:"running"`
 	Rules   []RuleWindows     `json:"rules"` // usable rules matching any window, priority order
+	Open    []string          `json:"open"`  // ids of the open windows, table order; changes on open and close only
 	Holds   windowrules.Holds `json:"holds"`
 	Look    windowrules.Look  `json:"look"`
 }
@@ -67,6 +68,7 @@ type snapshot struct {
 	state   State
 	windows []WindowInfo
 	facts   []windowrules.Facts
+	focused string // the last window seen focused and still open; "": none
 }
 
 // Engine matches the open windows against the usable rules.
@@ -106,6 +108,7 @@ type loop struct {
 	ctx      context.Context
 	wg       *sync.WaitGroup // the placements in flight, and the watcher
 	table    []entry
+	focused  string // the id of the last window seen focused, while it is open
 	rules    []windowrules.Rule
 	match    windowrules.Matcher
 	supports map[string]bool
@@ -140,7 +143,7 @@ func New(o Options) *Engine {
 
 func (e *Engine) empty() State {
 	return State{
-		Running: e.o.Events != nil, Rules: []RuleWindows{},
+		Running: e.o.Events != nil, Rules: []RuleWindows{}, Open: []string{},
 		Holds: windowrules.Hold(nil), Look: windowrules.LookOf(nil),
 	}
 }
@@ -230,6 +233,21 @@ func (e *Engine) State() State { return e.snap.Load().state }
 // Windows are the open windows as the rules see them.
 func (e *Engine) Windows() []WindowInfo { return e.snap.Load().windows }
 
+// Window is the open window with id ("": the last focused one still open) as
+// the rules see it, with its facts; false when there is none.
+func (e *Engine) Window(id string) (WindowInfo, windowrules.Facts, bool) {
+	snap := e.snap.Load()
+	if id == "" {
+		id = snap.focused
+	}
+	for i, w := range snap.windows {
+		if id != "" && w.ID == id {
+			return w, snap.facts[i], true
+		}
+	}
+	return WindowInfo{}, windowrules.Facts{}, false
+}
+
 // Run follows the windows until ctx ends (then nil); it runs Events in a
 // goroutine it owns and waits for it.
 func (e *Engine) Run(ctx context.Context) error {
@@ -306,10 +324,13 @@ func (l *loop) apply(ev windows.Event) {
 	case windows.Reset:
 		// Nothing lost focus across a reconnect: no grace
 		l.table = l.table[:0]
+		l.focused = ""
 		for _, w := range ev.Windows {
 			l.table = append(l.table, l.entryFor(w, nil))
+			l.seeFocus(w)
 		}
 	case windows.Opened, windows.Changed:
+		l.seeFocus(ev.Window)
 		i := slices.IndexFunc(l.table, func(t entry) bool { return t.win.ID == ev.Window.ID })
 		if i < 0 {
 			n := l.entryFor(ev.Window, nil)
@@ -334,6 +355,18 @@ func (l *loop) apply(ev windows.Event) {
 		if i := slices.IndexFunc(l.table, func(t entry) bool { return t.win.ID == ev.Window.ID }); i >= 0 {
 			l.table = slices.Delete(l.table, i, i+1)
 		}
+		if l.focused == ev.Window.ID {
+			l.focused = ""
+		}
+	}
+}
+
+// seeFocus remembers w when it is focused: the last focused window still
+// open is the one "focused" means to a rule made from it, whatever a
+// compositor says of focus while a layer surface holds the keyboard.
+func (l *loop) seeFocus(w windows.Window) {
+	if w.Focused {
+		l.focused = w.ID
 	}
 }
 
@@ -370,7 +403,8 @@ func (l *loop) recompute() time.Duration {
 	grace := l.e.o.Grace
 	next := time.Hour
 	var active []windowrules.Active
-	snap := &snapshot{}
+	snap := &snapshot{focused: l.focused}
+	var open []string
 	byRule := make([][]string, len(l.rules))
 	for i := range l.table {
 		t := &l.table[i]
@@ -394,15 +428,17 @@ func (l *loop) recompute() time.Duration {
 			info.Rules = append(info.Rules, l.rules[ri].ID)
 		}
 		snap.windows = append(snap.windows, info)
+		open = append(open, t.win.ID)
 		snap.facts = append(snap.facts, t.facts)
 	}
 	if snap.windows == nil {
 		snap.windows = []WindowInfo{}
 	}
 	st := State{
-		Running: l.e.o.Events != nil, Rules: []RuleWindows{},
+		Running: l.e.o.Events != nil, Rules: []RuleWindows{}, Open: []string{},
 		Holds: windowrules.Hold(active), Look: windowrules.LookOf(active),
 	}
+	st.Open = append(st.Open, open...)
 	for ri, ids := range byRule {
 		if len(ids) > 0 {
 			st.Rules = append(st.Rules, RuleWindows{Rule: l.rules[ri].ID, Windows: ids})
