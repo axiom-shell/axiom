@@ -30,10 +30,8 @@ QtObject {
   // focusedId ("" with none), layouts ({ [tiled window id]: its parent's
   // layout }, scratch (the windows in the scratchpad, in the contract's
   // shape with hidden true and output "": kept out of windows, for specials
-  // alone), specialWorkspaces ([{ name, id, output (the output holding it),
-  // urgent }] for each axiom-special-<name> workspace) }. Windows in the
-  // scratchpad aren't in windows; one shown from it is, on the workspace it
-  // shows on.
+  // alone) }. Windows in the scratchpad aren't in windows; one shown from it
+  // is, on the workspace it shows on.
   function tree(reply) {
     const info = {
       "windows": [],
@@ -43,8 +41,7 @@ QtObject {
       "order": _focusOrder(reply),
       "focusedId": "",
       "layouts": {},
-      "scratch": [],
-      "specialWorkspaces": []
+      "scratch": []
     };
     for (const output of reply?.nodes ?? []) {
       if (output.name === "__i3") {
@@ -70,14 +67,6 @@ QtObject {
         if (ws.type !== "workspace")
           continue;
         info.workspaceRects[ws.name] = ws.rect;
-        const group = root.specialWorkspaceName(ws.name);
-        if (group !== "")
-          info.specialWorkspaces.push({
-            "name": group,
-            "id": root.workspaceId(ws),
-            "output": output.name,
-            "urgent": ws.urgent === true
-          });
         const before = info.windows.length;
         _walk(ws, {
           "output": output.name,
@@ -393,63 +382,32 @@ QtObject {
     };
   }
 
-  // The workspace special group `name` is when it's a workspace of its own
-  function specialWorkspace(name) {
-    return `axiom-special-${name}`;
-  }
-
-  // The group name of an axiom special workspace's name, or "" for another
-  function specialWorkspaceName(wsName) {
-    const prefix = root.specialWorkspace("");
-    const text = String(wsName ?? "");
-    return text.startsWith(prefix) ? text.slice(prefix.length) : "";
-  }
-
   // The special groups (contract.md › Shapes, Special) from tree() (`info`),
-  // marks() (`marks`) and the outputs: every group a mark or a workspace
-  // names, the same in both specialWorkspaces modes
+  // marks() (`marks`) and the outputs: every group a mark names, with the
+  // windows carrying one (the scratchpad's and the ones shown from it)
   function specials(info, marks, outputs) {
     const names = [];
-    const add = name => {
-      if (name !== "" && !names.includes(name))
-        names.push(name);
-    };
     for (const id of Object.keys(marks ?? {}))
-      (marks[id] ?? []).forEach(mark => add(root.specialGroup(mark)));
-    (info?.specialWorkspaces ?? []).forEach(ws => add(ws.name));
+      (marks[id] ?? []).forEach(mark => {
+        const name = root.specialGroup(mark);
+        if (name !== "" && !names.includes(name))
+          names.push(name);
+      });
     return names.map(name => {
-      const ws = (info?.specialWorkspaces ?? []).find(w => w.name === name);
       const marked = win => (marks?.[win.id] ?? []).some(mark => root.specialGroup(mark) === name);
       const all = info?.windows ?? [];
-      const windows = all.filter(win => marked(win) || win.workspaceName === root.specialWorkspace(name)).concat((info?.scratch ?? []).filter(marked));
-      let output = "";
-      if (ws)
-        output = (outputs ?? []).find(o => o.activeWorkspaceId === ws.id)?.name ?? "";
-      if (output === "" && !ws)
-        output = all.find(win => marked(win) && win.output !== "")?.output ?? "";
+      const windows = all.filter(marked).concat((info?.scratch ?? []).filter(marked));
+      const output = all.find(win => marked(win) && win.output !== "")?.output ?? "";
       return {
         "name": name,
-        "id": ws?.id ?? 0,
+        "id": 0,
         "open": output !== "",
         "output": output,
         "windowCount": windows.length,
-        "urgent": ws?.urgent === true,
+        "urgent": false,
         "windows": windows
       };
     });
-  }
-
-  // The commands toggling special group `name` as a workspace of its own:
-  // back to `previous` (the workspace that output showed before it, or
-  // sway's back_and_forth, which goes to the last one on any output, with
-  // none known) when it's the workspace shown on the focused output
-  // (`active`, that workspace's name), else to it on that output
-  // (`output`), from wherever it is
-  function specialWorkspaceToggle(name, active, output, previous) {
-    const ws = root.specialWorkspace(name);
-    if (active !== ws)
-      return [`workspace ${root.quote(ws)}`, `move workspace to output ${root.quote(output)}`];
-    return [previous ? `workspace ${root.quote(previous)}` : "workspace back_and_forth"];
   }
 
   // The commands removing window `id`'s axiom special-group marks
@@ -457,58 +415,24 @@ QtObject {
     return (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `[con_id=${Number(id)}] unmark ${root.quote(mark)}`);
   }
 
-  // The commands moving window `id` into special group `name` kept as
-  // `kind` ("scratchpad", marked and hidden, or "workspace"), out of any
-  // group it's in (`marks`, every window's): a window is in one at a time
-  function specialMove(marks, id, name, kind) {
+  // The commands moving window `id` into special group `name` (marked and
+  // hidden in the scratchpad), out of any group it's in (`marks`, every
+  // window's): a window is in one at a time
+  function specialMove(marks, id, name) {
     const con = `[con_id=${Number(id)}]`;
-    return root._unmarkLines(marks, id).concat(kind === "workspace" ? [`${con} move container to workspace ${root.quote(root.specialWorkspace(name))}`] : [`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
+    return root._unmarkLines(marks, id).concat([`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
   }
 
   // The commands taking window `id` out of its special group (`marks`, every
   // window's): its axiom marks come off (a user's own stay). A scratchpad
-  // one (`scratch`: marked by axiom, or the user's own scratchpad window) also
-  // stops being the scratchpad's: shown first when
-  // `hidden`, then floated off and on again (sway refuses to float a hidden
-  // one), so it is an ordinary floating window. A workspace group's is just
-  // on a named workspace: the unmarks are all it takes.
-  function specialLeave(marks, id, hidden, scratch) {
+  // one (marked by axiom, or the user's own scratchpad window) also
+  // stops being the scratchpad's: shown first when `hidden`, then floated off
+  // and on again (sway refuses to float a hidden one), so it is an ordinary
+  // floating window.
+  function specialLeave(marks, id, hidden) {
     const con = `[con_id=${Number(id)}]`;
     const lines = root._unmarkLines(marks, id);
-    if (scratch === true)
-      return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
-    return lines;
-  }
-
-  // Special group `name`'s windows the other kind keeps, moved over to
-  // `kind` ("scratchpad" or "workspace") after Workspaces.specialWorkspaces
-  // changed: { lines (the commands), windows and marks (`windows` and
-  // `marks` as they are after them, for the scratchpad's toggle) }. To the
-  // workspace, marked windows lose the mark and move there; to the
-  // scratchpad, the windows on the group's workspace are marked (out of
-  // any other group) and moved to it, then back to `active` (the focused
-  // output's workspace): sway goes to the group's workspace when its last
-  // tiled window leaves for the scratchpad
-  function specialAdopt(windows, marks, name, kind, active) {
-    if (kind === "workspace")
-      return {
-        "lines": [].concat(...root.specialToggle([], marks, name, "").ids.map(id => root.specialMove(marks, id, name, kind))),
-        "windows": windows,
-        "marks": marks
-      };
-    const ws = root.specialWorkspace(name);
-    const strays = (windows ?? []).filter(win => win.workspaceName === ws);
-    const after = Object.assign({}, marks ?? {});
-    for (const win of strays)
-      after[win.id] = (marks?.[win.id] ?? []).filter(mark => root.specialGroup(mark) === "").concat([`axiom-special-${name}-${win.id}`]);
-    const lines = [].concat(...strays.map(win => root.specialMove(marks, win.id, name, kind)));
-    if (lines.length > 0 && active && active !== ws)
-      lines.push(`workspace --no-auto-back-and-forth ${root.quote(active)}`);
-    return {
-      "lines": lines,
-      "windows": (windows ?? []).filter(win => !strays.includes(win)),
-      "marks": after
-    };
+    return lines.concat(hidden === true ? [`${con} scratchpad show`] : [], [`${con} floating disable`, `${con} floating enable`]);
   }
 
   // The marks of every window in a get_tree reply: { [id]: [marks] }, for

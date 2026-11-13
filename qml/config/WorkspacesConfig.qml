@@ -30,9 +30,6 @@ QtObject {
   // Workspaces a monitor shows
   readonly property int size: grid ? columns * rows : count
   readonly property bool wrap: _c.wrap
-  // How sway shows a special group: "scratchpad" (its windows float over
-  // the workspace) or "workspace" (a workspace of its own)
-  readonly property string specialWorkspaces: _c.specialWorkspaces
   readonly property bool animate: _c.animate
   // The overview board's columns: the grid's, else even rows where possible
   readonly property int boardColumns: grid ? columns : _evenColumns(count)

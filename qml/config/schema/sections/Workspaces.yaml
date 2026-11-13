@@ -161,12 +161,3 @@ properties:
         icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: "An icon name or glyph, and text. The widget's Scratchpad labels picks which shows."}
         text: {type: string, title: Label, default: ''}
       required: [id]
-  specialWorkspaces:
-    type: string
-    x-group: Scratchpads
-    title: Special workspaces
-    x-control: toggle
-    enum: [scratchpad, workspace]
-    x-enumLabels: {scratchpad: Scratchpad, workspace: Workspace}
-    default: scratchpad
-    x-showIf: {/$supports.scratchpad: true}

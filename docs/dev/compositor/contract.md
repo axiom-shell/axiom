@@ -30,7 +30,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
   - `id` is the number axiom's layout uses (`WorkspacesConfig`).
 - **Special**: `{ name, id, open, output, windowCount, urgent, windows }`, a special workspace (scratchpad) for the switcher's cells (`CompositorManager.specials`; `HyprState.specials`, `SwayState.specials`).
   - `name` is the name a `toggleSpecial` bind takes (Hyprland's `special:magic` is `magic`).
-  - `id` is the compositor's workspace id while it is a workspace (Hyprland's negative id, or -1 where Hyprland gives none; sway's workspace mode: minus its con id), else 0 (a sway scratchpad group). Never match on it for Hyprland: `HyprState.specials` matches workspaces, outputs and windows by name.
+  - `id` is the compositor's workspace id while it is a workspace (Hyprland's negative id, or -1 where Hyprland gives none), else 0 (a sway scratchpad group). Never match on it for Hyprland: `HyprState.specials` matches workspaces, outputs and windows by name.
   - `output` is the output it is open on, or `""`; `open` is `output !== ""`.
   - `windows` are its windows in the Window shape, sway's hidden scratchpad ones included (`hidden: true`, `output: ""`); `windowCount` is their count.
   - `urgent`: the workspace's (always false for a sway scratchpad group).
@@ -101,7 +101,6 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `monitorColor` | a monitor rule's bit depth, color management and SDR fields |
 | `monitorMirror` | a monitor rule can mirror another output |
 | `namedSpecial` | named special workspaces (the `toggleSpecial` / `moveToSpecial` binds, the switcher's scratchpads: `CompositorManager.specials`) |
-| `scratchpad` | a scratchpad (sway's), standing in for the special workspace in those binds |
 | `mouseBinds` | binds on mouse buttons (`mouseDrag`, `mouseResize`) |
 | `pseudoTile` | the `pseudo` bind |
 | `splitToggle` | the `toggleSplit` bind (Hyprland's dwindle layout: on its scrolling layout the bind gets an info note) |

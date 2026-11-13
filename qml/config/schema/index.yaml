@@ -52,7 +52,7 @@ properties:
     description: 'The config file''s format: 2. A file without it is format 1, which axiom converts once.'
   version:
     type: integer
-    default: 106
+    default: 107
     x-settings: false
     description: Config version within format 2, used for migration.
   meta:
