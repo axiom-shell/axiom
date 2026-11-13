@@ -205,7 +205,7 @@ func TestResetHoldsAtOnce(t *testing.T) {
 	r.send(windows.Reset, win("1", "foot"), win("2", "other"))
 	r.waitFor("dnd held", func(s State) bool { return len(s.Holds.DND) == 1 })
 	st := r.e.State()
-	if !st.Running || !reflect.DeepEqual(st.Rules, []RuleWindows{{"a", []string{"1"}}}) {
+	if !st.Running || !reflect.DeepEqual(st.Rules, []RuleWindows{{"a", "a", []string{"1"}}}) {
 		t.Errorf("state %+v", st)
 	}
 }
@@ -374,7 +374,7 @@ func TestUnknownProcess(t *testing.T) {
 	r.send(windows.Reset, nopid, bridge, known)
 	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 2 })
 	st := r.e.State()
-	want := []RuleWindows{{"p", []string{"3"}}, {"g", []string{"2"}}}
+	want := []RuleWindows{{"p", "p", []string{"3"}}, {"g", "g", []string{"2"}}}
 	if !reflect.DeepEqual(st.Rules, want) {
 		t.Errorf("rules %+v, want %+v", st.Rules, want)
 	}
@@ -410,6 +410,83 @@ func TestUnknownProcess(t *testing.T) {
 	}
 }
 
+func TestRuleNames(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	named := `{"id":"n","name":"Games","enabled":true,"windows":[{"conditions":[` + appFoot + `]}],"shell":` + dndOpen + `}`
+	r.e.SetConfig(rulesOf(t, named, ruleJSON("u", appFoot, dndOpen)), nil)
+	r.run()
+	r.send(windows.Reset, win("1", "foot"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 2 })
+	want := []RuleWindows{{"n", "Games", []string{"1"}}, {"u", "u", []string{"1"}}}
+	if got := r.e.State().Rules; !reflect.DeepEqual(got, want) {
+		t.Errorf("rules %+v, want %+v", got, want)
+	}
+	if got := r.e.Match(rulesOf(t, named, ruleJSON("u", appFoot, dndOpen))); !reflect.DeepEqual(got, want) {
+		t.Errorf("Match %+v, want %+v", got, want)
+	}
+}
+
+func TestOverride(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	r.e.SetConfig(rulesOf(t, ruleJSON("a", appFoot, dndOpen)), nil)
+	r.run()
+	r.send(windows.Reset, win("1", "foot"))
+	r.waitFor("dnd held", func(s State) bool { return len(s.Holds.DND) == 1 })
+	if err := r.e.Override("x"); err == nil {
+		t.Error("an unknown effect was accepted")
+	}
+	if err := r.e.Override("dnd"); err != nil {
+		t.Fatal(err)
+	}
+	r.waitFor("overridden", func(s State) bool { return s.Overrides.DND })
+	// The hold ends with its window
+	r.send(windows.Closed, win("1", "foot"))
+	r.waitFor("not overridden", func(s State) bool { return !s.Overrides.DND && len(s.Holds.DND) == 0 })
+	// Asked while nothing is held: ignored, nothing pushed
+	n := r.count()
+	if err := r.e.Override("dnd"); err != nil {
+		t.Fatal(err)
+	}
+	// The loop takes the ask (it's recomputed against nothing held) before
+	// the next window opens, or the stale ask would meet its hold
+	if !testkit.Eventually(func() bool {
+		r.e.mu.Lock()
+		defer r.e.mu.Unlock()
+		return r.e.overrides == nil
+	}) {
+		t.Fatal("the loop never took the override")
+	}
+	r.quiet(n)
+	if r.e.State().Overrides.DND {
+		t.Error("an override with nothing held stuck")
+	}
+	// And the next hold isn't overridden
+	r.send(windows.Opened, win("2", "foot"))
+	r.waitFor("held again", func(s State) bool { return len(s.Holds.DND) == 1 })
+	if r.e.State().Overrides.DND {
+		t.Error("the next hold was overridden")
+	}
+}
+
+func TestPowerOverrideEndsWithAnotherHold(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	power := func(profile string) string {
+		return `{"powerProfile":{"enabled":true,"profile":"` + profile + `","when":"open"}}`
+	}
+	appBar := `{"field":"appId","op":"is","value":"bar"}`
+	r.e.SetConfig(rulesOf(t, ruleJSON("hi", appBar, power("powerSaver")), ruleJSON("lo", appFoot, power("performance"))), nil)
+	r.run()
+	r.send(windows.Reset, win("1", "foot"))
+	r.waitFor("held", func(s State) bool { return s.Holds.PowerProfile.Rule == "lo" })
+	r.e.Override("powerProfile")
+	r.waitFor("overridden", func(s State) bool { return s.Overrides.PowerProfile })
+	r.send(windows.Opened, win("2", "bar"))
+	r.waitFor("another hold", func(s State) bool { return s.Holds.PowerProfile.Rule == "hi" && !s.Overrides.PowerProfile })
+}
+
 func TestMatchDraft(t *testing.T) {
 	t.Parallel()
 	r := newRig(t)
@@ -422,7 +499,7 @@ func TestMatchDraft(t *testing.T) {
 		{"id":"c","enabled":true,"windows":[{"conditions":[{"field":"appId","op":"is","value":""}]}]}
 	]}`)
 	got := r.e.Match(draft)
-	want := []RuleWindows{{"a", []string{"1"}}, {"b", []string{"2"}}, {"c", []string{}}}
+	want := []RuleWindows{{"a", "a", []string{"1"}}, {"b", "b", []string{"2"}}, {"c", "c", []string{}}}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Match = %+v, want %+v", got, want)
 	}
