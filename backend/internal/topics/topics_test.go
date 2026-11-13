@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -256,45 +256,58 @@ func TestSubscribesApplyInOrder(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 	reg := rpc.NewRegistry()
+	var refreshed atomic.Int32
 	Register(reg, h.hub, Source{Name: "u", Floor: time.Millisecond, Default: 10 * time.Second,
-		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) { return 0, nil }})
+		OnRefresh: func() { refreshed.Add(1) },
+		Fetch:     func(ctx context.Context, requests []json.RawMessage) (any, error) { return 0, nil }})
 	a, b := net.Pipe()
 	c := rpc.NewConn(a, reg, rpc.DefaultLimits(), nil)
 	t.Cleanup(func() { c.Close(); b.Close() })
-	go io.Copy(io.Discard, b)
-	for i := 0; i < 100; i++ { // 200 calls: under MaxInFlight
-		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":0}}`+"\n", 2*i)
-		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":2000}}`+"\n", 2*i+1)
-	}
-	intervals := func() []time.Duration {
-		h.hub.mu.Lock()
-		defer h.hub.mu.Unlock()
-		var out []time.Duration
-		for _, s := range h.hub.sources["u"].subs {
-			out = append(out, s.interval)
+	const rounds = 60
+	const calls = 1 + 3*rounds // under MaxInFlight
+	// The replies come back in order: counting them says every call ran
+	replied := make(chan struct{})
+	go func() {
+		r := bufio.NewReader(b)
+		for n := 0; n < calls; {
+			l, err := r.ReadBytes('\n')
+			if err != nil {
+				return
+			}
+			if strings.Contains(string(l), `"id"`) { // not a u.state push
+				n++
+			}
 		}
-		return out
+		close(replied)
+	}()
+	id := 0
+	send := func(method, params string) {
+		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.%s","params":%s}`+"\n", id, method, params)
+		id++
 	}
-	if !testkit.Eventually(func() bool { got := intervals(); return len(got) == 1 && got[0] == 2*time.Second }) {
-		t.Fatalf("the hub's intervals %v, want 2s", intervals())
+	send("subscribe", `{"interval":0}`)
+	for i := 0; i < rounds; i++ { // a refresh, then a stale subscribe before the right one
+		send("refresh", `{}`)
+		send("subscribe", `{"interval":0}`)
+		send("subscribe", `{"interval":2000}`)
 	}
-	// ...and it never drifts back to the stale one
-	time.Sleep(50 * time.Millisecond)
-	if got := intervals(); len(got) != 1 || got[0] != 2*time.Second {
-		t.Errorf("intervals %v", got)
+	select {
+	case <-replied:
+	case <-time.After(testkit.Bound(2 * time.Second)):
+		t.Fatal("the calls didn't all answer")
 	}
-}
-
-func TestRegisterMarksTheMethodsInOrder(t *testing.T) {
-	t.Parallel()
-	h := newHarness(t)
-	reg := rpc.NewRegistry()
-	Register(reg, h.hub, Source{Name: "u", Floor: time.Millisecond, Default: time.Second,
-		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) { return 0, nil }})
-	for _, m := range []string{"u.subscribe", "u.unsubscribe", "u.refresh"} {
-		if !reg.IsInOrder(m) {
-			t.Errorf("%s isn't in order", m)
-		}
+	h.hub.mu.Lock()
+	defer h.hub.mu.Unlock()
+	var got []time.Duration
+	for _, s := range h.hub.sources["u"].subs {
+		got = append(got, s.interval)
+	}
+	if len(got) != 1 || got[0] != 2*time.Second {
+		t.Errorf("the hub's intervals %v, want 2s", got)
+	}
+	// Every refresh ran after the first subscribe, so none found no subscriber
+	if n := refreshed.Load(); n != rounds {
+		t.Errorf("%d refreshes took effect, want %d", n, rounds)
 	}
 }
 
@@ -309,27 +322,39 @@ func TestUnsubscribeThenSubscribeKeepsTheSubscription(t *testing.T) {
 	a, b := net.Pipe()
 	c := rpc.NewConn(a, reg, rpc.DefaultLimits(), nil)
 	t.Cleanup(func() { c.Close(); b.Close() })
+	const calls = 100
 	pushed := make(chan struct{}, 1)
+	replied := make(chan struct{})
 	go func() {
 		sc := bufio.NewScanner(b)
-		for sc.Scan() {
-			if strings.Contains(sc.Text(), `"u.state"`) {
+		for n := 0; sc.Scan(); {
+			line := sc.Text()
+			if strings.Contains(line, `"u.state"`) {
 				select {
 				case pushed <- struct{}{}:
 				default:
 				}
+			} else if strings.Contains(line, `"id"`) {
+				if n++; n == calls {
+					close(replied)
+				}
 			}
 		}
 	}()
-	for i := 0; i < 50; i++ {
+	for i := 0; i < calls/2; i++ {
 		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.unsubscribe"}`+"\n", 2*i)
 		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":2000}}`+"\n", 2*i+1)
 	}
-	if !testkit.Eventually(func() bool {
-		h.hub.mu.Lock()
-		defer h.hub.mu.Unlock()
-		return len(h.hub.sources["u"].subs) == 1
-	}) {
+	// The replies come back in order: all of them in says every call ran
+	select {
+	case <-replied:
+	case <-time.After(testkit.Bound(2 * time.Second)):
+		t.Fatal("the calls didn't all answer")
+	}
+	h.hub.mu.Lock()
+	subs := len(h.hub.sources["u"].subs)
+	h.hub.mu.Unlock()
+	if subs != 1 {
 		t.Fatal("the connection ended unsubscribed")
 	}
 	select {

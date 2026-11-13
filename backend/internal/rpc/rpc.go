@@ -116,9 +116,6 @@ func (r *Registry) InOrder(methods ...string) {
 	}
 }
 
-// IsInOrder reports whether method's calls run in the order they arrived.
-func (r *Registry) IsInOrder(method string) bool { return r.handlers[method].inOrder }
-
 // Types is what method takes and returns, as Go types (false: no such
 // method).
 func (r *Registry) Types(method string) (params, result reflect.Type, ok bool) {
@@ -478,15 +475,13 @@ func (c *Conn) readLoop() {
 		select {
 		case c.inFlight <- struct{}{}:
 		default:
-			if m.ID != nil {
-				// Busy, not Unavailable: the caller can tell it from a lost
-				// connection and ask again
-				if !busyLogged {
-					busyLogged = true
-					c.log.Warn("refusing calls: too many in flight")
-				}
-				c.replyError(m.ID, toWire(axerr.New(axerr.Busy, "too many requests in flight")))
+			// Busy, not Unavailable: the caller can tell it from a lost
+			// connection and ask again
+			if !busyLogged {
+				busyLogged = true
+				c.log.Warn("refusing calls: too many in flight")
 			}
+			c.replyError(m.ID, toWire(axerr.New(axerr.Busy, "too many requests in flight")))
 			continue
 		}
 		var after, done chan struct{}

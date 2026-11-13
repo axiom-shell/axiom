@@ -130,7 +130,8 @@ func Register(reg *rpc.Registry, h *Hub, src Source) {
 	})
 	// A connection's calls apply in the order sent: the shell can send a
 	// stale subscribe just before the right one, and the last to arrive
-	// must be the last sent. None of them blocks.
+	// must be the last sent. They queue behind the connection's other
+	// in-order calls (config.set, say), though none blocks for long.
 	reg.InOrder(name+".subscribe", name+".unsubscribe", name+".refresh")
 }
 
@@ -182,7 +183,7 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 		asked = asked || o.what == sub.what
 	}
 	t.subs[s] = sub
-	h.o.Log.Debug("topic subscribe", "topic", name, "subscribers", len(t.subs))
+	h.o.Log.Debug("topic subscribe", "topic", name, "subscribers", len(t.subs), "interval", sub.interval)
 	if t.cancel == nil {
 		h.start(t)
 	} else {

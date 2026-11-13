@@ -32,6 +32,11 @@ var ErrRefused = errors.New("niri refused it")
 
 // Request sends one request (a JSON value) and returns the reply's Ok.
 func (n *Niri) Request(ctx context.Context, request any) (json.RawMessage, error) {
+	ok, err := n.request(ctx, request)
+	return ok, ctxErr(ctx, err)
+}
+
+func (n *Niri) request(ctx context.Context, request any) (json.RawMessage, error) {
 	conn, err := dial(ctx, n.Path)
 	if err != nil {
 		return nil, err

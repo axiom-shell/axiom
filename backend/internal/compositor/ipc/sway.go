@@ -66,6 +66,10 @@ func swayRead(conn net.Conn) (uint32, []byte, error) {
 }
 
 func (s *Sway) request(ctx context.Context, kind uint32, payload string, reply any) error {
+	return ctxErr(ctx, s.roundTrip(ctx, kind, payload, reply))
+}
+
+func (s *Sway) roundTrip(ctx context.Context, kind uint32, payload string, reply any) error {
 	conn, err := dial(ctx, s.Path)
 	if err != nil {
 		return err

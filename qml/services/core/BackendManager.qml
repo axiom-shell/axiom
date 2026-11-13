@@ -81,6 +81,7 @@ QtObject {
   // (ConsumerRegistry) and listens to the state
   function acquire(topic, request) {
     root._acquired[topic] = request ?? {};
+    root._cancelRetry(topic);
     if (root.ready)
       root._subscribe(topic);
   }
@@ -91,9 +92,9 @@ QtObject {
     if (!(topic in root._acquired))
       return;
     delete root._acquired[topic];
-    delete root._retryTopics[topic];
+    root._cancelRetry(topic);
     if (root.ready)
-      root.call(topic + ".unsubscribe", {}, root._logFailure(topic + ".unsubscribe"));
+      root._unsubscribe(topic);
   }
 
   // Asks axiom to fetch an acquired topic now
@@ -130,50 +131,67 @@ QtObject {
   // acquire's topics: { topic: request }, subscribed again on each hello
   property var _acquired: ({})
 
-  // A subscribe axiom refused (busy: too many calls in flight, or any error
-  // but a closed connection) is sent again after a moment, with the topic's
-  // current request, never the one that failed: a lost one left its data
-  // stuck loading. One pending retry per topic
-  // (_retryTopics: { topic: attempts }), every second, given up after
-  // _maxResubscribes; release() cancels it.
+  // A subscribe or unsubscribe axiom refused as busy (too many calls in
+  // flight) is sent again after a moment: the subscribe with the topic's
+  // current request, never the one that failed (a lost one left its data
+  // stuck loading), the unsubscribe only while the topic is still released.
+  // Any other refusal is warned about once, not retried. One pending retry
+  // per topic (_retryTopics: { topic: attempts }, _retryDue: the topics the
+  // timer sends next), every second, given up after _maxResubscribes;
+  // acquire() and release() start the count again.
   function _subscribe(topic) {
-    root.call(topic + ".subscribe", root._acquired[topic], error => {
-      if (!error) {
-        delete root._retryTopics[topic];
-        return;
-      }
-      if (error.kind === "unavailable")
-        return;
-      if (error.kind !== "busy")
-        console.warn("[BackendManager]", topic + ".subscribe", "failed:", error.message);
-      root._retrySubscribe(topic);
-    });
+    root.call(topic + ".subscribe", root._acquired[topic], error => root._onAnswer(topic, ".subscribe", error));
+  }
+
+  function _unsubscribe(topic) {
+    root.call(topic + ".unsubscribe", {}, error => root._onAnswer(topic, ".unsubscribe", error));
   }
 
   readonly property int _maxResubscribes: 5
   property var _retryTopics: ({})
+  property var _retryDue: ({})
 
-  function _retrySubscribe(topic) {
-    if (!root.ready || !(topic in root._acquired))
-      return;
-    const attempts = root._retryTopics[topic] ?? 0;
-    if (attempts >= root._maxResubscribes) {
+  function _cancelRetry(topic) {
+    delete root._retryTopics[topic];
+    delete root._retryDue[topic];
+  }
+
+  function _onAnswer(topic, method, error) {
+    const step = TopicRetry.decide(error, root._retryTopics[topic] ?? 0, root._maxResubscribes);
+    switch (step.action) {
+    case "done":
       delete root._retryTopics[topic];
-      console.warn("[BackendManager]", topic + ".subscribe", "still refused: given up");
-      return;
+      break;
+    case "warn":
+      delete root._retryTopics[topic];
+      console.warn("[BackendManager]", topic + method, "failed:", error.message);
+      break;
+    case "giveUp":
+      delete root._retryTopics[topic];
+      console.warn("[BackendManager]", topic + method, "still refused: given up");
+      break;
+    case "retry":
+      if (!root.ready)
+        break;
+      root._retryTopics[topic] = step.attempts;
+      root._retryDue[topic] = true;
+      root._resubscribe.restart();
+      break;
     }
-    root._retryTopics[topic] = attempts + 1;
-    root._resubscribe.restart();
   }
 
   property Timer _resubscribe: Timer {
     interval: 1000
     onTriggered: {
-      for (const topic of Object.keys(root._retryTopics)) {
-        if (root.ready && topic in root._acquired)
+      const due = Object.keys(root._retryDue);
+      root._retryDue = {};
+      for (const topic of due) {
+        if (!root.ready)
+          delete root._retryTopics[topic];
+        else if (topic in root._acquired)
           root._subscribe(topic);
         else
-          delete root._retryTopics[topic];
+          root._unsubscribe(topic);
       }
     }
   }
@@ -345,6 +363,8 @@ QtObject {
       queued.forEach(entry => root._send(entry.line));
       // A new connection: axiom knows nothing of the targets or topics yet
       root._register();
+      root._retryTopics = {};
+      root._retryDue = {};
       Object.keys(root._acquired).forEach(topic => root._subscribe(topic));
       root.greeted();
     };

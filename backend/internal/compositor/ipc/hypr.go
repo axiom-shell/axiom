@@ -32,6 +32,11 @@ func HyprFromEnv(getenv func(string) string) *Hypr {
 // Request sends one request ("reload", "j/binds", "eval …") and returns the
 // reply.
 func (h *Hypr) Request(ctx context.Context, command string) (string, error) {
+	reply, err := h.request(ctx, command)
+	return reply, ctxErr(ctx, err)
+}
+
+func (h *Hypr) request(ctx context.Context, command string) (string, error) {
 	conn, err := dial(ctx, filepath.Join(h.Dir, ".socket.sock"))
 	if err != nil {
 		return "", err

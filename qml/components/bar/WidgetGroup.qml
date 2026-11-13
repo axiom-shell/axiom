@@ -86,8 +86,8 @@ Item {
   readonly property var _fills: root.measures.map(m => m.fill)
   // (a string key and back, so what follows it recomputes only when a
   // widget is shown or hidden, not for each new size)
-  readonly property string _shownKey: JSON.stringify(root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i)))
-  readonly property var _shown: JSON.parse(root._shownKey)
+  readonly property string _shownKey: BarRuns.flagsKey(root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i)))
+  readonly property var _shown: BarRuns.flagsOf(root._shownKey)
   // How many spacers it has: a side with any stretches to the center
   // (BarLayout.layoutSections)
   readonly property int fillCount: root._fills.filter(f => f).length
