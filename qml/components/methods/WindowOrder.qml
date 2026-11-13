@@ -20,10 +20,23 @@ QtObject {
     return kept;
   }
 
+  // Where the selection starts in the list `shown` (of `all`, the full list):
+  // before the first tile (-1) when the focused window leads `all` but is
+  // hidden, so the first step back lands on the last tile and the first step
+  // on from it on the first; else 0
+  function startIndex(all, shown, focusedId) {
+    if (focusedId === "" || all.length === 0 || all[0].id !== focusedId)
+      return 0;
+    return shown.some(win => win.id === focusedId) ? 0 : -1;
+  }
+
   // `index` moved `step` places, wrapping around `count`
   function stepIndex(index, step, count) {
     if (count <= 0)
       return 0;
+    // An index below 0 (before the first tile) stepping back counts from 0
+    if (index < 0 && step < 0)
+      index = 0;
     return ((index + step) % count + count) % count;
   }
 

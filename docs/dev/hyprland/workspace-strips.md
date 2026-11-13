@@ -49,7 +49,7 @@ Monitors on Hyprland's `scrolling` layout: how they're configured, how the Lua r
   - then the active workspace's windows, in strip order.
 - How the windows show is the widget's `stripWindows` (shown only where strips exist: strips listed or the scrolling layout with `supports.strips`, or `supports.stripsAlways`):
   - `each` (the default): `workspaces/StripWindows`, bar cells with app icons sized to the cells, the last focused one active, and a click focuses. They follow the widget's `spacing` and `solidBoxes`, like its workspace cells.
-  - `one`: `workspaces/StripWindowsBox`, one cell in the widget's style and occupied color holding every window's icon in strip order, no limit, along the bar. Each icon has a cell's room, `spacing` apart, so the box covers what a box each would. The last focused window (`CompositorManager.lastFocused`) is at full opacity with a short line in the active color under it (on a vertical bar, beside it toward the windows), the rest dimmed; under the pointer an icon lights its own room in the hover color (the box itself never lights), and a click on it focuses its window. `solidBoxes` fills the box.
+  - `one`: `workspaces/StripWindowsBox`, one cell in the widget's style and occupied color holding every shown window's icon ([The effects](../features/window-rules.md#the-effects)) in strip order, no limit, along the bar. Each icon has a cell's room, `spacing` apart, so the box covers what a box each would. The last focused window (`CompositorManager.lastFocused`) is at full opacity with a short line in the active color under it (on a vertical bar, beside it toward the windows), the rest dimmed; under the pointer an icon lights its own room in the hover color (the box itself never lights), and a click on it focuses its window. `solidBoxes` fills the box.
   - `off`: `ActiveStrip` doesn't load: no divider, no windows, and `stripOnly` never holds, so down to one workspace its own cell shows. The wheel still scrolls the strip.
   - The popout (below) shows a box each whatever it says.
 - **Wheel.** The wheel (`NotchWheel`, a step per notch) scrolls the strip a column at a time (`CompositorManager.stepStrip`: `layout("move ±col")`).
@@ -57,7 +57,7 @@ Monitors on Hyprland's `scrolling` layout: how they're configured, how the Lua r
   - It needs windows on the workspace; Hyprland refuses it on an empty one.
   - Hyprland focuses the column it moves to and warps the cursor there.
 - **Popout.** `WorkspaceStrip`'s popout on a strip monitor is `WorkspaceStrips`: each occupied workspace (plus the active one) as its number cell, then its `StripWindows`.
-- **One workspace.** With one workspace shown on a strip monitor (a size of 1, or down to the active one without `showEmpty` or with dynamic workspaces), the switchers show the windows alone (`stripOnly`: no number cell, no divider) while the workspace has any. With size 1, or one dynamic workspace, there's no popout. Every compositor.
+- **One workspace.** With one workspace shown on a strip monitor (a size of 1, or down to the active one without `showEmpty` or with dynamic workspaces), the switchers show the windows alone (`stripOnly`: no number cell, no divider) while the workspace has any shown (see [The effects](../features/window-rules.md#the-effects)). With size 1, or one dynamic workspace, there's no popout. Every compositor.
 
 ### Overview
 - The overview squeezes a strip workspace's tiled windows into its cell along the strip (`WorkspaceGeometry.stripRects`), so off-screen columns show.

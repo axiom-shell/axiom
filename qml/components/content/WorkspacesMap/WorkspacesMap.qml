@@ -40,7 +40,7 @@ Card {
         required property int modelData
         required property int index
         readonly property bool active: tile.modelData === root.activeId
-        readonly property var windows: CompositorManager.windows.filter(w => w.workspaceId === tile.modelData)
+        readonly property var windows: WindowRulesManager.shownIn("workspaces", CompositorManager.windows.filter(w => w.workspaceId === tile.modelData))
 
         x: grid.tileX(index)
         y: grid.tileY(index)
