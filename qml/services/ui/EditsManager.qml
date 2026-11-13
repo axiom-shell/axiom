@@ -44,6 +44,10 @@ QtObject {
       "dirty": CustomWidgetsManager.editor.isDirty
     },
     {
+      "type": "WindowRules",
+      "dirty": WindowRulesManager.editor.isDirty
+    },
+    {
       "type": "Layouts",
       "dirty": OverlayManager.layoutsDirty
     }
@@ -157,6 +161,8 @@ QtObject {
       KeybindManager.editor.save();
     if (CustomWidgetsManager.editor.isDirty)
       CustomWidgetsManager.editor.save();
+    if (WindowRulesManager.editor.isDirty)
+      WindowRulesManager.editor.save();
     OverlayManager.saveLayouts();
   }
 
@@ -170,6 +176,8 @@ QtObject {
       KeybindManager.editor.reset();
     if (CustomWidgetsManager.editor.isDirty)
       CustomWidgetsManager.editor.reset();
+    if (WindowRulesManager.editor.isDirty)
+      WindowRulesManager.editor.reset();
     OverlayManager.resetLayouts();
   }
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
+	"github.com/axiom-shell/axiom/backend/internal/tree"
 	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
 
@@ -535,4 +536,55 @@ func loadRegexFixture(t *testing.T) regexFixture {
 		t.Fatal(err)
 	}
 	return f
+}
+
+// The schema greys the effects the capabilities in ruleGates gate
+// (x-enabledIf, the page) on the same capability the renderers drop them for
+func TestRuleGatesMatchTheSchema(t *testing.T) {
+	t.Parallel()
+	data, err := tree.BuildSchema(testkit.RepoRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := jsonx.Unmarshal(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	window := get(get(get(get(get(parsed, "definitions"), "WindowRule"), "properties"), "window"), "properties")
+	if window == nil {
+		t.Fatal("no WindowRule.window properties")
+	}
+	// A leaf's gates: the /$supports keys of its x-enabledIf
+	gates := func(node any) []string {
+		var out []string
+		if cond, ok := get(node, "x-enabledIf").(*jsonx.Object); ok {
+			for _, key := range cond.Keys() {
+				if capability, found := strings.CutPrefix(key, "/$supports."); found {
+					if cond.Value(key) != true {
+						t.Errorf("%s: want true", key)
+					}
+					out = append(out, capability)
+				}
+			}
+		}
+		return out
+	}
+	for _, key := range window.(*jsonx.Object).Keys() {
+		node := get(window, key)
+		leaves := map[string]any{key: node}
+		if key == "special" {
+			props := get(node, "properties")
+			leaves = map[string]any{"special.id": get(props, "id"), "special.silent": get(props, "silent")}
+		}
+		for name, leaf := range leaves {
+			got := gates(leaf)
+			if want, gated := ruleGates[key]; gated {
+				if len(got) != 1 || got[0] != want {
+					t.Errorf("%s: x-enabledIf gates on %v, ruleGates says %q", name, got, want)
+				}
+			} else if len(got) > 0 {
+				t.Errorf("%s: x-enabledIf gates on %v, but ruleGates has no %q", name, got, key)
+			}
+		}
+	}
 }

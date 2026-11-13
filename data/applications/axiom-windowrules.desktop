@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Window Rules
+GenericName=Window rules
+Comment=Choose how windows open on the axiom desktop
+Exec=axiom ipc pages window windowrules
+Icon=preferences-system-windows
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=axiom;window;rules;windowrules;float;workspace;
+StartupNotify=false

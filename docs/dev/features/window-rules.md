@@ -1,10 +1,10 @@
 # Window rules
 
-> **Files:** `backend/internal/windowrules/`, `backend/internal/compositor/render/windowrules.go`, `qml/config/schema/sections/WindowRules.yaml`, `qml/config/schema/definitions/common/WindowRule.yaml`, `qml/config/schema/definitions/common/WindowRuleCondition.yaml`, `qml/config/schema/definitions/shared/WindowRuleWhen.yaml`, `tests/fixtures/windowrules/regex.json`
-> **Config:** `WindowRules.*` (no shell reader yet: the daemon compiles and writes it)
+> **Files:** `backend/internal/windowrules/`, `backend/internal/compositor/render/windowrules.go`, `qml/config/schema/sections/WindowRules.yaml`, `qml/config/schema/definitions/common/WindowRule.yaml`, `qml/config/schema/definitions/common/WindowRuleCondition.yaml`, `qml/config/schema/definitions/shared/WindowRuleWhen.yaml`, `tests/fixtures/windowrules/regex.json`, `qml/components/views/WindowRules/{WindowRules,RulesPanel,RuleInspector,KindBlock}.qml`, `qml/services/compositor/{WindowRulesManager,WindowRulesEditor}.qml`, `qml/components/methods/WindowRuleIssues.qml`
+> **Config:** `WindowRules.*` (no reader: the page edits a `ConfigDraft`; the daemon reads the rest)
 > **Related:** [Config modes](../compositor/config-modes.md), [Keybinds](../hyprland/keybinds.md), [Schema annotations](../core/schema-annotations.md), [Saved configs and sharing](../core/saved-configs-sharing.md)
 
-The user's window rules: what exists is the model, its validation, the renderers that compile it, and the writers that put the rules in each compositor's config.
+The user's window rules: the model, its validation, the renderers that compile it, the writers that put the rules in each compositor's config, and the Window rules page that edits them.
 
 ### The model
 - `WindowRules.rules` is an id'd list whose order is the priority: the higher a rule, the more it counts when two set the same thing. `Parse` turns the section into `Config`.
@@ -45,4 +45,13 @@ The user's window rules: what exists is the model, its validation, the renderers
 - Left to the daemon, reported in `Unwritten`: live kinds (`Live`) and a numbered workspace on niri or a special workspace on sway (`Placed`: sway's named specials are a per-window mark a `for_window` can't write). A kind no config can match (XWayland on niri, an app with no app ids) is `Skipped`.
 - niri's `open-on-workspace` names a workspace niri's own config declares. sway's look sets every window's opacity and blur as focus moves, which overrides a rule's opacity and No blur while the look sets them.
 
-The editor, the engine and the placement of what a config can't do come with the rest of the window rules work.
+### The page
+- The Window rules tool page (`needs: configModes`: rules reach the compositor only through the config writer) has the rules as a list, dragged to order (list order is priority), and beside it the selected rule: its name, icon and switch, its kinds of window and their conditions, its "When it opens" effects, and its problems. A condition is one compact row (field, test, value); the test's options and the value box follow the schema (`x-enumShowIf`, `x-showIf`).
+- Edits are a `ConfigDraft` of `WindowRules` in `WindowRulesManager.editor`, saved like every editor. Problems come from Go only: the draft's from `compositor.checkRules` (300 ms after the last edit, on load and when the compositor's abilities change; only the latest answer is kept) while the draft differs from what's saved, else `compositor.state`'s `windowRules` (`WindowRulesManager.savedReport`, what the compositor actually has). A rule with problems still saves; it isn't applied.
+- Right after a save the page shows the previous saved report until the daemon pushes the new state, and a dirty draft shows the saved report until its first check answers; a failed check keeps the last report.
+- No preview: unsaved rules never reach the compositor (`WindowRules` stays out of `CompositorConfigManager._layerSections`).
+- Effects the compositor can't do are greyed by `x-enabledIf` on the same capabilities `ruleGates` drops them for (a Go test keeps the two in step), with `CompositorManager.unsupportedNote` saying why; a greyed value is kept. A numbered workspace on niri, a special workspace on sway and kinds with live conditions are shown as "applied just after the window opens".
+- The conditions offered are `WindowRulesEditor.offeredFields`: app id, title, XWayland and Steam game. A rule already holding another field shows it.
+- An issue's text is its English `message` through `I18n.tr` with `args` filled in (a field id as its label): `WindowRulesEditor.issueText`, which lists every message of `validate.go` for the translations (a Go test keeps the list complete).
+
+The "While it's open, focused or fullscreen" effects, the engine that matches windows and places what a config can't, applying to open windows, the pickers and the built-in switches come with the rest of the window rules work.
