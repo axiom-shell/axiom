@@ -151,7 +151,8 @@ func (w *niriWriter) parts(in Inputs, spec any, path string, mode string) *jsonx
 		"outputs", w.outputs(in, path),
 		"options", options,
 		"look", look,
-		"input", render.NiriInputNodes(getAny(spec, "input"), w.schemaOf("Input")))
+		"input", render.NiriInputNodes(getAny(spec, "input"), w.schemaOf("Input")),
+		"windowRules", orNil(in.get("windowRules"), jsonx.Arr()))
 }
 
 func (w *niriWriter) moduleText(in Inputs, spec any) string {
@@ -165,6 +166,12 @@ func (w *niriWriter) managedText(in Inputs, spec any) string {
 	// niri's own corner is always off: hot corners are axiom's (HotCorners)
 	render.KdlSetPath(options, "gestures.hot-corners.off", jsonx.Arr(), nil)
 	options.Append(itemsOf(parts.Value("options"))...)
+	// The rules' opacity and blur come after the look, so they beat it
+	open, lookRules := splitLookRules(itemsOf(parts.Value("windowRules")))
+	look := jsonx.Arr(itemsOf(parts.Value("look"))...)
+	look.Append(lookRules.Items...)
+	parts.Set("windowRules", open)
+	parts.Set("look", look)
 	parts.Set("userDir", w.userDir())
 	parts.Set("userFiles", strs(userconf.NiriUserFiles(w.userDir())))
 	parts.Set("options", options)
@@ -173,6 +180,42 @@ func (w *niriWriter) managedText(in Inputs, spec any) string {
 	parts.Set("autostart", getAny(in.get("session"), "autostart"))
 	parts.Set("isAgent", render.Func(func(a ...any) any { return len(a) > 0 && w.tables.IsAgentCommand(a[0]) }))
 	return render.NiriManagedText(parts)
+}
+
+// splitLookRules splits window rule blocks for the managed config, whose
+// look comes after the user's files: each block's opacity and
+// background-effect, with its match and exclude nodes, go after the look
+// so they beat it; the rest stays ahead of the user's files. A block left
+// with only its matches is dropped. New nodes: what's in Inputs is shared.
+func splitLookRules(blocks []any) (open, look *jsonx.Array) {
+	open, look = jsonx.Arr(), jsonx.Arr()
+	for _, b := range blocks {
+		block, ok := b.(*jsonx.Object)
+		if !ok || jsonx.ToString(block.Value("name")) != "window-rule" {
+			open.Append(b)
+			continue
+		}
+		var matches, rest, fx []any
+		for _, c := range itemsOf(block.Value("children")) {
+			switch jsonx.ToString(getAny(c, "name")) {
+			case "match", "exclude":
+				matches = append(matches, c)
+			case "opacity", "background-effect":
+				fx = append(fx, c)
+			default:
+				rest = append(rest, c)
+			}
+		}
+		for _, part := range []struct {
+			into  *jsonx.Array
+			nodes []any
+		}{{open, rest}, {look, fx}} {
+			if len(part.nodes) > 0 {
+				part.into.Append(render.Node("window-rule", nil, nil, jsonx.Arr(append(slices.Clone(matches), part.nodes...)...)))
+			}
+		}
+	}
+	return open, look
 }
 
 func (w *niriWriter) emptyModuleText() string { return render.NiriEmptyModuleText(niriHeader) }
@@ -230,7 +273,7 @@ func (w *niriWriter) validate(ctx context.Context, text string) string {
 }
 
 func (w *niriWriter) runtimeApply(ctx context.Context, in Inputs, _ func() []string) {
-	module := render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath(), "detached"))
+	module := w.detachedModule(in)
 	wrapper := render.NiriWrapperText(niriHeader, w.mainConfig, w.detachedPath(), render.NiriMaximizeRule())
 	if w.refused = w.validate(ctx, module); w.refused != "" {
 		return
@@ -246,6 +289,15 @@ func (w *niriWriter) runtimeApply(ctx context.Context, in Inputs, _ func() []str
 		w.loadConfig(ctx, w.wrapperPath(), true)
 	}
 }
+
+// detachedModule is the module the detached wrapper includes after the
+// user's config: the rules last, so axiom's win
+func (w *niriWriter) detachedModule(in Inputs) string {
+	return render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath(), "detached"))
+}
+
+// a removed rule leaves the detached module, which niri reloads as it changes
+func (w *niriWriter) runtimeRulesGone(Inputs) bool { return false }
 
 func (w *niriWriter) runtimeClear(ctx context.Context) {
 	if w.state.NiriWrapper {

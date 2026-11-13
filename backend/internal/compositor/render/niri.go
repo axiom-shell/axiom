@@ -735,13 +735,13 @@ func nodeList(v any) []any { return items(v) }
 
 // NiriModuleText is NiriConf.moduleText: the module axiom loads into niri.
 // parts: { header, includeLines, rules, binds, outputs, look, input,
-// options }.
+// options, windowRules }.
 func NiriModuleText(parts any) string {
 	all := append([]any{}, nodeList(get(parts, "rules"))...)
 	if b := get(parts, "binds"); truthy(b) {
 		all = append(all, b)
 	}
-	for _, k := range []string{"outputs", "options", "look", "input"} {
+	for _, k := range []string{"outputs", "options", "look", "input", "windowRules"} {
 		all = append(all, nodeList(get(parts, k))...)
 	}
 	return jsCat(get(parts, "header")) + ` from its settings, and rewritten whenever they (or
@@ -783,8 +783,10 @@ func NiriManagedText(parts any) string {
 		binds = KdlSerialize(jsonx.Arr(b), 0) + "\n\n"
 	}
 	// before the user's files, so a rule of theirs wins
-	if r := nodeList(get(parts, "rules")); len(r) > 0 {
-		binds += KdlSerialize(jsonx.Arr(r...), 0) + "\n\n"
+	for _, k := range []string{"rules", "windowRules"} {
+		if r := nodeList(get(parts, k)); len(r) > 0 {
+			binds += KdlSerialize(jsonx.Arr(r...), 0) + "\n\n"
+		}
 	}
 	files := "// (none yet)"
 	if len(includes.Items) > 0 {

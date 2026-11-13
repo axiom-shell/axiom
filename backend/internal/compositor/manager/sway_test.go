@@ -298,3 +298,73 @@ func TestSwayFreshDaemonLeavesAStaleListStale(t *testing.T) {
 		t.Fatalf("the stale list was touched: at %d, %v", w.unbindAt, w.state.SwayUnbinds)
 	}
 }
+
+// swayRulesIn are the inputs whose runtime window rule lines are lines
+func swayRulesIn(lines ...string) Inputs {
+	return Inputs{jsonx.Obj("windowRules", jsonx.Obj("file", strs(nil), "runtime", strs(lines)))}
+}
+
+// rulesSent are the for_window lines among what sway was sent
+func rulesSent(asked <-chan string) []string {
+	var out []string
+	for _, cmd := range sent(asked) {
+		for _, c := range strings.Split(cmd, "; ") {
+			if strings.HasPrefix(c, "for_window") {
+				out = append(out, c)
+			}
+		}
+	}
+	return out
+}
+
+// sway keeps a runtime for_window until it reloads: an apply sends only
+// the lines not sent since, one no longer wanted takes a reload, and the
+// reload empties the list, so the next apply sends them all
+func TestSwayRuntimeRulesSentOnce(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	a, b := "for_window [app_id=\"a\"] floating enable", "for_window [app_id=\"b\"] sticky enable"
+	w := swayWith(t, "", true, nil)
+	path, asked := fakeSway(t)
+	w.ipc = &ipc.Sway{Path: path}
+	live := func() []string { return nil }
+
+	w.runtimeApply(ctx, swayRulesIn(a), live)
+	if got := rulesSent(asked); len(got) != 1 || got[0] != a {
+		t.Fatalf("first apply sent %v", got)
+	}
+	w.runtimeApply(ctx, swayRulesIn(a), live)
+	if got := rulesSent(asked); len(got) != 0 {
+		t.Fatalf("the same rules sent again: %v", got)
+	}
+	w.runtimeApply(ctx, swayRulesIn(a, b), live)
+	if got := rulesSent(asked); len(got) != 1 || got[0] != b {
+		t.Fatalf("an added rule sent %v, want only it", got)
+	}
+	if w.runtimeRulesGone(swayRulesIn(a, b)) {
+		t.Fatal("rules wanted still are gone")
+	}
+	if !w.runtimeRulesGone(swayRulesIn(b)) {
+		t.Fatal("a removed rule isn't gone")
+	}
+	w.configReloaded(ctx, Inputs{})
+	if w.state.SwayRules != nil {
+		t.Fatalf("a reload left the list: %v", w.state.SwayRules)
+	}
+	w.runtimeApply(ctx, swayRulesIn(b), live)
+	if got := rulesSent(asked); len(got) != 1 || got[0] != b {
+		t.Fatalf("after the reload sent %v", got)
+	}
+
+	// carried keeps the saved list, a fresh daemon starts without it
+	for _, carried := range []bool{true, false} {
+		tables, schema := repo(t)
+		e := env2(tables, schema, func(string) string { return "" })
+		e.carried = carried
+		e.state.SwayRules = []string{a}
+		got := newSway(e, nil).state.SwayRules
+		if carried != (len(got) == 1) {
+			t.Errorf("carried %v: list %v", carried, got)
+		}
+	}
+}

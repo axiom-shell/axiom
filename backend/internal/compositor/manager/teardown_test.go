@@ -117,7 +117,7 @@ func TestHyprTopLevelExecAxiomMeansPartialTeardown(t *testing.T) {
 		t.Fatalf("top-level exec: %v %q", starts, line)
 	}
 	got := w.teardownSteps(startIn(), true)
-	if got[0].Op != "eval" || got[0].Lines[0] != hyprUnbindLua {
+	if got[0].Op != "eval" || !reflect.DeepEqual(got[0].Lines, []string{hyprUnbindLua, hyprRulesOffLua}) {
 		t.Fatalf("partial: %+v", got)
 	}
 	conf := newHypr(writerEnv(t, map[string]string{"hypr/hyprland.conf": "exec-once = axiom run\nexec = axiom run\n"}, nil), nil)
