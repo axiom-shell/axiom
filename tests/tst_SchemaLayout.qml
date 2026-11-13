@@ -923,6 +923,39 @@ TestCase {
     compare(groups[4].rows[0].label, undefined);
   }
 
+  // A `perField` field with `x-hookup` gives its card `hookup`: its key
+  function test_card_per_field_hookup() {
+    const groups = SchemaLayout.groups({
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "Sec",
+          "x-card": {
+            "perField": true
+          },
+          "properties": {
+            "a": {
+              "type": "boolean",
+              "title": "Alpha",
+              "x-hookup": {}
+            },
+            "b": {
+              "type": "boolean",
+              "title": "Beta"
+            }
+          }
+        }
+      }
+    }, "S");
+    compare(groups.find(g => g.title === "Alpha").hookup, "a");
+    compare(groups.find(g => g.title === "Beta").hookup, undefined);
+    const real = SchemaLayout.groups(schema, "ThemeIntegrations");
+    const cards = real.filter(g => g.path.length === 1 && g.kind === "rows" && g.rows.length > 0);
+    verify(cards.length > 0);
+    for (const card of cards)
+      verify(card.hookup, card.title);
+  }
+
   // A hand-built card goes first; with `x-card.folds` it folds, and the
   // real cards that fold take their key as `foldKey` (EntryListCards do)
   function test_card_folds() {

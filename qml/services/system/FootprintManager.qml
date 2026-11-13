@@ -32,15 +32,20 @@ Singleton {
     return root.rows.filter(row => row.owner === owner);
   }
 
-  // Those "Remove its changes" undoes: not the system's own choices
+  // Those "Remove its changes" undoes at once: not the system's own choices
   // (default apps, input method groups), not what axiom only inferred
   function undoableFor(owner) {
-    return root.rows.filter(row => row.owner === owner && !row.system && !row.inferred);
+    return Footprint.ownerRows(root.rows, owner).recorded;
+  }
+
+  // The owner's rows axiom only inferred (the field asks before undoing them)
+  function inferredFor(owner) {
+    return Footprint.ownerRows(root.rows, owner).inferred;
   }
 
   // The owner's rows that are the system's own choices
   function systemFor(owner) {
-    return root.rows.filter(row => row.owner === owner && row.system);
+    return Footprint.ownerRows(root.rows, owner).system;
   }
 
   // A row's name

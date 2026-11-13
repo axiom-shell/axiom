@@ -4,6 +4,7 @@ import Quickshell
 import qs.services.core
 import qs.services.compositor
 import qs.services.apps
+import qs.components.methods
 
 /*
  * Hooks theme integrations into their apps' configs: each ThemeIntegrations
@@ -68,8 +69,7 @@ Singleton {
   // Whether every target Apply can do is done (false until checked, and
   // for an integration that's only copied)
   function isDone(key) {
-    const targets = (root.status[key]?.targets ?? []).filter(t => !t.copyOnly && !t.skipped);
-    return targets.length > 0 && targets.every(t => t.done);
+    return HookupStatus.done(root.status[key]?.targets);
   }
 
   function check(key) {

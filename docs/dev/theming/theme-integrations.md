@@ -123,7 +123,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go. On p
   - `check(key)` → `status[key]`;
   - `apply(key, done)` → `results[key]`, then checks again, and runs the integration for the current theme when Apply changed something. `done(ok, error)` is optional: false and the message on a call error, false and the first result's error when a result failed, else true (the Recommended setup list's run).
 - `forms/IntegrationHookup` shows it under a switched-on integration:
-  - the status;
+  - the status (`methods/HookupStatus`; the same word is the chip in the integration's settings card header, Off while the switch is off);
   - per target, the text with a copy button and an outline of what Apply will do (backup, link, where it goes, lines commented out);
   - then Apply.
 - `SettingsField` adds it under any field with `x-hookup`.

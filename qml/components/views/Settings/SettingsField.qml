@@ -23,7 +23,9 @@ import qs.components.reusable
 // shows, its rows `foldedBy` it (`foldedIn` when also inside an `x-fold`).
 // A field that writes outside axiom's folders (`Footprint.persistent`) says
 // so while the compositor mode is detached (axiom stopping leaves its
-// changes), and, off with changes recorded, offers to remove them
+// changes), and, off with changes recorded or inferred, offers to remove
+// them (recorded ones at once, then asks about the inferred ones, then the
+// system defaults)
 FormRow {
   id: root
 
@@ -55,18 +57,27 @@ FormRow {
   readonly property bool badged: root.footprinted && CompositorConfig.mode === "detached"
   // Off, with changes the ledger still holds
   readonly property bool isOff: field.current === Footprint.offValue(root.row.schema)
-  readonly property bool removable: root.footprinted && root.isOff && FootprintManager.undoableFor(root.ownerPath).length > 0
-  // The system defaults it changed, asked about once the rest is undone
+  readonly property int recordedCount: FootprintManager.undoableFor(root.ownerPath).length
+  // What axiom only inferred, asked about once the recorded ones are undone
+  readonly property int inferredCount: FootprintManager.inferredFor(root.ownerPath).length
+  property bool askedInferred: false
+  readonly property bool confirmInferred: root.askedInferred && root.isOff && root.recordedCount === 0 && root.inferredCount > 0
+  readonly property bool removable: root.footprinted && root.isOff && (root.recordedCount > 0 || root.inferredCount > 0) && !root.confirmInferred && !root.confirmSystem
+  // The system defaults it changed, asked about last
   readonly property int systemCount: FootprintManager.systemFor(root.ownerPath).length
   property bool askedSystem: false
-  readonly property bool confirmSystem: root.askedSystem && root.isOff && !root.removable && root.systemCount > 0
+  readonly property bool confirmSystem: root.askedSystem && root.isOff && root.recordedCount === 0 && !root.confirmInferred && root.systemCount > 0
   // The question is for the click it followed: gone once there is nothing
   // to ask about or the setting is on again
   onSystemCountChanged: if (root.systemCount === 0)
     root.askedSystem = false
-  onIsOffChanged: if (!root.isOff)
-    root.askedSystem = false
-  readonly property real footprintHeight: root.badged || root.removable || root.confirmSystem ? footprintRow.implicitHeight + Widget.spacing : 0
+  onInferredCountChanged: if (root.inferredCount === 0)
+    root.askedInferred = false
+  onIsOffChanged: if (!root.isOff) {
+    root.askedSystem = false;
+    root.askedInferred = false;
+  }
+  readonly property real footprintHeight: root.badged || root.removable || root.confirmInferred || root.confirmSystem ? footprintRow.implicitHeight + Widget.spacing : 0
 
   bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
   railHeight: root.custom !== "" ? 0 : field.implicitHeight
@@ -146,7 +157,7 @@ FormRow {
   // The footprint's chip and button, under the field
   RowLayout {
     id: footprintRow
-    visible: root.badged || root.removable || root.confirmSystem
+    visible: root.badged || root.removable || root.confirmInferred || root.confirmSystem
     y: field.implicitHeight + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + Widget.spacing
     width: parent.width
     spacing: Widget.spacing
@@ -185,8 +196,36 @@ FormRow {
       implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove its changes")
       onClicked: {
-        root.askedSystem = true;
-        FootprintManager.undoOwner(root.ownerPath);
+        root.askedSystem = root.systemCount > 0;
+        root.askedInferred = true;
+        if (root.recordedCount > 0)
+          FootprintManager.undoOwner(root.ownerPath);
+      }
+    }
+
+    StyledText {
+      visible: root.confirmInferred
+      // I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.")
+      text: root.inferredCount === 1 ? I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.") : I18n.tr("axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.", root.inferredCount)
+      wrapMode: Text.WordWrap
+      Layout.fillWidth: true
+    }
+
+    // Keep is the default: nothing happens unless Remove is clicked
+    StyledTextButton {
+      visible: root.confirmInferred
+      implicitHeight: Widget.height - Widget.px(4)
+      text: I18n.tr("Keep")
+      onClicked: root.askedInferred = false
+    }
+
+    StyledTextButton {
+      visible: root.confirmInferred
+      implicitHeight: Widget.height - Widget.px(4)
+      text: I18n.tr("Remove")
+      onClicked: {
+        root.askedInferred = false;
+        FootprintManager.undo(FootprintManager.inferredFor(root.ownerPath).map(row => row.id), true);
       }
     }
 
@@ -216,7 +255,7 @@ FormRow {
     }
 
     Item {
-      visible: !root.confirmSystem
+      visible: !root.confirmSystem && !root.confirmInferred
       Layout.fillWidth: true
     }
   }
