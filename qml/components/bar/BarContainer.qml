@@ -356,15 +356,7 @@ Rectangle {
   // box per item is one entry per item (BarBoxes.expand), each with its
   // `box`, all with its configIndex.
   function widgetModel(widgetConfigArray) {
-    return BarBoxes.expand((widgetConfigArray || []).map((widgetConf, i) => ({
-          "type": widgetConf.type,
-          "properties": widgetConf.properties || {},
-          // Its Auto color fields' roles (BarsConfig.withAutoColors)
-          "autoColors": widgetConf.autoColors || {},
-          "layout": widgetConf.layout || {},
-          "configIndex": i,
-          "visible": widgetConf.visible !== false
-        })).filter(widget => widget.visible), BarsConfig.boxItems);
+    return BarBoxes.sectionModel(widgetConfigArray, BarsConfig.boxItems);
   }
 
   // While the bar editor is on screen, what it shows of this bar (see
@@ -413,7 +405,10 @@ Rectangle {
     readonly property var slot: section.bar.slots[section.slotIndex]
     zone: BarsConfig.sectionNames[section.slotIndex]
     align: section.slotIndex / 2
-    widgets: section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone])
+    // The widgets as a string key and back: they follow only a change of
+    // content, not each new config object of equal content (as _hiddenKey)
+    readonly property string _widgetsKey: JSON.stringify(section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone]))
+    widgets: JSON.parse(section._widgetsKey)
     // A powerline segment reaches back under the one before it, across
     // sections too: the earlier section is drawn over the later
     z: 2 - section.slotIndex

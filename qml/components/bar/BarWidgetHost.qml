@@ -192,7 +192,11 @@ Item {
   // chase its own animation. Off until first placed, so a new bar (or an
   // editor rebuild) doesn't fly its widgets in from the start.
   property bool _settled: false
+  // Set on completion: a delegate's binding sets `widget` during creation
+  // and runs onWidgetChanged before it; the module loads once, on completion
+  property bool _completed: false
   Component.onCompleted: {
+    root._completed = true;
     _load();
     // A method, not a closure: the call is dropped if the host is gone
     // by then (a bar rebuilt)
@@ -238,6 +242,8 @@ Item {
     });
   }
   onWidgetChanged: {
+    if (!root._completed)
+      return;
     if ((root.widget.type ?? "") !== root._type)
       root._load();
     else if (root._item) {

@@ -16,6 +16,22 @@ QtObject {
     return Object.keys(options ?? {}).filter(item => properties?.[options[item]] === true);
   }
 
+  // A section's shown widgets from its config array (`itemsOf(config)`: see
+  // `expand`): each { type, properties, autoColors, layout, configIndex,
+  // visible } with `configIndex` its place in the array, which hidden
+  // widgets leave out. Plain data, so it survives a JSON round trip.
+  function sectionModel(configs, itemsOf) {
+    return root.expand((configs || []).map((widgetConf, i) => ({
+          "type": widgetConf.type,
+          "properties": widgetConf.properties || {},
+          // Its Auto color fields' roles (BarsConfig.withAutoColors)
+          "autoColors": widgetConf.autoColors || {},
+          "layout": widgetConf.layout || {},
+          "configIndex": i,
+          "visible": widgetConf.visible !== false
+        })).filter(widget => widget.visible), itemsOf);
+  }
+
   // A section's entries ({ configIndex, … }) with each one that has more
   // than one item (`itemsOf(entry)`, [] for a widget drawn whole) expanded
   // into one per item: the same entry with its item as `box`. Its

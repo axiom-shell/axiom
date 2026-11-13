@@ -37,6 +37,36 @@ QtObject {
     return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && root.deepEqual(a[key], b[key]));
   }
 
+  // `fresh` (an array of entries, `idOf(entry)` their ids) with each entry
+  // equal to the one of the same id in `prev` replaced by that previous
+  // object, so a rebuilt list of equal content notifies no reader. `prev` is
+  // { items, keys } from the last call; returns { items, keys } (keys[i] is
+  // JSON.stringify(fresh[i])), `items` being `prev.items` itself when
+  // nothing changed. Entries are plain data and colours (a QColor
+  // serialises as r/g/b/a); functions would be dropped from the key.
+  function keepEqual(prev, fresh, idOf) {
+    const oldKeys = new Map();
+    (prev?.items ?? []).forEach((item, i) => oldKeys.set(idOf(item), {
+        "item": item,
+        "key": prev.keys[i]
+      }));
+    const keys = fresh.map(entry => JSON.stringify(entry));
+    let kept = 0;
+    const items = fresh.map((entry, i) => {
+      const old = oldKeys.get(idOf(entry));
+      if (old && old.key === keys[i]) {
+        kept++;
+        return old.item;
+      }
+      return entry;
+    });
+    const same = prev?.items && prev.items.length === items.length && kept === items.length && items.every((item, i) => item === prev.items[i]);
+    return {
+      "items": same ? prev.items : items,
+      "keys": keys
+    };
+  }
+
   // The value at `path` (an array of keys and indices) in `object`, or
   // undefined where the path runs out: a config value by its key path
   function valueAt(object, path) {

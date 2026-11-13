@@ -21,8 +21,24 @@ QtObject {
   // bars on its screen (BarEnds.withEnds: where it lies, what it
   // reserves, which bar a shared corner goes to). An auto-hiding bar
   // pinned shown (BarRevealManager.pinned, which changes only on a pin,
-  // never on hover) reserves its space.
-  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => {
+  // never on hover) reserves its space. Each entry stays the same object
+  // while it is equal (Utils.keepEqual), so a pass over equal content
+  // reaches no reader; [] until this singleton has completed.
+  readonly property var bars: root._bars
+  property var _bars: []
+  property var _barKeys: []
+  on_FreshBarsChanged: root._keepBars()
+  Component.onCompleted: root._keepBars()
+  function _keepBars() {
+    const k = Utils.keepEqual({
+      "items": root._bars,
+      "keys": root._barKeys
+    }, root._freshBars, b => b.id);
+    root._barKeys = k.keys;
+    if (k.items !== root._bars)
+      root._bars = k.items;
+  }
+  readonly property var _freshBars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => {
     const enriched = BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps);
     enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
     return enriched;

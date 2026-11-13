@@ -47,8 +47,17 @@ Item {
     restoreMode: Binding.RestoreNone
   }
 
-  onSourceChanged: root._load()
-  Component.onCompleted: root._load()
+  // A binding sets `source` during creation, before completion; it loads
+  // once, on completion
+  property bool _completed: false
+  onSourceChanged: {
+    if (root._completed)
+      root._load();
+  }
+  Component.onCompleted: {
+    root._completed = true;
+    root._load();
+  }
 
   function _load() {
     // A new wallpaper mid-transition: finish it at once, so the image it
