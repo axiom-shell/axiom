@@ -132,6 +132,10 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 			return struct{}{}, err
 		}
 		m.SetFacts(p)
+		// The engine reads the same capabilities (ruleXwayland)
+		if d.windowRules != nil {
+			d.windowRules.SetSupports(p.Supports)
+		}
 		return struct{}{}, nil
 	})
 	rpc.Handle(reg, "compositor.layerRules", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {

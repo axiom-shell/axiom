@@ -660,5 +660,35 @@ TestCase {
     compare(SwayState.windowCommands(windows, "7", {
       "opacity": opacity
     }, all.applied, 0.1).lines, ["[all] dim_inactive 0.1"]);
+    // Window rules' look: a held window gets its rule's opacity, focused or not
+    const held = {
+      "opacity": {
+        "7": 50
+      },
+      "noBlur": ["7"]
+    };
+    const ruled = SwayState.windowCommands(windows, "4", {
+      "opacity": opacity
+    }, {}, 0, held);
+    compare(ruled.lines, ["[con_id=4] opacity 1", "[con_id=7] opacity 0.5", "[con_id=9] opacity 1"]);
+    const ruledFocused = SwayState.windowCommands(windows, "7", {
+      "opacity": opacity
+    }, ruled.applied, 0, held);
+    compare(ruledFocused.lines, ["[con_id=4] opacity 0.85"], "the held window keeps its rule's value as focus moves onto it");
+    // noBlur with the look's blur on: that window's blur off, the others on
+    compare(SwayState.windowCommands(windows, "7", {
+      "blur": true
+    }, {}, 0, held).lines, ["[con_id=4] blur enable", "[con_id=7] blur disable", "[con_id=9] blur enable"]);
+    // The look's blur null: no blur command, held or not
+    compare(SwayState.windowCommands(windows, "7", {
+      "opacity": opacity,
+      "blur": null
+    }, {}, 0, held).lines.join().indexOf("blur"), -1);
+    // Opacity off: every window to 1, then the held window's rule value back
+    compare(SwayState.windowCommands(windows, "7", null, ruledFocused.applied, 0, held).lines, ["[all] opacity 1", "[con_id=7] opacity 0.5"]);
+    // No look from the rules: exactly the lines without
+    compare(SwayState.windowCommands(windows, "4", {
+      "opacity": opacity
+    }, {}, 0, null).lines, first.lines);
   }
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
 	"github.com/axiom-shell/axiom/backend/internal/timedate"
 	"github.com/axiom-shell/axiom/backend/internal/udisks"
+	"github.com/axiom-shell/axiom/backend/internal/windowrules/engine"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
@@ -54,6 +55,8 @@ const (
 	topicFileSearch = "fileSearch"
 	// footprint.changed
 	topicFootprint = "footprint"
+	// windowRules.state
+	topicWindowRules = "windowRules"
 )
 
 // Pushes, each declared once with the type of its params and sent to the
@@ -103,6 +106,10 @@ var (
 	pushFootprintChanged = rpc.Push[struct{}]{Method: "footprint.changed", Latest: true}
 
 	pushCameraState = rpc.Push[camera.State]{Method: "camera.state", Latest: true}
+
+	// Which open windows each window rule matches and the while-effects in
+	// force (WindowRulesManager)
+	pushWindowRulesState = rpc.Push[engine.State]{Method: "windowRules.state", Latest: true}
 
 	// The file index's phase and counts, at most every 500 ms while it
 	// changes
@@ -246,10 +253,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare, topicFileSearch, topicFootprint:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare, topicFileSearch, topicFootprint, topicWindowRules:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare, fileSearch, footprint)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare, fileSearch, footprint, windowRules)", t)
 		}
 	}
 	return false, topics, nil
