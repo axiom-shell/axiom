@@ -1,6 +1,6 @@
 # Window rules
 
-> **Files:** `backend/internal/windowrules/`, `backend/internal/compositor/render/windowrules.go`, `qml/config/schema/sections/WindowRules.yaml`, `qml/config/schema/definitions/common/WindowRule.yaml`, `qml/config/schema/definitions/common/WindowRuleCondition.yaml`, `qml/config/schema/definitions/shared/WindowRuleWhen.yaml`, `tests/fixtures/windowrules/regex.json`, `qml/components/views/WindowRules/{WindowRules,RulesPanel,RuleInspector,KindBlock}.qml`, `qml/services/compositor/{WindowRulesManager,WindowRulesEditor}.qml`, `qml/components/methods/WindowRuleIssues.qml`
+> **Files:** `backend/internal/windowrules/`, `backend/internal/procinfo/`, `backend/internal/compositor/render/windowrules.go`, `qml/config/schema/sections/WindowRules.yaml`, `qml/config/schema/definitions/common/WindowRule.yaml`, `qml/config/schema/definitions/common/WindowRuleCondition.yaml`, `qml/config/schema/definitions/shared/WindowRuleWhen.yaml`, `tests/fixtures/windowrules/regex.json`, `qml/components/views/WindowRules/{WindowRules,RulesPanel,RuleInspector,KindBlock}.qml`, `qml/services/compositor/{WindowRulesManager,WindowRulesEditor}.qml`, `qml/components/methods/WindowRuleIssues.qml`
 > **Config:** `WindowRules.*` (no reader: the page edits a `ConfigDraft`; the daemon reads the rest)
 > **Related:** [Config modes](../compositor/config-modes.md), [Keybinds](../hyprland/keybinds.md), [Schema annotations](../core/schema-annotations.md), [Saved configs and sharing](../core/saved-configs-sharing.md)
 
@@ -18,6 +18,12 @@ The user's window rules: the model, its validation, the renderers that compile i
 ### Kinds: written or live
 - Some fields only the daemon can test: `process`, `startedFrom` and `game` are live (`Field.Live`). A kind with one live condition is live, so no compositor config can match it; `Rule.CompiledKinds` and `Rule.LiveKinds` split a rule's kinds, in order.
 - `steamGame` lowers to the app id `steam_app_<N>` and `app` (a desktop entry id) to the app ids a resolver gives, so neither is live. `Lower` gives a kind as tests, flags and the live bit.
+
+### Processes and games
+- `procinfo.Reader.Lookup` gives a window's process name (`comm`, with the kernel's 15-byte cut undone), the names of the processes above it and its game signals. It reads only the user's own processes, cached by pid and start time; the facts are taken at the first lookup and kept.
+- Only process names and signal names leave the package; argument and environment values never do: environment and command line are scanned for a fixed list of names and dropped. A non-dumpable process reads as not ours.
+- The signals and where each looks (the window's process, the processes above it, its environment) are the table in `procinfo/game.go`. Steam counts through what it launches (`reaper SteamLaunch` or a Steam game id), so Steam's own windows are not games. Lutris and Heroic count only through what runs the game (`lutris-wrapper`, `legendary`, `gogdl`, `nile`, or `LUTRIS_GAME_UUID` / `HEROIC_APP_NAME` in the environment), not their UI process. Wine and gamescope count only together with a launcher signal (Steam, Proton, Lutris, Heroic, umu): a bare `wine notepad` is not a game.
+- An X11 bridge (`xwayland-satellite`, `Xwayland`) stands for many windows, so its windows have no process facts: on niri, X11 games are recognised only by their `steam_app_N` app id. `procinfo.Detect` adds that app id signal.
 
 ### Patterns
 - A condition's value becomes one of three anchored forms: the literal (`is`, `isNot`), the literal inside `(?s:.*)` on both sides (`contains`), or the user's own pattern inside the same (`matches`).
@@ -54,4 +60,4 @@ The user's window rules: the model, its validation, the renderers that compile i
 - The conditions offered are `WindowRulesEditor.offeredFields`: app id, title, XWayland and Steam game. A rule already holding another field shows it.
 - An issue's text is its English `message` through `I18n.tr` with `args` filled in (a field id as its label): `WindowRulesEditor.issueText`, which lists every message of `validate.go` for the translations (a Go test keeps the list complete).
 
-The "While it's open, focused or fullscreen" effects, the engine that matches windows and places what a config can't, applying to open windows, the pickers and the built-in switches come with the rest of the window rules work.
+The window watcher, the engine that matches windows and places what a config can't, the live part of the editor, the "While it's open, focused or fullscreen" effects and the built-in switches come with the rest of the window rules work.

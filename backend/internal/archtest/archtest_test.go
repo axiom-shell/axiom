@@ -90,6 +90,7 @@ var tiers = map[string]int{
 	"internal/files":                tierEdge,
 	"internal/fileindex":            tierEdge,
 	"internal/procprio":             tierEdge,
+	"internal/procinfo":             tierEdge,
 	"internal/thumbnail":            tierEdge,
 	"internal/inputmethod":          tierEdge,
 	"internal/ipcroute":             tierEdge,
