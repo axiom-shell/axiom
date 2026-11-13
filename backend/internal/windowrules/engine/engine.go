@@ -76,7 +76,7 @@ type Engine struct {
 	kick  chan struct{} // capacity 1: the config or the capabilities changed
 	apply chan applyRequest
 
-	mu          sync.Mutex // guards the next six
+	mu          sync.Mutex // guards the next five
 	windowRules any
 	keybinds    any
 	supports    map[string]bool
@@ -173,7 +173,9 @@ func (e *Engine) SetReport(report any) {
 		var rows struct {
 			Rules []windowrules.Report `json:"rules"`
 		}
-		if err := json.Unmarshal(jsonx.MarshalCompact(report), &rows); err == nil {
+		if err := json.Unmarshal(jsonx.MarshalCompact(report), &rows); err != nil {
+			e.o.Log.Warn("windowrules: unreadable report", "err", err)
+		} else {
 			reports = make(map[string]windowrules.Report, len(rows.Rules))
 			for _, r := range rows.Rules {
 				reports[r.Rule] = r
@@ -496,7 +498,11 @@ func (l *loop) applyNow() int {
 		return 0
 	}
 	n := 0
+	now := l.e.o.Now()
 	for i := range l.table {
+		if t := &l.table[i]; !t.opened.IsZero() && now.Sub(t.opened) <= l.e.o.PlaceGrace {
+			continue // placePass owns a window in its grace
+		}
 		if batches := l.planFor(&l.table[i], true); len(batches) > 0 {
 			n++
 			l.send(l.table[i].win.ID, batches)

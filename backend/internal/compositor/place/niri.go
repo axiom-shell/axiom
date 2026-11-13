@@ -2,10 +2,10 @@ package place
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
-	"errors"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
@@ -16,10 +16,10 @@ type niri struct{ n *ipc.Niri }
 
 func (b niri) run(ctx context.Context, id string, steps []windowrules.Step) error {
 	actions, err := niriActions(id, steps)
-	if err != nil {
-		return err
-	}
 	var errs []error
+	if err != nil {
+		errs = append(errs, err)
+	}
 	for _, a := range actions {
 		if err := b.n.Action(ctx, a); err != nil {
 			errs = append(errs, err)
@@ -30,13 +30,15 @@ func (b niri) run(ctx context.Context, id string, steps []windowrules.Step) erro
 
 // niriActions are steps as niri actions for window id. A special workspace,
 // maximize (a toggle), pin and the look have no by-id action: they aren't
-// planned without their capabilities, and are skipped here.
+// planned without their capabilities, and are skipped here. A step niri can't
+// take (a workspace index past 255) is an error returned with the other actions.
 func niriActions(id string, steps []windowrules.Step) ([]any, error) {
 	n, err := decimal(id)
 	if err != nil {
 		return nil, fmt.Errorf("place: %q is not a niri window id", id)
 	}
 	var out []any
+	var errs []error
 	act := func(name string, args map[string]any) { out = append(out, map[string]any{name: args}) }
 	for _, s := range steps {
 		switch s.Kind {
@@ -50,6 +52,7 @@ func niriActions(id string, steps []windowrules.Step) ([]any, error) {
 			if isDigits(s.Workspace) {
 				idx, err := strconv.ParseUint(s.Workspace, 10, 8)
 				if err != nil {
+					errs = append(errs, fmt.Errorf("place: workspace %s is not a niri workspace index", s.Workspace))
 					continue
 				}
 				ref = map[string]any{"Index": idx}
@@ -69,5 +72,5 @@ func niriActions(id string, steps []windowrules.Step) ([]any, error) {
 			act("FocusWindow", map[string]any{"id": n})
 		}
 	}
-	return out, nil
+	return out, errors.Join(errs...)
 }

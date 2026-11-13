@@ -233,6 +233,7 @@ end`);
   // warp into the middle of its `side` half. Dwindle splits side by side when
   // the box is wider than tall (split_width_multiplier), so a side along the
   // other axis falls back to first/second half on the axis dwindle will use.
+  // mirrored in backend/internal/compositor/place/hypr.go
   readonly property string _luaPrelude: `local errs = {}
 local function run(f)
   local ok, e = pcall(function() hl.dispatch(f()) end)

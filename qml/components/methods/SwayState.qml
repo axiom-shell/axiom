@@ -432,7 +432,7 @@ QtObject {
 
   // The commands moving window `id` into special group `name` (marked and
   // hidden in the scratchpad), out of any group it's in (`marks`, every
-  // window's): a window is in one at a time
+  // window's): a window is in one at a time.
   // The daemon places windows in a group with the same mark (backend
   // compositor/place/sway.go)
   function specialMove(marks, id, name) {

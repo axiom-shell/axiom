@@ -305,8 +305,10 @@ func (w WindowEffects) has(key string) bool {
 		return w.NoFocus
 	case "noScreenShare":
 		return w.NoScreenShare
+	case "tearing":
+		return w.Tearing
 	}
-	return w.Tearing
+	return false
 }
 
 // LookKey is whether the effect is a rule's look, which the daemon can give

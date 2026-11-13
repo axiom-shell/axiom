@@ -41,14 +41,13 @@ const liveLook = "ruleLiveLook"
 // the daemon (the report's placed) when a kind the config writes matched; else
 // all the rule sets, less what the compositor can't do. "Don't focus when it
 // opens" means nothing after open, and the look needs the capability.
-func effectsOf(m RuleMatch, rep Report, supports map[string]bool, apply bool) []string {
-	written := !apply && slices.ContainsFunc(m.Kinds, func(k int) bool {
+func effectsOf(m RuleMatch, rep Report, supports map[string]bool, apply bool) (keys []string, written bool) {
+	written = !apply && slices.ContainsFunc(m.Kinds, func(k int) bool {
 		return !slices.Contains(rep.Live, k) && !slices.Contains(rep.Skipped, k)
 	})
 	if written {
-		return rep.Placed
+		return rep.Placed, true
 	}
-	var keys []string
 	for _, key := range m.Rule.Window.Keys() {
 		switch {
 		case key == "noFocus", slices.Contains(rep.Dropped, key):
@@ -57,7 +56,7 @@ func effectsOf(m RuleMatch, rep Report, supports map[string]bool, apply bool) []
 			keys = append(keys, key)
 		}
 	}
-	return keys
+	return keys, false
 }
 
 // PlanFor merges the matching rules' effects for one window; matches are
@@ -65,7 +64,9 @@ func effectsOf(m RuleMatch, rep Report, supports map[string]bool, apply bool) []
 // (every matching rule, written or not; never follows, a special is moved
 // silently). Per effect the highest rule giving it wins; the destination is
 // the highest rule giving a workspace or a special, with its own follow and
-// shown/silent; the look is every rule giving any of it.
+// shown/silent; the look is every rule giving any of it. A rule the config
+// writes claims its monitor, destination and size even where the daemon sets
+// none of them (the higher rule wins).
 func PlanFor(matches []RuleMatch, reports map[string]Report, supports map[string]bool, apply bool) Plan {
 	var p Plan
 	var dest, follow, size, output bool
@@ -76,7 +77,7 @@ func PlanFor(matches []RuleMatch, reports map[string]Report, supports map[string
 		}
 		w := m.Rule.Window
 		look := false
-		keys := effectsOf(m, rep, supports, apply)
+		keys, written := effectsOf(m, rep, supports, apply)
 		for _, key := range keys {
 			switch key {
 			case "monitor":
@@ -115,6 +116,20 @@ func PlanFor(matches []RuleMatch, reports map[string]Report, supports map[string
 				p.Tearing, look = true, true
 			default: // opacity, noBlur, noScreenShare
 				look = true
+			}
+		}
+		if written {
+			// the config's own effects are the compositor's: a lower rule
+			// can't move, resize or change the monitor of this window
+			for _, key := range w.Keys() {
+				switch key {
+				case "monitor":
+					output = true
+				case "workspace", "special":
+					dest = true
+				case "size":
+					size = true
+				}
 			}
 		}
 		if look {
@@ -177,7 +192,7 @@ func (p Plan) Batches(fullscreen bool) [][]Step {
 	if p.Float {
 		first = append(first, Step{Kind: StepFloat})
 	}
-	if len(p.LookRules) > 0 || p.Tearing {
+	if len(p.LookRules) > 0 {
 		first = append(first, Step{Kind: StepLook, Rules: p.LookRules, Tearing: p.Tearing})
 	}
 	var out [][]Step

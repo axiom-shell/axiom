@@ -3,18 +3,15 @@ package place
 
 import (
 	"context"
-	"io"
-	"log/slog"
 	"strconv"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
 
-// Options build a Dispatcher; nil Log discards.
+// Options build a Dispatcher.
 type Options struct {
 	Getenv func(string) string
-	Log    *slog.Logger
 }
 
 // backend is one compositor's side: its steps as commands, sent.
@@ -24,18 +21,14 @@ type backend interface {
 
 // Dispatcher sends steps to the compositor ipc.Detect finds.
 type Dispatcher struct {
-	b   backend
-	log *slog.Logger
+	b backend
 }
 
 // New is the dispatcher for the compositor in o.Getenv, or nil when none.
 // The compositor's kind isn't part of the API: what a plan may hold is the
 // shell's capabilities.
 func New(o Options) *Dispatcher {
-	d := &Dispatcher{log: o.Log}
-	if d.log == nil {
-		d.log = slog.New(slog.NewTextHandler(io.Discard, nil))
-	}
+	d := &Dispatcher{}
 	switch ipc.Detect(o.Getenv) {
 	case "hyprland":
 		h := ipc.HyprFromEnv(o.Getenv)

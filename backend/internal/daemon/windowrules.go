@@ -32,7 +32,7 @@ func (d *Daemon) newWindowRules() {
 	}
 	// The compositor's placement: the engine decides, this sends (a nil one
 	// places nothing)
-	if p := place.New(place.Options{Getenv: d.opts.Getenv, Log: d.opts.Log.With("part", "place")}); p != nil {
+	if p := place.New(place.Options{Getenv: d.opts.Getenv}); p != nil {
 		o.Place = p.Run
 	}
 	d.windowRules = engine.New(o)

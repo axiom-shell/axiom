@@ -480,7 +480,7 @@ func footWin(id string) windows.Window {
 
 // settled waits until no more batches arrive for a while.
 func (p *placer) settled() []placed {
-	time.Sleep(6 * settle)
+	time.Sleep(testkit.Bound(6 * settle))
 	return p.got()
 }
 
@@ -634,6 +634,28 @@ func TestApplyNow(t *testing.T) {
 	}
 }
 
+func TestApplyNowSkipsWindowsInGrace(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", appFoot, `{"fullscreen":true}`)), nil)
+	r.e.SetReport(report(t, `{"rule":"p","placed":[],"dropped":[],"live":[],"skipped":[]}`))
+	r.run()
+	r.send(windows.Reset)
+	r.send(windows.Opened, footWin("1"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	// placePass owns a window within its grace
+	if n, err := r.e.Apply(context.Background()); err != nil || n != 0 {
+		t.Fatalf("Apply in grace: %d %v", n, err)
+	}
+	r.advance(time.Second)
+	if n, err := r.e.Apply(context.Background()); err != nil || n != 1 {
+		t.Fatalf("Apply after grace: %d %v", n, err)
+	}
+	if !testkit.Eventually(func() bool { return len(p.got()) == 1 }) {
+		t.Fatalf("batches %v", kindsOf(p.got()))
+	}
+}
+
 func TestApplyNowWithoutReportOrPlacer(t *testing.T) {
 	t.Parallel()
 	r, p := placeRig(t)
@@ -666,9 +688,8 @@ func TestPlaceErrorsDontStopTheRest(t *testing.T) {
 
 func TestPlaceCancelledBetweenBatches(t *testing.T) {
 	t.Parallel()
-	r := newRigWith(t, func(o *Options) {})
 	p := &placer{}
-	r.e = New(Options{
+	e := New(Options{
 		Events: func(ctx context.Context, out chan<- windows.Event) error {
 			out <- windows.Event{Kind: windows.Opened, Window: footWin("1")}
 			<-ctx.Done()
@@ -677,11 +698,11 @@ func TestPlaceCancelledBetweenBatches(t *testing.T) {
 		Lookup: func(int) (procinfo.Process, bool) { return procinfo.Process{Name: "foot"}, true },
 		Place:  p.place, Settle: time.Hour,
 	})
-	r.e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true,"size":{"width":4,"height":5}}`)), nil)
-	r.e.SetReport(report(t, liveRow("p")))
+	e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true,"size":{"width":4,"height":5}}`)), nil)
+	e.SetReport(report(t, liveRow("p")))
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- r.e.Run(ctx) }()
+	go func() { done <- e.Run(ctx) }()
 	if !testkit.Eventually(func() bool { return len(p.got()) == 1 }) {
 		t.Fatal("no first batch")
 	}

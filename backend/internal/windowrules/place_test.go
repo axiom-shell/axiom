@@ -95,6 +95,15 @@ func TestPlanFor(t *testing.T) {
 		"niri-like row: workspace and follow placed": {
 			matches: []RuleMatch{rm("a", fx, 0)}, reports: map[string]Report{"a": row("a", []string{"workspace", "follow"}, nil)}, support: live,
 			want: Plan{Workspace: "3", Follow: true}},
+		"written higher rule claims monitor, workspace and size from a lower live rule": {
+			matches: []RuleMatch{rm("hi", WindowEffects{Workspace: "web", Monitor: "DP-2", Width: 1, Height: 2}, 0),
+				rm("lo", WindowEffects{Workspace: "chat", Monitor: "DP-1", Width: 3, Height: 4, Float: true, Follow: true}, 1)},
+			reports: map[string]Report{"hi": row("hi", nil, nil), "lo": row("lo", nil, nil)}, support: live,
+			want: Plan{Float: true}},
+		"written higher rule: its placed workspace is the destination": {
+			matches: []RuleMatch{rm("hi", WindowEffects{Workspace: "3"}, 0), rm("lo", WindowEffects{Workspace: "chat", Follow: true}, 1)},
+			reports: map[string]Report{"hi": row("hi", []string{"workspace"}, nil), "lo": row("lo", nil, nil)}, support: live,
+			want: Plan{Workspace: "3"}},
 		"niri-like row: a named workspace's follow only": {
 			matches: []RuleMatch{rm("a", fx, 0)}, reports: map[string]Report{"a": row("a", []string{"follow"}, nil)}, support: live,
 			want: Plan{Follow: true}},
@@ -141,7 +150,7 @@ func TestBatches(t *testing.T) {
 		"output and look first": {
 			Plan{Output: "DP-1", Workspace: "2", LookRules: []string{"a"}, Float: true}, false,
 			[][]StepKind{{StepOutput, StepMove, StepFloat, StepLook}}},
-		"tearing is a look":   {Plan{Tearing: true}, false, [][]StepKind{{StepLook}}},
+		"tearing is a look":   {Plan{Tearing: true, LookRules: []string{"a"}}, false, [][]StepKind{{StepLook}}},
 		"follow only":         {Plan{Follow: true}, false, [][]StepKind{{StepFocus}}},
 		"centre without move": {Plan{Center: true}, false, [][]StepKind{{StepCenter}}},
 	} {

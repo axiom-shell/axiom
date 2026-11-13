@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -152,14 +153,28 @@ func TestSwayCommands(t *testing.T) {
 		c + "allow_tearing yes",
 		c + "focus",
 	}, "; ")
-	got, err := swayCommands("42", steps)
+	got, err := swayCommands("42", steps, nil)
 	if err != nil || got != want {
 		t.Fatalf("%v\n%s\nwant\n%s", err, got, want)
 	}
 	for _, id := range []string{"0x5f", "", "4 2", "-1"} {
-		if _, err := swayCommands(id, steps); err == nil {
+		if _, err := swayCommands(id, steps, nil); err == nil {
 			t.Errorf("id %q accepted", id)
 		}
+	}
+}
+
+func TestSwayMovesOutOfItsGroup(t *testing.T) {
+	t.Parallel()
+	tree := json.RawMessage(`{"id":1,"nodes":[{"id":2,"nodes":[{"id":42,"marks":["axiom-special-a-42","keep"]}],"floating_nodes":[{"id":43,"marks":["axiom-special-z-43"]}]}]}`)
+	marks := specialMarks(tree, "42")
+	if !reflect.DeepEqual(marks, []string{"axiom-special-a-42"}) {
+		t.Fatalf("marks %v", marks)
+	}
+	got, err := swayCommands("42", stepList{{Kind: windowrules.StepMove, Special: "b"}}, marks)
+	want := "[con_id=42] unmark axiom-special-a-42; [con_id=42] mark --add axiom-special-b-42; [con_id=42] move scratchpad"
+	if err != nil || got != want {
+		t.Fatalf("%v\n%s\nwant\n%s", err, got, want)
 	}
 }
 
@@ -205,6 +220,11 @@ func TestNiriActions(t *testing.T) {
 	})
 	if err != nil || len(skipped) != 0 {
 		t.Errorf("skipped steps sent: %v %v", skipped, err)
+	}
+	// an index niri can't take is an error beside the other actions
+	acts, err = niriActions("7", stepList{{Kind: windowrules.StepMove, Workspace: "300"}, {Kind: windowrules.StepFloat}})
+	if err == nil || len(acts) != 1 {
+		t.Errorf("workspace 300: %v %v", acts, err)
 	}
 	for _, id := range []string{"0x5f", "", "-1"} {
 		if _, err := niriActions(id, steps); err == nil {

@@ -2,8 +2,11 @@ package place
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -16,7 +19,13 @@ import (
 type sway struct{ s *ipc.Sway }
 
 func (b sway) run(ctx context.Context, id string, steps []windowrules.Step) error {
-	cmds, err := swayCommands(id, steps)
+	var marks []string
+	if slices.ContainsFunc(steps, func(s windowrules.Step) bool { return s.Kind == windowrules.StepMove && s.Special != "" }) {
+		if tree, err := b.s.Tree(ctx); err == nil {
+			marks = specialMarks(tree, id)
+		}
+	}
+	cmds, err := swayCommands(id, steps, marks)
 	if err != nil || cmds == "" {
 		return err
 	}
@@ -33,9 +42,45 @@ func (b sway) run(ctx context.Context, id string, steps []windowrules.Step) erro
 	return errors.Join(errs...)
 }
 
+// specialMark matches the mark SwayState.specialGroup reads: the group is the
+// name up to the last "-", then the con id.
+var specialMark = regexp.MustCompile(`^axiom-special-(.+)-[^-]+$`)
+
+// specialMarks are the special-group marks container id carries in tree.
+func specialMarks(tree json.RawMessage, id string) []string {
+	var found []string
+	var walk func(n map[string]json.RawMessage)
+	walk = func(n map[string]json.RawMessage) {
+		var nid json.Number
+		if json.Unmarshal(n["id"], &nid) == nil && nid.String() == id {
+			var marks []string
+			_ = json.Unmarshal(n["marks"], &marks)
+			for _, m := range marks {
+				if specialMark.MatchString(m) {
+					found = append(found, m)
+				}
+			}
+			return
+		}
+		for _, key := range []string{"nodes", "floating_nodes"} {
+			var kids []map[string]json.RawMessage
+			_ = json.Unmarshal(n[key], &kids)
+			for _, k := range kids {
+				walk(k)
+			}
+		}
+	}
+	var root map[string]json.RawMessage
+	if json.Unmarshal(tree, &root) == nil {
+		walk(root)
+	}
+	return found
+}
+
 // swayCommands are steps as the command list for window id; "" when none
-// does anything.
-func swayCommands(id string, steps []windowrules.Step) (string, error) {
+// does anything. marks are the special-group marks it carries: a move into a
+// group first drops them, so it is in one group at a time.
+func swayCommands(id string, steps []windowrules.Step, marks []string) (string, error) {
 	n, err := decimal(id)
 	if err != nil {
 		return "", fmt.Errorf("place: %q is not a sway container id", id)
@@ -46,6 +91,9 @@ func swayCommands(id string, steps []windowrules.Step) (string, error) {
 		for _, c := range cmd {
 			cmds = append(cmds, con+c)
 		}
+	}
+	for _, m := range marks {
+		add("unmark " + render.SwayQuote(m))
 	}
 	for _, s := range steps {
 		switch s.Kind {
