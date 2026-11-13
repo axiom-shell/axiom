@@ -11,6 +11,13 @@ func switchesOn(steam, games bool) Switches {
 	return Switches{SteamFloat: steam, GamesSpecial: GamesSpecial{Enabled: games, Special: Special{ID: "x", Silent: true}}}
 }
 
+// allOn has the five switches on
+func allOn() Switches {
+	s := switchesOn(true, true)
+	s.PictureInPicture, s.UtilityFloat, s.FullscreenAwake = true, true, true
+	return s
+}
+
 func ids(rules []Rule) []string {
 	out := []string{}
 	for _, r := range rules {
@@ -32,6 +39,11 @@ func TestBuiltins(t *testing.T) {
 		"games":                {switchesOn(false, true), nil, []string{"_gamesSpecial"}},
 		"both, table order":    {switchesOn(true, true), nil, []string{"_steamFloat", "_gamesSpecial"}},
 		"games with an issue":  {switchesOn(true, true), missing, []string{"_steamFloat"}},
+		"pip":                  {Switches{PictureInPicture: true}, nil, []string{"_pictureInPicture"}},
+		"utility":              {Switches{UtilityFloat: true}, nil, []string{"_utilityFloat"}},
+		"awake":                {Switches{FullscreenAwake: true}, nil, []string{"_fullscreenAwake"}},
+		"all, table order":     {allOn(), nil, []string{"_steamFloat", "_gamesSpecial", "_pictureInPicture", "_utilityFloat", "_fullscreenAwake"}},
+		"all, games issue":     {allOn(), missing, []string{"_steamFloat", "_pictureInPicture", "_utilityFloat", "_fullscreenAwake"}},
 		"a user rule's issues": {switchesOn(true, false), []Issue{{Rule: "a", Path: "id"}}, []string{"_steamFloat"}},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -55,10 +67,10 @@ func TestBuiltins(t *testing.T) {
 
 func TestBuiltinsAreValid(t *testing.T) {
 	t.Parallel()
-	s := switchesOn(true, true)
+	s := allOn()
 	s.GamesSpecial.Special = Special{ID: "games"}
 	rules := Builtins(s, nil)
-	if len(rules) != 2 {
+	if len(rules) != 5 {
 		t.Fatalf("rules %v", ids(rules))
 	}
 	// The reserved ids are no rule of the user's: check the rules under others
@@ -83,8 +95,8 @@ func TestBuiltinsAreValid(t *testing.T) {
 
 func TestBuiltinRule(t *testing.T) {
 	t.Parallel()
-	s := switchesOn(true, true)
-	for _, key := range []string{"steamFloat", "gamesSpecial"} {
+	s := allOn()
+	for _, key := range []string{"steamFloat", "gamesSpecial", "pictureInPicture", "utilityFloat", "fullscreenAwake"} {
 		o, ok := BuiltinRule(key, s)
 		if !ok {
 			t.Fatalf("%s: no rule", key)
@@ -97,7 +109,7 @@ func TestBuiltinRule(t *testing.T) {
 				want = b
 			}
 		}
-		if !reflect.DeepEqual(got.Kinds, want.Kinds) || got.Window != want.Window || got.Icon == "" {
+		if !reflect.DeepEqual(got.Kinds, want.Kinds) || got.Window != want.Window || !reflect.DeepEqual(got.Shell, want.Shell) || got.Icon == "" {
 			t.Errorf("%s: copy %+v, switch %+v", key, got, want)
 		}
 		again, _ := BuiltinRule(key, s)
@@ -147,5 +159,53 @@ func TestSteamFloatMatches(t *testing.T) {
 				t.Fatalf("got %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestBuiltinMatches(t *testing.T) {
+	t.Parallel()
+	m := NewMatcher(Builtins(allOn(), nil), nil, true)
+	rules := Builtins(allOn(), nil)
+	const pip, util, awake = "_pictureInPicture", "_utilityFloat", "_fullscreenAwake"
+	type row struct {
+		f    Facts
+		want []string
+	}
+	cases := map[string]row{
+		"firefox pip":     {Facts{AppID: "firefox", Title: "Picture-in-Picture"}, []string{pip, awake}},
+		"flatpak firefox": {Facts{AppID: "org.mozilla.firefox", Title: "Picture-in-Picture"}, []string{pip, awake}},
+		"chromium pip":    {Facts{AppID: "chromium", Title: "Picture in picture"}, []string{pip, awake}},
+		"translated":      {Facts{AppID: "firefox", Title: "Bild-im-Bild"}, []string{awake}},
+		"longer title":    {Facts{AppID: "firefox", Title: "Picture-in-Picture - YouTube"}, []string{awake}},
+		"no facts":        {Facts{}, []string{awake}},
+		"pavucontrol-qt":  {Facts{AppID: "pavucontrol-qt"}, []string{awake}},
+		"suffixed":        {Facts{AppID: "org.pulseaudio.pavucontrolx"}, []string{awake}},
+		"other portal":    {Facts{AppID: "xdg-desktop-portal-hyprland"}, []string{awake}},
+	}
+	for _, id := range utilityAppIDs {
+		cases[id] = row{Facts{AppID: id}, []string{util, awake}}
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var got []string
+			for _, i := range m.Match(tc.f) {
+				got = append(got, rules[i].ID)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFullscreenAwakeHold(t *testing.T) {
+	t.Parallel()
+	r := Builtins(Switches{FullscreenAwake: true}, nil)[0]
+	if got := Hold([]Active{{Rule: r, Moment: Moment{Fullscreen: true}}}).KeepAwake; !reflect.DeepEqual(got, []string{"_fullscreenAwake"}) {
+		t.Errorf("fullscreen: %v", got)
+	}
+	if got := Hold([]Active{{Rule: r, Moment: Moment{Focused: true}}}).KeepAwake; len(got) != 0 {
+		t.Errorf("focused only: %v", got)
 	}
 }

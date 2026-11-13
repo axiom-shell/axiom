@@ -1,6 +1,7 @@
 package windowrules
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -53,6 +54,61 @@ var builtins = []builtin{
 			)
 		},
 	},
+	{
+		key: "pictureInPicture", name: "Float picture-in-picture videos",
+		on: func(s Switches) bool { return s.PictureInPicture },
+		// Title only: Firefox and Chromium name the window, no other signal
+		// tells it from the browser's. English titles; translated browsers miss.
+		rule: func(Switches) *jsonx.Object {
+			return jsonx.Obj(
+				"icon", "picture_in_picture_alt",
+				"windows", jsonx.Arr(jsonx.Obj("conditions", jsonx.Arr(
+					condObj("title", "matches", `^(Picture-in-Picture|Picture in picture)$`),
+				))),
+				"window", jsonx.Obj("float", true, "pin", true),
+			)
+		},
+	},
+	{
+		key: "utilityFloat", name: "Float utility windows",
+		on: func(s Switches) bool { return s.UtilityFloat },
+		rule: func(Switches) *jsonx.Object {
+			quoted := make([]string, len(utilityAppIDs))
+			for i, id := range utilityAppIDs {
+				quoted[i] = regexp.QuoteMeta(id)
+			}
+			return jsonx.Obj(
+				"icon", "tune",
+				"windows", jsonx.Arr(jsonx.Obj("conditions", jsonx.Arr(
+					condObj("appId", "matches", "^("+strings.Join(quoted, "|")+")$"),
+				))),
+				"window", jsonx.Obj("float", true),
+			)
+		},
+	},
+	{
+		key: "fullscreenAwake", name: "Keep the screen awake while fullscreen",
+		on: func(s Switches) bool { return s.FullscreenAwake },
+		// "appId matches .*" is how a rule says any window (a kind with no
+		// condition is refused). A shell-only rule is never written.
+		rule: func(Switches) *jsonx.Object {
+			return jsonx.Obj(
+				"icon", "coffee",
+				"windows", jsonx.Arr(jsonx.Obj("conditions", jsonx.Arr(condObj("appId", "matches", ".*")))),
+				"shell", jsonx.Obj("keepAwake", jsonx.Obj("enabled", true, "when", "fullscreen")),
+			)
+		},
+	},
+}
+
+// utilityAppIDs are the Wayland app ids Float utility windows matches: file
+// picker portals, polkit agents, volume, network and Bluetooth apps.
+var utilityAppIDs = []string{
+	"xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome",
+	"org.freedesktop.impl.portal.desktop.kde",
+	"org.kde.polkit-kde-authentication-agent-1", "polkit-gnome-authentication-agent-1",
+	"org.pulseaudio.pavucontrol", "pavucontrol", "com.saivert.pwvucontrol",
+	"nm-connection-editor", "blueman-manager",
 }
 
 func condObj(field, op, value string) *jsonx.Object {

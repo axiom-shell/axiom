@@ -69,7 +69,7 @@ QtObject {
     }, (error, result) => callback(error ? null : result.rules));
   }
 
-  // A built-in switch ("steamFloat", "gamesSpecial") as a rule of the user's
+  // A built-in switch (a WindowRules.switches key) as a rule of the user's
   // (Copy as rule), for an unsaved WindowRules section's values: `callback`
   // gets the rule ({ icon, windows, window }) or null
   // rpc: windowRules.builtin

@@ -63,7 +63,7 @@ func TestParse(t *testing.T) {
 			"pauseBinds": {"enabled": true, "mode": "allExcept", "binds": ["a", "b"], "when": "fullscreen"},
 			"pauseOsd": {"enabled": true, "when": "open"},
 			"hideBar": {"enabled": true, "when": "open"}}}],
-		"switches": {"steamFloat": true, "gamesSpecial": {"enabled": true, "special": {"id": "g", "silent": true}}}}`)
+		"switches": {"steamFloat": true, "pictureInPicture": true, "utilityFloat": true, "fullscreenAwake": true, "gamesSpecial": {"enabled": true, "special": {"id": "g", "silent": true}}}}`)
 	if errs := config.ValidationErrors(s, full, node); len(errs) > 0 {
 		t.Fatalf("the section doesn't validate: %v", errs)
 	}
@@ -86,7 +86,7 @@ func TestParse(t *testing.T) {
 				HideBar:      Trigger{true, WhenOpen},
 			},
 		}},
-		Switches: Switches{SteamFloat: true, GamesSpecial: GamesSpecial{true, Special{"g", true}}},
+		Switches: Switches{SteamFloat: true, PictureInPicture: true, UtilityFloat: true, FullscreenAwake: true, GamesSpecial: GamesSpecial{true, Special{"g", true}}},
 	}
 	if got := Parse(full); !reflect.DeepEqual(got, wantFull) {
 		t.Errorf("full: got\n%+v\nwant\n%+v", got, wantFull)
