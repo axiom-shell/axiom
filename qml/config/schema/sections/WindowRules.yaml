@@ -20,10 +20,10 @@ properties:
     description: Common behaviours, off until turned on. They rank below your own rules.
     additionalProperties: false
     properties:
-      steamFloat: {type: boolean, title: "Float Steam's small windows", default: false, description: "Every Steam window but the main one and Big Picture."}
       pictureInPicture: {type: boolean, title: Float picture-in-picture videos, default: false, description: "Firefox and Chromium video pop-outs float and show on every workspace. Found by their English title."}
       utilityFloat: {type: boolean, title: Float utility windows, default: false, description: "File pickers, password prompts, and the volume, network and Bluetooth apps."}
       fullscreenAwake: {type: boolean, title: Keep the screen awake while fullscreen, default: false, description: "While any window is fullscreen, even on a workspace you aren't looking at."}
+      steamFloat: {type: boolean, title: "Float Steam's small windows", default: false, description: "Every Steam window but the main one and Big Picture."}
       gamesSpecial:
         type: object
         title: Send games to a special workspace

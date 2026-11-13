@@ -16,7 +16,7 @@ FieldGroup {
 
   readonly property var editor: WindowRulesManager.editor
   readonly property var schema: ConfigManager.configSchema.properties.WindowRules.properties.switches
-  readonly property var boolKeys: ["pictureInPicture", "utilityFloat", "fullscreenAwake", "steamFloat"]
+  readonly property var boolKeys: Object.keys(root.schema.properties).filter(key => root.schema.properties[key].type === "boolean")
   readonly property var gamesSchema: root.schema.properties.gamesSpecial
   readonly property var problems: WindowRuleIssues.of(root.editor.report, "").map(issue => ({
         "level": "error",

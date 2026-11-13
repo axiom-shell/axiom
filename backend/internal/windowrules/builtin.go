@@ -8,7 +8,7 @@ import (
 )
 
 // builtin is one built-in switch as a rule: key is its WindowRules.switches
-// key, rule its windows, window and icon in config form (what a user would
+// key, rule its icon, windows, window and shell in config form (what a user would
 // save), so Builtins and Copy as rule read one source.
 type builtin struct {
 	key, name string
@@ -142,7 +142,7 @@ func switchIssue(key string, issues []Issue) bool {
 }
 
 // BuiltinRule is the built-in switch key's rule in config form ({icon,
-// windows, window}) for s's values: what Copy as rule adds. false: no such key.
+// windows, window, shell}) for s's values: what Copy as rule adds. false: no such key.
 func BuiltinRule(key string, s Switches) (*jsonx.Object, bool) {
 	for _, b := range builtins {
 		if b.key == key {

@@ -71,7 +71,7 @@ QtObject {
 
   // A built-in switch (a WindowRules.switches key) as a rule of the user's
   // (Copy as rule), for an unsaved WindowRules section's values: `callback`
-  // gets the rule ({ icon, windows, window }) or null
+  // gets the rule ({ icon, windows, window, shell }) or null
   // rpc: windowRules.builtin
   function builtin(key, section, callback) {
     BackendManager.call("windowRules.builtin", {
