@@ -303,7 +303,7 @@ func (w *swayWriter) pausePlan(in Inputs) (send []string, now swayPaused) {
 	byID := func(ids []string) *jsonx.Array {
 		out := jsonx.Arr()
 		for _, b := range w.pausable(in) {
-			if slices.Contains(ids, jsonx.ToString(orNil(getAny(b, "id"), ""))) {
+			if slices.Contains(ids, bindID(b)) {
 				out.Append(b)
 			}
 		}

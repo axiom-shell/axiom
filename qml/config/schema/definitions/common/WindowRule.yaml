@@ -121,7 +121,7 @@ properties:
             default: []
             description: Keybinds by id.
             items: {type: string}
-            x-ref: {kind: keybind, usedBy: 'Used by window rule {0}', name: name}
+            x-ref: {kind: keybind, when: {enabled: true}, usedBy: 'Used by window rule {0}', name: name}
             x-showIf: {enabled: true}
           when:
             $ref: '#/definitions/WindowRuleWhen'

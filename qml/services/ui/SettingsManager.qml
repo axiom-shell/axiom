@@ -80,7 +80,8 @@ QtObject {
   readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SchemaRefs.references(root.localConfig, CompositorManager.specialRefSites)) : []
 
   // What an `x-ref` field of `kind` can be set to: the ids of the things that
-  // exist, as edited, for the dropdown beside the typed text
+  // exist, as edited, for the dropdown beside the typed text (keybinds: the
+  // saved binds, which is what rules validate against)
   function refOptions(kind) {
     if (kind === "keybind")
       return KeybindsConfig.binds.filter(b => String(b.key ?? "").trim() !== "").map(b => b.id);

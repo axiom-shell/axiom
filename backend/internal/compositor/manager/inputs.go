@@ -156,7 +156,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	// alone (niri), else told apart (pause), which never rewrites a file
 	var ids []string
 	for _, b := range binds.Items {
-		if id := jsonx.ToString(orNil(getAny(b, "id"), "")); id != "" {
+		if id := bindID(b); id != "" {
 			ids = append(ids, id)
 		}
 	}
@@ -164,7 +164,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	if f.PauseInFile && len(pause.Paused) > 0 {
 		kept := jsonx.Arr()
 		for _, b := range binds.Items {
-			if !slices.Contains(pause.Paused, jsonx.ToString(orNil(getAny(b, "id"), ""))) {
+			if !slices.Contains(pause.Paused, bindID(b)) {
 				kept.Append(b)
 			}
 		}

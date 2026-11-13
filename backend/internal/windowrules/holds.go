@@ -113,7 +113,8 @@ type Pause struct {
 
 // Pause is what to pause of bound, the ids of the binds the layer binds, in
 // order: the one decision every compositor's writer applies (an id not bound
-// is dropped). A zero hold pauses nothing.
+// is dropped). A zero hold pauses nothing, nor does an all-except hold none
+// of whose kept binds is bound.
 func (b BindsHold) Pause(bound []string) Pause {
 	p := Pause{Keep: []string{}, Paused: []string{}}
 	if len(b.Rules) == 0 {
@@ -127,6 +128,11 @@ func (b BindsHold) Pause(bound []string) Pause {
 		case b.AllExcept || slices.Contains(b.These, id):
 			p.Paused = append(p.Paused, id)
 		}
+	}
+	// Every kept bind is unbound here (an "Only when", a layout): pausing all
+	// would leave no shortcut at all, so the rule pauses nothing
+	if p.AllExcept && len(p.Keep) == 0 {
+		return Pause{Keep: []string{}, Paused: []string{}}
 	}
 	return p
 }

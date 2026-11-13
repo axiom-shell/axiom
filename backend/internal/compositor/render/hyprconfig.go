@@ -174,20 +174,8 @@ func (t *Tables) switcherEntries(binds, ctx any, complete func(bind, ctx any) bo
 	return out
 }
 
-// BindLines is HyprConfigLua.bindLines: every complete bind's line, then
-// the switcher's submap.
-func (t *Tables) BindLines(binds, ctx any) []string {
-	out := []string{}
-	for _, b := range items(binds) {
-		if line := t.BindLua(b, ctx); line != "" {
-			out = append(out, line)
-		}
-	}
-	entries := t.switcherEntries(binds, ctx, func(b, c any) bool { return t.BindLua(b, c) != "" })
-	return append(out, SwitcherLua(entries)...)
-}
-
-// HyprBindLinesByID is BindLines with each bind's handle kept in AXIOM_BINDS
+// HyprBindLinesByID is HyprConfigLua.bindLines (every complete bind's line,
+// then the switcher's submap) with each bind's handle kept in AXIOM_BINDS
 // under its id (a bind with no id: the plain line), so the rule effect
 // "pause shortcuts" can switch it off (HyprPauseLua).
 func (t *Tables) HyprBindLinesByID(binds, ctx any) []string {

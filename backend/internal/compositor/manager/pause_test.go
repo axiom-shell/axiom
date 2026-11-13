@@ -66,21 +66,21 @@ func pauseHarness(t *testing.T) *harness {
 func TestPauseOwner(t *testing.T) {
 	t.Parallel()
 	h := pauseHarness(t)
-	if n := h.pauseCalls(); n != 0 {
-		t.Fatalf("paused nothing: %d calls", n)
+	if n := h.pauseCalls(); n != 1 {
+		t.Fatalf("only the give-back of an earlier image so far: %d calls", n)
 	}
 	h.m.SetPause(hold(false, nil, []string{"a"}))
-	h.eventually("paused", func() bool { return h.pauseCalls() == 1 })
+	h.eventually("paused", func() bool { return h.pauseCalls() == 2 })
 	h.m.SetPause(hold(false, nil, []string{"a"}))
 	h.w.reloadCh <- ipc.Reload{}
-	h.eventually("again after a reload", func() bool { return h.pauseCalls() == 2 })
+	h.eventually("again after a reload", func() bool { return h.pauseCalls() == 3 })
 	time.Sleep(100 * time.Millisecond)
-	if n := h.pauseCalls(); n != 2 {
+	if n := h.pauseCalls(); n != 3 {
 		t.Fatalf("the same hold applied again: %d", n)
 	}
 	// Ended: applied once more, nothing paused
 	h.m.SetPause(windowrules.BindsHold{Rules: []string{}, Keep: []string{}, These: []string{}})
-	h.eventually("given back", func() bool { return h.pauseCalls() == 3 })
+	h.eventually("given back", func() bool { return h.pauseCalls() == 4 })
 	if last := h.w.seen(); last[len(last)-1] != `pause:{"allExcept":false,"keep":[],"paused":[]}` {
 		t.Fatalf("last call %q", last[len(last)-1])
 	}
@@ -91,20 +91,20 @@ func TestPauseOwner(t *testing.T) {
 		return h.w.reloaded >= 2
 	})
 	time.Sleep(600 * time.Millisecond) // past the debounce of its re-apply
-	if n := h.pauseCalls(); n != 3 {
+	if n := h.pauseCalls(); n != 4 {
 		t.Fatalf("nothing paused, yet applied: %d", n)
 	}
 
 	h.m.SetPause(hold(true, []string{"b"}, nil))
-	h.eventually("all except", func() bool { return h.pauseCalls() == 4 })
+	h.eventually("all except", func() bool { return h.pauseCalls() == 5 })
 	// A leaver (the key recorder) drops to the default mode: put back
 	h.w.reloadCh <- ipc.Reload{ModeChanged: true, Mode: "axiom_record"}
 	h.w.reloadCh <- ipc.Reload{ModeChanged: true}
-	h.eventually("entered again", func() bool { return h.pauseCalls() == 5 })
+	h.eventually("entered again", func() bool { return h.pauseCalls() == 6 })
 	// A default with no mode before it is no leave
 	h.w.reloadCh <- ipc.Reload{ModeChanged: true}
 	time.Sleep(100 * time.Millisecond)
-	if n := h.pauseCalls(); n != 5 {
+	if n := h.pauseCalls(); n != 6 {
 		t.Fatalf("a mode that wasn't left: %d", n)
 	}
 }
@@ -115,14 +115,14 @@ func TestPauseIsGivenBackAtTeardown(t *testing.T) {
 	t.Parallel()
 	h := pauseHarness(t)
 	h.m.SetPause(hold(false, nil, []string{"a"}))
-	h.eventually("paused", func() bool { return h.pauseCalls() == 1 })
+	h.eventually("paused", func() bool { return h.pauseCalls() == 2 })
 	var steps []session.Step
 	h.m.do(context.Background(), func(context.Context) { steps = h.m.teardownSteps() })
 	if len(steps) < 2 || steps[0].Op != "unpause" || steps[1].Op != "reload" {
 		t.Fatalf("steps %+v", steps)
 	}
 	h.m.SetPause(hold(false, nil, nil))
-	h.eventually("given back", func() bool { return h.pauseCalls() == 2 })
+	h.eventually("given back", func() bool { return h.pauseCalls() == 3 })
 	h.m.do(context.Background(), func(context.Context) { steps = h.m.teardownSteps() })
 	if len(steps) != 1 || steps[0].Op != "reload" {
 		t.Fatalf("steps with nothing paused %+v", steps)
@@ -283,5 +283,99 @@ func TestSwayPause(t *testing.T) {
 	e.carried = false
 	if newSway(e, nil); e.state.SwayPaused.Mode != "" {
 		t.Error("a fresh daemon kept the pause record")
+	}
+}
+
+// A pause the last image left is given back by the first send, whatever the
+// first hold is
+func TestPauseUnknownAtStartIsGivenBack(t *testing.T) {
+	t.Parallel()
+	h := pauseHarness(t)
+	h.eventually("the give-back", func() bool { return h.pauseCalls() == 1 })
+	for _, c := range h.w.seen() {
+		if strings.HasPrefix(c, "pause:") && c != `pause:{"allExcept":false,"keep":[],"paused":[]}` {
+			t.Fatalf("first send %q", c)
+		}
+	}
+}
+
+// A pause that failed to send is retried on the next inputs, and teardown
+// gives back meanwhile
+func TestPauseFailedSendIsRetried(t *testing.T) {
+	t.Parallel()
+	h := pauseHarness(t)
+	h.eventually("the give-back", func() bool { return h.pauseCalls() == 1 })
+	h.w.mu.Lock()
+	h.w.pauseFails = true
+	h.w.mu.Unlock()
+	h.m.SetPause(hold(false, nil, []string{"a"}))
+	h.eventually("tried", func() bool { return h.pauseCalls() == 2 })
+	var steps []session.Step
+	h.m.do(context.Background(), func(context.Context) { steps = h.m.teardownSteps() })
+	if len(steps) == 0 || steps[0].Op != "unpause" {
+		t.Fatalf("a failed pause isn't given back: %+v", steps)
+	}
+	h.w.mu.Lock()
+	h.w.pauseFails = false
+	h.w.mu.Unlock()
+	h.m.SetPause(hold(false, nil, []string{"a", "b"}))
+	h.eventually("retried", func() bool { return h.pauseCalls() == 3 })
+	// The same hold again: nothing more to send
+	h.m.SetPause(hold(false, nil, []string{"a", "b"}))
+	time.Sleep(100 * time.Millisecond)
+	if n := h.pauseCalls(); n != 3 {
+		t.Fatalf("sent again: %d", n)
+	}
+}
+
+// niri keeps its binds in the files: a clean stop in included or managed mode
+// writes them again without the pause (no step does it)
+func TestNiriTeardownRewritesPausedFiles(t *testing.T) {
+	t.Parallel()
+	for _, mode := range []string{"included", "managed"} {
+		h := newHarness(t, mode)
+		h.w.byFile, h.w.bindsInText = true, true
+		h.w.loaded = true
+		h.modeMu.Lock()
+		h.config = jsonx.Obj("Keybinds", jsonx.Obj("binds", pauseBinds("a", "b")))
+		h.modeMu.Unlock()
+		h.m.SetFacts(Facts{Kind: "hyprland", PauseInFile: true, Supports: map[string]bool{}})
+		f := h.w.files(Inputs{})
+		path := f.IncludePath
+		if mode == "managed" {
+			path = f.ManagedPath
+		}
+		h.eventually(mode+": written", func() bool { return readFile(path) != "" })
+		plain := readFile(path)
+		h.m.SetPause(hold(false, nil, []string{"b"}))
+		h.eventually(mode+": paused in the file", func() bool { return readFile(path) != plain })
+		h.stop()
+		h.m.Teardown(context.Background())
+		if got := readFile(path); got != plain {
+			t.Errorf("%s: the file keeps the pause: %q, want %q", mode, got, plain)
+		}
+	}
+}
+
+// sway after a re-exec: the carried record is given back by a zero pause (the
+// manager's first send), and a zero pause with no record sends nothing
+func TestSwayPauseGivesBackACarriedRecord(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	w := swayWith(t, "", true, nil)
+	path, asked := fakeSway(t)
+	w.ipc = &ipc.Sway{Path: path}
+	zero := buildInputs(jsonx.Obj("Keybinds", jsonx.Obj("binds", pauseBinds("a"))), &Facts{Kind: "sway", Ctx: BindCtx{ShellCommand: "axiom"}}, nil)
+	w.pause(ctx, zero)
+	if got := sent(asked); len(got) != 0 {
+		t.Fatalf("nothing to give back, sent %v", got)
+	}
+	w.state.SwayPaused = swayPaused{Mode: "axiom_paused_x", Restore: []string{"bindsym Mod4+a nop"}}
+	w.pause(ctx, zero)
+	if got := strings.Join(sent(asked), " | "); !strings.Contains(got, "bindsym Mod4+a nop") || !strings.Contains(got, "mode default") {
+		t.Fatalf("sent %q", got)
+	}
+	if w.state.SwayPaused.Mode != "" || len(w.state.SwayPaused.Restore) != 0 {
+		t.Fatalf("record kept: %+v", w.state.SwayPaused)
 	}
 }

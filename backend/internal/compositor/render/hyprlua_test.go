@@ -328,7 +328,7 @@ func TestHyprBindLinesByID(t *testing.T) {
 	  {"id": "half", "key": "", "action": "terminal"},
 	  {"id": "alt", "key": "ALT + Tab", "action": "switchWindow"}]`)
 	ctx := parse(t, `{"terminal": "foot", "browser": "firefox", "shellCommand": "axiom"}`)
-	plain, byID := tab.BindLines(binds, ctx), tab.HyprBindLinesByID(binds, ctx)
+	plain, byID := bindLines(tab, binds, ctx), tab.HyprBindLinesByID(binds, ctx)
 	if len(byID) != len(plain)+1 || byID[0] != "AXIOM_BINDS = {}" {
 		t.Fatalf("got\n%q\nplain\n%q", byID, plain)
 	}
