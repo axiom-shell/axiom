@@ -167,6 +167,26 @@ func (d *Daemon) windowRulesMethods(reg *rpc.Registry) {
 			Windows int `json:"windows"`
 		}{n}, err
 	})
+	type builtinParams struct {
+		Key     string          `json:"key"`
+		Section json.RawMessage `json:"section"`
+	}
+	type builtinResult struct {
+		Rule json.RawMessage `json:"rule"`
+	}
+	// A built-in switch as a rule of the user's (Copy as rule), for the
+	// draft's own values (an unsaved special workspace included)
+	rpc.Handle(reg, "windowRules.builtin", func(ctx context.Context, c *rpc.Conn, p builtinParams) (builtinResult, error) {
+		filled, err := fillWindowRules(d.store.Pipeline().Schema(), p.Section)
+		if err != nil {
+			return builtinResult{}, err
+		}
+		rule, ok := windowrules.BuiltinRule(p.Key, windowrules.Parse(filled).Switches)
+		if !ok {
+			return builtinResult{}, axerr.New(axerr.BadRequest, "no built-in switch %q", p.Key)
+		}
+		return builtinResult{jsonx.MarshalCompact(rule)}, nil
+	})
 	type matchParams struct {
 		Section json.RawMessage `json:"section"`
 	}

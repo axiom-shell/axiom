@@ -69,6 +69,17 @@ QtObject {
     }, (error, result) => callback(error ? null : result.rules));
   }
 
+  // A built-in switch ("steamFloat", "gamesSpecial") as a rule of the user's
+  // (Copy as rule), for an unsaved WindowRules section's values: `callback`
+  // gets the rule ({ icon, windows, window }) or null
+  // rpc: windowRules.builtin
+  function builtin(key, section, callback) {
+    BackendManager.call("windowRules.builtin", {
+      "key": key,
+      "section": section
+    }, (error, result) => callback(error ? null : result.rule));
+  }
+
   // The user's own say over a hold (the DND switch turned off by hand): it
   // wins until the rule's hold ends; the daemon keeps it (state.overrides)
   // rpc: windowRules.override

@@ -20,17 +20,18 @@ properties:
     description: Common behaviours, off until turned on. They rank below your own rules.
     additionalProperties: false
     properties:
-      steamFloat: {type: boolean, title: "Float Steam's small windows", default: false}
+      steamFloat: {type: boolean, title: "Float Steam's small windows", default: false, description: "Every Steam window but the main one and Big Picture."}
       gamesSpecial:
         type: object
         title: Send games to a special workspace
         additionalProperties: false
         properties:
-          enabled: {type: boolean, title: Send games to a special workspace, default: false}
+          enabled: {type: boolean, title: Send games to a special workspace, default: false, description: "Steam games open there; other launchers' games move there just after they open.", x-enabledIf: {/$supports.namedSpecial: true}}
           special:
             type: object
             title: Special workspace
             additionalProperties: false
+            x-showIf: {enabled: true}
             properties:
-              id: {type: string, title: Special workspace, default: games}
-              silent: {type: boolean, title: Send them there silently, default: false, description: 'Off: the special workspace shows.'}
+              id: {type: string, title: Special workspace, default: "", x-enabledIf: {/$supports.namedSpecial: true}, x-ref: {kind: specialWorkspace}}
+              silent: {type: boolean, title: Send them there silently, default: false, description: 'Off: the special workspace shows.', x-enabledIf: {/$supports.namedSpecial: true}}

@@ -158,6 +158,10 @@ func TestValidateRest(t *testing.T) {
 	if got := codes(dup); !reflect.DeepEqual(got, []string{"duplicateId@id"}) {
 		t.Errorf("duplicate: %v", got)
 	}
+	// A built-in rule's id is taken
+	if got := codes(Validate(Config{Rules: []Rule{okRule("_steamFloat")}}, Context{})); !reflect.DeepEqual(got, []string{"duplicateId@id"}) {
+		t.Errorf("built-in id: %v", got)
+	}
 }
 
 func TestUsable(t *testing.T) {

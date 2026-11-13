@@ -335,7 +335,7 @@ func (l *loop) configure() {
 	xwayland := supports["ruleXwayland"]
 	cfg := windowrules.Parse(section)
 	issues := windowrules.Validate(cfg, windowrules.ContextOf(keybinds))
-	l.rules = windowrules.Usable(cfg, issues)
+	l.rules = windowrules.Effective(cfg, issues)
 	l.match = windowrules.NewMatcher(l.rules, l.e.o.AppIDs, xwayland)
 	l.supports = supports
 	l.e.mu.Lock()

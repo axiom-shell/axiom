@@ -33,6 +33,9 @@ var steamID = regexp.MustCompile(`^[0-9]+$`)
 func Validate(c Config, ctx Context) []Issue {
 	issues := []Issue{}
 	seen := map[string]bool{}
+	for _, id := range BuiltinIDs() {
+		seen[id] = true
+	}
 	for _, r := range c.Rules {
 		add := func(path, code, message string, args ...string) {
 			if args == nil {

@@ -631,3 +631,71 @@ func TestRuleGatesMatchTheSchema(t *testing.T) {
 		}
 	}
 }
+
+// The games switch's fields grey on the capability the renderers drop special for
+func TestSwitchGatesMatchTheSchema(t *testing.T) {
+	t.Parallel()
+	data, err := tree.BuildSchema(testkit.RepoRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := jsonx.Unmarshal(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	games := get(get(get(get(get(get(parsed, "properties"), "WindowRules"), "properties"), "switches"), "properties"), "gamesSpecial")
+	props := get(get(get(games, "properties"), "special"), "properties")
+	for name, leaf := range map[string]any{"enabled": get(get(games, "properties"), "enabled"), "special.id": get(props, "id"), "special.silent": get(props, "silent")} {
+		cond, _ := get(leaf, "x-enabledIf").(*jsonx.Object)
+		if cond == nil || cond.Len() != 1 || cond.Value("/$supports."+ruleGates["special"]) != true {
+			t.Errorf("switches.gamesSpecial.%s: x-enabledIf %v, want /$supports.%s", name, cond, ruleGates["special"])
+		}
+	}
+}
+
+// Both built-in switches are written before every rule of the user's
+func TestBuiltinRuleRows(t *testing.T) {
+	t.Parallel()
+	c := windowrules.Config{
+		Rules:    []windowrules.Rule{rule("mine", windowrules.WindowEffects{Float: true}, conds{cond(appID, is, "a")})},
+		Switches: windowrules.Switches{SteamFloat: true, GamesSpecial: windowrules.GamesSpecial{Enabled: true, Special: windowrules.Special{ID: "games"}}},
+	}
+	rules := windowrules.Effective(c, nil)
+	t.Run("hyprland", func(t *testing.T) {
+		t.Parallel()
+		got, left := HyprRuleLines(RuleSet{Rules: rules, Supports: hyprSupports})
+		want := `hl.window_rule({ name = "axiom-rule-_gamesSpecial-0", match = { class = "\\A(?s:.*)(?:\\Asteam_app_[0-9]+\\z)(?s:.*)\\z" }, workspace = "special:games" })
+hl.window_rule({ name = "axiom-rule-_steamFloat-0", match = { class = "\\A(?:steam)\\z", title = "\\A(?s:.*)(?:(?-s:.))(?s:.*)\\z", initial_title = "negative:\\A(?:(?:Steam)|(?:Steam Big Picture Mode))\\z" }, float = true })
+hl.window_rule({ name = "axiom-rule-mine-0", match = { class = "\\A(?:a)\\z" }, float = true })`
+		if strings.Join(got, "\n") != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "_gamesSpecial", Live: []int{1}}}) {
+			t.Fatalf("got\n%s\n%+v", strings.Join(got, "\n"), left)
+		}
+	})
+	t.Run("niri", func(t *testing.T) {
+		t.Parallel()
+		got, left := niriText(t, rules, nil)
+		want := `window-rule {
+    match app-id="\\A(?:steam)\\z" title="\\A(?s:.*)(?:(?-s:.))(?s:.*)\\z"
+    exclude title="\\A(?:(?:Steam)|(?:Steam Big Picture Mode))\\z"
+    open-floating true
+}
+window-rule {
+    match app-id="\\A(?:a)\\z"
+    open-floating true
+}`
+		if got != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "_gamesSpecial", Live: []int{1}, Dropped: []string{"special"}}}) {
+			t.Fatalf("got\n%s\n%+v", got, left)
+		}
+	})
+	t.Run("sway", func(t *testing.T) {
+		t.Parallel()
+		got, left := swayLines(rules, swaySupports, true)
+		want := `for_window [app_id="\A(?:steam)\z" title="\A(?=\A(?s:.*)(?:(?-s:.))(?s:.*)\z)(?!\A(?:(?:Steam)|(?:Steam Big Picture Mode))\z)"] floating enable
+for_window [class="\A(?:steam)\z" title="\A(?=\A(?s:.*)(?:(?-s:.))(?s:.*)\z)(?!\A(?:(?:Steam)|(?:Steam Big Picture Mode))\z)"] floating enable
+for_window [app_id="\A(?:a)\z"] floating enable
+for_window [class="\A(?:a)\z"] floating enable`
+		if strings.Join(got, "\n") != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "_gamesSpecial", Live: []int{1}, Placed: []string{"special"}}}) {
+			t.Fatalf("got\n%s\n%+v", strings.Join(got, "\n"), left)
+		}
+	})
+}
