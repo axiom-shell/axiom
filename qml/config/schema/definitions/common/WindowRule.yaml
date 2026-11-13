@@ -1,0 +1,143 @@
+# The WindowRule definition (#/definitions/WindowRule): one of
+# WindowRules.rules, its order its priority.
+
+type: object
+additionalProperties: false
+properties:
+  id: {$ref: '#/definitions/ItemId'}
+  name: {type: string, title: Name, default: ''}
+  icon: {type: string, x-control: icon, title: Icon, default: select_window}
+  enabled: {type: boolean, title: "On", default: true}
+  windows:
+    type: array
+    title: Which windows
+    description: Any of these kinds of window. Within a kind, every condition must hold.
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        conditions:
+          type: array
+          title: Conditions
+          default: []
+          items: {$ref: '#/definitions/WindowRuleCondition'}
+  window:
+    type: object
+    title: When it opens
+    description: "Written into the compositor's config, so the window opens in place."
+    additionalProperties: false
+    properties:
+      float: {type: boolean, title: Float, default: false}
+      size:
+        type: object
+        title: Size
+        additionalProperties: false
+        properties:
+          width: {type: integer, title: Width, x-unit: px, default: 0, minimum: 0, maximum: 16384, description: '0: as it opens.'}
+          height: {type: integer, title: Height, x-unit: px, default: 0, minimum: 0, maximum: 16384, description: '0: as it opens.'}
+      center: {type: boolean, title: Center, default: false}
+      workspace: {type: string, title: Workspace, default: '', description: 'A number or a name. Empty: where it opens.'}
+      follow: {type: boolean, title: Go there too, default: false, description: 'Off: the window opens there and you stay put.'}
+      special:
+        type: object
+        title: Special workspace
+        additionalProperties: false
+        properties:
+          id: {type: string, title: Special workspace, default: '', description: 'Empty: none.'}
+          silent: {type: boolean, title: Send it there silently, default: false, description: 'Off: the special workspace shows.'}
+      monitor: {type: string, x-scope: machine, x-options: screens, x-emptyLabel: Where it opens, title: Monitor, default: ''}
+      fullscreen: {type: boolean, title: Fullscreen, default: false}
+      maximize: {type: boolean, title: Maximize, default: false}
+      pin: {type: boolean, title: Show on every workspace, default: false}
+      opacity: {type: integer, title: Opacity, x-unit: '%', default: 0, minimum: 0, maximum: 100, description: '0: unchanged.'}
+      noBlur: {type: boolean, title: No blur, default: false}
+      noFocus: {type: boolean, title: "Don't focus when it opens", default: false}
+      noScreenShare: {type: boolean, title: Hide from screen sharing, default: false}
+      tearing: {type: boolean, title: Allow tearing, default: false}
+  shell:
+    type: object
+    title: "While it's open, focused or fullscreen"
+    additionalProperties: false
+    properties:
+      dnd:
+        type: object
+        title: Do not disturb
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Do not disturb, default: false}
+          when: {$ref: '#/definitions/WindowRuleWhen', x-showIf: {enabled: true}}
+      keepAwake:
+        type: object
+        title: Keep the screen awake
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Keep the screen awake, default: false}
+          when: {$ref: '#/definitions/WindowRuleWhen', x-showIf: {enabled: true}}
+      powerProfile:
+        type: object
+        title: Power profile
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Power profile, default: false}
+          profile:
+            type: string
+            title: Profile
+            enum: [performance, powerSaver]
+            x-enumLabels: {performance: Performance, powerSaver: Power saver}
+            x-control: toggle
+            default: performance
+            x-showIf: {enabled: true}
+          when: {$ref: '#/definitions/WindowRuleWhen', x-showIf: {enabled: true}}
+      hideFrom:
+        type: object
+        title: Hide it from
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Hide it from, default: false}
+          dock: {type: boolean, title: Dock, default: false, x-showIf: {enabled: true}}
+          switcher: {type: boolean, title: Window switcher, default: false, x-showIf: {enabled: true}}
+          workspaces: {type: boolean, title: Workspace icons, default: false, x-showIf: {enabled: true}}
+          launcher: {type: boolean, title: Launcher window rows, default: false, x-showIf: {enabled: true}}
+          when: {$ref: '#/definitions/WindowRuleWhen', x-showIf: {enabled: true}}
+      pauseBinds:
+        type: object
+        title: Pause shortcuts
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Pause shortcuts, default: false}
+          mode:
+            type: string
+            title: Which
+            enum: [these, allExcept]
+            x-enumLabels: {these: These, allExcept: All except these}
+            x-control: toggle
+            default: these
+            x-showIf: {enabled: true}
+          binds:
+            type: array
+            title: Shortcuts
+            default: []
+            description: Keybinds by id.
+            items: {type: string}
+            x-showIf: {enabled: true}
+          when:
+            $ref: '#/definitions/WindowRuleWhen'
+            default: focused
+            x-enumShowIf: {open: {mode: these}}
+            x-showIf: {enabled: true}
+      pauseOsd:
+        type: object
+        title: Pause OSDs on its monitor
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Pause OSDs on its monitor, default: false, description: Alerts such as a critical battery still show.}
+          when: {$ref: '#/definitions/WindowRuleWhen', default: focused, x-showIf: {enabled: true}}
+      hideBar:
+        type: object
+        title: Hide the bar on its monitor
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Hide the bar on its monitor, default: false, description: You can still reveal it at the screen edge.}
+          when: {$ref: '#/definitions/WindowRuleWhen', default: focused, x-showIf: {enabled: true}}
+required: [id]

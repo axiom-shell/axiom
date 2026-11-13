@@ -1,0 +1,36 @@
+# The WindowRules section of the config (config.json's "WindowRules").
+
+type: object
+x-category: Compositor
+x-settings: false
+x-scope: personal
+title: Window rules
+description: Edited on the Window rules page.
+additionalProperties: false
+properties:
+  rules:
+    type: array
+    title: Rules
+    default: []
+    description: The higher a rule in the list, the more it counts when two set the same thing.
+    items: {$ref: '#/definitions/WindowRule'}
+  switches:
+    type: object
+    title: Built-in rules
+    description: Common behaviours, off until turned on. They rank below your own rules.
+    additionalProperties: false
+    properties:
+      steamFloat: {type: boolean, title: "Float Steam's small windows", default: false}
+      gamesSpecial:
+        type: object
+        title: Send games to a special workspace
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Send games to a special workspace, default: false}
+          special:
+            type: object
+            title: Special workspace
+            additionalProperties: false
+            properties:
+              id: {type: string, title: Special workspace, default: games}
+              silent: {type: boolean, title: Send them there silently, default: false, description: 'Off: the special workspace shows.'}
