@@ -190,7 +190,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [greeter-runtime](features/greeter-runtime.md): the bundle, session script, greeter mode, `GreetdManager`.
 - [desktop](features/desktop.md): modules on the desktop.
 - [dock](features/dock.md): docks, pinning, visibility modes, placement.
-- [window-rules](features/window-rules.md): the user's window rules: the model (`WindowRules`), validation and its issues, the patterns conditions become, written and live kinds.
+- [window-rules](features/window-rules.md): the user's window rules: the model (`WindowRules`), validation and its issues, the patterns conditions become, written and live kinds, a window's process and the game detector.
 - [osd](features/osd.md): on-screen displays.
 - [notifications](features/notifications.md): server, history, toasts, DND.
 - [chat](features/chat.md): LLM chat, providers, streaming.
