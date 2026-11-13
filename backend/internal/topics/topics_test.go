@@ -1,6 +1,7 @@
 package topics
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -261,7 +262,7 @@ func TestSubscribesApplyInOrder(t *testing.T) {
 	c := rpc.NewConn(a, reg, rpc.DefaultLimits(), nil)
 	t.Cleanup(func() { c.Close(); b.Close() })
 	go io.Copy(io.Discard, b)
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 100; i++ { // 200 calls: under MaxInFlight
 		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":0}}`+"\n", 2*i)
 		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":2000}}`+"\n", 2*i+1)
 	}
@@ -281,6 +282,60 @@ func TestSubscribesApplyInOrder(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	if got := intervals(); len(got) != 1 || got[0] != 2*time.Second {
 		t.Errorf("intervals %v", got)
+	}
+}
+
+func TestRegisterMarksTheMethodsInOrder(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	reg := rpc.NewRegistry()
+	Register(reg, h.hub, Source{Name: "u", Floor: time.Millisecond, Default: time.Second,
+		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) { return 0, nil }})
+	for _, m := range []string{"u.subscribe", "u.unsubscribe", "u.refresh"} {
+		if !reg.IsInOrder(m) {
+			t.Errorf("%s isn't in order", m)
+		}
+	}
+}
+
+// An unsubscribe sent just before a subscribe never lands after it: the
+// connection ends subscribed, with a state pushed.
+func TestUnsubscribeThenSubscribeKeepsTheSubscription(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	reg := rpc.NewRegistry()
+	Register(reg, h.hub, Source{Name: "u", Floor: time.Millisecond, Default: 10 * time.Second,
+		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) { return 1, nil }})
+	a, b := net.Pipe()
+	c := rpc.NewConn(a, reg, rpc.DefaultLimits(), nil)
+	t.Cleanup(func() { c.Close(); b.Close() })
+	pushed := make(chan struct{}, 1)
+	go func() {
+		sc := bufio.NewScanner(b)
+		for sc.Scan() {
+			if strings.Contains(sc.Text(), `"u.state"`) {
+				select {
+				case pushed <- struct{}{}:
+				default:
+				}
+			}
+		}
+	}()
+	for i := 0; i < 50; i++ {
+		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.unsubscribe"}`+"\n", 2*i)
+		fmt.Fprintf(b, `{"jsonrpc":"2.0","id":%d,"method":"u.subscribe","params":{"interval":2000}}`+"\n", 2*i+1)
+	}
+	if !testkit.Eventually(func() bool {
+		h.hub.mu.Lock()
+		defer h.hub.mu.Unlock()
+		return len(h.hub.sources["u"].subs) == 1
+	}) {
+		t.Fatal("the connection ended unsubscribed")
+	}
+	select {
+	case <-pushed:
+	case <-time.After(testkit.Bound(5 * time.Second)):
+		t.Fatal("no state pushed")
 	}
 }
 

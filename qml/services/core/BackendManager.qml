@@ -91,6 +91,7 @@ QtObject {
     if (!(topic in root._acquired))
       return;
     delete root._acquired[topic];
+    delete root._retryTopics[topic];
     if (root.ready)
       root.call(topic + ".unsubscribe", {}, root._logFailure(topic + ".unsubscribe"));
   }
@@ -129,8 +130,52 @@ QtObject {
   // acquire's topics: { topic: request }, subscribed again on each hello
   property var _acquired: ({})
 
+  // A subscribe axiom refused (busy: too many calls in flight, or any error
+  // but a closed connection) is sent again after a moment, with the topic's
+  // current request, never the one that failed: a lost one left its data
+  // stuck loading. One pending retry per topic
+  // (_retryTopics: { topic: attempts }), every second, given up after
+  // _maxResubscribes; release() cancels it.
   function _subscribe(topic) {
-    root.call(topic + ".subscribe", root._acquired[topic], root._logFailure(topic + ".subscribe"));
+    root.call(topic + ".subscribe", root._acquired[topic], error => {
+      if (!error) {
+        delete root._retryTopics[topic];
+        return;
+      }
+      if (error.kind === "unavailable")
+        return;
+      if (error.kind !== "busy")
+        console.warn("[BackendManager]", topic + ".subscribe", "failed:", error.message);
+      root._retrySubscribe(topic);
+    });
+  }
+
+  readonly property int _maxResubscribes: 5
+  property var _retryTopics: ({})
+
+  function _retrySubscribe(topic) {
+    if (!root.ready || !(topic in root._acquired))
+      return;
+    const attempts = root._retryTopics[topic] ?? 0;
+    if (attempts >= root._maxResubscribes) {
+      delete root._retryTopics[topic];
+      console.warn("[BackendManager]", topic + ".subscribe", "still refused: given up");
+      return;
+    }
+    root._retryTopics[topic] = attempts + 1;
+    root._resubscribe.restart();
+  }
+
+  property Timer _resubscribe: Timer {
+    interval: 1000
+    onTriggered: {
+      for (const topic of Object.keys(root._retryTopics)) {
+        if (root.ready && topic in root._acquired)
+          root._subscribe(topic);
+        else
+          delete root._retryTopics[topic];
+      }
+    }
   }
 
   function _logFailure(method) {

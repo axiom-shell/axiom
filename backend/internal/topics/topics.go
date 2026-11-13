@@ -182,6 +182,7 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 		asked = asked || o.what == sub.what
 	}
 	t.subs[s] = sub
+	h.o.Log.Debug("topic subscribe", "topic", name, "subscribers", len(t.subs))
 	if t.cancel == nil {
 		h.start(t)
 	} else {
@@ -256,6 +257,7 @@ func (h *Hub) drop(t *topic, s Subscriber) {
 		return
 	}
 	delete(t.subs, s)
+	h.o.Log.Debug("topic unsubscribe", "topic", t.src.Name, "subscribers", len(t.subs))
 	if len(t.subs) > 0 {
 		signal(t.changed)
 		return
