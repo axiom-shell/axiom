@@ -14,6 +14,7 @@ import qs.components.content.Palette // qmllint disable unused-imports
 import qs.components.views.BarEditor // qmllint disable unused-imports
 import qs.components.views.CustomWidgets // qmllint disable unused-imports
 import qs.components.views.Keybinds // qmllint disable unused-imports
+import qs.components.views.WindowRules // qmllint disable unused-imports
 import qs.components.views.Settings // qmllint disable unused-imports
 
 // The overlay's window on one screen (shell/Overlay): opens and closes the

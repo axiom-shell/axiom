@@ -1,0 +1,5 @@
+label: Window rules
+icon: rule_settings
+tool: true
+window: true
+needs: configModes

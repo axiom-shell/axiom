@@ -3,7 +3,7 @@
 type: object
 x-category: Compositor
 x-showIf: {/$supports.configModes: true}
-x-links: [Keybinds, Monitors]
+x-links: [Keybinds, Monitors, WindowRules]
 x-intro: {file: CompositorStatus, setup: [mode]}
 title: Compositor
 description: How axiom sets up your compositor.

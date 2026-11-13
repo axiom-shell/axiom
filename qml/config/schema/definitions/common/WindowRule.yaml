@@ -38,23 +38,23 @@ properties:
           height: {type: integer, title: Height, x-unit: px, default: 0, minimum: 0, maximum: 16384, description: '0: as it opens.'}
       center: {type: boolean, title: Center, default: false}
       workspace: {type: string, title: Workspace, default: '', description: 'A number or a name. Empty: where it opens.'}
-      follow: {type: boolean, title: Go there too, default: false, description: 'Off: the window opens there and you stay put.'}
+      follow: {type: boolean, title: Go there too, default: false, description: 'Off: the window opens there and you stay put.', x-showIf: {workspace: {notEmpty: true}}}
       special:
         type: object
         title: Special workspace
         additionalProperties: false
         properties:
-          id: {type: string, title: Special workspace, default: '', description: 'Empty: none.'}
-          silent: {type: boolean, title: Send it there silently, default: false, description: 'Off: the special workspace shows.'}
+          id: {type: string, title: Special workspace, default: '', description: 'Empty: none.', x-enabledIf: {/$supports.namedSpecial: true}}
+          silent: {type: boolean, title: Send it there silently, default: false, description: 'Off: the special workspace shows.', x-showIf: {id: {notEmpty: true}}, x-enabledIf: {/$supports.namedSpecial: true}}
       monitor: {type: string, x-scope: machine, x-options: screens, x-emptyLabel: Where it opens, title: Monitor, default: ''}
       fullscreen: {type: boolean, title: Fullscreen, default: false}
-      maximize: {type: boolean, title: Maximize, default: false}
-      pin: {type: boolean, title: Show on every workspace, default: false}
-      opacity: {type: integer, title: Opacity, x-unit: '%', default: 0, minimum: 0, maximum: 100, description: '0: unchanged.'}
-      noBlur: {type: boolean, title: No blur, default: false}
+      maximize: {type: boolean, title: Maximize, default: false, x-enabledIf: {/$supports.ruleMaximize: true}}
+      pin: {type: boolean, title: Show on every workspace, default: false, description: 'On sway, only a floating window.', x-enabledIf: {/$supports.pin: true}}
+      opacity: {type: integer, title: Opacity, x-unit: '%', default: 0, minimum: 0, maximum: 100, description: '0: unchanged.', x-enabledIf: {/$supports.windowOpacity: true}}
+      noBlur: {type: boolean, title: No blur, default: false, x-enabledIf: {/$supports.windowBlur: true}}
       noFocus: {type: boolean, title: "Don't focus when it opens", default: false}
-      noScreenShare: {type: boolean, title: Hide from screen sharing, default: false}
-      tearing: {type: boolean, title: Allow tearing, default: false}
+      noScreenShare: {type: boolean, title: Hide from screen sharing, default: false, x-enabledIf: {/$supports.ruleNoScreenShare: true}}
+      tearing: {type: boolean, title: Allow tearing, default: false, x-enabledIf: {/$supports.ruleTearing: true}}
   shell:
     type: object
     title: "While it's open, focused or fullscreen"
