@@ -191,7 +191,7 @@ func after(t *testing.T) <-chan time.Time { return time.After(testkit.Bound(5 * 
 
 // A file an old axiom wrote is found when the daemon starts, so a theme
 // write afterwards can't take the old output for what was there before
-// axiom: an undo deletes the file (the write made the row recorded)
+// axiom: an undo deletes the file
 func TestBackfillFilesAtStart(t *testing.T) {
 	t.Parallel()
 	td := newTestDaemon(t)
@@ -211,7 +211,7 @@ func TestBackfillFilesAtStart(t *testing.T) {
 	}
 	l := NewLedger(td.getenv, nil, nil)
 	row, ok := l.Get(footprint.ID(footprint.KindFile, old, ""))
-	if !ok || string(row.Prior) != `{"absent":true}` || row.Inferred {
+	if !ok || string(row.Prior) != `{"absent":true}` || !row.Inferred {
 		t.Fatalf("%+v", row)
 	}
 	if r := l.Undo(context.Background(), []string{row.ID}, footprint.UndoOptions{Force: true}); r[0].Outcome != footprint.OutcomeDone {

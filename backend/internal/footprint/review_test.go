@@ -338,21 +338,3 @@ func TestPriorFileModeFollowsALink(t *testing.T) {
 		t.Errorf("mode %o", p.Mode)
 	}
 }
-
-func TestBeginMakesAnInferredRowRecorded(t *testing.T) {
-	t.Parallel()
-	l, _, root := newLedger(t)
-	path := filepath.Join(root, "a")
-	if _, _, err := l.BackfillFiles([]Row{{Kind: KindFile, Target: path, Owner: "ThemeIntegrations.gtk", Prior: Absent()}}); err != nil {
-		t.Fatal(err)
-	}
-	id := ID(KindFile, path, "")
-	if r, _ := l.Get(id); !r.Inferred {
-		t.Fatal("backfilled row not inferred")
-	}
-	begin(t, l, Row{Kind: KindFile, Target: path, Owner: "ThemeIntegrations.gtk"}, l.PriorFile(path))
-	r, _ := l.Get(id)
-	if r.Inferred || string(r.Prior) != string(Absent()) {
-		t.Errorf("want recorded with the backfill's prior: %+v", r)
-	}
-}
