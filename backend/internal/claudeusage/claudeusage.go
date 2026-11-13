@@ -198,9 +198,9 @@ func (u *usage) fetch(ctx context.Context, requests []json.RawMessage) map[strin
 		}
 		a := u.accounts[dir]
 		if a == nil {
-			a = &Account{Dir: dir, Status: "pending", Breakdown: []Share{}}
+			// Not saved until a fetch settles it (a cancelled one leaves nothing)
+			a = &Account{Dir: dir, Label: label, Status: "pending", Breakdown: []Share{}}
 			u.accounts[dir] = a
-			changed = true
 		}
 		if a.Label != label {
 			a.Label, changed = label, true
@@ -209,11 +209,23 @@ func (u *usage) fetch(ctx context.Context, requests []json.RawMessage) map[strin
 		// Claude Code rewrote the credentials: an account whose login had
 		// lapsed is fetched straight away (fresh numbers stay fresh with a
 		// new token)
+		prevCreds, hadCreds := u.creds[dir]
 		renewed := u.credsChanged(dir) && (a.Status == "expired" || a.Status == "missing")
 		limited := a.RateLimited && now.UnixMilli() < a.RetryAt
 		if renewed || (forced && !limited) || due(a, now, every) {
-			u.fetchOne(ctx, a, every)
-			changed = true
+			if u.fetchOne(ctx, a, every) {
+				changed = true
+			} else {
+				// Cancelled: the triggers that led here stay for the next run
+				if forced {
+					u.forced.Store(true)
+				}
+				if hadCreds {
+					u.creds[dir] = prevCreds
+				} else {
+					delete(u.creds, dir)
+				}
+			}
 		}
 		out[dir] = *a
 	}
@@ -249,7 +261,10 @@ type credentials struct {
 	} `json:"claudeAiOauth"`
 }
 
-func (u *usage) fetchOne(ctx context.Context, a *Account, every time.Duration) {
+// fetchOne reports whether it settled a's state; false when ctx was
+// cancelled mid-request (the shell unsubscribed): that is not a failure, so
+// no status, backoff or save, and the next fetch goes ahead at once.
+func (u *usage) fetchOne(ctx context.Context, a *Account, every time.Duration) bool {
 	var creds credentials
 	readJSON(filepath.Join(a.Dir, ".credentials.json"), &creds)
 	if a.Org == "" {
@@ -270,13 +285,16 @@ func (u *usage) fetchOne(ctx context.Context, a *Account, every time.Duration) {
 	switch {
 	case oauth == nil || oauth.AccessToken == "":
 		a.Status, a.Error = "missing", "No Claude login in "+a.Dir
-		return
+		return true
 	case oauth.ExpiresAt > 0 && int64(oauth.ExpiresAt) < now.UnixMilli():
 		a.Status, a.Error = "expired", ""
-		return
+		return true
 	}
 
 	status, retryAfter, body, err := u.get(ctx, oauth.AccessToken)
+	if ctx.Err() != nil {
+		return false
+	}
 	var reply map[string]any
 	if json.Unmarshal(body, &reply) != nil {
 		reply = nil
@@ -302,6 +320,7 @@ func (u *usage) fetchOne(ctx context.Context, a *Account, every time.Duration) {
 		a.Status, a.Error = "error", msg
 		u.o.Log.Info("fetching Claude usage", "dir", a.Dir, "err", msg, "retry", time.UnixMilli(a.RetryAt).Sub(now).Round(time.Minute))
 	}
+	return true
 }
 
 // backoff doubles the wait per consecutive failure, up to an hour; a 429

@@ -163,6 +163,11 @@ BarWidget {
   segmentData: key => {
     const stat = root._metricData(key);
     const metric = root._metric(key);
+    // (a config push can leave a key no metric of a moment)
+    if (!metric)
+      return {
+        "hidden": true
+      };
     return {
       "icon": stat.icon,
       "text": stat.value,

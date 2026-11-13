@@ -206,6 +206,14 @@ TestCase {
     compare(hidden, [[], [], []]);
   }
 
+  function test_overflowHidden_key_is_equal_for_equal_membership() {
+    // A widget growing by 9 px with room to spare hides no one else: the
+    // key BarContainer follows is the same string
+    const key = pref => JSON.stringify(BarLayout.overflowHidden([[m(100)], [m(pref)], [m(100, 100, 5)]], 1000, 0, 10, 4, false));
+    compare(key(100), key(109));
+    verify(key(100) !== key(900), "a widget crowded out changes it");
+  }
+
   function test_overflowHidden_drops_lowest_priority() {
     // 250 of room for 300: the priority-0 widget goes, wherever it is
     const hidden = BarLayout.overflowHidden([[m(100, 100, 5)], [m(100, 100, 0)], [m(100, 100, 5)]], 250, 0, 0, 0, false);

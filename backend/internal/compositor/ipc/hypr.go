@@ -32,6 +32,11 @@ func HyprFromEnv(getenv func(string) string) *Hypr {
 // Request sends one request ("reload", "j/binds", "eval …") and returns the
 // reply.
 func (h *Hypr) Request(ctx context.Context, command string) (string, error) {
+	reply, err := h.request(ctx, command)
+	return reply, ctxErr(ctx, err)
+}
+
+func (h *Hypr) request(ctx context.Context, command string) (string, error) {
 	conn, err := dial(ctx, filepath.Join(h.Dir, ".socket.sock"))
 	if err != nil {
 		return "", err
@@ -41,6 +46,10 @@ func (h *Hypr) Request(ctx context.Context, command string) (string, error) {
 		return "", err
 	}
 	reply, err := io.ReadAll(conn)
+	// A cancel or deadline mid-reply leaves a partial reply: that is ctx's error
+	if ctx.Err() != nil {
+		return "", ctx.Err()
+	}
 	if err != nil && len(reply) == 0 {
 		return "", err
 	}

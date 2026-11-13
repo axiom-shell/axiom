@@ -52,7 +52,7 @@ func (d *Daemon) sources() []topics.Source {
 	return append([]topics.Source{
 		tailscale.Source(tailscale.Options{Children: &d.children}),
 		tailscale.DetailsSource(tailscale.Options{Children: &d.children}),
-		updates.Source(updates.Options{Log: d.opts.Log, Children: &d.children}),
+		updates.Source(updates.Options{Log: d.opts.Log, Children: &d.children, Dir: d.runtime.Dir}),
 		d.sysmon.Source(),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 		weather.Source(weather.Options{Log: d.opts.Log}),
