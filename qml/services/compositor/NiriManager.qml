@@ -92,6 +92,7 @@ Singleton {
   // ext-background-effect. It has an overview of its own (overview) and a
   // window switcher its config binds (compositorSwitcher). No release
   // binds, fullscreen opacity, blur contrast or focus-on-activate switch.
+  // Window rules can't match XWayland or allow tearing.
   readonly property var supports: ({
       "configModes": true,
       "keybinds": true,
@@ -116,6 +117,8 @@ Singleton {
       "inputConfig": true,
       "keyCapture": true,
       "bindMerge": true,
+      "ruleMaximize": true,
+      "ruleNoScreenShare": true,
       "overview": true,
       "compositorSwitcher": true,
       "shareRestore": true
