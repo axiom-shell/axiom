@@ -268,3 +268,38 @@ func TestRelativeDirsIgnored(t *testing.T) {
 		t.Errorf("got %v", out)
 	}
 }
+
+type cancelling struct {
+	cancel context.CancelFunc
+	next   http.RoundTripper
+}
+
+func (c cancelling) RoundTrip(r *http.Request) (*http.Response, error) {
+	c.cancel()
+	return c.next.RoundTrip(r)
+}
+
+// A request cut short by the shell unsubscribing is not a failure: the
+// account stays pending, nothing is saved and the next fetch goes ahead.
+func TestCancelledIsNotFailure(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, reply{200, "", okReply})
+	dir := account(t, "tok", time.Time{})
+	ctx, cancel := context.WithCancel(context.Background())
+	client := &http.Client{Transport: cancelling{cancel, h.srv.Client().Transport}}
+	src := Source(Options{StateFile: h.state, Endpoint: h.srv.URL, Client: client, Now: h.clock.Now})
+	req, _ := json.Marshal(map[string]any{"interval": 60000, "every": (5 * time.Minute).Milliseconds(), "accounts": []map[string]string{{"label": "Work", "dir": dir}}})
+	out, err := src.Fetch(ctx, []json.RawMessage{req})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a := out.(map[string]Account)[dir]; a.Status != "pending" || a.Failures != 0 || a.RetryAt != 0 || a.Error != "" {
+		t.Fatalf("cancelled: %+v", a)
+	}
+	if _, err := os.Stat(h.state); !os.IsNotExist(err) {
+		t.Errorf("state written after a cancelled fetch: %v", err)
+	}
+	if a := h.get(dir, 5*time.Minute); a.Status != "ok" || a.Failures != 0 {
+		t.Errorf("next fetch: %+v", a)
+	}
+}
