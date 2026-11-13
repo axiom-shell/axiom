@@ -343,7 +343,10 @@ Rectangle {
 
   readonly property var _groups: [leftGroup, centerGroup, rightGroup]
   // Per section, the model indices hidden so the minimum sizes fit
-  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root._sectionGaps, root.barConfig.groupSpacing, root.barConfig.lockCenter)
+  // (as a string key and back: `hiddenIndices` follows only a change of who
+  // is hidden, not each new size, as BarRuns.flagsKey)
+  readonly property string _hiddenKey: JSON.stringify(BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root._sectionGaps, root.barConfig.groupSpacing, root.barConfig.lockCenter))
+  readonly property var hidden: JSON.parse(root._hiddenKey)
   // Each section's room along the bar; a side with spacers stretches to
   // the center (BarLayout.layoutSections)
   readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount), centerGroup.centerParts)
@@ -353,15 +356,7 @@ Rectangle {
   // box per item is one entry per item (BarBoxes.expand), each with its
   // `box`, all with its configIndex.
   function widgetModel(widgetConfigArray) {
-    return BarBoxes.expand((widgetConfigArray || []).map((widgetConf, i) => ({
-          "type": widgetConf.type,
-          "properties": widgetConf.properties || {},
-          // Its Auto color fields' roles (BarsConfig.withAutoColors)
-          "autoColors": widgetConf.autoColors || {},
-          "layout": widgetConf.layout || {},
-          "configIndex": i,
-          "visible": widgetConf.visible !== false
-        })).filter(widget => widget.visible), BarsConfig.boxItems);
+    return BarBoxes.sectionModel(widgetConfigArray, BarsConfig.boxItems);
   }
 
   // While the bar editor is on screen, what it shows of this bar (see
@@ -410,7 +405,10 @@ Rectangle {
     readonly property var slot: section.bar.slots[section.slotIndex]
     zone: BarsConfig.sectionNames[section.slotIndex]
     align: section.slotIndex / 2
-    widgets: section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone])
+    // The widgets as a string key and back: they follow only a change of
+    // content, not each new config object of equal content (as _hiddenKey)
+    readonly property string _widgetsKey: JSON.stringify(section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone]))
+    widgets: JSON.parse(section._widgetsKey)
     // A powerline segment reaches back under the one before it, across
     // sections too: the earlier section is drawn over the later
     z: 2 - section.slotIndex

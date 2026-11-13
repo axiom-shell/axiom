@@ -26,6 +26,15 @@ Loader {
       "fallbackIcon": Qt.binding(() => root.fallbackIcon)
     });
   }
-  onKindChanged: root._load()
-  Component.onCompleted: root._load()
+  // A binding sets `kind` during creation, before completion; the element
+  // loads once, on completion
+  property bool _completed: false
+  onKindChanged: {
+    if (root._completed)
+      root._load();
+  }
+  Component.onCompleted: {
+    root._completed = true;
+    root._load();
+  }
 }

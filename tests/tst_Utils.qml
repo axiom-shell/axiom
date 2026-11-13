@@ -80,6 +80,39 @@ TestCase {
     ]), "layout-3", "a taken id is numbered on from its stem");
   }
 
+  function test_keepEqual() {
+    const id = e => e.id;
+    const mk = (i, c) => ({
+          "id": i,
+          "c": Qt.color(c ?? "#ff0000"),
+          "n": {
+            "col": Qt.color(c ?? "#ff0000")
+          }
+        });
+    const first = Utils.keepEqual({
+      "items": [],
+      "keys": []
+    }, [mk("a"), mk("b")], id);
+    compare(first.items.length, 2);
+    compare(first.keys.length, 2);
+    const same = Utils.keepEqual(first, [mk("a"), mk("b")], id);
+    verify(same.items === first.items, "equal content keeps the array");
+    const fresh = [mk("a"), mk("b", "#00ff00")];
+    const changed = Utils.keepEqual(same, fresh, id);
+    verify(changed.items !== first.items);
+    verify(changed.items[0] === first.items[0]);
+    verify(changed.items[1] === fresh[1]);
+    const added = Utils.keepEqual(changed, [mk("a"), mk("b", "#00ff00"), mk("c")], id);
+    verify(added.items !== changed.items);
+    verify(added.items[0] === changed.items[0] && added.items[1] === changed.items[1]);
+    const removed = Utils.keepEqual(added, [mk("b", "#00ff00")], id);
+    compare(removed.items.length, 1);
+    verify(removed.items[0] === changed.items[1]);
+    const order = Utils.keepEqual(added, [mk("c"), mk("a"), mk("b", "#00ff00")], id);
+    verify(order.items !== added.items);
+    verify(order.items[0] === added.items[2] && order.items[1] === added.items[0]);
+  }
+
   function test_deepEqual() {
     verify(Utils.deepEqual({
       "a": 1,

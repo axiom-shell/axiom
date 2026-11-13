@@ -24,6 +24,37 @@ TestCase {
     }), []);
   }
 
+  function test_sectionModel() {
+    const itemsOf = e => e.type === "multi" ? ["a", "b"] : [];
+    const m = BarBoxes.sectionModel([
+      {
+        "type": "time",
+        "visible": false
+      },
+      {
+        "type": "multi",
+        "properties": {
+          "x": 1
+        }
+      },
+      {
+        "type": "battery"
+      }
+    ], itemsOf);
+    compare(m.length, 3);
+    compare(m[0].type, "multi");
+    compare(m[0].box, "a");
+    compare(m[1].box, "b");
+    compare(m[0].configIndex, 1);
+    compare(m[2].type, "battery");
+    compare(m[2].configIndex, 2);
+    compare(m[2].properties, {});
+    compare(m[2].autoColors, {});
+    compare(m[2].layout, {});
+    verify(Utils.deepEqual(JSON.parse(JSON.stringify(m)), m));
+    compare(BarBoxes.sectionModel(undefined, itemsOf), []);
+  }
+
   function test_expand_one_entry_per_item() {
     const entries = [
       {
