@@ -404,7 +404,7 @@ func (l *loop) recompute() time.Duration {
 	next := time.Hour
 	var active []windowrules.Active
 	snap := &snapshot{focused: l.focused}
-	var open []string
+	open := []string{}
 	byRule := make([][]string, len(l.rules))
 	for i := range l.table {
 		t := &l.table[i]
@@ -435,10 +435,9 @@ func (l *loop) recompute() time.Duration {
 		snap.windows = []WindowInfo{}
 	}
 	st := State{
-		Running: l.e.o.Events != nil, Rules: []RuleWindows{}, Open: []string{},
+		Running: l.e.o.Events != nil, Rules: []RuleWindows{}, Open: open,
 		Holds: windowrules.Hold(active), Look: windowrules.LookOf(active),
 	}
-	st.Open = append(st.Open, open...)
 	for ri, ids := range byRule {
 		if len(ids) > 0 {
 			st.Rules = append(st.Rules, RuleWindows{Rule: l.rules[ri].ID, Windows: ids})

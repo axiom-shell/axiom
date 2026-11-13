@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell.Widgets
 import qs.config
 import qs.components.methods
 
@@ -193,17 +192,9 @@ Popup {
             anchors.rightMargin: Widget.padding
             spacing: Widget.spacing
 
-            StyledIcon {
-              visible: rowDelegate.icon !== ""
-              text: rowDelegate.icon
-              textColor: Theme.accent
-            }
-
-            IconImage {
-              visible: (rowDelegate.entry?.image ?? "") !== ""
-              source: rowDelegate.entry?.image ?? ""
-              implicitSize: Appearance.fontSizeLarge
-              asynchronous: true
+            OptionGlyph {
+              icon: rowDelegate.icon
+              image: rowDelegate.entry?.image ?? ""
             }
 
             StyledLabel {

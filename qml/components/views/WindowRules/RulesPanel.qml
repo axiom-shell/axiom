@@ -65,6 +65,7 @@ Item {
               readonly property int open: root.editor.openCount(ruleRow.index)
               visible: open > 0
               text: I18n.tr("{0} open", open)
+              textColor: ruleRow.ink
               opacity: 0.6
               textSize: Appearance.fontSizeBy(-1)
             },

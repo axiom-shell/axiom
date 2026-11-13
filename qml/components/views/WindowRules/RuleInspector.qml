@@ -98,6 +98,8 @@ ColumnLayout {
         iconText: "select_window"
         text: I18n.tr("Add from open window")
         onClicked: WindowRulesManager.windows(list => {
+          if (!list)
+            return;
           root.windowTypes = list.map(w => ({
                 "type": w.id,
                 "label": w.title || w.appId || w.id,

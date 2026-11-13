@@ -53,10 +53,10 @@ QtObject {
     }, (error, result) => callback(error ? null : result.rules));
   }
 
-  // The open windows as the rules see them (windowRules.windows)
+  // The open windows as the rules see them (windowRules.windows); `callback` gets null when the daemon fails
   // rpc: windowRules.windows
   function windows(callback) {
-    BackendManager.call("windowRules.windows", {}, (error, result) => callback(error ? [] : result.windows));
+    BackendManager.call("windowRules.windows", {}, (error, result) => callback(error ? null : result.windows));
   }
 
   // What a rule made from a window starts with ({ window, kind }); id ""
@@ -78,7 +78,7 @@ QtObject {
   }
 
   // The installed apps matching `query` as options: { value (the desktop
-  // file), label, image }. A launcher-hidden app is installed too
+  // file), label, image }. Launcher-hidden (NoDisplay) apps are skipped
   function apps(query) {
     const q = (query ?? "").trim().toLowerCase();
     const list = [];

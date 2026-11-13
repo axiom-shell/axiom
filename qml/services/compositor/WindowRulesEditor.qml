@@ -320,7 +320,6 @@ QtObject {
       root._draftReport = null;
       ++root._sequence;
       root._checkSoon();
-      root._count();
     }
   }
 
