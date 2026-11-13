@@ -20,6 +20,8 @@ QtObject {
   // --- The draft ---
   readonly property var rules: _draft.local?.rules ?? []
   readonly property bool isDirty: _draft.isDirty
+  // The draft's built-in switches (WindowRules.switches)
+  readonly property var switches: _draft.local?.switches ?? ({})
 
   property int selectedIndex: 0
   readonly property var selected: rules[selectedIndex] ?? null
@@ -231,6 +233,51 @@ QtObject {
     else
       target[last] = value;
     root._apply();
+  }
+
+  // Sets a key of the built-in switches: `path` a list of keys under them
+  // (["gamesSpecial", "enabled"])
+  function setSwitch(path, value) {
+    const local = root._local();
+    if (!local?.switches)
+      return;
+    let target = local.switches;
+    for (const key of path.slice(0, -1)) {
+      if (target[key] === null || typeof target[key] !== "object")
+        target[key] = {};
+      target = target[key];
+    }
+    const last = path[path.length - 1];
+    if (Utils.deepEqual(target[last], value))
+      return;
+    target[last] = value;
+    root._apply();
+  }
+
+  // Copy as rule: the built-in switch `key` ("steamFloat", "gamesSpecial")
+  // as a rule of the user's, last (just above the switches, where it ranked),
+  // selected and unsaved, with the switch turned off so it isn't done twice
+  function copySwitch(key) {
+    EditsManager.commitTyping();
+    const draft = root._local();
+    if (!draft)
+      return;
+    WindowRulesManager.builtin(key, draft, builtinRule => {
+      const local = root._local();
+      if (!builtinRule || !local)
+        return;
+      // The switch's own title, a schema string
+      const props = ConfigManager.configSchema.properties.WindowRules.properties.switches.properties;
+      const name = I18n.tr(key === "steamFloat" ? props.steamFloat.title : props.gamesSpecial.properties.enabled.title);
+      const rule = Object.assign({
+        "id": Utils.newId(Utils.slug(name) || "rule", local.rules),
+        "name": name
+      }, builtinRule);
+      local.rules.push(ConfigManager.withDefaults(rule, "WindowRule"));
+      root.setSwitch(key === "steamFloat" ? [key] : [key, "enabled"], false);
+      root._apply();
+      root.select(local.rules.length - 1);
+    });
   }
 
   function addKind() {
