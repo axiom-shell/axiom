@@ -21,10 +21,11 @@ QtObject {
   // bars on its screen (BarEnds.withEnds: where it lies, what it
   // reserves, which bar a shared corner goes to). An auto-hiding bar
   // pinned shown (BarRevealManager.pinned, which changes only on a pin,
-  // never on hover) reserves its space. A bar on a monitor a window rule
-  // hides it on is enriched as auto-hiding (`hiddenByRule`, BarEnrich). Each entry stays the same object
-  // while it is equal (Utils.keepEqual), so a pass over equal content
-  // reaches no reader; [] until this singleton has completed.
+  // never on hover) reserves its space. A bar on a monitor a window
+  // rule hides it on is enriched as auto-hiding (`hiddenByRule`,
+  // BarEnrich). Each entry stays the same object while it is equal
+  // (Utils.keepEqual), so a pass over equal content reaches no reader;
+  // [] until this singleton has completed.
   readonly property var bars: root._bars
   property var _bars: []
   property var _barKeys: []
