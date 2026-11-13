@@ -42,7 +42,6 @@ QtObject {
   // whenever the overlay reopens)
   function ensureLoaded() {
     _draft.loadIfStale();
-    root._checkSoon();
   }
 
   function save() {
@@ -104,9 +103,11 @@ QtObject {
     const local = root._local();
     if (!local.rules[index])
       return;
+    const selectedId = root.selectedId;
     local.rules.splice(index, 1);
     root._apply();
-    root.select(Math.min(root.selectedIndex, local.rules.length - 1));
+    const kept = local.rules.findIndex(rule => rule.id === selectedId);
+    root.selectedIndex = Math.max(0, kept >= 0 ? kept : Math.min(index, local.rules.length - 1));
   }
 
   // Moves the rule at `from` to before row `to` (the count: after the
@@ -233,7 +234,12 @@ QtObject {
 
   property ConfigDraft _draft: ConfigDraft {
     path: ["WindowRules"]
-    onLoaded: root._checkSoon()
+    onLoaded: {
+      root.selectedIndex = Math.max(0, Math.min(root.selectedIndex, root.rules.length - 1));
+      root._draftReport = null;
+      ++root._sequence;
+      root._checkSoon();
+    }
   }
 
   // The newest draft report, and the number of the check that asked for it
@@ -286,8 +292,8 @@ QtObject {
   }
 
   function _load() {
+    EditsManager.commitTyping();
     _draft.load();
-    root.select(root.selectedIndex);
   }
 
   // After an edit in place
