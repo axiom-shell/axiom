@@ -33,5 +33,5 @@ properties:
             additionalProperties: false
             x-showIf: {enabled: true}
             properties:
-              id: {type: string, title: Special workspace, default: games, x-enabledIf: {/$supports.namedSpecial: true}, x-ref: {kind: specialWorkspace}}
+              id: {type: string, title: Special workspace, default: "", x-enabledIf: {/$supports.namedSpecial: true}, x-ref: {kind: specialWorkspace}}
               silent: {type: boolean, title: Send them there silently, default: false, description: 'Off: the special workspace shows.', x-enabledIf: {/$supports.namedSpecial: true}}
