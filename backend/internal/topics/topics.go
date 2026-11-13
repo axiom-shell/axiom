@@ -4,8 +4,13 @@
 // shortest interval asked, and not at all without subscribers; its state
 // is pushed as `<name>.state` whenever it changes, latest-wins. A request
 // asking for something no subscriber asked for yet (more than another
-// interval) is fetched at once rather than at the next interval. The Go side of the
-// shell's ConsumerRegistry contract.
+// interval) is fetched at once rather than at the next interval. A topic
+// whose last subscriber left keeps its state and when it was fetched: the
+// same request subscribing again within its interval is pushed that state
+// and the next fetch waits out the rest of the interval, so a shell that
+// recreates a widget in a loop costs no fetch each time (an explicit
+// refresh still fetches at once). The Go side of the shell's
+// ConsumerRegistry contract.
 package topics
 
 import (
@@ -83,6 +88,10 @@ type topic struct {
 	changed, refresh chan struct{}
 	last             json.RawMessage // the state last pushed
 	lastErr          string
+	// lastAt is when the last successful fetch finished; lastWhat the
+	// request the last subscriber to leave had (what `last` is for)
+	lastAt   time.Time
+	lastWhat string
 }
 
 type subscription struct {
@@ -178,7 +187,16 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 	}
 	t.subs[s] = sub
 	if t.cancel == nil {
-		h.start(t)
+		// A state kept from the last subscribers, for this same request and
+		// younger than its interval, is pushed and waited out, not refetched
+		var since time.Time
+		if t.last != nil && t.lastWhat == sub.what && h.o.Now().Sub(t.lastAt) < sub.interval {
+			since = t.lastAt
+			s.NotifyLatest(name+".state", t.last)
+		} else {
+			t.last = nil
+		}
+		h.start(t, since)
 	} else {
 		if !asked {
 			signal(t.refresh)
@@ -247,7 +265,8 @@ func (h *Hub) Refresh(name string) error {
 }
 
 func (h *Hub) drop(t *topic, s Subscriber) {
-	if _, ok := t.subs[s]; !ok {
+	sub, ok := t.subs[s]
+	if !ok {
 		return
 	}
 	delete(t.subs, s)
@@ -256,12 +275,14 @@ func (h *Hub) drop(t *topic, s Subscriber) {
 		return
 	}
 	t.cancel()
-	// A state fetched before is stale by the next subscriber
-	t.cancel, t.last, t.lastErr = nil, nil, ""
+	// The state stays for a subscriber coming back within its interval
+	// (Subscribe decides); an error does not
+	t.cancel, t.lastErr, t.lastWhat = nil, "", sub.what
 }
 
-// start runs t's loop; h.mu is held.
-func (h *Hub) start(t *topic) {
+// start runs t's loop; h.mu is held. A non-zero since is when the state
+// it pushes was fetched: the first fetch waits for the interval after it.
+func (h *Hub) start(t *topic, since time.Time) {
 	t.gen++
 	gen := t.gen
 	t.changed, t.refresh = make(chan struct{}, 1), make(chan struct{}, 1)
@@ -270,22 +291,25 @@ func (h *Hub) start(t *topic) {
 	t.cancel = cancel
 	h.o.Go(func(context.Context) {
 		defer cancel()
-		h.loop(ctx, t, gen, changed, refresh)
+		h.loop(ctx, t, gen, since, changed, refresh)
 	})
 }
 
 // loop fetches, then waits for the shortest interval asked since that
 // fetch (again whenever the intervals change), or a refresh (a request
 // asking for something new too).
-func (h *Hub) loop(ctx context.Context, t *topic, gen int, changed, refresh <-chan struct{}) {
+func (h *Hub) loop(ctx context.Context, t *topic, gen int, since time.Time, changed, refresh <-chan struct{}) {
 	for ctx.Err() == nil {
-		requests, _ := h.requests(t)
-		fetched := h.o.Now()
-		state, err := t.src.Fetch(ctx, requests)
-		if ctx.Err() != nil {
-			return
+		fetched := since
+		if since.IsZero() {
+			requests, _ := h.requests(t)
+			fetched = h.o.Now()
+			state, err := t.src.Fetch(ctx, requests)
+			if ctx.Err() != nil {
+				return
+			}
+			h.publish(t, gen, state, err)
 		}
-		h.publish(t, gen, state, err)
 	wait:
 		for {
 			_, interval := h.requests(t)
@@ -303,6 +327,7 @@ func (h *Hub) loop(ctx context.Context, t *topic, gen int, changed, refresh <-ch
 				break wait
 			}
 		}
+		since = time.Time{}
 	}
 }
 
@@ -341,6 +366,7 @@ func (h *Hub) publish(t *topic, gen int, state any, err error) {
 		return
 	}
 	t.lastErr = ""
+	t.lastAt = h.o.Now()
 	if bytes.Equal(data, t.last) {
 		return
 	}

@@ -278,12 +278,91 @@ func TestForgetAndRefresh(t *testing.T) {
 	}
 	h.clock.Advance(time.Hour)
 	notFetched(t, h)
-	// Subscribing again starts afresh: no stale state, a new fetch
+	// An hour later the kept state is stale: subscribing again fetches
 	h.set(5)
 	subscribe(t, h, s, `{}`)
 	fetched(t, h)
 	for st := state(t, s); st != `t.state {"v":5}`; st = state(t, s) {
 	}
+}
+
+func TestResubscribeWithinTheIntervalDoesNotFetch(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	a := newSub()
+	subscribe(t, h, a, `{"interval":5000}`)
+	fetched(t, h)
+	state(t, a)
+	settle(t, h)
+	// A widget destroyed and recreated over and over: no fetch each time
+	for range 3 {
+		h.hub.Unsubscribe(a, "t")
+		h.clock.Advance(time.Second)
+		b := newSub()
+		subscribe(t, h, b, `{"interval":5000}`)
+		if got := state(t, b); got != `t.state {"v":0}` {
+			t.Errorf("state %q", got)
+		}
+		notFetched(t, h)
+		a = b
+	}
+	// The rest of the interval (3 s of 5 s gone) is waited out, then it fetches
+	settleWaits(t, h, 2)
+	h.clock.Advance(1999 * time.Millisecond)
+	notFetched(t, h)
+	h.clock.Advance(time.Millisecond)
+	fetched(t, h)
+}
+
+func TestResubscribeAfterTheIntervalFetches(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	a := newSub()
+	subscribe(t, h, a, `{"interval":5000}`)
+	fetched(t, h)
+	state(t, a)
+	h.hub.Unsubscribe(a, "t")
+	h.clock.Advance(5 * time.Second)
+	h.set(7)
+	subscribe(t, h, a, `{"interval":5000}`)
+	fetched(t, h)
+	if got := state(t, a); got != `t.state {"v":7}` {
+		t.Errorf("state %q", got)
+	}
+	notFetched(t, h)
+}
+
+func TestResubscribeWithAnotherRequestFetches(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	a := newSub()
+	subscribe(t, h, a, `{"x":1}`)
+	fetched(t, h)
+	state(t, a)
+	h.hub.Unsubscribe(a, "t")
+	h.set(3)
+	subscribe(t, h, a, `{"x":2}`)
+	fetched(t, h)
+	if got := state(t, a); got != `t.state {"v":3}` {
+		t.Errorf("state %q", got)
+	}
+}
+
+func TestRefreshAfterResubscribeFetches(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	a := newSub()
+	subscribe(t, h, a, `{}`)
+	fetched(t, h)
+	state(t, a)
+	h.hub.Unsubscribe(a, "t")
+	subscribe(t, h, a, `{}`)
+	state(t, a)
+	notFetched(t, h)
+	if err := h.hub.Refresh("t"); err != nil {
+		t.Fatal(err)
+	}
+	fetched(t, h)
 }
 
 func TestRefusesUnknownTopicsAndBadParams(t *testing.T) {
