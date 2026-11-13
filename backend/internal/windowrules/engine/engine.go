@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/windows"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/procinfo"
@@ -46,11 +47,14 @@ type State struct {
 	Open    []string          `json:"open"`  // ids of the open windows, table order; changes on open and close only
 	Holds   windowrules.Holds `json:"holds"`
 	Look    windowrules.Look  `json:"look"`
+	// Overrides are the holds the user overrode by hand, each until it ends
+	Overrides windowrules.Overrides `json:"overrides"`
 }
 
 // RuleWindows are the open windows a rule matches, in window order.
 type RuleWindows struct {
 	Rule    string   `json:"rule"`
+	Name    string   `json:"name"` // the rule's name; its id when it has none
 	Windows []string `json:"windows"`
 }
 
@@ -78,12 +82,13 @@ type Engine struct {
 	kick  chan struct{} // capacity 1: the config or the capabilities changed
 	apply chan applyRequest
 
-	mu          sync.Mutex // guards the next five
+	mu          sync.Mutex // guards the next six
 	windowRules any
 	keybinds    any
 	supports    map[string]bool
 	report      map[string]windowrules.Report // nil: the compositor's config hasn't reported
 	changed     bool                          // since the loop last took them
+	overrides   []string                      // asked by Override, not yet taken by the loop
 }
 
 // applyRequest is Apply's call into the loop.
@@ -104,16 +109,19 @@ type entry struct {
 
 // loop is what Run's goroutine owns.
 type loop struct {
-	e        *Engine
-	ctx      context.Context
-	wg       *sync.WaitGroup // the placements in flight, and the watcher
-	table    []entry
-	focused  string // the id of the last window seen focused, while it is open
-	rules    []windowrules.Rule
-	match    windowrules.Matcher
-	supports map[string]bool
-	reports  map[string]windowrules.Report
-	last     []byte // the marshalled State last passed to OnChange
+	e         *Engine
+	ctx       context.Context
+	wg        *sync.WaitGroup // the placements in flight, and the watcher
+	table     []entry
+	focused   string // the id of the last window seen focused, while it is open
+	rules     []windowrules.Rule
+	match     windowrules.Matcher
+	supports  map[string]bool
+	reports   map[string]windowrules.Report
+	last      []byte            // the marshalled State last passed to OnChange
+	held      windowrules.Holds // the holds as last decided
+	pending   []string          // overrides asked since the last recompute
+	overrides windowrules.Overrides
 }
 
 // New is an engine with no windows and no rules.
@@ -155,6 +163,20 @@ func (e *Engine) SetConfig(windowRules, keybinds any) {
 	e.windowRules, e.keybinds, e.changed = windowRules, keybinds, true
 	e.mu.Unlock()
 	e.wake()
+}
+
+// Override is the user's own say over the hold of effect ("dnd"): it wins
+// until the rule's hold ends. It is ignored while the effect isn't held. The
+// loop applies it, so the change is pushed like any other.
+func (e *Engine) Override(effect string) error {
+	if effect != "dnd" && effect != "powerProfile" {
+		return axerr.New(axerr.BadRequest, "no such effect to override: %s", effect)
+	}
+	e.mu.Lock()
+	e.overrides = append(e.overrides, effect)
+	e.mu.Unlock()
+	e.wake()
+	return nil
 }
 
 // SetSupports takes the shell's capabilities (ruleXwayland): a kind testing
@@ -264,7 +286,7 @@ func (e *Engine) Run(ctx context.Context) error {
 		}()
 	}
 	defer wg.Wait()
-	l := &loop{e: e, ctx: ctx, wg: &wg}
+	l := &loop{e: e, ctx: ctx, wg: &wg, held: windowrules.Hold(nil)}
 	l.last, _ = json.Marshal(e.State())
 	timer := time.NewTimer(time.Hour)
 	defer timer.Stop()
@@ -302,6 +324,8 @@ func (l *loop) configure() {
 	l.e.mu.Lock()
 	changed := l.e.changed
 	l.e.changed = false
+	l.pending = l.e.overrides
+	l.e.overrides = nil
 	l.e.mu.Unlock()
 	if !changed {
 		return
@@ -434,13 +458,19 @@ func (l *loop) recompute() time.Duration {
 	if snap.windows == nil {
 		snap.windows = []WindowInfo{}
 	}
+	holds := windowrules.Hold(active)
+	l.overrides = l.overrides.Settle(l.held, holds)
+	for _, effect := range l.pending {
+		l.overrides.Override(effect, holds)
+	}
+	l.pending, l.held = nil, holds
 	st := State{
 		Running: l.e.o.Events != nil, Rules: []RuleWindows{}, Open: open,
-		Holds: windowrules.Hold(active), Look: windowrules.LookOf(active),
+		Holds: holds, Look: windowrules.LookOf(active), Overrides: l.overrides,
 	}
 	for ri, ids := range byRule {
 		if len(ids) > 0 {
-			st.Rules = append(st.Rules, RuleWindows{Rule: l.rules[ri].ID, Windows: ids})
+			st.Rules = append(st.Rules, RuleWindows{Rule: l.rules[ri].ID, Name: ruleName(l.rules[ri]), Windows: ids})
 		}
 	}
 	snap.state = st
@@ -482,7 +512,7 @@ func (e *Engine) Match(section any) []RuleWindows {
 	snap := e.snap.Load()
 	out := make([]RuleWindows, len(rules))
 	for i, r := range rules {
-		out[i] = RuleWindows{Rule: r.ID, Windows: []string{}}
+		out[i] = RuleWindows{Rule: r.ID, Name: ruleName(r), Windows: []string{}}
 	}
 	for wi, f := range snap.facts {
 		for _, ri := range m.Match(f) {
@@ -490,6 +520,14 @@ func (e *Engine) Match(section any) []RuleWindows {
 		}
 	}
 	return out
+}
+
+// ruleName is what a rule is called: its name, else its id.
+func ruleName(r windowrules.Rule) string {
+	if r.Name != "" {
+		return r.Name
+	}
+	return r.ID
 }
 
 // underKind is whether an issue's path is windows.<k> or below it.

@@ -288,6 +288,47 @@ func TestCaffeineHoldsALogindInhibitorWithIdleOff(t *testing.T) {
 	h.heldIdle(t, 1)
 }
 
+func TestKeepAwakeHoldsIdleOffWithCaffeine(t *testing.T) {
+	t.Parallel()
+	// Idle off: a rule alone takes the logind inhibitor, with its own why
+	h := start(t, true)
+	s := defaults()
+	s.Enabled = false
+	h.svc.Configure(s)
+	h.svc.SetKeepAwake([]string{"Games"})
+	h.heldIdle(t, 1)
+	if whys := h.logind.IdleWhys(); len(whys) != 1 || whys[0] != "Keep the screen awake" {
+		t.Errorf("whys %v", whys)
+	}
+	h.svc.SetKeepAwake(nil)
+	h.heldIdle(t, 0)
+
+	// Idle on: held off, the rule listed beside caffeine, one inhibitor
+	s.Enabled = true
+	h.svc.Configure(s)
+	h.until(t, func(s State) bool { return s.Logind && s.Armed == 3 })
+	h.svc.SetKeepAwake([]string{"Games"})
+	st := h.until(t, func(s State) bool { return s.Inhibited && s.Armed == 0 })
+	if len(st.Inhibitors) != 1 || st.Inhibitors[0].Source != "windowRule" || st.Inhibitors[0].App != "Games" {
+		t.Errorf("inhibitors %+v", st.Inhibitors)
+	}
+	h.svc.SetCaffeine(true)
+	h.until(t, func(s State) bool { return len(s.Inhibitors) == 2 })
+	h.heldIdle(t, 1)
+	// Caffeine off, the rule still holds
+	h.svc.SetCaffeine(false)
+	h.until(t, func(s State) bool { return len(s.Inhibitors) == 1 })
+	time.Sleep(100 * time.Millisecond)
+	if st = h.svc.State(); !st.Inhibited {
+		t.Errorf("not held by the rule alone: %+v", st)
+	}
+	h.heldIdle(t, 1)
+	// Both off: released
+	h.svc.SetKeepAwake(nil)
+	h.heldIdle(t, 0)
+	h.until(t, func(s State) bool { return !s.Inhibited && s.Armed == 3 && len(s.Inhibitors) == 0 })
+}
+
 func TestCaffeinesOwnLogindInhibitorIsntAnApp(t *testing.T) {
 	t.Parallel()
 	h := start(t, true)

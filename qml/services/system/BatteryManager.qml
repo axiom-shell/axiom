@@ -51,6 +51,8 @@ QtObject {
   // power-profiles-daemon, over D-Bus. Quickshell can't tell whether the
   // daemon is there, so its CLI being installed stands in for it
   readonly property bool hasPowerProfiles: DependencyManager.found.powerprofilesctl === true
+  // Whether this computer has a performance profile (power-profiles-daemon lists it only on some)
+  readonly property bool hasPerformance: hasPowerProfiles && PowerProfiles.hasPerformanceProfile
   readonly property bool powerSaver: hasPowerProfiles && PowerProfiles.profile === PowerProfile.PowerSaver
   // The power profile as a name: "powerSaver" | "balanced" |
   // "performance", "" without power-profiles-daemon

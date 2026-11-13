@@ -55,6 +55,8 @@ ColumnLayout {
     case "inhibited":
       if (IdleManager.inhibitors.length > 0 && IdleManager.inhibitors.every(held => held.source === "caffeine"))
         return I18n.tr("Caffeine is keeping the screen on: the steps below wait until it's turned off.");
+      if (IdleManager.inhibitors.length > 0 && IdleManager.inhibitors.every(held => held.source === "caffeine" || held.source === "windowRule"))
+        return I18n.tr("A window rule is keeping the screen on: the steps below wait until its window goes.");
       return I18n.tr("An app is keeping the screen on: the steps below wait until it lets go.");
     case "noLock":
       return I18n.tr("The lock screen is your own locker, but its Lock command is empty or loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker.");
@@ -71,7 +73,7 @@ ColumnLayout {
   }
 
   // What holds idle off (i18n: the sources, chosen at runtime:
-  // I18n.tr("Keeping awake") for caffeine)
+  // I18n.tr("Keeping awake") for caffeine, I18n.tr("Window rule: {0}", name))
   Repeater {
     model: Idle.enabled ? IdleManager.inhibitors.length : 0
 
@@ -83,13 +85,13 @@ ColumnLayout {
       spacing: Widget.spacing
 
       StyledIcon {
-        text: inhibitor.held.source === "caffeine" ? "coffee" : "visibility"
+        text: inhibitor.held.source === "caffeine" ? "coffee" : inhibitor.held.source === "windowRule" ? "select_window" : "visibility"
         textColor: Theme.accent
       }
 
       StyledLabel {
         Layout.fillWidth: true
-        text: inhibitor.held.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.held.reason ? `${inhibitor.held.app}: ${inhibitor.held.reason}` : inhibitor.held.app
+        text: inhibitor.held.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.held.source === "windowRule" ? I18n.tr("Window rule: {0}", inhibitor.held.app) : inhibitor.held.reason ? `${inhibitor.held.app}: ${inhibitor.held.reason}` : inhibitor.held.app
         elide: Text.ElideRight
       }
     }
