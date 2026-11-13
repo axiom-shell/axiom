@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"reflect"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -27,11 +28,13 @@ type rig struct {
 	procs   map[int]procinfo.Process
 	done    chan error
 	ended   atomic.Bool
+	now     time.Time // the engine's clock, frozen until advance
+	sent    int
 }
 
 func newRig(t *testing.T) *rig {
 	t.Helper()
-	r := &rig{t: t, script: make(chan windows.Event, 16), lookups: map[int]int{}, procs: map[int]procinfo.Process{}, done: make(chan error, 1)}
+	r := &rig{t: t, script: make(chan windows.Event, 16), lookups: map[int]int{}, procs: map[int]procinfo.Process{}, done: make(chan error, 1), now: time.Date(2026, 11, 13, 12, 0, 0, 0, time.UTC)}
 	r.e = New(Options{
 		Events: func(ctx context.Context, out chan<- windows.Event) error {
 			defer r.ended.Store(true)
@@ -57,6 +60,11 @@ func newRig(t *testing.T) *rig {
 		},
 		AppIDs: func(id string) []string { return nil },
 		Grace:  grace,
+		Now: func() time.Time {
+			r.mu.Lock()
+			defer r.mu.Unlock()
+			return r.now
+		},
 		OnChange: func(s State) {
 			r.mu.Lock()
 			r.changes = append(r.changes, s)
@@ -103,10 +111,31 @@ func (r *rig) waitFor(what string, cond func(State) bool) {
 	}
 }
 
-// quiet waits long enough for a push that shouldn't come
+// advance moves the engine's clock on
+func (r *rig) advance(d time.Duration) {
+	r.mu.Lock()
+	r.now = r.now.Add(d)
+	r.mu.Unlock()
+}
+
+// quiet checks no push followed what was sent: the engine handles events in
+// order, so once an unrelated window it is sent shows in Windows, everything
+// before it has been decided and pushed.
 func (r *rig) quiet(n int) {
 	r.t.Helper()
-	time.Sleep(3 * grace)
+	r.sent++
+	id := "sentinel" + strconv.Itoa(r.sent)
+	r.send(windows.Opened, win(id, "unrelated"))
+	if !testkit.Eventually(func() bool {
+		for _, w := range r.e.Windows() {
+			if w.ID == id {
+				return true
+			}
+		}
+		return false
+	}) {
+		r.t.Fatal("the sentinel window never showed")
+	}
 	if got := r.count(); got != n {
 		r.t.Fatalf("%d pushes, want %d", got, n)
 	}
@@ -173,10 +202,7 @@ func TestOpenedChangedClosed(t *testing.T) {
 	w.Title = "spam"
 	r.send(windows.Changed, w)
 	r.send(windows.Changed, w)
-	time.Sleep(3 * grace)
-	if got := r.count(); got != 0 {
-		t.Fatalf("%d pushes before a match", got)
-	}
+	r.quiet(0)
 	w.Title = "late"
 	r.send(windows.Changed, w)
 	r.waitFor("held", func(s State) bool { return len(s.Holds.DND) == 1 })
@@ -199,10 +225,11 @@ func TestFocusedGrace(t *testing.T) {
 	// Focus away: still held, then released after the grace
 	w.Focused = false
 	r.send(windows.Changed, w)
-	time.Sleep(grace / 5)
+	r.quiet(r.count())
 	if len(r.e.State().Holds.DND) != 1 {
 		t.Error("released before the grace")
 	}
+	r.advance(grace)
 	r.waitFor("released", func(s State) bool { return len(s.Holds.DND) == 0 })
 	// Focus back inside the grace: no push at all
 	w.Focused = true
@@ -211,7 +238,7 @@ func TestFocusedGrace(t *testing.T) {
 	n := r.count()
 	w.Focused = false
 	r.send(windows.Changed, w)
-	time.Sleep(grace / 5)
+	r.quiet(n)
 	w.Focused = true
 	r.send(windows.Changed, w)
 	r.quiet(n)

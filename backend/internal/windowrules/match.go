@@ -24,7 +24,6 @@ type Matcher struct {
 
 // compiledKind is a lowered kind with its patterns compiled.
 type compiledKind struct {
-	index int // its place in the rule's Kinds
 	tests []compiledTest
 	flags []Flag
 }
@@ -42,9 +41,8 @@ type compiledTest struct {
 func NewMatcher(rules []Rule, apps AppIDs, xwayland bool) Matcher {
 	m := Matcher{rules: make([][]compiledKind, len(rules))}
 	for i, r := range rules {
-		for ki, k := range r.Kinds {
+		for _, k := range r.Kinds {
 			if ck, ok := compileKind(k, apps, xwayland); ok {
-				ck.index = ki
 				m.rules[i] = append(m.rules[i], ck)
 			}
 		}

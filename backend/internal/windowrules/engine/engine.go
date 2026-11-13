@@ -27,6 +27,7 @@ type Options struct {
 	Lookup   func(pid int) (procinfo.Process, bool) // default procinfo.New(procinfo.Options{}).Lookup
 	AppIDs   windowrules.AppIDs                     // an `app` condition's ids; nil: such kinds match nothing
 	Grace    time.Duration                          // focused's off delay, default 500 ms
+	Now      func() time.Time                       // default time.Now
 	OnChange func(State)                            // from Run's goroutine, only when State changed
 	Log      *slog.Logger                           // nil discards
 }
@@ -58,7 +59,6 @@ type WindowInfo struct {
 type snapshot struct {
 	state   State
 	windows []WindowInfo
-	ids     []string
 	facts   []windowrules.Facts
 }
 
@@ -80,7 +80,8 @@ type entry struct {
 	win   windows.Window
 	proc  *procinfo.Process // the lookup's result; nil: none (no pid, not ours)
 	facts windowrules.Facts
-	lost  time.Time // when it lost focus; zero: not in grace
+	game  []procinfo.Signal // why it's a game (Detect); [] when it isn't
+	lost  time.Time         // when it lost focus; zero: not in grace
 }
 
 // loop is what Run's goroutine owns.
@@ -99,6 +100,9 @@ func New(o Options) *Engine {
 	}
 	if o.Grace <= 0 {
 		o.Grace = 500 * time.Millisecond
+	}
+	if o.Now == nil {
+		o.Now = time.Now
 	}
 	if o.Log == nil {
 		o.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -237,7 +241,7 @@ func (l *loop) apply(ev windows.Event) {
 		switch {
 		case ev.Window.Focused:
 		case old.win.Focused:
-			n.lost = time.Now()
+			n.lost = l.e.o.Now()
 		default:
 			n.lost = old.lost
 		}
@@ -261,10 +265,13 @@ func (l *loop) entryFor(w windows.Window, old *entry) entry {
 			e.proc = &p
 		}
 	}
+	if e.game = procinfo.Detect(w.AppID, e.proc); e.game == nil {
+		e.game = []procinfo.Signal{}
+	}
 	e.facts = windowrules.Facts{
 		AppID: w.AppID, Title: w.Title, XWayland: w.XWayland,
 		// A bridge stands for many windows: its process isn't theirs (D3)
-		Game: len(procinfo.Detect(w.AppID, e.proc)) > 0,
+		Game: len(e.game) > 0,
 	}
 	if e.proc != nil && !e.proc.Bridge {
 		e.facts.Process = &windowrules.ProcessFacts{Name: e.proc.Name, Ancestors: e.proc.Ancestors}
@@ -275,7 +282,7 @@ func (l *loop) entryFor(w windows.Window, old *entry) entry {
 // recompute matches every window, merges the holds, stores the snapshot and
 // reports a changed State. It returns how long until a window's grace ends.
 func (l *loop) recompute() time.Duration {
-	now := time.Now()
+	now := l.e.o.Now()
 	grace := l.e.o.Grace
 	next := time.Hour
 	var active []windowrules.Active
@@ -293,10 +300,7 @@ func (l *loop) recompute() time.Duration {
 		}
 		matches := l.match.Match(t.facts)
 		moment := windowrules.Moment{Focused: t.win.Focused || inGrace, Fullscreen: t.win.Fullscreen}
-		info := WindowInfo{Window: t.win, Process: t.proc, Game: procinfo.Detect(t.win.AppID, t.proc), Rules: []string{}}
-		if info.Game == nil {
-			info.Game = []procinfo.Signal{}
-		}
+		info := WindowInfo{Window: t.win, Process: t.proc, Game: t.game, Rules: []string{}}
 		for _, ri := range matches {
 			active = append(active, windowrules.Active{
 				Rule: l.rules[ri], Priority: ri, Window: t.win.ID, Output: t.win.Output, Moment: moment,
@@ -305,7 +309,6 @@ func (l *loop) recompute() time.Duration {
 			info.Rules = append(info.Rules, l.rules[ri].ID)
 		}
 		snap.windows = append(snap.windows, info)
-		snap.ids = append(snap.ids, t.win.ID)
 		snap.facts = append(snap.facts, t.facts)
 	}
 	if snap.windows == nil {
@@ -361,7 +364,7 @@ func (e *Engine) Match(section any) []RuleWindows {
 	}
 	for wi, f := range snap.facts {
 		for _, ri := range m.Match(f) {
-			out[ri].Windows = append(out[ri].Windows, snap.ids[wi])
+			out[ri].Windows = append(out[ri].Windows, snap.windows[wi].ID)
 		}
 	}
 	return out
