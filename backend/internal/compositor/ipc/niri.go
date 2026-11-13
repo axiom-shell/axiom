@@ -32,6 +32,11 @@ var ErrRefused = errors.New("niri refused it")
 
 // Request sends one request (a JSON value) and returns the reply's Ok.
 func (n *Niri) Request(ctx context.Context, request any) (json.RawMessage, error) {
+	ok, err := n.request(ctx, request)
+	return ok, ctxErr(ctx, err)
+}
+
+func (n *Niri) request(ctx context.Context, request any) (json.RawMessage, error) {
 	conn, err := dial(ctx, n.Path)
 	if err != nil {
 		return nil, err
@@ -45,6 +50,10 @@ func (n *Niri) Request(ctx context.Context, request any) (json.RawMessage, error
 		return nil, err
 	}
 	line, err := bufio.NewReader(conn).ReadBytes('\n')
+	// A cancel or deadline mid-reply leaves a partial line: that is ctx's error
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
 	if err != nil && len(line) == 0 {
 		return nil, err
 	}
