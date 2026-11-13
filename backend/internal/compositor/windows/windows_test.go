@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -30,7 +31,7 @@ func TestDiff(t *testing.T) {
 	if strings.Join(got, " ") != want {
 		t.Errorf("%v, want %s", got, want)
 	}
-	// Opened and closed inside one batch, and nothing changed
+	// an unchanged window: nothing
 	if ev := (&table{list: []Window{w("1", "a")}}).diff([]Window{w("1", "a")}); len(ev) != 0 {
 		t.Errorf("%+v", ev)
 	}
@@ -327,5 +328,55 @@ func TestRunFailedFetch(t *testing.T) {
 			default:
 			}
 		})
+	}
+}
+
+// stubSource has two requests; a line "ask X" asks X, "open ID" describes a
+// window the replies lack, "close ID" closes one
+type stubSource struct{ loaded []string }
+
+func (s *stubSource) connect(context.Context, func(), func([]byte)) error { return nil }
+func (s *stubSource) request(context.Context, string) ([]byte, error)     { return nil, nil }
+func (s *stubSource) reset()                                              {}
+func (s *stubSource) ready() bool                                         { return true }
+func (s *stubSource) snapshot() []string                                  { return []string{"first", "second"} }
+func (s *stubSource) load(_ context.Context, _ fetch, name string, _ []byte, t *table) error {
+	s.loaded = append(s.loaded, name)
+	t.list = []Window{{ID: "1"}}
+	return nil
+}
+func (s *stubSource) apply(t, pend *table, line []byte) []string {
+	verb, arg, _ := strings.Cut(string(line), " ")
+	switch verb {
+	case "open":
+		pend.add(Window{ID: arg})
+		return []string{"first"}
+	case "close":
+		t.remove(arg)
+		pend.remove(arg)
+	case "ask":
+		return []string{arg}
+	}
+	return nil
+}
+
+func TestBatch(t *testing.T) {
+	t.Parallel()
+	var fetched []string
+	f := func(_ context.Context, name string) ([]byte, error) {
+		fetched = append(fetched, name)
+		return nil, nil
+	}
+	s, tbl := &stubSource{}, &table{}
+	lines := [][]byte{[]byte("ask second"), []byte("ask first"), []byte("ask second"), []byte("open 2"), []byte("open 3"), []byte("close 3")}
+	if _, err := batch(context.Background(), f, s, tbl, lines); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"first", "second"}; !slices.Equal(fetched, want) || !slices.Equal(s.loaded, want) {
+		t.Errorf("fetched %v, loaded %v, want %v once each, in the snapshot's order", fetched, s.loaded, want)
+	}
+	// 2 opened and the reply lacks it: added; 3 opened and closed: not
+	if len(tbl.list) != 2 || tbl.list[0].ID != "1" || tbl.list[1].ID != "2" {
+		t.Errorf("%+v", tbl.list)
 	}
 }

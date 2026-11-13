@@ -143,7 +143,8 @@ func (h *Hypr) Reloads(ctx context.Context, out chan<- Reload) error {
 
 // Events reads Hyprland's event socket until ctx ends (nil) or it closes:
 // started once connected (nothing is sent; events from here on are read),
-// then line with each event ("name>>data").
+// then line with each event ("name>>data"). It returns nil when ctx ends,
+// else the read error.
 func (h *Hypr) Events(ctx context.Context, started func(), line func(string)) error {
 	conn, err := dial(context.Background(), filepath.Join(h.Dir, ".socket2.sock"))
 	if err != nil {
@@ -153,6 +154,7 @@ func (h *Hypr) Events(ctx context.Context, started func(), line func(string)) er
 	defer conn.Close()
 	// Closing the connection is what ends a read blocked on it
 	defer context.AfterFunc(ctx, func() { conn.Close() })()
+	// socket2 has no reply to wait for: connected is subscribed
 	if started != nil {
 		started()
 	}

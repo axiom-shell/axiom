@@ -21,85 +21,64 @@ func (s *hyprSource) connect(ctx context.Context, started func(), event func([]b
 	return s.h.Events(ctx, started, func(line string) { event([]byte(line)) })
 }
 
-func (s *hyprSource) start(ctx context.Context, f fetch, t *table) (bool, error) {
-	s.monitors, s.focus = nil, ""
-	t.list = nil
-	reply, err := f(ctx, "j/activewindow")
-	if err != nil {
-		return false, err
-	}
-	var active struct{ Address string }
-	if err := json.Unmarshal(reply, &active); err != nil {
-		return false, err
-	}
-	s.focus = hyprID(active.Address)
-	if err := s.fetchMonitors(ctx, f); err != nil {
-		return false, err
-	}
-	if err := s.fetchClients(ctx, f, t); err != nil {
-		return false, err
-	}
-	return true, nil
+func (s *hyprSource) request(ctx context.Context, name string) ([]byte, error) {
+	reply, err := s.h.Request(ctx, name)
+	return []byte(reply), err
 }
 
-func (s *hyprSource) batch(ctx context.Context, f fetch, t *table, events [][]byte) (bool, error) {
-	refetch, monitors := false, false
-	// Windows opened in this batch as their events describe them, for one
-	// j/clients doesn't have yet
-	opened := map[string]Window{}
-	var order []string
-	for _, e := range events {
-		name, data, _ := strings.Cut(string(e), ">>")
-		switch name {
-		case "windowtitlev2":
-			// The title may hold commas: the address is up to the first
-			addr, title, _ := strings.Cut(data, ",")
-			id := hyprID(addr)
-			t.update(id, func(w *Window) { w.Title = title })
-			if w, ok := opened[id]; ok {
-				w.Title = title
-				opened[id] = w
-			}
-		case "activewindowv2":
-			s.focus = hyprID(data)
-			t.focus(s.focus)
-		case "closewindow":
-			id := hyprID(data)
-			t.remove(id)
-			delete(opened, id)
-		case "openwindow":
-			// ADDR,WORKSPACE,CLASS,TITLE
-			p := strings.SplitN(data, ",", 4)
-			if len(p) == 4 {
-				id := hyprID(p[0])
-				if _, ok := opened[id]; !ok {
-					order = append(order, id)
-				}
-				opened[id] = Window{ID: id, AppID: p[2], Title: p[3], Workspace: p[1], Focused: id == s.focus}
-			}
-			refetch = true
-		case "monitoraddedv2", "monitorremovedv2":
-			monitors, refetch = true, true
-		case "movewindowv2", "changefloatingmode", "fullscreen", "moveworkspacev2", "renameworkspace", "configreloaded":
-			refetch = true
+func (s *hyprSource) reset()      { s.monitors, s.focus = nil, "" }
+func (s *hyprSource) ready() bool { return true }
+
+// snapshot: the monitors come before the clients, which name them by id
+func (s *hyprSource) snapshot() []string {
+	return []string{"j/activewindow", "j/monitors", "j/clients"}
+}
+
+func (s *hyprSource) apply(t, pend *table, line []byte) []string {
+	name, data, _ := strings.Cut(string(line), ">>")
+	switch name {
+	case "windowtitlev2":
+		// The title may hold commas: the address is up to the first
+		addr, title, _ := strings.Cut(data, ",")
+		for _, x := range []*table{t, pend} {
+			x.update(hyprID(addr), func(w *Window) { w.Title = title })
 		}
+	case "activewindowv2":
+		s.focus = hyprID(data)
+		t.focus(s.focus)
+		pend.focus(s.focus)
+	case "closewindow":
+		t.remove(hyprID(data))
+		pend.remove(hyprID(data))
+	case "openwindow":
+		// ADDR,WORKSPACE,CLASS,TITLE
+		if p := strings.SplitN(data, ",", 4); len(p) == 4 {
+			id := hyprID(p[0])
+			pend.add(Window{ID: id, AppID: p[2], Title: p[3], Workspace: p[1], Focused: id == s.focus})
+		}
+		return []string{"j/clients"}
+	case "monitoraddedv2", "monitorremovedv2":
+		return []string{"j/monitors", "j/clients"}
+	case "movewindowv2", "changefloatingmode", "fullscreen", "moveworkspacev2", "renameworkspace", "configreloaded":
+		return []string{"j/clients"}
 	}
-	if monitors {
-		if err := s.fetchMonitors(ctx, f); err != nil {
-			return true, err
+	return nil
+}
+
+func (s *hyprSource) load(ctx context.Context, f fetch, name string, reply []byte, t *table) error {
+	switch name {
+	case "j/activewindow":
+		var active struct{ Address string }
+		if err := json.Unmarshal(reply, &active); err != nil {
+			return err
 		}
+		s.focus = hyprID(active.Address)
+	case "j/monitors":
+		return s.loadMonitors(reply)
+	case "j/clients":
+		return s.loadClients(ctx, f, reply, t)
 	}
-	if refetch {
-		if err := s.fetchClients(ctx, f, t); err != nil {
-			return true, err
-		}
-		for _, id := range order {
-			if w, ok := opened[id]; ok && t.find(id) < 0 {
-				t.list = append(t.list, w)
-			}
-		}
-	}
-	return true, nil
+	return nil
 }
 
 // hyprID is an event's address as j/clients writes it: socket2 leaves the
@@ -114,11 +93,7 @@ func hyprID(addr string) string {
 	return "0x" + addr
 }
 
-func (s *hyprSource) fetchMonitors(ctx context.Context, f fetch) error {
-	reply, err := f(ctx, "j/monitors")
-	if err != nil {
-		return err
-	}
+func (s *hyprSource) loadMonitors(reply []byte) error {
 	var list []struct {
 		ID   int
 		Name string
@@ -133,14 +108,10 @@ func (s *hyprSource) fetchMonitors(ctx context.Context, f fetch) error {
 	return nil
 }
 
-// fetchClients replaces the table with j/clients' mapped windows, fetching
+// loadClients replaces the table with j/clients' mapped windows, fetching
 // the monitors again once when a client is on one that isn't known. The
 // focus stays what the events said.
-func (s *hyprSource) fetchClients(ctx context.Context, f fetch, t *table) error {
-	reply, err := f(ctx, "j/clients")
-	if err != nil {
-		return err
-	}
+func (s *hyprSource) loadClients(ctx context.Context, f fetch, reply []byte, t *table) error {
 	var clients []struct {
 		Address    string
 		Mapped     bool
@@ -159,13 +130,13 @@ func (s *hyprSource) fetchClients(ctx context.Context, f fetch, t *table) error 
 	for _, c := range clients {
 		// -1: on no monitor yet, which no monitor list will ever name
 		if _, ok := s.monitors[c.Monitor]; !ok && c.Monitor >= 0 && c.Mapped {
-			if err := s.fetchMonitors(ctx, f); err != nil {
+			if err := fetchLoad(ctx, f, s, "j/monitors", t); err != nil {
 				return err
 			}
 			break
 		}
 	}
-	t.list = nil
+	var list []Window
 	for _, c := range clients {
 		if !c.Mapped {
 			continue
@@ -178,7 +149,8 @@ func (s *hyprSource) fetchClients(ctx context.Context, f fetch, t *table) error 
 		if c.XWayland {
 			w.Class = c.Class
 		}
-		t.list = append(t.list, w)
+		list = append(list, w)
 	}
+	t.list = list
 	return nil
 }

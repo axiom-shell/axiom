@@ -68,22 +68,19 @@ func (n swayNode) window() Window {
 	return w
 }
 
-func (s *swaySource) start(ctx context.Context, f fetch, t *table) (bool, error) {
-	t.list = nil
-	return true, s.refetch(ctx, f, t)
-}
+func (s *swaySource) request(ctx context.Context, _ string) ([]byte, error) { return s.s.Tree(ctx) }
 
-// refetch replaces the table with get_tree's windows
-func (s *swaySource) refetch(ctx context.Context, f fetch, t *table) error {
-	reply, err := f(ctx, "get_tree")
-	if err != nil {
-		return err
-	}
+func (s *swaySource) reset()             {}
+func (s *swaySource) ready() bool        { return true }
+func (s *swaySource) snapshot() []string { return []string{"get_tree"} }
+
+// load replaces the table with get_tree's windows
+func (s *swaySource) load(_ context.Context, _ fetch, _ string, reply []byte, t *table) error {
 	var root swayNode
 	if err := json.Unmarshal(reply, &root); err != nil {
 		return err
 	}
-	t.list = nil
+	var list []Window
 	for _, output := range root.Nodes {
 		for _, ws := range output.Nodes {
 			if ws.Type != "workspace" {
@@ -94,9 +91,10 @@ func (s *swaySource) refetch(ctx context.Context, f fetch, t *table) error {
 			if output.Name == "__i3" && ws.Name == "__i3_scratch" {
 				name, out = "", ""
 			}
-			t.list = walk(t.list, ws, name, out)
+			list = walk(list, ws, name, out)
 		}
 	}
+	t.list = list
 	return nil
 }
 
@@ -118,69 +116,48 @@ func walk(list []Window, n swayNode, ws, output string) []Window {
 	return list
 }
 
-func (s *swaySource) batch(ctx context.Context, f fetch, t *table, events [][]byte) (bool, error) {
-	refetch := false
-	// Windows opened in this batch as their container describes them, for a
-	// tree that doesn't have one yet
-	opened := map[string]Window{}
-	var order []string
-	for _, e := range events {
-		var event struct {
-			Type string `json:"type"`
-			Body struct {
-				Change    string   `json:"change"`
-				Container swayNode `json:"container"`
-			} `json:"body"`
+func (s *swaySource) apply(t, pend *table, line []byte) []string {
+	var event struct {
+		Type string `json:"type"`
+		Body struct {
+			Change    string   `json:"change"`
+			Container swayNode `json:"container"`
+		} `json:"body"`
+	}
+	if json.Unmarshal(line, &event) != nil {
+		return nil
+	}
+	b := event.Body
+	if event.Type == "workspace" {
+		if b.Change == "move" || b.Change == "rename" || b.Change == "reload" {
+			return []string{"get_tree"}
 		}
-		if json.Unmarshal(e, &event) != nil {
-			continue
+		return nil
+	}
+	w := b.Container.window()
+	switch b.Change {
+	case "close":
+		t.remove(w.ID)
+		pend.remove(w.ID)
+	case "new", "move":
+		if b.Change == "new" {
+			pend.add(w)
 		}
-		b := event.Body
-		if event.Type == "workspace" {
-			if b.Change == "move" || b.Change == "rename" || b.Change == "reload" {
-				refetch = true
-			}
-			continue
-		}
-		w := b.Container.window()
-		switch b.Change {
-		case "close":
-			t.remove(w.ID)
-			delete(opened, w.ID)
-		case "new", "move":
-			if b.Change == "new" {
-				if _, ok := opened[w.ID]; !ok {
-					order = append(order, w.ID)
-				}
-				opened[w.ID] = w
-			}
-			refetch = true
-		default:
+		return []string{"get_tree"}
+	default:
+		for _, x := range []*table{t, pend} {
 			if b.Change == "focus" {
-				t.focus(w.ID)
+				x.focus(w.ID)
 			}
-			t.update(w.ID, func(old *Window) {
-				w.Workspace, w.Output = old.Workspace, old.Output
+			x.update(w.ID, func(old *Window) {
+				nw := w
+				nw.Workspace, nw.Output = old.Workspace, old.Output
 				if b.Change != "focus" {
-					w.Focused = old.Focused
+					nw.Focused = old.Focused
 				}
-				*old = w
+				*old = nw
 			})
-			if o, ok := opened[w.ID]; ok {
-				w.Workspace, w.Output = o.Workspace, o.Output
-				opened[w.ID] = w
-			}
 		}
 	}
-	if refetch {
-		if err := s.refetch(ctx, f, t); err != nil {
-			return true, err
-		}
-		for _, id := range order {
-			if w, ok := opened[id]; ok && t.find(id) < 0 {
-				t.list = append(t.list, w)
-			}
-		}
-	}
-	return true, nil
+	return nil
 }

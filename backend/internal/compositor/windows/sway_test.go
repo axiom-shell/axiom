@@ -28,7 +28,7 @@ func swayStart(t *testing.T) (*swaySource, *table, *fake) {
 	t.Helper()
 	f := &fake{replies: map[string]string{"get_tree": swayTree}}
 	s, tbl := &swaySource{}, &table{}
-	if _, err := s.start(context.Background(), f.fetch, tbl); err != nil {
+	if _, err := start(context.Background(), f.fetch, s, tbl); err != nil {
 		t.Fatal(err)
 	}
 	f.calls = nil
@@ -95,7 +95,7 @@ func TestSwayEvents(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			s, tbl, f := swayStart(t)
-			if _, err := s.batch(context.Background(), f.fetch, tbl, tc.lines); err != nil {
+			if _, err := batch(context.Background(), f.fetch, s, tbl, tc.lines); err != nil {
 				t.Fatal(err)
 			}
 			if !slices.Equal(f.calls, tc.calls) {

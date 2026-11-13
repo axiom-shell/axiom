@@ -5,7 +5,6 @@ package windows
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -85,40 +84,22 @@ func New(o Options) *Watcher {
 			return nil
 		}
 		w.src = &hyprSource{h: h}
-		w.fetch = func(ctx context.Context, request string) ([]byte, error) {
-			reply, err := h.Request(ctx, request)
-			return []byte(reply), err
-		}
 	case "sway":
 		s := ipc.SwayFromEnv(o.Getenv)
 		if s == nil {
 			return nil
 		}
 		w.src = &swaySource{s: s}
-		w.fetch = func(ctx context.Context, _ string) ([]byte, error) { return s.Tree(ctx) }
 	case "niri":
 		n := ipc.NiriFromEnv(o.Getenv)
 		if n == nil {
 			return nil
 		}
 		w.src = &niriSource{n: n}
-		w.fetch = func(ctx context.Context, request string) ([]byte, error) {
-			ok, err := n.Request(ctx, request)
-			if err != nil {
-				return nil, err
-			}
-			// The reply is {"Outputs": {name: output}}; the source reads the map
-			var reply struct {
-				Outputs map[string]any
-			}
-			if err := json.Unmarshal(ok, &reply); err != nil {
-				return nil, err
-			}
-			return json.Marshal(reply.Outputs)
-		}
 	default:
 		return nil
 	}
+	w.fetch = w.src.request
 	w.log = o.Log
 	if w.log == nil {
 		w.log = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -130,21 +111,89 @@ func New(o Options) *Watcher {
 	return &w
 }
 
-// fetch answers one read request: Hyprland "j/clients", "j/monitors",
-// "j/activewindow"; sway "get_tree"; niri "Outputs" (the output map)
-type fetch func(ctx context.Context, request string) ([]byte, error)
+// fetch answers one read request by name (a source's snapshot names);
+// tests replace Watcher.fetch with a fake
+type fetch func(ctx context.Context, name string) ([]byte, error)
 
-// source is one compositor's side of the watcher
+// source is one compositor's side of the watcher: protocol only. What is
+// the same for all (batching, refetching each request once, windows that
+// opened before a refetch could list them, readiness, diffs) is in this file.
 type source interface {
 	// connect reads the event stream until ctx ends or it drops (ipc's Events)
 	connect(ctx context.Context, started func(), event func([]byte)) error
-	// start forgets everything and reads the full state (niri: only Outputs;
-	// its Reset waits for the stream's first WindowsChanged); ready reports
-	// whether the table now holds the snapshot
-	start(ctx context.Context, f fetch, t *table) (ready bool, err error)
-	// batch applies events in order, then any refetch they asked for (D3);
-	// ready as for start (niri: true once WindowsChanged was applied)
-	batch(ctx context.Context, f fetch, t *table, events [][]byte) (ready bool, err error)
+	// request answers one read request: Hyprland "j/clients", "j/monitors",
+	// "j/activewindow"; sway "get_tree"; niri "Outputs" (as niri replied)
+	request(ctx context.Context, name string) ([]byte, error)
+	// reset forgets all state
+	reset()
+	// snapshot is the requests that read the full state, in the order they
+	// are made; a batch's refetches go in the same order
+	snapshot() []string
+	// apply makes one event's direct update to t and to pend (the windows
+	// opened so far in this batch: pend.add puts one there) and returns the
+	// requests the event needs (D3)
+	apply(t, pend *table, line []byte) (refetch []string)
+	// load takes the reply to a request into the source's state and t; f is
+	// for a request the reply itself needs
+	load(ctx context.Context, f fetch, name string, reply []byte, t *table) error
+	// ready is whether the table holds the snapshot (niri: after WindowsChanged)
+	ready() bool
+}
+
+// finisher is a source that builds the table from its own state after a
+// batch's loads (niri)
+type finisher interface {
+	finish(t *table)
+}
+
+// start forgets everything and reads the full state; ready says whether
+// the table now holds it
+func start(ctx context.Context, f fetch, src source, t *table) (bool, error) {
+	src.reset()
+	t.list = nil
+	for _, name := range src.snapshot() {
+		if err := fetchLoad(ctx, f, src, name, t); err != nil {
+			return false, err
+		}
+	}
+	return src.ready(), nil
+}
+
+func fetchLoad(ctx context.Context, f fetch, src source, name string, t *table) error {
+	reply, err := f(ctx, name)
+	if err != nil {
+		return err
+	}
+	return src.load(ctx, f, name, reply, t)
+}
+
+// batch applies events in order, then each request they asked for once (in
+// the snapshot's order), then adds the windows they opened that the table
+// still lacks (D2, D3)
+func batch(ctx context.Context, f fetch, src source, t *table, lines [][]byte) (bool, error) {
+	var pend table
+	asked := map[string]bool{}
+	for _, line := range lines {
+		for _, name := range src.apply(t, &pend, line) {
+			asked[name] = true
+		}
+	}
+	for _, name := range src.snapshot() {
+		if asked[name] {
+			if err := fetchLoad(ctx, f, src, name, t); err != nil {
+				return src.ready(), err
+			}
+		}
+	}
+	if fin, ok := src.(finisher); ok {
+		fin.finish(t)
+	}
+	for _, w := range pend.list {
+		if t.find(w.ID) < 0 {
+			t.list = append(t.list, w)
+		}
+	}
+	return src.ready(), nil
 }
 
 // table is the windows a source knows, in the compositor's order
@@ -160,6 +209,15 @@ func (t *table) find(id string) int {
 func (t *table) update(id string, fn func(*Window)) {
 	if i := t.find(id); i >= 0 {
 		fn(&t.list[i])
+	}
+}
+
+// add appends w, or replaces the window with its id
+func (t *table) add(w Window) {
+	if i := t.find(w.ID); i >= 0 {
+		t.list[i] = w
+	} else {
+		t.list = append(t.list, w)
 	}
 }
 
@@ -312,7 +370,7 @@ func (w *Watcher) process(ctx context.Context, out chan<- Event, items <-chan it
 			if len(lines) == 0 {
 				return nil
 			}
-			r, err := w.src.batch(ctx, w.fetch, t, lines)
+			r, err := batch(ctx, w.fetch, w.src, t, lines)
 			lines = nil
 			ready = r
 			return err
@@ -325,7 +383,7 @@ func (w *Watcher) process(ctx context.Context, out chan<- Event, items <-chan it
 			if err := flush(); err != nil {
 				return err
 			}
-			r, err := w.src.start(ctx, w.fetch, t)
+			r, err := start(ctx, w.fetch, w.src, t)
 			if err != nil {
 				return err
 			}

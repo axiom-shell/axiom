@@ -15,9 +15,9 @@ const (
 
 func niriStart(t *testing.T) (*niriSource, *table, *fake) {
 	t.Helper()
-	f := &fake{replies: map[string]string{"Outputs": `{"DP-1":{"logical":{"width":1920,"height":1080}},"HDMI-1":{"logical":{"width":800,"height":600}}}`}}
+	f := &fake{replies: map[string]string{"Outputs": `{"Outputs":{"DP-1":{"logical":{"width":1920,"height":1080}},"HDMI-1":{"logical":{"width":800,"height":600}}}}`}}
 	s, tbl := &niriSource{}, &table{}
-	ready, err := s.start(context.Background(), f.fetch, tbl)
+	ready, err := start(context.Background(), f.fetch, s, tbl)
 	if err != nil || ready {
 		t.Fatalf("start: %v %v", ready, err)
 	}
@@ -32,11 +32,11 @@ func TestNiriEvents(t *testing.T) {
 	t.Run("nothing before WindowsChanged, then the list", func(t *testing.T) {
 		t.Parallel()
 		s, tbl, f := niriStart(t)
-		ready, err := s.batch(ctx, f.fetch, tbl, [][]byte{[]byte(niriWS)})
+		ready, err := batch(ctx, f.fetch, s, tbl, [][]byte{[]byte(niriWS)})
 		if err != nil || ready || len(tbl.list) != 0 {
 			t.Fatalf("%v %v %+v", ready, err, tbl.list)
 		}
-		ready, _ = s.batch(ctx, f.fetch, tbl, [][]byte{[]byte(niriWindows)})
+		ready, _ = batch(ctx, f.fetch, s, tbl, [][]byte{[]byte(niriWindows)})
 		if !ready || len(tbl.list) != 2 {
 			t.Fatalf("%v %+v", ready, tbl.list)
 		}
@@ -51,13 +51,8 @@ func TestNiriEvents(t *testing.T) {
 	run := func(t *testing.T, lines ...string) (*niriSource, *table, *fake, []Event) {
 		t.Helper()
 		s, tbl, f := niriStart(t)
-		var all [][]byte
-		for _, l := range append([]string{niriWS, niriWindows}, "") {
-			if l != "" {
-				all = append(all, []byte(l))
-			}
-		}
-		if _, err := s.batch(ctx, f.fetch, tbl, all); err != nil {
+		all := [][]byte{[]byte(niriWS), []byte(niriWindows)}
+		if _, err := batch(ctx, f.fetch, s, tbl, all); err != nil {
 			t.Fatal(err)
 		}
 		before := slices.Clone(tbl.list)
@@ -66,7 +61,7 @@ func TestNiriEvents(t *testing.T) {
 		for _, l := range lines {
 			more = append(more, []byte(l))
 		}
-		if _, err := s.batch(ctx, f.fetch, tbl, more); err != nil {
+		if _, err := batch(ctx, f.fetch, s, tbl, more); err != nil {
 			t.Fatal(err)
 		}
 		return s, tbl, f, tbl.diff(before)

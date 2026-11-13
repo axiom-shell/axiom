@@ -37,8 +37,9 @@ const (
 
 // i3 IPC event types (the high bit marks an event)
 const (
-	SwayEventWorkspace = 0x80000000
-	SwayEventWindow    = 0x80000003
+	swayEventBit       = 0x80000000
+	SwayEventWorkspace = swayEventBit
+	SwayEventWindow    = swayEventBit | 3
 )
 
 const swayMagic = "i3-ipc"
@@ -170,8 +171,8 @@ func (s *Sway) Reloads(ctx context.Context, out chan<- Reload) error {
 }
 
 // Events subscribes to the event kinds ("window", "workspace", …) and reads
-// them until ctx ends (nil) or the socket closes: started once the
-// subscription is written, then event with each event's type and body (a
+// them until ctx ends (nil) or the socket closes: started once sway has
+// accepted the subscription (an error if it refuses), then event with each event's type and body (a
 // body is only valid during its call).
 func (s *Sway) Events(ctx context.Context, kinds []string, started func(), event func(kind uint32, body []byte)) error {
 	conn, err := dial(context.Background(), s.Path)
@@ -188,6 +189,18 @@ func (s *Sway) Events(ctx context.Context, kinds []string, started func(), event
 	if err := swayWrite(conn, swaySubscribe, subscribe); err != nil {
 		return err
 	}
+	// The reply comes before any event, inside dial's deadline
+	_, reply, err := swayRead(conn)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
+	}
+	var ok struct{ Success bool }
+	if json.Unmarshal(reply, &ok) != nil || !ok.Success {
+		return fmt.Errorf("sway: subscribe refused: %s", reply)
+	}
 	conn.SetDeadline(time.Time{})
 	if started != nil {
 		started()
@@ -201,7 +214,7 @@ func (s *Sway) Events(ctx context.Context, kinds []string, started func(), event
 			return err
 		}
 		// The reply to the subscription is a plain type, not an event
-		if kind&0x80000000 == 0 {
+		if kind&swayEventBit == 0 {
 			continue
 		}
 		event(kind, body)

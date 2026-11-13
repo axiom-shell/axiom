@@ -335,8 +335,9 @@ func TestEvents(t *testing.T) {
 		if err != nil || w.PID != 42 || w.WorkspaceID == nil || *w.WorkspaceID != 2 || !w.Focused || !w.Floating || w.Layout == nil || w.Layout.TileSize[0] != 10.5 {
 			t.Fatalf("%+v %v", w, err)
 		}
-		if err := json.Unmarshal([]byte(`{"id":4,"pid":null}`), &w); err != nil || w.PID != 0 && w.PID != 42 {
-			t.Fatalf("%+v %v", w, err)
+		var null NiriWindow
+		if err := json.Unmarshal([]byte(`{"id":4,"pid":null}`), &null); err != nil || null.PID != 0 {
+			t.Fatalf("%+v %v", null, err)
 		}
 	})
 }

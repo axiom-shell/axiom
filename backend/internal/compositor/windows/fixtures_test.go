@@ -80,11 +80,15 @@ func replay(t testing.TB, kind string) []stepResult {
 			if !ok {
 				return nil, fmt.Errorf("no recorded reply to %s", request)
 			}
+			if kind == "niri" {
+				// The recording holds the reply under its request's name
+				return json.Marshal(map[string]json.RawMessage{request: v})
+			}
 			return v, nil
 		}
 	}
 	src, tbl := kinds[kind](), &table{}
-	ready, err := src.start(ctx, fetchFrom(r.Start), tbl)
+	ready, err := start(ctx, fetchFrom(r.Start), src, tbl)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +104,7 @@ func replay(t testing.TB, kind string) []stepResult {
 			lines = append(lines, line(e))
 		}
 		before := slices.Clone(tbl.list)
-		ready, err := src.batch(ctx, fetchFrom(s.Replies), tbl, lines)
+		ready, err := batch(ctx, fetchFrom(s.Replies), src, tbl, lines)
 		if err != nil {
 			t.Fatalf("%s: %v", s.Note, err)
 		}
@@ -170,7 +174,7 @@ func TestFixtureFacts(t *testing.T) {
 					if w.ID == "" {
 						continue
 					}
-					if re := decimalID; kind == "hypr" && !hexID.MatchString(w.ID) || kind != "hypr" && !re.MatchString(w.ID) {
+					if kind == "hypr" && !hexID.MatchString(w.ID) || kind != "hypr" && !decimalID.MatchString(w.ID) {
 						t.Errorf("id %q is not the contract's", w.ID)
 					}
 				}
@@ -240,7 +244,7 @@ func TestFixtureFacts(t *testing.T) {
 				}
 			}
 
-			// Step 7 (A focused): focus moves from the X11 window to A and nothing else
+			// The 'A focused' step: focus moves from the X11 window to A and nothing else
 			for _, s := range steps {
 				if s.Note != "A focused" {
 					continue

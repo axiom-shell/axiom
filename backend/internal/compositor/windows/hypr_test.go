@@ -30,7 +30,7 @@ func hyprStart(t *testing.T, clients ...string) (*hyprSource, *table, *fake) {
 		"j/activewindow": `{}`,
 	}}
 	s, tbl := &hyprSource{}, &table{}
-	if _, err := s.start(context.Background(), f.fetch, tbl); err != nil {
+	if _, err := start(context.Background(), f.fetch, s, tbl); err != nil {
 		t.Fatal(err)
 	}
 	f.calls = nil
@@ -92,6 +92,13 @@ func TestHyprLines(t *testing.T) {
 				t.Errorf("%+v", ev)
 			}
 		}},
+		{"a client on no monitor yet", []string{"movewindowv2>>a1,2,2"}, map[string]string{
+			"j/clients": "[" + strings.Replace(a, `"monitor":0`, `"monitor":-1`, 1) + "," + b + "]",
+		}, []string{"j/clients"}, func(t *testing.T, _ *table, ev []Event) {
+			if len(ev) != 1 || ev[0].Window.Output != "" {
+				t.Errorf("%+v", ev)
+			}
+		}},
 		{"an unmapped client", []string{"movewindowv2>>a1,2,2"}, map[string]string{
 			"j/clients": "[" + a + "," + strings.Replace(client("0xd4", "x", "y", ""), `"mapped":true`, `"mapped":false`, 1) + "]",
 		}, []string{"j/clients"}, func(t *testing.T, tbl *table, _ []Event) {
@@ -134,7 +141,7 @@ func TestHyprLines(t *testing.T) {
 			for _, l := range tc.lines {
 				lines = append(lines, []byte(l))
 			}
-			if _, err := s.batch(context.Background(), f.fetch, tbl, lines); err != nil {
+			if _, err := batch(context.Background(), f.fetch, s, tbl, lines); err != nil {
 				t.Fatal(err)
 			}
 			if !slices.Equal(f.calls, tc.calls) {

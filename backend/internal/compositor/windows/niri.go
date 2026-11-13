@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"slices"
 	"strconv"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
@@ -31,25 +32,29 @@ func (s *niriSource) connect(ctx context.Context, started func(), event func([]b
 	return s.n.Events(ctx, started, event)
 }
 
-func (s *niriSource) start(ctx context.Context, f fetch, t *table) (bool, error) {
-	s.windows, s.workspace, s.seen, s.fresh = nil, map[uint64]niriWorkspace{}, false, true
-	t.list = nil
-	return false, s.fetchSizes(ctx, f)
+func (s *niriSource) request(ctx context.Context, name string) ([]byte, error) {
+	return s.n.Request(ctx, name)
 }
 
-func (s *niriSource) fetchSizes(ctx context.Context, f fetch) error {
-	reply, err := f(ctx, "Outputs")
-	if err != nil {
-		return err
-	}
-	var outputs map[string]struct {
-		Logical *struct{ Width, Height float64 }
+func (s *niriSource) reset() {
+	s.windows, s.workspace, s.seen, s.fresh = nil, map[uint64]niriWorkspace{}, false, true
+}
+
+func (s *niriSource) ready() bool        { return s.seen }
+func (s *niriSource) snapshot() []string { return []string{"Outputs"} }
+
+// load reads the output sizes from niri's reply, {"Outputs": {name: output}}
+func (s *niriSource) load(_ context.Context, _ fetch, _ string, reply []byte, _ *table) error {
+	var outputs struct {
+		Outputs map[string]struct {
+			Logical *struct{ Width, Height float64 }
+		}
 	}
 	if err := json.Unmarshal(reply, &outputs); err != nil {
 		return err
 	}
 	s.sizes = map[string][2]float64{}
-	for name, o := range outputs {
+	for name, o := range outputs.Outputs {
 		if o.Logical != nil {
 			s.sizes[name] = [2]float64{o.Logical.Width, o.Logical.Height}
 		}
@@ -57,93 +62,92 @@ func (s *niriSource) fetchSizes(ctx context.Context, f fetch) error {
 	return nil
 }
 
-func (s *niriSource) batch(ctx context.Context, f fetch, t *table, events [][]byte) (bool, error) {
-	workspaces := false
-	for _, line := range events {
-		var event map[string]json.RawMessage
-		if json.Unmarshal(line, &event) != nil {
-			continue
-		}
-		for name, body := range event {
-			switch name {
-			case "WorkspacesChanged":
-				var e struct {
-					Workspaces []struct {
-						ID     uint64
-						Idx    int
-						Name   *string
-						Output string
-					}
+// apply keeps niri's state as it sends it; the table is built from it in
+// finish, so t and pend aren't touched
+func (s *niriSource) apply(_, _ *table, line []byte) []string {
+	var refetch []string
+	var event map[string]json.RawMessage
+	if json.Unmarshal(line, &event) != nil {
+		return nil
+	}
+	for name, body := range event {
+		switch name {
+		case "WorkspacesChanged":
+			var e struct {
+				Workspaces []struct {
+					ID     uint64
+					Idx    int
+					Name   *string
+					Output string
 				}
-				if json.Unmarshal(body, &e) != nil {
-					continue
+			}
+			if json.Unmarshal(body, &e) != nil {
+				continue
+			}
+			s.workspace = map[uint64]niriWorkspace{}
+			for _, w := range e.Workspaces {
+				ws := niriWorkspace{idx: w.Idx, output: w.Output}
+				if w.Name != nil {
+					ws.name = *w.Name
 				}
-				s.workspace = map[uint64]niriWorkspace{}
-				for _, w := range e.Workspaces {
-					ws := niriWorkspace{idx: w.Idx, output: w.Output}
-					if w.Name != nil {
-						ws.name = *w.Name
-					}
-					s.workspace[w.ID] = ws
-				}
-				workspaces = true
-			case "WindowsChanged":
-				var e struct{ Windows []ipc.NiriWindow }
-				if json.Unmarshal(body, &e) != nil {
-					continue
-				}
-				s.windows, s.seen = e.Windows, true
-			case "WindowOpenedOrChanged":
-				var e struct{ Window ipc.NiriWindow }
-				if json.Unmarshal(body, &e) != nil {
-					continue
-				}
-				s.opened(e.Window)
-			case "WindowClosed":
-				var e struct{ ID uint64 }
-				if json.Unmarshal(body, &e) == nil {
-					s.closed(e.ID)
-				}
-			case "WindowFocusChanged":
-				var e struct{ ID *uint64 }
-				if json.Unmarshal(body, &e) == nil {
-					s.focus(e.ID)
-				}
-			case "WindowLayoutsChanged":
-				var e struct {
-					Changes [][2]json.RawMessage
-				}
-				if json.Unmarshal(body, &e) != nil {
-					continue
-				}
-				for _, c := range e.Changes {
-					var id uint64
-					var layout ipc.NiriLayout
-					if json.Unmarshal(c[0], &id) == nil && json.Unmarshal(c[1], &layout) == nil {
-						for i := range s.windows {
-							if s.windows[i].ID == id {
-								s.windows[i].Layout = &layout
-							}
-						}
+				s.workspace[w.ID] = ws
+			}
+			if !s.fresh {
+				refetch = []string{"Outputs"}
+			}
+		case "WindowsChanged":
+			var e struct{ Windows []ipc.NiriWindow }
+			if json.Unmarshal(body, &e) != nil {
+				continue
+			}
+			s.windows, s.seen = e.Windows, true
+		case "WindowOpenedOrChanged":
+			var e struct{ Window ipc.NiriWindow }
+			if json.Unmarshal(body, &e) != nil {
+				continue
+			}
+			s.opened(e.Window)
+		case "WindowClosed":
+			var e struct{ ID uint64 }
+			if json.Unmarshal(body, &e) == nil {
+				s.closed(e.ID)
+			}
+		case "WindowFocusChanged":
+			var e struct{ ID *uint64 }
+			if json.Unmarshal(body, &e) == nil {
+				s.focus(e.ID)
+			}
+		case "WindowLayoutsChanged":
+			var e struct {
+				Changes [][2]json.RawMessage
+			}
+			if json.Unmarshal(body, &e) != nil {
+				continue
+			}
+			for _, c := range e.Changes {
+				var id uint64
+				var layout ipc.NiriLayout
+				if json.Unmarshal(c[0], &id) == nil && json.Unmarshal(c[1], &layout) == nil {
+					if i := s.find(id); i >= 0 {
+						s.windows[i].Layout = &layout
 					}
 				}
 			}
 		}
 	}
-	if workspaces && !s.fresh {
-		if err := s.fetchSizes(ctx, f); err != nil {
-			return s.seen, err
-		}
-	}
+	return refetch
+}
+
+// finish builds the table from the state
+func (s *niriSource) finish(t *table) {
 	s.fresh = false
 	t.list = t.list[:0]
 	if !s.seen {
-		return false, nil
+		return
 	}
 	for _, w := range s.windows {
 		t.list = append(t.list, s.window(w))
 	}
-	return true, nil
 }
 
 // opened adds or replaces a window; one that opens focused unfocuses the
@@ -152,22 +156,21 @@ func (s *niriSource) opened(w ipc.NiriWindow) {
 	if w.Focused {
 		s.focus(nil)
 	}
-	for i := range s.windows {
-		if s.windows[i].ID == w.ID {
-			s.windows[i] = w
-			return
-		}
+	if i := s.find(w.ID); i >= 0 {
+		s.windows[i] = w
+		return
 	}
 	s.windows = append(s.windows, w)
 }
 
 func (s *niriSource) closed(id uint64) {
-	for i := range s.windows {
-		if s.windows[i].ID == id {
-			s.windows = append(s.windows[:i], s.windows[i+1:]...)
-			return
-		}
+	if i := s.find(id); i >= 0 {
+		s.windows = slices.Delete(s.windows, i, i+1)
 	}
+}
+
+func (s *niriSource) find(id uint64) int {
+	return slices.IndexFunc(s.windows, func(w ipc.NiriWindow) bool { return w.ID == id })
 }
 
 // focus focuses window id (nil: none)
