@@ -43,12 +43,14 @@ Loader {
   readonly property bool isVertical: barConfig.vertical
   readonly property real cell: cellLook.thickness
   readonly property bool stripVertical: stripDirection === "vertical"
-  readonly property bool hasWindows: active && CompositorManager.stripWindows(root.workspaceId, root.stripVertical).length > 0
+  // Its windows a rule doesn't hide from workspace icons
+  readonly property var _strip: WindowRulesManager.shownIn("workspaces", CompositorManager.stripWindows(root.workspaceId, root.stripVertical))
+  readonly property bool hasWindows: active && root._strip.length > 0
   // The strip is all there is: its windows show alone while it has any
   // (the switcher's cell stands in while it's empty)
   readonly property bool stripOnly: shownCount <= 1 && hasWindows
   // How many cells it shows: a box each, or one
-  readonly property int cells: !hasWindows ? 0 : windows === "one" ? 1 : CompositorManager.stripWindows(root.workspaceId, root.stripVertical).length
+  readonly property int cells: !hasWindows ? 0 : windows === "one" ? 1 : root._strip.length
   // A powerline's segments chain on from the row's, with no divider
   readonly property bool _chained: cellLook.run !== null && barConfig.look.grouping === "powerline"
   readonly property bool _divided: !stripOnly && !_chained

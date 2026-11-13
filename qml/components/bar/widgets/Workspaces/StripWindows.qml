@@ -36,7 +36,7 @@ Grid {
   property int chainFirst: 0
   property int chainCount: addresses.length
 
-  readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
+  readonly property var windows: WindowRulesManager.shownIn("workspaces", CompositorManager.stripWindows(root.workspaceId, root.stripVertical))
   // A string, so the cells are only rebuilt when the windows or their
   // order change, not on every compositor event
   readonly property string _key: root.windows.map(w => w.id).join(",")

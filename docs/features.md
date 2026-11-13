@@ -190,7 +190,7 @@ Then:
 
 axiom runs on Hyprland, niri and sway, and sets up the compositor from the same settings on each (**Settings → Compositor**):
 - **Keybinds** on their own page, with presets, a key recorder, and warnings for keys your own config already uses, plus a reference of every bind as a list or a keyboard, where you can press a combo to see what it does.
-- **Window rules** (the Window rules page): float, size, place, pin or fullscreen windows as they open, by app id, title, process, the program that started it, whether it's a game or an installed app; `/rule` makes one from the focused window; while one is open, focused or fullscreen, do not disturb, keep the screen awake or hold a power profile. Written into each compositor's config in every mode.
+- **Window rules** (the Window rules page): float, size, place, pin or fullscreen windows as they open, by app id, title, process, the program that started it, whether it's a game or an installed app; `/rule` makes one from the focused window; while one is open, focused or fullscreen, do not disturb, keep the screen awake or hold a power profile, or hide them from the dock, switcher, workspace icons and launcher. Written into each compositor's config in every mode.
 - **Monitors** arranged by dragging (see [the rest](#the-rest)).
 - **Window look:** theme-colored borders, rounding, gaps, shadows, dimming, opacity and blur, as far as the compositor supports them. **Match axiom's shape** keeps windows in step with axiom's own shape.
 - **Input:** input sources (keyboard layouts and, through fcitx5 or ibus, input methods for Japanese, Chinese, Korean and more, switched from the bar, a keybind or the OSD), key repeat, mouse and touchpad, and the cursor theme.

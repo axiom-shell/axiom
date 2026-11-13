@@ -113,7 +113,7 @@ Item {
   // perMonitor layout; in the standard layout workspaces are shared, so
   // any monitor's; and the special cells' (a shown special workspace's window sits
   // on a workspace on sway too: one preview per id, in its special cell)
-  readonly property var windows: CompositorManager.windows.filter(w => (!CompositorManager.perMonitorBlocks || w.output === root.monitor?.name) && root.ids.includes(w.workspaceId) && !w.hidden && !root.specialWindows.some(sw => sw.id === w.id)).concat(root.specialWindows)
+  readonly property var windows: WindowRulesManager.shownIn("workspaces", CompositorManager.windows.filter(w => (!CompositorManager.perMonitorBlocks || w.output === root.monitor?.name) && root.ids.includes(w.workspaceId) && !w.hidden && !root.specialWindows.some(sw => sw.id === w.id)).concat(root.specialWindows))
   readonly property var byAddress: root.windows.reduce((map, w) => {
     map[w.id] = w;
     return map;

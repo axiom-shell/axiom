@@ -87,8 +87,9 @@ Singleton {
     const output = CompositorManager.focused;
     const scope = WindowSwitcherConfig.scope;
     root._focusedId = CompositorManager.activeWindowId;
-    root._windows = WindowOrder.mru(CompositorManager.windows, win => DockLayout.inScope(win, scope, output?.name ?? "", output?.activeWorkspaceId ?? -1), root._focusedId);
-    root._index = 0;
+    const all = WindowOrder.mru(CompositorManager.windows, win => DockLayout.inScope(win, scope, output?.name ?? "", output?.activeWorkspaceId ?? -1), root._focusedId);
+    root._windows = WindowRulesManager.shownIn("switcher", all);
+    root._index = WindowOrder.startIndex(all, root._windows, root._focusedId);
     root._screenName = ShellManager.targetFor({
       "mode": "focused"
     });
