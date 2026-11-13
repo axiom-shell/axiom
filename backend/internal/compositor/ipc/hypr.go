@@ -128,15 +128,22 @@ func (h *Hypr) Eval(ctx context.Context, lua string) (string, error) {
 	return reply, nil
 }
 
-// Reloads streams Hyprland's config reloads (configreloaded events) until
-// ctx ends or the socket closes.
+// Reloads streams Hyprland's config reloads (configreloaded events) and
+// submap changes (submap events) until ctx ends or the socket closes.
 func (h *Hypr) Reloads(ctx context.Context, out chan<- Reload) error {
 	return h.Events(ctx, nil, func(line string) {
-		if name, _, _ := strings.Cut(line, ">>"); name == "configreloaded" {
-			select {
-			case out <- Reload{}:
-			case <-ctx.Done():
-			}
+		name, data, _ := strings.Cut(line, ">>")
+		var r Reload
+		switch name {
+		case "configreloaded":
+		case "submap":
+			r = Reload{ModeChanged: true, Mode: data}
+		default:
+			return
+		}
+		select {
+		case out <- r:
+		case <-ctx.Done():
 		}
 	})
 }

@@ -23,8 +23,8 @@ type Issue struct {
 }
 
 // Context is what validation needs from outside the section: the Keybinds
-// bind ids (nil: unknown, the check is skipped).
-type Context struct{ BindIDs []string }
+// bind ids (nil: unknown, the check is skipped) and those of them not bound.
+type Context struct{ BindIDs, Unbound []string }
 
 var steamID = regexp.MustCompile(`^[0-9]+$`)
 
@@ -174,6 +174,9 @@ func checkShell(s ShellEffects, ctx Context, add adder) {
 			add("shell.pauseBinds.when", "pauseBindsWhen", "All except works only while the window is focused or fullscreen.")
 		}
 		if ctx.BindIDs != nil {
+			if p.Mode == "allExcept" && len(p.Binds) > 0 && wayOutOff(p.Binds, ctx) {
+				add("shell.pauseBinds.binds", "pauseBindsWayOutOff", "The shortcuts you keep are paused or have no key: keep one that works, your way out.")
+			}
 			for i, id := range p.Binds {
 				if !slices.Contains(ctx.BindIDs, id) {
 					add("shell.pauseBinds.binds."+strconv.Itoa(i), "unknownBind", "Shortcut {0} no longer exists.", id)
@@ -193,6 +196,16 @@ func checkShell(s ShellEffects, ctx Context, add adder) {
 			whenOK("shell."+e.name+".when", e.t)
 		}
 	}
+}
+
+// wayOutOff: every kept shortcut exists and none is bound.
+func wayOutOff(keep []string, ctx Context) bool {
+	for _, id := range keep {
+		if !slices.Contains(ctx.BindIDs, id) || !slices.Contains(ctx.Unbound, id) {
+			return false
+		}
+	}
+	return true
 }
 
 func checkSwitches(s Switches, issues *[]Issue) {

@@ -136,11 +136,13 @@ Singleton {
   // The fields of the config that hold a special workspace's id (the
   // schema's `x-ref`s of that kind: SchemaRefs.sites)
   readonly property var specialRefSites: SchemaRefs.sites(ConfigManager.configSchema, "specialWorkspace")
+  // The same for a keybind's id (a window rule's pause shortcuts)
+  readonly property var keybindRefSites: SchemaRefs.sites(ConfigManager.configSchema, "keybind")
   // Every special workspace that exists, as SpecialWorkspaces.list's rows:
   // those with an entry (Workspaces.specialWorkspaces), the ids the shown
   // (live) config refers to and the live ones; [] without namedSpecial
   // reads: Workspaces.specialWorkspaces, Keybinds.binds, HotCorners.items
-  readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SpecialWorkspaces.references(ConfigManager.live, root.specialRefSites)) : []
+  readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SchemaRefs.references(ConfigManager.live, root.specialRefSites)) : []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
   // The focused monitor's name while it's connected (a screen surfaces are

@@ -318,3 +318,59 @@ func TestConfigTableNot(t *testing.T) {
 		}
 	}
 }
+
+func TestHyprBindLinesByID(t *testing.T) {
+	t.Parallel()
+	tab := repoTables(t)
+	binds := parse(t, `[
+	  {"id": "term", "key": "SUPER + Return", "action": "terminal"},
+	  {"key": "SUPER + B", "action": "browser"},
+	  {"id": "half", "key": "", "action": "terminal"},
+	  {"id": "alt", "key": "ALT + Tab", "action": "switchWindow"}]`)
+	ctx := parse(t, `{"terminal": "foot", "browser": "firefox", "shellCommand": "axiom"}`)
+	plain, byID := bindLines(tab, binds, ctx), tab.HyprBindLinesByID(binds, ctx)
+	if len(byID) != len(plain)+1 || byID[0] != "AXIOM_BINDS = {}" {
+		t.Fatalf("got\n%q\nplain\n%q", byID, plain)
+	}
+	if want := `AXIOM_BINDS["term"] = ` + plain[0]; byID[1] != want {
+		t.Errorf("id line %q, want %q", byID[1], want)
+	}
+	if byID[2] != plain[1] {
+		t.Errorf("a bind with no id stays plain: %q", byID[2])
+	}
+	for i := 3; i < len(plain); i++ {
+		if byID[i+1] != plain[i] && !strings.HasSuffix(byID[i+1], plain[i]) {
+			t.Errorf("line %d: %q vs %q", i, byID[i+1], plain[i])
+		}
+	}
+}
+
+func TestHyprPauseLua(t *testing.T) {
+	t.Parallel()
+	const reenable = `for _, id in ipairs(AXIOM_PAUSED or {}) do do local b = AXIOM_BINDS and AXIOM_BINDS[id]; if b then pcall(function() b:set_enabled(true) end) end end end
+AXIOM_PAUSED = nil`
+	const leave = `if hl.get_current_submap() == "axiom_paused" then hl.dispatch(hl.dsp.submap("reset")) end`
+	for name, tc := range map[string]struct {
+		paused, lines, keys []string
+		submap              bool
+		want                string
+	}{
+		"none": {want: reenable + "\n" + leave},
+		"these": {paused: []string{"a", "b"}, want: reenable + `
+AXIOM_PAUSED = { "a", "b" }
+for _, id in ipairs(AXIOM_PAUSED) do do local b = AXIOM_BINDS and AXIOM_BINDS[id]; if b then pcall(function() b:set_enabled(false) end) end end end
+` + leave},
+		"all except": {lines: []string{`hl.bind("SUPER + Escape", f, {})`}, keys: []string{"SUPER + Escape"}, submap: true, want: reenable + `
+hl.define_submap("axiom_paused", function()
+  for _, key in ipairs(AXIOM_PAUSE_KEYS or {}) do hl.unbind(key) end
+  hl.bind("SUPER + Escape", f, {})
+end)
+AXIOM_PAUSE_KEYS = { "SUPER + Escape" }
+hl.dispatch(hl.dsp.submap("axiom_paused"))`},
+		"all except, nothing to keep": {submap: true, want: reenable + "\n" + leave},
+	} {
+		if got := HyprPauseLua(tc.paused, tc.lines, tc.keys, tc.submap); got != tc.want {
+			t.Errorf("%s: got\n%s\nwant\n%s", name, got, tc.want)
+		}
+	}
+}

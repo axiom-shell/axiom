@@ -39,6 +39,7 @@ const (
 const (
 	swayEventBit       = 0x80000000
 	SwayEventWorkspace = swayEventBit
+	SwayEventMode      = swayEventBit | 2
 	SwayEventWindow    = swayEventBit | 3
 )
 
@@ -152,20 +153,32 @@ func (s *Sway) Tree(ctx context.Context) (json.RawMessage, error) {
 }
 
 // Reloads streams sway's config reloads (workspace events whose change is
-// "reload") until ctx ends or the socket closes.
+// "reload") and mode changes (mode events) until ctx ends or the socket closes.
 func (s *Sway) Reloads(ctx context.Context, out chan<- Reload) error {
-	return s.Events(ctx, []string{"workspace"}, nil, func(kind uint32, body []byte) {
-		if kind != SwayEventWorkspace {
-			return
-		}
+	return s.Events(ctx, []string{"workspace", "mode"}, nil, func(kind uint32, body []byte) {
 		var event struct {
 			Change string `json:"change"`
 		}
-		if json.Unmarshal(body, &event) == nil && event.Change == "reload" {
-			select {
-			case out <- Reload{}:
-			case <-ctx.Done():
+		var r Reload
+		switch kind {
+		case SwayEventWorkspace:
+			if json.Unmarshal(body, &event) != nil || event.Change != "reload" {
+				return
 			}
+		case SwayEventMode:
+			if json.Unmarshal(body, &event) != nil {
+				return
+			}
+			r = Reload{ModeChanged: true, Mode: event.Change}
+			if r.Mode == "default" {
+				r.Mode = ""
+			}
+		default:
+			return
+		}
+		select {
+		case out <- r:
+		case <-ctx.Done():
 		}
 	})
 }

@@ -17,7 +17,7 @@ A process is axiom's to stop, signal or restart only when it runs in this sessio
 
 ### Teardown
 `session.Teardown`, within 5 s and 2 s per compositor request, in this order, each part logging its failure and the rest going on:
-1. The compositor's steps (`compositor/ipc`, through the environment in the record): hyprland `reload`, `eval`, `setcursor`; sway `reload` or `commands`; niri `load` (the user's config). Only when asked (`Compositor`) and the compositor answers.
+1. The compositor's steps (`compositor/ipc`, through the environment in the record): hyprland `reload`, `eval`, `setcursor`; sway `reload` or `commands`; niri `load` (the user's config). A window rule's pause is given back first in every mode (Hyprland `eval`, sway `commands`); niri's clean stop rewrites its files without the pause instead (`Manager.Teardown`). Only when asked (`Compositor`) and the compositor answers.
 2. Processes: SIGTERM to axiom's own wlsunset (in scope, `AXIOM_SPAWNED=nightlight:<display>` in its environment; also without a compositor), then, for the same compositor instance, the `Stopped` entries started again unless a process in scope already runs that program. `Stopped` is cleared.
 3. Units: this display's units started (`systemctl --user start`, outside the state lock) and then dropped from the state; with the compositor gone or the bus not the manager's they stay for the next start's heal, each cause logged apart (only when this display has units).
 4. The portal lines of this display are undone (a file edit: also without a compositor), then the portal is restarted when a file changed and the compositor answers.

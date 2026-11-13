@@ -36,6 +36,10 @@ type fakeWriter struct {
 	reloaded int
 	// rulesGone is what runtimeRulesGone answers
 	rulesGone bool
+	// pauseFails: pause answers false; byFile: liveByFile (niri's)
+	pauseFails, byFile bool
+	// bindsInText: the texts list the binds (the file holds them out, niri's)
+	bindsInText bool
 }
 
 func (f *fakeWriter) note(c string) {
@@ -54,11 +58,17 @@ func (f *fakeWriter) files(in Inputs) files {
 	return files{ConfigDir: f.dir + "/conf/", IncludePath: f.dir + "/state/module", ManagedPath: f.dir + "/conf/hyprland.lua",
 		UserDir: f.dir + "/conf/user", UserFiles: f.dir + "/conf/user/*.lua", IncludeLines: "load it", RunsElsewhere: f.elsewhere}
 }
+func (f *fakeWriter) bindsText(in Inputs) string {
+	if !f.bindsInText {
+		return ""
+	}
+	return " " + string(jsonx.MarshalCompact(in.get("binds")))
+}
 func (f *fakeWriter) moduleText(in Inputs, spec any) string {
-	return "-- module " + jsonx.ToString(getAny(spec, "tag")) + "\n"
+	return "-- module " + jsonx.ToString(getAny(spec, "tag")) + f.bindsText(in) + "\n"
 }
 func (f *fakeWriter) managedText(in Inputs, spec any) string {
-	return hyprHeader + " managed " + jsonx.ToString(getAny(spec, "tag")) + "\n"
+	return hyprHeader + " managed " + jsonx.ToString(getAny(spec, "tag")) + f.bindsText(in) + "\n"
 }
 func (f *fakeWriter) emptyModuleText() string                    { return "-- empty\n" }
 func (f *fakeWriter) releasedText(in Inputs, mode string) string { return "-- given back" }
@@ -68,7 +78,7 @@ func (f *fakeWriter) liveLines(in Inputs, spec any) []string {
 func (f *fakeWriter) blurLines(in Inputs, spec any) []string {
 	return []string{"blur " + jsonx.ToString(getAny(spec, "tag"))}
 }
-func (f *fakeWriter) liveByFile() bool                        { return false }
+func (f *fakeWriter) liveByFile() bool                        { return f.byFile }
 func (f *fakeWriter) takesBack(part string) bool              { return part == "opacity" }
 func (f *fakeWriter) validate(context.Context, string) string { return f.invalid }
 func (f *fakeWriter) runLive(_ context.Context, lines []string) bool {
@@ -88,6 +98,13 @@ func (f *fakeWriter) runtimeRulesGone(Inputs) bool {
 func (f *fakeWriter) teardownSteps(Inputs, bool) []session.Step {
 	return []session.Step{{Op: "reload"}}
 }
+func (f *fakeWriter) pause(_ context.Context, in Inputs) bool {
+	f.note("pause:" + in.str("pauseKey"))
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return !f.pauseFails
+}
+func (f *fakeWriter) unpauseSteps(Inputs) []session.Step      { return []session.Step{{Op: "unpause"}} }
 func (f *fakeWriter) reloadStartsAxiom(Inputs) (bool, string) { return false, "" }
 func (f *fakeWriter) seenReload()                             {}
 func (f *fakeWriter) skippedKeys() []string                   { return nil }
@@ -143,6 +160,8 @@ type harness struct {
 	pushes chan string
 	steps  chan []session.Step
 	stop   func()
+	// pause calls sent before a test counts (pause_test.go)
+	pauseBase int
 }
 
 func newHarness(t *testing.T, mode string) *harness { return newHarnessEnv(t, mode, nil) }
@@ -218,7 +237,7 @@ func (h *harness) inputs(fileTag, liveTag, layerKey string, parts ...string) {
 	in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", layerKey, "liveKey", liveTag,
 		"supports", jsonx.Obj("windowBorders", true, "windowGaps", true, "windowOpacity", true),
 		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
-	h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
+	h.m.enqueue(func(ctx context.Context) { h.m.setInputs(ctx, in) })
 }
 
 // setMode changes the mode as the shell's save does
@@ -446,7 +465,7 @@ func TestABlurChangeSendsOnlyTheBlur(t *testing.T) {
 		in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", "k1", "liveKey", liveTag, "liveRestKey", rest,
 			"supports", jsonx.Obj("windowBorders", true),
 			"specFile", jsonx.Obj("tag", "f1", "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
-		h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
+		h.m.enqueue(func(ctx context.Context) { h.m.setInputs(ctx, in) })
 	}
 	set("r1", "l1")
 	h.eventually("the runtime layer", h.called("runtime:live l1"))

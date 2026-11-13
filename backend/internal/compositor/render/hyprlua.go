@@ -4,6 +4,7 @@ import (
 	"math"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -567,6 +568,45 @@ func greeterSchema(objectSchema any) *jsonx.Object {
 // leaveSubmap is HyprLua.leaveSubmap.
 func leaveSubmap(name string) string {
 	return "if hl.get_current_submap() == " + LuaString(name) + ` then hl.dispatch(hl.dsp.submap("reset")) end`
+}
+
+// PauseSubmap is the submap holding the binds kept while every other is
+// paused (HyprPauseLua).
+const PauseSubmap = "axiom_paused"
+
+// HyprPauseLua is what pauses shortcuts: first the last pause's binds are
+// switched on again (AXIOM_PAUSED, ids of AXIOM_BINDS' handles), then either
+// paused (ids) are switched off, or, with submap, the kept binds (their
+// hl.bind lines and keys) are defined in PauseSubmap, which is entered:
+// nothing outside it answers. No kept line: nothing is paused (never a
+// trap). Idempotent, so a re-exec or a reload needs nothing carried.
+func HyprPauseLua(paused, keptLines, keptKeys []string, submap bool) string {
+	each := func(id string, on bool) string {
+		return "do local b = AXIOM_BINDS and AXIOM_BINDS[" + id + "]; if b then pcall(function() b:set_enabled(" + strconv.FormatBool(on) + ") end) end end"
+	}
+	out := []string{"for _, id in ipairs(AXIOM_PAUSED or {}) do " + each("id", true) + " end", "AXIOM_PAUSED = nil"}
+	switch {
+	case submap && len(keptLines) > 0:
+		keys := make([]string, len(keptKeys))
+		for i, k := range keptKeys {
+			keys[i] = LuaString(k)
+		}
+		out = append(out, "hl.define_submap("+LuaString(PauseSubmap)+", function()",
+			"  for _, key in ipairs(AXIOM_PAUSE_KEYS or {}) do hl.unbind(key) end")
+		for _, l := range keptLines {
+			out = append(out, "  "+l)
+		}
+		return strings.Join(append(out, "end)", "AXIOM_PAUSE_KEYS = { "+strings.Join(keys, ", ")+" }",
+			"hl.dispatch(hl.dsp.submap("+LuaString(PauseSubmap)+"))"), "\n")
+	case len(paused) > 0 && !submap:
+		ids := make([]string, len(paused))
+		for i, id := range paused {
+			ids[i] = LuaString(id)
+		}
+		out = append(out, "AXIOM_PAUSED = { "+strings.Join(ids, ", ")+" }",
+			"for _, id in ipairs(AXIOM_PAUSED) do "+each("id", false)+" end")
+	}
+	return strings.Join(append(out, leaveSubmap(PauseSubmap)), "\n")
 }
 
 // The window switcher's submap and events (HyprLua's switcher)
