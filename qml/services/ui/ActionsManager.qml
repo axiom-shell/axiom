@@ -170,9 +170,10 @@ QtObject {
 
   // Runs it as its keybind would (ShellManager.runAction: its IPC
   // function, in place). `options`: { call: "toggle" | "open" | "close",
-  // argument, fromScreen }; fromScreen marks the change as the pointer's
-  // first (ShellManager.onScreen), so an OSD stays shut for it unless
-  // OSD.onScreenChanges
+  // argument, output, fromScreen }; `output` is the monitor a compositor
+  // action (toggleSpecial) acts on, "" for the focused one; fromScreen
+  // marks the change as the pointer's first (ShellManager.onScreen), so an
+  // OSD stays shut for it unless OSD.onScreenChanges
   function run(id, options) {
     const opts = options ?? {};
     const kind = root.osdKind(id);
@@ -183,7 +184,14 @@ QtObject {
     // lockscreen IPC target is off, and log out, which isn't a table action
     if (root.sessionActions.includes(id))
       SessionManager.sessionAction(id);
-    else
+    else if (id === "toggleSpecial") {
+      // A compositor action, not an IPC one: a named special workspace only (the unnamed one is no config target)
+      const special = String(opts.argument ?? "").trim();
+      if (special === "")
+        console.warn("[ActionsManager] toggleSpecial needs a special workspace id");
+      else
+        CompositorManager.toggleSpecial(special, opts.output ?? "");
+    } else
       ShellManager.runAction(id, opts.argument ?? "", opts.call ?? "toggle");
   }
 

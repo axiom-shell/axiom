@@ -79,6 +79,30 @@ QtObject {
   // config's is CompositorManager.knownSpecials
   readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
 
+  // What an `x-ref` field of `kind` can be set to: the ids of the things that
+  // exist, as edited, for the dropdown beside the typed text
+  function refOptions(kind) {
+    return kind === "specialWorkspace" ? SpecialWorkspaces.refOptions(root.knownSpecials) : [];
+  }
+
+  // Each of refOptions' ids with the name it was given, where it has one
+  function refLabels(kind) {
+    return kind === "specialWorkspace" ? SpecialWorkspaces.refLabels(root.knownSpecials) : ({});
+  }
+
+  // What the field `key` of the items of the array at `path` (["Keybinds",
+  // "binds"]) refers to for `item` (an item's keys: its `x-ref`'s `when`
+  // reads them), or ""
+  function refKindAt(path, key, item) {
+    const items = SchemaValidation.resolveRef(root.schemaAt(path)?.items, ConfigManager.configSchema);
+    return SchemaLayout.refKind(items?.properties?.[key], k => item[k]);
+  }
+
+  // Whether `value` may be set on an `x-ref` field of `kind`
+  function refValid(kind, value) {
+    return kind === "specialWorkspace" && SpecialWorkspaces.validId(value);
+  }
+
   // Sets the icon and text of special workspace `id`'s entry in the draft,
   // making the entry when it has none (a valid id only)
   function setSpecialWorkspace(id, icon, text) {
@@ -476,10 +500,6 @@ QtObject {
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":
       return ["", ...NotesManager.allNotes];
-    case "specialWorkspaces":
-      // Those that exist (Hyprland lists one only while it has windows), have
-      // an entry or are referred to, as edited (`knownSpecials`)
-      return root.knownSpecials.map(row => row.id);
     case "calendars":
       // Those new events can go to
       return ["", ...CalendarManager.calendars.filter(calendar => calendar.writable).map(calendar => calendar.id)];

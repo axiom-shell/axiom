@@ -818,7 +818,6 @@
     "Window management": "ウィンドウ管理",
     "Window shadows": "ウィンドウの影",
     "Works while locked": "ロック中も有効",
-    "Workspace name": "ワークスペース名",
     "XKB options": "XKB オプション",
     "e.g. caps:escape,grp:alt_shift_toggle.": "例: caps:escape,grp:alt_shift_toggle。",
     "x1, y1, x2, y2, as in CSS cubic-bezier().": "x1, y1, x2, y2 (CSS の cubic-bezier() と同じ)。",
@@ -3859,7 +3858,6 @@
     "Window gaps": "",
     "0: never dims.": "",
     "Also the automatic gap of floating bars and detached surfaces.": "",
-    "Search text, id, direction, workspace, kind, theme, timer length or command.": "",
     "A notification 5 minutes before the timer ends.": "",
     "Share between windows": "",
     "Math results as you type (needs qalc). Enter copies.": "",
@@ -3871,7 +3869,6 @@
     "Focused": "",
     "Bars, popouts, menus and panels.": "",
     "Share of the screen, end to end.": "",
-    "0: no dimming.": "",
     "Workspaces spanned": "",
     "Apps' windows. Off: your config's applies.": "",
     "An XKB layout (us, de). For an input method, the layout it types on. Empty: the first.": "",
@@ -4243,6 +4240,10 @@
     "Special workspace color": "",
     "Every special workspace, with its own label and icon.": "",
     "Special workspace labels": "",
-    "An icon name or glyph, and text. The widget's Special workspace labels picks which shows.": ""
+    "An icon name or glyph, and text. The widget's Special workspace labels picks which shows.": "",
+    "Search text, id, direction, workspace, special workspace, kind, theme, timer length or command.": "",
+    "Hides a special workspace when its last window closes.": "",
+    "How much the workspace behind a shown special workspace is darkened. 0: no dimming.": "",
+    "Switching to another workspace hides a shown special workspace.": ""
   }
 }

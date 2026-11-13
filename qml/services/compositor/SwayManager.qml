@@ -148,11 +148,14 @@ Singleton {
     if (hidden || grouped || scratch)
       lines.push(...SwayState.specialLeave(root._marks, id, hidden));
     if (floatAt) {
-      if (!reinsert)
-        lines.push(`${win} move container to workspace number ${workspaceId}`);
+      // Positioned before the move: an absolute position puts the window on
+      // the workspace visible at that point, which would pull it back from a
+      // hidden target. Moved after, it keeps the spot (same output).
       // A scratchpad window is floating, hidden ones in `scratch` only
       if ((root.windows.find(w => w.id === String(id)) ?? root._info.scratch.find(w => w.id === String(id)))?.floating)
         lines.push(`${win} move absolute position ${Math.round(floatAt.x)} ${Math.round(floatAt.y)}`);
+      if (!reinsert)
+        lines.push(`${win} move container to workspace number ${workspaceId}`);
     } else if (targetId) {
       const target = _con(targetId);
       const split = SwayState.dropSplit(root._info.layouts[String(targetId)], side);

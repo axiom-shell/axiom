@@ -121,3 +121,25 @@ func TestSchemaDefaultsAreValid(t *testing.T) {
 	}
 	check("Menu", jsonx.Obj("id", "test"))
 }
+
+// A hot corner may toggle a named special workspace, never move a window to
+// one (a stray pointer would).
+func TestHotCornerSpecialWorkspaceAction(t *testing.T) {
+	t.Parallel()
+	s := v2(t).S
+	root := s.Root()
+	for _, tc := range []struct {
+		action string
+		valid  bool
+	}{{"toggleSpecial", true}, {"moveToSpecial", false}} {
+		value := parse(t, `{"items": [{"id": "c", "corner": "topLeft", "action": "`+tc.action+`", "argument": "notes"}]}`)
+		filled, ok := config.ApplyDefaults(s, value, true, jsonx.Obj("$ref", "#/properties/HotCorners"))
+		if !ok {
+			t.Fatalf("%s: no defaults", tc.action)
+		}
+		errs := config.ValidationErrors(s, jsonx.Obj("HotCorners", filled), root)
+		if (len(errs) == 0) != tc.valid {
+			t.Errorf("%s: errors %q, valid want %v", tc.action, errs, tc.valid)
+		}
+	}
+}

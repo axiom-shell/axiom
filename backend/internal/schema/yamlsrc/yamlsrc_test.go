@@ -444,10 +444,22 @@ func TestAxiomActions(t *testing.T) {
 		}
 	}
 	left := []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop", "reboot", "poweroff"}
-	if got, want := len(enum), ipc.Len()-len(left)+1; got != want || enum[len(enum)-1] != "exec" || slices.ContainsFunc(left, func(s string) bool { return slices.Contains(enum, s) }) {
+	if got, want := len(enum), ipc.Len()-len(left)+2; got != want || enum[len(enum)-1] != "exec" || enum[len(enum)-2] != "toggleSpecial" || slices.Contains(enum, "moveToSpecial") || slices.ContainsFunc(left, func(s string) bool { return slices.Contains(enum, s) }) {
 		t.Errorf("enum = %v: want the %d ipcActions but %v, then exec", enum, want-1, left)
 	}
-	for key, want := range map[string][]string{"argument": argument, "call": call} {
+	if got, want := pointer(action, "/x-enumLabels").Value("toggleSpecial"), binds.Value("toggleSpecial"); got != want {
+		t.Errorf("toggleSpecial's label = %v, want %v", got, want)
+	}
+	if got := pointer(action, "/x-enumIcons").Value("toggleSpecial"); got != icons.Value("toggleSpecial") || got != "star" {
+		t.Errorf("toggleSpecial's icon = %v, want star", got)
+	}
+	if got := pointer(action, "/x-enumGroups").Value("toggleSpecial"); got != "Special" {
+		t.Errorf("toggleSpecial's group = %v, want Special", got)
+	}
+	if got, want := string(jsonx.MarshalCompact(pointer(action, "/x-enumShowIf/toggleSpecial"))), `{"/$supports.namedSpecial":true}`; got != want {
+		t.Errorf("toggleSpecial's x-enumShowIf = %s, want %s", got, want)
+	}
+	for key, want := range map[string][]string{"argument": slices.Insert(argument, len(argument)-1, "toggleSpecial"), "call": call} {
 		got := string(jsonx.MarshalCompact(pointer(item, "/"+key+"/x-showIf")))
 		if w := string(jsonx.MarshalCompact(jsonx.Obj("action", jsonx.Arr(anys(want)...)))); got != w {
 			t.Errorf("%s x-showIf = %s, want %s", key, got, w)
@@ -459,11 +471,11 @@ func TestAxiomActions(t *testing.T) {
 	fsys := fstest.MapFS{
 		IndexFile:                        {Data: []byte("type: object\nproperties: {}\nsections: [S]\n")},
 		AnnotationsFile:                  {Data: []byte("x-axiomActions: \"\"\nx-order: \"\"\nx-enumLabels: \"\"\nx-showIf: \"\"\n")},
-		SectionsDir + "/S.yaml":          {Data: []byte("type: object\nproperties:\n  action: {type: string, x-axiomActions: {except: [closeWindow]}}\n")},
+		SectionsDir + "/S.yaml":          {Data: []byte("type: object\nproperties:\n  action: {type: string, x-axiomActions: {except: [closeWindow], compositor: [launcher]}}\n")},
 		DefinitionsDir + "/Keybind.yaml": {Data: []byte("type: object\nproperties:\n  action: {type: string, x-enumLabels: {launcher: App launcher}}\n")},
 	}
 	_, err = Assemble(fsys)
-	for _, want := range []string{"except names closeWindow", "no label for overlay"} {
+	for _, want := range []string{"except names closeWindow", "no label for overlay", "compositor names launcher"} {
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("missing %q in %v", want, err)
 		}
