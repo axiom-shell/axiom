@@ -92,6 +92,9 @@ type topic struct {
 	// request the last subscriber to leave had (what `last` is for)
 	lastAt   time.Time
 	lastWhat string
+	// mixed: requests of more than one kind were subscribed since the
+	// last subscriber-less time, so `last` may merge them
+	mixed bool
 }
 
 type subscription struct {
@@ -184,6 +187,7 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 	asked := false
 	for _, o := range t.subs {
 		asked = asked || o.what == sub.what
+		t.mixed = t.mixed || o.what != sub.what
 	}
 	t.subs[s] = sub
 	if t.cancel == nil {
@@ -276,8 +280,13 @@ func (h *Hub) drop(t *topic, s Subscriber) {
 	}
 	t.cancel()
 	// The state stays for a subscriber coming back within its interval
-	// (Subscribe decides); an error does not
+	// (Subscribe decides); an error does not (publish clears it)
 	t.cancel, t.lastErr, t.lastWhat = nil, "", sub.what
+	// State merged from different requests fits none of them alone
+	if t.mixed {
+		t.last, t.lastAt = nil, time.Time{}
+	}
+	t.mixed = false
 }
 
 // start runs t's loop; h.mu is held. A non-zero since is when the state
@@ -359,6 +368,8 @@ func (h *Hub) publish(t *topic, gen int, state any, err error) {
 	}
 	if err != nil {
 		// Once per distinct error, not every interval
+		// A state from before the error is never reused by a resubscribe
+		t.last, t.lastAt, t.lastWhat = nil, time.Time{}, ""
 		if msg := err.Error(); msg != t.lastErr {
 			t.lastErr = msg
 			h.o.Log.Warn("fetching a topic", "topic", t.src.Name, "err", err)

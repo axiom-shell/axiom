@@ -209,11 +209,22 @@ func (u *usage) fetch(ctx context.Context, requests []json.RawMessage) map[strin
 		// Claude Code rewrote the credentials: an account whose login had
 		// lapsed is fetched straight away (fresh numbers stay fresh with a
 		// new token)
+		prevCreds, hadCreds := u.creds[dir]
 		renewed := u.credsChanged(dir) && (a.Status == "expired" || a.Status == "missing")
 		limited := a.RateLimited && now.UnixMilli() < a.RetryAt
 		if renewed || (forced && !limited) || due(a, now, every) {
 			if u.fetchOne(ctx, a, every) {
 				changed = true
+			} else {
+				// Cancelled: the triggers that led here stay for the next run
+				if forced {
+					u.forced.Store(true)
+				}
+				if hadCreds {
+					u.creds[dir] = prevCreds
+				} else {
+					delete(u.creds, dir)
+				}
 			}
 		}
 		out[dir] = *a

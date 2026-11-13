@@ -76,4 +76,24 @@ TestCase {
     compare(s.sent, ["a", "b"]);
     compare(r.wait, -1);
   }
+
+  function test_eachTopicAtItsOwnDeadline() {
+    const s = sim();
+    s.acquire("a");
+    s.acquire("b");
+    s.release("a", 0);
+    s.release("b", 1000);
+    compare(TopicGrace.wait(s.pending, 1000), 500, "the timer waits for the earliest");
+    s.fire(1500);
+    compare(s.sent, ["a"], "a at its own deadline");
+    compare(TopicGrace.wait(s.pending, 1500), 1000, "then b's remaining time");
+    s.fire(2499);
+    compare(s.sent, ["a"]);
+    s.fire(2500);
+    compare(s.sent, ["a", "b"], "b at 2500, not later");
+  }
+
+  function test_waitWithNothingPending() {
+    compare(TopicGrace.wait({}, 0), -1);
+  }
 }
