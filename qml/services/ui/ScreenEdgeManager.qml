@@ -21,7 +21,8 @@ QtObject {
   // bars on its screen (BarEnds.withEnds: where it lies, what it
   // reserves, which bar a shared corner goes to). An auto-hiding bar
   // pinned shown (BarRevealManager.pinned, which changes only on a pin,
-  // never on hover) reserves its space. Each entry stays the same object
+  // never on hover) reserves its space. A bar on a monitor a window rule
+  // hides it on is enriched as auto-hiding (`hiddenByRule`, BarEnrich). Each entry stays the same object
   // while it is equal (Utils.keepEqual), so a pass over equal content
   // reaches no reader; [] until this singleton has completed.
   readonly property var bars: root._bars
@@ -42,10 +43,12 @@ QtObject {
   // binding over those re-runs once per link as a gap change reaches them,
   // the first with the new gapsOut and the old float gaps (a swap of the
   // bars that is no input change)
-  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), ConfigManager.live.Bars.items)
-  function _freshBarsFor(gapsOut, floatGaps, items) {
+  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), ConfigManager.live.Bars.items, WindowRulesManager.hideBarOn)
+  function _freshBarsFor(gapsOut, floatGaps, items, hiddenOn) {
     return BarEnds.withEnds(BarsConfig.expandBars(items).map(bar => {
-      const enriched = BarsConfig.enrichBarConfig(bar, gapsOut, floatGaps);
+      const enriched = BarsConfig.enrichBarConfig(hiddenOn.includes(bar.monitor) ? Object.assign({}, bar, {
+        "hiddenByRule": true
+      }) : bar, gapsOut, floatGaps);
       enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
       return enriched;
     }), BarsConfig.endsOptions(gapsOut, floatGaps));

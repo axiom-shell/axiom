@@ -572,6 +572,19 @@ TestCase {
       "alert": true
     }), false), "quiet, even an alert");
     verify(!OSDEngine.opens({}, bars, change("app:fx"), false), "its key's opens: false (showOsd off)");
+    verify(!OSDEngine.opens({}, bars, change("master"), false, true), "paused: anyone's change");
+    verify(OSDEngine.opens({}, bars, change("master", {
+      "alert": true
+    }), false, true), "paused: an alert");
+    verify(!OSDEngine.opens({}, bars, change("master", {
+      "byUser": true
+    }), true, true), "paused: made on screen, with onScreenChanges");
+    verify(!OSDEngine.opens({
+      "quiet": true
+    }, bars, change("master", {
+      "alert": true
+    }), false, true), "paused: quiet, even an alert");
+    verify(OSDEngine.opens({}, bars, change("master"), false, false), "not paused: as before");
     bars.destroy();
   }
 

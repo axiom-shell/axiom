@@ -27,6 +27,15 @@ QtObject {
   readonly property var state: root._state
   // The while-effects in force, for their owners; `state.overrides` the ones the user overrode
   readonly property var holds: root._state ? root._state.holds : null
+  // The outputs a rule pauses OSDs on / hides the bars on (holds.pauseOsd /
+  // hideBar), the same array while they are; [] until known
+  readonly property var pauseOsdOn: root._outputs(root._pauseOsdKey)
+  readonly property var hideBarOn: root._outputs(root._hideBarKey)
+  readonly property string _pauseOsdKey: (root.holds?.pauseOsd ?? []).join("\n")
+  readonly property string _hideBarKey: (root.holds?.hideBar ?? []).join("\n")
+  function _outputs(key) {
+    return key === "" ? [] : key.split("\n");
+  }
   // Of `windows`, those no window rule hides from `place` ("dock",
   // "switcher", "workspaces", "launcher"; holds.hideFrom); all of them until
   // the daemon answers

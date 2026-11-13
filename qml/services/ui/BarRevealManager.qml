@@ -16,7 +16,10 @@ import qs.services.compositor
  * editor with it selected), revealed for a moment (revealFor: a workspace
  * change, a widget's news, the IPC reveal), or for whenCovered, while no
  * window covers its slot. One one-shot Timer runs to the earliest
- * deadline. The bars themselves (BarPanel) report hover, holds and
+ * deadline. A bar a window rule hides (`hiddenByRule`) is hidden at once
+ * as that starts (hideNow: a pin or a moment from before doesn't keep it
+ * shown); its edge, holds, the IPC reveal and a pin made then show it, and
+ * nothing is undone as the hold ends. The bars themselves (BarPanel) report hover, holds and
  * coverage, and slide in and out by `shownOf`. */
 QtObject {
   id: root
@@ -219,7 +222,32 @@ QtObject {
     }
   }
 
-  Component.onCompleted: root._checkWorkspaces()
+  // --- Hidden by a window rule ---
+
+  // The ids of the bars hidden by a window rule, as last seen
+  property var _ruleHidden: ({})
+
+  function _checkRuleHidden() {
+    const now = {};
+    ScreenEdgeManager.bars.filter(bar => bar.hiddenByRule).forEach(bar => {
+      now[bar.id] = true;
+      if (root._ruleHidden[bar.id] !== true)
+        root.hideNow(bar.id);
+    });
+    root._ruleHidden = now;
+  }
+
+  property Connections _edges: Connections {
+    target: ScreenEdgeManager
+    function onBarsChanged() {
+      root._checkRuleHidden();
+    }
+  }
+
+  Component.onCompleted: {
+    root._checkWorkspaces();
+    root._checkRuleHidden();
+  }
 
   // --- IPC (`axiom ipc bar …`; the keybind action `bar`) ---
 
