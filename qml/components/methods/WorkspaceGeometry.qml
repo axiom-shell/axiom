@@ -20,7 +20,7 @@ QtObject {
 
   // The largest scale at which cols×rows monitors of monW×monH, `gap` apart,
   // fit in availW×availH. With `side` > 0 there is also a column of one more
-  // cell's width right of them, `side` px from the grid (the scratchpads'
+  // cell's width right of them, `side` px from the grid (the special workspaces'
   // box, its padding and the room between the boxes), inside the same width;
   // missing or ≤ 0 is the grid alone.
   function fitScale(availW, availH, monW, monH, gap, cols, rows, side) {
@@ -38,13 +38,13 @@ QtObject {
     return n >= 1 && n <= count ? n - 1 : -1;
   }
 
-  // The scratchpads' column beside a cols×rows grid of cellW×cellH cells,
+  // The special workspaces' column beside a cols×rows grid of cellW×cellH cells,
   // `side` px from it: null for no cells, else { x, stackY, stackH,
   // boardWidth, boardHeight, scale, rects } with one rect per cell, stacked
   // and centred vertically on the grid's centre, each centred across the
   // column. The cells shrink (0.01 ≤ scale < 1) to fit the grid's height,
   // never the grid; none is under 1 px.
-  function scratchColumn(count, cellW, cellH, gap, cols, rows, side) {
+  function specialColumn(count, cellW, cellH, gap, cols, rows, side) {
     if (!(count > 0))
       return null;
     const gridW = cols * cellW + (cols - 1) * gap;
@@ -75,7 +75,7 @@ QtObject {
   }
 
   // The index of the column's rect under a point, or -1 (a null column too)
-  function scratchCellAt(column, x, y) {
+  function specialCellAt(column, x, y) {
     if (!column)
       return -1;
     return column.rects.findIndex(r => contains(r, x, y));
@@ -133,12 +133,12 @@ QtObject {
   }
 
   // The cell a key press moves the keyboard focus to: `index` in the board's
-  // cells (the `count` workspaces in `cols` columns, then `scratchCount`
-  // scratch cells in one column), `key` "left" | "right" | "up" | "down".
-  // Right of a grid row's last cell is the scratch cell at that row's height,
-  // and left of a scratch cell the grid's last cell at its. No wrap; an
+  // cells (the `count` workspaces in `cols` columns, then `specialCount`
+  // special cells in one column), `key` "left" | "right" | "up" | "down".
+  // Right of a grid row's last cell is the special cell at that row's height,
+  // and left of a special cell the grid's last cell at its. No wrap; an
   // impossible step stays put.
-  function navigate(index, key, cols, count, scratchCount) {
+  function navigate(index, key, cols, count, specialCount) {
     const rows = Math.ceil(count / cols);
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     if (index < count) {
@@ -152,15 +152,15 @@ QtObject {
         return index + cols < count ? index + cols : index;
       if (col < cols - 1 && index + 1 < count)
         return index + 1;
-      return scratchCount > 0 ? count + clamp(Math.floor((row + 0.5) * scratchCount / rows), 0, scratchCount - 1) : index;
+      return specialCount > 0 ? count + clamp(Math.floor((row + 0.5) * specialCount / rows), 0, specialCount - 1) : index;
     }
     const s = index - count;
     if (key === "up")
       return s > 0 ? index - 1 : index;
     if (key === "down")
-      return s < scratchCount - 1 ? index + 1 : index;
+      return s < specialCount - 1 ? index + 1 : index;
     if (key === "left" && count > 0) {
-      const row = clamp(Math.floor((s + 0.5) * rows / scratchCount), 0, rows - 1);
+      const row = clamp(Math.floor((s + 0.5) * rows / specialCount), 0, rows - 1);
       return Math.min(count - 1, row * cols + cols - 1);
     }
     return index;

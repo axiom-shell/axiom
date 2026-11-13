@@ -133,9 +133,14 @@ Singleton {
   // The special workspaces (contract.md › Shapes, Special), [] without
   // namedSpecial
   readonly property var specials: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
-  // The special workspace names configured: Workspaces.scratchpads', then
-  // the toggleSpecial binds'
-  readonly property var specialNames: root.supports.namedSpecial ? Scratchpads.configuredNames(WorkspacesConfig.scratchpads, KeybindsConfig.activeBinds) : []
+  // The fields of the config that hold a special workspace's id (the
+  // schema's `x-ref`s of that kind: SchemaRefs.sites)
+  readonly property var specialRefSites: SchemaRefs.sites(ConfigManager.configSchema, "specialWorkspace")
+  // Every special workspace that exists, as SpecialWorkspaces.list's rows:
+  // those with an entry (Workspaces.specialWorkspaces), the ids the shown
+  // (live) config refers to and the live ones; [] without namedSpecial
+  // reads: Workspaces.specialWorkspaces, Keybinds.binds, HotCorners.items
+  readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SpecialWorkspaces.references(ConfigManager.live, root.specialRefSites)) : []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
   // The focused monitor's name while it's connected (a screen surfaces are
@@ -301,21 +306,29 @@ Singleton {
     }, windows);
   }
 
-  // Toggles special workspace `name` on `output` ("" is the focused one)
-  function toggleSpecial(name, output) {
-    const trimmed = String(name ?? "").trim();
-    if (!root.supports.namedSpecial || trimmed === "")
+  // Toggles special workspace `id` on `output` (the focused one when ""). The
+  // id must be valid (SpecialWorkspaces.validId) or "", the unnamed special
+  // workspace (the switcher's cell for it).
+  function toggleSpecial(id, output) {
+    if (!root.supports.namedSpecial)
       return;
-    root.backend.toggleSpecial(trimmed, output || "");
+    if (id !== "" && !SpecialWorkspaces.validId(id)) {
+      console.warn("[CompositorManager] toggleSpecial: not a special workspace id:", JSON.stringify(id));
+      return;
+    }
+    root.backend.toggleSpecial(id, output || "");
   }
 
-  // Moves window `id` (the focused one when "" or left out) to special
-  // workspace `name`; a special shown or hidden stays so
-  function moveToSpecial(name, id) {
-    const trimmed = String(name ?? "").trim();
-    if (!root.supports.namedSpecial || trimmed === "")
+  // Moves window `windowId` (the focused one when "" or left out) to
+  // special workspace `id` (a valid one); a special shown or hidden stays so
+  function moveToSpecial(id, windowId) {
+    if (!root.supports.namedSpecial)
       return;
-    root.backend.moveToSpecial(trimmed, id || "");
+    if (!SpecialWorkspaces.validId(id)) {
+      console.warn("[CompositorManager] moveToSpecial: not a special workspace id:", JSON.stringify(id));
+      return;
+    }
+    root.backend.moveToSpecial(id, windowId || "");
   }
 
   // A workspace's windows, the biggest (by area) first, ties in the

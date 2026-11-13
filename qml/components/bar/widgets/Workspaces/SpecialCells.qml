@@ -10,7 +10,7 @@ import qs.components.bar.look
 
 // What a switcher shows after its workspaces and strip windows (ActiveStrip):
 // a divider (StripDivider), then a cell for each special workspace
-// (scratchpad) its `scratchpads` option lists (Scratchpads.cells), click one
+// its `specialWorkspaces` option lists (SpecialWorkspaces.cells), click one
 // to show or hide it on this monitor. A special open on this monitor draws
 // active, one open on another (or closed) as occupied while it has windows.
 // A powerline chains on with no divider, as the strip windows do. The
@@ -34,17 +34,17 @@ Loader {
   property int chainCount: cells
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property var _cells: Scratchpads.cells(CompositorManager.specials, CompositorManager.specialNames, root.properties.scratchpads)
+  readonly property var _cells: SpecialWorkspaces.cells(CompositorManager.knownSpecials, CompositorManager.specials, root.properties.specialWorkspaces)
   // A string, so the cells are only rebuilt when the set of names changes,
   // not on every compositor event
-  readonly property string _key: root._cells.map(c => c.name).join("\n")
-  readonly property var names: root._key === "" ? [] : root._key.split("\n")
+  readonly property string _key: SpecialWorkspaces.keyOf(root._cells.map(c => c.name))
+  readonly property var names: SpecialWorkspaces.namesOf(root._key)
   readonly property int cells: root.names.length
   // A powerline's segments chain on from the ones before, with no divider
   readonly property bool _chained: cellLook.run !== null && barConfig.look.grouping === "powerline"
   readonly property bool _divided: !_chained
 
-  active: root.properties.scratchpads !== "off" && CompositorManager.supports.namedSpecial === true
+  active: root.properties.specialWorkspaces !== "off" && CompositorManager.supports.namedSpecial === true
   visible: root.cells > 0
 
   sourceComponent: Grid {
@@ -90,7 +90,7 @@ Loader {
           required property int index
           readonly property string name: root.names[index] ?? ""
           readonly property var special: root._cells.find(c => c.name === name) ?? null
-          readonly property var _content: special ? contents.ofScratchpad(special, Scratchpads.entryFor(WorkspacesConfig.scratchpads, name)) : null
+          readonly property var _content: special ? contents.ofSpecial(special, SpecialWorkspaces.entryFor(WorkspacesConfig.specialWorkspaces, name)) : null
 
           part: "all"
           barConfig: root.barConfig
@@ -132,11 +132,12 @@ Loader {
           onClicked: CompositorManager.toggleSpecial(name, root.monitorName)
 
           LazyLoader {
-            active: cell.hovered
+            // The unnamed one has nothing to call it by
+            active: cell.hovered && cell.name !== ""
 
             StyledToolTip {
               target: cell
-              text: cell.name
+              text: SpecialWorkspaces.entryFor(WorkspacesConfig.specialWorkspaces, cell.name)?.text || cell.name
               edges: root.cellLook.innerEdges
             }
           }

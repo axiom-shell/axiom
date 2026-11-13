@@ -1800,4 +1800,32 @@ TestCase {
     compare(targets.filter(target => SchemaLayout.locate(schema, target) === null), []);
     compare(targets.length > 1, true);
   }
+
+  // A field that holds the id of something defined elsewhere (`x-ref`) is
+  // drawn as its picker only for the items its `when` matches
+  function test_refKind() {
+    const bind = schema.definitions.Keybind.properties.argument;
+    compare(SchemaLayout.refKind(bind, key => ({
+          "action": "toggleSpecial"
+        })[key]), "specialWorkspace");
+    compare(SchemaLayout.refKind(bind, key => ({
+          "action": "moveToSpecial"
+        })[key]), "specialWorkspace");
+    compare(SchemaLayout.refKind(bind, key => ({
+          "action": "launcherSearch"
+        })[key]), "");
+    compare(SchemaLayout.refKind(bind, key => undefined), "");
+    compare(SchemaLayout.refKind(schema.definitions.Keybind.properties.key, key => "toggleSpecial"), "", "no x-ref");
+    compare(SchemaLayout.refKind(undefined, key => ""), "");
+    const corner = schema.properties.HotCorners.properties.items.items.properties.argument;
+    compare(SchemaLayout.refKind(corner, key => ({
+          "action": "toggleSpecial"
+        })[key]), "specialWorkspace");
+    compare(SchemaLayout.refKind(corner, key => ({
+          "action": "exec"
+        })[key]), "");
+    compare(SchemaLayout.refKind(corner, key => ({
+          "action": "moveToSpecial"
+        })[key]), "");
+  }
 }

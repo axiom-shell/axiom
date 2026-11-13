@@ -51,13 +51,14 @@ properties:
           title: Action
           # A stray pointer fires a corner: none of the actions that lose state,
           # move a window with no sign or end the session
-          x-axiomActions: {except: [clearNotifications, moveWindowStep, moveWindowStepSilent, moveWindowNth, moveWindowNthSilent, stopwatchReset, timerReset, pomodoroStop, reboot, poweroff]}
+          x-axiomActions: {compositor: [toggleSpecial], except: [clearNotifications, moveWindowStep, moveWindowStepSilent, moveWindowNth, moveWindowNthSilent, stopwatchReset, timerReset, pomodoroStop, reboot, poweroff]}
           default: workspaceOverview
         argument:
           type: string
           title: Argument
           default: ''
-          description: Search text, id, direction, workspace, kind, theme, timer length or command.
+          description: Search text, id, direction, workspace, special workspace, kind, theme, timer length or command.
+          x-ref: {kind: specialWorkspace, when: {action: [toggleSpecial]}, usedBy: 'Used by hot corner {0}', name: corner}
         call:
           type: string
           title: Call

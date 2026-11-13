@@ -130,6 +130,16 @@ QtObject {
     return result;
   }
 
+  // What the field refers to (`x-ref`'s `kind`, "specialWorkspace"), or "" when
+  // it refers to nothing or its `when` doesn't hold for the item (valueOf
+  // gives the item's keys, as showIfHolds')
+  function refKind(fieldSchema, valueOf) {
+    const ref = fieldSchema?.["x-ref"];
+    if (!ref || !root.showIfHolds(ref.when, valueOf))
+      return "";
+    return ref.kind ?? "";
+  }
+
   // `x-showIf: { sibling: value | [values] | { not: value } | { notEmpty: true } }`: whether
   // it holds (every key), with valueOf(key) giving a sibling's value. A
   // plain key may be dotted (`open.onHover`: inside a sibling) and start

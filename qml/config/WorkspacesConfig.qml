@@ -30,9 +30,6 @@ QtObject {
   // Workspaces a monitor shows
   readonly property int size: grid ? columns * rows : count
   readonly property bool wrap: _c.wrap
-  // How sway shows a special group: "scratchpad" (its windows float over
-  // the workspace) or "workspace" (a workspace of its own)
-  readonly property string specialWorkspaces: _c.specialWorkspaces
   readonly property bool animate: _c.animate
   // The overview board's columns: the grid's, else even rows where possible
   readonly property int boardColumns: grid ? columns : _evenColumns(count)
@@ -72,9 +69,10 @@ QtObject {
     return Math.ceil(n / Math.floor(Math.sqrt(n)));
   }
 
-  // Own icon and label per special workspace (scratchpad): [{ id, name,
-  // icon, text }]
-  readonly property var scratchpads: _c.scratchpads
+  // The special workspaces with an entry: [{ id, icon, text }], `id` the
+  // special workspace's id (SpecialWorkspaces.validId), `icon` and `text` its
+  // own label
+  readonly property var specialWorkspaces: _c.specialWorkspaces
 
   // The strip direction of the monitor named `screenName`, "" when it tiles
   function stripDirection(screenName) {

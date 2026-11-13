@@ -219,6 +219,7 @@ properties:
     title: Argument
     default: ''
     description: 'Per action: a direction, workspace, page, menu id, theme, command or search text.'
+    x-ref: {kind: specialWorkspace, when: {action: [toggleSpecial, moveToSpecial]}, usedBy: 'Used by keybind {0}', name: key}
     x-showIf:
       action:
         - launcherSearch

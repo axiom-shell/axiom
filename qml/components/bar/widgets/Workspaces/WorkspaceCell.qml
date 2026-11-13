@@ -66,10 +66,10 @@ Item {
   property int iconSlots: 1
   property string glyph: ""
   // App icons after a short divider at the end of a glyph or text label (a
-  // scratchpad with `scratchpadSplit`), `tailLength` along the bar of
+  // special workspace with `specialWorkspaceSplit`), `tailLength` along the bar of
   // `length` (WorkspaceCells.splitTail); `tailEdge` the padding after it,
   // `tailShift` how far the label sits off the centre, `dividerAlong` the
-  // divider's size along the bar (all CellContents.ofScratchpad's)
+  // divider's size along the bar (all CellContents.ofSpecial's)
   property var tailPaths: []
   property real tailLength: 0
   property real tailEdge: 0

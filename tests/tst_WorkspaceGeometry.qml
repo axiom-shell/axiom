@@ -120,10 +120,10 @@ TestCase {
     compare(WorkspaceGeometry.fitScale(330, 200, 100, 50, 10, 2, 1, 0), 1.6);
   }
 
-  function test_scratchColumn() {
+  function test_specialColumn() {
     // 3 rows of 30 px cells, 5 px gaps: the grid is 100 px high, centre 50
-    compare(WorkspaceGeometry.scratchColumn(0, 40, 30, 5, 3, 3, 10), null);
-    const one = WorkspaceGeometry.scratchColumn(1, 40, 30, 5, 3, 3, 10);
+    compare(WorkspaceGeometry.specialColumn(0, 40, 30, 5, 3, 3, 10), null);
+    const one = WorkspaceGeometry.specialColumn(1, 40, 30, 5, 3, 3, 10);
     compare(one.x, 140);
     compare(one.boardWidth, 180);
     compare(one.scale, 1);
@@ -136,13 +136,13 @@ TestCase {
     compare(one.rects[0].y + one.rects[0].h / 2, 50, "one special lines up with the middle row");
     compare(one.stackY, 35);
     compare(one.stackH, 30);
-    const two = WorkspaceGeometry.scratchColumn(2, 40, 30, 5, 3, 3, 10);
+    const two = WorkspaceGeometry.specialColumn(2, 40, 30, 5, 3, 3, 10);
     compare(two.scale, 1);
     compare(two.rects[0].y, 18);
     compare(two.rects[1].y, 53);
     // (a whole pixel's rounding at most)
     verify(Math.abs((two.rects[0].y + two.rects[1].y + two.rects[1].h) / 2 - 50) <= 0.5, "two straddle the centre");
-    const four = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
+    const four = WorkspaceGeometry.specialColumn(4, 40, 30, 5, 3, 2, 10);
     compare(four.scale, 50 / 120);
     compare(four.stackY, 1);
     compare(four.rects[1], {
@@ -153,14 +153,14 @@ TestCase {
     });
   }
 
-  function test_scratchColumn_manyCells() {
+  function test_specialColumn_manyCells() {
     // 15 cells in one 30 px row: the scale stays positive, cells at least 1 px
-    const column = WorkspaceGeometry.scratchColumn(15, 40, 30, 5, 3, 1, 10);
+    const column = WorkspaceGeometry.specialColumn(15, 40, 30, 5, 3, 1, 10);
     compare(column.scale, 0.01);
     column.rects.forEach(r => verify(r.w >= 1 && r.h >= 1));
-    column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x, r.y), i));
+    column.rects.forEach((r, i) => compare(WorkspaceGeometry.specialCellAt(column, r.x, r.y), i));
     // Many in 3 rows shrink to the grid's height, centred on it
-    const many = WorkspaceGeometry.scratchColumn(6, 40, 30, 5, 3, 3, 10);
+    const many = WorkspaceGeometry.specialColumn(6, 40, 30, 5, 3, 3, 10);
     verify(many.scale < 1);
     verify(many.stackH <= 100);
     const last = many.rects[5];
@@ -168,13 +168,13 @@ TestCase {
     verify(Math.abs(many.stackY * 2 + many.stackH - 100) <= 1, "centred on the grid");
   }
 
-  function test_scratchCellAt() {
-    const column = WorkspaceGeometry.scratchColumn(4, 40, 30, 5, 3, 2, 10);
-    column.rects.forEach((r, i) => compare(WorkspaceGeometry.scratchCellAt(column, r.x + r.w / 2, r.y + r.h / 2), i));
-    compare(WorkspaceGeometry.scratchCellAt(column, 137, 5), -1);
+  function test_specialCellAt() {
+    const column = WorkspaceGeometry.specialColumn(4, 40, 30, 5, 3, 2, 10);
+    column.rects.forEach((r, i) => compare(WorkspaceGeometry.specialCellAt(column, r.x + r.w / 2, r.y + r.h / 2), i));
+    compare(WorkspaceGeometry.specialCellAt(column, 137, 5), -1);
     const last = column.rects[3];
-    compare(WorkspaceGeometry.scratchCellAt(column, last.x + 1, last.y + last.h + 3), -1);
-    compare(WorkspaceGeometry.scratchCellAt(null, 150, 5), -1);
+    compare(WorkspaceGeometry.specialCellAt(column, last.x + 1, last.y + last.h + 3), -1);
+    compare(WorkspaceGeometry.specialCellAt(null, 150, 5), -1);
   }
 
   function test_digitCell() {
@@ -191,7 +191,7 @@ TestCase {
   }
 
   function test_navigate() {
-    const nav = (i, key, cols, count, scratch) => WorkspaceGeometry.navigate(i, key, cols ?? 3, count ?? 6, scratch ?? 2);
+    const nav = (i, key, cols, count, specials) => WorkspaceGeometry.navigate(i, key, cols ?? 3, count ?? 6, specials ?? 2);
     compare(nav(0, "right"), 1);
     compare(nav(2, "right"), 6);
     compare(nav(5, "right"), 7);

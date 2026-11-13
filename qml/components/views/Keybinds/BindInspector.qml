@@ -24,6 +24,8 @@ ColumnLayout {
   // Not bound now by its "Only when" (its issues say why)
   readonly property bool idle: !root.paused && KeybindManager.editor.held[root.bindIndex] !== true
   readonly property bool needed: KeybindManager.needsArgument(root.bind.action)
+  // What the argument refers to (Keybind.argument's `x-ref`), or ""
+  readonly property string argumentRef: SettingsManager.refKindAt(["Keybinds", "binds"], "argument", root.bind)
   readonly property var callOptions: KeybindManager.callOptions(root.bind.action)
   readonly property var argumentOptions: {
     const options = KeybindManager.argumentOptions(root.bind.action);
@@ -119,16 +121,26 @@ ColumnLayout {
       Layout.preferredHeight: Widget.height
     }
 
+    // The id of something defined elsewhere: a dropdown that also takes a
+    // new one. It lists the ids of the settings draft, so one typed on another
+    // bind appears once the keybinds are saved
+    RefEntry {
+      visible: root.needed && root.argumentOptions === null && root.argumentRef !== ""
+      kind: root.argumentRef
+      value: root.bind.argument ?? ""
+      onCommitted: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
+      Layout.fillWidth: true
+      Layout.preferredHeight: Widget.height
+    }
+
     BindTextField {
       id: argumentText
       field: "argument"
-      visible: root.needed && root.argumentOptions === null
+      visible: root.needed && root.argumentOptions === null && root.argumentRef === ""
       placeholderText: {
         switch (KeybindManager.argumentKind(root.bind.action)) {
         case "resize":
           return I18n.tr("Step, e.g. 50 0");
-        case "special":
-          return I18n.tr("Workspace name");
         case "duration":
           return I18n.tr("Length, e.g. 10m or 1:30");
         case "raw":

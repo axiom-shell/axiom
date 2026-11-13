@@ -233,8 +233,8 @@ TestCase {
     verify(shared.calls.BindActions.supported(test.table, "stripWider", hyprland));
     verify(!shared.calls.BindActions.supported(test.table, "stripWider", {}));
     verify(shared.calls.BindActions.supported(test.table, "toggleSpecial", {
-      "scratchpad": true
-    }), "any one of its capabilities");
+      "namedSpecial": true
+    }), "its capability");
     for (const action in test.table.needs)
       verify(_schemaActions().includes(action), action + " is an action");
   }

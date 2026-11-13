@@ -42,6 +42,10 @@ Loader {
       return own;
     return own !== "" ? notes + "\n" + I18n.tr(own) : notes;
   }
+  // What the field refers to (`x-ref`: "specialWorkspace"), or "" while its
+  // `when` doesn't hold: a dropdown of those that exist, which also takes
+  // typed text
+  readonly property string refKind: SchemaLayout.refKind(fieldSchema, root._valueOf)
   readonly property bool isColor: fieldSchema["x-options"] === "colors"
   // `x-enumShowIf` hides options whose condition doesn't hold, and
   // `x-menuPlacements` the menus of other placements (the current value
@@ -51,9 +55,6 @@ Loader {
     const placements = fieldSchema["x-menuPlacements"];
     if (all && placements)
       all = all.filter(value => value === "" || value === root.current || MenusConfig.offeredIn(value, placements));
-    // A scratchpad's name that's no longer listed stays, so an entry never shows blank
-    if (all && fieldSchema["x-options"] === "specialWorkspaces" && root.current && !all.includes(root.current))
-      all = all.concat(root.current);
     const conditions = fieldSchema["x-enumShowIf"];
     if (!all || !conditions)
       return all;
@@ -305,6 +306,9 @@ Loader {
     case "number":
       return decimalField;
     default:
+      // The id of something defined elsewhere (`x-ref`)
+      if (root.refKind !== "")
+        return refField;
       // A long list (`x-control: "search"`) is typed into to filter it
       if (root.options && fieldSchema["x-control"] === "search")
         return searchField;
@@ -517,6 +521,26 @@ Loader {
     }
   }
 
+  // A field that refers to something defined elsewhere (`x-ref`): the ones
+  // that exist to pick from, or a new valid id typed (RefEntry)
+  Component {
+    id: refField
+    ColumnLayout {
+      spacing: Widget.spacing
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
+      }
+      RefEntry {
+        Layout.fillWidth: true
+        kind: root.refKind
+        value: root.current ?? ""
+        onCommitted: value => root.commit(value)
+      }
+    }
+  }
+
   // An icon (`x-control: "icon"`): a Material Symbols name picked from
   // the bundled font's (IconManager), searched by name and tag, or any
   // text typed or pasted (a Nerd Font glyph), which StyledIcon draws in the
@@ -540,7 +564,6 @@ Loader {
       readonly property string mode: iconColumn.modeKey !== "" ? (root._valueOf(iconColumn.modeKey) ?? "icon") : iconColumn.textKey !== "" ? "both" : "icon"
       readonly property bool showsIcon: iconColumn.mode !== "text"
       readonly property bool showsText: iconColumn.textKey !== "" && iconColumn.mode !== "icon"
-      readonly property bool drawsIcon: Utils.isSymbolName(iconColumn.value) ? IconManager.isKnown(iconColumn.value) : Array.from(iconColumn.value).length === 1
 
       // A sibling's path, for the form's edits
       function siblingPath(key) {
@@ -557,18 +580,11 @@ Loader {
         spacing: Widget.spacing
 
         // Sharing the row evenly with the text box when both show
-        StyledComboEntry {
+        IconEntry {
           Layout.fillWidth: true
           Layout.preferredWidth: 1
+          Layout.alignment: Qt.AlignTop
           visible: iconColumn.showsIcon
-          editable: true
-          icon: iconColumn.drawsIcon ? iconColumn.value : ""
-          placeholderText: I18n.tr("Search icons, or paste a glyph")
-          search: query => IconManager.search(query, 60).map(name => ({
-                  "value": name,
-                  "label": name,
-                  "icon": name
-                }))
           value: iconColumn.value
           onPicked: value => root.commit(value)
         }
@@ -609,15 +625,6 @@ Loader {
               root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
           }
         }
-      }
-      StyledText {
-        // Reads as a name, but the font has none by it: drawn as text
-        visible: iconColumn.showsIcon && Utils.isSymbolName(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
-        text: I18n.tr("No icon is named \"{0}\": it shows as text", iconColumn.value)
-        color: Theme.warning
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.WordWrap
-        Layout.fillWidth: true
       }
     }
   }

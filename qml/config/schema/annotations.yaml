@@ -3,7 +3,7 @@
 # refused, so a typo can't pass as an annotation.
 
 x-actions: the commands a custom widget element runs, in order (keys of its `actions`; `CustomWidgetsConfig.elementKinds`).
-x-axiomActions: 'an action picked from axiom''s own actions, filled from the bind actions table: {except, noArgument, extra} (the builder''s; never in the built schema).'
+x-axiomActions: 'an action picked from axiom''s own actions, filled from the bind actions table: {except, noArgument, extra, compositor} (the builder''s; never in the built schema).'
 x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'
@@ -61,6 +61,7 @@ x-placeUnder: 'a sibling key: in the Bar style block, the field''s row goes dire
 x-priority: a bar widget type's own priority when its bar is crowded (higher stays longer; default 0), which its `layout.priority` overrides (`BarsConfig.defaultPriority`).
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-recommended: 'the value the Recommended setup list turns it to (managed mode''s list, onboarder and Compositor card); on a section `installed`: its boolean fields on for installed apps (`x-commands`), a field with `false` left out (`methods/RecommendedSetup`).'
+x-ref: 'a field that holds the id of something another part of the config defines: `{ kind, when, usedBy, name }`. `kind` names what it refers to (`specialWorkspace`), `when` (`x-showIf`''s form, over the item''s keys) says which items hold one, `usedBy` is the English reason shown while it blocks deleting the thing (`{0}` the item''s `name` key''s value; translated), `SchemaRefs.sites` finds them.'
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
 x-row: 'a field''s settings row drawn by `views/Settings/<Name>.qml` (given `row` and `form`) instead of a generated control (the Keyboard card''s layouts, `InputSourcesField`); on a nested object, one row drawing every setting under it, on a card of its own (`Bars.style`, `BarStyleBlock`).'
 x-rowDraws: 'dotted paths, under its object, of other fields an `x-row` draws: their own rows hide on the settings page, and a search or the changed list finds them as this row (the layouts row''s input method switch).'

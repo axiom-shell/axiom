@@ -228,6 +228,23 @@ var all = []Step{
 	// appearance.colorText and a custom widget's bar.colorText dropped
 	// (v106.go)
 	{Version: 106, Run: v106},
+	// v107: sway's "workspace of their own" mode for special workspaces
+	// went: Workspaces.specialWorkspaces is dropped when it is the old
+	// string (a later step reuses the key for a list)
+	{Version: 107, Run: func(cfg *jsonx.Object) []string {
+		ws := object(cfg, "Workspaces")
+		if ws == nil {
+			return nil
+		}
+		if _, isString := ws.Value("specialWorkspaces").(string); !isString {
+			return nil
+		}
+		ws.Delete("specialWorkspaces")
+		return []string{"Workspaces.specialWorkspaces removed (sway now always uses the scratchpad)"}
+	}},
+	// v108: scratchpads became special workspaces: the list, the widget's
+	// and the overview's keys renamed, invalid names rewritten (v108.go)
+	{Version: 108, Run: v108},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

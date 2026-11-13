@@ -144,29 +144,23 @@ properties:
       /$supports.strips: true
       /$supports.stripsAlways: false
     x-compositor: {hyprland: {key: scrolling.follow_focus}}
-  scratchpads:
+  specialWorkspaces:
     type: array
-    x-group: Scratchpads
-    title: Scratchpads
+    x-group: Special workspaces
+    title: Special workspaces
     x-showIf: {/$supports.namedSpecial: true}
+    x-wide: true
+    x-row: SpecialWorkspacesField
     default: []
-    description: Own icon and label for a special workspace, by name. Also adds it to the switcher's All list.
+    description: Every special workspace, with its own label and icon.
     items:
       type: object
       additionalProperties: false
-      x-order: [name, icon, text]
+      x-order: [id, icon, text]
       properties:
-        id: {$ref: '#/definitions/ItemId'}
-        name: {type: string, x-options: specialWorkspaces, title: Name, default: '', description: "Its bind's name, e.g. magic."}
-        icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: "An icon name or glyph, and text. The widget's Scratchpad labels picks which shows."}
+        id:
+          $ref: '#/definitions/ItemId'
+          pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$'
+        icon: {type: string, x-control: icon, x-iconText: {text: text}, title: Label, default: '', description: "An icon name or glyph, and text. The widget's Special workspace labels picks which shows."}
         text: {type: string, title: Label, default: ''}
       required: [id]
-  specialWorkspaces:
-    type: string
-    x-group: Scratchpads
-    title: Special workspaces
-    x-control: toggle
-    enum: [scratchpad, workspace]
-    x-enumLabels: {scratchpad: Scratchpad, workspace: Workspace}
-    default: scratchpad
-    x-showIf: {/$supports.scratchpad: true}

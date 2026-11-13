@@ -15,6 +15,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/specialid"
 )
 
 var (
@@ -122,7 +123,7 @@ func mapDispatcher(name string, args []any) *jsonx.Object {
 	if name == "layout" && one == "togglesplit" {
 		return to("toggleSplit", "")
 	}
-	if s, ok := one.(string); ok && name == "workspace.toggle_special" && s != "" {
+	if s, ok := one.(string); ok && name == "workspace.toggle_special" && specialid.Valid(s) {
 		return to("toggleSpecial", s)
 	}
 	if isTable && len(table) == 1 {
@@ -149,8 +150,8 @@ func mapDispatcher(name string, args []any) *jsonx.Object {
 					}
 					return to("moveWindowStep", d)
 				}
-				if !goTo && isString && strings.HasPrefix(s, "special:") && len([]rune(s)) > 8 {
-					return to("moveToSpecial", string([]rune(s)[8:]))
+				if !goTo && isString && strings.HasPrefix(s, "special:") && specialid.Valid(strings.TrimPrefix(s, "special:")) {
+					return to("moveToSpecial", strings.TrimPrefix(s, "special:"))
 				}
 			}
 		}

@@ -34,6 +34,7 @@
   - the example config's exit command → `exitSession`
   - any other exec → `exec`
   - focus/move/float/pseudo/togglesplit/special/drag → their own actions
+  - a `toggle_special` or `special:<s>` move whose `<s>` isn't a valid special workspace id (`validSpecialID`, as `SpecialWorkspaces.validId`: ItemId's pattern, 32 chars at most, not `special`), or is the bare one (`toggle_special()`), stays `raw`, so a merged bind never holds an invalid id
   - anything else → the `raw` action (`compositor: hyprland`), with the dispatcher as written (its arguments rebuilt as Lua source: a keyword key bracketed, nan and inf as `(0/0)` and `math.huge`).
 - Hyprland's example config maps completely.
 - **Remapped keys.** Binds from an adopted `00-previous*.lua` on keys axiom's defaults use are moved (`exampleKeys`) and reported in `remapped`. A key in the user's other files was their own choice, so it isn't moved.

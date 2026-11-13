@@ -70,6 +70,75 @@ QtObject {
 
   // Every default filled in, from the schema alone
   readonly property var defaults: SchemaValidation.applyDefaults({}, ConfigManager.configSchema)
+  // The special workspaces' entries as edited (Workspaces.specialWorkspaces
+  // of the draft)
+  readonly property var specialEntries: root.localConfig?.Workspaces?.specialWorkspaces ?? WorkspacesConfig.specialWorkspaces
+  // Every special workspace that exists, as SpecialWorkspaces.list's rows,
+  // over the draft: its entries and the ids its binds and hot corners hold,
+  // unsaved or not, and the live ones; [] without namedSpecial. The saved
+  // config's is CompositorManager.knownSpecials
+  readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
+
+  // What an `x-ref` field of `kind` can be set to: the ids of the things that
+  // exist, as edited, for the dropdown beside the typed text
+  function refOptions(kind) {
+    return kind === "specialWorkspace" ? SpecialWorkspaces.refOptions(root.knownSpecials) : [];
+  }
+
+  // Each of refOptions' ids with the name it was given, where it has one
+  function refLabels(kind) {
+    return kind === "specialWorkspace" ? SpecialWorkspaces.refLabels(root.knownSpecials) : ({});
+  }
+
+  // What the field `key` of the items of the array at `path` (["Keybinds",
+  // "binds"]) refers to for `item` (an item's keys: its `x-ref`'s `when`
+  // reads them), or ""
+  function refKindAt(path, key, item) {
+    const items = SchemaValidation.resolveRef(root.schemaAt(path)?.items, ConfigManager.configSchema);
+    return SchemaLayout.refKind(items?.properties?.[key], k => item[k]);
+  }
+
+  // Whether `value` may be set on an `x-ref` field of `kind`
+  function refValid(kind, value) {
+    return kind === "specialWorkspace" && SpecialWorkspaces.validId(value);
+  }
+
+  // Sets the icon and text of special workspace `id`'s entry in the draft,
+  // making the entry when it has none (a valid id only)
+  function setSpecialWorkspace(id, icon, text) {
+    const entry = {
+      "id": id,
+      "icon": icon,
+      "text": text
+    };
+    if (root.specialEntries.some(e => e.id === id))
+      root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.map(e => e.id === id ? Object.assign({}, e, entry) : e));
+    else if (SpecialWorkspaces.validId(id))
+      root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.concat([entry]));
+  }
+
+  // Adds an entry for special workspace `id` to the draft; false when it is
+  // not a valid id or has one already
+  function addSpecialWorkspace(id) {
+    if (!SpecialWorkspaces.validId(id) || root.specialEntries.some(entry => entry.id === id))
+      return false;
+    root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.concat([
+      {
+        "id": id,
+        "icon": "",
+        "text": ""
+      }
+    ]));
+    return true;
+  }
+
+  // Removes `id`'s entry from the draft, unless something uses it
+  // (SpecialWorkspaces.deletable)
+  function removeSpecialWorkspace(id) {
+    if (SpecialWorkspaces.deletable(root.knownSpecials.find(row => row.id === id)))
+      root.setValue(["Workspaces", "specialWorkspaces"], root.specialEntries.filter(entry => entry.id !== id));
+  }
+
   // The schema with Bars.style's `$ref` resolved, which `rows` and
   // `compositorAllows` walk (SchemaLayout.resolved)
   readonly property var _resolvedSchema: SchemaLayout.resolved(ConfigManager.configSchema, ConfigManager.configSchema)
@@ -431,10 +500,6 @@ QtObject {
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":
       return ["", ...NotesManager.allNotes];
-    case "specialWorkspaces":
-      // Those that exist (Hyprland lists one only while it has windows) and
-      // those the binds and Workspaces.scratchpads name
-      return CompositorManager.specials.map(special => special.name).concat(CompositorManager.specialNames).filter((name, i, all) => name !== "" && all.indexOf(name) === i);
     case "calendars":
       // Those new events can go to
       return ["", ...CalendarManager.calendars.filter(calendar => calendar.writable).map(calendar => calendar.id)];

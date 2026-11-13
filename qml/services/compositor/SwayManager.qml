@@ -81,7 +81,6 @@ Singleton {
     "modifierTap": true,
     "releaseBinds": true,
     "bindMerge": true,
-    "scratchpad": true,
     "namedSpecial": true,
     "mouseBinds": true,
     "splitToggle": true,
@@ -143,14 +142,20 @@ Singleton {
     // flag when moved)
     const hidden = root._info.scratch.some(w => w.id === String(id));
     const grouped = (root._marks[String(id)] ?? []).some(mark => SwayState.specialGroup(mark) !== "");
-    if (hidden || grouped)
-      lines.push(...SwayState.specialLeave(root._marks, id, hidden, hidden || WorkspacesConfig.specialWorkspaces === "scratchpad"));
+    // The user's own shown scratchpad window (the unnamed special workspace)
+    // counts too: it would otherwise stay in the scratchpad
+    const scratch = root._info.scratchIds.includes(String(id));
+    if (hidden || grouped || scratch)
+      lines.push(...SwayState.specialLeave(root._marks, id, hidden));
     if (floatAt) {
-      if (!reinsert)
-        lines.push(`${win} move container to workspace number ${workspaceId}`);
+      // Positioned before the move: an absolute position puts the window on
+      // the workspace visible at that point, which would pull it back from a
+      // hidden target. Moved after, it keeps the spot (same output).
       // A scratchpad window is floating, hidden ones in `scratch` only
       if ((root.windows.find(w => w.id === String(id)) ?? root._info.scratch.find(w => w.id === String(id)))?.floating)
         lines.push(`${win} move absolute position ${Math.round(floatAt.x)} ${Math.round(floatAt.y)}`);
+      if (!reinsert)
+        lines.push(`${win} move container to workspace number ${workspaceId}`);
     } else if (targetId) {
       const target = _con(targetId);
       const split = SwayState.dropSplit(root._info.layouts[String(targetId)], side);
@@ -248,31 +253,18 @@ Singleton {
     SwayIpcManager.command(lines.join("; "), () => root.refresh());
   }
 
-  // --- Special workspaces: groups of scratchpad windows, or a workspace
-  // each (WorkspacesConfig.specialWorkspaces) ---
+  // --- Special workspaces: groups of marked scratchpad windows ---
 
   // Shows the windows of special group `name` on the focused output, or
-  // hides them when any is shown there (SwayState.specialToggle); as a
-  // workspace, goes to it or back (SwayState.specialWorkspaceToggle). The
-  // group's windows the other kind keeps move over first
-  // (SwayState.specialAdopt)
+  // hides them when any is shown there (SwayState.specialToggle). "" is the
+  // unnamed group: the scratchpad windows no group's mark claims.
   function toggleSpecial(name, output) {
     const target = output || root.focusedOutput;
-    const active = I3.monitors.values.find(m => m.name === target)?.activeWorkspace?.name ?? "";
-    const adopt = SwayState.specialAdopt(root.windows, root._marks, name, WorkspacesConfig.specialWorkspaces, active);
     const focus = target !== root.focusedOutput ? [`focus output ${SwayState.quote(target)}`] : [];
-    if (WorkspacesConfig.specialWorkspaces === "workspace") {
-      SwayIpcManager.dispatch(focus.concat(adopt.lines, SwayState.specialWorkspaceToggle(name, active, target, root._specialFrom[target] ?? "")).join("; "));
-      if (active !== SwayState.specialWorkspace(name))
-        root._specialFrom = Object.assign({}, root._specialFrom, {
-          [target]: active
-        });
-      return;
-    }
-    const plan = SwayState.specialToggle(adopt.windows, adopt.marks, name, target);
-    const shown = plan.ids.filter(id => adopt.windows.some(w => w.id === id));
-    const changes = adopt.lines.concat(plan.show ? plan.ids.filter(id => !adopt.windows.some(w => w.id === id && w.output === target)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`));
-    const lines = changes.length > 0 ? (plan.show || adopt.lines.length > 0 ? focus : []).concat(changes) : [];
+    const plan = SwayState.specialToggle(root.windows, root._marks, name, target, root._info.scratchIds);
+    const shown = plan.ids.filter(id => root.windows.some(w => w.id === id));
+    const changes = plan.show ? plan.ids.filter(id => !root.windows.some(w => w.id === id && w.output === target)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`);
+    const lines = changes.length > 0 ? (plan.show ? focus : []).concat(changes) : [];
     if (lines.length > 0)
       SwayIpcManager.command(lines.join("; "), () => root._debounce.restart());
   }
@@ -284,7 +276,7 @@ Singleton {
     id = id || root.activeWindowId;
     if (!id)
       return;
-    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, WorkspacesConfig.specialWorkspaces).join("; "), () => root._debounce.restart());
+    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name).join("; "), () => root._debounce.restart());
   }
 
   // --- axiom's config layer (the daemon's: CompositorConfigManager) ---
@@ -416,10 +408,6 @@ Singleton {
   property var _info: SwayState.tree(null)
   // Every window's marks ({ [id]: [marks] }), for the special groups
   property var _marks: ({})
-  // The workspace each output showed before toggleSpecial went to a special
-  // workspace there ({ [output]: name }), to go back to: sway's
-  // back_and_forth is one for all outputs
-  property var _specialFrom: ({})
   property string _focusedId: ""
   // Focus events so far, to tell a tree read before the last one (_fetch)
   property int _focusEvents: 0

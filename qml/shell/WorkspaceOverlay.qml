@@ -145,7 +145,7 @@ Scope {
           opacity: content.opacity
         }
         BoxBlurRegion {
-          target: overview.scratchBox
+          target: overview.specialBox
           opacity: content.opacity
         }
       }

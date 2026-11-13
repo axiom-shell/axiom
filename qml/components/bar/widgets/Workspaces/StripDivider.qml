@@ -4,7 +4,7 @@ import QtQuick
 import qs.components.reusable
 import qs.components.methods
 
-// The divider a switcher's after-parts (ActiveStrip, ScratchpadCells) start
+// The divider a switcher's after-parts (ActiveStrip, SpecialCells) start
 // with: the bar's separator style (a line when that's none), across the
 // bar as long as a cell is thick (shorter than it for a chevron's
 // slant).

@@ -172,7 +172,7 @@ Then:
   - The mouse wheel scrolls the strip.
   - The overview shows the whole strip, off-screen columns included.
   - The **Strips** keybind preset adds swapping columns, resizing them and fitting the visible ones.
-- **The overview** shows live window previews on Hyprland, and app icons elsewhere. Drag a window onto another workspace or onto a side of another window, right-drag to resize it, and middle-click to close it. Special workspaces (scratchpads) get a column of their own on the right, which windows can be dragged into and out of (not on niri, which has no named special workspaces). Arrow keys, Enter and the digits drive it from the keyboard.
+- **The overview** shows live window previews on Hyprland, and app icons elsewhere. Drag a window onto another workspace or onto a side of another window, right-drag to resize it, and middle-click to close it. Special workspaces get a column of their own on the right, which windows can be dragged into and out of (not on niri, which has no named special workspaces). Arrow keys, Enter and the digits drive it from the keyboard.
 - **Keybinds included.** Presets for the grid with WASD or the arrows (add <kbd>Shift</kbd> to take the window along), or previous and next.
 
 <p align="center"><img src="screenshots/workspace-overlay.webp" alt="The workspace overview: a 5×5 grid of workspaces with live window previews" width="900"></p>
@@ -337,7 +337,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Notes:** Markdown files in a folder you choose, edited in place with task checkboxes. A note open in two places stays in sync, and `/notes` in the launcher searches them all.
 - **Todo list and pomodoro timer:** one list and one timer, on the bar, in popouts and as modules. Pick the todo a session is for; a notification marks each session's and break's end. `/todo` adds or ticks off, `/pomodoro` starts, pauses or skips.
 - **Timer and stopwatch:** a one-off timer (`/timer 10m tea`, or a preset) and a stopwatch with laps, both able to run at once, on the bar, in a popout or as a module.
-- **Hot corners:** rest the pointer in a screen corner to run any axiom action (the overlay or a page, the launcher, the workspace overview, lock, do not disturb, media, …) or your own command, per corner and monitor, with an optional delay. They work on every compositor and stay quiet over fullscreen windows.
+- **Hot corners:** rest the pointer in a screen corner to run any axiom action (the overlay or a page, the launcher, the workspace overview, lock, do not disturb, media, …) or your own command, per corner and monitor, with an optional delay; a corner can also toggle a special workspace where the compositor has named ones. They work on every compositor and stay quiet over fullscreen windows.
 - **Power menu:** your choice of session actions, in your order, driven by mouse or keyboard. Log out, restart and shut down ask you to confirm.
 - **Monitors:** a page to arrange monitors by dragging (they snap edge to edge).
   - Set each one's mode, scale, rotation and VRR, and on Hyprland mirroring, bit depth and color management.
