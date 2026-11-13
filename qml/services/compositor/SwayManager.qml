@@ -85,6 +85,8 @@ Singleton {
     "mouseBinds": true,
     "splitToggle": true,
     "pin": true,
+    "ruleTearing": true,
+    "ruleXwayland": true,
     "windowOpacity": true,
     "fullscreenOpacity": true,
     "focusOnActivate": true
