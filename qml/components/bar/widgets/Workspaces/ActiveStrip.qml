@@ -44,8 +44,8 @@ Loader {
   readonly property real cell: cellLook.thickness
   readonly property bool stripVertical: stripDirection === "vertical"
   // Its windows a rule doesn't hide from workspace icons
-  readonly property var _strip: WindowRulesManager.shownIn("workspaces", CompositorManager.stripWindows(root.workspaceId, root.stripVertical))
-  readonly property bool hasWindows: active && root._strip.length > 0
+  readonly property var _strip: root.active ? WindowRulesManager.shownIn("workspaces", CompositorManager.stripWindows(root.workspaceId, root.stripVertical)) : []
+  readonly property bool hasWindows: root._strip.length > 0
   // The strip is all there is: its windows show alone while it has any
   // (the switcher's cell stands in while it's empty)
   readonly property bool stripOnly: shownCount <= 1 && hasWindows

@@ -25,7 +25,7 @@ QtObject {
   // windowRules.state: which open windows each rule matches, the holds and
   // the look; null until known
   readonly property var state: root._state
-  // The while-effects in force, for their owners (PRs 10-13); `state.overrides` the ones the user overrode
+  // The while-effects in force, for their owners; `state.overrides` the ones the user overrode
   readonly property var holds: root._state ? root._state.holds : null
   // Of `windows`, those no window rule hides from `place` ("dock",
   // "switcher", "workspaces", "launcher"; holds.hideFrom); all of them until
