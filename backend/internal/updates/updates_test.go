@@ -167,4 +167,9 @@ func TestCheckEnv(t *testing.T) {
 	if !slices.Equal(got, want) {
 		t.Errorf("checkEnv = %v, want %v", got, want)
 	}
+	// No runtime dir: no override, whatever the env already says
+	in := []string{"A=1", "CHECKUPDATES_DB=/tmp/other"}
+	if got := checkEnv(in, "", 7); !slices.Equal(got, in) {
+		t.Errorf("checkEnv without a runtime dir = %v, want %v", got, in)
+	}
 }

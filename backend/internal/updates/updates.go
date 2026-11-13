@@ -217,13 +217,13 @@ func runner(children *command.Children) func(ctx context.Context, bin string, ar
 }
 
 // checkEnv is env with CHECKUPDATES_DB set to a sync db of axiom's own
-// (under the runtime dir, the temp dir without one), so `checkupdates`
-// runs of other processes can't make this one fail.
+// under the runtime dir, so `checkupdates` runs of other processes can't
+// make this one fail. Without a runtime dir env is unchanged: a predictable
+// path in a shared temp dir could be pre-created by another user.
 func checkEnv(env []string, runtimeDir string, uid int) []string {
-	dir := runtimeDir
-	if dir == "" {
-		dir = os.TempDir()
+	if runtimeDir == "" {
+		return env
 	}
 	out := slices.DeleteFunc(slices.Clone(env), func(e string) bool { return strings.HasPrefix(e, "CHECKUPDATES_DB=") })
-	return append(out, "CHECKUPDATES_DB="+filepath.Join(dir, fmt.Sprintf("axiom-checkup-db-%d", uid)))
+	return append(out, "CHECKUPDATES_DB="+filepath.Join(runtimeDir, fmt.Sprintf("axiom-checkup-db-%d", uid)))
 }
