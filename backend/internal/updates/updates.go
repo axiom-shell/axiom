@@ -3,7 +3,9 @@
 // shell's Packages.updates names, sent with the request) and an AUR
 // helper's `-Qua`, parsed into packages. The hub runs one Fetch at a time,
 // which matters: concurrent `checkupdates` runs share a temporary sync db
-// and fail with "Cannot fetch updates".
+// and fail with "Cannot fetch updates". The daemon's runs use a db of their
+// own (CHECKUPDATES_DB under the runtime dir), so no other run, another
+// shell's daemon included, can make them fail.
 package updates
 
 import (
@@ -11,7 +13,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"slices"
@@ -204,10 +208,22 @@ func runner(children *command.Children) func(ctx context.Context, bin string, ar
 		// A check that hangs (a stuck mirror) gives way to the next interval
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
-		res, err := command.Run(ctx, command.Options{Children: children, Stop: true}, append([]string{bin}, args...), nil)
+		res, err := command.Run(ctx, command.Options{Children: children, Stop: true, Env: checkEnv(os.Environ(), os.Getenv("XDG_RUNTIME_DIR"), os.Getuid())}, append([]string{bin}, args...), nil)
 		if err != nil {
 			return nil, -1, err.Error()
 		}
 		return []byte(res.Stdout), res.ExitCode, strings.TrimSpace(res.Stderr)
 	}
+}
+
+// checkEnv is env with CHECKUPDATES_DB set to a sync db of axiom's own
+// (under the runtime dir, the temp dir without one), so `checkupdates`
+// runs of other processes can't make this one fail.
+func checkEnv(env []string, runtimeDir string, uid int) []string {
+	dir := runtimeDir
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	out := slices.DeleteFunc(slices.Clone(env), func(e string) bool { return strings.HasPrefix(e, "CHECKUPDATES_DB=") })
+	return append(out, "CHECKUPDATES_DB="+filepath.Join(dir, fmt.Sprintf("axiom-checkup-db-%d", uid)))
 }

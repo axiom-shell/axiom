@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.system
 import qs.config
 import qs.components.hosts.popout
+import qs.components.methods
 import qs.components.bar.widgets.base
 
 // Pending package updates from UpdatesManager: repo packages the way this
@@ -13,7 +14,8 @@ import qs.components.bar.widgets.base
 // terminal to upgrade, right click checks again now; hovering lists the
 // packages, or why the check failed. Stacked: the count over the AUR's share.
 // A failed check shows an error icon in place of the count, in its failed
-// colour, and its reason in the popout (the tooltip with the popout off).
+// colour, and its reason in the popout (the tooltip with the popout off). The
+// look changes only once a check has ended (UpdatesLook), never while one runs.
 BarWidget {
   id: root
 
@@ -26,35 +28,45 @@ BarWidget {
   // News: the count rose since the last check. Unknown until a check
   // ends here (the first one only records it)
   property bool _checked: false
+  // The failed look shown: follows `failed` between checks only
+  property bool lookFailed: false
+  function _settle() {
+    root.lookFailed = UpdatesLook.settledFailed(root.lookFailed, root.failed, UpdatesManager.checking);
+  }
+  onFailedChanged: _settle()
   Connections {
     target: UpdatesManager
     function onCheckingChanged() {
       if (!UpdatesManager.checking)
         root._checked = true;
+      root._settle();
     }
   }
   attentionLevel: root._checked ? root.count : -1
 
   // Shown while a check fails, so its popout can say why
-  hidden: !UpdatesManager.supported || (properties.hideWhenEmpty && count === 0 && !failed)
+  hidden: !UpdatesManager.supported || (properties.hideWhenEmpty && count === 0 && !lookFailed)
 
   // Failed: the icon style, with the error icon after its own
-  appearance: failed ? Object.assign({}, properties.appearance, {
+  appearance: lookFailed ? Object.assign({}, properties.appearance, {
     "style": "icon"
   }) : properties.appearance
-  icon: !failed ? "download" : "download\nerror"
+  icon: !lookFailed ? "download" : "download\nerror"
   text: String(count)
   minimumText: "00"
 
   subtext: aurPackages.length > 0 ? I18n.tr("{0} AUR", aurPackages.length) : I18n.tr("updates")
-  accentField: failed ? "failedColor" : count >= properties.warnThreshold ? "warnColor" : "backgroundColor"
+  accentField: lookFailed ? "failedColor" : count >= properties.warnThreshold ? "warnColor" : "backgroundColor"
 
   // Re-acquiring replaces the old request
   readonly property var updatesRequest: ({
       "aurHelper": UpdatesConfig.activeAurHelper
     })
   onUpdatesRequestChanged: UpdatesManager.acquire(root, updatesRequest)
-  Component.onCompleted: UpdatesManager.acquire(root, updatesRequest)
+  Component.onCompleted: {
+    _settle();
+    UpdatesManager.acquire(root, updatesRequest);
+  }
   Component.onDestruction: UpdatesManager.release(root)
 
   clickable: true

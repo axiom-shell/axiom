@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -156,5 +157,14 @@ func TestFetchCancelledIsQuiet(t *testing.T) {
 	}
 	if logged.Len() > 0 {
 		t.Errorf("logged %q, want nothing", logged.String())
+	}
+}
+
+func TestCheckEnv(t *testing.T) {
+	t.Parallel()
+	got := checkEnv([]string{"A=1", "CHECKUPDATES_DB=/tmp/other"}, "/run/user/7", 7)
+	want := []string{"A=1", "CHECKUPDATES_DB=/run/user/7/axiom-checkup-db-7"}
+	if !slices.Equal(got, want) {
+		t.Errorf("checkEnv = %v, want %v", got, want)
 	}
 }
