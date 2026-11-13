@@ -284,6 +284,14 @@ window-rule {
 			t.Fatalf("%q %v", got, left)
 		}
 	})
+	t.Run("supported flags don't write what niri can't", func(t *testing.T) {
+		t.Parallel()
+		all := supports("pin", "namedSpecial", "ruleTearing")
+		nodes, left := NiriRuleNodes(RuleSet{Rules: []windowrules.Rule{rule("r", windowrules.WindowEffects{Pin: true, Tearing: true, Special: windowrules.Special{ID: "s"}}, one)}, Supports: all})
+		if got := KdlSerialize(nodes, 0); got != "" || !reflect.DeepEqual(left, []Unwritten{{Rule: "r", Dropped: []string{"special", "pin", "tearing"}}}) {
+			t.Fatalf("%q %v", got, left)
+		}
+	})
 	t.Run("example", func(t *testing.T) {
 		t.Parallel()
 		got, left := niriText(t, exampleRules(), nil)
@@ -398,6 +406,15 @@ func TestSwayRuleLines(t *testing.T) {
 			t.Fatalf("%q %v", got, left)
 		}
 	})
+	t.Run("supported flags don't write what sway can't", func(t *testing.T) {
+		t.Parallel()
+		all := supports("namedSpecial", "pin", "ruleTearing", "ruleXwayland", "ruleMaximize", "ruleNoScreenShare")
+		got, left := swayLines([]windowrules.Rule{rule("r", windowrules.WindowEffects{Maximize: true, NoScreenShare: true}, one)}, all, true)
+		want := []Unwritten{{Rule: "r", Dropped: []string{"maximize", "noScreenShare"}}}
+		if got != nil || !reflect.DeepEqual(left, want) {
+			t.Fatalf("%q %v", got, left)
+		}
+	})
 	t.Run("file and runtime", func(t *testing.T) {
 		t.Parallel()
 		r := []windowrules.Rule{rule("r", windowrules.WindowEffects{Workspace: "a\\b"}, conds{cond(appID, is, `q"$`)})}
@@ -433,17 +450,7 @@ no_focus [class="\A(?:firefox)\z" title="\A(?s:.*)(?:Picture-in-Picture)(?s:.*)\
 
 func TestRuleQuoting(t *testing.T) {
 	t.Parallel()
-	var fixture struct {
-		Patterns  []struct{ Regex string }
-		Negations []struct{ Regex string }
-	}
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "tests/fixtures/windowrules/regex.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(data, &fixture); err != nil {
-		t.Fatal(err)
-	}
+	fixture := loadRegexFixture(t)
 	var res []string
 	for _, p := range fixture.Patterns {
 		if p.Regex != "" {
@@ -503,4 +510,29 @@ func TestRuleEffects(t *testing.T) {
 	if got := RuleEffects(windowrules.WindowEffects{}); got != nil {
 		t.Fatalf("got %v", got)
 	}
+}
+
+// regexFixture is tests/fixtures/windowrules/regex.json, the patterns and
+// negations the compilers and their validators share
+type regexFixture struct {
+	Patterns []struct {
+		Op, Value, Regex string
+	}
+	Negations []struct {
+		Values []string
+		Regex  string
+	}
+}
+
+func loadRegexFixture(t *testing.T) regexFixture {
+	t.Helper()
+	var f regexFixture
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "tests/fixtures/windowrules/regex.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &f); err != nil {
+		t.Fatal(err)
+	}
+	return f
 }

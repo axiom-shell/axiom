@@ -206,6 +206,8 @@ func hyprMatch(k ruleKind) string {
 		}
 		if neg, ok := k.neg[f.field]; ok {
 			key := f.key
+			// a Lua table has one `class` key and RE2 has no lookahead, so the
+			// negation goes on the initial value (equal at open)
 			if hasPos {
 				key = f.initial
 			}

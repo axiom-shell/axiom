@@ -1,7 +1,6 @@
 package render
 
 import (
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,8 +17,8 @@ import (
 // Hyprland file parses (luac), the managed file with everything on is a
 // config Hyprland itself takes (Hyprland --verify-config), and the niri and
 // sway files are configs those take (niri validate, sway --validate), each
-// where it's installed (not in CI). An option a compositor refuses fails here, not in a user's
-// session.
+// where it's installed (not in CI). An option a compositor refuses fails
+// here, not in a user's session.
 func TestCompositorsReadTheFiles(t *testing.T) {
 	t.Parallel()
 	tab := repoTables(t)
@@ -119,34 +118,50 @@ func TestCompositorsReadTheFiles(t *testing.T) {
 			}
 			return path
 		}
-		hyprLines, _ := HyprRuleLines(RuleSet{Rules: rules, Supports: hyprSupports})
-		hypr := write("rules.lua", strings.Join(hyprLines, "\n")+"\n")
-		check(t, "luac", "-p", hypr)
-		check(t, "Hyprland", "--verify-config", "-c", hypr)
-		nodes, _ := NiriRuleNodes(RuleSet{Rules: rules, Supports: niriSupports})
-		check(t, "niri", "validate", "-c", write("rules.kdl", KdlSerialize(nodes, 0)+"\n"))
-		swayLines, _ := SwayRuleLines(RuleSet{Rules: rules, Supports: swayFXSupport}, false)
-		check(t, "sway", "--validate", "-c", write("rules.conf", strings.Join(swayLines, "\n")+"\n"))
+		hyprLines, hyprLeft := HyprRuleLines(RuleSet{Rules: rules, Supports: hyprSupports})
+		if len(hyprLines) < len(rules) {
+			t.Fatalf("%d hyprland lines for %d rules", len(hyprLines), len(rules))
+		}
+		noSkips(t, "hyprland", hyprLeft)
+		nodes, niriLeft := NiriRuleNodes(RuleSet{Rules: rules, Supports: niriSupports})
+		// niri has no xwayland test: the two kinds of rule "all" that use it
+		for _, u := range niriLeft {
+			if u.Rule != "all" || len(u.Skipped) != 2 {
+				t.Fatalf("niri skipped %+v", u)
+			}
+		}
+		// stock sway (no blur) validates only the criteria of a for_window,
+		// never its command
+		swayLines, swayLeft := SwayRuleLines(RuleSet{Rules: rules, Supports: swaySupports}, false)
+		noSkips(t, "sway", swayLeft)
+		t.Run("hyprland", func(t *testing.T) {
+			hypr := write("rules.lua", strings.Join(hyprLines, "\n")+"\n")
+			check(t, "luac", "-p", hypr)
+			check(t, "Hyprland", "--verify-config", "-c", hypr)
+		})
+		t.Run("niri", func(t *testing.T) {
+			check(t, "niri", "validate", "-c", write("rules.kdl", KdlSerialize(nodes, 0)+"\n"))
+		})
+		t.Run("sway", func(t *testing.T) {
+			check(t, "sway", "--validate", "-c", write("rules.conf", strings.Join(swayLines, "\n")+"\n"))
+		})
 	})
+}
+
+func noSkips(t *testing.T, who string, left []Unwritten) {
+	t.Helper()
+	for _, u := range left {
+		if len(u.Skipped) > 0 {
+			t.Fatalf("%s skipped kinds of %s", who, u.Rule)
+		}
+	}
 }
 
 // validatorRules are one rule per fixture pattern and negation, plus one
 // with every effect and the kinds that matter
 func validatorRules(t *testing.T) []windowrules.Rule {
 	t.Helper()
-	var fixture struct {
-		Patterns []struct {
-			Op, Value, Regex string
-		}
-		Negations []struct{ Values []string }
-	}
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "tests/fixtures/windowrules/regex.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(data, &fixture); err != nil {
-		t.Fatal(err)
-	}
+	fixture := loadRegexFixture(t)
 	var rules []windowrules.Rule
 	for i, p := range fixture.Patterns {
 		if p.Regex != "" {
