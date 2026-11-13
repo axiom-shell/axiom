@@ -6,8 +6,9 @@
 // delay inhibitor until the lock screen is up), and holding off while an
 // app asks it to: over org.freedesktop.ScreenSaver (internal/screensaver)
 // or logind's idle inhibitors (systemd-inhibit), and always for axiom's
-// caffeine and the window rules' keep awake, which also hold a logind idle
-// inhibitor of their own (Idle on or off) for a user's own idle daemon. Docs: docs/dev/features/idle.md.
+// caffeine and the window rules' keep awake, which also hold a logind
+// idle inhibitor of their own (Idle on or off) for a user's own idle
+// daemon. Docs: docs/dev/features/idle.md.
 package idle
 
 import (
@@ -304,9 +305,9 @@ func (s *Service) stopBuses() {
 }
 
 // inhibited: something holds idle off that the compositor doesn't know
-// of: caffeine or a window rule's keep awake always; with inhibitors respected (the compositor then
-// holds off for Wayland inhibitors itself), ScreenSaver's and logind's
-// too, but for caffeine's own (others).
+// of: caffeine or a window rule's keep awake always; with inhibitors
+// respected (the compositor then holds off for Wayland inhibitors itself),
+// ScreenSaver's and logind's too, but for ours (others).
 func (s *Service) inhibited() bool {
 	if s.awake() {
 		return true
@@ -548,7 +549,7 @@ func (s *Service) logindOnce(ctx context.Context) error {
 	})
 }
 
-// relist lists logind's idle inhibitors again, once caffeine's let go:
+// relist lists logind's idle inhibitors again, once ours is let go:
 // BlockInhibited doesn't change while another one holds idle off too, so
 // no event says what is left.
 func (s *Service) relist() {

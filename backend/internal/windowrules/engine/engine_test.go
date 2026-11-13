@@ -449,6 +449,15 @@ func TestOverride(t *testing.T) {
 	if err := r.e.Override("dnd"); err != nil {
 		t.Fatal(err)
 	}
+	// The loop takes the ask (it's recomputed against nothing held) before
+	// the next window opens, or the stale ask would meet its hold
+	if !testkit.Eventually(func() bool {
+		r.e.mu.Lock()
+		defer r.e.mu.Unlock()
+		return r.e.overrides == nil
+	}) {
+		t.Fatal("the loop never took the override")
+	}
 	r.quiet(n)
 	if r.e.State().Overrides.DND {
 		t.Error("an override with nothing held stuck")

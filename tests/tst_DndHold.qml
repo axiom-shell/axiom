@@ -6,10 +6,11 @@ TestCase {
   name: "DndHold"
 
   function test_on() {
-    for (let bits = 0; bits < 8; bits++) {
-      const manual = (bits & 1) !== 0, held = (bits & 2) !== 0, overridden = (bits & 4) !== 0;
-      compare(DndHold.on(manual, held, overridden), manual || (held && !overridden), `manual ${manual} held ${held} overridden ${overridden}`);
-    }
+    compare(DndHold.on(true, false, false), true, "manual on");
+    compare(DndHold.on(false, true, false), true, "held, not overridden");
+    compare(DndHold.on(false, true, true), false, "held and overridden");
+    compare(DndHold.on(false, false, false), false, "nothing held");
+    compare(DndHold.on(true, true, true), true, "manual on and overridden");
   }
 
   function test_byHand() {

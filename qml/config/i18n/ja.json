@@ -4367,11 +4367,11 @@
     "game: {0}": "",
     "Needs power-profiles-daemon, which isn't installed.": "",
     "This computer has no performance profile.": "",
-    "A window rule is keeping the screen on: the steps below wait until its window goes.": "",
     "Window rule: {0}": "",
     "Turning do not disturb off yourself wins until the rule ends.": "",
     "Picking a profile yourself wins until the rule ends.": "",
     "Only axiom's own: the compositor's overview and other apps still show it.": "",
-    "Its app icon on the bar's workspaces, its preview in the workspace overview and in the workspace modules.": ""
+    "Its app icon on the bar's workspaces, its preview in the workspace overview and in the workspace modules.": "",
+    "A window rule is keeping the screen on: the steps below wait until it lets go.": ""
   }
 }

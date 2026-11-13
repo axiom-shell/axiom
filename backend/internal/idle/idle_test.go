@@ -318,7 +318,7 @@ func TestKeepAwakeHoldsIdleOffWithCaffeine(t *testing.T) {
 	// Caffeine off, the rule still holds
 	h.svc.SetCaffeine(false)
 	h.until(t, func(s State) bool { return len(s.Inhibitors) == 1 })
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(testkit.Bound(100 * time.Millisecond))
 	if st = h.svc.State(); !st.Inhibited {
 		t.Errorf("not held by the rule alone: %+v", st)
 	}
@@ -338,7 +338,7 @@ func TestCaffeinesOwnLogindInhibitorIsntAnApp(t *testing.T) {
 	h.svc.SetCaffeine(true)
 	h.heldIdle(t, 1)
 	st := h.until(t, func(s State) bool { return s.Inhibited && s.Armed == 0 })
-	time.Sleep(100 * time.Millisecond) // logind's BlockInhibited change
+	time.Sleep(testkit.Bound(100 * time.Millisecond)) // logind's BlockInhibited change
 	if st = h.svc.State(); len(st.Inhibitors) != 1 || st.Inhibitors[0].Source != "caffeine" {
 		t.Errorf("inhibitors %+v", st.Inhibitors)
 	}
@@ -354,7 +354,7 @@ func TestCaffeinesOwnLogindInhibitorIsntAnApp(t *testing.T) {
 	h.svc.SetCaffeine(true)
 	h.heldIdle(t, 1)
 	h.until(t, func(s State) bool { return s.Inhibited })
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(testkit.Bound(100 * time.Millisecond))
 	h.logind.SetInhibitors([]any{"idle", "mpv", "Playing", "block", uint32(1000), uint32(1)})
 	h.logind.SetBlocked(t, "handle-power-key:idle")
 	h.svc.SetCaffeine(false)
@@ -433,7 +433,7 @@ func TestLogindLockAndSleep(t *testing.T) {
 	h.svc.Configure(s)
 	h.until(t, func(s State) bool { return !s.Logind })
 	h.logind.Lock()
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(testkit.Bound(100 * time.Millisecond))
 	h.rec.expect(t, "lock", "lock", "screen true")
 }
 
