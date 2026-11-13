@@ -1,0 +1,10 @@
+# The WindowRuleWhen definition (#/definitions/WindowRuleWhen): while what
+# one of a window rule's axiom effects is on.
+
+x-inline: true
+type: string
+title: While it's
+enum: [open, focused, fullscreen]
+x-enumLabels: {open: Open, focused: Focused, fullscreen: Fullscreen}
+x-control: toggle
+default: open
