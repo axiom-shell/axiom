@@ -85,6 +85,7 @@ Singleton {
       "pin": true,
       "ruleMaximize": true,
       "ruleTearing": true,
+      "ruleLiveLook": true,
       "ruleNoScreenShare": true,
       "ruleXwayland": true,
       "windowGroups": true,

@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/place"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/windows"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/mimeapps"
 	"github.com/axiom-shell/axiom/backend/internal/procinfo"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
@@ -28,7 +30,23 @@ func (d *Daemon) newWindowRules() {
 	if w := windows.New(windows.Options{Getenv: d.opts.Getenv, Log: d.opts.Log.With("part", "windows")}); w != nil {
 		o.Events = w.Run
 	}
+	// The compositor's placement: the engine decides, this sends (a nil one
+	// places nothing)
+	if p := place.New(place.Options{Getenv: d.opts.Getenv, Log: d.opts.Log.With("part", "place")}); p != nil {
+		o.Place = p.Run
+	}
 	d.windowRules = engine.New(o)
+}
+
+// windowRulesReport hands the engine what the compositor's config does with
+// each rule (compositor.state's windowRules), from the compositor's pushes.
+func (d *Daemon) windowRulesReport(method string, params any) {
+	if method != pushCompositorState.Method || d.windowRules == nil {
+		return
+	}
+	if o, ok := jsonx.AsObject(params); ok {
+		d.windowRules.SetReport(o.Value("windowRules"))
+	}
 }
 
 // windowRulesChanged pushes the engine's state; the daemon's effect owners
@@ -69,6 +87,15 @@ func (d *Daemon) windowRulesMethods(reg *rpc.Registry) {
 		return struct {
 			Windows []engine.WindowInfo `json:"windows"`
 		}{d.windowRules.Windows()}, nil
+	})
+	// Apply to open windows: the saved rules, now, on every open window
+	rpc.Handle(reg, "windowRules.applyNow", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct {
+		Windows int `json:"windows"`
+	}, error) {
+		n, err := d.windowRules.Apply(ctx)
+		return struct {
+			Windows int `json:"windows"`
+		}{n}, err
 	})
 	type matchParams struct {
 		Section json.RawMessage `json:"section"`

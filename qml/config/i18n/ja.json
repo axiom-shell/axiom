@@ -4349,6 +4349,9 @@
     "All except works only while the window is focused or fullscreen.": "",
     "Shortcut {0} no longer exists.": "",
     "Pick a special workspace.": "",
-    "On sway, only a floating window.": ""
+    "On sway, only a floating window.": "",
+    "Apply to open windows": "",
+    "Save your changes first.": "",
+    "Moves the open windows as your saved rules say.": ""
   }
 }

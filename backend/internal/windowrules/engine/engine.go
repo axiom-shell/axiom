@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/windows"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/procinfo"
 	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
@@ -30,6 +31,12 @@ type Options struct {
 	Now      func() time.Time                       // default time.Now
 	OnChange func(State)                            // from Run's goroutine, only when State changed
 	Log      *slog.Logger                           // nil discards
+
+	// Place sends one batch of placement steps for a window (compositor/place);
+	// nil: nothing is placed
+	Place      func(ctx context.Context, id string, steps []windowrules.Step) error
+	Settle     time.Duration // between a window's batches, default 100 ms
+	PlaceGrace time.Duration // how long after it opened a window may still be placed, default 1.5 s
 }
 
 // State is what the engine decides (windowRules.state).
@@ -64,16 +71,21 @@ type snapshot struct {
 
 // Engine matches the open windows against the usable rules.
 type Engine struct {
-	o    Options
-	snap atomic.Pointer[snapshot]
-	kick chan struct{} // capacity 1: the config or the capabilities changed
+	o     Options
+	snap  atomic.Pointer[snapshot]
+	kick  chan struct{} // capacity 1: the config or the capabilities changed
+	apply chan applyRequest
 
-	mu          sync.Mutex // guards the next four
+	mu          sync.Mutex // guards the next six
 	windowRules any
 	keybinds    any
 	supports    map[string]bool
-	changed     bool // since the loop last took them
+	report      map[string]windowrules.Report // nil: the compositor's config hasn't reported
+	changed     bool                          // since the loop last took them
 }
+
+// applyRequest is Apply's call into the loop.
+type applyRequest struct{ reply chan int }
 
 // entry is one open window in the loop's table.
 type entry struct {
@@ -82,15 +94,23 @@ type entry struct {
 	facts windowrules.Facts
 	game  []procinfo.Signal // why it's a game (Detect); [] when it isn't
 	lost  time.Time         // when it lost focus; zero: not in grace
+
+	opened time.Time // when it opened after a Reset; zero: it was there before (never placed)
+	placed bool      // its placement was sent
+	kinds  []windowrules.KindMatch
 }
 
 // loop is what Run's goroutine owns.
 type loop struct {
-	e     *Engine
-	table []entry
-	rules []windowrules.Rule
-	match windowrules.Matcher
-	last  []byte // the marshalled State last passed to OnChange
+	e        *Engine
+	ctx      context.Context
+	wg       *sync.WaitGroup // the placements in flight, and the watcher
+	table    []entry
+	rules    []windowrules.Rule
+	match    windowrules.Matcher
+	supports map[string]bool
+	reports  map[string]windowrules.Report
+	last     []byte // the marshalled State last passed to OnChange
 }
 
 // New is an engine with no windows and no rules.
@@ -107,7 +127,13 @@ func New(o Options) *Engine {
 	if o.Log == nil {
 		o.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
 	}
-	e := &Engine{o: o, kick: make(chan struct{}, 1)}
+	if o.Settle <= 0 {
+		o.Settle = 100 * time.Millisecond
+	}
+	if o.PlaceGrace <= 0 {
+		o.PlaceGrace = 1500 * time.Millisecond
+	}
+	e := &Engine{o: o, kick: make(chan struct{}, 1), apply: make(chan applyRequest)}
 	e.snap.Store(&snapshot{state: e.empty(), windows: []WindowInfo{}})
 	return e
 }
@@ -137,6 +163,51 @@ func (e *Engine) SetSupports(supports map[string]bool) {
 	e.wake()
 }
 
+// SetReport takes compositor.state's windowRules ({issues, rules}, or nil while
+// the compositor's config layer isn't live): what the config already does with
+// each rule. Nothing is placed without it, since a written rule may have acted
+// already; a window waiting in its grace is placed when it comes.
+func (e *Engine) SetReport(report any) {
+	var reports map[string]windowrules.Report
+	if report != nil {
+		var rows struct {
+			Rules []windowrules.Report `json:"rules"`
+		}
+		if err := json.Unmarshal(jsonx.MarshalCompact(report), &rows); err == nil {
+			reports = make(map[string]windowrules.Report, len(rows.Rules))
+			for _, r := range rows.Rules {
+				reports[r.Rule] = r
+			}
+		}
+	}
+	e.mu.Lock()
+	e.report, e.changed = reports, true
+	e.mu.Unlock()
+	e.wake()
+}
+
+// Apply gives every open window, those from before the daemon started too,
+// what the saved rules would give it (Apply to open windows): written rules
+// as well, no follow, a special workspace not shown. It returns how many
+// windows got any step. Nothing happens without a report or a dispatcher.
+func (e *Engine) Apply(ctx context.Context) (int, error) {
+	if e.o.Place == nil {
+		return 0, nil
+	}
+	req := applyRequest{reply: make(chan int, 1)}
+	select {
+	case e.apply <- req:
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	}
+	select {
+	case n := <-req.reply:
+		return n, nil
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	}
+}
+
 func (e *Engine) wake() {
 	select {
 	case e.kick <- struct{}{}:
@@ -145,10 +216,10 @@ func (e *Engine) wake() {
 }
 
 // inputs are the config and capabilities as they stand.
-func (e *Engine) inputs() (windowRules, keybinds any, xwayland bool) {
+func (e *Engine) inputs() (windowRules, keybinds any, supports map[string]bool) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	return e.windowRules, e.keybinds, e.supports["ruleXwayland"]
+	return e.windowRules, e.keybinds, e.supports
 }
 
 // State is what the rules decide of the open windows now.
@@ -173,7 +244,7 @@ func (e *Engine) Run(ctx context.Context) error {
 		}()
 	}
 	defer wg.Wait()
-	l := &loop{e: e}
+	l := &loop{e: e, ctx: ctx, wg: &wg}
 	l.last, _ = json.Marshal(e.State())
 	timer := time.NewTimer(time.Hour)
 	defer timer.Stop()
@@ -196,6 +267,8 @@ func (e *Engine) Run(ctx context.Context) error {
 			}
 		case <-e.kick:
 			l.configure()
+		case req := <-e.apply:
+			req.reply <- l.applyNow()
 		case <-timer.C:
 		}
 		next := l.recompute()
@@ -213,11 +286,16 @@ func (l *loop) configure() {
 	if !changed {
 		return
 	}
-	section, keybinds, xwayland := l.e.inputs()
+	section, keybinds, supports := l.e.inputs()
+	xwayland := supports["ruleXwayland"]
 	cfg := windowrules.Parse(section)
 	issues := windowrules.Validate(cfg, windowrules.Context{BindIDs: windowrules.BindIDs(keybinds)})
 	l.rules = windowrules.Usable(cfg, issues)
 	l.match = windowrules.NewMatcher(l.rules, l.e.o.AppIDs, xwayland)
+	l.supports = supports
+	l.e.mu.Lock()
+	l.reports = l.e.report
+	l.e.mu.Unlock()
 }
 
 // apply takes one watcher event into the table.
@@ -233,11 +311,15 @@ func (l *loop) apply(ev windows.Event) {
 		i := slices.IndexFunc(l.table, func(t entry) bool { return t.win.ID == ev.Window.ID })
 		if i < 0 {
 			n := l.entryFor(ev.Window, nil)
+			if ev.Kind == windows.Opened {
+				n.opened = l.e.o.Now()
+			}
 			l.table = append(l.table, n)
 			return
 		}
 		old := l.table[i]
 		n := l.entryFor(ev.Window, &old)
+		n.opened, n.placed = old.opened, old.placed
 		switch {
 		case ev.Window.Focused:
 		case old.win.Focused:
@@ -298,10 +380,11 @@ func (l *loop) recompute() time.Duration {
 				t.lost = time.Time{}
 			}
 		}
-		matches := l.match.Match(t.facts)
+		t.kinds = l.match.MatchKinds(t.facts)
 		moment := windowrules.Moment{Focused: t.win.Focused || inGrace, Fullscreen: t.win.Fullscreen}
 		info := WindowInfo{Window: t.win, Process: t.proc, Game: t.game, Rules: []string{}}
-		for _, ri := range matches {
+		for _, km := range t.kinds {
+			ri := km.Rule
 			active = append(active, windowrules.Active{
 				Rule: l.rules[ri], Priority: ri, Window: t.win.ID, Output: t.win.Output, Moment: moment,
 			})
@@ -325,6 +408,7 @@ func (l *loop) recompute() time.Duration {
 	}
 	snap.state = st
 	l.e.snap.Store(snap)
+	l.placePass(now)
 	// Only what the rules decide is compared: a title that changes no
 	// match pushes nothing
 	b, _ := json.Marshal(st)
@@ -342,7 +426,8 @@ func (l *loop) recompute() time.Duration {
 // order, its kinds with an issue at or under windows.<k> left out. A
 // half-typed condition doesn't zero the others, and a disabled rule counts.
 func (e *Engine) Match(section any) []RuleWindows {
-	_, keybinds, xwayland := e.inputs()
+	_, keybinds, supports := e.inputs()
+	xwayland := supports["ruleXwayland"]
 	cfg := windowrules.Parse(section)
 	issues := windowrules.Validate(cfg, windowrules.Context{BindIDs: windowrules.BindIDs(keybinds)})
 	rules := make([]windowrules.Rule, len(cfg.Rules))
@@ -374,4 +459,76 @@ func (e *Engine) Match(section any) []RuleWindows {
 func underKind(path string, k int) bool {
 	p := "windows." + strconv.Itoa(k)
 	return path == p || strings.HasPrefix(path, p+".")
+}
+
+// planFor is what the saved rules give window t now.
+func (l *loop) planFor(t *entry, apply bool) [][]windowrules.Step {
+	matches := make([]windowrules.RuleMatch, len(t.kinds))
+	for i, km := range t.kinds {
+		matches[i] = windowrules.RuleMatch{Rule: l.rules[km.Rule], Kinds: km.Kinds}
+	}
+	return windowrules.PlanFor(matches, l.reports, l.supports, apply).Batches(t.win.Fullscreen)
+}
+
+// placePass places each window that opened within the grace, once. A late
+// title that makes a rule match is placed when it arrives; the grace is
+// checked when the window next changes, there is no timer. Plans are made
+// here, sent outside the loop.
+func (l *loop) placePass(now time.Time) {
+	if l.e.o.Place == nil || l.reports == nil {
+		return
+	}
+	for i := range l.table {
+		t := &l.table[i]
+		if t.opened.IsZero() || t.placed || now.Sub(t.opened) > l.e.o.PlaceGrace {
+			continue
+		}
+		if batches := l.planFor(t, false); len(batches) > 0 {
+			t.placed = true
+			l.send(t.win.ID, batches)
+		}
+	}
+}
+
+// applyNow is Apply to open windows: every window, from before too.
+func (l *loop) applyNow() int {
+	if l.reports == nil {
+		return 0
+	}
+	n := 0
+	for i := range l.table {
+		if batches := l.planFor(&l.table[i], true); len(batches) > 0 {
+			n++
+			l.send(l.table[i].win.ID, batches)
+		}
+	}
+	return n
+}
+
+// send runs a window's batches in a goroutine the engine owns, Settle apart.
+// A batch that fails (the window closed, a refused command) is logged and the
+// next still goes.
+func (l *loop) send(id string, batches [][]windowrules.Step) {
+	o := l.e.o
+	l.wg.Add(1)
+	go func() {
+		defer l.wg.Done()
+		for i, b := range batches {
+			if i > 0 {
+				timer := time.NewTimer(o.Settle)
+				select {
+				case <-l.ctx.Done():
+					timer.Stop()
+					return
+				case <-timer.C:
+				}
+			}
+			if l.ctx.Err() != nil {
+				return
+			}
+			if err := o.Place(l.ctx, id, b); err != nil && l.ctx.Err() == nil {
+				o.Log.Debug("windowrules: placing a window", "window", id, "err", err)
+			}
+		}
+	}()
 }
