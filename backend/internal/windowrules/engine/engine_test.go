@@ -446,6 +446,22 @@ func TestBuiltinSwitches(t *testing.T) {
 	}
 }
 
+func TestFullscreenAwakeSwitch(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	r.e.SetConfig(section(t, `{"rules":[],"switches":{"fullscreenAwake":true}}`), nil)
+	r.run()
+	w := win("1", "foot")
+	r.send(windows.Reset, w)
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	if s := r.e.State(); len(s.Holds.KeepAwake) != 0 || s.Rules[0].Name != "Keep the screen awake while fullscreen" {
+		t.Errorf("not fullscreen: %+v", s)
+	}
+	w.Fullscreen = true
+	r.send(windows.Changed, w)
+	r.waitFor("held", func(s State) bool { return reflect.DeepEqual(s.Holds.KeepAwake, []string{"_fullscreenAwake"}) })
+}
+
 func TestOverride(t *testing.T) {
 	t.Parallel()
 	r := newRig(t)

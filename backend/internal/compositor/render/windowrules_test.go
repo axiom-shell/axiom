@@ -699,3 +699,55 @@ for_window [class="\A(?:a)\z"] floating enable`
 		}
 	})
 }
+
+// The three more built-in switches: written before the user's rules, the
+// keep-awake one never
+func TestMoreBuiltinRuleRows(t *testing.T) {
+	t.Parallel()
+	c := windowrules.Config{
+		Rules:    []windowrules.Rule{rule("mine", windowrules.WindowEffects{Float: true}, conds{cond(appID, is, "a")})},
+		Switches: windowrules.Switches{PictureInPicture: true, UtilityFloat: true, FullscreenAwake: true},
+	}
+	rules := windowrules.Effective(c, nil)
+	t.Run("hyprland", func(t *testing.T) {
+		t.Parallel()
+		got, left := HyprRuleLines(RuleSet{Rules: rules, Supports: hyprSupports})
+		want := `hl.window_rule({ name = "axiom-rule-_utilityFloat-0", match = { class = "\\A(?s:.*)(?:\\A(?:xdg-desktop-portal-g(?:tk|nome)|org\\.(?:freedesktop\\.impl\\.portal\\.desktop\\.kde|kde\\.polkit-kde-authentication-agent-1)|polkit-gnome-authentication-agent-1|org\\.pulseaudio\\.pavucontrol|pavucontrol|com\\.saivert\\.pwvucontrol|nm-connection-editor|blueman-manager)\\z)(?s:.*)\\z" }, float = true })
+hl.window_rule({ name = "axiom-rule-_pictureInPicture-0", match = { title = "\\A(?s:.*)(?:\\APicture(?:-in-Picture| in picture)\\z)(?s:.*)\\z" }, float = true, pin = true })
+hl.window_rule({ name = "axiom-rule-mine-0", match = { class = "\\A(?:a)\\z" }, float = true })`
+		if strings.Join(got, "\n") != want || len(left) != 0 {
+			t.Fatalf("got\n%s\n%+v", strings.Join(got, "\n"), left)
+		}
+	})
+	t.Run("niri", func(t *testing.T) {
+		t.Parallel()
+		got, left := niriText(t, rules, nil)
+		want := `window-rule {
+    match app-id="\\A(?s:.*)(?:\\A(?:xdg-desktop-portal-g(?:tk|nome)|org\\.(?:freedesktop\\.impl\\.portal\\.desktop\\.kde|kde\\.polkit-kde-authentication-agent-1)|polkit-gnome-authentication-agent-1|org\\.pulseaudio\\.pavucontrol|pavucontrol|com\\.saivert\\.pwvucontrol|nm-connection-editor|blueman-manager)\\z)(?s:.*)\\z"
+    open-floating true
+}
+window-rule {
+    match title="\\A(?s:.*)(?:\\APicture(?:-in-Picture| in picture)\\z)(?s:.*)\\z"
+    open-floating true
+}
+window-rule {
+    match app-id="\\A(?:a)\\z"
+    open-floating true
+}`
+		if got != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "_pictureInPicture", Dropped: []string{"pin"}}}) {
+			t.Fatalf("got\n%s\n%+v", got, left)
+		}
+	})
+	t.Run("sway", func(t *testing.T) {
+		t.Parallel()
+		got, left := swayLines(rules, swaySupports, true)
+		want := `for_window [app_id="\A(?s:.*)(?:\A(?:xdg-desktop-portal-g(?:tk|nome)|org\.(?:freedesktop\.impl\.portal\.desktop\.kde|kde\.polkit-kde-authentication-agent-1)|polkit-gnome-authentication-agent-1|org\.pulseaudio\.pavucontrol|pavucontrol|com\.saivert\.pwvucontrol|nm-connection-editor|blueman-manager)\z)(?s:.*)\z"] floating enable
+for_window [class="\A(?s:.*)(?:\A(?:xdg-desktop-portal-g(?:tk|nome)|org\.(?:freedesktop\.impl\.portal\.desktop\.kde|kde\.polkit-kde-authentication-agent-1)|polkit-gnome-authentication-agent-1|org\.pulseaudio\.pavucontrol|pavucontrol|com\.saivert\.pwvucontrol|nm-connection-editor|blueman-manager)\z)(?s:.*)\z"] floating enable
+for_window [title="\A(?s:.*)(?:\APicture(?:-in-Picture| in picture)\z)(?s:.*)\z"] "floating enable, sticky enable"
+for_window [app_id="\A(?:a)\z"] floating enable
+for_window [class="\A(?:a)\z"] floating enable`
+		if strings.Join(got, "\n") != want || len(left) != 0 {
+			t.Fatalf("got\n%s\n%+v", strings.Join(got, "\n"), left)
+		}
+	})
+}
