@@ -97,8 +97,12 @@ QtObject {
     if (!root.ready)
       return;
     root._graced = TopicGrace.release(root._graced, topic, Date.now(), root._graceMs);
-    root._graceTimer.interval = root._graceMs;
-    root._graceTimer.restart();
+    // Armed once: a later release has a later deadline, which the timer's
+    // re-arm reaches
+    if (!root._graceTimer.running) {
+      root._graceTimer.interval = TopicGrace.wait(root._graced, Date.now());
+      root._graceTimer.start();
+    }
   }
 
   // Asks axiom to fetch an acquired topic now

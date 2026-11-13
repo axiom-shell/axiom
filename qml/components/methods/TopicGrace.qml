@@ -17,26 +17,35 @@ QtObject {
     return next;
   }
 
+  // ms from `now` to the earliest deadline in `pending` (0 when one is
+  // past), or -1 with none: how long the caller's timer should wait
+  function wait(pending, now) {
+    let next = -1;
+    for (const topic in pending) {
+      const left = Math.max(0, pending[topic] - now);
+      next = next < 0 ? left : Math.min(next, left);
+    }
+    return next;
+  }
+
   // What to do at `now`: { unsubscribe: topics due and still not acquired,
   // pending: the entries not due yet, wait: ms to the next deadline, or -1
   // with none left }. `acquired` is { topic: request }
   function due(pending, acquired, now) {
     const unsubscribe = [];
     const rest = {};
-    let wait = -1;
     for (const topic in pending) {
       const deadline = pending[topic];
-      if (deadline > now) {
+      if (deadline > now)
         rest[topic] = deadline;
-        wait = wait < 0 ? deadline - now : Math.min(wait, deadline - now);
-      } else if (!(topic in acquired)) {
+      else if (!(topic in acquired)) {
         unsubscribe.push(topic);
       }
     }
     return {
       "unsubscribe": unsubscribe,
       "pending": rest,
-      "wait": wait
+      "wait": root.wait(rest, now)
     };
   }
 }
