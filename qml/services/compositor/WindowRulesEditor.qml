@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import qs.config
 import qs.components.methods
 import qs.services.core
@@ -8,8 +9,10 @@ import qs.services.ui
 // The Window rules page's editor (WindowRulesManager.editor): a draft of
 // the WindowRules section, the selected rule, the edits, and the problems
 // Go finds in it (compositor.checkRules on the draft, 300 ms after the last
-// edit; the saved rules' are compositor.state's). Unsaved rules are never
-// shown to the compositor: no preview.
+// edit; the saved rules' are compositor.state's), and how many open windows
+// each rule's conditions match (windowRules.match on the draft, while the
+// page holds the editor: acquire/release). Unsaved rules are never shown to
+// the compositor: no preview.
 // Not a singleton: WindowRulesManager owns it.
 QtObject {
   id: root
@@ -22,8 +25,23 @@ QtObject {
   readonly property var selected: rules[selectedIndex] ?? null
   readonly property string selectedId: selected?.id ?? ""
 
-  // The condition fields the page offers; the others come with live matching
-  readonly property var offeredFields: ["appId", "title", "xwayland", "steamGame"]
+  // The open windows each draft rule matches ([{ rule, windows }], the
+  // draft's order), null until known
+  property var _matches: null
+
+  // How many open windows the rule at `index` matches now
+  function openCount(index) {
+    return WindowRuleIssues.countOf(root._matches, root.rules[index]?.id, index);
+  }
+
+  // The page takes the editor: the count runs until it lets go
+  function acquire(owner) {
+    root._counting.acquire(owner, true);
+  }
+
+  function release(owner) {
+    root._counting.release(owner);
+  }
 
   // The problems and per-rule facts to show ({ issues, rules },
   // WindowRuleIssues): the draft's while it differs from what's saved (or
@@ -82,6 +100,65 @@ QtObject {
     local.rules.push(ConfigManager.withDefaults(rule, "WindowRule"));
     root._apply();
     root.select(local.rules.length - 1);
+  }
+
+  // A new rule, last and selected, from what a window gave
+  // (WindowRulesManager.fromWindow's result): named after its installed
+  // app, else its title, else its app id
+  function addRuleFrom(result) {
+    EditsManager.commitTyping();
+    const local = root._local();
+    if (!local || !result?.kind)
+      return;
+    const window = result.window ?? ({});
+    const name = (window.appId ? DesktopEntries.heuristicLookup(window.appId)?.name : "") || window.title || window.appId || I18n.tr("New rule");
+    const rule = ({
+        "id": Utils.newId(Utils.slug(name) || "rule", local.rules),
+        "name": name,
+        "windows": [result.kind]
+      });
+    local.rules.push(ConfigManager.withDefaults(rule, "WindowRule"));
+    root._apply();
+    root.select(local.rules.length - 1);
+  }
+
+  // Adds a kind to the rule `ruleId` (found by id: the selection may have
+  // moved since a picker opened); a kind still the new-rule placeholder
+  // (one empty app id condition) is replaced
+  function addKindFrom(ruleId, kind) {
+    const rule = root._local()?.rules.find(r => r.id === ruleId);
+    if (!rule || !kind)
+      return;
+    EditsManager.commitTyping();
+    const last = rule.windows[rule.windows.length - 1];
+    const placeholder = last && last.conditions.length === 1 && last.conditions[0].field === "appId" && last.conditions[0].op === "is" && last.conditions[0].value === "";
+    if (placeholder)
+      rule.windows.splice(rule.windows.length - 1, 1);
+    rule.windows.push(kind);
+    root._apply();
+  }
+
+  // Add from open window: a kind from the window `windowId` for the rule
+  // selected now
+  function addKindFromWindow(windowId) {
+    const ruleId = root.selectedId;
+    WindowRulesManager.fromWindow(windowId, result => {
+      if (result)
+        root.addKindFrom(ruleId, result.kind);
+    });
+  }
+
+  // Add app: a kind for an installed app, for the rule selected now
+  function addApp(desktopId) {
+    root.addKindFrom(root.selectedId, {
+      "conditions": [
+        {
+          "field": "app",
+          "op": "is",
+          "value": desktopId
+        }
+      ]
+    });
   }
 
   function duplicate(index) {
@@ -186,8 +263,12 @@ QtObject {
     const condition = root._selectedRule()?.windows[k]?.conditions[c];
     if (!condition || condition[key] === value)
       return;
+    const previous = condition[key];
     condition[key] = value;
     if (key === "field") {
+      // A typed text is no desktop file, and the reverse
+      if ((value === "app") !== (previous === "app"))
+        condition.value = "";
       const allowed = root._opSchema["x-enumShowIf"]?.[condition.op];
       if (allowed && !SchemaLayout.showIfHolds(allowed, name => condition[name]))
         condition.op = "is";
@@ -246,6 +327,10 @@ QtObject {
   property var _draftReport: null
   property int _sequence: 0
 
+  // Pages holding the editor: the count runs while there is one
+  property ConsumerRegistry _counting: ConsumerRegistry {}
+  property int _matchSequence: 0
+
   property Timer _timer: Timer {
     interval: 300
     onTriggered: root._check()
@@ -257,6 +342,23 @@ QtObject {
 
     function onSupportsChanged() {
       root._checkSoon();
+    }
+  }
+
+  // A window opening or closing, or the page being taken, recounts
+  property Connections _windows: Connections {
+    target: WindowRulesManager
+
+    function onStateChanged() {
+      root._count();
+    }
+  }
+
+  property Connections _counted: Connections {
+    target: root._counting
+
+    function onActiveChanged() {
+      root._count();
     }
   }
 
@@ -272,6 +374,19 @@ QtObject {
     CompositorConfigManager.checkRules(_draft.local, report => {
       if (report !== null && sequence === root._sequence)
         root._draftReport = report;
+    });
+    root._count();
+  }
+
+  // The count of open windows per draft rule; only sets `_matches`, never
+  // the draft. The latest answer wins
+  function _count() {
+    if (!root._counting.active || _draft.local === null)
+      return;
+    const sequence = ++root._matchSequence;
+    WindowRulesManager.match(_draft.local, rows => {
+      if (rows !== null && sequence === root._matchSequence)
+        root._matches = rows;
     });
   }
 

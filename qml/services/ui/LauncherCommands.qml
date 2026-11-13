@@ -54,7 +54,7 @@ QtObject {
           ShellManager.openOverlayPage(page);
       }
     },
-    root._page("settings", ["prefs", "options"], "Settings", "Open the settings"), root._page("themes", [], "Themes", "Open the themes page"), root._page("bar", ["bareditor"], "BarEditor", "Open the bar editor"), root._page("keybinds", ["keys", "shortcuts"], "Keybinds", "Show the keybinds"), root._page("rules", ["windowrules", "window-rules"], "WindowRules", "Edit the window rules"), root._page("layouts", ["editor", "overlay-editor"], "Layouts", "Edit the overlay pages and menus", () => OverlayManager.editPages()), root._page("menus", ["edge-menus", "menu-editor"], "Layouts", "Edit the menus", () => OverlayManager.editMenus()), root._page("monitors", ["displays", "screens"], "Monitors", "Arrange and set up monitors"), root._page("widgets", ["custom-widgets", "waybar"], "CustomWidgets", "Make widgets from scripts"),
+    root._page("settings", ["prefs", "options"], "Settings", "Open the settings"), root._page("themes", [], "Themes", "Open the themes page"), root._page("bar", ["bareditor"], "BarEditor", "Open the bar editor"), root._page("keybinds", ["keys", "shortcuts"], "Keybinds", "Show the keybinds"), root._page("rules", ["windowrules", "window-rules"], "WindowRules", "Edit the window rules"), root._pageUnlessGreeter(root._page("rule", ["newrule"], "WindowRules", "Make a rule for the focused window", () => WindowRulesManager.newFromFocused())), root._page("layouts", ["editor", "overlay-editor"], "Layouts", "Edit the overlay pages and menus", () => OverlayManager.editPages()), root._page("menus", ["edge-menus", "menu-editor"], "Layouts", "Edit the menus", () => OverlayManager.editMenus()), root._page("monitors", ["displays", "screens"], "Monitors", "Arrange and set up monitors"), root._page("widgets", ["custom-widgets", "waybar"], "CustomWidgets", "Make widgets from scripts"),
     // --- Appearance ---
     {
       name: "theme",
@@ -592,7 +592,7 @@ QtObject {
       // I18n.tr("Open the settings") I18n.tr("Open the themes page") I18n.tr("Open the bar editor")
       // I18n.tr("Show the keybinds") I18n.tr("Edit the overlay pages and menus")
       // I18n.tr("Edit the menus") I18n.tr("Arrange and set up monitors")
-      // I18n.tr("Make widgets from scripts") I18n.tr("Edit the window rules")
+      // I18n.tr("Make widgets from scripts") I18n.tr("Edit the window rules") I18n.tr("Make a rule for the focused window")
       description: () => I18n.tr(description),
       // Not where the compositor can't do what the page needs (`x-needs`)
       available: () => {
@@ -605,6 +605,14 @@ QtObject {
         ShellManager.openOverlayPage(type);
       }
     };
+  }
+
+  // `entry` listed only in the session (the greeter has no focused window)
+  function _pageUnlessGreeter(entry) {
+    const base = entry.available;
+    return Object.assign(entry, {
+      available: () => !Paths.greeter && base()
+    });
   }
 
   // Picks the default audio device from `nodes()`

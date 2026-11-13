@@ -104,4 +104,27 @@ TestCase {
     compare(paths(WindowRuleIssues.general(WindowRuleIssues.of(report, "a"))), ["window.size", "windows"]);
     compare(paths(WindowRuleIssues.general(WindowRuleIssues.of(report, "b"))), ["id"]);
   }
+
+  function test_countOf() {
+    const rows = [
+      {
+        "rule": "a",
+        "windows": ["1", "2"]
+      },
+      {
+        "rule": "b",
+        "windows": []
+      },
+      {
+        "rule": "c",
+        "windows": ["3"]
+      }
+    ];
+    compare(WindowRuleIssues.countOf(rows, "a", 0), 2);
+    compare(WindowRuleIssues.countOf(rows, "c", 0), 1);
+    compare(WindowRuleIssues.countOf(rows, "b", 1), 0);
+    compare(WindowRuleIssues.countOf(rows, "zz", 0), 0);
+    compare(WindowRuleIssues.countOf(null, "a", 0), 0);
+    compare(WindowRuleIssues.countOf(rows, "", 0), 0);
+  }
 }

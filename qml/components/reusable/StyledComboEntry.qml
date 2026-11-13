@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 import qs.config
 
 // A choice from a list that drops down under the field, optionally typed
@@ -400,18 +399,9 @@ Item {
         anchors.rightMargin: Widget.padding
         spacing: Widget.spacing
 
-        StyledIcon {
-          visible: (option.modelData.icon ?? "") !== ""
-          text: option.modelData.icon ?? ""
-          textColor: Theme.accent
-        }
-
-        // An image in place of the glyph (an app's icon, by path or URL)
-        IconImage {
-          visible: (option.modelData.image ?? "") !== ""
-          source: option.modelData.image ?? ""
-          implicitSize: Appearance.fontSizeLarge
-          asynchronous: true
+        OptionGlyph {
+          icon: option.modelData.icon ?? ""
+          image: option.modelData.image ?? ""
         }
 
         StyledLabel {

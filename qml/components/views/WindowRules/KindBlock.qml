@@ -26,6 +26,11 @@ StyledContainer {
           "level": "error",
           "text": root.editor.issueText(issue)
         }));
+    if ((root.row?.missing ?? []).includes(root.k))
+      list.push({
+        "level": "warning",
+        "text": I18n.tr("This app isn't installed, so this kind matches nothing.")
+      });
     if ((root.row?.skipped ?? []).includes(root.k))
       list.push({
         "level": "warning",
@@ -124,7 +129,7 @@ StyledContainer {
         Layout.fillWidth: true
         Layout.preferredWidth: Widget.px(150)
         value: cond.condition.field ?? "appId"
-        options: cond.options("field", field => root.editor.offeredFields.includes(field) && SchemaLayout.showIfHolds(cond.schema.field["x-enumShowIf"]?.[field], key => CompositorManager.supports[key.slice("/$supports.".length)]))
+        options: cond.options("field", field => SchemaLayout.showIfHolds(cond.schema.field["x-enumShowIf"]?.[field], key => CompositorManager.supports[key.slice("/$supports.".length)]))
         onPicked: value => root.editor.setCondition(root.k, cond.c, "field", value)
       }
 
@@ -137,14 +142,32 @@ StyledContainer {
         onPicked: value => root.editor.setCondition(root.k, cond.c, "op", value)
       }
 
+      // An installed app: picked by name, its desktop file the value
+      StyledComboEntry {
+        visible: cond.valueShown && cond.condition.field === "app"
+        Layout.alignment: Qt.AlignTop
+        Layout.fillWidth: true
+        Layout.preferredWidth: Widget.px(150)
+        editable: true
+        placeholderText: I18n.tr("Pick an app")
+        search: query => WindowRulesManager.apps(query)
+        options: cond.condition.value ? [WindowRulesManager.appOption(cond.condition.value)] : []
+        value: cond.condition.value ?? ""
+        onPicked: value => root.editor.setCondition(root.k, cond.c, "value", value)
+      }
+
       StyledTextEntry {
         id: valueText
-        visible: cond.valueShown
+        visible: cond.valueShown && cond.condition.field !== "app"
         Layout.alignment: Qt.AlignTop
         Layout.fillWidth: true
         Layout.preferredWidth: Widget.px(150)
         readonly property string saved: cond.condition.value ?? ""
-        placeholderText: cond.condition.field === "steamGame" ? I18n.tr("A number, such as 570") : cond.condition.op === "matches" ? I18n.tr("A pattern") : ""
+        placeholderText: cond.condition.op === "matches" ? I18n.tr("A pattern") : ({
+            "steamGame": I18n.tr("A number, such as 570"),
+            "process": I18n.tr("A process name, such as steam"),
+            "startedFrom": I18n.tr("A program, such as lutris")
+          })[cond.condition.field] ?? ""
 
         Component.onCompleted: valueText.input.text = valueText.saved
         // Released, not committed: a removal has shifted the indexes by the
