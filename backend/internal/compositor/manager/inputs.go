@@ -2,10 +2,12 @@ package manager
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
 
 // Facts are what only the shell knows of the layer (compositor.inputs):
@@ -43,6 +45,9 @@ type Facts struct {
 	// Frameworks are the input method frameworks installed ("fcitx5",
 	// "ibus"): the daemon's to find (Options.LookPath), not the shell's
 	Frameworks []string `json:"-"`
+	// AppIDs gives an installed app's window app ids (a window rule's `app`
+	// condition): the daemon's to read (Options.AppIDs), not the shell's
+	AppIDs func(desktopID string) []string `json:"-"`
 }
 
 // BindCtx is what a bind's command runs with: axiom's paths and the apps.
@@ -180,6 +185,9 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 			"surfaces", jsonx.Obj("blur", surfacesBlur, "throughWindows", f.Blur.ThroughWindows, "backdrops", f.Blur.Backdrops, "threshold", f.Blur.Threshold),
 			"input", render.Input(at("Input"), f.XCursor))
 	}
+	// Compiled before layerKey, so a usable rule's change re-applies the
+	// layer; the report after it, so an issue on a disabled rule doesn't
+	compiled, report := windowRules(at("WindowRules"), at("Keybinds"), f)
 	in := jsonx.Obj(
 		"kind", f.Kind,
 		"supports", tree(f.Supports),
@@ -205,6 +213,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"polkit", flag("Polkit", "enabled"),
 		"compositorSwitcher", flag("WindowSwitcher", "compositorSwitcher") && f.Supports["compositorSwitcher"],
 		"inputMethod", inputMethodOf(at("Input", "keyboard", "method"), f.Frameworks),
+		"windowRules", compiled,
 	)
 	in.Set("layerKey", string(jsonx.MarshalCompact(in)))
 	specFile, specLive := spec(true), spec(false)
@@ -214,7 +223,81 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	// The live spec but for the blur now (specLive is specFile with
 	// Blur.Now): unchanged when only the blur paused or resumed
 	in.Set("liveRestKey", string(jsonx.MarshalCompact(specFile)))
+	in.Set("windowRulesReport", report)
 	return Inputs{in}
+}
+
+// ruleRow is what the editor shows of a usable rule: its effects by what
+// happens to them (compositor.state's windowRules)
+type ruleRow struct {
+	Rule    string   `json:"rule"`
+	Written []string `json:"written"` // effects the compositor's config applies
+	Placed  []string `json:"placed"`  // effects the daemon places after open
+	Dropped []string `json:"dropped"` // effects this compositor can't do
+	Live    []int    `json:"live"`    // kinds only the daemon can match
+	Skipped []int    `json:"skipped"` // kinds this compositor can't match
+}
+
+// windowRules is the WindowRules section as f.Kind's compositor takes it:
+// the usable rules compiled (Hyprland's lines, niri's nodes, sway's
+// {file, runtime} lines; nil for any other kind) and what the editor shows
+// of them ({issues, rules}). Only the usable rules (a bad one still saves,
+// but isn't compiled).
+func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.Object) {
+	cfg := windowrules.Parse(section)
+	issues := windowrules.Validate(cfg, windowrules.Context{BindIDs: windowrules.BindIDs(keybinds)})
+	usable := windowrules.Usable(cfg, issues)
+	set := render.RuleSet{Rules: usable, Apps: windowrules.AppIDs(f.AppIDs), Supports: f.Supports}
+	var left []render.Unwritten
+	switch f.Kind {
+	case "hyprland":
+		var lines []string
+		lines, left = render.HyprRuleLines(set)
+		compiled = strs(lines)
+	case "niri":
+		compiled, left = render.NiriRuleNodes(set)
+	case "sway":
+		file, left2 := render.SwayRuleLines(set, false)
+		runtime, _ := render.SwayRuleLines(set, true)
+		left = left2
+		compiled = jsonx.Obj("file", strs(file), "runtime", strs(runtime))
+	default:
+		return nil, jsonx.Obj("issues", tree(issues), "rules", jsonx.Arr())
+	}
+	byRule := map[string]render.Unwritten{}
+	for _, u := range left {
+		byRule[u.Rule] = u
+	}
+	rows := make([]ruleRow, 0, len(usable))
+	for _, r := range usable {
+		u := byRule[r.ID]
+		row := ruleRow{Rule: r.ID, Written: []string{}, Placed: orEmpty(u.Placed), Dropped: orEmpty(u.Dropped),
+			Live: orEmptyInts(u.Live), Skipped: orEmptyInts(u.Skipped)}
+		// Nothing is printed for a rule none of whose kinds is written
+		if len(u.Live)+len(u.Skipped) < len(r.Kinds) {
+			for _, key := range render.RuleEffects(r.Window) {
+				if !slices.Contains(u.Placed, key) && !slices.Contains(u.Dropped, key) {
+					row.Written = append(row.Written, key)
+				}
+			}
+		}
+		rows = append(rows, row)
+	}
+	return compiled, jsonx.Obj("issues", tree(issues), "rules", tree(rows))
+}
+
+func orEmpty(s []string) []string {
+	if s == nil {
+		return []string{}
+	}
+	return s
+}
+
+func orEmptyInts(s []int) []int {
+	if s == nil {
+		return []int{}
+	}
+	return s
 }
 
 // lookOpts are render.Look's opts from the shell's look, its colors as

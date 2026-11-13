@@ -34,6 +34,8 @@ type fakeWriter struct {
 	reloadCh  chan ipc.Reload
 	// reloaded: the reloads the manager has taken (configReloaded)
 	reloaded int
+	// rulesGone is what runtimeRulesGone answers
+	rulesGone bool
 }
 
 func (f *fakeWriter) note(c string) {
@@ -78,6 +80,11 @@ func (f *fakeWriter) runtimeApply(_ context.Context, in Inputs, live func() []st
 	f.note("runtime:" + strings.Join(live(), ";"))
 }
 func (f *fakeWriter) runtimeClear(context.Context) { f.note("clear") }
+func (f *fakeWriter) runtimeRulesGone(Inputs) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.rulesGone
+}
 func (f *fakeWriter) teardownSteps(Inputs, bool) []session.Step {
 	return []session.Step{{Op: "reload"}}
 }
@@ -873,5 +880,59 @@ func TestNiriFailedAtItsStartIsSaidAfterTheFirstApply(t *testing.T) {
 	m.configReloaded(context.Background(), ipc.Reload{Initial: true, Failed: true})
 	if want := m.w.problems(m.in).Failed; m.loaded || m.problem != want {
 		t.Fatalf("loaded %v, problem %q; want the failure said", m.loaded, m.problem)
+	}
+}
+
+// A window rule only a reload takes back reloads the compositor's config
+// while the runtime layer is on, and says so; not while it's off
+func TestUndoLiveReloadsForGoneRules(t *testing.T) {
+	t.Parallel()
+	var logs strings.Builder
+	w := &fakeWriter{}
+	m := &Manager{w: w, st: &runtimeState{}, mode: "detached", runtimeOn: true, o: Options{Log: slog.New(slog.NewTextHandler(&logs, nil))}}
+	if m.undoLive(context.Background()) {
+		t.Fatal("reloaded with no rule gone")
+	}
+	w.rulesGone = true
+	m.runtimeOn = false
+	if m.undoLive(context.Background()) {
+		t.Fatal("reloaded while the runtime layer is off")
+	}
+	m.runtimeOn = true
+	if !m.undoLive(context.Background()) || !slices.Contains(w.seen(), "reload") {
+		t.Fatalf("no reload for a gone rule: %v", w.seen())
+	}
+	if !strings.Contains(logs.String(), "window rules") {
+		t.Errorf("not logged: %s", logs.String())
+	}
+}
+
+// CheckRules shows a draft as compositor.state does the saved rules: the
+// issues, and the rows by the facts' supports; only the issues with no
+// writer
+func TestCheckRules(t *testing.T) {
+	t.Parallel()
+	draft, err := jsonx.Unmarshal([]byte(`{"rules":[
+		{"id":"a","enabled":true,"windows":[{"conditions":[{"field":"appId","op":"is","value":"x"}]}],"window":{"float":true,"pin":true}},
+		{"id":"b","enabled":true,"windows":[],"window":{"float":true}}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := newHarness(t, "detached")
+	h.m.SetFacts(Facts{Kind: "hyprland", Supports: map[string]bool{}})
+	got := h.m.CheckRules(context.Background(), draft)
+	if s := string(jsonx.MarshalCompact(got.Value("issues"))); !strings.Contains(s, `"rule":"b"`) {
+		t.Errorf("issues: %s", s)
+	}
+	if s := string(jsonx.MarshalCompact(got.Value("rules"))); s != `[{"rule":"a","written":["float"],"placed":[],"dropped":["pin"],"live":[],"skipped":[]}]` {
+		t.Errorf("rows: %s", s)
+	}
+	bare := &Manager{o: Options{Config: func() *jsonx.Object { return jsonx.NewObject() }}}
+	got = bare.CheckRules(context.Background(), draft)
+	if s := string(jsonx.MarshalCompact(got.Value("rules"))); s != "[]" {
+		t.Errorf("rows with no writer: %s", s)
+	}
+	if !strings.Contains(string(jsonx.MarshalCompact(got.Value("issues"))), `"rule":"b"`) {
+		t.Error("no issues with no writer")
 	}
 }

@@ -24,7 +24,11 @@
     "windowBlur": true,
     "blur": true,
     "windowShadow": true,
-    "windowDim": true
+    "windowDim": true,
+    "ruleMaximize": true,
+    "ruleTearing": true,
+    "ruleNoScreenShare": true,
+    "ruleXwayland": true
   },
   "fx": true,
   "ctx": {

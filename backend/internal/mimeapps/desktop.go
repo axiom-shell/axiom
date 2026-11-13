@@ -24,6 +24,8 @@ type Entry struct {
 	// (X-TerminalArgExec, xdg-terminal-exec's; "-e" when it says none)
 	TerminalArg string `json:"-"`
 	Path        string `json:"-"` // the file
+	// WMClass is StartupWMClass: the class an X11 or Electron window has
+	WMClass string `json:"-"`
 }
 
 // handles: the entry declares the type (MimeType=)
@@ -86,6 +88,8 @@ func readEntry(path, id string, lookPath func(string) (string, error)) (Entry, b
 			e.Categories = list(v)
 		case "X-TerminalArgExec":
 			e.TerminalArg = v
+		case "StartupWMClass":
+			e.WMClass = v
 		}
 	}
 	if kind != "Application" || hidden || e.Exec == "" {
@@ -269,4 +273,34 @@ func splitExec(s string) []string {
 		words = append(words, b.String())
 	}
 	return words
+}
+
+// WindowAppIDs are the app ids an installed app's windows have, for a
+// window rule's `app` condition: its desktop id less ".desktop", and its
+// StartupWMClass when it has one (X11 and Electron windows). The first
+// folder holding the entry wins (DataHome, then DataDirs); nil when none
+// does or it isn't an application.
+func WindowAppIDs(o Options, desktopID string) []string {
+	if desktopID == "" || strings.ContainsRune(desktopID, '/') {
+		return nil
+	}
+	for _, dir := range append([]string{o.DataHome}, o.DataDirs...) {
+		if dir == "" {
+			continue
+		}
+		path := filepath.Join(dir, "applications", desktopID)
+		if _, err := os.Stat(path); err != nil {
+			continue
+		}
+		e, ok := readEntry(path, desktopID, nil)
+		if !ok {
+			return nil
+		}
+		ids := []string{strings.TrimSuffix(desktopID, ".desktop")}
+		if e.WMClass != "" && e.WMClass != ids[0] {
+			ids = append(ids, e.WMClass)
+		}
+		return ids
+	}
+	return nil
 }

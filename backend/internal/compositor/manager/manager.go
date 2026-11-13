@@ -46,6 +46,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/takeover"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/mimeapps"
 	"github.com/axiom-shell/axiom/backend/internal/session"
 )
 
@@ -73,6 +74,10 @@ type Options struct {
 	// LookPath finds a program (default exec.LookPath): the input method
 	// frameworks installed (Facts.Frameworks)
 	LookPath func(string) (string, error)
+	// AppIDs gives an installed app's window app ids (default
+	// mimeapps.WindowAppIDs on the environment's folders): a window rule's
+	// `app` condition
+	AppIDs func(desktopID string) []string
 	// Bin: the binary (the daemon's own, /proc/self/exe) a bind merge
 	// reads Hyprland's files in, a child with its memory limited
 	// (binds.Options.Isolate); "" reads them in this process
@@ -158,6 +163,10 @@ type Manager struct {
 // (and it does nothing) under none of axiom's config modes' compositors.
 func New(o Options) *Manager {
 	o.Getenv = ipc.LiveEnv(o.Getenv)
+	if o.AppIDs == nil {
+		dirs := mimeapps.FromEnv(o.Getenv)
+		o.AppIDs = func(id string) []string { return mimeapps.WindowAppIDs(dirs, id) }
+	}
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
 	m.kind = ipc.Detect(o.Getenv)
 	m.st = loadState(o.RuntimeFile, Instance(o.Getenv))
@@ -402,6 +411,7 @@ func (m *Manager) buildInputs() Inputs {
 	if f != nil {
 		copied := *f
 		copied.Frameworks = m.frameworks()
+		copied.AppIDs = m.o.AppIDs
 		f = &copied
 	}
 	return buildInputs(m.o.Config(), f, outputs)
@@ -421,6 +431,32 @@ func (m *Manager) frameworks() []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// CheckRules is what the editor shows of a WindowRules section not yet
+// saved (its defaults filled): its issues and what this compositor's
+// config would apply of each usable rule, as compositor.state's
+// windowRules. Only the issues under a compositor with no writer.
+func (m *Manager) CheckRules(ctx context.Context, section any) *jsonx.Object {
+	var report *jsonx.Object
+	check := func(f *Facts) {
+		keybinds, _ := config.Lookup(m.o.Config(), config.Keys("Keybinds"))
+		_, report = windowRules(section, keybinds, f)
+	}
+	if m.w == nil {
+		check(&Facts{})
+		return report
+	}
+	m.do(ctx, func(context.Context) {
+		f := &Facts{}
+		if m.facts != nil {
+			copied := *m.facts
+			f = &copied
+		}
+		f.AppIDs = m.o.AppIDs
+		check(f)
+	})
+	return report
 }
 
 // OutputsChanged tells of an output connected or gone (the daemon's
@@ -579,8 +615,9 @@ func (m *Manager) state() *jsonx.Object {
 	}
 	complete := jsonx.Arr()
 	skipped, conflicts := jsonx.Arr(), jsonx.Arr()
-	var fs, look any
+	var fs, look, rules any
 	if m.live() {
+		rules = m.in.get("windowRulesReport")
 		for _, b := range itemsOf(activeBinds(m.in)) {
 			if m.w.complete(m.in, b) {
 				complete.Append(b)
@@ -608,7 +645,8 @@ func (m *Manager) state() *jsonx.Object {
 		"takeoverPending", m.takeoverPending, "managedCheck", check, "managedBlockedBy", by, "managedBlockedRepo", repo,
 		"monitorConflicts", conflicts, "skippedKeys", skipped, "complete", complete, "merging", m.merging,
 		"lastMerge", m.lastMerge, "mergeable", m.mergeable, "runningConfig", m.w.runningConfig(m.in),
-		"releaseProblem", m.releaseProblem, "files", fs, "look", look, "monitorProfile", monitorProfile)
+		"releaseProblem", m.releaseProblem, "files", fs, "look", look, "monitorProfile", monitorProfile,
+		"windowRules", rules)
 }
 
 // push sends the state when it changed
@@ -761,7 +799,7 @@ func (m *Manager) Teardown(ctx context.Context) {
 	if steps := m.teardownSteps(); len(steps) > 0 {
 		session.RunSteps(context.WithoutCancel(ctx), m.kind, m.StepEnv(), steps, func(f string, a ...any) { m.logf(f, a...) })
 	}
-	m.st.NiriWrapper, m.st.SwayUnbinds, m.st.LiveApplied, m.st.LiveCursor, m.st.RuntimeOn = false, nil, "", "", false
+	m.st.NiriWrapper, m.st.SwayUnbinds, m.st.SwayRules, m.st.LiveApplied, m.st.LiveCursor, m.st.RuntimeOn = false, nil, nil, "", "", false
 	m.runtimeOn = false
 	m.st.save()
 }
@@ -1219,6 +1257,9 @@ func (m *Manager) fileText() (string, string) {
 // reloaded.
 func (m *Manager) undoLive(ctx context.Context) bool {
 	dropped := m.droppedParts()
+	if m.runtimeOn && m.w.runtimeRulesGone(m.in) {
+		dropped = append(dropped, "window rules")
+	}
 	if len(dropped) == 0 {
 		return false
 	}
@@ -1231,7 +1272,7 @@ func (m *Manager) undoLive(ctx context.Context) bool {
 			return false
 		}
 	}
-	m.logf("Window look or input turned off (%s); reloading the compositor's config to take it back", strings.Join(dropped, ", "))
+	m.logf("Window look, input or rules turned off (%s); reloading the compositor's config to take it back", strings.Join(dropped, ", "))
 	m.w.reload(ctx)
 	return true
 }

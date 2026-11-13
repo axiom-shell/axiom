@@ -110,7 +110,8 @@ func (w *hyprWriter) module(in Inputs, spec any, path string) string {
 		"blur", strs(w.tables.BlurLua(getAny(spec, "surfaces"))),
 		"layers", strs(w.tables.LayerRulesLua()),
 		"monitors", w.monitorCalls(in, path),
-		"strips", strs(w.stripsLua(in))))
+		"strips", strs(w.stripsLua(in)),
+		"rules", orNil(in.get("windowRules"), jsonx.Arr())))
 }
 
 func (w *hyprWriter) managedText(in Inputs, spec any) string {
@@ -191,6 +192,21 @@ func (w *hyprWriter) setCursor(ctx context.Context, cursor any) { w.ipc.SetCurso
 // unbound before the binds are read, so they don't look like the user's
 const hyprUnbindLua = "for _, key in ipairs(AXIOM_RUNTIME_KEYS or {}) do hl.unbind(key) end\nAXIOM_RUNTIME_KEYS = nil"
 
+// hyprRulesOffLua turns off the window rules the runtime layer added
+// (AXIOM_RULES, their handles), which a reload drops along with the global
+const hyprRulesOffLua = "for _, r in ipairs(AXIOM_RULES or {}) do pcall(function() r:set_enabled(false) end) end\nAXIOM_RULES = nil"
+
+// hyprRuntimeRules are the window rules (HyprRuleLines) as the runtime
+// layer adds them: the last ones off, then each added, turned on and
+// recorded, in its own pcall so one Hyprland refuses doesn't stop the rest
+func hyprRuntimeRules(lines []string) []string {
+	out := []string{hyprRulesOffLua, "AXIOM_RULES = {}"}
+	for _, l := range lines {
+		out = append(out, "pcall(function() local r = "+l+"; r:set_enabled(true); AXIOM_RULES[#AXIOM_RULES + 1] = r end)")
+	}
+	return out
+}
+
 func (w *hyprWriter) runtimeApply(ctx context.Context, in Inputs, live func() []string) {
 	entries, animations, ok := w.runtime.read(func() (any, any, bool) {
 		w.eval(ctx, hyprUnbindLua)
@@ -228,6 +244,7 @@ func (w *hyprWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 	}
 	lines = append(lines, live()...)
 	lines = append(lines, render.StripsRuntimeLua(w.stripsLua(in), in.str("stripsKey"))...)
+	lines = append(lines, hyprRuntimeRules(strList(in.get("windowRules")))...)
 	w.eval(ctx, strings.Join(lines, "\n"))
 }
 
@@ -240,8 +257,10 @@ func getIndex(v any, i int) any {
 
 func (w *hyprWriter) runtimeClear(ctx context.Context) {
 	w.runtime.clear()
-	w.eval(ctx, hyprUnbindLua)
+	w.eval(ctx, hyprUnbindLua+"\n"+hyprRulesOffLua)
 }
+
+func (w *hyprWriter) runtimeRulesGone(Inputs) bool { return false }
 
 func (w *hyprWriter) skippedKeys() []string { return w.runtime.skipped }
 
@@ -294,7 +313,7 @@ func (w *hyprWriter) seenReload() { w.runtime.reloads.Add(1) }
 func (w *hyprWriter) teardownSteps(in Inputs, partial bool) []session.Step {
 	var steps []session.Step
 	if partial {
-		steps = append(steps, session.Step{Op: "eval", Lines: []string{hyprUnbindLua}})
+		steps = append(steps, session.Step{Op: "eval", Lines: []string{hyprUnbindLua, hyprRulesOffLua}})
 	} else {
 		steps = append(steps, session.Step{Op: "reload"})
 	}
