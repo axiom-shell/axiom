@@ -163,6 +163,33 @@ func TestHyprRuleLines(t *testing.T) {
 			t.Fatalf("%q %v", got, left)
 		}
 	})
+	t.Run("a live kind's look gets a tag rule after its kind lines", func(t *testing.T) {
+		t.Parallel()
+		fx := windowrules.WindowEffects{Float: true, Opacity: 50, NoBlur: true}
+		got, _ := HyprRuleLines(RuleSet{Rules: []windowrules.Rule{
+			rule("r", fx, one, conds{cond(windowrules.FieldProcess, is, "p")}),
+		}, Supports: hyprSupports})
+		tag := `hl.window_rule({ name = "axiom-rule-r-tag", match = { tag = "axiom-rule-r" }, opacity = "0.5 override", no_blur = true })`
+		if len(got) != 2 || !strings.Contains(got[0], `"axiom-rule-r-0"`) || got[1] != tag {
+			t.Fatalf("%q", got)
+		}
+	})
+	t.Run("no tag rule without a live kind, a look, or when it is dropped", func(t *testing.T) {
+		t.Parallel()
+		live := conds{cond(windowrules.FieldProcess, is, "p")}
+		for name, r := range map[string]windowrules.Rule{
+			"no live kind":   rule("r", windowrules.WindowEffects{Opacity: 50}, one),
+			"placement only": rule("r", windowrules.WindowEffects{Float: true}, live),
+			"dropped":        rule("r", windowrules.WindowEffects{NoBlur: true}, live),
+		} {
+			got, _ := HyprRuleLines(RuleSet{Rules: []windowrules.Rule{r}, Supports: supports("windowOpacity")})
+			for _, line := range got {
+				if strings.Contains(line, "-tag") {
+					t.Errorf("%s: %q", name, line)
+				}
+			}
+		}
+	})
 	t.Run("lower priority first", func(t *testing.T) {
 		t.Parallel()
 		got, _ := HyprRuleLines(RuleSet{Rules: []windowrules.Rule{rule("hi", float, one), rule("lo", float, one)}, Supports: hyprSupports})
@@ -213,7 +240,6 @@ func TestNiriRuleNodes(t *testing.T) {
 	}{
 		{"monitor", windowrules.WindowEffects{Monitor: "DP-1"}, `open-on-output "DP-1"`},
 		{"workspace name", windowrules.WindowEffects{Workspace: "w"}, `open-on-workspace "w"`},
-		{"workspace name follow", windowrules.WindowEffects{Workspace: "w", Follow: true}, `open-on-workspace "w"`},
 		{"float", windowrules.WindowEffects{Float: true}, `open-floating true`},
 		{"size", windowrules.WindowEffects{Width: 800, Height: 600}, "default-column-width {\n        fixed 800\n    }\n    default-window-height {\n        fixed 600\n    }"},
 		{"fullscreen", windowrules.WindowEffects{Fullscreen: true}, `open-fullscreen true`},
@@ -233,6 +259,14 @@ func TestNiriRuleNodes(t *testing.T) {
 			}
 		})
 	}
+	t.Run("follow: the node is written, the daemon follows", func(t *testing.T) {
+		t.Parallel()
+		got, left := niriText(t, []windowrules.Rule{rule("r", windowrules.WindowEffects{Workspace: "w", Follow: true}, one)}, nil)
+		want := "window-rule {\n" + m + "    open-on-workspace \"w\"\n}"
+		if got != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "r", Placed: []string{"follow"}}}) {
+			t.Fatalf("%q %v", got, left)
+		}
+	})
 	t.Run("numbered workspace is placed", func(t *testing.T) {
 		t.Parallel()
 		got, left := niriText(t, []windowrules.Rule{rule("r", windowrules.WindowEffects{Workspace: "3"}, one)}, nil)

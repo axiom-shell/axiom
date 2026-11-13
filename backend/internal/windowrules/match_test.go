@@ -91,3 +91,33 @@ func TestMatch(t *testing.T) {
 		t.Errorf("indices = %v", got)
 	}
 }
+
+func TestMatchKinds(t *testing.T) {
+	t.Parallel()
+	rules := []Rule{
+		{ID: "a", Kinds: []Kind{kind(cond(FieldAppID, OpIs, "x")), kind(cond(FieldTitle, OpIs, "t"))}},
+		{ID: "b", Kinds: []Kind{kind(cond(FieldAppID, OpIs, "nope"))}},
+		{ID: "c", Kinds: []Kind{kind(cond(FieldTitle, OpIs, "t"))}},
+	}
+	m := NewMatcher(rules, nil, true)
+	for name, tc := range map[string]struct {
+		f    Facts
+		want []KindMatch
+	}{
+		"second kind only": {Facts{AppID: "y", Title: "t"}, []KindMatch{{0, []int{1}}, {2, []int{0}}}},
+		"both kinds":       {Facts{AppID: "x", Title: "t"}, []KindMatch{{0, []int{0, 1}}, {2, []int{0}}}},
+		"none":             {Facts{AppID: "y"}, nil},
+	} {
+		got := m.MatchKinds(tc.f)
+		if !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("%s: %v, want %v", name, got, tc.want)
+		}
+		var idx []int
+		for _, km := range tc.want {
+			idx = append(idx, km.Rule)
+		}
+		if !reflect.DeepEqual(m.Match(tc.f), idx) {
+			t.Errorf("%s: Match %v, want %v", name, m.Match(tc.f), idx)
+		}
+	}
+}

@@ -36,10 +36,6 @@ type Unwritten struct {
 	Dropped []string // effects (schema keys) the compositor can't do: never applied
 }
 
-// ruleEffects are the effect keys in the order they're written.
-var ruleEffects = []string{"monitor", "workspace", "special", "float", "size", "center", "fullscreen",
-	"maximize", "pin", "opacity", "noBlur", "noFocus", "noScreenShare", "tearing"}
-
 // ruleGates are the capability each gated effect needs (read-only).
 var ruleGates = map[string]string{"special": "namedSpecial", "maximize": "ruleMaximize", "pin": "pin", "opacity": "windowOpacity",
 	"noBlur": "windowBlur", "noScreenShare": "ruleNoScreenShare", "tearing": "ruleTearing"}
@@ -126,49 +122,9 @@ func compile(set RuleSet, p rulePrinter) ([]compiledRule, []Unwritten) {
 	return out, left
 }
 
-// RuleEffects are the effects (schema keys) a rule sets, in the order they're written.
-func RuleEffects(w windowrules.WindowEffects) []string {
-	var keys []string
-	for _, key := range ruleEffects {
-		if ruleSet(w, key) {
-			keys = append(keys, key)
-		}
-	}
-	return keys
-}
-
-// ruleSet is whether the rule sets the effect (its value isn't "unset").
-func ruleSet(w windowrules.WindowEffects, key string) bool {
-	switch key {
-	case "monitor":
-		return w.Monitor != ""
-	case "workspace":
-		return w.Workspace != ""
-	case "special":
-		return w.Special.ID != ""
-	case "float":
-		return w.Float
-	case "size":
-		return w.Width != 0 && w.Height != 0
-	case "center":
-		return w.Center
-	case "fullscreen":
-		return w.Fullscreen
-	case "maximize":
-		return w.Maximize
-	case "pin":
-		return w.Pin
-	case "opacity":
-		return w.Opacity != 0
-	case "noBlur":
-		return w.NoBlur
-	case "noFocus":
-		return w.NoFocus
-	case "noScreenShare":
-		return w.NoScreenShare
-	}
-	return w.Tearing
-}
+// RuleEffects are the effects (schema keys) a rule sets, in the order they're
+// written (windowrules.WindowEffects.Keys).
+func RuleEffects(w windowrules.WindowEffects) []string { return w.Keys() }
 
 func isDigits(s string) bool { return s != "" && strings.Trim(s, "0123456789") == "" }
 
@@ -176,23 +132,66 @@ func opacityText(pct int) string { return fmtNum(float64(pct) / 100) }
 
 // --- Hyprland ---
 
-// HyprRuleLines are the rules as Hyprland Lua `hl.window_rule` lines.
+// HyprRuleLines are the rules as Hyprland Lua `hl.window_rule` lines. A rule
+// with a live kind also gets a tag rule for the look effects the daemon gives
+// a window it matches itself (Placement in docs/dev/features/window-rules.md);
+// place.hypr tags the window.
 func HyprRuleLines(set RuleSet) ([]string, []Unwritten) {
 	rules, left := compile(set, rulePrinter{placed: func(string, windowrules.WindowEffects) bool { return false }})
-	var lines []string
+	byRule := map[string]compiledRule{}
 	for _, c := range rules {
-		w := c.rule.Window
-		var fx []string
-		for _, key := range c.effects {
-			fx = append(fx, hyprEffect(key, w))
+		byRule[c.rule.ID] = c
+	}
+	dropped := map[string][]string{}
+	for _, u := range left {
+		dropped[u.Rule] = u.Dropped
+	}
+	var lines []string
+	// Lowest priority first: the higher rule lands last and wins
+	for _, r := range slices.Backward(set.Rules) {
+		if c, ok := byRule[r.ID]; ok {
+			w := c.rule.Window
+			var fx []string
+			for _, key := range c.effects {
+				// follow is part of the workspace line
+				if key != "follow" {
+					fx = append(fx, hyprEffect(key, w))
+				}
+			}
+			for _, k := range c.kinds {
+				name := "axiom-rule-" + c.rule.ID + "-" + strconv.Itoa(k.index)
+				lines = append(lines, "hl.window_rule({ name = "+LuaString(name)+", match = { "+hyprMatch(k)+" }, "+strings.Join(fx, ", ")+" })")
+			}
 		}
-		for _, k := range c.kinds {
-			name := "axiom-rule-" + c.rule.ID + "-" + strconv.Itoa(k.index)
-			lines = append(lines, "hl.window_rule({ name = "+LuaString(name)+", match = { "+hyprMatch(k)+" }, "+strings.Join(fx, ", ")+" })")
+		if tag := hyprTagRule(r, dropped[r.ID]); tag != "" {
+			lines = append(lines, tag)
 		}
 	}
 	return lines, left
 }
+
+// hyprTagRule is the tag rule giving a rule's look to the windows the daemon
+// tags (place.hypr's look step): "" when the rule has no live kind or no look
+// effect left.
+func hyprTagRule(r windowrules.Rule, dropped []string) string {
+	if !slices.ContainsFunc(r.Kinds, windowrules.Kind.Live) {
+		return ""
+	}
+	var fx []string
+	for _, key := range r.Window.Keys() {
+		if windowrules.LookKey(key) && !slices.Contains(dropped, key) {
+			fx = append(fx, hyprEffect(key, r.Window))
+		}
+	}
+	if len(fx) == 0 {
+		return ""
+	}
+	tag := HyprTag(r.ID)
+	return "hl.window_rule({ name = " + LuaString(tag+"-tag") + ", match = { tag = " + LuaString(tag) + " }, " + strings.Join(fx, ", ") + " })"
+}
+
+// HyprTag is the tag a rule's look rule matches (an ItemId, valid in a tag).
+func HyprTag(ruleID string) string { return "axiom-rule-" + ruleID }
 
 func hyprMatch(k ruleKind) string {
 	var m []string
@@ -253,7 +252,10 @@ func hyprEffect(key string, w windowrules.WindowEffects) string {
 // NiriRuleNodes are the rules as niri `window-rule` nodes (KdlSerialize prints them).
 func NiriRuleNodes(set RuleSet) (*jsonx.Array, []Unwritten) {
 	rules, left := compile(set, rulePrinter{
-		placed: func(key string, w windowrules.WindowEffects) bool { return key == "workspace" && isDigits(w.Workspace) },
+		// niri has no following form of open-on-workspace: the daemon focuses the window
+		placed: func(key string, w windowrules.WindowEffects) bool {
+			return key == "follow" || key == "workspace" && isDigits(w.Workspace)
+		},
 		cannot: []string{"special", "pin", "tearing"},
 	})
 	out := jsonx.Arr()

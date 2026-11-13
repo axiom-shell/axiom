@@ -256,3 +256,64 @@ func list(o *jsonx.Object, key string) []any {
 	}
 	return nil
 }
+
+// effectKeys are the effect keys (schema keys) in the order a compositor's
+// config writes them; follow comes with workspace (Keys).
+var effectKeys = []string{"monitor", "workspace", "follow", "special", "float", "size", "center", "fullscreen",
+	"maximize", "pin", "opacity", "noBlur", "noFocus", "noScreenShare", "tearing"}
+
+// Keys are the effects (schema keys) a rule sets, in the order they're
+// written; follow is listed only with a workspace.
+func (w WindowEffects) Keys() []string {
+	var keys []string
+	for _, key := range effectKeys {
+		if w.has(key) {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
+
+// has is whether the rule sets the effect (its value isn't "unset").
+func (w WindowEffects) has(key string) bool {
+	switch key {
+	case "monitor":
+		return w.Monitor != ""
+	case "workspace":
+		return w.Workspace != ""
+	case "follow":
+		return w.Follow && w.Workspace != ""
+	case "special":
+		return w.Special.ID != ""
+	case "float":
+		return w.Float
+	case "size":
+		return w.Width != 0 && w.Height != 0
+	case "center":
+		return w.Center
+	case "fullscreen":
+		return w.Fullscreen
+	case "maximize":
+		return w.Maximize
+	case "pin":
+		return w.Pin
+	case "opacity":
+		return w.Opacity != 0
+	case "noBlur":
+		return w.NoBlur
+	case "noFocus":
+		return w.NoFocus
+	case "noScreenShare":
+		return w.NoScreenShare
+	case "tearing":
+		return w.Tearing
+	}
+	return false
+}
+
+// LookKey is whether the effect is a rule's look, which the daemon can give
+// an open window by its own commands or a tag (opacity, noBlur,
+// noScreenShare, tearing).
+func LookKey(key string) bool {
+	return key == "opacity" || key == "noBlur" || key == "noScreenShare" || key == "tearing"
+}

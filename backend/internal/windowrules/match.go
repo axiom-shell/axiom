@@ -24,6 +24,7 @@ type Matcher struct {
 
 // compiledKind is a lowered kind with its patterns compiled.
 type compiledKind struct {
+	index int // its place in the rule's Kinds
 	tests []compiledTest
 	flags []Flag
 }
@@ -41,8 +42,9 @@ type compiledTest struct {
 func NewMatcher(rules []Rule, apps AppIDs, xwayland bool) Matcher {
 	m := Matcher{rules: make([][]compiledKind, len(rules))}
 	for i, r := range rules {
-		for _, k := range r.Kinds {
+		for ki, k := range r.Kinds {
 			if ck, ok := compileKind(k, apps, xwayland); ok {
+				ck.index = ki
 				m.rules[i] = append(m.rules[i], ck)
 			}
 		}
@@ -71,17 +73,36 @@ func compileKind(k Kind, apps AppIDs, xwayland bool) (compiledKind, bool) {
 	return ck, true
 }
 
+// KindMatch is a rule (its index in NewMatcher's order) and the kinds of it
+// that match: indices into Rule.Kinds.
+type KindMatch struct {
+	Rule  int
+	Kinds []int
+}
+
+// MatchKinds is, for each rule one of whose kinds matches f, which kinds do.
+func (m Matcher) MatchKinds(f Facts) []KindMatch {
+	var out []KindMatch
+	for i, kinds := range m.rules {
+		var hit []int
+		for _, k := range kinds {
+			if k.matches(f) {
+				hit = append(hit, k.index)
+			}
+		}
+		if hit != nil {
+			out = append(out, KindMatch{Rule: i, Kinds: hit})
+		}
+	}
+	return out
+}
+
 // Match is the indices of the rules (in NewMatcher's order) one of whose
 // kinds matches f.
 func (m Matcher) Match(f Facts) []int {
 	var out []int
-	for i, kinds := range m.rules {
-		for _, k := range kinds {
-			if k.matches(f) {
-				out = append(out, i)
-				break
-			}
-		}
+	for _, km := range m.MatchKinds(f) {
+		out = append(out, km.Rule)
 	}
 	return out
 }

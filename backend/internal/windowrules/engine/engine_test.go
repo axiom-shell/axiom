@@ -2,8 +2,11 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"reflect"
+	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -13,6 +16,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/procinfo"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
+	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
 
 const grace = 50 * time.Millisecond
@@ -32,10 +36,13 @@ type rig struct {
 	sent    int
 }
 
-func newRig(t *testing.T) *rig {
+func newRig(t *testing.T) *rig { return newRigWith(t, nil) }
+
+// newRigWith is newRig with its options adjusted first.
+func newRigWith(t *testing.T, adjust func(*Options)) *rig {
 	t.Helper()
 	r := &rig{t: t, script: make(chan windows.Event, 16), lookups: map[int]int{}, procs: map[int]procinfo.Process{}, done: make(chan error, 1), now: time.Date(2026, 11, 13, 12, 0, 0, 0, time.UTC)}
-	r.e = New(Options{
+	o := Options{
 		Events: func(ctx context.Context, out chan<- windows.Event) error {
 			defer r.ended.Store(true)
 			for {
@@ -70,7 +77,11 @@ func newRig(t *testing.T) *rig {
 			r.changes = append(r.changes, s)
 			r.mu.Unlock()
 		},
-	})
+	}
+	if adjust != nil {
+		adjust(&o)
+	}
+	r.e = New(o)
 	return r
 }
 
@@ -382,5 +393,326 @@ func TestRunWaitsForEvents(t *testing.T) {
 	}
 	if !r.ended.Load() {
 		t.Error("the events goroutine outlived Run")
+	}
+}
+
+// placed is one batch the fake Place was given.
+type placed struct {
+	at    time.Time
+	id    string
+	steps []windowrules.Step
+}
+
+// placer is a fake compositor: it records what it is sent.
+type placer struct {
+	mu    sync.Mutex
+	calls []placed
+	fail  map[int]bool // batch numbers (0-based, over all calls) that error
+}
+
+func (p *placer) place(ctx context.Context, id string, steps []windowrules.Step) error {
+	p.mu.Lock()
+	n := len(p.calls)
+	p.calls = append(p.calls, placed{time.Now(), id, steps})
+	fail := p.fail[n]
+	p.mu.Unlock()
+	if fail {
+		return errors.New("refused")
+	}
+	return nil
+}
+
+func (p *placer) got() []placed {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return slices.Clone(p.calls)
+}
+
+// kinds are the step kinds of each batch, as one string per batch.
+func kindsOf(calls []placed) []string {
+	var out []string
+	for _, c := range calls {
+		var ks []string
+		for _, s := range c.steps {
+			ks = append(ks, string(s.Kind))
+		}
+		out = append(out, c.id+":"+strings.Join(ks, ","))
+	}
+	return out
+}
+
+const settle = 20 * time.Millisecond
+
+// placeRig is a rig with a fake compositor and clock; foot's process is known.
+func placeRig(t *testing.T) (*rig, *placer) {
+	t.Helper()
+	p := &placer{}
+	r := newRigWith(t, func(o *Options) {
+		o.Place = p.place
+		o.Settle = settle
+		o.PlaceGrace = 200 * time.Millisecond
+	})
+	r.procs[10] = procinfo.Process{PID: 10, Name: "foot"}
+	return r, p
+}
+
+const procFoot = `{"field":"process","op":"is","value":"foot"}`
+
+func placeRule(id, cond, window string) string {
+	return `{"id":"` + id + `","enabled":true,"windows":[{"conditions":[` + cond + `]}],"window":` + window + `,"shell":{}}`
+}
+
+// report is compositor.state's windowRules with one live kind (index 0) per rule,
+// or the given rows.
+func report(t *testing.T, rows ...string) any {
+	return section(t, `{"issues":[],"rules":[`+strings.Join(rows, ",")+`]}`)
+}
+
+func liveRow(id string) string {
+	return `{"rule":"` + id + `","placed":[],"dropped":[],"live":[0],"skipped":[]}`
+}
+
+func footWin(id string) windows.Window {
+	w := win(id, "foot")
+	w.PID = 10
+	return w
+}
+
+// settled waits until no more batches arrive for a while.
+func (p *placer) settled() []placed {
+	time.Sleep(testkit.Bound(6 * settle))
+	return p.got()
+}
+
+func TestPlaceOnOpenedNotReset(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true,"size":{"width":400,"height":300}}`)), nil)
+	r.e.SetReport(report(t, liveRow("p")))
+	r.run()
+	r.send(windows.Reset, footWin("1"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	if calls := p.settled(); len(calls) != 0 {
+		t.Fatalf("a Reset window was placed: %v", kindsOf(calls))
+	}
+	r.send(windows.Opened, footWin("2"))
+	if !testkit.Eventually(func() bool { return len(p.got()) == 2 }) {
+		t.Fatalf("batches: %v", kindsOf(p.got()))
+	}
+	calls := p.got()
+	if got := kindsOf(calls); !reflect.DeepEqual(got, []string{"2:float", "2:size"}) {
+		t.Errorf("batches %v", got)
+	}
+	if gap := calls[1].at.Sub(calls[0].at); gap < settle {
+		t.Errorf("batches %v apart, want at least %v", gap, settle)
+	}
+	if calls[1].steps[0].Width != 400 || calls[1].steps[0].Height != 300 {
+		t.Errorf("size step %+v", calls[1].steps[0])
+	}
+	// A later change places nothing more
+	w := footWin("2")
+	w.Title = "again"
+	r.send(windows.Changed, w)
+	if got := p.settled(); len(got) != 2 {
+		t.Errorf("placed again: %v", kindsOf(got))
+	}
+}
+
+func TestPlaceLateTitle(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	titled := `{"field":"title","op":"is","value":"late"}`
+	r.e.SetConfig(rulesOf(t, placeRule("p", procFoot+","+titled, `{"float":true}`)), nil)
+	r.e.SetReport(report(t, liveRow("p")))
+	r.run()
+	r.send(windows.Reset)
+	r.send(windows.Opened, footWin("1"))
+	r.send(windows.Opened, footWin("2"))
+	if !testkit.Eventually(func() bool { return len(r.e.Windows()) == 2 }) {
+		t.Fatal("windows not in the table")
+	}
+	// 1's title comes within the grace, 2's after it
+	r.advance(100 * time.Millisecond)
+	w := footWin("1")
+	w.Title = "late"
+	r.send(windows.Changed, w)
+	r.waitFor("1 matched", func(s State) bool { return len(s.Rules) == 1 })
+	r.advance(150 * time.Millisecond)
+	w = footWin("2")
+	w.Title = "late"
+	r.send(windows.Changed, w)
+	r.waitFor("2 matched", func(s State) bool { return len(s.Rules[0].Windows) == 2 })
+	if got := kindsOf(p.settled()); !reflect.DeepEqual(got, []string{"1:float"}) {
+		t.Errorf("batches %v", got)
+	}
+}
+
+func TestPlaceOnceAndNotForLaterRules(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true}`)), nil)
+	r.e.SetReport(report(t, liveRow("p")))
+	r.run()
+	r.send(windows.Reset)
+	r.send(windows.Opened, footWin("1"))
+	if !testkit.Eventually(func() bool { return len(p.got()) == 1 }) {
+		t.Fatal("not placed")
+	}
+	// A rule added after placement doesn't place a window already placed
+	r.e.SetConfig(rulesOf(t, placeRule("q", procFoot, `{"workspace":"3"}`), placeRule("p", procFoot, `{"float":true}`)), nil)
+	r.e.SetReport(report(t, liveRow("p"), liveRow("q")))
+	r.waitFor("both match", func(s State) bool { return len(s.Rules) == 2 })
+	if got := p.settled(); len(got) != 1 {
+		t.Errorf("placed again: %v", kindsOf(got))
+	}
+}
+
+func TestPlaceWrittenKinds(t *testing.T) {
+	t.Parallel()
+	for name, tc := range map[string]struct {
+		row  string
+		want []string
+	}{
+		"nothing placed":      {`{"rule":"p","placed":[],"dropped":[],"live":[],"skipped":[]}`, nil},
+		"workspace is placed": {`{"rule":"p","placed":["workspace"],"dropped":[],"live":[],"skipped":[]}`, []string{"1:move"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			r, p := placeRig(t)
+			r.e.SetConfig(rulesOf(t, placeRule("p", appFoot, `{"float":true,"workspace":"3"}`)), nil)
+			r.e.SetReport(report(t, tc.row))
+			r.run()
+			r.send(windows.Reset)
+			r.send(windows.Opened, footWin("1"))
+			r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+			if got := kindsOf(p.settled()); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("batches %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPlaceWaitsForTheReport(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true}`)), nil)
+	r.run()
+	r.send(windows.Reset)
+	r.send(windows.Opened, footWin("1"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	if got := p.settled(); len(got) != 0 {
+		t.Fatalf("placed without a report: %v", kindsOf(got))
+	}
+	// A report within the grace places it
+	r.advance(50 * time.Millisecond)
+	r.e.SetReport(report(t, liveRow("p")))
+	if !testkit.Eventually(func() bool { return len(p.got()) == 1 }) {
+		t.Fatal("not placed once the report came")
+	}
+}
+
+func TestApplyNow(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", appFoot, `{"workspace":"3","follow":true}`)), nil)
+	// The kind is written: only Apply gives the window the rule
+	r.e.SetReport(report(t, `{"rule":"p","placed":[],"dropped":[],"live":[],"skipped":[]}`))
+	r.run()
+	r.send(windows.Reset, footWin("1"), footWin("2"), win("3", "other"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	n, err := r.e.Apply(context.Background())
+	if err != nil || n != 2 {
+		t.Fatalf("Apply: %d %v", n, err)
+	}
+	if !testkit.Eventually(func() bool { return len(p.got()) == 2 }) {
+		t.Fatalf("batches %v", kindsOf(p.got()))
+	}
+	got := kindsOf(p.got())
+	slices.Sort(got)
+	if !reflect.DeepEqual(got, []string{"1:move", "2:move"}) {
+		t.Errorf("batches %v (no focus: Apply never follows)", got)
+	}
+}
+
+func TestApplyNowSkipsWindowsInGrace(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", appFoot, `{"fullscreen":true}`)), nil)
+	r.e.SetReport(report(t, `{"rule":"p","placed":[],"dropped":[],"live":[],"skipped":[]}`))
+	r.run()
+	r.send(windows.Reset)
+	r.send(windows.Opened, footWin("1"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	// placePass owns a window within its grace
+	if n, err := r.e.Apply(context.Background()); err != nil || n != 0 {
+		t.Fatalf("Apply in grace: %d %v", n, err)
+	}
+	r.advance(time.Second)
+	if n, err := r.e.Apply(context.Background()); err != nil || n != 1 {
+		t.Fatalf("Apply after grace: %d %v", n, err)
+	}
+	if !testkit.Eventually(func() bool { return len(p.got()) == 1 }) {
+		t.Fatalf("batches %v", kindsOf(p.got()))
+	}
+}
+
+func TestApplyNowWithoutReportOrPlacer(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	r.e.SetConfig(rulesOf(t, placeRule("p", appFoot, `{"float":true}`)), nil)
+	r.run()
+	r.send(windows.Reset, footWin("1"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 1 })
+	if n, err := r.e.Apply(context.Background()); n != 0 || err != nil || len(p.settled()) != 0 {
+		t.Errorf("without a report: %d %v", n, err)
+	}
+	bare := New(Options{})
+	if n, err := bare.Apply(context.Background()); n != 0 || err != nil {
+		t.Errorf("without a dispatcher: %d %v", n, err)
+	}
+}
+
+func TestPlaceErrorsDontStopTheRest(t *testing.T) {
+	t.Parallel()
+	r, p := placeRig(t)
+	p.fail = map[int]bool{0: true}
+	r.e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true,"size":{"width":4,"height":5}}`)), nil)
+	r.e.SetReport(report(t, liveRow("p")))
+	r.run()
+	r.send(windows.Reset)
+	r.send(windows.Opened, footWin("1"))
+	if !testkit.Eventually(func() bool { return len(p.got()) == 2 }) {
+		t.Fatalf("the second batch wasn't sent: %v", kindsOf(p.got()))
+	}
+}
+
+func TestPlaceCancelledBetweenBatches(t *testing.T) {
+	t.Parallel()
+	p := &placer{}
+	e := New(Options{
+		Events: func(ctx context.Context, out chan<- windows.Event) error {
+			out <- windows.Event{Kind: windows.Opened, Window: footWin("1")}
+			<-ctx.Done()
+			return nil
+		},
+		Lookup: func(int) (procinfo.Process, bool) { return procinfo.Process{Name: "foot"}, true },
+		Place:  p.place, Settle: time.Hour,
+	})
+	e.SetConfig(rulesOf(t, placeRule("p", procFoot, `{"float":true,"size":{"width":4,"height":5}}`)), nil)
+	e.SetReport(report(t, liveRow("p")))
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- e.Run(ctx) }()
+	if !testkit.Eventually(func() bool { return len(p.got()) == 1 }) {
+		t.Fatal("no first batch")
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(testkit.Bound(5 * time.Second)):
+		t.Fatal("Run waited for the pending batch")
+	}
+	if got := p.got(); len(got) != 1 {
+		t.Errorf("a batch after cancel: %v", kindsOf(got))
 	}
 }

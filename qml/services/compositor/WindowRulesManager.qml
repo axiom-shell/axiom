@@ -28,6 +28,18 @@ QtObject {
 
   property var _state: null
 
+  // Apply to open windows: gives every open window what the saved rules
+  // would give it (the compositor's written rules too); `callback` (optional)
+  // gets how many windows it moved
+  // rpc: windowRules.applyNow
+  function applyNow(callback) {
+    BackendManager.call("windowRules.applyNow", {}, (error, result) => {
+      if (error)
+        console.warn("WindowRulesManager: applyNow failed:", error);
+      callback?.(error ? 0 : result.windows);
+    });
+  }
+
   // rpc: windowRules.get
   function _fetch() {
     BackendManager.call("windowRules.get", {}, (error, state) => {
