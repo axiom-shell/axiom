@@ -98,7 +98,7 @@ Rectangle {
       spacing: Widget.spacing
 
       StatusChip {
-        readonly property var s: HookupStatus.of(true, root.rows)
+        readonly property var s: HookupStatus.of(root.active, root.rows)
         text: I18n.tr(s.word)
         color: s.tone === "success" ? Theme.success : s.tone === "warning" ? Theme.warning : Theme.foregroundAlt
       }

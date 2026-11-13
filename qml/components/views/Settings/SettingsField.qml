@@ -196,7 +196,7 @@ FormRow {
       implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove its changes")
       onClicked: {
-        root.askedSystem = true;
+        root.askedSystem = root.systemCount > 0;
         root.askedInferred = true;
         if (root.recordedCount > 0)
           FootprintManager.undoOwner(root.ownerPath);
@@ -205,7 +205,8 @@ FormRow {
 
     StyledText {
       visible: root.confirmInferred
-      text: I18n.tr("axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.", root.inferredCount)
+      // I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.")
+      text: root.inferredCount === 1 ? I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.") : I18n.tr("axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.", root.inferredCount)
       wrapMode: Text.WordWrap
       Layout.fillWidth: true
     }

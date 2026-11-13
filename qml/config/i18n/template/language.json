@@ -3872,6 +3872,7 @@
     "authenticate": "",
     "axiom": "",
     "axiom already manages your {0} config. Keep it that way, or pick another mode.": "",
+    "axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.": "",
     "axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.": "",
     "axiom also runs on {0}: quit it there first.": "",
     "axiom answers apps' password requests.": "",

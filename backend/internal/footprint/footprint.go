@@ -355,7 +355,8 @@ func (l *Ledger) own(kind, target string) bool {
 
 // Begin records a change before it's made: a row for it, pending, with
 // Prior from prior (called only when the row is new). A row already
-// applied is left as it is (its write costs nothing). It returns "" for
+// applied is left as it is (its write costs nothing), but an inferred one
+// becomes recorded, as axiom now writes it. It returns "" for
 // a path under axiom's own folders, or on a nil Ledger: Done then does
 // nothing. A ledger that can't be written is an error, and the change
 // should not be made.
@@ -372,8 +373,12 @@ func (l *Ledger) Begin(row Row, prior func() (json.RawMessage, error)) (string, 
 		i := slices.IndexFunc(f.Rows, func(r Row) bool { return r.ID == row.ID })
 		if i >= 0 {
 			have := &f.Rows[i]
+			// axiom writing it makes it a recorded row (Prior stays what the
+			// backfill found)
+			wasInferred := have.Inferred
+			have.Inferred = false
 			if have.State == StateApplied && have.Owner == row.Owner && row.Hookup == nil {
-				return false, nil
+				return wasInferred, nil
 			}
 			have.State = StatePending
 			have.Updated = now

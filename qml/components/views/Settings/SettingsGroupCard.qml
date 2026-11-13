@@ -28,7 +28,7 @@ FoldingCard {
   // The `x-intro`'s own status, when it has one (read, not worked out here)
   // or, on a theme integration's card, its hookup's (HookupStatus decides)
   status: introLoader.intro?.status ?? root._hookup?.word ?? ""
-  statusColor: introLoader.intro ? introLoader.intro.statusColor ?? Theme.foregroundAlt : root._hookup?.tone === "success" ? Theme.success : root._hookup?.tone === "warning" ? Theme.warning : Theme.foregroundAlt
+  statusColor: introLoader.intro?.status !== undefined ? introLoader.intro.statusColor ?? Theme.foregroundAlt : root._hookup?.tone === "success" ? Theme.success : root._hookup?.tone === "warning" ? Theme.warning : Theme.foregroundAlt
   // Unsaved edits inside: Discard shows, and folded the dot, so they
   // aren't forgotten
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
@@ -36,10 +36,15 @@ FoldingCard {
 
   // The hookup chip of a theme integration's card (its unsaved switch value)
   // I18n.tr("Off") I18n.tr("Checking") I18n.tr("Set up") I18n.tr("Not set up") I18n.tr("Copy the text")
+  readonly property bool _hookupOn: !!root.group.hookup && root.form.valueAt(root.group.path.concat([root.group.hookup])) === true
+  on_HookupOnChanged: if (root._hookupOn)
+    IntegrationHookupManager.check(root.group.hookup)
+  Component.onCompleted: if (root._hookupOn)
+    IntegrationHookupManager.check(root.group.hookup)
   readonly property var _hookup: {
     if (!root.group.hookup)
       return null;
-    const s = HookupStatus.of(root.form.valueAt(root.group.path.concat([root.group.hookup])) === true, IntegrationHookupManager.status[root.group.hookup]?.targets ?? []);
+    const s = HookupStatus.of(root._hookupOn, IntegrationHookupManager.status[root.group.hookup]?.targets ?? []);
     return {
       "word": I18n.tr(s.word),
       "tone": s.tone
