@@ -421,3 +421,7 @@ func (w *niriWriter) teardownSteps(_ Inputs, _ bool) []session.Step {
 
 // reloadStartsAxiom: load-config-file doesn't run spawn-at-startup again.
 func (w *niriWriter) reloadStartsAxiom(Inputs) (bool, string) { return false, "" }
+
+// A pause is left out of the files (Facts.PauseInFile): nothing to do live
+func (w *niriWriter) pause(context.Context, Inputs) bool { return true }
+func (w *niriWriter) unpauseSteps(Inputs) []session.Step { return nil }

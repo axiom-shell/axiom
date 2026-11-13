@@ -44,7 +44,7 @@ properties:
         title: Special workspace
         additionalProperties: false
         properties:
-          id: {type: string, title: Special workspace, default: '', description: 'Empty: none.', x-enabledIf: {/$supports.namedSpecial: true}}
+          id: {type: string, title: Special workspace, default: '', description: 'Empty: none.', x-enabledIf: {/$supports.namedSpecial: true}, x-ref: {kind: specialWorkspace, usedBy: 'Used by window rule {0}', name: name}}
           silent: {type: boolean, title: Send it there silently, default: false, description: 'Off: the special workspace shows.', x-showIf: {id: {notEmpty: true}}, x-enabledIf: {/$supports.namedSpecial: true}}
       monitor: {type: string, x-scope: machine, x-options: screens, x-emptyLabel: Where it opens, title: Monitor, default: ''}
       fullscreen: {type: boolean, title: Fullscreen, default: false}
@@ -113,6 +113,7 @@ properties:
             x-enumLabels: {these: These, allExcept: All except these}
             x-control: toggle
             default: these
+            description: All except also pauses your own shortcuts, except on niri.
             x-showIf: {enabled: true}
           binds:
             type: array
@@ -120,6 +121,7 @@ properties:
             default: []
             description: Keybinds by id.
             items: {type: string}
+            x-ref: {kind: keybind, usedBy: 'Used by window rule {0}', name: name}
             x-showIf: {enabled: true}
           when:
             $ref: '#/definitions/WindowRuleWhen'

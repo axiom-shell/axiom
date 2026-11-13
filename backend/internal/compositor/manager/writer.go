@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/session"
+	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
 
 // Inputs are what the layer is made of (buildInputs: the config's binds,
@@ -29,6 +31,18 @@ func (in Inputs) get(key string) any {
 func (in Inputs) str(key string) string { return jsonx.ToString(orNil(in.get(key), "")) }
 
 func (in Inputs) flag(key string) bool { b, _ := in.get(key).(bool); return b }
+
+// pause is what the layer pauses now (buildInputs' "pause"), zero for none
+func (in Inputs) pause() windowrules.Pause {
+	var p windowrules.Pause
+	if v := in.get("pause"); v != nil {
+		json.Unmarshal(jsonx.MarshalCompact(v), &p)
+	}
+	return p
+}
+
+// isPaused: something is paused, or every bind but the kept ones
+func isPaused(p windowrules.Pause) bool { return p.AllExcept || len(p.Paused) > 0 }
 
 func orNil(v, def any) any {
 	if v == nil {
@@ -97,6 +111,13 @@ type writer interface {
 	// (session.Step); partial: the user's config starts axiom on every
 	// reload, so only the layer's binds (and the cursor) are taken out
 	teardownSteps(in Inputs, partial bool) []session.Step
+	// pause applies what in pauses of the layer's binds (buildInputs'
+	// "pause": the earlier pause is given back first), the compositor's way;
+	// false when it couldn't. unpauseSteps give the pause back when axiom
+	// stops (session.Step). niri's are no-ops: its binds are left out of its
+	// files instead (Facts.PauseInFile)
+	pause(ctx context.Context, in Inputs) bool
+	unpauseSteps(in Inputs) []session.Step
 	// reloadStartsAxiom: a reload would start axiom again (the user's config
 	// runs a line matching in's startPattern at every load), and which line
 	reloadStartsAxiom(in Inputs) (bool, string)

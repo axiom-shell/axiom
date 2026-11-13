@@ -278,9 +278,22 @@ QtObject {
     Qt.callLater(() => root.startRecording(index + 1));
   }
 
+  // The window rules' uses of the saved binds (a rule's pause shortcuts,
+  // `x-ref` of kind keybind: rules validate against the saved Keybinds)
+  readonly property var ruleRefs: SchemaRefs.references(ConfigManager.live, SchemaRefs.sites(ConfigManager.configSchema, "keybind"))
+
+  // Why the bind at `index` can't be removed ("" when it can): a window rule
+  // uses it. A new bind isn't saved, so no rule names it.
+  // I18n.tr("Used by window rule {0}")
+  function usedBy(index) {
+    const id = draft.local[index]?.id;
+    const ref = id === undefined ? undefined : root.ruleRefs.find(r => r.id === id);
+    return ref ? I18n.tr(ref.usedBy, ref.name) : "";
+  }
+
   function removeBind(index) {
     const bind = draft.local[index];
-    if (!bind)
+    if (!bind || root.usedBy(index) !== "")
       return;
     _remember(I18n.tr("Removed {0}", root._bindName(bind)));
     stopRecording();

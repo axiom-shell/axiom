@@ -299,6 +299,7 @@ QtObject {
   // I18n.tr("Pick at least one place to hide it from.")
   // I18n.tr("Pick at least one shortcut to pause.")
   // I18n.tr("Keep at least one shortcut, your way out.")
+  // I18n.tr("The shortcuts you keep are paused or have no key: keep one that works, your way out.")
   // I18n.tr("All except works only while the window is focused or fullscreen.")
   // I18n.tr("Shortcut {0} no longer exists.")
   // I18n.tr("Pick a special workspace.")

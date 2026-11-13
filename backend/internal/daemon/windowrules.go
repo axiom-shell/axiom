@@ -77,7 +77,7 @@ func ruleEffects(st engine.State) (awake []string, profile, reason string) {
 }
 
 // windowRulesChanged pushes the engine's state and gives the daemon's effect
-// owners their holds (keep awake, the power profile; pause binds follow in PR 12).
+// owners their holds (keep awake, the power profile, the paused shortcuts).
 func (d *Daemon) windowRulesChanged(st engine.State) {
 	awake, profile, reason := ruleEffects(st)
 	if d.idle != nil {
@@ -85,6 +85,9 @@ func (d *Daemon) windowRulesChanged(st engine.State) {
 	}
 	if d.power != nil {
 		d.power.Hold(profile, reason)
+	}
+	if d.compositor != nil {
+		d.compositor.SetPause(st.Holds.PauseBinds)
 	}
 	if d.server != nil {
 		pushWindowRulesState.Send(d.server, st, subscribedTo(topicWindowRules))

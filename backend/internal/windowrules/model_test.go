@@ -94,16 +94,17 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestBindIDs(t *testing.T) {
+func TestContextOf(t *testing.T) {
 	t.Parallel()
-	kb, err := jsonx.Unmarshal([]byte(`{"binds": [{"id": "a"}, 5, {"key": "x"}, {"id": "b"}]}`))
+	kb, err := jsonx.Unmarshal([]byte(`{"binds": [{"id": "a", "key": "x"}, 5, {"key": "x"}, {"id": "b", "key": "y", "paused": true}, {"id": "c", "key": ""}]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := BindIDs(kb); !reflect.DeepEqual(got, []string{"a", "b"}) {
-		t.Errorf("got %v", got)
+	want := Context{BindIDs: []string{"a", "b", "c"}, Unbound: []string{"b", "c"}}
+	if got := ContextOf(kb); !reflect.DeepEqual(got, want) {
+		t.Errorf("got %+v", got)
 	}
-	if got := BindIDs(nil); got != nil {
-		t.Errorf("nil: got %v", got)
+	if got := ContextOf(nil); got.BindIDs != nil || got.Unbound != nil {
+		t.Errorf("nil: got %+v", got)
 	}
 }

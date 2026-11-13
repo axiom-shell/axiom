@@ -77,17 +77,35 @@ QtObject {
   // over the draft: its entries and the ids its binds and hot corners hold,
   // unsaved or not, and the live ones; [] without namedSpecial. The saved
   // config's is CompositorManager.knownSpecials
-  readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SpecialWorkspaces.references(root.localConfig, CompositorManager.specialRefSites)) : []
+  readonly property var knownSpecials: CompositorManager.supports.namedSpecial ? SpecialWorkspaces.list(root.specialEntries, CompositorManager.specials, SchemaRefs.references(root.localConfig, CompositorManager.specialRefSites)) : []
 
   // What an `x-ref` field of `kind` can be set to: the ids of the things that
   // exist, as edited, for the dropdown beside the typed text
   function refOptions(kind) {
+    if (kind === "keybind")
+      return KeybindsConfig.binds.filter(b => String(b.key ?? "").trim() !== "").map(b => b.id);
     return kind === "specialWorkspace" ? SpecialWorkspaces.refOptions(root.knownSpecials) : [];
   }
 
   // Each of refOptions' ids with the name it was given, where it has one
   function refLabels(kind) {
+    if (kind === "keybind")
+      return KeybindsConfig.binds.reduce((labels, b) => {
+        labels[b.id] = I18n.tr("{0} · {1}", KeybindManager.displayCombo(b.key), KeybindManager.actionLabels[b.action] ?? String(b.action ?? ""));
+        return labels;
+      }, {});
     return kind === "specialWorkspace" ? SpecialWorkspaces.refLabels(root.knownSpecials) : ({});
+  }
+
+  // Each of refOptions' ids with its icon, where it has one (a shortcut's
+  // action's)
+  function refIcons(kind) {
+    if (kind !== "keybind")
+      return ({});
+    return KeybindsConfig.binds.reduce((icons, b) => {
+      icons[b.id] = KeybindManager.actionIcon(b.action);
+      return icons;
+    }, {});
   }
 
   // What the field `key` of the items of the array at `path` (["Keybinds",

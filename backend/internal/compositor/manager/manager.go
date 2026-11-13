@@ -48,6 +48,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/mimeapps"
 	"github.com/axiom-shell/axiom/backend/internal/session"
+	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 )
 
 // Options configure a manager.
@@ -118,6 +119,14 @@ type Manager struct {
 	liveKey string
 	// liveRest: the liveRestKey whose live lines were sent last
 	liveRest string
+
+	// hold: the window rules' pause (SetPause); pauseKey and paused what was
+	// last applied of it (applyPause); bindMode the compositor's bind mode,
+	// "" the default (bindModeChanged)
+	hold     windowrules.BindsHold
+	pauseKey string
+	paused   windowrules.Pause
+	bindMode string
 
 	// runtimeOn: the runtime layer is applied (kept in the runtime state
 	// too, for a carried image); steps the OnSteps last got, and whether
@@ -323,6 +332,10 @@ func (m *Manager) Run(ctx context.Context) error {
 			m.updateSteps()
 			m.push()
 		case r := <-reloads:
+			if r.ModeChanged {
+				m.bindModeChanged(ctx, r.Mode)
+				break
+			}
 			m.configReloaded(ctx, r)
 			m.push()
 		case <-poll.C:
@@ -342,7 +355,9 @@ func (m *Manager) watchReloads(ctx context.Context, out chan<- ipc.Reload) {
 			for r := range inner {
 				// Counted at once: a reload while the runtime layer reads the
 				// binds makes what it read stale
-				m.w.seenReload()
+				if !r.ModeChanged {
+					m.w.seenReload()
+				}
 				select {
 				case out <- r:
 				case <-ctx.Done():
@@ -377,12 +392,56 @@ func (m *Manager) live() bool {
 func (m *Manager) SetFacts(f Facts) {
 	m.enqueue(func(ctx context.Context) {
 		m.facts = &f
-		m.setInputs(m.buildInputs())
+		m.setInputs(ctx, m.buildInputs())
 	})
 }
 
+// SetPause takes the shortcuts the window rules pause (the engine's holds):
+// paused now, given back when it ends. Never blocks the caller.
+func (m *Manager) SetPause(h windowrules.BindsHold) {
+	m.enqueue(func(ctx context.Context) {
+		if reflect.DeepEqual(h, m.hold) {
+			return
+		}
+		m.hold = h
+		if m.facts != nil {
+			m.setInputs(ctx, m.buildInputs())
+		}
+	})
+}
+
+// applyPause is the one owner of the pause: the writer applies what the
+// inputs pause when that changed, or at once when force (a reload, a runtime
+// re-apply or a bind mode left took it away). Nothing where a file holds the
+// binds out (niri's) or nothing was paused and nothing is.
+func (m *Manager) applyPause(ctx context.Context, force bool) {
+	if !m.live() || m.w.liveByFile() {
+		return
+	}
+	key, now := m.in.str("pauseKey"), m.in.pause()
+	if (!force && key == m.pauseKey) || (!isPaused(now) && !isPaused(m.paused)) {
+		m.pauseKey = key
+		return
+	}
+	m.w.pause(ctx, m.in)
+	m.pauseKey, m.paused = key, now
+	m.updateSteps()
+}
+
+// bindModeChanged: the compositor's bind mode is now name ("" the default).
+// One answer for whatever leaves a mode (the key recorder, a kept switcher
+// bind): back to the pause that works through a mode. Only a change from
+// another mode counts, so a failed enter can't loop.
+func (m *Manager) bindModeChanged(ctx context.Context, name string) {
+	prev := m.bindMode
+	m.bindMode = name
+	if name == "" && prev != "" && m.paused.AllExcept {
+		m.applyPause(ctx, true)
+	}
+}
+
 // setInputs takes what the layer is made of, on the manager's goroutine
-func (m *Manager) setInputs(in Inputs) {
+func (m *Manager) setInputs(ctx context.Context, in Inputs) {
 	wasLive := m.live()
 	m.in = in
 	m.starts.valid = false
@@ -399,6 +458,9 @@ func (m *Manager) setInputs(in Inputs) {
 		m.liveKey = key
 		m.liveDebounce.Reset(300 * time.Millisecond)
 	}
+	if wasLive {
+		m.applyPause(ctx, false)
+	}
 }
 
 // buildInputs is what the layer is made of now
@@ -412,6 +474,7 @@ func (m *Manager) buildInputs() Inputs {
 		copied := *f
 		copied.Frameworks = m.frameworks()
 		copied.AppIDs = m.o.AppIDs
+		copied.Pause, copied.PauseInFile = m.hold, m.w != nil && m.w.liveByFile()
 		f = &copied
 	}
 	return buildInputs(m.o.Config(), f, outputs)
@@ -484,7 +547,7 @@ func (m *Manager) outputsChanged(ctx context.Context) {
 	}
 	m.applyProfile(ctx)
 	if m.facts != nil {
-		m.setInputs(m.buildInputs())
+		m.setInputs(ctx, m.buildInputs())
 	}
 }
 
@@ -507,7 +570,7 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 	m.enqueue(func(ctx context.Context) {
 		m.applyProfile(ctx)
 		if m.facts != nil {
-			m.setInputs(m.buildInputs())
+			m.setInputs(ctx, m.buildInputs())
 		}
 		if !m.live() {
 			return
@@ -767,15 +830,24 @@ func (m *Manager) updateSteps() {
 // axiom at every reload would start another with a reload, so only the
 // layer's binds go (said once).
 func (m *Manager) teardownSteps() []session.Step {
-	if !m.runtimeOn || !m.live() {
+	if !m.live() {
 		return nil
+	}
+	// A pause is given back first, in every mode (only the runtime layer
+	// below needs it applied)
+	var steps []session.Step
+	if isPaused(m.paused) {
+		steps = m.w.unpauseSteps(m.in)
+	}
+	if !m.runtimeOn {
+		return steps
 	}
 	starts, line := m.startsAxiom()
 	if starts && !m.partialNoted {
 		m.partialNoted = true
 		m.logf("your config starts axiom on every reload (%s): on quit axiom only takes its binds out", line)
 	}
-	return m.w.teardownSteps(m.in, starts)
+	return append(steps, m.w.teardownSteps(m.in, starts)...)
 }
 
 // startsAxiom is the writer's reloadStartsAxiom, read again only after the
@@ -807,6 +879,8 @@ func (m *Manager) Teardown(ctx context.Context) {
 		session.RunSteps(context.WithoutCancel(ctx), m.kind, m.StepEnv(), steps, func(f string, a ...any) { m.logf(f, a...) })
 	}
 	m.st.NiriWrapper, m.st.SwayUnbinds, m.st.SwayRules, m.st.LiveApplied, m.st.LiveCursor, m.st.RuntimeOn = false, nil, nil, "", "", false
+	m.st.SwayPaused = swayPaused{}
+	m.paused = windowrules.Pause{}
 	m.runtimeOn = false
 	m.st.save()
 }
@@ -827,6 +901,7 @@ func (m *Manager) runtimeApply(ctx context.Context) {
 	// Recorded ahead of the effect, so a crash in the middle of it is undone
 	m.setRuntimeOn(true)
 	m.w.runtimeApply(ctx, m.in, func() []string { return m.liveLines(ctx) })
+	m.applyPause(ctx, true)
 	m.updateSteps()
 	// The layer isn't as axiom made it: the card says so (a file mode's own
 	// problem comes first), until it is
@@ -1405,6 +1480,7 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	} else {
 		m.checkLoaded(ctx)
 		m.applyLive(ctx)
+		m.applyPause(ctx, true)
 	}
 	// The compositor reloads when one of the user's files changes
 	if m.mode == "managed" {

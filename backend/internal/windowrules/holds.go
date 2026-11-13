@@ -103,6 +103,34 @@ type BindsHold struct {
 	These     []string `json:"these"`
 }
 
+// Pause is what the layer pauses: AllExcept (Keep stay bound, Paused every
+// other) or these Paused; lists are never nil, in the layer's bind order.
+type Pause struct {
+	AllExcept bool     `json:"allExcept"`
+	Keep      []string `json:"keep"`
+	Paused    []string `json:"paused"`
+}
+
+// Pause is what to pause of bound, the ids of the binds the layer binds, in
+// order: the one decision every compositor's writer applies (an id not bound
+// is dropped). A zero hold pauses nothing.
+func (b BindsHold) Pause(bound []string) Pause {
+	p := Pause{Keep: []string{}, Paused: []string{}}
+	if len(b.Rules) == 0 {
+		return p
+	}
+	p.AllExcept = b.AllExcept
+	for _, id := range bound {
+		switch {
+		case b.AllExcept && slices.Contains(b.Keep, id):
+			p.Keep = append(p.Keep, id)
+		case b.AllExcept || slices.Contains(b.These, id):
+			p.Paused = append(p.Paused, id)
+		}
+	}
+	return p
+}
+
 // Hold merges the active rules' effects: dnd, keepAwake and pauseBinds are
 // held by every rule that holds them, hideFrom, pauseOsd and hideBar are the
 // union over the windows held, and the power profile is the

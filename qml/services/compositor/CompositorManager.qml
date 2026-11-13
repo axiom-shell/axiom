@@ -140,7 +140,7 @@ Singleton {
   // those with an entry (Workspaces.specialWorkspaces), the ids the shown
   // (live) config refers to and the live ones; [] without namedSpecial
   // reads: Workspaces.specialWorkspaces, Keybinds.binds, HotCorners.items
-  readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SpecialWorkspaces.references(ConfigManager.live, root.specialRefSites)) : []
+  readonly property var knownSpecials: root.supports.namedSpecial ? SpecialWorkspaces.list(WorkspacesConfig.specialWorkspaces, root.specials, SchemaRefs.references(ConfigManager.live, root.specialRefSites)) : []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
   // The focused monitor's name while it's connected (a screen surfaces are

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -104,7 +105,7 @@ func (w *hyprWriter) moduleText(in Inputs, spec any) string {
 func (w *hyprWriter) module(in Inputs, spec any, path string) string {
 	return render.ModuleLua(jsonx.Obj(
 		"header", hyprHeader, "includeLines", w.includeLines(), "requiredSettings", in.flag("requiredSettings"),
-		"binds", strs(w.tables.BindLines(activeBinds(in), in.get("ctx"))),
+		"binds", strs(w.tables.HyprBindLinesByID(activeBinds(in), in.get("ctx"))),
 		"look", strs(render.LookLua(getAny(spec, "look"), w.schemaOf("WindowLook"))),
 		"input", strs(render.InputLua(getAny(spec, "input"), w.schemaOf("Input"))),
 		"blur", strs(w.tables.BlurLua(getAny(spec, "surfaces"))),
@@ -229,7 +230,7 @@ func (w *hyprWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 	// The keys recorded right after the binds: a Lua error later in the
 	// chunk (an hl function this version lacks) would leave them unrecorded.
 	// A refused value isn't one: Hyprland reports it and runs on
-	lines := append(w.tables.BindLines(jsonx.Arr(binds...), in.get("ctx")), "AXIOM_RUNTIME_KEYS = { "+strings.Join(keys, ", ")+" }")
+	lines := append(w.tables.HyprBindLinesByID(jsonx.Arr(binds...), in.get("ctx")), "AXIOM_RUNTIME_KEYS = { "+strings.Join(keys, ", ")+" }")
 	if in.flag("requiredSettings") {
 		overridden := false
 		if first, ok := getIndex(animations, 0).(*jsonx.Array); ok {
@@ -246,6 +247,31 @@ func (w *hyprWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 	lines = append(lines, render.StripsRuntimeLua(w.stripsLua(in), in.str("stripsKey"))...)
 	lines = append(lines, hyprRuntimeRules(strList(in.get("windowRules")))...)
 	w.eval(ctx, strings.Join(lines, "\n"))
+}
+
+// pause is pauseLua evaluated
+func (w *hyprWriter) pause(ctx context.Context, in Inputs) bool {
+	return w.eval(ctx, w.pauseLua(in))
+}
+
+// pauseLua is render.HyprPauseLua for what in pauses: the paused binds'
+// handles switched off, or the kept binds in a submap
+func (w *hyprWriter) pauseLua(in Inputs) string {
+	p := in.pause()
+	var lines, keys []string
+	if p.AllExcept {
+		for _, b := range itemsOf(activeBinds(in)) {
+			if line := w.tables.BindLua(b, in.get("ctx")); line != "" && slices.Contains(p.Keep, jsonx.ToString(orNil(getAny(b, "id"), ""))) {
+				lines = append(lines, line)
+				keys = append(keys, render.BindKey(getAny(b, "key")))
+			}
+		}
+	}
+	return render.HyprPauseLua(p.Paused, lines, keys, p.AllExcept)
+}
+
+func (w *hyprWriter) unpauseSteps(Inputs) []session.Step {
+	return []session.Step{{Op: "eval", Lines: []string{render.HyprPauseLua(nil, nil, nil, false)}}}
 }
 
 func getIndex(v any, i int) any {

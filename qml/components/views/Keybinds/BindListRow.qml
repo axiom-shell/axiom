@@ -229,7 +229,9 @@ StyledContainer {
       visible: !root.isRun
       size: Widget.height - Widget.px(6)
       iconText: "close"
-      tooltipText: I18n.tr("Remove")
+      readonly property string usedBy: KeybindManager.editor.usedBy(root.bindIndex)
+      tooltipText: usedBy !== "" ? usedBy : I18n.tr("Remove")
+      enabled: usedBy === ""
       iconColor: root.ink
       backgroundColor: "transparent"
       hoverColor: Theme.error

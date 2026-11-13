@@ -48,6 +48,11 @@ type Facts struct {
 	// AppIDs gives an installed app's window app ids (a window rule's `app`
 	// condition): the daemon's to read (Options.AppIDs), not the shell's
 	AppIDs func(desktopID string) []string `json:"-"`
+	// Pause is the window rules' paused shortcuts (Manager.SetPause), and
+	// PauseInFile that the compositor takes binds only from files (niri's),
+	// so they're left out of them: the manager's to fill, not the shell's
+	Pause       windowrules.BindsHold `json:"-"`
+	PauseInFile bool                  `json:"-"`
 }
 
 // BindCtx is what a bind's command runs with: axiom's paths and the apps.
@@ -147,6 +152,25 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 			binds.Append(b)
 		}
 	}
+	// What the rules pause of them: left out of a file the compositor reads
+	// alone (niri), else told apart (pause), which never rewrites a file
+	var ids []string
+	for _, b := range binds.Items {
+		if id := jsonx.ToString(orNil(getAny(b, "id"), "")); id != "" {
+			ids = append(ids, id)
+		}
+	}
+	pause := f.Pause.Pause(ids)
+	if f.PauseInFile && len(pause.Paused) > 0 {
+		kept := jsonx.Arr()
+		for _, b := range binds.Items {
+			if !slices.Contains(pause.Paused, jsonx.ToString(orNil(getAny(b, "id"), ""))) {
+				kept.Append(b)
+			}
+		}
+		binds = kept
+		pause = windowrules.Pause{Keep: []string{}, Paused: []string{}}
+	}
 	stripOptions := jsonx.Obj("stripColumnWidth", getAny(workspaces, "stripColumnWidth"), "stripFollowFocus", getAny(workspaces, "stripFollowFocus"))
 	behaviour := at("WindowBehaviour")
 	managed := jsonx.NewObject()
@@ -224,6 +248,9 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	// Blur.Now): unchanged when only the blur paused or resumed
 	in.Set("liveRestKey", string(jsonx.MarshalCompact(specFile)))
 	in.Set("windowRulesReport", report)
+	// After liveRestKey: a pause never rewrites a file nor reloads
+	in.Set("pause", tree(pause))
+	in.Set("pauseKey", string(jsonx.MarshalCompact(tree(pause))))
 	return Inputs{in}
 }
 
@@ -246,7 +273,7 @@ type ruleRow struct {
 // but isn't compiled).
 func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.Object) {
 	cfg := windowrules.Parse(section)
-	issues := windowrules.Validate(cfg, windowrules.Context{BindIDs: windowrules.BindIDs(keybinds)})
+	issues := windowrules.Validate(cfg, windowrules.ContextOf(keybinds))
 	usable := windowrules.Usable(cfg, issues)
 	set := render.RuleSet{Rules: usable, Apps: windowrules.AppIDs(f.AppIDs), Supports: f.Supports}
 	var left []render.Unwritten

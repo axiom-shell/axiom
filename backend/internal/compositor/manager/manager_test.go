@@ -88,6 +88,11 @@ func (f *fakeWriter) runtimeRulesGone(Inputs) bool {
 func (f *fakeWriter) teardownSteps(Inputs, bool) []session.Step {
 	return []session.Step{{Op: "reload"}}
 }
+func (f *fakeWriter) pause(_ context.Context, in Inputs) bool {
+	f.note("pause:" + in.str("pauseKey"))
+	return true
+}
+func (f *fakeWriter) unpauseSteps(Inputs) []session.Step      { return []session.Step{{Op: "unpause"}} }
 func (f *fakeWriter) reloadStartsAxiom(Inputs) (bool, string) { return false, "" }
 func (f *fakeWriter) seenReload()                             {}
 func (f *fakeWriter) skippedKeys() []string                   { return nil }
@@ -218,7 +223,7 @@ func (h *harness) inputs(fileTag, liveTag, layerKey string, parts ...string) {
 	in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", layerKey, "liveKey", liveTag,
 		"supports", jsonx.Obj("windowBorders", true, "windowGaps", true, "windowOpacity", true),
 		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
-	h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
+	h.m.enqueue(func(ctx context.Context) { h.m.setInputs(ctx, in) })
 }
 
 // setMode changes the mode as the shell's save does
@@ -446,7 +451,7 @@ func TestABlurChangeSendsOnlyTheBlur(t *testing.T) {
 		in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", "k1", "liveKey", liveTag, "liveRestKey", rest,
 			"supports", jsonx.Obj("windowBorders", true),
 			"specFile", jsonx.Obj("tag", "f1", "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
-		h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
+		h.m.enqueue(func(ctx context.Context) { h.m.setInputs(ctx, in) })
 	}
 	set("r1", "l1")
 	h.eventually("the runtime layer", h.called("runtime:live l1"))

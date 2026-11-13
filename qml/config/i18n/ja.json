@@ -4372,6 +4372,10 @@
     "Picking a profile yourself wins until the rule ends.": "",
     "Only axiom's own: the compositor's overview and other apps still show it.": "",
     "Its app icon on the bar's workspaces, its preview in the workspace overview and in the workspace modules.": "",
-    "A window rule is keeping the screen on: the steps below wait until it lets go.": ""
+    "A window rule is keeping the screen on: the steps below wait until it lets go.": "",
+    "Add shortcut": "",
+    "Used by window rule {0}": "",
+    "The shortcuts you keep are paused or have no key: keep one that works, your way out.": "",
+    "All except also pauses your own shortcuts, except on niri.": ""
   }
 }

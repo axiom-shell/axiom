@@ -2,6 +2,8 @@ package manager
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -50,6 +52,7 @@ func newSway(e env, s *ipc.Sway) *swayWriter {
 		// The saved list may be stale: a duplicate for_window runs the same
 		// idempotent commands twice, a trusted stale list could leave rules out
 		e.state.SwayRules = nil
+		e.state.SwayPaused = swayPaused{}
 	}
 	return w
 }
@@ -265,8 +268,106 @@ func (w *swayWriter) userBinds() *jsonx.Array {
 	return render.SwayConfigBinds(text)
 }
 
+// pausable are the binds sway has bound: the runtime layer's while it's on
+// (those on keys the user's config holds were skipped, and an unbind by key
+// would hit the user's own), else the layer's complete ones
+func (w *swayWriter) pausable(in Inputs) []any {
+	if w.runtimeOn {
+		return w.runtime.applied
+	}
+	var out []any
+	for _, b := range itemsOf(activeBinds(in)) {
+		if w.complete(in, b) {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
+func (w *swayWriter) setPaused(p swayPaused) {
+	w.state.SwayPaused = p
+	w.state.save()
+}
+
+// notFloating drops the floating modifier's line, which sway has no bind of
+// to take out (mouse drag and resize aren't paused)
+func notFloating(lines []string) []string {
+	return slices.DeleteFunc(slices.Clone(lines), func(l string) bool { return strings.HasPrefix(l, "floating_modifier ") })
+}
+
+// pausePlan is what a pause of in does: the commands (the binds unbound, or
+// the mode defined, entered and the kept binds bound in it) and what gives
+// it back
+func (w *swayWriter) pausePlan(in Inputs) (send []string, now swayPaused) {
+	p := in.pause()
+	byID := func(ids []string) *jsonx.Array {
+		out := jsonx.Arr()
+		for _, b := range w.pausable(in) {
+			if slices.Contains(ids, jsonx.ToString(orNil(getAny(b, "id"), ""))) {
+				out.Append(b)
+			}
+		}
+		return out
+	}
+	cmdCtx := in.get("ctx")
+	switch {
+	case p.AllExcept:
+		var kept []string
+		for _, b := range byID(p.Keep).Items {
+			if l := w.tables.SwayBindLine(b, cmdCtx, true); l != "" {
+				kept = append(kept, l)
+			}
+		}
+		if len(kept) > 0 {
+			sum := sha256.Sum256([]byte(strings.Join(kept, "\n")))
+			now.Mode = "axiom_paused_" + hex.EncodeToString(sum[:4])
+			// bindsym defines the mode, as the key recorder's does
+			send = append([]string{`mode "` + now.Mode + `" bindsym --no-warn Mod4+Ctrl+Mod1+Shift+F24 nop`, `mode "` + now.Mode + `"`}, kept...)
+		}
+	case len(p.Paused) > 0:
+		binds := byID(p.Paused)
+		for _, u := range w.tables.SwayUnbinds(binds, cmdCtx, nil) {
+			if u.Key != "" {
+				send = append(send, u.Line)
+			}
+		}
+		now.Restore = notFloating(w.tables.SwayBindLines(binds, cmdCtx, true))
+	}
+	return send, now
+}
+
+// pause: the earlier pause is given back (its binds bound again, its mode
+// left), then pausePlan is sent. Recorded before it's sent, as setUnbind is.
+func (w *swayWriter) pause(ctx context.Context, in Inputs) bool {
+	old := w.state.SwayPaused
+	send, now := w.pausePlan(in)
+	w.setPaused(now)
+	restore := slices.Clone(old.Restore)
+	if old.Mode != "" && now.Mode == "" {
+		restore = append(restore, "mode default")
+	}
+	ok := w.sendEach(ctx, restore) == nil
+	return w.sendEach(ctx, send) == nil && ok
+}
+
+// unpauseSteps give back what the last pause did
+func (w *swayWriter) unpauseSteps(Inputs) []session.Step {
+	lines := slices.Clone(w.state.SwayPaused.Restore)
+	if w.state.SwayPaused.Mode != "" {
+		lines = append(lines, "mode default")
+	}
+	if len(lines) == 0 {
+		return nil
+	}
+	return []session.Step{{Op: "commands", Lines: lines}}
+}
+
 func (w *swayWriter) runtimeApply(ctx context.Context, in Inputs, live func() []string) {
 	w.runtimeOn = true
+	// The binds go into the mode in force: not a pause's
+	if w.state.SwayPaused.Mode != "" {
+		w.run(ctx, []string{"mode default"})
+	}
 	entries, _, ok := w.runtime.read(func() (any, any, bool) {
 		b := w.userBinds()
 		return b, nil, b != nil
@@ -437,6 +538,10 @@ func (w *swayWriter) configReloaded(context.Context, Inputs) bool {
 	if w.state.SwayRules != nil {
 		w.state.SwayRules = nil
 		w.state.save()
+	}
+	// the reload brought the file's binds back and left the pause's mode
+	if p := w.state.SwayPaused; p.Mode != "" || len(p.Restore) > 0 {
+		w.setPaused(swayPaused{})
 	}
 	if w.state.SwayUnbinds != nil && w.unbinds() == nil {
 		w.setUnbind(nil)

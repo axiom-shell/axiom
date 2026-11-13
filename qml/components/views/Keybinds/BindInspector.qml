@@ -66,7 +66,9 @@ ColumnLayout {
     SquareIconButton {
       size: Widget.height
       iconText: "delete"
-      tooltipText: I18n.tr("Remove")
+      readonly property string usedBy: KeybindManager.editor.usedBy(root.bindIndex)
+      tooltipText: usedBy !== "" ? usedBy : I18n.tr("Remove")
+      enabled: usedBy === ""
       hoverColor: Theme.error
       onClicked: KeybindManager.editor.removeBind(root.bindIndex)
     }
