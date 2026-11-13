@@ -46,6 +46,10 @@ func (h *Hypr) request(ctx context.Context, command string) (string, error) {
 		return "", err
 	}
 	reply, err := io.ReadAll(conn)
+	// A cancel or deadline mid-reply leaves a partial reply: that is ctx's error
+	if ctx.Err() != nil {
+		return "", ctx.Err()
+	}
 	if err != nil && len(reply) == 0 {
 		return "", err
 	}

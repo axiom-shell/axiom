@@ -50,6 +50,10 @@ func (n *Niri) request(ctx context.Context, request any) (json.RawMessage, error
 		return nil, err
 	}
 	line, err := bufio.NewReader(conn).ReadBytes('\n')
+	// A cancel or deadline mid-reply leaves a partial line: that is ctx's error
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
 	if err != nil && len(line) == 0 {
 		return nil, err
 	}

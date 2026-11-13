@@ -62,3 +62,35 @@ func returns(t *testing.T, call func(context.Context) error, ctx context.Context
 		t.Fatal("the request didn't return")
 	}
 }
+
+// A compositor that writes part of a reply and stalls: the cancel ends the
+// request with ctx's error, never the partial reply.
+func TestPartialReplyIsNotSuccess(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	stall := func(partial string) func(net.Conn) {
+		return func(c net.Conn) {
+			c.Write([]byte(partial))
+			io.Copy(io.Discard, c)
+		}
+	}
+	listen(t, filepath.Join(dir, "niri.sock"), stall(`{"Ok":"Handled"}`))
+	listen(t, filepath.Join(dir, ".socket.sock"), stall("ok"))
+	calls := map[string]func(ctx context.Context) error{
+		"niri": func(ctx context.Context) error {
+			_, err := (&Niri{Path: filepath.Join(dir, "niri.sock")}).Request(ctx, "Outputs")
+			return err
+		},
+		"hypr": func(ctx context.Context) error {
+			_, err := (&Hypr{Dir: dir}).Request(ctx, "j/binds")
+			return err
+		},
+	}
+	for name, call := range calls {
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			time.AfterFunc(100*time.Millisecond, cancel)
+			returns(t, call, ctx, context.Canceled)
+		})
+	}
+}
