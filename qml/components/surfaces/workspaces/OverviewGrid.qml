@@ -65,8 +65,9 @@ Item {
   readonly property var _liveCells: CompositorManager.supports.namedSpecial === true ? Scratchpads.cells(CompositorManager.specials, CompositorManager.specialNames, WorkspaceOverlayConfig.scratchpads) : []
   // A string, so the cells and their Repeater are rebuilt only when the set
   // of names changes
-  readonly property string _scratchKey: (root._frozenNames ?? root._liveCells.map(c => c.name)).join("\n")
-  readonly property var scratchNames: root._scratchKey === "" ? [] : root._scratchKey.split("\n")
+  // (each name led by a newline, so the unnamed one, "", still makes a key)
+  readonly property string _scratchKey: (root._frozenNames ?? root._liveCells.map(c => c.name)).map(name => "\n" + name).join("")
+  readonly property var scratchNames: root._scratchKey === "" ? [] : root._scratchKey.slice(1).split("\n")
   readonly property int scratchCount: root.scratchNames.length
   // The cells and their column together, so one never pairs with a stale other
   readonly property var scratch: {
@@ -294,10 +295,11 @@ Item {
     const win = root.byAddress[address];
     if (!win || cell < 0)
       return;
-    // Onto a scratch cell: into that special, the position ignored
+    // Onto a scratch cell: into that special, the position ignored. The
+    // unnamed one ("") takes no drops: nothing in axiom fills it
     if (cell >= root.ids.length) {
       const name = root.scratchNames[cell - root.ids.length];
-      if (win.special === name)
+      if (win.special === name || name === "")
         return;
       root._lastAction = Date.now();
       CompositorManager.moveToSpecial(name, address);
@@ -450,7 +452,7 @@ Item {
         tint: WorkspaceOverlayConfig.scratchpadColor
         current: special?.open === true && special.output === root.monitor?.name
         hovered: input.hoveredCell === cell && input.mode === ""
-        dropTarget: input.mode === "drag" && input.dropCell === cell
+        dropTarget: input.mode === "drag" && input.dropCell === cell && special?.name !== ""
         dropFill: dropTarget && input.dropHint === null
       }
     }
@@ -534,9 +536,11 @@ Item {
         y: rect.y + margin
         z: 3
         cornerRadius: root.cellRadius
-        text: shown.text
-        icon: shown.lead
-        iconPlain: !(Utils.isSymbolName(shown.lead) && IconManager.isKnown(shown.lead))
+        // The unnamed one is a star with no title (kind "glyph")
+        readonly property bool starOnly: shown.kind === "glyph"
+        text: starOnly ? "" : shown.text
+        icon: starOnly ? shown.text : shown.lead
+        iconPlain: !(Utils.isSymbolName(icon) && IconManager.isKnown(icon))
         tint: WorkspaceOverlayConfig.scratchpadColor
         tintText: true
         maxWidth: rect.w - 2 * margin

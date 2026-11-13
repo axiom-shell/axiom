@@ -359,6 +359,11 @@ func TestHyprMappingAndRawLua(t *testing.T) {
 		`hl.bind(mod .. " + R", hl.dsp.window.resize({ x = 10, y = -20, relative = true }), { repeating = true })`,
 		`hl.bind(mod .. " + W", hl.dsp.focus({ workspace = 3 }))`,
 		`hl.bind(mod .. " + M", hl.dsp.window.move({ workspace = "special:scratch" }))`,
+		`hl.bind(mod .. " + P", hl.dsp.workspace.toggle_special("my pad"))`,
+		`hl.bind(mod .. " + Q", hl.dsp.workspace.toggle_special())`,
+		`hl.bind(mod .. " + U", hl.dsp.workspace.toggle_special("special"))`,
+		`hl.bind(mod .. " + Y", hl.dsp.window.move({ workspace = "special:special" }))`,
+		`hl.bind(mod .. " + H", hl.dsp.workspace.toggle_special("magic"))`,
 		`hl.bind(mod .. " + N", hl.dsp.window.tag({ tag = "a\nb", list = { 1, 2 } }))`,
 		`hl.bind(mod .. " + D", hl.dsp.exec_cmd("axiom ipc appLauncher toggle"))`,
 		`hl.bind(mod .. " + E", hl.dsp.exec_cmd("axiom ipc menu show 'left'"))`,
@@ -374,6 +379,11 @@ func TestHyprMappingAndRawLua(t *testing.T) {
 	eq(t, strings.Contains(binds["SUPER + R"], `"repeating":true`), true)
 	eq(t, strings.Contains(binds["SUPER + W"], `"action":"workspaceNth","argument":"3"`), true)
 	eq(t, strings.Contains(binds["SUPER + M"], `"action":"moveToSpecial","argument":"scratch"`), true)
+	// An invalid or bare special workspace id stays raw; a valid one maps
+	for _, key := range []string{"SUPER + P", "SUPER + Q", "SUPER + U", "SUPER + Y"} {
+		eq(t, strings.Contains(binds[key], `"action":"raw"`), true)
+	}
+	eq(t, strings.Contains(binds["SUPER + H"], `"action":"toggleSpecial","argument":"magic"`), true)
 	// Raw Lua as Lua writes it back: list part first, other keys sorted
 	eq(t, strings.Contains(binds["SUPER + N"], `"argument":"hl.dsp.window.tag({ list = { 1, 2 }, tag = \"a\\nb\" })"`), true)
 	// A command calling axiom is its action, with the call it names

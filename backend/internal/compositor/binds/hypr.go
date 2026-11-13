@@ -122,7 +122,7 @@ func mapDispatcher(name string, args []any) *jsonx.Object {
 	if name == "layout" && one == "togglesplit" {
 		return to("toggleSplit", "")
 	}
-	if s, ok := one.(string); ok && name == "workspace.toggle_special" && s != "" {
+	if s, ok := one.(string); ok && name == "workspace.toggle_special" && validSpecialID(s) {
 		return to("toggleSpecial", s)
 	}
 	if isTable && len(table) == 1 {
@@ -149,8 +149,8 @@ func mapDispatcher(name string, args []any) *jsonx.Object {
 					}
 					return to("moveWindowStep", d)
 				}
-				if !goTo && isString && strings.HasPrefix(s, "special:") && len([]rune(s)) > 8 {
-					return to("moveToSpecial", string([]rune(s)[8:]))
+				if !goTo && isString && strings.HasPrefix(s, "special:") && validSpecialID(strings.TrimPrefix(s, "special:")) {
+					return to("moveToSpecial", strings.TrimPrefix(s, "special:"))
 				}
 			}
 		}
@@ -163,6 +163,16 @@ func mapDispatcher(name string, args []any) *jsonx.Object {
 		}
 	}
 	return nil
+}
+
+var specialIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+// validSpecialID mirrors SpecialWorkspaces.validId: a special workspace id
+// is ItemId's pattern, at most 32 chars, and not the reserved "special"
+// (Hyprland's bare special workspace). Anything else stays a raw bind, so a
+// merged bind never holds an invalid id.
+func validSpecialID(id string) bool {
+	return len(id) <= 32 && id != "special" && specialIDPattern.MatchString(id)
 }
 
 // pyG is a number as Python's :g writes it

@@ -30,8 +30,10 @@ QtObject {
   // focusedId ("" with none), layouts ({ [tiled window id]: its parent's
   // layout }, scratch (the windows in the scratchpad, in the contract's
   // shape with hidden true and output "": kept out of windows, for specials
-  // alone) }. Windows in the scratchpad aren't in windows; one shown from it
-  // is, on the workspace it shows on.
+  // alone), scratchIds (the ids of every window that came from the
+  // scratchpad, hidden in it or shown from it: its scratchpad_state is fresh
+  // or changed) }. Windows in the scratchpad aren't in windows; one shown
+  // from it is, on the workspace it shows on.
   function tree(reply) {
     const info = {
       "windows": [],
@@ -41,7 +43,8 @@ QtObject {
       "order": _focusOrder(reply),
       "focusedId": "",
       "layouts": {},
-      "scratch": []
+      "scratch": [],
+      "scratchIds": []
     };
     for (const output of reply?.nodes ?? []) {
       if (output.name === "__i3") {
@@ -50,7 +53,8 @@ QtObject {
             "windows": [],
             "counts": {},
             "layouts": {},
-            "focusedId": ""
+            "focusedId": "",
+            "scratchIds": []
           };
           _walk(ws, {
             "output": "",
@@ -59,6 +63,7 @@ QtObject {
             "hidden": true
           }, loose);
           info.scratch = info.scratch.concat(loose.windows);
+          info.scratchIds = info.scratchIds.concat(loose.windows.map(win => win.id));
         }
         continue;
       }
@@ -91,6 +96,9 @@ QtObject {
       const hidden = at.hidden || (tabbed && !floating && child.id !== front);
       if (child.pid !== undefined && child.pid !== null && (child.nodes ?? []).length === 0) {
         info.windows.push(root.window(child, at.ws, at.output, floating || at.floating, hidden));
+        // Null on every node that isn't a window
+        if (child.scratchpad_state === "fresh" || child.scratchpad_state === "changed")
+          info.scratchIds.push(String(child.id));
         if (!floating && !at.floating)
           info.layouts[String(child.id)] = node.layout;
         if (child.focused)
@@ -372,9 +380,12 @@ QtObject {
 
   // Of `windows` (the contract's), the ids in special group `name` (marked
   // axiom-special-<name>-…, `marks`: { [id]: [marks] }), and whether to show
-  // them on `output`: hide when any is shown there, else show
-  function specialToggle(windows, marks, name, output) {
-    const ids = Object.keys(marks ?? {}).filter(id => (marks[id] ?? []).some(mark => root.specialGroup(mark) === name));
+  // them on `output`: hide when any is shown there, else show. For the
+  // unnamed group ("") the ids are `scratchIds` (tree()'s) with no group's
+  // mark.
+  function specialToggle(windows, marks, name, output, scratchIds) {
+    const inGroup = (id, group) => (marks?.[id] ?? []).some(mark => root.specialGroup(mark) === group);
+    const ids = name === "" ? (scratchIds ?? []).filter(id => !(marks?.[id] ?? []).some(mark => root.specialGroup(mark) !== "")) : Object.keys(marks ?? {}).filter(id => inGroup(id, name));
     const shown = windows.some(win => ids.includes(win.id) && win.output === output);
     return {
       "ids": ids,
@@ -384,7 +395,9 @@ QtObject {
 
   // The special groups (contract.md › Shapes, Special) from tree() (`info`),
   // marks() (`marks`) and the outputs: every group a mark names, with the
-  // windows carrying one (the scratchpad's and the ones shown from it)
+  // windows carrying one (the scratchpad's and the ones shown from it).
+  // The unnamed group "" holds the scratchpad windows no group's mark claims,
+  // and is listed only when it has any.
   function specials(info, marks, outputs) {
     const names = [];
     for (const id of Object.keys(marks ?? {}))
@@ -393,8 +406,10 @@ QtObject {
         if (name !== "" && !names.includes(name))
           names.push(name);
       });
-    return names.map(name => {
-      const marked = win => (marks?.[win.id] ?? []).some(mark => root.specialGroup(mark) === name);
+    const unmarked = win => (info?.scratchIds ?? []).includes(win.id) && !(marks?.[win.id] ?? []).some(mark => root.specialGroup(mark) !== "");
+    const unnamed = (info?.windows ?? []).concat(info?.scratch ?? []).some(unmarked);
+    return (unnamed ? [""] : []).concat(names).map(name => {
+      const marked = name === "" ? unmarked : win => (marks?.[win.id] ?? []).some(mark => root.specialGroup(mark) === name);
       const all = info?.windows ?? [];
       const windows = all.filter(marked).concat((info?.scratch ?? []).filter(marked));
       const output = all.find(win => marked(win) && win.output !== "")?.output ?? "";

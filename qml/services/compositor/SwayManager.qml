@@ -142,7 +142,10 @@ Singleton {
     // flag when moved)
     const hidden = root._info.scratch.some(w => w.id === String(id));
     const grouped = (root._marks[String(id)] ?? []).some(mark => SwayState.specialGroup(mark) !== "");
-    if (hidden || grouped)
+    // The user's own shown scratchpad window (the unnamed special workspace)
+    // counts too: it would otherwise stay in the scratchpad
+    const scratch = root._info.scratchIds.includes(String(id));
+    if (hidden || grouped || scratch)
       lines.push(...SwayState.specialLeave(root._marks, id, hidden));
     if (floatAt) {
       if (!reinsert)
@@ -250,11 +253,12 @@ Singleton {
   // --- Special workspaces: groups of marked scratchpad windows ---
 
   // Shows the windows of special group `name` on the focused output, or
-  // hides them when any is shown there (SwayState.specialToggle)
+  // hides them when any is shown there (SwayState.specialToggle). "" is the
+  // unnamed group: the scratchpad windows no group's mark claims.
   function toggleSpecial(name, output) {
     const target = output || root.focusedOutput;
     const focus = target !== root.focusedOutput ? [`focus output ${SwayState.quote(target)}`] : [];
-    const plan = SwayState.specialToggle(root.windows, root._marks, name, target);
+    const plan = SwayState.specialToggle(root.windows, root._marks, name, target, root._info.scratchIds);
     const shown = plan.ids.filter(id => root.windows.some(w => w.id === id));
     const changes = plan.show ? plan.ids.filter(id => !root.windows.some(w => w.id === id && w.output === target)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`);
     const lines = changes.length > 0 ? (plan.show ? focus : []).concat(changes) : [];
