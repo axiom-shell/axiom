@@ -194,6 +194,7 @@ Item {
   property bool _settled: false
   // Set on completion: a delegate's binding sets `widget` during creation
   // and runs onWidgetChanged before it; the module loads once, on completion
+  // (docs/dev/core/qml-pitfalls.md, on<Prop>Changed before onCompleted)
   property bool _completed: false
   Component.onCompleted: {
     root._completed = true;

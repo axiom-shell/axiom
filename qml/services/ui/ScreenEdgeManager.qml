@@ -38,23 +38,34 @@ QtObject {
     if (k.items !== root._bars)
       root._bars = k.items;
   }
-  readonly property var _freshBars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => {
-    const enriched = BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps);
-    enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
-    return enriched;
-  }), root.endsOptions)
+  // Reads the gaps' inputs itself, not through floatGaps/endsOptions: a
+  // binding over those re-runs once per link as a gap change reaches them,
+  // the first with the new gapsOut and the old float gaps (a swap of the
+  // bars that is no input change)
+  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), ConfigManager.live.Bars.items)
+  function _freshBarsFor(gapsOut, floatGaps, items) {
+    return BarEnds.withEnds(BarsConfig.expandBars(items).map(bar => {
+      const enriched = BarsConfig.enrichBarConfig(bar, gapsOut, floatGaps);
+      enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
+      return enriched;
+    }), BarsConfig.endsOptions(gapsOut, floatGaps));
+  }
   readonly property var endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
 
   // The gaps a floating bar's Automatic float gap keeps (per edge name):
   // the compositor's outer gaps, or with no backend to ask, the screen
   // margin, so it isn't flush on the border (gapsOut stays 0: unknown
   // gaps aren't the margin)
-  readonly property var floatGaps: CompositorManager.backend ? CompositorManager.gapsOut : ({
-      "top": Appearance.screenMargin,
-      "right": Appearance.screenMargin,
-      "bottom": Appearance.screenMargin,
-      "left": Appearance.screenMargin
-    })
+  readonly property var floatGaps: root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut)
+  function _floatGapsFor(backend, gapsOut) {
+    const m = Appearance.screenMargin;
+    return backend ? gapsOut : ({
+        "top": m,
+        "right": m,
+        "bottom": m,
+        "left": m
+      });
+  }
 
   // The innermost enabled bar on each edge of a screen ({ top, bottom,
   // left, right }, null where there is none): what surfaces arranged after
