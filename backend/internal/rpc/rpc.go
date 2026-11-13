@@ -446,6 +446,8 @@ func (c *Conn) readLoop() {
 	// Closed once the last in-order call (InOrder) is handled: the next
 	// one waits for it
 	var lastInOrder chan struct{}
+	// The refusal is logged once per connection
+	busyLogged := false
 	for sc.Scan() {
 		line := sc.Bytes()
 		if len(bytes.TrimSpace(line)) == 0 {
@@ -473,9 +475,13 @@ func (c *Conn) readLoop() {
 		select {
 		case c.inFlight <- struct{}{}:
 		default:
-			if m.ID != nil {
-				c.replyError(m.ID, toWire(axerr.New(axerr.Unavailable, "too many requests in flight")))
+			// Busy, not Unavailable: the caller can tell it from a lost
+			// connection and ask again
+			if !busyLogged {
+				busyLogged = true
+				c.log.Warn("refusing calls: too many in flight")
 			}
+			c.replyError(m.ID, toWire(axerr.New(axerr.Busy, "too many requests in flight")))
 			continue
 		}
 		var after, done chan struct{}

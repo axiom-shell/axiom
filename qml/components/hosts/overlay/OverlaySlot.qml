@@ -44,7 +44,10 @@ Item {
 
   // Created with its properties already set, then bound so later config
   // edits reach it (as BarWidgetHost does)
-  onActiveChanged: _load()
+  onActiveChanged: {
+    if (root._completed)
+      _load();
+  }
   function _load() {
     if (!root.active || !root.componentPath) {
       loader.source = "";
@@ -58,8 +61,17 @@ Item {
       "expander": root.expander
     });
   }
-  onComponentPathChanged: _load()
-  Component.onCompleted: _load()
+  // A binding sets componentPath during creation, before completion; the
+  // module loads once, on completion
+  property bool _completed: false
+  onComponentPathChanged: {
+    if (root._completed)
+      _load();
+  }
+  Component.onCompleted: {
+    root._completed = true;
+    _load();
+  }
 
   // `contentZoom`: see StyledIcon
   Loader {
