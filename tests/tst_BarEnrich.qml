@@ -150,6 +150,52 @@ TestCase {
     verify(battery.properties.chargingColor !== "", "and picked");
   }
 
+  // A window rule hides the bar (hiddenByRule): enriched as an always-
+  // auto-hiding one, whatever it is configured as
+  function test_enrich_hidden_by_rule() {
+    const hidden = Bars.bar({
+      "autoHide": "never",
+      "reserveSpace": true,
+      "revealOnWorkspace": true,
+      "revealOnActivity": true,
+      "surface": "solid",
+      "shadow": {
+        "enabled": true
+      },
+      "hiddenByRule": true
+    }, {
+      "screenBorder": true
+    });
+    compare(hidden.autoHide, "always");
+    verify(hidden.autoHiding);
+    verify(!hidden.reserveSpace);
+    verify(!hidden.revealOnWorkspace);
+    verify(!hidden.revealOnActivity);
+    verify(hidden.hiddenByRule);
+    const kept = Bars.bar({
+      "autoHide": "never",
+      "reserveSpace": true,
+      "surface": "solid",
+      "shadow": {
+        "enabled": true
+      }
+    }, {
+      "screenBorder": true
+    });
+    verify(!kept.hiddenByRule);
+    compare(kept.autoHide, "never");
+    verify(kept.reserveSpace);
+    // Under the border a reserving solid bar leaves its shadow to it;
+    // hidden, it casts its own
+    compare(kept.shadow, false);
+    verify(hidden.look.values.shadow);
+    verify(hidden.shadow);
+    compare(Bars.bar({
+      "autoHide": "whenCovered",
+      "hiddenByRule": true
+    }).autoHide, "always");
+  }
+
   function test_kind_of() {
     const kind = (surface, floating) => BarEnrich.kindOf({
         "surface": surface,

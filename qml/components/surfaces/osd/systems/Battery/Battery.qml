@@ -10,6 +10,9 @@ import qs.components.surfaces.osd.engine
 // BatteryManager.levelEvent, never the level alone). BatteryWatch reads
 // BatteryManager; nothing is judged with no battery
 OSDSystem {
+  // A drop to low or critical opens the OSD while a window rule pauses
+  // OSDs, as a headset's battery does
+  alertKinds: ["low", "critical"]
   // The charger plugged in: its card; unplugged: its icon (the battery's
   // events: their card)
   onAdd: "card"

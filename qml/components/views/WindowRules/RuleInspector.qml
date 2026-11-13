@@ -173,7 +173,7 @@ ColumnLayout {
       Layout.fillWidth: true
       propertiesSchema: root.schema.shell.properties
       // The other effects follow in their own PRs
-      order: ["dnd", "keepAwake", "powerProfile", "hideFrom", "pauseBinds"]
+      order: ["dnd", "keepAwake", "powerProfile", "hideFrom", "pauseBinds", "pauseOsd", "hideBar"]
       values: root.rule.shell ?? ({})
       onEdited: (path, value) => root.editor.set(["shell"].concat(path), value)
     }
