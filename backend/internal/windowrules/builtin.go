@@ -10,9 +10,9 @@ import (
 // key, rule its windows, window and icon in config form (what a user would
 // save), so Builtins and Copy as rule read one source.
 type builtin struct {
-	key, id, name string
-	on            func(Switches) bool
-	rule          func(Switches) *jsonx.Object
+	key, name string
+	on        func(Switches) bool
+	rule      func(Switches) *jsonx.Object
 }
 
 // builtins is the table; its order is the priority, below every rule of the
@@ -20,7 +20,7 @@ type builtin struct {
 // makes.
 var builtins = []builtin{
 	{
-		key: "steamFloat", id: "_steamFloat", name: "Float Steam's small windows",
+		key: "steamFloat", name: "Float Steam's small windows",
 		on: func(s Switches) bool { return s.SteamFloat },
 		// Every Steam window but the main one and Big Picture. The positive
 		// "matches ." keeps a window with no title yet tiled.
@@ -38,7 +38,7 @@ var builtins = []builtin{
 		},
 	},
 	{
-		key: "gamesSpecial", id: "_gamesSpecial", name: "Send games to a special workspace",
+		key: "gamesSpecial", name: "Send games to a special workspace",
 		on: func(s Switches) bool { return s.GamesSpecial.Enabled },
 		// Kind 0 is written (Steam games), kind 1 is live: the other
 		// launchers' games are moved just after they open.
@@ -68,7 +68,7 @@ func Builtins(s Switches, issues []Issue) []Rule {
 			continue
 		}
 		r := parseRule(b.rule(s))
-		r.ID, r.Name, r.Enabled = b.id, b.name, true
+		r.ID, r.Name, r.Enabled = "_"+b.key, b.name, true
 		out = append(out, r)
 	}
 	return out
@@ -100,7 +100,7 @@ func BuiltinRule(key string, s Switches) (*jsonx.Object, bool) {
 func BuiltinIDs() []string {
 	ids := make([]string, len(builtins))
 	for i, b := range builtins {
-		ids[i] = b.id
+		ids[i] = "_" + b.key
 	}
 	return ids
 }

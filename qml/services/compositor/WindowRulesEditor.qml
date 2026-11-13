@@ -255,8 +255,9 @@ QtObject {
   }
 
   // Copy as rule: the built-in switch `key` ("steamFloat", "gamesSpecial")
-  // as a rule of the user's, last (just above the switches, where it ranked),
-  // selected and unsaved, with the switch turned off so it isn't done twice
+  // as a rule of the user's: last among the user's rules (just above the
+  // built-ins, where the switch ranked), selected and unsaved, with the switch
+  // turned off so it isn't done twice
   function copySwitch(key) {
     EditsManager.commitTyping();
     const draft = root._local();
@@ -274,8 +275,8 @@ QtObject {
         "name": name
       }, builtinRule);
       local.rules.push(ConfigManager.withDefaults(rule, "WindowRule"));
-      root.setSwitch(key === "steamFloat" ? [key] : [key, "enabled"], false);
       root._apply();
+      root.setSwitch(key === "steamFloat" ? [key] : [key, "enabled"], false);
       root.select(local.rules.length - 1);
     });
   }

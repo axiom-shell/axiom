@@ -22,20 +22,24 @@ FieldGroup {
         "text": root.editor.issueText(issue)
       }))
 
+  function copyAction(key) {
+    return {
+      "text": I18n.tr("Copy as rule"),
+      "icon": "content_copy",
+      "run": () => root.editor.copySwitch(key)
+    };
+  }
+
   title: I18n.tr(root.schema.title)
   description: I18n.tr(root.schema.description)
 
   SchemaPropertiesForm {
     Layout.fillWidth: true
-    propertiesSchema: Utils.pick(root.schema.properties, order)
+    propertiesSchema: Utils.pick(root.schema.properties, ["steamFloat"])
     order: ["steamFloat"]
     values: root.editor.switches
     onEdited: (path, value) => root.editor.setSwitch(path, value)
-    fieldAction: path => path[0] === "steamFloat" ? ({
-          "text": I18n.tr("Copy as rule"),
-          "icon": "content_copy",
-          "run": () => root.editor.copySwitch("steamFloat")
-        }) : null
+    fieldAction: path => path[0] === "steamFloat" ? root.copyAction("steamFloat") : null
   }
 
   SchemaPropertiesForm {
@@ -44,11 +48,7 @@ FieldGroup {
     order: ["enabled", "special"]
     values: root.editor.switches.gamesSpecial ?? ({})
     onEdited: (path, value) => root.editor.setSwitch(["gamesSpecial"].concat(path), value)
-    fieldAction: path => path[0] === "enabled" ? ({
-          "text": I18n.tr("Copy as rule"),
-          "icon": "content_copy",
-          "run": () => root.editor.copySwitch("gamesSpecial")
-        }) : null
+    fieldAction: path => path[0] === "enabled" && CompositorManager.supports.namedSpecial ? root.copyAction("gamesSpecial") : null
   }
 
   IssueList {
