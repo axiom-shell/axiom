@@ -86,13 +86,19 @@ QtObject {
   }
 
   // Drops the subscription: with nobody else subscribed, axiom stops
-  // fetching
+  // fetching. The unsubscribe goes out after a grace period (TopicGrace),
+  // so a consumer destroyed and rebuilt at once (the bar at shell start)
+  // doesn't make axiom stop and restart the topic's loop; an acquire
+  // meanwhile cancels it
   function release(topic) {
     if (!(topic in root._acquired))
       return;
     delete root._acquired[topic];
-    if (root.ready)
-      root.call(topic + ".unsubscribe", {}, root._logFailure(topic + ".unsubscribe"));
+    if (!root.ready)
+      return;
+    root._graced = TopicGrace.release(root._graced, topic, Date.now(), root._graceMs);
+    root._graceTimer.interval = root._graceMs;
+    root._graceTimer.restart();
   }
 
   // Asks axiom to fetch an acquired topic now
@@ -128,6 +134,33 @@ QtObject {
   property var _listeners: ({})
   // acquire's topics: { topic: request }, subscribed again on each hello
   property var _acquired: ({})
+
+  // release's topics waiting out the grace period: { topic: deadline in ms }
+  property var _graced: ({})
+  readonly property int _graceMs: 1500
+
+  // The grace period of the earliest pending release ended: unsubscribe
+  // what is still not acquired
+  property Timer _graceTimer: Timer {
+    repeat: false
+    onTriggered: {
+      const r = TopicGrace.due(root._graced, root._acquired, Date.now());
+      root._graced = r.pending;
+      if (root.ready)
+        r.unsubscribe.forEach(topic => root.call(topic + ".unsubscribe", {}, root._logFailure(topic + ".unsubscribe")));
+      if (r.wait >= 0) {
+        interval = r.wait;
+        restart();
+      }
+    }
+  }
+
+  // A connection that ended or began knows nothing of what was pending:
+  // an unsubscribe sent later would hit a fresh subscription
+  function _clearGrace() {
+    root._graceTimer.stop();
+    root._graced = ({});
+  }
 
   function _subscribe(topic) {
     root.call(topic + ".subscribe", root._acquired[topic], root._logFailure(topic + ".subscribe"));
@@ -291,6 +324,7 @@ QtObject {
       root._retry = 0;
       root._greetedSinceDrop = true;
       root._refused = null;
+      root._clearGrace();
       root._hello = result;
       root._applyDaemonState(result);
       if (result.dev)
@@ -360,6 +394,7 @@ QtObject {
   // hello, which is said again
   function _dropped() {
     root._hello = null;
+    root._clearGrace();
     root._failQueued({
       "kind": "unavailable",
       "message": "the connection to axiom closed"
@@ -390,6 +425,7 @@ QtObject {
       return;
     root._retire(socket);
     root._hello = null;
+    root._clearGrace();
     root._greetedSinceDrop = false;
     root._failQueued({
       "kind": "unavailable",
