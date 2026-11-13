@@ -21,24 +21,51 @@ QtObject {
   // bars on its screen (BarEnds.withEnds: where it lies, what it
   // reserves, which bar a shared corner goes to). An auto-hiding bar
   // pinned shown (BarRevealManager.pinned, which changes only on a pin,
-  // never on hover) reserves its space.
-  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => {
-    const enriched = BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps);
-    enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
-    return enriched;
-  }), root.endsOptions)
+  // never on hover) reserves its space. Each entry stays the same object
+  // while it is equal (Utils.keepEqual), so a pass over equal content
+  // reaches no reader; [] until this singleton has completed.
+  readonly property var bars: root._bars
+  property var _bars: []
+  property var _barKeys: []
+  on_FreshBarsChanged: root._keepBars()
+  Component.onCompleted: root._keepBars()
+  function _keepBars() {
+    const k = Utils.keepEqual({
+      "items": root._bars,
+      "keys": root._barKeys
+    }, root._freshBars, b => b.id);
+    root._barKeys = k.keys;
+    if (k.items !== root._bars)
+      root._bars = k.items;
+  }
+  // Reads the gaps' inputs itself, not through floatGaps/endsOptions: a
+  // binding over those re-runs once per link as a gap change reaches them,
+  // the first with the new gapsOut and the old float gaps (a swap of the
+  // bars that is no input change)
+  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), ConfigManager.live.Bars.items)
+  function _freshBarsFor(gapsOut, floatGaps, items) {
+    return BarEnds.withEnds(BarsConfig.expandBars(items).map(bar => {
+      const enriched = BarsConfig.enrichBarConfig(bar, gapsOut, floatGaps);
+      enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
+      return enriched;
+    }), BarsConfig.endsOptions(gapsOut, floatGaps));
+  }
   readonly property var endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
 
   // The gaps a floating bar's Automatic float gap keeps (per edge name):
   // the compositor's outer gaps, or with no backend to ask, the screen
   // margin, so it isn't flush on the border (gapsOut stays 0: unknown
   // gaps aren't the margin)
-  readonly property var floatGaps: CompositorManager.backend ? CompositorManager.gapsOut : ({
-      "top": Appearance.screenMargin,
-      "right": Appearance.screenMargin,
-      "bottom": Appearance.screenMargin,
-      "left": Appearance.screenMargin
-    })
+  readonly property var floatGaps: root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut)
+  function _floatGapsFor(backend, gapsOut) {
+    const m = Appearance.screenMargin;
+    return backend ? gapsOut : ({
+        "top": m,
+        "right": m,
+        "bottom": m,
+        "left": m
+      });
+  }
 
   // The innermost enabled bar on each edge of a screen ({ top, bottom,
   // left, right }, null where there is none): what surfaces arranged after

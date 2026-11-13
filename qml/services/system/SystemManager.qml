@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.components.methods
 import qs.config
 import qs.services.core
 import qs.services.ui
@@ -58,7 +59,7 @@ QtObject {
 
   function acquire(owner, request) {
     _registry.acquire(owner, {
-      "interval": request?.interval ?? 2000,
+      "interval": request?.interval,
       "metrics": request?.metrics ?? [],
       "diskPaths": request?.diskPaths ?? [],
       "history": request?.history ?? false
@@ -126,22 +127,12 @@ QtObject {
     if (error && error.kind !== "unavailable")
       console.warn(`[SystemManager] Could not keep the graphs' history: ${error.message}`);
   }
-  readonly property var _requests: _registry.requests
-
-  // (the QML JS engine has no Array.flatMap)
-  readonly property var _metrics: [...new Set([].concat(..._requests.map(r => r.metrics)))]
-  readonly property var _diskPaths: [...new Set([].concat(..._requests.map(r => r.diskPaths)))]
-  // The graphed metrics some consumer wants the history of
-  readonly property var _history: [...new Set([].concat(..._requests.filter(r => r.history).map(r => r.metrics)))].filter(m => ["cpu", "mem", "gpu", "cpuTemp", "net"].includes(m))
-  readonly property int _interval: _requests.length > 0 ? Math.min(..._requests.map(r => r.interval)) : 0
-  // The request as one string, so axiom is asked again only when it
-  // really changes (axiom keys disks by the path as asked, ~ and all)
-  readonly property string _requestKey: _registry.active ? JSON.stringify({
-    "interval": root._interval,
-    "metrics": root._metrics,
-    "diskPaths": root._diskPaths,
-    "history": root._history
-  }) : ""
+  // The request as one string, built in one binding from the consumers'
+  // requests (never apart: a half-evaluated one once sent an interval of
+  // 0), so axiom is asked again only when it really changes (axiom keys
+  // disks by the path as asked, ~ and all)
+  readonly property string _requestKey: _registry.active ? JSON.stringify(TopicRequest.systemRequest(_registry.requests)) : ""
+  readonly property var _metrics: root._requestKey !== "" ? JSON.parse(root._requestKey).metrics : []
 
   on_RequestKeyChanged: {
     if (root._requestKey !== "")

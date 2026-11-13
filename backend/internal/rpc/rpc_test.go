@@ -465,3 +465,42 @@ func TestInOrderCallsRunInOrder(t *testing.T) {
 		}
 	}
 }
+
+// Past MaxInFlight a call is refused as busy, not unavailable, so the
+// caller can tell it from a lost connection.
+func TestInFlightRefusalIsBusy(t *testing.T) {
+	t.Parallel()
+	release := make(chan struct{})
+	reg := NewRegistry()
+	Handle(reg, "wait", func(ctx context.Context, c *Conn, p struct{}) (struct{}, error) {
+		<-release
+		return struct{}{}, nil
+	})
+	a, b := net.Pipe()
+	c := NewConn(a, reg, Limits{MaxLine: 1 << 10, MaxDepth: 8, MaxInFlight: 2, QueueSize: 64}, nil)
+	t.Cleanup(func() { close(release); c.Close(); b.Close() })
+	replies := make(chan message, 8)
+	go func() {
+		r := bufio.NewReader(b)
+		for {
+			line, err := r.ReadBytes('\n')
+			if err != nil {
+				return
+			}
+			var m message
+			json.Unmarshal(line, &m)
+			replies <- m
+		}
+	}()
+	for n := 1; n <= 3; n++ {
+		io.WriteString(b, `{"jsonrpc":"2.0","id":`+string(rune('0'+n))+`,"method":"wait"}`+"\n")
+	}
+	select {
+	case m := <-replies:
+		if string(m.ID) != "3" || m.Error == nil || m.Error.Code != axerr.RPCCode(axerr.Busy) {
+			t.Fatalf("reply %s %+v, want id 3 refused as busy", m.ID, m.Error)
+		}
+	case <-time.After(testkit.Bound(2 * time.Second)):
+		t.Fatal("no refusal")
+	}
+}

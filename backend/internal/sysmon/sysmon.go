@@ -566,7 +566,7 @@ func (s *sampler) sample(ctx context.Context, requests []json.RawMessage) State 
 			}
 		}
 		if r.Interval != nil {
-			if d := time.Duration(*r.Interval * float64(time.Millisecond)); interval == 0 || d < interval {
+			if d := time.Duration(*r.Interval * float64(time.Millisecond)); d > 0 && (interval == 0 || d < interval) {
 				interval = d
 			}
 		}

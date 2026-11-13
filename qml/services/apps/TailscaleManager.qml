@@ -156,25 +156,26 @@ QtObject {
 
   // -- Private --
   property ConsumerRegistry _registry: ConsumerRegistry {}
-  // 0 while nothing has acquired it
-  readonly property int _interval: _registry.active ? TailscaleConfig.interval : 0
+  // The interval goes straight into the request, so the topic is never
+  // asked with a half-evaluated one (an interval of 0)
+  readonly property var _request: _registry.active ? {
+    "interval": TailscaleConfig.interval
+  } : null
   property ConsumerRegistry _detailsRegistry: ConsumerRegistry {}
-  readonly property int _detailsInterval: _detailsRegistry.active ? TailscaleConfig.interval : 0
+  readonly property var _detailsRequest: _detailsRegistry.active ? {
+    "interval": TailscaleConfig.interval
+  } : null
 
-  on_IntervalChanged: {
-    if (root._interval > 0)
-      BackendManager.acquire("tailscale", {
-        "interval": root._interval
-      });
+  on_RequestChanged: {
+    if (root._request)
+      BackendManager.acquire("tailscale", root._request);
     else
       BackendManager.release("tailscale");
   }
 
-  on_DetailsIntervalChanged: {
-    if (root._detailsInterval > 0)
-      BackendManager.acquire("tailscaledetails", {
-        "interval": root._detailsInterval
-      });
+  on_DetailsRequestChanged: {
+    if (root._detailsRequest)
+      BackendManager.acquire("tailscaledetails", root._detailsRequest);
     else
       BackendManager.release("tailscaledetails");
   }

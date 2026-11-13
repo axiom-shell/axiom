@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
 const okReply = `{
@@ -266,5 +268,125 @@ func TestRelativeDirsIgnored(t *testing.T) {
 	out, _ := h.fetch(context.Background(), []json.RawMessage{json.RawMessage(`{"accounts": [{"dir": "~/.claude"}]}`)})
 	if len(out.(map[string]Account)) != 0 {
 		t.Errorf("got %v", out)
+	}
+}
+
+// canceller cancels the context of the request in flight, once armed
+type canceller struct {
+	mu     sync.Mutex
+	cancel context.CancelFunc
+	next   http.RoundTripper
+}
+
+func (c *canceller) RoundTrip(r *http.Request) (*http.Response, error) {
+	c.mu.Lock()
+	cancel := c.cancel
+	c.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	return c.next.RoundTrip(r)
+}
+
+// cutShort is a source whose fetches can be cancelled mid-request
+type cutShort struct {
+	t   *testing.T
+	h   *harness
+	rt  *canceller
+	src topics.Source
+	dir string
+}
+
+func newCutShort(t *testing.T, replies ...reply) *cutShort {
+	h := newHarness(t, replies...)
+	rt := &canceller{next: h.srv.Client().Transport}
+	src := Source(Options{StateFile: h.state, Endpoint: h.srv.URL, Client: &http.Client{Transport: rt}, Now: h.clock.Now})
+	return &cutShort{t: t, h: h, rt: rt, src: src, dir: account(t, "tok", time.Time{})}
+}
+
+// fetch asks for the account, the request cancelled when cut is set
+func (c *cutShort) fetch(cut bool) Account {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	c.rt.mu.Lock()
+	c.rt.cancel = nil
+	if cut {
+		c.rt.cancel = cancel
+	}
+	c.rt.mu.Unlock()
+	req, _ := json.Marshal(map[string]any{"interval": 60000, "every": (5 * time.Minute).Milliseconds(), "accounts": []map[string]string{{"label": "Work", "dir": c.dir}}})
+	out, err := c.src.Fetch(ctx, []json.RawMessage{req})
+	if err != nil {
+		c.t.Fatal(err)
+	}
+	return out.(map[string]Account)[c.dir]
+}
+
+// A request cut short by the shell unsubscribing is not a failure: the
+// account stays pending, nothing is saved and the next fetch goes ahead.
+func TestCancelledIsNotFailure(t *testing.T) {
+	t.Parallel()
+	c := newCutShort(t, reply{200, "", okReply})
+	if a := c.fetch(true); a.Status != "pending" || a.Failures != 0 || a.RetryAt != 0 || a.Error != "" {
+		t.Fatalf("cancelled: %+v", a)
+	}
+	if _, err := os.Stat(c.h.state); !os.IsNotExist(err) {
+		t.Errorf("state written after a cancelled fetch: %v", err)
+	}
+	if a := c.fetch(false); a.Status != "ok" || a.Failures != 0 {
+		t.Errorf("next fetch: %+v", a)
+	}
+}
+
+// A cancel on a saved account leaves the file as it was
+func TestCancelledLeavesSavedState(t *testing.T) {
+	t.Parallel()
+	c := newCutShort(t, reply{200, "", okReply})
+	c.fetch(false)
+	before, err := os.ReadFile(c.h.state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.h.clock.now = c.h.clock.now.Add(time.Hour)
+	if a := c.fetch(true); a.Status != "ok" || a.Failures != 0 || a.RetryAt != 0 {
+		t.Fatalf("cancelled: %+v", a)
+	}
+	after, _ := os.ReadFile(c.h.state)
+	if string(before) != string(after) {
+		t.Errorf("state changed:\n%s\n%s", before, after)
+	}
+}
+
+// A refresh asked for is not lost to a cancelled fetch
+func TestCancelledKeepsRefresh(t *testing.T) {
+	t.Parallel()
+	c := newCutShort(t, reply{200, "", okReply})
+	c.fetch(false)
+	c.src.OnRefresh()
+	c.fetch(true)
+	before := c.h.srv.calls()
+	c.fetch(false)
+	if c.h.srv.calls() != before+1 {
+		t.Errorf("the refresh was lost: %d calls, had %d", c.h.srv.calls(), before)
+	}
+}
+
+// New credentials seen by a cancelled fetch are seen again by the next
+func TestCancelledKeepsRenewal(t *testing.T) {
+	t.Parallel()
+	c := newCutShort(t, reply{200, "", okReply})
+	creds := filepath.Join(c.dir, ".credentials.json")
+	writeJSON(t, creds, map[string]any{"claudeAiOauth": map[string]any{"accessToken": "old", "expiresAt": c.h.clock.now.Add(-time.Hour).UnixMilli()}})
+	if a := c.fetch(false); a.Status != "expired" {
+		t.Fatalf("setup: %+v", a)
+	}
+	c.h.clock.now = c.h.clock.now.Add(time.Minute)
+	writeJSON(t, creds, map[string]any{"claudeAiOauth": map[string]any{"accessToken": "new", "expiresAt": c.h.clock.now.Add(time.Hour).UnixMilli()}})
+	os.Chtimes(creds, c.h.clock.now, c.h.clock.now.Add(time.Second))
+	if a := c.fetch(true); a.Status != "expired" {
+		t.Fatalf("cancelled: %+v", a)
+	}
+	if a := c.fetch(false); a.Status != "ok" {
+		t.Errorf("the renewal was lost: %+v", a)
 	}
 }
