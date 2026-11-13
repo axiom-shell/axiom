@@ -4367,9 +4367,9 @@
     "game: {0}": "",
     "Needs power-profiles-daemon, which isn't installed.": "",
     "This computer has no performance profile.": "",
-    "A window rule is keeping the screen on: the steps below wait until its window goes.": "",
     "Window rule: {0}": "",
     "Turning do not disturb off yourself wins until the rule ends.": "",
-    "Picking a profile yourself wins until the rule ends.": ""
+    "Picking a profile yourself wins until the rule ends.": "",
+    "A window rule is keeping the screen on: the steps below wait until it lets go.": ""
   }
 }

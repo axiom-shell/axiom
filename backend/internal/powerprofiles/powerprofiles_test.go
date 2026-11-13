@@ -25,6 +25,7 @@ type fakePPD struct {
 	next   uint32
 	events []string
 	refuse string // a profile HoldProfile refuses
+	flaky  int    // HoldProfile calls left to fail with no answer (NoReply)
 }
 
 // newPPD exports PPD on bus, owning the UPower name, or legacy: the net.hadess one.
@@ -47,6 +48,10 @@ func newPPD(t *testing.T, bus *dbustest.Bus, legacy bool) *fakePPD {
 			f.mu.Lock()
 			defer f.mu.Unlock()
 			f.events = append(f.events, fmt.Sprintf("hold %s %s %s", profile, reason, app))
+			if f.flaky > 0 {
+				f.flaky--
+				return nil, dbus.NewError(dbus.ErrNoReply, "no reply")
+			}
 			if profile == f.refuse {
 				return nil, dbus.NewError(dbus.ErrFailed, "no %s profile", profile)
 			}
@@ -158,7 +163,7 @@ func (r *rig) run() {
 }
 
 // settle lets what was asked reach the daemon and its signals come back.
-func settle() { time.Sleep(150 * time.Millisecond) }
+func settle() { time.Sleep(testkit.Bound(150 * time.Millisecond)) }
 
 func TestHold(t *testing.T) {
 	t.Parallel()
@@ -277,6 +282,19 @@ func TestRefusedIsNotRetried(t *testing.T) {
 	ppd.expect("hold performance Games axiom")
 	r.h.Hold("power-saver", "Games")
 	ppd.expect("hold performance Games axiom", "hold power-saver Games axiom")
+}
+
+func TestNoAnswerIsRetried(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	ppd := newPPD(t, r.bus, false)
+	ppd.flaky = 1
+	r.run()
+	r.h.Hold("performance", "Games")
+	// The first call gets no answer: it is tried again, not given up on
+	ppd.expect("hold performance Games axiom", "hold performance Games axiom")
+	settle()
+	ppd.expect("hold performance Games axiom", "hold performance Games axiom")
 }
 
 func TestNothingWantedNeverDials(t *testing.T) {

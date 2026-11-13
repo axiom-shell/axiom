@@ -165,7 +165,8 @@ func (e *Engine) SetConfig(windowRules, keybinds any) {
 	e.wake()
 }
 
-// Override is the user's own say over the hold of effect ("dnd"): it wins
+// Override is the user's own say over the hold of effect ("dnd" or
+// "powerProfile"; only the daemon's power-profiles hook uses the latter): it wins
 // until the rule's hold ends. It is ignored while the effect isn't held. The
 // loop applies it, so the change is pushed like any other.
 func (e *Engine) Override(effect string) error {

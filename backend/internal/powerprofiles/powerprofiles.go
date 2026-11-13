@@ -105,7 +105,7 @@ func (h *Holder) Run(ctx context.Context) error {
 				continue
 			}
 		}
-		err := h.session(ctx)
+		err := h.connect(ctx)
 		if ctx.Err() != nil {
 			return nil
 		}
@@ -121,8 +121,8 @@ func (h *Holder) Run(ctx context.Context) error {
 	}
 }
 
-// session is one connection's life: it ends, nil, once nothing is wanted.
-func (h *Holder) session(ctx context.Context) error {
+// connect is one connection's life: it ends, nil, once nothing is wanted.
+func (h *Holder) connect(ctx context.Context) error {
 	conn, err := h.o.SystemBus(ctx)
 	if err != nil {
 		return err
@@ -155,7 +155,9 @@ func (h *Holder) session(ctx context.Context) error {
 		if w.profile == "" {
 			return nil
 		}
-		s.reconcile(ctx, w)
+		if err := s.reconcile(ctx, w); err != nil {
+			return err
+		}
 		select {
 		case <-ctx.Done():
 			return nil
@@ -193,14 +195,16 @@ type session struct {
 	done    int  // the gen given up on (overridden or refused); 0: none
 }
 
-// reconcile takes, changes or lets go of the hold so it is w.
-func (s *session) reconcile(ctx context.Context, w wish) {
+// reconcile takes, changes or lets go of the hold so it is w. It returns the
+// error of a call that failed without an answer (timeout, lost connection),
+// so the caller redials and tries again.
+func (s *session) reconcile(ctx context.Context, w wish) error {
 	if s.cookie != 0 && s.held.profile == w.profile && s.held.reason == w.reason {
-		return
+		return nil
 	}
 	if s.done == w.gen || s.waiting {
 		// Overridden or refused: nothing again until the wish changes
-		return
+		return nil
 	}
 	old := s.cookie
 	cookie, in, err := s.take(ctx, w)
@@ -211,7 +215,9 @@ func (s *session) reconcile(ctx context.Context, w wish) {
 		s.h.o.Log.Info("powerprofiles: power-profiles-daemon isn't running: waiting for it")
 		s.cookie, s.in, s.waiting = 0, nil, true
 	case ctx.Err() != nil || s.conn.Err() != nil:
-		return
+		return nil
+	case transient(err):
+		return err
 	default:
 		s.h.o.Log.Warn("powerprofiles: the profile was refused", "profile", w.profile, "reason", w.reason, "err", err)
 		s.cookie, s.done = 0, w.gen
@@ -221,6 +227,17 @@ func (s *session) reconcile(ctx context.Context, w wish) {
 	if old != 0 {
 		s.release(old)
 	}
+	return nil
+}
+
+// transient is whether err is no answer from the daemon (a timeout, a lost
+// connection) rather than its refusal.
+func transient(err error) bool {
+	switch dbus.ErrorName(err) {
+	case "", dbus.ErrNoReply, "org.freedesktop.DBus.Error.Timeout", "org.freedesktop.DBus.Error.Disconnected":
+		return true
+	}
+	return false
 }
 
 var errNoDaemon = errors.New("no power-profiles-daemon")
