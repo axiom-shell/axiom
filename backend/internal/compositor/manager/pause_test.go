@@ -37,7 +37,7 @@ func (h *harness) pauseCalls() int {
 			n++
 		}
 	}
-	return n
+	return n - h.pauseBase
 }
 
 // pauseHarness is a detached layer whose runtime layer is applied, with
@@ -57,6 +57,12 @@ func pauseHarness(t *testing.T) *harness {
 		}
 		return false
 	})
+	// The first inputs armed both debounces: stop them and drain an apply
+	// already queued, so the give-back is sent once, then count from it
+	h.m.do(context.Background(), func(context.Context) { h.m.debounce.Stop(); h.m.liveDebounce.Stop() })
+	h.m.do(context.Background(), func(context.Context) {})
+	h.eventually("the give-back", func() bool { return h.pauseCalls() >= 1 })
+	h.pauseBase = h.pauseCalls() - 1
 	return h
 }
 
@@ -322,7 +328,7 @@ func TestPauseFailedSendIsRetried(t *testing.T) {
 	h.eventually("retried", func() bool { return h.pauseCalls() == 3 })
 	// The same hold again: nothing more to send
 	h.m.SetPause(hold(false, nil, []string{"a", "b"}))
-	time.Sleep(100 * time.Millisecond)
+	h.m.do(context.Background(), func(context.Context) {})
 	if n := h.pauseCalls(); n != 3 {
 		t.Fatalf("sent again: %d", n)
 	}

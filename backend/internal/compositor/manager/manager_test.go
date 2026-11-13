@@ -160,6 +160,8 @@ type harness struct {
 	pushes chan string
 	steps  chan []session.Step
 	stop   func()
+	// pause calls sent before a test counts (pause_test.go)
+	pauseBase int
 }
 
 func newHarness(t *testing.T, mode string) *harness { return newHarnessEnv(t, mode, nil) }
