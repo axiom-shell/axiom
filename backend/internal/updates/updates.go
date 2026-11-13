@@ -3,7 +3,9 @@
 // shell's Packages.updates names, sent with the request) and an AUR
 // helper's `-Qua`, parsed into packages. The hub runs one Fetch at a time,
 // which matters: concurrent `checkupdates` runs share a temporary sync db
-// and fail with "Cannot fetch updates".
+// and fail with "Cannot fetch updates". The daemon's runs use a db of their
+// own (CHECKUPDATES_DB in the daemon's runtime dir, one per display), so no
+// other run, another shell's daemon included, can make them fail.
 package updates
 
 import (
@@ -11,7 +13,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"slices"
@@ -94,6 +98,10 @@ type Options struct {
 	Run func(ctx context.Context, bin string, args ...string) ([]byte, int, string)
 	// Children holds the default Run's commands, for a re-exec to hand on
 	Children *command.Children
+	// Dir is the daemon's own runtime directory (xdg.Runtime.Dir, one per
+	// display), where the default Run keeps checkupdates' sync db; empty:
+	// the db is left to the environment
+	Dir string
 }
 
 // Source is the `updates` topic.
@@ -105,7 +113,7 @@ func Source(o Options) topics.Source {
 		o.LookPath = exec.LookPath
 	}
 	if o.Run == nil {
-		o.Run = runner(o.Children)
+		o.Run = runner(o.Children, o.Dir)
 	}
 	if o.Now == nil {
 		o.Now = time.Now
@@ -198,16 +206,34 @@ func runCheck(ctx context.Context, o Options, c *Check) ([]Package, error) {
 	return Parse(c.Format, out), nil
 }
 
-// runner is the default Run, its commands in children.
-func runner(children *command.Children) func(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
+// runner is the default Run, its commands in children and its checkupdates
+// db in dir.
+func runner(children *command.Children, dir string) func(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
 	return func(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
 		// A check that hangs (a stuck mirror) gives way to the next interval
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
-		res, err := command.Run(ctx, command.Options{Children: children, Stop: true}, append([]string{bin}, args...), nil)
+		res, err := command.Run(ctx, command.Options{Children: children, Stop: true, Env: checkEnv(os.Environ(), dir)}, append([]string{bin}, args...), nil)
 		if err != nil {
 			return nil, -1, err.Error()
 		}
 		return []byte(res.Stdout), res.ExitCode, strings.TrimSpace(res.Stderr)
 	}
+}
+
+// checkupDB is the sync db's directory inside a daemon's runtime dir
+const checkupDB = "checkup-db"
+
+// checkEnv is env with CHECKUPDATES_DB set to a sync db in dir, the
+// daemon's own runtime directory ($XDG_RUNTIME_DIR/axiom/<display>), so
+// `checkupdates` runs of other processes and of other daemons (nested
+// shells share $XDG_RUNTIME_DIR) can't make this one fail. Without a dir
+// env is unchanged: a predictable path in a shared temp dir could be
+// pre-created by another user.
+func checkEnv(env []string, dir string) []string {
+	if dir == "" {
+		return env
+	}
+	out := slices.DeleteFunc(slices.Clone(env), func(e string) bool { return strings.HasPrefix(e, "CHECKUPDATES_DB=") })
+	return append(out, "CHECKUPDATES_DB="+filepath.Join(dir, checkupDB))
 }

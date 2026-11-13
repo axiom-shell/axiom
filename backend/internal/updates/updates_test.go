@@ -7,9 +7,12 @@ import (
 	"log/slog"
 	"os/exec"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
 func TestParse(t *testing.T) {
@@ -156,5 +159,43 @@ func TestFetchCancelledIsQuiet(t *testing.T) {
 	}
 	if logged.Len() > 0 {
 		t.Errorf("logged %q, want nothing", logged.String())
+	}
+}
+
+func TestCheckEnv(t *testing.T) {
+	t.Parallel()
+	got := checkEnv([]string{"A=1", "CHECKUPDATES_DB=/tmp/other"}, "/run/user/7/axiom/wayland-1")
+	want := []string{"A=1", "CHECKUPDATES_DB=/run/user/7/axiom/wayland-1/checkup-db"}
+	if !slices.Equal(got, want) {
+		t.Errorf("checkEnv = %v, want %v", got, want)
+	}
+	// No runtime dir: no override, whatever the env already says
+	in := []string{"A=1", "CHECKUPDATES_DB=/tmp/other"}
+	if got := checkEnv(in, ""); !slices.Equal(got, in) {
+		t.Errorf("checkEnv without a runtime dir = %v, want %v", got, in)
+	}
+}
+
+// Two daemons of one user share $XDG_RUNTIME_DIR: their displays, so their
+// runtime dirs, keep their checkupdates dbs apart.
+func TestCheckEnvDiffersPerDisplay(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	db := func(display string) string {
+		getenv := func(k string) string {
+			return map[string]string{"XDG_RUNTIME_DIR": root, "WAYLAND_DISPLAY": display}[k]
+		}
+		rt, err := xdg.ForDisplay(getenv, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return checkEnv(nil, rt.Dir)[0]
+	}
+	live, nested := db("wayland-1"), db("wayland-9")
+	if live == nested {
+		t.Errorf("both daemons use %s", live)
+	}
+	if live != db("wayland-1") {
+		t.Errorf("a daemon's db moved between runs")
 	}
 }
