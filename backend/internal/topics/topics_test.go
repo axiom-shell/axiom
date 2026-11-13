@@ -3,10 +3,12 @@ package topics
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -299,6 +301,7 @@ func TestResubscribeWithinTheIntervalDoesNotFetch(t *testing.T) {
 		h.hub.Unsubscribe(a, "t")
 		h.clock.Advance(time.Second)
 		b := newSub()
+		h.set(9)
 		subscribe(t, h, b, `{"interval":5000}`)
 		if got := state(t, b); got != `t.state {"v":0}` {
 			t.Errorf("state %q", got)
@@ -355,13 +358,63 @@ func TestRefreshAfterResubscribeFetches(t *testing.T) {
 	subscribe(t, h, a, `{}`)
 	fetched(t, h)
 	state(t, a)
+	settle(t, h)
 	h.hub.Unsubscribe(a, "t")
+	h.set(9)
 	subscribe(t, h, a, `{}`)
-	state(t, a)
+	if got := state(t, a); got != `t.state {"v":0}` {
+		t.Errorf("state %q", got)
+	}
 	notFetched(t, h)
 	if err := h.hub.Refresh("t"); err != nil {
 		t.Fatal(err)
 	}
+	fetched(t, h)
+}
+
+func TestResubscribeAfterMixedRequestsFetches(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	a, b := newSub(), newSub()
+	subscribe(t, h, a, `{"x":1}`)
+	fetched(t, h)
+	subscribe(t, h, b, `{"x":2}`)
+	fetched(t, h)
+	h.hub.Unsubscribe(a, "t")
+	h.hub.Unsubscribe(b, "t")
+	c := newSub()
+	subscribe(t, h, c, `{"x":2}`)
+	fetched(t, h)
+}
+
+func TestResubscribeAfterAnErrorFetches(t *testing.T) {
+	t.Parallel()
+	var failing atomic.Bool
+	h := newHarness(t, func(src *Source) {
+		fetch := src.Fetch
+		src.Fetch = func(ctx context.Context, r []json.RawMessage) (any, error) {
+			state, err := fetch(ctx, r)
+			if failing.Load() {
+				return nil, errors.New("down")
+			}
+			return state, err
+		}
+	})
+	a := newSub()
+	subscribe(t, h, a, `{"interval":5000}`)
+	fetched(t, h)
+	state(t, a)
+	settle(t, h)
+	failing.Store(true)
+	h.clock.Advance(5 * time.Second)
+	fetched(t, h)
+	topic := h.hub.sources["t"]
+	if !testkit.Eventually(func() bool { h.hub.mu.Lock(); defer h.hub.mu.Unlock(); return topic.last == nil }) {
+		t.Fatal("the state before the error was kept")
+	}
+	h.hub.Unsubscribe(a, "t")
+	failing.Store(false)
+	subscribe(t, h, a, `{"interval":5000}`)
 	fetched(t, h)
 }
 
