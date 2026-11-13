@@ -1,0 +1,163 @@
+package windows
+
+import (
+	"context"
+	"encoding/json"
+	"strconv"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+)
+
+// swaySource reads sway: window and workspace events and get_tree. A
+// window's other fields change from the event's container; where it
+// lives (workspace, output) only the tree knows.
+type swaySource struct {
+	s *ipc.Sway
+}
+
+func (s *swaySource) connect(ctx context.Context, started func(), event func([]byte)) error {
+	return s.s.Events(ctx, []string{"window", "workspace"}, started, func(kind uint32, body []byte) {
+		var name string
+		switch kind {
+		case ipc.SwayEventWindow:
+			name = "window"
+		case ipc.SwayEventWorkspace:
+			name = "workspace"
+		default:
+			return
+		}
+		// {"type": …, "body": …}: the shape the fixtures hold
+		line, err := json.Marshal(struct {
+			Type string          `json:"type"`
+			Body json.RawMessage `json:"body"`
+		}{name, body})
+		if err == nil {
+			event(line)
+		}
+	})
+}
+
+// swayNode is a get_tree node, or a window event's container
+type swayNode struct {
+	ID               int64                  `json:"id"`
+	Name             string                 `json:"name"`
+	Type             string                 `json:"type"`
+	AppID            string                 `json:"app_id"`
+	PID              int                    `json:"pid"`
+	Shell            string                 `json:"shell"`
+	Focused          bool                   `json:"focused"`
+	FullscreenMode   int                    `json:"fullscreen_mode"`
+	WindowProperties struct{ Class string } `json:"window_properties"`
+	Nodes            []swayNode             `json:"nodes"`
+	FloatingNodes    []swayNode             `json:"floating_nodes"`
+}
+
+// window is the node as a Window with no workspace or output
+func (n swayNode) window() Window {
+	w := Window{
+		ID: strconv.FormatInt(n.ID, 10), AppID: n.AppID, Title: n.Name, PID: n.PID,
+		XWayland: n.Shell == "xwayland", Floating: n.Type == "floating_con",
+		Fullscreen: n.FullscreenMode > 0, Focused: n.Focused,
+	}
+	if n.WindowProperties.Class != "" {
+		w.Class = n.WindowProperties.Class
+		if w.AppID == "" {
+			w.AppID = w.Class
+		}
+	}
+	return w
+}
+
+func (s *swaySource) request(ctx context.Context, _ string) ([]byte, error) { return s.s.Tree(ctx) }
+
+func (s *swaySource) reset()             {}
+func (s *swaySource) ready() bool        { return true }
+func (s *swaySource) snapshot() []string { return []string{"get_tree"} }
+
+// load replaces the table with get_tree's windows
+func (s *swaySource) load(_ context.Context, _ fetch, _ string, reply []byte, t *table) error {
+	var root swayNode
+	if err := json.Unmarshal(reply, &root); err != nil {
+		return err
+	}
+	var list []Window
+	for _, output := range root.Nodes {
+		for _, ws := range output.Nodes {
+			if ws.Type != "workspace" {
+				continue
+			}
+			name, out := ws.Name, output.Name
+			// The scratchpad is a workspace of its own, on no output
+			if output.Name == "__i3" && ws.Name == "__i3_scratch" {
+				name, out = "", ""
+			}
+			list = walk(list, ws, name, out)
+		}
+	}
+	t.list = list
+	return nil
+}
+
+// walk adds the windows under n (leaves with a pid) to list
+func walk(list []Window, n swayNode, ws, output string) []Window {
+	for _, kids := range [][]swayNode{n.Nodes, n.FloatingNodes} {
+		for _, c := range kids {
+			if len(c.Nodes) == 0 && len(c.FloatingNodes) == 0 {
+				if c.PID > 0 {
+					w := c.window()
+					w.Workspace, w.Output = ws, output
+					list = append(list, w)
+				}
+				continue
+			}
+			list = walk(list, c, ws, output)
+		}
+	}
+	return list
+}
+
+func (s *swaySource) apply(t, pend *table, line []byte) []string {
+	var event struct {
+		Type string `json:"type"`
+		Body struct {
+			Change    string   `json:"change"`
+			Container swayNode `json:"container"`
+		} `json:"body"`
+	}
+	if json.Unmarshal(line, &event) != nil {
+		return nil
+	}
+	b := event.Body
+	if event.Type == "workspace" {
+		if b.Change == "move" || b.Change == "rename" || b.Change == "reload" {
+			return []string{"get_tree"}
+		}
+		return nil
+	}
+	w := b.Container.window()
+	switch b.Change {
+	case "close":
+		t.remove(w.ID)
+		pend.remove(w.ID)
+	case "new", "move":
+		if b.Change == "new" {
+			pend.add(w)
+		}
+		return []string{"get_tree"}
+	default:
+		for _, x := range []*table{t, pend} {
+			if b.Change == "focus" {
+				x.focus(w.ID)
+			}
+			x.update(w.ID, func(old *Window) {
+				nw := w
+				nw.Workspace, nw.Output = old.Workspace, old.Output
+				if b.Change != "focus" {
+					nw.Focused = old.Focused
+				}
+				*old = nw
+			})
+		}
+	}
+	return nil
+}

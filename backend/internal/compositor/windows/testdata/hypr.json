@@ -1,0 +1,2672 @@
+{
+ "recorded": "Hyprland v0.57.2, nested, 2026-11-13",
+ "start": {
+  "j/clients": [
+   {
+    "address": "0x5620e1de7940",
+    "mapped": true,
+    "hidden": false,
+    "visible": true,
+    "acceptsInput": true,
+    "at": [
+     29,
+     56
+    ],
+    "size": [
+     712,
+     367
+    ],
+    "workspace": {
+     "address": "1",
+     "id": 1,
+     "type": "normal",
+     "name": "1"
+    },
+    "floating": false,
+    "monitor": 0,
+    "class": "wr-fixture-a",
+    "title": "fixture-a",
+    "initialClass": "wr-fixture-a",
+    "initialTitle": "fixture-a",
+    "pid": 3039751,
+    "xwayland": false,
+    "pinned": false,
+    "pinFullscreened": false,
+    "fullscreen": 0,
+    "fullscreenClient": 0,
+    "fullscreenHandler": "default",
+    "allowedOverFullscreen": true,
+    "grouped": [],
+    "tags": [],
+    "swallowing": "0x0",
+    "focusHistoryID": 0,
+    "inhibitingIdle": false,
+    "xdgTag": "",
+    "xdgDescription": "",
+    "contentType": "none",
+    "tearingHint": false,
+    "stableId": "18000002"
+   }
+  ],
+  "j/monitors": [
+   {
+    "id": 0,
+    "name": "WAYLAND-1",
+    "description": "",
+    "make": "",
+    "model": "",
+    "serial": "",
+    "width": 1155,
+    "height": 678,
+    "physicalWidth": 0,
+    "physicalHeight": 0,
+    "refreshRate": 60.0,
+    "x": 0,
+    "y": 0,
+    "activeWorkspace": {
+     "address": "1",
+     "id": 1,
+     "type": "normal",
+     "name": "1"
+    },
+    "specialWorkspace": {
+     "address": "",
+     "type": "",
+     "name": ""
+    },
+    "reserved": [
+     8,
+     35,
+     8,
+     8
+    ],
+    "scale": 1.5,
+    "transform": 0,
+    "focused": true,
+    "dpmsStatus": true,
+    "vrr": false,
+    "solitary": "0",
+    "solitaryBlockedBy": [
+     "NOTIFICATION",
+     "WINDOWED",
+     "CANDIDATE"
+    ],
+    "activelyTearing": false,
+    "tearingBlockedBy": [
+     "NOT_TORN",
+     "USER",
+     "SUPPORT",
+     "CANDIDATE",
+     "HW_CURSOR"
+    ],
+    "directScanoutTo": "0",
+    "directScanoutBlockedBy": [
+     "USER",
+     "CANDIDATE"
+    ],
+    "disabled": false,
+    "currentFormat": "XRGB8888",
+    "mirrorOf": "none",
+    "availableModes": [
+     "1155x678@60.00Hz"
+    ],
+    "colorManagementPreset": "srgb",
+    "sdrBrightness": 1,
+    "sdrSaturation": 1,
+    "sdrMinLuminance": 0.2,
+    "sdrMaxLuminance": 80,
+    "hardwareCursorsInUse": true,
+    "hardwareDetails": {
+     "backend": "wayland",
+     "hdr": false,
+     "chroma": false,
+     "bt2020": false,
+     "vrrCapable": false
+    }
+   }
+  ],
+  "j/activewindow": {
+   "address": "0x5620e1de7940",
+   "mapped": true,
+   "hidden": false,
+   "visible": true,
+   "acceptsInput": true,
+   "at": [
+    29,
+    56
+   ],
+   "size": [
+    712,
+    367
+   ],
+   "workspace": {
+    "address": "1",
+    "id": 1,
+    "type": "normal",
+    "name": "1"
+   },
+   "floating": false,
+   "monitor": 0,
+   "class": "wr-fixture-a",
+   "title": "fixture-a",
+   "initialClass": "wr-fixture-a",
+   "initialTitle": "fixture-a",
+   "pid": 3039751,
+   "xwayland": false,
+   "pinned": false,
+   "pinFullscreened": false,
+   "fullscreen": 0,
+   "fullscreenClient": 0,
+   "fullscreenHandler": "default",
+   "allowedOverFullscreen": true,
+   "grouped": [],
+   "tags": [],
+   "swallowing": "0x0",
+   "focusHistoryID": 0,
+   "inhibitingIdle": false,
+   "xdgTag": "",
+   "xdgDescription": "",
+   "contentType": "none",
+   "tearingHint": false,
+   "stableId": "18000002"
+  }
+ },
+ "steps": [
+  {
+   "note": "B opened",
+   "events": [
+    "windowtitle>>5620e37eb340",
+    "windowtitlev2>>5620e37eb340,before",
+    "openwindow>>5620e37eb340,1,wr-fixture-b,before",
+    "activewindow>>wr-fixture-b,before",
+    "activewindowv2>>5620e37eb340"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "before",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "NOTIFICATION",
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e37eb340",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      350,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-b",
+     "title": "before",
+     "initialClass": "wr-fixture-b",
+     "initialTitle": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000003"
+    }
+   }
+  },
+  {
+   "note": "B title changes",
+   "events": [
+    "windowtitle>>5620e37eb340",
+    "windowtitlev2>>5620e37eb340,after",
+    "activewindow>>wr-fixture-b,after",
+    "activewindowv2>>5620e37eb340"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e37eb340",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      350,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-b",
+     "title": "after",
+     "initialClass": "wr-fixture-b",
+     "initialTitle": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000003"
+    }
+   }
+  },
+  {
+   "note": "B floated",
+   "events": [
+    "changefloatingmode>>5620e37eb340,1"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       23,
+       50
+      ],
+      "size": [
+       367,
+       379
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": true,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e37eb340",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      23,
+      50
+     ],
+     "size": [
+      367,
+      379
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": true,
+     "monitor": 0,
+     "class": "wr-fixture-b",
+     "title": "after",
+     "initialClass": "wr-fixture-b",
+     "initialTitle": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000003"
+    }
+   }
+  },
+  {
+   "note": "B tiled again",
+   "events": [
+    "changefloatingmode>>5620e37eb340,0"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e37eb340",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      350,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-b",
+     "title": "after",
+     "initialClass": "wr-fixture-b",
+     "initialTitle": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000003"
+    }
+   }
+  },
+  {
+   "note": "B fullscreen",
+   "events": [
+    "fullscreen>>1"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": false,
+      "acceptsInput": false,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": false,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       0,
+       0
+      ],
+      "size": [
+       770,
+       452
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 2,
+      "fullscreenClient": 2,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "TRANSFORM",
+       "OVERLAYS"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e37eb340",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      0,
+      0
+     ],
+     "size": [
+      770,
+      452
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-b",
+     "title": "after",
+     "initialClass": "wr-fixture-b",
+     "initialTitle": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 2,
+     "fullscreenClient": 2,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000003"
+    }
+   }
+  },
+  {
+   "note": "B leaves fullscreen",
+   "events": [
+    "fullscreen>>0"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e37eb340",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      350,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-b",
+     "title": "after",
+     "initialClass": "wr-fixture-b",
+     "initialTitle": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000003"
+    }
+   }
+  },
+  {
+   "note": "B moved to workspace 2",
+   "events": [
+    "createworkspace>>2",
+    "createworkspacev2>>2,2",
+    "movewindow>>5620e37eb340,2",
+    "movewindowv2>>5620e37eb340,2,2",
+    "activewindow>>wr-fixture-a,fixture-a",
+    "activewindowv2>>5620e1de7940"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "2",
+       "id": 2,
+       "type": "normal",
+       "name": "2"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e1de7940",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      712,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-a",
+     "title": "fixture-a",
+     "initialClass": "wr-fixture-a",
+     "initialTitle": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000002"
+    }
+   }
+  },
+  {
+   "note": "X11 window opened",
+   "events": [
+    "windowtitle>>5620e3805850",
+    "windowtitlev2>>5620e3805850,x11 fixture",
+    "openwindow>>5620e3805850,1,Wrfixturex,x11 fixture",
+    "activewindow>>Wrfixturex,x11 fixture",
+    "activewindowv2>>5620e3805850"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "2",
+       "id": 2,
+       "type": "normal",
+       "name": "2"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 2,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     },
+     {
+      "address": "0x5620e3805850",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "Wrfixturex",
+      "title": "x11 fixture",
+      "initialClass": "Wrfixturex",
+      "initialTitle": "x11 fixture",
+      "pid": 3053136,
+      "xwayland": true,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000006"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e3805850",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      350,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "initialClass": "Wrfixturex",
+     "initialTitle": "x11 fixture",
+     "pid": 3053136,
+     "xwayland": true,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000006"
+    }
+   }
+  },
+  {
+   "note": "A focused",
+   "events": [
+    "activewindow>>wr-fixture-a,fixture-a",
+    "activewindowv2>>5620e1de7940"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       391,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "2",
+       "id": 2,
+       "type": "normal",
+       "name": "2"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 2,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     },
+     {
+      "address": "0x5620e3805850",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       350,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "Wrfixturex",
+      "title": "x11 fixture",
+      "initialClass": "Wrfixturex",
+      "initialTitle": "x11 fixture",
+      "pid": 3053136,
+      "xwayland": true,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000006"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e1de7940",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      391,
+      56
+     ],
+     "size": [
+      350,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-a",
+     "title": "fixture-a",
+     "initialClass": "wr-fixture-a",
+     "initialTitle": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000002"
+    }
+   }
+  },
+  {
+   "note": "X11 window closed",
+   "events": [
+    "closewindow>>5620e3805850"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     },
+     {
+      "address": "0x5620e37eb340",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "2",
+       "id": 2,
+       "type": "normal",
+       "name": "2"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-b",
+      "title": "after",
+      "initialClass": "wr-fixture-b",
+      "initialTitle": "before",
+      "pid": 3045129,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 1,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000003"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e1de7940",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      712,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-a",
+     "title": "fixture-a",
+     "initialClass": "wr-fixture-a",
+     "initialTitle": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000002"
+    }
+   }
+  },
+  {
+   "note": "B closed",
+   "events": [
+    "closewindow>>5620e37eb340",
+    "destroyworkspace>>2",
+    "destroyworkspacev2>>2,2"
+   ],
+   "replies": {
+    "j/clients": [
+     {
+      "address": "0x5620e1de7940",
+      "mapped": true,
+      "hidden": false,
+      "visible": true,
+      "acceptsInput": true,
+      "at": [
+       29,
+       56
+      ],
+      "size": [
+       712,
+       367
+      ],
+      "workspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "floating": false,
+      "monitor": 0,
+      "class": "wr-fixture-a",
+      "title": "fixture-a",
+      "initialClass": "wr-fixture-a",
+      "initialTitle": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "pinned": false,
+      "pinFullscreened": false,
+      "fullscreen": 0,
+      "fullscreenClient": 0,
+      "fullscreenHandler": "default",
+      "allowedOverFullscreen": true,
+      "grouped": [],
+      "tags": [],
+      "swallowing": "0x0",
+      "focusHistoryID": 0,
+      "inhibitingIdle": false,
+      "xdgTag": "",
+      "xdgDescription": "",
+      "contentType": "none",
+      "tearingHint": false,
+      "stableId": "18000002"
+     }
+    ],
+    "j/monitors": [
+     {
+      "id": 0,
+      "name": "WAYLAND-1",
+      "description": "",
+      "make": "",
+      "model": "",
+      "serial": "",
+      "width": 1155,
+      "height": 678,
+      "physicalWidth": 0,
+      "physicalHeight": 0,
+      "refreshRate": 60.0,
+      "x": 0,
+      "y": 0,
+      "activeWorkspace": {
+       "address": "1",
+       "id": 1,
+       "type": "normal",
+       "name": "1"
+      },
+      "specialWorkspace": {
+       "address": "",
+       "type": "",
+       "name": ""
+      },
+      "reserved": [
+       8,
+       35,
+       8,
+       8
+      ],
+      "scale": 1.5,
+      "transform": 0,
+      "focused": true,
+      "dpmsStatus": true,
+      "vrr": false,
+      "solitary": "0",
+      "solitaryBlockedBy": [
+       "WINDOWED",
+       "CANDIDATE"
+      ],
+      "activelyTearing": false,
+      "tearingBlockedBy": [
+       "NOT_TORN",
+       "USER",
+       "SUPPORT",
+       "CANDIDATE",
+       "HW_CURSOR"
+      ],
+      "directScanoutTo": "0",
+      "directScanoutBlockedBy": [
+       "USER",
+       "CANDIDATE"
+      ],
+      "disabled": false,
+      "currentFormat": "XRGB8888",
+      "mirrorOf": "none",
+      "availableModes": [
+       "1155x678@60.00Hz"
+      ],
+      "colorManagementPreset": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1,
+      "sdrMinLuminance": 0.2,
+      "sdrMaxLuminance": 80,
+      "hardwareCursorsInUse": true,
+      "hardwareDetails": {
+       "backend": "wayland",
+       "hdr": false,
+       "chroma": false,
+       "bt2020": false,
+       "vrrCapable": false
+      }
+     }
+    ],
+    "j/activewindow": {
+     "address": "0x5620e1de7940",
+     "mapped": true,
+     "hidden": false,
+     "visible": true,
+     "acceptsInput": true,
+     "at": [
+      29,
+      56
+     ],
+     "size": [
+      712,
+      367
+     ],
+     "workspace": {
+      "address": "1",
+      "id": 1,
+      "type": "normal",
+      "name": "1"
+     },
+     "floating": false,
+     "monitor": 0,
+     "class": "wr-fixture-a",
+     "title": "fixture-a",
+     "initialClass": "wr-fixture-a",
+     "initialTitle": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "pinned": false,
+     "pinFullscreened": false,
+     "fullscreen": 0,
+     "fullscreenClient": 0,
+     "fullscreenHandler": "default",
+     "allowedOverFullscreen": true,
+     "grouped": [],
+     "tags": [],
+     "swallowing": "0x0",
+     "focusHistoryID": 0,
+     "inhibitingIdle": false,
+     "xdgTag": "",
+     "xdgDescription": "",
+     "contentType": "none",
+     "tearingHint": false,
+     "stableId": "18000002"
+    }
+   }
+  }
+ ]
+}

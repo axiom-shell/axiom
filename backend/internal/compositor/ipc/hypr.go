@@ -131,6 +131,21 @@ func (h *Hypr) Eval(ctx context.Context, lua string) (string, error) {
 // Reloads streams Hyprland's config reloads (configreloaded events) until
 // ctx ends or the socket closes.
 func (h *Hypr) Reloads(ctx context.Context, out chan<- Reload) error {
+	return h.Events(ctx, nil, func(line string) {
+		if name, _, _ := strings.Cut(line, ">>"); name == "configreloaded" {
+			select {
+			case out <- Reload{}:
+			case <-ctx.Done():
+			}
+		}
+	})
+}
+
+// Events reads Hyprland's event socket until ctx ends (nil) or it closes:
+// started once connected (nothing is sent; events from here on are read),
+// then line with each event ("name>>data"). It returns nil when ctx ends,
+// else the read error.
+func (h *Hypr) Events(ctx context.Context, started func(), line func(string)) error {
 	conn, err := dial(context.Background(), filepath.Join(h.Dir, ".socket2.sock"))
 	if err != nil {
 		return err
@@ -139,15 +154,16 @@ func (h *Hypr) Reloads(ctx context.Context, out chan<- Reload) error {
 	defer conn.Close()
 	// Closing the connection is what ends a read blocked on it
 	defer context.AfterFunc(ctx, func() { conn.Close() })()
+	// socket2 has no reply to wait for: connected is subscribed
+	if started != nil {
+		started()
+	}
 	lines := bufio.NewScanner(conn)
 	lines.Buffer(make([]byte, 64*1024), 1024*1024)
 	for lines.Scan() {
-		if name, _, _ := strings.Cut(lines.Text(), ">>"); name == "configreloaded" {
-			select {
-			case out <- Reload{}:
-			case <-ctx.Done():
-				return nil
-			}
+		line(lines.Text())
+		if ctx.Err() != nil {
+			return nil
 		}
 	}
 	if ctx.Err() != nil {
