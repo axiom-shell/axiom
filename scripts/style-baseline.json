@@ -378,48 +378,6 @@
   "R7": 5,
   "R9": 1
  },
- "qml/components/views/CalendarPage/CalendarPage.qml": {
-  "R1": 2,
-  "R14": 1,
-  "R3": 2,
-  "R4": 3,
-  "R5": 2,
-  "R7": 2
- },
- "qml/components/views/CustomWidgets/BarTab.qml": {
-  "R1": 4,
-  "R14": 1,
-  "R3": 1,
-  "R4": 1,
-  "R7": 3
- },
- "qml/components/views/CustomWidgets/CustomWidgets.qml": {
-  "R14": 1,
-  "R3": 1
- },
- "qml/components/views/CustomWidgets/DataTab.qml": {
-  "R1": 4,
-  "R14": 6,
-  "R3": 4,
-  "R4": 2,
-  "R7": 1
- },
- "qml/components/views/CustomWidgets/DefinitionsPanel.qml": {
-  "R1": 1,
-  "R14": 4,
-  "R3": 3,
-  "R4": 3,
-  "R7": 1
- },
- "qml/components/views/CustomWidgets/ElementInspector.qml": {
-  "R14": 1
- },
- "qml/components/views/CustomWidgets/ModuleTab.qml": {
-  "R1": 2,
-  "R3": 1,
-  "R4": 1,
-  "R7": 2
- },
  "qml/components/views/Keybinds/ActionPicker.qml": {
   "R1": 12,
   "R14": 3,
@@ -551,28 +509,6 @@
   "R4": 1,
   "R5": 1,
   "R7": 1
- },
- "qml/components/views/Monitors/MonitorCanvas.qml": {
-  "R1": 8,
-  "R14": 2,
-  "R2": 1,
-  "R3": 3,
-  "R4": 2,
-  "R5": 1,
-  "R7": 6
- },
- "qml/components/views/Monitors/MonitorInspector.qml": {
-  "R1": 1,
-  "R14": 2,
-  "R3": 2,
-  "R4": 2,
-  "R5": 4,
-  "R7": 1
- },
- "qml/components/views/Monitors/Monitors.qml": {
-  "R14": 2,
-  "R3": 2,
-  "R4": 1
  },
  "qml/config/MenusConfig.qml": {
   "R1": 2
