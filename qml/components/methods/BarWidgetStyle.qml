@@ -54,17 +54,21 @@ import QtQuick
 // background). A widget's own content colours are still nudged; the override itself
 // (palette.override) never is, unless it is muted or pressed. Fills,
 // strokes and lines are never nudged.
+//
+// The math (mixing, compositing, contrast, nudging, readableOn) is
+// methods/Tone's, the shell's one copy (docs/dev/core/style.md); the
+// functions here of those names call it.
 QtObject {
   id: root
 
   // WCAG contrast the content must reach: text, and icons and graphics
-  readonly property real textContrast: 4.5
-  readonly property real iconContrast: 3
+  readonly property real textContrast: Tone.textContrast
+  readonly property real iconContrast: Tone.iconContrast
   // Muted: how far its color is mixed toward its backdrop, and the
   // contrast it keeps there; an empty cell's mix; and how far a press
   // mixes content toward its backdrop
   readonly property real mutedMix: 0.45
-  readonly property real mutedContrast: 3
+  readonly property real mutedContrast: Tone.mutedContrast
   readonly property real emptyMix: 0.6
   readonly property real pressMix: 0.2
 
@@ -117,19 +121,13 @@ QtObject {
 
   // `a` mixed `t` (0-1) of the way to `b`, every channel
   function mix(a, b, t) {
-    const x = Qt.color(a);
-    const y = Qt.color(b);
-    return Qt.rgba(x.r + (y.r - x.r) * t, x.g + (y.g - x.g) * t, x.b + (y.b - x.b) * t, x.a + (y.a - x.a) * t);
+    return Tone.mix(a, b, t);
   }
 
   // `color` mixed `t` toward `back`, its alpha kept (a clear color stays
   // clear)
   function _toward(color, back, t) {
-    const c = Qt.color(color);
-    if (c.a === 0)
-      return color;
-    const m = root.mix(c, back, t);
-    return Qt.rgba(m.r, m.g, m.b, c.a);
+    return Tone.toward(color, back, t);
   }
 
   // `color` dimmed to sit back on `backs` (opaque colors): mixed mutedMix
@@ -219,9 +217,7 @@ QtObject {
 
   // `top` drawn over `under`, as an opaque color (`under` taken opaque)
   function over(top, under) {
-    const t = Qt.color(top);
-    const u = Qt.color(under);
-    return Qt.rgba(t.r * t.a + u.r * (1 - t.a), t.g * t.a + u.g * (1 - t.a), t.b * t.a + u.b * (1 - t.a), 1);
+    return Tone.over(top, under);
   }
 
   // `color` where it reads on every one of `backs` (opaque colors; WCAG
@@ -229,26 +225,7 @@ QtObject {
   // reads better on them, by the least that does, its hue kept; the pole
   // itself where no mix does. Its alpha is kept; a clear color stays as it is.
   function nudged(backs, color, min) {
-    const c = Qt.color(color);
-    const worst = x => backs.reduce((least, b) => Math.min(least, Utils.contrast(b, x)), Infinity);
-    if (c.a === 0 || worst(c) >= min)
-      return color;
-    const white = Qt.rgba(1, 1, 1, c.a);
-    const black = Qt.rgba(0, 0, 0, c.a);
-    const pole = worst(white) >= worst(black) ? white : black;
-    const mix = t => Qt.rgba(c.r + (pole.r - c.r) * t, c.g + (pole.g - c.g) * t, c.b + (pole.b - c.b) * t, c.a);
-    if (worst(pole) < min)
-      return pole;
-    let low = 0;
-    let high = 1;
-    for (let i = 0; i < 12; i++) {
-      const middle = (low + high) / 2;
-      if (worst(mix(middle)) >= min)
-        high = middle;
-      else
-        low = middle;
-    }
-    return mix(high);
+    return Tone.nudged(backs, color, min);
   }
 
   // What a widget draws in: { fill, stroke, indicator, text, icon,
@@ -651,18 +628,14 @@ QtObject {
   // color of its own, Workspaces' box with its background off) stays
   // clear, where Qt.alpha would make it black at that opacity
   function faded(color, alpha) {
-    const c = Qt.color(color);
-    return Qt.alpha(c, c.a * alpha);
+    return Tone.faded(color, alpha);
   }
 
   // `preferred` where it reads on `background` (WCAG contrast at least
   // 4.5), else whichever of it, the `alternates` (colors) and black and
   // white contrasts with it most (`preferred` on a tie)
   function readableOn(background, preferred, alternates) {
-    if (Utils.contrast(background, preferred) >= 4.5)
-      return preferred;
-    const candidates = [preferred].concat(alternates ?? [], ["#000000", "#FFFFFF"]);
-    return candidates.reduce((best, c) => Utils.contrast(background, c) > Utils.contrast(background, best) ? c : best);
+    return Tone.readableOn(background, preferred, alternates);
   }
 
   // What reads on a fill the widget or run paints (`background`):

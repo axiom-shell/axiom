@@ -36,6 +36,8 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 - `qml/config/json/theme-defaults.json` is the one fallback palette and semantic → base16 map (dark and light).
 - Read through `ThemeManager.defaults` by `Theme`, for keys a theme omits and for a missing theme.
 - Also read by theme generation (`backend/internal/theme`, from the binary's embedded copy).
+- A theme's semantic map feeds `Style` ([Style](../core/style.md)), which is what the UI draws with: it derives every colour role once per theme change from `currentTheme`. The light map is in base16 order, the same slots as the dark map (a light theme's own map inverts the ramp itself), and a missing light theme falls back to the defaults' palette with its grey ramp reversed (`StyleTokens.reversedRamp`).
+- A theme's `preview` (the theme list's tile data) also carries `roles`: `StyleTokens.preview` of the theme, the nine Style roles a tile draws (`surfacePage`, `surface`, `text`, `textMuted`, `accent`, `onAccent`, `accentContainer`, `onAccentContainer`, `divider`).
 
 ### Generation from a wallpaper
 - `ThemeManager.generateThemesFromWallpaper` calls axiom's `theme.generate` (`{ wallpaper }`, an absolute path; `daemon/theme.go`). One call writes a `generated/wallpaper-<style>-dark|light` pair per style into `Paths.generatedThemesPath`, each file atomically (`fsx.WriteFile`), and answers the paths. Each records the wallpaper's path as given (`generated.wallpaper`, a link not resolved), the path `syncGeneratedTheme` compares with the wallpapers shown. A failure (no such file, not an image, a write refused) is an `axerr` kind whose message `generationFailed` shows; without axiom nothing is generated.

@@ -5,13 +5,14 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/axiom-shell/axiom/backend/internal/theme/palette"
 )
 
 var update = flag.Bool("update", false, "rewrite the golden files")
@@ -140,26 +141,6 @@ func xmlWellFormed(b []byte) error {
 	}
 }
 
-func luminance(c string) float64 {
-	var rgb [3]float64
-	for i := range rgb {
-		var v uint8
-		fmt.Sscanf(c[1+2*i:3+2*i], "%02x", &v)
-		x := float64(v) / 255
-		if x <= 0.04045 {
-			rgb[i] = x / 12.92
-		} else {
-			rgb[i] = math.Pow((x+0.055)/1.055, 2.4)
-		}
-	}
-	return 0.2126*rgb[0] + 0.7152*rgb[1] + 0.0722*rgb[2]
-}
-
-func contrastOf(a, b string) float64 {
-	la, lb := luminance(a), luminance(b)
-	return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
-}
-
 // The terminal palette and text colors are readable on every theme, and a
 // light theme's black is dark
 func TestTerminalPalette(t *testing.T) {
@@ -176,16 +157,16 @@ func TestTerminalPalette(t *testing.T) {
 			if i == 8 {
 				want = dimContrast
 			}
-			if got := contrastOf(v[name], bg); got < want-0.01 {
+			if got := palette.Contrast(v[name], bg); got < want-0.01 {
 				t.Errorf("%s %s %s: contrast %.2f", th.Stem, name, v[name], got)
 			}
 		}
 		for _, name := range textColors {
-			if got := contrastOf(v[name], bg); got < textContrast-0.01 {
+			if got := palette.Contrast(v[name], bg); got < textContrast-0.01 {
 				t.Errorf("%s %s %s: contrast %.2f", th.Stem, name, v[name], got)
 			}
 		}
-		if th.Light && luminance(v["ANSI_0"]) >= luminance(bg) {
+		if th.Light && palette.Luminance(v["ANSI_0"]) >= palette.Luminance(bg) {
 			t.Errorf("%s: black isn't dark", th.Stem)
 		}
 	}
@@ -298,7 +279,7 @@ func TestReadableNvimText(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, k := range []string{"accent", "accentAlt"} {
-			if c := contrastOf(data.Text[k], data.Semantic["background"]); c < textContrast-0.01 {
+			if c := palette.Contrast(data.Text[k], data.Semantic["background"]); c < textContrast-0.01 {
 				t.Errorf("%s %s: %.2f", name, k, c)
 			}
 		}

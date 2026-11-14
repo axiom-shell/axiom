@@ -1,0 +1,14 @@
+{
+  "name": "Flat dark",
+  "variant": "dark",
+  "colors": {
+    "base00": "#202020",
+    "base01": "#202020",
+    "base02": "#202020",
+    "base03": "#3a3a3a",
+    "base04": "#7a7a7a",
+    "base05": "#b0b0b0",
+    "base0D": "#2c3440",
+    "base0E": "#3a2c40"
+  }
+}

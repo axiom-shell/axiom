@@ -39,7 +39,8 @@ func TextHex(text string) string {
 var sixHex = regexp.MustCompile(`^[0-9a-fA-F]{6}`)
 
 // Luminance is CompositorLayer.luminance: the relative luminance (0–1) of
-// "rrggbb".
+// "rrggbb". The JS-parity copy of WCAG luminance (Math.pow's rounding); Go's
+// own decisions use palette.Luminance.
 func Luminance(hex any) float64 {
 	s := str(hex)
 	if !sixHex.MatchString(s) {

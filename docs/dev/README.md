@@ -20,6 +20,7 @@ Dependencies point one way: pure helpers (`qml/components/methods/`) at the bott
 | Settings page, saved configs, import/export | `docs/dev/core/settings-page.md`, `saved-configs-sharing.md` |
 | A new editor (draft, selection, inspector) | `docs/dev/core/editors-pattern.md` |
 | Before drawing any card, row, chip, drag | `docs/dev/core/shared-ui-pieces.md` |
+| Colours, text roles, icon sizes, radii, hairlines (`Style`) | `docs/dev/core/style.md` |
 | Bar / popouts, edge surfaces / overlay / menus | `docs/dev/bar/`, `popouts/` (start at `surface-context.md`), `overlay/`, `menus/` |
 | Compositor: windows, outputs, workspaces, capabilities, sway/niri | `docs/dev/compositor/` |
 | Config modes (detached / included / managed), the config writer | `docs/dev/compositor/config-modes.md` |
@@ -111,6 +112,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [file-picker](core/file-picker.md): the desktop's file/folder picker (`FilePickerManager`, axiom's `filepicker.pick`), folder settings' Browse button.
 - [i18n](core/i18n.md): translation mechanics, language files, `check_i18n.py`.
 - [shared-ui-pieces](core/shared-ui-pieces.md): index of reusable widgets and helpers. Check it before drawing anything.
+- [style](core/style.md): `Style`, the one place UI reads colours, text roles, icon sizes, radii and hairlines from; the colour math (`Tone`), the tokens (`StyleTokens`), the contrast pairs every theme is tested for.
 - [streamed-building](core/streamed-building.md): how pages show at once and fill in over frames (`BuildQueueManager`, `StreamedLoader`), what made them slow, and measuring it (`bench_overlay.sh`).
 - [memory](core/memory.md): reading the shell's memory (`mem.sh`, `bench_overlay.sh --mem`) in a nested session, and a recorded baseline.
 - [qml-pitfalls](core/qml-pitfalls.md): traps of QML, its JS engine and URL-loaded files that have each bitten. Read it before writing QML.
