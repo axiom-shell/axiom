@@ -56,16 +56,16 @@ Card {
       anchors.fill: parent
       values: SystemManager.netRxHistory
       maxValue: 0
-      lineColor: Theme.accentAlt
-      fillOpacity: 0.2 * graphs.fade
+      lineColor: Style.accentAlt
+      fillOpacity: 0.2 * graphs.fade // style-exempt: the chart fill fades its data colour
       capacity: SystemManager.historyLength
     }
     Sparkline {
       anchors.fill: parent
       values: SystemManager.netTxHistory
       maxValue: 0
-      lineColor: Theme.accent
-      fillOpacity: 0.08 * graphs.fade
+      lineColor: Style.accent
+      fillOpacity: 0.08 * graphs.fade // style-exempt: the chart fill fades its data colour
       lineWidth: 1.5
       showBaseline: false
       capacity: SystemManager.historyLength
@@ -89,7 +89,7 @@ Card {
       Graphs {
         anchors.fill: parent
         anchors.margins: Appearance.borderWidth
-        opacity: 0.5
+        opacity: 0.5 // style-exempt: backdrop graphs behind the figures
         fade: 0.6
       }
       RowLayout {
@@ -99,24 +99,24 @@ Card {
 
         StyledIcon {
           text: root.kindIcon
-          textColor: Theme.accent
-          textSize: Appearance.fontSizeBy(2)
+          size: "md"
+          tone: "accent"
         }
         StyledLabel {
           Layout.fillWidth: true
           text: root.info.name || I18n.tr("Disconnected")
-          elide: Text.ElideRight
-          font.weight: Font.Bold
+          overflow: "line"
+          font.weight: Style.weightStrong
         }
         RateLabel {
           rate: SystemManager.netRx
-          textColor: Theme.accentAlt
+          textColor: Style.accentAlt
         }
         RateLabel {
           visible: root.width > Appearance.fontSize * 22
           direction: "up"
           rate: SystemManager.netTx
-          textColor: Theme.accent
+          textColor: Style.accent
         }
         ExpandButton {
           module: root
@@ -140,8 +140,8 @@ Card {
         StyledText {
           visible: root.info.kind === "wifi"
           text: `${root.info.signal}%`
-          textSize: Appearance.fontSizeBy(-2)
-          opacity: 0.7
+          role: "caption"
+          tone: "faint"
         }
       }
       // Address, the VPNs and Tailscale on one line where there's room
@@ -151,26 +151,24 @@ Card {
         StyledText {
           visible: root.info.ip !== ""
           text: root.info.ip
-          textSize: Appearance.fontSizeBy(-2)
-          opacity: 0.7
+          role: "caption"
+          tone: "faint"
         }
         StyledText {
           visible: root.vpns !== ""
           width: Math.min(implicitWidth, parent.width)
-          elide: Text.ElideRight
+          overflow: "line"
           text: I18n.tr("VPN · {0}", root.vpns)
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.success
-          opacity: 0.8
+          role: "caption"
+          tone: "success"
         }
         StyledText {
           visible: root.tailscale !== ""
           width: Math.min(implicitWidth, parent.width)
-          elide: Text.ElideRight
+          overflow: "line"
           text: I18n.tr("Tailscale · {0}", root.tailscale)
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: TailscaleManager.connected ? Theme.success : Theme.foreground
-          opacity: 0.8
+          role: "caption"
+          tone: TailscaleManager.connected ? "success" : "muted"
         }
       }
 
@@ -184,7 +182,7 @@ Card {
         Layout.fillWidth: true
         RateLabel {
           rate: SystemManager.netRx
-          textColor: Theme.accentAlt
+          textColor: Style.accentAlt
         }
         Item {
           Layout.fillWidth: true
@@ -192,7 +190,7 @@ Card {
         RateLabel {
           direction: "up"
           rate: SystemManager.netTx
-          textColor: Theme.accent
+          textColor: Style.accent
         }
       }
     }

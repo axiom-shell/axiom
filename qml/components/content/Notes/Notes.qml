@@ -147,13 +147,19 @@ Card {
 
       // The note's name: opens the note list, or just a title when locked
       Rectangle {
+        id: nameChip
+        // The open browser holds the chip on the highest fill: its ink reads there
+        readonly property bool held: !root.locked && root.browserOpen
         visible: root.showHeader
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.iconButton
         radius: Widget.radius / 2
-        color: !root.locked && (root.browserOpen || chipHover.hovered) ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
+        color: nameChip.held ? Style.surfaceHighest : "transparent"
 
-        ColorGlide on color {}
+        StateLayer {
+          radius: nameChip.radius
+          hovered: !root.locked && chipHover.hovered
+        }
 
         RowLayout {
           anchors.fill: parent
@@ -163,26 +169,27 @@ Card {
 
           StyledIcon {
             text: "sticky_note_2"
-            textColor: Theme.accent
-            textSize: Appearance.fontSizeBy(2)
+            size: "md"
+            textColor: nameChip.held ? Style.inkHighest.accent : Style.textAccent
           }
           StyledLabel {
             Layout.fillWidth: true
             text: NotesManager.titleOf(root.path)
-            font.weight: Font.Bold
-            elide: Text.ElideMiddle
+            font.weight: Style.weightStrong
+            overflow: "line"
+            textColor: nameChip.held ? Style.inkHighest.text : Style.text
           }
           StyledLabel {
             visible: editor.progress.total > 0
             text: editor.progress.done + "/" + editor.progress.total
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
+            role: "caption"
+            textColor: nameChip.held ? Style.inkHighest.muted : Style.textMuted
           }
           StyledIcon {
             visible: !root.locked
             text: root.browserOpen ? "expand_less" : "expand_more"
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSize
+            size: "sm"
+            textColor: nameChip.held ? Style.inkHighest.muted : Style.textMuted
           }
         }
 
@@ -206,7 +213,7 @@ Card {
         visible: root.showToolbar
         enabled: !NotesManager.directoryMissing
         iconText: "checklist"
-        iconColor: Theme.foreground
+        iconColor: Style.text
         tooltipText: I18n.tr("Checklist")
         focusPolicy: Qt.NoFocus
         onClicked: editor.toggleTask()
@@ -215,7 +222,7 @@ Card {
         visible: root.showToolbar
         enabled: !NotesManager.directoryMissing
         iconText: "format_list_bulleted"
-        iconColor: Theme.foreground
+        iconColor: Style.text
         tooltipText: I18n.tr("Bulleted list")
         focusPolicy: Qt.NoFocus
         onClicked: editor.toggleBullet()
@@ -224,7 +231,7 @@ Card {
         visible: root.showToolbar
         enabled: !NotesManager.directoryMissing
         iconText: "search"
-        iconColor: root.findOpen ? Theme.accent : Theme.foreground
+        iconColor: root.findOpen ? Style.accent : Style.text
         tooltipText: I18n.tr("Find in note")
         focusPolicy: Qt.NoFocus
         onClicked: root.findOpen ? root.closeFind(false) : root.openFind("")
@@ -232,7 +239,7 @@ Card {
       FlatIconButton {
         visible: root.showToolbar && editor.progress.done > 0
         iconText: root.showCompleted ? "visibility" : "visibility_off"
-        iconColor: root.showCompleted ? Theme.foreground : Theme.accent
+        iconColor: root.showCompleted ? Style.text : Style.accent
         tooltipText: root.showCompleted ? I18n.tr("Hide completed items") : I18n.tr("Show completed items")
         focusPolicy: Qt.NoFocus
         onClicked: root.showCompleted = !root.showCompleted
@@ -240,7 +247,7 @@ Card {
       FlatIconButton {
         visible: root.showHeader && !root.locked
         iconText: "note_add"
-        iconColor: Theme.foreground
+        iconColor: Style.text
         tooltipText: I18n.tr("New note")
         onClicked: NotesManager.createNote(NotesManager.parentOf(root.path), "", path => root.show(path))
       }
@@ -249,8 +256,6 @@ Card {
     StyledSeparator {
       visible: header.visible
       Layout.fillWidth: true
-      separatorHeight: 1
-      opacity: 0.6
     }
 
     // Find in note: Enter / Shift+Enter step through the matches, Escape
@@ -283,26 +288,26 @@ Card {
       StyledLabel {
         visible: findField.text !== ""
         text: editor.findCount === 0 ? I18n.tr("No matches") : I18n.tr("{0}/{1}", editor.findIndex + 1, editor.findCount)
-        textColor: editor.findCount === 0 ? Theme.error : Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
+        role: "caption"
+        tone: editor.findCount === 0 ? "error" : "muted"
       }
       FlatIconButton {
         iconText: "keyboard_arrow_up"
-        iconColor: Theme.foreground
+        iconColor: Style.text
         tooltipText: I18n.tr("Previous match")
         focusPolicy: Qt.NoFocus
         onClicked: editor.find(findField.text, -1)
       }
       FlatIconButton {
         iconText: "keyboard_arrow_down"
-        iconColor: Theme.foreground
+        iconColor: Style.text
         tooltipText: I18n.tr("Next match")
         focusPolicy: Qt.NoFocus
         onClicked: editor.find(findField.text, 1)
       }
       FlatIconButton {
         iconText: "close"
-        iconColor: Theme.foreground
+        iconColor: Style.text
         tooltipText: I18n.tr("Close")
         focusPolicy: Qt.NoFocus
         onClicked: root.closeFind(false)
@@ -329,10 +334,10 @@ Card {
         anchors.fill: parent
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         text: I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory)
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
+        role: "caption"
+        tone: "muted"
       }
 
       // The note list closes on a click beside it
@@ -362,9 +367,9 @@ Card {
       visible: NotesManager.error !== ""
       Layout.fillWidth: true
       text: NotesManager.error
-      textColor: Theme.error
-      textSize: Appearance.fontSizeBy(-2)
-      elide: Text.ElideRight
+      role: "caption"
+      tone: "error"
+      overflow: "line"
     }
   }
 }

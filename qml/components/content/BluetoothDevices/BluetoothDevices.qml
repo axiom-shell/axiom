@@ -37,7 +37,7 @@ Panel {
 
   compactContent: CompactFigure {
     icon: BluetoothManager.enabled ? "bluetooth" : "bluetooth_disabled"
-    iconColor: BluetoothManager.connectedDevices.length > 0 ? Theme.accent : Theme.foregroundAlt
+    iconColor: BluetoothManager.connectedDevices.length > 0 ? Style.accent : Style.textMuted
     value: BluetoothManager.enabled ? String(BluetoothManager.connectedDevices.length) : ""
     label: BluetoothManager.enabled ? I18n.tr("connected") : I18n.tr("off")
   }
@@ -107,26 +107,24 @@ Panel {
 
     // Before forget, on a paired device's hover
     hoverActions: [
-      StyledRectButton {
+      StyledIconButton {
         size: Widget.iconButton
+        kind: "text"
         visible: row.known
         enabled: row.hovered && !row.busy
-        backgroundColor: "transparent"
-        borderHoverColor: Theme.accent
-        iconColor: row.renamingThis ? Theme.accent : Theme.foregroundAlt
+        iconColor: row.renamingThis ? Style.accent : Style.textMuted
         iconText: "edit"
         tooltipText: I18n.tr("Rename")
         onClicked: root.renaming = row.renamingThis ? "" : row.address
       },
-      StyledRectButton {
+      StyledIconButton {
         id: trustButton
         readonly property bool trusted: row.device?.trusted ?? false
         size: Widget.iconButton
+        kind: "text"
         visible: row.known
         enabled: row.hovered && !row.busy
-        backgroundColor: "transparent"
-        borderHoverColor: Theme.accent
-        iconColor: trustButton.trusted ? Theme.accent : Theme.foregroundAlt
+        iconColor: trustButton.trusted ? Style.accent : Style.textMuted
         iconText: trustButton.trusted ? "sync" : "sync_disabled"
         tooltipText: trustButton.trusted ? I18n.tr("Connects automatically: click to stop") : I18n.tr("Doesn't connect automatically: click to allow")
         onClicked: {
@@ -134,15 +132,14 @@ Panel {
           BluetoothManager.setTrusted(row.device, !trustButton.trusted);
         }
       },
-      StyledRectButton {
+      StyledIconButton {
         id: blockButton
         readonly property bool blocked: row.device?.blocked ?? false
         size: Widget.iconButton
+        kind: "text"
         visible: row.known
         enabled: row.hovered && !row.busy
-        backgroundColor: "transparent"
-        borderHoverColor: Theme.error
-        iconColor: blockButton.blocked ? Theme.error : Theme.foregroundAlt
+        iconColor: blockButton.blocked ? Style.error : Style.textMuted
         iconText: "block"
         tooltipText: blockButton.blocked ? I18n.tr("Blocked: click to let it connect") : I18n.tr("Block: disconnect it and refuse its connections")
         onClicked: {
@@ -195,21 +192,20 @@ Panel {
       horizontalAlignment: Text.AlignRight
       opacity: BluetoothManager.discoverable && BluetoothManager.discoverableLeft >= 0 ? 1 : 0
       text: root._clock(Math.max(0, BluetoothManager.discoverableLeft))
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.accent
+      role: "caption"
+      tone: "accent"
 
       FontMetrics {
         id: clockMetrics
         font.family: Appearance.fontFamily
-        font.pixelSize: Appearance.fontSizeBy(-2)
+        font.pixelSize: Style.typeCaption
       }
     }
     FlatIconButton {
       size: root.headerButton
       enabled: BluetoothManager.enabled
-      opacity: enabled ? 1 : 0.5
       iconText: BluetoothManager.discoverable ? "visibility" : "visibility_off"
-      iconColor: BluetoothManager.discoverable ? Theme.accent : Theme.foregroundAlt
+      iconColor: BluetoothManager.discoverable ? Style.accent : Style.textMuted
       tooltipText: !BluetoothManager.discoverable ? I18n.tr("Not discoverable: click to let devices find this computer") : BluetoothManager.discoverableLeft >= 0 ? I18n.tr("Discoverable for {0}: click to hide", root._clock(BluetoothManager.discoverableLeft)) : I18n.tr("Discoverable: click to hide")
       onClicked: {
         ShellManager.onScreen("bluetooth");
@@ -220,12 +216,11 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   StyledTabBar {
     enabled: BluetoothManager.enabled
-    opacity: enabled ? 1 : 0.5
+    opacity: enabled ? 1 : Style.opacityDisabled
     tabs: [I18n.tr("Devices ({0})", BluetoothManager.pairedDevices.length), I18n.tr("Discover")]
     currentIndex: root.currentTab
     onTabClicked: index => root.currentTab = index

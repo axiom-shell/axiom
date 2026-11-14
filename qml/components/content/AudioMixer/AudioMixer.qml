@@ -77,7 +77,7 @@ Panel {
     CompactFigure {
       anchors.fill: parent
       icon: parent.muted ? root.mutedGlyph : root.unmutedGlyph
-      iconColor: parent.muted ? Theme.foregroundAlt : Theme.accent
+      iconColor: parent.muted ? Style.textMuted : Style.accent
       value: String(Math.round((parent.node?.audio?.volume ?? 0) * 100))
       unit: "%"
       label: I18n.tr(root.isInput ? "Input" : "Output")
@@ -110,8 +110,8 @@ Panel {
       StyledText {
         visible: !root.embedded
         text: I18n.tr(root.isInput ? "Input" : "Output")
-        font.weight: Font.Bold
-        textColor: Theme.accent
+        role: "label"
+        tone: "accent"
       }
 
       // A card switches between output and input itself, from its header
@@ -124,13 +124,12 @@ Panel {
           title: I18n.tr(root.isInput ? "Input" : "Output")
           Repeater {
             model: [["output", "volume_up", I18n.tr("Output")], ["input", "mic", I18n.tr("Input")]]
-            StyledRectButton {
+            StyledIconButton {
               required property var modelData
               readonly property bool selected: root.mode === modelData[0]
+              kind: selected ? "tonal" : "text"
               iconText: modelData[1]
-              iconColor: selected ? Theme.accent : Theme.foregroundAlt
-              backgroundColor: Qt.alpha(Theme.backgroundHighlight, selected ? 1 : 0)
-              borderHoverColor: Theme.accent
+              iconColor: selected ? Style.inkHighest.accent : Style.textMuted
               tooltipText: modelData[2]
               onClicked: root.mode = modelData[0]
             }
@@ -182,7 +181,6 @@ Panel {
       Layout.fillHeight: root.sideBySide
       Layout.preferredWidth: root.sideBySide ? Appearance.borderWidth : -1
       Layout.preferredHeight: root.sideBySide ? -1 : Appearance.borderWidth
-      separatorColor: Theme.backgroundHighlight
     }
 
     Loader {
@@ -280,9 +278,9 @@ Panel {
               visible: root.currentTab === 0 ? root.apps.length === 0 : root.devices.length === 0
               horizontalAlignment: Text.AlignHCenter
               verticalAlignment: Text.AlignVCenter
-              wrapMode: Text.WordWrap
+              overflow: "wrap"
               text: root.currentTab === 1 ? I18n.tr("No devices found") : I18n.tr(root.isInput ? "No apps recording" : "No apps playing audio")
-              textColor: Theme.foregroundAlt
+              tone: "muted"
             }
 
             // Devices: click one to make it the default (whose volume is above)
@@ -298,7 +296,13 @@ Panel {
                 Layout.fillWidth: true
                 implicitHeight: deviceLayout.implicitHeight + Widget.spacing * 2
                 radius: Widget.radius
-                color: selected ? Theme.backgroundHighlight : deviceMouse.containsMouse ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
+                color: selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: no fill as the container at no alpha, so selecting doesn't fade through black
+
+                StateLayer {
+                  radius: deviceRow.radius
+                  hovered: deviceMouse.containsMouse
+                  pressed: deviceMouse.pressed
+                }
 
                 ColorGlide on color {}
 
@@ -325,23 +329,23 @@ Panel {
                     Layout.preferredWidth: Widget.iconButton
                     horizontalAlignment: Text.AlignHCenter
                     text: root.deviceIcon(deviceRow.node, false, 1)
-                    textSize: Appearance.fontSize * 1.2
-                    textColor: deviceRow.selected ? Theme.accent : Theme.foregroundAlt
+                    size: "md"
+                    textColor: deviceRow.selected ? Style.onAccentContainer : Style.textMuted
                   }
 
                   StyledLabel {
                     Layout.fillWidth: true
                     text: root.deviceName(deviceRow.node)
-                    elide: Text.ElideRight
-                    textSize: Appearance.fontSizeBy(-1)
-                    textColor: deviceRow.selected ? Theme.foreground : Theme.foregroundAlt
+                    overflow: "line"
+                    role: "caption"
+                    textColor: deviceRow.selected ? Style.onAccentContainer : Style.textMuted
                   }
 
                   // Always laid out, so selecting a row doesn't reflow it
                   StyledIcon {
                     opacity: deviceRow.selected ? 1 : 0
                     text: "check"
-                    textColor: Theme.accent
+                    textColor: Style.onAccentContainer
                   }
                 }
               }
