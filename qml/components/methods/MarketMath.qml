@@ -76,6 +76,14 @@ QtObject {
     return change > 0 ? "up" : "down";
   }
 
+  // The StyledText tone of a trend: faint when flat, else success or error
+  // by which way is a gain (`redForGains` flips them)
+  function trendTone(trend, redForGains) {
+    if (trend === "flat")
+      return "faint";
+    return (trend === "up") !== redForGains ? "success" : "error";
+  }
+
   // Decimals for a price: two from 1, four from 0.01, else four
   // significant digits (0.00001234)
   function decimals(value) {

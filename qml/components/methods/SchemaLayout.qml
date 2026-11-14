@@ -130,6 +130,14 @@ QtObject {
     return result;
   }
 
+  // Whether a field's `x-showIf` names a sibling (a plain key, not a `/`
+  // path): it is shown by that sibling's value, so it reads as part of the
+  // row above (SchemaField.followsSibling; the settings page keeps such rows
+  // together)
+  function followsSibling(fieldSchema) {
+    return Object.keys(fieldSchema?.["x-showIf"] ?? {}).some(key => !key.startsWith("/"));
+  }
+
   // What the field refers to (`x-ref`'s `kind`, "specialWorkspace"), or "" when
   // it refers to nothing or its `when` doesn't hold for the item (valueOf
   // gives the item's keys, as showIfHolds')
@@ -415,7 +423,7 @@ QtObject {
   // section's `x-card: { file, title, wide, folds, perField }` names a
   // hand-built card (settings/<file>Card.qml, titled `title`) that goes
   // first (`folds`: it folds like the generated cards, given its
-  // `foldKey`; `wide`: it spans both columns); its `x-intro` names a
+  // `foldKey`; `wide`: it spans every column); its `x-intro` names a
   // hand-built piece (settings/<name>.qml) at the top of the section's own
   // card, above its fields (`intro`), as a nested object's does on its
   // own. `perField` makes each of the section's direct fields a card of
@@ -423,7 +431,7 @@ QtObject {
   // switch's row labelled "Enabled"; the section's description gets a card
   // first. A nested object with `x-row` is one row (and the rows it draws)
   // on a card of its own, titled by the object. A card holding a field or
-  // `x-row` object marked `x-wide` spans both columns (`wide`).
+  // `x-row` object marked `x-wide` spans every column (`wide`).
   function groups(schema, sectionKey) {
     const section = root.resolved(schema.properties[sectionKey], schema);
     const sectionTitle = section.title ?? sectionKey;

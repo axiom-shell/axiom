@@ -1828,4 +1828,25 @@ TestCase {
           "action": "moveToSpecial"
         })[key]), "");
   }
+
+  function test_followsSibling() {
+    verify(!SchemaLayout.followsSibling({}));
+    verify(!SchemaLayout.followsSibling(null));
+    verify(!SchemaLayout.followsSibling({
+      "x-showIf": {
+        "/Compositor.mode": "managed"
+      }
+    }));
+    verify(SchemaLayout.followsSibling({
+      "x-showIf": {
+        "enabled": true
+      }
+    }));
+    verify(SchemaLayout.followsSibling({
+      "x-showIf": {
+        "/x": 1,
+        "mode": "a"
+      }
+    }));
+  }
 }
