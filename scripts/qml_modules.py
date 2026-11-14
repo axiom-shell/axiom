@@ -11,6 +11,9 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
 
   scripts/qml_modules.py OUT         build the tree in OUT (emptied first)
   scripts/qml_modules.py --pure OUT  only files that don't import Quickshell
+  scripts/qml_modules.py --layout OUT  the pure tree plus the layout harness's
+                                     pieces (reusable/, the readers Style
+                                     needs) over the stubs in tests-layout/stubs
 """
 import json
 import re
@@ -79,6 +82,40 @@ def pure(path):
     return not QUICKSHELL_IMPORT.search(path.read_text())
 
 
+# The layout harness (tests-layout/): the pure files and the pieces that import
+# only the Quickshell modules its stubs supply
+LAYOUT_STUBS = ROOT / "tests-layout" / "stubs"
+LAYOUT_CONFIG = {"Appearance", "Widget", "Theme", "Style", "StyleInk", "StyleTextRole"}
+STUBBED_IMPORTS = {"Quickshell", "Quickshell.Widgets"}
+
+
+def layout(path):
+    """What the layout harness loads: the components (pure, or importing only the Quickshell modules its stubs
+    supply) and the config readers the pieces read. The services and the other readers stay out: a module's
+    singletons are all compiled on import, so one that needs a missing service would fail the import."""
+    rel = path.relative_to(QML_ROOT).as_posix()
+    if rel.startswith("config/"):
+        return path.stem in LAYOUT_CONFIG
+    if not rel.startswith("components/"):
+        return False
+    return all(i in STUBBED_IMPORTS for i in re.findall(r"^import (Quickshell\S*)", path.read_text(), re.M))
+
+
+def add_stubs(out, stubs):
+    """Copy the stub files into the tree (replacing a file of the same name) and list them in their qmldir."""
+    for f in sorted(Path(stubs).rglob("*.qml")):
+        rel_dir = f.parent.relative_to(stubs)
+        target = Path(out) / rel_dir
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(f, target / f.name)
+        qmldir = target / "qmldir"
+        lines = qmldir.read_text().splitlines() if qmldir.exists() else ["module " + ".".join(rel_dir.parts)]
+        lines = [ln for ln in lines if f.name not in ln.split()]
+        kind = "singleton " if SINGLETON.search(f.read_text()) else ""
+        lines.append(f"{kind}{f.stem} 1.0 {f.name}")
+        qmldir.write_text("\n".join(lines) + "\n")
+
+
 def build_tree(out, only=None):
     """Build the module tree in `out` (emptied first); returns `out`.
 
@@ -107,11 +144,13 @@ def build_tree(out, only=None):
 
 def main():
     args = sys.argv[1:]
-    only = pure if args[:1] == ["--pure"] else None
+    only = pure if args[:1] == ["--pure"] else layout if args[:1] == ["--layout"] else None
     args = args[1:] if only else args
     if len(args) != 1:
         sys.exit(__doc__.strip())
     build_tree(args[0], only)
+    if only is layout:
+        add_stubs(args[0], LAYOUT_STUBS)
 
 
 if __name__ == "__main__":
