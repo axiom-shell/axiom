@@ -21,10 +21,10 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 
 ### Reader (CalendarConfig)
 - Accounts with their ids filled in.
-- `calendars`, flattened, with resolved colors.
+- `calendars`, flattened, with their colour names (a config name, a server `#hex`, else `accent`; UI resolves with `Style.resolve`).
 - `shownCalendars` / `writableCalendars`.
 - `newEventCalendar`.
-- `colors`, by calendar id.
+- `colors`: colour names, by calendar id.
 - `timeFormat`, from `use24Hour`.
 
 ### Calls
@@ -130,7 +130,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 - **`MonthGrid`:**
   - Six weeks, starting from the language's first weekday.
   - Owns the month shown: `step` / `showDay` / `showToday`, unless its owner binds `year` / `month` (the page). Either way a new month slides in. Asks `CalendarManager.ensureMonth`.
-  - Shows a dot per calendar with events on a day, modelled by the joined colors.
+  - Shows a dot per calendar with events on a day, modelled by the joined colour names.
   - With `titles`, it shows the events in cells that are tall enough, modelled by count, with "+n more".
   - `showEvents: false` makes it a plain date picker.
 - **`EventRow`:** calendar color, title, time and place.

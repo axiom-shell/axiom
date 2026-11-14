@@ -24,7 +24,7 @@ Panel {
   readonly property var metrics: (root.popoutMetrics ?? root.properties.metrics ?? ["cpu", "mem"]).filter(m => root.knownMetrics.includes(m))
   readonly property var shown: root.compact ? root.metrics.slice(0, 1) : root.metrics
 
-  implicitWidth: Widget.px(root.columns > 1 ? 520 : 360)
+  implicitWidth: Widget.textPx(root.columns > 1 ? 520 : 360)
   // One panel: its figure over a sparkline of at least a line
   fullMinWidth: Appearance.fontSize * 6
   fullMinHeight: Appearance.fontSize * 5

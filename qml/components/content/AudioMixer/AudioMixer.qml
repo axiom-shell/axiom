@@ -56,7 +56,7 @@ Panel {
   property real overflow: 0
   maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.listHeight - root.viewHeight
 
-  implicitWidth: Widget.px(380)
+  implicitWidth: Widget.textPx(380)
   fullMinWidth: Appearance.fontSize * 12
   // Grows to list every app or device (a short card stays the slider)
   wantedHeight: root.sliderOnly || root.viewHeight <= 0 ? 0 : root.height + root.overflow

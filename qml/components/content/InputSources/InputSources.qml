@@ -17,7 +17,7 @@ Panel {
 
   readonly property var sources: InputSourceManager.sources
 
-  implicitWidth: Widget.px(280)
+  implicitWidth: Widget.textPx(280)
 
   // Switches made in fcitx5 itself are heard without a tray too
   Component.onCompleted: InputSourceManager.acquire(root)

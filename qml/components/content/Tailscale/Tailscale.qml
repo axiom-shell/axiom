@@ -39,7 +39,7 @@ Panel {
   }
 
   spacing: Widget.padding
-  implicitWidth: Widget.px(380)
+  implicitWidth: Widget.textPx(380)
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 11
   // In a popout the list grows away from the controls, which stay by the

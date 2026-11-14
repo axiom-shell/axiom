@@ -21,7 +21,7 @@ Panel {
   // The dropdowns open just under the header
   readonly property real popupTop: header.height + Widget.spacing
 
-  implicitWidth: Widget.px(440) + root.margins * 2
+  implicitWidth: Widget.textPx(440) + root.margins * 2
   // The header, a message or two and the composer, else the figure
   fullMinWidth: Appearance.fontSize * 18
   fullMinHeight: Appearance.fontSize * 16

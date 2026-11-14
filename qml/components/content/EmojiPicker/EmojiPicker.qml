@@ -85,7 +85,7 @@ Panel {
     }
   ]
 
-  implicitWidth: Widget.px(380)
+  implicitWidth: Widget.textPx(380)
   fullMinWidth: Appearance.fontSize * 10
   fullMinHeight: Appearance.fontSize * 3.5
   wantsKeyboardFocus: true

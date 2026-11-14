@@ -71,7 +71,7 @@ Panel {
   fullMinWidth: Appearance.fontSize * 16
   fullMinHeight: Appearance.fontSize * 11
 
-  implicitWidth: Widget.px(400)
+  implicitWidth: Widget.textPx(400)
   // Grows to show every group and the open Quiet list (from compact, to
   // the full layout); nothing listed, back to its place
   readonly property bool _quietListed: root.hasQuiet && quietFold.open

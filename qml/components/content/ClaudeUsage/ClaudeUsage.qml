@@ -31,7 +31,7 @@ Panel {
     }))
 
   spacing: Widget.padding
-  implicitWidth: Math.max(Widget.px(320), body.implicitWidth + margins * 2)
+  implicitWidth: Math.max(Widget.textPx(320), body.implicitWidth + margins * 2)
 
   function duration(ms) {
     const minutes = Math.max(0, Math.round(ms / 60000));
@@ -139,7 +139,7 @@ Panel {
         tone: "muted"
         overflow: "wrap"
         Layout.fillWidth: true
-        Layout.maximumWidth: Widget.px(320)
+        Layout.maximumWidth: Widget.textPx(320)
       }
 
       Meter {
@@ -170,7 +170,7 @@ Panel {
         tone: "muted"
         overflow: "wrap"
         Layout.fillWidth: true
-        Layout.maximumWidth: Widget.px(320)
+        Layout.maximumWidth: Widget.textPx(320)
       }
 
       StyledText {

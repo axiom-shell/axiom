@@ -24,7 +24,7 @@ Panel {
   hovered: pointerInside || wantsKeyboardFocus
   onFocusLost: DrivesManager.cancelUnlock()
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 9
   // In a popout the list grows away from the header, which stays by the

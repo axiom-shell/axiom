@@ -51,7 +51,7 @@ Panel {
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 30 && root.innerWidth >= root.innerHeight * 1.3
   readonly property bool showHeader: root.embedded && !root.strip && root.innerHeight >= Appearance.fontSize * 9
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 11
   fullMinHeight: Appearance.fontSize * 3.5
   wantsKeyboardFocus: true

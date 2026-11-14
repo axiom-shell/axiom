@@ -14,7 +14,7 @@ Panel {
   id: root
 
   spacing: Widget.spacing
-  implicitWidth: Math.max(Widget.px(280), body.implicitWidth + margins * 2)
+  implicitWidth: Math.max(Widget.textPx(280), body.implicitWidth + margins * 2)
 
   ColumnLayout {
     Layout.fillWidth: true

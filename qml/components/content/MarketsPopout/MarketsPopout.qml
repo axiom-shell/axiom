@@ -43,7 +43,7 @@ Panel {
   readonly property real bodyHeight: root.selected !== null ? root.detailHeight : root.showsEmpty ? root.emptyHeight : root.listHeight
 
   spacing: Widget.padding
-  implicitWidth: Widget.px(400)
+  implicitWidth: Widget.textPx(400)
   // Room for the tallest view, and for the portfolio the detail hides
   maxImplicitHeight: root.implicitHeight - root.bodyHeight + Math.max(root.detailHeight, root.listHeight, root.emptyHeight) + (root.selected !== null && root.showPortfolio && root.portfolio !== null ? summary.implicitHeight + root.spacing : 0)
   flips: true

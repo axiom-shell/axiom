@@ -39,7 +39,7 @@ Panel {
   // The list beside the controls in a wide card
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 34 && root.innerWidth >= root.innerHeight * 1.4
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 10
   fullMinHeight: Appearance.fontSize * 3.5
   spacing: Widget.spacing

@@ -47,6 +47,7 @@ A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` bes
   - Icon, value and label stacked, or the icon beside them in a wide box.
   - Drops the label and then the icon as room runs out, shrinking the value to fit.
 - `EmptyState`: a faint `xl` icon over a `caption` line, with an optional `hint` and an `actionText` button (`triggered`); takes an `availableHeight` and drops to its icon when short.
+- Data that arrives after build: a `Skeleton` while the service has none and no error; `EmptyState` for nothing there; a spinner only for an action in progress (copy target: Weather).
 - `PasswordField` is the lock screen's field and `LoginField` the greeter's box (see [Lockscreen](../features/lockscreen.md)); `FocusKeeper` keeps the keyboard on them.
 - Generic controls: see [Shared UI pieces](../core/shared-ui-pieces.md).
 

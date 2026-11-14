@@ -63,7 +63,7 @@ Panel {
     label: I18n.tr("updates")
   }
 
-  implicitWidth: Math.max(Widget.px(320), body.implicitWidth + margins * 2)
+  implicitWidth: Math.max(Widget.textPx(320), body.implicitWidth + margins * 2)
 
   component Section: ColumnLayout {
     id: section
@@ -158,7 +158,7 @@ Panel {
     visible: !root.embedded && (root.total === 0 || root.failed !== "")
     Layout.fillWidth: true
     // A failed check's stderr wraps rather than widening the popout
-    Layout.maximumWidth: Widget.px(320)
+    Layout.maximumWidth: Widget.textPx(320)
     overflow: "wrap"
     text: root.failed || I18n.tr("System is up to date")
     tone: "muted"

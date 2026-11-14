@@ -41,7 +41,7 @@ Panel {
   // detail under them
   readonly property real rowHeight: Math.ceil(Appearance.fontSize * (root.titleLines > 1 ? 3.6 : 2.4)) + Widget.spacing * 2
 
-  implicitWidth: Widget.px(400)
+  implicitWidth: Widget.textPx(400)
   fullMinWidth: Appearance.fontSize * 11
   fullMinHeight: Appearance.fontSize * 3.5
   wantsKeyboardFocus: root.showSearch

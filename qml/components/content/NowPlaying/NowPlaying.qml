@@ -52,7 +52,7 @@ Panel {
   fullMinHeight: Appearance.fontSize * 3.5
 
   spacing: Widget.spacing
-  implicitWidth: Widget.px(380)
+  implicitWidth: Widget.textPx(380)
 
   component MediaButton: StyledIconButton {
     id: button
