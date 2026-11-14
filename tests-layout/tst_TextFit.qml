@@ -177,6 +177,16 @@ TestCase {
   }
 
   Component {
+    id: markedTabsComp
+
+    StyledTabBar {
+      tabs: ["Layout", "Surface", "Style", "Behaviour"]
+      marked: [1]
+      currentIndex: 0
+    }
+  }
+
+  Component {
     id: toolPaneComp
 
     ToolPane {
@@ -699,6 +709,29 @@ TestCase {
     bar.width = Widget.textPx(2000);
     waitForRendering(bar);
     fuzzyCompare(bar._current.width, bar._current.implicitWidth, 1, "a tab keeps its own width");
+  }
+
+  // A marked tab shows one unsaved dot, after its label and inside the tab
+  function test_marked_tab_shows_one_dot_after_its_label() {
+    harness.configure({});
+    const bar = createTemporaryObject(markedTabsComp, root, {
+      "width": Widget.textPx(400)
+    });
+    waitForRendering(bar);
+    // (find walks a tab's content item twice)
+    const dots = find(bar, it => it.shown !== undefined && it.onAccent !== undefined, []).filter((d, i, all) => all.indexOf(d) === i);
+    compare(dots.length, 4);
+    tryVerify(() => dots.filter(dot => dot.visible).length === 1);
+    const dot = dots.find(d => d.visible);
+    const tab = find(bar, it => it.text === "Surface" && it.checked !== undefined, [])[0];
+    verify(tab, "the Surface tab");
+    const label = find(tab, it => it.text === "Surface" && it.truncated !== undefined, [])[0];
+    const dotAt = dot.mapToItem(bar, 0, 0).x;
+    const labelAt = label.mapToItem(bar, 0, 0).x;
+    const tabAt = tab.mapToItem(bar, 0, 0).x;
+    verify(dotAt >= labelAt + label.width - 0.5, "after the label");
+    verify(dotAt + dot.width <= tabAt + tab.width + 0.5, "inside its tab");
+    compare(dots.indexOf(dot), 1, "on the second tab");
   }
 
   // A tab bar that does not scroll keeps the tab's own padding

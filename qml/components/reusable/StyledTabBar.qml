@@ -18,6 +18,8 @@ Item {
   property int currentIndex: 0
   property alias spacing: row.spacing
   property bool scrollable: false
+  // Tab indices with unsaved edits: each shows a dot after its label
+  property var marked: []
 
   signal tabClicked(int index)
 
@@ -112,6 +114,7 @@ Item {
           rightPadding: root.scrollable ? Style.space3 : undefined
           Layout.fillWidth: !root.scrollable
           text: modelData
+          marked: root.marked.includes(index)
           checked: root.currentIndex === index
           onClicked: root.tabClicked(index)
         }
