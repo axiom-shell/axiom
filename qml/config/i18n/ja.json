@@ -340,7 +340,6 @@
     "No settings match \"{0}\"": "「{0}」に一致する設定はありません",
     "Search keybinds": "キーバインドを検索",
     "{0} binds": "{0} 件のバインド",
-    "{0} of {1} binds": "{1} 件中 {0} 件のバインド",
     "Your binds": "自分のバインド",
     "With issues": "問題あり",
     "No keybinds match the filters": "フィルターに一致するキーバインドはありません",
@@ -4251,6 +4250,7 @@
     "Drag a module to move it, an edge or corner to resize it, a box on the background to select several (Shift adds). Arrows move the selection, Shift+arrows resize a single module, Delete removes it, Escape deselects, Ctrl+Z undoes.": "",
     "The desktop, lock screen and login screen.": "",
     "No binds yet": "",
-    "Add one, or start from a preset.": ""
+    "Add one, or start from a preset.": "",
+    "Filters": ""
   }
 }

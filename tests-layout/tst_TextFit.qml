@@ -200,6 +200,26 @@ TestCase {
   }
 
   Component {
+    id: toolPaneToolbarComp
+
+    ToolPane {
+      title: "Keyboard"
+      tabModel: ["One", "Two"]
+      toolbar: [
+        ToolBar {
+          objectName: "paneToolbar"
+          visible: false
+        }
+      ]
+      Rectangle {
+        objectName: "paneChild"
+        implicitHeight: 40
+        Layout.fillWidth: true
+      }
+    }
+  }
+
+  Component {
     id: workAreaComp
 
     WorkArea {
@@ -1090,6 +1110,26 @@ TestCase {
     waitForRendering(pane);
     verify(child.visible, "the body is back");
     compare(states().length, 0);
+  }
+
+  // A hidden toolbar leaves no gap under the tabs
+  function test_tool_pane_hidden_toolbar_takes_no_gap() {
+    harness.configure({});
+    const sizes = {
+      "width": 420,
+      "height": 500
+    };
+    const withBar = createTemporaryObject(toolPaneToolbarComp, root, sizes);
+    const without = createTemporaryObject(toolPaneToolbarComp, root, sizes);
+    waitForRendering(withBar);
+    waitForRendering(without);
+    const bar = find(without, it => it.objectName === "paneToolbar", [])[0];
+    verify(bar);
+    bar.destroy();
+    wait(0);
+    waitForRendering(without);
+    const bodyY = pane => find(pane, it => it.objectName === "paneChild", [])[0].mapToItem(pane, 0, 0).y;
+    compare(bodyY(withBar), bodyY(without));
   }
 
   // A status line hidden at load shows once its child does

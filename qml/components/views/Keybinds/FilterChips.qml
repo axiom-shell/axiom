@@ -1,25 +1,27 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import qs.config
 import qs.components.reusable
 
-// The Keybinds page's toggle chips, in groups set apart by a short line,
-// then Clear while any is on. Both tabs use it: the list (KeybindFilter)
-// and the editor (KeybindManager.page.visibleKey).
-Flow {
+// The Keybinds page's filters (both tabs: the list's KeybindFilter and the
+// editor's KeybindManager.page.visibleKey). The root is the `Filters` button
+// for a toolbar's `trailing`: primary, with a count, while any chip is on;
+// it opens every chip, in groups set apart by a short line, in a popover.
+// ActiveFilters goes in the toolbar's `filters` line: only the chips that
+// are on, one tap each to clear, then Clear.
+StyledTextButton {
   id: root
 
   // [{ id, options: [{ value, label }] }]; empty groups are skipped
   property var groups: []
   // { <group id>: [selected values] }
   property var selection: ({})
-  property bool filtering: false
 
   signal toggled(string group, string value)
-  signal cleared
 
-  spacing: Widget.spacing
-
+  // How many chips are on
+  readonly property int activeCount: root.groups.reduce((sum, group) => sum + (root.selection[group.id] ?? []).length, 0)
   // Chips, and a divider before each group but the first, as one list
   // so every chip wraps on its own
   readonly property var _items: root.groups.filter(group => group.options.length > 0).reduce((items, group, index) => {
@@ -35,47 +37,75 @@ Flow {
         })));
   }, [])
 
-  Repeater {
-    model: root._items
+  kind: root.activeCount > 0 ? "primary" : "tonal"
+  iconText: "filter_list"
+  text: I18n.tr("Filters")
+  implicitHeight: Widget.height
+  onClicked: popover.opened ? popover.close() : popover.open()
 
-    delegate: Loader {
-      id: item
-      required property var modelData
-      sourceComponent: modelData.divider ? divider : chip
+  CountBadge {
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.topMargin: -Math.round(height / 3)
+    anchors.rightMargin: -Math.round(width / 3)
+    shown: root.activeCount > 0
+    text: String(root.activeCount)
+    color: Style.onAccent
+    textColor: Style.accent
+  }
 
-      Component {
-        id: divider
+  Popup {
+    id: popover
+    x: root.width - width
+    y: root.height + Widget.spacing
+    width: Widget.textPx(440)
+    padding: Widget.padding
+    margins: Widget.spacing
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
-        Item {
-          implicitWidth: 1
-          implicitHeight: Widget.height
+    background: DropdownSurface {
+      floating: true
+    }
 
-          StyledSeparator {
-            anchors.centerIn: parent
-            width: 1
-            separatorHeight: parent.height * 0.6
-            opacity: 0.6
+    contentItem: Flow {
+      spacing: Widget.spacing
+
+      // Built only while shown
+      Repeater {
+        model: popover.visible ? root._items : []
+
+        delegate: Loader {
+          id: item
+          required property var modelData
+          sourceComponent: modelData.divider ? divider : chip
+
+          Component {
+            id: divider
+
+            Item {
+              implicitWidth: Style.dividerWidth
+              implicitHeight: Widget.smallHeight
+
+              StyledSeparator {
+                anchors.centerIn: parent
+                width: Style.dividerWidth
+                separatorHeight: parent.height * 0.6
+                backTone: "raised"
+              }
+            }
+          }
+
+          Component {
+            id: chip
+
+            ToggleChip {
+              text: item.modelData.label
+              checked: (root.selection[item.modelData.group] ?? []).includes(item.modelData.value)
+              onToggled: root.toggled(item.modelData.group, item.modelData.value)
+            }
           }
         }
       }
-
-      Component {
-        id: chip
-
-        SegmentButton {
-          implicitHeight: Widget.height
-          text: item.modelData.label
-          active: (root.selection[item.modelData.group] ?? []).includes(item.modelData.value)
-          onClicked: root.toggled(item.modelData.group, item.modelData.value)
-        }
-      }
     }
-  }
-
-  SegmentButton {
-    visible: root.filtering
-    implicitHeight: Widget.height
-    text: I18n.tr("Clear")
-    onClicked: root.cleared()
   }
 }

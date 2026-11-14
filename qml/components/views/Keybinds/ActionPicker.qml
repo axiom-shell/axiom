@@ -87,7 +87,13 @@ Item {
   function move(step) {
     if (root.rows.length === 0)
       return;
-    root.highlighted = Math.max(0, Math.min(root.rows.length - 1, root.highlighted + step));
+    let next = root.highlighted + step;
+    // While searching a header is a plain heading: step over it
+    while (root.searching && root.rows[next]?.header)
+      next += step;
+    if (next < 0 || next >= root.rows.length)
+      return;
+    root.highlighted = next;
     list.positionViewAtIndex(root.highlighted, ListView.Contain);
   }
 
@@ -98,11 +104,16 @@ Item {
 
   implicitHeight: Widget.height
 
-  StyledContainer {
+  Surface {
     id: button
     anchors.fill: parent
-    backgroundColor: buttonArea.containsMouse ? Theme.backgroundHighlight : Theme.backgroundAlt
-    borderColor: popup.visible ? Theme.accent : Theme.border
+    tone: "sunken"
+    outlined: true
+    border.color: popup.visible ? Style.accent : Style.borderStrong
+
+    StateLayer {
+      hovered: buttonArea.containsMouse
+    }
 
     RowLayout {
       anchors.fill: parent
@@ -112,19 +123,19 @@ Item {
 
       StyledIcon {
         text: KeybindManager.actionIcon(root.currentValue)
-        textColor: Theme.accent
+        tone: "muted"
       }
 
       StyledLabel {
         text: KeybindManager.actionLabels[root.currentValue] ?? root.currentValue
-        elide: Text.ElideRight
+        overflow: "line"
         Layout.fillWidth: true
       }
 
       StyledIcon {
         text: "arrow_drop_down"
-        textColor: Theme.accent
-        textSize: Appearance.fontSizeBy(2)
+        tone: "muted"
+        size: "md"
       }
     }
 
@@ -147,8 +158,7 @@ Item {
     focus: true
 
     background: DropdownSurface {
-      color: Theme.backgroundAlt
-      border.width: Appearance.borderWidth
+      floating: true
     }
 
     contentItem: ColumnLayout {
@@ -180,7 +190,7 @@ Item {
 
         ScrollIndicator.vertical: StyledScrollIndicator {}
 
-        delegate: Rectangle {
+        delegate: Item {
           id: row
           required property int index
           readonly property var entry: root.rows[index] ?? ({})
@@ -189,52 +199,45 @@ Item {
 
           width: ListView.view.width
           height: Widget.height
-          radius: Widget.radius
-          color: index === root.highlighted ? Theme.backgroundHighlight : "transparent"
 
-          RowLayout {
+          // A category header folds its actions; an action is picked. The
+          // keyboard highlight is the hover layer
+          MenuRow {
+            visible: !(row.header && root.searching)
             anchors.fill: parent
-            anchors.leftMargin: row.header ? Widget.spacing : Widget.padding * 2
-            anchors.rightMargin: Widget.padding
-            spacing: Widget.spacing
-
-            StyledIcon {
-              text: row.header ? (row.entry.open ? "expand_more" : "chevron_right") : KeybindManager.actionIcon(row.entry.info?.action)
-              textColor: row.header || row.current ? Theme.accent : Theme.foreground
-              opacity: row.header && root.searching ? 0.4 : 1
+            anchors.leftMargin: row.header ? 0 : Widget.padding
+            icon: row.header ? (row.entry.open ? "expand_more" : "chevron_right") : KeybindManager.actionIcon(row.entry.info?.action)
+            text: row.header ? I18n.tr(row.entry.section ?? "") : (row.entry.info?.label ?? "")
+            trailing: row.header ? String(row.entry.count ?? "") : ""
+            current: row.current
+            lit: row.index === root.highlighted
+            onHoveredChanged: {
+              if (hovered)
+                root.highlighted = row.index;
             }
-
-            StyledLabel {
-              text: row.header ? I18n.tr(row.entry.section ?? "") : (row.entry.info?.label ?? "")
-              textColor: row.header || row.current ? Theme.accent : Theme.foreground
-              font.weight: (row.header || row.current) ? Font.Bold : Font.Normal
-              elide: Text.ElideRight
-              Layout.fillWidth: true
-            }
-
-            StyledLabel {
-              visible: row.header
-              text: String(row.entry.count ?? "")
-              opacity: 0.5
-              textSize: Appearance.fontSizeBy(-2)
-            }
+            onActivated: root.activate(row.index)
           }
 
-          MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onEntered: root.highlighted = row.index
-            onClicked: root.activate(row.index)
+          // While searching a header is only a heading (a click does nothing)
+          StyledText {
+            visible: row.header && root.searching
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: Widget.padding
+            text: I18n.tr(row.entry.section ?? "")
+            role: "micro"
+            tone: "faint"
+            overflow: "line"
           }
         }
       }
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         visible: root.rows.length === 0
         text: I18n.tr("No actions match \"{0}\"", root.query.trim())
-        opacity: 0.6
+        tone: "faint"
         Layout.fillWidth: true
       }
     }
