@@ -32,16 +32,17 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - The five drafts are one list, `OverlayManager.drafts` (each with `isDirty`, `problems`, `ensureLoaded()`, `saveChanges()`, `resetChanges()`), and everything takes them from it: `layoutsDirty`, `layoutsProblems` (the dirty ones': what blocks Save and "Can't save yet" lists, so a saved layout nobody touched never blocks the others), `loadLayouts()` (on page open), `saveLayouts()` / `resetLayouts()` (the dirty ones). Save/Discard on the canvas and `EditsManager`'s Save all / Discard all call those, and `EditsManager` lists the page as unsaved while `layoutsDirty`. A new draft is a new entry in `drafts`.
 
 ### Layout of the page
-- `LayoutsPanel` on the left; on the right `GridCanvas` above `EditorInspector`, placed by `LayoutsEditorLayout`; a `GridDragLayer` covering it all.
+- `LayoutsPanel` on the left (a `ToolPane` "Layouts"); on the right `GridCanvas` (a `WorkArea`, its well at most `Widget.px(400)` tall) above `EditorInspector`, placed by `LayoutsEditorLayout` from the page's whole-pixel sizes (`BaseView.pageHeight`, `sideWidth`); a `GridDragLayer` covering it all.
 - Streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)): the side panel, each canvas tile (the tile's place and size are the loader's, so it glides as before) and the module library, built once and kept while a module's options show over it. The canvas and inspector themselves stay, reached through `LayoutsEditorLayout.canvas` / `inspector`.
 
 ### Left panel (`LayoutsPanel`)
+- The lists are pinned above the selection's fields (capped at 40 % of the pane, scrolling inside), each a `ListSection` with its count; the rows take the lists' keyboard route (Delete runs the row's remove; Escape is left to the overlay, as the editor always has something selected). "Can't save yet" is the pane's footer.
 - **`PagesSection`**:
-  - Your pages, with show/hide, duplicate and remove actions, and New page under them.
-  - Then the tool pages as a dimmed group with only show/hide. Every tool page is always in config (a migration put back any that were removed, hidden).
+  - "Overlay pages": your pages, with show/hide, duplicate and remove actions, and New page under them.
+  - Then "Tools", the tool pages with only show/hide, a collapsible section closed by default (`LayoutsPanel.toolsOpen` keeps it open while the page is up). Every tool page is always in config (a migration put back any that were removed, hidden).
   - Each group is dragged to reorder within itself.
-  - Then the Desktop, Lock screen and Login screen rows (not pages, not dragged).
-- **`MenusSection`**: the edge menus, dragged to reorder, duplicate/remove, New menu (a `StyledContextMenu` of what it's for: [editing and submenus](../menus/editing-submenus.md) › Creating a menu from what opens it).
+  - Then a "Screens" `ListSection` after Menus (hint line) holding the Desktop, Lock screen and Login screen rows (not pages, not dragged). Selecting a tool page from outside opens the Tools section (`LayoutsPanel.revealTool`).
+- **`MenusSection`** ("Menus"): the edge menus, dragged to reorder, duplicate/remove, New menu (a `StyledContextMenu` of what it's for: [editing and submenus](../menus/editing-submenus.md) › Creating a menu from what opens it).
 - Then the selection's fields:
   - A page's name, icon and Double grid.
   - A tool page's Show in the navigator.
