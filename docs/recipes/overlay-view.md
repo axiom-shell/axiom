@@ -2,7 +2,7 @@
 
 An overlay page type is a whole page of the overlay (the full-screen layer with the navigator at the bottom). A *tool page* is the hand-built kind (Settings, Themes, the bar editor, Keybinds, Calendar): it is always in the config and shows as an icon after the user's own pages. At the end you have a page that opens from the overlay, and for a tool page from the launcher, and that streams in without a hitch.
 
-**Copy from:** `qml/components/views/Themes/Themes.qml` + `schema.yaml` (a tool page made of streamed panels), `qml/components/views/CalendarPage/CalendarPage.qml` (a tool page that pops out into a window and keeps its state in a manager); the migration step `Version: 80` in `backend/internal/migrate/steps/steps.go` (it appends a tool page to existing configs), with `TestV80AddsTheCustomWidgetsPage` in `steps_test.go`.
+**Copy from:** `qml/components/views/Themes/Themes.qml` + `schema.yaml` and `qml/components/views/CalendarPage/CalendarPage.qml` show the style pattern (Themes: a tool page made of streamed panels; CalendarPage: one that pops out into a window and keeps its state in a manager); [tool-page](tool-page.md) is the recipe for an editor page; the migration step `Version: 80` in `backend/internal/migrate/steps/steps.go` (it appends a tool page to existing configs), with `TestV80AddsTheCustomWidgetsPage` in `steps_test.go`.
 **Background:** [pages and grid](../dev/overlay/pages-and-grid.md), [streamed building](../dev/core/streamed-building.md), [editors pattern](../dev/core/editors-pattern.md) (for an editor page), [page windows](../dev/overlay/page-windows.md), [migration recipe](migration.md); generated: [config/OverlayViews](../dev/config/OverlayViews.md)
 
 ## Files
@@ -25,7 +25,7 @@ Translation files need nothing: the pre-commit hook adds new strings to every la
 5. If the page pops out, keep its state in its manager and not in the page: only one host builds the page at a time, and the window and the overlay swap ([page windows](../dev/overlay/page-windows.md)).
 
 ## Watch out for
-- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. `check_style.py` fails a new file that has the old patterns.
 - A new folder under `views/` that is only imported from files loaded by URL isn't scanned until qs restarts (`module "qs.components.views.<Type>" is not installed`). Ask the user to restart.
 - An editor page never assigns the draft or the selection; the manager owns them (`select*()`), see the editors pattern.
 - The page only exists while it or a neighbour is shown. Anything that must last goes in a service.

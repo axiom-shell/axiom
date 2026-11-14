@@ -25,12 +25,16 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - An editor that undoes owns an `EditHistory` (`qml/services/ui/EditHistory`): `snapshot` / `restore` hooks over what its edits change (with the selection), `record(fieldKey)` before each edit (the same key as the step before joins it: typing, a stepper), or `take()` then `push(snap)` once an edit turns out to change something; `undo` / `redo`, `canUndo` / `canRedo`, `clear()` when the draft reloads; 50 steps. `GridEditor` (the layouts editor, the desktop, lock screen and custom widget grids) and `BarManager` use one; their buttons are `UndoRedoButtons`.
 
 ### Page
-- A `BaseView` with sizes `pageHeight`, `cardPageWidth`, `sideWidth`, and `editorWidth` for the main area beside it.
-- A `TitledCard` on the left holds, in order:
-  1. A list of `ListEntryRow`s (icon, name, badges, unsaved dot from `…Changed(index)`, `RowAction`s) and an `AddEntryButton`.
-  2. The selected entry's fields: `FieldGroup`s of `SchemaPropertiesForm`, grouped by `x-group`.
-  3. "Can't save yet" (`IssueList`) when `problems` block Save.
-- Save/Discard are page-wide, so they sit top-right like Settings: on the right-hand top card (`SectionsBoard`'s header, or `GridCanvas`'s through `LayoutsEditorLayout`). The left panel has `showActions: false`.
+One shape and one vocabulary for every tool page ([recipe](../../recipes/tool-page.md)): `[ListPane] [WorkArea over Inspector | Inspector]`, built on `views/base/`.
+- **Pieces.** A `BaseView` (`pageHeight`, `cardPageWidth`, `sideWidth`, `editorWidth`; `pageWidth` = side + editor + gap, `inspectorWidth`, `listWidth`: every tool page is `pageWidth` wide in the overlay, so switching pages never changes the box). Each pane is a `ToolPane` (a `TitledCard`: title = the kind of pane, never the selection's name; fixed slots in this order: header, `pinned`, tabs, `toolbar`, scrolling body, `footer`). A `ToolBar` holds search, controls and a count; a `ListSection` titles a group of rows (collapsible, with a hint line); a `WorkArea` holds the canvas with its undo, tools, status line and Save; `GroupColumns` flows an inspector's `FieldGroup`s into columns like a Settings card; an `InspectorHeader` names the selection and carries the standard actions.
+- **Select** a row (the accent container): the inspector shows it; Escape on the row or the inspector's close clears it. List rows take keyboard focus (Up/Down move, Enter selects, Delete runs the row's remove unless the page blocks it, Tab goes through the row's actions then out of the list).
+- **Edit** in the inspector: `FieldGroup`s of `SchemaPropertiesForm`, grouped by `x-group`.
+- **Add** with an `AddEntryButton` under the list. **Remove** with the row's × (`RowAction`, quiet, red on hover) and the inspector header's remove (`danger`). **Reorder** by drag, said once in the `ListSection`'s hint.
+- **Save/Discard** are page-wide and always in the header of the top-right pane (the work area, or the inspector where there is none); undo comes first in the work area's header.
+- **Search** in the `ToolBar`, with a count; nothing found shows the `"results"` empty state with a Clear action. Help is the work area's status line while nothing is selected, with a "?" for the long form.
+- **Empty states** differ by words and action, not only by icon: `"none"` (the page's icon, "No … yet", how to add), `"select"` ("Select a … to edit it") and `"results"` ("Nothing matches", Clear).
+- "Can't save yet" (`IssueList`) shows when `problems` block Save.
+- Pane geometry is in whole pixels. 7b and 7c convert the canvas editors (bars, layouts) and Keybinds onto this; the pages not yet converted keep their own panes until then.
 
 ### Unsaved reminders (`EditsManager`)
 - Drafts survive leaving a page or closing the overlay (bar and menu edits stay live through previews), so nothing blocks closing.

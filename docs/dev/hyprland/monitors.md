@@ -23,6 +23,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - The inspector shows `mirror` only with `supports.monitorMirror` or when the rule has one (a profile saved under another compositor: it can always be turned off), and the color mode and SDR fields only with `supports.monitorColor`.
 
 ### Editing
+- The page is one `ToolPane` (`pageWidth` wide in the overlay, `cardPageWidth` where onboarding embeds it): a toolbar with the layout picker (Rename turns it into a name field in place: Enter saves, Escape cancels; Delete; New layout asks its name the same way; Identify), the canvas as an embedded `WorkArea` beside the selected monitor's inspector, and the footnotes in its `footer`; Apply or Save is in its header.
 - The page edits a `ConfigDraft`.
 - `MonitorCanvas` and `MonitorInspector` are streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)).
 - **Detection.** Opening the page detects the current setup (`_detect`). The match is the daemon's: `compositor.state`'s `monitorProfile` (`CompositorConfigManager.monitorProfile`) names the saved profile it picked on its last read of the outputs (`render.MatchProfile`), and the page finds that name in the draft. The profile it finds or makes is `liveProfile` (the "(connected)" label, and what Apply tries live with a Keep prompt), followed through renames:

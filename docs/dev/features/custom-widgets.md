@@ -6,6 +6,9 @@
 
 A custom widget is a script drawn as a bar widget, that widget's popout and a module (overlay, desktop, edge menu and, when allowed, the lock screen), all from one definition in `CustomWidgets.items`, so the script runs once for all of them. Its output is read as Waybar reads a `custom/*` module's, so Waybar scripts run unchanged.
 
+### The page
+Two `ToolPane`s on a `BaseView` (docs/recipes/tool-page.md): "Custom widgets" on the left (the list pinned above, then the selected script's fields) and "Custom widget" on the right (an `InspectorHeader` for the selected definition, its Data, Bar and Module tabs, the Data and Bar tabs' groups in `GroupColumns`); the Module tab's element column and canvas are two boxes side by side.
+
 ### Definitions
 Each item (`definitions/custom/CustomWidget.yaml`) holds:
 - the script: `command` (run by `sh -c`), `mode` (`poll` every `interval`, `stream` one sample a line, `once`), `output` (`waybar`, `json`, `text`), `execIf` (Waybar's exec-if) and `refreshName`;
