@@ -566,7 +566,6 @@
     "Added {0}": "{0} 件追加",
     "Axiom binds": "axiom のバインド",
     "{0} with issues": "{0} 件に問題あり",
-    "No binds yet. Add one, or start from a preset.": "バインドはまだありません。追加するか、プリセットから始めてください。",
     "Add bind": "バインドを追加",
     "Takes back {0}, which axiom already wrote": "axiom が書いた {0} を再び管理します",
     "Checking {0}…": "{0} を確認中…",
@@ -4250,6 +4249,8 @@
     "Drag widgets to arrange them, across sections too.": "",
     "Saves this bar: its settings and its widgets": "",
     "Drag a module to move it, an edge or corner to resize it, a box on the background to select several (Shift adds). Arrows move the selection, Shift+arrows resize a single module, Delete removes it, Escape deselects, Ctrl+Z undoes.": "",
-    "The desktop, lock screen and login screen.": ""
+    "The desktop, lock screen and login screen.": "",
+    "No binds yet": "",
+    "Add one, or start from a preset.": ""
   }
 }

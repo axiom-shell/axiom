@@ -353,6 +353,59 @@ TestCase {
     }
   }
 
+  // Two sections, each with a header switch and two rows, then an item after
+  Component {
+    id: twoSectionsComp
+
+    Column {
+      id: col
+
+      property alias a2: a2
+      property alias b1: b1
+      property alias b2: b2
+
+      ListSection {
+        title: "A"
+        trailing: [
+          StyledSwitch {}
+        ]
+        ListEntryRow {
+          width: 300
+          label: "A1"
+        }
+        ListEntryRow {
+          id: a2
+
+          width: 300
+          label: "A2"
+        }
+      }
+      ListSection {
+        title: "B"
+        trailing: [
+          StyledSwitch {}
+        ]
+        ListEntryRow {
+          id: b1
+
+          width: 300
+          label: "B1"
+        }
+        ListEntryRow {
+          id: b2
+
+          width: 300
+          label: "B2"
+        }
+      }
+      Rectangle {
+        width: 10
+        height: 10
+        activeFocusOnTab: true
+      }
+    }
+  }
+
   Component {
     id: groupColumnsComp
 
@@ -985,6 +1038,21 @@ TestCase {
     c.sw.forceActiveFocus();
     keyClick(Qt.Key_Backtab);
     verify(c.row.activeFocus, "Shift+Tab from the switch is the row");
+  }
+
+  // Up and Down step over a section's header controls
+  function test_list_rows_walk_across_section_headers() {
+    harness.configure({});
+    const c = createTemporaryObject(twoSectionsComp, root);
+    waitForRendering(c);
+    c.a2.forceActiveFocus();
+    keyClick(Qt.Key_Down);
+    verify(c.b1.activeFocus, "Down crosses the next header");
+    keyClick(Qt.Key_Up);
+    verify(c.a2.activeFocus, "Up crosses it back");
+    c.b2.forceActiveFocus();
+    keyClick(Qt.Key_Down);
+    verify(c.b2.activeFocus, "the end of the list stays");
   }
 
   // A pane with an empty state hides its body and shows the state, top-anchored at the same place in the three kinds (so its icon stays still)

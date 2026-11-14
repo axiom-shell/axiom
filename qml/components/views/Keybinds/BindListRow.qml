@@ -11,7 +11,7 @@ import qs.components.content.parts
 // binds (BindGroups) folded into one. Its switch pauses or resumes it; a
 // tap selects a bind for the inspector, or unfolds a run. While every bind
 // shows, a bind can be carried to another place in its section.
-StyledContainer {
+ListEntryRow {
   id: root
 
   // The bind indices it shows: one, or a run's by number
@@ -27,7 +27,6 @@ StyledContainer {
   readonly property var bind: KeybindManager.editor.binds[root.bindIndex] ?? ({})
   readonly property string runKey: root.isRun ? BindGroups.runKey(KeybindManager.actionTable, root.bind) : ""
   readonly property bool expanded: root.isRun && KeybindManager.page.expandedRuns[root.runKey] === true
-  readonly property bool selected: !root.isRun && KeybindManager.editor.selectedIndex === root.bindIndex
   readonly property bool paused: root.indices.every(i => KeybindManager.editor.binds[i]?.paused === true)
   // Not bound now, by its "Only when" (paused says so itself)
   readonly property bool idle: !root.paused && root.indices.every(i => KeybindManager.editor.held[i] !== true)
@@ -35,12 +34,9 @@ StyledContainer {
   readonly property var issues: [].concat(...root.indices.map(i => KeybindManager.editor.issues[i] ?? []))
   readonly property bool hasError: root.issues.some(issue => issue.level === "error")
   readonly property bool hasWarning: KeybindManager.editor.hasIssue(root.issues)
-  readonly property bool changed: root.indices.some(i => KeybindManager.editor.changedBinds[i] === true)
   readonly property var parts: KeyNames.split(root.bind.key)
-  readonly property color ink: root.selected ? Theme.background : Theme.foreground
-  readonly property bool hovered: hover.hovered
-  // Its own label (less a "Section:" prefix), else its action's
-  readonly property string label: {
+  // Its own label (less a "Section:" prefix), else its action's (`label`)
+  readonly property string ownLabel: {
     if (root.isRun)
       return BindActions.defaultLabel(KeybindManager.actionTable, Object.assign({}, root.bind, {
         "argument": BindGroups.runNumbers(KeybindManager.editor.binds, root.indices)
@@ -49,20 +45,38 @@ StyledContainer {
   }
   readonly property string actionLabel: KeybindManager.actionLabels[root.bind.action] ?? String(root.bind.action ?? "")
 
-  Layout.fillWidth: true
   Layout.leftMargin: root.nested ? Widget.padding * 2 : 0
-  implicitHeight: Widget.height + Widget.padding / 2
-  backgroundColor: root.selected ? Theme.accent : Qt.alpha(Theme.backgroundHighlight, root.hovered || area.dragged ? 1 : 0)
-  borderWidth: root.hasError && !root.selected ? 1 : 0
-  borderColor: Theme.error
+  Layout.preferredHeight: Widget.height + Widget.padding / 2
+  selected: !root.isRun && KeybindManager.editor.selectedIndex === root.bindIndex
+  changed: root.indices.some(i => KeybindManager.editor.changedBinds[i] === true)
+  label: root.ownLabel || root.actionLabel
+  // A run shows its fold state
+  icon: root.isRun ? (root.expanded ? "unfold_less" : "unfold_more") : KeybindManager.actionIcon(root.bind.action)
+  // Paused and idle read faint; a paused bind's name is also struck through
+  dimmed: root.paused || root.idle
+  strikeout: root.paused
+  // The action, when the label doesn't say it
+  subtitle: root.ownLabel !== "" && root.ownLabel !== root.actionLabel && root.width > Widget.textPx(448) ? (root.isRun ? I18n.tr("{0} binds", root.indices.length) : root.actionLabel) : ""
+  issue: root.hasWarning ? (root.hasError ? "error" : "warning") : ""
+  issueTip: KeybindManager.editor.issueTip(root.indices)
+  escapeClears: true
+  border.width: root.hasError && !root.selected ? Style.hairline : 0
+  border.color: Style.error
 
-  ColorGlide on color {
-    duration: Appearance.animFast
+  onClicked: root.isRun ? KeybindManager.page.toggleRun(root.runKey) : KeybindManager.editor.selectBind(root.selected ? -1 : root.bindIndex, false)
+  onRemoveRequested: {
+    if (!root.isRun)
+      KeybindManager.editor.removeBind(root.bindIndex);
   }
+  onEscapePressed: KeybindManager.editor.selectBind(-1, false)
 
-  HoverHandler {
-    id: hover
-  }
+  // A run never drags
+  dragArea.dragLayer: root.dragLayer !== null && !root.isRun && KeybindManager.page.reorderable ? root.dragLayer : null
+  dragArea.payload: ({
+      "kind": "bind",
+      "index": root.bindIndex,
+      "label": root.label
+    })
 
   // Centred when asked for, unfolding its run first (its rows, built
   // then, find the ask in KeybindManager.editor.revealIndex)
@@ -91,46 +105,27 @@ StyledContainer {
     }
   }
 
-  DragArea {
-    id: area
-    anchors.fill: parent
-    dragEnabled: root.dragLayer !== null && !root.isRun && KeybindManager.page.reorderable
-    dragLayer: dragEnabled ? root.dragLayer : null
-    payload: ({
-        "kind": "bind",
-        "index": root.bindIndex,
-        "label": root.label
-      })
-    onTapped: {
-      if (root.isRun)
-        KeybindManager.page.toggleRun(root.runKey);
-      else
-        KeybindManager.editor.selectBind(root.selected ? -1 : root.bindIndex, false);
-    }
-  }
-
-  RowLayout {
-    anchors.fill: parent
-    anchors.leftMargin: Widget.padding / 2
-    anchors.rightMargin: Widget.padding / 2
-    spacing: Widget.spacing
-
+  leading: [
     // On while bound; off while paused
     StyledSwitch {
+      id: pauseSwitch
+      compact: true
       checkable: false
       checked: !root.paused
-      implicitHeight: Widget.smallHeight
       Layout.alignment: Qt.AlignVCenter
       onClicked: KeybindManager.editor.setPaused(root.indices, !root.paused)
-    }
-
-    // The combo, as keycaps
+      Keys.onTabPressed: root._tabFrom(pauseSwitch, true)
+      Keys.onBacktabPressed: root._tabFrom(pauseSwitch, false)
+    },
+    // The combo, as keycaps: one width in every row, so every icon and
+    // label start at one x
     RowLayout {
-      Layout.preferredWidth: Math.max(Widget.height * 6, root.width * 0.3)
-      Layout.maximumWidth: Layout.preferredWidth
+      Layout.minimumWidth: Math.max(Widget.textPx(192), Math.round(root.width * 0.3))
+      Layout.preferredWidth: Layout.minimumWidth
+      Layout.maximumWidth: Layout.minimumWidth
       spacing: Widget.spacing / 2
       clip: true
-      opacity: root.paused || root.idle ? 0.5 : 1
+      opacity: root.paused || root.idle ? Style.opacityDisabled : 1
 
       Repeater {
         model: root.parts.mods
@@ -149,53 +144,25 @@ StyledContainer {
       StyledLabel {
         visible: root.parts.key === ""
         text: KeybindManager.editor.recordingIndex === root.bindIndex ? I18n.tr("Press a combo…") : I18n.tr("No key")
-        textColor: root.selected ? root.ink : Theme.warning
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
+        textColor: root.selected ? root.ink : Style.warningText
       }
 
       Item {
         Layout.fillWidth: true
       }
     }
+  ]
 
-    StyledIcon {
-      text: root.isRun ? (root.expanded ? "unfold_less" : "unfold_more") : KeybindManager.actionIcon(root.bind.action)
-      textColor: root.selected ? root.ink : Theme.accent
-      opacity: root.paused || root.idle ? 0.5 : 1
-      Layout.preferredWidth: Appearance.fontSize * 1.5
-    }
-
-    StyledLabel {
-      text: root.label || root.actionLabel
-      textColor: root.ink
-      font.weight: root.selected ? Font.Bold : Font.Normal
-      font.strikeout: root.paused
-      opacity: root.paused || root.idle ? 0.5 : 1
-      elide: Text.ElideRight
-      Layout.fillWidth: true
-    }
-
-    // The action, when the label doesn't say it
-    StyledLabel {
-      visible: root.label !== "" && root.label !== root.actionLabel && root.width > Widget.height * 14
-      text: root.isRun ? I18n.tr("{0} binds", root.indices.length) : root.actionLabel
-      textColor: root.ink
-      opacity: 0.5
-      textSize: Appearance.fontSizeBy(-2)
-      elide: Text.ElideRight
-      Layout.maximumWidth: root.width * 0.25
-    }
-
+  badges: [
     // Its "Only when", and whether that holds now
     TipIcon {
       visible: root.condition !== ""
       text: "filter_alt"
       tip: root.idle ? I18n.tr("Only when: {0}. Not bound now.", root.condition) : I18n.tr("Only when: {0}", root.condition)
-      textColor: root.ink
-      opacity: 0.6
-      textSize: Appearance.fontSizeBy(-1)
-    }
-
+      textColor: root.inkMuted
+      size: "sm"
+    },
     // Flags that are on
     Repeater {
       model: [["repeating", "repeat", I18n.tr("Repeats while held")], ["locked", "lock", I18n.tr("Works while locked")], ["release", "keyboard_capslock", I18n.tr("Fires on release")]].filter(flag => root.bind[flag[0]] === true)
@@ -204,37 +171,18 @@ StyledContainer {
         required property var modelData
         text: modelData[1]
         tip: modelData[2]
-        textColor: root.ink
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-1)
+        textColor: root.inkMuted
+        size: "sm"
       }
     }
+  ]
 
-    IssueIcon {
-      id: issueIcon
-      visible: root.hasWarning
-      level: root.hasError ? "error" : "warning"
-      tip: KeybindManager.editor.issueTip(root.indices)
-      textColor: root.selected ? root.ink : Style.toneColor(issueIcon.tone)
-      // The row's other marks' size: larger, the symbol sits below centre
-      textSize: Appearance.fontSizeBy(-1)
-    }
-
-    UnsavedDot {
-      shown: root.changed
-      onAccent: root.selected
-    }
-
-    SquareIconButton {
-      visible: !root.isRun
-      size: Widget.height - Widget.px(6)
-      iconText: "close"
-      tooltipText: I18n.tr("Remove")
-      iconColor: root.ink
-      backgroundColor: "transparent"
-      hoverColor: Theme.error
-      opacity: root.hovered || root.selected ? 1 : 0
-      onClicked: KeybindManager.editor.removeBind(root.bindIndex)
-    }
+  RowAction {
+    row: root
+    danger: true
+    iconText: "close"
+    tooltipText: I18n.tr("Remove")
+    visible: !root.isRun
+    onClicked: KeybindManager.editor.removeBind(root.bindIndex)
   }
 }

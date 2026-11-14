@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.compositor
 import qs.components.reusable
+import qs.components.content.parts
 import qs.components.forms
 
 // The Keybinds page's list of axiom's own binds (Keybinds.binds), the body
@@ -72,151 +73,177 @@ ColumnLayout {
     onDropped: (drag, target, index) => target.dropAt(drag.index, index)
   }
 
-  // What the last merge did, and what it left behind
-  IssueList {
-    readonly property var merge: CompositorConfigManager.lastMerge
-    visible: merge !== null
+  // Whether the notice block has anything to show
+  readonly property bool showRemoveConflicts: !(KeybindManager.editor.canMerge && KeybindManager.editor.mergeableCount > 0) && KeybindManager.editor.userConflicts.length > 0
+  readonly property bool showMerge: KeybindManager.editor.canMerge && KeybindManager.editor.mergeableCount > 0
+  readonly property bool hasNotices: CompositorConfigManager.lastMerge !== null || KeybindManager.editor.issueCount > 0 || root.showRemoveConflicts || root.showMerge || KeybindManager.editor.undoText !== ""
+
+  // The merge note, the issues and the undo strip, in that order
+  Surface {
+    visible: root.hasNotices
+    tone: "sunken"
     Layout.fillWidth: true
-    issues: {
-      if (!merge)
-        return [];
-      const name = file => file.split("/").pop();
-      const found = [];
-      if (merge.saveFailed)
-        found.push({
-          "level": "error",
-          "text": I18n.tr("axiom's config couldn't be saved, so nothing moved")
-        });
-      else
-        found.push({
-          "level": "info",
-          "text": merge.removed > 0 ? I18n.tr("Moved {0} binds into axiom and saved; the files they came from are backed up beside them", merge.moved) : I18n.tr("Moved {0} binds into axiom", merge.moved)
-        });
-      for (const moved of merge.remapped ?? [])
-        found.push({
-          "level": "info",
-          "text": I18n.tr("{0} is on {1} now: axiom uses {2}", KeybindManager.actionLabels[moved.action] ?? moved.action, moved.to, moved.from)
-        });
-      for (const file of merge.tracked ?? [])
-        found.push({
-          "level": "info",
-          "text": I18n.tr("{0} is in a git repository: commit or revert the change there", Paths.shortenHome(file))
-        });
-      for (const kept of merge.kept)
-        found.push({
-          "level": "warning",
-          "text": I18n.tr("{0} stays in {1}: {2}", kept.key || "?", `${name(kept.file)}:${kept.line}`, root.reasonText(kept))
-        });
-      for (const failed of merge.failed)
-        found.push({
-          "level": "error",
-          "text": failed.line > 0 ? I18n.tr("Left the bind at {0} where it is, and out of axiom's: {1}", `${name(failed.file)}:${failed.line}`, root.reasonText(failed)) : I18n.tr("Left the binds in {0} where they are, and out of axiom's: {1}", name(failed.file), root.reasonText(failed))
-        });
-      for (const error of merge.errors)
-        found.push({
-          "level": "warning",
-          "text": error
-        });
-      return found;
-    }
-  }
+    implicitHeight: notices.implicitHeight + Widget.padding
 
-  RowLayout {
-    visible: KeybindManager.editor.issueCount > 0 || removeConflicts.visible || mergeButton.visible
-    Layout.fillWidth: true
-
-    StyledLabel {
-      text: KeybindManager.editor.issueCount > 0 ? I18n.tr("{0} with issues", KeybindManager.editor.issueCount) : ""
-      textColor: Theme.warning
-      textSize: Appearance.fontSizeBy(-1)
-      elide: Text.ElideRight
-      Layout.fillWidth: true
-    }
-
-    StyledTextButton {
-      id: removeConflicts
-      visible: !(KeybindManager.editor.canMerge && KeybindManager.editor.mergeableCount > 0) && KeybindManager.editor.userConflicts.length > 0
-      implicitHeight: Widget.height
-      iconText: "delete_sweep"
-      text: I18n.tr("Remove {0} binds your compositor config also has", KeybindManager.editor.userConflicts.length)
-      onClicked: KeybindManager.editor.removeUserConflicts()
-    }
-
-    // Managed mode merges them instead
-    SettingsLink {
-      id: modeLink
-      visible: modeLink.available && removeConflicts.visible
-      setting: "Compositor.mode"
-    }
-
-    // Managed mode: the user's binds move in instead
-    StyledTextButton {
-      id: mergeButton
-      visible: KeybindManager.editor.canMerge && KeybindManager.editor.mergeableCount > 0
-      enabled: !CompositorConfigManager.merging
-      implicitHeight: Widget.height
-      iconText: "merge"
-      text: I18n.tr("Merge {0} binds from your compositor config", KeybindManager.editor.mergeableCount)
-      onClicked: KeybindManager.editor.mergeUserBinds()
-    }
-  }
-
-  // Undo for the last removal, preset or pause of several binds
-  StyledContainer {
-    visible: KeybindManager.editor.undoText !== ""
-    Layout.fillWidth: true
-    implicitHeight: Widget.height + Widget.padding / 2
-    backgroundColor: Theme.backgroundHighlight
-
-    RowLayout {
+    ColumnLayout {
+      id: notices
       anchors.fill: parent
-      anchors.leftMargin: Widget.padding
-      anchors.rightMargin: Widget.padding / 2
+      anchors.margins: Widget.padding / 2
       spacing: Widget.spacing
 
-      StyledIcon {
-        text: "history"
-        textColor: Theme.accent
-      }
-
-      StyledLabel {
-        text: KeybindManager.editor.undoText
-        elide: Text.ElideRight
+      // What the last merge did, and what it left behind
+      IssueList {
+        readonly property var merge: CompositorConfigManager.lastMerge
+        visible: merge !== null
         Layout.fillWidth: true
+        issues: {
+          if (!merge)
+            return [];
+          const name = file => file.split("/").pop();
+          const found = [];
+          if (merge.saveFailed)
+            found.push({
+              "level": "error",
+              "text": I18n.tr("axiom's config couldn't be saved, so nothing moved")
+            });
+          else
+            found.push({
+              "level": "info",
+              "text": merge.removed > 0 ? I18n.tr("Moved {0} binds into axiom and saved; the files they came from are backed up beside them", merge.moved) : I18n.tr("Moved {0} binds into axiom", merge.moved)
+            });
+          for (const moved of merge.remapped ?? [])
+            found.push({
+              "level": "info",
+              "text": I18n.tr("{0} is on {1} now: axiom uses {2}", KeybindManager.actionLabels[moved.action] ?? moved.action, moved.to, moved.from)
+            });
+          for (const file of merge.tracked ?? [])
+            found.push({
+              "level": "info",
+              "text": I18n.tr("{0} is in a git repository: commit or revert the change there", Paths.shortenHome(file))
+            });
+          for (const kept of merge.kept)
+            found.push({
+              "level": "warning",
+              "text": I18n.tr("{0} stays in {1}: {2}", kept.key || "?", `${name(kept.file)}:${kept.line}`, root.reasonText(kept))
+            });
+          for (const failed of merge.failed)
+            found.push({
+              "level": "error",
+              "text": failed.line > 0 ? I18n.tr("Left the bind at {0} where it is, and out of axiom's: {1}", `${name(failed.file)}:${failed.line}`, root.reasonText(failed)) : I18n.tr("Left the binds in {0} where they are, and out of axiom's: {1}", name(failed.file), root.reasonText(failed))
+            });
+          for (const error of merge.errors)
+            found.push({
+              "level": "warning",
+              "text": error
+            });
+          return found;
+        }
       }
 
-      StyledTextButton {
-        implicitHeight: Widget.height - Widget.px(4)
-        iconText: "undo"
-        text: I18n.tr("Undo")
-        onClicked: KeybindManager.editor.undo()
+      RowLayout {
+        visible: KeybindManager.editor.issueCount > 0 || root.showRemoveConflicts || root.showMerge
+        Layout.fillWidth: true
+
+        StyledLabel {
+          text: KeybindManager.editor.issueCount > 0 ? I18n.tr("{0} with issues", KeybindManager.editor.issueCount) : ""
+          role: "caption"
+          tone: "warning"
+          overflow: "line"
+          Layout.fillWidth: true
+        }
+
+        StyledTextButton {
+          visible: root.showRemoveConflicts
+          implicitHeight: Widget.height
+          iconText: "delete_sweep"
+          text: I18n.tr("Remove {0} binds your compositor config also has", KeybindManager.editor.userConflicts.length)
+          onClicked: KeybindManager.editor.removeUserConflicts()
+        }
+
+        // Managed mode merges them instead
+        SettingsLink {
+          id: modeLink
+          visible: modeLink.available && root.showRemoveConflicts
+          setting: "Compositor.mode"
+        }
+
+        // Managed mode: the user's binds move in instead
+        StyledTextButton {
+          visible: root.showMerge
+          enabled: !CompositorConfigManager.merging
+          implicitHeight: Widget.height
+          iconText: "merge"
+          text: I18n.tr("Merge {0} binds from your compositor config", KeybindManager.editor.mergeableCount)
+          onClicked: KeybindManager.editor.mergeUserBinds()
+        }
       }
 
-      SquareIconButton {
-        size: Widget.height - Widget.px(4)
-        iconText: "close"
-        tooltipText: I18n.tr("Dismiss")
-        backgroundColor: "transparent"
-        onClicked: KeybindManager.editor.dismissUndo()
+      // Undo for the last removal, preset or pause of several binds
+      RowLayout {
+        visible: KeybindManager.editor.undoText !== ""
+        Layout.fillWidth: true
+        spacing: Widget.spacing
+
+        StyledIcon {
+          text: "history"
+          tone: "accent"
+        }
+
+        StyledLabel {
+          text: KeybindManager.editor.undoText
+          overflow: "line"
+          Layout.fillWidth: true
+        }
+
+        StyledTextButton {
+          implicitHeight: Widget.height - Widget.px(4)
+          iconText: "undo"
+          text: I18n.tr("Undo")
+          onClicked: KeybindManager.editor.undo()
+        }
+
+        SquareIconButton {
+          size: Widget.height - Widget.px(4)
+          iconText: "close"
+          tooltipText: I18n.tr("Dismiss")
+          onClicked: KeybindManager.editor.dismissUndo()
+        }
       }
     }
   }
 
-  StyledText {
-    wrapMode: Text.WordWrap
+  // Nothing yet: how to start
+  EmptyState {
     visible: KeybindManager.editor.binds.length === 0
-    text: I18n.tr("No binds yet. Add one, or start from a preset.")
-    opacity: 0.6
-    Layout.fillWidth: true
+    Layout.alignment: Qt.AlignHCenter
+    Layout.topMargin: Widget.padding
+    icon: "keyboard"
+    text: I18n.tr("No binds yet")
+    hint: I18n.tr("Add one, or start from a preset.")
+    actionText: I18n.tr("Add bind")
+    onTriggered: KeybindManager.editor.addAndStartRecording({})
   }
 
   StyledText {
-    wrapMode: Text.WordWrap
-    visible: KeybindManager.page.editQuery.trim() !== "" || KeybindManager.page.editFiltering
-    text: KeybindManager.page.visibleIndices.length > 0 ? I18n.tr("Showing {0} of {1}", KeybindManager.page.visibleIndices.length, KeybindManager.editor.binds.length) : KeybindManager.page.editQuery.trim() !== "" ? I18n.tr("No binds match \"{0}\"", KeybindManager.page.editQuery.trim()) : I18n.tr("No keybinds match the filters")
-    opacity: 0.6
-    textSize: Appearance.fontSizeBy(-2)
+    visible: KeybindManager.editor.binds.length > 0 && KeybindManager.page.visibleIndices.length > 0 && (KeybindManager.page.editQuery.trim() !== "" || KeybindManager.page.editFiltering)
+    text: I18n.tr("Showing {0} of {1}", KeybindManager.page.visibleIndices.length, KeybindManager.editor.binds.length)
+    role: "caption"
+    tone: "muted"
     Layout.fillWidth: true
+  }
+
+  // A search or filter matched nothing
+  EmptyState {
+    visible: KeybindManager.editor.binds.length > 0 && KeybindManager.page.visibleIndices.length === 0 && (KeybindManager.page.editQuery.trim() !== "" || KeybindManager.page.editFiltering)
+    Layout.alignment: Qt.AlignHCenter
+    Layout.topMargin: Widget.padding
+    icon: "search_off"
+    text: KeybindManager.page.editQuery.trim() !== "" ? I18n.tr("No binds match \"{0}\"", KeybindManager.page.editQuery.trim()) : I18n.tr("No keybinds match the filters")
+    actionText: I18n.tr("Clear")
+    onTriggered: {
+      KeybindManager.page.editQuery = "";
+      KeybindManager.page.clearEditFilters();
+    }
   }
 
   Repeater {

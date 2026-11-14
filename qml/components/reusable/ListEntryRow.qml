@@ -71,8 +71,17 @@ Rectangle {
     return null;
   }
 
+  // True when `item` sits inside a list header (ListSection marks it)
+  function _inHeader(item) {
+    for (let it = item; it; it = it.parent)
+      if (it._listHeader === true)
+        return true;
+    return false;
+  }
+
   // The next list row from this one along the focus chain (`forward`), the
-  // actions inside rows skipped; null at anything that is not a row
+  // actions inside rows and the controls of a section header skipped; null at
+  // anything else that is not a row
   function _neighbour(forward) {
     let it = root;
     for (let i = 0; i < 200; i++) {
@@ -81,6 +90,8 @@ Rectangle {
         return null;
       const owner = root._rowOf(it);
       if (owner === root)
+        continue;
+      if (owner === null && root._inHeader(it))
         continue;
       return owner;
     }
