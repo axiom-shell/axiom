@@ -43,8 +43,8 @@ Card {
   readonly property bool showHero: !root.missing && (root.sideBySide || (!root.strip && root.innerHeight >= Appearance.fontSize * 15 && root.innerWidth >= Appearance.fontSize * 9))
   readonly property real heroSize: root.sideBySide ? Math.min(root.innerHeight, root.innerWidth * 0.35, Appearance.fontSize * 12) : Math.min(root.innerWidth * 0.6, root.innerHeight - controls.implicitHeight - Widget.spacing * 4, Appearance.fontSize * 14)
   readonly property color lightColor: ColorTemperature.color(root.kelvin)
-  // What reads on the light's color: a deep shade of it (it's always light)
-  readonly property color onLightColor: Qt.darker(root.lightColor, 5)
+  // What reads on the light's color: a dark or light tint of it
+  readonly property color onLightColor: Tone.mix(root.lightColor, Tone.bestOn(root.lightColor), 0.8)
 
   fullMinWidth: Appearance.fontSize * 9
   fullMinHeight: Appearance.fontSize * 2.4
@@ -73,7 +73,7 @@ Card {
     CompactFigure {
       anchors.fill: parent
       icon: root.active ? "bedtime" : "bedtime_off"
-      iconColor: root.active ? Theme.accent : Theme.foregroundAlt
+      iconColor: root.active ? Style.accent : Style.textMuted
       value: root.active ? String(root.kelvin) : ""
       unit: root.active ? "K" : ""
       label: root.active ? I18n.tr("Night light") : I18n.tr("Night light off")
@@ -100,18 +100,18 @@ Card {
 
     Layout.fillWidth: true
     spacing: Widget.spacing
-    opacity: root.missing ? 0.4 : 1
+    opacity: root.missing ? Style.opacityDisabled : 1
     enabled: !root.missing
 
     StyledIcon {
       text: setting.icon
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(1)
+      size: "md"
+      tone: "muted"
     }
     StyledSlider {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.px(16)
-      fillColor: root.active ? Theme.accent : Theme.foregroundAlt
+      fillColor: root.active ? Style.accent : Style.textFaint
       value: setting.ratio
       onMoved: ratio => setting.moved(ratio)
       onReleased: ratio => setting.released(ratio)
@@ -120,8 +120,8 @@ Card {
       Layout.preferredWidth: Appearance.fontSize * 3.6
       horizontalAlignment: Text.AlignRight
       text: setting.valueText
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.foregroundAlt
+      role: "caption"
+      tone: "muted"
       font.features: {
         "tnum": 1
       }
@@ -145,10 +145,16 @@ Card {
       Layout.preferredWidth: root.heroSize
       Layout.preferredHeight: root.heroSize
       radius: width / 2
-      color: root.active ? Qt.alpha(root.lightColor, heroHover.hovered ? 0.95 : 0.85) : heroHover.hovered ? Theme.backgroundHighlight : Theme.backgroundAlt
-      border.color: root.active ? root.lightColor : Theme.border
-      border.width: Appearance.borderWidth * 2
-      scale: heroTap.pressed ? 0.95 : 1
+      color: root.active ? root.lightColor : Style.surfaceHighest
+      border.color: root.active ? root.lightColor : Style.borderSubtle
+      border.width: Style.hairline
+      scale: heroTap.pressed ? 0.95 : 1 // style-exempt: motion
+
+      StateLayer {
+        radius: hero.radius
+        hovered: heroHover.hovered
+        onAccent: root.active
+      }
 
       ColorGlide on color {}
       Glide on scale {}
@@ -160,14 +166,14 @@ Card {
           Layout.alignment: Qt.AlignHCenter
           text: root.active ? "bedtime" : "bedtime_off"
           textSize: hero.width * 0.32
-          textColor: root.active ? root.onLightColor : Theme.foregroundAlt
+          textColor: root.active ? root.onLightColor : Style.inkHighest.muted
         }
         StyledText {
           Layout.alignment: Qt.AlignHCenter
           text: root.active ? I18n.tr("{0} K", root.kelvin) : I18n.tr("Off")
-          textSize: Math.max(Appearance.fontSizeBy(-2), hero.width * 0.11)
-          textColor: root.active ? root.onLightColor : Theme.foregroundAlt
-          font.weight: Font.Bold
+          textSize: Math.max(Style.typeCaption, hero.width * 0.11) // fitted: the hero
+          textColor: root.active ? root.onLightColor : Style.inkHighest.muted
+          font.weight: Style.roleDisplay.weight
         }
       }
 
@@ -199,8 +205,8 @@ Card {
         StyledIcon {
           visible: !root.showHero
           text: root.active ? "bedtime" : "bedtime_off"
-          textColor: root.active ? Theme.accent : Theme.foregroundAlt
-          textSize: Appearance.fontSize * 1.5
+          size: "md"
+          tone: root.active ? "accent" : "muted"
         }
         ColumnLayout {
           Layout.fillWidth: !warmthInline.visible
@@ -209,15 +215,15 @@ Card {
           StyledLabel {
             Layout.fillWidth: true
             text: I18n.tr("Night light")
-            font.weight: Font.Bold
-            elide: Text.ElideRight
+            font.weight: Style.weightStrong
+            overflow: "line"
           }
           StyledLabel {
             Layout.fillWidth: true
             text: root.status
-            textSize: Appearance.fontSizeBy(-2)
-            textColor: root.missing ? Theme.warning : root.active ? Theme.accent : Theme.foregroundAlt
-            elide: Text.ElideRight
+            role: "caption"
+            tone: root.missing ? "warning" : root.active ? "accent" : "muted"
+            overflow: "line"
           }
         }
         // A wide strip: the warmth in the row
@@ -267,18 +273,18 @@ Card {
 
         StyledIcon {
           text: "schedule"
-          textColor: NightLight.schedule ? Theme.accent : Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(1)
+          size: "md"
+          tone: NightLight.schedule ? "accent" : "muted"
         }
         StyledLabel {
           Layout.fillWidth: true
           text: NightLight.schedule ? I18n.tr("On from {0} to {1}", NightLight.startAt, NightLight.endAt) : I18n.tr("No schedule")
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.foregroundAlt
-          elide: Text.ElideRight
+          role: "caption"
+          tone: "muted"
+          overflow: "line"
         }
         StyledSwitch {
-          scale: 0.8
+          scale: 0.8 // style-exempt: no text
           checked: NightLight.schedule
           onToggled: SettingsManager.commitValues({
             "NightLight.schedule": checked

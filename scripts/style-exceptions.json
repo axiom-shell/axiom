@@ -8,7 +8,7 @@
     "reason": "shows a colour value; its label reads on it (`Tone.bestOn` once per colour)"
   },
   "qml/components/content/NightLightControls/NightLightControls.qml": {
-    "rules": ["R6", "R7"],
+    "rules": ["R6"],
     "reason": "the night light's colour temperature and the ink that reads on it"
   }
 }
