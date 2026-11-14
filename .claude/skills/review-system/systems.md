@@ -181,7 +181,7 @@ Scope: themes, ThemeManager, wallpaper and schedules, night light.
 Docs: theming/themes.md theming/wallpaper-and-schedules.md theming/night-light.md
 Extra: qml/components/methods/ColorTemperature.qml
 Checks:
-- Missing theme keys filled from `theme-defaults.json`; config colour names through `Theme.resolveColor`.
+- Missing theme keys filled from `theme-defaults.json`; config colour names through `Style.resolve` (`docs/dev/core/style.md`).
 - Generated files under XDG paths, written atomically.
 - Schedules survive reloads and don't double-fire.
 Seams: every colour user; theme integrations.

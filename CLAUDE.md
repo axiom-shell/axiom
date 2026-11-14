@@ -44,7 +44,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 - Empty monitor = primary; expand `~` (`Paths.expandHome`); processes run without a shell.
 
 ### Theme, animation, text
-- Colors: `Theme.base00`–`base0F` or semantic names; config names via `Theme.resolveColor`.
+- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); `check_style.py` enforces.
 - A `duration:` is `Appearance.animFast`/`animNormal`/`animSlow` with `Appearance.easing`, unless a behaviour needs a fixed time (a blink, a pause); loops gate `running` on `Appearance.animations`.
 - `I18n.tr("{0} updates", count)`, never a built sentence; runtime keys listed in a comment. Dates via `I18n.formatDate`. Logs stay English.
 
@@ -53,7 +53,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 - Bars, pages, menus, docks, OSDs are config arrays keyed by stable ids.
 - Pages show at once: panels are `StreamedLoader`s, nothing built hidden, unbounded lists are ListViews.
 - Repeater models and `acquire()` requests come from config only, never live values (one pushed qs past 25 GB).
-- Sizes from `Widget`, `Widget.px(n)`, `Appearance.fontSize` (bars from their config); `Appearance.borderRadius` outer edges only; `ClippingRectangle` for rounded clips; icons are `StyledIcon`.
+- Sizes from `Widget`, `Widget.px(n)`; text and icon sizes and radii from `Style` roles (`docs/dev/core/style.md`) (bars from their config); `Style.radiusOuter` outer edges only; `ClippingRectangle` for rounded clips; icons are `StyledIcon`.
 - Surfaces on `General.screensFor(target)`, never `Quickshell.screens`; `ShellManager.isTarget` answers shortcuts and IPC; outside clicks close via `FocusGrab`.
 
 ### Formatting and layout

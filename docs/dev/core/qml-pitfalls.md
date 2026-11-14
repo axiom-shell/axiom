@@ -18,6 +18,11 @@ Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging sess
 - An object literal as a property value needs parentheses: `payload: ({ … })`; `payload: { … }` is a code block.
 - Assigning a bound property (`currentIndex = i`) breaks its binding: change the source it's bound to instead.
 - A derived type must not redeclare a property its base declares (it shadows the base's, e.g. an alias).
+- Never set `font.bold` on a StyledText (or anything derived from it): its role binds `font.weight`, which a base type applies after the instance's `font.bold` and so overwrites it. Set `font.weight` (an instance's own binding wins). `check_style.py` R13 fails it.
+- Native text under a `scale` breaks (atlas bleed): declare `readonly property real contentZoom: scale` on the scaled item, so the text inside draws distance field while it is zoomed. `check_style.py` R18 fails a scale with no host.
+- `Screen.devicePixelRatio` is the rounded-up integer under fractional scaling; use `item.Window.window.devicePixelRatio`.
+- An elide needs a bound (`Layout.fillWidth` or a maximum width) in a `RowLayout`, else it never elides and pushes its siblings (`check_style.py` R15).
+- `Text.WordWrap` never breaks a long token (a path, a URL); the roles use `Text.Wrap`. Set `overflow: "wrap"`, not `wrapMode`.
 - `visible: visibleChildren.length > 0` locks itself hidden (children read invisible with their parent); use `children.length` or a flag.
 - Under a hidden parent a child's `visible` changes emit nothing its Layout hears (`visibleChanged` follows the effective visibility), so the Layout keeps its old size: a parent shown only once that Layout has a size never shows (the OSD's icons' slot, now `enabled` and clipped instead). Never hide what holds a Layout by its size; read a child's own condition, not its `visible`, in a size (it reads false while hidden).
 - A Repeater rebuilds its delegates before the host's own `on<Model>Changed` handler runs: state the delegates report to the host (a widest width, a count) and the handler then resets is lost, and nothing reports it again (the keybinds reference's key column once stayed 0 wide whenever its binds refreshed after the first build). Measure from the built delegates instead (`Repeater.itemAt` from `Qt.callLater`, on `itemAdded` / `itemRemoved` and each delegate's change: `KeybindSection._measureKeys`).
@@ -45,3 +50,4 @@ Bar widgets, content and views are loaded by URL.
 - Rounded clipping is Quickshell.Widgets' `ClippingRectangle`, never a `MultiEffect` mask; set its `color`, which defaults to white.
 - `ShapePath.strokeGradient` is Qt 6.12; Fedora 44/45 ship 6.11, where an unknown property fails the whole file. Gradient strokes go through `SliceMasked`; axiom supports Fedora's current Qt (6.11) and later, so use no newer API.
 - A visibility or size that feeds back into the size a Layout gives a Text, decided from that Text's `truncated` (or a wrap/elide-dependent metric), can re-polish forever (Qt's polish guard is INT_MAX iterations; the shell freezes). Decide it from a hidden `Text` whose width is bound to the visible one (`ClampedText`).
+- A binding that walks visual parents adds a guard per ancestor for every instance; stop it at a publisher (InkHost/TextRender stop rules) rather than at the root.
