@@ -46,22 +46,18 @@ Item {
     StyledText {
       Layout.fillWidth: true
       text: root.notification?.summary || ""
-      font.weight: Font.Bold
-      elide: Text.ElideRight
-      maximumLineCount: root.summaryLines
-      wrapMode: root.summaryLines > 1 ? Text.Wrap : Text.NoWrap
+      role: "label"
+      overflow: root.summaryLines > 1 ? "wrap" : "line"
+      maxLines: root.summaryLines
     }
 
     StyledText {
       visible: (root.notification?.body ?? "") !== ""
       Layout.fillWidth: true
       text: root.notification?.body ?? ""
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-1)
-      wrapMode: Text.Wrap
-      maximumLineCount: root.bodyLines
-      elide: Text.ElideRight
-      linkColor: Theme.accent
+      role: "caption"
+      maxLines: root.bodyLines
+      linkColor: Style.textAccent
       onLinkActivated: link => NotificationManager.openLink(link)
 
       HoverHandler {

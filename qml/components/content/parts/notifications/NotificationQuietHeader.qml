@@ -18,17 +18,15 @@ FoldRow {
 
   StyledIcon {
     text: "notifications_none"
-    textColor: root.hovered ? Theme.accent : Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-1)
+    tone: root.hovered ? "accent" : "muted"
+    size: "sm"
   }
 
   StyledLabel {
     Layout.fillWidth: true
-    elide: Text.ElideRight
+    role: "micro"
     text: I18n.tr("Quiet") + "  ·  " + NotificationManager.quietCount
-    textColor: root.hovered ? Theme.accent : Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-2)
-    font.weight: Font.Bold
+    tone: root.hovered ? "accent" : "muted"
   }
 
   // Something new since it was last seen open
@@ -37,16 +35,15 @@ FoldRow {
     implicitWidth: Widget.px(6)
     implicitHeight: implicitWidth
     radius: width / 2
-    color: Theme.accent
+    color: Style.accent
   }
 
   StyledIconButton {
-    size: Widget.smallHeight
+    size: Math.max(Widget.smallHeight, Style.iconSm + Widget.spacing * 2)
     iconText: "clear_all"
-    iconSize: Appearance.fontSizeBy(-1)
+    iconSize: Style.iconSm
     borderRadius: width / 2
-    iconColor: Theme.foregroundAlt
-    hoverColor: Theme.background
+    iconColor: Style.textMuted
     tooltipText: I18n.tr("Clear quiet notifications")
     onClicked: NotificationManager.clearQuiet()
   }

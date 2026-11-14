@@ -36,8 +36,9 @@ Flickable {
     Repeater {
       model: root.actions
 
-      Rectangle {
+      Surface {
         id: pill
+        tone: "highest"
         required property var modelData
 
         // The action's icon, when the app sends them and the theme has it
@@ -47,10 +48,13 @@ Flickable {
         implicitWidth: (pill.showIcon ? icon.width : label.implicitWidth) + Widget.padding * 2
         implicitHeight: label.implicitHeight + Widget.padding
         radius: height / 2
-        color: area.containsMouse ? Theme.accent : Theme.backgroundHighlight
-        scale: area.pressed ? 0.95 : 1
+        scale: area.pressed ? 0.95 : 1 // style-exempt: motion
 
-        ColorGlide on color {}
+        StateLayer {
+          radius: pill.radius
+          hovered: area.containsMouse
+        }
+
         Glide on scale {}
 
         IconImage {
@@ -67,8 +71,8 @@ Flickable {
           visible: !pill.showIcon
           anchors.centerIn: parent
           text: pill.modelData.text
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: area.containsMouse ? Theme.background : Theme.foreground
+          role: "caption"
+          textColor: pill.ink.text
         }
 
         MouseArea {

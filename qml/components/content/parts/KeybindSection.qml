@@ -9,8 +9,10 @@ import qs.components.reusable
 // One section of the keybinds reference as a card: its icon and title,
 // then its rows grouped by modifiers (BindRows.byModifiers), each group
 // under its modifiers, with the keys in one aligned column
-StyledContainer {
+Surface {
   id: root
+  tone: "sunken"
+  outlined: false
 
   // A KeybindManager section, binds possibly filtered by a search
   required property var section

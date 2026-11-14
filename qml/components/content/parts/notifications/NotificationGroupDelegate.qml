@@ -77,39 +77,42 @@ Item {
     }
   }
 
-  readonly property color _fill: root.quiet ? Qt.alpha(Theme.backgroundAlt, 0.55) : Theme.backgroundAlt
-
   // The collapsed rest of the group, peeking out under the card
   Repeater {
     model: root.stackDepth
 
-    Rectangle {
+    Surface {
       required property int index
+      tone: root.quiet ? "sunken" : "raised"
+      outlined: true
       z: -1 - index
       anchors.horizontalCenter: parent.horizontalCenter
       width: card.width - 16 * (index + 1)
       height: Widget.smallHeight
       y: card.height - height + root.stackStep * (index + 1)
-      radius: Widget.radius
-      color: Theme.backgroundAlt
-      opacity: 0.7 - index * 0.25
+      radius: Style.radius
     }
   }
 
-  Rectangle {
+  Surface {
     id: card
+    tone: root.quiet ? "sunken" : "raised"
+    outlined: root.group?.critical ?? false
     width: parent.width
     height: body.implicitHeight + Widget.padding * 2
     clip: true
     radius: Widget.radius
-    color: hover.hovered ? Qt.tint(root._fill, Qt.alpha(Theme.backgroundHighlight, 0.4)) : root._fill
-    border.width: root.group?.critical ? Appearance.borderWidth : 0
-    border.color: Qt.alpha(Theme.error, 0.6)
+    border.color: Style.error
 
     Glide on height {
       duration: Appearance.animNormal
     }
-    ColorGlide on color {}
+
+    StateLayer {
+      anchors.fill: parent
+      hovered: hover.hovered
+      radius: card.radius
+    }
 
     HoverHandler {
       id: hover
@@ -124,7 +127,7 @@ Item {
       anchors.bottom: parent.bottom
       anchors.margins: Widget.padding
       radius: 1.5
-      color: Theme.error
+      color: Style.error
     }
 
     ColumnLayout {
@@ -161,28 +164,27 @@ Item {
 
           StyledLabel {
             Layout.fillWidth: true
-            elide: Text.ElideRight
+            role: "caption"
+            overflow: "line"
             text: (root.group?.appName ?? "") + (root.count > 1 ? "  ·  " + root.count : "")
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
-            font.weight: Font.Bold
+            font.weight: Style.weightStrong
           }
 
           Item {
             implicitWidth: Math.max(newest.implicitWidth, Widget.smallHeight)
-            implicitHeight: Widget.smallHeight
+            implicitHeight: Math.max(Widget.smallHeight, newest.implicitHeight)
 
             StyledLabel {
               id: newest
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
-              opacity: hover.hovered ? 0 : 0.7
+              opacity: hover.hovered ? 0 : 1
               text: {
                 void root.now;
                 return I18n.formatRelative(root.group?.newestTime ?? Date.now());
               }
-              textColor: Theme.foregroundAlt
-              textSize: Appearance.fontSizeBy(-3)
+              role: "micro"
+              tone: "faint"
 
               Glide on opacity {}
             }
@@ -190,14 +192,13 @@ Item {
             StyledIconButton {
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
-              size: Widget.smallHeight
+              size: Math.max(Widget.smallHeight, Style.iconXs + Widget.spacing * 2)
               visible: opacity > 0
               opacity: hover.hovered ? 1 : 0
               iconText: "close"
-              iconSize: Appearance.fontSizeBy(-2)
+              iconSize: Style.iconXs
               borderRadius: width / 2
-              iconColor: Theme.foregroundAlt
-              hoverColor: Theme.background
+              iconColor: Style.textMuted
               tooltipText: I18n.tr(root.count > 1 ? "Dismiss all" : "Dismiss")
               onClicked: root.dismissAll()
 
@@ -208,7 +209,7 @@ Item {
           StyledIcon {
             visible: root.count > 1
             text: "expand_more"
-            textColor: Theme.foregroundAlt
+            tone: "muted"
             rotation: root.expanded ? 180 : 0
 
             Glide on rotation {
@@ -241,9 +242,8 @@ Item {
 
           StyledSeparator {
             visible: row.index > 0
+            backTone: root.quiet ? "sunken" : "raised"
             Layout.fillWidth: true
-            separatorHeight: 1
-            separatorColor: Theme.backgroundHighlight
           }
 
           NotificationItemDelegate {
@@ -260,8 +260,8 @@ Item {
         visible: root.stacked
         Layout.fillWidth: true
         text: I18n.tr("+{0} more", root.count - 1)
-        textColor: Theme.accent
-        textSize: Appearance.fontSizeBy(-3)
+        role: "micro"
+        tone: "accent"
 
         TapHandler {
           onTapped: root.expanded = true

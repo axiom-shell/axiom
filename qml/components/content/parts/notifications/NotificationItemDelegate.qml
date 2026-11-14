@@ -97,19 +97,19 @@ Item {
           visible: root.showMeta
           Layout.alignment: Qt.AlignTop
           implicitWidth: Math.max(time.implicitWidth, Widget.smallHeight)
-          implicitHeight: Widget.smallHeight
+          implicitHeight: Math.max(Widget.smallHeight, time.implicitHeight)
 
           StyledLabel {
             id: time
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            opacity: root.hovered || !root.showTime ? 0 : 0.7
+            opacity: root.hovered || !root.showTime ? 0 : 1
             text: {
               void root.now;
               return I18n.formatRelative(root.entry?.time ?? Date.now());
             }
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-3)
+            role: "micro"
+            tone: "faint"
 
             Glide on opacity {}
           }
@@ -117,14 +117,13 @@ Item {
           StyledIconButton {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            size: Widget.smallHeight
+            size: Math.max(Widget.smallHeight, Style.iconXs + Widget.spacing * 2)
             visible: opacity > 0
             opacity: root.hovered ? 1 : 0
             iconText: "close"
-            iconSize: Appearance.fontSizeBy(-2)
+            iconSize: Style.iconXs
             borderRadius: width / 2
-            iconColor: Theme.foregroundAlt
-            hoverColor: Theme.background
+            iconColor: Style.textMuted
             tooltipText: I18n.tr("Dismiss")
             onClicked: root.dismiss()
 
