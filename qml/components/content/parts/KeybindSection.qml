@@ -81,7 +81,6 @@ Surface {
       StyledLabel {
         text: KeybindManager.sectionTitle(root._section)
         role: "title"
-        tone: "accent"
         Layout.fillWidth: true
       }
 
