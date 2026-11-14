@@ -376,10 +376,8 @@ Item {
       StyledText {
         visible: root.blockCount === 1 && root._noteText === ""
         width: parent.width
-        wrapMode: Text.WordWrap
         text: root.placeholderText
-        textColor: Theme.foregroundAlt
-        opacity: 0.7
+        tone: "faint"
       }
     }
   }
