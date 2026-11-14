@@ -502,9 +502,9 @@ QtObject {
   readonly property int rowPadding: Widget.smallPadding
   // how far a row's hover layer reaches past its content
   readonly property int rowBleed: Widget.smallPadding
-  // fixed px: a distance on screen, the gap the eye travels from a label to
-  // its control (not on the Interface scale: a raised scale on a wide screen
-  // still gets more columns)
+  // the width a flow column aims for. fixed px: a distance on screen, the
+  // gap the eye travels from a label to its control (not on the Interface
+  // scale: a raised scale on a wide screen still gets more columns)
   readonly property int columnTarget: 560
   // a flow column is never narrower: about the commonest screen's row column
   readonly property int columnMin: Widget.textPx(400)

@@ -203,6 +203,7 @@ QtObject {
     const g = name => Tone.rgb(theme.semantic[name]);
     const s = root._surfaces(g, dark);
     const t = root._texts(g, s);
+    const text = t.text;
     const reading = s.reading;
     const nudged = (backs, c, min) => Tone.nudgedRgb(backs, c, min + root.margin);
     const apart = (base, c, min, pole) => Tone.apartRgb(base, c, min + root.margin / 2, pole);
@@ -222,7 +223,7 @@ QtObject {
     set("surface", s.surface);
     set("surfaceRaised", s.raised);
     set("surfaceHighest", s.highest);
-    set("text", t.text);
+    set("text", text);
     set("textMuted", t.muted);
     set("textFaint", t.faint);
     set("textDisabled", nudged([s.surface], Tone.mixRgb(g("foreground"), s.surface, root.disabledMix), root.disabledContrast));
@@ -232,9 +233,9 @@ QtObject {
     const statusMix = dark ? root.statusMixDark : root.statusMixLight;
     const accent = nudged(reading, g("accent"), Tone.iconContrast);
     set("accent", accent);
-    set("onAccent", root._onColour(accent, s.page, [t.text]));
+    set("onAccent", root._onColour(accent, s.page, [text]));
     set("accentContainer", Tone.mixRgb(s.surface, g("accent"), containerMix));
-    set("onAccentContainer", nudged([rgbs.accentContainer], Tone.mixRgb(t.text, g("accent"), root.onAccentContainerMix), Tone.textContrast));
+    set("onAccentContainer", nudged([rgbs.accentContainer], Tone.mixRgb(text, g("accent"), root.onAccentContainerMix), Tone.textContrast));
     set("accentAlt", nudged(reading, g("accentAlt"), Tone.iconContrast));
     for (const status of ["success", "warning", "error", "info"]) {
       const c = g(status);
@@ -242,12 +243,11 @@ QtObject {
       set(status, nudged(reading, c, Tone.iconContrast));
       set(status + "Text", nudged(reading, c, Tone.textContrast));
       set(status + "Container", Tone.mixRgb(s.surface, c, statusMix));
-      set("on" + name, root._onColour(rgbs[status], s.page, [t.text]));
-      set("on" + name + "Container", nudged([rgbs[status + "Container"]], Tone.mixRgb(t.text, c, root.onStatusContainerMix), Tone.textContrast));
+      set("on" + name, root._onColour(rgbs[status], s.page, [text]));
+      set("on" + name + "Container", nudged([rgbs[status + "Container"]], Tone.mixRgb(text, c, root.onStatusContainerMix), Tone.textContrast));
     }
     out.series = ["accent", "accentAlt", "cyan", "green", "yellow", "orange", "magenta", "red"].map(name => Tone.fromRgb(nudged(reading, g(name), Tone.iconContrast)));
     // lines
-    const text = t.text;
     const subtleMix = dark ? root.subtleMixDark : root.subtleMixLight;
     const linePole = dark ? [1, 1, 1] : black;
     set("borderSubtle", apart(s.page, Tone.mixRgb(s.page, text, subtleMix), root.subtleContrast, linePole));
