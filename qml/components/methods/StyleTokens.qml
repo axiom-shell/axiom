@@ -33,12 +33,14 @@ QtObject {
   // button on a light card)
   readonly property var highestStepDark: [1.20, 1.60]
   readonly property var highestStepLight: [1.45, 1.90]
-  // sunken against the card: the dark mix measures at least 1.053; the
-  // light mix 1.04
-  readonly property real sunkenApartDark: 1.05
-  readonly property real sunkenApartLight: 1.04
-  // how far sunken lies from the page toward the card (the mix)
+  // sunken against the card in light themes: a step darker (the dark
+  // sunken is the page/card mix below, which measures at least 1.053)
+  readonly property real sunkenApartLight: 1.07
+  // how far sunken lies from the page toward the card in dark themes (the mix)
   readonly property real sunkenMix: 0.45
+  // a light theme's sunken tone: the card mixed this far toward the text,
+  // then moved apart from it
+  readonly property real sunkenTextMix: 0.06
   // the lighter segment of a segmented control against the other
   readonly property real segmentThumbContrast: 1.25
   // how far the light raised surface lifts from the page toward white
@@ -369,7 +371,7 @@ QtObject {
     const surface = step(page, g("backgroundAlt"), dark ? root.surfaceStepDark : root.surfaceStepLight, pole);
     const raised = dark ? step(surface, hi, root.raisedStepDark, [1, 1, 1]) : Tone.apartRgb(surface, Tone.mixRgb(page, [1, 1, 1], root.raisedLightMix), root.raisedApartLight + root.margin / 2, [1, 1, 1]);
     const highest = step(surface, hi, dark ? root.highestStepDark : root.highestStepLight, pole);
-    const sunken = Tone.mixRgb(page, surface, root.sunkenMix);
+    const sunken = dark ? Tone.mixRgb(page, surface, root.sunkenMix) : Tone.apartRgb(surface, Tone.mixRgb(surface, g("foreground"), root.sunkenTextMix), root.sunkenApartLight + root.margin / 2, [0, 0, 0]);
     return {
       "page": page,
       "surface": surface,

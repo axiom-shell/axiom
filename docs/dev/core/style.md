@@ -20,7 +20,7 @@ The roles are computed by formulas of the theme's resolved semantic map (never b
 
 ### The roles
 The member list is `docs/dev/generated/api/Style.md`. The groups:
-- **Surfaces** (tonal layering): `surfacePage` (the theme's raw background: chrome touching the screen), `surface` (cards), `surfaceSunken` (fields, troughs, wells), `surfaceRaised` (dropdowns, tooltips), `surfaceHighest` (switch tracks, chips, tonal buttons). `surfaceSunken` lies between the page and the card.
+- **Surfaces** (tonal layering): `surfacePage` (the theme's raw background: chrome touching the screen), `surface` (cards), `surfaceSunken` (fields, troughs, wells), `surfaceRaised` (dropdowns, tooltips), `surfaceHighest` (switch tracks, chips, tonal buttons). `surfaceSunken` lies between the page and the card in dark themes and is a step darker than the card in light themes.
 - **Text**: `text`, `textMuted`, `textFaint`, `textDisabled`, `textAccent`.
 - **Accent and status**: `accent`, `accentAlt`, `success`, `warning`, `error`, `info`, each with `…Text`, `…Container`, `on…` and `on…Container`; `series` (8 colours for charts); `segmentTrackTone` / `segmentThumbTone` (a segmented control's chosen option is always the lighter of the pair).
 - **Lines**: `divider`, `borderSubtle`, `borderStrong`, `focusRing`, `rail`, `frameStroke` (the theme's raw foreground, for what joins the screen frame).
@@ -38,7 +38,7 @@ The member list is `docs/dev/generated/api/Style.md`. The groups:
 
 ### Light themes
 - The semantic map already inverts the ramp for light themes: `theme-defaults.json`'s light map is in base16 order, the same slots as the dark one, as every bundled light theme's own map is. Style reads the map, never base slots, so `text` is dark and `surfacePage` light without a branch.
-- Three things differ by variant, all in `StyleTokens.derive`: `surface` steps toward black (a light page is usually near white, so lighter is impossible) and `surfaceRaised` toward white; `surfaceHighest` steps at least 1.45 from the card (1.20 in dark themes: an equal luminance ratio reads weaker on a light card); state, container and divider alphas are lower, since a dark ink over a light surface reads stronger.
+- Four things differ by variant, all in `StyleTokens.derive`: `surface` steps toward black (a light page is usually near white, so lighter is impossible) and `surfaceRaised` toward white; `surfaceHighest` steps at least 1.45 from the card (1.20 in dark themes: an equal luminance ratio reads weaker on a light card); `surfaceSunken` is the card mixed toward the text and moved a step darker (1.07; in dark themes the page/card mix); state, container and divider alphas are lower, since a dark ink over a light surface reads stronger.
 - The light fallback theme (a missing light theme) is `theme-defaults.json`'s palette with the grey ramp reversed (`StyleTokens.reversedRamp`, called by `ThemeManager._parseTheme`): the defaults' palette is dark, and with the light map in base16 order it would be a dark theme marked light.
 - `nudged` picks its pole by contrast, so an accent too weak to read is darkened on a light theme and lightened on a dark one without a variant check.
 

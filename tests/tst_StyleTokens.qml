@@ -202,7 +202,7 @@ TestCase {
       rows.push([`ink.${tone}.divider`, root.toneFills[tone], 1.12, "text"]);
     }
     const dark = o.dark;
-    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.04, "text"], ["segment.thumb", "segment.track", 1.25, "text"], ["borderSubtle", "surfacePage", 1.12, "text"]);
+    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["segment.thumb", "segment.track", 1.25, "text"], ["borderSubtle", "surfacePage", 1.12, "text"]);
     for (const b of root.neutral)
       rows.push(["borderStrong", b, 1.30, "text"]);
     rows.push(["text", "veil@grey", 4.5, "text"], ["text", "floor@pole:surfacePage", 3.0, "text"], ["text", "floor@pole:surface", 3.0, "text"]);
@@ -379,6 +379,7 @@ TestCase {
         if (lum(o.semantic.backgroundAlt) <= lum(o.semantic.background))
           verify(lum(o.surface) < lum(o.surfacePage), `${theme.name}: a light card darker than the page`);
         verify(lum(o.surfaceRaised) > lum(o.surface), `${theme.name}: a light raised surface lighter than the card`);
+        verify(lum(o.surfaceSunken) < lum(o.surface), `${theme.name}: a light sunken tone darker than the card`);
         verify(con(o.surfaceHighest, o.surface) >= 1.45, `${theme.name}: highest vs surface`);
       }
       compare(o.alphaHover, o.dark ? 0.08 : 0.06, theme.name);
