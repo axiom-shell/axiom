@@ -1,0 +1,2217 @@
+{
+ "qml/components/bar/BarContainer.qml": {
+  "R1": 5,
+  "R2": 6,
+  "R7": 10
+ },
+ "qml/components/bar/BarWidgetHost.qml": {
+  "R6": 1
+ },
+ "qml/components/bar/look/CellLook.qml": {
+  "R6": 5
+ },
+ "qml/components/bar/look/SliceMasked.qml": {
+  "R17": 3
+ },
+ "qml/components/bar/look/WidgetBackground.qml": {
+  "R6": 2
+ },
+ "qml/components/bar/look/WidgetLook.qml": {
+  "R6": 6
+ },
+ "qml/components/bar/widgets/base/BarWidget.qml": {
+  "R6": 1,
+  "R7": 2
+ },
+ "qml/components/bar/widgets/base/ValueGraphic.qml": {
+  "R5": 1
+ },
+ "qml/components/content/Agenda/Agenda.qml": {
+  "R1": 3,
+  "R4": 1,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/AudioMixer/AudioMixer.qml": {
+  "R1": 17,
+  "R14": 2,
+  "R2": 3,
+  "R4": 2,
+  "R5": 1,
+  "R7": 8
+ },
+ "qml/components/content/Battery/Battery.qml": {
+  "R1": 8,
+  "R14": 2,
+  "R3": 2,
+  "R4": 6,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/BluetoothDevices/BluetoothDevices.qml": {
+  "R1": 15,
+  "R3": 2,
+  "R4": 2,
+  "R7": 6
+ },
+ "qml/components/content/Brightness/Brightness.qml": {
+  "R1": 1
+ },
+ "qml/components/content/Caffeine/Caffeine.qml": {
+  "R1": 6,
+  "R14": 2,
+  "R4": 2,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/content/Calculator/Calculator.qml": {
+  "R1": 12,
+  "R14": 4,
+  "R18": 1,
+  "R2": 2,
+  "R4": 7,
+  "R5": 2,
+  "R7": 5
+ },
+ "qml/components/content/Calendar/Calendar.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/Chat/Chat.qml": {
+  "R1": 3,
+  "R2": 1,
+  "R3": 1,
+  "R7": 3
+ },
+ "qml/components/content/Cheatsheet/Cheatsheet.qml": {
+  "R1": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/ClaudeUsage/ClaudeUsage.qml": {
+  "R1": 13,
+  "R14": 4,
+  "R4": 6,
+  "R5": 2,
+  "R7": 8
+ },
+ "qml/components/content/ClipboardHistory/ClipboardHistory.qml": {
+  "R1": 11,
+  "R14": 1,
+  "R2": 1,
+  "R4": 2,
+  "R7": 6
+ },
+ "qml/components/content/Clock/Clock.qml": {
+  "R1": 4,
+  "R2": 2,
+  "R3": 4,
+  "R4": 2,
+  "R5": 5,
+  "R7": 3
+ },
+ "qml/components/content/ClockCalendar/ClockCalendar.qml": {
+  "R14": 1,
+  "R3": 1,
+  "R4": 4,
+  "R5": 1
+ },
+ "qml/components/content/ColorSwatch/ColorSwatch.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R6": 2,
+  "R7": 1
+ },
+ "qml/components/content/DevModeMenu/DevModeMenu.qml": {
+  "R1": 4,
+  "R14": 3,
+  "R3": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/content/Disks/Disks.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1
+ },
+ "qml/components/content/Drives/Drives.qml": {
+  "R1": 5,
+  "R7": 2
+ },
+ "qml/components/content/EmojiPicker/EmojiPicker.qml": {
+  "R1": 9,
+  "R14": 2,
+  "R18": 1,
+  "R2": 2,
+  "R3": 1,
+  "R4": 2,
+  "R7": 5
+ },
+ "qml/components/content/Favourites/Favourites.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/Greeting/Greeting.qml": {
+  "R1": 3,
+  "R14": 2,
+  "R4": 1,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/content/InputSources/InputSources.qml": {
+  "R1": 2,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/KeyboardLayout/KeyboardLayout.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R7": 2
+ },
+ "qml/components/content/Login/Login.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/content/Markets/Markets.qml": {
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/MarketsPopout/MarketsPopout.qml": {
+  "R1": 3,
+  "R2": 1,
+  "R4": 4,
+  "R5": 2,
+  "R7": 5
+ },
+ "qml/components/content/Network/Network.qml": {
+  "R1": 10,
+  "R14": 3,
+  "R3": 7,
+  "R4": 5,
+  "R5": 1,
+  "R7": 9
+ },
+ "qml/components/content/NightLightControls/NightLightControls.qml": {
+  "R1": 19,
+  "R14": 3,
+  "R18": 2,
+  "R2": 2,
+  "R3": 1,
+  "R4": 7,
+  "R5": 2,
+  "R7": 12
+ },
+ "qml/components/content/Notes/Notes.qml": {
+  "R1": 19,
+  "R14": 3,
+  "R2": 1,
+  "R3": 1,
+  "R4": 6,
+  "R5": 1,
+  "R7": 15
+ },
+ "qml/components/content/Notifications/Notifications.qml": {
+  "R1": 7,
+  "R14": 2,
+  "R3": 2,
+  "R4": 5,
+  "R7": 4
+ },
+ "qml/components/content/NowPlaying/NowPlaying.qml": {
+  "R1": 9,
+  "R14": 6,
+  "R17": 2,
+  "R18": 1,
+  "R2": 2,
+  "R3": 7,
+  "R4": 14,
+  "R5": 2,
+  "R7": 5
+ },
+ "qml/components/content/Palette/Palette.qml": {
+  "R1": 4,
+  "R14": 3,
+  "R2": 10,
+  "R3": 2,
+  "R4": 3,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/content/Password/Password.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/content/Pomodoro/Pomodoro.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/content/Power/Power.qml": {
+  "R1": 2
+ },
+ "qml/components/content/QuickActions/QuickActions.qml": {
+  "R1": 6,
+  "R4": 1
+ },
+ "qml/components/content/ScreenRecord/ScreenRecord.qml": {
+  "R1": 13,
+  "R14": 2,
+  "R3": 2,
+  "R4": 2,
+  "R5": 2,
+  "R7": 9
+ },
+ "qml/components/content/Screenshot/Screenshot.qml": {
+  "R1": 1
+ },
+ "qml/components/content/Session/Session.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/content/Stopwatch/Stopwatch.qml": {
+  "R1": 6,
+  "R4": 5,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/content/Submenu/MenuSubmenu.qml": {
+  "R1": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/content/Submenu/Submenu.qml": {
+  "R1": 5,
+  "R14": 4,
+  "R2": 2,
+  "R3": 3,
+  "R4": 3,
+  "R7": 2
+ },
+ "qml/components/content/SystemGraphs/SystemGraphs.qml": {
+  "R1": 7,
+  "R3": 1,
+  "R7": 2
+ },
+ "qml/components/content/Tailscale/Tailscale.qml": {
+  "R1": 32,
+  "R14": 12,
+  "R2": 6,
+  "R3": 3,
+  "R4": 16,
+  "R5": 2,
+  "R7": 21
+ },
+ "qml/components/content/ThemePicker/ThemePicker.qml": {
+  "R1": 7,
+  "R14": 3,
+  "R2": 2,
+  "R3": 3,
+  "R4": 1,
+  "R5": 2,
+  "R7": 5
+ },
+ "qml/components/content/TopProcesses/TopProcesses.qml": {
+  "R1": 10,
+  "R14": 1,
+  "R3": 3,
+  "R4": 6,
+  "R7": 6
+ },
+ "qml/components/content/Updates/Updates.qml": {
+  "R1": 6,
+  "R14": 3,
+  "R3": 1,
+  "R4": 3,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/content/VolumeDials/VolumeDials.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R7": 2
+ },
+ "qml/components/content/VpnConnections/VpnConnections.qml": {
+  "R1": 9,
+  "R4": 1,
+  "R7": 4
+ },
+ "qml/components/content/WallpaperPicker/WallpaperPicker.qml": {
+  "R1": 14,
+  "R14": 3,
+  "R3": 4,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/content/Weather/Weather.qml": {
+  "R1": 5,
+  "R3": 1,
+  "R4": 4,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/content/WeatherForecast/WeatherForecast.qml": {
+  "R1": 2,
+  "R4": 3,
+  "R7": 1
+ },
+ "qml/components/content/WifiNetworks/WifiNetworks.qml": {
+  "R1": 32,
+  "R14": 4,
+  "R2": 1,
+  "R3": 1,
+  "R4": 12,
+  "R5": 1,
+  "R7": 13
+ },
+ "qml/components/content/WorkspacesMap/WorkspacesMap.qml": {
+  "R1": 7,
+  "R3": 1,
+  "R4": 1,
+  "R7": 3
+ },
+ "qml/components/content/WorldClocks/WorldClocks.qml": {
+  "R1": 13,
+  "R14": 4,
+  "R2": 2,
+  "R4": 8,
+  "R5": 3,
+  "R7": 9
+ },
+ "qml/components/content/base/Card.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/content/base/CardHeader.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/content/base/Panel.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/content/base/SaveResetActions.qml": {
+  "R1": 7,
+  "R2": 1,
+  "R3": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/base/TitledCard.qml": {
+  "R3": 1,
+  "R9": 1
+ },
+ "qml/components/content/parts/AudioRow.qml": {
+  "R1": 13,
+  "R14": 2,
+  "R3": 1,
+  "R4": 5,
+  "R7": 6
+ },
+ "qml/components/content/parts/CodeLine.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R7": 2
+ },
+ "qml/components/content/parts/CompactFigure.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R3": 1,
+  "R4": 3,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/parts/ConnectionDetails.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R4": 4,
+  "R7": 2
+ },
+ "qml/components/content/parts/CountdownTimer.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R3": 1,
+  "R4": 2,
+  "R7": 1
+ },
+ "qml/components/content/parts/DefaultAppPickers.qml": {
+  "R1": 4,
+  "R14": 3,
+  "R4": 2,
+  "R7": 4
+ },
+ "qml/components/content/parts/DeviceList.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 2,
+  "R7": 1
+ },
+ "qml/components/content/parts/DeviceRow.qml": {
+  "R1": 16,
+  "R14": 2,
+  "R2": 3,
+  "R3": 1,
+  "R4": 4,
+  "R7": 6
+ },
+ "qml/components/content/parts/DialControls.qml": {
+  "R1": 4,
+  "R2": 2,
+  "R7": 2
+ },
+ "qml/components/content/parts/DriveRow.qml": {
+  "R1": 3,
+  "R14": 2,
+  "R4": 2,
+  "R7": 2
+ },
+ "qml/components/content/parts/EmptyState.qml": {
+  "R14": 1,
+  "R3": 1,
+  "R4": 2
+ },
+ "qml/components/content/parts/FigureValue.qml": {
+  "R1": 1,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/ItemRow.qml": {
+  "R1": 6,
+  "R14": 4,
+  "R2": 1,
+  "R4": 4,
+  "R7": 5
+ },
+ "qml/components/content/parts/KeyCap.qml": {
+  "R1": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/KeybindRow.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R2": 1,
+  "R3": 3,
+  "R4": 2,
+  "R7": 2
+ },
+ "qml/components/content/parts/KeybindSection.qml": {
+  "R1": 6,
+  "R14": 2,
+  "R2": 1,
+  "R3": 4,
+  "R4": 3,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/content/parts/KeyboardMap.qml": {
+  "R1": 5,
+  "R14": 2,
+  "R3": 2,
+  "R4": 4,
+  "R7": 2
+ },
+ "qml/components/content/parts/KeyboardReference.qml": {
+  "R1": 4,
+  "R2": 2
+ },
+ "qml/components/content/parts/LoginField.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/ModifierCap.qml": {
+  "R1": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/ModuleHeader.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/PomodoroDial.qml": {
+  "R1": 4,
+  "R7": 1
+ },
+ "qml/components/content/parts/PriceChart.qml": {
+  "R1": 6,
+  "R2": 4,
+  "R3": 1,
+  "R4": 1,
+  "R7": 5
+ },
+ "qml/components/content/parts/QuoteDetail.qml": {
+  "R1": 4,
+  "R14": 2,
+  "R4": 5,
+  "R5": 2,
+  "R7": 3
+ },
+ "qml/components/content/parts/QuoteRow.qml": {
+  "R1": 5,
+  "R14": 3,
+  "R2": 2,
+  "R3": 1,
+  "R4": 4,
+  "R5": 3,
+  "R7": 5
+ },
+ "qml/components/content/parts/QuoteTile.qml": {
+  "R1": 2,
+  "R14": 3,
+  "R2": 3,
+  "R3": 1,
+  "R4": 4,
+  "R5": 3,
+  "R7": 3
+ },
+ "qml/components/content/parts/RadioHeader.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/parts/RateLabel.qml": {
+  "R1": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/SecretField.qml": {
+  "R1": 2,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/Sparkline.qml": {
+  "R1": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/StatFigure.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/TimeRing.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/content/parts/TodoList.qml": {
+  "R3": 1
+ },
+ "qml/components/content/parts/ToolChecks.qml": {
+  "R1": 4,
+  "R14": 2,
+  "R7": 2
+ },
+ "qml/components/content/parts/TrayMenuItem.qml": {
+  "R1": 4,
+  "R14": 2,
+  "R3": 1,
+  "R7": 4
+ },
+ "qml/components/content/parts/TrayMenuList.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/WeatherCurrent.qml": {
+  "R1": 2,
+  "R14": 3,
+  "R4": 2,
+  "R5": 2,
+  "R7": 2
+ },
+ "qml/components/content/parts/WifiJoinForm.qml": {
+  "R1": 7,
+  "R14": 2,
+  "R3": 1,
+  "R4": 3,
+  "R7": 4
+ },
+ "qml/components/content/parts/calendar/DateTimeField.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/calendar/DayAgenda.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/calendar/EventEditor.qml": {
+  "R1": 7,
+  "R14": 2,
+  "R4": 2,
+  "R7": 5
+ },
+ "qml/components/content/parts/calendar/EventRow.qml": {
+  "R1": 6,
+  "R14": 2,
+  "R2": 2,
+  "R4": 4,
+  "R7": 5
+ },
+ "qml/components/content/parts/calendar/MonthGrid.qml": {
+  "R1": 14,
+  "R14": 2,
+  "R2": 3,
+  "R3": 4,
+  "R4": 5,
+  "R5": 2,
+  "R7": 10
+ },
+ "qml/components/content/parts/chat/AttachmentChip.qml": {
+  "R1": 4,
+  "R2": 1,
+  "R4": 1,
+  "R7": 4
+ },
+ "qml/components/content/parts/chat/ChatCodeBlock.qml": {
+  "R1": 8,
+  "R14": 1,
+  "R3": 1,
+  "R4": 3,
+  "R7": 3
+ },
+ "qml/components/content/parts/chat/ChatComposer.qml": {
+  "R1": 12,
+  "R14": 1,
+  "R3": 1,
+  "R4": 2,
+  "R7": 5
+ },
+ "qml/components/content/parts/chat/ChatHeader.qml": {
+  "R1": 9,
+  "R14": 2,
+  "R4": 3,
+  "R5": 1,
+  "R7": 6
+ },
+ "qml/components/content/parts/chat/ChatMarkdownText.qml": {
+  "R1": 3,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/chat/ChatMessage.qml": {
+  "R1": 10,
+  "R14": 5,
+  "R2": 4,
+  "R3": 3,
+  "R4": 7,
+  "R5": 1,
+  "R7": 8
+ },
+ "qml/components/content/parts/chat/ChatMessageList.qml": {
+  "R1": 3,
+  "R3": 1,
+  "R4": 2,
+  "R7": 3
+ },
+ "qml/components/content/parts/chat/ChatThinking.qml": {
+  "R1": 5,
+  "R3": 1,
+  "R4": 4,
+  "R7": 5
+ },
+ "qml/components/content/parts/chat/ConversationList.qml": {
+  "R1": 6,
+  "R14": 3,
+  "R2": 1,
+  "R4": 5,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/content/parts/chat/ModelPicker.qml": {
+  "R1": 9,
+  "R14": 3,
+  "R4": 6,
+  "R5": 1,
+  "R7": 7
+ },
+ "qml/components/content/parts/custom/CustomElementBase.qml": {
+  "R1": 2
+ },
+ "qml/components/content/parts/custom/elements/Bar/CustomBar.qml": {
+  "R1": 2
+ },
+ "qml/components/content/parts/custom/elements/Icon/CustomIcon.qml": {
+  "R1": 3,
+  "R4": 1,
+  "R7": 2
+ },
+ "qml/components/content/parts/custom/elements/Image/CustomImage.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/custom/elements/List/CustomList.qml": {
+  "R1": 1
+ },
+ "qml/components/content/parts/custom/elements/Ring/CustomRing.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 3,
+  "R5": 1
+ },
+ "qml/components/content/parts/custom/elements/Segments/CustomSegments.qml": {
+  "R1": 1
+ },
+ "qml/components/content/parts/custom/elements/Separator/CustomSeparator.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/content/parts/custom/elements/Sparkline/CustomSparkline.qml": {
+  "R1": 1
+ },
+ "qml/components/content/parts/custom/elements/Status/CustomStatus.qml": {
+  "R1": 1
+ },
+ "qml/components/content/parts/custom/elements/Text/CustomText.qml": {
+  "R1": 1,
+  "R14": 3,
+  "R4": 7,
+  "R5": 1
+ },
+ "qml/components/content/parts/custom/elements/TextBlock/CustomTextBlock.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 1
+ },
+ "qml/components/content/parts/custom/elements/Toggle/CustomToggle.qml": {
+  "R14": 1
+ },
+ "qml/components/content/parts/notes/NoteBlock.qml": {
+  "R1": 8,
+  "R2": 1,
+  "R4": 3,
+  "R7": 3
+ },
+ "qml/components/content/parts/notes/NoteBrowser.qml": {
+  "R1": 29,
+  "R14": 5,
+  "R2": 2,
+  "R3": 1,
+  "R4": 16,
+  "R5": 1,
+  "R7": 18
+ },
+ "qml/components/content/parts/notes/NoteEditor.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/notifications/NotificationActions.qml": {
+  "R1": 4,
+  "R18": 1,
+  "R4": 1,
+  "R7": 2
+ },
+ "qml/components/content/parts/notifications/NotificationAvatar.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/content/parts/notifications/NotificationGroupDelegate.qml": {
+  "R1": 13,
+  "R14": 1,
+  "R2": 4,
+  "R3": 2,
+  "R4": 4,
+  "R5": 1,
+  "R7": 9
+ },
+ "qml/components/content/parts/notifications/NotificationHeader.qml": {
+  "R1": 9,
+  "R14": 1,
+  "R2": 1,
+  "R3": 1,
+  "R4": 2,
+  "R5": 2,
+  "R7": 5
+ },
+ "qml/components/content/parts/notifications/NotificationItemDelegate.qml": {
+  "R1": 3,
+  "R3": 1,
+  "R4": 2,
+  "R7": 2
+ },
+ "qml/components/content/parts/notifications/NotificationQuietHeader.qml": {
+  "R1": 7,
+  "R14": 1,
+  "R4": 3,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/content/parts/notifications/NotificationReply.qml": {
+  "R4": 1
+ },
+ "qml/components/content/parts/notifications/NotificationText.qml": {
+  "R1": 2,
+  "R14": 6,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/forms/FieldChangeMarks.qml": {
+  "R1": 1,
+  "R4": 2
+ },
+ "qml/components/forms/FieldHeader.qml": {
+  "R14": 1,
+  "R4": 2,
+  "R5": 1
+ },
+ "qml/components/forms/FormRow.qml": {
+  "R1": 1,
+  "R3": 2,
+  "R7": 1
+ },
+ "qml/components/forms/GreeterSetup.qml": {
+  "R1": 9,
+  "R14": 12,
+  "R3": 4,
+  "R4": 1,
+  "R7": 6
+ },
+ "qml/components/forms/IconEntry.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/forms/IntegrationHookup.qml": {
+  "R1": 12,
+  "R14": 6,
+  "R2": 1,
+  "R5": 1,
+  "R7": 7
+ },
+ "qml/components/forms/OptionsGroup.qml": {
+  "R1": 1,
+  "R14": 2,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/forms/RecommendedSetupList.qml": {
+  "R1": 12,
+  "R14": 4,
+  "R4": 3,
+  "R7": 4
+ },
+ "qml/components/forms/SchemaComboBox.qml": {
+  "R1": 11,
+  "R14": 2,
+  "R4": 1,
+  "R6": 3,
+  "R7": 5,
+  "R9": 1
+ },
+ "qml/components/forms/SchemaField.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 2,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/forms/SchemaNumberField.qml": {
+  "R1": 8,
+  "R4": 6,
+  "R7": 4,
+  "R9": 1
+ },
+ "qml/components/forms/SchemaObjectArray.qml": {
+  "R1": 4,
+  "R3": 2,
+  "R4": 5,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/forms/SchemaOrderedChips.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R3": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/forms/SchemaTextField.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/forms/ScreenSharingSetup.qml": {
+  "R1": 7,
+  "R14": 2,
+  "R4": 1,
+  "R7": 3
+ },
+ "qml/components/forms/SettingsLink.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R4": 3,
+  "R7": 3
+ },
+ "qml/components/forms/SetupLines.qml": {
+  "R1": 1,
+  "R14": 2,
+  "R3": 1,
+  "R4": 2
+ },
+ "qml/components/hosts/overlay/ExpandedModule.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/hosts/overlay/ModuleGrid.qml": {
+  "R3": 1
+ },
+ "qml/components/hosts/overlay/OverlayPageNavigator.qml": {
+  "R1": 15,
+  "R2": 4,
+  "R3": 3,
+  "R4": 1,
+  "R5": 1,
+  "R7": 10
+ },
+ "qml/components/hosts/overlay/OverlayPages.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/hosts/overlay/PoppedOutCard.qml": {
+  "R1": 2,
+  "R14": 2,
+  "R4": 1,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/hosts/popout/AttachedSurface.qml": {
+  "R1": 2,
+  "R2": 5,
+  "R7": 5
+ },
+ "qml/components/hosts/popout/BlurShape.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/hosts/popout/EdgePopout.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/hosts/popout/OutsideShadow.qml": {
+  "R17": 1,
+  "R2": 2,
+  "R7": 2
+ },
+ "qml/components/hosts/window/PageWindow.qml": {
+  "R1": 2,
+  "R4": 1,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/reusable/ActionPill.qml": {
+  "R1": 7,
+  "R14": 6,
+  "R2": 2,
+  "R3": 2,
+  "R4": 2,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/reusable/ActionTile.qml": {
+  "R1": 7,
+  "R14": 1,
+  "R2": 2,
+  "R4": 2,
+  "R7": 3
+ },
+ "qml/components/reusable/AddEntryButton.qml": {
+  "R1": 2,
+  "R3": 1
+ },
+ "qml/components/reusable/BackdropRequest.qml": {
+  "R1": 2,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/CapsLockHint.qml": {
+  "R18": 1,
+  "R4": 1
+ },
+ "qml/components/reusable/ChoiceTiles.qml": {
+  "R1": 7,
+  "R14": 1,
+  "R3": 1,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/reusable/ClampedText.qml": {
+  "R1": 1,
+  "R14": 4,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/CornerPiece.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/reusable/CountBadge.qml": {
+  "R4": 1
+ },
+ "qml/components/reusable/CountdownBar.qml": {
+  "R1": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/CoverArt.qml": {
+  "R1": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/DragChip.qml": {
+  "R1": 9,
+  "R14": 1,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/reusable/DropdownSurface.qml": {
+  "R1": 2,
+  "R17": 2,
+  "R2": 1,
+  "R7": 2
+ },
+ "qml/components/reusable/FieldGroup.qml": {
+  "R1": 1,
+  "R2": 1,
+  "R3": 1
+ },
+ "qml/components/reusable/FlashOutline.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/FlatIconButton.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/FlowDropTarget.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/FoldHeader.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R3": 1,
+  "R4": 2,
+  "R7": 2
+ },
+ "qml/components/reusable/FoldRow.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/reusable/FrameNudge.qml": {
+  "R2": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/HoledItem.qml": {
+  "R17": 3,
+  "R2": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/InlineDragLayer.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/reusable/InspectorHeader.qml": {
+  "R1": 4,
+  "R14": 2,
+  "R3": 2,
+  "R4": 3,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/reusable/IssueList.qml": {
+  "R4": 1
+ },
+ "qml/components/reusable/KeyHint.qml": {
+  "R1": 4,
+  "R4": 2,
+  "R7": 4
+ },
+ "qml/components/reusable/LevelMeter.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/reusable/ListEntryRow.qml": {
+  "R1": 6,
+  "R14": 1,
+  "R2": 1,
+  "R3": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/MenuList.qml": {
+  "R1": 12,
+  "R14": 2,
+  "R3": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 7
+ },
+ "qml/components/reusable/PasswordEntry.qml": {
+  "R1": 4,
+  "R14": 2,
+  "R4": 1
+ },
+ "qml/components/reusable/PercentageCircle.qml": {
+  "R1": 3,
+  "R7": 2
+ },
+ "qml/components/reusable/PopInRectangle.qml": {
+  "R18": 1
+ },
+ "qml/components/reusable/RowAction.qml": {
+  "R1": 6,
+  "R2": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/SectionHeading.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/SegmentButton.qml": {
+  "R1": 10,
+  "R2": 2,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/SegmentMeter.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/reusable/SegmentRow.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/reusable/SeparatorMark.qml": {
+  "R2": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/SlashedIcon.qml": {
+  "R1": 2,
+  "R2": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/SquareIconButton.qml": {
+  "R1": 1,
+  "R3": 1
+ },
+ "qml/components/reusable/StatusChip.qml": {
+  "R1": 2,
+  "R4": 1,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/reusable/StyledComboEntry.qml": {
+  "R1": 6,
+  "R14": 1,
+  "R18": 1,
+  "R2": 1,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R9": 2
+ },
+ "qml/components/reusable/StyledContainer.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/StyledContextMenu.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/StyledIconButton.qml": {
+  "R1": 3,
+  "R18": 1,
+  "R3": 1,
+  "R4": 1,
+  "R6": 1,
+  "R7": 2
+ },
+ "qml/components/reusable/StyledRectButton.qml": {
+  "R1": 2,
+  "R4": 1,
+  "R6": 2,
+  "R7": 3
+ },
+ "qml/components/reusable/StyledScrollView.qml": {
+  "R1": 2
+ },
+ "qml/components/reusable/StyledSeparator.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/StyledSlider.qml": {
+  "R1": 3,
+  "R18": 1,
+  "R7": 3
+ },
+ "qml/components/reusable/StyledSwitch.qml": {
+  "R1": 4,
+  "R7": 3
+ },
+ "qml/components/reusable/StyledTabBar.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/reusable/StyledTabButton.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R4": 1
+ },
+ "qml/components/reusable/StyledTextArea.qml": {
+  "R1": 7,
+  "R2": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/StyledTextButton.qml": {
+  "R1": 6,
+  "R4": 1,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/reusable/StyledTextEntry.qml": {
+  "R1": 7,
+  "R2": 1,
+  "R4": 2,
+  "R7": 1
+ },
+ "qml/components/reusable/StyledToggle.qml": {
+  "R1": 6,
+  "R7": 4
+ },
+ "qml/components/reusable/StyledToolTip.qml": {
+  "R1": 2,
+  "R14": 1
+ },
+ "qml/components/reusable/StyledVolumeBar.qml": {
+  "R1": 6,
+  "R14": 1,
+  "R2": 4,
+  "R4": 3,
+  "R7": 4
+ },
+ "qml/components/reusable/TextCursor.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/reusable/TrashTarget.qml": {
+  "R1": 7,
+  "R18": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/reusable/TypeLibrary.qml": {
+  "R14": 1,
+  "R3": 1,
+  "R9": 1
+ },
+ "qml/components/reusable/TypePickerPopup.qml": {
+  "R1": 4,
+  "R14": 3,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 4,
+  "R9": 1
+ },
+ "qml/components/reusable/UnsavedDot.qml": {
+  "R1": 2,
+  "R7": 1
+ },
+ "qml/components/surfaces/border/BorderPanel.qml": {
+  "R7": 3
+ },
+ "qml/components/surfaces/border/RoundedBorders.qml": {
+  "R1": 2,
+  "R17": 5,
+  "R2": 2,
+  "R7": 2
+ },
+ "qml/components/surfaces/dock/DockItem.qml": {
+  "R1": 4,
+  "R3": 1,
+  "R7": 2
+ },
+ "qml/components/surfaces/dock/DockMenu.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R5": 1
+ },
+ "qml/components/surfaces/dock/DockWindow.qml": {
+  "R1": 3,
+  "R3": 1,
+  "R7": 2
+ },
+ "qml/components/surfaces/greeter/GreeterPreviewWindow.qml": {
+  "R1": 1,
+  "R2": 1,
+  "R7": 2
+ },
+ "qml/components/surfaces/greeter/GreeterSurface.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/surfaces/greeter/GreeterWindow.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/surfaces/launcher/Launcher.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/surfaces/launcher/LauncherPanel.qml": {
+  "R1": 12,
+  "R14": 1,
+  "R2": 1,
+  "R4": 6,
+  "R5": 1,
+  "R7": 9
+ },
+ "qml/components/surfaces/launcher/LauncherRow.qml": {
+  "R1": 15,
+  "R14": 4,
+  "R2": 3,
+  "R3": 1,
+  "R4": 3,
+  "R5": 1,
+  "R7": 8
+ },
+ "qml/components/surfaces/lockscreen/LockPreviewWindow.qml": {
+  "R1": 1,
+  "R2": 1,
+  "R7": 2
+ },
+ "qml/components/surfaces/lockscreen/LockSurface.qml": {
+  "R1": 2,
+  "R7": 2
+ },
+ "qml/components/surfaces/menu/FreeMenu.qml": {
+  "R18": 1
+ },
+ "qml/components/surfaces/menu/IntegratedEdgeMenu.qml": {
+  "R1": 3,
+  "R7": 4
+ },
+ "qml/components/surfaces/menu/MenuBody.qml": {
+  "R1": 17,
+  "R2": 3,
+  "R7": 2
+ },
+ "qml/components/surfaces/menu/MenuTile.qml": {
+  "R1": 1,
+  "R2": 2,
+  "R7": 4
+ },
+ "qml/components/surfaces/monitors/MonitorPromptWindow.qml": {
+  "R1": 5,
+  "R3": 3,
+  "R4": 2,
+  "R5": 2,
+  "R7": 3
+ },
+ "qml/components/surfaces/notifications/ToastItem.qml": {
+  "R1": 7,
+  "R14": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/surfaces/notifications/ToastStack.qml": {
+  "R1": 2,
+  "R2": 2,
+  "R7": 2
+ },
+ "qml/components/surfaces/onboarding/StepBar.qml": {
+  "R1": 9,
+  "R7": 4
+ },
+ "qml/components/surfaces/onboarding/pages/AppColorsPage.qml": {
+  "R1": 5,
+  "R14": 1,
+  "R5": 2,
+  "R7": 3
+ },
+ "qml/components/surfaces/onboarding/pages/AppsPage.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R5": 2,
+  "R7": 1
+ },
+ "qml/components/surfaces/onboarding/pages/BindsTable.qml": {
+  "R14": 1
+ },
+ "qml/components/surfaces/onboarding/pages/CompositorPage.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R5": 2,
+  "R7": 1
+ },
+ "qml/components/surfaces/onboarding/pages/ExampleCard.qml": {
+  "R1": 7,
+  "R14": 2,
+  "R2": 5,
+  "R4": 1,
+  "R5": 1,
+  "R7": 7
+ },
+ "qml/components/surfaces/onboarding/pages/FinishPage.qml": {
+  "R14": 1,
+  "R5": 1
+ },
+ "qml/components/surfaces/onboarding/pages/LookPage.qml": {
+  "R1": 5,
+  "R14": 1,
+  "R5": 2,
+  "R7": 2
+ },
+ "qml/components/surfaces/onboarding/pages/Notice.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R2": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/surfaces/onboarding/pages/OnboardingPage.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R7": 2
+ },
+ "qml/components/surfaces/onboarding/pages/OptionCard.qml": {
+  "R1": 12,
+  "R14": 2,
+  "R2": 1,
+  "R3": 3,
+  "R4": 5,
+  "R5": 1,
+  "R7": 7
+ },
+ "qml/components/surfaces/onboarding/pages/SystemPage.qml": {
+  "R14": 5,
+  "R5": 7
+ },
+ "qml/components/surfaces/onboarding/pages/WelcomePage.qml": {
+  "R1": 2,
+  "R14": 2,
+  "R7": 1
+ },
+ "qml/components/surfaces/onboarding/pages/WorkspacesPage.qml": {
+  "R1": 6,
+  "R7": 4
+ },
+ "qml/components/surfaces/osd/design/OSDCard.qml": {
+  "R1": 5,
+  "R14": 5,
+  "R4": 3,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/surfaces/osd/design/OSDLevelBar.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/surfaces/osd/design/OSDTile.qml": {
+  "R1": 9,
+  "R18": 1,
+  "R2": 4,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/surfaces/powermenu/PowerMenuTile.qml": {
+  "R1": 3
+ },
+ "qml/components/surfaces/powermenu/PowerMenuWindow.qml": {
+  "R1": 6,
+  "R14": 1,
+  "R18": 1,
+  "R4": 3,
+  "R5": 1,
+  "R7": 6
+ },
+ "qml/components/surfaces/prompt/PolkitCard.qml": {
+  "R1": 7,
+  "R14": 6,
+  "R3": 5,
+  "R4": 2,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/surfaces/prompt/PromptCard.qml": {
+  "R1": 8,
+  "R14": 3,
+  "R3": 2,
+  "R4": 2,
+  "R5": 2,
+  "R7": 4
+ },
+ "qml/components/surfaces/prompt/PromptWindow.qml": {
+  "R1": 4,
+  "R18": 1,
+  "R3": 1,
+  "R7": 3
+ },
+ "qml/components/surfaces/screenlayout/ScreenLayoutView.qml": {
+  "R1": 2,
+  "R17": 2,
+  "R2": 1,
+  "R7": 2
+ },
+ "qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml": {
+  "R1": 24,
+  "R14": 5,
+  "R18": 1,
+  "R2": 4,
+  "R3": 1,
+  "R4": 10,
+  "R5": 3,
+  "R7": 20
+ },
+ "qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml": {
+  "R1": 5,
+  "R2": 2,
+  "R4": 1,
+  "R7": 5
+ },
+ "qml/components/surfaces/switcher/SwitcherStrip.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/surfaces/switcher/SwitcherTile.qml": {
+  "R1": 6,
+  "R14": 1,
+  "R2": 2,
+  "R4": 1,
+  "R7": 3
+ },
+ "qml/components/surfaces/wallpaper/WallpaperView.qml": {
+  "R1": 1
+ },
+ "qml/components/surfaces/wallpaper/WallpaperWindow.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/surfaces/workspaces/OverviewGrid.qml": {
+  "R1": 5,
+  "R2": 1,
+  "R3": 2,
+  "R7": 5
+ },
+ "qml/components/surfaces/workspaces/WindowPreview.qml": {
+  "R1": 7,
+  "R14": 1,
+  "R2": 1,
+  "R4": 2,
+  "R7": 5
+ },
+ "qml/components/surfaces/workspaces/WorkspaceCell.qml": {
+  "R1": 7,
+  "R2": 2,
+  "R3": 1,
+  "R7": 4
+ },
+ "qml/components/surfaces/workspaces/WorkspaceNumber.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R2": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/views/BarEditor/BarDragLayer.qml": {
+  "R18": 1,
+  "R3": 1
+ },
+ "qml/components/views/BarEditor/BarsPanel.qml": {
+  "R1": 5,
+  "R14": 1,
+  "R3": 2,
+  "R7": 2
+ },
+ "qml/components/views/BarEditor/LayoutOverrideField.qml": {
+  "R1": 1,
+  "R14": 2,
+  "R3": 1,
+  "R4": 1
+ },
+ "qml/components/views/BarEditor/SectionLane.qml": {
+  "R1": 11,
+  "R14": 2,
+  "R2": 1,
+  "R3": 1,
+  "R4": 2,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/views/BarEditor/SectionsBoard.qml": {
+  "R1": 10,
+  "R14": 1,
+  "R3": 1,
+  "R4": 5,
+  "R7": 6
+ },
+ "qml/components/views/BarEditor/WidgetChip.qml": {
+  "R1": 10,
+  "R2": 1,
+  "R3": 2,
+  "R7": 4
+ },
+ "qml/components/views/BarEditor/WidgetInspector.qml": {
+  "R1": 9,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R7": 5,
+  "R9": 1
+ },
+ "qml/components/views/CalendarPage/CalendarPage.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R3": 2,
+  "R4": 3,
+  "R5": 2,
+  "R7": 2
+ },
+ "qml/components/views/CustomWidgets/BarTab.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R7": 3
+ },
+ "qml/components/views/CustomWidgets/CustomWidgets.qml": {
+  "R14": 1,
+  "R3": 1
+ },
+ "qml/components/views/CustomWidgets/DataTab.qml": {
+  "R1": 4,
+  "R14": 6,
+  "R3": 4,
+  "R4": 2,
+  "R7": 1
+ },
+ "qml/components/views/CustomWidgets/DefinitionsPanel.qml": {
+  "R1": 1,
+  "R14": 4,
+  "R3": 3,
+  "R4": 3,
+  "R7": 1
+ },
+ "qml/components/views/CustomWidgets/ElementInspector.qml": {
+  "R14": 1
+ },
+ "qml/components/views/CustomWidgets/ModuleTab.qml": {
+  "R1": 2,
+  "R3": 1,
+  "R4": 1,
+  "R7": 2
+ },
+ "qml/components/views/Keybinds/ActionPicker.qml": {
+  "R1": 12,
+  "R14": 3,
+  "R3": 3,
+  "R4": 2,
+  "R5": 1,
+  "R7": 6,
+  "R9": 1
+ },
+ "qml/components/views/Keybinds/BindEditor.qml": {
+  "R1": 3,
+  "R14": 4,
+  "R3": 2,
+  "R4": 2,
+  "R7": 2
+ },
+ "qml/components/views/Keybinds/BindInspector.qml": {
+  "R1": 1,
+  "R14": 5,
+  "R3": 6,
+  "R4": 6
+ },
+ "qml/components/views/Keybinds/BindListRow.qml": {
+  "R1": 8,
+  "R14": 2,
+  "R2": 1,
+  "R3": 6,
+  "R4": 5,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/views/Keybinds/BindSection.qml": {
+  "R1": 5,
+  "R3": 2,
+  "R4": 4,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/views/Keybinds/FilterChips.qml": {
+  "R3": 1
+ },
+ "qml/components/views/Keybinds/KeyMapPanel.qml": {
+  "R1": 5,
+  "R2": 2
+ },
+ "qml/components/views/Keybinds/KeyRecorder.qml": {
+  "R1": 8,
+  "R14": 1,
+  "R3": 3,
+  "R4": 2,
+  "R7": 1
+ },
+ "qml/components/views/Keybinds/Keybinds.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R3": 2,
+  "R7": 1
+ },
+ "qml/components/views/Keybinds/PresetSheet.qml": {
+  "R1": 9,
+  "R14": 5,
+  "R2": 1,
+  "R3": 11,
+  "R4": 5,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/views/Layouts/CanvasModule.qml": {
+  "R1": 10,
+  "R14": 2,
+  "R3": 2,
+  "R4": 5,
+  "R5": 2,
+  "R6": 1,
+  "R7": 5
+ },
+ "qml/components/views/Layouts/EditorInspector.qml": {
+  "R1": 4,
+  "R3": 1,
+  "R7": 2,
+  "R9": 2
+ },
+ "qml/components/views/Layouts/EntryListRow.qml": {
+  "R3": 1
+ },
+ "qml/components/views/Layouts/EntryListTarget.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/components/views/Layouts/GridCanvas.qml": {
+  "R1": 31,
+  "R14": 5,
+  "R2": 3,
+  "R3": 13,
+  "R4": 11,
+  "R5": 1,
+  "R7": 19
+ },
+ "qml/components/views/Layouts/GridDragLayer.qml": {
+  "R1": 4,
+  "R3": 1,
+  "R4": 1,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/views/Layouts/LayoutsPanel.qml": {
+  "R3": 1
+ },
+ "qml/components/views/Layouts/MenuOpening.qml": {
+  "R1": 12,
+  "R14": 3,
+  "R3": 4,
+  "R4": 2,
+  "R7": 5
+ },
+ "qml/components/views/Layouts/MenusSection.qml": {
+  "R1": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/views/Layouts/ModuleLibrary.qml": {
+  "R14": 1,
+  "R3": 1,
+  "R4": 1
+ },
+ "qml/components/views/Layouts/OpenerButtons.qml": {
+  "R14": 1,
+  "R3": 2,
+  "R4": 1
+ },
+ "qml/components/views/Layouts/PagesSection.qml": {
+  "R1": 1,
+  "R3": 2,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/views/Monitors/MonitorCanvas.qml": {
+  "R1": 8,
+  "R14": 2,
+  "R2": 1,
+  "R3": 3,
+  "R4": 2,
+  "R5": 1,
+  "R7": 6
+ },
+ "qml/components/views/Monitors/MonitorInspector.qml": {
+  "R1": 1,
+  "R14": 2,
+  "R3": 2,
+  "R4": 2,
+  "R5": 4,
+  "R7": 1
+ },
+ "qml/components/views/Monitors/Monitors.qml": {
+  "R14": 2,
+  "R3": 2,
+  "R4": 1
+ },
+ "qml/components/views/Settings/AccountCard.qml": {
+  "R1": 16,
+  "R14": 6,
+  "R2": 1,
+  "R4": 7,
+  "R5": 3,
+  "R7": 12
+ },
+ "qml/components/views/Settings/BarLookSample.qml": {
+  "R7": 4
+ },
+ "qml/components/views/Settings/BarStyleBlock.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R3": 2,
+  "R7": 2
+ },
+ "qml/components/views/Settings/CalendarAccountsCard.qml": {
+  "R1": 15,
+  "R14": 5,
+  "R3": 1,
+  "R4": 3,
+  "R7": 7
+ },
+ "qml/components/views/Settings/ChatProvidersCard.qml": {
+  "R1": 11,
+  "R14": 6,
+  "R3": 1,
+  "R4": 4,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/views/Settings/CommunitySetupsCard.qml": {
+  "R1": 8,
+  "R14": 11,
+  "R3": 9,
+  "R4": 7,
+  "R5": 2,
+  "R7": 6
+ },
+ "qml/components/views/Settings/CompositorStatus.qml": {
+  "R1": 16,
+  "R14": 13,
+  "R3": 4,
+  "R4": 10,
+  "R5": 3,
+  "R7": 6
+ },
+ "qml/components/views/Settings/DateTimeStatus.qml": {
+  "R1": 8,
+  "R14": 3,
+  "R4": 4,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/components/views/Settings/DefaultAppsCard.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R4": 1,
+  "R7": 2
+ },
+ "qml/components/views/Settings/DependenciesCard.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R7": 2
+ },
+ "qml/components/views/Settings/DevBanner.qml": {
+  "R1": 5,
+  "R14": 1,
+  "R2": 3,
+  "R3": 1,
+  "R7": 3
+ },
+ "qml/components/views/Settings/DevConfigDiffCard.qml": {
+  "R1": 9,
+  "R14": 8,
+  "R3": 6,
+  "R5": 1,
+  "R7": 6,
+  "R9": 1
+ },
+ "qml/components/views/Settings/DevTreeCard.qml": {
+  "R1": 8,
+  "R14": 7,
+  "R3": 4,
+  "R7": 4
+ },
+ "qml/components/views/Settings/DeveloperOptionsCard.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/DockListCard.qml": {
+  "R1": 4,
+  "R14": 3,
+  "R4": 2,
+  "R5": 1,
+  "R7": 2
+ },
+ "qml/components/views/Settings/EntryListCard.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R3": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/FoldingCard.qml": {
+  "R1": 2,
+  "R2": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/GreeterStatus.qml": {
+  "R1": 4,
+  "R14": 2,
+  "R7": 1
+ },
+ "qml/components/views/Settings/IdleStatus.qml": {
+  "R1": 6,
+  "R14": 3,
+  "R4": 1,
+  "R7": 3
+ },
+ "qml/components/views/Settings/InputMethodSetup.qml": {
+  "R1": 4,
+  "R14": 5,
+  "R4": 4,
+  "R7": 4
+ },
+ "qml/components/views/Settings/InputSourcesField.qml": {
+  "R1": 15,
+  "R14": 8,
+  "R2": 1,
+  "R4": 6,
+  "R5": 2,
+  "R7": 8
+ },
+ "qml/components/views/Settings/MarketsWatchlistCard.qml": {
+  "R1": 9,
+  "R14": 2,
+  "R4": 4,
+  "R5": 1,
+  "R7": 6
+ },
+ "qml/components/views/Settings/NightLightStatus.qml": {
+  "R1": 7,
+  "R14": 1,
+  "R7": 2
+ },
+ "qml/components/views/Settings/NotificationsPreview.qml": {
+  "R1": 2,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/OSDBarsEditor.qml": {
+  "R1": 3,
+  "R14": 2,
+  "R3": 2,
+  "R4": 2,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/views/Settings/OSDListCard.qml": {
+  "R1": 4,
+  "R7": 1
+ },
+ "qml/components/views/Settings/OSDSystemsEditor.qml": {
+  "R1": 3,
+  "R14": 3,
+  "R3": 2,
+  "R4": 2,
+  "R5": 1,
+  "R7": 3
+ },
+ "qml/components/views/Settings/OutsideChangesCard.qml": {
+  "R1": 7,
+  "R14": 5,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/views/Settings/PlaceIntro.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R4": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/PolkitStatus.qml": {
+  "R1": 7,
+  "R14": 2,
+  "R4": 1,
+  "R7": 3
+ },
+ "qml/components/views/Settings/RemoveAxiomPanel.qml": {
+  "R1": 7,
+  "R14": 11,
+  "R4": 1,
+  "R5": 1,
+  "R7": 6
+ },
+ "qml/components/views/Settings/SavedConfigsCard.qml": {
+  "R1": 6,
+  "R14": 15,
+  "R3": 5,
+  "R4": 7,
+  "R5": 4,
+  "R7": 3
+ },
+ "qml/components/views/Settings/ScreenSpotPicker.qml": {
+  "R1": 6,
+  "R7": 5
+ },
+ "qml/components/views/Settings/SelfUpdateStatus.qml": {
+  "R1": 10,
+  "R14": 9,
+  "R3": 5,
+  "R4": 5,
+  "R5": 1,
+  "R7": 4
+ },
+ "qml/components/views/Settings/SettingsContent.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 3,
+  "R4": 1,
+  "R5": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/SettingsField.qml": {
+  "R1": 1,
+  "R14": 2,
+  "R7": 1
+ },
+ "qml/components/views/Settings/SettingsGroupCard.qml": {
+  "R1": 4,
+  "R7": 1
+ },
+ "qml/components/views/Settings/SettingsSidebar.qml": {
+  "R1": 6,
+  "R14": 2,
+  "R3": 4,
+  "R4": 3,
+  "R7": 3
+ },
+ "qml/components/views/Settings/SpecialWorkspacesField.qml": {
+  "R1": 3,
+  "R14": 1,
+  "R3": 1,
+  "R7": 1
+ },
+ "qml/components/views/Settings/SystemInfoCard.qml": {
+  "R1": 7,
+  "R14": 6,
+  "R4": 5,
+  "R5": 1,
+  "R7": 7
+ },
+ "qml/components/views/Settings/TranslucencyStatus.qml": {
+  "R1": 4,
+  "R14": 1,
+  "R7": 2
+ },
+ "qml/config/MenusConfig.qml": {
+  "R1": 2
+ },
+ "qml/config/WindowLookConfig.qml": {
+  "R1": 5,
+  "R2": 1
+ },
+ "qml/config/WorkspaceOverlayConfig.qml": {
+  "R1": 2
+ },
+ "qml/services/apps/CalendarManager.qml": {
+  "R1": 2,
+  "R6": 1
+ },
+ "qml/services/apps/MarketsManager.qml": {
+  "R1": 3
+ },
+ "qml/services/compositor/CompositorConfigManager.qml": {
+  "R6": 3
+ },
+ "qml/shell/BlurBackingWindow.qml": {
+  "R17": 1
+ },
+ "qml/shell/Greeter.qml": {
+  "R1": 1,
+  "R7": 1
+ },
+ "qml/shell/Lockscreen.qml": {
+  "R2": 1,
+  "R7": 1
+ },
+ "qml/shell/NoParentNotice.qml": {
+  "R2": 5,
+  "R4": 3,
+  "R5": 1,
+  "R7": 5
+ },
+ "qml/shell/WorkspaceOverlay.qml": {
+  "R1": 3,
+  "R4": 2,
+  "R7": 3
+ }
+}
