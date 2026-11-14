@@ -58,7 +58,7 @@ Panel {
 
   compactContent: CompactFigure {
     icon: "update"
-    iconColor: root.total > 0 ? Theme.accent : Theme.foregroundAlt
+    iconColor: root.total > 0 ? Style.accent : Style.textMuted
     value: !UpdatesManager.supported ? "–" : UpdatesManager.checking && root.total === 0 ? "…" : String(root.total)
     label: I18n.tr("updates")
   }
@@ -83,8 +83,8 @@ Panel {
 
     StyledText {
       text: `${section.title} (${section.packages.length})`
-      font.weight: Font.Bold
-      textColor: Theme.accent
+      role: "label"
+      tone: "accent"
     }
 
     Repeater {
@@ -100,16 +100,17 @@ Panel {
           text: row.modelData.name
           Layout.fillWidth: true
           Layout.minimumWidth: Appearance.fontSize * 4
-          elide: Text.ElideRight
+          overflow: "line"
         }
         StyledLabel {
           visible: !section.namesOnly
           Layout.maximumWidth: root.embedded ? root.sectionWidth * 0.45 : Number.POSITIVE_INFINITY
-          elide: Text.ElideLeft
+          overflow: "line"
+          elide: Text.ElideLeft // style-exempt: the new version stays in view
           // dnf doesn't say the installed version
           text: section.narrow || row.modelData.from === "" ? row.modelData.to : `${row.modelData.from} → ${row.modelData.to}`
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
+          tone: "muted"
         }
       }
     }
@@ -117,8 +118,8 @@ Panel {
     StyledText {
       visible: section.packages.length > root.maxRows
       text: I18n.tr("+{0} more", section.packages.length - root.maxRows)
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
+      tone: "muted"
     }
   }
 
@@ -129,8 +130,10 @@ Panel {
     StyledText {
       visible: UpdatesManager.checking
       text: I18n.tr("checking…")
-      textSize: Appearance.fontSizeBy(-2)
-      opacity: 0.6
+      role: "caption"
+      tone: "faint"
+      Layout.maximumWidth: Widget.textPx(160)
+      overflow: "line"
     }
   }
 
@@ -156,9 +159,9 @@ Panel {
     Layout.fillWidth: true
     // A failed check's stderr wraps rather than widening the popout
     Layout.maximumWidth: Widget.px(320)
-    wrapMode: Text.Wrap
+    overflow: "wrap"
     text: root.failed || I18n.tr("System is up to date")
-    textColor: Theme.foregroundAlt
+    tone: "muted"
   }
 
   // A card: the empty state centred, and the lists kept at the top
@@ -166,13 +169,19 @@ Panel {
     visible: root.embedded
     Layout.fillWidth: true
     Layout.fillHeight: true
+    Skeleton {
+      visible: UpdatesManager.checking && root.total === 0 && root.failed === ""
+      anchors.left: parent.left
+      anchors.right: parent.right
+      lines: 3
+    }
     EmptyState {
-      visible: root.total === 0
+      visible: root.total === 0 && !(UpdatesManager.checking && root.failed === "")
       anchors.centerIn: parent
       maxWidth: parent.width
       availableHeight: parent.height
       icon: !UpdatesManager.supported ? "block" : root.failed !== "" ? "error" : "check"
-      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : UpdatesManager.checking ? I18n.tr("checking…") : root.failed || I18n.tr("System is up to date")
+      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : root.failed || I18n.tr("System is up to date")
     }
   }
 }

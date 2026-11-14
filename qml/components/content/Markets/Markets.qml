@@ -41,7 +41,7 @@ Card {
   compactContent: CompactFigure {
     readonly property string trend: MarketMath.trend(root.firstQuote?.change ?? 0)
     icon: trend === "up" ? "trending_up" : trend === "down" ? "trending_down" : "show_chart"
-    iconColor: MarketsManager.trendColor(trend)
+    iconColor: Style.toneColor(MarketMath.trendTone(trend, MarketsConfig.redForGains))
     value: root.firstQuote && !root.firstQuote.error ? MarketMath.formatPrice(root.firstQuote.price, root.firstQuote.currency) : ""
     label: root.first ? I18n.tr("{0} {1}", MarketMath.displayName(root.first, root.firstQuote), MarketMath.formatPercent(root.firstQuote?.changePercent ?? NaN)) : ""
   }
@@ -55,8 +55,15 @@ Card {
     text: root.items.length === 0 ? I18n.tr("No symbols on the watchlist yet") : I18n.tr("Couldn't load market prices: {0}", MarketsManager.error)
   }
 
+  Skeleton {
+    visible: MarketsManager.loading && root.items.length > 0
+    anchors.fill: parent
+    anchors.margins: root.pad
+    lines: 3
+  }
+
   ColumnLayout {
-    visible: root.items.length > 0 && !(root.failed && !root.firstQuote)
+    visible: root.items.length > 0 && !(root.failed && !root.firstQuote) && !MarketsManager.loading
     anchors.fill: parent
     anchors.margins: root.pad
     spacing: Widget.spacing
@@ -69,8 +76,10 @@ Card {
 
       StyledText {
         visible: root.portfolio !== null && root.selected === null
-        textColor: MarketsManager.trendColor(MarketMath.trend(root.portfolio?.dayChange ?? 0))
-        font.weight: Font.DemiBold
+        textColor: Style.toneColor(MarketMath.trendTone(MarketMath.trend(root.portfolio?.dayChange ?? 0), MarketsConfig.redForGains))
+        font.weight: Style.weightStrong
+        Layout.maximumWidth: Widget.textPx(160)
+        overflow: "line"
         text: root.portfolio ? I18n.tr("{0} · {1}", MarketMath.formatPrice(root.portfolio.value, MarketsConfig.baseCurrency), MarketMath.formatPercent(root.portfolio.dayPercent)) : ""
       }
       StyledIconButton {

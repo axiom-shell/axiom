@@ -23,7 +23,7 @@ Item {
 
   readonly property string trend: MarketMath.trend(root.quote?.change ?? 0)
   readonly property string trendTone: MarketMath.trendTone(root.trend, MarketsConfig.redForGains)
-  readonly property color trendLine: root.trendTone === "success" ? Style.success : root.trendTone === "error" ? Style.error : Style.textFaint
+  readonly property color trendLine: Style.trendLine(root.trendTone)
   readonly property var holding: root.showHoldings ? MarketMath.holding(root.item, root.quote) : null
   readonly property string stateLabel: MarketsManager.stateLabel(root.quote)
   readonly property bool hasPrice: !!root.quote && !root.quote.error

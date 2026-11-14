@@ -43,13 +43,21 @@ Card {
   readonly property real weekMin: root.daily ? Math.min(...root.daily.temperature_2m_min) : 0
   readonly property real weekMax: root.daily ? Math.max(...root.daily.temperature_2m_max) : 1
 
+  Skeleton {
+    anchors.centerIn: parent
+    width: Math.min(root.innerWidth, Widget.px(260))
+    visible: !root.current && WeatherManager.error === ""
+    lines: 2
+    avatar: true
+  }
+
   EmptyState {
     anchors.centerIn: parent
-    visible: !root.current
+    visible: !root.current && WeatherManager.error !== ""
     maxWidth: root.innerWidth
     availableHeight: root.innerHeight
-    icon: WeatherManager.error ? "cloud_off" : "cloud"
-    text: WeatherManager.error ? I18n.tr("Couldn't load the weather: {0}", WeatherManager.error) : I18n.tr("Loading weather…")
+    icon: "cloud_off"
+    text: I18n.tr("Couldn't load the weather: {0}", WeatherManager.error)
   }
 
   // Compact: the condition and temperature
@@ -98,14 +106,14 @@ Card {
           Layout.preferredWidth: Appearance.fontSize * 2.2
           horizontalAlignment: Text.AlignRight
           text: `${Math.round(day.low)}°`
-          opacity: 0.6
+          tone: "faint"
         }
         Rectangle {
           visible: list.bars
           Layout.preferredWidth: list.width * 0.35
           Layout.preferredHeight: Widget.px(4)
           radius: 2
-          color: Theme.backgroundAlt
+          color: Style.surfaceSunken
           Rectangle {
             readonly property real span: Math.max(1, root.weekMax - root.weekMin)
             x: parent.width * (day.low - root.weekMin) / span
@@ -116,11 +124,11 @@ Card {
               orientation: Gradient.Horizontal
               GradientStop {
                 position: 0
-                color: Theme.info
+                color: Style.info
               }
               GradientStop {
                 position: 1
-                color: Theme.warning
+                color: Style.warning
               }
             }
           }
@@ -129,7 +137,7 @@ Card {
           Layout.preferredWidth: Appearance.fontSize * 2.2
           horizontalAlignment: Text.AlignRight
           text: `${Math.round(day.high)}°`
-          font.weight: Font.Bold
+          font.weight: Style.weightStrong
         }
       }
     }
@@ -151,8 +159,8 @@ Card {
       spacing: root.pad * 2
       WeatherCurrent {
         stacked: root.stacked
-        iconSize: Appearance.fontSize * (root.stacked ? 4 * root.heroScale : 3)
-        temperatureSize: Appearance.fontSize * (root.stacked ? 2.4 * root.heroScale : 2)
+        iconSize: Style.typeBody * (root.stacked ? 4 * root.heroScale : 3) // fitted: the hero
+        temperatureSize: Style.typeBody * (root.stacked ? 2.4 * root.heroScale : 2) // fitted: the hero
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignVCenter
@@ -169,7 +177,7 @@ Card {
       visible: hours.visible || days.visible
     }
     StyledSeparator {
-      separatorColor: Theme.accent
+      accent: true
       visible: hours.visible || days.visible
       Layout.fillWidth: true
     }
@@ -194,18 +202,18 @@ Card {
           StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: parent.hourly ? I18n.formatDate(new Date(parent.hourly.time[parent.index]), "HH") : ""
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
+            role: "caption"
+            tone: "muted"
           }
           StyledIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             text: parent.hourly ? WeatherManager.conditionFor(parent.hourly.weather_code[parent.index], parent.hourly.is_day[parent.index]).icon : ""
-            textSize: Appearance.fontSize * 1.4
+            size: "md"
           }
           StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: parent.hourly ? `${Math.round(parent.hourly.temperature_2m[parent.index])}°` : ""
-            textSize: Appearance.fontSizeBy(-1)
+            role: "caption"
           }
         }
       }

@@ -42,7 +42,7 @@ ColumnLayout {
   readonly property string trend: MarketMath.trend(root.change)
   readonly property string trendTone: MarketMath.trendTone(root.trend, MarketsConfig.redForGains)
   readonly property color trendText: Style.toneColor(root.trendTone)
-  readonly property color trendLine: root.trendTone === "success" ? Style.success : root.trendTone === "error" ? Style.error : Style.textFaint
+  readonly property color trendLine: Style.trendLine(root.trendTone)
   readonly property string currency: root.quote?.currency ?? ""
 
   readonly property string _wantedKey: root.isDay || !root.item ? "" : root.item.source + ":" + root.item.symbol + ":" + root.shownRange

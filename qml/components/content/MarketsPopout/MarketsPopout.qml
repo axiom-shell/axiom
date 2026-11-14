@@ -28,6 +28,7 @@ Panel {
 
   readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.symbols)
   readonly property var portfolio: MarketsManager.portfolio
+  readonly property string dayTone: MarketMath.trendTone(MarketMath.trend(root.portfolio?.dayChange ?? 0), MarketsConfig.redForGains)
 
   // The symbol shown in detail ("" for the list), and its chart's range
   property string selectedId: ""
@@ -44,7 +45,7 @@ Panel {
   spacing: Widget.padding
   implicitWidth: Widget.px(400)
   // Room for the tallest view, and for the portfolio the detail hides
-  maxImplicitHeight: root.implicitHeight - root.bodyHeight + Math.max(root.detailHeight, root.listHeight, root.emptyHeight) + (root.selected !== null && root.showPortfolio && root.portfolio !== null ? portfolioBox.implicitHeight + root.spacing : 0)
+  maxImplicitHeight: root.implicitHeight - root.bodyHeight + Math.max(root.detailHeight, root.listHeight, root.emptyHeight) + (root.selected !== null && root.showPortfolio && root.portfolio !== null ? summary.implicitHeight + root.spacing : 0)
   flips: true
 
   ModuleHeader {
@@ -71,13 +72,12 @@ Panel {
   }
 
   // The holdings' total, today's change and the total gain
-  Rectangle {
-    id: portfolioBox
+  Surface {
+    id: summary
     visible: root.selected === null && root.showPortfolio && root.portfolio !== null
     Layout.fillWidth: true
     implicitHeight: portfolioRow.implicitHeight + Widget.padding * 2
-    radius: Widget.radius
-    color: Qt.alpha(MarketsManager.trendColor(MarketMath.trend(root.portfolio?.dayChange ?? 0)), 0.1)
+    tone: root.dayTone === "faint" ? "sunken" : root.dayTone + "Container"
 
     RowLayout {
       id: portfolioRow
@@ -88,13 +88,14 @@ Panel {
         spacing: 0
         StyledLabel {
           text: I18n.tr("Portfolio")
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.foregroundAlt
+          role: "caption"
+          textColor: summary.ink.muted
         }
         StyledLabel {
           text: root.portfolio ? MarketMath.formatPrice(root.portfolio.value, MarketsConfig.baseCurrency) : ""
-          textSize: Appearance.fontSize * 1.6
-          font.weight: Font.Bold
+          role: "display"
+          font.weight: Style.weightStrong
+          textColor: summary.ink.text
         }
       }
       Item {
@@ -104,15 +105,15 @@ Panel {
         spacing: 0
         StyledLabel {
           Layout.alignment: Qt.AlignRight
-          textColor: MarketsManager.trendColor(MarketMath.trend(root.portfolio?.dayChange ?? 0))
-          font.weight: Font.DemiBold
+          textColor: summary.ink.text
+          font.weight: Style.weightStrong
           text: root.portfolio ? I18n.tr("{0} ({1}) today", MarketMath.formatChange(root.portfolio.dayChange, MarketsConfig.baseCurrency), MarketMath.formatPercent(root.portfolio.dayPercent)) : ""
         }
         StyledLabel {
           Layout.alignment: Qt.AlignRight
           visible: root.portfolio?.gain !== null && root.portfolio?.gain !== undefined
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.foregroundAlt
+          role: "caption"
+          textColor: summary.ink.muted
           text: visible ? I18n.tr("{0} ({1}) in all", MarketMath.formatChange(root.portfolio.gain, MarketsConfig.baseCurrency), MarketMath.formatPercent(root.portfolio.gainPercent)) : ""
         }
       }
@@ -161,8 +162,8 @@ Panel {
   StyledText {
     Layout.fillWidth: true
     horizontalAlignment: Text.AlignHCenter
-    textSize: Appearance.fontSizeBy(-3)
-    textColor: Theme.foregroundInactive
+    role: "micro"
+    tone: "faint"
     text: MarketsManager.updatedAt > 0 ? I18n.tr("Updated {0} · Yahoo Finance, CoinGecko", I18n.formatDate(new Date(MarketsManager.updatedAt), I18n.timeFormat("default"))) : MarketsManager.loading ? I18n.tr("Loading prices…") : ""
   }
 }
