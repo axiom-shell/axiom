@@ -16,7 +16,7 @@ Everything outside the bars follows the Interface scale and Density through `Wid
 | A gap: 3–6 / 8 / 12–14 px | `Widget.spacing` / `Widget.spacing * 2` / `Widget.padding` |
 | Inner margins of a row, field or dropdown (6–8 px) | `Widget.smallPadding` |
 | A panel's or card's padding (10–22 px) | `Widget.padding` (× 2 for 18–22) |
-| A control's height (fields, switches, tabs) | `Widget.height` (or a fixed share of it) |
+| A control's height (fields, switches, tabs) | `Widget.height` (or a fixed share of it); it, `smallHeight` and `iconButton` grow with the font size so a control always holds a line of its text (`StyleTokens.controlHeight`) |
 | A square icon button | `Widget.iconButton` (`StyledIconButton`'s default `size`) |
 | A chip, pill or small button (18–22 px) | `Widget.smallHeight` |
 | A text or icon size | a `role` / `size` (`Style.textRole`, `Style.iconSize`) |

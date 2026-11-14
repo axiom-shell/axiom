@@ -30,8 +30,7 @@ TestCase {
   Component {
     id: textComp
 
-    StyledText {
-    }
+    StyledText {}
   }
 
   Component {
