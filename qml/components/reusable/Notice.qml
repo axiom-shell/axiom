@@ -11,7 +11,7 @@ Surface {
   signal triggered
 
   // -- Public API --
-  // info | success | warning | error
+  // info | success | warning | error | accent
   property string status: "info"
   // A Material Symbols name (by default the status's)
   property string icon: ({
@@ -59,9 +59,9 @@ Surface {
         Layout.fillWidth: true
         visible: root.text !== ""
         text: root.text
-        role: "micro"
+        role: root.title !== "" ? "micro" : "caption"
         overflow: "wrap"
-        textColor: root.ink.muted
+        textColor: root.title !== "" ? root.ink.muted : root.ink.text
       }
     }
     StyledTextButton {

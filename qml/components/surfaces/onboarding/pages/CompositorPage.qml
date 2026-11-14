@@ -50,7 +50,7 @@ OnboardingPage {
   // Why axiom can't set this compositor up (an older Hyprland)
   Notice {
     visible: OnboardingManager.setupProblem !== ""
-    tone: "error"
+    status: "error"
     text: OnboardingManager.setupProblem
   }
 
@@ -59,7 +59,7 @@ OnboardingPage {
   Notice {
     readonly property string hint: CompositorManager.unsupportedHint("blur")
     visible: hint !== ""
-    tone: "info"
+    status: "info"
     text: I18n.tr("{0} can't blur, round window corners or cast shadows, so axiom's surfaces are solid. {1}", root.compositor, hint)
   }
 
@@ -116,7 +116,7 @@ OnboardingPage {
 
   Notice {
     visible: OnboardingManager.chosenMode === "detached" && !OnboardingManager.autostartDone
-    tone: "warning"
+    status: "warning"
     text: I18n.tr("{0} won't start axiom by itself in this mode until your {1} does:", root.compositor, root.config)
   }
 
@@ -130,7 +130,7 @@ OnboardingPage {
 
   Notice {
     visible: CompositorConfigManager.skippedKeys.length > 0 && OnboardingManager.chosenMode !== "managed"
-    tone: "warning"
+    status: "warning"
     text: I18n.tr("Your config already binds {0}, so axiom's binds on those keys are skipped. Free them in your config, or pick other keys on the Keybinds page.", CompositorConfigManager.skippedKeys.join(", "))
   }
 

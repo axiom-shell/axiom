@@ -15,7 +15,7 @@ OnboardingPage {
 
   Notice {
     visible: checks.checked && checks.wanted.length === 0
-    tone: "success"
+    status: "success"
     text: I18n.tr("Everything axiom uses is installed.")
   }
 
