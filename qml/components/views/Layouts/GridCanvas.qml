@@ -189,7 +189,7 @@ Card {
           StyledLabel {
             text: root.title
             textSize: Appearance.fontSizeBy(4)
-            font.bold: true
+            font.weight: Font.Bold
             elide: Text.ElideRight
             Layout.maximumWidth: root.width / 3
           }

@@ -67,7 +67,7 @@ StyledContainer {
     StyledLabel {
       text: root.label
       textColor: root.ink
-      font.bold: root.selected
+      font.weight: (root.selected) ? Font.Bold : Font.Normal
       opacity: root.dimmed ? 0.5 : 1
       elide: Text.ElideRight
       Layout.fillWidth: true

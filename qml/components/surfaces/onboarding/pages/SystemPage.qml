@@ -37,7 +37,7 @@ OnboardingPage {
   StyledText {
     visible: !Paths.packaged
     text: I18n.tr("Keeping axiom up to date")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   SettingRows {
@@ -49,7 +49,7 @@ OnboardingPage {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Clipboard history")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   StyledText {
@@ -66,7 +66,7 @@ OnboardingPage {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Idle")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   RowLayout {
@@ -133,7 +133,7 @@ OnboardingPage {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Lock screen")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   RowLayout {
@@ -171,7 +171,7 @@ OnboardingPage {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Authentication prompts")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   StyledText {
@@ -216,7 +216,7 @@ OnboardingPage {
     Layout.topMargin: Widget.spacing
     visible: !!ScreenShareManager.portal
     text: I18n.tr("Screen sharing")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   RowLayout {
@@ -260,7 +260,7 @@ OnboardingPage {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Login screen")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   StyledText {

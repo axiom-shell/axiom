@@ -69,7 +69,7 @@ EntryListCard {
   entryContent: [
     StyledText {
       text: I18n.tr("Pinned apps")
-      font.bold: true
+      font.weight: Font.Bold
       Layout.fillWidth: true
     },
     RowLayout {

@@ -111,7 +111,7 @@ ColumnLayout {
         // "Section:" description)
         text: I18n.tr(root.section.key)
         textColor: Theme.accent
-        font.bold: true
+        font.weight: Font.Bold
       }
 
       StyledLabel {

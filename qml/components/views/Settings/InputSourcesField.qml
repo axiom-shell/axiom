@@ -311,7 +311,7 @@ ColumnLayout {
 
       StyledText {
         text: I18n.tr("Add a keyboard layout")
-        font.bold: true
+        font.weight: Font.Bold
       }
 
       StyledComboEntry {
@@ -342,7 +342,7 @@ ColumnLayout {
 
       StyledText {
         text: I18n.tr("Add an input method")
-        font.bold: true
+        font.weight: Font.Bold
       }
 
       StyledComboEntry {

@@ -348,7 +348,7 @@ Item {
           text: root.notification?.appName || ""
           textColor: Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(-2)
-          font.bold: true
+          font.weight: Font.Bold
           elide: Text.ElideRight
         }
 

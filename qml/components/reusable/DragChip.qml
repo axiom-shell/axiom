@@ -63,7 +63,7 @@ Rectangle {
       visible: root.showsLabel
       text: root.label
       textColor: root.ink
-      font.bold: root.selected
+      font.weight: (root.selected) ? Font.Bold : Font.Normal
       elide: Text.ElideRight
       Layout.fillWidth: true
     }

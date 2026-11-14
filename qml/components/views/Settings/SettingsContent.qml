@@ -395,7 +395,7 @@ Item {
             StyledLabel {
               text: I18n.tr(block.modelData.name)
               textSize: Appearance.fontSizeBy(2)
-              font.bold: true
+              font.weight: Font.Bold
             }
 
             StyledSeparator {

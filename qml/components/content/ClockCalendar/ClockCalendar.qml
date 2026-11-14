@@ -136,7 +136,7 @@ Card {
             minimumPixelSize: Math.min(Appearance.fontSize, Widget.px(8))
             textSize: Appearance.fontSize * 9
             text: I18n.formatDate(root.now, root.timeFormat)
-            font.bold: true
+            font.weight: Font.Bold
           }
           StyledText {
             id: dateText

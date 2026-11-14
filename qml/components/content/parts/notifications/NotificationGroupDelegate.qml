@@ -165,7 +165,7 @@ Item {
             text: (root.group?.appName ?? "") + (root.count > 1 ? "  ·  " + root.count : "")
             textColor: Theme.foregroundAlt
             textSize: Appearance.fontSizeBy(-2)
-            font.bold: true
+            font.weight: Font.Bold
           }
 
           Item {

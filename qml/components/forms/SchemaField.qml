@@ -328,7 +328,7 @@ Loader {
     id: groupHeader
     StyledText {
       text: I18n.tr(root.label)
-      font.bold: true
+      font.weight: Font.Bold
       textColor: Theme.accent
       topPadding: Widget.spacing
     }

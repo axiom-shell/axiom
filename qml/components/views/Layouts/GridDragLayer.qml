@@ -199,7 +199,7 @@ DragLayer {
       StyledLabel {
         text: root.hoverTarget?.targetKind === "trash" ? I18n.tr("Remove") : root.hoverTarget && !root.hoverValid ? I18n.tr("Doesn't fit here") : (root.dragging?.label ?? "")
         textColor: Theme.background
-        font.bold: true
+        font.weight: Font.Bold
       }
     }
   }

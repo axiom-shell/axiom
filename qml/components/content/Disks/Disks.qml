@@ -96,7 +96,7 @@ Card {
                 Layout.fillWidth: true
                 elide: Text.ElideMiddle
                 text: disk.modelData
-                font.bold: true
+                font.weight: Font.Bold
               }
               // Narrow: the used size only, then nothing beside the path
               StyledLabel {

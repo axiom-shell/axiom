@@ -168,7 +168,7 @@ StyledContainer {
     StyledLabel {
       text: root.label || root.actionLabel
       textColor: root.ink
-      font.bold: root.selected
+      font.weight: root.selected ? Font.Bold : Font.Normal
       font.strikeout: root.paused
       opacity: root.paused || root.idle ? 0.5 : 1
       elide: Text.ElideRight

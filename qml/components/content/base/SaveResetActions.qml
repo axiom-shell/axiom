@@ -104,7 +104,7 @@ RowLayout {
         text: button.label
         textSize: Appearance.fontSizeBy(-1)
         textColor: button.contentColor
-        font.bold: true
+        font.weight: Font.Bold
         Layout.alignment: Qt.AlignVCenter
       }
     }

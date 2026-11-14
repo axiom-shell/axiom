@@ -167,7 +167,7 @@ Card {
           text: root.active ? I18n.tr("{0} K", root.kelvin) : I18n.tr("Off")
           textSize: Math.max(Appearance.fontSizeBy(-2), hero.width * 0.11)
           textColor: root.active ? root.onLightColor : Theme.foregroundAlt
-          font.bold: true
+          font.weight: Font.Bold
         }
       }
 
@@ -209,7 +209,7 @@ Card {
           StyledLabel {
             Layout.fillWidth: true
             text: I18n.tr("Night light")
-            font.bold: true
+            font.weight: Font.Bold
             elide: Text.ElideRight
           }
           StyledLabel {

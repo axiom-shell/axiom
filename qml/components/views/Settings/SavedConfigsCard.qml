@@ -124,7 +124,7 @@ FieldGroup {
               anchors.verticalCenter: parent.verticalCenter
               width: Math.min(implicitWidth, nameLine.width - (badges.visible ? Widget.spacing + badges.implicitWidth : 0))
               text: row.fileBaseName
-              font.bold: true
+              font.weight: Font.Bold
               elide: Text.ElideRight
             }
 
@@ -202,7 +202,7 @@ FieldGroup {
 
         StyledLabel {
           text: I18n.tr("Defaults")
-          font.bold: true
+          font.weight: Font.Bold
           elide: Text.ElideRight
           Layout.fillWidth: true
         }
@@ -323,7 +323,7 @@ FieldGroup {
 
           StyledLabel {
             text: importRow.importing?.title ?? ""
-            font.bold: true
+            font.weight: Font.Bold
             elide: Text.ElideRight
             Layout.fillWidth: true
           }
@@ -445,7 +445,7 @@ FieldGroup {
 
           StyledLabel {
             text: exampleRow.modelData.title
-            font.bold: true
+            font.weight: Font.Bold
             elide: Text.ElideRight
             Layout.fillWidth: true
           }

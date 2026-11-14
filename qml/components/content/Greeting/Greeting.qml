@@ -79,7 +79,7 @@ Card {
       text: root.shownText
       textColor: Theme.resolveColor(root.properties.color)
       textSize: Math.max(Widget.px(8), Math.round(height))
-      font.bold: root.properties.bold
+      font.weight: root.properties.bold ? Font.Bold : Font.Normal
       fontSizeMode: Text.Fit
       minimumPixelSize: Widget.px(8)
       wrapMode: Text.WordWrap

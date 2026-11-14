@@ -66,7 +66,7 @@ Card {
       StyledLabel {
         text: chip.modelData
         textSize: Appearance.fontSizeBy(-2)
-        font.bold: true
+        font.weight: Font.Bold
       }
 
       StyledLabel {

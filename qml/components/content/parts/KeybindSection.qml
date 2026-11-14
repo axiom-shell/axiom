@@ -79,7 +79,7 @@ StyledContainer {
       StyledLabel {
         text: KeybindManager.sectionTitle(root._section)
         textColor: Theme.accent
-        font.bold: true
+        font.weight: Font.Bold
         elide: Text.ElideRight
         Layout.fillWidth: true
       }

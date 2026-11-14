@@ -143,7 +143,7 @@ Panel {
       text: key.modelData.label ?? key.modelData.key
       textSize: Math.max(Appearance.fontSizeBy(-2), Math.min(Appearance.fontSize * 1.5, key.height * 0.38))
       textColor: key.kind === "equals" ? Theme.background : key.kind === "op" ? Theme.accent : Theme.foreground
-      font.bold: key.kind !== "digit"
+      font.weight: (key.kind !== "digit") ? Font.Bold : Font.Normal
     }
     StyledIcon {
       visible: !!key.modelData.icon
@@ -395,7 +395,7 @@ Panel {
               text: root.result !== "" ? "= " + root.result : root.expr !== "" && CalculatorManager.busyFor(root.key) ? "…" : ""
               textSize: root.strip ? Appearance.fontSizeBy(2) : (answerBox.centred || answerBox.display) && root.innerHeight >= Appearance.fontSize * 12 ? Appearance.fontSize * 2.2 : Appearance.fontSize * 1.6
               textColor: root.copied !== "" && root.copied === root.result ? Theme.accent : Theme.foreground
-              font.bold: true
+              font.weight: Font.Bold
               wrapMode: answerBox.centred ? Text.Wrap : Text.NoWrap
               maximumLineCount: answerBox.centred ? 3 : 1
               elide: answerBox.centred ? Text.ElideRight : Text.ElideLeft

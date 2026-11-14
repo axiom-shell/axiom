@@ -242,7 +242,7 @@ ColumnLayout {
             StyledLabel {
               Layout.fillWidth: true
               text: root.selected ? root.labelOf(root.selected.type) : ""
-              font.bold: true
+              font.weight: Font.Bold
               elide: Text.ElideRight
             }
           }

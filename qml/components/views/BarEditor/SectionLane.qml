@@ -97,7 +97,7 @@ Rectangle {
 
     StyledLabel {
       text: root.title
-      font.bold: true
+      font.weight: Font.Bold
       elide: Text.ElideRight
       Layout.fillWidth: true
     }

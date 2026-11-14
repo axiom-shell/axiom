@@ -26,7 +26,7 @@ CustomElementBase {
     textFormat: root.rich ? Text.RichText : Text.PlainText
     textColor: root.colorOf(Theme.foreground)
     textFamily: root.options.monospace ? "monospace" : Appearance.fontFamily
-    font.bold: root.options.bold
+    font.weight: root.options.bold ? Font.Bold : Font.Normal
     horizontalAlignment: ({
         "left": Text.AlignLeft,
         "right": Text.AlignRight

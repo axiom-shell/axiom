@@ -203,7 +203,7 @@ Card {
               text: root.timeText(entry.there)
               textSize: Appearance.fontSize * 1.6
               textColor: entry.local ? Theme.accent : Theme.foreground
-              font.bold: true
+              font.weight: Font.Bold
               font.features: {
                 "tnum": 1
               }
@@ -245,7 +245,7 @@ Card {
                   Layout.fillWidth: true
                   text: root.cityOf(entry.place)
                   textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 1.3, root.rowHeight * 0.24))
-                  font.bold: entry.local
+                  font.weight: entry.local ? Font.Bold : Font.Normal
                   elide: Text.ElideRight
                 }
                 StyledLabel {
@@ -261,7 +261,7 @@ Card {
                 text: root.timeText(entry.there)
                 textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 2, root.rowHeight * 0.42))
                 textColor: entry.local ? Theme.accent : Theme.foreground
-                font.bold: true
+                font.weight: Font.Bold
                 font.features: {
                   "tnum": 1
                 }

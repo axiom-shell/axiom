@@ -71,7 +71,7 @@ Rectangle {
       visible: text !== ""
       textColor: root._contentColor
       textSize: root.textSize
-      font.bold: true
+      font.weight: Font.Bold
     }
   }
 

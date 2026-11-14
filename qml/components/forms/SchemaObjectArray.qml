@@ -78,7 +78,7 @@ ColumnLayout {
               text: "#" + (entry.index + 1)
               textColor: Theme.accent
               textSize: Appearance.fontSizeBy(-1)
-              font.bold: true
+              font.weight: Font.Bold
             }
 
             Item {

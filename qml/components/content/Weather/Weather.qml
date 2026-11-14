@@ -129,7 +129,7 @@ Card {
           Layout.preferredWidth: Appearance.fontSize * 2.2
           horizontalAlignment: Text.AlignRight
           text: `${Math.round(day.high)}°`
-          font.bold: true
+          font.weight: Font.Bold
         }
       }
     }

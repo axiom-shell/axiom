@@ -253,7 +253,7 @@ ColumnLayout {
         id: headerLine
         StyledText {
           text: root.stepTitle(entry.modelData.step)
-          font.bold: true
+          font.weight: Font.Bold
           color: Theme.foregroundAlt
         }
       }

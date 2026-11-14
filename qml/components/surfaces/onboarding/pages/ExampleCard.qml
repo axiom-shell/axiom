@@ -164,7 +164,7 @@ StyledContainer {
         Layout.fillWidth: true
         text: root.example.title
         textFormat: Text.PlainText
-        font.bold: true
+        font.weight: Font.Bold
         elide: Text.ElideRight
       }
 

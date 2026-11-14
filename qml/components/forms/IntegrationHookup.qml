@@ -141,7 +141,7 @@ Rectangle {
           Layout.fillWidth: true
           visible: text !== ""
           text: target.t.copyOnly ? I18n.tr(target.t.where ?? "") : target.t.title ? I18n.tr("{0}: {1}", I18n.tr(target.t.title), target.t.path ?? "") : target.t.path ?? ""
-          font.bold: true
+          font.weight: Font.Bold
           wrapMode: Text.WordWrap
         }
 

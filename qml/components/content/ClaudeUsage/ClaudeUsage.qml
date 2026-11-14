@@ -66,7 +66,7 @@ Panel {
       }
       StyledLabel {
         text: `${meter.usage?.percent ?? 0}%`
-        font.bold: true
+        font.weight: Font.Bold
       }
     }
     LevelMeter {
@@ -106,7 +106,7 @@ Panel {
 
         StyledLabel {
           text: account.row.label
-          font.bold: true
+          font.weight: Font.Bold
           textColor: Theme.accent
         }
         StyledLabel {

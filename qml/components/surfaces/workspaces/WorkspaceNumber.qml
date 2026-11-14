@@ -63,7 +63,7 @@ Rectangle {
       text: root.icon !== "" && root.iconPlain ? root.icon + (root.text !== "" ? " " + root.text : "") : root.text
       textSize: Appearance.fontSizeBy(-2)
       textColor: root._textColor
-      font.bold: root.current
+      font.weight: root.current ? Font.Bold : Font.Normal
       elide: Text.ElideRight
       width: root.maxWidth > 0 ? Math.min(implicitWidth, Math.max(0, root.maxWidth - Widget.padding - (iconLabel.visible ? iconLabel.implicitWidth + content.spacing : 0))) : implicitWidth
     }

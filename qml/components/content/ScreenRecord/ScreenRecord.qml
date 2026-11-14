@@ -123,7 +123,7 @@ Panel {
       visible: root.recording
       text: root.elapsed
       textColor: Theme.error
-      font.bold: true
+      font.weight: Font.Bold
       font.features: {
         "tnum": 1
       }
@@ -303,7 +303,7 @@ Panel {
           text: I18n.tr("Recent recordings")
           textSize: Appearance.fontSizeBy(-2)
           textColor: Theme.foregroundAlt
-          font.bold: true
+          font.weight: Font.Bold
           elide: Text.ElideRight
         }
         FlatIconButton {

@@ -85,7 +85,7 @@ OnboardingPage {
     Layout.topMargin: Widget.spacing
     visible: root.hookups.length > 0
     text: root.hookups.every(key => IntegrationHookupManager.isDone(key)) ? I18n.tr("Every app you turned on is set up") : I18n.tr("Finish setting up")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   Repeater {
@@ -102,7 +102,7 @@ OnboardingPage {
       StyledText {
         text: I18n.tr(ThemeManager.integrationTitle(hookup.modelData))
         textColor: Theme.accent
-        font.bold: true
+        font.weight: Font.Bold
       }
 
       IntegrationHookup {

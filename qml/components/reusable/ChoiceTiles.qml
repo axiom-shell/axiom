@@ -172,7 +172,7 @@ TileFlow {
           elide: Text.ElideRight
           text: tile.option.label ?? String(tile.option.value ?? "")
           textColor: tile.selected ? Theme.background : Theme.foreground
-          font.bold: tile.selected
+          font.weight: (tile.selected) ? Font.Bold : Font.Normal
         }
       }
 

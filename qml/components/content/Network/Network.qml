@@ -106,7 +106,7 @@ Card {
           Layout.fillWidth: true
           text: root.info.name || I18n.tr("Disconnected")
           elide: Text.ElideRight
-          font.bold: true
+          font.weight: Font.Bold
         }
         RateLabel {
           rate: SystemManager.netRx

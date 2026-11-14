@@ -28,7 +28,7 @@ ColumnLayout {
     horizontalAlignment: root._align
     elide: Text.ElideRight
     text: WeatherManager.place?.name ?? ""
-    font.bold: true
+    font.weight: Font.Bold
     textColor: Theme.accent
   }
   GridLayout {
@@ -54,7 +54,7 @@ ColumnLayout {
         horizontalAlignment: root._align
         text: WeatherManager.current ? `${Math.round(WeatherManager.current.temperature_2m)}${WeatherManager.unitSymbol}` + (root.labelInline ? `  ${WeatherManager.condition?.label ?? ""}` : "") : ""
         textSize: root.temperatureSize
-        font.bold: true
+        font.weight: Font.Bold
       }
       StyledText {
         visible: !root.labelInline

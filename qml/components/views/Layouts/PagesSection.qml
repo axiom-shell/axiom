@@ -33,7 +33,7 @@ ColumnLayout {
 
   StyledText {
     text: I18n.tr("Overlay pages")
-    font.bold: true
+    font.weight: Font.Bold
     textColor: Theme.accent
   }
 

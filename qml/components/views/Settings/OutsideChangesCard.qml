@@ -139,7 +139,7 @@ FoldingCard {
         id: headerLine
         StyledText {
           text: root.groupTitle(entry.modelData.owner)
-          font.bold: true
+          font.weight: Font.Bold
           color: Theme.foregroundAlt
         }
       }

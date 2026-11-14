@@ -105,7 +105,7 @@ Rectangle {
         wrapMode: root._nameLines > 1 ? Text.Wrap : Text.NoWrap
         maximumLineCount: root._nameLines
         elide: Text.ElideRight
-        font.bold: true
+        font.weight: Font.Bold
         textColor: root.contentColor
         textSize: Appearance.fontSizeBy(-1)
       }

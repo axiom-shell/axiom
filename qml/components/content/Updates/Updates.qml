@@ -83,7 +83,7 @@ Panel {
 
     StyledText {
       text: `${section.title} (${section.packages.length})`
-      font.bold: true
+      font.weight: Font.Bold
       textColor: Theme.accent
     }
 

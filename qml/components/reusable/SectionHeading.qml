@@ -20,7 +20,7 @@ ColumnLayout {
     text: root.title
     textColor: Theme.accent
     textSize: Appearance.fontSizeBy(1)
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   ClampedText {

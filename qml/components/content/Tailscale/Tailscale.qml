@@ -158,7 +158,7 @@ Panel {
           Layout.fillWidth: true
           text: notice.title
           wrapMode: Text.Wrap
-          font.bold: true
+          font.weight: Font.Bold
           textSize: Appearance.fontSizeBy(-1)
         }
         StyledText {
@@ -405,7 +405,7 @@ Panel {
       spacing: Widget.spacing
       StyledLabel {
         text: TailscaleManager.hostName
-        font.bold: true
+        font.weight: Font.Bold
       }
       StyledLabel {
         Layout.fillWidth: true

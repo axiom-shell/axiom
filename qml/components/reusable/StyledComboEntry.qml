@@ -418,7 +418,7 @@ Item {
           Layout.fillWidth: true
           elide: Text.ElideRight
           text: option.modelData.label
-          font.bold: option.modelData.value === root.value
+          font.weight: (option.modelData.value === root.value) ? Font.Bold : Font.Normal
         }
       }
 

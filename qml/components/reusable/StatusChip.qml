@@ -24,6 +24,6 @@ PopInRectangle {
     text: root.text
     textColor: Theme.background
     textSize: Appearance.fontSizeBy(-2)
-    font.bold: true
+    font.weight: Font.Bold
   }
 }

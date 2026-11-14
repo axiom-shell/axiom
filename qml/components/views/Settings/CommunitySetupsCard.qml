@@ -158,7 +158,7 @@ FieldGroup {
             StyledLabel {
               text: details.setup?.title ?? ""
               textFormat: Text.PlainText
-              font.bold: true
+              font.weight: Font.Bold
               textSize: Appearance.fontSizeBy(2)
               elide: Text.ElideRight
               Layout.fillWidth: true
@@ -342,7 +342,7 @@ FieldGroup {
                 Layout.fillWidth: true
                 text: tile.modelData.title
                 textFormat: Text.PlainText
-                font.bold: true
+                font.weight: Font.Bold
                 elide: Text.ElideRight
               }
 

@@ -58,7 +58,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: I18n.tr("Drop to remove")
         textColor: root.hovered ? Theme.background : Theme.foreground
-        font.bold: true
+        font.weight: Font.Bold
       }
     }
   }

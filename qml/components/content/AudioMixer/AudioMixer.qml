@@ -110,7 +110,7 @@ Panel {
       StyledText {
         visible: !root.embedded
         text: I18n.tr(root.isInput ? "Input" : "Output")
-        font.bold: true
+        font.weight: Font.Bold
         textColor: Theme.accent
       }
 

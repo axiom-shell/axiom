@@ -94,7 +94,7 @@ DropdownSurface {
               text: row.rowData.header
               textColor: Theme.foregroundAlt
               textSize: Appearance.fontSizeBy(-3)
-              font.bold: true
+              font.weight: Font.Bold
             }
           }
 

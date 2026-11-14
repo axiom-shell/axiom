@@ -62,7 +62,7 @@ ColumnLayout {
     StyledText {
       text: MonitorManager.labelFor(root.rule)
       textSize: Appearance.fontSizeBy(2)
-      font.bold: true
+      font.weight: Font.Bold
       Layout.fillWidth: true
       elide: Text.ElideRight
     }
@@ -308,7 +308,7 @@ ColumnLayout {
 
           StyledLabel {
             text: I18n.tr("Advanced")
-            font.bold: true
+            font.weight: Font.Bold
             Layout.fillWidth: true
           }
         }

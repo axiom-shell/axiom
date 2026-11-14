@@ -322,7 +322,7 @@ Panel {
 
         StyledLabel {
           text: I18n.tr("VPN")
-          font.bold: true
+          font.weight: Font.Bold
           textColor: Theme.accent
         }
         StyledLabel {

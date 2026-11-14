@@ -229,7 +229,7 @@ Popup {
         StyledLabel {
           visible: !root.saved
           text: root.preset?.title ?? ""
-          font.bold: true
+          font.weight: Font.Bold
           textSize: Appearance.fontSizeBy(2)
         }
 

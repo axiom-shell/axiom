@@ -144,7 +144,7 @@ Panel {
         text: value
         textColor: Theme.accent
         textSize: root.large ? Appearance.fontSize * 2 : root.short ? Appearance.fontSize : Appearance.fontSizeBy(3)
-        font.bold: true
+        font.weight: Font.Bold
       }
     }
     CrossFade {
@@ -340,7 +340,7 @@ Panel {
             elide: Text.ElideRight
             text: value
             textColor: Theme.accent
-            font.bold: true
+            font.weight: Font.Bold
           }
         }
         CrossFade {
