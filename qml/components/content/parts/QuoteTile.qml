@@ -8,8 +8,8 @@ import qs.components.methods
 import qs.components.reusable
 
 // One watched symbol as a tile (the markets module's tiles): its name,
-// the day's line edge to edge, then its price and change, tinted by the
-// trend.
+// the day's line edge to edge, then its price and change, the trend in the
+// change figure and the line.
 // A click is `clicked`.
 ClippingRectangle {
   id: root
@@ -21,17 +21,19 @@ ClippingRectangle {
   readonly property var quote: MarketsManager.quoteFor(root.item)
   readonly property bool hasPrice: !!root.quote && !root.quote.error
   readonly property string trend: MarketMath.trend(root.quote?.change ?? 0)
-  readonly property color trendColor: MarketsManager.trendColor(root.trend)
+  readonly property string trendTone: MarketMath.trendTone(root.trend, MarketsConfig.redForGains)
+  readonly property color trendText: Style.toneColor(root.trendTone)
+  readonly property color trendLine: root.trendTone === "success" ? Style.success : root.trendTone === "error" ? Style.error : Style.textFaint
 
   radius: Widget.radius
-  color: mouse.containsMouse ? Qt.alpha(root.trendColor, 0.14) : Qt.alpha(root.trendColor, 0.08)
-  border.width: 1
-  border.color: Qt.alpha(root.trendColor, 0.25)
-  Behavior on color {
-    ColorAnimation {
-      duration: Appearance.animFast
-      easing.type: Appearance.easing
-    }
+  color: Style.surfaceSunken
+  border.width: Style.hairline
+  border.color: Style.borderSubtle
+
+  StateLayer {
+    hovered: mouse.containsMouse
+    pressed: mouse.pressed
+    radius: root.radius
   }
 
   // Between the name and the price, edge to edge
@@ -46,9 +48,9 @@ ClippingRectangle {
     reference: root.quote?.prevClose ?? 0
     start: root.quote?.sessionStart ?? 0
     end: root.quote?.sessionEnd ?? 0
-    lineColor: root.trendColor
+    lineColor: root.trendLine
     lineWidth: Widget.px(1.5)
-    fillOpacity: 0.35
+    fillOpacity: 0.35 // style-exempt: the chart fill fades its data colour
     showReference: false
   }
 
@@ -62,17 +64,14 @@ ClippingRectangle {
     StyledText {
       Layout.fillWidth: true
       text: MarketMath.displayName(root.item, root.quote)
-      font.weight: Font.DemiBold
-      textSize: Appearance.fontSizeBy(-1)
-      elide: Text.ElideRight
+      role: "label"
     }
     StyledText {
       Layout.fillWidth: true
       text: root.quote?.error ? root.quote.error : MarketsManager.stateLabel(root.quote)
       visible: text !== ""
-      textSize: Appearance.fontSizeBy(-3)
-      textColor: root.quote?.error ? Theme.error : Theme.foregroundInactive
-      elide: Text.ElideRight
+      role: "micro"
+      tone: root.quote?.error ? "error" : "faint"
     }
   }
 
@@ -86,19 +85,17 @@ ClippingRectangle {
     StyledText {
       Layout.fillWidth: true
       text: root.hasPrice ? MarketMath.formatPrice(root.quote.price, root.quote.currency) : "—"
-      textSize: Appearance.fontSize * 1.3
-      font.weight: Font.Bold
+      role: "title"
       font.features: ({
           "tnum": 1
         })
-      elide: Text.ElideRight
     }
     StyledText {
       visible: root.hasPrice
       text: (root.trend === "up" ? "▲ " : root.trend === "down" ? "▼ " : "") + MarketMath.formatPercent(root.quote?.changePercent ?? 0).replace(/^[+−]/, "")
-      textColor: root.trendColor
-      textSize: Appearance.fontSizeBy(-2)
-      font.weight: Font.DemiBold
+      role: "caption"
+      textColor: root.trendText
+      font.weight: Style.weightStrong
     }
   }
 

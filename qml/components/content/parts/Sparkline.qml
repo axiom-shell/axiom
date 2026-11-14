@@ -10,8 +10,8 @@ Canvas {
   property var values: []
   property real minValue: 0
   property real maxValue: 100
-  property color lineColor: Theme.accent
-  property real fillOpacity: 0.2
+  property color lineColor: Style.accent
+  property real fillOpacity: 0.2 // style-exempt: the chart fill fades its data colour
   property real lineWidth: 2
   // How many samples the width represents, so a short history grows in
   // from the right instead of stretching
