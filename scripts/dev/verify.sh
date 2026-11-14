@@ -118,7 +118,8 @@ for f in "${changed[@]}"; do
   data/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
-  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure) ;;
+  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
+  scripts/check_style.py | scripts/style-exceptions.json | scripts/style-baseline.json) script_tests+=(CheckStyle) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
@@ -164,9 +165,11 @@ if [[ $qmlformat -eq 1 ]]; then
 fi
 step "structure" python3 scripts/check_structure.py
 step "sizes" python3 scripts/check_sizes.py
+step "style" python3 scripts/check_style.py
 # Warnings only (they never fail): show those in the files you changed
 if [[ -z "${AXIOM_VERBOSE:-}" && ${#qml[@]} -gt 0 ]]; then
   python3 scripts/check_sizes.py | grep -F -f <(printf '%s:\n' "${qml[@]}") | sort -u | head -n 10 | sed 's/^/  size warning: /' || true
+  python3 scripts/check_style.py --files "${qml[@]}" | head -n 10 | sed 's/^/  style warning: /' || true
 fi
 step "icon names" python3 scripts/check_icons.py
 step "doc citations" python3 scripts/check_docs.py

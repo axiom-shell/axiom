@@ -56,6 +56,7 @@ for job in "${jobs[@]}"; do
   checks)
     step "structure" python3 scripts/check_structure.py
     step "sizes" python3 scripts/check_sizes.py
+    step "style" python3 scripts/check_style.py
     step "icons" python3 scripts/check_icons.py
     step "docs" python3 scripts/check_docs.py
     step "package lists" python3 scripts/check_packages.py

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The style lint: keep colours, text sizes, weights and text rendering on the Style roles.
 
-A ratchet until PR 11 of the style stack (docs/dev/core/style.md; the rules'
-reasons and the lifecycle are in docs/dev/testing.md > The checks): every file
+A ratchet until the last style change (docs/dev/core/style.md; the lifecycle
+is in docs/dev/testing.md > The checks; the rules are listed below): every file
 holds at most the hits scripts/style-baseline.json records, and a file not in it
 holds none. Rules:
 
