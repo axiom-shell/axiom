@@ -56,7 +56,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `StyledSeparator`: a `Style.dividerWidth` divider in the divider colour of the fill it sits on (`backTone`: `raised` in menus, dropdowns and tooltips); `strong`, or `accent` where a divider is accent by design.
 - `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's, the bar's `separatorStyle` and a custom widget's Separator element).
 - `StatusChip` (filled status pill, a `tone`: its container and ink; never below the chip floor, its word never elided), `CountBadge` (a count on a button's or icon's corner; bumps when it changes), `UnsavedDot` (`onAccent` on a selected row).
-  - All three are `PopInRectangle`s: set `shown` (not `visible`) and they pop in and out; `pulse()` for a bump.
+  - All three are `PopInRectangle`s: set `shown` (not `visible`) and they slide up as they fade in and back as they fade out; `pulse()` for a bump.
 - `IssueList`: `[{ level, text }]`, errors red, warnings amber.
 - `TipIcon`: an icon saying what it means in a tooltip on hover (`tip`), for a flag or a problem shown without its text (the bind list's flags).
 - `IssueIcon`: one problem's icon in those colors (`level`, `tone`), a `TipIcon` saying what's wrong (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).

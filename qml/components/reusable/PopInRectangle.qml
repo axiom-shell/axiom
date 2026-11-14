@@ -3,8 +3,8 @@ import QtQuick
 import qs.config
 
 // A small mark that pops in and out (CountBadge, StatusChip, UnsavedDot):
-// set `shown` rather than `visible`, and it grows in from its centre and
-// shrinks away, staying visible (and laid out) until it has. `pulse()`
+// set `shown` rather than `visible`, and it slides up into place as it fades
+// in and back as it fades out, staying visible (and laid out) until it has. `pulse()`
 // gives it a short bump, for a value that changed while it shows.
 Rectangle {
   id: root
@@ -19,7 +19,11 @@ Rectangle {
 
   visible: _reveal > 0
   opacity: _reveal
-  scale: (0.6 + 0.4 * _reveal) * _bump
+  scale: root._bump
+  // A transform, never `y`: the badge's layout owns that
+  transform: Translate {
+    y: Math.round((1 - root._reveal) * Style.enterOffset)
+  }
 
   function pulse() {
     if (Appearance.animations && root.shown)

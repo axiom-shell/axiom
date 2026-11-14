@@ -284,6 +284,9 @@ Item {
     id: dropdownComponent
 
     Popup {
+      id: dropdown
+      // How far the list still has to slide up into place while it opens
+      property real _shift: 0
       y: root.height + Widget.spacing / 2
       width: root.width
       // Rows are inset from the rounded border (as SchemaComboBox's), so
@@ -292,9 +295,8 @@ Item {
       // The field keeps the keys: the list is driven from it
       focus: false
       closePolicy: Popup.CloseOnPressOutsideParent
-      transformOrigin: Item.Top
 
-      // Grows down out of the field, fading and scaling in
+      // Slides down out of the field, fading in
       enter: Transition {
         NumberAnimation {
           property: "opacity"
@@ -303,10 +305,10 @@ Item {
           duration: Appearance.animNormal
           easing.type: Appearance.easing
         }
-        NumberAnimation { // style-exempt: motion
-          property: "scale"
-          from: 0.95
-          to: 1
+        NumberAnimation {
+          property: "_shift"
+          from: -Style.enterOffset
+          to: 0
           duration: Appearance.animNormal
           easing.type: Appearance.easing
         }
@@ -321,9 +323,16 @@ Item {
       }
 
       // Solid: it opens inside its window, where no blur reaches
-      background: DropdownSurface {}
+      background: DropdownSurface {
+        transform: Translate {
+          y: Math.round(dropdown._shift)
+        }
+      }
 
       contentItem: ListView {
+        transform: Translate {
+          y: Math.round(dropdown._shift)
+        }
         implicitHeight: Math.min(contentHeight, Widget.height * 6)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
