@@ -58,9 +58,9 @@ Panel {
 
   compactContent: CompactFigure {
     icon: TailscaleManager.connected ? "vpn_lock" : "signal_disconnected"
-    iconColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
+    iconColor: TailscaleManager.connected ? Style.accent : Style.textMuted
     value: TailscaleManager.connected ? String(TailscaleManager.onlineCount) : ""
-    label: TailscaleManager.connected ? I18n.tr("online") : TailscaleManager.available ? TailscaleManager.stateText : I18n.tr("not installed")
+    label: !TailscaleManager.known ? "" : TailscaleManager.connected ? I18n.tr("online") : TailscaleManager.available ? TailscaleManager.stateText : I18n.tr("not installed")
   }
 
   function ago(iso) {
@@ -102,9 +102,8 @@ Panel {
     icon: root.osIcon(row.peer?.os ?? "")
     title: row.peer?.name ?? ""
     status: row.copied ? I18n.tr("Copied {0}", row.peer?.ips[0] ?? "") : row.peer ? root.peerStatus(row.peer) : ""
-    statusColor: row.copied ? Theme.accent : Theme.foregroundAlt
+    statusColor: row.copied ? Style.textAccent : Style.textMuted
     connected: row.peer?.online ?? false
-    color: row.hovered ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
     onPeerChanged: row.copied = false
     onActivated: {
       if ((row.peer?.ips.length ?? 0) === 0)
@@ -117,69 +116,6 @@ Panel {
       running: row.copied
       interval: 2000
       onTriggered: row.copied = false
-    }
-  }
-
-  // Something that needs the user before the rest works (operator rights,
-  // a login): a tinted box with what and why, and one small button
-  component Notice: Rectangle {
-    id: notice
-    property string icon
-    property string title
-    property string detail
-    property string action
-    property color tint: Theme.warning
-    // The button works (not while another action runs, by default)
-    property bool ready: !TailscaleManager.busy
-    signal triggered
-
-    Layout.fillWidth: true
-    implicitHeight: noticeRow.implicitHeight + Widget.padding
-    radius: Widget.radius
-    color: Qt.alpha(notice.tint, 0.12)
-    border.color: Qt.alpha(notice.tint, 0.4)
-    border.width: Appearance.borderWidth
-
-    RowLayout {
-      id: noticeRow
-      anchors.fill: parent
-      anchors.leftMargin: Widget.padding
-      anchors.rightMargin: Widget.padding / 2
-      spacing: Widget.padding
-      StyledIcon {
-        text: notice.icon
-        textColor: notice.tint
-        textSize: Appearance.fontSizeBy(2)
-      }
-      ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 0
-        StyledText {
-          Layout.fillWidth: true
-          text: notice.title
-          wrapMode: Text.Wrap
-          font.weight: Font.Bold
-          textSize: Appearance.fontSizeBy(-1)
-        }
-        StyledText {
-          Layout.fillWidth: true
-          visible: notice.detail !== ""
-          text: notice.detail
-          wrapMode: Text.Wrap
-          textSize: Appearance.fontSizeBy(-3)
-          textColor: Theme.foregroundAlt
-        }
-      }
-      StyledTextButton {
-        enabled: notice.ready
-        opacity: enabled ? 1 : 0.5
-        text: notice.action
-        textSize: Appearance.fontSizeBy(-2)
-        textPadding: Widget.smallPadding
-        backgroundColor: notice.tint
-        textColor: Theme.background
-        onClicked: notice.triggered()
-      }
     }
   }
 
@@ -215,19 +151,19 @@ Panel {
         Layout.preferredWidth: Widget.iconButton
         horizontalAlignment: Text.AlignHCenter
         text: fold.icon
-        textColor: foldRow.hovered && fold.foldable ? Theme.accent : Theme.foregroundAlt
+        tone: foldRow.hovered && fold.foldable ? "accent" : "muted"
       }
       StyledLabel {
         text: fold.label
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
       }
       StyledLabel {
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight
         text: fold.value
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: Theme.foregroundAlt
+        overflow: "line"
+        role: "caption"
+        tone: "muted"
       }
     }
     Loader {
@@ -240,62 +176,17 @@ Panel {
 
   // One choice in a fold (an account, an exit node, adding one): a check
   // on the chosen one, a click picks another
-  component ChoiceRow: Rectangle {
+  component ChoiceRow: ItemRow {
     id: choice
-    property string icon
-    property string title
-    property string subtitle
+    // The row's icon while it isn't the chosen one (a check)
+    property string glyph
     property bool chosen: false
     signal picked
 
-    Layout.fillWidth: true
-    implicitHeight: Math.max(choiceColumn.implicitHeight, Widget.iconButton) + Widget.spacing
-    radius: Widget.radius
-    color: choiceHover.hovered && choiceArea.enabled ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
-
-    ColorGlide on color {}
-
-    HoverHandler {
-      id: choiceHover
-    }
-    MouseArea {
-      id: choiceArea
-      anchors.fill: parent
-      enabled: !choice.chosen && !TailscaleManager.busy
-      cursorShape: Qt.PointingHandCursor
-      onClicked: choice.picked()
-    }
-    RowLayout {
-      anchors.fill: parent
-      anchors.rightMargin: Widget.padding
-      spacing: Widget.spacing
-      StyledIcon {
-        Layout.preferredWidth: Widget.iconButton
-        horizontalAlignment: Text.AlignHCenter
-        text: choice.chosen ? "check" : choice.icon
-        textColor: choice.chosen ? Theme.accent : Theme.foregroundAlt
-      }
-      ColumnLayout {
-        id: choiceColumn
-        Layout.fillWidth: true
-        spacing: 0
-        StyledLabel {
-          Layout.fillWidth: true
-          text: choice.title
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-1)
-          textColor: choice.chosen ? Theme.accent : Theme.foreground
-        }
-        StyledLabel {
-          Layout.fillWidth: true
-          visible: choice.subtitle !== ""
-          text: choice.subtitle
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-3)
-          textColor: Theme.foregroundAlt
-        }
-      }
-    }
+    icon: choice.chosen ? "check" : choice.glyph
+    marked: choice.chosen
+    clickable: !choice.chosen && !TailscaleManager.busy
+    onActivated: choice.picked()
   }
 
   // One of the node's switches (TailscaleManager.prefs[key]): toggling
@@ -328,13 +219,13 @@ Panel {
     StyledLabel {
       Layout.fillWidth: true
       text: pref.label
-      elide: Text.ElideRight
-      textSize: Appearance.fontSizeBy(-2)
+      overflow: "line"
+      role: "caption"
     }
     StyledSwitch {
       id: prefSwitch
       enabled: !TailscaleManager.busy
-      opacity: enabled ? 1 : 0.5
+      opacity: enabled ? 1 : Style.opacityDisabled
       checked: TailscaleManager.prefs[pref.key] ?? false
       onToggled: TailscaleManager.setPref(pref.key, checked)
     }
@@ -345,30 +236,34 @@ Panel {
   // bar whichever way the popout grows.
   Notice {
     visible: root.canAct && TailscaleManager.profilesDenied
+    status: "warning"
+    enabled: !TailscaleManager.busy
     icon: "admin_panel_settings"
     title: I18n.tr("Tailscale needs your permission")
-    detail: I18n.tr("Allow your user to connect, switch accounts and change options.")
-    action: I18n.tr("Grant access")
+    text: I18n.tr("Allow your user to connect, switch accounts and change options.")
+    actionText: I18n.tr("Grant access")
     onTriggered: TailscaleManager.grantOperator()
   }
 
   ModuleHeader {
     icon: "vpn_lock"
-    iconColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
+    iconColor: TailscaleManager.connected ? Style.accent : Style.textMuted
     title: TailscaleManager.tailnetName || I18n.tr("Tailscale")
 
     StyledText {
       visible: TailscaleManager.available
       text: TailscaleManager.stateText
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
+      role: "caption"
+      tone: TailscaleManager.connected ? "accent" : "muted"
+      Layout.maximumWidth: Widget.textPx(160)
+      overflow: "line"
     }
     // Connected or not; while connecting or disconnecting, where it's going
     StyledSwitch {
       id: connectSwitch
       visible: root.canAct
       enabled: !TailscaleManager.busy && !TailscaleManager.profilesDenied
-      opacity: enabled ? 1 : 0.5
+      opacity: enabled ? 1 : Style.opacityDisabled
       checked: TailscaleManager.pending === "tailscale.up" || TailscaleManager.pending !== "tailscale.down" && TailscaleManager.connected
       onToggled: {
         if (checked)
@@ -384,13 +279,13 @@ Panel {
   // `tailscale up`, an action (TailscaleConfig.actions) needing the rights
   Notice {
     visible: TailscaleManager.needsLogin && (TailscaleManager.authURL !== "" || root.canAct && !TailscaleManager.profilesDenied)
+    status: "accent"
     icon: "login"
-    tint: Theme.accent
     title: I18n.tr("Log in to Tailscale")
-    detail: TailscaleManager.authURL ? I18n.tr("Finish logging in in your browser.") : I18n.tr("This machine isn't logged in.")
-    action: I18n.tr("Log in")
+    text: TailscaleManager.authURL ? I18n.tr("Finish logging in in your browser.") : I18n.tr("This machine isn't logged in.")
+    actionText: I18n.tr("Log in")
     // Opening a link doesn't wait for `tailscale up` to give up
-    ready: TailscaleManager.authURL !== "" || !TailscaleManager.busy
+    enabled: TailscaleManager.authURL !== "" || !TailscaleManager.busy
     onTriggered: TailscaleManager.logIn()
   }
 
@@ -405,14 +300,14 @@ Panel {
       spacing: Widget.spacing
       StyledLabel {
         text: TailscaleManager.hostName
-        font.weight: Font.Bold
+        font.weight: Style.weightStrong
       }
       StyledLabel {
         Layout.fillWidth: true
         text: TailscaleManager.dnsName
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: Theme.foregroundAlt
+        overflow: "line"
+        role: "caption"
+        tone: "muted"
       }
     }
     StyledText {
@@ -420,10 +315,10 @@ Panel {
       property bool copied: false
       visible: TailscaleManager.ips.length > 0
       Layout.fillWidth: true
-      elide: Text.ElideRight
+      overflow: "line"
       text: ipText.copied ? I18n.tr("Copied {0}", TailscaleManager.ip) : TailscaleManager.ips.join(" · ")
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: ipText.copied ? Theme.accent : Theme.foreground
+      role: "caption"
+      tone: ipText.copied ? "accent" : "text"
 
       Timer {
         running: ipText.copied
@@ -441,11 +336,11 @@ Panel {
     }
     StyledText {
       Layout.fillWidth: true
-      elide: Text.ElideRight
+      overflow: "line"
       text: TailscaleManager.version ? I18n.tr("Tailscale {0}", TailscaleManager.version) : ""
       visible: text !== ""
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.foregroundAlt
+      role: "caption"
+      tone: "muted"
     }
   }
 
@@ -465,7 +360,7 @@ Panel {
         ChoiceRow {
           required property int index
           readonly property var profile: TailscaleManager.profiles[index] ?? null
-          icon: "person"
+          glyph: "person"
           title: profile ? (profile.nickname || profile.account) : ""
           subtitle: profile ? [profile.nickname && profile.nickname !== profile.account ? profile.account : "", profile.tailnet].filter(s => s).join(" · ") : ""
           chosen: profile?.selected ?? false
@@ -473,7 +368,7 @@ Panel {
         }
       }
       ChoiceRow {
-        icon: "person_add"
+        glyph: "person_add"
         title: I18n.tr("Add account")
         onPicked: TailscaleManager.addAccount()
       }
@@ -491,7 +386,7 @@ Panel {
     body: ColumnLayout {
       spacing: 0
       ChoiceRow {
-        icon: "block"
+        glyph: "block"
         title: I18n.tr("None")
         chosen: TailscaleManager.exitNode === ""
         onPicked: TailscaleManager.setExitNode("")
@@ -502,7 +397,7 @@ Panel {
         ChoiceRow {
           required property int index
           readonly property var peer: root.exitOptions[index] ?? null
-          icon: "public"
+          glyph: "public"
           title: peer?.name ?? ""
           subtitle: peer ? (peer.online ? peer.ips[0] ?? "" : I18n.tr("Offline")) : ""
           chosen: peer?.exitNode ?? false
@@ -555,40 +450,47 @@ Panel {
       StyledText {
         required property int index
         Layout.fillWidth: true
-        wrapMode: Text.Wrap
+        overflow: "wrap"
         text: TailscaleManager.health[index] ?? ""
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: Theme.warning
+        role: "caption"
+        tone: "warning"
       }
     }
   }
   StyledText {
     visible: !isNaN(root.keyDays) && root.keyDays < 7
     Layout.fillWidth: true
-    wrapMode: Text.Wrap
+    overflow: "wrap"
     text: root.keyDays <= 0 ? I18n.tr("This machine's key has expired: log in again.") : I18n.tr("This machine's key expires in {0} days.", Math.ceil(root.keyDays))
-    textSize: Appearance.fontSizeBy(-2)
-    textColor: Theme.warning
+    role: "caption"
+    tone: "warning"
   }
   StyledText {
     visible: TailscaleManager.lastError !== ""
     Layout.fillWidth: true
-    wrapMode: Text.Wrap
+    overflow: "wrap"
     text: TailscaleManager.lastError
-    textSize: Appearance.fontSizeBy(-2)
-    textColor: Theme.error
+    role: "caption"
+    tone: "error"
   }
 
   StyledSeparator {
+    visible: TailscaleManager.known
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   // Grows to list every device (from compact, to the full layout)
   wantedHeight: !TailscaleManager.connected ? 0 : root.compact ? 1 : root.height > 0 ? root.height + list.overflow : 0
 
+  Skeleton {
+    visible: !TailscaleManager.known
+    Layout.fillWidth: true
+    lines: 3
+  }
+
   DeviceList {
     id: list
+    visible: TailscaleManager.known
     embedded: root.embedded
     on: TailscaleManager.available && TailscaleManager.connected
     offIcon: "signal_disconnected"
