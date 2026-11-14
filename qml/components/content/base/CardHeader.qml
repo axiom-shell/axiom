@@ -9,7 +9,7 @@ import qs.config
 // Discard only with `canReset`) buttons for whichever service owns the panel's pending edits. Items
 // placed inside sit just after the title. The title elides and the buttons
 // drop to icons when the row is too narrow.
-Rectangle {
+Item {
   id: root
   property string title
   property bool dirty: false
@@ -30,7 +30,6 @@ Rectangle {
 
   Layout.fillWidth: true
   Layout.preferredHeight: Math.max(Widget.height + Widget.padding, headerRow.implicitHeight)
-  color: "transparent"
 
   RowLayout {
     id: headerRow
@@ -45,10 +44,22 @@ Rectangle {
       // a fraction short elides its last letters
       Layout.preferredWidth: Math.ceil(implicitWidth)
       Layout.maximumWidth: Math.ceil(implicitWidth)
+      role: "headline"
       text: root.title
-      textSize: Appearance.fontSizeBy(4)
-      font.weight: Font.Bold
-      elide: Text.ElideRight
+
+      HoverHandler {
+        id: titleHover
+      }
+    }
+
+    // The whole title, while the row is too narrow for it
+    LazyLoader {
+      active: titleHover.hovered && titleText.truncated
+      StyledToolTip {
+        target: titleText
+        text: root.title
+        maxWidth: Widget.textPx(320)
+      }
     }
 
     // `help`: a "?" telling it on hover
@@ -56,8 +67,8 @@ Rectangle {
       id: helpIcon
       visible: root.help !== ""
       text: "help"
-      textColor: helpArea.containsMouse ? Theme.accent : Theme.foregroundInactive
-      textSize: Appearance.fontSizeBy(2)
+      tone: helpArea.containsMouse ? "accent" : "faint"
+      size: "sm"
 
       MouseArea {
         id: helpArea
@@ -71,7 +82,7 @@ Rectangle {
         StyledToolTip {
           target: helpIcon
           text: root.help
-          maxWidth: Widget.px(320)
+          maxWidth: Widget.textPx(320)
         }
       }
     }

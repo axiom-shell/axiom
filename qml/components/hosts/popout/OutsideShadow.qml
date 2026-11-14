@@ -17,6 +17,9 @@ Item {
   required property Item target
   property bool active: true
   property alias look: shadow.look
+  // The shadow's colour, when a caller wants its own (the overlay page's
+  // soft shadow); else the shell's, from `look`
+  property alias shadowColor: shadow.shadowColor
   // Rects (in the target's coordinates) it isn't cast on either: where
   // surfaces joined to the target sit over it, whose translucent fill the
   // shadow would show (and blur) through
@@ -53,7 +56,7 @@ Item {
     id: cutMask
     anchors.fill: parent
     visible: false
-    layer.enabled: root._holed
+    layer.enabled: root._holed // style-exempt: no text
 
     ShaderEffectSource {
       anchors.fill: parent
@@ -71,7 +74,7 @@ Item {
         y: root.reach + hole.y
         width: hole.width
         height: hole.height
-        color: "black"
+        color: "black" // style-exempt: mask
       }
     }
 
@@ -103,7 +106,7 @@ Item {
         }
 
         ShapePath {
-          fillColor: "black"
+          fillColor: "black" // style-exempt: mask
           strokeColor: "transparent"
           strokeWidth: 0
           startX: fillet.px(0)

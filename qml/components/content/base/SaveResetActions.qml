@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.components.reusable
 import qs.config
 import qs.services.ui
@@ -11,7 +10,8 @@ import qs.services.ui
 // EditsManager.typingField) for whichever service owns a
 // page's pending edits. Save commits that text first, Discard drops it;
 // `reset` drops the edits back to what's saved. `compact` drops the labels
-// to icons with tooltips, for headers too narrow for both.
+// to icons with tooltips, for headers too narrow for both. Save is a
+// primary StyledTextButton, Discard a text one.
 RowLayout {
   id: root
 
@@ -37,10 +37,9 @@ RowLayout {
     id: saveButton
     visible: root.dirty || root._typing
     enabled: root.canSave
-    icon: "check"
+    kind: "primary"
+    iconText: "check"
     label: root.saveLabel
-    fillColor: hovered ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
-    contentColor: Theme.background
     onClicked: {
       EditsManager.commitTyping();
       root.save();
@@ -50,11 +49,9 @@ RowLayout {
   ActionButton {
     id: resetButton
     visible: (root.dirty && root.canReset) || root._typing
-    icon: "undo"
+    kind: "text"
+    iconText: "undo"
     label: I18n.tr("Discard")
-    fillColor: Theme.backgroundHighlight
-    strokeColor: hovered ? Theme.accent : Theme.border
-    contentColor: Theme.foreground
     onClicked: {
       EditsManager.discardTyping();
       root.reset();
@@ -62,67 +59,35 @@ RowLayout {
   }
 
   // Sized to its label (translations differ in width, and fonts in height),
-  // at least `minWidth` so Save and Discard line up in English
-  component ActionButton: Rectangle {
+  // at least `minWidth` so Save and Discard line up in English; compact, the
+  // icon alone with the label as its tooltip
+  component ActionButton: StyledTextButton {
     id: button
 
-    property string icon
     property string label
-    property color fillColor
-    property color strokeColor: "transparent"
-    property color contentColor
-    readonly property bool hovered: area.containsMouse
-    readonly property int minWidth: Widget.px(80)
-    readonly property real fullWidth: Math.max(button.minWidth, buttonIcon.implicitWidth + buttonText.implicitWidth + buttonRow.spacing + Widget.padding * 2)
+    readonly property int minWidth: Widget.textPx(80)
+    // With the label, whatever `compact` is: the label and icon measured
+    // here, as the button lays them out
+    readonly property real fullWidth: Math.max(button.minWidth, Math.ceil(labelMetrics.advanceWidth) + Math.ceil(iconMetrics.advanceWidth) + Widget.spacing / 2 + button.textPadding * 2)
 
-    signal clicked
+    text: root.compact ? "" : button.label
+    tooltipText: root.compact ? button.label : ""
+    opacity: button.enabled ? 1 : Style.opacityDisabled
+    Layout.preferredWidth: root.compact ? button.implicitHeight : button.fullWidth
+    Layout.preferredHeight: Widget.height
 
-    Layout.preferredWidth: root.compact ? Layout.preferredHeight : button.fullWidth
-    Layout.preferredHeight: Math.max(Widget.height - Widget.px(4), buttonRow.implicitHeight + Widget.spacing * 2)
-    color: button.fillColor
-    radius: Widget.radius
-    border.color: button.strokeColor
-    border.width: 1
-    opacity: button.enabled ? 1 : 0.4
-
-    RowLayout {
-      id: buttonRow
-      anchors.centerIn: parent
-      spacing: Widget.spacing
-
-      StyledIcon {
-        id: buttonIcon
-        text: button.icon
-        textSize: Appearance.fontSize
-        textColor: button.contentColor
-        Layout.alignment: Qt.AlignVCenter
-      }
-
-      StyledLabel {
-        id: buttonText
-        visible: !root.compact
-        text: button.label
-        textSize: Appearance.fontSizeBy(-1)
-        textColor: button.contentColor
-        font.weight: Font.Bold
-        Layout.alignment: Qt.AlignVCenter
-      }
+    TextMetrics {
+      id: labelMetrics
+      font.family: Appearance.fontFamily
+      font.pixelSize: button.textSize
+      font.weight: Style.roleLabel.weight
+      text: button.label
     }
-
-    MouseArea {
-      id: area
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: button.clicked()
-    }
-
-    LazyLoader {
-      active: root.compact && button.hovered
-      StyledToolTip {
-        target: button
-        text: button.label
-      }
+    TextMetrics {
+      id: iconMetrics
+      font.family: Appearance.iconFamily
+      font.pixelSize: button.textSize
+      text: button.iconText
     }
   }
 }
