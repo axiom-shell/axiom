@@ -36,9 +36,8 @@ RowLayout {
 
   StyledText {
     text: I18n.tr("Click a spot or drag to place it, to an edge to attach it; fine-tune below. Detached, it floats a distance across the free screen; attached, it grows out of the edge.")
-    textColor: Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    overflow: "wrap"
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignTop
   }

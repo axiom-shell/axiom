@@ -7,10 +7,10 @@ import qs.components.reusable
 // A settings card that folds: clicking its header (title, help text,
 // chevron) emits `toggled`, and the body below animates shut while
 // `collapsed`. Folded with `marked` set, it shows the unsaved-edits dot;
-// with a `status` its chip sits by the chevron, folded or not.
+// with a `status` its chip (`statusTone`) sits by the chevron, folded or not.
 // The generated cards (SettingsGroupCard) and the list cards
 // (EntryListCard) are built on it.
-StyledContainer {
+Surface {
   id: root
 
   property string title
@@ -23,9 +23,9 @@ StyledContainer {
   property bool foldable: true
   property bool marked: false
   // A status chip in the header, kept while folded (StatusChip's word and
-  // color; none while empty)
+  // tone; none while empty)
   property string status
-  property color statusColor: Theme.foregroundAlt
+  property string statusTone: "neutral"
   // Beside the header, while unfolded (an Add button)
   property alias headerExtras: extras.data
   default property alias content: body.content
@@ -33,21 +33,20 @@ StyledContainer {
   signal toggled
 
   Layout.fillWidth: true
-  implicitHeight: column.implicitHeight + Widget.padding * 2
-  // Faint, so cards side by side don't run together
-  borderColor: Qt.alpha(Theme.border, 0.25)
+  tone: "surface"
+  implicitHeight: column.implicitHeight + Style.space3 * 2
 
   ColumnLayout {
     id: column
     anchors.top: parent.top
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.margins: Widget.padding
-    spacing: Widget.spacing * 1.5
+    anchors.margins: Style.space3
+    spacing: 0
 
     RowLayout {
       Layout.fillWidth: true
-      spacing: Widget.spacing
+      spacing: Style.space1
 
       FoldHeader {
         Layout.alignment: Qt.AlignTop
@@ -58,7 +57,7 @@ StyledContainer {
         foldable: root.foldable
         marked: root.marked
         status: root.status
-        statusColor: root.statusColor
+        statusTone: root.statusTone
         onToggled: root.toggled()
       }
 
@@ -69,23 +68,17 @@ StyledContainer {
         visible: !root.collapsed && children.length > 0
         Layout.fillWidth: false
         Layout.alignment: Qt.AlignTop
-        spacing: Widget.spacing
+        spacing: Style.space1
       }
     }
 
-    // Between the header and the fields, while unfolded
-    StyledSeparator {
-      visible: !root.collapsed && body.content.length > 0
-      Layout.fillWidth: true
-      separatorHeight: 1
-      opacity: 0.6
-    }
-
+    // The gap under the header folds with the body
     FoldingColumn {
       id: body
       open: !root.collapsed
+      topPadding: Style.space2
       Layout.fillWidth: true
-      spacing: Widget.spacing * 1.5
+      spacing: Style.space2
     }
   }
 }

@@ -200,8 +200,8 @@ FoldingCard {
     visible: root.accounts.length === 0
     Layout.fillWidth: true
     text: I18n.tr("No accounts yet. Add one for a CalDAV server (iCloud, Fastmail, Nextcloud, …), an .ics subscription, or calendars kept on this computer.")
-    textColor: Theme.foregroundAlt
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    overflow: "wrap"
   }
 
   // One tab per account
@@ -239,9 +239,8 @@ FoldingCard {
     visible: root.account?.kind === "caldav" && root.account?.preset === "icloud"
     Layout.fillWidth: true
     text: I18n.tr("iCloud needs an app-specific password: make one at account.apple.com (Sign-In and Security → App-Specific Passwords). Your username is your Apple Account's email.")
-    textColor: Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    overflow: "wrap"
   }
 
   // The password, never in the draft
@@ -266,15 +265,14 @@ FoldingCard {
       implicitHeight: Widget.height
       visible: passwordField.text !== ""
       text: I18n.tr("Save")
-      backgroundColor: Theme.accent
-      textColor: Theme.background
+      kind: "primary"
       onClicked: {
         SecretsManager.setSecret("calendar", root.accountId, I18n.tr("{0} calendar", root.account.name || CalendarConfig.hostOf(root.account.url)), passwordField.text);
         passwordField.text = "";
       }
     }
     StatusChip {
-      color: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? Theme.success : root.passwordStatus === "none" ? Theme.warning : Theme.foregroundAlt
+      tone: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? "success" : root.passwordStatus === "none" ? "warning" : "neutral"
       text: root.passwordStatus === "keyring" ? I18n.tr("In keyring") : root.passwordStatus === "file" ? I18n.tr("In secrets file") : root.passwordStatus === "none" ? I18n.tr("No password") : I18n.tr("Checking…")
     }
   }
@@ -287,9 +285,9 @@ FoldingCard {
     StyledText {
       Layout.fillWidth: true
       text: root.isLocal ? I18n.tr("Kept in {0}", Paths.userDataPath + "calendars") : root.result?.busy ? I18n.tr("Connecting…") : root.result?.text ?? ""
-      textColor: root.isLocal || root.result?.busy ? Theme.foregroundAlt : root.result?.ok ? Theme.success : Theme.error
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.Wrap
+      tone: root.isLocal || root.result?.busy ? "faint" : root.result?.ok ? "success" : "error"
+      role: "caption"
+      overflow: "wrap"
     }
     StyledTextButton {
       implicitHeight: Widget.height - Widget.px(4)
@@ -310,14 +308,13 @@ FoldingCard {
       implicitHeight: Widget.height - Widget.px(4)
       iconText: "delete"
       text: root.confirmRemove ? I18n.tr("Click again to remove") : I18n.tr("Remove")
-      hoverColor: Theme.error
+      kind: "danger"
       onClicked: root.remove()
     }
   }
 
   // The account's calendars
   StyledSeparator {
-    separatorColor: Theme.accent
     visible: (root.account?.calendars ?? []).length > 0
     Layout.fillWidth: true
   }
@@ -349,14 +346,14 @@ FoldingCard {
         Layout.preferredWidth: Appearance.fontSize * 0.8
         Layout.preferredHeight: width
         radius: width / 2
-        color: calendarRow.joined?.color ?? Theme.accent
+        color: Style.resolve(calendarRow.joined?.color ?? "accent")
       }
       StyledLabel {
         visible: !root.isLocal
         Layout.fillWidth: true
         text: calendarRow.joined?.name || calendarRow.calendar.href
         textFormat: Text.PlainText
-        elide: Text.ElideRight
+        overflow: "line"
       }
       // A local calendar's name is the user's to change, committed like
       // every settings text field: on Enter, focus loss or the page's Save
@@ -403,7 +400,7 @@ FoldingCard {
       }
       StatusChip {
         shown: calendarRow.joined?.readOnly ?? false
-        color: Theme.foregroundAlt
+        tone: "neutral"
         text: I18n.tr("Read-only")
       }
       SegmentButton {
@@ -434,7 +431,7 @@ FoldingCard {
         implicitHeight: Widget.height - Widget.px(6)
         iconText: "delete"
         text: root.confirmDrop === calendarRow.calendar.href ? I18n.tr("Click again to remove (its files stay)") : ""
-        hoverColor: Theme.error
+        kind: "danger"
         tooltipText: root.confirmDrop === calendarRow.calendar.href ? "" : I18n.tr("Remove this calendar")
         onClicked: root.dropLocal(calendarRow.calendar.href)
       }
@@ -445,8 +442,8 @@ FoldingCard {
     visible: CalendarManager.calendars.some(calendar => calendar.account === root.accountId && !calendar.events)
     Layout.fillWidth: true
     text: I18n.tr("Task lists (such as iCloud's reminders) aren't shown yet.")
-    opacity: 0.6
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    role: "caption"
+    overflow: "wrap"
   }
 }

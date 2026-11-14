@@ -46,9 +46,9 @@ RowLayout {
 
   StyledText {
     text: NotificationManager.dnd ? I18n.tr("Do not disturb is on: a test notification goes only to the history.") : I18n.tr("Click a spot or drag to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.")
-    textColor: NotificationManager.dnd ? Theme.warning : Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    tone: NotificationManager.dnd ? "warning" : "muted"
+    role: "caption"
+    overflow: "wrap"
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignTop
   }

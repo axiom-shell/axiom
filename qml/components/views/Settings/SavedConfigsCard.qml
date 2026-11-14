@@ -41,9 +41,9 @@ FieldGroup {
     readonly property string hint: SavedConfigsManager.keepHint(restoring)
     readonly property bool hinting: armed && hint !== ""
     text: hinting ? hint : idle
-    opacity: hinting ? 1 : 0.6
-    textSize: Appearance.fontSizeBy(-2)
-    elide: Text.ElideRight
+    tone: hinting ? "text" : "muted"
+    role: "caption"
+    overflow: "line"
     Layout.fillWidth: true
   }
 
@@ -52,8 +52,7 @@ FieldGroup {
     required property bool shown
     visible: shown && SavedConfigsManager.status !== ""
     text: SavedConfigsManager.status
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-1)
+    role: "caption"
     Layout.fillWidth: true
   }
 
@@ -81,18 +80,19 @@ FieldGroup {
   }
 
   StyledText {
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     visible: SavedConfigsManager.model.count === 0
     text: I18n.tr("No saved configurations yet.")
-    opacity: 0.5
+    tone: "faint"
     Layout.fillWidth: true
   }
 
   Repeater {
     model: SavedConfigsManager.model
 
-    delegate: StyledContainer {
+    delegate: Surface {
       id: row
+      tone: "sunken"
       required property string fileBaseName
       required property date fileModified
       readonly property bool active: SavedConfigsManager.active === fileBaseName
@@ -124,8 +124,8 @@ FieldGroup {
               anchors.verticalCenter: parent.verticalCenter
               width: Math.min(implicitWidth, nameLine.width - (badges.visible ? Widget.spacing + badges.implicitWidth : 0))
               text: row.fileBaseName
-              font.weight: Font.Bold
-              elide: Text.ElideRight
+              role: "label"
+              overflow: "line"
             }
 
             Row {
@@ -137,7 +137,7 @@ FieldGroup {
 
               StatusChip {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.accent
+                tone: "accent"
                 text: I18n.tr("Current")
               }
 
@@ -175,14 +175,15 @@ FieldGroup {
           visible: !row.active
           Layout.preferredHeight: Widget.height
           text: I18n.tr(row.pendingAction === "delete" ? "Confirm" : "Delete")
-          hoverColor: Theme.error
+          kind: "danger"
           onClicked: root.confirm(row.fileBaseName, "delete")
         }
       }
     }
   }
 
-  StyledContainer {
+  Surface {
+    tone: "sunken"
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height + Widget.padding * 2
 
@@ -202,8 +203,8 @@ FieldGroup {
 
         StyledLabel {
           text: I18n.tr("Defaults")
-          font.weight: Font.Bold
-          elide: Text.ElideRight
+          role: "label"
+          overflow: "line"
           Layout.fillWidth: true
         }
 
@@ -217,7 +218,7 @@ FieldGroup {
       StyledTextButton {
         Layout.preferredHeight: Widget.height
         text: I18n.tr(defaultsRow.armed ? "Confirm" : "Restore")
-        hoverColor: Theme.error
+        kind: "danger"
         onClicked: root.confirm("", "restore")
       }
     }
@@ -242,7 +243,7 @@ FieldGroup {
     StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Include preferences, keybinds and apps")
-      elide: Text.ElideRight
+      overflow: "line"
     }
 
     StyledTextButton {
@@ -277,7 +278,7 @@ FieldGroup {
     StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Include commands (for a backup or your other PCs)")
-      elide: Text.ElideRight
+      overflow: "line"
     }
   }
 
@@ -287,15 +288,16 @@ FieldGroup {
 
   StyledText {
     text: I18n.tr("Only import files from people you trust. An import can also carry preferences, keybinds and apps, and commands, which you're asked about separately (off unless you turn them on): commands run as you, so read every one in the file first.")
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    role: "body"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   // The imported file, until it's applied or cancelled
-  StyledContainer {
+  Surface {
     id: importRow
+    tone: "sunken"
     readonly property var importing: SavedConfigsManager.importing
     visible: importing !== null
     Layout.fillWidth: true
@@ -323,25 +325,26 @@ FieldGroup {
 
           StyledLabel {
             text: importRow.importing?.title ?? ""
-            font.weight: Font.Bold
-            elide: Text.ElideRight
+            role: "label"
+            overflow: "line"
             Layout.fillWidth: true
           }
 
           StyledLabel {
             visible: text !== ""
             text: importRow.importing?.description ?? ""
-            opacity: 0.6
-            textSize: Appearance.fontSizeBy(-2)
-            elide: Text.ElideRight
+            tone: "muted"
+            role: "caption"
+            overflow: "line"
             Layout.fillWidth: true
           }
 
           StyledLabel {
             text: Paths.shortenHome(importRow.importing?.path ?? "")
-            opacity: 0.6
-            textSize: Appearance.fontSizeBy(-2)
-            elide: Text.ElideMiddle
+            tone: "muted"
+            role: "caption"
+            overflow: "line"
+            elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
             Layout.fillWidth: true
           }
         }
@@ -376,7 +379,7 @@ FieldGroup {
         StyledText {
           Layout.fillWidth: true
           text: I18n.tr("Also take its preferences, keybinds and apps")
-          wrapMode: Text.Wrap
+          overflow: "wrap"
         }
       }
 
@@ -392,24 +395,24 @@ FieldGroup {
         StyledText {
           Layout.fillWidth: true
           text: I18n.tr("Also take its commands")
-          wrapMode: Text.Wrap
+          overflow: "wrap"
         }
       }
 
       StyledText {
         visible: text !== ""
         text: SavedConfigsManager.keepHint("")
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "caption"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
 
       StyledText {
         visible: importRow.importing?.hasCommands ?? false
         text: I18n.tr("This file holds commands. They run as you, with your files and accounts, so a file from someone else can do anything you can. Before turning this on, open the file in a text editor and read every command in it, and only take them from a source you trust.")
-        textColor: takeCommands.checked ? Theme.error : Theme.warning
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        tone: takeCommands.checked ? "error" : "warning"
+        role: "body"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     }
@@ -425,8 +428,9 @@ FieldGroup {
   Repeater {
     model: SavedConfigsManager.examples
 
-    delegate: StyledContainer {
+    delegate: Surface {
       id: exampleRow
+      tone: "sunken"
       required property var modelData
       readonly property bool armed: root.pending?.name === "example:" + modelData.name
 
@@ -445,8 +449,8 @@ FieldGroup {
 
           StyledLabel {
             text: exampleRow.modelData.title
-            font.weight: Font.Bold
-            elide: Text.ElideRight
+            role: "label"
+            overflow: "line"
             Layout.fillWidth: true
           }
 

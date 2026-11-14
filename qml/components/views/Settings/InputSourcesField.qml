@@ -168,16 +168,17 @@ ColumnLayout {
   StyledText {
     visible: root.shown.length === 0
     Layout.fillWidth: true
-    wrapMode: Text.WordWrap
-    textColor: Theme.foregroundAlt
+    overflow: "wrap"
+    tone: "muted"
     text: I18n.tr("No input sources: the compositor types on us. Add a layout below.")
   }
 
   Repeater {
     model: root.shown.length
 
-    delegate: StyledContainer {
+    delegate: Surface {
       id: row
+      tone: "sunken"
       // The listed row, and the source's index in the list
       required property int index
       readonly property int at: root.shown[index] ?? -1
@@ -187,7 +188,6 @@ ColumnLayout {
 
       Layout.fillWidth: true
       implicitHeight: rowLayout.implicitHeight + Widget.smallPadding * 2
-      backgroundColor: Theme.background
 
       RowLayout {
         id: rowLayout
@@ -200,7 +200,7 @@ ColumnLayout {
 
         StyledIcon {
           text: row.ime ? "translate" : "keyboard"
-          textColor: Theme.foregroundAlt
+          tone: "muted"
         }
 
         ColumnLayout {
@@ -209,15 +209,15 @@ ColumnLayout {
 
           StyledLabel {
             Layout.fillWidth: true
-            elide: Text.ElideRight
+            overflow: "line"
             text: row.ime ? (row.engine?.displayName || row.source.engine) : InputSources.describe(root.registry, row.source.layout, row.source.variant)
           }
 
           StyledLabel {
             Layout.fillWidth: true
-            elide: Text.ElideRight
-            textColor: row.ime && root.chosenRuns && !row.engine ? Theme.warning : Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
+            overflow: "line"
+            tone: row.ime && root.chosenRuns && !row.engine ? "warning" : "muted"
+            role: "caption"
             text: {
               if (!row.ime)
                 return [row.source.layout, row.source.variant].filter(t => t).join(" ");
@@ -232,8 +232,7 @@ ColumnLayout {
         StyledLabel {
           visible: row.ime
           text: I18n.tr("Types on")
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
         }
 
         StyledComboEntry {
@@ -289,7 +288,7 @@ ColumnLayout {
         StyledIconButton {
           iconText: "close"
           tooltipText: I18n.tr("Remove")
-          hoverColor: Theme.error
+          kind: "danger"
           size: Widget.height - Widget.px(4)
           onClicked: root.remove(row.at)
         }
@@ -311,7 +310,7 @@ ColumnLayout {
 
       StyledText {
         text: I18n.tr("Add a keyboard layout")
-        font.weight: Font.Bold
+        role: "label"
       }
 
       StyledComboEntry {
@@ -342,7 +341,7 @@ ColumnLayout {
 
       StyledText {
         text: I18n.tr("Add an input method")
-        font.weight: Font.Bold
+        role: "label"
       }
 
       StyledComboEntry {
@@ -370,9 +369,8 @@ ColumnLayout {
       StyledText {
         visible: !root.chosenRuns
         Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
+        overflow: "wrap"
+        role: "caption"
         text: I18n.tr("Input methods (Japanese, Chinese, Korean, …) are engines of fcitx5 or ibus: start one to pick from the engines it has installed.")
       }
     }
@@ -386,13 +384,13 @@ ColumnLayout {
 
     StyledIcon {
       text: "translate"
-      textColor: Theme.foregroundAlt
+      tone: "muted"
     }
 
     StyledText {
       Layout.fillWidth: true
-      wrapMode: Text.WordWrap
-      textSize: Appearance.fontSizeBy(-1)
+      overflow: "wrap"
+      role: "caption"
       text: I18n.tr("{0} is running: let axiom manage it?", root.framework)
     }
 
@@ -444,13 +442,13 @@ ColumnLayout {
 
     StatusChip {
       text: root.chosenRuns ? root.framework : root.chosen === "none" ? I18n.tr("Off") : I18n.tr("Not running")
-      color: root.chosenRuns ? Theme.success : root.chosen === "none" ? Theme.foregroundAlt : Theme.warning
+      tone: root.chosenRuns ? "success" : root.chosen === "none" ? "neutral" : "warning"
     }
 
     StyledText {
       Layout.fillWidth: true
-      wrapMode: Text.WordWrap
-      textSize: Appearance.fontSizeBy(-1)
+      overflow: "wrap"
+      role: "body"
       text: {
         if (root.chosenRuns)
           return I18n.tr("{0} is running: its engines can be added above, and it gets these sources.", root.framework);
@@ -465,12 +463,12 @@ ColumnLayout {
   }
 
   // The framework's list isn't axiom's: which wins
-  StyledContainer {
+  Surface {
+    id: askBox
+    tone: "warningContainer"
     visible: root.asks !== ""
     Layout.fillWidth: true
     implicitHeight: askColumn.implicitHeight + Widget.padding * 1.5
-    backgroundColor: Qt.alpha(Theme.warning, 0.12)
-    borderColor: Theme.warning
 
     ColumnLayout {
       id: askColumn
@@ -482,7 +480,7 @@ ColumnLayout {
 
       StyledText {
         Layout.fillWidth: true
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         text: root.asks === "outside" ? I18n.tr("{0}'s list was changed outside axiom since axiom gave it these sources.", root.framework) : I18n.tr("{0} has a list of its own that isn't these sources. Which should it keep?", root.framework)
       }
 
@@ -515,9 +513,9 @@ ColumnLayout {
 
       StyledText {
         Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
+        overflow: "wrap"
+        role: "caption"
+        tone: "muted"
         text: root.asks === "outside" ? I18n.tr("Using its list puts it here unsaved: Save to keep it. Using axiom's gives {0} these sources again now.", root.framework) : I18n.tr("Using its list puts it here unsaved. Either way, {0} gets these sources when you Save.", root.framework)
       }
     }

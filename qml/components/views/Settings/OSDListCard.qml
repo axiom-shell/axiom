@@ -80,8 +80,7 @@ EntryListCard {
     iconText: "visibility"
     text: I18n.tr("Preview")
     tooltipText: I18n.tr("Keep this OSD open while you edit it, the selected system outlined")
-    backgroundColor: root.previewing ? Theme.accent : Theme.backgroundHighlight
-    textColor: root.previewing ? Theme.background : Theme.foreground
+    kind: root.previewing ? "primary" : "tonal"
     onClicked: root.previewing = !root.previewing
   }
 

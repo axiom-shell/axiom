@@ -3369,6 +3369,7 @@
     "This takes axiom out of your home and session: it gives back your compositor config, undoes the changes listed above, and deletes axiom's files and folders. Your own configs and backups are never deleted.": "",
     "This theme has no dark variant.": "",
     "This theme has no light variant.": "",
+    "This theme keeps surfaces at least {0}% solid so text stays readable": "",
     "This week: {0}": "",
     "This widget has no options": "",
     "This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.": "",

@@ -10,7 +10,7 @@ import qs.components.content.parts
 
 // The top of the Night light card (the section's `x-intro`): whether it's
 // on, how it warms the screens, and a switch to try the settings. `status`
-// and `statusColor` are the card's header chip
+// and `statusTone` are the card's header chip
 ColumnLayout {
   id: root
 
@@ -31,7 +31,7 @@ ColumnLayout {
   }
 
   readonly property string status: root.missing ? I18n.tr("Not installed") : NightLightManager.blocked ? I18n.tr("Blocked") : NightLightManager.active ? I18n.tr("On") : I18n.tr("Off")
-  readonly property color statusColor: root.missing ? Theme.error : NightLightManager.blocked ? Theme.warning : NightLightManager.active ? Theme.success : Theme.foregroundAlt
+  readonly property string statusTone: root.missing ? "error" : NightLightManager.blocked ? "warning" : NightLightManager.active ? "success" : "neutral"
 
   spacing: Widget.spacing
 
@@ -41,8 +41,8 @@ ColumnLayout {
 
     StyledText {
       text: root.detail
-      textColor: root.missing ? Theme.error : NightLightManager.blocked ? Theme.warning : Theme.foreground
-      wrapMode: Text.WordWrap
+      tone: root.missing ? "error" : NightLightManager.blocked ? "warning" : "text"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 

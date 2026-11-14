@@ -27,14 +27,14 @@ FieldGroup {
     return DevManager.active ? I18n.tr("Running") : I18n.tr("Waiting for the build");
   }
 
-  readonly property color statusColor: {
+  readonly property string statusTone: {
     if (DevManager.building)
-      return Theme.accent;
+      return "accent";
     if (!DevManager.enabled)
-      return Theme.foregroundAlt;
+      return "neutral";
     if (DevManager.buildFailed)
-      return Theme.error;
-    return DevManager.active ? Theme.success : Theme.warning;
+      return "error";
+    return DevManager.active ? "success" : "warning";
   }
 
   // A refusal shows its message; anything else clears the last one
@@ -74,7 +74,7 @@ FieldGroup {
   headerExtras: [
     StatusChip {
       text: root.statusLabel
-      color: root.statusColor
+      tone: root.statusTone
     }
   ]
 
@@ -114,10 +114,10 @@ FieldGroup {
 
     StyledText {
       text: I18n.tr("Checkout")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      elide: Text.ElideRight
+      overflow: "line"
       text: DevManager.checkout || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -125,20 +125,21 @@ FieldGroup {
 
     StyledText {
       text: I18n.tr("Dev build")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       text: DevManager.tree === "" ? "—" : DevManager.buildFresh ? I18n.tr("Built from the tree as it is") : (DevManager.buildWhy || I18n.tr("Not built yet"))
       Layout.fillWidth: true
     }
 
     StyledText {
       text: I18n.tr("Dev config")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      elide: Text.ElideMiddle
+      overflow: "line"
+      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
       text: Paths.shortenHome(DevManager.configPath) || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -146,10 +147,11 @@ FieldGroup {
 
     StyledText {
       text: I18n.tr("Install tree")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      elide: Text.ElideMiddle
+      overflow: "line"
+      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
       text: Paths.shortenHome(DevManager.installTree) || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -159,8 +161,8 @@ FieldGroup {
   StyledText {
     visible: text !== ""
     text: DevManager.tree !== "" && !DevManager.available ? DevManager.unavailable : ""
-    textColor: Theme.warning
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -169,8 +171,8 @@ FieldGroup {
   StyledText {
     visible: DevManager.configNote !== ""
     text: DevManager.configNote
-    textColor: Theme.warning
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -217,8 +219,8 @@ FieldGroup {
   StyledText {
     visible: root.message !== ""
     text: root.message
-    textColor: Theme.error
-    wrapMode: Text.WordWrap
+    tone: "error"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 

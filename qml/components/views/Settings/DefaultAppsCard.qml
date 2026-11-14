@@ -35,7 +35,7 @@ FieldGroup {
     StatusChip {
       shown: DefaultAppsManager.busy
       text: I18n.tr("Saving…")
-      color: Theme.foregroundAlt
+      tone: "neutral"
     },
     StyledIconButton {
       iconText: "refresh"
@@ -47,9 +47,8 @@ FieldGroup {
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("Every app follows these, not only axiom. A change is saved at once, in your mimeapps.list.")
-    textColor: Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    overflow: "wrap"
   }
 
   DefaultAppPickers {

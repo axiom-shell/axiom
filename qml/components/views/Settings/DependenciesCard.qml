@@ -15,7 +15,7 @@ FieldGroup {
     StatusChip {
       shown: checks.checked
       text: checks.wanted.length === 0 ? I18n.tr("All installed") : I18n.tr("{0} missing", checks.wanted.length)
-      color: checks.wanted.length === 0 ? Theme.success : Theme.warning
+      tone: checks.wanted.length === 0 ? "success" : "warning"
     },
     StyledIconButton {
       iconText: "refresh"
@@ -27,8 +27,8 @@ FieldGroup {
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("Programs some features use. Everything else works without them.")
-    textColor: Theme.foregroundAlt
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    overflow: "wrap"
   }
 
   ToolChecks {

@@ -257,9 +257,8 @@ ColumnLayout {
               badges: TipIcon {
                 visible: barRow.row.off === true
                 text: "visibility_off"
-                textColor: barRow.ink
-                textSize: Appearance.fontSizeBy(-1)
-                opacity: 0.7
+                textColor: barRow.inkMuted
+                size: "xs"
                 tip: I18n.tr("Hidden: its system's bars are switched off")
               }
 
@@ -278,8 +277,8 @@ ColumnLayout {
           visible: root.rows.length === 0
           Layout.fillWidth: true
           text: I18n.tr("No bars yet: add one to show a level.")
-          textColor: Theme.foregroundAlt
-          wrapMode: Text.WordWrap
+          tone: "muted"
+          overflow: "wrap"
         }
 
         AddEntryButton {
@@ -307,7 +306,8 @@ ColumnLayout {
       }
 
       // The selected bar's settings, from its schema
-      StyledContainer {
+      Surface {
+        tone: "sunken"
         visible: root.selected !== null
         Layout.preferredWidth: split.secondWidth
         Layout.alignment: Qt.AlignTop
@@ -325,29 +325,26 @@ ColumnLayout {
 
             StyledIcon {
               text: root.selected?.icon ?? ""
-              textColor: Theme.accent
+              tone: "accent"
             }
 
             StyledLabel {
               Layout.fillWidth: true
               text: root.selected?.name ?? ""
-              font.weight: Font.Bold
-              elide: Text.ElideRight
+              role: "label"
+              overflow: "line"
             }
 
             // Whose setting it is (a list's bar)
             StyledLabel {
               visible: (root.selected?.index ?? -1) >= 0
               text: root.selected ? OSDConfig.nameOf(root.selected.type) : ""
-              textColor: Theme.foregroundAlt
-              textSize: Appearance.fontSizeBy(-1)
+              role: "caption"
             }
           }
 
           StyledSeparator {
             Layout.fillWidth: true
-            separatorHeight: 1
-            opacity: 0.3
           }
 
           // A new form per bar, so no row writes onto another

@@ -8,24 +8,24 @@ import qs.components.reusable
 // The top of the Idle card (the section's `x-intro`): whether axiom is
 // watching for idle, what holds it off now, and a warning when another
 // program answers apps' requests to keep the screen on. `status` and
-// `statusColor` are the card's header chip
+// `statusTone` are the card's header chip
 ColumnLayout {
   id: root
 
   readonly property string stage: IdleManager.status
 
-  readonly property color statusColor: {
+  readonly property string statusTone: {
     switch (root.stage) {
     case "running":
-      return Theme.success;
+      return "success";
     case "inhibited":
-      return Theme.accent;
+      return "accent";
     case "noLock":
     case "unsupported":
     case "unavailable":
-      return Theme.warning;
+      return "warning";
     }
-    return Theme.foregroundAlt;
+    return "neutral";
   }
 
   readonly property string status: {
@@ -66,7 +66,7 @@ ColumnLayout {
 
   StyledText {
     text: root.detail
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -84,13 +84,13 @@ ColumnLayout {
 
       StyledIcon {
         text: inhibitor.held.source === "caffeine" ? "coffee" : "visibility"
-        textColor: Theme.accent
+        tone: "accent"
       }
 
       StyledLabel {
         Layout.fillWidth: true
         text: inhibitor.held.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.held.reason ? `${inhibitor.held.app}: ${inhibitor.held.reason}` : inhibitor.held.app
-        elide: Text.ElideRight
+        overflow: "line"
       }
     }
   }
@@ -98,9 +98,8 @@ ColumnLayout {
   StyledText {
     visible: Idle.enabled && IdleManager.screensaverHolder !== ""
     text: I18n.tr("{0} answers apps asking to keep the screen on, so axiom doesn't see them. If it's hypridle, remove its autostart line so the two don't both act when you're away.", IdleManager.screensaverHolder)
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 }

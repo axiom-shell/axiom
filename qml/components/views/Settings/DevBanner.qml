@@ -8,8 +8,9 @@ import qs.components.reusable
 // One line atop the settings page while dev mode is on (SettingsContent):
 // which tree and checkout run, and on which config. A click opens the
 // Development category (turning the developer options on first)
-Rectangle {
+Surface {
   id: root
+  tone: "accentContainer"
 
   // What it says: dev mode, the tree, its checkout, the config it edits
   readonly property string text: {
@@ -21,12 +22,13 @@ Rectangle {
   }
 
   implicitHeight: row.implicitHeight + Widget.smallPadding * 2
-  radius: Widget.radius
-  color: mouse.containsMouse ? Qt.alpha(Theme.accent, 0.25) : Qt.alpha(Theme.accent, 0.15)
-  border.color: Qt.alpha(Theme.accent, 0.5)
-  border.width: Appearance.borderWidth
 
-  ColorGlide on color {}
+  StateLayer {
+    anchors.fill: parent
+    radius: Style.radius
+    hovered: mouse.containsMouse
+    pressed: mouse.pressed
+  }
 
   RowLayout {
     id: row
@@ -36,20 +38,22 @@ Rectangle {
     spacing: Widget.spacing
 
     SpinningIcon {
-      text: DevManager.building ? "progress_activity" : "code"
-      textColor: DevManager.buildFailed ? Theme.error : Theme.accent
+      text: DevManager.building ? "progress_activity" : DevManager.buildFailed ? "error" : "code"
+      textColor: root.ink.icon
       spinning: DevManager.building
     }
 
     StyledLabel {
       text: root.text
-      elide: Text.ElideMiddle
+      role: "label"
+      overflow: "line"
+      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
       Layout.fillWidth: true
     }
 
     StyledIcon {
       text: "chevron_right"
-      opacity: 0.6
+      tone: "muted"
     }
   }
 

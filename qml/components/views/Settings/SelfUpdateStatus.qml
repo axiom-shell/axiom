@@ -7,7 +7,7 @@ import qs.components.reusable
 
 // The top of the axiom updates card (the section's `x-intro`): the
 // installed and newest release, what's new, and Check / Update. `status` and
-// `statusColor` are the card's header chip
+// `statusTone` are the card's header chip
 ColumnLayout {
   id: root
 
@@ -25,18 +25,18 @@ ColumnLayout {
     return SelfUpdateManager.state;
   }
 
-  readonly property color statusColor: {
+  readonly property string statusTone: {
     switch (root.stage) {
     case "uptodate":
-      return Theme.success;
+      return "success";
     case "available":
-      return Theme.accent;
+      return "accent";
     case "blocked":
-      return Theme.warning;
+      return "warning";
     case "error":
-      return Theme.error;
+      return "error";
     }
-    return Theme.foregroundAlt;
+    return "neutral";
   }
 
   readonly property string status: {
@@ -80,10 +80,10 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Installed")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      elide: Text.ElideRight
+      overflow: "line"
       text: root.installed || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -91,10 +91,10 @@ ColumnLayout {
 
     StyledText {
       text: SelfUpdateManager.channel === "main" ? I18n.tr("Latest on main") : I18n.tr("Latest release")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      elide: Text.ElideRight
+      overflow: "line"
       text: SelfUpdateManager.latest || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -102,10 +102,10 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Last checked")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateTimeFormat()) : I18n.tr("Never")
       Layout.fillWidth: true
     }
@@ -114,27 +114,25 @@ ColumnLayout {
   StyledText {
     visible: root.stage === "managed"
     text: I18n.tr("This copy of axiom isn't a git clone: its updates come from your package manager.")
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    role: "caption"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: root.stage === "error"
     text: SelfUpdateManager.error
-    textColor: Theme.error
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "error"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: root.stage === "blocked"
     text: I18n.tr("{0} is available, but your copy of axiom can't update: {1}", SelfUpdateManager.latest, SelfUpdateManager.blockedReason(SelfUpdateManager.blocked))
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -146,24 +144,24 @@ ColumnLayout {
     spacing: Widget.spacing / 2
 
     StyledText {
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       text: SelfUpdateManager.behind > 0 ? I18n.tr("What's new in {0} ({1} commits)", SelfUpdateManager.latest, SelfUpdateManager.behind) : I18n.tr("What's new in {0}", SelfUpdateManager.latest)
-      font.weight: Font.Bold
+      role: "label"
       Layout.fillWidth: true
     }
 
-    StyledContainer {
+    Surface {
+      tone: "sunken"
       Layout.fillWidth: true
       implicitHeight: notes.implicitHeight + Widget.padding * 2
-      backgroundColor: Theme.background
 
       StyledText {
         id: notes
         anchors.fill: parent
         anchors.margins: Widget.padding
         text: SelfUpdateManager.notes
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "body"
+        overflow: "wrap"
       }
     }
   }
@@ -175,9 +173,9 @@ ColumnLayout {
 
     StyledText {
       text: SelfUpdate.mode === "off" ? I18n.tr("Automatic checks are off.") : I18n.tr("Checked at startup and once a day.")
-      opacity: 0.6
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      tone: "muted"
+      role: "caption"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -192,8 +190,7 @@ ColumnLayout {
       implicitHeight: Widget.height - Widget.px(4)
       visible: SelfUpdateManager.available && !SelfUpdateManager.busy
       text: I18n.tr("Update to {0}", SelfUpdateManager.latest)
-      backgroundColor: Theme.accent
-      textColor: Theme.background
+      kind: "primary"
       onClicked: SelfUpdateManager.apply()
     }
   }

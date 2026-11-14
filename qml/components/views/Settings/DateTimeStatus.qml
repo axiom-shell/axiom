@@ -10,7 +10,7 @@ import qs.components.forms
 // Settings page, System › Date & time (the DateTime section's `x-intro`):
 // the machine's clock (DateTimeManager, timedated): the time now in the
 // formats below, the time zone, network time and setting the time by
-// hand while it's off. Each change asks polkit. `status` and `statusColor`
+// hand while it's off. Each change asks polkit. `status` and `statusTone`
 // are the card's header chip
 ColumnLayout {
   id: root
@@ -57,7 +57,7 @@ ColumnLayout {
     precision: SystemClock.Seconds
   }
 
-  readonly property color statusColor: !DateTimeManager.available ? Theme.foregroundAlt : DateTimeManager.ntp ? (DateTimeManager.ntpSynchronized ? Theme.success : Theme.warning) : Theme.accent
+  readonly property string statusTone: !DateTimeManager.available ? "neutral" : DateTimeManager.ntp ? (DateTimeManager.ntpSynchronized ? "success" : "warning") : "accent"
 
   spacing: Widget.spacing * 1.5
 
@@ -69,14 +69,13 @@ ColumnLayout {
 
     StyledText {
       text: I18n.formatDate(clock.date, I18n.clockFormat("default", true))
-      textSize: Appearance.fontSizeBy(14)
-      font.weight: Font.Medium
+      role: "display"
       textFamily: "monospace"
     }
 
     StyledText {
       text: I18n.formatDate(clock.date, I18n.dateFormat("fullDate"))
-      textColor: Theme.foregroundAlt
+      tone: "muted"
     }
   }
 
@@ -84,9 +83,8 @@ ColumnLayout {
     visible: !DateTimeManager.available
     Layout.fillWidth: true
     text: I18n.tr("The time zone and clock are set through systemd-timedated, which isn't answering here.")
-    textColor: Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    overflow: "wrap"
   }
 
   // --- Time zone ---
@@ -200,17 +198,15 @@ ColumnLayout {
     visible: DateTimeManager.localRtc
     Layout.fillWidth: true
     text: I18n.tr("The hardware clock keeps local time (as Windows does), so a dual boot shows the same time in both.")
-    textColor: Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    overflow: "wrap"
   }
 
   StyledText {
     visible: DateTimeManager.error !== ""
     Layout.fillWidth: true
     text: DateTimeManager.error
-    textColor: Theme.error
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "error"
+    overflow: "wrap"
   }
 }

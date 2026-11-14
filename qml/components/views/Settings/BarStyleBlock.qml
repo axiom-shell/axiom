@@ -186,9 +186,8 @@ ColumnLayout {
       StyledText {
         Layout.fillWidth: true
         text: I18n.tr("Some of these follow the shared style.")
-        textColor: Theme.foreground
-        opacity: 0.7
-        wrapMode: Text.WordWrap
+        tone: "muted"
+        overflow: "wrap"
       }
 
       StyledTextButton {
@@ -205,8 +204,7 @@ ColumnLayout {
 
       StyledText {
         text: I18n.tr("Shared with every bar.")
-        textColor: Theme.foreground
-        opacity: 0.7
+        tone: "muted"
       }
 
       SettingsLink {

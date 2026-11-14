@@ -142,7 +142,7 @@ FieldGroup {
     StatusChip {
       shown: SystemInfoManager.loading
       text: I18n.tr("Reading…")
-      color: Theme.foregroundAlt
+      tone: "neutral"
     },
     StyledIconButton {
       iconText: "refresh"
@@ -174,8 +174,8 @@ FieldGroup {
         anchors.centerIn: parent
         visible: !logo.visible
         text: root.info.chassis === "laptop" ? "laptop" : "computer"
-        textSize: Appearance.fontSizeBy(18)
-        textColor: Theme.accent
+        size: "xl"
+        tone: "accent"
       }
     }
 
@@ -186,9 +186,8 @@ FieldGroup {
       StyledLabel {
         visible: !root.renaming
         text: root.name || I18n.tr("This computer")
-        textSize: Appearance.fontSizeLarge
-        font.weight: Font.Medium
-        elide: Text.ElideRight
+        role: "headline"
+        overflow: "line"
         Layout.fillWidth: true
       }
 
@@ -224,24 +223,22 @@ FieldGroup {
       StyledLabel {
         visible: !!root.info.prettyHostname && root.info.hostname && root.info.prettyHostname !== root.info.hostname && !root.renaming
         text: I18n.tr("Hostname {0}", root.info.hostname)
-        textColor: Theme.foregroundAlt
         textFamily: "monospace"
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
       }
 
       StyledLabel {
         text: root.info.os ?? ""
-        textColor: Theme.foregroundAlt
-        elide: Text.ElideRight
+        tone: "muted"
+        overflow: "line"
         Layout.fillWidth: true
       }
 
       StyledText {
         visible: SystemInfoManager.renameError !== ""
         text: SystemInfoManager.renameError
-        textColor: Theme.error
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        tone: "error"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     }
@@ -290,14 +287,14 @@ FieldGroup {
           Layout.alignment: Qt.AlignTop
           // I18n.tr: the labels are declared above
           text: I18n.tr(fact.modelData.label)
-          textColor: Theme.foregroundAlt
-          elide: Text.ElideRight
+          tone: "muted"
+          overflow: "line"
         }
 
         StyledText {
           Layout.fillWidth: true
           text: fact.value || "—"
-          wrapMode: Text.Wrap
+          overflow: "wrap"
         }
       }
     }
@@ -312,9 +309,8 @@ FieldGroup {
     StyledText {
       Layout.fillWidth: true
       text: I18n.tr("Copy system info copies what a bug report asks for: versions, the compositor and the distribution, never your names or paths.")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-1)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      overflow: "wrap"
     }
 
     StyledTextButton {

@@ -187,7 +187,7 @@ Item {
   // The bar the boxes sit on
   Rectangle {
     anchors.fill: parent
-    radius: Widget.radius
+    radius: Style.radius
     color: root._barConfig.palette.background
   }
 

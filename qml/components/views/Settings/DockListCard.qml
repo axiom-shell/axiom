@@ -69,7 +69,7 @@ EntryListCard {
   entryContent: [
     StyledText {
       text: I18n.tr("Pinned apps")
-      font.weight: Font.Bold
+      role: "label"
       Layout.fillWidth: true
     },
     RowLayout {
@@ -89,16 +89,15 @@ EntryListCard {
 
       StyledText {
         text: root.ownPinned ? I18n.tr("Its own pinned apps") : I18n.tr("Global pinned apps")
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     },
     StyledText {
       visible: root.pinned.length === 0
       text: I18n.tr("None yet: search below, or right-click a running app on the dock and pick Keep in dock.")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      overflow: "wrap"
       Layout.fillWidth: true
     },
     Repeater {
@@ -134,7 +133,7 @@ EntryListCard {
         StyledIconButton {
           iconText: "close"
           tooltipText: I18n.tr("Remove")
-          hoverColor: Theme.error
+          kind: "danger"
           size: Widget.height - Widget.px(4)
           onClicked: root.unpinAt(pinnedRow.index)
         }
@@ -176,7 +175,6 @@ EntryListCard {
       }
     },
     StyledSeparator {
-      separatorColor: Theme.accent
       Layout.fillWidth: true
     }
   ]
@@ -201,15 +199,15 @@ EntryListCard {
 
     StyledLabel {
       text: row.name
-      elide: Text.ElideRight
+      overflow: "line"
       Layout.fillWidth: true
     }
 
     StyledLabel {
       visible: row.detail !== ""
       text: row.detail
-      textColor: Theme.error
-      textSize: Appearance.fontSizeBy(-2)
+      tone: "error"
+      role: "caption"
     }
 
     RowLayout {
