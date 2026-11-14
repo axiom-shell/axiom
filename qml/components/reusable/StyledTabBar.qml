@@ -8,20 +8,23 @@ import qs.components.methods
 // The owner keeps the current index: set `currentIndex`, and update it
 // from tabClicked. The current tab's highlight is the bar's own, sliding
 // from tab to tab: a 2 px accent underline under the current tab's label,
-// on a full-width baseline.
+// on a full-width baseline. `scrollable` keeps every label whole instead:
+// the tabs take their own widths in a row that scrolls sideways, the
+// current tab kept in view.
 Item {
   id: root
 
   property var tabs: []
   property int currentIndex: 0
   property alias spacing: row.spacing
+  property bool scrollable: false
 
   signal tabClicked(int index)
 
   Layout.fillWidth: true
   Layout.fillHeight: false
   Layout.preferredHeight: Widget.height
-  implicitWidth: row.implicitWidth
+  implicitWidth: root.scrollable ? Widget.textPx(160) : row.implicitWidth
   implicitHeight: Widget.height
 
   // The tab under the underline: its label's width plus a gap each side,
@@ -32,7 +35,24 @@ Item {
 
   // Off until laid out, so it doesn't grow in from nothing
   property bool _settled: false
-  Component.onCompleted: Qt.callLater(() => root._settled = true)
+  Component.onCompleted: Qt.callLater(() => {
+    root._settled = true;
+    root._reveal();
+  })
+
+  // Scrolls the strip so the current tab is whole in view
+  function _reveal() {
+    const tab = root._current;
+    if (!root.scrollable || !tab)
+      return;
+    const max = Math.max(0, flick.contentWidth - flick.width);
+    if (tab.x < flick.contentX)
+      flick.contentX = Math.min(max, tab.x);
+    else if (tab.x + tab.width > flick.contentX + flick.width)
+      flick.contentX = Math.min(max, tab.x + tab.width - flick.width);
+  }
+  onCurrentIndexChanged: Qt.callLater(root._reveal)
+  onScrollableChanged: Qt.callLater(root._reveal)
 
   // The baseline under every tab
   Rectangle {
@@ -43,42 +63,58 @@ Item {
     color: root._host ? root._host.inkScope.divider : Style.divider
   }
 
-  Rectangle {
-    id: indicator
-    visible: root._current !== null
-    x: root._current ? root._current.x + (root._current.width - width) / 2 : 0
-    y: parent.height - height
-    width: root._markWidth
-    height: Widget.px(2)
-    radius: height / 2
-    color: Style.accent
-
-    Glide on x {
-      enabled: root._settled
-      duration: Appearance.animNormal
-    }
-    Glide on width {
-      enabled: root._settled
-      duration: Appearance.animNormal
-    }
-  }
-
-  RowLayout {
-    id: row
+  Flickable {
+    id: flick
     anchors.fill: parent
-    spacing: Widget.spacing
-    uniformCellSizes: true
+    contentWidth: row.width
+    contentHeight: height
+    interactive: root.scrollable && flick.contentWidth > flick.width
+    flickableDirection: Flickable.HorizontalFlick
+    boundsBehavior: Flickable.StopAtBounds
+    clip: root.scrollable
 
-    Repeater {
-      id: tabRepeater
-      model: root.tabs
+    // The current tab's underline, in the content: it scrolls with its tab
+    Rectangle {
+      id: indicator
+      visible: root._current !== null
+      x: root._current ? root._current.x + (root._current.width - width) / 2 : 0
+      y: flick.height - height
+      width: root._markWidth
+      height: Widget.px(2)
+      radius: height / 2
+      color: Style.accent
 
-      StyledTabButton {
-        required property int index
-        required property string modelData
-        text: modelData
-        checked: root.currentIndex === index
-        onClicked: root.tabClicked(index)
+      Glide on x {
+        enabled: root._settled
+        duration: Appearance.animNormal
+      }
+      Glide on width {
+        enabled: root._settled
+        duration: Appearance.animNormal
+      }
+    }
+
+    RowLayout {
+      id: row
+      width: root.scrollable ? Math.max(row.implicitWidth, flick.width) : flick.width
+      height: flick.height
+      spacing: Widget.spacing
+      uniformCellSizes: !root.scrollable
+
+      Repeater {
+        id: tabRepeater
+        model: root.tabs
+
+        StyledTabButton {
+          required property int index
+          required property string modelData
+          leftPadding: root.scrollable ? Style.space3 : undefined
+          rightPadding: root.scrollable ? Style.space3 : undefined
+          Layout.fillWidth: !root.scrollable
+          text: modelData
+          checked: root.currentIndex === index
+          onClicked: root.tabClicked(index)
+        }
       }
     }
   }

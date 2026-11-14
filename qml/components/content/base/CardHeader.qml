@@ -12,6 +12,11 @@ import qs.config
 Item {
   id: root
   property string title
+  // An accent icon before the title (md; lg with `iconSize`), and a count
+  // after it (hidden below 0)
+  property string icon: ""
+  property string iconSize: "md"
+  property int count: -1
   property bool dirty: false
   // Hide both buttons for panels with nothing to save
   property bool showActions: true
@@ -35,6 +40,13 @@ Item {
     id: headerRow
     anchors.fill: parent
     spacing: Widget.spacing
+
+    StyledIcon {
+      visible: root.icon !== ""
+      text: root.icon
+      size: root.iconSize
+      tone: "accent"
+    }
 
     StyledLabel {
       id: titleText
@@ -60,6 +72,14 @@ Item {
         text: root.title
         maxWidth: Widget.textPx(320)
       }
+    }
+
+    StyledText {
+      id: countText
+      visible: root.count >= 0
+      role: "caption"
+      tone: "muted"
+      text: String(root.count)
     }
 
     // `help`: a "?" telling it on hover
@@ -103,7 +123,7 @@ Item {
       canSave: root.canSave
       canReset: root.canReset
       saveLabel: root.saveLabel
-      compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
+      compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (root.icon !== "" ? Style.iconSize(root.iconSize) + headerRow.spacing : 0) + (countText.visible ? countText.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
       onSave: root.save()
       onReset: root.reset()
     }

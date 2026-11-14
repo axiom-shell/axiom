@@ -513,7 +513,9 @@ TestCase {
     tryVerify(() => bar._current !== null && bar._markWidth > 0);
     const tab = bar._current;
     const label = tab.contentItem;
-    const underline = bar.children.find(c => c.height === Widget.px(2) && c.visible);
+    // (in the strip's content, so it scrolls with its tab)
+    const strip = bar.children.find(c => c.flickableDirection !== undefined);
+    const underline = strip.contentItem.children.find(c => c.height === Widget.px(2) && c.visible);
     verify(underline !== undefined, "the underline shows");
     // under the current label, no wider than its cell
     const centre = underline.x + underline.width / 2;

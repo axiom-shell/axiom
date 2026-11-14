@@ -17,5 +17,9 @@ SquareIconButton {
   kind: root.lit ? "primary" : root.danger ? "danger" : "text"
   opacity: root.lit || root.row.revealed ? 1 : 0
 
+  // A focused action handles Tab itself, so its row never sees it
+  Keys.onTabPressed: root.row._tabFrom(root, true)
+  Keys.onBacktabPressed: root.row._tabFrom(root, false)
+
   Glide on opacity {}
 }

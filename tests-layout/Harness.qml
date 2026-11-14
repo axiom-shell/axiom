@@ -1,4 +1,5 @@
 import QtQuick
+import qs.config
 import qs.components.methods
 import qs.services.core
 
@@ -39,11 +40,12 @@ QtObject {
     ThemeManager.currentTheme = root.json("qml/config/themes/" + (row.theme ?? "catppuccin-mocha") + ".json");
   }
 
-  // Every visible text-like item under `item` (a Text: advanceWidth-bearing, with painted sizes)
-  function texts(item) {
+  // Every visible text-like item under `item` (a Text: advanceWidth-bearing, with painted sizes);
+  // `skipIcons` leaves out the icons (the harness has no icon font: a glyph's name draws as text)
+  function texts(item, skipIcons) {
     const out = [];
     const walk = it => {
-      if (it.visible && it.paintedWidth !== undefined && it.lineCount !== undefined)
+      if (it.visible && it.paintedWidth !== undefined && it.lineCount !== undefined && !(skipIcons === true && it.font.family === Appearance.iconFamily))
         out.push(it);
       for (const child of it.children)
         walk(child);
@@ -55,9 +57,9 @@ QtObject {
   // A piece holds its texts: every visible one's painted rect inside the
   // piece within half a pixel; a one-line text has one line, a wrapping one at
   // most `maxLines`
-  function containedProblems(piece) {
+  function containedProblems(piece, skipIcons) {
     const problems = [];
-    for (const t of root.texts(piece)) {
+    for (const t of root.texts(piece, skipIcons)) {
       if (t.text === "")
         continue;
       const at = t.mapToItem(piece, 0, 0);
