@@ -162,10 +162,11 @@ GridLayout {
     }
 
     // Beside the first line, however many the value wraps to
-    FlatIconButton {
+    StyledIconButton {
       visible: root.browse === "folder"
       Layout.alignment: Qt.AlignTop
       size: Widget.height
+      kind: "tonal"
       iconText: "folder_open"
       tooltipText: I18n.tr("Choose a folder")
       enabled: !FilePickerManager.running
@@ -218,9 +219,8 @@ GridLayout {
   StyledText {
     visible: root._pickFailed
     text: I18n.tr("No file picker could be opened")
-    color: Theme.warning
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    tone: "warning"
     Layout.fillWidth: true
     Layout.columnSpan: root.columns
   }

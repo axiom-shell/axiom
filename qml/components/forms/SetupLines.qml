@@ -24,25 +24,24 @@ ColumnLayout {
 
   StyledText {
     text: block.hint
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    role: "caption"
     Layout.fillWidth: true
   }
 
-  StyledContainer {
+  Surface {
+    tone: "sunken"
+    outlined: true
     Layout.fillWidth: true
     implicitHeight: linesText.implicitHeight + Widget.padding * 2
-    backgroundColor: Theme.background
 
     StyledText {
       id: linesText
       anchors.fill: parent
       anchors.margins: Widget.padding
       text: block.lines
+      role: "body"
       textFamily: "monospace"
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WrapAnywhere
+      overflow: "wrap"
     }
   }
 

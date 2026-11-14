@@ -3,12 +3,16 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // One row of a schema form (the settings page, an editor's options, the
-// onboarder): a hairline across the gap above it (none on the top row), an
-// accent rail beside a row shown by a sibling's value, and a fold open and
-// shut as its `x-showIf` shows or hides it, gap and all, so the rows below
-// glide. What it holds sits in its body, under the gap.
+// onboarder), a row of the boxed list: padded `Style.rowPadding` above and
+// below, at least `Style.rowHeight` tall, a divider on its top boundary
+// (none on the top row), an accent rail beside a row shown by a sibling's
+// value, and a fold open and shut as its `x-showIf` shows or hides it, so
+// the rows below glide. A `hoverable` row (a switch, a two-option toggle, a
+// dropdown) acts on a click anywhere on it (`rowClicked`) and tints under
+// the pointer. What it holds sits in its body.
 Item {
   id: root
 
@@ -21,8 +25,11 @@ Item {
   // The content's height, and how much of it the rail runs beside
   property real bodyHeight: 0
   property real railHeight: root.bodyHeight
-  // The gap above the row, kept inside the row's height so it folds too
-  property real dividerGap: Widget.spacing * 3
+  // The part of the body, from its top, that a row click and the hover tint cover; the rest takes no row click
+  property real hitHeight: root.bodyHeight
+  // Whether the whole row acts: it tints under the pointer and a click on
+  // it outside its controls is `rowClicked`
+  property bool hoverable: false
   // The form's top row (no row above it shown), which has no gap: set by
   // the host (Utils.firstFormRow), never read from `y`, which the
   // layout sets from this row's height (a row flipping between the two
@@ -30,8 +37,16 @@ Item {
   property bool first: false
   default property alias content: body.data
   readonly property real indent: root.indented ? Widget.spacing * 2 : 0
-  // None above an empty row either (a field drawing nothing)
-  readonly property real topGap: root.first || root.bodyHeight <= 0 ? 0 : root.dividerGap
+  // The row at full reveal: its body padded, no less than a row's height
+  // (none for an empty row, a field drawing nothing)
+  readonly property real fullHeight: root.bodyHeight <= 0 ? 0 : Math.max(Style.rowHeight, root.bodyHeight + Style.rowPadding * 2)
+
+  // A click on the row outside its controls (while `hoverable`)
+  signal rowClicked
+
+  // A relay: the walks of the texts in the row stop here
+  readonly property var inkHostAbove: InkHost.find(root.parent)
+  readonly property real drawnZoom: TextRender.zoomAt(root.parent)
 
   // 1 shown, 0 hidden. Set by hand, not bound: a binding and the fold
   // would both answer a change of `shown`, in no set order
@@ -62,33 +77,57 @@ Item {
   }
 
   Layout.fillWidth: true
-  implicitHeight: (root.topGap + root.bodyHeight) * root._reveal
+  implicitHeight: root.fullHeight * root._reveal
   visible: root._reveal > 0
   clip: root._reveal < 1
 
+  // The hover tint and the row click, built only while hoverable. Under the
+  // body, so a control takes its own clicks
+  Loader {
+    width: root.width
+    height: root.hitHeight >= root.bodyHeight ? root.height : body.y + root.hitHeight
+    active: root.hoverable
+    sourceComponent: Item {
+      StateLayer {
+        bleed: Style.rowBleed
+        hovered: hover.hovered
+        pressed: click.pressed
+      }
+
+      HoverHandler {
+        id: hover
+      }
+
+      MouseArea {
+        id: click
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.rowClicked()
+      }
+    }
+  }
+
+  // On the row's top boundary, over the tint
   StyledSeparator {
-    visible: root.topGap > 0
+    visible: !root.first && root.fullHeight > 0
     x: root.indent
-    y: Math.round(root.topGap / 2) - 1
     width: root.width - root.indent
-    separatorHeight: 1
-    opacity: 0.45
   }
 
   Rectangle {
     visible: root.indented
-    y: root.topGap
+    y: body.y
     width: 2
     height: root.railHeight
     radius: 1
-    color: Theme.accent
-    opacity: 0.35 * root._reveal
+    color: Style.rail
+    opacity: root._reveal
   }
 
   Item {
     id: body
     x: root.indent
-    y: root.topGap
+    y: Math.round((root.fullHeight - root.bodyHeight) / 2)
     width: root.width - root.indent
     height: root.bodyHeight
     opacity: root._reveal

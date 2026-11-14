@@ -39,7 +39,6 @@ ColumnLayout {
 
     StyledText {
       text: root.installGreetd !== "" ? I18n.tr("The login screen runs under greetd, with its text login (agreety) as the fallback. Install them:") : I18n.tr("The login screen runs under greetd, with its text login (agreety) as the fallback. Install them with your package manager.")
-      wrapMode: Text.WordWrap
       Layout.fillWidth: true
     }
 
@@ -58,8 +57,7 @@ ColumnLayout {
 
     StyledText {
       text: root.installSway !== "" ? I18n.tr("The login screen runs in a compositor of its own: sway, or Hyprland when sway isn't installed. Neither is, so it would always fall back to greetd's text login. Install sway (plain sway is enough):") : I18n.tr("The login screen runs in a compositor of its own: sway, or Hyprland when sway isn't installed. Neither is, so it would always fall back to greetd's text login. Install sway with your package manager.")
-      textColor: root.status === "noCompositor" ? Theme.foreground : Theme.warning
-      wrapMode: Text.WordWrap
+      tone: root.status === "noCompositor" ? "" : "warning"
       Layout.fillWidth: true
     }
 
@@ -74,8 +72,7 @@ ColumnLayout {
   StyledText {
     visible: !GreeterManager.installable && root.status !== "noGreetd"
     text: I18n.tr("The login screen needs axiom installed from a git clone, or by a package. This copy is neither (no .git folder), so it can't be set up from here.")
-    textColor: root.status === "noClone" ? Theme.foreground : Theme.warning
-    wrapMode: Text.WordWrap
+    tone: root.status === "noClone" ? "" : "warning"
     Layout.fillWidth: true
   }
 
@@ -87,7 +84,6 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Install asks for your password once, then:")
-      wrapMode: Text.WordWrap
       Layout.fillWidth: true
     }
 
@@ -97,7 +93,6 @@ ColumnLayout {
       delegate: StyledText {
         required property string modelData
         text: root.bullet(modelData)
-        wrapMode: Text.WordWrap
         Layout.fillWidth: true
         Layout.leftMargin: Widget.padding
       }
@@ -105,8 +100,7 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("If the login screen ever fails to start, greetd's text login (agreety) takes its place. Remove puts greetd's config back.")
-      opacity: 0.7
-      wrapMode: Text.WordWrap
+      tone: "muted"
       Layout.fillWidth: true
     }
   }
@@ -115,8 +109,7 @@ ColumnLayout {
   StyledText {
     visible: root.status === "outdated"
     text: root.report?.configured === false ? I18n.tr("greetd's config no longer starts axiom's login screen. Update points it back (after a backup).") : root.report?.installedSource !== GreeterManager.wantedSource ? I18n.tr("The login screen's code came from elsewhere than Code from now says. Update takes it from there, asking for your password.") : Paths.packaged ? I18n.tr("axiom's package was updated since its login screen was set up. It runs the new code already; Update refreshes its start-up files and fallback look, asking for your password.") : I18n.tr("Axiom changed since its login screen was set up. Its layout and look follow your settings already; Update brings its code up to date, asking for your password.")
-    textColor: Theme.warning
-    wrapMode: Text.WordWrap
+    tone: "warning"
     Layout.fillWidth: true
   }
 
@@ -128,9 +121,7 @@ ColumnLayout {
     readonly property bool onMain: !Paths.packaged && !local && SelfUpdate.channel === "main"
     visible: root.report !== null && GreeterManager.installable && root.status !== "noGreetd" && root.status !== "noCompositor"
     text: Paths.packaged ? I18n.tr("The login screen runs the copy of axiom your package manager installed, so it updates with the system. Only root can change it.") : local ? I18n.tr("Code from Local: Update copies your clone as it is, uncommitted changes included, with the axiom binary you built last. Any program running as you can change them before you next update, and the password prompt is then the only check. Choose Git unless you're working on axiom.") : onMain ? I18n.tr("Code from Git, following main: root fetches main's newest build from {0}, the commit its prebuilt axiom binary was built from, checked against the build's checksums. Nothing that can write to your clone can change what the login screen runs.", root.report?.url || I18n.tr("axiom's official repository")) : I18n.tr("Code from Git: root fetches the newest release from {0}, with its prebuilt axiom binary checked against the release's checksums. Nothing that can write to your clone can change what the login screen runs.", root.report?.url || I18n.tr("axiom's official repository"))
-    textColor: local ? Theme.warning : Theme.foreground
-    opacity: local ? 1 : 0.7
-    wrapMode: Text.WordWrap
+    tone: local ? "warning" : "muted"
     Layout.fillWidth: true
   }
 
@@ -142,7 +133,6 @@ ColumnLayout {
 
     StyledText {
       text: GreeterManager.finishCommands.length > 0 ? I18n.tr("To finish, switch your display manager to greetd (it takes over at the next boot):") : I18n.tr("greetd shows it at the next login. To see it now, restart greetd, which ends this session:")
-      wrapMode: Text.WordWrap
       Layout.fillWidth: true
     }
 
@@ -157,9 +147,7 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Fonts and cursor themes installed only in your home folder don't reach the login screen: install them system-wide to use them there.")
-      opacity: 0.7
-      textSize: Appearance.fontSizeBy(-1)
-      wrapMode: Text.WordWrap
+      role: "caption"
       Layout.fillWidth: true
     }
   }
@@ -169,16 +157,14 @@ ColumnLayout {
   StyledText {
     visible: GreeterManager.phase === "done" && (GreeterManager.action === "uninstall" ? root.report?.installed === false : root.status === "installed")
     text: GreeterManager.action === "install" ? I18n.tr("The login screen is installed.") : GreeterManager.action === "update" ? I18n.tr("The login screen is up to date.") : I18n.tr("The login screen is removed.")
-    textColor: Theme.success
-    wrapMode: Text.WordWrap
+    tone: "success"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: GreeterManager.lastError !== ""
     text: GreeterManager.lastError
-    textColor: Theme.error
-    wrapMode: Text.WordWrap
+    tone: "error"
     Layout.fillWidth: true
   }
 
@@ -189,7 +175,7 @@ ColumnLayout {
     StyledLabel {
       visible: root.busy
       text: GreeterManager.phase === "password" ? I18n.tr("Waiting for your password...") : GreeterManager.action === "uninstall" ? I18n.tr("Removing now...") : I18n.tr("Installing now...")
-      opacity: 0.7
+      tone: "muted"
     }
 
     Item {
@@ -209,6 +195,7 @@ ColumnLayout {
       visible: root.status === "installed" || root.status === "outdated"
       enabled: !root.busy
       implicitHeight: Widget.height - Widget.px(4)
+      kind: "danger"
       iconText: root.confirmingRemove ? "warning" : "delete"
       text: root.confirmingRemove ? I18n.tr("Remove it?") : I18n.tr("Remove")
       onClicked: {
@@ -232,6 +219,7 @@ ColumnLayout {
       visible: root.status === "outdated" && GreeterManager.installable
       enabled: !root.busy
       implicitHeight: Widget.height - Widget.px(4)
+      kind: "primary"
       iconText: "system_update_alt"
       text: I18n.tr("Update")
       onClicked: GreeterManager.update()
@@ -241,6 +229,7 @@ ColumnLayout {
       visible: root.status === "off" || root.status === "notInstalled"
       enabled: !root.busy
       implicitHeight: Widget.height - Widget.px(4)
+      kind: "primary"
       iconText: "login"
       text: I18n.tr("Install")
       onClicked: GreeterManager.install()

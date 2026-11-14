@@ -43,9 +43,8 @@ ColumnLayout {
     // Reads as a name, but the font has none by it: drawn as text
     visible: Utils.isSymbolName(root.value) && !IconManager.isKnown(root.value)
     text: I18n.tr("No icon is named \"{0}\": it shows as text", root.value)
-    color: Theme.warning
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    tone: "warning"
     Layout.fillWidth: true
   }
 }

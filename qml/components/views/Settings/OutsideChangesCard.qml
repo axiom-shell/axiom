@@ -163,25 +163,37 @@ FoldingCard {
               Layout.fillWidth: true
             }
 
-            StatusChip {
-              visible: line.row.inferred === true
-              text: I18n.tr("Inferred")
+            Loader {
+              active: line.row.inferred === true
+              visible: active
+              sourceComponent: StatusChip {
+                text: I18n.tr("Inferred")
+              }
             }
 
-            StatusChip {
-              visible: line.row.status === "changed"
-              text: I18n.tr("Changed since")
-              color: Theme.warning
+            Loader {
+              active: line.row.status === "changed"
+              visible: active
+              sourceComponent: StatusChip {
+                text: I18n.tr("Changed since")
+                color: Theme.warning
+              }
             }
 
-            StatusChip {
-              visible: line.row.status === "gone"
-              text: I18n.tr("Gone")
+            Loader {
+              active: line.row.status === "gone"
+              visible: active
+              sourceComponent: StatusChip {
+                text: I18n.tr("Gone")
+              }
             }
 
-            StatusChip {
-              visible: line.row.system === true
-              text: I18n.tr("System")
+            Loader {
+              active: line.row.system === true
+              visible: active
+              sourceComponent: StatusChip {
+                text: I18n.tr("System")
+              }
             }
 
             StyledTextButton {
@@ -198,39 +210,45 @@ FoldingCard {
             }
           }
 
-          RowLayout {
-            visible: root.confirming === line.row.id
+          Loader {
+            active: root.confirming === line.row.id
+            visible: active
             Layout.fillWidth: true
-            spacing: Widget.spacing
+            sourceComponent: RowLayout {
+              spacing: Widget.spacing
 
-            StyledText {
-              text: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
-              wrapMode: Text.WordWrap
-              Layout.fillWidth: true
-            }
+              StyledText {
+                text: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+              }
 
-            StyledTextButton {
-              implicitHeight: Widget.height - Widget.px(4)
-              text: I18n.tr("Cancel")
-              onClicked: root.confirming = ""
-            }
+              StyledTextButton {
+                implicitHeight: Widget.height - Widget.px(4)
+                text: I18n.tr("Cancel")
+                onClicked: root.confirming = ""
+              }
 
-            StyledTextButton {
-              implicitHeight: Widget.height - Widget.px(4)
-              text: I18n.tr("Undo")
-              onClicked: {
-                root.confirming = "";
-                FootprintManager.undo([line.row.id], true);
+              StyledTextButton {
+                implicitHeight: Widget.height - Widget.px(4)
+                text: I18n.tr("Undo")
+                onClicked: {
+                  root.confirming = "";
+                  FootprintManager.undo([line.row.id], true);
+                }
               }
             }
           }
 
-          StyledText {
-            visible: line.note !== ""
-            text: line.note
-            color: Theme.warning
-            wrapMode: Text.WordWrap
+          Loader {
+            active: line.note !== ""
+            visible: active
             Layout.fillWidth: true
+            sourceComponent: StyledText {
+              text: line.note
+              color: Theme.warning
+              wrapMode: Text.WordWrap
+            }
           }
         }
       }

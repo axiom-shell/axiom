@@ -97,7 +97,7 @@ FoldingCard {
     Layout.fillWidth: true
     columns: 2
     columnSpacing: Widget.spacing * 2
-    // The rows keep their gaps themselves (FormRow.dividerGap)
+    // The rows keep their gaps themselves (FormRow's padding)
     rowSpacing: 0
 
     Repeater {

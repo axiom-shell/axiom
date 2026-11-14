@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import QtTest
 import qs.config
-import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
+import qs.components.methods
 
 // The restyled pieces at scale, font and density (the layout harness): each
 // holds its texts in its box, a control's label fits its control, a segment
@@ -182,6 +183,69 @@ TestCase {
           text: "A field"
         }
       }
+    }
+  }
+
+  Component {
+    id: headerComp
+
+    FieldHeader {
+      description: "What the field does, in a sentence"
+    }
+  }
+
+  Component {
+    id: schemaToggleComp
+
+    SchemaToggle {
+      description: "What it does"
+      options: ["a", "b"]
+      optionLabels: ({
+          "a": "First option",
+          "b": "Second option"
+        })
+      currentValue: "a"
+    }
+  }
+
+  Component {
+    id: formRowComp
+
+    FormRow {
+      id: formRow
+
+      property alias spy: clicks
+
+      width: 300
+      bodyHeight: 10
+
+      SignalSpy {
+        id: clicks
+
+        target: formRow
+        signalName: "rowClicked"
+      }
+    }
+  }
+
+  Component {
+    id: numberComp
+
+    SchemaNumberField {
+      label: "A number"
+      minimum: 0
+      maximum: 100
+      currentConfigValue: 50
+    }
+  }
+
+  Component {
+    id: foldHeaderComp
+
+    FoldHeader {
+      width: 400
+      title: "Group"
+      status: "On"
     }
   }
 
@@ -472,7 +536,7 @@ TestCase {
   }
 
   // A titled group is a boxed card: surface on the page or with no Surface,
-  // one tone up on any other host (the flat look is the FLAG commit's)
+  // raised on any other
   function test_field_group_is_boxed() {
     harness.configure({});
     const alone = createTemporaryObject(groupComp, root, {
@@ -489,8 +553,68 @@ TestCase {
       });
       waitForRendering(host);
       compare(host.group.tone, tone === "page" ? "surface" : "raised", tone);
-      compare(host.group.border.width, host.group.outlined ? Style.hairline : 0);
+      compare(host.group.border.width, Style.hairline, tone);
     }
+  }
+
+  function test_field_header_holds_its_text_data() {
+    return rows();
+  }
+
+  function test_field_header_holds_its_text(data) {
+    harness.configure(data);
+    const host = createTemporaryObject(headerComp, root, {
+      "width": room(data),
+      "label": strings[data.key]
+    });
+    waitForRendering(host);
+    compare(harness.containedProblems(host), []);
+  }
+
+  function test_schema_toggle_stacks_when_it_crowds_its_label_data() {
+    return rows();
+  }
+
+  function test_schema_toggle_stacks_when_it_crowds_its_label(data) {
+    harness.configure(data);
+    const toggle = createTemporaryObject(schemaToggleComp, root, {
+      "width": room(data),
+      "label": strings[data.key]
+    });
+    waitForRendering(toggle);
+    const control = toggle.children[0].children.find(c => c.options !== undefined);
+    compare(toggle.stacked, control.implicitWidth > toggle.width - Widget.textPx(160));
+    // A toggle wider than the whole row (a few long labels in a narrow
+    // form) overflows however it is laid out: only a fitting one is held
+    if (control.implicitWidth <= toggle.width)
+      compare(harness.containedProblems(toggle), []);
+  }
+
+  // A row of the boxed list: its body padded, never under a row's height,
+  // its divider on the top boundary (none on the top row), whole-row clicks
+  // only while hoverable
+  function test_form_row_is_a_boxed_list_row() {
+    harness.configure({});
+    const row = createTemporaryObject(formRowComp, root);
+    waitForRendering(row);
+    compare(row.implicitHeight, Math.max(Style.rowHeight, 10 + Style.rowPadding * 2));
+    const divider = row.children.find(c => c.height === Style.dividerWidth);
+    verify(divider.visible && divider.y === 0, "the divider sits on the top boundary");
+    row.first = true;
+    verify(!divider.visible, "none above the top row");
+    row.bodyHeight = Style.rowHeight * 2;
+    compare(row.implicitHeight, Style.rowHeight * 2 + Style.rowPadding * 2);
+    mouseClick(row, 10, row.height / 2);
+    compare(row.spy.count, 0);
+    row.hoverable = true;
+    mouseClick(row, 10, row.height / 2);
+    compare(row.spy.count, 1);
+    // Only the first hitHeight of the body takes the row click
+    row.hitHeight = 20;
+    mouseClick(row, 10, row.height - 2);
+    compare(row.spy.count, 1);
+    mouseClick(row, 10, Style.rowPadding + 5);
+    compare(row.spy.count, 2);
   }
 
   // Items under `item` (and in loaded ones) that satisfy `pred`
@@ -504,6 +628,44 @@ TestCase {
     };
     walk(item);
     return out;
+  }
+
+  // A number field builds only its mode's control: no stepper under the
+  // slider, no slider under the stepper, the stepper as wide as before
+  function test_number_field_builds_only_its_mode() {
+    harness.configure({});
+    const slider = createTemporaryObject(numberComp, root, {
+      "width": 500,
+      "mode": "slider"
+    });
+    waitForRendering(slider);
+    compare(findAll(slider, it => it.autoRepeat !== undefined).length, 0);
+    verify(findAll(slider, it => it.fillTone !== undefined).length > 0);
+    const stepper = createTemporaryObject(numberComp, root, {
+      "width": 500,
+      "mode": "stepper"
+    });
+    waitForRendering(stepper);
+    compare(findAll(stepper, it => it.fillTone !== undefined).length, 0);
+    compare(findAll(stepper, it => it.autoRepeat !== undefined).length, 4 + (stepper.showCoarse ? 0 : -2));
+    const box = findAll(stepper, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
+    const row = box.children.find(c => c.spacing === 2);
+    compare(box.implicitWidth, row.implicitWidth + stepper.containerMargins * 2);
+    compare(box.implicitHeight, stepper.controlHeight);
+  }
+
+  // A row that does not act builds no hover layer and no click area
+  function test_form_row_builds_its_hover_layer_only_while_hoverable() {
+    harness.configure({});
+    const row = createTemporaryObject(formRowComp, root);
+    waitForRendering(row);
+    compare(findAll(row, it => it.bleed !== undefined).length, 0);
+    compare(findAll(row, it => it.cursorShape !== undefined).length, 0);
+    row.hoverable = true;
+    verify(findAll(row, it => it.bleed !== undefined).length > 0);
+    verify(findAll(row, it => it.cursorShape !== undefined).length > 0);
+    row.hoverable = false;
+    compare(findAll(row, it => it.bleed !== undefined).length, 0);
   }
 
   // The More link is built only when the text is longer than its lines;
@@ -532,6 +694,20 @@ TestCase {
     verify(findAll(long, it => it.text === "Less").length > 0);
     compare(findAll(long, it => it.text === "More").length, 0);
     compare(body.lineCount, body.children[0].lineCount);
+  }
+
+  // A header's chip keeps its status colour until a card passes a tone
+  function test_fold_header_chip_tone() {
+    harness.configure({});
+    const header = createTemporaryObject(foldHeaderComp, root);
+    waitForRendering(header);
+    header.statusColor = Theme.success;
+    compare(header._chipTone, "success");
+    header.statusColor = Theme.foregroundAlt;
+    compare(header._chipTone, "neutral");
+    header.statusColor = Theme.success;
+    header.statusTone = "warning";
+    compare(header._chipTone, "warning");
   }
 
   // A text button with no icon builds none; with one it is in the label's colour

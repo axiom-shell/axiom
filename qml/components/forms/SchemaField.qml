@@ -205,7 +205,19 @@ Loader {
 
   visible: shown
   enabled: allowed
-  opacity: allowed && !placeKept ? 1 : 0.5
+  opacity: allowed && !placeKept ? 1 : Style.opacityDisabled
+
+  // Whether the row's whole area acts (FormRow.hoverable): a switch (also an
+  // automatic number's), a two-option toggle or a dropdown, while it can be
+  // used
+  readonly property bool hoverable: root.allowed && !root.placeKept && (root.sourceComponent === switchField || root.sourceComponent === autoSpinField || root.sourceComponent === comboField || (root.sourceComponent === toggleField && root.options?.length === 2))
+
+  // A click on the row outside its control (FormRow.rowClicked): the
+  // control does what its own click does
+  function rowClicked() {
+    if (root.hoverable && root.item && typeof root.item.activate === "function")
+      root.item.activate();
+  }
 
   // Kept in place, greyed: the control can't be used, but the row still
   // takes the hover that shows why
@@ -328,8 +340,8 @@ Loader {
     id: groupHeader
     StyledText {
       text: I18n.tr(root.label)
-      font.weight: Font.Bold
-      textColor: Theme.accent
+      role: "label"
+      tone: "accent"
       topPadding: Widget.spacing
     }
   }
@@ -378,7 +390,12 @@ Loader {
         })
       readonly property bool custom: root.current !== undefined && root.current !== autoField.auto.value
       spacing: Widget.spacing
+      // What a click on the row outside its controls does (rowClicked)
+      function activate() {
+        autoSwitch.activate();
+      }
       SchemaSwitch {
+        id: autoSwitch
         label: root.label
         description: root.description
         headerExtra: root.headerExtra
@@ -419,8 +436,8 @@ Loader {
         Layout.alignment: Qt.AlignVCenter
         horizontalAlignment: Text.AlignRight
         text: String(root.current ?? "")
-        elide: Text.ElideMiddle
-        opacity: 0.8
+        overflow: "line"
+        tone: "muted"
       }
       SquareIconButton {
         Layout.alignment: Qt.AlignVCenter

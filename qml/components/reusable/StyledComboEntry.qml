@@ -51,6 +51,9 @@ Item {
   property string query: ""
   property int highlighted: 0
 
+  // When the dropdown last began to close: a press outside closes it and
+  // still reaches the row under it
+  property real hiddenAt: 0
   property bool _inlineOpen: false
   readonly property bool _hasList: root.search !== null || root.options.length > 0
   // The inline list's most height, as it opens (read once: the room
@@ -329,6 +332,8 @@ Item {
 
         ScrollIndicator.vertical: StyledScrollIndicator {}
       }
+
+      onAboutToHide: root.hiddenAt = Date.now()
     }
   }
 

@@ -57,10 +57,10 @@ Item {
 
     SquareIconButton {
       visible: !root.atDefault
-      size: Appearance.fontSizeBy(8)
+      size: Style.iconLg
+      kind: "text"
       iconText: "settings_backup_restore"
-      iconSize: Appearance.fontSizeBy(-1)
-      backgroundColor: Theme.backgroundHighlight
+      iconSize: Style.iconXs
       tooltipText: root.defaultText === "" ? I18n.tr("Reset to default") : I18n.tr("Reset to default: {0}", root.defaultText)
       onClicked: root.reset(Utils.clone(root.defaultValue))
     }

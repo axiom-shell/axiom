@@ -31,10 +31,10 @@ ColumnLayout {
       trailing: root.headerExtra
     }
 
-    StyledRectButton {
+    StyledIconButton {
+      kind: "tonal"
       iconText: "add"
-      iconSize: Appearance.fontSizeBy(4)
-      hoverColor: Theme.accent
+      iconSize: Style.iconMd
 
       onClicked: {
         root.itemAdded();
@@ -56,8 +56,10 @@ ColumnLayout {
     Repeater {
       model: root.items.length
 
-      delegate: StyledContainer {
+      delegate: Surface {
         id: entry
+        tone: "sunken"
+        outlined: true
         required property int index
         readonly property var modelData: root.items[index]
 
@@ -76,9 +78,8 @@ ColumnLayout {
 
             StyledLabel {
               text: "#" + (entry.index + 1)
-              textColor: Theme.accent
-              textSize: Appearance.fontSizeBy(-1)
-              font.weight: Font.Bold
+              role: "label"
+              tone: "accent"
             }
 
             Item {
@@ -88,8 +89,9 @@ ColumnLayout {
             SquareIconButton {
               visible: entry.index > 0
               size: Widget.iconButton
+              kind: "text"
               iconText: "expand_less"
-              iconSize: Appearance.fontSizeBy(2)
+              iconSize: Style.iconSm
 
               onClicked: {
                 root.itemMoved(entry.index, entry.index - 1);
@@ -99,8 +101,9 @@ ColumnLayout {
             SquareIconButton {
               visible: entry.index < root.items.length - 1
               size: Widget.iconButton
+              kind: "text"
               iconText: "expand_more"
-              iconSize: Appearance.fontSizeBy(2)
+              iconSize: Style.iconSm
 
               onClicked: {
                 root.itemMoved(entry.index, entry.index + 1);
@@ -109,9 +112,9 @@ ColumnLayout {
 
             SquareIconButton {
               size: Widget.iconButton
+              kind: "danger"
               iconText: "close"
-              iconSize: Appearance.fontSizeBy(4)
-              hoverColor: Theme.error
+              iconSize: Style.iconMd
 
               onClicked: {
                 root.itemRemoved(entry.index);
@@ -121,8 +124,7 @@ ColumnLayout {
 
           StyledSeparator {
             Layout.fillWidth: true
-            separatorHeight: 1
-            opacity: 0.3
+            backTone: "sunken"
           }
 
           Loader {
@@ -138,16 +140,17 @@ ColumnLayout {
     }
   }
 
-  StyledContainer {
+  Surface {
     visible: root.items.length === 0
+    tone: "sunken"
+    outlined: true
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height * 3 - Widget.padding
-    backgroundColor: Theme.background
 
     StyledLabel {
       anchors.centerIn: parent
       text: I18n.tr("No items - click + to add")
-      opacity: 0.5
+      tone: "faint"
     }
   }
 }

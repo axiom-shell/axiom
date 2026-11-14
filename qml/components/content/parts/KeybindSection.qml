@@ -107,101 +107,104 @@ StyledContainer {
       onItemRemoved: Qt.callLater(root._measureKeys)
 
       delegate: Item {
-        id: item
+        id: entry
         required property var modelData
         required property int index
-        readonly property string groupKey: KeybindManager.page.refGroupKey(root._section, item.modelData.mods)
-        readonly property bool folded: KeybindManager.page.refFolded.includes(item.groupKey)
-        readonly property bool grouped: item.modelData.mods.length > 0
+        readonly property string groupKey: KeybindManager.page.refGroupKey(root._section, entry.modelData.mods)
+        readonly property bool folded: KeybindManager.page.refFolded.includes(entry.groupKey)
+        readonly property bool grouped: entry.modelData.mods.length > 0
         // Its keys' own width (0 for a header)
-        readonly property real rowKeyWidth: item.modelData.row ? row.keyImplicitWidth : 0
+        readonly property real rowKeyWidth: entry.modelData.row ? row.keyImplicitWidth : 0
         onRowKeyWidthChanged: Qt.callLater(root._measureKeys)
         Layout.fillWidth: true
-        visible: !item.modelData.row || !item.folded
-        implicitHeight: item.modelData.row ? row.implicitHeight : header.implicitHeight
+        visible: !entry.modelData.row || !entry.folded
+        implicitHeight: entry.modelData.row ? row.implicitHeight : header.implicitHeight
 
-        // A group's modifiers, then +; a click folds it
-        Item {
+        // A group's modifiers, then +; a click folds it. Built only for a header
+        Loader {
           id: header
-          visible: !item.modelData.row
+          active: !entry.modelData.row
+          visible: active
           width: parent.width
-          implicitHeight: headerLine.implicitHeight + (item.index > 0 ? Widget.spacing : 0)
+          sourceComponent: Item {
+            implicitHeight: headerLine.implicitHeight + (entry.index > 0 ? Widget.spacing : 0)
 
-          Rectangle {
-            anchors.fill: headerLine
-            anchors.margins: -2
-            radius: Widget.radius / 2
-            color: Qt.alpha(Theme.backgroundHighlight, headerArea.containsMouse ? 0.6 : 0)
+            Rectangle {
+              anchors.fill: headerLine
+              anchors.margins: -2
+              radius: Widget.radius / 2
+              color: Qt.alpha(Theme.backgroundHighlight, headerArea.containsMouse ? 0.6 : 0)
 
-            ColorGlide on color {
-              duration: Appearance.animFast
-            }
-          }
-
-          RowLayout {
-            id: headerLine
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: Widget.padding / 2
-            anchors.rightMargin: Widget.padding / 2
-            spacing: Widget.spacing / 2
-
-            ModifierCap {
-              mods: item.modelData.mods
-              glyphs: KeybindManager.page.refGlyphs
-              compact: true
-              opacity: 0.8
+              ColorGlide on color {
+                duration: Appearance.animFast
+              }
             }
 
-            StyledLabel {
-              text: "+"
-              opacity: 0.5
+            RowLayout {
+              id: headerLine
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.bottom: parent.bottom
+              anchors.leftMargin: Widget.padding / 2
+              anchors.rightMargin: Widget.padding / 2
+              spacing: Widget.spacing / 2
+
+              ModifierCap {
+                mods: entry.modelData.mods
+                glyphs: KeybindManager.page.refGlyphs
+                compact: true
+                opacity: 0.8
+              }
+
+              StyledLabel {
+                text: "+"
+                opacity: 0.5
+              }
+
+              StyledLabel {
+                visible: entry.folded
+                text: entry.modelData.count ?? ""
+                opacity: 0.5
+                textSize: Appearance.fontSizeBy(-2)
+              }
+
+              Item {
+                Layout.fillWidth: true
+              }
+
+              StyledIcon {
+                text: "expand_more"
+                textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
+                rotation: entry.folded ? -90 : 0
+
+                Glide on rotation {}
+              }
             }
 
-            StyledLabel {
-              visible: item.folded
-              text: item.modelData.count ?? ""
-              opacity: 0.5
-              textSize: Appearance.fontSizeBy(-2)
+            MouseArea {
+              id: headerArea
+              anchors.fill: headerLine
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: KeybindManager.page.toggleRefFold(entry.groupKey)
             }
-
-            Item {
-              Layout.fillWidth: true
-            }
-
-            StyledIcon {
-              text: "expand_more"
-              textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
-              rotation: item.folded ? -90 : 0
-
-              Glide on rotation {}
-            }
-          }
-
-          MouseArea {
-            id: headerArea
-            anchors.fill: headerLine
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: KeybindManager.page.toggleRefFold(item.groupKey)
           }
         }
 
         KeybindRow {
           id: row
-          visible: !!item.modelData.row
+          visible: !!entry.modelData.row
           // Rows under a group's modifiers sit in from them
-          x: item.grouped ? Widget.padding : 0
+          x: entry.grouped ? Widget.padding : 0
           width: parent.width - x
-          bind: item.modelData.row ?? ({
+          bind: entry.modelData.row ?? ({
               "label": "",
               "combos": [],
               "ids": [],
               "action": "",
               "overrides": ""
             })
-          groupMods: item.modelData.mods
+          groupMods: entry.modelData.mods
           keyWidth: root.keyWidth
           onEditRequested: bindIndex => root.editRequested(bindIndex)
         }
