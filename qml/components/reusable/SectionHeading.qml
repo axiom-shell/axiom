@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-// A section's title in the accent, with an optional muted description under
+// A section's title in the text colour, with an optional muted description under
 // it, folded to three lines behind More (FieldGroup, the theme list)
 ColumnLayout {
   id: root
@@ -15,7 +15,6 @@ ColumnLayout {
 
   StyledText {
     role: "title"
-    tone: "accent"
     overflow: "wrap"
     Layout.fillWidth: true
     text: root.title
