@@ -8,14 +8,16 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
-import qs.components.content.base
+import qs.components.views.base
 import qs.components.views.Settings
 
-// Bar editor, left: the bars, then the selected bar's settings under four
-// tabs (Layout, Surface, Style, Behaviour): its own groups, generated
-// from the schema's Bar definition, and its style (the Bar style block,
-// BarStyle's groups, each shared or its own). Only the shown tab's groups
-// are built.
+// Bar editor, left: the bars pinned above, then the selected bar's settings
+// under four tabs (Layout, Surface, Style, Behaviour; a dot on a tab holding
+// unsaved fields): its own groups, generated from the schema's Bar
+// definition, and its style (the Bar style block, BarStyle's groups, each
+// shared or its own). Only the shown tab's groups are built. Save and
+// Discard are the Widgets board's (they cover the bar's settings and its
+// widgets).
 Item {
   id: root
 
@@ -34,15 +36,18 @@ Item {
   // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
   // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Look") I18n.tr("Colors")
   // I18n.tr("Accents") I18n.tr("Shadow")
-  TitledCard {
-    title: I18n.tr("Bar Editor")
+  ToolPane {
+    anchors.fill: parent
+    title: I18n.tr("Bars")
     scrollKey: "BarEditor"
-    // Save and Discard here, above the bar list
-    dirty: BarManager.isDirty
-    onSave: BarManager.saveChanges()
-    onReset: BarManager.resetChanges()
+    showActions: false
 
-    headerExtras: ColumnLayout {
+    tabModel: root.hasBar ? root.tabs.map(tab => tab.label) : []
+    tabIndex: BarManager.panelTab
+    tabMarked: BarManager.changedTabs
+    onTabClicked: index => BarManager.selectPanelTab(index)
+
+    pinned: ColumnLayout {
       Layout.fillWidth: true
       spacing: Widget.spacing / 2
 
@@ -59,7 +64,11 @@ Item {
           selected: BarManager.selectedBarIndex === entry.index
           dimmed: entry.entryBar.enabled === false
           changed: BarManager.barChanged(entry.index)
+          escapeClears: true
           onClicked: BarManager.selectBar(entry.index)
+          // (removeBar keeps the last bar)
+          onRemoveRequested: BarManager.removeBar(entry.index)
+          onEscapePressed: BarManager.selectBar(-1)
 
           // One copy per monitor
           badges: StyledIcon {
@@ -67,7 +76,6 @@ Item {
             visible: entry.entryBar.screen.mode === "all"
             text: "desktop_windows"
             textColor: entry.ink
-            opacity: 0.7
 
             HoverHandler {
               id: everyMonitorHover
@@ -105,14 +113,6 @@ Item {
         text: I18n.tr("New bar")
         onClicked: BarManager.addBar()
       }
-
-      StyledTabBar {
-        visible: root.hasBar
-        Layout.fillWidth: true
-        tabs: root.tabs.map(tab => tab.label)
-        currentIndex: BarManager.panelTab
-        onTabClicked: index => BarManager.selectPanelTab(index)
-      }
     }
 
     // A ColumnLayout's Repeater re-runs its model on every draft edit:
@@ -138,8 +138,7 @@ Item {
             SquareIconButton {
               visible: group.modelData.title === "Surface"
               iconText: "format_paint"
-              iconColor: root.copiedHere ? Theme.background : Theme.foreground
-              backgroundColor: root.copiedHere ? Theme.accent : Theme.backgroundAlt
+              kind: root.copiedHere ? "primary" : "tonal"
               tooltipText: I18n.tr("Copy this bar's size and style")
               onClicked: BarManager.copyStyle(BarManager.selectedBarIndex)
             },
@@ -174,9 +173,9 @@ Item {
           StyledText {
             visible: "thickness" in group.modelData.schema
             text: I18n.tr("The bar is {0} px deep", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps).extent))
-            textColor: Theme.foreground
-            opacity: 0.7
-            wrapMode: Text.WordWrap
+            role: "caption"
+            tone: "muted"
+            overflow: "wrap"
             Layout.fillWidth: true
           }
         }

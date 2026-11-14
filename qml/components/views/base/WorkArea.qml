@@ -26,7 +26,7 @@ Surface {
   property alias tools: toolsRow.data
   // One caption line under the header (fit, nudge, crowded widgets)
   property alias status: statusRow.data
-  // Shown in the status line while `idle`
+  // Shown above the status while `idle`
   property string hintWhenIdle: ""
   property bool idle: false
   // 0: the well fills what it is given; a canvas stacked over an inspector
@@ -81,12 +81,13 @@ Surface {
     }
 
     // Never hidden (its status children would read hidden and it would stay so): with nothing showing, a negative margin takes back the gap the column puts after it
-    RowLayout {
+    ColumnLayout {
       Layout.fillWidth: true
       Layout.bottomMargin: root.idle && root.hintWhenIdle !== "" || statusRow.visibleChildren.length > 0 ? 0 : -Widget.spacing
-      spacing: Widget.spacing
+      spacing: 0
 
       StyledText {
+        id: hint
         visible: root.idle && root.hintWhenIdle !== ""
         Layout.fillWidth: true
         role: "caption"
@@ -96,6 +97,8 @@ Surface {
       }
       RowLayout {
         id: statusRow
+        Layout.fillWidth: true
+        Layout.topMargin: hint.visible && statusRow.visibleChildren.length > 0 ? Widget.spacing / 2 : 0
         spacing: Widget.spacing
       }
     }

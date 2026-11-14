@@ -34,7 +34,6 @@
     "Audio mixer": "オーディオミキサー",
     "Background": "背景",
     "Badge": "バッジ",
-    "Bar Editor": "バーエディター",
     "Battery": "バッテリー",
     "Battery Status": "バッテリーの状態",
     "Battery critically low: {0}%": "バッテリー残量が危険なほど少なくなっています：{0}%",
@@ -2827,10 +2826,7 @@
     "Drag widgets to arrange them, across sections too. Click one to edit it, right-click it for more: the bar outlines it. Keys: Delete, Ctrl+D, Alt+arrows to move it, Escape, Ctrl+Z to undo. Changes show on the bar as you make them; Save keeps them.": "",
     "Hide the drop order": "",
     "Show the order widgets drop in when the bar is crowded": "",
-    "Unsaved": "",
     "The bar is {0} px deep": "",
-    "No widget selected": "",
-    "Click a widget in a section to edit it, right-click it for more.": "",
     "Drag a widget onto a section, or click one to add it to the {0} section.": "",
     "No room on {0} for": "",
     "Select it": "",
@@ -4250,6 +4246,9 @@
     "No custom widgets yet": "",
     "Select a custom widget to edit it": "",
     "Rename this layout": "",
-    "Delete this layout": ""
+    "Delete this layout": "",
+    "Bar widget look": "",
+    "Drag widgets to arrange them, across sections too.": "",
+    "Saves this bar: its settings and its widgets": ""
   }
 }
