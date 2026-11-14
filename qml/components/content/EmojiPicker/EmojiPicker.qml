@@ -134,15 +134,14 @@ Panel {
     implicitHeight: root.cell
     radius: Widget.radius
     color: root.copied === cellItem.emoji ? Style.accentContainer : "transparent"
-    scale: cellTap.pressed ? 0.9 : 1 // style-exempt: motion
 
     StateLayer {
       radius: cellItem.radius
       hovered: cellHover.hovered
+      pressed: cellTap.pressed
     }
 
     ColorGlide on color {}
-    Glide on scale {}
 
     Text {
       renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)

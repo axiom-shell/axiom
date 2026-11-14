@@ -148,16 +148,15 @@ Card {
       color: root.active ? root.lightColor : Style.surfaceHighest
       border.color: root.active ? root.lightColor : Style.borderSubtle
       border.width: Style.hairline
-      scale: heroTap.pressed ? 0.95 : 1 // style-exempt: motion
 
       StateLayer {
         radius: hero.radius
         hovered: heroHover.hovered
+        pressed: heroTap.pressed
         onAccent: root.active
       }
 
       ColorGlide on color {}
-      Glide on scale {}
 
       ColumnLayout {
         anchors.centerIn: parent
