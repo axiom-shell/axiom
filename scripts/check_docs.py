@@ -44,7 +44,8 @@ PATH_ROOTS = ("qml/", "data/", "components/", "services/", "config/", "scripts/"
 # Names a rename retired: a doc still citing one is stale (old -> new)
 RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig",
            "EdgeMenusConfig": "MenusConfig", "EdgeMenuManager": "MenuManager", "EdgeMenuEditor": "MenuEditor",
-           "EdgeMenuBody": "MenuBody", "EdgeMenuSync": "MenuSync"}
+           "EdgeMenuBody": "MenuBody", "EdgeMenuSync": "MenuSync",
+           "StyledRectButton": "StyledIconButton"}
 # Backticked text that looks like a member access but isn't one of ours
 NOT_MEMBERS = {"Quickshell", "Qt", "Math", "JSON", "Object", "Array", "String", "Date", "Number",
                "console", "Hyprland", "Text", "Item", "Layout", "Keys", "Image"}

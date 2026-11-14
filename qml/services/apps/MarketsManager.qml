@@ -75,14 +75,6 @@ QtObject {
     });
   }
 
-  // The theme colour for a trend ("up", "down", "flat"), red for gains
-  // when the settings say so
-  function trendColor(trend) {
-    if (trend === "flat")
-      return Theme.foregroundInactive;
-    return (trend === "up") !== MarketsConfig.redForGains ? Theme.success : Theme.error;
-  }
-
   // A market state's short label ("" while it trades)
   function stateLabel(quote) {
     switch (quote?.marketState) {

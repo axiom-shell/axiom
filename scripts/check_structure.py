@@ -503,7 +503,7 @@ def main():
     }
     lock_reads = {"acquire", "release", "wants", "formatTime", "timeText", "dayLabel", "getBatteryIcon", "offsetOf", "dotsFor", "eventsOn",
                   "ensureMonth", "avatarOf", "currentFor", "iconFor", "nameFor", "sourcesFor", "conditionFor", "sessionActionInfo", "refreshIp",
-                  "quoteFor", "trendColor", "stateLabel", "history"}
+                  "quoteFor", "stateLabel", "history"}
     service_call = re.compile(r"\b([A-Z]\w*Manager)\.(\w+)\s*\(")
 
     def lock_files(path, seen):
