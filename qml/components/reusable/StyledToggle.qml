@@ -71,8 +71,6 @@ Item {
     anchors.fill: parent
     count: root.options.length
     index: root._index
-    // Today's capsule (the shape of the segment row is the toggle-shape FLAG)
-    radius: height / 2
 
     FocusRing {
       shown: root.activeFocus
