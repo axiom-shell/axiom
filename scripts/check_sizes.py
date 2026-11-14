@@ -48,7 +48,7 @@ ASSIGN = re.compile(r"^\s*(?:readonly\s+)?(?:property\s+(?:int|real)\s+)?(" + SI
 EXPR = re.compile(r"^\s*(?:readonly\s+)?(?:property\s+(?:int|real)\s+)?(" + SIZE_NAME + r")\s*:\s*(.+?)\s*(?://.*)?$")
 LITERAL = re.compile(r"(?<![\w.\[])\d+(?:\.\d+)?(?![\w.\]])")
 # Calls whose numbers are no px: grid units, already scaled, colors
-NOT_PX = ("Widget.px", "fontSizeBy", "span", "Qt.size", "Qt.rgba", "Qt.alpha")
+NOT_PX = ("Widget.px", "Widget.textPx", "fontSizeBy", "span", "Qt.size", "Qt.rgba", "Qt.alpha")
 EXEMPT = ("border.width", "borderWidth", "sourceSize")
 # `Appearance.fontSize - 2`, not `Appearance.fontSize * 2`
 FONT_OFFSET = re.compile(r"Appearance\.(fontSize(?:Large)?)\s*[-+]\s*\d")
