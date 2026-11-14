@@ -26,9 +26,18 @@ StyledTextButton {
     text: root.text
   }
 
+  // The icon's own width (one em for a symbol name)
+  TextMetrics {
+    id: iconMetrics
+    font.family: Appearance.iconFamily
+    font.pixelSize: root.textSize
+    text: root.iconText
+  }
+
   Layout.fillWidth: true
   Layout.preferredHeight: Widget.height
-  implicitWidth: Math.ceil(widest.advanceWidth) + root.textPadding * 2
+  // plus the icon and StyledTextButton's content spacing (`Widget.spacing / 2`) beside the label
+  implicitWidth: Math.ceil(widest.advanceWidth) + root.textPadding * 2 + (root.iconText !== "" ? Math.ceil(iconMetrics.advanceWidth) + (root.text !== "" ? Widget.spacing / 2 : 0) : 0)
   enabled: available
   kind: root.inRow ? "text" : root.active ? "primary" : "tonal"
   labelRole: root.inRow && !root.active ? "body" : "label"

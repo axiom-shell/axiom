@@ -78,6 +78,14 @@ TestCase {
   }
 
   Component {
+    id: iconSegmentComp
+
+    SegmentButton {
+      iconText: "visibility_off"
+    }
+  }
+
+  Component {
     id: toggleComp
 
     StyledToggle {
@@ -416,6 +424,22 @@ TestCase {
     // equal segments, as wide as the widest label
     const widths = Array.prototype.filter.call(row.children[1].children, c => c.width > 0).map(c => Math.round(c.width));
     verify(widths.every(w => Math.abs(w - widths[0]) <= 1), `unequal segments ${widths}`);
+  }
+
+  function test_segment_button_holds_icon_and_label_data() {
+    return rows();
+  }
+
+  function test_segment_button_holds_icon_and_label(data) {
+    harness.configure(data);
+    // no Layout parent (a Flow's case): width = implicitWidth
+    const button = createTemporaryObject(iconSegmentComp, root, {
+      "text": strings[data.key]
+    });
+    waitForRendering(button);
+    for (const t of harness.texts(button))
+      verify(!t.truncated, `"${t.text}" is elided`);
+    compare(harness.containedProblems(button), []);
   }
 
   function test_toggle_shows_every_label_data() {
