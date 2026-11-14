@@ -11,8 +11,8 @@ ColumnLayout {
   property string value: ""
   property string unit: ""
   property string label: ""
-  property color valueColor: Theme.foreground
-  property int valueSize: Appearance.fontSize * 2
+  property color valueColor: Style.text
+  property int valueSize: Style.typeBody * 2
 
   spacing: 0
 
@@ -27,8 +27,7 @@ ColumnLayout {
     visible: root.label !== ""
     Layout.fillWidth: true
     text: root.label
-    elide: Text.ElideRight
-    textSize: Appearance.fontSizeBy(-2)
-    opacity: 0.6
+    role: "caption"
+    overflow: "line"
   }
 }

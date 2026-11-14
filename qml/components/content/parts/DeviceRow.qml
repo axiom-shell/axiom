@@ -38,7 +38,7 @@ Rectangle {
   property string actionTip: root.connected ? I18n.tr("Disconnect") : root.connectTip
   // A small icon on the icon's bottom-right corner (e.g. "lock")
   property string iconBadge: ""
-  property color statusColor: root._confirmForget || root.failed ? Theme.error : root.busy || root.connected ? Theme.accent : Theme.foregroundAlt
+  property color statusColor: root._confirmForget || root.failed ? Style.errorText : root.busy || root.connected ? Style.textAccent : Style.textFaint
   // Buttons before forget, shown with it on hover (e.g. autoconnect)
   property alias hoverActions: hoverActionsRow.data
   readonly property bool hovered: rowHover.hovered
@@ -59,11 +59,17 @@ Rectangle {
   width: ListView.view?.width ?? implicitWidth
   implicitHeight: root.rowHeight + (root.expanded ? belowItem.childrenRect.height + Widget.spacing : 0)
   radius: Widget.radius
-  color: root.connected || root.selected ? Theme.backgroundHighlight : rowHover.hovered ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
+  // A lifted reading tone, so the status line's colours stay guaranteed pairs
+  color: root.connected || root.selected ? Style.surfaceRaised : "transparent"
   clip: true
 
-  ColorGlide on color {}
   Glide on implicitHeight {}
+
+  StateLayer {
+    anchors.fill: parent
+    radius: root.radius
+    hovered: rowHover.hovered
+  }
 
   HoverHandler {
     id: rowHover
@@ -99,8 +105,8 @@ Rectangle {
       Layout.preferredWidth: Widget.iconButton
       horizontalAlignment: Text.AlignHCenter
       text: root.icon
-      textSize: Appearance.fontSize * 1.4
-      textColor: root.connected ? Theme.accent : Theme.foregroundAlt
+      size: "md"
+      textColor: root.connected ? Style.textAccent : Style.textMuted
 
       // On the glyph's bottom-right corner
       StyledIcon {
@@ -109,7 +115,7 @@ Rectangle {
         y: Math.round((mainIcon.height + mainIcon.contentHeight) / 2 - height * 0.85)
         text: root.iconBadge
         fill: 1
-        textSize: Appearance.fontSizeBy(-4)
+        size: "xs"
         textColor: mainIcon.textColor
       }
     }
@@ -128,15 +134,13 @@ Rectangle {
         StyledLabel {
           Layout.fillWidth: true
           text: root.title
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-1)
-          textColor: root.connected ? Theme.foreground : Theme.foregroundAlt
+          role: "label"
+          textColor: root.connected || root.selected ? Style.text : Style.textMuted
         }
         StyledLabel {
           Layout.fillWidth: true
           text: root._confirmForget ? I18n.tr("Click again to forget") : root.status
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-3)
+          role: "micro"
           textColor: root.statusColor
         }
       }
@@ -158,14 +162,12 @@ Rectangle {
           spacing: Widget.spacing / 2
         }
 
-        StyledRectButton {
+        StyledIconButton {
           size: Widget.iconButton
           visible: root.known
           enabled: rowHover.hovered && !root.busy
+          kind: root._confirmForget ? "dangerPrimary" : "danger"
           iconText: "delete"
-          iconColor: Theme.error
-          backgroundColor: Qt.alpha(Theme.error, root._confirmForget ? 0.2 : 0)
-          borderHoverColor: Theme.error
           tooltipText: I18n.tr("Forget")
           onClicked: {
             if (root._confirmForget)
@@ -176,15 +178,13 @@ Rectangle {
       }
     }
 
-    StyledRectButton {
+    StyledIconButton {
       size: Widget.iconButton
       visible: root.connectable
       enabled: !root.busy
-      opacity: enabled ? 1 : 0.5
+      kind: "text"
       iconText: root.actionIcon
-      iconColor: root.connected ? Theme.accent : Theme.foreground
-      backgroundColor: "transparent"
-      borderHoverColor: Theme.accent
+      iconColor: root.connected ? Style.textAccent : Style.text
       tooltipText: root.actionTip
       onClicked: root.connectClicked()
     }

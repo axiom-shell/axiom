@@ -58,12 +58,13 @@ Item {
   FontMetrics {
     id: titleMetrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-1)
+    font.pixelSize: Style.typeLabel
+    font.weight: Style.roleLabel.weight
   }
   FontMetrics {
     id: statusMetrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-3)
+    font.pixelSize: Style.typeMicro
   }
 
   ColumnLayout {
@@ -102,8 +103,9 @@ Item {
 
     // A ListView, so only the rows in view are built: Wi-Fi can see
     // dozens of networks, and a row is a few dozen items
-    ListView {
+    MotionListView {
       id: list
+      animateFirstFill: false
       implicitHeight: list.contentHeight
       spacing: 2
       boundsBehavior: Flickable.StopAtBounds
@@ -127,8 +129,7 @@ Item {
     visible: root.on && root.count === 0
     horizontalAlignment: Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter
-    wrapMode: Text.WordWrap
+    role: "caption"
     text: root.emptyText
-    textColor: Theme.foregroundAlt
   }
 }
