@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.config
 
 // A problem's icon, as IssueList draws it (error red, warning amber, info
 // accent), saying what's wrong in a tooltip on hover (`tip`; none while

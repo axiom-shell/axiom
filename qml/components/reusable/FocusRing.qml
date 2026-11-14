@@ -12,7 +12,9 @@ Rectangle {
   property bool shown: false
 
   // -- Implementation --
-  readonly property real _parentRadius: root.parent && root.parent.radius !== undefined ? root.parent.radius : 0
+  // (var: qmllint knows only Item's members)
+  readonly property var _host: root.parent
+  readonly property real _parentRadius: root._host && root._host.radius !== undefined ? root._host.radius : 0
 
   visible: root.shown
   anchors.fill: parent
