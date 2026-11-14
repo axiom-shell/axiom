@@ -215,7 +215,7 @@ StyledContainer {
       visible: root.hasWarning
       level: root.hasError ? "error" : "warning"
       tip: KeybindManager.editor.issueTip(root.indices)
-      textColor: root.selected ? root.ink : issueIcon.tone
+      textColor: root.selected ? root.ink : Style.toneColor(issueIcon.tone)
       // The row's other marks' size: larger, the symbol sits below centre
       textSize: Appearance.fontSizeBy(-1)
     }

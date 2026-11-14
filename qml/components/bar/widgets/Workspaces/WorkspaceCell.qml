@@ -391,6 +391,7 @@ Item {
     // Centred on its figures
     StyledLabel {
       anchors.centerIn: parent
+      overflow: "none"
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
       textColor: root._shown.content

@@ -14,30 +14,22 @@ StyledText {
   // Material Symbols' variable axes
   property real fill: 0
   property int weight: 400
+  // "xs" | "sm" | "md" | "lg" | "xl" (Style.iconSize)
+  property string size: "sm"
 
   // -- Implementation --
   textFamily: isSymbol ? Appearance.iconFamily : Appearance.fontFamily
+  textSize: Style.iconSize(root.size)
+  // A ligature glyph never wraps or elides
+  overflow: "none"
   // Filled symbols are built from overlapping contours, which the default
   // distance-field renderer draws as blotches, and curve rendering leaves seams
   // and uneven thin strokes. Native rendering gets both right, but a scaled
   // native glyph is resampled and blurs: grow an icon by size, not `scale`.
-  // Drawn scaled (ancestors' `contentZoom`s: the overlay's pages, an edge
-  // menu's modules), an unfilled one is drawn by the distance-field renderer, which
-  // scales cleanly
-  renderType: isSymbol && !(root._zoomed && root.fill === 0) ? Text.NativeRendering : Text.QtRendering
-  // The ancestors whose `contentZoom`s it's drawn at (a page's, a menu
-  // module's), found once it's placed
-  // (var: qmllint knows only Item's members)
-  property var _zoomHosts: []
-  readonly property bool _zoomed: Math.abs(root._zoomHosts.reduce((zoom, host) => zoom * host.contentZoom, 1) - 1) > 0.01
-  Component.onCompleted: {
-    const hosts = [];
-    for (let item = root.parent; item; item = item.parent) {
-      if ("contentZoom" in item)
-        hosts.push(item);
-    }
-    root._zoomHosts = hosts;
-  }
+  // Drawn under a zoom (ancestors' `contentZoom`s: the overlay's pages, an
+  // edge menu's modules) an unfilled one is drawn by the distance-field
+  // renderer, which scales cleanly
+  renderType: TextRender.typeFor(root._drawnZoom, root.isSymbol, root.fill)
   font.variableAxes: isSymbol ? {
     "FILL": root.fill,
     "wght": root.weight

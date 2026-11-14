@@ -12,6 +12,7 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
   scripts/qml_modules.py OUT         build the tree in OUT (emptied first)
   scripts/qml_modules.py --pure OUT  only files that don't import Quickshell
 """
+import json
 import re
 import shutil
 import sys
@@ -21,6 +22,42 @@ ROOT = Path(__file__).resolve().parent.parent
 # The shell's QML: `qs.` module names are relative to it
 QML_ROOT = ROOT / "qml"
 QML_DIRS = ["components", "shell", "services", "config"]
+
+# The colour calls a bar widget may not make (check_structure T2): the shell's colour functions and raw colours
+WIDGET_COLOR_CALLS = re.compile(
+    r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\s*\(|\bBarWidgetStyle\.|"
+    r"\bBarsConfig\.\w*Colors?\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"
+    r"[\"'](?:white|black|red|green|blue|yellow|orange|purple|gray|grey|cyan|magenta)[\"']")
+
+
+def load_exceptions(path, rules, section=None):
+    """Read an exceptions file ({ "<key>": { "rules": [...], "reason": "..." } }, under `section` if given) into
+    (entries, errors): every entry needs a reason and only known rules."""
+    path = Path(path)
+    if not path.exists():
+        return {}, []
+    try:
+        data = json.loads(path.read_text())
+    except ValueError as e:
+        return {}, [f"{path.name}: not JSON: {e}"]
+    if section:
+        data = data.get(section, {})
+    entries, errors = {}, []
+    for key, entry in data.items():
+        if key.startswith("_"):
+            continue
+        if not isinstance(entry, dict):
+            errors.append(f"{path.name}: {key} is not an object")
+            continue
+        if not str(entry.get("reason", "")).strip():
+            errors.append(f"{path.name}: {key} has no reason")
+        listed = entry.get("rules", [])
+        for rule in listed:
+            if rule not in rules:
+                errors.append(f"{path.name}: {key} names {rule}, not a rule")
+        entries[key] = dict(entry, rules=listed, reason=entry.get("reason", ""))
+    return entries, errors
+
 
 SINGLETON = re.compile(r"^\s*pragma\s+Singleton\b", re.M)
 

@@ -10,9 +10,9 @@ TipIcon {
 
   // "error" | "warning" | "info"
   property string level: "warning"
-  // The level's color (`textColor` unless a host sets its own)
-  readonly property color tone: root.level === "error" ? Theme.error : root.level === "info" ? Theme.accent : Theme.warning
 
   text: root.level === "error" ? "error" : root.level === "info" ? "info" : "warning"
-  textColor: root.tone
+  // The level's tone name (the inherited StyledText.tone), which IssueList's
+  // text beside it takes too
+  tone: root.level === "error" ? "error" : root.level === "info" ? "accent" : "warning"
 }

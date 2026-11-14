@@ -1,6 +1,8 @@
 //@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma Env QSG_RENDER_LOOP=threaded
+//@ pragma NativeTextRendering
+//@ pragma Env QSG_DISTANCEFIELD_ANTIALIASING=gray
 
 pragma ComponentBehavior: Bound
 import Quickshell

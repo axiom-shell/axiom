@@ -39,9 +39,9 @@ ColumnLayout {
 
       StyledText {
         text: issue.entry.text
-        textColor: icon.tone
+        tone: icon.tone
         textSize: root.textSize
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     }

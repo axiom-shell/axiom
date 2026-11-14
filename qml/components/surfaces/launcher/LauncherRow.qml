@@ -152,6 +152,7 @@ Item {
 
         StyledLabel {
           Layout.fillWidth: usage.text === ""
+          Layout.maximumWidth: parent.width
           text: root.modelData.title ?? ""
           // Titles are clipboard text, window titles, file names: never markup
           textFormat: Text.PlainText
