@@ -116,14 +116,14 @@ Card {
     Rectangle {
       anchors.fill: parent
       radius: height / 2
-      color: Qt.alpha(Theme.foreground, 0.12)
+      color: Style.surfaceSunken
     }
     Rectangle {
       x: parent.width * 7 / 24
       width: parent.width * 12 / 24
       height: parent.height
       radius: height / 2
-      color: Qt.alpha(Theme.accent, 0.45)
+      color: Style.rail
     }
     Rectangle {
       readonly property real at: (band.there.getHours() + band.there.getMinutes() / 60) / 24
@@ -132,7 +132,7 @@ Card {
       width: Widget.px(3)
       height: parent.height + Widget.px(6)
       radius: 1.5
-      color: Theme.accent
+      color: Style.accent
     }
   }
 
@@ -188,22 +188,22 @@ Card {
               spacing: Widget.spacing / 2
               StyledIcon {
                 text: entry.day ? "light_mode" : "dark_mode"
-                textColor: entry.local ? Theme.accent : Theme.foregroundAlt
-                textSize: Appearance.fontSizeBy(-1)
+                size: "sm"
+                tone: entry.local ? "accent" : "muted"
               }
               StyledLabel {
                 Layout.fillWidth: true
                 text: root.cityOf(entry.place)
-                textSize: Appearance.fontSizeBy(-1)
-                elide: Text.ElideRight
+                role: "caption"
+                overflow: "line"
               }
             }
             StyledText {
               Layout.alignment: Qt.AlignHCenter
               text: root.timeText(entry.there)
-              textSize: Appearance.fontSize * 1.6
-              textColor: entry.local ? Theme.accent : Theme.foreground
-              font.weight: Font.Bold
+              textSize: Math.round(Style.typeBody * 1.6) // fitted: the tile
+              textColor: entry.local ? Style.textAccent : Style.text
+              font.weight: Style.roleDisplay.weight
               font.features: {
                 "tnum": 1
               }
@@ -212,9 +212,9 @@ Card {
               Layout.alignment: Qt.AlignHCenter
               Layout.maximumWidth: parent.width
               text: root.detailOf(entry.place.timezone, entry.there)
-              textSize: Appearance.fontSizeBy(-3)
-              textColor: Theme.foregroundAlt
-              elide: Text.ElideRight
+              role: "micro"
+              tone: "muted"
+              overflow: "line"
             }
           }
         }
@@ -235,8 +235,8 @@ Card {
 
               StyledIcon {
                 text: entry.day ? "light_mode" : "dark_mode"
-                textColor: entry.local ? Theme.accent : Theme.foregroundAlt
-                textSize: Appearance.fontSizeBy(2)
+                size: "md"
+                tone: entry.local ? "accent" : "muted"
               }
               ColumnLayout {
                 Layout.fillWidth: true
@@ -244,24 +244,24 @@ Card {
                 StyledLabel {
                   Layout.fillWidth: true
                   text: root.cityOf(entry.place)
-                  textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 1.3, root.rowHeight * 0.24))
-                  font.weight: entry.local ? Font.Bold : Font.Normal
-                  elide: Text.ElideRight
+                  textSize: Math.max(Style.typeBody, Math.min(Style.typeBody * 1.3, root.rowHeight * 0.24)) // fitted: the row
+                  font.weight: entry.local ? Style.weightStrong : Style.weightNormal
+                  overflow: "line"
                 }
                 StyledLabel {
                   Layout.fillWidth: true
                   visible: text !== "" && root.rowHeight >= Appearance.fontSize * 2.6
                   text: root.detailOf(entry.place.timezone, entry.there)
-                  textSize: Appearance.fontSizeBy(-3)
-                  textColor: Theme.foregroundAlt
-                  elide: Text.ElideRight
+                  role: "micro"
+                  tone: "muted"
+                  overflow: "line"
                 }
               }
               StyledLabel {
                 text: root.timeText(entry.there)
-                textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 2, root.rowHeight * 0.42))
-                textColor: entry.local ? Theme.accent : Theme.foreground
-                font.weight: Font.Bold
+                textSize: Math.max(Style.typeBody, Math.min(Style.typeDisplay, root.rowHeight * 0.42)) // fitted: the row's time
+                textColor: entry.local ? Style.textAccent : Style.text
+                font.weight: Style.roleDisplay.weight
                 font.features: {
                   "tnum": 1
                 }
