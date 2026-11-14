@@ -4,6 +4,7 @@ import qs.config
 import qs.services.compositor
 import qs.components.reusable
 import qs.components.methods
+import qs.components.hosts.popout
 import qs.components.views.Layouts
 import qs.services.ui
 
@@ -193,6 +194,29 @@ Item {
   // The box the pages are drawn in (the overlay's blur region)
   readonly property Item box: mainContentBox
 
+  // The page box's soft shadow (D-26), cast from a plain copy of its shape
+  // (capturing the box would redraw the whole page every frame it changes).
+  // Under the box, past its clip; off with the shell's shadow switch and
+  // where the compositor's blur would frost it
+  OutsideShadow {
+    target: shadowShape
+    active: root.open
+    hideTarget: true
+    shadowColor: Style.shadowSoft
+    look: ({
+        "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart),
+        "shadowSize": Widget.px(16)
+      })
+  }
+  Rectangle {
+    id: shadowShape
+    anchors.centerIn: parent
+    width: contentContainer.width
+    height: contentContainer.height
+    radius: Style.radiusOuter
+    color: Style.surfacePage
+  }
+
   // The box grows and shrinks about its centre to the page's size as the
   // pages change. Centred, not anchored to the sides, which would override
   // the animated width (and snap the box's edges to the new page's).
@@ -211,15 +235,12 @@ Item {
       duration: Appearance.animNormal
     }
 
-    Rectangle {
+    Surface {
       id: mainContentBox
+      tone: "page"
       anchors.centerIn: parent
       width: contentContainer.width
       height: contentContainer.height
-      radius: Appearance.borderRadius
-      color: Appearance.fill(Theme.backgroundAlt)
-      border.color: Theme.foreground
-      border.width: Appearance.borderWidth
 
       // Laid out at the grid's unit and scaled as a whole, so the box's
       // own border and radius stay crisp; from its top left, placed on a
