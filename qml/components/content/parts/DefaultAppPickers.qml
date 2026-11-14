@@ -87,14 +87,14 @@ ColumnLayout {
 
         StyledIcon {
           text: row.modelData.icon
-          textColor: Theme.accent
+          tone: "accent"
         }
 
         StyledLabel {
           Layout.preferredWidth: Widget.px(130)
           // I18n.tr: the labels are declared in DefaultAppsManager
           text: I18n.tr(row.modelData.label)
-          elide: Text.ElideRight
+          overflow: "line"
         }
 
         StyledComboEntry {
@@ -117,7 +117,7 @@ ColumnLayout {
         TipIcon {
           visible: row.roleState?.mixed === true && !row.commandShown
           text: "call_split"
-          textColor: Theme.foregroundAlt
+          tone: "muted"
           tip: I18n.tr("Some of these files open in other apps; picking one sets them all.")
         }
       }
@@ -150,9 +150,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.leftMargin: Appearance.fontSize * 1.6
         text: row.modelData.id === "terminal" ? I18n.tr("For terminal apps axiom runs: command -e program. Other apps still open the default terminal.") : I18n.tr("axiom starts it given what it opens (links, folders or files). Other apps still open the default.")
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "caption"
       }
     }
   }
@@ -161,8 +159,7 @@ ColumnLayout {
     visible: DefaultAppsManager.error !== ""
     Layout.fillWidth: true
     text: DefaultAppsManager.error
-    textColor: Theme.error
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    role: "caption"
+    tone: "error"
   }
 }

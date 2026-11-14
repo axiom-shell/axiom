@@ -19,7 +19,7 @@ Item {
 
   readonly property int itemHeight: Widget.height
   readonly property int itemPadding: Widget.padding
-  property real minWidth: Widget.height * 4
+  property real minWidth: Widget.textPx(112)
   property real maxWidth: (_window?.screen?.width ?? 2000) * 0.3 // a stand-in screen width
   // 0: unbounded (a submenu passes SubPopout.maxContentHeight)
   property real maxHeight: 0
@@ -84,13 +84,18 @@ Item {
         }
       }
 
+      Skeleton {
+        visible: !root.contentReady
+        Layout.fillWidth: true
+        lines: 3
+        role: "label"
+      }
+
       // Empty state
       StyledText {
-        wrapMode: Text.WordWrap
         visible: root.contentReady && menuRepeater.count === 0
         text: root.emptyText
-        textColor: Theme.accent
-        opacity: 0.5
+        tone: "faint"
         Layout.fillWidth: true
         Layout.preferredHeight: root.itemHeight
         horizontalAlignment: Text.AlignHCenter

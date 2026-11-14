@@ -8,17 +8,15 @@ import qs.components.reusable
 
 // Text to paste somewhere (a config line, a command), in a monospace box
 // with a Copy button
-Rectangle {
+Surface {
   id: root
+  tone: "sunken"
+  outlined: false
 
   property string text
 
   Layout.fillWidth: true
   implicitHeight: row.implicitHeight + Widget.padding
-  radius: Widget.radius
-  color: Theme.backgroundAlt
-  border.color: Theme.border
-  border.width: Appearance.borderWidth
 
   RowLayout {
     id: row
@@ -31,7 +29,7 @@ Rectangle {
       Layout.fillWidth: true
       text: root.text
       textFamily: "monospace"
-      wrapMode: Text.WrapAnywhere
+      overflow: "wrap"
     }
 
     StyledTextButton {

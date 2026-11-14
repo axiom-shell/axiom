@@ -81,14 +81,12 @@ ColumnLayout {
 
   // Beside the last field: the password, else (an open hidden network)
   // the name
-  component ConnectButton: StyledRectButton {
+  component ConnectButton: StyledIconButton {
+    kind: "text"
     size: Widget.iconButton
     enabled: root.complete
-    opacity: enabled ? 1 : 0.5
     iconText: "link"
-    iconColor: Theme.accent
-    backgroundColor: "transparent"
-    borderHoverColor: Theme.accent
+    iconColor: Style.accent
     tooltipText: I18n.tr("Connect")
     onClicked: root.submit()
   }
@@ -161,9 +159,9 @@ ColumnLayout {
     visible: root.error !== ""
     Layout.fillWidth: true
     text: root.error
-    wrapMode: Text.WordWrap
-    textSize: Appearance.fontSizeBy(-3)
-    textColor: Theme.error
+    role: "micro"
+    overflow: "wrap"
+    tone: "error"
   }
 
   // More: the inner method, an outer identity and the server's check
@@ -176,8 +174,9 @@ ColumnLayout {
     StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("More options")
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: moreRow.hovered ? Theme.accent : Theme.foregroundAlt
+      role: "caption"
+      overflow: "line"
+      tone: moreRow.hovered ? "accent" : "muted"
     }
   }
 
@@ -230,9 +229,8 @@ ColumnLayout {
       StyledLabel {
         Layout.fillWidth: true
         text: root.caCert !== "" ? root.caCert : I18n.tr("No file chosen")
-        elide: Text.ElideMiddle
-        textSize: Appearance.fontSizeBy(-3)
-        textColor: root.caCert !== "" ? Theme.foreground : Theme.foregroundAlt
+        role: "micro"
+        tone: root.caCert !== "" ? "text" : "muted"
       }
       FlatIconButton {
         iconText: "folder_open"

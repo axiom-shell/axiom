@@ -12,8 +12,8 @@ Row {
   property real rate: 0
   // "down" or "up"
   property string direction: "down"
-  property color textColor: Theme.foreground
-  property int textSize: Appearance.fontSizeBy(-1)
+  property color textColor: Style.text
+  property int textSize: Style.typeCaption
 
   spacing: 2
 

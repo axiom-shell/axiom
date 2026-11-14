@@ -19,7 +19,7 @@ ColumnLayout {
   property alias horizontal: dial.horizontal
   property alias dialSize: dial.dialSize
 
-  readonly property color phaseColor: PomodoroManager.isBreak ? Theme.accentAlt : Theme.accent
+  readonly property color phaseColor: PomodoroManager.isBreak ? Style.accentAlt : Style.accent
   // Sessions done towards the next long break (all of them during it)
   readonly property int towardsLong: PomodoroManager.phase === "long" ? PomodoroConfig.longBreakEvery : PomodoroManager.completed % PomodoroConfig.longBreakEvery
 
@@ -59,7 +59,7 @@ ColumnLayout {
         width: Appearance.fontSize * 0.6
         height: width
         radius: width / 2
-        color: index < root.towardsLong ? Theme.accent : Theme.backgroundHighlight
+        color: index < root.towardsLong ? Style.accent : Style.surfaceSunken
       }
     }
   }

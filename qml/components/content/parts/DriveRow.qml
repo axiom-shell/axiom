@@ -79,10 +79,10 @@ DeviceRow {
 
           StyledLabel {
             Layout.fillWidth: true
-            elide: Text.ElideRight
+            role: "caption"
+            overflow: "line"
+            tone: volumeRow.action === "open" ? "text" : "muted"
             text: [volumeRow.volume?.label || I18n.tr("Volume {0}", volumeRow.index + 1), volumeRow.volume?.fsType ?? "", DriveInfo.size(volumeRow.volume?.size)].filter(s => s !== "").join(" · ")
-            textSize: Appearance.fontSizeBy(-2)
-            textColor: volumeRow.action === "open" ? Theme.foreground : Theme.foregroundAlt
           }
           FlatIconButton {
             visible: volumeRow.action === "open"
@@ -125,9 +125,9 @@ DeviceRow {
             Layout.fillWidth: true
             visible: DrivesManager.unlockError !== ""
             text: DrivesManager.unlockError
-            wrapMode: Text.WordWrap
-            textSize: Appearance.fontSizeBy(-3)
-            textColor: Theme.error
+            role: "micro"
+            overflow: "wrap"
+            tone: "error"
           }
         }
       }

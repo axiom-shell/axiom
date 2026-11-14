@@ -15,8 +15,8 @@ ColumnLayout {
 
   property bool stacked: false
   property bool labelInline: false
-  property real iconSize: Appearance.fontSize * 3
-  property real temperatureSize: Appearance.fontSize * 2
+  property real iconSize: Math.round(Style.typeBody * 3) // fitted: the hero glyph beside the temperature
+  property real temperatureSize: Math.round(Style.typeBody * 2) // fitted: the temperature
 
   readonly property int _align: root.stacked ? Text.AlignHCenter : Text.AlignLeft
 
@@ -26,10 +26,9 @@ ColumnLayout {
     visible: (WeatherManager.place?.name ?? "") !== ""
     Layout.fillWidth: true
     horizontalAlignment: root._align
-    elide: Text.ElideRight
+    overflow: "line"
     text: WeatherManager.place?.name ?? ""
-    font.weight: Font.Bold
-    textColor: Theme.accent
+    tone: "accent"
   }
   GridLayout {
     Layout.fillWidth: true
@@ -54,22 +53,21 @@ ColumnLayout {
         horizontalAlignment: root._align
         text: WeatherManager.current ? `${Math.round(WeatherManager.current.temperature_2m)}${WeatherManager.unitSymbol}` + (root.labelInline ? `  ${WeatherManager.condition?.label ?? ""}` : "") : ""
         textSize: root.temperatureSize
-        font.weight: Font.Bold
+        font.weight: Style.roleDisplay.weight
       }
       StyledText {
         visible: !root.labelInline
         Layout.fillWidth: true
         horizontalAlignment: root._align
-        elide: Text.ElideRight
+        overflow: "line"
         text: WeatherManager.condition?.label ?? ""
       }
       StyledText {
         Layout.fillWidth: true
         horizontalAlignment: root._align
-        elide: Text.ElideRight
+        role: "caption"
+        overflow: "line"
         text: WeatherManager.details
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
       }
     }
   }

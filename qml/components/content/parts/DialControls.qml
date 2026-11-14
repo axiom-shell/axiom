@@ -6,7 +6,7 @@ import qs.config
 import qs.components.reusable
 
 // A TimeRing over (or beside, `horizontal`) three round buttons: a main one
-// filled in the ring's colour between two tonal ones, the running view of
+// in the accent between two tonal ones, the running view of
 // the one-off timer and caffeine (CountdownTimer) and the stopwatch
 // (Stopwatch). With `fill` (an overlay card) the ring and buttons grow to
 // the room it's given; either way they're centred in it. With `steps`, the
@@ -23,7 +23,7 @@ Item {
   property string label: ""
   property bool running: false
   property bool urgent: false
-  property color color: Theme.accent
+  property color color: Style.accent
   // How often progress moves (ms), the ring sweeping between
   property int tick: 1000
 
@@ -150,37 +150,37 @@ Item {
         visible: !root.choosing
         spacing: Widget.spacing
 
-        FlatIconButton {
+        StyledIconButton {
+          Layout.alignment: Qt.AlignVCenter
           size: root.smallButton
           iconSize: Math.round(root.smallButton * 0.5)
           iconText: root.leftIcon
           tooltipText: root.leftTip
           enabled: root.leftEnabled
           borderRadius: root.smallButton / 2
-          backgroundColor: Theme.backgroundAlt
+          kind: "tonal"
           onClicked: root.leftClicked()
         }
-        FlatIconButton {
+        StyledIconButton {
+          kind: "primary"
+          Layout.alignment: Qt.AlignVCenter
           size: root.bigButton
           iconSize: Math.round(root.bigButton * 0.55)
           iconText: root.mainIcon
           tooltipText: root.mainTip
-          iconColor: Theme.background
           borderRadius: root.bigButton / 2
-          backgroundColor: root.color
-          hoverColor: Qt.lighter(root.color, 1.12)
-          pressColor: Qt.darker(root.color, 1.12)
           onClicked: root.mainClicked()
         }
-        FlatIconButton {
+        StyledIconButton {
           id: rightButton
+          Layout.alignment: Qt.AlignVCenter
           size: root.smallButton
           iconSize: Math.round(root.smallButton * 0.5)
           iconText: root.rightIcon
           tooltipText: root.rightTip
           enabled: root.rightEnabled
           borderRadius: root.smallButton / 2
-          backgroundColor: Theme.backgroundAlt
+          kind: "tonal"
           onClicked: root.rightClicked()
           onPressAndHold: root.choosing = root.choices.length > 0
 

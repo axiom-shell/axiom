@@ -45,7 +45,7 @@ ColumnLayout {
   }
 
   // A ListView, so only the items in view are built
-  ListView {
+  MotionListView {
     id: flick
     visible: root.items.length > 0
     Layout.fillWidth: true
@@ -77,7 +77,7 @@ ColumnLayout {
         title: entry.item.summary
         titleLines: 2
         subtitle: PomodoroManager.todoUid === entry.item.uid && !entry.item.done ? I18n.tr("Working on it") : ""
-        opacity: entry.item.done ? 0.55 : 1
+        dimmed: entry.item.done
         onActivated: TodoManager.toggle(entry.item.uid)
 
         FlatIconButton {
