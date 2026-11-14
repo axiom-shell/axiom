@@ -41,6 +41,7 @@ BaseView {
   LayoutsEditorLayout {
     id: layout
     grid: root.grid
+    page: root
     mainWidth: root.editorWidth
     editor: root.target.editor
     canvas.modules: root.target.modules

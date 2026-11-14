@@ -10,5 +10,9 @@
   "qml/components/content/NightLightControls/NightLightControls.qml": {
     "rules": ["R6"],
     "reason": "the night light's colour temperature and the ink that reads on it"
+  },
+  "qml/components/views/Layouts/CanvasModule.qml": {
+    "rules": ["R6"],
+    "reason": "a module tile's fill is the user's colour; its ink is picked once per fill (`Tone.bestOn`)"
   }
 }

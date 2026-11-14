@@ -1228,7 +1228,6 @@
     "Save the menu to add a bar button or keybind for it.": "バーのボタンやキーバインドを追加するには、先にメニューを保存してください。",
     "Drag a module onto the canvas, or click one to add it.": "モジュールをキャンバスにドラッグするか、クリックして追加します。",
     "{0} × {1} cards": "{0} × {1} カード",
-    "Click a module on the canvas to edit it, or drag a box to select several": "キャンバス上のモジュールをクリックして編集、または枠をドラッグして複数選択",
     "Drag one to move them all, or use the arrow keys": "どれかをドラッグしてまとめて移動、または矢印キーで移動",
     "In quarter cards. Drag an edge or corner on the canvas, or step it here.": "¼カード単位。キャンバスで辺か角をドラッグするか、ここで増減します。",
     "Height": "高さ",
@@ -4249,6 +4248,8 @@
     "Delete this layout": "",
     "Bar widget look": "",
     "Drag widgets to arrange them, across sections too.": "",
-    "Saves this bar: its settings and its widgets": ""
+    "Saves this bar: its settings and its widgets": "",
+    "Drag a module to move it, an edge or corner to resize it, a box on the background to select several (Shift adds). Arrows move the selection, Shift+arrows resize a single module, Delete removes it, Escape deselects, Ctrl+Z undoes.": "",
+    "The desktop, lock screen and login screen.": ""
   }
 }

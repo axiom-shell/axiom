@@ -1,13 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
 import qs.components.reusable
 import qs.components.methods
 import qs.components.forms
-import qs.components.content.base
 
 // Layouts editor, below the canvas: the selected module's options, with
 // its size beside them; a group selected together, its count and Remove;
@@ -32,9 +30,9 @@ Item {
   // A new form per module (KeyedLoader)
   readonly property string selectionKey: root.module ? [root.editor.scopeKey, root.index, root.moduleType].join(":") : ""
 
-  Card {
-    color: Theme.background
-    border.color: Theme.border
+  Surface {
+    anchors.fill: parent
+    tone: "surface"
 
     ColumnLayout {
       anchors.fill: parent
@@ -45,7 +43,19 @@ Item {
         icon: root.groupCount > 0 ? "select_all" : root.module ? root.dragLayer.moduleIcon(root.moduleType) : "extension"
         filled: root.module !== null || root.groupCount > 0
         title: root.groupCount > 0 ? I18n.tr("{0} modules", root.groupCount) : root.module ? root.dragLayer.moduleLabel(root.moduleType) : I18n.tr("Library")
-        subtitle: root.groupCount > 0 ? I18n.tr("Drag one to move them all, or use the arrow keys") : root.place ? I18n.tr("{0} × {1} cards", GridPlacement.cards(root.place.w), GridPlacement.cards(root.place.h)) : root.editable ? I18n.tr("Click a module on the canvas to edit it, or drag a box to select several") : root.notEditableHint
+        // (With nothing selected the canvas's status line says what to do)
+        subtitle: root.groupCount > 0 ? I18n.tr("Drag one to move them all, or use the arrow keys") : root.place ? I18n.tr("{0} × {1} cards", GridPlacement.cards(root.place.w), GridPlacement.cards(root.place.h)) : root.editable ? "" : root.notEditableHint
+        canDuplicate: root.removable
+        onDuplicate: root.editor.duplicateModule(root.index)
+        canRemove: root.removable || root.groupCount > 0
+        onRemove: {
+          if (root.groupCount > 0)
+            root.editor.removeSelection();
+          else
+            root.editor.removeModule(root.index);
+        }
+        closable: root.module !== null || root.groupCount > 0
+        onClose: root.editor.clearSelection()
 
         // Centre the selection across or down: on the screen, or among the
         // other modules (GridEditor.planCentre). Dimmed, but still saying
@@ -71,7 +81,7 @@ Item {
             readonly property var plan: root.editor.planCentre(centreButton.modelData.axis)
             readonly property bool can: centreButton.plan !== null && centreButton.plan.valid && !centreButton.plan.noop
             visible: centreButton.plan !== null
-            opacity: centreButton.can ? 1 : 0.4
+            opacity: centreButton.can ? 1 : Style.opacityDisabled
             iconText: centreButton.modelData.icon
             tooltipText: {
               if (!centreButton.plan)
@@ -89,36 +99,6 @@ Item {
                 root.editor.centreSelection(centreButton.modelData.axis);
             }
           }
-        }
-
-        SquareIconButton {
-          visible: root.removable
-          iconText: "content_copy"
-          tooltipText: I18n.tr("Duplicate")
-          onClicked: root.editor.duplicateModule(root.index)
-        }
-
-        SquareIconButton {
-          visible: root.removable
-          iconText: "delete"
-          hoverColor: Theme.error
-          tooltipText: I18n.tr("Remove")
-          onClicked: root.editor.removeModule(root.index)
-        }
-
-        SquareIconButton {
-          visible: root.groupCount > 0
-          iconText: "delete"
-          hoverColor: Theme.error
-          tooltipText: I18n.tr("Remove")
-          onClicked: root.editor.removeSelection()
-        }
-
-        SquareIconButton {
-          visible: root.module !== null || root.groupCount > 0
-          iconText: "close"
-          tooltipText: I18n.tr("Close")
-          onClicked: root.editor.clearSelection()
         }
       }
 
@@ -152,15 +132,13 @@ Item {
         }
 
         // Right: its size
-        ScrollView {
+        StyledScrollView {
           id: sizeScroll
           visible: root.module !== null
           Layout.fillWidth: true
           Layout.fillHeight: true
           Layout.preferredWidth: 2
-          clip: true
-          ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-          contentWidth: availableWidth
+          contentPadding: 0
 
           FieldGroup {
             width: sizeScroll.availableWidth
@@ -215,12 +193,10 @@ Item {
   Component {
     id: options
 
-    ScrollView {
+    StyledScrollView {
       id: optionsScroll
       anchors.fill: parent
-      clip: true
-      ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-      contentWidth: availableWidth
+      contentPadding: 0
 
       // Each module keeps its place across the overlay closing
       property ScrollMemory memory: ScrollMemory {

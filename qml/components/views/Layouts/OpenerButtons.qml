@@ -24,17 +24,17 @@ ColumnLayout {
   StyledText {
     visible: !root.saved
     Layout.fillWidth: true
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     text: root.unsavedHint
-    textSize: Appearance.fontSizeBy(-2)
-    opacity: 0.7
+    role: "caption"
+    tone: "muted"
   }
 
   Flow {
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
     enabled: root.saved
-    opacity: enabled ? 1 : 0.5
+    opacity: enabled ? 1 : Style.opacityDisabled
 
     Repeater {
       model: root.bars.length
