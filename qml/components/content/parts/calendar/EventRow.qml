@@ -23,9 +23,12 @@ Rectangle {
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Widget.spacing
   radius: Widget.radius
-  color: area.containsMouse && root.clickable ? Qt.alpha(Theme.backgroundHighlight, 0.7) : Qt.alpha(Theme.backgroundHighlight, 0)
+  color: "transparent"
 
-  ColorGlide on color {}
+  StateLayer {
+    hovered: area.containsMouse && root.clickable
+    pressed: area.pressed && root.clickable
+  }
 
   // Fades in as its list (a day, the agenda) is shown or changes
   NumberAnimation on opacity {
@@ -48,7 +51,7 @@ Rectangle {
       Layout.topMargin: Widget.spacing / 2
       Layout.bottomMargin: Widget.spacing / 2
       radius: 2
-      color: CalendarManager.colors[root.event?.calendar] ?? Theme.accent
+      color: Style.resolve(CalendarManager.colors[root.event?.calendar] ?? "accent")
     }
 
     ColumnLayout {
@@ -67,20 +70,19 @@ Rectangle {
           Layout.minimumWidth: widest.implicitWidth
           Layout.rightMargin: Widget.spacing / 2
           text: root.when
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-1)
+          role: "caption"
         }
         StyledLabel {
           Layout.fillWidth: true
           text: root.event?.title || I18n.tr("(No title)")
           textFormat: Text.PlainText
-          elide: Text.ElideRight
+          overflow: "line"
         }
         StyledIcon {
           visible: root.event?.recurring ?? false
           text: "repeat"
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.foregroundAlt
+          size: "xs"
+          tone: "muted"
         }
       }
       StyledLabel {
@@ -88,9 +90,8 @@ Rectangle {
         Layout.fillWidth: true
         text: root.event?.location ? I18n.tr("{0} · {1}", root.when, root.event.location) : root.when
         textFormat: Text.PlainText
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        elide: Text.ElideRight
+        role: "caption"
+        overflow: "line"
       }
     }
   }
@@ -100,7 +101,7 @@ Rectangle {
     visible: false
     readonly property string sample: I18n.formatDate(new Date(2000, 0, 1, 22, 58), CalendarConfig.timeFormat)
     text: I18n.tr("{0} – {1}", sample, sample)
-    textSize: Appearance.fontSizeBy(-1)
+    role: "caption"
   }
 
   MouseArea {

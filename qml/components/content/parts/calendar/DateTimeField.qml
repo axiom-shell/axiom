@@ -51,23 +51,24 @@ ColumnLayout {
       visible: root.label !== ""
       Layout.preferredWidth: Appearance.fontSize * 4.5
       text: root.label
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-1)
-      elide: Text.ElideRight
+      role: "caption"
+      overflow: "line"
     }
     StyledTextButton {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       text: I18n.formatDate(new Date(root.value), I18n.dateFormat("shortDate"))
       iconText: "calendar_today"
-      backgroundColor: Theme.backgroundAlt
-      borderColor: picker.open ? Theme.accent : Theme.border
-      borderWidth: Appearance.borderWidth
+      kind: "outlined"
       enabled: !root.readOnly
       onClicked: {
         if (!picker.open)
           grid.showDay(CalendarEvents.dayKey(root.value));
         picker.open = !picker.open;
+      }
+
+      FocusRing {
+        shown: picker.open
       }
     }
     StyledTextEntry {
