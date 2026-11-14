@@ -7,6 +7,7 @@ import qs.services.apps
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
+import qs.components.methods
 
 // Emoji to copy (EmojiManager, as the launcher's ";" does): a search field,
 // Unicode's groups as tabs and a grid, most used first until you search or
@@ -139,6 +140,7 @@ Panel {
     Glide on scale {}
 
     Text {
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       anchors.centerIn: parent
       text: cellItem.emoji
       font.pixelSize: root.cell * 0.6

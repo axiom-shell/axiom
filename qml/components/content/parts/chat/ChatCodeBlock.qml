@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.system
 import qs.components.reusable
+import qs.components.methods
 
 // A fenced code block in a reply: its language, a copy button and the code
 // in a monospace font. `open` while its closing fence is still streaming in.
@@ -68,6 +69,7 @@ StyledContainer {
 
     TextEdit {
       id: codeText
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       Layout.fillWidth: true
       Layout.margins: Widget.padding
       text: root.code

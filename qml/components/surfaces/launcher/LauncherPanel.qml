@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import qs.components.reusable
 import qs.config
 import qs.services.ui
+import qs.components.methods
 
 // The launcher's contents: the search field, the results and the controls
 // hint, without a box of its own: its host's surface is the box (an
@@ -198,6 +199,7 @@ FocusScope {
 
     TextField {
       id: input
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       Layout.fillWidth: true
       focus: true
       color: Theme.foreground

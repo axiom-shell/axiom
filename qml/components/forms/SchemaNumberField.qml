@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.methods
 
 // An integer setting: a slider with a value box when the range is a
 // comfortable drag (7 to 200 steps), otherwise a compact stepper beside the
@@ -232,6 +233,7 @@ ColumnLayout {
 
     TextInput {
       id: input
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       anchors.verticalCenter: parent.verticalCenter
       anchors.right: unitLabel.left
       anchors.rightMargin: box.unitGap

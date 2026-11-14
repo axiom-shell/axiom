@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.config
+import qs.components.methods
 
 // A multi-line text field in a StyledContainer, optionally growing with its
 // text. Pushed-in values follow the StyledTextEntry pattern (textEdited).
@@ -84,6 +85,7 @@ StyledContainer {
 
     TextArea {
       id: textInput
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       width: flickable.width
       // The margins above are the only space around the text: the style's
       // own padding would push it off-centre

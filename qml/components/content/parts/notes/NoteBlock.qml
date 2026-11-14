@@ -100,6 +100,7 @@ Item {
 
   TextEdit {
     id: textEdit
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
 
     // One line's height, for the checkbox
     readonly property real lineHeight: fontMetrics.height
@@ -204,6 +205,7 @@ Item {
 
   Text {
     id: rendered
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     visible: !root.editing
     x: textEdit.x
     width: textEdit.width

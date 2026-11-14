@@ -182,6 +182,7 @@ Item {
 
         Text {
           id: tickerText
+          renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
           // Centred across on its letters, as a label is
           readonly property TextBandPadding _band: TextBandPadding {
             label: tickerText
@@ -260,6 +261,7 @@ Item {
 
         Text {
           id: value
+          renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
           anchors.horizontalCenter: parent.horizontalCenter
           text: root.text
           textFormat: root.textFormat
@@ -272,6 +274,7 @@ Item {
           }
         }
         Text {
+          renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
           anchors.horizontalCenter: parent.horizontalCenter
           visible: text !== ""
           text: root.subtext

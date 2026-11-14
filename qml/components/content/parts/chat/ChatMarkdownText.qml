@@ -1,11 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 
 // Selectable chat text: Markdown prose (Chat.renderMarkdown), or plain text
 // for what the user typed. Links open in the browser.
 TextEdit {
   id: root
+  renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
 
   property bool markdown: ChatConfig.renderMarkdown
   property color textColor: Theme.foreground

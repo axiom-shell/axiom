@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.config
+import qs.components.methods
 
 // A single-line text field in a StyledContainer. It writes every keystroke
 // back to `text`: push values in and act on textEdited (see docs/dev/core/qml-pitfalls.md).
@@ -62,6 +63,7 @@ StyledContainer {
 
   TextField {
     id: textField
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     anchors.fill: parent
     anchors.leftMargin: Widget.padding
     anchors.rightMargin: (root._clearShown ? clearButton.width + clearButton.inset + Widget.spacing : Widget.padding) + root._capsRoom

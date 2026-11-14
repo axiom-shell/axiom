@@ -315,6 +315,7 @@ PanelWindow {
           color: Theme.accent
           opacity: tile.selected ? 1 : 0
           scale: tile.selected ? 1 : 0.6
+          readonly property real contentZoom: scale
 
           Glide on opacity {}
           Glide on scale {}

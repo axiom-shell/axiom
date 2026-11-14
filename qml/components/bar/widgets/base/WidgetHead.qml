@@ -86,6 +86,7 @@ Item {
 
   Text {
     id: textHead
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     visible: root.head === textHead
     text: root.text
     color: root.textColor
