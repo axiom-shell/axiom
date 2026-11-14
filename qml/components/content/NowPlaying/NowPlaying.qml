@@ -36,6 +36,8 @@ Panel {
   // A strip: one row of small art, the track and the buttons
   readonly property bool mini: root.embedded && !root.compact && root.height < Appearance.fontSize * 7
   readonly property real artSize: Widget.px(96)
+  // The blurred cover shows: every line over it takes the veil's ink
+  readonly property bool washed: root.hasPlayer && root.artSource !== ""
   // A seek bar is being dragged, so the popout mustn't dismiss
   property bool seeking: false
 
@@ -52,35 +54,12 @@ Panel {
   spacing: Widget.spacing
   implicitWidth: Widget.px(380)
 
-  component MediaButton: Rectangle {
+  component MediaButton: StyledIconButton {
     id: button
-    property string icon
-    property real size: Widget.height
     property bool primary: false
-    signal clicked
-    implicitWidth: button.size
-    implicitHeight: button.size
-    Layout.preferredWidth: button.size
-    Layout.preferredHeight: button.size
-    radius: button.size / 2
-    opacity: button.enabled ? 1 : 0.4
-    color: button.primary ? (buttonArea.containsMouse ? Qt.lighter(Theme.accent, 1.15) : Theme.accent) : buttonArea.containsMouse ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
-    scale: buttonArea.pressed ? 0.92 : 1
-    ColorGlide on color {}
-    Glide on scale {}
-    StyledIcon {
-      anchors.centerIn: parent
-      text: button.icon
-      textColor: button.primary ? Theme.background : Theme.foreground
-      textSize: button.size * 0.5
-    }
-    MouseArea {
-      id: buttonArea
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: button.clicked()
-    }
+    kind: button.primary ? "primary" : "text"
+    borderRadius: button.size / 2
+    iconSize: Math.round(button.size * 0.5)
   }
 
   // The cover (CoverArt)
@@ -96,7 +75,6 @@ Panel {
       visible: !root.short
       Layout.fillWidth: true
       implicitHeight: playerRow.implicitHeight
-      opacity: 0.6
       RowLayout {
         id: playerRow
         anchors.fill: parent
@@ -108,14 +86,16 @@ Panel {
         StyledLabel {
           Layout.fillWidth: true
           Layout.maximumWidth: Math.ceil(implicitWidth)
-          elide: Text.ElideRight
+          overflow: "line"
           text: MediaManager.identity
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
+          tone: root.washed ? "text" : "faint"
         }
         StyledIcon {
           visible: MediaManager.players.length > 1
           text: "refresh"
-          textSize: Appearance.fontSizeBy(-2)
+          size: "xs"
+          tone: root.washed ? "text" : "faint"
         }
         Item {
           Layout.fillWidth: true
@@ -139,12 +119,12 @@ Panel {
       value: MediaManager.trackTitle || I18n.tr("Unknown track")
       delegate: StyledText {
         required property var value
-        elide: Text.ElideRight
+        overflow: "line"
         horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
         text: value
-        textColor: Theme.accent
-        textSize: root.large ? Appearance.fontSize * 2 : root.short ? Appearance.fontSize : Appearance.fontSizeBy(3)
-        font.weight: Font.Bold
+        role: root.large ? "headline" : root.short ? "label" : "title"
+        tone: root.washed ? "text" : "accent"
+        font.weight: Style.weightStrong
       }
     }
     CrossFade {
@@ -153,24 +133,25 @@ Panel {
       value: MediaManager.trackArtist || " "
       delegate: StyledText {
         required property var value
-        elide: Text.ElideRight
+        overflow: "line"
         horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
         text: value
-        textSize: root.large ? Appearance.fontSizeBy(4) : root.short ? Appearance.fontSizeBy(-2) : Appearance.fontSize
+        role: root.large ? "title" : root.short ? "caption" : "body"
+        tone: root.washed ? "text" : "muted"
       }
     }
     CrossFade {
       visible: !root.short
       Layout.fillWidth: true
-      opacity: 0.6
       // MediaManager doesn't surface the album, but the Mpris player does
       value: (MediaManager.activePlayer?.trackAlbum ?? "") || " "
       delegate: StyledText {
         required property var value
-        elide: Text.ElideRight
+        overflow: "line"
         horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
         text: value
-        textSize: root.large ? Appearance.fontSize : Appearance.fontSizeBy(-2)
+        role: root.large ? "body" : "caption"
+        tone: root.washed ? "text" : "faint"
       }
     }
   }
@@ -194,16 +175,16 @@ Panel {
       Layout.fillWidth: true
       StyledLabel {
         text: MediaManager.formatTime(seek.pressed ? seek.position * MediaManager.length : MediaManager.position)
-        textSize: root.large ? Appearance.fontSizeBy(-1) : Appearance.fontSizeBy(-3)
-        opacity: 0.6
+        role: root.large ? "caption" : "micro"
+        tone: root.washed ? "text" : "faint"
       }
       Item {
         Layout.fillWidth: true
       }
       StyledLabel {
         text: MediaManager.formatTime(MediaManager.length)
-        textSize: root.large ? Appearance.fontSizeBy(-1) : Appearance.fontSizeBy(-3)
-        opacity: 0.6
+        role: root.large ? "caption" : "micro"
+        tone: root.washed ? "text" : "faint"
       }
     }
     RowLayout {
@@ -211,20 +192,20 @@ Panel {
       spacing: root.short ? Widget.spacing : Widget.spacing * 1.5
       MediaButton {
         size: Widget.height * (root.large ? 1.4 : 1)
-        icon: "skip_previous"
+        iconText: "skip_previous"
         enabled: MediaManager.canGoPrevious
         onClicked: MediaManager.previous() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         primary: true
         size: Widget.height * (root.short ? 1.2 : root.large ? 2 : 1.4)
-        icon: MediaManager.isPlaying ? "pause" : "play_arrow"
+        iconText: MediaManager.isPlaying ? "pause" : "play_arrow"
         enabled: MediaManager.canTogglePlaying
         onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         size: Widget.height * (root.large ? 1.4 : 1)
-        icon: "skip_next"
+        iconText: "skip_next"
         enabled: MediaManager.canGoNext
         onClicked: MediaManager.next() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
@@ -253,8 +234,8 @@ Panel {
           sourceSize: Qt.size(128, 128)
           fillMode: Image.PreserveAspectCrop
           asynchronous: true
-          layer.enabled: true
-          layer.effect: MultiEffect {
+          layer.enabled: true // style-exempt: no text
+          layer.effect: MultiEffect { // style-exempt: no text
             blurEnabled: true
             blur: 1
             blurMax: 48
@@ -264,8 +245,7 @@ Panel {
       }
       Rectangle {
         anchors.fill: parent
-        color: Theme.background
-        opacity: 0.6
+        color: Style.veil
       }
     }
   }
@@ -280,7 +260,7 @@ Panel {
       visible: root.hasPlayer
       primary: true
       size: Math.min(parent.width, parent.height) * 0.4
-      icon: MediaManager.isPlaying ? "pause" : "play_arrow"
+      iconText: MediaManager.isPlaying ? "pause" : "play_arrow"
       enabled: MediaManager.canTogglePlaying
       onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
     }
@@ -337,43 +317,43 @@ Panel {
           value: MediaManager.trackTitle || I18n.tr("Unknown track")
           delegate: StyledText {
             required property var value
-            elide: Text.ElideRight
+            overflow: "line"
             text: value
-            textColor: Theme.accent
-            font.weight: Font.Bold
+            tone: root.washed ? "text" : "accent"
+            font.weight: Style.weightStrong
           }
         }
         CrossFade {
           visible: root.innerHeight >= Appearance.fontSize * 2.6
           Layout.fillWidth: true
-          opacity: 0.8
           value: MediaManager.trackArtist
           delegate: StyledText {
             required property var value
-            elide: Text.ElideRight
+            overflow: "line"
             text: value
-            textSize: Appearance.fontSizeBy(-2)
+            role: "caption"
+            tone: root.washed ? "text" : "muted"
           }
         }
       }
       MediaButton {
         visible: parent.wide
         size: Math.min(Widget.height, root.innerHeight)
-        icon: "skip_previous"
+        iconText: "skip_previous"
         enabled: MediaManager.canGoPrevious
         onClicked: MediaManager.previous() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         primary: true
         size: Math.min(Widget.height * 1.2, root.innerHeight)
-        icon: MediaManager.isPlaying ? "pause" : "play_arrow"
+        iconText: MediaManager.isPlaying ? "pause" : "play_arrow"
         enabled: MediaManager.canTogglePlaying
         onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         visible: parent.wide
         size: Math.min(Widget.height, root.innerHeight)
-        icon: "skip_next"
+        iconText: "skip_next"
         enabled: MediaManager.canGoNext
         onClicked: MediaManager.next() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
