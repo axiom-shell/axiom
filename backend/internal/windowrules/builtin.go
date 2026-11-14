@@ -102,13 +102,19 @@ var builtins = []builtin{
 }
 
 // utilityAppIDs are the Wayland app ids Float utility windows matches: file
-// picker portals, polkit agents, volume, network and Bluetooth apps.
+// picker portals, polkit agents, volume, network and Bluetooth apps, and the
+// helpers axiom launches (screenshot editor, dialogs, Qt theme settings).
 var utilityAppIDs = []string{
 	"xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome",
 	"org.freedesktop.impl.portal.desktop.kde",
 	"org.kde.polkit-kde-authentication-agent-1", "polkit-gnome-authentication-agent-1",
 	"org.pulseaudio.pavucontrol", "pavucontrol", "com.saivert.pwvucontrol",
 	"nm-connection-editor", "blueman-manager",
+	// axiom's own helpers. Read from desktop files and binaries: com.gabm.satty
+	// (older: satty), org.gnome.Zenity (older: zenity), qt5ct, qt6ct. Unverified:
+	// swappy, kdialog, org.kde.kdialog, blueberry.py, pavucontrol-qt.
+	"com.gabm.satty", "satty", "swappy", "zenity", "org.gnome.Zenity",
+	"kdialog", "org.kde.kdialog", "blueberry.py", "pavucontrol-qt", "qt5ct", "qt6ct",
 }
 
 func condObj(field, op, value string) *jsonx.Object {

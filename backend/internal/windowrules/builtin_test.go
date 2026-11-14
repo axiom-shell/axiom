@@ -178,7 +178,6 @@ func TestBuiltinMatches(t *testing.T) {
 		"translated":      {Facts{AppID: "firefox", Title: "Bild-im-Bild"}, []string{awake}},
 		"longer title":    {Facts{AppID: "firefox", Title: "Picture-in-Picture - YouTube"}, []string{awake}},
 		"no facts":        {Facts{}, []string{awake}},
-		"pavucontrol-qt":  {Facts{AppID: "pavucontrol-qt"}, []string{awake}},
 		"suffixed":        {Facts{AppID: "org.pulseaudio.pavucontrolx"}, []string{awake}},
 		"other portal":    {Facts{AppID: "xdg-desktop-portal-hyprland"}, []string{awake}},
 	}
