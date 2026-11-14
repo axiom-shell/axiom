@@ -74,12 +74,19 @@ TitledCard {
   showActions: false
 
   headerExtras: [
-    RowLayout {
+    GridLayout {
+      id: modeGrid
       Layout.fillWidth: true
-      spacing: Widget.spacing / 2
+      // Side by side while both fit whole, else Auto on its own line: no label is cut
+      readonly property bool _oneLine: modeRow.implicitWidth + autoButton.implicitWidth + modeGrid.columnSpacing <= modeGrid.width
+      columns: modeGrid._oneLine ? 2 : 1
+      columnSpacing: Widget.spacing / 2
+      rowSpacing: Widget.spacing / 2
 
       SegmentRow {
+        id: modeRow
         Layout.fillWidth: true
+        Layout.minimumWidth: implicitWidth
 
         SegmentButton {
           text: I18n.tr("Dark")
@@ -103,6 +110,7 @@ TitledCard {
       // A switch of its own: picking Dark or Light by hand lasts until the
       // schedule's next change
       SegmentButton {
+        id: autoButton
         Layout.fillWidth: false
         iconText: "schedule"
         text: I18n.tr("Auto")
@@ -133,9 +141,9 @@ TitledCard {
       visible: root.family !== null && !(root.hasDark && root.hasLight)
       Layout.fillWidth: true
       text: root.hasDark ? I18n.tr("This theme has no light variant.") : I18n.tr("This theme has no dark variant.")
-      opacity: 0.6
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "faint"
+      overflow: "wrap"
     }
   ]
 
@@ -144,15 +152,21 @@ TitledCard {
   component ThemeTile: Rectangle {
     id: tile
     required property var modelData
+    readonly property var roles: tile.preview.roles ?? ({})
     readonly property var preview: (Appearance.darkMode ? (modelData.darkPreview ?? modelData.lightPreview) : (modelData.lightPreview ?? modelData.darkPreview)) ?? ({})
     readonly property bool current: root.family !== null && (root.family.dark || root.family.light) === (modelData.dark || modelData.light)
 
     Layout.fillWidth: true
     Layout.preferredHeight: tileColumn.implicitHeight + Widget.padding * 2
     radius: Widget.radius
-    color: Appearance.fill(preview.background ?? Theme.backgroundAlt)
-    border.width: current ? Appearance.borderWidth * 2 + 1 : Appearance.borderWidth + 1
-    border.color: current ? Theme.accent : tileArea.containsMouse ? Qt.alpha(Theme.foreground, 0.5) : Qt.alpha(Theme.border, 0.6)
+    color: tile.roles.surfacePage ?? Style.surfacePage
+    border.width: tile.current ? Style.focusWidth : Style.hairline
+    border.color: tile.current ? Style.accent : Style.borderSubtle
+
+    StateLayer {
+      radius: tile.radius
+      hovered: tileArea.containsMouse
+    }
 
     ColorGlide on border.color {}
 
@@ -171,24 +185,22 @@ TitledCard {
         StyledLabel {
           Layout.fillWidth: true
           text: tile.modelData.label
-          textColor: tile.preview.foreground ?? Theme.foreground
-          font.weight: Font.Bold
-          elide: Text.ElideRight
+          role: "label"
+          textColor: tile.roles.text ?? Style.text
+          overflow: "line"
         }
 
         // Has both variants
         StyledIcon {
           visible: !!tile.modelData.dark && !!tile.modelData.light
           text: "contrast"
-          textColor: tile.preview.foreground ?? Theme.foreground
-          opacity: 0.6
+          textColor: tile.roles.textMuted ?? Style.textMuted
         }
 
         StyledIcon {
           visible: tile.current
           text: "check"
-          textColor: tile.preview.accent ?? Theme.accent
-          font.weight: Font.Bold
+          textColor: tile.roles.accent ?? Style.accent
         }
       }
 
@@ -247,8 +259,8 @@ TitledCard {
         visible: group.modelData.families.length === 0
         Layout.fillWidth: true
         text: group.modelData.empty
-        opacity: 0.6
-        wrapMode: Text.WordWrap
+        tone: "faint"
+        overflow: "wrap"
       }
     }
   }

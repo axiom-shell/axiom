@@ -19,7 +19,7 @@ Card {
   // At most two of a color's names (Theme.roles): its first UI role that
   // isn't a border (borders follow other colors), then its plain color
   // name, else whichever name comes next
-  readonly property var _hues: ["red", "orange", "yellow", "green", "cyan", "blue", "magenta", "grey", "white"]
+  readonly property var _hues: ["red", "orange", "yellow", "green", "cyan", "blue", "magenta", "grey", "white"] // style-exempt: theme colour names, read through Style.resolve
   function shownNames(names) {
     const role = names.find(name => !name.startsWith("border")) ?? names[0];
     const rest = names.filter(name => name !== role);
@@ -39,7 +39,7 @@ Card {
   component Chip: ColumnLayout {
     id: chip
     required property string modelData
-    readonly property color value: Theme.resolveColor(chip.modelData)
+    readonly property color value: Style.resolve(chip.modelData)
     readonly property var roles: root.shownNames(Theme.roles[chip.modelData] ?? [])
 
     Layout.fillWidth: true
@@ -54,8 +54,8 @@ Card {
       Layout.minimumHeight: Appearance.fontSize * 1.5
       radius: Widget.radius
       color: chip.value
-      border.width: Appearance.borderWidth
-      border.color: Qt.alpha(Theme.border, 0.6)
+      border.width: Style.hairline
+      border.color: Style.borderSubtle
     }
 
     RowLayout {
@@ -65,16 +65,17 @@ Card {
 
       StyledLabel {
         text: chip.modelData
-        textSize: Appearance.fontSizeBy(-2)
-        font.weight: Font.Bold
+        role: "caption"
+        font.weight: Style.weightStrong
+        tone: "text"
       }
 
       StyledLabel {
         Layout.fillWidth: true
         text: chip.value.toString().toUpperCase()
-        textSize: Appearance.fontSizeBy(-3)
-        opacity: 0.6
-        elide: Text.ElideRight
+        role: "micro"
+        tone: "faint"
+        overflow: "line"
       }
     }
 
@@ -82,9 +83,9 @@ Card {
     StyledText {
       Layout.fillWidth: true
       text: chip.roles.concat(Array(Math.max(0, root.roleLines - chip.roles.length)).fill("")).join("\n")
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(-3)
-      wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+      role: "micro"
+      tone: "accent"
+      overflow: "wrap"
     }
   }
 
@@ -96,7 +97,7 @@ Card {
         required property string modelData
         width: parent.width / 16
         height: parent.height
-        color: Theme.resolveColor(modelData)
+        color: Style.resolve(modelData)
       }
     }
   }
@@ -112,8 +113,9 @@ Card {
 
       StyledText {
         text: Theme.name
-        opacity: 0.6
-        elide: Text.ElideRight
+        tone: "faint"
+        Layout.maximumWidth: Widget.textPx(160)
+        overflow: "line"
       }
     }
 

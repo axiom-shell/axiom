@@ -6,31 +6,29 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
 
-// properties: { color: base00-base0F (or any name Theme.resolveColor accepts), label }
+// properties: { color: base00-base0F (or any name `Style.resolve` accepts), label }
 Card {
   id: root
 
-  // Whichever of the theme's foreground and background reads on the swatch
-  readonly property bool _foregroundIsLight: !Utils.isColorDark(Theme.foreground)
-  readonly property color labelColor: Utils.isColorDark(root.color) === root._foregroundIsLight ? Theme.foreground : Theme.background
+  // White or black, whichever reads on the swatch
+  readonly property color labelColor: Tone.bestOn(root.color)
 
   // Both labels where they fit apart, else just the color's name, centred,
   // else none
   readonly property bool bothLabels: root.height >= Appearance.fontSize * 4.5
   readonly property bool nameLabel: root.height >= Appearance.fontSize * 2 && root.width >= Appearance.fontSize * 3
 
-  color: Theme.resolveColor(root.properties.color)
+  color: Style.resolve(root.properties.color)
   border.width: Math.max(Appearance.borderWidth, 3)
 
   component SwatchLabel: StyledText {
     anchors.horizontalCenter: parent.horizontalCenter
     width: Math.min(implicitWidth, root.width - Widget.spacing * 2)
     horizontalAlignment: Text.AlignHCenter
-    elide: Text.ElideRight
+    overflow: "line"
+    role: "micro"
+    font.weight: Style.weightStrong
     textColor: root.labelColor
-    textSize: Appearance.fontSizeBy(-4)
-    font.weight: Font.Bold
-    opacity: 0.8
   }
 
   SwatchLabel {
