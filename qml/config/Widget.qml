@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import qs.services.core
+import qs.components.methods
 
 // Reader for the Interface section (named Widget, as every size outside
 // the bars is Widget.<size>): sizing for panels, cards, popouts and
@@ -72,6 +73,11 @@ QtObject {
   // their own widgets
   function px(n: real): int {
     return Math.round(n * scale);
+  }
+  // A width that holds text (N characters at the default font): follows the
+  // Interface scale and the font size; equal to px(n) at 14 px
+  function textPx(n: real): int {
+    return StyleTokens.textPx(n, scale, Appearance.baseFontSize);
   }
   // A form field at least this wide puts a short control (a dropdown, a
   // slider) beside its label, at fieldControlWidth; narrower, under it

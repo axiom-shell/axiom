@@ -7,6 +7,8 @@
 An index of reusable pieces. Reach for one of these before drawing your own; when a pattern appears a second time, it becomes one of these. Every file in `reusable/`, `forms/` and `content/parts/` is named here or in the docs it links to (`scripts/check_docs.py` checks): add a line when you add a piece.
 
 ### Sizes
+Colours, text and icon sizes: `Style` ([style](style.md)).
+
 Everything outside the bars follows the Interface scale and Density through `Widget` (`qml/config/Widget.qml`); a size written as a number doesn't, and `scripts/check_sizes.py` fails on one of 3 px or more, set alone or added, subtracted or chosen in a size's expression (`Widget.height - 4` is `Widget.height - Widget.px(4)`; factors like `* 2` and grid units like `span(8)` are fine).
 
 | What | Use |
@@ -207,6 +209,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - **Tool checks** (`content/parts/ToolChecks`): the optional programs features use (`DependencyManager.tools`), each installed or not, `columns` to a line, and a `CodeLine` installing the missing ones here; checked when built, `check()` again. The onboarder's Checks page and Settings › System's Optional packages.
 
 ### Pure helpers (`methods/`)
+- `methods/Tone`: the shell's colour math (mixing, compositing, WCAG contrast, nudging a colour until it reads); `Style` and the bar's `BarWidgetStyle` call it, UI never does ([style](style.md)).
+- `methods/StyleTokens`: every colour role of a theme (`derive`), a theme tile's `preview`, the shape rules (`concentric`, `textPx`, `roleSize`) ([style](style.md)).
 - **Search** (`methods/Search`): shared by LauncherManager and EmojiManager.
   - `score(text, q)`: the launcher's 0–100 fuzzy match.
   - `frecency(useRecord, now)`, and `useBonus(frecency)`: the 0–25 it adds to a match's score (apps, commands, emoji).

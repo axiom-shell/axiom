@@ -507,10 +507,12 @@ QtObject {
     console.error("[ThemeManager]", content ? "Failed to parse theme:" : "Theme not found:", Paths.greeter ? _themeUrl(name) : name);
     const defaults = root._defaults ?? _readDefaults();
     const variant = /light$/i.test(name ?? "") ? "light" : "dark";
+    // the defaults' palette is dark: a light fallback reads it from the light
+    // end, as the light map is in base16 order now
     return {
       "name": "Default (fallback)",
       "variant": variant,
-      "colors": defaults.colors,
+      "colors": variant === "light" ? StyleTokens.reversedRamp(defaults.colors) : defaults.colors,
       "semantic": defaults.semantic[variant]
     };
   }
@@ -590,6 +592,7 @@ QtObject {
   // never one beside it.
   function _readThemes(loader, prefix) {
     const themes = [];
+    const started = Date.now();
     for (let i = 0; i < loader.count; i++) {
       const fileName = loader.get(i, "fileName");
       if (fileName === "theme.schema.json")
@@ -607,11 +610,15 @@ QtObject {
         console.warn("[ThemeManager] Skipping unreadable theme", fileName, e);
       }
     }
+    // shown by log.sh --debug: the scan's whole cost, previews' roles included
+    console.log("[ThemeManager] Scanned", themes.length, "themes in", Date.now() - started, "ms");
     return themes;
   }
 
   // A theme's look for the theme list: { background, foreground, accent,
-  // colors: base08-base0E }, filling what it omits from theme-defaults.json
+  // colors: base08-base0E, roles }, filling what it omits from
+  // theme-defaults.json; `roles` is the Style roles of a tile
+  // (StyleTokens.preview)
   function _preview(json) {
     const variant = json.variant === "light" ? "light" : "dark";
     const colors = Object.assign({}, root._defaults.colors, json.colors ?? {});
@@ -621,7 +628,8 @@ QtObject {
       "background": resolve("background") || colors.base00,
       "foreground": resolve("foreground") || colors.base05,
       "accent": resolve("accent") || colors.base0D,
-      "colors": ["base08", "base09", "base0A", "base0B", "base0C", "base0D", "base0E"].map(name => colors[name])
+      "colors": ["base08", "base09", "base0A", "base0B", "base0C", "base0D", "base0E"].map(name => colors[name]),
+      "roles": StyleTokens.preview(StyleTokens.theme(json, root._defaults))
     };
   }
 
