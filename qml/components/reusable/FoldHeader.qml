@@ -21,24 +21,6 @@ Item {
   // A StatusChip's word and tone; no chip while empty
   property string status
   property string statusTone: "neutral"
-  // Kept for FoldingCard until it passes a tone
-  property color statusColor: "transparent"
-  // The chip's tone: statusTone, else the tone statusColor names. Until PR 3
-  // passes tones; PR 3 deletes it with statusColor
-  readonly property string _chipTone: {
-    if (root.statusTone !== "neutral")
-      return root.statusTone;
-    const c = root.statusColor;
-    if (Qt.colorEqual(c, Theme.success) || Qt.colorEqual(c, Style.successText)) // style-exempt: a legacy colour matched to its tone
-      return "success";
-    if (Qt.colorEqual(c, Theme.warning) || Qt.colorEqual(c, Style.warningText)) // style-exempt: a legacy colour matched to its tone
-      return "warning";
-    if (Qt.colorEqual(c, Theme.error) || Qt.colorEqual(c, Style.errorText)) // style-exempt: a legacy colour matched to its tone
-      return "error";
-    if (Qt.colorEqual(c, Theme.accent)) // style-exempt: a legacy colour matched to its tone
-      return "accent";
-    return "neutral";
-  }
 
   signal toggled
 
@@ -96,7 +78,7 @@ Item {
       StatusChip {
         visible: root.status !== ""
         text: root.status
-        tone: root._chipTone
+        tone: root.statusTone
         Layout.alignment: Qt.AlignVCenter
       }
 
