@@ -332,52 +332,6 @@
   "R5": 1,
   "R7": 1
  },
- "qml/components/views/BarEditor/BarDragLayer.qml": {
-  "R18": 1,
-  "R3": 1
- },
- "qml/components/views/BarEditor/BarsPanel.qml": {
-  "R1": 5,
-  "R14": 1,
-  "R3": 2,
-  "R7": 2
- },
- "qml/components/views/BarEditor/LayoutOverrideField.qml": {
-  "R1": 1,
-  "R14": 2,
-  "R3": 1,
-  "R4": 1
- },
- "qml/components/views/BarEditor/SectionLane.qml": {
-  "R1": 11,
-  "R14": 2,
-  "R2": 1,
-  "R3": 1,
-  "R4": 2,
-  "R5": 1,
-  "R7": 5
- },
- "qml/components/views/BarEditor/SectionsBoard.qml": {
-  "R1": 10,
-  "R14": 1,
-  "R3": 1,
-  "R4": 5,
-  "R7": 6
- },
- "qml/components/views/BarEditor/WidgetChip.qml": {
-  "R1": 10,
-  "R2": 1,
-  "R3": 2,
-  "R7": 4
- },
- "qml/components/views/BarEditor/WidgetInspector.qml": {
-  "R1": 9,
-  "R14": 1,
-  "R3": 1,
-  "R4": 1,
-  "R7": 5,
-  "R9": 1
- },
  "qml/components/views/Keybinds/ActionPicker.qml": {
   "R1": 12,
   "R14": 3,
@@ -439,76 +393,6 @@
   "R4": 5,
   "R5": 1,
   "R7": 5
- },
- "qml/components/views/Layouts/CanvasModule.qml": {
-  "R1": 10,
-  "R14": 2,
-  "R3": 2,
-  "R4": 5,
-  "R5": 2,
-  "R6": 1,
-  "R7": 5
- },
- "qml/components/views/Layouts/EditorInspector.qml": {
-  "R1": 4,
-  "R3": 1,
-  "R7": 2,
-  "R9": 2
- },
- "qml/components/views/Layouts/EntryListRow.qml": {
-  "R3": 1
- },
- "qml/components/views/Layouts/EntryListTarget.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/views/Layouts/GridCanvas.qml": {
-  "R1": 31,
-  "R14": 5,
-  "R2": 3,
-  "R3": 13,
-  "R4": 11,
-  "R5": 1,
-  "R7": 19
- },
- "qml/components/views/Layouts/GridDragLayer.qml": {
-  "R1": 4,
-  "R3": 1,
-  "R4": 1,
-  "R5": 1,
-  "R7": 3
- },
- "qml/components/views/Layouts/LayoutsPanel.qml": {
-  "R3": 1
- },
- "qml/components/views/Layouts/MenuOpening.qml": {
-  "R1": 12,
-  "R14": 3,
-  "R3": 4,
-  "R4": 2,
-  "R7": 5
- },
- "qml/components/views/Layouts/MenusSection.qml": {
-  "R1": 1,
-  "R5": 1,
-  "R7": 1
- },
- "qml/components/views/Layouts/ModuleLibrary.qml": {
-  "R14": 1,
-  "R3": 1,
-  "R4": 1
- },
- "qml/components/views/Layouts/OpenerButtons.qml": {
-  "R14": 1,
-  "R3": 2,
-  "R4": 1
- },
- "qml/components/views/Layouts/PagesSection.qml": {
-  "R1": 1,
-  "R3": 2,
-  "R4": 1,
-  "R5": 1,
-  "R7": 1
  },
  "qml/config/MenusConfig.qml": {
   "R1": 2
