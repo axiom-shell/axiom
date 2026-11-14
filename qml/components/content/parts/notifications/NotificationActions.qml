@@ -48,14 +48,11 @@ Flickable {
         implicitWidth: (pill.showIcon ? icon.width : label.implicitWidth) + Widget.padding * 2
         implicitHeight: label.implicitHeight + Widget.padding
         radius: height / 2
-        scale: area.pressed ? 0.95 : 1 // style-exempt: motion
-
         StateLayer {
           radius: pill.radius
           hovered: area.containsMouse
+          pressed: area.pressed
         }
-
-        Glide on scale {}
 
         IconImage {
           id: icon
