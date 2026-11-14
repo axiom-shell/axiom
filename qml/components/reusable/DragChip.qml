@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 
 // A pill with an icon and a name that can be carried: a bar widget or a
@@ -28,7 +29,7 @@ Rectangle {
 
   readonly property bool hovered: area.containsMouse
   // The colour of text and icons after the name
-  readonly property color ink: root.selected ? Theme.background : Theme.foreground
+  readonly property color ink: root.selected ? Style.inkAccentContainer.text : Style.inkHighest.text
 
   // A right click asks for a menu (`menuRequested`, at the point in it)
   property bool hasMenu: false
@@ -38,12 +39,19 @@ Rectangle {
 
   implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
   implicitHeight: Widget.height + Widget.padding / 2
-  radius: Widget.radius
-  color: root.selected ? Theme.accent : (root.hovered || root.highlighted ? Theme.backgroundHighlight : Theme.background)
-  border.color: root.selected || root.hovered || root.highlighted ? Theme.accent : Theme.border
-  border.width: 1
+  radius: Style.radius
+  color: root.selected ? Style.accentContainer : Style.surfaceHighest
+  border.color: root.selected ? Style.accent : Style.borderStrong
+  border.width: Style.hairline
 
   ColorGlide on color {}
+  ColorGlide on border.color {}
+
+  StateLayer {
+    hovered: root.hovered || root.highlighted
+    pressed: area.pressed
+    dragged: area.dragged
+  }
 
   RowLayout {
     id: row
@@ -55,16 +63,18 @@ Rectangle {
     StyledIcon {
       visible: root.showsLabel
       text: root.icon
-      textColor: root.selected ? Theme.background : Theme.accent
-      Layout.preferredWidth: Appearance.fontSize * 1.3
+      textColor: root.selected ? Style.inkAccentContainer.icon : Style.inkHighest.graphic
+      Layout.preferredWidth: Style.iconSm * 1.3
     }
 
     StyledLabel {
+      id: name
+
       visible: root.showsLabel
       text: root.label
+      role: "label"
+      overflow: "line"
       textColor: root.ink
-      font.weight: (root.selected) ? Font.Bold : Font.Normal
-      elide: Text.ElideRight
       Layout.fillWidth: true
     }
   }
@@ -74,6 +84,15 @@ Rectangle {
     anchors.fill: parent
     dragEnabled: area.payload !== null
     onTapped: root.clicked()
+  }
+
+  // The full name of an elided label
+  LazyLoader {
+    active: root.hovered && name.truncated
+    StyledToolTip {
+      target: name
+      text: root.label
+    }
   }
 
   // Over the drag area, taking only the right button (a left press goes

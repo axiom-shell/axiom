@@ -10,9 +10,11 @@ Item {
 
   property real percentage: 0
   property string iconText: "●"
-  property color iconColor: Theme.background
-  property color fillColor: Theme.accentAlt
-  property color trackColor: Theme.backgroundHighlight
+  // A role name: accent | success | warning | error | info
+  property string fillTone: "accent"
+  property color iconColor: Style.inkSunken.icon
+  property color fillColor: Style.toneFill(root.fillTone)
+  property color trackColor: Style.surfaceSunken
   // The stroke, as a share of the side, but never thinner than a slider's trough
   property real thickness: Math.max(Widget.px(4), side * 0.07)
   // Degrees the track spans, centred on the top

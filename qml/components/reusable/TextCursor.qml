@@ -11,7 +11,7 @@ Rectangle {
   readonly property bool _focused: root.parent ? root.parent.activeFocus : false
 
   width: 2
-  color: Theme.accent
+  color: Style.accent
   visible: root._focused
 
   SequentialAnimation on opacity {

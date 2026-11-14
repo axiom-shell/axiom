@@ -14,6 +14,8 @@ Rectangle {
   property real _reveal: shown ? 1 : 0
   Glide on _reveal {}
   property real _bump: 1
+  // Its pulse scales the badge: the text inside is drawn distance field while it does
+  readonly property real contentZoom: root.scale
 
   visible: _reveal > 0
   opacity: _reveal

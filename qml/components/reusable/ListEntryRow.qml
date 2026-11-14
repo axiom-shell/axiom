@@ -1,14 +1,16 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 
 // One entry of an editor's list (bars, overlay pages, edge menus): an
-// icon and a name, filled with the accent while selected, then `badges`,
-// the unsaved-edits dot and the row's actions (RowActions, as children).
+// icon and a name, filled with the accent container while selected, then
+// `badges`, the unsaved-edits dot and the row's actions (RowActions, as
+// children), which show while the row is hovered, focused or selected.
 // A tap is `clicked`; with `dragArea.dragLayer` and `payload` set, the row
 // can also be carried.
-StyledContainer {
+Rectangle {
   id: root
 
   property string icon
@@ -26,19 +28,29 @@ StyledContainer {
   // hovered while the pointer is on one of its actions
   readonly property bool hovered: hover.hovered
   // The colour of text and icons on the row
-  readonly property color ink: root.selected ? Theme.background : Theme.foreground
+  readonly property color ink: root.selected ? Style.inkAccentContainer.text : root.dimmed ? Style.textFaint : Style.text
+  // The colour of a sub-line on the row
+  readonly property color inkMuted: root.selected ? Style.inkAccentContainer.muted : Style.textMuted
+  // Whether the row's actions show: hovered, focused or selected, or one of
+  // them focused
+  readonly property bool revealed: root.hovered || root.selected || root.activeFocus || root._actionFocused
+
+  readonly property bool _actionFocused: actionRow.children.some(child => child.activeFocus)
 
   signal clicked
 
   Layout.fillWidth: true
   Layout.preferredHeight: Widget.height + Widget.padding
-  // Clear is the hover colour at no alpha, not "transparent" (black), so
-  // fading out doesn't pass through grey
-  backgroundColor: root.selected ? Theme.accent : Qt.alpha(Theme.backgroundHighlight, root.hovered ? 1 : 0)
-  borderWidth: 0
+  color: root.selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
+  radius: Style.radius
 
   ColorGlide on color {
     duration: Appearance.animNormal
+  }
+
+  StateLayer {
+    hovered: root.hovered
+    dragged: area.dragged
   }
 
   HoverHandler {
@@ -60,16 +72,17 @@ StyledContainer {
 
     StyledIcon {
       text: root.icon
-      textColor: root.selected ? Theme.background : Theme.accent
-      Layout.preferredWidth: Appearance.fontSize * 1.5
+      textColor: root.selected ? Style.inkAccentContainer.icon : root.dimmed ? Style.textFaint : Style.textAccent
+      Layout.preferredWidth: Style.iconSm * 1.5
     }
 
     StyledLabel {
+      id: name
+
       text: root.label
+      role: "label"
+      overflow: "line"
       textColor: root.ink
-      font.weight: (root.selected) ? Font.Bold : Font.Normal
-      opacity: root.dimmed ? 0.5 : 1
-      elide: Text.ElideRight
       Layout.fillWidth: true
     }
 
@@ -86,6 +99,15 @@ StyledContainer {
     RowLayout {
       id: actionRow
       spacing: Widget.spacing
+    }
+  }
+
+  // The full name of an elided label
+  LazyLoader {
+    active: hover.hovered && name.truncated
+    StyledToolTip {
+      target: name
+      text: root.label
     }
   }
 }

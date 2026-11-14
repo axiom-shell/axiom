@@ -11,7 +11,7 @@ ColumnLayout {
 
   // [{ level: "error" | "warning" | "info", text }]
   property var issues: []
-  property real textSize: Appearance.fontSize
+  property real textSize: Style.typeBody
 
   Layout.fillWidth: true
   spacing: Widget.spacing / 2

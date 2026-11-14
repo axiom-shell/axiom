@@ -14,8 +14,8 @@ Rectangle {
   z: 1
   radius: Widget.radius
   color: "transparent"
-  border.color: Theme.accent
-  border.width: Appearance.borderWidth + 1
+  border.color: Style.focusRing
+  border.width: Style.focusWidth
   opacity: 0
 
   SequentialAnimation {

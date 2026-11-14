@@ -13,8 +13,10 @@ Item {
   property real share: 0
   property bool vertical: false
   property real thickness: Widget.px(6)
-  property color trackColor: Theme.backgroundHighlight
-  property color fillColor: Theme.accent
+  // A role name: accent | success | warning | error | info
+  property string fillTone: "accent"
+  property color trackColor: Style.surfaceSunken
+  property color fillColor: Style.toneFill(root.fillTone)
 
   readonly property real _share: Math.max(0, Math.min(1, root.share))
 

@@ -28,19 +28,16 @@ Item {
 
   Glide on opacity {}
 
-  Rectangle {
+  Surface {
     id: pill
     anchors.centerIn: parent
     implicitWidth: label.implicitWidth + icon.implicitWidth + Widget.padding * 3
     implicitHeight: Widget.height + Widget.padding
     radius: height / 2
-    color: root.hovered ? Theme.error : Theme.backgroundAlt
-    border.color: Theme.error
-    border.width: Math.max(Appearance.borderWidth, 1)
-    scale: root.hovered ? 1.08 : 1
-
-    ColorGlide on color {}
-    Glide on scale {}
+    tone: root.hovered ? "errorContainer" : "raised"
+    outlined: true
+    border.color: Style.error
+    border.width: Math.max(Style.hairline, 1)
 
     Row {
       anchors.centerIn: parent
@@ -50,15 +47,15 @@ Item {
         id: icon
         anchors.verticalCenter: parent.verticalCenter
         text: "delete"
-        textColor: root.hovered ? Theme.background : Theme.error
-        textSize: Appearance.fontSizeBy(4)
+        size: "md"
+        tone: root.hovered ? "text" : "error"
       }
       StyledLabel {
         id: label
         anchors.verticalCenter: parent.verticalCenter
         text: I18n.tr("Drop to remove")
-        textColor: root.hovered ? Theme.background : Theme.foreground
-        font.weight: Font.Bold
+        role: "label"
+        overflow: "none"
       }
     }
   }

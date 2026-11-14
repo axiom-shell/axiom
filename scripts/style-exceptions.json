@@ -1,8 +1,1 @@
-{
- "qml/components/reusable/StyledComboEntry.qml": {
-  "reason": "a colour option shows its colour; its ink is picked once per option in the options model",
-  "rules": [
-   "R7"
-  ]
- }
-}
+{}

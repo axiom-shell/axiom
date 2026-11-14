@@ -89,9 +89,8 @@ ColumnLayout {
         horizontalMargin: Widget.spacing
         verticalMargin: Widget.spacing
         minHeight: 0
-        backgroundColor: "transparent"
-        borderColor: "transparent"
-        borderWidth: 0
+        color: "transparent"
+        outlined: false
         placeholderText: I18n.tr("Message {0}…", ChatManager.preset.name)
         onAccepted: root._send()
       }

@@ -2,11 +2,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.components.methods
 
 // A row of equal-width tabs (StyledTabButtons), one per label in `tabs`.
 // The owner keeps the current index: set `currentIndex`, and update it
 // from tabClicked. The current tab's highlight is the bar's own, sliding
-// from tab to tab.
+// from tab to tab: a 2 px accent underline under the current tab's label,
+// on a full-width baseline.
 Item {
   id: root
 
@@ -22,32 +24,34 @@ Item {
   implicitWidth: row.implicitWidth
   implicitHeight: Widget.height
 
-  // From the tabs' (uniform) cells rather than their items, which the
-  // Repeater rebuilds whenever a label changes
-  readonly property int _count: root.tabs.length
-  readonly property real _tabWidth: root._count > 0 ? (row.width - row.spacing * (root._count - 1)) / root._count : 0
+  // The tab under the underline: its label's width plus a gap each side,
+  // centred in its cell (null until the Repeater has built it)
+  readonly property var _host: InkHost.find(root.parent)
+  readonly property var _current: root.currentIndex >= 0 && root.currentIndex < tabRepeater.count ? tabRepeater.itemAt(root.currentIndex) : null
+  readonly property real _markWidth: root._current ? Math.min(root._current.width, root._current.contentItem.implicitWidth + Style.space2 * 2) : 0
 
   // Off until laid out, so it doesn't grow in from nothing
   property bool _settled: false
   Component.onCompleted: Qt.callLater(() => root._settled = true)
 
+  // The baseline under every tab
+  Rectangle {
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    height: Style.dividerWidth
+    color: root._host ? root._host.inkScope.divider : Style.divider
+  }
+
   Rectangle {
     id: indicator
-    visible: root.currentIndex >= 0 && root.currentIndex < root._count
-    x: root.currentIndex * (root._tabWidth + row.spacing)
-    width: root._tabWidth
-    height: row.height
-    radius: Widget.radius
-    color: Theme.backgroundHighlight
-
-    Rectangle {
-      anchors.bottom: parent.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
-      width: parent.width * 0.8
-      height: 2
-      radius: 1
-      color: Theme.accent
-    }
+    visible: root._current !== null
+    x: root._current ? root._current.x + (root._current.width - width) / 2 : 0
+    y: parent.height - height
+    width: root._markWidth
+    height: Widget.px(2)
+    radius: height / 2
+    color: Style.accent
 
     Glide on x {
       enabled: root._settled
@@ -66,6 +70,7 @@ Item {
     uniformCellSizes: true
 
     Repeater {
+      id: tabRepeater
       model: root.tabs
 
       StyledTabButton {

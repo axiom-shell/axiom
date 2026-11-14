@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import qs.config
 
 // A section's title in the accent, with an optional muted description under
 // it, folded to three lines behind More (FieldGroup, the theme list)
@@ -15,16 +14,14 @@ ColumnLayout {
   spacing: 2
 
   StyledText {
-    wrapMode: Text.WordWrap
+    role: "title"
+    tone: "accent"
+    overflow: "wrap"
     Layout.fillWidth: true
     text: root.title
-    textColor: Theme.accent
-    textSize: Appearance.fontSizeBy(1)
-    font.weight: Font.Bold
   }
 
   ClampedText {
     text: root.description
-    textOpacity: 0.7
   }
 }

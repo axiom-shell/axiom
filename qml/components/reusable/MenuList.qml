@@ -116,40 +116,13 @@ FocusScope {
     spacing: 0
 
     // Back out of a submenu, named for it
-    Rectangle {
+    MenuRow {
       visible: root._parentItem !== null
+      dense: true
+      icon: "arrow_back"
+      text: root._parentItem?.text ?? ""
       Layout.fillWidth: true
-      implicitWidth: backRow.implicitWidth + Widget.smallPadding * 2
-      implicitHeight: Widget.height
-      radius: Widget.radius
-      color: backArea.containsMouse ? Theme.backgroundHighlight : "transparent"
-
-      RowLayout {
-        id: backRow
-        anchors.fill: parent
-        anchors.leftMargin: Widget.smallPadding
-        anchors.rightMargin: Widget.smallPadding
-        spacing: Widget.spacing
-
-        StyledIcon {
-          text: "arrow_back"
-          textColor: Theme.accent
-        }
-        StyledLabel {
-          Layout.fillWidth: true
-          text: root._parentItem?.text ?? ""
-          font.weight: Font.Medium
-          elide: Text.ElideRight
-        }
-      }
-
-      MouseArea {
-        id: backArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.back()
-      }
+      onActivated: root.back()
     }
 
     Repeater {
@@ -166,63 +139,36 @@ FocusScope {
         readonly property bool danger: modelData?.danger === true
 
         Layout.fillWidth: true
-        implicitWidth: separator ? 0 : rowContent.implicitWidth + Widget.smallPadding * 2
+        implicitWidth: separator ? 0 : entry.implicitWidth
         implicitHeight: separator ? Widget.spacing + 1 : Widget.height
 
         StyledSeparator {
           visible: row.separator
           anchors.verticalCenter: parent.verticalCenter
           width: parent.width
-          separatorColor: row.modelData?.accent === true ? Theme.accent : Theme.border
+          backTone: "raised"
+          accent: row.modelData?.accent === true
         }
 
-        Rectangle {
+        MenuRow {
+          id: entry
+
           visible: !row.separator
           anchors.fill: parent
-          radius: Widget.radius
-          color: row.lit ? (row.danger ? Theme.error : Theme.backgroundHighlight) : "transparent"
-          opacity: row.usable ? 1 : 0.4
-
-          RowLayout {
-            id: rowContent
-            anchors.fill: parent
-            anchors.leftMargin: Widget.smallPadding
-            anchors.rightMargin: Widget.smallPadding
-            spacing: Widget.spacing
-
-            StyledIcon {
-              // A checked item's mark takes the icon's place
-              text: row.modelData?.checked === true ? "check" : (row.modelData?.icon ?? "")
-              textColor: row.lit && row.danger ? Theme.background : Theme.accent
-              Layout.preferredWidth: Appearance.fontSizeBy(4)
-            }
-            StyledLabel {
-              Layout.fillWidth: true
-              text: row.modelData?.text ?? ""
-              textColor: row.lit && row.danger ? Theme.background : Theme.foreground
-              elide: Text.ElideRight
-            }
-            StyledLabel {
-              visible: text !== ""
-              text: row.modelData?.shortcut ?? ""
-              textColor: Theme.foregroundInactive
-              textSize: Appearance.fontSizeBy(-1)
-            }
-            StyledIcon {
-              visible: row.hasSubmenu
-              text: "chevron_right"
-              textColor: Theme.foregroundInactive
-            }
+          dense: true
+          enabled: row.usable
+          lit: row.lit
+          danger: row.danger
+          checked: row.modelData?.checked === true
+          icon: row.modelData?.icon ?? ""
+          text: row.modelData?.text ?? ""
+          trailing: row.modelData?.shortcut ?? ""
+          chevron: row.hasSubmenu
+          onHoveredChanged: {
+            if (hovered)
+              root.highlighted = row.index;
           }
-
-          MouseArea {
-            anchors.fill: parent
-            enabled: row.usable
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onEntered: root.highlighted = row.index
-            onClicked: root.activate(row.index)
-          }
+          onActivated: root.activate(row.index)
         }
       }
     }

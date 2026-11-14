@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 
 // An icon struck through while `slashed`: the base icon ("wifi", never
 // "wifi_off") with one drawn slash, top left to bottom right as Material's
@@ -11,11 +12,14 @@ Item {
   id: root
 
   property string text
-  property int textSize: Appearance.fontSize
-  property color textColor: Theme.foreground
+  property int textSize: Style.iconSm
+  // The enclosing Surface's text ink, else the text role
+  property color textColor: Style.toneOn(root._outer ? root._outer.inkScope : null, "text")
   property bool slashed: false
   // The colour it's drawn on; transparent for no cutout
-  property color cutout: Qt.alpha(Theme.background, 0)
+  property color cutout: "transparent"
+
+  readonly property var _outer: InkHost.find(root.parent)
 
   implicitWidth: icon.implicitWidth
   implicitHeight: icon.implicitHeight

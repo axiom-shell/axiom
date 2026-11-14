@@ -12,28 +12,28 @@ Row {
 
   spacing: Widget.spacing
 
-  Rectangle {
+  Surface {
     anchors.verticalCenter: parent.verticalCenter
-    width: Math.max(height, keyText.implicitWidth + Widget.spacing * 2)
-    height: keyText.implicitHeight + Widget.px(4)
-    radius: Widget.radius / 2
-    color: Appearance.fill(Theme.backgroundAlt)
-    border.color: Theme.border
-    border.width: 1
+    tone: "sunken"
+    outlined: true
+    width: Math.max(height, Math.ceil(keyText.implicitWidth) + Widget.spacing * 2)
+    height: Math.max(Widget.smallHeight, Math.ceil(keyText.implicitHeight) + Widget.px(2))
+    radius: Style.radiusInner
 
     StyledLabel {
       id: keyText
       anchors.centerIn: parent
+      role: "micro"
+      overflow: "none"
+      tone: "muted"
       text: root.key
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-4)
     }
   }
 
   StyledLabel {
     anchors.verticalCenter: parent.verticalCenter
+    role: "caption"
+    tone: "faint"
     text: root.label
-    textColor: Theme.foregroundInactive
-    textSize: Appearance.fontSizeBy(-3)
   }
 }

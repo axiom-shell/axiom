@@ -6,6 +6,6 @@ import qs.config
 // A flat icon button: no fill until hovered, its icon dimmer (the chat's
 // and notes' toolbars)
 StyledIconButton {
+  iconColor: Style.toneOn(_scope, "muted")
   Layout.alignment: Qt.AlignVCenter
-  iconColor: Theme.foregroundAlt
 }

@@ -11,7 +11,7 @@ Item {
 
   // "line" | "dot" | "slash" | "chevron" (anything else draws nothing)
   property string style: "line"
-  property color color: "white"
+  property color color: Style.divider
   property real thickness: 2
   // How far it reaches across the bar (px)
   property real length: Widget.px(16)

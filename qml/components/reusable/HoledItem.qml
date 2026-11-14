@@ -18,8 +18,8 @@ Item {
   Item {
     id: inner
     anchors.fill: parent
-    layer.enabled: root._layered
-    layer.effect: MultiEffect {
+    layer.enabled: root._layered // style-exempt: no text, a hole mask
+    layer.effect: MultiEffect { // style-exempt: no text, a hole mask
       maskEnabled: true
       maskInverted: true
       maskSource: mask
@@ -32,7 +32,7 @@ Item {
     id: mask
     anchors.fill: parent
     visible: false
-    layer.enabled: root._layered
+    layer.enabled: root._layered // style-exempt: no text, a hole mask
 
     Repeater {
       model: root.holes.length
@@ -44,7 +44,7 @@ Item {
         y: hole.y
         width: hole.width
         height: hole.height
-        color: "black"
+        color: "black" // style-exempt: mask
       }
     }
   }

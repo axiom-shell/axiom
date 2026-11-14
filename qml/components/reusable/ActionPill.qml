@@ -7,8 +7,8 @@ import qs.config
 
 // A wide action or toggle tile, as in Android's quick settings: an icon
 // well beside a name and a status line. Coloured as ActionTile is
-// (`active` fills it with `activeColor`, hover takes `tone`, `countdown`
-// runs a bar down). With `opens`, the well toggles (`clicked`) and the
+// (`active` fills it with the `activeTone`, hover gives its well the
+// tone's container, `countdown` runs a bar down). With `opens`, the well toggles (`clicked`) and the
 // rest opens the detail (`opened`), marked by a chevron; without, the whole
 // pill is `clicked`.
 Rectangle {
@@ -18,7 +18,11 @@ Rectangle {
   property string label: ""
   property string status: ""
   property bool active: false
-  property color activeColor: Theme.accent
+  // accent | error: the fill while active, and the container the well takes
+  // while hovered
+  property string activeTone: "accent"
+  // Chrome overrides, kept until no caller sets them
+  property color activeColor: root.activeTone === "error" ? Style.error : Style.accent
   property color tone: root.activeColor
   property int countdown: 0
   // There's a detail to open
@@ -28,7 +32,13 @@ Rectangle {
   signal opened
 
   readonly property bool hot: area.containsMouse || wellArea.containsMouse
-  readonly property color contentColor: root.active ? Theme.background : root.hot ? root.tone : Theme.foreground
+  readonly property string _containerTone: root.activeTone + "Container"
+  readonly property color _containerFill: root.activeTone === "error" ? Style.errorContainer : Style.accentContainer
+  // Glyph on the well: highest at rest, the container's ink hovered, the
+  // fill's ink while active
+  readonly property color contentColor: root.active ? Style.inkOf(root.activeTone).icon : root.hot ? Style.inkOf(root._containerTone).icon : Style.inkHighest.icon
+  readonly property color labelColor: root.active ? Style.inkOf(root.activeTone).text : root.hot ? Style.inkOf(root._containerTone).text : Style.inkSurface.text
+  readonly property color mutedColor: root.active ? Style.inkOf(root.activeTone).muted : root.hot ? Style.inkOf(root._containerTone).muted : Style.inkSurface.muted
   readonly property real _wellSize: Math.max(0, Math.min(root.height - Widget.spacing * 2, Appearance.fontSize * 2.6))
   // Room for the name beside the well
   readonly property bool _textShown: root.width - root._wellSize - Widget.spacing * 3 >= Appearance.fontSize * 3
@@ -40,14 +50,20 @@ Rectangle {
   readonly property int _nameLines: Math.max(1, Math.min(2, Math.floor((root._room - (root._statusShown ? statusMetrics.height : 0)) / nameMetrics.height)))
   readonly property int _statusLines: Math.max(1, Math.min(3 - nameText.lineCount, Math.floor((root._room - nameText.lineCount * nameMetrics.height) / statusMetrics.height)))
 
-  radius: Widget.radius
-  color: Appearance.fill(root.active ? root.activeColor : root.hot ? Theme.backgroundHighlight : Theme.backgroundAlt)
-  border.color: root.active ? root.activeColor : root.hot ? root.tone : Theme.border
-  border.width: Appearance.borderWidth
+  radius: Style.radius
+  color: root.active ? root.activeColor : Style.fill
+  border.color: root.active ? root.activeColor : root.hot ? root.tone : Style.borderSubtle
+  border.width: Style.hairline
   clip: true
 
   ColorGlide on color {}
   ColorGlide on border.color {}
+
+  StateLayer {
+    hovered: root.hot
+    pressed: area.pressed
+    onAccent: root.active
+  }
 
   // The rest of the pill: opens, or toggles without a detail
   MouseArea {
@@ -70,7 +86,7 @@ Rectangle {
       Layout.alignment: Qt.AlignVCenter
       Layout.fillWidth: !root._textShown
       radius: Math.min(Widget.radius * 1.5, width / 2)
-      color: root.active ? Qt.rgba(0, 0, 0, 0.12) : wellArea.containsMouse ? Qt.alpha(root.tone, 0.16) : Appearance.fill(Theme.background)
+      color: root.active ? Style.stateOnAccentHover : wellArea.containsMouse ? root._containerFill : Style.surfaceHighest
 
       ColorGlide on color {}
 
@@ -78,7 +94,7 @@ Rectangle {
         anchors.centerIn: parent
         text: root.icon
         textColor: root.contentColor
-        textSize: Math.min(well.width, well.height) * 0.5
+        textSize: Math.max(Style.iconXs, Math.min(well.width, well.height) * 0.5) // fitted: the glyph is half its well
         fill: root.hot || root.active ? 1 : 0
       }
 
@@ -102,24 +118,20 @@ Rectangle {
         id: nameText
         Layout.fillWidth: true
         text: root.label
-        wrapMode: root._nameLines > 1 ? Text.Wrap : Text.NoWrap
-        maximumLineCount: root._nameLines
-        elide: Text.ElideRight
-        font.weight: Font.Bold
-        textColor: root.contentColor
-        textSize: Appearance.fontSizeBy(-1)
+        role: "label"
+        overflow: "wrap"
+        maxLines: root._nameLines
+        textColor: root.labelColor
       }
       StyledLabel {
         id: statusText
         Layout.fillWidth: true
         visible: root._statusShown
         text: root.status
-        wrapMode: root._statusLines > 1 ? Text.Wrap : Text.NoWrap
-        maximumLineCount: root._statusLines
-        elide: Text.ElideRight
-        textColor: root.contentColor
-        opacity: 0.75
-        textSize: Appearance.fontSizeBy(-2)
+        role: "caption"
+        overflow: "wrap"
+        maxLines: root._statusLines
+        textColor: root.mutedColor
       }
     }
 
@@ -135,14 +147,14 @@ Rectangle {
     StyledIcon {
       visible: root.opens && root._textShown
       text: "chevron_right"
-      textColor: root.contentColor
-      opacity: 0.75
+      textColor: root.mutedColor
     }
   }
 
   // Time left while active
   CountdownBar {
     running: root.active
+    fillColor: Style.inkOf(root.activeTone).graphic
     duration: root.countdown
   }
 

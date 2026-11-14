@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
-// A StyledRectButton that fills with the accent on hover and dims when
-// disabled
-StyledRectButton {
-  opacity: enabled ? 1 : 0.4
-  hoverColor: Theme.accent
+// A tonal icon button, a Widget.height square: the shell's standard action
+// button, Tab-focusable like every StyledIconButton
+StyledIconButton {
+  kind: "tonal"
+  size: Widget.height
 }

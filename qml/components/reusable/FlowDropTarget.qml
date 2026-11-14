@@ -58,7 +58,7 @@ Item {
     visible: at >= 0 && beside !== null
     width: Widget.px(2)
     radius: width / 2
-    color: Theme.accent
+    color: Style.accent
     x: beside ? holder.mapFromItem(beside.parent, before ? beside.x : beside.x + beside.width, 0).x - width / 2 + (before ? -Widget.spacing / 4 : Widget.spacing / 4) : 0
     y: beside ? holder.mapFromItem(beside.parent, 0, beside.y).y : 0
     height: beside ? beside.height : 0

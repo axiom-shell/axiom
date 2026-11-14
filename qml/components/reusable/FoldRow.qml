@@ -21,6 +21,11 @@ Item {
   Layout.fillWidth: true
   implicitHeight: row.implicitHeight
 
+  StateLayer {
+    hovered: root.hovered
+    bleed: Widget.smallPadding
+  }
+
   MouseArea {
     id: area
     anchors.fill: parent
@@ -45,7 +50,7 @@ Item {
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
     text: "expand_more"
-    textColor: root.hovered ? Theme.accent : Theme.foregroundAlt
+    tone: root.hovered ? "accent" : "muted"
     rotation: root.open ? 0 : -90
 
     Glide on rotation {}

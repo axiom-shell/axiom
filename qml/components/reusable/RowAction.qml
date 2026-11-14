@@ -2,9 +2,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
-// A small flat button on a ListEntryRow, faint until the row is hovered
-// or selected. `lit` keeps it at full strength and in the accent (the
-// state it toggles is on); `danger` hovers in the error colour.
+// A small flat button on a ListEntryRow, hidden until the row shows its
+// actions (hovered, focused or selected). `lit` keeps it shown in the
+// primary kind (the state it toggles is on); `danger` hovers in the error
+// container.
 SquareIconButton {
   id: root
 
@@ -13,8 +14,8 @@ SquareIconButton {
   property bool danger: false
 
   size: Widget.height - Widget.px(6)
-  iconColor: root.row.selected ? Theme.background : (root.lit ? Theme.accent : Theme.foreground)
-  backgroundColor: "transparent"
-  hoverColor: root.danger ? Theme.error : (root.row.selected ? Qt.darker(Theme.accent, 1.15) : Theme.backgroundAlt)
-  opacity: root.lit || root.row.selected || root.row.hovered ? 1 : 0.35
+  kind: root.lit ? "primary" : root.danger ? "danger" : "text"
+  opacity: root.lit || root.row.revealed ? 1 : 0
+
+  Glide on opacity {}
 }

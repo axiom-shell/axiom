@@ -31,10 +31,7 @@ Popup {
   onOpened: list.forceActiveFocus()
 
   // Solid, as every dropdown's list: nothing blurs behind a Popup
-  background: DropdownSurface {
-    color: Theme.backgroundAlt
-    border.width: Appearance.borderWidth
-  }
+  background: DropdownSurface {}
 
   contentItem: MenuList {
     id: list

@@ -5,7 +5,8 @@ import qs.config
 import qs.components.methods
 
 // A single choice as a wrapping row of equal tiles (a TileFlow), each a
-// preview over its label: the chosen one filled with the accent, one that
+// preview over its label: the chosen one filled with the accent container
+// and ringed in the accent, one that
 // can't be picked greyed, saying why in a tooltip on hover. Arrow keys
 // move between the tiles, Enter or Space picks. The owner keeps the
 // value: set `value`, and update it from `picked`.
@@ -33,7 +34,7 @@ TileFlow {
   // The tile the keys are on
   property int _cursor: -1
 
-  minTileWidth: Appearance.fontSize * 9
+  minTileWidth: Style.typeBody * 9
   activeFocusOnTab: true
   onActiveFocusChanged: {
     if (root.activeFocus && (root._cursor < 0 || root._cursor >= root.options.length))
@@ -76,15 +77,19 @@ TileFlow {
       width: root.tileWidth
       height: (root._previews ? root.previewHeight + Widget.smallPadding : 0) + Widget.height
 
-      Rectangle {
+      Surface {
         anchors.fill: parent
-        radius: Widget.radius
-        color: Appearance.fill(tile.selected ? Theme.accent : hover.hovered && tile.reason === "" ? Theme.backgroundAlt : Theme.backgroundHighlight)
-        border.color: tile.cursor ? (tile.selected ? Theme.foreground : Theme.accent) : "transparent"
-        border.width: Appearance.borderWidth
+        tone: tile.selected ? "accentContainer" : "surface"
+        outlined: true
+        border.width: tile.selected ? Style.focusWidth : Style.hairline
+        border.color: tile.selected ? Style.accent : Style.borderSubtle
 
-        ColorGlide on color {
-          duration: Appearance.animNormal
+        StateLayer {
+          hovered: hover.hovered && tile.reason === ""
+        }
+
+        FocusRing {
+          shown: tile.cursor
         }
       }
 
@@ -92,7 +97,7 @@ TileFlow {
         id: content
         anchors.fill: parent
         anchors.margins: Widget.smallPadding / 2
-        opacity: tile.reason === "" ? 1 : 0.4
+        opacity: tile.reason === "" ? 1 : Style.opacityDisabled
 
         Glide on opacity {}
 
@@ -169,10 +174,10 @@ TileFlow {
           height: Widget.height - Widget.smallPadding
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
-          elide: Text.ElideRight
+          role: "label"
+          overflow: "line"
           text: tile.option.label ?? String(tile.option.value ?? "")
-          textColor: tile.selected ? Theme.background : Theme.foreground
-          font.weight: (tile.selected) ? Font.Bold : Font.Normal
+          textColor: tile.selected ? Style.inkAccentContainer.text : Style.inkSurface.text
         }
       }
 

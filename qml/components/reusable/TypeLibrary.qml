@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.components.methods
@@ -66,7 +65,7 @@ ColumnLayout {
     StyledTextEntry {
       id: search
       Layout.fillWidth: true
-      Layout.maximumWidth: Appearance.fontSize * 16
+      Layout.maximumWidth: Style.typeBody * 16
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search")
       clearable: true
@@ -76,13 +75,12 @@ ColumnLayout {
     }
   }
 
-  ScrollView {
+  StyledScrollView {
     id: scroll
     Layout.fillWidth: true
     Layout.fillHeight: true
-    clip: true
-    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-    contentWidth: availableWidth
+    contentPadding: 0
+    showScrollBar: true
 
     ColumnLayout {
       width: scroll.availableWidth
@@ -92,8 +90,8 @@ ColumnLayout {
         visible: root.sections.length === 0 && root.query.trim() !== ""
         Layout.fillWidth: true
         text: I18n.tr("Nothing matches “{0}”", root.query.trim())
-        opacity: 0.6
-        wrapMode: Text.WordWrap
+        tone: "muted"
+        overflow: "wrap"
       }
 
       Repeater {

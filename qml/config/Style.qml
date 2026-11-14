@@ -306,6 +306,23 @@ QtObject {
     }
   }
 
+  // A solid fill by tone name, for a meter or bar's fill: accent (and any
+  // unknown name), success, warning, error, info
+  function toneFill(name) {
+    switch (name) {
+    case "success":
+      return root.success;
+    case "warning":
+      return root.warning;
+    case "error":
+      return root.error;
+    case "info":
+      return root.info;
+    default:
+      return root.accent;
+    }
+  }
+
   // What a StyledText inside a Surface draws by default: with an `ink`,
   // text, muted, faint and accent read its key of that name; any other
   // tone, or no ink, is toneColor(tone)

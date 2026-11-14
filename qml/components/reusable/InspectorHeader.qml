@@ -30,17 +30,16 @@ ColumnLayout {
     Layout.preferredHeight: Widget.height + Widget.padding
     spacing: Widget.spacing
 
-    Rectangle {
+    Surface {
       Layout.preferredWidth: Widget.height + Widget.px(4)
       Layout.preferredHeight: Widget.height + Widget.px(4)
-      radius: Widget.radius
-      color: root.filled ? Theme.accent : Theme.backgroundAlt
+      tone: root.filled ? "accentContainer" : "highest"
 
       StyledIcon {
         anchors.centerIn: parent
         text: root.icon
-        textColor: root.filled ? Theme.background : Theme.accent
-        textSize: Appearance.fontSizeBy(4)
+        size: "md"
+        tone: root.filled ? "text" : "accent"
       }
     }
 
@@ -50,17 +49,16 @@ ColumnLayout {
 
       StyledLabel {
         text: root.title
-        textSize: Appearance.fontSizeBy(4)
-        font.weight: Font.Bold
-        elide: Text.ElideRight
+        role: "title"
+        overflow: "line"
         Layout.fillWidth: true
       }
 
       StyledLabel {
         text: root.subtitle
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-2)
-        elide: Text.ElideRight
+        role: "caption"
+        tone: "muted"
+        overflow: "line"
         Layout.fillWidth: true
       }
     }
@@ -75,6 +73,5 @@ ColumnLayout {
 
   StyledSeparator {
     Layout.fillWidth: true
-    opacity: 0.3
   }
 }

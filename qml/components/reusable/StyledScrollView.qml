@@ -6,7 +6,7 @@ import QtQuick.Controls
 import qs.config
 
 // A ScrollView with the shell's padding, clipped to itself, and a thin
-// accent scroll bar that shows only when asked.
+// scroll bar that shows only when asked.
 ScrollView {
   id: root
 
@@ -35,8 +35,7 @@ ScrollView {
     contentItem: Rectangle {
       implicitWidth: root.showScrollBar ? Widget.px(6) : 0
       radius: width / 2
-      color: Theme.accent
-      opacity: parent.pressed ? 0.8 : 0.4
+      color: parent.pressed ? Style.textMuted : Style.textFaint
       visible: root.showScrollBar
 
       Glide on opacity {
@@ -46,9 +45,8 @@ ScrollView {
 
     background: Rectangle {
       implicitWidth: root.showScrollBar ? Widget.px(8) : 0
-      color: Theme.backgroundAlt
+      color: Style.stateHover
       visible: root.showScrollBar
-      opacity: 0.2
       radius: width / 2
     }
   }

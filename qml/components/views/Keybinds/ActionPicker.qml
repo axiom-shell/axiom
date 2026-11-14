@@ -178,7 +178,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         model: popup.visible ? root.rows.length : 0
 
-        ScrollIndicator.vertical: ScrollIndicator {}
+        ScrollIndicator.vertical: StyledScrollIndicator {}
 
         delegate: Rectangle {
           id: row
