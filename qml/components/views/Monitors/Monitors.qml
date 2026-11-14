@@ -6,7 +6,6 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
-import qs.components.content.base
 import qs.components.views.base
 
 // The monitors page: layout profiles (one per set of monitors, picked by
@@ -27,6 +26,16 @@ BaseView {
   // following one would open the overlay over it
   property bool settingsLinks: true
 
+  // Whether the layout's name is being typed in place of the picker
+  property bool renaming: false
+
+  function startRename() {
+    nameField.text = MonitorManager.profiles[MonitorManager.selectedProfile]?.name ?? "";
+    root.renaming = true;
+    nameField.input.forceActiveFocus();
+    nameField.input.selectAll();
+  }
+
   // Where the compositor gets the profiles from, per Compositor.mode
   readonly property string modeNote: {
     switch (CompositorConfig.mode) {
@@ -39,10 +48,23 @@ BaseView {
   }
 
   Item {
-    implicitWidth: root.cardPageWidth
+    // pageWidth like every tool page; cardPageWidth where the onboarder
+    // embeds it (settingsLinks off)
+    implicitWidth: root.settingsLinks ? root.pageWidth : root.cardPageWidth
     implicitHeight: root.pageHeight
 
-    TitledCard {
+    // The entry renames the selected layout: another one selected under it
+    // (Delete, a monitor plugged in) ends the rename
+    Connections {
+      target: MonitorManager
+      function onSelectedProfileChanged() {
+        root.renaming = false;
+      }
+    }
+
+    ToolPane {
+      id: pane
+      anchors.fill: parent
       title: I18n.tr("Monitors")
       scrollKey: "Monitors"
       // Unsaved, or not what the monitors show: Apply puts it on;
@@ -54,88 +76,96 @@ BaseView {
       onSave: MonitorManager.apply()
       onReset: MonitorManager.reset()
 
-      headerExtras: RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing * 2
-
-        SchemaComboBox {
-          label: ""
-          Layout.fillWidth: false
-          Layout.preferredWidth: root.grid.unit * 0.7
-          options: MonitorManager.profiles.map((_, index) => String(index))
-          optionLabels: MonitorManager.profiles.reduce((labels, profile, index) => {
-            labels[String(index)] = index === MonitorManager.liveProfile ? I18n.tr("{0} (connected)", profile.name) : profile.name;
-            return labels;
-          }, {})
-          currentValue: String(MonitorManager.selectedProfile)
-          onSelectionChanged: value => MonitorManager.selectProfile(Number(value))
-        }
-
-        StyledTextEntry {
-          id: nameField
-          Layout.preferredWidth: root.grid.unit * 0.6
-          Layout.preferredHeight: Widget.height
-          placeholderText: I18n.tr("Layout name")
-          // Only typing renames, never a name pushed in (below)
-          onTextEdited: MonitorManager.renameProfile(MonitorManager.selectedProfile, nameField.text)
-
-          // StyledTextEntry writes each keystroke back to its `text`, which
-          // drops any binding on it, so the name is pushed in instead: on
-          // every draft change unless it's being typed, always on a switch
-          function syncName(force) {
-            if (force || !nameField.input.activeFocus)
-              nameField.text = MonitorManager.profiles[MonitorManager.selectedProfile]?.name ?? "";
-          }
-          Component.onCompleted: syncName(true)
-          Connections {
-            target: MonitorManager
-            function onProfileChanged() {
-              nameField.syncName(false);
+      toolbar: ToolBar {
+        leading: [
+          // The layout picker, or its name while renaming (Enter saves,
+          // Escape cancels)
+          SchemaComboBox {
+            visible: !root.renaming
+            label: ""
+            Layout.fillWidth: false
+            Layout.preferredWidth: root.grid.unit * 0.7
+            options: MonitorManager.profiles.map((_, index) => String(index))
+            optionLabels: MonitorManager.profiles.reduce((labels, profile, index) => {
+              labels[String(index)] = index === MonitorManager.liveProfile ? I18n.tr("{0} (connected)", profile.name) : profile.name;
+              return labels;
+            }, {})
+            currentValue: String(MonitorManager.selectedProfile)
+            onSelectionChanged: value => MonitorManager.selectProfile(Number(value))
+          },
+          StyledTextEntry {
+            id: nameField
+            visible: root.renaming
+            Layout.preferredWidth: root.grid.unit * 0.7
+            Layout.preferredHeight: Widget.height
+            placeholderText: I18n.tr("Layout name")
+            onAccepted: {
+              MonitorManager.renameProfile(MonitorManager.selectedProfile, nameField.text);
+              root.renaming = false;
             }
-            function onSelectedProfileChanged() {
-              nameField.syncName(true);
-            }
+            input.Keys.onEscapePressed: root.renaming = false
+            // Leaving it cancels
+            input.onActiveFocusChanged: if (!nameField.input.activeFocus)
+              root.renaming = false
+          },
+          StyledIconButton {
+            iconText: "edit"
+            tooltipText: I18n.tr("Rename this layout")
+            onClicked: root.startRename()
+          },
+          StyledIconButton {
+            visible: MonitorManager.profiles.length > 1
+            kind: "danger"
+            iconText: "delete"
+            tooltipText: I18n.tr("Delete this layout")
+            onClicked: MonitorManager.removeProfile(MonitorManager.selectedProfile)
           }
-        }
-
-        StyledTextButton {
-          implicitHeight: Widget.height
-          iconText: "add"
-          text: I18n.tr("New layout")
-          onClicked: MonitorManager.newProfile()
-        }
-
-        StyledTextButton {
-          visible: MonitorManager.profiles.length > 1
-          implicitHeight: Widget.height
-          iconText: "delete"
-          text: I18n.tr("Delete")
-          onClicked: MonitorManager.removeProfile(MonitorManager.selectedProfile)
-        }
-
-        Item {
-          Layout.fillWidth: true
-        }
-
-        StyledTextButton {
-          implicitHeight: Widget.height
-          iconText: "badge"
-          text: I18n.tr("Identify")
-          onClicked: ActionsManager.run("monitorsIdentify")
-        }
+        ]
+        trailing: [
+          StyledTextButton {
+            implicitHeight: Widget.height
+            iconText: "add"
+            text: I18n.tr("New layout")
+            onClicked: {
+              // Made at once with its default name, which the entry asks to
+              // change
+              MonitorManager.newProfile();
+              root.startRename();
+            }
+          },
+          StyledTextButton {
+            implicitHeight: Widget.height
+            iconText: "badge"
+            text: I18n.tr("Identify")
+            onClicked: ActionsManager.run("monitorsIdentify")
+          }
+        ]
       }
 
       RowLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: root.pageHeight - Widget.height * 6
+        Layout.preferredHeight: pane.bodyHeight
         spacing: Widget.spacing * 3
 
-        // Both streamed in as the page opens (StreamedLoader)
-        StreamedLoader {
+        // The canvas is the pane's only main content: no box of its own
+        // (its Apply and name are the pane's header). Both streamed in as
+        // the page opens (StreamedLoader)
+        WorkArea {
+          embedded: true
+          showActions: false
           Layout.fillWidth: true
           Layout.fillHeight: true
-          label: "monitor canvas"
-          sourceComponent: MonitorCanvas {}
+
+          StreamedLoader {
+            anchors.fill: parent
+            label: "monitor canvas"
+            sourceComponent: MonitorCanvas {}
+          }
+        }
+
+        StyledSeparator {
+          Layout.fillHeight: true
+          Layout.preferredWidth: Style.dividerWidth
         }
 
         StyledScrollView {
@@ -161,32 +191,31 @@ BaseView {
         }
       }
 
-      StyledText {
-        visible: !MonitorManager.selectedIsLive
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        opacity: 0.7
-        text: I18n.tr("This layout is for monitors that aren't all connected: saving keeps it for when they are.")
-      }
-
-      IssueList {
-        issues: MonitorManager.issues
-      }
-
-      StyledText {
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-2)
-        text: root.modeNote
-      }
-
-      SettingsLink {
-        id: modeLink
-        Layout.fillWidth: true
-        visible: root.settingsLinks && modeLink.available
-        setting: "Compositor.mode"
-      }
+      footer: [
+        StyledText {
+          visible: !MonitorManager.selectedIsLive
+          Layout.fillWidth: true
+          overflow: "wrap"
+          tone: "muted"
+          text: I18n.tr("This layout is for monitors that aren't all connected: saving keeps it for when they are.")
+        },
+        IssueList {
+          issues: MonitorManager.issues
+        },
+        StyledText {
+          Layout.fillWidth: true
+          overflow: "wrap"
+          role: "caption"
+          tone: "muted"
+          text: root.modeNote
+        },
+        SettingsLink {
+          id: modeLink
+          Layout.fillWidth: true
+          visible: root.settingsLinks && modeLink.available
+          setting: "Compositor.mode"
+        }
+      ]
     }
   }
 }

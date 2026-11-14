@@ -21,7 +21,8 @@ BaseView {
 
   readonly property CalendarPageState pageState: CalendarManager.page
   readonly property real sideColumnWidth: root.grid.unit * 1.05
-  readonly property real monthWidth: Math.max(root.grid.unit * 1.6, Math.min(root.grid.unit * 3, root.grid.roomWidth - root.sideColumnWidth - OverlayConfig.cardSpacing * 3))
+  // The page is pageWidth wide like every tool page
+  readonly property real monthWidth: Math.max(root.grid.unit * 1.6, root.pageWidth - root.sideColumnWidth - OverlayConfig.cardSpacing)
 
   Component.onCompleted: {
     CalendarManager.acquire(root);
@@ -71,27 +72,22 @@ BaseView {
         anchors.margins: monthCard.pad
         spacing: Widget.spacing
 
+        // The month name changes width: Sync, Today and the arrows sit at the row's end, so stepping months never moves them
         RowLayout {
           Layout.fillWidth: true
           spacing: Widget.spacing / 2
 
-          StyledIcon {
-            text: "calendar_month"
-            textColor: Theme.accent
-            textSize: Appearance.fontSizeBy(4)
-          }
-          StyledLabel {
-            text: I18n.formatDate(new Date(root.pageState.year, root.pageState.month, 1), I18n.dateFormat("monthYear"))
-            textSize: Appearance.fontSizeBy(4)
-            font.weight: Font.Bold
-          }
-          Item {
-            Layout.fillWidth: true
-          }
-          StyledLabel {
-            text: CalendarManager.syncing ? I18n.tr("Syncing…") : CalendarManager.lastSync > 0 ? I18n.tr("Synced {0}", I18n.formatDate(new Date(CalendarManager.lastSync), CalendarConfig.timeFormat)) : ""
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
+          CardHeader {
+            icon: "calendar_month"
+            iconSize: "lg"
+            title: I18n.formatDate(new Date(root.pageState.year, root.pageState.month, 1), I18n.dateFormat("monthYear"))
+            showActions: false
+
+            StyledLabel {
+              text: CalendarManager.syncing ? I18n.tr("Syncing…") : CalendarManager.lastSync > 0 ? I18n.tr("Synced {0}", I18n.formatDate(new Date(CalendarManager.lastSync), CalendarConfig.timeFormat)) : ""
+              role: "caption"
+              tone: "muted"
+            }
           }
           FlatIconButton {
             visible: CalendarManager.hasCalendars
@@ -160,60 +156,55 @@ BaseView {
           StyledSeparator {
             Layout.fillWidth: true
           }
-          RowLayout {
-            Layout.fillWidth: true
-            StyledLabel {
-              Layout.fillWidth: true
-              text: I18n.tr("Calendars")
-              font.weight: Font.Bold
-            }
-            FlatIconButton {
+          ListSection {
+            title: I18n.tr("Calendars")
+            trailing: FlatIconButton {
               iconText: "settings"
               tooltipText: I18n.tr("Calendar settings")
               onClicked: SettingsManager.openSetting("Calendar", true)
             }
-          }
-          Flickable {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredHeight: calendarList.implicitHeight
-            contentHeight: calendarList.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
 
-            ColumnLayout {
-              id: calendarList
-              width: parent.width
-              spacing: 0
+            Flickable {
+              Layout.fillWidth: true
+              Layout.preferredHeight: Math.min(calendarList.implicitHeight, root.pageHeight * 0.4 - Widget.height * 2)
+              contentHeight: calendarList.implicitHeight
+              boundsBehavior: Flickable.StopAtBounds
+              clip: true
 
-              Repeater {
-                id: calendarRepeater
-                readonly property var calendars: CalendarManager.calendars.filter(calendar => calendar.events)
-                model: calendars.length
-                RowLayout {
-                  id: calendarRow
-                  required property int index
-                  readonly property var calendar: calendarRepeater.calendars[index] ?? ({})
-                  Layout.fillWidth: true
-                  spacing: Widget.spacing
+              ColumnLayout {
+                id: calendarList
+                width: parent.width
+                spacing: 0
 
-                  Rectangle {
-                    Layout.preferredWidth: Appearance.fontSize * 0.7
-                    Layout.preferredHeight: width
-                    radius: width / 2
-                    color: Style.resolve(calendarRow.calendar.color)
-                    opacity: calendarRow.calendar.enabled ? 1 : 0.4
-                  }
-                  StyledLabel {
+                Repeater {
+                  id: calendarRepeater
+                  readonly property var calendars: CalendarManager.calendars.filter(calendar => calendar.events)
+                  model: calendars.length
+                  RowLayout {
+                    id: calendarRow
+                    required property int index
+                    readonly property var calendar: calendarRepeater.calendars[index] ?? ({})
                     Layout.fillWidth: true
-                    text: calendarRow.calendar.name
-                    textFormat: Text.PlainText
-                    elide: Text.ElideRight
-                    opacity: calendarRow.calendar.enabled ? 1 : 0.6
-                  }
-                  StyledSwitch {
-                    checked: calendarRow.calendar.enabled
-                    onToggled: root.setShown(calendarRow.calendar, checked)
+                    spacing: Widget.spacing
+
+                    Rectangle {
+                      Layout.preferredWidth: Appearance.fontSize * 0.7
+                      Layout.preferredHeight: width
+                      radius: width / 2
+                      color: Style.resolve(calendarRow.calendar.color)
+                      opacity: calendarRow.calendar.enabled ? 1 : Style.opacityDisabled
+                    }
+                    StyledLabel {
+                      Layout.fillWidth: true
+                      text: calendarRow.calendar.name
+                      textFormat: Text.PlainText
+                      overflow: "line"
+                      tone: calendarRow.calendar.enabled ? "" : "faint"
+                    }
+                    StyledSwitch {
+                      checked: calendarRow.calendar.enabled
+                      onToggled: root.setShown(calendarRow.calendar, checked)
+                    }
                   }
                 }
               }

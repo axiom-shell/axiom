@@ -4248,6 +4248,8 @@
     "Switching to another workspace hides a shown special workspace.": "",
     "This theme keeps surfaces at least {0}% solid so text stays readable": "",
     "No custom widgets yet": "",
-    "Select a custom widget to edit it": ""
+    "Select a custom widget to edit it": "",
+    "Rename this layout": "",
+    "Delete this layout": ""
   }
 }
