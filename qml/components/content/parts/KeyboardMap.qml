@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.config
@@ -7,7 +8,7 @@ import qs.services.compositor
 import qs.components.methods
 import qs.components.reusable
 
-// A US keyboard (KeyMap.rows, then KeyMap.extras), each key coloured and
+// A US keyboard (KeyMap.rows, then KeyMap.extras), each key toned and
 // labelled through hooks: the editor's key map of free keys and the
 // keybinds reference's keyboard. `tall` keys show an icon and what the key
 // does under its name. Above it the modifier chips, below it what the
@@ -15,12 +16,12 @@ import qs.components.reusable
 ColumnLayout {
   id: root
 
-  // Hooks, by a key's name: whose it is (a source, coloured by fillFor; axiom's
-  // and both take the background's ink), whether it takes a click, and for
-  // tall keys what it does (a label and an icon; a tooltip shows the label
-  // in full)
+  // Hooks, by a key's name: whose it is (a source, toned by toneFor: a
+  // Surface tone name; every key's text reads that surface's ink), whether
+  // it takes a click, and for tall keys what it does (a label and an icon; a
+  // tooltip shows the label in full)
   property var sourceOf: key => ""
-  property var fillFor: source => Theme.backgroundAlt
+  property var toneFor: source => "sunken"
   property var clickableOf: key => false
   property var labelOf: key => ""
   property var iconOf: key => ""
@@ -35,7 +36,10 @@ ColumnLayout {
   signal clicked(string key)
 
   // One key unit, the main block being 15 wide
-  readonly property real unit: Math.floor((root.width - Widget.spacing / 2 * 14) / 15)
+  // (never under the floor that holds the widest modifier label whole)
+  readonly property real unit: Math.max(Math.floor((root.width - Widget.spacing / 2 * 14) / 15), root._minUnit)
+  // "Super", the widest blank label, on its 1.25-unit key (Shift and Caps sit on wider keys)
+  readonly property real _minUnit: Math.ceil((modMetrics.advanceWidth + Widget.px(4) - Widget.spacing / 2 * 0.25) / 1.25)
   // The main block's width, which every row is centred to
   readonly property real blockWidth: root.unit * 15 + Widget.spacing / 2 * 14
 
@@ -46,7 +50,15 @@ ColumnLayout {
   Layout.minimumWidth: 0
   Layout.maximumWidth: Number.POSITIVE_INFINITY
 
-  component KeyButton: Rectangle {
+  TextMetrics {
+    id: modMetrics
+    font.family: Appearance.fontFamily
+    font.pixelSize: Style.typeMicro
+    font.weight: Style.roleMicro.weight
+    text: "Super"
+  }
+
+  component KeyButton: Item {
     id: keyButton
 
     required property var entry
@@ -55,13 +67,22 @@ ColumnLayout {
     readonly property string does: keyButton.blank ? "" : root.labelOf(keyButton.entry.key)
     readonly property string icon: keyButton.blank ? "" : root.iconOf(keyButton.entry.key)
     readonly property string source: keyButton.blank ? "" : root.sourceOf(keyButton.entry.key)
-    readonly property color ink: keyButton.source === "axiom" || keyButton.source === "both" ? Theme.background : Theme.foreground
 
     implicitHeight: Math.round(Widget.height * (root.tall ? 1.9 : 0.9))
-    radius: Widget.radius / 2
-    color: keyButton.blank ? "transparent" : root.fillFor(keyButton.source)
-    border.width: keyArea.containsMouse && keyButton.clickable ? 1 : 0
-    border.color: Theme.foreground
+
+    Surface {
+      id: face
+      anchors.fill: parent
+      visible: !keyButton.blank
+      tone: root.toneFor(keyButton.source)
+      outlined: false
+      radius: Style.radiusInner
+    }
+
+    StateLayer {
+      hovered: keyArea.containsMouse && keyButton.clickable
+      onAccent: face.tone === "accent"
+    }
 
     // Its name: centred, or in the corner of a tall key that does something
     StyledText {
@@ -71,10 +92,10 @@ ColumnLayout {
       width: corner ? implicitWidth : parent.width - Widget.px(4)
       horizontalAlignment: Text.AlignHCenter
       text: keyButton.entry.label
-      textColor: keyButton.ink
-      opacity: keyButton.blank ? 0.3 : (corner ? 0.7 : 1)
-      textSize: Appearance.fontSizeBy(corner ? -3 : -2)
-      elide: Text.ElideRight
+      textColor: keyButton.blank ? Style.textFaint : corner ? face.ink.muted : face.ink.text
+      role: corner || keyButton.blank ? "micro" : "caption"
+      // A blank key's name (a modifier) is never elided; a bound key's elides at the floor
+      overflow: keyButton.blank ? "none" : "line"
     }
 
     Column {
@@ -89,17 +110,16 @@ ColumnLayout {
         visible: keyButton.icon !== ""
         anchors.horizontalCenter: parent.horizontalCenter
         text: keyButton.icon
-        textColor: keyButton.ink
-        textSize: Appearance.fontSize
+        size: "sm"
+        textColor: face.ink.icon
       }
 
       StyledText {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         text: keyButton.does
-        textColor: keyButton.ink
-        textSize: Appearance.fontSizeBy(-3)
-        elide: Text.ElideRight
+        role: "micro"
+        textColor: face.ink.muted
       }
     }
 
@@ -140,43 +160,66 @@ ColumnLayout {
     }
   }
 
-  Repeater {
-    model: KeyMap.rows
+  // Rows and extras scroll sideways inside the panel when the unit's floor
+  // makes the block wider than it (big fonts, a narrow panel): a keycap is
+  // never squeezed
+  Flickable {
+    id: scroller
+    Layout.fillWidth: true
+    Layout.preferredHeight: contentHeight
+    implicitHeight: contentHeight
+    flickableDirection: Flickable.HorizontalFlick
+    contentWidth: root.blockWidth
+    contentHeight: keyBlock.implicitHeight
+    leftMargin: Math.max(0, (width - contentWidth) / 2)
+    interactive: contentWidth > width
+    clip: true
+    ScrollIndicator.horizontal: StyledScrollIndicator {}
 
-    delegate: Row {
-      id: keyRow
-      required property var modelData
-      Layout.alignment: Qt.AlignHCenter
+    ColumnLayout {
+      id: keyBlock
+      width: root.blockWidth
       spacing: Widget.spacing / 2
 
       Repeater {
-        model: keyRow.modelData
+        model: KeyMap.rows
 
-        delegate: KeyButton {
+        delegate: Row {
+          id: keyRow
           required property var modelData
-          entry: modelData
-          width: root.unit * modelData.width + Widget.spacing / 2 * (modelData.width - 1)
+          Layout.alignment: Qt.AlignHCenter
+          spacing: Widget.spacing / 2
+
+          Repeater {
+            model: keyRow.modelData
+
+            delegate: KeyButton {
+              required property var modelData
+              entry: modelData
+              width: root.unit * modelData.width + Widget.spacing / 2 * (modelData.width - 1)
+            }
+          }
         }
       }
-    }
-  }
 
-  // Ten to a row, so the rows end with the main block's
-  Flow {
-    id: extras
-    readonly property real keyWidth: Math.floor((width - spacing * 9) / 10)
-    Layout.preferredWidth: root.blockWidth
-    Layout.alignment: Qt.AlignHCenter
-    Layout.topMargin: Widget.spacing / 2
-    spacing: Widget.spacing / 2
+      // Ten to a row, so the rows end with the main block's
+      Flow {
+        id: extras
+        readonly property real keyWidth: Math.floor((width - spacing * 9) / 10)
+        Layout.preferredWidth: root.blockWidth
+        Layout.alignment: Qt.AlignHCenter
+        Layout.topMargin: Widget.spacing / 2
+        spacing: Widget.spacing / 2
 
-    Repeater {
-      model: KeyMap.extras
+        Repeater {
+          model: KeyMap.extras
 
-      delegate: KeyButton {
-        required property var modelData
-        entry: modelData
-        width: extras.keyWidth
+          delegate: KeyButton {
+            required property var modelData
+            entry: modelData
+            width: extras.keyWidth
+          }
+        }
       }
     }
   }
@@ -195,20 +238,18 @@ ColumnLayout {
         required property var modelData
         spacing: Widget.spacing / 2
 
-        Rectangle {
+        Surface {
           anchors.verticalCenter: parent.verticalCenter
-          width: Appearance.fontSize
-          height: Appearance.fontSize
-          radius: Widget.px(3)
-          color: root.fillFor(legendEntry.modelData[0])
-          border.width: 1
-          border.color: Theme.border
+          tone: root.toneFor(legendEntry.modelData[0])
+          outlined: true
+          implicitWidth: Style.iconSm
+          implicitHeight: Style.iconSm
+          radius: Style.radiusMin
         }
 
         StyledLabel {
           text: legendEntry.modelData[1]
-          opacity: 0.7
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
         }
       }
     }

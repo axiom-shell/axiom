@@ -17,16 +17,16 @@ KeyboardMap {
 
   signal editRequested(int bindIndex)
 
-  function fill(source) {
+  function tone(source) {
     switch (source) {
     case "axiom":
-      return Theme.accent;
+      return "accent";
     case "both":
-      return Qt.alpha(Theme.accent, 0.6);
+      return "accentContainer";
     case "user":
-      return Qt.alpha(Theme.warning, 0.7);
+      return "warningContainer";
     }
-    return Theme.backgroundAlt;
+    return "sunken";
   }
 
   // The modifiers held, and chips to change them (the page's, shared with
@@ -35,7 +35,7 @@ KeyboardMap {
   showMods: true
   tall: true
   sourceOf: key => root.labels[key]?.source ?? ""
-  fillFor: source => root.fill(source)
+  toneFor: source => root.tone(source)
   legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
   labelOf: key => root.labels[key]?.label ?? ""
   iconOf: key => root.labels[key]?.action ? KeybindManager.actionIcon(root.labels[key].action) : ""

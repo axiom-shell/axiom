@@ -86,6 +86,12 @@ TestCase {
   }
 
   Component {
+    id: keyMapComp
+
+    KeyboardMap {}
+  }
+
+  Component {
     id: zoomComp
 
     Item {
@@ -252,6 +258,59 @@ TestCase {
     state.availableHeight = full;
     waitForRendering(state, 1000);
     compare(state.implicitHeight, full);
+  }
+
+  // The key map: every blank (modifier) key's name whole in its key, and the
+  // block scrolling sideways, never squeezing a keycap, when a big font makes
+  // its keys wider than the panel
+  function test_keyboard_map_keeps_modifier_names_whole_data() {
+    return [
+      {
+        "tag": "520 px, font 14",
+        "fontSize": 14,
+        "width": 520,
+        "scrolls": false
+      },
+      {
+        "tag": "400 px, font 24",
+        "fontSize": 24,
+        "width": 400,
+        "scrolls": true
+      }
+    ];
+  }
+
+  function find(item, test, out) {
+    if (test(item))
+      out.push(item);
+    for (const child of item.children)
+      find(child, test, out);
+    if (item.contentItem && item.contentItem !== item)
+      find(item.contentItem, test, out);
+    return out;
+  }
+
+  function test_keyboard_map_keeps_modifier_names_whole(data) {
+    harness.configure({
+      "fontSize": data.fontSize
+    });
+    const map = createTemporaryObject(keyMapComp, root, {
+      "width": data.width
+    });
+    waitForRendering(map);
+    const keys = find(map, it => it.blank === true && it.entry !== undefined && it.entry.label !== "", []);
+    verify(keys.length > 0);
+    for (const key of keys) {
+      const label = find(key, it => it.text === key.entry.label && it.lineCount !== undefined, [])[0];
+      verify(label, key.entry.label);
+      compare(label.truncated, false, key.entry.label);
+      verify(label.implicitWidth <= key.width - Widget.px(4) + 0.5, `${key.entry.label}: ${label.implicitWidth} in ${key.width}`);
+    }
+    const scroller = find(map, it => it.flickableDirection !== undefined, [])[0];
+    verify(scroller);
+    compare(scroller.contentWidth > scroller.width, data.scrolls);
+    verify(scroller.contentHeight > 0);
+    compare(scroller.height, scroller.contentHeight);
   }
 
   function test_roles_hold_their_text_data() {

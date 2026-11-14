@@ -35,18 +35,18 @@ ColumnLayout {
       });
   }
 
-  function fill(source) {
+  function tone(source) {
     switch (source) {
     case "axiom":
-      return Theme.accent;
+      return "accent";
     case "both":
-      return Theme.error;
+      return "errorContainer";
     case "paused":
-      return Qt.alpha(Theme.accent, 0.3);
+      return "accentContainer";
     case "user":
-      return Qt.alpha(Theme.warning, 0.7);
+      return "warningContainer";
     }
-    return Theme.backgroundAlt;
+    return "sunken";
   }
 
   SectionHeading {
@@ -59,7 +59,7 @@ ColumnLayout {
     showMods: true
     mods: KeybindManager.page.keyMapMods
     sourceOf: key => root.held(key).source
-    fillFor: source => root.fill(source)
+    toneFor: source => root.tone(source)
     legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["paused", I18n.tr("Paused or not bound now")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
     clickableOf: key => root.held(key).source !== "user"
     onClicked: key => root.pick(key)

@@ -107,7 +107,7 @@ for f in "${changed[@]}"; do
     [[ -f "$f" ]] && tests+=("${name#tst_}")
     ;;
   # A piece or a form control runs the layout harness (tests-layout/)
-  qml/components/reusable/* | qml/components/forms/* | qml/config/Style.qml | qml/config/Widget.qml | tests-layout/*) tests+=(TextFit MenuRow Pieces) ;;
+  qml/components/reusable/* | qml/components/forms/* | qml/components/content/parts/KeyboardMap.qml | qml/config/Style.qml | qml/config/Widget.qml | tests-layout/*) tests+=(TextFit MenuRow Pieces) ;;
   # A theme or a style fixture runs the pair sweep before CI does
   qml/config/themes/* | qml/config/json/theme-defaults.json | tests/fixtures/style/*) tests+=(StyleTokens Tone) ;;
   esac
