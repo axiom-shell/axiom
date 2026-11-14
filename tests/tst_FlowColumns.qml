@@ -43,6 +43,38 @@ TestCase {
     compare(FlowColumns.count(3900, 560, 400, 4, 8, 2), 4);
   }
 
+  // A tool page's inspector groups (GroupColumns): the pane's body width at
+  // 100 % on the overlay's three screens, 1920x1080, 2560x1440, 3840x2160.
+  // unit = (short side - 2 x 80 - 20) / 2 (450, 630, 990: the Settings
+  // table's W = 2 x unit - 40 agrees); BaseView.editorWidth = 2.8 x unit
+  // (the room beside the side panel is wider on every one of them); the
+  // pane's body is that less its padding either side (Widget.padding 10).
+  // Columns are gap 20 (Style.space5) apart, 400..700 px (1.25 x target).
+  function test_group_columns_at_the_editor_widths() {
+    for (const row of [
+      {
+        "short": 1080,
+        "n": 2
+      },
+      {
+        "short": 1440,
+        "n": 3
+      },
+      {
+        "short": 2160,
+        "n": 4
+      }
+    ]) {
+      const unit = (row.short - 2 * 80 - 20) / 2;
+      const body = Math.round(unit * 2.8) - 2 * 10;
+      const n = FlowColumns.count(body, 560, 400, 4, 20);
+      compare(n, row.n, `${row.short}: ${body} px`);
+      const column = (body - (n - 1) * 20) / n;
+      verify(n >= 2);
+      verify(column >= 400 && column <= Math.round(1.25 * 560), `${row.short}: ${column} px columns`);
+    }
+  }
+
   function test_count_raised_scale() {
     // The real widths at a raised Interface scale (min = px(400) there)
     compare(FlowColumns.count(848, 560, 500, 4, 10, 2), 2);
