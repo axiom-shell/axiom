@@ -8,6 +8,7 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.views.base
 import qs.components.bar.look
 
 // Custom widgets page, Bar tab: the widget as it's drawn on a bar across
@@ -49,75 +50,80 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
-  FieldGroup {
+  // The groups flow into columns, as a Settings card's rows do
+  GroupColumns {
     Layout.fillWidth: true
-    title: I18n.tr("Preview")
 
-    RowLayout {
+    FieldGroup {
       Layout.fillWidth: true
-      spacing: Widget.spacing * 3
+      title: I18n.tr("Preview")
 
-      BarPreview {
-        Layout.alignment: Qt.AlignTop
-        barConfig: root.barConfig
-      }
-      BarPreview {
-        Layout.alignment: Qt.AlignTop
-        barConfig: root.verticalBar
-      }
-      Item {
+      RowLayout {
         Layout.fillWidth: true
+        spacing: Widget.spacing * 3
+
+        BarPreview {
+          Layout.alignment: Qt.AlignTop
+          barConfig: root.barConfig
+        }
+        BarPreview {
+          Layout.alignment: Qt.AlignTop
+          barConfig: root.verticalBar
+        }
+        Item {
+          Layout.fillWidth: true
+        }
       }
     }
-  }
 
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("On the bar")
-
-    SchemaPropertiesForm {
+    FieldGroup {
       Layout.fillWidth: true
-      propertiesSchema: root.schema.bar.properties
-      order: ["style", "icon", "segments", "width", "popout"]
-      values: root.definition?.bar ?? ({})
-      onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+      title: I18n.tr("On the bar")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: root.schema.bar.properties
+        order: ["style", "icon", "segments", "width", "popout"]
+        values: root.definition?.bar ?? ({})
+        onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+      }
     }
-  }
 
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("Text")
-
-    SchemaPropertiesForm {
+    FieldGroup {
       Layout.fillWidth: true
-      propertiesSchema: Utils.pick(root.schema, order)
-      order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
-      values: root.definition ?? ({})
-      onEdited: (path, value) => root.editor.set(path, value)
+      title: I18n.tr("Text")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
+        values: root.definition ?? ({})
+        onEdited: (path, value) => root.editor.set(path, value)
+      }
+
+      JsonField {
+        label: I18n.tr("Icons")
+        description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
+        key: "formatIcons"
+      }
+      JsonField {
+        label: I18n.tr("State colours")
+        description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
+        key: "states"
+      }
     }
 
-    JsonField {
-      label: I18n.tr("Icons")
-      description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
-      key: "formatIcons"
-    }
-    JsonField {
-      label: I18n.tr("State colours")
-      description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
-      key: "states"
-    }
-  }
-
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("Actions")
-    description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click.")
-
-    SchemaPropertiesForm {
+    FieldGroup {
       Layout.fillWidth: true
-      propertiesSchema: root.schema.actions.properties
-      values: root.definition?.actions ?? ({})
-      onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
+      title: I18n.tr("Actions")
+      description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click.")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: root.schema.actions.properties
+        values: root.definition?.actions ?? ({})
+        onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
+      }
     }
   }
 
@@ -136,9 +142,10 @@ ColumnLayout {
     implicitWidth: preview.vertical ? (preview.barConfig?.thickness ?? 0) + Widget.padding * 2 : Math.max(Appearance.fontSize * 10, (preview.item?.implicitWidth ?? 0) + preview.ends + Widget.padding * 2)
     implicitHeight: preview.vertical ? Math.max(Appearance.fontSize * 8, (preview.item?.implicitHeight ?? 0) + preview.ends + Widget.padding * 2) : (preview.barConfig?.thickness ?? 0) + Widget.padding * 2
     radius: Appearance.borderRadius
-    color: Theme.background
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
+    // Stands in for a bar's background at its default look: the page colour
+    color: Style.surfacePage
+    border.color: Style.borderSubtle
+    border.width: Style.hairline
 
     Loader {
       anchors.centerIn: parent
@@ -201,10 +208,9 @@ ColumnLayout {
     StyledText {
       Layout.fillWidth: true
       text: json.bad ? I18n.tr("Not valid JSON yet.") : json.description
-      textColor: json.bad ? Theme.warning : Theme.foreground
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
-      opacity: json.bad ? 1 : 0.6
+      tone: json.bad ? "warning" : "faint"
+      role: "caption"
+      overflow: "wrap"
     }
   }
 }

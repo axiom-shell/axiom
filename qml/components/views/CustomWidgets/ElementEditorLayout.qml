@@ -5,6 +5,7 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
+import qs.components.content.base
 import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the element library and the selected
@@ -35,15 +36,44 @@ GridDragLayer {
     anchors.fill: parent
     spacing: Widget.spacing * 3
 
-    StyledScrollView {
-      id: side
+    // A box and a header like the canvas's, so the two read as a pair
+    Surface {
       Layout.preferredWidth: Appearance.fontSize * 22
       Layout.fillHeight: true
-      contentPadding: 0
+      tone: "surface"
 
-      ElementInspector {
-        width: side.availableWidth
-        dragLayer: root
+      ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: Widget.padding
+        spacing: Widget.spacing
+
+        CardHeader {
+          icon: "category"
+          title: I18n.tr("Elements")
+          showActions: false
+        }
+
+        // While no element is selected: what the library is for
+        StyledText {
+          visible: root.editor.selected < 0
+          Layout.fillWidth: true
+          role: "caption"
+          tone: "muted"
+          overflow: "wrap"
+          text: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
+        }
+
+        StyledScrollView {
+          id: sideScroll
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+          contentPadding: 0
+
+          ElementInspector {
+            width: sideScroll.availableWidth
+            dragLayer: root
+          }
+        }
       }
     }
 

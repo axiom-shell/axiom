@@ -71,16 +71,14 @@ ColumnLayout {
 
         StyledText {
           text: I18n.tr(preview.modelData.label)
-          textSize: Appearance.fontSizeBy(-2)
-          opacity: 0.7
+          role: "caption"
+          tone: "muted"
         }
-        Rectangle {
+        // A module card sits on the overlay's page colour, as on a real page
+        Surface {
           implicitWidth: GridPlacement.span(preview.modelData.size[0], root.card) * preview.zoom
           implicitHeight: GridPlacement.span(preview.modelData.size[1], root.card) * preview.zoom
-          radius: Widget.radius
-          color: Appearance.fill(Theme.background)
-          border.color: Theme.border
-          border.width: Appearance.borderWidth
+          tone: "page"
           clip: true
 
           Item {

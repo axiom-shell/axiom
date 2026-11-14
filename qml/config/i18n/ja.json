@@ -4246,6 +4246,8 @@
     "Hides a special workspace when its last window closes.": "",
     "How much the workspace behind a shown special workspace is darkened. 0: no dimming.": "",
     "Switching to another workspace hides a shown special workspace.": "",
-    "This theme keeps surfaces at least {0}% solid so text stays readable": ""
+    "This theme keeps surfaces at least {0}% solid so text stays readable": "",
+    "No custom widgets yet": "",
+    "Select a custom widget to edit it": ""
   }
 }

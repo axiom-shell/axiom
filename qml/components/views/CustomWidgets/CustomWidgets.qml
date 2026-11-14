@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.apps
 import qs.components.reusable
-import qs.components.content.base
 import qs.components.views.base
 
 // The Custom widgets page (docs/dev/features/custom-widgets.md): the
@@ -16,6 +15,7 @@ BaseView {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
+  readonly property var tabNames: [I18n.tr("Data"), I18n.tr("Bar"), I18n.tr("Module")]
 
   Component.onCompleted: {
     root.editor.ensureLoaded();
@@ -35,24 +35,41 @@ BaseView {
     implicitWidth: root.editorWidth
     implicitHeight: root.pageHeight
 
-    TitledCard {
+    ToolPane {
+      id: pane
       anchors.fill: parent
-      title: root.editor.selected?.name ?? I18n.tr("Custom widgets")
+      // The kind of pane, never the selection's name (that is the header's)
+      title: I18n.tr("Custom widget")
       scrollKey: "CustomWidgets/" + root.editor.tab
       dirty: root.editor.isDirty
       onSave: root.editor.save()
       onReset: root.editor.reset()
 
-      headerExtras: StyledTabBar {
-        Layout.fillWidth: true
-        visible: root.editor.selected !== null
-        tabs: [I18n.tr("Data"), I18n.tr("Bar"), I18n.tr("Module")]
-        currentIndex: root.editor.tab
-        onTabClicked: index => root.editor.selectTab(index)
-      }
+      tabModel: root.editor.selected !== null ? root.tabNames : []
+      tabIndex: root.editor.tab
+      onTabClicked: index => root.editor.selectTab(index)
 
-      EmptyStateLine {
-        visible: root.editor.selected === null
+      emptyKind: root.editor.selected !== null ? "" : root.editor.items.length === 0 ? "none" : "select"
+      emptyIcon: root.editor.items.length === 0 ? "widgets" : ""
+      emptyText: root.editor.items.length === 0 ? I18n.tr("No custom widgets yet") : I18n.tr("Select a custom widget to edit it")
+      emptyHint: root.editor.items.length === 0 ? I18n.tr("Add a custom widget on the left: point it at a script, then pick what its output shows on the bar and in its module.") : ""
+
+      pinned: Loader {
+        active: root.editor.selected !== null
+        visible: active
+        Layout.fillWidth: true
+
+        sourceComponent: InspectorHeader {
+          icon: root.editor.selected?.icon || "widgets"
+          title: root.editor.selected?.name || root.editor.selected?.id || ""
+          subtitle: root.editor.selected?.command ?? ""
+          canDuplicate: true
+          duplicateTooltip: I18n.tr("Copy this custom widget")
+          canRemove: true
+          removeTooltip: I18n.tr("Remove this custom widget")
+          onDuplicate: root.editor.duplicate(root.editor.selectedIndex)
+          onRemove: root.editor.remove(root.editor.selectedIndex)
+        }
       }
 
       // Only the shown tab is built
@@ -78,16 +95,9 @@ BaseView {
         id: moduleTab
         ModuleTab {
           grid: root.grid
-          availableHeight: root.pageHeight - Widget.height * 4
+          availableHeight: pane.bodyHeight
         }
       }
     }
-  }
-
-  component EmptyStateLine: StyledText {
-    Layout.fillWidth: true
-    text: I18n.tr("Add a custom widget on the left: point it at a script, then pick what its output shows on the bar and in its module.")
-    wrapMode: Text.WordWrap
-    opacity: 0.7
   }
 }
