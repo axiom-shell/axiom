@@ -66,7 +66,7 @@ Panel {
     root.hiddenOpen = false;
   }
 
-  implicitWidth: Widget.px(380)
+  implicitWidth: Widget.textPx(380)
   // The switch, the connection and a row or two, else the figure
   fullMinWidth: Appearance.fontSize * 15
   fullMinHeight: Appearance.fontSize * 12
@@ -103,24 +103,20 @@ Panel {
   FontMetrics {
     id: smallMetrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-3)
+    font.pixelSize: Style.typeMicro
   }
 
   compactContent: CompactFigure {
     icon: root.radioOn ? root.kindIcon : "signal_wifi_0_bar"
-    iconColor: root.info.kind !== "" ? Theme.accent : Theme.foregroundAlt
+    iconColor: root.info.kind !== "" ? Style.accent : Style.textMuted
     value: ""
     label: root.info.name || I18n.tr(root.radioOn ? "Disconnected" : "off")
   }
 
-  // A flat footer action: an icon and a label, filled only on hover
+  // A flat footer action: an icon and a label, an accent text button
   component FooterAction: StyledTextButton {
-    textSize: Appearance.fontSizeBy(-2)
-    backgroundColor: Qt.alpha(Theme.backgroundHighlight, 0)
-    hoverColor: Theme.backgroundHighlight
-    pressColor: Theme.backgroundAlt
-    textColor: Theme.foregroundAlt
-    textHoverColor: Theme.foreground
+    kind: "text"
+    textSize: Style.typeCaption
   }
 
   component NetworkRow: DeviceRow {
@@ -158,14 +154,13 @@ Panel {
     onForgetConfirmed: NetworkingManager.forget(row.network)
 
     // Whether it joins on its own when in range
-    hoverActions: StyledRectButton {
+    hoverActions: StyledIconButton {
       size: Widget.iconButton
+      kind: "text"
       visible: row.known
       enabled: row.hovered && !row.busy
       iconText: row.autoconnects ? "sync" : "sync_disabled"
-      iconColor: row.autoconnects ? Theme.accent : Theme.foregroundAlt
-      backgroundColor: "transparent"
-      borderHoverColor: Theme.accent
+      iconColor: row.autoconnects ? Style.accent : Style.textMuted
       tooltipText: row.autoconnects ? I18n.tr("Joins automatically: click to stop") : I18n.tr("Doesn't join automatically: click to allow")
       onClicked: NetworkingManager.setAutoconnect(row.network, !row.autoconnects)
     }
@@ -208,7 +203,7 @@ Panel {
       visible: root.showsVpn && VpnManager.available
       size: root.headerButton
       iconText: "vpn_key"
-      iconColor: VpnManager.importError !== "" ? Theme.error : Theme.foregroundAlt
+      iconColor: VpnManager.importError !== "" ? Style.error : Style.textMuted
       tooltipText: VpnManager.importError || I18n.tr("Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file")
       onClicked: VpnManager.pickImport()
     }
@@ -216,7 +211,7 @@ Panel {
       visible: NetworkingManager.available || BluetoothManager.available
       size: root.headerButton
       iconText: "flight"
-      iconColor: NetworkingManager.airplane ? Theme.accent : Theme.foregroundAlt
+      iconColor: NetworkingManager.airplane ? Style.accent : Style.textMuted
       tooltipText: NetworkingManager.airplane ? I18n.tr("Airplane mode: on") : I18n.tr("Airplane mode: off")
       onClicked: ActionsManager.run("airplane", {
         "fromScreen": true
@@ -237,8 +232,8 @@ Panel {
       Layout.preferredWidth: Widget.iconButton
       horizontalAlignment: Text.AlignHCenter
       text: root.kindIcon
-      textSize: Appearance.fontSize * 1.4
-      textColor: root.info.kind !== "" ? Theme.accent : Theme.foregroundAlt
+      size: "md"
+      textColor: root.info.kind !== "" ? Style.accent : Style.textMuted
     }
 
     ColumnLayout {
@@ -248,16 +243,16 @@ Panel {
       StyledText {
         Layout.fillWidth: true
         text: root.info.name || I18n.tr("Disconnected")
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-1)
+        overflow: "line"
+        role: "caption"
       }
       StyledText {
         Layout.fillWidth: true
         visible: root.info.kind !== ""
         text: NetworkingManager.connectivity === "portal" ? I18n.tr("Sign-in needed: open a web page") : NetworkingManager.connectivity === "limited" ? I18n.tr("Connected, no internet") : root.info.ip !== "" ? `${root.info.ip} · ${root.info.device}` : root.info.device
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-3)
-        textColor: NetworkingManager.connectivity === "portal" ? Theme.accent : NetworkingManager.connectivity === "limited" ? Theme.warning : Theme.foregroundAlt
+        overflow: "line"
+        role: "micro"
+        tone: NetworkingManager.connectivity === "portal" ? "accent" : NetworkingManager.connectivity === "limited" ? "warning" : "muted"
       }
     }
 
@@ -268,15 +263,15 @@ Panel {
       RateLabel {
         Layout.alignment: Qt.AlignRight
         rate: SystemManager.netRx
-        textColor: Theme.accentAlt
-        textSize: Appearance.fontSizeBy(-3)
+        textColor: Style.accentAlt
+        textSize: Style.typeMicro
       }
       RateLabel {
         Layout.alignment: Qt.AlignRight
         direction: "up"
         rate: SystemManager.netTx
-        textColor: Theme.accent
-        textSize: Appearance.fontSizeBy(-3)
+        textColor: Style.accent
+        textSize: Style.typeMicro
       }
     }
   }
@@ -296,7 +291,6 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   // The VPNs: built only when there are some
@@ -322,26 +316,24 @@ Panel {
 
         StyledLabel {
           text: I18n.tr("VPN")
-          font.weight: Font.Bold
-          textColor: Theme.accent
+          role: "label"
+          tone: "accent"
         }
         StyledLabel {
           Layout.fillWidth: true
           text: VpnManager.primary ? `${VpnManager.primary.name} · ${VpnManager.statusText(VpnManager.primary)}` : I18n.tr("Off · {0} saved", VpnManager.rows.length)
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: VpnManager.anyActive ? Theme.foreground : vpnSummary.hovered ? Theme.accent : Theme.foregroundAlt
+          overflow: "line"
+          role: "caption"
+          textColor: VpnManager.anyActive ? Style.text : vpnSummary.hovered ? Style.textAccent : Style.textMuted
         }
-        StyledRectButton {
+        StyledIconButton {
           readonly property var target: vpnSection.target
           visible: !root.vpnOpen && target !== null
           size: Widget.iconButton
+          kind: "text"
           enabled: !VpnManager.busy(target)
-          opacity: enabled ? 1 : 0.5
           iconText: target?.state === "on" ? "link_off" : "link"
-          iconColor: target?.state === "on" ? Theme.accent : Theme.foreground
-          backgroundColor: "transparent"
-          borderHoverColor: Theme.accent
+          iconColor: target?.state === "on" ? Style.accent : Style.text
           tooltipText: target?.state === "on" ? I18n.tr("Disconnect {0}", target.name) : I18n.tr("Connect {0}", target?.name ?? "")
           onClicked: {
             ShellManager.onScreen("vpn");
@@ -353,7 +345,7 @@ Panel {
       FontMetrics {
         id: vpnTitle
         font.family: Appearance.fontFamily
-        font.pixelSize: Appearance.fontSizeBy(-1)
+        font.pixelSize: Style.typeCaption
       }
 
       // Every VPN: built only while unfolded
@@ -390,20 +382,20 @@ Panel {
 
         StyledLabel {
           text: I18n.tr("Public IP")
-          textSize: Appearance.fontSizeBy(-3)
-          textColor: Theme.foregroundAlt
+          role: "micro"
+          tone: "muted"
         }
         StyledLabel {
           Layout.fillWidth: true
           text: VpnManager.publicIpBusy ? I18n.tr("Checking…") : VpnManager.publicIp || "—"
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-3)
+          overflow: "line"
+          role: "micro"
         }
         FlatIconButton {
           size: root.smallLine
           enabled: !VpnManager.publicIpBusy
           iconText: "travel_explore"
-          iconSize: Appearance.fontSizeBy(-2)
+          iconSize: Style.iconXs
           tooltipText: I18n.tr("Check (asks {0})", VpnConfig.publicIpUrl)
           onClicked: VpnManager.checkPublicIp()
         }
@@ -414,7 +406,6 @@ Panel {
       StyledSeparator {
         Layout.fillWidth: true
         Layout.topMargin: root.spacing - vpnSection.spacing
-        separatorColor: Theme.backgroundHighlight
       }
     }
   }
@@ -462,7 +453,6 @@ Panel {
   StyledSeparator {
     visible: root.radioOn
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   Flow {
