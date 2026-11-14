@@ -311,6 +311,48 @@ TestCase {
     }
   }
 
+  // A row whose `leading` slot holds a switch, then one action, then an item after
+  Component {
+    id: leadingRowComp
+
+    Column {
+      id: col
+
+      property alias row: lrow
+      property alias sw: sw
+      property alias action: act
+      property alias after: after
+
+      ListEntryRow {
+        id: lrow
+
+        width: 300
+        label: "A"
+        leading: [
+          StyledSwitch {
+            id: sw
+
+            Keys.onTabPressed: lrow._tabFrom(sw, true)
+            Keys.onBacktabPressed: lrow._tabFrom(sw, false)
+          }
+        ]
+
+        RowAction {
+          id: act
+          row: lrow
+          iconText: "close"
+        }
+      }
+      Rectangle {
+        id: after
+
+        width: 10
+        height: 10
+        activeFocusOnTab: true
+      }
+    }
+  }
+
   Component {
     id: groupColumnsComp
 
@@ -332,6 +374,96 @@ TestCase {
         objectName: "d"
         implicitHeight: 120
       }
+    }
+  }
+
+  Component {
+    id: toggleChipComp
+
+    ToggleChip {
+      width: implicitWidth
+    }
+  }
+
+  // The shape of a bind row: a compact switch and keycaps in `leading`, a
+  // subtitle, four quick-reference badges and a ×
+  Component {
+    id: bindShapedComp
+
+    ListEntryRow {
+      id: shaped
+
+      property int keys: 2
+      readonly property real keyGroup: Math.max(Widget.textPx(192), Math.round(shaped.width * 0.3))
+
+      height: Widget.height + Widget.padding / 2
+      icon: "folder"
+      label: "Toggle the launcher"
+      subtitle: "Run a command"
+      leading: [
+        StyledSwitch {
+          compact: true
+          checked: true
+        },
+        RowLayout {
+          objectName: "keycaps"
+          Layout.minimumWidth: shaped.keyGroup
+          Layout.preferredWidth: shaped.keyGroup
+          Layout.maximumWidth: shaped.keyGroup
+          spacing: Widget.spacing / 2
+          clip: true
+
+          Repeater {
+            model: shaped.keys
+
+            delegate: KeyCap {
+              text: "K"
+            }
+          }
+
+          Item {
+            Layout.fillWidth: true
+          }
+        }
+      ]
+      badges: [
+        TipIcon {
+          text: "filter_alt"
+          tip: "Only when"
+          size: "sm"
+        },
+        TipIcon {
+          text: "repeat"
+          tip: "Repeats"
+          size: "sm"
+        },
+        TipIcon {
+          text: "lock"
+          tip: "Locked"
+          size: "sm"
+        },
+        TipIcon {
+          text: "keyboard_capslock"
+          tip: "Release"
+          size: "sm"
+        }
+      ]
+
+      RowAction {
+        row: shaped
+        danger: true
+        iconText: "close"
+      }
+    }
+  }
+
+  Component {
+    id: plainRowComp
+
+    ListEntryRow {
+      height: Widget.height + Widget.padding / 2
+      icon: "folder"
+      label: "A paused bind"
     }
   }
 
@@ -838,6 +970,23 @@ TestCase {
     verify(rows.rowA.activeFocus, "Shift+Tab from the first action is the row");
   }
 
+  // Tab reaches the row's leading controls, then its actions, then out
+  function test_list_row_tab_reaches_leading_controls() {
+    harness.configure({});
+    const c = createTemporaryObject(leadingRowComp, root);
+    waitForRendering(c);
+    c.row.forceActiveFocus();
+    keyClick(Qt.Key_Tab);
+    verify(c.sw.activeFocus, "Tab reaches the switch");
+    keyClick(Qt.Key_Tab);
+    verify(c.action.activeFocus, "then the action");
+    keyClick(Qt.Key_Tab);
+    verify(c.after.activeFocus, "then the item after the list");
+    c.sw.forceActiveFocus();
+    keyClick(Qt.Key_Backtab);
+    verify(c.row.activeFocus, "Shift+Tab from the switch is the row");
+  }
+
   // A pane with an empty state hides its body and shows the state, top-anchored at the same place in the three kinds (so its icon stays still)
   function test_tool_pane_shows_its_empty_state() {
     harness.configure({});
@@ -916,5 +1065,157 @@ TestCase {
       for (const other of placed)
         if (one !== other && one.x === other.x)
           verify(one.y + one.height <= other.y || other.y + other.height <= one.y, `${one.objectName} overlaps ${other.objectName}`);
+  }
+
+  // A filter chip holds its word, shows a check only while on and is
+  // tall enough for it
+  function test_toggle_chip_holds_its_text_data() {
+    return rows().filter(r => r.width === "narrow");
+  }
+
+  function test_toggle_chip_holds_its_text(data) {
+    harness.configure(data);
+    const chip = createTemporaryObject(toggleChipComp, root, {
+      "text": strings[data.key]
+    });
+    waitForRendering(chip);
+    compare(harness.containedProblems(chip, true), []);
+    const checks = () => find(chip, it => it.text === "check" && it.visible, []);
+    compare(checks().length, 0);
+    chip.checked = true;
+    waitForRendering(chip);
+    compare(checks().length, 1);
+    compare(harness.containedProblems(chip, true), []);
+    verify(chip.height >= Widget.smallHeight);
+    const toggles = createTemporaryObject(spyComp, root, {
+      "target": chip,
+      "signalName": "toggled"
+    });
+    mouseClick(chip);
+    compare(toggles.count, 1);
+  }
+
+  // A row with a leading slot and a subtitle: the subtitle on the label's
+  // line, after it, within a quarter of the row
+  function test_list_entry_row_subtitle_and_leading() {
+    harness.configure({});
+    const row = createTemporaryObject(bindShapedComp, root, {
+      "width": Widget.textPx(900)
+    });
+    waitForRendering(row);
+    const label = find(row, it => it.text === row.label && it.lineCount !== undefined, [])[0];
+    const subtitle = find(row, it => it.text === row.subtitle && it.lineCount !== undefined, [])[0];
+    verify(label && subtitle);
+    verify(subtitle.visible);
+    const labelAt = label.mapToItem(row, 0, 0);
+    const subtitleAt = subtitle.mapToItem(row, 0, 0);
+    verify(subtitleAt.x >= labelAt.x + label.paintedWidth - 0.5, "after the label");
+    verify(Math.abs(subtitleAt.y + subtitle.height / 2 - (labelAt.y + label.height / 2)) < Math.max(label.height, subtitle.height), "on the label's line");
+    verify(subtitle.width <= row.width * 0.25 + 0.5, `${subtitle.width} of ${row.width}`);
+    const keycaps = find(row, it => it.objectName === "keycaps", [])[0];
+    verify(keycaps.mapToItem(row, 0, 0).x < labelAt.x, "leading before the label");
+    row.subtitle = "";
+    waitForRendering(row);
+    verify(!subtitle.visible);
+  }
+
+  // A bind-shaped row, selected and hovered at the narrowest width: every
+  // badge visible, inside the row and clear of the ×
+  function test_bind_shaped_row_keeps_its_badges_data() {
+    return rows().filter(r => r.key === "en");
+  }
+
+  function test_bind_shaped_row_keeps_its_badges(data) {
+    harness.configure(data);
+    const row = createTemporaryObject(bindShapedComp, root, {
+      "width": 4000,
+      "selected": true,
+      // As BindListRow: the action's name shows only in a wide row
+      "subtitle": ""
+    });
+    waitForRendering(row);
+    const badges = find(row, it => it.tip !== undefined && it.text !== "" && it.level === undefined, []);
+    compare(badges.length, 4);
+    const action = find(row, it => it.iconText !== undefined && it.row !== undefined, [])[0];
+    verify(action);
+    const switchItem = find(row, it => it.compact === true && it.checkable !== undefined, [])[0];
+    verify(switchItem);
+    let needed = 0;
+    for (let pass = 0; pass < 2; pass++) {
+      row.width = Math.max(Widget.textPx(300), needed);
+      needed = Widget.padding * 1.5 + Style.iconSm * 1.5 + Widget.px(20) + Widget.textPx(60) + switchItem.width + row.keyGroup + Widget.spacing * 4 + action.width + Widget.spacing;
+      for (const badge of badges)
+        needed += badge.width + Widget.spacing;
+    }
+    row.width = Math.max(Widget.textPx(300), needed);
+    mouseMove(row, row.width / 2, row.height / 2);
+    waitForRendering(row);
+    verify(row.revealed);
+    tryCompare(action, "opacity", 1);
+    const actionAt = action.mapToItem(row, 0, 0).x;
+    verify(actionAt + action.width <= row.width + 0.5, "× inside");
+    for (const badge of badges) {
+      const at = badge.mapToItem(row, 0, 0);
+      verify(badge.visible && at.x >= 0 && at.x + badge.width <= row.width + 0.5, `${badge.text} inside: ${at.x} + ${badge.width} of ${row.width}`);
+      verify(at.x + badge.width <= actionAt + 0.5, `${badge.text} clear of the ×`);
+    }
+  }
+
+  // Rows with one to four keycaps put their labels at one x
+  function test_bind_shaped_rows_align_their_labels() {
+    harness.configure({});
+    let x = -1;
+    for (let keys = 1; keys <= 4; keys++) {
+      const row = createTemporaryObject(bindShapedComp, root, {
+        "width": Widget.textPx(700),
+        "keys": keys
+      });
+      waitForRendering(row);
+      const label = find(row, it => it.text === row.label && it.lineCount !== undefined, [])[0];
+      const at = label.mapToItem(row, 0, 0).x;
+      if (x < 0)
+        x = at;
+      compare(at, x, `${keys} keycaps`);
+    }
+  }
+
+  // A struck-through, dimmed row: the strike on its name, the name faint
+  function test_list_entry_row_strikes_and_dims() {
+    harness.configure({});
+    const row = createTemporaryObject(plainRowComp, root, {
+      "width": Widget.textPx(400),
+      "strikeout": true,
+      "dimmed": true
+    });
+    waitForRendering(row);
+    const label = find(row, it => it.text === row.label && it.lineCount !== undefined, [])[0];
+    verify(label.font.strikeout);
+    const near = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b) + Math.abs(a.a - b.a) < 0.02;
+    tryVerify(() => near(label.color, Style.textFaint));
+    const plain = createTemporaryObject(plainRowComp, root, {
+      "width": Widget.textPx(400)
+    });
+    waitForRendering(plain);
+    verify(!find(plain, it => it.text === plain.label && it.lineCount !== undefined, [])[0].font.strikeout);
+  }
+
+  // An issue shows an IssueIcon with its tip; none shows nothing
+  function test_list_entry_row_shows_its_issue() {
+    harness.configure({});
+    const row = createTemporaryObject(plainRowComp, root, {
+      "width": Widget.textPx(400)
+    });
+    waitForRendering(row);
+    const icon = () => find(row, it => it.level !== undefined && it.tip !== undefined, [])[0];
+    verify(icon());
+    verify(!icon().visible);
+    row.issue = "warning";
+    row.issueTip = "Bound more than once";
+    waitForRendering(row);
+    verify(icon().visible);
+    compare(icon().tip, "Bound more than once");
+    compare(icon().level, "warning");
+    row.issue = "error";
+    compare(icon().level, "error");
   }
 }

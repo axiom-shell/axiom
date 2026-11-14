@@ -3,13 +3,17 @@ import QtQuick
 import QtQuick.Controls
 import qs.config
 
-// A themed on/off switch.
+// A themed on/off switch. `compact` is the dense row's: the track
+// `Widget.smallHeight` high, the same proportions.
 Switch {
   id: root
 
+  // -- Public API --
+  property bool compact: false
+
   // -- Implementation --
   implicitWidth: Math.round(implicitHeight * 1.9)
-  implicitHeight: Widget.height - Widget.px(4)
+  implicitHeight: root.compact ? Widget.smallHeight : Widget.height - Widget.px(4)
 
   indicator: Rectangle {
     x: root.checked ? root.width - width - Widget.px(2) : Widget.px(2)

@@ -6,11 +6,13 @@ import qs.config
 
 // One entry of an editor's list (bars, overlay pages, edge menus): an
 // icon and a name, filled with the accent container while selected, then
-// `badges`, the unsaved-edits dot and the row's actions (RowActions, as
-// children), which show while the row is hovered, focused or selected.
+// `badges`, the unsaved-edits dot, an `issue` mark and the row's actions
+// (RowActions, as children), which show while the row is hovered, focused or
+// selected. `leading` is a slot before the icon (a switch, keycaps) and a
+// `subtitle` follows the name on its line.
 // A tap is `clicked`; with `dragArea.dragLayer` and `payload` set, the row
 // can also be carried. It takes keyboard focus (one Tab stop for the whole
-// list: Tab goes through the row's own actions, then out of the list): Up and
+// list: Tab goes through the row's leading controls and actions, then out of the list): Up and
 // Down move to the previous and next row, Enter is `clicked`, Delete
 // `removeRequested` and Escape, while the row is selected and the page set `escapeClears`, `escapePressed`
 // (the page runs the remove, with its own blocked rule, and clears its
@@ -25,8 +27,18 @@ Rectangle {
   property bool dimmed: false
   // Unsaved edits
   property bool changed: false
+  // A line after the name (at most a quarter of the row); empty shows none
+  property string subtitle: ""
+  property int subtitleLines: 1
+  // "" | "error" | "warning" | "info": an IssueIcon before the actions,
+  // saying `issueTip` on hover
+  property string issue: ""
+  property string issueTip: ""
+  // The name struck through (a switched-off entry that still counts)
+  property bool strikeout: false
   // The page clears its selection on Escape (it connects escapePressed); otherwise Escape reaches the host (an overlay closes)
   property bool escapeClears: false
+  property alias leading: leadingRow.data
   property alias badges: badgeRow.data
   default property alias actions: actionRow.data
   property alias dragArea: area
@@ -91,9 +103,10 @@ Rectangle {
   }
 
   // Tab (`forward`) or Shift+Tab pressed on `from` (this row, or one of its
-  // actions): the next or previous action of this row, else out
+  // actions or leading controls): the next or previous stop of this row (its
+  // leading controls, then its actions), else out
   function _tabFrom(from, forward) {
-    const actions = actionRow.children.filter(child => child.visible && child.enabled && child.activeFocusOnTab);
+    const actions = leadingRow.children.concat(actionRow.children).filter(child => child.visible && child.enabled && child.activeFocusOnTab);
     const at = actions.indexOf(from);
     const next = forward ? actions[at + 1] : at > 0 ? actions[at - 1] : (at === 0 ? root : undefined);
     if (next) {
@@ -159,6 +172,12 @@ Rectangle {
     anchors.rightMargin: Widget.padding / 2
     spacing: Widget.spacing
 
+    RowLayout {
+      id: leadingRow
+      visible: children.length > 0
+      spacing: Widget.spacing
+    }
+
     StyledIcon {
       text: root.icon
       textColor: root.selected ? Style.inkAccentContainer.icon : root.dimmed ? Style.textFaint : Style.textAccent
@@ -172,7 +191,18 @@ Rectangle {
       role: "label"
       overflow: "line"
       textColor: root.ink
+      font.strikeout: root.strikeout
       Layout.fillWidth: true
+    }
+
+    StyledLabel {
+      visible: root.subtitle !== ""
+      text: root.subtitle
+      role: "caption"
+      overflow: root.subtitleLines > 1 ? "wrap" : "line"
+      maxLines: root.subtitleLines
+      textColor: root.inkMuted
+      Layout.maximumWidth: root.width * 0.25
     }
 
     RowLayout {
@@ -183,6 +213,15 @@ Rectangle {
     UnsavedDot {
       shown: root.changed
       onAccent: root.selected
+    }
+
+    IssueIcon {
+      id: issueIcon
+      visible: root.issue !== ""
+      level: root.issue === "" ? "warning" : root.issue
+      tip: root.issueTip
+      size: "sm"
+      textColor: root.selected ? Style.inkAccentContainer.text : Style.toneColor(issueIcon.tone)
     }
 
     RowLayout {
