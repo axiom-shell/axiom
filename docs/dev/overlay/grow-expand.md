@@ -48,11 +48,11 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
 - The content is loaded at its full size, bare but padded (`host.padded`, which keeps SlotContext's `pad`).
   - The grid's whole bounds are its `slotRect`, and it gets no `expander`, so it isn't compact and can't expand again.
 - It's revealed by the box rather than resized.
-- The modules under it dim (still seen around it) and take no input.
+- The modules under it dim (`Style.opacityDisabled`, still seen around it) and take no input.
 - Content that draws its own box (`drawsBox`, NowPlaying's blurred cover) starts below the back button's row; other content tucks up under it.
 - Back, Escape (the layer takes the keyboard and gives it back) or a click beside the box shrink it into `from`, and it unloads. So it acquires and releases as any module does.
 - It stays inside the grid: an edge menu's window, blur shape and footprint don't change, and a small menu shows the detail's compact form.
-- The box is opaque and outlined even in a menu without module borders, as it floats over the dimmed modules.
+- The box is a solid `surface` Surface, outlined even in a menu without module borders, as it floats over the dimmed modules.
 
 ### Expanding: who expands
 - `QuickActions`:

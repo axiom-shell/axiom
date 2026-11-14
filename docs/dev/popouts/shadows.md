@@ -11,7 +11,7 @@ Every surface with an exposed border casts the shell's shadow. It uses the bars'
   - It is kept only outside the surface's shape (`cut`), so none of it shows through a translucent fill.
   - `cut` covers only pixels the surface covers fully. Under the surface's anti-aliased edge the shadow stays; otherwise a pixel's gap shows.
 - **While the blur window backs a surface,** the blur window casts the shadow instead. See [Translucency and blur](../theming/translucency-blur.md).
-- **Drawn under its target** by `hosts/popout/OutsideShadow`, which captures the target with room for the shadow.
+- **Drawn under its target** by `hosts/popout/OutsideShadow`, which captures the target with room for the shadow. `shadowColor` lets a caller set the colour (the overlay page box's `Style.shadowSoft`).
 - **`holes`:** the parts OutsideShadow leaves out are:
   - where surfaces joined to the target sit;
   - for an attached surface, the stroke it grows out of, beside it as well as under it (not on a bare edge). Its window is over that stroke's, so a shadow there dims the stroke. It is darkest under the surface's soft edge, which made a 1px seam where the two strokes meet;

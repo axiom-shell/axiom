@@ -27,25 +27,26 @@ A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` bes
   - sections dropped or rearranged where they don't fit (Weather's hours and days, ClockCalendar's calendar, Disks' header and columns, Clock's label then date, SystemGraphs' columns whose rows would be shorter than a panel);
   - a one-row form for strips where it has one (NowPlaying, AudioMixer's slider, Network).
 - Thresholds that depend on text are in px from `Appearance.fontSize`, not grid units.
+- A module reads `Style` for its look: a header is `ModuleHeader`; text by `role` and `tone`, never `font.bold` or `Theme.`; a figure's size is fitted to its box (`// fitted:`); status colours are tone strings (`"error"`, `"warning"`, `"success"`) or `Style` roles (Battery, Disks). Battery, Disks, Caffeine and WeatherForecast are the copy targets.
 - An edge menu's units aren't square. A layout choice that must match the slot's real proportions reads `innerWidth` / `innerHeight` rather than `shape` (NowPlaying's side-by-side).
 - A bare edge menu module drops its padding, unless it draws a box of its own (`drawsBox`, e.g. NowPlaying's blurred cover), which keeps it inside that box.
 - On an overlay page with `Overlay.moduleBorders` off a module is bare too, but keeps its padding (`host.padded`).
 
 ### Shared parts (`content/parts/`)
-- `ModuleHeader`, `Sparkline` (between `minValue` and `maxValue`), `StatFigure`, `RateLabel`.
+- `ModuleHeader` (an `md` accent icon, the title in role `title`, trailing items at their own width, a trailing label capped by itself (`Layout.maximumWidth: Widget.textPx(160)`, `overflow: "line"`); `RadioHeader` is one), `Sparkline` (between `minValue` and `maxValue`), `StatFigure`, `RateLabel`.
 - `TileGrid`: lays out `reusable/ActionTile`s (the icon-well tiles the power menu also uses), or `ActionPill`s with a `minAspect`.
 - `ExpandButton`: a strip's button growing its detail, hidden where it can't (see [Growing and expanding](grow-expand.md)).
 - Radio menus, shared by WifiNetworks and BluetoothDevices:
   - `RadioHeader`
   - `DeviceList`: in a popout as high as its rows (at least one, off its message, up to `visibleRows`, then it scrolls; `growRoom` for the panel's `maxImplicitHeight`), off and empty states (`offAction` puts a button under the off message: Bluetooth's Unblock). A ListView, so only the rows in view are built (Wi-Fi can see dozens of networks), modelled by a `CountModel`, so a scan adding or dropping rows keeps the view's place; its rows are `DeviceRow`s, as wide as the list.
   - `DeviceRow`: confirm-to-forget, connect (or another end button: `actionIcon` / `actionTip`, a drive's eject; none with `connectable` off, Tailscale's peers); extras beside the title and content under it. Content under it that only shows while `expanded` goes in a Loader active then (as Wi-Fi's password field), or every row builds it.
-- `ItemRow`: a plain list entry. An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a muted `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
+- `ItemRow`: a plain list entry (a hover state layer, `label` title, `caption` subtitle, `micro` detail; `dimmed` for a done one; the name shows whole in a tooltip while cut). An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a faint `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
 - `KeybindSection` (a section of binds as a card, grouped by modifiers), `KeybindRow` (keys first), `KeyCap` (a folded direction set in one cap) and `ModifierCap` draw keybinds read-only, for the Keybinds page and the Cheatsheet module.
-- `FigureValue`: the bold value + unit row of `StatFigure` and `CompactFigure`.
+- `FigureValue`: the value + unit row of `StatFigure` and `CompactFigure` (the value in `Style.roleDisplay.weight`; sizes fitted to their box, marked `// fitted:`).
 - `CompactFigure`: fills its box (inside `pad`); its label is plain text.
   - Icon, value and label stacked, or the icon beside them in a wide box.
   - Drops the label and then the icon as room runs out, shrinking the value to fit.
-- `EmptyState`: takes an `availableHeight` and drops to its icon when short.
+- `EmptyState`: a faint `xl` icon over a `caption` line, with an optional `hint` and an `actionText` button (`triggered`); takes an `availableHeight` and drops to its icon when short.
 - `PasswordField` is the lock screen's field and `LoginField` the greeter's box (see [Lockscreen](../features/lockscreen.md)); `FocusKeeper` keeps the keyboard on them.
 - Generic controls: see [Shared UI pieces](../core/shared-ui-pieces.md).
 
