@@ -124,7 +124,6 @@ Panel {
         StyledSeparator {
           visible: root.perMonitor
           Layout.fillWidth: true
-          separatorColor: Theme.backgroundHighlight
         }
 
         Repeater {

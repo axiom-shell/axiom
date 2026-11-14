@@ -118,7 +118,7 @@ Panel {
       text: StopwatchClock.format(StopwatchManager.elapsed, true, false)
       label: StopwatchManager.stopwatchIdle ? "" : !StopwatchManager.stopwatchRunning ? I18n.tr("Paused") : StopwatchManager.laps.length > 0 ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
       running: StopwatchManager.stopwatchRunning
-      color: Theme.accentAlt
+      color: Style.accentAlt
       tick: 100
       leftIcon: "restart_alt"
       leftTip: I18n.tr("Reset")
@@ -145,12 +145,12 @@ Panel {
     StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Laps")
-      font.weight: Font.Bold
-      textSize: Appearance.fontSizeBy(-1)
+      role: "caption"
+      font.weight: Style.weightStrong
     }
     FlatIconButton {
       size: Math.round(Appearance.fontSize * 1.6)
-      iconSize: Appearance.fontSizeBy(-1)
+      iconSize: Style.iconSm
       iconText: "content_copy"
       tooltipText: I18n.tr("Copy laps")
       onClicked: ClipboardManager.copyText(StopwatchClock.lapsText(StopwatchManager.laps, n => I18n.tr("Lap {0}", n)))
@@ -182,27 +182,27 @@ Panel {
         "fastest": false,
         "slowest": false
       }
-      readonly property color tint: lapRow.lap.fastest ? Theme.success : lapRow.lap.slowest ? Theme.error : Theme.foreground
+      readonly property color tint: lapRow.lap.fastest ? Style.successText : lapRow.lap.slowest ? Style.errorText : Style.text
       width: ListView.view.width
       spacing: Widget.spacing
 
       StyledLabel {
         Layout.fillWidth: true
         text: I18n.tr("Lap {0}", lapRow.lap.number)
-        textColor: lapRow.lap.fastest || lapRow.lap.slowest ? lapRow.tint : Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
+        textColor: lapRow.lap.fastest || lapRow.lap.slowest ? lapRow.tint : Style.textMuted
       }
       StyledLabel {
         text: StopwatchClock.format(lapRow.lap.split, true, false)
+        role: "caption"
         textColor: lapRow.tint
-        textSize: Appearance.fontSizeBy(-1)
       }
       StyledLabel {
         Layout.preferredWidth: Appearance.fontSize * 5
         horizontalAlignment: Text.AlignRight
         text: StopwatchClock.format(lapRow.lap.total, true, false)
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
+        tone: "muted"
       }
     }
   }

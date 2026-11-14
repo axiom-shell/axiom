@@ -30,8 +30,10 @@ Panel {
     StyledText {
       visible: InputSourceManager.running
       text: InputSourceManager.framework
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.foregroundAlt
+      role: "caption"
+      tone: "muted"
+      Layout.maximumWidth: Widget.textPx(160)
+      overflow: "line"
     }
     FlatIconButton {
       iconText: "settings"
@@ -42,7 +44,6 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   ColumnLayout {

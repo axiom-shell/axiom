@@ -79,8 +79,8 @@ Panel {
     }
     StyledLabel {
       text: I18n.tr("{0} binds", root.bindCount)
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.foregroundAlt
+      role: "caption"
+      tone: "muted"
     }
   }
 

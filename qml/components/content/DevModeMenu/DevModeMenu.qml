@@ -23,24 +23,24 @@ Panel {
     StyledText {
       Layout.fillWidth: true
       text: DevManager.checkout !== "" ? I18n.tr("Dev mode · {0}", DevManager.checkout) : I18n.tr("Dev mode")
-      font.weight: Font.Bold
-      textColor: Theme.accent
-      elide: Text.ElideRight
+      role: "title"
+      tone: "accent"
+      overflow: "line"
     }
     StyledText {
       Layout.fillWidth: true
       visible: text !== ""
       text: Paths.shortenHome(DevManager.tree)
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      elide: Text.ElideMiddle
+      role: "caption"
+      tone: "muted"
+      overflow: "line"
     }
     StyledText {
       Layout.fillWidth: true
       text: DevManager.buildText
-      textColor: DevManager.buildFailed && !DevManager.building ? Theme.error : Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      elide: Text.ElideRight
+      role: "caption"
+      tone: DevManager.buildFailed && !DevManager.building ? "error" : "muted"
+      overflow: "line"
     }
   }
 
@@ -53,7 +53,7 @@ Panel {
     title: I18n.tr("Rebuild")
     subtitle: DevManager.available ? "" : DevManager.unavailable
     clickable: DevManager.available && !DevManager.building
-    opacity: clickable ? 1 : 0.5
+    opacity: clickable ? 1 : Style.opacityDisabled
     onActivated: DevManager.rebuild()
   }
 

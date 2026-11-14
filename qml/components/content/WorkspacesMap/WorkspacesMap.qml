@@ -35,7 +35,7 @@ Card {
     Repeater {
       model: root.ids
 
-      Rectangle {
+      Surface {
         id: tile
         required property int modelData
         required property int index
@@ -47,9 +47,14 @@ Card {
         width: grid.tileWidth
         height: grid.tileHeight
         radius: Widget.radius
-        color: tile.active ? Theme.accent : tileArea.containsMouse ? Theme.backgroundHighlight : Theme.backgroundAlt
-        border.color: tile.active ? Theme.accent : Theme.border
-        border.width: Appearance.borderWidth
+        tone: tile.active ? "accent" : "sunken"
+        outlined: !tile.active
+
+        StateLayer {
+          radius: tile.radius
+          hovered: tileArea.containsMouse
+          onAccent: tile.active
+        }
 
         // The number, where it doesn't crowd the icons
         StyledText {
@@ -58,9 +63,8 @@ Card {
           anchors.top: parent.top
           anchors.margins: Widget.spacing
           text: tile.modelData
-          textSize: Appearance.fontSizeBy(-3)
-          textColor: tile.active ? Theme.background : Theme.foreground
-          opacity: 0.7
+          role: "micro"
+          textColor: tile.ink.text
         }
 
         // Rows of icons, each centred (a Flow left-aligns them), balanced so

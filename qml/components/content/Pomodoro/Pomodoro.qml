@@ -24,7 +24,7 @@ Panel {
 
   compactContent: CompactFigure {
     icon: PomodoroManager.isBreak ? "coffee" : "timer"
-    iconColor: PomodoroManager.isBreak ? Theme.accentAlt : Theme.accent
+    iconColor: PomodoroManager.isBreak ? Style.accentAlt : Style.accent
     value: PomodoroManager.remainingText
     label: PomodoroManager.phaseLabel
   }

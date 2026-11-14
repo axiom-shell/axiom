@@ -41,8 +41,8 @@ Card {
         Layout.preferredHeight: dial.side
         percentage: dial.muted ? 0 : Math.round(dial.level * 100)
         iconText: dial.icon
-        iconColor: dial.muted ? Theme.error : Theme.foreground
-        fillColor: Theme.accent
+        iconColor: dial.muted ? Style.error : Style.text
+        fillColor: Style.accent
         MouseArea {
           anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
@@ -55,10 +55,10 @@ Card {
         visible: dial.labelled
         Layout.alignment: Qt.AlignCenter
         Layout.maximumWidth: dial.beside ? dial.width - dial.side - dial.gap : dial.width
-        elide: Text.ElideRight
+        overflow: "line"
         text: dial.muted ? I18n.tr("{0} · muted", dial.label) : `${dial.label} · ${Math.round(dial.level * 100)}%`
-        textSize: Appearance.fontSizeBy(-1)
-        opacity: 0.8
+        role: "caption"
+        tone: "muted"
       }
     }
   }

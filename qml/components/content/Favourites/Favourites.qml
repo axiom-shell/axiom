@@ -56,7 +56,13 @@ Card {
         width: grid.tileWidth
         height: grid.tileHeight
         radius: Widget.radius
-        color: appArea.containsMouse ? Theme.backgroundHighlight : "transparent"
+        color: "transparent"
+
+        StateLayer {
+          radius: app.radius
+          hovered: appArea.containsMouse
+          pressed: appArea.pressed
+        }
 
         ColumnLayout {
           anchors.centerIn: parent
@@ -74,9 +80,9 @@ Card {
             visible: app.labelled
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
+            overflow: "line"
+            role: "caption"
             text: app.modelData.name
-            textSize: Appearance.fontSizeBy(-2)
           }
         }
 
