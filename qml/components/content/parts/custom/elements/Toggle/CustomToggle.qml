@@ -45,7 +45,7 @@ CustomElementBase {
         visible: text !== ""
         Layout.fillWidth: true
         text: root.label
-        elide: Text.ElideRight
+        overflow: "line"
       }
       StyledSwitch {
         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight

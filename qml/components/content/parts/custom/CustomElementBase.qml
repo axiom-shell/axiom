@@ -52,7 +52,7 @@ Item {
   }
 
   // The state's colour from the script, or null
-  readonly property var stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : null
+  readonly property var stateColor: root.fields?.color ? Style.resolve(root.fields.color) : null
 
   // The colour part (CustomElementBase.yaml's x-parts.color): a picked
   // colour, else `fallback`. Graphics (`state`) take the state's colour
@@ -63,7 +63,7 @@ Item {
     const byState = "stateColor" in root.options ? root.options.stateColor : picked === "";
     if (byState && root.stateColor !== null)
       return root.stateColor;
-    return picked ? Theme.resolveColor(picked) : fallback;
+    return picked ? Style.resolve(picked) : fallback;
   }
 
   // Run one of the element's actions with `value` filled in

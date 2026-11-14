@@ -17,8 +17,8 @@ CustomElementBase {
     id: glyph
     anchors.centerIn: parent
     text: root.shown
-    textColor: root.colorOf(Theme.accent)
-    textSize: Math.max(Appearance.fontSizeBy(-4), Math.min(root.width, root.height) * 0.75)
+    textColor: root.colorOf(Style.accent)
+    textSize: Math.max(Style.typeMicro, Math.min(root.width, root.height) * 0.75) // fitted: the element's box
   }
 
   // On the icon's corner, wherever the box puts it
@@ -26,8 +26,8 @@ CustomElementBase {
     anchors.horizontalCenter: glyph.right
     anchors.verticalCenter: glyph.top
     text: root.badge
-    color: Theme.error
-    textColor: Theme.background
+    color: Style.error
+    textColor: Style.onError
     shown: root.badge !== "" && root.badge !== "0"
   }
 }

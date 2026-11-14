@@ -18,7 +18,7 @@ CustomElementBase {
     width: root.options.round ? Math.min(root.width, root.height) : root.width
     height: root.options.round ? width : root.height
     radius: root.options.round ? width / 2 : Widget.radius
-    color: Theme.backgroundHighlight
+    color: Style.surfaceHighest
 
     Image {
       anchors.fill: parent

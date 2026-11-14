@@ -15,6 +15,6 @@ CustomElementBase {
     round: root.options.round
     share: Math.max(0, root.ratio())
     vertical: root.vertical
-    litColor: root.colorOf(Theme.accent)
+    litColor: root.colorOf(Style.accent)
   }
 }

@@ -36,7 +36,7 @@ CustomElementBase {
       share: root.share
       vertical: root.vertical
       thickness: root.thickness
-      fillColor: root.colorOf(Theme.accent)
+      fillColor: root.colorOf(Style.accent)
     }
   }
 
@@ -49,7 +49,7 @@ CustomElementBase {
         height: Math.max(Widget.px(16), root.thickness)
         rotation: root.vertical ? -90 : 0
         troughHeight: root.thickness
-        fillColor: root.colorOf(Theme.accent)
+        fillColor: root.colorOf(Style.accent)
         value: root.held >= 0 ? root.held : root.share
         onReleased: ratio => {
           root.held = ratio;

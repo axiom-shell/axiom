@@ -14,31 +14,30 @@ CustomElementBase {
   // at a size from the box
   readonly property bool rich: /<[a-z][^>]*>/i.test(root.shown)
   readonly property int fixedSize: ({
-      "small": Appearance.fontSizeBy(-2),
-      "normal": Appearance.fontSize,
-      "large": Appearance.fontSizeLarge,
-      "huge": Appearance.fontSize * 2
+      "small": Style.typeCaption,
+      "normal": Style.typeBody,
+      "large": Style.typeHeadline,
+      "huge": Style.typeBody * 2
     })[root.options.size] ?? 0
 
   StyledText {
     anchors.fill: parent
     text: root.shown
     textFormat: root.rich ? Text.RichText : Text.PlainText
-    textColor: root.colorOf(Theme.foreground)
+    textColor: root.colorOf(Style.text)
     textFamily: root.options.monospace ? "monospace" : Appearance.fontFamily
-    font.weight: root.options.bold ? Font.Bold : Font.Normal
+    font.weight: root.options.bold ? Style.weightStrong : Style.weightNormal
     horizontalAlignment: ({
         "left": Text.AlignLeft,
         "right": Text.AlignRight
       })[root.options.align] ?? Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter
-    wrapMode: Text.Wrap
-    elide: Text.ElideRight
-    maximumLineCount: Math.max(1, Math.floor(root.height / Math.max(1, Appearance.fontSizeBy(-4) * 1.3)))
+    overflow: "wrap"
+    maxLines: Math.max(1, Math.floor(root.height / Math.max(1, Style.typeMicro * 1.3)))
     // Fitted, it's never larger than a built-in module's figure (StatFigure)
-    textSize: root.fixedSize || Math.max(Appearance.fontSizeBy(-4), Math.min(Appearance.fontSize * 2, root.height * 0.7))
+    textSize: root.fixedSize || Math.max(Style.typeMicro, Math.min(Style.typeBody * 2, root.height * 0.7)) // fitted: the element's box
     fontSizeMode: root.fixedSize || root.rich ? Text.FixedSize : Text.Fit
-    minimumPixelSize: Appearance.fontSizeBy(-4)
+    minimumPixelSize: Style.typeMicro
     clip: true
   }
 }

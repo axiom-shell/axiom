@@ -19,6 +19,6 @@ CustomElementBase {
     values: root.history?.[root.bind.value ?? ""] ?? []
     minValue: root.graphRange.min
     maxValue: root.graphRange.max
-    lineColor: root.colorOf(Theme.accent)
+    lineColor: root.colorOf(Style.accent)
   }
 }
