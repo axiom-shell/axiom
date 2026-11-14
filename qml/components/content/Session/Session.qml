@@ -18,8 +18,8 @@ Card {
   readonly property bool tight: root.height - root.pad * 2 < Widget.height
   readonly property real margin: root.tight ? 0 : root.pad
 
-  color: root.tight || root.bare ? "transparent" : Theme.background
-  border.width: root.tight || root.bare ? 0 : Appearance.borderWidth
+  color: root.tight || root.bare ? "transparent" : Style.surface
+  outlined: !(root.tight || root.bare)
 
   StyledComboEntry {
     anchors.left: parent.left

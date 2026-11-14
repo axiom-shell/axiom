@@ -63,8 +63,8 @@ Panel {
         Layout.fillHeight: true
         Layout.preferredWidth: Math.max(Widget.px(180), body.width * 0.32)
         sourceComponent: ConversationList {
-          color: Theme.backgroundAlt
-          border.width: 0
+          tone: "sunken"
+          outlined: false
           floating: false
         }
       }
@@ -92,8 +92,6 @@ Panel {
 
         StyledSeparator {
           Layout.fillWidth: true
-          separatorHeight: 1
-          opacity: 0.6
         }
 
         ChatMessageList {
@@ -155,9 +153,9 @@ Panel {
         visible: drop.containsDrag
         anchors.fill: parent
         radius: Widget.radius
-        color: Qt.alpha(Theme.accent, 0.12)
-        border.color: Theme.accent
-        border.width: 2
+        color: Style.accentWash
+        border.color: Style.accent
+        border.width: Style.focusWidth
       }
     }
   }

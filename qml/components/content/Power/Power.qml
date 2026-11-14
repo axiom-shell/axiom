@@ -59,7 +59,7 @@ Card {
         icon: info?.icon ?? ""
         label: info?.label ?? ""
         active: gate.armed === action
-        activeColor: SessionManager.destructiveActions.includes(action) ? Theme.error : Theme.accent
+        activeTone: SessionManager.destructiveActions.includes(action) ? "error" : "accent"
         countdown: gate.armed === action ? gate.timeout : 0
         onClicked: root.press(action)
       }

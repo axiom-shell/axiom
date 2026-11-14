@@ -133,10 +133,10 @@ Card {
             horizontalAlignment: root.clockRow ? Text.AlignRight : Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             fontSizeMode: Text.Fit
-            minimumPixelSize: Math.min(Appearance.fontSize, Widget.px(8))
-            textSize: Appearance.fontSize * 9
+            minimumPixelSize: Style.typeMicro
+            textSize: Style.typeBody * 9 // fitted: the clock line (fontSizeMode Fit)
             text: I18n.formatDate(root.now, root.timeFormat)
-            font.weight: Font.Bold
+            font.weight: Style.roleDisplay.weight
           }
           StyledText {
             id: dateText
@@ -144,10 +144,10 @@ Card {
             Layout.fillWidth: !root.clockRow
             Layout.maximumWidth: root.clockRow ? clockBox.width * 0.45 : -1
             horizontalAlignment: root.clockRow ? Text.AlignLeft : Text.AlignHCenter
-            elide: Text.ElideRight
+            overflow: "line"
             text: I18n.formatDate(root.now, I18n.dateFormat(root.compact ? "shortDate" : "longDate"))
-            textSize: root.compact ? Appearance.fontSizeBy(-2) : Appearance.fontSize
-            opacity: 0.7
+            textSize: root.compact ? Style.typeCaption : Style.typeBody
+            tone: "muted"
           }
         }
       }

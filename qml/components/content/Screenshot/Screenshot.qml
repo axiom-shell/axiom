@@ -50,7 +50,7 @@ Card {
         label: stops ? I18n.tr("Stop") : modelData[2]
         showLabel: !root.compact
         active: stops
-        activeColor: Theme.error
+        activeTone: "error"
         onClicked: root.capture(modelData[0])
       }
     }

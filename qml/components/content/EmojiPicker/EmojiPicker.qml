@@ -133,8 +133,13 @@ Panel {
     implicitWidth: root.cell
     implicitHeight: root.cell
     radius: Widget.radius
-    color: root.copied === cellItem.emoji ? Qt.alpha(Theme.accent, 0.3) : cellHover.hovered ? Theme.backgroundHighlight : "transparent"
-    scale: cellTap.pressed ? 0.9 : 1
+    color: root.copied === cellItem.emoji ? Style.accentContainer : "transparent"
+    scale: cellTap.pressed ? 0.9 : 1 // style-exempt: motion
+
+    StateLayer {
+      radius: cellItem.radius
+      hovered: cellHover.hovered
+    }
 
     ColorGlide on color {}
     Glide on scale {}
@@ -144,7 +149,7 @@ Panel {
       anchors.centerIn: parent
       text: cellItem.emoji
       font.pixelSize: root.cell * 0.6
-      color: Theme.foreground
+      color: Style.text
     }
 
     HoverHandler {
@@ -183,7 +188,7 @@ Panel {
     visible: root.showGroups
     Layout.fillWidth: true
     spacing: 0
-    opacity: root.query === "" ? 1 : 0.4
+    opacity: root.query === "" ? 1 : Style.opacityDisabled
 
     Glide on opacity {}
 
@@ -199,8 +204,8 @@ Panel {
         Layout.preferredWidth: -1
         size: Widget.iconButton
         iconText: tab.info.icon
-        iconColor: tab.active ? Theme.accent : Theme.foregroundAlt
-        backgroundColor: tab.active ? Qt.alpha(Theme.accent, 0.15) : "transparent"
+        kind: tab.active ? "tonal" : "text"
+        iconColor: tab.active ? Style.inkHighest.accent : Style.textMuted
         tooltipText: tab.info.group === "" ? I18n.tr("Most used") : I18n.tr(tab.info.group)
         onClicked: {
           field.text = "";
@@ -252,9 +257,9 @@ Panel {
     visible: root.showFooter
     Layout.fillWidth: true
     text: root.copied !== "" ? I18n.tr("Copied {0}", root.copied) : root.hoveredEntry ? root.nameOf(root.hoveredEntry) : I18n.tr("Click to copy")
-    textSize: Appearance.fontSizeBy(-2)
-    textColor: root.copied !== "" ? Theme.accent : Theme.foregroundAlt
-    elide: Text.ElideRight
+    role: "caption"
+    tone: root.copied !== "" ? "accent" : "muted"
+    overflow: "line"
   }
 
   // A short card: the most used in a row
@@ -275,13 +280,13 @@ Panel {
     }
 
     StyledText {
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       visible: root.recent.length === 0
       Layout.fillWidth: true
       horizontalAlignment: Text.AlignHCenter
       text: I18n.tr("Emoji you copy show up here")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
+      tone: "muted"
     }
 
     Item {
