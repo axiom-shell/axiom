@@ -28,17 +28,14 @@ ColumnLayout {
 
   spacing: Widget.spacing / 2
 
-  StyledContainer {
+  Surface {
     Layout.fillWidth: true
     implicitHeight: box.implicitHeight + Widget.spacing * 3
-    backgroundColor: Theme.backgroundAlt
-    borderColor: area.input.activeFocus ? Theme.accent : Theme.border
-    borderWidth: 1
-    borderRadius: Widget.radius + 2
-
-    ColorGlide on borderColor {
-      duration: Appearance.animNormal
-    }
+    tone: "sunken"
+    outlined: true
+    border.color: area.input.activeFocus ? Style.accent : Style.borderStrong
+    border.width: area.input.activeFocus ? Style.focusWidth : Style.hairline
+    radius: Widget.radius + 2
 
     ColumnLayout {
       id: box
@@ -65,17 +62,17 @@ ColumnLayout {
           }
         }
 
-        Rectangle {
+        Surface {
           visible: ChatManager.attaching
           width: Widget.px(56)
           height: Widget.px(56)
+          tone: "highest"
           radius: Widget.radius / 2
-          color: Theme.backgroundHighlight
 
           StyledIcon {
             anchors.centerIn: parent
             text: "hourglass_empty"
-            textColor: Theme.foregroundAlt
+            tone: "muted"
           }
         }
       }
@@ -133,34 +130,15 @@ ColumnLayout {
           label: I18n.tr("new line")
         }
 
-        Rectangle {
+        StyledIconButton {
           id: sendButton
           readonly property bool canSend: ChatManager.busy || area.text.trim() !== "" || ChatManager.attachments.length > 0
+          kind: sendButton.canSend && !ChatManager.busy ? "primary" : "tonal"
+          enabled: sendButton.canSend || ChatManager.busy
           Layout.alignment: Qt.AlignVCenter
-          implicitWidth: Widget.iconButton
-          implicitHeight: Widget.iconButton
-          radius: height / 2
-          color: ChatManager.busy ? Theme.backgroundHighlight : canSend ? Theme.accent : Theme.backgroundHighlight
-          opacity: canSend ? 1 : 0.5
-
-          ColorGlide on color {
-            duration: Appearance.animNormal
-          }
-
-          StyledIcon {
-            anchors.centerIn: parent
-            text: ChatManager.busy ? "stop" : "arrow_upward"
-            fill: 1
-            textColor: ChatManager.busy ? Theme.foreground : sendButton.canSend ? Theme.background : Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(2)
-          }
-
-          TapHandler {
-            onTapped: ChatManager.busy ? ChatManager.stop() : root._send()
-          }
-          HoverHandler {
-            cursorShape: sendButton.canSend ? Qt.PointingHandCursor : Qt.ArrowCursor
-          }
+          iconText: ChatManager.busy ? "stop" : "arrow_upward"
+          iconSize: Style.iconMd
+          onClicked: ChatManager.busy ? ChatManager.stop() : root._send()
         }
       }
     }
@@ -172,8 +150,7 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.leftMargin: Widget.spacing
     text: ChatManager.notice
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-3)
-    elide: Text.ElideRight
+    role: "micro"
+    tone: "warning"
   }
 }

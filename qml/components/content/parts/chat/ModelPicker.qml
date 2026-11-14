@@ -74,15 +74,13 @@ DropdownSurface {
               spacing: Widget.spacing / 2
 
               StyledLabel {
-                elide: Text.ElideRight
+                role: "micro"
+                tone: "faint"
                 Layout.topMargin: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
                 Layout.bottomMargin: Widget.spacing / 2
                 Layout.leftMargin: Widget.spacing
                 Layout.fillWidth: true
                 text: row.rowData.header
-                textColor: Theme.foregroundAlt
-                textSize: Appearance.fontSizeBy(-3)
-                font.weight: Font.Bold
               }
 
               // Whether the provider has a key
@@ -93,8 +91,8 @@ DropdownSurface {
                 Layout.bottomMargin: Widget.spacing / 2
                 Layout.rightMargin: Widget.spacing
                 text: "key_off"
-                textColor: Theme.warning
-                textSize: Appearance.fontSizeBy(-2)
+                tone: "warning"
+                size: "xs"
               }
             }
           }
@@ -106,9 +104,9 @@ DropdownSurface {
               leftPadding: Widget.spacing
               rightPadding: Widget.spacing
               text: I18n.tr("No models: fetch them in Settings → Chat")
-              textColor: Theme.foregroundInactive
-              textSize: Appearance.fontSizeBy(-3)
-              wrapMode: Text.WordWrap
+              role: "micro"
+              overflow: "wrap"
+              tone: "faint"
             }
           }
 
@@ -121,7 +119,11 @@ DropdownSurface {
               width: row.width
               implicitHeight: Widget.height
               radius: Widget.radius / 2
-              color: choiceHover.hovered ? Theme.backgroundHighlight : "transparent"
+              color: choice.selected ? Style.accentContainer : "transparent"
+
+              StateLayer {
+                hovered: choiceHover.hovered
+              }
 
               HoverHandler {
                 id: choiceHover
@@ -146,21 +148,21 @@ DropdownSurface {
                 StyledIcon {
                   visible: choice.preset !== null
                   text: choice.preset?.icon || "chat"
-                  textColor: choice.selected ? Theme.accent : Theme.foregroundAlt
-                  textSize: Appearance.fontSize
+                  size: "sm"
+                  textColor: choice.selected ? Style.onAccentContainer : Style.textMuted
                 }
                 StyledLabel {
                   Layout.fillWidth: true
                   text: choice.preset ? choice.preset.name : row.rowData.model
-                  textColor: choice.selected ? Theme.accent : Theme.foreground
-                  textSize: Appearance.fontSizeBy(-1)
-                  elide: Text.ElideRight
+                  role: "caption"
+                  textColor: choice.selected ? Style.onAccentContainer : Style.text
+                  overflow: "line"
                 }
                 StyledIcon {
                   visible: choice.selected
                   text: "check"
-                  textColor: Theme.accent
-                  textSize: Appearance.fontSize
+                  size: "sm"
+                  textColor: Style.onAccentContainer
                 }
               }
             }

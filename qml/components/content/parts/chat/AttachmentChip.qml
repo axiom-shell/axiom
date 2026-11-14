@@ -19,9 +19,9 @@ ClippingRectangle {
   implicitWidth: root.size
   implicitHeight: root.size
   radius: Widget.radius / 2
-  color: Theme.backgroundHighlight
-  border.color: Theme.border
-  border.width: 1
+  color: Style.surfaceHighest
+  border.color: Style.borderSubtle
+  border.width: Style.hairline
 
   // Inside the border: the content item is inset by its width
   Image {
@@ -40,35 +40,24 @@ ClippingRectangle {
     visible: false
     anchors.centerIn: parent
     text: "broken_image"
-    textColor: Theme.foregroundAlt
+    textColor: Style.inkHighest.icon
   }
 
   HoverHandler {
     id: hover
   }
 
-  Rectangle {
+  StyledIconButton {
     visible: root.removable && hover.hovered
+    kind: "tonal"
     anchors.top: parent.top
     anchors.right: parent.right
     anchors.margins: Widget.spacing
-    width: Widget.smallHeight
-    height: Widget.smallHeight
-    radius: width / 2
-    color: Qt.alpha(Theme.background, 0.85)
-
-    StyledIcon {
-      anchors.centerIn: parent
-      text: "close"
-      textSize: Appearance.fontSizeBy(-3)
-    }
-
-    TapHandler {
-      onTapped: root.removed()
-    }
-
-    HoverHandler {
-      cursorShape: Qt.PointingHandCursor
-    }
+    // Never under what its glyph needs
+    size: Math.max(Widget.smallHeight, Style.iconXs + Widget.spacing * 2)
+    borderRadius: size / 2
+    iconText: "close"
+    iconSize: Style.iconXs
+    onClicked: root.removed()
   }
 }

@@ -69,9 +69,8 @@ Item {
       leftPadding: Widget.px(3)
       contentItem: Rectangle {
         implicitWidth: Widget.px(4)
-        radius: 2
-        color: Theme.accent
-        opacity: parent.pressed ? 0.8 : 0.4
+        radius: width / 2
+        color: parent.pressed ? Style.textMuted : Style.textFaint
       }
     }
 
@@ -121,7 +120,8 @@ Item {
   }
 
   // Scrolled up while there's more below
-  Rectangle {
+  Surface {
+    tone: "raised"
     visible: !root._follow && flick.contentHeight > flick.height
     anchors.bottom: parent.bottom
     anchors.horizontalCenter: parent.horizontalCenter
@@ -129,9 +129,6 @@ Item {
     implicitWidth: jumpRow.implicitWidth + Widget.padding * 2
     implicitHeight: jumpRow.implicitHeight + Widget.spacing
     radius: height / 2
-    color: Theme.backgroundHighlight
-    border.color: Theme.border
-    border.width: 1
 
     RowLayout {
       id: jumpRow
@@ -139,11 +136,12 @@ Item {
       spacing: Widget.spacing / 2
       StyledIcon {
         text: "arrow_downward"
-        textSize: Appearance.fontSizeBy(-1)
+        size: "sm"
       }
       StyledLabel {
         text: I18n.tr("Jump to latest")
-        textSize: Appearance.fontSizeBy(-2)
+        role: "caption"
+        tone: "text"
       }
     }
 

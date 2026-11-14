@@ -69,7 +69,7 @@ DropdownSurface {
       showScrollBar: list.contentHeight > scroll.height
 
       // A ListView, so only the rows in view are built
-      ListView {
+      MotionListView {
         id: list
         spacing: 2
         boundsBehavior: Flickable.StopAtBounds
@@ -86,15 +86,13 @@ DropdownSurface {
           Component {
             id: headerRow
             StyledText {
-              elide: Text.ElideRight
+              role: "micro"
+              tone: "faint"
               width: row.width
               topPadding: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
               bottomPadding: Widget.spacing / 2
               leftPadding: Widget.spacing
               text: row.rowData.header
-              textColor: Theme.foregroundAlt
-              textSize: Appearance.fontSizeBy(-3)
-              font.weight: Font.Bold
             }
           }
 
@@ -108,7 +106,11 @@ DropdownSurface {
               width: row.width
               implicitHeight: Math.max(Widget.height, itemRowLayout.implicitHeight + Widget.spacing)
               radius: Widget.radius / 2
-              color: current ? Qt.alpha(Theme.accent, 0.16) : itemHover.hovered ? Theme.backgroundHighlight : "transparent"
+              color: current ? Style.accentContainer : "transparent"
+
+              StateLayer {
+                hovered: itemHover.hovered
+              }
 
               HoverHandler {
                 id: itemHover
@@ -132,9 +134,9 @@ DropdownSurface {
                   visible: !item.editing
                   Layout.fillWidth: true
                   text: item.conversation.title || I18n.tr("Untitled")
-                  textColor: item.current ? Theme.accent : Theme.foreground
-                  textSize: Appearance.fontSizeBy(-1)
-                  elide: Text.ElideRight
+                  role: "caption"
+                  textColor: item.current ? Style.onAccentContainer : Style.text
+                  overflow: "line"
                 }
 
                 // Built only while this row renames
@@ -164,7 +166,8 @@ DropdownSurface {
                   visible: itemHover.hovered && !item.editing
                   size: Widget.iconButton
                   iconText: "edit"
-                  iconSize: Appearance.fontSizeBy(-2)
+                  iconColor: item.current ? Style.inkAccentContainer.muted : Style.textMuted
+                  iconSize: Style.iconXs
                   tooltipText: I18n.tr("Rename")
                   onClicked: root.renaming = item.conversation.id
                 }
@@ -172,7 +175,8 @@ DropdownSurface {
                   visible: itemHover.hovered && !item.editing
                   size: Widget.iconButton
                   iconText: "delete"
-                  iconSize: Appearance.fontSizeBy(-2)
+                  iconColor: item.current ? Style.inkAccentContainer.muted : Style.textMuted
+                  iconSize: Style.iconXs
                   tooltipText: I18n.tr("Delete")
                   onClicked: ChatManager.remove(item.conversation.id)
                 }
@@ -191,10 +195,8 @@ DropdownSurface {
       Layout.topMargin: Widget.padding
       horizontalAlignment: Text.AlignHCenter
       verticalAlignment: Text.AlignTop
-      wrapMode: Text.WordWrap
       text: ChatConfig.keepConversations === 0 ? I18n.tr("Conversations aren't saved (Settings → Chat).") : root.query !== "" ? I18n.tr("No matches") : I18n.tr("No conversations yet")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
     }
   }
 }

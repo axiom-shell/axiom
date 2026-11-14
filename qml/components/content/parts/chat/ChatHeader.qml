@@ -26,7 +26,7 @@ RowLayout {
     visible: !root.listDocked
     size: root.rowHeight
     iconText: "history"
-    iconColor: root.listOpen ? Theme.accent : Theme.foreground
+    iconColor: root.listOpen ? Style.accent : Style.text
     tooltipText: I18n.tr("Conversations")
     onClicked: root.toggleList()
   }
@@ -36,25 +36,26 @@ RowLayout {
     Layout.alignment: Qt.AlignVCenter
     Layout.leftMargin: root.listDocked ? Widget.spacing : 0
     text: ChatManager.conversation.title || I18n.tr("New conversation")
-    font.weight: Font.Bold
-    elide: Text.ElideRight
+    role: "title"
   }
 
   // Preset and model
-  Rectangle {
+  Surface {
+    id: chip
     Layout.alignment: Qt.AlignVCenter
-    Layout.maximumWidth: Widget.px(220)
-    implicitWidth: chip.implicitWidth + Widget.padding * 1.5
+    Layout.maximumWidth: Widget.textPx(220)
+    implicitWidth: chipRow.implicitWidth + Widget.padding * 1.5
     implicitHeight: root.rowHeight
+    tone: root.pickerOpen ? "accentContainer" : "highest"
     radius: height / 2
-    color: root.pickerOpen || chipHover.hovered ? Theme.backgroundHighlight : Theme.backgroundAlt
-    border.color: root.pickerOpen ? Theme.accent : Theme.border
-    border.width: 1
 
-    ColorGlide on color {}
+    StateLayer {
+      radius: chip.radius
+      hovered: chipHover.hovered
+    }
 
     RowLayout {
-      id: chip
+      id: chipRow
       anchors.fill: parent
       anchors.leftMargin: Widget.padding
       anchors.rightMargin: Widget.padding * 0.5
@@ -63,21 +64,22 @@ RowLayout {
       StyledIcon {
         Layout.alignment: Qt.AlignVCenter
         text: ChatManager.preset.icon || "chat"
-        textColor: Theme.accent
-        textSize: Appearance.fontSize
+        size: "sm"
+        textColor: chip.ink.accent
       }
       StyledLabel {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         text: ChatManager.model || I18n.tr("No model")
-        textSize: Appearance.fontSizeBy(-2)
-        elide: Text.ElideMiddle
+        role: "caption"
+        overflow: "line"
+        textColor: chip.ink.text
       }
       StyledIcon {
         Layout.alignment: Qt.AlignVCenter
         text: root.pickerOpen ? "expand_less" : "expand_more"
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSize
+        size: "sm"
+        textColor: chip.ink.muted
       }
     }
 
@@ -93,7 +95,7 @@ RowLayout {
   FlatIconButton {
     size: root.rowHeight
     iconText: "edit_square"
-    iconColor: Theme.foreground
+    iconColor: Style.text
     tooltipText: I18n.tr("New conversation")
     onClicked: ChatManager.newConversation(ChatManager.preset.name)
   }
