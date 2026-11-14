@@ -22,11 +22,15 @@ Card {
   readonly property var lowest: BatteryManager.lowestPeripheral
 
   function peripheralColor(level) {
-    return level === "critical" ? Theme.error : level === "low" ? Theme.warning : Theme.success;
+    return level === "critical" ? Style.error : level === "low" ? Style.warning : Style.success;
+  }
+  function peripheralTone(level) {
+    return level === "critical" ? "error" : level === "low" ? "warning" : "success";
   }
 
   readonly property string stateText: BatteryManager.isCharging ? I18n.tr("Charging · {0} to full", BatteryManager.timeToFull) : BatteryManager.isFull ? I18n.tr("Fully charged") : I18n.tr("{0} left", BatteryManager.timeRemaining)
-  readonly property color levelColor: BatteryManager.isCritical ? Theme.error : BatteryManager.isLow ? Theme.warning : Theme.success
+  readonly property color levelColor: BatteryManager.isCritical ? Style.error : BatteryManager.isLow ? Style.warning : Style.success
+  readonly property string levelTone: BatteryManager.isCritical ? "error" : BatteryManager.isLow ? "warning" : "success"
   readonly property bool sideBySide: root.shape === "horizontal"
 
   fullMinWidth: Appearance.fontSize * 6
@@ -34,7 +38,7 @@ Card {
 
   compactContent: CompactFigure {
     icon: BatteryManager.isAvailable ? BatteryManager.getBatteryIcon() : root.onlyPeripherals ? root.lowest.glyph : "power"
-    iconColor: BatteryManager.isAvailable ? root.levelColor : root.onlyPeripherals ? root.peripheralColor(root.lowest.level) : Theme.foregroundAlt
+    iconColor: BatteryManager.isAvailable ? root.levelColor : root.onlyPeripherals ? root.peripheralColor(root.lowest.level) : Style.textMuted
     value: BatteryManager.isAvailable ? String(Math.round(BatteryManager.percentage)) : root.onlyPeripherals ? String(root.lowest.percentage) : ""
     unit: BatteryManager.isAvailable || root.onlyPeripherals ? "%" : ""
     label: BatteryManager.isAvailable ? root.stateText : root.onlyPeripherals ? root.lowest.name : I18n.tr("On AC power")
@@ -76,8 +80,8 @@ Card {
           anchors.fill: parent
           percentage: Math.round(BatteryManager.percentage)
           iconText: BatteryManager.getBatteryIcon()
-          iconColor: Theme.foreground
-          fillColor: root.levelColor
+          iconColor: Style.text
+          fillTone: root.levelTone
         }
       }
 
@@ -90,17 +94,16 @@ Card {
         StyledText {
           Layout.alignment: root.sideBySide ? Qt.AlignLeft : Qt.AlignHCenter
           text: `${Math.round(BatteryManager.percentage)}%`
-          textSize: root.sideBySide ? Appearance.fontSize * 1.6 : Appearance.fontSize
-          font.weight: Font.Bold
+          role: "label"
+          textSize: root.sideBySide ? Math.round(Style.typeBody * 1.6) : Style.typeBody // fitted: the figure beside the ring
         }
         StyledText {
           Layout.fillWidth: true
           Layout.maximumWidth: root.innerWidth
           horizontalAlignment: root.sideBySide ? Text.AlignLeft : Text.AlignHCenter
-          elide: Text.ElideRight
+          role: "caption"
+          overflow: "line"
           text: root.stateText
-          textSize: Appearance.fontSizeBy(-2)
-          opacity: 0.7
         }
       }
     }
@@ -130,28 +133,27 @@ Card {
 
           StyledIcon {
             text: line.peripheral?.glyph ?? ""
-            textSize: Appearance.fontSize
-            textColor: root.peripheralColor(line.peripheral?.level ?? "none")
+            size: "sm"
+            tone: root.peripheralTone(line.peripheral?.level ?? "none")
           }
           StyledLabel {
             Layout.fillWidth: true
             text: line.peripheral?.name ?? ""
-            elide: Text.ElideRight
-            textSize: Appearance.fontSizeBy(-2)
+            role: "caption"
+            overflow: "line"
           }
           LevelMeter {
             Layout.preferredWidth: Widget.px(40)
             Layout.fillHeight: true
             thickness: Widget.px(4)
             share: (line.peripheral?.percentage ?? 0) / 100
-            fillColor: root.peripheralColor(line.peripheral?.level ?? "none")
+            fillTone: root.peripheralTone(line.peripheral?.level ?? "none")
           }
           StyledLabel {
             Layout.preferredWidth: percentMetrics.advanceWidth("100%") // a measuring string, the widest percent
             horizontalAlignment: Text.AlignRight
             text: (line.peripheral?.percentage ?? 0) + "%"
-            textSize: Appearance.fontSizeBy(-2)
-            opacity: 0.7
+            role: "caption"
           }
         }
       }
@@ -164,7 +166,7 @@ Card {
     FontMetrics {
       id: percentMetrics
       font.family: Appearance.fontFamily
-      font.pixelSize: Appearance.fontSizeBy(-2)
+      font.pixelSize: Style.typeCaption
     }
   }
 }

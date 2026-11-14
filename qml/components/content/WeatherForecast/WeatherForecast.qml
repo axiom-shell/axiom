@@ -27,7 +27,6 @@ Panel {
   }
 
   StyledSeparator {
-    separatorColor: Theme.accent
     Layout.fillWidth: true
   }
 
@@ -47,18 +46,17 @@ Panel {
         StyledText {
           Layout.alignment: Qt.AlignHCenter
           text: WeatherManager.dayLabel(day.index)
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
         }
         StyledIcon {
           Layout.alignment: Qt.AlignHCenter
           text: WeatherManager.conditionFor(root.daily.weather_code[day.index], 1).icon
-          textSize: Appearance.fontSize * 1.5
+          size: "lg"
         }
         StyledText {
           Layout.alignment: Qt.AlignHCenter
           text: `${Math.round(root.daily.temperature_2m_max[day.index])}° / ${Math.round(root.daily.temperature_2m_min[day.index])}°`
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
         }
       }
     }
