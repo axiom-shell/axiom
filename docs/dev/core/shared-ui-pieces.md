@@ -47,7 +47,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `SlashedIcon`: an icon struck through while `slashed`, one drawn slash (top left to bottom right, Material's direction) over a `cutout` line in what it sits on. Every off state is the base icon slashed, never an icon's own `_off` form, so they all look the same (the OSD's bars and status icons).
 - `SectionHeading`: `title`-role title (text colour) + muted `caption` description, folded past three lines.
 - `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, built and shown only when it's longer. Field and card descriptions use it.
-- `FoldHeader` / `FoldingCard`: `status` and `statusColor` put a `StatusChip` centred on the chevron, kept while folded (a settings card's `x-intro` supplies them).
+- `FoldHeader` / `FoldingCard`: `status` and `statusTone` put a `StatusChip` centred on the chevron, kept while folded (a settings card's `x-intro` supplies them).
 - `FieldGroup`: a titled card of fields, a `Surface` (`surface` on the page or with no Surface; flat, no fill or border and the host's ink, inside any other Surface) with `Style.space3` margins (flat: above only); `headerExtras` beside the heading.
 - `StyledContainer`: a compatibility box (sunken fill through the surface opacity or solid, optional border and radius), kept until the last style change; use `Surface`.
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar. `StyledScrollIndicator`: a `ScrollIndicator` drawn from `Style` (a bare one draws in the user's Qt palette); every popup list uses it.
@@ -158,6 +158,8 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
   - One frame per open unless `live` (or `hovered` / `resizing`).
   - Used by the overview's windows and the switcher's tiles.
 
+- `SettledColumns`: a non-visual piece: units placed by `ColumnSplit` (`placed`), their splits followed while settling (after a build, a width change or `relayout()`) and fixed once no split height has changed for 150 ms. The settings page's cards and a generated card's rows use it.
+
 ### Motion (`reusable/`)
 - `Glide` / `ColorGlide` (`Glide on width {}`): a Behavior with the shell's animation, animFast eased by `Appearance.easing`.
   - `duration` for animNormal/animSlow; `enabled` to gate it.
@@ -202,7 +204,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `content/Submenu`: a module opening another edge menu as a submenu.
 
 ### Settings cards (`views/Settings/`)
-- `FoldingCard`: fold header + a `FoldingColumn` body, in a faint border so neighbouring cards stay apart.
+- `FoldingCard`: a `Surface` (`surface`, outlined) of a fold header and a `FoldingColumn` body, no line between; its `statusTone` is the header chip's.
 - `SettingsGroupCard`: generated.
 - `EntryListCard`: a list of entries as tabs with a screen picker; the entry's settings fold by `x-group` (the first under the picker), and `wide` puts the other groups beside the picker's column with the room.
 - `OSDSystemsEditor`: an OSD's `systems` (OSDListCard's `entryContent`): `EntryListRow`s in an `EntryListTarget` on an `InlineDragLayer` (dragged to reorder, clicked to select, X to remove), Add opening a grouped `TypePickerPopup` of the systems not in the list, and the selected one's `SchemaPropertiesForm` beside the list with the room, else under it (`SplitColumns`).
@@ -223,6 +225,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `methods/Tone`: the shell's colour math (mixing, compositing, WCAG contrast, nudging a colour until it reads); `Style` and the bar's `BarWidgetStyle` call it, UI never does ([style](style.md)).
 - `methods/InkHost.find(start)`: the nearest visual ancestor with an `inkScope` (a Surface), the ink a `StyledText` inherits; stops at a relay (`inkHostAbove`); called in a binding, so it follows a reparent ([style](style.md) › Pieces).
 - `methods/TextRender`: `zoomAt(start)` (the product of the `contentZoom`s above an item, up to the nearest `drawnZoom` publisher) and `typeFor(zoom, symbol, fill)` (native at rest, distance field under a zoom) ([style](style.md) › Crisp text).
+- `methods/FlowColumns`: newspaper columns for the settings page: how many a width holds (`count`), which rows stay together (`blocks`, `lines`) and where each goes (`place`, over `ColumnSplit.placeN`) ([Settings page](settings-page.md) › Columns).
 - `methods/StyleTokens`: every colour role of a theme (`derive`), a theme tile's `preview`, the shape rules (`concentric`, `textPx`, `roleSize`) ([style](style.md)).
 - **Search** (`methods/Search`): shared by LauncherManager and EmojiManager.
   - `score(text, q)`: the launcher's 0–100 fuzzy match.
