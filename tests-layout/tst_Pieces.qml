@@ -536,7 +536,7 @@ TestCase {
   }
 
   // A titled group is a boxed card: surface on the page or with no Surface,
-  // raised on any other
+  // flat (the host's fill and ink) on any other
   function test_field_group_is_boxed() {
     harness.configure({});
     const alone = createTemporaryObject(groupComp, root, {
@@ -552,8 +552,14 @@ TestCase {
         "tone": tone
       });
       waitForRendering(host);
-      compare(host.group.tone, tone === "page" ? "surface" : "raised", tone);
-      compare(host.group.border.width, Style.hairline, tone);
+      compare(host.group.tone, tone === "page" ? "surface" : tone, tone);
+      if (tone === "page") {
+        compare(host.group.border.width, Style.hairline);
+      } else {
+        compare(host.group.color.a, 0, tone);
+        compare(host.group.border.width, 0, tone);
+        compare(host.group.ink, host.ink, tone);
+      }
     }
   }
 

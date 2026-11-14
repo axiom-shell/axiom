@@ -5,7 +5,8 @@ import qs.config
 import qs.components.methods
 
 // A titled group of fields, as on the settings page (editor inspectors): a
-// boxed card of its own.
+// boxed card of its own on the page, flat inside a pane (no fill or border: the
+// pane's own).
 Surface {
   id: root
   property string title
@@ -15,14 +16,26 @@ Surface {
   default property alias content: groupColumn.data
 
   // The Surface it sits on: the page (or none) takes it as a surface-tone
-  // card, any other is a pane, where the card is one tone up
+  // card, any other is a pane, where the group is flat, on the pane's own fill
   readonly property var _host: InkHost.find(root.parent)
   readonly property bool _boxed: !root._host || root._host.tone === "page"
 
   Layout.fillWidth: true
   Layout.alignment: Qt.AlignTop
-  tone: root._boxed ? "surface" : "raised"
-  implicitHeight: groupColumn.implicitHeight + Style.space3 * 2
+  tone: root._boxed ? "surface" : root._host.tone
+  implicitHeight: groupColumn.implicitHeight + (root._boxed ? Style.space3 * 2 : Style.space3)
+
+  // Flat inside a pane: no fill, border or side margins; `color` returns to
+  // Surface's own binding on leaving the state
+  states: State {
+    when: !root._boxed
+    PropertyChanges {
+      root.color: "transparent"
+      root.outlined: false
+      groupColumn.anchors.leftMargin: 0
+      groupColumn.anchors.rightMargin: 0
+    }
+  }
 
   ColumnLayout {
     id: groupColumn

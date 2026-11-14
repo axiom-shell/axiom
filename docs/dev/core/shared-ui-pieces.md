@@ -48,7 +48,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `SectionHeading`: `title`-role title (text colour) + muted `caption` description, folded past three lines.
 - `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, built and shown only when it's longer. Field and card descriptions use it.
 - `FoldHeader` / `FoldingCard`: `status` and `statusColor` put a `StatusChip` centred on the chevron, kept while folded (a settings card's `x-intro` supplies them).
-- `FieldGroup`: a titled card of fields, a `Surface` (`surface` on the page or with no Surface, `raised` on any other host) with `Style.space3` margins; `headerExtras` beside the heading.
+- `FieldGroup`: a titled card of fields, a `Surface` (`surface` on the page or with no Surface; flat, no fill or border and the host's ink, inside any other Surface) with `Style.space3` margins (flat: above only); `headerExtras` beside the heading.
 - `StyledContainer`: a compatibility box (sunken fill through the surface opacity or solid, optional border and radius), kept until the last style change; use `Surface`.
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar. `StyledScrollIndicator`: a `ScrollIndicator` drawn from `Style` (a bare one draws in the user's Qt palette); every popup list uses it.
 - `KeyHint`: a keycap and what it does (`[↵] open`), for a controls hint.
