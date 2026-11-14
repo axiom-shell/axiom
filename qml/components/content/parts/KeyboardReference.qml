@@ -20,9 +20,9 @@ KeyboardMap {
   function tone(source) {
     switch (source) {
     case "axiom":
-      return "accent";
-    case "both":
       return "accentContainer";
+    case "both":
+      return "errorContainer";
     case "user":
       return "warningContainer";
     }

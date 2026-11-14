@@ -38,11 +38,11 @@ ColumnLayout {
   function tone(source) {
     switch (source) {
     case "axiom":
-      return "accent";
+      return "accentContainer";
     case "both":
       return "errorContainer";
     case "paused":
-      return "accentContainer";
+      return "highest";
     case "user":
       return "warningContainer";
     }
