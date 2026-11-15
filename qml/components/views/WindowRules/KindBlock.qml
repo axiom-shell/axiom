@@ -60,7 +60,7 @@ StyledContainer {
       StyledLabel {
         Layout.fillWidth: true
         text: I18n.tr("Kind {0}", root.k + 1)
-        font.bold: true
+        role: "label"
       }
 
       StyledIconButton {
