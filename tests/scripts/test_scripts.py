@@ -1357,7 +1357,7 @@ class HabitsScript(unittest.TestCase):
     def test_overlapping_adds_keep_every_habit(self):
         procs = [subprocess.Popen(["bash", str(self.SCRIPT), "do", "add", f"h{n}"], env=self.env) for n in range(8)]
         for proc in procs:
-            proc.wait(timeout=30)
+            self.assertEqual(proc.wait(timeout=30), 0)
         self.assertEqual(sorted(i["id"] for i in self.show()["items"]), [str(n) for n in range(1, 9)])
         self.assertFalse((self.tmp / "axiom" / "habits.tsv.lock").exists())
 

@@ -42,14 +42,10 @@ yesterday=$(date -d yesterday +%F)
 # Runs with the file locked (a directory, so it is atomic and needs nothing
 # installed): the changing actions never overlap. A lock left behind
 # (killed mid-change) is broken after 5 s, far longer than a change takes;
-# after 10 s of waiting, or when the lock can't be made at all, it gives up
+# after 10 s of waiting it gives up
 lock_file() {
   local tries=0
   while ! mkdir "$lock" 2>/dev/null; do
-    if [ ! -d "$lock" ]; then
-      mkdir "$lock" 2>/dev/null || die "can't lock $tsv"
-      break
-    fi
     tries=$((tries + 1))
     [ "$tries" -lt 100 ] || die "can't lock $tsv"
     [ "$tries" -ne 50 ] || rmdir "$lock" 2>/dev/null
@@ -109,6 +105,7 @@ commit() {
 do_action() {
   local action=${1:-} value=${2:-} id name last streak next=0
   mkdir -p "$state_dir" 2>/dev/null || die "can't make $state_dir"
+  [ -w "$state_dir" ] || die "can't make $state_dir"
   lock_file
   case "$action" in
   check)
