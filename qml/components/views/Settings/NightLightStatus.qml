@@ -48,7 +48,6 @@ ColumnLayout {
 
     StyledTextButton {
       visible: NightLightManager.available
-      implicitHeight: Widget.height - Widget.px(4)
       text: NightLightManager.active ? I18n.tr("Turn off") : I18n.tr("Turn on")
       onClicked: ActionsManager.run("nightLight", {
         "fromScreen": true

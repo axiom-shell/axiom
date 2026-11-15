@@ -111,14 +111,14 @@ Panel {
           Layout.maximumWidth: Widget.textPx(160)
         }
         StyledLabel {
-          // I18n.tr("token expired") I18n.tr("fetch failed") I18n.tr("not logged in") I18n.tr("loading…")
+          // I18n.tr("token expired") I18n.tr("fetch failed") I18n.tr("not logged in")
           readonly property var labels: ({
               "expired": "token expired",
               "error": "fetch failed",
               "missing": "not logged in"
             })
           visible: account.row.status !== "ok" && account.row.status !== "pending"
-          text: I18n.tr(labels[account.row.status] ?? "loading…")
+          text: I18n.tr(labels[account.row.status])
           role: "caption"
           tone: "warning"
           overflow: "line"

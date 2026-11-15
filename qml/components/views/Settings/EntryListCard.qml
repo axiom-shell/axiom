@@ -135,7 +135,6 @@ FoldingCard {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       iconText: "add"
       text: I18n.tr("Add")
       onClicked: root.add()
@@ -211,14 +210,12 @@ FoldingCard {
             spacing: Widget.spacing / 2
 
             StyledTextButton {
-              implicitHeight: Widget.height - Widget.px(4)
               iconText: "visibility"
               text: I18n.tr("Show")
               onClicked: root.show(root.entry.id)
             }
 
             StyledTextButton {
-              implicitHeight: Widget.height - Widget.px(4)
               iconText: "content_copy"
               text: I18n.tr("Duplicate")
               onClicked: root.duplicate()
@@ -226,7 +223,6 @@ FoldingCard {
 
             StyledTextButton {
               visible: root.entries.length > 1
-              implicitHeight: Widget.height - Widget.px(4)
               iconText: "delete"
               text: I18n.tr("Delete")
               kind: "danger"

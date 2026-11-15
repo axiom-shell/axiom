@@ -218,7 +218,6 @@ ColumnLayout {
       }
 
       StyledTextButton {
-        implicitHeight: Widget.height - Widget.px(4)
         enabled: !GreeterManager.elevating
         iconText: "delete"
         text: GreeterManager.elevating ? I18n.tr("Removing now...") : I18n.tr("Uninstall the login screen first")
@@ -342,14 +341,12 @@ ColumnLayout {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       enabled: !root.starting
       text: I18n.tr("Cancel")
       onClicked: root.closed()
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       enabled: root.canStart
       iconText: "delete_forever"
       text: I18n.tr("Remove axiom")

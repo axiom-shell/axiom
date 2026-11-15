@@ -102,13 +102,11 @@ FoldingCard {
 
     StyledTextButton {
       visible: root.confirming === "all"
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Cancel")
       onClicked: root.confirming = ""
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Undo all")
       onClicked: {
         if (root.confirming !== "all") {
@@ -199,7 +197,6 @@ FoldingCard {
 
             StyledTextButton {
               visible: root.confirming !== line.row.id
-              implicitHeight: Widget.height - Widget.px(4)
               text: I18n.tr("Undo")
               onClicked: {
                 if (line.row.inferred === true || line.row.system === true) {
@@ -225,13 +222,11 @@ FoldingCard {
               }
 
               StyledTextButton {
-                implicitHeight: Widget.height - Widget.px(4)
                 text: I18n.tr("Cancel")
                 onClicked: root.confirming = ""
               }
 
               StyledTextButton {
-                implicitHeight: Widget.height - Widget.px(4)
                 text: I18n.tr("Undo")
                 onClicked: {
                   root.confirming = "";
@@ -270,7 +265,6 @@ FoldingCard {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       iconText: "delete_forever"
       text: I18n.tr("Remove axiom from this system…")
       kind: "danger"

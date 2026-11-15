@@ -2,7 +2,7 @@
 
 A tool page that edits a list of things (custom widgets, monitors) is built from the same pieces in `qml/components/views/base/`, so every one looks and behaves alike. At the end you have a page of one or two panes: a list, and for the selected entry an inspector (and for a canvas page, a work area).
 
-**Copy from:** `qml/components/views/CustomWidgets/` (`CustomWidgets.qml` and `DefinitionsPanel.qml`: a list pinned above a script form, an inspector with an `InspectorHeader`, tabs and the empty states) and `qml/components/views/Monitors/` (a toolbar, an embedded `WorkArea` and a footer).
+**Copy from:** `qml/components/views/CustomWidgets/` (`CustomWidgets.qml` and `DefinitionsPanel.qml`: a list pinned above a script form, an inspector with an `InspectorHeader`, tabs and the empty states) and `qml/components/views/Monitors/` (a toolbar, an embedded `WorkArea` and a footer). For a `ToolBar` also read `Monitors` and `Keybinds`; for a `ListSection`, `CalendarPage` (CustomWidgets uses neither).
 **Background:** [editors pattern](../dev/core/editors-pattern.md) (the vocabulary this page follows), [shared UI pieces](../dev/core/shared-ui-pieces.md) › Tool pages, [overlay-view](overlay-view.md) (the page type itself, its schema and launcher command), [style](../dev/core/style.md)
 
 ## The shape
@@ -23,7 +23,7 @@ A tool page that edits a list of things (custom widgets, monitors) is built from
 
 ## Steps
 1. Follow [overlay-view](overlay-view.md) for the page itself.
-2. Put the list in a left `ToolPane`'s `pinned`; connect each row's `removeRequested` to the remove its × runs (with its blocked rule) and, where the page can clear its selection, `escapePressed` to that with `escapeClears: true` (otherwise leave both, so Escape closes the overlay).
+2. Put the list in a left `ToolPane`'s `pinned`; connect each row's `removeRequested` to the remove its × runs (with its blocked rule) and, where the page can clear its selection, `escapePressed` to that with `escapeClears: true` (otherwise leave both, so Escape reaches the host and closes the overlay: a list that always has a selection, as the layouts editor's, leaves it; Escape-clears is opt-in per list, for one with an empty-selection state).
 3. Put the selected entry's editor in the right `ToolPane`: an `InspectorHeader` in `pinned`, tabs in `tabModel`, the form in the body (a selection-keyed `KeyedLoader`, so nothing is built hidden).
 4. Save and Discard belong in the header of the top-right pane (`dirty`, `onSave`, `onReset`).
 

@@ -21,7 +21,8 @@ Item {
   readonly property int switchesOn: Object.values(root.editor.switches).filter(value => value === true || value?.enabled === true).length
   // The built-in switches' problems (rule "")
   readonly property int switchProblems: WindowRuleIssues.of(root.editor.report, "").length
-  // Whether the built-ins section is open (the panel remembers it)
+  // Whether the built-ins section is open: held here, not in the section, so
+  // the SwitchesGroup Loader can unload while it is closed (not persisted)
   property bool builtinsOpen: false
 
   ToolPane {

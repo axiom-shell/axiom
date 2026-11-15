@@ -105,14 +105,24 @@ QtObject {
   // instead): its band's bare backs and the ink its text colour is, from
   // config geometry, never the drawn bars (ScreenEdgeManager.bars reads this
   // floor back: a binding loop)
-  readonly property real _edgeTarget: root._edgeFloorOf(root._bars, root.revision)
-  function _edgeFloorOf(items, revision) {
+  readonly property real _edgeTarget: root._edgeFloorOf(root._barPalettes, root.revision)
+  // Each bar's palette as it draws it (an enrich per bar), kept apart from
+  // `revision` so a grid arriving re-runs only the floor, never the enrich:
+  // it follows the bars' config and the theme and appearance the enrich reads
+  readonly property var _barPalettes: BarsConfig.expandBars(root._bars).filter(bar => bar.enabled && bar.surface !== "none").map(bar => ({
+        "bar": bar,
+        "palette": BarsConfig.enrichBarConfig(bar, {}, {}).palette
+      }))
+  function _edgeFloorOf(entries, revision) {
     if (!Appearance.translucent)
       return 0;
     const bg = Style.surfacePage;
     const min = Tone.textContrast + StyleTokens.margin;
     let floor = 0;
-    for (const bar of BarsConfig.expandBars(items)) {
+    for (const {
+      bar,
+      palette
+    } of entries) {
       const screen = General.outputs.find(s => s.name === bar.monitor);
       if (!bar.enabled || bar.surface === "none" || !screen)
         continue;
@@ -121,7 +131,6 @@ QtObject {
         continue;
       // The text colour as the bar draws it (palette: Auto's or the user's
       // pick, as BarEnrich takes it)
-      const palette = BarsConfig.enrichBarConfig(bar, {}, {}).palette;
       const ref = palette.override ?? Tone.nudged([bg], palette.barText, min);
       floor = Math.max(floor, Tone.alphaFloor(bg, ref, Backdrop.backs(region, bg, 0), min));
     }

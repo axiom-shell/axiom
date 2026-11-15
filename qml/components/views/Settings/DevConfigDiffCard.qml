@@ -151,7 +151,6 @@ FieldGroup {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       enabled: !root.busy
       text: I18n.tr("Bring live changes over")
       iconText: "merge"

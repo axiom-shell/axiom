@@ -51,6 +51,9 @@ Panel {
     }
     return out;
   }
+  // Only while a first sync runs and nothing failed: a sync that never writes
+  // events.json leaves lastSync 0 for good
+  readonly property bool loading: CalendarManager.hasCalendars && CalendarManager.lastSync === 0 && CalendarManager.syncing && CalendarManager.errors.length === 0 && root.groups.length === 0 && !root.session.active
   readonly property var next: CalendarEvents.nextEvent(CalendarManager.upcoming(root.now, root.now + root.properties.days * CalendarEvents.dayMs, false), root.now, root.properties.days * CalendarEvents.dayMs, false)
 
   compactContent: CompactFigure {
@@ -129,10 +132,16 @@ Panel {
     }
   }
 
+  Skeleton {
+    visible: root.loading
+    Layout.fillWidth: true
+    lines: 3
+  }
+
   // A plain Item takes the free height (a layout's maximum would cap it,
   // and the column would spread the rest around the header)
   Item {
-    visible: !root.session.active && root.groups.length === 0
+    visible: !root.session.active && root.groups.length === 0 && !root.loading
     Layout.fillWidth: true
     Layout.fillHeight: true
 

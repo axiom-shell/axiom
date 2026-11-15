@@ -115,7 +115,6 @@ Panel {
           spacing: Widget.spacing / 2
 
           StyledTextButton {
-            implicitHeight: Widget.height - Widget.px(4)
             iconText: "power_settings_new"
             text: I18n.tr("Turn off")
             onClicked: ActionsManager.run("idleInhibit", {
@@ -124,7 +123,6 @@ Panel {
             })
           }
           StyledTextButton {
-            implicitHeight: Widget.height - Widget.px(4)
             iconText: "timer"
             text: I18n.tr("Set a timer")
             onClicked: root.pickingTimer = true
@@ -170,7 +168,6 @@ Panel {
   StyledTextButton {
     visible: root.pickingTimer
     Layout.alignment: Qt.AlignHCenter
-    implicitHeight: Widget.height - Widget.px(4)
     iconText: "arrow_back"
     text: I18n.tr("Keep on with no timer")
     onClicked: root.pickingTimer = false

@@ -274,7 +274,6 @@ Item {
 
       StyledTextButton {
         visible: root.foldableKeys.length > 0
-        Layout.preferredHeight: Widget.height - Widget.px(4)
         text: root.allFolded ? I18n.tr("Unfold all") : I18n.tr("Fold all")
         iconText: root.allFolded ? "unfold_more" : "unfold_less"
         onClicked: root.setAllFolded(!root.allFolded)
@@ -295,7 +294,6 @@ Item {
 
         delegate: StyledTextButton {
           required property string modelData
-          Layout.preferredHeight: Widget.height - Widget.px(4)
           text: OverlayManager.pageLinkLabel(modelData)
           iconText: OverlayManager.pageLinkIcon(modelData)
           onClicked: OverlayManager.followPageLink(modelData)

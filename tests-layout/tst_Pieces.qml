@@ -928,4 +928,159 @@ TestCase {
     compare(sw.background.radius, Style.radiusInner);
     compare(sw.indicator.radius, StyleTokens.concentric(Style.radiusInner, Widget.px(2), Style.radiusMin));
   }
+
+  Component {
+    id: stateComp
+
+    Rectangle {
+      width: 100
+      height: 40
+      radius: 6
+
+      StateLayer {
+        objectName: "layer"
+      }
+    }
+  }
+
+  Component {
+    id: ringComp
+
+    Rectangle {
+      width: 100
+      height: 40
+      radius: 6
+
+      FocusRing {
+        objectName: "ring"
+      }
+    }
+  }
+
+  Component {
+    id: skeletonComp
+
+    Skeleton {
+      width: 300
+    }
+  }
+
+  Component {
+    id: trackComp
+
+    SegmentTrack {
+      width: 300
+      height: 40
+      count: 3
+    }
+  }
+
+  Component {
+    id: motionComp
+
+    MotionListView {
+      width: 100
+      height: 100
+      model: 3
+      delegate: Item {
+        required property int index
+
+        width: 100
+        height: 20
+      }
+    }
+  }
+
+  // The state tint: rest, hover, press (over hover), drag and the on-accent set
+  function test_state_layer_tints_by_state() {
+    harness.configure({});
+    const host = createTemporaryObject(stateComp, root);
+    const layer = host.children[0];
+    compare(layer.width, host.width);
+    tryCompare(layer, "color", Style.stateRest);
+    layer.hovered = true;
+    layer.pressed = true;
+    tryCompare(layer, "color", Style.statePressed);
+    layer.pressed = false;
+    layer.dragged = true;
+    tryCompare(layer, "color", Style.stateDrag);
+    layer.dragged = false;
+    tryCompare(layer, "color", Style.stateHover);
+    layer.onAccent = true;
+    tryCompare(layer, "color", Style.stateOnAccentHover);
+    layer.hovered = false;
+    tryCompare(layer, "color", Style.stateOnAccentRest);
+    layer.bleed = 4;
+    compare(layer.width, host.width + 8);
+  }
+
+  // The ring shows only with `shown`, sits outside its parent and follows its radius
+  function test_focus_ring_follows_its_parent() {
+    harness.configure({});
+    const host = createTemporaryObject(ringComp, root);
+    const ring = host.children[0];
+    compare(ring.visible, false);
+    ring.shown = true;
+    compare(ring.visible, true);
+    compare(ring.radius, host.radius + Style.focusWidth);
+    compare(ring.width, host.width + Style.focusWidth * 2);
+    compare(ring.x, -Style.focusWidth);
+    host.radius = 10;
+    compare(ring.radius, 10 + Style.focusWidth);
+  }
+
+  // The skeleton makes one bar per line, the last shorter, and an avatar on request
+  function test_skeleton_bars_and_avatar() {
+    harness.configure({});
+    const sk = createTemporaryObject(skeletonComp, root, {
+      "lines": 3
+    });
+    waitForRendering(sk);
+    const bars = findAll(sk, it => it.last !== undefined && it.height === sk._bar);
+    compare(bars.length, 3);
+    const widths = bars.slice(0, 3).map(b => b.width);
+    verify(widths[2] < widths[0], "the last bar is shorter: " + widths);
+    const one = createTemporaryObject(skeletonComp, root, {
+      "lines": 1
+    });
+    waitForRendering(one);
+    const only = findAll(one, it => it.last !== undefined && it.height === one._bar);
+    verify(only.length > 0 && Math.abs(only[0].width - one.width) < 1, "a single line spans the width");
+    const discs = it => findAll(it, c => c.radius !== undefined && c.width === Style.iconLg && c.height === Style.iconLg && c.visible);
+    compare(discs(one).length, 0);
+    one.avatar = true;
+    waitForRendering(one);
+    compare(discs(one).length, 1);
+  }
+
+  // The thumb sits under segment `index`, as wide as a segment, with corners concentric in the track
+  function test_segment_track_thumb_follows_index() {
+    harness.configure({});
+    const track = createTemporaryObject(trackComp, root);
+    waitForRendering(track);
+    const thumb = findAll(track, it => it.tone === Style.segmentThumbTone && it !== track)[0];
+    verify(thumb !== undefined, "has a thumb");
+    compare(thumb.width, Math.round(track._segment));
+    tryCompare(thumb, "x", Math.round(track.inset));
+    track.index = 2;
+    tryCompare(thumb, "x", Math.round(track.inset + 2 * track._segment));
+    compare(thumb.radius, StyleTokens.concentric(track.radius, track.inset, Style.radiusMin));
+    compare(thumb.height, track.height - track.inset * 2);
+    track.count = 0;
+    verify(track._segment > 0 && isFinite(track._segment), "an empty track does not divide by zero");
+  }
+
+  // The first model fill never animates unless asked; later changes do (with the shell's animations)
+  function test_motion_list_view_skips_first_fill() {
+    harness.configure({});
+    const view = createTemporaryObject(motionComp, root);
+    compare(view._settled, false);
+    compare(view._animate, false);
+    tryCompare(view, "_settled", true);
+    compare(view._animate, Appearance.animations);
+    const first = createTemporaryObject(motionComp, root, {
+      "animateFirstFill": true
+    });
+    compare(first._animate, Appearance.animations);
+  }
 }

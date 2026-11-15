@@ -572,8 +572,6 @@ QtObject {
 
   // ---- motion ----
 
-  // card enter stagger
-  readonly property int staggerStep: Math.round(Appearance.animFast * 0.3)
   // how far a streamed card or a list row slides in
   readonly property int enterOffset: Widget.px(8)
   // behaviour timing: the skeleton shimmer

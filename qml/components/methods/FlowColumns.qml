@@ -51,13 +51,13 @@ QtObject {
     });
   }
 
-  // Whether row `i` continues the unit of the row before it: an `x-beside`
-  // row, a dependent row or a row another field draws, in the same context
   // A row that spans the row area: a heading, or an `x-wide` field (or `x-row` object)
   function _wide(row) {
     return root._heading(row) || row.schema?.["x-wide"] === true;
   }
 
+  // Whether row `i` continues the unit of the row before it: an `x-beside`
+  // row, a dependent row or a row another field draws, in the same context
   function _continues(rows, contexts, i) {
     if (i === 0 || root._wide(rows[i]) || root._wide(rows[i - 1]) || contexts[i] !== contexts[i - 1])
       return false;

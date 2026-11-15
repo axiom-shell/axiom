@@ -171,7 +171,6 @@ ColumnLayout {
         StyledTextButton {
           visible: item.restartable
           Layout.topMargin: Widget.spacing / 2
-          implicitHeight: Widget.height - Widget.px(4)
           iconText: "restart_alt"
           text: I18n.tr("Restart the portal")
           onClicked: RecommendedSetupManager.restartPortal()

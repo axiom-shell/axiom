@@ -202,7 +202,6 @@ FormRow {
 
     StyledTextButton {
       visible: root.removable
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove its changes")
       onClicked: {
         root.askedSystem = root.systemCount > 0;
@@ -223,14 +222,12 @@ FormRow {
     // Keep is the default: nothing happens unless Remove is clicked
     StyledTextButton {
       visible: root.confirmInferred
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Keep")
       onClicked: root.askedInferred = false
     }
 
     StyledTextButton {
       visible: root.confirmInferred
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove")
       onClicked: {
         root.askedInferred = false;
@@ -248,14 +245,12 @@ FormRow {
     // Keep is the default: nothing happens unless Put back is clicked
     StyledTextButton {
       visible: root.confirmSystem
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Keep")
       onClicked: root.askedSystem = false
     }
 
     StyledTextButton {
       visible: root.confirmSystem
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Put back")
       onClicked: {
         root.askedSystem = false;
