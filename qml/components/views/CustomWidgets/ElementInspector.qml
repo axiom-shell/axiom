@@ -89,19 +89,16 @@ ColumnLayout {
       "state": I18n.tr("State"),
       "min": I18n.tr("Min"),
       "max": I18n.tr("Max"),
-      "placeholder": I18n.tr("Placeholder"),
-      "enabled": I18n.tr("Enabled")
+      "placeholder": I18n.tr("Placeholder")
     };
     return titles[name] ?? name;
   }
 
   // What an empty slot means. Most fall back to the output's own key; a
-  // Button's label to its action's name; `enabled` is always on; a Button's
+  // Button's label to its action's name; a Button's
   // icon and value, a Toggle's label and an Entry's placeholder are empty
   function slotPlaceholder(name) {
     const type = root.element?.type ?? "";
-    if (name === "enabled")
-      return I18n.tr("Always");
     if (type === "Button")
       return name === "label" ? I18n.tr("The action's name") : "";
     if (type === "Entry" || (type === "Toggle" && name === "label"))
@@ -113,6 +110,27 @@ ColumnLayout {
   function slotDescription(name) {
     return root.element?.type === "Button" && name === "value" ? I18n.tr("Sent to the action as {value}") : "";
   }
+
+  // The tests a Visible or Enabled condition offers: the rule tests, then
+  // has a value / is empty and is on / is off (CustomWidgetData.holds)
+  readonly property var conditionTests: root.editor.ruleTests.concat([
+    {
+      "value": "set",
+      "label": I18n.tr("has a value")
+    },
+    {
+      "value": "unset",
+      "label": I18n.tr("is empty")
+    },
+    {
+      "value": "on",
+      "label": I18n.tr("is on")
+    },
+    {
+      "value": "off",
+      "label": I18n.tr("is off")
+    }
+  ])
 
   spacing: Widget.spacing * 2
 
@@ -292,6 +310,15 @@ ColumnLayout {
               writeRun: value => root.editor.setElement(["run", trigger.modelData], value)
             }
           }
+
+          ConditionRows {
+            label: I18n.tr("Enabled")
+            value: root.element?.enabledWhen ?? ({})
+            keys: root.colorKeys
+            tests: root.conditionTests
+            whenTest: "on"
+            write: (field, value) => root.editor.setElement(["enabledWhen", field], value)
+          }
         }
       }
 
@@ -304,83 +331,16 @@ ColumnLayout {
         }
 
         ColumnLayout {
-          id: vis
-          readonly property var when: root.element?.showWhen ?? ({})
-          readonly property bool on: (vis.when.test ?? "always") !== "always"
-          readonly property bool needsValue: ["is", "isNot", "above", "below"].includes(vis.when.test ?? "")
           Layout.fillWidth: true
           spacing: 0
 
-          InspectorRow {
+          ConditionRows {
             first: true
             label: I18n.tr("Show")
-
-            StyledToggle {
-              Layout.fillWidth: true
-              options: ["always", "when"]
-              labels: ({
-                  "always": I18n.tr("Always"),
-                  "when": I18n.tr("When")
-                })
-              value: vis.on ? "when" : "always"
-              onPicked: value => root.editor.setElement(["showWhen", "test"], value === "always" ? "always" : "is")
-            }
-          }
-
-          InspectorRow {
-            indented: true
-            shown: vis.on
-
-            KeyField {
-              Layout.fillWidth: true
-              keys: root.colorKeys
-              value: vis.when.key ?? ""
-              onPicked: value => root.editor.setElement(["showWhen", "key"], value)
-            }
-          }
-
-          InspectorRow {
-            indented: true
-            shown: vis.on
-
-            RowLayout {
-              Layout.fillWidth: true
-              spacing: Widget.spacing
-
-              StyledComboEntry {
-                Layout.preferredWidth: Widget.px(120)
-                Layout.fillWidth: !vis.needsValue
-                value: vis.when.test ?? "always"
-                options: root.editor.ruleTests.concat([
-                  {
-                    "value": "set",
-                    "label": I18n.tr("has a value")
-                  },
-                  {
-                    "value": "unset",
-                    "label": I18n.tr("is empty")
-                  }
-                ])
-                // Always has no row of its own: the toggle above is its place
-                onPicked: value => root.editor.setElement(["showWhen", "test"], value)
-              }
-
-              StyledTextEntry {
-                id: whenValue
-                visible: vis.needsValue
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                placeholderText: I18n.tr("Value")
-                onTextEdited: root.editor.setElement(["showWhen", "value"], whenValue.text)
-                Binding {
-                  target: whenValue
-                  property: "text"
-                  value: vis.when.value ?? ""
-                  when: !whenValue.input.activeFocus
-                  restoreMode: Binding.RestoreNone
-                }
-              }
-            }
+            value: root.element?.showWhen ?? ({})
+            keys: root.colorKeys
+            tests: root.conditionTests
+            write: (field, value) => root.editor.setElement(["showWhen", field], value)
           }
         }
       }

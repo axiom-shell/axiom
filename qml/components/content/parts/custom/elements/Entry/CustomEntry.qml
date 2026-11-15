@@ -20,7 +20,7 @@ CustomElementBase {
     height: Math.min(parent.height, implicitHeight)
     y: root.placeY(height)
     placeholderText: root.text("placeholder")
-    enabled: root.actionsEnabled && root.keysHost
+    enabled: root.actionsEnabled && root.keysHost && root.allowed
     onAccepted: {
       const refused = root.runTrigger("submit", field.text);
       if (refused === "" && root.options.clear)

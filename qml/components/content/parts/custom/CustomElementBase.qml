@@ -141,11 +141,15 @@ Item {
     }, root.run[trigger] ?? "");
   }
 
-  // Whether `trigger` does something now: actions on, an action picked, the
-  // sample leaves it on and, for a command, the script can run it
+  // Its Enabled condition (enabledWhen) holds for the current sample
+  readonly property bool allowed: CustomWidgetData.shown(root.element?.enabledWhen, root.fields, root.own)
+
+  // Whether `trigger` does something now: actions on, an action picked, its
+  // Enabled condition holds, the sample leaves it on and, for a command, the
+  // script can run it
   function canRun(trigger) {
     const item = root.actionFor(trigger);
-    if (!root.actionsEnabled || item === null)
+    if (!root.actionsEnabled || item === null || !root.allowed)
       return false;
     if (!CustomWidgetData.actionEnabled(root.fields?.actions, item))
       return false;

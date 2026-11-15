@@ -246,7 +246,7 @@ ColumnLayout {
     description: I18n.tr("Typed text is literal; braces read the output.")
 
     Para {
-      text: I18n.tr("What you type in a field (Shows) is shown as typed: Hello shows Hello. {path} reads the output: {text}, {player.title}, {items.0.text}. A field holding only one {path} gets the value itself (a number, a list); text around it, such as {value}% or {title} by {artist}, is filled in as one line. A {path} the output doesn't have stays as typed, and the editor warns about it. Empty: the output's own key for that field. Every element also has Visible (hidden while a test fails) and colours (Color by state).")
+      text: I18n.tr("What you type in a field (Shows) is shown as typed: Hello shows Hello. {path} reads the output: {text}, {player.title}, {items.0.text}. A field holding only one {path} gets the value itself (a number, a list); text around it, such as {value}% or {title} by {artist}, is filled in as one line. A {path} the output doesn't have stays as typed, and the editor warns about it. Empty: the output's own key for that field. Every element also has Visible (hidden while a test fails) and colours (Color by state). An element that runs actions also has Enabled: its actions do not run, and a Button dims or hides, while its test fails (is on and is off read a value as on or off: false, 0, no and off are off).")
     }
     // By count over the schema's element kinds
     Repeater {

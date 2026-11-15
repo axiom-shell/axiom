@@ -1,7 +1,7 @@
 label: Button
 icon: smart_button
 defaultSize: [3, 1]
-slots: [label, icon, value, enabled]
+slots: [label, icon, value]
 actions: [click]
 color: button
 size: text

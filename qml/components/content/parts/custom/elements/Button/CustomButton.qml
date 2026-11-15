@@ -9,10 +9,10 @@ import qs.components.content.parts.custom
 // A custom widget's Button element: an icon and label (each its text field,
 // the label, else the action's name unless it has an icon: an icon alone) that run its click action
 // (`value` is the {value}; off while the sample, a hold or a failing script
-// turns it off, or its `enabled` slot is false); with no action it does
+// turns it off, or its Enabled condition fails); with no action it does
 // nothing. A `background` fills it in that colour (and `textColor` its text; each can
 // change by a rule); `disabled: hide`
-// hides it while the script or its `enabled` binding has it off (not for a
+// hides it while the script or its Enabled condition has it off (not for a
 // hold or a failure). A failed run flashes it and its tooltip says why. With
 // `confirm` the first press turns its label into "Confirm?" (red) for 3
 // seconds and the second runs it.
@@ -23,8 +23,8 @@ CustomElementBase {
   property bool asking: false
   readonly property string label: root.asking ? I18n.tr("Confirm?") : root.bind.label ? root.text("label") : root.bind.icon ? "" : (root.actionFor("click")?.name ?? "")
   readonly property string icon: root.text("icon")
-  // Its `enabled` binding has it off
-  readonly property bool slotOff: !!root.bind.enabled && !CustomWidgetData.truthy(root.value("enabled"))
+  // Its Enabled condition has it off
+  readonly property bool slotOff: !root.allowed
   // The script or the binding has it off
   readonly property bool off: (root.actionFor("click") !== null && !CustomWidgetData.actionEnabled(root.fields?.actions, root.actionFor("click"))) || root.slotOff
   readonly property bool pressable: root.canRun("click") && !root.slotOff

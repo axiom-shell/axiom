@@ -768,6 +768,13 @@ TestCase {
     compare(CustomWidgetData.holds("below", "80", "80"), false);
     compare(CustomWidgetData.holds("above", "high", "80"), false, "a word is no number");
     compare(CustomWidgetData.holds("below", "high", "80"), false);
+    compare(CustomWidgetData.holds("on", true, ""), true, "on: a true");
+    compare(CustomWidgetData.holds("on", "yes", ""), true, "on: a word of on");
+    for (const off of [false, "false", 0, "0", "no", "off", "", undefined])
+      compare(CustomWidgetData.holds("on", off, ""), false, "on: " + off + " is off");
+    compare(CustomWidgetData.holds("off", "no", ""), true, "off: no");
+    compare(CustomWidgetData.holds("off", undefined, ""), true, "off: nothing");
+    compare(CustomWidgetData.holds("off", "on", ""), false, "off: on");
     compare(CustomWidgetData.holds("above", "5", ""), false, "no operand");
     compare(CustomWidgetData.holds("set", "0", ""), true, "text \"0\" is a value");
     compare(CustomWidgetData.holds("set", 0, ""), false, "the number 0");
@@ -970,6 +977,26 @@ TestCase {
       "test": "set",
       "key": ""
     }, f, ""), "nothing shown: not set");
+    verify(CustomWidgetData.shown({
+      "test": "on",
+      "key": "on"
+    }, f, "own"), "on reads a true");
+    verify(!CustomWidgetData.shown({
+      "test": "on",
+      "key": "blank"
+    }, f, "own"), "an empty value is off");
+    verify(!CustomWidgetData.shown({
+      "test": "on",
+      "key": "zero"
+    }, f, "own"), "\"0\" is off, unlike set");
+    verify(CustomWidgetData.shown({
+      "test": "off",
+      "key": "missing"
+    }, f, "own"), "a missing key is off");
+    verify(!CustomWidgetData.shown({
+      "test": "off",
+      "key": "on"
+    }, f, "own"), "off while on");
   }
 
   function test_colorFields() {

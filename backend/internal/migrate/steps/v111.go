@@ -14,7 +14,8 @@ import (
 //  2. Button and Toggle `options.label` / `options.icon` move into `bind`;
 //  3. bar and element command strings become `actions.items` entries that
 //     `bar.run` and each element's `run` point at;
-//  4. `states` and Text's `stateColor` become colour rules (`colorStates`).
+//  4. `states` and Text's `stateColor` become colour rules (`colorStates`);
+//  5. a Button's `bind.enabled` becomes `enabledWhen` (one `{path}`) or goes.
 //
 // A definition whose `actions.items` is already an array is done and skipped
 // whole; every definition changed gets that array (empty when no action was
@@ -118,6 +119,13 @@ func v111Definition(def *jsonx.Object) []string {
 	if v111Labels(elements) {
 		add("labels moved into fields")
 	}
+	enabled, dropped := v111Enabled(elements)
+	if enabled {
+		add("enabled became a condition")
+	}
+	for _, id := range dropped {
+		add(fmt.Sprintf("%s enabled: not a value, dropped", id))
+	}
 	made := jsonx.Arr()
 	if v111Commands(def, actions, bar, elements, made) {
 		add("commands became actions")
@@ -203,6 +211,39 @@ func v111Labels(elements []*jsonx.Object) bool {
 		}
 	}
 	return changed
+}
+
+var v111OnePath = regexp.MustCompile(`^\{([^{}]+)\}$`)
+
+// v111Enabled turns a Button's `bind.enabled` that is exactly one `{path}`
+// into `enabledWhen: {test: on, key: path}`; any other non-empty text is
+// dropped (its element id is returned); the binding is deleted either way
+func v111Enabled(elements []*jsonx.Object) (bool, []string) {
+	changed := false
+	var dropped []string
+	for _, el := range elements {
+		if el.Value("type") != "Button" {
+			continue
+		}
+		bind, _ := el.Value("bind").(*jsonx.Object)
+		if bind == nil || !bind.Has("enabled") {
+			continue
+		}
+		text, _ := bind.Value("enabled").(string)
+		bind.Delete("enabled")
+		if strings.TrimSpace(text) == "" {
+			changed = true
+			continue
+		}
+		if m := v111OnePath.FindStringSubmatch(strings.TrimSpace(text)); m != nil {
+			el.Set("enabledWhen", jsonx.Obj("test", "on", "key", strings.TrimSpace(m[1])))
+			changed = true
+			continue
+		}
+		id, _ := el.Value("id").(string)
+		dropped = append(dropped, id)
+	}
+	return changed, dropped
 }
 
 func v111Action(id, name, command string) *jsonx.Object {

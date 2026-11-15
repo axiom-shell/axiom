@@ -138,6 +138,8 @@ properties:
     additionalProperties: {type: string}
     description: 'Per field: typed text is shown as it is; {path} inserts a value from the output ({cpu}, {player.title}). Exactly one {path} passes the value itself (a list, a number). Empty: the output''s own key.'
   showWhen: {$ref: '#/definitions/CustomShowWhen'}
+  # Kinds with actions: off while its test fails (the actions don't run)
+  enabledWhen: {$ref: '#/definitions/CustomShowWhen', title: Enabled}
   options: {type: object, additionalProperties: false, properties: {}}
   run:
     type: object

@@ -578,6 +578,7 @@ QtObject {
   //   above / below: both as numbers (parseFloat, so "85%" is 85); false
   //                  when either isn't one
   //   set / unset: has a value (text counts, even "0"), then not
+  //   on / off: truthy (false, "false", 0, no, off and "" are off), then not
   //   always: true
   function holds(test, value, operand) {
     switch (test) {
@@ -600,6 +601,10 @@ QtObject {
       return root._isSet(value);
     case "unset":
       return !root._isSet(value);
+    case "on":
+      return root.truthy(value);
+    case "off":
+      return !root.truthy(value);
     }
     return false;
   }

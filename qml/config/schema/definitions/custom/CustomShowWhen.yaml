@@ -1,5 +1,6 @@
 # The CustomShowWhen definition (#/definitions/CustomShowWhen): when a custom
-# widget element is shown (its Visible setting), read from the output
+# widget element is shown (its Visible setting) or can run its actions (its
+# Enabled setting), read from the output
 # (docs/dev/features/custom-widgets.md).
 
 type: object
@@ -9,8 +10,8 @@ properties:
   test:
     type: string
     title: Show
-    enum: [always, is, isNot, above, below, set, unset]
+    enum: [always, is, isNot, above, below, set, unset, 'on', 'off']
     default: always
-    x-enumLabels: {always: Always, is: When it is, isNot: When it is not, above: When above, below: When below, set: When set, unset: When not set}
+    x-enumLabels: {always: Always, is: When it is, isNot: When it is not, above: When above, below: When below, set: When set, unset: When not set, 'on': When on, 'off': When off}
   key: {type: string, title: Key, default: '', description: 'Empty: what the element shows.'}
   value: {type: string, title: Value, default: ''}
