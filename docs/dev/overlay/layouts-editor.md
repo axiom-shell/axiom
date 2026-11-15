@@ -32,7 +32,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - The five drafts are one list, `OverlayManager.drafts` (each with `isDirty`, `problems`, `ensureLoaded()`, `saveChanges()`, `resetChanges()`), and everything takes them from it: `layoutsDirty`, `layoutsProblems` (the dirty ones': what blocks Save and "Can't save yet" lists, so a saved layout nobody touched never blocks the others), `loadLayouts()` (on page open), `saveLayouts()` / `resetLayouts()` (the dirty ones). Save/Discard on the canvas and `EditsManager`'s Save all / Discard all call those, and `EditsManager` lists the page as unsaved while `layoutsDirty`. A new draft is a new entry in `drafts`.
 
 ### Layout of the page
-- `LayoutsPanel` on the left (a `ToolPane` "Layouts"); on the right `GridCanvas` (a `WorkArea`, its well at most `Widget.px(400)` tall) above `EditorInspector`, placed by `LayoutsEditorLayout` from the page's whole-pixel sizes (`BaseView.pageHeight`, `sideWidth`); a `GridDragLayer` covering it all.
+- `LayoutsPanel` on the left (a `ToolPane` "Layouts"); on the right `GridCanvas` (a `WorkArea`, its well filling the canvas card) above `EditorInspector`, placed by `LayoutsEditorLayout` from the page's whole-pixel sizes (`BaseView.pageHeight`, `sideWidth`); a `GridDragLayer` covering it all.
 - Streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)): the side panel, each canvas tile (the tile's place and size are the loader's, so it glides as before) and the module library, built once and kept while a module's options show over it. The canvas and inspector themselves stay, reached through `LayoutsEditorLayout.canvas` / `inspector`.
 
 ### Left panel (`LayoutsPanel`)
