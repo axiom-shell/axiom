@@ -788,4 +788,47 @@ TestCase {
     verify(settledAt >= 0 && settledAt <= Appearance.animNormal + 60, "settled after " + settledAt + " ms");
     tryVerify(() => Math.abs(mark.x - left) < 0.5 && Math.abs(mark.width - width) < 0.5);
   }
+
+  Component {
+    id: switchComp
+
+    StyledSwitch {}
+  }
+
+  function test_switch_knob_follows_its_track_data() {
+    return [{ "tag": "100", "scale": 100 }, { "tag": "150", "scale": 150 }];
+  }
+
+  // The knob's corners are concentric in the track, whatever the track's radius
+  function test_switch_knob_follows_its_track(data) {
+    harness.configure({ "scale": data.scale });
+    const sw = createTemporaryObject(switchComp, root);
+    waitForRendering(sw);
+    compare(sw.indicator.radius, StyleTokens.concentric(sw.background.radius, Widget.px(2), Style.radiusMin));
+    sw.background.radius = Widget.px(5);
+    compare(sw.indicator.radius, StyleTokens.concentric(Widget.px(5), Widget.px(2), Style.radiusMin));
+  }
+
+  // The stepper's buttons have corners concentric in their box
+  function test_stepper_buttons_are_concentric_in_their_box() {
+    harness.configure({});
+    const stepper = createTemporaryObject(numberComp, root, { "width": 500, "mode": "stepper" });
+    waitForRendering(stepper);
+    const box = findAll(stepper, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
+    const buttons = findAll(stepper, it => it.autoRepeat !== undefined && it.visible);
+    verify(buttons.length >= 2, "the stepper shows its buttons");
+    for (const b of buttons) {
+      compare(b.borderRadius, StyleTokens.concentric(box.radius, stepper.containerMargins, Style.radiusMin));
+      verify(b.borderRadius < box.radius, "inner corners tighter than the box's");
+    }
+  }
+
+  // The switch track is the toggle's shape (the switch-shape FLAG)
+  function test_switch_takes_the_toggle_shape() {
+    harness.configure({});
+    const sw = createTemporaryObject(switchComp, root);
+    waitForRendering(sw);
+    compare(sw.background.radius, Style.radiusInner);
+    compare(sw.indicator.radius, StyleTokens.concentric(Style.radiusInner, Widget.px(2), Style.radiusMin));
+  }
 }
