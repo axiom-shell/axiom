@@ -1611,6 +1611,29 @@ TestCase {
     ], element).place, element.place, "the same place");
   }
 
+  function test_bindChoicesEdges() {
+    compare(CustomWidgetData.bindChoices([
+      {
+        "constructor": 1,
+        "toString": "x"
+      }
+    ]).map(c => c.path), ["constructor", "toString"], "paths named like Object keys");
+    compare(CustomWidgetData.bindChoices([
+      {
+        "a": 1,
+        "b": 2,
+        "c": 3
+      }
+    ], 2).length, 2, "the cap");
+    const long = CustomWidgetData.bindChoices([
+      {
+        "t": "x".repeat(41)
+      }
+    ])[0].preview;
+    compare(long.length, 40, "a long leaf's preview");
+    verify(long.endsWith("…"));
+  }
+
   function test_bindChoices() {
     const choices = CustomWidgetData.bindChoices([
       {
@@ -1730,11 +1753,13 @@ TestCase {
     compare(CustomWidgetData.fromExport("{\"command\": \"a\", \"id\": \"q\"}").definitions[0].id, undefined, "a bare definition, id dropped");
     compare(CustomWidgetData.fromExport("[" + text + ", {\"module\": {}}]").definitions.length, 2, "a list of either");
     compare(CustomWidgetData.fromExport("// c\n{\"command\": \"a\",}").error, "", "comments and trailing commas");
-    verify(CustomWidgetData.fromExport("{nope").error.startsWith("Not valid JSON"), "bad JSON");
-    verify(CustomWidgetData.fromExport("{\"name\": \"x\"}").error !== "", "no module and no command");
-    verify(CustomWidgetData.fromExport("[1]").error !== "", "not objects");
-    verify(CustomWidgetData.fromExport("{\"axiomCustomWidget\": 2, \"definition\": {\"command\": \"a\"}}").error !== "", "a newer wrapper");
-    compare(CustomWidgetData.fromExport("[]").error, "Nothing in it.");
+    const nope = CustomWidgetData.fromExport("{nope");
+    compare(nope.error, "json", "bad JSON");
+    verify(nope.detail !== "", "with its detail");
+    compare(CustomWidgetData.fromExport("{\"name\": \"x\"}").error, "noModule", "no module and no command");
+    compare(CustomWidgetData.fromExport("[1]").error, "notWidget", "not objects");
+    compare(CustomWidgetData.fromExport("{\"axiomCustomWidget\": 2, \"definition\": {\"command\": \"a\"}}").error, "newer", "a newer wrapper");
+    compare(CustomWidgetData.fromExport("[]").error, "empty");
   }
 
   function test_readImport() {
@@ -1746,8 +1771,8 @@ TestCase {
     compare(waybar.definitions[0].command, "a.sh");
     const bad = CustomWidgetData.readImport("{\"nothing\": 1}");
     compare(bad.kind, "");
-    verify(bad.error !== "");
-    verify(CustomWidgetData.readImport("{nope").error.startsWith("Not valid JSON"));
+    compare(bad.error, "neither");
+    compare(CustomWidgetData.readImport("{nope").error, "json");
   }
 
   function test_pushLogAndKeys() {
@@ -1762,7 +1787,8 @@ TestCase {
   function test_templates() {
     const names = CustomWidgetData.galleryPresets.map(p => p.name);
     compare(names, ["Daily habits", "Toggle", "Slider", "List with a row action", "Media card", "Status with an error screen"]);
-    compare(CustomWidgetData.scriptPresets.some(p => p.template), false, "the known scripts have commands");
+    verify(CustomWidgetData.scriptPresets.map(p => p.name).includes("Daily habits"), "Daily habits is also a known script");
+    compare(CustomWidgetData.scriptPresets.every(p => !!p.command), true, "the known scripts have commands");
     for (const t of CustomWidgetData.galleryPresets) {
       const module = t.module;
       const ids = CustomWidgetData.allElements(module).map(e => e.id);
@@ -1877,6 +1903,11 @@ TestCase {
     compare(CustomWidgetData.renameKey(map, "b", "x").x, 2);
     verify(CustomWidgetData.renameKey(map, "b", "") === map, "an empty name: as it is");
     verify(CustomWidgetData.renameKey(map, "b", "c") === map, "a taken name: as it is");
+    verify("constructor" in CustomWidgetData.renameKey({
+      "a": 1
+    }, "a", "constructor") && Object.keys(CustomWidgetData.renameKey({
+      "a": 1
+    }, "a", "constructor")).includes("constructor"), "a name on the prototype is free");
     verify(CustomWidgetData.renameKey(map, "b", "b") === map, "the same name");
     compare(map.b, 2, "not changed in place");
   }

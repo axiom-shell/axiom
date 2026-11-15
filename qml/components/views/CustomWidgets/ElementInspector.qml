@@ -8,11 +8,10 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.views.Layouts
 
-// Custom widgets page, Module tab: the element library (shown while no
-// element is selected), then the selected
-// element's bindings (each slot: the output's own key, a path in it, a
-// format or a number), its look (its kind's options,
-// CustomWidgetsConfig.elementKinds) and the commands it runs.
+// Custom widgets page, Module tab: the element library (always there, a
+// folding group), then the selected element's bindings (each slot: the
+// output's own key, a path in it, a format or a number), its look (its
+// kind's options, CustomWidgetsConfig.elementKinds) and the commands it runs.
 ColumnLayout {
   id: root
 
@@ -70,14 +69,13 @@ ColumnLayout {
     if (action === "" || action.startsWith("axiom:") || command === "")
       return "";
     const fields = root.editor.previewFields;
+    // The element's own value when it binds one, else empty (as at runtime)
     const values = {
       "action": action,
       "rev": CustomWidgetData.asText(fields?.rev),
-      "tree": Paths.treePath
+      "tree": Paths.treePath,
+      "value": root.element.bind?.value && fields ? CustomWidgetData.asText(CustomWidgetData.elementValue(fields, root.element.bind.value)) : ""
     };
-    // The element's own value, when it binds one
-    if (root.element.bind?.value && fields)
-      values.value = CustomWidgetData.asText(CustomWidgetData.elementValue(fields, root.element.bind.value));
     return CustomWidgetData.fillCommand(command, values);
   }
 
@@ -89,7 +87,11 @@ ColumnLayout {
       root.editor.setElement(["bind", root.lastSlot.slice(at + 1)], path);
       return;
     }
+    // A full module adds nothing: then there is no new element to bind
+    const was = root.grid.selected;
     root.grid.addModule("Text");
+    if (root.grid.selected === was)
+      return;
     root.editor.setElement(["bind", "text"], path);
   }
 
@@ -121,7 +123,8 @@ ColumnLayout {
   // The library: drag one onto the module, or click it to add it where
   // there's room. Always there, as a group that folds away
   FoldingSection {
-    title: I18n.tr("Elements")
+    title: I18n.tr("Add an element")
+    description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
     collapsed: root.libraryFolded
     onToggled: root.libraryFolded = !root.libraryFolded
 
@@ -192,7 +195,13 @@ ColumnLayout {
           Layout.fillWidth: true
           placeholderText: I18n.tr(root.kind?.label ?? "")
           onTextEdited: root.editor.setElement(["name"], nameEntry.text)
-          Component.onCompleted: nameEntry.text = root.element?.name ?? ""
+          Binding {
+            target: nameEntry
+            property: "text"
+            value: root.element?.name ?? ""
+            when: !nameEntry.input.activeFocus
+            restoreMode: Binding.RestoreNone
+          }
         }
       }
 
@@ -253,7 +262,7 @@ ColumnLayout {
               text: slot.now.missing ? I18n.tr("Nothing at this path in the previewed sample") : I18n.tr("now: {0}", slot.now.text)
               role: "caption"
               tone: slot.now.missing ? "warning" : "muted"
-              textFamily: slot.now.missing ? "" : "monospace"
+              textFamily: slot.now.missing ? Appearance.fontFamily : "monospace"
               overflow: "line"
             }
           }

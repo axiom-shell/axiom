@@ -446,7 +446,13 @@ ColumnLayout {
             id: nameEntry
             Layout.fillWidth: true
             onTextEdited: root.editor.setView(["name"], nameEntry.text)
-            Component.onCompleted: nameEntry.text = root.view?.name ?? ""
+            Binding {
+              target: nameEntry
+              property: "text"
+              value: root.view?.name ?? ""
+              when: !nameEntry.input.activeFocus
+              restoreMode: Binding.RestoreNone
+            }
           }
           Connections {
             target: root
@@ -496,7 +502,13 @@ ColumnLayout {
           Layout.fillWidth: true
           placeholderText: I18n.tr("Values, separated by commas")
           onTextEdited: root.editor.setView(["when", "values"], valuesEntry.text.split(",").map(v => v.trim()).filter(v => v !== ""))
-          Component.onCompleted: valuesEntry.text = (screen.when.values ?? []).join(", ")
+          Binding {
+            target: valuesEntry
+            property: "text"
+            value: (screen.when.values ?? []).join(", ")
+            when: !valuesEntry.input.activeFocus
+            restoreMode: Binding.RestoreNone
+          }
         }
 
         StyledTextButton {

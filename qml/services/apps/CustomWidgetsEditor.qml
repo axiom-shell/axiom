@@ -83,7 +83,7 @@ QtObject {
   // Why the live sample can't be kept ("count", "size"), or ""
   readonly property string keepRefused: root.liveSample === null ? "" : CustomWidgetData.keepSample(root.selected?.samples, root.sampleKey, root.liveSample, root.sampleLimits).refused
   // What the previews draw: the edited layer's sample, resolved (null: none yet)
-  readonly property var previewFields: !root.pageShown ? null : CustomWidgetsManager.resolveSample(root.selectedId, CustomWidgetData.sampleForView(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null))
+  readonly property var previewFields: !root.pageShown ? null : CustomWidgetsManager.resolveSample(root.selectedId, root.previewSampleSource)
 
   // Keeps the live sample as the edited layer's. Returns why it couldn't
   // ("count", "size"), or ""
@@ -272,10 +272,13 @@ QtObject {
   // whole definition but the edited layer's elements, so the base is the
   // layer edited while the screens' order or number changes)
   property int _structureSeq: 0
+  function _recordStructure() {
+    root.elements.recordField("def:structure:" + (++root._structureSeq));
+  }
   function _beforeStructure() {
     if (root.viewIndex >= 0)
       root.selectView(-1);
-    root.elements.recordField("def:structure:" + (++root._structureSeq));
+    root._recordStructure();
   }
 
   // A copy of screen `index`, named "<name> (copy)", right after it (its
@@ -315,7 +318,7 @@ QtObject {
     const list = target < 0 ? def?.module.elements : def?.module.views[target]?.elements;
     if (!element || !list || target === root.viewIndex)
       return false;
-    root.elements.recordField("def:structure:" + (++root._structureSeq));
+    root._recordStructure();
     list.push(CustomWidgetData.elementCopy(list, element));
     root._fitSize();
     root._apply();

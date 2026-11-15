@@ -96,7 +96,7 @@ Item {
       StyledContextMenu {
         id: newMenu
         parent: root
-        // Known scripts: names declared in CustomWidgetData.presets
+        // Known scripts: names declared in CustomWidgetData.scriptPresets
         items: [
           {
             "id": "bar",

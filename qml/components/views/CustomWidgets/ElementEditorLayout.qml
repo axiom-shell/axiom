@@ -176,15 +176,6 @@ GridDragLayer {
           showActions: false
         }
 
-        // What the library is for
-        StyledText {
-          Layout.fillWidth: true
-          role: "caption"
-          tone: "muted"
-          overflow: "wrap"
-          text: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
-        }
-
         StyledScrollView {
           id: sideScroll
           Layout.fillWidth: true

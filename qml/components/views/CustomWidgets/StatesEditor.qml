@@ -12,7 +12,8 @@ import qs.components.forms
 // word the script prints (a state or a class) and the theme colour it
 // stands for, with Remove, and an add button whose menu offers the states
 // seen live (at most 8, CustomWidgetsEditor.seenStates) that have no
-// colour yet, and a blank one. The row's name is read once as it is built.
+// colour yet, and a blank one. The row's name follows the saved name while the
+// field isn't being typed in.
 ColumnLayout {
   id: root
 
@@ -45,7 +46,13 @@ ColumnLayout {
         Layout.preferredWidth: 1
         placeholderText: I18n.tr("State")
         onTextEdited: root.editor.set(["states"], CustomWidgetData.renameKey(root.stateColors, row.name, nameEntry.text.trim()))
-        Component.onCompleted: nameEntry.text = row.name
+        Binding {
+          target: nameEntry
+          property: "text"
+          value: row.name
+          when: !nameEntry.input.activeFocus
+          restoreMode: Binding.RestoreNone
+        }
       }
       SchemaComboBox {
         Layout.fillWidth: true

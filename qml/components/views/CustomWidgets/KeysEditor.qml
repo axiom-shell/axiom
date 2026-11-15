@@ -33,6 +33,7 @@ ColumnLayout {
 
       KeyCapture {
         value: row.key
+        taken: root.names
         onCaptured: name => root.editor.set(["module", "keys"], CustomWidgetData.renameKey(root.keys, row.key, name))
       }
       StyledComboEntry {

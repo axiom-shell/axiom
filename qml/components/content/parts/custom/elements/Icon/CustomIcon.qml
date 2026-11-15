@@ -16,6 +16,7 @@ CustomElementBase {
   readonly property string badge: root.options.badge ? root.text("badge", "badge") : ""
 
   Thumbnail {
+    id: picture
     visible: root.themed
     anchors.centerIn: parent
     width: Math.min(root.width, root.height) * 0.75
@@ -35,10 +36,10 @@ CustomElementBase {
     textSize: Math.max(Style.typeMicro, Math.min(root.width, root.height) * 0.75) // fitted: the element's box
   }
 
-  // On the icon's corner, wherever the box puts it
+  // On the picture's (or glyph's) corner, wherever the box puts it
   CountBadge {
-    anchors.horizontalCenter: root.themed ? root.right : glyph.right
-    anchors.verticalCenter: root.themed ? root.top : glyph.top
+    anchors.horizontalCenter: root.themed ? picture.right : glyph.right
+    anchors.verticalCenter: root.themed ? picture.top : glyph.top
     text: root.badge
     color: Style.error
     textColor: Style.onError

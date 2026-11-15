@@ -9,7 +9,8 @@ import qs.components.views.base
 // The Custom widgets page (docs/dev/features/custom-widgets.md): the
 // definitions and the selected one's script on the left; on the right its
 // data (the script's output, and which part of it each field reads), its
-// bar look and its module, each a tab (or, while importing, the Import form). Edits go through
+// bar look, its module and Help, each a tab (or, while adding, the Import
+// form or the template gallery). Edits go through
 // CustomWidgetsManager.editor's draft and show live on the bars and pages.
 BaseView {
   id: root

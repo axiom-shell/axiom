@@ -639,6 +639,7 @@ QtObject {
   // I18n.tr("Media (Waybar's mediaplayer.py)") I18n.tr("Package updates")
   // I18n.tr("Weather (wttr.in)") I18n.tr("Failed services") I18n.tr("WireGuard VPN")
   // I18n.tr("GPU load (NVIDIA)") I18n.tr("Daily habits")
+  // Descriptions: I18n.tr("Habits to check off each day, with streaks")
   // Daily habits' texts, which CustomWidgetsEditor.add translates (the
   // `=` literals, options and screen names): I18n.tr("Habits")
   // I18n.tr("All done today") I18n.tr("Add your first habit below")
@@ -761,6 +762,7 @@ QtObject {
     },
     {
       "name": "Daily habits",
+      "description": "Habits to check off each day, with streaks",
       "template": true,
       "icon": "task_alt",
       "command": "bash '{tree}data/custom-widgets/habits.sh' show",
@@ -1720,14 +1722,14 @@ QtObject {
   // text, at most 40 characters) }]
   function bindChoices(samples, cap) {
     const out = [];
-    const seen = {};
+    const seen = new Set();
     for (const sample of samples ?? []) {
       if (sample === null || sample === undefined || typeof sample !== "object")
         continue;
       for (const p of root.flatten(sample)) {
-        if (p.type === "object" || p.path in seen)
+        if (p.type === "object" || seen.has(p.path))
           continue;
-        seen[p.path] = true;
+        seen.add(p.path);
         const text = p.type === "array" ? "" : root.asText(p.value);
         out.push({
           "path": p.path,
@@ -1786,8 +1788,11 @@ QtObject {
   }
 
   // Pasted text read as shared widgets: { definitions (partial, ids
-  // dropped), error }. The wrapper Copy makes, a bare definition, or a list
-  // of either; comments and trailing commas are allowed
+  // dropped), error, detail }. `error` is a code, "" when good: "json"
+  // (`detail` says why), "notWidget" (an item that is no object), "newer",
+  // "noModule" (no module and no command) or "empty". The wrapper Copy
+  // makes, a bare definition, or a list of either; comments and trailing
+  // commas are allowed
   function fromExport(text) {
     let parsed;
     try {
@@ -1795,7 +1800,8 @@ QtObject {
     } catch (e) {
       return {
         "definitions": [],
-        "error": "Not valid JSON: " + e.message
+        "error": "json",
+        "detail": e.message
       };
     }
     const definitions = [];
@@ -1803,21 +1809,24 @@ QtObject {
       if (item === null || typeof item !== "object" || Array.isArray(item))
         return {
           "definitions": [],
-          "error": "Not a custom widget."
+          "error": "notWidget",
+          "detail": ""
         };
       let def = item;
       if ("axiomCustomWidget" in item) {
         if (typeof item.axiomCustomWidget !== "number" || item.axiomCustomWidget > 1)
           return {
             "definitions": [],
-            "error": "Made by a newer version of axiom."
+            "error": "newer",
+            "detail": ""
           };
         def = item.definition;
       }
       if (def === null || typeof def !== "object" || Array.isArray(def) || (!def.module && !def.command))
         return {
           "definitions": [],
-          "error": "Not a custom widget: it has no module and no command."
+          "error": "noModule",
+          "detail": ""
         };
       const copy = Utils.clone(def);
       delete copy.id;
@@ -1825,19 +1834,22 @@ QtObject {
     }
     return {
       "definitions": definitions,
-      "error": definitions.length ? "" : "Nothing in it."
+      "error": definitions.length ? "" : "empty",
+      "detail": ""
     };
   }
 
   // What the Import form reads from a paste: a shared widget (fromExport)
   // first, else a Waybar `custom/*` module (fromWaybar). { definitions,
-  // error, kind ("widget", "waybar", "" when it read neither) }
+  // error ("" when good, "json" with its `detail`, else "neither"), detail,
+  // kind ("widget", "waybar", "" when it read neither) }
   function readImport(text) {
     const shared = root.fromExport(text);
     if (shared.error === "")
       return {
         "definitions": shared.definitions,
         "error": "",
+        "detail": "",
         "kind": "widget"
       };
     try {
@@ -1846,6 +1858,7 @@ QtObject {
         return {
           "definitions": waybar,
           "error": "",
+          "detail": "",
           "kind": "waybar"
         };
     } catch (e) {
@@ -1853,7 +1866,8 @@ QtObject {
     }
     return {
       "definitions": [],
-      "error": shared.error.startsWith("Not valid JSON") ? shared.error : "Not a custom widget or a Waybar custom module.",
+      "error": shared.error === "json" ? "json" : "neither",
+      "detail": shared.error === "json" ? shared.detail : "",
       "kind": ""
     };
   }
@@ -1909,7 +1923,7 @@ QtObject {
   // `map` with key `from` renamed `to`, in its place; the same map when
   // `to` is empty or another key already
   function renameKey(map, from, to) {
-    if (to === "" || to === from || to in (map ?? {}))
+    if (to === "" || to === from || Object.prototype.hasOwnProperty.call(map ?? {}, to))
       return map;
     return Object.keys(map ?? {}).reduce((next, key) => {
       next[key === from ? to : key] = map[key];
@@ -1969,9 +1983,10 @@ QtObject {
     };
   }
 
-  // The presets the New chooser's "From a known script" lists (a command to
-  // start from) and the ones its gallery draws (`template`: a ready look
-  // with a sample per screen, drawn before any script exists)
-  readonly property var scriptPresets: root.presets.filter(p => !p.template)
+  // The presets the New chooser's "From a known script" lists (the ones
+  // with a command, Daily habits too) and the ones its gallery draws
+  // (`template`: a ready look with a sample per screen, drawn before any
+  // script exists)
+  readonly property var scriptPresets: root.presets.filter(p => !!p.command)
   readonly property var galleryPresets: root.presets.filter(p => p.template)
 }

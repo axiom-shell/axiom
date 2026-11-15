@@ -37,6 +37,21 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
+  // The text for a CustomWidgetData.readImport error code
+  function errorText(code, detail) {
+    if (code === "json")
+      return I18n.tr("Not valid JSON: {0}", detail);
+    if (code === "notWidget")
+      return I18n.tr("Not a custom widget.");
+    if (code === "newer")
+      return I18n.tr("Made by a newer version of axiom.");
+    if (code === "noModule")
+      return I18n.tr("Not a custom widget: it has no module and no command.");
+    if (code === "empty")
+      return I18n.tr("Nothing in it.");
+    return I18n.tr("Not a custom widget or a Waybar custom module.");
+  }
+
   FieldGroup {
     Layout.fillWidth: true
     title: I18n.tr("Import a widget")
@@ -74,7 +89,7 @@ ColumnLayout {
       visible: root.result !== null && root.result.error !== ""
       status: "error"
       title: I18n.tr("Couldn't read it")
-      text: root.result?.error ?? ""
+      text: root.errorText(root.result?.error ?? "", root.result?.detail ?? "")
     }
 
     // A good paste: what it would run

@@ -10,8 +10,8 @@ import qs.components.content.parts.custom
 
 // Custom widgets page, the inspector pane while picking a template for an
 // interactive card: each one drawn from its own sample (CustomWidgetData.
-// galleryPresets have no command, so they preview before any script
-// exists). A click adds it and opens it on the Module tab, at its first
+// galleryPresets have a sample per screen (all but Daily habits have no
+// command), so they preview before any script exists). A click adds it and opens it on the Module tab, at its first
 // screen.
 ColumnLayout {
   id: root
@@ -26,7 +26,7 @@ ColumnLayout {
   FieldGroup {
     Layout.fillWidth: true
     title: I18n.tr("Interactive card")
-    description: I18n.tr("Pick a look to start from. It has a sample for each of its screens and no script yet: point it at yours, and it comes alive.")
+    description: I18n.tr("Pick a look to start from. Each has a sample for each of its screens, so it shows before your script exists: point it at yours, and it comes alive.")
     headerExtras: StyledTextButton {
       implicitHeight: Widget.smallHeight
       iconText: "close"
