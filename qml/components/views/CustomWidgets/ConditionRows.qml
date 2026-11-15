@@ -24,6 +24,8 @@ ColumnLayout {
   property string whenTest: "is"
   // The top row of its box
   property bool first: false
+  // The caption beside the toggle (see InspectorRow)
+  property bool beside: false
   property var write: function (field, value) {}
 
   readonly property string test: root.value?.test ?? "always"
@@ -35,6 +37,7 @@ ColumnLayout {
 
   InspectorRow {
     first: root.first
+    beside: root.beside
     label: root.label
 
     StyledToggle {

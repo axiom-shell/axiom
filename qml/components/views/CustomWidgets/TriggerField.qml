@@ -56,44 +56,44 @@ InspectorRow {
     }
   }
 
-  RowLayout {
-    visible: root.action !== null
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StyledText {
+  below: [
+    RowLayout {
+      visible: root.action !== null
       Layout.fillWidth: true
-      text: root.runs === "" ? I18n.tr("No command yet") : root.action?.kind === "axiom" ? root.runs : I18n.tr("Runs: {0}", root.runs)
-      textFamily: root.action?.kind === "axiom" || root.runs === "" ? Appearance.fontFamily : "monospace"
+      spacing: Widget.spacing
+
+      StyledText {
+        Layout.fillWidth: true
+        text: root.runs === "" ? I18n.tr("No command yet") : root.action?.kind === "axiom" ? root.runs : I18n.tr("Runs: {0}", root.runs)
+        textFamily: root.action?.kind === "axiom" || root.runs === "" ? Appearance.fontFamily : "monospace"
+        role: "caption"
+        tone: root.runs === "" ? "warning" : "muted"
+        elide: Text.ElideMiddle // style-exempt: middle
+      }
+      StyledTextButton {
+        implicitHeight: Widget.smallHeight
+        kind: "text"
+        text: root.editing ? I18n.tr("Done") : I18n.tr("Edit")
+        onClicked: root.editor.editingAction = root.editing ? "" : root.action.id
+      }
+    },
+    StyledText {
+      visible: root.removed
+      Layout.fillWidth: true
+      text: I18n.tr("This action was removed")
       role: "caption"
-      tone: root.runs === "" ? "warning" : "muted"
-      elide: Text.ElideMiddle // style-exempt: middle
-    }
-    StyledTextButton {
-      implicitHeight: Widget.height
-      kind: "text"
-      text: root.editing ? I18n.tr("Done") : I18n.tr("Edit")
-      onClicked: root.editor.editingAction = root.editing ? "" : root.action.id
-    }
-  }
+      tone: "warning"
+    },
+    Loader {
+      active: root.editing
+      visible: active
+      Layout.fillWidth: true
+      Layout.topMargin: Widget.spacing / 2
 
-  StyledText {
-    visible: root.removed
-    Layout.fillWidth: true
-    text: I18n.tr("This action was removed")
-    role: "caption"
-    tone: "warning"
-  }
-
-  Loader {
-    active: root.editing
-    visible: active
-    Layout.fillWidth: true
-    Layout.topMargin: Widget.spacing / 2
-
-    sourceComponent: ActionRow {
-      openAtStart: true
-      index: root.actionIndex
+      sourceComponent: ActionRow {
+        openAtStart: true
+        index: root.actionIndex
+      }
     }
-  }
+  ]
 }

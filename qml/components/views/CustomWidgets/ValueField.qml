@@ -71,15 +71,17 @@ InspectorRow {
     }
   }
 
-  StyledText {
-    visible: root.unknown.length > 0 || root.now !== ""
-    Layout.fillWidth: true
-    text: root.unknown.length > 0 ? I18n.tr("{0} isn't in the previewed sample", "{" + root.unknown[0] + "}") : I18n.tr("now: {0}", root.now)
-    role: "caption"
-    tone: root.unknown.length > 0 ? "warning" : "muted"
-    textFamily: root.unknown.length > 0 ? Appearance.fontFamily : "monospace"
-    overflow: "line"
-  }
+  below: [
+    StyledText {
+      visible: root.unknown.length > 0 || root.now !== ""
+      Layout.fillWidth: true
+      text: root.unknown.length > 0 ? I18n.tr("{0} isn't in the previewed sample", "{" + root.unknown[0] + "}") : I18n.tr("now: {0}", root.now)
+      role: "caption"
+      tone: root.unknown.length > 0 ? "warning" : "muted"
+      textFamily: root.unknown.length > 0 ? Appearance.fontFamily : "monospace"
+      overflow: "line"
+    }
+  ]
 
   // A pick is inserted as {path}; an insert isn't `textEdited`, so it writes
   // itself. Labels are the paths as they are

@@ -116,6 +116,7 @@ ColumnLayout {
         spacing: 0
 
         ColorField {
+          beside: true
           readonly property var colorSchema: root.schema.bar.properties.color
           first: true
           key: "color"
@@ -164,6 +165,7 @@ ColumnLayout {
 
           TriggerField {
             id: trigger
+            beside: true
             required property string modelData
             required property int index
             first: trigger.index === 0

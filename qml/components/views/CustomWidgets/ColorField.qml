@@ -57,6 +57,8 @@ ColumnLayout {
   // The keys a rule can read (KeyField.keys)
   property var keys: []
   property bool first: false
+  // The label beside the control (see InspectorRow)
+  property bool beside: false
   property var write: (path, value) => {}
 
   readonly property bool isHex: root.value.charAt(0) === "#"
@@ -198,6 +200,7 @@ ColumnLayout {
 
   InspectorRow {
     first: root.first
+    beside: root.beside
     label: root.label
     description: root.description
 
@@ -226,33 +229,34 @@ ColumnLayout {
       }
     }
 
-    StyledTextEntry {
-      id: hex
-      visible: root.custom
-      Layout.fillWidth: true
-      input.font.family: "monospace"
-      placeholderText: I18n.tr("e.g. {0}", "#ff8800") // style-exempt: an example
-      onTextEdited: {
-        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.text))
-          root.write([root.key], hex.text);
+    below: [
+      StyledTextEntry {
+        id: hex
+        visible: root.custom
+        Layout.fillWidth: true
+        input.font.family: "monospace"
+        placeholderText: I18n.tr("e.g. {0}", "#ff8800") // style-exempt: an example
+        onTextEdited: {
+          if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.text))
+            root.write([root.key], hex.text);
+        }
+        Binding {
+          target: hex
+          property: "text"
+          value: root.isHex ? root.value : ""
+          when: !hex.input.activeFocus
+          restoreMode: Binding.RestoreNone
+        }
+      },
+      StyledText {
+        visible: root.custom
+        Layout.fillWidth: true
+        text: I18n.tr("Doesn't follow the theme")
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
       }
-      Binding {
-        target: hex
-        property: "text"
-        value: root.isHex ? root.value : ""
-        when: !hex.input.activeFocus
-        restoreMode: Binding.RestoreNone
-      }
-    }
-
-    StyledText {
-      visible: root.custom
-      Layout.fillWidth: true
-      text: I18n.tr("Doesn't follow the theme")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-    }
+    ]
   }
 
   FormRow {
@@ -272,6 +276,7 @@ ColumnLayout {
 
   InspectorRow {
     indented: true
+    beside: root.beside
     shown: root.statesOn
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")

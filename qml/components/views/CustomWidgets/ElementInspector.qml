@@ -232,6 +232,7 @@ ColumnLayout {
 
       // Shown on the canvas: empty, the kind
       InspectorRow {
+        beside: true
         first: true
         label: I18n.tr("Name")
 
@@ -269,6 +270,7 @@ ColumnLayout {
 
             ValueField {
               id: field
+              beside: true
               required property string modelData
               required property int index
               Layout.fillWidth: true
@@ -300,6 +302,7 @@ ColumnLayout {
 
             TriggerField {
               id: trigger
+              beside: true
               required property string modelData
               required property int index
               first: trigger.index === 0
@@ -312,6 +315,7 @@ ColumnLayout {
           }
 
           ConditionRows {
+            beside: true
             label: I18n.tr("Enabled")
             value: root.element?.enabledWhen ?? ({})
             keys: root.colorKeys
@@ -335,6 +339,7 @@ ColumnLayout {
           spacing: 0
 
           ConditionRows {
+            beside: true
             first: true
             label: I18n.tr("Show")
             value: root.element?.showWhen ?? ({})
@@ -364,6 +369,7 @@ ColumnLayout {
 
             ColorField {
               id: color
+              beside: true
               required property var modelData
               required property int index
               readonly property var schema: root.kind?.options?.[color.modelData.key] ?? ({})
