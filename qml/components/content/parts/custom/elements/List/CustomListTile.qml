@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Widgets
 import qs.config
 import qs.components.reusable
 
@@ -57,22 +56,12 @@ Item {
         textSize: Math.max(Style.typeMicro, Math.min(parent.width, parent.height) * 0.6) // fitted: the tile's box
       }
 
-      ClippingRectangle {
+      Thumbnail {
         visible: root.rowImage !== ""
         anchors.centerIn: parent
         width: Math.min(parent.width, parent.height)
         height: width
-        radius: Widget.radius / 2
-        color: Style.surfaceHighest
-
-        Image {
-          anchors.fill: parent
-          source: root.rowImage
-          fillMode: Image.PreserveAspectCrop
-          asynchronous: true
-          sourceSize.width: width
-          sourceSize.height: height
-        }
+        source: root.rowImage
       }
     }
 

@@ -676,7 +676,7 @@ TestCase {
     }), "", "an unknown word");
     compare(CustomWidgetData.elementTone(f, {
       "tone": "kind"
-    }), "error", "the class map");
+    }), "error", "a built-in state word");
     compare(CustomWidgetData.elementTone(f, {}), "", "unbound");
     compare(CustomWidgetData.elementTone(f, undefined), "", "no bind");
     compare(CustomWidgetData.elementTone(f, {
@@ -1429,5 +1429,12 @@ TestCase {
         }
       }
     }, -1, {}, null).kept, 1, "the empty key is no screen");
+  }
+
+  function test_baseSlotsLast() {
+    compare(CustomWidgetData.baseSlotsLast([["show", "tone", "label", "icon"], ["show", "tone"]]), [["label", "icon", "show", "tone"], ["show", "tone"]]);
+    compare(CustomWidgetData.baseSlotsLast([]), []);
+    // One list: every slot is shared, so it stays as it is
+    compare(CustomWidgetData.baseSlotsLast([["show", "tone", "text"]]), [["show", "tone", "text"]]);
   }
 }

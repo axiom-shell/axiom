@@ -24,8 +24,8 @@ CustomElementBase {
     anchors.fill: parent
     values: root.listed ?? root.history?.[root.bind.value ?? ""] ?? []
     values2: root.bind.value2 ? root.listed2 ?? root.history?.[root.bind.value2] ?? [] : []
-    // A list is as long as it is (at least 2), a history as the service keeps
-    capacity: root.listed !== null || root.listed2 !== null ? Math.max(2, root.listed?.length ?? 0, root.listed2?.length ?? 0) : CustomWidgetsManager.historyLength
+    // Each series as long as it is: a list its length, a history what the service keeps
+    capacity: Math.max(2, root.listed?.length ?? CustomWidgetsManager.historyLength, root.bind.value2 ? (root.listed2?.length ?? CustomWidgetsManager.historyLength) : 0)
     style: root.options.style
     minValue: root.graphRange.min
     maxValue: root.graphRange.max

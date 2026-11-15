@@ -213,8 +213,9 @@ settings:
 	}
 }
 
-// A base's x-slots merge into every kind's list, the base's after the
-// kind's own: the custom widget elements' show and tone bindings.
+// A base's x-slots merge into every kind's list, the base's first (kinds.go's
+// list merge; CustomWidgetsConfig.elementKinds lists them last for the
+// editor): the custom widget elements' show and tone bindings.
 func TestKindBaseSlots(t *testing.T) {
 	t.Parallel()
 	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))

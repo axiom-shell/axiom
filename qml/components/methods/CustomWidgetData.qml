@@ -924,6 +924,15 @@ QtObject {
     };
   }
 
+  // Each kind's slot list (`slotLists`, the kinds' x-slots) in the same
+  // order, the slots every list has moved to the end, in the first list's
+  // order: the base's slots are the ones every kind has; Separator has only
+  // those
+  function baseSlotsLast(slotLists) {
+    const shared = slotLists.length === 0 ? [] : slotLists[0].filter(s => slotLists.every(l => l.indexOf(s) >= 0));
+    return slotLists.map(l => l.filter(s => shared.indexOf(s) < 0).concat(shared));
+  }
+
   // A series a script prints: `v` (a list) as its finite numbers (a
   // numeric string is parsed, anything else dropped), the last `cap`; null
   // when `v` isn't a list
