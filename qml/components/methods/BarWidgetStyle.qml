@@ -186,7 +186,7 @@ QtObject {
   readonly property int pulseSteps: 16
 
   // The steps of a pulse from `a` to `b`: `steps + 1` entries, [0] being `a`
-  // and [steps] `b` (with `keys`, `a` with those fields of `b`), between them
+  // and [steps] `b` (with `keys`, `a` with `b`'s fields over it), between them
   // mixColors(a, b, k / steps, keys) (with `keys`, over `a`'s other fields)
   function pulseLadder(a, b, steps, keys = null) {
     const ladder = [];

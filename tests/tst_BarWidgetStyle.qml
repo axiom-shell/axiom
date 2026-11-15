@@ -888,7 +888,7 @@ TestCase {
     const ladder = BarWidgetStyle.pulseLadder(a, b, 16, keys);
     compare(ladder.length, 17, "17 entries");
     verify(ladder[0] === a, "[0] is the first");
-    verify(root.deepSame(ladder[16], Object.assign({}, a, b)), "[16] is the first with the muted");
+    verify(root.deepSame(ladder[16], Object.assign({}, a, b)), "[16] is the first with the muted's fields over it");
     for (let k = 1; k < 16; k++)
       verify(root.deepSame(ladder[k], Object.assign({}, a, BarWidgetStyle.mixColors(a, b, k / 16, keys))), `step ${k}`);
   }

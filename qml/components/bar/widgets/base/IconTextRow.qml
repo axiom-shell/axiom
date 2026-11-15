@@ -45,11 +45,9 @@ Item {
   // Between the icon's glyphs side by side (its lines on a horizontal bar)
   property real iconSpacing: 0
   // What the label and the icon draw in, from the owner. They follow a
-  // change by gliding unless `glides` is off (a caller drawing every frame
-  // itself)
+  // change by gliding
   required property color textColor
   required property color iconColor
-  property bool glides: true
   property int fontSize: 0
   // The label's digits are of equal width (tabular figures), and it takes
   // the room of its text with every digit a 0, never less than
@@ -173,7 +171,6 @@ Item {
           textSize: root.fontSize * root.iconScale
 
           ColorGlide on color {
-            enabled: root.glides
           }
         }
       }
@@ -234,7 +231,6 @@ Item {
         }
 
         ColorGlide on color {
-          enabled: root.glides
         }
       }
     }

@@ -23,9 +23,6 @@ Item {
   property string text: ""
   required property color iconColor
   required property color textColor
-  // The colors follow a change by gliding unless `glides` is off (a caller
-  // drawing every frame itself)
-  property bool glides: true
   readonly property Item head: ownHead ?? (icon !== "" ? iconHead : text !== "" ? textHead : null)
   // Where it starts along the widget
   property real start: barConfig.innerPadding
@@ -80,7 +77,6 @@ Item {
     textSize: root.barConfig.fontSize
 
     ColorGlide on color {
-      enabled: root.glides
     }
   }
 
@@ -98,7 +94,6 @@ Item {
     }
 
     ColorGlide on color {
-      enabled: root.glides
     }
   }
 }
