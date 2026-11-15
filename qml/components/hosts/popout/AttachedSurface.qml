@@ -103,8 +103,8 @@ Item {
   // their content add this on each side (see bar Popouts, submenus).
   readonly property int contentInset: Appearance.borderWidth + PopoutsConfig.padding
 
-  property color fillColor: Theme.background
-  property color strokeColor: Theme.foreground
+  property color fillColor: Style.surfacePage
+  property color strokeColor: Style.frameStroke
   // Casts the shell's shadow (SurfaceShadow), for a surface whose
   // border shows: off for a bar's own pills, which their bar's casts
   property bool castShadow: false
@@ -196,7 +196,7 @@ Item {
   property color mirrorStroke: "transparent"
   // (a copy is drawn opaque: the blur window applies the opacity to all
   // of them at once, so where they overlap they don't stack)
-  readonly property color _fill: root.mirror ? root.fillColor : root.backed || root.hollow ? "transparent" : root.opaque ? root.fillColor : Appearance.fill(root.fillColor)
+  readonly property color _fill: root.mirror ? root.fillColor : root.backed || root.hollow ? "transparent" : root.opaque ? root.fillColor : Style.edgeFill(root.fillColor, false)
   readonly property color _stroke: root.mirror ? root.mirrorStroke : root.hollow ? "transparent" : root.strokeColor
   // Rects (in this item's coordinates) where its outline is left open:
   // what's joined to it over them (a submenu on its side, a popout on
@@ -486,7 +486,7 @@ Item {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-          fillColor: "black"
+          fillColor: "black" // style-exempt: mask
           strokeColor: "transparent"
           strokeWidth: 0
 
@@ -497,7 +497,7 @@ Item {
 
         ShapePath {
           fillColor: "transparent"
-          strokeColor: "black"
+          strokeColor: "black" // style-exempt: mask
           strokeWidth: root.strokeWidth
           capStyle: ShapePath.FlatCap
           joinStyle: ShapePath.MiterJoin
@@ -519,7 +519,7 @@ Item {
           y: area.y
           width: area.width
           height: area.height
-          color: "black"
+          color: "black" // style-exempt: mask
         }
       }
       // ...and past the walls surfaces running on from its box continue
@@ -533,7 +533,7 @@ Item {
           y: area.y
           width: area.width
           height: area.height
-          color: "black"
+          color: "black" // style-exempt: mask
         }
       }
 
@@ -547,7 +547,7 @@ Item {
         topRightRadius: detachedBox.topRightRadius
         bottomLeftRadius: detachedBox.bottomLeftRadius
         bottomRightRadius: detachedBox.bottomRightRadius
-        color: "black"
+        color: "black" // style-exempt: mask
       }
     }
 

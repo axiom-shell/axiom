@@ -137,13 +137,13 @@ PopupWindow {
     target: box
   }
 
-  StyledContainer {
+  Surface {
     id: box
+    tone: "raised"
+    solid: true
     anchors.fill: parent
-    implicitWidth: Math.min(Widget.px(360), Math.max(Widget.px(160), column.implicitWidth + Widget.padding * 2))
+    implicitWidth: Math.min(Widget.textPx(360), Math.max(Widget.textPx(160), column.implicitWidth + Widget.padding * 2))
     implicitHeight: column.implicitHeight + Widget.spacing * 2
-    backgroundColor: Theme.background
-    borderColor: Theme.border
 
     HoverHandler {
       id: menuHover
@@ -162,8 +162,8 @@ PopupWindow {
         visible: root.full || root.dockWindow.dock.showLabels
         Layout.fillWidth: true
         text: root.name
-        font.weight: (root.windows.length > 0) ? Font.Bold : Font.Normal
-        elide: Text.ElideRight
+        font.weight: root.windows.length > 0 ? Style.weightStrong : Style.weightNormal
+        overflow: "line"
       }
 
       MenuList {

@@ -65,7 +65,7 @@ Image {
       root._swap(done);
       return;
     }
-    const dpr = Screen.devicePixelRatio;
+    const dpr = root.Window.window?.devicePixelRatio ?? Screen.devicePixelRatio;
     const generation = root._generation;
     root._grabbing = item.grabToImage(result => {
       if (generation !== root._generation)

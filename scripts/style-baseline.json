@@ -26,47 +26,10 @@
  "qml/components/bar/widgets/base/ValueGraphic.qml": {
   "R5": 1
  },
- "qml/components/hosts/popout/AttachedSurface.qml": {
-  "R1": 2,
-  "R2": 5,
-  "R7": 5
- },
- "qml/components/hosts/popout/BlurShape.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/hosts/popout/EdgePopout.qml": {
-  "R1": 2,
-  "R7": 1
- },
  "qml/components/reusable/OptionGlyph.qml": {
   "R1": 1,
   "R4": 1,
   "R7": 1
- },
- "qml/components/surfaces/border/BorderPanel.qml": {
-  "R7": 3
- },
- "qml/components/surfaces/border/RoundedBorders.qml": {
-  "R1": 2,
-  "R17": 5,
-  "R2": 2,
-  "R7": 2
- },
- "qml/components/surfaces/dock/DockItem.qml": {
-  "R1": 4,
-  "R3": 1,
-  "R7": 2
- },
- "qml/components/surfaces/dock/DockMenu.qml": {
-  "R1": 2,
-  "R14": 1,
-  "R5": 1
- },
- "qml/components/surfaces/dock/DockWindow.qml": {
-  "R1": 3,
-  "R3": 1,
-  "R7": 2
  },
  "qml/components/surfaces/greeter/GreeterPreviewWindow.qml": {
   "R1": 1,
@@ -81,27 +44,6 @@
   "R1": 1,
   "R7": 1
  },
- "qml/components/surfaces/launcher/Launcher.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/surfaces/launcher/LauncherPanel.qml": {
-  "R1": 12,
-  "R14": 1,
-  "R2": 1,
-  "R4": 6,
-  "R5": 1,
-  "R7": 9
- },
- "qml/components/surfaces/launcher/LauncherRow.qml": {
-  "R1": 15,
-  "R14": 4,
-  "R2": 3,
-  "R3": 1,
-  "R4": 3,
-  "R5": 1,
-  "R7": 8
- },
  "qml/components/surfaces/lockscreen/LockPreviewWindow.qml": {
   "R1": 1,
   "R2": 1,
@@ -110,23 +52,6 @@
  "qml/components/surfaces/lockscreen/LockSurface.qml": {
   "R1": 2,
   "R7": 2
- },
- "qml/components/surfaces/menu/FreeMenu.qml": {
-  "R18": 1
- },
- "qml/components/surfaces/menu/IntegratedEdgeMenu.qml": {
-  "R1": 3,
-  "R7": 4
- },
- "qml/components/surfaces/menu/MenuBody.qml": {
-  "R1": 17,
-  "R2": 3,
-  "R7": 2
- },
- "qml/components/surfaces/menu/MenuTile.qml": {
-  "R1": 1,
-  "R2": 2,
-  "R7": 4
  },
  "qml/components/surfaces/monitors/MonitorPromptWindow.qml": {
   "R1": 5,
@@ -355,21 +280,12 @@
   "R14": 1,
   "R3": 1
  },
- "qml/config/MenusConfig.qml": {
-  "R1": 2
- },
  "qml/config/WindowLookConfig.qml": {
   "R1": 5,
   "R2": 1
  },
- "qml/config/WorkspaceOverlayConfig.qml": {
-  "R1": 2
- },
  "qml/services/compositor/CompositorConfigManager.qml": {
   "R6": 3
- },
- "qml/shell/BlurBackingWindow.qml": {
-  "R17": 1
  },
  "qml/shell/Greeter.qml": {
   "R1": 1,

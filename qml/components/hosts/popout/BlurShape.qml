@@ -14,7 +14,9 @@ QtObject {
 
   required property Item source
   // A rect's fill (an AttachedSurface's is its fillColor)
-  property color color: Theme.background
+  property color color: Style.surfacePage
+  // How far its copy has faded in (a toast or menu tile fading), applied to the copy alone
+  property real fade: 1
   property string kind: "attached"
   property string screen: ""
   property real x: 0

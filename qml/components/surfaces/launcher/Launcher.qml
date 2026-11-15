@@ -116,7 +116,7 @@ Scope {
   BackdropRequest {
     screen: root.screen
     shown: root.shown && LauncherConfig.showBackdrop
-    fillColor: Theme.background
+    fillColor: Style.surfacePage
     fillOpacity: LauncherConfig.backdrop
   }
 

@@ -98,7 +98,7 @@ PanelWindow {
     y: root.edge === "bottom" ? root.strokeWidth : 0
     width: root.horizontal ? parent.width : depth
     height: root.horizontal ? depth : parent.height
-    color: Appearance.fill(root.frameColor)
+    color: Style.edgeFill(root.frameColor, false)
   }
 
   // The stroke's row: the fill under the stroke and past its ends
@@ -115,7 +115,7 @@ PanelWindow {
       y: root.horizontal ? (root.edge === "top" ? root.frameWidth - root.strokeWidth : 0) : piece.start
       width: root.horizontal ? piece.end - piece.start : root.strokeWidth
       height: root.horizontal ? root.strokeWidth : piece.end - piece.start
-      color: Appearance.fill(root.frameColor)
+      color: Style.edgeFill(root.frameColor, false)
     }
   }
 
@@ -129,7 +129,7 @@ PanelWindow {
       required property bool modelData
       readonly property bool atStart: modelData
       readonly property int along: root.frameWidth - root.strokeWidth
-      color: Appearance.fill(root.endFillColor)
+      color: Style.edgeFill(root.endFillColor, false)
       width: root.horizontal ? along : root.strokeWidth
       height: root.horizontal ? root.strokeWidth : along
       x: root.horizontal ? (atStart ? 0 : parent.width - width) : (root.edge === "left" ? along : 0)

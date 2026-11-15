@@ -20,8 +20,8 @@ Item {
   property var screen: null
   property int frameWidth: Appearance.screenMargin
   property int innerBorderRadius: Appearance.borderRadius
-  property color frameColor: Theme.background
-  property color innerStrokeColor: Theme.foreground
+  property color frameColor: Style.surfacePage
+  property color innerStrokeColor: Style.frameStroke
   property int strokeWidth: Appearance.borderWidth
   // The corner's curve plus its stroke
   readonly property int cornerSize: root.innerBorderRadius + root.strokeWidth
@@ -202,14 +202,14 @@ Item {
       id: interior
       anchors.fill: parent
       visible: false
-      layer.enabled: !shadowSlot.idle
+      layer.enabled: !shadowSlot.idle // style-exempt: no text
 
       Shape {
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-          fillColor: "black"
+          fillColor: "black" // style-exempt: mask
           fillRule: ShapePath.OddEvenFill
           strokeColor: "transparent"
           strokeWidth: 0
@@ -224,8 +224,8 @@ Item {
     Item {
       anchors.fill: parent
       visible: !root.backed && !shadowSlot.idle
-      layer.enabled: visible
-      layer.effect: MultiEffect {
+      layer.enabled: visible // style-exempt: no text
+      layer.effect: MultiEffect { // style-exempt: no text
         maskEnabled: true
         maskSource: interior
       }
@@ -234,8 +234,8 @@ Item {
       Shape {
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
-        layer.enabled: true
-        layer.effect: MultiEffect {
+        layer.enabled: true // style-exempt: no text
+        layer.effect: MultiEffect { // style-exempt: no text
           shadowEnabled: true
           shadowColor: BarsConfig.shadowColor(shadowWindow.look)
           shadowBlur: 1
@@ -243,7 +243,7 @@ Item {
         }
 
         ShapePath {
-          fillColor: "black"
+          fillColor: "black" // style-exempt: mask
           fillRule: ShapePath.OddEvenFill
           strokeColor: "transparent"
           strokeWidth: 0
