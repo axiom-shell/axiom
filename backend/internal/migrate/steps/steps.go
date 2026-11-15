@@ -310,6 +310,10 @@ var all = []Step{
 		}
 		return changes
 	}},
+	// v111: released custom widgets: bare-word bindings became {path}, Button
+	// and Toggle option labels moved into bind, bar and element commands
+	// became actions, colour-by-state became rules (v111.go)
+	{Version: 111, Run: v111},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.
