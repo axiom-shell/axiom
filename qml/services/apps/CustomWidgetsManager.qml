@@ -283,12 +283,11 @@ QtObject {
     const failed = exitCode !== 0;
     const line = String(stderr ?? "").split("\n").map(l => l.trim()).filter(l => l !== "").pop() ?? "";
     const message = failed ? (line !== "" ? line.slice(0, 300) : I18n.tr("The action failed with code {0}", exitCode)) : "";
+    if (failed)
+      console.log(`[CustomWidgetsManager] ${id}: action ${action} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
     // a widget no longer shown forgets its runs (_sync)
-    if (!(id in root._watching)) {
-      if (failed)
-        console.log(`[CustomWidgetsManager] ${id}: action ${action} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
+    if (!(id in root._watching))
       return;
-    }
     root._lastAction = Object.assign({}, root._lastAction, {
       [id]: {
         "action": action,
@@ -299,8 +298,6 @@ QtObject {
         "run": run
       }
     });
-    if (failed)
-      console.log(`[CustomWidgetsManager] ${id}: action ${action} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
     const hold = root._busy[id];
     if (!continuous && hold?.run === run) {
       if (failed || hold.sampled)
@@ -326,6 +323,34 @@ QtObject {
       }
     }
   }
+
+  // The ids shown, and what each watches: changes only with the config
+  readonly property var _wanted: {
+    const ids = {};
+    for (const r of root._registry.requests) {
+      const def = CustomWidgetsConfig.definition(r.id);
+      if (def?.command)
+        ids[r.id] = {
+          "command": root._command(def),
+          "interval": def.interval,
+          "mode": def.mode,
+          "format": def.output === "text" ? "text" : "json",
+          "execIf": def.execIf
+        };
+    }
+    return ids;
+  }
+  readonly property string _wantedJson: JSON.stringify(_wanted)
+  // Next tick: an acquire made while a consumer's binding on `fields`
+  // evaluates (its id settling) must not write `fields` inside it
+  on_WantedJsonChanged: Qt.callLater(root._sync)
+
+  property var _watching: ({})
+  property var _blocked: ({})
+  property var _fields: ({})
+  property var _outputs: ({})
+  property var _history: ({})
+  property var _seen: ({})
 
   // The command a definition's script runs as
   function _command(def) {
