@@ -51,7 +51,7 @@ ColumnLayout {
   readonly property int buttonSize: controlHeight - (containerMargins * 2)
   // The stepper buttons' corners, concentric in their box (a sunken
   // Surface: Style.radius) inset by containerMargins
-  readonly property real buttonRadius: StyleTokens.concentric(Style.radius, root.containerMargins, Style.radiusMin)
+  readonly property real buttonRadius: Style.concentric(Style.radius, root.containerMargins)
 
   readonly property int steps: Math.round((highest - lowest) / step)
   readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
