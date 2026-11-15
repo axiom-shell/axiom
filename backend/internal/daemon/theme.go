@@ -8,6 +8,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/hookup"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/theme"
+	"github.com/axiom-shell/axiom/backend/internal/theme/backdrop"
 )
 
 // themePart: ThemeManager's themes generated from a wallpaper, written by
@@ -27,11 +28,25 @@ type ThemeGenerateResult struct {
 	Files []string `json:"files"`
 }
 
+// ThemeBackdropRequest is the wallpaper to sample, an absolute path.
+type ThemeBackdropRequest struct {
+	Wallpaper string `json:"wallpaper"`
+}
+
 func (d *Daemon) themeMethods(reg *rpc.Registry) {
 	d.themeIntegrateMethods(reg)
 	rpc.Handle(reg, "theme.generate", func(ctx context.Context, c *rpc.Conn, p ThemeGenerateRequest) (ThemeGenerateResult, error) {
+		if err := d.backdrop.acquire(ctx); err != nil {
+			return ThemeGenerateResult{}, err
+		}
+		defer d.backdrop.release()
 		files, err := theme.Generate(p.Wallpaper, d.dirs.GeneratedThemes, time.Now())
 		return ThemeGenerateResult{Files: files}, err
+	})
+	// the wallpaper as a grid of luminance levels (package backdrop), for
+	// what is readable over it
+	rpc.Handle(reg, "theme.backdrop", func(ctx context.Context, c *rpc.Conn, p ThemeBackdropRequest) (backdrop.Grid, error) {
+		return d.backdrop.grid(ctx, p.Wallpaper)
 	})
 }
 

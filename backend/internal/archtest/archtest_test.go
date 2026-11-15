@@ -49,6 +49,7 @@ var tiers = map[string]int{
 	"internal/compositor/render":    tierPure,
 	"internal/calendar/ical":        tierPure,
 	"internal/theme/palette":        tierPure,
+	"internal/theme/backdrop":       tierPure,
 	"internal/theme/integrations":   tierPure,
 	"internal/hookup":               tierPure,
 	"internal/greeterinstall/rules": tierPure,

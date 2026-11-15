@@ -74,6 +74,7 @@ func BuildContract() Contract {
 	d := &Daemon{opts: Options{Getenv: func(string) string { return "" }, Log: slog.New(slog.DiscardHandler)}}
 	d.topics = topics.New(topics.Options{Log: d.opts.Log})
 	d.sysmon = d.newSysmon()
+	d.backdrop = newBackdropPart()
 	d.dev = newDevMode(d, false)
 	reg := rpc.NewRegistry()
 	for _, methods := range d.methodSets() {

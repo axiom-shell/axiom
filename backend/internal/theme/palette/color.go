@@ -3,6 +3,7 @@ package palette
 import (
 	"fmt"
 	"math"
+	"sync"
 )
 
 // A color in OKLab (L 0-1, a and b about ±0.4): a perceptual space, so
@@ -150,4 +151,26 @@ func mod360(h float64) float64 {
 // hueDiff is the signed shortest rotation from hue a to hue b, in degrees.
 func hueDiff(a, b float64) float64 {
 	return mod360(b-a+180) - 180
+}
+
+// linearTable is toLinear of every 8-bit channel, built once.
+var linearTable = sync.OnceValue(func() [256]float64 {
+	var t [256]float64
+	for i := range t {
+		t[i] = toLinear(float64(i) / 255)
+	}
+	return t
+})
+
+// LinearOf is WCAG's relative luminance (0-1) of one 8-bit pixel.
+func LinearOf(r, g, b uint8) float64 {
+	t := linearTable()
+	return 0.2126*t[r] + 0.7152*t[g] + 0.0722*t[b]
+}
+
+// GreyOf is the 8-bit grey (r = g = b) whose relative luminance is lum
+// (clamped to 0-1): the inverse of LinearOf for a grey.
+func GreyOf(lum float64) uint8 {
+	lum = min(max(lum, 0), 1)
+	return uint8(math.Round(fromLinear(lum) * 255))
 }
