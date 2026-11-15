@@ -49,7 +49,7 @@ func niriActions(id string, steps []windowrules.Step) ([]any, error) {
 				continue
 			}
 			ref := map[string]any{"Name": s.Workspace}
-			if isDigits(s.Workspace) {
+			if windowrules.AllDigits(s.Workspace) {
 				idx, err := strconv.ParseUint(s.Workspace, 10, 8)
 				if err != nil {
 					errs = append(errs, fmt.Errorf("place: workspace %s is not a niri workspace index", s.Workspace))
