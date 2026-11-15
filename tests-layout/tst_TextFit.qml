@@ -937,6 +937,20 @@ TestCase {
           verify(one.y + one.height <= other.y || other.y + other.height <= one.y, `${one.objectName} overlaps ${other.objectName}`);
   }
 
+  Component {
+    id: workAreaToolsComp
+
+    WorkArea {
+      title: "Widgets"
+      dirty: true
+      undoRedo: Item {
+        objectName: "undoProbe"
+        implicitWidth: 40
+        implicitHeight: 20
+      }
+    }
+  }
+
   // A section's count follows its title, not the far edge; a long title
   // elides and the count stays in
   function test_list_section_count_follows_title() {
@@ -967,5 +981,25 @@ TestCase {
     verify(count.visible);
     verify(title.truncated, "the title elides");
     compare(harness.containedProblems(narrow, true), []);
+  }
+
+  // Undo / redo sit at the right, before Save, and the title is left of them
+  function test_work_area_tools_sit_by_the_actions() {
+    harness.configure({});
+    const area = createTemporaryObject(workAreaToolsComp, root, {
+      "width": 900,
+      "height": 300
+    });
+    waitForRendering(area);
+    const probe = find(area, it => it.objectName === "undoProbe", [])[0];
+    const save = find(area, it => it.text === "Save" && it.iconText !== undefined, [])[0] ?? find(area, it => it.text === "Save", [])[0];
+    const title = find(area, it => it.text === "Widgets", [])[0];
+    verify(probe && save && title);
+    const probeAt = probe.mapToItem(area, 0, 0);
+    const saveAt = save.mapToItem(area, 0, 0);
+    const titleAt = title.mapToItem(area, 0, 0);
+    verify(probeAt.x > area.width / 2, `probe at ${probeAt.x}`);
+    verify(probeAt.x + probe.width <= saveAt.x + 0.5, `probe ends ${probeAt.x + probe.width}, Save at ${saveAt.x}`);
+    verify(titleAt.x + title.width < probeAt.x, "the title is left of it");
   }
 }

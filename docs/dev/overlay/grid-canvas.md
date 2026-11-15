@@ -17,7 +17,7 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
 - With "Show other menus" (`OverlayManager.menus.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
   - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their module size can differ.
   - They are not drop targets.
-- A header with undo/redo at its left, the module count, a menu's arrows moving it along its edge (see [Menu editing](../menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu).
+- A header with the module count, undo/redo at its right before Save, a menu's arrows moving it along its edge (see [Menu editing](../menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu).
 
 ### GridCanvas: alignment guides
 Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement`).

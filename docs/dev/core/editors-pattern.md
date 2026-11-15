@@ -30,7 +30,7 @@ One shape and one vocabulary for every tool page ([recipe](../../recipes/tool-pa
 - **Select** a row (the accent container): the inspector shows it; Escape on the row or the inspector's close clears it. List rows take keyboard focus (Up/Down move, Enter selects, Delete runs the row's remove unless the page blocks it, Tab goes through the row's actions then out of the list).
 - **Edit** in the inspector: `FieldGroup`s of `SchemaPropertiesForm`, grouped by `x-group`.
 - **Add** with an `AddEntryButton` under the list. **Remove** with the row's × (`RowAction`, quiet, red on hover) and the inspector header's remove (`danger`). **Reorder** by drag, said once in the `ListSection`'s hint.
-- **Save/Discard** are page-wide and always in the header of the top-right pane (the work area, or the inspector where there is none); undo comes first in the work area's header.
+- **Save/Discard** are page-wide and always in the header of the top-right pane (the work area, or the inspector where there is none); undo and redo come first among the work area's tools, at the right of its header before Save (`CardHeader.trailingTools`).
 - **Search** in the `ToolBar`, with a count; nothing found shows the `"results"` empty state with a Clear action. Help is the work area's status line while nothing is selected, with a "?" for the long form.
 - **Empty states** differ by words and action, not only by icon: `"none"` (the page's icon, "No … yet", how to add), `"select"` ("Select a … to edit it") and `"results"` ("Nothing matches", Clear).
 - "Can't save yet" (`IssueList`) shows when `problems` block Save.
