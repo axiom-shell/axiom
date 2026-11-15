@@ -1136,6 +1136,46 @@ TestCase {
       ]
     };
     compare(CustomWidgetData.historyBindings(module).join(), "cpu,net", "base and views, duplicates once");
+    compare(CustomWidgetData.historyBindings({
+      "elements": [
+        {
+          "type": "Sparkline",
+          "bind": {
+            "value": "up",
+            "value2": "down"
+          }
+        },
+        {
+          "type": "Sparkline",
+          "bind": {
+            "value2": "up"
+          }
+        },
+        {
+          "type": "Text",
+          "bind": {
+            "value2": "no"
+          }
+        }
+      ]
+    }).join(), "up,down", "value2 too, once, Sparklines only");
+  }
+
+  function test_series() {
+    compare(CustomWidgetData.series([1, "2", "x", null], 240), [1, 2], "numbers kept, numeric strings parsed, others dropped");
+    compare(CustomWidgetData.series(5, 240), null, "a number is no series");
+    compare(CustomWidgetData.series("1,2", 240), null, "nor a string");
+    compare(CustomWidgetData.series(undefined, 240), null, "nor nothing");
+    compare(CustomWidgetData.series({}, 240), null, "nor an object");
+    compare(CustomWidgetData.series([], 240), [], "an empty list is an empty series");
+    const long = [];
+    for (let i = 0; i < 300; i++)
+      long.push(i);
+    const kept = CustomWidgetData.series(long, 240);
+    compare(kept.length, 240, "the last 240");
+    compare(kept[0], 60);
+    compare(kept[239], 299);
+    compare(CustomWidgetData.series([1, Infinity, NaN, 3], 240), [1, 3], "non-finite dropped");
   }
 
   // --- Named actions ---
