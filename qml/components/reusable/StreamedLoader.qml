@@ -30,6 +30,9 @@ Loader {
   // >= 0 delays the enter by this many steps (at most 8) after the item
   // is built, so a row of them rises one after another
   property int enterIndex: -1
+  // Off: it only fades in, without sliding up (the settings cards and their
+  // fields, which sit on a page that slides in itself)
+  property bool rise: true
 
   // Streamed with `always` and still filling in (until the queue drains):
   // the loaders inside it stream too, so a settings card switched to fills
@@ -62,13 +65,13 @@ Loader {
       root._entered = false;
       root._enter = 0;
     } else if (root._streamed && !root._entered) {
-      root._enter = Style.enterOffset;
-      rise.restart();
+      root._enter = root.rise ? Style.enterOffset : 0;
+      riseAnim.restart();
     }
   }
 
   SequentialAnimation {
-    id: rise
+    id: riseAnim
 
     PauseAnimation {
       duration: Appearance.animations && root.enterIndex >= 0 ? Math.min(root.enterIndex, 8) * Style.staggerStep : 0

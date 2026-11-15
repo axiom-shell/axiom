@@ -179,4 +179,14 @@ QtObject {
       "height": cards.length > 0 ? y - gap : 0
     };
   }
+
+  // A settings card's height before it's built, from its schema group: its
+  // rows (nested-object headers don't count; a hand-built card has none
+  // listed, so it counts `fallbackRows`) at `rowHeight`, plus the header and
+  // padding (`chrome`). A guess for the split only: the measured height
+  // replaces it once the card exists
+  function estimateHeight(group, rowHeight, chrome, fallbackRows) {
+    const rows = group.kind === "rows" ? group.rows.filter(row => row.kind !== "group").length : fallbackRows;
+    return chrome + Math.max(rows, 1) * rowHeight;
+  }
 }

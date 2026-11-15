@@ -37,7 +37,7 @@ Surface {
     height: root.height - root.inset * 2
     tone: Style.segmentThumbTone
     outlined: Style.segmentThumbTone === "surface"
-    radius: StyleTokens.concentric(root.radius, root.inset, Style.radiusMin)
+    radius: Style.concentric(root.radius, root.inset)
 
     Glide on x {
       enabled: root._settled
