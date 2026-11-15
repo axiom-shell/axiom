@@ -13,7 +13,6 @@ properties:
     default: true
     description: Wayland variables for apps. Yours below win.
   env:
-    x-wide: true
     type: array
     title: Environment
     default: []

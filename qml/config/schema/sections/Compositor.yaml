@@ -216,7 +216,6 @@ properties:
         x-compositor: {hyprland: {key: animations.workspace_wraparound}}
       curves:
         x-scope: look
-        x-wide: true
         type: array
         title: Curves
         x-group: Animations
