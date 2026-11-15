@@ -114,12 +114,14 @@ QtObject {
     root._levelSerial += 1;
     root.levelEvent = {
       "level": level,
+      // As other events name theirs: what an OSD's `alertKinds` reads
+      "kind": level,
       "serial": root._levelSerial
     };
   }
 
   // The last drop to low or critical, for the OSD's Battery system (its
-  // `battery` key): { level: "low" | "critical", serial }, else null. Set only when the
+  // `battery` key): { level, kind: "low" | "critical", serial }, else null. Set only when the
   // OSD says it (_sayLevel)
   property var levelEvent: null
   property int _levelSerial: 0

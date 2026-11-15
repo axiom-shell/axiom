@@ -544,9 +544,12 @@ QtObject {
   // (`byUser`), which `onScreenChanges` (OSD.onScreenChanges) or the
   // change's own `alert` (a headset's battery low) overrides. A change
   // that doesn't open it still shows on an open one. `item`: the
-  // system's item ({ quiet, … }; its definition's `options`)
-  function opens(item, def, change, onScreenChanges) {
+  // system's item ({ quiet, … }; its definition's `options`). `paused` (a
+  // window rule pauses OSDs on the OSD's monitor): only an alert opens it
+  function opens(item, def, change, onScreenChanges, paused) {
     if (item?.quiet === true || root.entryOf(def, change.key).opens === false)
+      return false;
+    if (paused === true && change.alert !== true)
       return false;
     return change.alert === true || change.byUser !== true || onScreenChanges === true;
   }
