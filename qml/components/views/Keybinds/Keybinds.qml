@@ -160,6 +160,7 @@ BaseView {
       id: listCard
       anchors.fill: parent
       title: I18n.tr("Keybinds")
+      headerIcon: "keyboard"
       scrollKey: "Keybinds"
       showActions: false
 
@@ -403,6 +404,7 @@ BaseView {
 
     sourceComponent: TitledCard {
       title: KeybindManager.editor.selectedIndex >= 0 ? I18n.tr("Bind") : I18n.tr("Key map")
+      headerIcon: "keyboard"
       // The key map keeps its place; a bind starts at its top
       scrollKey: KeybindManager.editor.selectedIndex >= 0 ? "" : "Keybinds/map"
       showActions: true

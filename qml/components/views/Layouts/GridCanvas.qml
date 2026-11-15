@@ -16,8 +16,8 @@ import qs.components.views.base
 // pushes them aside (GridEditor's plans, shown live while dragging).
 // Drag a box on the background (Shift: adding) or Shift/Ctrl+click
 // modules to select several, then drag one to move them all.
-// A WorkArea: undo / redo at the top left of its header, then the icon,
-// title and count, Save and Discard at its right; the nudge, the grid
+// A WorkArea: the icon, title and count in its header, then at its
+// right undo / redo before Save and Discard; the nudge, the grid
 // offset and how it fits in its status line, which says how to use the
 // canvas while nothing is selected. Keys while it has focus: Ctrl+Z,
 // Ctrl+Shift+Z (Ctrl+Y); with a selection, arrows move it, Shift+arrows
@@ -32,6 +32,8 @@ WorkArea {
   // `emptyText` shows under the icon)
   property var modules: null
   property string emptyText: ""
+  // The sentence over an empty canvas; a page with another source of modules says its own
+  property string emptyHint: I18n.tr("Empty: drag modules here from the library below, or click one to add it.")
   // An edge menu's edge ("left", …), drawn along that side; "" for a page
   property string edge: ""
   // An edge menu's screen around it ({ x, y, w, h } in grid units from
@@ -559,7 +561,7 @@ WorkArea {
       width: Math.min(parent.width, Widget.textPx(260))
       horizontalAlignment: Text.AlignHCenter
       overflow: "wrap"
-      text: I18n.tr("Empty: drag modules here from the library below, or click one to add it.")
+      text: root.emptyHint
       tone: "muted"
     }
 

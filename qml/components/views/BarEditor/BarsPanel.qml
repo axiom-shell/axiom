@@ -39,6 +39,7 @@ Item {
   ToolPane {
     anchors.fill: parent
     title: I18n.tr("Bars")
+    headerIcon: "toolbar"
     scrollKey: "BarEditor"
     showActions: false
 

@@ -7,7 +7,7 @@ import qs.config
 
 // Title row of a TitledCard, with Save and Discard (shown while `dirty`,
 // Discard only with `canReset`) buttons for whichever service owns the panel's pending edits. Items
-// placed inside sit just after the title. The title elides and the buttons
+// placed inside sit just after the title (`trailingTools` sit at the right, before the buttons). The title elides and the buttons
 // drop to icons when the row is too narrow.
 Item {
   id: root
@@ -29,6 +29,8 @@ Item {
   property string help: ""
   // Controls beside the title
   default property alias extras: extrasRow.data
+  // Controls at the right, just before Save and Discard
+  property alias trailingTools: trailingToolsRow.data
 
   signal save
   signal reset
@@ -117,13 +119,19 @@ Item {
       Layout.fillWidth: true
     }
 
+    RowLayout {
+      id: trailingToolsRow
+      visible: children.length > 0
+      spacing: Widget.spacing / 2
+    }
+
     SaveResetActions {
       visible: root.showActions
       dirty: root.dirty
       canSave: root.canSave
       canReset: root.canReset
       saveLabel: root.saveLabel
-      compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (root.icon !== "" ? Style.iconSize(root.iconSize) + headerRow.spacing : 0) + (countText.visible ? countText.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
+      compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (root.icon !== "" ? Style.iconSize(root.iconSize) + headerRow.spacing : 0) + (countText.visible ? countText.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + (trailingToolsRow.visible ? trailingToolsRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
       onSave: root.save()
       onReset: root.reset()
     }

@@ -4391,6 +4391,8 @@
     "Keep the screen awake while fullscreen": "",
     "File pickers, password prompts, dialogs, the screenshot editor, Qt theme settings, and the volume, network and Bluetooth apps.": "",
     "The menu's box, or with Box set to None, the tile under each card. Auto: the theme's surface colour.": "",
-    "Auto: the screen frame's outline colour.": ""
+    "Auto: the screen frame's outline colour.": "",
+    "How it looks on the bar, with the last output.": "",
+    "An empty module: drag elements here from the left, or click one to add it where there's room.": ""
   }
 }

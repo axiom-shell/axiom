@@ -38,7 +38,7 @@ GridDragLayer {
 
     // A box and a header like the canvas's, so the two read as a pair
     Surface {
-      Layout.preferredWidth: Appearance.fontSize * 22
+      Layout.preferredWidth: Math.min(Widget.textPx(340), Math.round(root.width * 0.34))
       Layout.fillHeight: true
       tone: "surface"
 
@@ -88,6 +88,7 @@ GridDragLayer {
         title: I18n.tr("Module")
         icon: "widgets"
         emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")
+        emptyHint: I18n.tr("An empty module: drag elements here from the left, or click one to add it where there's room.")
       }
     }
   }

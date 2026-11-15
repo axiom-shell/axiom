@@ -12,6 +12,8 @@ Card {
   id: root
 
   property alias title: header.title
+  // An accent icon before the title
+  property alias headerIcon: header.icon
   property alias dirty: header.dirty
   property alias showActions: header.showActions
   property alias canSave: header.canSave
