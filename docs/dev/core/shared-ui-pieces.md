@@ -233,6 +233,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 
 ### Pure helpers (`methods/`)
 - `methods/Tone`: the shell's colour math (mixing, compositing, WCAG contrast, nudging a colour until it reads); `Style` and the bar's `BarWidgetStyle` call it, UI never does ([style](style.md)).
+- `methods/OutputWindows`: which windows show on an output (active workspace plus the open special, by name where given) and its `hasFullscreen`; `workspaceKey` changes with either workspace ([contract](../compositor/contract.md)).
 - `methods/InkHost.find(start)`: the nearest visual ancestor with an `inkScope` (a Surface), the ink a `StyledText` inherits; stops at a relay (`inkHostAbove`); called in a binding, so it follows a reparent ([style](style.md) › Pieces).
 - `methods/TextRender`: `zoomAt(start)` (the product of the `contentZoom`s above an item, up to the nearest `drawnZoom` publisher) and `typeFor(zoom, symbol, fill)` (native at rest, distance field under a zoom) ([style](style.md) › Crisp text).
 - `methods/FlowColumns`: newspaper columns for the settings page: how many a width holds (`count`), which rows stay together (`blocks`, `lines`) and where each goes (`place`, over `ColumnSplit.placeN`) ([Settings page](settings-page.md) › Columns).

@@ -136,8 +136,7 @@ QtObject {
     const covers = w => w.fullscreen || w.maximized;
     return [].concat(...screens.map(screen => {
       const output = CompositorManager.output(screen.name);
-      const shown = [output?.activeWorkspaceId ?? -1, output?.specialWorkspaceId ?? 0].filter(id => id !== -1 && id !== 0);
-      return CompositorManager.windows.filter(w => !w.hidden && shown.includes(w.workspaceId)).sort((a, b) => covers(b) - covers(a) || b.floating - a.floating || (a.focusRank ?? 0) - (b.focusRank ?? 0)).map(w => Object.assign({
+      return OutputWindows.shown(output, CompositorManager.windows).filter(w => !w.hidden).sort((a, b) => covers(b) - covers(a) || b.floating - a.floating || (a.focusRank ?? 0) - (b.focusRank ?? 0)).map(w => Object.assign({
           "output": screen.name
         }, ScreenRegion.intersect({
           "x": w.x,

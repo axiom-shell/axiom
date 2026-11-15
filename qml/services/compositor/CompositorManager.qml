@@ -281,9 +281,7 @@ Singleton {
   // open on it, shows a fullscreen window (maximized ones don't count:
   // they leave reserved space alone)
   function hasFullscreen(name) {
-    const out = root.output(name);
-    const ids = [out?.activeWorkspaceId ?? -1, out?.specialWorkspaceId ?? 0].filter(id => id !== -1 && id !== 0);
-    return ids.length > 0 && root.windows.some(w => ids.includes(w.workspaceId) && w.fullscreen);
+    return OutputWindows.hasFullscreen(root.output(name), root.windows);
   }
 
   // Whether a window on the screen's active workspace (or the special
@@ -298,8 +296,7 @@ Singleton {
     const workspaceId = output?.activeWorkspaceId ?? -1;
     if (workspaceId === -1)
       return false;
-    const specialId = output.specialWorkspaceId;
-    const windows = root.windows.filter(w => !w.hidden && (w.workspaceId === workspaceId || (specialId !== 0 && w.workspaceId === specialId)));
+    const windows = OutputWindows.shown(output, root.windows).filter(w => !w.hidden);
     return DockLayout.covered({
       "x": rect.x + screen.x,
       "y": rect.y + screen.y,
