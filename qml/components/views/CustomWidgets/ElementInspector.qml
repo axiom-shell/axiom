@@ -25,17 +25,55 @@ ColumnLayout {
   readonly property var element: root.editor.element
   readonly property var kind: CustomWidgetsConfig.elementKind(root.element?.type ?? "")
   readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
-  // The binding choices: the output's own key, or any path in it (a
-  // format or a number can be typed)
+  // The binding choices: the output's own key, or any path in the saved
+  // samples, what was seen and the output now (a format or a number can be
+  // typed), each labelled with its value
   readonly property var bindOptions: [
     {
       "value": "",
       "label": I18n.tr("The output's own")
     }
-  ].concat((root.fields?.sample ? CustomWidgetData.flatten(root.fields.sample) : []).filter(p => p.type !== "object").map(p => ({
+  ].concat(root.editor.bindPaths.map(p => ({
         "value": p.path,
-        "label": p.path
+        "label": p.path + " — " + (p.type === "array" ? I18n.tr("a list of {0}", p.value) : p.preview)
       })))
+  // The slot an edit last started in, "<element key>|<slot>": a click in the
+  // Data panel binds it
+  property string lastSlot: ""
+  readonly property string elementKey: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
+  property bool dataOpen: false
+
+  // What a slot's binding reads as in the previewed sample: { text, missing }
+  // ("" without a binding or a sample; a `=` binding is fixed text)
+  function nowOf(binding) {
+    if (!binding || root.editor.previewFields === null)
+      return {
+        "text": "",
+        "missing": false
+      };
+    if (binding.startsWith("="))
+      return {
+        "text": I18n.tr("fixed text"),
+        "missing": false
+      };
+    const value = CustomWidgetData.elementValue(root.editor.previewFields, binding);
+    return {
+      "text": value === undefined ? "" : CustomWidgetData.asText(value),
+      "missing": value === undefined
+    };
+  }
+
+  // A path clicked in the Data panel: bound to the slot last started in on
+  // this element, else to a new Text
+  function bindPath(path) {
+    const at = root.lastSlot.indexOf("|");
+    if (root.element && at > 0 && root.lastSlot.slice(0, at) === root.elementKey) {
+      root.editor.setElement(["bind", root.lastSlot.slice(at + 1)], path);
+      return;
+    }
+    root.grid.addModule("Text");
+    root.editor.setElement(["bind", "text"], path);
+  }
 
   // A slot's title in the Shows group: the kinds' slot names (translated as
   // they are), the two every kind has (show and tone) and a Sparkline's second series
@@ -159,23 +197,52 @@ ColumnLayout {
         Repeater {
           model: root.kind?.slots ?? []
 
-          RowLayout {
+          ColumnLayout {
             id: slot
             required property string modelData
+            readonly property var now: root.nowOf(root.element?.bind?.[slot.modelData] ?? "")
             Layout.fillWidth: true
-            spacing: Widget.spacing
+            spacing: Widget.spacing / 2
 
-            StyledLabel {
-              Layout.preferredWidth: Widget.textPx(70)
-              text: root.slotTitle(slot.modelData)
-            }
-            StyledComboEntry {
+            RowLayout {
               Layout.fillWidth: true
-              editable: true
-              placeholderText: root.slotOptions(slot.modelData)[0].label
-              value: root.element?.bind?.[slot.modelData] ?? ""
-              options: root.slotOptions(slot.modelData)
-              onPicked: value => root.editor.setElement(["bind", slot.modelData], value === "" ? undefined : value)
+              spacing: Widget.spacing
+
+              StyledLabel {
+                Layout.preferredWidth: Widget.textPx(70)
+                text: root.slotTitle(slot.modelData)
+              }
+              StyledComboEntry {
+                id: combo
+                Layout.fillWidth: true
+                editable: true
+                placeholderText: root.slotOptions(slot.modelData)[0].label
+                value: root.element?.bind?.[slot.modelData] ?? ""
+                options: root.slotOptions(slot.modelData)
+                onPicked: value => {
+                  root.lastSlot = root.elementKey + "|" + slot.modelData;
+                  root.editor.setElement(["bind", slot.modelData], value === "" ? undefined : value);
+                }
+
+                Connections {
+                  target: combo.input
+                  function onActiveFocusChanged() {
+                    if (combo.input.activeFocus)
+                      root.lastSlot = root.elementKey + "|" + slot.modelData;
+                  }
+                }
+              }
+            }
+            // What it reads in the previewed sample
+            StyledText {
+              visible: slot.now.text !== "" || slot.now.missing
+              Layout.fillWidth: true
+              Layout.leftMargin: Widget.textPx(70) + Widget.spacing
+              text: slot.now.missing ? I18n.tr("Nothing at this path in the previewed sample") : I18n.tr("now: {0}", slot.now.text)
+              role: "caption"
+              tone: slot.now.missing ? "warning" : "muted"
+              textFamily: slot.now.missing ? "" : "monospace"
+              overflow: "line"
             }
           }
         }
@@ -237,6 +304,24 @@ ColumnLayout {
           onEdited: (path, value) => root.editor.setElement(["actions"].concat(path), value)
         }
       }
+    }
+  }
+
+  // What the output holds, by path: a click binds it to the slot last
+  // started in, or adds a Text showing it
+  FoldingSection {
+    visible: root.editor.bindPaths.length > 0
+    title: I18n.tr("Data")
+    description: I18n.tr("Click a value to bind it to the slot you were in, or to a new text.")
+    collapsed: !root.dataOpen
+    onToggled: root.dataOpen = !root.dataOpen
+
+    CustomWidgetPaths {
+      Layout.fillWidth: true
+      paths: root.editor.bindPaths
+      maxRows: 100
+      pickable: true
+      onPicked: path => root.bindPath(path)
     }
   }
 }

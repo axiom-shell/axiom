@@ -197,36 +197,10 @@ ColumnLayout {
       title: I18n.tr("What's in it")
       description: I18n.tr("Each value the output holds, by its path: the module's elements show them. The bar reads Waybar's keys (text, alt, tooltip, class, percentage) and axiom's (icon, value, min, max, unit, subtext, state, badge, urgent, image, items, hidden).")
 
-      // By count: a new sample of the same shape rebuilds nothing
-      Repeater {
-        model: Math.min(root.paths.length, root.maxRows)
-
-        RowLayout {
-          id: pathRow
-          required property int index
-          readonly property var entry: root.paths[index] ?? ({})
-          Layout.fillWidth: true
-          spacing: Widget.spacing
-
-          StyledLabel {
-            Layout.preferredWidth: Appearance.fontSize * 12
-            text: pathRow.entry.path ?? ""
-            textFamily: "monospace"
-            role: "caption"
-            elide: Text.ElideMiddle // style-exempt: middle
-          }
-          StyledLabel {
-            Layout.fillWidth: true
-            text: pathRow.entry.type === "array" ? I18n.tr("a list of {0}", pathRow.entry.value) : pathRow.entry.type === "object" ? "{…}" : CustomWidgetData.asText(pathRow.entry.value)
-            tone: "muted"
-          }
-        }
-      }
-
-      StyledText {
-        visible: root.paths.length > root.maxRows
-        text: I18n.tr("…and {0} more", root.paths.length - root.maxRows)
-        tone: "muted"
+      CustomWidgetPaths {
+        Layout.fillWidth: true
+        paths: root.paths
+        maxRows: root.maxRows
       }
     }
   }

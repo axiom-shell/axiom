@@ -4485,6 +4485,10 @@
     "Paste or edit the sample of {0}": "",
     "What the script prints, as JSON: {\"text\": \"…\"}": "",
     "Save the sample": "",
-    "Not a JSON object.": ""
+    "Not a JSON object.": "",
+    "fixed text": "",
+    "Nothing at this path in the previewed sample": "",
+    "now: {0}": "",
+    "Click a value to bind it to the slot you were in, or to a new text.": ""
   }
 }
