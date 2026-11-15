@@ -49,10 +49,13 @@ ColumnLayout {
     active: root.element === null
     visible: active
     Layout.fillWidth: true
+    // A Flow's height comes from its width
+    Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
 
     // (Its title and description are the column's header, in
     // ElementEditorLayout)
-    sourceComponent: ColumnLayout {
+    sourceComponent: Flow {
+      width: parent?.width ?? 0
       spacing: Widget.spacing
 
       Repeater {
@@ -60,7 +63,6 @@ ColumnLayout {
 
         ModuleChip {
           required property var modelData
-          Layout.fillWidth: true
           dragLayer: root.dragLayer
           // Kind labels: the schema's
           typeInfo: modelData
