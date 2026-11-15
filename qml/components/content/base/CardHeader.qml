@@ -125,15 +125,28 @@ Item {
       spacing: Widget.spacing / 2
     }
 
-    SaveResetActions {
+    // With tools at the right the Save / Discard slot keeps its full size
+    // while they are hidden, so the tools' right edge never moves with
+    // `dirty`, the title or `compact`'s width
+    Item {
+      id: actionsSlot
       visible: root.showActions
-      dirty: root.dirty
-      canSave: root.canSave
-      canReset: root.canReset
-      saveLabel: root.saveLabel
-      compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (root.icon !== "" ? Style.iconSize(root.iconSize) + headerRow.spacing : 0) + (countText.visible ? countText.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + (trailingToolsRow.visible ? trailingToolsRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
-      onSave: root.save()
-      onReset: root.reset()
+      Layout.preferredWidth: trailingToolsRow.visible ? Math.ceil(actions.compact ? Widget.height * 2 + actions.spacing : actions.fullWidth) : actions.implicitWidth
+      Layout.preferredHeight: actions.implicitHeight
+      implicitWidth: actions.implicitWidth
+
+      SaveResetActions {
+        id: actions
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        dirty: root.dirty
+        canSave: root.canSave
+        canReset: root.canReset
+        saveLabel: root.saveLabel
+        compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (root.icon !== "" ? Style.iconSize(root.iconSize) + headerRow.spacing : 0) + (countText.visible ? countText.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + (trailingToolsRow.visible ? trailingToolsRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
+        onSave: root.save()
+        onReset: root.reset()
+      }
     }
   }
 }
