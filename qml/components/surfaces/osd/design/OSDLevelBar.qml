@@ -100,9 +100,9 @@ Item {
     anchors.fill: parent
     visible: root.highlight && root.shown
     z: 1
-    radius: Widget.radius
+    radius: Style.radius
     color: "transparent"
     border.width: Widget.px(2)
-    border.color: Theme.accent
+    border.color: Style.accent
   }
 }

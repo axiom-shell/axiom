@@ -1,31 +1,8 @@
 {
- "qml/components/bar/look/SliceMasked.qml": {
-  "R17": 3
- },
  "qml/components/reusable/OptionGlyph.qml": {
   "R1": 1,
   "R4": 1,
   "R7": 1
- },
- "qml/components/surfaces/osd/design/OSDCard.qml": {
-  "R1": 5,
-  "R14": 5,
-  "R4": 3,
-  "R5": 1,
-  "R7": 4
- },
- "qml/components/surfaces/osd/design/OSDLevelBar.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/surfaces/osd/design/OSDTile.qml": {
-  "R1": 9,
-  "R18": 1,
-  "R2": 4,
-  "R3": 1,
-  "R4": 1,
-  "R5": 1,
-  "R7": 5
  },
  "qml/components/views/WindowRules/KindBlock.qml": {
   "R1": 3,
