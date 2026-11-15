@@ -4620,6 +4620,7 @@
     "e.g. ~/bin/cpu.sh": "",
     "Auto reads Waybar's or axiom's JSON, else the text.": "",
     "Put it on a bar": "",
-    "Put it on a page": ""
+    "Put it on a page": "",
+    "Unnamed": ""
   }
 }

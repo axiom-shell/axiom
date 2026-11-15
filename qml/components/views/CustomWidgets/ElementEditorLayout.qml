@@ -196,6 +196,9 @@ GridDragLayer {
       ColumnLayout {
         id: topColumn
         Layout.fillWidth: true
+        // Never grows past its content: with a screen's form empty (the base)
+        // the spare height went to it and left the canvas nothing
+        Layout.maximumHeight: topColumn.implicitHeight
         spacing: Widget.spacing
       }
 

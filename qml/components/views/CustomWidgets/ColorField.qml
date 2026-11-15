@@ -292,59 +292,71 @@ ColumnLayout {
       Repeater {
         model: root.rules.length
 
-        RowLayout {
+        ColumnLayout {
           id: rule
           required property int index
           readonly property var item: root.rules[rule.index] ?? ({})
           Layout.fillWidth: true
-          spacing: Widget.spacing
+          Layout.bottomMargin: Widget.spacing
+          spacing: Widget.spacing / 2
 
-          StyledComboEntry {
-            Layout.preferredWidth: Widget.px(88)
-            Layout.minimumWidth: 0
-            value: rule.item.test ?? "is"
-            options: [
-              {
-                "value": "is",
-                "label": I18n.tr("is")
-              },
-              {
-                "value": "isNot",
-                "label": I18n.tr("is not")
-              },
-              {
-                "value": "above",
-                "label": I18n.tr("is above")
-              },
-              {
-                "value": "below",
-                "label": I18n.tr("is below")
-              }
-            ]
-            onPicked: value => root.setRule(rule.index, {
-                "test": value
-              })
-          }
-
-          StyledTextEntry {
-            id: valueEntry
+          RowLayout {
             Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            placeholderText: root.stateKey === "state" && root.editor.seenStates.length > 0 ? I18n.tr("e.g. {0}", root.editor.seenStates[0]) : I18n.tr("Value")
-            onTextEdited: root.setRule(rule.index, {
-              "value": valueEntry.text
-            })
-            Binding {
-              target: valueEntry
-              property: "text"
-              value: rule.item.value ?? ""
-              when: !valueEntry.input.activeFocus
-              restoreMode: Binding.RestoreNone
+            spacing: Widget.spacing
+
+            StyledComboEntry {
+              Layout.preferredWidth: Widget.px(88)
+              Layout.minimumWidth: 0
+              value: rule.item.test ?? "is"
+              options: [
+                {
+                  "value": "is",
+                  "label": I18n.tr("is")
+                },
+                {
+                  "value": "isNot",
+                  "label": I18n.tr("is not")
+                },
+                {
+                  "value": "above",
+                  "label": I18n.tr("is above")
+                },
+                {
+                  "value": "below",
+                  "label": I18n.tr("is below")
+                }
+              ]
+              onPicked: value => root.setRule(rule.index, {
+                  "test": value
+                })
+            }
+
+            StyledTextEntry {
+              id: valueEntry
+              Layout.fillWidth: true
+              Layout.minimumWidth: 0
+              placeholderText: root.stateKey === "state" && root.editor.seenStates.length > 0 ? I18n.tr("e.g. {0}", root.editor.seenStates[0]) : I18n.tr("Value")
+              onTextEdited: root.setRule(rule.index, {
+                "value": valueEntry.text
+              })
+              Binding {
+                target: valueEntry
+                property: "text"
+                value: rule.item.value ?? ""
+                when: !valueEntry.input.activeFocus
+                restoreMode: Binding.RestoreNone
+              }
+            }
+
+            FlatIconButton {
+              iconText: "close"
+              tooltipText: I18n.tr("Remove this rule")
+              onClicked: root.write([root.statesKey, "rules"], root.rules.filter((r, i) => i !== rule.index))
             }
           }
 
           StyledComboEntry {
-            Layout.preferredWidth: Widget.px(104)
+            Layout.fillWidth: true
             Layout.minimumWidth: 0
             value: rule.item.color ?? ""
             options: root.entries(rule.item.color ?? "", false, false)
@@ -365,12 +377,6 @@ ColumnLayout {
               border.width: Style.hairline
               border.color: Style.borderStrong
             }
-          }
-
-          FlatIconButton {
-            iconText: "close"
-            tooltipText: I18n.tr("Remove this rule")
-            onClicked: root.write([root.statesKey, "rules"], root.rules.filter((r, i) => i !== rule.index))
           }
         }
       }
