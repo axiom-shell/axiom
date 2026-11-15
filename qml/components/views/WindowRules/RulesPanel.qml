@@ -19,6 +19,8 @@ Item {
   readonly property var editor: WindowRulesManager.editor
   // The built-in switches that are on
   readonly property int switchesOn: Object.values(root.editor.switches).filter(value => value === true || value?.enabled === true).length
+  // The built-in switches' problems (rule "")
+  readonly property int switchProblems: WindowRuleIssues.of(root.editor.report, "").length
   // Whether the built-ins section is open (the panel remembers it)
   property bool builtinsOpen: false
 
@@ -125,8 +127,21 @@ Item {
       open: root.builtinsOpen
       onToggled: root.builtinsOpen = !root.builtinsOpen
 
-      SwitchesGroup {
+      trailing: [
+        IssueIcon {
+          visible: root.switchProblems > 0
+          level: "error"
+          size: "sm"
+          tip: I18n.tr("{0} problems", root.switchProblems)
+        }
+      ]
+
+      // Built only while open: nothing built hidden
+      Loader {
+        active: root.builtinsOpen
+        visible: active
         Layout.fillWidth: true
+        sourceComponent: SwitchesGroup {}
       }
     }
 

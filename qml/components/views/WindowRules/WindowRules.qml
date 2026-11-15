@@ -46,7 +46,7 @@ BaseView {
 
       emptyKind: root.editor.selected !== null ? "" : "none"
       emptyIcon: "select_window"
-      emptyText: I18n.tr("No rules yet.")
+      emptyText: I18n.tr("Nothing to edit yet")
       emptyHint: I18n.tr("Add a rule on the left: pick which windows it's for, then what happens when one opens.")
 
       pinned: Loader {

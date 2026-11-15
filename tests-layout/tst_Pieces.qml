@@ -589,6 +589,34 @@ TestCase {
     }
   }
 
+  // A group with no title leaves no blank heading line
+  function test_field_group_without_title_has_no_blank_heading() {
+    harness.configure({});
+    const titled = createTemporaryObject(groupComp, root, {
+      "width": 400
+    });
+    const bare = createTemporaryObject(groupComp, root, {
+      "width": 400,
+      "title": ""
+    });
+    waitForRendering(titled);
+    waitForRendering(bare);
+    function titleItem(item) {
+      if (item.role === "title")
+        return item;
+      for (const child of item.children) {
+        const found = titleItem(child);
+        if (found)
+          return found;
+      }
+      return null;
+    }
+    const heading = titleItem(bare);
+    verify(heading !== null);
+    compare(heading.visible, false);
+    verify(bare.implicitHeight < titled.implicitHeight);
+  }
+
   function test_field_header_holds_its_text_data() {
     return rows();
   }

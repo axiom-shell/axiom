@@ -75,7 +75,7 @@ ColumnLayout {
     SchemaPropertiesForm {
       Layout.fillWidth: true
       propertiesSchema: Utils.pick(root.schema, order)
-      order: ["name", "icon", "enabled"]
+      order: ["name", "icon"]
       values: root.rule
       onEdited: (path, value) => root.editor.set(path, value)
     }
