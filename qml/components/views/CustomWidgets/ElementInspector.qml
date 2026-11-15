@@ -8,7 +8,8 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.views.Layouts
 
-// Custom widgets page, Module tab: the element library, then the selected
+// Custom widgets page, Module tab: the element library (shown while no
+// element is selected), then the selected
 // element's bindings (each slot: the output's own key, a path in it, a
 // format or a number), its look (its kind's options,
 // CustomWidgetsConfig.elementKinds) and the commands it runs.
@@ -48,17 +49,20 @@ ColumnLayout {
     active: root.element === null
     visible: active
     Layout.fillWidth: true
+    // A Flow's height comes from its width
+    Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
 
-    sourceComponent: FieldGroup {
-      title: I18n.tr("Elements")
-      description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
+    // (Its title and description are the column's header, in
+    // ElementEditorLayout)
+    sourceComponent: Flow {
+      width: parent?.width ?? 0
+      spacing: Widget.spacing
 
       Repeater {
         model: CustomWidgetsConfig.elementKinds
 
         ModuleChip {
           required property var modelData
-          Layout.fillWidth: true
           dragLayer: root.dragLayer
           // Kind labels: the schema's
           typeInfo: modelData
@@ -85,24 +89,15 @@ ColumnLayout {
         // In grid units, as the canvas sizes it
         subtitle: root.element ? I18n.tr("{0} × {1}", root.element.place.w / CustomWidgetData.subCells, root.element.place.h / CustomWidgetData.subCells) : ""
 
-        SquareIconButton {
-          size: Widget.height
-          iconText: "content_copy"
-          tooltipText: I18n.tr("Copy this element")
-          onClicked: root.grid.duplicateModule(root.grid.selected)
-        }
-        SquareIconButton {
-          size: Widget.height
-          iconText: "delete"
-          tooltipText: I18n.tr("Remove this element")
-          onClicked: root.grid.removeModule(root.grid.selected)
-        }
-        SquareIconButton {
-          size: Widget.height
-          iconText: "close"
-          tooltipText: I18n.tr("Back to the elements")
-          onClicked: root.grid.clearSelection()
-        }
+        canDuplicate: true
+        duplicateTooltip: I18n.tr("Copy this element")
+        canRemove: true
+        removeTooltip: I18n.tr("Remove this element")
+        closable: true
+        closeTooltip: I18n.tr("Back to the elements")
+        onDuplicate: root.grid.duplicateModule(root.grid.selected)
+        onRemove: root.grid.removeModule(root.grid.selected)
+        onClose: root.grid.clearSelection()
       }
 
       FieldGroup {
@@ -120,8 +115,7 @@ ColumnLayout {
             spacing: Widget.spacing
 
             StyledLabel {
-              elide: Text.ElideRight
-              Layout.preferredWidth: Appearance.fontSize * 5
+              Layout.preferredWidth: Widget.textPx(70)
               text: I18n.tr(slot.modelData)
             }
             StyledComboEntry {

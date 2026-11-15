@@ -77,15 +77,13 @@ ColumnLayout {
     root._heldView = null;
   }
 
+  // The board: the WorkArea's well draws it
   Rectangle {
     id: board
     Layout.fillWidth: true
     Layout.fillHeight: true
     Layout.minimumHeight: Widget.height * 6
-    color: Theme.backgroundAlt
-    radius: Widget.radius
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
+    color: "transparent"
     clip: true
 
     // A click on the empty board clears nothing, but takes focus from a field
@@ -127,10 +125,12 @@ ColumnLayout {
         height: placed.height
         z: dragging ? 2 : selected ? 1 : 0
         radius: Widget.radius
-        color: selected ? Qt.alpha(Theme.accent, 0.25) : Theme.backgroundHighlight
-        border.color: selected ? Theme.accent : Theme.border
-        border.width: Appearance.borderWidth * (selected ? 2 : 1)
-        opacity: monitor ? 1 : 0.55
+        color: selected ? Style.accentContainer : Style.surfaceRaised
+        border.color: selected ? Style.accent : Style.borderStrong
+        border.width: selected ? Style.focusWidth : Style.hairline
+        opacity: monitor ? 1 : Style.opacityDisabled
+        // What reads on the tile's fill
+        readonly property StyleInk ink: Style.inkOf(selected ? "accentContainer" : "raised")
 
         ColumnLayout {
           anchors.centerIn: parent
@@ -145,31 +145,33 @@ ColumnLayout {
               visible: tile.primary
               text: "star"
               fill: 1
-              textColor: Theme.accent
+              textColor: tile.ink.accent
             }
 
             StyledLabel {
               text: MonitorManager.labelFor(tile.rule)
-              font.weight: Font.Bold
-              elide: Text.ElideRight
+              role: "label"
+              textColor: tile.ink.text
               Layout.maximumWidth: tile.width - Widget.padding * 2
             }
           }
 
+          // One line, elided, as before: a narrow tile must not grow past its box
           StyledText {
             Layout.alignment: Qt.AlignHCenter
             Layout.maximumWidth: tile.width - Widget.padding
-            elide: Text.ElideRight
-            opacity: 0.7
-            textSize: Appearance.fontSizeBy(-2)
+            role: "caption"
+            overflow: "line"
+            textColor: tile.ink.muted
             text: tile.mode ? I18n.tr("{0}×{1} @ {2} Hz", tile.mode.width, tile.mode.height, MonitorLayout.formatRate(tile.mode.rate)) : I18n.tr("Preferred mode")
           }
 
           StyledText {
             visible: !tile.monitor
             Layout.alignment: Qt.AlignHCenter
-            opacity: 0.7
-            textSize: Appearance.fontSizeBy(-2)
+            role: "caption"
+            overflow: "line"
+            textColor: tile.ink.muted
             text: I18n.tr("Not connected")
           }
         }
@@ -199,7 +201,7 @@ ColumnLayout {
         }
         readonly property bool vertical: guide.axis === "x"
         z: 3
-        color: Theme.accent
+        color: Style.accent
         x: vertical ? (guide.at - root.view.x) * root.view.scale : 0
         y: vertical ? 0 : (guide.at - root.view.y) * root.view.scale
         width: vertical ? 1 : board.width

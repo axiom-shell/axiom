@@ -6,11 +6,14 @@ import qs.components.reusable
 
 // A titled, scrolling panel card (settings, theme, bar editor panels):
 // header with optional Save/Discard, divider, optional fixed extras (e.g. a
-// tab strip), then the scrolling body that children go into.
+// tab strip), then the scrolling body that children go into, then an
+// optional fixed `footer`.
 Card {
   id: root
 
   property alias title: header.title
+  // An accent icon before the title
+  property alias headerIcon: header.icon
   property alias dirty: header.dirty
   property alias showActions: header.showActions
   property alias canSave: header.canSave
@@ -18,6 +21,12 @@ Card {
   property alias saveLabel: header.saveLabel
   // Fixed content between the divider and the scrolling body
   property alias headerExtras: extras.data
+  // Fixed content under the scrolling body (a ToolPane's footer): nothing
+  // here and it takes no room
+  property alias footer: footerColumn.data
+  // The scrolling body's height (set by the layout, not by what's in it):
+  // a body holding one tall work surface sizes it from this
+  readonly property alias bodyHeight: scroll.availableHeight
   // Hides the extras with their space (hiding only what's inside can
   // leave the column its old height)
   property bool showExtras: true
@@ -102,6 +111,16 @@ Card {
         width: scroll.availableWidth
         spacing: Widget.spacing * 2
       }
+    }
+
+    // Takes its own height, never the body's
+    ColumnLayout {
+      id: footerColumn
+      Layout.fillWidth: true
+      Layout.fillHeight: false
+      Layout.topMargin: Widget.spacing
+      visible: children.length > 0
+      spacing: Widget.spacing
     }
   }
 }

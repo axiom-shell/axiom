@@ -18,7 +18,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 
 ### View (`OverlayPages` → `OverlayView`)
 - `qml/components/views/<type>/<type>.qml`, a `BaseView` that receives the screen's `grid` and its `viewConfig`.
-- `BaseView` gives hand-built pages their sizes: `pageHeight` (two cards; a page window's height in a window, `windowed`), `cardPageWidth`, `sideWidth`.
+- `BaseView` gives hand-built pages their sizes, in whole pixels: `pageHeight` (two cards; a page window's height in a window, `windowed`), `cardPageWidth`, `sideWidth`, and for tool pages `pageWidth` (side + editor + gap: every tool page is this wide, so switching pages never changes the overlay box), `inspectorWidth` and `listWidth` (the page less the inspector). Tool pages are built on `ToolPane`/`WorkArea` ([editors pattern](../core/editors-pattern.md)).
 - `Custom` (`views/Custom/Custom.qml`) is one `ModuleGrid` of its `modules`, with its own `icon` in the navigator (`OverlayConfig.pageIcon`; empty is the type's).
 - Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`, `CustomWidgets`, `WindowRules`.
   - `CalendarPage`: the month with its events, the selected day's `DayPane`, and the calendars to switch on and off. It is not named `Calendar`, which `views/Themes`' import of `content/` would see twice.

@@ -83,6 +83,7 @@ What to reach for (every piece is in `qml/components/reusable/`; [shared-ui-piec
 | You need | Use |
 |---|---|
 | A box | `Surface` (`tone`, `outlined`, `solid`, `shadowed`) |
+| An editor page | `ToolPane` + `WorkArea` + `InspectorHeader` (recipe [tool-page](../../recipes/tool-page.md)) |
 | Hover, press, drag on a control | `StateLayer`, first in the control |
 | Keyboard focus | `FocusRing` (only on controls that take Tab focus) |
 | A loading placeholder | `Skeleton` |

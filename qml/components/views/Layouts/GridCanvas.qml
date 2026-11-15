@@ -15,7 +15,7 @@ import qs.components.content.base
 // pushes them aside (GridEditor's plans, shown live while dragging).
 // Drag a box on the background (Shift: adding) or Shift/Ctrl+click
 // modules to select several, then drag one to move them all.
-// Undo / redo at the top left, and keys while it has focus: Ctrl+Z,
+// Undo / redo in the work area's header, at the right before Save, and keys while it has focus: Ctrl+Z,
 // Ctrl+Shift+Z (Ctrl+Y); with a selection, arrows move it, Shift+arrows
 // resize a single module, Delete removes it, Escape deselects it.
 // Geometry is scaled by hand (not Item.scale) so text and controls stay

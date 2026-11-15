@@ -6,6 +6,9 @@
 
 CalDAV accounts, read-only .ics feeds and local calendars: synced and edited through the axiom daemon, editing events, reminders, and the calendar UI parts.
 
+### The page
+`CalendarPage` is `BaseView.pageWidth` wide like every tool page: the month in a `CardHeader` card (month, sync state, Today and the month arrows) beside the selected day's events over the calendars, a `ListSection` of switch rows.
+
 ### Sources
 - **CalDAV accounts.**
 - **Read-only .ics subscriptions:** `https://` / `webcal://`, or a local `file://` feed.

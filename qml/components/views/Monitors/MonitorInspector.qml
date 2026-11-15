@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.compositor
 import qs.components.reusable
+import qs.components.content.parts
 import qs.components.forms
 import qs.components.methods
 
@@ -48,40 +49,24 @@ ColumnLayout {
 
   spacing: Widget.spacing * 2
 
-  StyledText {
+  // The nothing-selected state
+  EmptyState {
     visible: !root.rule
-    text: I18n.tr("Select a monitor")
-    opacity: 0.6
-  }
-
-  ColumnLayout {
-    visible: !!root.rule
     Layout.fillWidth: true
-    spacing: 2
-
-    StyledText {
-      text: MonitorManager.labelFor(root.rule)
-      textSize: Appearance.fontSizeBy(2)
-      font.weight: Font.Bold
-      Layout.fillWidth: true
-      elide: Text.ElideRight
-    }
-
-    StyledText {
-      text: root.monitor ? root.monitor.description : I18n.tr("Not connected")
-      opacity: 0.7
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
-      Layout.fillWidth: true
-    }
+    Layout.topMargin: Widget.padding * 2
+    icon: "touch_app"
+    text: I18n.tr("Select a monitor")
   }
 
-  StyledTextButton {
-    visible: !!root.rule && !root.monitor
-    text: I18n.tr("Remove from this layout")
-    iconText: "delete"
-    implicitHeight: Widget.height
-    onClicked: MonitorManager.forgetOutput(root.output)
+  InspectorHeader {
+    visible: !!root.rule
+    icon: "monitor"
+    title: MonitorManager.labelFor(root.rule)
+    subtitle: root.monitor ? root.monitor.description : I18n.tr("Not connected")
+    // Only a monitor that is not connected can leave the layout
+    canRemove: !!root.rule && !root.monitor
+    removeTooltip: I18n.tr("Remove from this layout")
+    onRemove: MonitorManager.forgetOutput(root.output)
   }
 
   RowLayout {
@@ -189,7 +174,7 @@ ColumnLayout {
 
         StyledText {
           text: I18n.tr("Rotation")
-          font.weight: Font.Medium
+          role: "label"
         }
 
         RowLayout {
@@ -218,7 +203,7 @@ ColumnLayout {
 
           StyledLabel {
             text: I18n.tr("Flipped")
-            font.weight: Font.Medium
+            role: "label"
           }
 
           StyledSwitch {
@@ -303,12 +288,12 @@ ColumnLayout {
 
           StyledIcon {
             text: root.advancedOpen ? "expand_more" : "chevron_right"
-            textColor: Theme.accent
+            tone: "accent"
           }
 
           StyledLabel {
             text: I18n.tr("Advanced")
-            font.weight: Font.Bold
+            role: "label"
             Layout.fillWidth: true
           }
         }

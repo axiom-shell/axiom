@@ -8,11 +8,12 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.views.base
 import qs.components.bar.look
 
-// Custom widgets page, Bar tab: the widget as it's drawn on a bar across
-// and on one down the side (the real bar widget, on the first bar's
-// look), then its bar style, its text (Waybar's format, icons and
+// Custom widgets page, Bar tab: one banner across the page holding the
+// widget as it's drawn on a bar across and on one down the side (the real
+// bar widget, on the first bar's look) and a caption, then its bar style, its text (Waybar's format, icons and
 // states) and its actions.
 ColumnLayout {
   id: root
@@ -49,82 +50,106 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
+  // One banner across the page: the widget on a bar across and on one down
+  // the side, and what it shows
   FieldGroup {
     Layout.fillWidth: true
     title: I18n.tr("Preview")
 
-    RowLayout {
+    Rectangle {
       Layout.fillWidth: true
-      spacing: Widget.spacing * 3
+      radius: Appearance.borderRadius
+      // Stands in for a bar's background at its default look: the page colour
+      color: Style.surfacePage
+      border.color: Style.borderSubtle
+      border.width: Style.hairline
+      implicitHeight: bannerRow.implicitHeight + Widget.padding * 2
 
-      BarPreview {
-        Layout.alignment: Qt.AlignTop
-        barConfig: root.barConfig
+      RowLayout {
+        id: bannerRow
+        anchors.fill: parent
+        anchors.margins: Widget.padding
+        spacing: Widget.spacing * 3
+
+        BarPreview {
+          Layout.alignment: Qt.AlignVCenter
+          barConfig: root.barConfig
+        }
+        BarPreview {
+          Layout.alignment: Qt.AlignVCenter
+          barConfig: root.verticalBar
+        }
+        StyledText {
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignVCenter
+          role: "caption"
+          tone: "muted"
+          overflow: "wrap"
+          text: I18n.tr("How it looks on the bar, with the last output.")
+        }
       }
-      BarPreview {
-        Layout.alignment: Qt.AlignTop
-        barConfig: root.verticalBar
-      }
-      Item {
+    }
+  }
+
+  // The other groups flow into columns, as a Settings card's rows do
+  GroupColumns {
+    Layout.fillWidth: true
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("On the bar")
+
+      SchemaPropertiesForm {
         Layout.fillWidth: true
+        propertiesSchema: root.schema.bar.properties
+        order: ["style", "icon", "segments", "width", "popout"]
+        values: root.definition?.bar ?? ({})
+        onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+      }
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Text")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
+        values: root.definition ?? ({})
+        onEdited: (path, value) => root.editor.set(path, value)
+      }
+
+      JsonField {
+        label: I18n.tr("Icons")
+        description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
+        key: "formatIcons"
+      }
+      JsonField {
+        label: I18n.tr("State colours")
+        description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
+        key: "states"
+      }
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Actions")
+      description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click.")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: root.schema.actions.properties
+        values: root.definition?.actions ?? ({})
+        onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
       }
     }
   }
 
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("On the bar")
-
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: root.schema.bar.properties
-      order: ["style", "icon", "segments", "width", "popout"]
-      values: root.definition?.bar ?? ({})
-      onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
-    }
-  }
-
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("Text")
-
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: Utils.pick(root.schema, order)
-      order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
-      values: root.definition ?? ({})
-      onEdited: (path, value) => root.editor.set(path, value)
-    }
-
-    JsonField {
-      label: I18n.tr("Icons")
-      description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
-      key: "formatIcons"
-    }
-    JsonField {
-      label: I18n.tr("State colours")
-      description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
-      key: "states"
-    }
-  }
-
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("Actions")
-    description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click.")
-
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: root.schema.actions.properties
-      values: root.definition?.actions ?? ({})
-      onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
-    }
-  }
-
-  // The bar widget itself on a strip of the bar's background, over the
+  // The bar widget itself, standing on the banner, over the
   // background its WidgetGroup would draw (a lone widget's caps: the
   // bar's widget style and shape, the pill's fill)
-  component BarPreview: Rectangle {
+  component BarPreview: Item {
     id: preview
     property var barConfig: null
     readonly property bool vertical: preview.barConfig?.vertical ?? false
@@ -135,10 +160,6 @@ ColumnLayout {
     readonly property real ends: preview.segment ? preview.segment.lead + preview.segment.trail : 0
     implicitWidth: preview.vertical ? (preview.barConfig?.thickness ?? 0) + Widget.padding * 2 : Math.max(Appearance.fontSize * 10, (preview.item?.implicitWidth ?? 0) + preview.ends + Widget.padding * 2)
     implicitHeight: preview.vertical ? Math.max(Appearance.fontSize * 8, (preview.item?.implicitHeight ?? 0) + preview.ends + Widget.padding * 2) : (preview.barConfig?.thickness ?? 0) + Widget.padding * 2
-    radius: Appearance.borderRadius
-    color: Theme.background
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
 
     Loader {
       anchors.centerIn: parent
@@ -201,10 +222,9 @@ ColumnLayout {
     StyledText {
       Layout.fillWidth: true
       text: json.bad ? I18n.tr("Not valid JSON yet.") : json.description
-      textColor: json.bad ? Theme.warning : Theme.foreground
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
-      opacity: json.bad ? 1 : 0.6
+      tone: json.bad ? "warning" : "faint"
+      role: "caption"
+      overflow: "wrap"
     }
   }
 }

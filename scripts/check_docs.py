@@ -126,6 +126,7 @@ def strip_fences(text):
 PIECE_INDEX = {
     "qml/components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
     "qml/components/forms": ["docs/dev/core/shared-ui-pieces.md"],
+    "qml/components/views/base": ["docs/dev/core/shared-ui-pieces.md"],
     "qml/components/content/parts": ["docs/dev/core/shared-ui-pieces.md", "docs/dev/overlay/content-roots.md",
                                  "docs/dev/overlay/writing-modules.md"],
 }

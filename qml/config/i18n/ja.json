@@ -4247,6 +4247,10 @@
     "How much the workspace behind a shown special workspace is darkened. 0: no dimming.": "",
     "Switching to another workspace hides a shown special workspace.": "",
     "This theme keeps surfaces at least {0}% solid so text stays readable": "",
+    "No custom widgets yet": "",
+    "Select a custom widget to edit it": "",
+    "Rename this layout": "",
+    "Delete this layout": "",
     "Send it there silently": "",
     "Window rules": "",
     "Show on every workspace": "",
@@ -4385,6 +4389,7 @@
     "Firefox and Chromium video pop-outs float and show on every workspace. Found by their English title.": "",
     "While any window is fullscreen, even on a workspace you aren't looking at.": "",
     "Keep the screen awake while fullscreen": "",
-    "File pickers, password prompts, dialogs, the screenshot editor, Qt theme settings, and the volume, network and Bluetooth apps.": ""
+    "File pickers, password prompts, dialogs, the screenshot editor, Qt theme settings, and the volume, network and Bluetooth apps.": "",
+    "How it looks on the bar, with the last output.": ""
   }
 }

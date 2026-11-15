@@ -9,7 +9,12 @@ import qs.config
 // `badges`, the unsaved-edits dot and the row's actions (RowActions, as
 // children), which show while the row is hovered, focused or selected.
 // A tap is `clicked`; with `dragArea.dragLayer` and `payload` set, the row
-// can also be carried.
+// can also be carried. It takes keyboard focus (one Tab stop for the whole
+// list: Tab goes through the row's own actions, then out of the list): Up and
+// Down move to the previous and next row, Enter is `clicked`, Delete
+// `removeRequested` and Escape, while the row is selected and the page set `escapeClears`, `escapePressed`
+// (the page runs the remove, with its own blocked rule, and clears its
+// selection).
 Rectangle {
   id: root
 
@@ -20,6 +25,8 @@ Rectangle {
   property bool dimmed: false
   // Unsaved edits
   property bool changed: false
+  // The page clears its selection on Escape (it connects escapePressed); otherwise Escape reaches the host (an overlay closes)
+  property bool escapeClears: false
   property alias badges: badgeRow.data
   default property alias actions: actionRow.data
   property alias dragArea: area
@@ -37,7 +44,85 @@ Rectangle {
 
   readonly property bool _actionFocused: actionRow.children.some(child => child.activeFocus)
 
+  // Marks a row for the Up/Down walk along the focus chain
+  readonly property bool _listRow: true
+
   signal clicked
+  signal removeRequested
+  signal escapePressed
+
+  // The row at the end of `item`'s ancestry that is a list row, or null
+  function _rowOf(item) {
+    for (let it = item; it; it = it.parent)
+      if (it._listRow === true)
+        return it;
+    return null;
+  }
+
+  // The next list row from this one along the focus chain (`forward`), the
+  // actions inside rows skipped; null at anything that is not a row
+  function _neighbour(forward) {
+    let it = root;
+    for (let i = 0; i < 200; i++) {
+      it = it.nextItemInFocusChain(forward);
+      if (!it || it === root)
+        return null;
+      const owner = root._rowOf(it);
+      if (owner === root)
+        continue;
+      return owner;
+    }
+    return null;
+  }
+
+  // Focus moves out of the list: to the first item past its rows, forward or
+  // back, never the next row
+  function _leave(forward) {
+    let it = root;
+    for (let i = 0; i < 400; i++) {
+      it = it.nextItemInFocusChain(forward);
+      if (!it || it === root)
+        return;
+      if (root._rowOf(it) === null) {
+        it.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason);
+        return;
+      }
+    }
+  }
+
+  // Tab (`forward`) or Shift+Tab pressed on `from` (this row, or one of its
+  // actions): the next or previous action of this row, else out
+  function _tabFrom(from, forward) {
+    const actions = actionRow.children.filter(child => child.visible && child.enabled && child.activeFocusOnTab);
+    const at = actions.indexOf(from);
+    const next = forward ? actions[at + 1] : at > 0 ? actions[at - 1] : (at === 0 ? root : undefined);
+    if (next) {
+      next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason);
+      return;
+    }
+    root._leave(forward);
+  }
+
+  activeFocusOnTab: true
+  Keys.onTabPressed: root._tabFrom(root, true)
+  Keys.onBacktabPressed: root._tabFrom(root, false)
+  Keys.onPressed: event => {
+    if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+      const next = root._neighbour(event.key === Qt.Key_Down);
+      if (next)
+        next.forceActiveFocus(Qt.TabFocusReason);
+      event.accepted = next !== null;
+    } else if (event.key === Qt.Key_Escape && root.selected && root.escapeClears) {
+      root.escapePressed();
+      event.accepted = true;
+    } else if (root.activeFocus && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+      root.clicked();
+      event.accepted = true;
+    } else if (root.activeFocus && event.key === Qt.Key_Delete) {
+      root.removeRequested();
+      event.accepted = true;
+    }
+  }
 
   Layout.fillWidth: true
   Layout.preferredHeight: Widget.height + Widget.padding
@@ -55,6 +140,10 @@ Rectangle {
 
   HoverHandler {
     id: hover
+  }
+
+  FocusRing {
+    shown: root.activeFocus
   }
 
   DragArea {

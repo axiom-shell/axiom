@@ -7,10 +7,10 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
-import qs.components.content.base
+import qs.components.views.base
 
-// Custom widgets page, left: the definitions (add, duplicate, remove), then
-// the selected one's script: what runs and how, picked from a file or
+// Custom widgets page, left: the definitions (add, duplicate, remove) pinned
+// above, then the selected one's script: what runs and how, picked from a file or
 // typed, with the head of the script when it's a file.
 Item {
   id: root
@@ -43,13 +43,14 @@ Item {
   // reaches nothing here
   readonly property bool signalsWaybar: /RTMIN/.test(root.scriptText)
 
-  TitledCard {
+  ToolPane {
     anchors.fill: parent
     title: I18n.tr("Custom widgets")
+    headerIcon: "widgets"
     scrollKey: "CustomWidgets/list"
     showActions: false
 
-    headerExtras: ColumnLayout {
+    pinned: ColumnLayout {
       Layout.fillWidth: true
       spacing: Widget.spacing / 2
 
@@ -67,6 +68,7 @@ Item {
           dimmed: !entry.item.command
           changed: root.editor.changed(entry.index)
           onClicked: root.editor.selectDefinition(entry.index)
+          onRemoveRequested: root.editor.remove(entry.index)
 
           RowAction {
             row: entry
@@ -111,6 +113,7 @@ Item {
       }
 
       StyledTextButton {
+        Layout.fillWidth: true
         Layout.bottomMargin: Widget.spacing
         implicitHeight: Widget.height
         iconText: root.importing ? "expand_less" : "input"
@@ -143,9 +146,9 @@ Item {
             StyledText {
               Layout.fillWidth: true
               text: root.importNote
-              wrapMode: Text.WordWrap
-              textSize: Appearance.fontSizeBy(-2)
-              opacity: 0.8
+              role: "caption"
+              tone: "muted"
+              overflow: "wrap"
             }
             StyledTextButton {
               implicitHeight: Widget.height
@@ -200,9 +203,9 @@ Item {
           StyledText {
             Layout.fillWidth: true
             text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.definition?.refreshName || root.definition?.id || ""}`)
-            wrapMode: Text.WrapAnywhere
-            textSize: Appearance.fontSizeBy(-2)
-            opacity: 0.6
+            role: "caption"
+            tone: "faint"
+            overflow: "wrap"
           }
         }
 
@@ -210,8 +213,8 @@ Item {
           visible: root.signalsWaybar
           Layout.fillWidth: true
           text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.definition?.refreshName || root.definition?.id || ""}`)
-          textColor: Theme.warning
-          wrapMode: Text.WordWrap
+          tone: "warning"
+          overflow: "wrap"
         }
 
         FieldGroup {
@@ -224,11 +227,10 @@ Item {
             Layout.fillWidth: true
             text: root.scriptHead
             textFamily: "monospace"
-            textSize: Appearance.fontSizeBy(-3)
-            // A long line wraps inside the card (multi-line text doesn't
-            // elide without a wrap)
-            wrapMode: Text.Wrap
-            opacity: 0.8
+            role: "micro"
+            tone: "muted"
+            // A long line wraps inside the card
+            overflow: "wrap"
           }
         }
       }
