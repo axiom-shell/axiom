@@ -805,6 +805,31 @@ TestCase {
   }
 
   Component {
+    id: streamedComp
+    StreamedLoader {
+      always: true
+      sourceComponent: Rectangle {
+        implicitWidth: 20
+        implicitHeight: 20
+      }
+    }
+  }
+
+  // `rise: false` only fades: the slide's distance stays 0 as the item arrives
+  function test_streamed_loader_rise_opt_out() {
+    harness.configure({});
+    const rising = createTemporaryObject(streamedComp, root);
+    verify(rising.item !== null, "built");
+    compare(rising._enter, Style.enterOffset);
+    const fading = createTemporaryObject(streamedComp, root, {
+      "rise": false
+    });
+    verify(fading.item !== null, "built");
+    compare(fading._enter, 0);
+    compare(fading.transform[0].y, 0);
+  }
+
+  Component {
     id: switchComp
 
     StyledSwitch {}
