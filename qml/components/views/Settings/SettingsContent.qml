@@ -346,6 +346,10 @@ Item {
             gap: block.gap
             wide: block.wide
             heights: block.modelData.groups.map(() => 0)
+            // Split by a card's measured height once it's built, and until
+            // then by an estimate from its schema, so a card still to come
+            // doesn't count as 0 and shift the built ones at each arrival
+            splitHeights: block.modelData.groups.map((group, i) => columns.heights[i] > 0 ? columns.heights[i] : ColumnSplit.estimateHeight(group, Style.rowHeight, Style.rowHeight + Style.space3 * 2, 3))
             onSettled: root._takeJump()
           }
 
