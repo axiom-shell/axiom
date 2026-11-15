@@ -109,7 +109,8 @@ QtObject {
   // Each bar's palette as it draws it (an enrich per bar), kept apart from
   // `revision` so a grid arriving re-runs only the floor, never the enrich:
   // it follows the bars' config and the theme and appearance the enrich reads
-  readonly property var _barPalettes: BarsConfig.expandBars(root._bars).filter(bar => bar.enabled && bar.surface !== "none").map(bar => ({
+  // (skipped while opaque or off-screen, as the floor is 0 there)
+  readonly property var _barPalettes: !Appearance.translucent ? [] : BarsConfig.expandBars(root._bars).filter(bar => bar.enabled && bar.surface !== "none" && General.outputs.some(s => s.name === bar.monitor)).map(bar => ({
         "bar": bar,
         "palette": BarsConfig.enrichBarConfig(bar, {}, {}).palette
       }))

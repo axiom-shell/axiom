@@ -1006,6 +1006,47 @@ TestCase {
     }
   }
 
+  // A hoverable row around a toggle, wired as SchemaField wires it (the real
+  // SchemaField needs SettingsManager, which the layout harness has no
+  // stub for, so its tinted/hoverable predicates stay untested here)
+  Component {
+    id: toggleInRowComp
+    FormRow {
+      id: wrapper
+      property alias toggle: inner
+      width: 600
+      bodyHeight: inner.implicitHeight
+      hoverable: true
+      onRowClicked: inner.activate()
+      SchemaToggle {
+        id: inner
+        width: parent.width
+        label: "A toggle"
+        description: "What it does"
+        options: ["a", "b", "c"]
+        optionLabels: ({
+            "a": "A",
+            "b": "B",
+            "c": "C"
+          })
+        currentValue: "a"
+      }
+    }
+  }
+
+  // A click on the row's background (off the toggle) cycles it
+  function test_form_row_background_click_cycles_its_toggle() {
+    harness.configure({});
+    const row = createTemporaryObject(toggleInRowComp, root);
+    waitForRendering(row);
+    const spy = createTemporaryObject(pickSpyComp, root, {
+      "target": row.toggle
+    });
+    mouseClick(row, 1, row.height / 2);
+    compare(spy.count, 1);
+    compare(spy.signalArguments[0][0], "b");
+  }
+
   function test_trailing_control_centres_on_the_label_block_data() {
     return [
       {
@@ -1083,6 +1124,21 @@ TestCase {
     const tall = header.height;
     part.open = false;
     tryVerify(() => header.height < tall - 40 + 1);
+  }
+
+  // Stacked (a narrow row), the links sit above the control, never beside it
+  function test_stacked_toggle_keeps_its_link_above() {
+    harness.configure({});
+    const field = createTemporaryObject(toggleRowComp, root, {
+      "width": Widget.textPx(200),
+      "headerBelow": belowComp
+    });
+    waitForRendering(field);
+    verify(field.stacked);
+    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
+    const control = findAll(field, it => it._segment !== undefined)[0];
+    const top = control.mapToItem(field, 0, 0).y;
+    verify(header.mapToItem(field, 0, header.height).y <= top, "the header, link included, ends above the toggle");
   }
 
   // The More link is built only when the text is longer than its lines;

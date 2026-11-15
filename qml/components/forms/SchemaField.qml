@@ -210,12 +210,14 @@ Loader {
   opacity: allowed && !placeKept ? 1 : Style.opacityDisabled
 
   // Whether the row's whole area acts (FormRow.hoverable): a switch (also an
-  // automatic number's), a toggle or a dropdown, while it can be used
-  readonly property bool hoverable: root.allowed && !root.placeKept && (root.sourceComponent === switchField || root.sourceComponent === autoSpinField || root.sourceComponent === comboField || root.sourceComponent === toggleField)
+  // automatic number's), a toggle, the icon field's Icon/Text/Both switch
+  // (only when it shows) or a dropdown, while it can be used
+  readonly property bool hoverable: root.allowed && !root.placeKept && (root.sourceComponent === switchField || root.sourceComponent === autoSpinField || root.sourceComponent === comboField || root.sourceComponent === toggleField || (root.sourceComponent === iconField && (root.fieldSchema["x-iconText"]?.mode ?? "") !== ""))
 
   // Whether the row tints under the pointer (FormRow.tinted): every
-  // setting, while it can be used (a group heading is no setting)
-  readonly property bool tinted: row.kind !== "group" && root.allowed && !root.placeKept
+  // setting, while it can be used, but a group heading (no setting) and a
+  // list of objects, whose items' own rows tint
+  readonly property bool tinted: row.kind !== "group" && root.sourceComponent !== arrayField && root.allowed && !root.placeKept
 
   // A click on the row outside its control (FormRow.rowClicked): the
   // control does what its own click does
@@ -613,7 +615,8 @@ Loader {
   // ({ mode, text }: sibling keys), the row also has a text box for the
   // `text` sibling, and an Icon / Text / Both switch at its right sets the
   // `mode` sibling: the icon box shows for Icon and Both, the text box
-  // for Text and Both
+  // for Text and Both. A click on the row off its boxes and switch cycles
+  // the mode
   Component {
     id: iconField
     ColumnLayout {
@@ -631,6 +634,17 @@ Loader {
       // A sibling's path, for the form's edits
       function siblingPath(key) {
         return SchemaLayout.keyPath(root.row.path.slice(0, -1), key);
+      }
+
+      readonly property var modes: ["icon", "text", "both"]
+
+      // What a click on the row off the boxes and switch does (FormRow's
+      // rowClicked): the next mode, like SchemaToggle.activate
+      function activate() {
+        if (iconColumn.modeKey === "" || !root.form)
+          return;
+        const index = Math.max(0, iconColumn.modes.indexOf(iconColumn.mode));
+        root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), iconColumn.modes[(index + 1) % iconColumn.modes.length]);
       }
 
       FieldHeader {
@@ -677,7 +691,7 @@ Loader {
 
         StyledToggle {
           visible: iconColumn.modeKey !== ""
-          options: ["icon", "text", "both"]
+          options: iconColumn.modes
           labels: ({
               "icon": I18n.tr("Icon"),
               "text": I18n.tr("Text"),
