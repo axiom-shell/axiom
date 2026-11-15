@@ -49,6 +49,7 @@ properties:
     additionalProperties: {type: string}
     description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key.'
   options: {type: object, additionalProperties: false, properties: {}}
+  action: {x-scope: commands, type: string, title: Action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$', description: 'A named action it runs instead of its commands.'}
   actions:
     type: object
     additionalProperties: false

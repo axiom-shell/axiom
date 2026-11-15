@@ -78,6 +78,8 @@ Item {
             widgetId: root.definition?.id ?? ""
             actionsEnabled: root.actionsEnabled
             fallbackIcon: root.definition?.icon ?? "widgets"
+            invokeSet: (root.definition?.invoke?.command ?? "") !== ""
+            failing: !!root.fields?.failure && root.fields.failure.kind !== "script"
           }
         }
       }

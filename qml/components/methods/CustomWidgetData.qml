@@ -67,8 +67,8 @@ QtObject {
   }
 
   // A list of rows (an output's items, or a bound list) as
-  // { text, icon, value (a number, or undefined), subtext }: a plain entry
-  // is its text; anything not a list is none
+  // { text, icon, value (a number, or undefined), subtext, id }: a plain
+  // entry is its text, its id empty; anything not a list is none
   function rows(v) {
     if (!Array.isArray(v))
       return [];
@@ -76,12 +76,14 @@ QtObject {
         "text": root.asText(i.text),
         "icon": root.asText(i.icon),
         "value": root._number(i.value),
-        "subtext": root.asText(i.subtext)
+        "subtext": root.asText(i.subtext),
+        "id": root.asText(i.id)
       } : {
         "text": root.asText(i),
         "icon": "",
         "value": undefined,
-        "subtext": ""
+        "subtext": "",
+        "id": ""
       });
   }
 
@@ -890,5 +892,40 @@ QtObject {
         out.push(e.bind.value);
     }
     return out;
+  }
+
+  // --- Named actions ---
+
+  // Whether the sample lets action `id` run: a built-in ("axiom:…") always,
+  // everything when the sample lists no actions (null), else only the
+  // ids it lists as enabled
+  function actionEnabled(actions, id) {
+    if (String(id).startsWith("axiom:") || actions === null || actions === undefined)
+      return true;
+    return actions[id]?.enabled === true;
+  }
+
+  // `text` as one shell word: a plain number as is, anything else in
+  // single quotes (a ' as '\''), nothing as ''
+  function shellQuote(text) {
+    const t = String(text ?? "");
+    return /^-?[0-9.]+$/.test(t) ? t : "'" + t.replace(/'/g, "'\\''") + "'";
+  }
+
+  // An action command with its placeholders filled in one pass: {action},
+  // {value} and {rev} already quoted (shellQuote), {tree} as is. `values`
+  // holds the ones to fill; a placeholder it has no value for, one after
+  // a $ (${rev}) and any other {…} stay as typed. A filled value is never
+  // searched again
+  function fillCommand(template, values) {
+    return String(template ?? "").replace(/\$?\{(action|value|rev|tree)\}/g, (m, k) => m[0] === "$" || !(k in values) ? m : k === "tree" ? values.tree : root.shellQuote(root.asText(values[k])));
+  }
+
+  // Whether a built-in action ("axiom:<id>") may run from a widget: not
+  // one of `refused` (the session's and the destructive ones, which a
+  // stray key press or script must never run)
+  function builtinAllowed(id, refused) {
+    const text = String(id);
+    return !(text.startsWith("axiom:") && (refused ?? []).includes(text.slice(6)));
   }
 }

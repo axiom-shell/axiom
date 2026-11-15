@@ -631,15 +631,34 @@ TestCase {
         "text": "a",
         "icon": "",
         "value": 3,
-        "subtext": ""
+        "subtext": "",
+        "id": ""
       },
       {
         "text": "b",
         "icon": "",
         "value": undefined,
-        "subtext": ""
+        "subtext": "",
+        "id": ""
       }
     ], "objects read, plain entries are their text");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "id": "/home"
+      },
+      {
+        "text": "b",
+        "id": 7
+      }
+    ])[0].id, "/home", "an id is kept");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "b",
+        "id": 7
+      }
+    ])[0].id, "7", "an id is text");
+    compare(CustomWidgetData.rows(["plain"])[0].id, "", "a plain string has no id");
     compare(CustomWidgetData.rows("nope"), [], "not a list: none");
   }
 
@@ -977,5 +996,78 @@ TestCase {
       ]
     };
     compare(CustomWidgetData.historyBindings(module).join(), "cpu,net", "base and views, duplicates once");
+  }
+
+  // --- Named actions ---
+
+  function test_actionEnabled() {
+    const actions = {
+      "undo": {
+        "enabled": false
+      },
+      "check": {
+        "enabled": true
+      }
+    };
+    compare(CustomWidgetData.actionEnabled(null, "next"), true, "no actions: all on");
+    compare(CustomWidgetData.actionEnabled(undefined, "next"), true, "no sample: on");
+    compare(CustomWidgetData.actionEnabled(actions, "check"), true, "listed on");
+    compare(CustomWidgetData.actionEnabled(actions, "undo"), false, "listed off");
+    compare(CustomWidgetData.actionEnabled(actions, "next"), false, "unlisted: off");
+    compare(CustomWidgetData.actionEnabled(actions, "axiom:refresh"), true, "a built-in is always on");
+    compare(CustomWidgetData.actionEnabled({}, "axiom:restart"), true, "a built-in with an empty list");
+  }
+
+  function test_shellQuote() {
+    compare(CustomWidgetData.shellQuote("42.5"), "42.5", "a number is bare");
+    compare(CustomWidgetData.shellQuote("-3"), "-3", "a negative number");
+    compare(CustomWidgetData.shellQuote("seek"), "'seek'", "a word is quoted");
+    compare(CustomWidgetData.shellQuote("it's"), "'it'\\''s'", "a quote survives");
+    compare(CustomWidgetData.shellQuote(""), "''", "nothing is ''");
+    compare(CustomWidgetData.shellQuote("a$&b"), "'a$&b'", "shell characters stay inside the quotes");
+  }
+
+  function test_fillCommand() {
+    compare(CustomWidgetData.fillCommand("playerctl-do {action} {value}", {
+      "action": "seek",
+      "value": "42.5"
+    }), "playerctl-do 'seek' 42.5", "the spec's example");
+    compare(CustomWidgetData.fillCommand("x {value}", {
+      "value": "{rev}",
+      "rev": "9"
+    }), "x '{rev}'", "a filled value is not filled again");
+    compare(CustomWidgetData.fillCommand("x ${rev}", {
+      "rev": "9"
+    }), "x ${rev}", "after a $: untouched");
+    compare(CustomWidgetData.fillCommand("{action}{value}", {
+      "action": "a",
+      "value": "b"
+    }), "'a''b'", "both filled");
+    compare(CustomWidgetData.fillCommand("{action}", {
+      "value": "1"
+    }), "{action}", "no value for it: kept");
+    compare(CustomWidgetData.fillCommand("x {text}", {
+      "value": "1"
+    }), "x {text}", "{text} stays as typed");
+    compare(CustomWidgetData.fillCommand("{value} {value}", {
+      "value": "z"
+    }), "'z' 'z'", "the same placeholder twice");
+    compare(CustomWidgetData.fillCommand("bash {tree}run {value}", {
+      "tree": "/opt/axiom/",
+      "value": ""
+    }), "bash /opt/axiom/run ''", "{tree} as is, an empty value ''");
+    compare(CustomWidgetData.fillCommand("x {value}", {
+      "value": "a$&b"
+    }), "x 'a$&b'", "shell characters intact");
+  }
+
+  function test_builtinAllowed() {
+    const refused = ["poweroff", "lock", "reboot"];
+    compare(CustomWidgetData.builtinAllowed("axiom:poweroff", refused), false, "poweroff");
+    compare(CustomWidgetData.builtinAllowed("axiom:lock", refused), false, "lock");
+    compare(CustomWidgetData.builtinAllowed("axiom:toggleMute", refused), true, "mute");
+    compare(CustomWidgetData.builtinAllowed("axiom:refresh", refused), true, "refresh");
+    compare(CustomWidgetData.builtinAllowed("poweroff", refused), true, "a script's own id isn't a built-in");
+    compare(CustomWidgetData.builtinAllowed("axiom:poweroff", undefined), true, "nothing refused");
   }
 }

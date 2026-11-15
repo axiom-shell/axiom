@@ -2303,7 +2303,6 @@
     "On the bar": "",
     "Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.": "",
     "A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.": "",
-    "Run by clicks and scrolls on the bar widget, as Waybar's on-click.": "",
     "Not valid JSON yet.": "",
     "Make widgets from scripts": "",
     "Text block": "",
@@ -4414,6 +4413,15 @@
     "Is not set": "",
     "Is set": "",
     "Values": "",
-    "Drawn under every screen.": ""
+    "Drawn under every screen.": "",
+    "None (the commands)": "",
+    "Set the action command first": "",
+    "Run by clicks and scrolls on the bar widget, as Waybar's on-click. A named action runs the action command (Script) instead of the command.": "",
+    "Right-click action": "",
+    "A named action instead of the command.": "",
+    "A named action it runs instead of its commands.": "",
+    "Scroll up action": "",
+    "Middle-click action": "",
+    "Scroll down action": ""
   }
 }

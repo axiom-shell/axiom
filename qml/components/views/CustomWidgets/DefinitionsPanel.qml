@@ -185,7 +185,7 @@ Item {
           SchemaPropertiesForm {
             Layout.fillWidth: true
             propertiesSchema: Utils.pick(root.schema, order)
-            order: ["name", "icon", "command", "mode", "interval", "output", "execIf", "refreshName"]
+            order: ["name", "icon", "command", "mode", "interval", "output", "execIf", "refreshName", "invoke"]
             values: root.definition ?? ({})
             onEdited: (path, value) => root.editor.set(path, value)
           }
