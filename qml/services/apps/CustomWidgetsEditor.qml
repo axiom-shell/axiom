@@ -4,6 +4,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 import qs.services.ui
 
 // The Custom widgets page's editor (CustomWidgetsManager.editor): a draft of
@@ -196,6 +197,8 @@ QtObject {
 
   function selectDefinition(index) {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
+    root.importing = false;
+    root.copyNote = "";
     root.viewIndex = -1;
     root.testMode = false;
     root.seen = {};
@@ -349,12 +352,15 @@ QtObject {
   }
 
   // A new definition (from `preset`, a partial definition, when given),
-  // selected
-  function add(preset) {
+  // selected; `translate` false keeps its texts (an import's)
+  function add(preset, translate) {
     const local = root._local();
     const base = Object.assign({
       "name": I18n.tr("Custom widget")
-    }, root._translated(preset ?? {}));
+    }, translate === false ? preset : root._translated(preset ?? {}));
+    // A gallery entry's own keys aren't a definition's
+    delete base.template;
+    delete base.description;
     base.id = Utils.newId(Utils.slug(base.name) || "widget", local.items);
     local.items.push(ConfigManager.withDefaults(base, "CustomWidget"));
     root._apply();
@@ -396,24 +402,37 @@ QtObject {
     });
   }
 
-  // Adds the Waybar module(s) in `text` (CustomWidgetData.fromWaybar),
-  // selecting the last. Returns how many, or the reason it couldn't read it
-  // ({ count, error })
-  function importWaybar(text) {
-    let defs;
-    try {
-      defs = CustomWidgetData.fromWaybar(text);
-    } catch (e) {
-      return {
-        "count": 0,
-        "error": e.message
-      };
+  // The Import form is open in the inspector pane (ImportForm)
+  property bool importing: false
+  // What Copy just said ("" none), shown under the header until dismissed
+  // or another definition is selected
+  property string copyNote: ""
+
+  // Adds the definitions an Import form read and confirmed (a shared
+  // widget's, or a Waybar module's: CustomWidgetData.readImport), each with
+  // a fresh id and as it is (no translation of its texts), selecting the
+  // last, and closes the form. A schema error shows when the page saves
+  function importDefinitions(definitions) {
+    definitions.forEach(def => root.add(def, false));
+    root.importing = false;
+  }
+
+  // Puts the selected definition on the clipboard as Copy's wrapper
+  // (CustomWidgetData.exportOf: the definition less its id), and says what
+  // it runs when that is a file outside this shell's tree, which the
+  // receiver must be given by hand
+  function copyDefinition() {
+    const def = root.selected;
+    if (!def)
+      return;
+    ClipboardManager.copyText(CustomWidgetData.exportOf(def));
+    const outside = [];
+    for (const c of CustomWidgetData.commandsOf(def)) {
+      const path = root.scriptPath(c.command);
+      if (path !== "" && !path.startsWith(Paths.treePath) && !outside.includes(path))
+        outside.push(path);
     }
-    defs.forEach(def => root.add(def));
-    return {
-      "count": defs.length,
-      "error": defs.length ? "" : I18n.tr("No custom module (an \"exec\") in it.")
-    };
+    root.copyNote = outside.length ? I18n.tr("Copied. It runs {0}: send those files by hand.", outside.join(", ")) : I18n.tr("Copied.");
   }
 
   function duplicate(index) {

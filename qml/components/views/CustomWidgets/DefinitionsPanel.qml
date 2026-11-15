@@ -16,8 +16,6 @@ Item {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
-  property bool importing: false
-  property string importNote: ""
   readonly property var definition: root.editor.selected
   readonly property var schema: ConfigManager.configSchema.definitions.CustomWidget.properties
   readonly property string scriptPath: root.editor.scriptPath(root.definition?.command)
@@ -73,7 +71,7 @@ Item {
           RowAction {
             row: entry
             iconText: "content_copy"
-            tooltipText: I18n.tr("Copy this custom widget")
+            tooltipText: I18n.tr("Duplicate")
             onClicked: root.editor.duplicate(entry.index)
           }
           RowAction {
@@ -112,57 +110,15 @@ Item {
         }
       }
 
+      // Paste what someone copied (or a Waybar custom/* module): the
+      // Import form, in the inspector pane
       StyledTextButton {
         Layout.fillWidth: true
         Layout.bottomMargin: Widget.spacing
         implicitHeight: Widget.height
-        iconText: root.importing ? "expand_less" : "input"
-        text: I18n.tr("Import from Waybar…")
-        onClicked: {
-          root.importing = !root.importing;
-          root.importNote = "";
-        }
-      }
-
-      // Paste a custom/* block, or a whole config: built while open
-      Loader {
-        active: root.importing
-        visible: active
-        Layout.fillWidth: true
-        Layout.bottomMargin: Widget.spacing
-
-        sourceComponent: ColumnLayout {
-          spacing: Widget.spacing / 2
-
-          StyledTextArea {
-            id: waybarText
-            Layout.fillWidth: true
-            Layout.preferredHeight: Widget.height * 4
-            input.font.family: "monospace"
-            placeholderText: I18n.tr("Paste a \"custom/…\" module from your Waybar config, or the whole config")
-          }
-          RowLayout {
-            Layout.fillWidth: true
-            StyledText {
-              Layout.fillWidth: true
-              text: root.importNote
-              role: "caption"
-              tone: "muted"
-              overflow: "wrap"
-            }
-            StyledTextButton {
-              implicitHeight: Widget.height
-              iconText: "download"
-              text: I18n.tr("Import")
-              onClicked: {
-                const result = root.editor.importWaybar(waybarText.text);
-                root.importNote = result.error ? I18n.tr("Couldn't read it: {0}", result.error) : I18n.tr("Added {0}.", result.count);
-                if (!result.error)
-                  waybarText.text = "";
-              }
-            }
-          }
-        }
+        iconText: "input"
+        text: I18n.tr("Import a widget…")
+        onClicked: root.editor.importing = true
       }
     }
 
