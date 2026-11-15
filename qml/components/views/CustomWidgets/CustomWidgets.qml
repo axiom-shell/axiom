@@ -15,7 +15,7 @@ BaseView {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
-  readonly property var tabNames: [I18n.tr("Data"), I18n.tr("Bar"), I18n.tr("Module")]
+  readonly property var tabNames: [I18n.tr("Data"), I18n.tr("Bar"), I18n.tr("Module"), I18n.tr("Help")]
 
   Component.onCompleted: {
     root.editor.ensureLoaded();
@@ -46,13 +46,15 @@ BaseView {
       onSave: root.editor.save()
       onReset: root.editor.reset()
 
-      tabModel: root.editor.selected !== null && !root.editor.importing ? root.tabNames : []
+      tabModel: (root.editor.selected !== null || root.editor.tab === 3) && !root.editor.importing ? root.tabNames : []
       tabIndex: root.editor.tab
       onTabClicked: index => root.editor.selectTab(index)
 
-      emptyKind: root.editor.selected !== null || root.editor.importing ? "" : root.editor.items.length === 0 ? "none" : "select"
+      emptyKind: root.editor.selected !== null || root.editor.importing || root.editor.tab === 3 ? "" : root.editor.items.length === 0 ? "none" : "select"
       emptyIcon: root.editor.items.length === 0 ? "widgets" : ""
       emptyText: root.editor.items.length === 0 ? I18n.tr("No custom widgets yet") : I18n.tr("Select a custom widget to edit it")
+      emptyActionText: I18n.tr("How custom widgets work")
+      onEmptyTriggered: root.editor.openHelp("output")
       emptyHint: root.editor.items.length === 0 ? I18n.tr("Add a custom widget on the left: point it at a script, then pick what its output shows on the bar and in its module.") : ""
 
       pinned: Loader {
@@ -96,10 +98,14 @@ BaseView {
         id: tabs
         Layout.fillWidth: true
         Layout.preferredHeight: tabs.childrenRect.height
-        key: root.editor.importing ? "import" : root.editor.selected !== null ? root.editor.tab + ":" + root.editor.selectedId : ""
-        sourceComponent: root.editor.importing ? importForm : root.editor.tab === 1 ? barTab : root.editor.tab === 2 ? moduleTab : dataTab
+        key: root.editor.importing ? "import" : root.editor.tab === 3 ? "help" : root.editor.selected !== null ? root.editor.tab + ":" + root.editor.selectedId : ""
+        sourceComponent: root.editor.importing ? importForm : root.editor.tab === 3 ? helpTab : root.editor.tab === 1 ? barTab : root.editor.tab === 2 ? moduleTab : dataTab
       }
 
+      Component {
+        id: helpTab
+        CustomWidgetsHelp {}
+      }
       Component {
         id: importForm
         ImportForm {}

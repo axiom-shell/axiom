@@ -35,6 +35,14 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
+  // The contract, in Help
+  StyledTextButton {
+    implicitHeight: Widget.height
+    iconText: "help"
+    text: I18n.tr("What should my script print?")
+    onClicked: root.editor.openHelp("output")
+  }
+
   // Run state, and Run now
   RowLayout {
     Layout.fillWidth: true

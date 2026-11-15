@@ -219,6 +219,11 @@ ColumnLayout {
                 Layout.preferredWidth: Widget.textPx(70)
                 text: root.slotTitle(slot.modelData)
               }
+              SquareIconButton {
+                iconText: "help"
+                tooltipText: I18n.tr("What a slot reads")
+                onClicked: root.editor.openHelp("slots")
+              }
               StyledComboEntry {
                 id: combo
                 Layout.fillWidth: true
@@ -284,6 +289,11 @@ ColumnLayout {
           StyledLabel {
             Layout.preferredWidth: Widget.textPx(70)
             text: I18n.tr("Action")
+          }
+          SquareIconButton {
+            iconText: "help"
+            tooltipText: I18n.tr("How actions work")
+            onClicked: root.editor.openHelp("actions")
           }
           StyledComboEntry {
             Layout.fillWidth: true

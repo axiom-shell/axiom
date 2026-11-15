@@ -171,8 +171,17 @@ QtObject {
   // page shows and for each definition
   property bool testMode: false
 
-  // The page's tab: 0 data, 1 bar, 2 module (selectTab)
+  // The page's tab: 0 data, 1 bar, 2 module, 3 help (selectTab)
   property int tab: 0
+  // The Help section open ("output", "actions", "examples", "slots",
+  // "lifetime", "failure", "waybar"; "" none)
+  property string helpSection: "output"
+
+  // Opens the Help tab at `section`
+  function openHelp(section) {
+    root.helpSection = section;
+    root.selectTab(3);
+  }
 
   function selectTab(index) {
     root.tab = index;
