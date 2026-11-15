@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.components.reusable
 
 // A row of an EntryListTarget (`list`): placed by its index, and dragged
@@ -18,7 +19,7 @@ ListEntryRow {
   width: root.list.width
   height: root.list.rowHeight
   y: root.index * root.list.rowStep
-  opacity: root.carried ? 0.3 : 1
+  opacity: root.carried ? Style.opacityDisabled : 1
   dragArea.dragLayer: root.list.dragLayer
   dragArea.payload: ({
       "kind": root.list.moveKind,

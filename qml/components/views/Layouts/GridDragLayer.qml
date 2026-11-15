@@ -183,8 +183,8 @@ DragLayer {
     width: ghostRow.implicitWidth + Widget.padding * 2
     height: Widget.height + Widget.padding / 2
     radius: Widget.radius
-    color: root.hoverTarget && (!root.hoverValid || root.hoverTarget.targetKind === "trash") ? Theme.error : Theme.accent
-    opacity: 0.92
+    readonly property bool refused: root.hoverTarget !== null && (!root.hoverValid || root.hoverTarget.targetKind === "trash")
+    color: ghost.refused ? Style.error : Style.accent
 
     RowLayout {
       id: ghostRow
@@ -193,13 +193,13 @@ DragLayer {
 
       StyledIcon {
         text: root.dragging?.icon ?? ""
-        textColor: Theme.background
-        textSize: Appearance.fontSizeBy(2)
+        textColor: ghost.refused ? Style.onError : Style.onAccent
+        size: "md"
       }
       StyledLabel {
         text: root.hoverTarget?.targetKind === "trash" ? I18n.tr("Remove") : root.hoverTarget && !root.hoverValid ? I18n.tr("Doesn't fit here") : (root.dragging?.label ?? "")
-        textColor: Theme.background
-        font.weight: Font.Bold
+        textColor: ghost.refused ? Style.onError : Style.onAccent
+        role: "label"
       }
     }
   }

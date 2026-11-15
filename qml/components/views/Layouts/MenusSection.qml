@@ -5,6 +5,7 @@ import qs.config
 import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
+import qs.components.views.base
 
 // Layouts editor, left: the menus (drag to reorder, click to edit),
 // and New menu, asking what the menu is for
@@ -15,55 +16,55 @@ ColumnLayout {
 
   spacing: Widget.spacing / 2
 
-  StyledText {
+  ListSection {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Menus")
-    font.weight: Font.Bold
-    textColor: Theme.accent
-  }
-
-  EntryListTarget {
-    id: menuList
-    dragLayer: root.dragLayer
-    moveKind: "menu-move"
+    title: I18n.tr("Menus")
     count: OverlayManager.menus.localMenus?.length ?? 0
-    onDropRequested: (drag, index) => OverlayManager.menus.moveMenu(drag.index, index)
 
-    Repeater {
-      model: menuList.count
+    EntryListTarget {
+      id: menuList
+      dragLayer: root.dragLayer
+      moveKind: "menu-move"
+      count: OverlayManager.menus.localMenus?.length ?? 0
+      onDropRequested: (drag, index) => OverlayManager.menus.moveMenu(drag.index, index)
 
-      EntryListRow {
-        id: entry
-        readonly property var entryMenu: OverlayManager.menus.localMenus[entry.index] ?? ({})
+      Repeater {
+        model: menuList.count
 
-        list: menuList
-        icon: Utils.edgeArrow(entry.entryMenu.edge)
-        label: OverlayManager.menus.menuLabel(entry.entryMenu, entry.index)
-        selected: OverlayManager.editTarget === "menu" && OverlayManager.menus.selectedMenuIndex === entry.index
-        dimmed: entry.entryMenu.enabled === false
-        changed: OverlayManager.menus.menuChanged(entry.index)
-        onClicked: OverlayManager.editMenu(entry.index)
+        EntryListRow {
+          id: entry
+          readonly property var entryMenu: OverlayManager.menus.localMenus[entry.index] ?? ({})
 
-        // Held open on screen by the editor
-        badges: StyledIcon {
-          visible: OverlayManager.menus.previewing !== "" && OverlayManager.menus.previewing === entry.entryMenu.id
-          text: "visibility"
-          textColor: entry.ink
-        }
+          list: menuList
+          icon: Utils.edgeArrow(entry.entryMenu.edge)
+          label: OverlayManager.menus.menuLabel(entry.entryMenu, entry.index)
+          selected: OverlayManager.editTarget === "menu" && OverlayManager.menus.selectedMenuIndex === entry.index
+          dimmed: entry.entryMenu.enabled === false
+          changed: OverlayManager.menus.menuChanged(entry.index)
+          onClicked: OverlayManager.editMenu(entry.index)
+          onRemoveRequested: OverlayManager.menus.removeMenu(entry.index)
 
-        RowAction {
-          row: entry
-          iconText: "content_copy"
-          tooltipText: I18n.tr("Duplicate this menu")
-          onClicked: OverlayManager.menus.duplicateMenu(entry.index)
-        }
+          // Held open on screen by the editor
+          badges: StyledIcon {
+            visible: OverlayManager.menus.previewing !== "" && OverlayManager.menus.previewing === entry.entryMenu.id
+            text: "visibility"
+            textColor: entry.ink
+          }
 
-        RowAction {
-          row: entry
-          danger: true
-          iconText: "close"
-          tooltipText: I18n.tr("Remove this menu")
-          onClicked: OverlayManager.menus.removeMenu(entry.index)
+          RowAction {
+            row: entry
+            iconText: "content_copy"
+            tooltipText: I18n.tr("Duplicate this menu")
+            onClicked: OverlayManager.menus.duplicateMenu(entry.index)
+          }
+
+          RowAction {
+            row: entry
+            danger: true
+            iconText: "close"
+            tooltipText: I18n.tr("Remove this menu")
+            onClicked: OverlayManager.menus.removeMenu(entry.index)
+          }
         }
       }
     }

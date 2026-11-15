@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
@@ -11,7 +10,9 @@ import qs.components.content.base
 // Bar editor, beside the board: the selected widget's options and sizing
 // (as the running bars report it) and the library of widget types to drag
 // onto the bar, side by side (inspector about 55%), or one over the other
-// when the room is taller than wide
+// when the room is taller than wide. With no widget selected the inspector
+// is hidden (the board's status line says what to do) and the library has
+// the room.
 Item {
   id: root
 
@@ -43,18 +44,17 @@ Item {
   readonly property real _gap: OverlayConfig.cardSpacing
   // The inspector's length along the split (about 55%); the library has
   // the rest past the gap
-  readonly property real _inspectorLength: Math.round(((root.stacked ? root.height : root.width) - root._gap) * 0.55)
-  readonly property real _libraryLength: (root.stacked ? root.height : root.width) - root._gap - root._inspectorLength
+  readonly property bool _selected: root.selectionKey !== ""
+  readonly property real _along: root.stacked ? root.height : root.width
+  readonly property real _inspectorLength: root._selected ? Math.round((root._along - root._gap) * 0.55) : 0
+  readonly property real _libraryLength: root._along - (root._selected ? root._gap + root._inspectorLength : 0)
 
-  // Each card fills its box (Card)
-  Item {
+  // Each card fills its box
+  Surface {
+    tone: "surface"
+    visible: root._selected
     width: root.stacked ? root.width : root._inspectorLength
     height: root.stacked ? root._inspectorLength : root.height
-
-    Card {
-      color: Theme.background
-      border.color: Theme.border
-    }
 
     Item {
       anchors.fill: parent
@@ -65,37 +65,15 @@ Item {
         key: root.selectionKey
         sourceComponent: editor
       }
-
-      // Nothing selected
-      ColumnLayout {
-        anchors.fill: parent
-        visible: root.selectionKey === ""
-        spacing: Widget.spacing
-
-        InspectorHeader {
-          icon: "touch_app"
-          filled: false
-          title: I18n.tr("No widget selected")
-          subtitle: I18n.tr("Click a widget in a section to edit it, right-click it for more.")
-        }
-
-        Item {
-          Layout.fillHeight: true
-        }
-      }
     }
   }
 
-  Item {
+  Surface {
+    tone: "surface"
     x: root.stacked ? 0 : root.width - width
     y: root.stacked ? root.height - height : 0
     width: root.stacked ? root.width : root._libraryLength
     height: root.stacked ? root._libraryLength : root.height
-
-    Card {
-      color: Theme.background
-      border.color: Theme.border
-    }
 
     Loader {
       anchors.fill: parent
@@ -135,8 +113,10 @@ Item {
             parts.push(I18n.tr("no room for it on {0}", root.crowdedOn.join(", ")));
           return parts.join(" · ");
         }
-        showsLinks: opensLink.available || typeLinks.shows
-        // What it opens, then where its feature is set (the type's `x-link`)
+        showsLinks: opensLink.available || typeLinks.shows || styleLink.available
+        // What it opens, then where its feature is set (the type's `x-link`),
+        // then where every bar's widget look is set (the bar's own, if it
+        // takes one, is in the bar's Style groups)
         links: [
           SettingsLink {
             id: opensLink
@@ -145,57 +125,35 @@ Item {
           FieldLinks {
             id: typeLinks
             links: editorRoot.typeInfo?.link
+          },
+          SettingsLink {
+            id: styleLink
+            setting: "Bars.style"
+            text: I18n.tr("Bar widget look")
+            icon: "palette"
           }
         ]
+        canDuplicate: true
+        onDuplicate: BarManager.duplicateWidget(editorRoot.zone, editorRoot.index)
+        canRemove: true
+        onRemove: BarManager.removeWidget(editorRoot.zone, editorRoot.index)
+        closable: true
+        onClose: BarManager.clearSelection()
 
+        // The state toggle, ahead of the standard actions
         SquareIconButton {
+          kind: editorRoot.hidden ? "primary" : "tonal"
           iconText: editorRoot.hidden ? "visibility_off" : "visibility"
-          iconColor: editorRoot.hidden ? Theme.background : Theme.foreground
-          backgroundColor: editorRoot.hidden ? Theme.accent : Theme.backgroundAlt
           tooltipText: I18n.tr(editorRoot.hidden ? "Hidden on the bar: click to show it" : "Hide it on the bar, keeping its settings")
           onClicked: BarManager.setWidgetVisible(editorRoot.zone, editorRoot.index, editorRoot.hidden)
         }
-
-        SquareIconButton {
-          iconText: "content_copy"
-          tooltipText: I18n.tr("Duplicate")
-          onClicked: BarManager.duplicateWidget(editorRoot.zone, editorRoot.index)
-        }
-
-        SquareIconButton {
-          iconText: "delete"
-          hoverColor: Theme.error
-          tooltipText: I18n.tr("Remove")
-          onClicked: BarManager.removeWidget(editorRoot.zone, editorRoot.index)
-        }
-
-        // Where every bar's widget look is set (the bar's own, if it takes
-        // one, is in the bar's Style groups)
-        SquareIconButton {
-          readonly property SettingsLink link: SettingsLink {
-            setting: "Bars.style"
-          }
-
-          visible: link.available
-          iconText: "palette"
-          tooltipText: link.label
-          onClicked: link.follow()
-        }
-
-        SquareIconButton {
-          iconText: "close"
-          tooltipText: I18n.tr("Close")
-          onClicked: BarManager.clearSelection()
-        }
       }
 
-      ScrollView {
+      StyledScrollView {
         id: scroll
         Layout.fillWidth: true
         Layout.fillHeight: true
-        clip: true
-        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-        contentWidth: availableWidth
+        contentPadding: 0
 
         // Each widget keeps its place across the overlay closing
         property ScrollMemory memory: ScrollMemory {
@@ -283,9 +241,9 @@ Item {
       StyledText {
         Layout.fillWidth: true
         text: I18n.tr("Drag a widget onto a section, or click one to add it to the {0} section.", root.dragLayer.zoneLabel(BarManager.lastZone))
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.WordWrap
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
       }
 
       TypeLibrary {

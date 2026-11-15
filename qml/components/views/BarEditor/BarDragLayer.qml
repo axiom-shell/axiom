@@ -105,7 +105,5 @@ DragLayer {
     enabled: false
     selected: true
     z: 10
-    opacity: 0.9
-    scale: 1.04
   }
 }

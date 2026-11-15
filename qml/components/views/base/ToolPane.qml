@@ -19,6 +19,8 @@ TitledCard {
   property alias toolbar: toolbarHolder.data
   property var tabModel: []
   property int tabIndex: 0
+  // Tab indices with unsaved edits (a dot after their label)
+  property var tabMarked: []
   // Fixed content above the tabs, scrolling inside past `pinnedShare` of the
   // pane's height
   property alias pinned: pinnedColumn.data
@@ -76,6 +78,7 @@ TitledCard {
       visible: root.tabModel.length > 0
       scrollable: true
       tabs: root.tabModel
+      marked: root.tabMarked
       currentIndex: root.tabIndex
       onTabClicked: index => root.tabClicked(index)
     },

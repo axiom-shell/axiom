@@ -178,6 +178,16 @@ TestCase {
   }
 
   Component {
+    id: markedTabsComp
+
+    StyledTabBar {
+      tabs: ["Layout", "Surface", "Style", "Behaviour"]
+      marked: [1]
+      currentIndex: 0
+    }
+  }
+
+  Component {
     id: toolPaneComp
 
     ToolPane {
@@ -229,6 +239,11 @@ TestCase {
           text: "Fits"
         }
       ]
+
+      Item {
+        objectName: "work"
+        anchors.fill: parent
+      }
     }
   }
 
@@ -733,6 +748,29 @@ TestCase {
     compare(flick.interactive, false, "a strip that fits doesn't flick");
   }
 
+  // A marked tab shows one unsaved dot, after its label and inside the tab
+  function test_marked_tab_shows_one_dot_after_its_label() {
+    harness.configure({});
+    const bar = createTemporaryObject(markedTabsComp, root, {
+      "width": Widget.textPx(400)
+    });
+    waitForRendering(bar);
+    // (find walks a tab's content item twice)
+    const dots = find(bar, it => it.shown !== undefined && it.onAccent !== undefined, []).filter((d, i, all) => all.indexOf(d) === i);
+    compare(dots.length, 4);
+    tryVerify(() => dots.filter(dot => dot.visible).length === 1);
+    const dot = dots.find(d => d.visible);
+    const tab = find(bar, it => it.text === "Surface" && it.checked !== undefined, [])[0];
+    verify(tab, "the Surface tab");
+    const label = find(tab, it => it.text === "Surface" && it.truncated !== undefined, [])[0];
+    const dotAt = dot.mapToItem(bar, 0, 0).x;
+    const labelAt = label.mapToItem(bar, 0, 0).x;
+    const tabAt = tab.mapToItem(bar, 0, 0).x;
+    verify(dotAt >= labelAt + label.width - 0.5, "after the label");
+    verify(dotAt + dot.width <= tabAt + tab.width + 0.5, "inside its tab");
+    compare(dots.indexOf(dot), 1, "on the second tab");
+  }
+
   // A tab bar that does not scroll keeps the tab's own padding
   function test_plain_tabs_keep_their_padding() {
     harness.configure({});
@@ -893,6 +931,21 @@ TestCase {
     pane.rows = 2;
     waitForRendering(pane);
     verify(!edge.visible, "a short list has no edge");
+  }
+
+  // The work area's well fills its box: no band under it, its top meets the status line
+  function test_work_area_well_fills_its_box() {
+    harness.configure({});
+    const area = createTemporaryObject(workAreaComp, root, {
+      "width": 900,
+      "height": 700
+    });
+    waitForRendering(area);
+    const work = find(area, it => it.objectName === "work", [])[0];
+    verify(work);
+    verify(work.height > 0);
+    verify(Math.abs(work.mapToItem(area, 0, work.height).y - area.height) <= Widget.padding + 1, "the well reaches the box's bottom");
+    verify(work.mapToItem(area, 0, 0).y < area.height / 3, "and starts near the top ");
   }
 
   // A status line hidden at load shows once its child does

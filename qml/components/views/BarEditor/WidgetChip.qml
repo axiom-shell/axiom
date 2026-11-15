@@ -35,7 +35,7 @@ DragChip {
   // 0 shows none: a spacer, or the badges off)
   property int dropOrder: 0
   // The longest a live widget is drawn (a long window title is cut)
-  property real maxPreviewWidth: Widget.px(260)
+  property real maxPreviewWidth: Widget.textPx(260)
 
   readonly property bool live: root.widget !== null && root.previewConfig !== null
   // Live, but drawing nothing (or not built yet)
@@ -45,11 +45,13 @@ DragChip {
   showsLabel: !root.live || root.empty
   icon: root.dragLayer.icon(root.type)
   label: root.dragLayer.label(root.type)
-  opacity: root.faded ? 0.3 : (root.hiddenWidget || (root.live && root.empty && previewLoader.item !== null) ? 0.6 : 1)
+  // Carried, hidden on the bar or showing nothing: dimmed
+  opacity: root.faded || root.hiddenWidget || (root.live && root.empty && previewLoader.item !== null) ? Style.opacityDisabled : 1
   // A live widget keeps its own colours: selected, it's tinted, not filled
-  color: root.selected ? (root.showsLabel ? Theme.accent : Qt.alpha(Theme.accent, 0.2)) : (root.hovered || root.highlighted ? Theme.backgroundHighlight : Theme.background)
+  color: root.selected ? (root.showsLabel ? Style.accentContainer : Style.accentWash) : Style.surfaceHighest
 
-  readonly property color _markInk: root.showsLabel ? root.ink : Theme.foreground
+  // What reads on the chip's fill (DragChip's `ink` is a colour)
+  readonly property StyleInk markInk: Style.inkOf(root.selected ? "accentContainer" : "highest")
 
   // The widget as the bar draws it alone in a section: a section of its
   // own (WidgetGroup), so its background takes the look as the bar's do
@@ -90,8 +92,7 @@ DragChip {
     visible: active
     sourceComponent: StyledIcon {
       text: "visibility_off"
-      textColor: root._markInk
-      opacity: 0.7
+      textColor: root.markInk.muted
     }
   }
 
@@ -101,7 +102,7 @@ DragChip {
     visible: active
     sourceComponent: StyledIcon {
       text: "compress"
-      textColor: root.selected ? root._markInk : Theme.warning
+      textColor: root.markInk.text
     }
   }
 
@@ -109,7 +110,7 @@ DragChip {
   CountBadge {
     shown: root.dropOrder > 0
     text: String(root.dropOrder)
-    color: root.selected && root.showsLabel ? Theme.background : Theme.accent
-    textColor: root.selected && root.showsLabel ? Theme.accent : Theme.background
+    color: Style.accent
+    textColor: Style.onAccent
   }
 }

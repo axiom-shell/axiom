@@ -43,8 +43,9 @@ Rectangle {
   readonly property var info: OverlayConfig.moduleInfo(root.type)
   readonly property var props: root.module?.properties ?? {}
   readonly property bool filled: (root.info?.canvasFill ?? "") !== ""
-  readonly property color fill: root.filled ? Theme.resolveColor(root.props[root.info.canvasFill]) : Theme.backgroundAlt
-  readonly property color ink: root.filled ? Utils.getContrastColor(root.fill) : Theme.foreground
+  readonly property color fill: root.filled ? Style.resolve(root.props[root.info.canvasFill]) : Style.surfaceRaised
+  // Read on the fill: the user's colour picks it, once per fill
+  readonly property color ink: root.filled ? Tone.bestOn(root.fill) : Style.text // style-exempt: the ink that reads on the user's colour
   readonly property string detail: {
     const value = root.info?.canvasDetail ? root.props[root.info.canvasDetail] : undefined;
     return Array.isArray(value) ? value.join(", ") : String(value ?? "");
@@ -58,9 +59,9 @@ Rectangle {
   // Set by GridCanvas, matching its lattice
   radius: Widget.radius
   color: root.fill
-  border.color: root.selected ? Theme.accent : Theme.border
-  border.width: root.selected ? Math.max(Appearance.borderWidth, 2) : Appearance.borderWidth
-  opacity: root.carried ? 0.3 : 1
+  border.color: root.selected ? Style.accent : Style.borderStrong
+  border.width: root.selected ? Style.focusWidth : Style.hairline
+  opacity: root.carried ? Style.opacityDisabled : 1
 
   Glide on opacity {}
 
@@ -78,7 +79,7 @@ Rectangle {
     y: -root.growth.up * root.step
     width: root.width
     height: root.height + (root.growth.up + root.growth.down) * root.step
-    readonly property color ink: Theme.accent
+    readonly property color ink: Style.accent
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
     onInkChanged: requestPaint()
@@ -104,30 +105,28 @@ Rectangle {
       width: parent.width
       horizontalAlignment: Text.AlignHCenter
       text: root.dragLayer?.moduleIcon(root.type) ?? ""
-      textColor: root.filled ? root.ink : Theme.accent
-      textSize: root.small ? Appearance.fontSizeBy(2) : Appearance.fontSizeBy(8)
+      textColor: root.filled ? root.ink : Style.textAccent
+      size: root.small ? "md" : "lg"
     }
 
     StyledText {
       width: parent.width
       visible: !root.small
       horizontalAlignment: Text.AlignHCenter
-      elide: Text.ElideRight
+      overflow: "line"
       text: root.dragLayer?.moduleLabel(root.type) ?? ""
       textColor: root.ink
-      textSize: Appearance.fontSizeBy(-1)
-      font.weight: Font.Bold
+      role: "label"
     }
 
     StyledText {
       width: parent.width
       visible: text !== "" && !root.small
       horizontalAlignment: Text.AlignHCenter
-      elide: Text.ElideRight
+      overflow: "line"
       text: root.detail
-      textColor: root.ink
-      textSize: Appearance.fontSizeBy(-3)
-      opacity: 0.75
+      role: "micro"
+      textColor: root.filled ? root.ink : Style.textMuted
     }
   }
 
@@ -163,16 +162,15 @@ Rectangle {
     width: sizeText.implicitWidth + Widget.padding
     height: sizeText.implicitHeight + Widget.px(4)
     radius: height / 2
-    color: Theme.accent
+    color: Style.accent
 
     StyledLabel {
       id: sizeText
       anchors.centerIn: parent
       readonly property var place: root.dragLayer?.landingPlace ?? root.place
       text: root.dragLayer?.sizeLabel(sizeText.place.w, sizeText.place.h) ?? ""
-      textColor: Theme.background
-      textSize: Appearance.fontSizeBy(-2)
-      font.weight: Font.Bold
+      textColor: Style.onAccent
+      role: "micro"
     }
   }
 
@@ -242,7 +240,7 @@ Rectangle {
         width: zone.corner ? Math.min(parent.width, Widget.px(8)) : zone.north || zone.south ? Math.min(parent.width, Appearance.fontSize * 2) : Widget.px(3)
         height: zone.corner ? Math.min(parent.height, Widget.px(8)) : zone.east || zone.west ? Math.min(parent.height, Appearance.fontSize * 2) : Widget.px(3)
         radius: Math.min(width, height) / 2
-        color: Theme.accent
+        color: Style.accent
       }
     }
   }

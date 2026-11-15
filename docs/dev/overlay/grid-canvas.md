@@ -17,7 +17,7 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
 - With "Show other menus" (`OverlayManager.menus.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
   - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their module size can differ.
   - They are not drop targets.
-- A header with the module count, undo/redo at its right before Save, a menu's arrows moving it along its edge (see [Menu editing](../menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu).
+- `GridCanvas` is a `WorkArea`: the header runs the icon, title and module count, then at the right undo/redo before Save and Discard (the editor's, `showActions`/`dirty`/`canSave`), with a "?" for the keys. Its status line holds a menu's arrows moving it along its edge and its grid offset (see [Menu editing](../menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu); while nothing is selected the idle hint sits above the status line's contents and says "Drag to move · drag an edge to resize · click to edit". The canvas is the work area's sunken well, its tiles raised (`surfaceRaised`), the selected one outlined in the accent; a page with nothing to edit shows an `EmptyState`. The well fills the canvas card (60 % of the page height, over the inspector).
 
 ### GridCanvas: alignment guides
 Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement`).
@@ -38,9 +38,10 @@ Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement
   - Escape deselects; with nothing selected it passes on and closes the overlay.
 
 ### Inspector
+- Its header (`InspectorHeader`): the two Centre buttons, then the standard actions: duplicate, one remove (the module's, or the group's), close.
 - Shows the selected module's options (`OptionsGroup`) and its Size (steppers in units, shown as cards: `GridPlacement.cards`).
-- Else the `ModuleLibrary`: `ModuleChip`s to drag, or click to add at `firstFree`.
-- A group selected shows its count and Remove instead of the library.
+- Else the `ModuleLibrary` (with nothing selected, under the title "Library": the canvas's status line says what to do): `ModuleChip`s to drag, or click to add at `firstFree`.
+- A group selected: its count in the title (the header's Remove and Close act on the group), no library.
 
 ### GridDragLayer
 - Payloads:

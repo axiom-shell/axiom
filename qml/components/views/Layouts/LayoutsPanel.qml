@@ -2,17 +2,20 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services.session
 import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
-import qs.components.content.base
+import qs.components.views.base
 
 // Layouts editor, left: the overlay pages, the desktop, the lock screen
-// and the menus, then what's selected: a page's name and icon and
+// and the menus pinned above (scrolling inside past 40 % of the pane), then
+// what's selected: a page's name and icon and
 // what opens it, a menu's settings in groups (from the schema's Menu
 // definition, its Opening group led by how to try and open it), the
 // desktop's (led by which monitor's layout is edited), or the lock
-// screen's (led by its preview), and anything that blocks saving
+// screen's (led by its preview); anything that blocks saving is the pane's
+// footer
 Item {
   id: root
 
@@ -30,6 +33,8 @@ Item {
   readonly property bool isDesktopMonitor: root.isDesktop && DesktopManager.isMonitorTarget(DesktopManager.selectedTarget)
   readonly property bool isCustom: root.view?.type === "Custom"
   readonly property var problems: OverlayManager.layoutsProblems
+  // The tools section's state, kept while the page is up
+  property bool toolsOpen: false
 
   // StyledTextEntry writes each keystroke back to its `text`, which drops
   // any binding on it, so the name is pushed in rather than bound: on every
@@ -39,40 +44,110 @@ Item {
     if (force || !nameEntry.input.activeFocus)
       nameEntry.text = OverlayManager.selectedView()?.name ?? "";
   }
+  // A tool page selected from outside opens the Tools section (closing it
+  // by hand still works: it only opens on a new selection)
+  function revealTool() {
+    if (OverlayManager.editTarget === "page" && OverlayConfig.isTool(OverlayManager.selectedView()?.type ?? ""))
+      root.toolsOpen = true;
+  }
   Connections {
     target: OverlayManager
     function onSelectedViewIndexChanged() {
       root.syncName(true);
+      root.revealTool();
+    }
+    function onEditTargetChanged() {
+      root.revealTool();
     }
     function onLocalViewsChanged() {
       root.syncName(false);
     }
   }
-  Component.onCompleted: root.syncName(true)
+  Component.onCompleted: {
+    root.syncName(true);
+    root.revealTool();
+  }
 
   // Group titles: I18n.tr("General") I18n.tr("Opening") I18n.tr("Placement")
   // I18n.tr("Style") I18n.tr("Behaviour") I18n.tr("Closing") I18n.tr("Advanced")
   // I18n.tr("Other")
   // I18n.tr("Grid") I18n.tr("Background")
-  TitledCard {
+  ToolPane {
+    anchors.fill: parent
     title: I18n.tr("Layouts")
+    headerIcon: "dashboard_customize"
     scrollKey: "Layouts"
     showActions: false
 
-    PagesSection {
+    pinned: ColumnLayout {
       Layout.fillWidth: true
-      dragLayer: root.dragLayer
+      spacing: Widget.spacing / 2
+
+      PagesSection {
+        Layout.fillWidth: true
+        dragLayer: root.dragLayer
+        toolsOpen: root.toolsOpen
+        onToolsToggled: root.toolsOpen = !root.toolsOpen
+      }
+
+      MenusSection {
+        Layout.fillWidth: true
+        dragLayer: root.dragLayer
+      }
+
+      ListSection {
+        Layout.fillWidth: true
+        Layout.topMargin: Widget.spacing
+        title: I18n.tr("Screens")
+        count: 1 + (OverlayManager.lockscreenEditable ? 1 : 0) + (OverlayManager.greeterEditable ? 1 : 0)
+        hint: I18n.tr("The desktop, lock screen and login screen.")
+
+        // Not dragged: these aren't the navigator's pages
+        ListEntryRow {
+          Layout.fillWidth: true
+          Layout.preferredHeight: Widget.height + Widget.padding
+          icon: "desktop_windows"
+          label: I18n.tr("Desktop")
+          selected: OverlayManager.editTarget === "desktop"
+          changed: DesktopManager.editor.isDirty
+          onClicked: OverlayManager.editDesktop()
+        }
+
+        ListEntryRow {
+          visible: OverlayManager.lockscreenEditable
+          Layout.fillWidth: true
+          Layout.preferredHeight: Widget.height + Widget.padding
+          icon: "lock"
+          label: I18n.tr("Lock screen")
+          selected: OverlayManager.editTarget === "lockscreen"
+          changed: LockManager.editor.isDirty
+          onClicked: OverlayManager.editLockscreen()
+        }
+
+        // Once it's set up (Settings → Login screen)
+        ListEntryRow {
+          visible: OverlayManager.greeterEditable
+          Layout.fillWidth: true
+          Layout.preferredHeight: Widget.height + Widget.padding
+          icon: "login"
+          label: I18n.tr("Login screen")
+          selected: OverlayManager.editTarget === "greeter"
+          changed: GreeterManager.editor.isDirty
+          onClicked: OverlayManager.editGreeter()
+        }
+      }
     }
 
-    MenusSection {
-      Layout.fillWidth: true
-      dragLayer: root.dragLayer
-    }
+    footer: FieldGroup {
+      visible: root.problems.length > 0
+      title: I18n.tr("Can't save yet")
 
-    StyledSeparator {
-      Layout.fillWidth: true
-      Layout.topMargin: Widget.spacing
-      opacity: 0.3
+      IssueList {
+        issues: root.problems.map(text => ({
+              "level": "error",
+              "text": text
+            }))
+      }
     }
 
     // A Custom page
@@ -252,19 +327,6 @@ Item {
           values: root.screenLayout ?? ({})
           onEdited: (path, value) => root.screenTarget.screenEditor.updateLayoutField(path[0], value)
         }
-      }
-    }
-
-    FieldGroup {
-      visible: root.problems.length > 0
-      Layout.topMargin: Widget.spacing
-      title: I18n.tr("Can't save yet")
-
-      IssueList {
-        issues: root.problems.map(text => ({
-              "level": "error",
-              "text": text
-            }))
       }
     }
   }

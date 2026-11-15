@@ -266,6 +266,28 @@ QtObject {
     return JSON.stringify(bar) !== JSON.stringify(saved);
   }
 
+  // The editor tabs (BarsConfig.editorTabs indices, sorted) holding unsaved
+  // edits of the selected bar: its top-level keys but `widgets` that differ
+  // from its saved copy (as barChanged compares), by the tab of each key; and
+  // every tab with style sections while its `style`, or the shared Bars style
+  // those sections edit, differs
+  readonly property var changedTabs: {
+    const bar = root.localConfig?.[root.selectedBarIndex];
+    if (!bar)
+      return [];
+    const saved = (root.savedConfig ?? []).find(b => b.id === bar.id) ?? ({});
+    const tabs = new Set();
+    for (const key of Object.keys(bar))
+      if (key !== "widgets" && key !== "style" && JSON.stringify(bar[key]) !== JSON.stringify(saved[key]))
+        tabs.add(BarsConfig.editorTabOf(key));
+    if (JSON.stringify(bar.style) !== JSON.stringify(saved.style) || JSON.stringify(root.localStyle) !== JSON.stringify(draft.saved?.style))
+      BarsConfig.editorTabs.forEach((tab, index) => {
+        if (tab.styles.length > 0)
+          tabs.add(index);
+      });
+    return Array.from(tabs).sort((a, b) => a - b);
+  }
+
   function selectedBar() {
     return root.localConfig?.[root.selectedBarIndex] || null;
   }

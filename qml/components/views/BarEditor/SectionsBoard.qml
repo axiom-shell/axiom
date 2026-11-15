@@ -5,16 +5,17 @@ import qs.config
 import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
-import qs.components.content.base
+import qs.components.views.base
 
 // Bar editor: the selected bar's three sections, each a lane of draggable
 // widget chips that wrap (SectionLane), one row under another whatever
-// the bar's edge. Its header has undo and redo, the drop order badges'
-// switch, an Unsaved chip and the help in a "?" (Save and Discard are
-// BarsPanel's); under it, how the running bar fits on each screen it's
-// on, the widgets it has no room for as buttons selecting them, with
-// Raise priority / Set max length for a selected one. While a chip is
-// carried, a TrashTarget shows over them, between the title and the first section. A chip's right
+// the bar's edge, in the well of a WorkArea. Its header has undo and redo,
+// the drop order badges' switch, Save and Discard (they cover the bar's
+// settings too) and the help in a "?"; under it, as its status line, how
+// the running bar fits on each screen it's on, the widgets it has no room
+// for as buttons selecting them, with Raise priority / Set max length for
+// a selected one. While a chip is carried, a TrashTarget shows over them,
+// between the title and the first section. A chip's right
 // click opens its menu; while the board has focus (a chip clicked) it
 // takes Delete, Ctrl+D, Alt+arrows, Escape and Ctrl+Z / Ctrl+Shift+Z /
 // Ctrl+Y.
@@ -79,7 +80,8 @@ FocusScope {
     }, {});
   }
 
-  implicitHeight: column.implicitHeight + Widget.padding * 2
+  // The work area's chrome and the lanes in its well
+  implicitHeight: area.implicitHeight + lanes.implicitHeight + Widget.padding * 2
 
   // The bar editor's keys, while the board has focus
   Keys.onPressed: event => {
@@ -221,53 +223,58 @@ FocusScope {
     // "edit": the right click selected it, so the inspector shows it
   }
 
-  Card {
+  WorkArea {
+    id: area
     anchors.fill: parent
-    color: Theme.background
-    border.color: Theme.border
+    icon: "widgets"
+    title: I18n.tr("Widgets")
+    // Its first sentence is the status line's hint while nothing is selected
+    help: I18n.tr("Drag widgets to arrange them, across sections too. Click one to edit it, right-click it for more: the bar outlines it. Keys: Delete, Ctrl+D, Alt+arrows to move it, Escape, Ctrl+Z to undo. Changes show on the bar as you make them; Save keeps them.")
+    hintWhenIdle: I18n.tr("Drag widgets to arrange them, across sections too.")
+    idle: BarManager.selectedWidgetConfig() === null
+    // The bar's settings (BarsPanel) and its widgets
+    dirty: BarManager.isDirty
+    onSave: BarManager.saveChanges()
+    onReset: BarManager.resetChanges()
 
-    ColumnLayout {
-      id: column
-      anchors.fill: parent
-      anchors.margins: Widget.padding
-      spacing: Widget.spacing
+    undoRedo: UndoRedoButtons {
+      canUndo: BarManager.history.canUndo
+      canRedo: BarManager.history.canRedo
+      onUndo: BarManager.history.undo()
+      onRedo: BarManager.history.redo()
+    }
 
-      CardHeader {
-        title: I18n.tr("Widgets")
-        showActions: false
-        help: I18n.tr("Drag widgets to arrange them, across sections too. Click one to edit it, right-click it for more: the bar outlines it. Keys: Delete, Ctrl+D, Alt+arrows to move it, Escape, Ctrl+Z to undo. Changes show on the bar as you make them; Save keeps them.")
+    tools: StyledIconButton {
+      kind: root.showDropOrder ? "primary" : "text"
+      iconText: "format_list_numbered"
+      tooltipText: root.showDropOrder ? I18n.tr("Hide the drop order") : I18n.tr("Show the order widgets drop in when the bar is crowded")
+      onClicked: root.showDropOrder = !root.showDropOrder
+    }
 
-        UndoRedoButtons {
-          canUndo: BarManager.history.canUndo
-          canRedo: BarManager.history.canRedo
-          onUndo: BarManager.history.undo()
-          onRedo: BarManager.history.redo()
-        }
+    // How the bar fits: the screens it fits, or per screen the widgets
+    // it has no room for, each a button selecting it; for a selected
+    // one, what would make it fit
+    status: ColumnLayout {
+      visible: BarManager.isDirty || root.turnedOff || root.reports.length > 0
+      Layout.fillWidth: true
+      spacing: Widget.spacing / 2
 
-        FlatIconButton {
-          iconText: "format_list_numbered"
-          iconColor: root.showDropOrder ? Theme.accent : Theme.foregroundAlt
-          tooltipText: root.showDropOrder ? I18n.tr("Hide the drop order") : I18n.tr("Show the order widgets drop in when the bar is crowded")
-          onClicked: root.showDropOrder = !root.showDropOrder
-        }
-
-        StatusChip {
-          shown: BarManager.isDirty
-          text: I18n.tr("Unsaved")
-          color: Theme.warning
-        }
+      StyledText {
+        visible: BarManager.isDirty
+        Layout.fillWidth: true
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
+        text: I18n.tr("Saves this bar: its settings and its widgets")
       }
 
-      // How the bar fits: the screens it fits, or per screen the widgets
-      // it has no room for, each a button selecting it; for a selected
-      // one, what would make it fit
       StyledText {
         visible: root.turnedOff || (root.reports.length > 0 && root.crowded.length === 0)
         Layout.fillWidth: true
         text: root.turnedOff ? I18n.tr("Turned off") : I18n.tr("Fits {0}", root.reports.map(report => report.screen).join(", "))
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.WordWrap
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
       }
 
       Flow {
@@ -289,8 +296,9 @@ FocusScope {
               height: Widget.height
               verticalAlignment: Text.AlignVCenter
               text: I18n.tr("No room on {0} for", screenFit.modelData.screen)
-              textColor: Theme.warning
-              textSize: Appearance.fontSizeBy(-2)
+              role: "caption"
+              tone: "warning"
+              overflow: "none"
             }
 
             Repeater {
@@ -300,10 +308,9 @@ FocusScope {
                 required property var modelData
                 readonly property bool isSelected: BarManager.selectedWidget.zone === modelData.zone && BarManager.selectedWidget.index === modelData.index
                 text: root.dragLayer.widgetLabel(BarManager.selectedBar()?.widgets?.[modelData.zone]?.[modelData.index])
-                textSize: Appearance.fontSizeBy(-2)
+                kind: isSelected ? "primary" : "tonal"
+                textSize: Style.typeCaption
                 textPadding: Widget.smallPadding
-                backgroundColor: isSelected ? Theme.warning : Theme.backgroundHighlight
-                textColor: isSelected ? Theme.background : Theme.foreground
                 tooltipText: I18n.tr("Select it")
                 onClicked: {
                   BarManager.selectWidget(modelData.zone, modelData.index);
@@ -318,7 +325,7 @@ FocusScope {
           visible: root.selectedCrowdedOn !== null
           iconText: "keyboard_double_arrow_up"
           text: I18n.tr("Raise priority")
-          textSize: Appearance.fontSizeBy(-2)
+          textSize: Style.typeCaption
           textPadding: Widget.smallPadding
           tooltipText: I18n.tr("Drop it last when the bar is crowded")
           onClicked: BarManager.raiseWidgetPriority(BarManager.selectedWidget.zone, BarManager.selectedWidget.index)
@@ -328,41 +335,42 @@ FocusScope {
           visible: root.selectedCrowdedOn !== null && root.selectedElastic && root.fittingMax > 0
           iconText: "width"
           text: I18n.tr("Set max length")
-          textSize: Appearance.fontSizeBy(-2)
+          textSize: Style.typeCaption
           textPadding: Widget.smallPadding
           tooltipText: I18n.tr("Cap it at {0} px, so it fits on {1}", root.fittingMax, root.selectedCrowdedOn?.screen ?? "")
           onClicked: BarManager.updateWidgetLayout(BarManager.selectedWidget.zone, BarManager.selectedWidget.index, "maxSize", root.fittingMax)
         }
       }
+    }
 
-      // The sections, one row under another
-      ColumnLayout {
-        id: lanes
-        Layout.fillWidth: true
-        spacing: Widget.spacing
+    // The sections, one row under another, in the well
+    ColumnLayout {
+      id: lanes
+      anchors.fill: parent
+      anchors.margins: Widget.padding
+      spacing: Widget.spacing
 
-        Repeater {
-          model: root.dragLayer.zones
+      Repeater {
+        model: root.dragLayer.zones
 
-          delegate: SectionLane {
-            id: lane
-            required property var modelData
+        delegate: SectionLane {
+          id: lane
+          required property var modelData
 
-            Layout.fillWidth: true
-            dragLayer: root.dragLayer
-            reports: root.reports
-            zone: lane.modelData.key
-            title: lane.modelData.label
-            dropOrders: root.dropOrders[lane.modelData.key] ?? []
-            fit: root.turnedOff ? null : root.narrowest?.sections?.[lane.modelData.key] ?? null
-            fitScreen: root.narrowest?.screen ?? ""
-            onAddRequested: anchor => {
-              root._pendingZone = lane.modelData.key;
-              addPopup.openAt(anchor);
-            }
-            onChipClicked: root.forceActiveFocus()
-            onMenuRequested: (index, chip, x, y) => root._openMenu(lane.modelData.key, index, chip, x, y)
+          Layout.fillWidth: true
+          dragLayer: root.dragLayer
+          reports: root.reports
+          zone: lane.modelData.key
+          title: lane.modelData.label
+          dropOrders: root.dropOrders[lane.modelData.key] ?? []
+          fit: root.turnedOff ? null : root.narrowest?.sections?.[lane.modelData.key] ?? null
+          fitScreen: root.narrowest?.screen ?? ""
+          onAddRequested: anchor => {
+            root._pendingZone = lane.modelData.key;
+            addPopup.openAt(anchor);
           }
+          onChipClicked: root.forceActiveFocus()
+          onMenuRequested: (index, chip, x, y) => root._openMenu(lane.modelData.key, index, chip, x, y)
         }
       }
 
@@ -370,14 +378,16 @@ FocusScope {
         Layout.fillHeight: true
       }
     }
+  }
 
-    // Over the header and the fit line (not needed mid-drag), centred
-    // between the board's title and the first section
-    TrashTarget {
-      x: (parent.width - width) / 2
-      y: Math.max(0, column.y + (lanes.y - height) / 2)
-      dragLayer: root.dragLayer
-      active: root.dragLayer.dragging?.kind === "move"
-    }
+  // Over the header and the fit line (not needed mid-drag), centred
+  // between the board's title and the first section (placed as a drag
+  // starts, when the layout has settled)
+  TrashTarget {
+    id: trash
+    x: (parent.width - width) / 2
+    y: trash.active ? Math.max(0, (lanes.mapToItem(root, 0, 0).y - height) / 2) : 0
+    dragLayer: root.dragLayer
+    active: root.dragLayer.dragging?.kind === "move"
   }
 }

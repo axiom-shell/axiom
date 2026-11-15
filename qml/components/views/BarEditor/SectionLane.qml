@@ -14,7 +14,7 @@ import qs.components.reusable
 // widget the pointer is over on a running bar looks hovered. Its header's
 // meter shows how much of the section's room its widgets want on the
 // narrowest screen.
-Rectangle {
+Surface {
   id: root
 
   required property var dragLayer
@@ -60,10 +60,12 @@ Rectangle {
 
   implicitWidth: Widget.padding * 2 + header.implicitWidth
   implicitHeight: Widget.padding * 2 + header.implicitHeight + Widget.spacing + Math.max(root.chipHeight, flow.implicitHeight)
-  radius: Widget.radius
-  color: root.hovering ? Qt.alpha(Theme.accent, 0.1) : Theme.background
-  border.color: root.hovering ? Theme.accent : Theme.border
-  border.width: 1
+  // A tile in the board's well: outlined at rest, the accent container
+  // under a drop
+  tone: root.hovering ? "accentContainer" : "surface"
+  outlined: true
+  border.color: root.hovering ? Style.accent : Style.borderStrong
+  border.width: root.hovering ? Style.focusWidth : Style.hairline
 
   ColorGlide on color {}
 
@@ -97,8 +99,8 @@ Rectangle {
 
     StyledLabel {
       text: root.title
-      font.weight: Font.Bold
-      elide: Text.ElideRight
+      role: "label"
+      overflow: "line"
       Layout.fillWidth: true
     }
 
@@ -110,7 +112,7 @@ Rectangle {
       Layout.preferredHeight: Widget.height - Widget.px(6)
       thickness: Widget.px(4)
       share: root.fit && root.fit.room > 0 ? root.fit.used / root.fit.room : 1
-      fillColor: root.overfull ? Theme.warning : Theme.accent
+      fillTone: root.overfull ? "warning" : "accent"
 
       HoverHandler {
         id: meterHover
@@ -131,9 +133,8 @@ Rectangle {
       visible: root.zone === "center"
       size: Widget.height - Widget.px(6)
       iconText: locked ? "lock" : "lock_open"
-      iconSize: Appearance.fontSizeBy(-1)
-      iconColor: locked ? Theme.background : Theme.foreground
-      backgroundColor: locked ? Theme.accent : Theme.backgroundAlt
+      kind: locked ? "primary" : "tonal"
+      iconSize: Style.iconSm
       tooltipText: I18n.tr(locked ? "Center locked: it stays dead center, other sections make room" : "Lock the center section in place")
       onClicked: BarManager.updateBarField("lockCenter", !locked)
     }
@@ -210,10 +211,10 @@ Rectangle {
     width: flow.width
     height: root.chipHeight
     verticalAlignment: Text.AlignVCenter
-    elide: Text.ElideRight
+    overflow: "line"
     text: I18n.tr("Drop widgets here")
-    opacity: 0.45
-    textSize: Appearance.fontSizeBy(-1)
+    role: "caption"
+    tone: "faint"
   }
 
   // Where the dragged widget would land
@@ -224,6 +225,6 @@ Rectangle {
     width: 2
     height: root.landing.height
     radius: 1
-    color: Theme.accent
+    color: Style.inkAccentContainer.accent
   }
 }

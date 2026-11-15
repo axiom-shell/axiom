@@ -37,7 +37,7 @@ ColumnLayout {
       spacing: 2
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         text: I18n.tr(root.fieldSchema.title ?? root.key)
         Layout.fillWidth: true
       }
@@ -45,9 +45,9 @@ ColumnLayout {
       StyledText {
         visible: !!root.fieldSchema.description
         text: root.fieldSchema.description ? I18n.tr(root.fieldSchema.description) : ""
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.WordWrap
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     }
@@ -83,8 +83,8 @@ ColumnLayout {
     SquareIconButton {
       Layout.alignment: Qt.AlignBottom
       size: Widget.height
+      kind: "text"
       iconText: "close"
-      hoverColor: Theme.error
       tooltipText: root.key === "priority" ? I18n.tr("Use its type's priority") : I18n.tr("Use the widget's own sizing")
       onClicked: root.edited(undefined)
     }

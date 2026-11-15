@@ -50,6 +50,6 @@ Item {
     height: Widget.px(3)
     radius: 1.5
     y: Math.max(0, root.dragLayer.hoverIndex * root.rowStep - Widget.spacing / 4 - 1.5)
-    color: Theme.accent
+    color: Style.accent
   }
 }
