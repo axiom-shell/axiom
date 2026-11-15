@@ -48,7 +48,7 @@ func TestV106SystemStatsBoxes(t *testing.T) {
 func TestV105ThenV106FromV104(t *testing.T) {
 	t.Parallel()
 	in := `{"format":2,"version":104,"Bars":{"items":[{"id":"top","location":"left","widgets":{"left":[{"type":"Updates","properties":{"manyColor":"base08","appearance":{"style":"label","colorText":true,"width":0}}},{"type":"Workspaces","properties":{"lead":"position","textColor":"base06"}}]}}]},"CustomWidgets":{"items":[{"id":"c","bar":{"style":"label","colorText":true,"width":0}}]}}`
-	want := `{"format":2,"version":108,"Bars":{"items":[{"id":"top","edge":"left","widgets":{"left":[{"type":"Updates","properties":{"warnColor":"base08","appearance":{"style":"label","width":null}}},{"type":"Workspaces","properties":{"foregroundColor":"base06","leadIcon":""}}]}}]},"CustomWidgets":{"items":[{"id":"c","bar":{"style":"label","width":null}}]}}`
+	want := `{"format":2,"version":109,"Bars":{"items":[{"id":"top","edge":"left","widgets":{"left":[{"type":"Updates","properties":{"warnColor":"base08","appearance":{"style":"label","width":null}}},{"type":"Workspaces","properties":{"foregroundColor":"base06","leadIcon":""}}]}}]},"CustomWidgets":{"items":[{"id":"c","bar":{"style":"label","width":null}}]}}`
 	v, err := jsonx.Unmarshal([]byte(in))
 	if err != nil {
 		t.Fatal(err)

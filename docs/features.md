@@ -89,10 +89,10 @@ Set a style once under **Settings → Look & Feel → Bar style**, and give any 
 - **Built-in pages:**
   - **Settings**, generated from the config schema
   - **Bar editor** and **Layouts** (see [the Layouts editor](#the-layouts-editor))
-  - **Themes**, **Keybinds**, **Monitors** and **Calendar**
+  - **Themes**, **Keybinds**, **Window rules**, **Monitors** and **Calendar**
 
   Tool pages sit after your own in the navigator, as icons, and any of them can be hidden.
-- **Page windows:** Settings, Themes, the Bar editor, Keybinds, Custom widgets and Calendar open in a window of their own from the navigator's pop-out button (or their app launcher entries, e.g. *Axiom Settings*), to keep them beside what they change. The window's own button puts the page back in the overlay, as does closing it. While a page is in a window, the overlay shows a box in its place (**Bring here**, **Go to window**), and anything that opens the page by name (its `/` command, a keybind, a link) goes to the window. A link in a window to another page opens the overlay, whose back chip returns to the window. Unsaved edits carry over both ways.
+- **Page windows:** Settings, Themes, the Bar editor, Keybinds, Window rules, Custom widgets and Calendar open in a window of their own from the navigator's pop-out button (or their app launcher entries, e.g. *Axiom Settings*), to keep them beside what they change. The window's own button puts the page back in the overlay, as does closing it. While a page is in a window, the overlay shows a box in its place (**Bring here**, **Go to window**), and anything that opens the page by name (its `/` command, a keybind, a link) goes to the window. A link in a window to another page opens the overlay, whose back chip returns to the window. Unsaved edits carry over both ways.
 - Every page has an opener: a bar button or a keybind that opens the overlay on it, added from the editor in one click.
 - **Page switcher** on the bottom or top edge, naming every page while they fit, only the current one, or none (icons only). Scroll over it to step through the pages.
 - The overlay slides in from the top or bottom, or fades in, over a dimmed screen whose darkness you set (or no dimming at all).
@@ -190,6 +190,7 @@ Then:
 
 axiom runs on Hyprland, niri and sway, and sets up the compositor from the same settings on each (**Settings → Compositor**):
 - **Keybinds** on their own page, with presets, a key recorder, and warnings for keys your own config already uses, plus a reference of every bind as a list or a keyboard, where you can press a combo to see what it does.
+- **Window rules** (the Window rules page): float, size, place, pin or fullscreen windows as they open, by app id or title, written into each compositor's config in every mode.
 - **Monitors** arranged by dragging (see [the rest](#the-rest)).
 - **Window look:** theme-colored borders, rounding, gaps, shadows, dimming, opacity and blur, as far as the compositor supports them. **Match axiom's shape** keeps windows in step with axiom's own shape.
 - **Input:** input sources (keyboard layouts and, through fcitx5 or ibus, input methods for Japanese, Chinese, Korean and more, switched from the bar, a keybind or the OSD), key repeat, mouse and touchpad, and the cursor theme.

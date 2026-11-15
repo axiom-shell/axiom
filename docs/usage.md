@@ -46,7 +46,7 @@ axiom ipc <target> <function> [args]
 | Target | Functions |
 | --- | --- |
 | `overlay` | `open`, `close`, `toggle`, `page <type>` (a page in a window of its own: its window) |
-| `pages` | `window <type>` (a tool page in a window of its own, or its window focused: `settings`, `themes`, `bareditor`, `keybinds`, `customwidgets`, `calendarpage`), `close <type>` (back into the overlay), `list` |
+| `pages` | `window <type>` (a tool page in a window of its own, or its window focused: `settings`, `themes`, `bareditor`, `keybinds`, `windowrules`, `customwidgets`, `calendarpage`), `close <type>` (back into the overlay), `list` |
 | `menu` | `open <id>`, `close <id>`, `toggle <id>`, `pin <id>`, `unpin <id>`, `resetPosition <id>` (a free menu back to its anchor), `list`, `edit` |
 | `edgeMenu` | the `menu` target's old name, kept for older binds and scripts: the same functions |
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
@@ -169,7 +169,7 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | Group | Commands |
 | --- | --- |
 | **Session** | `/lock` `/suspend` `/hibernate` `/logout` `/reboot` `/poweroff` `/power` |
-| **Pages** | `/overlay [page]` `/settings` `/themes` `/bar` `/keybinds` `/layouts` `/menus` `/monitors` `/widgets` `/workspaces` `/calendar` |
+| **Pages** | `/overlay [page]` `/settings` `/themes` `/bar` `/keybinds` `/rules` `/layouts` `/menus` `/monitors` `/widgets` `/workspaces` `/calendar` |
 | **Look** | `/theme <name>` `/dark` `/light` `/mode` `/wallpaper <file\|Random>` `/nextwallpaper` `/transition <name>` `/generate` `/nightlight [on\|off]` |
 | **Audio and media** | `/volume <n\|+n\|-n>` `/mute` `/mic` `/output <device>` `/input <device>` `/play` `/next` `/prev` |
 | **Connectivity** | `/wifi [on\|off]` `/bluetooth [on\|off]` `/airplane [on\|off]` `/connect <device>` `/vpn [name]` `/eject [drive]` |

@@ -10,6 +10,8 @@ properties:
     enum: [appId, title, process, startedFrom, xwayland, game, steamGame, app]
     x-enumLabels: {appId: App id, title: Title, process: Process, startedFrom: Started from, xwayland: Runs under XWayland, game: Is a game, steamGame: Steam game id, app: Installed app}
     default: appId
+    x-enumShowIf:
+      xwayland: {/$supports.ruleXwayland: true}
   op:
     type: string
     title: Test
