@@ -11,8 +11,9 @@ import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the element library while nothing is
 // selected; the selected element's settings in its place: its text fields
-// (Shows: a ValueField per slot of its kind), the actions it runs and its look
-// (its kind's options, CustomWidgetsConfig.elementKinds).
+// (Shows: a ValueField per slot of its kind), the actions it runs, when it is
+// shown (Visible), its colours (a ColorField each) and its look (the rest of
+// its kind's options, CustomWidgetsConfig.elementKinds).
 ColumnLayout {
   id: root
 
@@ -43,9 +44,17 @@ ColumnLayout {
   // What {value} reads as in the previewed sample, for the Runs line under a trigger
   readonly property string valueText: root.readBind("value")
 
-  // The slots the Shows group lists: the kind's own. (show and tone, which
-  // every kind has, are no text fields: they go with the colours)
-  readonly property var shownSlots: (root.kind?.slots ?? []).filter(slot => slot !== "show" && slot !== "tone")
+  // The keys a colour rule or Visible can read: the output's paths, for a
+  // List the keys of its rows (a rule reads each row's own item, and the
+  // row's `state`)
+  readonly property var colorKeys: {
+    if (root.element?.type !== "List")
+      return root.editor.bindPaths.map(p => p.path);
+    const fields = root.editor.previewFields;
+    const rows = CustomWidgetData.rows(root.element.bind?.items ? CustomWidgetData.elementValue(fields, root.element.bind.items) : fields?.sample?.items, root.element.options?.row);
+    const keys = Object.keys(rows.find(row => row.raw !== null && typeof row.raw === "object")?.raw ?? ({}));
+    return keys.includes("state") ? keys : ["state"].concat(keys);
+  }
 
   // A slot's title in the Shows group. The names are the kinds' slots:
   // I18n.tr("Text") I18n.tr("Value") I18n.tr("Unit") I18n.tr("Label") I18n.tr("Icon")
@@ -167,7 +176,7 @@ ColumnLayout {
       }
 
       FieldGroup {
-        visible: root.shownSlots.length > 0
+        visible: (root.kind?.slots ?? []).length > 0
         Layout.fillWidth: true
         title: I18n.tr("Shows")
         headerExtras: TipIcon {
@@ -181,7 +190,7 @@ ColumnLayout {
 
           // By count over the kind's slots
           Repeater {
-            model: root.shownSlots
+            model: (root.kind?.slots ?? [])
 
             ValueField {
               id: field
@@ -227,14 +236,157 @@ ColumnLayout {
       }
 
       FieldGroup {
-        visible: Object.keys(root.kind?.options ?? {}).length > 0
+        Layout.fillWidth: true
+        title: I18n.tr("Visible")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Show it only while a value in the output holds.")
+        }
+
+        ColumnLayout {
+          id: vis
+          readonly property var when: root.element?.showWhen ?? ({})
+          readonly property bool on: (vis.when.test ?? "always") !== "always"
+          readonly property bool needsValue: ["is", "isNot", "above", "below"].includes(vis.when.test ?? "")
+          Layout.fillWidth: true
+          spacing: 0
+
+          InspectorRow {
+            first: true
+            label: I18n.tr("Show")
+
+            StyledToggle {
+              Layout.fillWidth: true
+              options: ["always", "when"]
+              labels: ({
+                  "always": I18n.tr("Always"),
+                  "when": I18n.tr("When")
+                })
+              value: vis.on ? "when" : "always"
+              onPicked: value => root.editor.setElement(["showWhen", "test"], value === "always" ? "always" : "is")
+            }
+          }
+
+          InspectorRow {
+            indented: true
+            shown: vis.on
+
+            KeyField {
+              Layout.fillWidth: true
+              keys: root.colorKeys
+              value: vis.when.key ?? ""
+              onPicked: value => root.editor.setElement(["showWhen", "key"], value)
+            }
+          }
+
+          InspectorRow {
+            indented: true
+            shown: vis.on
+
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Widget.spacing
+
+              StyledComboEntry {
+                Layout.preferredWidth: Widget.px(120)
+                Layout.fillWidth: !vis.needsValue
+                value: vis.when.test ?? "always"
+                options: [
+                  {
+                    "value": "is",
+                    "label": I18n.tr("is")
+                  },
+                  {
+                    "value": "isNot",
+                    "label": I18n.tr("is not")
+                  },
+                  {
+                    "value": "above",
+                    "label": I18n.tr("is above")
+                  },
+                  {
+                    "value": "below",
+                    "label": I18n.tr("is below")
+                  },
+                  {
+                    "value": "set",
+                    "label": I18n.tr("has a value")
+                  },
+                  {
+                    "value": "unset",
+                    "label": I18n.tr("is empty")
+                  }
+                ]
+                // Always has no row of its own: the toggle above is its place
+                onPicked: value => root.editor.setElement(["showWhen", "test"], value)
+              }
+
+              StyledTextEntry {
+                id: whenValue
+                visible: vis.needsValue
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                placeholderText: I18n.tr("Value")
+                onTextEdited: root.editor.setElement(["showWhen", "value"], whenValue.text)
+                Binding {
+                  target: whenValue
+                  property: "text"
+                  value: vis.when.value ?? ""
+                  when: !whenValue.input.activeFocus
+                  restoreMode: Binding.RestoreNone
+                }
+              }
+            }
+          }
+        }
+      }
+
+      FieldGroup {
+        visible: (root.kind?.colors.length ?? 0) > 0
+        Layout.fillWidth: true
+        title: I18n.tr("Colors")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Pick a color, or turn on Color by state to pick it from a value.")
+        }
+
+        ColumnLayout {
+          Layout.fillWidth: true
+          spacing: 0
+
+          // By count over the kind's colours (the schema's)
+          Repeater {
+            model: root.kind?.colors ?? []
+
+            ColorField {
+              id: color
+              required property var modelData
+              required property int index
+              readonly property var schema: root.kind?.options?.[color.modelData.key] ?? ({})
+              first: color.index === 0
+              key: color.modelData.key
+              statesKey: color.modelData.statesKey
+              label: I18n.tr(color.schema.title ?? "")
+              description: color.schema.description ? I18n.tr(color.schema.description) : ""
+              emptyLabel: color.schema["x-emptyLabel"] ?? "Auto"
+              value: root.element?.options?.[color.key] ?? ""
+              statesValue: root.element?.options?.[color.statesKey] ?? ({})
+              keys: root.colorKeys
+              write: (path, value) => root.editor.setElement(["options"].concat(path), value)
+            }
+          }
+        }
+      }
+
+      FieldGroup {
+        visible: (root.kind?.lookOrder.length ?? 0) > 0
         Layout.fillWidth: true
         title: I18n.tr("Look")
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
-          propertiesSchema: root.kind?.options ?? ({})
-          order: root.kind?.optionsOrder ?? []
+          propertiesSchema: Utils.pick(root.kind?.options ?? ({}), order)
+          order: root.kind?.lookOrder ?? []
           values: root.element?.options ?? ({})
           onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
         }

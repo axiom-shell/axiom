@@ -13,8 +13,8 @@ import qs.components.bar.look
 
 // Custom widgets page, Bar tab: one banner across the page holding the
 // widget as it's drawn on a bar across and on one down the side (the real
-// bar widget, on the first bar's look) and a caption, then its bar style, its text (Waybar's format, icons and
-// states) and its clicks.
+// bar widget, on the first bar's look) and a caption, then its bar style, its status colour (and Color by state), its text
+// (Waybar's format and icons) and its clicks.
 ColumnLayout {
   id: root
 
@@ -105,6 +105,29 @@ ColumnLayout {
         order: ["style", "icon", "segments", "width", "popout"]
         values: root.definition?.bar ?? ({})
         onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+      }
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Status color")
+      description: I18n.tr(root.schema.bar.properties.color.description)
+
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 0
+
+        ColorField {
+          readonly property var colorSchema: root.schema.bar.properties.color
+          first: true
+          key: "color"
+          statesKey: "colorStates"
+          emptyLabel: colorSchema["x-emptyLabel"] ?? "Auto"
+          value: root.definition?.bar?.color ?? ""
+          statesValue: root.definition?.bar?.colorStates ?? ({})
+          keys: root.editor.bindPaths.map(p => p.path)
+          write: (path, value) => root.editor.set(["bar"].concat(path), value)
+        }
       }
     }
 

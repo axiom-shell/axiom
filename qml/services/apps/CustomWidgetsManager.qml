@@ -643,7 +643,7 @@ QtObject {
     }
   }
 
-  // A definition edited (its format, icons, states: a preview on the page)
+  // A definition edited (its format, icons, colours: a preview on the page)
   // redraws its last output at once, not at the next one (a stream may
   // send none for a while). The history keeps only real samples.
   function _reresolve() {

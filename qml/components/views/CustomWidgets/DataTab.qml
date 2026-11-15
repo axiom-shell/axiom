@@ -168,14 +168,6 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
-      title: I18n.tr("States")
-      description: I18n.tr("A state or class the script prints → a theme colour, for the bar and the elements' Color by. ok, warning and critical are already known.")
-
-      StatesEditor {}
-    }
-
-    FieldGroup {
-      Layout.fillWidth: true
       title: I18n.tr("Actions")
       description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
 

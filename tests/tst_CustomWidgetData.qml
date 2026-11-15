@@ -2265,41 +2265,6 @@ TestCase {
     verify(CustomWidgetData.fitZoom([8, 2], 100, 150, 400) < CustomWidgetData.fitZoom([2, 2], 100, 150, 400), "a wider module is drawn smaller");
   }
 
-  function test_keyMaps() {
-    compare(Object.keys(CustomWidgetData.withKey({
-      "a": 1,
-      "b": 2
-    }, "a", 9)), ["a", "b"], "a set key keeps its place");
-    compare(CustomWidgetData.withKey({
-      "a": 1
-    }, "b", 2), {
-      "a": 1,
-      "b": 2
-    });
-    compare(CustomWidgetData.withoutKey({
-      "a": 1,
-      "b": 2
-    }, "a"), {
-      "b": 2
-    });
-    const map = {
-      "a": 1,
-      "b": 2,
-      "c": 3
-    };
-    compare(Object.keys(CustomWidgetData.renameKey(map, "b", "x")), ["a", "x", "c"], "renamed in place");
-    compare(CustomWidgetData.renameKey(map, "b", "x").x, 2);
-    verify(CustomWidgetData.renameKey(map, "b", "") === map, "an empty name: as it is");
-    verify(CustomWidgetData.renameKey(map, "b", "c") === map, "a taken name: as it is");
-    verify("constructor" in CustomWidgetData.renameKey({
-      "a": 1
-    }, "a", "constructor") && Object.keys(CustomWidgetData.renameKey({
-      "a": 1
-    }, "a", "constructor")).includes("constructor"), "a name on the prototype is free");
-    verify(CustomWidgetData.renameKey(map, "b", "b") === map, "the same name");
-    compare(map.b, 2, "not changed in place");
-  }
-
   function test_lockIssues() {
     compare(CustomWidgetData.lockIssues(null), []);
     compare(CustomWidgetData.lockIssues({

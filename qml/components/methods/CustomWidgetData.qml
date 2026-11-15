@@ -2152,31 +2152,6 @@ QtObject {
     return root.sampleForView(definition, index, seen, liveFields) === null ? "none" : "live";
   }
 
-  // `map` with `key` set to `value`, its order kept (a new key last)
-  function withKey(map, key, value) {
-    return Object.assign({}, map, {
-      [key]: value
-    });
-  }
-
-  // `map` without `key`
-  function withoutKey(map, key) {
-    const next = Object.assign({}, map);
-    delete next[key];
-    return next;
-  }
-
-  // `map` with key `from` renamed `to`, in its place; the same map when
-  // `to` is empty or another key already
-  function renameKey(map, from, to) {
-    if (to === "" || to === from || Object.prototype.hasOwnProperty.call(map ?? {}, to))
-      return map;
-    return Object.keys(map ?? {}).reduce((next, key) => {
-      next[key === from ? to : key] = map[key];
-      return next;
-    }, {});
-  }
-
   // What a definition offered on the lock screen holds that doesn't work
   // there or shows a script's text to whoever sees the screen: "actions"
   // (an element or the bar runs an action), "entry" (an
