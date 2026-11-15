@@ -20,8 +20,9 @@ QtObject {
 
   // id -> the definition's fields from its last output
   readonly property var fields: _fields
-  // id -> { text, value, exitCode, error, at, blocked } of its last output
-  // (blocked: its "run only if" command failed)
+  // id -> { text, value, exitCode, error, stderr (its last line), exited (a
+  // stream that ended), at, blocked } of its last output (blocked: its "run
+  // only if" command failed)
   readonly property var outputs: _outputs
   // id -> { binding ("" for the widget's own value) -> [numbers] }, the
   // last historyLength samples
@@ -54,7 +55,20 @@ QtObject {
       root._checkIf(id, def);
       return;
     }
-    CommandManager.refresh(def.command);
+    CommandManager.refresh(root._command(def));
+  }
+
+  // Stop the widget's script and start it again now (a poll just runs
+  // again): refresh only republishes a running stream's last line
+  function restart(id) {
+    const def = CustomWidgetsConfig.definition(id);
+    if (!def)
+      return;
+    if (root._blocked[id]) {
+      root._checkIf(id, def);
+      return;
+    }
+    CommandManager.restart(root._command(def));
   }
 
   // Run one of a definition's actions ("click", "rightClick", "middleClick",
@@ -91,7 +105,7 @@ QtObject {
       const def = CustomWidgetsConfig.definition(r.id);
       if (def?.command)
         ids[r.id] = {
-          "command": def.command,
+          "command": root._command(def),
           "interval": def.interval,
           "mode": def.mode,
           "format": def.output === "text" ? "text" : "json",
@@ -111,6 +125,11 @@ QtObject {
   property var _outputs: ({})
   property var _history: ({})
   property var _seen: ({})
+
+  // The command a definition's script runs as
+  function _command(def) {
+    return def.command;
+  }
 
   function _owner(id) {
     return "customWidget:" + id;
@@ -204,6 +223,8 @@ QtObject {
         "value": value,
         "exitCode": run.exitCode,
         "error": run.error,
+        "stderr": run.stderr,
+        "exited": run.exited,
         "at": run.at,
         "blocked": false
       };
@@ -317,6 +338,16 @@ QtObject {
       if (!def)
         return `no custom widget "${name}"`;
       root.refresh(def.id);
+      return "";
+    }
+
+    // Stop a custom widget's script and start it again now: its refresh
+    // name, id or name (a stream's process is replaced, a poll runs again)
+    function restart(name: string): string {
+      const def = root.find(name);
+      if (!def)
+        return `no custom widget "${name}"`;
+      root.restart(def.id);
       return "";
     }
 

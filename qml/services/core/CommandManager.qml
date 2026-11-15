@@ -9,7 +9,7 @@ import QtQuick
 //   CommandManager.acquire(owner, { command, interval, mode, format })
 //   CommandManager.outputs[command]    // last stdout, trimmed
 //   CommandManager.values[command]     // with format "json": it parsed
-//   CommandManager.runs[command]       // { exitCode, error, at } of the last
+//   CommandManager.runs[command]       // { exitCode, error, stderr, exited, at } of the last
 // Also runs one-off commands: runDetached (a shell string or an argv) for
 // widgets and services that don't wait on it (so they start no processes of
 // their own), and run() for services that want the output:
@@ -29,8 +29,10 @@ QtObject {
   // "json" (absent while the output isn't JSON)
   readonly property var values: _values
   // command -> { exitCode, error ("" when none: it couldn't start, or its
-  // output isn't the JSON asked for), at (ms since the epoch) } of its
-  // last output
+  // output isn't the JSON asked for), stderr (the last line the run wrote
+  // to stderr, "" for none; a stream's, once it exited), exited (a stream
+  // that ended: its output is its last line), at (ms since the epoch) } of
+  // its last output
   readonly property var runs: _runs
 
   // request: { command, interval (ms, default 5000, at least 500), mode
@@ -101,6 +103,16 @@ QtObject {
   function refresh(command) {
     if (command in root._watched)
       BackendManager.call("exec.refresh", {
+        "command": command
+      }, root._logFailure);
+  }
+
+  // Run a watched command afresh: a stream's process is stopped and a new
+  // one started at once, a poll runs again (refresh only republishes a
+  // stream's last line)
+  function restart(command) {
+    if (command in root._watched)
+      BackendManager.call("exec.restart", {
         "command": command
       }, root._logFailure);
   }
@@ -178,6 +190,8 @@ QtObject {
         runs[command] = {
           "exitCode": entry.exitCode ?? 0,
           "error": entry.error ?? "",
+          "stderr": entry.stderr ?? "",
+          "exited": entry.exited ?? false,
           "at": entry.at ?? 0
         };
       }

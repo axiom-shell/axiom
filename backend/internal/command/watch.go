@@ -7,12 +7,13 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // The watched commands (CommandManager's acquire and outputs: `exec.watch`,
-// `exec.unwatch`, `exec.refresh`). Each distinct command runs through
+// `exec.unwatch`, `exec.refresh`, `exec.restart`). Each distinct command runs through
 // `sh -c` in one loop for every subscriber, at the shortest interval any
 // of them asked (once, for a command only watched in once mode; as a
 // stream, stream.go, for one any of them streams), and not at all without
@@ -58,9 +59,33 @@ type Entry struct {
 	// output (the command didn't start)
 	Error    string `json:"error,omitempty"`
 	ExitCode int    `json:"exitCode"`
+	// The last non-empty line the run wrote to stderr (at most maxStderrLine
+	// bytes): a poll's, or a stream's up to its exit
+	Stderr string `json:"stderr,omitempty"`
+	// A stream that ended (its Text is the last line it printed, ExitCode
+	// how it ended)
+	Exited bool `json:"exited,omitempty"`
 	// When the output became what it is (ms since the epoch): an unchanged
-	// output isn't pushed again
+	// output isn't pushed again (a changed Stderr or Exited counts only
+	// for a non-zero exit)
 	At int64 `json:"at"`
+}
+
+// maxStderrLine is the most of a stderr line an entry carries.
+const maxStderrLine = 300
+
+// lastLine is the last non-empty line of text, cut to maxStderrLine
+// bytes (at a character).
+func lastLine(text string) string {
+	lines := strings.Split(strings.TrimRight(text, "\r\n\t "), "\n")
+	line := strings.TrimSpace(lines[len(lines)-1])
+	if len(line) > maxStderrLine {
+		line = line[:maxStderrLine]
+		for !utf8.ValidString(line) {
+			line = line[:len(line)-1]
+		}
+	}
+	return line
 }
 
 // Outputs is the push: every command the subscriber watches that has run.
@@ -98,9 +123,9 @@ type Watches struct {
 
 // watched is one command's loop, while anyone watches it.
 type watched struct {
-	cancel           context.CancelFunc
-	changed, refresh chan struct{}
-	entry            *Entry
+	cancel                    context.CancelFunc
+	changed, refresh, restart chan struct{}
+	entry                     *Entry
 }
 
 // NewWatches returns Watches with nothing watched.
@@ -205,6 +230,17 @@ func (w *Watches) Refresh(command string) {
 	}
 }
 
+// Restart runs a watched command afresh: a poll runs now, a stream's
+// process is stopped and a new one started at once (also when it exited
+// and waits out its backoff; its killed run publishes no exit).
+func (w *Watches) Restart(command string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if run := w.runs[command]; run != nil {
+		signal(run.restart)
+	}
+}
+
 func (w *Watches) drop(s Subscriber, command string) {
 	if _, ok := w.subs[s][command]; !ok {
 		return
@@ -276,7 +312,7 @@ func (w *Watches) interval(command string) (time.Duration, bool) {
 // start runs command's loop; w.mu is held.
 func (w *Watches) start(command string) {
 	ctx, cancel := context.WithCancel(w.o.Context)
-	run := &watched{cancel: cancel, changed: make(chan struct{}, 1), refresh: make(chan struct{}, 1)}
+	run := &watched{cancel: cancel, changed: make(chan struct{}, 1), refresh: make(chan struct{}, 1), restart: make(chan struct{}, 1)}
 	w.runs[command] = run
 	w.o.Go(func(context.Context) {
 		defer cancel()
@@ -312,7 +348,7 @@ func (w *Watches) poll(ctx context.Context, command string, run *watched) {
 	if ctx.Err() != nil {
 		return
 	}
-	w.publish(command, run, res.Stdout, res.ExitCode, err, ran)
+	w.publish(command, run, res.Stdout, lastLine(res.Stderr), res.ExitCode, false, err, ran)
 	for {
 		w.mu.Lock()
 		interval, poll := w.interval(command)
@@ -330,6 +366,8 @@ func (w *Watches) poll(ctx context.Context, command string, run *watched) {
 			return
 		case <-run.refresh:
 			return
+		case <-run.restart: // a poll's restart is a refresh
+			return
 		case <-run.changed:
 		case <-due:
 			return
@@ -338,15 +376,15 @@ func (w *Watches) poll(ctx context.Context, command string, run *watched) {
 }
 
 // publish makes command's entry from its output (a run's stdout, a
-// stream's line) and pushes it to its watchers when it differs from the
-// last.
-func (w *Watches) publish(command string, run *watched, out string, exitCode int, err error, at time.Time) {
+// stream's line), its last stderr line and whether a stream ended, and
+// pushes it to its watchers when it differs from the last.
+func (w *Watches) publish(command string, run *watched, out, stderr string, exitCode int, exited bool, err error, at time.Time) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.runs[command] != run {
 		return // stopped meanwhile
 	}
-	e := Entry{Text: strings.TrimSpace(out), ExitCode: exitCode, At: at.UnixMilli()}
+	e := Entry{Text: strings.TrimSpace(out), Stderr: stderr, Exited: exited, ExitCode: exitCode, At: at.UnixMilli()}
 	if err != nil {
 		e.ExitCode, e.Error = -1, err.Error()
 	} else if w.json(command) && e.Text != "" {
@@ -357,7 +395,8 @@ func (w *Watches) publish(command string, run *watched, out string, exitCode int
 		}
 	}
 	if last := run.entry; last != nil && last.Text == e.Text && last.ExitCode == e.ExitCode &&
-		last.Error == e.Error && string(last.Value) == string(e.Value) {
+		last.Error == e.Error && string(last.Value) == string(e.Value) &&
+		(e.ExitCode == 0 || (last.Stderr == e.Stderr && last.Exited == e.Exited)) {
 		return
 	}
 	run.entry = &e
