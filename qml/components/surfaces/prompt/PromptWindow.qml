@@ -116,11 +116,15 @@ PanelWindow {
     height: loader.implicitHeight + root.pad * 2
 
     opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.97 // style-exempt: motion
+    // The show: a fade and a slide (never a scale: scaled text goes soft)
+    property real _reveal: root.shown ? 1 : 0
+    transform: Translate {
+      y: Math.round((1 - card._reveal) * Style.enterOffset)
+    }
     Glide on opacity {
       duration: Appearance.animNormal
     }
-    Glide on scale {
+    Glide on _reveal {
       duration: Appearance.animNormal
     }
 

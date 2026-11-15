@@ -151,7 +151,7 @@ PanelWindow {
   WlrLayershell.namespace: "axiom-powermenu"
 
   // Where the compositor blurs only what a window asks: the card, as it
-  // fades and scales in
+  // fades and slides in
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
@@ -160,6 +160,7 @@ PanelWindow {
     id: cardBlur
     target: card
     opacity: card.opacity
+    moving: card._reveal
   }
 
   Item {
@@ -204,11 +205,15 @@ PanelWindow {
       clip: true
 
       opacity: root.shown ? 1 : 0
-      scale: root.shown ? 1 : 0.97 // style-exempt: motion
+      // The show: a fade and a slide (never a scale: scaled text goes soft)
+      property real _reveal: root.shown ? 1 : 0
+      transform: Translate {
+        y: Math.round((1 - card._reveal) * Style.enterOffset)
+      }
       Glide on opacity {
         duration: Appearance.animNormal
       }
-      Glide on scale {
+      Glide on _reveal {
         duration: Appearance.animNormal
       }
 
