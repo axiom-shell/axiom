@@ -71,7 +71,6 @@ QtObject {
   // baseFontSize, the setting itself
   readonly property int baseFontSize: _c.font.size
   readonly property int fontSize: Math.round(baseFontSize * Widget.scale)
-  readonly property int fontSizeLarge: fontSizeBy(4)
   // The font size `n` px bigger (smaller when negative) than the setting,
   // at the Interface scale: the offset grows with the text, where
   // `fontSize + n` would leave it the same at every scale
