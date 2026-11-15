@@ -1117,4 +1117,25 @@ TestCase {
     verify(col.button.width >= col.button.implicitWidth, `button ${col.button.width}`);
     verify(label.width >= label.implicitWidth - 0.5, `label ${label.width} of ${label.implicitWidth}`);
   }
+
+  // The tools' right edge is the same whatever the title, and whether or
+  // not Save and Discard are showing
+  function test_work_area_tools_right_edge_is_pinned() {
+    harness.configure({});
+    const edges = [];
+    for (const [title, dirty] of [["Widgets", true], ["Widgets", false], ["A much longer editor title than that", true], ["A much longer editor title than that", false]]) {
+      const area = createTemporaryObject(workAreaToolsComp, root, {
+        "width": 900,
+        "height": 300,
+        "title": title,
+        "dirty": dirty
+      });
+      waitForRendering(area);
+      const probe = find(area, it => it.objectName === "undoProbe", [])[0];
+      verify(probe);
+      edges.push(probe.mapToItem(area, 0, 0).x + probe.width);
+    }
+    for (const e of edges)
+      verify(Math.abs(e - edges[0]) < 0.5, `right edges ${edges}`);
+  }
 }
