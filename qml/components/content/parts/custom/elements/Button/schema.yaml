@@ -6,3 +6,12 @@ actions: [click]
 settings:
   label: {type: string, title: Label, default: ''}
   icon: {type: string, x-control: icon, title: Icon, default: ''}
+  color: {type: string, title: Color, x-options: colors, default: '', x-emptyLabel: None}
+  disabled:
+    type: string
+    title: When off
+    default: dim
+    x-control: toggle
+    enum: [dim, hide]
+    x-enumLabels: {dim: Dimmed, hide: Hidden}
+    description: 'When the script or the output turns the action off.'

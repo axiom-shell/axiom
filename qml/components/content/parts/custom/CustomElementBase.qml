@@ -29,6 +29,8 @@ Item {
   property bool invokeSet: false
   // The script isn't answering (a start error, an exit): named actions are off
   property bool failing: false
+  // Another action holds the widget's script actions (CustomWidgetsManager.busy)
+  property bool busy: false
 
   readonly property var bind: element?.bind ?? ({})
   readonly property var options: element?.options ?? ({})
@@ -77,7 +79,20 @@ Item {
   readonly property bool builtin: root.actionId.startsWith("axiom:")
   // Whether pressing it does something: actions on, and for a named one the
   // sample leaves it enabled and the script can run it
-  readonly property bool canRun: root.actionsEnabled && (root.actionId === "" || (CustomWidgetData.actionEnabled(root.fields?.actions, root.actionId) && (root.builtin || (root.invokeSet && !root.failing))))
+  readonly property bool canRun: root.actionsEnabled && (root.actionId === "" || (CustomWidgetData.actionEnabled(root.fields?.actions, root.actionId) && (root.builtin || (root.invokeSet && !root.busy && !root.failing))))
+
+  // Its named action's last run, when it failed (CustomWidgetsManager.lastAction:
+  // `message` the stderr line, `at` when), until the action runs again; else null
+  readonly property var failed: {
+    const last = CustomWidgetsManager.lastAction[root.widgetId];
+    return root.actionId !== "" && last && last.failed && last.action === root.actionId ? last : null;
+  }
+
+  // The ink that reads on `color`, a colour from data (a custom widget's
+  // tone): called per element, never per row
+  function inkOn(color) {
+    return Tone.readableOn(color, Style.surfacePage, [Style.text]); // style-exempt: data colour (a custom widget's tone), its ink once per element
+  }
 
   // Run one of the element's actions with `value` filled in
   function act(action, value) {

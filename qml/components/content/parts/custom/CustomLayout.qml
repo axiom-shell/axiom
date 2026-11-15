@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 
@@ -80,6 +81,7 @@ Item {
             fallbackIcon: root.definition?.icon ?? "widgets"
             invokeSet: (root.definition?.invoke?.command ?? "") !== ""
             failing: !!root.fields?.failure && root.fields.failure.kind !== "script"
+            busy: CustomWidgetsManager.busy[root.definition?.id ?? ""] !== undefined
           }
         }
       }

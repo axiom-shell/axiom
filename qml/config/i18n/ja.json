@@ -4422,6 +4422,13 @@
     "A named action it runs instead of its commands.": "",
     "Scroll up action": "",
     "Middle-click action": "",
-    "Scroll down action": ""
+    "Scroll down action": "",
+    "The action failed with code {0}": "",
+    "When off": "",
+    "When the script or the output turns the action off.": "",
+    "Other actions are off until it finishes and the script prints again, so a double press acts once.": "",
+    "Dimmed": "",
+    "Wait for each action": "",
+    "Hidden": ""
   }
 }

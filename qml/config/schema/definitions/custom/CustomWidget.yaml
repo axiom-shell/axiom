@@ -49,6 +49,11 @@ properties:
         title: Action command
         default: ''
         description: 'Runs a named action: {action}, {value} and {rev} are filled in, already quoted. Should exit quickly.'
+      hold:
+        type: boolean
+        title: Wait for each action
+        default: true
+        description: 'Other actions are off until it finishes and the script prints again, so a double press acts once.'
   bar:
     $ref: '#/definitions/BarDisplay'
     x-order: [style, segments, width, icon, popout]
