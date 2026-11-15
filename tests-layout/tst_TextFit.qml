@@ -220,6 +220,31 @@ TestCase {
   }
 
   Component {
+    id: toolPanePinnedComp
+
+    ToolPane {
+      id: pane
+      title: "Pages"
+      property int rows: 20
+      pinned: [
+        Repeater {
+          model: pane.rows
+
+          Rectangle {
+            implicitHeight: 40
+            Layout.fillWidth: true
+          }
+        }
+      ]
+      Rectangle {
+        objectName: "paneChild"
+        implicitHeight: 40
+        Layout.fillWidth: true
+      }
+    }
+  }
+
+  Component {
     id: workAreaComp
 
     WorkArea {
@@ -233,6 +258,11 @@ TestCase {
           text: "Fits"
         }
       ]
+
+      Item {
+        objectName: "work"
+        anchors.fill: parent
+      }
     }
   }
 
@@ -914,6 +944,12 @@ TestCase {
     bar.width = Widget.textPx(2000);
     waitForRendering(bar);
     fuzzyCompare(bar._current.width, bar._current.implicitWidth, 1, "a tab keeps its own width");
+    const tabs = Array.from(new Set(find(bar, it => it.checked !== undefined && bar.tabs.includes(it.text), []))).sort((a, b) => a.x - b.x);
+    compare(tabs.length, bar.tabs.length);
+    fuzzyCompare(tabs[0].x, 0, 0.5, "first tab at the start");
+    for (let i = 1; i < tabs.length; i++)
+      fuzzyCompare(tabs[i].x, tabs[i - 1].x + tabs[i - 1].width + bar.spacing, 0.5, "packed, not spread");
+    compare(flick.interactive, false, "a strip that fits doesn't flick");
   }
 
   // A marked tab shows one unsaved dot, after its label and inside the tab
@@ -1130,6 +1166,42 @@ TestCase {
     waitForRendering(without);
     const bodyY = pane => find(pane, it => it.objectName === "paneChild", [])[0].mapToItem(pane, 0, 0).y;
     compare(bodyY(withBar), bodyY(without));
+  }
+
+  // A pinned list cut at its cap shows its edge (a separator and a scroll bar); a short one shows neither
+  function test_tool_pane_pinned_overflow_shows_its_edge() {
+    harness.configure({});
+    const pane = createTemporaryObject(toolPanePinnedComp, root, {
+      "width": 400,
+      "height": 600
+    });
+    waitForRendering(pane);
+    const edge = find(pane, it => it.objectName === "pinnedEdge", [])[0];
+    verify(edge);
+    verify(edge.visible, "the cut list shows its edge");
+    const area = find(pane, it => it.Layout && it.Layout.preferredHeight > 0 && it.implicitHeight === it.Layout.preferredHeight && it.clip !== undefined && it.width > 300 && it.height <= 240.5 && it.height > 100, [])[0];
+    verify(area, "the pinned area");
+    verify(area.height <= Math.round(600 * 0.4));
+    const child = find(pane, it => it.objectName === "paneChild", [])[0];
+    verify(child.mapToItem(pane, 0, 0).y >= edge.mapToItem(pane, 0, 0).y + edge.height, "the body starts below the edge");
+    pane.rows = 2;
+    waitForRendering(pane);
+    verify(!edge.visible, "a short list has no edge");
+  }
+
+  // The work area's well fills its box: no band under it, its top meets the status line
+  function test_work_area_well_fills_its_box() {
+    harness.configure({});
+    const area = createTemporaryObject(workAreaComp, root, {
+      "width": 900,
+      "height": 700
+    });
+    waitForRendering(area);
+    const work = find(area, it => it.objectName === "work", [])[0];
+    verify(work);
+    verify(work.height > 0);
+    verify(Math.abs(work.mapToItem(area, 0, work.height).y - area.height) <= Widget.padding + 1, "the well reaches the box's bottom");
+    verify(work.mapToItem(area, 0, 0).y < area.height / 3, "and starts near the top ");
   }
 
   // A status line hidden at load shows once its child does

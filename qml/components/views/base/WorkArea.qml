@@ -29,9 +29,6 @@ Surface {
   // Shown above the status while `idle`
   property string hintWhenIdle: ""
   property bool idle: false
-  // 0: the well fills what it is given; a canvas stacked over an inspector
-  // caps it (Widget.px(400))
-  property real wellMaxHeight: 0
   default property alias content: well.data
 
   signal save
@@ -83,6 +80,7 @@ Surface {
     // Never hidden (its status children would read hidden and it would stay so): with nothing showing, a negative margin takes back the gap the column puts after it
     ColumnLayout {
       Layout.fillWidth: true
+      Layout.fillHeight: false
       Layout.bottomMargin: root.idle && root.hintWhenIdle !== "" || statusRow.visibleChildren.length > 0 ? 0 : -Widget.spacing
       spacing: 0
 
@@ -108,7 +106,6 @@ Surface {
       id: wellBox
       Layout.fillWidth: true
       Layout.fillHeight: true
-      Layout.maximumHeight: root.wellMaxHeight > 0 ? root.wellMaxHeight : Number.POSITIVE_INFINITY
       tone: "sunken"
       clip: true
 
