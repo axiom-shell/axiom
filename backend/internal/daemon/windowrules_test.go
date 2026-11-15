@@ -39,4 +39,11 @@ func TestWindowRulesMethods(t *testing.T) {
 	if err := c.Call(context.Background(), "windowRules.match", draft, &m); err != nil || len(m.Rules) != 1 {
 		t.Errorf("match %+v, %v", m, err)
 	}
+	// Apply to open windows without a compositor places nothing
+	var ap struct {
+		Windows *int `json:"windows"`
+	}
+	if err := c.Call(context.Background(), "windowRules.applyNow", struct{}{}, &ap); err != nil || ap.Windows == nil || *ap.Windows != 0 {
+		t.Errorf("applyNow %+v, %v", ap, err)
+	}
 }

@@ -72,6 +72,7 @@ func (d *Daemon) newCompositor(carried bool) *manager.Manager {
 				return
 			}
 			p.Send(d.server, json.RawMessage(jsonx.MarshalCompact(params)), subscribedTo(topicCompositor))
+			d.windowRulesReport(method, params)
 		},
 		OnSteps: d.sess.setSteps,
 		// This image, even once the file it came from is replaced

@@ -82,7 +82,7 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	}
 	// The rule flags are each backend's (facts.json's are Hyprland's)
 	flags := map[string]map[string]bool{
-		"niri": {"ruleTearing": false, "ruleXwayland": false},
+		"niri": {"ruleTearing": false, "ruleLiveLook": false, "ruleXwayland": false},
 		"sway": {"ruleMaximize": false, "ruleNoScreenShare": false},
 	}[kind]
 	if flags != nil {

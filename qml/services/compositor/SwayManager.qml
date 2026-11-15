@@ -86,6 +86,7 @@ Singleton {
     "splitToggle": true,
     "pin": true,
     "ruleTearing": true,
+    "ruleLiveLook": true,
     "ruleXwayland": true,
     "windowOpacity": true,
     "fullscreenOpacity": true,
