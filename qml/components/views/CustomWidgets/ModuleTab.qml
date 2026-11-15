@@ -11,11 +11,13 @@ import qs.components.content.parts.custom
 
 // Custom widgets page, Module tab: the module as it's drawn (the bar
 // widget's popout, and the sizes a page may give it: it's laid out
-// proportionally) across the top; under it the element library and the
-// selected element down the left, and the layouts editor's canvas filling
-// the rest, editing the elements as it edits a submenu's modules (drag in,
-// move, resize from any side, push, box-select, guides, undo). The
-// module's box fits its elements.
+// proportionally) across the top; under it the layer strip (the base
+// elements, and a chip per screen, with the selected screen's form), then
+// the element library and the selected element down the left, and the
+// layouts editor's canvas filling the rest, editing the layer's elements as
+// it edits a submenu's modules (drag in, move, resize from any side, push,
+// box-select, guides, undo). The module's box fits the elements of every
+// layer; the base is drawn dimmed under a screen being edited.
 ColumnLayout {
   id: root
 
@@ -24,8 +26,11 @@ ColumnLayout {
   required property real availableHeight
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var definition: root.editor.selected
-  readonly property var elements: root.definition?.module?.elements ?? []
-  readonly property var designSize: CustomWidgetData.designSize(root.elements, root.definition?.module?.size)
+  // The layer being edited (the base, or a screen)
+  readonly property var elements: root.editor.layerElements
+  readonly property var views: root.definition?.module?.views ?? []
+  readonly property var view: root.views[root.editor.viewIndex] ?? null
+  readonly property var designSize: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
   readonly property real card: root.grid?.unit ?? Widget.px(400)
   // The lock-screen column's width: wide enough for its button's whole label
   readonly property real lockWidth: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultLayoutButton.implicitWidth)
@@ -105,6 +110,7 @@ ColumnLayout {
               fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? ({})
               history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
               actionsEnabled: false
+              viewIndex: root.editor.viewIndex
             }
           }
         }
@@ -128,11 +134,76 @@ ColumnLayout {
       }
       StyledTextButton {
         id: defaultLayoutButton
-        visible: root.elements.length === 0
+        visible: root.elements.length === 0 && root.views.length === 0
         implicitHeight: Widget.height
         iconText: "auto_awesome"
         text: I18n.tr("Start from the default layout")
         onClicked: root.editor.useDefaultElements()
+      }
+    }
+  }
+
+  // The layers: the base, and a screen each (the first whose condition
+  // holds is drawn over the base)
+  Flow {
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    ToggleChip {
+      text: I18n.tr("Base")
+      checked: root.editor.viewIndex < 0
+      onToggled: root.editor.selectView(-1)
+    }
+    Repeater {
+      model: root.views.length
+
+      ToggleChip {
+        id: chip
+        required property int index
+        text: root.views[chip.index]?.name || root.views[chip.index]?.id || ""
+        checked: root.editor.viewIndex === chip.index
+        onToggled: root.editor.selectView(chip.index)
+      }
+    }
+    StyledTextButton {
+      implicitHeight: Widget.smallHeight
+      iconText: "add"
+      text: I18n.tr("Add a screen")
+      enabled: root.definition !== null
+      onClicked: root.editor.addView(I18n.tr("Screen {0}", root.views.length + 1))
+    }
+  }
+
+  // The selected screen: its name, whether the base shows under it, and
+  // when it is drawn
+  FieldGroup {
+    visible: root.view !== null
+    Layout.fillWidth: true
+    title: I18n.tr("Screen")
+    description: I18n.tr("Drawn over the base elements while its condition holds; the first screen that holds wins. The key \"error\" is the script's failure.")
+
+    KeyedLoader {
+      Layout.fillWidth: true
+      Layout.preferredHeight: childrenRect.height
+      key: root.view ? root.editor.selectedId + "/" + root.editor.viewIndex : ""
+
+      sourceComponent: ColumnLayout {
+        width: parent?.width ?? 0
+        spacing: Widget.spacing
+
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties.views.items.properties, ["name", "base", "when"])
+          order: ["name", "base", "when"]
+          values: root.view ?? ({})
+          onEdited: (path, value) => root.editor.setView(path, value)
+        }
+        StyledTextButton {
+          implicitHeight: Widget.height
+          iconText: "delete"
+          text: I18n.tr("Remove this screen")
+          onClicked: root.editor.removeView(root.editor.viewIndex)
+        }
       }
     }
   }
@@ -142,5 +213,9 @@ ColumnLayout {
     Layout.fillHeight: true
     elements: root.elements
     editable: root.definition !== null
+    underlay: root.view ? (root.definition?.module?.elements ?? []).map(e => ({
+          "place": e.place,
+          "label": e.options?.label || e.type
+        })) : []
   }
 }

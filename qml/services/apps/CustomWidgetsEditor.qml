@@ -6,8 +6,9 @@ import qs.services.core
 import qs.services.ui
 
 // The Custom widgets page's editor (CustomWidgetsManager.editor): a draft of
-// the CustomWidgets section, the selected definition and element, and the
-// edits. Unsaved edits show live on the bars and modules through a preview,
+// the CustomWidgets section, the selected definition, the layer being
+// edited (the base elements, or one screen: module.views) and element, and
+// the edits. Unsaved edits show live on the bars and modules through a preview,
 // and the selected definition stays acquired while the page is shown, so
 // its sample (CustomWidgetsManager.outputs) is there to bind from.
 // Not a singleton: CustomWidgetsManager owns it.
@@ -21,6 +22,14 @@ QtObject {
   property int selectedIndex: 0
   readonly property var selected: items[selectedIndex] ?? null
   readonly property string selectedId: selected?.id ?? ""
+  // The layer edited: -1 the base elements, else an index in module.views
+  // (the page calls them screens)
+  property int viewIndex: -1
+  // The elements of the layer edited: what the canvas shows and edits
+  readonly property var layerElements: root.selected?.module?.views?.[root.viewIndex]?.elements ?? (root.viewIndex >= 0 ? [] : root.selected?.module?.elements ?? [])
+  // The selected element, or null
+  readonly property var element: root.elements.selected >= 0 ? (root.layerElements[root.elements.selected] ?? null) : null
+
   // The selected definition's module elements on their lattice, edited as
   // the layouts editor edits a submenu's modules: moves, resizes, pushes,
   // the selection and undo (GridEditor; kept from the top left, so the
@@ -34,7 +43,7 @@ QtObject {
         "rows": 8 * CustomWidgetData.subCells
       })
     shiftsBack: true
-    scopeKey: root.selectedId
+    scopeKey: root.selectedId + "/" + root.viewIndex
     // The definition's own keys go with each snapshot (every one but the
     // elements, which the history keeps as modules), so undo covers an
     // edit to a format or an option as well as a move
@@ -80,14 +89,67 @@ QtObject {
 
   function selectDefinition(index) {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
+    root.viewIndex = -1;
     root.elements.clearSelection();
     root.elements.clearHistory();
   }
 
-  // Starts the module from the elements drawn while it has none
-  function useDefaultElements() {
+  // Edits screen `index` (-1: the base elements): its history and
+  // selection start over
+  function selectView(index) {
+    const count = root.selected?.module?.views?.length ?? 0;
+    root.viewIndex = index >= 0 && index < count ? index : -1;
+    root.elements.clearSelection();
+    root.elements.clearHistory();
+  }
+
+  // A new screen shown while the output matches `when` ({ key, test,
+  // values }, by default the state is one of none), selected
+  function addView(name, when) {
     const def = root._local().items[root.selectedIndex];
     if (!def)
+      return;
+    const views = def.module.views;
+    views.push({
+      "id": Utils.newId(Utils.slug(name) || "screen", views),
+      "name": name ?? "",
+      "base": true,
+      "when": Object.assign({
+        "key": "state",
+        "test": "is",
+        "values": []
+      }, when ?? {}),
+      "elements": []
+    });
+    root._apply();
+    root.selectView(views.length - 1);
+  }
+
+  function removeView(index) {
+    const def = root._local().items[root.selectedIndex];
+    if (!def || !def.module.views[index])
+      return;
+    def.module.views.splice(index, 1);
+    root._apply();
+    root.selectView(-1);
+  }
+
+  // Sets a key of the edited screen (`path` a key or a list of keys into it)
+  function setView(path, value) {
+    if (root.viewIndex < 0)
+      return;
+    const keys = ["module", "views", root.viewIndex].concat(path);
+    if (Utils.deepEqual(root._valueAt(keys), value))
+      return;
+    root.elements.recordField("view:" + root.viewIndex + ":" + keys.slice(3).join("."));
+    root._write(keys, value);
+  }
+
+  // Starts the module from the elements drawn while it has none (the base
+  // of a definition with no screens)
+  function useDefaultElements() {
+    const def = root._local().items[root.selectedIndex];
+    if (!def || root.viewIndex >= 0 || def.module.views.length > 0)
       return;
     const fields = CustomWidgetsManager.fields[def.id];
     root._elements().splice(0, Infinity, ...CustomWidgetsConfig.defaultElements(def.module?.size, (fields?.ratio ?? -1) >= 0));
@@ -102,7 +164,7 @@ QtObject {
     const index = root.elements.selected;
     if (index < 0)
       return;
-    const keys = ["module", "elements", index].concat(path);
+    const keys = root.layerPath().concat([index], path);
     if (Utils.deepEqual(root._valueAt(keys), value))
       return;
     // One undo step per field, typing in it included
@@ -190,6 +252,11 @@ QtObject {
     return path.startsWith("/") || path.startsWith("~/") ? Paths.expandHome(path) : "";
   }
 
+  // Where the edited layer's elements are in the definition
+  function layerPath() {
+    return root.viewIndex >= 0 ? ["module", "views", root.viewIndex, "elements"] : ["module", "elements"];
+  }
+
   // -- Private --
 
   // The selected definition's value at `keys`, undefined when absent
@@ -217,33 +284,43 @@ QtObject {
     root._apply();
   }
 
-  // The selected definition for the undo history: all of it, its module's
-  // elements left out (null; the history keeps them as modules)
+  // The selected definition for the undo history: all of it, the edited
+  // layer's elements left out (null; the history keeps them as modules)
   function _definitionSnapshot() {
     const def = root._local()?.items[root.selectedIndex];
     if (!def)
       return null;
-    return Object.assign({}, def, {
-      "module": Object.assign({}, def.module, {
-        "elements": null
-      })
-    });
+    const copy = Utils.clone(def);
+    const path = root.layerPath();
+    const holder = path.slice(0, -1).reduce((v, key) => v?.[key], copy);
+    if (holder)
+      holder[path[path.length - 1]] = null;
+    return copy;
   }
 
-  // Puts a snapshot's keys back into the selected definition in place
-  // (its elements are spliced back by the history already)
+  // Puts a snapshot's keys back into the selected definition in place (the
+  // edited layer's elements are spliced back by the history already)
   function _restoreDefinition(extra) {
     const def = root._local()?.items[root.selectedIndex];
     if (!def || !extra)
       return;
-    const put = (target, from, keep) => {
-      Object.keys(target).filter(key => key !== keep && !(key in from)).forEach(key => delete target[key]);
-      Object.keys(from).filter(key => key !== keep).forEach(key => target[key] = Utils.clone(from[key]));
-    };
-    const module = extra.module;
-    put(def, extra, "module");
-    if (module)
-      put(def.module, module, "elements");
+    root._restoreInto(def, extra, root.layerPath());
+  }
+
+  // `from`'s keys into `target` (objects or lists), but for the array at
+  // `skip` (a path of keys)
+  function _restoreInto(target, from, skip) {
+    const isList = Array.isArray(from);
+    if (isList)
+      target.length = from.length;
+    else
+      Object.keys(target).filter(key => !(key in from)).forEach(key => delete target[key]);
+    for (const key of Object.keys(from)) {
+      if (String(key) === String(skip[0]) && skip.length > 1 && target[key] !== null && typeof target[key] === "object")
+        root._restoreInto(target[key], from[key], skip.slice(1));
+      else if (!(String(key) === String(skip[0]) && skip.length === 1))
+        target[key] = Utils.clone(from[key]);
+    }
   }
 
   property ConfigDraft _draft: ConfigDraft {
@@ -258,14 +335,16 @@ QtObject {
 
   // The selected definition's elements in the draft, or null without one
   function _elements() {
-    return root._local().items[root.selectedIndex]?.module.elements ?? null;
+    const keys = root.layerPath();
+    return keys.reduce((v, key) => v?.[key], root._local().items[root.selectedIndex]) ?? null;
   }
 
   // The size a page starts the module at follows its elements
   function _fitSize() {
     const def = root._local().items[root.selectedIndex];
-    if (def?.module && def.module.elements?.length)
-      def.module.size = CustomWidgetData.pageSize(def.module.elements, def.module.size);
+    const all = CustomWidgetData.allElements(def?.module);
+    if (def?.module && all.length)
+      def.module.size = CustomWidgetData.pageSize(all, def.module.size);
   }
 
   function _load() {

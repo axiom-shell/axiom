@@ -755,4 +755,227 @@ TestCase {
     // Wide enough: the height rule alone, as before
     compare(CustomWidgetData.previewZoom(sizes, 450, 100000, 900, 400, 20), Math.min(0.3, 900 * 0.22 / GridPlacement.span(4, 450)), "wide page: height only");
   }
+
+  // --- Screens ---
+
+  function test_allElements() {
+    compare(CustomWidgetData.allElements(null).length, 0, "none");
+    compare(CustomWidgetData.allElements({
+      "elements": [
+        {
+          "id": "a"
+        }
+      ]
+    }).length, 1, "base only");
+    compare(CustomWidgetData.allElements({
+      "elements": [],
+      "views": [
+        {
+          "elements": [
+            {
+              "id": "b"
+            }
+          ]
+        },
+        {
+          "elements": [
+            {
+              "id": "c"
+            },
+            {
+              "id": "d"
+            }
+          ]
+        }
+      ]
+    }).length, 3, "views only");
+    compare(CustomWidgetData.allElements({
+      "elements": [
+        {
+          "id": "a"
+        }
+      ],
+      "views": [
+        {
+          "elements": [
+            {
+              "id": "b"
+            }
+          ]
+        }
+      ]
+    }).map(e => e.id).join(), "a,b", "base first");
+  }
+
+  function _fields(sample, failure) {
+    return {
+      "sample": sample,
+      "failure": failure ?? null,
+      "error": failure?.message ?? ""
+    };
+  }
+
+  function test_matches() {
+    const is = values => ({
+          "key": "state",
+          "test": "is",
+          "values": values
+        });
+    compare(CustomWidgetData.matches(is(["front"]), _fields({
+      "state": "front"
+    })), true, "is");
+    compare(CustomWidgetData.matches(is(["front"]), _fields({
+      "state": "back"
+    })), false, "is, another");
+    compare(CustomWidgetData.matches({
+      "key": "state",
+      "test": "isNot",
+      "values": ["front"]
+    }, _fields({
+      "state": "back"
+    })), true, "isNot");
+    compare(CustomWidgetData.matches({
+      "key": "state",
+      "test": "isNot",
+      "values": []
+    }, _fields({
+      "state": "back"
+    })), false, "isNot with no values");
+    compare(CustomWidgetData.matches(is([]), _fields({
+      "state": "front"
+    })), false, "is with no values");
+    compare(CustomWidgetData.matches({
+      "key": "ready",
+      "test": "set"
+    }, _fields({
+      "ready": true
+    })), true, "set: true");
+    compare(CustomWidgetData.matches({
+      "key": "ready",
+      "test": "set"
+    }, _fields({
+      "ready": "false"
+    })), false, "set: the string false");
+    compare(CustomWidgetData.matches({
+      "key": "ready",
+      "test": "unset"
+    }, _fields({})), true, "unset: missing");
+    compare(CustomWidgetData.matches(is(["true"]), _fields({
+      "state": true
+    })), true, "true is the text true");
+    compare(CustomWidgetData.matches({
+      "key": "player.status",
+      "test": "is",
+      "values": ["playing"]
+    }, _fields({
+      "player": {
+        "status": "playing"
+      }
+    })), true, "a nested path");
+    compare(CustomWidgetData.matches({
+      "key": "",
+      "test": "is",
+      "values": ["x"]
+    }, _fields({
+      "state": "x"
+    })), true, "an empty key is state");
+    compare(CustomWidgetData.matches(is(["front"]), null), false, "null fields");
+    const failing = _fields({}, {
+      "kind": "exit",
+      "message": "boom"
+    });
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "set"
+    }, failing), true, "error set");
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "unset"
+    }, failing), false, "error unset while failing");
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "unset"
+    }, _fields({})), true, "error unset");
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "is",
+      "values": ["boom"]
+    }, failing), true, "error is its message");
+  }
+
+  function test_pickView() {
+    const view = (id, when) => ({
+          "id": id,
+          "when": when
+        });
+    const front = view("front", {
+      "key": "state",
+      "test": "is",
+      "values": ["front"]
+    });
+    const back = view("back", {
+      "key": "state",
+      "test": "is",
+      "values": ["back", "front"]
+    });
+    const error = view("err", {
+      "key": "error",
+      "test": "set"
+    });
+    const fields = _fields({
+      "state": "front"
+    });
+    compare(CustomWidgetData.pickView({}, fields).index, -1, "no views");
+    compare(CustomWidgetData.pickView({
+      "views": [front]
+    }, fields).index, 0, "front");
+    compare(CustomWidgetData.pickView({
+      "views": [back, front]
+    }, fields).index, 0, "two matches: the first");
+    const failing = _fields({
+      "state": "front"
+    }, {
+      "kind": "script",
+      "message": "x"
+    });
+    compare(CustomWidgetData.pickView({
+      "views": [front, error]
+    }, failing).index, 1, "failure: the error view");
+    const stale = CustomWidgetData.pickView({
+      "views": [front]
+    }, failing);
+    compare(stale.index, -1, "failure: no stale state view");
+    compare(stale.builtinError, true, "failure: the stock screen");
+    const none = CustomWidgetData.pickView({
+      "views": [front]
+    }, null);
+    compare(none.index, -1, "null fields");
+    compare(none.builtinError, false, "null fields: no error");
+  }
+
+  function test_historyBindings() {
+    compare(CustomWidgetData.historyBindings({}).length, 0, "none");
+    const spark = value => ({
+          "type": "Sparkline",
+          "bind": {
+            "value": value
+          }
+        });
+    const module = {
+      "elements": [spark("cpu"),
+        {
+          "type": "Text",
+          "bind": {
+            "value": "x"
+          }
+        },
+        spark("")],
+      "views": [
+        {
+          "elements": [spark("net"), spark("cpu")]
+        }
+      ]
+    };
+    compare(CustomWidgetData.historyBindings(module).join(), "cpu,net", "base and views, duplicates once");
+  }
 }

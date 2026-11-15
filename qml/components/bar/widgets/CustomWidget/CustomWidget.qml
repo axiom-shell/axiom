@@ -12,7 +12,9 @@ import qs.components.bar.widgets.base
 // (BarWidget's display styles: label is Waybar's look). Clicks and scrolls run its
 // actions; hovering opens its module, else shows the output's tooltip
 // (Waybar's; the definition's Tooltip switch). Hidden while the script
-// says so (empty text, as Waybar).
+// says so (empty text, as Waybar). While the script fails (an interactive
+// definition: CustomWidgetData.failure) it shows the error, in the error
+// colour, whatever its style.
 BarWidget {
   id: root
 
@@ -28,6 +30,7 @@ BarWidget {
       "popout": false
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
+  readonly property bool failing: !!root.fields?.failure
   readonly property var graphRange: CustomWidgetData.graphRange(root.fields, {})
 
   Component.onCompleted: CustomWidgetsManager.acquire(root, root.widgetId)
@@ -40,19 +43,19 @@ BarWidget {
   history: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
   graphMin: root.graphRange.min
   graphMax: root.graphRange.max
-  styleText: root.fields?.plain ?? ""
+  styleText: root.failing ? root.fields.error : (root.fields?.plain ?? "")
   subtext: root.fields?.subtext || root.fields?.alt || ""
 
   // News: its state went to warning, or to critical (its colour's
   // name, CustomWidgetData's state color), from a calmer one
-  attentionLevel: root.fields === null ? -1 : root.fields.color === "error" ? 2 : root.fields.color === "warning" ? 1 : 0
+  attentionLevel: root.fields === null ? -1 : root.failing || root.fields.color === "error" ? 2 : root.fields.color === "warning" ? 1 : 0
 
   hidden: root.fields?.hidden ?? false
-  icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
-  text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
+  icon: root.bar.icon === "material" ? (root.failing ? "error" : root.fields?.icon || root.definition?.icon || "widgets") : ""
+  text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.failing ? root.fields.error : root.fields.plain
   // The script's state color (a theme color's name), which the base
   // resolves; none: the widget's own color
-  stateColorName: root.fields?.color ?? ""
+  stateColorName: root.failing ? "error" : (root.fields?.color ?? "")
   // Urgent: a slow colour pulse
   pulsing: root.fields?.urgent ?? false
 
