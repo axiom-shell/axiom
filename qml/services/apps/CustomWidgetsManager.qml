@@ -242,7 +242,7 @@ QtObject {
   // What resolve needs besides the definition and the sample (its
   // `context`): the theme's colour names, the script's last run (`output`,
   // an entry of `outputs`), whether the definition is interactive (it has
-  // an action command) and the failure messages. `{0}` is the exit code,
+  // an action command, or screens) and the failure messages. `{0}` is the exit code,
   // `{1}` the script's last stderr line.
   function _context(id, output) {
     const def = CustomWidgetsConfig.definition(id);
@@ -255,7 +255,7 @@ QtObject {
         "text": output.text,
         "exited": output.exited ?? false
       },
-      "interactive": def.invoke.command !== "",
+      "interactive": def.invoke.command !== "" || def.module.views.length > 0,
       "stream": def.mode === "stream",
       "words": {
         "exited": I18n.tr("The script exited with code {0}"),
@@ -268,7 +268,7 @@ QtObject {
   // element's binding
   function _pushHistory(last, def, resolved) {
     const next = {};
-    const bindings = [""].concat((def.module?.elements ?? []).filter(e => e.type === "Sparkline" && e.bind?.value).map(e => e.bind.value));
+    const bindings = [""].concat(CustomWidgetData.historyBindings(def.module));
     for (const b of bindings) {
       const v = b === "" ? resolved.value : parseFloat(CustomWidgetData.elementValue(resolved, b));
       const list = (last?.[b] ?? []).slice(-(root.historyLength - 1));

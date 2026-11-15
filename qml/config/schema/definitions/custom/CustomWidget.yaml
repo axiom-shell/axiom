@@ -112,5 +112,34 @@ properties:
       elements:
         type: array
         default: []
+        description: Drawn under every screen.
         items: {$ref: '#/definitions/CustomElement'}
+      views:
+        type: array
+        default: []
+        description: Screens drawn over the base elements, the first whose condition holds.
+        items:
+          type: object
+          additionalProperties: false
+          required: [id]
+          properties:
+            id: {$ref: '#/definitions/ItemId'}
+            name: {type: string, title: Name, default: ''}
+            base: {type: boolean, title: Show the base elements, default: true}
+            when:
+              type: object
+              additionalProperties: false
+              properties:
+                key: {type: string, title: Key, default: state, description: 'A key or path in the output; error: the failure.'}
+                test:
+                  type: string
+                  title: Test
+                  default: is
+                  enum: [is, isNot, set, unset]
+                  x-enumLabels: {is: Is one of, isNot: Is none of, set: Is set, unset: Is not set}
+                values: {type: array, title: Values, default: [], items: {type: string}, x-showIf: {test: [is, isNot]}}
+            elements:
+              type: array
+              default: []
+              items: {$ref: '#/definitions/CustomElement'}
 required: [id]

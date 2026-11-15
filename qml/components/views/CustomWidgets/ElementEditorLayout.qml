@@ -18,6 +18,8 @@ GridDragLayer {
   // The selected definition's elements, and whether there's one
   property var elements: []
   property bool editable: false
+  // The base elements, drawn dimmed under the canvas while a screen is edited
+  property var underlay: []
 
   editor: CustomWidgetsManager.editor.elements
   // Element kinds, not module types (schema labels)
@@ -85,6 +87,7 @@ GridDragLayer {
       GridCanvas {
         dragLayer: root
         modules: root.editable ? root.elements : null
+        underlay: root.underlay
         title: I18n.tr("Module")
         icon: "widgets"
         emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")

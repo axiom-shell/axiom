@@ -4399,6 +4399,21 @@
     "The script exited with code {0}: {1}": "",
     "Action command": "",
     "Runs a named action: {action}, {value} and {rev} are filled in, already quoted. Should exit quickly.": "",
-    "How named actions run (buttons, keys, the bar, axiom ipc customWidgets act).": ""
+    "How named actions run (buttons, keys, the bar, axiom ipc customWidgets act).": "",
+    "Base": "",
+    "Add a screen": "",
+    "Screen {0}": "",
+    "Drawn over the base elements while its condition holds; the first screen that holds wins. The key \"error\" is the script's failure.": "",
+    "Remove this screen": "",
+    "Exit code {0}": "",
+    "Screens drawn over the base elements, the first whose condition holds.": "",
+    "Is one of": "",
+    "A key or path in the output; error: the failure.": "",
+    "Show the base elements": "",
+    "Is none of": "",
+    "Is not set": "",
+    "Is set": "",
+    "Values": "",
+    "Drawn under every screen.": ""
   }
 }

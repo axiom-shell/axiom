@@ -20,7 +20,7 @@ ColumnLayout {
   required property var dragLayer
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var grid: root.editor.elements
-  readonly property var element: root.grid.selected >= 0 ? (root.editor.selected?.module?.elements?.[root.grid.selected] ?? null) : null
+  readonly property var element: root.editor.element
   readonly property var kind: CustomWidgetsConfig.elementKind(root.element?.type ?? "")
   readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
   // The binding choices: the output's own key, or any path in it (a
@@ -77,7 +77,7 @@ ColumnLayout {
     id: selected
     Layout.fillWidth: true
     Layout.preferredHeight: selected.childrenRect.height
-    key: root.element ? root.editor.selectedId + "/" + root.element.id : ""
+    key: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
 
     sourceComponent: ColumnLayout {
       width: selected.width

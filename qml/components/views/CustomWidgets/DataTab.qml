@@ -7,7 +7,8 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.views.base
 
-// Custom widgets page, Data tab: the script's last output as it came, and
+// Custom widgets page, Data tab: the script's last output as it came (with
+// its exit code and last stderr line when it failed), and
 // every value in it with its path (what the module's elements bind to).
 // Each field reads the output's key of the same name: the script shapes
 // its own JSON.
@@ -66,6 +67,22 @@ ColumnLayout {
         tone: root.output?.text ? "" : "faint"
         overflow: "wrap"
         maxLines: 12
+      }
+      StyledLabel {
+        visible: root.output !== null && !root.output.blocked && root.output.exitCode > 0
+        Layout.fillWidth: true
+        text: I18n.tr("Exit code {0}", root.output?.exitCode ?? 0)
+        tone: "muted"
+      }
+      StyledText {
+        visible: !!root.output?.stderr
+        Layout.fillWidth: true
+        text: root.output?.stderr ?? ""
+        textFamily: "monospace"
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
+        maxLines: 3
       }
     }
 

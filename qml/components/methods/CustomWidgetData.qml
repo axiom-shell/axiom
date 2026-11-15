@@ -824,4 +824,71 @@ QtObject {
     const byWidth = (width - reserved - spacing * sizes.length) / Math.max(1, across);
     return Math.max(0.05, Math.min(0.3, byHeight, byWidth));
   }
+
+  // --- Screens (module.views) ---
+
+  // The module's elements in every layer: the base, then each screen's
+  // (the lattice and the design size cover all of them)
+  function allElements(module) {
+    let out = (module?.elements ?? []).slice();
+    for (const view of module?.views ?? [])
+      out = out.concat(view.elements ?? []);
+    return out;
+  }
+
+  // Whether a screen's `when` ({ key, test (is, isNot, set, unset),
+  // values }) holds for the resolved `fields` (null: never). The key
+  // "error" is the failure: set while there is one, `is` / `isNot`
+  // compare its message; any other is a key or path in the sample
+  // ("state" when empty)
+  function matches(when, fields) {
+    if (!fields)
+      return false;
+    const test = when?.test ?? "is";
+    const values = when?.values ?? [];
+    if ((when?.key ?? "state") === "error") {
+      if (test === "set")
+        return fields.failure !== null && fields.failure !== undefined;
+      if (test === "unset")
+        return fields.failure === null || fields.failure === undefined;
+      const message = fields.error ?? "";
+      return test === "isNot" ? values.length > 0 && !values.includes(message) : values.includes(message);
+    }
+    const v = root.get(fields.sample, when?.key || "state");
+    if (test === "set")
+      return root.truthy(v);
+    if (test === "unset")
+      return !root.truthy(v);
+    const text = root.asText(v);
+    return test === "isNot" ? values.length > 0 && !values.includes(text) : values.includes(text);
+  }
+
+  // The screen to draw: { index (-1: the base alone), builtinError (the
+  // failure has no screen of its own: draw the stock one) }. While the
+  // widget fails only screens keyed on "error" are tried
+  function pickView(module, fields) {
+    const views = module?.views ?? [];
+    if (fields?.failure) {
+      const index = views.findIndex(v => v.when?.key === "error" && root.matches(v.when, fields));
+      return {
+        "index": index,
+        "builtinError": index < 0
+      };
+    }
+    return {
+      "index": views.findIndex(v => root.matches(v.when, fields)),
+      "builtinError": false
+    };
+  }
+
+  // The distinct bindings of every Sparkline in every layer: what the
+  // service keeps a history of
+  function historyBindings(module) {
+    const out = [];
+    for (const e of root.allElements(module)) {
+      if (e.type === "Sparkline" && e.bind?.value && out.indexOf(e.bind.value) < 0)
+        out.push(e.bind.value);
+    }
+    return out;
+  }
 }
