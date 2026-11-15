@@ -21,6 +21,8 @@ Item {
   property var fields: ({})
   property var history: ({})
   property bool actionsEnabled: true
+  // The host can take typed keys (CustomWidget.keysHost)
+  property bool keysHost: false
   property real gap: Widget.px(6)
   // The screen drawn over the base (an index in module.views), -1: the base alone
   property int viewIndex: -1
@@ -85,6 +87,7 @@ Item {
             failing: !!root.fields?.failure && root.fields.failure.kind !== "script"
             busy: CustomWidgetsManager.busy[root.definition?.id ?? ""] !== undefined
             moduleFont: root.definition?.module?.font ?? ""
+            keysHost: root.keysHost
           }
         }
       }

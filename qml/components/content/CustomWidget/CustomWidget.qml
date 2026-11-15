@@ -30,6 +30,14 @@ Panel {
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property var output: CustomWidgetsManager.outputs[root.widgetId] ?? null
   readonly property bool actionsEnabled: root.host?.kind !== "lockscreen" && !root.host?.preview
+  // The host can take typed keys: a popout, an overlay card or an edge menu
+  // (not the desktop, the lock screen or a preview); an Entry works only there
+  readonly property bool keysHost: !root.embedded || ["overlay", "menu"].includes(root.host?.kind)
+  // An Entry in any layer: a popout then keeps the keyboard (and a focus
+  // grab, so a click outside closes it)
+  readonly property bool hasEntry: CustomWidgetData.allElements(root.definition?.module).some(e => e.type === "Entry")
+  wantsKeyboardFocus: !root.embedded && root.actionsEnabled && root.hasEntry
+
   // The screen to draw (-1: the base alone), and whether a failure has none
   readonly property var view: root.fields ? CustomWidgetData.pickView(root.definition?.module, root.fields) : ({
       "index": -1,
@@ -70,6 +78,7 @@ Panel {
         fields: root.fields ?? ({})
         history: CustomWidgetsManager.history[root.widgetId] ?? ({})
         actionsEnabled: root.actionsEnabled
+        keysHost: root.keysHost
         viewIndex: root.view.index
       }
     }

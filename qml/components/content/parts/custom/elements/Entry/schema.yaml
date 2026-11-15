@@ -1,0 +1,8 @@
+label: Entry
+icon: edit_note
+defaultSize: [8, 1]
+slots: [placeholder]
+actions: [submit]
+settings:
+  placeholder: {type: string, title: Placeholder, default: ''}
+  clear: {type: boolean, title: Clear after sending, default: true}

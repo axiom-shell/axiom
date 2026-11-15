@@ -4447,6 +4447,10 @@
     "Color by": "",
     "Not colored": "",
     "Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output's own key. =text is literal. show: hidden while false; tone: a word the definition's states map to a colour.": "",
-    "Second value": ""
+    "Second value": "",
+    "{value} is the text.": "",
+    "Submit command": "",
+    "Entry": "",
+    "Clear after sending": ""
   }
 }

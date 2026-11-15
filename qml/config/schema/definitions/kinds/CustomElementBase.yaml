@@ -61,3 +61,4 @@ properties:
       change: {x-scope: commands, type: string, title: Change command, default: '', description: '{value} is the new value.'}
       'on': {x-scope: commands, type: string, title: Turn-on command, default: ''}
       'off': {x-scope: commands, type: string, title: Turn-off command, default: ''}
+      submit: {x-scope: commands, type: string, title: Submit command, default: '', description: '{value} is the text.'}
