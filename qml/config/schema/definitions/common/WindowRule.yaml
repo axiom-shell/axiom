@@ -94,10 +94,10 @@ properties:
         title: Hide it from
         additionalProperties: false
         properties:
-          enabled: {type: boolean, title: Hide it from, default: false}
+          enabled: {type: boolean, title: Hide it from, description: "Only axiom's own: the compositor's overview and other apps still show it.", default: false}
           dock: {type: boolean, title: Dock, default: false, x-showIf: {enabled: true}}
           switcher: {type: boolean, title: Window switcher, default: false, x-showIf: {enabled: true}}
-          workspaces: {type: boolean, title: Workspace icons, default: false, x-showIf: {enabled: true}}
+          workspaces: {type: boolean, title: Workspace icons, description: "Its app icon on the bar's workspaces, its preview in the workspace overview and in the workspace modules.", default: false, x-showIf: {enabled: true}}
           launcher: {type: boolean, title: Launcher window rows, default: false, x-showIf: {enabled: true}}
           when: {$ref: '#/definitions/WindowRuleWhen', x-showIf: {enabled: true}}
       pauseBinds:
