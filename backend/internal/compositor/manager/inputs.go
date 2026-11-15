@@ -274,7 +274,7 @@ type ruleRow struct {
 func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.Object) {
 	cfg := windowrules.Parse(section)
 	issues := windowrules.Validate(cfg, windowrules.ContextOf(keybinds))
-	usable := windowrules.Usable(cfg, issues)
+	usable := windowrules.Effective(cfg, issues)
 	set := render.RuleSet{Rules: usable, Apps: windowrules.AppIDs(f.AppIDs), Supports: f.Supports}
 	var left []render.Unwritten
 	switch f.Kind {

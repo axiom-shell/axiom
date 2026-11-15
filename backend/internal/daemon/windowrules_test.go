@@ -44,6 +44,24 @@ func TestWindowRulesMethods(t *testing.T) {
 	if err := c.Call(context.Background(), "windowRules.match", draft, &m); err != nil || len(m.Rules) != 1 {
 		t.Errorf("match %+v, %v", m, err)
 	}
+	// A built-in switch as a rule, for the draft's own special workspace
+	var bi struct {
+		Rule struct {
+			Icon   string `json:"icon"`
+			Window struct {
+				Special struct {
+					ID string `json:"id"`
+				} `json:"special"`
+			} `json:"window"`
+		} `json:"rule"`
+	}
+	sw := map[string]any{"key": "gamesSpecial", "section": map[string]any{"switches": map[string]any{"gamesSpecial": map[string]any{"special": map[string]any{"id": "play"}}}}}
+	if err := c.Call(context.Background(), "windowRules.builtin", sw, &bi); err != nil || bi.Rule.Window.Special.ID != "play" || bi.Rule.Icon == "" {
+		t.Errorf("builtin %+v, %v", bi, err)
+	}
+	if err := c.Call(context.Background(), "windowRules.builtin", map[string]any{"key": "x", "section": map[string]any{}}, nil); axerr.KindOf(err) != axerr.BadRequest {
+		t.Errorf("builtin x: %v", err)
+	}
 	// A rule from a window: no compositor, no window
 	for _, id := range []string{"", "7"} {
 		if err := c.Call(context.Background(), "windowRules.fromWindow", map[string]any{"id": id}, nil); axerr.KindOf(err) != axerr.NotFound {

@@ -4376,6 +4376,9 @@
     "Add shortcut": "",
     "Used by window rule {0}": "",
     "The shortcuts you keep are paused or have no key: keep one that works, your way out.": "",
-    "All except also pauses your own shortcuts, except on niri.": ""
+    "All except also pauses your own shortcuts, except on niri.": "",
+    "Copy as rule": "",
+    "Steam games open there; other launchers' games move there just after they open.": "",
+    "Every Steam window but the main one and Big Picture.": ""
   }
 }

@@ -427,6 +427,25 @@ func TestRuleNames(t *testing.T) {
 	}
 }
 
+// The built-in switches are rules like the user's: matched by the engine, by
+// name; the draft's count (Match) stays the draft's own rules
+func TestBuiltinSwitches(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	sw := `"switches":{"steamFloat":false,"gamesSpecial":{"enabled":true,"special":{"id":"games","silent":false}}}`
+	r.e.SetConfig(section(t, `{"rules":[`+ruleJSON("u", appFoot, dndOpen)+`],`+sw+`}`), nil)
+	r.run()
+	r.send(windows.Reset, win("1", "steam_app_570"), win("2", "foot"))
+	r.waitFor("matched", func(s State) bool { return len(s.Rules) == 2 })
+	want := []RuleWindows{{"u", "u", []string{"2"}}, {"_gamesSpecial", "Send games to a special workspace", []string{"1"}}}
+	if got := r.e.State().Rules; !reflect.DeepEqual(got, want) {
+		t.Errorf("rules %+v, want %+v", got, want)
+	}
+	if got := r.e.Match(section(t, `{"rules":[`+ruleJSON("u", appFoot, dndOpen)+`],`+sw+`}`)); len(got) != 1 || got[0].Rule != "u" {
+		t.Errorf("Match %+v: the draft's own rules only", got)
+	}
+}
+
 func TestOverride(t *testing.T) {
 	t.Parallel()
 	r := newRig(t)

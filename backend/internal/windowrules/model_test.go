@@ -45,7 +45,6 @@ func TestParse(t *testing.T) {
 	t.Parallel()
 	empty, _, _ := section(t, `{}`)
 	want := Config{}
-	want.Switches.GamesSpecial.Special.ID = "games"
 	if got := Parse(empty); !reflect.DeepEqual(got, want) {
 		t.Errorf("defaults: got %+v, want %+v", got, want)
 	}

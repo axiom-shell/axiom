@@ -22,7 +22,7 @@ import (
 
 // RuleSet is what the window rule renderers take.
 type RuleSet struct {
-	Rules    []windowrules.Rule // windowrules.Usable: enabled, valid, highest priority first
+	Rules    []windowrules.Rule // windowrules.Effective: enabled, valid, highest priority first, built-ins last
 	Apps     windowrules.AppIDs // an `app` condition's app ids
 	Supports map[string]bool    // the backend's supports (compositor.inputs)
 }
