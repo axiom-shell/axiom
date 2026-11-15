@@ -21,6 +21,7 @@ import qs.services.ui
 //   CustomWidgetsManager.history[id]  // { <binding>: [numbers] }
 //   CustomWidgetsManager.busy[id]     // a hold: { action, run, phase, until, sampled }
 //   CustomWidgetsManager.lastAction[id] // { action, failed, exitCode, message, at, run }
+//   CustomWidgetsManager.actionRan(id, entry) // each action command's end, each refusal
 QtObject {
   id: root
 
@@ -46,6 +47,13 @@ QtObject {
   readonly property var lastAction: _lastAction
   readonly property int holdCap: 15000
   readonly property int holdGrace: 1000
+
+  // An action command ended, or an action was refused: `entry` is { at (ms),
+  // action, command (as it ran: placeholders filled, {tree} expanded; ""
+  // when refused), exitCode, ms (how long it ran), stderr (its last line),
+  // refused (why not: invoke's reasons; "" when it ran) }. The editor keeps
+  // the last few of the selected definition's
+  signal actionRan(string id, var entry)
 
   // The Custom widgets page's draft and selection
   readonly property CustomWidgetsEditor editor: CustomWidgetsEditor {}
@@ -130,6 +138,21 @@ QtObject {
   // (a scroll, a slider) never holds, one runs at a time and the latest
   // value waits; built-ins never hold and are never refused for it
   function invoke(id, action, value, continuous, fromIpc) {
+    const why = root._invoke(id, action, value, continuous, fromIpc);
+    if (why !== "" && why !== "no widget")
+      root.actionRan(id, {
+        "at": Date.now(),
+        "action": action,
+        "command": "",
+        "exitCode": -1,
+        "ms": 0,
+        "stderr": "",
+        "refused": why
+      });
+    return why;
+  }
+
+  function _invoke(id, action, value, continuous, fromIpc) {
     const def = CustomWidgetsConfig.definition(id);
     if (!def)
       return "no widget";
@@ -193,7 +216,8 @@ QtObject {
       "rev": root._fields[id]?.rev ?? "",
       "tree": Paths.treePath
     });
-    CommandManager.run(["sh", "-c", command], (code, out, err) => root._done(id, action, run, continuous, code, err));
+    const started = Date.now();
+    CommandManager.run(["sh", "-c", command], (code, out, err) => root._done(id, action, run, continuous, code, err, command, started));
   }
 
   // What an action's name reads as on a button with no label of its own
@@ -286,7 +310,7 @@ QtObject {
   // when a sample came meanwhile; a failure releases it. At exit 0 the
   // script runs again when the definition asks. A continuous run starts
   // the value sent meanwhile
-  function _done(id, action, run, continuous, exitCode, stderr) {
+  function _done(id, action, run, continuous, exitCode, stderr, command, startedAt) {
     const failed = exitCode !== 0;
     const line = String(stderr ?? "").split("\n").map(l => l.trim()).filter(l => l !== "").pop() ?? "";
     const message = failed ? (line !== "" ? line.slice(0, 300) : I18n.tr("The action failed with code {0}", exitCode)) : "";
@@ -295,6 +319,15 @@ QtObject {
     // a widget no longer shown forgets its runs (_sync)
     if (!(id in root._watching))
       return;
+    root.actionRan(id, {
+      "at": Date.now(),
+      "action": action,
+      "command": command,
+      "exitCode": exitCode,
+      "ms": Date.now() - startedAt,
+      "stderr": line,
+      "refused": ""
+    });
     root._lastAction = Object.assign({}, root._lastAction, {
       [id]: {
         "action": action,

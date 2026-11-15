@@ -209,9 +209,17 @@ ColumnLayout {
     Layout.preferredHeight: active ? GridPlacement.span(root.designSize[1], root.card) * root.testZoom : 0
 
     sourceComponent: Item {
+      // What it ran, to the right of the popout
+      ActionLog {
+        anchors.left: testBox.right
+        anchors.leftMargin: Widget.spacing * 2
+        anchors.right: parent.right
+        anchors.top: parent.top
+      }
+
       Surface {
         id: testBox
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.left: parent.left
         implicitWidth: GridPlacement.span(root.designSize[0], root.card) * root.testZoom
         implicitHeight: GridPlacement.span(root.designSize[1], root.card) * root.testZoom
         tone: "page"

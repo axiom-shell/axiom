@@ -161,6 +161,11 @@ QtObject {
     root.set(["samples"], next);
   }
 
+  // The last 20 action commands the selected definition ran or had refused
+  // (CustomWidgetsManager.actionRan entries), oldest first: page-only, cleared
+  // when another definition is selected
+  property var actionLog: []
+
   // Test mode (D2): the module's preview runs its actions, keys and Entries
   // for real, against the real commands. Never saved; off each time the
   // page shows and for each definition
@@ -199,6 +204,7 @@ QtObject {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
     root.importing = false;
     root.copyNote = "";
+    root.actionLog = [];
     root.viewIndex = -1;
     root.testMode = false;
     root.seen = {};
@@ -487,6 +493,10 @@ QtObject {
   property Connections _live: Connections {
     // Only while the page shows (the manager creates this editor)
     target: root.pageShown ? CustomWidgetsManager : null
+    function onActionRan(id, entry) {
+      if (id === root.selectedId)
+        root.actionLog = CustomWidgetData.pushLog(root.actionLog, entry, 20);
+    }
     function onFieldsChanged() {
       const fields = CustomWidgetsManager.fields[root.selectedId];
       const module = root.selected?.module;

@@ -4513,6 +4513,12 @@
     "Import a widget…": "",
     "Copy this widget to share": "",
     "Copied. It runs {0}: send those files by hand.": "",
-    "Copied.": ""
+    "Copied.": "",
+    "Runs: {0}": "",
+    "Actions run": "",
+    "The last actions this widget ran, from its buttons, keys and the test preview. Not saved.": "",
+    "Refused: {0} ({1})": "",
+    "Ran: {0} → exit {1} · {2} ms": "",
+    "No action has run yet.": ""
   }
 }

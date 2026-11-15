@@ -177,6 +177,14 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
+      title: I18n.tr("Actions run")
+      description: I18n.tr("The last actions this widget ran, from its buttons, keys and the test preview. Not saved.")
+
+      ActionLog {}
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
       title: I18n.tr("Output")
       description: I18n.tr("The last thing the script printed, as it came.")
 

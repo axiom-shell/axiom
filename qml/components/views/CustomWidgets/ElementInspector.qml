@@ -62,6 +62,25 @@ ColumnLayout {
     };
   }
 
+  // The action command the selected element runs, as it would for the
+  // previewed sample ("" for none, a built-in or no action command)
+  readonly property string runsLine: {
+    const action = root.element?.action ?? "";
+    const command = root.editor.selected?.invoke?.command ?? "";
+    if (action === "" || action.startsWith("axiom:") || command === "")
+      return "";
+    const fields = root.editor.previewFields;
+    const values = {
+      "action": action,
+      "rev": CustomWidgetData.asText(fields?.rev),
+      "tree": Paths.treePath
+    };
+    // The element's own value, when it binds one
+    if (root.element.bind?.value && fields)
+      values.value = CustomWidgetData.asText(CustomWidgetData.elementValue(fields, root.element.bind.value));
+    return CustomWidgetData.fillCommand(command, values);
+  }
+
   // A path clicked in the Data panel: bound to the slot last started in on
   // this element, else to a new Text
   function bindPath(path) {
@@ -274,6 +293,16 @@ ColumnLayout {
             options: root.editor.actionOptions
             onPicked: value => root.editor.setElement(["action"], value)
           }
+        }
+        // What pressing it runs, filled from the previewed sample
+        StyledText {
+          visible: root.runsLine !== ""
+          Layout.fillWidth: true
+          text: I18n.tr("Runs: {0}", root.runsLine)
+          textFamily: "monospace"
+          role: "caption"
+          tone: "muted"
+          elide: Text.ElideMiddle // style-exempt: middle
         }
         StyledText {
           visible: (root.element?.action ?? "") !== "" && !(root.element.action ?? "").startsWith("axiom:") && !root.editor.selected?.invoke.command
