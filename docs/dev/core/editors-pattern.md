@@ -35,7 +35,7 @@ One shape and one vocabulary for every tool page ([recipe](../../recipes/tool-pa
 - **Empty states** differ by words and action, not only by icon: `"none"` (the page's icon, "No … yet", how to add), `"select"` ("Select a … to edit it") and `"results"` ("Nothing matches", Clear).
 - "Can't save yet" (`IssueList`) shows when `problems` block Save.
 - With a `WorkArea` the inspector is hidden while nothing is selected (the bar editor's widget inspector; the layouts editor's, which then holds the module library), the status line carrying the instruction.
-- Pane geometry is in whole pixels. The bar and layouts editors are on this; Keybinds converts next, and the pages not yet converted keep their own panes until then.
+- Pane geometry is in whole pixels. The bar, layouts and keybinds editors are on this; the pages not yet converted keep their own panes until then.
 
 ### Unsaved reminders (`EditsManager`)
 - Drafts survive leaving a page or closing the overlay (bar and menu edits stay live through previews), so nothing blocks closing.
