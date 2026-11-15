@@ -62,7 +62,7 @@ func hyprChunk(id string, steps []windowrules.Step) (string, error) {
 			switch {
 			case s.Special != "":
 				ws, follow = "special:"+s.Special, s.Show
-			case isDigits(s.Workspace):
+			case windowrules.AllDigits(s.Workspace):
 				ws = s.Workspace
 			}
 			add(fmt.Sprintf("hl.dsp.window.move({ workspace = %s, follow = %t, %s })", render.LuaString(ws), follow, w))

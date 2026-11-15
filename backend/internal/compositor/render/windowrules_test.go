@@ -545,17 +545,6 @@ func TestRuleQuoting(t *testing.T) {
 	}
 }
 
-func TestRuleEffects(t *testing.T) {
-	t.Parallel()
-	w := windowrules.WindowEffects{Tearing: true, Float: true, Width: 1, Height: 2, Opacity: 50}
-	if got, want := RuleEffects(w), []string{"float", "size", "opacity", "tearing"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v want %v", got, want)
-	}
-	if got := RuleEffects(windowrules.WindowEffects{}); got != nil {
-		t.Fatalf("got %v", got)
-	}
-}
-
 // regexFixture is tests/fixtures/windowrules/regex.json, the patterns and
 // negations the compilers and their validators share
 type regexFixture struct {

@@ -72,30 +72,19 @@ type Watcher struct {
 	retry time.Duration
 }
 
-// New watches the compositor ipc.Detect finds in o.Getenv, or is nil when
+// New watches the compositor ipc.RunningFromEnv finds in o.Getenv, or is nil when
 // none. The compositor's kind isn't part of the API: what the engine may
 // do is the shell's capabilities.
 func New(o Options) *Watcher {
 	var w Watcher
-	switch ipc.Detect(o.Getenv) {
-	case "hyprland":
-		h := ipc.HyprFromEnv(o.Getenv)
-		if h == nil {
-			return nil
-		}
-		w.src = &hyprSource{h: h}
-	case "sway":
-		s := ipc.SwayFromEnv(o.Getenv)
-		if s == nil {
-			return nil
-		}
-		w.src = &swaySource{s: s}
-	case "niri":
-		n := ipc.NiriFromEnv(o.Getenv)
-		if n == nil {
-			return nil
-		}
-		w.src = &niriSource{n: n}
+	r := ipc.RunningFromEnv(o.Getenv)
+	switch {
+	case r.Hypr != nil:
+		w.src = &hyprSource{h: r.Hypr}
+	case r.Sway != nil:
+		w.src = &swaySource{s: r.Sway}
+	case r.Niri != nil:
+		w.src = &niriSource{n: r.Niri}
 	default:
 		return nil
 	}

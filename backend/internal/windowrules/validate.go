@@ -144,7 +144,7 @@ func checkWindow(w WindowEffects, add adder) {
 }
 
 func workspaceOK(name string) bool {
-	if strings.Trim(name, "0123456789") == "" {
+	if AllDigits(name) {
 		n, err := strconv.Atoi(name)
 		return err == nil && n >= 1
 	}
