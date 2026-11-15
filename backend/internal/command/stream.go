@@ -120,7 +120,7 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 		w.publish(command, run, "", "", 0, false, startError("sh", err), now)
 		return now, streamExited
 	}
-	var settled <-chan time.Time = w.o.Until(w.o.Now().Add(firstBackoff))
+	settled := w.o.Until(w.o.Now().Add(firstBackoff))
 	exited := make(chan struct{})
 	go func() {
 		wait()

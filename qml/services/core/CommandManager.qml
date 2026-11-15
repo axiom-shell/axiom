@@ -31,8 +31,8 @@ QtObject {
   // command -> { exitCode, error ("" when none: it couldn't start, or its
   // output isn't the JSON asked for), stderr (the last line the run wrote
   // to stderr, "" for none; a stream's, once it exited), exited (a stream
-  // that ended with a non-zero exit: its output is its last line), at (ms since the epoch) } of
-  // its last output
+  // that ended with a non-zero exit: its output is its last line), at (ms
+  // since the epoch) } of its last output
   readonly property var runs: _runs
 
   // request: { command, interval (ms, default 5000, at least 500), mode

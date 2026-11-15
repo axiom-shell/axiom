@@ -21,8 +21,8 @@ QtObject {
   // id -> the definition's fields from its last output
   readonly property var fields: _fields
   // id -> { text, value, exitCode, error, stderr (its last line), exited (a
-  // stream that ended with a non-zero exit), at, blocked } of its last output (blocked: its "run
-  // only if" command failed)
+  // stream that ended with a non-zero exit), at, blocked } of its last
+  // output (blocked: its "run only if" command failed)
   readonly property var outputs: _outputs
   // id -> { binding ("" for the widget's own value) -> [numbers] }, the
   // last historyLength samples
