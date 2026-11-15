@@ -9,6 +9,7 @@ How the overlay shows a page at once and fills it in over the next frames, inste
 ### The queue (`BuildQueueManager`)
 - One queue for the whole shell. A caller queues a job (`request(owner, job, label)`: a function that builds something) and drops its jobs when it goes away (`cancel(owner)` from `onDestruction`).
 - A Timer runs jobs every 16 ms while any are waiting, within a 6 ms budget a step, and always at least one, however long it takes. A single job can't be split, so a job's own size is the frame it costs.
+- A job requested with `first` (`StreamedLoader.buildFirst`) goes ahead of every other, behind the `first` ones already queued: the settings sidebar, which would otherwise arrive after every card.
 - Jobs whose owner is `visible` go first: the page on screen fills in before its hidden neighbours.
 - A job is dropped from the queue once it has run, not before, so `pending` stays above 0 while the last job builds and what it makes still streams.
 - A job taking over 16 ms logs `Built <label> in X ms` (`scripts/log.sh --debug`): a hitch to look at.
@@ -18,6 +19,8 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 - Lay it out as its content would be: `Layout.*`, `x`/`y`/`width`/`height` or anchors go on the loader. It takes the item's implicit size, and sizes the item to its own when it has one, so give it a size (e.g. `Layout.preferredWidth: root.sideWidth`) where the page's box mustn't change size as it fills in.
 - Data goes in from the loader's properties: a Repeater's `required` ones are declared on the loader, and the content reads `loaderId.modelData` (with `pragma ComponentBehavior: Bound`).
 - `wanted: false` doesn't build it, or unbuilds it, as `active`. Use it for content shown only in some mode (Keybinds' keyboard reference, the editing inspector), with the mode's own condition, never `visible`: an item on a hidden neighbour page is not `visible`, so `wanted: visible` would build it only once on screen and drop it whenever the page slides away.
+- `rise: false` fades only, without the slide up (default true): the settings cards and `SchemaPropertiesForm` fields set it, since a category switch slides the whole page in and two motions made it jitter. The sidebar and page entrances keep the rise. The slide's Translate and the stagger's animation are made only for a loader that rises (or has an `enterIndex`), so a fade-only loader costs ~25 % less to build.
+- `buildFirst: true` queues its build ahead of everything else (default false): the settings sidebar only, so it shows before the cards.
 - `label` names it in the slow-job log.
 - Anything can be loaded, a `Popup` included (Keybinds' presets): it's parented to the loader, so put the loader where the popup's `x`/`y` are measured from. Call into it as `(loader.item as Type)?.fn()`.
 - Ids inside it are out of reach from outside. Something the page calls by id (`month.showDay`) or reads through an alias stays outside; stream its insides instead (`MonthGrid` streams its day cells, `GridCanvas` its tiles).

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtTest
 import qs.config
+import qs.components.methods
 import qs.components.reusable
 import qs.components.surfaces.osd.design
 import qs.components.content.base
@@ -1402,7 +1403,7 @@ TestCase {
     verify(!find(plain, it => it.text === plain.label && it.lineCount !== undefined, [])[0].font.strikeout);
   }
 
-  // An issue shows an IssueIcon with its tip; none shows nothing
+  // An issue shows an IssueIcon with its tip; none builds nothing
   function test_list_entry_row_shows_its_issue() {
     harness.configure({});
     const row = createTemporaryObject(plainRowComp, root, {
@@ -1410,8 +1411,7 @@ TestCase {
     });
     waitForRendering(row);
     const icon = () => find(row, it => it.level !== undefined && it.tip !== undefined, [])[0];
-    verify(icon());
-    verify(!icon().visible);
+    verify(!icon());
     row.issue = "warning";
     row.issueTip = "Bound more than once";
     waitForRendering(row);
@@ -1560,5 +1560,39 @@ TestCase {
     compare(harness.containedProblems(tile, true), []);
     for (const t of harness.texts(tile, true))
       compare(t.lineCount, 1);
+  }
+
+  Component {
+    id: lockColumnComp
+
+    ColumnLayout {
+      property alias button: defaultButton
+      readonly property real fit: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultButton.implicitWidth)
+
+      width: fit
+      spacing: 4
+
+      StyledTextButton {
+        id: defaultButton
+        iconText: "auto_awesome"
+        text: "Start from the default layout"
+      }
+    }
+  }
+
+  // The Module tab's lock-screen column is as wide as its "Start from the
+  // default layout" button, whose label stays whole at any font size
+  function test_lock_column_holds_default_layout_button() {
+    harness.configure({
+      "fontSize": 20
+    });
+    const col = createTemporaryObject(lockColumnComp, root);
+    verify(col);
+    waitForRendering(col);
+    const label = find(col.button, it => it.text === "Start from the default layout", [])[0];
+    verify(label);
+    verify(col.width >= col.button.implicitWidth, `column ${col.width}, button ${col.button.implicitWidth}`);
+    verify(col.button.width >= col.button.implicitWidth, `button ${col.button.width}`);
+    verify(label.width >= label.implicitWidth - 0.5, `label ${label.width} of ${label.implicitWidth}`);
   }
 }

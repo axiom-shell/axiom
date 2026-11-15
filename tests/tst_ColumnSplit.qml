@@ -122,4 +122,41 @@ TestCase {
     compare(ColumnSplit.placeN(heights, wide, [[1, 1, 2]], 2, 10, [], true).cards, good, "more columns than n");
     compare(ColumnSplit.placeN(heights, wide, [], 2, 10, [], true).cards, good, "none");
   }
+
+  function test_estimateHeight() {
+    const rows = {
+      "kind": "rows",
+      "rows": [
+        {
+          "kind": "field"
+        },
+        {
+          "kind": "group"
+        },
+        {
+          "kind": "field"
+        },
+        {
+          "kind": "array"
+        }
+      ]
+    };
+    compare(ColumnSplit.estimateHeight(rows, 30, 50, 3), 50 + 3 * 30, "nested headers don't count");
+    compare(ColumnSplit.estimateHeight({
+      "kind": "rows",
+      "rows": []
+    }, 30, 50, 3), 80, "at least one row");
+    compare(ColumnSplit.estimateHeight({
+      "kind": "card",
+      "rows": []
+    }, 30, 50, 3), 140, "a hand-built card counts the fallback");
+  }
+
+  // Unbuilt cards counted as 0 pull the split off; an estimate keeps it where the real heights put it
+  function test_split_with_estimates_is_stable() {
+    const flat = [false, false, false, false];
+    const late = ColumnSplit.splitsN([100, 110, 90, 100], flat, 2, 10, []);
+    compare(ColumnSplit.splitsN([100, 100, 100, 100], flat, 2, 10, []), late, "estimates for the cards to come");
+    verify(ColumnSplit.splitsN([100, 0, 0, 0], flat, 2, 10, []).toString() !== late.toString(), "zeros split elsewhere");
+  }
 }

@@ -20,7 +20,8 @@ Switch {
     y: Widget.px(2)
     width: root.height - Widget.px(4)
     height: root.height - Widget.px(4)
-    radius: (root.height - Widget.px(4)) / 2
+    // Concentric in the track, whatever its radius
+    radius: Style.concentric(track.radius, Widget.px(2))
     color: root.checked ? Style.onAccent : Style.inkHighest.icon
 
     ColorGlide on color {
@@ -33,9 +34,10 @@ Switch {
   }
 
   background: Rectangle {
+    id: track
     implicitWidth: root.implicitWidth
     implicitHeight: root.implicitHeight
-    radius: height / 2
+    radius: Style.radiusInner
     color: root.checked ? Style.accent : Style.surfaceHighest
     // A hairline while off, so the track shows on a highest fill
     border.color: Style.borderStrong

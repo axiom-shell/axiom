@@ -12,6 +12,7 @@ import qs.components.forms
 // dev mode
 FieldGroup {
   id: root
+  pageCard: true
 
   readonly property string detail: {
     if (!DevManager.enabled)

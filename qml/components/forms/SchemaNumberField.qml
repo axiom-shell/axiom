@@ -49,6 +49,9 @@ ColumnLayout {
   property int controlHeight: Math.min(Widget.height, Style.iconLg)
   readonly property int containerMargins: 2
   readonly property int buttonSize: controlHeight - (containerMargins * 2)
+  // The stepper buttons' corners, concentric in their box (a sunken
+  // Surface: Style.radius) inset by containerMargins
+  readonly property real buttonRadius: Style.concentric(Style.radius, root.containerMargins)
 
   readonly property int steps: Math.round((highest - lowest) / step)
   readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
@@ -224,6 +227,7 @@ ColumnLayout {
     // The ±10 buttons: text, smaller and dimmer than −/+
     property bool coarse: false
     size: root.buttonSize
+    borderRadius: root.buttonRadius
     Layout.preferredWidth: coarse ? Math.round(root.buttonSize * 1.4) : root.buttonSize
     kind: "tonal"
     iconSize: coarse ? Style.iconXs : Style.iconSm

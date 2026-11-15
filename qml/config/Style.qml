@@ -548,6 +548,10 @@ QtObject {
   readonly property int radiusMin: Math.min(Widget.radius, Widget.px(3))
   // a highlight inset inside a control or row
   readonly property int radiusInner: StyleTokens.concentric(Widget.radius, Widget.spacing, root.radiusMin)
+  // the radius of a shape inset by `inset` inside an `outer` one (UI calls this, not StyleTokens)
+  function concentric(outer: real, inset: real): real {
+    return StyleTokens.concentric(outer, inset, root.radiusMin);
+  }
   // 0 turns outlines off (tonal layering remains)
   readonly property int hairline: Appearance.borderWidth
   // row dividers always draw: they separate content, not surfaces
