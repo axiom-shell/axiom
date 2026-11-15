@@ -884,7 +884,32 @@ TestCase {
     compare(defs[0].command, "$HOME/mediaplayer.py 2> /dev/null");
     compare(defs[0].formatIcons.spotify, "S");
     compare(defs[0].maxLength, 40);
-    compare(defs[0].actions.click, "playerctl play-pause");
+    compare(defs[0].actions.items, [
+      {
+        "id": "click",
+        "name": "Click",
+        "kind": "command",
+        "command": "playerctl play-pause",
+        "wait": false
+      }
+    ], "a click command is an action that doesn't wait");
+    compare(defs[0].bar.run, {
+      "click": "click"
+    }, "the bar runs it");
+    const scrolled = CustomWidgetData.fromWaybar('{"exec": "x", "on-click-right": "r", "on-scroll-up": "u", "on-scroll-down": "d", "on-click-middle": "m"}')[0];
+    compare(scrolled.actions.items.map(a => a.id), ["rightClick", "middleClick", "scrollUp", "scrollDown"], "every trigger");
+    compare(scrolled.bar.run, {
+      "rightClick": "rightClick",
+      "middleClick": "middleClick",
+      "scrollUp": "scrollUp",
+      "scrollDown": "scrollDown"
+    });
+    compare(scrolled.actions.items.map(a => a.name), ["Right click", "Middle click", "Scroll up", "Scroll down"]);
+    const quiet = CustomWidgetData.fromWaybar('{"exec": "x"}')[0];
+    compare(quiet.actions, {
+      "items": []
+    }, "no click: no actions");
+    compare(quiet.bar, undefined, "no click: no bar.run");
     const polled = CustomWidgetData.fromWaybar('{"exec": "x", "interval": 60, "signal": 6}')[0];
     compare(polled.mode, "poll");
     compare(polled.interval, 60000, "seconds to ms");
@@ -932,12 +957,12 @@ TestCase {
     const preset = CustomWidgetData.presets.find(p => p.name === "Daily habits");
     verify(preset, "the preset is listed");
     verify(preset.command.includes("{tree}data/custom-widgets/habits.sh"), "the script is found through {tree}");
-    verify(preset.invoke.command.includes("{action} {value}"), "the action command takes the action and its value");
+    compare(preset.invoke, undefined, "no invoke command");
+    compare(preset.actions.items.map(a => a.id), ["check", "add", "undo", "remove"], "an action each");
+    verify(preset.actions.items.every(a => a.kind === "command" && a.wait && a.command.includes("habits.sh")), "commands that wait");
     const views = preset.module.views;
     compare(views.map(v => v.id), ["open", "done", "empty"], "a screen per state");
-    compare(preset.module.keys, {
-      "u": "undo"
-    }, "undo on a key");
+    compare(preset.module.keys, undefined, "no keys");
     compare(Object.keys(preset.samples).sort(), ["done", "empty", "open"], "a sample per screen");
     const context = {
       "interactive": true,
@@ -947,21 +972,22 @@ TestCase {
       const fields = CustomWidgetData.resolve(preset, preset.samples[view.id], context);
       compare(CustomWidgetData.pickView(preset.module, fields).index, index, "the " + view.id + " sample picks its screen");
     });
-    // The actions the elements and keys name are ones the samples list
-    const named = new Set(CustomWidgetData.allElements(preset.module).map(e => e.action).filter(a => a).concat(Object.values(preset.module.keys)));
+    // The actions the elements run are the preset's, and ones the samples list
+    const named = new Set([].concat(...CustomWidgetData.allElements(preset.module).map(e => Object.values(e.run ?? {}))).filter(a => a));
+    compare(Array.from(named).sort(), ["add", "check", "undo"], "what the elements run");
     for (const action of named) {
+      verify(CustomWidgetData.actionOf(preset, action) !== null, action + " is one of its actions");
       verify(Object.values(preset.samples).some(sm => action in sm.actions), "a sample lists " + action);
       verify(/^[A-Za-z0-9_.-]{1,64}$/.test(action), action + " is an action id");
     }
     const open = CustomWidgetData.resolve(preset, preset.samples.open, context);
     compare(open.color, "accent", "open is the accent");
     compare(CustomWidgetData.resolve(preset, preset.samples.done, context).color, "success", "done is success");
-    compare(CustomWidgetData.actionEnabled(CustomWidgetData.resolve(preset, preset.samples.empty, context).actions, "check"), false, "nothing to check while empty");
-    compare(CustomWidgetData.fillCommand(preset.invoke.command, {
-      "action": "add",
+    compare(CustomWidgetData.actionEnabled(CustomWidgetData.resolve(preset, preset.samples.empty, context).actions, CustomWidgetData.actionOf(preset, "check")), false, "nothing to check while empty");
+    compare(CustomWidgetData.fillCommand(CustomWidgetData.actionOf(preset, "add").command, {
       "value": "it's",
       "tree": "/opt/axiom/"
-    }), "bash '/opt/axiom/data/custom-widgets/habits.sh' do 'add' 'it'\\''s'", "the action command filled in");
+    }), "bash '/opt/axiom/data/custom-widgets/habits.sh' do add 'it'\\''s'", "the action command filled in");
   }
 
   function test_preview_zoom_fits_width() {
@@ -1263,6 +1289,102 @@ TestCase {
 
   // --- Named actions ---
 
+  function test_actionOf() {
+    const def = {
+      "actions": {
+        "items": [
+          {
+            "id": "a1",
+            "name": "Open"
+          },
+          {
+            "id": "go",
+            "name": "a1"
+          },
+          {
+            "id": "b2",
+            "name": "Close"
+          }
+        ]
+      }
+    };
+    compare(CustomWidgetData.actionOf(def, "b2").name, "Close", "by id");
+    compare(CustomWidgetData.actionOf(def, "Close").id, "b2", "by name");
+    compare(CustomWidgetData.actionOf(def, "a1").id, "a1", "an id wins over a name");
+    compare(CustomWidgetData.actionOf(def, "nope"), null, "missing");
+    compare(CustomWidgetData.actionOf(def, ""), null, "an empty ref");
+    compare(CustomWidgetData.actionOf(def, undefined), null, "no ref");
+    compare(CustomWidgetData.actionOf({}, "a1"), null, "a definition with no actions");
+    compare(CustomWidgetData.actionOf(null, "a1"), null, "no definition");
+  }
+
+  function test_axiomValues() {
+    const refused = ["lock", "poweroff"];
+    compare(CustomWidgetData.axiomValues(["overlay", "lock", "seek", "edgeMenu", "poweroff"], refused, id => id === "seek", ["main", "second"]), ["refresh", "restart", "screen:", "screen:main", "screen:second", "overlay", "edgeMenu"], "refused and argument-taking dropped, in order");
+    compare(CustomWidgetData.axiomValues(["a", "seek"], [], ["seek"], []), ["refresh", "restart", "screen:", "a"], "a list of argument-taking ids");
+    compare(CustomWidgetData.axiomValues([], [], id => false, []), ["refresh", "restart", "screen:"], "no shell actions, no screens");
+    compare(CustomWidgetData.axiomValues(undefined, undefined, undefined, undefined), ["refresh", "restart", "screen:"], "nothing given");
+  }
+
+  function test_actionRefs() {
+    const def = {
+      "bar": {
+        "run": {
+          "click": "x",
+          "scrollUp": "x",
+          "rightClick": "y"
+        }
+      },
+      "module": {
+        "elements": [
+          {
+            "id": "a",
+            "run": {
+              "click": "x"
+            }
+          },
+          {
+            "id": "b",
+            "run": {}
+          },
+          {
+            "id": "c"
+          }
+        ],
+        "views": [
+          {
+            "id": "v",
+            "elements": [
+              {
+                "id": "d",
+                "run": {
+                  "on": "x",
+                  "off": "y"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    };
+    compare(CustomWidgetData.actionRefs(def, "none"), 0, "none");
+    compare(CustomWidgetData.actionRefs(def, "y"), 2, "two");
+    compare(CustomWidgetData.actionRefs(def, "x"), 4, "the base, a screen and the bar");
+    compare(CustomWidgetData.actionRefs({}, "x"), 0, "an empty definition");
+    const cleared = CustomWidgetData.withoutActionRefs(def, "x");
+    compare(CustomWidgetData.actionRefs(cleared, "x"), 0, "clears all");
+    compare(cleared.bar.run, {
+      "click": "",
+      "scrollUp": "",
+      "rightClick": "y"
+    }, "leaves the bar's others");
+    compare(cleared.module.views[0].elements[0].run, {
+      "on": "",
+      "off": "y"
+    }, "leaves a screen element's others");
+    compare(def.bar.run.click, "x", "the original is untouched");
+  }
+
   function test_actionEnabled() {
     const actions = {
       "undo": {
@@ -1272,15 +1394,25 @@ TestCase {
         "enabled": true
       }
     };
-    compare(CustomWidgetData.actionEnabled(null, "next"), true, "no actions: all on");
-    compare(CustomWidgetData.actionEnabled(undefined, "next"), true, "no sample: on");
-    compare(CustomWidgetData.actionEnabled(actions, "check"), true, "listed on");
-    compare(CustomWidgetData.actionEnabled(actions, "undo"), false, "listed off");
-    compare(CustomWidgetData.actionEnabled(actions, "next"), false, "unlisted: off");
-    compare(CustomWidgetData.actionEnabled(actions, "axiom:refresh"), true, "a built-in is always on");
-    compare(CustomWidgetData.actionEnabled({}, "axiom:restart"), true, "a built-in with an empty list");
-    compare(CustomWidgetData.actionEnabled(actions, "constructor"), false, "an Object.prototype name isn't listed");
-    compare(CustomWidgetData.actionEnabled(actions, "toString"), false, "toString isn't listed");
+    const item = id => ({
+          "id": id,
+          "kind": "command"
+        });
+    compare(CustomWidgetData.actionEnabled(null, item("next")), true, "no actions: all on");
+    compare(CustomWidgetData.actionEnabled(undefined, item("next")), true, "no sample: on");
+    compare(CustomWidgetData.actionEnabled(actions, item("check")), true, "listed on");
+    compare(CustomWidgetData.actionEnabled(actions, item("undo")), false, "listed off");
+    compare(CustomWidgetData.actionEnabled(actions, item("next")), false, "unlisted: off");
+    compare(CustomWidgetData.actionEnabled(actions, {
+      "id": "refresh",
+      "kind": "axiom"
+    }), true, "an axiom action is always on");
+    compare(CustomWidgetData.actionEnabled({}, {
+      "id": "x",
+      "kind": "axiom"
+    }), true, "an axiom action with an empty list");
+    compare(CustomWidgetData.actionEnabled(actions, item("constructor")), false, "an Object.prototype name isn't listed");
+    compare(CustomWidgetData.actionEnabled(actions, item("toString")), false, "toString isn't listed");
   }
 
   function test_shellQuote() {
@@ -1297,10 +1429,9 @@ TestCase {
   }
 
   function test_fillCommand() {
-    compare(CustomWidgetData.fillCommand("playerctl-do {action} {value}", {
-      "action": "seek",
+    compare(CustomWidgetData.fillCommand("playerctl-do seek {value}", {
       "value": "42.5"
-    }), "playerctl-do 'seek' 42.5", "the spec's example");
+    }), "playerctl-do seek 42.5", "a number is bare");
     compare(CustomWidgetData.fillCommand("x {value}", {
       "value": "{rev}",
       "rev": "9"
@@ -1308,13 +1439,17 @@ TestCase {
     compare(CustomWidgetData.fillCommand("x ${rev}", {
       "rev": "9"
     }), "x ${rev}", "after a $: untouched");
-    compare(CustomWidgetData.fillCommand("{action}{value}", {
-      "action": "a",
+    compare(CustomWidgetData.fillCommand("{rev}{value}", {
+      "rev": "a",
       "value": "b"
     }), "'a''b'", "both filled");
-    compare(CustomWidgetData.fillCommand("{action}", {
+    compare(CustomWidgetData.fillCommand("{rev}", {
       "value": "1"
-    }), "{action}", "no value for it: kept");
+    }), "{rev}", "no value for it: kept");
+    compare(CustomWidgetData.fillCommand("x {action}", {
+      "action": "a",
+      "value": "1"
+    }), "x {action}", "{action} stays as typed");
     compare(CustomWidgetData.fillCommand("x {text}", {
       "value": "1"
     }), "x {text}", "{text} stays as typed");
@@ -1335,12 +1470,11 @@ TestCase {
 
   function test_builtinAllowed() {
     const refused = ["poweroff", "lock", "reboot"];
-    compare(CustomWidgetData.builtinAllowed("axiom:poweroff", refused), false, "poweroff");
-    compare(CustomWidgetData.builtinAllowed("axiom:lock", refused), false, "lock");
-    compare(CustomWidgetData.builtinAllowed("axiom:toggleMute", refused), true, "mute");
-    compare(CustomWidgetData.builtinAllowed("axiom:refresh", refused), true, "refresh");
-    compare(CustomWidgetData.builtinAllowed("poweroff", refused), true, "a script's own id isn't a built-in");
-    compare(CustomWidgetData.builtinAllowed("axiom:poweroff", undefined), true, "nothing refused");
+    compare(CustomWidgetData.builtinAllowed("poweroff", refused), false, "poweroff");
+    compare(CustomWidgetData.builtinAllowed("lock", refused), false, "lock");
+    compare(CustomWidgetData.builtinAllowed("toggleMute", refused), true, "mute");
+    compare(CustomWidgetData.builtinAllowed("refresh", refused), true, "refresh");
+    compare(CustomWidgetData.builtinAllowed("poweroff", undefined), true, "nothing refused");
   }
 
   // --- Keys ---
@@ -1668,37 +1802,29 @@ TestCase {
     compare(CustomWidgetData.commandsOf({
       "command": "a.sh",
       "execIf": "  ",
-      "invoke": {
-        "command": "b.sh {action}"
-      },
       "actions": {
-        "click": "c",
-        "rightClick": "",
         "refreshAfter": true,
-        "named": {
-          "click": "act"
-        }
-      },
-      "module": {
-        "elements": [
+        "items": [
           {
             "id": "go",
-            "actions": {
-              "click": "d"
-            }
-          }
-        ],
-        "views": [
+            "name": "Go",
+            "kind": "command",
+            "command": "b.sh {value}"
+          },
           {
-            "id": "open",
-            "elements": [
-              {
-                "id": "list",
-                "actions": {
-                  "submit": "e"
-                }
-              }
-            ]
+            "id": "plain",
+            "kind": "command",
+            "command": "c"
+          },
+          {
+            "id": "restart",
+            "kind": "axiom",
+            "axiom": "restart"
+          },
+          {
+            "id": "empty",
+            "kind": "command",
+            "command": " "
           }
         ]
       }
@@ -1708,22 +1834,14 @@ TestCase {
         "command": "a.sh"
       },
       {
-        "where": "invoke.command",
-        "command": "b.sh {action}"
+        "where": "actions/Go",
+        "command": "b.sh {value}"
       },
       {
-        "where": "actions.click",
+        "where": "actions/plain",
         "command": "c"
-      },
-      {
-        "where": "base/go/actions.click",
-        "command": "d"
-      },
-      {
-        "where": "open/list/actions.submit",
-        "command": "e"
       }
-    ], "the non-empty commands, each with where it is; named actions aren't commands");
+    ], "the non-empty commands, each with where it is (an action's name, else id); Axiom actions aren't commands");
     const template = CustomWidgetData.galleryPresets.find(p => p.name === "Slider");
     compare(CustomWidgetData.commandsOf(template), [], "a template holds none");
     compare(CustomWidgetData.commandsOf(null), []);
@@ -1811,10 +1929,14 @@ TestCase {
         if (key !== "")
           compare(CustomWidgetData.pickView(module, fields).index, index, t.name + ": the " + key + " sample picks its screen");
       }
-      // Every action an element or key names is one a sample lists
-      const named = CustomWidgetData.allElements(module).map(e => e.action).filter(a => a && !a.startsWith("axiom:"));
-      for (const action of named)
-        verify(Object.values(t.samples).some(sm => sm.actions && action in sm.actions), t.name + ": a sample lists " + action);
+      // Every action an element runs is one of the template's, and a command one a sample lists
+      const named = [].concat(...CustomWidgetData.allElements(module).map(e => Object.values(e.run ?? {}))).filter(a => a);
+      for (const action of named) {
+        const item = CustomWidgetData.actionOf(t, action);
+        verify(item !== null, t.name + ": " + action + " is one of its actions");
+        if (item?.kind === "command")
+          verify(Object.values(t.samples).some(sm => sm.actions && action in sm.actions), t.name + ": a sample lists " + action);
+      }
     }
     const media = CustomWidgetData.galleryPresets.find(p => p.name === "Media card");
     const nothing = CustomWidgetData.resolve(media, media.samples.nothing, {
@@ -1931,13 +2053,12 @@ TestCase {
     }), [], "literals and graphics are fine");
     compare(CustomWidgetData.lockIssues({
       "module": {
-        "keys": {
-          "u": "undo"
-        },
         "elements": [
           {
             "type": "Button",
-            "action": "undo"
+            "run": {
+              "click": "undo"
+            }
           },
           {
             "type": "Entry"
@@ -1957,31 +2078,42 @@ TestCase {
           }
         ]
       }
-    }), ["actions", "keys", "entry", "text"], "each, screens included");
+    }), ["actions", "entry", "text"], "each, screens included");
     compare(CustomWidgetData.lockIssues({
       "module": {
         "elements": [
           {
             "type": "Button",
-            "action": "",
-            "actions": {
-              "click": "  "
+            "run": {
+              "click": ""
             }
           }
         ]
       }
-    }), [], "an empty command is none");
+    }), [], "an empty action is none");
     compare(CustomWidgetData.lockIssues({
       "module": {
-        "elements": [
+        "views": [
           {
-            "type": "Button",
-            "actions": {
-              "click": "x"
-            }
+            "id": "a",
+            "elements": [
+              {
+                "type": "Toggle",
+                "run": {
+                  "on": "go"
+                }
+              }
+            ]
           }
         ]
       }
-    }), ["actions"], "a command");
+    }), ["actions"], "an action on a screen");
+    compare(CustomWidgetData.lockIssues({
+      "bar": {
+        "run": {
+          "click": "go"
+        }
+      }
+    }), ["actions"], "the bar's click");
   }
 }

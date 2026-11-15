@@ -9,10 +9,9 @@ import qs.components.bar.widgets.base
 
 // A custom widget on the bar (docs/dev/features/custom-widgets.md): its
 // script's output (CustomWidgetsManager) in the definition's bar style
-// (BarWidget's display styles: label is Waybar's look). Clicks and scrolls run its
-// actions; hovering opens its module, else shows the output's tooltip
-// (Waybar's; the definition's Tooltip switch). A click or scroll names an
-// action (actions.named) or is a command. Hidden while the script
+// (BarWidget's display styles: label is Waybar's look). Clicks and scrolls run the
+// actions bar.run picks; hovering opens its module, else shows the output's tooltip
+// (Waybar's; the definition's Tooltip switch). Hidden while the script
 // says so (empty text, as Waybar). While the script fails (an interactive
 // definition: CustomWidgetData.failure) it shows the error, in the error
 // colour, whatever its style.
@@ -60,12 +59,11 @@ BarWidget {
   // Urgent: a slow colour pulse
   pulsing: root.fields?.urgent ?? false
 
-  readonly property var actions: root.definition?.actions ?? ({})
-  readonly property var named: root.actions.named ?? ({})
-  clickable: !!(root.actions.click || root.actions.rightClick || root.actions.middleClick || root.named.click || root.named.rightClick || root.named.middleClick)
+  readonly property var run: root.definition?.bar?.run ?? ({})
+  clickable: !!(root.run.click || root.run.rightClick || root.run.middleClick)
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
   onClicked: button => CustomWidgetsManager.act(root.widgetId, button === Qt.RightButton ? "rightClick" : button === Qt.MiddleButton ? "middleClick" : "click")
-  scrollable: !!(root.actions.scrollUp || root.actions.scrollDown || root.named.scrollUp || root.named.scrollDown)
+  scrollable: !!(root.run.scrollUp || root.run.scrollDown)
   onScrolled: steps => CustomWidgetsManager.act(root.widgetId, steps > 0 ? "scrollUp" : "scrollDown")
 
   // Whether hovering opens its module; the tooltip shows only when not

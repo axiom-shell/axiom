@@ -13,7 +13,7 @@ Loader {
   property string widgetId: ""
   property bool actionsEnabled: true
   property string fallbackIcon: "widgets"
-  property bool invokeSet: false
+  property var widgetActions: []
   property bool failing: false
   property bool busy: false
   property string moduleFont: ""
@@ -30,7 +30,7 @@ Loader {
       "widgetId": Qt.binding(() => root.widgetId),
       "actionsEnabled": Qt.binding(() => root.actionsEnabled),
       "fallbackIcon": Qt.binding(() => root.fallbackIcon),
-      "invokeSet": Qt.binding(() => root.invokeSet),
+      "widgetActions": Qt.binding(() => root.widgetActions),
       "failing": Qt.binding(() => root.failing),
       "busy": Qt.binding(() => root.busy),
       "moduleFont": Qt.binding(() => root.moduleFont),

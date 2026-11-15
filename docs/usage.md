@@ -88,7 +88,7 @@ axiom ipc <target> <function> [args]
 | `calendar` | `open`, `newEvent`, `sync`, `add <text>` (as `/event`) |
 | `notes` | `open` (the overlay page or menu with a Notes module) |
 | `todo` | `add <text>`, `toggle <text>`, `list`, `count`, `clearCompleted` |
-| `customWidgets` | `refresh <name>` (a custom widget's refresh name, id or name: its script runs again now), `restart <name>` (stops a stream's process and starts it again; a poll just runs again), `act <name> <action>` / `actValue <name> <action> <value>` (run a named action as a press would, with the hold, `{value}` the value; answers `not shown` when nothing shows the widget, else `busy`, `disabled`, `failing`, … or nothing when it ran), `list` |
+| `customWidgets` | `refresh <name>` (a custom widget's refresh name, id or name: its script runs again now), `restart <name>` (stops a stream's process and starts it again; a poll just runs again), `act <name> <action>` / `actValue <name> <action> <value>` (run one of its actions, by id or name, as a press would, with the hold, `{value}` the value; answers `not shown` when nothing shows the widget, else `no action`, `no command`, `busy`, `disabled`, `failing`, … or nothing when it ran), `list` |
 | `pomodoro` | `start`, `pause`, `toggle`, `skip`, `stop`, `reset`, `status` |
 | `markets` | `refresh` (fetches every watched price now), `status` (a line per symbol: name, price, currency, today's change; the portfolio last). Editing the watchlist and holdings: `axiom markets` (below) |
 | `stopwatch` | `timer <duration [label]>`, `toggleTimer`, `resetTimer`, `toggle`, `lap`, `reset`, `status` |

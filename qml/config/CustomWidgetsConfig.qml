@@ -28,17 +28,12 @@ QtObject {
     return root.byId[id] ?? null;
   }
 
-  // The built-in actions an element or the bar can name besides the script's
-  // own (CustomWidgetsManager.invoke); an ActionsManager id the editor adds
-  // as "axiom:<id>" (CustomWidgetData.builtinAllowed passes it)
-  readonly property var builtinActions: ["axiom:refresh", "axiom:restart"]
-
   // The element kinds a module is built from (the CustomElement oneOf:
   // components/content/parts/custom/elements/<Type>/schema.yaml), by
   // label: { type, label, icon, size ([w, h] sub-cells it's added at,
   // `x-defaultSize`), slots (its bindings, `x-slots`, the base's, which every kind has, last: CustomWidgetData.baseSlotsLast), actions (the
-  // commands it runs, `x-actions`), actionsSchema (theirs, a properties
-  // schema), options (its look, a properties schema), optionsOrder }. Labels and titles are English: the editor
+  // triggers it runs actions on, `x-actions`: keys of its `run`), options (its
+  // look, a properties schema), optionsOrder }. Labels and titles are English: the editor
   // translates them
   readonly property var elementKinds: {
     const schema = ConfigManager.configSchema;
@@ -52,7 +47,6 @@ QtObject {
         "size": def["x-defaultSize"] ?? [4, 4],
         "slots": slots[i],
         "actions": def["x-actions"] ?? [],
-        "actionsSchema": Utils.pick(def.properties.actions.properties, def["x-actions"] ?? []),
         "options": def.properties.options?.properties ?? ({}),
         "optionsOrder": def.properties.options?.["x-order"] ?? []
       };

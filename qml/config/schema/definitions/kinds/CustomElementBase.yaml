@@ -52,14 +52,14 @@ properties:
     additionalProperties: {type: string}
     description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key. =text is literal. show: hidden while false; tone: a word the definition''s states map to a colour.'
   options: {type: object, additionalProperties: false, properties: {}}
-  action: {$ref: '#/definitions/ActionId', title: Action, description: 'A named action it runs instead of its commands.'}
-  actions:
+  run:
     type: object
     additionalProperties: false
-    description: Commands it runs; {value} is filled in.
+    default: {}
+    description: The widget action each trigger runs.
     properties:
-      click: {x-scope: commands, type: string, title: Click command, default: '', description: '{value}: the label, or the row''s text.'}
-      change: {x-scope: commands, type: string, title: Change command, default: '', description: '{value} is the new value.'}
-      'on': {x-scope: commands, type: string, title: Turn-on command, default: ''}
-      'off': {x-scope: commands, type: string, title: Turn-off command, default: ''}
-      submit: {x-scope: commands, type: string, title: Submit command, default: '', description: '{value} is the text.'}
+      click: {$ref: '#/definitions/ActionId', title: On press}
+      change: {$ref: '#/definitions/ActionId', title: On change}
+      'on': {$ref: '#/definitions/ActionId', title: Turn on}
+      'off': {$ref: '#/definitions/ActionId', title: Turn off}
+      submit: {$ref: '#/definitions/ActionId', title: On Enter}

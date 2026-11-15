@@ -35,12 +35,9 @@ Panel {
   readonly property bool keysHost: !root.embedded || ["overlay", "menu"].includes(root.host?.kind)
   // An Entry in any layer
   readonly property bool hasEntry: CustomWidgetData.allElements(root.definition?.module).some(e => e.type === "Entry")
-  // The module maps keys (module.keys) and can take them: a popout, an
-  // overlay card or an edge menu, with actions on
-  readonly property bool keysEnabled: root.actionsEnabled && root.keysHost && Object.keys(root.definition?.module?.keys ?? ({})).length > 0
-  // A popout then keeps the keyboard too (and a focus grab, so a click
+  // A popout with an Entry keeps the keyboard (and a focus grab, so a click
   // outside closes it)
-  wantsKeyboardFocus: !root.embedded && root.actionsEnabled && (root.keysEnabled || root.hasEntry)
+  wantsKeyboardFocus: !root.embedded && root.actionsEnabled && root.hasEntry
 
   // The screen to draw (-1: the base alone), and whether a failure has none
   readonly property var view: root.fields ? CustomWidgetData.pickView(root.definition?.module, root.fields) : ({
@@ -83,8 +80,6 @@ Panel {
         history: CustomWidgetsManager.history[root.widgetId] ?? ({})
         actionsEnabled: root.actionsEnabled
         keysHost: root.keysHost
-        keysEnabled: root.keysEnabled
-        focusOnShow: !root.embedded
         viewIndex: root.view.index
       }
     }
@@ -98,7 +93,7 @@ Panel {
           availableHeight: box.height
           icon: root.view.builtinError ? "error" : (root.definition?.icon ?? "widgets")
           actionText: root.view.builtinError && root.actionsEnabled ? I18n.tr("Restart") : ""
-          onTriggered: CustomWidgetsManager.invoke(root.widgetId, "axiom:restart", undefined, false) // lock-inert: the button is off without actionsEnabled
+          onTriggered: CustomWidgetsManager.restart(root.widgetId) // lock-inert: the button is off without actionsEnabled
           text: root.view.builtinError ? root.fields.error : root._withheld && root._chosen ? I18n.tr("This custom widget isn't offered on the lock screen") : !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
         }
       }

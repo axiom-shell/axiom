@@ -586,7 +586,9 @@ QtObject {
   // isn't JSON(C).
   //   exec → command; interval (s) → poll, "once" → once, none → stream;
   //   exec-if, format, format-icons, max-length, escape, tooltip,
-  //   on-click(-right, -middle), on-scroll-up/down; signal → refreshName
+  //   on-click(-right, -middle), on-scroll-up/down (each an action that
+  //   doesn't wait, run by the bar's click or scroll: bar.run); signal →
+  //   refreshName
   function fromWaybar(text) {
     let body = root.stripJsonc(text).trim();
     if (/^"[^"]+"\s*:/.test(body))
@@ -603,7 +605,9 @@ QtObject {
         "mode": interval === "once" ? "once" : typeof interval === "number" && interval > 0 ? "poll" : "stream",
         "output": "waybar",
         "format": typeof m.format === "string" ? m.format : "{}",
-        "actions": {}
+        "actions": {
+          "items": []
+        }
       };
       if (def.mode === "poll")
         def.interval = Math.max(500, Math.round(interval * 1000));
@@ -619,17 +623,34 @@ QtObject {
         def.tooltip = false;
       if (m.signal !== undefined)
         def.refreshName = String(name).replace(/^custom\//, "");
-      const actions = {
-        "on-click": "click",
-        "on-click-right": "rightClick",
-        "on-click-middle": "middleClick",
-        "on-scroll-up": "scrollUp",
-        "on-scroll-down": "scrollDown"
+      // Each click or scroll command becomes an action (named by its
+      // trigger: I18n.tr("Click") I18n.tr("Right click") I18n.tr("Middle click")
+      // I18n.tr("Scroll up") I18n.tr("Scroll down")) the bar runs
+      const triggers = {
+        "on-click": ["click", "Click"],
+        "on-click-right": ["rightClick", "Right click"],
+        "on-click-middle": ["middleClick", "Middle click"],
+        "on-scroll-up": ["scrollUp", "Scroll up"],
+        "on-scroll-down": ["scrollDown", "Scroll down"]
       };
-      for (const key in actions) {
-        if (typeof m[key] === "string")
-          def.actions[actions[key]] = m[key];
+      const run = {};
+      for (const key in triggers) {
+        if (typeof m[key] !== "string")
+          continue;
+        const [trigger, label] = triggers[key];
+        def.actions.items.push({
+          "id": trigger,
+          "name": label,
+          "kind": "command",
+          "command": m[key],
+          "wait": false
+        });
+        run[trigger] = trigger;
       }
+      if (def.actions.items.length > 0)
+        def.bar = {
+          "run": run
+        };
       return def;
     });
   }
@@ -639,6 +660,10 @@ QtObject {
   // I18n.tr("Media (Waybar's mediaplayer.py)") I18n.tr("Package updates")
   // I18n.tr("Weather (wttr.in)") I18n.tr("Failed services") I18n.tr("WireGuard VPN")
   // I18n.tr("GPU load (NVIDIA)") I18n.tr("Daily habits")
+  // Their actions' names: I18n.tr("Click") I18n.tr("Right click") I18n.tr("Scroll up")
+  // I18n.tr("Scroll down") I18n.tr("Check off") I18n.tr("Add") I18n.tr("Undo")
+  // I18n.tr("Remove") I18n.tr("Open") I18n.tr("Set") I18n.tr("Turn on") I18n.tr("Turn off")
+  // I18n.tr("Previous") I18n.tr("Play or pause") I18n.tr("Next")
   // Descriptions: I18n.tr("Habits to check off each day, with streaks")
   // Daily habits' texts, which CustomWidgetsEditor.add translates (the
   // `=` literals, options and screen names): I18n.tr("Habits")
@@ -662,11 +687,27 @@ QtObject {
         "dnd-inhibited-none": "notifications_off"
       },
       "bar": {
-        "style": "icon"
+        "style": "icon",
+        "run": {
+          "click": "click",
+          "rightClick": "rightClick"
+        }
       },
       "actions": {
-        "click": "swaync-client -t -sw",
-        "rightClick": "swaync-client -d -sw"
+        "items": [
+          {
+            "id": "click",
+            "name": "Click",
+            "command": "swaync-client -t -sw",
+            "wait": false
+          },
+          {
+            "id": "rightClick",
+            "name": "Right click",
+            "command": "swaync-client -d -sw",
+            "wait": false
+          }
+        ]
       }
     },
     {
@@ -683,10 +724,20 @@ QtObject {
       },
       "hideEmpty": false,
       "bar": {
-        "style": "icon"
+        "style": "icon",
+        "run": {
+          "click": "click"
+        }
       },
       "actions": {
-        "click": "dunstctl set-paused toggle"
+        "items": [
+          {
+            "id": "click",
+            "name": "Click",
+            "command": "dunstctl set-paused toggle",
+            "wait": false
+          }
+        ]
       }
     },
     {
@@ -700,10 +751,34 @@ QtObject {
       },
       "maxLength": 40,
       "escape": true,
+      "bar": {
+        "run": {
+          "click": "click",
+          "scrollUp": "scrollUp",
+          "scrollDown": "scrollDown"
+        }
+      },
       "actions": {
-        "click": "playerctl play-pause",
-        "scrollUp": "playerctl next",
-        "scrollDown": "playerctl previous"
+        "items": [
+          {
+            "id": "click",
+            "name": "Click",
+            "command": "playerctl play-pause",
+            "wait": false
+          },
+          {
+            "id": "scrollUp",
+            "name": "Scroll up",
+            "command": "playerctl next",
+            "wait": false
+          },
+          {
+            "id": "scrollDown",
+            "name": "Scroll down",
+            "command": "playerctl previous",
+            "wait": false
+          }
+        ]
       }
     },
     {
@@ -769,8 +844,37 @@ QtObject {
       "mode": "poll",
       "interval": 60000,
       "output": "json",
-      "invoke": {
-        "command": "bash '{tree}data/custom-widgets/habits.sh' do {action} {value}"
+      "actions": {
+        "items": [
+          {
+            "id": "check",
+            "name": "Check off",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do check {value}",
+            "wait": true
+          },
+          {
+            "id": "add",
+            "name": "Add",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do add {value}",
+            "wait": true
+          },
+          {
+            "id": "undo",
+            "name": "Undo",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do undo",
+            "wait": true
+          },
+          {
+            "id": "remove",
+            "name": "Remove",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do remove {value}",
+            "wait": true
+          }
+        ]
       },
       "format": "{text}",
       "states": {
@@ -783,9 +887,6 @@ QtObject {
       },
       "module": {
         "size": [4, 4],
-        "keys": {
-          "u": "undo"
-        },
         "elements": [
           {
             "id": "title",
@@ -830,7 +931,9 @@ QtObject {
               "w": 3,
               "h": 2
             },
-            "action": "undo",
+            "run": {
+              "click": "undo"
+            },
             "options": {
               "icon": "undo",
               "disabled": "hide"
@@ -845,7 +948,9 @@ QtObject {
               "w": 16,
               "h": 2
             },
-            "action": "add",
+            "run": {
+              "submit": "add"
+            },
             "options": {
               "placeholder": "New habit"
             }
@@ -870,7 +975,9 @@ QtObject {
                   "w": 16,
                   "h": 12
                 },
-                "action": "check"
+                "run": {
+                  "click": "check"
+                }
               }
             ]
           },
@@ -1041,7 +1148,9 @@ QtObject {
         "on": "success",
         "off": "warning"
       },
-      "invoke": {},
+      "actions": {
+        "items": [root._act("on", "Turn on"), root._act("off", "Turn off")]
+      },
       "module": {
         "size": [4, 2],
         "elements": [root._el("title", "Text", [0, 0, 11, 3], {
@@ -1053,7 +1162,10 @@ QtObject {
             "state": "state"
           }, {
             "label": "Enabled"
-          }, "set")],
+          }, {
+            "on": "on",
+            "off": "off"
+          })],
         "views": [root._view("on", "On", {
             "key": "state",
             "test": "is",
@@ -1075,14 +1187,16 @@ QtObject {
           "state": "on",
           "text": "VPN",
           "actions": {
-            "set": {}
+            "on": {},
+            "off": {}
           }
         },
         "off": {
           "state": "off",
           "text": "VPN",
           "actions": {
-            "set": {}
+            "on": {},
+            "off": {}
           }
         }
       }
@@ -1092,6 +1206,9 @@ QtObject {
       "template": true,
       "description": "A value you can drag, such as the brightness",
       "icon": "linear_scale",
+      "actions": {
+        "items": [root._act("set", "Set")]
+      },
       "module": {
         "size": [4, 2],
         "elements": [root._el("title", "Text", [0, 0, 11, 3], {
@@ -1103,7 +1220,9 @@ QtObject {
             "text": "{value}{unit}"
           }, {
             "align": "right"
-          }), root._el("slider", "Bar", [0, 4, 16, 3], null, null, "set")]
+          }), root._el("slider", "Bar", [0, 4, 16, 3], null, null, {
+            "change": "set"
+          })]
       },
       "samples": {
         "": {
@@ -1123,6 +1242,9 @@ QtObject {
       "template": true,
       "description": "Rows you can press, such as disks",
       "icon": "list",
+      "actions": {
+        "items": [root._act("open", "Open")]
+      },
       "states": {
         "full": "error",
         "ok": "success"
@@ -1134,7 +1256,9 @@ QtObject {
           }, {
             "align": "left",
             "bold": true
-          }), root._el("rows", "List", [0, 2, 16, 14], null, null, "open")]
+          }), root._el("rows", "List", [0, 2, 16, 14], null, null, {
+            "click": "open"
+          })]
       },
       "samples": {
         "": {
@@ -1176,6 +1300,9 @@ QtObject {
       "template": true,
       "description": "Playing, paused and nothing playing, with buttons",
       "icon": "music_note",
+      "actions": {
+        "items": [root._act("prev", "Previous"), root._act("toggle", "Play or pause"), root._act("next", "Next")]
+      },
       "states": {
         "playing": "success",
         "paused": "warning"
@@ -1193,11 +1320,17 @@ QtObject {
             "align": "left"
           }), root._el("prev", "Button", [0, 8, 4, 3], null, {
             "icon": "skip_previous"
-          }, "prev"), root._el("toggle", "Button", [6, 8, 4, 3], {
+          }, {
+            "click": "prev"
+          }), root._el("toggle", "Button", [6, 8, 4, 3], {
             "icon": "icon"
-          }, null, "toggle"), root._el("next", "Button", [12, 8, 4, 3], null, {
+          }, null, {
+            "click": "toggle"
+          }), root._el("next", "Button", [12, 8, 4, 3], null, {
             "icon": "skip_next"
-          }, "next")],
+          }, {
+            "click": "next"
+          })],
         "views": [root._view("playing", "Playing", {
             "key": "state",
             "test": "is",
@@ -1256,6 +1389,16 @@ QtObject {
       "template": true,
       "description": "A status line, and a screen for when the script fails",
       "icon": "radio_button_checked",
+      "actions": {
+        "items": [
+          {
+            "id": "restart",
+            "name": "Restart",
+            "kind": "axiom",
+            "axiom": "restart"
+          }
+        ]
+      },
       "states": {
         "ok": "success"
       },
@@ -1278,7 +1421,9 @@ QtObject {
               "text": "error"
             }, {
               "align": "left"
-            }), root._el("retry", "Button", [4, 5, 8, 3], null, null, "axiom:restart")], false)]
+            }), root._el("retry", "Button", [4, 5, 8, 3], null, null, {
+              "click": "restart"
+            })], false)]
       },
       "samples": {
         "": {
@@ -1511,12 +1656,70 @@ QtObject {
 
   // --- Named actions ---
 
-  // Whether the sample lets action `id` run: a built-in ("axiom:…") always,
-  // everything when the sample lists no actions (null), else only the
-  // ids it lists as enabled
-  function actionEnabled(actions, id) {
-    if (String(id).startsWith("axiom:") || actions === null || actions === undefined)
+  // The action of `def` (`actions.items`) that `ref` names: by id, else by
+  // name (the IPC takes either); null for "" or none
+  function actionOf(def, ref) {
+    const key = String(ref ?? "");
+    if (key === "")
+      return null;
+    const items = def?.actions?.items ?? [];
+    return items.find(a => a.id === key) ?? items.find(a => a.name === key) ?? null;
+  }
+
+  // The values an Axiom action can take, in order: refresh, restart, screen:
+  // (the base), screen:<id> for each of `screenIds`, then each of `shellIds`
+  // (the caller sorts them by label) that isn't in `refused` and takes no
+  // argument (`needsArgument`: an id → bool, or a list of ids)
+  function axiomValues(shellIds, refused, needsArgument, screenIds) {
+    const takes = id => typeof needsArgument === "function" ? !!needsArgument(id) : (needsArgument ?? []).indexOf(id) >= 0;
+    const out = ["refresh", "restart", "screen:"];
+    for (const id of screenIds ?? [])
+      out.push("screen:" + id);
+    for (const id of shellIds ?? []) {
+      if (root.builtinAllowed(id, refused) && !takes(id) && out.indexOf(id) < 0)
+        out.push(id);
+    }
+    return out;
+  }
+
+  // The `run` objects of a definition's elements (every layer) and of its bar
+  function _runs(def) {
+    const out = root.allElements(def?.module).map(e => e.run);
+    out.push(def?.bar?.run);
+    return out.filter(r => r !== null && r !== undefined && typeof r === "object");
+  }
+
+  // How many triggers (elements' `run`, the bar's `bar.run`) name action `id`
+  function actionRefs(def, id) {
+    let n = 0;
+    for (const run of root._runs(def)) {
+      for (const trigger of Object.keys(run)) {
+        if (run[trigger] === id)
+          n++;
+      }
+    }
+    return n;
+  }
+
+  // `def` as a copy whose triggers that name action `id` name none
+  function withoutActionRefs(def, id) {
+    const copy = Utils.clone(def);
+    for (const run of root._runs(copy)) {
+      for (const trigger of Object.keys(run)) {
+        if (run[trigger] === id)
+          run[trigger] = "";
+      }
+    }
+    return copy;
+  }
+
+  // Whether the sample lets action `item` (an entry of `actions.items`)
+  // run: an Axiom one always, everything when the sample lists no actions
+  // (null), else only the ids it lists as enabled
+  function actionEnabled(actions, item) {
+    if (item?.kind === "axiom" || actions === null || actions === undefined)
       return true;
+    const id = item?.id ?? "";
     return Object.prototype.hasOwnProperty.call(actions, id) && actions[id]?.enabled === true;
   }
 
@@ -1527,21 +1730,20 @@ QtObject {
     return /^-?(\d+(\.\d+)?|\.\d+)$/.test(t) ? t : "'" + t.replace(/'/g, "'\\''") + "'";
   }
 
-  // An action command with its placeholders filled in one pass: {action},
-  // {value} and {rev} already quoted (shellQuote), {tree} as is. `values`
+  // An action command with its placeholders filled in one pass: {value}
+  // and {rev} already quoted (shellQuote), {tree} as is. `values`
   // holds the ones to fill; a placeholder it has no value for, one after
   // a $ (${rev}) and any other {…} stay as typed. A filled value is never
   // searched again
   function fillCommand(template, values) {
-    return String(template ?? "").replace(/\$?\{(action|value|rev|tree)\}/g, (m, k) => m[0] === "$" || !(k in values) ? m : k === "tree" ? values.tree : root.shellQuote(root.asText(values[k])));
+    return String(template ?? "").replace(/\$?\{(value|rev|tree)\}/g, (m, k) => m[0] === "$" || !(k in values) ? m : k === "tree" ? values.tree : root.shellQuote(root.asText(values[k])));
   }
 
-  // Whether a built-in action ("axiom:<id>") may run from a widget: not
-  // one of `refused` (the session's and the destructive ones, which a
-  // stray key press or script must never run)
+  // Whether a shell action (a bare id: "lock", "overlay") may run from a
+  // widget: not one of `refused` (the session's and the destructive ones,
+  // which a stray press or script must never run)
   function builtinAllowed(id, refused) {
-    const text = String(id);
-    return !(text.startsWith("axiom:") && (refused ?? []).includes(text.slice(6)));
+    return !(refused ?? []).includes(String(id));
   }
 
   // --- Keys ---
@@ -1746,9 +1948,7 @@ QtObject {
 
   // Every command a definition holds, what Import lists before anything
   // runs and Copy warns about: [{ where, command }], the non-empty ones of
-  // `command`, `execIf`, `invoke.command`, the bar's five click and scroll
-  // commands and each element's `actions` in every layer. `where` is a path
-  // ("actions.click", "open/list/actions.click": a screen's id, the element)
+  // `command`, `execIf` and each command action ("actions/<name or id>")
   function commandsOf(definition) {
     const out = [];
     const add = (where, command) => {
@@ -1761,18 +1961,10 @@ QtObject {
     const def = definition ?? {};
     add("command", def.command);
     add("execIf", def.execIf);
-    add("invoke.command", def.invoke?.command);
-    for (const key of ["click", "rightClick", "middleClick", "scrollUp", "scrollDown"])
-      add("actions." + key, def.actions?.[key]);
-    const layer = (name, elements) => {
-      for (const element of elements ?? []) {
-        for (const key of Object.keys(element.actions ?? {}))
-          add(name + "/" + element.id + "/actions." + key, element.actions[key]);
-      }
-    };
-    layer("base", def.module?.elements);
-    for (const view of def.module?.views ?? [])
-      layer(view.id, view.elements);
+    for (const item of def.actions?.items ?? []) {
+      if (item.kind !== "axiom")
+        add("actions/" + (item.name || item.id), item.command);
+    }
     return out;
   }
 
@@ -1933,17 +2125,15 @@ QtObject {
 
   // What a definition offered on the lock screen holds that doesn't work
   // there or shows a script's text to whoever sees the screen: "actions"
-  // (an element runs a named action or a command), "keys", "entry" (an
+  // (an element or the bar runs an action), "entry" (an
   // Entry element), "text" (an element's `text` bound to the output). []
   // when it holds none
   function lockIssues(definition) {
     const module = definition?.module;
     const elements = root.allElements(module);
     const issues = [];
-    if (elements.some(e => (e.action ?? "") !== "" || Object.values(e.actions ?? {}).some(c => typeof c === "string" && c.trim() !== "")))
+    if (root._runs(definition).some(run => Object.values(run).some(id => !!id)))
       issues.push("actions");
-    if (Object.keys(module?.keys ?? {}).length > 0)
-      issues.push("keys");
     if (elements.some(e => e.type === "Entry"))
       issues.push("entry");
     if (elements.some(e => (e.bind?.text ?? "") !== "" && !e.bind.text.startsWith("=")))
@@ -1951,8 +2141,9 @@ QtObject {
     return issues;
   }
 
-  // A template's element ([x, y, w, h] in sub-cells)
-  function _el(id, type, place, bind, options, action) {
+  // A template's element ([x, y, w, h] in sub-cells; `run`: its triggers'
+  // action ids)
+  function _el(id, type, place, bind, options, run) {
     const element = {
       "id": id,
       "type": type,
@@ -1967,9 +2158,21 @@ QtObject {
       element.bind = bind;
     if (options)
       element.options = options;
-    if (action)
-      element.action = action;
+    if (run)
+      element.run = run;
     return element;
+  }
+
+  // A template's command action (its command is the script's, set when
+  // there is one)
+  function _act(id, name) {
+    return {
+      "id": id,
+      "name": name,
+      "kind": "command",
+      "command": "",
+      "wait": true
+    };
   }
 
   // A template's screen

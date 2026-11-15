@@ -10,13 +10,13 @@ import qs.components.content.parts.custom
 // the element (a CustomListRow) or across it as tiles (`orientation`, a
 // CustomListTile). A row's `state` tones its icon and meter through the
 // definition's states; `max` with a numeric value draws a meter; `image` a
-// thumbnail. A row's click runs the element's named action with {value} the
-// row's id, else its value, else its text; without an action, the click
-// command with {value} the row's text.
+// thumbnail. A row's click runs the element's click action with {value} the
+// row's id, else its value, else its text; with no action the rows aren't
+// pressable.
 CustomElementBase {
   id: root
 
-  readonly property bool clickable: root.canRun && (root.actionId !== "" || root.actions.click !== "")
+  readonly property bool clickable: root.canRun("click")
   readonly property bool across: root.options.orientation === "horizontal"
   // A row's icon is an icon of the desktop icon theme, drawn as its picture
   readonly property bool themed: root.options.iconSource === "theme"
@@ -71,10 +71,7 @@ CustomElementBase {
     }
     root.asking = "";
     askTimer.stop();
-    if (root.actionId !== "")
-      root.run("click", id || value || text);
-    else
-      root.act("click", text);
+    root.runTrigger("click", key);
   }
 
   ListModel {

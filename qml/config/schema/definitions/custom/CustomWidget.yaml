@@ -38,25 +38,9 @@ properties:
     title: Refresh name
     default: ''
     description: 'Empty: its id.'
-  invoke:
-    type: object
-    additionalProperties: false
-    description: How named actions run (buttons, keys, the bar, axiom ipc customWidgets act).
-    properties:
-      command:
-        x-scope: commands
-        type: string
-        title: Action command
-        default: ''
-        description: 'Runs a named action: {action}, {value} and {rev} are filled in, already quoted. Should exit quickly.'
-      hold:
-        type: boolean
-        title: Wait for each action
-        default: true
-        description: 'Other actions are off until it finishes and the script prints again, so a double press acts once.'
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, segments, width, icon, popout]
+    x-order: [style, segments, width, icon, popout, run]
     x-properties:
       icon:
         type: string
@@ -67,6 +51,17 @@ properties:
         x-enumLabels: {none: None, glyph: Inline, material: Icon}
         description: 'Inline: the format''s {icon}, drawn with the text.'
       popout: {type: boolean, title: Module on hover, default: true}
+      run:
+        type: object
+        additionalProperties: false
+        default: {}
+        description: The action each click or scroll runs.
+        properties:
+          click: {$ref: '#/definitions/ActionId', title: Click}
+          rightClick: {$ref: '#/definitions/ActionId', title: Right click}
+          middleClick: {$ref: '#/definitions/ActionId', title: Middle click}
+          scrollUp: {$ref: '#/definitions/ActionId', title: Scroll up}
+          scrollDown: {$ref: '#/definitions/ActionId', title: Scroll down}
   tooltip:
     type: boolean
     title: Tooltip
@@ -83,24 +78,14 @@ properties:
   actions:
     type: object
     additionalProperties: false
-    description: Commands run on click and scroll. Never on the lock screen.
+    description: What the widget can run. Elements and the bar pick one by its id. Never on the lock screen.
     properties:
-      click: {x-scope: commands, type: string, title: Click command, default: ''}
-      rightClick: {x-scope: commands, type: string, title: Right-click command, default: ''}
-      middleClick: {x-scope: commands, type: string, title: Middle-click command, default: ''}
-      scrollUp: {x-scope: commands, type: string, title: Scroll up command, default: ''}
-      scrollDown: {x-scope: commands, type: string, title: Scroll down command, default: ''}
-      refreshAfter: {type: boolean, title: Rerun after actions, default: true}
-      named:
-        type: object
-        additionalProperties: false
-        description: A named action instead of the command.
-        properties:
-          click: {$ref: '#/definitions/ActionId', title: Click action}
-          rightClick: {$ref: '#/definitions/ActionId', title: Right-click action}
-          middleClick: {$ref: '#/definitions/ActionId', title: Middle-click action}
-          scrollUp: {$ref: '#/definitions/ActionId', title: Scroll up action}
-          scrollDown: {$ref: '#/definitions/ActionId', title: Scroll down action}
+      items:
+        type: array
+        default: []
+        maxItems: 32
+        items: {$ref: '#/definitions/CustomWidgetAction'}
+      refreshAfter: {type: boolean, title: Rerun the script after an action, default: true}
   samples:
     type: object
     title: Samples
@@ -164,12 +149,5 @@ properties:
               type: array
               default: []
               items: {$ref: '#/definitions/CustomElement'}
-      keys:
-        x-scope: commands
-        type: object
-        title: Keys
-        default: {}
-        additionalProperties: {type: string, pattern: '^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
-        description: 'A key ("1", "space", "ctrl+z") → an action (overlay, edge menu, bar popout).'
       font: {type: string, title: Font, default: '', description: 'Text elements'' font family when they set none.'}
 required: [id]

@@ -240,7 +240,6 @@ ColumnLayout {
             history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
             actionsEnabled: true
             keysHost: true
-            keysEnabled: Object.keys(root.definition?.module?.keys ?? ({})).length > 0
             viewIndex: root.liveFields ? CustomWidgetData.pickView(root.definition?.module, root.liveFields).index : root.editor.viewIndex
           }
         }

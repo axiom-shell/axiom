@@ -1,0 +1,34 @@
+# One action of a custom widget (CustomWidget.actions.items): a command the
+# widget runs, or one of axiom's own actions. Elements and the bar name it by
+# its id (docs/dev/features/custom-widgets.md).
+
+type: object
+additionalProperties: false
+required: [id]
+properties:
+  id: {$ref: '#/definitions/ItemId'}
+  name: {type: string, title: Name, default: ''}
+  kind:
+    type: string
+    title: Runs
+    enum: [command, axiom]
+    default: command
+    x-control: toggle
+    x-enumLabels: {command: Command, axiom: Axiom action}
+  command:
+    x-scope: commands
+    type: string
+    title: Command
+    default: ''
+    description: '{value}: what the element sends. {rev} and {tree} too. Quoted for you.'
+  axiom:
+    x-scope: commands
+    type: string
+    title: Axiom action
+    default: ''
+    description: 'refresh, restart, screen:<screen id> (screen: the base), or a shell action that takes no argument.'
+  wait:
+    type: boolean
+    title: Wait for it to finish
+    default: true
+    description: Other actions wait, and a failure shows on the button. Off for commands that open an app.

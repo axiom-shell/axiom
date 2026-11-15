@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.components.methods
+import qs.services.compositor
 import qs.services.core
 import qs.services.session
 import qs.services.ui
@@ -12,15 +13,14 @@ import qs.services.ui
 // popout or module shows it (acquire/release by id, so the script runs once
 // for all of them), and its output is read into fields
 // (CustomWidgetData.resolve) for every consumer. Also keeps a short numeric
-// history for sparklines, and runs the widgets' actions: the commands of
-// Waybar's clicks, and named actions (invoke) that run the definition's
-// action command, or a built-in (axiom:refresh, axiom:restart, an
-// ActionsManager id).
+// history for sparklines, and runs the widgets' actions (actions.items,
+// picked by id from an element's or the bar's `run`): a command, or an
+// Axiom action (refresh, restart, a shell action of ActionsManager).
 //   CustomWidgetsManager.acquire(owner, id) / release(owner)
 //   CustomWidgetsManager.fields[id]   // resolved fields, or absent
 //   CustomWidgetsManager.history[id]  // { <binding>: [numbers] }
 //   CustomWidgetsManager.busy[id]     // a hold: { action, run, phase, until, sampled }
-//   CustomWidgetsManager.lastAction[id] // { action, failed, exitCode, message, at, run }
+//   CustomWidgetsManager.lastAction[id] // { action (its id), failed, exitCode, message, at, run }
 //   CustomWidgetsManager.actionRan(id, entry) // each action command's end, each refusal
 QtObject {
   id: root
@@ -49,10 +49,11 @@ QtObject {
   readonly property int holdGrace: 1000
 
   // An action command ended, or an action was refused: `entry` is { at (ms),
-  // action, command (as it ran: placeholders filled, {tree} expanded; ""
-  // when refused), exitCode, ms (how long it ran), stderr (its last line),
-  // refused (why not: invoke's reasons; "" when it ran) }. The editor keeps
-  // the last few of the selected definition's
+  // action (its id), name, command (as it ran: placeholders filled, {tree}
+  // expanded; "" when refused), exitCode (-1 when it didn't wait), ms (how
+  // long it ran), stderr (its last line), refused (why not: invoke's
+  // reasons; "" when it ran), detached (true: it didn't wait) }. The editor
+  // keeps the last few of the selected definition's
   signal actionRan(string id, var entry)
 
   // The Custom widgets page's draft and selection
@@ -97,62 +98,48 @@ QtObject {
     CommandManager.restart(root._command(def));
   }
 
-  // Run one of a definition's actions ("click", "rightClick", "middleClick",
-  // "scrollUp", "scrollDown"): its named action when it has one
-  // (actions.named, a scroll is continuous), else its command, then
-  // refresh it when it asks to
-  function act(id, action) {
-    const def = CustomWidgetsConfig.definition(id);
-    const named = def?.actions?.named?.[action] ?? "";
-    if (named !== "")
-      root.invoke(id, named, undefined, action.startsWith("scroll"));
-    else
-      root.runCommand(id, def?.actions?.[action] ?? "", undefined);
+  // Run the action a bar trigger ("click", "rightClick", "middleClick",
+  // "scrollUp", "scrollDown") names in the definition's bar.run, if any (a
+  // scroll is continuous)
+  function act(id, trigger) {
+    const ref = CustomWidgetsConfig.definition(id)?.bar?.run?.[trigger] ?? "";
+    if (ref !== "")
+      root.invoke(id, ref, undefined, trigger.startsWith("scroll"));
   }
 
-  // Run `command` for widget `id`, `{value}` filled in (shell-quoted unless
-  // a number). Nothing runs in the greeter or while the screen is locked.
-  function runCommand(id, command, value) {
-    if (!command || Paths.greeter || LockManager.builtinLocked)
-      return;
-    CommandManager.runDetached(CustomWidgetData.fillCommand(command, {
-      "value": CustomWidgetData.asText(value),
-      "tree": Paths.treePath
-    }));
-    if (CustomWidgetsConfig.definition(id)?.actions?.refreshAfter ?? true)
-      root._refreshSoon(id);
-  }
-
-  // Run the named action `action` of widget `id` with `value` ({value} in
-  // its command). Built-ins ("axiom:refresh", "axiom:restart",
-  // "axiom:<ActionsManager id>": never a session or destructive one) need
-  // no command; any other id runs the definition's action command
-  // (invoke.command, {action} {value} {rev} filled in, quoted) and, at
-  // exit 0, refreshes the script when the definition asks. `fromIpc`: the
-  // request comes from the named-action IPC (`axiom ipc customWidgets act`):
-  // refused while nothing shows the widget. Returns "" when it ran, else why not:
-  // "no widget", "not shown", "locked", "refused", "no action command",
-  // "failing" (the script isn't answering), "disabled" (the sample turns
-  // it off) or "busy" (another discrete action holds the widget: a double
-  // press acts once; invoke.hold off never holds). A continuous action
-  // (a scroll, a slider) never holds, one runs at a time and the latest
-  // value waits; built-ins never hold and are never refused for it
-  function invoke(id, action, value, continuous, fromIpc) {
-    const why = root._invoke(id, action, value, continuous, fromIpc);
-    if (why !== "" && why !== "no widget")
+  // Run action `ref` (an id, or a name) of widget `id` with `value` ({value}
+  // in its command). An Axiom action (refresh, restart or an ActionsManager
+  // id that takes no argument, never a session or destructive one) runs
+  // as it is; a command action fills {value} {rev} {tree} in (quoted) and
+  // runs; one that waits refreshes the script at exit 0 when the definition
+  // asks. `fromIpc`: the request comes from the IPC
+  // (`axiom ipc customWidgets act`): refused while nothing shows the widget.
+  // Returns "" when it ran, else why not: "no widget", "not shown", "locked",
+  // "no action" (no such action), "refused" (an Axiom action it may not
+  // run), "no command", "failing" (the script isn't answering), "disabled"
+  // (the sample turns it off) or "busy" (another discrete action that waits
+  // holds the widget: a double press acts once). A continuous action (a
+  // scroll, a slider) never holds, one runs at a time and the latest value
+  // waits; Axiom actions never hold and are never refused for it
+  function invoke(id, ref, value, continuous, fromIpc) {
+    const why = root._invoke(id, ref, value, continuous, fromIpc);
+    if (why !== "" && why !== "no widget") {
+      const item = CustomWidgetData.actionOf(CustomWidgetsConfig.definition(id), ref);
       root.actionRan(id, {
         "at": Date.now(),
-        "action": action,
+        "action": item?.id ?? ref,
+        "name": item?.name ?? "",
         "command": "",
         "exitCode": -1,
         "ms": 0,
         "stderr": "",
         "refused": why
       });
+    }
     return why;
   }
 
-  function _invoke(id, action, value, continuous, fromIpc) {
+  function _invoke(id, ref, value, continuous, fromIpc) {
     const def = CustomWidgetsConfig.definition(id);
     if (!def)
       return "no widget";
@@ -160,73 +147,95 @@ QtObject {
       return "not shown";
     if (Paths.greeter || LockManager.builtinLocked)
       return "locked";
-    if (action.startsWith("axiom:")) {
-      const rest = action.slice(6);
-      const refused = ActionsManager.sessionActions.concat(ActionsManager.destructive(rest) ? [rest] : []);
-      if (!CustomWidgetData.builtinAllowed(action, refused))
-        return "refused";
-      if (rest === "refresh")
-        root.refresh(id);
-      else if (rest === "restart")
-        root.restart(id);
-      else
-        ActionsManager.run(rest);
-      return "";
-    }
-    if (def.invoke.command === "")
-      return "no action command";
+    const item = CustomWidgetData.actionOf(def, ref);
+    if (item === null)
+      return "no action";
+    if (item.kind === "axiom")
+      return root._runAxiom(id, item.axiom);
+    if (item.command === "")
+      return "no command";
     const fields = root._fields[id];
     if (fields && fields.failure && fields.failure.kind !== "script")
       return "failing";
-    if (!CustomWidgetData.actionEnabled(fields?.actions, action))
+    if (!CustomWidgetData.actionEnabled(fields?.actions, item))
       return "disabled";
     if (continuous) {
       // One run of an action at a time; a value sent meanwhile replaces any
       // waiting one (the latest wins), run when the first ends
-      if (root._own(root._inFlight[id], action)) {
+      if (root._own(root._inFlight[id], item.id)) {
         root._pending[id] = Object.assign({}, root._pending[id], {
-          [action]: value
+          [item.id]: value
         });
         return "";
       }
       root._inFlight[id] = Object.assign({}, root._inFlight[id], {
-        [action]: true
+        [item.id]: true
       });
-      root._start(id, action, value, 0, true);
+      root._start(id, item, value, 0, true);
       return "";
     }
     // A discrete one is refused while another holds the widget
-    const hold = def.invoke.hold;
     if (root._busy[id])
       return "busy";
-    const run = ++root._runSeq;
-    if (hold)
-      root._hold(id, action, run);
-    root._start(id, action, value, run, false);
+    if (item.wait) {
+      const run = ++root._runSeq;
+      root._hold(id, item.id, run);
+      root._start(id, item, value, run, false);
+      return "";
+    }
+    // One that doesn't wait (it opens an app): started and forgotten
+    const command = root._fill(id, item, value);
+    CommandManager.runDetached(command);
+    if (def.actions.refreshAfter)
+      root._refreshSoon(id);
+    root.actionRan(id, {
+      "at": Date.now(),
+      "action": item.id,
+      "name": item.name,
+      "command": command,
+      "exitCode": -1,
+      "ms": 0,
+      "stderr": "",
+      "refused": "",
+      "detached": true
+    });
     return "";
   }
 
-  // Runs the action command (`run`: the discrete run's number, 0 for a
-  // continuous one)
-  function _start(id, action, value, run, continuous) {
-    const def = CustomWidgetsConfig.definition(id);
-    const command = CustomWidgetData.fillCommand(def.invoke.command, {
-      "action": action,
+  // An Axiom action: refresh, restart, or an ActionsManager id (not a session
+  // or destructive one, nor one that takes an argument). "" when it ran,
+  // else "refused"
+  function _runAxiom(id, action) {
+    if (action === "refresh") {
+      root.refresh(id);
+      return "";
+    }
+    if (action === "restart") {
+      root.restart(id);
+      return "";
+    }
+    const refused = ActionsManager.sessionActions.concat(ActionsManager.destructive(action) ? [action] : []);
+    if (action === "" || action.startsWith("screen:") || !CustomWidgetData.builtinAllowed(action, refused) || KeybindManager.needsArgument(action))
+      return "refused";
+    ActionsManager.run(action);
+    return "";
+  }
+
+  // The command of action `item` with {value}, {rev} and {tree} filled in
+  function _fill(id, item, value) {
+    return CustomWidgetData.fillCommand(item.command, {
       "value": CustomWidgetData.asText(value),
       "rev": root._fields[id]?.rev ?? "",
       "tree": Paths.treePath
     });
-    const started = Date.now();
-    CommandManager.run(["sh", "-c", command], (code, out, err) => root._done(id, action, run, continuous, code, err, command, started));
   }
 
-  // What an action's name reads as on a button with no label of its own
-  function actionLabel(id) {
-    if (id === "axiom:refresh")
-      return I18n.tr("Refresh");
-    if (id === "axiom:restart")
-      return I18n.tr("Restart");
-    return id.startsWith("axiom:") ? ActionsManager.label(id.slice(6)) : "";
+  // Runs the action command (`run`: the discrete run's number, 0 for a
+  // continuous one)
+  function _start(id, item, value, run, continuous) {
+    const command = root._fill(id, item, value);
+    const started = Date.now();
+    CommandManager.run(["sh", "-c", command], (code, out, err) => root._done(id, item, run, continuous, code, err, command, started));
   }
 
   // The lookup `axiom ipc customWidgets refresh` uses: a widget by its
@@ -310,18 +319,19 @@ QtObject {
   // when a sample came meanwhile; a failure releases it. At exit 0 the
   // script runs again when the definition asks. A continuous run starts
   // the value sent meanwhile
-  function _done(id, action, run, continuous, exitCode, stderr, command, startedAt) {
+  function _done(id, item, run, continuous, exitCode, stderr, command, startedAt) {
     const failed = exitCode !== 0;
     const line = String(stderr ?? "").split("\n").map(l => l.trim()).filter(l => l !== "").pop() ?? "";
     const message = failed ? (line !== "" ? line.slice(0, 300) : I18n.tr("The action failed with code {0}", exitCode)) : "";
     if (failed)
-      console.log(`[CustomWidgetsManager] ${id}: action ${action} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
+      console.log(`[CustomWidgetsManager] ${id}: action ${item.id} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
     // a widget no longer shown forgets its runs (_sync)
     if (!(id in root._watching))
       return;
     root.actionRan(id, {
       "at": Date.now(),
-      "action": action,
+      "action": item.id,
+      "name": item.name,
       "command": command,
       "exitCode": exitCode,
       "ms": Date.now() - startedAt,
@@ -330,7 +340,7 @@ QtObject {
     });
     root._lastAction = Object.assign({}, root._lastAction, {
       [id]: {
-        "action": action,
+        "action": item.id,
         "failed": failed,
         "exitCode": exitCode,
         "message": message,
@@ -351,15 +361,15 @@ QtObject {
     if (!failed && CustomWidgetsConfig.definition(id)?.actions.refreshAfter)
       root.refresh(id);
     if (continuous) {
-      const waiting = root._own(root._pending[id], action) ? root._pending[id][action] : undefined;
+      const waiting = root._own(root._pending[id], item.id) ? root._pending[id][item.id] : undefined;
       const inFlight = Object.assign({}, root._inFlight[id]);
-      delete inFlight[action];
+      delete inFlight[item.id];
       root._inFlight[id] = inFlight;
-      if (root._own(root._pending[id], action)) {
+      if (root._own(root._pending[id], item.id)) {
         const rest = Object.assign({}, root._pending[id]);
-        delete rest[action];
+        delete rest[item.id];
         root._pending[id] = rest;
-        root.invoke(id, action, waiting, true);
+        root.invoke(id, item.id, waiting, true);
       }
     }
   }
@@ -582,7 +592,7 @@ QtObject {
         "text": output.text,
         "exited": output.exited ?? false
       },
-      "interactive": def.invoke.command !== "" || def.module.views.length > 0,
+      "interactive": def.actions.items.some(a => a.kind === "command" && a.command !== "") || def.module.views.length > 0,
       "stream": def.mode === "stream",
       "words": {
         "exited": I18n.tr("The script exited with code {0}"),
@@ -691,10 +701,11 @@ QtObject {
       return "";
     }
 
-    // Run a named action of a custom widget (its name as `refresh`) as a
-    // press would, holding it as one does. Answers "" when it ran, else why
-    // not: "not shown" (nothing shows the widget: a stream isn't running),
-    // "locked", "refused", "no action command", "failing", "disabled" or "busy"
+    // Run an action of a custom widget (its name as `refresh`; the action by
+    // its id or name) as a press would, holding it as one does. Answers ""
+    // when it ran, else why not: "not shown" (nothing shows the widget: a
+    // stream isn't running), "locked", "no action", "refused", "no command",
+    // "failing", "disabled" or "busy"
     function act(name: string, action: string): string {
       return root._ipcAct(name, action, undefined);
     }

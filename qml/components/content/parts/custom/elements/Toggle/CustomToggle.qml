@@ -7,9 +7,9 @@ import qs.components.content.parts.custom
 
 // A custom widget's Toggle element: its state binding (true, on, yes, 1,
 // enabled, active or a non-zero number is on) as a switch beside its label,
-// or as a quick-settings ActionPill; flipping it runs its named action
-// (`{value}` on or off), else its on or off command, and holds the new
-// state until the next sample.
+// or as a quick-settings ActionPill; flipping it runs its turn-on or
+// turn-off action (`{value}` on or off) and holds the new state until the
+// next sample.
 CustomElementBase {
   id: root
 
@@ -29,7 +29,7 @@ CustomElementBase {
 
   function flip(on) {
     root.held = on ? 1 : 0;
-    root.run(on ? "on" : "off", on ? "on" : "off");
+    root.runTrigger(on ? "on" : "off", on ? "on" : "off");
   }
 
   Loader {
@@ -50,7 +50,7 @@ CustomElementBase {
       }
       StyledSwitch {
         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-        enabled: root.canRun
+        enabled: root.canRun(root.shownOn ? "off" : "on")
         checked: root.shownOn
         onToggled: root.flip(checked)
       }
@@ -60,7 +60,7 @@ CustomElementBase {
   Component {
     id: pill
     ActionPill {
-      enabled: root.canRun
+      enabled: root.canRun(root.shownOn ? "off" : "on")
       icon: root.options.icon
       label: root.label
       status: root.shownOn ? I18n.tr("On") : I18n.tr("Off")

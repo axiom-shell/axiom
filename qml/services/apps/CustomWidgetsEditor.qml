@@ -130,13 +130,13 @@ QtObject {
         "label": I18n.tr("None (the commands)")
       }
     ];
-    for (const id of CustomWidgetsConfig.builtinActions)
+    for (const id of ["refresh", "restart"])
       out.push({
-        "value": id,
-        "label": CustomWidgetsManager.actionLabel(id)
+        "value": "axiom:" + id,
+        "label": id === "refresh" ? I18n.tr("Refresh") : I18n.tr("Restart")
       });
     for (const id of KeybindManager.actions) {
-      if (CustomWidgetData.builtinAllowed("axiom:" + id, refused))
+      if (CustomWidgetData.builtinAllowed(id, refused))
         out.push({
           "value": "axiom:" + id,
           "label": ActionsManager.label(id)
