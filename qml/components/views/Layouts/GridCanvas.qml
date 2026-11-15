@@ -32,6 +32,8 @@ WorkArea {
   // `emptyText` shows under the icon)
   property var modules: null
   property string emptyText: ""
+  // The sentence over an empty canvas; a page with another source of modules says its own
+  property string emptyHint: I18n.tr("Empty: drag modules here from the library below, or click one to add it.")
   // An edge menu's edge ("left", …), drawn along that side; "" for a page
   property string edge: ""
   // An edge menu's screen around it ({ x, y, w, h } in grid units from
@@ -559,7 +561,7 @@ WorkArea {
       width: Math.min(parent.width, Widget.textPx(260))
       horizontalAlignment: Text.AlignHCenter
       overflow: "wrap"
-      text: I18n.tr("Empty: drag modules here from the library below, or click one to add it.")
+      text: root.emptyHint
       tone: "muted"
     }
 

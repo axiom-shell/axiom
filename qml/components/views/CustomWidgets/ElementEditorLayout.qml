@@ -88,6 +88,7 @@ GridDragLayer {
         title: I18n.tr("Module")
         icon: "widgets"
         emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")
+        emptyHint: I18n.tr("An empty module: drag elements here from the left, or click one to add it where there's room.")
       }
     }
   }

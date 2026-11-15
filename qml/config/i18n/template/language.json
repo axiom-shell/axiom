@@ -295,6 +295,7 @@
     "An XKB layout (us, de). For an input method, the layout it types on. Empty: the first.": "",
     "An app": "",
     "An app is keeping the screen on: the steps below wait until it lets go.": "",
+    "An empty module: drag elements here from the left, or click one to add it where there's room.": "",
     "An environment variable holding the key. It wins over a stored one.": "",
     "An event starting within 15 minutes.": "",
     "An icon name or glyph, and text. The widget's Special workspace labels picks which shows.": "",
