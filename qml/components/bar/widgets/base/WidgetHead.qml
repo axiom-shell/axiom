@@ -23,8 +23,8 @@ Item {
   property string text: ""
   required property color iconColor
   required property color textColor
-  // The colors follow a change by gliding unless `glides` is off (a pulse
-  // sets them each frame)
+  // The colors follow a change by gliding unless `glides` is off (a caller
+  // drawing every frame itself)
   property bool glides: true
   readonly property Item head: ownHead ?? (icon !== "" ? iconHead : text !== "" ? textHead : null)
   // Where it starts along the widget

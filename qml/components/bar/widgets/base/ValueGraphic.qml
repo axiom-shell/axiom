@@ -268,7 +268,7 @@ Item {
           color: root.paint.caption
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize * ValueGraphics.stackedValueScale * stack.fit
-          font.bold: true
+          font.bold: true // style-exempt: bar look (D-24)
           font.features: {
             "tnum": 1
           }

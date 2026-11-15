@@ -237,7 +237,7 @@ Item {
         layer.enabled: true // style-exempt: no text
         layer.effect: MultiEffect { // style-exempt: no text
           shadowEnabled: true
-          shadowColor: BarsConfig.shadowColor(shadowWindow.look)
+          shadowColor: Style.shadowColor(shadowWindow.look)
           shadowBlur: 1
           blurMax: shadowWindow.look.shadowSize
         }

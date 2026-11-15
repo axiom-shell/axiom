@@ -24,7 +24,7 @@ QtObject {
       return Qt.color(stops[0]);
     const x = Math.max(0, Math.min(1, t)) * n;
     const k = Math.min(n - 1, Math.floor(x));
-    return root._mix(stops[k], stops[k + 1], x - k);
+    return Tone.mix(stops[k], stops[k + 1], x - k);
   }
 
   // The part of the bar gradient from `start` to `end` along the bar (0 to
@@ -47,10 +47,5 @@ QtObject {
           "color": Qt.alpha(root.gradientAt(stops, start + span * position), alpha)
         });
     return [at(0), at(inner), at(1)];
-  }
-
-  function _mix(a, b, f) {
-    const p = Qt.color(a), q = Qt.color(b);
-    return Qt.rgba(p.r + (q.r - p.r) * f, p.g + (q.g - p.g) * f, p.b + (q.b - p.b) * f, p.a + (q.a - p.a) * f);
   }
 }

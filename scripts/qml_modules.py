@@ -29,7 +29,7 @@ QML_DIRS = ["components", "shell", "services", "config"]
 # The colour calls a bar widget may not make (check_structure T2): the shell's colour functions and raw colours
 WIDGET_COLOR_CALLS = re.compile(
     r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\s*\(|\bBarWidgetStyle\.|"
-    r"\bBarsConfig\.\w*Colors?\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"
+    r"\bBarsConfig\.\w*Colors?\(|\bBarColors\.(?:widgetColors|pulseLadder|resolve)\s*\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"
     r"[\"'](?:white|black|red|green|blue|yellow|orange|purple|gray|grey|cyan|magenta)[\"']")
 
 

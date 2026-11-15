@@ -599,7 +599,7 @@ Rectangle {
         y: area.y
         width: area.width
         height: area.height
-        color: "black"
+        color: "black" // style-exempt: mask
       }
     }
   }
@@ -644,13 +644,13 @@ Rectangle {
       id: solidFill
       anchors.fill: parent
       visible: root.barConfig.solid
-      color: root.backed ? "transparent" : BlurManager.fillOn(Theme.background, root.blurScreen)
+      color: root.backed ? "transparent" : BlurManager.fillOn(Style.surfacePage, root.blurScreen)
 
       Rectangle {
         parent: shadowShape
         anchors.fill: parent
         visible: solidFill.visible
-        color: "black"
+        color: "black" // style-exempt: mask
       }
 
       BlurShape {
@@ -678,7 +678,7 @@ Rectangle {
           "start": 0,
           "end": 0
         }
-        color: Theme.foreground
+        color: Style.frameStroke
         width: root.isVertical ? Appearance.borderWidth : piece.end - piece.start
         height: root.isVertical ? piece.end - piece.start : Appearance.borderWidth
         x: root.isVertical ? (root.barConfig.left ? root.width - width : 0) : piece.start
@@ -721,7 +721,7 @@ Rectangle {
         y: root.isVertical ? rect.start : across
         width: root.isVertical ? depth : rect.length
         height: root.isVertical ? rect.length : depth
-        color: root.backed ? "transparent" : BlurManager.fillOn(Theme.background, root.blurScreen)
+        color: root.backed ? "transparent" : BlurManager.fillOn(Style.surfacePage, root.blurScreen)
         // The stroke drawn by the one below, left open where a popout joins
         border.width: 0
 
@@ -743,7 +743,7 @@ Rectangle {
           Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: Theme.foreground
+            border.color: Style.frameStroke
             border.width: Appearance.borderWidth
             topLeftRadius: island.topLeftRadius
             topRightRadius: island.topRightRadius
@@ -764,7 +764,7 @@ Rectangle {
           topRightRadius: island.topRightRadius
           bottomLeftRadius: island.bottomLeftRadius
           bottomRightRadius: island.bottomRightRadius
-          color: "black"
+          color: "black" // style-exempt: mask
         }
 
         BlurShape {
@@ -912,7 +912,7 @@ Rectangle {
             y: area.y - pill.boxRect.y
             width: area.width
             height: area.height
-            color: BlurManager.fillOn(Theme.background, root.blurScreen)
+            color: BlurManager.fillOn(Style.surfacePage, root.blurScreen)
           }
         }
 
@@ -922,8 +922,8 @@ Rectangle {
           source: pill
           x: pill.x
           y: pill.y
-          fillColor: "black"
-          mirrorStroke: "black"
+          fillColor: "black" // style-exempt: mask
+          mirrorStroke: "black" // style-exempt: mask
         }
         // ...and where it runs on past its outline: off a bare screen
         // edge, into what it joins straight (AttachedSurface.shadowRunOn).
@@ -946,7 +946,7 @@ Rectangle {
               y: area.y
               width: area.width
               height: area.height
-              color: "black"
+              color: "black" // style-exempt: mask
             }
           }
         }

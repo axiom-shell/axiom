@@ -27,7 +27,7 @@ MultiEffect {
   property var look: BarStyle.look
 
   shadowEnabled: look.shadow
-  shadowColor: BarsConfig.shadowColor(look)
+  shadowColor: Style.shadowColor(look)
   shadowBlur: 1
   blurMax: look.shadowSize
   maskEnabled: cut

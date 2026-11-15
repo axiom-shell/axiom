@@ -82,4 +82,4 @@ Each bar end's `kind`, joining rules, pill bars merging at a corner, and pills t
   - `innerInset`: inset past a solid bar reserving its edge
   - in the `axiom-border-shadow` namespace. Its layer rule stacks it under every other axiom surface, the overlay backdrop included.
 - A solid bar reserving its edge under the border casts no shadow of its own (`BarsConfig.enrichBarConfig`'s `borderShadowed`).
-- `BarsConfig.shadowColor` resolves the color for both the border and the bar shadows (see [Widget shapes](widget-shapes-runs.md#bar-shadow)).
+- `Style.shadowColor` resolves the color for both the border and the bar shadows (see [Widget shapes](widget-shapes-runs.md#bar-shadow)).

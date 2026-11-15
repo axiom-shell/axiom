@@ -115,10 +115,13 @@ QtObject {
     return BarGradient.gradientSlice(root.barConfig.palette.gradientStops, root.spotOf(item, from), root.spotOf(item, to), part.alpha);
   }
 
-  // `look` mixed toward `muted` by `pulse` (0-1), in the fields `keys`
-  // names (null: all of them), as a pulsing cell draws it
-  function pulsed(look, muted, pulse, keys) {
-    return BarWidgetStyle.mixColors(look, muted, pulse, keys);
+  // How many steps a pulse takes (BarWidgetStyle.pulseSteps)
+  readonly property int pulseSteps: BarWidgetStyle.pulseSteps
+
+  // The ladder a pulsing cell steps along (BarWidgetStyle.pulseLadder), from
+  // `look` to `muted`, in the fields `keys` names (null: all of them)
+  function ladderOf(look, muted, keys) {
+    return BarWidgetStyle.pulseLadder(look, muted, BarWidgetStyle.pulseSteps, keys);
   }
 
   // `look` with its box, outline and line cleared (the active cell's box at

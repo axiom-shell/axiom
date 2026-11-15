@@ -142,7 +142,7 @@ A widget drawn one box per item is one host per item, so its boxes are run membe
 - `BarContainer` paints the bar in one `surface` layer: its background, inner stroke and pills.
 - A `shadow` (on or off) therefore follows their outline without redrawing for the widgets: a `MultiEffect` shadow spread evenly round it, in `shadowColor` (Auto: the accent).
 - `shadowReach` widens the bar window on its inner side. The input mask stays the bar.
-- `BarsConfig.shadowColor` resolves a shadow's color, both for the bar and for the border's inward shadow (see [Layering and corners](layering-and-corners.md#border-shadow-window)): `BarsConfig.shadowBaseColor`, capped at `Appearance.shadowAlphaMax` and premultiplied, as `MultiEffect` blends `shadowColor` (a color cleared by its alpha alone still adds its light). Windows matching axiom's shadow take `shadowBaseColor` ([window look](../compositor/window-look.md)).
+- `Style.shadowColor` resolves a shadow's color, both for the bar and for the border's inward shadow (see [Layering and corners](layering-and-corners.md#border-shadow-window)): `Style.shadowBaseColor`, capped at `Appearance.shadowAlphaMax` and premultiplied, as `MultiEffect` blends `shadowColor` (a color cleared by its alpha alone still adds its light). Windows matching axiom's shadow take `Style.shadowBaseColor` ([window look](../compositor/window-look.md)).
 
 ### Accent line
 - Above the shadow, `bar/AccentLines` (in `BarContainer`, over its surface and under its sections) draws the look's `accentLine` (`{ side, color, fade, width }`, or null) along the bar's inner or outer edge, fading into its `fade`.

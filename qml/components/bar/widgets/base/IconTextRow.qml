@@ -45,7 +45,8 @@ Item {
   // Between the icon's glyphs side by side (its lines on a horizontal bar)
   property real iconSpacing: 0
   // What the label and the icon draw in, from the owner. They follow a
-  // change by gliding unless `glides` is off (a pulse sets them each frame)
+  // change by gliding unless `glides` is off (a caller drawing every frame
+  // itself)
   required property color textColor
   required property color iconColor
   property bool glides: true

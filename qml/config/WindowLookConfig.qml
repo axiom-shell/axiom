@@ -17,8 +17,8 @@ QtObject {
   readonly property bool blurSet: _c.blur.enabled
 
   // The border colors: the ones picked, else the theme's
-  readonly property color activeBorder: _c.borders.activeColor ? Theme.resolveColor(_c.borders.activeColor) : Theme.borderFocus
-  readonly property color inactiveBorder: _c.borders.inactiveColor ? Theme.resolveColor(_c.borders.inactiveColor) : Theme.border
+  readonly property color activeBorder: _c.borders.activeColor ? Style.resolve(_c.borders.activeColor) : Style.resolve("borderFocus")
+  readonly property color inactiveBorder: _c.borders.inactiveColor ? Style.resolve(_c.borders.inactiveColor) : Style.resolve("border")
   // The windows' shadow: axiom's (Bar style's shadow, its color and size)
   // while it matches it, where off casts none; else its own. Matched, it
   // is a soft (blurred) shadow, as axiom draws it where nothing caps it
@@ -31,7 +31,7 @@ QtObject {
   readonly property int shadowSize: shadowMatched ? _barLook.shadowSize : _c.shadow.size
   // Its color: axiom's, the one picked, or none for the compositor's own
   readonly property bool shadowThemed: shadowMatched || _c.shadow.color !== ""
-  readonly property color shadowColor: shadowMatched ? BarsConfig.shadowBaseColor(_barLook) : shadowThemed ? Theme.resolveColor(_c.shadow.color) : "black"
+  readonly property color shadowColor: shadowMatched ? Style.shadowBaseColor(_barLook) : shadowThemed ? Style.resolve(_c.shadow.color) : "black" // style-exempt: the compositor's own shadow colour, never drawn by the shell
   // (a picked color nearly opaque, as the compositors' own are)
   readonly property real shadowAlpha: shadowMatched ? shadowColor.a : 0.93
   // How strong windows cast it (1 = as above), on top of its alpha

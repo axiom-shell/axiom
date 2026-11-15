@@ -365,6 +365,48 @@ QtObject {
     }
   }
 
+  // ---- shadows ----
+
+  // A shadow's colour: `look.shadowColor` (a bar's look or the BarStyle
+  // section's), Automatic the theme's raw accent (not the nudged `accent`)
+  function shadowBaseColor(look) {
+    return Qt.color(look.shadowColor ? root.resolve(look.shadowColor) : root.resolve("accent"));
+  }
+
+  // What a shadow is drawn in (shadowBaseColor). While surfaces blur, it
+  // stays under Hyprland's blur threshold (Appearance.shadowAlphaMax), so
+  // the blur doesn't spread into it.
+  // Premultiplied, as MultiEffect blends its shadowColor: a color made
+  // clearer by its alpha alone keeps its light (a glow capped to 0 still
+  // drew in full, and SwayFX blurred it again on every redraw nearby).
+  // Memoised per look; it reads `_roles` and the cap before the lookup, so a
+  // binding that hits still depends on both (the cache is emptied in place
+  // when the theme's roles changed: no handler-order dependence).
+  function shadowColor(look) {
+    const roles = root._roles;
+    const max = Appearance.shadowAlphaMax;
+    const memo = root._shadowMemo;
+    if (memo.roles !== roles) {
+      memo.roles = roles;
+      for (const k in memo.map)
+        delete memo.map[k];
+    }
+    const key = `${look.shadowColor}|${max}`;
+    const hit = memo.map[key];
+    if (hit !== undefined)
+      return hit;
+    const color = root.shadowBaseColor(look);
+    const a = Math.min(color.a, max);
+    const result = Qt.rgba(color.r * a, color.g * a, color.b * a, a);
+    memo.map[key] = result;
+    return result;
+  }
+  // mutated in place, never reassigned (a reassignment inside a binding loops)
+  readonly property var _shadowMemo: ({
+      "roles": null,
+      "map": ({})
+    })
+
   // ---- translucency ----
 
   // The user's surface opacity, raised to the theme's readability floor

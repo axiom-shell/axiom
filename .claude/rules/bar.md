@@ -11,6 +11,7 @@ paths:
 - **Layer order** (bars, border, popouts, dock, menus, backdrops, screenshot) is `LayerStack.layers` alone, turned into compositor rules by the daemon. Change the table and `tst_LayerStack`'s order test, never a number in a doc. Hyprland reads `order` only when a surface maps, so a window whose namespace changes is remade (keyed on `BarsConfig.layerNamespace`).
 - **Corners and ends are `methods/BarEnds`' alone** (`ends` on each `ScreenEdgeManager.bars` entry): read the end's `kind`; a new case is a `BarEnds` rule plus a `tst_BarEnds` row.
 - **Widget styles are traits in `methods/BarLook`**: nothing else compares a `widgetStyle` string (`check_structure`). Code branches on the look's traits and resolved fields (`barConfig.look`); a schema asks `$bar.<trait>`. A new style is a trait record (`docs/dev/bar/widget-style.md` › Adding a widget style).
+- **Colours:** `BarColors` (`resolve`, `foreground`/`background`, memoised `widgetColors`, pulse ladders) and `Style.shadowColor`; nothing under `bar/` outside `look/` reads `Theme`, and a pulse steps along `BarWidgetStyle.pulseLadder`, never mixing per frame ([widget style](../../docs/dev/bar/widget-style.md)).
 - Bars and the border never draw over a fullscreen window, and nothing maps a Top window in response to fullscreen.
 - Geometry animates what's drawn, never what's measured.
 - Before changing how surfaces sit on an edge, read `docs/dev/bar/layering-and-corners.md` and `docs/dev/popouts/surface-context.md`.

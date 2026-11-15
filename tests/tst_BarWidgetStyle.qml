@@ -838,4 +838,62 @@ TestCase {
     console.info(`sweep: ${cases} cell cases in ${Date.now() - started} ms`);
     verify(fails.length === 0, `${fails.length} of ${cases} cases fail:\n` + fails.slice(0, 12).join("\n"));
   }
+
+  // ---- Pulse ladder ----
+
+  // Whether `x` and `y` hold the same colours, arrays and fields
+  function deepSame(x, y) {
+    const isColor = v => (typeof v === "string" && /^(#[0-9a-fA-F]+|transparent)$/.test(v)) || (typeof v === "object" && v !== null && v.r !== undefined);
+    if (isColor(x) && isColor(y))
+      return Qt.colorEqual(x, y);
+    if (Array.isArray(x) || Array.isArray(y))
+      return Array.isArray(x) && Array.isArray(y) && x.length === y.length && x.every((v, i) => root.deepSame(v, y[i]));
+    if (x !== null && typeof x === "object" && y !== null && typeof y === "object") {
+      const keys = Object.keys(x);
+      return keys.length === Object.keys(y).length && keys.every(k => k in y && root.deepSame(x[k], y[k]));
+    }
+    return x === y;
+  }
+
+  function ladderPair(look) {
+    const bar = Bars.bar({
+      "widgetStyle": look
+    });
+    return [BarWidgetStyle.widgetColors(bar, "#fb4934", "#282828", {}), BarWidgetStyle.widgetColors(bar, "#fb4934", "#282828", {
+        "muted": true
+      })];
+  }
+
+  function test_pulse_ladder() {
+    for (const look of ["filled", "outline"]) {
+      const [a, b] = root.ladderPair(look);
+      const ladder = BarWidgetStyle.pulseLadder(a, b, 16, null);
+      compare(ladder.length, 17, look + ": 17 entries");
+      verify(ladder[0] === a, look + ": [0] is the first");
+      verify(ladder[16] === b, look + ": [16] is the muted");
+      for (let k = 1; k < 16; k++)
+        verify(root.deepSame(ladder[k], BarWidgetStyle.mixColors(a, b, k / 16)), `${look}: step ${k}`);
+    }
+  }
+
+  function test_pulse_ladder_keys() {
+    const keys = ["content", "back"];
+    const bar = Bars.bar({
+      "widgetStyle": "filled"
+    });
+    const cell = muted => BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {
+        "muted": muted
+      }), "#fb4934", "#282828", "urgent");
+    const a = cell(false), b = cell(true);
+    const ladder = BarWidgetStyle.pulseLadder(a, b, 16, keys);
+    compare(ladder.length, 17, "17 entries");
+    verify(ladder[0] === a, "[0] is the first");
+    verify(root.deepSame(ladder[16], Object.assign({}, a, b)), "[16] is the first with the muted");
+    for (let k = 1; k < 16; k++)
+      verify(root.deepSame(ladder[k], Object.assign({}, a, BarWidgetStyle.mixColors(a, b, k / 16, keys))), `step ${k}`);
+  }
+
+  function test_pulse_steps() {
+    compare(BarWidgetStyle.pulseSteps, 16);
+  }
 }

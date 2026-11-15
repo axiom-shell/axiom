@@ -296,7 +296,6 @@ Item {
     leadAfterIcon: graphic.afterIcon
     textColor: root.paint.text
     iconColor: root._rowIconColor
-    glides: !root.pulsing
   }
 
   // Its display style's graphic in the row's lead slot: in the colors of
@@ -350,7 +349,6 @@ Item {
     hasLabel: root.ownContent !== null
     iconColor: root.paint.icon
     textColor: root.paint.headText
-    glides: !root.pulsing
   }
 
   Loader {

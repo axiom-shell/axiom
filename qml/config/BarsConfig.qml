@@ -5,7 +5,8 @@ import qs.services.core
 import qs.components.methods
 
 // Reader for the Bars section and the bar look helpers: derived layout
-// values (enrichBarConfig), widget colors, look groups and autoColor fields.
+// values (enrichBarConfig), cell colors (widget colors: BarColors), look
+// groups and autoColor fields.
 QtObject {
   id: root
 
@@ -28,9 +29,9 @@ QtObject {
       "borderWidth": Appearance.borderWidth,
       "screenBorder": Appearance.screenBorder,
       "screenMargin": Appearance.screenMargin,
-      "resolve": name => Theme.resolveColor(name),
-      "foreground": Theme.foreground,
-      "background": Theme.background,
+      "resolve": BarColors.env.resolve,
+      "foreground": BarColors.env.foreground,
+      "background": BarColors.env.background,
       "outputs": General.outputs,
       "autoColorFields": root.autoColorFields,
       "baseColorNames": Theme.baseColorNames,
@@ -59,12 +60,6 @@ QtObject {
   // gaps an Automatic floating gap keeps (BarEnrich.endsOptions)
   function endsOptions(gapsOut, floatGaps) {
     return BarEnrich.endsOptions(gapsOut, floatGaps, root.enrichEnv());
-  }
-
-  // What a bar widget draws in on its bar (BarWidgetStyle.widgetColors):
-  // `foregroundName` is the text color it's configured with.
-  function widgetColors(barConfig, accent, foregroundName, widget) {
-    return BarWidgetStyle.widgetColors(barConfig, accent, Theme.resolveColor(foregroundName), widget);
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
@@ -129,12 +124,12 @@ QtObject {
   // hover box, null for Auto: the palette's cellHover, BarWidgetStyle.cell)
   function workspaceColors(properties) {
     return {
-      "activeColor": Theme.resolveColor(properties.activeColor),
-      "occupiedColor": Theme.resolveColor(properties.occupiedColor),
-      "urgentColor": Theme.resolveColor(properties.urgentColor),
-      "emptyColor": Theme.resolveColor(properties.emptyColor),
-      "textColor": Theme.resolveColor(properties.foregroundColor),
-      "hoverColor": properties.hoverColor ? Theme.resolveColor(properties.hoverColor) : null
+      "activeColor": BarColors.resolve(properties.activeColor),
+      "occupiedColor": BarColors.resolve(properties.occupiedColor),
+      "urgentColor": BarColors.resolve(properties.urgentColor),
+      "emptyColor": BarColors.resolve(properties.emptyColor),
+      "textColor": BarColors.resolve(properties.foregroundColor),
+      "hoverColor": properties.hoverColor ? BarColors.resolve(properties.hoverColor) : null
     };
   }
 
@@ -162,24 +157,6 @@ QtObject {
   // `x-autoColor` role, and whether it gives way to the bar's gradient
   // while Auto (an `accent` always, else `x-autoGradient`)
   readonly property var autoColorFields: BarEnrich.autoColorFields(ConfigManager.configSchema)
-
-  // The color of a shadow: `shadowColor` as a bar's look or the BarStyle
-  // section has it. Automatic is the accent.
-  function shadowBaseColor(look) {
-    return Qt.color(look.shadowColor ? Theme.resolveColor(look.shadowColor) : Theme.accent);
-  }
-
-  // What a shadow is drawn in (shadowBaseColor). While surfaces blur, it
-  // stays under Hyprland's blur threshold (Appearance.shadowAlphaMax), so
-  // the blur doesn't spread into it.
-  // Premultiplied, as MultiEffect blends its shadowColor: a color made
-  // clearer by its alpha alone keeps its light (a glow capped to 0 still
-  // drew in full, and SwayFX blurred it again on every redraw nearby).
-  function shadowColor(look) {
-    const color = shadowBaseColor(look);
-    const a = Math.min(color.a, Appearance.shadowAlphaMax);
-    return Qt.rgba(color.r * a, color.g * a, color.b * a, a);
-  }
 
   // How much further than half a connector gap past a transparent bar's
   // inner edge a box detached from it (a bar popout, a floating edge menu)

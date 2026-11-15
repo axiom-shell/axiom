@@ -26,5 +26,17 @@
   "qml/shell/NoParentNotice.qml": {
     "rules": ["R2", "R5", "R7"],
     "reason": "shown when axiom didn't start the shell: reads no config, creates no Style"
+  },
+  "qml/components/hosts/popout/SurfaceShadow.qml": {
+    "rules": ["R6"],
+    "reason": "draws the shell's shadow for a look it is handed: Style.shadowColor(look), memoised per look (tokens.md › Performance 6)"
+  },
+  "qml/components/surfaces/border/RoundedBorders.qml": {
+    "rules": ["R6"],
+    "reason": "draws the shell's shadow for a look it is handed: Style.shadowColor(look), memoised per look (tokens.md › Performance 6)"
+  },
+  "qml/components/bar/**": {
+    "rules": ["R7"],
+    "reason": "colours come from the bar palette (paint, BarColors), D-24"
   }
 }
