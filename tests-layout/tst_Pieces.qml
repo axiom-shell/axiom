@@ -768,4 +768,38 @@ TestCase {
     zoomed.contentZoom = 1;
     compare(zoomed.text.renderType, Text.NativeRendering);
   }
+
+  // The underline heads straight for its final place: no overshoot, no creep back
+  function test_tab_bar_underline_slides_without_overshoot() {
+    harness.configure({});
+    const bar = createTemporaryObject(tabBarComp, root, {
+      "tabs": ["A", "A much longer label", "B"],
+      "currentIndex": 0,
+      "width": Widget.textPx(330)
+    });
+    waitForRendering(bar);
+    tryVerify(() => bar._settled);
+    const mark = findAll(bar, it => it.height === Widget.px(2) && it.radius !== undefined && it.visible)[0];
+    verify(mark !== undefined, "the underline shows");
+    bar.currentIndex = 1;
+    const tab = bar._current;
+    const width = bar._markWidth;
+    const left = tab.x + (tab.width - width) / 2;
+    const right = left + width;
+    let prevLeft = mark.x;
+    let settledAt = -1;
+    const start = Date.now();
+    for (let i = 0; i < 60; i++) {
+      wait(5);
+      verify(mark.x <= left + 0.5, "left edge past its place: " + mark.x + " > " + left);
+      verify(mark.x + mark.width <= right + 0.5, "right edge past its place: " + (mark.x + mark.width) + " > " + right);
+      verify(mark.x >= prevLeft - 0.5, "left edge moved back: " + prevLeft + " -> " + mark.x);
+      prevLeft = mark.x;
+      if (settledAt < 0 && Math.abs(mark.x - left) < 0.5 && Math.abs(mark.width - width) < 0.5)
+        settledAt = Date.now() - start;
+    }
+    // one move of animNormal, not a chase that trails behind it
+    verify(settledAt >= 0 && settledAt <= Appearance.animNormal + 60, "settled after " + settledAt + " ms");
+    tryVerify(() => Math.abs(mark.x - left) < 0.5 && Math.abs(mark.width - width) < 0.5);
+  }
 }
