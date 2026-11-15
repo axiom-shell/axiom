@@ -761,6 +761,7 @@ QtObject {
     },
     {
       "name": "Daily habits",
+      "template": true,
       "icon": "task_alt",
       "command": "bash '{tree}data/custom-widgets/habits.sh' show",
       "mode": "poll",
@@ -1016,6 +1017,275 @@ QtObject {
           "actions": {
             "add": {}
           }
+        }
+      }
+    },
+    // The gallery's templates: no command, a sample per screen (their texts
+    // are English here and translated by CustomWidgetsEditor.add: the
+    // names and descriptions, listed here, the `=` literals as the
+    // others'): I18n.tr("Toggle") I18n.tr("An on / off switch, such as a VPN")
+    // I18n.tr("Slider") I18n.tr("A value you can drag, such as the brightness")
+    // I18n.tr("List with a row action") I18n.tr("Rows you can press, such as disks")
+    // I18n.tr("Media card") I18n.tr("Playing, paused and nothing playing, with buttons")
+    // I18n.tr("Status with an error screen") I18n.tr("A status line, and a screen for when the script fails")
+    // I18n.tr("Enabled") I18n.tr("Disks") I18n.tr("Nothing playing") I18n.tr("Restart")
+    // I18n.tr("On") I18n.tr("Off") I18n.tr("Playing") I18n.tr("Paused") I18n.tr("Nothing") I18n.tr("Error")
+    {
+      "name": "Toggle",
+      "template": true,
+      "description": "An on / off switch, such as a VPN",
+      "icon": "toggle_on",
+      "states": {
+        "on": "success",
+        "off": "warning"
+      },
+      "invoke": {},
+      "module": {
+        "size": [4, 2],
+        "elements": [root._el("title", "Text", [0, 0, 11, 3], {
+            "text": "{text}"
+          }, {
+            "align": "left",
+            "bold": true
+          }), root._el("switch", "Toggle", [0, 4, 16, 4], {
+            "state": "state"
+          }, {
+            "label": "Enabled"
+          }, "set")],
+        "views": [root._view("on", "On", {
+            "key": "state",
+            "test": "is",
+            "values": ["on"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "=lock",
+              "tone": "state"
+            })]), root._view("off", "Off", {
+            "key": "state",
+            "test": "is",
+            "values": ["off"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "=lock_open",
+              "tone": "state"
+            })])]
+      },
+      "samples": {
+        "on": {
+          "state": "on",
+          "text": "VPN",
+          "actions": {
+            "set": {}
+          }
+        },
+        "off": {
+          "state": "off",
+          "text": "VPN",
+          "actions": {
+            "set": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "Slider",
+      "template": true,
+      "description": "A value you can drag, such as the brightness",
+      "icon": "linear_scale",
+      "module": {
+        "size": [4, 2],
+        "elements": [root._el("title", "Text", [0, 0, 11, 3], {
+            "text": "{text}"
+          }, {
+            "align": "left",
+            "bold": true
+          }), root._el("amount", "Text", [11, 0, 5, 3], {
+            "text": "{value}{unit}"
+          }, {
+            "align": "right"
+          }), root._el("slider", "Bar", [0, 4, 16, 3], null, null, "set")]
+      },
+      "samples": {
+        "": {
+          "text": "Brightness",
+          "value": 60,
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "actions": {
+            "set": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "List with a row action",
+      "template": true,
+      "description": "Rows you can press, such as disks",
+      "icon": "list",
+      "states": {
+        "full": "error",
+        "ok": "success"
+      },
+      "module": {
+        "size": [4, 4],
+        "elements": [root._el("title", "Text", [0, 0, 16, 2], {
+            "text": "=Disks"
+          }, {
+            "align": "left",
+            "bold": true
+          }), root._el("rows", "List", [0, 2, 16, 14], null, null, "open")]
+      },
+      "samples": {
+        "": {
+          "text": "3 disks",
+          "items": [
+            {
+              "id": "/",
+              "text": "/",
+              "subtext": "120 GB free",
+              "value": 62,
+              "max": 100,
+              "state": "ok"
+            },
+            {
+              "id": "/home",
+              "text": "/home",
+              "subtext": "12 GB free",
+              "value": 94,
+              "max": 100,
+              "state": "full"
+            },
+            {
+              "id": "/mnt/data",
+              "text": "/mnt/data",
+              "subtext": "1.4 TB free",
+              "value": 30,
+              "max": 100,
+              "state": "ok"
+            }
+          ],
+          "actions": {
+            "open": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "Media card",
+      "template": true,
+      "description": "Playing, paused and nothing playing, with buttons",
+      "icon": "music_note",
+      "states": {
+        "playing": "success",
+        "paused": "warning"
+      },
+      "module": {
+        "size": [4, 3],
+        "elements": [root._el("title", "Text", [0, 0, 12, 3], {
+            "text": "{text}"
+          }, {
+            "align": "left",
+            "bold": true
+          }), root._el("artist", "Text", [0, 3, 16, 2], {
+            "text": "{subtext}"
+          }, {
+            "align": "left"
+          }), root._el("prev", "Button", [0, 8, 4, 3], null, {
+            "icon": "skip_previous"
+          }, "prev"), root._el("toggle", "Button", [6, 8, 4, 3], {
+            "icon": "icon"
+          }, null, "toggle"), root._el("next", "Button", [12, 8, 4, 3], null, {
+            "icon": "skip_next"
+          }, "next")],
+        "views": [root._view("playing", "Playing", {
+            "key": "state",
+            "test": "is",
+            "values": ["playing"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "=graphic_eq",
+              "tone": "state"
+            })]), root._view("paused", "Paused", {
+            "key": "state",
+            "test": "is",
+            "values": ["paused"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "=pause_circle",
+              "tone": "state"
+            })]), root._view("nothing", "Nothing", {
+            "key": "state",
+            "test": "isNot",
+            "values": ["playing", "paused"]
+          }, [root._el("mark", "Icon", [5, 1, 6, 6], {
+              "icon": "=music_off"
+            }), root._el("message", "Text", [0, 8, 16, 3], {
+              "text": "=Nothing playing"
+            })], false)]
+      },
+      "samples": {
+        "playing": {
+          "state": "playing",
+          "text": "Song title",
+          "subtext": "Artist",
+          "icon": "pause",
+          "actions": {
+            "prev": {},
+            "toggle": {},
+            "next": {}
+          }
+        },
+        "paused": {
+          "state": "paused",
+          "text": "Song title",
+          "subtext": "Artist",
+          "icon": "play_arrow",
+          "actions": {
+            "prev": {},
+            "toggle": {},
+            "next": {}
+          }
+        },
+        "nothing": {
+          "state": "stopped",
+          "actions": {}
+        }
+      }
+    },
+    {
+      "name": "Status with an error screen",
+      "template": true,
+      "description": "A status line, and a screen for when the script fails",
+      "icon": "radio_button_checked",
+      "states": {
+        "ok": "success"
+      },
+      "module": {
+        "size": [4, 2],
+        "elements": [root._el("status", "Status", [0, 0, 10, 3], {
+            "text": "{text}"
+          }), root._el("detail", "Text", [0, 3, 16, 3], {
+            "text": "{subtext}"
+          }, {
+            "align": "left"
+          })],
+        "views": [root._view("error", "Error", {
+            "key": "error",
+            "test": "set",
+            "values": []
+          }, [root._el("mark", "Icon", [0, 0, 4, 4], {
+              "icon": "=error"
+            }), root._el("message", "Text", [4, 0, 12, 4], {
+              "text": "error"
+            }, {
+              "align": "left"
+            }), root._el("retry", "Button", [4, 5, 8, 3], null, null, "axiom:restart")], false)]
+      },
+      "samples": {
+        "": {
+          "state": "ok",
+          "text": "All good",
+          "subtext": "Checked just now"
+        },
+        "error": {
+          "error": "Could not reach the server"
         }
       }
     }
@@ -1399,4 +1669,255 @@ QtObject {
       return last;
     return liveFields && root.pickView(definition?.module, liveFields).index === index ? liveFields.sample : null;
   }
+
+  // --- The editor's pure parts (docs/dev/features/custom-widgets.md › The page) ---
+
+  // `list` with the item at `from` moved to `to` (a new list; the same
+  // when either is out of range or they are equal)
+  function moveItem(list, from, to) {
+    const items = list ?? [];
+    if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length)
+      return items;
+    const next = items.slice();
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    return next;
+  }
+
+  // A copy of screen `index` of `views` for the editor's Duplicate: a new id
+  // and `name`, its elements and condition copied (its sample is not: that
+  // is kept under the screen's id). Null for none
+  function viewCopy(views, index, name) {
+    const source = views?.[index];
+    if (!source)
+      return null;
+    const copy = Utils.clone(source);
+    copy.id = Utils.newId(Utils.slug(name) || source.id, views);
+    copy.name = name;
+    return copy;
+  }
+
+  // `element` as it lands in another layer (`elements`): its place kept, a
+  // new id when `elements` has it already
+  function elementCopy(elements, element) {
+    const copy = Utils.clone(element);
+    if ((elements ?? []).some(e => e.id === copy.id))
+      copy.id = Utils.newId(copy.id, elements);
+    return copy;
+  }
+
+  // The paths the editor offers to bind from, over `samples` (an output
+  // each, null ones skipped), first seen first, each path once, leaves and
+  // lists only: [{ path, type, value (the list's length), preview (a leaf's
+  // text, at most 40 characters) }]
+  function bindChoices(samples, cap) {
+    const out = [];
+    const seen = {};
+    for (const sample of samples ?? []) {
+      if (sample === null || sample === undefined || typeof sample !== "object")
+        continue;
+      for (const p of root.flatten(sample)) {
+        if (p.type === "object" || p.path in seen)
+          continue;
+        seen[p.path] = true;
+        const text = p.type === "array" ? "" : root.asText(p.value);
+        out.push({
+          "path": p.path,
+          "type": p.type,
+          "value": p.value,
+          "preview": text.length > 40 ? text.slice(0, 39) + "…" : text
+        });
+        if (out.length >= (cap ?? 200))
+          return out;
+      }
+    }
+    return out;
+  }
+
+  // Every command a definition holds, what Import lists before anything
+  // runs and Copy warns about: [{ where, command }], the non-empty ones of
+  // `command`, `execIf`, `invoke.command`, the bar's five click and scroll
+  // commands and each element's `actions` in every layer. `where` is a path
+  // ("actions.click", "open/list/actions.click": a screen's id, the element)
+  function commandsOf(definition) {
+    const out = [];
+    const add = (where, command) => {
+      if (typeof command === "string" && command.trim() !== "")
+        out.push({
+          "where": where,
+          "command": command
+        });
+    };
+    const def = definition ?? {};
+    add("command", def.command);
+    add("execIf", def.execIf);
+    add("invoke.command", def.invoke?.command);
+    for (const key of ["click", "rightClick", "middleClick", "scrollUp", "scrollDown"])
+      add("actions." + key, def.actions?.[key]);
+    const layer = (name, elements) => {
+      for (const element of elements ?? []) {
+        for (const key of Object.keys(element.actions ?? {}))
+          add(name + "/" + element.id + "/actions." + key, element.actions[key]);
+      }
+    };
+    layer("base", def.module?.elements);
+    for (const view of def.module?.views ?? [])
+      layer(view.id, view.elements);
+    return out;
+  }
+
+  // The text Copy puts on the clipboard: T30's wrapper around `definition`
+  // without its id (the new owner's list gives it one), as JSON
+  function exportOf(definition) {
+    const copy = Utils.clone(definition);
+    delete copy.id;
+    return JSON.stringify({
+      "axiomCustomWidget": 1,
+      "definition": copy
+    }, null, 2);
+  }
+
+  // Pasted text read as shared widgets: { definitions (partial, ids
+  // dropped), error }. The wrapper Copy makes, a bare definition, or a list
+  // of either; comments and trailing commas are allowed
+  function fromExport(text) {
+    let parsed;
+    try {
+      parsed = JSON.parse(root.stripJsonc(text).trim());
+    } catch (e) {
+      return {
+        "definitions": [],
+        "error": "Not valid JSON: " + e.message
+      };
+    }
+    const definitions = [];
+    for (const item of Array.isArray(parsed) ? parsed : [parsed]) {
+      if (item === null || typeof item !== "object" || Array.isArray(item))
+        return {
+          "definitions": [],
+          "error": "Not a custom widget."
+        };
+      let def = item;
+      if ("axiomCustomWidget" in item) {
+        if (typeof item.axiomCustomWidget !== "number" || item.axiomCustomWidget > 1)
+          return {
+            "definitions": [],
+            "error": "Made by a newer version of axiom."
+          };
+        def = item.definition;
+      }
+      if (def === null || typeof def !== "object" || Array.isArray(def) || (!def.module && !def.command))
+        return {
+          "definitions": [],
+          "error": "Not a custom widget: it has no module and no command."
+        };
+      const copy = Utils.clone(def);
+      delete copy.id;
+      definitions.push(copy);
+    }
+    return {
+      "definitions": definitions,
+      "error": definitions.length ? "" : "Nothing in it."
+    };
+  }
+
+  // What the Import form reads from a paste: a shared widget (fromExport)
+  // first, else a Waybar `custom/*` module (fromWaybar). { definitions,
+  // error, kind ("widget", "waybar", "" when it read neither) }
+  function readImport(text) {
+    const shared = root.fromExport(text);
+    if (shared.error === "")
+      return {
+        "definitions": shared.definitions,
+        "error": "",
+        "kind": "widget"
+      };
+    try {
+      const waybar = root.fromWaybar(text);
+      if (waybar.length)
+        return {
+          "definitions": waybar,
+          "error": "",
+          "kind": "waybar"
+        };
+    } catch (e) {
+      // Not Waybar's either: the first reading's error says why
+    }
+    return {
+      "definitions": [],
+      "error": shared.error.startsWith("Not valid JSON") ? shared.error : "Not a custom widget or a Waybar custom module.",
+      "kind": ""
+    };
+  }
+
+  // `list` with `entry` added, the last `cap` kept (the editor's action log)
+  function pushLog(list, entry, cap) {
+    return (list ?? []).concat([entry]).slice(-cap);
+  }
+
+  // The key a typed key is shown as when it can be mapped, else "": a key
+  // `reservedKeys` holds is refused
+  function mappableKey(name) {
+    return name !== "" && !root.reservedKeys.includes(name) ? name : "";
+  }
+
+  // The `state` values in `states` that no screen of `module` is for (the
+  // editor offers a screen for each)
+  function unmatchedStates(module, states) {
+    return (states ?? []).filter(state => !(module?.views ?? []).some(view => root.matches(view.when, {
+          "sample": {
+            "state": state
+          },
+          "failure": null,
+          "error": ""
+        })));
+  }
+
+  // Where the sample a screen (-1: none) is previewed with comes from, as
+  // sampleForView picks it: "saved" (kept in the definition), "live" (the
+  // last one seen, or the output now) or "none"
+  function sampleSource(definition, index, seen, liveFields) {
+    const key = root.viewKey(definition?.module, index);
+    const kept = definition?.samples?.[key];
+    if (kept !== undefined && kept !== null)
+      return "saved";
+    return root.sampleForView(definition, index, seen, liveFields) === null ? "none" : "live";
+  }
+
+  // A template's element ([x, y, w, h] in sub-cells)
+  function _el(id, type, place, bind, options, action) {
+    const element = {
+      "id": id,
+      "type": type,
+      "place": {
+        "x": place[0],
+        "y": place[1],
+        "w": place[2],
+        "h": place[3]
+      }
+    };
+    if (bind)
+      element.bind = bind;
+    if (options)
+      element.options = options;
+    if (action)
+      element.action = action;
+    return element;
+  }
+
+  // A template's screen
+  function _view(id, name, when, elements, base) {
+    return {
+      "id": id,
+      "name": name,
+      "base": base !== false,
+      "when": when,
+      "elements": elements
+    };
+  }
+
+  // The presets the New chooser's "From a known script" lists (a command to
+  // start from) and the ones its gallery draws (`template`: a ready look
+  // with a sample per screen, drawn before any script exists)
+  readonly property var scriptPresets: root.presets.filter(p => !p.template)
+  readonly property var galleryPresets: root.presets.filter(p => p.template)
 }

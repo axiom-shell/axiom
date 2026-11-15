@@ -94,6 +94,33 @@ QtObject {
     return kept.refused;
   }
 
+  // Keeps `text` (JSON, an object) as the edited layer's sample. Returns why
+  // it couldn't: "json" (not an object), "count", "size", or ""
+  function saveSample(text) {
+    let sample;
+    try {
+      sample = JSON.parse(text);
+    } catch (e) {
+      return "json";
+    }
+    if (sample === null || typeof sample !== "object" || Array.isArray(sample))
+      return "json";
+    const kept = CustomWidgetData.keepSample(root.selected?.samples, root.sampleKey, sample, root.sampleLimits);
+    if (kept.refused === "")
+      root.set(["samples"], kept.samples);
+    return kept.refused;
+  }
+
+  // The sample the edited layer is previewed with, as JSON text to edit
+  readonly property string sampleText: root.previewSampleSource === null ? "{}" : JSON.stringify(root.previewSampleSource, null, 2)
+  readonly property var previewSampleSource: root.pageShown ? CustomWidgetData.sampleForView(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null) : null
+  // Where it comes from: "saved", "live" or "none"
+  readonly property string sampleSource: root.pageShown ? CustomWidgetData.sampleSource(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null) : "none"
+
+  // The paths the page offers to bind from (the saved samples, then what
+  // was seen live, then the output now), each once
+  readonly property var bindPaths: root.pageShown ? CustomWidgetData.bindChoices(Object.values(root.selected?.samples ?? ({})).concat(Object.values(root.seen), [root.liveSample]), 200) : []
+
   // Forgets the sample kept under `key`
   function removeSample(key) {
     const next = Object.assign({}, root.selected?.samples);
@@ -148,8 +175,9 @@ QtObject {
   }
 
   // A new screen shown while the output matches `when` ({ key, test,
-  // values }, by default the state is one of none), selected
-  function addView(name, when) {
+  // values }, by default the state is one of none), selected; `base` false
+  // draws it alone (without the base elements under it)
+  function addView(name, when, base) {
     const def = root._local().items[root.selectedIndex];
     if (!def)
       return;
@@ -157,7 +185,7 @@ QtObject {
     views.push({
       "id": Utils.newId(Utils.slug(name) || "screen", views),
       "name": name ?? "",
-      "base": true,
+      "base": base !== false,
       "when": Object.assign({
         "key": "state",
         "test": "is",
@@ -179,6 +207,61 @@ QtObject {
       delete def.samples[id];
     root._apply();
     root.selectView(-1);
+  }
+
+  // The screens' structure edited from a chip's menu or an element's: one
+  // undo step each, recorded under its own key (the history keeps the
+  // whole definition but the edited layer's elements, so the base is the
+  // layer edited while the screens' order or number changes)
+  property int _structureSeq: 0
+  function _beforeStructure() {
+    if (root.viewIndex >= 0)
+      root.selectView(-1);
+    root.elements.recordField("def:structure:" + (++root._structureSeq));
+  }
+
+  // A copy of screen `index`, named "<name> (copy)", right after it (its
+  // sample is not copied)
+  function duplicateView(index) {
+    const def = root._local().items[root.selectedIndex];
+    const source = def?.module.views[index];
+    if (!source)
+      return;
+    const copy = CustomWidgetData.viewCopy(def.module.views, index, I18n.tr("{0} (copy)", source.name || source.id));
+    root._beforeStructure();
+    def.module.views.splice(index + 1, 0, copy);
+    root._fitSize();
+    root._apply();
+  }
+
+  // Moves screen `from` to place `to` (they are tried in order: the first
+  // whose condition holds is drawn)
+  function moveView(from, to) {
+    const def = root._local().items[root.selectedIndex];
+    if (!def)
+      return;
+    const moved = CustomWidgetData.moveItem(def.module.views, from, to);
+    if (moved === def.module.views)
+      return;
+    root._beforeStructure();
+    def.module.views.splice(0, Infinity, ...moved);
+    root._apply();
+  }
+
+  // The selected element, copied into the layer `target` (-1: the base,
+  // else a screen's index) at the same place: a new id when it has one
+  // there. Returns whether it was copied
+  function copyElementToView(target) {
+    const def = root._local().items[root.selectedIndex];
+    const element = root.element;
+    const list = target < 0 ? def?.module.elements : def?.module.views[target]?.elements;
+    if (!element || !list || target === root.viewIndex)
+      return false;
+    root.elements.recordField("def:structure:" + (++root._structureSeq));
+    list.push(CustomWidgetData.elementCopy(list, element));
+    root._fitSize();
+    root._apply();
+    return true;
   }
 
   // Sets a key of the edited screen (`path` a key or a list of keys into it)

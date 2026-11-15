@@ -34,6 +34,35 @@ ColumnLayout {
   readonly property var views: root.definition?.module?.views ?? []
   readonly property var view: root.views[root.editor.viewIndex] ?? null
   readonly property var designSize: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
+  // The chip a menu is open for, and a counter its Rename bumps
+  property int menuView: 0
+  property int renameRequests: 0
+  // The states seen live that no screen is for
+  readonly property var unmatched: CustomWidgetData.unmatchedStates(root.definition?.module, root.editor.seenStates)
+  // The paths a screen's condition can read, then the failure
+  readonly property var keyOptions: [
+    {
+      "value": "state",
+      "label": "state"
+    },
+    {
+      "value": "error",
+      "label": I18n.tr("error (the script failed)")
+    }
+  ].concat(root.editor.bindPaths.filter(p => p.type !== "array" && p.path !== "state").map(p => ({
+        "value": p.path,
+        "label": p.path
+      })))
+  // The tests, as the schema names them
+  readonly property var testOptions: ["is", "isNot", "set", "unset"].map(value => ({
+        "value": value,
+        "label": ({
+            "is": I18n.tr("Is one of"),
+            "isNot": I18n.tr("Is none of"),
+            "set": I18n.tr("Is set"),
+            "unset": I18n.tr("Is not set")
+          })[value]
+      }))
   readonly property real card: root.grid?.unit ?? Widget.px(400)
   // The lock-screen column's width: wide enough for its button's whole label
   readonly property real lockWidth: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultLayoutButton.implicitWidth)
@@ -169,8 +198,10 @@ ColumnLayout {
     text: I18n.tr("The base elements are empty: pick a screen to design it.")
   }
 
-  // The layers: the base, and a screen each (the first whose condition
-  // holds is drawn over the base)
+  // The layers: Base, a chip per screen (the first whose condition holds is
+  // drawn over the base; right-click for its menu) and "+", which offers a
+  // screen for each state the script has said that none is for, one for a
+  // failure and a blank one
   Flow {
     Layout.fillWidth: true
     spacing: Widget.spacing
@@ -186,22 +217,128 @@ ColumnLayout {
       ToggleChip {
         id: chip
         required property int index
-        text: root.views[chip.index]?.name || root.views[chip.index]?.id || ""
+        // A dot marks a screen with a sample kept
+        text: (root.definition?.samples?.[root.views[chip.index]?.id] !== undefined ? "● " : "") + (root.views[chip.index]?.name || root.views[chip.index]?.id || "")
         checked: root.editor.viewIndex === chip.index
         onToggled: root.editor.selectView(chip.index)
+
+        TapHandler {
+          acceptedButtons: Qt.RightButton
+          onTapped: point => {
+            root.menuView = chip.index;
+            chipMenu.openAt(chip, point.position.x, point.position.y);
+          }
+        }
       }
     }
-    StyledTextButton {
-      implicitHeight: Widget.smallHeight
+    SquareIconButton {
+      id: addScreen
       iconText: "add"
-      text: I18n.tr("Add a screen")
+      tooltipText: I18n.tr("Add a screen")
       enabled: root.definition !== null
-      onClicked: root.editor.addView(I18n.tr("Screen {0}", root.views.length + 1))
+      onClicked: addMenu.openAt(addScreen, 0, addScreen.height)
+    }
+    StatusChip {
+      text: root.editor.sampleSource === "saved" ? I18n.tr("Previewing: saved") : root.editor.sampleSource === "live" ? I18n.tr("Previewing: live") : I18n.tr("Previewing: none")
+      tone: root.editor.sampleSource === "saved" ? "success" : root.editor.sampleSource === "live" ? "info" : "neutral"
+    }
+  }
+
+  StyledContextMenu {
+    id: addMenu
+    parent: root
+    items: [
+      {
+        "id": "when",
+        "icon": "bolt",
+        "text": I18n.tr("When the script says…"),
+        "enabled": root.unmatched.length > 0,
+        "submenu": root.unmatched.map(state => ({
+              "id": "state:" + state,
+              "text": state
+            }))
+      },
+      {
+        "id": "fails",
+        "icon": "error",
+        "text": I18n.tr("When it fails")
+      },
+      {
+        "id": "blank",
+        "icon": "crop_square",
+        "text": I18n.tr("Blank screen")
+      }
+    ]
+    onTriggered: id => {
+      if (id === "fails")
+        root.editor.addView(I18n.tr("Failed"), {
+          "key": "error",
+          "test": "set"
+        }, false);
+      else if (id === "blank")
+        root.editor.addView(I18n.tr("Screen {0}", root.views.length + 1));
+      else if (id.startsWith("state:"))
+        root.editor.addView(id.slice(6), {
+          "key": "state",
+          "test": "is",
+          "values": [id.slice(6)]
+        });
+    }
+  }
+
+  // A chip's menu (menuView: the screen)
+  StyledContextMenu {
+    id: chipMenu
+    parent: root
+    items: [
+      {
+        "id": "rename",
+        "icon": "edit",
+        "text": I18n.tr("Rename")
+      },
+      {
+        "id": "duplicate",
+        "icon": "content_copy",
+        "text": I18n.tr("Duplicate")
+      },
+      {
+        "id": "left",
+        "icon": "arrow_back",
+        "text": I18n.tr("Move left"),
+        "enabled": root.menuView > 0
+      },
+      {
+        "id": "right",
+        "icon": "arrow_forward",
+        "text": I18n.tr("Move right"),
+        "enabled": root.menuView < root.views.length - 1
+      },
+      {
+        "id": "remove",
+        "icon": "delete",
+        "text": I18n.tr("Remove"),
+        "danger": true
+      }
+    ]
+    onTriggered: id => {
+      const index = root.menuView;
+      if (id === "rename") {
+        root.editor.selectView(index);
+        root.renameRequests++;
+      } else if (id === "duplicate") {
+        root.editor.duplicateView(index);
+      } else if (id === "left") {
+        root.editor.moveView(index, index - 1);
+      } else if (id === "right") {
+        root.editor.moveView(index, index + 1);
+      } else if (id === "remove") {
+        root.editor.removeView(index);
+      }
     }
   }
 
   // The selected screen: its name, whether the base shows under it, and
-  // when it is drawn
+  // when it is drawn, as a sentence
   FieldGroup {
     visible: root.view !== null
     Layout.fillWidth: true
@@ -214,16 +351,78 @@ ColumnLayout {
       key: root.view ? root.editor.selectedId + "/" + root.editor.viewIndex : ""
 
       sourceComponent: ColumnLayout {
+        id: screen
         width: parent?.width ?? 0
         spacing: Widget.spacing
 
+        readonly property var when: root.view?.when ?? ({})
+        readonly property bool listed: screen.when.test === "is" || screen.when.test === "isNot"
+
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Widget.spacing
+
+          StyledLabel {
+            Layout.preferredWidth: Widget.textPx(70)
+            text: I18n.tr("Name")
+          }
+          StyledTextEntry {
+            id: nameEntry
+            Layout.fillWidth: true
+            onTextEdited: root.editor.setView(["name"], nameEntry.text)
+            Component.onCompleted: nameEntry.text = root.view?.name ?? ""
+          }
+          Connections {
+            target: root
+            function onRenameRequestsChanged() {
+              nameEntry.input.forceActiveFocus();
+              nameEntry.input.selectAll();
+            }
+          }
+        }
+
         SchemaPropertiesForm {
           Layout.fillWidth: true
-          propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties.views.items.properties, ["name", "base", "when"])
-          order: ["name", "base", "when"]
+          propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties.views.items.properties, ["base"])
+          order: ["base"]
           values: root.view ?? ({})
           onEdited: (path, value) => root.editor.setView(path, value)
         }
+
+        // "Show when [key] [is one of] [values]"
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Widget.spacing
+
+          StyledLabel {
+            text: I18n.tr("Show when")
+          }
+          StyledComboEntry {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            editable: true
+            value: screen.when.key ?? ""
+            placeholderText: "state"
+            options: root.keyOptions
+            onPicked: value => root.editor.setView(["when", "key"], value)
+          }
+          StyledComboEntry {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            value: screen.when.test ?? "is"
+            options: root.testOptions
+            onPicked: value => root.editor.setView(["when", "test"], value)
+          }
+        }
+        StyledTextEntry {
+          id: valuesEntry
+          visible: screen.listed
+          Layout.fillWidth: true
+          placeholderText: I18n.tr("Values, separated by commas")
+          onTextEdited: root.editor.setView(["when", "values"], valuesEntry.text.split(",").map(v => v.trim()).filter(v => v !== ""))
+          Component.onCompleted: valuesEntry.text = (screen.when.values ?? []).join(", ")
+        }
+
         StyledTextButton {
           implicitHeight: Widget.height
           iconText: "delete"

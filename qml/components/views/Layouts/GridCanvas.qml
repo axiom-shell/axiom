@@ -77,6 +77,10 @@ WorkArea {
   // base elements while a screen is edited)
   property var underlay: []
 
+  // A right click on tile `index` (selected by it), at (x, y) in `tile`
+  // (an Item): the owner opens the menu it wants
+  signal tileContext(int index, var tile, real x, real y)
+
   readonly property bool editable: root.modules !== null && root.modules !== undefined
   readonly property var list: root.editable ? root.modules : []
   readonly property var bounds: GridPlacement.bounds(root.underlay.length > 0 ? root.list.concat(root.underlay) : root.list)
@@ -646,6 +650,7 @@ WorkArea {
           step: root.step
           gap: root.gap
           growth: root.growthOf(tile.index)
+          onContextRequested: (x, y) => root.tileContext(tile.index, tile, x, y)
         }
       }
     }

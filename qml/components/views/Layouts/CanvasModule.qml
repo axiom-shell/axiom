@@ -51,6 +51,9 @@ Rectangle {
     return Array.isArray(value) ? value.join(", ") : String(value ?? "");
   }
 
+  // A right click on it, at (x, y) in the tile
+  signal contextRequested(real x, real y)
+
   // The side being dragged to resize it ("n", "ne", … "nw"), else ""
   property string resizing: ""
   readonly property bool small: root.width < Appearance.fontSize * 7 || root.height < Appearance.fontSize * 4
@@ -127,6 +130,16 @@ Rectangle {
       text: root.detail
       role: "micro"
       textColor: root.filled ? root.ink : Style.textMuted
+    }
+  }
+
+  // A right click selects it and asks the canvas's owner for its menu, at
+  // the point in the tile
+  TapHandler {
+    acceptedButtons: Qt.RightButton
+    onTapped: point => {
+      root.editor.select(root.index);
+      root.contextRequested(point.position.x, point.position.y);
     }
   }
 

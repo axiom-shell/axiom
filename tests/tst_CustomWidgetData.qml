@@ -920,7 +920,9 @@ TestCase {
 
   function test_presetsLoad() {
     for (const preset of CustomWidgetData.presets) {
-      verify(preset.name && preset.command, preset.name);
+      verify(preset.name && (preset.command || preset.template), preset.name);
+      if (!preset.command)
+        continue;
       const f = CustomWidgetData.resolve(preset, CustomWidgetData.parse("on", undefined, preset.output ?? "waybar", preset.mode === "stream"));
       verify(typeof f.text === "string", preset.name);
     }
@@ -1542,5 +1544,302 @@ TestCase {
     compare(CustomWidgetData.baseSlotsLast([]), []);
     // One list: every slot is shared, so it stays as it is
     compare(CustomWidgetData.baseSlotsLast([["show", "tone", "text"]]), [["show", "tone", "text"]]);
+  }
+
+  function test_moveItem() {
+    compare(CustomWidgetData.moveItem(["a", "b", "c"], 0, 2), ["b", "c", "a"]);
+    compare(CustomWidgetData.moveItem(["a", "b", "c"], 2, 1), ["a", "c", "b"]);
+    compare(CustomWidgetData.moveItem(["a", "b"], 0, 5), ["a", "b"], "out of range: as it is");
+    compare(CustomWidgetData.moveItem(["a", "b"], 1, 1), ["a", "b"], "same place");
+    compare(CustomWidgetData.moveItem(null, 0, 1), [], "none");
+    const list = ["a", "b"];
+    CustomWidgetData.moveItem(list, 0, 1);
+    compare(list, ["a", "b"], "not changed in place");
+  }
+
+  function test_viewCopy() {
+    const views = [
+      {
+        "id": "open",
+        "name": "Open",
+        "base": false,
+        "when": {
+          "key": "state",
+          "test": "is",
+          "values": ["open"]
+        },
+        "elements": [
+          {
+            "id": "a",
+            "type": "Text"
+          }
+        ]
+      }
+    ];
+    const copy = CustomWidgetData.viewCopy(views, 0, "Open (copy)");
+    compare(copy.id, "open-copy", "a new id from the name");
+    compare(copy.name, "Open (copy)");
+    compare(copy.when.values, ["open"], "the condition is copied");
+    compare(copy.base, false);
+    compare(copy.elements, views[0].elements, "its elements are copied");
+    verify(copy.elements !== views[0].elements, "not the same array");
+    compare(CustomWidgetData.viewCopy(views, 0, "Open").id, "open-2", "a clash is numbered");
+    compare(CustomWidgetData.viewCopy(views, 3, "x"), null);
+  }
+
+  function test_elementCopy() {
+    const element = {
+      "id": "a",
+      "type": "Text",
+      "place": {
+        "x": 1,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      }
+    };
+    compare(CustomWidgetData.elementCopy([], element).id, "a", "no clash: the same id");
+    compare(CustomWidgetData.elementCopy([
+      {
+        "id": "a"
+      }
+    ], element).id, "a-2", "a clash: a new id");
+    compare(CustomWidgetData.elementCopy([
+      {
+        "id": "a"
+      }
+    ], element).place, element.place, "the same place");
+  }
+
+  function test_bindChoices() {
+    const choices = CustomWidgetData.bindChoices([
+      {
+        "text": "x",
+        "data": {
+          "temp": 21
+        },
+        "items": [1, 2]
+      },
+      null,
+      {
+        "text": "other",
+        "extra": "y".repeat(60)
+      }
+    ]);
+    compare(choices.map(c => c.path), ["text", "data.temp", "items", "items.0", "items.1", "extra"], "each path once, objects left out");
+    compare(choices[0].preview, "x", "the first seen value");
+    compare(choices[2].type, "array");
+    compare(choices[2].preview, "", "a list has no preview");
+    compare(choices[5].preview.length, 40, "long values are cut");
+    compare(CustomWidgetData.bindChoices([
+      {
+        "a": 1,
+        "b": 2,
+        "c": 3
+      }
+    ], 2).length, 2, "capped");
+    compare(CustomWidgetData.bindChoices(null), []);
+  }
+
+  function test_commandsOf() {
+    compare(CustomWidgetData.commandsOf({
+      "command": "a.sh",
+      "execIf": "  ",
+      "invoke": {
+        "command": "b.sh {action}"
+      },
+      "actions": {
+        "click": "c",
+        "rightClick": "",
+        "refreshAfter": true,
+        "named": {
+          "click": "act"
+        }
+      },
+      "module": {
+        "elements": [
+          {
+            "id": "go",
+            "actions": {
+              "click": "d"
+            }
+          }
+        ],
+        "views": [
+          {
+            "id": "open",
+            "elements": [
+              {
+                "id": "list",
+                "actions": {
+                  "submit": "e"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }), [
+      {
+        "where": "command",
+        "command": "a.sh"
+      },
+      {
+        "where": "invoke.command",
+        "command": "b.sh {action}"
+      },
+      {
+        "where": "actions.click",
+        "command": "c"
+      },
+      {
+        "where": "base/go/actions.click",
+        "command": "d"
+      },
+      {
+        "where": "open/list/actions.submit",
+        "command": "e"
+      }
+    ], "the non-empty commands, each with where it is; named actions aren't commands");
+    const template = CustomWidgetData.galleryPresets.find(p => p.name === "Slider");
+    compare(CustomWidgetData.commandsOf(template), [], "a template holds none");
+    compare(CustomWidgetData.commandsOf(null), []);
+  }
+
+  function test_exportAndImport() {
+    const def = {
+      "id": "x",
+      "name": "X",
+      "command": "x.sh",
+      "samples": {
+        "": {
+          "text": "1"
+        }
+      }
+    };
+    const text = CustomWidgetData.exportOf(def);
+    const wrapped = JSON.parse(text);
+    compare(wrapped.axiomCustomWidget, 1, "versioned");
+    compare("id" in wrapped.definition, false, "no id");
+    compare(wrapped.definition.samples, def.samples, "samples travel");
+    compare(def.id, "x", "the definition is not changed");
+    const back = CustomWidgetData.fromExport(text);
+    compare(back.error, "");
+    compare(back.definitions.length, 1);
+    compare(back.definitions[0].command, "x.sh");
+    compare(CustomWidgetData.fromExport("{\"command\": \"a\", \"id\": \"q\"}").definitions[0].id, undefined, "a bare definition, id dropped");
+    compare(CustomWidgetData.fromExport("[" + text + ", {\"module\": {}}]").definitions.length, 2, "a list of either");
+    compare(CustomWidgetData.fromExport("// c\n{\"command\": \"a\",}").error, "", "comments and trailing commas");
+    verify(CustomWidgetData.fromExport("{nope").error.startsWith("Not valid JSON"), "bad JSON");
+    verify(CustomWidgetData.fromExport("{\"name\": \"x\"}").error !== "", "no module and no command");
+    verify(CustomWidgetData.fromExport("[1]").error !== "", "not objects");
+    verify(CustomWidgetData.fromExport("{\"axiomCustomWidget\": 2, \"definition\": {\"command\": \"a\"}}").error !== "", "a newer wrapper");
+    compare(CustomWidgetData.fromExport("[]").error, "Nothing in it.");
+  }
+
+  function test_readImport() {
+    compare(CustomWidgetData.readImport(CustomWidgetData.exportOf({
+      "command": "a"
+    })).kind, "widget");
+    const waybar = CustomWidgetData.readImport("\"custom/x\": { \"exec\": \"a.sh\", \"interval\": 5 }");
+    compare(waybar.kind, "waybar", "a Waybar module is the second mode");
+    compare(waybar.definitions[0].command, "a.sh");
+    const bad = CustomWidgetData.readImport("{\"nothing\": 1}");
+    compare(bad.kind, "");
+    verify(bad.error !== "");
+    verify(CustomWidgetData.readImport("{nope").error.startsWith("Not valid JSON"));
+  }
+
+  function test_pushLogAndKeys() {
+    compare(CustomWidgetData.pushLog([1, 2, 3], 4, 3), [2, 3, 4], "the last `cap`");
+    compare(CustomWidgetData.pushLog(null, 1, 3), [1]);
+    compare(CustomWidgetData.mappableKey("3"), "3");
+    compare(CustomWidgetData.mappableKey("escape"), "", "reserved");
+    compare(CustomWidgetData.mappableKey("shift+tab"), "", "reserved");
+    compare(CustomWidgetData.mappableKey(""), "");
+  }
+
+  function test_templates() {
+    const names = CustomWidgetData.galleryPresets.map(p => p.name);
+    compare(names, ["Daily habits", "Toggle", "Slider", "List with a row action", "Media card", "Status with an error screen"]);
+    compare(CustomWidgetData.scriptPresets.some(p => p.template), false, "the known scripts have commands");
+    for (const t of CustomWidgetData.galleryPresets) {
+      const module = t.module;
+      const ids = CustomWidgetData.allElements(module).map(e => e.id);
+      verify(ids.length > 0, t.name + " has elements");
+      // Element ids are unique in a layer (a screen's may repeat the base's)
+      for (const layer of [module.elements].concat((module.views ?? []).map(v => v.elements)))
+        compare(new Set(layer.map(e => e.id)).size, layer.length, t.name + ": unique ids");
+      const keys = Object.keys(t.samples);
+      verify(keys.length > 0, t.name + " has a sample");
+      const context = {
+        "interactive": true,
+        "colorNames": ["accent", "success", "warning", "error"]
+      };
+      for (const key of keys) {
+        const fields = CustomWidgetData.resolve(t, t.samples[key], context);
+        const views = module.views ?? [];
+        const index = views.findIndex(v => v.id === key);
+        verify(key === "" || index >= 0, t.name + ": sample " + key + " is a screen's");
+        // A screen's sample picks its screen; the base's picks none
+        if (key !== "")
+          compare(CustomWidgetData.pickView(module, fields).index, index, t.name + ": the " + key + " sample picks its screen");
+      }
+      // Every action an element or key names is one a sample lists
+      const named = CustomWidgetData.allElements(module).map(e => e.action).filter(a => a && !a.startsWith("axiom:"));
+      for (const action of named)
+        verify(Object.values(t.samples).some(sm => sm.actions && action in sm.actions), t.name + ": a sample lists " + action);
+    }
+    const media = CustomWidgetData.galleryPresets.find(p => p.name === "Media card");
+    const nothing = CustomWidgetData.resolve(media, media.samples.nothing, {
+      "interactive": true
+    });
+    compare(CustomWidgetData.pickView(media.module, nothing).index, 2, "nothing playing is the third screen");
+    const status = CustomWidgetData.galleryPresets.find(p => p.name === "Status with an error screen");
+    const failing = CustomWidgetData.resolve(status, status.samples.error, {
+      "interactive": true
+    });
+    compare(CustomWidgetData.pickView(status.module, failing).index, 0, "a script's error picks the error screen");
+  }
+
+  function test_unmatchedStatesAndSource() {
+    const module = {
+      "views": [
+        {
+          "id": "a",
+          "when": {
+            "key": "state",
+            "test": "is",
+            "values": ["playing"]
+          }
+        },
+        {
+          "id": "e",
+          "when": {
+            "key": "error",
+            "test": "set"
+          }
+        }
+      ]
+    };
+    compare(CustomWidgetData.unmatchedStates(module, ["playing", "paused", "idle"]), ["paused", "idle"], "the states no screen is for");
+    compare(CustomWidgetData.unmatchedStates(null, ["x"]), ["x"]);
+    compare(CustomWidgetData.unmatchedStates(module, null), []);
+    const def = {
+      "module": module,
+      "samples": {
+        "a": {
+          "state": "playing"
+        }
+      }
+    };
+    compare(CustomWidgetData.sampleSource(def, 0, {}, null), "saved");
+    compare(CustomWidgetData.sampleSource(def, 1, {
+      "e": {
+        "error": "x"
+      }
+    }, null), "live", "seen is live");
+    compare(CustomWidgetData.sampleSource(def, 1, {}, null), "none");
+    compare(CustomWidgetData.sampleSource(def, -1, {}, null), "none");
   }
 }

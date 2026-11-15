@@ -27,6 +27,9 @@ ColumnLayout {
   // The edited layer's name, for the Keep button
   readonly property string layerName: root.editor.sampleKey === "" ? I18n.tr("Base") : (root.definition?.module.views[root.editor.viewIndex]?.name || root.editor.sampleKey)
   readonly property string keepReason: root.editor.keepRefused === "count" ? I18n.tr("{0} samples are kept: remove one first", root.editor.sampleLimits.entries) : root.editor.keepRefused === "size" ? I18n.tr("The samples are over {0} KB: remove one first", root.editor.sampleLimits.bytes / 1024) : ""
+  // The sample editor is open, and why its last Save was refused
+  property bool editingSample: false
+  property string sampleError: ""
   // Rows built at most: a large output lists its first paths
   readonly property int maxRows: 200
   width: parent?.width ?? 0
@@ -78,6 +81,57 @@ ColumnLayout {
         text: root.keepReason
         tone: "warning"
         overflow: "wrap"
+      }
+
+      // Paste or edit the layer's sample: JSON, checked on Save
+      StyledTextButton {
+        implicitHeight: Widget.height
+        enabled: root.definition !== null
+        iconText: root.editingSample ? "expand_less" : "edit_note"
+        text: I18n.tr("Paste or edit the sample of {0}", root.layerName)
+        onClicked: {
+          root.editingSample = !root.editingSample;
+          root.sampleError = "";
+        }
+      }
+      Loader {
+        active: root.editingSample
+        visible: active
+        Layout.fillWidth: true
+
+        sourceComponent: ColumnLayout {
+          spacing: Widget.spacing / 2
+
+          StyledTextArea {
+            id: sampleArea
+            Layout.fillWidth: true
+            expandable: true
+            input.font.family: "monospace"
+            placeholderText: I18n.tr("What the script prints, as JSON: {\"text\": \"…\"}")
+            Component.onCompleted: sampleArea.text = root.editor.sampleText
+          }
+          RowLayout {
+            Layout.fillWidth: true
+            StyledText {
+              Layout.fillWidth: true
+              text: root.sampleError
+              role: "caption"
+              tone: "warning"
+              overflow: "wrap"
+            }
+            StyledTextButton {
+              implicitHeight: Widget.height
+              iconText: "save"
+              text: I18n.tr("Save the sample")
+              onClicked: {
+                const why = root.editor.saveSample(sampleArea.text);
+                root.sampleError = why === "json" ? I18n.tr("Not a JSON object.") : why === "count" ? I18n.tr("{0} samples are kept: remove one first", root.editor.sampleLimits.entries) : why === "size" ? I18n.tr("The samples are over {0} KB: remove one first", root.editor.sampleLimits.bytes / 1024) : "";
+                if (why === "")
+                  root.editingSample = false;
+              }
+            }
+          }
+        }
       }
 
       // By count, over the kept keys (config, never live values)
