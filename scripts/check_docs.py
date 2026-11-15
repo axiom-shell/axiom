@@ -42,7 +42,7 @@ PATH_ROOTS = ("qml/", "data/", "components/", "services/", "config/", "scripts/"
               "examples/", "assets/", "backend/", "packaging/", ".github/", ".claude/", "shell.qml", "greeter.qml",
               "install.sh")
 # Names a rename retired: a doc still citing one is stale (old -> new)
-RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig",
+RETIRED = {"StyledContainer": "Surface", "IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig",
            "EdgeMenusConfig": "MenusConfig", "EdgeMenuManager": "MenuManager", "EdgeMenuEditor": "MenuEditor",
            "EdgeMenuBody": "MenuBody", "EdgeMenuSync": "MenuSync",
            "StyledRectButton": "StyledIconButton"}

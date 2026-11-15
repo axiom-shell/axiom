@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """The style lint: keep colours, text sizes, weights and text rendering on the Style roles.
 
-A ratchet until the last style change (docs/dev/core/style.md; the lifecycle
-is in docs/dev/testing.md > The checks; the rules are listed below): every file
-holds at most the hits scripts/style-baseline.json records, and a file not in it
-holds none. Rules:
+Every hit fails (docs/dev/core/style.md; the checks are listed in
+docs/dev/testing.md > The checks). Rules:
 
   R1   `Theme.` reads (but the pickers' passthroughs), `Theme.resolveColor(` included
   R2   Qt.alpha/rgba/hsla/hsva/lighter/darker/tint, a quoted hex or CSS colour
@@ -28,19 +26,15 @@ holds none. Rules:
   R17  layer.enabled / layer.effect over content
   R18  a scale over content with no `contentZoom` host
 
-Not baselined (any hit fails): R11, R13, R15, R16. A line carrying
-`// style-exempt: <reason>` counts 0; scripts/style-exceptions.json waives a file
-(or glob) per rule.
+Every hit fails; a line is waived with `// style-exempt: <reason>`, a file with an
+entry in scripts/style-exceptions.json (rules and reason; an entry no longer needed
+fails). A public `Style` member nothing reads fails too.
 
-  scripts/check_style.py                  the ratchet; exit 1 on a failure
-  scripts/check_style.py --files F...     print the hits of these files (always exit 0)
-  scripts/check_style.py --write-baseline once, in the PR that adds the ratchet
-  scripts/check_style.py --shrink-baseline  lower every entry to the current counts
-  scripts/check_style.py --raise F...     set these files' entries to their current counts
-  scripts/check_style.py --roles          Style members nothing reads (report only)
+  scripts/check_style.py                  every hit, then the role check; exit 1 on any
+  scripts/check_style.py --files F...     the hits of these files only; exit 1 on any
+  scripts/check_style.py --roles          only the role check (Style members nothing reads)
 """
 import fnmatch
-import json
 import re
 import sys
 from collections import defaultdict
@@ -51,11 +45,9 @@ import qml_modules  # noqa: E402
 
 ROOT = qml_modules.ROOT
 QML = qml_modules.QML_ROOT
-BASELINE = ROOT / "scripts" / "style-baseline.json"
 EXCEPTIONS = ROOT / "scripts" / "style-exceptions.json"
 
 RULES = [f"R{n}" for n in range(1, 19)]
-BASELINED = {r for r in RULES if r not in ("R11", "R13", "R15", "R16")}
 EVERYWHERE = {"R11", "R13", "R16"}
 STYLE_LAYER_PIECES = {"Surface", "StateLayer", "FocusRing", "Skeleton", "StyledScrollIndicator", "BackdropScrim"}
 STYLE_LAYER_CONFIG = {"Style", "StyleInk", "StyleTextRole", "BarColors", "Theme", "Appearance", "BarsConfig", "BarStyle"}
@@ -799,56 +791,15 @@ def survey(files=None):
     return out, exceptions, errors
 
 
-# ---- the ratchet ----
-
-def load_baseline():
-    if not BASELINE.exists():
-        return None, ["scripts/style-baseline.json is missing (python3 scripts/check_style.py --write-baseline)"]
-    try:
-        data = json.loads(BASELINE.read_text())
-    except ValueError as e:
-        return None, [f"scripts/style-baseline.json is not JSON: {e}"]
-    errors = []
-    if not isinstance(data, dict):
-        return None, ["scripts/style-baseline.json is not an object of files"]
-    for path, rules in data.items():
-        if not isinstance(rules, dict) or not all(r in BASELINED and isinstance(n, int) and n > 0 for r, n in rules.items()):
-            errors.append(f"scripts/style-baseline.json: {path}: not {{rule: count > 0}} for a baselined rule")
-    return data, errors
-
-
-def write_baseline(data):
-    BASELINE.write_text(json.dumps(data, sort_keys=True, indent=1) + "\n")
-
-
-def baseline_counts(result):
-    return {rel: {r: n for r, n in counts.items() if r in BASELINED and n} for rel, (counts, *_rest) in result.items()
-            if any(r in BASELINED and n for r, n in counts.items())}
-
+# ---- the check ----
 
 def check():
     result, exceptions, errors = survey()
-    base, shape = load_baseline()
-    errors += shape
-    base = base or {}
     for rel, (counts, detail, stale, hits) in sorted(result.items()):
-        for rule in sorted(counts):
-            n = counts[rule]
-            if rule in BASELINED:
-                allowed = base.get(rel, {}).get(rule, 0)
-                if n > allowed:
-                    first = next((h for h in detail if h[1] == rule), None)
-                    where = f"{rel}:{first[0]}" if first else rel
-                    errors.append(f"{where}: {rule} {n} hits, the baseline allows {allowed}" + (f" ({first[2]})" if first else ""))
-            else:
-                for line, r, text_, _n in detail:
-                    if r == rule:
-                        errors.append(f"{rel}:{line}: {rule} {text_}")
+        for line, rule, text_, _n in sorted(detail):
+            errors.append(f"{rel}:{line}: {rule} {text_}")
         for line in stale:
             errors.append(f"{rel}:{line}: a `// style-exempt:` line with no hit (stale waiver)")
-    for rel in sorted(base):
-        if rel not in result:
-            errors.append(f"{rel}: in the baseline but no longer scanned (python3 scripts/check_style.py --shrink-baseline)")
     for pattern, entry in sorted(exceptions.items()):
         matched = [rel for rel in result if fnmatch.fnmatch(rel, pattern)]
         if not matched:
@@ -860,33 +811,6 @@ def check():
     return errors
 
 
-def command_write():
-    if BASELINE.exists():
-        sys.exit("scripts/style-baseline.json exists; --write-baseline is for the first one")
-    result, _, errors = survey()
-    counts = baseline_counts(result)
-    write_baseline(counts)
-    print(f"wrote scripts/style-baseline.json: {len(counts)} files")
-
-
-def command_shrink():
-    result, _, _ = survey()
-    base, _ = load_baseline()
-    base = base or {}
-    now = baseline_counts(result)
-    out = {}
-    for rel, rules in base.items():
-        if rel not in now:
-            print(f"dropped {rel}")
-            continue
-        kept = {r: min(n, now[rel].get(r, 0)) for r, n in rules.items() if now[rel].get(r, 0)}
-        if kept != rules:
-            print(f"shrank {rel}: " + ", ".join(f"{r} {rules[r]} → {kept.get(r, 0)}" for r in rules if kept.get(r, 0) != rules[r]))
-        if kept:
-            out[rel] = kept
-    write_baseline(out)
-
-
 def rel_of(path):
     p = Path(path)
     p = p if p.is_absolute() else Path.cwd() / p
@@ -896,62 +820,75 @@ def rel_of(path):
         return Path(path).as_posix()
 
 
-def command_raise(paths):
-    if not paths:
-        sys.exit("--raise needs at least one path")
-    result, _, _ = survey()
-    base, _ = load_baseline()
-    base = base or {}
-    now = baseline_counts(result)
-    for path in paths:
-        rel = rel_of(path)
-        if rel not in result:
-            sys.exit(f"{path}: not a scanned file")
-        if rel not in now:
-            sys.exit(f"{path}: no baselined hit to raise to")
-        before = base.get(rel, {})
-        print(f"raised {rel}: " + ", ".join(f"{r} {before.get(r, 0)} → {n}" for r, n in sorted(now[rel].items())))
-        base[rel] = now[rel]
-    write_baseline(base)
-
-
 def command_files(paths):
     wanted = {rel_of(p) for p in paths}
     result, _, _ = survey(wanted)
+    found = 0
     for rel in sorted(result):
         for line, rule, text_, _n in sorted(result[rel][1]):
             print(f"{rel}:{line}: {rule} {text_}")
+            found += 1
+    return found
+
+
+# The functions of Style.qml that pick a role by a name: a role they return is read
+# when the function is read outside Style (a literal `tone: "success"` reaches
+# `successText` through `toneColor`).
+SWITCHES = ("toneColor", "textRole", "iconSize", "inkOf")
+STYLE_FILES = ("Style", "StyleInk", "StyleTextRole")
+
+
+def function_body(text, name):
+    m = re.search(r"\bfunction " + name + r"\(", text)
+    if not m:
+        return ""
+    start = text.index("{", m.end())
+    depth = 0
+    for i in range(start, len(text)):
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        if depth == 0:
+            return text[start:i]
+    return text[start:]
+
+
+def unused_roles():
+    """The public members of Style.qml nothing outside the style files reads."""
+    path = QML / "config" / "Style.qml"
+    if not path.exists():
+        return []
+    style = path.read_text()
+    members = set(re.findall(r"^\s*(?:readonly\s+)?property\s+[\w.<>]+\s+(\w+)\s*:", style, re.M))
+    members |= set(re.findall(r"^\s*function\s+(\w+)\s*\(", style, re.M))
+    members = sorted(m for m in members if not m.startswith("_"))
+    sources = "\n".join(f.read_text(errors="replace") for f in sorted(QML.rglob("*.qml")) if f.stem not in STYLE_FILES)
+    read = {m for m in members if re.search(r"\bStyle\." + m + r"\b", sources)}
+    for fn in SWITCHES:
+        if fn in read:
+            read |= set(re.findall(r"\broot\.(\w+)", function_body(style, fn)))
+    return [m for m in members if m not in read]
 
 
 def command_roles():
-    style = (QML / "config" / "Style.qml").read_text()
-    members = sorted(set(re.findall(r"readonly property \w+ (\w+):", style)) - {"revision"})
-    sources = "\n".join(f.read_text(errors="replace") for f in all_files()
-                        if f.stem not in ("Style", "StyleInk", "StyleTextRole"))
-    for m in members:
-        if not re.search(r"Style\." + m + r"\b", sources):
-            print(f"unused: Style.{m}")
+    found = unused_roles()
+    for m in found:
+        print(f"Style.qml: unused role {m}")
+    return len(found)
 
 
 def main():
     args = sys.argv[1:]
     if not args:
         errors = check()
+        errors += [f"Style.qml: unused role {m}" for m in unused_roles()]
         if errors:
             print("\n".join(errors))
-            print(f"\n{len(errors)} style failure(s); the ratchet only shrinks (docs/dev/testing.md > The checks)")
+            print(f"\n{len(errors)} style failure(s) (docs/dev/testing.md > The checks)")
             sys.exit(1)
         print("style ok")
-    elif args[0] == "--write-baseline":
-        command_write()
-    elif args[0] == "--shrink-baseline":
-        command_shrink()
-    elif args[0] == "--raise":
-        command_raise(args[1:])
     elif args[0] == "--files":
-        command_files(args[1:])
+        sys.exit(1 if command_files(args[1:]) else 0)
     elif args[0] == "--roles":
-        command_roles()
+        sys.exit(1 if command_roles() else 0)
     else:
         sys.exit(__doc__.strip())
 

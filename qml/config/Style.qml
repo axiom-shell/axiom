@@ -48,13 +48,9 @@ QtObject {
   readonly property color success: root._roles.success
   readonly property color successText: root._roles.successText
   readonly property color successContainer: root._roles.successContainer
-  readonly property color onSuccess: root._roles.onSuccess
-  readonly property color onSuccessContainer: root._roles.onSuccessContainer
   readonly property color warning: root._roles.warning
   readonly property color warningText: root._roles.warningText
   readonly property color warningContainer: root._roles.warningContainer
-  readonly property color onWarning: root._roles.onWarning
-  readonly property color onWarningContainer: root._roles.onWarningContainer
   readonly property color error: root._roles.error
   readonly property color errorText: root._roles.errorText
   readonly property color errorContainer: root._roles.errorContainer
@@ -63,8 +59,6 @@ QtObject {
   readonly property color info: root._roles.info
   readonly property color infoText: root._roles.infoText
   readonly property color infoContainer: root._roles.infoContainer
-  readonly property color onInfo: root._roles.onInfo
-  readonly property color onInfoContainer: root._roles.onInfoContainer
   readonly property color divider: root._roles.divider
   readonly property color borderSubtle: root._roles.borderSubtle
   readonly property color borderStrong: root._roles.borderStrong
@@ -430,13 +424,6 @@ QtObject {
 
   // ---- alphas ----
 
-  readonly property real alphaHover: root._roles.alphaHover
-  readonly property real alphaPressed: root._roles.alphaPressed
-  readonly property real alphaDrag: root._roles.alphaDrag
-  readonly property real alphaScrim: root._roles.alphaScrim
-  readonly property real alphaShadowSoft: root._roles.alphaShadowSoft
-  readonly property real alphaVeil: root._roles.alphaVeil
-  readonly property real alphaWash: root._roles.alphaWash
   // a whole disabled control
   readonly property real opacityDisabled: root._roles.opacityDisabled
 
