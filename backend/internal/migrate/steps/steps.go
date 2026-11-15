@@ -245,6 +245,32 @@ var all = []Step{
 	// v108: scratchpads became special workspaces: the list, the widget's
 	// and the overview's keys renamed, invalid names rewritten (v108.go)
 	{Version: 108, Run: v108},
+	// v109: the Window rules tool page
+	{Version: 109, Run: func(cfg *jsonx.Object) []string {
+		overlay := object(cfg, "Overlay")
+		if overlay == nil {
+			return nil
+		}
+		items, _ := overlay.Value("items").(*jsonx.Array)
+		if items == nil {
+			return nil
+		}
+		taken := map[string]bool{}
+		for _, item := range items.Items {
+			view, _ := item.(*jsonx.Object)
+			if view == nil {
+				continue
+			}
+			if view.Value("type") == "WindowRules" {
+				return nil
+			}
+			if id, ok := view.Value("id").(string); ok {
+				taken[id] = true
+			}
+		}
+		items.Append(jsonx.Obj("id", freeID("windowRules", taken), "type", "WindowRules"))
+		return []string{"Overlay.items: added the Window rules page"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

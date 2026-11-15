@@ -9,7 +9,9 @@ import qs.components.methods
 // with a search field: typing filters the types as the editors' libraries
 // do (LibraryOrder.filtered: by label, type, group heading or keyword),
 // Up/Down move, Enter picks, Escape closes. `types` is a list of
-// { type, label, icon?, group?, keywords? }, shown in the order given, or
+// { type, label, icon?, image?, detail?, group?, keywords? } (image: a
+// picture drawn in place of the glyph, an app's icon; detail: a faint
+// second text after the label, elided), shown in the order given, or
 // with `groups` (the schema's `x-libraryGroups`) under a heading per
 // group (LibraryOrder.grouped). The caller tracks what it opened this
 // for. `openAt(item)` opens it under `item` (or above it when there's no
@@ -178,6 +180,8 @@ Popup {
           anchors.fill: parent
           visible: !rowDelegate.heading
           icon: rowDelegate.icon
+          image: rowDelegate.entry?.image ?? ""
+          trailing: rowDelegate.entry?.detail ?? ""
           text: rowDelegate.entry ? root.labelOf(rowDelegate.entry) : ""
           lit: rowDelegate.at === root.highlighted
           onHoveredChanged: {

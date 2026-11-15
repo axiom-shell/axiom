@@ -1,6 +1,6 @@
 # Editors pattern
 
-> **Files:** `qml/services/core/ConfigDraft.qml`, `qml/services/ui/EditsManager.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/reusable/DragLayer.qml`; editor managers `qml/services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `qml/services/ui/MenuEditor.qml`, `qml/services/apps/CustomWidgetsEditor.qml`, `qml/services/compositor/{KeybindEditor,MonitorManager}.qml`, `qml/services/ui/ScreenLayoutEditor.qml`
+> **Files:** `qml/services/core/ConfigDraft.qml`, `qml/services/ui/EditsManager.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/reusable/DragLayer.qml`; editor managers `qml/services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `qml/services/ui/MenuEditor.qml`, `qml/services/apps/CustomWidgetsEditor.qml`, `qml/services/compositor/{KeybindEditor,MonitorManager,WindowRulesEditor}.qml`, `qml/services/ui/ScreenLayoutEditor.qml`
 > **Config:** whichever path the editor drafts; layout prefs in `~/.local/state/axiom/ui/editors.json`
 > **Related:** [Config manager](config-manager.md), [Bar editor](../bar/bar-editor.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Monitors](../hyprland/monitors.md), [Keybinds](../hyprland/keybinds.md), [Shared UI pieces](shared-ui-pieces.md)
 

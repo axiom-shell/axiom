@@ -9,7 +9,9 @@ import QtQuick
 // screenMargin, resolve (a color name to a color), foreground, background,
 // outputs (the screens: name, width, height), autoColorFields
 // (BarsConfig's), baseColorNames (Theme's), redForGains (Markets' Red for gains,
-// which swaps the rise and fall roles) }.
+// which swaps the rise and fall roles) }. A bar entry with `hiddenByRule`
+// (a window rule hides the bar on its monitor: ScreenEdgeManager sets it)
+// is enriched as an always-auto-hiding bar.
 QtObject {
   id: root
 
@@ -77,7 +79,8 @@ QtObject {
     const islandDepth = env.borderWidth + edgePadding + thickness + edgePadding + env.borderWidth;
     // An auto-hiding bar reserves nothing unless pinned (ScreenEdgeManager
     // sets `pinned`; BarEnds zones it by reserveSpace || pinned)
-    const autoHiding = barConfig.autoHide !== "never";
+    const hidden = barConfig.hiddenByRule === true;
+    const autoHiding = hidden || barConfig.autoHide !== "never";
     const reserves = barConfig.reserveSpace && !autoHiding;
     const borderShadowed = solid && env.screenBorder && reserves;
     // Between the widgets within a section: a powerline's touch, and
@@ -157,13 +160,17 @@ QtObject {
       "shadowReach": kind !== "transparent" && !borderShadowed && look.values.shadow ? Math.ceil(look.values.shadowSize * 1.25) : 0,
       "lockCenter": barConfig.lockCenter,
       // never, always, whenCovered; what shows a hidden bar, and how long
-      "autoHide": barConfig.autoHide,
+      "autoHide": hidden ? "always" : barConfig.autoHide,
       "autoHiding": autoHiding,
+      // A window rule hides it on its monitor: auto-hiding, reserving
+      // nothing, revealed only at its edge (BarRevealManager hides it as
+      // this turns on)
+      "hiddenByRule": hidden,
       // Pinned shown by the `bar` IPC toggle: it then reserves its space
       // (BarRevealManager; ScreenEdgeManager sets it)
       "pinned": false,
-      "revealOnWorkspace": barConfig.revealOnWorkspace,
-      "revealOnActivity": barConfig.revealOnActivity,
+      "revealOnWorkspace": !hidden && barConfig.revealOnWorkspace,
+      "revealOnActivity": !hidden && barConfig.revealOnActivity,
       "revealFor": barConfig.revealFor,
       "timing": barConfig.timing,
       "location": loc,

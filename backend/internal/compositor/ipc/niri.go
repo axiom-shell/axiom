@@ -102,9 +102,21 @@ func (n *Niri) Outputs(ctx context.Context) ([]render.Output, error) {
 
 // NiriWindow is one of niri's windows (the Windows request).
 type NiriWindow struct {
-	ID    uint64 `json:"id"`
-	Title string `json:"title"`
-	AppID string `json:"app_id"`
+	ID          uint64      `json:"id"`
+	Title       string      `json:"title"`
+	AppID       string      `json:"app_id"`
+	PID         int         `json:"pid"`          // 0 when niri doesn't know it (null)
+	WorkspaceID *uint64     `json:"workspace_id"` // nil for a window on no workspace
+	Focused     bool        `json:"is_focused"`
+	Floating    bool        `json:"is_floating"`
+	Layout      *NiriLayout `json:"layout"`
+}
+
+// NiriLayout is where niri puts a window: TileSize is the tile's size in
+// logical pixels ([width, height]), which tells a fullscreen tile (niri
+// 26.04 has no fullscreen field).
+type NiriLayout struct {
+	TileSize []float64 `json:"tile_size"`
 }
 
 // Windows lists niri's windows.

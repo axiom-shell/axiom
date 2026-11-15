@@ -649,7 +649,7 @@ func SwayCursorLine(theme, size any) string {
 const SwayLoadedMode = "axiom_layer"
 
 // SwayModuleText is SwayConf.moduleText: the included file. parts: {
-// header, includeLines, binds, look, input, outputs }.
+// header, includeLines, binds, look, input, outputs, rules }.
 func SwayModuleText(parts any) string {
 	section := func(title, name string) string {
 		l := stringList(get(parts, name))
@@ -667,7 +667,7 @@ func SwayModuleText(parts any) string {
 
 # Tells axiom this file is loaded
 mode "` + SwayLoadedMode + `" bindsym --no-warn F35 mode default
-` + section("Binds", "binds") + section("Window borders and gaps", "look") + section("Input", "input") + section("Monitors", "outputs")
+` + section("Binds", "binds") + section("Window borders and gaps", "look") + section("Input", "input") + section("Monitors", "outputs") + section("Window rules", "rules")
 }
 
 // SwayManagedText is SwayConf.managedText: the managed sway config. opts: {

@@ -6,8 +6,9 @@
 // delay inhibitor until the lock screen is up), and holding off while an
 // app asks it to: over org.freedesktop.ScreenSaver (internal/screensaver)
 // or logind's idle inhibitors (systemd-inhibit), and always for axiom's
-// caffeine, which also holds a logind idle inhibitor of its own (Idle on
-// or off) for a user's own idle daemon. Docs: docs/dev/features/idle.md.
+// caffeine and the window rules' keep awake, which also hold a logind
+// idle inhibitor of their own (Idle on or off) for a user's own idle
+// daemon. Docs: docs/dev/features/idle.md.
 package idle
 
 import (
@@ -16,6 +17,7 @@ import (
 	"log/slog"
 	"os"
 	"reflect"
+	"slices"
 	"sync"
 	"time"
 
@@ -83,7 +85,7 @@ type State struct {
 
 // Inhibitor is one thing holding idle off.
 type Inhibitor struct {
-	Source string `json:"source"` // "screensaver" | "logind" | "caffeine"
+	Source string `json:"source"` // "screensaver" | "logind" | "caffeine" | "windowRule"
 	App    string `json:"app"`
 	Reason string `json:"reason"`
 }
@@ -119,6 +121,7 @@ type Service struct {
 	armed         []*armed
 	plan          []Listener
 	caffeine      bool
+	keepAwake     []string // the window rules holding the screen awake, by name
 	lg            *logind.Logind
 	delayMax      time.Duration
 	idleBlocked   bool
@@ -127,7 +130,7 @@ type Service struct {
 	sleepHeld     *logind.Logind // the logind the sleep inhibitor was taken from
 	lgCtx         context.Context
 	stopSystem    context.CancelFunc
-	stopCaffeine  context.CancelFunc // caffeine's logind idle inhibitor's holder
+	stopAwake     context.CancelFunc // the logind idle inhibitor's holder (caffeine's or a rule's)
 	stopSession   context.CancelFunc
 	busCtx        context.Context
 	wg            sync.WaitGroup
@@ -168,6 +171,20 @@ func (s *Service) Configure(settings Settings) {
 		s.reconcile()
 	})
 }
+
+// SetKeepAwake is the window rules' keep awake: the names of the rules
+// holding it now (none: none do). It holds idle off the way caffeine does,
+// beside it: one logind idle inhibitor serves both.
+func (s *Service) SetKeepAwake(names []string) {
+	names = slices.Clone(names)
+	s.post(func() {
+		s.keepAwake = names
+		s.reconcile()
+	})
+}
+
+// awake: caffeine or a window rule holds the screen awake.
+func (s *Service) awake() bool { return s.caffeine || len(s.keepAwake) > 0 }
 
 // SetCaffeine is the shell's caffeine switch: while on, it holds axiom's
 // idle off and holds a logind idle inhibitor (Idle on or off), which a
@@ -226,15 +243,15 @@ func (s *Service) reconcile() {
 		s.stopSystem()
 		s.stopSystem, s.lg, s.lgCtx, s.idleBlocked, s.idleApps = nil, nil, nil, false, nil
 	}
-	// Caffeine's logind idle inhibitor, whatever Idle's settings
-	wantHold := s.caffeine && s.o.SystemBus != nil
-	if wantHold && s.stopCaffeine == nil {
+	// The logind idle inhibitor of caffeine and the rules, whatever Idle's settings
+	wantHold := s.awake() && s.o.SystemBus != nil
+	if wantHold && s.stopAwake == nil {
 		var ctx context.Context
-		ctx, s.stopCaffeine = context.WithCancel(s.busCtx)
-		s.goBus(func() { s.runCaffeine(ctx) })
-	} else if !wantHold && s.stopCaffeine != nil {
-		s.stopCaffeine()
-		s.stopCaffeine = nil
+		ctx, s.stopAwake = context.WithCancel(s.busCtx)
+		s.goBus(func() { s.runAwake(ctx) })
+	} else if !wantHold && s.stopAwake != nil {
+		s.stopAwake()
+		s.stopAwake = nil
 	}
 	wantSession := st.Enabled && st.RespectInhibitors && s.o.SessionBus != nil
 	if wantSession && s.stopSession == nil {
@@ -282,17 +299,17 @@ func (s *Service) stopBuses() {
 	if s.stopSession != nil {
 		s.stopSession()
 	}
-	if s.stopCaffeine != nil {
-		s.stopCaffeine()
+	if s.stopAwake != nil {
+		s.stopAwake()
 	}
 }
 
 // inhibited: something holds idle off that the compositor doesn't know
-// of: caffeine always; with inhibitors respected (the compositor then
-// holds off for Wayland inhibitors itself), ScreenSaver's and logind's
-// too, but for caffeine's own (others).
+// of: caffeine or a window rule's keep awake always; with inhibitors
+// respected (the compositor then holds off for Wayland inhibitors itself),
+// ScreenSaver's and logind's too, but for ours (others).
 func (s *Service) inhibited() bool {
-	if s.caffeine {
+	if s.awake() {
 		return true
 	}
 	return s.settings.RespectInhibitors && (s.idleBlocked || s.ss != nil && len(s.ss.Inhibitors()) > 0)
@@ -532,7 +549,7 @@ func (s *Service) logindOnce(ctx context.Context) error {
 	})
 }
 
-// relist lists logind's idle inhibitors again, once caffeine's let go:
+// relist lists logind's idle inhibitors again, once ours is let go:
 // BlockInhibited doesn't change while another one holds idle off too, so
 // no event says what is left.
 func (s *Service) relist() {
@@ -555,32 +572,34 @@ func (s *Service) relist() {
 	})
 }
 
-// caffeineWho and caffeineWhy name caffeine's logind idle inhibitor.
-const caffeineWho, caffeineWhy = "axiom", "Caffeine"
+// awakeWho and awakeWhy name the logind idle inhibitor of caffeine and the
+// window rules; the why isn't "Caffeine" since a rule may be all that holds it.
+const awakeWho, awakeWhy = "axiom", "Keep the screen awake"
 
-// others are the inhibitors that aren't caffeine's own (this process's).
+// others are the inhibitors that aren't our own (this process's).
 func others(listed []logind.Inhibitor) []logind.Inhibitor {
 	pid := uint32(os.Getpid())
 	var out []logind.Inhibitor
 	for _, in := range listed {
-		if in.Who != caffeineWho || in.PID != pid {
+		if in.Who != awakeWho || in.PID != pid {
 			out = append(out, in)
 		}
 	}
 	return out
 }
 
-// runCaffeine holds a logind idle inhibitor until ctx ends (caffeine
-// goes off, or the service stops), taken again after Retry when it
+// runAwake holds a logind idle inhibitor until ctx ends (caffeine and the
+// rules let go, or the service stops), taken again after Retry when it
 // can't be. A re-exec closes it (close-on-exec): the next image takes
-// its own once the shell, greeting it, sends caffeine again.
-func (s *Service) runCaffeine(ctx context.Context) {
+// its own once the shell, greeting it, sends caffeine again, and the window
+// rules' holds come again from the engine's reset.
+func (s *Service) runAwake(ctx context.Context) {
 	for {
-		err := s.caffeineOnce(ctx)
+		err := s.awakeOnce(ctx)
 		if ctx.Err() != nil {
 			return
 		}
-		s.o.Log.Warn("idle: no logind idle inhibitor for caffeine: retrying", "in", s.o.Retry, "err", err)
+		s.o.Log.Warn("idle: no logind idle inhibitor to keep the screen awake: retrying", "in", s.o.Retry, "err", err)
 		select {
 		case <-ctx.Done():
 			return
@@ -589,17 +608,17 @@ func (s *Service) runCaffeine(ctx context.Context) {
 	}
 }
 
-// caffeineOnce takes the inhibitor on a connection of its own (Idle may
+// awakeOnce takes the inhibitor on a connection of its own (Idle may
 // be off, with no logind connected), which it needs no longer: logind
 // holds idle off while the descriptor is open.
-func (s *Service) caffeineOnce(ctx context.Context) error {
+func (s *Service) awakeOnce(ctx context.Context) error {
 	tctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	conn, err := s.o.SystemBus(tctx)
 	if err != nil {
 		return err
 	}
-	f, err := logind.Manager(conn).InhibitIdle(tctx, caffeineWho, caffeineWhy)
+	f, err := logind.Manager(conn).InhibitIdle(tctx, awakeWho, awakeWhy)
 	conn.Close()
 	if err != nil {
 		return err
@@ -720,6 +739,11 @@ func (s *Service) publish() {
 	}
 	if s.caffeine && s.settings.Enabled {
 		st.Inhibitors = append(st.Inhibitors, Inhibitor{Source: "caffeine"})
+	}
+	if s.settings.Enabled {
+		for _, name := range s.keepAwake {
+			st.Inhibitors = append(st.Inhibitors, Inhibitor{Source: "windowRule", App: name})
+		}
 	}
 	if s.published && reflect.DeepEqual(st, s.lastPublished) {
 		return
