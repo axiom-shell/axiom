@@ -1002,4 +1002,31 @@ TestCase {
     verify(probeAt.x + probe.width <= saveAt.x + 0.5, `probe ends ${probeAt.x + probe.width}, Save at ${saveAt.x}`);
     verify(titleAt.x + title.width < probeAt.x, "the title is left of it");
   }
+
+  // A pane's `headerIcon` shows before its title; empty, nothing and the
+  // title stays where it was
+  function test_tool_pane_title_icon() {
+    harness.configure({});
+    const plain = createTemporaryObject(toolPaneComp, root, {
+      "width": 420,
+      "height": 500
+    });
+    waitForRendering(plain);
+    const plainTitle = find(plain, it => it.text === "Window rules", [])[0];
+    verify(plainTitle);
+    verify(find(plain, it => it.text === "widgets" && it.visible, []).length === 0, "no icon without headerIcon");
+    const plainX = plainTitle.mapToItem(plain, 0, 0).x;
+    const pane = createTemporaryObject(toolPaneComp, root, {
+      "width": 420,
+      "height": 500,
+      "headerIcon": "widgets"
+    });
+    waitForRendering(pane);
+    const icon = find(pane, it => it.text === "widgets" && it.visible, [])[0];
+    const title = find(pane, it => it.text === "Window rules", [])[0];
+    verify(icon && title);
+    const iconRight = icon.mapToItem(pane, 0, 0).x + icon.width;
+    verify(iconRight <= title.mapToItem(pane, 0, 0).x + 0.5, `icon ends ${iconRight}, title at ${title.mapToItem(pane, 0, 0).x}`);
+    verify(title.mapToItem(pane, 0, 0).x > plainX, "the title moved right of the icon");
+  }
 }

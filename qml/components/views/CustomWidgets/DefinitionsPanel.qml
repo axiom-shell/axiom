@@ -46,6 +46,7 @@ Item {
   ToolPane {
     anchors.fill: parent
     title: I18n.tr("Custom widgets")
+    headerIcon: "widgets"
     scrollKey: "CustomWidgets/list"
     showActions: false
 

@@ -40,6 +40,7 @@ BaseView {
       anchors.fill: parent
       // The kind of pane, never the selection's name (that is the header's)
       title: I18n.tr("Custom widget")
+      headerIcon: "widgets"
       scrollKey: "CustomWidgets/" + root.editor.tab
       dirty: root.editor.isDirty
       onSave: root.editor.save()
