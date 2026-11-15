@@ -5,7 +5,7 @@
     required keys, hex colors, semantic names that resolve, pairs that exist)
   - the Neovim module Apply copies compiles and maps the shipped themes
   - check_sizes.py finds sizes written as numbers, skipping hairlines
-  - check_style.py: every style rule on a fixture file, its waivers, scope and ratchet
+  - check_style.py: every style rule on a fixture file, its waivers, scope, every-hit-fails and role check
   - check_icons.py finds icon names the bundled font doesn't have
   - only PAM's success unlocks the built-in lock screen
   - each check fails on what it catches: a copy of the tree (fixture_root)
@@ -707,7 +707,7 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckStyle(unittest.TestCase):
-    """scripts/check_style.py: each rule R1 to R18 on a fixture file, the waivers, the scope and the ratchet."""
+    """scripts/check_style.py: each rule R1 to R18 on a fixture file, the waivers, the scope, every hit failing and the role check."""
     HEAD = "pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.config\n// A fixture.\n"
     UI = "qml/components/reusable/X.qml"
     STYLED = {"qml/components/reusable/StyledText.qml": HEAD + "Text {\n}\n",
@@ -733,7 +733,7 @@ class CheckStyle(unittest.TestCase):
         files.update(extra or {})
         self.put(files)
         code, out = run_check(self.root, "check_style.py", "--files", path)
-        self.assertEqual(code, 0, out)
+        self.assertEqual(code, 1 if out.strip() else 0, out)
         return [line.split(": ")[1].split(" ")[0] for line in out.splitlines() if line.startswith(path + ":")]
 
     def rule(self, body, rule, **kw):
@@ -908,11 +908,9 @@ class CheckStyle(unittest.TestCase):
 
     def test_waivers(self):
         self.assertEqual(self.rule('  property var x: "black" // style-exempt: mask', "R2"), 0)
-        # a file's exception keeps its hits out of the baseline
+        # a file's exception waives its rule
         self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["R1"], "reason": "a fixture"}}),
                   self.UI: self.HEAD + "Item {\n  property var x: Theme.accent\n}\n"})
-        self.assertEqual(run_check(self.root, "check_style.py", "--write-baseline")[0], 0)
-        self.assertEqual(self.baseline(), {})
         self.assertEqual(run_check(self.root, "check_style.py")[0], 0)
 
     def test_a_malformed_exception_is_an_error_not_a_traceback(self):
@@ -936,84 +934,64 @@ class CheckStyle(unittest.TestCase):
         self.put({self.UI: self.HEAD + "Item {\n  property var x: Theme.accent\n}\n",
                   "qml/components/reusable/Y.qml": self.HEAD + "Item {\n  property var x: Theme.accent\n}\n"})
         code, out = run_check(self.root, "check_style.py", "--files", self.UI)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 1)
         self.assertIn(f"{self.UI}:6: R1", out)
         self.assertNotIn("Y.qml", out)
 
-    def ratchet(self, *args):
+    def check(self, *args):
         return run_check(self.root, "check_style.py", *args)
 
-    def baseline(self):
-        return json.loads((self.root / "scripts" / "style-baseline.json").read_text())
-
-    def test_ratchet(self):
-        two = self.HEAD + "Item {\n  property var a: Theme.a\n  property var b: Theme.b\n}\n"
-        other = "qml/components/reusable/Y.qml"
-        self.put({self.UI: two, other: two})
-        code, out = self.ratchet()
+    def test_any_hit_fails(self):
+        self.put({self.UI: self.HEAD + 'Item {\n  property var x: "#ff0000"\n}\n'})
+        code, out = self.check()
         self.assertEqual(code, 1)
-        self.assertIn("style-baseline.json is missing", out)
-        self.assertEqual(self.ratchet("--write-baseline")[0], 0)
-        self.assertEqual(self.baseline(), {self.UI: {"R1": 2}, other: {"R1": 2}})
-        self.assertEqual(self.ratchet()[0], 0)
-        self.assertNotEqual(self.ratchet("--write-baseline")[0], 0)
-        # one more hit fails; --raise sets the named file's entry and leaves the other's alone
-        self.put({self.UI: two.replace("}\n", "  property var c: Theme.c\n}\n")})
-        code, out = self.ratchet()
-        self.assertEqual(code, 1)
-        self.assertIn(self.UI, out)
-        code, out = self.ratchet("--raise", self.UI)
-        self.assertEqual(code, 0, out)
-        self.assertIn(f"raised {self.UI}: R1 2 → 3", out)
-        self.assertEqual(self.baseline(), {self.UI: {"R1": 3}, other: {"R1": 2}})
-        self.assertEqual(self.ratchet()[0], 0)
-        # a new file with a hit fails; --raise needs a path, and a file with a hit
-        new = "qml/components/reusable/Z.qml"
-        self.put({new: two, "qml/components/reusable/W.qml": self.HEAD + "Item {\n}\n"})
-        self.assertEqual(self.ratchet()[0], 1)
-        self.assertNotEqual(self.ratchet("--raise")[0], 0)
-        self.assertNotEqual(self.ratchet("--raise", "qml/components/reusable/W.qml")[0], 0)
-        self.assertEqual(self.ratchet("--raise", new)[0], 0)
-        # a deleted file's entry fails; --shrink-baseline drops it and lowers, never raises
-        (self.root / other).unlink()
-        code, out = self.ratchet()
-        self.assertEqual(code, 1)
-        self.assertIn("Y.qml", out)
-        self.put({self.UI: self.HEAD + "Item {\n  property var a: Theme.a\n}\n"})
-        self.assertEqual(self.ratchet("--shrink-baseline")[0], 0)
-        self.assertEqual(self.baseline(), {self.UI: {"R1": 1}, new: {"R1": 2}})
-        self.put({self.UI: two})
-        self.assertEqual(self.ratchet()[0], 1)
-        self.assertEqual(self.ratchet("--shrink-baseline")[0], 0)
-        self.assertEqual(self.baseline()[self.UI], {"R1": 1})
+        self.assertIn(f"{self.UI}:6: R2", out)
 
     def test_counting_unit(self):
         text = self.HEAD + ("Item {\n  property var a: [Theme.a, Theme.b]\n  // property var b: Theme.c\n"
                             "  /* property var c: Theme.d */\n  property var d: Theme.e // style-exempt: a test\n"
                             "  property var e: \"// Theme.f\"\n}\n")
         self.put({self.UI: text})
-        self.assertEqual(self.ratchet("--write-baseline")[0], 0)
-        # a comment's match and a waived line's count 0; a match inside a string literal stays
-        self.assertEqual(self.baseline()[self.UI], {"R1": 3})
-
-    def test_unbaselined_rules_fail(self):
-        self.put({self.UI: self.HEAD + "Text {\n}\n"})
-        self.ratchet("--write-baseline")
-        code, out = self.ratchet()
+        code, out = self.check()
         self.assertEqual(code, 1)
-        self.assertIn("R16", out)
+        # a comment's match and a waived line's count nothing; a match inside a string literal stays
+        self.assertEqual(out.count(": R1 "), 3, out)
+
+    def test_unused_role_fails(self):
+        self.put({"qml/config/Style.qml": self.HEAD + "Item {\n  readonly property color unusedRole: \"red\"\n}\n"})
+        code, out = self.check()
+        self.assertEqual(code, 1)
+        self.assertIn("Style.qml: unused role unusedRole", out)
+        self.assertEqual(self.check("--roles")[0], 1)
+
+    def test_role_read_by_piece_counts(self):
+        self.put({"qml/config/Style.qml": self.HEAD + "Item {\n  readonly property color fillRole: \"red\"\n}\n",
+                  "qml/components/reusable/Surface.qml": self.HEAD + "Item {\n  color: Style.fillRole\n}\n"})
+        self.assertEqual(self.check("--roles"), (0, ""))
+
+    def test_role_read_through_a_switch_counts(self):
+        style = self.HEAD + ("Item {\n  readonly property color successText: root.x\n"
+                             "  function toneColor(name) {\n    switch (name) {\n    case \"success\":\n"
+                             "      return root.successText;\n    }\n  }\n}\n")
+        self.put({"qml/config/Style.qml": style,
+                  "qml/components/reusable/Y.qml": self.HEAD + "Item {\n  property var c: Style.toneColor(\"x\")\n}\n"})
+        code, out = self.check("--roles")
+        self.assertEqual(code, 0, out)
+
+    def test_private_member_ignored(self):
+        self.put({"qml/config/Style.qml": self.HEAD + "Item {\n  readonly property var _roles: ({})\n"
+                                                      "  function _derive(a) { return a; }\n}\n"})
+        self.assertEqual(self.check("--roles"), (0, ""))
 
     def test_stale_waivers(self):
         self.put({self.UI: self.HEAD + "Item {\n  width: 3 // style-exempt: nothing here\n}\n"})
-        self.ratchet("--write-baseline")
-        code, out = self.ratchet()
+        code, out = self.check()
         self.assertEqual(code, 1)
         self.assertIn("stale waiver", out)
         # an exception whose file is gone, or whose rule no file under it hits
         self.put({self.UI: self.HEAD + "Item {\n}\n", "scripts/style-exceptions.json": json.dumps(
             {self.UI: {"rules": ["R1"], "reason": "x"}, "qml/components/reusable/Gone.qml": {"rules": ["R1"], "reason": "x"}})})
-        (self.root / "scripts" / "style-baseline.json").write_text("{}\n")
-        code, out = self.ratchet()
+        code, out = self.check()
         self.assertEqual(code, 1)
         self.assertIn("Gone.qml matches no file", out)
         self.assertIn("lists R1, which no file", out)

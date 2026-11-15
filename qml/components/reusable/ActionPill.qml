@@ -21,9 +21,6 @@ Rectangle {
   // accent | error: the fill while active, and the container the well takes
   // while hovered
   property string activeTone: "accent"
-  // Chrome overrides, kept until no caller sets them
-  property color activeColor: root.activeTone === "error" ? Style.error : Style.accent
-  property color tone: root.activeColor
   property int countdown: 0
   // There's a detail to open
   property bool opens: false
@@ -31,6 +28,8 @@ Rectangle {
   signal clicked
   signal opened
 
+  // The fill while active, and the hover / selected outline
+  readonly property color _activeColor: root.activeTone === "error" ? Style.error : Style.accent
   readonly property bool hot: area.containsMouse || wellArea.containsMouse
   readonly property string _containerTone: root.activeTone + "Container"
   readonly property color _containerFill: root.activeTone === "error" ? Style.errorContainer : Style.accentContainer
@@ -51,8 +50,8 @@ Rectangle {
   readonly property int _statusLines: Math.max(1, Math.min(3 - nameText.lineCount, Math.floor((root._room - nameText.lineCount * nameMetrics.height) / statusMetrics.height)))
 
   radius: Style.radius
-  color: root.active ? root.activeColor : Style.fill
-  border.color: root.active ? root.activeColor : root.hot ? root.tone : Style.borderSubtle
+  color: root.active ? root._activeColor : Style.fill
+  border.color: root.active || root.hot ? root._activeColor : Style.borderSubtle
   border.width: Style.hairline
   clip: true
 

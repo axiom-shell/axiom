@@ -31,8 +31,8 @@ TestCase {
   // ---- Exact rows ----
 
   function test_over_composites_opaque() {
-    same(BarWidgetStyle.over("#ffffff", "#000000"), "#ffffff", "opaque top");
-    close(BarWidgetStyle.over(Qt.rgba(1, 1, 1, 0.5), "#000000"), Qt.rgba(0.5, 0.5, 0.5, 1), "half");
+    same(Tone.over("#ffffff", "#000000"), "#ffffff", "opaque top");
+    close(Tone.over(Qt.rgba(1, 1, 1, 0.5), "#000000"), Qt.rgba(0.5, 0.5, 0.5, 1), "half");
   }
 
   function test_faded_keeps_a_clear_color_clear() {
@@ -41,48 +41,48 @@ TestCase {
   }
 
   function test_nudged() {
-    same(BarWidgetStyle.nudged(["#000000"], "#ffffff", 4.5), "#ffffff", "a readable color is kept");
+    same(Tone.nudged(["#000000"], "#ffffff", 4.5), "#ffffff", "a readable color is kept");
     // By the least that reaches it, its hue kept, lighter on a dark back
-    const back = BarWidgetStyle.over(BarWidgetStyle.faded("#31748f", 0.2), "#191724");
-    const out = Qt.color(BarWidgetStyle.nudged([back], "#31748f", 4.5));
-    verify(Utils.contrast(back, "#31748f") < 4.5, "the live case is unreadable");
-    verify(Utils.contrast(back, out) >= 4.5 && Utils.contrast(back, out) < 4.8, "by the least: " + Utils.contrast(back, out));
+    const back = Tone.over(BarWidgetStyle.faded("#31748f", 0.2), "#191724");
+    const out = Qt.color(Tone.nudged([back], "#31748f", 4.5));
+    verify(Tone.contrast(back, "#31748f") < 4.5, "the live case is unreadable");
+    verify(Tone.contrast(back, out) >= 4.5 && Tone.contrast(back, out) < 4.8, "by the least: " + Tone.contrast(back, out));
     verify(out.r > 0x31 / 255 && out.b > out.r, "lighter, hue kept");
     // A light back goes darker
-    const dark = Qt.color(BarWidgetStyle.nudged(["#f0f0f0"], "#7090a0", 4.5));
-    verify(Utils.contrast("#f0f0f0", dark) >= 4.5 && dark.r < 0x70 / 255, "darker on light");
+    const dark = Qt.color(Tone.nudged(["#f0f0f0"], "#7090a0", 4.5));
+    verify(Tone.contrast("#f0f0f0", dark) >= 4.5 && dark.r < 0x70 / 255, "darker on light");
     // Every back
-    const both = BarWidgetStyle.nudged(["#202020", "#808080"], "#909090", 3);
-    verify(Utils.contrast("#202020", both) >= 3 && Utils.contrast("#808080", both) >= 3, "both");
+    const both = Tone.nudged(["#202020", "#808080"], "#909090", 3);
+    verify(Tone.contrast("#202020", both) >= 3 && Tone.contrast("#808080", both) >= 3, "both");
     // No mix reaches it: a pole
-    const pole = BarWidgetStyle.nudged(["#777777"], "#777777", 21);
+    const pole = Tone.nudged(["#777777"], "#777777", 21);
     verify(Qt.colorEqual(pole, "#000000") || Qt.colorEqual(pole, "#ffffff"), "a pole");
   }
 
   function test_readable_on() {
-    same(BarWidgetStyle.readableOn("#000000", "#ffffff"), "#ffffff", "contrasting");
-    same(BarWidgetStyle.readableOn("#ffffff", "#eeeeee"), "#000000", "too close");
+    same(Tone.readableOn("#000000", "#ffffff"), "#ffffff", "contrasting");
+    same(Tone.readableOn("#ffffff", "#eeeeee"), "#000000", "too close");
     // By contrast, not a luma split: gruvbox's dark text on its red reads
     // at about 4.3, black at 6.1
-    same(BarWidgetStyle.readableOn("#fb4934", "#282828"), "#000000", "black beats the dark text");
-    same(BarWidgetStyle.readableOn("#777777", "#ffffff", ["#000000"]), "#000000", "the one with the most contrast");
+    same(Tone.readableOn("#fb4934", "#282828"), "#000000", "black beats the dark text");
+    same(Tone.readableOn("#777777", "#ffffff", ["#000000"]), "#000000", "the one with the most contrast");
   }
 
   function test_mix() {
-    same(BarWidgetStyle.mix("#ff0000", "#0000ff", 0), "#ff0000", "none");
-    same(BarWidgetStyle.mix("#ff0000", "#0000ff", 1), "#0000ff", "all");
-    close(BarWidgetStyle.mix("#000000", "#ffffff", 0.25), "#404040", "a quarter");
+    same(Tone.mix("#ff0000", "#0000ff", 0), "#ff0000", "none");
+    same(Tone.mix("#ff0000", "#0000ff", 1), "#0000ff", "all");
+    close(Tone.mix("#000000", "#ffffff", 0.25), "#404040", "a quarter");
   }
 
   // Muted: mixed mutedMix toward the first back, floored at mutedContrast
   function test_muted() {
     const backs = ["#202020"];
     const m = BarWidgetStyle.muted(backs, "#ffffff");
-    close(m, BarWidgetStyle.mix("#ffffff", "#202020", 0.45), "mixed toward the back");
-    verify(Utils.contrast("#202020", m) >= 3, "above the floor");
+    close(m, Tone.mix("#ffffff", "#202020", 0.45), "mixed toward the back");
+    verify(Tone.contrast("#202020", m) >= 3, "above the floor");
     // Where the mix falls short of the floor it is nudged up to it
     const low = BarWidgetStyle.muted(["#202020"], "#505050");
-    verify(Utils.contrast("#202020", low) >= 3 && Utils.contrast("#202020", low) < 3.3, "floored: " + Utils.contrast("#202020", low));
+    verify(Tone.contrast("#202020", low) >= 3 && Tone.contrast("#202020", low) < 3.3, "floored: " + Tone.contrast("#202020", low));
   }
 
   function test_mix_colors_meets_in_between() {
@@ -93,8 +93,8 @@ TestCase {
     });
     compare(BarWidgetStyle.mixColors(rest, dim, 0), rest, "0 is the first");
     const mid = BarWidgetStyle.mixColors(rest, dim, 0.5);
-    close(mid.fill, BarWidgetStyle.mix(rest.fill, dim.fill, 0.5), "fill");
-    verify(Utils.contrast(mid.iconBack[0], mid.icon) >= 3, "the mid-point's icon reads");
+    close(mid.fill, Tone.mix(rest.fill, dim.fill, 0.5), "fill");
+    verify(Tone.contrast(mid.iconBack[0], mid.icon) >= 3, "the mid-point's icon reads");
   }
 
   function test_mix_colors_keys_match_the_full_mix() {
@@ -193,7 +193,7 @@ TestCase {
       "pressed": true
     });
     verify(!Qt.colorEqual(rest.text, pressed.text) && !Qt.colorEqual(rest.icon, pressed.icon), "content differs");
-    verify(Utils.contrast(pressed.textBack[0], pressed.text) >= 4.5 && Utils.contrast(pressed.iconBack[0], pressed.icon) >= 3, "and reads");
+    verify(Tone.contrast(pressed.textBack[0], pressed.text) >= 4.5 && Tone.contrast(pressed.iconBack[0], pressed.icon) >= 3, "and reads");
     same(pressed.fill, rest.fill, "the fill stays");
   }
 
@@ -209,7 +209,7 @@ TestCase {
     compare(c.textBack.length, 2, "two backdrops");
     same(Qt.rgba(c.level.r, c.level.g, c.level.b, 1), "#ffffff", "a white sheen on a mid fill");
     fuzzyCompare(c.level.a, 0.35, 0.01, "at the same strength");
-    c.textBack.forEach(back => verify(Utils.contrast(back, c.text) >= 4.5, "text reads on each: " + back));
+    c.textBack.forEach(back => verify(Tone.contrast(back, c.text) >= 4.5, "text reads on each: " + back));
   }
 
   // A cell's content in an empty cell is mixed emptyMix toward what it
@@ -219,8 +219,8 @@ TestCase {
       "widgetStyle": "plain"
     });
     const c = BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {}), "#665c54", Bars.theme.foreground, "empty");
-    const back = BarWidgetStyle.over(bar.palette.background, bar.palette.background);
-    const want = BarWidgetStyle.nudged([back], BarWidgetStyle.mix(Bars.theme.foreground, back, BarWidgetStyle.emptyMix), 3);
+    const back = Tone.over(bar.palette.background, bar.palette.background);
+    const want = Tone.nudged([back], Tone.mix(Bars.theme.foreground, back, BarWidgetStyle.emptyMix), 3);
     same(c.content, want, "mixed toward the bar");
   }
 
@@ -235,8 +235,8 @@ TestCase {
     same(cell(false).fill, "#fb4934", "at rest");
     same(BarWidgetStyle.mixColors(cell(false), cell(true), 1).fill, cell(true).fill, "fully pulsed is muted");
     const mid = BarWidgetStyle.mixColors(cell(false), cell(true), 0.5);
-    close(mid.fill, BarWidgetStyle.mix(cell(false).fill, cell(true).fill, 0.5), "between");
-    mid.back.forEach(back => verify(Utils.contrast(back, mid.content) >= 3, "the mid-point reads"));
+    close(mid.fill, Tone.mix(cell(false).fill, cell(true).fill, 0.5), "between");
+    mid.back.forEach(back => verify(Tone.contrast(back, mid.content) >= 3, "the mid-point reads"));
     compare(cell(false).hover.toString(), Bars.theme.backgroundHighlight, "a cell's hover is the palette's");
     same(BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {
       "hover": "#123456"
@@ -336,7 +336,7 @@ TestCase {
       if (name.startsWith("split icon") && Qt.colorEqual(c.fill, "#fb4934"))
         fails.push(`${name}: filled on hover`);
       c.textBack.forEach(b => {
-        if (Utils.contrast(b, c.text) < 4.5)
+        if (Tone.contrast(b, c.text) < 4.5)
           fails.push(`${name}: text ${c.text} under 4.5 on ${b}`);
       });
     }
@@ -386,7 +386,7 @@ TestCase {
       const over = root.parse(keys);
       const palette = Bars.bar(over).palette;
       const c = root.colorsOf(over, widget);
-      const named = (key, back) => key === "accent" ? BarWidgetStyle.over("#fb4934", back) : key === "tint" ? BarWidgetStyle.over(BarWidgetStyle.faded("#fb4934", 0.25), back) : key === "bar" ? back : BarWidgetStyle.over(palette[key], back);
+      const named = (key, back) => key === "accent" ? Tone.over("#fb4934", back) : key === "tint" ? Tone.over(BarWidgetStyle.faded("#fb4934", 0.25), back) : key === "bar" ? back : Tone.over(palette[key], back);
       if (c.textBack.length !== 1 || !root.close2(c.textBack[0], named(text, bg)))
         fails.push(`${name}: textBack ${c.textBack}, not ${text}`);
       if (c.iconBack.length !== 1 || !root.close2(c.iconBack[0], named(icon, bg)))
@@ -402,9 +402,9 @@ TestCase {
     });
     compare(level.textBack.length, 2, "level: two text backdrops");
     compare(level.iconBack.length, 2, "level: two icon backdrops");
-    if (!root.close2(level.textBack[1], BarWidgetStyle.over(level.level, level.textBack[0])))
+    if (!root.close2(level.textBack[1], Tone.over(level.level, level.textBack[0])))
       fails.push("level: the second textBack is not the level over the first");
-    if (!root.close2(level.iconBack[1], BarWidgetStyle.over(level.level, level.iconBack[0])))
+    if (!root.close2(level.iconBack[1], Tone.over(level.level, level.iconBack[0])))
       fails.push("level: the second iconBack is not the level over the first");
     verify(fails.length === 0, fails.join("\n"));
   }
@@ -454,7 +454,7 @@ TestCase {
         });
         const tag = `${look.key}${split ? " split" : ""}`;
         const key = !split && look.split ? "fill" : look.show;
-        const expected = look.as === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : look.as === "icon" ? BarWidgetStyle.nudged(c.iconBack, "#fb4934", 3) : "#fb4934";
+        const expected = look.as === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : look.as === "icon" ? Tone.nudged(c.iconBack, "#fb4934", 3) : "#fb4934";
         if (key === null) {
           const other = BarWidgetStyle.widgetColors(bar, "#458588", "#282828", {});
           if (!Qt.colorEqual(c.text, other.text) || !Qt.colorEqual(c.icon, other.icon) || !Qt.colorEqual(c.fill, other.fill))
@@ -525,7 +525,7 @@ TestCase {
         const c = BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {}), "#fb4934", "#282828", state);
         const tag = `${look.key} ${state}`;
         const key = look.show === "iconFill" ? "fill" : look.show === "icon" ? "content" : look.show;
-        const read = BarWidgetStyle.nudged(c.back, "#fb4934", 4.5);
+        const read = Tone.nudged(c.back, "#fb4934", 4.5);
         if (key === null) {
           const want = state === "active" ? bar.palette.barText : read;
           if (!Qt.colorEqual(c.content, want))
@@ -609,7 +609,7 @@ TestCase {
 
   // `color` reads on every one of `backs` at `floor`
   function reads(backs, color, floor) {
-    return backs.every(b => Utils.contrast(b, color) >= floor - 1e-6);
+    return backs.every(b => Tone.contrast(b, color) >= floor - 1e-6);
   }
 
   // What must hold of the colors() of a widget in `ctx`, whether `muted`
@@ -639,7 +639,7 @@ TestCase {
     const slice = stops ? BarGradient.gradientAt(stops, 0.3) : null;
     const gives = ctx.gradient && ctx.auto && stops !== null;
     const base = gives ? slice : ctx.accent;
-    const want = muted ? BarWidgetStyle.mix(base, ctx.bar.palette.background, BarWidgetStyle.mutedMix) : base;
+    const want = muted ? Tone.mix(base, ctx.bar.palette.background, BarWidgetStyle.mutedMix) : base;
     if (Math.abs(Qt.color(c.accent).r - Qt.color(want).r) > 0.01 || Math.abs(Qt.color(c.accent).g - Qt.color(want).g) > 0.01 || Math.abs(Qt.color(c.accent).b - Qt.color(want).b) > 0.01)
       fails.push(`${tag}: accent ${c.accent} is not ${gives ? "the slice" : "its own"} ${want}`);
   }
@@ -667,10 +667,10 @@ TestCase {
       return;
     const palette = ctx.bar.palette;
     const badge = BarWidgetStyle.badge(palette, c, ctx.accent);
-    const backs = c.iconOnFill ? c.iconBack : c.iconBack.concat([BarWidgetStyle.over(palette.background, palette.background)]);
+    const backs = c.iconOnFill ? c.iconBack : c.iconBack.concat([Tone.over(palette.background, palette.background)]);
     if (!root.reads(backs, badge.fill, 3))
       fails.push(`${tag}: badge fill ${badge.fill} under 3 on ${backs}`);
-    if (Utils.contrast(BarWidgetStyle.over(badge.fill, palette.background), badge.text) < 4.5)
+    if (Tone.contrast(Tone.over(badge.fill, palette.background), badge.text) < 4.5)
       fails.push(`${tag}: badge text ${badge.text} under 4.5`);
     if (!Qt.colorEqual(badge.ring, c.iconOnFill ? c.iconBack[0] : "transparent"))
       fails.push(`${tag}: badge ring ${badge.ring}`);
@@ -766,14 +766,14 @@ TestCase {
   function checkCell(fails, tag, c, muted, state, ctx) {
     const floor = state === "empty" || (muted && !c.onFill) ? BarWidgetStyle.mutedContrast : 4.5;
     // plain's occupied and unmuted active text is the bar's text, as set
-    const seen = c.back.map(b => BarWidgetStyle.over(c.content, b));
+    const seen = c.back.map(b => Tone.over(c.content, b));
     if (ctx.override) {
-      if (muted && !c.onFill && !c.back.every((b, i) => Utils.contrast(b, seen[i]) >= floor - 1e-6))
+      if (muted && !c.onFill && !c.back.every((b, i) => Tone.contrast(b, seen[i]) >= floor - 1e-6))
         fails.push(`${tag}: muted content under ${floor}`);
       return;
     }
     c.back.forEach((b, i) => {
-      if (Utils.contrast(b, seen[i]) < floor - 1e-6)
+      if (Tone.contrast(b, seen[i]) < floor - 1e-6)
         fails.push(`${tag}: content ${c.content} under ${floor} on ${b}`);
     });
     if (!c.onFill && root.pole(c.content))
@@ -823,7 +823,7 @@ TestCase {
                       const mid = BarWidgetStyle.mixColors(rest, dim, 0.5);
                       if (!ctx.override)
                         mid.back.forEach(b => {
-                          if (Utils.contrast(b, BarWidgetStyle.over(mid.content, b)) < BarWidgetStyle.mutedContrast - 1e-6)
+                          if (Tone.contrast(b, Tone.over(mid.content, b)) < BarWidgetStyle.mutedContrast - 1e-6)
                             fails.push(`${tag}: pulse mid-point content ${mid.content} under 3 on ${b}`);
                         });
                       root.checkMutedGradient(fails, tag, rest, dim, mid);
@@ -1022,7 +1022,7 @@ TestCase {
       for (const b of bar.palette.backs)
         verify(Qt.color(b).a === 1, "opaque backs");
       // The darkest and the brightest back differ less than the bare ones do
-      const spread = Math.abs(Utils.contrast(bar.palette.backs[1], bar.palette.backs[2]));
+      const spread = Math.abs(Tone.contrast(bar.palette.backs[1], bar.palette.backs[2]));
       verify(spread < 4, `${themeKey}: the fill at 60% evens the wallpaper out (${spread})`);
     }
   }

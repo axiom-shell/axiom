@@ -14,4 +14,4 @@ The pieces every popout is built from: bar popouts, edge popouts (OSDs, floating
 - Layer order is `LayerStack.layers`; nothing draws over fullscreen or maps a Top window in response to it.
 - Verify with `tst_SurfaceContext` rows and one targeted screenshot, not a matrix of popouts.
 - A host's box: the edge family's `Style.surfacePage` / `Style.frameStroke` / `Style.edgeFill`; never `fillPage`, `Qt.alpha` or an `Appearance` alpha (that's free-standing surfaces').
-- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
+- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. `check_style.py` fails a file that has them.

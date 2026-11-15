@@ -4,7 +4,8 @@ import qs.config
 
 // A small filled pill with a word: a status (On, Running, Not installed) in
 // its tone's container, on the settings page's status cards. A caller's
-// `color:` still wins over the tone until its area is restyled.
+// `color:` (a data colour: a custom widget's Status element) wins over the
+// tone and passes the `ink`.
 PopInRectangle {
   id: root
 

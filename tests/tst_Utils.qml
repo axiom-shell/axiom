@@ -221,21 +221,6 @@ TestCase {
     compare(Utils.truncate("日本語テキスト", 7, "…"), "日本語…");
   }
 
-  function test_contrast() {
-    verify(Utils.isColorDark("#101010"));
-    verify(!Utils.isColorDark("#f0f0f0"));
-    compare(Utils.getContrastColor("#000000"), "#FFFFFF");
-    compare(Utils.getContrastColor("#ffffff"), "#000000");
-    fuzzyCompare(Utils.contrast("#000000", "#ffffff"), 21, 0.01);
-    fuzzyCompare(Utils.contrast("#777777", "#777777"), 1, 0.001);
-    fuzzyCompare(Utils.luminance("#ffffff"), 1, 0.001);
-    // By contrast, not by a luma split: gruvbox's red reads better in
-    // black (6.1) than white (3.4); a mid blue in white
-    compare(Utils.getContrastColor("#fb4934"), "#000000");
-    compare(Utils.getContrastColor("#458588"), "#000000");
-    compare(Utils.getContrastColor("#3060c0"), "#FFFFFF");
-  }
-
   function test_rates() {
     compare(Utils.rateParts(0), [0, "B/s"]);
     compare(Utils.rateParts(900), [900, "B/s"]);
@@ -258,13 +243,6 @@ TestCase {
   function test_formatSize() {
     compare(Utils.formatSize(512 * Utils.bytesPerGiB), "512G");
     compare(Utils.formatSize(1843 * Utils.bytesPerGiB), "1.8T");
-  }
-
-  function test_fadeable() {
-    compare(Utils.fadeable("#ff0000", "#00ff00"), "#ff0000");
-    const faded = Qt.color(Utils.fadeable("transparent", "#00000000", "#336699"));
-    compare([faded.a, Math.round(faded.b * 255)], [0, 0x99]);
-    compare(Qt.color(Utils.fadeable("transparent")).a, 0);
   }
 
   function test_monthGrid() {

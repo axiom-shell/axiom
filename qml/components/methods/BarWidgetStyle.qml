@@ -123,21 +123,10 @@ QtObject {
     };
   }
 
-  // `a` mixed `t` (0-1) of the way to `b`, every channel
-  function mix(a, b, t) {
-    return Tone.mix(a, b, t);
-  }
-
-  // `color` mixed `t` toward `back`, its alpha kept (a clear color stays
-  // clear)
-  function _toward(color, back, t) {
-    return Tone.toward(color, back, t);
-  }
-
   // `color` dimmed to sit back on `backs` (opaque colors): mixed mutedMix
   // toward the first, then nudged to read at least mutedContrast on all
   function muted(backs, color) {
-    return root.nudged(backs, root._toward(color, backs[0], root.mutedMix), root.mutedContrast);
+    return Tone.nudged(backs, Tone.toward(color, backs[0], root.mutedMix), root.mutedContrast);
   }
 
   // `a` mixed `t` of the way to `b`, each color in them (colors() or
@@ -158,9 +147,9 @@ QtObject {
       const x = a[key];
       const y = b[key];
       if (isColor(x) && isColor(y))
-        out[key] = Qt.colorEqual(x, y) ? x : root.mix(x, y, t);
+        out[key] = Qt.colorEqual(x, y) ? x : Tone.mix(x, y, t);
       else if (Array.isArray(x) && Array.isArray(y) && x.length === y.length && x.every(isColor))
-        out[key] = x.map((c, i) => root.mix(c, y[i], t));
+        out[key] = x.map((c, i) => Tone.mix(c, y[i], t));
       else if (x !== null && typeof x === "object" && !Array.isArray(x) && y !== null && typeof y === "object" && x.r === undefined)
         out[key] = root.mixColors(x, y, t, null);
       else
@@ -175,12 +164,12 @@ QtObject {
     };
     for (const key in backs)
       if (key in out && out[backs[key]] && !Qt.colorEqual(out[key], a[key]) && !Qt.colorEqual(out[key], b[key]))
-        out[key] = root.nudged(out[backs[key]], out[key], root.mutedContrast);
+        out[key] = Tone.nudged(out[backs[key]], out[key], root.mutedContrast);
     if (a.gradient && b.gradient && (keys === null || "gradient" in out))
       out.gradient = root._part(a.gradient.part, a.gradient.alpha + (b.gradient.alpha - a.gradient.alpha) * t);
     if (out.graphic && out.iconBack) {
-      out.graphic.line = root.nudged(out.iconBack, out.graphic.line, root.mutedContrast);
-      out.graphic.subcaption = root.nudged(out.iconBack, out.graphic.subcaption, root.mutedContrast);
+      out.graphic.line = Tone.nudged(out.iconBack, out.graphic.line, root.mutedContrast);
+      out.graphic.subcaption = Tone.nudged(out.iconBack, out.graphic.subcaption, root.mutedContrast);
     }
     return out;
   }
@@ -231,25 +220,12 @@ QtObject {
   function badge(palette, colors, color) {
     const cut = colors.iconOnFill === true;
     const backs = cut ? colors.iconBack : colors.iconBack.concat(root._bar(palette));
-    const fill = root.nudged(backs, color, root.iconContrast);
+    const fill = Tone.nudged(backs, color, root.iconContrast);
     return {
       "fill": fill,
-      "text": root.readableOn(root.over(fill, palette.background), palette.barText, [palette.background]),
+      "text": Tone.readableOn(Tone.over(fill, palette.background), palette.barText, [palette.background]),
       "ring": cut ? colors.iconBack[0] : "transparent"
     };
-  }
-
-  // `top` drawn over `under`, as an opaque color (`under` taken opaque)
-  function over(top, under) {
-    return Tone.over(top, under);
-  }
-
-  // `color` where it reads on every one of `backs` (opaque colors; WCAG
-  // contrast at least `min`), else mixed toward white or black, whichever
-  // reads better on them, by the least that does, its hue kept; the pole
-  // itself where no mix does. Its alpha is kept; a clear color stays as it is.
-  function nudged(backs, color, min) {
-    return Tone.nudged(backs, color, min);
   }
 
   // What a widget draws in: { fill, stroke, indicator, text, icon,
@@ -279,7 +255,7 @@ QtObject {
   function colors(look, palette, state, accent, own) {
     const graded = state.gradient !== null && state.auto;
     const base = graded ? state.gradient : accent;
-    const color = state.muted ? root._toward(base, root._bar(palette)[0], root.mutedMix) : base;
+    const color = state.muted ? Tone.toward(base, root._bar(palette)[0], root.mutedMix) : base;
     const result = root._widget(look, palette, state, color, root._readable(palette, color, own), graded);
     result.gradient = graded ? root._dimmedGradient(state, root._widgetGradient(look, state)) : null;
     result.accent = color;
@@ -312,8 +288,8 @@ QtObject {
   function _finish(palette, state, result) {
     result.level = root._level(state, result);
     if (state.level) {
-      result.textBack = result.textBack.concat(result.textBack.map(b => root.over(result.level, b)));
-      result.iconBack = result.iconBack.concat(result.iconBack.map(b => root.over(result.level, b)));
+      result.textBack = result.textBack.concat(result.textBack.map(b => Tone.over(result.level, b)));
+      result.iconBack = result.iconBack.concat(result.iconBack.map(b => Tone.over(result.level, b)));
     }
     const flags = {
       "override": palette.override,
@@ -345,10 +321,10 @@ QtObject {
     if (dimmed)
       c = root.muted(backs, c);
     if (flags.pressed)
-      c = root._toward(c, backs[0], root.pressMix);
+      c = Tone.toward(c, backs[0], root.pressMix);
     if (fixed && !dimmed && !flags.pressed)
       return c;
-    return root.nudged(backs, c, dimmed ? root.mutedContrast : min);
+    return Tone.nudged(backs, c, dimmed ? root.mutedContrast : min);
   }
 
   // The pill's level color: the icon's, faded to 35%. Where the widget
@@ -362,10 +338,10 @@ QtObject {
     if (!state.level)
       return plain;
     const poles = ["#ffffff", "#000000"];
-    const reads = level => [result.textBack, result.iconBack].every(backs => poles.some(p => backs.every(b => Utils.contrast(b, p) >= root.textContrast && Utils.contrast(root.over(level, b), p) >= root.textContrast)));
+    const reads = level => [result.textBack, result.iconBack].every(backs => poles.some(p => backs.every(b => Tone.contrast(b, p) >= root.textContrast && Tone.contrast(Tone.over(level, b), p) >= root.textContrast)));
     if (reads(plain))
       return plain;
-    const text = Utils.contrast(result.textBack[0], "#ffffff") >= Utils.contrast(result.textBack[0], "#000000") ? "#ffffff" : "#000000";
+    const text = Tone.contrast(result.textBack[0], "#ffffff") >= Tone.contrast(result.textBack[0], "#000000") ? "#ffffff" : "#000000";
     const sheens = [text === "#ffffff" ? "#000000" : "#ffffff", text].map(p => Qt.alpha(p, 0.35));
     const sheen = sheens.find(reads);
     if (sheen !== undefined)
@@ -389,13 +365,13 @@ QtObject {
   // part's own colours (WidgetLook.paint.graphicOf: a segment in a field of
   // its own)
   function graphic(backs, line, text) {
-    const caption = root.over(text, backs[0]);
+    const caption = Tone.over(text, backs[0]);
     return {
-      "line": root.over(line, backs[0]),
-      "track": root.over(root.faded(line, 0.2), backs[0]),
-      "area": root.over(root.faded(line, 0.35), backs[0]),
+      "line": Tone.over(line, backs[0]),
+      "track": Tone.over(root.faded(line, 0.2), backs[0]),
+      "area": Tone.over(root.faded(line, 0.35), backs[0]),
       "caption": caption,
-      "subcaption": root.nudged(backs, root._toward(caption, backs[0], 0.3), root.mutedContrast)
+      "subcaption": Tone.nudged(backs, Tone.toward(caption, backs[0], 0.3), root.mutedContrast)
     };
   }
 
@@ -437,7 +413,7 @@ QtObject {
   function cell(look, palette, state, color, own, cellState) {
     const graded = state.gradient !== null && state.auto;
     const base = graded ? state.gradient : color;
-    const fill = state.muted ? root._toward(base, root._bar(palette)[0], root.mutedMix) : base;
+    const fill = state.muted ? Tone.toward(base, root._bar(palette)[0], root.mutedMix) : base;
     const result = root._cell(look, palette, state, fill, root._readable(palette, fill, own), cellState);
     result.gradient = graded ? root._dimmedGradient(state, root._cellGradient(look, state, result)) : null;
     result.hover = state.hover ?? palette.cellHover;
@@ -525,7 +501,7 @@ QtObject {
     // What content sits on, opaque: the bar, a color over it, a tint of
     // the accent over it
     const bar = root._bar(palette);
-    const on = c => bar.map(b => root.over(c, b));
+    const on = c => bar.map(b => Tone.over(c, b));
     const tint = on(root.faded(accent, look.tint));
     if (state.hovered && fills)
       // Filled in its own color, its text and icon reading on it; an
@@ -597,20 +573,20 @@ QtObject {
     // Behind it, opaque: what the widget's text sits on (`state.under`,
     // else the bar), or the run's fill; its state color is nudged to read
     // there (not under the bar's text color), over its box's fill
-    const behind = merged && root._onFill(drawn) ? [root.over(palette.group, palette.background)] : state.under ?? root._bar(palette);
-    const over = (c, backs) => backs.map(b => root.over(c, b));
+    const behind = merged && root._onFill(drawn) ? [Tone.over(palette.group, palette.background)] : state.under ?? root._bar(palette);
+    const over = (c, backs) => backs.map(b => Tone.over(c, b));
     if (state.hovered && fills)
       return root._makeCell(color, drawn.stroke && !state.group ? color : none, none, text(own), true, true, over(color, behind));
-    const nudge = (c, backs) => root.nudged(backs, c, root.textContrast);
+    const nudge = (c, backs) => Tone.nudged(backs, c, root.textContrast);
     // An empty cell's content: the text mixed toward what it sits on
-    const empty = backs => root.nudged(backs, root._toward(text(under), backs[0], root.emptyMix), root.mutedContrast);
+    const empty = backs => Tone.nudged(backs, Tone.toward(text(under), backs[0], root.emptyMix), root.mutedContrast);
     const onBar = (c, backs) => cellState === "empty" ? empty(backs) : palette.override ?? nudge(c, backs);
     const unfilled = fills ? Qt.alpha(color, 0) : none;
     if (merged)
       return root._makeCell(unfilled, none, none, onBar(color, behind), false, false, behind);
     const box = root._box(drawn, look, palette, color, own, unfilled);
     if (!drawn.colored)
-      return root._makeCell(box.fill, box.stroke, box.indicator, cellState === "active" ? text(palette.barText) : cellState === "urgent" ? nudge(color, behind) : cellState === "occupied" ? nudge(root._toward(text(palette.barText), behind[0], 0.3), behind) : empty(behind), false, false, behind);
+      return root._makeCell(box.fill, box.stroke, box.indicator, cellState === "active" ? text(palette.barText) : cellState === "urgent" ? nudge(color, behind) : cellState === "occupied" ? nudge(Tone.toward(text(palette.barText), behind[0], 0.3), behind) : empty(behind), false, false, behind);
     const back = over(box.fill, behind);
     return root._makeCell(box.fill, box.stroke, box.indicator, box.onFill ? text(box.icon) : onBar(box.icon, back), false, box.onFill, back);
   }
@@ -663,13 +639,6 @@ QtObject {
     return Tone.faded(color, alpha);
   }
 
-  // `preferred` where it reads on `background` (WCAG contrast at least
-  // 4.5), else whichever of it, the `alternates` (colors) and black and
-  // white contrasts with it most (`preferred` on a tie)
-  function readableOn(background, preferred, alternates) {
-    return Tone.readableOn(background, preferred, alternates);
-  }
-
   // What reads on a fill the widget or run paints (`background`):
   // `preferred` or, where it doesn't read, the palette's foreground or
   // background, or black or white (readableOn). On a clear fill (a widget
@@ -677,7 +646,7 @@ QtObject {
   function _readable(palette, background, preferred) {
     if (Qt.color(background).a === 0)
       return preferred;
-    return root.readableOn(background, preferred, [palette.barText, palette.background]);
+    return Tone.readableOn(background, preferred, [palette.barText, palette.background]);
   }
 
   function _part(part, alpha) {

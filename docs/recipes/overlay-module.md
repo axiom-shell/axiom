@@ -22,7 +22,7 @@ Translation files need nothing: the pre-commit hook adds new strings to every la
 7. Put it on a page and on the desktop in a nested shell and look at both.
 
 ## Watch out for
-- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy targets (`Battery`, `Disks`, `Caffeine`, `WeatherForecast`) show the pattern; `check_style.py` fails a new file that has the old ones.
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy targets (`Battery`, `Disks`, `Caffeine`, `WeatherForecast`) show the pattern; `check_style.py` fails a file that has them.
 - Modules exist only while their page is shown, so lasting state goes in a service.
 - Repeater models and `acquire` requests come from config or counts, never live values. A model rebuilt on every sample once pushed qs past 25 GB.
 - A module named like a config section links its settings to that section (`x-link`) unless the schema says `link`.
