@@ -170,8 +170,7 @@ Item {
           text: root._iconLines[index] ?? ""
           textSize: root.fontSize * root.iconScale
 
-          ColorGlide on color {
-          }
+          ColorGlide on color {}
         }
       }
 
@@ -230,8 +229,7 @@ Item {
           "tnum": 1
         }
 
-        ColorGlide on color {
-        }
+        ColorGlide on color {}
       }
     }
   }

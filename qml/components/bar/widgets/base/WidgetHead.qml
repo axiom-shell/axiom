@@ -76,8 +76,7 @@ Item {
     textColor: root.iconColor
     textSize: root.barConfig.fontSize
 
-    ColorGlide on color {
-    }
+    ColorGlide on color {}
   }
 
   Text {
@@ -93,7 +92,6 @@ Item {
       "tnum": 1
     }
 
-    ColorGlide on color {
-    }
+    ColorGlide on color {}
   }
 }
