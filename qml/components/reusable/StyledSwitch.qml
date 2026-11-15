@@ -22,7 +22,7 @@ Switch {
     width: root.height - Widget.px(4)
     height: root.height - Widget.px(4)
     // Concentric in the track, whatever its radius
-    radius: StyleTokens.concentric(track.radius, Widget.px(2), Style.radiusMin)
+    radius: Style.concentric(track.radius, Widget.px(2))
     color: root.checked ? Style.onAccent : Style.inkHighest.icon
 
     ColorGlide on color {
