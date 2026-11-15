@@ -22,6 +22,7 @@ import qs.components.reusable
  */
 FieldGroup {
   id: root
+  pageCard: true
 
   description: I18n.tr("Snapshots of the look, layout, keybinds, apps and wallpapers, stored in {0}. Restoring one leaves monitors, accounts, theme integrations and other settings for this PC as they are.", SavedConfigsManager.savedDir)
 
