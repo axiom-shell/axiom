@@ -26,6 +26,9 @@ ColumnLayout {
   property var labelOf: key => ""
   property var iconOf: key => ""
   property bool tall: false
+  // Drawn straight on the background (a bare Cheatsheet): a blank key's name
+  // takes the key's full ink, not the faint one, as the rest of its text
+  property bool bare: false
   // The modifier chips (shown with showMods), lit for `mods`: they toggle
   // the page's key map modifiers
   property bool showMods: false
@@ -92,7 +95,7 @@ ColumnLayout {
       width: corner ? implicitWidth : parent.width - Widget.px(4)
       horizontalAlignment: Text.AlignHCenter
       text: keyButton.entry.label
-      textColor: keyButton.blank ? Style.textFaint : corner ? face.ink.muted : face.ink.text
+      textColor: keyButton.blank ? (root.bare ? face.ink.text : Style.textFaint) : corner ? face.ink.muted : face.ink.text
       role: corner || keyButton.blank ? "micro" : "caption"
       // A blank key's name (a modifier) is never elided; a bound key's elides at the floor
       overflow: keyButton.blank ? "none" : "line"

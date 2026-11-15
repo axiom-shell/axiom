@@ -1,6 +1,6 @@
 # Desktop
 
-> **Files:** `qml/services/ui/DesktopManager.qml`, `qml/config/DesktopConfig.qml`, `qml/shell/Desktop.qml`, `qml/components/surfaces/desktop/DesktopWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/services/ui/ScreenLayoutEditor.qml`, `qml/components/views/Layouts/DesktopTarget.qml`
+> **Files:** `qml/services/ui/DesktopManager.qml`, `qml/config/DesktopConfig.qml`, `qml/shell/Desktop.qml`, `qml/components/surfaces/desktop/DesktopWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/components/reusable/BackdropScrim.qml`, `qml/services/ui/ScreenLayoutEditor.qml`, `qml/components/views/Layouts/DesktopTarget.qml`
 > **Config:** `Desktop.all`, `Desktop.primary`, `Desktop.monitors[]` (reader `DesktopConfig`)
 > **Related:** [Lockscreen](lockscreen.md), [Layouts editor](../overlay/layouts-editor.md), [Clock and time zones](clock-timezones.md), [Saved configs](../core/saved-configs-sharing.md), [Menu hosts](../menus/hosts.md), [Dock](dock.md)
 
@@ -52,6 +52,7 @@ Overlay modules drawn on the desktop, under the windows. Read this doc for deskt
 - ClipboardHistory shows clip history on the wallpaper; it's there only if the user adds it.
 - ClockCalendar has `x-keyboard: false`, so its events stay read-only on the desktop (adding it would hand every desktop with a clock the keyboard on a click); Calendar and Agenda edit there.
 - The Clock module (styles, time zones) is in [clock-timezones.md](clock-timezones.md).
+- **Readable on the wallpaper**: a module with no card box (`moduleBorders` off: `host.bare`, the clock, the Greeting, anything bare) gets a `BackdropScrim` behind its slot (`ScreenLayoutView`): a soft shade of the theme background, only as strong as the wallpaper under the module needs for its text to read (`Tone.alphaFloor` over `WallpaperToneManager.regionOn`'s backs; none on a calm wallpaper), so the desktop clock stays readable over a busy photo. The ink it is computed from is the module's `backdropInk` (the Clock's and Greeting's digits and text, the user's colour as set, never changed), else `Style.text`; a Cheatsheet bare on the desktop draws its muted count line and its key map's blank-key names in `Style.text`. Until the daemon has answered (a few hundred ms at start) there is no shade. No setting turns it off. See [translucency-blur.md](../theming/translucency-blur.md) and [style.md](../core/style.md) › Over the wallpaper.
 
 ### Editing
 - **Where:** the Desktop row on the [Layouts page](../overlay/layouts-editor.md), above Lock screen.

@@ -80,7 +80,8 @@ Panel {
     StyledLabel {
       text: I18n.tr("{0} binds", root.bindCount)
       role: "caption"
-      tone: "muted"
+      // Bare, over the background: the ink the shade behind it guarantees
+      tone: root.bare ? "text" : "muted"
     }
   }
 
@@ -93,6 +94,7 @@ Panel {
 
     sourceComponent: KeyboardReference {
       sections: root.sections
+      bare: root.bare
       mods: root.properties.mods
       showMods: false
       onEditRequested: bindIndex => root.edit(bindIndex)

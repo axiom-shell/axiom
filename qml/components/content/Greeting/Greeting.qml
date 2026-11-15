@@ -24,6 +24,9 @@ Card {
   // greetingBorder, not moduleBorders (off by default: text straight on
   // the background)
   readonly property bool boxless: root.host?.kind === "lockscreen" || root.host?.kind === "greeter" ? root.host.greetingBorder !== true : root.bare
+  // The colour of its text, the user's pick as set: what the shade behind it
+  // is computed from while it has no box (BackdropScrim)
+  readonly property color backdropInk: Style.resolve(root.properties.color)
   readonly property string template: root.properties.text
   readonly property bool wantsGreeting: root.template.includes("{greeting}")
 
@@ -77,7 +80,7 @@ Card {
       Layout.fillWidth: true
       Layout.fillHeight: true
       text: root.shownText
-      textColor: Style.resolve(root.properties.color)
+      textColor: root.backdropInk
       textSize: Math.max(Style.typeMicro, Math.round(height)) // fitted: the card's height
       font.weight: root.properties.bold ? Style.weightStrong : Style.weightNormal
       fontSizeMode: Text.Fit
