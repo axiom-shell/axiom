@@ -1746,14 +1746,14 @@ QtObject {
   // Whether a screen's `when` ({ key, test (is, isNot, set, unset),
   // values }) holds for the resolved `fields` (null: never). The key
   // "error" is the failure: set while there is one, `is` / `isNot`
-  // compare its message, and never hold while it isn't failing; any other is a key or path in the sample
-  // ("state" when empty)
+  // compare its message, and never hold while it isn't failing; any other is a key or path in the sample.
+  // An empty key never holds (only a Go to screen action shows that screen)
   function matches(when, fields) {
-    if (!fields)
+    if (!fields || !(when?.key ?? ""))
       return false;
     const test = when?.test ?? "is";
     const values = when?.values ?? [];
-    if ((when?.key ?? "state") === "error") {
+    if (when.key === "error") {
       if (test === "set")
         return fields.failure !== null && fields.failure !== undefined;
       if (test === "unset")
@@ -1763,7 +1763,7 @@ QtObject {
       const message = fields.error ?? "";
       return test === "isNot" ? values.length > 0 && !values.includes(message) : values.includes(message);
     }
-    const v = root.get(fields.sample, when?.key || "state");
+    const v = root.get(fields.sample, when.key);
     if (test === "set")
       return root.truthy(v);
     if (test === "unset")
@@ -1772,10 +1772,19 @@ QtObject {
     return test === "isNot" ? values.length > 0 && !values.includes(text) : values.includes(text);
   }
 
+  // The first screen whose condition holds (a non-empty key that
+  // matches), else -1
+  function conditionView(module, fields) {
+    return (module?.views ?? []).findIndex(v => !!(v.when?.key ?? "") && root.matches(v.when, fields));
+  }
+
   // The screen to draw: { index (-1: the base alone), builtinError (the
-  // failure has no screen of its own: draw the stock one) }. While the
-  // widget fails only screens keyed on "error" are tried
-  function pickView(module, fields) {
+  // failure has no screen of its own: draw the stock one) }. `chosen` is
+  // a Go to screen choice, { view: "<id>" | "" (the base), matched: the
+  // conditionView when it was made } or null: it wins until the condition
+  // picks another screen, and an id that no longer exists is ignored.
+  // While the widget fails only screens keyed on "error" are tried
+  function pickView(module, fields, chosen) {
     const views = module?.views ?? [];
     if (fields?.failure) {
       const index = views.findIndex(v => v.when?.key === "error" && root.matches(v.when, fields));
@@ -1784,8 +1793,15 @@ QtObject {
         "builtinError": index < 0
       };
     }
+    const c = root.conditionView(module, fields);
+    let index = c;
+    if (chosen && chosen.matched === c) {
+      const own = chosen.view === "" ? -1 : views.findIndex(v => v.id === chosen.view);
+      if (own >= 0 || chosen.view === "")
+        index = own;
+    }
     return {
-      "index": views.findIndex(v => root.matches(v.when, fields)),
+      "index": index,
       "builtinError": false
     };
   }
@@ -2161,18 +2177,6 @@ QtObject {
   // `list` with `entry` added, the last `cap` kept (the editor's action log)
   function pushLog(list, entry, cap) {
     return (list ?? []).concat([entry]).slice(-cap);
-  }
-
-  // The `state` values in `states` that no screen of `module` is for (the
-  // editor offers a screen for each)
-  function unmatchedStates(module, states) {
-    return (states ?? []).filter(state => !(module?.views ?? []).some(view => root.matches(view.when, {
-          "sample": {
-            "state": state
-          },
-          "failure": null,
-          "error": ""
-        })));
   }
 
   // Where the sample a screen (-1: none) is previewed with comes from, as

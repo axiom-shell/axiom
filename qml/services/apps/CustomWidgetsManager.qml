@@ -27,6 +27,10 @@ QtObject {
 
   // id -> the definition's fields from its last output
   readonly property var fields: _fields
+  // id -> { view, matched }: the screen a Go to screen action chose ("" the
+  // base) and the screen the condition picked then; CustomWidgetData.pickView
+  // holds it until that changes. In memory, per definition
+  readonly property var pages: _pages
   // id -> { text, value, exitCode, error, stderr (its last line), exited (a
   // stream that ended with a non-zero exit), at, blocked } of its last
   // output (blocked: its "run only if" command failed)
@@ -91,11 +95,34 @@ QtObject {
     const def = CustomWidgetsConfig.definition(id);
     if (!def)
       return;
+    root._clearPage(id);
     if (root._blocked[id]) {
       root._checkIf(id, def);
       return;
     }
     CommandManager.restart(root._command(def));
+  }
+
+  // Show screen `viewId` of widget `id` (a screen id; "" the base alone)
+  // until its condition picks another one
+  function goTo(id, viewId) {
+    const def = CustomWidgetsConfig.definition(id);
+    if (!def)
+      return;
+    root._pages = Object.assign({}, root._pages, {
+      [id]: {
+        "view": viewId,
+        "matched": CustomWidgetData.conditionView(def.module, root._fields[id])
+      }
+    });
+  }
+
+  function _clearPage(id) {
+    if (!(id in root._pages))
+      return;
+    const next = Object.assign({}, root._pages);
+    delete next[id];
+    root._pages = next;
   }
 
   // Run the action a bar trigger ("click", "rightClick", "middleClick",
@@ -151,7 +178,7 @@ QtObject {
     if (item === null)
       return "no action";
     if (item.kind === "axiom")
-      return root._runAxiom(id, item.axiom);
+      return root._runAxiom(id, item.axiom, def);
     if (item.command === "")
       return "no command";
     const fields = root._fields[id];
@@ -202,10 +229,10 @@ QtObject {
     return "";
   }
 
-  // An Axiom action: refresh, restart, or an ActionsManager id (not a session
+  // An Axiom action: refresh, restart, screen:<id> (screen: the base), or an ActionsManager id (not a session
   // or destructive one, nor one that takes an argument). "" when it ran,
   // else "refused"
-  function _runAxiom(id, action) {
+  function _runAxiom(id, action, def) {
     if (action === "refresh") {
       root.refresh(id);
       return "";
@@ -214,8 +241,15 @@ QtObject {
       root.restart(id);
       return "";
     }
+    if (action.startsWith("screen:")) {
+      const view = action.slice("screen:".length);
+      if (view !== "" && !def.module.views.some(v => v.id === view))
+        return "refused";
+      root.goTo(id, view);
+      return "";
+    }
     const refused = ActionsManager.sessionActions.concat(ActionsManager.destructive(action) ? [action] : []);
-    if (action === "" || action.startsWith("screen:") || !CustomWidgetData.builtinAllowed(action, refused) || KeybindManager.needsArgument(action))
+    if (action === "" || !CustomWidgetData.builtinAllowed(action, refused) || KeybindManager.needsArgument(action))
       return "refused";
     ActionsManager.run(action);
     return "";
@@ -398,6 +432,7 @@ QtObject {
   property var _watching: ({})
   property var _blocked: ({})
   property var _fields: ({})
+  property var _pages: ({})
   property var _outputs: ({})
   property var _history: ({})
   property var _seen: ({})
@@ -448,6 +483,10 @@ QtObject {
     root._inFlight = keep(root._inFlight);
     root._pending = keep(root._pending);
     root._scheduleHold();
+    root._pages = Object.keys(root._pages).filter(id => CustomWidgetsConfig.definition(id)).reduce((m, id) => {
+      m[id] = root._pages[id];
+      return m;
+    }, {});
     root._fields = keep(root._fields);
     root._outputs = keep(root._outputs);
     root._history = keep(root._history);

@@ -328,9 +328,13 @@ QtObject {
     root.elements.clearHistory();
   }
 
-  // A new screen shown while the output matches `when` ({ key, test,
-  // values }, by default the state is one of none), selected; `base` false
-  // draws it alone (without the base elements under it)
+  // The screen just added: its form takes the focus in the name once it
+  // exists (the form clears it; page-only)
+  property bool focusScreenName: false
+
+  // A new screen over the base, selected: shown only by a Go to screen
+  // action unless `when` ({ key, test, values }) says otherwise; `base`
+  // false draws it alone (without the base elements under it)
   function addView(name, when, base) {
     const def = root._local().items[root.selectedIndex];
     if (!def)
@@ -341,7 +345,7 @@ QtObject {
       "name": name ?? "",
       "base": base !== false,
       "when": Object.assign({
-        "key": "state",
+        "key": "",
         "test": "is",
         "values": []
       }, when ?? {}),
@@ -430,6 +434,23 @@ QtObject {
       return;
     root.elements.recordField("view:" + root.viewIndex + ":" + keys.slice(3).join("."));
     root._write(keys, value);
+  }
+
+  // Screen `index`'s condition key (an empty one: only a Go to screen
+  // action shows it). The key "error" also sets the test to set and draws
+  // the screen alone, as one undo step
+  function setViewKey(index, key) {
+    const view = root._local().items[root.selectedIndex]?.module.views[index];
+    if (!view || view.when.key === key)
+      return;
+    if (key === "error") {
+      root._recordStructure();
+      root._write(["module", "views", index, "when", "key"], "error");
+      root._write(["module", "views", index, "when", "test"], "set");
+      root._write(["module", "views", index, "base"], false);
+      return;
+    }
+    root._write(["module", "views", index, "when", "key"], key);
   }
 
   // Starts the module from the elements drawn while it has none (the base

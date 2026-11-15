@@ -4367,7 +4367,6 @@
     "Exit code {0}": "",
     "Screens drawn over the base elements, the first whose condition holds.": "",
     "Is one of": "",
-    "A key or path in the output; error: the failure.": "",
     "Show the base elements": "",
     "Is none of": "",
     "Is not set": "",
@@ -4616,6 +4615,8 @@
     "Fit: as large as the box allows. The others: the shell's text sizes.": "",
     "Middle": "",
     "Where a Round picture sits in a box wider or taller than it. The others fill the box.": "",
-    "Fit: as large as the box allows. The others: the shell's icon sizes.": ""
+    "Fit: as large as the box allows. The others: the shell's icon sizes.": "",
+    "Only an action": "",
+    "Empty: only a Go to screen action shows it. error: the failure.": ""
   }
 }

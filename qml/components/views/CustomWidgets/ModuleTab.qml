@@ -53,10 +53,12 @@ ColumnLayout {
   // The chip a menu is open for, and a counter its Rename bumps
   property int menuView: 0
   property int renameRequests: 0
-  // The states seen live that no screen is for
-  readonly property var unmatched: CustomWidgetData.unmatchedStates(root.definition?.module, root.editor.seenStates)
   // The paths a screen's condition can read, then the failure
   readonly property var keyOptions: [
+    {
+      "value": "",
+      "label": I18n.tr("Only an action")
+    },
     {
       "value": "state",
       "label": "state"
@@ -327,11 +329,8 @@ ColumnLayout {
         "id": "when",
         "icon": "bolt",
         "text": I18n.tr("When the script says…"),
-        "enabled": root.unmatched.length > 0,
-        "submenu": root.unmatched.map(state => ({
-              "id": "state:" + state,
-              "text": state
-            }))
+        "enabled": false,
+        "submenu": []
       },
       {
         "id": "fails",
@@ -483,9 +482,9 @@ ColumnLayout {
             Layout.preferredWidth: 1
             editable: true
             value: screen.when.key ?? ""
-            placeholderText: "state"
+            placeholderText: I18n.tr("Only an action")
             options: root.keyOptions
-            onPicked: value => root.editor.setView(["when", "key"], value)
+            onPicked: value => root.editor.setViewKey(root.editor.viewIndex, value)
           }
           StyledComboEntry {
             Layout.fillWidth: true

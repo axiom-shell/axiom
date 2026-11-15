@@ -139,7 +139,7 @@ properties:
               type: object
               additionalProperties: false
               properties:
-                key: {type: string, title: Key, default: state, description: 'A key or path in the output; error: the failure.'}
+                key: {type: string, title: Key, default: '', description: 'Empty: only a Go to screen action shows it. error: the failure.'}
                 test:
                   type: string
                   title: Test

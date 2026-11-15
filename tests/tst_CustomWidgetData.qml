@@ -1426,6 +1426,14 @@ TestCase {
   }
 
   function test_matches() {
+    compare(CustomWidgetData.matches({
+      "key": "",
+      "test": "unset"
+    }, _fields({})), false, "an empty key never holds");
+    compare(CustomWidgetData.matches({
+      "test": "is",
+      "values": [""]
+    }, _fields({})), false, "no key never holds");
     const errWhen = (test, values) => ({
           "key": "error",
           "test": test,
@@ -1499,7 +1507,7 @@ TestCase {
       "values": ["x"]
     }, _fields({
       "state": "x"
-    })), true, "an empty key is state");
+    })), false, "an empty key is no state: it never holds");
     compare(CustomWidgetData.matches(is(["front"]), null), false, "null fields");
     const failing = _fields({}, {
       "kind": "exit",
@@ -1579,6 +1587,61 @@ TestCase {
     }, null);
     compare(none.index, -1, "null fields");
     compare(none.builtinError, false, "null fields: no error");
+    // Go to screen choices over the condition
+    const two = {
+      "views": [front, view("other", {
+          "key": "",
+          "test": "is"
+        })]
+    };
+    compare(CustomWidgetData.pickView(two, fields, null).index, 0, "no choice: the condition's");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "other",
+      "matched": 0
+    }).index, 1, "a manual choice wins while the condition result is the same");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "other",
+      "matched": -1
+    }).index, 0, "the condition changed: it resets");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "",
+      "matched": 0
+    }).index, -1, "Go to the base: the base alone");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "gone",
+      "matched": 0
+    }).index, 0, "a stale id falls through");
+    compare(CustomWidgetData.pickView(two, failing, {
+      "view": "other",
+      "matched": 0
+    }).builtinError, true, "failing: the choice is ignored");
+  }
+
+  function test_conditionView() {
+    const view = (id, key, values) => ({
+          "id": id,
+          "when": {
+            "key": key,
+            "test": "is",
+            "values": values ?? []
+          }
+        });
+    const fields = _fields({
+      "state": "a"
+    });
+    compare(CustomWidgetData.conditionView({}, fields), -1, "no views");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "", ["a"]), view("y", "state", ["a"])]
+    }, fields), 1, "an empty key is skipped");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "state", ["b"]), view("y", "state", ["a"]), view("z", "state", ["a"])]
+    }, fields), 1, "the first match");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "state", ["b"])]
+    }, fields), -1, "no match");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "state", ["a"])]
+    }, null), -1, "null fields");
   }
 
   function test_historyBindings() {
@@ -2234,7 +2297,7 @@ TestCase {
     compare(CustomWidgetData.pickView(status.module, failing).index, 0, "a script's error picks the error screen");
   }
 
-  function test_unmatchedStatesAndSource() {
+  function test_sampleSource() {
     const module = {
       "views": [
         {
@@ -2254,9 +2317,6 @@ TestCase {
         }
       ]
     };
-    compare(CustomWidgetData.unmatchedStates(module, ["playing", "paused", "idle"]), ["paused", "idle"], "the states no screen is for");
-    compare(CustomWidgetData.unmatchedStates(null, ["x"]), ["x"]);
-    compare(CustomWidgetData.unmatchedStates(module, null), []);
     const def = {
       "module": module,
       "samples": {

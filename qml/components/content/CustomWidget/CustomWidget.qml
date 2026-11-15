@@ -40,7 +40,7 @@ Panel {
   wantsKeyboardFocus: !root.embedded && root.actionsEnabled && root.hasEntry
 
   // The screen to draw (-1: the base alone), and whether a failure has none
-  readonly property var view: root.fields ? CustomWidgetData.pickView(root.definition?.module, root.fields) : ({
+  readonly property var view: root.fields ? CustomWidgetData.pickView(root.definition?.module, root.fields, CustomWidgetsManager.pages[root.widgetId] ?? null) : ({
       "index": -1,
       "builtinError": false
     })
