@@ -638,7 +638,11 @@ QtObject {
   // no ids). Names: I18n.tr("Notifications (SwayNC)") I18n.tr("Do not disturb (dunst)")
   // I18n.tr("Media (Waybar's mediaplayer.py)") I18n.tr("Package updates")
   // I18n.tr("Weather (wttr.in)") I18n.tr("Failed services") I18n.tr("WireGuard VPN")
-  // I18n.tr("GPU load (NVIDIA)")
+  // I18n.tr("GPU load (NVIDIA)") I18n.tr("Daily habits")
+  // Daily habits' texts, which CustomWidgetsEditor.add translates (the
+  // `=` literals, options and screen names): I18n.tr("Habits")
+  // I18n.tr("All done today") I18n.tr("Add your first habit below")
+  // I18n.tr("New habit") I18n.tr("Open") I18n.tr("Done") I18n.tr("Empty")
   readonly property var presets: [
     {
       "name": "Notifications (SwayNC)",
@@ -753,6 +757,266 @@ QtObject {
       "format": "{}%",
       "bar": {
         "style": "ring"
+      }
+    },
+    {
+      "name": "Daily habits",
+      "icon": "task_alt",
+      "command": "bash '{tree}data/custom-widgets/habits.sh' show",
+      "mode": "poll",
+      "interval": 60000,
+      "output": "json",
+      "invoke": {
+        "command": "bash '{tree}data/custom-widgets/habits.sh' do {action} {value}"
+      },
+      "format": "{text}",
+      "states": {
+        "done": "success",
+        "open": "accent"
+      },
+      "bar": {
+        "style": "label",
+        "popout": true
+      },
+      "module": {
+        "size": [4, 4],
+        "keys": {
+          "u": "undo"
+        },
+        "elements": [
+          {
+            "id": "title",
+            "type": "Text",
+            "place": {
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 2
+            },
+            "bind": {
+              "text": "=Habits"
+            },
+            "options": {
+              "align": "left",
+              "bold": true
+            }
+          },
+          {
+            "id": "count",
+            "type": "Text",
+            "place": {
+              "x": 10,
+              "y": 0,
+              "w": 3,
+              "h": 2
+            },
+            "bind": {
+              "text": "{text}",
+              "tone": "state"
+            },
+            "options": {
+              "align": "right"
+            }
+          },
+          {
+            "id": "undo",
+            "type": "Button",
+            "place": {
+              "x": 13,
+              "y": 0,
+              "w": 3,
+              "h": 2
+            },
+            "action": "undo",
+            "options": {
+              "icon": "undo",
+              "disabled": "hide"
+            }
+          },
+          {
+            "id": "new",
+            "type": "Entry",
+            "place": {
+              "x": 0,
+              "y": 14,
+              "w": 16,
+              "h": 2
+            },
+            "action": "add",
+            "options": {
+              "placeholder": "New habit"
+            }
+          }
+        ],
+        "views": [
+          {
+            "id": "open",
+            "name": "Open",
+            "when": {
+              "key": "state",
+              "test": "is",
+              "values": ["open"]
+            },
+            "elements": [
+              {
+                "id": "habits",
+                "type": "List",
+                "place": {
+                  "x": 0,
+                  "y": 2,
+                  "w": 16,
+                  "h": 12
+                },
+                "action": "check"
+              }
+            ]
+          },
+          {
+            "id": "done",
+            "name": "Done",
+            "when": {
+              "key": "state",
+              "test": "is",
+              "values": ["done"]
+            },
+            "elements": [
+              {
+                "id": "mark",
+                "type": "Icon",
+                "place": {
+                  "x": 5,
+                  "y": 3,
+                  "w": 6,
+                  "h": 6
+                },
+                "bind": {
+                  "icon": "=task_alt",
+                  "tone": "state"
+                }
+              },
+              {
+                "id": "message",
+                "type": "Text",
+                "place": {
+                  "x": 0,
+                  "y": 10,
+                  "w": 16,
+                  "h": 2
+                },
+                "bind": {
+                  "text": "=All done today"
+                }
+              }
+            ]
+          },
+          {
+            "id": "empty",
+            "name": "Empty",
+            "when": {
+              "key": "state",
+              "test": "is",
+              "values": ["empty"]
+            },
+            "elements": [
+              {
+                "id": "hint",
+                "type": "Text",
+                "place": {
+                  "x": 0,
+                  "y": 5,
+                  "w": 16,
+                  "h": 2
+                },
+                "bind": {
+                  "text": "=Add your first habit below"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "samples": {
+        "open": {
+          "state": "open",
+          "text": "1/3",
+          "value": 1,
+          "min": 0,
+          "max": 3,
+          "items": [
+            {
+              "id": "1",
+              "text": "Read",
+              "icon": "check_circle",
+              "subtext": "4 days",
+              "state": "done"
+            },
+            {
+              "id": "2",
+              "text": "Walk",
+              "icon": "radio_button_unchecked",
+              "subtext": "0 days",
+              "state": "open"
+            },
+            {
+              "id": "3",
+              "text": "Stretch",
+              "icon": "radio_button_unchecked",
+              "subtext": "2 days",
+              "state": "open"
+            }
+          ],
+          "actions": {
+            "add": {},
+            "check": {},
+            "undo": {}
+          }
+        },
+        "done": {
+          "state": "done",
+          "text": "3/3",
+          "value": 3,
+          "min": 0,
+          "max": 3,
+          "items": [
+            {
+              "id": "1",
+              "text": "Read",
+              "icon": "check_circle",
+              "subtext": "5 days",
+              "state": "done"
+            },
+            {
+              "id": "2",
+              "text": "Walk",
+              "icon": "check_circle",
+              "subtext": "1 day",
+              "state": "done"
+            },
+            {
+              "id": "3",
+              "text": "Stretch",
+              "icon": "check_circle",
+              "subtext": "3 days",
+              "state": "done"
+            }
+          ],
+          "actions": {
+            "add": {},
+            "check": {},
+            "undo": {}
+          }
+        },
+        "empty": {
+          "state": "empty",
+          "text": "0/0",
+          "value": 0,
+          "min": 0,
+          "max": 0,
+          "items": [],
+          "actions": {
+            "add": {}
+          }
+        }
       }
     }
   ]

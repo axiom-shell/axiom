@@ -926,6 +926,42 @@ TestCase {
     }
   }
 
+  function test_presetDailyHabits() {
+    const preset = CustomWidgetData.presets.find(p => p.name === "Daily habits");
+    verify(preset, "the preset is listed");
+    verify(preset.command.includes("{tree}data/custom-widgets/habits.sh"), "the script is found through {tree}");
+    verify(preset.invoke.command.includes("{action} {value}"), "the action command takes the action and its value");
+    const views = preset.module.views;
+    compare(views.map(v => v.id), ["open", "done", "empty"], "a screen per state");
+    compare(preset.module.keys, {
+      "u": "undo"
+    }, "undo on a key");
+    compare(Object.keys(preset.samples).sort(), ["done", "empty", "open"], "a sample per screen");
+    const context = {
+      "interactive": true,
+      "colorNames": ["accent", "success"]
+    };
+    views.forEach((view, index) => {
+      const fields = CustomWidgetData.resolve(preset, preset.samples[view.id], context);
+      compare(CustomWidgetData.pickView(preset.module, fields).index, index, "the " + view.id + " sample picks its screen");
+    });
+    // The actions the elements and keys name are ones the samples list
+    const named = new Set(CustomWidgetData.allElements(preset.module).map(e => e.action).filter(a => a).concat(Object.values(preset.module.keys)));
+    for (const action of named) {
+      verify(Object.values(preset.samples).some(sm => action in sm.actions), "a sample lists " + action);
+      verify(/^[A-Za-z0-9_.-]{1,64}$/.test(action), action + " is an action id");
+    }
+    const open = CustomWidgetData.resolve(preset, preset.samples.open, context);
+    compare(open.color, "accent", "open is the accent");
+    compare(CustomWidgetData.resolve(preset, preset.samples.done, context).color, "success", "done is success");
+    compare(CustomWidgetData.actionEnabled(CustomWidgetData.resolve(preset, preset.samples.empty, context).actions, "check"), false, "nothing to check while empty");
+    compare(CustomWidgetData.fillCommand(preset.invoke.command, {
+      "action": "add",
+      "value": "it's",
+      "tree": "/opt/axiom/"
+    }), "bash '/opt/axiom/data/custom-widgets/habits.sh' do 'add' 'it'\\''s'", "the action command filled in");
+  }
+
   function test_preview_zoom_fits_width() {
     const sizes = [[4, 4], [4, 4], [8, 2], [8, 4], [4, 1]];
     for (const card of [450, 624, 990]) {

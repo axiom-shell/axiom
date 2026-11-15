@@ -108,7 +108,8 @@ QtObject {
     if (!command || Paths.greeter || LockManager.builtinLocked)
       return;
     CommandManager.runDetached(CustomWidgetData.fillCommand(command, {
-      "value": CustomWidgetData.asText(value)
+      "value": CustomWidgetData.asText(value),
+      "tree": Paths.treePath
     }));
     if (CustomWidgetsConfig.definition(id)?.actions?.refreshAfter ?? true)
       root._refreshSoon(id);
@@ -189,7 +190,8 @@ QtObject {
     const command = CustomWidgetData.fillCommand(def.invoke.command, {
       "action": action,
       "value": CustomWidgetData.asText(value),
-      "rev": root._fields[id]?.rev ?? ""
+      "rev": root._fields[id]?.rev ?? "",
+      "tree": Paths.treePath
     });
     CommandManager.run(["sh", "-c", command], (code, out, err) => root._done(id, action, run, continuous, code, err));
   }
@@ -357,9 +359,16 @@ QtObject {
   property var _history: ({})
   property var _seen: ({})
 
-  // The command a definition's script runs as
+  // The command a definition's script runs as: `{tree}` filled in
   function _command(def) {
-    return def.command;
+    return root._expand(def.command);
+  }
+
+  // `{tree}` (the axiom tree this shell runs, with a trailing slash: a dev
+  // or nested tree finds its own data/ scripts) filled in, as typed
+  // elsewhere. It stays literal in config, so a definition holds no path
+  function _expand(text) {
+    return String(text ?? "").replace(/\{tree\}/g, () => Paths.treePath);
   }
 
   function _owner(id) {
@@ -414,7 +423,7 @@ QtObject {
 
   // Waybar's exec-if: the script runs only once this succeeds
   function _checkIf(id, def) {
-    CommandManager.run(["sh", "-c", def.execIf], exitCode => {
+    CommandManager.run(["sh", "-c", root._expand(def.execIf)], exitCode => {
       if (!(id in root._watching))
         return;
       if (exitCode === 0) {

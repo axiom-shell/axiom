@@ -232,11 +232,46 @@ QtObject {
     const local = root._local();
     const base = Object.assign({
       "name": I18n.tr("Custom widget")
-    }, preset ?? {});
+    }, root._translated(preset ?? {}));
     base.id = Utils.newId(Utils.slug(base.name) || "widget", local.items);
     local.items.push(ConfigManager.withDefaults(base, "CustomWidget"));
     root._apply();
     root.selectDefinition(local.items.length - 1);
+  }
+
+  // A preset's English texts in the user's language: the `=` literals and the
+  // placeholders and labels of its elements, and its screens' names (the keys
+  // are listed in CustomWidgetData.presets' comment). A definition with no
+  // such text, or a name no key matches, comes back as it is
+  function _translated(def) {
+    if (!def.module)
+      return def;
+    const elements = list => (list ?? []).map(element => {
+        const bind = Object.assign({}, element.bind);
+        for (const slot of Object.keys(bind)) {
+          if (typeof bind[slot] === "string" && bind[slot].startsWith("=") && bind[slot].length > 1)
+            bind[slot] = "=" + I18n.tr(bind[slot].slice(1));
+        }
+        const options = Object.assign({}, element.options);
+        for (const key of ["label", "placeholder"]) {
+          if (typeof options[key] === "string" && options[key] !== "")
+            options[key] = I18n.tr(options[key]);
+        }
+        return Object.assign({}, element, {
+          "bind": bind,
+          "options": options
+        });
+      });
+    const module = Object.assign({}, def.module, {
+      "elements": elements(def.module.elements),
+      "views": (def.module.views ?? []).map(view => Object.assign({}, view, {
+          "name": view.name ? I18n.tr(view.name) : "",
+          "elements": elements(view.elements)
+        }))
+    });
+    return Object.assign({}, def, {
+      "module": module
+    });
   }
 
   // Adds the Waybar module(s) in `text` (CustomWidgetData.fromWaybar),
