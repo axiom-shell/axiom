@@ -4,3 +4,11 @@ defaultSize: [8, 4]
 slots: [items]
 actions: [click]
 color: state
+settings:
+  orientation:
+    type: string
+    title: Direction
+    default: vertical
+    x-control: toggle
+    enum: [vertical, horizontal]
+    x-enumLabels: {vertical: Down, horizontal: Across}

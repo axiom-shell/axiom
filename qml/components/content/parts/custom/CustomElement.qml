@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.content.parts.custom.elements.List // qmllint disable unused-imports
 
 // One element of a custom widget's module, loaded by its kind
 // (elements/<Type>/Custom<Type>.qml, each a CustomElementBase).
