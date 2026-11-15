@@ -71,7 +71,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
   - `unit`: the card size content lays out at, `drawnUnit / zoom` (rounded down). Bigger text (the Interface scale) fits less in each card.
   - `roomWidth` / `roomHeight`: the room in layout px, what views size against (`BaseView.editorWidth`).
 - Views receive it as `grid` (`BaseView`) and size everything from `grid.unit` / `grid.span(n)` / `grid.sizes(bounds, stretch)`, passing plain numbers down to content. Text and widget sizes stay the shell's px tokens; the zoom scales them with the cards.
-- `OverlayPages` draws the current page at `contentZoom` (`zoom × fitScale`, Item.scale on the views' container); its box is sized in drawn px, so its border and radius stay crisp.
+- `OverlayPages` draws the current page at `contentZoom` (`zoom × fitScale`, Item.scale on the views' container); its box (a `page` Surface with the `borderSubtle` hairline) is sized in drawn px, so its border and radius stay crisp. It casts a soft shadow (`Style.shadowSoft`, an `OutsideShadow` of a plain copy of the box's shape) while the shell's shadow switch is on, except where the compositor's blur would frost it (`Appearance.blur && BlurManager.shadowsApart`).
   - The container scales from its top left, placed on a whole px, and the grid knows what it's drawn at (`OverlayGrid.drawnZoom`, which `PageWindow` sets too), so `GridPlacement.rectPx` puts every slot's edges on whole drawn px: each card's border falls on the screen's pixels alike, never smeared over two at some zooms.
   - Menus, the desktop, the lock screen and the greeter zoom each module's content instead (`ModuleGrid.zoom`), keeping their grid in drawn px with its gaps scaled to its cards (`OverlayGrid.gap`, `GridPlacement.gapOf`), so the grid is the overlay's scaled: see [Menu hosts](../menus/hosts.md).
   - `StyledIcon` finds the `contentZoom`s up its parents (multiplied) and, scaled, draws unfilled symbols with the distance-field renderer (a native glyph blurs when scaled; a filled one stays native, as distance fields blot its contours).
@@ -101,7 +101,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - A view with `visible: false` stays in config but isn't shown.
 
 ### Navigator
-- `OverlayPageNavigator`, pinned to the screen's bottom or top edge (`Overlay.navigator`), shows a tab per page with a sliding accent pill. It's pinned to the edge, not the box, since the box changes height with each page.
+- `OverlayPageNavigator`, pinned to the screen's bottom or top edge (`Overlay.navigator`), shows a tab per page with a sliding accent-container pill. It's pinned to the edge, not the box, since the box changes height with each page.
 - Tabs come from `OverlayPages.pages`: icon, name and `tool` from `OverlayConfig.viewIcon` / `viewLabel` / `isTool`, shared with the layouts editor.
 - Tool tabs follow a divider as icons only (named in a tooltip), even when current.
 - `Overlay.navigatorLabels`: `auto` drops the other tabs to icons when all names don't fit; `current` names only the current tab; `icons` names none.

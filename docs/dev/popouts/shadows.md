@@ -1,6 +1,6 @@
 # Popout shadow
 
-> **Files:** `qml/components/hosts/popout/SurfaceShadow.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/bar/BarContainer.qml`
+> **Files:** `qml/components/hosts/popout/SurfaceShadow.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/ShapeShadow.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/bar/BarContainer.qml`
 > **Config:** `Bars.style.shadow` (`enabled`, `color`, `size`)
 > **Related:** [Surface context](surface-context.md), [Submenus](submenus.md), [Translucency and blur](../theming/translucency-blur.md), [Blur window and openings](../theming/blur-window-openings.md), [Bar layering and corners](../bar/layering-and-corners.md)
 
@@ -11,7 +11,8 @@ Every surface with an exposed border casts the shell's shadow. It uses the bars'
   - It is kept only outside the surface's shape (`cut`), so none of it shows through a translucent fill.
   - `cut` covers only pixels the surface covers fully. Under the surface's anti-aliased edge the shadow stays; otherwise a pixel's gap shows.
 - **While the blur window backs a surface,** the blur window casts the shadow instead. See [Translucency and blur](../theming/translucency-blur.md).
-- **Drawn under its target** by `hosts/popout/OutsideShadow`, which captures the target with room for the shadow.
+- **Drawn under its target** by `hosts/popout/OutsideShadow`, which captures the target with room for the shadow. `shadowColor` lets a caller set the colour (the overlay page box's `Style.shadowSoft`).
+- **The overlay page box** (`hosts/popout/ShapeShadow`) draws its shadow from its size and corner radius: an OutsideShadow of a small box of that radius, rendered once (again only when the radius or shadow size changes) and cut in nine, the corners as they are and the edges stretched along their length, so the box growing between pages costs eight quads and no capture or blur of a box-sized texture. Qt API: `ShaderEffectSource` (`sourceRect`, `textureSize`, `live: false`, `scheduleUpdate`) and `MultiEffect`, all in Qt 6.5+ (Fedora stable ships 6.11).
 - **`holes`:** the parts OutsideShadow leaves out are:
   - where surfaces joined to the target sit;
   - for an attached surface, the stroke it grows out of, beside it as well as under it (not on a bare edge). Its window is over that stroke's, so a shadow there dims the stroke. It is darkest under the surface's soft edge, which made a 1px seam where the two strokes meet;

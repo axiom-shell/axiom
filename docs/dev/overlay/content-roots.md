@@ -13,8 +13,9 @@
 
 ### Roots
 - **`Card`** (`content/base/`): a free-form card (box, `properties`, slot context). Card-only content uses it.
+  - The card box is a `Surface` (`surface` tone, `Style.fill`, the `borderSubtle` hairline); bare (borders off, a lock screen, greeter, desktop or edge menu without borders): no box.
   - A `Card`'s `compactContent` replaces its children when `compact` (they go into an inner item that hides).
-  - Override only what differs, like `color`.
+  - Override `color` only for a module that shows a colour.
 - **`Panel`**: lays its children out in a column and works in either host.
   - In a bar popout it sizes to its content with the popout box (`wrapper` set, `hovered` read for dismissal).
   - In a card the host passes `embedded: true`: it fills the slot with the card box, and `compactContent` (e.g. a `CompactFigure`) replaces the column when `compact` (see [Writing modules](writing-modules.md)).

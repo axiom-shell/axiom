@@ -30,7 +30,7 @@ FloatingWindow {
   readonly property var _kept: PageWindowManager.sizeOf(root.type)
 
   title: PageWindowManager.titleOf(root.type)
-  color: Theme.background
+  color: Style.surfacePage
   implicitWidth: root._kept ? root._kept[0] : Math.round(Math.min((root.screen?.width ?? 1920) * 0.75, pageGrid.drawnUnit * 4.2 + root._padding * 2)) // a stand-in screen until it has one
   implicitHeight: root._kept ? root._kept[1] : Math.round(Math.min((root.screen?.height ?? 1080) * 0.85, pageGrid.drawnUnit * 2 + pageGrid.gap + root._headerHeight + root._padding * 3)) // a stand-in screen until it has one
   minimumSize: Qt.size(Math.round(pageGrid.drawnUnit * 1.6), Math.round(pageGrid.drawnUnit + root._headerHeight + root._padding * 3))
@@ -65,15 +65,15 @@ FloatingWindow {
 
     StyledIcon {
       text: OverlayConfig.viewIcon(root.type)
-      textSize: Appearance.fontSize * 1.4
-      textColor: Theme.accent
+      size: "md"
+      tone: "accent"
     }
 
     StyledLabel {
       text: OverlayConfig.viewLabel({
         "type": root.type
       }, 0)
-      font.weight: Font.DemiBold
+      role: "title"
     }
 
     UnsavedDot {

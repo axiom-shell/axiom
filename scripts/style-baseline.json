@@ -40,14 +40,6 @@
   "R5": 1,
   "R7": 8
  },
- "qml/components/content/Battery/Battery.qml": {
-  "R1": 8,
-  "R14": 2,
-  "R3": 2,
-  "R4": 6,
-  "R5": 1,
-  "R7": 2
- },
  "qml/components/content/BluetoothDevices/BluetoothDevices.qml": {
   "R1": 15,
   "R3": 2,
@@ -56,13 +48,6 @@
  },
  "qml/components/content/Brightness/Brightness.qml": {
   "R1": 1
- },
- "qml/components/content/Caffeine/Caffeine.qml": {
-  "R1": 6,
-  "R14": 2,
-  "R4": 2,
-  "R5": 1,
-  "R7": 4
  },
  "qml/components/content/Calculator/Calculator.qml": {
   "R1": 12,
@@ -134,13 +119,6 @@
   "R4": 2,
   "R5": 1,
   "R7": 3
- },
- "qml/components/content/Disks/Disks.qml": {
-  "R1": 4,
-  "R14": 1,
-  "R3": 1,
-  "R4": 1,
-  "R5": 1
  },
  "qml/components/content/Drives/Drives.qml": {
   "R1": 5,
@@ -360,11 +338,6 @@
   "R5": 1,
   "R7": 4
  },
- "qml/components/content/WeatherForecast/WeatherForecast.qml": {
-  "R1": 2,
-  "R4": 3,
-  "R7": 1
- },
  "qml/components/content/WifiNetworks/WifiNetworks.qml": {
   "R1": 32,
   "R14": 4,
@@ -388,33 +361,6 @@
   "R5": 3,
   "R7": 9
  },
- "qml/components/content/base/Card.qml": {
-  "R1": 2,
-  "R7": 2
- },
- "qml/components/content/base/CardHeader.qml": {
-  "R1": 2,
-  "R14": 1,
-  "R4": 2,
-  "R5": 1,
-  "R7": 1
- },
- "qml/components/content/base/Panel.qml": {
-  "R1": 2,
-  "R7": 2
- },
- "qml/components/content/base/SaveResetActions.qml": {
-  "R1": 7,
-  "R2": 1,
-  "R3": 1,
-  "R4": 2,
-  "R5": 1,
-  "R7": 2
- },
- "qml/components/content/base/TitledCard.qml": {
-  "R3": 1,
-  "R9": 1
- },
  "qml/components/content/parts/AudioRow.qml": {
   "R1": 13,
   "R14": 2,
@@ -425,14 +371,6 @@
  "qml/components/content/parts/CodeLine.qml": {
   "R1": 2,
   "R14": 1,
-  "R7": 2
- },
- "qml/components/content/parts/CompactFigure.qml": {
-  "R1": 2,
-  "R14": 1,
-  "R3": 1,
-  "R4": 3,
-  "R5": 1,
   "R7": 2
  },
  "qml/components/content/parts/ConnectionDetails.qml": {
@@ -454,20 +392,6 @@
   "R4": 2,
   "R7": 4
  },
- "qml/components/content/parts/DeviceList.qml": {
-  "R1": 1,
-  "R14": 1,
-  "R4": 2,
-  "R7": 1
- },
- "qml/components/content/parts/DeviceRow.qml": {
-  "R1": 16,
-  "R14": 2,
-  "R2": 3,
-  "R3": 1,
-  "R4": 4,
-  "R7": 6
- },
  "qml/components/content/parts/DialControls.qml": {
   "R1": 4,
   "R2": 2,
@@ -478,25 +402,6 @@
   "R14": 2,
   "R4": 2,
   "R7": 2
- },
- "qml/components/content/parts/EmptyState.qml": {
-  "R14": 1,
-  "R3": 1,
-  "R4": 2
- },
- "qml/components/content/parts/FigureValue.qml": {
-  "R1": 1,
-  "R3": 1,
-  "R4": 1,
-  "R5": 1,
-  "R7": 1
- },
- "qml/components/content/parts/ItemRow.qml": {
-  "R1": 6,
-  "R14": 4,
-  "R2": 1,
-  "R4": 4,
-  "R7": 5
  },
  "qml/components/content/parts/KeyCap.qml": {
   "R1": 1,
@@ -540,13 +445,6 @@
   "R4": 1,
   "R7": 1
  },
- "qml/components/content/parts/ModuleHeader.qml": {
-  "R1": 1,
-  "R14": 1,
-  "R4": 1,
-  "R5": 1,
-  "R7": 1
- },
  "qml/components/content/parts/PomodoroDial.qml": {
   "R1": 4,
   "R7": 1
@@ -583,12 +481,6 @@
   "R5": 3,
   "R7": 3
  },
- "qml/components/content/parts/RadioHeader.qml": {
-  "R1": 2,
-  "R14": 1,
-  "R5": 1,
-  "R7": 2
- },
  "qml/components/content/parts/RateLabel.qml": {
   "R1": 1,
   "R4": 1,
@@ -602,13 +494,6 @@
  "qml/components/content/parts/Sparkline.qml": {
   "R1": 1,
   "R3": 1,
-  "R7": 1
- },
- "qml/components/content/parts/StatFigure.qml": {
-  "R1": 1,
-  "R14": 1,
-  "R3": 1,
-  "R4": 1,
   "R7": 1
  },
  "qml/components/content/parts/TimeRing.qml": {
@@ -877,32 +762,6 @@
   "R5": 1,
   "R7": 1
  },
- "qml/components/hosts/overlay/ExpandedModule.qml": {
-  "R1": 2,
-  "R7": 2
- },
- "qml/components/hosts/overlay/ModuleGrid.qml": {
-  "R3": 1
- },
- "qml/components/hosts/overlay/OverlayPageNavigator.qml": {
-  "R1": 15,
-  "R2": 4,
-  "R3": 3,
-  "R4": 1,
-  "R5": 1,
-  "R7": 10
- },
- "qml/components/hosts/overlay/OverlayPages.qml": {
-  "R1": 2,
-  "R7": 2
- },
- "qml/components/hosts/overlay/PoppedOutCard.qml": {
-  "R1": 2,
-  "R14": 2,
-  "R4": 1,
-  "R5": 1,
-  "R7": 2
- },
  "qml/components/hosts/popout/AttachedSurface.qml": {
   "R1": 2,
   "R2": 5,
@@ -915,17 +774,6 @@
  "qml/components/hosts/popout/EdgePopout.qml": {
   "R1": 2,
   "R7": 1
- },
- "qml/components/hosts/popout/OutsideShadow.qml": {
-  "R17": 1,
-  "R2": 2,
-  "R7": 2
- },
- "qml/components/hosts/window/PageWindow.qml": {
-  "R1": 2,
-  "R4": 1,
-  "R5": 1,
-  "R7": 2
  },
  "qml/components/reusable/OptionGlyph.qml": {
   "R1": 1,

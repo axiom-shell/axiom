@@ -1,16 +1,18 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Widgets
 import qs.config
 import qs.components.reusable
 
 // One entry in a module's list (clipboard clips, calculator answers,
 // recordings): an icon or a rounded thumbnail, a title and a muted
-// subtitle, a muted `detail` on the right (a value), and buttons after it
+// subtitle, a faint `detail` on the right (a value), and buttons after it
 // (children), faint until the row is hovered so showing them moves
 // nothing. Clicking the row `activated`s it, unless it isn't `clickable`.
-Rectangle {
+// The name shows whole in a tooltip while it is cut.
+Item {
   id: root
 
   property string icon: ""
@@ -22,7 +24,9 @@ Rectangle {
   property int titleLines: 1
   // Marked (e.g. pinned): the icon in the accent
   property bool marked: false
-  property color iconColor: root.marked ? Theme.accent : Theme.foregroundAlt
+  // A done task, not a disabled one: title, subtitle and icon go faint
+  property bool dimmed: false
+  property color iconColor: root.dimmed ? Style.textFaint : root.marked ? Style.accent : Style.textMuted
   property string detail: ""
   property bool clickable: true
   readonly property bool hovered: rowHover.hovered
@@ -32,10 +36,12 @@ Rectangle {
 
   Layout.fillWidth: true
   implicitHeight: Math.max(content.implicitHeight, Appearance.fontSize * 2) + Widget.spacing * 2
-  radius: Widget.radius
-  color: Qt.alpha(Theme.backgroundHighlight, rowHover.hovered ? 0.5 : 0)
 
-  ColorGlide on color {}
+  StateLayer {
+    anchors.fill: parent
+    radius: Widget.radius
+    hovered: rowHover.hovered
+  }
 
   HoverHandler {
     id: rowHover
@@ -62,7 +68,7 @@ Rectangle {
       Layout.preferredWidth: Appearance.fontSize * 1.5
       horizontalAlignment: Text.AlignHCenter
       text: root.icon
-      textSize: Appearance.fontSizeBy(2)
+      size: "md"
       textColor: root.iconColor
     }
 
@@ -71,7 +77,7 @@ Rectangle {
       Layout.preferredWidth: Appearance.fontSize * 3
       Layout.preferredHeight: Appearance.fontSize * 2
       radius: Widget.radius / 2
-      color: Theme.backgroundAlt
+      color: Style.surfaceHighest
 
       Image {
         anchors.fill: parent
@@ -87,28 +93,33 @@ Rectangle {
       spacing: 0
 
       StyledLabel {
+        id: titleText
         Layout.fillWidth: true
+        role: "label"
+        tone: root.dimmed ? "faint" : ""
+        overflow: root.titleLines > 1 ? "wrap" : "line"
+        maxLines: root.titleLines
         text: root.title
-        textSize: Appearance.fontSizeBy(-1)
-        elide: Text.ElideRight
-        wrapMode: root.titleLines > 1 ? Text.Wrap : Text.NoWrap
-        maximumLineCount: root.titleLines
+
+        HoverHandler {
+          id: titleHover
+        }
       }
       StyledLabel {
         visible: root.subtitle !== ""
         Layout.fillWidth: true
+        role: "caption"
+        tone: root.dimmed ? "faint" : ""
+        overflow: "line"
         text: root.subtitle
-        textSize: Appearance.fontSizeBy(-3)
-        textColor: Theme.foregroundAlt
-        elide: Text.ElideRight
       }
     }
 
     StyledLabel {
       visible: root.detail !== ""
+      role: "micro"
+      tone: "faint"
       text: root.detail
-      textSize: Appearance.fontSizeBy(-1)
-      textColor: Theme.foregroundAlt
     }
 
     RowLayout {
@@ -118,6 +129,15 @@ Rectangle {
       enabled: rowHover.hovered
 
       Glide on opacity {}
+    }
+  }
+
+  LazyLoader {
+    active: titleHover.hovered && titleText.truncated
+    StyledToolTip {
+      target: titleText
+      text: root.title
+      maxWidth: Widget.textPx(320)
     }
   }
 }

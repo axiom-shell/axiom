@@ -49,14 +49,14 @@ Panel {
 
   compactContent: CompactFigure {
     icon: IdleManager.caffeine ? "coffee" : "bedtime"
-    iconColor: IdleManager.caffeine ? Theme.accent : Theme.foregroundAlt
+    iconColor: IdleManager.caffeine ? Style.accent : Style.textMuted
     value: IdleManager.caffeineTimed ? IdleManager.caffeineText : IdleManager.caffeine ? I18n.tr("On") : I18n.tr("Off")
     label: I18n.tr("Caffeine")
   }
 
   ModuleHeader {
     icon: IdleManager.caffeine ? "coffee" : "bedtime"
-    iconColor: IdleManager.caffeine ? Theme.accent : Theme.foregroundAlt
+    iconColor: IdleManager.caffeine ? Style.accent : Style.textMuted
     title: I18n.tr("Caffeine")
 
     StyledSwitch {
@@ -91,25 +91,23 @@ Panel {
           visible: awake.showFigure
           Layout.alignment: Qt.AlignHCenter
           text: "coffee"
-          textColor: Theme.accent
+          tone: "accent"
           // Larger in a roomy card
-          textSize: root.embedded ? Math.max(Appearance.fontSize * 3.2, Math.min(Appearance.fontSize * 6, awake.parent.height * 0.3)) : Appearance.fontSize * 3.2
+          textSize: root.embedded ? Math.max(Style.typeBody * 3.2, Math.min(Style.typeBody * 6, awake.parent.height * 0.3)) : Style.typeBody * 3.2 // fitted: the card's height
         }
         StyledText {
           Layout.fillWidth: true
           horizontalAlignment: Text.AlignHCenter
-          wrapMode: Text.WordWrap
+          role: "label"
+          overflow: "wrap"
           text: I18n.tr("Awake until turned off")
-          font.weight: Font.Bold
         }
         StyledText {
           visible: awake.showFigure
           Layout.fillWidth: true
           horizontalAlignment: Text.AlignHCenter
-          wrapMode: Text.WordWrap
+          role: "caption"
           text: I18n.tr("The screen won't lock or turn off while you're away.")
-          textSize: Appearance.fontSizeBy(-1)
-          textColor: Theme.foregroundAlt
         }
         RowLayout {
           Layout.alignment: Qt.AlignHCenter

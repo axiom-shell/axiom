@@ -90,19 +90,18 @@ Item {
     onClicked: root.collapse()
   }
 
-  Rectangle {
+  Surface {
     id: box
+    tone: "surface"
+    // Opaque over the dimmed modules, and outlined even in a menu without
+    // module borders, as it floats over them
+    solid: true
+    outlined: true
     x: root.shown ? root.inset : root._from[0]
     y: root.shown ? root.inset : root._from[1]
     width: root.shown ? root.width - root.inset * 2 : root._from[2]
     height: root.shown ? root.height - root.inset * 2 : root._from[3]
     opacity: root.shown ? 1 : 0
-    // Opaque over the dimmed modules, and outlined even in a menu without
-    // module borders, as it floats over them
-    color: Theme.background
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
-    radius: Widget.radius
     clip: true
 
     Glide on x {

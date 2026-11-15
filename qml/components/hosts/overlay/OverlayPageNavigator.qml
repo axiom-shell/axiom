@@ -7,7 +7,8 @@ import qs.services.ui
 import qs.components.reusable
 
 // Fixed page navigator for the overlay's pages: arrows at the ends and a tab
-// per page (icon and name), the current one under a sliding accent pill.
+// per page (icon and name), the current one under a sliding accent-container
+// pill.
 // Tool pages follow the user's own after a divider, as icons (named in a
 // tooltip), even when current. When every name doesn't fit `maxWidth`, the
 // other tabs drop to their icons too; `labels` can keep them there, or
@@ -19,7 +20,7 @@ import qs.components.reusable
 // back chip leads the arrows: back arrow and that page's icon.
 // Kept as its own item, anchored directly to the overlay's screen edge,
 // so it doesn't move when the current page's content height changes.
-Rectangle {
+Surface {
   id: root
 
   required property int currentIndex
@@ -41,7 +42,7 @@ Rectangle {
   readonly property real controlHeight: root.height - root.inset * 2
   readonly property real innerRadius: Math.max(0, Widget.radius - root.inset / 2)
   readonly property real tabPadding: Widget.padding * 1.5
-  readonly property real iconSize: Appearance.fontSize * 1.4
+  readonly property real iconSize: Style.iconMd
   readonly property real labelSpacing: Widget.spacing / 2
   readonly property real tabSpacing: Widget.spacing
   readonly property string currentType: root.pages[root.currentIndex]?.type ?? ""
@@ -69,14 +70,12 @@ Rectangle {
   readonly property real chrome: root.controlHeight * 2 + row.spacing * 2 + (root.inset + root.endInset) * 2 + (root.showEditActions ? editActions.implicitWidth + row.spacing : 0) + (root.hasPopOut ? popOut.implicitWidth + row.spacing : 0) + (root.backPage ? backChip.implicitWidth + backChip.Layout.leftMargin + row.spacing : 0)
   // Only the current tab keeps its name when all of them don't fit
   readonly property bool compact: root.maxWidth > 0 && root.chrome + measureRow.fullWidth > root.maxWidth
-  readonly property color onAccent: Theme.background
+  // What reads on the current page's pill
+  readonly property color currentInk: Style.onAccentContainer
 
   width: row.implicitWidth + (root.inset + root.endInset) * 2
   height: OverlayConfig.navigatorHeight
-  radius: Appearance.borderRadius
-  color: Appearance.fill(Theme.backgroundAlt)
-  border.color: Theme.foreground
-  border.width: Appearance.borderWidth
+  tone: "page"
 
   NotchWheel {
     onStepped: direction => {
@@ -113,55 +112,20 @@ Rectangle {
   }
 
   // An icon button in the pill (the arrows, the edit actions), named in a
-  // tooltip when `tip` is set; dimmed while disabled
-  component ArrowButton: Rectangle {
-    id: arrow
-    property string icon
-    property color iconColor: Theme.foreground
-    property string tip: ""
-    signal clicked
-
-    Layout.preferredWidth: root.controlHeight
-    Layout.preferredHeight: root.controlHeight
-    radius: root.innerRadius
-    opacity: arrow.enabled ? 1 : 0.4
-    // Fade the highlight in and out rather than from "transparent", which is
-    // transparent black and flashes dark mid-animation
-    color: arrowArea.containsMouse ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
-
-    StyledIcon {
-      anchors.centerIn: parent
-      text: arrow.icon
-      textSize: root.iconSize * 1.2
-      color: arrow.iconColor
-    }
-
-    MouseArea {
-      id: arrowArea
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: arrow.clicked()
-    }
-
-    LazyLoader {
-      active: arrow.tip !== "" && arrowArea.containsMouse
-      StyledToolTip {
-        target: arrow
-        text: arrow.tip
-        edges: Edges.Top
-      }
-    }
-
-    ColorGlide on color {}
-    Glide on opacity {}
+  // tooltip when `tooltipText` is set; dimmed while disabled
+  component ArrowButton: StyledIconButton {
+    kind: "text"
+    size: root.controlHeight
+    iconSize: root.iconSize * 1.2
+    borderRadius: root.innerRadius
+    tooltipEdges: Edges.Top
   }
 
   // A thin divider between groups of controls
   component Divider: StyledSeparator {
-    Layout.preferredWidth: Appearance.borderWidth
+    backTone: "page"
+    Layout.preferredWidth: Style.dividerWidth
     Layout.preferredHeight: root.controlHeight * 0.6
-    opacity: 0.5
   }
 
   RowLayout {
@@ -179,9 +143,14 @@ Rectangle {
       // Clear of the navigator's rounded left end
       Layout.leftMargin: Widget.spacing
       radius: root.innerRadius
-      color: backArea.containsMouse ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
-      border.color: Qt.alpha(Theme.accent, 0.6)
-      border.width: Appearance.borderWidth
+      color: "transparent"
+      border.color: Style.borderStrong
+      border.width: Style.hairline
+
+      StateLayer {
+        radius: root.innerRadius
+        hovered: backArea.containsMouse
+      }
 
       Row {
         id: backContent
@@ -192,7 +161,7 @@ Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           text: "arrow_back"
           textSize: root.iconSize
-          textColor: Theme.accent
+          tone: "accent"
         }
 
         StyledIcon {
@@ -218,12 +187,10 @@ Rectangle {
           edges: Edges.Top
         }
       }
-
-      ColorGlide on color {}
     }
 
     ArrowButton {
-      icon: "chevron_left"
+      iconText: "chevron_left"
       onClicked: root.previous()
     }
 
@@ -241,7 +208,7 @@ Rectangle {
         width: parent.currentTab?.tabWidth ?? 0
         height: parent.height
         radius: root.innerRadius
-        color: Theme.accent
+        color: Style.accentContainer
         visible: parent.currentTab !== null
 
         Glide on x {
@@ -268,9 +235,9 @@ Rectangle {
             required property var modelData
             readonly property bool isCurrent: index === root.currentIndex
             readonly property bool showLabel: !tab.modelData.tool && root.labels !== "icons" && (tab.isCurrent || (root.labels === "auto" && !root.compact))
-            readonly property color ink: tab.isCurrent ? root.onAccent : Theme.foreground
+            readonly property color ink: tab.isCurrent ? root.currentInk : Style.text
             readonly property bool firstTool: tab.modelData.tool === true && tab.index > 0 && root.pages[tab.index - 1]?.tool !== true
-            readonly property real divider: tab.firstTool ? root.tabSpacing + Appearance.borderWidth : 0
+            readonly property real divider: tab.firstTool ? root.tabSpacing + Style.dividerWidth : 0
             readonly property real tabWidth: root.tabPadding * 2 + content.implicitWidth
 
             width: tab.divider + tab.tabWidth
@@ -278,20 +245,23 @@ Rectangle {
 
             StyledSeparator {
               visible: tab.firstTool
+              backTone: "page"
               x: root.tabSpacing / 2 - width
               anchors.verticalCenter: parent.verticalCenter
-              width: Appearance.borderWidth
+              width: Style.dividerWidth
               height: root.controlHeight * 0.6
-              opacity: 0.5
             }
 
-            Rectangle {
+            Item {
               id: tabBox
               x: tab.divider
               width: tab.tabWidth
               height: parent.height
-              radius: root.innerRadius
-              color: !tab.isCurrent && tabArea.containsMouse ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
+
+              StateLayer {
+                radius: root.innerRadius
+                hovered: !tab.isCurrent && tabArea.containsMouse
+              }
 
               Row {
                 id: content
@@ -310,7 +280,7 @@ Rectangle {
                   anchors.verticalCenter: parent.verticalCenter
                   text: tab.modelData.label
                   visible: tab.showLabel
-                  font.weight: tab.isCurrent ? Font.DemiBold : Font.Normal
+                  font.weight: tab.isCurrent ? Style.weightStrong : Style.weightNormal
                   textColor: tab.ink
                 }
 
@@ -346,8 +316,6 @@ Rectangle {
                   edges: Edges.Top
                 }
               }
-
-              ColorGlide on color {}
             }
           }
         }
@@ -364,8 +332,8 @@ Rectangle {
 
       ArrowButton {
         enabled: root.canPopOut
-        icon: "open_in_new"
-        tip: I18n.tr("Open in a window")
+        iconText: "open_in_new"
+        tooltipText: I18n.tr("Open in a window")
         onClicked: PageWindowManager.popOut(root.currentType)
       }
 
@@ -373,7 +341,7 @@ Rectangle {
     }
 
     ArrowButton {
-      icon: "chevron_right"
+      iconText: "chevron_right"
       onClicked: root.next()
     }
 
@@ -387,15 +355,15 @@ Rectangle {
       }
 
       ArrowButton {
-        icon: "save"
-        iconColor: Theme.accent
-        tip: I18n.tr("Save all unsaved changes")
+        iconText: "save"
+        iconColor: Style.textAccent
+        tooltipText: I18n.tr("Save all unsaved changes")
         onClicked: EditsManager.saveAll()
       }
 
       ArrowButton {
-        icon: "undo"
-        tip: I18n.tr("Discard all unsaved changes")
+        iconText: "undo"
+        tooltipText: I18n.tr("Discard all unsaved changes")
         onClicked: EditsManager.discardAll()
       }
     }

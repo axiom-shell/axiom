@@ -4,14 +4,13 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// A radio menu's title row (Wi-Fi, Bluetooth): the title, a refresh icon
-// spinning while it scans, any `extras` (Wi-Fi's airplane mode), and the
-// power switch (none without `switchShown`). Everything is always laid
-// out, so the row never shifts.
-RowLayout {
+// A radio menu's title row (Wi-Fi, Bluetooth), a ModuleHeader: the title, a
+// refresh icon spinning while it scans, any `extras` (Wi-Fi's airplane
+// mode), and the power switch (none without `switchShown`). Everything is
+// always laid out, so the row never shifts.
+ModuleHeader {
   id: root
 
-  property string title: ""
   property bool scanning: false
   property bool checked: false
   property bool switchEnabled: true
@@ -20,21 +19,11 @@ RowLayout {
 
   signal toggled(bool checked)
 
-  Layout.fillWidth: true
   Layout.fillHeight: false
-  spacing: Widget.spacing
-
-  StyledLabel {
-    Layout.fillWidth: true
-    text: root.title
-    elide: Text.ElideRight
-    font.weight: Font.Bold
-    textColor: Theme.accent
-  }
 
   SpinningIcon {
     text: "refresh"
-    textColor: Theme.foregroundAlt
+    tone: "muted"
     opacity: root.scanning ? 1 : 0
     spinning: root.scanning
 

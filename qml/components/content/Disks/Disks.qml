@@ -41,7 +41,10 @@ Card {
   Component.onDestruction: SystemManager.release(root)
 
   function barColor(ratio) {
-    return ratio > 0.9 ? Theme.error : ratio > 0.75 ? Theme.warning : Theme.accent;
+    return ratio > 0.9 ? Style.error : ratio > 0.75 ? Style.warning : Style.accent;
+  }
+  function barTone(ratio) {
+    return ratio > 0.9 ? "error" : ratio > 0.75 ? "warning" : "accent";
   }
 
   // Compact: the first path's usage
@@ -94,17 +97,16 @@ Card {
               Layout.fillWidth: true
               StyledLabel {
                 Layout.fillWidth: true
-                elide: Text.ElideMiddle
+                role: "label"
+                elide: Text.ElideMiddle // style-exempt: middle
                 text: disk.modelData
-                font.weight: Font.Bold
               }
               // Narrow: the used size only, then nothing beside the path
               StyledLabel {
                 readonly property bool narrow: disk.width < Appearance.fontSize * 12
                 visible: disk.width >= Appearance.fontSize * 7
                 text: !disk.usage ? "…" : narrow ? Utils.formatSize(disk.usage.used) : Utils.formatSize(disk.usage.used) + " / " + Utils.formatSize(disk.usage.total)
-                textSize: Appearance.fontSizeBy(-2)
-                opacity: 0.7
+                role: "caption"
               }
             }
             LevelMeter {
@@ -112,8 +114,7 @@ Card {
               Layout.preferredHeight: thickness
               thickness: Widget.px(8)
               share: disk.ratio
-              trackColor: Theme.backgroundAlt
-              fillColor: root.barColor(disk.ratio)
+              fillTone: root.barTone(disk.ratio)
             }
           }
         }

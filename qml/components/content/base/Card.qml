@@ -1,12 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.reusable
 
 // Base for overlay modules (what BarWidget is for bar modules): the card
-// box filling its slot. Modules set only what differs, e.g. `color`,
-// and pick their internal layout from `shape` / `compact` (see
-// OverlaySlot, which sets `slotRect`).
-Rectangle {
+// box (a Style surface) filling its slot. Modules set only what differs,
+// e.g. `color`, and pick their internal layout from `shape` / `compact`
+// (see OverlaySlot, which sets `slotRect`).
+Surface {
   id: root
 
   // This module's `properties` from config (schema defaults filled in)
@@ -75,10 +76,9 @@ Rectangle {
   default property alias content: full.data
 
   anchors.fill: parent
-  color: bare ? "transparent" : Appearance.fill(Theme.background)
-  border.color: Theme.border
-  border.width: bare ? 0 : Appearance.borderWidth
-  radius: Widget.radius
+  tone: "surface"
+  color: root.bare ? "transparent" : Style.fill
+  outlined: !root.bare
   clip: true
 
   Item {

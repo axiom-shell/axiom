@@ -789,6 +789,21 @@ TestCase {
     tryVerify(() => Math.abs(mark.x - left) < 0.5 && Math.abs(mark.width - width) < 0.5);
   }
 
+  // A settings page's card sits in the page's own card (a Surface): `pageCard`
+  // keeps it boxed there, where any other group goes flat
+  function test_field_group_page_card_stays_boxed() {
+    harness.configure({});
+    const host = createTemporaryObject(hostComp, root, {
+      "tone": "surface"
+    });
+    waitForRendering(host);
+    compare(host.group.border.width, 0);
+    host.group.pageCard = true;
+    compare(host.group.tone, "surface");
+    compare(host.group.border.width, Style.hairline);
+    verify(host.group.color.a > 0);
+  }
+
   Component {
     id: streamedComp
     StreamedLoader {

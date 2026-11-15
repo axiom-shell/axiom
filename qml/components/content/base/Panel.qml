@@ -129,13 +129,13 @@ Item {
   width: root.embedded ? (parent?.width ?? implicitWidth) : implicitWidth
   height: root.embedded ? (parent?.height ?? implicitHeight) : implicitHeight
 
-  Rectangle {
+  Surface {
+    tone: "surface"
     anchors.fill: parent
     anchors.margins: -root.bleed
     // A popout's surface draws its own fill
-    color: root.embedded && !root.bare ? Appearance.fill(Theme.background) : "transparent"
-    border.color: root.embedded && !root.bare ? Theme.border : "transparent"
-    border.width: root.embedded && !root.bare ? Appearance.borderWidth : 0
+    color: root.embedded && !root.bare ? Style.fill : "transparent"
+    outlined: root.embedded && !root.bare
     radius: root.boxRadius
     clip: true
 

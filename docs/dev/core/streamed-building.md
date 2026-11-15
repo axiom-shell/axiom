@@ -35,7 +35,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 
 ### Overlay pages
 - Opening or switching builds only the page shown, and its neighbours after it has slid in (`OverlayPages._settled`): see [pages-and-grid › Loading](../overlay/pages-and-grid.md).
-- A Custom page's `ModuleGrid` has `stream: true`: its modules are queued in reveal order, top left to bottom right (`GridPlacement.revealOrder`), and fade in (`OverlaySlot.active` / `ready`). The grid is sized from the places, so only a module that grows (`grow`) moves the ones below it as it arrives, since its height is known once it's built. Once all have arrived, modules added later build at once (`_streamed`).
+- A Custom page's `ModuleGrid` has `stream: true`: its modules are queued in reveal order, top left to bottom right (`GridPlacement.revealOrder`), and fade in while sliding up `Style.enterOffset` (`OverlaySlot.active` / `ready`). The grid is sized from the places, so only a module that grows (`grow`) moves the ones below it as it arrives, since its height is known once it's built. Once all have arrived, modules added later build at once (`_streamed`).
 - Every tool page streams its parts. A page's own synchronous build (`Overlay page N built in X ms`) is what's left: the page's frame, what it calls by id, and the first frame of each loader.
   - **Settings**: the sidebar, then each card of the category, and each `SchemaPropertiesForm` field.
   - **BarEditor**: the bars panel (each field group, each field), the sections board, the widget inspector.

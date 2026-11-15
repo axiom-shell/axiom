@@ -16,6 +16,7 @@ import qs.components.reusable
 // methods/DevDiff)
 FieldGroup {
   id: root
+  pageCard: true
 
   // dev.config.diff's rows: [{ path, side, dev?, live?, devOnly }]
   property var rows: []

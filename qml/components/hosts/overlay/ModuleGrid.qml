@@ -178,7 +178,7 @@ Item {
   Item {
     anchors.fill: parent
     enabled: root.expanded === null
-    opacity: expandedLayer.shown ? 0.35 : 1
+    opacity: expandedLayer.shown ? Style.opacityDisabled : 1
     Glide on opacity {
       duration: Appearance.animNormal
     }
@@ -223,6 +223,17 @@ Item {
         opacity: moduleSlot.ready || !root.stream ? 1 : 0
 
         Glide on opacity {
+          enabled: root.stream
+          duration: Appearance.animFast
+        }
+
+        // Slides up as it fades in, in build order; whole pixels, it carries text
+        property real _enter: moduleSlot.ready || !root.stream ? 0 : Style.enterOffset
+        transform: Translate {
+          y: Math.round(slot._enter)
+        }
+
+        Glide on _enter {
           enabled: root.stream
           duration: Appearance.animFast
         }

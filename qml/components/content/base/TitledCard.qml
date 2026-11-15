@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
@@ -73,8 +72,6 @@ Card {
       Layout.fillWidth: true
       Layout.topMargin: Widget.spacing / 2
       Layout.bottomMargin: Widget.spacing / 2
-      separatorHeight: 1
-      opacity: 0.3
     }
 
     // Not fillHeight (a layout's default): with its children all hidden it
@@ -92,18 +89,17 @@ Card {
       spacing: Widget.spacing
     }
 
-    ScrollView {
+    StyledScrollView {
       id: scroll
       Layout.fillWidth: true
       Layout.fillHeight: true
       Layout.topMargin: extras.visible ? 0 : Widget.spacing
-      clip: true
-      ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-      contentWidth: availableWidth
+      contentPadding: 0
+      showScrollBar: true
 
       ColumnLayout {
         id: body
-        width: scroll.width - Widget.padding * 2
+        width: scroll.availableWidth
         spacing: Widget.spacing * 2
       }
     }

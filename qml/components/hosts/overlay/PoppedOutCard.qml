@@ -27,26 +27,25 @@ Item {
     StyledIcon {
       Layout.alignment: Qt.AlignHCenter
       text: OverlayConfig.viewIcon(root.type)
-      textSize: Appearance.fontSize * 3
-      textColor: Theme.accent
+      size: "xl"
+      tone: "accent"
     }
 
     StyledText {
       Layout.fillWidth: true
       horizontalAlignment: Text.AlignHCenter
-      wrapMode: Text.Wrap
+      role: "title"
+      overflow: "wrap"
       text: I18n.tr("{0} is open in a window", OverlayConfig.viewLabel({
         "type": root.type
       }, 0))
-      font.weight: Font.DemiBold
     }
 
     StyledText {
       Layout.fillWidth: true
       horizontalAlignment: Text.AlignHCenter
-      wrapMode: Text.Wrap
+      role: "caption"
       text: I18n.tr("Edits made there show here too.")
-      textColor: Theme.foregroundAlt
     }
 
     RowLayout {
