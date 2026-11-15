@@ -2,15 +2,17 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.config
+import qs.components.methods
 
-// A single-line text field in a StyledContainer. It writes every keystroke
+// A single-line text field in a sunken, outlined Surface (a caller makes it
+// frameless with `color: "transparent"; outlined: false`). It writes every keystroke
 // back to `text`: push values in and act on textEdited (see docs/dev/core/qml-pitfalls.md).
 // `clearable` (search boxes) adds an X at the right while it holds text,
 // which empties it as a typed edit and keeps the focus in it; with
 // `escapeClears`, Escape does too (passed on when it's already empty).
 // A field hiding its text (a password) warns while Caps Lock is on, by
 // itself: CapsLockHint at the right, loaded only while it has focus.
-StyledContainer {
+Surface {
   id: root
 
   // --- Public API ---
@@ -53,15 +55,18 @@ StyledContainer {
   // A combo's height (Widget.height), growing as long text wraps; the
   // TextField's own padding is zeroed, so the box's is the only one
   implicitHeight: Math.max(Widget.height, textField.contentHeight + Widget.spacing * 2)
-  borderColor: textField.activeFocus ? Theme.accent : Theme.border
-  backgroundColor: Theme.backgroundAlt
+  tone: "sunken"
+  outlined: true
+  border.width: root.outlined ? (textField.activeFocus ? Style.focusWidth : Style.hairline) : 0
+  border.color: textField.activeFocus ? Style.accent : Style.borderStrong
 
-  ColorGlide on borderColor {
+  ColorGlide on border.color {
     duration: Appearance.animNormal
   }
 
   TextField {
     id: textField
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     anchors.fill: parent
     anchors.leftMargin: Widget.padding
     anchors.rightMargin: (root._clearShown ? clearButton.width + clearButton.inset + Widget.spacing : Widget.padding) + root._capsRoom
@@ -92,16 +97,16 @@ StyledContainer {
     }
 
     // --- Core Properties ---
-    color: Theme.foreground
+    color: root.ink.text
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSize
+    font.pixelSize: Style.typeBody
     selectByMouse: true
-    selectedTextColor: Theme.background
-    selectionColor: Theme.accent
+    selectedTextColor: Style.onAccent
+    selectionColor: Style.accent
     wrapMode: Text.Wrap
 
     // --- Placeholder Properties ---
-    placeholderTextColor: Qt.alpha(Theme.foreground, 0.5)
+    placeholderTextColor: root.ink.faint
 
     onAccepted: root.accepted()
 
@@ -116,14 +121,14 @@ StyledContainer {
     id: clearButton
     visible: root._clearShown
     // Inset from the border all round, so its hover fill never covers it
-    readonly property real inset: Appearance.borderWidth + Widget.px(4)
+    readonly property real inset: Style.hairline + Widget.px(4)
     size: Math.min(Widget.iconButton, root.height - inset * 2)
     anchors.right: parent.right
     anchors.rightMargin: inset
     anchors.verticalCenter: parent.verticalCenter
     focusPolicy: Qt.NoFocus
     iconText: "close"
-    iconSize: Appearance.fontSizeBy(1)
+    iconSize: Style.iconSm
     tooltipText: I18n.tr("Clear")
     onClicked: root.clear()
   }

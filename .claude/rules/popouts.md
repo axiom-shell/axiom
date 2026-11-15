@@ -13,3 +13,4 @@ The pieces every popout is built from: bar popouts, edge popouts (OSDs, floating
 - Shadows go through `OutsideShadow` (explicit padding), never a `MultiEffect` on the item's own layer.
 - Layer order is `LayerStack.layers`; nothing draws over fullscreen or maps a Top window in response to it.
 - Verify with `tst_SurfaceContext` rows and one targeted screenshot, not a matrix of popouts.
+- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.

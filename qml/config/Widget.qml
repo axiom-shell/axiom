@@ -52,19 +52,21 @@ QtObject {
     })
   readonly property var _density: _densities[density]
 
-  // Height of buttons, fields and other controls
-  readonly property int height: Math.round(_density.height * scale)
+  // Height of buttons, fields and other controls: the density's, or what
+  // the font's line needs (StyleTokens.controlHeight)
+  readonly property int height: StyleTokens.controlHeight(Math.round(_density.height * scale), Appearance.fontSize, px(1))
   // Inner padding of panels, cards and controls
   readonly property int padding: Math.round(_density.padding * scale)
   // Gap between items inside panels, cards and controls
   readonly property int spacing: Math.round(_density.spacing * scale)
   // A module card's padding (OverlayConfig.cardPad)
   readonly property int cardPadding: Math.round(_density.card * scale)
-  // Side of a square icon button (StyledIconButton's default size)
-  readonly property int iconButton: Math.round(_density.iconButton * scale)
+  // Side of a square icon button (StyledIconButton's default size): the
+  // density's, or what its icon needs
+  readonly property int iconButton: Math.max(Math.round(_density.iconButton * scale), Appearance.fontSize + 2 * px(4))
   // Height of chips, pills and small buttons (keybind chips, a
-  // notification's actions)
-  readonly property int smallHeight: Math.round(_density.smallHeight * scale)
+  // notification's actions): the density's, or what a micro line needs
+  readonly property int smallHeight: StyleTokens.controlHeight(Math.round(_density.smallHeight * scale), Appearance.fontSizeBy(-3), 0)
   // Inner margins of rows, fields and dropdowns
   readonly property int smallPadding: Math.round(_density.smallPadding * scale)
 
@@ -81,9 +83,9 @@ QtObject {
   }
   // A form field at least this wide puts a short control (a dropdown, a
   // slider) beside its label, at fieldControlWidth; narrower, under it
-  readonly property int fieldInlineFrom: px(420)
+  readonly property int fieldInlineFrom: textPx(420)
   function fieldControlWidth(fieldWidth: real): int {
-    return Math.round(Math.min(px(260), fieldWidth * 0.42));
+    return Math.round(Math.min(textPx(260), fieldWidth * 0.42));
   }
   // Corners of what sits inside something (cards, controls, rows, bar
   // widgets); outer edges use Appearance.borderRadius

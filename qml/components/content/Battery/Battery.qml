@@ -91,7 +91,7 @@ Card {
           Layout.alignment: root.sideBySide ? Qt.AlignLeft : Qt.AlignHCenter
           text: `${Math.round(BatteryManager.percentage)}%`
           textSize: root.sideBySide ? Appearance.fontSize * 1.6 : Appearance.fontSize
-          font.bold: true
+          font.weight: Font.Bold
         }
         StyledText {
           Layout.fillWidth: true

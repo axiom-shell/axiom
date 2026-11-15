@@ -410,6 +410,34 @@ TestCase {
     compare(StyleTokens.textPx(400, 1, 7), 200, "and shrinks with it");
   }
 
+  // The control-height floor (Widget.height, smallHeight, iconButton): unchanged
+  // at font 14 for every density at every integer scale, and a line of at
+  // least 1.5 em plus its padding from font 8 to 32. The font size is the
+  // scaled one, as Appearance.fontSize is.
+  function test_control_height() {
+    const densities = {
+      "compact": [26, 24, 18],
+      "normal": [30, 28, 20],
+      "roomy": [36, 32, 24]
+    };
+    for (const [density, [height, iconButton, smallHeight]] of Object.entries(densities)) {
+      for (let percent = 75; percent <= 150; percent++) {
+        const scale = percent / 100;
+        const at = `${density} at ${percent} %`;
+        const base = Math.round(height * scale);
+        compare(StyleTokens.controlHeight(base, Math.round(14 * scale), Math.round(scale)), base, `height ${at}`);
+        const small = Math.round(smallHeight * scale);
+        compare(StyleTokens.controlHeight(small, Math.round(11 * scale), 0), small, `smallHeight ${at}`);
+        const button = Math.round(iconButton * scale);
+        compare(Math.max(button, Math.round(14 * scale) + 2 * Math.round(4 * scale)), button, `iconButton ${at}`);
+      }
+    }
+    for (let font = 8; font <= 32; font++) {
+      verify(StyleTokens.controlHeight(10, font, 1) >= Math.ceil(1.5 * font) + 2, `font ${font}`);
+      verify(StyleTokens.controlHeight(10, font, 0) >= Math.ceil(1.5 * font), `font ${font}, no padding`);
+    }
+  }
+
   function test_size_floor() {
     for (let base = 8; base <= 32; base++) {
       for (let percent = 75; percent <= 150; percent += 5) {

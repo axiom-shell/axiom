@@ -12,12 +12,17 @@ Switch {
   implicitHeight: Widget.height - Widget.px(4)
 
   indicator: Rectangle {
-    x: root.checked ? root.width - width - 2 : 2
-    y: 2
+    x: root.checked ? root.width - width - Widget.px(2) : Widget.px(2)
+    y: Widget.px(2)
     width: root.height - Widget.px(4)
     height: root.height - Widget.px(4)
-    radius: (root.height - Widget.px(4)) / 2
-    color: Theme.foreground
+    // Concentric in the track, whatever its radius
+    radius: Style.concentric(track.radius, Widget.px(2))
+    color: root.checked ? Style.onAccent : Style.inkHighest.icon
+
+    ColorGlide on color {
+      duration: Appearance.animNormal
+    }
 
     Glide on x {
       duration: Appearance.animNormal
@@ -25,15 +30,21 @@ Switch {
   }
 
   background: Rectangle {
+    id: track
     implicitWidth: root.implicitWidth
     implicitHeight: root.implicitHeight
-    radius: height / 2
-    color: root.checked ? Theme.accent : Theme.backgroundHighlight
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
+    radius: Style.radiusInner
+    color: root.checked ? Style.accent : Style.surfaceHighest
+    // A hairline while off, so the track shows on a highest fill
+    border.color: Style.borderStrong
+    border.width: root.checked ? 0 : Style.hairline
 
     ColorGlide on color {
       duration: Appearance.animNormal
+    }
+
+    FocusRing {
+      shown: root.visualFocus
     }
   }
 }

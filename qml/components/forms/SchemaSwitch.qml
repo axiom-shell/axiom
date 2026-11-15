@@ -5,7 +5,8 @@ import qs.config
 import qs.components.reusable
 
 // A boolean setting: its label and description, the switch at the row's
-// right end, centred on them; a click anywhere on the row toggles it
+// right end, centred on them; a click anywhere on the row toggles it (the
+// FormRow's `rowClicked`, routed to `activate` by SchemaField)
 Item {
   id: root
   required property string label
@@ -20,11 +21,9 @@ Item {
   implicitWidth: row.implicitWidth
   implicitHeight: row.implicitHeight
 
-  // Under the switch, which takes its own clicks
-  MouseArea {
-    anchors.fill: parent
-    cursorShape: Qt.PointingHandCursor
-    onClicked: root.toggled(!root.checked)
+  // What a click on the row outside the switch does
+  function activate() {
+    root.toggled(!root.checked);
   }
 
   RowLayout {

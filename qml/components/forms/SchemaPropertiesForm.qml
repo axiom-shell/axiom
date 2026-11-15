@@ -105,7 +105,7 @@ ColumnLayout {
     Layout.fillWidth: true
     columns: 2
     columnSpacing: Widget.spacing * 2
-    // The rows keep their gaps themselves (FormRow.dividerGap)
+    // The rows pad themselves (FormRow: Style.rowPadding)
     rowSpacing: 0
 
     Repeater {
@@ -122,6 +122,8 @@ ColumnLayout {
         shown: field.item ? field.item.shown : undefined
         indented: field.item?.followsSibling ?? false
         bodyHeight: column.implicitHeight
+        hoverable: field.item?.hoverable ?? false
+        onRowClicked: field.item?.rowClicked()
         readonly property bool _beside: modelData.schema?.["x-beside"] === true
         // Read again once every field exists (`count` changes after the
         // Repeater made them): itemAt doesn't notify, and the field after
@@ -147,6 +149,7 @@ ColumnLayout {
           StreamedLoader {
             id: field
             Layout.fillWidth: true
+            rise: false
             label: "form field"
             Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
               "row": cell.modelData,

@@ -40,17 +40,21 @@ ColumnLayout {
 
   readonly property string _automaticText: I18n.tr("Automatic while axiom runs: axiom adds its portal line as it starts and takes it out when it stops (a share running then ends).")
 
-  readonly property color statusColor: {
+  // success | warning | error | neutral
+  readonly property string statusTone: {
     switch (root.status) {
     case "ready":
-      return Theme.success;
+      return "success";
     case "todo":
-      return Theme.warning;
+      return "warning";
     case "missing":
-      return Theme.error;
+      return "error";
     }
-    return Theme.foregroundAlt;
+    return "neutral";
   }
+  // statusTone as a colour, for views/Settings/ScreenSharingStatus.qml
+  // until its restyle (then deleted)
+  readonly property color statusColor: root.statusTone === "neutral" ? Style.textMuted : Style.toneColor(root.statusTone)
 
   readonly property string statusLabel: {
     switch (root.status) {
@@ -105,8 +109,7 @@ ColumnLayout {
 
   StyledText {
     text: root.detail
-    textColor: root.status === "missing" ? Theme.error : Theme.foreground
-    wrapMode: Text.WordWrap
+    tone: root.status === "missing" ? "error" : ""
     Layout.fillWidth: true
   }
 
@@ -134,9 +137,8 @@ ColumnLayout {
     StyledText {
       Layout.fillWidth: true
       text: I18n.tr("The portal reads its config as it starts: restart it once after applying. A share running now stops.")
-      textColor: Theme.foregroundInactive
-      textSize: Appearance.fontSizeBy(-1)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "faint"
     }
 
     StyledTextButton {

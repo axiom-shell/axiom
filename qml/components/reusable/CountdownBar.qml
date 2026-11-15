@@ -10,12 +10,15 @@ Rectangle {
 
   property bool running: false
   property int duration: 0
+  // A role name: accent | success | warning | error | info; a host that
+  // draws it on an accent tile passes `fillColor: <its ink>.graphic`
+  property string fillTone: "accent"
+  property color fillColor: Style.toneFill(root.fillTone)
 
   anchors.bottom: parent.bottom
   anchors.left: parent.left
   height: Widget.px(3)
-  color: Theme.background
-  opacity: 0.6
+  color: root.fillColor
   visible: root.running && root.duration > 0
   width: 0
 

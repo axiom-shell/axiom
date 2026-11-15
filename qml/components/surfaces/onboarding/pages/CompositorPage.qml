@@ -143,7 +143,7 @@ OnboardingPage {
     StyledText {
       Layout.topMargin: Widget.spacing
       text: I18n.tr("Keyboard")
-      font.bold: true
+      font.weight: Font.Bold
     }
 
     SettingRows {
@@ -165,7 +165,7 @@ OnboardingPage {
       Layout.topMargin: Widget.spacing
       visible: BatteryManager.isAvailable
       text: I18n.tr("Touchpad")
-      font.bold: true
+      font.weight: Font.Bold
     }
 
     SettingRows {

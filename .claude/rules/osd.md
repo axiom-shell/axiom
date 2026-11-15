@@ -13,3 +13,4 @@ paths:
 - **Declarations before code**: a definition is `exposes`, its model, policies and the declarations osd.md › Engine lists, plus `tile()` (and `card()`). No `judge()` without a reason written above it; a missing behaviour is a new generic declaration in `OSDEngine` with a `tst_OSDEngine` case and an osd.md line, never a system's name in the engine or host.
 - **Every behaviour is a timeline row** in `tests/osd/<Type>.js` (listed in `tests/osd/index.js`; cross-system rows in `Cross.js`).
 - `OSDHost` and `engine/` name no system; anything two systems draw goes in `design/`.
+- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.

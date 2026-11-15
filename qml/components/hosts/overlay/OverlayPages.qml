@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.services.compositor
 import qs.components.reusable
+import qs.components.methods
 import qs.components.views.Layouts
 import qs.services.ui
 
@@ -234,6 +235,8 @@ Item {
         transformOrigin: Item.TopLeft
         scale: root.contentZoom
         readonly property real contentZoom: root.contentZoom
+        readonly property real drawnZoom: viewsContainer.contentZoom * TextRender.zoomAt(viewsContainer.parent)
+        readonly property var inkHostAbove: InkHost.find(viewsContainer.parent)
 
         Repeater {
           id: viewsRepeater

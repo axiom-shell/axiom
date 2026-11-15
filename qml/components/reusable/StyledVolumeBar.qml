@@ -51,9 +51,10 @@ Item {
     id: background
     anchors.fill: parent
     radius: Widget.radius
-    color: root.isMuted ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
+    color: Style.surfaceSunken
+    opacity: root.isMuted ? 1 : 0
 
-    ColorGlide on color {
+    Glide on opacity {
       duration: Appearance.animNormal
     }
   }
@@ -81,8 +82,8 @@ Item {
       implicitWidth: Widget.px(root.orientation === Qt.Vertical ? 12 : 120)
       implicitHeight: Widget.px(root.orientation === Qt.Vertical ? 120 : 12)
 
-      radius: Widget.radius
-      color: Qt.alpha(Theme.foreground, 0.2)
+      radius: Style.radius
+      color: Style.surfaceSunken
 
       Rectangle {
         id: barFill
@@ -93,8 +94,8 @@ Item {
         width: root.orientation === Qt.Horizontal ? parent.width * root.volumeLevel : parent.width
         height: root.orientation === Qt.Vertical ? parent.height * root.volumeLevel : parent.height
 
-        radius: Widget.radius
-        color: root.isMuted ? Qt.alpha(Theme.foreground, 0.4) : Theme.accent
+        radius: Style.radius
+        color: root.isMuted ? Style.textFaint : Style.accent
 
         Glide on height {
           duration: Appearance.animNormal
@@ -140,13 +141,11 @@ Item {
       implicitHeight: iconText.implicitHeight
 
       // Behind the icon while it's hovered as a button
-      Rectangle {
-        anchors.centerIn: parent
-        width: parent.width + Widget.spacing * 2
-        height: parent.height + Widget.spacing
-        radius: Widget.radius
-        color: Qt.alpha(Theme.backgroundAlt, iconArea.containsMouse ? 1 : 0)
-        ColorGlide on color {}
+      StateLayer {
+        hovered: iconArea.containsMouse
+        bleed: Widget.spacing
+        anchors.topMargin: -Widget.spacing / 2
+        anchors.bottomMargin: -Widget.spacing / 2
       }
 
       // Cross-fades as the level crosses a step (volume to muted)
@@ -159,7 +158,7 @@ Item {
         delegate: SlashedIcon {
           required property var value
           text: value
-          textSize: Appearance.fontSizeBy(10)
+          textSize: Style.iconLg
           slashed: root.isMuted
         }
       }
@@ -185,7 +184,8 @@ Item {
 
     StyledLabel {
       text: root.showPercent ? Math.round(root.volumeLevel * 100) + "%" : ""
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
+      overflow: "none"
       horizontalAlignment: Text.AlignHCenter
       Layout.row: content.isVertical ? 2 : 0
       Layout.column: content.isVertical ? 0 : 2
@@ -193,12 +193,11 @@ Item {
       // A fixed width for percentages, so the bar doesn't shift as it changes
       Layout.preferredWidth: root.showPercent ? widest.advanceWidth : -1
       visible: text !== ""
-      elide: Text.ElideRight
 
       TextMetrics {
         id: widest
         font.family: Appearance.fontFamily
-        font.pixelSize: Appearance.fontSizeBy(-2)
+        font.pixelSize: Style.typeCaption
         text: "100%"
       }
     }

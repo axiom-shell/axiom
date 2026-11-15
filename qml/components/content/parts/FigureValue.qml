@@ -20,7 +20,7 @@ RowLayout {
     text: root.value
     textColor: root.valueColor
     textSize: root.valueSize
-    font.bold: true
+    font.weight: Font.Bold
   }
   StyledText {
     visible: root.unit !== ""

@@ -114,7 +114,7 @@ Panel {
         text: root.dayTitle(group.day.key)
         textColor: group.day.key === root.todayKey ? Theme.accent : Theme.foregroundAlt
         textSize: Appearance.fontSizeBy(-2)
-        font.bold: true
+        font.weight: Font.Bold
       }
       Repeater {
         model: group.day.events.length

@@ -91,7 +91,7 @@ OnboardingPage {
     Layout.topMargin: Widget.spacing
     visible: root.bar !== null
     text: I18n.tr("Bar")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   GridLayout {
@@ -195,7 +195,7 @@ OnboardingPage {
     Layout.topMargin: Widget.spacing
     visible: SavedConfigsManager.examples.length > 0
     text: I18n.tr("Example setups")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   StyledText {

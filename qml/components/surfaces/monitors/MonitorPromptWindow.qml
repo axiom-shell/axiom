@@ -68,7 +68,7 @@ PanelWindow {
         Layout.alignment: Qt.AlignHCenter
         text: root.screen?.name ?? ""
         textSize: root.asking ? Appearance.fontSize : Appearance.fontSize * 3
-        font.bold: true
+        font.weight: Font.Bold
         opacity: root.asking ? 0.6 : 1
       }
 
@@ -84,7 +84,7 @@ PanelWindow {
         Layout.alignment: Qt.AlignHCenter
         text: I18n.tr("Keep this display layout?")
         textSize: Appearance.fontSizeBy(4)
-        font.bold: true
+        font.weight: Font.Bold
       }
 
       StyledText {

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.methods
 
 // An integer setting: a slider with a value box when the range is a
 // comfortable drag (7 to 200 steps), otherwise a compact stepper beside the
@@ -45,9 +46,12 @@ ColumnLayout {
   property int value: shownConfigValue
 
   // Compact, near the text's own height, so it doesn't outweigh the label
-  property int controlHeight: Math.min(Widget.height, Appearance.fontSizeBy(10))
+  property int controlHeight: Math.min(Widget.height, Style.iconLg)
   readonly property int containerMargins: 2
   readonly property int buttonSize: controlHeight - (containerMargins * 2)
+  // The stepper buttons' corners, concentric in their box (a sunken
+  // Surface: Style.radius) inset by containerMargins
+  readonly property real buttonRadius: Style.concentric(Style.radius, root.containerMargins)
 
   readonly property int steps: Math.round((highest - lowest) / step)
   readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
@@ -127,14 +131,25 @@ ColumnLayout {
       Layout.alignment: Qt.AlignVCenter
     }
 
+    // Centred on the label and description beside it; the stepper sits
+    // right, the slider fills (or takes the field's control width inline)
+    Loader {
+      sourceComponent: root.isSlider ? sliderControl : stepperControl
+      Layout.alignment: root.isSlider ? Qt.AlignVCenter : Qt.AlignRight | Qt.AlignVCenter
+      Layout.fillWidth: root.isSlider && !root.inline
+      Layout.preferredWidth: root.isSlider && root.inline ? Widget.fieldControlWidth(root.width) : -1
+    }
+  }
+
+  // Only the mode's control is built (the other would be half the field's cost)
+  Component {
+    id: stepperControl
+
     // Stepper: [−10][−][ value ][+][+10]
-    StyledContainer {
-      visible: !root.isSlider
-      // Centred on the label and description beside it
-      Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-      borderColor: Theme.border
-      Layout.preferredHeight: root.controlHeight
-      Layout.preferredWidth: stepperRow.implicitWidth + root.containerMargins * 2
+    Surface {
+      tone: "sunken"
+      implicitWidth: stepperRow.implicitWidth + root.containerMargins * 2
+      implicitHeight: root.controlHeight
 
       RowLayout {
         id: stepperRow
@@ -159,7 +174,7 @@ ColumnLayout {
         ValueBox {
           Layout.fillHeight: true
           color: "transparent"
-          border.width: 0
+          outlined: false
         }
 
         StepButton {
@@ -177,19 +192,18 @@ ColumnLayout {
         }
       }
     }
+  }
+
+  Component {
+    id: sliderControl
 
     // Slider: track, then the value box
     RowLayout {
-      visible: root.isSlider
-      Layout.fillWidth: !root.inline
-      Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
-      Layout.alignment: Qt.AlignVCenter
       spacing: Widget.spacing
 
       StyledSlider {
         Layout.fillWidth: true
         Layout.preferredHeight: root.controlHeight
-        troughColor: Theme.border
         value: root.highest > root.lowest ? (root.value - root.lowest) / (root.highest - root.lowest) : 0
         onMoved: ratio => root.value = root.clamp(root.lowest + ratio * (root.highest - root.lowest))
         onReleased: ratio => root.setValue(root.lowest + ratio * (root.highest - root.lowest), true)
@@ -205,7 +219,7 @@ ColumnLayout {
   TextMetrics {
     id: widest
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSize
+    font.pixelSize: Style.typeBody
     text: String(Math.abs(root.lowest) > Math.abs(root.highest) ? root.lowest : root.highest)
   }
 
@@ -213,9 +227,11 @@ ColumnLayout {
     // The ±10 buttons: text, smaller and dimmer than −/+
     property bool coarse: false
     size: root.buttonSize
+    borderRadius: root.buttonRadius
     Layout.preferredWidth: coarse ? Math.round(root.buttonSize * 1.4) : root.buttonSize
-    iconSize: coarse ? Appearance.fontSizeBy(-4) : Appearance.fontSize
-    iconColor: coarse ? Theme.foregroundAlt : Theme.foreground
+    kind: "tonal"
+    iconSize: coarse ? Style.iconXs : Style.iconSm
+    iconColor: coarse ? Style.inkHighest.muted : Style.inkHighest.icon
     autoRepeat: true
     autoRepeatDelay: 400
     autoRepeatInterval: 60
@@ -223,25 +239,31 @@ ColumnLayout {
 
   // The number (typed input, clamped on Enter or focus loss; Escape
   // reverts) with its unit. Wheel steps by one, or ten with Shift.
-  component ValueBox: StyledContainer {
+  component ValueBox: Surface {
     id: box
+    tone: "sunken"
+    outlined: true
     Layout.fillWidth: false
     readonly property int unitGap: root.unitText === "" ? 0 : 3
     Layout.preferredWidth: widest.advanceWidth + unitLabel.implicitWidth + box.unitGap + Widget.padding * 2
-    border.color: input.activeFocus ? Theme.accent : Theme.border
+    border.width: box.outlined ? (input.activeFocus ? Style.focusWidth : Style.hairline) : 0
+    border.color: input.activeFocus ? Style.accent : Style.borderStrong
 
     TextInput {
       id: input
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       anchors.verticalCenter: parent.verticalCenter
       anchors.right: unitLabel.left
       anchors.rightMargin: box.unitGap
       anchors.left: parent.left
       anchors.leftMargin: Widget.padding
       horizontalAlignment: root.unitText === "" ? Text.AlignHCenter : Text.AlignRight
-      color: Theme.foreground
+      color: box.ink.text
       font.family: Appearance.fontFamily
-      font.pixelSize: Appearance.fontSize
+      font.pixelSize: Style.typeBody
       selectByMouse: true
+      selectionColor: Style.accent
+      selectedTextColor: Style.onAccent
       inputMethodHints: Qt.ImhFormattedNumbersOnly
       validator: RegularExpressionValidator {
         regularExpression: /-?\d*/
@@ -349,8 +371,8 @@ ColumnLayout {
       anchors.right: parent.right
       anchors.rightMargin: Widget.padding
       text: root.unitText
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
+      tone: "muted"
     }
 
     WheelHandler {

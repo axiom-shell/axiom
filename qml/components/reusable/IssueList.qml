@@ -11,7 +11,7 @@ ColumnLayout {
 
   // [{ level: "error" | "warning" | "info", text }]
   property var issues: []
-  property real textSize: Appearance.fontSize
+  property real textSize: Style.typeBody
 
   Layout.fillWidth: true
   spacing: Widget.spacing / 2
@@ -39,9 +39,9 @@ ColumnLayout {
 
       StyledText {
         text: issue.entry.text
-        textColor: icon.tone
+        tone: icon.tone
         textSize: root.textSize
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     }

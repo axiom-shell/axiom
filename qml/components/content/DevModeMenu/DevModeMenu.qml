@@ -23,7 +23,7 @@ Panel {
     StyledText {
       Layout.fillWidth: true
       text: DevManager.checkout !== "" ? I18n.tr("Dev mode · {0}", DevManager.checkout) : I18n.tr("Dev mode")
-      font.bold: true
+      font.weight: Font.Bold
       textColor: Theme.accent
       elide: Text.ElideRight
     }

@@ -246,7 +246,7 @@ Item {
                 return I18n.tr("The request failed");
               }
               textColor: Theme.error
-              font.bold: true
+              font.weight: Font.Bold
             }
           }
 

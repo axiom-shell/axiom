@@ -194,7 +194,7 @@ FieldGroup {
     boundsBehavior: Flickable.StopAtBounds
     model: root.rows.length
 
-    ScrollIndicator.vertical: ScrollIndicator {}
+    ScrollIndicator.vertical: StyledScrollIndicator {}
 
     delegate: Rectangle {
       id: entry

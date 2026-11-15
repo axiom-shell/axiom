@@ -6,28 +6,68 @@ import Quickshell
 import qs.config
 import qs.components.methods
 
-// A ToolButton showing a Material Symbols icon, with hover and press colors
-// and an optional tooltip.
+// A ToolButton showing a Material Symbols icon, drawn from its `kind`, with a
+// state layer for hover and press, a focus ring on keyboard focus and an
+// optional tooltip.
 ToolButton {
   id: root
 
   // -- Public API --
   property string iconText: ""
   property string tooltipText: ""
+  // The tooltip's preferred edges (OverlayPageNavigator's arrows)
+  property int tooltipEdges: Edges.Bottom
   // A square of this side that doesn't stretch in layouts
   property int size: Widget.iconButton
+  // text (no fill at rest) | tonal | primary | danger (quiet: the error
+  // container shows on hover) | dangerPrimary
+  property string kind: "text"
 
   // -- Configurable Appearance --
-  property int iconSize: Appearance.fontSize
-  property color iconColor: Theme.foreground
-  property color backgroundColor: "transparent"
-  property color hoverColor: Theme.backgroundHighlight
-  property color pressColor: Theme.backgroundAlt
+  property int iconSize: Style.iconSm
+  // A content colour: set for a state or data, else the kind's
+  property color iconColor: root._ink
+  // Chrome overrides, kept until no call site sets them
+  property color backgroundColor: root._fill
+  property color hoverColor: "transparent"
+  property color pressColor: "transparent"
   property color borderColor: "transparent"
-  property int borderWidth: Appearance.borderWidth
-  property real borderRadius: Widget.radius
+  property int borderWidth: 0
+  property real borderRadius: Style.radius
 
   // -- Implementation --
+  // A relay for its icon: the walk of the text inside stops here
+  readonly property var inkHostAbove: InkHost.find(root.parent)
+  readonly property real drawnZoom: TextRender.zoomAt(root.parent)
+  readonly property var _scope: root.inkHostAbove ? root.inkHostAbove.inkScope : null
+  readonly property bool _dangerOn: root.kind === "danger" && (root.hovered || root.pressed)
+  readonly property bool _onFill: root.kind === "primary" || root.kind === "dangerPrimary"
+  readonly property color _fill: {
+    switch (root.kind) {
+    case "tonal":
+      return Style.fillHighest;
+    case "primary":
+      return Style.accent;
+    case "dangerPrimary":
+      return Style.error;
+    default:
+      return Qt.alpha(Style.accent, 0); // style-exempt: no fill as the accent at no alpha, so a kind change (RowAction lit) doesn't fade through black
+    }
+  }
+  readonly property color _ink: {
+    switch (root.kind) {
+    case "tonal":
+      return Style.inkHighest.icon;
+    case "primary":
+      return Style.inkAccent.icon;
+    case "dangerPrimary":
+      return Style.inkError.icon;
+    case "danger":
+      return root._dangerOn ? Style.inkErrorContainer.icon : Style.toneOn(root._scope, "muted");
+    default:
+      return Style.toneOn(root._scope, "text");
+    }
+  }
 
   implicitWidth: size
   implicitHeight: size
@@ -38,10 +78,8 @@ ToolButton {
   Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
   padding: 0
-  opacity: enabled ? 1.0 : 0.4
-  scale: root.pressed ? 0.92 : 1.0
-
-  Glide on scale {}
+  focusPolicy: Qt.TabFocus
+  opacity: enabled ? 1.0 : Style.opacityDisabled
 
   HoverHandler {
     cursorShape: Qt.PointingHandCursor
@@ -52,6 +90,7 @@ ToolButton {
     StyledToolTip {
       target: root
       text: root.tooltipText
+      edges: root.tooltipEdges
     }
   }
 
@@ -61,16 +100,37 @@ ToolButton {
     textColor: root.iconColor
     horizontalAlignment: Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter
+
+    ColorGlide on textColor {}
   }
 
   background: Rectangle {
-    color: Utils.fadeable(root.pressed ? root.pressColor : (root.hovered ? root.hoverColor : root.backgroundColor), root.hoverColor, root.backgroundColor)
+    color: root.backgroundColor
     border.color: root.borderColor
     border.width: root.borderWidth
     radius: root.borderRadius
 
-    ColorGlide on color {
-      duration: Appearance.animNormal
+    ColorGlide on color {}
+
+    // the quiet danger button's hover fill
+    Rectangle {
+      anchors.fill: parent
+      radius: parent.radius
+      color: Style.errorContainer
+      opacity: root._dangerOn ? 1 : 0
+
+      Glide on opacity {}
+    }
+
+    StateLayer {
+      hovered: root.hovered
+      pressed: root.pressed
+      onAccent: root._onFill
+      radius: parent.radius
+    }
+
+    FocusRing {
+      shown: root.visualFocus
     }
   }
 }

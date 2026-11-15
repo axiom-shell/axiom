@@ -18,10 +18,11 @@ IssueIcon {
   text: "keyboard_capslock"
   level: "warning"
   tip: I18n.tr("Caps Lock is on")
-  textSize: Appearance.fontSizeBy(1)
   visible: root._reveal > 0
   opacity: root._reveal
-  scale: 0.6 + 0.4 * root._reveal
+  transform: Translate {
+    y: Math.round((1 - root._reveal) * Style.enterOffset)
+  }
 
   Component.onCompleted: LockKeysManager.acquire(root)
   Component.onDestruction: LockKeysManager.release(root)

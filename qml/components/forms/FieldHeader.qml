@@ -13,7 +13,7 @@ ColumnLayout {
   // Shown right after the label, on its line (the settings row's unsaved
   // dot and reset button)
   property Component trailing: null
-  // A list's title: bold and a step larger
+  // A list's title: the title role, a step larger
   property bool title: false
   readonly property real _trailingRoom: trailingPart.active ? trailingPart.implicitWidth + Widget.spacing : 0
 
@@ -35,9 +35,8 @@ ColumnLayout {
       id: labelText
       width: Math.max(0, Math.min(Math.ceil(labelWidth.advanceWidth) + 1, labelRow.width - root._trailingRoom))
       text: I18n.tr(root.label)
-      textSize: root.title ? Appearance.fontSizeBy(1) : Appearance.fontSize
-      font.weight: root.title ? Font.Bold : Font.Medium
-      wrapMode: Text.Wrap
+      role: root.title ? "title" : "label"
+      overflow: "wrap"
     }
 
     // Centred on the label, whatever it shows

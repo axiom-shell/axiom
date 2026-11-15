@@ -178,7 +178,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         model: popup.visible ? root.rows.length : 0
 
-        ScrollIndicator.vertical: ScrollIndicator {}
+        ScrollIndicator.vertical: StyledScrollIndicator {}
 
         delegate: Rectangle {
           id: row
@@ -207,7 +207,7 @@ Item {
             StyledLabel {
               text: row.header ? I18n.tr(row.entry.section ?? "") : (row.entry.info?.label ?? "")
               textColor: row.header || row.current ? Theme.accent : Theme.foreground
-              font.bold: row.header || row.current
+              font.weight: (row.header || row.current) ? Font.Bold : Font.Normal
               elide: Text.ElideRight
               Layout.fillWidth: true
             }

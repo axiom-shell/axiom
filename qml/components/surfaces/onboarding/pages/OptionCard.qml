@@ -62,7 +62,7 @@ Rectangle {
 
         StyledLabel {
           text: root.title
-          font.bold: true
+          font.weight: Font.Bold
         }
 
         Rectangle {

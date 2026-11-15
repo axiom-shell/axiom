@@ -20,6 +20,8 @@ Item {
   readonly property real position: root._shown
 
   // -- Configurable Appearance --
+  // A role name for the fill: accent | success | warning | error | info
+  property string fillTone: "accent"
   property alias troughColor: troughRect.color
   property alias fillColor: fillRect.color
   property alias handleColor: handleRect.color
@@ -46,8 +48,10 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     width: parent.width
     height: Widget.px(6)
-    radius: Widget.radius
-    color: Theme.backgroundHighlight
+    radius: Style.radius
+    color: Style.surfaceSunken
+    border.width: Style.hairline
+    border.color: Style.borderStrong
   }
 
   // The handle travels within the trough, so it never sticks out past
@@ -60,7 +64,7 @@ Item {
     width: root._shown * root._travel + handleRect.width / 2
     height: troughRect.height
     radius: height / 2
-    color: Theme.accent
+    color: Style.toneFill(root.fillTone)
   }
 
   Rectangle {
@@ -70,8 +74,10 @@ Item {
     width: root.handleSize
     height: root.handleSize
     radius: root.handleSize / 2
-    color: Theme.foreground
-    scale: mouseArea.isDragging ? 1.2 : (mouseArea.containsMouse ? 1.1 : 1.0)
+    color: Style.onAccent
+    border.width: Style.hairline
+    border.color: Style.borderSubtle
+    scale: mouseArea.isDragging ? 1.2 : (mouseArea.containsMouse ? 1.1 : 1.0) // style-exempt: no text
 
     Glide on scale {
       duration: Appearance.animNormal

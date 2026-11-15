@@ -395,7 +395,7 @@ Item {
             StyledLabel {
               text: I18n.tr(block.modelData.name)
               textSize: Appearance.fontSizeBy(2)
-              font.bold: true
+              font.weight: Font.Bold
             }
 
             StyledSeparator {
@@ -424,6 +424,7 @@ Item {
               delegate: StreamedLoader {
                 id: card
                 always: true
+                rise: false
                 label: `settings card ${card.modelData.key}`
                 required property var modelData
                 required property int index

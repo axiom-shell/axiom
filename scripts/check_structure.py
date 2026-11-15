@@ -63,6 +63,7 @@ import re
 import sys
 from pathlib import Path
 
+import qml_modules
 from qml_modules import qml_files
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -116,10 +117,7 @@ WIDGET_ROOTS = {"BarWidget", "AudioLevelWidget"}
 WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroundLevelColor splits splitAt "
                   "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
                   "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
-WIDGET_COLOR_CALLS = re.compile(
-    r"\bTheme\.|resolveColor|Qt\.(?:rgba|hsla|hsva|alpha|lighter|darker|tint|color)\s*\(|\bBarWidgetStyle\.|"
-    r"\bBarsConfig\.\w*Colors?\(|[\"']#[0-9a-fA-F]{3,8}[\"']|"
-    r"[\"'](?:white|black|red|green|blue|yellow|orange|purple|gray|grey|cyan|magenta)[\"']")
+WIDGET_COLOR_CALLS = qml_modules.WIDGET_COLOR_CALLS
 
 errors, warnings = [], []
 
@@ -176,7 +174,8 @@ def bar_widget_template(schema, sources, errors):
     """Every bar widget is data on BarWidget (docs/dev/bar/widget-style.md ›
     The widget template): rules T1-T8, but for the listed exceptions."""
     root = ROOT / WIDGETS_DIR
-    exceptions = json.loads(WIDGET_EXCEPTIONS.read_text()).get("types", {}) if WIDGET_EXCEPTIONS.exists() else {}
+    exceptions, shape = qml_modules.load_exceptions(WIDGET_EXCEPTIONS, WIDGET_RULES, section="types")
+    errors.extend(shape)
     found = {}  # type -> [(rule, message)]
     colour_fields = {}
     for t in schema_types(schema, "BarWidget"):
@@ -295,13 +294,8 @@ def bar_widget_template(schema, sources, errors):
         if not (root / t).is_dir():
             errors.append(f"{name}: {t} has no folder under {WIDGETS_DIR}")
             continue
-        if not str(entry.get("reason", "")).strip():
-            errors.append(f"{name}: {t} has no reason")
-        listed = entry.get("rules", [])
-        for rule in listed:
-            if rule not in WIDGET_RULES:
-                errors.append(f"{name}: {t} names {rule}, not a rule (T1-T8)")
-            elif not any(r == rule for r, _ in found.get(t, [])):
+        for rule in entry["rules"]:
+            if rule in WIDGET_RULES and not any(r == rule for r, _ in found.get(t, [])):
                 errors.append(f"{name}: {t} lists {rule}, which it no longer breaks")
         read_in = entry.get("fieldsReadIn", [])
         if read_in:

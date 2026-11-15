@@ -68,7 +68,7 @@ Item {
       Layout.alignment: Qt.AlignHCenter
       text: root.text
       textSize: Math.max(Appearance.fontSize, Math.round(root.size * 0.2))
-      font.bold: true
+      font.weight: Font.Bold
       textColor: root.running ? Theme.foreground : Theme.foregroundAlt
     }
     StyledText {

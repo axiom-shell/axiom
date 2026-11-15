@@ -199,6 +199,7 @@ Item {
 
       Text {
         id: textLabel
+        renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
         // Across a bar, its letters centred where the icon's middle is (the
         // run's, with none) on a whole pixel, and turned along a vertical
         // one, across it: its lines are moved in its box to centre on them

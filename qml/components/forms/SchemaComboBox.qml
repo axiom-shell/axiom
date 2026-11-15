@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
@@ -16,8 +15,8 @@ GridLayout {
   property string description: ""
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
-  // Options are color names (Theme.resolveColor): paint the box and each
-  // row in the color it names (an empty one, automatic, shows its label)
+  // Options are color names (Style.resolve): each row is painted in the
+  // color it names (an empty one, automatic, shows its label)
   property bool swatches: false
   // value -> label shown for it; values without one are shown translated
   property var optionLabels: ({})
@@ -29,8 +28,27 @@ GridLayout {
     return root.swatches && value && !root.optionLabels?.[value] ? value : root.optionLabel(value);
   }
 
-  readonly property color _currentColor: root.swatches && root.currentValue ? Theme.resolveColor(root.currentValue) : Theme.backgroundAlt
-  readonly property color _currentTextColor: root.swatches && root.currentValue ? Utils.getContrastColor(root._currentColor) : Theme.foreground
+  // The choices as StyledComboEntry takes them; a swatch's label ink is
+  // picked here once per option, never per delegate
+  readonly property var _entries: root.options.map(value => {
+    const named = root.swatches && value !== "";
+    return {
+      "value": value,
+      "label": root.swatchLabel(value),
+      "swatch": named ? value : "",
+      "swatchInk": named ? String(Tone.bestOn(Style.resolve(value))) : "" // style-exempt: a swatch row shows the colour it names, its ink is picked once per option, here
+    };
+  })
+
+  // What a click on the whole row does (SchemaField.rowClicked)
+  function activate() {
+    // A press outside a dropdown closes it and is the same click that
+    // reaches this row: that click must not open the list again
+    if (entry.listOpen)
+      entry.closeList();
+    else if (Date.now() - entry.hiddenAt > Qt.styleHints.mouseDoubleClickInterval)
+      entry.openList();
+  }
 
   signal selectionChanged(string newValue)
 
@@ -49,118 +67,14 @@ GridLayout {
     Layout.alignment: Qt.AlignVCenter
   }
 
-  StyledContainer {
-    id: comboContainer
+  StyledComboEntry {
+    id: entry
     Layout.fillWidth: !root.inline
     Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
     // Beside the label: centred on it and its description
     Layout.alignment: Qt.AlignVCenter
-    Layout.preferredHeight: Widget.height
-    backgroundColor: root._currentColor
-    borderColor: comboBox.popup.visible ? Theme.accent : Theme.border
-
-    RowLayout {
-      anchors.fill: parent
-      anchors.leftMargin: Widget.padding
-      anchors.rightMargin: Widget.padding
-      spacing: 0
-
-      StyledLabel {
-        text: root.swatchLabel(root.currentValue)
-        textColor: root._currentTextColor
-        Layout.fillWidth: true
-        elide: Text.ElideRight
-      }
-
-      StyledIcon {
-        text: "arrow_drop_down"
-        textColor: root.swatches ? root._currentTextColor : Theme.accent
-        textSize: Appearance.fontSizeBy(2)
-        Layout.preferredWidth: implicitWidth
-      }
-    }
-
-    ComboBox {
-      id: comboBox
-      anchors.fill: parent
-      model: root.options
-      currentIndex: root.options.indexOf(root.currentValue)
-
-      background: Item {}
-      contentItem: Item {}
-      indicator: Item {}
-
-      onActivated: index => {
-        root.selectionChanged(root.options[index]);
-      }
-
-      // Rows are inset from the popup's rounded border and rounded
-      // themselves, so the background shows all the way around
-      popup: Popup {
-        y: comboContainer.height + Widget.spacing
-        width: comboContainer.width
-        // Kept inside the window (above the field when there's no room below)
-        margins: Widget.spacing
-        padding: Widget.spacing
-
-        background: DropdownSurface {
-          color: Theme.backgroundAlt
-          border.width: Appearance.borderWidth
-        }
-
-        contentItem: ListView {
-          clip: true
-          implicitHeight: Math.min(contentHeight, Widget.height * 10)
-          spacing: root.swatches ? Widget.spacing / 2 : 0
-          model: comboBox.popup.visible ? comboBox.delegateModel : null
-          currentIndex: comboBox.highlightedIndex
-
-          ScrollIndicator.vertical: ScrollIndicator {}
-        }
-      }
-
-      delegate: Rectangle {
-        id: optionDelegate
-        required property int index
-        required property string modelData
-        readonly property color swatchColor: !root.swatches ? "transparent" : modelData ? Theme.resolveColor(modelData) : Theme.backgroundAlt
-
-        width: ListView.view.width
-        height: Widget.height
-        radius: Widget.radius
-        color: root.swatches ? swatchColor : (delegateArea.containsMouse ? Theme.backgroundHighlight : "transparent")
-        border.width: root.swatches && (delegateArea.containsMouse || modelData === root.currentValue) ? Appearance.borderWidth * 2 : 0
-        border.color: Utils.getContrastColor(swatchColor)
-
-        StyledLabel {
-          anchors.fill: parent
-          anchors.leftMargin: Widget.padding
-          anchors.rightMargin: Widget.padding
-          text: root.swatchLabel(optionDelegate.modelData)
-          textColor: root.swatches ? Utils.getContrastColor(optionDelegate.swatchColor) : Theme.foreground
-          verticalAlignment: Text.AlignVCenter
-          elide: Text.ElideRight
-        }
-
-        MouseArea {
-          id: delegateArea
-          anchors.fill: parent
-          hoverEnabled: true
-          // currentIndex stays bound to currentValue, which the caller
-          // updates (or not, if it rejects the choice)
-          onClicked: {
-            comboBox.activated(optionDelegate.index);
-            comboBox.popup.close();
-          }
-        }
-      }
-    }
-
-    MouseArea {
-      anchors.fill: parent
-      onClicked: {
-        comboBox.popup.open();
-      }
-    }
+    options: root._entries
+    value: root.currentValue
+    onPicked: value => root.selectionChanged(value)
   }
 }

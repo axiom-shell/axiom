@@ -306,6 +306,23 @@ QtObject {
     }
   }
 
+  // A solid fill by tone name, for a meter or bar's fill: accent (and any
+  // unknown name), success, warning, error, info
+  function toneFill(name) {
+    switch (name) {
+    case "success":
+      return root.success;
+    case "warning":
+      return root.warning;
+    case "error":
+      return root.error;
+    case "info":
+      return root.info;
+    default:
+      return root.accent;
+    }
+  }
+
   // What a StyledText inside a Surface draws by default: with an `ink`,
   // text, muted, faint and accent read its key of that name; any other
   // tone, or no ink, is toneColor(tone)
@@ -484,6 +501,10 @@ QtObject {
   readonly property int radiusMin: Math.min(Widget.radius, Widget.px(3))
   // a highlight inset inside a control or row
   readonly property int radiusInner: StyleTokens.concentric(Widget.radius, Widget.spacing, root.radiusMin)
+  // the radius of a shape inset by `inset` inside an `outer` one (UI calls this, not StyleTokens)
+  function concentric(outer: real, inset: real): real {
+    return StyleTokens.concentric(outer, inset, root.radiusMin);
+  }
   // 0 turns outlines off (tonal layering remains)
   readonly property int hairline: Appearance.borderWidth
   // row dividers always draw: they separate content, not surfaces

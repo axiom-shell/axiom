@@ -91,18 +91,19 @@ ColumnLayout {
     return row.state === "idle" && row.done ? I18n.tr("Already on") : "";
   }
 
-  function chipColor(row) {
+  // The chip's tone (StatusChip.tone)
+  function chipTone(row) {
     switch (row.state) {
     case "done":
-      return Theme.success;
+      return "success";
     case "failed":
-      return Theme.error;
+      return "error";
     case "running":
-      return Theme.accent;
+      return "accent";
     case "idle":
-      return row.done ? Theme.success : Theme.foregroundAlt;
+      return row.done ? "success" : "neutral";
     }
-    return Theme.foregroundAlt;
+    return "neutral";
   }
 
   // The apps row names the apps it's on for (their schema titles)
@@ -139,26 +140,23 @@ ColumnLayout {
         StyledLabel {
           Layout.fillWidth: true
           text: I18n.tr(item.row.label) + (item.detail !== "" ? " · " + item.detail : "")
-          elide: Text.ElideRight
-          textColor: item.row.available || item.row.done ? Theme.foreground : Theme.foregroundInactive
+          tone: item.row.available || item.row.done ? "" : "faint"
         }
 
         StyledText {
           visible: item.problem !== "" || item.note !== ""
           Layout.fillWidth: true
           text: item.problem !== "" ? item.problem : item.note
-          textColor: item.row.state === "failed" ? Theme.error : Theme.foregroundInactive
-          textSize: Appearance.fontSizeBy(-1)
-          wrapMode: Text.WordWrap
+          role: "caption"
+          tone: item.row.state === "failed" ? "error" : "faint"
         }
 
         StyledText {
           visible: item.restartable && item.problem !== ""
           Layout.fillWidth: true
           text: I18n.tr("Takes effect after the portal restarts or next login.")
-          textColor: Theme.foregroundInactive
-          textSize: Appearance.fontSizeBy(-1)
-          wrapMode: Text.WordWrap
+          role: "caption"
+          tone: "faint"
         }
 
         // What restarting costs
@@ -166,9 +164,8 @@ ColumnLayout {
           visible: item.restartable
           Layout.fillWidth: true
           text: I18n.tr("The portal reads its config as it starts: restart it once after applying. A share running now stops.")
-          textColor: Theme.foregroundInactive
-          textSize: Appearance.fontSizeBy(-1)
-          wrapMode: Text.WordWrap
+          role: "caption"
+          tone: "faint"
         }
 
         StyledTextButton {
@@ -184,7 +181,7 @@ ColumnLayout {
       StatusChip {
         visible: text !== ""
         text: root.chipText(item.row)
-        color: root.chipColor(item.row)
+        tone: root.chipTone(item.row)
       }
     }
   }
@@ -192,6 +189,7 @@ ColumnLayout {
   StyledTextButton {
     visible: root.showApply
     enabled: root.anyChecked && !RecommendedSetupManager.running
+    kind: "primary"
     iconText: "verified"
     text: I18n.tr("Apply")
     onClicked: RecommendedSetupManager.apply()

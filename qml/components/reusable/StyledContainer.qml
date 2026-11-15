@@ -9,7 +9,7 @@ Rectangle {
   id: root
 
   // -- Configurable Appearance --
-  property color backgroundColor: Theme.backgroundAlt
+  property color backgroundColor: Style.surfaceSunken
   property alias borderColor: root.border.color
   property alias borderWidth: root.border.width
   property alias borderRadius: root.radius
@@ -17,8 +17,8 @@ Rectangle {
   property bool solid: false
 
   // -- Implementation --
-  color: root.solid ? root.backgroundColor : Appearance.fill(root.backgroundColor)
+  color: Style.edgeFill(root.backgroundColor, root.solid)
   border.color: "transparent"
-  border.width: Appearance.borderWidth
-  radius: Widget.radius
+  border.width: Style.hairline
+  radius: Style.radius
 }

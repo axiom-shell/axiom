@@ -18,7 +18,7 @@ ColumnLayout {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Menus")
-    font.bold: true
+    font.weight: Font.Bold
     textColor: Theme.accent
   }
 

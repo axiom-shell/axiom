@@ -25,6 +25,7 @@ Translation files need nothing: the pre-commit hook adds new strings to every la
 7. Run `scripts/run_tests.sh OSDSystems` until the rows pass, then add the system to an OSD in Settings in a nested shell and make it change.
 
 ## Watch out for
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
 - **No `judge()` without a reason.** Every shipped system is declarations. A behaviour the engine lacks becomes a new generic declaration in `OSDEngine` (with a `tst_OSDEngine` case and a line in osd.md › Engine), never a system's name in the engine or in `OSDHost`. A one-off `judge()` says why above it.
 - The definition imports only `QtQuick`, `qs.components.methods` and `qs.components.surfaces.osd.engine` (`check_structure`), so the test can load it; anything that reads a service goes in the watcher.
 - No file of the folder names another (`check_structure`), because they are loaded by URL. A design file is named by `design`, not imported.

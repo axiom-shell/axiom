@@ -162,7 +162,7 @@ PopupWindow {
         visible: root.full || root.dockWindow.dock.showLabels
         Layout.fillWidth: true
         text: root.name
-        font.bold: root.windows.length > 0
+        font.weight: (root.windows.length > 0) ? Font.Bold : Font.Normal
         elide: Text.ElideRight
       }
 

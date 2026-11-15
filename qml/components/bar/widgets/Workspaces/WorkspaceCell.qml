@@ -239,7 +239,7 @@ Item {
         textFamily: leadLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
         textSize: leadLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
         textColor: root._shown.content
-        font.bold: !leadLabel.symbol && root.isActive && !root.boxed
+        font.weight: (!leadLabel.symbol && root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
         ColorGlide on color {
           enabled: root.animated && !root.pulsing
@@ -264,7 +264,7 @@ Item {
         textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
         textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
         textColor: root._shown.content
-        font.bold: !textLabel.symbol && root.isActive && !root.boxed
+        font.weight: (!textLabel.symbol && root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
         ColorGlide on color {
           enabled: root.animated && !root.pulsing
@@ -391,11 +391,12 @@ Item {
     // Centred on its figures
     StyledLabel {
       anchors.centerIn: parent
+      overflow: "none"
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
       textColor: root._shown.content
       textSize: root.barConfig.fontSize - 1
-      font.bold: root.isActive && !root.boxed
+      font.weight: (root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
       ColorGlide on color {
         enabled: root.animated && !root.pulsing

@@ -34,9 +34,8 @@ FieldGroup {
   StyledText {
     visible: root.problem !== ""
     Layout.fillWidth: true
-    wrapMode: Text.WordWrap
     text: root.problem
-    textColor: Theme.error
+    tone: "error"
   }
 
   SchemaPropertiesForm {
@@ -55,10 +54,9 @@ FieldGroup {
   }
 
   StyledText {
-    wrapMode: Text.WordWrap
     visible: form.rows.length === 0
     text: root.emptyText
-    opacity: 0.6
+    tone: "faint"
     Layout.fillWidth: true
   }
 }

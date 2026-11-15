@@ -100,7 +100,7 @@ Panel {
           horizontalAlignment: Text.AlignHCenter
           wrapMode: Text.WordWrap
           text: I18n.tr("Awake until turned off")
-          font.bold: true
+          font.weight: Font.Bold
         }
         StyledText {
           visible: awake.showFigure

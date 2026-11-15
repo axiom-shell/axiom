@@ -28,7 +28,7 @@ RowLayout {
     Layout.fillWidth: true
     text: root.title
     elide: Text.ElideRight
-    font.bold: true
+    font.weight: Font.Bold
     textColor: Theme.accent
   }
 

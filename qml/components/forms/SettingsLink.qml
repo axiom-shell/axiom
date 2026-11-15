@@ -70,23 +70,23 @@ Item {
 
     StyledIcon {
       text: root.icon !== "" ? root.icon : root.target ? "settings" : root.opens ? "edit" : OverlayManager.pageLinkIcon(root.page)
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(-1)
+      size: "xs"
+      tone: "accent"
     }
 
     StyledLabel {
       Layout.fillWidth: true
       text: root.label
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(-1)
+      role: "caption"
+      tone: "accent"
       font.underline: area.containsMouse
-      elide: Text.ElideRight
+      overflow: "line"
     }
 
     StyledIcon {
       text: "arrow_forward"
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(-1)
+      size: "xs"
+      tone: "accent"
     }
   }
 

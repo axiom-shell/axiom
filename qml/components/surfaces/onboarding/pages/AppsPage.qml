@@ -52,7 +52,7 @@ OnboardingPage {
     Layout.topMargin: Widget.spacing
     visible: root.binds
     text: I18n.tr("Main modifier key")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   RowLayout {
@@ -82,7 +82,7 @@ OnboardingPage {
     Layout.topMargin: Widget.spacing
     visible: root.binds
     text: I18n.tr("Keys to know")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   BindsTable {

@@ -2,12 +2,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.config
+import qs.components.methods
 
-// A multi-line text field in a StyledContainer, optionally growing with its
+// A multi-line text field in a sunken, outlined Surface, optionally growing with its
 // text. Pushed-in values follow the StyledTextEntry pattern (textEdited).
 // `singleLine` makes it a one-line value that wraps instead (a command): no
 // line breaks, Enter submits, Tab moves on.
-StyledContainer {
+Surface {
   id: root
 
   // --- Public API ---
@@ -44,14 +45,13 @@ StyledContainer {
     return Math.max(root.minHeight, Math.ceil(shown) + root.verticalMargin * 2);
   }
 
-  borderColor: textInput.activeFocus ? Theme.accent : Theme.border
-  backgroundColor: Theme.backgroundAlt
+  tone: "sunken"
+  outlined: true
+  border.width: root.outlined ? (textInput.activeFocus ? Style.focusWidth : Style.hairline) : 0
+  border.color: textInput.activeFocus ? Style.accent : Style.borderStrong
 
-  Behavior on borderColor {
-    ColorAnimation {
-      duration: Appearance.animNormal
-      easing.type: Appearance.easing
-    }
+  ColorGlide on border.color {
+    duration: Appearance.animNormal
   }
 
   Behavior on implicitHeight {
@@ -84,6 +84,7 @@ StyledContainer {
 
     TextArea {
       id: textInput
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       width: flickable.width
       // The margins above are the only space around the text: the style's
       // own padding would push it off-centre
@@ -108,12 +109,12 @@ StyledContainer {
       }
 
       // --- Core Properties ---
-      color: Theme.foreground
+      color: root.ink.text
       font.family: Appearance.fontFamily
-      font.pixelSize: Appearance.fontSize
+      font.pixelSize: Style.typeBody
       selectByMouse: true
-      selectedTextColor: Theme.background
-      selectionColor: Theme.accent
+      selectedTextColor: Style.onAccent
+      selectionColor: Style.accent
       wrapMode: root.expandable ? TextEdit.Wrap : TextEdit.NoWrap
       // Past `maxLines`, the line being typed stays in view
       onCursorRectangleChanged: {
@@ -126,7 +127,7 @@ StyledContainer {
       }
 
       // --- Placeholder Properties ---
-      placeholderTextColor: Qt.alpha(Theme.foreground, 0.5)
+      placeholderTextColor: root.ink.faint
 
       // Handle Enter/Return key
       Keys.onPressed: event => {

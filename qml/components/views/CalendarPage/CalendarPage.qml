@@ -83,7 +83,7 @@ BaseView {
           StyledLabel {
             text: I18n.formatDate(new Date(root.pageState.year, root.pageState.month, 1), I18n.dateFormat("monthYear"))
             textSize: Appearance.fontSizeBy(4)
-            font.bold: true
+            font.weight: Font.Bold
           }
           Item {
             Layout.fillWidth: true
@@ -165,7 +165,7 @@ BaseView {
             StyledLabel {
               Layout.fillWidth: true
               text: I18n.tr("Calendars")
-              font.bold: true
+              font.weight: Font.Bold
             }
             FlatIconButton {
               iconText: "settings"

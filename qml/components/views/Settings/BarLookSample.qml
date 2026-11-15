@@ -197,6 +197,7 @@ Item {
     height: root.height
     anchors.centerIn: parent
     scale: Math.min(1, (root.width - Widget.smallPadding * 2) / Math.max(1, root._length))
+    readonly property real contentZoom: scale
     enabled: false
 
     // A merged run's one background, under the boxes

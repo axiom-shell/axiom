@@ -106,13 +106,13 @@ ColumnLayout {
               "index": chip.index,
               "label": chip.label
             })
-          opacity: carrier.dragging?.index === chip.index ? 0.4 : 1
+          opacity: carrier.dragging?.index === chip.index ? 0.4 : 1 // style-exempt: a chip being dragged dims, a drag ghost
           onClicked: root.remove(chip.index)
 
           StyledIcon {
             text: "close"
             textColor: chip.ink
-            textSize: Appearance.fontSizeBy(-2)
+            size: "xs"
           }
         }
       }
@@ -123,8 +123,7 @@ ColumnLayout {
     visible: root.chosen.length === 0
     Layout.fillWidth: true
     text: I18n.tr("None chosen. Add some from below.")
-    textColor: Theme.foregroundAlt
-    wrapMode: Text.Wrap
+    tone: "muted"
   }
 
   // The options not chosen: a click adds one at the end
@@ -140,9 +139,8 @@ ColumnLayout {
       StyledText {
         visible: group.modelData.name !== "" && root.available.length > 1
         text: I18n.tr(group.modelData.name)
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
-        font.weight: Font.Medium
+        role: "micro"
+        tone: "faint"
       }
 
       Flow {

@@ -101,7 +101,7 @@ Rectangle {
     anchors.centerIn: parent
     visible: !!tile.t.label
     text: tile.t.label ?? ""
-    font.bold: true
+    font.weight: Font.Bold
     textColor: tile.ink
     opacity: tile.inkOpacity
   }

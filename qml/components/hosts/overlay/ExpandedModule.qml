@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // A module's detail grown over its grid (ModuleGrid.expand): a card box
 // opening out of the tile or strip that asked for it to the grid less
@@ -132,6 +133,7 @@ Item {
     // At the grown box's place whatever the box's, so it never moves.
     // `contentZoom`: see StyledIcon
     Item {
+      id: zoomHost
       x: root.inset - box.x
       y: root.inset - box.y
       width: (root.width - root.inset * 2) / root.zoom
@@ -139,6 +141,8 @@ Item {
       scale: root.zoom
       transformOrigin: Item.TopLeft
       readonly property real contentZoom: root.zoom
+      readonly property real drawnZoom: zoomHost.contentZoom * TextRender.zoomAt(zoomHost.parent)
+      readonly property var inkHostAbove: InkHost.find(zoomHost.parent)
 
       RowLayout {
         id: header

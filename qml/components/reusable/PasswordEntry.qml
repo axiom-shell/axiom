@@ -43,7 +43,7 @@ Item {
   // What the line says: the message, else the Caps Lock warning
   readonly property bool _capsWarning: root.capsMessage && root.message === "" && entry.capsHintShown
   readonly property string _line: root._capsWarning ? I18n.tr("Caps Lock is on") : root.message
-  readonly property color _lineColor: root._capsWarning ? Theme.warning : root.messageIsError ? Theme.error : Theme.foregroundAlt
+  readonly property color _lineColor: root._capsWarning ? Style.warningText : root.messageIsError ? Style.errorText : Style.textMuted
 
   signal accepted
 
@@ -96,10 +96,9 @@ Item {
       // A space keeps a reserved line's height
       text: root._line || " "
       textColor: root._lineColor
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
       horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
-      wrapMode: root.wrapMessage ? Text.WordWrap : Text.NoWrap
-      elide: root.wrapMessage ? Text.ElideNone : Text.ElideRight
+      overflow: root.wrapMessage ? "wrap" : "line"
     }
   }
 
@@ -114,17 +113,17 @@ Item {
     id: busyTrack
     readonly property real inset: Math.min(entry.radius, entry.height / 2)
     x: body.x + busyTrack.inset
-    y: body.y + entry.y + entry.height - height - Appearance.borderWidth - 1
+    y: body.y + entry.y + entry.height - height - Style.hairline - 1
     width: entry.width - busyTrack.inset * 2
     height: Widget.px(3)
     visible: root.busy
     clip: true
 
-    StyledContainer {
+    Rectangle {
       width: parent.width * 0.3
       height: parent.height
       radius: height / 2
-      backgroundColor: Theme.accent
+      color: Style.accent
 
       SequentialAnimation on x {
         loops: Animation.Infinite

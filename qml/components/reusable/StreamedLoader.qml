@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.services.core
+import qs.components.methods
 
 // A Loader built a moment after it's created, from BuildQueueManager's
 // queue, then faded in: a tool page's sections, cards and long lists, so the
@@ -11,7 +13,9 @@ import qs.services.core
 // loader). It only streams while its page is first being built (the
 // nearest ancestor's `buildStreaming`, BaseView's) or, with `always`, whenever
 // it's made: otherwise, or with `stream: false`, it builds at once, as a
-// plain Loader.
+// plain Loader. A streamed item fades in and slides up into place; the
+// slide is a Translate (never the loader's own `y`, which its layout or a
+// caller owns), and `enterIndex` staggers a row of them.
 Loader {
   id: root
 
@@ -23,6 +27,15 @@ Loader {
   property string label: ""
   // Off: not built (or unbuilt) even once its turn has come, as `active`
   property bool wanted: true
+  // >= 0 delays the enter by this many steps (at most 8) after the item
+  // is built, so a row of them rises one after another
+  property int enterIndex: -1
+  // Off: it only fades in, without sliding up (the settings cards and their
+  // fields, which sit on a page that slides in itself)
+  property bool rise: true
+  // Its build goes ahead of every other queued one (the settings sidebar,
+  // which otherwise arrives after all the cards)
+  property bool buildFirst: false
 
   // Streamed with `always` and still filling in (until the queue drains):
   // the loaders inside it stream too, so a settings card switched to fills
@@ -30,13 +43,73 @@ Loader {
   // all in the frame the card arrives
   property bool streamsInside: false
 
+  // A relay: the walks of the texts it builds stop here
+  readonly property var inkHostAbove: InkHost.find(root.parent)
+  readonly property real drawnZoom: TextRender.zoomAt(root.parent)
+
   property bool _granted: false
   property bool _streamed: false
+  // The item has been shown (after its stagger)
+  property bool _entered: false
+  // The slide's distance left
+  property real _enter: 0
+  property SequentialAnimation _riseAnim: null
   active: root._granted && root.wanted
-  opacity: root.item !== null || !root._streamed ? 1 : 0
+  opacity: !root._streamed || root._entered ? 1 : 0
 
   Glide on opacity {
     enabled: root._streamed
+  }
+
+  onItemChanged: {
+    if (root.item === null) {
+      root._entered = false;
+      root._enter = 0;
+    } else if (root._streamed && !root._entered) {
+      // The slide and the stagger are built only when used: a loader that
+      // only fades (most of them) has neither
+      if (root.rise || root.enterIndex >= 0) {
+        if (root._riseAnim === null) {
+          if (root.rise)
+            root.transform = [slideComp.createObject(root)];
+          root._riseAnim = riseComp.createObject(root);
+        }
+        root._enter = root.rise ? Style.enterOffset : 0;
+        root._riseAnim.restart();
+      } else {
+        root._entered = true;
+      }
+    }
+  }
+
+  // The slide: a Translate, made for a loader that rises
+  Component {
+    id: slideComp
+
+    Translate {
+      y: Math.round(root._enter)
+    }
+  }
+
+  // The stagger, then the item shown and the slide's run
+  Component {
+    id: riseComp
+
+    SequentialAnimation {
+      PauseAnimation {
+        duration: Appearance.animations && root.enterIndex >= 0 ? Math.min(root.enterIndex, 8) * Style.staggerStep : 0
+      }
+      ScriptAction {
+        script: root._entered = true
+      }
+      NumberAnimation {
+        target: root
+        property: "_enter"
+        to: 0
+        duration: Appearance.animNormal
+        easing.type: Appearance.easing
+      }
+    }
   }
 
   // (untyped: qmllint knows only Item's members)
@@ -60,7 +133,7 @@ Loader {
     if (root.stream && (root.always || root._pageStreaming())) {
       root._streamed = true;
       root.streamsInside = root.always;
-      BuildQueueManager.request(root, () => root._granted = true, root.label);
+      BuildQueueManager.request(root, () => root._granted = true, root.label, root.buildFirst);
     } else {
       root._granted = true;
     }

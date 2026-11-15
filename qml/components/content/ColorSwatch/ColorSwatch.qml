@@ -29,7 +29,7 @@ Card {
     elide: Text.ElideRight
     textColor: root.labelColor
     textSize: Appearance.fontSizeBy(-4)
-    font.bold: true
+    font.weight: Font.Bold
     opacity: 0.8
   }
 

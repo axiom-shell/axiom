@@ -18,9 +18,27 @@ Item {
   property bool collapsed: false
   property bool foldable: true
   property bool marked: false
-  // A StatusChip's word and color; no chip while empty
+  // A StatusChip's word and tone; no chip while empty
   property string status
-  property color statusColor: Theme.foregroundAlt
+  property string statusTone: "neutral"
+  // Kept for FoldingCard until it passes a tone
+  property color statusColor: "transparent"
+  // The chip's tone: statusTone, else the tone statusColor names. Until PR 3
+  // passes tones; PR 3 deletes it with statusColor
+  readonly property string _chipTone: {
+    if (root.statusTone !== "neutral")
+      return root.statusTone;
+    const c = root.statusColor;
+    if (Qt.colorEqual(c, Theme.success) || Qt.colorEqual(c, Style.successText)) // style-exempt: a legacy colour matched to its tone
+      return "success";
+    if (Qt.colorEqual(c, Theme.warning) || Qt.colorEqual(c, Style.warningText)) // style-exempt: a legacy colour matched to its tone
+      return "warning";
+    if (Qt.colorEqual(c, Theme.error) || Qt.colorEqual(c, Style.errorText)) // style-exempt: a legacy colour matched to its tone
+      return "error";
+    if (Qt.colorEqual(c, Theme.accent)) // style-exempt: a legacy colour matched to its tone
+      return "accent";
+    return "neutral";
+  }
 
   signal toggled
 
@@ -47,11 +65,11 @@ Item {
       spacing: 2
 
       StyledText {
-        wrapMode: Text.WordWrap
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
         visible: root.section !== ""
         text: root.section
-        opacity: 0.6
-        textSize: Appearance.fontSizeBy(-2)
         Layout.fillWidth: true
       }
 
@@ -78,15 +96,14 @@ Item {
       StatusChip {
         visible: root.status !== ""
         text: root.status
-        color: root.statusColor
+        tone: root._chipTone
         Layout.alignment: Qt.AlignVCenter
       }
 
       StyledIcon {
         visible: root.foldable
         text: "expand_more"
-        textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(4)
+        tone: headerArea.containsMouse ? "accent" : "muted"
         rotation: root.collapsed ? -90 : 0
         Layout.alignment: Qt.AlignVCenter
 

@@ -28,7 +28,7 @@ FoldRow {
     text: I18n.tr("Quiet") + "  ·  " + NotificationManager.quietCount
     textColor: root.hovered ? Theme.accent : Theme.foregroundAlt
     textSize: Appearance.fontSizeBy(-2)
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   // Something new since it was last seen open

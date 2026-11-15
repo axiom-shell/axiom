@@ -46,7 +46,7 @@ Item {
     StyledText {
       Layout.fillWidth: true
       text: root.notification?.summary || ""
-      font.bold: true
+      font.weight: Font.Bold
       elide: Text.ElideRight
       maximumLineCount: root.summaryLines
       wrapMode: root.summaryLines > 1 ? Text.Wrap : Text.NoWrap

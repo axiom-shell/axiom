@@ -132,7 +132,7 @@ Item {
         Layout.fillWidth: true
         Layout.leftMargin: Widget.spacing / 2
         text: I18n.formatDate(new Date(root.year, root.month, 1), I18n.dateFormat("monthYear"))
-        font.bold: true
+        font.weight: Font.Bold
         elide: Text.ElideRight
         MouseArea {
           anchors.fill: parent
@@ -250,7 +250,7 @@ Item {
                 anchors.centerIn: parent
                 text: cell.modelData.day
                 textColor: cell.modelData.isToday ? Theme.background : Theme.foreground
-                font.bold: cell.modelData.isToday
+                font.weight: cell.modelData.isToday ? Font.Bold : Font.Normal
                 opacity: cell.modelData.inMonth ? 1 : 0.35
                 textSize: Appearance.fontSizeBy(-1)
               }

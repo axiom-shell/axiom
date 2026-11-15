@@ -46,7 +46,7 @@ CustomElementBase {
     width: ring.side * 0.7
     horizontalAlignment: Text.AlignHCenter
     text: root.label
-    font.bold: true
+    font.weight: Font.Bold
     textSize: Math.max(Appearance.fontSizeBy(-4), ring.side * 0.22)
     fontSizeMode: Text.HorizontalFit
     minimumPixelSize: Appearance.fontSizeBy(-4)

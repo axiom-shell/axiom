@@ -131,6 +131,7 @@ BarWidget {
   }
 
   component ClockText: Text {
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     color: root.paint.text
     font.family: Appearance.fontFamily
     font.pixelSize: root.barConfig.fontSize

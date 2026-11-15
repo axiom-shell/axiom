@@ -172,7 +172,7 @@ TitledCard {
           Layout.fillWidth: true
           text: tile.modelData.label
           textColor: tile.preview.foreground ?? Theme.foreground
-          font.bold: true
+          font.weight: Font.Bold
           elide: Text.ElideRight
         }
 
@@ -188,7 +188,7 @@ TitledCard {
           visible: tile.current
           text: "check"
           textColor: tile.preview.accent ?? Theme.accent
-          font.bold: true
+          font.weight: Font.Bold
         }
       }
 

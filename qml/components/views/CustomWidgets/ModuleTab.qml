@@ -87,6 +87,7 @@ ColumnLayout {
             width: parent.width / preview.zoom
             height: parent.height / preview.zoom
             scale: preview.zoom
+            readonly property real contentZoom: scale
             transformOrigin: Item.TopLeft
 
             CustomLayout {

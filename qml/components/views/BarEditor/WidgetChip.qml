@@ -85,18 +85,24 @@ DragChip {
   }
 
   // Hidden on the bar
-  StyledIcon {
-    visible: root.hiddenWidget
-    text: "visibility_off"
-    textColor: root._markInk
-    opacity: 0.7
+  Loader {
+    active: root.hiddenWidget
+    visible: active
+    sourceComponent: StyledIcon {
+      text: "visibility_off"
+      textColor: root._markInk
+      opacity: 0.7
+    }
   }
 
   // No room for it on the bar
-  StyledIcon {
-    visible: root.crowded && !root.hiddenWidget
-    text: "compress"
-    textColor: root.selected ? root._markInk : Theme.warning
+  Loader {
+    active: root.crowded && !root.hiddenWidget
+    visible: active
+    sourceComponent: StyledIcon {
+      text: "compress"
+      textColor: root.selected ? root._markInk : Theme.warning
+    }
   }
 
   // When it goes on a crowded bar

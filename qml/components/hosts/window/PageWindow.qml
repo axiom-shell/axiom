@@ -5,6 +5,7 @@ import Quickshell
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.methods
 import qs.components.hosts.overlay
 
 // One overlay tool page in a window of its own (PageWindowManager): a
@@ -129,6 +130,8 @@ FloatingWindow {
       }
       readonly property real contentZoom: pageGrid.zoom * pageBox.fitScale
       scale: pageBox.contentZoom
+      readonly property real drawnZoom: pageBox.contentZoom * TextRender.zoomAt(pageBox.parent)
+      readonly property var inkHostAbove: InkHost.find(pageBox.parent)
 
       Loader {
         id: view

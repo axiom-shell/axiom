@@ -66,7 +66,7 @@ ColumnLayout {
     onTriggered: root.flush()
   }
 
-  // The rows keep their gaps themselves (FormRow.dividerGap)
+  // The rows pad themselves (FormRow: Style.rowPadding)
   spacing: 0
 
   // The top row drawn (FormRow.first)
@@ -84,6 +84,8 @@ ColumnLayout {
       shown: field.shown
       indented: field.followsSibling
       bodyHeight: field.implicitHeight
+      hoverable: field.hoverable
+      onRowClicked: field.rowClicked()
 
       SchemaField {
         id: field

@@ -150,7 +150,7 @@ ColumnLayout {
 
             StyledLabel {
               text: MonitorManager.labelFor(tile.rule)
-              font.bold: true
+              font.weight: Font.Bold
               elide: Text.ElideRight
               Layout.maximumWidth: tile.width - Widget.padding * 2
             }

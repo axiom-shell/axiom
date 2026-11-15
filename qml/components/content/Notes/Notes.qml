@@ -169,7 +169,7 @@ Card {
           StyledLabel {
             Layout.fillWidth: true
             text: NotesManager.titleOf(root.path)
-            font.bold: true
+            font.weight: Font.Bold
             elide: Text.ElideMiddle
           }
           StyledLabel {

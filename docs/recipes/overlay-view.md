@@ -25,6 +25,7 @@ Translation files need nothing: the pre-commit hook adds new strings to every la
 5. If the page pops out, keep its state in its manager and not in the page: only one host builds the page at a time, and the window and the overlay swap ([page windows](../dev/overlay/page-windows.md)).
 
 ## Watch out for
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
 - A new folder under `views/` that is only imported from files loaded by URL isn't scanned until qs restarts (`module "qs.components.views.<Type>" is not installed`). Ask the user to restart.
 - An editor page never assigns the draft or the selection; the manager owns them (`select*()`), see the editors pattern.
 - The page only exists while it or a neighbour is shown. Anything that must last goes in a service.

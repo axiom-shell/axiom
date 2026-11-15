@@ -145,7 +145,7 @@ Panel {
     StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Laps")
-      font.bold: true
+      font.weight: Font.Bold
       textSize: Appearance.fontSizeBy(-1)
     }
     FlatIconButton {

@@ -36,7 +36,7 @@ RowLayout {
     Layout.alignment: Qt.AlignVCenter
     Layout.leftMargin: root.listDocked ? Widget.spacing : 0
     text: ChatManager.conversation.title || I18n.tr("New conversation")
-    font.bold: true
+    font.weight: Font.Bold
     elide: Text.ElideRight
   }
 

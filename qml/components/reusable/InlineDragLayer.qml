@@ -15,7 +15,7 @@ DragLayer {
   z: 10
   onMoved: point => ghost.at = point
 
-  StyledContainer {
+  Surface {
     id: ghost
     property point at: Qt.point(0, 0)
     visible: root.dragging !== null
@@ -23,13 +23,13 @@ DragLayer {
     y: ghost.at.y - height / 2
     implicitWidth: ghostLabel.implicitWidth + Widget.padding * 2
     implicitHeight: Widget.height
-    backgroundColor: Theme.accent
+    tone: "accent"
 
     StyledLabel {
       id: ghostLabel
       anchors.centerIn: parent
       text: root.dragging?.label ?? ""
-      textColor: Theme.background
+      role: "label"
     }
   }
 }

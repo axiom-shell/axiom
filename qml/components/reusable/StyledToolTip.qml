@@ -57,13 +57,13 @@ PopupWindow {
     opacity: box.opacity
   }
 
-  StyledContainer {
+  Surface {
     id: box
     anchors.fill: parent
     implicitWidth: label.width + Widget.padding * 2
     implicitHeight: label.height + Widget.spacing * 2
-    backgroundColor: Theme.background
-    borderColor: Theme.border
+    tone: "raised"
+    outlined: true
     // Fades in as the window appears
     opacity: root.visible ? 1 : 0
 
@@ -74,7 +74,8 @@ PopupWindow {
       anchors.centerIn: parent
       // Wrapped at `maxWidth`, when set
       width: root.maxWidth > 0 ? Math.min(implicitWidth, root.maxWidth) : implicitWidth
-      wrapMode: root.maxWidth > 0 ? Text.Wrap : Text.NoWrap
+      role: "caption"
+      overflow: root.maxWidth > 0 ? "wrap" : "none"
       textFormat: root.rich ? Text.RichText : Text.AutoText
       text: root.text
     }

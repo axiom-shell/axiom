@@ -33,6 +33,7 @@ New translation keys are added by the pre-commit hook.
 4. Run `scripts/dev/verify.sh`. `check_structure` fails an `x-card`, `x-intro` or `x-row` whose file doesn't exist.
 
 ## Watch out for
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
 - **Text fields** follow the push pattern (`StyledTextEntry`: push values in unless focused, act on `textEdited`); see [qml-pitfalls](../dev/core/qml-pitfalls.md).
 - **Takeovers.** A card that takes over something on this PC (compositor mode, locker, idle, polkit, greeter) belongs to an `x-takeover` setting, and only that card changes it.
 - **Secrets** typed in a card go to `SecretsManager`, never the draft (`CalendarAccountsCard`).

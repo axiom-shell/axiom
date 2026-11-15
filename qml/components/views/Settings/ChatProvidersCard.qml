@@ -109,7 +109,7 @@ FieldGroup {
 
           StyledLabel {
             text: row.provider.name
-            font.bold: true
+            font.weight: Font.Bold
           }
           StyledLabel {
             Layout.fillWidth: true

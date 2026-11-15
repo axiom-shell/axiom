@@ -47,7 +47,7 @@ Rectangle {
       Layout.maximumWidth: Math.ceil(implicitWidth)
       text: root.title
       textSize: Appearance.fontSizeBy(4)
-      font.bold: true
+      font.weight: Font.Bold
       elide: Text.ElideRight
     }
 

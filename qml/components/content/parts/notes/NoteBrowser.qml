@@ -175,7 +175,7 @@ DropdownSurface {
                   text: root.crumbs[crumb.index - 1] ?? ""
                   textColor: crumb.last ? Theme.foreground : Theme.foregroundAlt
                   textSize: Appearance.fontSizeBy(-1)
-                  font.bold: crumb.last
+                  font.weight: crumb.last ? Font.Bold : Font.Normal
                 }
                 HoverHandler {
                   id: crumbHover

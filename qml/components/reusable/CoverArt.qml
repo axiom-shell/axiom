@@ -15,7 +15,7 @@ Item {
   ClippingRectangle {
     anchors.fill: parent
     radius: root.radius
-    color: Theme.backgroundAlt
+    color: Style.surfaceHighest
     CrossFade {
       anchors.fill: parent
       value: root.source
@@ -34,8 +34,8 @@ Item {
       anchors.centerIn: parent
       visible: root.source === ""
       text: "music_note"
-      textSize: Math.min(root.width, root.height) * 0.4
-      opacity: 0.4
+      textSize: Math.max(Style.iconXs, Math.min(root.width, root.height) * 0.4) // fitted: the note fills part of the cover
+      tone: "faint"
     }
   }
 }

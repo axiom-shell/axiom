@@ -14,10 +14,10 @@ import qs.config
  */
 Item {
   id: root
-  property int borderRadius: Appearance.borderRadius
-  property color fillColor: Theme.background
-  property color strokeColor: Theme.foreground
-  property int strokeWidth: Appearance.borderWidth
+  property int borderRadius: Style.radiusOuter
+  property color fillColor: Style.surfacePage
+  property color strokeColor: Style.borderStrong
+  property int strokeWidth: Style.hairline
 
   property bool isLeft: true
   property bool isTop: true
@@ -44,7 +44,7 @@ Item {
 
     // --- FILL ---
     ShapePath {
-      fillColor: Appearance.fill(root.fillColor)
+      fillColor: Style.edgeFill(root.fillColor, false)
       strokeColor: "transparent"
       strokeWidth: 0
 

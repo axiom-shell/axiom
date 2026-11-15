@@ -121,10 +121,7 @@ Popup {
   onOpened: search.input.forceActiveFocus()
 
   // Solid, as every dropdown's list: nothing blurs behind a Popup
-  background: DropdownSurface {
-    color: Theme.backgroundAlt
-    border.width: Appearance.borderWidth
-  }
+  background: DropdownSurface {}
 
   contentItem: ColumnLayout {
     spacing: Widget.spacing
@@ -153,7 +150,7 @@ Popup {
       boundsBehavior: Flickable.StopAtBounds
       model: root.rows
 
-      ScrollIndicator.vertical: ScrollIndicator {}
+      ScrollIndicator.vertical: StyledScrollIndicator {}
 
       // A group's heading, or a type to pick
       delegate: Item {
@@ -173,53 +170,25 @@ Popup {
           anchors.right: parent.right
           anchors.bottom: parent.bottom
           anchors.leftMargin: Widget.smallPadding
-          elide: Text.ElideRight
+          role: "micro"
+          tone: "faint"
+          overflow: "line"
           text: rowDelegate.modelData.heading ?? ""
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-1)
-          font.weight: Font.Medium
         }
 
-        Rectangle {
-          visible: !rowDelegate.heading
+        MenuRow {
           anchors.fill: parent
-          radius: Widget.radius
-          color: rowDelegate.at === root.highlighted ? Theme.backgroundHighlight : "transparent"
-
-          RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Widget.padding
-            anchors.rightMargin: Widget.padding
-            spacing: Widget.spacing
-
-            OptionGlyph {
-              icon: rowDelegate.icon
-              image: rowDelegate.entry?.image ?? ""
-            }
-
-            StyledLabel {
-              Layout.fillWidth: true
-              elide: Text.ElideRight
-              text: rowDelegate.entry ? root.labelOf(rowDelegate.entry) : ""
-            }
-
-            StyledText {
-              visible: (rowDelegate.entry?.detail ?? "") !== ""
-              Layout.maximumWidth: rowDelegate.width * 0.45
-              elide: Text.ElideRight
-              text: rowDelegate.entry?.detail ?? ""
-              opacity: 0.6
-              textSize: Appearance.fontSizeBy(-1)
-            }
+          visible: !rowDelegate.heading
+          icon: rowDelegate.icon
+          image: rowDelegate.entry?.image ?? ""
+          trailing: rowDelegate.entry?.detail ?? ""
+          text: rowDelegate.entry ? root.labelOf(rowDelegate.entry) : ""
+          lit: rowDelegate.at === root.highlighted
+          onHoveredChanged: {
+            if (hovered)
+              root.highlighted = rowDelegate.at;
           }
-
-          MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onEntered: root.highlighted = rowDelegate.at
-            onClicked: root.activate(rowDelegate.at)
-          }
+          onActivated: root.activate(rowDelegate.at)
         }
       }
     }
@@ -227,8 +196,9 @@ Popup {
     StyledText {
       visible: root.matches.length === 0
       text: I18n.tr("Nothing matches \"{0}\"", root.query.trim())
-      opacity: 0.6
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "muted"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
   }

@@ -331,7 +331,7 @@ ColumnLayout {
             StyledLabel {
               Layout.fillWidth: true
               text: root.selected?.name ?? ""
-              font.bold: true
+              font.weight: Font.Bold
               elide: Text.ElideRight
             }
 

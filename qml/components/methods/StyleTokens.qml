@@ -186,6 +186,14 @@ QtObject {
     return Math.round(n * scale * baseFontSize / 14);
   }
 
+  // A control's height that holds its text: `base` (the density's height at
+  // the scale) or, if the font needs more, a line of 1.5 em (room for a CJK
+  // fallback) and `pad` above and below. Unchanged at font 14 for every
+  // density and scale.
+  function controlHeight(base, line, pad) {
+    return Math.max(base, Math.ceil(1.5 * line) + 2 * pad);
+  }
+
   // A role's size: `Appearance.fontSizeBy(n)` at font setting `base` and
   // scale `scale`, never under 9 px at 100 % (on the scale) and never above
   // the body size

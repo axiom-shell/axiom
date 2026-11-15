@@ -148,7 +148,7 @@ ColumnLayout {
     StyledText {
       wrapMode: Text.WordWrap
       text: SelfUpdateManager.behind > 0 ? I18n.tr("What's new in {0} ({1} commits)", SelfUpdateManager.latest, SelfUpdateManager.behind) : I18n.tr("What's new in {0}", SelfUpdateManager.latest)
-      font.bold: true
+      font.weight: Font.Bold
       Layout.fillWidth: true
     }
 

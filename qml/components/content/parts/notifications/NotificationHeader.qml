@@ -29,7 +29,7 @@ RowLayout {
     Layout.maximumWidth: Math.ceil(implicitWidth)
     elide: Text.ElideRight
     text: I18n.tr("Notifications")
-    font.bold: true
+    font.weight: Font.Bold
     textColor: Theme.accent
   }
 
@@ -46,7 +46,7 @@ RowLayout {
       text: NotificationManager.countLabel
       textSize: Appearance.fontSizeBy(-3)
       textColor: Theme.background
-      font.bold: true
+      font.weight: Font.Bold
     }
   }
 

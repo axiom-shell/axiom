@@ -77,6 +77,7 @@ Card {
 
   // Large digits: same-width, so the clock doesn't shift as it ticks
   component Digits: Text {
+    renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     color: root.textColor
     font.family: Appearance.fontFamily
     font.bold: true
@@ -101,6 +102,7 @@ Card {
     // (A Digits; one inline component can't hold another here)
     Text {
       id: capDigits
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       y: capLine.height - capLine.cap * capLine.pad - capDigits.baselineOffset
       color: root.textColor
       font.family: Appearance.fontFamily
@@ -155,6 +157,7 @@ Card {
     }
 
     Text {
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       width: parent.width
       height: root.captionSize * root.lineRatio
       visible: root.dateShown
@@ -168,6 +171,7 @@ Card {
     }
 
     Text {
+      renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       width: parent.width
       height: root.captionSize * root.lineRatio
       visible: root.labelShown

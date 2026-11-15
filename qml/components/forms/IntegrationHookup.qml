@@ -12,8 +12,9 @@ import qs.components.reusable
 // does to that file (back it up, then add the text where it's read last
 // or where the format needs it), then Apply. Copy-only targets (configs
 // in code, like wezterm.lua) just say where the text goes.
-Rectangle {
+Surface {
   id: root
+  tone: "sunken"
 
   // The ThemeIntegrations key
   required property string integration
@@ -36,8 +37,6 @@ Rectangle {
 
   visible: root.active && IntegrationHookupManager.targets(root.integration).length > 0
   implicitHeight: body.implicitHeight + Widget.padding * 2
-  radius: Widget.radius
-  color: Qt.alpha(Theme.backgroundHighlight, 0.5)
 
   onVisibleChanged: if (visible)
     IntegrationHookupManager.check(root.integration)
@@ -100,14 +99,13 @@ Rectangle {
       StatusChip {
         readonly property var s: HookupStatus.of(root.active, root.rows)
         text: I18n.tr(s.word)
-        color: s.tone === "success" ? Theme.success : s.tone === "warning" ? Theme.warning : Theme.foregroundAlt
+        tone: s.tone || "neutral"
       }
 
       StyledText {
         Layout.fillWidth: true
         text: root.allDone ? root.doneText : root.applicable ? root.todoText : I18n.tr("This app's config is code: copy the text into it.")
-        textColor: Theme.foregroundAlt
-        wrapMode: Text.WordWrap
+        tone: "muted"
       }
 
       FlatIconButton {
@@ -122,8 +120,7 @@ Rectangle {
       Layout.fillWidth: true
       visible: root.note !== ""
       text: root.note === "" ? "" : I18n.tr(root.note)
-      textColor: Theme.foregroundAlt
-      wrapMode: Text.WordWrap
+      tone: "muted"
     }
 
     Repeater {
@@ -141,8 +138,8 @@ Rectangle {
           Layout.fillWidth: true
           visible: text !== ""
           text: target.t.copyOnly ? I18n.tr(target.t.where ?? "") : target.t.title ? I18n.tr("{0}: {1}", I18n.tr(target.t.title), target.t.path ?? "") : target.t.path ?? ""
-          font.bold: true
-          wrapMode: Text.WordWrap
+          role: "label"
+          overflow: "wrap"
         }
 
         RowLayout {
@@ -173,8 +170,7 @@ Rectangle {
           Layout.fillWidth: true
           visible: target.lines.length > 0
           text: target.lines.map(line => "• " + line).join("\n")
-          textColor: target.t.done ? Theme.success : target.t.conflicts?.length > 0 ? Theme.warning : Theme.foreground
-          wrapMode: Text.WordWrap
+          tone: target.t.done ? "success" : target.t.conflicts?.length > 0 ? "warning" : ""
         }
       }
     }
@@ -187,11 +183,11 @@ Rectangle {
       StyledText {
         Layout.fillWidth: true
         text: I18n.tr("Nothing else is changed. To undo it, put the backup back.")
-        textColor: Theme.foregroundAlt
-        wrapMode: Text.WordWrap
+        tone: "muted"
       }
 
       StyledTextButton {
+        kind: "primary"
         text: root.busy ? I18n.tr("Applying…") : I18n.tr("Apply")
         iconText: "done"
         onClicked: if (!root.busy)
@@ -205,8 +201,7 @@ Rectangle {
       readonly property var changed: root.results.filter(r => r.changed || r.error)
       visible: changed.length > 0
       text: changed.map(r => r.error ? I18n.tr("{0}: {1}", r.path, r.error === "conflict" ? I18n.tr("already set, left alone") : r.error) : r.backup ? I18n.tr("Changed {0} (backup: {1})", r.path, r.backup) : I18n.tr("Created {0}", r.path)).join("\n")
-      textColor: changed.some(r => r.error) ? Theme.error : Theme.success
-      wrapMode: Text.WordWrap
+      tone: changed.some(r => r.error) ? "error" : "success"
     }
   }
 }

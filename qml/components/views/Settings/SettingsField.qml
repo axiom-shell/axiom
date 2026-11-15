@@ -80,6 +80,10 @@ FormRow {
   readonly property real footprintHeight: root.badged || root.removable || root.confirmInferred || root.confirmSystem ? footprintRow.implicitHeight + Widget.spacing : 0
 
   bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
+  // A click anywhere on a switch, toggle or dropdown row acts (SchemaField)
+  hoverable: root.isValue && root.custom === "" && field.hoverable
+  hitHeight: field.implicitHeight
+  onRowClicked: field.rowClicked()
   railHeight: root.custom !== "" ? 0 : field.implicitHeight
 
   // Outlines the row for a moment (a link to this setting)

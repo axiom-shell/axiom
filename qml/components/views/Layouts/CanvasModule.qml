@@ -116,7 +116,7 @@ Rectangle {
       text: root.dragLayer?.moduleLabel(root.type) ?? ""
       textColor: root.ink
       textSize: Appearance.fontSizeBy(-1)
-      font.bold: true
+      font.weight: Font.Bold
     }
 
     StyledText {
@@ -172,7 +172,7 @@ Rectangle {
       text: root.dragLayer?.sizeLabel(sizeText.place.w, sizeText.place.h) ?? ""
       textColor: Theme.background
       textSize: Appearance.fontSizeBy(-2)
-      font.bold: true
+      font.weight: Font.Bold
     }
   }
 

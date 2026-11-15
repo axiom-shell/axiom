@@ -245,7 +245,7 @@ Card {
               Layout.fillWidth: true
               text: I18n.tr(slot.modelData === "dark" ? "Dark" : "Light")
               textColor: slot.selected ? Theme.accent : Theme.foreground
-              font.bold: slot.selected
+              font.weight: slot.selected ? Font.Bold : Font.Normal
               elide: Text.ElideRight
             }
           }

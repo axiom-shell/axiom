@@ -2,9 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.components.methods
 
-// A titled group of fields, as on the settings page (editor inspectors)
-StyledContainer {
+// A titled group of fields, as on the settings page (editor inspectors): a
+// boxed card of its own on the page, flat inside a pane (no fill or border: the
+// pane's own).
+Surface {
   id: root
   property string title
   property string description
@@ -12,19 +15,35 @@ StyledContainer {
   property alias headerExtras: headerRow.data
   default property alias content: groupColumn.data
 
+  // The Surface it sits on: the page (or none) takes it as a surface-tone
+  // card, any other is a pane, where the group is flat, on the pane's own fill
+  readonly property var _host: InkHost.find(root.parent)
+  readonly property bool _boxed: !root._host || root._host.tone === "page"
+
   Layout.fillWidth: true
   Layout.alignment: Qt.AlignTop
-  implicitHeight: groupColumn.implicitHeight + Widget.padding * 2
-  // Faint, as a settings card's (FoldingCard)
-  borderColor: Qt.alpha(Theme.border, 0.25)
+  tone: root._boxed ? "surface" : root._host.tone
+  implicitHeight: groupColumn.implicitHeight + (root._boxed ? Style.space3 * 2 : Style.space3)
+
+  // Flat inside a pane: no fill, border or side margins; `color` returns to
+  // Surface's own binding on leaving the state
+  states: State {
+    when: !root._boxed
+    PropertyChanges {
+      root.color: "transparent"
+      root.outlined: false
+      groupColumn.anchors.leftMargin: 0
+      groupColumn.anchors.rightMargin: 0
+    }
+  }
 
   ColumnLayout {
     id: groupColumn
     anchors.top: parent.top
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.margins: Widget.padding
-    spacing: Widget.spacing * 1.5
+    anchors.margins: Style.space3
+    spacing: Style.space2
 
     RowLayout {
       id: headerRow
@@ -35,14 +54,6 @@ StyledContainer {
         title: root.title
         description: root.description
       }
-    }
-
-    // Between the heading and the fields, as on a settings card
-    StyledSeparator {
-      visible: root.title !== ""
-      Layout.fillWidth: true
-      separatorHeight: 1
-      opacity: 0.6
     }
   }
 }

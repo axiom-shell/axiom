@@ -49,7 +49,7 @@ OnboardingPage {
   StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Where things are")
-    font.bold: true
+    font.weight: Font.Bold
   }
 
   BindsTable {

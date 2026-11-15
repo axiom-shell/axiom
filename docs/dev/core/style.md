@@ -4,7 +4,7 @@
 > **Config:** `Appearance.font`, `Appearance.shape`, `Appearance.surface`, `Interface.*`, the theme
 > **Related:** [Shared UI pieces](shared-ui-pieces.md), [Themes](../theming/themes.md), [QML pitfalls](qml-pitfalls.md), [Translucency and blur](../theming/translucency-blur.md)
 
-`Style` is the one place UI reads a colour, text role, icon size, radius or hairline from. It derives every colour of the theme once per theme change, aliases `Appearance` and `Widget` as roles, and has a test that sweeps every bundled theme for its contrast targets. Nothing in the UI reads it yet: the pieces that do arrive with the next changes, and the bar keeps its own readability stack on the same colour math (`Tone`).
+`Style` is the one place UI reads a colour, text role, icon size, radius or hairline from. It derives every colour of the theme once per theme change, aliases `Appearance` and `Widget` as roles, and has a test that sweeps every bundled theme for its contrast targets. The shared pieces (below) read it; areas not yet restyled keep their old colours until their change, and the bar keeps its own readability stack on the same colour math (`Tone`).
 
 ### What reads what
 | Piece | What | Reads |
@@ -25,10 +25,10 @@ The member list is `docs/dev/generated/api/Style.md`. The groups:
 - **Accent and status**: `accent`, `accentAlt`, `success`, `warning`, `error`, `info`, each with `…Text`, `…Container`, `on…` and `on…Container`; `series` (8 colours for charts); `segmentTrackTone` / `segmentThumbTone` (a segmented control's chosen option is always the lighter of the pair).
 - **Lines**: `divider`, `borderSubtle`, `borderStrong`, `focusRing`, `rail`, `frameStroke` (the theme's raw foreground, for what joins the screen frame).
 - **State layers and washes** (translucent colours): `stateHover`, `statePressed`, `stateDrag`, `stateRest`, `stateOnAccent…`, `scrim`, `shadowSoft`, `veil`, `accentWash`, `errorWash`; the alphas as numbers (`alphaHover`, … `alphaWash`) and `opacityDisabled`.
-- **Inks**: `inkPage`, `inkSurface`, `inkSunken`, `inkRaised`, `inkHighest`, `inkAccent`, `inkAccentContainer`, `ink<Status>` and `ink<Status>Container`: what reads on each fill (`StyleInk`: `text`, `muted`, `faint`, `accent`, `icon`, `graphic`, `divider`). `inkOf(tone)`, `toneColor(name)`, `toneOn(ink, tone)` look them up.
+- **Inks**: `inkPage`, `inkSurface`, `inkSunken`, `inkRaised`, `inkHighest`, `inkAccent`, `inkAccentContainer`, `ink<Status>` and `ink<Status>Container`: what reads on each fill (`StyleInk`: `text`, `muted`, `faint`, `accent`, `icon`, `graphic`, `divider`). `inkOf(tone)`, `toneColor(name)`, `toneOn(ink, tone)` look them up; `toneFill(name)` is a meter or bar fill by tone (accent, success, warning, error, info).
 - **Text roles** (`StyleTextRole`: size, weight, default tone, default overflow): `roleMicro`, `roleCaption`, `roleBody`, `roleLabel`, `roleTitle`, `roleHeadline`, `roleDisplay`, `textRole(name)`; the sizes `typeMicro` … `typeDisplay` and weights `weightNormal`, `weightMedium`, `weightStrong`. Micro and caption never fall under 9 px at 100 % (on the Interface scale) or above body.
 - **Icon sizes**: `iconXs` … `iconXl`, `iconSize(name)`.
-- **Shape**: `radiusOuter`, `radius`, `radiusInner` (concentric: the radius less the spacing, never under `radiusMin`), `radiusMin`, `hairline`, `dividerWidth`, `focusWidth`.
+- **Shape**: `radiusOuter`, `radius`, `radiusInner` (concentric: the radius less the spacing, never under `radiusMin`), `radiusMin`, `hairline`, `dividerWidth`, `focusWidth`. A shape inset inside another (a segment thumb, a switch knob, a stepper's buttons) takes `Style.concentric(the holder's radius, its inset)` (`StyleTokens.concentric` with `radiusMin`).
 - **Spacing**: `space1` … `space5`, `rowHeight`, `rowPadding`, `rowBleed`, `columnTarget` (a distance on screen, not on the Interface scale), `columnMin` (`Widget.textPx(400)`), `columnLeast`, `columnMax`.
 - **Motion**: `staggerStep`, `enterOffset`, `shimmerPeriod`.
 - **Config colour names**: `resolve(name)` reads one closed map `StyleTokens.theme` builds per theme (every semantic name, `white` and `bg3` included, and `base00`–`base0F`), then a `#hex`, then anything Qt parses.
@@ -76,7 +76,48 @@ In 11 bundled themes the accent is within OKLab distance 0.05 of a status colour
 1. **Theme-level colours are computed once per theme change, in one binding.** `Style._roles` depends only on `ThemeManager.currentTheme` and `ThemeManager.defaults` (one object each), so a theme switch evaluates `StyleTokens.derive` exactly once; every colour property is a plain read of `_roles`. It does not read `Theme.*` properties. `derive` makes 216–1794 contrast evaluations per theme (median 733); on `color` values that cost 2.3–5.5 ms, so `StyleTokens` runs its inner math on plain `[r, g, b]` arrays (a back's luminance once per `nudged` / `apart` call), builds `color` values only for the returned roles, and **the budget is `derive` ≤ 4 ms on the dev machine for the worst bundled theme**. No cache by theme name: a switch back costs the same one derive. Style logs `Style derived in <n> ms` (an unconditional `console.log`, shown by `scripts/log.sh --debug`), and `tst_StyleTokens` › `test_derive_time` logs the 20-run mean per theme.
 2. **Setting-level values re-evaluate only when their setting changes**: `fill*` (surface opacity, blur availability, the floor), the text roles, icon sizes, `radius*`, `space*`, `hairline` bind `Appearance` / `Widget` members directly, each a typed property.
 3. **Per surface context, never per delegate.** On-fill colours (`Style.ink*`), state layers and containers are precomputed. A row on an accent fill reads `Style.inkAccent.text`; it never calls `readableOn`.
-4. **Delegates only read properties.** No UI binding calls a colour function (`Tone.*`, `Utils` colour functions, `Qt.alpha/lighter/darker/tint/color`). Style's lookups are not colour math and are allowed: `Style.inkOf`, `toneColor`, `toneOn`, `textRole`, `iconSize`, `resolve` (a `switch` or a map read) and `edgeFill` (one alpha, one binding per surface).
+4. **Delegates only read properties.** No UI binding calls a colour function (`Tone.*`, `Utils` colour functions, `Qt.alpha/lighter/darker/tint/color`). Style's lookups are not colour math and are allowed: `Style.inkOf`, `toneColor`, `toneOn`, `toneFill`, `textRole`, `iconSize`, `resolve` (a `switch` or a map read) and `edgeFill` (one alpha, one binding per surface).
+
+### Pieces
+What to reach for (every piece is in `qml/components/reusable/`; [shared-ui-pieces](shared-ui-pieces.md) › Style pieces has each one's API):
+| You need | Use |
+|---|---|
+| A box | `Surface` (`tone`, `outlined`, `solid`, `shadowed`) |
+| Hover, press, drag on a control | `StateLayer`, first in the control |
+| Keyboard focus | `FocusRing` (only on controls that take Tab focus) |
+| A loading placeholder | `Skeleton` |
+| A list that grows and shrinks | `MotionListView` |
+| A menu or dropdown row | `MenuRow` |
+| Text | `StyledText` / `StyledLabel` with a `role` and a `tone`; an icon: `StyledIcon` with a `size` |
+
+Text and icons inside a Surface take its `ink` by default: `InkHost.find` walks from a text up its visual parents to the nearest item with an `inkScope` (or a relay, which answers for the host above it), in a binding, so it follows a reparent and the first colour is already the ink. Put content inside the Surface it sits on (a sibling fill is not inherited); a Popup's content sits in another window, finds no Surface, and takes the global roles. A colour set explicitly is still a role (`<surface>.ink.*`, `Style.*`), never a literal: `scripts/check_style.py` ([testing](../testing.md) › The checks) enforces it, as a ratchet until the last style change.
+
+The old way to the new, by what the code wrote:
+| Old | New |
+|---|---|
+| `Appearance.fontSizeBy(-4)`, `(-3)` | `role: "micro"` |
+| `fontSizeBy(-2)`, `(-1)` | `role: "caption"` (or `body` for reading text) |
+| `Appearance.fontSize` | `role: "body"`, or `"label"` for a control or row name |
+| `fontSizeBy(1)`, `(2)` | `role: "label"` / `"title"` |
+| `fontSizeBy(3)`, `(4)`, `fontSizeLarge` | `role: "headline"` |
+| `fontSizeBy(6)` and up | `"headline"`, `"display"`, or a fitted size |
+| `Theme.foreground` / `foregroundInactive` | `Style.text` / `Style.textMuted` (a `tone` on a StyledText) |
+| `Theme.accent` as text | `Style.textAccent`; as a fill `Style.accent` with `Style.onAccent` on it |
+| `Qt.alpha(...)` over a fill, `opacity: 0.5` | a role (`Style.stateHover`, `scrim`, `veil`, `textFaint`) or `Style.opacityDisabled` |
+| `font.bold: true` | the role's weight, or `font.weight: Font.Bold` where bold must stay |
+| `Theme.resolveColor(name)` | `Style.resolve(name)` |
+| `Qt.lighter`/`darker` hover tint | `StateLayer` |
+
+### Crisp text
+Text and icons are native at rest (hinted, snapped to device pixels) and distance field only under a declared zoom: `StyledText.renderType` is `TextRender.typeFor(_drawnZoom, ...)`, where `_drawnZoom` is `TextRender.zoomAt(parent)`, the product of every `contentZoom` above it up to the nearest publisher. Both walks stop at the nearest publisher: a Surface or a MenuRow (each has an `inkScope` and `drawnZoom`) or a relay (`StreamedLoader`, `StyledIconButton`, `FormRow`, the page and module zoom hosts: `inkHostAbove` and `drawnZoom`). `qml/shell.qml` and `qml/greeter.qml` carry `//@ pragma NativeTextRendering` (Controls internals and anything missed) and `//@ pragma Env QSG_DISTANCEFIELD_ANTIALIASING=gray` (no colour fringes on zoomed or rotated distance-field text).
+- A raw `Text`, `TextInput`, `TextEdit`, `TextField` or `TextArea` carries `renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)` (R16).
+- Shows fade and slide; nothing scales over text but a declared zoom.
+- An item with a persistent `scale` other than 1 that holds text declares `readonly property real contentZoom: scale` (R18).
+- Never `layer.enabled` / `layer.effect` on an item that holds text (a layer resamples it, blurred at any fractional scale): a soft shadow is a `RectangularShadow` (`Surface.shadowed`). Masks, shadow sources, art and blur sources keep theirs with `// style-exempt: no text` (R17).
+- `Screen.devicePixelRatio` is the rounded-up integer under fractional scaling: use `item.Window.window.devicePixelRatio`. `font.hintingPreference` is never set.
+
+### Text layout
+Three units for a size: control sizes from `Widget` (`Widget.px(n)`), text measures from `Widget.textPx(n)` (a width whose job is to hold n characters: label columns, column minimums, panel widths), screen measures from `GridPlacement`. A text decides what happens when it does not fit through `overflow` (`line`: one line, elided; `wrap`: wraps and breaks a long token; `none`) and `maxLines`, with the role's default when unset; never `wrapMode`, `elide` or `maximumLineCount` on a StyledText (R14). An elided text needs a bound in a `RowLayout` (`Layout.fillWidth` or a maximum width, R15). A fitted size is `Math.max(Style.typeMicro, ...)` on a line marked `// fitted:` (R4). Sizes that hold a text round their width up (`Math.ceil`) so it never elides by a fraction.
 
 ### Adding a role
 A formula in `StyleTokens.derive` (its constants at the top, each with a comment), a row in `tst_StyleTokens` (a pair, if the role is drawn on a fill), a property in `Style`, and a line here. Regenerate `tests/fixtures/style/expected.json` if the role is in it. The generated `docs/dev/generated/api/Style.md` lists the members.

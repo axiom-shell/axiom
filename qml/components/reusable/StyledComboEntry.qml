@@ -1,15 +1,16 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import Quickshell
 import qs.config
 
 // A choice from a list that drops down under the field, optionally typed
 // (`editable`): typing filters the list and Enter takes what was typed, or
 // the highlighted match. Up/Down move through the list (opening it), and
-// Escape closes it. `options` is [{ value, label, icon?, image? }] (icon a
-// glyph, image a picture's path: an app's icon); `value` is the
+// Escape closes it. `options` is [{ value, label, icon?, image?, swatch?,
+// swatchInk? }] (icon a glyph, image a picture's path: an app's icon; swatch
+// a colour name the row is filled with, its label drawn in swatchInk, picked
+// once per option by the options' owner); `value` is the
 // current choice, which the field shows unless it's being typed in (the
 // push pattern: picking emits `picked`, the owner sets `value`).
 // `search` (a function of the typed text returning options) replaces the
@@ -50,6 +51,9 @@ Item {
   property string query: ""
   property int highlighted: 0
 
+  // When the dropdown last began to close: a press outside closes it and
+  // still reaches the row under it
+  property real hiddenAt: 0
   property bool _inlineOpen: false
   readonly property bool _hasList: root.search !== null || root.options.length > 0
   // The inline list's most height, as it opens (read once: the room
@@ -190,8 +194,8 @@ Item {
     anchors.top: parent.top
     height: parent.height - inlineBox.height
     readOnly: root.readOnly || !root.editable
-    input.leftPadding: root.icon !== "" ? Appearance.fontSize * 1.6 : 0
-    input.rightPadding: Appearance.fontSize * 1.6
+    input.leftPadding: root.icon !== "" ? Style.iconSm * 1.6 : 0
+    input.rightPadding: Style.iconSm * 1.6
     // One line, cut off rather than wrapped in a narrow field
     input.wrapMode: TextInput.NoWrap
     onTextEdited: {
@@ -237,7 +241,7 @@ Item {
       anchors.leftMargin: Widget.padding
       anchors.verticalCenter: parent.verticalCenter
       text: root.icon
-      textColor: Theme.accent
+      tone: "muted"
     }
 
     StyledIcon {
@@ -246,7 +250,7 @@ Item {
       anchors.rightMargin: Widget.smallPadding
       anchors.verticalCenter: parent.verticalCenter
       text: "expand_more"
-      opacity: 0.7
+      tone: "muted"
       // Turns over as the list opens
       rotation: root.listOpen ? 180 : 0
       Glide on rotation {
@@ -259,7 +263,7 @@ Item {
   // only on its chevron, so the text stays clickable
   MouseArea {
     anchors.fill: entry
-    anchors.leftMargin: root.editable ? entry.width - Appearance.fontSize * 2 : 0
+    anchors.leftMargin: root.editable ? entry.width - Style.iconSm * 2 : 0
     enabled: !root.readOnly
     cursorShape: Qt.PointingHandCursor
     onClicked: {
@@ -280,6 +284,9 @@ Item {
     id: dropdownComponent
 
     Popup {
+      id: dropdown
+      // How far the list still has to slide up into place while it opens
+      property real _shift: 0
       y: root.height + Widget.spacing / 2
       width: root.width
       // Rows are inset from the rounded border (as SchemaComboBox's), so
@@ -288,9 +295,8 @@ Item {
       // The field keeps the keys: the list is driven from it
       focus: false
       closePolicy: Popup.CloseOnPressOutsideParent
-      transformOrigin: Item.Top
 
-      // Grows down out of the field, fading and scaling in
+      // Slides down out of the field, fading in
       enter: Transition {
         NumberAnimation {
           property: "opacity"
@@ -300,9 +306,9 @@ Item {
           easing.type: Appearance.easing
         }
         NumberAnimation {
-          property: "scale"
-          from: 0.95
-          to: 1
+          property: "_shift"
+          from: -Style.enterOffset
+          to: 0
           duration: Appearance.animNormal
           easing.type: Appearance.easing
         }
@@ -318,19 +324,25 @@ Item {
 
       // Solid: it opens inside its window, where no blur reaches
       background: DropdownSurface {
-        color: Theme.backgroundAlt
-        border.width: Appearance.borderWidth
+        transform: Translate {
+          y: Math.round(dropdown._shift)
+        }
       }
 
       contentItem: ListView {
+        transform: Translate {
+          y: Math.round(dropdown._shift)
+        }
         implicitHeight: Math.min(contentHeight, Widget.height * 6)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         model: root.matches
         delegate: optionDelegate
 
-        ScrollIndicator.vertical: ScrollIndicator {}
+        ScrollIndicator.vertical: StyledScrollIndicator {}
       }
+
+      onAboutToHide: root.hiddenAt = Date.now()
     }
   }
 
@@ -357,8 +369,6 @@ Item {
       anchors.bottom: parent.bottom
       height: inlineList.implicitHeight + Widget.spacing * 2
       floating: false
-      color: Appearance.fill(Theme.backgroundAlt)
-      border.width: Appearance.borderWidth
 
       Loader {
         id: inlineList
@@ -372,7 +382,7 @@ Item {
           model: root.matches
           delegate: optionDelegate
 
-          ScrollIndicator.vertical: ScrollIndicator {}
+          ScrollIndicator.vertical: StyledScrollIndicator {}
         }
       }
     }
@@ -381,43 +391,70 @@ Item {
   Component {
     id: optionDelegate
 
-    Rectangle {
+    Item {
       id: option
       required property var modelData
       required property int index
+      // A colour option: the row is its colour, its label in the ink the
+      // options' owner picked for it
+      readonly property bool swatched: (modelData.swatch ?? "") !== ""
 
       width: ListView.view.width
       height: Widget.height
-      radius: Widget.radius
-      color: index === root.highlighted ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
 
-      ColorGlide on color {}
-
-      RowLayout {
+      // One look per row, built only for it
+      Loader {
         anchors.fill: parent
-        anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.padding
-        spacing: Widget.spacing
-
-        OptionGlyph {
+        active: !option.swatched
+        sourceComponent: MenuRow {
           icon: option.modelData.icon ?? ""
           image: option.modelData.image ?? ""
-        }
-
-        StyledLabel {
-          Layout.fillWidth: true
-          elide: Text.ElideRight
           text: option.modelData.label
-          font.bold: option.modelData.value === root.value
+          current: option.modelData.value === root.value
+          lit: option.index === root.highlighted
+          onHoveredChanged: {
+            if (hovered)
+              root.highlighted = option.index;
+          }
+          onActivated: root.pick(option.modelData.value)
         }
       }
 
-      MouseArea {
+      Loader {
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onEntered: root.highlighted = option.index
-        onClicked: root.pick(option.modelData.value)
+        active: option.swatched
+        sourceComponent: Rectangle {
+          radius: Style.radiusInner
+          color: Style.resolve(option.modelData.swatch ?? "")
+          border.width: option.modelData.value === root.value ? Style.focusWidth : 0
+          border.color: Style.focusRing
+
+          StateLayer {
+            hovered: swatchArea.containsMouse || option.index === root.highlighted
+            pressed: swatchArea.pressed
+          }
+
+          StyledLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: Widget.padding
+            anchors.rightMargin: Widget.padding
+            role: "label"
+            overflow: "line"
+            text: option.modelData.label
+            textColor: Style.resolve(option.modelData.swatchInk ?? "")
+          }
+
+          MouseArea {
+            id: swatchArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: root.highlighted = option.index
+            onClicked: root.pick(option.modelData.value)
+          }
+        }
       }
     }
   }

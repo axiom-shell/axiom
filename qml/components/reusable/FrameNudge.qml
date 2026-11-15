@@ -22,8 +22,8 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    color: "#02000000"
-    opacity: root._flip ? 0.5 : 0.4
+    color: "#02000000" // style-exempt: frame nudge, never seen
+    opacity: root._flip ? 0.5 : 0.4 // style-exempt: frame nudge, never seen
   }
 
   Timer {

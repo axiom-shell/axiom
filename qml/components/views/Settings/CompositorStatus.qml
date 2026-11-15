@@ -154,7 +154,7 @@ ColumnLayout {
         wrapMode: Text.WordWrap
         text: root.blocked ? I18n.tr("Can't switch to Managed") : I18n.tr("Save switches to {0}:", root._modeLabel(root.pendingMode))
         textColor: root.blocked ? Theme.error : Theme.accent
-        font.bold: true
+        font.weight: Font.Bold
         Layout.fillWidth: true
       }
 
@@ -202,7 +202,7 @@ ColumnLayout {
         wrapMode: Text.WordWrap
         text: I18n.tr("Managed mode needs your approval")
         textColor: Theme.warning
-        font.bold: true
+        font.weight: Font.Bold
         Layout.fillWidth: true
       }
 
@@ -241,7 +241,7 @@ ColumnLayout {
         wrapMode: Text.WordWrap
         text: I18n.tr("Recommended setup")
         textColor: Theme.accent
-        font.bold: true
+        font.weight: Font.Bold
         Layout.fillWidth: true
       }
 
