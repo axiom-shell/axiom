@@ -350,7 +350,8 @@ QtObject {
   // "" for none), percentage, value, min, max (0-100 unless given), hasMax
   // (the output gave a max or a percentage), ratio (0-1, or -1 without a
   // value), state, rev, actions (actionsOf), failure (failure), error (its
-  // message), hiddenByScript (the output's own `hidden`), interactive,
+  // message), hiddenByScript (the output's own `hidden`), interactive, states (the
+  // definition's map) and colorNames (the context's), which `tone` reads,
   // unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
   function resolve(definition, sample, context) {
@@ -418,6 +419,8 @@ QtObject {
       "failure": failure,
       "error": failure?.message ?? "",
       "interactive": !!context?.interactive,
+      "states": d.states ?? {},
+      "colorNames": context?.colorNames ?? [],
       "hiddenByScript": hiddenByScript,
       "percentage": percentage,
       "value": value,
@@ -438,6 +441,10 @@ QtObject {
     };
   }
 
+  // What resolve returns for its own use, not an output key of that name: a
+  // binding of one reads the sample's
+  readonly property var _internalFields: ["states", "colorNames", "actions", "interactive", "failure"]
+
   // An element's own binding: a literal when it starts with "=" (the rest,
   // as text: `=Show answer`, `=task_alt`, `=5`), a format when it has a "{"
   // (filled from the resolved fields, then the sample), else a field name,
@@ -457,12 +464,27 @@ QtObject {
         "text": fields?.plain,
         "icon": fields?.glyph
       });
+      for (const key of root._internalFields)
+        delete values[key];
       return root.fill(b, values);
     }
     // `sample` and resolve's own bookkeeping aren't fields a script prints
-    if (fields && b in fields && ["sample", "actions", "interactive", "failure"].indexOf(b) < 0)
+    if (fields && b in fields && b !== "sample" && root._internalFields.indexOf(b) < 0)
       return fields[b];
     return root.get(fields?.sample, b);
+  }
+
+  // Whether an element is shown: its `show` binding holds (truthy), or it
+  // has none
+  function elementShown(fields, bind) {
+    return !bind?.show || root.truthy(root.elementValue(fields, bind.show));
+  }
+
+  // The theme colour name an element's `tone` binding gives: its value
+  // looked up in the definition's states (a theme colour name passes
+  // through; a hex or an unknown word is ""), "" without a binding
+  function elementTone(fields, bind) {
+    return bind?.tone ? root.stateColor(root.asText(root.elementValue(fields, bind.tone)), [], fields?.states, fields?.colorNames) : "";
   }
 
   // An element's value, min and max as numbers: each slot's binding (a

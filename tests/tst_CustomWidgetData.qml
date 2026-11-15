@@ -570,6 +570,123 @@ TestCase {
     }).value, undefined);
   }
 
+  // resolve hands states and colorNames on for `tone`; a sample's own keys
+  // of those names still bind to the sample (C-B9)
+  function test_resolveStatesAndOwnKeys() {
+    const states = {
+      "low": "error"
+    };
+    const names = ["accent", "error"];
+    const f = CustomWidgetData.resolve({
+      "states": states
+    }, {
+      "text": "x"
+    }, {
+      "colorNames": names
+    });
+    compare(f.states, states, "the definition's map");
+    compare(f.colorNames, names, "the context's names");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x"
+    }).colorNames, [], "no context: none");
+    const own = CustomWidgetData.resolve({
+      "states": states
+    }, {
+      "text": "x",
+      "states": "mine",
+      "actions": "ours",
+      "failure": "f",
+      "colorNames": "c",
+      "interactive": "i"
+    });
+    compare(CustomWidgetData.elementValue(own, "states"), "mine", "a sample's own states");
+    compare(CustomWidgetData.elementValue(own, "actions"), "ours", "its own actions");
+    compare(CustomWidgetData.elementValue(own, "failure"), "f", "its own failure");
+    compare(CustomWidgetData.elementValue(own, "colorNames"), "c", "its own colorNames");
+    compare(CustomWidgetData.elementValue(own, "interactive"), "i", "its own interactive");
+    compare(CustomWidgetData.elementValue(own, "{states}"), "mine", "a format reads the sample's too");
+  }
+
+  function test_elementShown() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "on": true,
+      "off": false,
+      "zero": "0",
+      "blank": "",
+      "word": "yes"
+    });
+    verify(CustomWidgetData.elementShown(f, undefined), "no bind: shown");
+    verify(CustomWidgetData.elementShown(f, {}), "no show: shown");
+    verify(CustomWidgetData.elementShown(f, {
+      "show": "on"
+    }), "true");
+    verify(!CustomWidgetData.elementShown(f, {
+      "show": "off"
+    }), "false");
+    verify(!CustomWidgetData.elementShown(f, {
+      "show": "zero"
+    }), "\"0\"");
+    verify(!CustomWidgetData.elementShown(f, {
+      "show": "blank"
+    }), "empty");
+    verify(!CustomWidgetData.elementShown(f, {
+      "show": "missing.path"
+    }), "a missing path");
+    verify(CustomWidgetData.elementShown(f, {
+      "show": "word"
+    }), "yes");
+    verify(CustomWidgetData.elementShown(f, {
+      "show": "=1"
+    }), "a literal 1");
+  }
+
+  function test_elementTone() {
+    const f = CustomWidgetData.resolve({
+      "states": {
+        "low": "error",
+        "playing": "accent"
+      }
+    }, {
+      "text": "x",
+      "level": "low",
+      "mode": "playing",
+      "other": "nope",
+      "hex": "#ff0000",
+      "theme": "warning",
+      "class": "critical",
+      "kind": "critical"
+    }, {
+      "colorNames": ["accent", "error", "warning"]
+    });
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "level"
+    }), "error", "a word in states");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "mode"
+    }), "accent");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "theme"
+    }), "warning", "a theme name passes through");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "hex"
+    }), "", "a hex colours nothing");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "other"
+    }), "", "an unknown word");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "kind"
+    }), "error", "the class map");
+    compare(CustomWidgetData.elementTone(f, {}), "", "unbound");
+    compare(CustomWidgetData.elementTone(f, undefined), "", "no bind");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "toString"
+    }), "", "a word naming an Object member is no state");
+    compare(CustomWidgetData.elementTone(f, {
+      "tone": "=error"
+    }), "error", "a literal word");
+  }
+
   function test_lattice() {
     compare(CustomWidgetData.lattice([], [4, 2]), {
       "cols": 16,

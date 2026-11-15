@@ -213,6 +213,30 @@ settings:
 	}
 }
 
+// A base's x-slots merge into every kind's list, the base's after the
+// kind's own: the custom widget elements' show and tone bindings.
+func TestKindBaseSlots(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	slots := func(name string) []string {
+		def := root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
+		var out []string
+		for _, v := range def.Value("x-slots").(*jsonx.Array).Items {
+			out = append(out, v.(string))
+		}
+		return out
+	}
+	if got, want := slots("ButtonCustomElement"), []string{"show", "tone", "label", "icon", "value", "enabled"}; !slices.Equal(got, want) {
+		t.Errorf("Button's slots = %v, want the base's then its own %v", got, want)
+	}
+	if got, want := slots("SeparatorCustomElement"), []string{"show", "tone"}; !slices.Equal(got, want) {
+		t.Errorf("Separator's slots = %v, want %v", got, want)
+	}
+}
+
 // A part's override reaching into a setting that $refs a definition
 // inlines that definition, so a type narrows one of its fields.
 func TestPartOverrideInlinesRef(t *testing.T) {
