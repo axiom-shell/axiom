@@ -8,6 +8,7 @@ import qs.services.system
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.views.base
 
 // Window rules page, right: the selected rule. Its name, icon and switch;
 // its kinds of window and their conditions; what happens when one opens
@@ -67,129 +68,134 @@ ColumnLayout {
 
   spacing: Widget.spacing * 2
 
-  SchemaPropertiesForm {
+  // The groups flow into columns, as a Settings card's rows do
+  GroupColumns {
     Layout.fillWidth: true
-    propertiesSchema: Utils.pick(root.schema, order)
-    order: ["name", "icon", "enabled"]
-    values: root.rule
-    onEdited: (path, value) => root.editor.set(path, value)
-  }
 
-  FieldGroup {
-    title: I18n.tr(root.schema.windows.title)
-    description: I18n.tr(root.schema.windows.description)
+    SchemaPropertiesForm {
+      Layout.fillWidth: true
+      propertiesSchema: Utils.pick(root.schema, order)
+      order: ["name", "icon"]
+      values: root.rule
+      onEdited: (path, value) => root.editor.set(path, value)
+    }
 
-    Repeater {
-      model: root.rule.windows?.length ?? 0
+    FieldGroup {
+      title: I18n.tr(root.schema.windows.title)
+      description: I18n.tr(root.schema.windows.description)
 
-      delegate: ColumnLayout {
-        id: kindItem
-        required property int index
+      Repeater {
+        model: root.rule.windows?.length ?? 0
+
+        delegate: ColumnLayout {
+          id: kindItem
+          required property int index
+          Layout.fillWidth: true
+          spacing: Widget.spacing
+
+          StyledText {
+            visible: kindItem.index > 0
+            text: I18n.tr("or")
+            tone: "muted"
+          }
+
+          KindBlock {
+            Layout.fillWidth: true
+            k: kindItem.index
+          }
+        }
+      }
+
+      Flow {
         Layout.fillWidth: true
         spacing: Widget.spacing
 
-        StyledText {
-          visible: kindItem.index > 0
-          text: I18n.tr("or")
-          opacity: 0.6
+        StyledTextButton {
+          implicitHeight: Widget.height
+          iconText: "add"
+          text: I18n.tr("Add another kind")
+          onClicked: root.editor.addKind()
         }
 
-        KindBlock {
-          Layout.fillWidth: true
-          k: kindItem.index
+        StyledTextButton {
+          id: fromWindowButton
+          visible: WindowRulesManager.state?.running === true
+          implicitHeight: Widget.height
+          iconText: "select_window"
+          text: I18n.tr("Add from open window")
+          onClicked: WindowRulesManager.windows(list => {
+            if (!list)
+              return;
+            root.windowTypes = list.map(w => ({
+                  "type": w.id,
+                  "label": w.title || w.appId || w.id,
+                  "image": AppIconManager.resolveWindowIcon(w.appId, w.title),
+                  "detail": WindowRulesManager.windowDetail(w),
+                  "keywords": [w.appId, w.process?.name ?? ""]
+                }));
+            windowPicker.openAt(fromWindowButton);
+          })
         }
-      }
-    }
 
-    Flow {
-      Layout.fillWidth: true
-      spacing: Widget.spacing
-
-      StyledTextButton {
-        implicitHeight: Widget.height
-        iconText: "add"
-        text: I18n.tr("Add another kind")
-        onClicked: root.editor.addKind()
-      }
-
-      StyledTextButton {
-        id: fromWindowButton
-        visible: WindowRulesManager.state?.running === true
-        implicitHeight: Widget.height
-        iconText: "select_window"
-        text: I18n.tr("Add from open window")
-        onClicked: WindowRulesManager.windows(list => {
-          if (!list)
-            return;
-          root.windowTypes = list.map(w => ({
-                "type": w.id,
-                "label": w.title || w.appId || w.id,
-                "image": AppIconManager.resolveWindowIcon(w.appId, w.title),
-                "detail": WindowRulesManager.windowDetail(w),
-                "keywords": [w.appId, w.process?.name ?? ""]
-              }));
-          windowPicker.openAt(fromWindowButton);
-        })
-      }
-
-      StyledTextButton {
-        id: addAppButton
-        implicitHeight: Widget.height
-        iconText: "apps"
-        text: I18n.tr("Add app")
-        onClicked: {
-          root.appTypes = WindowRulesManager.apps("").map(o => ({
-                "type": o.value,
-                "label": o.label,
-                "image": o.image
-              }));
-          appPicker.openAt(addAppButton);
+        StyledTextButton {
+          id: addAppButton
+          implicitHeight: Widget.height
+          iconText: "apps"
+          text: I18n.tr("Add app")
+          onClicked: {
+            root.appTypes = WindowRulesManager.apps("").map(o => ({
+                  "type": o.value,
+                  "label": o.label,
+                  "image": o.image
+                }));
+            appPicker.openAt(addAppButton);
+          }
         }
       }
     }
-  }
 
-  FieldGroup {
-    title: I18n.tr(root.schema.window.title)
-    description: I18n.tr(root.schema.window.description)
+    FieldGroup {
+      title: I18n.tr(root.schema.window.title)
+      description: I18n.tr(root.schema.window.description)
 
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: root.schema.window.properties
-      order: ["float", "size", "center", "workspace", "follow", "special", "monitor", "fullscreen", "maximize", "pin", "opacity", "noBlur", "noFocus", "noScreenShare", "tearing"]
-      values: root.rule.window ?? ({})
-      onEdited: (path, value) => root.editor.set(["window"].concat(path), value)
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: root.schema.window.properties
+        order: ["float", "size", "center", "workspace", "follow", "special", "monitor", "fullscreen", "maximize", "pin", "opacity", "noBlur", "noFocus", "noScreenShare", "tearing"]
+        values: root.rule.window ?? ({})
+        onEdited: (path, value) => root.editor.set(["window"].concat(path), value)
+      }
+
+      IssueList {
+        issues: root.placedNotes.concat(root.noFocusNotes)
+      }
     }
 
-    IssueList {
-      issues: root.placedNotes.concat(root.noFocusNotes)
+    FieldGroup {
+      title: I18n.tr(root.schema.shell.title)
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: root.schema.shell.properties
+        // The other effects follow in their own PRs
+        order: ["dnd", "keepAwake", "powerProfile", "hideFrom", "pauseBinds", "pauseOsd", "hideBar"]
+        values: root.rule.shell ?? ({})
+        onEdited: (path, value) => root.editor.set(["shell"].concat(path), value)
+      }
+
+      IssueList {
+        issues: root.powerNotes
+      }
     }
-  }
 
-  FieldGroup {
-    title: I18n.tr(root.schema.shell.title)
+    FieldGroup {
+      visible: root.generalNotes.length > 0
+      title: I18n.tr("Problems")
+      description: I18n.tr("A rule with problems is saved but not applied.")
 
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: root.schema.shell.properties
-      // The other effects follow in their own PRs
-      order: ["dnd", "keepAwake", "powerProfile", "hideFrom", "pauseBinds", "pauseOsd", "hideBar"]
-      values: root.rule.shell ?? ({})
-      onEdited: (path, value) => root.editor.set(["shell"].concat(path), value)
-    }
-
-    IssueList {
-      issues: root.powerNotes
-    }
-  }
-
-  FieldGroup {
-    visible: root.generalNotes.length > 0
-    title: I18n.tr("Problems")
-    description: I18n.tr("A rule with problems is saved but not applied.")
-
-    IssueList {
-      issues: root.generalNotes
+      IssueList {
+        issues: root.generalNotes
+      }
     }
   }
 

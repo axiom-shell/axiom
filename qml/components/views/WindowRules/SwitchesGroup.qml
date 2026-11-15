@@ -9,7 +9,7 @@ import qs.components.reusable
 import qs.components.forms
 
 // Window rules page, left: the built-in switches (the on/off ones, then Send
-// games to a special workspace), each with Copy as rule, which
+// games to a special workspace; its heading is the host section's), each with Copy as rule, which
 // turns it into a rule to edit; the games switch's problems show under it.
 FieldGroup {
   id: root
@@ -31,7 +31,6 @@ FieldGroup {
     };
   }
 
-  title: I18n.tr(root.schema.title)
   description: I18n.tr(root.schema.description)
 
   SchemaPropertiesForm {

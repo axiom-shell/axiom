@@ -4393,6 +4393,8 @@
     "The menu's box, or with Box set to None, the tile under each card. Auto: the theme's surface colour.": "",
     "Auto: the screen frame's outline colour.": "",
     "How it looks on the bar, with the last output.": "",
-    "An empty module: drag elements here from the left, or click one to add it where there's room.": ""
+    "An empty module: drag elements here from the left, or click one to add it where there's room.": "",
+    "Rule": "",
+    "Nothing to edit yet": ""
   }
 }
