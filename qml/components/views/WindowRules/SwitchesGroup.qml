@@ -8,14 +8,15 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 
-// Window rules page, left: the built-in switches (Float Steam's small
-// windows, Send games to a special workspace), each with Copy as rule, which
+// Window rules page, left: the built-in switches (the on/off ones, then Send
+// games to a special workspace), each with Copy as rule, which
 // turns it into a rule to edit; the games switch's problems show under it.
 FieldGroup {
   id: root
 
   readonly property var editor: WindowRulesManager.editor
   readonly property var schema: ConfigManager.configSchema.properties.WindowRules.properties.switches
+  readonly property var boolKeys: Object.keys(root.schema.properties).filter(key => root.schema.properties[key].type === "boolean")
   readonly property var gamesSchema: root.schema.properties.gamesSpecial
   readonly property var problems: WindowRuleIssues.of(root.editor.report, "").map(issue => ({
         "level": "error",
@@ -35,11 +36,11 @@ FieldGroup {
 
   SchemaPropertiesForm {
     Layout.fillWidth: true
-    propertiesSchema: Utils.pick(root.schema.properties, ["steamFloat"])
-    order: ["steamFloat"]
+    propertiesSchema: Utils.pick(root.schema.properties, root.boolKeys)
+    order: root.boolKeys
     values: root.editor.switches
     onEdited: (path, value) => root.editor.setSwitch(path, value)
-    fieldAction: path => path[0] === "steamFloat" ? root.copyAction("steamFloat") : null
+    fieldAction: path => root.boolKeys.includes(path[0]) ? root.copyAction(path[0]) : null
   }
 
   SchemaPropertiesForm {

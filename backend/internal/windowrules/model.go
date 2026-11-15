@@ -126,8 +126,9 @@ type PauseBinds struct {
 
 // Switches are the built-in rules, ranked below the user's own.
 type Switches struct {
-	SteamFloat   bool
-	GamesSpecial GamesSpecial
+	SteamFloat                                      bool
+	GamesSpecial                                    GamesSpecial
+	PictureInPicture, UtilityFloat, FullscreenAwake bool
 }
 
 // GamesSpecial sends games to a special workspace.
@@ -147,7 +148,10 @@ func Parse(section any) Config {
 	sw := obj(root.Value("switches"))
 	gs := obj(sw.Value("gamesSpecial"))
 	c.Switches = Switches{
-		SteamFloat: flag(sw, "steamFloat"),
+		SteamFloat:       flag(sw, "steamFloat"),
+		PictureInPicture: flag(sw, "pictureInPicture"),
+		UtilityFloat:     flag(sw, "utilityFloat"),
+		FullscreenAwake:  flag(sw, "fullscreenAwake"),
 		GamesSpecial: GamesSpecial{
 			Enabled: flag(gs, "enabled"),
 			Special: parseSpecial(obj(gs.Value("special"))),

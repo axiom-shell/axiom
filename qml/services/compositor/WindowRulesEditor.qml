@@ -254,7 +254,7 @@ QtObject {
     root._apply();
   }
 
-  // Copy as rule: the built-in switch `key` ("steamFloat", "gamesSpecial")
+  // Copy as rule: the built-in switch `key` (a WindowRules.switches key)
   // as a rule of the user's: last among the user's rules (just above the
   // built-ins, where the switch ranked), selected and unsaved, with the switch
   // turned off so it isn't done twice
@@ -269,14 +269,14 @@ QtObject {
         return;
       // The switch's own title, a schema string
       const props = ConfigManager.configSchema.properties.WindowRules.properties.switches.properties;
-      const name = I18n.tr(key === "steamFloat" ? props.steamFloat.title : props.gamesSpecial.properties.enabled.title);
+      const name = I18n.tr(key === "gamesSpecial" ? props.gamesSpecial.properties.enabled.title : props[key].title);
       const rule = Object.assign({
         "id": Utils.newId(Utils.slug(name) || "rule", local.rules),
         "name": name
       }, builtinRule);
       local.rules.push(ConfigManager.withDefaults(rule, "WindowRule"));
       root._apply();
-      root.setSwitch(key === "steamFloat" ? [key] : [key, "enabled"], false);
+      root.setSwitch(key === "gamesSpecial" ? [key, "enabled"] : [key], false);
       root.select(local.rules.length - 1);
     });
   }

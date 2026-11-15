@@ -59,6 +59,19 @@ func TestWindowRulesMethods(t *testing.T) {
 	if err := c.Call(context.Background(), "windowRules.builtin", sw, &bi); err != nil || bi.Rule.Window.Special.ID != "play" || bi.Rule.Icon == "" {
 		t.Errorf("builtin %+v, %v", bi, err)
 	}
+	var aw struct {
+		Rule struct {
+			Shell struct {
+				KeepAwake struct {
+					Enabled bool   `json:"enabled"`
+					When    string `json:"when"`
+				} `json:"keepAwake"`
+			} `json:"shell"`
+		} `json:"rule"`
+	}
+	if err := c.Call(context.Background(), "windowRules.builtin", map[string]any{"key": "fullscreenAwake", "section": map[string]any{}}, &aw); err != nil || !aw.Rule.Shell.KeepAwake.Enabled || aw.Rule.Shell.KeepAwake.When != "fullscreen" {
+		t.Errorf("builtin fullscreenAwake %+v, %v", aw, err)
+	}
 	if err := c.Call(context.Background(), "windowRules.builtin", map[string]any{"key": "x", "section": map[string]any{}}, nil); axerr.KindOf(err) != axerr.BadRequest {
 		t.Errorf("builtin x: %v", err)
 	}
