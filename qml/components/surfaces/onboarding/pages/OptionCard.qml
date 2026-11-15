@@ -8,8 +8,9 @@ import qs.components.reusable
 // A choice as a box: an icon, a title with an optional tag ("Recommended"),
 // and a description. The selected one is outlined in the accent color;
 // an unavailable one is greyed out, saying why.
-Rectangle {
+Surface {
   id: root
+  tone: root.selected ? "accentContainer" : "surface"
 
   property string icon
   property string title
@@ -18,7 +19,8 @@ Rectangle {
   property bool recommended: false
   // The tag beside the title ("" for none)
   property string tag: root.recommended ? I18n.tr("Recommended") : ""
-  property color tagColor: Theme.accent
+  // StatusChip's tone for the tag
+  property string tagTone: "accent"
   // False greys it out and ignores clicks
   property bool available: true
   // Why it isn't available, shown under the description
@@ -28,12 +30,15 @@ Rectangle {
 
   Layout.fillWidth: true
   implicitHeight: row.implicitHeight + Widget.padding * 2
-  radius: Widget.radius
-  color: root.selected ? Qt.alpha(Theme.accent, 0.12) : area.containsMouse && root.available ? Theme.backgroundHighlight : Theme.backgroundAlt
-  border.color: root.selected ? Theme.accent : Theme.border
-  border.width: Appearance.borderWidth
+  // Outlined in both states: subtle, or the accent when selected
+  outlined: true
+  border.color: root.selected ? Style.accent : Style.borderSubtle
 
   ColorGlide on color {}
+
+  StateLayer {
+    hovered: area.containsMouse && root.available && !root.selected
+  }
 
   RowLayout {
     id: row
@@ -43,11 +48,11 @@ Rectangle {
 
     StyledIcon {
       Layout.alignment: Qt.AlignTop
-      opacity: root.available ? 1 : 0.5
+      opacity: root.available ? 1 : Style.opacityDisabled
       visible: root.icon !== ""
       text: root.icon
-      textSize: Appearance.fontSize * 1.6
-      textColor: root.selected ? Theme.accent : Theme.foreground
+      size: "lg"
+      tone: root.selected ? "accent" : ""
     }
 
     ColumnLayout {
@@ -57,39 +62,29 @@ Rectangle {
       spacing: Widget.spacing / 2
 
       RowLayout {
-        opacity: root.available ? 1 : 0.5
         spacing: Widget.spacing
 
         StyledLabel {
           text: root.title
-          font.weight: Font.Bold
+          role: "label"
+          tone: root.available ? "" : "disabled"
         }
 
-        Rectangle {
+        StatusChip {
           visible: root.tag !== ""
-          implicitWidth: tag.implicitWidth + Widget.spacing * 2
-          implicitHeight: tag.implicitHeight + Widget.px(4)
-          radius: height / 2
-          color: root.tagColor
-
-          StyledLabel {
-            id: tag
-            anchors.centerIn: parent
-            text: root.tag
-            textSize: Appearance.fontSize * 0.8
-            textColor: Theme.background
-          }
+          opacity: root.available ? 1 : Style.opacityDisabled
+          text: root.tag
+          // On the selected card's accent container an accent chip would vanish
+          tone: root.selected && root.tagTone === "accent" ? "neutral" : root.tagTone
         }
       }
 
       StyledText {
         Layout.fillWidth: true
         visible: root.description !== ""
-        opacity: root.available ? 1 : 0.5
         text: root.description
-        wrapMode: Text.WordWrap
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSize * 0.9
+        role: "caption"
+        tone: root.available ? "muted" : "disabled"
       }
 
       RowLayout {
@@ -100,16 +95,14 @@ Rectangle {
         StyledIcon {
           Layout.alignment: Qt.AlignTop
           text: "block"
-          textColor: Theme.warning
-          textSize: Appearance.fontSize
+          tone: "warning"
         }
 
         StyledText {
           Layout.fillWidth: true
           text: root.unavailableReason
-          wrapMode: Text.WordWrap
-          textColor: Theme.warning
-          textSize: Appearance.fontSize * 0.9
+          role: "caption"
+          tone: "warning"
         }
       }
     }

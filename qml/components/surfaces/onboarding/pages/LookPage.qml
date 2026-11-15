@@ -88,10 +88,11 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     visible: root.bar !== null
     text: I18n.tr("Bar")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   GridLayout {
@@ -177,8 +178,7 @@ OnboardingPage {
         required property string modelData
         // I18n.tr("Top") I18n.tr("Bottom") I18n.tr("Left") I18n.tr("Right")
         text: I18n.tr(modelData[0].toUpperCase() + modelData.slice(1))
-        backgroundColor: root.bar?.edge === modelData ? Theme.accent : Theme.backgroundHighlight
-        textColor: root.bar?.edge === modelData ? Theme.background : Theme.foreground
+        kind: root.bar?.edge === modelData ? "primary" : "tonal"
         onClicked: root.setBar("edge", modelData)
       }
     }
@@ -192,18 +192,18 @@ OnboardingPage {
   // --- Example setups ---
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     visible: SavedConfigsManager.examples.length > 0
     text: I18n.tr("Example setups")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   StyledText {
     Layout.fillWidth: true
     visible: SavedConfigsManager.examples.length > 0
     text: I18n.tr("Applies a whole look (bars, theme, menus) at once. Your wallpaper and the rest of this setup stay.")
-    wrapMode: Text.WordWrap
-    textColor: Theme.foregroundAlt
+    tone: "muted"
   }
 
   TileFlow {

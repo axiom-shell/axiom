@@ -49,10 +49,11 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     visible: root.binds
     text: I18n.tr("Main modifier key")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   RowLayout {
@@ -79,10 +80,11 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     visible: root.binds
     text: I18n.tr("Keys to know")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   BindsTable {
@@ -137,7 +139,6 @@ OnboardingPage {
     Layout.fillWidth: true
     visible: root.binds
     text: I18n.tr("Every key can be changed on the overlay's Keybinds page.")
-    wrapMode: Text.WordWrap
-    textColor: Theme.foregroundAlt
+    tone: "muted"
   }
 }

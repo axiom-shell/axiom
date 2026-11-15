@@ -30,9 +30,7 @@ RowLayout {
     Layout.preferredHeight: root.buttonHeight
     text: I18n.tr("Skip setup")
     iconText: "close"
-    backgroundColor: Theme.backgroundAlt
-    borderColor: Theme.foreground
-    borderWidth: Appearance.borderWidth
+    kind: "outlined"
     onClicked: root.quitRequested()
   }
 
@@ -65,21 +63,16 @@ RowLayout {
     text: OnboardingManager.isLast ? I18n.tr("Finish") : I18n.tr("Next")
     iconText: OnboardingManager.isLast ? "check" : "arrow_forward"
     iconAfter: true
-    backgroundColor: Theme.accent
-    textColor: Theme.background
-    hoverColor: Theme.accentAlt
+    kind: "primary"
     onClicked: OnboardingManager.next()
   }
 
   // Confirming a skip
-  Rectangle {
+  Surface {
+    tone: "surface"
     visible: root.confirmingQuit
     Layout.preferredHeight: root.buttonHeight
     implicitWidth: confirmRow.implicitWidth + Widget.padding * 2
-    radius: Widget.radius
-    color: Theme.backgroundAlt
-    border.color: Theme.foreground
-    border.width: Appearance.borderWidth
 
     RowLayout {
       id: confirmRow
@@ -97,8 +90,7 @@ RowLayout {
 
       StyledTextButton {
         text: I18n.tr("Skip setup")
-        backgroundColor: Theme.error
-        textColor: Theme.background
+        kind: "danger"
         onClicked: root.quitConfirmed()
       }
     }

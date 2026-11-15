@@ -97,7 +97,7 @@ OnboardingPage {
       description: modelData.description
       selected: OnboardingManager.chosenMode === modelData.mode
       tag: modelData.tag
-      tagColor: modelData.mode === "managed" ? Theme.accent : Theme.warning
+      tagTone: modelData.mode === "managed" ? "accent" : "warning"
       available: !(modelData.mode === "managed" && root.configState === "blocked")
       unavailableReason: modelData.mode === "managed" ? OnboardingManager.blockedReason : ""
       onClicked: OnboardingManager.chooseMode(modelData.mode)
@@ -141,9 +141,10 @@ OnboardingPage {
     spacing: Widget.spacing
 
     StyledText {
+      Layout.fillWidth: true
       Layout.topMargin: Widget.spacing
       text: I18n.tr("Keyboard")
-      font.weight: Font.Bold
+      role: "title"
     }
 
     SettingRows {
@@ -162,10 +163,11 @@ OnboardingPage {
     }
 
     StyledText {
+      Layout.fillWidth: true
       Layout.topMargin: Widget.spacing
       visible: BatteryManager.isAvailable
       text: I18n.tr("Touchpad")
-      font.weight: Font.Bold
+      role: "title"
     }
 
     SettingRows {
@@ -178,7 +180,6 @@ OnboardingPage {
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("The mode is applied when you press Finish; only Apply above changes {0} right away. You can switch modes later in Settings → Compositor.", root.config)
-    wrapMode: Text.WordWrap
-    textColor: Theme.foregroundAlt
+    tone: "muted"
   }
 }

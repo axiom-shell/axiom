@@ -11,8 +11,9 @@ import qs.components.reusable
 // screen drawn in its theme, with its bars on their edges in their style,
 // its docks and the screen border, then its palette, title and description.
 // A click applies it at once.
-StyledContainer {
+Surface {
   id: root
+  tone: "surface"
 
   // { name, title, description, theme, screenBorder, bars: [{ location,
   // surface, floating }], docks: [{ edge }] }
@@ -20,16 +21,15 @@ StyledContainer {
 
   // Its theme's preview colors, or the running theme's for one not found
   readonly property var preview: ThemeFamilies.previewOf(ThemeManager.themeFamilies, root.example.theme ?? "") ?? ({})
-  readonly property color background: root.preview.background ?? Theme.background
-  readonly property color foreground: root.preview.foreground ?? Theme.foreground
-  readonly property color accent: root.preview.accent ?? Theme.accent
+  // Its theme's roles (StyleTokens.preview), null for one not found
+  readonly property var roles: root.preview.roles ?? null
   readonly property bool applied: SavedConfigsManager.activeSource === root.example.name
 
   implicitHeight: column.implicitHeight + Widget.padding * 2
-  borderWidth: 2
-  borderColor: root.applied ? Theme.accent : area.containsMouse ? Theme.border : "transparent"
+  border.width: Style.focusWidth
+  border.color: root.applied ? Style.accent : area.containsMouse ? Style.borderStrong : "transparent"
 
-  ColorGlide on borderColor {}
+  ColorGlide on border.color {}
 
   ColumnLayout {
     id: column
@@ -43,7 +43,7 @@ StyledContainer {
       Layout.fillWidth: true
       Layout.preferredHeight: width * 10 / 16
       radius: Widget.radius / 2
-      color: root.background
+      color: root.roles?.surfacePage ?? Style.surfacePage
       clip: true
 
       // How thick a bar is, and how far a floating one sits off its edge
@@ -56,7 +56,7 @@ StyledContainer {
         radius: parent.radius
         color: "transparent"
         border.width: Math.max(1, screen.gap / 2)
-        border.color: Qt.alpha(root.foreground, 0.3)
+        border.color: root.roles?.divider ?? Style.divider
       }
 
       Repeater {
@@ -87,7 +87,9 @@ StyledContainer {
             anchors.fill: parent
             visible: bar.surface === "bar"
             radius: bar.floats ? Math.min(width, height) / 2 : 0
-            color: Qt.alpha(root.foreground, 0.15)
+            color: root.roles?.surface ?? Style.surface
+            border.width: Style.hairline
+            border.color: root.roles?.divider ?? Style.divider
           }
 
           Repeater {
@@ -105,7 +107,9 @@ StyledContainer {
               width: bar.across ? group.size : screen.thickness
               height: bar.across ? screen.thickness : group.size
               radius: Math.min(width, height) / 2
-              color: bar.pills ? Qt.alpha(root.foreground, 0.2) : "transparent"
+              color: bar.pills ? root.roles?.surface ?? Style.surface : "transparent"
+              border.width: bar.pills ? Style.hairline : 0
+              border.color: root.roles?.divider ?? Style.divider
 
               // The widgets: the first group's in the accent
               Rectangle {
@@ -113,7 +117,7 @@ StyledContainer {
                 width: bar.across ? group.size * 0.6 : screen.thickness * 0.35
                 height: bar.across ? screen.thickness * 0.35 : group.size * 0.6
                 radius: Math.min(width, height) / 2
-                color: group.index === 0 ? root.accent : Qt.alpha(root.foreground, 0.6)
+                color: group.index === 0 ? root.roles?.accent ?? Style.accent : root.roles?.textMuted ?? Style.textMuted
               }
             }
           }
@@ -132,7 +136,9 @@ StyledContainer {
           width: across ? screen.width * 0.24 : screen.thickness
           height: across ? screen.thickness : screen.width * 0.24
           radius: Math.min(width, height) / 2
-          color: Qt.alpha(root.foreground, 0.2)
+          color: root.roles?.surface ?? Style.surface
+          border.width: Style.hairline
+          border.color: root.roles?.divider ?? Style.divider
           x: across ? (screen.width - width) / 2 : modelData.edge === "left" ? offset : screen.width - width - offset
           y: across ? (modelData.edge === "top" ? offset : screen.height - height - offset) : (screen.height - height) / 2
         }
@@ -164,13 +170,12 @@ StyledContainer {
         Layout.fillWidth: true
         text: root.example.title
         textFormat: Text.PlainText
-        font.weight: Font.Bold
-        elide: Text.ElideRight
+        role: "label"
       }
 
       StatusChip {
         shown: root.applied
-        color: Theme.accent
+        tone: "accent"
         text: I18n.tr("Applied")
       }
     }
@@ -179,9 +184,8 @@ StyledContainer {
       Layout.fillWidth: true
       text: root.example.description
       textFormat: Text.PlainText
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "muted"
     }
   }
 

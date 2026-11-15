@@ -75,8 +75,9 @@ OnboardingPage {
     Repeater {
       model: 2
 
-      delegate: Rectangle {
+      delegate: Surface {
         id: monitor
+        tone: "surface"
         required property int index
         // Scrolling: a column of workspaces, the last one empty
         readonly property bool column: root.layout === "scrolling" && root.canScroll
@@ -85,9 +86,6 @@ OnboardingPage {
         width: root.cardWidth * 0.36
         height: width * 0.6
         radius: Widget.radius / 2
-        color: Theme.backgroundAlt
-        border.color: Theme.border
-        border.width: Appearance.borderWidth
 
         Grid {
           anchors.centerIn: parent
@@ -104,14 +102,14 @@ OnboardingPage {
               width: Math.min((monitor.width - Widget.px(16)) / monitor.columns - Widget.spacing, (monitor.height - Widget.px(16)) / monitor.rows - Widget.spacing)
               height: width
               radius: Widget.px(3)
-              color: active ? Theme.accent : Theme.backgroundHighlight
+              color: active ? Style.accent : Style.surfaceHighest
 
               StyledLabel {
                 anchors.centerIn: parent
                 visible: root.layout !== "grid" && parent.width > Appearance.fontSize
                 text: String(parent.index + 1)
-                textSize: Math.max(Widget.px(8), parent.width * 0.45)
-                textColor: parent.active ? Theme.background : Theme.foreground
+                textSize: Math.max(Style.typeMicro, parent.width * 0.45) // fitted: the number fills its square
+                textColor: parent.active ? Style.onAccent : Style.inkHighest.text
               }
             }
           }

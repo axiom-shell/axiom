@@ -47,9 +47,10 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Where things are")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   BindsTable {
@@ -90,6 +91,5 @@ OnboardingPage {
     Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("In the launcher, / lists commands: /config sets any setting, /monitors opens the monitor layout, and /welcome brings this setup back. The overlay's pages hold Settings, the Keybinds editor, the Bar and overlay editors, and themes.")
-    wrapMode: Text.WordWrap
   }
 }
