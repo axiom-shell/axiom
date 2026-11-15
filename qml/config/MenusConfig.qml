@@ -105,11 +105,12 @@ QtObject {
     return MenuTiles.detached(menu);
   }
 
-  // The menu's box colours
+  // The menu's box colours. Auto ('') is the theme's surface and the
+  // frame's outline (D-56)
   function colorsOf(menu) {
     return {
-      "fill": Theme.resolveColor(menu.backgroundColor),
-      "stroke": Theme.resolveColor(menu.borderColor)
+      "fill": menu.backgroundColor ? Style.resolve(menu.backgroundColor) : Style.surfacePage,
+      "stroke": menu.borderColor ? Style.resolve(menu.borderColor) : Style.frameStroke
     };
   }
 

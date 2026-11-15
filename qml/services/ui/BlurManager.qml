@@ -106,7 +106,7 @@ QtObject {
   // A surface's own fill on `screen`: at the surface opacity, solid where
   // opaqueOn
   function fillOn(color, screen) {
-    return root.opaqueOn(screen) ? color : Appearance.fill(color);
+    return Style.edgeFill(color, root.opaqueOn(screen));
   }
 
   // The registered BlurShapes; changes only as one comes or goes. Each

@@ -31,6 +31,16 @@ QtObject {
     return dock.visibility === "always" && dock.reserveSpace && !(dock.detached && dock.distance > 0);
   }
 
+  // The dock's box colours. Auto ('') is the theme's surface and the
+  // frame's outline (D-56), read before Style.resolve (which turns '' into
+  // transparent)
+  function colorsOf(dock) {
+    return {
+      "fill": dock.backgroundColor ? Style.resolve(dock.backgroundColor) : Style.surfacePage,
+      "stroke": dock.borderColor ? Style.resolve(dock.borderColor) : Style.frameStroke
+    };
+  }
+
   function dockById(id) {
     return root.docks.find(dock => dock.id === id) ?? null;
   }

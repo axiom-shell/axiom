@@ -176,8 +176,8 @@ properties:
         default: 400
         minimum: 0
         maximum: 5000
-  backgroundColor: {type: string, title: Background color, x-options: colors, default: base00}
-  borderColor: {type: string, title: Border color, x-options: colors, default: base05}
+  backgroundColor: {type: string, title: Background color, x-options: colors, default: '', x-emptyLabel: Auto}
+  borderColor: {type: string, title: Border color, x-options: colors, default: '', x-emptyLabel: Auto}
   pinnedOwn:
     type: boolean
     title: Own pinned apps
