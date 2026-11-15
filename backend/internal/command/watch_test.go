@@ -57,6 +57,19 @@ func (c *fakeClock) Advance(d time.Duration) {
 	c.waits = kept
 }
 
+// armed is how many waits end d from now.
+func (c *fakeClock) armed(d time.Duration) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	n := 0
+	for _, w := range c.waits {
+		if w.at.Equal(c.now.Add(d)) {
+			n++
+		}
+	}
+	return n
+}
+
 // fakeSub records the outputs pushed to it.
 type fakeSub struct{ pushes chan Outputs }
 
@@ -384,4 +397,24 @@ func TestWatchRestartPoll(t *testing.T) {
 	h.ran(t, "x")
 	h.w.Restart("unknown") // nothing watched: nothing happens
 	h.idle(t)
+}
+
+// lastLine cuts a long line at the byte limit, backing up to a character
+// start there only (not at an invalid byte earlier in the line).
+func TestLastLine(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ name, in, want string }{
+		{"invalid byte inside", strings.Repeat("a", 49) + "\xff" + strings.Repeat("b", 400), strings.Repeat("a", 49) + "\xff" + strings.Repeat("b", 250)},
+		{"cut mid character", strings.Repeat("a", 299) + "é" + strings.Repeat("b", 10), strings.Repeat("a", 299)},
+		{"short", "boom", "boom"},
+		{"last of several, trimmed", "one\n two \n\n", "two"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			if got := lastLine(c.in); got != c.want {
+				t.Errorf("lastLine = %q (%d bytes), want %q (%d bytes)", got, len(got), c.want, len(c.want))
+			}
+		})
+	}
 }

@@ -180,6 +180,9 @@ TestCase {
       }
     });
     compare(CustomWidgetData.actionsOf({}), {}, "an empty list: every action off");
+    const own = CustomWidgetData.actionsOf(JSON.parse('{"__proto__":{"enabled":false},"constructor":{},"ok":{}}'));
+    compare(Object.keys(own), ["ok"], "names every object has aren't action ids");
+    verify(Object.getPrototypeOf(own) === Object.prototype, "the prototype stays");
   }
 
   readonly property var _words: ({
@@ -292,6 +295,17 @@ TestCase {
     compare(CustomWidgetData.failure({
       "error": ""
     }, ok, _ctx(true, false)), null, "an empty error");
+    for (const off of [false, 0,
+      {},
+      "  "])
+      compare(CustomWidgetData.failure({
+        "error": off
+      }, ok, _ctx(true, false)), null, "error " + JSON.stringify(off) + " is no error");
+    const on = CustomWidgetData.failure({
+      "error": true
+    }, ok, _ctx(true, false));
+    compare(on.kind, "script", "error true");
+    compare(on.message, "true");
     compare(CustomWidgetData.failure(sample, ok, undefined), null, "no context");
     compare(CustomWidgetData.failure(sample, {
       "exitCode": 3,
@@ -373,6 +387,18 @@ TestCase {
     });
     verify(quiet.hidden);
     compare(quiet.error, "");
+    // An error of false doesn't fail, and the script's own hidden stands
+    const off = CustomWidgetData.resolve({}, {
+      "text": "",
+      "error": false,
+      "hidden": true
+    }, {
+      "interactive": true,
+      "stream": false,
+      "words": _words
+    });
+    compare(off.failure, null);
+    verify(off.hidden, "hidden by the script");
     // hidden by the script, apart from empty text
     const byScript = CustomWidgetData.resolve({}, {
       "text": "x",

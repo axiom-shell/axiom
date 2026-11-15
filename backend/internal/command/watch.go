@@ -12,14 +12,15 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
-// The watched commands (CommandManager's acquire and outputs: `exec.watch`,
-// `exec.unwatch`, `exec.refresh`, `exec.restart`). Each distinct command runs through
-// `sh -c` in one loop for every subscriber, at the shortest interval any
-// of them asked (once, for a command only watched in once mode; as a
-// stream, stream.go, for one any of them streams), and not at all without
-// subscribers. A subscriber gets one latest-wins push
-// carrying every command it watches, since per-command pushes on one
-// method would overwrite each other.
+// The watched commands (CommandManager's acquire and outputs:
+// `exec.watch`, `exec.unwatch`, `exec.refresh`, `exec.restart`). Each
+// distinct command runs through `sh -c` in one loop for every
+// subscriber, at the shortest interval any of them asked (once, for a
+// command only watched in once mode; as a stream, stream.go, for one
+// any of them streams), and not at all without subscribers. A
+// subscriber gets one latest-wins push carrying every command it
+// watches, since per-command pushes on one method would overwrite each
+// other.
 
 // Watch modes and formats.
 const (
@@ -62,8 +63,9 @@ type Entry struct {
 	// The last non-empty line the run wrote to stderr (at most maxStderrLine
 	// bytes): a poll's, or a stream's up to its exit
 	Stderr string `json:"stderr,omitempty"`
-	// A stream that ended (its Text is the last line it printed, ExitCode
-	// how it ended)
+	// A stream that ended with a non-zero exit (its Text is the last line
+	// it printed, ExitCode how it ended). An exit 0 with unchanged text
+	// isn't pushed, and a new process that runs 1 s clears it.
 	Exited bool `json:"exited,omitempty"`
 	// When the output became what it is (ms since the epoch): an unchanged
 	// output isn't pushed again (a changed Stderr or Exited counts only
@@ -80,10 +82,11 @@ func lastLine(text string) string {
 	lines := strings.Split(strings.TrimRight(text, "\r\n\t "), "\n")
 	line := strings.TrimSpace(lines[len(lines)-1])
 	if len(line) > maxStderrLine {
-		line = line[:maxStderrLine]
-		for !utf8.ValidString(line) {
-			line = line[:len(line)-1]
+		cut := maxStderrLine
+		for i := 0; i < utf8.UTFMax-1 && cut > 0 && !utf8.RuneStart(line[cut]); i++ {
+			cut--
 		}
+		line = line[:cut]
 	}
 	return line
 }
@@ -400,6 +403,29 @@ func (w *Watches) publish(command string, run *watched, out, stderr string, exit
 		return
 	}
 	run.entry = &e
+	w.notify(command)
+}
+
+// settle clears a stream's non-zero exit from its entry once a new
+// process has run for a while (the entry is otherwise left as the last
+// process ended until it prints); w.mu is not held.
+func (w *Watches) settle(command string, run *watched, at time.Time) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.runs[command] != run || run.entry == nil || run.entry.ExitCode == 0 {
+		return
+	}
+	e := *run.entry
+	if e.ExitCode == -1 {
+		e.Error = ""
+	}
+	e.ExitCode, e.Exited, e.Stderr, e.At = 0, false, "", at.UnixMilli()
+	run.entry = &e
+	w.notify(command)
+}
+
+// notify pushes to everyone watching command; w.mu is held.
+func (w *Watches) notify(command string) {
 	for s, cmds := range w.subs {
 		if _, ok := cmds[command]; ok {
 			w.push(s)

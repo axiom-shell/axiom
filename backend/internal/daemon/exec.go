@@ -19,8 +19,8 @@ func (d *Daemon) execMethods(reg *rpc.Registry) {
 
 // execHandlers are exec.run and exec.spawn, run with options' (the
 // shell's, the greeter's quickshell's environment), and exec.watch,
-// exec.unwatch, exec.refresh and exec.restart on watches' commands (which run with the
-// same options).
+// exec.unwatch, exec.refresh and exec.restart on watches' commands
+// (which run with the same options).
 func execHandlers(reg *rpc.Registry, options func() command.Options, watches func() *command.Watches) {
 	type runParams struct {
 		Argv []string `json:"argv"`

@@ -84,9 +84,10 @@ func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 
 // streamOnce runs command once, publishing its lines, until it exits
 // (when, streamExited; the exit is published with the last stderr line
-// and Exited) or it's stopped (streamStopped: ctx ended or nobody streams
-// it any more; streamRestarted: Restart), when its group is killed and
-// nothing is published for it.
+// and Exited) or it's stopped (streamStopped: ctx ended or nobody
+// streams it any more; streamRestarted: Restart), when its group is
+// killed and nothing is published for it. A non-zero exit still in the
+// entry is cleared once this process has run firstBackoff.
 func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, stderr *rateLimited) (time.Time, streamEnd) {
 	// A restart from before this run is no restart of it
 	select {
@@ -119,6 +120,7 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 		w.publish(command, run, "", "", 0, false, startError("sh", err), now)
 		return now, streamExited
 	}
+	var settled <-chan time.Time = w.o.Until(w.o.Now().Add(firstBackoff))
 	exited := make(chan struct{})
 	go func() {
 		wait()
@@ -150,6 +152,9 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 			return time.Time{}, streamRestarted
 		case <-run.refresh:
 			flush(0, "", false)
+		case <-settled:
+			settled = nil
+			w.settle(command, run, w.o.Now())
 		case <-lines:
 			if due == nil {
 				due = w.o.Until(published.Add(coalesce))

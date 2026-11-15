@@ -214,7 +214,8 @@ QtObject {
       return null;
     const out = {};
     for (const id of Object.keys(value)) {
-      if (!root._actionId(id))
+      // names every object has (`__proto__`, `constructor`, …) aren't action ids
+      if (!root._actionId(id) || id in Object.prototype)
         continue;
       const entry = value[id];
       out[id] = {
@@ -238,7 +239,8 @@ QtObject {
   //   start:   it couldn't start (exitCode -1 and an error)
   //   stopped: a stream that ended with a non-zero exit
   //   exit:    a non-zero exit with no output
-  //   script:  the sample's own non-empty `error`
+  //   script:  the sample's own `error` (a non-empty string, or any other
+  //            truthy value)
   function failure(sample, run, context) {
     if (!context?.interactive)
       return null;
@@ -259,7 +261,8 @@ QtObject {
       return make("stopped", exitMessage());
     if (code !== undefined && code !== 0 && !r.text)
       return make("exit", exitMessage());
-    const error = root.asText(sample?.error);
+    const e = sample?.error;
+    const error = typeof e === "string" ? e.trim() : root.truthy(e) ? root.asText(e) : "";
     return error !== "" ? make("script", error) : null;
   }
 
@@ -341,11 +344,12 @@ QtObject {
   //   definition: { format, formatIcons,
   //                 states, maxLength, escape, hideEmpty }
   // Returns { text (rich, the format filled), plain (it as plain text),
-  // rawText, alt, tooltip (rich), classes, color (a theme name or colour,
+  // rawText, alt, tooltip (rich), classes, color (a theme colour name,
   // "" for none), percentage, value, min, max (0-100 unless given), hasMax
   // (the output gave a max or a percentage), ratio (0-1, or -1 without a
   // value), state, rev, actions (actionsOf), failure (failure), error (its
-  // message), hiddenByScript (the output's own `hidden`), interactive, unit, subtext, icon (a Material Symbols name), glyph (the
+  // message), hiddenByScript (the output's own `hidden`), interactive,
+  // unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
   function resolve(definition, sample, context) {
     const d = definition ?? {};
