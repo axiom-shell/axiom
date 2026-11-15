@@ -35,6 +35,11 @@ QtObject {
       })
     shiftsBack: true
     scopeKey: root.selectedId
+    // The definition's own keys go with each snapshot (every one but the
+    // elements, which the history keeps as modules), so undo covers an
+    // edit to a format or an option as well as a move
+    snapshotExtra: () => root._definitionSnapshot()
+    restoreExtra: extra => root._restoreDefinition(extra)
     factory: ({
         "make": (type, place) => CustomWidgetsConfig.newElement(type, Utils.newId(type, root._elements()), place),
         "size": type => CustomWidgetsConfig.elementKind(type)?.size ?? [4, 4]
@@ -97,7 +102,12 @@ QtObject {
     const index = root.elements.selected;
     if (index < 0)
       return;
-    root.set(["module", "elements", index].concat(path), value);
+    const keys = ["module", "elements", index].concat(path);
+    if (Utils.deepEqual(root._valueAt(keys), value))
+      return;
+    // One undo step per field, typing in it included
+    root.elements.recordField("el:" + index + ":" + path.join("."));
+    root._write(keys, value);
   }
 
   // Whether a definition differs from its saved version (matched by id)
@@ -165,24 +175,11 @@ QtObject {
   // Sets a key of the selected definition: `path` a key or a list of keys
   // into it (["bar", "style"])
   function set(path, value) {
-    const def = root._local().items[root.selectedIndex];
-    if (!def)
-      return;
     const keys = Array.isArray(path) ? path : [path];
-    let target = def;
-    for (const key of keys.slice(0, -1)) {
-      if (target[key] === null || typeof target[key] !== "object")
-        target[key] = {};
-      target = target[key];
-    }
-    const last = keys[keys.length - 1];
-    if (Utils.deepEqual(target[last], value))
+    if (Utils.deepEqual(root._valueAt(keys), value))
       return;
-    if (value === undefined)
-      delete target[last];
-    else
-      target[last] = value;
-    root._apply();
+    root.elements.recordField("def:" + keys.join("."));
+    root._write(keys, value);
   }
 
   // The selected definition's command as a file to show, when its first
@@ -194,6 +191,61 @@ QtObject {
   }
 
   // -- Private --
+
+  // The selected definition's value at `keys`, undefined when absent
+  function _valueAt(keys) {
+    return keys.reduce((v, key) => v === null || typeof v !== "object" ? undefined : v[key], root._local().items[root.selectedIndex]);
+  }
+
+  // Sets the value at `keys` of the selected definition (undefined removes
+  // it), making the objects on the way
+  function _write(keys, value) {
+    const def = root._local().items[root.selectedIndex];
+    if (!def)
+      return;
+    let target = def;
+    for (const key of keys.slice(0, -1)) {
+      if (target[key] === null || typeof target[key] !== "object")
+        target[key] = {};
+      target = target[key];
+    }
+    const last = keys[keys.length - 1];
+    if (value === undefined)
+      delete target[last];
+    else
+      target[last] = value;
+    root._apply();
+  }
+
+  // The selected definition for the undo history: all of it, its module's
+  // elements left out (null; the history keeps them as modules)
+  function _definitionSnapshot() {
+    const def = root._local()?.items[root.selectedIndex];
+    if (!def)
+      return null;
+    return Object.assign({}, def, {
+      "module": Object.assign({}, def.module, {
+        "elements": null
+      })
+    });
+  }
+
+  // Puts a snapshot's keys back into the selected definition in place
+  // (its elements are spliced back by the history already)
+  function _restoreDefinition(extra) {
+    const def = root._local()?.items[root.selectedIndex];
+    if (!def || !extra)
+      return;
+    const put = (target, from, keep) => {
+      Object.keys(target).filter(key => key !== keep && !(key in from)).forEach(key => delete target[key]);
+      Object.keys(from).filter(key => key !== keep).forEach(key => target[key] = Utils.clone(from[key]));
+    };
+    const module = extra.module;
+    put(def, extra, "module");
+    if (module)
+      put(def.module, module, "elements");
+  }
+
   property ConfigDraft _draft: ConfigDraft {
     path: ["CustomWidgets"]
     onRefused: root._apply()
