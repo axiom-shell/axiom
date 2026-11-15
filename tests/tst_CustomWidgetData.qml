@@ -1323,6 +1323,9 @@ TestCase {
       "tree": "/opt/axiom/",
       "value": ""
     }), "bash /opt/axiom/run ''", "{tree} as is, an empty value ''");
+    compare(CustomWidgetData.fillCommand("ls ${tree} {tree}x {value}", {
+      "tree": "/t/"
+    }), "ls ${tree} /t/x {value}", "a shell ${tree} stays, unfilled placeholders stay");
     compare(CustomWidgetData.fillCommand("x {value}", {
       "value": "a$&b"
     }), "x 'a$&b'", "shell characters intact");
@@ -1361,6 +1364,8 @@ TestCase {
     compare(CustomWidgetData.keyName(Qt.Key_Shift, "", Qt.ShiftModifier, false), "", "a modifier alone");
     compare(CustomWidgetData.keyName(Qt.Key_F1, "", none, false), "", "a key with no name");
     compare(CustomWidgetData.keyName(Qt.Key_Slash, "/", Qt.ControlModifier, false), "", "ctrl on a key outside A-Z and 0-9");
+    compare(CustomWidgetData.keyName(Qt.Key_U, "u", Qt.MetaModifier, false), "", "a Super chord is none");
+    compare(CustomWidgetData.keyName(Qt.Key_Z, "\x1a", Qt.ControlModifier | Qt.MetaModifier, false), "", "ctrl+super is none");
     compare(CustomWidgetData.keyName(Qt.Key_A, "a", none, undefined), "a", "no auto-repeat flag");
   }
 
