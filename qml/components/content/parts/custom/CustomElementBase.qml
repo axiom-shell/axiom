@@ -58,8 +58,9 @@ Item {
     return CustomWidgetData.elementRatio(root.fields, root.bind);
   }
 
-  // The state's colour from the script, or null
-  readonly property var stateColor: root.fields?.color ? Style.resolve(root.fields.color) : null
+  // The state's colour from the script, or null; the error colour while the
+  // script fails
+  readonly property var stateColor: root.fields?.failure ? Style.error : (root.fields?.color ? Style.resolve(root.fields.color) : null)
 
   // The colour part (CustomElementBase.yaml's x-parts.color): a picked
   // colour, else `fallback`. Graphics (`state`) take the state's colour
