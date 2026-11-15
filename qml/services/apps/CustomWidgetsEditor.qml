@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.compositor
 import qs.services.ui
 
 // The Custom widgets page's editor (CustomWidgetsManager.editor): a draft of
@@ -116,6 +117,37 @@ QtObject {
   readonly property var previewSampleSource: root.pageShown ? CustomWidgetData.sampleForView(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null) : null
   // Where it comes from: "saved", "live" or "none"
   readonly property string sampleSource: root.pageShown ? CustomWidgetData.sampleSource(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null) : "none"
+
+  // The actions an element or a key can name: none (its own commands), the
+  // built-ins, an action of the shell that's allowed (never a session or
+  // destructive one), then the ids the output's `actions` lists
+  readonly property var actionOptions: {
+    const refused = ActionsManager.sessionActions.concat(KeybindManager.actions.filter(id => ActionsManager.destructive(id)));
+    const out = [
+      {
+        "value": "",
+        "label": I18n.tr("None (the commands)")
+      }
+    ];
+    for (const id of CustomWidgetsConfig.builtinActions)
+      out.push({
+        "value": id,
+        "label": CustomWidgetsManager.actionLabel(id)
+      });
+    for (const id of KeybindManager.actions) {
+      if (CustomWidgetData.builtinAllowed("axiom:" + id, refused))
+        out.push({
+          "value": "axiom:" + id,
+          "label": ActionsManager.label(id)
+        });
+    }
+    for (const id of Object.keys((root.pageShown ? CustomWidgetsManager.fields[root.selectedId]?.actions : null) ?? ({})))
+      out.push({
+        "value": id,
+        "label": id
+      });
+    return out;
+  }
 
   // The paths the page offers to bind from (the saved samples, then what
   // was seen live, then the output now), each once

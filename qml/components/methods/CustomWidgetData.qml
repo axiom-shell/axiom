@@ -1892,6 +1892,51 @@ QtObject {
     return root.sampleForView(definition, index, seen, liveFields) === null ? "none" : "live";
   }
 
+  // `map` with `key` set to `value`, its order kept (a new key last)
+  function withKey(map, key, value) {
+    return Object.assign({}, map, {
+      [key]: value
+    });
+  }
+
+  // `map` without `key`
+  function withoutKey(map, key) {
+    const next = Object.assign({}, map);
+    delete next[key];
+    return next;
+  }
+
+  // `map` with key `from` renamed `to`, in its place; the same map when
+  // `to` is empty or another key already
+  function renameKey(map, from, to) {
+    if (to === "" || to === from || to in (map ?? {}))
+      return map;
+    return Object.keys(map ?? {}).reduce((next, key) => {
+      next[key === from ? to : key] = map[key];
+      return next;
+    }, {});
+  }
+
+  // What a definition offered on the lock screen holds that doesn't work
+  // there or shows a script's text to whoever sees the screen: "actions"
+  // (an element runs a named action or a command), "keys", "entry" (an
+  // Entry element), "text" (an element's `text` bound to the output). []
+  // when it holds none
+  function lockIssues(definition) {
+    const module = definition?.module;
+    const elements = root.allElements(module);
+    const issues = [];
+    if (elements.some(e => (e.action ?? "") !== "" || Object.values(e.actions ?? {}).some(c => typeof c === "string" && c.trim() !== "")))
+      issues.push("actions");
+    if (Object.keys(module?.keys ?? {}).length > 0)
+      issues.push("keys");
+    if (elements.some(e => e.type === "Entry"))
+      issues.push("entry");
+    if (elements.some(e => (e.bind?.text ?? "") !== "" && !e.bind.text.startsWith("=")))
+      issues.push("text");
+    return issues;
+  }
+
   // A template's element ([x, y, w, h] in sub-cells)
   function _el(id, type, place, bind, options, action) {
     const element = {

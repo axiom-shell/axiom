@@ -1850,4 +1850,107 @@ TestCase {
     compare(CustomWidgetData.fitZoom([4, 4], 100, 0, 0), 0.05, "at least 0.05");
     verify(CustomWidgetData.fitZoom([8, 2], 100, 150, 400) < CustomWidgetData.fitZoom([2, 2], 100, 150, 400), "a wider module is drawn smaller");
   }
+
+  function test_keyMaps() {
+    compare(Object.keys(CustomWidgetData.withKey({
+      "a": 1,
+      "b": 2
+    }, "a", 9)), ["a", "b"], "a set key keeps its place");
+    compare(CustomWidgetData.withKey({
+      "a": 1
+    }, "b", 2), {
+      "a": 1,
+      "b": 2
+    });
+    compare(CustomWidgetData.withoutKey({
+      "a": 1,
+      "b": 2
+    }, "a"), {
+      "b": 2
+    });
+    const map = {
+      "a": 1,
+      "b": 2,
+      "c": 3
+    };
+    compare(Object.keys(CustomWidgetData.renameKey(map, "b", "x")), ["a", "x", "c"], "renamed in place");
+    compare(CustomWidgetData.renameKey(map, "b", "x").x, 2);
+    verify(CustomWidgetData.renameKey(map, "b", "") === map, "an empty name: as it is");
+    verify(CustomWidgetData.renameKey(map, "b", "c") === map, "a taken name: as it is");
+    verify(CustomWidgetData.renameKey(map, "b", "b") === map, "the same name");
+    compare(map.b, 2, "not changed in place");
+  }
+
+  function test_lockIssues() {
+    compare(CustomWidgetData.lockIssues(null), []);
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Text",
+            "bind": {
+              "text": "=Hello"
+            }
+          },
+          {
+            "type": "Ring"
+          }
+        ]
+      }
+    }), [], "literals and graphics are fine");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "keys": {
+          "u": "undo"
+        },
+        "elements": [
+          {
+            "type": "Button",
+            "action": "undo"
+          },
+          {
+            "type": "Entry"
+          }
+        ],
+        "views": [
+          {
+            "id": "a",
+            "elements": [
+              {
+                "type": "Text",
+                "bind": {
+                  "text": "{text}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }), ["actions", "keys", "entry", "text"], "each, screens included");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Button",
+            "action": "",
+            "actions": {
+              "click": "  "
+            }
+          }
+        ]
+      }
+    }), [], "an empty command is none");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Button",
+            "actions": {
+              "click": "x"
+            }
+          }
+        ]
+      }
+    }), ["actions"], "a command");
+  }
 }

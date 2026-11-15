@@ -127,13 +127,6 @@ ColumnLayout {
         description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
         path: "formatIcons"
       }
-      JsonField {
-        editor: root.editor
-        definition: root.definition
-        label: I18n.tr("State colours")
-        description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
-        path: "states"
-      }
     }
 
     FieldGroup {

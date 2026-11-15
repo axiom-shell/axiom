@@ -176,9 +176,8 @@ GridDragLayer {
           showActions: false
         }
 
-        // While no element is selected: what the library is for
+        // What the library is for
         StyledText {
-          visible: root.editor.selected < 0
           Layout.fillWidth: true
           role: "caption"
           tone: "muted"

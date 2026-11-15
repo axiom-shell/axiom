@@ -161,6 +161,22 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
+      title: I18n.tr("States")
+      description: I18n.tr("A state or class the script prints → a theme colour, for the bar and the elements' Color by. ok, warning and critical are already known.")
+
+      StatesEditor {}
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Keys")
+      description: I18n.tr("A key → an action. They work in the overlay, edge menus and the bar popout, once the module is clicked (at once in the popout), and not while an Entry has the focus.")
+
+      KeysEditor {}
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
       title: I18n.tr("Output")
       description: I18n.tr("The last thing the script printed, as it came.")
 

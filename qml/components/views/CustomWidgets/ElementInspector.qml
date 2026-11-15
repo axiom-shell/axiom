@@ -6,8 +6,6 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
-import qs.services.ui
-import qs.services.compositor
 import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the element library (shown while no
@@ -42,6 +40,7 @@ ColumnLayout {
   property string lastSlot: ""
   readonly property string elementKey: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
   property bool dataOpen: false
+  property bool libraryFolded: false
 
   // What a slot's binding reads as in the previewed sample: { text, missing }
   // ("" without a binding or a sample; a `=` binding is fixed text)
@@ -93,37 +92,6 @@ ColumnLayout {
     ].concat(root.bindOptions.slice(1)) : root.bindOptions;
   }
 
-  // The actions an element can name: none (its own commands), the
-  // built-ins, an action of the shell that's allowed (never a session or
-  // destructive one), then the ids the output's `actions` lists
-  readonly property var actionOptions: {
-    const refused = ActionsManager.sessionActions.concat(KeybindManager.actions.filter(id => ActionsManager.destructive(id)));
-    const out = [
-      {
-        "value": "",
-        "label": I18n.tr("None (the commands)")
-      }
-    ];
-    for (const id of CustomWidgetsConfig.builtinActions)
-      out.push({
-        "value": id,
-        "label": CustomWidgetsManager.actionLabel(id)
-      });
-    for (const id of KeybindManager.actions) {
-      if (CustomWidgetData.builtinAllowed("axiom:" + id, refused))
-        out.push({
-          "value": "axiom:" + id,
-          "label": ActionsManager.label(id)
-        });
-    }
-    for (const id of Object.keys(root.fields?.actions ?? ({})))
-      out.push({
-        "value": id,
-        "label": id
-      });
-    return out;
-  }
-
   spacing: Widget.spacing * 2
 
   // Slot names, shown as is: I18n.tr("text") I18n.tr("value")
@@ -132,30 +100,32 @@ ColumnLayout {
   // I18n.tr("max") I18n.tr("placeholder") I18n.tr("enabled")
 
   // The library: drag one onto the module, or click it to add it where
-  // there's room
-  // Only while no element is selected, as the layouts editor's library
-  Loader {
-    active: root.element === null
-    visible: active
-    Layout.fillWidth: true
-    // A Flow's height comes from its width
-    Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
+  // there's room. Always there, as a group that folds away
+  FoldingSection {
+    title: I18n.tr("Elements")
+    collapsed: root.libraryFolded
+    onToggled: root.libraryFolded = !root.libraryFolded
 
-    // (Its title and description are the column's header, in
-    // ElementEditorLayout)
-    sourceComponent: Flow {
-      width: parent?.width ?? 0
-      spacing: Widget.spacing
+    Loader {
+      active: !root.libraryFolded
+      Layout.fillWidth: true
+      // A Flow's height comes from its width
+      Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
 
-      Repeater {
-        model: CustomWidgetsConfig.elementKinds
+      sourceComponent: Flow {
+        width: parent?.width ?? 0
+        spacing: Widget.spacing
 
-        ModuleChip {
-          required property var modelData
-          dragLayer: root.dragLayer
-          // Kind labels: the schema's
-          typeInfo: modelData
-          onClicked: root.grid.addModule(modelData.type)
+        Repeater {
+          model: CustomWidgetsConfig.elementKinds
+
+          ModuleChip {
+            required property var modelData
+            dragLayer: root.dragLayer
+            // Kind labels: the schema's
+            typeInfo: modelData
+            onClicked: root.grid.addModule(modelData.type)
+          }
         }
       }
     }
@@ -301,7 +271,7 @@ ColumnLayout {
             editable: true
             placeholderText: I18n.tr("None (the commands)")
             value: root.element?.action ?? ""
-            options: root.actionOptions
+            options: root.editor.actionOptions
             onPicked: value => root.editor.setElement(["action"], value)
           }
         }

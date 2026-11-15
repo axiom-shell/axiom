@@ -34,6 +34,17 @@ ColumnLayout {
   readonly property var views: root.definition?.module?.views ?? []
   readonly property var view: root.views[root.editor.viewIndex] ?? null
   readonly property var designSize: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
+  // What the lock screen does to this definition, while it is offered there
+  // ("" when it holds nothing affected): CustomWidgetData.lockIssues
+  readonly property string lockWarning: {
+    const issues = root.definition?.module?.lockscreen ? CustomWidgetData.lockIssues(root.definition) : [];
+    const parts = [];
+    if (issues.some(i => i === "actions" || i === "keys" || i === "entry"))
+      parts.push(I18n.tr("Actions, keys and entries do nothing there."));
+    if (issues.includes("text"))
+      parts.push(I18n.tr("Text the script prints is readable by anyone who sees the lock screen."));
+    return parts.join(" ");
+  }
   // The live output the test preview draws (null before the script's first
   // output: the previewed sample then) and the zoom that fits the popout in
   // the tab's width and half its height
@@ -170,20 +181,13 @@ ColumnLayout {
         values: root.definition?.module ?? ({})
         onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
       }
-      // A key → an action (overlay, edge menu, bar popout)
-      KeyedLoader {
+      // Offered on the lock screen: what doesn't work there
+      Notice {
+        visible: root.lockWarning !== ""
         Layout.preferredWidth: root.lockWidth
-        Layout.preferredHeight: childrenRect.height
-        key: root.definition ? root.editor.selectedId : ""
-
-        sourceComponent: JsonField {
-          width: parent?.width ?? 0
-          editor: root.editor
-          definition: root.definition
-          label: I18n.tr("Keys")
-          description: I18n.tr("A key → an action, {\"3\": \"check\", \"space\": \"play-pause\", \"ctrl+z\": \"undo\"}. They work in the overlay, edge menus and the bar popout, once the module is clicked (at once in the popout).")
-          path: ["module", "keys"]
-        }
+        status: "warning"
+        title: I18n.tr("On the lock screen")
+        text: root.lockWarning
       }
       StyledTextButton {
         id: defaultLayoutButton
