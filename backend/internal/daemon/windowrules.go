@@ -10,6 +10,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/mimeapps"
+	"github.com/axiom-shell/axiom/backend/internal/powerprofiles"
 	"github.com/axiom-shell/axiom/backend/internal/procinfo"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/store"
@@ -51,9 +52,40 @@ func (d *Daemon) windowRulesReport(method string, params any) {
 	}
 }
 
-// windowRulesChanged pushes the engine's state; the daemon's effect owners
-// (keep awake, power profile, pause binds) take st.Holds here too (PRs 10 and 12).
+// ruleEffects reads the holds the daemon's effect owners act on: the names of
+// the rules holding keep awake, and the power profile (PPD's name, "" for none
+// or while the user overrode it) with the rule's name for its reason.
+func ruleEffects(st engine.State) (awake []string, profile, reason string) {
+	names := map[string]string{}
+	for _, r := range st.Rules {
+		names[r.Rule] = r.Name
+	}
+	name := func(id string) string {
+		if n := names[id]; n != "" {
+			return n
+		}
+		return id
+	}
+	awake = []string{}
+	for _, id := range st.Holds.KeepAwake {
+		awake = append(awake, name(id))
+	}
+	if h := st.Holds.PowerProfile; h.Rule != "" && !st.Overrides.PowerProfile {
+		profile, reason = powerprofiles.Name(h.Profile), name(h.Rule)
+	}
+	return awake, profile, reason
+}
+
+// windowRulesChanged pushes the engine's state and gives the daemon's effect
+// owners their holds (keep awake, the power profile; pause binds follow in PR 12).
 func (d *Daemon) windowRulesChanged(st engine.State) {
+	awake, profile, reason := ruleEffects(st)
+	if d.idle != nil {
+		d.idle.SetKeepAwake(awake)
+	}
+	if d.power != nil {
+		d.power.Hold(profile, reason)
+	}
 	if d.server != nil {
 		pushWindowRulesState.Send(d.server, st, subscribedTo(topicWindowRules))
 	}
@@ -89,6 +121,21 @@ func (d *Daemon) windowRulesMethods(reg *rpc.Registry) {
 		return struct {
 			Windows []engine.WindowInfo `json:"windows"`
 		}{d.windowRules.Windows()}, nil
+	})
+	type overrideParams struct {
+		Effect string `json:"effect"`
+	}
+	// The user's own say over a hold (the shell's DND switch turned off by
+	// hand): it wins until the rule's hold ends. A profile is overridden by
+	// picking one, which PPD reports.
+	rpc.Handle(reg, "windowRules.override", func(ctx context.Context, c *rpc.Conn, p overrideParams) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell overrides a window rule's hold")
+		}
+		if p.Effect != "dnd" {
+			return struct{}{}, axerr.New(axerr.BadRequest, "only dnd is overridden this way")
+		}
+		return struct{}{}, d.windowRules.Override(p.Effect)
 	})
 	type fromParams struct {
 		ID string `json:"id"`

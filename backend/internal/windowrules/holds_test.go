@@ -172,3 +172,55 @@ func TestLookOf(t *testing.T) {
 		t.Errorf("empty look has nil parts: %+v", empty)
 	}
 }
+
+func TestOverrides(t *testing.T) {
+	t.Parallel()
+	dnd := Holds{DND: []string{"a"}}
+	power := Holds{PowerProfile: ProfileHold{Profile: "performance", Rule: "a"}}
+	for _, c := range []struct {
+		name   string
+		effect string
+		h      Holds
+		want   bool
+		got    Overrides
+	}{
+		{"dnd held", "dnd", dnd, true, Overrides{DND: true}},
+		{"dnd not held", "dnd", Holds{}, false, Overrides{}},
+		{"power held", "powerProfile", power, true, Overrides{PowerProfile: true}},
+		{"power not held", "powerProfile", dnd, false, Overrides{}},
+		{"unknown", "keepAwake", Holds{KeepAwake: []string{"a"}}, false, Overrides{}},
+	} {
+		var o Overrides
+		if ok := o.Override(c.effect, c.h); ok != c.want || o != c.got {
+			t.Errorf("%s: %v %+v", c.name, ok, o)
+		}
+	}
+}
+
+func TestSettle(t *testing.T) {
+	t.Parallel()
+	both := Overrides{DND: true, PowerProfile: true}
+	p := func(profile, rule string) Holds {
+		return Holds{DND: []string{"a"}, PowerProfile: ProfileHold{Profile: profile, Rule: rule}}
+	}
+	for _, c := range []struct {
+		name      string
+		prev, now Holds
+		want      Overrides
+	}{
+		{"nothing changed", p("performance", "a"), p("performance", "a"), both},
+		{"another rule still holds dnd", Holds{DND: []string{"a", "b"}}, Holds{DND: []string{"b"}}, both},
+		{"dnd ends", p("performance", "a"), Holds{PowerProfile: ProfileHold{Profile: "performance", Rule: "a"}}, Overrides{PowerProfile: true}},
+		{"another profile", p("performance", "a"), p("power-saver", "a"), Overrides{DND: true}},
+		{"another rule", p("performance", "a"), p("performance", "b"), Overrides{DND: true}},
+		{"power ends", p("performance", "a"), Holds{DND: []string{"a"}}, Overrides{DND: true}},
+	} {
+		if got := both.Settle(c.prev, c.now); got != c.want {
+			t.Errorf("%s: %+v, want %+v", c.name, got, c.want)
+		}
+	}
+	b, _ := json.Marshal(both)
+	if string(b) != `{"dnd":true,"powerProfile":true}` {
+		t.Errorf("json %s", b)
+	}
+}

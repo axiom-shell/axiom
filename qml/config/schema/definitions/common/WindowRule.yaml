@@ -65,7 +65,7 @@ properties:
         title: Do not disturb
         additionalProperties: false
         properties:
-          enabled: {type: boolean, title: Do not disturb, default: false}
+          enabled: {type: boolean, title: Do not disturb, description: Turning do not disturb off yourself wins until the rule ends., default: false}
           when: {$ref: '#/definitions/WindowRuleWhen', x-showIf: {enabled: true}}
       keepAwake:
         type: object
@@ -79,7 +79,7 @@ properties:
         title: Power profile
         additionalProperties: false
         properties:
-          enabled: {type: boolean, title: Power profile, default: false}
+          enabled: {type: boolean, title: Power profile, description: Picking a profile yourself wins until the rule ends., default: false}
           profile:
             type: string
             title: Profile

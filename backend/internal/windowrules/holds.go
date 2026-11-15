@@ -51,6 +51,40 @@ type ProfileHold struct {
 	Rule    string `json:"rule"`
 }
 
+// Overrides are the holds the user overrode by hand (turned DND off, picked
+// a power profile), each until that hold ends.
+type Overrides struct {
+	DND          bool `json:"dnd"`
+	PowerProfile bool `json:"powerProfile"`
+}
+
+// Override sets effect's override ("dnd" or "powerProfile") when h holds it;
+// false when it isn't held or the effect is unknown.
+func (o *Overrides) Override(effect string, h Holds) bool {
+	switch {
+	case effect == "dnd" && len(h.DND) > 0:
+		o.DND = true
+	case effect == "powerProfile" && h.PowerProfile.Rule != "":
+		o.PowerProfile = true
+	default:
+		return false
+	}
+	return true
+}
+
+// Settle is o once the holds went from prev to now: DND's ends when nothing
+// holds DND, the power profile's when the held profile or rule changes (a new
+// hold the user hasn't overridden).
+func (o Overrides) Settle(prev, now Holds) Overrides {
+	if len(now.DND) == 0 {
+		o.DND = false
+	}
+	if now.PowerProfile != prev.PowerProfile {
+		o.PowerProfile = false
+	}
+	return o
+}
+
 // HideFromHold is, per place, the ids of the windows to hide from it, sorted.
 type HideFromHold struct {
 	Dock       []string `json:"dock"`

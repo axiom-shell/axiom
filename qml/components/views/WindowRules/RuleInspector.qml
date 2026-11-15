@@ -36,6 +36,27 @@ ColumnLayout {
       "text": I18n.tr("Don't focus when it opens: not applied to the kinds axiom matches just after the window opens.")
     }
   ] : []
+  // The power profile needs power-profiles-daemon, and performance a computer that has it
+  readonly property var powerNotes: {
+    const hold = root.rule.shell?.powerProfile;
+    if (hold?.enabled !== true)
+      return [];
+    if (!BatteryManager.hasPowerProfiles)
+      return [
+        {
+          "level": "warning",
+          "text": I18n.tr("Needs power-profiles-daemon, which isn't installed.")
+        }
+      ];
+    if (hold.profile === "performance" && !BatteryManager.hasPerformance)
+      return [
+        {
+          "level": "warning",
+          "text": I18n.tr("This computer has no performance profile.")
+        }
+      ];
+    return [];
+  }
   // The open windows the picker lists, taken when it opens
   property var windowTypes: []
   property var appTypes: []
@@ -142,6 +163,23 @@ ColumnLayout {
 
     IssueList {
       issues: root.placedNotes.concat(root.noFocusNotes)
+    }
+  }
+
+  FieldGroup {
+    title: I18n.tr(root.schema.shell.title)
+
+    SchemaPropertiesForm {
+      Layout.fillWidth: true
+      propertiesSchema: root.schema.shell.properties
+      // The other effects follow in their own PRs
+      order: ["dnd", "keepAwake", "powerProfile"]
+      values: root.rule.shell ?? ({})
+      onEdited: (path, value) => root.editor.set(["shell"].concat(path), value)
+    }
+
+    IssueList {
+      issues: root.powerNotes
     }
   }
 

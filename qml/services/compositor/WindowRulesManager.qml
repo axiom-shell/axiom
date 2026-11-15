@@ -25,7 +25,7 @@ QtObject {
   // windowRules.state: which open windows each rule matches, the holds and
   // the look; null until known
   readonly property var state: root._state
-  // The while-effects in force, for their owners (PRs 10-13)
+  // The while-effects in force, for their owners (PRs 10-13); `state.overrides` the ones the user overrode
   readonly property var holds: root._state ? root._state.holds : null
   // What sway's per-window look leaves to the rules
   readonly property var look: root._state ? root._state.look : null
@@ -51,6 +51,18 @@ QtObject {
     BackendManager.call("windowRules.match", {
       "section": section
     }, (error, result) => callback(error ? null : result.rules));
+  }
+
+  // The user's own say over a hold (the DND switch turned off by hand): it
+  // wins until the rule's hold ends; the daemon keeps it (state.overrides)
+  // rpc: windowRules.override
+  function override(effect) {
+    BackendManager.call("windowRules.override", {
+      "effect": effect
+    }, error => {
+      if (error)
+        console.warn("WindowRulesManager: override failed:", error);
+    });
   }
 
   // The open windows as the rules see them (windowRules.windows); `callback` gets null when the daemon fails
