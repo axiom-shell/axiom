@@ -168,7 +168,7 @@ type Manager struct {
 	debounce, liveDebounce, fileSync, releaseRetry, hotplug *time.Timer
 }
 
-// New is the manager for the compositor running (ipc.Detect); Kind is ""
+// New is the manager for the compositor running (ipc.RunningFromEnv); Kind is ""
 // (and it does nothing) under none of axiom's config modes' compositors.
 func New(o Options) *Manager {
 	o.Getenv = ipc.LiveEnv(o.Getenv)
@@ -177,22 +177,23 @@ func New(o Options) *Manager {
 		o.AppIDs = func(id string) []string { return mimeapps.WindowAppIDs(dirs, id) }
 	}
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
-	m.kind = ipc.Detect(o.Getenv)
+	r := ipc.RunningFromEnv(o.Getenv)
+	m.kind = r.Kind
 	m.st = loadState(o.RuntimeFile, Instance(o.Getenv))
 	m.runtimeOn = m.st.RuntimeOn
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
 	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st, carried: o.Carried}
 	switch m.kind {
 	case "hyprland":
-		m.w = newHypr(e, ipc.HyprFromEnv(o.Getenv))
-		m.profiles = &profileSwitch{io: Outputs{Hypr: ipc.HyprFromEnv(o.Getenv)}, hyprland: true}
+		m.w = newHypr(e, r.Hypr)
+		m.profiles = &profileSwitch{io: Outputs{Hypr: r.Hypr}, hyprland: true}
 		m.hotplugDelay = 0
 	case "sway":
-		m.w = newSway(e, ipc.SwayFromEnv(o.Getenv))
-		m.profiles = &profileSwitch{io: Outputs{Sway: ipc.SwayFromEnv(o.Getenv)}}
+		m.w = newSway(e, r.Sway)
+		m.profiles = &profileSwitch{io: Outputs{Sway: r.Sway}}
 	case "niri":
-		m.w = newNiri(e, ipc.NiriFromEnv(o.Getenv))
-		m.profiles = &profileSwitch{io: Outputs{Niri: ipc.NiriFromEnv(o.Getenv)}}
+		m.w = newNiri(e, r.Niri)
+		m.profiles = &profileSwitch{io: Outputs{Niri: r.Niri}}
 	}
 	// Unknown until the first send: a pause the last image left is given back
 	m.paused = windowrules.Pause{AllExcept: true}

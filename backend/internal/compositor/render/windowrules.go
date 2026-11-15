@@ -106,7 +106,7 @@ func compile(set RuleSet, p rulePrinter) ([]compiledRule, []Unwritten) {
 				u.Skipped = append(u.Skipped, i)
 			}
 		}
-		for _, key := range RuleEffects(r.Window) {
+		for _, key := range r.Window.Keys() {
 			switch gate := ruleGates[key]; {
 			case gate != "" && !set.Supports[gate], slices.Contains(p.cannot, key):
 				u.Dropped = append(u.Dropped, key)
@@ -126,12 +126,6 @@ func compile(set RuleSet, p rulePrinter) ([]compiledRule, []Unwritten) {
 	slices.Reverse(out)
 	return out, left
 }
-
-// RuleEffects are the effects (schema keys) a rule sets, in the order they're
-// written (windowrules.WindowEffects.Keys).
-func RuleEffects(w windowrules.WindowEffects) []string { return w.Keys() }
-
-func isDigits(s string) bool { return s != "" && strings.Trim(s, "0123456789") == "" }
 
 func opacityText(pct int) string { return fmtNum(float64(pct) / 100) }
 
@@ -230,7 +224,7 @@ func hyprEffect(key string, w windowrules.WindowEffects) string {
 		return "monitor = " + LuaString(w.Monitor)
 	case "workspace":
 		ws := "name:" + w.Workspace
-		if isDigits(w.Workspace) {
+		if windowrules.AllDigits(w.Workspace) {
 			ws = w.Workspace
 		}
 		if !w.Follow {
@@ -259,7 +253,7 @@ func NiriRuleNodes(set RuleSet) (*jsonx.Array, []Unwritten) {
 	rules, left := compile(set, rulePrinter{
 		// niri has no following form of open-on-workspace: the daemon focuses the window
 		placed: func(key string, w windowrules.WindowEffects) bool {
-			return key == "follow" || key == "workspace" && isDigits(w.Workspace)
+			return key == "follow" || key == "workspace" && windowrules.AllDigits(w.Workspace)
 		},
 		cannot: []string{"special", "pin", "tearing"},
 	})
@@ -432,7 +426,7 @@ func swayCommands(c compiledRule) []string {
 	add("monitor", "move container to output "+SwayQuote(w.Monitor))
 	if c.has("workspace") {
 		ws, move := "workspace "+SwayQuote(w.Workspace), "move container to workspace "+SwayQuote(w.Workspace)
-		if isDigits(w.Workspace) {
+		if windowrules.AllDigits(w.Workspace) {
 			ws, move = "workspace number "+w.Workspace, "move container to workspace number "+w.Workspace
 		}
 		cmds = append(cmds, move)

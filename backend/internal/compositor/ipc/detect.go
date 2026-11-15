@@ -53,6 +53,30 @@ func Detect(getenv func(string) string) string {
 	return set[0].kind
 }
 
+// Running is the compositor Detect picks and its socket's client: only
+// Kind's field is set, and it is nil when the environment names the
+// compositor but not all of its socket (Hyprland without XDG_RUNTIME_DIR).
+type Running struct {
+	Kind string // Detect's: "hyprland", "sway", "niri" or ""
+	Hypr *Hypr
+	Sway *Sway
+	Niri *Niri
+}
+
+// RunningFromEnv is the compositor getenv names (Detect) with its client.
+func RunningFromEnv(getenv func(string) string) Running {
+	r := Running{Kind: Detect(getenv)}
+	switch r.Kind {
+	case "hyprland":
+		r.Hypr = HyprFromEnv(getenv)
+	case "sway":
+		r.Sway = SwayFromEnv(getenv)
+	case "niri":
+		r.Niri = NiriFromEnv(getenv)
+	}
+	return r
+}
+
 // running: the process v names is that compositor
 func running(getenv func(string) string, v compositorVar) bool {
 	pid := ""

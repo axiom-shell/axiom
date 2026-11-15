@@ -19,7 +19,7 @@ type backend interface {
 	run(ctx context.Context, id string, steps []windowrules.Step) error
 }
 
-// Dispatcher sends steps to the compositor ipc.Detect finds.
+// Dispatcher sends steps to the compositor ipc.RunningFromEnv finds.
 type Dispatcher struct {
 	b backend
 }
@@ -29,25 +29,14 @@ type Dispatcher struct {
 // shell's capabilities.
 func New(o Options) *Dispatcher {
 	d := &Dispatcher{}
-	switch ipc.Detect(o.Getenv) {
-	case "hyprland":
-		h := ipc.HyprFromEnv(o.Getenv)
-		if h == nil {
-			return nil
-		}
-		d.b = hypr{h}
-	case "sway":
-		s := ipc.SwayFromEnv(o.Getenv)
-		if s == nil {
-			return nil
-		}
-		d.b = sway{s}
-	case "niri":
-		n := ipc.NiriFromEnv(o.Getenv)
-		if n == nil {
-			return nil
-		}
-		d.b = niri{n}
+	r := ipc.RunningFromEnv(o.Getenv)
+	switch {
+	case r.Hypr != nil:
+		d.b = hypr{r.Hypr}
+	case r.Sway != nil:
+		d.b = sway{r.Sway}
+	case r.Niri != nil:
+		d.b = niri{r.Niri}
 	default:
 		return nil
 	}
@@ -67,17 +56,4 @@ func (d *Dispatcher) Run(ctx context.Context, id string, steps []windowrules.Ste
 // decimal is id as the number sway and niri give a window.
 func decimal(id string) (uint64, error) {
 	return strconv.ParseUint(id, 10, 64)
-}
-
-// isDigits is whether a workspace is a number rather than a name.
-func isDigits(s string) bool {
-	if s == "" {
-		return false
-	}
-	for _, r := range s {
-		if r < '0' || r > '9' {
-			return false
-		}
-	}
-	return true
 }
