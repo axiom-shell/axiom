@@ -11,7 +11,7 @@ import qs.components.reusable
 // One kind of window in a rule (RuleInspector): its conditions, each a row
 // (what to test, how, against what), Add a condition, and the kind's own
 // problems and notes. Every condition is read by index from the draft.
-StyledContainer {
+Surface {
   id: root
 
   // The kind's place in the rule's windows
@@ -46,7 +46,7 @@ StyledContainer {
 
   Layout.fillWidth: true
   implicitHeight: column.implicitHeight + Widget.padding * 2
-  backgroundColor: Qt.alpha(Theme.backgroundHighlight, 0.4)
+  tone: "sunken"
 
   ColumnLayout {
     id: column
@@ -66,7 +66,7 @@ StyledContainer {
       StyledIconButton {
         iconText: "close"
         tooltipText: I18n.tr("Remove this kind")
-        hoverColor: Theme.error
+        kind: "danger"
         onClicked: root.editor.removeKind(root.k)
       }
     }
@@ -198,7 +198,7 @@ StyledContainer {
         Layout.alignment: Qt.AlignTop
         iconText: "close"
         tooltipText: I18n.tr("Remove this condition")
-        hoverColor: Theme.error
+        kind: "danger"
         onClicked: root.editor.removeCondition(root.k, cond.c)
       }
     }

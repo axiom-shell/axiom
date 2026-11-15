@@ -91,7 +91,7 @@ ColumnLayout {
         StyledText {
           visible: kindItem.index > 0
           text: I18n.tr("or")
-          opacity: 0.6
+          tone: "muted"
         }
 
         KindBlock {
