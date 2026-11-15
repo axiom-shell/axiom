@@ -87,7 +87,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `layerFrameSync` | changes axiom makes to its layer windows in one pass show in the same frame (Hyprland, sway). Without it (niri) another window's can show a frame or so late, so context following a sliding surface along its slide (`PillBarJoin`, a joined submenu's pill reach) leads its wall by a stroke (`EdgePlacement._slideLead`) |
 | `windowCover` | without `windowGeometry`, windows carry a `cover` (niri's tiled ones), which obscures a dock (`CompositorManager.windowsCover`) |
 | `workspaceSlide` | `travel` legs slide |
-| `windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity` | the `WindowLook` parts shown and applied |
+| `windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity` | the `WindowLook` parts shown and applied; `windowBlur` and `windowOpacity` also gate the window rule effects No blur and Opacity |
 | `fullscreenOpacity` | the window look's fullscreen opacity (niri's opacity rules can't match a fullscreen window) |
 | `blurContrast` | the window blur's contrast (Hyprland, SwayFX; niri's blur has none) |
 | `focusOnActivate` | Windows and focus › Focus windows that ask for it (niri has no such switch: it always focuses a window that asks with a valid token) |
@@ -101,11 +101,13 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `bindMerge` | the user's own binds can be read (the Keybinds page's List, conflicts, Merge) |
 | `monitorColor` | a monitor rule's bit depth, color management and SDR fields |
 | `monitorMirror` | a monitor rule can mirror another output |
-| `namedSpecial` | named special workspaces (the `toggleSpecial` / `moveToSpecial` binds, the switcher's special workspaces: `CompositorManager.specials`, `knownSpecials`; capability and config: the Workspaces section's Special workspaces card) |
+| `namedSpecial` | named special workspaces (the `toggleSpecial` / `moveToSpecial` binds, the switcher's special workspaces: `CompositorManager.specials`, `knownSpecials`; capability and config: the Workspaces section's Special workspaces card) and the window rule effect Special workspace (sway's is placed by the daemon after the window opens) |
 | `mouseBinds` | binds on mouse buttons (`mouseDrag`, `mouseResize`) |
 | `pseudoTile` | the `pseudo` bind |
 | `splitToggle` | the `toggleSplit` bind (Hyprland's dwindle layout: on its scrolling layout the bind gets an info note) |
-| `pin` | the `pin` bind (a floating window shown on every workspace) |
+| `pin` | the `pin` bind (a floating window shown on every workspace) and the window rule effect Show on every workspace |
+| `ruleMaximize`, `ruleTearing`, `ruleNoScreenShare` | the window rule effects Maximize, Allow tearing and Hide from screen sharing, written into the compositor's config (`render` `HyprRuleLines`, `NiriRuleNodes`, `SwayRuleLines`; [window rules](../features/window-rules.md)). Without one the effect is dropped |
+| `ruleXwayland` | a window rule's "Runs under XWayland" condition can be written (niri has no such matcher: a kind with it isn't written) |
 | `windowGroups` | the `toggleGroup` bind |
 | `compositorSwitcher` | the compositor has a window switcher of its own its config can bind (niri's `recent-windows`): while `WindowSwitcher.compositorSwitcher` is on (shown only with it), the daemon's writer binds the switch windows keys to it instead of axiom's IPC, in the included and managed files only, managed writing them empty when no such bind is axiom's or the setting is off (`render.NiriRecentWindows`, `manager` `niriWriter.parts`) |
 | `overview` | the compositor has an overview of its own, the backend's `overview(verb)` (`open`, `close`, `toggle`; `CompositorManager.compositorOverview`): while `WorkspaceOverlay.compositorOverview` is on (shown only with it), everything that opens axiom's workspace overview (its IPC, binds, `/overview`, bar buttons) opens that instead (`qml/shell/WorkspaceOverlay.qml`) |

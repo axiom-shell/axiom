@@ -83,6 +83,10 @@ Singleton {
       "pseudoTile": true,
       "splitToggle": true,
       "pin": true,
+      "ruleMaximize": true,
+      "ruleTearing": true,
+      "ruleNoScreenShare": true,
+      "ruleXwayland": true,
       "windowGroups": true,
       "shareRestore": true
     })
