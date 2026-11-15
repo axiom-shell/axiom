@@ -440,6 +440,22 @@ QtObject {
     }
   }
 
+  // A sample (a script's output object, as the editor keeps it) resolved as
+  // widget `id`'s live output would be, as a successful run: null without
+  // the definition or a sample. What the editor previews a screen with
+  function resolveSample(id, sample) {
+    const def = CustomWidgetsConfig.definition(id);
+    if (!def || sample === null || sample === undefined)
+      return null;
+    return CustomWidgetData.resolve(def, sample, root._context(id, {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": CustomWidgetData.asText(sample.text),
+      "exited": false
+    }));
+  }
+
   // A new sample of widget `id`: a grace ends, a running hold notes it
   // (so its exit ends it)
   function _sampled(id) {

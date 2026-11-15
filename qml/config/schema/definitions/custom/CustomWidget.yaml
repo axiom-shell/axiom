@@ -101,6 +101,13 @@ properties:
           middleClick: {x-scope: commands, type: string, title: Middle-click action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
           scrollUp: {x-scope: commands, type: string, title: Scroll up action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
           scrollDown: {x-scope: commands, type: string, title: Scroll down action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
+  samples:
+    type: object
+    title: Samples
+    default: {}
+    x-settings: false
+    additionalProperties: {type: object}
+    description: 'A sample output per screen (a screen id, "" for none): what the editor previews it with.'
   states:
     type: object
     title: State colors

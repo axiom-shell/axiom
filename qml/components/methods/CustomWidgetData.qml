@@ -928,4 +928,47 @@ QtObject {
     const text = String(id);
     return !(text.startsWith("axiom:") && (refused ?? []).includes(text.slice(6)));
   }
+
+  // --- Samples ---
+
+  // The key a screen's sample is kept under: its id, "" for no screen
+  // (the base alone)
+  function viewKey(module, index) {
+    return index < 0 || !module?.views?.[index] ? "" : module.views[index].id;
+  }
+
+  // `sample` kept under `key` in `samples` (a screen id, "" for none):
+  // { samples (a new map; the old one when refused), refused ("count": a
+  // new key past limits.entries, "size": the whole past limits.bytes
+  // as JSON, else "") }. Nothing passed in is changed
+  function keepSample(samples, key, sample, limits) {
+    const old = samples ?? {};
+    const next = Object.assign({}, old);
+    next[key] = sample;
+    const lim = limits ?? {};
+    let refused = "";
+    if (!(key in old) && Object.keys(next).length > (lim.entries ?? Infinity))
+      refused = "count";
+    else if (JSON.stringify(next).length > (lim.bytes ?? Infinity))
+      refused = "size";
+    return {
+      "samples": refused === "" ? next : Object.assign({}, old),
+      "refused": refused
+    };
+  }
+
+  // The sample the editor previews screen `index` (-1: no screen) with: the
+  // one kept in the definition, else the last one seen live for it (`seen`:
+  // key -> sample), else the live one when it is what picks that screen
+  // (`liveFields`, resolved: pickView), else null
+  function sampleForView(definition, index, seen, liveFields) {
+    const key = root.viewKey(definition?.module, index);
+    const kept = definition?.samples?.[key];
+    if (kept !== undefined && kept !== null)
+      return kept;
+    const last = seen?.[key];
+    if (last !== undefined && last !== null)
+      return last;
+    return liveFields && root.pickView(definition?.module, liveFields).index === index ? liveFields.sample : null;
+  }
 }

@@ -17,7 +17,10 @@ import qs.components.content.parts.custom
 // layouts editor's canvas filling the rest, editing the layer's elements as
 // it edits a submenu's modules (drag in, move, resize from any side, push,
 // box-select, guides, undo). The module's box fits the elements of every
-// layer; the base is drawn dimmed under a screen being edited.
+// layer; the base is drawn dimmed under a screen being edited. The previews draw the
+// edited screen's sample (kept in the definition, else the last one seen
+// live: CustomWidgetsEditor.previewFields), so every screen can be designed
+// before the script reaches it.
 ColumnLayout {
   id: root
 
@@ -107,7 +110,7 @@ ColumnLayout {
               anchors.fill: parent
               anchors.margins: Widget.cardPadding
               definition: root.definition
-              fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? ({})
+              fields: root.editor.previewFields ?? ({})
               history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
               actionsEnabled: false
               viewIndex: root.editor.viewIndex
@@ -141,6 +144,14 @@ ColumnLayout {
         onClicked: root.editor.useDefaultElements()
       }
     }
+  }
+
+  // The base is empty and the sample picks no screen: nothing to draw
+  Notice {
+    visible: root.editor.viewIndex < 0 && root.views.length > 0 && root.elements.length === 0
+    status: "info"
+    title: I18n.tr("No screen for this sample")
+    text: I18n.tr("The base elements are empty: pick a screen to design it.")
   }
 
   // The layers: the base, and a screen each (the first whose condition

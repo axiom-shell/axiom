@@ -1070,4 +1070,119 @@ TestCase {
     compare(CustomWidgetData.builtinAllowed("poweroff", refused), true, "a script's own id isn't a built-in");
     compare(CustomWidgetData.builtinAllowed("axiom:poweroff", undefined), true, "nothing refused");
   }
+
+  // --- Samples ---
+
+  function test_viewKey() {
+    const module = {
+      "views": [
+        {
+          "id": "front"
+        },
+        {
+          "id": "back"
+        }
+      ]
+    };
+    compare(CustomWidgetData.viewKey(module, 1), "back", "a screen's id");
+    compare(CustomWidgetData.viewKey(module, -1), "", "no screen");
+    compare(CustomWidgetData.viewKey(module, 5), "", "past the list");
+    compare(CustomWidgetData.viewKey(null, 0), "", "no module");
+  }
+
+  function test_keepSample() {
+    const limits = {
+      "entries": 2,
+      "bytes": 100
+    };
+    const samples = {
+      "a": {
+        "x": 1
+      }
+    };
+    const kept = CustomWidgetData.keepSample(samples, "b", {
+      "y": 2
+    }, limits);
+    compare(kept.refused, "", "kept");
+    compare(Object.keys(kept.samples).join(), "a,b", "added");
+    compare(Object.keys(samples).join(), "a", "the argument is not changed");
+    const replaced = CustomWidgetData.keepSample(kept.samples, "a", {
+      "x": 9
+    }, limits);
+    compare(replaced.refused, "", "an existing key is replaced at the cap");
+    compare(replaced.samples.a.x, 9, "its new value");
+    const full = CustomWidgetData.keepSample(kept.samples, "c", {}, limits);
+    compare(full.refused, "count", "a third key is refused");
+    compare(Object.keys(full.samples).join(), "a,b", "the map is as it was");
+    const big = CustomWidgetData.keepSample({}, "a", {
+      "text": "x".repeat(200)
+    }, limits);
+    compare(big.refused, "size", "too big");
+    compare(Object.keys(big.samples).length, 0, "nothing kept");
+    compare(CustomWidgetData.keepSample(undefined, "", {}, limits).refused, "", "no map yet");
+  }
+
+  function test_sampleForView() {
+    const module = {
+      "views": [
+        {
+          "id": "front",
+          "when": {
+            "key": "state",
+            "test": "is",
+            "values": ["front"]
+          }
+        },
+        {
+          "id": "back",
+          "when": {
+            "key": "state",
+            "test": "is",
+            "values": ["back"]
+          }
+        }
+      ]
+    };
+    const def = {
+      "module": module,
+      "samples": {
+        "front": {
+          "state": "front",
+          "saved": true
+        }
+      }
+    };
+    const live = _fields({
+      "state": "back",
+      "live": true
+    });
+    compare(CustomWidgetData.sampleForView(def, 0, {
+      "front": {
+        "seen": true
+      }
+    }, live).saved, true, "saved wins over seen and live");
+    compare(CustomWidgetData.sampleForView(def, 1, {
+      "back": {
+        "seen": true
+      }
+    }, live).seen, true, "seen over live");
+    compare(CustomWidgetData.sampleForView(def, 1, {}, live).live, true, "live when it picks that screen");
+    compare(CustomWidgetData.sampleForView({
+      "module": module
+    }, 0, {}, live), null, "live that picks another screen: none");
+    compare(CustomWidgetData.sampleForView(def, -1, {}, _fields({
+      "state": "other"
+    })).state, "other", "live that picks no screen is the base's");
+    compare(CustomWidgetData.sampleForView({
+      "module": module
+    }, 0, {}, null), null, "no live fields");
+    compare(CustomWidgetData.sampleForView({
+      "module": module,
+      "samples": {
+        "": {
+          "kept": 1
+        }
+      }
+    }, -1, {}, null).kept, 1, "the empty key is no screen");
+  }
 }
