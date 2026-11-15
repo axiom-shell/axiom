@@ -12,6 +12,8 @@ RowLayout {
   property string icon: ""
   property string title: ""
   property color iconColor: Style.accent
+  // The gap between the trailing children
+  property real trailSpacing: Widget.spacing / 2
   default property alias trailing: trail.data
 
   Layout.fillWidth: true
@@ -32,6 +34,6 @@ RowLayout {
 
   RowLayout {
     id: trail
-    spacing: Widget.spacing / 2
+    spacing: root.trailSpacing
   }
 }

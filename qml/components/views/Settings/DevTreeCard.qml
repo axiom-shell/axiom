@@ -92,14 +92,12 @@ FieldGroup {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       enabled: treeEntry.text.trim() !== "" && Paths.expandHome(treeEntry.text.trim()) !== DevManager.tree
       text: I18n.tr("Set")
       onClicked: root._setTree()
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       enabled: DevManager.tree !== "" && !DevManager.enabled
       text: I18n.tr("Clear")
       tooltipText: DevManager.enabled ? I18n.tr("Turn dev mode off first") : ""
@@ -182,7 +180,6 @@ FieldGroup {
     spacing: Widget.spacing
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       enabled: DevManager.enabled || DevManager.tree !== ""
       text: DevManager.enabled ? I18n.tr("Turn off") : I18n.tr("Turn on")
       iconText: "power_settings_new"
@@ -194,7 +191,6 @@ FieldGroup {
     StyledTextButton {
       visible: DevManager.available
       enabled: !DevManager.building
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Rebuild")
       iconText: "refresh"
       onClicked: DevManager.rebuild(error => root._answered(error))
@@ -207,7 +203,6 @@ FieldGroup {
     // Either image: the dev image's store, else the dev config's file
     StyledTextButton {
       visible: DevManager.tree !== ""
-      implicitHeight: Widget.height - Widget.px(4)
       text: gate.armed === "replace" ? I18n.tr("Click again to replace the dev config") : I18n.tr("Copy live → dev")
       iconText: "content_copy"
       onClicked: {

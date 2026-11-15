@@ -55,7 +55,6 @@ RowLayout {
 
   StyledTextButton {
     Layout.alignment: Qt.AlignTop
-    implicitHeight: Widget.height - Widget.px(4)
     iconText: "visibility"
     text: I18n.tr("Show")
     onClicked: NotificationManager.sendNotification("axiom", I18n.tr("A test notification"), I18n.tr("Change the settings below and show another to see them."))

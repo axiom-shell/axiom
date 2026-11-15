@@ -16,6 +16,8 @@ GridLayout {
   property string description: ""
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
   property var pattern: null
   // Shown in the empty box
   property string placeholderText: ""
@@ -126,6 +128,7 @@ GridLayout {
     label: root.label
     description: root.description
     trailing: root.headerExtra
+    below: root.headerBelow
     Layout.fillWidth: true
     // Centred on the box beside it
     Layout.alignment: Qt.AlignVCenter

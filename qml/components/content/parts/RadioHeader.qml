@@ -20,6 +20,7 @@ ModuleHeader {
   signal toggled(bool checked)
 
   Layout.fillHeight: false
+  trailSpacing: Widget.spacing
 
   SpinningIcon {
     text: "refresh"

@@ -30,7 +30,7 @@ The member list is `docs/dev/generated/api/Style.md`. The groups:
 - **Icon sizes**: `iconXs` … `iconXl`, `iconSize(name)`.
 - **Shape**: `radiusOuter`, `radius`, `radiusInner` (concentric: the radius less the spacing, never under `radiusMin`), `radiusMin`, `hairline`, `dividerWidth`, `focusWidth`. A shape inset inside another (a segment thumb, a switch knob, a stepper's buttons) takes `Style.concentric(the holder's radius, its inset)` (`StyleTokens.concentric` with `radiusMin`).
 - **Spacing**: `space1` … `space5`, `rowHeight`, `rowPadding`, `rowBleed`, `columnTarget` (a distance on screen, not on the Interface scale), `columnMin` (`Widget.textPx(400)`), `columnLeast`, `columnMax`.
-- **Motion**: `staggerStep`, `enterOffset`, `shimmerPeriod`.
+- **Motion**: `enterOffset`, `shimmerPeriod`.
 - **Config colour names**: `resolve(name)` reads one closed map `StyleTokens.theme` builds per theme (every semantic name, `white` and `bg3` included, and `base00`–`base0F`), then a `#hex`, then anything Qt parses.
 - **Revision**: `revision` increments whenever the roles change. A `Canvas` puts it in its repaint key ([QML pitfalls](qml-pitfalls.md) › Canvas).
 

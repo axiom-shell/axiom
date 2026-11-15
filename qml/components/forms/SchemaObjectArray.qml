@@ -13,6 +13,8 @@ ColumnLayout {
   property var itemDelegate: null
   // After the label (the settings row's unsaved dot and reset)
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
 
   signal itemAdded
   signal itemRemoved(int index)
@@ -29,6 +31,7 @@ ColumnLayout {
       label: root.label
       title: true
       trailing: root.headerExtra
+      below: root.headerBelow
     }
 
     StyledIconButton {

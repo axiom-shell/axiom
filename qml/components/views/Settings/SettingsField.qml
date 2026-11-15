@@ -84,8 +84,10 @@ FormRow {
   // so a fold opening or shutting never moves a row across columns
   readonly property real flowHeight: field.shown !== false && root.foldHasRows && !root.row.drawnBy ? root.fullHeight : 0
 
-  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
-  // A click anywhere on a switch, toggle or dropdown row acts (SchemaField)
+  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + root.footprintHeight
+  // Every setting row tints; a click on a switch, toggle or dropdown row
+  // acts (SchemaField)
+  tinted: root.isValue && root.custom === "" && field.tinted
   hoverable: root.isValue && root.custom === "" && field.hoverable
   hitHeight: field.implicitHeight
   onRowClicked: field.rowClicked()
@@ -108,6 +110,8 @@ FormRow {
     row: root.row
     form: root.form
     headerExtra: root.isValue ? changeMarks : null
+    // `x-link`, read with the label
+    headerBelow: root.isValue && root.row.schema?.["x-link"] ? linksBelow : null
     // Kept drawn while the row folds shut (the row hides once it has);
     // not built for a row drawn otherwise (its `shown` still holds)
     active: root.custom === "" && !root.foldHeader && !root.row.drawnBy
@@ -155,19 +159,11 @@ FormRow {
     }
   }
 
-  // `x-link`: where something it follows or names is set
-  FieldLinks {
-    id: links
-    y: field.implicitHeight + hookup.shownHeight + Widget.spacing
-    width: parent.width
-    links: root.isValue ? root.row.schema?.["x-link"] : undefined
-  }
-
   // The footprint's chip and button, under the field
   RowLayout {
     id: footprintRow
     visible: root.badged || root.removable || root.confirmInferred || root.confirmSystem
-    y: field.implicitHeight + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + Widget.spacing
+    y: field.implicitHeight + hookup.shownHeight + Widget.spacing
     width: parent.width
     spacing: Widget.spacing
 
@@ -202,7 +198,6 @@ FormRow {
 
     StyledTextButton {
       visible: root.removable
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove its changes")
       onClicked: {
         root.askedSystem = root.systemCount > 0;
@@ -223,14 +218,12 @@ FormRow {
     // Keep is the default: nothing happens unless Remove is clicked
     StyledTextButton {
       visible: root.confirmInferred
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Keep")
       onClicked: root.askedInferred = false
     }
 
     StyledTextButton {
       visible: root.confirmInferred
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Remove")
       onClicked: {
         root.askedInferred = false;
@@ -248,14 +241,12 @@ FormRow {
     // Keep is the default: nothing happens unless Put back is clicked
     StyledTextButton {
       visible: root.confirmSystem
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Keep")
       onClicked: root.askedSystem = false
     }
 
     StyledTextButton {
       visible: root.confirmSystem
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Put back")
       onClicked: {
         root.askedSystem = false;
@@ -266,6 +257,14 @@ FormRow {
     Item {
       visible: !root.confirmSystem && !root.confirmInferred
       Layout.fillWidth: true
+    }
+  }
+
+  // `x-link`: where something it follows or names is set
+  Component {
+    id: linksBelow
+    FieldLinks {
+      links: root.row.schema?.["x-link"]
     }
   }
 

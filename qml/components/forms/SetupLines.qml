@@ -49,7 +49,6 @@ ColumnLayout {
     spacing: Widget.spacing
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Copy")
       onClicked: block.copyClicked()
     }
@@ -57,7 +56,6 @@ ColumnLayout {
     StyledTextButton {
       visible: block.canAdd
       enabled: !block.adding && !block.added
-      implicitHeight: Widget.height - Widget.px(4)
       text: block.added ? I18n.tr("Added") : block.adding ? I18n.tr("Adding…") : I18n.tr("Add it for me")
       onClicked: block.addClicked()
     }

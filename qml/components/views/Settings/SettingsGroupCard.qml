@@ -67,7 +67,6 @@ FoldingCard {
   // rest of the page's kept
   headerExtras: StyledTextButton {
     visible: root.foldable && root.marked
-    Layout.preferredHeight: Widget.height - Widget.px(4)
     kind: "text"
     text: I18n.tr("Discard")
     iconText: "undo"

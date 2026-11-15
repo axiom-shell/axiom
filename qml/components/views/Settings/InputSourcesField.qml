@@ -395,7 +395,6 @@ ColumnLayout {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Manage it")
       // The one running becomes the chosen one, unless it already is
       onClicked: SettingsManager.setValues([
@@ -488,7 +487,6 @@ ColumnLayout {
         spacing: Widget.spacing
 
         StyledTextButton {
-          implicitHeight: Widget.height - Widget.px(4)
           text: I18n.tr("Use {0}'s list", root.framework)
           iconText: "download"
           onClicked: {
@@ -499,7 +497,6 @@ ColumnLayout {
         }
 
         StyledTextButton {
-          implicitHeight: Widget.height - Widget.px(4)
           text: I18n.tr("Use axiom's")
           iconText: "upload"
           onClicked: {

@@ -190,7 +190,6 @@ FoldingCard {
   }
 
   headerExtras: StyledTextButton {
-    implicitHeight: Widget.height - Widget.px(4)
     iconText: "add"
     text: I18n.tr("Add")
     onClicked: root.add()
@@ -290,14 +289,12 @@ FoldingCard {
       overflow: "wrap"
     }
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       visible: root.isLocal
       iconText: "add"
       text: I18n.tr("Add calendar")
       onClicked: root.addLocal()
     }
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       visible: !root.isLocal
       enabled: !root.result?.busy && (root.account?.url ?? "") !== ""
       iconText: "sync"
@@ -305,7 +302,6 @@ FoldingCard {
       onClicked: root.connect()
     }
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       iconText: "delete"
       text: root.confirmRemove ? I18n.tr("Click again to remove") : I18n.tr("Remove")
       kind: "danger"

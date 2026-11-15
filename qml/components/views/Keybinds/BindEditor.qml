@@ -196,7 +196,6 @@ ColumnLayout {
         }
 
         StyledTextButton {
-          implicitHeight: Widget.height - Widget.px(4)
           iconText: "undo"
           text: I18n.tr("Undo")
           onClicked: KeybindManager.editor.undo()

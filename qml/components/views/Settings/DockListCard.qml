@@ -164,7 +164,6 @@ EntryListCard {
             "id": "",
             "name": ""
           }
-          implicitHeight: Widget.height - Widget.px(4)
           iconText: "add"
           text: result.app.name
           onClicked: {

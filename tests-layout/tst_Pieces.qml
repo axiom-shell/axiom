@@ -236,6 +236,149 @@ TestCase {
     }
   }
 
+  // A row holding one control (`childComp`, given its size) in its body
+  Component {
+    id: hoverRowComp
+
+    FormRow {
+      id: hoverRow
+
+      property Component childComp
+      property alias holder: holder
+
+      width: 300
+      bodyHeight: 60
+
+      Loader {
+        id: holder
+
+        x: 10
+        y: 5
+        sourceComponent: hoverRow.childComp
+      }
+    }
+  }
+
+  Component {
+    id: hSwitchComp
+    StyledSwitch {}
+  }
+
+  Component {
+    id: hToggle2Comp
+    StyledToggle {
+      options: ["a", "b"]
+      labels: ({
+          "a": "A",
+          "b": "B"
+        })
+      value: "a"
+    }
+  }
+
+  Component {
+    id: hToggle3Comp
+    StyledToggle {
+      options: ["a", "b", "c"]
+      labels: ({
+          "a": "A",
+          "b": "B",
+          "c": "C"
+        })
+      value: "a"
+    }
+  }
+
+  Component {
+    id: hSliderComp
+    StyledSlider {
+      width: 200
+      height: 30
+    }
+  }
+
+  Component {
+    id: hComboComp
+    StyledComboEntry {
+      width: 200
+      options: [
+        {
+          "value": "a",
+          "label": "A"
+        },
+        {
+          "value": "b",
+          "label": "B"
+        }
+      ]
+      value: "a"
+    }
+  }
+
+  Component {
+    id: hTextComp
+    StyledTextEntry {
+      width: 200
+    }
+  }
+
+  Component {
+    id: hMouseComp
+    MouseArea {
+      width: 100
+      height: 30
+      hoverEnabled: true
+    }
+  }
+
+  Component {
+    id: hClampedComp
+    ClampedText {
+      width: 150
+      maxLines: 1
+      text: "A much longer help text that wraps over many lines at this narrow width, well past one"
+    }
+  }
+
+  Component {
+    id: belowComp
+    Item {
+      property bool open: true
+      readonly property bool shows: open
+      implicitHeight: 40
+    }
+  }
+
+  Component {
+    id: toggleRowComp
+    SchemaToggle {
+      width: 600
+      label: "A toggle"
+      description: "What it does"
+      options: ["a", "b"]
+      optionLabels: ({
+          "a": "A",
+          "b": "B"
+        })
+      currentValue: "a"
+    }
+  }
+
+  Component {
+    id: threeToggleRowComp
+    SchemaToggle {
+      width: 600
+      label: "A toggle"
+      options: ["a", "b", "c"]
+      optionLabels: ({
+          "a": "A",
+          "b": "B",
+          "c": "C"
+        })
+      currentValue: "a"
+    }
+  }
+
   Component {
     id: numberComp
 
@@ -631,6 +774,24 @@ TestCase {
     compare(harness.containedProblems(host), []);
   }
 
+  // A header with only a `below` part shows while the part does
+  function test_field_header_shows_below_only_while_it_shows() {
+    harness.configure({});
+    const host = createTemporaryObject(headerComp, root, {
+      "width": 300,
+      "description": "",
+      "below": belowComp
+    });
+    waitForRendering(host);
+    verify(host.visible);
+    verify(host.implicitHeight >= 40);
+    const part = findAll(host, it => it.shows !== undefined)[0];
+    part.open = false;
+    verify(!host.visible);
+    part.open = true;
+    verify(host.visible);
+  }
+
   function test_schema_toggle_stacks_when_it_crowds_its_label_data() {
     return rows();
   }
@@ -675,6 +836,14 @@ TestCase {
     compare(row.spy.count, 1);
     mouseClick(row, 10, Style.rowPadding + 5);
     compare(row.spy.count, 2);
+    // The tint band: the hit part of the body, padded below as above
+    const layer = findAll(row, it => it.bleed !== undefined)[0];
+    compare(layer.parent.parent.height, 20 + 2 * Style.rowPadding);
+    mouseMove(row, 10, Style.rowPadding + 5);
+    verify(row.hovered);
+    mouseMove(row, 10, row.height - 2);
+    verify(!row.hovered);
+    mouseMove(root, 650, 450);
   }
 
   // Items under `item` (and in loaded ones) that satisfy `pred`
@@ -714,18 +883,262 @@ TestCase {
     compare(box.implicitHeight, stepper.controlHeight);
   }
 
-  // A row that does not act builds no hover layer and no click area
-  function test_form_row_builds_its_hover_layer_only_while_hoverable() {
+  // A row tints unless `tinted` is off; its click area shows only while hoverable
+  function test_form_row_tints_unless_untinted() {
     harness.configure({});
     const row = createTemporaryObject(formRowComp, root);
     waitForRendering(row);
+    verify(findAll(row, it => it.bleed !== undefined).length > 0);
+    compare(findAll(row, it => it.cursorShape !== undefined && it.visible).length, 0);
+    row.hoverable = true;
+    verify(findAll(row, it => it.cursorShape !== undefined && it.visible).length > 0);
+    row.hoverable = false;
+    compare(findAll(row, it => it.cursorShape !== undefined && it.visible).length, 0);
+    row.tinted = false;
     compare(findAll(row, it => it.bleed !== undefined).length, 0);
-    compare(findAll(row, it => it.cursorShape !== undefined).length, 0);
     row.hoverable = true;
     verify(findAll(row, it => it.bleed !== undefined).length > 0);
-    verify(findAll(row, it => it.cursorShape !== undefined).length > 0);
-    row.hoverable = false;
-    compare(findAll(row, it => it.bleed !== undefined).length, 0);
+  }
+
+  function test_form_row_keeps_hover_over_its_controls_data() {
+    const out = [];
+    for (const [name, comp] of [["switch", hSwitchComp], ["toggle2", hToggle2Comp], ["toggle3", hToggle3Comp], ["slider", hSliderComp], ["combo", hComboComp], ["text", hTextComp], ["mouse", hMouseComp], ["more", hClampedComp]])
+      for (const hoverable of [false, true])
+        out.push({
+          "tag": `${name} ${hoverable ? "hoverable" : "plain"}`,
+          "comp": comp,
+          "name": name,
+          "hoverable": hoverable
+        });
+    return out;
+  }
+
+  // The pointer over any control of the row keeps the row's hover (the
+  // handler is on the row, an ancestor of every control)
+  function test_form_row_keeps_hover_over_its_controls(data) {
+    harness.configure({});
+    const row = createTemporaryObject(hoverRowComp, root, {
+      "childComp": data.comp,
+      "hoverable": data.hoverable
+    });
+    waitForRendering(row);
+    let target = row.holder.item;
+    if (data.name === "more") {
+      target = findAll(row, it => it.text === "More")[0];
+      verify(target !== undefined, "the More link");
+    }
+    mouseMove(root, 650, 450);
+    verify(!row.hovered);
+    mouseMove(target, target.width / 2, target.height / 2);
+    wait(50);
+    verify(row.hovered, `${data.tag}: row hovered over the control`);
+    const layer = findAll(row, it => it.bleed !== undefined)[0];
+    verify(layer.hovered, `${data.tag}: the tint shows`);
+    mouseMove(root, 650, 450);
+    verify(!row.hovered);
+  }
+
+  function test_toggle_click_picks_the_segment_data() {
+    return [
+      {
+        "tag": "two",
+        "comp": hToggle2Comp,
+        "values": ["a", "b"]
+      },
+      {
+        "tag": "three",
+        "comp": hToggle3Comp,
+        "values": ["a", "b", "c"]
+      }
+    ];
+  }
+
+  // A click on a segment picks it; on the chosen one, nothing
+  function test_toggle_click_picks_the_segment(data) {
+    harness.configure({});
+    const toggle = createTemporaryObject(data.comp, root);
+    waitForRendering(toggle);
+    const spy = createTemporaryObject(pickSpyComp, root, {
+      "target": toggle
+    });
+    mouseClick(toggle, toggle._inset + toggle._segment * 0.5, toggle.height / 2);
+    compare(spy.count, 0);
+    for (let i = 1; i < data.values.length; i++) {
+      mouseClick(toggle, toggle._inset + toggle._segment * (i + 0.5), toggle.height / 2);
+      compare(spy.count, i);
+      compare(spy.signalArguments[i - 1][0], data.values[i]);
+    }
+  }
+
+  Component {
+    id: pickSpyComp
+    SignalSpy {
+      signalName: "picked"
+    }
+  }
+
+  function test_schema_toggle_row_click_cycles_data() {
+    return [
+      {
+        "tag": "two",
+        "comp": toggleRowComp,
+        "values": ["a", "b"]
+      },
+      {
+        "tag": "three",
+        "comp": threeToggleRowComp,
+        "values": ["a", "b", "c"]
+      }
+    ];
+  }
+
+  function test_schema_toggle_row_click_cycles(data) {
+    harness.configure({});
+    const toggle = createTemporaryObject(data.comp, root);
+    waitForRendering(toggle);
+    const spy = createTemporaryObject(pickSpyComp, root, {
+      "target": toggle
+    });
+    for (let i = 0; i < data.values.length; i++) {
+      toggle.currentValue = data.values[i];
+      toggle.activate();
+      compare(spy.signalArguments[i][0], data.values[(i + 1) % data.values.length]);
+    }
+  }
+
+  // A hoverable row around a toggle, wired as SchemaField wires it (the real
+  // SchemaField needs SettingsManager, which the layout harness has no
+  // stub for, so its tinted/hoverable predicates stay untested here)
+  Component {
+    id: toggleInRowComp
+    FormRow {
+      id: wrapper
+      property alias toggle: inner
+      width: 600
+      bodyHeight: inner.implicitHeight
+      hoverable: true
+      onRowClicked: inner.activate()
+      SchemaToggle {
+        id: inner
+        width: parent.width
+        label: "A toggle"
+        description: "What it does"
+        options: ["a", "b", "c"]
+        optionLabels: ({
+            "a": "A",
+            "b": "B",
+            "c": "C"
+          })
+        currentValue: "a"
+      }
+    }
+  }
+
+  // A click on the row's background (off the toggle) cycles it
+  function test_form_row_background_click_cycles_its_toggle() {
+    harness.configure({});
+    const row = createTemporaryObject(toggleInRowComp, root);
+    waitForRendering(row);
+    const spy = createTemporaryObject(pickSpyComp, root, {
+      "target": row.toggle
+    });
+    mouseClick(row, 1, row.height / 2);
+    compare(spy.count, 1);
+    compare(spy.signalArguments[0][0], "b");
+  }
+
+  function test_trailing_control_centres_on_the_label_block_data() {
+    return [
+      {
+        "tag": "combo",
+        "kind": "listOpen",
+        "comp": comboRowComp
+      },
+      {
+        "tag": "switch",
+        "kind": "compact",
+        "comp": switchRowComp
+      },
+      {
+        "tag": "toggle",
+        "kind": "_segment",
+        "comp": toggleRowComp
+      },
+      {
+        "tag": "slider",
+        "kind": "fillTone",
+        "comp": sliderRowComp
+      }
+    ];
+  }
+
+  Component {
+    id: comboRowComp
+    SchemaComboBox {
+      width: Widget.fieldInlineFrom + 200
+      label: "A choice"
+      description: "What it does"
+      options: ["a", "b"]
+      currentValue: "a"
+    }
+  }
+
+  Component {
+    id: switchRowComp
+    SchemaSwitch {
+      width: 600
+      label: "A switch"
+      description: "What it does"
+      checked: false
+    }
+  }
+
+  Component {
+    id: sliderRowComp
+    SchemaNumberField {
+      width: Widget.fieldInlineFrom + 200
+      label: "A slider"
+      description: "What it does"
+      mode: "slider"
+      minimum: 0
+      maximum: 100
+      currentConfigValue: 50
+    }
+  }
+
+  // The control sits on the middle of title, description and the line
+  // under them; a part that doesn't show adds nothing
+  function test_trailing_control_centres_on_the_label_block(data) {
+    harness.configure({});
+    const field = createTemporaryObject(data.comp, root, {
+      "headerBelow": belowComp
+    });
+    waitForRendering(field);
+    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
+    const part = findAll(header, it => it.shows !== undefined)[0];
+    verify(part !== undefined && header.height >= 40 + Widget.spacing / 2);
+    const middle = item => item.mapToItem(field, 0, item.height / 2).y;
+    const control = findAll(field, it => it[data.kind] !== undefined)[0];
+    verify(control !== undefined, "a trailing control");
+    verify(Math.abs(middle(control) - middle(header)) <= 1, `${data.tag}: control ${middle(control)} header ${middle(header)}`);
+    const tall = header.height;
+    part.open = false;
+    tryVerify(() => header.height < tall - 40 + 1);
+  }
+
+  // Stacked (a narrow row), the links sit above the control, never beside it
+  function test_stacked_toggle_keeps_its_link_above() {
+    harness.configure({});
+    const field = createTemporaryObject(toggleRowComp, root, {
+      "width": Widget.textPx(200),
+      "headerBelow": belowComp
+    });
+    waitForRendering(field);
+    verify(field.stacked);
+    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
+    const control = findAll(field, it => it._segment !== undefined)[0];
+    const top = control.mapToItem(field, 0, 0).y;
+    verify(header.mapToItem(field, 0, header.height).y <= top, "the header, link included, ends above the toggle");
   }
 
   // The More link is built only when the text is longer than its lines;
@@ -927,5 +1340,160 @@ TestCase {
     waitForRendering(sw);
     compare(sw.background.radius, Style.radiusInner);
     compare(sw.indicator.radius, StyleTokens.concentric(Style.radiusInner, Widget.px(2), Style.radiusMin));
+  }
+
+  Component {
+    id: stateComp
+
+    Rectangle {
+      width: 100
+      height: 40
+      radius: 6
+
+      StateLayer {
+        objectName: "layer"
+      }
+    }
+  }
+
+  Component {
+    id: ringComp
+
+    Rectangle {
+      width: 100
+      height: 40
+      radius: 6
+
+      FocusRing {
+        objectName: "ring"
+      }
+    }
+  }
+
+  Component {
+    id: skeletonComp
+
+    Skeleton {
+      width: 300
+    }
+  }
+
+  Component {
+    id: trackComp
+
+    SegmentTrack {
+      width: 300
+      height: 40
+      count: 3
+    }
+  }
+
+  Component {
+    id: motionComp
+
+    MotionListView {
+      width: 100
+      height: 100
+      model: 3
+      delegate: Item {
+        required property int index
+
+        width: 100
+        height: 20
+      }
+    }
+  }
+
+  // The state tint: rest, hover, press (over hover), drag and the on-accent set
+  function test_state_layer_tints_by_state() {
+    harness.configure({});
+    const host = createTemporaryObject(stateComp, root);
+    const layer = host.children[0];
+    compare(layer.width, host.width);
+    tryCompare(layer, "color", Style.stateRest);
+    layer.hovered = true;
+    layer.pressed = true;
+    tryCompare(layer, "color", Style.statePressed);
+    layer.pressed = false;
+    layer.dragged = true;
+    tryCompare(layer, "color", Style.stateDrag);
+    layer.dragged = false;
+    tryCompare(layer, "color", Style.stateHover);
+    layer.onAccent = true;
+    tryCompare(layer, "color", Style.stateOnAccentHover);
+    layer.hovered = false;
+    tryCompare(layer, "color", Style.stateOnAccentRest);
+    layer.bleed = 4;
+    compare(layer.width, host.width + 8);
+  }
+
+  // The ring shows only with `shown`, sits outside its parent and follows its radius
+  function test_focus_ring_follows_its_parent() {
+    harness.configure({});
+    const host = createTemporaryObject(ringComp, root);
+    const ring = host.children[0];
+    compare(ring.visible, false);
+    ring.shown = true;
+    compare(ring.visible, true);
+    compare(ring.radius, host.radius + Style.focusWidth);
+    compare(ring.width, host.width + Style.focusWidth * 2);
+    compare(ring.x, -Style.focusWidth);
+    host.radius = 10;
+    compare(ring.radius, 10 + Style.focusWidth);
+  }
+
+  // The skeleton makes one bar per line, the last shorter, and an avatar on request
+  function test_skeleton_bars_and_avatar() {
+    harness.configure({});
+    const sk = createTemporaryObject(skeletonComp, root, {
+      "lines": 3
+    });
+    waitForRendering(sk);
+    const bars = findAll(sk, it => it.last !== undefined && it.height === sk._bar);
+    compare(bars.length, 3);
+    const widths = bars.slice(0, 3).map(b => b.width);
+    verify(widths[2] < widths[0], "the last bar is shorter: " + widths);
+    const one = createTemporaryObject(skeletonComp, root, {
+      "lines": 1
+    });
+    waitForRendering(one);
+    const only = findAll(one, it => it.last !== undefined && it.height === one._bar);
+    verify(only.length > 0 && Math.abs(only[0].width - one.width) < 1, "a single line spans the width");
+    const discs = it => findAll(it, c => c.radius !== undefined && c.width === Style.iconLg && c.height === Style.iconLg && c.visible);
+    compare(discs(one).length, 0);
+    one.avatar = true;
+    waitForRendering(one);
+    compare(discs(one).length, 1);
+  }
+
+  // The thumb sits under segment `index`, as wide as a segment, with corners concentric in the track
+  function test_segment_track_thumb_follows_index() {
+    harness.configure({});
+    const track = createTemporaryObject(trackComp, root);
+    waitForRendering(track);
+    const thumb = findAll(track, it => it.tone === Style.segmentThumbTone && it !== track)[0];
+    verify(thumb !== undefined, "has a thumb");
+    compare(thumb.width, Math.round(track._segment));
+    tryCompare(thumb, "x", Math.round(track.inset));
+    track.index = 2;
+    tryCompare(thumb, "x", Math.round(track.inset + 2 * track._segment));
+    compare(thumb.radius, StyleTokens.concentric(track.radius, track.inset, Style.radiusMin));
+    compare(thumb.height, track.height - track.inset * 2);
+    track.count = 0;
+    verify(track._segment > 0 && isFinite(track._segment), "an empty track does not divide by zero");
+  }
+
+  // The first model fill never animates unless asked; later changes do (with the shell's animations)
+  function test_motion_list_view_skips_first_fill() {
+    harness.configure({});
+    const view = createTemporaryObject(motionComp, root);
+    compare(view._settled, false);
+    compare(view._animate, false);
+    tryCompare(view, "_settled", true);
+    compare(view._animate, Appearance.animations);
+    const first = createTemporaryObject(motionComp, root, {
+      "animateFirstFill": true
+    });
+    compare(first._animate, Appearance.animations);
   }
 }

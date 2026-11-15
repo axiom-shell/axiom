@@ -215,7 +215,6 @@ ColumnLayout {
       }
 
       StyledTextButton {
-        implicitHeight: Widget.height - Widget.px(4)
         text: I18n.tr("Allow takeover")
         onClicked: CompositorConfigManager.allowTakeover()
       }
@@ -261,7 +260,6 @@ ColumnLayout {
       }
 
       StyledTextButton {
-        implicitHeight: Widget.height - Widget.px(4)
         text: root.recommendedRan ? I18n.tr("Close") : I18n.tr("Not now")
         onClicked: RecommendedSetupManager.dismiss()
       }
@@ -355,7 +353,6 @@ ColumnLayout {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Open folder")
       onClicked: CompositorConfigManager.openConfigDir()
     }

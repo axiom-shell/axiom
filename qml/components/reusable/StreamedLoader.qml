@@ -15,7 +15,7 @@ import qs.components.methods
 // it's made: otherwise, or with `stream: false`, it builds at once, as a
 // plain Loader. A streamed item fades in and slides up into place; the
 // slide is a Translate (never the loader's own `y`, which its layout or a
-// caller owns), and `enterIndex` staggers a row of them.
+// caller owns).
 Loader {
   id: root
 
@@ -27,9 +27,6 @@ Loader {
   property string label: ""
   // Off: not built (or unbuilt) even once its turn has come, as `active`
   property bool wanted: true
-  // >= 0 delays the enter by this many steps (at most 8) after the item
-  // is built, so a row of them rises one after another
-  property int enterIndex: -1
   // Off: it only fades in, without sliding up (the settings cards and their
   // fields, which sit on a page that slides in itself)
   property bool rise: true
@@ -66,15 +63,14 @@ Loader {
       root._entered = false;
       root._enter = 0;
     } else if (root._streamed && !root._entered) {
-      // The slide and the stagger are built only when used: a loader that
-      // only fades (most of them) has neither
-      if (root.rise || root.enterIndex >= 0) {
+      // The slide is built only when used: a loader that only fades (most of
+      // them) has none
+      if (root.rise) {
         if (root._riseAnim === null) {
-          if (root.rise)
-            root.transform = [slideComp.createObject(root)];
+          root.transform = [slideComp.createObject(root)];
           root._riseAnim = riseComp.createObject(root);
         }
-        root._enter = root.rise ? Style.enterOffset : 0;
+        root._enter = Style.enterOffset;
         root._riseAnim.restart();
       } else {
         root._entered = true;
@@ -91,14 +87,11 @@ Loader {
     }
   }
 
-  // The stagger, then the item shown and the slide's run
+  // The item shown and the slide's run
   Component {
     id: riseComp
 
     SequentialAnimation {
-      PauseAnimation {
-        duration: Appearance.animations && root.enterIndex >= 0 ? Math.min(root.enterIndex, 8) * Style.staggerStep : 0
-      }
       ScriptAction {
         script: root._entered = true
       }

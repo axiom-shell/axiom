@@ -105,7 +105,6 @@ Item {
     // dozens of networks, and a row is a few dozen items
     MotionListView {
       id: list
-      animateFirstFill: false
       implicitHeight: list.contentHeight
       spacing: 2
       boundsBehavior: Flickable.StopAtBounds

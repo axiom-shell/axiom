@@ -122,6 +122,7 @@ ColumnLayout {
         shown: field.item ? field.item.shown : undefined
         indented: field.item?.followsSibling ?? false
         bodyHeight: column.implicitHeight
+        tinted: field.item?.tinted ?? false
         hoverable: field.item?.hoverable ?? false
         onRowClicked: field.item?.rowClicked()
         readonly property bool _beside: modelData.schema?.["x-beside"] === true
@@ -155,6 +156,7 @@ ColumnLayout {
               "row": cell.modelData,
               "form": root,
               "headerExtra": root.changedAt ? marks : null,
+              "headerBelow": cell.modelData.schema?.["x-link"] || root.fieldAction ? below : null,
               "visible": true
             })
           }
@@ -173,22 +175,33 @@ ColumnLayout {
             }
           }
 
-          FieldLinks {
-            Layout.fillWidth: true
-            links: cell.modelData.schema?.["x-link"]
-          }
+          // The field's `x-link`s and action, read with its label
+          // (FieldHeader.below)
+          Component {
+            id: below
+            ColumnLayout {
+              readonly property bool shows: links.shows || actionLink.active
+              spacing: Widget.spacing / 2
 
-          // Made only for a field with an action, not under every field
-          Loader {
-            id: actionLink
-            readonly property var action: root.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
-            Layout.fillWidth: true
-            active: actionLink.action !== null
-            visible: active
-            sourceComponent: SettingsLink {
-              text: actionLink.action.text
-              icon: actionLink.action.icon ?? ""
-              run: actionLink.action.run
+              FieldLinks {
+                id: links
+                Layout.fillWidth: true
+                links: cell.modelData.schema?.["x-link"]
+              }
+
+              // Made only for a field with an action, not under every field
+              Loader {
+                id: actionLink
+                readonly property var action: root.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
+                Layout.fillWidth: true
+                active: actionLink.action !== null
+                visible: active
+                sourceComponent: SettingsLink {
+                  text: actionLink.action.text
+                  icon: actionLink.action.icon ?? ""
+                  run: actionLink.action.run
+                }
+              }
             }
           }
         }

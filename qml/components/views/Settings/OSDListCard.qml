@@ -76,7 +76,6 @@ EntryListCard {
   onShow: id => ShellManager.showOsd(id)
 
   headerButtons: StyledTextButton {
-    implicitHeight: Widget.height - Widget.px(4)
     iconText: "visibility"
     text: I18n.tr("Preview")
     tooltipText: I18n.tr("Keep this OSD open while you edit it, the selected system outlined")

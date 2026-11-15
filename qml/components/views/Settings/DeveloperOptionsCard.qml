@@ -65,7 +65,6 @@ FieldGroup {
     }
 
     StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Open Development")
       onClicked: DevManager.openDevelopment()
     }

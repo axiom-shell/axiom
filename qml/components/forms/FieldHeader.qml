@@ -13,13 +13,20 @@ ColumnLayout {
   // Shown right after the label, on its line (the settings row's unsaved
   // dot and reset button)
   property Component trailing: null
+  // Shown under the description, read with the label (a field's `x-link`
+  // line). Its root declares `readonly property bool shows`, from data
+  // (never layout)
+  property Component below: null
   // A list's title: the title role, a step larger
   property bool title: false
   readonly property real _trailingRoom: trailingPart.active ? trailingPart.implicitWidth + Widget.spacing : 0
 
   Layout.fillWidth: true
   spacing: Widget.px(2)
-  visible: root.label !== "" || root.description !== ""
+  // (`item.shows`, never `belowPart.visible`: that depends on this one)
+  readonly property var _belowItem: belowPart.item
+  readonly property bool _belowShows: root._belowItem?.shows === true
+  visible: root.label !== "" || root.description !== "" || root._belowShows
 
   // The label at its one-line width, or what's left beside the trailing
   // part: it wraps, never elides. (Placed by hand: a layout sizing the
@@ -58,5 +65,14 @@ ColumnLayout {
   // Long help folds to three lines behind More
   ClampedText {
     text: root.description === "" ? "" : I18n.tr(root.description)
+  }
+
+  Loader {
+    id: belowPart
+    Layout.fillWidth: true
+    Layout.topMargin: Widget.spacing / 2
+    active: root.below !== null
+    visible: root._belowShows
+    sourceComponent: root.below
   }
 }
