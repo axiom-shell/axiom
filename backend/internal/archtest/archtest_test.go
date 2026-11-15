@@ -56,6 +56,7 @@ var tiers = map[string]int{
 	"internal/xkb":                  tierPure,
 	"internal/specialid":            tierPure,
 	"internal/windowrules":          tierPure,
+	"internal/windowrules/engine":   tierEdge,
 	"internal/filesearch":           tierPure,
 	"internal/account":              tierEdge,
 	"internal/assets":               tierEdge,

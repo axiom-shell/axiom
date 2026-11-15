@@ -330,12 +330,20 @@ Singleton {
   function _applyWindowLook() {
     if (!root._windowEffects)
       return;
-    const plan = SwayState.windowCommands(root.windows, root.activeWindowId, root._windowEffects, JSON.parse(_recent.windowLookJson), root._configDim);
+    const plan = SwayState.windowCommands(root.windows, root.activeWindowId, root._windowEffects, JSON.parse(_recent.windowLookJson), root._configDim, WindowRulesManager.look);
     _recent.windowLookJson = JSON.stringify(plan.applied);
     if (plan.lines.length > 0)
       SwayIpcManager.command(plan.lines.join("; "));
   }
   onWindowsChanged: _applyWindowLook()
+
+  // The windows a rule sets the opacity or blur of (the window rules engine)
+  Connections {
+    target: WindowRulesManager
+    function onLookChanged() {
+      root._applyWindowLook();
+    }
+  }
 
   // After a config reload: each window's blur and shadows are the
   // config's again, so the look sent after every reload (setLiveLook)

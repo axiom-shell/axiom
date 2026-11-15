@@ -481,13 +481,24 @@ QtObject {
    * changes, and what's set then. Opacity going off puts every window back
    * to 1 and the dim to `revertDim` (the config's default_dim_inactive);
    * the blur and shadows go back with the reload that turns a part off.
+   * `rules` is the window rules engine's look ({ opacity: { id: percent },
+   * noBlur: [id] }, or null): a window a rule sets the opacity of gets
+   * that value, whatever the focus, and one it turns the blur off for
+   * gets none, so the look doesn't overwrite what the rule set. Opacity
+   * going off puts those windows back to their rule's value after the 1.
    */
-  function windowCommands(windows, focusedId, effects, applied, revertDim) {
+  function windowCommands(windows, focusedId, effects, applied, revertDim, rules) {
     const now = {};
     const lines = [];
     const had = key => Object.values(applied ?? {}).some(set => set?.[key] !== undefined);
-    if (!effects?.opacity && had("opacity"))
+    if (!effects?.opacity && had("opacity")) {
       lines.push("[all] opacity 1");
+      for (const win of windows ?? []) {
+        const v = rules?.opacity?.[win.id];
+        if (v !== undefined)
+          lines.push(`[con_id=${Number(win.id)}] opacity ${v / 100}`);
+      }
+    }
     if ((effects?.dim ?? null) === null && had("dim"))
       lines.push(`[all] dim_inactive ${Number(revertDim) || 0}`);
     const toggle = on => on ? "enable" : "disable";
@@ -495,10 +506,11 @@ QtObject {
       const want = {};
       if (effects?.opacity) {
         const o = effects.opacity;
-        want.opacity = Math.round(win.fullscreen ? o.fullscreen : win.id === focusedId ? o.active : o.inactive) / 100;
+        const rule = rules?.opacity?.[win.id];
+        want.opacity = rule !== undefined ? rule / 100 : Math.round(win.fullscreen ? o.fullscreen : win.id === focusedId ? o.active : o.inactive) / 100;
       }
       if ((effects?.blur ?? null) !== null)
-        want.blur = effects.blur === true;
+        want.blur = effects.blur === true && !(rules?.noBlur ?? []).includes(win.id);
       if ((effects?.shadows ?? null) !== null)
         want.shadows = effects.shadows === true;
       if ((effects?.dim ?? null) !== null)
