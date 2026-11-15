@@ -438,13 +438,16 @@ QtObject {
     };
   }
 
-  // An element's own binding: a format when it has a "{" (filled from the
-  // resolved fields, then the sample), else a field name, else a path in
-  // the sample. Returns the raw value (a format: its string).
+  // An element's own binding: a literal when it starts with "=" (the rest,
+  // as text: `=Show answer`, `=task_alt`, `=5`), a format when it has a "{"
+  // (filled from the resolved fields, then the sample), else a field name,
+  // else a path in the sample. Returns the raw value (a format: its string).
   function elementValue(fields, binding) {
     if (!binding)
       return undefined;
     const b = String(binding);
+    if (b[0] === "=")
+      return b.slice(1);
     // A number typed as the binding (a max of 100)
     if (/^-?\d+(\.\d+)?$/.test(b.trim()))
       return Number(b);

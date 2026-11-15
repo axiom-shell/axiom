@@ -2306,7 +2306,6 @@
     "Not valid JSON yet.": "",
     "Make widgets from scripts": "",
     "Text block": "",
-    "Fit the box": "",
     "Small": "",
     "Large": "",
     "Huge": "",
@@ -3761,7 +3760,6 @@
     "Tabs over the grid, when there's room.": "",
     "Auto: only when every tile fits its name.": "",
     "Auto: the border color.": "",
-    "Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output's own key.": "",
     "Completed items": "",
     "Dragged values round to this. 0: none.": "",
     "Dot only": "",
@@ -4439,6 +4437,12 @@
     "Keep as the sample of {0}": "",
     "Forget this sample": "",
     "A sample output per screen (a screen id, \"\" for none): what the editor previews it with.": "",
-    "A named action: empty, a built-in (axiom:<id>) or an id the definition's action command is run with.": ""
+    "A named action: empty, a built-in (axiom:<id>) or an id the definition's action command is run with.": "",
+    "Draw a bound value's Pango markup.": "",
+    "Markup": "",
+    "Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output's own key. =text is literal.": "",
+    "Text elements' font family when they set none.": "",
+    "Empty: monospace when on, else the module's, else the shell's.": "",
+    "Fill the box": ""
   }
 }

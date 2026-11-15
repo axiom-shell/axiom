@@ -6,6 +6,8 @@ color: text
 settings:
   bold: {type: boolean, title: Bold, default: false}
   monospace: {type: boolean, title: Monospace, default: false}
+  markup: {type: boolean, title: Markup, default: false, description: 'Draw a bound value''s Pango markup.'}
+  font: {type: string, title: Font, default: '', description: 'Empty: monospace when on, else the module''s, else the shell''s.'}
   align:
     type: string
     title: Alignment
@@ -17,5 +19,5 @@ settings:
     type: string
     title: Size
     default: auto
-    enum: [auto, small, normal, large, huge]
-    x-enumLabels: {auto: Fit the box, small: Small, normal: Normal, large: Large, huge: Huge}
+    enum: [auto, fill, small, normal, large, huge]
+    x-enumLabels: {auto: Auto, fill: Fill the box, small: Small, normal: Normal, large: Large, huge: Huge}

@@ -130,8 +130,8 @@ ColumnLayout {
 
       SchemaPropertiesForm {
         Layout.preferredWidth: root.lockWidth
-        propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen"])
-        order: ["lockscreen"]
+        propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen", "font"])
+        order: ["lockscreen", "font"]
         values: root.definition?.module ?? ({})
         onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
       }
