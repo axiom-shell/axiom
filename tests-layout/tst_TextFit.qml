@@ -1380,7 +1380,7 @@ TestCase {
     verify(!find(plain, it => it.text === plain.label && it.lineCount !== undefined, [])[0].font.strikeout);
   }
 
-  // An issue shows an IssueIcon with its tip; none shows nothing
+  // An issue shows an IssueIcon with its tip; none builds nothing
   function test_list_entry_row_shows_its_issue() {
     harness.configure({});
     const row = createTemporaryObject(plainRowComp, root, {
@@ -1388,8 +1388,7 @@ TestCase {
     });
     waitForRendering(row);
     const icon = () => find(row, it => it.level !== undefined && it.tip !== undefined, [])[0];
-    verify(icon());
-    verify(!icon().visible);
+    verify(!icon());
     row.issue = "warning";
     row.issueTip = "Bound more than once";
     waitForRendering(row);
