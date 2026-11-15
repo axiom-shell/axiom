@@ -174,14 +174,21 @@ func (t *Tables) switcherEntries(binds, ctx any, complete func(bind, ctx any) bo
 	return out
 }
 
-// BindLines is HyprConfigLua.bindLines: every complete bind's line, then
-// the switcher's submap.
-func (t *Tables) BindLines(binds, ctx any) []string {
-	out := []string{}
+// HyprBindLinesByID is HyprConfigLua.bindLines (every complete bind's line,
+// then the switcher's submap) with each bind's handle kept in AXIOM_BINDS
+// under its id (a bind with no id: the plain line), so the rule effect
+// "pause shortcuts" can switch it off (HyprPauseLua).
+func (t *Tables) HyprBindLinesByID(binds, ctx any) []string {
+	out := []string{"AXIOM_BINDS = {}"}
 	for _, b := range items(binds) {
-		if line := t.BindLua(b, ctx); line != "" {
-			out = append(out, line)
+		line := t.BindLua(b, ctx)
+		if line == "" {
+			continue
 		}
+		if id := str(or(get(b, "id"), "")); id != "" {
+			line = "AXIOM_BINDS[" + LuaString(id) + "] = " + line
+		}
+		out = append(out, line)
 	}
 	entries := t.switcherEntries(binds, ctx, func(b, c any) bool { return t.BindLua(b, c) != "" })
 	return append(out, SwitcherLua(entries)...)
@@ -199,13 +206,13 @@ func RequiredLua(withAnimation bool) []string {
 
 // ModuleLua is HyprConfigLua.moduleLua: the included module. parts: {
 // header, includeLines, requiredSettings, and the Lua lines of binds, look,
-// input, blur, layers, monitors, strips }.
+// input, blur, layers, monitors, strips, rules }.
 func ModuleLua(parts any) string {
 	setup := []string{}
 	if truthy(get(parts, "requiredSettings")) {
 		setup = append(setup, "M.required()")
 	}
-	setup = append(setup, "M.binds()", "M.look()", "M.input()", "M.blur()", "M.layers()", "M.monitors()", "M.strips()")
+	setup = append(setup, "M.binds()", "M.look()", "M.input()", "M.blur()", "M.layers()", "M.monitors()", "M.strips()", "M.rules()")
 	part := func(name string) string { return indent(stringList(get(parts, name)), "  ") }
 	return jsCat(get(parts, "header")) + ` from its Hyprland settings, and rewritten whenever they
 -- (or the theme) change: edit those, not this file.
@@ -259,6 +266,12 @@ end
 -- Strips (the scrolling layout) on the monitors Workspaces lists
 function M.strips()
 ` + part("strips") + `
+end
+
+-- Your window rules (the Window rules page), the most important last: a
+-- later rule wins, so your own after this file win over them
+function M.rules()
+` + part("rules") + `
 end
 
 function M.setup()

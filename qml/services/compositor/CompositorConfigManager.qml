@@ -55,6 +55,9 @@ Singleton {
   // config already binds them
   readonly property var skippedKeys: _state.skippedKeys ?? []
   readonly property bool takeoverPending: _state.takeoverPending === true
+  // The saved window rules as the compositor's config takes them
+  // ({ issues, rules }, WindowRuleIssues), null until the shell's facts come
+  readonly property var windowRules: _state.windowRules ?? null
   // Why the managed config couldn't be given back on leaving managed mode
   // (the daemon tries again), or ""
   readonly property string releaseProblem: _state.releaseProblem ?? ""
@@ -313,6 +316,15 @@ Singleton {
   // the shell can't read them from the compositor (sway, niri), or null
   function withEntries(callback) {
     BackendManager.call("compositor.entries", {}, (err, entries) => callback(err ? null : entries));
+  }
+
+  // Calls back with the report of an unsaved WindowRules section (the
+  // same shape as `windowRules`), or null when it couldn't be checked
+  // rpc: compositor.checkRules
+  function checkRules(section, callback) {
+    BackendManager.call("compositor.checkRules", {
+      "section": section
+    }, (err, report) => callback(err ? null : report));
   }
 
   // --- For the settings page ---

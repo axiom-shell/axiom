@@ -43,6 +43,7 @@ sway fires a release bind only when no other key came between, and niri has no r
 - `WindowSwitcherManager.step(n)` opens the switcher on the first event.
   - It snapshots `CompositorManager.windows`, most recently used first (`methods/WindowOrder.mru`, by `focusHistoryID`).
   - The event-driven `CompositorManager.activeWindowId` goes first, since the fetched window list lags behind a quick second switch.
+  - Windows a window rule hides from the switcher (`WindowRulesManager.shownIn`) are left out. When the focused window is one of them the selection starts before the first tile (`WindowOrder.startIndex`), so the first step lands on the last window used.
   - The list is filtered by `DockLayout.inScope` for `scope` (with `all`, every monitor's windows), and fixed until the switcher closes. The switcher shows on the focused monitor.
 - `commit()` focuses the selection through `CompositorManager.focusWindow`. It does nothing when the selection is the window focused at open.
 - A tile click `pick`s, and leaves through `HyprlandManager.leaveSwitcher` (`axiom_switcher_leave()`). The listener stops and the submap resets, the same way the key recorder's submap is left ([Keybinds](keybinds.md#recording-a-key)).

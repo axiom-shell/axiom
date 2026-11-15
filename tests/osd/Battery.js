@@ -10,7 +10,7 @@
 //            shown) }
 //   battery  { available, level ("none" | "low" | "critical", now),
 //            percent, timeLeft (timeRemaining, as shown), event
-//            (BatteryManager.levelEvent: { level, serial }, set only as the
+//            (BatteryManager.levelEvent: { level, kind, serial }, set only as the
 //            level drops, once settled; or null), seq }
 //
 // decided: `battery` is an "event" model key (its card comes only with
@@ -47,7 +47,7 @@ var rows = [
     "name": "the first reading shows nothing",
     "options": opts,
     "steps": [
-      { "at": 0, "state": { "charger": ch(true), "battery": bat("low", 18, "", { "level": "low", "serial": 1 }, 1) } }
+      { "at": 0, "state": { "charger": ch(true), "battery": bat("low", 18, "", { "level": "low", "kind": "low", "serial": 1 }, 1) } }
     ]
   },
   // ---- The charger ----
@@ -57,7 +57,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "charger": ch(false), "battery": bat("none", 64) } },
       { "at": 3000, "state": { "charger": ch(true, { "charging": true, "untilFull": "1h 20m" }) },
-        "expect": { "key": "charger", "show": "card", "kind": "add",
+        "expect": { "key": "charger", "show": "card", "kind": "add", "alert": false,
           "tile": { "icon": "power", "on": true, "notable": false, "hidden": false, "slash": false, "name": "64%" },
           "card": { "icon": "battery_charging_full", "title": "64%", "role": "Charging", "detail": "1h 20m", "clickable": false },
           "host": "open", "action": null } }
@@ -132,8 +132,8 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": { "charger": ch(false, { "percent": 21 }), "battery": bat("none", 21, "1h 15m") } },
-      { "at": 3000, "state": { "battery": bat("low", 18, "1h 5m", { "level": "low", "serial": 1 }, 1) },
-        "expect": { "key": "battery", "show": "card", "kind": "event",
+      { "at": 3000, "state": { "battery": bat("low", 18, "1h 5m", { "level": "low", "kind": "low", "serial": 1 }, 1) },
+        "expect": { "key": "battery", "show": "card", "kind": "event", "alert": true,
           "tile": { "icon": "battery_low", "on": true, "notable": true, "hidden": false, "slash": false },
           "card": { "icon": "battery_low", "title": "18%", "role": "Battery low", "detail": "1h 5m", "tone": "", "clickable": false },
           "host": "open" } }
@@ -143,9 +143,9 @@ var rows = [
     "name": "dropped to critical: on the warning colour",
     "options": opts,
     "steps": [
-      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "serial": 1 }, 1) } },
-      { "at": 3000, "state": { "battery": bat("critical", 6, "", { "level": "critical", "serial": 2 }, 2) },
-        "expect": { "key": "battery", "show": "card",
+      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "kind": "low", "serial": 1 }, 1) } },
+      { "at": 3000, "state": { "battery": bat("critical", 6, "", { "level": "critical", "kind": "critical", "serial": 2 }, 2) },
+        "expect": { "key": "battery", "show": "card", "alert": true,
           "tile": { "icon": "battery_alert", "on": true, "notable": true },
           "card": { "icon": "battery_alert", "title": "6%", "role": "Battery critically low", "detail": "", "tone": "warning" } } }
     ]
@@ -154,8 +154,8 @@ var rows = [
     "name": "a critical drop's card says critical though the level reads none (plugged in under it)",
     "options": opts,
     "steps": [
-      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "serial": 1 }, 1) } },
-      { "at": 3000, "state": { "battery": bat("none", 6, "", { "level": "critical", "serial": 2 }, 2) },
+      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "kind": "low", "serial": 1 }, 1) } },
+      { "at": 3000, "state": { "battery": bat("none", 6, "", { "level": "critical", "kind": "critical", "serial": 2 }, 2) },
         "expect": { "key": "battery", "show": "card",
           "card": { "icon": "battery_alert", "title": "6%", "role": "Battery critically low", "tone": "warning" } } }
     ]
@@ -173,7 +173,7 @@ var rows = [
     "name": "the event cleared: nothing",
     "options": opts,
     "steps": [
-      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 18, "", { "level": "low", "serial": 1 }, 1) } },
+      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 18, "", { "level": "low", "kind": "low", "serial": 1 }, 1) } },
       { "at": 3000, "state": { "battery": bat("low", 18, "", null, 1) } }
     ]
   },
@@ -182,7 +182,7 @@ var rows = [
     "options": { "shows": ["charger"] },
     "steps": [
       { "at": 0, "state": { "charger": ch(false), "battery": bat("none", 21) } },
-      { "at": 3000, "state": { "battery": bat("low", 18, "", { "level": "low", "serial": 1 }, 1) } }
+      { "at": 3000, "state": { "battery": bat("low", 18, "", { "level": "low", "kind": "low", "serial": 1 }, 1) } }
     ]
   },
   {
@@ -190,7 +190,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": { "charger": ch(false, { "percent": 19 }), "battery": bat("none", 19) } },
-      { "at": 3000, "state": { "battery": bat("low", 18, "", { "level": "low", "serial": 1 }, 1) },
+      { "at": 3000, "state": { "battery": bat("low", 18, "", { "level": "low", "kind": "low", "serial": 1 }, 1) },
         "expect": { "key": "battery", "show": "card", "host": "open" } },
       { "at": 3500, "state": { "charger": ch(true, { "percent": 18, "charging": true }) },
         "expect": { "key": "charger", "show": "card", "host": "replace" } }

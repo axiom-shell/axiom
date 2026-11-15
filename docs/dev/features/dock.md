@@ -20,7 +20,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 - On "focused" the dock is rebuilt on whichever monitor focus moves to.
 
 ### Items (DockManager + methods/DockLayout)
-- `itemsFor(dock, screen)` groups `CompositorManager.windows` by app.
+- `itemsFor(dock, screen)` groups `CompositorManager.windows` by app, less the windows a window rule hides from the dock (`WindowRulesManager.shownIn("dock", …)`); the intellihide still counts them.
   - The app key (`appKey`) is `DesktopEntries.heuristicLookup(appId)`, else the window's app id.
 - `methods/DockLayout` is pure:
   - **`buildItems`:** pinned items first, then running ones when `showRunning` is on.

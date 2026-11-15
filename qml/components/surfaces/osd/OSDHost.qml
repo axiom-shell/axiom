@@ -18,7 +18,8 @@ import qs.components.surfaces.osd.design
 // an OSDSystemHost (its definition and watcher, loaded by URL); their
 // changes come through OSDEngine's arbitration (OSDEngine.arbitrate:
 // against the card out, then the ring) and open the OSD as
-// OSDSystemHost.opens says. No system is named here
+// OSDSystemHost.opens says (paused on its screen by a window rule: only
+// an alert opens it). No system is named here
 // (docs/dev/features/osd.md › Engine). The parts stack out from the edge
 // in one box, the bars nearest it, then the icons (`iconsPlace` inside:
 // the other way round), the card last (OSDParts.partOrder; with
@@ -42,6 +43,8 @@ Item {
   required property var osd
   // The screen it's on (a ShellScreen), for its systems
   property var screen: null
+  // A window rule pauses OSDs on its screen: only an alert opens it
+  property bool paused: false
   // The edge it slides out of runs vertically
   property bool edgeVertical: false
   // The edge is the bottom or the right one: the parts stack up or left
@@ -937,6 +940,7 @@ Item {
       type: system.modelData
       options: root.osd.systems[system.index] ?? ({})
       screen: root.screen
+      paused: root.paused
       osdId: root.osd.id
       onChange: what => root._onChange(system, what)
       Component.onCompleted: root._register(system, true)

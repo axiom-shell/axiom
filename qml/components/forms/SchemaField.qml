@@ -294,6 +294,9 @@ Loader {
       return readonlyField;
     switch (fieldSchema.type) {
     case "array":
+      // The ids of something defined elsewhere (`x-ref`)
+      if (root.refKind !== "")
+        return refChipsField;
       // Strings only: from a fixed set (chips), or free text (a monitor
       // list too: its names may be of monitors not plugged in)
       if (fieldSchema.items?.enum && fieldSchema["x-ordered"])
@@ -538,6 +541,24 @@ Loader {
         value: root.current ?? ""
         onCommitted: value => root.commit(value)
       }
+    }
+  }
+
+  // An array of ids of something defined elsewhere (`x-ref`): chips and a
+  // picker of the others (RefChips)
+  Component {
+    id: refChipsField
+    RefChips {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      // The only kind-specific text
+      addText: I18n.tr("Add shortcut")
+      value: root.current ?? []
+      options: SettingsManager.refOptions(root.refKind)
+      labels: SettingsManager.refLabels(root.refKind)
+      icons: SettingsManager.refIcons(root.refKind)
+      onEdited: value => root.commit(value)
     }
   }
 
