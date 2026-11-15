@@ -4621,6 +4621,7 @@
     "Auto reads Waybar's or axiom's JSON, else the text.": "",
     "Put it on a bar": "",
     "Put it on a page": "",
-    "Unnamed": ""
+    "Unnamed": "",
+    "Theme font": ""
   }
 }

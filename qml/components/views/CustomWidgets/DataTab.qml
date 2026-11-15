@@ -58,7 +58,8 @@ ColumnLayout {
     root.scriptText = "";
     if (path !== "")
       CommandManager.run(["head", "-c", "262144", "--", path], (code, out) => {
-        if (path === root.scriptPath)
+        // The reply can come after the tab is gone (root then is null)
+        if (root && path === root.scriptPath)
           root.scriptText = code === 0 && out.startsWith("#!") ? out : "";
       });
   }

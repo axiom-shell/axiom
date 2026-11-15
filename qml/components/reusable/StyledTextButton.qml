@@ -22,6 +22,9 @@ Surface {
   property string iconText: ""
   // Draw the icon after the label instead of before it
   property bool iconAfter: false
+  // A fill of the owner's own colour (set `color` too): hover and press use
+  // the tints made for solid fills, as primary does
+  property bool ownFill: false
   // The label's and the icon's size
   property real textSize: Style.typeLabel
   property string tooltipText: ""
@@ -80,7 +83,7 @@ Surface {
   StateLayer {
     hovered: mouseArea.containsMouse
     pressed: mouseArea.pressed
-    onAccent: root.kind === "primary" || root.kind === "dangerPrimary"
+    onAccent: root.ownFill || root.kind === "primary" || root.kind === "dangerPrimary"
     radius: root.radius
   }
 

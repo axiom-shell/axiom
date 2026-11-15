@@ -151,5 +151,5 @@ properties:
               type: array
               default: []
               items: {$ref: '#/definitions/CustomElement'}
-      font: {type: string, title: Font, default: '', description: 'Text elements'' font family when they set none.'}
+      font: {type: string, title: Font, default: '', x-emptyLabel: Theme font, description: 'Text elements'' font family when they set none.'}
 required: [id]

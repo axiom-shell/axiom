@@ -66,7 +66,7 @@ ColumnLayout {
       // The key it was made for (the loader's model): a flag raised for the
       // next form must not be taken by one that is going
       required property string modelData
-      readonly property var when: root.view?.when ?? ({})
+      readonly property var when: root?.view?.when ?? ({})
       readonly property bool noKey: (screen.when.key ?? "") === ""
       readonly property bool listed: screen.when.test === "is" || screen.when.test === "isNot"
       // The two labels share a width, so Name and Show when start their fields at one edge
@@ -78,7 +78,8 @@ ColumnLayout {
 
       // A new screen (or Rename) takes the focus in its Name
       function focusName() {
-        if (!root.editor.focusScreenName || screen.modelData !== root.formKey)
+        // (root is null while the form is torn down with the page)
+        if (!root || !root.editor.focusScreenName || screen.modelData !== root.formKey)
           return;
         root.editor.focusScreenName = false;
         nameEntry.input.forceActiveFocus();

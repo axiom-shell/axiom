@@ -28,6 +28,10 @@ ColumnLayout {
   // or they would shrink while a screen's form shows
   required property real tabHeight
   readonly property var editor: CustomWidgetsManager.editor
+  // What a preview with no sample reads from: unresolved {paths} are empty
+  readonly property var noSample: ({
+      "noSample": true
+    })
   // The live output the test preview draws (null before the script's first
   // output: the previewed sample then)
   readonly property var liveFields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
@@ -165,7 +169,7 @@ ColumnLayout {
               anchors.fill: parent
               anchors.margins: Widget.cardPadding
               definition: root.definition
-              fields: root.editor.previewFields ?? ({})
+              fields: root.editor.previewFields ?? root.noSample
               history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
               actionsEnabled: false
               viewIndex: root.editor.viewIndex
@@ -206,7 +210,7 @@ ColumnLayout {
             anchors.fill: parent
             anchors.margins: Widget.cardPadding
             definition: root.definition
-            fields: root.liveFields ?? root.editor.previewFields ?? ({})
+            fields: root.liveFields ?? root.editor.previewFields ?? root.noSample
             history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
             actionsEnabled: true
             keysHost: true

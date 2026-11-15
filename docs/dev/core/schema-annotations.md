@@ -93,7 +93,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - Others: `"languages"`, `"menus"`, `"customWidgets"`, `"marketSymbols"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"regions"` (Qt locale codes, `DateFormats.regions`, labelled by their own language and country), `"calendars"`, `"chatProviders"` (an empty default adds the empty choice, labelled by `x-emptyLabel`), `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
   - `"menus"` labels each menu by its name and placement (`"{0} · {1}"`, the placement's `x-enumLabels` through `MenusConfig.placementLabels`); the value stays its id.
 - `x-menuPlacements` (on an `"menus"` picker): only menus of those placements are offered (`MenusConfig.offeredIn`); the value the field holds stays listed, so a config pointing at another placement still shows it. A bar widget's popout menu (`popout.menu`) takes `[edge, free]`: a strip pushes the bars inwards, moving them as the pointer hovers a widget. A Button's click menu and a Submenu module's menu offer every placement.
-- `x-emptyLabel`: offers or renames the empty value under that label.
+- `x-emptyLabel`: offers or renames the empty value under that label (on a text field, its placeholder).
   - On a color: automatic (a bar's `widgetTextColor`).
   - A color without it lists its `default` first, labelled as the default, so an override can be undone.
   - On `"screens"`: renames empty where it means something else, as in `General.primaryMonitor` itself.

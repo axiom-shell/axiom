@@ -79,29 +79,40 @@ GridDragLayer {
       readonly property real designHeight: Math.max(1, (content.module?.place?.h ?? 1) / CustomWidgetData.subCells * root.card)
       readonly property real zoom: Math.min(content.width / content.designWidth, content.height / content.designHeight)
       readonly property string title: content.module ? (content.module.name || I18n.tr(CustomWidgetsConfig.elementKind(content.module.type)?.label ?? content.module.type)) : ""
+      // Room above the tile inside the canvas, for the name chip (it re-reads
+      // when the element moves or resizes: the place is read for that)
+      readonly property real roomAbove: {
+        const place = content.module?.place;
+        return place && content.height >= 0 ? content.mapToItem(canvasHolder, 0, 0).y : 0;
+      }
       opacity: content.hidden ? Style.opacityDisabled : 1
-      clip: true
 
-      // Centred in the tile
+      // Centred in the tile, cut to it
       Item {
-        x: (content.width - content.designWidth * content.zoom) / 2
-        y: (content.height - content.designHeight * content.zoom) / 2
-        width: content.designWidth
-        height: content.designHeight
-        scale: content.zoom
-        transformOrigin: Item.TopLeft
-        readonly property real contentZoom: scale
+        id: clipped
+        anchors.fill: parent
+        clip: true
 
-        CustomElement {
-          anchors.fill: parent
-          anchors.margins: Widget.px(3)
-          element: content.module ?? ({})
-          fields: content.fields
-          history: CustomWidgetsManager.history[CustomWidgetsManager.editor.selectedId] ?? ({})
-          widgetId: CustomWidgetsManager.editor.selectedId
-          actionsEnabled: false
-          fallbackIcon: CustomWidgetsManager.editor.selected?.icon || "widgets"
-          moduleFont: CustomWidgetsManager.editor.selected?.module?.font ?? ""
+        Item {
+          x: (content.width - content.designWidth * content.zoom) / 2
+          y: (content.height - content.designHeight * content.zoom) / 2
+          width: content.designWidth
+          height: content.designHeight
+          scale: content.zoom
+          transformOrigin: Item.TopLeft
+          readonly property real contentZoom: scale
+
+          CustomElement {
+            anchors.fill: parent
+            anchors.margins: Widget.px(3)
+            element: content.module ?? ({})
+            fields: content.fields
+            history: CustomWidgetsManager.history[CustomWidgetsManager.editor.selectedId] ?? ({})
+            widgetId: CustomWidgetsManager.editor.selectedId
+            actionsEnabled: false
+            fallbackIcon: CustomWidgetsManager.editor.selected?.icon || "widgets"
+            moduleFont: CustomWidgetsManager.editor.selected?.module?.font ?? ""
+          }
         }
       }
 
@@ -109,12 +120,16 @@ GridDragLayer {
         id: tileHover
       }
 
-      // Its name, while the pointer is on it or it is the selected element
+      // Its name, while the pointer is on it or it is the selected element:
+      // on the tile's top edge, outside it, so it never covers the element
+      // (inside, at the top, only where the canvas has no room above)
       Row {
+        id: chips
+        readonly property bool above: content.roomAbove >= chips.height + Widget.px(2)
         visible: (tileHover.hovered || (content.module?.id ?? "") === (CustomWidgetsManager.editor.element?.id ?? null)) && content.width > Widget.px(56) && content.height > Widget.px(28)
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: Widget.px(2)
+        x: Widget.px(2)
+        y: chips.above ? -chips.height - Widget.px(1) : Widget.px(2)
+        z: 3
         spacing: Widget.px(2)
 
         StatusChip {
@@ -204,6 +219,7 @@ GridDragLayer {
 
       // GridCanvas anchors itself to what holds it
       Item {
+        id: canvasHolder
         Layout.fillWidth: true
         Layout.fillHeight: true
 
@@ -213,6 +229,7 @@ GridDragLayer {
           underlay: root.underlay
           tileContent: elementTile
           showActions: false
+          showMargins: false
           onTileContext: (index, tile, x, y) => elementMenu.openAt(tile, x, y)
           title: I18n.tr("Module")
           icon: "widgets"

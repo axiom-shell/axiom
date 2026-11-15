@@ -70,6 +70,9 @@ Item {
     Row {
       id: leadingSlot
 
+      // Empty, it must not take a gap of the row's spacing (the label sat
+      // one spacing right of the padding)
+      visible: leadingSlot.children.length > 0
       spacing: Widget.spacing
       Layout.alignment: Qt.AlignVCenter
     }

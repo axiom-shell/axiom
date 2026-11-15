@@ -268,7 +268,10 @@ ColumnLayout {
         visible: (root.kind?.actions.length ?? 0) > 0
         Layout.fillWidth: true
         title: I18n.tr("Runs")
-        description: I18n.tr("Never on the lock screen.")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Never on the lock screen.")
+        }
 
         ColumnLayout {
           Layout.fillWidth: true

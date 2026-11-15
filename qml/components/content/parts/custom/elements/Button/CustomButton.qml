@@ -78,6 +78,7 @@ CustomElementBase {
     anchors.fill: parent
     kind: root.asking ? "danger" : "tonal"
     enabled: root.pressable
+    ownFill: root.coloured
     iconText: root.icon
     text: root.label
     // Fit: two fifths of the box, never below a label; else the shell's text size

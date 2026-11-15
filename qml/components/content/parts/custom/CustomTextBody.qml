@@ -60,7 +60,8 @@ CustomElementBase {
 
   Loader {
     anchors.fill: parent
-    anchors.margins: root.inset
+    // Fit keeps a margin of the box's height, so its lines never touch the edge
+    anchors.margins: root.inset + (root.fitting ? root.innerHeight * 0.04 : 0)
     sourceComponent: root.scrolls && !root.fitting ? scrolling : still
   }
 

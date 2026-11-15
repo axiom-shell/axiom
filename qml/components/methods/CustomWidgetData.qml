@@ -508,14 +508,16 @@ QtObject {
 
   // What resolve returns for its own use, not an output key of that name: a
   // binding of one reads the sample's
-  readonly property var _internalFields: ["colorNames", "actions", "interactive", "failure"]
+  readonly property var _internalFields: ["colorNames", "actions", "interactive", "failure", "noSample"]
 
   // What a text field of an element reads as (an element's `bind`): "" is
   // nothing (undefined: the slot falls back to the output's own key); exactly
   // one {path} alone is the value itself (a field of `fields`, else a path in
   // the sample: a list, a number, text; undefined when missing); other text
   // with a "{" is filled ({text} is the plain text; a {x} that is no field and
-  // no path stays as typed); anything else is typed text, a number when it is one.
+  // no path stays as typed, unless `fields.noSample` (a preview with no sample
+  // yet) says there is nothing to fill from: then it reads as empty); anything
+  // else is typed text, a number when it is one.
   function elementValue(fields, binding) {
     if (binding === undefined || binding === null || binding === "")
       return undefined;
@@ -538,7 +540,7 @@ QtObject {
       });
       for (const key of root._internalFields)
         delete values[key];
-      return root.fill(b, values, true);
+      return root.fill(b, values, fields?.noSample !== true);
     }
     return /^-?\d+(\.\d+)?$/.test(b.trim()) ? Number(b) : b;
   }

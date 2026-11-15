@@ -4,6 +4,7 @@ defaultSize: [8, 4]
 slots: [items]
 actions: [click]
 color: {variant: state, colorStates: {default: {key: state}}}
+size: {variant: text, size: {default: normal}}
 settings:
   orientation:
     type: string

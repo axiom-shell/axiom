@@ -12,11 +12,23 @@ import qs.components.content.parts.custom
 // row's own keys, `state` by default) tone a row's icon and meter; `max` with a numeric value draws a meter; `image` a
 // thumbnail. A row's click runs the element's click action with {value} the
 // row's id, else its value, else its text; with no action the rows aren't
-// pressable.
+// pressable. The element's Size scales the rows (text, icons, meters, gaps)
+// as one: Small to Huge are the shell's text sizes against the body size;
+// Fit grows them to fill the box (rows down the element, tiles across it),
+// never below Normal.
 CustomElementBase {
   id: root
 
   readonly property bool clickable: root.canRun("click")
+  // How much bigger than the natural row it is drawn (1 = Normal)
+  readonly property real zoom: root.fixedTextSize !== 0 ? root.fixedTextSize / Style.typeBody : root.fitZoom
+  // Fit: rows share the box's height (down), tiles the box's smaller side (across)
+  readonly property real fitZoom: {
+    const count = Math.max(1, rowsModel.count);
+    const natural = root.across ? Widget.textPx(56) : Widget.textPx(44);
+    const room = root.across ? Math.min(root.height, root.width / count) : root.height / count;
+    return Math.max(1, Math.min(3, room / natural));
+  }
   readonly property bool across: root.options.orientation === "horizontal"
   // A row's icon is an icon of the desktop icon theme, drawn as its picture
   readonly property bool themed: root.options.iconSource === "theme"
@@ -111,11 +123,16 @@ CustomElementBase {
 
       // Tiles share the width, none narrower than a word
       width: root.across ? Math.max(Widget.textPx(56), (ListView.view.width - ListView.view.spacing * Math.max(0, ListView.view.count - 1)) / Math.max(1, ListView.view.count)) : ListView.view.width
-      height: root.across ? ListView.view.height : (content.item as CustomListRow)?.implicitHeight ?? 0
+      height: root.across ? ListView.view.height : ((content.item as CustomListRow)?.implicitHeight ?? 0) * root.zoom
 
+      // Drawn at its natural size in a box 1/zoom as big, then scaled up
       Loader {
         id: content
-        anchors.fill: parent
+        width: row.width / root.zoom
+        height: row.height / root.zoom
+        scale: root.zoom
+        transformOrigin: Item.TopLeft
+        readonly property real contentZoom: scale
         sourceComponent: root.across ? tile : line
       }
 

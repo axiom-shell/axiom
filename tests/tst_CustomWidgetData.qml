@@ -652,6 +652,12 @@ TestCase {
     compare(CustomWidgetData.elementValue(f, "{cpu.temp}°C"), "70°C", "a format");
     compare(CustomWidgetData.elementValue(f, "CPU {cpu.temp}"), "CPU 70", "typed text around a path");
     compare(CustomWidgetData.elementValue(f, "{cpu.temp} {nope}"), "70 {nope}", "an unknown {x} stays as typed");
+    compare(CustomWidgetData.elementValue({
+      "noSample": true
+    }, "Storm {temp}"), "Storm ", "no sample: an unresolved {path} is empty, not the template");
+    compare(CustomWidgetData.elementValue({
+      "noSample": true
+    }, "plain"), "plain", "no sample: typed text stays");
     compare(CustomWidgetData.elementValue(f, "percentage"), "percentage", "a bare word is literal");
     compare(CustomWidgetData.elementValue(f, "cpu.temp"), "cpu.temp", "a bare path is literal");
     compare(CustomWidgetData.elementValue(f, "100"), 100, "a number typed");

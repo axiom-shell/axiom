@@ -28,6 +28,7 @@ Item {
     anchors.fill: parent
     radius: Widget.radius
     hovered: area.containsMouse && root.clickable
+    pressed: area.pressed && root.clickable
   }
 
   MouseArea {

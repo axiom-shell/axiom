@@ -81,6 +81,9 @@ WorkArea {
   // `module` (the tile's module, or an underlay item's `element`), loaded by
   // CanvasModule and the underlay
   property Component tileContent: null
+  // The selected module's room to each side (margins). Off in the custom
+  // widget editor, where the lines read as stray guides
+  property bool showMargins: true
 
   // A right click on tile `index` (selected by it), at (x, y) in `tile`
   // (an Item): the owner opens the menu it wants
@@ -152,7 +155,7 @@ WorkArea {
   readonly property var margins: {
     const editor = root.dragLayer.editor;
     const place = root.places[editor.selected] ?? null;
-    if (!place || root.dragLayer.landingPlace)
+    if (!root.showMargins || !place || root.dragLayer.landingPlace)
       return [];
     return GridPlacement.canvasMargins(root.fit, place, editor.guideFrame(root.places, [editor.selected]));
   }
