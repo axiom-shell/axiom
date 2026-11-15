@@ -3,6 +3,8 @@ icon: star
 defaultSize: [2, 2]
 slots: [icon, badge]
 color: icon
+place: both
+size: icon
 settings:
   source:
     type: string

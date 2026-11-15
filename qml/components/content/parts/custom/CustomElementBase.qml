@@ -45,6 +45,51 @@ Item {
   // Drawn down its box rather than across (a Bar, Segments, Separator)
   readonly property bool vertical: root.height > root.width
 
+  // -- Placement and size (CustomElementBase.yaml's place and size parts) --
+  // `align` (Left | Center | Right) and `valign` (Top | Middle | Bottom) of
+  // content smaller than the box, as Text's alignments for a text kind
+  readonly property int hAlign: ({
+      "left": Text.AlignLeft,
+      "right": Text.AlignRight
+    })[root.options.align] ?? Text.AlignHCenter
+  readonly property int vAlign: ({
+      "top": Text.AlignTop,
+      "bottom": Text.AlignBottom
+    })[root.options.valign] ?? Text.AlignVCenter
+  // The padding inside the box: 0, or a little once the element draws a
+  // background (a filled Text sets it); the only padding there is
+  property real inset: 0
+  // `size` other than Fit as the shell's text size, 0 for Fit
+  readonly property real fixedTextSize: ({
+      "small": Style.typeCaption,
+      "normal": Style.typeBody,
+      "large": Style.typeHeadline,
+      "huge": Style.typeBody * 2
+    })[root.options.size] ?? 0
+  // The same as an icon's size, 0 for Fit
+  readonly property real fixedIconSize: ({
+      "small": Style.iconSm,
+      "normal": Style.iconMd,
+      "large": Style.iconLg,
+      "huge": Style.iconXl
+    })[root.options.size] ?? 0
+
+  // Where content `w` px wide starts across the box (`align`)
+  function placeX(w) {
+    return CustomWidgetData.alignOffset(root.options.align ?? "center", root.width - w);
+  }
+
+  // Where content `h` px tall starts down the box (`valign`)
+  function placeY(h) {
+    return CustomWidgetData.alignOffset(root.options.valign ?? "middle", root.height - h);
+  }
+
+  // A text size for a box `boxH` px tall: the fixed size, else (Fit) four
+  // fifths of the box, never below the smallest type
+  function textSizeFor(boxH) {
+    return root.fixedTextSize || Math.max(Style.typeMicro, boxH * 0.8); // fitted: the element's box
+  }
+
   // A slot's value: its binding, else the widget's `field`
   function value(slot, field) {
     const b = root.bind[slot];

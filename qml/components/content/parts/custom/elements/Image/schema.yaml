@@ -2,6 +2,9 @@ label: Image
 icon: image
 defaultSize: [3, 3]
 slots: [image]
+place:
+  variant: both
+  align: {description: 'Where a Round picture sits in a box wider or taller than it. The others fill the box.'}
 settings:
   fit:
     type: string

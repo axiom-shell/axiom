@@ -70,6 +70,55 @@ x-parts:
         default: ''
         x-emptyLabel: None
       backgroundStates: {$ref: '#/definitions/CustomColorStates'}
+  # Placement (a kind's `place: <variant>`): where content smaller than its box
+  # sits. Size (`size: <variant>`): how big its text or glyph is
+  place:
+    # Across and down
+    both:
+      align:
+        type: string
+        title: Across
+        x-control: toggle
+        default: center
+        enum: [left, center, right]
+        x-enumLabels: {left: Left, center: Center, right: Right}
+      valign:
+        type: string
+        title: Down
+        x-control: toggle
+        default: middle
+        enum: [top, middle, bottom]
+        x-enumLabels: {top: Top, middle: Middle, bottom: Bottom}
+    # Fills the width (Entry): down only
+    down:
+      valign:
+        type: string
+        title: Down
+        x-control: toggle
+        default: middle
+        enum: [top, middle, bottom]
+        x-enumLabels: {top: Top, middle: Middle, bottom: Bottom}
+  size:
+    # Text, Text block, Button
+    text:
+      size:
+        type: string
+        title: Size
+        x-control: toggle
+        default: auto
+        enum: [auto, small, normal, large, huge]
+        x-enumLabels: {auto: Fit, small: Small, normal: Normal, large: Large, huge: Huge}
+        description: 'Fit: as large as the box allows. The others: the shell''s text sizes.'
+    # Icon
+    icon:
+      size:
+        type: string
+        title: Size
+        x-control: toggle
+        default: auto
+        enum: [auto, small, normal, large, huge]
+        x-enumLabels: {auto: Fit, small: Small, normal: Normal, large: Large, huge: Huge}
+        description: 'Fit: as large as the box allows. The others: the shell''s icon sizes.'
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}

@@ -4,6 +4,7 @@ defaultSize: [3, 1]
 slots: [label, icon, value, enabled]
 actions: [click]
 color: button
+size: text
 settings:
   confirm: {type: boolean, title: Ask first, default: false, description: 'The first press asks "Confirm?" for 3 seconds; the second runs it.'}
   disabled:

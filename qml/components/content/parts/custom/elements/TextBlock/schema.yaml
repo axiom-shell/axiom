@@ -3,6 +3,8 @@ icon: notes
 defaultSize: [8, 4]
 slots: [text]
 color: text
+place: {variant: both, align: {default: left}, valign: {default: top}}
+size: {variant: text, size: {default: normal}}
 settings:
   monospace: {type: boolean, title: Monospace, default: false, description: Lines aren't wrapped.}
   markup: {type: boolean, title: Markup, default: false, description: 'Draw a bound value''s Pango markup.'}

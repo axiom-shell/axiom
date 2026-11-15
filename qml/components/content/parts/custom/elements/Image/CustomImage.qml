@@ -6,7 +6,8 @@ import qs.components.content.parts.custom
 
 // A custom widget's Image element: a path or URL (the widget's image field
 // by default), cropped or fitted to its box with rounded corners, or a
-// circle.
+// circle. A round picture sits in the box by Across and Down;
+// the others fill it.
 CustomElementBase {
   id: root
 
@@ -14,7 +15,8 @@ CustomElementBase {
   readonly property string source: root.imageUrl(root.path)
 
   Thumbnail {
-    anchors.centerIn: parent
+    x: root.placeX(width)
+    y: root.placeY(height)
     width: root.options.round ? Math.min(root.width, root.height) : root.width
     height: root.options.round ? width : root.height
     radius: root.options.round ? width / 2 : Widget.radius

@@ -1043,7 +1043,8 @@ QtObject {
             },
             "options": {
               "align": "left",
-              "bold": true
+              "bold": true,
+              "size": "large"
             }
           },
           {
@@ -1060,6 +1061,7 @@ QtObject {
             },
             "options": {
               "align": "right",
+              "size": "large",
               "colorStates": root._stateRules("state", [["done", "success"], ["open", "accent"]])
             }
           },
@@ -1163,6 +1165,9 @@ QtObject {
                 },
                 "bind": {
                   "text": "All done today"
+                },
+                "options": {
+                  "size": "normal"
                 }
               }
             ]
@@ -1187,6 +1192,9 @@ QtObject {
                 },
                 "bind": {
                   "text": "Add your first habit below"
+                },
+                "options": {
+                  "size": "normal"
                 }
               }
             ]
@@ -1301,7 +1309,8 @@ QtObject {
             "text": "{text}"
           }, {
             "align": "left",
-            "bold": true
+            "bold": true,
+            "size": "large"
           }), root._el("switch", "Toggle", [0, 4, 16, 4], {
             "state": "{state}",
             "label": "Enabled"
@@ -1360,11 +1369,13 @@ QtObject {
             "text": "{text}"
           }, {
             "align": "left",
-            "bold": true
+            "bold": true,
+            "size": "large"
           }), root._el("amount", "Text", [11, 0, 5, 3], {
             "text": "{value}{unit}"
           }, {
-            "align": "right"
+            "align": "right",
+            "size": "large"
           }), root._el("slider", "Bar", [0, 4, 16, 3], null, null, {
             "change": "set"
           })]
@@ -1396,7 +1407,8 @@ QtObject {
             "text": "Disks"
           }, {
             "align": "left",
-            "bold": true
+            "bold": true,
+            "size": "large"
           }), root._el("rows", "List", [0, 2, 16, 14], null, {
             "colorStates": root._stateRules("state", [["full", "error"], ["ok", "success"]])
           }, {
@@ -1452,11 +1464,13 @@ QtObject {
             "text": "{text}"
           }, {
             "align": "left",
-            "bold": true
+            "bold": true,
+            "size": "large"
           }), root._el("artist", "Text", [0, 3, 16, 2], {
             "text": "{subtext}"
           }, {
-            "align": "left"
+            "align": "left",
+            "size": "normal"
           }), root._el("prev", "Button", [0, 8, 4, 3], {
             "icon": "skip_previous"
           }, null, {
@@ -1494,6 +1508,8 @@ QtObject {
               "icon": "music_off"
             }), root._el("message", "Text", [0, 8, 16, 3], {
               "text": "Nothing playing"
+            }, {
+              "size": "normal"
             })], false)]
       },
       "samples": {
@@ -1547,7 +1563,8 @@ QtObject {
           }), root._el("detail", "Text", [0, 3, 16, 3], {
             "text": "{subtext}"
           }, {
-            "align": "left"
+            "align": "left",
+            "size": "normal"
           })],
         "views": [root._view("error", "Error", {
             "key": "error",
@@ -1558,7 +1575,8 @@ QtObject {
             }), root._el("message", "Text", [4, 0, 12, 4], {
               "text": "{error}"
             }, {
-              "align": "left"
+              "align": "left",
+              "size": "normal"
             }), root._el("retry", "Button", [4, 5, 8, 3], null, null, {
               "click": "restart"
             })], false)]
@@ -1601,6 +1619,21 @@ QtObject {
   // The whole grid units a page starts the module at: designSize rounded up
   function pageSize(elements, size) {
     return root.designSize(elements, size).map(n => Math.max(1, Math.ceil(n)));
+  }
+
+  // Where content `free` px short of its box starts along an axis: 0 for
+  // left | top (and anything unknown), half for center | middle, all of it for
+  // right | bottom. An element's `align` (across) and `valign` (down)
+  function alignOffset(align, free) {
+    const room = Math.max(0, free);
+    return align === "center" || align === "middle" ? room / 2 : align === "right" || align === "bottom" ? room : 0;
+  }
+
+  // How many lines of text `size` px tall a box `height` px tall holds (at
+  // least 1): a Text's `maxLines`, so a size too big for its box elides on
+  // its first line instead of being cut through
+  function textLines(height, size) {
+    return Math.max(1, Math.floor(height / Math.max(1, size * 1.3)));
   }
 
   // An element's rect in px: `place` { x, y, w, h } in sub-cells on a
@@ -1663,7 +1696,8 @@ QtObject {
           "text": "{text}"
         },
         "options": {
-          "align": "left"
+          "align": "left",
+          "size": "large"
         }
       });
     return out;

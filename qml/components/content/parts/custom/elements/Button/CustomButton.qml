@@ -80,6 +80,8 @@ CustomElementBase {
     enabled: root.pressable
     iconText: root.icon
     text: root.label
+    // Fit: two fifths of the box, never below a label; else the shell's text size
+    textSize: root.fixedTextSize || Math.max(Style.typeLabel, root.textSizeFor(root.height / 2))
     onClicked: root.press()
 
     Binding {

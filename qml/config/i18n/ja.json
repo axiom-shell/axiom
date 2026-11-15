@@ -4392,7 +4392,6 @@
     "Markup": "",
     "Text elements' font family when they set none.": "",
     "Empty: monospace when on, else the module's, else the shell's.": "",
-    "Fill the box": "",
     "Show when": "",
     "Second value": "",
     "Entry": "",
@@ -4613,6 +4612,10 @@
     "Doesn't follow the theme": "",
     "Pick the color from a value in the output.": "",
     "Add a rule": "",
-    "Otherwise: the color above.": ""
+    "Otherwise: the color above.": "",
+    "Fit: as large as the box allows. The others: the shell's text sizes.": "",
+    "Middle": "",
+    "Where a Round picture sits in a box wider or taller than it. The others fill the box.": "",
+    "Fit: as large as the box allows. The others: the shell's icon sizes.": ""
   }
 }

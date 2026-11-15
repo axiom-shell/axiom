@@ -6,7 +6,7 @@ import qs.components.content.parts.custom
 
 // A custom widget's Status element: a StatusChip in the state's colour
 // with a word in the ink that reads on it (the widget's alt, else its first
-// class), or a dot without room.
+// class), or a dot without room, placed in its box by Across and Down.
 CustomElementBase {
   id: root
 
@@ -17,7 +17,8 @@ CustomElementBase {
 
   Rectangle {
     visible: root.dot
-    anchors.centerIn: parent
+    x: root.placeX(width)
+    y: root.placeY(height)
     width: Math.min(root.width, root.height, Widget.px(14))
     height: width
     radius: width / 2
@@ -28,7 +29,8 @@ CustomElementBase {
 
   StatusChip {
     visible: !root.dot
-    anchors.centerIn: parent
+    x: root.placeX(width)
+    y: root.placeY(height)
     text: root.word
     color: root.chipColor
     ink: root.chipInk

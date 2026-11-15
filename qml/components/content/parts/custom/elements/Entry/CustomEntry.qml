@@ -9,13 +9,16 @@ import qs.components.content.parts.custom
 // action the sample turned off) keeps it and the focus. It stays enabled
 // during a hold, so the text can still be edited, and never takes its text
 // from a sample. Off where the host can't take the keyboard (the desktop,
-// the lock screen, a preview).
+// the lock screen, a preview). It keeps its own height in a taller box and
+// sits Down by `valign`.
 CustomElementBase {
   id: root
 
   StyledTextEntry {
     id: field
-    anchors.fill: parent
+    width: parent.width
+    height: Math.min(parent.height, implicitHeight)
+    y: root.placeY(height)
     placeholderText: root.text("placeholder")
     enabled: root.actionsEnabled && root.keysHost
     onAccepted: {

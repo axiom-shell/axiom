@@ -1183,12 +1183,30 @@ TestCase {
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
     compare(CustomWidgetData.defaultElements([4, 2], false)[0].type, "Icon");
     compare(els[1].options.align, "left", "the text against the icon");
+    compare(els[1].options.size, "large", "the text keeps a size now Fit is uncapped");
     compare(els[0].bind, {
       "value": "{value}"
     }, "the ring shows the output's value");
     compare(els[1].bind, {
       "text": "{text}"
     }, "the text shows the output's text");
+  }
+
+  function test_alignOffset() {
+    compare(CustomWidgetData.alignOffset("left", 40), 0);
+    compare(CustomWidgetData.alignOffset("top", 40), 0);
+    compare(CustomWidgetData.alignOffset("center", 40), 20);
+    compare(CustomWidgetData.alignOffset("middle", 40), 20);
+    compare(CustomWidgetData.alignOffset("right", 40), 40);
+    compare(CustomWidgetData.alignOffset("bottom", 40), 40);
+    compare(CustomWidgetData.alignOffset("center", -10), 0, "a box smaller than its content: the start");
+    compare(CustomWidgetData.alignOffset("", 40), 0, "unknown: the start");
+  }
+
+  function test_textLines() {
+    compare(CustomWidgetData.textLines(100, 20), 3, "26 px a line");
+    compare(CustomWidgetData.textLines(10, 40), 1, "never fewer than one");
+    compare(CustomWidgetData.textLines(0, 0), 1);
   }
 
   function test_stripJsonc() {

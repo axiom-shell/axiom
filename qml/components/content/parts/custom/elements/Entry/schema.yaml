@@ -3,5 +3,6 @@ icon: edit_note
 defaultSize: [8, 1]
 slots: [placeholder]
 actions: [submit]
+place: down
 settings:
   clear: {type: boolean, title: Clear after sending, default: true}

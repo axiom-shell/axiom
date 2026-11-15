@@ -5,7 +5,9 @@ import qs.components.reusable
 import qs.components.content.parts.custom
 
 // A custom widget's Icon element: a Material Symbols name (the widget's icon
-// field, else its definition's) or the format-icons glyph, with a badge.
+// field, else its definition's) or the format-icons glyph, with a badge,
+// placed in its box by Across and Down: Fit is three quarters of the box's
+// short side, else a shell icon size.
 CustomElementBase {
   id: root
 
@@ -16,6 +18,8 @@ CustomElementBase {
   readonly property string badge: root.options.badge ? root.text("badge", "badge") : ""
   // Its background (picked or by a rule), else null: none
   readonly property var background: root.colorFor("background", null)
+  // The glyph's (or picture's) side
+  readonly property real side: root.fixedIconSize || Math.max(Style.typeMicro, Math.min(root.width, root.height) * 0.75) // fitted: the element's box
 
   Surface {
     anchors.fill: parent
@@ -27,8 +31,9 @@ CustomElementBase {
   Thumbnail {
     id: picture
     visible: root.themed
-    anchors.centerIn: parent
-    width: Math.min(root.width, root.height) * 0.75
+    x: root.placeX(width)
+    y: root.placeY(height)
+    width: root.side
     height: width
     color: "transparent"
     radius: 0
@@ -39,10 +44,11 @@ CustomElementBase {
   StyledIcon {
     id: glyph
     visible: !root.themed
-    anchors.centerIn: parent
+    x: root.placeX(width)
+    y: root.placeY(height)
     text: root.shown
     textColor: root.colorOf(root.background !== null ? root.inkOn(root.background) : Style.accent)
-    textSize: Math.max(Style.typeMicro, Math.min(root.width, root.height) * 0.75) // fitted: the element's box
+    textSize: root.side
   }
 
   // On the picture's (or glyph's) corner, wherever the box puts it
