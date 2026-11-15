@@ -33,6 +33,9 @@ Loader {
   // Off: it only fades in, without sliding up (the settings cards and their
   // fields, which sit on a page that slides in itself)
   property bool rise: true
+  // Its build goes ahead of every other queued one (the settings sidebar,
+  // which otherwise arrives after all the cards)
+  property bool buildFirst: false
 
   // Streamed with `always` and still filling in (until the queue drains):
   // the loaders inside it stream too, so a settings card switched to fills
@@ -50,11 +53,9 @@ Loader {
   property bool _entered: false
   // The slide's distance left
   property real _enter: 0
+  property SequentialAnimation _riseAnim: null
   active: root._granted && root.wanted
   opacity: !root._streamed || root._entered ? 1 : 0
-  transform: Translate {
-    y: Math.round(root._enter)
-  }
 
   Glide on opacity {
     enabled: root._streamed
@@ -65,26 +66,49 @@ Loader {
       root._entered = false;
       root._enter = 0;
     } else if (root._streamed && !root._entered) {
-      root._enter = root.rise ? Style.enterOffset : 0;
-      riseAnim.restart();
+      // The slide and the stagger are built only when used: a loader that
+      // only fades (most of them) has neither
+      if (root.rise || root.enterIndex >= 0) {
+        if (root._riseAnim === null) {
+          if (root.rise)
+            root.transform = [slideComp.createObject(root)];
+          root._riseAnim = riseComp.createObject(root);
+        }
+        root._enter = root.rise ? Style.enterOffset : 0;
+        root._riseAnim.restart();
+      } else {
+        root._entered = true;
+      }
     }
   }
 
-  SequentialAnimation {
-    id: riseAnim
+  // The slide: a Translate, made for a loader that rises
+  Component {
+    id: slideComp
 
-    PauseAnimation {
-      duration: Appearance.animations && root.enterIndex >= 0 ? Math.min(root.enterIndex, 8) * Style.staggerStep : 0
+    Translate {
+      y: Math.round(root._enter)
     }
-    ScriptAction {
-      script: root._entered = true
-    }
-    NumberAnimation {
-      target: root
-      property: "_enter"
-      to: 0
-      duration: Appearance.animNormal
-      easing.type: Appearance.easing
+  }
+
+  // The stagger, then the item shown and the slide's run
+  Component {
+    id: riseComp
+
+    SequentialAnimation {
+      PauseAnimation {
+        duration: Appearance.animations && root.enterIndex >= 0 ? Math.min(root.enterIndex, 8) * Style.staggerStep : 0
+      }
+      ScriptAction {
+        script: root._entered = true
+      }
+      NumberAnimation {
+        target: root
+        property: "_enter"
+        to: 0
+        duration: Appearance.animNormal
+        easing.type: Appearance.easing
+      }
     }
   }
 
@@ -109,7 +133,7 @@ Loader {
     if (root.stream && (root.always || root._pageStreaming())) {
       root._streamed = true;
       root.streamsInside = root.always;
-      BuildQueueManager.request(root, () => root._granted = true, root.label);
+      BuildQueueManager.request(root, () => root._granted = true, root.label, root.buildFirst);
     } else {
       root._granted = true;
     }

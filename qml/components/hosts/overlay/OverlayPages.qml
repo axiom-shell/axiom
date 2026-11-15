@@ -194,27 +194,19 @@ Item {
   // The box the pages are drawn in (the overlay's blur region)
   readonly property Item box: mainContentBox
 
-  // The page box's soft shadow (D-26), cast from a plain copy of its shape
-  // (capturing the box would redraw the whole page every frame it changes).
-  // Under the box, past its clip; off with the shell's shadow switch and
-  // where the compositor's blur would frost it
-  OutsideShadow {
-    target: shadowShape
+  // The page box's soft shadow (D-26), drawn from the box's size and
+  // radius (ShapeShadow; capturing the box would redraw the whole page
+  // every frame it changes). Under the box, past its clip; off with the
+  // shell's shadow switch and where the compositor's blur would frost it
+  ShapeShadow {
+    box: contentContainer
+    radius: Style.radiusOuter
     active: root.open
-    hideTarget: true
     shadowColor: Style.shadowSoft
     look: ({
         "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart),
         "shadowSize": Widget.px(16)
       })
-  }
-  Rectangle {
-    id: shadowShape
-    anchors.centerIn: parent
-    width: contentContainer.width
-    height: contentContainer.height
-    radius: Style.radiusOuter
-    color: Style.surfacePage
   }
 
   // The box grows and shrinks about its centre to the page's size as the
