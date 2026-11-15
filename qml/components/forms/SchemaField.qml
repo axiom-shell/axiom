@@ -25,6 +25,8 @@ Loader {
   required property var form
   // Shown after the field's label (SettingsField's unsaved dot and reset)
   property Component headerExtra: null
+  // Shown under the field's description, read with its label: the host's `x-link` line
+  property Component headerBelow: null
 
   readonly property var fieldSchema: row.schema ?? ({})
   readonly property var current: form?.valueAt(row.path)
@@ -208,9 +210,12 @@ Loader {
   opacity: allowed && !placeKept ? 1 : Style.opacityDisabled
 
   // Whether the row's whole area acts (FormRow.hoverable): a switch (also an
-  // automatic number's), a two-option toggle or a dropdown, while it can be
-  // used
-  readonly property bool hoverable: root.allowed && !root.placeKept && (root.sourceComponent === switchField || root.sourceComponent === autoSpinField || root.sourceComponent === comboField || (root.sourceComponent === toggleField && root.options?.length === 2))
+  // automatic number's), a toggle or a dropdown, while it can be used
+  readonly property bool hoverable: root.allowed && !root.placeKept && (root.sourceComponent === switchField || root.sourceComponent === autoSpinField || root.sourceComponent === comboField || root.sourceComponent === toggleField)
+
+  // Whether the row tints under the pointer (FormRow.tinted): every
+  // setting, while it can be used (a group heading is no setting)
+  readonly property bool tinted: row.kind !== "group" && root.allowed && !root.placeKept
 
   // A click on the row outside its control (FormRow.rowClicked): the
   // control does what its own click does
@@ -341,11 +346,21 @@ Loader {
 
   Component {
     id: groupHeader
-    StyledText {
-      text: I18n.tr(root.label)
-      role: "label"
-      tone: "accent"
-      topPadding: Widget.spacing
+    ColumnLayout {
+      spacing: Widget.px(2)
+      StyledText {
+        text: I18n.tr(root.label)
+        role: "label"
+        tone: "accent"
+        topPadding: Widget.spacing
+      }
+      Loader {
+        Layout.fillWidth: true
+        Layout.topMargin: Widget.spacing / 2
+        active: root.headerBelow !== null
+        visible: item?.shows === true
+        sourceComponent: root.headerBelow
+      }
     }
   }
 
@@ -355,6 +370,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       checked: root.current === true
       onToggled: value => root.commit(value)
     }
@@ -370,6 +386,7 @@ Loader {
       maximum: root.fieldSchema.maximum ?? 9999
       stepSize: root.fieldSchema.multipleOf ?? 1
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       unit: root.fieldSchema["x-unit"] ?? ""
       unitScale: SchemaLayout.unitScale(unit)
       mode: root.form?.numberMode || (root.fieldSchema["x-control"] ?? "auto")
@@ -402,6 +419,7 @@ Loader {
         label: root.label
         description: root.description
         headerExtra: root.headerExtra
+        headerBelow: root.headerBelow
         checked: autoField.custom
         onToggled: value => root.commit(value ? autoField.auto.start : autoField.auto.value)
       }
@@ -431,6 +449,7 @@ Loader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
+        below: root.headerBelow
         // Centred on a control taller than it (a label alone)
         Layout.alignment: Qt.AlignVCenter
       }
@@ -458,6 +477,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       options: root.options
       optionLabels: root.optionLabels
       // (An inheriting one shows the value it follows)
@@ -483,6 +503,7 @@ Loader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
+        below: root.headerBelow
       }
       ChoiceTiles {
         Layout.fillWidth: true
@@ -506,6 +527,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       options: root.options
       optionLabels: root.optionLabels
       swatches: root.isColor
@@ -522,6 +544,7 @@ Loader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
+        below: root.headerBelow
       }
       StyledComboEntry {
         Layout.fillWidth: true
@@ -551,6 +574,7 @@ Loader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
+        below: root.headerBelow
       }
       RefEntry {
         Layout.fillWidth: true
@@ -569,6 +593,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       // The only kind-specific text
       addText: I18n.tr("Add shortcut")
       value: root.current ?? []
@@ -612,6 +637,7 @@ Loader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
+        below: root.headerBelow
       }
       RowLayout {
         Layout.fillWidth: true
@@ -673,6 +699,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       items: root.current ?? []
       itemDelegate: Component {
         SchemaArrayItem {
@@ -693,6 +720,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       multiline: root.fieldSchema["x-multiline"] === true
       browse: root.fieldSchema["x-control"] === "folder" ? "folder" : ""
       // Text that doesn't match yet (a half-typed time) isn't committed
@@ -717,6 +745,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       beside: true
       pattern: "^-?[0-9]*[.]?[0-9]*$"
       currentConfigValue: root.current === undefined || root.current === null ? "" : String(root.current)
@@ -739,6 +768,7 @@ Loader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
+        below: root.headerBelow
       }
       Flow {
         Layout.fillWidth: true
@@ -770,6 +800,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       value: root.current ?? []
       options: root._chipOptions
       labels: root.optionLabels
@@ -786,6 +817,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
       suggestions: SettingsManager.suggestionsFor(root.fieldSchema)
       commaList: true
       currentConfigValue: (root.current ?? []).join(", ")

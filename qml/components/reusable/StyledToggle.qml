@@ -6,9 +6,9 @@ import qs.config
 
 // A two- or three-way toggle: a SegmentTrack with each option's label in an
 // equal segment, the thumb under the chosen one gliding across as it
-// changes. With two options a click anywhere flips it, as a switch does;
-// with three a click picks the segment under the pointer. The owner keeps
-// the value: set `value`, and update it from `picked`.
+// changes. A click picks the segment under the pointer (the chosen one
+// again does nothing); Space flips two, Left and Right step. The owner
+// keeps the value: set `value`, and update it from `picked`.
 Item {
   id: root
 
@@ -105,10 +105,9 @@ Item {
     anchors.fill: parent
     cursorShape: Qt.PointingHandCursor
     onClicked: mouse => {
-      if (root.options.length === 2)
-        root._flip();
-      else
-        root.picked(root.options[Math.max(0, Math.min(root.options.length - 1, Math.floor((mouse.x - root._inset) / root._segment)))]);
+      const index = Math.max(0, Math.min(root.options.length - 1, Math.floor((mouse.x - root._inset) / root._segment)));
+      if (index !== root._index)
+        root.picked(root.options[index]);
     }
   }
 }

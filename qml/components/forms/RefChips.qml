@@ -17,6 +17,8 @@ ColumnLayout {
   property string label
   property string description
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
   // The button's text
   property string addText
   property var value: []
@@ -40,6 +42,7 @@ ColumnLayout {
     label: root.label
     description: root.description
     trailing: root.headerExtra
+    below: root.headerBelow
   }
 
   Flow {

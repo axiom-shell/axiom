@@ -6,8 +6,8 @@ import qs.components.reusable
 
 // A setting of two or three values (`x-control: toggle`): its label and
 // description, a StyledToggle with the options at the row's right end,
-// centred on them; with two, a click anywhere on the row flips it (the
-// FormRow's `rowClicked`, routed to `activate` by SchemaField)
+// centred on them; a click on the row off the toggle cycles to the next
+// option (the FormRow's `rowClicked`, routed to `activate` by SchemaField)
 Item {
   id: root
   required property string label
@@ -17,6 +17,8 @@ Item {
   property string description: ""
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
 
   signal picked(var value)
 
@@ -29,11 +31,11 @@ Item {
   implicitWidth: row.implicitWidth
   implicitHeight: row.implicitHeight
 
-  // What a click on the row outside the toggle does (two options only:
-  // with three, the row can't say which)
+  // What a click on the row outside the toggle does: the next option, the
+  // first after the last
   function activate() {
-    if (root.options.length === 2)
-      root.picked(root.options[1 - Math.max(0, root.options.indexOf(root.currentValue))]);
+    const index = Math.max(0, root.options.indexOf(root.currentValue));
+    root.picked(root.options[(index + 1) % root.options.length]);
   }
 
   GridLayout {
@@ -48,6 +50,7 @@ Item {
       label: root.label
       description: root.description
       trailing: root.headerExtra
+      below: root.headerBelow
     }
 
     // Centred on the label and description together

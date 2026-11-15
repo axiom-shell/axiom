@@ -84,6 +84,7 @@ ColumnLayout {
       shown: field.shown
       indented: field.followsSibling
       bodyHeight: field.implicitHeight
+      tinted: field.tinted
       hoverable: field.hoverable
       onRowClicked: field.rowClicked()
 

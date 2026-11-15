@@ -31,6 +31,8 @@ ColumnLayout {
   readonly property int shownConfigValue: Math.round(root.currentConfigValue / root.unitScale)
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
   // Shown after the value, e.g. "px", "%", "ms"
   property string unit: ""
   // "auto" picks by range; "slider" or "stepper" forces one
@@ -127,6 +129,7 @@ ColumnLayout {
       label: root.label
       description: root.description
       trailing: root.headerExtra
+      below: root.headerBelow
       // Centred on a control taller than it (a label alone)
       Layout.alignment: Qt.AlignVCenter
     }

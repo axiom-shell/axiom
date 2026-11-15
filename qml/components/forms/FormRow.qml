@@ -10,9 +10,15 @@ import qs.components.methods
 // below, at least `Style.rowHeight` tall, a divider on its top boundary
 // (none on the top row), an accent rail beside a row shown by a sibling's
 // value, and a fold open and shut as its `x-showIf` shows or hides it, so
-// the rows below glide. A `hoverable` row (a switch, a two-option toggle, a
-// dropdown) acts on a click anywhere on it (`rowClicked`) and tints under
-// the pointer. What it holds sits in its body.
+// the rows below glide. A `tinted` row (the default) tints under the
+// pointer, and keeps the tint while the pointer is over its controls: the
+// HoverHandler is on the row, an ancestor of every control (a handler on a
+// sibling painted under them loses the hover to any child that takes it).
+// A `hoverable` row also acts on a click outside its controls
+// (`rowClicked`). The tint and the click cover the band: the whole row, or
+// with a `hitHeight` shorter than the body, the first `hitHeight` of it
+// padded below by as much as above, so the field sits centred in it. What
+// the row holds sits in its body.
 Item {
   id: root
 
@@ -27,9 +33,13 @@ Item {
   property real railHeight: root.bodyHeight
   // The part of the body, from its top, that a row click and the hover tint cover; the rest takes no row click
   property real hitHeight: root.bodyHeight
-  // Whether the whole row acts: it tints under the pointer and a click on
-  // it outside its controls is `rowClicked`
+  // Whether the row tints under the pointer
+  property bool tinted: true
+  // Whether a click on the row outside its controls is `rowClicked`
+  // (pointing cursor); a hoverable row always tints
   property bool hoverable: false
+  // The pointer is over the row's band
+  readonly property bool hovered: rowHover.hovered && rowHover.point.position.y < band.height
   // The form's top row (no row above it shown), which has no gap: set by
   // the host (Utils.firstFormRow), never read from `y`, which the
   // layout sets from this row's height (a row flipping between the two
@@ -81,26 +91,30 @@ Item {
   visible: root._reveal > 0
   clip: root._reveal < 1
 
-  // The hover tint and the row click, built only while hoverable. Under the
-  // body, so a control takes its own clicks
+  HoverHandler {
+    id: rowHover
+    enabled: root.tinted || root.hoverable
+  }
+
+  // The hover tint and the row click, built while tinted or hoverable.
+  // Under the body, so a control takes its own clicks
   Loader {
+    id: band
     width: root.width
-    height: root.hitHeight >= root.bodyHeight ? root.height : body.y + root.hitHeight
-    active: root.hoverable
+    height: root.hitHeight >= root.bodyHeight ? root.height : Math.min(root.height, root.hitHeight + body.y * 2)
+    active: root.tinted || root.hoverable
     sourceComponent: Item {
       StateLayer {
         bleed: Style.rowBleed
-        hovered: hover.hovered
+        hovered: root.hovered
         pressed: click.pressed
       }
 
-      HoverHandler {
-        id: hover
-      }
-
+      // Invisible, it takes no clicks and sets no cursor
       MouseArea {
         id: click
         anchors.fill: parent
+        visible: root.hoverable
         cursorShape: Qt.PointingHandCursor
         onClicked: root.rowClicked()
       }

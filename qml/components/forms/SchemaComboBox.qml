@@ -15,6 +15,8 @@ GridLayout {
   property string description: ""
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
   // Options are color names (Style.resolve): each row is painted in the
   // color it names (an empty one, automatic, shows its label)
   property bool swatches: false
@@ -63,6 +65,7 @@ GridLayout {
     label: root.label
     description: root.description
     trailing: root.headerExtra
+    below: root.headerBelow
     // Centred on a control taller than it (a label alone)
     Layout.alignment: Qt.AlignVCenter
   }

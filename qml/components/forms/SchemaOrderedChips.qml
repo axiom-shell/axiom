@@ -14,6 +14,8 @@ ColumnLayout {
   property string label
   property string description
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
   // The value now, and every option it may hold
   property var value: []
   property var options: []
@@ -69,6 +71,7 @@ ColumnLayout {
     label: root.label
     description: root.description
     trailing: root.headerExtra
+    below: root.headerBelow
   }
 
   // Carries the chosen chips

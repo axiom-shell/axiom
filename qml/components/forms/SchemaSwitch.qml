@@ -14,6 +14,8 @@ Item {
   property string description: ""
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
+  // Under the description (FieldHeader.below)
+  property Component headerBelow: null
 
   signal toggled(bool newValue)
 
@@ -36,6 +38,7 @@ Item {
       label: root.label
       description: root.description
       trailing: root.headerExtra
+      below: root.headerBelow
     }
 
     // Centred on the label and description together
