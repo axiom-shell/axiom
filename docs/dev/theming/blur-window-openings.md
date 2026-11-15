@@ -15,7 +15,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - A shape is a `hosts/popout/BlurShape`: an `AttachedSurface`, a `Rectangle` or the border's `frame`, with its top-left on screen and its fill color.
 - `qml/shell/BlurBacking`: one click-through `axiom-blur-backing` window per screen (a `qml/shell/BlurBackingWindow`), layer order 9 (under the chrome, over the backdrop).
   - It draws a copy of each shape (`AttachedSurfaceCopy`, an `AttachedSurface` `mirror`, its geometry bound to the source's, sliding with it; a strip that slides reads `SlideAnimation.slideX`/`slideY`).
-  - All copies are drawn opaque and then at the surface opacity at once, so overlaps never stack.
+  - All copies are drawn opaque and then at the surface opacity at once (`Style.edgeAlpha`), so overlaps never stack; a fading copy (a toast, a menu tile) fades alone through `BlurShape.fade`.
 - It's the only one of these windows the compositor blurs, in one pass (on niri only where it sends its shapes as its blur region: [translucency](translucency-blur.md) › niri: blur regions). The overlay, the floating launcher and switcher and the other free-standing surfaces still blur themselves (notification toasts are backed by it: a card is a `BlurShape` rect, the attached box an EdgePopout).
 - The chrome draws its own outer fill transparent: `AttachedSurface.backed`, `BarContainer.backed`, `RoundedBorders.backed`.
 

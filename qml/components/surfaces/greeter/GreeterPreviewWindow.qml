@@ -47,7 +47,7 @@ PanelWindow {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.top: parent.top
       anchors.topMargin: OverlayConfig.cardSpacing
-      color: Theme.accent
+      tone: "accent"
       text: I18n.tr("Preview: Esc or click to close")
     }
   }

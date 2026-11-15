@@ -15,7 +15,7 @@ PanelWindow {
   WlrLayershell.namespace: "axiom-greeter"
   WlrLayershell.keyboardFocus: surface.isTarget ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
   exclusionMode: ExclusionMode.Ignore
-  color: Theme.background
+  color: Style.surfacePage
   anchors {
     top: true
     bottom: true

@@ -9,6 +9,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 ### Config
 - The `Dock` section, read by `DockConfig`.
 - `docks` is `[DockEntry]`, each with its own `enabled`; the default dock starts off (the section-wide `enabled` went in config v69).
+- A dock's `backgroundColor` / `borderColor` default to Auto (`''`; config v110 cleared the old `base00`/`base05`): `DockConfig.colorsOf(dock)` reads Auto as the edge family's `Style.surfacePage` / `Style.frameStroke` before `Style.resolve` (which turns `''` into transparent). The pinned/running separator is `Style.inkPage.divider`; the app's context menu a solid raised `Surface`.
 - Docks are edited on `views/Settings/DockListCard`, the section's `x-card`, in its own `Dock` settings category.
 - **Pinned apps** are the shared `Apps.pinned` (personal), which every dock shows, unless a dock's `pinnedOwn` is on: then its own `pinned` (`DockConfig.pinnedOf`). The card's switch picks which; turning it on starts the dock's own list as a copy of the shared one.
   - So a shared setup's docks (`pinnedOwn` is look, `pinned` personal) show the importer's apps, never the author's.

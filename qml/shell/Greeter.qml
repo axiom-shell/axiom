@@ -34,7 +34,7 @@ Scope {
       id: window
       implicitWidth: 1280 // the windowed test size, a screen stand-in
       implicitHeight: 720 // the windowed test size, a screen stand-in
-      color: Theme.background
+      color: Style.surfacePage
       title: "axiom greeter"
 
       GreeterSurface {

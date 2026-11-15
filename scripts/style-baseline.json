@@ -31,28 +31,6 @@
   "R4": 1,
   "R7": 1
  },
- "qml/components/surfaces/greeter/GreeterPreviewWindow.qml": {
-  "R1": 1,
-  "R2": 1,
-  "R7": 2
- },
- "qml/components/surfaces/greeter/GreeterSurface.qml": {
-  "R1": 2,
-  "R7": 2
- },
- "qml/components/surfaces/greeter/GreeterWindow.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/surfaces/lockscreen/LockPreviewWindow.qml": {
-  "R1": 1,
-  "R2": 1,
-  "R7": 2
- },
- "qml/components/surfaces/lockscreen/LockSurface.qml": {
-  "R1": 2,
-  "R7": 2
- },
  "qml/components/surfaces/osd/design/OSDCard.qml": {
   "R1": 5,
   "R14": 5,
@@ -97,19 +75,5 @@
  },
  "qml/services/compositor/CompositorConfigManager.qml": {
   "R6": 3
- },
- "qml/shell/Greeter.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/shell/Lockscreen.qml": {
-  "R2": 1,
-  "R7": 1
- },
- "qml/shell/NoParentNotice.qml": {
-  "R2": 5,
-  "R4": 3,
-  "R5": 1,
-  "R7": 5
  }
 }

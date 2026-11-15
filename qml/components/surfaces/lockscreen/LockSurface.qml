@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.reusable
 import qs.services.core
 import qs.services.compositor
 import qs.components.content.parts
@@ -64,12 +65,9 @@ ScreenLayoutView {
     anchors.bottomMargin: parent.height / 6
     width: Math.min(parent.width * 0.6, Appearance.fontSize * 28)
     active: root.isTarget && root._settled && SurfaceManager.requiredFields[root.passwordKey] !== true
-    sourceComponent: Rectangle {
+    sourceComponent: Surface {
+      tone: "page"
       implicitHeight: fallback.implicitHeight + Widget.padding * 2
-      radius: Widget.radius
-      color: Theme.background
-      border.color: Theme.border
-      border.width: Appearance.borderWidth
 
       PasswordField {
         id: fallback

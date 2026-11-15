@@ -121,7 +121,7 @@ Scope {
 
     WlSessionLockSurface {
       id: surface
-      color: "black"
+      color: "black" // style-exempt: the lock's base under its wallpaper, never waits for the theme
 
       Component.onCompleted: root.surfaces++
       Component.onDestruction: root.surfaces--

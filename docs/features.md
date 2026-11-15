@@ -141,7 +141,7 @@ Menus are the overlay's other half. Every overlay module fits in them, placed on
 - **Per-menu settings.** Each menu has its own:
   - edge, monitor and position along the edge
   - length: fit its modules, or take the whole edge
-  - module size and colors
+  - module size and colors (Background and Border default to Auto: the theme's surface and the screen frame's outline; a config step moves the old defaults there)
   - hover timings
 
   A strip menu can also draw a framed box along the whole edge.
@@ -243,6 +243,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Right-click for the app's menu.
   - Drag icons to reorder or pin them, or off the dock to unpin.
   - Icons magnify under the pointer, and a tooltip names each app.
+- **Colors:** Background and Border default to Auto (the theme's surface and the screen frame's outline); a config step moves the old defaults there.
 - **Visibility:** always shown, shown on hover, or hidden while a window overlaps it. Running apps can count windows everywhere, on the dock's monitor only, or on its workspace only.
 
 **OSD:**
