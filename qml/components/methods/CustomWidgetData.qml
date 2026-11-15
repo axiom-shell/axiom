@@ -76,6 +76,12 @@ QtObject {
     return v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
   }
 
+  // The text a List row shows for its number: the value and the item's own
+  // `unit` ("84%"); nothing for a row with no number
+  function rowValueText(row) {
+    return row.value === undefined ? "" : root.asText(row.value) + root.asText(row.raw?.unit);
+  }
+
   // A list of rows (an output's items, or a bound list) as
   // { text, icon, value (a number, or undefined), subtext, id, state (its
   // tone's word), max (a number above 0 that a numeric value is out of, else
@@ -1360,8 +1366,6 @@ QtObject {
             "values": ["off"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
               "icon": "do_not_disturb_off"
-            }, {
-              "color": "warning"
             })])]
       },
       "samples": {
@@ -1463,6 +1467,7 @@ QtObject {
               "subtext": "120 GB free",
               "value": 62,
               "max": 100,
+              "unit": "%",
               "state": "ok"
             },
             {
@@ -1471,6 +1476,7 @@ QtObject {
               "subtext": "12 GB free",
               "value": 94,
               "max": 100,
+              "unit": "%",
               "state": "full"
             },
             {
@@ -1479,6 +1485,7 @@ QtObject {
               "subtext": "1.4 TB free",
               "value": 30,
               "max": 100,
+              "unit": "%",
               "state": "ok"
             }
           ],
@@ -1555,7 +1562,9 @@ QtObject {
               "size": "normal"
             }), root._el("play", "Button", [5, 8, 6, 3], {
               "label": "Play"
-            }, null, {
+            }, {
+              "size": "normal"
+            }, {
               "click": "toggle"
             })], false)]
       },
@@ -1619,7 +1628,9 @@ QtObject {
           }, {
             "align": "left",
             "size": "normal"
-          }), root._el("break", "Button", [10, 0, 6, 3], null, null, {
+          }), root._el("break", "Button", [10, 0, 6, 3], null, {
+            "size": "normal"
+          }, {
             "click": "break"
           })],
         "views": [root._view("error", "Error", {
@@ -1633,9 +1644,13 @@ QtObject {
             }, {
               "align": "left",
               "size": "normal"
-            }), root._el("fix", "Button", [4, 5, 6, 3], null, null, {
+            }), root._el("fix", "Button", [4, 5, 6, 3], null, {
+              "size": "normal"
+            }, {
               "click": "fix"
-            }), root._el("restart", "Button", [10, 5, 6, 3], null, null, {
+            }), root._el("restart", "Button", [10, 5, 6, 3], null, {
+              "size": "normal"
+            }, {
               "click": "restart"
             })], false)]
       },

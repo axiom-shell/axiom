@@ -9,7 +9,7 @@ import qs.components.content.parts.custom
 // a ListModel updated in place so a new sample never rebuilds them, down
 // the element (a CustomListRow) or across it as tiles (`orientation`, a
 // CustomListTile). The colour part's rules (`colorStates`, read from the
-// row's own keys, `state` by default) tone a row's icon and meter; `max` with a numeric value draws a meter; `image` a
+// row's own keys, `state` by default) tone a row's icon and meter; a row's `unit` follows its value; `max` with a numeric value draws a meter; `image` a
 // thumbnail. A row's click runs the element's click action with {value} the
 // row's id, else its value, else its text; with no action the rows aren't
 // pressable. The element's Size scales the rows (text, icons, meters, gaps)
@@ -52,7 +52,7 @@ CustomElementBase {
         "rowId": rows[i].id,
         "rowText": rows[i].text,
         "rowIcon": root.themed ? "" : rows[i].icon,
-        "rowValue": CustomWidgetData.asText(rows[i].value),
+        "rowValue": CustomWidgetData.rowValueText(rows[i]),
         "rowSubtext": rows[i].subtext,
         "rowTone": rowName(rows[i]),
         "rowNumber": rows[i].value ?? 0,

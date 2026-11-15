@@ -113,7 +113,7 @@ list() {
     state=ok
     [ "$cap" -lt 90 ] || state=full
     [ -z "$items" ] || items+=","
-    items+="{\"id\":$(json_str "$mount"),\"text\":$(json_str "$mount"),\"subtext\":\"$free free\",\"value\":$cap,\"max\":100,\"state\":\"$state\"}"
+    items+="{\"id\":$(json_str "$mount"),\"text\":$(json_str "$mount"),\"subtext\":\"$free free\",\"value\":$cap,\"max\":100,\"unit\":\"%\",\"state\":\"$state\"}"
   done < <(df -P -x tmpfs -x devtmpfs -x squashfs -x overlay -x efivarfs 2>/dev/null | tail -n +2)
   printf '{"text":"%s disk%s","items":[%s]}\n' "$n" "$([ "$n" = 1 ] || echo s)" "$items"
 }

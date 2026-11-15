@@ -1061,6 +1061,28 @@ TestCase {
     }, "no place yet: an empty rect");
   }
 
+  function test_rowValueText() {
+    const rows = CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": 84,
+        "unit": "%"
+      },
+      {
+        "text": "b",
+        "value": "3"
+      },
+      {
+        "text": "c",
+        "unit": "%"
+      },
+      "d"]);
+    compare(CustomWidgetData.rowValueText(rows[0]), "84%", "the unit follows the value");
+    compare(CustomWidgetData.rowValueText(rows[1]), "3", "no unit: the value");
+    compare(CustomWidgetData.rowValueText(rows[2]), "", "no number: nothing, whatever the unit");
+    compare(CustomWidgetData.rowValueText(rows[3]), "", "a plain entry has none");
+  }
+
   function test_rows() {
     compare(CustomWidgetData.rows([
       {

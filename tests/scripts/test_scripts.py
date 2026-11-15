@@ -1445,6 +1445,7 @@ class DemoScript(unittest.TestCase):
         for item in out["items"]:
             self.assertTrue(item["id"].startswith("/"))
             self.assertIn(item["state"], ("ok", "full"))
+            self.assertEqual(item["unit"], "%", "the used share reads as a percentage")
             self.assertEqual(item["state"] == "full", item["value"] >= 90)
 
     def test_media_walks_the_tracks(self):
