@@ -27,8 +27,8 @@ ColumnLayout {
   readonly property var elements: root.definition?.module?.elements ?? []
   readonly property var designSize: CustomWidgetData.designSize(root.elements, root.definition?.module?.size)
   readonly property real card: root.grid?.unit ?? Widget.px(400)
-  // The lock-screen column's width
-  readonly property real lockWidth: Appearance.fontSize * 16
+  // The lock-screen column's width: wide enough for its button's whole label
+  readonly property real lockWidth: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultLayoutButton.implicitWidth)
   // The previews: the popout at the design size, then the sizes a page may give
   // I18n.tr("Popout") I18n.tr("Square") I18n.tr("Wide") I18n.tr("Large") I18n.tr("Strip")
   readonly property var previews: [
@@ -127,6 +127,7 @@ ColumnLayout {
         onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
       }
       StyledTextButton {
+        id: defaultLayoutButton
         visible: root.elements.length === 0
         implicitHeight: Widget.height
         iconText: "auto_awesome"

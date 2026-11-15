@@ -700,6 +700,13 @@ QtObject {
     return out;
   }
 
+  // The Module tab's lock-screen column width: its base width, or its widest
+  // child's (the "Start from the default layout" button, whose label never
+  // wraps or elides) when that is wider
+  function lockColumnWidth(base, buttonWidth) {
+    return Math.max(base, Math.ceil(buttonWidth));
+  }
+
   // The zoom (at most 0.3, at least 0.05) the Module tab's size previews
   // are drawn at: the one that fits its height (their tallest, at least four
   // units, a fifth of the height) and its width. `sizes` are the previews'
