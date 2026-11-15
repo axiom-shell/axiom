@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services.core
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
@@ -11,7 +12,7 @@ import qs.components.views.Layouts
 // Custom widgets page, Module tab: the element library (always there, a
 // folding group), then the selected element's bindings (each slot: the
 // output's own key, a path in it, a format or a number), its look (its
-// kind's options, CustomWidgetsConfig.elementKinds) and the commands it runs.
+// kind's options, CustomWidgetsConfig.elementKinds) and the actions it runs.
 ColumnLayout {
   id: root
 
@@ -61,23 +62,17 @@ ColumnLayout {
     };
   }
 
-  // The action command the selected element runs, as it would for the
-  // previewed sample ("" for none, a built-in or no action command)
-  readonly property string runsLine: {
-    const action = root.element?.action ?? "";
-    const command = root.editor.selected?.invoke?.command ?? "";
-    if (action === "" || action.startsWith("axiom:") || command === "")
-      return "";
-    const fields = root.editor.previewFields;
-    // The element's own value when it binds one, else empty (as at runtime)
-    const values = {
-      "action": action,
-      "rev": CustomWidgetData.asText(fields?.rev),
-      "tree": Paths.treePath,
-      "value": root.element.bind?.value && fields ? CustomWidgetData.asText(CustomWidgetData.elementValue(fields, root.element.bind.value)) : ""
-    };
-    return CustomWidgetData.fillCommand(command, values);
+  // The titles of an element's triggers ("On press", "On change"…): every
+  // kind's `run` has the base's
+  readonly property var triggerTitles: {
+    const defs = ConfigManager.configSchema.definitions;
+    const first = defs.CustomElement.oneOf[0].$ref.replace("#/definitions/", "");
+    return defs[first].properties.run.properties;
   }
+  // The name "New action…" gives an action made for this element
+  readonly property string actionName: root.element?.name || I18n.tr(root.kind?.label ?? "")
+  // What {value} reads as in the previewed sample, for the Runs line under a trigger
+  readonly property string valueText: root.element?.bind?.value && root.editor.previewFields ? CustomWidgetData.asText(CustomWidgetData.elementValue(root.editor.previewFields, root.element.bind.value)) : ""
 
   // A path clicked in the Data panel: bound to the slot last started in on
   // this element, else to a new Text
@@ -289,55 +284,25 @@ ColumnLayout {
         title: I18n.tr("Runs")
         description: I18n.tr("Never on the lock screen.")
 
-        // A named action (the script's, or a built-in) instead of the
-        // commands below
-        RowLayout {
+        ColumnLayout {
           Layout.fillWidth: true
-          spacing: Widget.spacing
+          spacing: 0
 
-          StyledLabel {
-            Layout.preferredWidth: Widget.textPx(70)
-            text: I18n.tr("Action")
-          }
-          SquareIconButton {
-            iconText: "help"
-            tooltipText: I18n.tr("How actions work")
-            onClicked: root.editor.openHelp("actions")
-          }
-          StyledComboEntry {
-            Layout.fillWidth: true
-            editable: true
-            placeholderText: I18n.tr("None (the commands)")
-            value: root.element?.action ?? ""
-            options: root.editor.actionOptions
-            onPicked: value => root.editor.setElement(["action"], value)
-          }
-        }
-        // What pressing it runs, filled from the previewed sample
-        StyledText {
-          visible: root.runsLine !== ""
-          Layout.fillWidth: true
-          text: I18n.tr("Runs: {0}", root.runsLine)
-          textFamily: "monospace"
-          role: "caption"
-          tone: "muted"
-          elide: Text.ElideMiddle // style-exempt: middle
-        }
-        StyledText {
-          visible: (root.element?.action ?? "") !== "" && !(root.element.action ?? "").startsWith("axiom:") && !root.editor.selected?.invoke.command
-          Layout.fillWidth: true
-          text: I18n.tr("Set the action command first")
-          tone: "warning"
-          overflow: "wrap"
-        }
+          Repeater {
+            model: root.kind?.actions ?? []
 
-        SchemaPropertiesForm {
-          visible: (root.element?.action ?? "") === ""
-          Layout.fillWidth: true
-          propertiesSchema: root.kind?.actionsSchema ?? ({})
-          order: root.kind?.actions ?? []
-          values: root.element?.actions ?? ({})
-          onEdited: (path, value) => root.editor.setElement(["actions"].concat(path), value)
+            TriggerField {
+              id: trigger
+              required property string modelData
+              required property int index
+              first: trigger.index === 0
+              label: root.triggerTitles[trigger.modelData].title
+              current: root.element?.run?.[trigger.modelData] ?? ""
+              newName: root.actionName
+              valueText: root.valueText
+              writeRun: value => root.editor.setElement(["run", trigger.modelData], value)
+            }
+          }
         }
       }
     }

@@ -39,8 +39,8 @@ ColumnLayout {
   readonly property string lockWarning: {
     const issues = root.definition?.module?.lockscreen ? CustomWidgetData.lockIssues(root.definition) : [];
     const parts = [];
-    if (issues.some(i => i === "actions" || i === "keys" || i === "entry"))
-      parts.push(I18n.tr("Actions, keys and entries do nothing there."));
+    if (issues.some(i => i === "actions" || i === "entry"))
+      parts.push(I18n.tr("Actions and entries do nothing there."));
     if (issues.includes("text"))
       parts.push(I18n.tr("Text the script prints is readable by anyone who sees the lock screen."));
     return parts.join(" ");
@@ -201,7 +201,7 @@ ColumnLayout {
   }
 
   // Test mode: the popout at its design size, fitted, as it is live with
-  // its actions, keys and Entries on (they run the real commands)
+  // its actions and Entries on (they run the real commands)
   Loader {
     active: root.editor.testMode
     visible: active

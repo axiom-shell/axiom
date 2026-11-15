@@ -8,7 +8,7 @@ import qs.components.reusable
 // Custom widgets page: the selected definition's last action commands, newest
 // first (CustomWidgetsEditor.actionLog: the page's, never saved), each as
 // "Ran: <command> → exit N · 120 ms · <stderr>", or "Refused: <why>" for
-// one that wasn't run (busy, disabled, locked…). Test mode and the real
+// one that wasn't run (busy, disabled, no command…). Test mode and the real
 // buttons both land here.
 StyledText {
   id: root
@@ -25,8 +25,10 @@ StyledText {
       return I18n.tr("locked");
     if (code === "refused")
       return I18n.tr("refused");
-    if (code === "no action command")
-      return I18n.tr("no action command");
+    if (code === "no action")
+      return I18n.tr("no action");
+    if (code === "no command")
+      return I18n.tr("no command");
     if (code === "failing")
       return I18n.tr("failing");
     if (code === "disabled")
@@ -36,7 +38,7 @@ StyledText {
     return code;
   }
   // One text, not a row per entry: the log is live
-  readonly property string lines: root.editor.actionLog.slice().reverse().map(entry => entry.refused !== "" ? I18n.tr("Refused: {0} ({1})", root.reasonText(entry.refused), entry.action) : I18n.tr("Ran: {0} → exit {1} · {2} ms", entry.command.slice(0, 160), entry.exitCode, entry.ms) + (entry.stderr !== "" ? " · " + entry.stderr : "")).join("\n")
+  readonly property string lines: root.editor.actionLog.slice().reverse().map(entry => entry.refused !== "" ? I18n.tr("Refused: {0} ({1})", root.reasonText(entry.refused), entry.name || entry.action) : entry.detached ? I18n.tr("Started: {0}", entry.command.slice(0, 160)) : I18n.tr("Ran: {0} → exit {1} · {2} ms", entry.command.slice(0, 160), entry.exitCode, entry.ms) + (entry.stderr !== "" ? " · " + entry.stderr : "")).join("\n")
 
   Layout.fillWidth: true
   text: root.lines !== "" ? root.lines : I18n.tr("No action has run yet.")

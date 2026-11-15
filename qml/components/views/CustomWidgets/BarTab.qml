@@ -14,7 +14,7 @@ import qs.components.bar.look
 // Custom widgets page, Bar tab: one banner across the page holding the
 // widget as it's drawn on a bar across and on one down the side (the real
 // bar widget, on the first bar's look) and a caption, then its bar style, its text (Waybar's format, icons and
-// states) and its actions.
+// states) and its clicks.
 ColumnLayout {
   id: root
 
@@ -101,7 +101,7 @@ ColumnLayout {
 
       SchemaPropertiesForm {
         Layout.fillWidth: true
-        propertiesSchema: root.schema.bar.properties
+        propertiesSchema: Utils.pick(root.schema.bar.properties, order)
         order: ["style", "icon", "segments", "width", "popout"]
         values: root.definition?.bar ?? ({})
         onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
@@ -131,14 +131,26 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
-      title: I18n.tr("Actions")
-      description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click. A named action runs the action command (Script) instead of the command.")
+      title: I18n.tr("Clicks")
+      description: I18n.tr("What clicks and scrolls on the bar widget run.")
 
-      SchemaPropertiesForm {
+      ColumnLayout {
         Layout.fillWidth: true
-        propertiesSchema: root.schema.actions.properties
-        values: root.definition?.actions ?? ({})
-        onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
+        spacing: 0
+
+        Repeater {
+          model: ["click", "rightClick", "middleClick", "scrollUp", "scrollDown"]
+
+          TriggerField {
+            id: trigger
+            required property string modelData
+            required property int index
+            first: trigger.index === 0
+            label: root.schema.bar.properties.run.properties[trigger.modelData].title
+            current: root.definition?.bar?.run?.[trigger.modelData] ?? ""
+            writeRun: value => root.editor.set(["bar", "run", trigger.modelData], value)
+          }
+        }
       }
     }
   }

@@ -7,9 +7,10 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.views.base
 
-// Custom widgets page, Data tab: the script's last output as it came (with
-// its exit code and last stderr line when it failed), and
-// every value in it with its path (what the module's elements bind to).
+// Custom widgets page, Data tab: the run state, the widget's actions
+// (ActionsEditor), the script's last output as it came (with its exit code
+// and last stderr line when it failed), and every value in it with its path
+// (what the module's elements bind to).
 // Each field reads the output's key of the same name: the script shapes
 // its own JSON.
 ColumnLayout {
@@ -35,14 +36,6 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
-  // The contract, in Help
-  StyledTextButton {
-    implicitHeight: Widget.height
-    iconText: "help"
-    text: I18n.tr("What should my script print?")
-    onClicked: root.editor.openHelp("output")
-  }
-
   // Run state, and Run now
   RowLayout {
     Layout.fillWidth: true
@@ -56,6 +49,12 @@ ColumnLayout {
       Layout.fillWidth: true
       text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateTimeFormat())) : ""
       tone: "muted"
+    }
+    StyledTextButton {
+      implicitHeight: Widget.height
+      iconText: "help"
+      text: I18n.tr("What should my script print?")
+      onClicked: root.editor.openHelp("output")
     }
     StyledTextButton {
       implicitHeight: Widget.height
@@ -177,10 +176,10 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
-      title: I18n.tr("Keys")
-      description: I18n.tr("A key → an action. They work in the overlay, edge menus and the bar popout, once the module is clicked (at once in the popout), and not while an Entry has the focus.")
+      title: I18n.tr("Actions")
+      description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
 
-      KeysEditor {}
+      ActionsEditor {}
     }
 
     FieldGroup {

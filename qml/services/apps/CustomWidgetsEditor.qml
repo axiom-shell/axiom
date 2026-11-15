@@ -119,35 +119,128 @@ QtObject {
   // Where it comes from: "saved", "live" or "none"
   readonly property string sampleSource: root.pageShown ? CustomWidgetData.sampleSource(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null) : "none"
 
-  // The actions an element or a key can name: none (its own commands), the
-  // built-ins, an action of the shell that's allowed (never a session or
-  // destructive one), then the ids the output's `actions` lists
-  readonly property var actionOptions: {
-    const refused = ActionsManager.sessionActions.concat(KeybindManager.actions.filter(id => ActionsManager.destructive(id)));
+  // --- Actions (the definition's actions.items; elements and the bar pick one by id) ---
+
+  // What a trigger's combo offers: Nothing, each action of the definition
+  // and "New action…" (value "__new", which newActionFor answers)
+  readonly property var actionChoices: {
     const out = [
       {
         "value": "",
-        "label": I18n.tr("None (the commands)")
+        "label": I18n.tr("Nothing")
       }
     ];
-    for (const id of ["refresh", "restart"])
+    for (const item of root.selected?.actions?.items ?? [])
       out.push({
-        "value": "axiom:" + id,
-        "label": id === "refresh" ? I18n.tr("Refresh") : I18n.tr("Restart")
+        "value": item.id,
+        "label": item.name || item.id,
+        "icon": item.kind === "axiom" ? "bolt" : "terminal"
       });
-    for (const id of KeybindManager.actions) {
-      if (CustomWidgetData.builtinAllowed(id, refused))
-        out.push({
-          "value": "axiom:" + id,
-          "label": ActionsManager.label(id)
-        });
-    }
-    for (const id of Object.keys((root.pageShown ? CustomWidgetsManager.fields[root.selectedId]?.actions : null) ?? ({})))
-      out.push({
-        "value": id,
-        "label": id
-      });
+    out.push({
+      "value": "__new",
+      "label": I18n.tr("New action…"),
+      "icon": "add"
+    });
     return out;
+  }
+
+  // The values an Axiom action takes, each with its label (the shell's
+  // actions: never a session or destructive one, none that takes an
+  // argument). Runtime keys: I18n.tr("Refresh this widget")
+  // I18n.tr("Restart this widget") I18n.tr("Go to screen: Base")
+  // I18n.tr("Go to screen: {0}")
+  readonly property var axiomChoices: {
+    const refused = ActionsManager.sessionActions.concat(KeybindManager.actions.filter(id => ActionsManager.destructive(id)));
+    const views = root.selected?.module?.views ?? [];
+    const shell = KeybindManager.actions.slice().sort((a, b) => ActionsManager.label(a).localeCompare(ActionsManager.label(b)));
+    return CustomWidgetData.axiomValues(shell, refused, id => KeybindManager.needsArgument(id), views.map(v => v.id)).map(value => {
+      let label;
+      if (value === "refresh")
+        label = I18n.tr("Refresh this widget");
+      else if (value === "restart")
+        label = I18n.tr("Restart this widget");
+      else if (value === "screen:")
+        label = I18n.tr("Go to screen: Base");
+      else if (value.startsWith("screen:")) {
+        const view = views.find(v => v.id === value.slice(7));
+        label = I18n.tr("Go to screen: {0}", view?.name || view?.id || value.slice(7));
+      } else
+        label = ActionsManager.label(value);
+      return {
+        "value": value,
+        "label": label
+      };
+    });
+  }
+
+  // The action ids of the page (an inline editor of one is open under its
+  // trigger: page-only, never saved)
+  property string editingAction: ""
+  // The action whose row takes the focus in its name once it exists: the one
+  // just added (the row clears it)
+  property string focusAction: ""
+
+  // How many triggers (elements' and the bar's) use action `id`
+  function actionUses(id) {
+    return CustomWidgetData.actionRefs(root.selected, id);
+  }
+
+  // A new action made of `fields` (name, kind, command…), added last, one
+  // undo step. Returns its id ("" without a definition). Its name defaults
+  // to "Action {n}"
+  function addAction(fields) {
+    const def = root._local().items[root.selectedIndex];
+    if (!def)
+      return "";
+    const items = def.actions.items;
+    const name = fields?.name || I18n.tr("Action {0}", items.length + 1);
+    const item = ConfigManager.withDefaults(Object.assign({}, fields, {
+      "id": Utils.newId(Utils.slug(name) || "action", items),
+      "name": name
+    }), "CustomWidgetAction");
+    root._recordStructure();
+    root.focusAction = item.id;
+    items.push(item);
+    root._apply();
+    return item.id;
+  }
+
+  // Sets `key` of action `index` (typing in one field is one undo step)
+  function setAction(index, key, value) {
+    const item = root.selected?.actions?.items?.[index];
+    if (!item || Utils.deepEqual(item[key], value))
+      return;
+    root.elements.recordField("def:action:" + item.id + ":" + key);
+    root._write(["actions", "items", index, key], value);
+  }
+
+  // Removes action `index` and clears every trigger that named it, as one step
+  function removeAction(index) {
+    const def = root._local().items[root.selectedIndex];
+    const item = def?.actions.items[index];
+    if (!item)
+      return;
+    root._beforeStructure();
+    const cleared = CustomWidgetData.withoutActionRefs(def, item.id);
+    cleared.actions.items.splice(index, 1);
+    // In place: the draft keeps its object
+    root._restoreInto(def, cleared, []);
+    if (root.editingAction === item.id)
+      root.editingAction = "";
+    root._apply();
+  }
+
+  // "New action…" in a trigger's combo: a command action named `name` (""
+  // numbers it), picked through `writeRun(id)` (an element's trigger or the
+  // bar's) and opened for editing under the trigger
+  function newActionFor(name, writeRun) {
+    const id = root.addAction(name !== "" ? {
+      "name": name
+    } : {});
+    if (id === "")
+      return;
+    writeRun(id);
+    root.editingAction = id;
   }
 
   // The paths the page offers to bind from (the saved samples, then what
@@ -185,6 +278,7 @@ QtObject {
 
   function selectTab(index) {
     root.tab = index;
+    root.focusAction = "";
   }
 
   // While the page shows, the selected definition runs
@@ -215,6 +309,8 @@ QtObject {
     root.gallery = false;
     root.copyNote = "";
     root.actionLog = [];
+    root.editingAction = "";
+    root.focusAction = "";
     root.viewIndex = -1;
     root.testMode = false;
     root.seen = {};
@@ -387,10 +483,18 @@ QtObject {
   }
 
   // A preset's English texts in the user's language: the `=` literals and the
-  // placeholders and labels of its elements, and its screens' names (the keys
+  // placeholders and labels of its elements, and its actions' and screens' names (the keys
   // are listed in CustomWidgetData.presets' comment). A definition with no
   // such text, or a name no key matches, comes back as it is
-  function translated(def) {
+  function translated(preset) {
+    // The actions' names first (their keys are in the same comment)
+    const def = !preset.actions?.items ? preset : Object.assign({}, preset, {
+      "actions": Object.assign({}, preset.actions, {
+        "items": preset.actions.items.map(action => Object.assign({}, action, {
+            "name": action.name ? I18n.tr(action.name) : ""
+          }))
+      })
+    });
     if (!def.module)
       return def;
     const elements = list => (list ?? []).map(element => {
