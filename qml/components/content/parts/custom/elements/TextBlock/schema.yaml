@@ -5,3 +5,5 @@ slots: [text]
 color: text
 settings:
   monospace: {type: boolean, title: Monospace, default: false, description: Lines aren't wrapped.}
+  markup: {type: boolean, title: Markup, default: false, description: 'Draw a bound value''s Pango markup.'}
+  font: {type: string, title: Font, default: '', description: 'Empty: monospace when on, else the module''s, else the shell''s.'}

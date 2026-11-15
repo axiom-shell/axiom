@@ -82,6 +82,7 @@ Item {
             invokeSet: (root.definition?.invoke?.command ?? "") !== ""
             failing: !!root.fields?.failure && root.fields.failure.kind !== "script"
             busy: CustomWidgetsManager.busy[root.definition?.id ?? ""] !== undefined
+            moduleFont: root.definition?.module?.font ?? ""
           }
         }
       }

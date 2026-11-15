@@ -31,6 +31,8 @@ Item {
   property bool failing: false
   // Another action holds the widget's script actions (CustomWidgetsManager.busy)
   property bool busy: false
+  // The module's font family (module.font), for a Text with none of its own
+  property string moduleFont: ""
 
   readonly property var bind: element?.bind ?? ({})
   readonly property var options: element?.options ?? ({})

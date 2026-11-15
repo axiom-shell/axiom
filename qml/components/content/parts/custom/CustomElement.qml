@@ -15,6 +15,7 @@ Loader {
   property bool invokeSet: false
   property bool failing: false
   property bool busy: false
+  property string moduleFont: ""
 
   readonly property string kind: root.element?.type ?? "Text"
 
@@ -29,7 +30,8 @@ Loader {
       "fallbackIcon": Qt.binding(() => root.fallbackIcon),
       "invokeSet": Qt.binding(() => root.invokeSet),
       "failing": Qt.binding(() => root.failing),
-      "busy": Qt.binding(() => root.busy)
+      "busy": Qt.binding(() => root.busy),
+      "moduleFont": Qt.binding(() => root.moduleFont)
     });
   }
   // A binding sets `kind` during creation, before completion; the element

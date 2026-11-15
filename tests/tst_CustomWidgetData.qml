@@ -540,6 +540,11 @@ TestCase {
     compare(CustomWidgetData.elementValue(f, "cpu.temp"), 70, "a path");
     compare(CustomWidgetData.elementValue(f, "{cpu.temp}°C"), "70°C", "a format");
     compare(CustomWidgetData.elementValue(f, "100"), 100, "a number typed");
+    compare(CustomWidgetData.elementValue(f, "=Show answer"), "Show answer", "a literal");
+    compare(CustomWidgetData.elementValue(f, "=5"), "5", "a literal number is text");
+    compare(CustomWidgetData.elementValue(f, "={x}"), "{x}", "a literal format is not filled");
+    compare(CustomWidgetData.elementValue(f, "="), "", "an empty literal");
+    compare(CustomWidgetData.elementValue(f, "=cpu.temp"), "cpu.temp", "a literal is no path");
     compare(CustomWidgetData.elementRatio(f, {}), 0.5, "no binding: the output's own");
     compare(CustomWidgetData.elementRatio(f, {
       "value": "cpu.temp",
