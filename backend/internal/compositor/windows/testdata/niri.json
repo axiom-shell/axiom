@@ -1,0 +1,120 @@
+{
+ "recorded": "niri 26.04 (8ed0da4), nested, 2026-11-13",
+ "start": {
+  "Outputs": {
+   "winit": {
+    "name": "winit",
+    "make": "Smithay",
+    "model": "Winit",
+    "serial": null,
+    "physical_size": null,
+    "modes": [
+     {
+      "width": 1119,
+      "height": 1366,
+      "refresh_rate": 60000,
+      "is_preferred": true
+     }
+    ],
+    "current_mode": 0,
+    "is_custom_mode": true,
+    "vrr_supported": false,
+    "vrr_enabled": false,
+    "logical": {
+     "x": 0,
+     "y": 0,
+     "width": 1119,
+     "height": 1366,
+     "scale": 1.0,
+     "transform": "Flipped180"
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "note": "stream start: the snapshot, A open",
+   "events": [
+    "{\"WorkspacesChanged\":{\"workspaces\":[{\"id\":1,\"idx\":1,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":true,\"is_focused\":true,\"active_window_id\":2},{\"id\":2,\"idx\":2,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":false,\"is_focused\":false,\"active_window_id\":null}]}}",
+    "{\"WindowsChanged\":{\"windows\":[{\"id\":2,\"title\":\"fixture-a\",\"app_id\":\"wr-fixture-a\",\"pid\":2994662,\"workspace_id\":1,\"is_focused\":true,\"is_floating\":false,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":[1,1],\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141580,\"nanos\":382744810}}]}}",
+    "{\"KeyboardLayoutsChanged\":{\"keyboard_layouts\":{\"names\":[\"English (US)\"],\"current_idx\":0}}}",
+    "{\"OverviewOpenedOrClosed\":{\"is_open\":false}}",
+    "{\"ConfigLoaded\":{\"failed\":false}}",
+    "{\"CastsChanged\":{\"casts\":[]}}"
+   ]
+  },
+  {
+   "note": "B opened",
+   "events": [
+    "{\"WorkspaceActiveWindowChanged\":{\"workspace_id\":1,\"active_window_id\":3}}",
+    "{\"WindowOpenedOrChanged\":{\"window\":{\"id\":3,\"title\":\"before\",\"app_id\":\"wr-fixture-b\",\"pid\":3001373,\"workspace_id\":1,\"is_focused\":true,\"is_floating\":false,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":[2,1],\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141585,\"nanos\":417891216}}}}"
+   ]
+  },
+  {
+   "note": "B title changes",
+   "events": [
+    "{\"WindowOpenedOrChanged\":{\"window\":{\"id\":3,\"title\":\"after\",\"app_id\":\"wr-fixture-b\",\"pid\":3001373,\"workspace_id\":1,\"is_focused\":true,\"is_floating\":false,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":[2,1],\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141585,\"nanos\":417891216}}}}"
+   ]
+  },
+  {
+   "note": "B floated",
+   "events": [
+    "{\"WindowOpenedOrChanged\":{\"window\":{\"id\":3,\"title\":\"after\",\"app_id\":\"wr-fixture-b\",\"pid\":3001373,\"workspace_id\":1,\"is_focused\":true,\"is_floating\":true,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":null,\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":[589.0,68.0],\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141585,\"nanos\":417891216}}}}"
+   ]
+  },
+  {
+   "note": "B tiled again",
+   "events": [
+    "{\"WindowOpenedOrChanged\":{\"window\":{\"id\":3,\"title\":\"after\",\"app_id\":\"wr-fixture-b\",\"pid\":3001373,\"workspace_id\":1,\"is_focused\":true,\"is_floating\":false,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":[2,1],\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141585,\"nanos\":417891216}}}}"
+   ]
+  },
+  {
+   "note": "B fullscreen",
+   "events": [
+    "{\"WindowLayoutsChanged\":{\"changes\":[[3,{\"pos_in_scrolling_layout\":[2,1],\"tile_size\":[1119.0,1366.0],\"window_size\":[1119,1366],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]}]]}}"
+   ]
+  },
+  {
+   "note": "B leaves fullscreen",
+   "events": [
+    "{\"WindowLayoutsChanged\":{\"changes\":[[3,{\"pos_in_scrolling_layout\":[2,1],\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]}]]}}"
+   ]
+  },
+  {
+   "note": "B moved to workspace 2",
+   "events": [
+    "{\"WorkspacesChanged\":{\"workspaces\":[{\"id\":1,\"idx\":1,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":false,\"is_focused\":false,\"active_window_id\":2},{\"id\":2,\"idx\":2,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":true,\"is_focused\":true,\"active_window_id\":3},{\"id\":3,\"idx\":3,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":false,\"is_focused\":false,\"active_window_id\":null}]}}",
+    "{\"WindowOpenedOrChanged\":{\"window\":{\"id\":3,\"title\":\"after\",\"app_id\":\"wr-fixture-b\",\"pid\":3001373,\"workspace_id\":2,\"is_focused\":true,\"is_floating\":false,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":[1,1],\"tile_size\":[522.0,1290.0],\"window_size\":[522,1290],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141585,\"nanos\":417891216}}}}"
+   ]
+  },
+  {
+   "note": "X11 window opened",
+   "events": [
+    "{\"WorkspaceActiveWindowChanged\":{\"workspace_id\":2,\"active_window_id\":4}}",
+    "{\"WindowOpenedOrChanged\":{\"window\":{\"id\":4,\"title\":\"x11 fixture\",\"app_id\":\"Wrfixturex\",\"pid\":3009897,\"workspace_id\":2,\"is_focused\":true,\"is_floating\":false,\"is_urgent\":false,\"layout\":{\"pos_in_scrolling_layout\":[2,1],\"tile_size\":[527.0,1291.0],\"window_size\":[527,1291],\"tile_pos_in_workspace_view\":null,\"window_offset_in_tile\":[0.0,0.0]},\"focus_timestamp\":{\"secs\":141592,\"nanos\":1449901}}}}"
+   ]
+  },
+  {
+   "note": "A focused",
+   "events": [
+    "{\"WorkspaceActivated\":{\"id\":1,\"focused\":true}}",
+    "{\"WindowFocusChanged\":{\"id\":2}}"
+   ]
+  },
+  {
+   "note": "X11 window closed",
+   "events": [
+    "{\"WorkspaceActiveWindowChanged\":{\"workspace_id\":2,\"active_window_id\":3}}",
+    "{\"WindowClosed\":{\"id\":4}}",
+    "{\"WindowFocusTimestampChanged\":{\"id\":2,\"focus_timestamp\":{\"secs\":141593,\"nanos\":674448225}}}"
+   ]
+  },
+  {
+   "note": "B closed",
+   "events": [
+    "{\"WorkspacesChanged\":{\"workspaces\":[{\"id\":1,\"idx\":1,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":true,\"is_focused\":true,\"active_window_id\":2},{\"id\":3,\"idx\":2,\"name\":null,\"output\":\"winit\",\"is_urgent\":false,\"is_active\":false,\"is_focused\":false,\"active_window_id\":null}]}}",
+    "{\"WindowClosed\":{\"id\":3}}"
+   ]
+  }
+ ]
+}

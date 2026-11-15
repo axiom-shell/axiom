@@ -29,12 +29,24 @@ type runtimeState struct {
 	// commands) is untrusted and not read: the binds an older image made stay
 	// until sway reloads (bindsym overwrites anyway).
 	SwayUnbinds []render.SwayUnbind `json:"swayUnbinds"`
+	// SwayRules: the runtime for_window/no_focus lines sent since sway last
+	// reloaded (sway can't take one back: removing one reloads)
+	SwayRules []string `json:"swayRules"`
+	// SwayPaused: what sway's pause did (swayWriter.pause), to give it back
+	SwayPaused swayPaused `json:"swayPaused"`
 	// NiriWrapper: whether niri runs the detached wrapper. A fresh daemon
 	// (Options.Carried false) re-checks it: it loads the wrapper once
 	NiriWrapper bool `json:"niriWrapper"`
 	// RuntimeOn: the runtime layer is applied (Manager.runtimeOn), so a
 	// carried image knows what a teardown takes out
 	RuntimeOn bool `json:"runtimeOn"`
+}
+
+// swayPaused is a sway pause: the binds' lines unbound by it (bound again to
+// restore) or the mode entered (left to restore), never both
+type swayPaused struct {
+	Restore []string `json:"restore"`
+	Mode    string   `json:"mode"`
 }
 
 func loadState(path, instance string) *runtimeState {

@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	lua "github.com/yuin/gopher-lua"
 )
 
 // fakeHyprland answers every request on dir's request socket with "ok"
@@ -104,5 +106,74 @@ func TestRuntimeKeysFollowTheBinds(t *testing.T) {
 	sent := <-asked
 	if k, l := strings.Index(sent, "AXIOM_RUNTIME_KEYS = {"), strings.Index(sent, "hl.look()"); k < 0 || l < k {
 		t.Errorf("the keys aren't recorded ahead of the look: %q", sent)
+	}
+}
+
+// The window rules go in the runtime eval after the strips; the last ones
+// are turned off by their handles, then each is added, turned on and
+// recorded; a clear turns them off
+func TestRuntimeRulesFollowTheRules(t *testing.T) {
+	t.Parallel()
+	off := hyprRulesOffLua
+	if got := strings.Join(hyprRuntimeRules(nil), "\n"); got != off+"\nAXIOM_RULES = {}" {
+		t.Errorf("no rules: %q", got)
+	}
+	two := strings.Join(hyprRuntimeRules([]string{"hl.window_rule({ name = \"a\" })", "hl.window_rule({ name = \"b\" })"}), "\n")
+	want := off + "\nAXIOM_RULES = {}\n" +
+		"pcall(function() local r = hl.window_rule({ name = \"a\" }); r:set_enabled(true); AXIOM_RULES[#AXIOM_RULES + 1] = r end)\n" +
+		"pcall(function() local r = hl.window_rule({ name = \"b\" }); r:set_enabled(true); AXIOM_RULES[#AXIOM_RULES + 1] = r end)"
+	if two != want {
+		t.Errorf("two rules:\n%s\nwant\n%s", two, want)
+	}
+
+	tables, schema := repo(t)
+	dir, asked := fakeHyprland(t)
+	w := newHypr(env2(tables, schema, func(string) string { return "" }), &ipc.Hypr{Dir: dir})
+	in := Inputs{jsonx.Obj("windowRules", strs([]string{"hl.window_rule({ name = \"a\" })"}))}
+	w.runtimeApply(context.Background(), in, func() []string { return []string{"hl.look()"} })
+	for range 3 {
+		<-asked
+	}
+	sent := <-asked
+	if l, r := strings.Index(sent, "hl.look()"), strings.Index(sent, "AXIOM_RULES = {}"); l < 0 || r < l {
+		t.Errorf("the rules aren't after the look and strips: %q", sent)
+	}
+	w.runtimeClear(context.Background())
+	if cleared := <-asked; !strings.Contains(cleared, hyprRulesOffLua) {
+		t.Errorf("clear doesn't turn the rules off: %q", cleared)
+	}
+
+	// The chunks as Hyprland's Lua runs them, hl.window_rule a stub
+	// returning a handle that records set_enabled
+	L := lua.NewState()
+	defer L.Close()
+	script := `handles = {}
+hl = { window_rule = function(spec)
+  local h = { name = spec.name }
+  function h:set_enabled(v) self.on = v end
+  handles[#handles + 1] = h
+  return h
+end }`
+	if err := L.DoString(script); err != nil {
+		t.Fatal(err)
+	}
+	rule := func(name string) string { return "hl.window_rule({ name = \"" + name + "\" })" }
+	for _, names := range [][]string{{"a", "b"}, {"b"}} {
+		var lines []string
+		for _, n := range names {
+			lines = append(lines, rule(n))
+		}
+		if err := L.DoString(strings.Join(hyprRuntimeRules(lines), "\n")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := L.DoString(`result = ""
+for _, h in ipairs(handles) do result = result .. h.name .. "=" .. tostring(h.on) .. " " end`); err != nil {
+		t.Fatal(err)
+	}
+	// a and b of the first apply, then b again; the first two turned off
+	// by the second apply, the last one on
+	if got := L.GetGlobal("result").String(); got != "a=false b=false b=true " {
+		t.Errorf("handles: %q", got)
 	}
 }

@@ -1,0 +1,6 @@
+mode "axiom_paused_be675f54" bindsym --no-warn Mod4+Ctrl+Mod1+Shift+F24 nop
+mode "axiom_paused_be675f54"
+bindsym --no-warn --no-repeat Mod4+f fullscreen toggle
+bindsym --no-warn --no-repeat Mod4+c kill
+--- restore
+

@@ -93,3 +93,5 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
   - Cleared by `clearEditFilters()`, which Add bind also calls.
   - Applied in `visibleKey`. Turning any of them on, or searching, turns `reorderable` off.
 - Both tabs draw their chips with `views/Keybinds/FilterChips`: groups of `{ value, label }` options, a `selection` map, and `toggled`/`cleared` signals.
+
+- A shortcut a window rule uses (its pause shortcuts: `x-ref` of kind `keybind`) can't be removed: `KeybindEditor.usedBy(index)` is the reason ("Used by window rule {0}", from the saved rules), which disables Remove in `BindInspector` and `BindListRow` and makes `removeBind` return. Hyprland's read binds leave out the `axiom_paused` submap (`HyprlandManager._pauseSubmap`), where the kept binds of a pause live.

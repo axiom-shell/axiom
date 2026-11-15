@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 )
 
@@ -71,6 +72,7 @@ func (d *Daemon) newCompositor(carried bool) *manager.Manager {
 				return
 			}
 			p.Send(d.server, json.RawMessage(jsonx.MarshalCompact(params)), subscribedTo(topicCompositor))
+			d.windowRulesReport(method, params)
 		},
 		OnSteps: d.sess.setSteps,
 		// This image, even once the file it came from is replaced
@@ -105,6 +107,17 @@ func bindActionsMethod(reg *rpc.Registry) {
 	})
 }
 
+// fillWindowRules is a draft WindowRules section with the schema's defaults
+// filled (a new rule's `enabled` is true only after that)
+func fillWindowRules(s *schema.Schema, section json.RawMessage) (any, error) {
+	v, err := jsonx.Unmarshal(section)
+	if err != nil {
+		return nil, axerr.New(axerr.BadRequest, "the section isn't JSON: %v", err)
+	}
+	filled, _ := config.ApplyDefaults(s, v, true, schema.Get(schema.Get(s.Root(), "properties"), "WindowRules"))
+	return filled, nil
+}
+
 func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 	bindActionsMethod(reg)
 	// Only the shell drives it: its inputs, and every action that changes
@@ -120,6 +133,10 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 			return struct{}{}, err
 		}
 		m.SetFacts(p)
+		// The engine reads the same capabilities (ruleXwayland)
+		if d.windowRules != nil {
+			d.windowRules.SetSupports(p.Supports)
+		}
 		return struct{}{}, nil
 	})
 	rpc.Handle(reg, "compositor.layerRules", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
@@ -139,6 +156,18 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 	})
 	rpc.Handle(reg, "compositor.entries", func(ctx context.Context, c *rpc.Conn, _ struct{}) (json.RawMessage, error) {
 		return jsonx.MarshalCompact(m.Entries(ctx)), nil
+	})
+	// The editor's draft of WindowRules, checked as compositor.state's
+	// windowRules reports the saved one
+	type checkRulesParams struct {
+		Section json.RawMessage `json:"section"`
+	}
+	rpc.Handle(reg, "compositor.checkRules", func(ctx context.Context, c *rpc.Conn, p checkRulesParams) (json.RawMessage, error) {
+		filled, err := fillWindowRules(d.store.Pipeline().Schema(), p.Section)
+		if err != nil {
+			return nil, err
+		}
+		return jsonx.MarshalCompact(m.CheckRules(ctx, filled)), nil
 	})
 	type onlyParams struct {
 		Only string `json:"only"`

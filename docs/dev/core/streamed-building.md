@@ -40,6 +40,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
   - **Keybinds**: the header chips, each bind section, the presets popup; the keyboard reference and the editing inspector only in their modes.
   - **Themes**: the wallpaper picker, theme picker, palette and look settings.
   - **Monitors**: the canvas and the inspector.
+  - **WindowRules**: the list; the inspector is one card.
   - **CalendarPage**: the month's day cells (`MonthGrid`, shared with the Clock/Calendar module).
 
 ### Editors reopening

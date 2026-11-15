@@ -231,7 +231,7 @@ QtObject {
           row: () => _appRow(m.app)
         }));
     if (LauncherConfig.windows) {
-      for (const win of CompositorManager.windows) {
+      for (const win of WindowRulesManager.shownIn("launcher", CompositorManager.windows)) {
         if (win.hidden)
           continue;
         // No fuzzy matches: titles are long enough to match most anything
