@@ -4559,6 +4559,9 @@
     "Interactive card": "",
     "Pick a look to start from. It has a sample for each of its screens and no script yet: point it at yours, and it comes alive.": "",
     "Bar text from a script": "",
-    "From a known script": ""
+    "From a known script": "",
+    "Material: a row's icon is a symbol name. Icon theme: an icon of the desktop icon theme (a row's image wins).": "",
+    "Icon theme": "",
+    "Material: a symbol name. Format: the format-icons glyph. Icon theme: the name is an icon of the desktop icon theme.": ""
   }
 }

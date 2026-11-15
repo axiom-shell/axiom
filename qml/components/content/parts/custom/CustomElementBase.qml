@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.apps
+import qs.services.system
 
 // What every custom widget element is given (CustomElement loads one by its
 // kind, elements/<Type>/Custom<Type>.qml): its config, the widget's resolved
@@ -104,6 +105,12 @@ Item {
   // (`~` expanded); "" for none. The Image element's and a List row's
   function imageUrl(path) {
     return !path ? "" : /^[a-z]+:\/\//.test(path) ? path : "file://" + Paths.expandHome(path);
+  }
+
+  // An icon theme icon's source for `name` (AppIconManager.appIcon: the
+  // generic program icon when the theme lacks it), "" for no name
+  function themeIcon(name) {
+    return name ? AppIconManager.appIcon(name) : ""; // lock-inert: only resolves an icon file
   }
 
   // The ink that reads on `color`, a colour from data (a custom widget's

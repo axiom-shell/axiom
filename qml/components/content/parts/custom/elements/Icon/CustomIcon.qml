@@ -10,11 +10,25 @@ CustomElementBase {
   id: root
 
   readonly property bool glyph: root.options.source === "glyph"
-  readonly property string shown: root.bind.icon ? root.text("icon") : root.glyph ? (root.fields?.glyph ?? "") : (root.fields?.icon || root.fallbackIcon)
+  // The name is an icon of the desktop icon theme, drawn as a picture
+  readonly property bool themed: root.options.source === "theme"
+  readonly property string shown: root.bind.icon ? root.text("icon") : root.glyph ? (root.fields?.glyph ?? "") : root.themed ? (root.fields?.icon ?? "") : (root.fields?.icon || root.fallbackIcon)
   readonly property string badge: root.options.badge ? root.text("badge", "badge") : ""
+
+  Thumbnail {
+    visible: root.themed
+    anchors.centerIn: parent
+    width: Math.min(root.width, root.height) * 0.75
+    height: width
+    color: "transparent"
+    radius: 0
+    fillMode: Image.PreserveAspectFit
+    source: root.themed ? root.themeIcon(root.shown) : ""
+  }
 
   StyledIcon {
     id: glyph
+    visible: !root.themed
     anchors.centerIn: parent
     text: root.shown
     textColor: root.colorOf(Style.accent)
@@ -23,8 +37,8 @@ CustomElementBase {
 
   // On the icon's corner, wherever the box puts it
   CountBadge {
-    anchors.horizontalCenter: glyph.right
-    anchors.verticalCenter: glyph.top
+    anchors.horizontalCenter: root.themed ? root.right : glyph.right
+    anchors.verticalCenter: root.themed ? root.top : glyph.top
     text: root.badge
     color: Style.error
     textColor: Style.onError

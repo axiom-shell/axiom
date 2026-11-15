@@ -18,22 +18,28 @@ CustomElementBase {
 
   readonly property bool clickable: root.canRun && (root.actionId !== "" || root.actions.click !== "")
   readonly property bool across: root.options.orientation === "horizontal"
+  // A row's icon is an icon of the desktop icon theme, drawn as its picture
+  readonly property bool themed: root.options.iconSource === "theme"
   // The output's items are rows already; a bound list is made them
   readonly property var rows: root.bind.items ? CustomWidgetData.rows(root.value("items")) : (root.fields?.items ?? [])
-  onRowsChanged: {
+  onRowsChanged: root._fill()
+  // Its icon source changing redraws the same rows
+  onThemedChanged: root._fill()
+
+  function _fill() {
     const rows = root.rows;
     for (let i = 0; i < rows.length; i++) {
       // Roles named apart from ItemRow's own properties
       const row = {
         "rowId": rows[i].id,
         "rowText": rows[i].text,
-        "rowIcon": rows[i].icon,
+        "rowIcon": root.themed ? "" : rows[i].icon,
         "rowValue": CustomWidgetData.asText(rows[i].value),
         "rowSubtext": rows[i].subtext,
         "rowTone": CustomWidgetData.stateColor(rows[i].state, [], root.fields?.states, root.fields?.colorNames),
         "rowNumber": rows[i].value ?? 0,
         "rowMax": rows[i].max ?? 0,
-        "rowImage": root.imageUrl(rows[i].image)
+        "rowImage": rows[i].image || !root.themed ? root.imageUrl(rows[i].image) : root.themeIcon(rows[i].icon)
       };
       if (i < rowsModel.count)
         rowsModel.set(i, row);

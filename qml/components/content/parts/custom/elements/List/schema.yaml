@@ -12,3 +12,11 @@ settings:
     x-control: toggle
     enum: [vertical, horizontal]
     x-enumLabels: {vertical: Down, horizontal: Across}
+  iconSource:
+    type: string
+    title: Icons
+    default: material
+    x-control: toggle
+    enum: [material, theme]
+    x-enumLabels: {material: Material, theme: Icon theme}
+    description: 'Material: a row''s icon is a symbol name. Icon theme: an icon of the desktop icon theme (a row''s image wins).'

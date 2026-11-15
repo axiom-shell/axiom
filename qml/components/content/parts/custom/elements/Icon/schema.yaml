@@ -9,6 +9,7 @@ settings:
     title: Source
     default: material
     x-control: toggle
-    enum: [material, glyph]
-    x-enumLabels: {material: Material, glyph: Format}
+    enum: [material, glyph, theme]
+    x-enumLabels: {material: Material, glyph: Format, theme: Icon theme}
+    description: 'Material: a symbol name. Format: the format-icons glyph. Icon theme: the name is an icon of the desktop icon theme.'
   badge: {type: boolean, title: Badge, default: false}
