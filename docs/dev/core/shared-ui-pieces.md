@@ -83,6 +83,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
 - `LevelMeter`: a level shown, not set: `StyledSlider`'s trough and fill without the handle, across or filling up (`vertical`); the fill is never shorter than its rounded ends. Any meter in a rounded trough is one (the custom widgets', Disks, Claude usage).
 - `SegmentMeter`: a level as blocks or dots lit up to `share`, in a row or a column filling up.
+- `Sparkline`: a small graph of `values` (oldest first) between `minValue` and `maxValue` (0: the largest shown), a line filled underneath or, with `style: "bars"`, a bar per value; `values2` adds a second line in `lineColor2` (`Style.series[1]`) on the same range. It paints only from its own properties, so it needs no `Style.revision`.
   - Both are drawn by the bar's display styles (`bar/widgets/base/ValueGraphic`, [Display styles](../bar/display-styles.md)) and a custom widget's elements; a bar sets their sizes from its font.
 - `SegmentButton`: a choice, accent when `active`, as wide as its label (and icon); `Layout.fillWidth: false` in a row of pills.
 - `SegmentRow`: a single choice of SegmentButtons on one `SegmentTrack`, the thumb sliding to the active one; the segments are equal and as wide as the widest label, never elided (a form row stacks the control under its label when it doesn't fit). Toggles and multi-select chips stay plain rows or Flows.

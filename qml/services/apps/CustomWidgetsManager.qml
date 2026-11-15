@@ -532,7 +532,11 @@ QtObject {
     const next = {};
     const bindings = [""].concat(CustomWidgetData.historyBindings(def.module));
     for (const b of bindings) {
-      const v = b === "" ? resolved.value : parseFloat(CustomWidgetData.elementValue(resolved, b));
+      const raw = b === "" ? resolved.value : CustomWidgetData.elementValue(resolved, b);
+      // A list is the series itself (CustomWidgetData.series): no history
+      if (Array.isArray(raw))
+        continue;
+      const v = b === "" ? raw : parseFloat(raw);
       const list = (last?.[b] ?? []).slice(-(root.historyLength - 1));
       if (typeof v === "number" && isFinite(v))
         list.push(v);

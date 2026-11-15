@@ -910,13 +910,33 @@ QtObject {
     };
   }
 
-  // The distinct bindings of every Sparkline in every layer: what the
-  // service keeps a history of
+  // A series a script prints: `v` (a list) as its finite numbers (a
+  // numeric string is parsed, anything else dropped), the last `cap`; null
+  // when `v` isn't a list
+  function series(v, cap) {
+    if (!Array.isArray(v))
+      return null;
+    const out = [];
+    for (const item of v) {
+      const n = root._number(item);
+      if (n !== undefined)
+        out.push(n);
+    }
+    return cap > 0 ? out.slice(-cap) : out;
+  }
+
+  // The distinct `value` and `value2` bindings of every Sparkline in every
+  // layer: what the service keeps a history of (a binding whose value is a
+  // list needs none: it is the series)
   function historyBindings(module) {
     const out = [];
     for (const e of root.allElements(module)) {
-      if (e.type === "Sparkline" && e.bind?.value && out.indexOf(e.bind.value) < 0)
-        out.push(e.bind.value);
+      if (e.type !== "Sparkline")
+        continue;
+      for (const b of [e.bind?.value, e.bind?.value2]) {
+        if (b && out.indexOf(b) < 0)
+          out.push(b);
+      }
     }
     return out;
   }

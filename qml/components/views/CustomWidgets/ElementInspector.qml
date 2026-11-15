@@ -38,9 +38,9 @@ ColumnLayout {
       })))
 
   // A slot's title in the Shows group: the kinds' slot names (translated as
-  // they are) and the two every kind has, show and tone
+  // they are), the two every kind has (show and tone) and a Sparkline's second series
   function slotTitle(name) {
-    return name === "show" ? I18n.tr("Show when") : name === "tone" ? I18n.tr("Color by") : I18n.tr(name);
+    return name === "show" ? I18n.tr("Show when") : name === "tone" ? I18n.tr("Color by") : name === "value2" ? I18n.tr("Second value") : I18n.tr(name);
   }
 
   // What an empty slot means: the output's own key, for show and tone
