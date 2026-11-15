@@ -173,6 +173,14 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	for _, page := range pages.Items {
 		page.(*jsonx.Object).Delete("visible")
 	}
+	// The v109 step appends the Window rules page; the defaults list it
+	// beside Keybinds
+	for i, page := range pages.Items {
+		if page.(*jsonx.Object).Value("type") == "WindowRules" {
+			pages.Items = append(append(pages.Items[:i:i], pages.Items[i+1:]...), page)
+			break
+		}
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {

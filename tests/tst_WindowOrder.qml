@@ -51,6 +51,22 @@ TestCase {
     compare(WindowOrder.stepIndex(0, -1, 3), 2, "wraps backwards");
     compare(WindowOrder.stepIndex(0, 1, 1), 0, "one window");
     compare(WindowOrder.stepIndex(0, 1, 0), 0, "none");
+    compare(WindowOrder.stepIndex(-1, 1, 3), 0, "before the first, on");
+    compare(WindowOrder.stepIndex(-1, -1, 3), 2, "before the first, back");
+    compare(WindowOrder.stepIndex(-1, 2, 3), 1, "before the first, on by two");
+  }
+
+  function test_startIndex() {
+    const a = {
+      "id": "a"
+    }, b = {
+      "id": "b"
+    };
+    compare(WindowOrder.startIndex([a, b], [a, b], "a"), 0, "focused first and shown");
+    compare(WindowOrder.startIndex([a, b], [b], "a"), -1, "focused first and hidden");
+    compare(WindowOrder.startIndex([a, b], [b], ""), 0, "nothing focused");
+    compare(WindowOrder.startIndex([a, b], [b], "z"), 0, "focused not in the list");
+    compare(WindowOrder.startIndex([], [], "a"), 0, "empty");
   }
 
   function cellsOf(grid) {
