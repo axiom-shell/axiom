@@ -29,6 +29,7 @@ BaseView {
     Layout.preferredWidth: root.grid.unit * 0.6
     Layout.preferredHeight: root.pageHeight
     label: "settings sidebar"
+    buildFirst: true
 
     sourceComponent: SettingsSidebar {
       categories: root.categories
