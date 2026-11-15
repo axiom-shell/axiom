@@ -417,8 +417,10 @@ QtObject {
   readonly property color fillSunken: root.surfaceAlpha < 1 ? Tone.alpha(root.surfaceSunken, root.surfaceAlpha) : root.surfaceSunken
   readonly property color fillRaised: root.surfaceAlpha < 1 ? Tone.alpha(root.surfaceRaised, root.surfaceAlpha) : root.surfaceRaised
   readonly property color fillHighest: root.surfaceAlpha < 1 ? Tone.alpha(root.surfaceHighest, root.surfaceAlpha) : root.surfaceHighest
-  // The edge family's alpha: the user's opacity, unfloored
-  readonly property real edgeAlpha: Appearance.surfaceAlpha
+  // The edge family's alpha: the user's opacity, raised to what the bars'
+  // content needs over the wallpapers (the one value for every screen and
+  // the whole family, so surfaces that join never differ)
+  readonly property real edgeAlpha: Appearance.surfaceAlpha < 1 ? Math.max(Appearance.surfaceAlpha, Appearance.wallpaperEdgeFloor) : 1
   // `color` at the edge family's alpha, unless `opaque`
   function edgeFill(color, opaque) {
     return opaque || root.edgeAlpha >= 1 ? color : Tone.alpha(color, Qt.color(color).a * root.edgeAlpha);

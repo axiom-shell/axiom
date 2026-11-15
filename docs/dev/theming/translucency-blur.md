@@ -1,6 +1,6 @@
 # Translucency and blur
 
-> **Files:** `qml/config/Appearance.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/reusable/BlurRegion.qml`, `qml/components/reusable/BoxBlurRegion.qml`, `backend/internal/compositor/render/niri.go`, `qml/services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `qml/components/views/Settings/TranslucencyStatus.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`
+> **Files:** `qml/config/Appearance.qml`, `qml/services/ui/WallpaperToneManager.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/reusable/BlurRegion.qml`, `qml/components/reusable/BoxBlurRegion.qml`, `backend/internal/compositor/render/niri.go`, `qml/services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `qml/components/views/Settings/TranslucencyStatus.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`
 > **Config:** `Appearance.surface.opacity`, `Appearance.surface.blur` (`enabled`, `throughWindows`, `backdrops`, `pauseFullscreen`)
 > **Related:** [Blur window and openings](blur-window-openings.md), [Window look](../compositor/window-look.md), [Popout registry](../popouts/registry.md)
 
@@ -18,12 +18,15 @@ The translucency setting, how fills apply it, the Hyprland layer rules axiom wri
 - Reader properties: `Appearance.surfaceAlpha`, `compositorBlurs`, `translucent`, `blur`, `blurThroughWindows`, `blurBackdrops`, `blurThreshold` (0.5), `shadowAlphaMax`.
 
 ### Fills
-- The edge family (`AttachedSurface`, `CornerPiece`, `BorderPanel`, the bar, edge menus, docks, toasts) draws at `Style.edgeAlpha` (the user's opacity, unfloored) through `Style.edgeFill(color, opaque)`; every other surface (`Surface`: the overlay's box and navigator, cards, prompts, pickers, power menu, overview, lock and greeter cards) at `Style.surfaceAlpha` (floored, D-50 as narrowed by Q-8b).
+- The edge family (`AttachedSurface`, `CornerPiece`, `BorderPanel`, the bar, edge menus, docks, toasts) draws at `Style.edgeAlpha` (the user's opacity, raised to the wallpaper's edge floor, below) through `Style.edgeFill(color, opaque)`; every other surface (`Surface`: the overlay's box and navigator, cards, prompts, pickers, power menu, overview, lock and greeter cards) at `Style.surfaceAlpha` (floored, D-50 as narrowed by Q-8b).
 - Outer and nested fills alike, so nested fills stack: a card on a 60% panel reads about 84%.
 - Accent colors and hover tints are left alone.
 
+### The edge floor from the wallpaper
+Below 100 % `Style.edgeAlpha` is `max(Appearance.surfaceAlpha, Appearance.wallpaperEdgeFloor)`: the least alpha at which the bars' text colour reads (4.5 plus the readability margin) over the wallpapers under every non-transparent bar, taken once for every screen and the whole edge family, so surfaces that join never differ. `WallpaperToneManager` computes it from config geometry (`BarsConfig.expandBars`, the band each bar covers: `Backdrop.band`), never from the drawn bars, which read it back (a binding loop), and hands it to `Appearance` through a `Binding`. It is 0 until the daemon's grid arrives (`theme.backdrop`, [Themes](themes.md)), and it glides (`Appearance.animSlow`) when it changes, so a new wallpaper never steps every edge surface at once. A bar with no surface gets a shade or an adapting ink instead (`BarEnrich.backdropOf`, [Bar widget style](../bar/widget-style.md)). The floor applies to bars over a compositor that blurs, as the opacity setting does.
+
 ### Style's floor
-`Style.surfaceAlpha` is `Appearance.surfaceAlpha` raised to the theme's readability floor (the least alpha at which `text` on the page and on a card, over the opposite pole of the wallpaper, reaches 3.0; none at 100 %), and `Style.fill*` are the roles at it ([Style](../core/style.md) › Translucency). The bar keeps `Appearance`'s alpha.
+`Style.surfaceAlpha` is `Appearance.surfaceAlpha` raised to the theme's readability floor (the least alpha at which `text` on the page and on a card, over the opposite pole of the wallpaper, reaches 3.0; none at 100 %), and `Style.fill*` are the roles at it ([Style](../core/style.md) › Translucency). The edge family has its own floor from the wallpaper (above).
 
 ### Hyprland layer rules
 Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones SwayFX's `layer_effects` and niri's xray rules are written from too), handed `spec.surfaces` (`M.blur()` in the module). The named layer rules are always written, `enabled` or not, since a rule is taken back by redefining it (no reload).

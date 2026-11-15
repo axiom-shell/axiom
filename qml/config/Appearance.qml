@@ -117,6 +117,10 @@ QtObject {
   // (CompositorManager.supports.blur), handed over by CompositorManager: a
   // reader reads no service, and building CompositorManager reads this
   property bool compositorBlurs: false
+  // The least alpha of the bars' fill (and what joins it) that keeps their
+  // content readable over the wallpapers, 0 until the tone is known: handed
+  // over by WallpaperToneManager (a reader reads no service)
+  property real wallpaperEdgeFloor: 0
   readonly property bool translucent: surfaceAlpha < 1
   // The compositor blurs behind them (Hyprland's layer rules, which leave
   // out pixels under blurThreshold: shadows, dims, fades; SwayFX's layer
