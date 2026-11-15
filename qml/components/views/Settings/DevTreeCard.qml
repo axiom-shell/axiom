@@ -13,6 +13,7 @@ import qs.components.content.parts
 // config's file
 FieldGroup {
   id: root
+  pageCard: true
 
   // What axiom last answered a click with: a refusal's message, or ""
   property string message: ""
