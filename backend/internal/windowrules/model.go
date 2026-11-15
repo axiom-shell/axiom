@@ -1,7 +1,11 @@
 // Package windowrules is the model of the user's window rules (config.json's WindowRules): the section parsed into rules, their validation into issues the editor shows, the patterns their conditions become, and which kinds of window a compositor's config can match and which only the daemon can. Pure: no I/O.
 package windowrules
 
-import "github.com/axiom-shell/axiom/backend/internal/jsonx"
+import (
+	"strings"
+
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+)
 
 // Field is what a condition tests of a window.
 type Field string
@@ -330,3 +334,7 @@ func (w WindowEffects) has(key string) bool {
 func LookKey(key string) bool {
 	return key == "opacity" || key == "noBlur" || key == "noScreenShare" || key == "tearing"
 }
+
+// AllDigits is whether s is a non-empty run of ASCII digits: a numbered
+// workspace rather than a name, or a Steam game id.
+func AllDigits(s string) bool { return s != "" && strings.Trim(s, "0123456789") == "" }
