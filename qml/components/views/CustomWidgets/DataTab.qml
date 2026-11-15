@@ -22,6 +22,11 @@ ColumnLayout {
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property var sample: root.fields?.sample ?? null
   readonly property var paths: root.sample ? CustomWidgetData.flatten(root.sample) : []
+  // The screens' samples kept in the definition: their keys
+  readonly property var sampleKeys: Object.keys(root.definition?.samples ?? ({}))
+  // The edited layer's name, for the Keep button
+  readonly property string layerName: root.editor.sampleKey === "" ? I18n.tr("no screen") : (root.definition?.module.views[root.editor.viewIndex]?.name || root.editor.sampleKey)
+  readonly property string keepReason: root.editor.keepRefused === "count" ? I18n.tr("{0} samples are kept: remove one first", root.editor.sampleLimits.entries) : root.editor.keepRefused === "size" ? I18n.tr("The samples are over {0} KB: remove one first", root.editor.sampleLimits.bytes / 1024) : ""
   // Rows built at most: a large output lists its first paths
   readonly property int maxRows: 200
   width: parent?.width ?? 0
@@ -53,6 +58,52 @@ ColumnLayout {
   // The groups flow into columns, as a Settings card's rows do
   GroupColumns {
     Layout.fillWidth: true
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Samples")
+      description: I18n.tr("A sample per screen is saved in the config with the definition: the Module tab previews each screen with it before the script reaches it.")
+
+      StyledTextButton {
+        implicitHeight: Widget.height
+        enabled: root.editor.liveSample !== null && root.keepReason === ""
+        iconText: "bookmark_add"
+        text: I18n.tr("Keep as the sample of {0}", root.layerName)
+        tooltipText: root.keepReason
+        onClicked: root.editor.keepSample()
+      }
+      StyledText {
+        visible: root.keepReason !== ""
+        Layout.fillWidth: true
+        text: root.keepReason
+        tone: "warning"
+        overflow: "wrap"
+      }
+
+      // By count, over the kept keys (config, never live values)
+      Repeater {
+        model: root.sampleKeys.length
+
+        RowLayout {
+          id: sampleRow
+          required property int index
+          readonly property string key: root.sampleKeys[sampleRow.index] ?? ""
+          Layout.fillWidth: true
+          spacing: Widget.spacing
+
+          StyledLabel {
+            Layout.fillWidth: true
+            text: sampleRow.key === "" ? I18n.tr("No screen") : (root.definition?.module.views.find(v => v.id === sampleRow.key)?.name || sampleRow.key)
+            overflow: "line"
+          }
+          SquareIconButton {
+            iconText: "close"
+            tooltipText: I18n.tr("Forget this sample")
+            onClicked: root.editor.removeSample(sampleRow.key)
+          }
+        }
+      }
+    }
 
     FieldGroup {
       Layout.fillWidth: true

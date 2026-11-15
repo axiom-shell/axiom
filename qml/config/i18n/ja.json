@@ -4429,6 +4429,17 @@
     "Other actions are off until it finishes and the script prints again, so a double press acts once.": "",
     "Dimmed": "",
     "Wait for each action": "",
-    "Hidden": ""
+    "Hidden": "",
+    "No screen for this sample": "",
+    "The base elements are empty: pick a screen to design it.": "",
+    "no screen": "",
+    "{0} samples are kept: remove one first": "",
+    "The samples are over {0} KB: remove one first": "",
+    "Samples": "",
+    "A sample per screen is saved in the config with the definition: the Module tab previews each screen with it before the script reaches it.": "",
+    "Keep as the sample of {0}": "",
+    "No screen": "",
+    "Forget this sample": "",
+    "A sample output per screen (a screen id, \"\" for none): what the editor previews it with.": ""
   }
 }

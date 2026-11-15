@@ -11,7 +11,8 @@ import qs.services.ui
 // the edits. Unsaved edits show live on the bars and modules through a preview,
 // and the selected definition stays acquired while the page is shown, so
 // its sample (CustomWidgetsManager.outputs) is there to bind from.
-// Not a singleton: CustomWidgetsManager owns it.
+// Not a singleton: CustomWidgetsManager owns it, so what reads the manager
+// waits for `pageShown`.
 QtObject {
   id: root
 
@@ -59,6 +60,45 @@ QtObject {
     }
   }
 
+  // --- Samples (D1): one per screen, kept in the definition ---
+
+  // The most samples and bytes (as JSON) a definition keeps
+  readonly property var sampleLimits: ({
+      "entries": 16,
+      "bytes": 65536
+    })
+  // View key ("" none) -> the last live sample that picked it, and the
+  // distinct `state` values seen live (the first 8): what the page has
+  // watched since the definition was selected (never saved)
+  property var seen: ({})
+  property var seenStates: []
+  // The live sample, the one Keep would save
+  readonly property var liveSample: root.pageShown ? (CustomWidgetsManager.fields[root.selectedId]?.sample ?? null) : null
+  // The key the edited layer's sample is kept under
+  readonly property string sampleKey: CustomWidgetData.viewKey(root.selected?.module, root.viewIndex)
+  // Why the live sample can't be kept ("count", "size"), or ""
+  readonly property string keepRefused: root.liveSample === null ? "" : CustomWidgetData.keepSample(root.selected?.samples, root.sampleKey, root.liveSample, root.sampleLimits).refused
+  // What the previews draw: the edited layer's sample, resolved (null: none yet)
+  readonly property var previewFields: !root.pageShown ? null : CustomWidgetsManager.resolveSample(root.selectedId, CustomWidgetData.sampleForView(root.selected, root.viewIndex, root.seen, CustomWidgetsManager.fields[root.selectedId] ?? null))
+
+  // Keeps the live sample as the edited layer's. Returns why it couldn't
+  // ("count", "size"), or ""
+  function keepSample() {
+    if (root.liveSample === null)
+      return "";
+    const kept = CustomWidgetData.keepSample(root.selected?.samples, root.sampleKey, root.liveSample, root.sampleLimits);
+    if (kept.refused === "")
+      root.set(["samples"], kept.samples);
+    return kept.refused;
+  }
+
+  // Forgets the sample kept under `key`
+  function removeSample(key) {
+    const next = Object.assign({}, root.selected?.samples);
+    delete next[key];
+    root.set(["samples"], next);
+  }
+
   // The page's tab: 0 data, 1 bar, 2 module (selectTab)
   property int tab: 0
 
@@ -90,6 +130,8 @@ QtObject {
   function selectDefinition(index) {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
     root.viewIndex = -1;
+    root.seen = {};
+    root.seenStates = [];
     root.elements.clearSelection();
     root.elements.clearHistory();
   }
@@ -258,6 +300,30 @@ QtObject {
   }
 
   // -- Private --
+
+  // Each new output of the selected definition is the last one seen for the
+  // screen it picks, and its state is one to offer a screen for
+  property Connections _live: Connections {
+    // Only while the page shows (the manager creates this editor)
+    target: root.pageShown ? CustomWidgetsManager : null
+    function onFieldsChanged() {
+      const fields = CustomWidgetsManager.fields[root.selectedId];
+      const module = root.selected?.module;
+      if (!fields || !module)
+        return;
+      const pick = CustomWidgetData.pickView(module, fields);
+      // A failure no screen draws has no sample of its own
+      if (pick.builtinError)
+        return;
+      const key = CustomWidgetData.viewKey(module, pick.index);
+      if (!Utils.deepEqual(root.seen[key], fields.sample))
+        root.seen = Object.assign({}, root.seen, {
+          [key]: fields.sample
+        });
+      if (fields.state !== "" && root.seenStates.length < 8 && !root.seenStates.includes(fields.state))
+        root.seenStates = root.seenStates.concat([fields.state]);
+    }
+  }
 
   // The selected definition's value at `keys`, undefined when absent
   function _valueAt(keys) {
