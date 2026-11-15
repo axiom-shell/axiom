@@ -8,6 +8,8 @@
   - check_style.py: every style rule on a fixture file, its waivers, scope, every-hit-fails and role check
   - check_icons.py finds icon names the bundled font doesn't have
   - only PAM's success unlocks the built-in lock screen
+  - the Daily habits script (data/custom-widgets/habits.sh): add, check,
+    streaks, undo, remove, bad ids, JSON, overlapping changes
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -1276,6 +1278,88 @@ class GreeterSession(unittest.TestCase):
         self.fake("start-hyprland")
         self.fake("agreety")
         self.assertEqual(self.run_session(), ["sway", "agreety"])
+
+
+class HabitsScript(unittest.TestCase):
+    """data/custom-widgets/habits.sh, the Daily habits widget's script, run
+    on a state folder of its own."""
+
+    SCRIPT = ROOT / "data" / "custom-widgets" / "habits.sh"
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.env = dict(os.environ, XDG_STATE_HOME=str(self.tmp))
+        self.tsv = self.tmp / "axiom" / "habits.tsv"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_script(self, *args):
+        return subprocess.run(["bash", str(self.SCRIPT), *args], env=self.env,
+                              capture_output=True, text=True, timeout=30)
+
+    def show(self):
+        result = self.run_script("show")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_starts_empty_with_only_add(self):
+        out = self.show()
+        self.assertEqual((out["state"], out["text"], out["items"]), ("empty", "0/0", []))
+        self.assertEqual(out["actions"], {"add": {}})
+
+    def test_add_check_and_the_screens(self):
+        self.assertEqual(self.run_script("do", "add", "  Read\ta \"book\"  ").returncode, 0)
+        self.run_script("do", "add", "Walk")
+        out = self.show()
+        self.assertEqual((out["state"], out["text"]), ("open", "0/2"))
+        self.assertEqual([i["text"] for i in out["items"]], ['Read a "book"', "Walk"])
+        self.assertEqual(out["actions"], {"add": {}, "check": {}, "undo": {}})
+        self.run_script("do", "check", "1")
+        out = self.show()
+        self.assertEqual((out["state"], out["text"]), ("open", "1/2"))
+        self.assertEqual(out["items"][0]["state"], "done")
+        self.assertEqual(out["items"][0]["subtext"], "1 day")
+        self.run_script("do", "check", "2")
+        self.run_script("do", "check", "2")
+        self.assertEqual(self.show()["state"], "done")
+
+    def test_a_streak_counts_days_in_a_row(self):
+        self.run_script("do", "add", "Read")
+        yesterday = subprocess.run(["date", "-d", "yesterday", "+%F"], capture_output=True, text=True).stdout.strip()
+        self.tsv.write_text(f"1\tRead\t{yesterday}\t4\n")
+        self.assertEqual(self.show()["items"][0]["subtext"], "4 days")
+        self.run_script("do", "check", "1")
+        self.assertEqual(self.show()["items"][0]["subtext"], "5 days")
+        self.tsv.write_text("1\tRead\t2000-01-01\t9\n")
+        self.assertEqual(self.show()["items"][0]["subtext"], "0 days")
+        self.run_script("do", "check", "1")
+        self.assertEqual(self.show()["items"][0]["subtext"], "1 day")
+
+    def test_undo_and_remove(self):
+        self.run_script("do", "add", "Read")
+        self.run_script("do", "add", "Walk")
+        self.run_script("do", "remove", "1")
+        self.assertEqual([i["text"] for i in self.show()["items"]], ["Walk"])
+        self.assertEqual(self.run_script("do", "undo").returncode, 0)
+        self.assertEqual([i["text"] for i in self.show()["items"]], ["Read", "Walk"])
+        self.assertNotIn("undo", self.show()["actions"])
+        self.assertEqual(self.run_script("do", "undo").returncode, 2)
+
+    def test_bad_input_exits_2_with_a_line_on_stderr(self):
+        self.run_script("do", "add", "Read")
+        for args in (("check", "9"), ("check", "x"), ("remove", "9"), ("add", "  "), ("fly", ""), ("add",)):
+            result = self.run_script("do", *args)
+            self.assertEqual(result.returncode, 2, args)
+            self.assertTrue(result.stderr.strip().startswith("habits:"), args)
+        self.assertEqual(len(self.show()["items"]), 1)
+
+    def test_overlapping_adds_keep_every_habit(self):
+        procs = [subprocess.Popen(["bash", str(self.SCRIPT), "do", "add", f"h{n}"], env=self.env) for n in range(8)]
+        for proc in procs:
+            proc.wait(timeout=30)
+        self.assertEqual(sorted(i["id"] for i in self.show()["items"]), [str(n) for n in range(1, 9)])
+        self.assertFalse((self.tmp / "axiom" / "habits.tsv.lock").exists())
 
 
 if __name__ == "__main__":
