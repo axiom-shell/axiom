@@ -5,28 +5,34 @@ import qs.config
 import qs.services.compositor
 import qs.components.methods
 import qs.components.reusable
-import qs.components.content.base
+import qs.components.content.parts
+import qs.components.views.base
 import qs.components.views.Layouts
 
-// Window rules page, left: the built-in switches, then the rules in priority
-// order (dragged to reorder, switched on and off, copied, removed), and New
-// rule.
+// Window rules page, left: the rules in priority order (dragged to reorder,
+// switched on and off, copied, removed) and New rule, then the built-in
+// switches in a section closed until opened; Apply to open windows stays under
+// them.
 Item {
   id: root
 
   readonly property var editor: WindowRulesManager.editor
+  // The built-in switches that are on
+  readonly property int switchesOn: Object.values(root.editor.switches).filter(value => value === true || value?.enabled === true).length
+  // Whether the built-ins section is open (the panel remembers it)
+  property bool builtinsOpen: false
 
-  TitledCard {
+  ToolPane {
     anchors.fill: parent
     title: I18n.tr("Window rules")
+    headerIcon: "select_window"
     scrollKey: "WindowRules/list"
     showActions: false
 
-    SwitchesGroup {}
-
-    FieldGroup {
+    ListSection {
       title: I18n.tr("Your rules")
-      description: I18n.tr("Drag to order: when two rules set the same thing, the higher one wins.")
+      count: root.editor.rules.length
+      hint: I18n.tr("Drag to order: when two rules set the same thing, the higher one wins.")
 
       // Carries the rows
       InlineDragLayer {
@@ -56,7 +62,10 @@ Item {
             selected: root.editor.selectedIndex === ruleRow.index
             dimmed: ruleRow.item.enabled === false
             changed: root.editor.changed(ruleRow.index)
+            issue: ruleRow.problems > 0 ? "error" : ""
+            issueTip: I18n.tr("{0} problems", ruleRow.problems)
             onClicked: root.editor.select(ruleRow.index)
+            onRemoveRequested: root.editor.remove(ruleRow.index)
 
             badges: [
               StyledText {
@@ -64,15 +73,8 @@ Item {
                 readonly property int open: root.editor.openCount(ruleRow.index)
                 visible: open > 0
                 text: I18n.tr("{0} open", open)
-                textColor: ruleRow.ink
-                opacity: 0.6
-                textSize: Appearance.fontSizeBy(-1)
-              },
-              IssueIcon {
-                visible: ruleRow.problems > 0
-                level: "error"
-                textSize: Appearance.fontSizeBy(-1)
-                tip: I18n.tr("{0} problems", ruleRow.problems)
+                role: "caption"
+                textColor: ruleRow.selected ? Style.inkAccentContainer.muted : Style.textMuted
               }
             ]
 
@@ -100,12 +102,11 @@ Item {
         }
       }
 
-      StyledText {
+      EmptyState {
         visible: root.editor.rules.length === 0
-        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignHCenter
+        icon: "select_window"
         text: I18n.tr("No rules yet.")
-        textColor: Theme.foregroundAlt
-        wrapMode: Text.WordWrap
       }
 
       AddEntryButton {
@@ -114,22 +115,35 @@ Item {
         text: I18n.tr("New rule")
         onClicked: root.editor.add()
       }
+    }
 
-      // Applies the saved rules, so it waits for the draft to be saved. The
-      // button stays hoverable while it waits, to say why
-      StyledTextButton {
-        readonly property bool ready: WindowRulesManager.state?.running === true && !root.editor.isDirty
+    ListSection {
+      Layout.topMargin: Widget.spacing
+      title: I18n.tr("Built-in rules")
+      count: root.switchesOn
+      collapsible: true
+      open: root.builtinsOpen
+      onToggled: root.builtinsOpen = !root.builtinsOpen
 
+      SwitchesGroup {
         Layout.fillWidth: true
-        implicitHeight: Widget.height
-        opacity: ready ? 1 : 0.5
-        iconText: "select_window"
-        text: I18n.tr("Apply to open windows")
-        tooltipText: root.editor.isDirty ? I18n.tr("Save your changes first.") : I18n.tr("Moves the open windows as your saved rules say.")
-        onClicked: {
-          if (ready)
-            WindowRulesManager.applyNow();
-        }
+      }
+    }
+
+    // Applies the saved rules, so it waits for the draft to be saved. The
+    // button stays hoverable while it waits, to say why
+    footer: StyledTextButton {
+      readonly property bool ready: WindowRulesManager.state?.running === true && !root.editor.isDirty
+
+      Layout.fillWidth: true
+      implicitHeight: Widget.height
+      opacity: ready ? 1 : Style.opacityDisabled
+      iconText: "select_window"
+      text: I18n.tr("Apply to open windows")
+      tooltipText: root.editor.isDirty ? I18n.tr("Save your changes first.") : I18n.tr("Moves the open windows as your saved rules say.")
+      onClicked: {
+        if (ready)
+          WindowRulesManager.applyNow();
       }
     }
   }
