@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -84,8 +85,11 @@ func TestTeardownStepsEmptyWhenTheRuntimeLayerIsOff(t *testing.T) {
 			h.eventually("the layer is cleared", h.called("clear"))
 			var steps []session.Step
 			h.m.do(context.Background(), func(context.Context) { steps = h.m.teardownSteps() })
-			if len(steps) != 0 {
-				t.Fatalf("steps %v", steps)
+			// at most the pause's give-back (unknown until the first send)
+			for _, st := range steps {
+				if st.Op != "unpause" {
+					t.Fatalf("steps %v", steps)
+				}
 			}
 		})
 	}
@@ -224,6 +228,8 @@ func TestOnStepsFollowsApplyAndClear(t *testing.T) {
 		for {
 			select {
 			case got := <-h.steps:
+				// the pause's give-back is the pause's own (pause_test.go)
+				got = slices.DeleteFunc(slices.Clone(got), func(s session.Step) bool { return s.Op == "unpause" })
 				if reflect.DeepEqual(got, want) || (len(got) == 0 && len(want) == 0) {
 					return
 				}

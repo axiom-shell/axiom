@@ -61,6 +61,12 @@ func repo(t *testing.T) (*render.Tables, any) {
 // decodes them
 func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	t.Helper()
+	return goldenInputsWith(t, kind, len(noIM) > 0 && noIM[0], nil)
+}
+
+// goldenInputsWith is goldenInputs with the facts changed by facts
+func goldenInputsWith(t *testing.T, kind string, noIM bool, facts func(*Facts)) Inputs {
+	t.Helper()
 	data, err := os.ReadFile(filepath.Join("testdata", "facts.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -70,6 +76,9 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 		t.Fatalf("compositor.inputs doesn't decode the shell's facts: %v", err)
 	}
 	f.Kind = kind
+	if facts != nil {
+		facts(&f)
+	}
 	f.Frameworks = []string{"fcitx5"}
 	// facts.json is a Hyprland shell's: niri's every output is a strip
 	// (its strip binds hold)
@@ -109,7 +118,7 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(noIM) > 0 && noIM[0] {
+	if noIM {
 		getAny(getAny(getAny(cfg, "Input"), "keyboard"), "method").(*jsonx.Object).Set("enabled", false)
 	}
 	return buildInputs(cfg.(*jsonx.Object), &f, []render.Output{{Name: "DP-1", Description: "Example Display 0001"}})
@@ -169,6 +178,25 @@ func TestGoldenFiles(t *testing.T) {
 				files["runtime-rules.txt"] = strings.Join(runtimeRules(in), "\n") + "\n"
 			case "niri":
 				files["detached-module.kdl"] = w.(*niriWriter).detachedModule(in)
+			}
+			// What the rules pause: the shortcuts left out of niri's file, the
+			// commands a pause sends on the others
+			these := func(f *Facts) {
+				f.Pause = hold(false, nil, []string{"super-c", "super-z", "super-ctrl-s", "super-mouse-272"})
+			}
+			except := func(f *Facts) { f.Pause = hold(true, []string{"super-f", "super-c"}, nil) }
+			switch c.kind {
+			case "hyprland":
+				files["pause-these.lua"] = w.(*hyprWriter).pauseLua(goldenInputsWith(t, c.kind, false, these)) + "\n"
+				files["pause-allexcept.lua"] = w.(*hyprWriter).pauseLua(goldenInputsWith(t, c.kind, false, except)) + "\n"
+			case "sway":
+				for name, f := range map[string]func(*Facts){"these": these, "allexcept": except} {
+					send, now := w.(*swayWriter).pausePlan(goldenInputsWith(t, c.kind, false, f))
+					files["pause-"+name+".txt"] = strings.Join(send, "\n") + "\n--- restore\n" + strings.Join(now.Restore, "\n") + "\n"
+				}
+			case "niri":
+				paused := goldenInputsWith(t, c.kind, false, func(f *Facts) { these(f); f.PauseInFile = true })
+				files["module-paused.kdl"] = w.moduleText(paused, paused.get("specFile"))
 			}
 			if live := w.liveLines(in, in.get("specLive")); len(live) > 0 {
 				files["live.txt"] = strings.Join(live, "\n") + "\n"

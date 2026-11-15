@@ -334,7 +334,7 @@ func (l *loop) configure() {
 	section, keybinds, supports := l.e.inputs()
 	xwayland := supports["ruleXwayland"]
 	cfg := windowrules.Parse(section)
-	issues := windowrules.Validate(cfg, windowrules.Context{BindIDs: windowrules.BindIDs(keybinds)})
+	issues := windowrules.Validate(cfg, windowrules.ContextOf(keybinds))
 	l.rules = windowrules.Usable(cfg, issues)
 	l.match = windowrules.NewMatcher(l.rules, l.e.o.AppIDs, xwayland)
 	l.supports = supports
@@ -497,7 +497,7 @@ func (e *Engine) Match(section any) []RuleWindows {
 	_, keybinds, supports := e.inputs()
 	xwayland := supports["ruleXwayland"]
 	cfg := windowrules.Parse(section)
-	issues := windowrules.Validate(cfg, windowrules.Context{BindIDs: windowrules.BindIDs(keybinds)})
+	issues := windowrules.Validate(cfg, windowrules.ContextOf(keybinds))
 	rules := make([]windowrules.Rule, len(cfg.Rules))
 	for i, r := range cfg.Rules {
 		kinds := []windowrules.Kind{}

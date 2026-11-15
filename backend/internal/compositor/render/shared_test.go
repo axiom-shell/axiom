@@ -293,7 +293,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"HyprConfigLua.animationsLua":  func(t *Tables, a []any) any { return AnimationsLua(arg(a, 0), arg(a, 1)) },
 	"HyprConfigLua.animationsOff":  func(t *Tables, a []any) any { return AnimationsOff(arg(a, 0), arg(a, 1)) },
 	"HyprConfigLua.bindKey":        func(t *Tables, a []any) any { return BindKey(arg(a, 0)) },
-	"HyprConfigLua.bindLines":      func(t *Tables, a []any) any { return strList(t.BindLines(arg(a, 0), arg(a, 1))) },
+	"HyprConfigLua.bindLines":      func(t *Tables, a []any) any { return strList(bindLines(t, arg(a, 0), arg(a, 1))) },
 	"HyprConfigLua.bindLua":        func(t *Tables, a []any) any { return t.BindLua(arg(a, 0), arg(a, 1)) },
 	"HyprConfigLua.dispatcherLua":  func(t *Tables, a []any) any { return t.DispatcherLua(argStr(a, 0), argStr(a, 1), arg(a, 2)) },
 	"HyprConfigLua.emptyModuleLua": func(t *Tables, a []any) any { return EmptyModuleLua(argStr(a, 0)) },
@@ -363,4 +363,18 @@ func nilObject(o *jsonx.Object) any {
 		return nil
 	}
 	return o
+}
+
+// bindLines is HyprConfigLua.bindLines as the frozen cases pin it: every
+// complete bind's line, then the switcher's submap (no AXIOM_BINDS handles,
+// which HyprBindLinesByID adds)
+func bindLines(t *Tables, binds, ctx any) []string {
+	out := []string{}
+	for _, b := range items(binds) {
+		if line := t.BindLua(b, ctx); line != "" {
+			out = append(out, line)
+		}
+	}
+	entries := t.switcherEntries(binds, ctx, func(b, c any) bool { return t.BindLua(b, c) != "" })
+	return append(out, SwitcherLua(entries)...)
 }

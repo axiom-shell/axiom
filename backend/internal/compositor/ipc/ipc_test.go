@@ -91,16 +91,21 @@ func TestHypr(t *testing.T) {
 	if reply, _ := h.Eval(ctx(t), "bad()"); !strings.Contains(reply, "boom") {
 		t.Fatalf("eval error: %q", reply)
 	}
-	out := make(chan Reload, 1)
+	out := make(chan Reload, 4)
 	c, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go h.Reloads(c, out)
 	conn := <-events
-	io.WriteString(conn, "workspace>>2\nconfigreloaded>>\n")
-	select {
-	case <-out:
-	case <-time.After(testkit.Bound(3 * time.Second)):
-		t.Fatal("no reload")
+	io.WriteString(conn, "workspace>>2\nconfigreloaded>>\nsubmap>>axiom_record\nsubmap>>\n")
+	for i, want := range []Reload{{}, {ModeChanged: true, Mode: "axiom_record"}, {ModeChanged: true}} {
+		select {
+		case got := <-out:
+			if got != want {
+				t.Fatalf("event %d: got %+v, want %+v", i, got, want)
+			}
+		case <-time.After(testkit.Bound(3 * time.Second)):
+			t.Fatalf("event %d: nothing", i)
+		}
 	}
 }
 
@@ -146,6 +151,8 @@ func TestSway(t *testing.T) {
 				swayReply(c, kind, `{"success":true}`)
 				swayReply(c, SwayEventWorkspace, `{"change":"focus"}`)
 				swayReply(c, SwayEventWorkspace, `{"change":"reload"}`)
+				swayReply(c, SwayEventMode, `{"change":"axiom_record"}`)
+				swayReply(c, SwayEventMode, `{"change":"default"}`)
 			}
 		}
 	})
@@ -159,14 +166,19 @@ func TestSway(t *testing.T) {
 	if modes, err := s.BindingModes(ctx(t)); err != nil || len(modes) != 2 || modes[1] != "axiom_layer" {
 		t.Fatalf("modes: %v %v", modes, err)
 	}
-	out := make(chan Reload, 2)
+	out := make(chan Reload, 4)
 	c, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go s.Reloads(c, out)
-	select {
-	case <-out:
-	case <-time.After(testkit.Bound(3 * time.Second)):
-		t.Fatal("no reload")
+	for i, want := range []Reload{{}, {ModeChanged: true, Mode: "axiom_record"}, {ModeChanged: true}} {
+		select {
+		case got := <-out:
+			if got != want {
+				t.Fatalf("event %d: got %+v, want %+v", i, got, want)
+			}
+		case <-time.After(testkit.Bound(3 * time.Second)):
+			t.Fatalf("event %d: nothing", i)
+		}
 	}
 	select {
 	case <-out:

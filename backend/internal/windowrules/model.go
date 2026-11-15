@@ -215,15 +215,22 @@ func trigger(o *jsonx.Object) Trigger {
 	return Trigger{Enabled: flag(o, "enabled"), When: When(str(o, "when"))}
 }
 
-// BindIDs are the ids of the Keybinds section's binds, for Context.
-func BindIDs(keybinds any) []string {
-	var ids []string
+// ContextOf is the Context of the Keybinds section: every bind id, and the
+// ids of those not bound (paused or with no key).
+func ContextOf(keybinds any) Context {
+	var c Context
 	for _, b := range list(obj(keybinds), "binds") {
-		if id := str(obj(b), "id"); id != "" {
-			ids = append(ids, id)
+		o := obj(b)
+		id := str(o, "id")
+		if id == "" {
+			continue
+		}
+		c.BindIDs = append(c.BindIDs, id)
+		if flag(o, "paused") || str(o, "key") == "" {
+			c.Unbound = append(c.Unbound, id)
 		}
 	}
-	return ids
+	return c
 }
 
 // obj is v as an object, or an empty one (every read of it is then zero).

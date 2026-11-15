@@ -62,7 +62,7 @@ func TestValidate(t *testing.T) {
 		"pauseBindsNone":       {shell(ShellEffects{PauseBinds: PauseBinds{on(WhenFocused), "these", nil}}), Context{}, "pauseBindsNone", "shell.pauseBinds.binds", nil},
 		"pauseBindsNoWayOut":   {shell(ShellEffects{PauseBinds: PauseBinds{on(WhenFocused), "allExcept", nil}}), Context{}, "pauseBindsNoWayOut", "shell.pauseBinds.binds", nil},
 		"pauseBindsWhen":       {shell(ShellEffects{PauseBinds: PauseBinds{on(WhenOpen), "allExcept", []string{"a"}}}), Context{}, "pauseBindsWhen", "shell.pauseBinds.when", nil},
-		"unknownBind":          {shell(ShellEffects{PauseBinds: PauseBinds{on(WhenFocused), "these", []string{"a", "z"}}}), Context{[]string{"a"}}, "unknownBind", "shell.pauseBinds.binds.1", []string{"z"}},
+		"unknownBind":          {shell(ShellEffects{PauseBinds: PauseBinds{on(WhenFocused), "these", []string{"a", "z"}}}), Context{BindIDs: []string{"a"}}, "unknownBind", "shell.pauseBinds.binds.1", []string{"z"}},
 		"unknownWhen":          {shell(ShellEffects{DND: Trigger{true, "never"}}), Context{}, "unknownWhen", "shell.dnd.when", nil},
 	} {
 		args := tc.args
@@ -136,6 +136,22 @@ func TestValidateRest(t *testing.T) {
 	ub.Shell.PauseBinds = PauseBinds{Trigger{true, WhenFocused}, "these", []string{"a", "b"}}
 	if got := Validate(Config{Rules: []Rule{ub}}, Context{BindIDs: []string{}}); len(got) != 2 {
 		t.Errorf("empty BindIDs: %+v", got)
+	}
+	// A way out that works: a kept bind that is paused or keyless is none.
+	wo := okRule("wo")
+	wo.Shell.PauseBinds = PauseBinds{Trigger{true, WhenFocused}, "allExcept", []string{"a", "b"}}
+	for name, tc := range map[string]struct {
+		ctx  Context
+		want []string
+	}{
+		"all unbound":  {Context{BindIDs: []string{"a", "b"}, Unbound: []string{"a", "b"}}, []string{"pauseBindsWayOutOff@shell.pauseBinds.binds"}},
+		"one works":    {Context{BindIDs: []string{"a", "b"}, Unbound: []string{"a"}}, []string{}},
+		"unknown kept": {Context{BindIDs: []string{"a"}, Unbound: []string{"a"}}, []string{"unknownBind@shell.pauseBinds.binds.1"}},
+		"unknown ids":  {Context{}, []string{}},
+	} {
+		if got := codes(Validate(Config{Rules: []Rule{wo}}, tc.ctx)); !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("way out %s: got %v, want %v", name, got, tc.want)
+		}
 	}
 	// Duplicate ids.
 	dup := Validate(Config{Rules: []Rule{okRule("x"), okRule("x")}}, Context{})
