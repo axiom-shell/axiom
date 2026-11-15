@@ -25,9 +25,8 @@ ColumnLayout {
   readonly property var paths: root.sample ? CustomWidgetData.flatten(root.sample) : []
   // The screens' samples kept in the definition: their keys
   readonly property var sampleKeys: Object.keys(root.definition?.samples ?? ({}))
-  // The edited layer's name, for the Keep button
+  // The edited layer's name, for the sample editor button
   readonly property string layerName: root.editor.sampleKey === "" ? I18n.tr("Base") : (root.definition?.module.views[root.editor.viewIndex]?.name || root.editor.sampleKey)
-  readonly property string keepReason: root.editor.keepRefused === "count" ? I18n.tr("{0} samples are kept: remove one first", root.editor.sampleLimits.entries) : root.editor.keepRefused === "size" ? I18n.tr("The samples are over {0} KB: remove one first", root.editor.sampleLimits.bytes / 1024) : ""
   // The sample editor is open, and why its last Save was refused
   property bool editingSample: false
   property string sampleError: ""
@@ -73,22 +72,6 @@ ColumnLayout {
       Layout.fillWidth: true
       title: I18n.tr("Samples")
       description: I18n.tr("A sample per screen is saved in the config with the definition: the Module tab previews each screen with it before the script reaches it.")
-
-      StyledTextButton {
-        implicitHeight: Widget.height
-        enabled: root.editor.liveSample !== null && root.keepReason === ""
-        iconText: "bookmark_add"
-        text: I18n.tr("Keep as the sample of {0}", root.layerName)
-        tooltipText: root.keepReason
-        onClicked: root.editor.keepSample()
-      }
-      StyledText {
-        visible: root.keepReason !== ""
-        Layout.fillWidth: true
-        text: root.keepReason
-        tone: "warning"
-        overflow: "wrap"
-      }
 
       // Paste or edit the layer's sample: JSON, checked on Save
       StyledTextButton {

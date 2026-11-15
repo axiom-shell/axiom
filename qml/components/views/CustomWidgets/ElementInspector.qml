@@ -7,10 +7,12 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.content.base
 import qs.components.views.Layouts
 
-// Custom widgets page, Module tab: the element library while nothing is
-// selected; the selected element's settings in its place: its text fields
+// Custom widgets page, Module tab: while nothing is selected the element
+// library and the module's own settings (lock screen, font); the selected
+// element's settings in their place: its text fields
 // (Shows: a ValueField per slot of its kind), the actions it runs, when it is
 // shown (Visible), its colours (a ColorField each) and its look (the rest of
 // its kind's options, CustomWidgetsConfig.elementKinds).
@@ -22,6 +24,19 @@ ColumnLayout {
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var grid: root.editor.elements
   readonly property var element: root.editor.element
+  readonly property var definition: root.editor.selected
+  readonly property var views: root.definition?.module?.views ?? []
+  // What the lock screen does to this definition, while it is offered there
+  // ("" when it holds nothing affected): CustomWidgetData.lockIssues
+  readonly property string lockWarning: {
+    const issues = root.definition?.module?.lockscreen ? CustomWidgetData.lockIssues(root.definition) : [];
+    const parts = [];
+    if (issues.some(i => i === "actions" || i === "entry"))
+      parts.push(I18n.tr("Actions and entries do nothing there."));
+    if (issues.includes("text"))
+      parts.push(I18n.tr("Text the script prints is readable by anyone who sees the lock screen."));
+    return parts.join(" ");
+  }
   readonly property var kind: CustomWidgetsConfig.elementKind(root.element?.type ?? "")
   readonly property string elementKey: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
 
@@ -101,13 +116,26 @@ ColumnLayout {
 
   spacing: Widget.spacing * 2
 
-  // The library: drag one onto the module, or click it to add it where
-  // there's room. It is the whole of the nothing-selected state
-  FieldGroup {
+  // The library and the module's own settings: what the column holds while
+  // nothing is selected
+  ColumnLayout {
     visible: !root.element
     Layout.fillWidth: true
-    title: I18n.tr("Add an element")
-    description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
+    spacing: Widget.spacing * 2
+
+    CardHeader {
+      icon: "category"
+      title: I18n.tr("Elements")
+      showActions: false
+    }
+
+    StyledText {
+      Layout.fillWidth: true
+      text: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
+      role: "caption"
+      tone: "muted"
+      overflow: "wrap"
+    }
 
     Flow {
       Layout.fillWidth: true
@@ -123,6 +151,35 @@ ColumnLayout {
           typeInfo: modelData
           onClicked: root.grid.addModule(modelData.type)
         }
+      }
+    }
+
+    // The font is a setting of the module's Text elements, so it sits here
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Module")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen", "font"])
+        order: ["lockscreen", "font"]
+        values: root.definition?.module ?? ({})
+        onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
+      }
+      // Offered on the lock screen: what doesn't work there
+      Notice {
+        visible: root.lockWarning !== ""
+        Layout.fillWidth: true
+        status: "warning"
+        title: I18n.tr("On the lock screen")
+        text: root.lockWarning
+      }
+      StyledTextButton {
+        visible: root.editor.layerElements.length === 0 && root.views.length === 0
+        implicitHeight: Widget.height
+        iconText: "auto_awesome"
+        text: I18n.tr("Start from the default layout")
+        onClicked: root.editor.useDefaultElements()
       }
     }
   }

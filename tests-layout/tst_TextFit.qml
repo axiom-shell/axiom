@@ -1562,40 +1562,6 @@ TestCase {
       compare(t.lineCount, 1);
   }
 
-  Component {
-    id: lockColumnComp
-
-    ColumnLayout {
-      property alias button: defaultButton
-      readonly property real fit: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultButton.implicitWidth)
-
-      width: fit
-      spacing: 4
-
-      StyledTextButton {
-        id: defaultButton
-        iconText: "auto_awesome"
-        text: "Start from the default layout"
-      }
-    }
-  }
-
-  // The Module tab's lock-screen column is as wide as its "Start from the
-  // default layout" button, whose label stays whole at any font size
-  function test_lock_column_holds_default_layout_button() {
-    harness.configure({
-      "fontSize": 20
-    });
-    const col = createTemporaryObject(lockColumnComp, root);
-    verify(col);
-    waitForRendering(col);
-    const label = find(col.button, it => it.text === "Start from the default layout", [])[0];
-    verify(label);
-    verify(col.width >= col.button.implicitWidth, `column ${col.width}, button ${col.button.implicitWidth}`);
-    verify(col.button.width >= col.button.implicitWidth, `button ${col.button.width}`);
-    verify(label.width >= label.implicitWidth - 0.5, `label ${label.width} of ${label.implicitWidth}`);
-  }
-
   // The tools' right edge is the same whatever the title, and whether or
   // not Save and Discard are showing
   function test_work_area_tools_right_edge_is_pinned() {

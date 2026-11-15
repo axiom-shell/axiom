@@ -5,13 +5,13 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
-import qs.components.content.base
 import qs.components.content.parts.custom
 import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the element library and the selected
-// element down the left, and the layouts editor's canvas filling the rest,
-// in one GridDragLayer (as LayoutsEditorLayout holds the layouts editor's),
+// element down the left (the tab's full height), and on the right what the
+// host puts above (`canvasTop`) over the layouts editor's canvas filling the
+// rest, in one GridDragLayer (as LayoutsEditorLayout holds the layouts editor's),
 // so elements are carried from the library onto the module.
 GridDragLayer {
   id: root
@@ -25,6 +25,8 @@ GridDragLayer {
   // One grid unit in pixels at the module's design size: an element is drawn
   // at the size it has there and scaled into its tile
   property real card: Widget.px(400)
+  // What the host puts above the canvas (the previews, the layers, a screen's form)
+  property alias canvasTop: topColumn.data
 
   // "Copy to screen ▸": the base, then each screen but the one edited
   readonly property var copyTargets: {
@@ -61,8 +63,8 @@ GridDragLayer {
 
   // An element drawn in its tile (GridCanvas.tileContent): the real element
   // on the previewed sample, at the size it has in the module and scaled to
-  // the tile, with its name (else its kind) in a chip; one the sample's
-  // `show` hides is dimmed and says so. Never runs anything
+  // the tile, with its name (else its kind) in a chip while it is hovered or
+  // selected; one the sample's `showWhen` hides is dimmed and says so. Never runs anything
   Component {
     id: elementTile
 
@@ -80,7 +82,10 @@ GridDragLayer {
       opacity: content.hidden ? Style.opacityDisabled : 1
       clip: true
 
+      // Centred in the tile
       Item {
+        x: (content.width - content.designWidth * content.zoom) / 2
+        y: (content.height - content.designHeight * content.zoom) / 2
         width: content.designWidth
         height: content.designHeight
         scale: content.zoom
@@ -100,8 +105,13 @@ GridDragLayer {
         }
       }
 
+      HoverHandler {
+        id: tileHover
+      }
+
+      // Its name, while the pointer is on it or it is the selected element
       Row {
-        visible: content.width > Widget.px(56) && content.height > Widget.px(28)
+        visible: (tileHover.hovered || (content.module?.id ?? "") === (CustomWidgetsManager.editor.element?.id ?? null)) && content.width > Widget.px(56) && content.height > Widget.px(28)
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.margins: Widget.px(2)
@@ -159,52 +169,53 @@ GridDragLayer {
     anchors.fill: parent
     spacing: Widget.spacing * 3
 
-    // A box and a header like the canvas's, so the two read as a pair
+    // The inspector, the tab's full height; it owns its header
     Surface {
       Layout.preferredWidth: Math.min(Widget.textPx(340), Math.round(root.width * 0.34))
       Layout.fillHeight: true
       tone: "surface"
 
-      ColumnLayout {
+      StyledScrollView {
+        id: sideScroll
         anchors.fill: parent
-        anchors.margins: Widget.padding
-        spacing: Widget.spacing
 
-        CardHeader {
-          icon: "category"
-          title: I18n.tr("Elements")
-          showActions: false
-        }
-
-        StyledScrollView {
-          id: sideScroll
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          contentPadding: 0
-
-          ElementInspector {
-            width: sideScroll.availableWidth
-            dragLayer: root
-          }
+        ElementInspector {
+          width: sideScroll.availableWidth
+          dragLayer: root
         }
       }
     }
 
-    // GridCanvas anchors itself to what holds it
-    Item {
+    // What is being looked at and edited (previews, the layers, the screen's
+    // form: the host's `canvasTop`), then the canvas filling the rest
+    ColumnLayout {
       Layout.fillWidth: true
       Layout.fillHeight: true
+      spacing: Widget.spacing
 
-      GridCanvas {
-        dragLayer: root
-        modules: root.editable ? root.elements : null
-        underlay: root.underlay
-        tileContent: elementTile
-        onTileContext: (index, tile, x, y) => elementMenu.openAt(tile, x, y)
-        title: I18n.tr("Module")
-        icon: "widgets"
-        emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")
-        emptyHint: I18n.tr("An empty module: drag elements here from the left, or click one to add it where there's room.")
+      ColumnLayout {
+        id: topColumn
+        Layout.fillWidth: true
+        spacing: Widget.spacing
+      }
+
+      // GridCanvas anchors itself to what holds it
+      Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+
+        GridCanvas {
+          dragLayer: root
+          modules: root.editable ? root.elements : null
+          underlay: root.underlay
+          tileContent: elementTile
+          showActions: false
+          onTileContext: (index, tile, x, y) => elementMenu.openAt(tile, x, y)
+          title: I18n.tr("Module")
+          icon: "widgets"
+          emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")
+          emptyHint: I18n.tr("An empty module: drag elements here from the left, or click one to add it where there's room.")
+        }
       }
     }
   }
