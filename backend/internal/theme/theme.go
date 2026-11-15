@@ -48,6 +48,7 @@ func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Open made the same path absolute: it can't fail here
 	path, _ := filepath.Abs(wallpaper)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, axerr.Wrap(axerr.Unavailable, err, "can't make the themes' folder")

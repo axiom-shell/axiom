@@ -90,8 +90,9 @@ func part(lo, hi, i int) (int, int) {
 func mean(img image.Image, ox, oy, x0, x1, y0, y1 int) float64 {
 	var sum float64
 	count := 0
+	xs := spread(x0, x1)
 	for _, y := range spread(y0, y1) {
-		for _, x := range spread(x0, x1) {
+		for _, x := range xs {
 			c := color.NRGBAModel.Convert(img.At(ox+x, oy+y)).(color.NRGBA)
 			sum += palette.LinearOf(c.R, c.G, c.B)
 			count++

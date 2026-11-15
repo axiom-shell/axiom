@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"errors"
 	stdimage "image"
 	"os"
 	"path/filepath"
@@ -86,40 +87,52 @@ func (b *backdropPart) grid(ctx context.Context, path string) (backdrop.Grid, er
 	}
 	key := backdropKey{path, info.ModTime(), info.Size()}
 
-	b.mu.Lock()
-	if g, ok := b.grids[key]; ok {
-		b.touch(key)
-		b.mu.Unlock()
-		return g, nil
-	}
-	if f, ok := b.flights[key]; ok {
-		b.mu.Unlock()
-		select {
-		case <-f.done:
-			return f.grid, f.err
-		case <-ctx.Done():
-			return backdrop.Grid{}, ctx.Err()
+	for {
+		b.mu.Lock()
+		if g, ok := b.grids[key]; ok {
+			b.touch(key)
+			b.mu.Unlock()
+			return g, nil
 		}
-	}
-	f := &backdropFlight{done: make(chan struct{})}
-	b.flights[key] = f
-	b.mu.Unlock()
-
-	f.grid, f.err = b.sample(ctx, path)
-
-	b.mu.Lock()
-	delete(b.flights, key)
-	if f.err == nil {
-		b.grids[key] = f.grid
-		b.lru = append(b.lru, key)
-		for len(b.lru) > backdropCacheSize {
-			delete(b.grids, b.lru[0])
-			b.lru = b.lru[1:]
+		if f, ok := b.flights[key]; ok {
+			b.mu.Unlock()
+			select {
+			case <-f.done:
+				// A cancelled leader's error is its own: ask again
+				if f.err != nil && (errors.Is(f.err, context.Canceled) || errors.Is(f.err, context.DeadlineExceeded)) && ctx.Err() == nil {
+					continue
+				}
+				return f.grid, f.err
+			case <-ctx.Done():
+				return backdrop.Grid{}, ctx.Err()
+			}
 		}
+		f := &backdropFlight{done: make(chan struct{})}
+		b.flights[key] = f
+		b.mu.Unlock()
+
+		func() {
+			defer func() {
+				if recover() != nil {
+					f.grid, f.err = backdrop.Grid{}, axerr.New(axerr.Internal, "can't decode the wallpaper")
+				}
+				b.mu.Lock()
+				delete(b.flights, key)
+				if f.err == nil {
+					b.grids[key] = f.grid
+					b.lru = append(b.lru, key)
+					for len(b.lru) > backdropCacheSize {
+						delete(b.grids, b.lru[0])
+						b.lru = b.lru[1:]
+					}
+				}
+				b.mu.Unlock()
+				close(f.done)
+			}()
+			f.grid, f.err = b.sample(ctx, path)
+		}()
+		return f.grid, f.err
 	}
-	b.mu.Unlock()
-	close(f.done)
-	return f.grid, f.err
 }
 
 // touch makes key the newest (mu held).
