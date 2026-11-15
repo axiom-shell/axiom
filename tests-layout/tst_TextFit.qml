@@ -936,4 +936,36 @@ TestCase {
         if (one !== other && one.x === other.x)
           verify(one.y + one.height <= other.y || other.y + other.height <= one.y, `${one.objectName} overlaps ${other.objectName}`);
   }
+
+  // A section's count follows its title, not the far edge; a long title
+  // elides and the count stays in
+  function test_list_section_count_follows_title() {
+    harness.configure({});
+    const section = createTemporaryObject(listSectionComp, root, {
+      "width": Widget.textPx(500),
+      "title": "Your rules",
+      "hint": ""
+    });
+    waitForRendering(section);
+    let title = find(section, it => it.text === "Your rules", [])[0];
+    let count = find(section, it => it.text === "3", [])[0];
+    verify(title && count);
+    const titleAt = title.mapToItem(section, 0, 0);
+    const countAt = count.mapToItem(section, 0, 0);
+    verify(Math.abs(countAt.x - (titleAt.x + title.width + Widget.spacing)) <= 1, `count at ${countAt.x}, title ends ${titleAt.x + title.width}`);
+    verify(countAt.x + count.width < section.width / 2, `count's right edge ${countAt.x + count.width}`);
+
+    const narrow = createTemporaryObject(listSectionComp, root, {
+      "width": Widget.textPx(200),
+      "title": "A very long title for a section that has little room at all",
+      "hint": ""
+    });
+    waitForRendering(narrow);
+    title = find(narrow, it => it.text === narrow.title, [])[0];
+    count = find(narrow, it => it.text === "3", [])[0];
+    verify(title && count);
+    verify(count.visible);
+    verify(title.truncated, "the title elides");
+    compare(harness.containedProblems(narrow, true), []);
+  }
 }
