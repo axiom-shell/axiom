@@ -4,7 +4,7 @@
 > **Config:** `Appearance.font`, `Appearance.shape`, `Appearance.surface`, `Interface.*`, the theme
 > **Related:** [Shared UI pieces](shared-ui-pieces.md), [Themes](../theming/themes.md), [QML pitfalls](qml-pitfalls.md), [Translucency and blur](../theming/translucency-blur.md)
 
-`Style` is the one place UI reads a colour, text role, icon size, radius or hairline from. It derives every colour of the theme once per theme change, aliases `Appearance` and `Widget` as roles, and has a test that sweeps every bundled theme for its contrast targets. The shared pieces (below) read it; areas not yet restyled keep their old colours until their change, and the bar keeps its own readability stack on the same colour math (`Tone`).
+`Style` is the one place UI reads a colour, text role, icon size, radius or hairline from. It derives every colour of the theme once per theme change, aliases `Appearance` and `Widget` as roles, and has a test that sweeps every bundled theme for its contrast targets. The shared pieces (below) read it, and the bar keeps its own readability stack on the same colour math (`Tone`).
 
 ### What reads what
 | Piece | What | Reads |

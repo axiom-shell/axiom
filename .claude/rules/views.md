@@ -13,4 +13,4 @@ Overlay page types: `<Type>/<Type>.qml` + `schema.yaml` (expanded over `definiti
 - Tool pages are built on `ToolPane`/`ToolBar`/`ListSection`/`WorkArea` (`docs/recipes/tool-page.md`).
 - Editor pages never assign the draft or selection; the manager owns them (`select*()`).
 - `Settings/` holds hand-built settings parts: `x-card: {file, title, wide, folds}` loads `Settings/<file>Card.qml` (titled by `title`, never in its QML), `x-intro` (also `{file, setup}`) and `x-row` load `Settings/<Name>.qml` (`docs/dev/core/schema-annotations.md` › Hand-built parts).
-- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
+- Colours, text and icon sizes: `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. `check_style.py` fails a file that has them.
