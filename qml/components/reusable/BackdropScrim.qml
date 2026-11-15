@@ -72,12 +72,15 @@ Item {
     duration: Appearance.animSlow
   }
 
-  RectangularShadow {
+  Loader {
     anchors.fill: parent
     anchors.margins: -root._grow
-    radius: Style.radiusOuter
-    blur: root._blur
-    color: Style.surfacePage
+    active: root.shown
+    sourceComponent: RectangularShadow {
+      radius: Style.radiusOuter
+      blur: root._blur
+      color: Style.surfacePage
+    }
   }
 
   // The wallpaper's tone is asked for while a shade could be drawn

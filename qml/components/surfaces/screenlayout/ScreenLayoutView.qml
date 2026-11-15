@@ -210,8 +210,7 @@ Item {
       BackdropScrim {
         id: shade
         required property int index
-        readonly property var place: grid.places[shade.index] ?? null
-        readonly property var r: shade.place ? GridPlacement.rectPx(shade.place, grid.sizes) : null
+        readonly property var r: grid.cardRects[shade.index] ?? null
         screen: root.screen
         shown: shade.r !== null && root.bare(root.placedModules[shade.index])
         area: shade.r ? Qt.rect(grid.x + shade.r.x, grid.y + shade.r.y, shade.r.width, shade.r.height) : Qt.rect(0, 0, 0, 0)
@@ -220,6 +219,16 @@ Item {
         ink: grid.inks[shade.index] ?? Style.text
         fixedRegion: root.flatRegion
         worstCase: root.host?.kind === "lockscreen" || root.host?.kind === "greeter"
+
+        // The slot's glide (ModuleGrid), on the item only: the alpha reads `area`
+        Glide on y {
+          enabled: grid.settled
+          duration: Appearance.animNormal
+        }
+        Glide on height {
+          enabled: grid.settled
+          duration: Appearance.animNormal
+        }
       }
     }
 

@@ -121,6 +121,10 @@ QtObject {
   // content readable over the wallpapers, 0 until the tone is known: handed
   // over by WallpaperToneManager (a reader reads no service)
   property real wallpaperEdgeFloor: 0
+  // The floor's settled value, not glided: what bars judge their content
+  // against, so a glide never re-enriches them each frame; handed over by
+  // WallpaperToneManager
+  property real wallpaperEdgeTarget: 0
   readonly property bool translucent: surfaceAlpha < 1
   // The compositor blurs behind them (Hyprland's layer rules, which leave
   // out pixels under blurThreshold: shadows, dims, fades; SwayFX's layer

@@ -18,13 +18,14 @@ QtObject {
   // `backdrop`: the grey levels the wallpaper is under the bar's band
   // (WallpaperToneManager.regionOn), for a bar that needs them (no surface,
   // or translucent), else null: its palette is then exactly today's. Only
-  // then are Style.edgeAlpha (which follows the wallpaper's edge floor, itself
-  // computed from bars enriched with no backdrop) and the backdrop read.
+  // then are Style.edgeAlphaSettled (the wallpaper's edge floor at rest, itself
+  // computed from bars enriched with no backdrop: the glide re-enriches no
+  // bar) and the backdrop read.
   function enrichBarConfig(barConfig, gapsOut, floatGaps, backdrop = null) {
     const env = root.enrichEnv();
     if (backdrop) {
       env.backdrop = backdrop;
-      env.edgeAlpha = Style.edgeAlpha;
+      env.edgeAlpha = Style.edgeAlphaSettled;
     }
     return BarEnrich.enrich(barConfig, gapsOut, floatGaps, env);
   }

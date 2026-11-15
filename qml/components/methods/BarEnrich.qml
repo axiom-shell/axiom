@@ -11,7 +11,7 @@ import QtQuick
 // (BarsConfig's), baseColorNames (Theme's), redForGains (Markets' Red for gains,
 // which swaps the rise and fall roles), and over a wallpaper backdrop (the
 // bars that need one: BarsConfig.enrichBarConfig) backdrop (the grey levels
-// under its band: Backdrop.region), edgeAlpha (Style.edgeAlpha) and margin
+// under its band: Backdrop.region), edgeAlpha (Style.edgeAlphaSettled) and margin
 // (Tone's readability margin) }. A bar entry with `hiddenByRule`
 // (a window rule hides the bar on its monitor: ScreenEdgeManager sets it)
 // is enriched as an always-auto-hiding bar.

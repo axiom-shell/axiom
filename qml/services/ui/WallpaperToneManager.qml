@@ -13,7 +13,8 @@ import qs.services.core
  * bars and BackdropScrim read) and the edge family's floored alpha
  * (`edgeFloor`: Appearance.wallpaperEdgeFloor), the least opacity the bars'
  * fill needs so their content reads on the wallpapers, the same on every
- * screen. Nothing is polled; the daemon decodes each wallpaper once. */
+ * screen. Nothing is polled; the daemon decodes each wallpaper once. On a wallpaper change the previous
+ * wallpaper's grid stands in until the new one's arrives. */
 QtObject {
   id: root
 
@@ -52,6 +53,12 @@ QtObject {
     property: "wallpaperEdgeFloor"
     value: root.edgeFloor
   }
+  // And its settled value (not glided)
+  property Binding _appearanceTarget: Binding {
+    target: Appearance
+    property: "wallpaperEdgeTarget"
+    value: root._edgeTarget
+  }
 
   // A bare module on a desktop, lock or greeter layout (BackdropScrim) needs
   // the tone while it exists
@@ -64,8 +71,8 @@ QtObject {
   property int _moduleUsers: 0
 
   // The grey levels { mean, low, high } the wallpaper is under `rect` (screen
-  // units, 0-1 both ways) on the screen `screenName`: null while unknown (the
-  // daemon hasn't answered yet), or, with `worstCase`, the pole. A wallpaper
+  // units, 0-1 both ways) on the screen `screenName`: null while unknown (no
+  // grid has been ready on that screen yet), or, with `worstCase`, the pole. A wallpaper
   // that can't be decoded is the pole; no wallpaper is the theme's
   // background. `blurred`: the compositor blurs what's behind the surface.
   function regionOn(screenName, rect, blurred, worstCase) {
@@ -76,8 +83,10 @@ QtObject {
     const path = root._pathOf(ThemeManager.wallpaperFor(screenName));
     if (path === "")
       return Backdrop.flat(Style.surfacePage);
-    const entry = root._grids[path];
+    let entry = root._grids[path];
     if (!entry || entry.state === "pending")
+      entry = root._grids[root._lastReady[screenName]];
+    if (!entry || entry.state !== "ready" && entry.state !== "failed")
       return worstCase ? Backdrop.flat(root.pole) : null;
     if (entry.state === "failed")
       return Backdrop.flat(root.pole);
@@ -123,6 +132,10 @@ QtObject {
 
   // path -> { state: "pending" | "ready" | "failed", grid }, mutated in place
   property var _grids: ({})
+  // screen name -> the path of the last grid that was ready on it, held while
+  // a new wallpaper's is pending, so nothing drops to "unknown" on a
+  // wallpaper change; mutated in place, read through `revision`
+  property var _lastReady: ({})
   readonly property string _pathsKey: JSON.stringify(General.outputs.map(s => root._pathOf(ThemeManager.wallpaperFor(s.name))))
   on_PathsKeyChanged: Qt.callLater(root._sync)
   onNeededChanged: Qt.callLater(root._sync)
@@ -137,8 +150,28 @@ QtObject {
   function _sync() {
     const wanted = root.needed ? JSON.parse(root._pathsKey).filter(path => path !== "") : [];
     let changed = false;
+    if (!root.needed) {
+      root._lastReady = ({});
+      changed = true;
+    } else {
+      const names = General.outputs.map(s => s.name);
+      for (const name of Object.keys(root._lastReady)) {
+        if (!names.includes(name)) {
+          delete root._lastReady[name];
+          changed = true;
+        }
+      }
+      for (const name of names) {
+        const path = root._pathOf(ThemeManager.wallpaperFor(name));
+        if (path !== "" && root._grids[path]?.state === "ready" && root._lastReady[name] !== path) {
+          root._lastReady[name] = path;
+          changed = true;
+        }
+      }
+    }
+    const kept = Object.values(root._lastReady);
     for (const path of Object.keys(root._grids)) {
-      if (!wanted.includes(path)) {
+      if (!wanted.includes(path) && !kept.includes(path)) {
         delete root._grids[path];
         changed = true;
       }
@@ -174,7 +207,16 @@ QtObject {
         "state": "failed",
         "grid": null
       };
+      if (grid) {
+        for (const s of General.outputs) {
+          if (root._pathOf(ThemeManager.wallpaperFor(s.name)) === path)
+            root._lastReady[s.name] = path;
+        }
+        Qt.callLater(root._sync);
+      }
       root.revision++;
+    }, {
+      "repeatable": true
     });
   }
 }
