@@ -12,4 +12,3 @@ settings:
     enum: [switch, pill]
     x-enumLabels: {switch: Switch, pill: Pill}
   icon: {type: string, x-control: icon, title: Icon, default: toggle_on, x-showIf: {look: pill}}
-  label: {type: string, title: Label, default: ''}

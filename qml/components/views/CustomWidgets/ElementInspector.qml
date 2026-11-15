@@ -9,10 +9,10 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.views.Layouts
 
-// Custom widgets page, Module tab: the element library (always there, a
-// folding group), then the selected element's bindings (each slot: the
-// output's own key, a path in it, a format or a number), its look (its
-// kind's options, CustomWidgetsConfig.elementKinds) and the actions it runs.
+// Custom widgets page, Module tab: the element library while nothing is
+// selected; the selected element's settings in its place: its text fields
+// (Shows: a ValueField per slot of its kind), the actions it runs and its look
+// (its kind's options, CustomWidgetsConfig.elementKinds).
 ColumnLayout {
   id: root
 
@@ -22,45 +22,7 @@ ColumnLayout {
   readonly property var grid: root.editor.elements
   readonly property var element: root.editor.element
   readonly property var kind: CustomWidgetsConfig.elementKind(root.element?.type ?? "")
-  readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
-  // The binding choices: the output's own key, or any path in the saved
-  // samples, what was seen and the output now (a format or a number can be
-  // typed), each labelled with its value
-  readonly property var bindOptions: [
-    {
-      "value": "",
-      "label": I18n.tr("The output's own")
-    }
-  ].concat(root.editor.bindPaths.map(p => ({
-        "value": p.path,
-        "label": p.path + " — " + (p.type === "array" ? I18n.tr("a list of {0}", p.value) : p.preview)
-      })))
-  // The slot an edit last started in, "<element key>|<slot>": a click in the
-  // Data panel binds it
-  property string lastSlot: ""
   readonly property string elementKey: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
-  property bool dataOpen: false
-  property bool libraryFolded: false
-
-  // What a slot's binding reads as in the previewed sample: { text, missing }
-  // ("" without a binding or a sample; a `=` binding is fixed text)
-  function nowOf(binding) {
-    if (!binding || root.editor.previewFields === null)
-      return {
-        "text": "",
-        "missing": false
-      };
-    if (binding.startsWith("="))
-      return {
-        "text": I18n.tr("fixed text"),
-        "missing": false
-      };
-    const value = CustomWidgetData.elementValue(root.editor.previewFields, binding);
-    return {
-      "text": value === undefined ? "" : CustomWidgetData.asText(value),
-      "missing": value === undefined
-    };
-  }
 
   // The titles of an element's triggers ("On press", "On change"…): every
   // kind's `run` has the base's
@@ -69,80 +31,88 @@ ColumnLayout {
     const first = defs.CustomElement.oneOf[0].$ref.replace("#/definitions/", "");
     return defs[first].properties.run.properties;
   }
-  // The name "New action…" gives an action made for this element
-  readonly property string actionName: root.element?.name || I18n.tr(root.kind?.label ?? "")
+  // What the previewed sample makes of one of the element's text fields ("" unbound)
+  function readBind(slot) {
+    const binding = root.element?.bind?.[slot] ?? "";
+    return binding && root.editor.previewFields ? CustomWidgetData.asText(CustomWidgetData.elementValue(root.editor.previewFields, binding)) : "";
+  }
+
+  // The name "New action…" gives an action made for this element: its name,
+  // else its label, else its kind
+  readonly property string actionName: root.element?.name || root.readBind("label") || I18n.tr(root.kind?.label ?? "")
   // What {value} reads as in the previewed sample, for the Runs line under a trigger
-  readonly property string valueText: root.element?.bind?.value && root.editor.previewFields ? CustomWidgetData.asText(CustomWidgetData.elementValue(root.editor.previewFields, root.element.bind.value)) : ""
+  readonly property string valueText: root.readBind("value")
 
-  // A path clicked in the Data panel: bound to the slot last started in on
-  // this element, else to a new Text
-  function bindPath(path) {
-    const at = root.lastSlot.indexOf("|");
-    if (root.element && at > 0 && root.lastSlot.slice(0, at) === root.elementKey) {
-      root.editor.setElement(["bind", root.lastSlot.slice(at + 1)], path);
-      return;
-    }
-    // A full module adds nothing: then there is no new element to bind
-    const was = root.grid.selected;
-    root.grid.addModule("Text");
-    if (root.grid.selected === was)
-      return;
-    root.editor.setElement(["bind", "text"], path);
-  }
+  // The slots the Shows group lists: the kind's own. (show and tone, which
+  // every kind has, are no text fields: they go with the colours)
+  readonly property var shownSlots: (root.kind?.slots ?? []).filter(slot => slot !== "show" && slot !== "tone")
 
-  // A slot's title in the Shows group: the kinds' slot names (translated as
-  // they are), the two every kind has (show and tone) and a Sparkline's second series
+  // A slot's title in the Shows group. The names are the kinds' slots:
+  // I18n.tr("Text") I18n.tr("Value") I18n.tr("Unit") I18n.tr("Label") I18n.tr("Icon")
+  // I18n.tr("Badge") I18n.tr("Items") I18n.tr("Image") I18n.tr("State") I18n.tr("Min")
+  // I18n.tr("Max") I18n.tr("Placeholder") I18n.tr("Enabled") I18n.tr("Second value")
   function slotTitle(name) {
-    return name === "show" ? I18n.tr("Show when") : name === "tone" ? I18n.tr("Color by") : name === "value2" ? I18n.tr("Second value") : I18n.tr(name);
+    const titles = {
+      "text": I18n.tr("Text"),
+      "value": I18n.tr("Value"),
+      "value2": I18n.tr("Second value"),
+      "unit": I18n.tr("Unit"),
+      "label": I18n.tr("Label"),
+      "icon": I18n.tr("Icon"),
+      "badge": I18n.tr("Badge"),
+      "items": I18n.tr("Items"),
+      "image": I18n.tr("Image"),
+      "state": I18n.tr("State"),
+      "min": I18n.tr("Min"),
+      "max": I18n.tr("Max"),
+      "placeholder": I18n.tr("Placeholder"),
+      "enabled": I18n.tr("Enabled")
+    };
+    return titles[name] ?? name;
   }
 
-  // What an empty slot means: the output's own key, for show and tone
-  // nothing (always shown, not coloured)
-  function slotOptions(name) {
-    const none = name === "show" ? I18n.tr("Always") : I18n.tr("Not colored");
-    return name === "show" || name === "tone" ? [
-      {
-        "value": "",
-        "label": none
-      }
-    ].concat(root.bindOptions.slice(1)) : root.bindOptions;
+  // What an empty slot means. Most fall back to the output's own key; a
+  // Button's label to its action's name; `enabled` is always on; a Button's
+  // icon and value, a Toggle's label and an Entry's placeholder are empty
+  function slotPlaceholder(name) {
+    const type = root.element?.type ?? "";
+    if (name === "enabled")
+      return I18n.tr("Always");
+    if (type === "Button")
+      return name === "label" ? I18n.tr("The action's name") : "";
+    if (type === "Entry" || (type === "Toggle" && name === "label"))
+      return "";
+    return I18n.tr("The output's own");
+  }
+
+  // What a slot's {value} is for, where it isn't plain
+  function slotDescription(name) {
+    return root.element?.type === "Button" && name === "value" ? I18n.tr("Sent to the action as {value}") : "";
   }
 
   spacing: Widget.spacing * 2
 
-  // Slot names, shown as is: I18n.tr("text") I18n.tr("value")
-  // I18n.tr("unit") I18n.tr("label") I18n.tr("icon") I18n.tr("badge")
-  // I18n.tr("items") I18n.tr("image") I18n.tr("state") I18n.tr("min")
-  // I18n.tr("max") I18n.tr("placeholder") I18n.tr("enabled")
-
   // The library: drag one onto the module, or click it to add it where
-  // there's room. Always there, as a group that folds away
-  FoldingSection {
+  // there's room. It is the whole of the nothing-selected state
+  FieldGroup {
+    visible: !root.element
+    Layout.fillWidth: true
     title: I18n.tr("Add an element")
     description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
-    collapsed: root.libraryFolded
-    onToggled: root.libraryFolded = !root.libraryFolded
 
-    Loader {
-      active: !root.libraryFolded
+    Flow {
       Layout.fillWidth: true
-      // A Flow's height comes from its width
-      Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
+      spacing: Widget.spacing
 
-      sourceComponent: Flow {
-        width: parent?.width ?? 0
-        spacing: Widget.spacing
+      Repeater {
+        model: CustomWidgetsConfig.elementKinds
 
-        Repeater {
-          model: CustomWidgetsConfig.elementKinds
-
-          ModuleChip {
-            required property var modelData
-            dragLayer: root.dragLayer
-            // Kind labels: the schema's
-            typeInfo: modelData
-            onClicked: root.grid.addModule(modelData.type)
-          }
+        ModuleChip {
+          required property var modelData
+          dragLayer: root.dragLayer
+          // Kind labels: the schema's
+          typeInfo: modelData
+          onClicked: root.grid.addModule(modelData.type)
         }
       }
     }
@@ -153,7 +123,7 @@ ColumnLayout {
     id: selected
     Layout.fillWidth: true
     Layout.preferredHeight: selected.childrenRect.height
-    key: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
+    key: root.elementKey
 
     sourceComponent: ColumnLayout {
       width: selected.width
@@ -177,14 +147,10 @@ ColumnLayout {
       }
 
       // Shown on the canvas: empty, the kind
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing
+      InspectorRow {
+        first: true
+        label: I18n.tr("Name")
 
-        StyledLabel {
-          Layout.preferredWidth: Widget.textPx(70)
-          text: I18n.tr("Name")
-        }
         StyledTextEntry {
           id: nameEntry
           Layout.fillWidth: true
@@ -201,80 +167,34 @@ ColumnLayout {
       }
 
       FieldGroup {
-        visible: (root.kind?.slots.length ?? 0) > 0
+        visible: root.shownSlots.length > 0
         Layout.fillWidth: true
         title: I18n.tr("Shows")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Type text, or insert {a value}.")
+        }
 
-        Repeater {
-          model: root.kind?.slots ?? []
+        ColumnLayout {
+          Layout.fillWidth: true
+          spacing: 0
 
-          ColumnLayout {
-            id: slot
-            required property string modelData
-            readonly property var now: root.nowOf(root.element?.bind?.[slot.modelData] ?? "")
-            Layout.fillWidth: true
-            spacing: Widget.spacing / 2
+          // By count over the kind's slots
+          Repeater {
+            model: root.shownSlots
 
-            RowLayout {
+            ValueField {
+              id: field
+              required property string modelData
+              required property int index
               Layout.fillWidth: true
-              spacing: Widget.spacing
-
-              StyledLabel {
-                Layout.preferredWidth: Widget.textPx(70)
-                text: root.slotTitle(slot.modelData)
-              }
-              SquareIconButton {
-                iconText: "help"
-                tooltipText: I18n.tr("What a slot reads")
-                onClicked: root.editor.openHelp("slots")
-              }
-              StyledComboEntry {
-                id: combo
-                Layout.fillWidth: true
-                editable: true
-                placeholderText: root.slotOptions(slot.modelData)[0].label
-                value: root.element?.bind?.[slot.modelData] ?? ""
-                options: root.slotOptions(slot.modelData)
-                onPicked: value => {
-                  root.lastSlot = root.elementKey + "|" + slot.modelData;
-                  root.editor.setElement(["bind", slot.modelData], value === "" ? undefined : value);
-                }
-
-                Connections {
-                  target: combo.input
-                  function onActiveFocusChanged() {
-                    if (combo.input.activeFocus)
-                      root.lastSlot = root.elementKey + "|" + slot.modelData;
-                  }
-                }
-              }
-            }
-            // What it reads in the previewed sample
-            StyledText {
-              visible: slot.now.text !== "" || slot.now.missing
-              Layout.fillWidth: true
-              Layout.leftMargin: Widget.textPx(70) + Widget.spacing
-              text: slot.now.missing ? I18n.tr("Nothing at this path in the previewed sample") : I18n.tr("now: {0}", slot.now.text)
-              role: "caption"
-              tone: slot.now.missing ? "warning" : "muted"
-              textFamily: slot.now.missing ? Appearance.fontFamily : "monospace"
-              overflow: "line"
+              first: field.index === 0
+              slot: field.modelData
+              label: root.slotTitle(field.modelData)
+              description: root.slotDescription(field.modelData)
+              placeholder: root.slotPlaceholder(field.modelData)
             }
           }
-        }
-      }
-
-      FieldGroup {
-        visible: Object.keys(root.kind?.options ?? {}).length > 0
-        Layout.fillWidth: true
-        title: I18n.tr("Look")
-
-        SchemaPropertiesForm {
-          Layout.fillWidth: true
-          propertiesSchema: root.kind?.options ?? ({})
-          order: root.kind?.optionsOrder ?? []
-          values: root.element?.options ?? ({})
-          onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
         }
       }
 
@@ -305,24 +225,28 @@ ColumnLayout {
           }
         }
       }
-    }
-  }
 
-  // What the output holds, by path: a click binds it to the slot last
-  // started in, or adds a Text showing it
-  FoldingSection {
-    visible: root.editor.bindPaths.length > 0
-    title: I18n.tr("Data")
-    description: I18n.tr("Click a value to bind it to the slot you were in, or to a new text.")
-    collapsed: !root.dataOpen
-    onToggled: root.dataOpen = !root.dataOpen
+      FieldGroup {
+        visible: Object.keys(root.kind?.options ?? {}).length > 0
+        Layout.fillWidth: true
+        title: I18n.tr("Look")
 
-    CustomWidgetPaths {
-      Layout.fillWidth: true
-      paths: root.editor.bindPaths
-      maxRows: 100
-      pickable: true
-      onPicked: path => root.bindPath(path)
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: root.kind?.options ?? ({})
+          order: root.kind?.optionsOrder ?? []
+          values: root.element?.options ?? ({})
+          onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
+        }
+      }
+
+      StyledTextButton {
+        Layout.alignment: Qt.AlignRight
+        implicitHeight: Widget.height
+        kind: "text"
+        text: I18n.tr("More in Help")
+        onClicked: root.editor.openHelp("slots")
+      }
     }
   }
 }

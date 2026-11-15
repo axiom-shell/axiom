@@ -26,7 +26,7 @@ properties:
     title: Output
     enum: [waybar, json, text]
     default: waybar
-    x-enumLabels: {waybar: Waybar (JSON or text lines), json: JSON, text: Plain text}
+    x-enumLabels: {waybar: Auto, json: Auto (JSON), text: Plain text}
   execIf:
     x-scope: commands
     type: string

@@ -30,6 +30,119 @@ TestCase {
     }, "text ignores the JSON");
   }
 
+  function test_parseAuto() {
+    for (const format of ["waybar", "json"]) {
+      compare(CustomWidgetData.parse("[1,2,3]", [1, 2, 3], format, false), {
+        "text": "3",
+        "value": 3,
+        "items": [1, 2, 3]
+      }, format + ": an array is its items");
+      compare(CustomWidgetData.parse("\"hi\"", "hi", format, false), {
+        "text": "hi",
+        "value": "hi"
+      }, format + ": a string");
+      compare(CustomWidgetData.parse("42", 42, format, false), {
+        "text": "42",
+        "value": 42
+      }, format + ": a number");
+      compare(CustomWidgetData.parse("true", true, format, false), {
+        "text": "true",
+        "value": true
+      }, format + ": a boolean");
+      compare(CustomWidgetData.parse("a\nb\nwarning", undefined, format, false), {
+        "text": "a",
+        "tooltip": "b",
+        "class": "warning"
+      }, format + ": text lines");
+      compare(CustomWidgetData.parse("a b", undefined, format, true), {
+        "text": "a b"
+      }, format + ": a streamed line is only text");
+    }
+    compare(CustomWidgetData.parse("[1]", [1], "text", false), {
+      "text": "[1]"
+    }, "text ignores the JSON");
+  }
+
+  function test_rowsMap() {
+    const items = [
+      {
+        "name": "Docs",
+        "size": "3 GB",
+        "id": "d1",
+        "player": {
+          "title": "T"
+        }
+      },
+      "plain"];
+    const rows = CustomWidgetData.rows(items, {
+      "text": "{name}",
+      "subtext": "{size} used",
+      "icon": "folder",
+      "id": "{player.title}"
+    });
+    compare(rows[0].text, "Docs", "one {key}: the row's value");
+    compare(rows[0].subtext, "3 GB used", "typed text around a key");
+    compare(rows[0].icon, "folder", "typed text is literal");
+    compare(rows[0].id, "T", "a path in the row");
+    compare(rows[0].raw, items[0], "the item is kept");
+    compare(rows[1].text, "plain", "a plain string is its text");
+    compare(rows[1].subtext, "", "a plain string has the rest empty");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a"
+      }
+    ], {
+      "text": "{text}",
+      "subtext": "{subtext}",
+      "icon": "{icon}",
+      "id": ""
+    })[0].subtext, "", "a key the row lacks is empty");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "id": "x"
+      }
+    ], {
+      "text": "{text}",
+      "subtext": "",
+      "icon": "",
+      "id": ""
+    })[0].id, "", "an empty id stays empty");
+  }
+
+  function test_ownValue() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "unit": "%",
+      "cpu": {
+        "temp": 70
+      }
+    });
+    compare(CustomWidgetData.ownValue(f, {}, "unit"), "%", "unbound: the output's own");
+    compare(CustomWidgetData.ownValue(f, {
+      "unit": "{cpu.temp}"
+    }, "unit"), 70, "bound");
+    compare(CustomWidgetData.ownValue(f, {
+      "unit": ""
+    }, "unit"), "%", "empty is unbound");
+    compare(CustomWidgetData.ownValue(f, {
+      "unit": "°C"
+    }, "unit"), "°C", "typed text");
+  }
+
+  function test_unknownPaths() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "cpu": {
+        "temp": 70
+      }
+    });
+    compare(CustomWidgetData.unknownPaths(f, "{cpu.temp}° {text}"), [], "all known");
+    compare(CustomWidgetData.unknownPaths(f, "{nope} {cpu.nope} {nope}"), ["nope", "cpu.nope"], "each unknown once");
+    compare(CustomWidgetData.unknownPaths(f, "plain"), [], "typed text reads nothing");
+    compare(CustomWidgetData.unknownPaths(null, "{a}"), ["a"], "no sample: unknown");
+  }
+
   function test_flatten() {
     const paths = CustomWidgetData.flatten({
       "text": "x",
@@ -410,11 +523,11 @@ TestCase {
     compare(CustomWidgetData.elementValue(CustomWidgetData.resolve({}, {
       "text": "x",
       "interactive": "mine"
-    }), "interactive"), "mine");
+    }), "{interactive}"), "mine");
     compare(CustomWidgetData.elementValue(CustomWidgetData.resolve({}, {
       "text": "x",
       "failure": "mine"
-    }), "failure"), "mine");
+    }), "{failure}"), "mine");
   }
 
   function test_pango() {
@@ -534,20 +647,30 @@ TestCase {
       "percentage": 50,
       "cpu": {
         "temp": 70
-      }
+      },
+      "list": [1, 2]
     });
-    compare(CustomWidgetData.elementValue(f, "percentage"), 50, "a field");
-    compare(CustomWidgetData.elementValue(f, "cpu.temp"), 70, "a path");
+    compare(CustomWidgetData.elementValue(f, ""), undefined, "empty: the output's own");
+    compare(CustomWidgetData.elementValue(f, undefined), undefined);
+    compare(CustomWidgetData.elementValue(f, "{percentage}"), 50, "one {path}: a field, raw");
+    compare(CustomWidgetData.elementValue(f, "{cpu.temp}"), 70, "one {path}: a path, raw");
+    compare(CustomWidgetData.elementValue(f, "{list}"), [1, 2], "one {path}: a list");
+    compare(CustomWidgetData.elementValue(f, "{text}"), "x", "one {text}: the plain text");
+    compare(CustomWidgetData.elementValue(f, "{}"), "x", "{} is the text");
+    compare(CustomWidgetData.elementValue(f, "{nope}"), undefined, "one {path} missing");
     compare(CustomWidgetData.elementValue(f, "{cpu.temp}°C"), "70°C", "a format");
+    compare(CustomWidgetData.elementValue(f, "CPU {cpu.temp}"), "CPU 70", "typed text around a path");
+    compare(CustomWidgetData.elementValue(f, "{cpu.temp} {nope}"), "70 {nope}", "an unknown {x} stays as typed");
+    compare(CustomWidgetData.elementValue(f, "percentage"), "percentage", "a bare word is literal");
+    compare(CustomWidgetData.elementValue(f, "cpu.temp"), "cpu.temp", "a bare path is literal");
     compare(CustomWidgetData.elementValue(f, "100"), 100, "a number typed");
-    compare(CustomWidgetData.elementValue(f, "=Show answer"), "Show answer", "a literal");
-    compare(CustomWidgetData.elementValue(f, "=5"), "5", "a literal number is text");
-    compare(CustomWidgetData.elementValue(f, "={x}"), "{x}", "a literal format is not filled");
-    compare(CustomWidgetData.elementValue(f, "="), "", "an empty literal");
-    compare(CustomWidgetData.elementValue(f, "=cpu.temp"), "cpu.temp", "a literal is no path");
+    compare(CustomWidgetData.elementValue(f, "-2.5"), -2.5, "a negative decimal");
+    compare(CustomWidgetData.elementValue(f, "5%"), "5%", "not a number");
+    compare(CustomWidgetData.elementValue(f, "=Show answer"), "=Show answer", "= means nothing special");
+    compare(CustomWidgetData.elementValue(f, "=5"), "=5", "= then a number is text");
     compare(CustomWidgetData.elementRatio(f, {}), 0.5, "no binding: the output's own");
     compare(CustomWidgetData.elementRatio(f, {
-      "value": "cpu.temp",
+      "value": "{cpu.temp}",
       "min": "20",
       "max": "120"
     }), 0.5, "value, min and max bound");
@@ -563,10 +686,10 @@ TestCase {
     });
     compare(CustomWidgetData.elementRatio(mem, {}), 0.25, "the output's max, not 100");
     compare(CustomWidgetData.elementRatio(mem, {
-      "value": "items.0.value"
+      "value": "{items.0.value}"
     }), 0.5, "a bound value keeps the output's max");
     compare(CustomWidgetData.elementRange(mem, {
-      "value": "nope"
+      "value": "{nope}"
     }).value, undefined);
   }
 
@@ -599,11 +722,11 @@ TestCase {
       "colorNames": "c",
       "interactive": "i"
     });
-    compare(CustomWidgetData.elementValue(own, "states"), "mine", "a sample's own states");
-    compare(CustomWidgetData.elementValue(own, "actions"), "ours", "its own actions");
-    compare(CustomWidgetData.elementValue(own, "failure"), "f", "its own failure");
-    compare(CustomWidgetData.elementValue(own, "colorNames"), "c", "its own colorNames");
-    compare(CustomWidgetData.elementValue(own, "interactive"), "i", "its own interactive");
+    compare(CustomWidgetData.elementValue(own, "{states}"), "mine", "a sample's own states");
+    compare(CustomWidgetData.elementValue(own, "{actions}"), "ours", "its own actions");
+    compare(CustomWidgetData.elementValue(own, "{failure}"), "f", "its own failure");
+    compare(CustomWidgetData.elementValue(own, "{colorNames}"), "c", "its own colorNames");
+    compare(CustomWidgetData.elementValue(own, "{interactive}"), "i", "its own interactive");
     compare(CustomWidgetData.elementValue(own, "{states}"), "mine", "a format reads the sample's too");
   }
 
@@ -619,25 +742,25 @@ TestCase {
     verify(CustomWidgetData.elementShown(f, undefined), "no bind: shown");
     verify(CustomWidgetData.elementShown(f, {}), "no show: shown");
     verify(CustomWidgetData.elementShown(f, {
-      "show": "on"
+      "show": "{on}"
     }), "true");
     verify(!CustomWidgetData.elementShown(f, {
-      "show": "off"
+      "show": "{off}"
     }), "false");
     verify(!CustomWidgetData.elementShown(f, {
-      "show": "zero"
+      "show": "{zero}"
     }), "\"0\"");
     verify(!CustomWidgetData.elementShown(f, {
-      "show": "blank"
+      "show": "{blank}"
     }), "empty");
     verify(!CustomWidgetData.elementShown(f, {
-      "show": "missing.path"
+      "show": "{missing.path}"
     }), "a missing path");
     verify(CustomWidgetData.elementShown(f, {
-      "show": "word"
+      "show": "{word}"
     }), "yes");
     verify(CustomWidgetData.elementShown(f, {
-      "show": "=1"
+      "show": "1"
     }), "a literal 1");
   }
 
@@ -660,30 +783,30 @@ TestCase {
       "colorNames": ["accent", "error", "warning"]
     });
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "level"
+      "tone": "{level}"
     }), "error", "a word in states");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "mode"
+      "tone": "{mode}"
     }), "accent");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "theme"
+      "tone": "{theme}"
     }), "warning", "a theme name passes through");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "hex"
+      "tone": "{hex}"
     }), "", "a hex colours nothing");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "other"
+      "tone": "{other}"
     }), "", "an unknown word");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "kind"
+      "tone": "{kind}"
     }), "error", "a built-in state word");
     compare(CustomWidgetData.elementTone(f, {}), "", "unbound");
     compare(CustomWidgetData.elementTone(f, undefined), "", "no bind");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "toString"
+      "tone": "{toString}"
     }), "", "a word naming an Object member is no state");
     compare(CustomWidgetData.elementTone(f, {
-      "tone": "=error"
+      "tone": "error"
     }), "error", "a literal word");
   }
 
@@ -757,7 +880,11 @@ TestCase {
         "id": "",
         "state": "",
         "max": undefined,
-        "image": ""
+        "image": "",
+        "raw": {
+          "text": "a",
+          "value": "3"
+        }
       },
       {
         "text": "b",
@@ -767,7 +894,8 @@ TestCase {
         "id": "",
         "state": "",
         "max": undefined,
-        "image": ""
+        "image": "",
+        "raw": "b"
       }
     ], "objects read, plain entries are their text");
     compare(CustomWidgetData.rows([
@@ -865,6 +993,12 @@ TestCase {
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
     compare(CustomWidgetData.defaultElements([4, 2], false)[0].type, "Icon");
     compare(els[1].options.align, "left", "the text against the icon");
+    compare(els[0].bind, {
+      "value": "{value}"
+    }, "the ring shows the output's value");
+    compare(els[1].bind, {
+      "text": "{text}"
+    }, "the text shows the output's text");
   }
 
   function test_stripJsonc() {
@@ -950,6 +1084,18 @@ TestCase {
         continue;
       const f = CustomWidgetData.resolve(preset, CustomWidgetData.parse("on", undefined, preset.output ?? "waybar", preset.mode === "stream"));
       verify(typeof f.text === "string", preset.name);
+    }
+    // Text fields are typed text or {paths}: no bare word reads data, no `=`
+    for (const preset of CustomWidgetData.presets) {
+      for (const e of CustomWidgetData.allElements(preset.module)) {
+        for (const slot of Object.keys(e.bind ?? {})) {
+          const b = e.bind[slot];
+          verify(b[0] !== "=", preset.name + "/" + e.id + "." + slot + " has no =");
+          if (["state", "tone"].indexOf(slot) >= 0)
+            verify(b.indexOf("{") === 0, preset.name + "/" + e.id + "." + slot + " reads data as {path}");
+        }
+        verify(e.options?.label === undefined && e.options?.placeholder === undefined && (e.type !== "Button" || e.options?.icon === undefined), preset.name + "/" + e.id + " keeps its labels in bind");
+      }
     }
   }
 
@@ -1973,7 +2119,7 @@ TestCase {
           {
             "type": "Text",
             "bind": {
-              "text": "=Hello"
+              "text": "Hello"
             }
           },
           {

@@ -21,7 +21,7 @@ CustomElementBase {
       return v !== 0;
     return ["true", "on", "yes", "1", "enabled", "active"].indexOf(String(v ?? "").toLowerCase()) >= 0;
   }
-  readonly property string label: root.bind.label ? root.text("label") : root.options.label
+  readonly property string label: root.text("label")
   // The state just set, until the next sample (-1: none)
   property int held: -1
   onFieldsChanged: root.held = -1

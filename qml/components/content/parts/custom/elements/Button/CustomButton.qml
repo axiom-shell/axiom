@@ -7,8 +7,8 @@ import qs.components.reusable
 import qs.components.methods
 import qs.components.content.parts.custom
 
-// A custom widget's Button element: an icon and label (each from its
-// option unless bound, else the action's name) that run its click action
+// A custom widget's Button element: an icon and label (each its text field,
+// the label else the action's name) that run its click action
 // (`value` is the {value}; off while the sample, a hold or a failing script
 // turns it off, or its `enabled` slot is false); with no action it does
 // nothing. A `color` makes it a filled Surface in that colour; `disabled: hide`
@@ -21,8 +21,8 @@ CustomElementBase {
 
   // The first press of a `confirm` button was made, until it runs or 3 s pass
   property bool asking: false
-  readonly property string label: root.asking ? I18n.tr("Confirm?") : root.bind.label ? root.text("label") : root.options.label || (root.actionFor("click")?.name ?? "")
-  readonly property string icon: root.bind.icon ? root.text("icon") : root.options.icon
+  readonly property string label: root.asking ? I18n.tr("Confirm?") : root.bind.label ? root.text("label") : (root.actionFor("click")?.name ?? "")
+  readonly property string icon: root.text("icon")
   // Its `enabled` binding has it off
   readonly property bool slotOff: !!root.bind.enabled && !CustomWidgetData.truthy(root.value("enabled"))
   // The script or the binding has it off

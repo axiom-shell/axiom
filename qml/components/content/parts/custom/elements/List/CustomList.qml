@@ -20,8 +20,8 @@ CustomElementBase {
   readonly property bool across: root.options.orientation === "horizontal"
   // A row's icon is an icon of the desktop icon theme, drawn as its picture
   readonly property bool themed: root.options.iconSource === "theme"
-  // The output's items are rows already; a bound list is made them
-  readonly property var rows: root.bind.items ? CustomWidgetData.rows(root.value("items")) : (root.fields?.items ?? [])
+  // The output's items, or a bound list, made rows by the element's `row` map
+  readonly property var rows: CustomWidgetData.rows(root.bind.items ? root.value("items") : root.fields?.sample?.items, root.options.row)
   onRowsChanged: root._fill()
   // Its icon source changing redraws the same rows
   onThemedChanged: root._fill()

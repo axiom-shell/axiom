@@ -30,35 +30,45 @@ QtObject {
     })
 
   // A sample (an object) from one output: `text` (the trimmed output),
-  // `value` (it parsed as JSON, or undefined) and the definition's `format`:
-  //   "waybar": a JSON object as is; otherwise lines text, tooltip, class
-  //   "json":   a JSON object as is; any other JSON value as { text, value }
-  //   "text":   { text }
-  // `stream`: each output is one line of a stream (Waybar reads only the
-  // text from such a line when it isn't JSON)
+  // `value` (it parsed as JSON, or undefined) and the definition's `format`.
+  // "waybar" and "json" are both Auto:
+  //   a JSON object: as it is
+  //   a JSON array: { text: its length, value: its length, items: the array }
+  //   any other JSON value: { text: String(v), value: v }
+  //   not JSON: Waybar's lines (text, tooltip, class), or only the text for
+  //             a stream line
+  //   "text":   { text }, the JSON ignored
   function parse(text, value, format, stream) {
-    const isObject = value !== null && typeof value === "object" && !Array.isArray(value);
-    if (format !== "text" && isObject)
-      return value;
-    if (format === "json" && value !== undefined)
+    if (format === "text")
       return {
-        "text": typeof value === "string" ? value : JSON.stringify(value),
+        "text": text ?? ""
+      };
+    if (value !== null && typeof value === "object" && !Array.isArray(value))
+      return value;
+    if (Array.isArray(value))
+      return {
+        "text": String(value.length),
+        "value": value.length,
+        "items": value
+      };
+    if (value !== undefined)
+      return {
+        "text": String(value),
         "value": value
       };
-    if (format === "waybar" && !stream) {
-      const lines = (text ?? "").split("\n");
-      const sample = {
-        "text": lines[0] ?? ""
+    if (stream)
+      return {
+        "text": text ?? ""
       };
-      if (lines.length > 1)
-        sample.tooltip = lines[1];
-      if (lines.length > 2)
-        sample.class = lines[2];
-      return sample;
-    }
-    return {
-      "text": text ?? ""
+    const lines = (text ?? "").split("\n");
+    const sample = {
+      "text": lines[0] ?? ""
     };
+    if (lines.length > 1)
+      sample.tooltip = lines[1];
+    if (lines.length > 2)
+      sample.class = lines[2];
+    return sample;
   }
 
   // A value as text: "" for nothing, JSON for an object or list
@@ -69,9 +79,12 @@ QtObject {
   // A list of rows (an output's items, or a bound list) as
   // { text, icon, value (a number, or undefined), subtext, id, state (its
   // tone's word), max (a number above 0 that a numeric value is out of, else
-  // undefined: the row draws a meter), image (a path or URL) }: a plain
-  // entry is its text, the rest empty; anything not a list is none
-  function rows(v) {
+  // undefined: the row draws a meter), image (a path or URL), raw (the
+  // item) }: a plain entry is its text, the rest empty; anything not a list
+  // is none. `map` (a List's `row`: { text, subtext, icon, id }, each typed
+  // text or {key} of the item, a path reaching into it) says where those four
+  // come from; without it each is the item's key of that name.
+  function rows(v, map) {
     if (!Array.isArray(v))
       return [];
     return v.map(i => {
@@ -84,20 +97,37 @@ QtObject {
           "id": "",
           "state": "",
           "max": undefined,
-          "image": ""
+          "image": "",
+          "raw": i
         };
       const value = root._number(i.value);
       const max = root._number(i.max);
+      const own = key => map ? root._rowText(map[key], i) : root.asText(i[key]);
       return {
-        "text": root.asText(i.text),
-        "icon": root.asText(i.icon),
+        "text": own("text"),
+        "icon": own("icon"),
         "value": value,
-        "subtext": root.asText(i.subtext),
-        "id": root.asText(i.id),
+        "subtext": own("subtext"),
+        "id": own("id"),
         "state": root.asText(i.state),
         "max": value !== undefined && max !== undefined && max > 0 ? max : undefined,
-        "image": root.asText(i.image)
+        "image": root.asText(i.image),
+        "raw": i
       };
+    });
+  }
+
+  // A row-mapping field against a row: typed text as it is, {key} (one, alone)
+  // the row's value of it, else the text filled; a key the row lacks is empty
+  function _rowText(template, item) {
+    const t = String(template ?? "");
+    if (t.indexOf("{") < 0)
+      return t;
+    const one = /^\{([^{}:]*)\}$/.exec(t);
+    if (one)
+      return root.asText(root.get(item, one[1] === "" || one[1] === "0" ? "text" : one[1]));
+    return root.fill(t, {
+      "_sample": item
     });
   }
 
@@ -142,10 +172,13 @@ QtObject {
   // `values`: `{}` and `{0}` are the text; `{name}` (a field, or a path in
   // the sample) its value; a `:spec` after the name is ignored. Unknown
   // names fill nothing.
-  function fill(template, values) {
+  // With `keepUnknown` a name that is no field and no path stays as typed.
+  function fill(template, values, keepUnknown) {
     return String(template ?? "").replace(/\{([^{}:]*)(?::[^{}]*)?\}/g, (match, name) => {
       const key = name === "" || name === "0" ? "text" : name;
-      return root.asText(key in values ? values[key] : root.get(values._sample, key));
+      const known = key in values;
+      const v = known ? values[key] : root.get(values._sample, key);
+      return keepUnknown && !known && v === undefined ? match : root.asText(v);
     });
   }
 
@@ -459,19 +492,26 @@ QtObject {
   // binding of one reads the sample's
   readonly property var _internalFields: ["states", "colorNames", "actions", "interactive", "failure"]
 
-  // An element's own binding: a literal when it starts with "=" (the rest,
-  // as text: `=Show answer`, `=task_alt`, `=5`), a format when it has a "{"
-  // (filled from the resolved fields, then the sample), else a field name,
-  // else a path in the sample. Returns the raw value (a format: its string).
+  // What a text field of an element reads as (an element's `bind`): "" is
+  // nothing (undefined: the slot falls back to the output's own key); exactly
+  // one {path} alone is the value itself (a field of `fields`, else a path in
+  // the sample: a list, a number, text; undefined when missing); other text
+  // with a "{" is filled ({text} is the plain text; a {x} that is no field and
+  // no path stays as typed); anything else is typed text, a number when it is one.
   function elementValue(fields, binding) {
-    if (!binding)
+    if (binding === undefined || binding === null || binding === "")
       return undefined;
     const b = String(binding);
-    if (b[0] === "=")
-      return b.slice(1);
-    // A number typed as the binding (a max of 100)
-    if (/^-?\d+(\.\d+)?$/.test(b.trim()))
-      return Number(b);
+    const one = /^\{([^{}:]*)\}$/.exec(b);
+    if (one) {
+      const key = one[1] === "" || one[1] === "0" ? "text" : one[1];
+      if (key === "text" && fields)
+        return fields.plain;
+      // `sample` and resolve's own bookkeeping aren't fields a script prints
+      if (fields && key in fields && key !== "sample" && root._internalFields.indexOf(key) < 0)
+        return fields[key];
+      return root.get(fields?.sample, key);
+    }
     if (b.indexOf("{") >= 0) {
       const values = Object.assign({}, fields, {
         "_sample": fields?.sample,
@@ -480,12 +520,30 @@ QtObject {
       });
       for (const key of root._internalFields)
         delete values[key];
-      return root.fill(b, values);
+      return root.fill(b, values, true);
     }
-    // `sample` and resolve's own bookkeeping aren't fields a script prints
-    if (fields && b in fields && b !== "sample" && root._internalFields.indexOf(b) < 0)
-      return fields[b];
-    return root.get(fields?.sample, b);
+    return /^-?\d+(\.\d+)?$/.test(b.trim()) ? Number(b) : b;
+  }
+
+  // The {paths} of a text field that read nothing in `fields` (no field, no
+  // path in the sample): what the editor warns about
+  function unknownPaths(fields, binding) {
+    const out = [];
+    const re = /\{([^{}:]*)(?::[^{}]*)?\}/g;
+    let m;
+    while ((m = re.exec(String(binding ?? ""))) !== null) {
+      const key = m[1] === "" || m[1] === "0" ? "text" : m[1];
+      const field = key === "text" || (fields && key in fields && key !== "sample" && root._internalFields.indexOf(key) < 0);
+      if (!field && root.get(fields?.sample, key) === undefined && out.indexOf(key) < 0)
+        out.push(key);
+    }
+    return out;
+  }
+
+  // An element's slot as the element reads it: its text field when typed,
+  // else the output's own `slot` (an unbound text shows the output's text)
+  function ownValue(fields, bind, slot) {
+    return bind?.[slot] ? root.elementValue(fields, bind[slot]) : fields?.[slot];
   }
 
   // Whether an element is shown: its `show` binding holds (truthy), or it
@@ -666,7 +724,7 @@ QtObject {
   // I18n.tr("Previous") I18n.tr("Play or pause") I18n.tr("Next")
   // Descriptions: I18n.tr("Habits to check off each day, with streaks")
   // Daily habits' texts, which CustomWidgetsEditor.add translates (the
-  // `=` literals, options and screen names): I18n.tr("Habits")
+  // typed texts, labels and screen names): I18n.tr("Habits")
   // I18n.tr("All done today") I18n.tr("Add your first habit below")
   // I18n.tr("New habit") I18n.tr("Open") I18n.tr("Done") I18n.tr("Empty")
   readonly property var presets: [
@@ -898,7 +956,7 @@ QtObject {
               "h": 2
             },
             "bind": {
-              "text": "=Habits"
+              "text": "Habits"
             },
             "options": {
               "align": "left",
@@ -916,7 +974,7 @@ QtObject {
             },
             "bind": {
               "text": "{text}",
-              "tone": "state"
+              "tone": "{state}"
             },
             "options": {
               "align": "right"
@@ -934,8 +992,10 @@ QtObject {
             "run": {
               "click": "undo"
             },
+            "bind": {
+              "icon": "undo"
+            },
             "options": {
-              "icon": "undo",
               "disabled": "hide"
             }
           },
@@ -951,7 +1011,7 @@ QtObject {
             "run": {
               "submit": "add"
             },
-            "options": {
+            "bind": {
               "placeholder": "New habit"
             }
           }
@@ -1000,8 +1060,8 @@ QtObject {
                   "h": 6
                 },
                 "bind": {
-                  "icon": "=task_alt",
-                  "tone": "state"
+                  "icon": "task_alt",
+                  "tone": "{state}"
                 }
               },
               {
@@ -1014,7 +1074,7 @@ QtObject {
                   "h": 2
                 },
                 "bind": {
-                  "text": "=All done today"
+                  "text": "All done today"
                 }
               }
             ]
@@ -1038,7 +1098,7 @@ QtObject {
                   "h": 2
                 },
                 "bind": {
-                  "text": "=Add your first habit below"
+                  "text": "Add your first habit below"
                 }
               }
             ]
@@ -1159,10 +1219,9 @@ QtObject {
             "align": "left",
             "bold": true
           }), root._el("switch", "Toggle", [0, 4, 16, 4], {
-            "state": "state"
-          }, {
+            "state": "{state}",
             "label": "Enabled"
-          }, {
+          }, null, {
             "on": "on",
             "off": "off"
           })],
@@ -1171,15 +1230,15 @@ QtObject {
             "test": "is",
             "values": ["on"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "=lock",
-              "tone": "state"
+              "icon": "lock",
+              "tone": "{state}"
             })]), root._view("off", "Off", {
             "key": "state",
             "test": "is",
             "values": ["off"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "=lock_open",
-              "tone": "state"
+              "icon": "lock_open",
+              "tone": "{state}"
             })])]
       },
       "samples": {
@@ -1252,7 +1311,7 @@ QtObject {
       "module": {
         "size": [4, 4],
         "elements": [root._el("title", "Text", [0, 0, 16, 2], {
-            "text": "=Disks"
+            "text": "Disks"
           }, {
             "align": "left",
             "bold": true
@@ -1318,17 +1377,17 @@ QtObject {
             "text": "{subtext}"
           }, {
             "align": "left"
-          }), root._el("prev", "Button", [0, 8, 4, 3], null, {
+          }), root._el("prev", "Button", [0, 8, 4, 3], {
             "icon": "skip_previous"
-          }, {
+          }, null, {
             "click": "prev"
           }), root._el("toggle", "Button", [6, 8, 4, 3], {
-            "icon": "icon"
+            "icon": "{icon}"
           }, null, {
             "click": "toggle"
-          }), root._el("next", "Button", [12, 8, 4, 3], null, {
+          }), root._el("next", "Button", [12, 8, 4, 3], {
             "icon": "skip_next"
-          }, {
+          }, null, {
             "click": "next"
           })],
         "views": [root._view("playing", "Playing", {
@@ -1336,23 +1395,23 @@ QtObject {
             "test": "is",
             "values": ["playing"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "=graphic_eq",
-              "tone": "state"
+              "icon": "graphic_eq",
+              "tone": "{state}"
             })]), root._view("paused", "Paused", {
             "key": "state",
             "test": "is",
             "values": ["paused"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "=pause_circle",
-              "tone": "state"
+              "icon": "pause_circle",
+              "tone": "{state}"
             })]), root._view("nothing", "Nothing", {
             "key": "state",
             "test": "isNot",
             "values": ["playing", "paused"]
           }, [root._el("mark", "Icon", [5, 1, 6, 6], {
-              "icon": "=music_off"
+              "icon": "music_off"
             }), root._el("message", "Text", [0, 8, 16, 3], {
-              "text": "=Nothing playing"
+              "text": "Nothing playing"
             })], false)]
       },
       "samples": {
@@ -1416,9 +1475,9 @@ QtObject {
             "test": "set",
             "values": []
           }, [root._el("mark", "Icon", [0, 0, 4, 4], {
-              "icon": "=error"
+              "icon": "error"
             }), root._el("message", "Text", [4, 0, 12, 4], {
-              "text": "error"
+              "text": "{error}"
             }, {
               "align": "left"
             }), root._el("retry", "Button", [4, 5, 8, 3], null, null, {
@@ -1505,7 +1564,9 @@ QtObject {
           "w": side,
           "h": g.rows
         },
-        "bind": {},
+        "bind": hasValue ? {
+          "value": "{value}"
+        } : {},
         "options": {}
       }
     ];
@@ -1519,7 +1580,9 @@ QtObject {
           "w": g.cols - side,
           "h": g.rows
         },
-        "bind": {},
+        "bind": {
+          "text": "{text}"
+        },
         "options": {
           "align": "left"
         }
@@ -2057,7 +2120,7 @@ QtObject {
       issues.push("actions");
     if (elements.some(e => e.type === "Entry"))
       issues.push("entry");
-    if (elements.some(e => (e.bind?.text ?? "") !== "" && !e.bind.text.startsWith("=")))
+    if (elements.some(e => (e.bind?.text ?? "").indexOf("{") >= 0))
       issues.push("text");
     return issues;
   }

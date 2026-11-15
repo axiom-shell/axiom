@@ -50,7 +50,7 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key. =text is literal. show: hidden while false; tone: a word the definition''s states map to a colour.'
+    description: 'Per field: typed text is shown as it is; {path} inserts a value from the output ({cpu}, {player.title}). Exactly one {path} passes the value itself (a list, a number). Empty: the output''s own key. show: hidden while false; tone: a word the definition''s states map to a colour.'
   options: {type: object, additionalProperties: false, properties: {}}
   run:
     type: object

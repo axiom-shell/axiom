@@ -482,8 +482,8 @@ QtObject {
     root.selectDefinition(local.items.length - 1);
   }
 
-  // A preset's English texts in the user's language: the `=` literals and the
-  // placeholders and labels of its elements, and its actions' and screens' names (the keys
+  // A preset's English texts in the user's language: the typed texts, labels and
+  // placeholders of its elements, and its actions' and screens' names (the keys
   // are listed in CustomWidgetData.presets' comment). A definition with no
   // such text, or a name no key matches, comes back as it is
   function translated(preset) {
@@ -499,18 +499,12 @@ QtObject {
       return def;
     const elements = list => (list ?? []).map(element => {
         const bind = Object.assign({}, element.bind);
-        for (const slot of Object.keys(bind)) {
-          if (typeof bind[slot] === "string" && bind[slot].startsWith("=") && bind[slot].length > 1)
-            bind[slot] = "=" + I18n.tr(bind[slot].slice(1));
-        }
-        const options = Object.assign({}, element.options);
-        for (const key of ["label", "placeholder"]) {
-          if (typeof options[key] === "string" && options[key] !== "")
-            options[key] = I18n.tr(options[key]);
+        for (const slot of ["text", "label", "placeholder"]) {
+          if (typeof bind[slot] === "string" && bind[slot] !== "" && bind[slot].indexOf("{") < 0)
+            bind[slot] = I18n.tr(bind[slot]);
         }
         return Object.assign({}, element, {
-          "bind": bind,
-          "options": options
+          "bind": bind
         });
       });
     const module = Object.assign({}, def.module, {

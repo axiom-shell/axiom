@@ -16,7 +16,7 @@ CustomElementBase {
   StyledTextEntry {
     id: field
     anchors.fill: parent
-    placeholderText: root.bind.placeholder ? root.text("placeholder") : root.options.placeholder
+    placeholderText: root.text("placeholder")
     enabled: root.actionsEnabled && root.keysHost
     onAccepted: {
       const refused = root.runTrigger("submit", field.text);
