@@ -120,8 +120,8 @@ QtObject {
   // no command; any other id runs the definition's action command
   // (invoke.command, {action} {value} {rev} filled in, quoted) and, at
   // exit 0, refreshes the script when the definition asks. `fromIpc`: the
-  // request came from `axiom ipc` (nothing shows the widget to click:
-  // refused while nothing shows it). Returns "" when it ran, else why not:
+  // request comes from the named-action IPC (not added yet): refused while
+  // nothing shows the widget. Returns "" when it ran, else why not:
   // "no widget", "not shown", "locked", "refused", "no action command",
   // "failing" (the script isn't answering), "disabled" (the sample turns
   // it off) or "busy" (another discrete action holds the widget: a double
@@ -283,6 +283,12 @@ QtObject {
     const failed = exitCode !== 0;
     const line = String(stderr ?? "").split("\n").map(l => l.trim()).filter(l => l !== "").pop() ?? "";
     const message = failed ? (line !== "" ? line.slice(0, 300) : I18n.tr("The action failed with code {0}", exitCode)) : "";
+    // a widget no longer shown forgets its runs (_sync)
+    if (!(id in root._watching)) {
+      if (failed)
+        console.log(`[CustomWidgetsManager] ${id}: action ${action} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
+      return;
+    }
     root._lastAction = Object.assign({}, root._lastAction, {
       [id]: {
         "action": action,

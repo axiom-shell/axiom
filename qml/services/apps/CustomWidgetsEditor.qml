@@ -33,9 +33,11 @@ QtObject {
 
   // The selected definition's module elements on their lattice, edited as
   // the layouts editor edits a submenu's modules: moves, resizes, pushes,
-  // the selection and undo (GridEditor; kept from the top left, so the
-  // module's box fits its elements, and inside a module's largest,
-  // module.size's maximum of 8 units, so the definition can be saved)
+  // the selection and undo (GridEditor; kept from the top left while the
+  // definition has no screens, so the module's box fits its elements; with
+  // screens every layer is placed absolutely, as they share one lattice;
+  // and inside a module's largest, module.size's maximum of 8 units, so the
+  // definition can be saved)
   readonly property GridEditor elements: GridEditor {
     modulesOf: () => root._elements()
     host: "overlay"
@@ -43,7 +45,7 @@ QtObject {
         "cols": 8 * CustomWidgetData.subCells,
         "rows": 8 * CustomWidgetData.subCells
       })
-    shiftsBack: true
+    shiftsBack: (root.selected?.module?.views?.length ?? 0) === 0
     scopeKey: root.selectedId + "/" + root.viewIndex
     // The definition's own keys go with each snapshot (every one but the
     // elements, which the history keeps as modules), so undo covers an
@@ -171,7 +173,10 @@ QtObject {
     const def = root._local().items[root.selectedIndex];
     if (!def || !def.module.views[index])
       return;
+    const id = def.module.views[index].id;
     def.module.views.splice(index, 1);
+    if (def.samples && id in def.samples)
+      delete def.samples[id];
     root._apply();
     root.selectView(-1);
   }
