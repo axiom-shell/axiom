@@ -67,24 +67,38 @@ QtObject {
   }
 
   // A list of rows (an output's items, or a bound list) as
-  // { text, icon, value (a number, or undefined), subtext, id }: a plain
-  // entry is its text, its id empty; anything not a list is none
+  // { text, icon, value (a number, or undefined), subtext, id, state (its
+  // tone's word), max (a number above 0 that a numeric value is out of, else
+  // undefined: the row draws a meter), image (a path or URL) }: a plain
+  // entry is its text, the rest empty; anything not a list is none
   function rows(v) {
     if (!Array.isArray(v))
       return [];
-    return v.map(i => i !== null && typeof i === "object" ? {
+    return v.map(i => {
+      if (i === null || typeof i !== "object")
+        return {
+          "text": root.asText(i),
+          "icon": "",
+          "value": undefined,
+          "subtext": "",
+          "id": "",
+          "state": "",
+          "max": undefined,
+          "image": ""
+        };
+      const value = root._number(i.value);
+      const max = root._number(i.max);
+      return {
         "text": root.asText(i.text),
         "icon": root.asText(i.icon),
-        "value": root._number(i.value),
+        "value": value,
         "subtext": root.asText(i.subtext),
-        "id": root.asText(i.id)
-      } : {
-        "text": root.asText(i),
-        "icon": "",
-        "value": undefined,
-        "subtext": "",
-        "id": ""
-      });
+        "id": root.asText(i.id),
+        "state": root.asText(i.state),
+        "max": value !== undefined && max !== undefined && max > 0 ? max : undefined,
+        "image": root.asText(i.image)
+      };
+    });
   }
 
   // A number, or one in a string; undefined otherwise

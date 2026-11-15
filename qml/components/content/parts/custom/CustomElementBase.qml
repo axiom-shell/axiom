@@ -97,6 +97,12 @@ Item {
     return root.actionId !== "" && last && last.failed && last.action === root.actionId ? last : null;
   }
 
+  // An image's source from a path or URL: a URL as it is, else a file
+  // (`~` expanded); "" for none. The Image element's and a List row's
+  function imageUrl(path) {
+    return !path ? "" : /^[a-z]+:\/\//.test(path) ? path : "file://" + Paths.expandHome(path);
+  }
+
   // The ink that reads on `color`, a colour from data (a custom widget's
   // tone): called per element, never per row
   function inkOn(color) {

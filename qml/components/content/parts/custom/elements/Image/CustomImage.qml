@@ -11,7 +11,7 @@ CustomElementBase {
   id: root
 
   readonly property string path: root.text("image", "image")
-  readonly property string source: root.path === "" ? "" : /^[a-z]+:\/\//.test(root.path) ? root.path : "file://" + Paths.expandHome(root.path)
+  readonly property string source: root.imageUrl(root.path)
 
   ClippingRectangle {
     anchors.centerIn: parent

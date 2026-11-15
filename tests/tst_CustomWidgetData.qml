@@ -754,14 +754,20 @@ TestCase {
         "icon": "",
         "value": 3,
         "subtext": "",
-        "id": ""
+        "id": "",
+        "state": "",
+        "max": undefined,
+        "image": ""
       },
       {
         "text": "b",
         "icon": "",
         "value": undefined,
         "subtext": "",
-        "id": ""
+        "id": "",
+        "state": "",
+        "max": undefined,
+        "image": ""
       }
     ], "objects read, plain entries are their text");
     compare(CustomWidgetData.rows([
@@ -782,6 +788,45 @@ TestCase {
     ])[0].id, "7", "an id is text");
     compare(CustomWidgetData.rows(["plain"])[0].id, "", "a plain string has no id");
     compare(CustomWidgetData.rows("nope"), [], "not a list: none");
+    const full = CustomWidgetData.rows([
+      {
+        "text": "/",
+        "value": 40,
+        "max": "200",
+        "state": "warning",
+        "image": "/tmp/a.png"
+      }
+    ])[0];
+    compare(full.max, 200, "a max is a number");
+    compare(full.state, "warning", "a state is kept");
+    compare(full.image, "/tmp/a.png", "an image is kept");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "max": 10
+      }
+    ])[0].max, undefined, "a max without a value");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": 3,
+        "max": 0
+      }
+    ])[0].max, undefined, "a max of 0");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": "x",
+        "max": 10
+      }
+    ])[0].max, undefined, "a value that is no number");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": 3,
+        "max": -5
+      }
+    ])[0].max, undefined, "a negative max");
   }
 
   function test_graphRange() {
