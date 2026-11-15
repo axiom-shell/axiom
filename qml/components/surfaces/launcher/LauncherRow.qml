@@ -155,8 +155,9 @@ Item {
         spacing: Widget.spacing * 2
 
         StyledLabel {
-          Layout.fillWidth: usage.text === ""
-          Layout.maximumWidth: parent.width
+          // Fills down to an elide, never wider than its text: the usage follows it
+          Layout.fillWidth: true
+          Layout.maximumWidth: Math.ceil(implicitWidth)
           text: root.modelData.title ?? ""
           // Titles are clipboard text, window titles, file names: never markup
           textFormat: Text.PlainText
