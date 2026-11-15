@@ -69,6 +69,7 @@ Item {
           model: lyr.spec.elements.length
 
           CustomElement {
+            id: el
             required property int index
             readonly property var r: CustomWidgetData.rect(element.place, root.grid, root.width, root.height, root.gap)
             x: r.x
@@ -76,7 +77,7 @@ Item {
             width: r.width
             height: r.height
             // Built either way (it can flip every sample); only drawn while shown
-            visible: CustomWidgetData.shown(element.showWhen, root.fields, CustomWidgetData.ownValue(root.fields, element.bind, CustomWidgetsConfig.elementKind(element.type)?.slots?.[0] ?? ""))
+            visible: el.shown
             element: lyr.spec.elements[index] ?? ({})
             fields: root.fields
             history: root.history

@@ -351,23 +351,7 @@ ColumnLayout {
                 Layout.preferredWidth: Widget.px(120)
                 Layout.fillWidth: !vis.needsValue
                 value: vis.when.test ?? "always"
-                options: [
-                  {
-                    "value": "is",
-                    "label": I18n.tr("is")
-                  },
-                  {
-                    "value": "isNot",
-                    "label": I18n.tr("is not")
-                  },
-                  {
-                    "value": "above",
-                    "label": I18n.tr("is above")
-                  },
-                  {
-                    "value": "below",
-                    "label": I18n.tr("is below")
-                  },
+                options: root.editor.ruleTests.concat([
                   {
                     "value": "set",
                     "label": I18n.tr("has a value")
@@ -376,7 +360,7 @@ ColumnLayout {
                     "value": "unset",
                     "label": I18n.tr("is empty")
                   }
-                ]
+                ])
                 // Always has no row of its own: the toggle above is its place
                 onPicked: value => root.editor.setElement(["showWhen", "test"], value)
               }

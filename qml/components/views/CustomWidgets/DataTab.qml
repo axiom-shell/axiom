@@ -257,7 +257,7 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
-      title: I18n.tr("Output")
+      title: I18n.tr("Last output")
       description: I18n.tr("The last thing the script printed, as it came.")
 
       StyledText {
@@ -384,7 +384,7 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Actions run")
-      description: I18n.tr("The last actions this widget ran, from its buttons, keys and the test preview. Not saved.")
+      description: I18n.tr("The last actions this widget ran, from its buttons, rows, toggles and the test preview. Not saved.")
 
       ActionLog {}
     }

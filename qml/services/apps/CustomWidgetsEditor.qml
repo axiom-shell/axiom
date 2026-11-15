@@ -144,6 +144,26 @@ QtObject {
     return out;
   }
 
+  // The tests a colour rule or Visible holds a value against, with labels
+  readonly property var ruleTests: [
+    {
+      "value": "is",
+      "label": I18n.tr("is")
+    },
+    {
+      "value": "isNot",
+      "label": I18n.tr("is not")
+    },
+    {
+      "value": "above",
+      "label": I18n.tr("is above")
+    },
+    {
+      "value": "below",
+      "label": I18n.tr("is below")
+    }
+  ]
+
   // The values an Axiom action takes, each with its label (the shell's
   // actions: never a session or destructive one, none that takes an
   // argument). Runtime keys: I18n.tr("Refresh this widget")
@@ -361,9 +381,14 @@ QtObject {
     if (!def || !def.module.views[index])
       return;
     const id = def.module.views[index].id;
-    def.module.views.splice(index, 1);
-    if (def.samples && id in def.samples)
-      delete def.samples[id];
+    // One undo step: the screen, its "Go to" actions and what ran them
+    root._beforeStructure();
+    const cleared = CustomWidgetData.withoutScreen(def, id);
+    cleared.module.views.splice(index, 1);
+    if (cleared.samples && id in cleared.samples)
+      delete cleared.samples[id];
+    // In place: the draft keeps its object
+    root._restoreInto(def, cleared, []);
     root._apply();
     root.selectView(-1);
   }

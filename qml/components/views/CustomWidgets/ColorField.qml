@@ -27,6 +27,22 @@ ColumnLayout {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
+
+  // The colour square drawn at the left inside a colour dropdown (the
+  // dropdown's `input.leftPadding` makes room); each sets its `color`
+  // qmllint disable Quick.layout-positioning
+  component SwatchSquare: Rectangle {
+    anchors.left: parent.left
+    anchors.leftMargin: Widget.padding
+    anchors.top: parent.top
+    anchors.topMargin: (Widget.height - Style.iconSm) / 2
+    width: Style.iconSm
+    height: Style.iconSm
+    radius: Style.radiusInner
+    border.width: Style.hairline
+    border.color: Style.borderStrong
+  }
+  // qmllint enable Quick.layout-positioning
   // The title and description of the colour, as its schema has them
   property string label: ""
   property string description: ""
@@ -203,18 +219,9 @@ ColumnLayout {
             root.write([root.key], value);
         }
 
-        Rectangle {
-          anchors.left: parent.left
-          anchors.leftMargin: Widget.padding
-          anchors.top: parent.top
-          anchors.topMargin: (Widget.height - Style.iconSm) / 2
-          width: Style.iconSm
-          height: Style.iconSm
-          radius: Style.radiusInner
+        SwatchSquare {
           // Auto and None show an empty square
           color: Style.resolve(root.custom && !root.isHex ? "" : root.value)
-          border.width: Style.hairline
-          border.color: Style.borderStrong
         }
       }
     }
@@ -308,24 +315,7 @@ ColumnLayout {
               Layout.preferredWidth: Widget.px(88)
               Layout.minimumWidth: 0
               value: rule.item.test ?? "is"
-              options: [
-                {
-                  "value": "is",
-                  "label": I18n.tr("is")
-                },
-                {
-                  "value": "isNot",
-                  "label": I18n.tr("is not")
-                },
-                {
-                  "value": "above",
-                  "label": I18n.tr("is above")
-                },
-                {
-                  "value": "below",
-                  "label": I18n.tr("is below")
-                }
-              ]
+              options: root.editor.ruleTests
               onPicked: value => root.setRule(rule.index, {
                   "test": value
                 })
@@ -365,17 +355,8 @@ ColumnLayout {
                 "color": value
               })
 
-            Rectangle {
-              anchors.left: parent.left
-              anchors.leftMargin: Widget.padding
-              anchors.top: parent.top
-              anchors.topMargin: (Widget.height - Style.iconSm) / 2
-              width: Style.iconSm
-              height: Style.iconSm
-              radius: Style.radiusInner
+            SwatchSquare {
               color: Style.resolve(rule.item.color ?? "")
-              border.width: Style.hairline
-              border.color: Style.borderStrong
             }
           }
         }

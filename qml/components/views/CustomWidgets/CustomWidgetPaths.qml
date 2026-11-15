@@ -6,8 +6,7 @@ import qs.components.methods
 import qs.components.reusable
 
 // Custom widgets page: the paths of an output with the value at each, what an
-// element binds to (the Data tab's list; the element column's Data panel,
-// where a click binds one: `pickable`). `paths` is [{ path, type, value }]
+// element binds to (the Data tab's list). `paths` is [{ path, type, value }]
 // (CustomWidgetData.flatten or bindChoices); the first `maxRows` are built, by
 // count: a new sample of the same shape rebuilds nothing.
 ColumnLayout {
@@ -15,11 +14,6 @@ ColumnLayout {
 
   property var paths: []
   property int maxRows: 200
-  // A row can be clicked: `picked(path)`
-  property bool pickable: false
-
-  signal picked(string path)
-
   spacing: Widget.spacing
 
   Repeater {
@@ -31,12 +25,6 @@ ColumnLayout {
       readonly property var entry: root.paths[row.index] ?? ({})
       Layout.fillWidth: true
       implicitHeight: line.implicitHeight
-
-      StateLayer {
-        visible: root.pickable
-        hovered: area.containsMouse
-        pressed: area.pressed
-      }
 
       RowLayout {
         id: line
@@ -56,15 +44,6 @@ ColumnLayout {
           tone: "muted"
           overflow: "line"
         }
-      }
-
-      MouseArea {
-        id: area
-        anchors.fill: parent
-        enabled: root.pickable
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.picked(row.entry.path ?? "")
       }
     }
   }

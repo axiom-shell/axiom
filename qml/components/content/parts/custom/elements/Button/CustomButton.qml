@@ -79,6 +79,7 @@ CustomElementBase {
     kind: root.asking ? "danger" : "tonal"
     enabled: root.pressable
     ownFill: root.coloured
+    inkColor: root.ink
     iconText: root.icon
     text: root.label
     // Fit: two fifths of the box, never below a label; else the shell's text size
@@ -90,12 +91,6 @@ CustomElementBase {
       property: "color"
       value: root.fill
       when: root.coloured
-    }
-    Binding {
-      target: button
-      property: "_contentColor"
-      value: root.ink
-      when: root.ink !== null
     }
   }
 

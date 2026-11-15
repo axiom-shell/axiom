@@ -26,7 +26,8 @@ Surface {
 
   // Folded or not: page-only, never written. A just-added action and a row
   // opened inline (TriggerField) start open
-  property bool open: root.itemId !== "" && root.editor.focusAction === root.itemId
+  property bool openAtStart: false
+  property bool open: root.openAtStart || (root.itemId !== "" && root.editor.focusAction === root.itemId)
   // What the action runs, in a word or two, for the folded line
   readonly property string summary: root.item?.kind === "axiom" ? root.axiomLabel : (root.item?.command ?? "")
 

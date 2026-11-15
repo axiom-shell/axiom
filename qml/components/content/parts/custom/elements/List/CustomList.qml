@@ -37,6 +37,9 @@ CustomElementBase {
   onRowsChanged: root._fill()
   // Its icon source changing redraws the same rows
   onThemedChanged: root._fill()
+  // Its colour part changing re-tints the same rows
+  readonly property string tones: JSON.stringify([root.options.color ?? "", root.options.colorStates ?? null])
+  onTonesChanged: root._fill()
 
   // The colour name the element's colour part gives a row (its rules read
   // the row's own keys): "" for none, so the element's own colour tints it

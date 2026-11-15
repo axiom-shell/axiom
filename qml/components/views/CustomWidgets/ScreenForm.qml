@@ -18,6 +18,8 @@ ColumnLayout {
   readonly property var definition: root.editor.selected
   readonly property var views: root.definition?.module?.views ?? []
   readonly property var view: root.views[root.editor.viewIndex] ?? null
+  // Its "Go to" action exists already
+  readonly property bool hasGoTo: root.view !== null && (root.definition?.actions?.items ?? []).some(a => a.kind === "axiom" && a.axiom === "screen:" + root.view.id)
   readonly property string formKey: root.view ? root.editor.selectedId + "/" + root.editor.viewIndex : ""
   // The paths a screen's condition can read, then the failure
   readonly property var keyOptions: [
@@ -203,7 +205,7 @@ ColumnLayout {
           }
           // The action it makes is named "Show <screen>"
           StyledTextButton {
-            visible: screen.noKey
+            visible: screen.noKey && !root.hasGoTo
             Layout.alignment: Qt.AlignVCenter
             implicitHeight: Widget.height
             kind: "text"

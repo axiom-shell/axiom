@@ -5,31 +5,6 @@ import qs.components.methods
 TestCase {
   name: "CustomWidgetData"
 
-  function test_parse() {
-    const json = {
-      "text": "3",
-      "alt": "pending"
-    };
-    compare(CustomWidgetData.parse("{…}", json, "waybar", false), json, "waybar json: the object");
-    compare(CustomWidgetData.parse("a\nb\nwarning", undefined, "waybar", false), {
-      "text": "a",
-      "tooltip": "b",
-      "class": "warning"
-    }, "waybar text: text, tooltip, class lines");
-    compare(CustomWidgetData.parse("▁▂▃", undefined, "waybar", true), {
-      "text": "▁▂▃"
-    }, "a streamed line is only text");
-    compare(CustomWidgetData.parse("42", 42, "json", false), {
-      "text": "42",
-      "value": 42
-    }, "json scalar");
-    compare(CustomWidgetData.parse("{\"a\":1}", {
-      "a": 1
-    }, "text", false), {
-      "text": "{\"a\":1}"
-    }, "text ignores the JSON");
-  }
-
   function test_parseAuto() {
     for (const format of ["waybar", "json"]) {
       compare(CustomWidgetData.parse("[1,2,3]", [1, 2, 3], format, false), {
@@ -49,6 +24,17 @@ TestCase {
         "text": "true",
         "value": true
       }, format + ": a boolean");
+      const json = {
+        "text": "3",
+        "alt": "pending"
+      };
+      compare(CustomWidgetData.parse("{…}", json, format, false), json, format + ": waybar json: the object");
+      compare(CustomWidgetData.parse("3.10", 3.1, format, false), {
+        "text": "3.10",
+        "value": 3.1
+      }, format + ": a number keeps its printed text");
+      compare(CustomWidgetData.parse("0.50", 0.5, format, false).text, "0.50", format + ": a trailing zero stays");
+      compare(CustomWidgetData.parse("12345678901234567890", 12345678901234567000, format, false).text, "12345678901234567890", format + ": a long id keeps its digits");
       compare(CustomWidgetData.parse("a\nb\nwarning", undefined, format, false), {
         "text": "a",
         "tooltip": "b",
@@ -61,6 +47,54 @@ TestCase {
     compare(CustomWidgetData.parse("[1]", [1], "text", false), {
       "text": "[1]"
     }, "text ignores the JSON");
+  }
+
+  function test_withoutScreen() {
+    const def = {
+      "actions": {
+        "items": [
+          {
+            "id": "go",
+            "kind": "axiom",
+            "axiom": "screen:b"
+          },
+          {
+            "id": "keep",
+            "kind": "axiom",
+            "axiom": "screen:c"
+          },
+          {
+            "id": "cmd",
+            "kind": "command",
+            "command": "true"
+          }
+        ]
+      },
+      "module": {
+        "elements": [
+          {
+            "type": "Button",
+            "run": {
+              "click": "go",
+              "long": "keep"
+            }
+          }
+        ]
+      },
+      "bar": {
+        "run": {
+          "click": "go"
+        }
+      }
+    };
+    const out = CustomWidgetData.withoutScreen(def, "b");
+    compare(out.actions.items.map(a => a.id), ["keep", "cmd"], "its Go to action is gone");
+    compare(out.module.elements[0].run, {
+      "click": "",
+      "long": "keep"
+    }, "its triggers name none, others stay");
+    compare(out.bar.run.click, "", "the bar's trigger too");
+    compare(def.actions.items.length, 3, "the input is not changed");
   }
 
   function test_rowsMap() {
@@ -2445,6 +2479,33 @@ TestCase {
         ]
       }
     }), ["actions", "entry", "text"], "each, screens included");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Text"
+          }
+        ]
+      }
+    }), ["text"], "an unbound Text shows the output");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "TextBlock",
+            "bind": {
+              "text": ""
+            }
+          }
+        ]
+      }
+    }), ["text"], "an empty bound Text block shows the output");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [],
+        "views": []
+      }
+    }), ["text"], "the default layout shows the text");
     compare(CustomWidgetData.lockIssues({
       "module": {
         "elements": [

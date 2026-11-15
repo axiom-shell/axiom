@@ -92,6 +92,7 @@ InspectorRow {
     Layout.topMargin: Widget.spacing / 2
 
     sourceComponent: ActionRow {
+      openAtStart: true
       index: root.actionIndex
     }
   }

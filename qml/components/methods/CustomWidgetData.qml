@@ -34,7 +34,8 @@ QtObject {
   // "waybar" and "json" are both Auto:
   //   a JSON object: as it is
   //   a JSON array: { text: its length, value: its length, items: the array }
-  //   any other JSON value: { text: String(v), value: v }
+  //   any other JSON value: { text, value: v }; a string's text is itself,
+  //             any other scalar keeps the text as printed
   //   not JSON: Waybar's lines (text, tooltip, class), or only the text for
   //             a stream line
   //   "text":   { text }, the JSON ignored
@@ -53,7 +54,7 @@ QtObject {
       };
     if (value !== undefined)
       return {
-        "text": String(value),
+        "text": typeof value === "string" ? value : String(text ?? "").trim() || String(value),
         "value": value
       };
     if (stream)
@@ -619,12 +620,17 @@ QtObject {
   // first rule that holds (its own "" is `auto`); else, or when none holds,
   // `picked`, else `auto`. A hex passes as it is
   function colorFor(picked, states, fields, own, auto) {
-    if (states?.enabled) {
-      const value = root.readKey(fields, states.key, own);
-      for (const rule of states.rules ?? []) {
-        if (root.holds(rule.test, value, rule.value))
-          return rule.color || auto;
-      }
+    if (!states?.enabled)
+      return picked || auto;
+    return root._ruleColor(states, root.readKey(fields, states.key, own), picked, auto);
+  }
+
+  // The colour of the first rule of `states` that holds for `value` (its own
+  // "" is `auto`), else `picked`, else `auto`
+  function _ruleColor(states, value, picked, auto) {
+    for (const rule of states.rules ?? []) {
+      if (root.holds(rule.test, value, rule.value))
+        return rule.color || auto;
     }
     return picked || auto;
   }
@@ -636,11 +642,7 @@ QtObject {
     if (!states?.enabled)
       return picked || "";
     const value = states.key ? root.get(row?.raw, states.key) : own;
-    for (const rule of states.rules ?? []) {
-      if (root.holds(rule.test, value, rule.value))
-        return rule.color || "";
-    }
-    return picked || "";
+    return root._ruleColor(states, value, picked, "");
   }
 
   // Whether an element is shown (its showWhen: { test, key, value }): always
@@ -1969,6 +1971,18 @@ QtObject {
     return copy;
   }
 
+  // `def` as a copy without its "Go to" actions of screen `viewId` (Axiom
+  // actions `screen:<id>`), the triggers that ran them naming none
+  function withoutScreen(def, viewId) {
+    let copy = Utils.clone(def);
+    const gone = (copy?.actions?.items ?? []).filter(a => a.kind === "axiom" && a.axiom === "screen:" + viewId).map(a => a.id);
+    for (const id of gone)
+      copy = root.withoutActionRefs(copy, id);
+    if (copy?.actions?.items)
+      copy.actions.items = copy.actions.items.filter(a => !gone.includes(a.id));
+    return copy;
+  }
+
   // Whether the sample lets action `item` (an entry of `actions.items`)
   // run: an Axiom one always, everything when the sample lists no actions
   // (null), else only the ids it lists as enabled
@@ -2266,8 +2280,9 @@ QtObject {
   // What a definition offered on the lock screen holds that doesn't work
   // there or shows a script's text to whoever sees the screen: "actions"
   // (an element or the bar runs an action), "entry" (an
-  // Entry element), "text" (an element's `text` bound to the output). []
-  // when it holds none
+  // Entry element), "text" (an element's `text` bound to the output, an
+  // unbound Text or Text block, which shows the output, or the default layout
+  // of a module with no elements and no screens). [] when it holds none
   function lockIssues(definition) {
     const module = definition?.module;
     const elements = root.allElements(module);
@@ -2276,7 +2291,9 @@ QtObject {
       issues.push("actions");
     if (elements.some(e => e.type === "Entry"))
       issues.push("entry");
-    if (elements.some(e => (e.bind?.text ?? "").indexOf("{") >= 0))
+    const unboundText = e => (e.type === "Text" || e.type === "TextBlock") && !e.bind?.text;
+    const noLayout = !!module && elements.length === 0 && (module?.views ?? []).length === 0;
+    if (elements.some(e => (e.bind?.text ?? "").indexOf("{") >= 0 || unboundText(e)) || noLayout)
       issues.push("text");
     return issues;
   }

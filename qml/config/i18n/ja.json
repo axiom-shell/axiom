@@ -4441,7 +4441,6 @@
     "Copied.": "",
     "Runs: {0}": "",
     "Actions run": "",
-    "The last actions this widget ran, from its buttons, keys and the test preview. Not saved.": "",
     "Refused: {0} ({1})": "",
     "Ran: {0} → exit {1} · {2} ms": "",
     "No action has run yet.": "",
@@ -4667,6 +4666,8 @@
     "Typed text is literal; braces read the output.": "",
     "What you type in a field (Shows) is shown as typed: Hello shows Hello. {path} reads the output: {text}, {player.title}, {items.0.text}. A field holding only one {path} gets the value itself (a number, a list); text around it, such as {value}% or {title} by {artist}, is filled in as one line. A {path} the output doesn't have stays as typed, and the editor warns about it. Empty: the output's own key for that field. Every element also has Visible (hidden while a test fails) and colours (Color by state).": "",
     "It fails when the script can't start, a stream exits with an error, a run exits with an error and no output, or the output has a non-empty error. Add a screen whose key is error, or the stock error screen shows the message with Restart. When the script can't answer, its command actions are off; an error the script prints itself leaves them to its actions output, so a Fix it button keeps working. Refresh and Restart always work.": "",
-    "A Waybar custom module's script runs as it is (New › Import a widget reads its config). A script that refreshes Waybar with pkill -RTMIN+N waybar should run axiom ipc customWidgets refresh NAME instead. A frame-rate stream such as cava isn't supported: a stream is coalesced to 4 pushes a second.": ""
+    "A Waybar custom module's script runs as it is (New › Import a widget reads its config). A script that refreshes Waybar with pkill -RTMIN+N waybar should run axiom ipc customWidgets refresh NAME instead. A frame-rate stream such as cava isn't supported: a stream is coalesced to 4 pushes a second.": "",
+    "Last output": "",
+    "The last actions this widget ran, from its buttons, rows, toggles and the test preview. Not saved.": ""
   }
 }

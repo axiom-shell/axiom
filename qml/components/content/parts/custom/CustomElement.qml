@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 import qs.components.content.parts.custom.elements.List // qmllint disable unused-imports
 
 // One element of a custom widget's module, loaded by its kind
@@ -23,6 +24,8 @@ Loader {
   readonly property string kind: root.element?.type ?? "Text"
   // Its kind's bindings (what a colour rule reads by default: the first)
   readonly property var kindSlots: CustomWidgetsConfig.elementKind(root.kind)?.slots ?? []
+  // Its Visible rule (showWhen) holds for the current sample
+  readonly property bool shown: CustomWidgetData.shown(root.element?.showWhen, root.fields, CustomWidgetData.ownValue(root.fields, root.element?.bind, root.kindSlots[0] ?? ""))
 
   // Built with its config, so it never sees itself empty, and bound to it
   function _load() {
