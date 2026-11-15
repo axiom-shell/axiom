@@ -136,8 +136,8 @@ PanelWindow {
   Rectangle {
     id: dim
     anchors.fill: parent
-    color: Appearance.darkMode ? Theme.background : Theme.foreground
-    opacity: root.shown ? 0.75 : 0
+    color: Style.scrim
+    opacity: root.shown ? 1 : 0
 
     Glide on opacity {
       duration: Appearance.animNormal
@@ -197,7 +197,7 @@ PanelWindow {
   }))
   // The card's width with one screen, and the most a screen's picture is
   // tall
-  readonly property int cardBaseWidth: Widget.px(1040)
+  readonly property int cardBaseWidth: Widget.textPx(1040)
   readonly property int screenMaxHeight: Widget.px(340)
   // The gap a tile leaves around its picture: a screen's tile is its
   // place on the map (MonitorMap sets its geometry), a window's a grid cell
@@ -217,14 +217,13 @@ PanelWindow {
     id: titleMetrics
     visible: false
     text: "Ag"
-    textSize: Appearance.fontSizeBy(-1)
-    font.weight: Font.DemiBold
+    role: "label"
   }
   StyledText {
     id: subtitleMetrics
     visible: false
     text: "Ag"
-    textSize: Appearance.fontSizeBy(-2)
+    role: "caption"
   }
 
   // A screen or window tile: its picture in a ring that shows it's picked,
@@ -258,7 +257,7 @@ PanelWindow {
           radius: Widget.radius + root.ring
           color: "transparent"
           border.width: Widget.px(2)
-          border.color: tile.selected ? Theme.accent : tile.hovered ? Theme.border : "transparent"
+          border.color: tile.selected ? Style.accent : tile.hovered ? Style.borderStrong : "transparent"
 
           ColorGlide on border.color {}
         }
@@ -268,7 +267,7 @@ PanelWindow {
           visible: tile.isScreen
           anchors.fill: parent
           radius: Widget.radius
-          color: Theme.backgroundAlt
+          color: Style.surfaceSunken
 
           ScreencopyView {
             anchors.fill: parent
@@ -282,8 +281,8 @@ PanelWindow {
             anchors.centerIn: parent
             visible: !root.canCaptureOutputs || !tile.shellScreen
             text: "monitor"
-            textSize: Appearance.fontSizeBy(14)
-            textColor: Theme.foregroundInactive
+            size: "xl"
+            tone: "faint"
           }
         }
 
@@ -312,7 +311,7 @@ PanelWindow {
           width: Widget.px(24)
           height: width
           radius: width / 2
-          color: Theme.accent
+          color: Style.accent
           opacity: tile.selected ? 1 : 0
           scale: tile.selected ? 1 : 0.6
           readonly property real contentZoom: scale
@@ -323,8 +322,8 @@ PanelWindow {
           StyledIcon {
             anchors.centerIn: parent
             text: "check"
-            textSize: Appearance.fontSizeBy(-1)
-            textColor: Theme.background
+            role: "caption"
+            textColor: Style.onAccent
           }
         }
       }
@@ -337,7 +336,7 @@ PanelWindow {
         width: picture.width - (tile.isScreen ? Widget.spacing * 2 : 0)
         height: labels.implicitHeight + (tile.isScreen ? Widget.smallPadding : 0)
         radius: Widget.radius
-        color: tile.isScreen ? Qt.alpha(Theme.background, 0.85) : "transparent"
+        color: tile.isScreen ? Style.surfaceRaised : "transparent"
 
         ColumnLayout {
           id: labels
@@ -349,10 +348,8 @@ PanelWindow {
           StyledText {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
-            textSize: Appearance.fontSizeBy(-1)
-            font.weight: Font.DemiBold
-            textColor: tile.selected ? Theme.accent : Theme.foreground
+            role: "label"
+            textColor: tile.selected ? Style.textAccent : Style.text
             text: tile.isScreen ? tile.modelData.name : (tile.modelData.title || tile.modelData.appId || tile.modelData.token)
 
             ColorGlide on textColor {}
@@ -361,9 +358,9 @@ PanelWindow {
           StyledText {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
-            textSize: Appearance.fontSizeBy(-2)
-            textColor: Theme.foregroundInactive
+            role: "caption"
+            overflow: "line"
+            tone: "faint"
             text: {
               if (!tile.isScreen)
                 return tile.modelData.title ? tile.modelData.appId : "";
@@ -390,22 +387,19 @@ PanelWindow {
     }
   }
 
-  Rectangle {
+  Surface {
     id: card
+    tone: "page"
 
     visible: root.hasCard
     anchors.centerIn: parent
     // The base width, wider as the screens' map asks
     width: Math.min(Math.max(root.cardBaseWidth, root.mapSize.width + root.pad * 2), root.cardMaxWidth)
     height: Math.min(content.implicitHeight + root.pad * 2, root.height - Widget.px(64))
-    color: Appearance.fill(Theme.background)
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
-    radius: Appearance.borderRadius
     clip: true
 
     opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.97
+    scale: root.shown ? 1 : 0.97 // style-exempt: motion
     Glide on opacity {
       duration: Appearance.animNormal
     }
@@ -434,13 +428,13 @@ PanelWindow {
           Layout.preferredWidth: Widget.px(40)
           Layout.preferredHeight: Widget.px(40)
           radius: Widget.radius
-          color: Qt.alpha(Theme.accent, 0.16)
+          color: Style.accentContainer
 
           StyledIcon {
             anchors.centerIn: parent
             text: "screen_share"
-            textSize: Appearance.fontSizeLarge
-            textColor: Theme.accent
+            size: "md"
+            textColor: Style.onAccentContainer
           }
         }
 
@@ -451,17 +445,15 @@ PanelWindow {
           StyledLabel {
             Layout.fillWidth: true
             text: I18n.tr("Share your screen")
-            textSize: Appearance.fontSizeLarge
-            font.weight: Font.DemiBold
-            elide: Text.ElideRight
+            role: "headline"
           }
 
           StyledLabel {
             Layout.fillWidth: true
             text: root.request?.appId ? I18n.tr("{0} asks what to share", root.request.appId) : I18n.tr("Pick what to share")
-            textColor: Theme.foregroundInactive
-            textSize: Appearance.fontSizeBy(-1)
-            elide: Text.ElideRight
+            tone: "faint"
+            role: "caption"
+            overflow: "line"
           }
         }
 
@@ -523,14 +515,14 @@ PanelWindow {
           anchors.centerIn: parent
           visible: (root.tab === "screen" && root.outputs.length === 0) || (root.tab === "window" && grid.count === 0)
           text: root.tab === "screen" ? I18n.tr("No screen to share") : I18n.tr("No window to share")
-          textColor: Theme.foregroundInactive
+          tone: "faint"
         }
 
         // Region: what happens next
         ColumnLayout {
           visible: root.tab === "region"
           anchors.centerIn: parent
-          width: Math.min(parent.width, Widget.px(420))
+          width: Math.min(parent.width, Widget.textPx(420))
           spacing: Widget.padding
 
           Rectangle {
@@ -538,24 +530,24 @@ PanelWindow {
             Layout.preferredWidth: Widget.px(72)
             Layout.preferredHeight: Widget.px(72)
             radius: Widget.radius
-            color: Qt.alpha(Theme.accent, 0.12)
+            color: Style.accentWash
             border.width: Widget.px(2)
-            border.color: Qt.alpha(Theme.accent, 0.5)
+            border.color: Style.accent
 
             StyledIcon {
               anchors.centerIn: parent
               text: "screenshot_region"
-              textSize: Appearance.fontSizeBy(14)
-              textColor: Theme.accent
+              size: "xl"
+              tone: "accent"
             }
           }
 
           StyledText {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
             text: I18n.tr("Share a part of a screen: drag a rectangle over it. Escape there comes back here.")
-            textColor: Theme.foregroundInactive
+            role: "caption"
+            tone: "faint"
           }
         }
       }
@@ -590,8 +582,7 @@ PanelWindow {
           iconText: root.tab === "region" ? "screenshot_region" : "screen_share"
           text: root.tab === "region" ? I18n.tr("Drag a region") : I18n.tr("Share")
           enabled: root.tab === "region" || root.selection?.kind === root.tab
-          backgroundColor: Theme.accent
-          textColor: Theme.background
+          kind: "primary"
           onClicked: root.share()
         }
       }

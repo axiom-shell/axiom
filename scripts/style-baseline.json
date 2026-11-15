@@ -73,73 +73,6 @@
   "R5": 1,
   "R7": 5
  },
- "qml/components/surfaces/screenlayout/ScreenLayoutView.qml": {
-  "R1": 2,
-  "R17": 2,
-  "R2": 1,
-  "R7": 2
- },
- "qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml": {
-  "R1": 24,
-  "R14": 5,
-  "R18": 1,
-  "R2": 4,
-  "R3": 1,
-  "R4": 10,
-  "R5": 3,
-  "R7": 20
- },
- "qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml": {
-  "R1": 5,
-  "R2": 2,
-  "R4": 1,
-  "R7": 5
- },
- "qml/components/surfaces/switcher/SwitcherStrip.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/surfaces/switcher/SwitcherTile.qml": {
-  "R1": 6,
-  "R14": 1,
-  "R2": 2,
-  "R4": 1,
-  "R7": 3
- },
- "qml/components/surfaces/wallpaper/WallpaperView.qml": {
-  "R1": 1
- },
- "qml/components/surfaces/wallpaper/WallpaperWindow.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/surfaces/workspaces/OverviewGrid.qml": {
-  "R1": 5,
-  "R2": 1,
-  "R3": 2,
-  "R7": 5
- },
- "qml/components/surfaces/workspaces/WindowPreview.qml": {
-  "R1": 7,
-  "R14": 1,
-  "R2": 1,
-  "R4": 2,
-  "R7": 5
- },
- "qml/components/surfaces/workspaces/WorkspaceCell.qml": {
-  "R1": 7,
-  "R2": 2,
-  "R3": 1,
-  "R7": 4
- },
- "qml/components/surfaces/workspaces/WorkspaceNumber.qml": {
-  "R1": 4,
-  "R14": 1,
-  "R2": 1,
-  "R4": 2,
-  "R5": 1,
-  "R7": 1
- },
  "qml/components/views/WindowRules/KindBlock.qml": {
   "R1": 3,
   "R2": 1
@@ -178,10 +111,5 @@
   "R4": 3,
   "R5": 1,
   "R7": 5
- },
- "qml/shell/WorkspaceOverlay.qml": {
-  "R1": 3,
-  "R4": 2,
-  "R7": 3
  }
 }

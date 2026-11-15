@@ -16,7 +16,7 @@ Rectangle {
   property bool iconPlain: false
   // The badge's color when current (its fill), and for the idle text with
   // `tintText`
-  property color tint: Theme.accent
+  property color tint: Style.accent
   property bool tintText: false
   // The text elides to fit this; 0 means no limit
   property real maxWidth: 0
@@ -26,7 +26,7 @@ Rectangle {
   // thicker, active one) and of the corner's curve
   property real cornerRadius: Widget.radius
   readonly property real _edge: Appearance.borderWidth * 2 + 2
-  readonly property color _textColor: root.current ? Theme.background : root.tintText ? root.tint : Theme.foreground
+  readonly property color _textColor: root.current ? Style.onAccent : root.tintText ? root.tint : Style.text
   // Its inset from the cell's corner (placed by OverviewGrid): past the
   // border along the edges, and far enough in that the pill's end circle
   // stays inside the corner's inner arc
@@ -40,7 +40,7 @@ Rectangle {
   width: Math.max(height, content.implicitWidth + Widget.padding)
   height: Math.max(label.implicitHeight, iconLabel.implicitHeight) + Widget.px(4)
   radius: height / 2
-  color: root.current ? root.tint : Qt.alpha(Theme.background, 0.75)
+  color: root.current ? root.tint : Style.surfaceRaised
 
   Row {
     id: content
@@ -52,7 +52,7 @@ Rectangle {
       visible: root.icon !== "" && !root.iconPlain
       anchors.verticalCenter: parent.verticalCenter
       text: root.icon
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
       textColor: root._textColor
     }
 
@@ -61,10 +61,10 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       // Plain icon text and the text share one label
       text: root.icon !== "" && root.iconPlain ? root.icon + (root.text !== "" ? " " + root.text : "") : root.text
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
       textColor: root._textColor
-      font.weight: root.current ? Font.Bold : Font.Normal
-      elide: Text.ElideRight
+      font.weight: root.current ? Style.weightStrong : Style.weightMedium
+      overflow: "line"
       width: root.maxWidth > 0 ? Math.min(implicitWidth, Math.max(0, root.maxWidth - Widget.padding - (iconLabel.visible ? iconLabel.implicitWidth + content.spacing : 0))) : implicitWidth
     }
   }

@@ -361,14 +361,11 @@ Item {
   implicitWidth: board.width + root.pad * 2
   implicitHeight: gridBox.height
 
-  Rectangle {
+  Surface {
     id: gridBox
+    tone: "page"
     width: root.cellW * root.columns + root.gap * (root.columns - 1) + root.pad * 2
     height: board.height + root.pad * 2
-    radius: Appearance.borderRadius
-    color: Appearance.fill(Theme.background)
-    border.color: Theme.foreground
-    border.width: Appearance.borderWidth
 
     // Clicks on the panel's margin don't reach the backdrop (which closes)
     MouseArea {
@@ -485,7 +482,7 @@ Item {
         radius: root.previewRadius
         hovered: input.hoveredAddress === modelData && (input.mode === "" || input.mode === "resize")
         resizing: input.mode === "resize" && input.activeAddress === modelData
-        opacity: input.mode === "drag" && input.activeAddress === modelData ? 0.3 : 1
+        opacity: input.mode === "drag" && input.activeAddress === modelData ? Style.opacityDisabled : 1
 
         Glide on x {
           enabled: !preview.resizing
@@ -561,7 +558,7 @@ Item {
       radius: root.cellRadius + outset
       color: "transparent"
       border.width: Appearance.borderWidth * 2
-      border.color: Theme.foreground
+      border.color: Style.focusRing
 
       Glide on x {}
       Glide on y {}
@@ -589,8 +586,8 @@ Item {
       height: hint?.rect.h ?? 0
       z: 3
       radius: root.previewRadius
-      color: Qt.alpha(Theme.accent, 0.3)
-      border.color: Theme.accent
+      color: Style.accentWash
+      border.color: Style.accent
       border.width: Appearance.borderWidth * 2
 
       Glide on x {
@@ -623,7 +620,6 @@ Item {
       capturing: root.active && visible
       radius: root.previewRadius
       hovered: true
-      opacity: 0.9
     }
 
     OverviewInput {

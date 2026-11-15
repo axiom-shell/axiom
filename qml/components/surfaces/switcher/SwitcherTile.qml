@@ -30,11 +30,16 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: Widget.radius
-    color: root.selected ? Qt.alpha(Theme.accent, 0.14) : mouse.containsMouse ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
+    color: root.selected ? Style.accentContainer : "transparent"
     border.width: Appearance.borderWidth
-    border.color: root.selected ? Theme.accent : "transparent"
+    border.color: root.selected ? Style.accent : "transparent"
 
     ColorGlide on color {}
+
+    StateLayer {
+      radius: Widget.radius
+      hovered: mouse.containsMouse && !root.selected
+    }
   }
 
   Item {
@@ -74,9 +79,9 @@ Item {
     anchors.left: box.left
     anchors.right: box.right
     text: root.windowData?.title || root.windowData?.appId || ""
-    textColor: root.selected ? Theme.accent : Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-1)
-    elide: Text.ElideRight
+    textColor: root.selected ? Style.onAccentContainer : Style.textMuted
+    role: "caption"
+    overflow: "line"
     horizontalAlignment: Text.AlignHCenter
   }
 

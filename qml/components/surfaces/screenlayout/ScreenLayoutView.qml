@@ -97,7 +97,7 @@ Item {
 
     Rectangle {
       anchors.fill: parent
-      color: root.background === "color" ? Theme.resolveColor(root.layout.backdrop.color) : Theme.background
+      color: root.background === "color" ? Style.resolve(root.layout.backdrop.color) : Style.surfacePage
     }
 
     // With the same transitions as the wallpaper window, when the
@@ -106,8 +106,8 @@ Item {
       anchors.fill: parent
       visible: root.background === "wallpaper"
       source: visible ? root.wallpaper : ""
-      layer.enabled: root.blurWallpaper
-      layer.effect: MultiEffect {
+      layer.enabled: root.blurWallpaper // style-exempt: no text
+      layer.effect: MultiEffect { // style-exempt: no text
         blurEnabled: true
         blur: 1
         blurMax: 64
@@ -117,7 +117,7 @@ Item {
 
     Rectangle {
       anchors.fill: parent
-      color: "black"
+      color: "black" // style-exempt: the layout's backdrop dim, a black veil at its Dim %
       opacity: (root.layout?.backdrop?.dim ?? 0) / 100
     }
   }

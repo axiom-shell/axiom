@@ -52,6 +52,6 @@ Item {
     id: empty
     visible: root.count === 0
     text: I18n.tr("No windows")
-    textColor: Theme.foregroundAlt
+    tone: "muted"
   }
 }
