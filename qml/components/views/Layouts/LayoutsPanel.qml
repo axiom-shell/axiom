@@ -75,6 +75,7 @@ Item {
   ToolPane {
     anchors.fill: parent
     title: I18n.tr("Layouts")
+    headerIcon: "dashboard_customize"
     scrollKey: "Layouts"
     showActions: false
 

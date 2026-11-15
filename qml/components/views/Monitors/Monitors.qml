@@ -66,6 +66,7 @@ BaseView {
       id: pane
       anchors.fill: parent
       title: I18n.tr("Monitors")
+      headerIcon: "monitor"
       scrollKey: "Monitors"
       // Unsaved, or not what the monitors show: Apply puts it on;
       // Discard only for unsaved edits

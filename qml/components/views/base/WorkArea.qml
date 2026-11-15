@@ -8,8 +8,8 @@ import qs.components.content.base
 // An editor's work surface: a box (`surface`, none with `embedded`, set
 // only where this is its pane's only main content) with a header, an
 // optional status line and a sunken well holding the work (children). The
-// header's extras run in a fixed order: `undoRedo`, `tools`, then Save and
-// Discard (`showActions`, `dirty`, `canSave`; signals `save` and `reset`).
+// header's tools sit at the right in a fixed order: `undoRedo`, `tools`, then
+// Save and Discard (`showActions`, `dirty`, `canSave`; signals `save` and `reset`).
 // An embedded work area with no `title` draws no header at all.
 Surface {
   id: root
@@ -65,16 +65,24 @@ Surface {
       onSave: root.save()
       onReset: root.reset()
 
-      RowLayout {
-        id: undoRow
-        visible: children.length > 0
-        spacing: 0
-      }
-      RowLayout {
-        id: toolsRow
-        visible: children.length > 0
-        spacing: Widget.spacing / 2
-      }
+      trailingTools: [
+        RowLayout {
+          id: undoRow
+          visible: children.length > 0
+          spacing: 0
+        },
+        RowLayout {
+          id: toolsRow
+          visible: children.length > 0
+          spacing: Widget.spacing / 2
+        },
+        StyledSeparator {
+          Layout.preferredHeight: Widget.height / 2
+          Layout.preferredWidth: Style.dividerWidth
+          Layout.alignment: Qt.AlignVCenter
+          visible: root.showActions && root.dirty && (undoRow.visible || toolsRow.visible)
+        }
+      ]
     }
 
     // Never hidden (its status children would read hidden and it would stay so): with nothing showing, a negative margin takes back the gap the column puts after it

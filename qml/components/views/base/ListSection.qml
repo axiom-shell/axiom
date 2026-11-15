@@ -64,6 +64,8 @@ ColumnLayout {
         tone: "muted"
         overflow: "line"
         Layout.fillWidth: true
+        // Elides when short of room, but never pushes the count away
+        Layout.maximumWidth: Math.ceil(implicitWidth)
       }
 
       StyledText {
@@ -71,6 +73,10 @@ ColumnLayout {
         role: "caption"
         tone: "muted"
         text: String(root.count)
+      }
+
+      Item {
+        Layout.fillWidth: true
       }
 
       RowLayout {

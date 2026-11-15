@@ -27,6 +27,36 @@ ColumnLayout {
   readonly property var elements: root.definition?.module?.elements ?? []
   readonly property var designSize: CustomWidgetData.designSize(root.elements, root.definition?.module?.size)
   readonly property real card: root.grid?.unit ?? Widget.px(400)
+  // The lock-screen column's width
+  readonly property real lockWidth: Appearance.fontSize * 16
+  // The previews: the popout at the design size, then the sizes a page may give
+  // I18n.tr("Popout") I18n.tr("Square") I18n.tr("Wide") I18n.tr("Large") I18n.tr("Strip")
+  readonly property var previews: [
+    {
+      "label": "Popout",
+      "size": root.designSize
+    },
+    {
+      "label": "Square",
+      "size": [4, 4]
+    },
+    {
+      "label": "Wide",
+      "size": [8, 2]
+    },
+    {
+      "label": "Large",
+      "size": [8, 4]
+    },
+    {
+      "label": "Strip",
+      "size": [4, 1]
+    }
+  ]
+  // The zoom that fits them in the width and height the tab has beside the
+  // lock-screen column
+  readonly property var previewSizes: root.previews.map(p => p.size)
+  readonly property real previewZoom: CustomWidgetData.previewZoom(root.previewSizes, root.card, root.width, root.availableHeight, root.lockWidth + Widget.spacing * 2, Widget.spacing * 2)
 
   width: parent?.width ?? 0
   height: root.availableHeight
@@ -35,37 +65,17 @@ ColumnLayout {
   // The previews, the lock screen switch
   RowLayout {
     Layout.fillWidth: true
+    Layout.minimumWidth: 0
+    clip: true
     spacing: Widget.spacing * 2
 
-    // I18n.tr("Popout") I18n.tr("Square") I18n.tr("Wide") I18n.tr("Large") I18n.tr("Strip")
     Repeater {
-      model: [
-        {
-          "label": "Popout",
-          "size": root.designSize
-        },
-        {
-          "label": "Square",
-          "size": [4, 4]
-        },
-        {
-          "label": "Wide",
-          "size": [8, 2]
-        },
-        {
-          "label": "Large",
-          "size": [8, 4]
-        },
-        {
-          "label": "Strip",
-          "size": [4, 1]
-        }
-      ]
+      model: root.previews
 
       ColumnLayout {
         id: preview
         required property var modelData
-        readonly property real zoom: Math.min(0.3, root.availableHeight * 0.22 / Math.max(1, GridPlacement.span(Math.max(root.designSize[1], 4), root.card)))
+        readonly property real zoom: root.previewZoom
         Layout.alignment: Qt.AlignTop
         spacing: Widget.spacing / 2
 
@@ -110,7 +120,7 @@ ColumnLayout {
       spacing: Widget.spacing
 
       SchemaPropertiesForm {
-        Layout.preferredWidth: Appearance.fontSize * 16
+        Layout.preferredWidth: root.lockWidth
         propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen"])
         order: ["lockscreen"]
         values: root.definition?.module ?? ({})
