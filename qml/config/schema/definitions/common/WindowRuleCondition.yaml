@@ -1,0 +1,27 @@
+# The WindowRuleCondition definition (#/definitions/WindowRuleCondition):
+# one test of a kind of window in a window rule.
+
+type: object
+additionalProperties: false
+properties:
+  field:
+    type: string
+    title: Window's
+    enum: [appId, title, process, startedFrom, xwayland, game, steamGame, app]
+    x-enumLabels: {appId: App id, title: Title, process: Process, startedFrom: Started from, xwayland: Runs under XWayland, game: Is a game, steamGame: Steam game id, app: Installed app}
+    default: appId
+  op:
+    type: string
+    title: Test
+    enum: [is, contains, matches, isNot]
+    x-enumLabels: {is: is, contains: contains, matches: matches pattern, isNot: "isn't"}
+    x-enumShowIf:
+      contains: {field: [appId, title, process, startedFrom]}
+      matches: {field: [appId, title, process, startedFrom]}
+    default: is
+  value:
+    type: string
+    title: Value
+    default: ''
+    description: 'Text, a pattern, a Steam game id or an app, by what it tests.'
+    x-showIf: {field: [appId, title, process, startedFrom, steamGame, app]}
