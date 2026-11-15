@@ -83,7 +83,9 @@ Surface {
           Layout.preferredHeight: Widget.height / 2
           Layout.preferredWidth: Style.dividerWidth
           Layout.alignment: Qt.AlignVCenter
-          visible: root.showActions && root.dirty && (undoRow.visible || toolsRow.visible)
+          // Kept in place (faded) while clean, so the tools don't shift
+          visible: root.showActions && (undoRow.visible || toolsRow.visible)
+          opacity: root.dirty ? 1 : 0
         }
       ]
     }
