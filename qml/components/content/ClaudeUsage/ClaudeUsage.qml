@@ -6,6 +6,7 @@ import qs.config
 import qs.services.apps
 import qs.components.reusable
 import qs.components.content.base
+import qs.components.content.parts
 
 // Claude plan usage per account (from ClaudeUsageManager): the session and
 // weekly limits with their reset times, extra usage and where the week went.
@@ -30,7 +31,7 @@ Panel {
     }))
 
   spacing: Widget.padding
-  implicitWidth: Math.max(Widget.px(320), body.implicitWidth + margins * 2)
+  implicitWidth: Math.max(Widget.textPx(320), body.implicitWidth + margins * 2)
 
   function duration(ms) {
     const minutes = Math.max(0, Math.round(ms / 60000));
@@ -44,8 +45,8 @@ Panel {
     const t = Date.parse(resetsAt);
     return isNaN(t) ? "" : I18n.tr("resets in {0}", duration(t - root.now));
   }
-  function colorFor(percent) {
-    return percent >= root.criticalThreshold ? Theme.error : percent >= root.warnThreshold ? Theme.warning : Theme.accent;
+  function toneFor(percent) {
+    return percent >= root.criticalThreshold ? "error" : percent >= root.warnThreshold ? "warning" : "accent";
   }
 
   component Meter: ColumnLayout {
@@ -62,24 +63,24 @@ Panel {
       StyledLabel {
         text: meter.title
         Layout.fillWidth: true
-        elide: Text.ElideRight
+        overflow: "line"
       }
       StyledLabel {
         text: `${meter.usage?.percent ?? 0}%`
-        font.weight: Font.Bold
+        font.weight: Style.weightStrong
       }
     }
     LevelMeter {
       Layout.fillWidth: true
       implicitHeight: thickness
       share: (meter.usage?.percent ?? 0) / 100
-      fillColor: root.colorFor(meter.usage?.percent ?? 0)
+      fillTone: root.toneFor(meter.usage?.percent ?? 0)
     }
     StyledText {
       visible: text !== ""
       text: root.resetText(meter.usage?.resetsAt ?? "")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
+      tone: "muted"
     }
   }
 
@@ -97,48 +98,48 @@ Panel {
       StyledSeparator {
         visible: account.index > 0
         Layout.fillWidth: true
-        separatorColor: Theme.backgroundHighlight
       }
 
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.padding
+      ModuleHeader {
+        title: account.row.label
 
         StyledLabel {
-          text: account.row.label
-          font.weight: Font.Bold
-          textColor: Theme.accent
-        }
-        StyledLabel {
           text: [account.row.org, account.row.plan].filter(s => s).join(" · ")
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
-          elide: Text.ElideRight
-          Layout.fillWidth: true
+          role: "caption"
+          tone: "muted"
+          overflow: "line"
+          Layout.maximumWidth: Widget.textPx(160)
         }
         StyledLabel {
           // I18n.tr("token expired") I18n.tr("fetch failed") I18n.tr("not logged in") I18n.tr("loading…")
           readonly property var labels: ({
               "expired": "token expired",
               "error": "fetch failed",
-              "missing": "not logged in",
-              "pending": "loading…"
+              "missing": "not logged in"
             })
-          visible: account.row.status !== "ok"
+          visible: account.row.status !== "ok" && account.row.status !== "pending"
           text: I18n.tr(labels[account.row.status] ?? "loading…")
-          textColor: account.row.status === "pending" ? Theme.foregroundAlt : Theme.warning
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
+          tone: "warning"
+          overflow: "line"
+          Layout.maximumWidth: Widget.textPx(160)
         }
+      }
+
+      Skeleton {
+        visible: account.row.status === "pending"
+        Layout.fillWidth: true
+        lines: 2
       }
 
       StyledText {
         visible: account.row.status === "expired" || account.row.status === "error" || account.row.status === "missing"
         text: account.row.status === "expired" ? I18n.tr("Run Claude Code with this account to refresh its login.") : (account.row.error ?? "")
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.Wrap
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
-        Layout.maximumWidth: Widget.px(320)
+        Layout.maximumWidth: Widget.textPx(320)
       }
 
       Meter {
@@ -165,18 +166,18 @@ Panel {
       StyledText {
         visible: (account.row.breakdown ?? []).length > 0
         text: I18n.tr("This week: {0}", (account.row.breakdown ?? []).map(b => `${b.name} ${b.percent}%`).join(" · "))
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        wrapMode: Text.Wrap
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
-        Layout.maximumWidth: Widget.px(320)
+        Layout.maximumWidth: Widget.textPx(320)
       }
 
       StyledText {
         visible: (account.row.fetchedAt ?? 0) > 0
         text: I18n.tr("Updated {0} ago", root.duration(root.now - account.row.fetchedAt))
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
+        role: "caption"
+        tone: "muted"
       }
     }
   }
@@ -184,6 +185,6 @@ Panel {
   StyledText {
     visible: root.accountRows.length === 0
     text: I18n.tr("No accounts configured")
-    textColor: Theme.foregroundAlt
+    tone: "muted"
   }
 }

@@ -60,14 +60,14 @@ Card {
 
     StyledIcon {
       text: root.live ? InputSourceManager.iconFor(root.current) : "keyboard"
-      textColor: area.containsMouse ? Theme.accent : Theme.foreground
+      tone: area.containsMouse ? "accent" : "text"
     }
 
     StyledLabel {
       Layout.fillWidth: true
-      elide: Text.ElideRight
+      overflow: "line"
       text: root.live && root.current !== "" ? InputSourceManager.nameFor(root.current) : I18n.tr("Keyboard layout")
-      textColor: area.containsMouse ? Theme.accent : Theme.foreground
+      tone: area.containsMouse ? "accent" : "text"
     }
   }
 }

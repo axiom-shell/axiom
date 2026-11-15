@@ -24,7 +24,7 @@ Panel {
   readonly property var metrics: (root.popoutMetrics ?? root.properties.metrics ?? ["cpu", "mem"]).filter(m => root.knownMetrics.includes(m))
   readonly property var shown: root.compact ? root.metrics.slice(0, 1) : root.metrics
 
-  implicitWidth: Widget.px(root.columns > 1 ? 520 : 360)
+  implicitWidth: Widget.textPx(root.columns > 1 ? 520 : 360)
   // One panel: its figure over a sparkline of at least a line
   fullMinWidth: Appearance.fontSize * 6
   fullMinHeight: Appearance.fontSize * 5
@@ -42,7 +42,7 @@ Panel {
         "sub": SystemManager.hasCpuTemp ? `${SystemManager.cpuTemp}°C` : "",
         "history": SystemManager.cpuHistory,
         "max": 100,
-        "color": Theme.accent
+        "color": Style.series[0]
       };
     case "mem":
       return {
@@ -52,7 +52,7 @@ Panel {
         "sub": `${(SystemManager.memUsedBytes / Utils.bytesPerGiB).toFixed(1)} / ${(SystemManager.memTotalBytes / Utils.bytesPerGiB).toFixed(1)} GiB`,
         "history": SystemManager.memHistory,
         "max": 100,
-        "color": Theme.success
+        "color": Style.series[3]
       };
     case "gpu":
       return {
@@ -62,7 +62,7 @@ Panel {
         "sub": SystemManager.gpuTemp > 0 ? `${SystemManager.gpuTemp}°C` : "",
         "history": SystemManager.gpuHistory,
         "max": 100,
-        "color": Theme.info
+        "color": Style.series[2]
       };
     case "cpuTemp":
       return {
@@ -72,7 +72,7 @@ Panel {
         "sub": "",
         "history": SystemManager.cpuTempHistory,
         "max": 100,
-        "color": Theme.warning
+        "color": Style.series[4]
       };
     case "net":
       {
@@ -85,7 +85,7 @@ Panel {
           "sub": `↑ ${tx[0]} ${tx[1]}`,
           "history": SystemManager.netRxHistory,
           "max": 0,
-          "color": Theme.accentAlt
+          "color": Style.series[1]
         };
       }
     }
@@ -129,6 +129,7 @@ Panel {
 
   // Compact: the first metric's figure centred over its graph
   compactContent: Item {
+    id: compactMetric
     readonly property var metric: root.info(root.shown[0])
 
     // Out to the card's edges, under the figure
@@ -140,8 +141,8 @@ Panel {
       height: (parent.height + root.pad * 2) * 0.45
       values: parent.metric?.history ?? []
       maxValue: parent.metric?.max ?? 100
-      lineColor: parent.metric?.color ?? Theme.accent
-      fillOpacity: 0.15
+      lineColor: compactMetric.metric?.color ?? Style.series[0]
+      fillOpacity: 0.15 // style-exempt: the chart fill fades its data colour
       showBaseline: false
       capacity: SystemManager.historyLength
     }
@@ -154,7 +155,7 @@ Panel {
       value: String(parent.metric?.value ?? "")
       unit: parent.metric?.unit ?? ""
       label: parent.metric?.label ?? ""
-      valueColor: parent.metric?.color ?? Theme.foreground
+      valueColor: compactMetric.metric?.color ?? Style.text
     }
   }
 

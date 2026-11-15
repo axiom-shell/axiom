@@ -323,6 +323,12 @@ QtObject {
     }
   }
 
+  // The line colour of a trend tone (`MarketMath.trendTone`): the solid
+  // success or error, faint when flat
+  function trendLine(tone) {
+    return tone === "success" ? root.success : tone === "error" ? root.error : root.textFaint;
+  }
+
   // What a StyledText inside a Surface draws by default: with an `ink`,
   // text, muted, faint and accent read its key of that name; any other
   // tone, or no ink, is toneColor(tone)

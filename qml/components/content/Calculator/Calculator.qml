@@ -51,7 +51,7 @@ Panel {
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 30 && root.innerWidth >= root.innerHeight * 1.3
   readonly property bool showHeader: root.embedded && !root.strip && root.innerHeight >= Appearance.fontSize * 9
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 11
   fullMinHeight: Appearance.fontSize * 3.5
   wantsKeyboardFocus: true
@@ -119,11 +119,10 @@ Panel {
   }
 
   // One key: a digit, an operator (tinted) or = (filled), or an icon
-  component Key: Rectangle {
+  component Key: Surface {
     id: key
     required property var modelData
     readonly property string kind: modelData.kind ?? "digit"
-    readonly property bool hot: hover.hovered || tap.pressed
 
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -131,26 +130,30 @@ Panel {
     Layout.preferredWidth: (modelData.span ?? 1) * 10
     Layout.preferredHeight: 10 // a layout weight, not a size
     radius: Widget.radius
-    color: key.kind === "equals" ? (key.hot ? Qt.lighter(Theme.accent, 1.1) : Theme.accent) : key.kind === "op" ? Qt.alpha(Theme.accent, key.hot ? 0.3 : 0.16) : key.hot ? Theme.backgroundHighlight : Theme.backgroundAlt
-    scale: tap.pressed ? 0.94 : 1
+    tone: key.kind === "equals" ? "accent" : key.kind === "op" ? "accentContainer" : "highest"
+    outlined: false
 
-    ColorGlide on color {}
-    Glide on scale {}
+    StateLayer {
+      radius: key.radius
+      hovered: hover.hovered
+      pressed: tap.pressed
+      onAccent: key.kind === "equals"
+    }
 
     StyledLabel {
       visible: !key.modelData.icon
       anchors.centerIn: parent
       text: key.modelData.label ?? key.modelData.key
-      textSize: Math.max(Appearance.fontSizeBy(-2), Math.min(Appearance.fontSize * 1.5, key.height * 0.38))
-      textColor: key.kind === "equals" ? Theme.background : key.kind === "op" ? Theme.accent : Theme.foreground
-      font.weight: (key.kind !== "digit") ? Font.Bold : Font.Normal
+      textSize: Math.max(Style.typeCaption, Math.min(Style.typeBody * 1.5, key.height * 0.38)) // fitted: the key
+      textColor: key.ink.text
+      font.weight: key.kind !== "digit" ? Style.weightStrong : Style.weightNormal
     }
     StyledIcon {
       visible: !!key.modelData.icon
       anchors.centerIn: parent
       text: key.modelData.icon ?? ""
-      textSize: Math.max(Appearance.fontSizeBy(-2), Math.min(Appearance.fontSize * 1.5, key.height * 0.38))
-      textColor: Theme.accent
+      textSize: Math.max(Style.typeCaption, Math.min(Style.typeBody * 1.5, key.height * 0.38)) // fitted: the key
+      textColor: key.ink.accent
     }
 
     HoverHandler {
@@ -393,12 +396,12 @@ Panel {
               Layout.fillWidth: true
               horizontalAlignment: answerBox.centred ? Text.AlignHCenter : root.strip ? Text.AlignLeft : Text.AlignRight
               text: root.result !== "" ? "= " + root.result : root.expr !== "" && CalculatorManager.busyFor(root.key) ? "…" : ""
-              textSize: root.strip ? Appearance.fontSizeBy(2) : (answerBox.centred || answerBox.display) && root.innerHeight >= Appearance.fontSize * 12 ? Appearance.fontSize * 2.2 : Appearance.fontSize * 1.6
-              textColor: root.copied !== "" && root.copied === root.result ? Theme.accent : Theme.foreground
-              font.weight: Font.Bold
-              wrapMode: answerBox.centred ? Text.Wrap : Text.NoWrap
-              maximumLineCount: answerBox.centred ? 3 : 1
-              elide: answerBox.centred ? Text.ElideRight : Text.ElideLeft
+              textSize: root.strip ? Style.typeTitle : (answerBox.centred || answerBox.display) && root.innerHeight >= Style.typeBody * 12 ? Style.typeBody * 2.2 : Style.typeBody * 1.6 // fitted: the answer box
+              textColor: root.copied !== "" && root.copied === root.result ? Style.accent : Style.text
+              font.weight: Style.weightStrong
+              overflow: answerBox.centred ? "wrap" : "line"
+              maxLines: answerBox.centred ? 3 : 1
+              elide: answerBox.centred ? Text.ElideRight : Text.ElideLeft // style-exempt: a strip answer keeps its last digits
 
               ColorGlide on textColor {}
 
@@ -410,13 +413,13 @@ Panel {
               }
             }
             StyledText {
-              elide: Text.ElideRight
+              overflow: "line"
               visible: !root.strip
               Layout.fillWidth: true
               horizontalAlignment: answerBox.centred ? Text.AlignHCenter : Text.AlignRight
               text: root.copied !== "" ? I18n.tr("Copied") : root.result !== "" ? I18n.tr("Enter to copy") : root.expr !== "" && CalculatorManager.answered(root.key, root.expr) ? I18n.tr("No result") : I18n.tr("Math, units and currencies")
-              textSize: Appearance.fontSizeBy(-3)
-              textColor: Theme.foregroundAlt
+              role: "micro"
+              tone: "muted"
             }
           }
         }

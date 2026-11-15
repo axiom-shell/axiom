@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.reusable
 import qs.components.views.Monitors
 
 // The monitor layout: the Monitors page as it is (without its links into

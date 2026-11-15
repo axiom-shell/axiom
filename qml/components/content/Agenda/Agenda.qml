@@ -76,7 +76,7 @@ Panel {
       visible: CalendarManager.writableCalendars.length > 0
       size: Math.round(Appearance.fontSize * 1.8)
       iconText: "add"
-      iconColor: Theme.accent
+      iconColor: Style.accent
       tooltipText: I18n.tr("New event")
       onClicked: root.session.open(CalendarEvents.newDraft(root.todayKey, Date.now(), CalendarManager.newEventCalendar, CalendarConfig.defaultDuration, CalendarConfig.defaultReminder))
     }
@@ -112,9 +112,9 @@ Panel {
       StyledText {
         Layout.leftMargin: Widget.spacing / 2
         text: root.dayTitle(group.day.key)
-        textColor: group.day.key === root.todayKey ? Theme.accent : Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        font.weight: Font.Bold
+        role: "caption"
+        font.weight: Style.weightStrong
+        tone: group.day.key === root.todayKey ? "accent" : "muted"
       }
       Repeater {
         model: group.day.events.length

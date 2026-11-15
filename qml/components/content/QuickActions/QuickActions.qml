@@ -141,7 +141,7 @@ Card {
       "detail": root.details[name]?.type,
       "detailProperties": root.details[name]?.properties,
       "destructive": destructive,
-      "tone": destructive ? Theme.error : Theme.accent
+      "tone": destructive ? "error" : "accent"
     };
   }
 
@@ -197,7 +197,7 @@ Card {
   FontMetrics {
     id: labelFont
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-1)
+    font.pixelSize: Style.typeCaption
   }
 
   // Runs a tile's action: pin's own, else the catalogue's (ActionsManager.
@@ -254,8 +254,7 @@ Card {
         active: def.active
         showLabel: root.labels === "show" || (root.labels === "auto" && root.labelsFit)
         forceLabel: root.labels === "show"
-        activeColor: def.destructive ? Theme.error : Theme.accent
-        tone: def.tone ?? activeColor
+        activeTone: def.tone
         countdown: def.destructive ? gate.timeout : 0
         opens: detail !== ""
         onClicked: root.tap(action, tile)
@@ -280,8 +279,7 @@ Card {
         label: def.label
         status: def.status ?? ""
         active: def.active
-        activeColor: def.destructive ? Theme.error : Theme.accent
-        tone: def.tone ?? activeColor
+        activeTone: def.tone
         countdown: def.destructive ? gate.timeout : 0
         opens: detail !== ""
         onClicked: root.tap(action, pill)

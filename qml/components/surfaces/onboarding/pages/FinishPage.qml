@@ -24,25 +24,25 @@ OnboardingPage {
 
   Notice {
     visible: root.changesMode && root.mode === "managed"
-    tone: "info"
+    status: "info"
     text: OnboardingManager.configState === "stock" ? I18n.tr("Finish replaces {0}'s example {1} with axiom's (a dated backup stays beside it) and reloads {0}. axiom starts with every session from then on.", root.compositor, root.config) : OnboardingManager.configState === "custom" ? I18n.tr("Finish moves your {1} into user/ (a dated backup stays too), writes axiom's in its place and reloads {0}. axiom starts with every session from then on.", root.compositor, root.config) : I18n.tr("Finish writes {1} and reloads {0}. axiom starts with every session from then on.", root.compositor, root.config)
   }
 
   Notice {
     visible: root.changesMode && CompositorConfig.mode !== "detached"
-    tone: "warning"
+    status: "warning"
     text: I18n.tr("Finish changes how axiom sets up {0}: what the current mode set up is undone.", root.compositor)
   }
 
   Notice {
     visible: root.mode === "included"
-    tone: OnboardingManager.includeDone && OnboardingManager.autostartDone ? "info" : "warning"
+    status: OnboardingManager.includeDone && OnboardingManager.autostartDone ? "info" : "warning"
     text: !OnboardingManager.includeDone ? I18n.tr("Finish writes axiom's module, but your {0} doesn't load it yet: Apply the lines on the Compositor step. Until then, axiom adds its keybinds while it runs.", root.config) : !OnboardingManager.autostartDone ? I18n.tr("Finish writes axiom's module, which your {0} loads. It doesn't start axiom yet: Apply the autostart line on the Compositor step.", root.config) : I18n.tr("Finish writes axiom's module, which your {0} loads.", root.config)
   }
 
   Notice {
     visible: root.hasCompositorPage && root.mode === "detached" && !OnboardingManager.autostartDone
-    tone: "warning"
+    status: "warning"
     text: I18n.tr("{0} won't start axiom by itself: Apply the autostart line on the Compositor step, or add it to your {1} yourself.", root.compositor, root.config)
   }
 

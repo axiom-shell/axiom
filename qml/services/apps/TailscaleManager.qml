@@ -15,6 +15,8 @@ import qs.services.system
 QtObject {
   id: root
 
+  // A state has arrived (before it, `available` is only the default)
+  property bool known: false
   // Installed at all (false until axiom says otherwise)
   property bool available: false
   // "Running", "Stopped", "NeedsLogin", ... ("" if unknown)
@@ -206,6 +208,7 @@ QtObject {
 
   Component.onCompleted: {
     BackendManager.listen("tailscale.state", state => {
+      root.known = true;
       root.available = state.available;
       root.backendState = state.backendState;
       root.tailnetName = state.tailnetName;

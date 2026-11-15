@@ -21,7 +21,7 @@ Panel {
   // The dropdowns open just under the header
   readonly property real popupTop: header.height + Widget.spacing
 
-  implicitWidth: Widget.px(440) + root.margins * 2
+  implicitWidth: Widget.textPx(440) + root.margins * 2
   // The header, a message or two and the composer, else the figure
   fullMinWidth: Appearance.fontSize * 18
   fullMinHeight: Appearance.fontSize * 16
@@ -63,8 +63,8 @@ Panel {
         Layout.fillHeight: true
         Layout.preferredWidth: Math.max(Widget.px(180), body.width * 0.32)
         sourceComponent: ConversationList {
-          color: Theme.backgroundAlt
-          border.width: 0
+          tone: "sunken"
+          outlined: false
           floating: false
         }
       }
@@ -92,8 +92,6 @@ Panel {
 
         StyledSeparator {
           Layout.fillWidth: true
-          separatorHeight: 1
-          opacity: 0.6
         }
 
         ChatMessageList {
@@ -155,9 +153,9 @@ Panel {
         visible: drop.containsDrag
         anchors.fill: parent
         radius: Widget.radius
-        color: Qt.alpha(Theme.accent, 0.12)
-        border.color: Theme.accent
-        border.width: 2
+        color: Style.accentWash
+        border.color: Style.accent
+        border.width: Style.focusWidth
       }
     }
   }

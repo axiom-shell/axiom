@@ -41,7 +41,7 @@ Panel {
   // detail under them
   readonly property real rowHeight: Math.ceil(Appearance.fontSize * (root.titleLines > 1 ? 3.6 : 2.4)) + Widget.spacing * 2
 
-  implicitWidth: Widget.px(400)
+  implicitWidth: Widget.textPx(400)
   fullMinWidth: Appearance.fontSize * 11
   fullMinHeight: Appearance.fontSize * 3.5
   wantsKeyboardFocus: root.showSearch
@@ -74,7 +74,7 @@ Panel {
 
   compactContent: CompactFigure {
     icon: "content_paste"
-    iconColor: root.off ? Theme.foregroundAlt : Theme.accent
+    iconColor: root.off ? Style.textMuted : Style.accent
     value: root.off ? "" : String(ClipboardManager.shown.length)
     label: root.off ? I18n.tr("off") : I18n.tr("clips")
   }
@@ -86,15 +86,17 @@ Panel {
     StyledText {
       visible: ClipboardManager.shown.length > 0
       text: String(ClipboardManager.shown.length)
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.foregroundAlt
+      role: "caption"
+      tone: "muted"
+      Layout.maximumWidth: Widget.textPx(160)
+      overflow: "line"
     }
     FlatIconButton {
       visible: ClipboardManager.entries.length > 0
       size: Widget.iconButton
       iconText: "delete_sweep"
-      iconColor: root.confirmClear ? Theme.error : Theme.foregroundAlt
-      backgroundColor: root.confirmClear ? Qt.alpha(Theme.error, 0.2) : "transparent"
+      iconColor: root.confirmClear ? Style.inkError.icon : Style.textMuted
+      kind: root.confirmClear ? "dangerPrimary" : "text"
       tooltipText: root.confirmClear ? I18n.tr("Click again to clear (pins stay)") : I18n.tr("Clear the history")
       onClicked: {
         if (root.confirmClear)
@@ -168,7 +170,7 @@ Panel {
         visible: ClipboardManager.canPin(row.entry)
         size: Widget.iconButton
         iconText: row.pinned ? "keep_off" : "keep"
-        iconColor: row.pinned ? Theme.accent : Theme.foregroundAlt
+        iconColor: row.pinned ? Style.accent : Style.textMuted
         tooltipText: row.pinned ? I18n.tr("Unpin") : I18n.tr("Pin")
         onClicked: ClipboardManager.togglePin(row.entry)
       }
@@ -195,14 +197,14 @@ Panel {
 
     StyledIcon {
       text: root.copiedId !== "" ? "check" : "content_paste"
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(2)
+      size: "md"
+      tone: "accent"
     }
     StyledLabel {
       Layout.fillWidth: true
       text: root.off ? I18n.tr("Clipboard history is off") : root.newest ? ClipboardManager.labelOf(root.newest) : I18n.tr("Nothing copied yet")
-      textColor: root.newest && !root.off ? Theme.foreground : Theme.foregroundAlt
-      elide: Text.ElideRight
+      tone: root.newest && !root.off ? "text" : "muted"
+      overflow: "line"
     }
     FlatIconButton {
       visible: root.newest !== null && !root.off

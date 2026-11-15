@@ -48,16 +48,19 @@ Card {
   }
 
   fullMinWidth: Widget.height * 3
-  color: root.bare ? "transparent" : Appearance.fill(Theme.background)
-  opacity: root.opens || root.menuId === "" ? 1 : 0.5
+  opacity: root.opens || root.menuId === "" ? 1 : Style.opacityDisabled
 
   Rectangle {
     anchors.fill: parent
     anchors.margins: root.bare ? 0 : Appearance.borderWidth
     radius: Widget.radius
-    color: root.isOpen ? Qt.alpha(Theme.accent, 0.2) : Qt.alpha(Theme.backgroundHighlight, area.containsMouse ? 0.5 : 0)
+    color: root.isOpen ? Style.accentContainer : "transparent"
 
-    ColorGlide on color {}
+    StateLayer {
+      radius: parent.radius
+      hovered: area.containsMouse
+      pressed: area.pressed
+    }
   }
 
   // What the anchor reads as hovered: the row, or the editor holding it
@@ -95,7 +98,7 @@ Card {
 
   // Wider than tall: a menu row, the arrow at the side it opens on
   readonly property bool stacked: root.shape !== "horizontal"
-  readonly property color tint: root.isOpen ? Theme.accent : Theme.foreground
+  readonly property color tint: root.isOpen ? Style.onAccentContainer : Style.text
 
   RowLayout {
     visible: !root.stacked
@@ -115,15 +118,15 @@ Card {
       Layout.fillWidth: true
       visible: !root.compact && root.label !== ""
       text: root.label
-      elide: Text.ElideRight
+      overflow: "line"
+      textColor: root.tint
       horizontalAlignment: root.toLeft ? Text.AlignRight : Text.AlignLeft
     }
 
     StyledIcon {
       Layout.alignment: Qt.AlignVCenter
       text: root.toLeft ? "chevron_left" : "chevron_right"
-      textColor: root.tint
-      opacity: root.isOpen ? 1 : 0.6
+      textColor: root.isOpen ? root.tint : Style.textMuted
     }
   }
 
@@ -136,10 +139,10 @@ Card {
     width: root.innerWidth
     spacing: Widget.spacing / 2
 
-    readonly property int iconSize: Math.round(Math.max(Appearance.fontSize * 1.2, Math.min(root.innerWidth * 0.5, root.innerHeight * 0.3, Appearance.fontSize * 3)))
-    readonly property int labelSize: root.innerWidth < Widget.height * 2 ? Appearance.fontSizeBy(-2) : Appearance.fontSize
+    readonly property int iconSize: Math.round(Math.max(Style.typeBody * 1.2, Math.min(root.innerWidth * 0.5, root.innerHeight * 0.3, Style.typeBody * 3))) // fitted: the tile
+    readonly property int labelSize: root.innerWidth < Widget.height * 2 ? Style.typeCaption : Style.typeBody
     // Icon, two lines of label and the arrow
-    readonly property bool roomForLabel: root.innerHeight >= tile.iconSize + tile.labelSize * 3.2 + Appearance.fontSize * 1.5
+    readonly property bool roomForLabel: root.innerHeight >= tile.iconSize + tile.labelSize * 3.2 + Style.typeBody * 1.5
 
     StyledIcon {
       Layout.alignment: Qt.AlignHCenter
@@ -156,18 +159,17 @@ Card {
       visible: tile.roomForLabel && root.label !== ""
       text: root.label
       textSize: tile.labelSize
-      wrapMode: Text.Wrap
-      maximumLineCount: 2
-      elide: Text.ElideRight
+      overflow: "wrap"
+      maxLines: 2
+      textColor: root.tint
       horizontalAlignment: Text.AlignHCenter
     }
 
     StyledIcon {
       Layout.alignment: Qt.AlignHCenter
-      textSize: Math.round(Appearance.fontSize * 1.5)
+      textSize: Math.round(Style.typeBody * 1.5) // fitted: the tile
       text: root.toLeft ? "chevron_left" : "chevron_right"
-      textColor: root.tint
-      opacity: root.isOpen ? 1 : 0.6
+      textColor: root.isOpen ? root.tint : Style.textMuted
     }
   }
 }

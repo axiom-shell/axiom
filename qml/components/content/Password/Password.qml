@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
 
@@ -42,16 +43,16 @@ Card {
   // Boxed, it's drawn like LockSurface's fallback field: a box as tall as
   // the field plus padding, across the slot. Its height doesn't change
   // with the messages: their line is kept, or they show in the field
-  Rectangle {
+  Surface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
     anchors.margins: root.margin
     height: root.boxed ? field.implicitHeight + root.boxPad * 2 : parent.height - root.margin * 2
     radius: Widget.radius
-    color: root.boxed ? Theme.background : "transparent"
-    border.color: Theme.border
-    border.width: root.boxed ? Appearance.borderWidth : 0
+    tone: "sunken"
+    outlined: root.boxed
+    color: root.boxed ? Style.surfaceSunken : "transparent"
 
     PasswordField {
       id: field

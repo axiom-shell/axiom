@@ -87,6 +87,12 @@ TestCase {
     compare(CalendarEvents.dotColors(day, colors, 3), ["#ff0000", "#00ff00", "#0000ff"]);
     compare(CalendarEvents.dotColors(day, colors, 2), ["#ff0000", "#00ff00"]);
     compare(CalendarEvents.dotColors([], colors, 3), []);
+    const named = {
+      "a|cal": "accent",
+      "b|cal": "base0D",
+      "c|cal": "#ff0000"
+    };
+    compare(CalendarEvents.dotColors(day, named, 3), ["accent", "base0D", "#ff0000"], "colour names pass through and dedupe as strings");
   }
 
   function test_spanOn() {

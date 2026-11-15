@@ -24,7 +24,7 @@ Panel {
   hovered: pointerInside || wantsKeyboardFocus
   onFocusLost: DrivesManager.cancelUnlock()
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 9
   // In a popout the list grows away from the header, which stays by the
@@ -34,14 +34,14 @@ Panel {
 
   compactContent: CompactFigure {
     icon: "usb"
-    iconColor: DrivesManager.mountedDrives.length > 0 ? Theme.accent : Theme.foregroundAlt
+    iconColor: DrivesManager.mountedDrives.length > 0 ? Style.accent : Style.textMuted
     value: String(DrivesManager.count)
     label: DrivesManager.count === 0 ? I18n.tr("no drives") : I18n.tr("{0} mounted", DrivesManager.mountedDrives.length)
   }
 
   ModuleHeader {
     icon: "usb"
-    iconColor: DrivesManager.mountedDrives.length > 0 ? Theme.accent : Theme.foregroundAlt
+    iconColor: DrivesManager.mountedDrives.length > 0 ? Style.accent : Style.textMuted
     title: I18n.tr("Drives")
 
     FlatIconButton {
@@ -54,7 +54,6 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   // Grows to list every row (from compact, to the full layout)

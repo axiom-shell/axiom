@@ -2,5 +2,13 @@
   "qml/components/views/Settings/BarLookSample.qml": {
     "rules": ["R7"],
     "reason": "draws a bar sample in its bar palette (BarsConfig/BarLook colours: the bar keeps its look, D-24)"
+  },
+  "qml/components/content/ColorSwatch/ColorSwatch.qml": {
+    "rules": ["R6"],
+    "reason": "shows a colour value; its label reads on it (`Tone.bestOn` once per colour)"
+  },
+  "qml/components/content/NightLightControls/NightLightControls.qml": {
+    "rules": ["R6"],
+    "reason": "the night light's colour temperature and the ink that reads on it"
   }
 }

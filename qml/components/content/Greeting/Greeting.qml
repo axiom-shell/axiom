@@ -40,8 +40,8 @@ Card {
   readonly property string picture: !root.properties.showPicture ? "" : root.onGreeter ? (root.greeterUser?.name ? GreetdManager.avatarOf(root.greeterUser.name) : "") : AccountManager.iconUrl
   readonly property string shownText: root.template === "" ? (root.displayName ? I18n.tr("Hey {0}", root.displayName) : I18n.tr("Welcome")) : root.template.replace(/\{name\}/g, root.displayName).replace(/\{user\}/g, root.userName).replace(/\{greeting\}/g, root.greeting)
 
-  color: root.boxless ? "transparent" : Theme.background
-  border.width: root.boxless ? 0 : Appearance.borderWidth
+  color: root.boxless ? "transparent" : Style.surface
+  outlined: !root.boxless
 
   SystemClock {
     id: clock
@@ -60,7 +60,7 @@ Card {
       Layout.preferredWidth: Layout.preferredHeight
       Layout.alignment: Qt.AlignVCenter
       radius: width / 2
-      color: Theme.backgroundAlt
+      color: Style.surfaceHighest
 
       Image {
         id: pictureImage
@@ -77,13 +77,12 @@ Card {
       Layout.fillWidth: true
       Layout.fillHeight: true
       text: root.shownText
-      textColor: Theme.resolveColor(root.properties.color)
-      textSize: Math.max(Widget.px(8), Math.round(height))
-      font.weight: root.properties.bold ? Font.Bold : Font.Normal
+      textColor: Style.resolve(root.properties.color)
+      textSize: Math.max(Style.typeMicro, Math.round(height)) // fitted: the card's height
+      font.weight: root.properties.bold ? Style.weightStrong : Style.weightNormal
       fontSizeMode: Text.Fit
-      minimumPixelSize: Widget.px(8)
-      wrapMode: Text.WordWrap
-      elide: Text.ElideRight
+      minimumPixelSize: Style.typeMicro
+      overflow: "wrap"
       horizontalAlignment: root.properties.alignment === "left" ? Text.AlignLeft : root.properties.alignment === "right" ? Text.AlignRight : Text.AlignHCenter
       verticalAlignment: Text.AlignVCenter
     }

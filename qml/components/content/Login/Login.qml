@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
 
@@ -41,16 +42,16 @@ Card {
     key: root.onGreeter ? (root.host.key ?? "") : ""
   }
 
-  Rectangle {
+  Surface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
     anchors.margins: root.margin
     height: Math.min(root.boxed ? field.implicitHeight + Widget.padding * 2 : Infinity, parent.height - root.margin * 2)
     radius: Widget.radius
-    color: root.boxed ? Theme.background : "transparent"
-    border.color: Theme.border
-    border.width: root.boxed ? Appearance.borderWidth : 0
+    tone: "sunken"
+    outlined: root.boxed
+    color: root.boxed ? Style.surfaceSunken : "transparent"
 
     LoginField {
       id: field

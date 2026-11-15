@@ -26,7 +26,7 @@ Panel {
 
   compactContent: CompactFigure {
     icon: NotificationManager.dnd ? "notifications_off" : "notifications"
-    iconColor: NotificationManager.count > 0 ? Theme.accent : Theme.foregroundAlt
+    iconColor: NotificationManager.count > 0 ? Style.accent : Style.textMuted
     value: String(NotificationManager.count)
     label: I18n.tr(NotificationManager.dnd ? "muted" : "notifications")
   }
@@ -55,23 +55,23 @@ Panel {
   FontMetrics {
     id: smallMetrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-2)
+    font.pixelSize: Style.typeCaption
   }
   FontMetrics {
     id: summaryMetrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSize
+    font.pixelSize: Style.typeBody
   }
   FontMetrics {
     id: bodyMetrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-1)
+    font.pixelSize: Style.typeCaption
   }
   // A header and a notification, else the figure
   fullMinWidth: Appearance.fontSize * 16
   fullMinHeight: Appearance.fontSize * 11
 
-  implicitWidth: Widget.px(400)
+  implicitWidth: Widget.textPx(400)
   // Grows to show every group and the open Quiet list (from compact, to
   // the full layout); nothing listed, back to its place
   readonly property bool _quietListed: root.hasQuiet && quietFold.open
@@ -206,7 +206,6 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   // Empty: centred in whatever room is left (the card's slot above the
@@ -228,29 +227,27 @@ Panel {
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: NotificationManager.dnd ? "notifications_paused" : "notifications_active"
-        textColor: Theme.foregroundAlt
+        textColor: Style.textFaint
         // Smaller in a popout, to fit one notification's height
-        textSize: Appearance.fontSize * (root.embedded ? 3 : 2)
-        opacity: 0.4
+        textSize: root.embedded ? Style.iconXl * 1.3 : Style.iconXl // fitted: one notification's height
       }
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: I18n.tr("All caught up")
-        textColor: Theme.foregroundAlt
+        tone: "muted"
       }
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         visible: NotificationManager.dnd
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: I18n.tr("Do not disturb is on")
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
+        role: "caption"
+        tone: "faint"
       }
     }
   }
@@ -297,7 +294,6 @@ Panel {
     StyledSeparator {
       id: quietSeparator
       Layout.fillWidth: true
-      separatorColor: Theme.backgroundHighlight
     }
 
     NotificationQuietHeader {

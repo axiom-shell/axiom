@@ -4,6 +4,7 @@ import Quickshell
 import qs.config
 import qs.services.system
 import qs.components.methods
+import qs.components.reusable
 import qs.components.content.base
 
 // A clock as large as its slot allows, in a `style`: "digital" (the time
@@ -21,8 +22,11 @@ Card {
   readonly property bool use24Hour: I18n.hours24(root.properties.hourFormat)
   readonly property bool showSeconds: root.properties.showSeconds
   readonly property string timezone: root.properties.timezone
-  readonly property color textColor: root.properties.color ? Theme.resolveColor(root.properties.color) : Theme.foreground
-  readonly property color accentColor: root.properties.accentColor ? Theme.resolveColor(root.properties.accentColor) : Theme.accent
+  readonly property color textColor: root.properties.color ? Style.resolve(root.properties.color) : Style.text
+  readonly property color accentColor: root.properties.accentColor ? Style.resolve(root.properties.accentColor) : Style.accent
+  // The date, the meridiem and the meta line: the picked colour as is, else muted
+  // (bare, over the wallpaper: the clock's own ink, the one a shade guarantees)
+  readonly property color secondaryColor: root.properties.color || root.bare ? root.textColor : Style.textMuted
 
   onTimezoneChanged: TimeZoneManager.acquire(root, root.timezone)
   Component.onCompleted: TimeZoneManager.acquire(root, root.timezone)
@@ -45,7 +49,7 @@ Card {
   // (the label goes first, then the date)
   readonly property string dateText: root.properties.showDate ? I18n.formatDate(root.now, I18n.dateFormat(root.innerWidth < Appearance.fontSize * 14 ? "shortDate" : "longDate")) : ""
   readonly property string label: root.properties.label
-  readonly property real captionSize: Math.max(Appearance.fontSizeBy(-2), Math.min(Appearance.fontSize * 1.6, root.innerHeight / 12))
+  readonly property real captionSize: Math.max(Style.typeCaption, Math.min(Style.typeBody * 1.6, root.innerHeight / 12)) // fitted: the caption lines
   readonly property real spacing: Widget.spacing / 2
   readonly property real captionLine: root.captionSize * root.lineRatio + root.spacing
   readonly property bool dateShown: root.dateText !== "" && root.innerHeight >= root.captionLine * 2
@@ -59,8 +63,8 @@ Card {
   // Measured at 100 px, then scaled to the room
   component Metrics: TextMetrics {
     font.family: Appearance.fontFamily
-    font.pixelSize: 100 // a measuring font, scaled to the room
-    font.bold: true
+    font.pixelSize: 100 // style-exempt: a measuring font, scaled to the room
+    font.weight: Style.roleDisplay.weight
     font.features: {
       "tnum": 1
     }
@@ -80,7 +84,7 @@ Card {
     renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
     color: root.textColor
     font.family: Appearance.fontFamily
-    font.bold: true
+    font.weight: Style.roleDisplay.weight
     font.features: {
       "tnum": 1
     }
@@ -107,7 +111,7 @@ Card {
       color: root.textColor
       font.family: Appearance.fontFamily
       font.pixelSize: capLine.size
-      font.bold: true
+      font.weight: Style.roleDisplay.weight
       font.features: {
         "tnum": 1
       }
@@ -164,8 +168,7 @@ Card {
       horizontalAlignment: Text.AlignHCenter
       elide: Text.ElideRight
       text: root.dateText
-      color: root.textColor
-      opacity: 0.8
+      color: root.secondaryColor
       font.family: Appearance.fontFamily
       font.pixelSize: root.captionSize
     }
@@ -181,7 +184,7 @@ Card {
       color: root.accentColor
       font.family: Appearance.fontFamily
       font.pixelSize: root.captionSize * 0.9
-      font.bold: true
+      font.weight: Style.weightStrong
       font.capitalization: Font.AllUppercase
       font.letterSpacing: root.captionSize * 0.08
     }
@@ -228,7 +231,7 @@ Card {
         Digits {
           visible: root.meridiem !== ""
           text: root.meridiem
-          opacity: 0.7
+          color: root.secondaryColor
           font.pixelSize: line.size * line.suffixScale * 0.8
         }
       }
@@ -271,9 +274,8 @@ Card {
         anchors.horizontalCenter: parent.horizontalCenter
         visible: stack.meta !== ""
         text: stack.meta
-        opacity: 0.7
+        color: root.secondaryColor
         font.pixelSize: stack.size * stack.metaScale
-        font.bold: false
       }
     }
   }
@@ -291,12 +293,12 @@ Card {
       width: face.side
       height: face.side
 
-      Rectangle {
+      Surface {
         anchors.fill: parent
+        tone: "sunken"
+        outlined: true
         radius: width / 2
-        color: Qt.alpha(root.textColor, 0.06)
-        border.color: Qt.alpha(root.textColor, 0.3)
-        border.width: Math.max(1, face.side * 0.012)
+        color: root.bare ? "transparent" : Style.fillSunken
       }
 
       // The marks, longer at the quarters: each turned about the centre
@@ -316,8 +318,7 @@ Card {
             width: face.side * (mark.quarter ? 0.024 : 0.014)
             height: face.side * (mark.quarter ? 0.09 : 0.05)
             radius: width / 2
-            color: root.textColor
-            opacity: mark.quarter ? 0.9 : 0.5
+            color: root.bare ? root.secondaryColor : mark.quarter ? Style.textMuted : Style.textFaint
           }
         }
       }

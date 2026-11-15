@@ -19,7 +19,7 @@ import qs.services.ui
  * while reminders are on; one call runs at a time, later jobs queued.
  *   CalendarManager.acquire(owner) / release(owner)
  *   CalendarManager.eventsOn("2026-10-05")    // that day's, in order
- *   CalendarManager.dotsFor("2026-10-05")     // its calendars' colors
+ *   CalendarManager.dotsFor("2026-10-05")     // its calendars' colour names
  *   CalendarManager.save(draft, scope, cb) / remove(event, scope, cb)
  * What a server says of a calendar (its name, color, whether it's
  * read-only, what it holds) is kept here, in the calendar state (`info`),
@@ -50,7 +50,8 @@ QtObject {
   property var info: ({})
   // Every account's calendars, flattened: { id ("<account>|<href>"),
   // account, accountName, kind, href, name (its own, else the server's),
-  // color (its own, else the server's, else the accent), enabled,
+  // color (a colour name: its own, else the server's `#hex`, else `accent`;
+  // resolve with `Style.resolve`), enabled,
   // readOnly, events (it holds events), writable }
   readonly property var calendars: [].concat(...CalendarConfig.accounts.map(account => account.calendars.map(calendar => {
       const id = account.id + "|" + calendar.href;
@@ -64,7 +65,7 @@ QtObject {
         "kind": account.kind,
         "href": calendar.href,
         "name": calendar.name || known.name || calendar.href,
-        "color": String(calendar.color ? Theme.resolveColor(calendar.color) : (known.serverColor || Theme.accent)),
+        "color": calendar.color || known.serverColor || "accent",
         "enabled": calendar.enabled,
         "readOnly": readOnly,
         "events": components.includes("VEVENT"),
@@ -77,7 +78,7 @@ QtObject {
   // Where a new event goes: the default calendar while it's shown and
   // writable, else the first that is ("" with none)
   readonly property string newEventCalendar: (root.writableCalendars.find(calendar => calendar.id === CalendarConfig.defaultCalendar) ?? root.writableCalendars[0])?.id ?? ""
-  // calendar id -> its color, for the views
+  // calendar id -> its colour name, for the views
   readonly property var colors: root.calendars.reduce((map, calendar) => {
     map[calendar.id] = calendar.color;
     return map;

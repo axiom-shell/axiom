@@ -201,7 +201,7 @@ BaseView {
                     Layout.preferredWidth: Appearance.fontSize * 0.7
                     Layout.preferredHeight: width
                     radius: width / 2
-                    color: calendarRow.calendar.color
+                    color: Style.resolve(calendarRow.calendar.color)
                     opacity: calendarRow.calendar.enabled ? 1 : 0.4
                   }
                   StyledLabel {

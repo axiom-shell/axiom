@@ -135,9 +135,9 @@ Panel {
     StyledLabel {
       Layout.fillWidth: true
       text: CalendarManager.syncing ? I18n.tr("Syncing…") : CalendarManager.errors.length > 0 ? I18n.tr("{0} calendars couldn't sync", CalendarManager.errors.length) : ""
-      textColor: CalendarManager.errors.length > 0 && !CalendarManager.syncing ? Theme.error : Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      elide: Text.ElideRight
+      role: "caption"
+      tone: CalendarManager.errors.length > 0 && !CalendarManager.syncing ? "error" : "muted"
+      overflow: "line"
     }
     FlatIconButton {
       iconText: "sync"

@@ -67,9 +67,9 @@ Card {
     id: thumbnail
     property alias source: picture.source
     property alias sourceSize: picture.sourceSize
-    property color fillColor: Theme.backgroundHighlight
+    property color fillColor: Style.surfaceHighest
     property color borderColor: "transparent"
-    property real borderWidth: 2
+    property real borderWidth: Style.hairline
     default property alias content: overlay.data
 
     ClippingRectangle {
@@ -104,7 +104,7 @@ Card {
   compactContent: Thumbnail {
     source: root.wallpaper
     sourceSize: Qt.size(320, 200)
-    borderColor: Theme.border
+    borderColor: Style.borderSubtle
   }
 
   ColumnLayout {
@@ -120,7 +120,9 @@ Card {
       StyledText {
         visible: ThemeManager.isGenerating
         text: I18n.tr("Generating themes...")
-        textColor: Theme.accent
+        tone: "accent"
+        Layout.maximumWidth: Widget.textPx(160)
+        overflow: "line"
       }
 
       SquareIconButton {
@@ -213,14 +215,14 @@ Card {
             Layout.preferredHeight: width * 10 / 16
             source: root.variantMode ? slot.url : ""
             sourceSize: Qt.size(320, 200)
-            borderColor: slot.selected ? Theme.accent : slotArea.containsMouse ? Theme.foreground : Theme.border
-            borderWidth: slot.selected ? 3 : 2
+            borderColor: slot.selected ? Style.accent : slotArea.containsMouse ? Style.borderStrong : Style.borderSubtle
+            borderWidth: slot.selected ? Style.focusWidth : Style.hairline
 
             StyledLabel {
               anchors.centerIn: parent
               visible: slot.url === ""
               text: I18n.tr("Pick one below")
-              opacity: 0.6
+              textColor: Style.inkHighest.faint
             }
 
             MouseArea {
@@ -238,15 +240,15 @@ Card {
 
             StyledIcon {
               text: slot.modelData === "dark" ? "dark_mode" : "light_mode"
-              textColor: slot.selected ? Theme.accent : Theme.foreground
+              tone: slot.selected ? "accent" : "text"
             }
 
             StyledLabel {
               Layout.fillWidth: true
               text: I18n.tr(slot.modelData === "dark" ? "Dark" : "Light")
-              textColor: slot.selected ? Theme.accent : Theme.foreground
-              font.weight: slot.selected ? Font.Bold : Font.Normal
-              elide: Text.ElideRight
+              tone: slot.selected ? "accent" : "text"
+              font.weight: slot.selected ? Style.weightStrong : Style.roleBody.weight
+              overflow: "line"
             }
           }
         }
@@ -272,13 +274,13 @@ Card {
       Layout.preferredHeight: width * 10 / 16
       source: root.tall ? root.wallpaper : ""
       sourceSize: Qt.size(640, 400)
-      borderColor: Theme.accent
+      borderColor: Style.accent
 
       StyledLabel {
         anchors.centerIn: parent
         visible: root.wallpaper === ""
         text: I18n.tr("No wallpaper set")
-        opacity: 0.6
+        textColor: Style.inkHighest.faint
       }
     }
 
@@ -286,8 +288,8 @@ Card {
       visible: root.tall && !root.variantMode && root.wallpaper !== ""
       Layout.fillWidth: true
       text: root.wallpaper.split("/").pop()
-      elide: Text.ElideMiddle
-      opacity: 0.7
+      overflow: "line"
+      tone: "muted"
     }
 
     Item {
@@ -298,10 +300,10 @@ Card {
         anchors.centerIn: parent
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        wrapMode: Text.Wrap
+        overflow: "wrap"
         visible: WallpaperManager.images.length === 0
         text: Appearance.wallpaperCollection ? I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder + "/" + Appearance.wallpaperCollection) : I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder)
-        opacity: 0.6
+        tone: "faint"
       }
 
       GridView {
@@ -327,9 +329,9 @@ Card {
             anchors.margins: Widget.spacing / 2
             source: thumb.modelData
             sourceSize: Qt.size(320, 200)
-            fillColor: Theme.backgroundAlt
-            borderColor: thumb.current ? Theme.accent : thumbArea.containsMouse ? Theme.foreground : "transparent"
-            borderWidth: thumb.current ? 3 : 2
+            fillColor: Style.surfaceSunken
+            borderColor: thumb.current ? Style.accent : thumbArea.containsMouse ? Style.borderStrong : "transparent"
+            borderWidth: thumb.current ? Style.focusWidth : Style.hairline
           }
 
           MouseArea {

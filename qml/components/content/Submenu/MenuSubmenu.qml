@@ -48,8 +48,7 @@ Item {
     id: emptyText
     visible: root.empty
     text: root.menu ? I18n.tr("No modules in this menu yet") : I18n.tr("This menu is gone")
-    textColor: Theme.accent
-    opacity: 0.5
+    tone: "faint"
     padding: Widget.spacing
   }
 }

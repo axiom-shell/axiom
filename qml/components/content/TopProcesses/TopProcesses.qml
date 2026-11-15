@@ -37,14 +37,14 @@ Card {
     id: numberMetrics
     text: "100.0%"
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-1)
+    font.pixelSize: Style.typeCaption
   }
 
   TextMetrics {
     id: killMetrics
     text: "close"
     font.family: Appearance.iconFamily
-    font.pixelSize: Appearance.fontSize
+    font.pixelSize: Style.typeBody
   }
 
   // Compact: the busiest process
@@ -72,9 +72,8 @@ Card {
         Layout.rightMargin: root.narrow ? Widget.spacing * 1.5 + killMetrics.advanceWidth : Widget.spacing / 2
         horizontalAlignment: Text.AlignRight
         text: "CPU"
-        textColor: root.sortBy === "cpu" ? Theme.accent : Theme.foreground
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
+        role: "caption"
+        tone: root.sortBy === "cpu" ? "accent" : "muted"
       }
       StyledText {
         visible: !root.narrow || root.sortBy === "mem"
@@ -82,9 +81,8 @@ Card {
         Layout.rightMargin: Widget.spacing * 1.5 + killMetrics.advanceWidth
         horizontalAlignment: Text.AlignRight
         text: I18n.tr("Mem")
-        textColor: root.sortBy === "mem" ? Theme.accent : Theme.foreground
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
+        role: "caption"
+        tone: root.sortBy === "mem" ? "accent" : "muted"
       }
     }
 
@@ -114,7 +112,12 @@ Card {
             width: parent.width
             height: root.rowHeight
             radius: Widget.radius
-            color: rowHover.hovered ? Theme.backgroundHighlight : "transparent"
+            color: "transparent"
+
+            StateLayer {
+              radius: row.radius
+              hovered: rowHover.hovered
+            }
 
             HoverHandler {
               id: rowHover
@@ -128,7 +131,7 @@ Card {
 
               StyledLabel {
                 Layout.fillWidth: true
-                elide: Text.ElideRight
+                overflow: "line"
                 text: row.proc.command
               }
               StyledLabel {
@@ -136,23 +139,22 @@ Card {
                 Layout.preferredWidth: numberMetrics.advanceWidth
                 horizontalAlignment: Text.AlignRight
                 text: `${row.proc.cpu.toFixed(1)}%`
-                textColor: root.sortBy === "cpu" ? Theme.accent : Theme.foreground
-                textSize: Appearance.fontSizeBy(-1)
+                role: "caption"
+                tone: root.sortBy === "cpu" ? "accent" : "text"
               }
               StyledLabel {
                 visible: !root.narrow || root.sortBy === "mem"
                 Layout.preferredWidth: numberMetrics.advanceWidth
                 horizontalAlignment: Text.AlignRight
                 text: `${row.proc.mem.toFixed(1)}%`
-                textColor: root.sortBy === "mem" ? Theme.accent : Theme.foreground
-                textSize: Appearance.fontSizeBy(-1)
-                opacity: 0.8
+                role: "caption"
+                tone: root.sortBy === "mem" ? "accent" : "text"
               }
               StyledIcon {
                 Layout.preferredWidth: killMetrics.advanceWidth
                 opacity: rowHover.hovered ? 1 : 0
                 text: "close"
-                textColor: Theme.error
+                tone: "error"
                 MouseArea {
                   anchors.fill: parent
                   cursorShape: Qt.PointingHandCursor

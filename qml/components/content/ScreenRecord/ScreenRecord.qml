@@ -39,7 +39,7 @@ Panel {
   // The list beside the controls in a wide card
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 34 && root.innerWidth >= root.innerHeight * 1.4
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 10
   fullMinHeight: Appearance.fontSize * 3.5
   spacing: Widget.spacing
@@ -72,10 +72,10 @@ Panel {
     CompactFigure {
       anchors.fill: parent
       icon: root.recording ? "stop_circle" : "screen_record"
-      iconColor: root.recording ? Theme.error : Theme.accent
+      iconColor: root.recording ? Style.error : Style.accent
       value: root.recording ? root.elapsed : ""
       label: root.recording ? I18n.tr("Recording") : I18n.tr("Record")
-      valueColor: Theme.error
+      valueColor: Style.errorText
     }
     TapHandler {
       enabled: !root.missing
@@ -92,7 +92,7 @@ Panel {
     implicitWidth: Appearance.fontSize * 0.7
     implicitHeight: implicitWidth
     radius: width / 2
-    color: Theme.error
+    color: Style.error
 
     SequentialAnimation on opacity {
       running: root.recording && Appearance.animations
@@ -102,7 +102,7 @@ Panel {
           dot.opacity = 1;
       }
       NumberAnimation {
-        to: 0.25
+        to: 0.25 // style-exempt: a blink
         duration: Appearance.animSlow * 2
         easing.type: Appearance.easing
       }
@@ -117,13 +117,15 @@ Panel {
   ModuleHeader {
     visible: root.showHeader && !root.missing
     icon: "screen_record"
-    iconColor: root.recording ? Theme.error : Theme.accent
+    iconColor: root.recording ? Style.error : Style.accent
     title: I18n.tr("Screen recording")
     StyledText {
       visible: root.recording
       text: root.elapsed
-      textColor: Theme.error
-      font.weight: Font.Bold
+      tone: "error"
+      font.weight: Style.weightStrong
+      Layout.maximumWidth: Widget.textPx(160)
+      overflow: "line"
       font.features: {
         "tnum": 1
       }
@@ -157,14 +159,14 @@ Panel {
     StyledIcon {
       visible: !root.recording
       text: "screen_record"
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(2)
+      size: "md"
+      tone: "accent"
     }
     StyledLabel {
       Layout.fillWidth: true
       text: root.recording ? I18n.tr("Recording · {0}", root.elapsed) : I18n.tr("Screen recording")
-      textColor: root.recording ? Theme.error : Theme.foreground
-      elide: Text.ElideRight
+      tone: root.recording ? "error" : "text"
+      overflow: "line"
     }
     FlatIconButton {
       visible: !root.recording
@@ -184,7 +186,7 @@ Panel {
       visible: root.recording
       size: Widget.iconButton
       iconText: "stop"
-      iconColor: Theme.error
+      iconColor: Style.error
       tooltipText: I18n.tr("Stop")
       onClicked: ActionsManager.run("screenRecord", {
         "call": "close"
@@ -239,7 +241,7 @@ Panel {
           icon: "stop"
           label: I18n.tr("Stop · {0}", root.elapsed)
           active: true
-          activeColor: Theme.error
+          activeTone: "error"
           onClicked: ActionsManager.run("screenRecord", {
             "call": "close"
           })
@@ -250,7 +252,7 @@ Panel {
         visible: root.showAudio
         Layout.fillWidth: true
         enabled: !root.recording
-        opacity: root.recording ? 0.5 : 1
+        opacity: root.recording ? Style.opacityDisabled : 1
 
         Repeater {
           // Short names where it's narrow.
@@ -301,10 +303,9 @@ Panel {
         StyledLabel {
           Layout.fillWidth: true
           text: I18n.tr("Recent recordings")
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.foregroundAlt
-          font.weight: Font.Bold
-          elide: Text.ElideRight
+          role: "micro"
+          tone: "muted"
+          overflow: "line"
         }
         FlatIconButton {
           size: Widget.smallHeight

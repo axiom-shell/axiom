@@ -20,7 +20,7 @@ Panel {
 
   readonly property var vpns: VpnManager.rows
 
-  implicitWidth: Widget.px(360)
+  implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 9
   // In a popout the list grows away from the header, which stays by the
@@ -33,25 +33,27 @@ Panel {
 
   compactContent: CompactFigure {
     icon: VpnManager.anyActive ? "vpn_lock" : "vpn_key_off"
-    iconColor: VpnManager.anyActive ? Theme.accent : Theme.foregroundAlt
+    iconColor: VpnManager.anyActive ? Style.accent : Style.textMuted
     value: ""
     label: VpnManager.primary?.name ?? I18n.tr("off")
   }
 
   ModuleHeader {
     icon: VpnManager.anyActive ? "vpn_lock" : "vpn_key_off"
-    iconColor: VpnManager.anyActive ? Theme.accent : Theme.foregroundAlt
+    iconColor: VpnManager.anyActive ? Style.accent : Style.textMuted
     title: I18n.tr("VPN")
 
     StyledText {
       text: VpnManager.anyActive ? I18n.tr("{0} on", VpnManager.activeRows.length) : I18n.tr("Off")
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: VpnManager.anyActive ? Theme.accent : Theme.foregroundAlt
+      role: "caption"
+      tone: VpnManager.anyActive ? "accent" : "muted"
+      Layout.maximumWidth: Widget.textPx(160)
+      overflow: "line"
     }
     FlatIconButton {
       visible: VpnManager.available
       iconText: "upload_file"
-      iconColor: VpnManager.importError !== "" ? Theme.error : Theme.foregroundAlt
+      iconColor: VpnManager.importError !== "" ? Style.error : Style.textMuted
       tooltipText: VpnManager.importError || I18n.tr("Import a WireGuard (.conf) or OpenVPN (.ovpn) file")
       onClicked: VpnManager.pickImport()
     }
@@ -65,7 +67,6 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
-    separatorColor: Theme.backgroundHighlight
   }
 
   // Grows to list every row (from compact, to the full layout)
