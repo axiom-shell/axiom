@@ -16,10 +16,6 @@ Rectangle {
   // The accent, where a divider is accent by design
   property bool accent: false
 
-  // -- Configurable Appearance --
-  property alias separatorColor: root.color
-  property alias separatorHeight: root.height
-
   // -- Implementation --
   height: Style.dividerWidth
   color: root.accent ? Style.accent : root.strong ? Style.borderStrong : Style.inkOf(root.backTone).divider

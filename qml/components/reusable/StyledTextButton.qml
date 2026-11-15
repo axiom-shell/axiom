@@ -31,16 +31,7 @@ Surface {
   property alias labelRole: label.role
 
   // -- Configurable Appearance --
-  // Chrome overrides: the kind's colours are the defaults, a call site that
-  // sets one still wins (deleted once no call site does)
   property int textPadding: Math.round(Widget.smallPadding * 4 / 3)
-  property color backgroundColor: root._filled ? root._fill : "transparent"
-  property color hoverColor: root.backgroundColor
-  property color pressColor: root.backgroundColor
-  property color textColor: Style.toneOn(root.inkScope, root.kind === "text" ? "accent" : "text")
-  property color textHoverColor: root.textColor
-  property color borderColor: Style.borderStrong
-  property int borderWidth: root.kind === "outlined" ? Style.hairline : 0
   property real borderRadius: Style.radius
 
   // -- Implementation --
@@ -58,7 +49,8 @@ Surface {
       return Style.fillHighest;
     }
   }
-  readonly property color _contentColor: mouseArea.containsMouse ? root.textHoverColor : root.textColor
+  // The label's and the icon's colour; SegmentButton sets it for a segment in a row
+  property color _contentColor: Style.toneOn(root.inkScope, root.kind === "text" ? "accent" : "text")
 
   // No fill of its own: text and outlined buttons read the Surface they sit on
   tone: {
@@ -75,10 +67,10 @@ Surface {
       return root._host && root._host.tone ? root._host.tone : "surface";
     }
   }
-  color: root.backgroundColor
+  color: root._filled ? root._fill : "transparent"
   radius: root.borderRadius
-  border.width: root.borderWidth
-  border.color: root.borderColor
+  border.width: root.kind === "outlined" ? Style.hairline : 0
+  border.color: Style.borderStrong
   implicitWidth: content.implicitWidth + (textPadding * 2)
   implicitHeight: Math.max(content.implicitHeight + (textPadding * 2), Widget.height)
   Layout.alignment: Qt.AlignVCenter

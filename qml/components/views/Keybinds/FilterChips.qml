@@ -89,7 +89,7 @@ StyledTextButton {
               StyledSeparator {
                 anchors.centerIn: parent
                 width: Style.dividerWidth
-                separatorHeight: parent.height * 0.6
+                height: parent.height * 0.6
                 backTone: "raised"
               }
             }

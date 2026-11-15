@@ -27,12 +27,6 @@ ToolButton {
   property int iconSize: Style.iconSm
   // A content colour: set for a state or data, else the kind's
   property color iconColor: root._ink
-  // Chrome overrides, kept until no call site sets them
-  property color backgroundColor: root._fill
-  property color hoverColor: "transparent"
-  property color pressColor: "transparent"
-  property color borderColor: "transparent"
-  property int borderWidth: 0
   property real borderRadius: Style.radius
 
   // -- Implementation --
@@ -105,9 +99,7 @@ ToolButton {
   }
 
   background: Rectangle {
-    color: root.backgroundColor
-    border.color: root.borderColor
-    border.width: root.borderWidth
+    color: root._fill
     radius: root.borderRadius
 
     ColorGlide on color {}

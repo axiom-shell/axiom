@@ -21,10 +21,6 @@ Rectangle {
   // accent | error: the colour an active tile is filled with, and the
   // container its well takes while hovered or selected
   property string activeTone: "accent"
-  // Chrome overrides, kept until no caller sets them: the tone's colours
-  property color activeColor: root.activeTone === "error" ? Style.error : Style.accent
-  // Colour of the hover / selected outline
-  property color tone: root.activeColor
   // Highlighted as if hovered (keyboard selection)
   property bool selected: false
   // Allow the label at all (off: always icon-only)
@@ -42,6 +38,8 @@ Rectangle {
 
   // The label fits whole (QuickActions mirrors this for its "auto" names)
   readonly property bool labelFits: labelMetrics.advanceWidth <= root.width - Widget.spacing * 2 && root.height >= Appearance.fontSize * 4.5
+  // The fill while active, and the hover / selected outline
+  readonly property color _activeColor: root.activeTone === "error" ? Style.error : Style.accent
   readonly property bool hot: root.selected || area.containsMouse
   readonly property string _containerTone: root.activeTone + "Container"
   readonly property color _containerFill: root.activeTone === "error" ? Style.errorContainer : Style.accentContainer
@@ -56,8 +54,8 @@ Rectangle {
   readonly property real _wellSize: Math.max(Math.min(Appearance.fontSize * 1.6, Math.min(root.width, root.height) - Widget.px(4)), Math.min(root.width - Widget.spacing * 2, root.height - Widget.spacing * 2 - (root._labelShown ? labelText.implicitHeight + Widget.spacing : 0)) * (root._labelShown ? 0.7 : 0.66))
 
   radius: Style.radius
-  color: root.active ? root.activeColor : Style.fill
-  border.color: root.active ? root.activeColor : root.hot ? root.tone : Style.borderSubtle
+  color: root.active ? root._activeColor : Style.fill
+  border.color: root.active || root.hot ? root._activeColor : Style.borderSubtle
   border.width: Style.hairline
   clip: true
 

@@ -253,42 +253,6 @@ QtObject {
     return shown + " " + units[unit];
   }
 
-  // A colour to animate to or from: a fully transparent `c` becomes the
-  // first visible one of `fallbacks` at alpha 0, since fading through
-  // "transparent" (transparent black) flashes dark mid-animation
-  function fadeable(c, ...fallbacks) {
-    if (Qt.color(c).a > 0)
-      return c;
-    const visible = fallbacks.find(f => Qt.color(f).a > 0);
-    return visible !== undefined ? Qt.alpha(visible, 0) : c;
-  }
-
-  // Check if color is dark
-  function isColorDark(color) {
-    const c = Qt.color(color);
-    const luminance = 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
-    return luminance < 0.5;
-  }
-
-  // Get contrasting text color for background: white or black, whichever
-  // has more WCAG contrast with it (kept until PR 11; new code reads Style
-  // roles)
-  function getContrastColor(backgroundColor) {
-    return Tone.bestOn(backgroundColor);
-  }
-
-  // WCAG contrast ratio, 1 to 21 (kept until PR 11; new code reads Style
-  // roles)
-  function contrast(a, b) {
-    return Tone.contrast(a, b);
-  }
-
-  // WCAG relative luminance, 0 (black) to 1 (white) (kept until PR 11; new
-  // code reads Style roles)
-  function luminance(color) {
-    return Tone.luminance(color);
-  }
-
   // The 6 weeks (42 days) shown for a month, starting on `firstDay` (0 =
   // Sunday, as Date.getDay()): [{ day, month, year, inMonth, isToday, key }]
   // (key: "YYYY-MM-DD", as CalendarEvents.dayKey).
