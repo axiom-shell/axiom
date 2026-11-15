@@ -84,29 +84,55 @@ Item {
         }
       }
 
+      // The New flow: what kind of widget (a chooser, not a blank one at
+      // once)
       AddEntryButton {
+        id: newButton
         Layout.topMargin: Widget.spacing
         text: I18n.tr("New custom widget")
-        onClicked: root.editor.add()
+        onClicked: newMenu.openAt(newButton, 0, newButton.height)
       }
 
-      // Presets: names declared in CustomWidgetData.presets
-      StyledComboEntry {
-        Layout.fillWidth: true
-        value: ""
-        icon: "auto_awesome"
-        placeholderText: I18n.tr("From a preset…")
-        options: CustomWidgetData.presets.map((preset, index) => ({
-              "value": String(index),
-              "label": I18n.tr(preset.name),
-              "icon": preset.icon
-            }))
-        onPicked: value => {
-          const preset = CustomWidgetData.presets[Number(value)];
-          if (preset)
-            root.editor.add(Object.assign({}, preset, {
-              "name": I18n.tr(preset.name)
-            }));
+      StyledContextMenu {
+        id: newMenu
+        parent: root
+        // Known scripts: names declared in CustomWidgetData.presets
+        items: [
+          {
+            "id": "bar",
+            "icon": "text_fields",
+            "text": I18n.tr("Bar text from a script")
+          },
+          {
+            "id": "card",
+            "icon": "dashboard_customize",
+            "text": I18n.tr("Interactive card")
+          },
+          {
+            "id": "script",
+            "icon": "auto_awesome",
+            "text": I18n.tr("From a known script"),
+            "submenu": CustomWidgetData.scriptPresets.map((preset, index) => ({
+                  "id": "preset:" + index,
+                  "icon": preset.icon,
+                  "text": I18n.tr(preset.name)
+                }))
+          },
+          {
+            "id": "import",
+            "icon": "input",
+            "text": I18n.tr("Import a widget…")
+          }
+        ]
+        onTriggered: id => {
+          if (id === "bar")
+            root.editor.addBlank();
+          else if (id === "card")
+            root.editor.openGallery();
+          else if (id === "import")
+            root.editor.openImport();
+          else if (id.startsWith("preset:"))
+            root.editor.addScript(CustomWidgetData.scriptPresets[Number(id.slice(7))]);
         }
       }
 
@@ -118,7 +144,7 @@ Item {
         implicitHeight: Widget.height
         iconText: "input"
         text: I18n.tr("Import a widget…")
-        onClicked: root.editor.importing = true
+        onClicked: root.editor.openImport()
       }
     }
 

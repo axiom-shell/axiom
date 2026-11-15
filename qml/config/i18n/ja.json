@@ -2336,7 +2336,6 @@
     "Failed services": "",
     "WireGuard VPN": "",
     "GPU load (NVIDIA)": "",
-    "From a preset…": "",
     "Import": "",
     "This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.": "",
     "{0} × {1}": "",
@@ -4556,6 +4555,10 @@
     "They keep working.": "",
     "A Waybar custom module's script runs as it is (Import a widget reads its config). A script that refreshes Waybar with pkill -RTMIN+N waybar should run axiom ipc customWidgets refresh NAME instead. A frame-rate stream such as cava isn't supported: a stream is coalesced to 4 pushes a second.": "",
     "Help": "",
-    "How custom widgets work": ""
+    "How custom widgets work": "",
+    "Interactive card": "",
+    "Pick a look to start from. It has a sample for each of its screens and no script yet: point it at yours, and it comes alive.": "",
+    "Bar text from a script": "",
+    "From a known script": ""
   }
 }

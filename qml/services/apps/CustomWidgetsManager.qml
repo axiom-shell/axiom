@@ -537,6 +537,18 @@ QtObject {
     }));
   }
 
+  // As resolveSample, for a definition that isn't in the config (a gallery
+  // template, defaults filled): its sample as a successful run's fields
+  function resolveFor(def, sample) {
+    return CustomWidgetData.resolve(def, sample, root._contextFor(def, {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": CustomWidgetData.asText(sample.text),
+      "exited": false
+    }));
+  }
+
   // A new sample of widget `id`: a grace ends, a running hold notes it
   // (so its exit ends it)
   function _sampled(id) {
@@ -557,7 +569,10 @@ QtObject {
   // an action command, or screens) and the failure messages. `{0}` is the exit code,
   // `{1}` the script's last stderr line.
   function _context(id, output) {
-    const def = CustomWidgetsConfig.definition(id);
+    return root._contextFor(CustomWidgetsConfig.definition(id), output);
+  }
+
+  function _contextFor(def, output) {
     return {
       "colorNames": Object.keys(Theme.stringToColorMap),
       "run": {

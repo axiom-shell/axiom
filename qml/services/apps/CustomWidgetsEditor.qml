@@ -212,6 +212,7 @@ QtObject {
   function selectDefinition(index) {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
     root.importing = false;
+    root.gallery = false;
     root.copyNote = "";
     root.actionLog = [];
     root.viewIndex = -1;
@@ -372,7 +373,7 @@ QtObject {
     const local = root._local();
     const base = Object.assign({
       "name": I18n.tr("Custom widget")
-    }, translate === false ? preset : root._translated(preset ?? {}));
+    }, translate === false ? preset : root.translated(preset ?? {}));
     // A gallery entry's own keys aren't a definition's
     delete base.template;
     delete base.description;
@@ -386,7 +387,7 @@ QtObject {
   // placeholders and labels of its elements, and its screens' names (the keys
   // are listed in CustomWidgetData.presets' comment). A definition with no
   // such text, or a name no key matches, comes back as it is
-  function _translated(def) {
+  function translated(def) {
     if (!def.module)
       return def;
     const elements = list => (list ?? []).map(element => {
@@ -417,8 +418,50 @@ QtObject {
     });
   }
 
-  // The Import form is open in the inspector pane (ImportForm)
+  // The Import form (ImportForm) or the template gallery (GalleryForm) is
+  // open in the inspector pane, instead of the tabs
   property bool importing: false
+  property bool gallery: false
+  readonly property bool formOpen: root.importing || root.gallery
+
+  function openImport() {
+    root.gallery = false;
+    root.importing = true;
+  }
+
+  function openGallery() {
+    root.importing = false;
+    root.gallery = true;
+  }
+
+  // The New flow's ends (the chooser, DefinitionsPanel): a blank widget for
+  // a bar text from a script, on the Data tab
+  function addBlank() {
+    root.add({
+      "bar": {
+        "style": "label"
+      }
+    });
+    root.selectTab(0);
+  }
+
+  // A known script's preset, on the Data tab
+  function addScript(preset) {
+    root.add(Object.assign({}, preset, {
+      "name": I18n.tr(preset.name)
+    }));
+    root.selectTab(0);
+  }
+
+  // A gallery template, on the Module tab at its first screen
+  function addTemplate(template) {
+    root.add(Object.assign({}, template, {
+      "name": I18n.tr(template.name)
+    }));
+    root.selectTab(2);
+    if ((root.selected?.module?.views?.length ?? 0) > 0)
+      root.selectView(0);
+  }
   // What Copy just said ("" none), shown under the header until dismissed
   // or another definition is selected
   property string copyNote: ""
