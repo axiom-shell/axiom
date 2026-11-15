@@ -303,7 +303,7 @@ func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.O
 			Live: orEmpty(u.Live), Skipped: orEmpty(u.Skipped), Missing: orEmpty(u.Missing)}
 		// Nothing is printed for a rule none of whose kinds is written
 		if len(u.Live)+len(u.Skipped)+len(u.Missing) < len(r.Kinds) {
-			for _, key := range render.RuleEffects(r.Window) {
+			for _, key := range r.Window.Keys() {
 				if !slices.Contains(u.Placed, key) && !slices.Contains(u.Dropped, key) {
 					row.Written = append(row.Written, key)
 				}
