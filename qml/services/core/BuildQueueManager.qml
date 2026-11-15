@@ -1,13 +1,15 @@
 pragma Singleton
 import QtQuick
+import qs.components.methods
 
 // Spreads building UI over frames: a page's modules (ModuleGrid.stream)
 // and tool pages' sections (StreamedLoader) queue a job each, and the jobs
 // run a few per 16 ms step, within a 6 ms budget (at least one a step,
 // however long it takes), so showing a page never waits on all of it.
 // Jobs run in the order queued, those whose owner is visible first (the
-// page shown before its neighbours). A job that alone takes over a frame
-// is logged (`--debug`), naming its label.
+// page shown before its neighbours); a `first` job (the settings sidebar)
+// goes ahead of all of them, in the order the first ones were queued. A job
+// that alone takes over a frame is logged (`--debug`), naming its label.
 QtObject {
   id: root
 
@@ -15,15 +17,16 @@ QtObject {
   readonly property int pending: root._queue.length
 
   // Queues `job` (a function building something) for `owner` (an Item;
-  // its jobs are dropped when it cancels)
-  function request(owner, job, label) {
-    root._queue = root._queue.concat([
-      {
-        "owner": owner,
-        "job": job,
-        "label": label ?? ""
-      }
-    ]);
+  // its jobs are dropped when it cancels). `first` puts it ahead of every
+  // job that isn't, behind the `first` ones already waiting.
+  function request(owner, job, label, first) {
+    const entry = {
+      "owner": owner,
+      "job": job,
+      "label": label ?? "",
+      "first": first === true
+    };
+    root._queue = BuildOrder.enqueue(root._queue, entry);
   }
 
   // Drops `owner`'s jobs not run yet: call it from onDestruction
@@ -37,8 +40,7 @@ QtObject {
   readonly property int _budget: 6
 
   function _next() {
-    const shown = root._queue.findIndex(entry => entry.owner?.visible === true);
-    return root._queue[Math.max(0, shown)];
+    return BuildOrder.next(root._queue);
   }
 
   function _step() {

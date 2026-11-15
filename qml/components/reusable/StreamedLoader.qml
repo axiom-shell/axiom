@@ -33,6 +33,9 @@ Loader {
   // Off: it only fades in, without sliding up (the settings cards and their
   // fields, which sit on a page that slides in itself)
   property bool rise: true
+  // Its build goes ahead of every other queued one (the settings sidebar,
+  // which otherwise arrives after all the cards)
+  property bool buildFirst: false
 
   // Streamed with `always` and still filling in (until the queue drains):
   // the loaders inside it stream too, so a settings card switched to fills
@@ -109,7 +112,7 @@ Loader {
     if (root.stream && (root.always || root._pageStreaming())) {
       root._streamed = true;
       root.streamsInside = root.always;
-      BuildQueueManager.request(root, () => root._granted = true, root.label);
+      BuildQueueManager.request(root, () => root._granted = true, root.label, root.buildFirst);
     } else {
       root._granted = true;
     }
