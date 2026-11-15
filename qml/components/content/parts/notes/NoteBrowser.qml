@@ -148,15 +148,20 @@ DropdownSurface {
                 visible: crumb.index > 0
                 anchors.verticalCenter: parent.verticalCenter
                 text: "chevron_right"
-                textColor: Theme.foregroundAlt
-                textSize: Appearance.fontSizeBy(-2)
+                size: "xs"
+                tone: "faint"
               }
               Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 implicitWidth: (crumb.index === 0 ? crumbLabel.implicitWidth : crumbName.implicitWidth) + Widget.spacing * 1.5
-                implicitHeight: Widget.smallHeight
+                implicitHeight: Math.max(Widget.smallHeight, (crumb.index === 0 ? crumbLabel.implicitHeight : crumbName.implicitHeight) + Widget.spacing)
                 radius: Widget.radius / 2
-                color: crumbHover.hovered && !crumb.last ? Theme.backgroundHighlight : "transparent"
+                color: "transparent"
+
+                StateLayer {
+                  hovered: crumbHover.hovered && !crumb.last
+                  radius: parent.radius
+                }
 
                 // The top is an icon; a folder's name is text (a name like
                 // "work" would draw as that icon)
@@ -165,17 +170,17 @@ DropdownSurface {
                   visible: crumb.index === 0
                   anchors.centerIn: parent
                   text: "home"
-                  textColor: crumb.last ? Theme.foreground : Theme.foregroundAlt
-                  textSize: Appearance.fontSizeBy(1)
+                  size: "sm"
+                  tone: crumb.last ? "text" : "muted"
                 }
                 StyledLabel {
                   id: crumbName
                   visible: crumb.index > 0
                   anchors.centerIn: parent
                   text: root.crumbs[crumb.index - 1] ?? ""
-                  textColor: crumb.last ? Theme.foreground : Theme.foregroundAlt
-                  textSize: Appearance.fontSizeBy(-1)
-                  font.weight: crumb.last ? Font.Bold : Font.Normal
+                  role: "caption"
+                  tone: crumb.last ? "text" : "muted"
+                  font.weight: crumb.last ? Style.weightStrong : Style.roleCaption.weight
                 }
                 HoverHandler {
                   id: crumbHover
@@ -194,14 +199,14 @@ DropdownSurface {
       FlatIconButton {
         size: Widget.iconButton
         iconText: "note_add"
-        iconColor: root.creating === "note" ? Theme.accent : Theme.foreground
+        iconColor: root.creating === "note" ? Style.accent : Style.text
         tooltipText: I18n.tr("New note")
         onClicked: root.creating = root.creating === "note" ? "" : "note"
       }
       FlatIconButton {
         size: Widget.iconButton
         iconText: "create_new_folder"
-        iconColor: root.creating === "folder" ? Theme.accent : Theme.foreground
+        iconColor: root.creating === "folder" ? Style.accent : Style.text
         tooltipText: I18n.tr("New folder")
         onClicked: root.creating = root.creating === "folder" ? "" : "folder"
       }
@@ -246,12 +251,11 @@ DropdownSurface {
     }
 
     StyledSeparator {
+      backTone: "raised"
       Layout.fillWidth: true
-      separatorHeight: 1
-      opacity: 0.6
     }
 
-    ListView {
+    MotionListView {
       id: resultList
       visible: root.query !== ""
       Layout.fillWidth: true
@@ -273,7 +277,11 @@ DropdownSurface {
         width: resultList.width
         implicitHeight: hitLayout.implicitHeight + Widget.spacing
         radius: Widget.radius / 2
-        color: hitHover.hovered ? Theme.backgroundHighlight : "transparent"
+        color: "transparent"
+
+        StateLayer {
+          hovered: hitHover.hovered
+        }
 
         HoverHandler {
           id: hitHover
@@ -295,8 +303,8 @@ DropdownSurface {
           StyledIcon {
             Layout.alignment: Qt.AlignTop
             text: hit.byName ? "description" : "notes"
-            textColor: hit.result.path === root.current ? Theme.accent : Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(1)
+            size: "sm"
+            tone: hit.result.path === root.current ? "accent" : "muted"
           }
           ColumnLayout {
             Layout.fillWidth: true
@@ -306,32 +314,30 @@ DropdownSurface {
               Layout.fillWidth: true
               text: root.highlighted(hit.result.title)
               textFormat: Text.StyledText
-              textColor: hit.result.path === root.current ? Theme.accent : Theme.foreground
-              textSize: Appearance.fontSizeBy(-1)
-              elide: Text.ElideRight
+              role: "caption"
+              tone: hit.result.path === root.current ? "accent" : "text"
+              overflow: "line"
             }
             StyledLabel {
               visible: text !== ""
               Layout.fillWidth: true
               text: hit.byName ? hit.result.snippet : root.highlighted(hit.result.snippet)
               textFormat: hit.byName ? Text.PlainText : Text.StyledText
-              textColor: Theme.foregroundAlt
-              textSize: Appearance.fontSizeBy(-2)
-              elide: Text.ElideRight
+              role: "caption"
+              overflow: "line"
             }
           }
           StyledLabel {
             visible: !hit.byName
             Layout.alignment: Qt.AlignTop
             text: I18n.tr("line {0}", hit.result.line + 1)
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-3)
+            role: "micro"
           }
         }
       }
     }
 
-    ListView {
+    MotionListView {
       id: list
       visible: root.query === ""
       Layout.fillWidth: true
@@ -357,7 +363,11 @@ DropdownSurface {
         width: list.width
         implicitHeight: Math.max(Widget.height - Widget.px(4), rowLayout.implicitHeight + Widget.spacing / 2)
         radius: Widget.radius / 2
-        color: row.confirming ? Qt.alpha(Theme.error, 0.14) : row.isCurrent ? Qt.alpha(Theme.accent, 0.16) : rowHover.hovered ? Theme.backgroundHighlight : "transparent"
+        color: row.confirming ? Style.errorContainer : row.isCurrent ? Style.accentContainer : "transparent"
+
+        StateLayer {
+          hovered: rowHover.hovered
+        }
 
         HoverHandler {
           id: rowHover
@@ -383,17 +393,17 @@ DropdownSurface {
           StyledIcon {
             text: row.fileIsDir ? "folder" : "description"
             fill: row.fileIsDir ? 1 : 0
-            textColor: row.fileIsDir ? Theme.accent : row.isCurrent ? Theme.accent : Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(1)
+            size: "sm"
+            textColor: row.confirming ? Style.onErrorContainer : row.isCurrent ? Style.onAccentContainer : row.fileIsDir ? Style.accent : Style.textMuted
           }
 
           StyledLabel {
             visible: !row.editing
             Layout.fillWidth: true
             text: row.confirming ? (NotesManager.canTrash ? I18n.tr("Move {0} to the trash?", row.fileName) : I18n.tr("Delete {0} for good?", row.fileName)) : row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName)
-            textColor: row.isCurrent ? Theme.accent : Theme.foreground
-            textSize: Appearance.fontSizeBy(-1)
-            elide: Text.ElideRight
+            role: "caption"
+            textColor: row.confirming ? Style.onErrorContainer : row.isCurrent ? Style.onAccentContainer : Style.text
+            overflow: "line"
           }
 
           StyledTextEntry {
@@ -419,8 +429,8 @@ DropdownSurface {
           StyledIcon {
             visible: row.fileIsDir && !row.editing && !row.confirming && !rowHover.hovered
             text: "chevron_right"
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSize
+            tone: "muted"
+            size: "sm"
           }
 
           // Delete: confirm or cancel
@@ -428,8 +438,8 @@ DropdownSurface {
             visible: row.confirming
             size: Widget.iconButton
             iconText: "check"
-            iconColor: Theme.error
-            iconSize: Appearance.fontSizeBy(-1)
+            iconColor: Style.onErrorContainer
+            iconSize: Style.iconSm
             tooltipText: I18n.tr("Delete")
             onClicked: root.remove(row.path)
           }
@@ -437,7 +447,8 @@ DropdownSurface {
             visible: row.confirming
             size: Widget.iconButton
             iconText: "close"
-            iconSize: Appearance.fontSizeBy(-1)
+            iconColor: Style.onErrorContainer
+            iconSize: Style.iconSm
             tooltipText: I18n.tr("Cancel")
             onClicked: root.confirming = ""
           }
@@ -446,7 +457,8 @@ DropdownSurface {
             visible: rowHover.hovered && !row.editing && !row.confirming
             size: Widget.iconButton
             iconText: "edit"
-            iconSize: Appearance.fontSizeBy(-2)
+            iconColor: row.isCurrent ? Style.inkAccentContainer.muted : Style.textMuted
+            iconSize: Style.iconXs
             tooltipText: I18n.tr("Rename")
             onClicked: {
               root.confirming = "";
@@ -457,7 +469,8 @@ DropdownSurface {
             visible: rowHover.hovered && !row.editing && !row.confirming
             size: Widget.iconButton
             iconText: "delete"
-            iconSize: Appearance.fontSizeBy(-2)
+            iconColor: row.isCurrent ? Style.inkAccentContainer.muted : Style.textMuted
+            iconSize: Style.iconXs
             tooltipText: I18n.tr("Delete")
             onClicked: {
               root.renaming = "";
@@ -473,15 +486,13 @@ DropdownSurface {
     }
 
     StyledText {
-      wrapMode: Text.WordWrap
       visible: root.query !== "" && !root.searching && root.results.length === 0
       Layout.fillWidth: true
       Layout.topMargin: Widget.spacing
       Layout.bottomMargin: Widget.spacing
       horizontalAlignment: Text.AlignHCenter
       text: I18n.tr("No notes match")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
     }
 
     StyledText {
@@ -490,10 +501,8 @@ DropdownSurface {
       Layout.topMargin: Widget.spacing
       Layout.bottomMargin: Widget.spacing
       horizontalAlignment: Text.AlignHCenter
-      wrapMode: Text.WordWrap
       text: NotesManager.directoryMissing ? I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory) : root.folder === "" ? I18n.tr("No notes yet") : I18n.tr("This folder is empty")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
     }
   }
 }

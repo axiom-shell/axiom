@@ -72,7 +72,7 @@ Item {
     visible: !root.showImage && !icon.visible
     anchors.centerIn: parent
     text: "notifications"
-    textColor: Theme.accent
+    tone: "accent"
     textSize: root.size * 0.8
   }
 

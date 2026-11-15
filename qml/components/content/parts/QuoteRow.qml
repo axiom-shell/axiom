@@ -22,7 +22,8 @@ Item {
   signal clicked
 
   readonly property string trend: MarketMath.trend(root.quote?.change ?? 0)
-  readonly property color trendColor: MarketsManager.trendColor(root.trend)
+  readonly property string trendTone: MarketMath.trendTone(root.trend, MarketsConfig.redForGains)
+  readonly property color trendLine: root.trendTone === "success" ? Style.success : root.trendTone === "error" ? Style.error : Style.textFaint
   readonly property var holding: root.showHoldings ? MarketMath.holding(root.item, root.quote) : null
   readonly property string stateLabel: MarketsManager.stateLabel(root.quote)
   readonly property bool hasPrice: !!root.quote && !root.quote.error
@@ -30,16 +31,10 @@ Item {
   implicitHeight: body.implicitHeight + Widget.smallPadding * 2
   implicitWidth: body.implicitWidth + Widget.smallPadding * 2
 
-  Rectangle {
-    anchors.fill: parent
+  StateLayer {
+    hovered: mouse.containsMouse
+    pressed: mouse.pressed
     radius: Widget.radius
-    color: mouse.containsMouse ? Qt.alpha(Theme.foreground, 0.06) : "transparent"
-    Behavior on color {
-      ColorAnimation {
-        duration: Appearance.animFast
-        easing.type: Appearance.easing
-      }
-    }
   }
 
   MouseArea {
@@ -63,8 +58,7 @@ Item {
       StyledLabel {
         Layout.fillWidth: true
         text: MarketMath.displayName(root.item, root.quote)
-        font.weight: Font.DemiBold
-        elide: Text.ElideRight
+        role: "label"
       }
       RowLayout {
         Layout.fillWidth: true
@@ -72,14 +66,14 @@ Item {
         StyledIcon {
           visible: !!root.quote?.stale
           text: "history"
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.warning
+          size: "xs"
+          tone: "warning"
         }
         StyledLabel {
           Layout.fillWidth: true
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: root.quote?.error ? Theme.error : Theme.foregroundInactive
-          elide: Text.ElideRight
+          role: "caption"
+          tone: root.quote?.error ? "error" : "faint"
+          overflow: "line"
           text: {
             if (root.quote?.error)
               return root.quote.error;
@@ -91,9 +85,8 @@ Item {
       StyledLabel {
         Layout.fillWidth: true
         visible: root.holding !== null
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: Theme.foregroundAlt
-        elide: Text.ElideRight
+        role: "caption"
+        overflow: "line"
         text: root.holding ? I18n.tr("{0} · {1} today", MarketMath.formatPrice(root.holding.value, root.quote.currency), MarketMath.formatChange(root.holding.dayChange, root.quote.currency)) : ""
       }
     }
@@ -106,9 +99,9 @@ Item {
       reference: root.quote?.prevClose ?? 0
       start: root.quote?.sessionStart ?? 0
       end: root.quote?.sessionEnd ?? 0
-      lineColor: root.trendColor
+      lineColor: root.trendLine
       lineWidth: Widget.px(1.5)
-      fillOpacity: 0.22
+      fillOpacity: 0.22 // style-exempt: the chart fill fades its data colour
     }
 
     // At least a usual price's width, so the rows' charts line up
@@ -119,24 +112,26 @@ Item {
       StyledLabel {
         Layout.alignment: Qt.AlignRight
         text: root.hasPrice ? MarketMath.formatPrice(root.quote.price, root.quote.currency) : "—"
-        font.weight: Font.DemiBold
+        role: "label"
+        font.weight: Style.weightStrong
         font.features: ({
             "tnum": 1
           })
       }
-      Rectangle {
+      Surface {
+        id: chip
+        tone: root.trendTone === "faint" ? "highest" : root.trendTone + "Container"
         Layout.alignment: Qt.AlignRight
         visible: root.hasPrice
         implicitWidth: change.implicitWidth + Widget.smallPadding * 2
         implicitHeight: change.implicitHeight + Widget.px(2)
         radius: height / 2
-        color: Qt.alpha(root.trendColor, 0.16)
         StyledLabel {
           id: change
           anchors.centerIn: parent
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: root.trendColor
-          font.weight: Font.DemiBold
+          role: "caption"
+          textColor: chip.ink.text
+          font.weight: Style.weightStrong
           font.features: ({
               "tnum": 1
             })

@@ -120,8 +120,7 @@ ColumnLayout {
         StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 4.5
           text: I18n.tr("Reminder")
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-1)
+          role: "caption"
         }
         StyledComboEntry {
           Layout.fillWidth: true
@@ -196,9 +195,8 @@ ColumnLayout {
     visible: root.session.error !== "" || root.session.readOnly
     Layout.fillWidth: true
     text: root.session.error !== "" ? root.session.error : I18n.tr("This calendar can't be changed.")
-    textColor: root.session.error !== "" ? Theme.error : Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.Wrap
+    role: "caption"
+    tone: root.session.error !== "" ? "error" : "muted"
   }
 
   // Which of a recurring event's: this one, or all of them; or a single
@@ -213,13 +211,13 @@ ColumnLayout {
       id: askText
       Layout.fillWidth: true
       text: root.session.asking === "confirm" ? I18n.tr("Delete this event?") : root.session.asking === "delete" ? I18n.tr("Delete which?") : I18n.tr("Change which?")
-      elide: Text.ElideRight
+      overflow: "line"
     }
     StyledTextButton {
       visible: root.session.asking === "confirm"
       text: I18n.tr("Delete")
       iconText: "delete"
-      textColor: Theme.error
+      kind: "danger"
       onClicked: root.session.removeAs("series")
     }
     StyledTextButton {
@@ -248,7 +246,7 @@ ColumnLayout {
       visible: !root.session.isNew && !root.session.readOnly
       text: I18n.tr("Delete")
       iconText: "delete"
-      textColor: Theme.error
+      kind: "danger"
       enabled: !root.session.busy
       onClicked: root.session.remove()
     }
@@ -263,8 +261,7 @@ ColumnLayout {
       visible: !root.session.readOnly
       text: root.session.busy ? I18n.tr("Saving…") : I18n.tr("Save")
       iconText: "check"
-      backgroundColor: Theme.accent
-      textColor: Theme.background
+      kind: "primary"
       enabled: !root.session.busy
       onClicked: root.session.save()
     }

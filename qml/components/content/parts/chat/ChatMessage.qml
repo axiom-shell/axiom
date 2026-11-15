@@ -47,17 +47,16 @@ Item {
 
     // --- The user's message ---
 
-    Rectangle {
+    Surface {
       id: bubble
+      tone: "accentContainer"
+      outlined: false
       visible: root.isUser
       Layout.alignment: Qt.AlignRight
       Layout.maximumWidth: root.width * 0.85
       implicitWidth: Math.min(root.width * 0.85, userColumn.implicitWidth + Widget.padding * 2)
       implicitHeight: userColumn.implicitHeight + Widget.padding * 1.5
       radius: Widget.radius + 2
-      color: Qt.alpha(Theme.accent, 0.16)
-      border.color: Qt.alpha(Theme.accent, 0.35)
-      border.width: 1
 
       ColumnLayout {
         id: userColumn
@@ -87,6 +86,7 @@ Item {
           Layout.fillWidth: true
           Layout.maximumWidth: root.width * 0.85 - Widget.padding * 2
           markdown: false
+          textColor: bubble.ink.text
           text: root.isUser ? root.text : ""
         }
       }
@@ -160,8 +160,8 @@ Item {
             width: Widget.px(7)
             height: Widget.px(7)
             radius: width / 2
-            color: Theme.accent
-            opacity: 0.35
+            color: Style.accent
+            opacity: 0.35 // style-exempt: pulse
 
             SequentialAnimation on opacity {
               running: root.streaming && Appearance.animations
@@ -174,7 +174,7 @@ Item {
                 duration: Appearance.animNormal
               }
               NumberAnimation {
-                to: 0.35
+                to: 0.35 // style-exempt: pulse
                 duration: Appearance.animNormal
               }
               PauseAnimation {
@@ -192,14 +192,13 @@ Item {
 
         StyledIcon {
           text: root.message?.state === "stopped" ? "stop_circle" : root.message?.notice === "refusal" ? "block" : "content_cut"
-          textColor: Theme.warning
-          textSize: Appearance.fontSizeBy(-1)
+          tone: "warning"
+          size: "sm"
         }
         StyledText {
           Layout.fillWidth: true
-          wrapMode: Text.WordWrap
-          textColor: Theme.warning
-          textSize: Appearance.fontSizeBy(-2)
+          role: "caption"
+          tone: "warning"
           text: {
             if (root.message?.state === "stopped")
               return I18n.tr("Stopped");
@@ -211,13 +210,12 @@ Item {
       }
 
       // A failed reply
-      StyledContainer {
+      Surface {
+        id: errorBox
+        tone: "errorContainer"
         visible: root.message?.state === "error"
         Layout.fillWidth: true
         implicitHeight: errorColumn.implicitHeight + Widget.padding * 1.5
-        backgroundColor: Qt.alpha(Theme.error, 0.12)
-        borderColor: Qt.alpha(Theme.error, 0.5)
-        borderWidth: 1
 
         ColumnLayout {
           id: errorColumn
@@ -229,10 +227,9 @@ Item {
             spacing: Widget.spacing / 2
             StyledIcon {
               text: "error"
-              textColor: Theme.error
+              textColor: errorBox.ink.text
             }
             StyledText {
-              wrapMode: Text.WordWrap
               Layout.fillWidth: true
               text: {
                 switch (root.message?.errorKind) {
@@ -245,19 +242,17 @@ Item {
                 }
                 return I18n.tr("The request failed");
               }
-              textColor: Theme.error
-              font.weight: Font.Bold
+              textColor: errorBox.ink.text
+              font.weight: Style.weightStrong
             }
           }
 
           StyledText {
             Layout.fillWidth: true
             text: root.message?.error ?? ""
-            wrapMode: Text.Wrap
-            maximumLineCount: 6
-            elide: Text.ElideRight
-            textSize: Appearance.fontSizeBy(-2)
-            opacity: 0.8
+            role: "caption"
+            maxLines: 6
+            tone: "muted"
           }
 
           RowLayout {
@@ -295,15 +290,15 @@ Item {
         Layout.alignment: Qt.AlignVCenter
         Layout.rightMargin: Widget.spacing
         text: root.message?.model ?? ""
-        textColor: Theme.foregroundInactive
-        textSize: Appearance.fontSizeBy(-3)
+        role: "micro"
+        tone: "faint"
       }
 
       FlatIconButton {
         visible: root.text !== ""
         size: Widget.iconButton
         iconText: "content_copy"
-        iconSize: Appearance.fontSizeBy(-2)
+        iconSize: Style.iconXs
         tooltipText: I18n.tr("Copy")
         onClicked: ClipboardManager.copyText(root.text)
       }
@@ -312,7 +307,7 @@ Item {
         visible: !root.isUser && root.isLast && root.message?.state !== "error"
         size: Widget.iconButton
         iconText: "refresh"
-        iconSize: Appearance.fontSizeBy(-2)
+        iconSize: Style.iconXs
         tooltipText: I18n.tr("Regenerate")
         onClicked: ChatManager.regenerate()
       }
@@ -320,7 +315,7 @@ Item {
       FlatIconButton {
         size: Widget.iconButton
         iconText: "delete"
-        iconSize: Appearance.fontSizeBy(-2)
+        iconSize: Style.iconXs
         tooltipText: I18n.tr("Delete")
         onClicked: ChatManager.removeMessage(root.index)
       }

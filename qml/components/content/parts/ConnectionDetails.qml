@@ -48,7 +48,7 @@ GridLayout {
   FontMetrics {
     id: metrics
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSizeBy(-3)
+    font.pixelSize: Style.typeMicro
   }
 
   StyledText {
@@ -56,8 +56,7 @@ GridLayout {
     Layout.columnSpan: 3
     Layout.preferredHeight: root.lineHeight
     text: I18n.tr("Reading…")
-    textSize: Appearance.fontSizeBy(-3)
-    textColor: Theme.foregroundAlt
+    role: "micro"
   }
 
   Repeater {
@@ -80,9 +79,8 @@ GridLayout {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         text: cell.column === 0 ? cell.line[0] : cell.line[1]
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-3)
-        textColor: cell.column === 0 ? Theme.foregroundAlt : Theme.foreground
+        role: "micro"
+        tone: cell.column === 0 ? "muted" : "text"
       }
 
       FlatIconButton {
@@ -90,7 +88,7 @@ GridLayout {
         anchors.centerIn: parent
         size: root.lineHeight
         iconText: "content_copy"
-        iconSize: Appearance.fontSizeBy(-2)
+        iconSize: Style.iconXs
         tooltipText: I18n.tr("Copy")
         onClicked: ClipboardManager.copyText(cell.line[1].split("/")[0])
       }

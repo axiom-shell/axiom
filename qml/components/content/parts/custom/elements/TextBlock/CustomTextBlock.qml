@@ -20,10 +20,10 @@ CustomElementBase {
       width: root.width
       text: root.options.monospace ? "<span style=\"white-space:pre\">" + root.shown + "</span>" : root.shown
       textFormat: Text.RichText
-      textColor: root.colorOf(Theme.foreground)
+      textColor: root.colorOf(Style.text)
       textFamily: root.options.monospace ? "monospace" : Appearance.fontFamily
-      textSize: Appearance.fontSizeBy(-1)
-      wrapMode: root.options.monospace ? Text.NoWrap : Text.Wrap
+      role: "caption"
+      overflow: root.options.monospace ? "none" : "wrap"
     }
   }
 }

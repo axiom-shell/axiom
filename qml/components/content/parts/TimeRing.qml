@@ -18,7 +18,7 @@ Item {
   property real progress: 0
   property string text: ""
   property string label: ""
-  property color color: Theme.accent
+  property color color: Style.accent
   property bool running: false
   property bool urgent: false
   // How often progress moves (ms)
@@ -26,7 +26,7 @@ Item {
 
   // What the ring shows: progress, swept to
   property real _shown: 0
-  property color _color: root.urgent ? Theme.warning : root.color
+  property color _color: root.urgent ? Style.warning : root.color
   ColorGlide on _color {}
 
   Component.onCompleted: root._shown = root.progress
@@ -67,17 +67,17 @@ Item {
     StyledText {
       Layout.alignment: Qt.AlignHCenter
       text: root.text
-      textSize: Math.max(Appearance.fontSize, Math.round(root.size * 0.2))
-      font.weight: Font.Bold
-      textColor: root.running ? Theme.foreground : Theme.foregroundAlt
+      textSize: Math.max(Style.typeBody, Math.round(root.size * 0.2)) // fitted: the ring's centre
+      font.weight: Style.roleDisplay.weight
+      textColor: root.running ? Style.text : Style.textMuted
     }
     StyledText {
       Layout.alignment: Qt.AlignHCenter
       Layout.maximumWidth: root.size * 0.8
       text: root.label
       visible: text !== ""
-      elide: Text.ElideRight
-      textSize: Math.max(Appearance.fontSizeBy(-2), Math.round(root.size * 0.07))
+      overflow: "line"
+      textSize: Math.max(Style.typeCaption, Math.round(root.size * 0.07)) // fitted: the line under the time
       textColor: root._color
     }
   }

@@ -9,8 +9,10 @@ import qs.components.reusable
 // One section of the keybinds reference as a card: its icon and title,
 // then its rows grouped by modifiers (BindRows.byModifiers), each group
 // under its modifiers, with the keys in one aligned column
-StyledContainer {
+Surface {
   id: root
+  tone: "sunken"
+  outlined: false
 
   // A KeybindManager section, binds possibly filtered by a search
   required property var section
@@ -73,30 +75,26 @@ StyledContainer {
 
       StyledIcon {
         text: root._section.undescribed ? "help" : KeybindManager.sectionIcon(root._section.title)
-        textColor: Theme.accent
+        tone: "accent"
       }
 
       StyledLabel {
         text: KeybindManager.sectionTitle(root._section)
-        textColor: Theme.accent
-        font.weight: Font.Bold
-        elide: Text.ElideRight
+        role: "title"
         Layout.fillWidth: true
       }
 
       StyledLabel {
         text: root._section.binds.length
-        opacity: 0.5
-        textSize: Appearance.fontSizeBy(-2)
+        role: "caption"
+        tone: "faint"
       }
     }
 
     StyledText {
       visible: root._section.undescribed
       text: I18n.tr("A bind's description sets its label, and a \"Section: Label\" prefix picks its section.")
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.Wrap
+      role: "caption"
       Layout.fillWidth: true
     }
 
@@ -129,14 +127,13 @@ StyledContainer {
           sourceComponent: Item {
             implicitHeight: headerLine.implicitHeight + (entry.index > 0 ? Widget.spacing : 0)
 
-            Rectangle {
+            Item {
               anchors.fill: headerLine
               anchors.margins: -2
-              radius: Widget.radius / 2
-              color: Qt.alpha(Theme.backgroundHighlight, headerArea.containsMouse ? 0.6 : 0)
 
-              ColorGlide on color {
-                duration: Appearance.animFast
+              StateLayer {
+                hovered: headerArea.containsMouse
+                pressed: headerArea.pressed
               }
             }
 
@@ -153,19 +150,19 @@ StyledContainer {
                 mods: entry.modelData.mods
                 glyphs: KeybindManager.page.refGlyphs
                 compact: true
-                opacity: 0.8
               }
 
               StyledLabel {
                 text: "+"
-                opacity: 0.5
+                role: "caption"
+                tone: "faint"
               }
 
               StyledLabel {
                 visible: entry.folded
                 text: entry.modelData.count ?? ""
-                opacity: 0.5
-                textSize: Appearance.fontSizeBy(-2)
+                role: "caption"
+                tone: "faint"
               }
 
               Item {
@@ -174,7 +171,7 @@ StyledContainer {
 
               StyledIcon {
                 text: "expand_more"
-                textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
+                tone: headerArea.containsMouse ? "accent" : "muted"
                 rotation: entry.folded ? -90 : 0
 
                 Glide on rotation {}

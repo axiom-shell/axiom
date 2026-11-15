@@ -11,6 +11,8 @@ PopInRectangle {
   property string text: ""
   // success | warning | error | info | accent | neutral
   property string tone: "neutral"
+  // The word's colour: the tone's ink; a caller passing its own `color:` passes the ink that reads on it
+  property color ink: root._ink.text
 
   readonly property var _ink: root.tone === "neutral" ? Style.inkHighest : Style.inkOf(root.tone + "Container")
 
@@ -46,6 +48,6 @@ PopInRectangle {
     role: "caption"
     overflow: "none"
     text: root.text
-    textColor: root._ink.text
+    textColor: root.ink
   }
 }

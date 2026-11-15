@@ -42,14 +42,13 @@ ColumnLayout {
       Layout.fillWidth: true
       Layout.leftMargin: root.closable ? 0 : Widget.spacing / 2
       text: I18n.formatDate(CalendarEvents.dateOf(root.dayKey), I18n.dateFormat("longDate"))
-      font.weight: Font.Bold
-      elide: Text.ElideRight
+      role: "title"
     }
     FlatIconButton {
       visible: !root.readOnly && CalendarManager.writableCalendars.length > 0
       size: Math.round(Appearance.fontSize * 1.8)
       iconText: "add"
-      iconColor: Theme.accent
+      iconColor: Style.accent
       tooltipText: I18n.tr("New event")
       onClicked: root.addClicked()
     }

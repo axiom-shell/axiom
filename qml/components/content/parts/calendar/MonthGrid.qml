@@ -132,8 +132,7 @@ Item {
         Layout.fillWidth: true
         Layout.leftMargin: Widget.spacing / 2
         text: I18n.formatDate(new Date(root.year, root.month, 1), I18n.dateFormat("monthYear"))
-        font.weight: Font.Bold
-        elide: Text.ElideRight
+        role: "title"
         MouseArea {
           anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
@@ -147,8 +146,8 @@ Item {
           required property var modelData
           size: Math.round(root.headerHeight * 0.9)
           iconText: modelData[0]
-          iconColor: Theme.accent
-          iconSize: Appearance.fontSizeBy(2)
+          iconColor: Style.accent
+          iconSize: Style.iconMd
           onClicked: root.step(modelData[1])
         }
       }
@@ -172,8 +171,8 @@ Item {
           horizontalAlignment: root.titles ? Text.AlignLeft : Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
           text: I18n.locale.dayName((root.firstDay + index) % 7, root.titles ? Locale.ShortFormat : Locale.NarrowFormat)
-          textSize: Appearance.fontSizeBy(-2)
-          opacity: 0.6
+          role: "caption"
+          tone: "faint"
         }
       }
 
@@ -220,9 +219,12 @@ Item {
               anchors.margins: 1
               visible: root.titles
               radius: Widget.radius
-              color: cell.selected ? Theme.backgroundHighlight : cellArea.containsMouse ? Qt.alpha(Theme.backgroundHighlight, 0.5) : "transparent"
-              border.color: cell.selected ? Theme.accent : "transparent"
-              border.width: cell.selected ? 1 : 0
+              color: cell.selected ? Style.accentContainer : "transparent"
+
+              StateLayer {
+                hovered: cellArea.containsMouse
+                radius: parent.radius
+              }
             }
             Rectangle {
               visible: !root.titles
@@ -230,9 +232,13 @@ Item {
               width: Math.min(parent.width, parent.height, Appearance.fontSize * 2.6) * 0.9
               height: width
               radius: width / 2
-              color: cell.modelData.isToday ? Theme.accent : cell.selected ? Theme.backgroundHighlight : cellArea.containsMouse ? Qt.alpha(Theme.backgroundHighlight, 0.5) : "transparent"
-              border.color: cell.selected && !cell.modelData.isToday ? Theme.accent : "transparent"
-              border.width: cell.selected ? 1 : 0
+              color: cell.modelData.isToday ? Style.accent : cell.selected ? Style.accentContainer : "transparent"
+
+              StateLayer {
+                hovered: cellArea.containsMouse
+                radius: width / 2
+                onAccent: cell.modelData.isToday
+              }
             }
 
             // The day's number: centred, or top-left in a cell with titles
@@ -243,16 +249,15 @@ Item {
               width: root.titles ? Math.max(cell.numberSize, numberText.implicitWidth + Widget.spacing * 2) : numberText.implicitWidth
               height: root.titles ? cell.numberSize : numberText.implicitHeight
               radius: height / 2
-              color: root.titles && cell.modelData.isToday ? Theme.accent : "transparent"
+              color: root.titles && cell.modelData.isToday ? Style.accent : "transparent"
 
               StyledLabel {
                 id: numberText
                 anchors.centerIn: parent
                 text: cell.modelData.day
-                textColor: cell.modelData.isToday ? Theme.background : Theme.foreground
-                font.weight: cell.modelData.isToday ? Font.Bold : Font.Normal
-                opacity: cell.modelData.inMonth ? 1 : 0.35
-                textSize: Appearance.fontSizeBy(-1)
+                textColor: cell.modelData.isToday ? Style.onAccent : cell.selected ? Style.onAccentContainer : cell.modelData.inMonth ? Style.text : Style.textDisabled
+                role: "caption"
+                font.weight: cell.modelData.isToday ? Style.weightStrong : Style.roleCaption.weight
               }
             }
 
@@ -262,7 +267,7 @@ Item {
               anchors.horizontalCenter: parent.horizontalCenter
               y: Math.min(cell.height - 5, number.y + number.height + 1)
               spacing: 2
-              opacity: cell.modelData.inMonth ? 1 : 0.5
+              opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
 
               Repeater {
                 model: cell.dotKey ? cell.dotKey.split(",") : []
@@ -271,7 +276,7 @@ Item {
                   width: Math.max(Widget.px(3), Appearance.fontSize * 0.28)
                   height: width
                   radius: width / 2
-                  color: cell.modelData.isToday && !root.titles ? Theme.background : modelData
+                  color: cell.modelData.isToday && !root.titles ? Style.onAccent : Style.resolve(modelData)
                 }
               }
             }
@@ -284,7 +289,7 @@ Item {
               y: number.y + cell.numberSize + 2
               width: cell.width - cell.inset * 2
               spacing: 1
-              opacity: cell.modelData.inMonth ? 1 : 0.5
+              opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
 
               Repeater {
                 model: cell.shownCount
@@ -292,14 +297,13 @@ Item {
                   id: chip
                   required property int index
                   readonly property var event: cell.dayEvents[index] ?? null
-                  readonly property color calendarColor: CalendarManager.colors[chip.event?.calendar] ?? Theme.accent
+                  readonly property color calendarColor: Style.resolve(CalendarManager.colors[chip.event?.calendar] ?? "accent")
                   width: parent?.width ?? 0
                   height: cell.lineHeight
                   radius: Widget.radius / 2
-                  color: chip.event?.allDay ? Qt.alpha(chip.calendarColor, 0.3) : "transparent"
+                  color: chip.event?.allDay ? Style.surfaceHighest : "transparent"
 
                   Rectangle {
-                    visible: !chip.event?.allDay
                     x: 2
                     anchors.verticalCenter: parent.verticalCenter
                     width: Widget.px(3)
@@ -309,12 +313,12 @@ Item {
                   }
                   StyledLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    x: Widget.px(chip.event?.allDay ? 4 : 8)
+                    x: Widget.px(8)
                     width: parent.width - x - 2
                     text: chip.event ? (chip.event.allDay || CalendarEvents.spanOn(chip.event, cell.key) !== "single" && CalendarEvents.spanOn(chip.event, cell.key) !== "starts" ? "" : I18n.formatDate(new Date(chip.event.start), CalendarConfig.timeFormat) + " ") + (chip.event.title || I18n.tr("(No title)")) : ""
                     textFormat: Text.PlainText
-                    elide: Text.ElideRight
-                    textSize: Appearance.fontSizeBy(-3)
+                    role: "micro"
+                    textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.onAccentContainer : Style.text
                   }
                 }
               }
@@ -322,8 +326,8 @@ Item {
                 visible: cell.dayEvents.length > cell.shownCount
                 x: 4
                 text: I18n.tr("+{0} more", cell.dayEvents.length - cell.shownCount)
-                textSize: Appearance.fontSizeBy(-3)
-                textColor: Theme.foregroundAlt
+                role: "micro"
+                textColor: cell.selected ? Style.inkAccentContainer.muted : Style.textMuted
               }
             }
 

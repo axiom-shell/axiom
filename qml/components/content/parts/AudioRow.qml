@@ -47,15 +47,15 @@ Item {
         anchors.fill: parent
         source: root.iconSource
         visible: root.iconSource !== "" && status === Image.Ready
-        opacity: root.muted ? 0.5 : 1
+        opacity: root.muted ? Style.opacityDisabled : 1
       }
 
       StyledIcon {
         anchors.centerIn: parent
         visible: !image.visible
         text: root.icon
-        textColor: root.muted ? Theme.foregroundAlt : Theme.foreground
-        textSize: Appearance.fontSize * 1.4
+        tone: root.muted ? "muted" : "text"
+        size: "md"
       }
     }
 
@@ -73,9 +73,8 @@ Item {
           Layout.fillWidth: !subtitleText.visible
           Layout.maximumWidth: subtitleText.visible ? implicitWidth : -1
           text: root.title
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-1)
-          textColor: root.muted ? Theme.foregroundAlt : Theme.foreground
+          role: "label"
+          tone: root.muted ? "muted" : "text"
         }
 
         StyledLabel {
@@ -83,17 +82,14 @@ Item {
           Layout.fillWidth: true
           visible: root.subtitle !== "" && root.subtitle !== root.title
           text: root.subtitle
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-3)
-          textColor: Theme.foregroundAlt
+          role: "micro"
         }
       }
 
       StyledSlider {
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.px(16)
-        handleColor: root.muted ? Theme.foregroundAlt : Theme.foreground
-        fillColor: root.muted ? Theme.foregroundAlt : Theme.accent
+        fillColor: root.muted ? Style.textFaint : Style.accent
         value: Math.min(1, root.volume / root.maxVolume)
         onMoved: value => root.volumeMoved(value * root.maxVolume)
         onReleased: value => root.volumeMoved(value * root.maxVolume)
@@ -104,24 +100,22 @@ Item {
       Layout.preferredWidth: percentMetrics.width
       horizontalAlignment: Text.AlignRight
       text: `${Math.round(root.volume * 100)}%`
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.foregroundAlt
+      role: "caption"
 
       TextMetrics {
         id: percentMetrics
         font.family: Appearance.fontFamily
-        font.pixelSize: Appearance.fontSizeBy(-2)
+        font.pixelSize: Style.typeCaption
         text: "150%"
       }
     }
 
-    StyledRectButton {
+    StyledIconButton {
       visible: root.showMute
+      kind: "text"
       size: Widget.iconButton
       iconText: root.muted ? root.mutedGlyph : root.unmutedGlyph
-      iconColor: root.muted ? Theme.error : Theme.foreground
-      backgroundColor: "transparent"
-      borderHoverColor: Theme.accent
+      iconColor: root.muted ? Style.error : Style.text
       tooltipText: I18n.tr(root.muted ? "Unmute" : "Mute")
       onClicked: root.muteToggled()
     }

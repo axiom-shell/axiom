@@ -25,8 +25,8 @@ ColumnLayout {
     StyledIcon {
       id: thinkIcon
       text: "psychology"
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSize
+      tone: "muted"
+      size: "sm"
 
       SequentialAnimation on opacity {
         running: root.live && Appearance.animations
@@ -36,7 +36,7 @@ ColumnLayout {
             thinkIcon.opacity = 1;
         }
         NumberAnimation {
-          to: 0.35
+          to: 0.35 // style-exempt: pulse
           duration: Appearance.animSlow * 2
           easing.type: Easing.InOutSine
         }
@@ -55,15 +55,14 @@ ColumnLayout {
         const seconds = Math.round(root.durationMs / 1000);
         return seconds > 0 ? I18n.tr("Thought for {0}s", seconds) : I18n.tr("Thought");
       }
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-1)
+      role: "caption"
     }
 
     StyledIcon {
       visible: root.text !== ""
       text: root.expanded ? "expand_less" : "expand_more"
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSize
+      tone: "muted"
+      size: "sm"
     }
 
     TapHandler {
@@ -86,14 +85,14 @@ ColumnLayout {
       Layout.fillHeight: true
       implicitWidth: 2
       radius: 1
-      color: Theme.border
+      color: Style.divider
     }
 
     ChatMarkdownText {
       Layout.fillWidth: true
       text: root.text
-      textColor: Theme.foregroundAlt
-      font.pixelSize: Appearance.fontSizeBy(-1)
+      textColor: Style.textMuted
+      font.pixelSize: Style.typeCaption
     }
   }
 }

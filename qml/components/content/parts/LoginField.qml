@@ -96,7 +96,7 @@ Item {
       Layout.preferredHeight: Layout.preferredWidth
       Layout.alignment: Qt.AlignTop
       radius: width / 2
-      color: Theme.backgroundAlt
+      color: Style.surfaceHighest
 
       Image {
         id: avatarImage

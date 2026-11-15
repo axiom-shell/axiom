@@ -6,20 +6,21 @@ import qs.components.reusable
 
 // A combo's modifiers in one keycap: as glyphs (Super as an icon, ⌃ ⌥ ⇧),
 // or as words with `glyphs` off
-Rectangle {
+Surface {
   id: root
+  tone: "sunken"
+  outlined: true
 
   required property var mods
   property bool glyphs: true
   property bool compact: false
 
-  readonly property real textSize: Appearance.fontSize - (root.compact ? 2 : 1)
+  readonly property real textSize: root.compact ? Style.typeMicro : Style.typeCaption
 
   visible: root.mods.length > 0
   implicitHeight: Math.round(Widget.height * (root.compact ? 0.62 : 0.75))
   implicitWidth: Math.max(implicitHeight, content.implicitWidth + Widget.padding)
-  radius: Widget.radius / 2
-  color: Theme.backgroundHighlight
+  radius: Style.radiusInner
 
   Row {
     id: content

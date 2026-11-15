@@ -47,14 +47,12 @@ RowLayout {
     }
   }
 
-  StyledRectButton {
+  StyledIconButton {
+    kind: "text"
     size: Widget.iconButton
     enabled: root.canSubmit
-    opacity: enabled ? 1 : 0.5
     iconText: root.buttonIcon
-    iconColor: Theme.accent
-    backgroundColor: "transparent"
-    borderHoverColor: Theme.accent
+    iconColor: Style.accent
     tooltipText: root.buttonTip
     onClicked: root.submitted()
   }

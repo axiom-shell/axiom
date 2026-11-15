@@ -53,7 +53,7 @@ ColumnLayout {
 
         StyledIcon {
           text: tool.present === undefined ? "hourglass_empty" : tool.present ? "check_circle" : "cancel"
-          textColor: tool.present === undefined ? Theme.foregroundInactive : tool.present ? Theme.success : Theme.warning
+          tone: tool.present === undefined ? "faint" : tool.present ? "success" : "warning"
         }
 
         StyledLabel {
@@ -65,8 +65,8 @@ ColumnLayout {
           Layout.fillWidth: true
           // I18n.tr: purposes are declared in DependencyManager
           text: I18n.tr(tool.modelData.purpose)
-          textColor: Theme.foregroundAlt
-          elide: Text.ElideRight
+          tone: "muted"
+          overflow: "line"
         }
       }
     }
@@ -81,7 +81,6 @@ ColumnLayout {
       Layout.topMargin: Widget.spacing
       Layout.fillWidth: true
       text: root.installLines.length > 0 ? I18n.tr("To install what's missing:") : I18n.tr("Install these with your package manager: {0}", root.wanted.join(", "))
-      wrapMode: Text.WordWrap
     }
 
     CodeLine {

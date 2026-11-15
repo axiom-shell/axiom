@@ -4,8 +4,10 @@ import qs.config
 import qs.components.reusable
 
 // One key (or modifier) of a keybind, drawn as a small keycap
-Rectangle {
+Surface {
   id: root
+  tone: "sunken"
+  outlined: true
 
   property string text
   // Lower, for the reference's compact density
@@ -13,13 +15,13 @@ Rectangle {
 
   implicitHeight: Math.round(Widget.height * (root.compact ? 0.62 : 0.75))
   implicitWidth: Math.max(implicitHeight, content.implicitWidth + Widget.padding)
-  radius: Widget.radius / 2
-  color: Theme.backgroundHighlight
+  radius: Style.radiusInner
 
   StyledLabel {
     id: content
     anchors.centerIn: parent
     text: root.text
-    textSize: Appearance.fontSize - (root.compact ? 2 : 1)
+    role: root.compact ? "micro" : "caption"
+    tone: "text"
   }
 }

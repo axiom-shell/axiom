@@ -40,7 +40,9 @@ ColumnLayout {
   readonly property real change: root.isDay ? (root.quote?.change ?? 0) : root.price - root.reference
   readonly property real percent: root.isDay ? (root.quote?.changePercent ?? 0) : root.reference > 0 ? root.change / root.reference * 100 : 0
   readonly property string trend: MarketMath.trend(root.change)
-  readonly property color trendColor: MarketsManager.trendColor(root.trend)
+  readonly property string trendTone: MarketMath.trendTone(root.trend, MarketsConfig.redForGains)
+  readonly property color trendText: Style.toneColor(root.trendTone)
+  readonly property color trendLine: root.trendTone === "success" ? Style.success : root.trendTone === "error" ? Style.error : Style.textFaint
   readonly property string currency: root.quote?.currency ?? ""
 
   readonly property string _wantedKey: root.isDay || !root.item ? "" : root.item.source + ":" + root.item.symbol + ":" + root.shownRange
@@ -71,8 +73,8 @@ ColumnLayout {
     spacing: Widget.padding
     StyledLabel {
       text: MarketMath.formatPrice(root.price, root.currency)
-      textSize: Appearance.fontSize * 1.8
-      font.weight: Font.Bold
+      role: "display"
+      font.weight: Style.weightStrong
       font.features: ({
           "tnum": 1
         })
@@ -80,13 +82,13 @@ ColumnLayout {
     ColumnLayout {
       spacing: 0
       StyledLabel {
-        textColor: root.trendColor
-        font.weight: Font.DemiBold
+        textColor: root.trendText
+        font.weight: Style.weightStrong
         text: isNaN(root.price) ? "" : I18n.tr("{0} ({1})", MarketMath.formatChange(root.change, root.currency), MarketMath.formatPercent(root.percent))
       }
       StyledLabel {
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: Theme.foregroundInactive
+        role: "caption"
+        tone: "faint"
         text: {
           const state = MarketsManager.stateLabel(root.quote);
           const name = root.quote?.name ?? "";
@@ -111,7 +113,7 @@ ColumnLayout {
       reference: root.reference
       start: root.isDay ? (root.quote?.sessionStart ?? 0) : 0
       end: root.isDay ? (root.quote?.sessionEnd ?? 0) : 0
-      lineColor: root.trendColor
+      lineColor: root.trendLine
       currency: root.currency
       showDate: !root.isDay
       detailed: true
@@ -120,10 +122,10 @@ ColumnLayout {
     StyledText {
       anchors.centerIn: parent
       visible: root.points.length <= 1
-      textColor: root._error ? Theme.error : Theme.foregroundInactive
-      textSize: Appearance.fontSizeBy(-1)
+      role: "caption"
+      tone: root._error ? "error" : "faint"
       width: Math.min(implicitWidth, parent.width)
-      wrapMode: Text.Wrap
+      maxLines: 3
       horizontalAlignment: Text.AlignHCenter
       text: root._error ? I18n.tr("Couldn't load the chart: {0}", root._error) : I18n.tr("Loading the chart…")
     }
@@ -158,8 +160,8 @@ ColumnLayout {
         required property string modelData
         Layout.fillWidth: true
         text: I18n.tr(modelData)
-        textSize: Appearance.fontSizeBy(-3)
-        textColor: Theme.foregroundInactive
+        role: "micro"
+        tone: "faint"
       }
     }
     Repeater {
@@ -167,8 +169,8 @@ ColumnLayout {
       StyledText {
         required property int index
         Layout.fillWidth: true
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
+        overflow: "line"
         font.features: ({
             "tnum": 1
           })

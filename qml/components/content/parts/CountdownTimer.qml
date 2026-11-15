@@ -162,8 +162,8 @@ Item {
         Layout.alignment: Qt.AlignHCenter
         Layout.bottomMargin: Widget.spacing / 2
         text: root.idleIcon
-        textSize: Appearance.fontSize * 3.2
-        opacity: 0.4
+        size: "xl"
+        tone: "faint"
       }
 
       StyledTextEntry {
@@ -194,9 +194,9 @@ Item {
           anchors.rightMargin: Widget.padding
           anchors.verticalCenter: parent.verticalCenter
           width: Math.min(implicitWidth, durationField.width * 0.6)
-          elide: Text.ElideLeft
-          textSize: Appearance.fontSizeBy(-1)
-          textColor: idleColumn.typed.ms > 0 ? Theme.foregroundAlt : Theme.error
+          role: "caption"
+          overflow: "line"
+          tone: idleColumn.typed.ms > 0 ? "muted" : "error"
           text: idleColumn.typed.ms > 0 ? I18n.tr("{0} · ends {1}", StopwatchClock.formatShort(idleColumn.typed.ms), I18n.formatDate(new Date(Date.now() + idleColumn.typed.ms), CalendarConfig.timeFormat)) : I18n.tr("Not a duration")
         }
       }

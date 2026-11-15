@@ -8,8 +8,9 @@ import qs.components.methods
 
 // A fenced code block in a reply: its language, a copy button and the code
 // in a monospace font. `open` while its closing fence is still streaming in.
-StyledContainer {
+Surface {
   id: root
+  tone: "sunken"
 
   property string code: ""
   property string lang: ""
@@ -18,9 +19,6 @@ StyledContainer {
   property bool _copied: false
 
   implicitHeight: column.implicitHeight
-  backgroundColor: Theme.backgroundAlt
-  borderColor: Theme.border
-  borderWidth: 1
   clip: true
 
   ColumnLayout {
@@ -41,17 +39,15 @@ StyledContainer {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         text: root.lang || I18n.tr("code")
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-3)
+        role: "micro"
         textFamily: "monospace"
-        elide: Text.ElideRight
       }
 
       FlatIconButton {
         size: Widget.iconButton
         iconText: root._copied ? "check" : "content_copy"
-        iconSize: Appearance.fontSizeBy(-1)
-        iconColor: root._copied ? Theme.success : Theme.foregroundAlt
+        iconSize: Style.iconSm
+        iconColor: root._copied ? Style.success : Style.textMuted
         tooltipText: I18n.tr("Copy")
         onClicked: {
           ClipboardManager.copyText(root.code);
@@ -62,9 +58,8 @@ StyledContainer {
     }
 
     StyledSeparator {
+      backTone: "sunken"
       Layout.fillWidth: true
-      separatorHeight: 1
-      opacity: 0.6
     }
 
     TextEdit {
@@ -77,11 +72,11 @@ StyledContainer {
       selectByMouse: true
       wrapMode: TextEdit.WrapAnywhere
       textFormat: TextEdit.PlainText
-      color: Theme.foreground
-      selectionColor: Theme.accent
-      selectedTextColor: Theme.background
+      color: Style.text
+      selectionColor: Style.accent
+      selectedTextColor: Style.onAccent
       font.family: "monospace"
-      font.pixelSize: Appearance.fontSizeBy(-1)
+      font.pixelSize: Style.typeCaption
 
       HoverHandler {
         cursorShape: Qt.IBeamCursor

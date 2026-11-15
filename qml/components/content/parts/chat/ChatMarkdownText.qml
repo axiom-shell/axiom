@@ -10,7 +10,7 @@ TextEdit {
   renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
 
   property bool markdown: ChatConfig.renderMarkdown
-  property color textColor: Theme.foreground
+  property color textColor: Style.text
 
   readOnly: true
   selectByMouse: true
@@ -18,10 +18,10 @@ TextEdit {
   wrapMode: TextEdit.Wrap
   textFormat: root.markdown ? TextEdit.MarkdownText : TextEdit.PlainText
   color: root.textColor
-  selectionColor: Theme.accent
-  selectedTextColor: Theme.background
+  selectionColor: Style.accent
+  selectedTextColor: Style.onAccent
   font.family: Appearance.fontFamily
-  font.pixelSize: Appearance.fontSize
+  font.pixelSize: Style.typeBody
 
   onLinkActivated: link => Qt.openUrlExternally(link)
 

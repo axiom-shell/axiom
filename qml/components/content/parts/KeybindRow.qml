@@ -34,14 +34,9 @@ Item {
   implicitWidth: line.implicitWidth + Widget.padding
   implicitHeight: line.implicitHeight + (root.compact ? 2 : Widget.spacing)
 
-  Rectangle {
-    anchors.fill: parent
-    radius: Widget.radius / 2
-    color: Qt.alpha(Theme.backgroundHighlight, root.editable && area.containsMouse ? 0.6 : 0)
-
-    ColorGlide on color {
-      duration: Appearance.animFast
-    }
+  StateLayer {
+    hovered: root.editable && area.containsMouse
+    pressed: area.pressed
   }
 
   MouseArea {
@@ -120,28 +115,27 @@ Item {
 
     StyledIcon {
       text: root.bind.action ? KeybindManager.actionIcon(root.bind.action) : (root.bind.user ? "person" : "keyboard")
-      textColor: root.bind.action ? Theme.accent : Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-1)
-      opacity: root.bind.action ? 1 : 0.6
+      tone: root.bind.action ? "accent" : "faint"
+      size: "sm"
     }
 
     StyledLabel {
       text: root.bind.label || I18n.tr("No description")
-      opacity: root.bind.label ? 1 : 0.5
-      elide: Text.ElideRight
+      tone: root.bind.label ? "text" : "faint"
+      overflow: "line"
       Layout.fillWidth: true
     }
 
     IssueIcon {
       visible: root.bind.overrides !== ""
       tip: I18n.tr("Axiom's \"{0}\" is skipped: this bind holds its key", root.bind.overrides)
-      textSize: Appearance.fontSizeBy(-1)
+      size: "sm"
     }
   }
 
   component Slash: StyledLabel {
     anchors.verticalCenter: parent.verticalCenter
     text: "/"
-    opacity: 0.4
+    tone: "faint"
   }
 }

@@ -17,9 +17,9 @@ Item {
   property real reference: 0
   property real start: 0
   property real end: 0
-  property color lineColor: Theme.accent
+  property color lineColor: Style.accent
   property real lineWidth: Widget.px(2)
-  property real fillOpacity: 0.28
+  property real fillOpacity: 0.28 // style-exempt: the chart fill fades its data colour
   property bool showReference: true
   property bool detailed: false
   // The hover label's currency and whether its time shows the date
@@ -69,6 +69,9 @@ Item {
         canvas._repaint();
       }
     }
+    // A theme switch repaints the reference line
+    readonly property int styleRevision: Style.revision
+    onStyleRevisionChanged: canvas._repaint()
     onWidthChanged: _repaint()
     onHeightChanged: _repaint()
 
@@ -80,7 +83,7 @@ Item {
         return;
       if (root.showReference && root.reference > 0) {
         const y = Math.round(root.yOf(root.reference)) + 0.5;
-        ctx.strokeStyle = Qt.alpha(Theme.foregroundInactive, 0.7);
+        ctx.strokeStyle = Style.textFaint;
         ctx.lineWidth = 1;
         ctx.setLineDash([3, 3]);
         ctx.beginPath();
@@ -101,8 +104,8 @@ Item {
         ctx.lineTo(firstX, height);
         ctx.closePath();
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
-        gradient.addColorStop(0, Qt.alpha(root.lineColor, root.fillOpacity));
-        gradient.addColorStop(1, Qt.alpha(root.lineColor, 0));
+        gradient.addColorStop(0, Qt.alpha(root.lineColor, root.fillOpacity)); // style-exempt: the chart fill fades its data colour
+        gradient.addColorStop(1, Qt.alpha(root.lineColor, 0)); // style-exempt: the chart fill fades its data colour
         ctx.fillStyle = gradient;
         ctx.fill();
         ctx.restore();
@@ -149,7 +152,7 @@ Item {
     x: root._hovered ? Math.round(root.xOf(root._hovered[0])) : 0
     width: 1
     height: root.height
-    color: Qt.alpha(Theme.foreground, 0.35)
+    color: Style.borderStrong
   }
 
   Rectangle {
@@ -162,11 +165,12 @@ Item {
     radius: size / 2
     color: root.lineColor
     border.width: 2
-    border.color: Theme.background
+    border.color: Style.surface
   }
 
-  Rectangle {
+  Surface {
     id: label
+    tone: "raised"
     visible: root._hovered !== null
     readonly property real px: root._hovered ? root.xOf(root._hovered[0]) : 0
     x: Math.max(0, Math.min(root.width - width, px - width / 2))
@@ -174,14 +178,11 @@ Item {
     width: labelText.implicitWidth + Widget.smallPadding * 2
     height: labelText.implicitHeight + Widget.spacing
     radius: height / 2
-    color: Theme.backgroundAlt
-    border.width: 1
-    border.color: Theme.border
 
     StyledLabel {
       id: labelText
       anchors.centerIn: parent
-      textSize: Appearance.fontSizeBy(-2)
+      role: "caption"
       text: root._hovered ? I18n.tr("{0} · {1}", MarketMath.formatPrice(root._hovered[1], root.currency), I18n.formatDate(new Date(root._hovered[0] * 1000), root.showDate ? I18n.dateFormat("mediumDate") : I18n.timeFormat("default"))) : ""
     }
   }

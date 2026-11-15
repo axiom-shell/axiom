@@ -34,21 +34,21 @@ CustomElementBase {
     anchors.fill: parent
     sweep: root.gauge ? 240 : 360
     percentage: root.share * 100
-    fillColor: root.colorOf(Theme.accent)
+    fillColor: root.colorOf(Style.accent)
     iconText: root.inside === "icon" ? (root.fields?.icon || root.fallbackIcon) : ""
     iconColor: ring.fillColor
   }
 
   StyledLabel {
-    elide: Text.ElideRight
+    overflow: "line"
     visible: root.label !== ""
     anchors.centerIn: parent
     width: ring.side * 0.7
     horizontalAlignment: Text.AlignHCenter
     text: root.label
-    font.weight: Font.Bold
-    textSize: Math.max(Appearance.fontSizeBy(-4), ring.side * 0.22)
+    font.weight: Style.roleDisplay.weight
+    textSize: Math.max(Style.typeMicro, ring.side * 0.22) // fitted: the ring's centre
     fontSizeMode: Text.HorizontalFit
-    minimumPixelSize: Appearance.fontSizeBy(-4)
+    minimumPixelSize: Style.typeMicro
   }
 }

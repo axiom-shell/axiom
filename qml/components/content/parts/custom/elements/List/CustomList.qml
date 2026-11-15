@@ -56,7 +56,7 @@ CustomElementBase {
       title: row.rowText
       subtitle: row.rowSubtext
       detail: row.rowValue
-      iconColor: root.colorOf(Theme.foregroundAlt)
+      iconColor: root.colorOf(Style.textMuted)
       clickable: root.clickable
       onActivated: root.act("click", row.rowText)
     }

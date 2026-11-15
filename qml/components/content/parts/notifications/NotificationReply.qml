@@ -42,7 +42,7 @@ RowLayout {
   StyledIconButton {
     Layout.alignment: Qt.AlignVCenter
     iconText: "send"
-    iconSize: Appearance.fontSizeBy(-2)
+    iconSize: Style.iconXs
     borderRadius: width / 2
     enabled: entry.text.trim() !== ""
     tooltipText: I18n.tr("Send")

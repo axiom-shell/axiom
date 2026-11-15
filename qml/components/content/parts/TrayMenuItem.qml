@@ -5,9 +5,9 @@ import Quickshell
 import qs.config
 import qs.components.reusable
 
-// One entry of a tray menu (TrayMenuList): a separator, or a label with its
-// check/radio indicator, icon and submenu chevron
-Rectangle {
+// One entry of a tray menu (TrayMenuList): a separator, or a MenuRow with
+// its check/radio indicator, image icon and submenu chevron
+Item {
   id: root
   required property var menuItem
   required property int itemHeight
@@ -19,37 +19,55 @@ Rectangle {
   readonly property int indicatorSize: Math.round(itemHeight * 0.5)
   property bool openToLeft
   // Keeps a submenu opened from this item up while the pointer is on it
-  readonly property bool hovered: menuItemArea.containsMouse
+  readonly property bool hovered: row.hovered
 
   Layout.fillWidth: true
-  Layout.preferredWidth: contentRow.implicitWidth + (itemPadding * 2)
-  // A label may hold line breaks (DBus labels can): each line past the
-  // first adds its height, so a one-line entry keeps `itemHeight`
-  Layout.preferredHeight: menuItem.isSeparator ? 1 : Math.round(itemHeight + label.implicitHeight * (1 - 1 / Math.max(1, label.lineCount)))
-  color: menuItemArea.containsMouse && menuItem.enabled && !menuItem.isSeparator ? Theme.backgroundHighlight : "transparent"
-  radius: Widget.radius
-  opacity: menuItem.enabled ? 1.0 : 0.5
+  Layout.preferredWidth: row.implicitWidth
+  Layout.preferredHeight: menuItem.isSeparator ? 1 : itemHeight
 
-  // Main content row
-  RowLayout {
-    id: contentRow
+  MenuRow {
+    id: row
     anchors.fill: parent
-    anchors.leftMargin: root.itemPadding
-    anchors.rightMargin: root.itemPadding
-    spacing: Widget.spacing * 2
     visible: !root.menuItem.isSeparator
-    layoutDirection: root.openToLeft ? Qt.RightToLeft : Qt.LeftToRight
+    enabled: root.menuItem.enabled
+    // DBus labels may hold line breaks: one line here
+    text: (root.menuItem.text ?? "").replace(/\s*\n\s*/g, " ")
+    image: root.menuItem.icon
+    chevron: root.menuItem.hasChildren && !root.openToLeft
+
+    onActivated: {
+      if (root.menuItem.hasChildren) {
+        root.submenuRequested(root);
+      } else {
+        root.menuItem.triggered();
+        root.itemClicked();
+      }
+    }
+    onHoveredChanged: {
+      if (!row.hovered) {
+        submenuHoverTimer.stop();
+      } else if (root.menuItem.hasChildren) {
+        submenuHoverTimer.restart();
+      } else {
+        root.plainItemHovered();
+      }
+    }
+
+    // A submenu that opens to the left shows its chevron first
+    StyledIcon {
+      visible: root.openToLeft && root.menuItem.hasChildren
+      text: "chevron_left"
+      tone: "faint"
+    }
 
     // Checkbox/Radio indicator
     Rectangle {
       visible: root.menuItem.buttonType !== QsMenuButtonType.None
-      Layout.preferredWidth: root.indicatorSize
-      Layout.maximumWidth: root.indicatorSize
-      Layout.minimumWidth: root.indicatorSize
-      Layout.preferredHeight: root.indicatorSize
+      width: root.indicatorSize
+      height: root.indicatorSize
       color: "transparent"
-      border.color: Theme.foreground
-      border.width: 1
+      border.color: Style.borderStrong
+      border.width: Style.hairline
       radius: root.menuItem.buttonType === QsMenuButtonType.RadioButton ? width / 2 : 2
 
       Rectangle {
@@ -57,43 +75,9 @@ Rectangle {
         width: parent.width - Widget.smallPadding
         height: parent.height - Widget.smallPadding
         radius: root.menuItem.buttonType === QsMenuButtonType.RadioButton ? width / 2 : 1
-        color: Theme.accent
+        color: Style.accent
         visible: root.menuItem.checkState === Qt.Checked
       }
-    }
-
-    // Icon
-    Image {
-      visible: root.menuItem.icon !== ""
-      source: root.menuItem.icon
-      sourceSize.width: root.indicatorSize
-      sourceSize.height: root.indicatorSize
-      Layout.preferredWidth: root.indicatorSize
-      Layout.maximumWidth: root.indicatorSize
-      Layout.minimumWidth: root.indicatorSize
-      Layout.preferredHeight: root.indicatorSize
-      fillMode: Image.PreserveAspectFit
-      smooth: true
-    }
-
-    // Label
-    StyledLabel {
-      id: label
-      text: root.menuItem.text
-      Layout.fillWidth: true
-      elide: Text.ElideRight
-      wrapMode: Text.NoWrap
-      horizontalAlignment: root.openToLeft ? Text.AlignRight : Text.AlignLeft
-    }
-
-    // Submenu indicator
-    StyledIcon {
-      visible: root.menuItem.hasChildren
-      text: root.openToLeft ? "chevron_left" : "chevron_right"
-      textColor: Theme.accent
-      Layout.preferredWidth: implicitWidth
-      Layout.maximumWidth: Math.ceil(implicitWidth)
-      Layout.minimumWidth: implicitWidth
     }
   }
 
@@ -109,36 +93,8 @@ Rectangle {
     interval: 100
     repeat: false
     onTriggered: {
-      if (root.menuItem.hasChildren && menuItemArea.containsMouse) {
+      if (root.menuItem.hasChildren && row.hovered) {
         root.submenuRequested(root);
-      }
-    }
-  }
-
-  MouseArea {
-    id: menuItemArea
-    anchors.fill: parent
-    hoverEnabled: true
-    enabled: root.menuItem.enabled && !root.menuItem.isSeparator
-
-    onEntered: {
-      if (root.menuItem.hasChildren) {
-        submenuHoverTimer.restart();
-      } else {
-        root.plainItemHovered();
-      }
-    }
-
-    onExited: {
-      submenuHoverTimer.stop();
-    }
-
-    onClicked: {
-      if (root.menuItem.hasChildren) {
-        root.submenuRequested(root);
-      } else {
-        root.menuItem.triggered();
-        root.itemClicked();
       }
     }
   }

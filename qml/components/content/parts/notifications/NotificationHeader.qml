@@ -1,78 +1,44 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 
 import qs.services.system
 import qs.services.ui
 import qs.config
 import qs.components.reusable
+import qs.components.content.parts
 
-// The notification menu's title row: bell, title, count pill, then the do
-// not disturb toggle and clear all
-RowLayout {
+// The notification menu's title row: bell, title, then the count pill, the
+// do not disturb toggle and clear all
+ModuleHeader {
   id: root
 
   signal clearAll
 
-  Layout.fillWidth: true
-  spacing: Widget.spacing
+  icon: NotificationManager.dnd ? "notifications_paused" : "notifications"
+  title: I18n.tr("Notifications")
 
-  StyledIcon {
-    text: NotificationManager.dnd ? "notifications_paused" : "notifications"
-    textColor: Theme.accent
-    textSize: Appearance.fontSizeBy(2)
+  CountBadge {
+    shown: NotificationManager.count > 0
+    text: NotificationManager.countLabel
+    color: Style.accent
+    textColor: Style.onAccent
   }
 
-  // Shrinks (eliding) before the buttons are pushed out of a narrow card
-  StyledLabel {
-    Layout.fillWidth: true
-    Layout.maximumWidth: Math.ceil(implicitWidth)
-    elide: Text.ElideRight
-    text: I18n.tr("Notifications")
-    font.weight: Font.Bold
-    textColor: Theme.accent
-  }
-
-  Rectangle {
-    visible: NotificationManager.count > 0
-    implicitWidth: Math.max(implicitHeight, countLabel.implicitWidth + Widget.px(12))
-    implicitHeight: countLabel.implicitHeight + Widget.px(4)
-    radius: height / 2
-    color: Theme.accent
-
-    StyledLabel {
-      id: countLabel
-      anchors.centerIn: parent
-      text: NotificationManager.countLabel
-      textSize: Appearance.fontSizeBy(-3)
-      textColor: Theme.background
-      font.weight: Font.Bold
-    }
-  }
-
-  Item {
-    Layout.fillWidth: true
-  }
-
-  StyledRectButton {
+  StyledIconButton {
+    kind: NotificationManager.dnd ? "primary" : "text"
     size: Widget.iconButton
     iconText: NotificationManager.dnd ? "notifications_paused" : "notifications_off"
-    iconColor: NotificationManager.dnd ? Theme.background : Theme.foreground
-    backgroundColor: Qt.alpha(Theme.accent, NotificationManager.dnd ? 1 : 0)
-    borderHoverColor: Theme.accent
     tooltipText: I18n.tr(NotificationManager.dnd ? "Do not disturb is on" : "Do not disturb")
     onClicked: ActionsManager.run("toggleDnd", {
       "fromScreen": true
     })
   }
 
-  StyledRectButton {
+  StyledIconButton {
+    kind: "text"
     size: Widget.iconButton
     enabled: NotificationManager.count > 0
-    opacity: enabled ? 1 : 0.4
     iconText: "clear_all"
-    backgroundColor: "transparent"
-    borderHoverColor: Theme.error
     tooltipText: I18n.tr("Clear all")
     onClicked: root.clearAll()
   }

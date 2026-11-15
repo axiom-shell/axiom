@@ -71,8 +71,8 @@ Item {
     y: Math.max(0, (textEdit.lineHeight - height) / 2)
     text: root.checked ? "check_box" : "check_box_outline_blank"
     fill: root.checked ? 1 : 0
-    textColor: root.checked ? Theme.accent : Theme.foregroundAlt
-    textSize: Appearance.fontSizeBy(4)
+    tone: root.checked ? "accent" : "muted"
+    size: "md"
 
     // A MouseArea, not a TapHandler: it accepts the press, so the editor's
     // background MouseArea (which focuses the note's end) never sees it. An
@@ -95,7 +95,7 @@ Item {
     width: end.y === start.y ? end.x - start.x : textEdit.width - start.x
     height: start.height
     radius: 2
-    color: Qt.alpha(Theme.accent, 0.35)
+    color: Style.accentWash
   }
 
   TextEdit {
@@ -113,13 +113,13 @@ Item {
     opacity: root.editing ? 1 : 0
     wrapMode: TextEdit.Wrap
     textFormat: TextEdit.PlainText
-    color: root.checked ? Theme.foregroundAlt : Theme.foreground
+    color: root.checked ? Style.textFaint : Style.text
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSize
+    font.pixelSize: Style.typeBody
     font.strikeout: root.checked
     selectByMouse: true
-    selectionColor: Theme.accent
-    selectedTextColor: Theme.background
+    selectionColor: Style.accent
+    selectedTextColor: Style.onAccent
 
     FontMetrics {
       id: fontMetrics
@@ -215,9 +215,9 @@ Item {
     textFormat: Text.MarkdownText
     wrapMode: Text.Wrap
     color: textEdit.color
-    linkColor: Theme.accent
+    linkColor: Style.textAccent
     font.family: Appearance.fontFamily
-    font.pixelSize: Appearance.fontSize
+    font.pixelSize: Style.typeBody
     font.strikeout: root.checked
 
     HoverHandler {
