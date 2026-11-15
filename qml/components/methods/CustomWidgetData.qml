@@ -13,7 +13,7 @@ QtObject {
   readonly property int subCells: 4
 
   // The fields a definition can bind: Waybar's five, then axiom's
-  readonly property var fieldNames: ["text", "alt", "tooltip", "class", "percentage", "icon", "value", "min", "max", "unit", "subtext", "state", "badge", "urgent", "image", "items", "hidden"]
+  readonly property var fieldNames: ["text", "alt", "tooltip", "class", "percentage", "icon", "value", "min", "max", "unit", "subtext", "state", "badge", "urgent", "image", "items", "hidden", "rev", "actions", "error"]
 
   // Waybar's usual classes → theme colour names (a definition's `states`
   // add to and override these)
@@ -158,20 +158,109 @@ QtObject {
     return value ? String(value).split(/\s+/).filter(c => c) : [];
   }
 
-  // The theme colour name for a state: `state` itself when it's a known
-  // name or a colour; else the first class `states` (over defaultStates)
-  // maps. "" when none.
-  function stateColor(state, classList, states) {
+  // Whether `name` is one of the theme's colour names (`colorNames`, the
+  // keys of Theme.stringToColorMap)
+  function isThemeColor(name, colorNames) {
+    return (colorNames ?? []).indexOf(String(name)) >= 0;
+  }
+
+  // The theme colour name for a state. The first that holds: `states` (over
+  // defaultStates) maps `state`; `state` is itself a theme colour name; the
+  // first class `states` maps. "" when none: a state that is neither
+  // mapped nor a theme name (a hex too) colours nothing.
+  function stateColor(state, classList, states, colorNames) {
     const map = Object.assign({}, root.defaultStates, states ?? {});
+    const mapped = key => Object.prototype.hasOwnProperty.call(map, key);
     if (state) {
       const s = String(state);
-      return map[s] ?? s;
+      if (mapped(s))
+        return map[s];
+      if (root.isThemeColor(s, colorNames))
+        return s;
     }
     for (const c of classList ?? []) {
-      if (c in map)
+      if (mapped(c))
         return map[c];
     }
     return "";
+  }
+
+  // Whether a script's value counts as on: true, a non-zero number, a string
+  // that isn't "", false, 0, no or off (any case), a non-empty list or object
+  function truthy(v) {
+    if (v === true)
+      return true;
+    if (typeof v === "number")
+      return isFinite(v) && v !== 0;
+    if (typeof v === "string")
+      return ["", "false", "0", "no", "off"].indexOf(v.trim().toLowerCase()) < 0;
+    if (Array.isArray(v))
+      return v.length > 0;
+    return v !== null && typeof v === "object" && Object.keys(v).length > 0;
+  }
+
+  // An action id (a letter, digit, "_", "." or "-", up to 64; "axiom:" ids
+  // are the shell's own)
+  function _actionId(id) {
+    return /^[A-Za-z0-9_.-]{1,64}$/.test(id);
+  }
+
+  // A sample's `actions` ({<id>: {enabled}}) as { <id>: { enabled } }, or
+  // null when it isn't an object (no list: every action is on). Ids that
+  // aren't action ids, and `axiom:` ids (always on), are dropped; `enabled`
+  // is truthy, and on when missing.
+  function actionsOf(value) {
+    if (value === null || typeof value !== "object" || Array.isArray(value))
+      return null;
+    const out = {};
+    for (const id of Object.keys(value)) {
+      if (!root._actionId(id))
+        continue;
+      const entry = value[id];
+      out[id] = {
+        "enabled": root.truthy(entry !== null && typeof entry === "object" ? entry.enabled ?? true : true)
+      };
+    }
+    return out;
+  }
+
+  // `template` with {0}, {1}… filled from `args`
+  function _format(template, args) {
+    return String(template ?? "").replace(/\{(\d+)\}/g, (m, i) => i in args ? String(args[i]) : m);
+  }
+
+  // Why a definition's script isn't answering, or null: { kind, message,
+  // exitCode, stderr }. Only an interactive definition fails (a Waybar-style
+  // one draws as it always did). `run` is the script's last run { exitCode,
+  // error, stderr, text, exited }; `context` { interactive, stream, words:
+  // { exited, exitedWith } } (the two message templates, {0} the code and
+  // {1} the stderr line). The first that holds:
+  //   start:   it couldn't start (exitCode -1 and an error)
+  //   stopped: a stream that ended with a non-zero exit
+  //   exit:    a non-zero exit with no output
+  //   script:  the sample's own non-empty `error`
+  function failure(sample, run, context) {
+    if (!context?.interactive)
+      return null;
+    const r = run ?? {};
+    const words = context.words ?? {};
+    const code = typeof r.exitCode === "number" ? r.exitCode : undefined;
+    const stderr = r.stderr ? String(r.stderr) : "";
+    const make = (kind, message) => ({
+          "kind": kind,
+          "message": message,
+          "exitCode": code ?? 0,
+          "stderr": stderr
+        });
+    const exitMessage = () => stderr ? root._format(words.exitedWith, [code, stderr]) : root._format(words.exited, [code]);
+    if (code === -1 && r.error)
+      return make("start", String(r.error));
+    if (context.stream && r.exited && code !== undefined && code !== 0)
+      return make("stopped", exitMessage());
+    if (code !== undefined && code !== 0 && !r.text)
+      return make("exit", exitMessage());
+    const error = root.asText(sample?.error);
+    return error !== "" ? make("script", error) : null;
   }
 
   // Text escaped for rich text (Waybar's `escape`)
@@ -255,9 +344,10 @@ QtObject {
   // rawText, alt, tooltip (rich), classes, color (a theme name or colour,
   // "" for none), percentage, value, min, max (0-100 unless given), hasMax
   // (the output gave a max or a percentage), ratio (0-1, or -1 without a
-  // value), unit, subtext, icon (a Material Symbols name), glyph (the
+  // value), state, rev, actions (actionsOf), failure (failure), error (its
+  // message), hiddenByScript (the output's own `hidden`), interactive, unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
-  function resolve(definition, sample) {
+  function resolve(definition, sample, context) {
     const d = definition ?? {};
     const s = sample ?? {};
     const f = {};
@@ -304,7 +394,10 @@ QtObject {
     const textPlain = root.plain(text);
     const classList = root.classes(f.class);
     const items = root.rows(f.items);
-    const hidden = f.hidden === true || f.hidden === "true" || (d.hideEmpty !== false && rawText.trim() === "");
+    const hiddenByScript = f.hidden === true || f.hidden === "true";
+    const failure = root.failure(s, context?.run, context);
+    // A failing widget always shows its failure
+    const hidden = failure === null && (hiddenByScript || (d.hideEmpty !== false && rawText.trim() === ""));
     return {
       "text": text,
       "plain": textPlain,
@@ -312,7 +405,14 @@ QtObject {
       "alt": str(f.alt),
       "tooltip": root.pango(esc(str(f.tooltip))),
       "classes": classList,
-      "color": root.stateColor(str(f.state), classList, d.states),
+      "color": root.stateColor(str(f.state), classList, d.states, context?.colorNames),
+      "state": str(f.state),
+      "rev": str(f.rev),
+      "actions": root.actionsOf(f.actions),
+      "failure": failure,
+      "error": failure?.message ?? "",
+      "interactive": !!context?.interactive,
+      "hiddenByScript": hiddenByScript,
       "percentage": percentage,
       "value": value,
       "min": min,
@@ -350,7 +450,8 @@ QtObject {
       });
       return root.fill(b, values);
     }
-    if (fields && b in fields && b !== "sample")
+    // `sample` and resolve's own bookkeeping aren't fields a script prints
+    if (fields && b in fields && ["sample", "actions", "interactive", "failure"].indexOf(b) < 0)
       return fields[b];
     return root.get(fields?.sample, b);
   }

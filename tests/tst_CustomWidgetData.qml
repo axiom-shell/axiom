@@ -101,15 +101,294 @@ TestCase {
   }
 
   function test_states() {
+    const names = ["accent", "warning", "error", "success"];
     compare(CustomWidgetData.classes(["a", "b"]), ["a", "b"]);
     compare(CustomWidgetData.classes("a b"), ["a", "b"]);
-    compare(CustomWidgetData.stateColor("", ["custom-spotify", "critical"], {}), "error");
+    compare(CustomWidgetData.stateColor("", ["custom-spotify", "critical"], {}, names), "error");
     compare(CustomWidgetData.stateColor("", ["playing"], {
       "playing": "accent"
-    }), "accent", "a definition's own state");
-    compare(CustomWidgetData.stateColor("warning", [], {}), "warning", "state over classes");
-    compare(CustomWidgetData.stateColor("#ff0000", [], {}), "#ff0000", "a colour passes");
-    compare(CustomWidgetData.stateColor("", ["x"], {}), "");
+    }, names), "accent", "a definition's own state");
+    compare(CustomWidgetData.stateColor("front", [], {
+      "front": "accent"
+    }, names), "accent", "a state is a mode, mapped by states");
+    compare(CustomWidgetData.stateColor("front", [], {}, names), "", "an unmapped word colours nothing");
+    compare(CustomWidgetData.stateColor("warning", [], {}, names), "warning", "state over classes");
+    compare(CustomWidgetData.stateColor("accent", [], {}, names), "accent", "a theme name passes");
+    compare(CustomWidgetData.stateColor("#ff0000", [], {}, names), "", "a hex colours nothing");
+    compare(CustomWidgetData.stateColor("", ["x"], {}, names), "");
+    compare(CustomWidgetData.stateColor("zzz", ["critical"], {}, names), "error", "an unmapped state falls to the classes");
+    compare(CustomWidgetData.stateColor("constructor", [], {}, names), "", "not an Object member");
+    compare(CustomWidgetData.stateColor("accent", [], {}), "", "no colour names: a theme name isn't known");
+  }
+
+  function test_isThemeColor() {
+    verify(CustomWidgetData.isThemeColor("accent", ["accent", "error"]));
+    verify(!CustomWidgetData.isThemeColor("#ff0000", ["accent"]));
+    verify(!CustomWidgetData.isThemeColor("front", ["accent"]));
+    verify(!CustomWidgetData.isThemeColor("accent", undefined), "no names: false");
+  }
+
+  function test_truthy() {
+    for (const on of [true, 1, -2, 0.5, "yes", "true", "1", "x", [0],
+      {
+        "a": 1
+      }
+    ])
+      verify(CustomWidgetData.truthy(on), JSON.stringify(on));
+    for (const off of [false, 0, NaN, Infinity, "", "false", "FALSE", "0", "No", "off", " Off ", [],
+      {},
+      null, undefined])
+      verify(!CustomWidgetData.truthy(off), String(off));
+  }
+
+  function test_actionsOf() {
+    compare(CustomWidgetData.actionsOf(undefined), null, "missing");
+    compare(CustomWidgetData.actionsOf("x"), null, "not an object");
+    compare(CustomWidgetData.actionsOf([1]), null, "a list");
+    compare(CustomWidgetData.actionsOf({
+      "undo": {
+        "enabled": false
+      },
+      "next": {},
+      "a": {
+        "enabled": "no"
+      },
+      "b": {
+        "enabled": "false"
+      },
+      "c": {
+        "enabled": "yes"
+      },
+      "bad id": {},
+      "axiom:refresh": {},
+      "": {}
+    }), {
+      "undo": {
+        "enabled": false
+      },
+      "next": {
+        "enabled": true
+      },
+      "a": {
+        "enabled": false
+      },
+      "b": {
+        "enabled": false
+      },
+      "c": {
+        "enabled": true
+      }
+    });
+    compare(CustomWidgetData.actionsOf({}), {}, "an empty list: every action off");
+  }
+
+  readonly property var _words: ({
+      "exited": "exited {0}",
+      "exitedWith": "exited {0}: {1}"
+    })
+
+  function _ctx(interactive, stream) {
+    return {
+      "interactive": interactive,
+      "stream": stream,
+      "words": _words
+    };
+  }
+
+  function test_failure() {
+    const sample = {
+      "text": "x"
+    };
+    const ok = {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": "x",
+      "exited": false
+    };
+    const start = CustomWidgetData.failure(sample, {
+      "exitCode": -1,
+      "error": "no such file",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }, _ctx(true, false));
+    compare(start.kind, "start");
+    compare(start.message, "no such file");
+    const stopped = CustomWidgetData.failure(sample, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "boom",
+      "text": "",
+      "exited": true
+    }, _ctx(true, true));
+    compare(stopped.kind, "stopped");
+    compare(stopped.message, "exited 3: boom");
+    compare(stopped.exitCode, 3);
+    compare(stopped.stderr, "boom");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": true
+    }, _ctx(true, true)).message, "exited 3", "no stderr line");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 1,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }, _ctx(true, false)).kind, "exit", "a poll exiting non-zero with no output");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, ok, _ctx(true, false)).kind, "script");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, ok, _ctx(true, false)).message, "bad");
+    // Precedence
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "boom",
+      "text": "{\"error\":\"bad\"}",
+      "exited": true
+    }, _ctx(true, true)).kind, "stopped", "a stopped stream whose last sample has an error");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, {
+      "exitCode": -1,
+      "error": "x",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }, _ctx(true, false)).kind, "start", "start before script");
+    // No failure
+    compare(CustomWidgetData.failure(sample, {}, _ctx(true, false)), null, "an empty run");
+    compare(CustomWidgetData.failure(sample, undefined, _ctx(true, false)), null, "no run");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 1,
+      "text": ""
+    }, _ctx(false, false)), null, "non-interactive exit 1 with no text");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, ok, _ctx(false, false)), null, "non-interactive error");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 1,
+      "error": "",
+      "stderr": "",
+      "text": "some output",
+      "exited": false
+    }, _ctx(true, false)), null, "non-zero with output, not a stream");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": "x",
+      "exited": true
+    }, _ctx(true, true)), null, "a stream that exited 0");
+    compare(CustomWidgetData.failure({
+      "error": ""
+    }, ok, _ctx(true, false)), null, "an empty error");
+    compare(CustomWidgetData.failure(sample, ok, undefined), null, "no context");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": true
+    }, {
+      "interactive": true,
+      "stream": true
+    }).message, "", "words missing");
+  }
+
+  function test_resolveContext() {
+    const names = ["accent", "error"];
+    const f = CustomWidgetData.resolve({
+      "states": {
+        "front": "accent"
+      }
+    }, {
+      "text": "x",
+      "state": "front",
+      "rev": 4,
+      "actions": {
+        "undo": {
+          "enabled": false
+        }
+      }
+    }, {
+      "colorNames": names
+    });
+    compare(f.color, "accent", "state through states");
+    compare(f.state, "front");
+    compare(f.rev, "4");
+    compare(f.actions.undo.enabled, false);
+    compare(f.failure, null);
+    compare(f.error, "");
+    verify(!f.interactive);
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "state": "back"
+    }, {
+      "colorNames": names
+    }).color, "", "without the entry, the widget's own colour");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "state": "#ff0000"
+    }, {
+      "colorNames": names
+    }).color, "", "a hex colours nothing");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x"
+    }).actions, null);
+    // A failing, interactive widget isn't hidden for want of text
+    const failing = CustomWidgetData.resolve({}, {
+      "error": "boom"
+    }, {
+      "interactive": true,
+      "stream": false,
+      "words": _words,
+      "run": {
+        "exitCode": 0,
+        "error": "",
+        "stderr": "",
+        "text": "{}",
+        "exited": false
+      }
+    });
+    compare(failing.error, "boom");
+    compare(failing.failure.kind, "script");
+    verify(!failing.hidden, "not hidden while failing");
+    verify(!failing.hiddenByScript);
+    verify(failing.interactive);
+    // The same sample, not interactive: hidden as Waybar hides empty text
+    const quiet = CustomWidgetData.resolve({}, {
+      "error": "boom"
+    }, {
+      "interactive": false
+    });
+    verify(quiet.hidden);
+    compare(quiet.error, "");
+    // hidden by the script, apart from empty text
+    const byScript = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "hidden": "true"
+    });
+    verify(byScript.hiddenByScript);
+    verify(byScript.hidden);
+    // A sample's own bookkeeping-named keys bind to the sample's value
+    compare(CustomWidgetData.elementValue(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "interactive": "mine"
+    }), "interactive"), "mine");
+    compare(CustomWidgetData.elementValue(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "failure": "mine"
+    }), "failure"), "mine");
   }
 
   function test_pango() {

@@ -38,6 +38,17 @@ properties:
     title: Refresh name
     default: ''
     description: 'Empty: its id.'
+  invoke:
+    type: object
+    additionalProperties: false
+    description: How named actions run (buttons, keys, the bar, axiom ipc customWidgets act).
+    properties:
+      command:
+        x-scope: commands
+        type: string
+        title: Action command
+        default: ''
+        description: 'Runs a named action: {action}, {value} and {rev} are filled in, already quoted. Should exit quickly.'
   bar:
     $ref: '#/definitions/BarDisplay'
     x-order: [style, segments, width, icon, popout]

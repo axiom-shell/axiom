@@ -196,11 +196,9 @@ QtObject {
       const text = CommandManager.outputs[w.command] ?? "";
       const value = CommandManager.values[w.command];
       const sample = CustomWidgetData.parse(text, value, def.output, def.mode === "stream");
-      const resolved = CustomWidgetData.resolve(def, sample);
       fields = fields ?? Object.assign({}, root._fields);
       outputs = outputs ?? Object.assign({}, root._outputs);
       history = history ?? Object.assign({}, root._history);
-      fields[id] = resolved;
       outputs[id] = {
         "text": text,
         "value": value,
@@ -209,6 +207,8 @@ QtObject {
         "at": run.at,
         "blocked": false
       };
+      const resolved = CustomWidgetData.resolve(def, sample, root._context(id, outputs[id]));
+      fields[id] = resolved;
       history[id] = root._pushHistory(history[id], def, resolved);
     }
     if (fields) {
@@ -216,6 +216,31 @@ QtObject {
       root._outputs = outputs;
       root._history = history;
     }
+  }
+
+  // What resolve needs besides the definition and the sample (its
+  // `context`): the theme's colour names, the script's last run (`output`,
+  // an entry of `outputs`), whether the definition is interactive (it has
+  // an action command) and the failure messages. `{0}` is the exit code,
+  // `{1}` the script's last stderr line.
+  function _context(id, output) {
+    const def = CustomWidgetsConfig.definition(id);
+    return {
+      "colorNames": Object.keys(Theme.stringToColorMap),
+      "run": {
+        "exitCode": output.exitCode,
+        "error": output.error,
+        "stderr": output.stderr ?? "",
+        "text": output.text,
+        "exited": output.exited ?? false
+      },
+      "interactive": def.invoke.command !== "",
+      "stream": def.mode === "stream",
+      "words": {
+        "exited": I18n.tr("The script exited with code {0}"),
+        "exitedWith": I18n.tr("The script exited with code {0}: {1}")
+      }
+    };
   }
 
   // The numbers a definition graphs: its own value, and each Sparkline
@@ -266,7 +291,7 @@ QtObject {
       const out = root._outputs[id];
       if (!def || !out || out.blocked)
         continue;
-      const resolved = CustomWidgetData.resolve(def, CustomWidgetData.parse(out.text, out.value, def.output, def.mode === "stream"));
+      const resolved = CustomWidgetData.resolve(def, CustomWidgetData.parse(out.text, out.value, def.output, def.mode === "stream"), root._context(id, out));
       if (Utils.deepEqual(resolved, root._fields[id]))
         continue;
       fields = fields ?? Object.assign({}, root._fields);

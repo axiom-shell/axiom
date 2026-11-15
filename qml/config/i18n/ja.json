@@ -4394,6 +4394,11 @@
     "How it looks on the bar, with the last output.": "",
     "An empty module: drag elements here from the left, or click one to add it where there's room.": "",
     "Rule": "",
-    "Nothing to edit yet": ""
+    "Nothing to edit yet": "",
+    "The script exited with code {0}": "",
+    "The script exited with code {0}: {1}": "",
+    "Action command": "",
+    "Runs a named action: {action}, {value} and {rev} are filled in, already quoted. Should exit quickly.": "",
+    "How named actions run (buttons, keys, the bar, axiom ipc customWidgets act).": ""
   }
 }

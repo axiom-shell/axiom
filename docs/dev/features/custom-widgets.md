@@ -21,9 +21,28 @@ The fields, each read from the output's key of the same name (the script shapes 
 ### Reading an output
 `CustomWidgetData` is the pure half:
 - `parse`: a JSON object as is; Waybar's text output as lines text, tooltip, class (a streamed line is only text).
-- `resolve`: the fields, the format filled (`{}` / `{0}` the text, `{icon}` the format-icons pick, any field or path), `escape` before filling, Pango markup turned into Qt rich text (`pango`), the state colour (`stateColor`: the `state` field, else the first class `states` or the defaults map), `ratio` (the value between min and max; `percentage` alone is a value on 0–100), `hidden` (empty text, as Waybar).
+- `resolve(definition, sample, context)`: the fields, the format filled (`{}` / `{0}` the text, `{icon}` the format-icons pick, any field or path), `escape` before filling, Pango markup turned into Qt rich text (`pango`), the colour (`stateColor`, see the script contract), `ratio` (the value between min and max; `percentage` alone is a value on 0–100), `hidden` (empty text, as Waybar; never while failing), and `state`, `rev`, `actions` (`actionsOf`), `failure` / `error` (`failure`), `hiddenByScript` (the output's own `hidden`) and `interactive`. The `context` is the manager's (`CustomWidgetsManager._context`): the theme's colour names, the script's last run and whether the definition is interactive; without one `resolve` still works (no colour names, no failure).
+- `truthy` (what a script's value counts as on), `isThemeColor`, `actionsOf`, `failure`: the rules the script contract names.
 - `flatten` lists a sample's paths for the editor's dropdowns.
 - `lattice`, `designSize`, `pageSize`, `rect`: the module's lattice, 4 sub-cells a grid unit (16 a card), the elements' bounds (so the box fits them), laid out proportionally over whatever size the module gets.
+
+### Script contract
+What a script prints and how the definition reads it. Output modes (`poll`, `stream` one sample a line, `once`) and formats (`waybar`, `json`, `text`) are as above; Waybar `custom/*` scripts keep working unchanged.
+
+| key | meaning |
+| --- | --- |
+| `text`, `alt`, `tooltip`, `class`, `percentage` | Waybar's (Pango in `text` / `tooltip` unless `escape`) |
+| `icon`, `value`, `min`, `max`, `unit`, `subtext`, `badge`, `urgent`, `image`, `items`, `hidden` | axiom's, as above |
+| `state` | the script's **mode name**: matched by screens (later), looked up in the definition's `states` for the colour |
+| `rev` | the screen's revision, kept as text; later passed back to an action as `{rev}`, so an action can refuse a stale screen |
+| `actions` | `{<id>: {enabled}}`: with it, an action it doesn't list is off; `enabled` is read through `truthy` (`false`, `"false"`, `0`, `no`, `off`, `""` are off; missing is on). Ids that aren't action ids (`^[A-Za-z0-9_.-]{1,64}$`) are dropped |
+| `error` | non-empty: the widget is failing (interactive definitions only, below). Plain text |
+| anything else | data, bound by path (`player.title`, `items.0.text`) |
+
+- **Colour.** `stateColor` is the first that holds: `states` (over the default class map: `ok`, `warning`, `critical`, …) maps the `state`; the `state` is itself a theme colour name; `states` or the class map maps the first `class` that it knows. **A `state` that is none of these, or a hex, colours nothing** (it used to pass a hex through): `state` names a mode, the definition maps it to a colour.
+- **Interactive.** A definition with an action command (`invoke.command`; the command's placeholders and the actions that run it come with the named actions) is interactive. Only an interactive definition fails: `failure` is, in this order, `start` (the script couldn't start), `stopped` (a stream that ended with a non-zero exit), `exit` (a non-zero exit with no output) or `script` (the sample's own `error`). It carries `kind`, `message`, `exitCode` and `stderr`; `resolve` returns it with `error` (the message) and never hides a failing widget. A definition without an action command draws and hides as it always did: exit codes, start errors and `error` change nothing there.
+- **Lifetime.** A watched command runs only while some bar widget, popout, module or the editor shows its widget (`CustomWidgetsManager._sync`; a stream is killed). A stateful widget keeps its state **outside** the stream (a daemon or a file), and its action command must not need the stream. An element or bar click always has its widget shown; `axiom ipc customWidgets act` / `actValue` answer `not shown` when nothing shows the widget (shown = an id in the manager's registry; the editor's running definition counts). Long jobs (an update) detach and report through that state; the action command exits quickly.
+- cava and other frame-rate streams are unsupported: a stream is coalesced to 4 pushes a second.
 
 ### Running
 `CustomWidgetsManager.acquire(owner, id)` watches the definition's command through `CommandManager` (format `json` unless the output is plain text) under its own owner per id; the merge by command string means a widget on two bars and a module still runs one script. Each push whose `CommandManager.runs[command].at` changed is resolved into `fields[id]`, and an edited definition (its format, icons, states: the page's preview) re-resolves its last output at once, without adding to the history; `outputs[id]` keeps the raw text, value, exit code and error for the editor, and `history[id]` the last 60 values of the widget's value and of each Sparkline element's binding. With an `execIf`, the script is watched only once that command succeeds (checked when first shown and on refresh).
