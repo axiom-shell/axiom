@@ -699,4 +699,17 @@ QtObject {
       });
     return out;
   }
+
+  // The zoom (at most 0.3, at least 0.05) the Module tab's size previews
+  // are drawn at: the one that fits its height (their tallest, at least four
+  // units, a fifth of the height) and its width. `sizes` are the previews'
+  // [w, h] in grid units, `card` the card size, `reserved` the px beside
+  // them and `spacing` the px between them.
+  function previewZoom(sizes, card, width, height, reserved, spacing) {
+    const tall = Math.max(4, ...sizes.map(size => size[1]));
+    const byHeight = height * 0.22 / Math.max(1, GridPlacement.span(tall, card));
+    const across = sizes.reduce((sum, size) => sum + GridPlacement.span(size[0], card), 0);
+    const byWidth = (width - reserved - spacing * sizes.length) / Math.max(1, across);
+    return Math.max(0.05, Math.min(0.3, byHeight, byWidth));
+  }
 }

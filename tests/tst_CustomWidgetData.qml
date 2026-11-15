@@ -434,4 +434,20 @@ TestCase {
       verify(typeof f.text === "string", preset.name);
     }
   }
+
+  function test_preview_zoom_fits_width() {
+    const sizes = [[4, 4], [4, 4], [8, 2], [8, 4], [4, 1]];
+    for (const card of [450, 624, 990]) {
+      for (const width of [1180, 1500, 2600]) {
+        const reserved = 400;
+        const spacing = 20;
+        const zoom = CustomWidgetData.previewZoom(sizes, card, width, 900, reserved, spacing);
+        verify(zoom <= 0.3, "never above 0.3");
+        const used = sizes.reduce((sum, size) => sum + GridPlacement.span(size[0], card) * zoom, 0) + reserved + spacing * sizes.length;
+        verify(used <= width + 0.001, "card " + card + " at " + width + ": " + used);
+      }
+    }
+    // Wide enough: the height rule alone, as before
+    compare(CustomWidgetData.previewZoom(sizes, 450, 100000, 900, 400, 20), Math.min(0.3, 900 * 0.22 / GridPlacement.span(4, 450)), "wide page: height only");
+  }
 }
