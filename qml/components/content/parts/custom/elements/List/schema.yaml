@@ -3,7 +3,7 @@ icon: list
 defaultSize: [8, 4]
 slots: [items]
 actions: [click]
-color: state
+color: {variant: state, colorStates: {default: {key: state}}}
 settings:
   orientation:
     type: string

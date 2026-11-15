@@ -40,7 +40,7 @@ properties:
     description: 'Empty: its id.'
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, segments, width, icon, popout, run]
+    x-order: [style, segments, width, icon, popout, color, colorStates, run]
     x-properties:
       icon:
         type: string
@@ -51,6 +51,14 @@ properties:
         x-enumLabels: {none: None, glyph: Inline, material: Icon}
         description: 'Inline: the format''s {icon}, drawn with the text.'
       popout: {type: boolean, title: Module on hover, default: true}
+      color:
+        type: string
+        title: Status color
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: "Colors the widget, like a battery turning red. Auto: the script's class (warning, critical)."
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
       run:
         type: object
         additionalProperties: false
@@ -93,12 +101,6 @@ properties:
     x-settings: false
     additionalProperties: {type: object}
     description: 'A sample output per screen (a screen id, "" for none): what the editor previews it with.'
-  states:
-    type: object
-    title: State colors
-    default: {}
-    additionalProperties: {type: string}
-    description: A class or state → a theme color.
   module:
     type: object
     additionalProperties: false

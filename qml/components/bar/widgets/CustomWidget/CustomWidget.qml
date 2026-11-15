@@ -27,7 +27,9 @@ BarWidget {
       "icon": "material",
       "segments": 5,
       "width": null,
-      "popout": false
+      "popout": false,
+      "color": "",
+      "colorStates": {}
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property bool failing: !!root.fields?.failure
@@ -48,14 +50,15 @@ BarWidget {
 
   // News: its state went to warning, or to critical (its colour's
   // name, CustomWidgetData's state color), from a calmer one
-  attentionLevel: root.fields === null ? -1 : root.failing || root.fields.color === "error" ? 2 : root.fields.color === "warning" ? 1 : 0
+  attentionLevel: root.fields === null ? -1 : root.failing || root.stateColorName === "error" ? 2 : root.stateColorName === "warning" ? 1 : 0
 
   hidden: root.fields?.hidden ?? false
   icon: root.bar.icon === "material" ? (root.failing ? "error" : root.fields?.icon || root.definition?.icon || "widgets") : ""
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.failing ? root.fields.error : root.fields.plain
-  // The script's state color (a theme color's name), which the base
-  // resolves; none: the widget's own color
-  stateColorName: root.failing ? "error" : (root.fields?.color ?? "")
+  // The status color (a theme color's name), which the base resolves: the
+  // error while failing, else bar.color (a rule of bar.colorStates, or
+  // Auto: the script's state); none: the widget's own color
+  stateColorName: root.failing ? "error" : CustomWidgetData.colorFor(root.bar.color, root.bar.colorStates, root.fields, root.fields?.plain, root.fields?.color ?? "")
   // Urgent: a slow colour pulse
   pulsing: root.fields?.urgent ?? false
 

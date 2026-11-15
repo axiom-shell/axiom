@@ -14,6 +14,15 @@ CustomElementBase {
   readonly property bool themed: root.options.source === "theme"
   readonly property string shown: root.bind.icon ? root.text("icon") : root.glyph ? (root.fields?.glyph ?? "") : root.themed ? (root.fields?.icon ?? "") : (root.fields?.icon || root.fallbackIcon)
   readonly property string badge: root.options.badge ? root.text("badge", "badge") : ""
+  // Its background (picked or by a rule), else null: none
+  readonly property var background: root.colorFor("background", null)
+
+  Surface {
+    anchors.fill: parent
+    visible: root.background !== null
+    outlined: false
+    color: root.background ?? "transparent"
+  }
 
   Thumbnail {
     id: picture
@@ -32,7 +41,7 @@ CustomElementBase {
     visible: !root.themed
     anchors.centerIn: parent
     text: root.shown
-    textColor: root.colorOf(Style.accent)
+    textColor: root.colorOf(root.background !== null ? root.inkOn(root.background) : Style.accent)
     textSize: Math.max(Style.typeMicro, Math.min(root.width, root.height) * 0.75) // fitted: the element's box
   }
 

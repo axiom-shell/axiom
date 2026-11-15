@@ -31,24 +31,30 @@ QtObject {
   // The element kinds a module is built from (the CustomElement oneOf:
   // components/content/parts/custom/elements/<Type>/schema.yaml), by
   // label: { type, label, icon, size ([w, h] sub-cells it's added at,
-  // `x-defaultSize`), slots (its bindings, `x-slots`, the base's, which every kind has, last: CustomWidgetData.baseSlotsLast), actions (the
+  // `x-defaultSize`), slots (its bindings, its own `x-slots`), actions (the
   // triggers it runs actions on, `x-actions`: keys of its `run`), options (its
-  // look, a properties schema), optionsOrder }. Labels and titles are English: the editor
+  // look, a properties schema), optionsOrder, colors ([{ key, statesKey }]: its colour
+  // settings and their "Color by state" rules, CustomWidgetData.colorFields),
+  // lookOrder (optionsOrder without them) }. Labels and titles are English: the editor
   // translates them
   readonly property var elementKinds: {
     const schema = ConfigManager.configSchema;
     const defs = (schema?.definitions?.CustomElement?.oneOf ?? []).map(option => schema.definitions[option.$ref.replace("#/definitions/", "")]);
-    const slots = CustomWidgetData.baseSlotsLast(defs.map(d => d["x-slots"] ?? []));
-    return defs.map((def, i) => {
+    return defs.map(def => {
+      const options = def.properties.options?.properties ?? ({});
+      const order = def.properties.options?.["x-order"] ?? [];
+      const colors = CustomWidgetData.colorFields(options, order);
       return {
         "type": def.properties.type.const,
         "label": def.properties.type.description,
         "icon": def["x-icon"] ?? "widgets",
         "size": def["x-defaultSize"] ?? [4, 4],
-        "slots": slots[i],
+        "slots": def["x-slots"] ?? [],
         "actions": def["x-actions"] ?? [],
-        "options": def.properties.options?.properties ?? ({}),
-        "optionsOrder": def.properties.options?.["x-order"] ?? []
+        "options": options,
+        "optionsOrder": order,
+        "colors": colors.colors,
+        "lookOrder": colors.look
       };
     }).sort((a, b) => a.label.localeCompare(b.label));
   }

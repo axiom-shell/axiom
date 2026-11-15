@@ -213,28 +213,26 @@ settings:
 	}
 }
 
-// A base's x-slots merge into every kind's list, the base's first (kinds.go's
-// list merge; CustomWidgetsConfig.elementKinds lists them last for the
-// editor): the custom widget elements' show and tone bindings.
-func TestKindBaseSlots(t *testing.T) {
+// A kind's x-slots are its own (the custom widget elements' bindings; the
+// base lists none), and a kind with none has no key.
+func TestKindSlots(t *testing.T) {
 	t.Parallel()
 	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	slots := func(name string) []string {
-		def := root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
-		var out []string
-		for _, v := range def.Value("x-slots").(*jsonx.Array).Items {
-			out = append(out, v.(string))
-		}
-		return out
+	def := func(name string) *jsonx.Object {
+		return root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
 	}
-	if got, want := slots("ButtonCustomElement"), []string{"show", "tone", "label", "icon", "value", "enabled"}; !slices.Equal(got, want) {
-		t.Errorf("Button's slots = %v, want the base's then its own %v", got, want)
+	var got []string
+	for _, v := range def("ButtonCustomElement").Value("x-slots").(*jsonx.Array).Items {
+		got = append(got, v.(string))
 	}
-	if got, want := slots("SeparatorCustomElement"), []string{"show", "tone"}; !slices.Equal(got, want) {
-		t.Errorf("Separator's slots = %v, want %v", got, want)
+	if want := []string{"label", "icon", "value", "enabled"}; !slices.Equal(got, want) {
+		t.Errorf("Button's slots = %v, want its own %v", got, want)
+	}
+	if def("SeparatorCustomElement").Has("x-slots") {
+		t.Errorf("Separator has x-slots, want none")
 	}
 }
 

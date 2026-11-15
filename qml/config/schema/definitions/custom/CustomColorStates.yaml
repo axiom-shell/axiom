@@ -1,0 +1,27 @@
+# The CustomColorStates definition (#/definitions/CustomColorStates): "Color by
+# state" for one colour of a custom widget element or the bar (a colour key's
+# rules are `<key>States`): the first rule that holds picks the colour
+# (docs/dev/features/custom-widgets.md).
+
+type: object
+additionalProperties: false
+default: {}
+properties:
+  enabled: {type: boolean, title: Color by state, default: false}
+  key: {type: string, title: Key, default: '', description: 'Empty: what the element shows.'}
+  rules:
+    type: array
+    default: []
+    maxItems: 16
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        test:
+          type: string
+          title: Test
+          enum: [is, isNot, above, below]
+          default: is
+          x-enumLabels: {is: Is, isNot: Is not, above: Above, below: Below}
+        value: {type: string, title: Value, default: ''}
+        color: {type: string, title: Color, default: ''}

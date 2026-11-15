@@ -72,7 +72,7 @@ GridDragLayer {
       // The element (the tile's module, or an underlay item's element)
       property var module: null
       readonly property var fields: CustomWidgetsManager.editor.previewFields ?? ({})
-      readonly property bool hidden: !CustomWidgetData.elementShown(content.fields, content.module?.bind)
+      readonly property bool hidden: !CustomWidgetData.shown(content.module?.showWhen, content.fields, CustomWidgetData.ownValue(content.fields, content.module?.bind, CustomWidgetsConfig.elementKind(content.module?.type)?.slots?.[0] ?? ""))
       readonly property real designWidth: Math.max(1, (content.module?.place?.w ?? 1) / CustomWidgetData.subCells * root.card)
       readonly property real designHeight: Math.max(1, (content.module?.place?.h ?? 1) / CustomWidgetData.subCells * root.card)
       readonly property real zoom: Math.min(content.width / content.designWidth, content.height / content.designHeight)

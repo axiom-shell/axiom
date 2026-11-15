@@ -2,7 +2,7 @@ label: Icon
 icon: star
 defaultSize: [2, 2]
 slots: [icon, badge]
-color: state
+color: icon
 settings:
   source:
     type: string

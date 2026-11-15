@@ -15,8 +15,8 @@ QtObject {
   // The fields a definition can bind: Waybar's five, then axiom's
   readonly property var fieldNames: ["text", "alt", "tooltip", "class", "percentage", "icon", "value", "min", "max", "unit", "subtext", "state", "badge", "urgent", "image", "items", "hidden", "rev", "actions", "error"]
 
-  // Waybar's usual classes → theme colour names (a definition's `states`
-  // add to and override these)
+  // Waybar's usual classes → theme colour names (an element's or the bar's
+  // Auto colour follows these)
   readonly property var defaultStates: ({
       "ok": "success",
       "good": "success",
@@ -213,12 +213,12 @@ QtObject {
     return (colorNames ?? []).indexOf(String(name)) >= 0;
   }
 
-  // The theme colour name for a state. The first that holds: `states` (over
-  // defaultStates) maps `state`; `state` is itself a theme colour name; the
-  // first class `states` maps. "" when none: a state that is neither
-  // mapped nor a theme name (a hex too) colours nothing.
-  function stateColor(state, classList, states, colorNames) {
-    const map = Object.assign({}, root.defaultStates, states ?? {});
+  // The theme colour name for a state. The first that holds: defaultStates
+  // maps `state`; `state` is itself a theme colour name; the first class
+  // defaultStates maps. "" when none: a state that is neither mapped nor a
+  // theme name (a hex too) colours nothing.
+  function stateColor(state, classList, colorNames) {
+    const map = root.defaultStates;
     const mapped = key => Object.prototype.hasOwnProperty.call(map, key);
     if (state) {
       const s = String(state);
@@ -391,15 +391,14 @@ QtObject {
   // alt (so a script printing "on" picks the "on" icon); a format-icons
   // pick that's a Material Symbols name is the icon, when there's none.
   //   definition: { format, formatIcons,
-  //                 states, maxLength, escape, hideEmpty }
+  //                 maxLength, escape, hideEmpty }
   // Returns { text (rich, the format filled), plain (it as plain text),
   // rawText, alt, tooltip (rich), classes, color (a theme colour name,
   // "" for none), percentage, value, min, max (0-100 unless given), hasMax
   // (the output gave a max or a percentage), ratio (0-1, or -1 without a
   // value), state, rev, actions (actionsOf), failure (failure), error (its
-  // message), hiddenByScript (the output's own `hidden`), interactive, states (the
-  // definition's map) and colorNames (the context's), which `tone` reads,
-  // unit, subtext, icon (a Material Symbols name), glyph (the
+  // message), hiddenByScript (the output's own `hidden`), interactive and
+  // colorNames (the context's), unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
   function resolve(definition, sample, context) {
     const d = definition ?? {};
@@ -459,14 +458,13 @@ QtObject {
       "alt": str(f.alt),
       "tooltip": root.pango(esc(str(f.tooltip))),
       "classes": classList,
-      "color": root.stateColor(str(f.state), classList, d.states, context?.colorNames),
+      "color": root.stateColor(str(f.state), classList, context?.colorNames),
       "state": str(f.state),
       "rev": str(f.rev),
       "actions": root.actionsOf(f.actions),
       "failure": failure,
       "error": failure?.message ?? "",
       "interactive": !!context?.interactive,
-      "states": d.states ?? {},
       "colorNames": context?.colorNames ?? [],
       "hiddenByScript": hiddenByScript,
       "percentage": percentage,
@@ -490,7 +488,7 @@ QtObject {
 
   // What resolve returns for its own use, not an output key of that name: a
   // binding of one reads the sample's
-  readonly property var _internalFields: ["states", "colorNames", "actions", "interactive", "failure"]
+  readonly property var _internalFields: ["colorNames", "actions", "interactive", "failure"]
 
   // What a text field of an element reads as (an element's `bind`): "" is
   // nothing (undefined: the slot falls back to the output's own key); exactly
@@ -546,17 +544,106 @@ QtObject {
     return bind?.[slot] ? root.elementValue(fields, bind[slot]) : fields?.[slot];
   }
 
-  // Whether an element is shown: its `show` binding holds (truthy), or it
-  // has none
-  function elementShown(fields, bind) {
-    return !bind?.show || root.truthy(root.elementValue(fields, bind.show));
+  // Whether `value` passes a test (a colour rule's, or an element's Visible):
+  //   is / isNot: the text of the value, trimmed, against `operand`
+  //   above / below: both as numbers (parseFloat, so "85%" is 85); false
+  //                  when either isn't one
+  //   set / unset: has a value (text counts, even "0"), then not
+  //   always: true
+  function holds(test, value, operand) {
+    switch (test) {
+    case "always":
+      return true;
+    case "is":
+      return root.asText(value).trim() === String(operand ?? "").trim();
+    case "isNot":
+      return root.asText(value).trim() !== String(operand ?? "").trim();
+    case "above":
+    case "below":
+      {
+        const v = parseFloat(root.asText(value));
+        const o = parseFloat(operand);
+        if (isNaN(v) || isNaN(o))
+          return false;
+        return test === "above" ? v > o : v < o;
+      }
+    case "set":
+      return root._isSet(value);
+    case "unset":
+      return !root._isSet(value);
+    }
+    return false;
   }
 
-  // The theme colour name an element's `tone` binding gives: its value
-  // looked up in the definition's states (a theme colour name passes
-  // through; a hex or an unknown word is ""), "" without a binding
-  function elementTone(fields, bind) {
-    return bind?.tone ? root.stateColor(root.asText(root.elementValue(fields, bind.tone)), [], fields?.states, fields?.colorNames) : "";
+  // Whether a value is set: text (even "0" or "no") when it isn't empty,
+  // else truthy (not 0, false, nothing or an empty list)
+  function _isSet(value) {
+    return typeof value === "string" ? value.trim() !== "" : root.truthy(value);
+  }
+
+  // What a colour rule or Visible reads: `key` "" is `own` (what the element
+  // shows), else the key or path in the output ({key} through elementValue)
+  function readKey(fields, key, own) {
+    return key ? root.elementValue(fields, "{" + key + "}") : own;
+  }
+
+  // A colour as a name ("" for Auto): with `states.enabled` the colour of the
+  // first rule that holds (its own "" is `auto`); else, or when none holds,
+  // `picked`, else `auto`. A hex passes as it is
+  function colorFor(picked, states, fields, own, auto) {
+    if (states?.enabled) {
+      const value = root.readKey(fields, states.key, own);
+      for (const rule of states.rules ?? []) {
+        if (root.holds(rule.test, value, rule.value))
+          return rule.color || auto;
+      }
+    }
+    return picked || auto;
+  }
+
+  // colorFor over a List row: the key is read from the row's own item
+  // (`row.raw`, a path as {key}), "" reads its text
+  function rowColor(picked, states, row) {
+    const own = row?.text;
+    if (!states?.enabled)
+      return picked || "";
+    const value = states.key ? root.get(row?.raw, states.key) : own;
+    for (const rule of states.rules ?? []) {
+      if (root.holds(rule.test, value, rule.value))
+        return rule.color || "";
+    }
+    return picked || "";
+  }
+
+  // Whether an element is shown (its showWhen: { test, key, value }): always
+  // when there is none
+  function shown(showWhen, fields, own) {
+    const test = showWhen?.test ?? "always";
+    return test === "always" || root.holds(test, root.readKey(fields, showWhen.key, own), showWhen.value);
+  }
+
+  // The colours of a kind's options schema, in `order`: { colors: [{ key,
+  // statesKey }] (a key with `x-options: colors`; statesKey `<key>States`
+  // when the schema has it, else ""), look: the other keys, the `…States`
+  // ones left out }
+  function colorFields(options, order) {
+    const keys = (order ?? []).length > 0 ? order : Object.keys(options ?? {});
+    const colors = [];
+    const look = [];
+    for (const key of keys) {
+      const states = key + "States";
+      if (options?.[key]?.["x-options"] === "colors")
+        colors.push({
+          "key": key,
+          "statesKey": options?.[states] ? states : ""
+        });
+      else if (!(key.endsWith("States") && options?.[key.slice(0, -6)]?.["x-options"] === "colors"))
+        look.push(key);
+    }
+    return {
+      "colors": colors,
+      "look": look
+    };
   }
 
   // An element's value, min and max as numbers: each slot's binding (a
@@ -935,10 +1022,6 @@ QtObject {
         ]
       },
       "format": "{text}",
-      "states": {
-        "done": "success",
-        "open": "accent"
-      },
       "bar": {
         "style": "label",
         "popout": true
@@ -973,11 +1056,11 @@ QtObject {
               "h": 2
             },
             "bind": {
-              "text": "{text}",
-              "tone": "{state}"
+              "text": "{text}"
             },
             "options": {
-              "align": "right"
+              "align": "right",
+              "colorStates": root._stateRules("state", [["done", "success"], ["open", "accent"]])
             }
           },
           {
@@ -1037,6 +1120,9 @@ QtObject {
                 },
                 "run": {
                   "click": "check"
+                },
+                "options": {
+                  "colorStates": root._stateRules("state", [["done", "success"], ["open", "accent"]])
                 }
               }
             ]
@@ -1060,8 +1146,10 @@ QtObject {
                   "h": 6
                 },
                 "bind": {
-                  "icon": "task_alt",
-                  "tone": "{state}"
+                  "icon": "task_alt"
+                },
+                "options": {
+                  "color": "success"
                 }
               },
               {
@@ -1204,10 +1292,6 @@ QtObject {
       "template": true,
       "description": "An on / off switch, such as a VPN",
       "icon": "toggle_on",
-      "states": {
-        "on": "success",
-        "off": "warning"
-      },
       "actions": {
         "items": [root._act("on", "Turn on"), root._act("off", "Turn off")]
       },
@@ -1230,15 +1314,17 @@ QtObject {
             "test": "is",
             "values": ["on"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "lock",
-              "tone": "{state}"
+              "icon": "lock"
+            }, {
+              "color": "success"
             })]), root._view("off", "Off", {
             "key": "state",
             "test": "is",
             "values": ["off"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "lock_open",
-              "tone": "{state}"
+              "icon": "lock_open"
+            }, {
+              "color": "warning"
             })])]
       },
       "samples": {
@@ -1304,10 +1390,6 @@ QtObject {
       "actions": {
         "items": [root._act("open", "Open")]
       },
-      "states": {
-        "full": "error",
-        "ok": "success"
-      },
       "module": {
         "size": [4, 4],
         "elements": [root._el("title", "Text", [0, 0, 16, 2], {
@@ -1315,7 +1397,9 @@ QtObject {
           }, {
             "align": "left",
             "bold": true
-          }), root._el("rows", "List", [0, 2, 16, 14], null, null, {
+          }), root._el("rows", "List", [0, 2, 16, 14], null, {
+            "colorStates": root._stateRules("state", [["full", "error"], ["ok", "success"]])
+          }, {
             "click": "open"
           })]
       },
@@ -1362,10 +1446,6 @@ QtObject {
       "actions": {
         "items": [root._act("prev", "Previous"), root._act("toggle", "Play or pause"), root._act("next", "Next")]
       },
-      "states": {
-        "playing": "success",
-        "paused": "warning"
-      },
       "module": {
         "size": [4, 3],
         "elements": [root._el("title", "Text", [0, 0, 12, 3], {
@@ -1395,15 +1475,17 @@ QtObject {
             "test": "is",
             "values": ["playing"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "graphic_eq",
-              "tone": "{state}"
+              "icon": "graphic_eq"
+            }, {
+              "color": "success"
             })]), root._view("paused", "Paused", {
             "key": "state",
             "test": "is",
             "values": ["paused"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "pause_circle",
-              "tone": "{state}"
+              "icon": "pause_circle"
+            }, {
+              "color": "warning"
             })]), root._view("nothing", "Nothing", {
             "key": "state",
             "test": "isNot",
@@ -1457,9 +1539,6 @@ QtObject {
             "axiom": "restart"
           }
         ]
-      },
-      "states": {
-        "ok": "success"
       },
       "module": {
         "size": [4, 2],
@@ -1675,15 +1754,6 @@ QtObject {
       "index": views.findIndex(v => root.matches(v.when, fields)),
       "builtinError": false
     };
-  }
-
-  // Each kind's slot list (`slotLists`, the kinds' x-slots) in the same
-  // order, the slots every list has moved to the end, in the first list's
-  // order: the base's slots are the ones every kind has; Separator has only
-  // those
-  function baseSlotsLast(slotLists) {
-    const shared = slotLists.length === 0 ? [] : slotLists[0].filter(s => slotLists.every(l => l.indexOf(s) >= 0));
-    return slotLists.map(l => l.filter(s => shared.indexOf(s) < 0).concat(shared));
   }
 
   // A series a script prints: `v` (a list) as its finite numbers (a
@@ -2145,6 +2215,19 @@ QtObject {
     if (run)
       element.run = run;
     return element;
+  }
+
+  // A "Color by state" setting reading `key`: one `is` rule per [value, colour]
+  function _stateRules(key, pairs) {
+    return {
+      "enabled": true,
+      "key": key,
+      "rules": pairs.map(p => ({
+            "test": "is",
+            "value": p[0],
+            "color": p[1]
+          }))
+    };
   }
 
   // A template's command action (its command is the script's, set when

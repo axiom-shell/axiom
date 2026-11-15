@@ -217,21 +217,16 @@ TestCase {
     const names = ["accent", "warning", "error", "success"];
     compare(CustomWidgetData.classes(["a", "b"]), ["a", "b"]);
     compare(CustomWidgetData.classes("a b"), ["a", "b"]);
-    compare(CustomWidgetData.stateColor("", ["custom-spotify", "critical"], {}, names), "error");
-    compare(CustomWidgetData.stateColor("", ["playing"], {
-      "playing": "accent"
-    }, names), "accent", "a definition's own state");
-    compare(CustomWidgetData.stateColor("front", [], {
-      "front": "accent"
-    }, names), "accent", "a state is a mode, mapped by states");
-    compare(CustomWidgetData.stateColor("front", [], {}, names), "", "an unmapped word colours nothing");
-    compare(CustomWidgetData.stateColor("warning", [], {}, names), "warning", "state over classes");
-    compare(CustomWidgetData.stateColor("accent", [], {}, names), "accent", "a theme name passes");
-    compare(CustomWidgetData.stateColor("#ff0000", [], {}, names), "", "a hex colours nothing");
-    compare(CustomWidgetData.stateColor("", ["x"], {}, names), "");
-    compare(CustomWidgetData.stateColor("zzz", ["critical"], {}, names), "error", "an unmapped state falls to the classes");
-    compare(CustomWidgetData.stateColor("constructor", [], {}, names), "", "not an Object member");
-    compare(CustomWidgetData.stateColor("accent", [], {}), "", "no colour names: a theme name isn't known");
+    compare(CustomWidgetData.stateColor("", ["custom-spotify", "critical"], names), "error");
+    compare(CustomWidgetData.stateColor("ok", [], names), "success", "a built-in word");
+    compare(CustomWidgetData.stateColor("front", [], names), "", "an unmapped word colours nothing");
+    compare(CustomWidgetData.stateColor("warning", [], names), "warning", "state over classes");
+    compare(CustomWidgetData.stateColor("accent", [], names), "accent", "a theme name passes");
+    compare(CustomWidgetData.stateColor("#ff0000", [], names), "", "a hex colours nothing");
+    compare(CustomWidgetData.stateColor("", ["x"], names), "");
+    compare(CustomWidgetData.stateColor("zzz", ["critical"], names), "error", "an unmapped state falls to the classes");
+    compare(CustomWidgetData.stateColor("constructor", [], names), "", "not an Object member");
+    compare(CustomWidgetData.stateColor("accent", []), "", "no colour names: a theme name isn't known");
   }
 
   function test_isThemeColor() {
@@ -434,13 +429,9 @@ TestCase {
 
   function test_resolveContext() {
     const names = ["accent", "error"];
-    const f = CustomWidgetData.resolve({
-      "states": {
-        "front": "accent"
-      }
-    }, {
+    const f = CustomWidgetData.resolve({}, {
       "text": "x",
-      "state": "front",
+      "state": "accent",
       "rev": 4,
       "actions": {
         "undo": {
@@ -450,8 +441,8 @@ TestCase {
     }, {
       "colorNames": names
     });
-    compare(f.color, "accent", "state through states");
-    compare(f.state, "front");
+    compare(f.color, "accent", "a theme name as the state");
+    compare(f.state, "accent");
     compare(f.rev, "4");
     compare(f.actions.undo.enabled, false);
     compare(f.failure, null);
@@ -693,28 +684,21 @@ TestCase {
     }).value, undefined);
   }
 
-  // resolve hands states and colorNames on for `tone`; a sample's own keys
-  // of those names still bind to the sample (C-B9)
-  function test_resolveStatesAndOwnKeys() {
-    const states = {
-      "low": "error"
-    };
+  // resolve hands colorNames on; a sample's own keys of those names still
+  // bind to the sample (C-B9)
+  function test_resolveOwnKeys() {
     const names = ["accent", "error"];
-    const f = CustomWidgetData.resolve({
-      "states": states
-    }, {
+    const f = CustomWidgetData.resolve({}, {
       "text": "x"
     }, {
       "colorNames": names
     });
-    compare(f.states, states, "the definition's map");
+    verify(!("states" in f), "no states field");
     compare(f.colorNames, names, "the context's names");
     compare(CustomWidgetData.resolve({}, {
       "text": "x"
     }).colorNames, [], "no context: none");
-    const own = CustomWidgetData.resolve({
-      "states": states
-    }, {
+    const own = CustomWidgetData.resolve({}, {
       "text": "x",
       "states": "mine",
       "actions": "ours",
@@ -730,84 +714,290 @@ TestCase {
     compare(CustomWidgetData.elementValue(own, "{states}"), "mine", "a format reads the sample's too");
   }
 
-  function test_elementShown() {
+  function test_holds() {
+    compare(CustomWidgetData.holds("always", undefined, ""), true);
+    compare(CustomWidgetData.holds("is", "open ", " open"), true, "trimmed");
+    compare(CustomWidgetData.holds("is", "open", "done"), false);
+    compare(CustomWidgetData.holds("isNot", "open", "done"), true);
+    compare(CustomWidgetData.holds("isNot", "open", "open"), false);
+    compare(CustomWidgetData.holds("is", undefined, ""), true, "nothing is the empty text");
+    compare(CustomWidgetData.holds("is", 5, "5"), true, "a number as text");
+    compare(CustomWidgetData.holds("above", "85%", "80"), true, "a percent is a number");
+    compare(CustomWidgetData.holds("above", 80, "80"), false, "not above itself");
+    compare(CustomWidgetData.holds("below", 79.5, "80"), true);
+    compare(CustomWidgetData.holds("below", "80", "80"), false);
+    compare(CustomWidgetData.holds("above", "high", "80"), false, "a word is no number");
+    compare(CustomWidgetData.holds("below", "high", "80"), false);
+    compare(CustomWidgetData.holds("above", "5", ""), false, "no operand");
+    compare(CustomWidgetData.holds("set", "0", ""), true, "text \"0\" is a value");
+    compare(CustomWidgetData.holds("set", 0, ""), false, "the number 0");
+    compare(CustomWidgetData.holds("set", "", ""), false);
+    compare(CustomWidgetData.holds("unset", "", ""), true);
+    compare(CustomWidgetData.holds("unset", "x", ""), false);
+    compare(CustomWidgetData.holds("nonsense", "x", "x"), false);
+  }
+
+  function test_readKey() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "level": 90,
+      "player": {
+        "title": "Song"
+      }
+    });
+    compare(CustomWidgetData.readKey(f, "", "own"), "own", "no key: what the element shows");
+    compare(CustomWidgetData.readKey(f, "level", "own"), 90, "an output key");
+    compare(CustomWidgetData.readKey(f, "player.title", "own"), "Song", "a path");
+    compare(CustomWidgetData.readKey(f, "nope", "own"), undefined, "a missing key");
+  }
+
+  function test_colorFor() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "cpu": 85,
+      "state": "low"
+    });
+    const states = {
+      "enabled": true,
+      "key": "cpu",
+      "rules": [
+        {
+          "test": "above",
+          "value": "90",
+          "color": "error"
+        },
+        {
+          "test": "above",
+          "value": "70",
+          "color": "warning"
+        },
+        {
+          "test": "above",
+          "value": "50",
+          "color": ""
+        }
+      ]
+    };
+    compare(CustomWidgetData.colorFor("accent", states, f, "own", "auto"), "warning", "the first that holds wins");
+    const low = {
+      "enabled": true,
+      "key": "state",
+      "rules": [
+        {
+          "test": "is",
+          "value": "high",
+          "color": "error"
+        }
+      ]
+    };
+    compare(CustomWidgetData.colorFor("accent", low, f, "own", "auto"), "accent", "no match: the picked colour");
+    compare(CustomWidgetData.colorFor("", low, f, "own", "auto"), "auto", "no match, none picked: auto");
+    const blank = {
+      "enabled": true,
+      "key": "cpu",
+      "rules": [
+        {
+          "test": "above",
+          "value": "50",
+          "color": ""
+        }
+      ]
+    };
+    compare(CustomWidgetData.colorFor("accent", blank, f, "own", "auto"), "auto", "a rule's empty colour is auto");
+    compare(CustomWidgetData.colorFor("accent", {
+      "enabled": false,
+      "key": "cpu",
+      "rules": states.rules
+    }, f, "own", "auto"), "accent", "off ignores the rules");
+    compare(CustomWidgetData.colorFor("#ff0000", undefined, f, "own", "auto"), "#ff0000", "a hex passes");
+    compare(CustomWidgetData.colorFor("", undefined, f, "own", ""), "", "nothing at all");
+    compare(CustomWidgetData.colorFor("", {
+      "enabled": true,
+      "key": "",
+      "rules": [
+        {
+          "test": "is",
+          "value": "own",
+          "color": "success"
+        }
+      ]
+    }, f, "own", "auto"), "success", "an empty key reads what the element shows");
+  }
+
+  function test_rowColor() {
+    const row = CustomWidgetData.rows([
+      {
+        "text": "Read",
+        "state": "done",
+        "meta": {
+          "level": 3
+        }
+      }
+    ])[0];
+    const rules = {
+      "enabled": true,
+      "key": "state",
+      "rules": [
+        {
+          "test": "is",
+          "value": "done",
+          "color": "success"
+        },
+        {
+          "test": "is",
+          "value": "open",
+          "color": "accent"
+        }
+      ]
+    };
+    compare(CustomWidgetData.rowColor("", rules, row), "success", "a row's state rule");
+    compare(CustomWidgetData.rowColor("", rules, {
+      "raw": {
+        "state": "open"
+      }
+    }), "accent");
+    compare(CustomWidgetData.rowColor("base0D", rules, {
+      "raw": {
+        "state": "other"
+      }
+    }), "base0D", "no match: the picked colour");
+    compare(CustomWidgetData.rowColor("", Object.assign({}, rules, {
+      "key": "missing"
+    }), row), "", "a missing key matches nothing");
+    compare(CustomWidgetData.rowColor("", Object.assign({}, rules, {
+      "key": "meta.level",
+      "rules": [
+        {
+          "test": "above",
+          "value": "2",
+          "color": "error"
+        }
+      ]
+    }), row), "error", "a path in the row");
+    compare(CustomWidgetData.rowColor("", {
+      "enabled": false,
+      "key": "state",
+      "rules": rules.rules
+    }, row), "", "off");
+    compare(CustomWidgetData.rowColor("base0D", undefined, row), "base0D");
+  }
+
+  function test_shown() {
     const f = CustomWidgetData.resolve({}, {
       "text": "x",
       "on": true,
-      "off": false,
       "zero": "0",
       "blank": "",
-      "word": "yes"
+      "temp": 85
     });
-    verify(CustomWidgetData.elementShown(f, undefined), "no bind: shown");
-    verify(CustomWidgetData.elementShown(f, {}), "no show: shown");
-    verify(CustomWidgetData.elementShown(f, {
-      "show": "{on}"
-    }), "true");
-    verify(!CustomWidgetData.elementShown(f, {
-      "show": "{off}"
-    }), "false");
-    verify(!CustomWidgetData.elementShown(f, {
-      "show": "{zero}"
-    }), "\"0\"");
-    verify(!CustomWidgetData.elementShown(f, {
-      "show": "{blank}"
-    }), "empty");
-    verify(!CustomWidgetData.elementShown(f, {
-      "show": "{missing.path}"
-    }), "a missing path");
-    verify(CustomWidgetData.elementShown(f, {
-      "show": "{word}"
-    }), "yes");
-    verify(CustomWidgetData.elementShown(f, {
-      "show": "1"
-    }), "a literal 1");
+    verify(CustomWidgetData.shown(undefined, f, "own"), "no setting: shown");
+    verify(CustomWidgetData.shown({}, f, "own"), "no test: shown");
+    verify(CustomWidgetData.shown({
+      "test": "always"
+    }, f, "own"), "always");
+    verify(CustomWidgetData.shown({
+      "test": "set",
+      "key": "zero"
+    }, f, "own"), "\"0\" is text, so it is set");
+    verify(!CustomWidgetData.shown({
+      "test": "set",
+      "key": "blank"
+    }, f, "own"), "empty is not set");
+    verify(CustomWidgetData.shown({
+      "test": "unset",
+      "key": "blank"
+    }, f, "own"), "unset");
+    verify(CustomWidgetData.shown({
+      "test": "unset",
+      "key": "missing"
+    }, f, "own"), "a missing key is unset");
+    verify(CustomWidgetData.shown({
+      "test": "above",
+      "key": "temp",
+      "value": "80"
+    }, f, "own"), "above");
+    verify(!CustomWidgetData.shown({
+      "test": "below",
+      "key": "temp",
+      "value": "80"
+    }, f, "own"), "below");
+    verify(CustomWidgetData.shown({
+      "test": "is",
+      "key": "",
+      "value": "own"
+    }, f, "own"), "an empty key reads what the element shows");
+    verify(!CustomWidgetData.shown({
+      "test": "set",
+      "key": ""
+    }, f, ""), "nothing shown: not set");
   }
 
-  function test_elementTone() {
-    const f = CustomWidgetData.resolve({
-      "states": {
-        "low": "error",
-        "playing": "accent"
-      }
-    }, {
-      "text": "x",
-      "level": "low",
-      "mode": "playing",
-      "other": "nope",
-      "hex": "#ff0000",
-      "theme": "warning",
-      "class": "critical",
-      "kind": "critical"
-    }, {
-      "colorNames": ["accent", "error", "warning"]
-    });
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{level}"
-    }), "error", "a word in states");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{mode}"
-    }), "accent");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{theme}"
-    }), "warning", "a theme name passes through");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{hex}"
-    }), "", "a hex colours nothing");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{other}"
-    }), "", "an unknown word");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{kind}"
-    }), "error", "a built-in state word");
-    compare(CustomWidgetData.elementTone(f, {}), "", "unbound");
-    compare(CustomWidgetData.elementTone(f, undefined), "", "no bind");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "{toString}"
-    }), "", "a word naming an Object member is no state");
-    compare(CustomWidgetData.elementTone(f, {
-      "tone": "error"
-    }), "error", "a literal word");
+  function test_colorFields() {
+    const color = {
+      "x-options": "colors"
+    };
+    const text = {
+      "color": color,
+      "colorStates": {},
+      "background": color,
+      "backgroundStates": {},
+      "bold": {},
+      "font": {}
+    };
+    compare(CustomWidgetData.colorFields(text, ["bold", "color", "colorStates", "background", "backgroundStates", "font"]), {
+      "colors": [
+        {
+          "key": "color",
+          "statesKey": "colorStates"
+        },
+        {
+          "key": "background",
+          "statesKey": "backgroundStates"
+        }
+      ],
+      "look": ["bold", "font"]
+    }, "Text: pairs, the rest as look");
+    compare(CustomWidgetData.colorFields({
+      "background": color,
+      "backgroundStates": {},
+      "textColor": color,
+      "textColorStates": {},
+      "confirm": {}
+    }, ["confirm", "background", "backgroundStates", "textColor", "textColorStates"]), {
+      "colors": [
+        {
+          "key": "background",
+          "statesKey": "backgroundStates"
+        },
+        {
+          "key": "textColor",
+          "statesKey": "textColorStates"
+        }
+      ],
+      "look": ["confirm"]
+    }, "Button");
+    compare(CustomWidgetData.colorFields({
+      "color": color,
+      "style": {}
+    }, ["style", "color"]), {
+      "colors": [
+        {
+          "key": "color",
+          "statesKey": ""
+        }
+      ],
+      "look": ["style"]
+    }, "a colour with no rules");
+    compare(CustomWidgetData.colorFields({
+      "a": {}
+    }, []), {
+      "colors": [],
+      "look": ["a"]
+    }, "no order: the schema's keys, no colours");
+    compare(CustomWidgetData.colorFields({}, []), {
+      "colors": [],
+      "look": []
+    }, "none");
   }
 
   function test_lattice() {
@@ -1087,12 +1277,14 @@ TestCase {
     }
     // Text fields are typed text or {paths}: no bare word reads data, no `=`
     for (const preset of CustomWidgetData.presets) {
+      verify(preset.states === undefined, preset.name + " has no states map");
       for (const e of CustomWidgetData.allElements(preset.module)) {
         for (const slot of Object.keys(e.bind ?? {})) {
           const b = e.bind[slot];
           verify(b[0] !== "=", preset.name + "/" + e.id + "." + slot + " has no =");
-          if (["state", "tone"].indexOf(slot) >= 0)
+          if (slot === "state")
             verify(b.indexOf("{") === 0, preset.name + "/" + e.id + "." + slot + " reads data as {path}");
+          verify(slot !== "tone" && slot !== "show", preset.name + "/" + e.id + " has no " + slot + " binding");
         }
         verify(e.options?.label === undefined && e.options?.placeholder === undefined && (e.type !== "Button" || e.options?.icon === undefined), preset.name + "/" + e.id + " keeps its labels in bind");
       }
@@ -1109,6 +1301,10 @@ TestCase {
     const views = preset.module.views;
     compare(views.map(v => v.id), ["open", "done", "empty"], "a screen per state");
     compare(preset.module.keys, undefined, "no keys");
+    const count = preset.module.elements.find(e => e.id === "count");
+    compare(count.options.colorStates.rules.map(r => r.value + ">" + r.color), ["done>success", "open>accent"], "the count's colour by state");
+    const list = views[0].elements.find(e => e.type === "List");
+    compare(list.options.colorStates.key, "state", "the list reads each row's state");
     compare(Object.keys(preset.samples).sort(), ["done", "empty", "open"], "a sample per screen");
     const context = {
       "interactive": true,
@@ -1127,8 +1323,8 @@ TestCase {
       verify(/^[A-Za-z0-9_.-]{1,64}$/.test(action), action + " is an action id");
     }
     const open = CustomWidgetData.resolve(preset, preset.samples.open, context);
-    compare(open.color, "accent", "open is the accent");
-    compare(CustomWidgetData.resolve(preset, preset.samples.done, context).color, "success", "done is success");
+    compare(CustomWidgetData.colorFor("", count.options.colorStates, open, open.text, ""), "accent", "open is the accent");
+    compare(CustomWidgetData.colorFor("", count.options.colorStates, CustomWidgetData.resolve(preset, preset.samples.done, context), "", ""), "success", "done is success");
     compare(CustomWidgetData.actionEnabled(CustomWidgetData.resolve(preset, preset.samples.empty, context).actions, CustomWidgetData.actionOf(preset, "check")), false, "nothing to check while empty");
     compare(CustomWidgetData.fillCommand(CustomWidgetData.actionOf(preset, "add").command, {
       "value": "it's",
@@ -1752,13 +1948,6 @@ TestCase {
         }
       }
     }, -1, {}, null).kept, 1, "the empty key is no screen");
-  }
-
-  function test_baseSlotsLast() {
-    compare(CustomWidgetData.baseSlotsLast([["show", "tone", "label", "icon"], ["show", "tone"]]), [["label", "icon", "show", "tone"], ["show", "tone"]]);
-    compare(CustomWidgetData.baseSlotsLast([]), []);
-    // One list: every slot is shared, so it stays as it is
-    compare(CustomWidgetData.baseSlotsLast([["show", "tone", "text"]]), [["show", "tone", "text"]]);
   }
 
   function test_moveItem() {

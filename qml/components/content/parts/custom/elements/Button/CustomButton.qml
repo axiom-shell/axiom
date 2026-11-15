@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import qs.config
 import qs.components.reusable
@@ -11,7 +10,8 @@ import qs.components.content.parts.custom
 // the label else the action's name) that run its click action
 // (`value` is the {value}; off while the sample, a hold or a failing script
 // turns it off, or its `enabled` slot is false); with no action it does
-// nothing. A `color` makes it a filled Surface in that colour; `disabled: hide`
+// nothing. A `background` fills it in that colour (and `textColor` its text; each can
+// change by a rule); `disabled: hide`
 // hides it while the script or its `enabled` binding has it off (not for a
 // hold or a failure). A failed run flashes it and its tooltip says why. With
 // `confirm` the first press turns its label into "Confirm?" (red) for 3
@@ -30,8 +30,13 @@ CustomElementBase {
   readonly property bool pressable: root.canRun("click") && !root.slotOff
   // Its click action's last run, when it failed
   readonly property var failedRun: root.failed("click")
-  readonly property bool coloured: root.options.color !== ""
-  readonly property color fill: root.asking ? Style.error : Style.resolve(root.options.color)
+  // Its background, else null (Auto: the tonal button); the question's red wins
+  readonly property var background: root.colorFor("background", null)
+  readonly property bool coloured: root.background !== null && !root.asking
+  readonly property color fill: root.background ?? Style.fillHighest
+  // The text colour (picked or by a rule), else the ink that reads on the
+  // background, else null: the button's own
+  readonly property var ink: root.colorFor("textColor", root.coloured ? root.inkOn(root.fill) : null)
   // Held for a moment after a failed run: a blink (a fixed time)
   property bool flashing: false
 
@@ -66,68 +71,28 @@ CustomElementBase {
     onTriggered: root.flashing = false
   }
 
-  Loader {
+  // One button for every look: Auto is the tonal one; a background (picked
+  // or by a rule) fills it, its ink reading on it unless Text color is set
+  StyledTextButton {
+    id: button
     anchors.fill: parent
-    sourceComponent: root.coloured ? filled : plain
-  }
+    kind: root.asking ? "danger" : "tonal"
+    enabled: root.pressable
+    iconText: root.icon
+    text: root.label
+    onClicked: root.press()
 
-  Component {
-    id: plain
-    StyledTextButton {
-      kind: root.asking ? "danger" : "tonal"
-      enabled: root.pressable
-      iconText: root.icon
-      text: root.label
-      onClicked: root.press()
+    Binding {
+      target: button
+      property: "color"
+      value: root.fill
+      when: root.coloured
     }
-  }
-
-  // A colour from the definition: its fill, and the ink that reads on it
-  Component {
-    id: filled
-    Surface {
-      id: button
-      outlined: false
-      color: root.fill
-      opacity: root.pressable ? 1 : Style.opacityDisabled
-
-      StateLayer {
-        hovered: area.containsMouse && root.pressable
-        pressed: area.pressed && root.pressable
-        onAccent: true
-        radius: button.radius
-      }
-
-      RowLayout {
-        anchors.centerIn: parent
-        width: Math.min(implicitWidth, button.width)
-        spacing: Widget.spacing / 2
-
-        StyledIcon {
-          visible: root.icon !== ""
-          text: root.icon
-          textColor: root.inkOn(root.fill)
-          textSize: Style.typeLabel
-        }
-        StyledLabel {
-          visible: text !== ""
-          text: root.label
-          role: "label"
-          textColor: root.inkOn(root.fill)
-          textSize: Style.typeLabel
-          overflow: "line"
-          Layout.fillWidth: true
-        }
-      }
-
-      MouseArea {
-        id: area
-        anchors.fill: parent
-        enabled: root.pressable
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.press()
-      }
+    Binding {
+      target: button
+      property: "_contentColor"
+      value: root.ink
+      when: root.ink !== null
     }
   }
 

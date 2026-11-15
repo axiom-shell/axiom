@@ -65,26 +65,26 @@ Item {
     return CustomWidgetData.elementRatio(root.fields, root.bind);
   }
 
-  // The theme colour name its `tone` binding gives through the definition's
-  // states ("" unbound, or a word nothing maps: CustomWidgetData.elementTone)
-  readonly property string toneName: CustomWidgetData.elementTone(root.fields, root.bind)
+  // What the element shows (its first slot's value: a colour rule or
+  // Visible that names no key reads it); CustomElement passes the kind's slots
+  property var kindSlots: []
+  readonly property var own: CustomWidgetData.ownValue(root.fields, root.bind, root.kindSlots[0] ?? "")
   // The state's colour from the script, or null; the error colour while the
   // script fails
   readonly property var stateColor: root.fields?.failure ? Style.error : (root.fields?.color ? Style.resolve(root.fields.color) : null)
 
-  // The colour part (CustomElementBase.yaml's x-parts.color): a bound
-  // `tone`'s colour (every kind, text too: binding it is the request), else
-  // a picked colour, else `fallback`. Graphics (`state`) take the state's
-  // colour when left on Auto; text (`text`, which has a stateColor switch)
-  // only when asked
+  // The colour `key` of the element's colour part (CustomElementBase.yaml's
+  // x-parts.color): the first rule of `<key>States` that holds, else the
+  // picked one, else `auto`
+  function colorFor(key, auto) {
+    const name = CustomWidgetData.colorFor(root.options[key], root.options[key + "States"], root.fields, root.own, "");
+    return name !== "" ? Style.resolve(name) : auto;
+  }
+
+  // The element's main colour (`color`): Auto (and a rule's Auto) takes the
+  // script's state colour when it gives one, else `fallback`
   function colorOf(fallback) {
-    if (root.toneName !== "")
-      return Style.resolve(root.toneName);
-    const picked = root.options.color;
-    const byState = "stateColor" in root.options ? root.options.stateColor : picked === "";
-    if (byState && root.stateColor !== null)
-      return root.stateColor;
-    return picked ? Style.resolve(picked) : fallback;
+    return root.colorFor("color", root.stateColor ?? fallback);
   }
 
   // The action `trigger` runs (an entry of widgetActions), or null

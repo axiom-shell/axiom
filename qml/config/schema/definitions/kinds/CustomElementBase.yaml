@@ -6,11 +6,11 @@ type: object
 required: [type, id]
 additionalProperties: false
 x-settingsAt: /properties/options/properties
-# Every kind's bindings: kinds.go merges this list in ahead of the kind's own; CustomWidgetsConfig.elementKinds lists them last
-x-slots: [show, tone]
+# Colours (a kind's `color: <variant>`): each colour key has its rules in
+# `<key>States` (CustomColorStates); CustomWidgetData.colorFields reads the pairs
 x-parts:
   color:
-    # Graphics: the state's colour when the script gives one
+    # Graphics, Status, List, Separator: the state's colour when the script gives one
     state:
       color:
         type: string
@@ -18,8 +18,9 @@ x-parts:
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-        description: 'Empty: the state''s color, else the accent.'
-    # Text: the text colour, or the state's when asked
+        description: 'Auto: the script''s class or state word (warning, critical), else the accent.'
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+    # Text, Text block: the text colour, and a background behind it
     text:
       color:
         type: string
@@ -27,12 +28,48 @@ x-parts:
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-
-      stateColor:
-        type: boolean
-        title: Color by state
-        default: false
-        description: The state's colour, when the script gives one.
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+      background:
+        type: string
+        title: Background
+        x-options: colors
+        default: ''
+        x-emptyLabel: None
+      backgroundStates: {$ref: '#/definitions/CustomColorStates'}
+    # Button: Auto is the tonal button
+    button:
+      background:
+        type: string
+        title: Background
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: 'Auto: the tonal button.'
+      backgroundStates: {$ref: '#/definitions/CustomColorStates'}
+      textColor:
+        type: string
+        title: Text color
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: 'Auto: the ink that reads on the background.'
+      textColorStates: {$ref: '#/definitions/CustomColorStates'}
+    # Icon
+    icon:
+      color:
+        type: string
+        title: Color
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+      background:
+        type: string
+        title: Background
+        x-options: colors
+        default: ''
+        x-emptyLabel: None
+      backgroundStates: {$ref: '#/definitions/CustomColorStates'}
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}
@@ -50,7 +87,8 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: 'Per field: typed text is shown as it is; {path} inserts a value from the output ({cpu}, {player.title}). Exactly one {path} passes the value itself (a list, a number). Empty: the output''s own key. show: hidden while false; tone: a word the definition''s states map to a colour.'
+    description: 'Per field: typed text is shown as it is; {path} inserts a value from the output ({cpu}, {player.title}). Exactly one {path} passes the value itself (a list, a number). Empty: the output''s own key.'
+  showWhen: {$ref: '#/definitions/CustomShowWhen'}
   options: {type: object, additionalProperties: false, properties: {}}
   run:
     type: object

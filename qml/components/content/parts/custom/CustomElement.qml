@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.components.content.parts.custom.elements.List // qmllint disable unused-imports
 
 // One element of a custom widget's module, loaded by its kind
@@ -20,6 +21,8 @@ Loader {
   property bool keysHost: false
 
   readonly property string kind: root.element?.type ?? "Text"
+  // Its kind's bindings (what a colour rule reads by default: the first)
+  readonly property var kindSlots: CustomWidgetsConfig.elementKind(root.kind)?.slots ?? []
 
   // Built with its config, so it never sees itself empty, and bound to it
   function _load() {
@@ -34,7 +37,8 @@ Loader {
       "failing": Qt.binding(() => root.failing),
       "busy": Qt.binding(() => root.busy),
       "moduleFont": Qt.binding(() => root.moduleFont),
-      "keysHost": Qt.binding(() => root.keysHost)
+      "keysHost": Qt.binding(() => root.keysHost),
+      "kindSlots": Qt.binding(() => root.kindSlots)
     });
   }
   // A binding sets `kind` during creation, before completion; the element

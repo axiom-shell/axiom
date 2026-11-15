@@ -8,8 +8,8 @@ import qs.components.content.parts.custom
 // state, max, image } (the widget's items field, or a bound array), kept in
 // a ListModel updated in place so a new sample never rebuilds them, down
 // the element (a CustomListRow) or across it as tiles (`orientation`, a
-// CustomListTile). A row's `state` tones its icon and meter through the
-// definition's states; `max` with a numeric value draws a meter; `image` a
+// CustomListTile). The colour part's rules (`colorStates`, read from the
+// row's own keys, `state` by default) tone a row's icon and meter; `max` with a numeric value draws a meter; `image` a
 // thumbnail. A row's click runs the element's click action with {value} the
 // row's id, else its value, else its text; with no action the rows aren't
 // pressable.
@@ -26,6 +26,12 @@ CustomElementBase {
   // Its icon source changing redraws the same rows
   onThemedChanged: root._fill()
 
+  // The colour name the element's colour part gives a row (its rules read
+  // the row's own keys): "" for none, so the element's own colour tints it
+  function rowName(row) {
+    return CustomWidgetData.rowColor(root.options.color, root.options.colorStates, row);
+  }
+
   function _fill() {
     const rows = root.rows;
     for (let i = 0; i < rows.length; i++) {
@@ -36,7 +42,7 @@ CustomElementBase {
         "rowIcon": root.themed ? "" : rows[i].icon,
         "rowValue": CustomWidgetData.asText(rows[i].value),
         "rowSubtext": rows[i].subtext,
-        "rowTone": CustomWidgetData.stateColor(rows[i].state, [], root.fields?.states, root.fields?.colorNames),
+        "rowTone": rowName(rows[i]),
         "rowNumber": rows[i].value ?? 0,
         "rowMax": rows[i].max ?? 0,
         "rowImage": rows[i].image || !root.themed ? root.imageUrl(rows[i].image) : root.themeIcon(rows[i].icon)
