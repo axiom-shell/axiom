@@ -228,7 +228,7 @@ func TestKindSlots(t *testing.T) {
 	for _, v := range def("ButtonCustomElement").Value("x-slots").(*jsonx.Array).Items {
 		got = append(got, v.(string))
 	}
-	if want := []string{"label", "icon", "value"}; !slices.Equal(got, want) {
+	if want := []string{"label", "icon"}; !slices.Equal(got, want) {
 		t.Errorf("Button's slots = %v, want its own %v", got, want)
 	}
 	if def("SeparatorCustomElement").Has("x-slots") {

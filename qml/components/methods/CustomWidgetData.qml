@@ -517,6 +517,19 @@ QtObject {
   // binding of one reads the sample's
   readonly property var _internalFields: ["colorNames", "actions", "interactive", "failure", "noSample"]
 
+  // `fields` as `fill` reads them: the text is the plain one, the icon the
+  // glyph, and resolve's own bookkeeping is left out
+  function fillValues(fields) {
+    const values = Object.assign({}, fields, {
+      "_sample": fields?.sample,
+      "text": fields?.plain,
+      "icon": fields?.glyph
+    });
+    for (const key of root._internalFields)
+      delete values[key];
+    return values;
+  }
+
   // What a text field of an element reads as (an element's `bind`): "" is
   // nothing (undefined: the slot falls back to the output's own key); exactly
   // one {path} alone is the value itself (a field of `fields`, else a path in
@@ -540,14 +553,7 @@ QtObject {
       return root.get(fields?.sample, key);
     }
     if (b.indexOf("{") >= 0) {
-      const values = Object.assign({}, fields, {
-        "_sample": fields?.sample,
-        "text": fields?.plain,
-        "icon": fields?.glyph
-      });
-      for (const key of root._internalFields)
-        delete values[key];
-      return root.fill(b, values, fields?.noSample !== true);
+      return root.fill(b, root.fillValues(fields), fields?.noSample !== true);
     }
     return /^-?\d+(\.\d+)?$/.test(b.trim()) ? Number(b) : b;
   }
@@ -2006,12 +2012,51 @@ QtObject {
   }
 
   // An action command with its placeholders filled in one pass: {value}
-  // and {rev} already quoted (shellQuote), {tree} as is. `values`
-  // holds the ones to fill; a placeholder it has no value for, one after
-  // a $ (${rev}) and any other {…} stay as typed. A filled value is never
-  // searched again
+  // and {rev} already quoted (shellQuote), {tree} and {arg} as is ({arg} is
+  // commandLine's already quoted words). `values` holds the ones to fill; a
+  // placeholder it has no value for, one after a $ (${rev}) and any other
+  // {…} stay as typed. A filled value is never searched again
   function fillCommand(template, values) {
-    return String(template ?? "").replace(/\$?\{(value|rev|tree)\}/g, (m, k) => m[0] === "$" || !(k in values) ? m : k === "tree" ? values.tree : root.shellQuote(root.asText(values[k])));
+    return String(template ?? "").replace(/\$?\{(value|rev|tree|arg)\}/g, (m, k) => m[0] === "$" || !(k in values) ? m : k === "tree" || k === "arg" ? values[k] : root.shellQuote(root.asText(values[k])));
+  }
+
+  // A trigger's argument as shell words, each quoted: split on whitespace,
+  // a "…" group is one word, {path}s filled from `fields` in each word
+  // (after the split, so a filled value never makes or merges words); a
+  // quoted word can't end the command or start another
+  function argWords(arg, fields) {
+    const words = [];
+    const re = /"([^"]*)"|(\S+)/g;
+    const text = String(arg ?? "");
+    const values = root.fillValues(fields);
+    for (let m = re.exec(text); m !== null; m = re.exec(text))
+      words.push(root.shellQuote(root.fill(m[1] !== undefined ? m[1] : m[2], values, true)));
+    return words.join(" ");
+  }
+
+  // An action command as it runs: `command` with {value} {rev} {tree} and
+  // {arg} filled in, and the trigger's argument `arg` (argWords) where it
+  // says {arg}, else added at the end. `ctx`: { value, ownValue (the
+  // trigger has a value of its own: a slider, an Entry, a Toggle, a List
+  // row; a Button's click and the bar's clicks have none), rev, tree,
+  // fields (the output, for {path}s) }. Without a value of its own {value}
+  // is the whole argument as one word, and a command that has {value}
+  // gets no argument added
+  function commandLine(command, arg, ctx) {
+    const text = String(command ?? "");
+    const c = ctx ?? ({});
+    const argText = root.argWords(arg, c.fields);
+    const values = {
+      "value": c.ownValue ? root.asText(c.value) : root.fill(String(arg ?? "").trim(), root.fillValues(c.fields), true),
+      "arg": argText
+    };
+    if (c.rev !== undefined)
+      values.rev = c.rev;
+    if (c.tree !== undefined)
+      values.tree = c.tree;
+    const line = root.fillCommand(text, values);
+    const placed = /(^|[^$])\{arg\}/.test(text) || (!c.ownValue && /(^|[^$])\{value\}/.test(text));
+    return argText === "" || placed ? line : line + " " + argText;
   }
 
   // Whether a shell action (a bare id: "lock", "overlay") may run from a

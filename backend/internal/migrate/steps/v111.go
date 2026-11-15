@@ -15,7 +15,9 @@ import (
 //  3. bar and element command strings become `actions.items` entries that
 //     `bar.run` and each element's `run` point at;
 //  4. `states` and Text's `stateColor` become colour rules (`colorStates`);
-//  5. a Button's `bind.enabled` becomes `enabledWhen` (one `{path}`) or goes.
+//  5. a Button's `bind.enabled` becomes `enabledWhen` (one `{path}`) or goes;
+//  6. a Button's `bind.value` becomes its `args.click` (its label when it
+//     had none), when its command uses {value}.
 //
 // A definition whose `actions.items` is already an array is done and skipped
 // whole; every definition changed gets that array (empty when no action was
@@ -357,19 +359,13 @@ func v111Commands(def, actions, bar *jsonx.Object, elements []*jsonx.Object, mad
 		if typ == "Button" && ownCommand == "" && barClick != "" {
 			setRun(el, "click", barClick)
 		}
+		if typ == "Button" {
+			v111ButtonArgument(el, strings.Contains(ownCommand, "{value}"))
+		}
 		if !strings.Contains(ownCommand, "{value}") {
 			continue
 		}
 		switch typ {
-		case "Button":
-			bind, _ := el.Value("bind").(*jsonx.Object)
-			if bind == nil {
-				continue
-			}
-			label, _ := bind.Value("label").(string)
-			if cur, _ := bind.Value("value").(string); cur == "" && label != "" {
-				bind.Set("value", label)
-			}
 		case "List":
 			opts, _ := el.Value("options").(*jsonx.Object)
 			if opts == nil {
@@ -385,6 +381,48 @@ func v111Commands(def, actions, bar *jsonx.Object, elements []*jsonx.Object, mad
 		}
 	}
 	return changed || made.Len() > 0
+}
+
+// v111ButtonArgument moves a Button's `bind.value` (text its click sent as
+// {value}) into `args.click`; a Button has no Value now. A command that uses
+// {value} gets the old value, else the label, as its argument (a Button's
+// {value} is its argument); `bind.value` is deleted either way
+func v111ButtonArgument(el *jsonx.Object, usesValue bool) {
+	bind, _ := el.Value("bind").(*jsonx.Object)
+	if bind == nil {
+		return
+	}
+	value, _ := bind.Value("value").(string)
+	label, _ := bind.Value("label").(string)
+	bind.Delete("value")
+	if !usesValue {
+		return
+	}
+	if strings.TrimSpace(value) == "" {
+		value = label
+	}
+	if strings.TrimSpace(value) == "" {
+		return
+	}
+	args, _ := el.Value("args").(*jsonx.Object)
+	if args == nil {
+		if el.Has("args") {
+			return
+		}
+		args = jsonx.NewObject()
+		el.Set("args", args)
+	}
+	args.Set("click", v111ArgumentText(value))
+}
+
+// v111ArgumentText is `text` as one argument word: quoted when it holds
+// whitespace or a quote (a v1.2.1 {value} was always one word)
+func v111ArgumentText(text string) string {
+	text = strings.TrimSpace(text)
+	if strings.ContainsAny(text, " \t\n\"") {
+		return "\"" + strings.ReplaceAll(text, "\"", "") + "\""
+	}
+	return text
 }
 
 func v111Rules(words [][2]string) *jsonx.Array {

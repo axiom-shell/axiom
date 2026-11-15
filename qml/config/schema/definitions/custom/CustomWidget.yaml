@@ -40,7 +40,7 @@ properties:
     description: 'Empty: its id.'
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, segments, width, icon, popout, color, colorStates, run]
+    x-order: [style, segments, width, icon, popout, color, colorStates, run, args]
     x-properties:
       icon:
         type: string
@@ -70,6 +70,17 @@ properties:
           middleClick: {$ref: '#/definitions/ActionId', title: Middle click}
           scrollUp: {$ref: '#/definitions/ActionId', title: Scroll up}
           scrollDown: {$ref: '#/definitions/ActionId', title: Scroll down}
+      args:
+        type: object
+        additionalProperties: false
+        default: {}
+        description: The text each click or scroll adds to its action's command, as words (quoted for the shell, never run).
+        properties:
+          click: {type: string, title: Click, default: '', pattern: '^[^\n\r]{0,512}$'}
+          rightClick: {type: string, title: Right click, default: '', pattern: '^[^\n\r]{0,512}$'}
+          middleClick: {type: string, title: Middle click, default: '', pattern: '^[^\n\r]{0,512}$'}
+          scrollUp: {type: string, title: Scroll up, default: '', pattern: '^[^\n\r]{0,512}$'}
+          scrollDown: {type: string, title: Scroll down, default: '', pattern: '^[^\n\r]{0,512}$'}
   tooltip:
     type: boolean
     title: Tooltip

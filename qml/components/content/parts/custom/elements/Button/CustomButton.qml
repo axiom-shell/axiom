@@ -50,7 +50,7 @@ CustomElementBase {
     }
     root.asking = false;
     askTimer.stop();
-    root.runTrigger("click", root.text("value"));
+    root.runTrigger("click", undefined);
   }
 
   onFailedRunChanged: {

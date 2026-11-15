@@ -42,6 +42,8 @@ Item {
   readonly property var options: element?.options ?? ({})
   // trigger -> action id (click, change, on, off, submit)
   readonly property var run: element?.run ?? ({})
+  // trigger -> its argument (the text added to the action's command)
+  readonly property var args: element?.args ?? ({})
   // Drawn down its box rather than across (a Bar, Segments, Separator)
   readonly property bool vertical: root.height > root.width
 
@@ -182,12 +184,13 @@ Item {
     return Tone.readableOn(color, Style.surfacePage, [Style.text]); // style-exempt: data colour (a custom widget's tone), its ink once per element
   }
 
-  // Press: run the action `trigger` picks with `value` ({value}; `continuous`:
-  // a slider's, the latest value wins). Returns "" when it ran, else why not
+  // Press: run the action `trigger` picks with `value` ({value}; undefined for
+  // a trigger with no value of its own, a Button's; `continuous`: a slider's,
+  // the latest value wins) and the trigger's argument. Returns "" when it ran, else why not
   // (CustomWidgetsManager.invoke); "no action" when none is picked
   function runTrigger(trigger, value, continuous) {
     if (!root.actionsEnabled)
       return "locked";
-    return CustomWidgetsManager.invoke(root.widgetId, root.run[trigger] ?? "", value, !!continuous); // lock-inert: actionsEnabled is off on the lock screen
+    return CustomWidgetsManager.invoke(root.widgetId, root.run[trigger] ?? "", value, !!continuous, false, root.args[trigger] ?? ""); // lock-inert: actionsEnabled is off on the lock screen
   }
 }

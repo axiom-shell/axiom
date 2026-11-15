@@ -172,6 +172,9 @@ ColumnLayout {
             label: root.schema.bar.properties.run.properties[trigger.modelData].title
             current: root.definition?.bar?.run?.[trigger.modelData] ?? ""
             writeRun: value => root.editor.set(["bar", "run", trigger.modelData], value)
+            arg: root.definition?.bar?.args?.[trigger.modelData] ?? ""
+            ownValue: false
+            writeArg: value => root.editor.set(["bar", "args", trigger.modelData], value)
           }
         }
       }

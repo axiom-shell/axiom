@@ -1980,6 +1980,88 @@ TestCase {
     }), "x 'a$&b'", "shell characters intact");
   }
 
+  function test_fillCommandArg() {
+    compare(CustomWidgetData.fillCommand("x {arg}", {
+      "arg": "'a' 'b'"
+    }), "x 'a' 'b'", "{arg} is the words as they are (already quoted)");
+    compare(CustomWidgetData.fillCommand("x ${arg}", {
+      "arg": "'a'"
+    }), "x ${arg}", "a shell ${arg} stays");
+    compare(CustomWidgetData.fillCommand("x {arg}", {
+      "value": "1"
+    }), "x {arg}", "no arg given: kept");
+    compare(CustomWidgetData.fillCommand("{value} {arg}", {
+      "value": "{arg}",
+      "arg": "'z'"
+    }), "'{arg}' 'z'", "a filled value is never searched again");
+  }
+
+  function test_commandLine() {
+    const fields = {
+      "plain": "hello",
+      "sample": {
+        "title": "a b",
+        "evil": "x'; rm -rf ~; echo '",
+        "sub": "$(touch /tmp/pwn) `id` $HOME\nnext",
+        "quote": "say \"hi\" now",
+        "n": 42,
+        "loop": "{arg} {value}"
+      }
+    };
+    const own = {
+      "value": "7",
+      "ownValue": true,
+      "rev": "r1",
+      "tree": "/t/",
+      "fields": fields
+    };
+    const none = {
+      "ownValue": false,
+      "rev": "r1",
+      "tree": "/t/",
+      "fields": fields
+    };
+    const quote = "'\\''";
+    compare(CustomWidgetData.commandLine("kby", "next", none), "kby 'next'", "appended at the end");
+    compare(CustomWidgetData.commandLine("kby --x {arg} --y", "next", none), "kby --x 'next' --y", "{arg} placement");
+    compare(CustomWidgetData.commandLine("kby", "next now", none), "kby 'next' 'now'", "two words");
+    compare(CustomWidgetData.commandLine("kby", "go \"next song\" 3", none), "kby 'go' 'next song' 3", "a quoted group is one word; a number stays bare");
+    compare(CustomWidgetData.commandLine("kby", "-5", none), "kby -5", "a number left bare");
+    compare(CustomWidgetData.commandLine("kby", "", none), "kby", "an empty argument changes nothing");
+    compare(CustomWidgetData.commandLine("kby", "   ", none), "kby", "a blank argument changes nothing");
+    compare(CustomWidgetData.commandLine("kby {arg}", "", none), "kby ", "an empty {arg} is nothing");
+    compare(CustomWidgetData.commandLine("kby {value}", "next", none), "kby 'next'", "a Button's {value} is its argument, nothing added");
+    compare(CustomWidgetData.commandLine("kby {value}", "next now", none), "kby 'next now'", "{value} is the whole argument as one word");
+    compare(CustomWidgetData.commandLine("kby {value} {arg}", "a b", none), "kby 'a b' 'a' 'b'", "both {value} and {arg}");
+    compare(CustomWidgetData.commandLine("kby ${value}", "next", none), "kby ${value} 'next'", "a shell ${value} is no placeholder: added at the end");
+    compare(CustomWidgetData.commandLine("set {value}", "next", own), "set 7 'next'", "a slider's {value} and the argument added");
+    compare(CustomWidgetData.commandLine("set {value}", "", own), "set 7", "a slider's {value} alone");
+    compare(CustomWidgetData.commandLine("set {arg} {value}", "up", own), "set 'up' 7", "{arg} before {value}");
+    compare(CustomWidgetData.commandLine("kby ${arg} {arg}", "a", none), "kby ${arg} 'a'", "${arg} untouched");
+    compare(CustomWidgetData.commandLine("run {rev} {tree}x", "go", none), "run 'r1' /t/x 'go'", "{rev} and {tree} as before");
+    compare(CustomWidgetData.commandLine("kby", "{title}", none), "kby 'a b'", "a {path} is filled, and stays one word");
+    compare(CustomWidgetData.commandLine("kby", "{n} {title}", none), "kby 42 'a b'", "a number from the output is bare");
+    compare(CustomWidgetData.commandLine("kby", "{nope}", none), "kby '{nope}'", "an unknown {x} stays as typed");
+    compare(CustomWidgetData.commandLine("kby {value}", "{title}", none), "kby 'a b'", "{value} filled from the output too");
+    compare(CustomWidgetData.commandLine("kby", "{text}", none), "kby 'hello'", "{text} is the plain text");
+    // Nothing in the argument can end or start a command
+    compare(CustomWidgetData.commandLine("kby", "next; rm -rf ~", none), "kby 'next;' 'rm' '-rf' '~'", "; stays inside a word");
+    compare(CustomWidgetData.commandLine("kby", "$(id) `id` && x | y > z", none), "kby '$(id)' '`id`' '&&' 'x' '|' 'y' '>' 'z'", "substitutions and operators are literal words");
+    compare(CustomWidgetData.commandLine("kby", "it's", none), "kby 'it" + quote + "s'", "a quote is closed and escaped");
+    compare(CustomWidgetData.commandLine("kby", "{evil}", none), "kby 'x" + quote + "; rm -rf ~; echo " + quote + "'", "output text with a quote can't leave its word");
+    compare(CustomWidgetData.commandLine("kby", "{sub}", none), "kby '$(touch /tmp/pwn) `id` $HOME\nnext'", "output text with $() and a newline stays inside the quotes");
+    compare(CustomWidgetData.commandLine("kby", "{quote} x", none), "kby 'say \"hi\" now' 'x'", "output text with quotes and spaces is one word: the split comes first");
+    compare(CustomWidgetData.commandLine("kby {value}", "{evil}", none), "kby 'x" + quote + "; rm -rf ~; echo " + quote + "'", "{value} from the output is quoted too");
+    compare(CustomWidgetData.commandLine("kby {arg}", "{loop}", none), "kby '{arg} {value}'", "a filled {arg} and {value} are never filled again");
+    compare(CustomWidgetData.commandLine("kby {value}", "{loop}", none), "kby '{arg} {value}'", "a {value} in the filled argument stays");
+    compare(CustomWidgetData.commandLine("kby", "{loop}", none), "kby '{arg} {value}'", "appended text is not filled again");
+    compare(CustomWidgetData.commandLine("kby {value}", "x", {
+      "ownValue": true,
+      "value": "a; b",
+      "fields": fields
+    }), "kby 'a; b' 'x'", "an own value is quoted as before");
+  }
+
   function test_builtinAllowed() {
     const refused = ["poweroff", "lock", "reboot"];
     compare(CustomWidgetData.builtinAllowed("poweroff", refused), false, "poweroff");

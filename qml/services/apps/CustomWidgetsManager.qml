@@ -127,15 +127,18 @@ QtObject {
 
   // Run the action a bar trigger ("click", "rightClick", "middleClick",
   // "scrollUp", "scrollDown") names in the definition's bar.run, if any (a
-  // scroll is continuous)
+  // scroll is continuous), with the argument bar.args names for it
   function act(id, trigger) {
-    const ref = CustomWidgetsConfig.definition(id)?.bar?.run?.[trigger] ?? "";
+    const def = CustomWidgetsConfig.definition(id);
+    const ref = def?.bar?.run?.[trigger] ?? "";
     if (ref !== "")
-      root.invoke(id, ref, undefined, trigger.startsWith("scroll"));
+      root.invoke(id, ref, undefined, trigger.startsWith("scroll"), false, def.bar.args?.[trigger] ?? "");
   }
 
   // Run action `ref` (an id, or a name) of widget `id` with `value` ({value}
-  // in its command). An Axiom action (refresh, restart or an ActionsManager
+  // in its command; undefined: the trigger has none of its own) and the
+  // trigger's argument `arg` (CustomWidgetData.commandLine). An Axiom
+  // action (refresh, restart or an ActionsManager
   // id that takes no argument, never a session or destructive one) runs
   // as it is; a command action fills {value} {rev} {tree} in (quoted) and
   // runs; one that waits refreshes the script at exit 0 when the definition
@@ -148,8 +151,8 @@ QtObject {
   // holds the widget: a double press acts once). A continuous action (a
   // scroll, a slider) never holds, one runs at a time and the latest value
   // waits; Axiom actions never hold and are never refused for it
-  function invoke(id, ref, value, continuous, fromIpc) {
-    const why = root._invoke(id, ref, value, continuous, fromIpc);
+  function invoke(id, ref, value, continuous, fromIpc, arg) {
+    const why = root._invoke(id, ref, value, continuous, fromIpc, arg ?? "");
     if (why !== "" && why !== "no widget") {
       const item = CustomWidgetData.actionOf(CustomWidgetsConfig.definition(id), ref);
       root.actionRan(id, {
@@ -166,7 +169,7 @@ QtObject {
     return why;
   }
 
-  function _invoke(id, ref, value, continuous, fromIpc) {
+  function _invoke(id, ref, value, continuous, fromIpc, arg) {
     const def = CustomWidgetsConfig.definition(id);
     if (!def)
       return "no widget";
@@ -191,14 +194,17 @@ QtObject {
       // waiting one (the latest wins), run when the first ends
       if (root._own(root._inFlight[id], item.id)) {
         root._pending[id] = Object.assign({}, root._pending[id], {
-          [item.id]: value
+          [item.id]: {
+            "value": value,
+            "arg": arg
+          }
         });
         return "";
       }
       root._inFlight[id] = Object.assign({}, root._inFlight[id], {
         [item.id]: true
       });
-      root._start(id, item, value, 0, true);
+      root._start(id, item, value, arg, 0, true);
       return "";
     }
     // A discrete one is refused while another holds the widget
@@ -207,11 +213,11 @@ QtObject {
     if (item.wait) {
       const run = ++root._runSeq;
       root._hold(id, item.id, run);
-      root._start(id, item, value, run, false);
+      root._start(id, item, value, arg, run, false);
       return "";
     }
     // One that doesn't wait (it opens an app): started and forgotten
-    const command = root._fill(id, item, value);
+    const command = root._fill(id, item, value, arg);
     CommandManager.runDetached(command);
     if (def.actions.refreshAfter)
       root._refreshSoon(id);
@@ -255,19 +261,22 @@ QtObject {
     return "";
   }
 
-  // The command of action `item` with {value}, {rev} and {tree} filled in
-  function _fill(id, item, value) {
-    return CustomWidgetData.fillCommand(item.command, {
-      "value": CustomWidgetData.asText(value),
+  // The command of action `item` as it runs (CustomWidgetData.commandLine):
+  // {value}, {rev}, {tree} and {arg} filled in, `arg` added
+  function _fill(id, item, value, arg) {
+    return CustomWidgetData.commandLine(item.command, arg, {
+      "value": value,
+      "ownValue": value !== undefined,
       "rev": root._fields[id]?.rev ?? "",
-      "tree": Paths.treePath
+      "tree": Paths.treePath,
+      "fields": root._fields[id]
     });
   }
 
   // Runs the action command (`run`: the discrete run's number, 0 for a
   // continuous one)
-  function _start(id, item, value, run, continuous) {
-    const command = root._fill(id, item, value);
+  function _start(id, item, value, arg, run, continuous) {
+    const command = root._fill(id, item, value, arg);
     const started = Date.now();
     CommandManager.run(["sh", "-c", command], (code, out, err) => root._done(id, item, run, continuous, code, err, command, started));
   }
@@ -288,7 +297,7 @@ QtObject {
   property var _busy: ({})
   property var _lastAction: ({})
   // id -> { action -> true }: continuous runs in flight; id -> { action ->
-  // value }: the latest value sent meanwhile
+  // { value, arg }: the latest one sent meanwhile
   property var _inFlight: ({})
   property var _pending: ({})
   property int _runSeq: 0
@@ -395,7 +404,7 @@ QtObject {
     if (!failed && CustomWidgetsConfig.definition(id)?.actions.refreshAfter)
       root.refresh(id);
     if (continuous) {
-      const waiting = root._own(root._pending[id], item.id) ? root._pending[id][item.id] : undefined;
+      const waiting = root._own(root._pending[id], item.id) ? root._pending[id][item.id] : null;
       const inFlight = Object.assign({}, root._inFlight[id]);
       delete inFlight[item.id];
       root._inFlight[id] = inFlight;
@@ -403,7 +412,7 @@ QtObject {
         const rest = Object.assign({}, root._pending[id]);
         delete rest[item.id];
         root._pending[id] = rest;
-        root.invoke(id, item.id, waiting, true);
+        root.invoke(id, item.id, waiting.value, true, false, waiting.arg);
       }
     }
   }

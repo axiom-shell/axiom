@@ -4538,7 +4538,6 @@
     "Items": "",
     "Min": "",
     "The action's name": "",
-    "Sent to the action as {value}": "",
     "Type text, or insert {a value}.": "",
     "More in Help": "",
     "Row icon": "",
@@ -4659,7 +4658,6 @@
     "Send it. The other person opens New, then Import a widget…, pastes and presses Check.": "",
     "Files the command uses are not copied: send them too.": "",
     "What an action runs, and what it is given.": "",
-    "An action is a command (one sh -c line) or an axiom action, listed on the Data tab. A button, row, toggle, slider, entry or bar click picks one by name. {value} is the button's value, a row's id (else value, else text), on or off, the number a slider was released at, or the typed text. {rev} is the current screen's revision; {tree} is this shell's folder. They arrive already quoted (a plain number bare, anything else in single quotes): don't quote them yourself.": "",
     "Nothing runs on the lock screen, while the script isn't answering, when the output turns the action off, with no command, or while another action holds the widget: a double press acts once. Refresh, Restart and the shell's own actions need no command. axiom ipc customWidgets act NAME ACTION runs one from a terminal while the widget is shown.": "",
     "An action that adds a line to a file": "",
     "Text fields and {paths}": "",
@@ -4671,6 +4669,12 @@
     "is on": "",
     "is off": "",
     "What you type in a field (Shows) is shown as typed: Hello shows Hello. {path} reads the output: {text}, {player.title}, {items.0.text}. A field holding only one {path} gets the value itself (a number, a list); text around it, such as {value}% or {title} by {artist}, is filled in as one line. A {path} the output doesn't have stays as typed, and the editor warns about it. Empty: the output's own key for that field. Every element also has Visible (hidden while a test fails) and colours (Color by state). An element that runs actions also has Enabled: its actions do not run, and a Button dims or hides, while its test fails (is on and is off read a value as on or off: false, 0, no and off are off).": "",
-    "When on": ""
+    "When on": "",
+    "Added to the end of the command, or where it says {arg}. Words are quoted for you: it can't run anything.": "",
+    "e.g. next": "",
+    "An action is a command (one sh -c line) or an axiom action, listed on the Data tab. A button, row, toggle, slider, entry or bar click picks one by name. {value} is a row's id (else value, else text), on or off, the number a slider was released at, or the typed text; a button or a bar click has none, so its {value} is its Argument. Under the action you pick, Argument adds words to the command (at the end, or where it says {arg}), so one action can serve many buttons; each word is quoted, and a {path} in it is filled from the output. {rev} is the current screen's revision; {tree} is this shell's folder. They arrive already quoted (a plain number bare, anything else in single quotes): don't quote them yourself.": "",
+    "{value}: what the element sends. {arg}: the trigger's argument (else added at the end). {rev} and {tree} too. Quoted for you.": "",
+    "The text each trigger adds to its action's command, as words (quoted for the shell, never run).": "",
+    "The text each click or scroll adds to its action's command, as words (quoted for the shell, never run).": ""
   }
 }

@@ -214,7 +214,7 @@ ColumnLayout {
     description: I18n.tr("What an action runs, and what it is given.")
 
     Para {
-      text: I18n.tr("An action is a command (one sh -c line) or an axiom action, listed on the Data tab. A button, row, toggle, slider, entry or bar click picks one by name. {value} is the button's value, a row's id (else value, else text), on or off, the number a slider was released at, or the typed text. {rev} is the current screen's revision; {tree} is this shell's folder. They arrive already quoted (a plain number bare, anything else in single quotes): don't quote them yourself.")
+      text: I18n.tr("An action is a command (one sh -c line) or an axiom action, listed on the Data tab. A button, row, toggle, slider, entry or bar click picks one by name. {value} is a row's id (else value, else text), on or off, the number a slider was released at, or the typed text; a button or a bar click has none, so its {value} is its Argument. Under the action you pick, Argument adds words to the command (at the end, or where it says {arg}), so one action can serve many buttons; each word is quoted, and a {path} in it is filled from the output. {rev} is the current screen's revision; {tree} is this shell's folder. They arrive already quoted (a plain number bare, anything else in single quotes): don't quote them yourself.")
     }
     Para {
       text: I18n.tr("Nothing runs on the lock screen, while the script isn't answering, when the output turns the action off, with no command, or while another action holds the widget: a double press acts once. Refresh, Restart and the shell's own actions need no command. axiom ipc customWidgets act NAME ACTION runs one from a terminal while the widget is shown.")

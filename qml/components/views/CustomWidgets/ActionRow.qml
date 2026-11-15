@@ -141,7 +141,7 @@ Surface {
 
       InspectorRow {
         shown: root.item?.kind !== "axiom"
-        description: I18n.tr("{value}: what the element sends. {rev} and {tree} too. Quoted for you.")
+        description: I18n.tr("{value}: what the element sends. {arg}: the trigger's argument (else added at the end). {rev} and {tree} too. Quoted for you.")
 
         StyledTextEntry {
           id: commandEntry

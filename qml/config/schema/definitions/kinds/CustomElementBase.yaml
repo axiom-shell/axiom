@@ -152,3 +152,14 @@ properties:
       'on': {$ref: '#/definitions/ActionId', title: Turn on}
       'off': {$ref: '#/definitions/ActionId', title: Turn off}
       submit: {$ref: '#/definitions/ActionId', title: On Enter}
+  args:
+    type: object
+    additionalProperties: false
+    default: {}
+    description: The text each trigger adds to its action's command, as words (quoted for the shell, never run).
+    properties:
+      click: {type: string, title: On press, default: '', pattern: '^[^\n\r]{0,512}$'}
+      change: {type: string, title: On change, default: '', pattern: '^[^\n\r]{0,512}$'}
+      'on': {type: string, title: Turn on, default: '', pattern: '^[^\n\r]{0,512}$'}
+      'off': {type: string, title: Turn off, default: '', pattern: '^[^\n\r]{0,512}$'}
+      submit: {type: string, title: On Enter, default: '', pattern: '^[^\n\r]{0,512}$'}

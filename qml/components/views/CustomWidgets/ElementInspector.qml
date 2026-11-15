@@ -106,11 +106,6 @@ ColumnLayout {
     return I18n.tr("The output's own");
   }
 
-  // What a slot's {value} is for, where it isn't plain
-  function slotDescription(name) {
-    return root.element?.type === "Button" && name === "value" ? I18n.tr("Sent to the action as {value}") : "";
-  }
-
   // The tests a Visible or Enabled condition offers: the rule tests, then
   // has a value / is empty and is on / is off (CustomWidgetData.holds)
   readonly property var conditionTests: root.editor.ruleTests.concat([
@@ -277,7 +272,6 @@ ColumnLayout {
               first: field.index === 0
               slot: field.modelData
               label: root.slotTitle(field.modelData)
-              description: root.slotDescription(field.modelData)
               placeholder: root.slotPlaceholder(field.modelData)
             }
           }
@@ -310,7 +304,10 @@ ColumnLayout {
               current: root.element?.run?.[trigger.modelData] ?? ""
               newName: root.actionName
               valueText: root.valueText
+              ownValue: root.element?.type !== "Button"
               writeRun: value => root.editor.setElement(["run", trigger.modelData], value)
+              arg: root.element?.args?.[trigger.modelData] ?? ""
+              writeArg: value => root.editor.setElement(["args", trigger.modelData], value)
             }
           }
 

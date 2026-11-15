@@ -8,12 +8,15 @@ import qs.components.reusable
 
 // What one trigger runs (an element's On press, the bar's Click…): a
 // dropdown of the widget's actions (Nothing, each one, New action…), under
-// it what the pick runs (its command as it would be filled from the previewed
-// sample, or the Axiom action's name) and an Edit button that opens the
+// it, for a command action, the trigger's Argument (words added to the
+// command: CustomWidgetData.commandLine), what the pick runs (its command
+// as it would be filled from the previewed sample, with the argument, or the
+// Axiom action's name) and an Edit button that opens the
 // action's ActionRow under the field. "New action…" makes an action named
 // `newName`, picks it and opens it. A ref that names no action (it was
 // removed) says so. `writeRun(value)` writes the pick: the element's
-// `run.<trigger>` or the bar's `bar.run.<trigger>`.
+// `run.<trigger>` or the bar's `bar.run.<trigger>`; `writeArg(text)` the
+// argument (`args.<trigger>`, `bar.args.<trigger>`).
 InspectorRow {
   id: root
 
@@ -21,6 +24,12 @@ InspectorRow {
   // The action picked (its id; "" nothing)
   property string current: ""
   property var writeRun: value => {}
+  // The trigger's argument
+  property string arg: ""
+  property var writeArg: value => {}
+  // Whether the trigger has a value of its own ({value}); a Button's click
+  // and the bar's clicks have none: their {value} is the argument
+  property bool ownValue: true
   // The name "New action…" gives the action
   property string newName: ""
   // What {value} is filled with in the caption (the element's value)
@@ -37,10 +46,12 @@ InspectorRow {
       return "";
     if (root.action.kind === "axiom")
       return root.editor.axiomChoices.find(c => c.value === root.action.axiom)?.label ?? root.action.axiom;
-    return CustomWidgetData.fillCommand(root.action.command, {
-      "value": root.valueText,
+    return CustomWidgetData.commandLine(root.action.command, root.arg, {
+      "value": root.ownValue ? root.valueText : undefined,
+      "ownValue": root.ownValue,
       "rev": CustomWidgetData.asText(root.editor.previewFields?.rev),
-      "tree": Paths.treePath
+      "tree": Paths.treePath,
+      "fields": root.editor.previewFields
     });
   }
 
@@ -57,6 +68,38 @@ InspectorRow {
   }
 
   below: [
+    RowLayout {
+      // Axiom actions ignore it (the text is kept)
+      visible: root.action?.kind === "command"
+      Layout.fillWidth: true
+      spacing: Widget.spacing
+
+      StyledText {
+        text: I18n.tr("Argument")
+        role: "caption"
+        tone: "muted"
+      }
+      TipIcon {
+        text: "help"
+        tip: I18n.tr("Added to the end of the command, or where it says {arg}. Words are quoted for you: it can't run anything.")
+      }
+      StyledTextEntry {
+        id: argEntry
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        placeholderText: I18n.tr("e.g. next")
+        input.font.family: "monospace"
+        onTextEdited: root.writeArg(argEntry.text)
+
+        Binding {
+          target: argEntry
+          property: "text"
+          value: root.arg
+          when: !argEntry.input.activeFocus
+          restoreMode: Binding.RestoreNone
+        }
+      }
+    },
     RowLayout {
       visible: root.action !== null
       Layout.fillWidth: true
