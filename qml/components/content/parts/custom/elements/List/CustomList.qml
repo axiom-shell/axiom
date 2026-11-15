@@ -50,8 +50,27 @@ CustomElementBase {
       rowsModel.remove(rows.length, rowsModel.count - rows.length);
   }
 
-  // A row's press: the named action, else the click command
+  // The row whose first press with `confirm` was made (its id, else value,
+  // else text), until it runs or 3 s pass: it says "Confirm?" in red
+  property string asking: ""
+  // A fixed time: how long the question is open
+  Timer {
+    id: askTimer
+    interval: 3000
+    onTriggered: root.asking = ""
+  }
+
+  // A row's press: the named action, else the click command. With `confirm`
+  // the first press asks
   function press(id, value, text) {
+    const key = id || value || text;
+    if (root.options.confirm && root.asking !== key) {
+      root.asking = key;
+      askTimer.restart();
+      return;
+    }
+    root.asking = "";
+    askTimer.stop();
     if (root.actionId !== "")
       root.run("click", id || value || text);
     else
@@ -82,7 +101,9 @@ CustomElementBase {
       required property real rowMax
       required property string rowImage
       // The row's colours: its tone's, else the element's own
-      readonly property color tint: row.rowTone ? Style.resolve(row.rowTone) : root.colorOf(Style.textMuted)
+      // Asked to confirm: it says so in the error colour
+      readonly property bool asking: root.asking !== "" && root.asking === (row.rowId || row.rowValue || row.rowText)
+      readonly property color tint: row.asking ? Style.error : row.rowTone ? Style.resolve(row.rowTone) : root.colorOf(Style.textMuted)
       readonly property color meter: row.rowTone ? Style.resolve(row.rowTone) : Style.toneFill("accent")
 
       // Tiles share the width, none narrower than a word
@@ -101,7 +122,7 @@ CustomElementBase {
           rowText: row.rowText
           rowIcon: row.rowIcon
           rowValue: row.rowValue
-          rowSubtext: row.rowSubtext
+          rowSubtext: row.asking ? I18n.tr("Confirm?") : row.rowSubtext
           rowImage: row.rowImage
           rowNumber: row.rowNumber
           rowMax: row.rowMax
@@ -117,7 +138,7 @@ CustomElementBase {
         CustomListTile {
           rowText: row.rowText
           rowIcon: row.rowIcon
-          rowSubtext: row.rowSubtext
+          rowSubtext: row.asking ? I18n.tr("Confirm?") : row.rowSubtext
           rowImage: row.rowImage
           rowNumber: row.rowNumber
           rowMax: row.rowMax

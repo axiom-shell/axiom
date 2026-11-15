@@ -15,11 +15,15 @@ import qs.components.content.parts.custom
 // ({value} is the label); without either, the widget's own click action.
 // A `color` makes it a filled Surface in that colour; `disabled: hide`
 // hides it while the script or its `enabled` binding has it off (not for a
-// hold or a failure). A failed run flashes it and its tooltip says why.
+// hold or a failure). A failed run flashes it and its tooltip says why. With
+// `confirm` the first press turns its label into "Confirm?" (red) for 3
+// seconds and the second runs it.
 CustomElementBase {
   id: root
 
-  readonly property string label: root.bind.label ? root.text("label") : root.options.label || CustomWidgetsManager.actionLabel(root.actionId) // lock-inert: a name, nothing runs
+  // The first press of a `confirm` button was made, until it runs or 3 s pass
+  property bool asking: false
+  readonly property string label: root.asking ? I18n.tr("Confirm?") : root.bind.label ? root.text("label") : root.options.label || CustomWidgetsManager.actionLabel(root.actionId) // lock-inert: a name, nothing runs
   readonly property string icon: root.bind.icon ? root.text("icon") : root.options.icon
   // Its `enabled` binding has it off
   readonly property bool slotOff: !!root.bind.enabled && !CustomWidgetData.truthy(root.value("enabled"))
@@ -27,13 +31,20 @@ CustomElementBase {
   readonly property bool off: (root.actionId !== "" && !CustomWidgetData.actionEnabled(root.fields?.actions, root.actionId)) || root.slotOff
   readonly property bool pressable: root.canRun && !root.slotOff
   readonly property bool coloured: root.options.color !== ""
-  readonly property color fill: Style.resolve(root.options.color)
+  readonly property color fill: root.asking ? Style.error : Style.resolve(root.options.color)
   // Held for a moment after a failed run: a blink (a fixed time)
   property bool flashing: false
 
   visible: !(root.options.disabled === "hide" && root.off)
 
   function press() {
+    if (root.options.confirm && !root.asking) {
+      root.asking = true;
+      askTimer.restart();
+      return;
+    }
+    root.asking = false;
+    askTimer.stop();
     if (root.actionId !== "")
       root.run("click", root.text("value"));
     else if (root.actions.click !== "")
@@ -47,6 +58,12 @@ CustomElementBase {
       root.flashing = true;
       flashTimer.restart();
     }
+  }
+  // A fixed time: how long the question is open
+  Timer {
+    id: askTimer
+    interval: 3000
+    onTriggered: root.asking = false
   }
   Timer {
     id: flashTimer
@@ -62,6 +79,7 @@ CustomElementBase {
   Component {
     id: plain
     StyledTextButton {
+      kind: root.asking ? "danger" : "tonal"
       enabled: root.pressable
       iconText: root.icon
       text: root.label

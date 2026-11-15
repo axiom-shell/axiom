@@ -4562,6 +4562,9 @@
     "From a known script": "",
     "Material: a row's icon is a symbol name. Icon theme: an icon of the desktop icon theme (a row's image wins).": "",
     "Icon theme": "",
-    "Material: a symbol name. Format: the format-icons glyph. Icon theme: the name is an icon of the desktop icon theme.": ""
+    "Material: a symbol name. Format: the format-icons glyph. Icon theme: the name is an icon of the desktop icon theme.": "",
+    "The first press on a row asks \"Confirm?\" on it for 3 seconds; the second runs it.": "",
+    "Ask first": "",
+    "The first press asks \"Confirm?\" for 3 seconds; the second runs it.": ""
   }
 }

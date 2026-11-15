@@ -7,6 +7,7 @@ settings:
   label: {type: string, title: Label, default: ''}
   icon: {type: string, x-control: icon, title: Icon, default: ''}
   color: {type: string, title: Color, x-options: colors, default: '', x-emptyLabel: None}
+  confirm: {type: boolean, title: Ask first, default: false, description: 'The first press asks "Confirm?" for 3 seconds; the second runs it.'}
   disabled:
     type: string
     title: When off

@@ -20,3 +20,4 @@ settings:
     enum: [material, theme]
     x-enumLabels: {material: Material, theme: Icon theme}
     description: 'Material: a row''s icon is a symbol name. Icon theme: an icon of the desktop icon theme (a row''s image wins).'
+  confirm: {type: boolean, title: Ask first, default: false, description: 'The first press on a row asks "Confirm?" on it for 3 seconds; the second runs it.'}
