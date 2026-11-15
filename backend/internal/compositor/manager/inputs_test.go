@@ -2,6 +2,7 @@ package manager
 
 import (
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
@@ -202,4 +203,108 @@ func TestBindConditions(t *testing.T) {
 			t.Errorf("%s: %s, want %s", c.name, got, c.want)
 		}
 	}
+}
+
+// The WindowRules section as each compositor takes it: only the usable rules
+// compiled (and in layerKey), the report for all of them
+func TestWindowRulesInputs(t *testing.T) {
+	t.Parallel()
+	rule := func(id string, enabled bool, kinds, window string) string {
+		return `{"id":"` + id + `","enabled":` + map[bool]string{true: "true", false: "false"}[enabled] +
+			`,"windows":` + kinds + `,"window":` + window + `}`
+	}
+	one := `[{"conditions":[{"field":"appId","op":"is","value":"x"}]}]`
+	cfgWith := func(t *testing.T, rules ...string) *jsonx.Object {
+		t.Helper()
+		v, err := jsonx.Unmarshal([]byte(`{"WindowRules":{"rules":[` + strings.Join(rules, ",") + `]}}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v.(*jsonx.Object)
+	}
+	facts := func(kind string) *Facts {
+		return &Facts{Kind: kind, Supports: map[string]bool{"pin": true, "namedSpecial": true}}
+	}
+	build := func(t *testing.T, kind string, f func(*Facts), rules ...string) Inputs {
+		t.Helper()
+		fs := facts(kind)
+		if f != nil {
+			f(fs)
+		}
+		return buildInputs(cfgWith(t, rules...), fs, nil)
+	}
+	report := func(in Inputs) string { return string(jsonx.MarshalCompact(in.get("windowRulesReport"))) }
+
+	float := rule("a", true, one, `{"float":true}`)
+	off := rule("b", false, one, `{"float":true}`)
+	broken := rule("c", true, `[]`, `{"float":true}`)
+
+	t.Run("usable only", func(t *testing.T) {
+		t.Parallel()
+		with := build(t, "hyprland", nil, float, off, broken)
+		without := build(t, "hyprland", nil, float)
+		if string(jsonx.MarshalCompact(with.get("windowRules"))) != string(jsonx.MarshalCompact(without.get("windowRules"))) {
+			t.Errorf("a disabled or bad rule reached the compositor: %s", jsonx.MarshalCompact(with.get("windowRules")))
+		}
+		if with.str("layerKey") != without.str("layerKey") {
+			t.Error("a rule not written changed layerKey")
+		}
+		if !strings.Contains(report(with), `"code":"noKinds"`) || report(with) == report(without) {
+			t.Errorf("the report: %s", report(with))
+		}
+	})
+	t.Run("layerKey follows a usable rule", func(t *testing.T) {
+		t.Parallel()
+		base := build(t, "hyprland", nil, float, off)
+		if build(t, "hyprland", nil, float, rule("b", false, one, `{"float":true,"pin":true}`)).str("layerKey") != base.str("layerKey") {
+			t.Error("a disabled rule changed layerKey")
+		}
+		if build(t, "hyprland", nil, rule("a", true, one, `{"float":true,"pin":true}`), off).str("layerKey") == base.str("layerKey") {
+			t.Error("a usable rule's change left layerKey")
+		}
+	})
+	t.Run("shapes", func(t *testing.T) {
+		t.Parallel()
+		if h := build(t, "hyprland", nil, float).get("windowRules"); len(strList(h)) != 1 {
+			t.Errorf("hyprland: %s", jsonx.MarshalCompact(h))
+		}
+		if n, ok := build(t, "niri", nil, float).get("windowRules").(*jsonx.Array); !ok || len(n.Items) != 1 {
+			t.Errorf("niri: not one node")
+		}
+		s := build(t, "sway", nil, float).get("windowRules")
+		if // one line for app_id and one for class
+		len(strList(getAny(s, "file"))) != 2 || len(strList(getAny(s, "runtime"))) != 2 {
+			t.Errorf("sway: %s", jsonx.MarshalCompact(s))
+		}
+		other := build(t, "none", nil, float)
+		if other.get("windowRules") != nil || report(other) != `{"issues":[],"rules":[]}` {
+			t.Errorf("another kind: %v %s", other.get("windowRules"), report(other))
+		}
+	})
+	t.Run("rows", func(t *testing.T) {
+		t.Parallel()
+		// pin is Placed nowhere here (Hyprland writes it) and dropped on a
+		// compositor without it; a live-only kind leaves nothing written
+		live := rule("l", true, `[{"conditions":[{"field":"process","op":"is","value":"p"}]}]`, `{"float":true}`)
+		in := build(t, "hyprland", func(f *Facts) { f.Supports["pin"] = false }, rule("a", true, one, `{"float":true,"pin":true}`), live)
+		want := `[{"rule":"a","written":["float"],"placed":[],"dropped":["pin"],"live":[],"skipped":[]},` +
+			`{"rule":"l","written":[],"placed":[],"dropped":[],"live":[0],"skipped":[]}]`
+		if got := string(jsonx.MarshalCompact(getAny(in.get("windowRulesReport"), "rules"))); got != want {
+			t.Errorf("rows:\n%s\nwant\n%s", got, want)
+		}
+	})
+	t.Run("app ids", func(t *testing.T) {
+		t.Parallel()
+		app := rule("p", true, `[{"conditions":[{"field":"app","op":"is","value":"x.desktop"}]}]`, `{"float":true}`)
+		resolved := build(t, "hyprland", func(f *Facts) {
+			f.AppIDs = func(string) []string { return []string{"x", "x-class"} }
+		}, app)
+		if h := strList(resolved.get("windowRules")); len(h) != 1 || !strings.Contains(h[0], "x-class") {
+			t.Errorf("app not resolved: %v", h)
+		}
+		unresolved := build(t, "hyprland", nil, app)
+		if !strings.Contains(report(unresolved), `"skipped":[0]`) || len(strList(unresolved.get("windowRules"))) != 0 {
+			t.Errorf("no app ids: %s", report(unresolved))
+		}
+	})
 }

@@ -89,6 +89,10 @@ type writer interface {
 	// The runtime layer
 	runtimeApply(ctx context.Context, in Inputs, live func() []string)
 	runtimeClear(ctx context.Context)
+	// runtimeRulesGone: a window rule the runtime layer applied is no longer
+	// wanted and the compositor can only drop it with a reload (sway's
+	// for_window)
+	runtimeRulesGone(in Inputs) bool
 	// teardownSteps are what takes the runtime layer out when axiom stops
 	// (session.Step); partial: the user's config starts axiom on every
 	// reload, so only the layer's binds (and the cursor) are taken out

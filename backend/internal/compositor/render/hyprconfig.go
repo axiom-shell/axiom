@@ -199,13 +199,13 @@ func RequiredLua(withAnimation bool) []string {
 
 // ModuleLua is HyprConfigLua.moduleLua: the included module. parts: {
 // header, includeLines, requiredSettings, and the Lua lines of binds, look,
-// input, blur, layers, monitors, strips }.
+// input, blur, layers, monitors, strips, rules }.
 func ModuleLua(parts any) string {
 	setup := []string{}
 	if truthy(get(parts, "requiredSettings")) {
 		setup = append(setup, "M.required()")
 	}
-	setup = append(setup, "M.binds()", "M.look()", "M.input()", "M.blur()", "M.layers()", "M.monitors()", "M.strips()")
+	setup = append(setup, "M.binds()", "M.look()", "M.input()", "M.blur()", "M.layers()", "M.monitors()", "M.strips()", "M.rules()")
 	part := func(name string) string { return indent(stringList(get(parts, name)), "  ") }
 	return jsCat(get(parts, "header")) + ` from its Hyprland settings, and rewritten whenever they
 -- (or the theme) change: edit those, not this file.
@@ -259,6 +259,12 @@ end
 -- Strips (the scrolling layout) on the monitors Workspaces lists
 function M.strips()
 ` + part("strips") + `
+end
+
+-- Your window rules (the Window rules page), the most important last: a
+-- later rule wins, so your own after this file win over them
+function M.rules()
+` + part("rules") + `
 end
 
 function M.setup()

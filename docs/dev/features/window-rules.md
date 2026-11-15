@@ -1,10 +1,10 @@
 # Window rules
 
 > **Files:** `backend/internal/windowrules/`, `backend/internal/compositor/render/windowrules.go`, `qml/config/schema/sections/WindowRules.yaml`, `qml/config/schema/definitions/common/WindowRule.yaml`, `qml/config/schema/definitions/common/WindowRuleCondition.yaml`, `qml/config/schema/definitions/shared/WindowRuleWhen.yaml`, `tests/fixtures/windowrules/regex.json`
-> **Config:** `WindowRules.*` (no reader yet: only the daemon's package reads it)
+> **Config:** `WindowRules.*` (no shell reader yet: the daemon compiles and writes it)
 > **Related:** [Config modes](../compositor/config-modes.md), [Keybinds](../hyprland/keybinds.md), [Schema annotations](../core/schema-annotations.md), [Saved configs and sharing](../core/saved-configs-sharing.md)
 
-The user's window rules: what exists is the model, its validation and the renderers that compile it; nothing reads the section at runtime yet.
+The user's window rules: what exists is the model, its validation, the renderers that compile it, and the writers that put the rules in each compositor's config.
 
 ### The model
 - `WindowRules.rules` is an id'd list whose order is the priority: the higher a rule, the more it counts when two set the same thing. `Parse` turns the section into `Config`.
@@ -30,6 +30,10 @@ The user's window rules: what exists is the model, its validation and the render
 - An issue's `message` is an English template with `{0}` placeholders that `args` fill, so the page can translate it; a field in `args` is its raw id.
 - The codes and their checks are in `validate.go`.
 
+### Writing
+- The daemon compiles the usable rules once per config change (`windowRules` in `buildInputs`) and each writer puts them where its compositor's rules go: the module, the managed config, niri's detached module, or the runtime (Hyprland's `AXIOM_RULES`, sway's `for_window`). Who wins per mode, the managed split on niri, and the runtime layers: [config modes](../compositor/config-modes.md), [Hyprland](../hyprland/config-modes.md), [niri](../compositor/niri-backend.md), [sway](../compositor/sway-backend.md).
+- `compositor.state`'s `windowRules` reports the issues and, per usable rule, what the config applies, what the daemon will place after open, what's dropped; `compositor.checkRules` checks an unsaved draft the same way (unsaved rules never reach the compositor).
+
 ### Compiling
 - `HyprRuleLines`, `NiriRuleNodes` and `SwayRuleLines` (`render/windowrules.go`) take a `RuleSet` (the usable rules, the app id resolver, the backend's `supports`) and give the rules in Hyprland Lua, niri KDL and sway config lines, plus an `Unwritten` per rule with something left out. One compile step decides which kinds and effects are written, from the capabilities (never the compositor's name); the printers only print.
 - Rules are written lowest priority first: every compositor lets the later rule win for the same property, so the higher rule in the list lands last.
@@ -41,4 +45,4 @@ The user's window rules: what exists is the model, its validation and the render
 - Left to the daemon, reported in `Unwritten`: live kinds (`Live`) and a numbered workspace on niri or a special workspace on sway (`Placed`: sway's named specials are a per-window mark a `for_window` can't write). A kind no config can match (XWayland on niri, an app with no app ids) is `Skipped`.
 - niri's `open-on-workspace` names a workspace niri's own config declares. sway's look sets every window's opacity and blur as focus moves, which overrides a rule's opacity and No blur while the look sets them.
 
-PR 3 wires them into the writers; the engine and the page come with the rest of the window rules work.
+The editor, the engine and the placement of what a config can't do come with the rest of the window rules work.

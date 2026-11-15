@@ -29,6 +29,9 @@ type runtimeState struct {
 	// commands) is untrusted and not read: the binds an older image made stay
 	// until sway reloads (bindsym overwrites anyway).
 	SwayUnbinds []render.SwayUnbind `json:"swayUnbinds"`
+	// SwayRules: the runtime for_window/no_focus lines sent since sway last
+	// reloaded (sway can't take one back: removing one reloads)
+	SwayRules []string `json:"swayRules"`
 	// NiriWrapper: whether niri runs the detached wrapper. A fresh daemon
 	// (Options.Carried false) re-checks it: it loads the wrapper once
 	NiriWrapper bool `json:"niriWrapper"`
