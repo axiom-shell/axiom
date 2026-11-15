@@ -4451,6 +4451,8 @@
     "{value} is the text.": "",
     "Submit command": "",
     "Entry": "",
-    "Clear after sending": ""
+    "Clear after sending": "",
+    "placeholder": "",
+    "enabled": ""
   }
 }

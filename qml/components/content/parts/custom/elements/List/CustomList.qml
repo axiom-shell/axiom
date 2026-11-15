@@ -80,7 +80,7 @@ CustomElementBase {
       readonly property color meter: row.rowTone ? Style.resolve(row.rowTone) : Style.toneFill("accent")
 
       // Tiles share the width, none narrower than a word
-      width: root.across ? Math.max(Widget.textPx(56), ListView.view.width / Math.max(1, ListView.view.count)) : ListView.view.width
+      width: root.across ? Math.max(Widget.textPx(56), (ListView.view.width - ListView.view.spacing * Math.max(0, ListView.view.count - 1)) / Math.max(1, ListView.view.count)) : ListView.view.width
       height: root.across ? ListView.view.height : (content.item as CustomListRow)?.implicitHeight ?? 0
 
       Loader {

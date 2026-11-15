@@ -91,7 +91,7 @@ ColumnLayout {
   // Slot names, shown as is: I18n.tr("text") I18n.tr("value")
   // I18n.tr("unit") I18n.tr("label") I18n.tr("icon") I18n.tr("badge")
   // I18n.tr("items") I18n.tr("image") I18n.tr("state") I18n.tr("min")
-  // I18n.tr("max")
+  // I18n.tr("max") I18n.tr("placeholder") I18n.tr("enabled")
 
   // The library: drag one onto the module, or click it to add it where
   // there's room

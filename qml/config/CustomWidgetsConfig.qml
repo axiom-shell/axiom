@@ -33,27 +33,24 @@ QtObject {
   // as "axiom:<id>" (CustomWidgetData.builtinAllowed passes it)
   readonly property var builtinActions: ["axiom:refresh", "axiom:restart"]
 
-  // The bindings every element kind has (CustomElementBase.yaml's x-slots),
-  // listed after the kind's own
-  readonly property var baseSlots: ["show", "tone"]
-
   // The element kinds a module is built from (the CustomElement oneOf:
   // components/content/parts/custom/elements/<Type>/schema.yaml), by
   // label: { type, label, icon, size ([w, h] sub-cells it's added at,
-  // `x-defaultSize`), slots (its bindings, `x-slots`, the base's last), actions (the
+  // `x-defaultSize`), slots (its bindings, `x-slots`, the base's, which every kind has, last: CustomWidgetData.baseSlotsLast), actions (the
   // commands it runs, `x-actions`), actionsSchema (theirs, a properties
   // schema), options (its look, a properties schema), optionsOrder }. Labels and titles are English: the editor
   // translates them
   readonly property var elementKinds: {
     const schema = ConfigManager.configSchema;
-    return (schema?.definitions?.CustomElement?.oneOf ?? []).map(option => {
-      const def = schema.definitions[option.$ref.replace("#/definitions/", "")];
+    const defs = (schema?.definitions?.CustomElement?.oneOf ?? []).map(option => schema.definitions[option.$ref.replace("#/definitions/", "")]);
+    const slots = CustomWidgetData.baseSlotsLast(defs.map(d => d["x-slots"] ?? []));
+    return defs.map((def, i) => {
       return {
         "type": def.properties.type.const,
         "label": def.properties.type.description,
         "icon": def["x-icon"] ?? "widgets",
         "size": def["x-defaultSize"] ?? [4, 4],
-        "slots": (def["x-slots"] ?? []).filter(s => root.baseSlots.indexOf(s) < 0).concat(root.baseSlots),
+        "slots": slots[i],
         "actions": def["x-actions"] ?? [],
         "actionsSchema": Utils.pick(def.properties.actions.properties, def["x-actions"] ?? []),
         "options": def.properties.options?.properties ?? ({}),

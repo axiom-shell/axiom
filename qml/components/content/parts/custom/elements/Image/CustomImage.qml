@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Widgets
 import qs.config
+import qs.components.reusable
 import qs.components.content.parts.custom
 
 // A custom widget's Image element: a path or URL (the widget's image field
@@ -13,21 +13,13 @@ CustomElementBase {
   readonly property string path: root.text("image", "image")
   readonly property string source: root.imageUrl(root.path)
 
-  ClippingRectangle {
+  Thumbnail {
     anchors.centerIn: parent
     width: root.options.round ? Math.min(root.width, root.height) : root.width
     height: root.options.round ? width : root.height
     radius: root.options.round ? width / 2 : Widget.radius
-    color: Style.surfaceHighest
-
-    Image {
-      anchors.fill: parent
-      source: root.source
-      fillMode: root.options.fit === "fit" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
-      asynchronous: true
-      cache: false
-      sourceSize.width: width
-      sourceSize.height: height
-    }
+    source: root.source
+    fillMode: root.options.fit === "fit" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+    cache: false
   }
 }

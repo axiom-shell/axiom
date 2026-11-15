@@ -6,7 +6,7 @@ type: object
 required: [type, id]
 additionalProperties: false
 x-settingsAt: /properties/options/properties
-# Every kind's bindings after its own (kinds.go merges the base's list in)
+# Every kind's bindings: kinds.go merges this list in ahead of the kind's own; CustomWidgetsConfig.elementKinds lists them last
 x-slots: [show, tone]
 x-parts:
   color:
