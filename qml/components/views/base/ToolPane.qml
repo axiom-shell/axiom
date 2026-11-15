@@ -76,6 +76,10 @@ TitledCard {
     StyledTabBar {
       id: tabStrip
       visible: root.tabModel.length > 0
+      // The toolbar holder is never hidden (its child would read hidden
+      // forever) and a Layout item cannot be shorter than 0: with nothing
+      // showing in it, a negative margin here takes back its gap
+      Layout.bottomMargin: toolbarHolder.visible && toolbarHolder.visibleChildren.length === 0 ? -Widget.spacing : 0
       scrollable: true
       tabs: root.tabModel
       marked: root.tabMarked

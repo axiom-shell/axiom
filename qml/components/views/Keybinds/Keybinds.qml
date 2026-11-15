@@ -9,12 +9,14 @@ import qs.components.content.base
 import qs.components.content.parts
 import qs.components.views.base
 
-// The keybinds page: the compositor's binds by section, as cards in
-// columns, with a search over labels, sections and keys and toggle chips
-// by section, modifier and source (KeybindFilter); or the editor for
-// axiom's own binds: their list by section (BindEditor) beside an
-// inspector for the selected one (BindInspector), or with none selected,
-// the key map (KeyMapPanel)
+// The keybinds page, a ToolPane with a tab for each mode: the compositor's
+// binds by section, as cards in columns, with a search over labels, sections
+// and keys, a look-up by key and filters by section, modifier and source
+// (KeybindFilter); the keyboard they sit on; or the editor for axiom's own
+// binds: their list by section (BindEditor) beside an inspector for the
+// selected one (BindInspector), or with none selected, the key map
+// (KeyMapPanel). One toolbar serves every tab, its controls shown by tab
+// (never a Loader per tab: a recording in the look-up survives a switch).
 BaseView {
   id: root
 
@@ -41,253 +43,273 @@ BaseView {
   readonly property bool lookupFree: root.lookupId !== "" && KeybindFilter.filter(KeybindManager.keybindings, "", {
     "ids": [root.lookupId]
   }).length === 0
+  // The mode's tab: 0 all binds, 1 keyboard, 2 edit
+  readonly property int tabIndex: root.editing ? 2 : root.keyboard ? 1 : 0
   readonly property bool narrowed: root.query !== "" || KeybindManager.page.filtering || root.lookupId !== ""
 
   readonly property int shownCount: root.sections.reduce((sum, section) => sum + section.binds.length, 0)
-  readonly property int totalCount: KeybindManager.keybindings.reduce((sum, section) => sum + section.binds.length, 0)
 
   // Masonry: each section goes to the shortest column, by row count
   readonly property var columns: KeybindFilter.columns(root.sections, root.columnCount)
 
+  // The filter chips' groups and what is on, for each tab's `Filters` button
+  // and its active chips
+  readonly property var listGroups: [
+    {
+      "id": "section",
+      "options": KeybindManager.keybindings.filter(section => section.binds.length > 0).map(section => ({
+            "value": KeybindFilter.sectionKey(section),
+            "label": KeybindManager.sectionTitle(section) + "  " + section.binds.length
+          }))
+    },
+    {
+      "id": "mod",
+      "options": KeybindManager.page.modOptions.map(mod => ({
+            "value": mod,
+            "label": KeyNames.modifierLabel(mod)
+          }))
+    },
+    {
+      "id": "source",
+      "options": [
+        {
+          "value": "axiom",
+          "label": I18n.tr("Axiom binds")
+        },
+        {
+          "value": "user",
+          "label": I18n.tr("Your binds")
+        }
+      ]
+    }
+  ]
+  readonly property var listSelection: ({
+      "section": KeybindManager.page.sectionFilter,
+      "mod": KeybindManager.page.modFilter,
+      "source": KeybindManager.page.sourceFilter
+    })
+  readonly property var editGroups: [
+    {
+      "id": "editSection",
+      "options": KeybindManager.page.editSectionOptions.map(option => ({
+            "value": option.key,
+            "label": I18n.tr(option.title) + "  " + option.count
+          }))
+    },
+    {
+      "id": "editMod",
+      "options": KeybindManager.page.editModOptions.map(mod => ({
+            "value": mod,
+            "label": KeyNames.modifierLabel(mod)
+          }))
+    },
+    {
+      "id": "editState",
+      "options": (KeybindManager.page.pausedCount > 0 || KeybindManager.page.editPausedOnly ? [
+          {
+            "value": "paused",
+            "label": I18n.tr("Paused") + "  " + KeybindManager.page.pausedCount
+          }
+        ] : []).concat(KeybindManager.page.conditionalCount > 0 || KeybindManager.page.editConditionalOnly ? [
+        {
+          "value": "conditional",
+          "label": I18n.tr("Only when") + "  " + KeybindManager.page.conditionalCount
+        }
+      ] : []).concat(KeybindManager.editor.issueCount > 0 || KeybindManager.page.editIssuesOnly ? [
+        {
+          "value": "issues",
+          "label": I18n.tr("With issues") + "  " + KeybindManager.editor.issueCount
+        }
+      ] : [])
+    }
+  ]
+  readonly property var editSelection: ({
+      "editSection": KeybindManager.page.editSectionFilter,
+      "editMod": KeybindManager.page.editModFilter,
+      "editState": (KeybindManager.page.editPausedOnly ? ["paused"] : []).concat(KeybindManager.page.editConditionalOnly ? ["conditional"] : []).concat(KeybindManager.page.editIssuesOnly ? ["issues"] : [])
+    })
+
+  function toggleEditFilter(group, value) {
+    if (group === "editState" && value === "paused")
+      KeybindManager.page.editPausedOnly = !KeybindManager.page.editPausedOnly;
+    else if (group === "editState" && value === "conditional")
+      KeybindManager.page.editConditionalOnly = !KeybindManager.page.editConditionalOnly;
+    else if (group === "editState")
+      KeybindManager.page.editIssuesOnly = !KeybindManager.page.editIssuesOnly;
+    else
+      KeybindManager.page.toggleFilter(group, value);
+  }
+
+  // Binds the looked-up key, which nothing holds, in the editor
+  function bindLookup() {
+    const combo = KeybindManager.page.lookupCombo;
+    KeybindManager.page.lookupCombo = "";
+    KeybindManager.page.editing = true;
+    KeybindManager.editor.addBind({
+      "key": combo
+    });
+  }
+
   Item {
     id: listSide
-    // The list alone takes the editor's whole width, so switching keeps it
-    implicitWidth: root.editing ? root.listWidth : root.listWidth + root.inspectorWidth + OverlayConfig.cardSpacing
+    // The list alone takes the editor's whole width, so switching keeps the page's
+    implicitWidth: root.editing ? root.listWidth : root.pageWidth
     implicitHeight: root.pageHeight
 
-    TitledCard {
+    ToolPane {
       id: listCard
+      anchors.fill: parent
       title: I18n.tr("Keybinds")
+      headerIcon: "keyboard"
       scrollKey: "Keybinds"
       showActions: false
 
-      headerExtras: [
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Widget.spacing * 2
+      tabModel: [I18n.tr("All binds"), I18n.tr("Keyboard"), I18n.tr("Edit axiom binds")]
+      tabIndex: root.tabIndex
+      tabMarked: KeybindManager.editor.isDirty ? [2] : []
+      onTabClicked: index => {
+        if (index < 2) {
+          KeybindManager.editor.stopRecording();
+          KeybindManager.page.setRefView(index === 1 ? "keyboard" : "list");
+        }
+        KeybindManager.page.editing = index === 2;
+      }
 
-          SegmentRow {
-            Repeater {
-              // I18n.tr("All binds") I18n.tr("Keyboard") I18n.tr("Edit axiom binds")
-              model: ["All binds", "Keyboard", "Edit axiom binds"]
+      // Nothing matched the search, the look-up or the chips
+      emptyKind: root.tabIndex === 0 && root.narrowed && root.sections.length === 0 ? "results" : ""
+      emptyText: root.lookupFree ? I18n.tr("Nothing is bound to {0}", KeybindManager.displayCombo(KeybindManager.page.lookupCombo)) : root.query !== "" ? I18n.tr("No keybinds match \"{0}\"", root.query) : I18n.tr("No keybinds match the filters")
+      emptyActionText: root.lookupFree ? I18n.tr("Bind it") : I18n.tr("Clear")
+      onEmptyTriggered: {
+        if (root.lookupFree) {
+          root.bindLookup();
+        } else {
+          KeybindManager.page.query = "";
+          KeybindManager.page.lookupCombo = "";
+          KeybindManager.page.clearFilters();
+        }
+      }
 
-              delegate: SegmentButton {
-                required property string modelData
-                required property int index
-                readonly property bool selected: index === 2 ? root.editing : !root.editing && root.keyboard === (index === 1)
-                implicitHeight: Widget.height
-                text: I18n.tr(modelData) + (index === 2 && KeybindManager.editor.isDirty ? "  •" : "")
-                active: selected
-                Layout.fillWidth: false
-                onClicked: {
-                  if (index < 2) {
-                    KeybindManager.editor.stopRecording();
-                    KeybindManager.page.setRefView(index === 1 ? "keyboard" : "list");
-                  }
-                  KeybindManager.page.editing = index === 2;
-                }
-              }
-            }
+      toolbar: ToolBar {
+        id: bar
+
+        // The keyboard has nothing to search or set
+        visible: root.tabIndex !== 1
+        searchable: true
+        searchPlaceholder: root.editing ? I18n.tr("Search binds by key, action or label") : I18n.tr("Search keybinds")
+        count: root.editing ? KeybindManager.page.visibleIndices.length : root.shownCount
+        onSearchEdited: {
+          if (root.editing)
+            KeybindManager.page.editQuery = bar.searchText;
+          else
+            KeybindManager.page.query = bar.searchText;
+        }
+
+        // One field for both searches: it shows the shown tab's, and follows
+        // it when the query changes elsewhere (Add bind clears the editor's)
+        function syncSearch() {
+          const wanted = root.editing ? KeybindManager.page.editQuery : KeybindManager.page.query;
+          if (bar.searchText !== wanted)
+            bar.searchText = wanted;
+        }
+        Component.onCompleted: bar.syncSearch()
+
+        Connections {
+          target: KeybindManager.page
+          function onQueryChanged() {
+            bar.syncSearch();
           }
-
-          StyledTextEntry {
-            visible: !root.editing && !root.keyboard
-            Layout.fillWidth: true
-            Layout.preferredHeight: Widget.height
-            placeholderText: I18n.tr("Search keybinds")
-            clearable: true
-            Component.onCompleted: input.text = KeybindManager.page.query
-            onTextChanged: KeybindManager.page.query = text
+          function onEditQueryChanged() {
+            bar.syncSearch();
           }
+        }
 
-          StyledTextEntry {
-            id: editSearch
-            visible: root.editing
-            Layout.fillWidth: true
-            Layout.preferredHeight: Widget.height
-            placeholderText: I18n.tr("Search binds by key, action or label")
-            clearable: true
-            Component.onCompleted: input.text = KeybindManager.page.editQuery
-            onTextChanged: KeybindManager.page.editQuery = text
-            // Add bind clears the search
-            Connections {
-              target: KeybindManager.page
-              function onEditQueryChanged() {
-                if (editSearch.input.text !== KeybindManager.page.editQuery)
-                  editSearch.input.text = KeybindManager.page.editQuery;
-              }
-            }
+        Connections {
+          target: root
+          function onEditingChanged() {
+            bar.syncSearch();
           }
+        }
 
-          StyledTextButton {
-            visible: root.editing
-            implicitHeight: Widget.height
-            iconText: "playlist_add"
-            text: I18n.tr("Presets")
-            onClicked: presetSheet.open()
-          }
-
-          StyledTextButton {
-            visible: root.editing
-            implicitHeight: Widget.height
-            iconText: "add"
-            text: I18n.tr("Add bind")
-            onClicked: KeybindManager.editor.addAndStartRecording({})
-          }
-
-          Item {
-            visible: root.keyboard
-            Layout.fillWidth: true
-          }
-
+        trailing: [
           // Press a combo to see what it does
           KeyRecorder {
-            visible: !root.editing && !root.keyboard
+            visible: root.tabIndex === 0
             Layout.preferredWidth: root.grid.unit * 0.55
             bindIndex: KeybindManager.editor.lookupIndex
             combo: KeybindManager.page.lookupCombo
             placeholder: I18n.tr("Look up a combo")
-          }
-
+          },
           StyledIconButton {
-            visible: !root.editing && KeybindManager.page.lookupCombo !== ""
+            visible: root.tabIndex === 0 && KeybindManager.page.lookupCombo !== ""
             size: Widget.height
             iconText: "close"
             tooltipText: I18n.tr("Show every bind")
             onClicked: KeybindManager.page.lookupCombo = ""
-          }
-
+          },
           StyledIconButton {
-            visible: !root.editing && !root.keyboard
+            visible: root.tabIndex === 0
             size: Widget.height
+            kind: KeybindManager.page.refDensity === "compact" ? "primary" : "text"
             iconText: KeybindManager.page.refDensity === "compact" ? "density_small" : "density_medium"
             tooltipText: KeybindManager.page.refDensity === "compact" ? I18n.tr("Comfortable rows") : I18n.tr("Compact rows")
             onClicked: KeybindManager.page.setRefDensity(KeybindManager.page.refDensity === "compact" ? "comfortable" : "compact")
-          }
-
+          },
           StyledIconButton {
-            visible: !root.editing && !root.keyboard
+            visible: root.tabIndex === 0
             size: Widget.height
+            kind: KeybindManager.page.refGlyphs ? "primary" : "text"
             iconText: "keyboard_command_key"
-            iconColor: KeybindManager.page.refGlyphs ? Theme.accent : Theme.foreground
             tooltipText: KeybindManager.page.refGlyphs ? I18n.tr("Modifiers as words") : I18n.tr("Modifiers as symbols")
             onClicked: KeybindManager.page.setRefGlyphs(!KeybindManager.page.refGlyphs)
+          },
+          StyledTextButton {
+            visible: root.editing
+            kind: "tonal"
+            implicitHeight: Widget.height
+            iconText: "playlist_add"
+            text: I18n.tr("Presets")
+            onClicked: presetSheet.open()
+          },
+          StyledTextButton {
+            visible: root.editing
+            kind: "tonal"
+            implicitHeight: Widget.height
+            iconText: "add"
+            text: I18n.tr("Add bind")
+            onClicked: KeybindManager.editor.addAndStartRecording({})
+          },
+          FilterChips {
+            visible: root.tabIndex === 0
+            groups: root.listGroups
+            selection: root.listSelection
+            onToggled: (group, value) => KeybindManager.page.toggleFilter(group, value)
+          },
+          FilterChips {
+            visible: root.editing && KeybindManager.editor.binds.length > 0
+            groups: root.editGroups
+            selection: root.editSelection
+            onToggled: (group, value) => root.toggleEditFilter(group, value)
           }
+        ]
 
-          StyledLabel {
-            visible: !root.editing && !root.keyboard
-            text: root.narrowed ? I18n.tr("{0} of {1} binds", root.shownCount, root.totalCount) : I18n.tr("{0} binds", root.totalCount)
-            opacity: 0.6
-          }
-        },
-        StreamedLoader {
-          visible: !root.editing && !root.keyboard
-          wanted: !root.editing && !root.keyboard
-          Layout.fillWidth: true
-          label: "keybind filter chips"
-
-          sourceComponent: FilterChips {
-            groups: [
-              {
-                "id": "section",
-                "options": KeybindManager.keybindings.filter(section => section.binds.length > 0).map(section => ({
-                      "value": KeybindFilter.sectionKey(section),
-                      "label": KeybindManager.sectionTitle(section) + "  " + section.binds.length
-                    }))
-              },
-              {
-                "id": "mod",
-                "options": KeybindManager.page.modOptions.map(mod => ({
-                      "value": mod,
-                      "label": KeyNames.modifierLabel(mod)
-                    }))
-              },
-              {
-                "id": "source",
-                "options": [
-                  {
-                    "value": "axiom",
-                    "label": I18n.tr("Axiom binds")
-                  },
-                  {
-                    "value": "user",
-                    "label": I18n.tr("Your binds")
-                  }
-                ]
-              }
-            ]
-            selection: ({
-                "section": KeybindManager.page.sectionFilter,
-                "mod": KeybindManager.page.modFilter,
-                "source": KeybindManager.page.sourceFilter
-              })
-            filtering: KeybindManager.page.filtering
+        // The chips that are on, while any is
+        filters: [
+          ActiveFilters {
+            visible: root.tabIndex === 0 && KeybindManager.page.filtering
+            groups: root.listGroups
+            selection: root.listSelection
             onToggled: (group, value) => KeybindManager.page.toggleFilter(group, value)
             onCleared: KeybindManager.page.clearFilters()
-          }
-        },
-        StreamedLoader {
-          visible: root.editing && KeybindManager.editor.binds.length > 0
-          wanted: root.editing
-          Layout.fillWidth: true
-          label: "keybind filter chips"
-
-          sourceComponent: FilterChips {
-            groups: [
-              {
-                "id": "editSection",
-                "options": KeybindManager.page.editSectionOptions.map(option => ({
-                      "value": option.key,
-                      "label": I18n.tr(option.title) + "  " + option.count
-                    }))
-              },
-              {
-                "id": "editMod",
-                "options": KeybindManager.page.editModOptions.map(mod => ({
-                      "value": mod,
-                      "label": KeyNames.modifierLabel(mod)
-                    }))
-              },
-              {
-                "id": "editState",
-                "options": (KeybindManager.page.pausedCount > 0 || KeybindManager.page.editPausedOnly ? [
-                    {
-                      "value": "paused",
-                      "label": I18n.tr("Paused") + "  " + KeybindManager.page.pausedCount
-                    }
-                  ] : []).concat(KeybindManager.page.conditionalCount > 0 || KeybindManager.page.editConditionalOnly ? [
-                  {
-                    "value": "conditional",
-                    "label": I18n.tr("Only when") + "  " + KeybindManager.page.conditionalCount
-                  }
-                ] : []).concat(KeybindManager.editor.issueCount > 0 || KeybindManager.page.editIssuesOnly ? [
-                  {
-                    "value": "issues",
-                    "label": I18n.tr("With issues") + "  " + KeybindManager.editor.issueCount
-                  }
-                ] : [])
-              }
-            ]
-            selection: ({
-                "editSection": KeybindManager.page.editSectionFilter,
-                "editMod": KeybindManager.page.editModFilter,
-                "editState": (KeybindManager.page.editPausedOnly ? ["paused"] : []).concat(KeybindManager.page.editConditionalOnly ? ["conditional"] : []).concat(KeybindManager.page.editIssuesOnly ? ["issues"] : [])
-              })
-            filtering: KeybindManager.page.editFiltering
-            onToggled: (group, value) => {
-              if (group === "editState" && value === "paused")
-                KeybindManager.page.editPausedOnly = !KeybindManager.page.editPausedOnly;
-              else if (group === "editState" && value === "conditional")
-                KeybindManager.page.editConditionalOnly = !KeybindManager.page.editConditionalOnly;
-              else if (group === "editState")
-                KeybindManager.page.editIssuesOnly = !KeybindManager.page.editIssuesOnly;
-              else
-                KeybindManager.page.toggleFilter(group, value);
-            }
+          },
+          ActiveFilters {
+            visible: root.editing && KeybindManager.page.editFiltering
+            groups: root.editGroups
+            selection: root.editSelection
+            onToggled: (group, value) => root.toggleEditFilter(group, value)
             onCleared: KeybindManager.page.clearEditFilters()
           }
-        }
-      ]
+        ]
+      }
 
       Loader {
         active: root.editing
@@ -295,30 +317,6 @@ BaseView {
         Layout.fillWidth: true
         sourceComponent: BindEditor {
           scrollTo: item => listCard.scrollTo(item, true)
-        }
-      }
-
-      StyledText {
-        wrapMode: Text.WordWrap
-        visible: !root.editing && !root.keyboard && root.narrowed && root.sections.length === 0
-        text: root.lookupFree ? I18n.tr("Nothing is bound to {0}", KeybindManager.displayCombo(KeybindManager.page.lookupCombo)) : root.query !== "" ? I18n.tr("No keybinds match \"{0}\"", root.query) : I18n.tr("No keybinds match the filters")
-        opacity: 0.6
-        Layout.fillWidth: true
-        Layout.topMargin: Widget.padding
-      }
-
-      StyledTextButton {
-        visible: !root.editing && !root.keyboard && root.lookupFree
-        implicitHeight: Widget.height
-        iconText: "add"
-        text: I18n.tr("Bind it")
-        onClicked: {
-          const combo = KeybindManager.page.lookupCombo;
-          KeybindManager.page.lookupCombo = "";
-          KeybindManager.page.editing = true;
-          KeybindManager.editor.addBind({
-            "key": combo
-          });
         }
       }
 
@@ -406,6 +404,7 @@ BaseView {
 
     sourceComponent: TitledCard {
       title: KeybindManager.editor.selectedIndex >= 0 ? I18n.tr("Bind") : I18n.tr("Key map")
+      headerIcon: "keyboard"
       // The key map keeps its place; a bind starts at its top
       scrollKey: KeybindManager.editor.selectedIndex >= 0 ? "" : "Keybinds/map"
       showActions: true

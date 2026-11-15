@@ -16,7 +16,7 @@ import qs.components.content.parts
 // turn over it records a scroll (SUPER + mouse_down), and a modifier let go
 // with no other key between records a tap (Super_L) where the compositor
 // binds one. Esc cancels.
-StyledContainer {
+Surface {
   id: root
 
   required property int bindIndex
@@ -33,9 +33,11 @@ StyledContainer {
   property string tap: ""
   readonly property var parts: KeyNames.split(root.combo)
 
+  tone: "sunken"
+  outlined: true
   implicitHeight: Widget.height
-  backgroundColor: root.recording ? Theme.background : (area.containsMouse ? Theme.backgroundHighlight : Theme.backgroundAlt)
-  borderColor: root.recording ? Theme.accent : (root.invalid ? Theme.error : Theme.border)
+  border.color: root.recording ? Style.accent : root.invalid ? Style.error : Style.borderStrong
+  border.width: root.recording ? Style.focusWidth : Style.hairline
 
   onRecordingChanged: {
     root.held = [];
@@ -51,6 +53,10 @@ StyledContainer {
   Component.onDestruction: {
     if (root.recording)
       KeybindManager.editor.stopRecording();
+  }
+
+  StateLayer {
+    hovered: area.containsMouse && !root.recording
   }
 
   RowLayout {
@@ -77,10 +83,9 @@ StyledContainer {
     StyledLabel {
       visible: root.recording || root.parts.key === ""
       text: root.recording ? I18n.tr("Press a combo…") : root.placeholder
-      textColor: root.recording ? Theme.accent : Theme.foreground
-      opacity: root.recording ? 1 : 0.5
-      textSize: Appearance.fontSizeBy(-1)
-      elide: Text.ElideRight
+      role: "caption"
+      tone: root.recording ? "accent" : "faint"
+      overflow: "line"
       Layout.fillWidth: true
     }
 
@@ -93,14 +98,14 @@ StyledContainer {
     KeyCap {
       visible: root.recording
       text: "Esc"
-      opacity: 0.5
+      opacity: Style.opacityDisabled
     }
 
     StyledIcon {
       visible: !root.recording
       text: "keyboard"
-      opacity: 0.5
-      textSize: Appearance.fontSizeBy(-2)
+      tone: "faint"
+      size: "xs"
     }
   }
 

@@ -6,6 +6,7 @@ import qs.config
 import qs.services.compositor
 import qs.components.methods
 import qs.components.reusable
+import qs.components.content.base
 import qs.components.content.parts
 
 // The Keybinds editor's presets, over the list: on the left the built-in
@@ -64,11 +65,11 @@ Popup {
 
   // Solid, over a dimmed list: the page itself may be see-through
   background: DropdownSurface {
-    color: Theme.background
+    solid: true
   }
 
   Overlay.modal: Rectangle {
-    color: Qt.alpha(Theme.background, 0.6)
+    color: Style.scrim
   }
 
   contentItem: ColumnLayout {
@@ -77,18 +78,25 @@ Popup {
     RowLayout {
       Layout.fillWidth: true
 
-      SectionHeading {
+      CardHeader {
         title: I18n.tr("Presets")
-        description: I18n.tr("Sets of binds to start from. Pick what to add; keys already in use are left alone unless you tick them, which pauses the bind there.")
+        showActions: false
       }
 
       SquareIconButton {
         size: Widget.height
         iconText: "close"
         tooltipText: I18n.tr("Close")
-        Layout.alignment: Qt.AlignTop
         onClicked: root.close()
       }
+    }
+
+    StyledText {
+      text: I18n.tr("Sets of binds to start from. Pick what to add; keys already in use are left alone unless you tick them, which pauses the bind there.")
+      role: "caption"
+      tone: "muted"
+      overflow: "wrap"
+      Layout.fillWidth: true
     }
 
     RowLayout {
@@ -126,9 +134,8 @@ Popup {
 
                 badges: StyledText {
                   text: presetRow.modelData.binds.length
-                  textColor: presetRow.ink
-                  opacity: 0.6
-                  textSize: Appearance.fontSizeBy(-2)
+                  role: "caption"
+                  textColor: presetRow.inkMuted
                 }
               }
             }
@@ -136,8 +143,7 @@ Popup {
 
           StyledSeparator {
             Layout.fillWidth: true
-            separatorHeight: 1
-            opacity: 0.3
+            backTone: "raised"
           }
 
           FoldingSection {
@@ -159,9 +165,8 @@ Popup {
 
                 badges: StyledText {
                   text: savedRow.modelData.binds.length
-                  textColor: savedRow.ink
-                  opacity: 0.6
-                  textSize: Appearance.fontSizeBy(-2)
+                  role: "caption"
+                  textColor: savedRow.inkMuted
                 }
 
                 RowAction {
@@ -181,9 +186,9 @@ Popup {
             StyledText {
               visible: KeybindManager.editor.savedPresets.length === 0
               text: I18n.tr("Save your binds as they are to come back to them later.")
-              opacity: 0.6
-              wrapMode: Text.WordWrap
-              textSize: Appearance.fontSizeBy(-1)
+              role: "caption"
+              tone: "muted"
+              overflow: "wrap"
               Layout.fillWidth: true
             }
 
@@ -206,7 +211,6 @@ Popup {
                 iconText: "save"
                 tooltipText: KeybindManager.editor.savedPresets.some(p => p.title === newName.text.trim()) ? I18n.tr("Save over the preset by this name") : I18n.tr("Save the binds as a preset")
                 enabled: newName.text.trim() !== ""
-                opacity: enabled ? 1 : 0.5
                 onClicked: root.saveAs(newName.text)
               }
             }
@@ -216,8 +220,8 @@ Popup {
 
       StyledSeparator {
         Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        opacity: 0.3
+        Layout.preferredWidth: Style.dividerWidth
+        backTone: "raised"
       }
 
       // What it would do
@@ -229,15 +233,15 @@ Popup {
         StyledLabel {
           visible: !root.saved
           text: root.preset?.title ?? ""
-          font.weight: Font.Bold
-          textSize: Appearance.fontSizeBy(2)
+          role: "headline"
         }
 
         StyledText {
           visible: !root.saved
           text: root.preset?.description ?? ""
-          opacity: 0.7
-          wrapMode: Text.WordWrap
+          role: "caption"
+          tone: "muted"
+          overflow: "wrap"
           Layout.fillWidth: true
         }
 
@@ -298,7 +302,7 @@ Popup {
             Repeater {
               model: root.plan
 
-              delegate: StyledContainer {
+              delegate: Rectangle {
                 id: step
                 required property var modelData
                 readonly property bool can: root.merging && step.modelData.status !== "same"
@@ -308,9 +312,13 @@ Popup {
 
                 Layout.fillWidth: true
                 implicitHeight: Widget.height + Widget.padding / 2
-                backgroundColor: stepArea.containsMouse && step.can ? Theme.backgroundHighlight : "transparent"
-                borderWidth: 0
-                opacity: step.can || !root.merging ? 1 : 0.5
+                color: "transparent"
+                radius: Style.radiusInner
+                opacity: step.can || !root.merging ? 1 : Style.opacityDisabled
+
+                StateLayer {
+                  hovered: stepArea.containsMouse && step.can
+                }
 
                 MouseArea {
                   id: stepArea
@@ -330,7 +338,7 @@ Popup {
                   StyledIcon {
                     visible: root.merging
                     text: !step.can ? "check" : step.on ? "check_box" : "check_box_outline_blank"
-                    textColor: step.on ? Theme.accent : Theme.foreground
+                    tone: step.on ? "accent" : ""
                   }
 
                   RowLayout {
@@ -359,7 +367,7 @@ Popup {
 
                   StyledLabel {
                     text: BindActions.defaultLabel(KeybindManager.actionTable, step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
-                    elide: Text.ElideRight
+                    overflow: "line"
                     Layout.fillWidth: true
                   }
 
@@ -376,10 +384,9 @@ Popup {
                       }
                       return I18n.tr("New");
                     }
-                    textColor: step.modelData.status === "taken" ? Theme.warning : Theme.foreground
-                    opacity: step.modelData.status === "taken" ? 1 : 0.6
-                    textSize: Appearance.fontSizeBy(-2)
-                    elide: Text.ElideRight
+                    tone: step.modelData.status === "taken" ? "warning" : "muted"
+                    role: "caption"
+                    overflow: "line"
                     Layout.maximumWidth: parent.width * 0.4
                   }
                 }
@@ -398,7 +405,7 @@ Popup {
           readonly property int resuming: picked.filter(step => step.status === "resume").length
 
           StyledText {
-            wrapMode: Text.WordWrap
+            overflow: "wrap"
             text: {
               if (!root.merging)
                 return I18n.tr("Replaces your {0} binds with these {1}", KeybindManager.editor.binds.length, root.plan.length);
@@ -408,7 +415,8 @@ Popup {
                 return I18n.tr("Adds {0}, pauses {1}", parent.adding, parent.pausing);
               return I18n.tr("Adds {0}", parent.adding);
             }
-            opacity: 0.7
+            role: "caption"
+            tone: "muted"
             Layout.fillWidth: true
           }
 
@@ -423,9 +431,8 @@ Popup {
             iconText: "done"
             text: I18n.tr("Apply")
             enabled: root.merging ? root.chosen.length > 0 : root.preset !== null
-            opacity: enabled ? 1 : 0.5
-            backgroundColor: Theme.accent
-            textColor: Theme.background
+            kind: "primary"
+            opacity: enabled ? 1 : Style.opacityDisabled
             onClicked: {
               if (root.merging)
                 KeybindManager.editor.applyPreset(root.presetId, root.chosen);

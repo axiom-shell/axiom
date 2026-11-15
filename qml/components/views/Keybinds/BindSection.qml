@@ -5,13 +5,15 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.views.base
 
 // A section of the Keybinds editor's list (KeybindManager.page.editLayout): a
-// header to fold it (remembered, EditsManager.keybindsFolded), with its
-// counts, the unsaved dot and a switch pausing or resuming all of it, over
-// its rows (BindListRow, a run's binds under it while unfolded). Rows
-// carried within the section drop here (a drag layer target).
-ColumnLayout {
+// ListSection whose header folds it (remembered, EditsManager.keybindsFolded)
+// and ends in its issue mark and count, the unsaved dot and a switch pausing
+// or resuming all of it, over its rows (BindListRow, a run's binds under it
+// while unfolded). Rows carried within the section drop here (a drag layer
+// target).
+ListSection {
   id: root
 
   // { key, indices, rows: [[index]] }
@@ -35,7 +37,7 @@ ColumnLayout {
 
   // The row position a drop at `point` (in the drag layer) goes before
   function indexAt(point) {
-    const p = root.dragLayer.mapToItem(rows, point.x, point.y);
+    const p = root.dragLayer.mapToItem(rowStack, point.x, point.y);
     for (let i = 0; i < rowRepeater.count; i++) {
       const row = rowRepeater.itemAt(i);
       if (row && p.y < row.y + row.height / 2)
@@ -58,8 +60,42 @@ ColumnLayout {
     KeybindManager.editor.moveBind(from, Math.min(to, KeybindManager.editor.binds.length - 1));
   }
 
-  Layout.fillWidth: true
-  spacing: Widget.spacing / 2
+  // Section names come from BindActions.sectionFor (or a bind's own
+  // "Section:" description)
+  title: I18n.tr(root.section.key)
+  count: root.section.indices.length
+  collapsible: true
+  open: !root.folded
+  onToggled: EditsManager.setKeybindsFolded(root.section.key, !root.folded)
+
+  trailing: [
+    IssueIcon {
+      visible: root.issueCount > 0
+      tip: KeybindManager.editor.issueTip(root.section.indices)
+      size: "sm"
+    },
+    StyledText {
+      visible: root.issueCount > 0
+      text: root.issueCount
+      role: "caption"
+      tone: "warning"
+    },
+    UnsavedDot {
+      shown: root.changed
+    },
+    StyledText {
+      text: root.allPaused ? I18n.tr("Paused") : ""
+      role: "caption"
+      tone: "faint"
+    },
+    // Pauses or resumes the whole section
+    StyledSwitch {
+      compact: true
+      checkable: false
+      checked: !root.allPaused
+      onClicked: KeybindManager.editor.setPaused(root.section.indices, !root.allPaused)
+    }
+  ]
 
   Component.onCompleted: {
     if (root.dragLayer)
@@ -80,86 +116,8 @@ ColumnLayout {
     }
   }
 
-  Item {
-    Layout.fillWidth: true
-    implicitHeight: Widget.height
-
-    MouseArea {
-      id: headerArea
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: EditsManager.setKeybindsFolded(root.section.key, !root.folded)
-    }
-
-    RowLayout {
-      anchors.fill: parent
-      anchors.leftMargin: Widget.padding / 2
-      anchors.rightMargin: Widget.padding / 2
-      spacing: Widget.spacing
-
-      StyledIcon {
-        text: "expand_more"
-        textColor: headerArea.containsMouse ? Theme.accent : Theme.foregroundAlt
-        rotation: root.folded ? -90 : 0
-
-        Glide on rotation {}
-      }
-
-      StyledLabel {
-        // Section names come from BindActions.sectionFor (or a bind's own
-        // "Section:" description)
-        text: I18n.tr(root.section.key)
-        textColor: Theme.accent
-        font.weight: Font.Bold
-      }
-
-      StyledLabel {
-        text: root.section.indices.length
-        opacity: 0.5
-        textSize: Appearance.fontSizeBy(-2)
-      }
-
-      IssueIcon {
-        visible: root.issueCount > 0
-        tip: KeybindManager.editor.issueTip(root.section.indices)
-        textSize: Appearance.fontSizeBy(-1)
-      }
-
-      StyledLabel {
-        visible: root.issueCount > 0
-        text: root.issueCount
-        textColor: Theme.warning
-        textSize: Appearance.fontSizeBy(-2)
-      }
-
-      UnsavedDot {
-        shown: root.changed
-      }
-
-      Item {
-        Layout.fillWidth: true
-      }
-
-      StyledLabel {
-        text: root.allPaused ? I18n.tr("Paused") : ""
-        opacity: 0.5
-        textSize: Appearance.fontSizeBy(-2)
-      }
-
-      // Pauses or resumes the whole section
-      StyledSwitch {
-        checkable: false
-        checked: !root.allPaused
-        implicitHeight: Widget.smallHeight
-        onClicked: KeybindManager.editor.setPaused(root.section.indices, !root.allPaused)
-      }
-    }
-  }
-
   ColumnLayout {
-    id: rows
-    visible: !root.folded
+    id: rowStack
     Layout.fillWidth: true
     spacing: 2
 
@@ -209,8 +167,8 @@ ColumnLayout {
       width: parent.width
       height: Widget.px(3)
       radius: 1.5
-      y: rows.y + at - 1.5 - parent.y
-      color: Theme.accent
+      y: rowStack.y + at - 1.5 - parent.y
+      color: Style.accent
     }
   }
 }

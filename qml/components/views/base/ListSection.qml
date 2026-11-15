@@ -27,6 +27,9 @@ ColumnLayout {
 
   Item {
     id: header
+
+    // Marks a list header, which the rows' Up/Down walk steps over
+    readonly property bool _listHeader: true
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height
 

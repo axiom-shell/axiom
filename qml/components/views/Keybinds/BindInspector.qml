@@ -41,43 +41,26 @@ ColumnLayout {
     title: KeybindManager.displayCombo(root.bind.key) || I18n.tr("No key yet")
     subtitle: (KeybindManager.actionLabels[root.bind.action] ?? "") + (root.paused ? "  ·  " + I18n.tr("Paused") : root.idle ? "  ·  " + I18n.tr("Not bound now") : "")
 
-    SquareIconButton {
-      size: Widget.height
-      iconText: "content_copy"
-      tooltipText: I18n.tr("Duplicate, then record its key")
-      onClicked: KeybindManager.editor.duplicateBind(root.bindIndex)
-    }
+    canDuplicate: true
+    duplicateTooltip: I18n.tr("Duplicate, then record its key")
+    revertable: KeybindManager.editor.changedBinds[root.bindIndex] === true
+    revertTooltip: I18n.tr("Revert to the saved bind")
+    canRemove: true
+    removeBlockedReason: KeybindManager.editor.usedBy(root.bindIndex)
+    closable: true
+    closeTooltip: I18n.tr("Close, to see the key map")
+    onDuplicate: KeybindManager.editor.duplicateBind(root.bindIndex)
+    onRevert: KeybindManager.editor.revertBind(root.bindIndex)
+    onRemove: KeybindManager.editor.removeBind(root.bindIndex)
+    onClose: KeybindManager.editor.selectBind(-1)
 
-    SquareIconButton {
-      size: Widget.height
+    // Pause is an action: its icon and tooltip swap (the header's well and
+    // subtitle already show the paused state)
+    StyledIconButton {
+      kind: "text"
       iconText: root.paused ? "play_arrow" : "pause"
       tooltipText: root.paused ? I18n.tr("Resume") : I18n.tr("Pause: keep it, but don't bind it")
       onClicked: KeybindManager.editor.setPaused([root.bindIndex], !root.paused)
-    }
-
-    SquareIconButton {
-      visible: KeybindManager.editor.changedBinds[root.bindIndex] === true
-      size: Widget.height
-      iconText: "history"
-      tooltipText: I18n.tr("Revert to the saved bind")
-      onClicked: KeybindManager.editor.revertBind(root.bindIndex)
-    }
-
-    SquareIconButton {
-      size: Widget.height
-      iconText: "delete"
-      readonly property string usedBy: KeybindManager.editor.usedBy(root.bindIndex)
-      tooltipText: usedBy !== "" ? usedBy : I18n.tr("Remove")
-      enabled: usedBy === ""
-      hoverColor: Theme.error
-      onClicked: KeybindManager.editor.removeBind(root.bindIndex)
-    }
-
-    SquareIconButton {
-      size: Widget.height
-      iconText: "close"
-      tooltipText: I18n.tr("Close, to see the key map")
-      onClicked: KeybindManager.editor.selectBind(-1)
     }
   }
 
@@ -93,9 +76,9 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
-      opacity: 0.6
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "muted"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
   }
@@ -182,8 +165,8 @@ ColumnLayout {
       StyledLabel {
         visible: !BindActions.hasOwnSection(label.input.text)
         text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
-        opacity: 0.5
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
+        tone: "faint"
       }
 
       BindTextField {
@@ -197,9 +180,9 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
-      opacity: 0.6
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "muted"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
   }
@@ -220,7 +203,7 @@ ColumnLayout {
         // turned off
         readonly property bool allowed: flag.modelData[3] === "" || CompositorManager.supports[flag.modelData[3]] === true
         enabled: flag.allowed || flag.on
-        opacity: flag.allowed ? 1 : 0.5
+        opacity: flag.allowed ? 1 : Style.opacityDisabled
         Layout.fillWidth: true
         spacing: Widget.spacing
 
@@ -229,16 +212,16 @@ ColumnLayout {
           spacing: 0
 
           StyledText {
-            wrapMode: Text.WordWrap
+            overflow: "wrap"
             text: flag.modelData[1]
             Layout.fillWidth: true
           }
 
           StyledText {
             text: flag.allowed ? flag.modelData[2] : CompositorManager.unsupportedNote(flag.modelData[3])
-            opacity: 0.6
-            textSize: Appearance.fontSizeBy(-2)
-            wrapMode: Text.WordWrap
+            role: "caption"
+            tone: "muted"
+            overflow: "wrap"
             Layout.fillWidth: true
           }
         }
@@ -308,9 +291,9 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
-      opacity: 0.6
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: "muted"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
   }
@@ -318,7 +301,7 @@ ColumnLayout {
   IssueList {
     visible: root.issues.length > 0
     issues: root.issues
-    textSize: Appearance.fontSizeBy(-1)
+    textSize: Style.typeCaption
     Layout.fillWidth: true
   }
 
