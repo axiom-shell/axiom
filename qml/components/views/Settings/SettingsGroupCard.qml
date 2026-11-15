@@ -103,7 +103,7 @@ FoldingCard {
   }
 
   // The rows in blocks (FlowColumns.blocks), placed in `count` newspaper
-  // columns, headings across them. Positions follow the rows' live heights;
+  // columns, headings and `x-wide` rows across them. Positions follow the rows' live heights;
   // the splits follow their heights as if every fold were open, only while
   // settling (SettledColumns), so a fold opening never moves a row across
   // columns
