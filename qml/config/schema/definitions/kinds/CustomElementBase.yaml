@@ -6,6 +6,8 @@ type: object
 required: [type, id]
 additionalProperties: false
 x-settingsAt: /properties/options/properties
+# Every kind's bindings after its own (kinds.go merges the base's list in)
+x-slots: [show, tone]
 x-parts:
   color:
     # Graphics: the state's colour when the script gives one
@@ -47,7 +49,7 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key. =text is literal.'
+    description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key. =text is literal. show: hidden while false; tone: a word the definition''s states map to a colour.'
   options: {type: object, additionalProperties: false, properties: {}}
   action: {$ref: '#/definitions/ActionId', title: Action, description: 'A named action it runs instead of its commands.'}
   actions:

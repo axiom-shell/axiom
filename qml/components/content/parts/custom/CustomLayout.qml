@@ -73,6 +73,8 @@ Item {
             y: r.y
             width: r.width
             height: r.height
+            // Built either way (it can flip every sample); only drawn while shown
+            visible: CustomWidgetData.elementShown(root.fields, element.bind)
             element: lyr.spec.elements[index] ?? ({})
             fields: root.fields
             history: root.history

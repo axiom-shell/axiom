@@ -60,15 +60,21 @@ Item {
     return CustomWidgetData.elementRatio(root.fields, root.bind);
   }
 
+  // The theme colour name its `tone` binding gives through the definition's
+  // states ("" unbound, or a word nothing maps: CustomWidgetData.elementTone)
+  readonly property string toneName: CustomWidgetData.elementTone(root.fields, root.bind)
   // The state's colour from the script, or null; the error colour while the
   // script fails
   readonly property var stateColor: root.fields?.failure ? Style.error : (root.fields?.color ? Style.resolve(root.fields.color) : null)
 
-  // The colour part (CustomElementBase.yaml's x-parts.color): a picked
-  // colour, else `fallback`. Graphics (`state`) take the state's colour
-  // when left on Auto; text (`text`, which has a stateColor switch) only
-  // when asked
+  // The colour part (CustomElementBase.yaml's x-parts.color): a bound
+  // `tone`'s colour (every kind, text too: binding it is the request), else
+  // a picked colour, else `fallback`. Graphics (`state`) take the state's
+  // colour when left on Auto; text (`text`, which has a stateColor switch)
+  // only when asked
   function colorOf(fallback) {
+    if (root.toneName !== "")
+      return Style.resolve(root.toneName);
     const picked = root.options.color;
     const byState = "stateColor" in root.options ? root.options.stateColor : picked === "";
     if (byState && root.stateColor !== null)

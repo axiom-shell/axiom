@@ -37,6 +37,24 @@ ColumnLayout {
         "label": p.path
       })))
 
+  // A slot's title in the Shows group: the kinds' slot names (translated as
+  // they are) and the two every kind has, show and tone
+  function slotTitle(name) {
+    return name === "show" ? I18n.tr("Show when") : name === "tone" ? I18n.tr("Color by") : I18n.tr(name);
+  }
+
+  // What an empty slot means: the output's own key, for show and tone
+  // nothing (always shown, not coloured)
+  function slotOptions(name) {
+    const none = name === "show" ? I18n.tr("Always") : I18n.tr("Not colored");
+    return name === "show" || name === "tone" ? [
+      {
+        "value": "",
+        "label": none
+      }
+    ].concat(root.bindOptions.slice(1)) : root.bindOptions;
+  }
+
   // The actions an element can name: none (its own commands), the
   // built-ins, an action of the shell that's allowed (never a session or
   // destructive one), then the ids the output's `actions` lists
@@ -149,14 +167,14 @@ ColumnLayout {
 
             StyledLabel {
               Layout.preferredWidth: Widget.textPx(70)
-              text: I18n.tr(slot.modelData)
+              text: root.slotTitle(slot.modelData)
             }
             StyledComboEntry {
               Layout.fillWidth: true
               editable: true
-              placeholderText: I18n.tr("The output's own")
+              placeholderText: root.slotOptions(slot.modelData)[0].label
               value: root.element?.bind?.[slot.modelData] ?? ""
-              options: root.bindOptions
+              options: root.slotOptions(slot.modelData)
               onPicked: value => root.editor.setElement(["bind", slot.modelData], value === "" ? undefined : value)
             }
           }

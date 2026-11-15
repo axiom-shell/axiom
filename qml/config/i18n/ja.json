@@ -4440,9 +4440,12 @@
     "A named action: empty, a built-in (axiom:<id>) or an id the definition's action command is run with.": "",
     "Draw a bound value's Pango markup.": "",
     "Markup": "",
-    "Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output's own key. =text is literal.": "",
     "Text elements' font family when they set none.": "",
     "Empty: monospace when on, else the module's, else the shell's.": "",
-    "Fill the box": ""
+    "Fill the box": "",
+    "Show when": "",
+    "Color by": "",
+    "Not colored": "",
+    "Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output's own key. =text is literal. show: hidden while false; tone: a word the definition's states map to a colour.": ""
   }
 }
