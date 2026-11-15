@@ -107,7 +107,7 @@ func swayCommands(id string, steps []windowrules.Step, marks []string) (string, 
 				if s.Show {
 					add("scratchpad show")
 				}
-			case isDigits(s.Workspace):
+			case windowrules.AllDigits(s.Workspace):
 				add("move container to workspace number " + s.Workspace)
 			default:
 				add("move container to workspace " + render.SwayQuote(s.Workspace))
