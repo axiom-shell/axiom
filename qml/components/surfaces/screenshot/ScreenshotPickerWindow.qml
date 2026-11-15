@@ -247,7 +247,7 @@ PanelWindow {
         y: modelData.y
         width: Math.max(0, modelData.width)
         height: Math.max(0, modelData.height)
-        color: Qt.rgba(0, 0, 0, 0.45)
+        color: Qt.rgba(0, 0, 0, 0.45) // style-exempt: the dim over a frozen screen, its own scrim
       }
     }
 
@@ -256,22 +256,22 @@ PanelWindow {
       y: root.selection.y
       width: root.selection.width
       height: root.selection.height
-      readonly property color tint: root.recording ? Theme.error : Theme.accent
-      color: ScreenshotManager.picker.dragging ? "transparent" : Qt.alpha(tint, 0.12)
-      border.color: tint
+      color: ScreenshotManager.picker.dragging ? "transparent" : (root.recording ? Style.errorWash : Style.accentWash)
+      border.color: root.recording ? Style.error : Style.accent
       border.width: Math.max(2, Appearance.borderWidth)
       visible: root.marked && root.selection.width > 0 && root.selection.height > 0
     }
 
     // Size in the picture's own pixels
-    Rectangle {
+    Surface {
+      tone: "raised"
+      solid: true
       readonly property bool below: root.selection.y + root.selection.height + height + 6 < root.height
       x: Math.min(root.width - width, Math.max(0, root.selection.x))
       y: below ? root.selection.y + root.selection.height + Widget.smallPadding : Math.max(0, root.selection.y - height - Widget.smallPadding)
       width: sizeText.implicitWidth + Widget.smallPadding * 2
       height: sizeText.implicitHeight + Widget.smallPadding
       radius: Appearance.borderRadius / 2
-      color: Theme.background
       visible: root.marked && root.hasPointer && root.selection.width > 0 && root.selection.height > 0
       // The whole selection's, over every screen it's on
       readonly property size pixels: ScreenshotManager.picker.selection ? ScreenshotManager.picker.pixelSize(ScreenshotManager.picker.selection) : Qt.size(0, 0)
@@ -280,7 +280,7 @@ PanelWindow {
         id: sizeText
         anchors.centerIn: parent
         text: `${parent.pixels.width} × ${parent.pixels.height}`
-        textSize: Appearance.fontSizeBy(-3)
+        role: "micro"
       }
     }
 
@@ -320,16 +320,13 @@ PanelWindow {
     // Controls, out of the way while dragging: what a pick does (a
     // screenshot or a recording; for a screenshot, save or only copy, and
     // whether it opens in the annotator), then the keys
-    Rectangle {
+    Surface {
+      tone: "page"
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: parent.bottom
       anchors.bottomMargin: Widget.px(40)
       width: controls.implicitWidth + Widget.px(24)
       height: controls.implicitHeight + Widget.px(16)
-      radius: Appearance.borderRadius
-      color: Theme.background
-      border.color: Theme.border
-      border.width: Appearance.borderWidth
       visible: root.focusedScreen && !ScreenshotManager.picker.dragging
 
       // Clicks between the buttons aren't captures

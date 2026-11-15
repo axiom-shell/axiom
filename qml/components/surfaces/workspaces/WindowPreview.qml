@@ -52,7 +52,7 @@ Item {
   ClippingRectangle {
     anchors.fill: parent
     radius: root.radius
-    color: Theme.backgroundAlt
+    color: Style.surfaceSunken
 
     ScreencopyView {
       id: capture
@@ -83,7 +83,7 @@ Item {
       anchors.bottom: parent.bottom
       height: title.implicitHeight + Widget.smallPadding
       visible: root.showTitle && root.hovered && !root.resizing && root.height > height * 2.5
-      color: Qt.alpha(Theme.background, 0.85)
+      color: Style.surfaceRaised
 
       StyledLabel {
         id: title
@@ -93,8 +93,7 @@ Item {
         anchors.leftMargin: Widget.smallPadding
         anchors.rightMargin: Widget.smallPadding
         text: root.windowData?.title || root.windowData?.appId || ""
-        textSize: Appearance.fontSizeBy(-3)
-        elide: Text.ElideRight
+        role: "micro"
         horizontalAlignment: Text.AlignHCenter
       }
     }
@@ -105,7 +104,7 @@ Item {
     radius: root.radius
     color: "transparent"
     border.width: root.hovered || root.resizing ? Appearance.borderWidth * 2 : Appearance.borderWidth
-    border.color: root.resizing || root.hovered ? Theme.accent : root.focused ? Theme.borderFocus : Theme.border
+    border.color: root.resizing || root.hovered ? Style.accent : root.focused ? Style.focusRing : Style.borderSubtle
 
     ColorGlide on border.color {}
   }
@@ -130,14 +129,14 @@ Item {
     width: sizeLabel.implicitWidth + Widget.smallPadding * 2
     height: sizeLabel.implicitHeight + Widget.smallPadding
     radius: height / 2
-    color: Theme.accent
+    color: Style.accent
 
     StyledLabel {
       id: sizeLabel
       anchors.centerIn: parent
       text: `${root.windowData?.w ?? 0} × ${root.windowData?.h ?? 0}`
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.background
+      role: "caption"
+      textColor: Style.onAccent
     }
   }
 }

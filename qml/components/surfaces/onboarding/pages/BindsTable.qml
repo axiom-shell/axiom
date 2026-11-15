@@ -41,7 +41,7 @@ GridLayout {
       StyledLabel {
         Layout.fillWidth: true
         text: entryRow.modelData.label
-        elide: Text.ElideRight
+        overflow: "line"
       }
 
       IssueIcon {

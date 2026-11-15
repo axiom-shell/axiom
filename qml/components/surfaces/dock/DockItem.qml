@@ -53,7 +53,7 @@ Item {
     smooth: true
     mipmap: true
     asynchronous: true
-    opacity: area.pressed && !root.dragging ? 0.7 : 1
+    opacity: area.pressed && !root.dragging ? 0.7 : 1 // style-exempt: press dim of an app icon (an image takes no state layer)
   }
 
   // A dot per window (up to three), or a line, in the box's padding on the
@@ -76,7 +76,7 @@ Item {
       visible: indicator.line
       anchors.fill: parent
       radius: indicator.dot / 2
-      color: root.focused ? Theme.accent : Theme.foreground
+      color: root.focused ? Style.accent : Style.text
     }
 
     Repeater {
@@ -89,7 +89,7 @@ Item {
         width: indicator.dot
         height: indicator.dot
         radius: indicator.dot / 2
-        color: root.focused ? Theme.accent : Theme.foreground
+        color: root.focused ? Style.accent : Style.text
       }
     }
   }

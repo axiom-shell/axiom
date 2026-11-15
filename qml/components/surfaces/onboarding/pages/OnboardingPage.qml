@@ -39,7 +39,7 @@ Item {
 
       TitledCard {
         id: card
-        color: Theme.background
+        color: Style.surfacePage
         title: root.title
         showActions: false
 
@@ -47,8 +47,7 @@ Item {
           Layout.fillWidth: true
           visible: root.intro !== ""
           text: root.intro
-          wrapMode: Text.WordWrap
-          textColor: Theme.foregroundAlt
+          tone: "muted"
         }
       }
     }

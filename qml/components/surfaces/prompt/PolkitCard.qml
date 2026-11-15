@@ -115,8 +115,8 @@ ColumnLayout {
         anchors.centerIn: parent
         visible: !appIcon.visible
         text: "admin_panel_settings"
-        textColor: Theme.accent
-        textSize: Widget.px(32)
+        size: "xl"
+        tone: "accent"
       }
     }
 
@@ -127,15 +127,13 @@ ColumnLayout {
       StyledText {
         Layout.fillWidth: true
         text: I18n.tr("Authentication required")
-        textSize: Appearance.fontSizeLarge
-        font.weight: Font.DemiBold
-        wrapMode: Text.WordWrap
+        role: "headline"
+        overflow: "wrap"
       }
 
       StyledText {
         Layout.fillWidth: true
         text: root.message
-        wrapMode: Text.WordWrap
       }
     }
   }
@@ -150,53 +148,52 @@ ColumnLayout {
     StyledText {
       visible: actionDescription.visible
       text: I18n.tr("Action")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
       id: actionDescription
       Layout.fillWidth: true
       visible: text !== ""
       text: PolkitManager.actionInfo.description ?? ""
-      wrapMode: Text.WordWrap
     }
 
     StyledText {
       visible: vendor.visible
       text: I18n.tr("From")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
       id: vendor
       Layout.fillWidth: true
       visible: text !== ""
       text: PolkitManager.actionInfo.vendor ?? ""
-      wrapMode: Text.WordWrap
     }
 
     StyledText {
       visible: root.actionId !== ""
       text: I18n.tr("Action ID")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
       Layout.fillWidth: true
       visible: root.actionId !== ""
       text: root.actionId
       textFamily: "monospace"
-      textSize: Appearance.fontSizeBy(-1)
-      elide: Text.ElideMiddle
+      role: "caption"
+      overflow: "line"
+      elide: Text.ElideMiddle // style-exempt: middle
     }
 
     StyledText {
       visible: (root.flow?.identities.length ?? 0) === 1
       text: I18n.tr("As")
-      opacity: 0.7
+      tone: "muted"
     }
     StyledText {
       Layout.fillWidth: true
       visible: (root.flow?.identities.length ?? 0) === 1
       text: root.identityLabel(root.flow?.selectedIdentity)
-      elide: Text.ElideRight
+      overflow: "line"
     }
   }
 
@@ -208,7 +205,7 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Authenticate as")
-      opacity: 0.7
+      tone: "muted"
     }
 
     Flow {
@@ -223,8 +220,7 @@ ColumnLayout {
           readonly property bool selected: root.flow?.selectedIdentity === modelData
           text: root.identityLabel(modelData)
           iconText: modelData.isGroup ? "group" : "person"
-          backgroundColor: selected ? Theme.accent : Theme.backgroundHighlight
-          textColor: selected ? Theme.background : Theme.foreground
+          kind: selected ? "primary" : "tonal"
           onClicked: {
             PolkitManager.selectIdentity(modelData);
             root.takeFocus();
@@ -277,8 +273,7 @@ ColumnLayout {
     StyledTextButton {
       text: I18n.tr("Authenticate")
       iconText: "lock_open"
-      backgroundColor: Theme.accent
-      textColor: Theme.background
+      kind: "primary"
       onClicked: root.submit()
     }
   }

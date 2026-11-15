@@ -30,8 +30,7 @@ ActionTile {
   icon: root.info?.icon ?? ""
   label: root.armed ? I18n.tr("Confirm?") : (root.info?.label ?? "")
   active: root.armed
-  activeColor: Theme.error
-  tone: SessionManager.destructiveActions.includes(root.action) ? Theme.error : Theme.accent
+  activeTone: root.armed || SessionManager.destructiveActions.includes(root.action) ? "error" : "accent"
   countdown: root.armedTimeout
 
   opacity: root.introProgress

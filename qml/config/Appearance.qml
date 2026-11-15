@@ -107,8 +107,8 @@ QtObject {
 
   // --- Translucency ---
   // How solid the shell's surfaces are (0.6–1). Every surface fill goes
-  // through fill(), outer and nested alike, so nested fills stack: a card
-  // on a 60% panel reads about 84%.
+  // through Style (edgeFill, fill*), outer and nested alike, so nested fills
+  // stack: a card on a 60% panel reads about 84%.
   // Solid where the compositor can't blur behind them (plain sway): a
   // translucent surface over another would show it through unblurred. The
   // setting keeps its value (greyed out, x-enabledIf).
@@ -135,15 +135,6 @@ QtObject {
   // blurs the chrome's popups). Where the blur has no threshold (SwayFX),
   // a window it doesn't blur casts them (BlurBacking).
   readonly property real shadowAlphaMax: blur ? 0.45 : 1
-
-  // A surface fill (a theme color, or a name or "#hex" as
-  // Theme.resolveColor gives one) at the surface opacity
-  function fill(color) {
-    if (!translucent)
-      return color;
-    const c = Qt.color(color);
-    return Qt.alpha(c, c.a * surfaceAlpha);
-  }
 
   // --- Motion ---
   // Every animation in the shell uses one of these durations, so the

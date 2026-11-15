@@ -450,6 +450,8 @@ PopoutWrapperBase {
       strokeColor: root.colors.stroke
       // Tiled, no box: its cards draw their tiles (MenuTile)
       hollow: root.tiled
+      // The menu scales with the user's animation setting: its text is distance field then, native at rest (_scale is 1)
+      readonly property real contentZoom: root._scale
 
       transform: Scale {
         origin.x: surface.boxRect.x + surface.boxRect.width / 2

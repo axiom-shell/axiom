@@ -253,14 +253,17 @@ properties:
     type: string
     title: Background color
     x-options: colors
-    default: base00
-    description: The menu's box, or with Box set to None, the tile under each card.
+    default: ''
+    x-emptyLabel: Auto
+    description: "The menu's box, or with Box set to None, the tile under each card. Auto: the theme's surface colour."
   borderColor:
     x-group: Look
     type: string
     title: Border color
     x-options: colors
-    default: base05
+    default: ''
+    x-emptyLabel: Auto
+    description: "Auto: the screen frame's outline colour."
     x-showIf:
       anyOf:
         - {placement: strip}

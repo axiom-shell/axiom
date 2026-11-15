@@ -10,7 +10,7 @@ QtObject {
 
   // Cells show the monitor's wallpaper, else `color`
   readonly property bool wallpaper: _c.background === "wallpaper"
-  readonly property color color: Theme.resolveColor(_c.color)
+  readonly property color color: Style.resolve(_c.color)
   // 0-1: how dark workspaces other than the active one are drawn
   readonly property real dimInactive: _c.dimInactive / 100
   // 0-1 of the screen the grid may take
@@ -23,7 +23,7 @@ QtObject {
   // (those with windows, or shown) or "all" (SpecialWorkspaces.cells)
   readonly property string specialWorkspaces: _c.specialWorkspaces
   // The border and label color of a special workspace's cell
-  readonly property color specialWorkspaceColor: Theme.resolveColor(_c.specialWorkspaceColor)
+  readonly property color specialWorkspaceColor: Style.resolve(_c.specialWorkspaceColor)
   readonly property bool showHint: _c.showHint
   // Open the compositor's own overview instead, where it has one
   // (CompositorManager.supports.overview)

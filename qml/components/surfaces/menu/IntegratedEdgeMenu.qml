@@ -180,12 +180,12 @@ PopoutWrapperBase {
         Rectangle {
           id: strip
           anchors.fill: parent
-          color: panel.backed ? "transparent" : BlurManager.fillOn(root.framed ? Theme.background : root.colors.fill, root.screen)
+          color: panel.backed ? "transparent" : Style.edgeFill(root.framed ? Style.surfacePage : root.colors.fill, BlurManager.opaqueOn(root.screen))
 
           BlurShape {
             source: strip
             kind: "rect"
-            color: root.framed ? Theme.background : root.colors.fill
+            color: root.framed ? Style.surfacePage : root.colors.fill
             screen: root.screen?.name ?? ""
             x: (placeOnScreen.origin?.x ?? 0) + slide.slideX
             y: (placeOnScreen.origin?.y ?? 0) + slide.slideY
@@ -203,7 +203,7 @@ PopoutWrapperBase {
           width: parent.width - root.frameInset * 2 - (root.vertical ? root.innerStroke : 0)
           height: parent.height - root.frameInset * 2 - (root.vertical ? 0 : root.innerStroke)
           radius: Appearance.borderRadius
-          color: BlurManager.fillOn(root.colors.fill, root.screen)
+          color: Style.edgeFill(root.colors.fill, BlurManager.opaqueOn(root.screen))
           border.color: root.colors.stroke
           border.width: Appearance.borderWidth
         }
@@ -211,7 +211,7 @@ PopoutWrapperBase {
         // With the screen border off, nothing inside draws the frame's stroke
         Rectangle {
           visible: !Appearance.screenBorder
-          color: Theme.foreground
+          color: Style.frameStroke
           width: root.vertical ? Appearance.borderWidth : parent.width
           height: root.vertical ? parent.height : Appearance.borderWidth
           x: root.edge === ScreenEdge.Left ? parent.width - width : 0

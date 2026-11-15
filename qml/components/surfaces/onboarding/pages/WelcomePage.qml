@@ -38,7 +38,6 @@ OnboardingPage {
     Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("How big should cards and text be? This window uses the same sizes, so it changes as you drag.")
-    wrapMode: Text.WordWrap
   }
 
   SettingRows {
@@ -56,7 +55,6 @@ OnboardingPage {
     StyledText {
       Layout.fillWidth: true
       text: I18n.tr("Turns on what axiom can run for you, in one go. Untick what you'd rather keep your own under What this turns on. The login screen comes last and asks for your password.")
-      wrapMode: Text.WordWrap
     }
 
     RowLayout {
@@ -79,7 +77,7 @@ OnboardingPage {
       StyledText {
         Layout.fillWidth: true
         text: RecommendedSetupManager.running ? I18n.tr("Applying...") : root.failedCount > 0 ? I18n.tr("{0} failed", root.failedCount) : root.applied ? I18n.tr("Done") : ""
-        textColor: root.failedCount > 0 && !RecommendedSetupManager.running ? Theme.error : Theme.foregroundInactive
+        tone: root.failedCount > 0 && !RecommendedSetupManager.running ? "error" : "faint"
       }
     }
 

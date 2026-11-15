@@ -24,7 +24,7 @@ Item {
   required property var tiles
   property point scroll: Qt.point(0, 0)
   property size viewSize: Qt.size(0, 0)
-  property color fillColor: Theme.background
+  property color fillColor: Style.surfacePage
   property real radius: Widget.radius
   // Eases its growing (after it's first laid out)
   property bool animate: false
@@ -71,14 +71,14 @@ Item {
     anchors.fill: parent
     visible: ownShadow.active
     radius: root.radius
-    color: "black"
+    color: "black" // style-exempt: mask
   }
 
   Rectangle {
     id: fill
     anchors.fill: parent
     radius: root.radius
-    color: root.backed ? "transparent" : root.tiles?.opaque ? root.fillColor : Appearance.fill(root.fillColor)
+    color: root.backed ? "transparent" : Style.edgeFill(root.fillColor, root.tiles?.opaque ?? false)
   }
 
   // ...or by the blur window, at its place on the screen
@@ -88,7 +88,8 @@ Item {
     screen: root.tiles?.screen ?? ""
     x: (root._origin?.x ?? 0) + root.x
     y: (root._origin?.y ?? 0) + root.y
-    color: Qt.alpha(root.fillColor, root.tiles?.opacity ?? 1)
+    color: root.fillColor
+    fade: root.tiles?.opacity ?? 1
     shadow: root.tiles?.look ?? null
     overlayLayer: root.tiles?.overlayLayer ?? false
     shown: root.backed && root.visible && root._origin !== null

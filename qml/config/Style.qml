@@ -377,8 +377,7 @@ QtObject {
   readonly property color fillHighest: root.surfaceAlpha < 1 ? Tone.alpha(root.surfaceHighest, root.surfaceAlpha) : root.surfaceHighest
   // The edge family's alpha: the user's opacity, unfloored
   readonly property real edgeAlpha: Appearance.surfaceAlpha
-  // `color` at the edge family's alpha (what Appearance.fill gives when not
-  // `opaque`)
+  // `color` at the edge family's alpha, unless `opaque`
   function edgeFill(color, opaque) {
     return opaque || root.edgeAlpha >= 1 ? color : Tone.alpha(color, Qt.color(color).a * root.edgeAlpha);
   }

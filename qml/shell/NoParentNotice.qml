@@ -63,21 +63,21 @@ Scope {
           Text {
             renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
             color: "#ebdbb2"
-            font.pixelSize: 16 // no config to size by without axiom
+            font.pixelSize: 16 // no config to size by without axiom // style-exempt: shown when axiom did not start the shell, no Style
             font.bold: true
             text: root.reason ? "This axiom binary was built for other shell files" : "axiom isn't running this shell"
           }
           Text {
             renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
             color: "#d5c4a1"
-            font.pixelSize: 14 // no config to size by without axiom
+            font.pixelSize: 14 // no config to size by without axiom // style-exempt: shown when axiom did not start the shell, no Style
             text: root.reason ? root.reason + "\nUpdate axiom (or run the binary built from this checkout)." : "The shell is started by the axiom binary. Start it with:"
           }
           Text {
             renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
             visible: !root.reason
             color: "#fabd2f"
-            font.pixelSize: 14 // no config to size by without axiom
+            font.pixelSize: 14 // no config to size by without axiom // style-exempt: shown when axiom did not start the shell, no Style
             font.family: "monospace"
             text: root._line
           }

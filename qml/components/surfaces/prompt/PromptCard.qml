@@ -144,8 +144,8 @@ FocusScope {
         StyledIcon {
           anchors.centerIn: parent
           text: root.request?.icon || "info"
-          textColor: Theme.accent
-          textSize: Widget.px(32)
+          size: "xl"
+          tone: "accent"
         }
       }
 
@@ -156,16 +156,14 @@ FocusScope {
         StyledText {
           Layout.fillWidth: true
           text: root.request?.title ?? ""
-          textSize: Appearance.fontSizeLarge
-          font.weight: Font.DemiBold
-          wrapMode: Text.WordWrap
+          role: "headline"
+          overflow: "wrap"
         }
 
         StyledText {
           Layout.fillWidth: true
           visible: text !== ""
           text: root.request?.message ?? ""
-          wrapMode: Text.WordWrap
         }
       }
     }
@@ -185,10 +183,9 @@ FocusScope {
           readonly property int entered: root.request?.entered ?? -1
           text: modelData
           textFamily: "monospace"
-          textSize: Appearance.fontSizeBy(14)
-          font.weight: Font.DemiBold
-          textColor: entered >= 0 && index < entered ? Theme.accent : Theme.foreground
-          opacity: entered >= 0 && index >= entered ? 0.6 : 1
+          role: "display"
+          font.weight: Style.weightStrong
+          textColor: entered >= 0 && index < entered ? Style.textAccent : entered >= 0 ? Style.textFaint : Style.text
         }
       }
     }
@@ -238,8 +235,7 @@ FocusScope {
       Layout.fillWidth: true
       visible: root.fields.length === 0 && text !== ""
       text: root.request?.error ?? ""
-      textColor: Theme.error
-      wrapMode: Text.WordWrap
+      tone: "error"
     }
 
     RowLayout {
@@ -270,9 +266,7 @@ FocusScope {
           text: modelData.label
           iconText: modelData.icon ?? ""
           enabled: !root.busy && (!primary || root.filled)
-          opacity: enabled ? 1 : 0.5
-          backgroundColor: primary ? Theme.accent : Theme.backgroundHighlight
-          textColor: primary ? Theme.background : Theme.foreground
+          kind: primary ? "primary" : "tonal"
           onClicked: root.act(modelData)
         }
       }

@@ -174,10 +174,7 @@ Item {
       visible: MenusConfig.canPopOut(root.menu)
       size: Widget.height
       iconText: "open_in_new"
-      iconColor: root.poppedOut ? Theme.background : Theme.foreground
-      backgroundColor: root.poppedOut ? Theme.accent : Qt.alpha(Theme.background, 0.85)
-      hoverColor: root.poppedOut ? Theme.accent : Theme.backgroundHighlight
-      borderColor: Theme.border
+      kind: root.poppedOut ? "primary" : "tonal"
       tooltipText: root.poppedOut ? I18n.tr("Dock: close it back onto its edge") : I18n.tr("Pop out: keep it open off its edge")
       onClicked: MenuManager.togglePoppedOut(root.menu.id)
     }
@@ -186,10 +183,7 @@ Item {
       visible: root.menu.pinButton
       size: Widget.height
       iconText: "push_pin"
-      iconColor: root.pinned ? Theme.background : Theme.foreground
-      backgroundColor: root.pinned ? Theme.accent : Qt.alpha(Theme.background, 0.85)
-      hoverColor: root.pinned ? Theme.accent : Theme.backgroundHighlight
-      borderColor: Theme.border
+      kind: root.pinned ? "primary" : "tonal"
       tooltipText: root.pinned ? I18n.tr("Unpin: close as usual") : I18n.tr("Pin: keep this menu open")
       onClicked: MenuManager.togglePinned(root.menu.id)
     }
@@ -200,9 +194,7 @@ Item {
       visible: root.menu.closeButton && !root.poppedOut
       size: Widget.height
       iconText: "close"
-      backgroundColor: Qt.alpha(Theme.background, 0.85)
-      hoverColor: Theme.backgroundHighlight
-      borderColor: Theme.border
+      kind: "tonal"
       tooltipText: I18n.tr("Close")
       onClicked: MenuManager.closeUnpinned(root.menu.id)
     }

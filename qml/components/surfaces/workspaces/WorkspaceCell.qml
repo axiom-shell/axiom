@@ -19,7 +19,7 @@ Item {
   // null fills the cell
   property var wallpaperRect: null
   property size wallpaperSize: Qt.size(0, 0)
-  property color color: Theme.backgroundAlt
+  property color color: Style.surfaceSunken
   // 0-1: how dark it is drawn when it isn't the active workspace
   property real dim: 0.5
   property real radius: Widget.radius
@@ -30,8 +30,8 @@ Item {
   // has no tiled windows to split)
   property bool dropTarget: false
   property bool dropFill: false
-  // A color for the borders and the drop fill (a special workspace's); transparent
-  // keeps the usual ones
+  // A color for the borders (a special workspace's); transparent keeps the usual
+  // ones
   property color tint: "transparent"
   readonly property bool tinted: root.tint.a > 0
 
@@ -58,19 +58,23 @@ Item {
     // Other workspaces sit back a little
     Rectangle {
       anchors.fill: parent
-      color: Theme.base00
-      opacity: root.current || root.dropTarget ? 0 : root.hovered ? root.dim * 0.4 : root.dim
+      color: Style.surfacePage
+      opacity: root.current || root.dropTarget ? 0 : root.hovered ? root.dim * 0.4 : root.dim // style-exempt: the hover lifts the cell's dim to 40 % of it (a scale of the dim, not a state alpha)
 
       Glide on opacity {}
+    }
+
+    StateLayer {
+      hovered: root.hovered
     }
   }
 
   Rectangle {
     anchors.fill: parent
     radius: root.radius
-    color: root.dropFill ? Qt.alpha(root.tinted ? root.tint : Theme.accent, 0.3) : "transparent"
+    color: root.dropFill ? Style.accentWash : "transparent"
     border.width: root.current || root.dropTarget ? Appearance.borderWidth * 2 : Appearance.borderWidth
-    border.color: root.tinted ? (root.hovered || root.dropTarget ? Qt.lighter(root.tint, 1.4) : root.tint) : root.dropTarget ? Theme.accent : root.current ? Theme.accent : root.hovered ? Theme.borderFocus : Theme.border
+    border.color: root.tinted ? root.tint : root.dropTarget || root.current ? Style.accent : Style.borderSubtle
 
     ColorGlide on border.color {}
   }

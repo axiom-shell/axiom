@@ -79,9 +79,9 @@ PanelWindow {
       return [];
     // None while its fill is drawn under the blur threshold, fading or
     // faded out (an AttachedSurface's `fade`, a dock fading as it hides, a
-    // rect's colour fading, as a toast's), as BoxBlurRegion and Hyprland's
+    // shape's `fade`, as a toast's or a menu tile's), as BoxBlurRegion and Hyprland's
     // ignore_alpha compare it
-    if (Appearance.surfaceAlpha * shape.color.a * (src.shownOpacity ?? 1) * (src.hostOpacity ?? 1) < Appearance.blurThreshold)
+    if (Appearance.surfaceAlpha * shape.color.a * (shape.fade ?? 1) * (src.shownOpacity ?? 1) * (src.hostOpacity ?? 1) < Appearance.blurThreshold)
       return [];
     const clip = shape.clipRect ?? {
       "x": 0,
@@ -170,8 +170,8 @@ PanelWindow {
   Item {
     id: fills
     anchors.fill: parent
-    layer.enabled: groups.count > 1 && visible
-    opacity: Appearance.surfaceAlpha
+    layer.enabled: groups.count > 1 && visible // style-exempt: no text
+    opacity: Style.edgeAlpha
     visible: backing.part !== "shadows"
   }
 
@@ -366,6 +366,7 @@ PanelWindow {
             bottomLeftRadius: src?.bottomLeftRadius ?? 0
             bottomRightRadius: src?.bottomRightRadius ?? 0
             color: slot.shape?.color ?? "transparent"
+            opacity: slot.shape?.fade ?? 1
           }
         }
 

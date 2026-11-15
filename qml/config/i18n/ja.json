@@ -3490,7 +3490,6 @@
     "Dock: close it back onto its edge": "",
     "Pop out: keep it open off its edge": "",
     "Panel": "",
-    "The menu's box, or with Box set to None, the tile under each card.": "",
     "Box": "",
     "On a screen edge": "",
     "A bar widget's popout": "",
@@ -4391,6 +4390,8 @@
     "While any window is fullscreen, even on a workspace you aren't looking at.": "",
     "Keep the screen awake while fullscreen": "",
     "File pickers, password prompts, dialogs, the screenshot editor, Qt theme settings, and the volume, network and Bluetooth apps.": "",
+    "The menu's box, or with Box set to None, the tile under each card. Auto: the theme's surface colour.": "",
+    "Auto: the screen frame's outline colour.": "",
     "How it looks on the bar, with the last output.": "",
     "An empty module: drag elements here from the left, or click one to add it where there's room.": ""
   }

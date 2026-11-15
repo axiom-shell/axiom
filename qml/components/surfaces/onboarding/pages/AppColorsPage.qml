@@ -57,14 +57,13 @@ OnboardingPage {
 
         StyledIcon {
           text: integration.present ? "check_circle" : "radio_button_unchecked"
-          textColor: integration.present ? Theme.success : Theme.foregroundInactive
+          textColor: integration.present ? Style.success : Style.textFaint
         }
 
         StyledLabel {
           Layout.fillWidth: true
           text: I18n.tr(ThemeManager.integrationTitle(integration.modelData))
-          elide: Text.ElideRight
-          textColor: integration.present ? Theme.foreground : Theme.foregroundInactive
+          tone: integration.present ? "" : "faint"
         }
 
         StyledSwitch {
@@ -82,10 +81,11 @@ OnboardingPage {
   // The switched-on integrations' hookups: the line to add, and Apply
   // (i18n: keys from the schema: integration titles)
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     visible: root.hookups.length > 0
     text: root.hookups.every(key => IntegrationHookupManager.isDone(key)) ? I18n.tr("Every app you turned on is set up") : I18n.tr("Finish setting up")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   Repeater {
@@ -101,8 +101,8 @@ OnboardingPage {
 
       StyledText {
         text: I18n.tr(ThemeManager.integrationTitle(hookup.modelData))
-        textColor: Theme.accent
-        font.weight: Font.Bold
+        role: "label"
+        tone: "accent"
       }
 
       IntegrationHookup {

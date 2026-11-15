@@ -14,5 +14,17 @@
   "qml/components/views/Layouts/CanvasModule.qml": {
     "rules": ["R6"],
     "reason": "a module tile's fill is the user's colour; its ink is picked once per fill (`Tone.bestOn`)"
+  },
+  "qml/components/surfaces/lockscreen/LockPreviewWindow.qml": {
+    "rules": ["R2", "R7"],
+    "reason": "\"black\" stands in for the screen behind a preview"
+  },
+  "qml/components/surfaces/greeter/GreeterPreviewWindow.qml": {
+    "rules": ["R2", "R7"],
+    "reason": "\"black\" stands in for the screen behind a preview"
+  },
+  "qml/shell/NoParentNotice.qml": {
+    "rules": ["R2", "R5", "R7"],
+    "reason": "shown when axiom didn't start the shell: reads no config, creates no Style"
   }
 }

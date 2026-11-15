@@ -271,6 +271,45 @@ var all = []Step{
 		items.Append(jsonx.Obj("id", freeID("windowRules", taken), "type", "WindowRules"))
 		return []string{"Overlay.items: added the Window rules page"}
 	}},
+	// v110: menus' and docks' Background and Border colours became Auto
+	// (''): the old defaults, base00 and base05, are cleared so they follow
+	// the theme and the screen frame; a picked colour stays
+	{Version: 110, Run: func(cfg *jsonx.Object) []string {
+		var changes []string
+		for _, section := range []struct{ key, noun string }{{"Menus", "menus"}, {"Dock", "docks"}} {
+			root := object(cfg, section.key)
+			if root == nil {
+				continue
+			}
+			items, _ := root.Value("items").(*jsonx.Array)
+			if items == nil {
+				continue
+			}
+			changed := 0
+			for _, item := range items.Items {
+				entry, _ := item.(*jsonx.Object)
+				if entry == nil {
+					continue
+				}
+				hit := false
+				if entry.Value("backgroundColor") == "base00" {
+					entry.Set("backgroundColor", "")
+					hit = true
+				}
+				if entry.Value("borderColor") == "base05" {
+					entry.Set("borderColor", "")
+					hit = true
+				}
+				if hit {
+					changed++
+				}
+			}
+			if changed > 0 {
+				changes = append(changes, fmt.Sprintf("%s.items: %d %s' default colours became Auto", section.key, changed, section.noun))
+			}
+		}
+		return changes
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

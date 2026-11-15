@@ -152,7 +152,7 @@ Item {
     property real aspect: root._screen.height > 0 ? root._screen.width / root._screen.height : 1
     property vector4d fromRect: root._transition.name === "show" ? Qt.vector4d(0, 0, 0, 0) : root._rect(root.previous)
     property vector4d toRect: root._rect(root.current)
-    property color background: Theme.background
+    property color background: Style.surfacePage
     property point origin: Qt.point(root._transition.origin.x, root._transition.origin.y)
     property real sweep: root._transition.sweep
     property real seed: root._transition.seed

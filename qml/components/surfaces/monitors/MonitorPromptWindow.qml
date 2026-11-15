@@ -46,15 +46,13 @@ PanelWindow {
     opacity: card.opacity
   }
 
-  Rectangle {
+  Surface {
     id: card
+    tone: "page"
 
     width: content.implicitWidth + root.pad * 2
     height: content.implicitHeight + root.pad * 2
-    color: Appearance.fill(Theme.background)
-    border.color: root.asking ? Theme.accent : Theme.border
-    border.width: Appearance.borderWidth
-    radius: Appearance.borderRadius
+    border.color: root.asking ? Style.accent : Style.borderSubtle
     opacity: root.shown ? 1 : 0
 
     Glide on opacity {}
@@ -67,31 +65,34 @@ PanelWindow {
       StyledText {
         Layout.alignment: Qt.AlignHCenter
         text: root.screen?.name ?? ""
-        textSize: root.asking ? Appearance.fontSize : Appearance.fontSize * 3
-        font.weight: Font.Bold
-        opacity: root.asking ? 0.6 : 1
+        textSize: root.asking ? Style.typeBody : Style.typeBody * 3 // fitted: the monitor's number, read from across the room
+        font.weight: Style.weightStrong
+        tone: root.asking ? "muted" : ""
+        overflow: "none"
       }
 
       StyledText {
         visible: !root.asking
         Layout.alignment: Qt.AlignHCenter
+        Layout.maximumWidth: Widget.textPx(420)
         text: String(root.screen?.model ?? "").trim()
-        opacity: 0.7
+        tone: "muted"
       }
 
       StyledText {
         visible: root.asking
         Layout.alignment: Qt.AlignHCenter
         text: I18n.tr("Keep this display layout?")
-        textSize: Appearance.fontSizeBy(4)
-        font.weight: Font.Bold
+        Layout.maximumWidth: Widget.textPx(420)
+        role: "headline"
       }
 
       StyledText {
         visible: root.asking
         Layout.alignment: Qt.AlignHCenter
+        Layout.maximumWidth: Widget.textPx(420)
         text: I18n.tr("Going back in {0} s", MonitorManager.secondsLeft)
-        opacity: 0.7
+        tone: "muted"
       }
 
       RowLayout {
@@ -110,8 +111,7 @@ PanelWindow {
           text: I18n.tr("Keep")
           iconText: "check"
           implicitHeight: Widget.height
-          backgroundColor: Theme.accent
-          textColor: Theme.background
+          kind: "primary"
           onClicked: MonitorManager.keep()
         }
       }

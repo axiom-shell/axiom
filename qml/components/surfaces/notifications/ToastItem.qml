@@ -297,8 +297,8 @@ Item {
     id: background
     anchors.fill: parent
     visible: root.card
-    color: root.backed ? "transparent" : BlurManager.fillOn(Theme.background, root.screenName)
-    border.color: root.critical ? Theme.error : Theme.foreground
+    color: root.backed ? "transparent" : Style.edgeFill(Style.surfacePage, BlurManager.opaqueOn(root.screenName))
+    border.color: root.critical ? Style.error : Style.borderSubtle
     border.width: Appearance.borderWidth
     radius: Appearance.borderRadius + 2
   }
@@ -315,7 +315,7 @@ Item {
     anchors.bottom: parent.bottom
     anchors.margins: Widget.padding
     radius: 1.5
-    color: Theme.error
+    color: Style.error
   }
 
   ColumnLayout {
@@ -346,10 +346,8 @@ Item {
         StyledLabel {
           Layout.fillWidth: true
           text: root.notification?.appName || ""
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
-          font.weight: Font.Bold
-          elide: Text.ElideRight
+          role: "micro"
+          tone: "muted"
         }
 
         NotificationText {
@@ -371,10 +369,9 @@ Item {
         Layout.alignment: Qt.AlignTop
 
         iconText: "close"
-        iconSize: Appearance.fontSizeBy(-2)
+        kind: "text"
+        iconSize: Style.iconXs
         borderRadius: width / 2
-        iconColor: Theme.foregroundAlt
-        hoverColor: Theme.backgroundHighlight
 
         onClicked: root.close(NotificationsConfig.closeRemoves)
       }

@@ -112,8 +112,8 @@ PopoutWrapperBase {
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
   readonly property bool onOverlayLayer: root.windowLayer === WlrLayer.Overlay
-  property color fillColor: Theme.background
-  property color strokeColor: Theme.foreground
+  property color fillColor: Style.surfacePage
+  property color strokeColor: Style.frameStroke
   // No box of its own drawn, only its content (AttachedSurface.hollow: a
   // tiled edge menu, whose cards draw their own tiles)
   property bool hollow: false

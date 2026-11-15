@@ -177,7 +177,7 @@ FocusScope {
     y: root._offset(root._order.indexOf(searchRow))
     x: Widget.padding * 2
     width: root.width - Widget.padding * 4
-    height: Appearance.fontSizeLarge + Widget.px(36)
+    height: Style.typeHeadline + Widget.px(36)
     spacing: Widget.padding
 
     StyledIcon {
@@ -193,8 +193,8 @@ FocusScope {
           files: "folder_open"
         })
       text: glyphs[LauncherManager.mode] ?? glyphs.apps
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(6)
+      size: "lg"
+      tone: "accent"
     }
 
     TextField {
@@ -202,14 +202,14 @@ FocusScope {
       renderType: TextRender.typeFor(TextRender.zoomAt(parent), false, 0)
       Layout.fillWidth: true
       focus: true
-      color: Theme.foreground
+      color: Style.text
       font.family: Appearance.fontFamily
-      font.pixelSize: Appearance.fontSizeLarge
+      font.pixelSize: Style.typeHeadline
       selectByMouse: true
-      selectedTextColor: Theme.background
-      selectionColor: Theme.accent
+      selectedTextColor: Style.onAccent
+      selectionColor: Style.accent
       placeholderText: LauncherConfig.commands ? I18n.tr("Search apps, or type / for commands") : I18n.tr("Search apps")
-      placeholderTextColor: Theme.foregroundInactive
+      placeholderTextColor: Style.textFaint
       background: null
       padding: 0
 
@@ -250,7 +250,7 @@ FocusScope {
 
       cursorDelegate: Rectangle {
         width: 2
-        color: Theme.accent
+        color: Style.accent
         visible: input.activeFocus
         SequentialAnimation on opacity {
           loops: Animation.Infinite
@@ -283,14 +283,14 @@ FocusScope {
       implicitWidth: modeLabel.implicitWidth + Widget.spacing * 4
       implicitHeight: modeLabel.implicitHeight + Widget.spacing * 2
       radius: Widget.radius
-      color: Qt.alpha(Theme.accent, 0.16)
+      color: Style.accentContainer
 
       StyledLabel {
         id: modeLabel
         anchors.centerIn: parent
         text: parent.labels[LauncherManager.mode] ?? ""
-        textColor: Theme.accent
-        textSize: Appearance.fontSizeBy(-2)
+        textColor: Style.onAccentContainer
+        role: "caption"
       }
     }
 
@@ -299,7 +299,7 @@ FocusScope {
       visible: input.text !== ""
       focusPolicy: Qt.NoFocus
       iconText: "close"
-      iconSize: Appearance.fontSizeBy(2)
+      iconSize: Style.iconMd
       tooltipText: I18n.tr("Clear")
       onClicked: {
         input.clear();
@@ -308,13 +308,12 @@ FocusScope {
     }
   }
 
-  Rectangle {
+  StyledSeparator {
     id: searchLine
+    backTone: "page"
     y: root._offset(root._order.indexOf(searchLine))
     width: root.width
-    height: Appearance.borderWidth
     visible: list.count > 0 || empty.visible
-    color: Theme.border
   }
 
   // --- Results ---
@@ -332,22 +331,20 @@ FocusScope {
       Layout.topMargin: Widget.padding
       visible: LauncherManager.frequent && list.count > 0
       text: I18n.tr("Frequent")
-      textColor: Theme.foregroundInactive
-      textSize: Appearance.fontSizeBy(-3)
-      font.weight: Font.DemiBold
+      role: "micro"
+      tone: "faint"
       font.capitalization: Font.AllUppercase
       font.letterSpacing: 1
     }
 
     StyledText {
       id: empty
-      wrapMode: Text.WordWrap
       Layout.fillWidth: true
       Layout.margins: Widget.padding * 2
       visible: list.count === 0 && input.text.trim() !== ""
       horizontalAlignment: Text.AlignHCenter
       text: I18n.tr("No results")
-      textColor: Theme.foregroundInactive
+      tone: "faint"
     }
 
     // The list at its rows' height (and a margin each side), in a frame
@@ -424,13 +421,12 @@ FocusScope {
   }
 
   // --- Controls hint ---
-  Rectangle {
+  StyledSeparator {
     id: hintLine
+    backTone: "page"
     y: root._offset(root._order.indexOf(hintLine))
     width: root.width
-    height: Appearance.borderWidth
     visible: LauncherConfig.showHint
-    color: Theme.border
   }
 
   Item {

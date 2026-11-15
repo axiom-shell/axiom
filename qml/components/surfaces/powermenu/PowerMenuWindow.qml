@@ -130,7 +130,7 @@ PanelWindow {
   BackdropRequest {
     screen: root.screen
     shown: root.shown && PowerMenuConfig.showBackdrop
-    fillColor: Theme.background
+    fillColor: Style.surfacePage
     fillOpacity: PowerMenuConfig.backdrop
   }
 
@@ -151,7 +151,7 @@ PanelWindow {
   WlrLayershell.namespace: "axiom-powermenu"
 
   // Where the compositor blurs only what a window asks: the card, as it
-  // fades and scales in
+  // fades and slides in
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
@@ -160,6 +160,7 @@ PanelWindow {
     id: cardBlur
     target: card
     opacity: card.opacity
+    moving: card._reveal
   }
 
   Item {
@@ -194,24 +195,25 @@ PanelWindow {
       onClicked: root.shown = false
     }
 
-    Rectangle {
+    Surface {
       id: card
+      tone: "page"
 
       anchors.centerIn: parent
       width: Math.min(tiles.implicitWidth + root.pad * 2, root.width - Widget.px(32))
       height: content.implicitHeight + root.pad * 2
-      color: Appearance.fill(Theme.background)
-      border.color: Theme.border
-      border.width: Appearance.borderWidth
-      radius: Appearance.borderRadius
       clip: true
 
       opacity: root.shown ? 1 : 0
-      scale: root.shown ? 1 : 0.97
+      // The show: a fade and a slide (never a scale: scaled text goes soft)
+      property real _reveal: root.shown ? 1 : 0
+      transform: Translate {
+        y: Math.round((1 - card._reveal) * Style.enterOffset)
+      }
       Glide on opacity {
         duration: Appearance.animNormal
       }
-      Glide on scale {
+      Glide on _reveal {
         duration: Appearance.animNormal
       }
 
@@ -239,10 +241,8 @@ PanelWindow {
             anchors.right: uptimeRow.left
             anchors.rightMargin: root.pad
             anchors.verticalCenter: parent.verticalCenter
-            elide: Text.ElideRight
             text: I18n.tr("Goodbye, {0}", General.displayName)
-            textSize: Appearance.fontSizeLarge
-            font.weight: Font.DemiBold
+            role: "headline"
           }
 
           Row {
@@ -255,14 +255,14 @@ PanelWindow {
             StyledIcon {
               anchors.verticalCenter: parent.verticalCenter
               text: "schedule"
-              textColor: Theme.foregroundInactive
-              textSize: Appearance.fontSize
+              tone: "faint"
             }
             StyledLabel {
               anchors.verticalCenter: parent.verticalCenter
+              width: Math.min(implicitWidth, Widget.textPx(220))
               text: I18n.tr("up {0}", root.uptime)
-              textColor: Theme.foregroundInactive
-              textSize: Appearance.fontSizeBy(-1)
+              role: "caption"
+              tone: "faint"
             }
           }
         }
@@ -290,11 +290,10 @@ PanelWindow {
           }
         }
 
-        Rectangle {
+        StyledSeparator {
+          backTone: "page"
           visible: PowerMenuConfig.showHint
           width: parent.width
-          height: Appearance.borderWidth
-          color: Theme.border
         }
 
         Flow {

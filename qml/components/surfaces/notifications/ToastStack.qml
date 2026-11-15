@@ -391,7 +391,8 @@ Scope {
           screen: root.screenName
           x: area.origin.x + toastCard.x + toastCard.shiftX
           y: area.origin.y + toastCard.y + toastCard.shiftY
-          color: Qt.alpha(Theme.background, toastCard.opacity)
+          color: Style.surfacePage
+          fade: toastCard.opacity
           overlayLayer: true
           // (out of sight, faded or slid, it blurs nothing: a covered
           // toast draws nothing)
@@ -487,7 +488,7 @@ Scope {
               anchors.margins: Widget.padding
               y: row.fromEnd ? parent.height - height : 0
               height: 1
-              color: Qt.alpha(Theme.foreground, 0.25)
+              color: Style.divider
             }
 
             ToastItem {

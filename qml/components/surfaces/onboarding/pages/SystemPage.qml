@@ -35,9 +35,10 @@ OnboardingPage {
 
   // A package updates with the system
   StyledText {
+    Layout.fillWidth: true
     visible: !Paths.packaged
     text: I18n.tr("Keeping axiom up to date")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   SettingRows {
@@ -47,15 +48,15 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Clipboard history")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("Type : in the launcher to search what you've copied. axiom keeps it in memory only and skips what password managers mark as sensitive; turn it off if you copy passwords from apps that don't.")
-    wrapMode: Text.WordWrap
   }
 
   SettingRows {
@@ -64,9 +65,10 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Idle")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   RowLayout {
@@ -115,7 +117,6 @@ OnboardingPage {
     StyledText {
       Layout.fillWidth: true
       text: I18n.tr("To lock after some idle time with your own idle daemon, have it lock with this command, also before the computer sleeps:")
-      wrapMode: Text.WordWrap
     }
 
     CodeLine {
@@ -127,13 +128,13 @@ OnboardingPage {
     Layout.fillWidth: true
     visible: !Idle.enabled
     text: I18n.tr("Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.")
-    wrapMode: Text.WordWrap
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Lock screen")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   RowLayout {
@@ -169,15 +170,15 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Authentication prompts")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("When an app needs administrator rights (installing updates, mounting a drive, changing system settings), a polkit agent asks for your password. A session has only one.")
-    wrapMode: Text.WordWrap
   }
 
   RowLayout {
@@ -213,10 +214,11 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     visible: !!ScreenShareManager.portal
     text: I18n.tr("Screen sharing")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   RowLayout {
@@ -258,15 +260,15 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Login screen")
-    font.weight: Font.Bold
+    role: "title"
   }
 
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("Axiom can be the screen you log in on (through greetd), laid out on the Layouts page like the lock screen.")
-    wrapMode: Text.WordWrap
   }
 
   RowLayout {

@@ -23,6 +23,7 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 ### Motion
 - As matches come and go, the list's frame (`LauncherPanel.listFrame`) glides to its rows' height (animFast). The list keeps its target height, clipped meanwhile.
 - The box follows the panel as drawn.
+- The current row is an `accentContainer` pill with an accent bar (title in `onAccentContainer`); hovering another row shows a `StateLayer`. The box is the edge family's (`Style.surfacePage` / `Style.frameStroke`).
 - Rows are reused across keystrokes, so nothing is created per keystroke. A row whose result changes (`kind` + `title`) dips its content and brings it back (animFast) rather than cross-fading its text.
 
 ### Row shape

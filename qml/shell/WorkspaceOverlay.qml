@@ -83,7 +83,7 @@ Scope {
       BackdropRequest {
         screen: overlayWindow.modelData
         shown: overlayWindow.shown
-        fillColor: Theme.base00
+        fillColor: Style.surfacePage
         fillOpacity: WorkspaceOverlayConfig.backdrop
       }
 
@@ -202,15 +202,19 @@ Scope {
           StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: I18n.tr("Click to go · Drag to move · Right-drag to resize · Middle-click to close")
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-1)
+            width: Math.min(implicitWidth, overview.width)
+            horizontalAlignment: Text.AlignHCenter
+            role: "caption"
+            tone: "muted"
           }
 
           StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: I18n.tr("Arrows to select · Enter to go · 1-9 to jump to a workspace")
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-1)
+            width: Math.min(implicitWidth, overview.width)
+            horizontalAlignment: Text.AlignHCenter
+            role: "caption"
+            tone: "muted"
           }
         }
       }

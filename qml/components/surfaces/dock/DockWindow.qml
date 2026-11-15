@@ -583,8 +583,8 @@ Scope {
         detachedOffset: Math.max(0, root._detachedBox - root.connectorGap / 2)
         boxWidth: root.vertical ? root.thickness + (root.attached ? placement.attachClearance : 0) : root.surfaceBoxLength
         boxHeight: root.vertical ? root.surfaceBoxLength : root.thickness + (root.attached ? placement.attachClearance : 0)
-        fillColor: Theme.resolveColor(root.dock.backgroundColor)
-        strokeColor: Theme.resolveColor(root.dock.borderColor)
+        fillColor: DockConfig.colorsOf(root.dock).fill
+        strokeColor: DockConfig.colorsOf(root.dock).stroke
         // Hiding, it moves past its window's edge
         hiddenBehind: Math.max(0, root.slide)
         hostOpacity: dockContent.opacity
@@ -600,8 +600,7 @@ Scope {
         y: root.vertical ? along : root.crossAt(root.boxOffset + root.pad / 2, across)
         width: root.vertical ? across : root.lineWidth
         height: root.vertical ? root.lineWidth : across
-        color: Theme.resolveColor(root.dock.borderColor)
-        opacity: 0.5
+        color: Style.inkPage.divider
       }
 
       Repeater {

@@ -45,7 +45,7 @@ Item {
   readonly property bool _image: _source !== ""
   // An emoji is its own picture: bigger, on no tile
   readonly property bool _emoji: modelData.kind === "emoji"
-  readonly property color _titleColor: current ? Theme.accent : Theme.foreground
+  readonly property color _titleColor: current ? Style.onAccentContainer : Style.text
 
   // Rows are reused as the results change: one showing a different result
   // than before dips and comes back, icon and text together. Not on its
@@ -65,7 +65,7 @@ Item {
     id: refresh
     target: content
     property: "opacity"
-    from: 0.6
+    from: 0.6 // style-exempt: a refreshed row fades back in from this level
     to: 1
     duration: Appearance.animFast
     easing.type: Appearance.easing
@@ -77,8 +77,12 @@ Item {
     anchors.leftMargin: Widget.smallPadding
     anchors.rightMargin: Widget.smallPadding
     radius: Widget.radius
-    color: root.current ? Qt.alpha(Theme.accent, 0.14) : area.containsMouse && root.pointerActive ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
+    color: root.current ? Style.accentContainer : "transparent"
     ColorGlide on color {}
+
+    StateLayer {
+      hovered: area.containsMouse && root.pointerActive && !root.current
+    }
 
     Rectangle {
       width: Widget.px(3)
@@ -87,7 +91,7 @@ Item {
       anchors.left: parent.left
       anchors.leftMargin: Widget.spacing
       anchors.verticalCenter: parent.verticalCenter
-      color: Theme.accent
+      color: Style.accent
       opacity: root.current ? 1 : 0
       Glide on opacity {}
     }
@@ -129,14 +133,14 @@ Item {
         anchors.fill: parent
         visible: !root._image
         radius: Widget.radius
-        color: root._emoji ? "transparent" : root.current ? Qt.alpha(Theme.accent, 0.18) : Theme.backgroundAlt
+        color: root._emoji ? "transparent" : root.modelData.armed ? Style.errorContainer : Style.surfaceHighest
         ColorGlide on color {}
 
         StyledIcon {
           anchors.centerIn: parent
           text: root.modelData.glyph ?? ""
-          textSize: Math.round(LauncherConfig.iconSize * (root._emoji ? 0.8 : 0.55))
-          textColor: root.modelData.armed ? Theme.error : root._titleColor
+          textSize: Math.max(Style.iconXs, Math.round(LauncherConfig.iconSize * (root._emoji ? 0.8 : 0.55))) // fitted: the glyph fills its tile (Launcher.iconSize)
+          textColor: root.modelData.armed ? Style.inkErrorContainer.icon : root.current ? Style.inkHighest.accent : Style.inkHighest.icon
         }
       }
     }
@@ -158,8 +162,7 @@ Item {
           // Titles are clipboard text, window titles, file names: never markup
           textFormat: Text.PlainText
           textColor: root._titleColor
-          font.weight: Font.Medium
-          elide: Text.ElideRight
+          role: "label"
           ColorGlide on color {}
         }
 
@@ -169,9 +172,9 @@ Item {
           visible: text !== ""
           text: root.modelData.usage ?? ""
           textFormat: Text.PlainText
-          textColor: Theme.foregroundInactive
-          textSize: Appearance.fontSizeBy(-2)
-          elide: Text.ElideRight
+          textColor: root.current ? Style.inkAccentContainer.muted : Style.textMuted
+          role: "caption"
+          overflow: "line"
         }
       }
 
@@ -180,9 +183,9 @@ Item {
         visible: LauncherConfig.showDescriptions && text !== ""
         text: root.modelData.subtitle ?? ""
         textFormat: Text.PlainText
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        elide: Text.ElideRight
+        textColor: root.current ? Style.inkAccentContainer.muted : Style.textMuted
+        role: "caption"
+        overflow: "line"
       }
     }
 
@@ -193,7 +196,7 @@ Item {
       implicitWidth: hint.implicitWidth + Widget.smallPadding * 2
       implicitHeight: hint.implicitHeight + Widget.smallPadding
       radius: Widget.radius
-      color: root.modelData.armed ? Theme.error : Theme.backgroundAlt
+      color: root.modelData.armed ? Style.error : Style.surfaceHighest
 
       StyledLabel {
         id: hint
@@ -203,9 +206,8 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         text: root.modelData.hint ?? ""
-        textColor: root.modelData.armed ? Theme.background : Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-3)
-        elide: Text.ElideRight
+        textColor: root.modelData.armed ? Style.onError : Style.inkHighest.muted
+        role: "micro"
       }
     }
   }

@@ -18,16 +18,12 @@ The translucency setting, how fills apply it, the Hyprland layer rules axiom wri
 - Reader properties: `Appearance.surfaceAlpha`, `compositorBlurs`, `translucent`, `blur`, `blurThroughWindows`, `blurBackdrops`, `blurThreshold` (0.5), `shadowAlphaMax`.
 
 ### Fills
-- Every surface fill goes through `Appearance.fill(color)` at the shared pieces' draw sites:
-  - `AttachedSurface`, `CornerPiece`, `BorderPanel`;
-  - the bar's background and islands, the overlay's box and navigator;
-  - edge menus, docks, power menu, overview, polkit and monitor prompts;
-  - `StyledContainer`, `Card`/`Panel`, buttons, inputs, `ActionTile`, `DropdownSurface`.
+- The edge family (`AttachedSurface`, `CornerPiece`, `BorderPanel`, the bar, edge menus, docks, toasts) draws at `Style.edgeAlpha` (the user's opacity, unfloored) through `Style.edgeFill(color, opaque)`; every other surface (`Surface`: the overlay's box and navigator, cards, prompts, pickers, power menu, overview, lock and greeter cards) at `Style.surfaceAlpha` (floored, D-50 as narrowed by Q-8b).
 - Outer and nested fills alike, so nested fills stack: a card on a 60% panel reads about 84%.
 - Accent colors and hover tints are left alone.
 
 ### Style's floor
-`Style.surfaceAlpha` is `Appearance.surfaceAlpha` raised to the theme's readability floor (the least alpha at which `text` on the page and on a card, over the opposite pole of the wallpaper, reaches 3.0; none at 100 %), and `Style.fill*` are the roles at it ([Style](../core/style.md) › Translucency). The bar keeps `Appearance`'s alpha and `Appearance.fill`, as does everything not yet on `Style`.
+`Style.surfaceAlpha` is `Appearance.surfaceAlpha` raised to the theme's readability floor (the least alpha at which `text` on the page and on a card, over the opposite pole of the wallpaper, reaches 3.0; none at 100 %), and `Style.fill*` are the roles at it ([Style](../core/style.md) › Translucency). The bar keeps `Appearance`'s alpha.
 
 ### Hyprland layer rules
 Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones SwayFX's `layer_effects` and niri's xray rules are written from too), handed `spec.surfaces` (`M.blur()` in the module). The named layer rules are always written, `enabled` or not, since a rule is taken back by redefining it (no reload).
@@ -73,7 +69,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
     - the rules are taken back at runtime, as is Hyprland's blur where the window look kept it on for the surfaces alone (the module file keeps the saved setting);
   - where each window asks for its own blur (niri, `supports.blurRegion`), only on that screen: its windows send no region (`regionsOn`), and `active` stays on;
   - the blur window goes there (`backingOn`) and the chrome fills itself.
-- On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` for the bars and integrated edge menus, `StyledContainer.solid` for toasts.
+- On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` (`Style.edgeFill`) for the bars, integrated edge menus and toasts.
 - Elsewhere they stay translucent.
 
 ### Stacking

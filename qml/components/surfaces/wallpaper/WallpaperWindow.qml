@@ -42,7 +42,7 @@ PanelWindow {
   WlrLayershell.layer: WlrLayer.Background
   WlrLayershell.namespace: "axiom-wallpaper"
   exclusionMode: ExclusionMode.Ignore
-  color: Theme.background
+  color: Style.surfacePage
   anchors {
     top: true
     bottom: true
