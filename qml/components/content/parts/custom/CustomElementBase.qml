@@ -31,6 +31,9 @@ Item {
   property bool failing: false
   // Another action holds the widget's script actions (CustomWidgetsManager.busy)
   property bool busy: false
+  // The host can take typed keys (an overlay card, an edge menu, a bar
+  // popout), so an Entry works
+  property bool keysHost: false
   // The module's font family (module.font), for a Text with none of its own
   property string moduleFont: ""
 
