@@ -129,6 +129,7 @@ properties:
               place: {x: 12, 'y': 4, w: 4, h: 4}
       - {id: settings, type: Settings}
       - {id: keybinds, type: Keybinds}
+      - {id: windowRules, type: WindowRules}
       - {id: barEditor, type: BarEditor}
       - {id: themes, type: Themes}
       - {id: monitors, type: Monitors}

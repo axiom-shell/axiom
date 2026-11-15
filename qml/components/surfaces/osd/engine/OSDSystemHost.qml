@@ -33,11 +33,14 @@ Item {
   // What shows for a change (OSDEngine.judge's, with { system })
   signal change(var what)
 
+  // A window rule pauses OSDs on its screen: only an alert opens it
+  property bool paused: false
+
   // Whether a change opens the OSD shut (OSDEngine.opens: its item's
   // `quiet`, its key's `opens`, on-screen unless OSD.onScreenChanges or
-  // the change's `alert`)
+  // the change's `alert`, and not while `paused` but for an alert)
   function opens(what) {
-    return OSDEngine.opens(root.options, root.definition, what, OSDConfig.onScreenChanges);
+    return OSDEngine.opens(root.options, root.definition, what, OSDConfig.onScreenChanges, root.paused);
   }
 
   // The card for a change (OSDEngine.cardOf), or null. A host re-reads

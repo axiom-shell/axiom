@@ -248,6 +248,43 @@ window-rule {
     open-maximized-to-edges false
 }
 
+window-rule {
+    match title="\\A(?s:.*)(?:Wine)(?s:.*)\\z"
+    open-floating true
+    block-out-from "screencast"
+}
+window-rule {
+    match app-id="\\A(?:steam)\\z"
+    open-on-output "DP-1"
+    open-maximized-to-edges true
+}
+window-rule {
+    match app-id="\\A(?:(?:org\\.gnome\\.Calculator)|(?:gnome-calculator))\\z"
+    open-floating true
+}
+window-rule {
+    match app-id="\\A(?s:.*)(?:\\Asteam_app_[0-9]+\\z)(?s:.*)\\z"
+    open-on-workspace "games"
+    open-fullscreen true
+}
+window-rule {
+    match title="\\A(?:Game)\\z"
+    exclude app-id="\\A(?:(?:steam))\\z"
+    open-on-workspace "games"
+    open-fullscreen true
+}
+window-rule {
+    match app-id="\\A(?:firefox)\\z" title="\\A(?s:.*)(?:Picture-in-Picture)(?s:.*)\\z"
+    open-floating true
+    default-column-width {
+        fixed 640
+    }
+    default-window-height {
+        fixed 360
+    }
+    open-focused false
+}
+
 // Your files
 // (none yet)
 
@@ -402,6 +439,13 @@ layer-rule {
 layer-rule {
     match namespace="^axiom-wallpaper$"
     place-within-backdrop true
+}
+window-rule {
+    match app-id="\\A(?:org\\.gnome\\.Nautilus)\\z"
+    opacity 0.85
+    background-effect {
+        blur false
+    }
 }
 environment {
     GDK_BACKEND "wayland,x11,*"

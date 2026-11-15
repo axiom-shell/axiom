@@ -825,6 +825,18 @@ TestCase {
     compare(placed(bars, withBorder).map(b => b.layerRank), [1, 0, 0, 0, 0, 0, 0]);
   }
 
+  // A bar turning auto-hiding (a window rule hides it: reserveSpace false)
+  // remaps no bar window: the layer ranks stay
+  function test_layer_ranks_ignore_reserve_space() {
+    const set = reserve => [bar("top", "floatingPills"), bar("top", "floating", {
+          "id": "f1",
+          "reserveSpace": reserve
+        }), bar("top", "pills", {
+          "reserveSpace": reserve
+        })];
+    compare(placed(set(false), withBorder).map(b => b.layerRank), placed(set(true), withBorder).map(b => b.layerRank));
+  }
+
   // Tabs reach the outer edge of what the widgets sit on, inside any
   // stroke there
   function test_tab_edge() {
