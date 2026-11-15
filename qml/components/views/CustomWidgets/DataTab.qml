@@ -2,15 +2,19 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services.core
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
 import qs.components.views.base
 
-// Custom widgets page, Data tab: the run state, the widget's actions
-// (ActionsEditor), the script's last output as it came (with its exit code
-// and last stderr line when it failed), and every value in it with its path
-// (what the module's elements bind to).
+// Custom widgets page, Data tab: the run state, the script (what runs and
+// how: name, icon, command, run mode, output, and folded the conditions and
+// the head of the script), the widget's actions (ActionsEditor), the
+// script's last output as it came (with its exit code and last stderr line
+// when it failed), every value in it with its path (what the module's
+// elements bind to), the samples and the actions run.
 // Each field reads the output's key of the same name: the script shapes
 // its own JSON.
 ColumnLayout {
@@ -18,6 +22,7 @@ ColumnLayout {
 
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var definition: root.editor.selected
+  readonly property var schema: ConfigManager.configSchema.definitions.CustomWidget.properties
   readonly property string widgetId: root.editor.selectedId
   readonly property var output: CustomWidgetsManager.outputs[root.widgetId] ?? null
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
@@ -32,6 +37,32 @@ ColumnLayout {
   property string sampleError: ""
   // Rows built at most: a large output lists its first paths
   readonly property int maxRows: 200
+  readonly property string scriptPath: root.editor.scriptPath(root.definition?.command)
+  // The script, read (its first 256 KiB, off the UI thread) when its path
+  // changes: only a script, text starting with #!, not a program the
+  // command names (an ELF)
+  property string scriptText: ""
+  // Its first lines
+  readonly property string scriptHead: root.scriptText.split("\n").slice(0, 40).join("\n")
+  // The script refreshes Waybar by signal (pkill -RTMIN+N waybar), which
+  // reaches nothing here
+  readonly property bool signalsWaybar: /RTMIN/.test(root.scriptText)
+  // The refresh name the script can call
+  readonly property string refreshTarget: root.definition?.refreshName || root.definition?.id || ""
+  property bool advancedOpen: false
+  onScriptPathChanged: root._readScript()
+  Component.onCompleted: root._readScript()
+
+  function _readScript() {
+    const path = root.scriptPath;
+    root.scriptText = "";
+    if (path !== "")
+      CommandManager.run(["head", "-c", "262144", "--", path], (code, out) => {
+        if (path === root.scriptPath)
+          root.scriptText = code === 0 && out.startsWith("#!") ? out : "";
+      });
+  }
+
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
@@ -41,21 +72,25 @@ ColumnLayout {
     spacing: Widget.spacing
 
     StatusChip {
+      Layout.alignment: Qt.AlignVCenter
       text: !root.definition?.command ? I18n.tr("No command") : root.output === null ? I18n.tr("Waiting") : root.output.blocked ? I18n.tr("Not run") : root.output.error ? I18n.tr("Failed") : I18n.tr("Running")
       tone: !root.definition?.command || root.output?.blocked ? "neutral" : root.output?.error ? "error" : root.output === null ? "warning" : "success"
     }
     StyledLabel {
       Layout.fillWidth: true
+      Layout.alignment: Qt.AlignVCenter
       text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateTimeFormat())) : ""
       tone: "muted"
     }
     StyledTextButton {
+      Layout.alignment: Qt.AlignVCenter
       implicitHeight: Widget.height
       iconText: "help"
       text: I18n.tr("What should my script print?")
       onClicked: root.editor.openHelp("output")
     }
     StyledTextButton {
+      Layout.alignment: Qt.AlignVCenter
       implicitHeight: Widget.height
       enabled: !!root.definition?.command
       iconText: "play_arrow"
@@ -67,6 +102,202 @@ ColumnLayout {
   // The groups flow into columns, as a Settings card's rows do
   GroupColumns {
     Layout.fillWidth: true
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Script")
+
+      // One box of rows: the form's, the command's, the form's again
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 0
+
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(root.schema, order)
+          order: ["name", "icon"]
+          values: root.definition ?? ({})
+          onEdited: (path, value) => root.editor.set(path, value)
+        }
+
+        InspectorRow {
+          label: I18n.tr("Command")
+          description: I18n.tr(root.schema.command.description)
+
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: Widget.spacing
+
+            StyledTextEntry {
+              id: commandEntry
+              Layout.fillWidth: true
+              Layout.alignment: Qt.AlignVCenter
+              placeholderText: I18n.tr("e.g. ~/bin/cpu.sh")
+              input.font.family: "monospace"
+              onTextEdited: root.editor.set("command", commandEntry.text)
+
+              Binding {
+                target: commandEntry
+                property: "text"
+                value: root.definition?.command ?? ""
+                when: !commandEntry.input.activeFocus
+                restoreMode: Binding.RestoreNone
+              }
+            }
+            SquareIconButton {
+              Layout.alignment: Qt.AlignVCenter
+              iconText: "folder_open"
+              tooltipText: I18n.tr("Pick a script…")
+              onClicked: FilePickerManager.pick(root, I18n.tr("Pick a script"), {
+                "start": root.scriptPath !== "" ? root.scriptPath.replace(/\/[^/]*$/, "") : "~",
+                "shortenHome": true
+              }, path => root.editor.set("command", path))
+            }
+          }
+        }
+
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          follows: true
+          propertiesSchema: Utils.pick(root.schema, order)
+          order: ["mode", "interval"]
+          values: root.definition ?? ({})
+          onEdited: (path, value) => root.editor.set(path, value)
+        }
+
+        // Waybar's and axiom's JSON, or the script's text as it is
+        InspectorRow {
+          label: I18n.tr("Output")
+          description: I18n.tr("Auto reads Waybar's or axiom's JSON, else the text.")
+
+          StyledToggle {
+            Layout.fillWidth: true
+            options: ["auto", "text"]
+            labels: ({
+                "auto": I18n.tr("Auto"),
+                "text": I18n.tr("Plain text")
+              })
+            value: root.definition?.output === "text" ? "text" : "auto"
+            onPicked: value => root.editor.set("output", value === "text" ? "text" : "waybar")
+          }
+        }
+      }
+
+      StyledText {
+        visible: root.signalsWaybar
+        Layout.fillWidth: true
+        text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
+        tone: "warning"
+        overflow: "wrap"
+      }
+
+      FoldingSection {
+        title: I18n.tr("Advanced")
+        collapsed: !root.advancedOpen
+        onToggled: root.advancedOpen = !root.advancedOpen
+
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(root.schema, order)
+          order: ["execIf", "refreshName"]
+          values: root.definition ?? ({})
+          onEdited: (path, value) => root.editor.set(path, value)
+        }
+        StyledText {
+          Layout.fillWidth: true
+          text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
+          role: "caption"
+          tone: "faint"
+          overflow: "wrap"
+        }
+        Surface {
+          visible: root.scriptHead !== ""
+          Layout.fillWidth: true
+          tone: "sunken"
+          outlined: true
+          implicitHeight: head.implicitHeight + Style.space3 * 2
+
+          ColumnLayout {
+            id: head
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: Style.space3
+            spacing: Widget.spacing / 2
+
+            StyledText {
+              Layout.fillWidth: true
+              text: root.scriptPath
+              role: "caption"
+              tone: "faint"
+              overflow: "wrap"
+            }
+            StyledText {
+              Layout.fillWidth: true
+              text: root.scriptHead
+              textFamily: "monospace"
+              role: "micro"
+              tone: "muted"
+              // A long line wraps inside the box
+              overflow: "wrap"
+            }
+          }
+        }
+      }
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Actions")
+      description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
+
+      ActionsEditor {}
+    }
+
+    FieldGroup {
+      Layout.fillWidth: true
+      title: I18n.tr("Output")
+      description: I18n.tr("The last thing the script printed, as it came.")
+
+      StyledText {
+        Layout.fillWidth: true
+        text: root.output?.text ? root.output.text.slice(0, 4000) : I18n.tr("Nothing yet")
+        textFamily: "monospace"
+        role: "caption"
+        tone: root.output?.text ? "" : "faint"
+        overflow: "wrap"
+        maxLines: 12
+      }
+      StyledLabel {
+        visible: root.output !== null && !root.output.blocked && root.output.exitCode > 0
+        Layout.fillWidth: true
+        text: I18n.tr("Exit code {0}", root.output?.exitCode ?? 0)
+        tone: "muted"
+      }
+      StyledText {
+        visible: !!root.output?.stderr
+        Layout.fillWidth: true
+        text: root.output?.stderr ?? ""
+        textFamily: "monospace"
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
+        maxLines: 3
+      }
+    }
+
+    FieldGroup {
+      visible: root.paths.length > 0
+      Layout.fillWidth: true
+      title: I18n.tr("What's in it")
+      description: I18n.tr("Each value the output holds, by its path: the module's elements show them. The bar reads Waybar's keys (text, alt, tooltip, class, percentage) and axiom's (icon, value, min, max, unit, subtext, state, badge, urgent, image, items, hidden).")
+
+      CustomWidgetPaths {
+        Layout.fillWidth: true
+        paths: root.paths
+        maxRows: root.maxRows
+      }
+    }
 
     FieldGroup {
       Layout.fillWidth: true
@@ -151,63 +382,10 @@ ColumnLayout {
 
     FieldGroup {
       Layout.fillWidth: true
-      title: I18n.tr("Actions")
-      description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
-
-      ActionsEditor {}
-    }
-
-    FieldGroup {
-      Layout.fillWidth: true
       title: I18n.tr("Actions run")
       description: I18n.tr("The last actions this widget ran, from its buttons, keys and the test preview. Not saved.")
 
       ActionLog {}
-    }
-
-    FieldGroup {
-      Layout.fillWidth: true
-      title: I18n.tr("Output")
-      description: I18n.tr("The last thing the script printed, as it came.")
-
-      StyledText {
-        Layout.fillWidth: true
-        text: root.output?.text ? root.output.text.slice(0, 4000) : I18n.tr("Nothing yet")
-        textFamily: "monospace"
-        role: "caption"
-        tone: root.output?.text ? "" : "faint"
-        overflow: "wrap"
-        maxLines: 12
-      }
-      StyledLabel {
-        visible: root.output !== null && !root.output.blocked && root.output.exitCode > 0
-        Layout.fillWidth: true
-        text: I18n.tr("Exit code {0}", root.output?.exitCode ?? 0)
-        tone: "muted"
-      }
-      StyledText {
-        visible: !!root.output?.stderr
-        Layout.fillWidth: true
-        text: root.output?.stderr ?? ""
-        textFamily: "monospace"
-        role: "caption"
-        tone: "muted"
-        overflow: "wrap"
-        maxLines: 3
-      }
-    }
-
-    FieldGroup {
-      visible: root.paths.length > 0
-      Layout.fillWidth: true
-      title: I18n.tr("What's in it")
-      description: I18n.tr("Each value the output holds, by its path: the module's elements show them. The bar reads Waybar's keys (text, alt, tooltip, class, percentage) and axiom's (icon, value, min, max, unit, subtext, state, badge, urgent, image, items, hidden).")
-
-      CustomWidgetPaths {
-        Layout.fillWidth: true
-        paths: root.paths
-        maxRows: root.maxRows
-      }
     }
   }
 }

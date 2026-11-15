@@ -20,7 +20,7 @@ properties:
     enum: [poll, stream, once]
     default: poll
     x-enumLabels: {poll: Every interval, stream: Continuously (one sample a line), once: Once (then on refresh)}
-  interval: {type: integer, title: Interval, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
+  interval: {type: integer, title: Interval, x-unit: s, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
   output:
     type: string
     title: Output
@@ -50,7 +50,7 @@ properties:
         default: material
         x-enumLabels: {none: None, glyph: Inline, material: Icon}
         description: 'Inline: the format''s {icon}, drawn with the text.'
-      popout: {type: boolean, title: Module on hover, default: true}
+      popout: {type: boolean, title: Module on hover, default: false}
       color:
         type: string
         title: Status color

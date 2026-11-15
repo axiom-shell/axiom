@@ -2297,6 +2297,23 @@ TestCase {
     compare(CustomWidgetData.pickView(status.module, failing).index, 0, "a script's error picks the error screen");
   }
 
+  function test_nameFromCommand() {
+    compare(CustomWidgetData.nameFromCommand("~/bin/cpu.sh x"), "cpu", "a path with an extension and an argument");
+    compare(CustomWidgetData.nameFromCommand("checkupdates | wc -l"), "checkupdates", "a pipeline");
+    compare(CustomWidgetData.nameFromCommand("uptime"), "uptime", "a bare command");
+    compare(CustomWidgetData.nameFromCommand("\"/opt/my tools/disk.py\" --fast"), "disk", "a quoted path with a space");
+    compare(CustomWidgetData.nameFromCommand("/usr/bin/.hidden"), ".hidden", "a leading dot stays");
+    compare(CustomWidgetData.nameFromCommand("  "), "", "blank");
+    compare(CustomWidgetData.nameFromCommand(""), "", "empty");
+  }
+
+  function test_freeName() {
+    compare(CustomWidgetData.freeName("Custom widget", []), "Custom widget", "free");
+    compare(CustomWidgetData.freeName("Custom widget", ["Custom widget"]), "Custom widget 2", "taken");
+    compare(CustomWidgetData.freeName("Custom widget", ["Custom widget", "Custom widget 2"]), "Custom widget 3", "two taken");
+    compare(CustomWidgetData.freeName("cpu", ["cpu 2"]), "cpu", "a gap elsewhere is no clash");
+  }
+
   function test_sampleSource() {
     const module = {
       "views": [

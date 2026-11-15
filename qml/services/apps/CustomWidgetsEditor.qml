@@ -559,13 +559,22 @@ QtObject {
   // The New flow's ends (the chooser, DefinitionsPanel): a blank widget for
   // a bar text from a script, on the Data tab
   function addBlank() {
+    const name = CustomWidgetData.freeName(I18n.tr("Custom widget"), root.items.map(item => item.name));
     root.add({
+      "name": name,
       "bar": {
         "style": "label"
       }
+    }, false);
+    root.autoNamed = Object.assign({}, root.autoNamed, {
+      [root.selectedId]: name
     });
     root.selectTab(0);
   }
+
+  // The names addBlank gave, by id, while the user hasn't typed another: the
+  // command then names the widget (page only, not saved)
+  property var autoNamed: ({})
 
   // A known script's preset, on the Data tab
   function addScript(preset) {
@@ -645,6 +654,19 @@ QtObject {
       return;
     root.elements.recordField("def:" + keys.join("."));
     root._write(keys, value);
+    // A blank widget takes its command's name until its name is edited
+    if (keys.length === 1 && keys[0] === "command") {
+      const id = root.selectedId;
+      const name = CustomWidgetData.nameFromCommand(value);
+      if (name !== "" && root.autoNamed[id] !== undefined && root.autoNamed[id] === root.selected?.name) {
+        const taken = root.items.filter(item => item.id !== id).map(item => item.name);
+        const next = CustomWidgetData.freeName(name, taken);
+        root.autoNamed = Object.assign({}, root.autoNamed, {
+          [id]: next
+        });
+        root.set("name", next);
+      }
+    }
   }
 
   // The selected definition's command as a file to show, when its first

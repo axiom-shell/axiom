@@ -385,6 +385,26 @@ QtObject {
     return String(rich ?? "").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
+  // A name for a widget from its command: the first word's file name without
+  // its extension ("~/bin/cpu.sh x" is "cpu", "checkupdates | wc" is
+  // "checkupdates"), "" when the command has no word
+  function nameFromCommand(command) {
+    const text = String(command ?? "").trim();
+    const quoted = text.match(/^(["'])(.*?)\1/);
+    const word = quoted ? quoted[2] : text.split(/\s+/)[0];
+    const file = word.replace(/\/+$/, "").split("/").pop();
+    const dot = file.lastIndexOf(".");
+    return dot > 0 ? file.slice(0, dot) : file;
+  }
+
+  // `base`, else "base 2", "base 3", … : the first not in `names`
+  function freeName(base, names) {
+    let name = base;
+    for (let n = 2; names.includes(name); n++)
+      name = `${base} ${n}`;
+    return name;
+  }
+
   // The fields of one sample as a definition draws them, each read from
   // the key of the same name (a script shapes its own JSON). Plain text
   // that's a number is the value; text matching a format-icons key is the

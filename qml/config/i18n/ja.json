@@ -2281,7 +2281,6 @@
     "Pick a script…": "",
     "Pick a script": "",
     "Run it again from anywhere: {0}": "",
-    "The script": "",
     "No command": "",
     "Waiting": "",
     "Not run": "",
@@ -4617,6 +4616,10 @@
     "Show {0}": "",
     "No screen for this sample: the base elements are empty, so pick a screen to design it.": "",
     "Previews": "",
-    "Turn on Test actions to click": ""
+    "Turn on Test actions to click": "",
+    "e.g. ~/bin/cpu.sh": "",
+    "Auto reads Waybar's or axiom's JSON, else the text.": "",
+    "Put it on a bar": "",
+    "Put it on a page": ""
   }
 }

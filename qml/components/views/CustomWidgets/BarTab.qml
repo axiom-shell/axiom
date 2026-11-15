@@ -56,13 +56,10 @@ ColumnLayout {
     Layout.fillWidth: true
     title: I18n.tr("Preview")
 
-    Rectangle {
+    // Stands in for a bar's background at its default look: the page tone
+    Surface {
       Layout.fillWidth: true
-      radius: Appearance.borderRadius
-      // Stands in for a bar's background at its default look: the page colour
-      color: Style.surfacePage
-      border.color: Style.borderSubtle
-      border.width: Style.hairline
+      tone: "page"
       implicitHeight: bannerRow.implicitHeight + Widget.padding * 2
 
       RowLayout {

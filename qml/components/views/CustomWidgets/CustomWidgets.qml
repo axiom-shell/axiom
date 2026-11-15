@@ -4,11 +4,12 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.apps
 import qs.components.reusable
+import qs.components.forms
 import qs.components.views.base
 
 // The Custom widgets page (docs/dev/features/custom-widgets.md): the
-// definitions and the selected one's script on the left; on the right its
-// data (the script's output, and which part of it each field reads), its
+// definitions on the left; on the right its data (the script, its output,
+// and which part of it each field reads), its
 // bar look, its module and Help, each a tab (or, while adding, the Import
 // form or the template gallery). Edits go through
 // CustomWidgetsManager.editor's draft and show live on the bars and pages.
@@ -75,6 +76,21 @@ BaseView {
             removeTooltip: I18n.tr("Remove this custom widget")
             onDuplicate: root.editor.duplicate(root.editor.selectedIndex)
             onRemove: root.editor.remove(root.editor.selectedIndex)
+            // Where to put it: hints only (nothing here writes a bar or a page);
+            // hidden while unsaved, so no bar or page names an unsaved id
+            showsLinks: !root.editor.isDirty
+            links: [
+              SettingsLink {
+                page: "BarEditor"
+                text: I18n.tr("Put it on a bar")
+                icon: "toolbar"
+              },
+              SettingsLink {
+                page: "Layouts"
+                text: I18n.tr("Put it on a page")
+                icon: "dashboard"
+              }
+            ]
 
             // Copy: the definition on the clipboard, to share by hand
             StyledIconButton {
