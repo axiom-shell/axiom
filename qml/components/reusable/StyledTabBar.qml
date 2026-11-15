@@ -43,10 +43,11 @@ Item {
     color: root._host ? root._host.inkScope.divider : Style.divider
   }
 
+  // x centres on the target width (_markWidth), never the gliding width, so the two glides never chase each other
   Rectangle {
     id: indicator
     visible: root._current !== null
-    x: root._current ? root._current.x + (root._current.width - width) / 2 : 0
+    x: root._current ? root._current.x + (root._current.width - root._markWidth) / 2 : 0
     y: parent.height - height
     width: root._markWidth
     height: Widget.px(2)
