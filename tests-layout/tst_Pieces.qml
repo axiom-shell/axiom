@@ -836,4 +836,13 @@ TestCase {
       verify(b.borderRadius < box.radius, "inner corners tighter than the box's");
     }
   }
+
+  // The switch track is the toggle's shape (the switch-shape FLAG)
+  function test_switch_takes_the_toggle_shape() {
+    harness.configure({});
+    const sw = createTemporaryObject(switchComp, root);
+    waitForRendering(sw);
+    compare(sw.background.radius, Style.radiusInner);
+    compare(sw.indicator.radius, StyleTokens.concentric(Style.radiusInner, Widget.px(2), Style.radiusMin));
+  }
 }

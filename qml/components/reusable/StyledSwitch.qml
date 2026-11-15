@@ -34,7 +34,7 @@ Switch {
     id: track
     implicitWidth: root.implicitWidth
     implicitHeight: root.implicitHeight
-    radius: height / 2
+    radius: Style.radiusInner
     color: root.checked ? Style.accent : Style.surfaceHighest
     // A hairline while off, so the track shows on a highest fill
     border.color: Style.borderStrong
