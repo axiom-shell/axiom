@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.methods
 import qs.config
 
 // The track and sliding thumb of SegmentRow and StyledToggle (private to
@@ -36,7 +37,7 @@ Surface {
     height: root.height - root.inset * 2
     tone: Style.segmentThumbTone
     outlined: Style.segmentThumbTone === "surface"
-    radius: Math.max(Style.radiusMin, root.radius - root.inset)
+    radius: StyleTokens.concentric(root.radius, root.inset, Style.radiusMin)
 
     Glide on x {
       enabled: root._settled
