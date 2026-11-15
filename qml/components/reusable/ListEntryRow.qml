@@ -206,14 +206,18 @@ Rectangle {
       Layout.fillWidth: true
     }
 
-    StyledLabel {
-      visible: root.subtitle !== ""
-      text: root.subtitle
-      role: "caption"
-      overflow: root.subtitleLines > 1 ? "wrap" : "line"
-      maxLines: root.subtitleLines
-      textColor: root.inkMuted
+    // Built only while there is a subtitle, so a row without one pays nothing
+    Loader {
+      active: root.subtitle !== ""
+      visible: active
       Layout.maximumWidth: root.width * 0.25
+      sourceComponent: StyledLabel {
+        text: root.subtitle
+        role: "caption"
+        overflow: root.subtitleLines > 1 ? "wrap" : "line"
+        maxLines: root.subtitleLines
+        textColor: root.inkMuted
+      }
     }
 
     RowLayout {
@@ -226,13 +230,18 @@ Rectangle {
       onAccent: root.selected
     }
 
-    IssueIcon {
-      id: issueIcon
-      visible: root.issue !== ""
-      level: root.issue === "" ? "warning" : root.issue
-      tip: root.issueTip
-      size: "sm"
-      textColor: root.selected ? Style.inkAccentContainer.text : Style.toneColor(issueIcon.tone)
+    // Built only while there is an issue
+    Loader {
+      active: root.issue !== ""
+      visible: active
+      sourceComponent: IssueIcon {
+        id: issueIcon
+
+        level: root.issue
+        tip: root.issueTip
+        size: "sm"
+        textColor: root.selected ? Style.inkAccentContainer.text : Style.toneColor(issueIcon.tone)
+      }
     }
 
     RowLayout {
