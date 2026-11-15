@@ -44,7 +44,33 @@ func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	path, err := filepath.Abs(wallpaper)
+	img, err := Open(wallpaper)
+	if err != nil {
+		return nil, err
+	}
+	// Open made the same path absolute: it can't fail here
+	path, _ := filepath.Abs(wallpaper)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, axerr.Wrap(axerr.Unavailable, err, "can't make the themes' folder")
+	}
+	var written []string
+	for _, file := range palette.Themes(palette.Analyze(img), semantic, path, now) {
+		out := filepath.Join(dir, file.Name)
+		if err := fsx.WriteFile(out, file.Data, 0o644); err != nil {
+			return written, err
+		}
+		written = append(written, out)
+	}
+	return written, nil
+}
+
+// Open decodes the image at path (a path relative to the working directory
+// is made absolute). The errors are Generate's: axerr.NotFound (no such
+// file), BadRequest (not an image it can decode, or larger than maxPixels),
+// Unavailable (unreadable). The package keeps no state, so a caller that
+// opens often bounds the decodes itself (the daemon's one-slot semaphore).
+func Open(path string) (image.Image, error) {
+	path, err := filepath.Abs(path)
 	if err != nil {
 		return nil, axerr.Wrap(axerr.BadRequest, err, "can't read the wallpaper")
 	}
@@ -61,18 +87,7 @@ func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 	if err != nil {
 		return nil, axerr.Wrap(axerr.BadRequest, err, "can't read the wallpaper %s", path)
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, axerr.Wrap(axerr.Unavailable, err, "can't make the themes' folder")
-	}
-	var written []string
-	for _, file := range palette.Themes(palette.Analyze(img), semantic, path, now) {
-		out := filepath.Join(dir, file.Name)
-		if err := fsx.WriteFile(out, file.Data, 0o644); err != nil {
-			return written, err
-		}
-		written = append(written, out)
-	}
-	return written, nil
+	return img, nil
 }
 
 // decode reads the image after checking its header's size.

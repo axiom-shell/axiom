@@ -41,6 +41,14 @@ Item {
   // module's size never feeds back into itself in one pass
   readonly property bool growable: root.extent === null && (root.host?.kind === "overlay" || root.host?.kind === "menu")
   property var growth: []
+  // Each module's backdropInk (null: the default text colour), by place in
+  // `modules`, for what is drawn behind a bare module (ScreenLayoutView)
+  property var inks: []
+  function _setInk(index, ink) {
+    const next = root.inks.slice();
+    next[index] = ink;
+    root.inks = next;
+  }
   // Where the grid's edge is (GridPlacement.grown): -1 at its top (a page,
   // a top or side menu), 1 at its bottom (a bottom menu). Growing takes the
   // free rows that way first, then grows away from it
@@ -213,7 +221,16 @@ Item {
           return Math.max(0, Math.min(grow, rows - placed.h));
         }
         onWantRowsChanged: root._setGrowth(slot.index, slot.wantRows)
-        Component.onCompleted: root._setGrowth(slot.index, slot.wantRows)
+        Component.onCompleted: {
+          root._setGrowth(slot.index, slot.wantRows);
+          root._setInk(slot.index, moduleSlot.backdropInk);
+        }
+        Connections {
+          target: moduleSlot
+          function onBackdropInkChanged() {
+            root._setInk(slot.index, moduleSlot.backdropInk);
+          }
+        }
 
         x: slot.r.x
         y: slot.r.y

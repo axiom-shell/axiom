@@ -49,10 +49,23 @@ QtObject {
     return BarEnds.withEnds(BarsConfig.expandBars(items).map(bar => {
       const enriched = BarsConfig.enrichBarConfig(hiddenOn.includes(bar.monitor) ? Object.assign({}, bar, {
         "hiddenByRule": true
-      }) : bar, gapsOut, floatGaps);
+      }) : bar, gapsOut, floatGaps, root._backdropOf(bar));
       enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
       return enriched;
     }), BarsConfig.endsOptions(gapsOut, floatGaps));
+  }
+  // What the wallpaper is under a bar that needs it (one with no surface, or
+  // any while the surfaces are translucent), else null: an opaque bar never
+  // reads the wallpaper, so a new one re-enriches only the bars that do. The
+  // band is from its config: the whole edge, its thickness and the screen
+  // margin deep (never from the enriched bar, which this feeds).
+  function _backdropOf(bar) {
+    if (bar.surface !== "none" && !Appearance.translucent)
+      return null;
+    const screen = General.outputs.find(s => s.name === bar.monitor);
+    if (!screen)
+      return null;
+    return WallpaperToneManager.regionOn(bar.monitor, Backdrop.band(bar.edge, bar.thickness, Appearance.screenMargin, screen), Appearance.blur, false);
   }
   readonly property var endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
 

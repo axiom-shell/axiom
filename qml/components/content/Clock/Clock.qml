@@ -23,6 +23,9 @@ Card {
   readonly property bool showSeconds: root.properties.showSeconds
   readonly property string timezone: root.properties.timezone
   readonly property color textColor: root.properties.color ? Style.resolve(root.properties.color) : Style.text
+  // What the shade behind a bare clock is computed from (BackdropScrim): its
+  // digits' colour, the user's pick as set
+  readonly property color backdropInk: root.textColor
   readonly property color accentColor: root.properties.accentColor ? Style.resolve(root.properties.accentColor) : Style.accent
   // The date, the meridiem and the meta line: the picked colour as is, else muted
   // (bare, over the wallpaper: the clock's own ink, the one a shade guarantees)

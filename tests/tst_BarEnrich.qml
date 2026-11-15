@@ -233,4 +233,47 @@ TestCase {
     verify(tall.innerGap > plain.innerGap, "a taller bar scales its gap");
     compare(tall.iconGap, tall.innerGap * 1.5);
   }
+
+  // No wallpaper backdrop (an opaque bar, or one not asked): today's object,
+  // with none of the backdrop's keys
+  function test_without_a_backdrop_no_backs_or_scrim_keys() {
+    for (const surface of ["none", "solid", "pills"]) {
+      const bar = Bars.bar({
+        "surface": surface
+      });
+      verify(!("backs" in bar.palette), surface + ": no backs");
+      verify(!("scrim" in bar.palette), surface + ": no palette scrim");
+      verify(!("scrim" in bar), surface + ": no scrim");
+      verify(!("scrimReach" in bar), surface + ": no scrimReach");
+    }
+    const same = Bars.bar({
+      "surface": "none"
+    }, {
+      "backdrop": null
+    });
+    verify(!("backs" in same.palette), "a null backdrop is none");
+  }
+
+  // A transparent bar given a backdrop reserves its shade's fade room
+  function test_a_transparent_bar_reserves_the_fade_room() {
+    const env = {
+      "backdrop": {
+        "mean": 128,
+        "low": 0,
+        "high": 255
+      },
+      "edgeAlpha": 1,
+      "margin": 0.05
+    };
+    const bar = Bars.bar({
+      "surface": "none"
+    }, env);
+    compare(bar.scrimReach, Math.ceil(bar.extent / 2));
+    verify(bar.scrim > 0, "a checker wallpaper is shaded");
+    const solid = Bars.bar({
+      "surface": "solid"
+    }, env);
+    verify(!("scrimReach" in solid), "a bar with a fill reserves none");
+    compare(solid.palette.scrim, 0);
+  }
 }

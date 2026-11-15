@@ -32,6 +32,12 @@ Item {
   // What the module is drawn at: laid out at the slot's size over this,
   // then scaled to it (an edge menu's modules, see ModuleGrid.zoom)
   property real zoom: 1
+  // The module built, untyped (its own members are read dynamically)
+  readonly property var _built: loader.item
+  // The colour of the text it draws, where it draws it straight on the
+  // background (a bare module's own `backdropInk`: the module's colour, which
+  // the shade behind it is computed from), else null
+  readonly property var backdropInk: root._built?.backdropInk ?? null
   // The height the module grows to, drawn (its growHeight; 0: as placed)
   readonly property real growHeight: (loader.item?.growHeight ?? 0) * root.zoom
   // Whether the module is built yet: a streaming grid (ModuleGrid.stream)

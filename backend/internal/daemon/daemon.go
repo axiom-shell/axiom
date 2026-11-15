@@ -230,6 +230,8 @@ type Daemon struct {
 	topics *topics.Hub
 	// sysmon is the `system` topic and the graphs' history
 	sysmon *sysmon.Monitor
+	// backdrop is theme.backdrop's grid cache and the decode slot
+	backdrop *backdropPart
 	// markets is the `markets` topic and its search and history
 	// (marketsService)
 	markets *markets.Markets
@@ -465,6 +467,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
 	d.sysmon = d.newSysmon()
+	d.backdrop = newBackdropPart()
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)

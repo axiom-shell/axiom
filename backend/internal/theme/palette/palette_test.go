@@ -265,3 +265,17 @@ func TestLCHColorFitsTheGamut(t *testing.T) {
 		}
 	}
 }
+
+func TestGreyOfLinearOf(t *testing.T) {
+	for g := range 256 {
+		if got := GreyOf(LinearOf(uint8(g), uint8(g), uint8(g))); got != uint8(g) {
+			t.Fatalf("GreyOf(LinearOf(%d)) = %d", g, got)
+		}
+	}
+	if got := LinearOf(255, 255, 255); math.Abs(got-1) > 1e-12 {
+		t.Fatalf("LinearOf(white) = %v", got)
+	}
+	if LinearOf(0, 0, 0) != 0 {
+		t.Fatal("LinearOf(black) != 0")
+	}
+}

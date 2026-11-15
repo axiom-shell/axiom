@@ -6,6 +6,7 @@ import Quickshell
 import qs.config
 import qs.components.methods
 import qs.components.hosts.overlay
+import qs.components.reusable
 import qs.components.surfaces.wallpaper
 
 // One screen of a screen layout (a ScreenLayout: the lock screen's, the
@@ -14,7 +15,9 @@ import qs.components.surfaces.wallpaper
 // `insets` at the card size (GridPlacement.screenArrangement), fading
 // in. Children go over the modules (LockSurface's and GreeterSurface's fallback
 // fields). The desktop draws no background (`showBackdrop`): its modules
-// sit on the wallpaper, and only frost a copy of it.
+// sit on the wallpaper, and only frost a copy of it. A module with no card
+// box of its own (bare) gets a soft shade behind it where the background
+// would make its text unreadable (BackdropScrim).
 Item {
   id: root
 
@@ -53,6 +56,25 @@ Item {
       "right": 0,
       "bottom": 0
     })
+  // Whether a module draws no box of its own, its text straight on the
+  // background: every module while the host is bare (moduleBorders off); on
+  // the lock screen and the greeter the Greeting and the Password follow
+  // their own border switches
+  function bare(module) {
+    const kind = root.host?.kind;
+    if (kind === "lockscreen" || kind === "greeter") {
+      if (module?.type === "Greeting")
+        return root.host.greetingBorder !== true;
+      if (module?.type === "Password")
+        return root.host.passwordBorder !== true;
+    }
+    return root.host?.bare === true;
+  }
+  // The shade's backs follow what is drawn behind the modules: a colour
+  // backdrop is flat grey levels (no daemon, never unknown), else the
+  // wallpaper's, as on the desktop, where no backdrop (and no dim) is drawn
+  readonly property var flatRegion: root.showBackdrop && root.background === "color" ? Backdrop.flat(Style.resolve(root.layout.backdrop.color)) : null
+  readonly property real shadeDim: root.showBackdrop ? (root.layout?.backdrop?.dim ?? 0) / 100 : 0
   readonly property real roomWidth: Math.max(0, root.width - root.insets.left - root.insets.right)
   readonly property real roomHeight: Math.max(0, root.height - root.insets.top - root.insets.bottom)
 
@@ -179,6 +201,35 @@ Item {
       maskSource: modulesCapture
       maskThresholdMin: Appearance.blurThreshold
       maskSpreadAtMin: 0
+    }
+
+    // Under each bare module (before the grid: behind its slot)
+    Repeater {
+      model: root.placedModules.length
+
+      BackdropScrim {
+        id: shade
+        required property int index
+        readonly property var r: grid.cardRects[shade.index] ?? null
+        screen: root.screen
+        shown: shade.r !== null && root.bare(root.placedModules[shade.index])
+        area: shade.r ? Qt.rect(grid.x + shade.r.x, grid.y + shade.r.y, shade.r.width, shade.r.height) : Qt.rect(0, 0, 0, 0)
+        dim: root.shadeDim
+        blurred: root.showBackdrop && root.blurWallpaper
+        ink: grid.inks[shade.index] ?? Style.text
+        fixedRegion: root.flatRegion
+        worstCase: root.host?.kind === "lockscreen" || root.host?.kind === "greeter"
+
+        // The slot's glide (ModuleGrid), on the item only: the alpha reads `area`
+        Glide on y {
+          enabled: grid.settled
+          duration: Appearance.animNormal
+        }
+        Glide on height {
+          enabled: grid.settled
+          duration: Appearance.animNormal
+        }
+      }
     }
 
     ModuleGrid {

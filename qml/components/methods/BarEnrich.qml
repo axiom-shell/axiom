@@ -9,7 +9,10 @@ import QtQuick
 // screenMargin, resolve (a color name to a color), foreground, background,
 // outputs (the screens: name, width, height), autoColorFields
 // (BarsConfig's), baseColorNames (Theme's), redForGains (Markets' Red for gains,
-// which swaps the rise and fall roles) }. A bar entry with `hiddenByRule`
+// which swaps the rise and fall roles), and over a wallpaper backdrop (the
+// bars that need one: BarsConfig.enrichBarConfig) backdrop (the grey levels
+// under its band: Backdrop.region), edgeAlpha (Style.edgeAlphaSettled) and margin
+// (Tone's readability margin) }. A bar entry with `hiddenByRule`
 // (a window rule hides the bar on its monitor: ScreenEdgeManager sets it)
 // is enriched as an always-auto-hiding bar.
 QtObject {
@@ -88,6 +91,14 @@ QtObject {
     const separators = look.separators;
     const groupSpacing = look.grouping === "powerline" ? 0 : separators.style !== "none" ? BarLayout.dividerGap(separators.style, separators.thickness, thickness, separators.gap) : barConfig.widgetGap;
 
+    // The look's colors, and with a wallpaper backdrop (`env.backdrop`) what
+    // they read on and the shade a transparent bar needs (backdropOf)
+    const palette = BarWidgetStyle.palette(look, env.resolve, env.foreground, env.background);
+    const backdrop = root.backdropOf(kind, palette, env);
+    if (backdrop) {
+      palette.backs = backdrop.backs;
+      palette.scrim = backdrop.scrim;
+    }
     const vertical = loc === ScreenEdge.Left || loc === ScreenEdge.Right;
     const screen = env.outputs.find(s => s.name === barConfig.monitor) ?? null;
     const bar = {
@@ -145,7 +156,7 @@ QtObject {
       // gradient, separators and accent line (BarLook.resolve)
       "look": look,
       // The look's colors, resolved (BarWidgetStyle.palette)
-      "palette": BarWidgetStyle.palette(look, env.resolve, env.foreground, env.background),
+      "palette": palette,
       // The gap a split widget keeps between its parts
       // (BarShapes.splitRoom), -1 on other styles
       "splitRoom": look.split ? look.split.room : -1,
@@ -178,7 +189,7 @@ QtObject {
       // and corners go by, so hiding, showing and pinning never move them)
       "reserveSpace": reserves,
       // Each Auto color picked for its place on this bar
-      "widgets": root.withAutoColors(barConfig.widgets, look, env),
+      "widgets": root.withAutoColors(barConfig.widgets, look, env, palette),
       "vertical": vertical,
       // Along its screen's shorter edge: of two bars of a kind meeting at a
       // corner, it takes the corner (BarEnds)
@@ -188,6 +199,13 @@ QtObject {
       "top": loc === ScreenEdge.Top,
       "bottom": loc === ScreenEdge.Bottom
     };
+    if (backdrop && kind === "transparent") {
+      // The shade along its edge (BarContainer), and the room its fade past
+      // the bar takes in the window, reserved whether or not a shade shows,
+      // so the window never grows when the wallpaper changes
+      bar.scrim = backdrop.scrim;
+      bar.scrimReach = Math.ceil(bar.extent / 2);
+    }
     // How much less than its extent it reserves alone on its edge
     // (reserveTrim). Where it lies among the other bars on its edge, what
     // it reserves there and what its ends meet depend on the other bars on
@@ -199,6 +217,43 @@ QtObject {
       "radius": env.radius
     })));
     return bar;
+  }
+
+  // What a bar's colors are read on over the wallpaper (`env.backdrop`: the
+  // grey levels { mean, low, high } under its band, Backdrop.region), or
+  // null with none (today's palette exactly). `backs`: the opaque colors its
+  // content reads on, `scrim`: the alpha of the theme background shade along
+  // a transparent bar (0 where its content adapts instead). A translucent bar
+  // is read on its fill at the edge family's alpha (`env.edgeAlpha`).
+  // The reference ink is the bar's text color: Auto's, as it reads on the
+  // opaque bar, or the user's pick as set (never nudged: the shade is
+  // computed from it, and stops at the opaque background where it can't read).
+  function backdropOf(kind, palette, env) {
+    const region = env.backdrop ?? null;
+    if (!region)
+      return null;
+    const bg = env.background;
+    const min = Tone.textContrast + env.margin;
+    if (kind !== "transparent")
+      return {
+        "backs": Backdrop.backs(region, bg, env.edgeAlpha),
+        "scrim": 0
+      };
+    const user = palette.override;
+    const ref = user ?? Tone.nudged([bg], palette.barText, min);
+    const bare = Backdrop.backs(region, bg, 0);
+    // One color reads on the whole wallpaper (the content adapts through
+    // its own nudge): no shade
+    if (Tone.reaches(bare, user ?? Tone.nudged(bare, ref, min), Tone.textContrast))
+      return {
+        "backs": bare,
+        "scrim": 0
+      };
+    const scrim = Tone.alphaFloor(bg, ref, bare, min);
+    return {
+      "backs": Backdrop.backs(region, bg, scrim),
+      "scrim": scrim
+    };
   }
 
   // What a bar draws as, from its surface and floating: solid, pills,
@@ -243,7 +298,7 @@ QtObject {
   // neighbours, seen against the bar or, filled and merged, the run
   // (`look`'s autoContrast trait, BarLook), and those fields' roles as the
   // widget's `autoColors` ({ key: { role, gradient } })
-  function withAutoColors(widgets, look, env) {
+  function withAutoColors(widgets, look, env, palette) {
     const shown = [].concat(...root.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
             "section": section,
             "index": index,
@@ -276,7 +331,7 @@ QtObject {
       "critical": named("error"),
       "rise": named(env.redForGains ? "error" : "success"),
       "fall": named(env.redForGains ? "success" : "error"),
-      "backdrop": seen.onRun ? env.resolve(look.group.color) : env.background,
+      "backdrop": seen.onRun ? env.resolve(look.group.color) : palette?.backs?.[0] ?? env.background,
       // A fill need only show on the bar; otherwise the color is text or a stroke
       "minContrast": seen.minContrast
     });
