@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import qs.components.methods
 import qs.config
 
 // A themed on/off switch. `compact` is the dense row's: the track
