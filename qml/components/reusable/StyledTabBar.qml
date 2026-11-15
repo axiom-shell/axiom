@@ -9,8 +9,8 @@ import qs.components.methods
 // from tabClicked. The current tab's highlight is the bar's own, sliding
 // from tab to tab: a 2 px accent underline under the current tab's label,
 // on a full-width baseline. `scrollable` keeps every label whole instead:
-// the tabs take their own widths in a row that scrolls sideways, the
-// current tab kept in view.
+// the tabs take their own widths, packed at the start, in a row that
+// scrolls sideways, the current tab kept in view.
 Item {
   id: root
 
@@ -98,7 +98,7 @@ Item {
 
     RowLayout {
       id: row
-      width: root.scrollable ? Math.max(row.implicitWidth, flick.width) : flick.width
+      width: root.scrollable ? row.implicitWidth : flick.width
       height: flick.height
       spacing: Widget.spacing
       uniformCellSizes: !root.scrollable
