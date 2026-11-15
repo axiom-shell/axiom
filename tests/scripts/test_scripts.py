@@ -1314,7 +1314,7 @@ class HabitsScript(unittest.TestCase):
         out = self.show()
         self.assertEqual((out["state"], out["text"]), ("open", "0/2"))
         self.assertEqual([i["text"] for i in out["items"]], ['Read a "book"', "Walk"])
-        self.assertEqual(out["actions"], {"add": {}, "check": {}, "undo": {}})
+        self.assertEqual(out["actions"], {"add": {}, "check": {}, "remove": {}, "undo": {}})
         self.run_script("do", "check", "1")
         out = self.show()
         self.assertEqual((out["state"], out["text"]), ("open", "1/2"))
@@ -1360,6 +1360,41 @@ class HabitsScript(unittest.TestCase):
             proc.wait(timeout=30)
         self.assertEqual(sorted(i["id"] for i in self.show()["items"]), [str(n) for n in range(1, 9)])
         self.assertFalse((self.tmp / "axiom" / "habits.tsv.lock").exists())
+
+    def test_remove_is_listed_only_with_habits(self):
+        self.assertNotIn("remove", self.show()["actions"])
+        self.run_script("do", "add", "Read")
+        self.assertIn("remove", self.show()["actions"])
+
+    def test_last_line_without_newline(self):
+        self.tsv.parent.mkdir(parents=True)
+        self.tsv.write_text("1\tread\t-\t0\n2\tgym\t-\t0")
+        self.assertEqual(len(self.show()["items"]), 2)
+        self.assertEqual(self.run_script("do", "check", "1").returncode, 0)
+        self.assertIn("2\tgym", self.tsv.read_text())
+        self.assertEqual(self.run_script("do", "add", "c").returncode, 0)
+        text = self.tsv.read_text()
+        self.assertTrue(text.endswith("\n"))
+        self.assertEqual([line.split("\t")[0] for line in text.splitlines()], ["1", "2", "3"])
+
+    def test_state_dir_a_file_exits_2(self):
+        (self.tmp / "axiom").write_text("")
+        result = subprocess.run(["bash", str(self.SCRIPT), "do", "add", "a"], env=self.env,
+                                capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(result.stderr.startswith("habits:"))
+
+    def test_read_only_state_dir_exits_2(self):
+        if os.geteuid() == 0:
+            self.skipTest("root ignores directory modes")
+        state = self.tmp / "axiom"
+        state.mkdir()
+        state.chmod(0o555)
+        self.addCleanup(lambda: state.exists() and state.chmod(0o755))
+        result = subprocess.run(["bash", str(self.SCRIPT), "do", "add", "a"], env=self.env,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(result.stderr.startswith("habits:"))
 
 
 if __name__ == "__main__":

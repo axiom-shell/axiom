@@ -365,10 +365,13 @@ QtObject {
   }
 
   // `{tree}` (the axiom tree this shell runs, with a trailing slash: a dev
-  // or nested tree finds its own data/ scripts) filled in, as typed
-  // elsewhere. It stays literal in config, so a definition holds no path
+  // or nested tree finds its own data/ scripts) filled in the way element
+  // commands are (a shell `${tree}` stays). It stays literal in config, so
+  // a definition holds no path
   function _expand(text) {
-    return String(text ?? "").replace(/\{tree\}/g, () => Paths.treePath);
+    return CustomWidgetData.fillCommand(text, {
+      "tree": Paths.treePath
+    });
   }
 
   function _owner(id) {
@@ -614,7 +617,7 @@ QtObject {
     const def = root.find(name);
     if (!def)
       return `no custom widget "${name}"`;
-    return root.invoke(def.id, action, value, false, true); // lock-inert: invoke refuses while the screen is locked
+    return root.invoke(def.id, action, value, false, true);
   }
 
   property IpcTarget _ipc: IpcTarget {

@@ -41,15 +41,18 @@ yesterday=$(date -d yesterday +%F)
 
 # Runs with the file locked (a directory, so it is atomic and needs nothing
 # installed): the changing actions never overlap. A lock left behind
-# (killed mid-change) is broken after 5 s, far longer than a change takes
+# (killed mid-change) is broken after 5 s, far longer than a change takes;
+# after 10 s of waiting, or when the lock can't be made at all, it gives up
 lock_file() {
   local tries=0
   while ! mkdir "$lock" 2>/dev/null; do
-    tries=$((tries + 1))
-    if [ "$tries" -ge 50 ]; then
-      rmdir "$lock" 2>/dev/null
-      tries=0
+    if [ ! -d "$lock" ]; then
+      mkdir "$lock" 2>/dev/null || die "can't lock $tsv"
+      break
     fi
+    tries=$((tries + 1))
+    [ "$tries" -lt 100 ] || die "can't lock $tsv"
+    [ "$tries" -ne 50 ] || rmdir "$lock" 2>/dev/null
     sleep 0.1
   done
   trap 'rmdir "$lock" 2>/dev/null' EXIT
@@ -58,7 +61,7 @@ lock_file() {
 show() {
   local id name last streak total=0 done_count=0 items="" shown state icon status
   if [ -r "$tsv" ]; then
-    while IFS=$'\t' read -r id name last streak; do
+    while IFS=$'\t' read -r id name last streak || [ -n "${id:-}" ]; do
       [ -n "$id" ] || continue
       total=$((total + 1))
       shown=0
@@ -86,6 +89,7 @@ show() {
   fi
   local actions='"add":{}'
   [ "$total" -eq 0 ] || actions+=',"check":{}'
+  [ "$total" -eq 0 ] || actions+=',"remove":{}'
   [ ! -e "$prev" ] || actions+=',"undo":{}'
   printf '{"state":"%s","text":"%s/%s","value":%s,"min":0,"max":%s,"items":[%s],"actions":{%s}}\n' \
     "$state" "$done_count" "$total" "$done_count" "$total" "$items" "$actions"
@@ -104,13 +108,13 @@ commit() {
 
 do_action() {
   local action=${1:-} value=${2:-} id name last streak next=0
-  mkdir -p "$state_dir"
+  mkdir -p "$state_dir" 2>/dev/null || die "can't make $state_dir"
   lock_file
   case "$action" in
   check)
     [[ $value =~ ^[0-9]+$ ]] || die "not a habit id: $value"
     has_habit "$value" || die "no habit $value"
-    while IFS=$'\t' read -r id name last streak; do
+    while IFS=$'\t' read -r id name last streak || [ -n "${id:-}" ]; do
       if [ "$id" = "$value" ] && [ "$last" != "$today" ]; then
         if [ "$last" = "$yesterday" ]; then
           streak=$((streak + 1))
@@ -130,12 +134,12 @@ do_action() {
     [ -n "$name" ] || die "a habit needs a name"
     name=${name:0:80}
     if [ -r "$tsv" ]; then
-      while IFS=$'\t' read -r id _; do
+      while IFS=$'\t' read -r id _ || [ -n "${id:-}" ]; do
         [ "$id" -gt "$next" ] 2>/dev/null && next=$id
       done <"$tsv"
     fi
     {
-      [ ! -r "$tsv" ] || cat "$tsv"
+      [ ! -r "$tsv" ] || sed '$a\' "$tsv"
       printf '%s\t%s\t-\t0\n' $((next + 1)) "$name"
     } >"$tsv.new"
     commit

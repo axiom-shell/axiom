@@ -1271,13 +1271,15 @@ QtObject {
 
   // The name a key press goes by in a module's `keys` ("3", "space",
   // "ctrl+z"), or "" for none: a key held down (auto-repeat) is none, so a
-  // held key acts once. A printed key is its text, lower-cased; with Ctrl
+  // held key acts once, and so is a Super chord. A printed key is its text, lower-cased; with Ctrl
   // or Alt its name comes from `key` instead (A to Z, 0 to 9: `text` is
   // then a control character), prefixed "ctrl+" and "alt+". The others are
   // space, return, backspace, left, right, up, down, escape and tab, which
   // add "shift+" when Shift is down. `modifiers` is Qt's bit set
   function keyName(key, text, modifiers, autoRepeat) {
     if (autoRepeat)
+      return "";
+    if ((modifiers & Qt.MetaModifier) !== 0)
       return "";
     const ctrl = (modifiers & Qt.ControlModifier) !== 0;
     const alt = (modifiers & Qt.AltModifier) !== 0;
