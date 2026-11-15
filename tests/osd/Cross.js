@@ -453,5 +453,26 @@ var rows = [
       { "system": "Wifi", "at": 6300, "state": { "wifi": w(true, true, "Home") },
         "expect": { "key": "wifi", "show": "card", "host": "replace" } }
     ]
+  },
+  // ---- A window rule pauses OSDs ----
+  {
+    "name": "a window rule pauses the OSD: only alerts open it",
+    "systems": ["Audio", "Bluetooth", "Battery", "Message"],
+    "paused": true,
+    "options": { "Audio": audioOpts, "Bluetooth": {}, "Battery": { "shows": ["charger", "battery"] }, "Message": {} },
+    "steps": [
+      { "system": "Audio", "at": 0, "state": audioStart() },
+      { "system": "Bluetooth", "at": 0, "state": { "bluetooth": bt(null) } },
+      { "system": "Battery", "at": 0, "state": { "charger": { "available": true, "value": false, "percent": 50, "charging": false, "full": false, "untilFull": "" }, "battery": { "available": true, "level": "none", "percent": 50, "timeLeft": "", "event": null, "seq": 0 } } },
+      { "system": "Message", "at": 0, "state": { "message": { "event": null, "seq": 0 } } },
+      { "system": "Audio", "at": 3000, "state": { "master": { "level": 0.6, "muted": false, "node": "52" } },
+        "expect": { "key": "master", "show": "level", "opens": false } },
+      { "system": "Bluetooth", "at": 6000, "state": { "bluetooth": bt("low", 1) },
+        "expect": { "key": "bluetooth", "show": "card", "alert": true, "opens": true } },
+      { "system": "Battery", "at": 9000, "state": { "battery": { "available": true, "level": "critical", "percent": 6, "timeLeft": "", "event": { "level": "critical", "kind": "critical", "serial": 1 }, "seq": 1 } },
+        "expect": { "key": "battery", "show": "card", "alert": true, "opens": true } },
+      { "system": "Message", "at": 12000, "state": { "message": { "event": { "icon": "save", "text": "Saved", "detail": "", "tone": "" }, "seq": 1 } },
+        "expect": { "key": "message", "show": "card", "opens": false } }
+    ]
   }
 ];

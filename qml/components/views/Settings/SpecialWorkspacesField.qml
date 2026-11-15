@@ -19,6 +19,7 @@ import qs.components.reusable
 // settings draft.
 // I18n.tr("Used by keybind {0}")
 // I18n.tr("Used by hot corner {0}")
+// I18n.tr("Used by window rule {0}")
 // I18n.tr("Top left")
 // I18n.tr("Top right")
 // I18n.tr("Bottom left")

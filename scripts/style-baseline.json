@@ -39,6 +39,11 @@
   "R1": 2,
   "R7": 1
  },
+ "qml/components/reusable/OptionGlyph.qml": {
+  "R1": 1,
+  "R4": 1,
+  "R7": 1
+ },
  "qml/components/surfaces/border/BorderPanel.qml": {
   "R7": 3
  },
@@ -393,6 +398,24 @@
   "R4": 5,
   "R5": 1,
   "R7": 5
+ },
+ "qml/components/views/WindowRules/KindBlock.qml": {
+  "R1": 3,
+  "R2": 1
+ },
+ "qml/components/views/WindowRules/RuleInspector.qml": {
+  "R3": 1
+ },
+ "qml/components/views/WindowRules/RulesPanel.qml": {
+  "R1": 1,
+  "R14": 1,
+  "R3": 2,
+  "R4": 2,
+  "R7": 1
+ },
+ "qml/components/views/WindowRules/WindowRules.qml": {
+  "R14": 1,
+  "R3": 1
  },
  "qml/config/MenusConfig.qml": {
   "R1": 2

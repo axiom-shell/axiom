@@ -83,6 +83,11 @@ Singleton {
       "pseudoTile": true,
       "splitToggle": true,
       "pin": true,
+      "ruleMaximize": true,
+      "ruleTearing": true,
+      "ruleLiveLook": true,
+      "ruleNoScreenShare": true,
+      "ruleXwayland": true,
       "windowGroups": true,
       "shareRestore": true
     })
@@ -228,6 +233,7 @@ end`);
   // warp into the middle of its `side` half. Dwindle splits side by side when
   // the box is wider than tall (split_width_multiplier), so a side along the
   // other axis falls back to first/second half on the axis dwindle will use.
+  // mirrored in backend/internal/compositor/place/hypr.go
   readonly property string _luaPrelude: `local errs = {}
 local function run(f)
   local ok, e = pcall(function() hl.dispatch(f()) end)
@@ -404,7 +410,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // Hyprland's binds as JSON (modmask, key, keycode, submap, description,
   // dispatcher, arg, …)
   function withMainBinds(callback) {
-    root._json("binds", binds => callback(Array.isArray(binds) ? binds.filter(entry => entry.submap !== root._captureSubmap && entry.submap !== root._switcherSubmap) : null));
+    root._json("binds", binds => callback(Array.isArray(binds) ? binds.filter(entry => entry.submap !== root._captureSubmap && entry.submap !== root._switcherSubmap && entry.submap !== root._pauseSubmap) : null));
   }
 
   // While on, every key reaches axiom instead of a bind (the Keybinds
@@ -416,6 +422,8 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     root._eval(on ? root._enterCaptureLua : root._leaveCaptureLua);
   }
 
+  // The daemon's render.PauseSubmap
+  readonly property string _pauseSubmap: "axiom_paused"
   readonly property string _captureSubmap: "axiom_record"
   readonly property string _leaveCaptureLua: `AXIOM_CAPTURE_GEN = (AXIOM_CAPTURE_GEN or 0) + 1
 if hl.get_current_submap() == "${_captureSubmap}" then hl.dispatch(hl.dsp.submap("reset")) end`

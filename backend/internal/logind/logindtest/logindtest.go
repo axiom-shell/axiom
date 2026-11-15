@@ -257,6 +257,18 @@ func (f *Fake) IdleHeld() int {
 	return len(f.taken)
 }
 
+// IdleWhys are the reasons of the idle inhibitors taken with Inhibit and
+// held now.
+func (f *Fake) IdleWhys() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []string
+	for _, row := range f.taken {
+		out = append(out, row[2].(string))
+	}
+	return out
+}
+
 // Lock sends the session's Lock signal (loginctl lock-session).
 func (f *Fake) Lock() error { return f.Conn.Emit(SessionPath, ifaceSession, "Lock", "") }
 

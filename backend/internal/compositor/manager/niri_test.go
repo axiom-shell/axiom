@@ -325,3 +325,38 @@ func TestNiriSuccessfulLoadClearsPending(t *testing.T) {
 		t.Fatalf("after the answer: pending %q, checked %v, flag %v", w.pending, w.wrapperChecked, w.state.NiriWrapper)
 	}
 }
+
+// The window rules come last in the included and the detached module, after
+// the look's own window-rule blocks, so they win. Managed: the rule's
+// opacity and background-effect go after the look, the rest between the
+// maximize rule and the user's files, a block with only look nodes leaving
+// no empty block there.
+func TestNiriWindowRulesAfterTheLook(t *testing.T) {
+	t.Parallel()
+	w := goldenWriter(t, "niri").(*niriWriter)
+	in := goldenInputs(t, "niri")
+	spec := in.get("specFile")
+	rule := "match app-id=\"\\\\A(?:org\\\\.gnome\\\\.Nautilus)\\\\z\"\n    opacity 0.85"
+	for name, text := range map[string]string{"included": w.moduleText(in, spec), "detached": w.detachedModule(in)} {
+		// after the look's last node (a layer rule, the wallpaper's) and the input
+		if rules, look := strings.Index(text, "open-floating"), strings.LastIndex(text, "layer-rule {"); look < 0 || rules < look || rules < strings.Index(text, "xcursor-theme") {
+			t.Errorf("%s: the rules aren't after the look", name)
+		}
+	}
+	managed := w.managedText(in, spec)
+	files := strings.Index(managed, "// Your files")
+	maximize := strings.Index(managed, "open-maximized-to-edges false")
+	if open := strings.Index(managed, "open-floating"); open < maximize || open > files {
+		t.Errorf("managed: the rule's other nodes aren't between the maximize rule and the user's files")
+	}
+	if at := strings.Index(managed, rule); at < strings.LastIndex(managed, "layer-rule {") {
+		t.Errorf("managed: the opacity rule isn't after the look:\n%s", managed)
+	}
+	// Nautilus has opacity and blur only: nothing of it before the user's files
+	if strings.Contains(managed[:files], "Nautilus") {
+		t.Error("managed: a block with only look nodes left a block before the user's files")
+	}
+	if strings.Contains(managed[:files], "window-rule {\n}") {
+		t.Error("managed: an empty block")
+	}
+}

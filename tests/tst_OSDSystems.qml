@@ -177,7 +177,7 @@ TestCase {
           if (field === "tile")
             root._holds(OSDEngine.tileOf(def, what.key, after[what.key]), x.tile, where + " tile");
           else if (field === "opens")
-            compare(OSDEngine.opens(def.options, def, what, row.onScreenChanges === true), x.opens, where + " opens");
+            compare(OSDEngine.opens(def.options, def, what, row.onScreenChanges === true, row.paused === true), x.opens, where + " opens");
           else if (field === "action")
             root._holds(def.actionOf(what.key, after[what.key]), x.action, where + " action");
           else if (field === "card")

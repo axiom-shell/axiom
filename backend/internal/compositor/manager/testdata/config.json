@@ -1492,5 +1492,31 @@
   },
   "Polkit": {
     "enabled": true
+  },
+  "WindowRules": {
+    "rules": [
+      {"id": "pip", "name": "Firefox PiP", "enabled": true,
+       "windows": [{"conditions": [{"field": "appId", "op": "is", "value": "firefox"}, {"field": "title", "op": "contains", "value": "Picture-in-Picture"}]}],
+       "window": {"float": true, "size": {"width": 640, "height": 360}, "pin": true, "noFocus": true}},
+      {"id": "games", "name": "Games", "enabled": true,
+       "windows": [{"conditions": [{"field": "appId", "op": "matches", "value": "^steam_app_\\d+$"}]},
+                   {"conditions": [{"field": "title", "op": "is", "value": "Game"}, {"field": "appId", "op": "isNot", "value": "steam"}]}],
+       "window": {"workspace": "games", "fullscreen": true, "tearing": true}},
+      {"id": "files", "name": "Files", "enabled": true,
+       "windows": [{"conditions": [{"field": "appId", "op": "is", "value": "org.gnome.Nautilus"}]}],
+       "window": {"opacity": 85, "noBlur": true}},
+      {"id": "calc", "name": "Calculator", "enabled": true,
+       "windows": [{"conditions": [{"field": "app", "op": "is", "value": "org.gnome.Calculator.desktop"}]}],
+       "window": {"float": true, "center": true, "special": {"id": "calc", "silent": true}}},
+      {"id": "steam", "name": "Steam", "enabled": true,
+       "windows": [{"conditions": [{"field": "appId", "op": "is", "value": "steam"}]}, {"conditions": [{"field": "process", "op": "is", "value": "steam"}]}],
+       "window": {"workspace": "3", "follow": true, "monitor": "DP-1", "maximize": true}},
+      {"id": "wine", "name": "Wine", "enabled": true,
+       "windows": [{"conditions": [{"field": "xwayland", "op": "is", "value": ""}]}, {"conditions": [{"field": "title", "op": "contains", "value": "Wine"}]}],
+       "window": {"float": true, "noScreenShare": true}},
+      {"id": "off", "name": "Off", "enabled": false,
+       "windows": [{"conditions": [{"field": "appId", "op": "is", "value": "never"}]}], "window": {"float": true}},
+      {"id": "broken", "name": "Broken", "enabled": true, "windows": [], "window": {"float": true}}
+    ]
   }
 }

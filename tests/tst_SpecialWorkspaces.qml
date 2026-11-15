@@ -94,6 +94,8 @@ TestCase {
   readonly property var sites: [
     {
       "path": ["Keybinds", "binds"],
+      "field": ["argument"],
+      "many": false,
       "key": "argument",
       "when": {
         "action": ["toggleSpecial", "moveToSpecial"]
@@ -103,6 +105,8 @@ TestCase {
     },
     {
       "path": ["HotCorners", "items"],
+      "field": ["argument"],
+      "many": false,
       "key": "argument",
       "when": {
         "action": ["toggleSpecial"]
@@ -160,7 +164,7 @@ TestCase {
         ]
       }
     };
-    compare(SpecialWorkspaces.references(config, sites), [
+    compare(SchemaRefs.references(config, sites), [
       {
         "id": "magic",
         "usedBy": "Used by keybind {0}",
@@ -180,14 +184,14 @@ TestCase {
         "translate": true
       }
     ], "a hot corner by its title; only the actions `when` names, with a non-empty id");
-    compare(SpecialWorkspaces.references({}, sites), [], "no sections");
-    compare(SpecialWorkspaces.references({
+    compare(SchemaRefs.references({}, sites), [], "no sections");
+    compare(SchemaRefs.references({
       "Keybinds": {
         "binds": "x"
       }
     }, sites), [], "not a list");
-    compare(SpecialWorkspaces.references(config, []), []);
-    compare(SpecialWorkspaces.references(null, null), []);
+    compare(SchemaRefs.references(config, []), []);
+    compare(SchemaRefs.references(null, null), []);
   }
 
   function test_list() {
