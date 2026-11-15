@@ -149,6 +149,7 @@ ColumnLayout {
           StreamedLoader {
             id: field
             Layout.fillWidth: true
+            rise: false
             label: "form field"
             Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
               "row": cell.modelData,
