@@ -37,6 +37,9 @@ Bar widgets, content and views are loaded by URL.
 - A new directory imported only from URL-loaded files isn't scanned until qs restarts (`module "qs.…" is not installed`): ask the user to restart. New singletons are picked up by a hot reload (qs 0.3.1).
 - An inline `component A` using another inline `component B` of the same file fails with "A is not a type": inline B's body.
 
+### Canvas
+- `onPaint` doesn't follow bindings: put every colour and value it reads in the repaint key (`paintKey`, `GridCanvas`), Style colours through `Style.revision`.
+
 ### Effects
 - A `MultiEffect` handed a visible item's own layer (`layer.enabled` source) pads that layer and redraws the item shrunk and offset; handed a `ShaderEffectSource` with `autoPaddingEnabled`, it stretches it. Shadows of visible surfaces go through `OutsideShadow` (explicit padding).
 - Rounded clipping is Quickshell.Widgets' `ClippingRectangle`, never a `MultiEffect` mask; set its `color`, which defaults to white.

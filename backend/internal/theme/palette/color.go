@@ -42,6 +42,22 @@ func contrast(a, b rgb8) float64 {
 	return (la + 0.05) / (lb + 0.05)
 }
 
+// Luminance is WCAG's relative luminance (0-1) of "#rrggbb" (black for
+// anything else): what Go's own decisions and tests measure with. The
+// compositor files use render.Luminance, the JS port frozen to the shell's
+// output (docs/dev/core/style.md > Contrast in QML and Go).
+func Luminance(hex string) float64 {
+	c, _ := parseHex(hex)
+	return c.luminance()
+}
+
+// Contrast is the WCAG contrast ratio (1-21) of two "#rrggbb" colors.
+func Contrast(a, b string) float64 {
+	ca, _ := parseHex(a)
+	cb, _ := parseHex(b)
+	return contrast(ca, cb)
+}
+
 func toLinear(c float64) float64 {
 	if c <= 0.04045 {
 		return c / 12.92

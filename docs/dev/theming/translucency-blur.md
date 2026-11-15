@@ -26,6 +26,9 @@ The translucency setting, how fills apply it, the Hyprland layer rules axiom wri
 - Outer and nested fills alike, so nested fills stack: a card on a 60% panel reads about 84%.
 - Accent colors and hover tints are left alone.
 
+### Style's floor
+`Style.surfaceAlpha` is `Appearance.surfaceAlpha` raised to the theme's readability floor (the least alpha at which `text` on the page and on a card, over the opposite pole of the wallpaper, reaches 3.0; none at 100 %), and `Style.fill*` are the roles at it ([Style](../core/style.md) › Translucency). The bar keeps `Appearance`'s alpha and `Appearance.fill`, as does everything not yet on `Style`.
+
 ### Hyprland layer rules
 Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones SwayFX's `layer_effects` and niri's xray rules are written from too), handed `spec.surfaces` (`M.blur()` in the module). The named layer rules are always written, `enabled` or not, since a rule is taken back by redefining it (no reload).
 - `axiom-blur`, on the namespaces that blur themselves (`LayerStack.blurSurfaces`: the blur window, the overlay, the floating launcher and switcher, …):

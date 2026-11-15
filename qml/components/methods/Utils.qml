@@ -271,23 +271,22 @@ QtObject {
   }
 
   // Get contrasting text color for background: white or black, whichever
-  // has more WCAG contrast with it
+  // has more WCAG contrast with it (kept until PR 11; new code reads Style
+  // roles)
   function getContrastColor(backgroundColor) {
-    return contrast(backgroundColor, "#FFFFFF") >= contrast(backgroundColor, "#000000") ? "#FFFFFF" : "#000000";
+    return Tone.bestOn(backgroundColor);
   }
 
-  // WCAG contrast ratio, 1 to 21
+  // WCAG contrast ratio, 1 to 21 (kept until PR 11; new code reads Style
+  // roles)
   function contrast(a, b) {
-    const la = luminance(a);
-    const lb = luminance(b);
-    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    return Tone.contrast(a, b);
   }
 
-  // WCAG relative luminance, 0 (black) to 1 (white)
+  // WCAG relative luminance, 0 (black) to 1 (white) (kept until PR 11; new
+  // code reads Style roles)
   function luminance(color) {
-    const c = Qt.color(color);
-    const lin = v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-    return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+    return Tone.luminance(color);
   }
 
   // The 6 weeks (42 days) shown for a month, starting on `firstDay` (0 =

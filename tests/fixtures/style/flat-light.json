@@ -1,0 +1,15 @@
+{
+  "name": "Flat light",
+  "variant": "light",
+  "colors": {
+    "base00": "#f2f2f2",
+    "base01": "#f2f2f2",
+    "base02": "#f2f2f2",
+    "base03": "#d0d0d0",
+    "base04": "#9a9a9a",
+    "base05": "#5a5a5a",
+    "base0D": "#dfe6ee",
+    "base0E": "#eedfee",
+    "base0A": "#f0e68c"
+  }
+}

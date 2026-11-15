@@ -155,7 +155,7 @@ jobs:
             { git show "HEAD:$f"; git show "HEAD^1:$f"; } 2>/dev/null | grep -qE 'IpcTarget[[:space:]]*[{]' && echo "$f" || true
           done)
           if [ "$EVENT" != pull_request ] || [ -n "$ipc" ] || printf '%s\n' "$changed" |
-            grep -qE '^(backend/|qml/config/(schema|json)/|qml/components/methods/|data/(examples|templates|greeter)/|tests/(Shared|RepoFiles|tst_)|scripts/(check_all|check_go|generate|gen_docs|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
+            grep -qE '^(backend/|qml/config/(schema|json)/|qml/components/methods/|data/(examples|templates|greeter)/|tests/(Shared|RepoFiles|tst_)|tests/fixtures/style/contrast\.json|scripts/(check_all|check_go|generate|gen_docs|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
             echo "run=1" >> "$GITHUB_OUTPUT"
           else
             echo "Nothing the binary is built or tested from changed: skipping the Go checks"

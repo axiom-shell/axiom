@@ -154,6 +154,29 @@ class Themes(unittest.TestCase):
         for base in BASES:
             self.assertRegex(template["colors"][base], HEX)
 
+    def test_style_fixture_lists_every_theme(self):
+        # tests/fixtures/style/themes.json is what tst_StyleTokens sweeps
+        # (a QML test can't list a folder)
+        listed = json.loads((ROOT / "tests" / "fixtures" / "style" / "themes.json").read_text())
+        stems = sorted(f.stem for f in THEMES.glob("*.json") if f.name != "theme.schema.json")
+        self.assertEqual(sorted(listed), stems)
+
+
+class StyleLayer(unittest.TestCase):
+    """qml/config/Style.qml is built on the lock screen and in the greeter, so
+    it reads nothing beyond the Style import list (docs/dev/core/style.md)"""
+    ALLOWED = {"ThemeManager", "Theme", "Appearance", "Widget", "StyleTokens", "Tone", "StyleInk",
+               "StyleTextRole", "Style", "QtObject", "Qt", "Font", "Math", "console", "Date"}
+
+    def test_style_imports(self):
+        text = (ROOT / "qml" / "config" / "Style.qml").read_text()
+        text = re.sub(r"//[^\n]*", "", text)
+        text = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+        used = set(re.findall(r"\b([A-Z][A-Za-z0-9]*|console)\b(?=\s*[.{])", text))
+        self.assertEqual(sorted(used - self.ALLOWED), [])
+        # every *Manager but ThemeManager, the bar's config and the compositor layer stay out
+        self.assertNotRegex(text, r"\b(BarStyle|BarsConfig|CompositorManager|(?!ThemeManager\b)\w+Manager)\b")
+
 
 class NvimModule(unittest.TestCase):
     """The axiom_theme Lua module Apply copies into a Neovim config"""

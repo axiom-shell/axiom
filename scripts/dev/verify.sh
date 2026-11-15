@@ -92,6 +92,8 @@ for f in "${changed[@]}"; do
   # backend/ and the repo files the binary embeds (backend/tools/syncassets)
   case "$f" in
   backend/* | qml/config/json/backend.json | qml/config/json/theme-defaults.json) go=1 ;;
+  # The contrast pairs the Go side (palette) and tst_Tone both read
+  tests/fixtures/style/contrast.json) go=1 ;;
   # The shared fixtures: both sides replay them (docs/dev/backend/README.md)
   tests/Shared.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
   esac
@@ -104,11 +106,14 @@ for f in "${changed[@]}"; do
     name="$(basename "$f" .qml)"
     [[ -f "$f" ]] && tests+=("${name#tst_}")
     ;;
+  # A theme or a style fixture runs the pair sweep before CI does
+  qml/config/themes/* | qml/config/json/theme-defaults.json | tests/fixtures/style/*) tests+=(StyleTokens Tone) ;;
   esac
   # tests/scripts/test_scripts.py's classes for each script (the whole
   # file takes ~15 s); a new script with tests gets a line here
   case "$f" in
-  qml/config/themes/* | qml/config/json/theme-defaults.json | scripts/gen_theme_template.py) script_tests+=(Themes) ;;
+  qml/config/themes/* | qml/config/json/theme-defaults.json | scripts/gen_theme_template.py | tests/fixtures/style/themes.json) script_tests+=(Themes) ;;
+  qml/config/Style.qml) script_tests+=(StyleLayer) ;;
   data/templates/nvim/*) script_tests+=(NvimModule) ;;
   data/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
