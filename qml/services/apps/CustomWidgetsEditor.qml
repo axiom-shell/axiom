@@ -128,6 +128,11 @@ QtObject {
     root.set(["samples"], next);
   }
 
+  // Test mode (D2): the module's preview runs its actions, keys and Entries
+  // for real, against the real commands. Never saved; off each time the
+  // page shows and for each definition
+  property bool testMode: false
+
   // The page's tab: 0 data, 1 bar, 2 module (selectTab)
   property int tab: 0
 
@@ -137,6 +142,7 @@ QtObject {
 
   // While the page shows, the selected definition runs
   property bool pageShown: false
+  onPageShownChanged: root.testMode = false
 
   // Loads the draft unless it holds unsaved edits (the page is rebuilt
   // whenever the overlay reopens)
@@ -159,6 +165,7 @@ QtObject {
   function selectDefinition(index) {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
     root.viewIndex = -1;
+    root.testMode = false;
     root.seen = {};
     root.seenStates = [];
     root.elements.clearSelection();

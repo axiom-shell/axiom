@@ -1400,6 +1400,15 @@ QtObject {
     return Math.max(0.05, Math.min(0.3, byHeight, byWidth));
   }
 
+  // The zoom (at most 1, at least 0.05) a module of `size` ([w, h] in grid
+  // units, `card` px a unit) is drawn at to fit `width` by `height`: the
+  // test preview, one large preview
+  function fitZoom(size, card, width, height) {
+    const w = Math.max(1, GridPlacement.span(size[0], card));
+    const h = Math.max(1, GridPlacement.span(size[1], card));
+    return Math.max(0.05, Math.min(1, width / w, height / h));
+  }
+
   // --- Screens (module.views) ---
 
   // The module's elements in every layer: the base, then each screen's

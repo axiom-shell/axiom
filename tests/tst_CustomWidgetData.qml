@@ -1842,4 +1842,12 @@ TestCase {
     compare(CustomWidgetData.sampleSource(def, 1, {}, null), "none");
     compare(CustomWidgetData.sampleSource(def, -1, {}, null), "none");
   }
+
+  function test_fitZoom() {
+    compare(CustomWidgetData.fitZoom([4, 4], 100, 10000, 10000), 1, "never past full size");
+    verify(CustomWidgetData.fitZoom([4, 4], 100, 50, 10000) < 1, "narrow: smaller");
+    verify(CustomWidgetData.fitZoom([4, 4], 100, 10000, 50) < 1, "short: smaller");
+    compare(CustomWidgetData.fitZoom([4, 4], 100, 0, 0), 0.05, "at least 0.05");
+    verify(CustomWidgetData.fitZoom([8, 2], 100, 150, 400) < CustomWidgetData.fitZoom([2, 2], 100, 150, 400), "a wider module is drawn smaller");
+  }
 }

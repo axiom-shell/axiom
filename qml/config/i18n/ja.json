@@ -4491,6 +4491,8 @@
     "now: {0}": "",
     "Click a value to bind it to the slot you were in, or to a new text.": "",
     "hidden": "",
-    "Shown on the canvas. Empty: the kind.": ""
+    "Shown on the canvas. Empty: the kind.": "",
+    "Test actions": "",
+    "Runs real commands": ""
   }
 }

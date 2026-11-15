@@ -34,6 +34,11 @@ ColumnLayout {
   readonly property var views: root.definition?.module?.views ?? []
   readonly property var view: root.views[root.editor.viewIndex] ?? null
   readonly property var designSize: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
+  // The live output the test preview draws (null before the script's first
+  // output: the previewed sample then) and the zoom that fits the popout in
+  // the tab's width and half its height
+  readonly property var liveFields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
+  readonly property real testZoom: CustomWidgetData.fitZoom(root.designSize, root.card, root.width, root.availableHeight * 0.5)
   // The chip a menu is open for, and a counter its Rename bumps
   property int menuView: 0
   property int renameRequests: 0
@@ -101,6 +106,7 @@ ColumnLayout {
 
   // The previews, the lock screen switch
   RowLayout {
+    visible: !root.editor.testMode
     Layout.fillWidth: true
     Layout.minimumWidth: 0
     clip: true
@@ -190,6 +196,46 @@ ColumnLayout {
     }
   }
 
+  // Test mode: the popout at its design size, fitted, as it is live with
+  // its actions, keys and Entries on (they run the real commands)
+  Loader {
+    active: root.editor.testMode
+    visible: active
+    Layout.fillWidth: true
+    Layout.preferredHeight: active ? GridPlacement.span(root.designSize[1], root.card) * root.testZoom : 0
+
+    sourceComponent: Item {
+      Surface {
+        id: testBox
+        anchors.horizontalCenter: parent.horizontalCenter
+        implicitWidth: GridPlacement.span(root.designSize[0], root.card) * root.testZoom
+        implicitHeight: GridPlacement.span(root.designSize[1], root.card) * root.testZoom
+        tone: "page"
+        clip: true
+
+        Item {
+          width: parent.width / root.testZoom
+          height: parent.height / root.testZoom
+          scale: root.testZoom
+          readonly property real contentZoom: scale
+          transformOrigin: Item.TopLeft
+
+          CustomLayout {
+            anchors.fill: parent
+            anchors.margins: Widget.cardPadding
+            definition: root.definition
+            fields: root.liveFields ?? root.editor.previewFields ?? ({})
+            history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
+            actionsEnabled: true
+            keysHost: true
+            keysEnabled: Object.keys(root.definition?.module?.keys ?? ({})).length > 0
+            viewIndex: root.liveFields ? CustomWidgetData.pickView(root.definition?.module, root.liveFields).index : root.editor.viewIndex
+          }
+        }
+      }
+    }
+  }
+
   // The base is empty and the sample picks no screen: nothing to draw
   Notice {
     visible: root.editor.viewIndex < 0 && root.views.length > 0 && root.elements.length === 0 && CustomWidgetData.pickView(root.definition?.module, CustomWidgetsManager.fields[root.editor.selectedId] ?? null).index < 0
@@ -237,6 +283,24 @@ ColumnLayout {
       tooltipText: I18n.tr("Add a screen")
       enabled: root.definition !== null
       onClicked: addMenu.openAt(addScreen, 0, addScreen.height)
+    }
+    // Test mode: not saved, off each time the page opens
+    RowLayout {
+      spacing: Widget.spacing
+
+      StyledSwitch {
+        compact: true
+        checked: root.editor.testMode
+        onToggled: root.editor.testMode = checked
+      }
+      StyledText {
+        text: I18n.tr("Test actions")
+      }
+      StatusChip {
+        visible: root.editor.testMode
+        text: I18n.tr("Runs real commands")
+        tone: "warning"
+      }
     }
     StatusChip {
       text: root.editor.sampleSource === "saved" ? I18n.tr("Previewing: saved") : root.editor.sampleSource === "live" ? I18n.tr("Previewing: live") : I18n.tr("Previewing: none")
