@@ -25,7 +25,7 @@ ColumnLayout {
   // The screens' samples kept in the definition: their keys
   readonly property var sampleKeys: Object.keys(root.definition?.samples ?? ({}))
   // The edited layer's name, for the Keep button
-  readonly property string layerName: root.editor.sampleKey === "" ? I18n.tr("no screen") : (root.definition?.module.views[root.editor.viewIndex]?.name || root.editor.sampleKey)
+  readonly property string layerName: root.editor.sampleKey === "" ? I18n.tr("Base") : (root.definition?.module.views[root.editor.viewIndex]?.name || root.editor.sampleKey)
   readonly property string keepReason: root.editor.keepRefused === "count" ? I18n.tr("{0} samples are kept: remove one first", root.editor.sampleLimits.entries) : root.editor.keepRefused === "size" ? I18n.tr("The samples are over {0} KB: remove one first", root.editor.sampleLimits.bytes / 1024) : ""
   // Rows built at most: a large output lists its first paths
   readonly property int maxRows: 200
@@ -93,7 +93,7 @@ ColumnLayout {
 
           StyledLabel {
             Layout.fillWidth: true
-            text: sampleRow.key === "" ? I18n.tr("No screen") : (root.definition?.module.views.find(v => v.id === sampleRow.key)?.name || sampleRow.key)
+            text: sampleRow.key === "" ? I18n.tr("Base") : (root.definition?.module.views.find(v => v.id === sampleRow.key)?.name || sampleRow.key)
             overflow: "line"
           }
           SquareIconButton {

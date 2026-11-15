@@ -148,7 +148,7 @@ ColumnLayout {
 
   // The base is empty and the sample picks no screen: nothing to draw
   Notice {
-    visible: root.editor.viewIndex < 0 && root.views.length > 0 && root.elements.length === 0
+    visible: root.editor.viewIndex < 0 && root.views.length > 0 && root.elements.length === 0 && CustomWidgetData.pickView(root.definition?.module, CustomWidgetsManager.fields[root.editor.selectedId] ?? null).index < 0
     status: "info"
     title: I18n.tr("No screen for this sample")
     text: I18n.tr("The base elements are empty: pick a screen to design it.")
@@ -224,7 +224,7 @@ ColumnLayout {
     Layout.fillHeight: true
     elements: root.elements
     editable: root.definition !== null
-    underlay: root.view ? (root.definition?.module?.elements ?? []).map(e => ({
+    underlay: root.view && root.view.base ? (root.definition?.module?.elements ?? []).map(e => ({
           "place": e.place,
           "label": e.options?.label || e.type
         })) : []

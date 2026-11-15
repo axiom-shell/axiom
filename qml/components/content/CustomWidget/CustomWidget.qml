@@ -60,7 +60,7 @@ Panel {
     // The layout, or why there's nothing to show: only one is built
     Loader {
       anchors.fill: parent
-      sourceComponent: root.fields !== null && !(root.fields.interactive ? root.fields.hiddenByScript : root.fields.hidden) && !root.view.builtinError ? layout : empty
+      sourceComponent: root.fields !== null && !(root.fields.interactive ? root.fields.hiddenByScript && root.fields.failure === null : root.fields.hidden) && !root.view.builtinError ? layout : empty
     }
 
     Component {

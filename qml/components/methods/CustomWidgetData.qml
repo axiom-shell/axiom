@@ -841,7 +841,7 @@ QtObject {
   // Whether a screen's `when` ({ key, test (is, isNot, set, unset),
   // values }) holds for the resolved `fields` (null: never). The key
   // "error" is the failure: set while there is one, `is` / `isNot`
-  // compare its message; any other is a key or path in the sample
+  // compare its message, and never hold while it isn't failing; any other is a key or path in the sample
   // ("state" when empty)
   function matches(when, fields) {
     if (!fields)
@@ -853,6 +853,8 @@ QtObject {
         return fields.failure !== null && fields.failure !== undefined;
       if (test === "unset")
         return fields.failure === null || fields.failure === undefined;
+      if (fields.failure === null || fields.failure === undefined)
+        return false;
       const message = fields.error ?? "";
       return test === "isNot" ? values.length > 0 && !values.includes(message) : values.includes(message);
     }
@@ -909,7 +911,7 @@ QtObject {
   // single quotes (a ' as '\''), nothing as ''
   function shellQuote(text) {
     const t = String(text ?? "");
-    return /^-?[0-9.]+$/.test(t) ? t : "'" + t.replace(/'/g, "'\\''") + "'";
+    return /^-?(\d+(\.\d+)?|\.\d+)$/.test(t) ? t : "'" + t.replace(/'/g, "'\\''") + "'";
   }
 
   // An action command with its placeholders filled in one pass: {action},
@@ -931,6 +933,27 @@ QtObject {
 
   // --- Samples ---
 
+  // The UTF-8 byte length of `text` (a lone surrogate counts as 3, as it
+  // would be written as U+FFFD)
+  function utf8Length(text) {
+    const t = String(text ?? "");
+    let n = 0;
+    for (let i = 0; i < t.length; i++) {
+      const c = t.charCodeAt(i);
+      if (c < 0x80) {
+        n += 1;
+      } else if (c < 0x800) {
+        n += 2;
+      } else if (c >= 0xD800 && c < 0xDC00 && i + 1 < t.length && t.charCodeAt(i + 1) >= 0xDC00 && t.charCodeAt(i + 1) < 0xE000) {
+        n += 4;
+        i++;
+      } else {
+        n += 3;
+      }
+    }
+    return n;
+  }
+
   // The key a screen's sample is kept under: its id, "" for no screen
   // (the base alone)
   function viewKey(module, index) {
@@ -949,7 +972,7 @@ QtObject {
     let refused = "";
     if (!(key in old) && Object.keys(next).length > (lim.entries ?? Infinity))
       refused = "count";
-    else if (JSON.stringify(next).length > (lim.bytes ?? Infinity))
+    else if (root.utf8Length(JSON.stringify(next)) > (lim.bytes ?? Infinity))
       refused = "size";
     return {
       "samples": refused === "" ? next : Object.assign({}, old),

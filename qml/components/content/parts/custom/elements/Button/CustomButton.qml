@@ -21,9 +21,11 @@ CustomElementBase {
 
   readonly property string label: root.bind.label ? root.text("label") : root.options.label || CustomWidgetsManager.actionLabel(root.actionId) // lock-inert: a name, nothing runs
   readonly property string icon: root.bind.icon ? root.text("icon") : root.options.icon
+  // Its `enabled` binding has it off
+  readonly property bool slotOff: !!root.bind.enabled && !CustomWidgetData.truthy(root.value("enabled"))
   // The script or the binding has it off
-  readonly property bool off: (root.actionId !== "" && !CustomWidgetData.actionEnabled(root.fields?.actions, root.actionId)) || (!!root.bind.enabled && !CustomWidgetData.truthy(root.value("enabled")))
-  readonly property bool pressable: root.canRun && !(!!root.bind.enabled && !CustomWidgetData.truthy(root.value("enabled")))
+  readonly property bool off: (root.actionId !== "" && !CustomWidgetData.actionEnabled(root.fields?.actions, root.actionId)) || root.slotOff
+  readonly property bool pressable: root.canRun && !root.slotOff
   readonly property bool coloured: root.options.color !== ""
   readonly property color fill: Style.resolve(root.options.color)
   // Held for a moment after a failed run: a blink (a fixed time)

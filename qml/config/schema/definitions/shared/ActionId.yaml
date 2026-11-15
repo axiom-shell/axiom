@@ -1,0 +1,8 @@
+# The ActionId definition (#/definitions/ActionId).
+
+x-inline: true
+type: string
+default: ''
+pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'
+x-scope: commands
+description: 'A named action: empty, a built-in (axiom:<id>) or an id the definition''s action command is run with.'

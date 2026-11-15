@@ -835,6 +835,17 @@ TestCase {
   }
 
   function test_matches() {
+    const errWhen = (test, values) => ({
+          "key": "error",
+          "test": test,
+          "values": values
+        });
+    compare(CustomWidgetData.matches(errWhen("isNot", ["x"]), _fields({})), false, "error isNot: never while healthy");
+    compare(CustomWidgetData.matches(errWhen("is", [""]), _fields({})), false, "error is [\"\"]: never while healthy");
+    compare(CustomWidgetData.matches(errWhen("isNot", ["x"]), _fields({}, {
+      "kind": "script",
+      "message": "y"
+    })), true, "error isNot: another message");
     const is = values => ({
           "key": "state",
           "test": "is",
@@ -965,6 +976,13 @@ TestCase {
     }, failing);
     compare(stale.index, -1, "failure: no stale state view");
     compare(stale.builtinError, true, "failure: the stock screen");
+    compare(CustomWidgetData.pickView({
+      "views": [view("e", {
+          "key": "error",
+          "test": "isNot",
+          "values": ["x"]
+        }), front]
+    }, fields).index, 1, "healthy: an error isNot screen is skipped");
     const none = CustomWidgetData.pickView({
       "views": [front]
     }, null);
@@ -1020,6 +1038,10 @@ TestCase {
 
   function test_shellQuote() {
     compare(CustomWidgetData.shellQuote("42.5"), "42.5", "a number is bare");
+    compare(CustomWidgetData.shellQuote("."), "'.'", "a dot is quoted");
+    compare(CustomWidgetData.shellQuote("1.2.3"), "'1.2.3'", "two dots are quoted");
+    compare(CustomWidgetData.shellQuote("-."), "'-.'", "-. is quoted");
+    compare(CustomWidgetData.shellQuote(".5"), ".5", ".5 is a number");
     compare(CustomWidgetData.shellQuote("-3"), "-3", "a negative number");
     compare(CustomWidgetData.shellQuote("seek"), "'seek'", "a word is quoted");
     compare(CustomWidgetData.shellQuote("it's"), "'it'\\''s'", "a quote survives");
@@ -1120,6 +1142,22 @@ TestCase {
     compare(big.refused, "size", "too big");
     compare(Object.keys(big.samples).length, 0, "nothing kept");
     compare(CustomWidgetData.keepSample(undefined, "", {}, limits).refused, "", "no map yet");
+    const cjk = n => ({
+          "text": "語".repeat(n)
+        });
+    compare(CustomWidgetData.keepSample({}, "a", cjk(30000), {
+      "bytes": 65536
+    }).refused, "size", "30000 CJK characters are over 64 KB of UTF-8");
+    compare(CustomWidgetData.keepSample({}, "a", cjk(20000), {
+      "bytes": 65536
+    }).refused, "", "20000 fit");
+  }
+
+  function test_utf8Length() {
+    compare(CustomWidgetData.utf8Length("a"), 1);
+    compare(CustomWidgetData.utf8Length("é"), 2);
+    compare(CustomWidgetData.utf8Length("語"), 3);
+    compare(CustomWidgetData.utf8Length("😀"), 4);
   }
 
   function test_sampleForView() {
