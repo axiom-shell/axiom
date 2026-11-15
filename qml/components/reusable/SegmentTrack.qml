@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.components.methods
 import qs.config
 
 // The track and sliding thumb of SegmentRow and StyledToggle (private to
