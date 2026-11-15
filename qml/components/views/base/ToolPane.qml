@@ -54,6 +54,8 @@ TitledCard {
       StyledScrollView {
         anchors.fill: parent
         contentPadding: 0
+        // A bar only while the capped list overflows
+        showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
 
         ColumnLayout {
           id: pinnedColumn
@@ -61,6 +63,13 @@ TitledCard {
           spacing: Widget.spacing / 2
         }
       }
+    },
+    // The pinned area's edge, drawn only while its list is cut
+    StyledSeparator {
+      objectName: "pinnedEdge"
+      Layout.fillWidth: true
+      Layout.topMargin: -Widget.spacing / 2
+      visible: pinnedColumn.implicitHeight > pinnedArea.height
     },
     StyledTabBar {
       id: tabStrip
