@@ -41,6 +41,7 @@ StyledTextButton {
   enabled: available
   kind: root.inRow ? "text" : root.active ? "primary" : "tonal"
   labelRole: root.inRow && !root.active ? "body" : "label"
+  // The else-branch matches StyledTextButton's default for primary/tonal; spelled out because a binding can't fall back to the base default.
   _contentColor: root.inRow ? root._rowInk : Style.toneOn(root.inkScope, "text")
 
   readonly property color _rowInk: {

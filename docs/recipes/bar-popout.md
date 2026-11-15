@@ -26,7 +26,7 @@ A popout-only panel needs no schema entry. If the same file should also be an ov
    The name is literal so `check_structure` can check that the file exists.
 
 ## Watch out for
-- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy targets (`Battery`, `Disks`, `Caffeine`, `WeatherForecast`) show the pattern; `check_style.py` fails a new file that has the old ones.
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy targets (`Battery`, `Disks`, `Caffeine`, `WeatherForecast`) show the pattern; `check_style.py` fails a file that has them.
 - **Read `extraData` through your own properties**, never the wrapper's `currentData`.
 - **Text fields and growth.** A text field inside needs `wantsKeyboardFocus: true`. A panel that grows needs `maxImplicitHeight` (and `maxImplicitWidth` if it widens), and should keep its controls still: it sizes to what it shows and sets `flips` so they stay beside the bar when it grows upwards ([Bar popout window sizing](../dev/popouts/hosts-and-switching.md#bar-popout-window-sizing)).
 - **Submenus.** A popout opened from inside popout or menu content becomes that popout's submenu (one level deep). It is the same `PopoutAnchor`, with no extra code.

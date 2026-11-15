@@ -118,8 +118,7 @@ QtObject {
   }
 
   // Whether white has at least the contrast of black on `color` (WCAG: not
-  // the YIQ test of Utils.isColorDark, which disagrees on saturated mid
-  // colors)
+  // the YIQ luminance test, which disagrees on saturated mid colors)
   function isDark(color) {
     return root.contrast(color, "#ffffff") >= root.contrast(color, "#000000");
   }
