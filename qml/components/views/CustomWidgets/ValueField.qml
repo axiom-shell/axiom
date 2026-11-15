@@ -12,8 +12,9 @@ import qs.components.reusable
 // selection). Under it what a format reads as in the previewed sample
 // ("now: CPU 42%"), or a warning when a {path} in it reads nothing there.
 // Empty: the slot falls back to the output's own key (`placeholder` says
-// what that is). A row of the element inspector: put the rows of one group
-// in a ColumnLayout with no spacing and mark the first `first`.
+// what that is). An InspectorRow: its label above the field, as a schema
+// text field's; put the rows of one group in a ColumnLayout with no spacing
+// and mark the first `first`.
 InspectorRow {
   id: root
 
@@ -31,6 +32,8 @@ InspectorRow {
   // Where the picked path goes: the cursor (or selection) when the { } button was pressed
   property int insertFrom: 0
   property int insertTo: 0
+
+  belowShown: root.unknown.length > 0 || root.now !== ""
 
   // Writes the typed text; an empty field removes the key
   function write(text) {

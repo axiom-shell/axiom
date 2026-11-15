@@ -13,7 +13,7 @@ import qs.components.bar.look
 
 // Custom widgets page, Bar tab: one banner across the page holding the
 // widget as it's drawn on a bar across and on one down the side (the real
-// bar widget, on the first bar's look) and a caption, then its bar style, its status colour (and Color by state), its text
+// bar widget, on the first bar's look) and a caption, then its bar style with its status colour (and Color by state), its text
 // (Waybar's format and icons) and its clicks.
 ColumnLayout {
   id: root
@@ -97,28 +97,23 @@ ColumnLayout {
       Layout.fillWidth: true
       title: I18n.tr("On the bar")
 
-      SchemaPropertiesForm {
-        Layout.fillWidth: true
-        propertiesSchema: Utils.pick(root.schema.bar.properties, order)
-        order: ["style", "icon", "segments", "width", "popout"]
-        values: root.definition?.bar ?? ({})
-        onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
-      }
-    }
-
-    FieldGroup {
-      Layout.fillWidth: true
-      title: I18n.tr("Status color")
-      description: I18n.tr(root.schema.bar.properties.color.description)
-
+      // One box of rows: the form's, then the status colour's
       ColumnLayout {
         Layout.fillWidth: true
         spacing: 0
 
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(root.schema.bar.properties, order)
+          order: ["style", "icon", "segments", "width", "popout"]
+          values: root.definition?.bar ?? ({})
+          onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+        }
+
         ColorField {
-          beside: true
           readonly property var colorSchema: root.schema.bar.properties.color
-          first: true
+          label: I18n.tr(colorSchema.title)
+          description: I18n.tr(colorSchema.description)
           key: "color"
           statesKey: "colorStates"
           emptyLabel: colorSchema["x-emptyLabel"] ?? "Auto"
@@ -134,20 +129,26 @@ ColumnLayout {
       Layout.fillWidth: true
       title: I18n.tr("Text")
 
-      SchemaPropertiesForm {
+      // One box of rows: the form's, then the icons'
+      ColumnLayout {
         Layout.fillWidth: true
-        propertiesSchema: Utils.pick(root.schema, order)
-        order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
-        values: root.definition ?? ({})
-        onEdited: (path, value) => root.editor.set(path, value)
-      }
+        spacing: 0
 
-      JsonField {
-        editor: root.editor
-        definition: root.definition
-        label: I18n.tr("Icons")
-        description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
-        path: "formatIcons"
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(root.schema, order)
+          order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
+          values: root.definition ?? ({})
+          onEdited: (path, value) => root.editor.set(path, value)
+        }
+
+        JsonField {
+          editor: root.editor
+          definition: root.definition
+          label: I18n.tr("Icons")
+          description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
+          path: "formatIcons"
+        }
       }
     }
 
@@ -165,7 +166,6 @@ ColumnLayout {
 
           TriggerField {
             id: trigger
-            beside: true
             required property string modelData
             required property int index
             first: trigger.index === 0

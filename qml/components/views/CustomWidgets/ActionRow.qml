@@ -8,9 +8,10 @@ import qs.components.forms
 
 // One action of the selected custom widget (actions.items[index]), edited in
 // a box that folds: collapsed it is one line (the name, the kind and a short
-// summary of what it runs); open it holds its name and a remove button, Command or Axiom action, what it runs
-// (a command, or one of the Axiom actions), and, for a command, whether the
-// widget waits for it. Used by the Data tab's Actions group and inline under
+// summary of what it runs); open, its form rows: its name and a remove
+// button, Runs (a Command | Axiom action toggle beside its label), what it
+// runs (a command, or one of the Axiom actions), and, for a command, whether
+// the widget waits for it (a switch row). Used by the Data tab's Actions group and inline under
 // a trigger (TriggerField). Name and command are pushed in while unfocused
 // and written on textEdited.
 Surface {
@@ -126,22 +127,30 @@ Surface {
         }
       }
 
-      InspectorRow {
-        StyledToggle {
-          Layout.fillWidth: true
+      FormRow {
+        hoverable: true
+        bodyHeight: kindField.implicitHeight
+        onRowClicked: kindField.activate()
+
+        SchemaToggle {
+          id: kindField
+          width: parent.width
+          label: I18n.tr("Runs")
           options: ["command", "axiom"]
-          labels: ({
+          optionLabels: ({
               "command": I18n.tr("Command"),
               "axiom": I18n.tr("Axiom action")
             })
-          value: root.item?.kind ?? "command"
+          currentValue: root.item?.kind ?? "command"
           onPicked: value => root.editor.setAction(root.index, "kind", value)
         }
       }
 
       InspectorRow {
         shown: root.item?.kind !== "axiom"
+        label: I18n.tr("Command")
         description: I18n.tr("{value}: what the element sends. {arg}: the trigger's argument (else added at the end). {rev} and {tree} too. Quoted for you.")
+        belowShown: (root.item?.command ?? "") === ""
 
         StyledTextEntry {
           id: commandEntry
@@ -158,8 +167,7 @@ Surface {
             restoreMode: Binding.RestoreNone
           }
         }
-        StyledText {
-          visible: (root.item?.command ?? "") === ""
+        below: StyledText {
           Layout.fillWidth: true
           text: I18n.tr("No command yet")
           role: "caption"
@@ -169,6 +177,7 @@ Surface {
 
       InspectorRow {
         shown: root.item?.kind === "axiom"
+        label: I18n.tr("Axiom action")
         description: I18n.tr("refresh, restart, screen:<screen id> (screen: the base), or a shell action that takes no argument.")
 
         StyledComboEntry {
@@ -190,22 +199,19 @@ Surface {
         }
       }
 
-      InspectorRow {
+      FormRow {
         shown: root.item?.kind !== "axiom"
+        hoverable: true
+        bodyHeight: waitField.implicitHeight
+        onRowClicked: waitField.activate()
 
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Widget.spacing * 2
-
-          FieldHeader {
-            label: I18n.tr("Wait for it to finish")
-            description: I18n.tr("Other actions wait, and a failure shows on the button. Off for commands that open an app.")
-          }
-          StyledSwitch {
-            Layout.alignment: Qt.AlignVCenter
-            checked: root.item?.wait ?? true
-            onToggled: root.editor.setAction(root.index, "wait", checked)
-          }
+        SchemaSwitch {
+          id: waitField
+          width: parent.width
+          label: I18n.tr("Wait for it to finish")
+          description: I18n.tr("Other actions wait, and a failure shows on the button. Off for commands that open an app.")
+          checked: root.item?.wait ?? true
+          onToggled: value => root.editor.setAction(root.index, "wait", value)
         }
       }
 

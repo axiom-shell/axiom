@@ -12,10 +12,11 @@ import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: while nothing is selected the element
 // library and the module's own settings (lock screen, font); the selected
-// element's settings in their place: its text fields
-// (Shows: a ValueField per slot of its kind), the actions it runs, when it is
-// shown (Visible), its colours (a ColorField each) and its look (the rest of
-// its kind's options, CustomWidgetsConfig.elementKinds).
+// element's settings in their place: its name and when it is shown (Visible,
+// one row), its text fields (Shows: a ValueField per slot of its kind), the
+// actions it runs and when they can (Enabled), its colours (a ColorField
+// each) and its look (the rest of its kind's options,
+// CustomWidgetsConfig.elementKinds).
 ColumnLayout {
   id: root
 
@@ -227,7 +228,6 @@ ColumnLayout {
 
       // Shown on the canvas: empty, the kind
       InspectorRow {
-        beside: true
         first: true
         label: I18n.tr("Name")
 
@@ -244,6 +244,16 @@ ColumnLayout {
             restoreMode: Binding.RestoreNone
           }
         }
+      }
+
+      // One row: Always, or When a value in the output holds
+      ConditionRows {
+        label: I18n.tr("Visible")
+        description: I18n.tr("Show it only while a value in the output holds.")
+        value: root.element?.showWhen ?? ({})
+        keys: root.colorKeys
+        tests: root.conditionTests
+        write: (field, value) => root.editor.setElement(["showWhen", field], value)
       }
 
       FieldGroup {
@@ -265,7 +275,6 @@ ColumnLayout {
 
             ValueField {
               id: field
-              beside: true
               required property string modelData
               required property int index
               Layout.fillWidth: true
@@ -296,7 +305,6 @@ ColumnLayout {
 
             TriggerField {
               id: trigger
-              beside: true
               required property string modelData
               required property int index
               first: trigger.index === 0
@@ -312,37 +320,12 @@ ColumnLayout {
           }
 
           ConditionRows {
-            beside: true
             label: I18n.tr("Enabled")
             value: root.element?.enabledWhen ?? ({})
             keys: root.colorKeys
             tests: root.conditionTests
             whenTest: "on"
             write: (field, value) => root.editor.setElement(["enabledWhen", field], value)
-          }
-        }
-      }
-
-      FieldGroup {
-        Layout.fillWidth: true
-        title: I18n.tr("Visible")
-        headerExtras: TipIcon {
-          text: "help"
-          tip: I18n.tr("Show it only while a value in the output holds.")
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: 0
-
-          ConditionRows {
-            beside: true
-            first: true
-            label: I18n.tr("Show")
-            value: root.element?.showWhen ?? ({})
-            keys: root.colorKeys
-            tests: root.conditionTests
-            write: (field, value) => root.editor.setElement(["showWhen", field], value)
           }
         }
       }
@@ -366,7 +349,6 @@ ColumnLayout {
 
             ColorField {
               id: color
-              beside: true
               required property var modelData
               required property int index
               readonly property var schema: root.kind?.options?.[color.modelData.key] ?? ({})

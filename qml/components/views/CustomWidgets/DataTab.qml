@@ -168,18 +168,22 @@ ColumnLayout {
         }
 
         // Waybar's and axiom's JSON, or the script's text as it is
-        InspectorRow {
-          label: I18n.tr("Output")
-          description: I18n.tr("Auto reads Waybar's or axiom's JSON, else the text.")
+        FormRow {
+          hoverable: true
+          bodyHeight: outputField.implicitHeight
+          onRowClicked: outputField.activate()
 
-          StyledToggle {
-            Layout.fillWidth: true
+          SchemaToggle {
+            id: outputField
+            width: parent.width
+            label: I18n.tr("Output")
+            description: I18n.tr("Auto reads Waybar's or axiom's JSON, else the text.")
             options: ["auto", "text"]
-            labels: ({
+            optionLabels: ({
                 "auto": I18n.tr("Auto"),
                 "text": I18n.tr("Plain text")
               })
-            value: root.definition?.output === "text" ? "text" : "auto"
+            currentValue: root.definition?.output === "text" ? "text" : "auto"
             onPicked: value => root.editor.set("output", value === "text" ? "text" : "waybar")
           }
         }
@@ -365,26 +369,41 @@ ColumnLayout {
         }
       }
 
-      // By count, over the kept keys (config, never live values)
-      Repeater {
-        model: root.sampleKeys.length
+      // The kept samples, a form row each. By count, over the kept keys
+      // (config, never live values)
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 0
 
-        RowLayout {
-          id: sampleRow
-          required property int index
-          readonly property string key: root.sampleKeys[sampleRow.index] ?? ""
-          Layout.fillWidth: true
-          spacing: Widget.spacing
+        Repeater {
+          model: root.sampleKeys.length
 
-          StyledLabel {
-            Layout.fillWidth: true
-            text: sampleRow.key === "" ? I18n.tr("Base") : (root.definition?.module.views.find(v => v.id === sampleRow.key)?.name || sampleRow.key)
-            overflow: "line"
-          }
-          SquareIconButton {
-            iconText: "close"
-            tooltipText: I18n.tr("Forget this sample")
-            onClicked: root.editor.removeSample(sampleRow.key)
+          FormRow {
+            id: sampleRow
+            required property int index
+            readonly property string key: root.sampleKeys[sampleRow.index] ?? ""
+            first: sampleRow.index === 0
+            bodyHeight: sampleLine.implicitHeight
+
+            RowLayout {
+              id: sampleLine
+              width: parent.width
+              spacing: Widget.spacing
+
+              StyledLabel {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                text: sampleRow.key === "" ? I18n.tr("Base") : (root.definition?.module.views.find(v => v.id === sampleRow.key)?.name || sampleRow.key)
+                role: "label"
+                overflow: "line"
+              }
+              FlatIconButton {
+                Layout.alignment: Qt.AlignVCenter
+                iconText: "close"
+                tooltipText: I18n.tr("Forget this sample")
+                onClicked: root.editor.removeSample(sampleRow.key)
+              }
+            }
           }
         }
       }

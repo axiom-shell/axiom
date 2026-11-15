@@ -8,9 +8,11 @@ import qs.components.reusable
 import qs.components.forms
 
 // One colour of a custom widget element or of the bar (Colors, Bar tab >
-// Status color), set in one place: a dropdown of the theme's colours, each
-// row painted in its colour (Auto or None first, Custom… last, which opens
-// a hex field), then "Color by state": a switch that turns on rules, each
+// Status color), set in one place, as form rows: a dropdown of the theme's
+// colours laid out as a schema colour field (InspectorRow's `shortControl`),
+// each row painted in its colour (Auto or None first, Custom… last, which
+// opens a hex field), then "Color by state": a switch row (SchemaSwitch, a
+// click on the row flips it) that turns on rules, each
 // "when the key is / isn't / above / below a value, this colour", the first
 // that holds winning and the colour above the fallback. The rules are kept
 // while it is off. `write(path, value)` writes `path` (a list of keys
@@ -57,8 +59,6 @@ ColumnLayout {
   // The keys a rule can read (KeyField.keys)
   property var keys: []
   property bool first: false
-  // The label beside the control (see InspectorRow)
-  property bool beside: false
   property var write: (path, value) => {}
 
   readonly property bool isHex: root.value.charAt(0) === "#"
@@ -200,32 +200,29 @@ ColumnLayout {
 
   InspectorRow {
     first: root.first
-    beside: root.beside
     label: root.label
     description: root.description
+    shortControl: true
+    dropdown: combo
+    belowShown: root.custom
 
-    RowLayout {
+    StyledComboEntry {
+      id: combo
       Layout.fillWidth: true
-      spacing: Widget.spacing
+      // Custom… shows while a hex is the colour or has been asked for
+      value: root.custom ? "__custom" : root.value
+      options: root.entries(root.value, true, true)
+      // Room for the colour square drawn in the field
+      input.leftPadding: Style.iconSm * 1.6
+      onPicked: value => {
+        root.customPicked = value === "__custom";
+        if (value !== "__custom")
+          root.write([root.key], value);
+      }
 
-      StyledComboEntry {
-        id: combo
-        Layout.fillWidth: true
-        // Custom… shows while a hex is the colour or has been asked for
-        value: root.custom ? "__custom" : root.value
-        options: root.entries(root.value, true, true)
-        // Room for the colour square drawn in the field
-        input.leftPadding: Style.iconSm * 1.6
-        onPicked: value => {
-          root.customPicked = value === "__custom";
-          if (value !== "__custom")
-            root.write([root.key], value);
-        }
-
-        SwatchSquare {
-          // Auto and None show an empty square
-          color: Style.resolve(root.custom && !root.isHex ? "" : root.value)
-        }
+      SwatchSquare {
+        // Auto and None show an empty square
+        color: Style.resolve(root.custom && !root.isHex ? "" : root.value)
       }
     }
 
@@ -260,9 +257,9 @@ ColumnLayout {
   }
 
   FormRow {
-    id: switchRow
-    tinted: false
+    hoverable: true
     bodyHeight: stateSwitch.implicitHeight
+    onRowClicked: stateSwitch.activate()
 
     SchemaSwitch {
       id: stateSwitch
@@ -276,7 +273,6 @@ ColumnLayout {
 
   InspectorRow {
     indented: true
-    beside: root.beside
     shown: root.statesOn
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")

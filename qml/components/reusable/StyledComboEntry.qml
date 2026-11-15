@@ -158,6 +158,17 @@ Item {
     root._dropdown?.close();
   }
 
+  // A click on the form row holding it, off the field (SchemaComboBox's
+  // and the custom widgets' InspectorRow's rowClicked): opens or closes the
+  // list. A press outside an open list closes it and is the same click that
+  // reaches the row: that click must not open the list again
+  function toggleFromRow() {
+    if (root.listOpen)
+      root.closeList();
+    else if (Date.now() - root.hiddenAt > Application.styleHints.mouseDoubleClickInterval)
+      root.openList();
+  }
+
   function pick(value) {
     root.closeList();
     root.query = "";
