@@ -2200,7 +2200,7 @@ TestCase {
       }
     ], "the non-empty commands, each with where it is (an action's name, else id); Axiom actions aren't commands");
     const template = CustomWidgetData.galleryPresets.find(p => p.name === "Slider");
-    compare(CustomWidgetData.commandsOf(template), [], "a template holds none");
+    compare(CustomWidgetData.commandsOf(template).map(c => c.where), ["command", "actions/Set"], "a template's script and its action");
     compare(CustomWidgetData.commandsOf(null), []);
   }
 
@@ -2260,6 +2260,18 @@ TestCase {
     compare(names, ["Daily habits", "Toggle", "Slider", "List with a row action", "Media card", "Status with an error screen"]);
     verify(CustomWidgetData.scriptPresets.map(p => p.name).includes("Daily habits"), "Daily habits is also a known script");
     compare(CustomWidgetData.scriptPresets.every(p => !!p.command), true, "the known scripts have commands");
+    compare(CustomWidgetData.scriptPresets.some(p => p.demo), false, "a demo template isn't a known script");
+    for (const t of CustomWidgetData.galleryPresets) {
+      verify(t.demo === true || t.name === "Daily habits", t.name + " is a demo or Daily habits");
+      verify(t.command.length > 0 && t.mode === "poll" && t.output === "json", t.name + " runs a poll script");
+      verify(t.command.includes("{tree}data/custom-widgets/" + (t.demo ? "demo.sh" : "habits.sh")), t.name + ": the script is found through {tree}");
+      for (const a of t.actions.items.filter(a => a.kind === "command"))
+        verify(a.command.length > 0, t.name + ": " + a.id + " has a command");
+      for (const a of t.actions.items.filter(a => a.kind === "axiom"))
+        verify(a.axiom.length > 0, t.name + ": " + a.id + " names an axiom action");
+    }
+    const slider = CustomWidgetData.galleryPresets.find(p => p.name === "Slider");
+    verify(slider.actions.items[0].command.endsWith("slider set {value}"), "the slider's action sends the released value");
     for (const t of CustomWidgetData.galleryPresets) {
       const module = t.module;
       const ids = CustomWidgetData.allElements(module).map(e => e.id);

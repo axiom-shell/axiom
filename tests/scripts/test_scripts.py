@@ -1397,5 +1397,102 @@ class HabitsScript(unittest.TestCase):
         self.assertTrue(result.stderr.startswith("habits:"))
 
 
+class DemoScript(unittest.TestCase):
+    """data/custom-widgets/demo.sh, the templates' script, run on a state
+    folder of its own."""
+
+    SCRIPT = ROOT / "data" / "custom-widgets" / "demo.sh"
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.env = dict(os.environ, XDG_STATE_HOME=str(self.tmp))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_script(self, *args):
+        return subprocess.run(["bash", str(self.SCRIPT), *args], env=self.env,
+                              capture_output=True, text=True, timeout=30)
+
+    def show(self, template):
+        result = self.run_script(template, "show")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.endswith("\n") and not result.stdout.endswith("\n\n"))
+        return json.loads(result.stdout)
+
+    def test_toggle_round_trip(self):
+        self.assertEqual(self.show("toggle"), {"text": "Focus mode", "state": "off"})
+        self.assertEqual(self.run_script("toggle", "on").returncode, 0)
+        self.assertEqual(self.show("toggle")["state"], "on")
+        self.run_script("toggle", "off")
+        self.assertEqual(self.show("toggle")["state"], "off")
+
+    def test_slider_set_truncates_clamps_and_rejects(self):
+        self.assertEqual(self.show("slider")["value"], 50)
+        for given, want in (("37.9", 37), ("150", 100), ("-5", 0), ("007", 7), (".5", 0), ("99999999999999", 100)):
+            self.assertEqual(self.run_script("slider", "set", given).returncode, 0, given)
+            self.assertEqual(self.show("slider")["value"], want, given)
+        for bad in ("abc", "", "1e3", "5%"):
+            result = self.run_script("slider", "set", bad)
+            self.assertEqual(result.returncode, 2, bad)
+            self.assertTrue(result.stderr.startswith("demo: "), bad)
+        self.assertEqual(self.show("slider")["value"], 100, "a rejected value changes nothing")
+
+    def test_list_prints_the_mounts(self):
+        out = self.show("list")
+        self.assertIsInstance(out["items"], list)
+        self.assertEqual(out["text"].split()[0], str(len(out["items"])))
+        for item in out["items"]:
+            self.assertTrue(item["id"].startswith("/"))
+            self.assertIn(item["state"], ("ok", "full"))
+            self.assertEqual(item["state"] == "full", item["value"] >= 90)
+
+    def test_media_walks_the_tracks(self):
+        first = self.show("media")
+        self.assertEqual((first["state"], first["icon"]), ("playing", "pause"))
+        self.run_script("media", "toggle")
+        paused = self.show("media")
+        self.assertEqual((paused["state"], paused["icon"], paused["text"]), ("paused", "play_arrow", first["text"]))
+        self.run_script("media", "toggle")
+        self.run_script("media", "next")
+        self.assertNotEqual(self.show("media")["text"], first["text"])
+        self.run_script("media", "next")
+        stopped = self.show("media")
+        self.assertEqual(stopped["state"], "stopped", "next past the last track stops")
+        self.run_script("media", "toggle")
+        self.assertEqual(self.show("media")["state"], "playing", "toggle from stopped plays")
+        for _ in range(3):
+            self.run_script("media", "next")
+        self.assertEqual(self.show("media")["state"], "stopped")
+        self.run_script("media", "prev")
+        self.assertEqual(self.show("media")["state"], "playing", "prev from stopped plays the last track")
+
+    def test_status_break_and_fix(self):
+        ok = self.show("status")
+        self.assertEqual((ok["state"], ok["text"]), ("ok", "All good"))
+        self.run_script("status", "break")
+        result = self.run_script("status", "show")
+        self.assertEqual(result.returncode, 0, "a failing demo still exits 0")
+        self.assertTrue(json.loads(result.stdout)["error"])
+        self.run_script("status", "fix")
+        self.assertEqual(self.show("status")["state"], "ok")
+
+    def test_bad_input_exits_2_with_demo_on_stderr(self):
+        for args in (("nope", "show"), ("toggle", "nope"), ("toggle",), ()):
+            result = self.run_script(*args)
+            self.assertEqual(result.returncode, 2, args)
+            self.assertTrue(result.stderr.startswith("demo: "), args)
+            self.assertEqual(result.stdout, "")
+
+    def test_every_template_command_is_a_verb_the_script_takes(self):
+        source = (ROOT / "qml" / "components" / "methods" / "CustomWidgetData.qml").read_text()
+        calls = re.findall(r'_demo\("(\w+)", "(\w+)"\)(?: \+ " \{value\}")?', source)
+        self.assertGreaterEqual(len(calls), 12)
+        for template, verb in calls:
+            args = [template, verb] + (["42"] if verb == "set" else [])
+            result = self.run_script(*args)
+            self.assertEqual(result.returncode, 0, "%s %s: %s" % (template, verb, result.stderr))
+
+
 if __name__ == "__main__":
     unittest.main()

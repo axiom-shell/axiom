@@ -259,16 +259,17 @@ QtObject {
   // when another definition is selected
   property var actionLog: []
 
-  // Test mode (D2): the module's preview runs its actions, keys and Entries
+  // Test mode (D2): the module's preview runs its actions and Entries
   // for real, against the real commands. Never saved; off each time the
   // page shows and for each definition
   property bool testMode: false
 
   // The page's tab: 0 data, 1 bar, 2 module, 3 help (selectTab)
   property int tab: 0
-  // The Help section open ("output", "actions", "examples", "slots",
-  // "lifetime", "failure", "waybar"; "" none)
-  property string helpSection: "output"
+  // The Help section open (a task: "task-bar", "task-button", "task-color",
+  // "task-list", "task-screens", "task-place", "task-share"; or "output",
+  // "text", "actions", "examples", "lifetime", "failure", "waybar"; "" none)
+  property string helpSection: "task-bar"
 
   // Opens the Help tab at `section`
   function openHelp(section) {
@@ -496,6 +497,7 @@ QtObject {
     }, translate === false ? preset : root.translated(preset ?? {}));
     // A gallery entry's own keys aren't a definition's
     delete base.template;
+    delete base.demo;
     delete base.description;
     base.id = Utils.newId(Utils.slug(base.name) || "widget", local.items);
     local.items.push(ConfigManager.withDefaults(base, "CustomWidget"));

@@ -95,7 +95,7 @@ Surface {
 
       InspectorRow {
         first: true
-        label: "Name"
+        label: I18n.tr("Name")
 
         RowLayout {
           Layout.fillWidth: true
@@ -138,7 +138,7 @@ Surface {
 
       InspectorRow {
         shown: root.item?.kind !== "axiom"
-        description: "{value}: what the element sends. {rev} and {tree} too. Quoted for you."
+        description: I18n.tr("{value}: what the element sends. {rev} and {tree} too. Quoted for you.")
 
         StyledTextEntry {
           id: commandEntry
@@ -166,7 +166,7 @@ Surface {
 
       InspectorRow {
         shown: root.item?.kind === "axiom"
-        description: "refresh, restart, screen:<screen id> (screen: the base), or a shell action that takes no argument."
+        description: I18n.tr("refresh, restart, screen:<screen id> (screen: the base), or a shell action that takes no argument.")
 
         StyledComboEntry {
           id: axiomCombo
@@ -195,8 +195,8 @@ Surface {
           spacing: Widget.spacing * 2
 
           FieldHeader {
-            label: "Wait for it to finish"
-            description: "Other actions wait, and a failure shows on the button. Off for commands that open an app."
+            label: I18n.tr("Wait for it to finish")
+            description: I18n.tr("Other actions wait, and a failure shows on the button. Off for commands that open an app.")
           }
           StyledSwitch {
             Layout.alignment: Qt.AlignVCenter

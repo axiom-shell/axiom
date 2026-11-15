@@ -457,7 +457,7 @@ ColumnLayout {
         implicitHeight: Widget.height
         kind: "text"
         text: I18n.tr("More in Help")
-        onClicked: root.editor.openHelp("slots")
+        onClicked: root.editor.openHelp("text")
       }
     }
   }

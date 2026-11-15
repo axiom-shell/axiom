@@ -7,13 +7,14 @@ import qs.services.system
 import qs.components.reusable
 
 // Custom widgets page, Help tab (also the empty pane's "How custom widgets
-// work"): what a script prints and how the definition reads it, mirroring
-// docs/dev/features/custom-widgets.md › Script contract. One section open at
-// a time (CustomWidgetsEditor.helpSection, which the Data tab's "What should
-// my script print?" and the "?" beside the Action combo and each binding
-// set): the output, the action command's placeholders, an example script per
-// mode, the slots every element has and each kind's, lifetime, failure and
-// Waybar notes.
+// work"): a guide per task (show output on the bar, a button, colours, a list,
+// screens, placing, sharing), then the reference: what a script prints and
+// how the definition reads it, mirroring docs/dev/features/custom-widgets.md
+// › Script contract. One section open at a time
+// (CustomWidgetsEditor.helpSection, which the Data tab's "What should my
+// script print?" and an inspector's "More in Help" set): the output, text
+// fields and {paths}, actions and placeholders, example scripts, lifetime,
+// failure and Waybar notes.
 ColumnLayout {
   id: root
 
@@ -21,12 +22,12 @@ ColumnLayout {
   readonly property string section: root.editor.helpSection
 
   // The output's keys and what each means
-  readonly property var contract: [["text, alt, tooltip, class, percentage", I18n.tr("Waybar's: Pango markup in text and tooltip unless the definition escapes it.")], ["icon, value, min, max, unit, subtext, badge, urgent, image, hidden", I18n.tr("axiom's: an icon name, a number and its range, a unit, a second line, a count, a picture, hidden.")], ["items", I18n.tr("Rows: {text, icon, value, subtext, id, state, max, image}. A row's id is what its action receives; state tones it; a value with a max draws a meter; image is a thumbnail.")], ["state", I18n.tr("The script's mode name: screens match it, and the States colour it. A word with no colour, or a hex, colours nothing.")], ["rev", I18n.tr("The screen's revision, passed back to an action as {rev}, so it can refuse a stale screen.")], ["actions", I18n.tr("{id: {enabled}}: an action it doesn't list is off; enabled false, \"false\", 0, no and off turn it off.")], ["error", I18n.tr("Non-empty: the widget is failing, and the Failed screen shows this text.")], [I18n.tr("anything else"), I18n.tr("Data, bound by its path: player.title, items.0.text. A list of numbers draws on a Sparkline.")]]
+  readonly property var contract: [["text, alt, tooltip, class, percentage", I18n.tr("Waybar's: Pango markup in text and tooltip unless the definition escapes it.")], ["icon, value, min, max, unit, subtext, badge, urgent, image, hidden", I18n.tr("axiom's: an icon name, a number and its range, a unit, a second line, a count, a picture, hidden.")], ["items", I18n.tr("Rows: {text, icon, value, subtext, id, state, max, image}. A row's id is what its action receives; state tones it; a value with a max draws a meter; image is a thumbnail.")], ["state", I18n.tr("The script's mode name: screens match it, and a Color by state rule can read it. Waybar's words (ok, warning, critical…) and theme colour names colour on their own; any other word colours nothing without a rule.")], ["rev", I18n.tr("The screen's revision, passed back to an action as {rev}, so it can refuse a stale screen.")], ["actions", I18n.tr("{id: {enabled}}: an action it doesn't list is off; enabled false, \"false\", 0, no and off turn it off.")], ["error", I18n.tr("Non-empty: the widget is failing, and a screen on the key error (or the stock error screen) shows this text.")], [I18n.tr("anything else"), I18n.tr("Data, bound by its path: player.title, items.0.text. A list of numbers draws on a Sparkline.")]]
 
   // Example scripts: poll, stream and the action command
   readonly property string pollExample: "#!/bin/sh\n# Mode: poll. Prints one JSON object each time it runs.\nload=$(awk '{print int($1 * 100)}' /proc/loadavg)\nprintf '{\"text\": \"load %s\", \"value\": %s, \"max\": 400, \"state\": \"ok\"}\\n' \"$load\" \"$load\"\n"
   readonly property string streamExample: "#!/bin/sh\n# Mode: stream. One JSON line per change, never buffered.\nwhile true; do\n  printf '{\"text\": \"%s\"}\\n' \"$(date +%H:%M:%S)\"\n  sleep 1\ndone\n"
-  readonly property string invokeExample: "#!/bin/sh\n# The action command: sh -c 'mylist.sh {action} {value}'.\n# Both arrive already quoted; it should exit quickly.\ncase \"$1\" in\n  add)   echo \"$2\" >> \"$HOME/.local/state/mylist\" ;;\n  clear) : > \"$HOME/.local/state/mylist\" ;;\n  *)     echo \"unknown action $1\" >&2; exit 2 ;;\nesac\n"
+  readonly property string actionExample: "#!/bin/sh\n# An action's command: sh -c 'mylist.sh add {value}'.\n# {value} arrives already quoted; it should exit quickly.\necho \"$1\" >> \"$HOME/.local/state/mylist\"\n"
 
   // A section: open while it is the one the editor points at
   component Fold: FoldingSection {
@@ -85,6 +86,94 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
+  // A task guide: numbered steps, one per line
+  component Steps: ColumnLayout {
+    id: steps
+    property var lines: []
+    Layout.fillWidth: true
+    spacing: Widget.spacing / 2
+
+    // By count over the fixed list of a guide
+    Repeater {
+      model: steps.lines.length
+
+      Para {
+        required property int index
+        text: (index + 1) + ". " + steps.lines[index]
+      }
+    }
+  }
+
+  Fold {
+    key: "task-bar"
+    title: I18n.tr("Show a command's output on the bar")
+    description: I18n.tr("The shortest way to a working widget.")
+
+    Steps {
+      lines: [I18n.tr("Click New and pick Bar text from a script."), I18n.tr("On the Data tab, type the command in Command (a script that prints some text)."), I18n.tr("Press Run now: the output shows under the status line."), I18n.tr("Open the Bar tab to choose the style, the icon and the colour."), I18n.tr("Put it on a bar from the link in the header.")]
+    }
+  }
+
+  Fold {
+    key: "task-button"
+    title: I18n.tr("Add a button that runs a command")
+    description: I18n.tr("A button on the module, a command behind it.")
+
+    Steps {
+      lines: [I18n.tr("Open the Module tab and drag a Button from the library onto the canvas."), I18n.tr("Select it. In Runs, open On press and choose New action…."), I18n.tr("Type the command to run, and name the action."), I18n.tr("Leave Wait for it to finish on, unless the command opens an app."), I18n.tr("Turn on Test actions above the previews to press it for real.")]
+    }
+  }
+
+  Fold {
+    key: "task-color"
+    title: I18n.tr("Color text by a value")
+    description: I18n.tr("Red above a limit, green below it.")
+
+    Steps {
+      lines: [I18n.tr("Select the Text on the Module tab."), I18n.tr("In Colors, turn on Color by state."), I18n.tr("Pick the Key the script prints (a number or a word)."), I18n.tr("Add rules, such as is above 80 → Error and is below 80 → Success.")]
+    }
+  }
+
+  Fold {
+    key: "task-list"
+    title: I18n.tr("Show a list")
+    description: I18n.tr("Rows from the script's items.")
+
+    Steps {
+      lines: [I18n.tr("Make the script print {\"items\": [{\"text\": \"one\"}, {\"text\": \"two\"}]} or a JSON array."), I18n.tr("Drag a List onto the Module tab."), I18n.tr("In Look, set Row text to {name} to show another key of each row."), I18n.tr("To act on a row, give On press an action: it receives the row's id.")]
+    }
+  }
+
+  Fold {
+    key: "task-screens"
+    title: I18n.tr("Switch screens with a button")
+    description: I18n.tr("A second screen, shown on a press.")
+
+    Steps {
+      lines: [I18n.tr("On the Module tab press + beside Base to add a screen."), I18n.tr("Open the Data tab and add an action of the kind Go to screen, with that screen."), I18n.tr("Select a Button on the base and pick the action in On press."), I18n.tr("On the screen, add a Button whose action is Go to screen: Base, to come back.")]
+    }
+  }
+
+  Fold {
+    key: "task-place"
+    title: I18n.tr("Put it on a bar or a page")
+    description: I18n.tr("Where the widget shows.")
+
+    Steps {
+      lines: [I18n.tr("Use the links in the page header: Put it on a bar and Put it on a page."), I18n.tr("In the Bars editor or the Layouts editor, open the library and look under Custom."), I18n.tr("Drag your widget in, then save.")]
+    }
+  }
+
+  Fold {
+    key: "task-share"
+    title: I18n.tr("Share a widget")
+    description: I18n.tr("One copy, one paste.")
+
+    Steps {
+      lines: [I18n.tr("Press Copy beside the widget's name: it goes on the clipboard."), I18n.tr("Send it. The other person opens New, then Import a widget…, pastes and presses Check."), I18n.tr("Files the command uses are not copied: send them too.")]
+    }
+  }
+
   Fold {
     key: "output"
     title: I18n.tr("What the script prints")
@@ -122,17 +211,17 @@ ColumnLayout {
   Fold {
     key: "actions"
     title: I18n.tr("Actions and placeholders")
-    description: I18n.tr("The action command, and what it is given.")
+    description: I18n.tr("What an action runs, and what it is given.")
 
     Para {
-      text: I18n.tr("A button, row, toggle, slider, entry or key names an action; the action command runs it as one sh -c line. {action} is the id and {value} the button's value, a row's id (else value, else text), on or off, the number a slider was released at, or the typed text. {rev} is the current screen's revision; {tree} is this shell's folder. They arrive already quoted (a plain number bare, anything else in single quotes): don't quote them yourself.")
+      text: I18n.tr("An action is a command (one sh -c line) or an axiom action, listed on the Data tab. A button, row, toggle, slider, entry or bar click picks one by name. {value} is the button's value, a row's id (else value, else text), on or off, the number a slider was released at, or the typed text. {rev} is the current screen's revision; {tree} is this shell's folder. They arrive already quoted (a plain number bare, anything else in single quotes): don't quote them yourself.")
     }
     Para {
-      text: I18n.tr("Nothing runs on the lock screen, while the script isn't answering, when the output turns the action off, with no action command, or while another action holds the widget: a double press acts once. axiom:refresh, axiom:restart and the shell's own actions need no command. axiom ipc customWidgets act NAME ACTION runs one from a terminal while the widget is shown.")
+      text: I18n.tr("Nothing runs on the lock screen, while the script isn't answering, when the output turns the action off, with no command, or while another action holds the widget: a double press acts once. Refresh, Restart and the shell's own actions need no command. axiom ipc customWidgets act NAME ACTION runs one from a terminal while the widget is shown.")
     }
     Example {
-      title: I18n.tr("An action command")
-      code: root.invokeExample
+      title: I18n.tr("An action that adds a line to a file")
+      code: root.actionExample
     }
   }
 
@@ -152,12 +241,12 @@ ColumnLayout {
   }
 
   Fold {
-    key: "slots"
-    title: I18n.tr("Slots")
-    description: I18n.tr("What each element can be bound to.")
+    key: "text"
+    title: I18n.tr("Text fields and {paths}")
+    description: I18n.tr("Typed text is literal; braces read the output.")
 
     Para {
-      text: I18n.tr("A slot reads a key (value), a path (player.title), a format ({text}%) or a literal (=Hello). Empty: the output's own key. Every element also has Show when (hidden while false) and Color by (a word the States map to a colour).")
+      text: I18n.tr("What you type in a field (Shows) is shown as typed: Hello shows Hello. {path} reads the output: {text}, {player.title}, {items.0.text}. A field holding only one {path} gets the value itself (a number, a list); text around it, such as {value}% or {title} by {artist}, is filled in as one line. A {path} the output doesn't have stays as typed, and the editor warns about it. Empty: the output's own key for that field. Every element also has Visible (hidden while a test fails) and colours (Color by state).")
     }
     // By count over the schema's element kinds
     Repeater {
@@ -201,7 +290,7 @@ ColumnLayout {
     description: I18n.tr("Only a widget with an action command or screens can fail.")
 
     Para {
-      text: I18n.tr("It fails when the script can't start, a stream exits with an error, a run exits with an error and no output, or the output has a non-empty error. Add a screen for it (\"When it fails\") or the stock error screen shows the message with Restart. While it fails, named actions are off; the built-in ones still work.")
+      text: I18n.tr("It fails when the script can't start, a stream exits with an error, a run exits with an error and no output, or the output has a non-empty error. Add a screen whose key is error, or the stock error screen shows the message with Restart. When the script can't answer, its command actions are off; an error the script prints itself leaves them to its actions output, so a Fix it button keeps working. Refresh and Restart always work.")
     }
   }
 
@@ -211,7 +300,7 @@ ColumnLayout {
     description: I18n.tr("They keep working.")
 
     Para {
-      text: I18n.tr("A Waybar custom module's script runs as it is (Import a widget reads its config). A script that refreshes Waybar with pkill -RTMIN+N waybar should run axiom ipc customWidgets refresh NAME instead. A frame-rate stream such as cava isn't supported: a stream is coalesced to 4 pushes a second.")
+      text: I18n.tr("A Waybar custom module's script runs as it is (New › Import a widget reads its config). A script that refreshes Waybar with pkill -RTMIN+N waybar should run axiom ipc customWidgets refresh NAME instead. A frame-rate stream such as cava isn't supported: a stream is coalesced to 4 pushes a second.")
     }
   }
 }

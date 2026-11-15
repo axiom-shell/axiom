@@ -1307,23 +1307,29 @@ QtObject {
         }
       }
     },
-    // The gallery's templates: no command, a sample per screen (their texts
-    // are English here and translated by CustomWidgetsEditor.add: the
-    // names and descriptions, listed here, the `=` literals as the
-    // others'): I18n.tr("Toggle") I18n.tr("An on / off switch, such as a VPN")
+    // The gallery's templates (`demo`, but Daily habits): each runs
+    // data/custom-widgets/demo.sh, so it works when added, and has a sample
+    // per screen to preview before the script answers (their texts are
+    // English here and translated by CustomWidgetsEditor.add: the names,
+    // descriptions, labels and action names, listed here): I18n.tr("Toggle") I18n.tr("An on / off switch, such as a VPN")
     // I18n.tr("Slider") I18n.tr("A value you can drag, such as the brightness")
     // I18n.tr("List with a row action") I18n.tr("Rows you can press, such as disks")
     // I18n.tr("Media card") I18n.tr("Playing, paused and nothing playing, with buttons")
     // I18n.tr("Status with an error screen") I18n.tr("A status line, and a screen for when the script fails")
-    // I18n.tr("Enabled") I18n.tr("Disks") I18n.tr("Nothing playing") I18n.tr("Restart")
+    // I18n.tr("Enabled") I18n.tr("Play") I18n.tr("Turn on") I18n.tr("Turn off") I18n.tr("Set") I18n.tr("Open") I18n.tr("Previous") I18n.tr("Play or pause") I18n.tr("Next") I18n.tr("Break it") I18n.tr("Fix it") I18n.tr("Disks") I18n.tr("Nothing playing") I18n.tr("Restart")
     // I18n.tr("On") I18n.tr("Off") I18n.tr("Playing") I18n.tr("Paused") I18n.tr("Nothing") I18n.tr("Error")
     {
       "name": "Toggle",
       "template": true,
+      "demo": true,
       "description": "An on / off switch, such as a VPN",
       "icon": "toggle_on",
+      "command": root._demo("toggle", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
       "actions": {
-        "items": [root._act("on", "Turn on"), root._act("off", "Turn off")]
+        "items": [root._act("on", "Turn on", root._demo("toggle", "on")), root._act("off", "Turn off", root._demo("toggle", "off"))]
       },
       "module": {
         "size": [4, 2],
@@ -1345,7 +1351,7 @@ QtObject {
             "test": "is",
             "values": ["on"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "lock"
+              "icon": "do_not_disturb_on"
             }, {
               "color": "success"
             })]), root._view("off", "Off", {
@@ -1353,7 +1359,7 @@ QtObject {
             "test": "is",
             "values": ["off"]
           }, [root._el("mark", "Icon", [12, 0, 4, 3], {
-              "icon": "lock_open"
+              "icon": "do_not_disturb_off"
             }, {
               "color": "warning"
             })])]
@@ -1361,7 +1367,7 @@ QtObject {
       "samples": {
         "on": {
           "state": "on",
-          "text": "VPN",
+          "text": "Focus mode",
           "actions": {
             "on": {},
             "off": {}
@@ -1369,7 +1375,7 @@ QtObject {
         },
         "off": {
           "state": "off",
-          "text": "VPN",
+          "text": "Focus mode",
           "actions": {
             "on": {},
             "off": {}
@@ -1380,10 +1386,15 @@ QtObject {
     {
       "name": "Slider",
       "template": true,
+      "demo": true,
       "description": "A value you can drag, such as the brightness",
       "icon": "linear_scale",
+      "command": root._demo("slider", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
       "actions": {
-        "items": [root._act("set", "Set")]
+        "items": [root._act("set", "Set", root._demo("slider", "set") + " {value}")]
       },
       "module": {
         "size": [4, 2],
@@ -1404,7 +1415,7 @@ QtObject {
       },
       "samples": {
         "": {
-          "text": "Brightness",
+          "text": "Desk lamp",
           "value": 60,
           "min": 0,
           "max": 100,
@@ -1418,10 +1429,15 @@ QtObject {
     {
       "name": "List with a row action",
       "template": true,
+      "demo": true,
       "description": "Rows you can press, such as disks",
       "icon": "list",
+      "command": root._demo("list", "show"),
+      "mode": "poll",
+      "interval": 60000,
+      "output": "json",
       "actions": {
-        "items": [root._act("open", "Open")]
+        "items": [root._act("open", "Open", "xdg-open {value}", false)]
       },
       "module": {
         "size": [4, 4],
@@ -1475,10 +1491,15 @@ QtObject {
     {
       "name": "Media card",
       "template": true,
+      "demo": true,
       "description": "Playing, paused and nothing playing, with buttons",
       "icon": "music_note",
+      "command": root._demo("media", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
       "actions": {
-        "items": [root._act("prev", "Previous"), root._act("toggle", "Play or pause"), root._act("next", "Next")]
+        "items": [root._act("prev", "Previous", root._demo("media", "prev")), root._act("toggle", "Play or pause", root._demo("media", "toggle")), root._act("next", "Next", root._demo("media", "next"))]
       },
       "module": {
         "size": [4, 3],
@@ -1526,19 +1547,23 @@ QtObject {
             "key": "state",
             "test": "isNot",
             "values": ["playing", "paused"]
-          }, [root._el("mark", "Icon", [5, 1, 6, 6], {
+          }, [root._el("mark", "Icon", [6, 0, 4, 4], {
               "icon": "music_off"
-            }), root._el("message", "Text", [0, 8, 16, 3], {
+            }), root._el("message", "Text", [0, 5, 16, 2], {
               "text": "Nothing playing"
             }, {
               "size": "normal"
+            }), root._el("play", "Button", [5, 8, 6, 3], {
+              "label": "Play"
+            }, null, {
+              "click": "toggle"
             })], false)]
       },
       "samples": {
         "playing": {
           "state": "playing",
-          "text": "Song title",
-          "subtext": "Artist",
+          "text": "Night Drive",
+          "subtext": "Velvet Static",
           "icon": "pause",
           "actions": {
             "prev": {},
@@ -1548,8 +1573,8 @@ QtObject {
         },
         "paused": {
           "state": "paused",
-          "text": "Song title",
-          "subtext": "Artist",
+          "text": "Night Drive",
+          "subtext": "Velvet Static",
           "icon": "play_arrow",
           "actions": {
             "prev": {},
@@ -1559,17 +1584,24 @@ QtObject {
         },
         "nothing": {
           "state": "stopped",
-          "actions": {}
+          "actions": {
+            "toggle": {}
+          }
         }
       }
     },
     {
       "name": "Status with an error screen",
       "template": true,
+      "demo": true,
       "description": "A status line, and a screen for when the script fails",
       "icon": "radio_button_checked",
+      "command": root._demo("status", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
       "actions": {
-        "items": [
+        "items": [root._act("break", "Break it", root._demo("status", "break")), root._act("fix", "Fix it", root._demo("status", "fix")),
           {
             "id": "restart",
             "name": "Restart",
@@ -1587,6 +1619,8 @@ QtObject {
           }, {
             "align": "left",
             "size": "normal"
+          }), root._el("break", "Button", [10, 0, 6, 3], null, null, {
+            "click": "break"
           })],
         "views": [root._view("error", "Error", {
             "key": "error",
@@ -1599,7 +1633,9 @@ QtObject {
             }, {
               "align": "left",
               "size": "normal"
-            }), root._el("retry", "Button", [4, 5, 8, 3], null, null, {
+            }), root._el("fix", "Button", [4, 5, 6, 3], null, null, {
+              "click": "fix"
+            }), root._el("restart", "Button", [10, 5, 6, 3], null, null, {
               "click": "restart"
             })], false)]
       },
@@ -1607,10 +1643,17 @@ QtObject {
         "": {
           "state": "ok",
           "text": "All good",
-          "subtext": "Checked just now"
+          "subtext": "Checked at 09:41",
+          "actions": {
+            "break": {}
+          }
         },
         "error": {
-          "error": "Could not reach the server"
+          "error": "The demo service is down",
+          "state": "down",
+          "actions": {
+            "fix": {}
+          }
         }
       }
     }
@@ -2258,16 +2301,22 @@ QtObject {
     };
   }
 
-  // A template's command action (its command is the script's, set when
-  // there is one)
-  function _act(id, name) {
+  // A template's command action: `command` is its demo script's call
+  // (demo.sh TEMPLATE VERB, `{value}` for one that takes the element's value)
+  function _act(id, name, command, wait) {
     return {
       "id": id,
       "name": name,
       "kind": "command",
-      "command": "",
-      "wait": true
+      "command": command,
+      "wait": wait !== false
     };
+  }
+
+  // The command running the demo script's `template` verb (the script
+  // prints the template's output on `show`)
+  function _demo(template, verb) {
+    return "bash '{tree}data/custom-widgets/demo.sh' " + template + " " + verb;
   }
 
   // A template's screen
@@ -2282,9 +2331,10 @@ QtObject {
   }
 
   // The presets the New chooser's "From a known script" lists (the ones
-  // with a command, Daily habits too) and the ones its gallery draws
+  // with a command, Daily habits too, but not a `demo` template: its script
+  // is the gallery's) and the ones its gallery draws
   // (`template`: a ready look with a sample per screen, drawn before any
   // script exists)
-  readonly property var scriptPresets: root.presets.filter(p => !!p.command)
+  readonly property var scriptPresets: root.presets.filter(p => !!p.command && !p.demo)
   readonly property var galleryPresets: root.presets.filter(p => p.template)
 }
