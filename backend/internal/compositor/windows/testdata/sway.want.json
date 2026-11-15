@@ -1,0 +1,320 @@
+[
+ {
+  "note": "start",
+  "events": [
+   {
+    "kind": "reset",
+    "windows": [
+     {
+      "id": "5",
+      "appId": "wr-fixture-a",
+      "class": "",
+      "title": "fixture-a",
+      "pid": 2967614,
+      "xwayland": false,
+      "workspace": "1",
+      "output": "WL-1",
+      "floating": false,
+      "fullscreen": false,
+      "focused": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "note": "B opened",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "5",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 2967614,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   },
+   {
+    "kind": "opened",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "before",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B title changes",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B floated",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": true,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B tiled again",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B fullscreen",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": true,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B leaves fullscreen",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B moved to workspace 2",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "5",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 2967614,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   },
+   {
+    "kind": "changed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "2",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ },
+ {
+  "note": "X11 window opened",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "5",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 2967614,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   },
+   {
+    "kind": "opened",
+    "window": {
+     "id": "8",
+     "appId": "Wrfixturex",
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "pid": 2981615,
+     "xwayland": true,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "A focused",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "5",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 2967614,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   },
+   {
+    "kind": "changed",
+    "window": {
+     "id": "8",
+     "appId": "Wrfixturex",
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "pid": 2981615,
+     "xwayland": true,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ },
+ {
+  "note": "X11 window closed",
+  "events": [
+   {
+    "kind": "closed",
+    "window": {
+     "id": "8",
+     "appId": "Wrfixturex",
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "pid": 2981615,
+     "xwayland": true,
+     "workspace": "1",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ },
+ {
+  "note": "B closed",
+  "events": [
+   {
+    "kind": "closed",
+    "window": {
+     "id": "6",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 2973969,
+     "xwayland": false,
+     "workspace": "2",
+     "output": "WL-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ }
+]

@@ -83,7 +83,7 @@ QtObject {
   // (WorkspaceCells.chosen): on a strip monitor strip order, else left to
   // right, then top to bottom
   function _icons(wsId) {
-    const bySize = CompositorManager.windowsBySize(wsId);
+    const bySize = WindowRulesManager.shownIn("workspaces", CompositorManager.windowsBySize(wsId));
     return root._iconsFrom(bySize, root._onScreen(wsId, bySize));
   }
 
@@ -102,7 +102,8 @@ QtObject {
   function ofSpecial(special, entry) {
     const mode = root.properties.specialWorkspaceLabel;
     const split = root.properties.specialWorkspaceSplit === true;
-    const icons = (mode === "icon" || split) && root.properties.showAppIcons && special.windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(special.windows), WorkspaceCells.byPosition(special.windows)) : [];
+    const windows = WindowRulesManager.shownIn("workspaces", special.windows);
+    const icons = (mode === "icon" || split) && root.properties.showAppIcons && windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(windows), WorkspaceCells.byPosition(windows)) : [];
     const shown = SpecialWorkspaces.content(entry, special.name, mode, icons.length > 0, split);
     shown.written = mode !== "icon" && shown.kind === "text";
     const tail = shown.tail ? icons : [];
@@ -133,7 +134,7 @@ QtObject {
   function _onScreen(wsId, windows) {
     const output = CompositorManager.workspaces.find(w => w.id === wsId)?.output ?? "";
     const direction = output !== "" ? CompositorManager.stripDirection(output) : "";
-    return direction !== "" ? CompositorManager.stripWindows(wsId, direction === "vertical") : WorkspaceCells.byPosition(windows);
+    return direction !== "" ? WindowRulesManager.shownIn("workspaces", CompositorManager.stripWindows(wsId, direction === "vertical")) : WorkspaceCells.byPosition(windows);
   }
 
   // Whether a label's icon draws as one: a name the icon font has (as the

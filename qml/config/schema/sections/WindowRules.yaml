@@ -1,0 +1,40 @@
+# The WindowRules section of the config (config.json's "WindowRules").
+
+type: object
+x-category: Compositor
+x-settings: false
+x-scope: personal
+title: Window rules
+description: Edited on the Window rules page.
+additionalProperties: false
+properties:
+  rules:
+    type: array
+    title: Rules
+    default: []
+    description: The higher a rule in the list, the more it counts when two set the same thing.
+    items: {$ref: '#/definitions/WindowRule'}
+  switches:
+    type: object
+    title: Built-in rules
+    description: Common behaviours, off until turned on. They rank below your own rules.
+    additionalProperties: false
+    properties:
+      pictureInPicture: {type: boolean, title: Float picture-in-picture videos, default: false, description: "Firefox and Chromium video pop-outs float and show on every workspace. Found by their English title."}
+      utilityFloat: {type: boolean, title: Float utility windows, default: false, description: "File pickers, password prompts, dialogs, the screenshot editor, Qt theme settings, and the volume, network and Bluetooth apps."}
+      fullscreenAwake: {type: boolean, title: Keep the screen awake while fullscreen, default: false, description: "While any window is fullscreen, even on a workspace you aren't looking at."}
+      steamFloat: {type: boolean, title: "Float Steam's small windows", default: false, description: "Every Steam window but the main one and Big Picture."}
+      gamesSpecial:
+        type: object
+        title: Send games to a special workspace
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, title: Send games to a special workspace, default: false, description: "Steam games open there; other launchers' games move there just after they open.", x-enabledIf: {/$supports.namedSpecial: true}}
+          special:
+            type: object
+            title: Special workspace
+            additionalProperties: false
+            x-showIf: {enabled: true}
+            properties:
+              id: {type: string, title: Special workspace, default: "", x-enabledIf: {/$supports.namedSpecial: true}, x-ref: {kind: specialWorkspace}}
+              silent: {type: boolean, title: Send them there silently, default: false, description: 'Off: the special workspace shows.', x-enabledIf: {/$supports.namedSpecial: true}}

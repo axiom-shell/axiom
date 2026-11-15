@@ -802,6 +802,12 @@
       },
       {
         "kind": "installed",
+        "path": "$HOME/.local/share/applications/axiom-windowrules.desktop",
+        "step": "files",
+        "what": "Delete"
+      },
+      {
+        "kind": "installed",
         "path": "$HOME/.local/share/xdg-desktop-portal/portals/axiom.portal",
         "step": "files",
         "what": "Delete"
