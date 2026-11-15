@@ -61,6 +61,12 @@ func repo(t *testing.T) (*render.Tables, any) {
 // decodes them
 func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	t.Helper()
+	return goldenInputsWith(t, kind, len(noIM) > 0 && noIM[0], nil)
+}
+
+// goldenInputsWith is goldenInputs with the facts changed by facts
+func goldenInputsWith(t *testing.T, kind string, noIM bool, facts func(*Facts)) Inputs {
+	t.Helper()
 	data, err := os.ReadFile(filepath.Join("testdata", "facts.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -70,6 +76,9 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 		t.Fatalf("compositor.inputs doesn't decode the shell's facts: %v", err)
 	}
 	f.Kind = kind
+	if facts != nil {
+		facts(&f)
+	}
 	f.Frameworks = []string{"fcitx5"}
 	// facts.json is a Hyprland shell's: niri's every output is a strip
 	// (its strip binds hold)
@@ -80,6 +89,27 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 		}
 		f.Supports = supports
 	}
+	// The rule flags are each backend's (facts.json's are Hyprland's)
+	flags := map[string]map[string]bool{
+		"niri": {"ruleTearing": false, "ruleLiveLook": false, "ruleXwayland": false},
+		"sway": {"ruleMaximize": false, "ruleNoScreenShare": false},
+	}[kind]
+	if flags != nil {
+		supports := map[string]bool{}
+		for k, v := range f.Supports {
+			supports[k] = v
+		}
+		for k, v := range flags {
+			supports[k] = v
+		}
+		f.Supports = supports
+	}
+	f.AppIDs = func(id string) []string {
+		if id == "org.gnome.Calculator.desktop" {
+			return []string{"org.gnome.Calculator", "gnome-calculator"}
+		}
+		return nil
+	}
 	data, err = os.ReadFile(filepath.Join("testdata", "config.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +118,7 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(noIM) > 0 && noIM[0] {
+	if noIM {
 		getAny(getAny(getAny(cfg, "Input"), "keyboard"), "method").(*jsonx.Object).Set("enabled", false)
 	}
 	return buildInputs(cfg.(*jsonx.Object), &f, []render.Output{{Name: "DP-1", Description: "Example Display 0001"}})
@@ -141,6 +171,33 @@ func TestGoldenFiles(t *testing.T) {
 			// variables, the user's own fcitx5 autostart line kept
 			noIM := goldenInputs(t, c.kind, true)
 			files["managed-no-im"+c.ext] = w.managedText(noIM, noIM.get("specFile"))
+			switch c.kind {
+			case "hyprland":
+				files["runtime-rules.lua"] = strings.Join(hyprRuntimeRules(strList(in.get("windowRules"))), "\n") + "\n"
+			case "sway":
+				files["runtime-rules.txt"] = strings.Join(runtimeRules(in), "\n") + "\n"
+			case "niri":
+				files["detached-module.kdl"] = w.(*niriWriter).detachedModule(in)
+			}
+			// What the rules pause: the shortcuts left out of niri's file, the
+			// commands a pause sends on the others
+			these := func(f *Facts) {
+				f.Pause = hold(false, nil, []string{"super-c", "super-z", "super-ctrl-s", "super-mouse-272"})
+			}
+			except := func(f *Facts) { f.Pause = hold(true, []string{"super-f", "super-c"}, nil) }
+			switch c.kind {
+			case "hyprland":
+				files["pause-these.lua"] = w.(*hyprWriter).pauseLua(goldenInputsWith(t, c.kind, false, these)) + "\n"
+				files["pause-allexcept.lua"] = w.(*hyprWriter).pauseLua(goldenInputsWith(t, c.kind, false, except)) + "\n"
+			case "sway":
+				for name, f := range map[string]func(*Facts){"these": these, "allexcept": except} {
+					send, now := w.(*swayWriter).pausePlan(goldenInputsWith(t, c.kind, false, f))
+					files["pause-"+name+".txt"] = strings.Join(send, "\n") + "\n--- restore\n" + strings.Join(now.Restore, "\n") + "\n"
+				}
+			case "niri":
+				paused := goldenInputsWith(t, c.kind, false, func(f *Facts) { these(f); f.PauseInFile = true })
+				files["module-paused.kdl"] = w.moduleText(paused, paused.get("specFile"))
+			}
 			if live := w.liveLines(in, in.get("specLive")); len(live) > 0 {
 				files["live.txt"] = strings.Join(live, "\n") + "\n"
 			}
@@ -218,7 +275,7 @@ func checkWithCompositor(t *testing.T, kind string, files map[string]string) {
 		}
 	}
 	for name, text := range files {
-		if name == "live.txt" {
+		if strings.HasSuffix(name, ".txt") {
 			continue
 		}
 		// What the file includes are the user's files, checked when the

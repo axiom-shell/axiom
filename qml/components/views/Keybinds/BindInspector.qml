@@ -46,6 +46,7 @@ ColumnLayout {
     revertable: KeybindManager.editor.changedBinds[root.bindIndex] === true
     revertTooltip: I18n.tr("Revert to the saved bind")
     canRemove: true
+    removeBlockedReason: KeybindManager.editor.usedBy(root.bindIndex)
     closable: true
     closeTooltip: I18n.tr("Close, to see the key map")
     onDuplicate: KeybindManager.editor.duplicateBind(root.bindIndex)

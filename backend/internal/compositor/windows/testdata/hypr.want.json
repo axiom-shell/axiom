@@ -1,0 +1,320 @@
+[
+ {
+  "note": "start",
+  "events": [
+   {
+    "kind": "reset",
+    "windows": [
+     {
+      "id": "0x5620e1de7940",
+      "appId": "wr-fixture-a",
+      "class": "",
+      "title": "fixture-a",
+      "pid": 3039751,
+      "xwayland": false,
+      "workspace": "1",
+      "output": "WAYLAND-1",
+      "floating": false,
+      "fullscreen": false,
+      "focused": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "note": "B opened",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e1de7940",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   },
+   {
+    "kind": "opened",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "before",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B title changes",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B floated",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": true,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B tiled again",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B fullscreen",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": true,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B leaves fullscreen",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "B moved to workspace 2",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e1de7940",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   },
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "2",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ },
+ {
+  "note": "X11 window opened",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e1de7940",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   },
+   {
+    "kind": "opened",
+    "window": {
+     "id": "0x5620e3805850",
+     "appId": "Wrfixturex",
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "pid": 3053136,
+     "xwayland": true,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   }
+  ]
+ },
+ {
+  "note": "A focused",
+  "events": [
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e1de7940",
+     "appId": "wr-fixture-a",
+     "class": "",
+     "title": "fixture-a",
+     "pid": 3039751,
+     "xwayland": false,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": true
+    }
+   },
+   {
+    "kind": "changed",
+    "window": {
+     "id": "0x5620e3805850",
+     "appId": "Wrfixturex",
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "pid": 3053136,
+     "xwayland": true,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ },
+ {
+  "note": "X11 window closed",
+  "events": [
+   {
+    "kind": "closed",
+    "window": {
+     "id": "0x5620e3805850",
+     "appId": "Wrfixturex",
+     "class": "Wrfixturex",
+     "title": "x11 fixture",
+     "pid": 3053136,
+     "xwayland": true,
+     "workspace": "1",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ },
+ {
+  "note": "B closed",
+  "events": [
+   {
+    "kind": "closed",
+    "window": {
+     "id": "0x5620e37eb340",
+     "appId": "wr-fixture-b",
+     "class": "",
+     "title": "after",
+     "pid": 3045129,
+     "xwayland": false,
+     "workspace": "2",
+     "output": "WAYLAND-1",
+     "floating": false,
+     "fullscreen": false,
+     "focused": false
+    }
+   }
+  ]
+ }
+]

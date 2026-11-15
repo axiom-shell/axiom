@@ -181,7 +181,9 @@ ListEntryRow {
     row: root
     danger: true
     iconText: "close"
-    tooltipText: I18n.tr("Remove")
+    readonly property string usedBy: KeybindManager.editor.usedBy(root.bindIndex)
+    tooltipText: usedBy !== "" ? usedBy : I18n.tr("Remove")
+    enabled: usedBy === ""
     visible: !root.isRun
     onClicked: KeybindManager.editor.removeBind(root.bindIndex)
   }
