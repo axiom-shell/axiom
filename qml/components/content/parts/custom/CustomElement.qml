@@ -12,6 +12,8 @@ Loader {
   property string widgetId: ""
   property bool actionsEnabled: true
   property string fallbackIcon: "widgets"
+  property bool invokeSet: false
+  property bool failing: false
 
   readonly property string kind: root.element?.type ?? "Text"
 
@@ -23,7 +25,9 @@ Loader {
       "history": Qt.binding(() => root.history),
       "widgetId": Qt.binding(() => root.widgetId),
       "actionsEnabled": Qt.binding(() => root.actionsEnabled),
-      "fallbackIcon": Qt.binding(() => root.fallbackIcon)
+      "fallbackIcon": Qt.binding(() => root.fallbackIcon),
+      "invokeSet": Qt.binding(() => root.invokeSet),
+      "failing": Qt.binding(() => root.failing)
     });
   }
   // A binding sets `kind` during creation, before completion; the element

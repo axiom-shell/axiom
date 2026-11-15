@@ -135,7 +135,7 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Actions")
-      description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click.")
+      description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click. A named action runs the action command (Script) instead of the command.")
 
       SchemaPropertiesForm {
         Layout.fillWidth: true

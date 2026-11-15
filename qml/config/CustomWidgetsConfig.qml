@@ -28,6 +28,11 @@ QtObject {
     return root.byId[id] ?? null;
   }
 
+  // The built-in actions an element or the bar can name besides the script's
+  // own (CustomWidgetsManager.invoke); an ActionsManager id the editor adds
+  // as "axiom:<id>" (CustomWidgetData.builtinAllowed passes it)
+  readonly property var builtinActions: ["axiom:refresh", "axiom:restart"]
+
   // The element kinds a module is built from (the CustomElement oneOf:
   // components/content/parts/custom/elements/<Type>/schema.yaml), by
   // label: { type, label, icon, size ([w, h] sub-cells it's added at,

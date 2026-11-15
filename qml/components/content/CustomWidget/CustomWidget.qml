@@ -83,7 +83,7 @@ Panel {
           availableHeight: box.height
           icon: root.view.builtinError ? "error" : (root.definition?.icon ?? "widgets")
           actionText: root.view.builtinError && root.actionsEnabled ? I18n.tr("Restart") : ""
-          onTriggered: CustomWidgetsManager.restart(root.widgetId) // lock-inert: the button is off without actionsEnabled
+          onTriggered: CustomWidgetsManager.invoke(root.widgetId, "axiom:restart", undefined, false) // lock-inert: the button is off without actionsEnabled
           text: root.view.builtinError ? root.fields.error : root._withheld && root._chosen ? I18n.tr("This custom widget isn't offered on the lock screen") : !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
         }
       }

@@ -6,7 +6,8 @@ import qs.services.apps
 
 // What every custom widget element is given (CustomElement loads one by its
 // kind, elements/<Type>/Custom<Type>.qml): its config, the widget's resolved
-// fields and history, and helpers reading its bindings. Bindings: a field
+// fields and history, and helpers reading its bindings and running its
+// action (a named one through CustomWidgetsManager.invoke, else its commands). Bindings: a field
 // name, a path in the sample or a format (CustomWidgetData.elementValue);
 // an empty one falls back to the widget's own field. Its options are its
 // kind's schema (elements/<Type>/schema.yaml), every default filled.
@@ -24,6 +25,10 @@ Item {
   property bool actionsEnabled: true
   // The definition's icon, for an element with none
   property string fallbackIcon: "widgets"
+  // The definition has an action command (named actions can run it)
+  property bool invokeSet: false
+  // The script isn't answering (a start error, an exit): named actions are off
+  property bool failing: false
 
   readonly property var bind: element?.bind ?? ({})
   readonly property var options: element?.options ?? ({})
@@ -66,9 +71,28 @@ Item {
     return picked ? Style.resolve(picked) : fallback;
   }
 
+  // The named action the element runs instead of its commands ("" none);
+  // a built-in is "axiom:…"
+  readonly property string actionId: root.element?.action ?? ""
+  readonly property bool builtin: root.actionId.startsWith("axiom:")
+  // Whether pressing it does something: actions on, and for a named one the
+  // sample leaves it enabled and the script can run it
+  readonly property bool canRun: root.actionsEnabled && (root.actionId === "" || (CustomWidgetData.actionEnabled(root.fields?.actions, root.actionId) && (root.builtin || (root.invokeSet && !root.failing))))
+
   // Run one of the element's actions with `value` filled in
   function act(action, value) {
     if (root.actionsEnabled) // lock-inert: actionsEnabled is off on the lock screen
       CustomWidgetsManager.runCommand(root.widgetId, root.actions[action] ?? "", value);
+  }
+
+  // Press: the element's named action when it has one (`continuous`: a
+  // slider's, the latest value wins), else its `kind` command. Returns ""
+  // when it ran, else why not (CustomWidgetsManager.invoke)
+  function run(kind, value, continuous) {
+    if (root.actionId === "")
+      root.act(kind, value);
+    else if (root.actionsEnabled) // lock-inert: actionsEnabled is off on the lock screen
+      return CustomWidgetsManager.invoke(root.widgetId, root.actionId, value, !!continuous);
+    return "";
   }
 }

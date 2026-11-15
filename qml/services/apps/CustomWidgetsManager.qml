@@ -5,13 +5,17 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.session
+import qs.services.ui
 
 // Runs the custom JSON widgets (docs/dev/features/custom-widgets.md): each
 // definition's script is watched through CommandManager while a bar widget,
 // popout or module shows it (acquire/release by id, so the script runs once
 // for all of them), and its output is read into fields
 // (CustomWidgetData.resolve) for every consumer. Also keeps a short numeric
-// history for sparklines, and runs the widgets' actions.
+// history for sparklines, and runs the widgets' actions: the commands of
+// Waybar's clicks, and named actions (invoke) that run the definition's
+// action command, or a built-in (axiom:refresh, axiom:restart, an
+// ActionsManager id).
 //   CustomWidgetsManager.acquire(owner, id) / release(owner)
 //   CustomWidgetsManager.fields[id]   // resolved fields, or absent
 //   CustomWidgetsManager.history[id]  // { <binding>: [numbers] }
@@ -72,10 +76,16 @@ QtObject {
   }
 
   // Run one of a definition's actions ("click", "rightClick", "middleClick",
-  // "scrollUp", "scrollDown"), then refresh it when it asks to
+  // "scrollUp", "scrollDown"): its named action when it has one
+  // (actions.named, a scroll is continuous), else its command, then
+  // refresh it when it asks to
   function act(id, action) {
     const def = CustomWidgetsConfig.definition(id);
-    root.runCommand(id, def?.actions?.[action] ?? "", undefined);
+    const named = def?.actions?.named?.[action] ?? "";
+    if (named !== "")
+      root.invoke(id, named, undefined, action.startsWith("scroll"));
+    else
+      root.runCommand(id, def?.actions?.[action] ?? "", undefined);
   }
 
   // Run `command` for widget `id`, `{value}` filled in (shell-quoted unless
@@ -83,11 +93,68 @@ QtObject {
   function runCommand(id, command, value) {
     if (!command || Paths.greeter || LockManager.builtinLocked)
       return;
-    const text = value === undefined ? "" : String(value);
-    const quoted = /^-?[0-9.]+$/.test(text) ? text : "'" + text.replace(/'/g, "'\\''") + "'";
-    CommandManager.runDetached(command.replace(/\{value\}/g, quoted));
+    CommandManager.runDetached(CustomWidgetData.fillCommand(command, {
+      "value": CustomWidgetData.asText(value)
+    }));
     if (CustomWidgetsConfig.definition(id)?.actions?.refreshAfter ?? true)
       root._refreshSoon(id);
+  }
+
+  // Run the named action `action` of widget `id` with `value` ({value} in
+  // its command). Built-ins ("axiom:refresh", "axiom:restart",
+  // "axiom:<ActionsManager id>": never a session or destructive one) need
+  // no command; any other id runs the definition's action command
+  // (invoke.command, {action} {value} {rev} filled in, quoted) and, at
+  // exit 0, refreshes the script when the definition asks. `fromIpc`: the
+  // request came from `axiom ipc` (nothing shows the widget to click:
+  // refused while nothing shows it). Returns "" when it ran, else why not:
+  // "no widget", "not shown", "locked", "refused", "no action command",
+  // "failing" (the script isn't answering) or "disabled" (the sample turns
+  // it off)
+  function invoke(id, action, value, continuous, fromIpc) {
+    const def = CustomWidgetsConfig.definition(id);
+    if (!def)
+      return "no widget";
+    if (fromIpc && !root._shown(id))
+      return "not shown";
+    if (Paths.greeter || LockManager.builtinLocked)
+      return "locked";
+    if (action.startsWith("axiom:")) {
+      const rest = action.slice(6);
+      const refused = ActionsManager.sessionActions.concat(ActionsManager.destructive(rest) ? [rest] : []);
+      if (!CustomWidgetData.builtinAllowed(action, refused))
+        return "refused";
+      if (rest === "refresh")
+        root.refresh(id);
+      else if (rest === "restart")
+        root.restart(id);
+      else
+        ActionsManager.run(rest);
+      return "";
+    }
+    if (def.invoke.command === "")
+      return "no action command";
+    const fields = root._fields[id];
+    if (fields && fields.failure && fields.failure.kind !== "script")
+      return "failing";
+    if (!CustomWidgetData.actionEnabled(fields?.actions, action))
+      return "disabled";
+    const command = CustomWidgetData.fillCommand(def.invoke.command, {
+      "action": action,
+      "value": CustomWidgetData.asText(value),
+      "rev": fields?.rev ?? ""
+    });
+    CommandManager.run(["sh", "-c", command], code => root._done(id, code));
+    return "";
+  }
+
+  // What an action's name reads as on a button with no label of its own
+  function actionLabel(id) {
+    if (id === "axiom:refresh")
+      return I18n.tr("Refresh");
+    if (id === "axiom:restart")
+      return I18n.tr("Restart");
+    return id.startsWith("axiom:") ? ActionsManager.label(id.slice(6)) : "";
   }
 
   // The lookup `axiom ipc customWidgets refresh` uses: a widget by its
@@ -98,6 +165,18 @@ QtObject {
 
   // -- Private --
   property ConsumerRegistry _registry: ConsumerRegistry {}
+  // Whether something shows the widget (the editor's running one counts)
+  function _shown(id) {
+    return root._registry.requests.some(r => r.id === id);
+  }
+
+  // An action command finished: at exit 0 the script runs again, when the
+  // definition asks
+  function _done(id, exitCode) {
+    if (exitCode === 0 && CustomWidgetsConfig.definition(id)?.actions.refreshAfter)
+      root.refresh(id);
+  }
+
   // The ids shown, and what each watches: changes only with the config
   readonly property var _wanted: {
     const ids = {};

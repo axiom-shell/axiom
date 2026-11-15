@@ -6,6 +6,8 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.services.ui
+import qs.services.compositor
 import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the element library (shown while no
@@ -34,6 +36,37 @@ ColumnLayout {
         "value": p.path,
         "label": p.path
       })))
+
+  // The actions an element can name: none (its own commands), the
+  // built-ins, an action of the shell that's allowed (never a session or
+  // destructive one), then the ids the output's `actions` lists
+  readonly property var actionOptions: {
+    const refused = ActionsManager.sessionActions.concat(KeybindManager.actions.filter(id => ActionsManager.destructive(id)));
+    const out = [
+      {
+        "value": "",
+        "label": I18n.tr("None (the commands)")
+      }
+    ];
+    for (const id of CustomWidgetsConfig.builtinActions)
+      out.push({
+        "value": id,
+        "label": CustomWidgetsManager.actionLabel(id)
+      });
+    for (const id of KeybindManager.actions) {
+      if (CustomWidgetData.builtinAllowed("axiom:" + id, refused))
+        out.push({
+          "value": "axiom:" + id,
+          "label": ActionsManager.label(id)
+        });
+    }
+    for (const id of Object.keys(root.fields?.actions ?? ({})))
+      out.push({
+        "value": id,
+        "label": id
+      });
+    return out;
+  }
 
   spacing: Widget.spacing * 2
 
@@ -150,7 +183,35 @@ ColumnLayout {
         title: I18n.tr("Runs")
         description: I18n.tr("Never on the lock screen.")
 
+        // A named action (the script's, or a built-in) instead of the
+        // commands below
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Widget.spacing
+
+          StyledLabel {
+            Layout.preferredWidth: Widget.textPx(70)
+            text: I18n.tr("Action")
+          }
+          StyledComboEntry {
+            Layout.fillWidth: true
+            editable: true
+            placeholderText: I18n.tr("None (the commands)")
+            value: root.element?.action ?? ""
+            options: root.actionOptions
+            onPicked: value => root.editor.setElement(["action"], value)
+          }
+        }
+        StyledText {
+          visible: (root.element?.action ?? "") !== "" && !(root.element.action ?? "").startsWith("axiom:") && !root.editor.selected?.invoke.command
+          Layout.fillWidth: true
+          text: I18n.tr("Set the action command first")
+          tone: "warning"
+          overflow: "wrap"
+        }
+
         SchemaPropertiesForm {
+          visible: (root.element?.action ?? "") === ""
           Layout.fillWidth: true
           propertiesSchema: root.kind?.actionsSchema ?? ({})
           order: root.kind?.actions ?? []

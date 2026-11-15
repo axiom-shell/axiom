@@ -86,6 +86,16 @@ properties:
       scrollUp: {x-scope: commands, type: string, title: Scroll up command, default: ''}
       scrollDown: {x-scope: commands, type: string, title: Scroll down command, default: ''}
       refreshAfter: {type: boolean, title: Rerun after actions, default: true}
+      named:
+        type: object
+        additionalProperties: false
+        description: A named action instead of the command.
+        properties:
+          click: {x-scope: commands, type: string, title: Click action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
+          rightClick: {x-scope: commands, type: string, title: Right-click action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
+          middleClick: {x-scope: commands, type: string, title: Middle-click action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
+          scrollUp: {x-scope: commands, type: string, title: Scroll up action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
+          scrollDown: {x-scope: commands, type: string, title: Scroll down action, default: '', pattern: '^$|^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
   states:
     type: object
     title: State colors
