@@ -811,12 +811,23 @@ TestCase {
   }
 
   function test_switch_knob_follows_its_track_data() {
-    return [{ "tag": "100", "scale": 100 }, { "tag": "150", "scale": 150 }];
+    return [
+      {
+        "tag": "100",
+        "scale": 100
+      },
+      {
+        "tag": "150",
+        "scale": 150
+      }
+    ];
   }
 
   // The knob's corners are concentric in the track, whatever the track's radius
   function test_switch_knob_follows_its_track(data) {
-    harness.configure({ "scale": data.scale });
+    harness.configure({
+      "scale": data.scale
+    });
     const sw = createTemporaryObject(switchComp, root);
     waitForRendering(sw);
     compare(sw.indicator.radius, StyleTokens.concentric(sw.background.radius, Widget.px(2), Style.radiusMin));
@@ -827,7 +838,10 @@ TestCase {
   // The stepper's buttons have corners concentric in their box
   function test_stepper_buttons_are_concentric_in_their_box() {
     harness.configure({});
-    const stepper = createTemporaryObject(numberComp, root, { "width": 500, "mode": "stepper" });
+    const stepper = createTemporaryObject(numberComp, root, {
+      "width": 500,
+      "mode": "stepper"
+    });
     waitForRendering(stepper);
     const box = findAll(stepper, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
     const buttons = findAll(stepper, it => it.autoRepeat !== undefined && it.visible);
