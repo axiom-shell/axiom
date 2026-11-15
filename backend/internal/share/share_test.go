@@ -3,6 +3,7 @@ package share
 import (
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -280,4 +281,146 @@ func TestDropped(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A config holding a custom widget in each place a CustomWidget item can sit:
+// a bar widget, and a module of an overlay page, the desktop and the lock
+// screen (and a Clock beside each, which is look).
+const customWidgetConfig = `{"format": 2, "version": 76,
+	"CustomWidgets": {"items": [{"id": "mine", "name": "Mine", "command": "uptime"}]},
+	"Bars": {"items": [{"id": "main", "screen": {"mode": "primary"}, "widgets": {
+		"left": [{"id": "cw", "type": "CustomWidget", "properties": {"definition": "mine"}}, {"id": "time", "type": "Time"}]}}]},
+	"Overlay": {"items": [{"id": "home", "type": "Custom", "name": "Home", "layout": {"modules": [
+		{"id": "cwm", "type": "CustomWidget", "place": {"x": 0, "y": 0, "w": 4, "h": 2}, "properties": {"definition": "mine"}},
+		{"id": "clock", "type": "Clock", "place": {"x": 4, "y": 0, "w": 3, "h": 3}}]}}]},
+	"Desktop": {"items": [{"id": "primary", "screen": {"mode": "primary"}, "modules": [
+		{"id": "cwd", "type": "CustomWidget", "place": {"x": 0, "y": 0, "w": 4, "h": 2}, "properties": {"definition": "mine"}},
+		{"id": "clock", "type": "Clock", "place": {"x": 4, "y": 0, "w": 3, "h": 3}}]}]},
+	"Lockscreen": {"layout": {"modules": [
+		{"id": "cwl", "type": "CustomWidget", "place": {"x": 0, "y": 0, "w": 4, "h": 2}, "properties": {"definition": "mine"}},
+		{"id": "clock", "type": "Clock", "place": {"x": 4, "y": 0, "w": 3, "h": 3}}]}}}`
+
+// walk is the value at path, a number selecting an array's item
+func walk(v any, path string) any {
+	for _, key := range strings.Split(path, ".") {
+		switch node := v.(type) {
+		case *jsonx.Object:
+			v, _ = node.Get(key)
+		case *jsonx.Array:
+			i, err := strconv.Atoi(key)
+			if err != nil || i >= len(node.Items) {
+				return nil
+			}
+			v = node.Items[i]
+		default:
+			return nil
+		}
+	}
+	return v
+}
+
+// ids of the items of the array at path, by id
+func idsAt(v any, path string) []string {
+	arr, _ := walk(v, path).(*jsonx.Array)
+	ids := []string{}
+	if arr != nil {
+		for _, item := range arr.Items {
+			id, _ := item.(*jsonx.Object).Value("id").(string)
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// The arrays a custom widget item can sit in, and the ids it and its look
+// neighbour have there.
+var customWidgetPlaces = []struct {
+	name, path, custom, look string
+}{
+	{"bar widgets", "Bars.items.0.widgets.left", "cw", "time"},
+	{"overlay modules", "Overlay.items.0.layout.modules", "cwm", "clock"},
+	{"desktop modules", "Desktop.items.0.modules", "cwd", "clock"},
+	{"lock screen modules", "Lockscreen.layout.modules", "cwl", "clock"},
+}
+
+// A custom widget (a bar widget, or a module in the overlay, on the
+// desktop or the lock screen) is personal: left out of a look-only share,
+// reported as dropped, kept when personal is asked for. Its definition,
+// the CustomWidgets section, is personal too.
+func TestCustomWidgetsArePersonal(t *testing.T) {
+	t.Parallel()
+	s := v2(t)
+	cfg := filled(t, s, customWidgetConfig)
+	look := Pick(s, cfg, nil, nil)
+	personal := Pick(s, cfg, []string{"personal"}, nil)
+	dropped := map[string]string{}
+	for _, d := range Dropped(s, cfg, nil, nil) {
+		if strings.Contains(d.Path, "[cw") || strings.HasPrefix(d.Path, "CustomWidgets") {
+			dropped[d.Path] = d.Scope
+		}
+	}
+	for _, p := range customWidgetPlaces {
+		if got := idsAt(look, p.path); !reflect.DeepEqual(got, []string{p.look}) {
+			t.Errorf("%s in a look share: %v", p.name, got)
+		}
+		if got := idsAt(personal, p.path); !reflect.DeepEqual(got, []string{p.custom, p.look}) {
+			t.Errorf("%s with personal: %v", p.name, got)
+		}
+		if !strings.Contains(strings.Join(mapKeys(dropped), " "), "["+p.custom+"]") {
+			t.Errorf("%s: %s not reported as dropped: %v", p.name, p.custom, dropped)
+		}
+	}
+	for path, scope := range dropped {
+		if scope != "personal" {
+			t.Errorf("%s dropped as %s", path, scope)
+		}
+	}
+	if has(look, "CustomWidgets") || !has(personal, "CustomWidgets.items") {
+		t.Error("the CustomWidgets section isn't personal")
+	}
+}
+
+func mapKeys(m map[string]string) []string {
+	keys := []string{}
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// Applying a shared file onto a config keeps the user's own custom widget
+// items (a shared file never carries one), and takes the file's look; with
+// personal asked for, the file's custom widgets replace them.
+func TestApplyKeepsOwnCustomWidgets(t *testing.T) {
+	t.Parallel()
+	s := v2(t)
+	user := filled(t, s, customWidgetConfig)
+	shared := filled(t, s, `{"format": 2, "version": 76,
+		"Bars": {"items": [{"id": "main", "screen": {"mode": "primary"}, "widgets": {"left": [{"id": "time", "type": "Time", "properties": {"showSeconds": true}}]}}]},
+		"Overlay": {"items": [{"id": "home", "type": "Custom", "name": "Home", "layout": {"modules": [{"id": "theirs", "type": "Clock", "place": {"x": 0, "y": 0, "w": 3, "h": 3}}]}}]},
+		"Desktop": {"items": [{"id": "primary", "screen": {"mode": "primary"}, "modules": [{"id": "theirs", "type": "Clock", "place": {"x": 0, "y": 0, "w": 3, "h": 3}}]}]},
+		"Lockscreen": {"layout": {"modules": [{"id": "theirs", "type": "Clock", "place": {"x": 0, "y": 0, "w": 3, "h": 3}}]}}}`)
+	applied := Apply(s, user, shared, nil, nil)
+	for _, p := range customWidgetPlaces {
+		got := idsAt(applied, p.path)
+		if !contains(got, p.custom) {
+			t.Errorf("%s: the user's custom widget lost: %v", p.name, got)
+		}
+	}
+	if len(idsAt(applied, "CustomWidgets.items")) != 1 {
+		t.Error("the user's definitions changed")
+	}
+	if errs := config.ValidationErrors(s, applied, s.Root()); len(errs) > 0 {
+		t.Errorf("applied config invalid: %v", errs)
+	}
+}
+
+func contains(list []string, want string) bool {
+	for _, s := range list {
+		if s == want {
+			return true
+		}
+	}
+	return false
 }
