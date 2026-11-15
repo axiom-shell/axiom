@@ -15,6 +15,7 @@ import qs.components.reusable
 // lines, nothing personal) and Rename (hostnamed, polkit asks)
 FieldGroup {
   id: root
+  pageCard: true
 
   readonly property var info: SystemInfoManager.info
   readonly property var report: SystemInfoManager.report
