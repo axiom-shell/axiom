@@ -30,9 +30,16 @@ const (
 	swayRunCommand      = 0
 	swaySubscribe       = 2
 	swayGetOutputs      = 3
+	swayGetTree         = 4
 	swayGetVersion      = 7
 	swayGetBindingModes = 8
-	swayEventWorkspace  = 0x80000000
+)
+
+// i3 IPC event types (the high bit marks an event)
+const (
+	swayEventBit       = 0x80000000
+	SwayEventWorkspace = swayEventBit
+	SwayEventWindow    = swayEventBit | 3
 )
 
 const swayMagic = "i3-ipc"
@@ -137,30 +144,19 @@ func (s *Sway) Version(ctx context.Context) (string, error) {
 	return "sway " + reply.HumanReadable, nil
 }
 
+// Tree is sway's container tree (GET_TREE), as sway sent it.
+func (s *Sway) Tree(ctx context.Context) (json.RawMessage, error) {
+	var out json.RawMessage
+	err := s.request(ctx, swayGetTree, "", &out)
+	return out, err
+}
+
 // Reloads streams sway's config reloads (workspace events whose change is
 // "reload") until ctx ends or the socket closes.
 func (s *Sway) Reloads(ctx context.Context, out chan<- Reload) error {
-	conn, err := dial(context.Background(), s.Path)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	// Closing the connection is what ends a read blocked on it
-	defer context.AfterFunc(ctx, func() { conn.Close() })()
-	if err := swayWrite(conn, swaySubscribe, []byte(`["workspace"]`)); err != nil {
-		return err
-	}
-	conn.SetDeadline(time.Time{})
-	for {
-		kind, body, err := swayRead(conn)
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil
-			}
-			return err
-		}
-		if kind != swayEventWorkspace {
-			continue
+	return s.Events(ctx, []string{"workspace"}, nil, func(kind uint32, body []byte) {
+		if kind != SwayEventWorkspace {
+			return
 		}
 		var event struct {
 			Change string `json:"change"`
@@ -169,8 +165,61 @@ func (s *Sway) Reloads(ctx context.Context, out chan<- Reload) error {
 			select {
 			case out <- Reload{}:
 			case <-ctx.Done():
+			}
+		}
+	})
+}
+
+// Events subscribes to the event kinds ("window", "workspace", …) and reads
+// them until ctx ends (nil) or the socket closes: started once sway has
+// accepted the subscription (an error if it refuses), then event with each event's type and body (a
+// body is only valid during its call).
+func (s *Sway) Events(ctx context.Context, kinds []string, started func(), event func(kind uint32, body []byte)) error {
+	conn, err := dial(context.Background(), s.Path)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	// Closing the connection is what ends a read blocked on it
+	defer context.AfterFunc(ctx, func() { conn.Close() })()
+	subscribe, err := json.Marshal(kinds)
+	if err != nil {
+		return err
+	}
+	if err := swayWrite(conn, swaySubscribe, subscribe); err != nil {
+		return err
+	}
+	// The reply comes before any event, inside dial's deadline
+	_, reply, err := swayRead(conn)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
+	}
+	var ok struct{ Success bool }
+	if json.Unmarshal(reply, &ok) != nil || !ok.Success {
+		return fmt.Errorf("sway: subscribe refused: %s", reply)
+	}
+	conn.SetDeadline(time.Time{})
+	if started != nil {
+		started()
+	}
+	for {
+		kind, body, err := swayRead(conn)
+		if err != nil {
+			if ctx.Err() != nil {
 				return nil
 			}
+			return err
+		}
+		// The reply to the subscription is a plain type, not an event
+		if kind&swayEventBit == 0 {
+			continue
+		}
+		event(kind, body)
+		if ctx.Err() != nil {
+			return nil
 		}
 	}
 }

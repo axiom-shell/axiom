@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"io"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -142,8 +144,8 @@ func TestSway(t *testing.T) {
 				swayReply(c, kind, `["default","axiom_layer"]`)
 			case swaySubscribe:
 				swayReply(c, kind, `{"success":true}`)
-				swayReply(c, swayEventWorkspace, `{"change":"focus"}`)
-				swayReply(c, swayEventWorkspace, `{"change":"reload"}`)
+				swayReply(c, SwayEventWorkspace, `{"change":"focus"}`)
+				swayReply(c, SwayEventWorkspace, `{"change":"reload"}`)
 			}
 		}
 	})
@@ -259,4 +261,83 @@ func TestVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEvents(t *testing.T) {
+	t.Parallel()
+	t.Run("Hypr", func(t *testing.T) {
+		t.Parallel()
+		dir := short(t)
+		listen(t, filepath.Join(dir, ".socket2.sock"), func(c net.Conn) {
+			io.WriteString(c, "workspace>>2\nopenwindow>>a,1,c,t\n")
+			time.Sleep(time.Second)
+		})
+		lines := make(chan string, 4)
+		var started atomic.Int32
+		c, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go (&Hypr{Dir: dir}).Events(c, func() { started.Add(1) }, func(l string) { lines <- l })
+		for _, want := range []string{"workspace>>2", "openwindow>>a,1,c,t"} {
+			select {
+			case l := <-lines:
+				if l != want || started.Load() != 1 {
+					t.Fatalf("%q, want %q (started %d)", l, want, started.Load())
+				}
+			case <-time.After(testkit.Bound(3 * time.Second)):
+				t.Fatal("no line")
+			}
+		}
+	})
+	t.Run("Sway", func(t *testing.T) {
+		t.Parallel()
+		path := filepath.Join(short(t), "sway.sock")
+		got := make(chan string, 1)
+		listen(t, path, func(c net.Conn) {
+			kind, body, err := swayRead(c)
+			if err != nil {
+				return
+			}
+			if kind == swayGetTree {
+				swayReply(c, kind, `{"id":1}`)
+				return
+			}
+			got <- string(body)
+			swayReply(c, kind, `{"success":true}`)
+			swayReply(c, SwayEventWindow, `{"change":"new"}`)
+			time.Sleep(time.Second)
+		})
+		type ev struct {
+			kind uint32
+			body string
+		}
+		events := make(chan ev, 1)
+		var started atomic.Int32
+		c, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go (&Sway{Path: path}).Events(c, []string{"window", "workspace"}, func() { started.Add(1) }, func(k uint32, b []byte) { events <- ev{k, string(b)} })
+		select {
+		case e := <-events:
+			if e.kind != SwayEventWindow || e.body != `{"change":"new"}` || started.Load() != 1 || <-got != `["window","workspace"]` {
+				t.Fatalf("%+v %d", e, started.Load())
+			}
+		case <-time.After(testkit.Bound(3 * time.Second)):
+			t.Fatal("no event")
+		}
+		tree, err := (&Sway{Path: path}).Tree(ctx(t))
+		if err != nil || string(tree) != `{"id":1}` {
+			t.Fatalf("tree: %s %v", tree, err)
+		}
+	})
+	t.Run("Niri window decode", func(t *testing.T) {
+		t.Parallel()
+		var w NiriWindow
+		err := json.Unmarshal([]byte(`{"id":3,"title":"t","app_id":"a","pid":42,"workspace_id":2,"is_focused":true,"is_floating":true,"layout":{"tile_size":[10.5,20]}}`), &w)
+		if err != nil || w.PID != 42 || w.WorkspaceID == nil || *w.WorkspaceID != 2 || !w.Focused || !w.Floating || w.Layout == nil || w.Layout.TileSize[0] != 10.5 {
+			t.Fatalf("%+v %v", w, err)
+		}
+		var null NiriWindow
+		if err := json.Unmarshal([]byte(`{"id":4,"pid":null}`), &null); err != nil || null.PID != 0 {
+			t.Fatalf("%+v %v", null, err)
+		}
+	})
 }
