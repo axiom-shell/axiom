@@ -63,3 +63,38 @@ func TestDetectPicksTheCompositorRunning(t *testing.T) {
 		t.Errorf("WithoutVars = %v", got)
 	}
 }
+
+func TestRunningFromEnv(t *testing.T) {
+	procDir = t.TempDir()
+	t.Cleanup(func() { procDir = "/proc" })
+	cases := []struct {
+		name             string
+		env              map[string]string
+		kind             string
+		hypr, sway, niri bool
+	}{
+		{"none", map[string]string{}, "", false, false, false},
+		{"hyprland", map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "x", "XDG_RUNTIME_DIR": "/run/u"}, "hyprland", true, false, false},
+		{"hyprland without a runtime dir", map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "x"}, "hyprland", false, false, false},
+		{"sway", map[string]string{"SWAYSOCK": "/s"}, "sway", false, true, false},
+		{"niri", map[string]string{"NIRI_SOCKET": "/n"}, "niri", false, false, true},
+		{"both, neither running", map[string]string{"SWAYSOCK": "/s", "NIRI_SOCKET": "/n"}, "sway", false, true, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := RunningFromEnv(func(n string) string { return c.env[n] })
+			if r.Kind != c.kind || (r.Hypr != nil) != c.hypr || (r.Sway != nil) != c.sway || (r.Niri != nil) != c.niri {
+				t.Fatalf("got %+v, want kind %q hypr %v sway %v niri %v", r, c.kind, c.hypr, c.sway, c.niri)
+			}
+			if c.hypr && r.Hypr.Dir != "/run/u/hypr/x" {
+				t.Errorf("Hypr.Dir = %q", r.Hypr.Dir)
+			}
+			if c.sway && r.Sway.Path != "/s" {
+				t.Errorf("Sway.Path = %q", r.Sway.Path)
+			}
+			if c.niri && r.Niri.Path != "/n" {
+				t.Errorf("Niri.Path = %q", r.Niri.Path)
+			}
+		})
+	}
+}

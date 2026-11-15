@@ -9,7 +9,7 @@ func KindFor(f Facts) Kind {
 	c := Condition{Field: FieldAppID, Op: OpIs, Value: f.AppID}
 	switch {
 	case f.AppID != "":
-		if n, ok := strings.CutPrefix(f.AppID, "steam_app_"); ok && isDigits(n) {
+		if n, ok := strings.CutPrefix(f.AppID, "steam_app_"); ok && AllDigits(n) {
 			c = Condition{Field: FieldSteamGame, Op: OpIs, Value: n}
 		}
 	case f.Process != nil && f.Process.Name != "":
@@ -19,5 +19,3 @@ func KindFor(f Facts) Kind {
 	}
 	return Kind{Conditions: []Condition{c}}
 }
-
-func isDigits(s string) bool { return s != "" && strings.Trim(s, "0123456789") == "" }
