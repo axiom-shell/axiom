@@ -87,8 +87,8 @@ PanelWindow {
   Rectangle {
     id: dim
     anchors.fill: parent
-    color: Appearance.darkMode ? Theme.background : Theme.foreground
-    opacity: root.shown ? 0.75 : 0
+    color: Style.scrim
+    opacity: root.shown ? 1 : 0
 
     Glide on opacity {
       duration: Appearance.animNormal
@@ -106,20 +106,17 @@ PanelWindow {
     }
   }
 
-  Rectangle {
+  Surface {
     id: card
+    tone: "page"
 
     visible: root.hasCard
     anchors.centerIn: parent
-    width: Math.min(Widget.px(480), root.width - Widget.px(32))
+    width: Math.min(Widget.textPx(480), root.width - Widget.px(32))
     height: loader.implicitHeight + root.pad * 2
-    color: Appearance.fill(Theme.background)
-    border.color: Theme.border
-    border.width: Appearance.borderWidth
-    radius: Appearance.borderRadius
 
     opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.97
+    scale: root.shown ? 1 : 0.97 // style-exempt: motion
     Glide on opacity {
       duration: Appearance.animNormal
     }

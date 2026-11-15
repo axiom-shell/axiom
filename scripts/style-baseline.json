@@ -53,25 +53,6 @@
   "R1": 2,
   "R7": 2
  },
- "qml/components/surfaces/monitors/MonitorPromptWindow.qml": {
-  "R1": 5,
-  "R3": 3,
-  "R4": 2,
-  "R5": 2,
-  "R7": 3
- },
- "qml/components/surfaces/notifications/ToastItem.qml": {
-  "R1": 7,
-  "R14": 1,
-  "R4": 2,
-  "R5": 1,
-  "R7": 5
- },
- "qml/components/surfaces/notifications/ToastStack.qml": {
-  "R1": 2,
-  "R2": 2,
-  "R7": 2
- },
  "qml/components/surfaces/onboarding/StepBar.qml": {
   "R1": 9,
   "R7": 4
@@ -161,39 +142,6 @@
   "R4": 1,
   "R5": 1,
   "R7": 5
- },
- "qml/components/surfaces/powermenu/PowerMenuTile.qml": {
-  "R1": 3
- },
- "qml/components/surfaces/powermenu/PowerMenuWindow.qml": {
-  "R1": 6,
-  "R14": 1,
-  "R18": 1,
-  "R4": 3,
-  "R5": 1,
-  "R7": 6
- },
- "qml/components/surfaces/prompt/PolkitCard.qml": {
-  "R1": 7,
-  "R14": 6,
-  "R3": 5,
-  "R4": 2,
-  "R5": 1,
-  "R7": 3
- },
- "qml/components/surfaces/prompt/PromptCard.qml": {
-  "R1": 8,
-  "R14": 3,
-  "R3": 2,
-  "R4": 2,
-  "R5": 2,
-  "R7": 4
- },
- "qml/components/surfaces/prompt/PromptWindow.qml": {
-  "R1": 4,
-  "R18": 1,
-  "R3": 1,
-  "R7": 3
  },
  "qml/components/surfaces/screenlayout/ScreenLayoutView.qml": {
   "R1": 2,
