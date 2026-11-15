@@ -15,8 +15,18 @@ QtObject {
   // with the compositor's outer gaps (`gapsOut`: per edge name,
   // CompositorManager's) and the gaps an Automatic floating gap keeps
   // (`floatGaps`: ScreenEdgeManager.floatGaps). BarEnrich.enrich does it.
-  function enrichBarConfig(barConfig, gapsOut, floatGaps) {
-    return BarEnrich.enrich(barConfig, gapsOut, floatGaps, root.enrichEnv());
+  // `backdrop`: the grey levels the wallpaper is under the bar's band
+  // (WallpaperToneManager.regionOn), for a bar that needs them (no surface,
+  // or translucent), else null: its palette is then exactly today's. Only
+  // then are Style.edgeAlpha (which follows the wallpaper's edge floor, itself
+  // computed from bars enriched with no backdrop) and the backdrop read.
+  function enrichBarConfig(barConfig, gapsOut, floatGaps, backdrop = null) {
+    const env = root.enrichEnv();
+    if (backdrop) {
+      env.backdrop = backdrop;
+      env.edgeAlpha = Style.edgeAlpha;
+    }
+    return BarEnrich.enrich(barConfig, gapsOut, floatGaps, env);
   }
 
   // What BarEnrich reads of the shell (its `env`)
@@ -35,7 +45,8 @@ QtObject {
       "outputs": General.outputs,
       "autoColorFields": root.autoColorFields,
       "baseColorNames": Theme.baseColorNames,
-      "redForGains": MarketsConfig.redForGains
+      "redForGains": MarketsConfig.redForGains,
+      "margin": StyleTokens.margin
     };
   }
 

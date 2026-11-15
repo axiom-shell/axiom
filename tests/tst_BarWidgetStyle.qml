@@ -896,4 +896,134 @@ TestCase {
   function test_pulse_steps() {
     compare(BarWidgetStyle.pulseSteps, 16);
   }
+
+  // ---- Over a wallpaper (transparent bars: backs and scrim) ----
+
+  // The fixture backdrops of tokens_reference.py (its BACKDROPS): the grey
+  // levels { mean, low, high } under a bar
+  readonly property var backdrops: ({
+      "white": {
+        "mean": 255,
+        "low": 255,
+        "high": 255
+      },
+      "black": {
+        "mean": 0,
+        "low": 0,
+        "high": 0
+      },
+      "grey": {
+        "mean": 128,
+        "low": 128,
+        "high": 128
+      },
+      "checker": {
+        "mean": 188,
+        "low": 0,
+        "high": 255
+      },
+      "busy": {
+        "mean": 128,
+        "low": 30,
+        "high": 230
+      }
+    })
+
+  // A transparent bar of `look` on `theme` over `backdrop`, its text colour
+  // `textColor` (a BarStyle value: "" for Auto)
+  function overWallpaper(themeKey, theme, backdrop, look, textColor) {
+    return Bars.bar(Object.assign({
+      "surface": "none",
+      "widgetTextColor": textColor
+    }, look.over), Object.assign(Bars.themeEnv(theme), {
+      "backdrop": root.backdrops[backdrop],
+      "edgeAlpha": 1,
+      "margin": 0.05
+    }));
+  }
+
+  readonly property var wallpaperLooks: ["plain", "accentText", "underline", "tinted"]
+
+  function test_transparent_bar_content_reads_on_every_back() {
+    const fails = [];
+    for (const [themeKey, theme] of root.themes)
+      for (const name of Object.keys(root.backdrops))
+        for (const look of root.looks.filter(l => root.wallpaperLooks.includes(l.key))) {
+          const bar = root.overWallpaper(themeKey, theme, name, look, "");
+          const backs = bar.palette.backs;
+          if (!backs || backs.length !== 3) {
+            fails.push(`${themeKey} ${name} ${look.key}: no backs`);
+            continue;
+          }
+          for (const accent of root.accents) {
+            const c = BarWidgetStyle.widgetColors(bar, accent, "#282828", {
+              "splits": false
+            });
+            const tag = `${themeKey} ${name} ${look.key} ${accent}`;
+            for (const [part, color, min, on] of [["text", c.text, 4.5, c.textBack], ["icon", c.icon, 3, c.iconBack]])
+              if (!root.reads(on, color, min))
+                fails.push(`${tag}: ${part} ${color} under ${min} on ${on}`);
+          }
+        }
+    verify(fails.length === 0, `${fails.length} fail:\n` + fails.slice(0, 12).join("\n"));
+  }
+
+  // The shade: wherever one colour can't read on the whole wallpaper
+  // (tokens_reference.py --scrims: the checker and the busy one on every
+  // theme, a flat white, black or grey on none)
+  function test_scrim_where_one_colour_cannot_read() {
+    const look = root.looks.find(l => l.key === "plain");
+    for (const [themeKey, theme] of root.themes)
+      for (const name of Object.keys(root.backdrops)) {
+        const bar = root.overWallpaper(themeKey, theme, name, look, "");
+        const shaded = name === "checker" || name === "busy";
+        compare(bar.palette.scrim > 0, shaded, `${themeKey} ${name}: scrim ${bar.palette.scrim}`);
+        compare(bar.scrim, bar.palette.scrim, "the bar carries it");
+        compare(bar.scrimReach, Math.ceil(bar.extent / 2), "its fade room is reserved");
+        // The shade's own backs are the wallpaper under it: never lighter or
+        // darker than the theme background allows
+        verify(bar.palette.scrim <= 1);
+      }
+  }
+
+  function test_a_user_text_colour_is_kept_and_shaded() {
+    const look = root.looks.find(l => l.key === "plain");
+    for (const [themeKey, theme] of root.themes) {
+      const set = Bars.resolverOf(theme).call(null, "base0D");
+      const bar = root.overWallpaper(themeKey, theme, "checker", look, "base0D");
+      verify(bar.palette.scrim > 0, `${themeKey}: the picked colour is shaded`);
+      const c = BarWidgetStyle.widgetColors(bar, "#fb4934", "#282828", {
+        "splits": false
+      });
+      same(c.text, set, `${themeKey}: the picked colour is never nudged`);
+    }
+  }
+
+  function test_no_backdrop_leaves_the_palette_as_it_was() {
+    const look = root.looks.find(l => l.key === "plain");
+    const bar = Bars.bar(Object.assign({
+      "surface": "none"
+    }, look.over));
+    verify(!("backs" in bar.palette) && !("scrim" in bar.palette), "no backs or scrim keys");
+    verify(!("scrim" in bar) && !("scrimReach" in bar), "no scrim keys on the bar");
+  }
+
+  // A translucent bar that fills: read on its fill at the edge alpha
+  function test_translucent_bar_reads_on_its_fill() {
+    const look = root.looks.find(l => l.key === "plain");
+    for (const [themeKey, theme] of root.themes) {
+      const bar = Bars.bar(look.over, Object.assign(Bars.themeEnv(theme), {
+        "backdrop": root.backdrops.busy,
+        "edgeAlpha": 0.6,
+        "margin": 0.05
+      }));
+      compare(bar.palette.scrim, 0, "a bar with a fill gets no shade");
+      verify(!("scrimReach" in bar), "and reserves no fade room");
+      for (const b of bar.palette.backs)
+        verify(Qt.color(b).a === 1, "opaque backs");
+      // The darkest and the brightest back differ less than the bare ones do
+      const spread = Math.abs(Utils.contrast(bar.palette.backs[1], bar.palette.backs[2]));
+      verify(spread < 4, `${themeKey}: the fill at 60% evens the wallpaper out (${spread})`);
+    }
+  }
 }

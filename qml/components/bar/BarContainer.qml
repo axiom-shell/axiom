@@ -640,6 +640,45 @@ Rectangle {
     id: surface
     anchors.fill: parent
 
+    // A transparent bar over a wallpaper its content can't read on: a soft
+    // shade of the theme background, `scrim` strong along the whole bar and
+    // fading out over `scrimReach` past it (the window holds that room). It
+    // glides with the wallpaper.
+    Rectangle {
+      id: scrim
+      readonly property real reach: root.barConfig.scrimReach ?? 0
+      readonly property real total: root.barConfig.extent + scrim.reach
+      // The bar's share of the gradient; the screen edge is its far end
+      // for a bottom or right bar
+      readonly property real share: scrim.total > 0 ? root.barConfig.extent / scrim.total : 1
+      readonly property bool far: root.barConfig.bottom || root.barConfig.right
+      x: root.isVertical && scrim.far ? -scrim.reach : 0
+      y: !root.isVertical && scrim.far ? -scrim.reach : 0
+      width: root.isVertical ? scrim.total : root.width
+      height: root.isVertical ? root.height : scrim.total
+      opacity: root.barConfig.scrim ?? 0
+      visible: scrim.opacity > 0
+      Glide on opacity {
+        duration: Appearance.animSlow
+      }
+      gradient: Gradient {
+        orientation: root.isVertical ? Gradient.Horizontal : Gradient.Vertical
+
+        GradientStop {
+          position: 0
+          color: scrim.far ? "transparent" : Style.surfacePage
+        }
+        GradientStop {
+          position: scrim.far ? 1 - scrim.share : scrim.share
+          color: Style.surfacePage
+        }
+        GradientStop {
+          position: 1
+          color: scrim.far ? Style.surfacePage : "transparent"
+        }
+      }
+    }
+
     Rectangle {
       id: solidFill
       anchors.fill: parent

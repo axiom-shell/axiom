@@ -16,8 +16,12 @@ import QtQuick
 // dividers between widgets), accentLine ({ from, to }, the bar's accent
 // line, or null), hoverOutline (a hovered widget's outline), cellHover (a
 // hovered cell's box) and highlight (the bar editor's highlight of the
-// selected widget: the theme's accent). A user's color is taken as set,
-// never graded.
+// selected widget: the theme's accent). Over a wallpaper (BarEnrich) it
+// also holds backs (the opaque colors the bar's content reads on: the
+// wallpaper's mean, darkest and brightest under it, with any shade) and
+// scrim (the shade's alpha), which stand in for the background: absent, the
+// bar reads on `background` alone. A user's color is taken as set, never
+// graded.
 //
 // `state` is what of the widget itself its colors depend on (state()):
 //   splits    it shows an icon part and a label apart (split: an icon or a
@@ -226,7 +230,7 @@ QtObject {
   // the palette's colors).
   function badge(palette, colors, color) {
     const cut = colors.iconOnFill === true;
-    const backs = cut ? colors.iconBack : colors.iconBack.concat([root._opaque(palette.background)]);
+    const backs = cut ? colors.iconBack : colors.iconBack.concat(root._bar(palette));
     const fill = root.nudged(backs, color, root.iconContrast);
     return {
       "fill": fill,
@@ -275,7 +279,7 @@ QtObject {
   function colors(look, palette, state, accent, own) {
     const graded = state.gradient !== null && state.auto;
     const base = graded ? state.gradient : accent;
-    const color = state.muted ? root._toward(base, root._opaque(palette.background), root.mutedMix) : base;
+    const color = state.muted ? root._toward(base, root._bar(palette)[0], root.mutedMix) : base;
     const result = root._widget(look, palette, state, color, root._readable(palette, color, own), graded);
     result.gradient = graded ? root._dimmedGradient(state, root._widgetGradient(look, state)) : null;
     result.accent = color;
@@ -433,7 +437,7 @@ QtObject {
   function cell(look, palette, state, color, own, cellState) {
     const graded = state.gradient !== null && state.auto;
     const base = graded ? state.gradient : color;
-    const fill = state.muted ? root._toward(base, root._opaque(palette.background), root.mutedMix) : base;
+    const fill = state.muted ? root._toward(base, root._bar(palette)[0], root.mutedMix) : base;
     const result = root._cell(look, palette, state, fill, root._readable(palette, fill, own), cellState);
     result.gradient = graded ? root._dimmedGradient(state, root._cellGradient(look, state, result)) : null;
     result.hover = state.hover ?? palette.cellHover;
@@ -520,8 +524,8 @@ QtObject {
     const unfilled = fills ? Qt.alpha(accent, 0) : none;
     // What content sits on, opaque: the bar, a color over it, a tint of
     // the accent over it
-    const bar = [root._opaque(palette.background)];
-    const on = c => [root.over(c, bar[0])];
+    const bar = root._bar(palette);
+    const on = c => bar.map(b => root.over(c, b));
     const tint = on(root.faded(accent, look.tint));
     if (state.hovered && fills)
       // Filled in its own color, its text and icon reading on it; an
@@ -593,7 +597,7 @@ QtObject {
     // Behind it, opaque: what the widget's text sits on (`state.under`,
     // else the bar), or the run's fill; its state color is nudged to read
     // there (not under the bar's text color), over its box's fill
-    const behind = merged && root._onFill(drawn) ? [root.over(palette.group, palette.background)] : state.under ?? [root._opaque(palette.background)];
+    const behind = merged && root._onFill(drawn) ? [root.over(palette.group, palette.background)] : state.under ?? root._bar(palette);
     const over = (c, backs) => backs.map(b => root.over(c, b));
     if (state.hovered && fills)
       return root._makeCell(color, drawn.stroke && !state.group ? color : none, none, text(own), true, true, over(color, behind));
@@ -637,6 +641,14 @@ QtObject {
   // widget's own fill (`colors`, colors())
   function onOwnFill(colors, part) {
     return part === "text" ? colors.textOwnFill : colors.iconOwnFill;
+  }
+
+  // What content on the bar itself reads on, opaque: the bar's background,
+  // or over a wallpaper (`palette.backs`, BarEnrich) the colors under it at
+  // its mean, darkest and brightest, with any shade the bar draws. [0] is
+  // the mean, which mixes (muted, pressed) go toward.
+  function _bar(palette) {
+    return palette.backs ?? [root._opaque(palette.background)];
   }
 
   // `color` taken opaque
