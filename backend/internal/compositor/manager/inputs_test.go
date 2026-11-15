@@ -287,18 +287,30 @@ func TestWindowRulesInputs(t *testing.T) {
 		// compositor without it; a live-only kind leaves nothing written
 		live := rule("l", true, `[{"conditions":[{"field":"process","op":"is","value":"p"}]}]`, `{"float":true}`)
 		in := build(t, "hyprland", func(f *Facts) { f.Supports["pin"] = false }, rule("a", true, one, `{"float":true,"pin":true}`), live)
-		want := `[{"rule":"a","written":["float"],"placed":[],"dropped":["pin"],"live":[],"skipped":[]},` +
-			`{"rule":"l","written":[],"placed":[],"dropped":[],"live":[0],"skipped":[]}]`
+		want := `[{"rule":"a","written":["float"],"placed":[],"dropped":["pin"],"live":[],"skipped":[],"missing":[]},` +
+			`{"rule":"l","written":[],"placed":[],"dropped":[],"live":[0],"skipped":[],"missing":[]}]`
 		if got := string(jsonx.MarshalCompact(getAny(in.get("windowRulesReport"), "rules"))); got != want {
 			t.Errorf("rows:\n%s\nwant\n%s", got, want)
+		}
+	})
+	t.Run("a missing app's kind is reported and prints nothing", func(t *testing.T) {
+		t.Parallel()
+		gone := rule("m", true, `[{"conditions":[{"field":"app","op":"is","value":"gone.desktop"}]}]`, `{"float":true}`)
+		in := build(t, "hyprland", nil, gone)
+		want := `[{"rule":"m","written":[],"placed":[],"dropped":[],"live":[],"skipped":[],"missing":[0]}]`
+		if got := string(jsonx.MarshalCompact(getAny(in.get("windowRulesReport"), "rules"))); got != want {
+			t.Errorf("rows:\n%s\nwant\n%s", got, want)
+		}
+		if h := in.get("windowRules"); len(strList(h)) != 0 {
+			t.Errorf("hyprland wrote %s", jsonx.MarshalCompact(h))
 		}
 	})
 	t.Run("follow is its own effect", func(t *testing.T) {
 		t.Parallel()
 		w := rule("f", true, one, `{"workspace":"3","follow":true}`)
 		for kind, want := range map[string]string{
-			"hyprland": `[{"rule":"f","written":["workspace","follow"],"placed":[],"dropped":[],"live":[],"skipped":[]}]`,
-			"niri":     `[{"rule":"f","written":[],"placed":["workspace","follow"],"dropped":[],"live":[],"skipped":[]}]`,
+			"hyprland": `[{"rule":"f","written":["workspace","follow"],"placed":[],"dropped":[],"live":[],"skipped":[],"missing":[]}]`,
+			"niri":     `[{"rule":"f","written":[],"placed":["workspace","follow"],"dropped":[],"live":[],"skipped":[],"missing":[]}]`,
 		} {
 			in := build(t, kind, nil, w)
 			if got := string(jsonx.MarshalCompact(getAny(in.get("windowRulesReport"), "rules"))); got != want {
@@ -316,7 +328,7 @@ func TestWindowRulesInputs(t *testing.T) {
 			t.Errorf("app not resolved: %v", h)
 		}
 		unresolved := build(t, "hyprland", nil, app)
-		if !strings.Contains(report(unresolved), `"skipped":[0]`) || len(strList(unresolved.get("windowRules"))) != 0 {
+		if !strings.Contains(report(unresolved), `"missing":[0]`) || len(strList(unresolved.get("windowRules"))) != 0 {
 			t.Errorf("no app ids: %s", report(unresolved))
 		}
 	})

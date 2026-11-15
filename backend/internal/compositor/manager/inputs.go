@@ -236,6 +236,7 @@ type ruleRow struct {
 	Dropped []string `json:"dropped"` // effects this compositor can't do
 	Live    []int    `json:"live"`    // kinds only the daemon can match
 	Skipped []int    `json:"skipped"` // kinds this compositor can't match
+	Missing []int    `json:"missing"` // kinds whose installed app isn't installed
 }
 
 // windowRules is the WindowRules section as f.Kind's compositor takes it:
@@ -272,9 +273,9 @@ func windowRules(section, keybinds any, f *Facts) (compiled any, report *jsonx.O
 	for _, r := range usable {
 		u := byRule[r.ID]
 		row := ruleRow{Rule: r.ID, Written: []string{}, Placed: orEmpty(u.Placed), Dropped: orEmpty(u.Dropped),
-			Live: orEmpty(u.Live), Skipped: orEmpty(u.Skipped)}
+			Live: orEmpty(u.Live), Skipped: orEmpty(u.Skipped), Missing: orEmpty(u.Missing)}
 		// Nothing is printed for a rule none of whose kinds is written
-		if len(u.Live)+len(u.Skipped) < len(r.Kinds) {
+		if len(u.Live)+len(u.Skipped)+len(u.Missing) < len(r.Kinds) {
 			for _, key := range render.RuleEffects(r.Window) {
 				if !slices.Contains(u.Placed, key) && !slices.Contains(u.Dropped, key) {
 					row.Written = append(row.Written, key)

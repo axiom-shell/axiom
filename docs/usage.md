@@ -84,6 +84,7 @@ axiom ipc <target> <function> [args]
 | `selfUpdate` | `check`, `update`, `open` |
 | `community` | `refresh`, `list` (each setup's id and title), `apply <id>` (without its wallpaper) |
 | `chat` | `open`, `newChat`, `ask <text>`, `settings` |
+| `windowRules` | `open` (the Window rules page), `fromFocused` (a new rule for the focused window on the page, unsaved until you save) |
 | `calendar` | `open`, `newEvent`, `sync`, `add <text>` (as `/event`) |
 | `notes` | `open` (the overlay page or menu with a Notes module) |
 | `todo` | `add <text>`, `toggle <text>`, `list`, `count`, `clearCompleted` |
@@ -169,7 +170,7 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | Group | Commands |
 | --- | --- |
 | **Session** | `/lock` `/suspend` `/hibernate` `/logout` `/reboot` `/poweroff` `/power` |
-| **Pages** | `/overlay [page]` `/settings` `/themes` `/bar` `/keybinds` `/rules` `/layouts` `/menus` `/monitors` `/widgets` `/workspaces` `/calendar` |
+| **Pages** | `/overlay [page]` `/settings` `/themes` `/bar` `/keybinds` `/rules` `/rule` `/layouts` `/menus` `/monitors` `/widgets` `/workspaces` `/calendar` |
 | **Look** | `/theme <name>` `/dark` `/light` `/mode` `/wallpaper <file\|Random>` `/nextwallpaper` `/transition <name>` `/generate` `/nightlight [on\|off]` |
 | **Audio and media** | `/volume <n\|+n\|-n>` `/mute` `/mic` `/output <device>` `/input <device>` `/play` `/next` `/prev` |
 | **Connectivity** | `/wifi [on\|off]` `/bluetooth [on\|off]` `/airplane [on\|off]` `/connect <device>` `/vpn [name]` `/eject [drive]` |

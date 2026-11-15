@@ -4352,6 +4352,18 @@
     "On sway, only a floating window.": "",
     "Apply to open windows": "",
     "Save your changes first.": "",
-    "Moves the open windows as your saved rules say.": ""
+    "Moves the open windows as your saved rules say.": "",
+    "{0} open": "",
+    "Don't focus when it opens: not applied to the kinds axiom matches just after the window opens.": "",
+    "Add from open window": "",
+    "Add app": "",
+    "Search open windows": "",
+    "This app isn't installed, so this kind matches nothing.": "",
+    "Pick an app": "",
+    "A process name, such as steam": "",
+    "A program, such as lutris": "",
+    "Make a rule for the focused window": "",
+    "process not known": "",
+    "game: {0}": ""
   }
 }

@@ -149,7 +149,16 @@ func TestHyprRuleLines(t *testing.T) {
 			rule("r", float, conds{cond(windowrules.FieldApp, is, "org.x")}, conds{cond(windowrules.FieldApp, is, "none")}),
 		}, Apps: apps, Supports: hyprSupports})
 		want := `hl.window_rule({ name = "axiom-rule-r-0", match = { class = "\\A(?:(?:x)|(?:y))\\z" }, float = true })`
-		if len(got) != 1 || got[0] != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "r", Skipped: []int{1}}}) {
+		if len(got) != 1 || got[0] != want || !reflect.DeepEqual(left, []Unwritten{{Rule: "r", Missing: []int{1}}}) {
+			t.Fatalf("%q %v", got, left)
+		}
+	})
+	t.Run("a missing app is Missing, an xwayland kind without the capability Skipped", func(t *testing.T) {
+		t.Parallel()
+		got, left := HyprRuleLines(RuleSet{Rules: []windowrules.Rule{
+			rule("r", float, one, conds{cond(windowrules.FieldApp, is, "none")}, conds{cond(xway, is, "")}),
+		}, Supports: map[string]bool{}})
+		if len(got) != 1 || !reflect.DeepEqual(left, []Unwritten{{Rule: "r", Missing: []int{1}, Skipped: []int{2}}}) {
 			t.Fatalf("%q %v", got, left)
 		}
 	})

@@ -108,10 +108,12 @@ func (r *rig) send(kind windows.Kind, w ...windows.Window) {
 	r.script <- ev
 }
 
+// count is the pushes so far, less those of quiet's sentinel windows (each
+// changes State.Open once).
 func (r *rig) count() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return len(r.changes)
+	return len(r.changes) - r.sent
 }
 
 // waitFor waits until cond holds of the engine's state
@@ -146,6 +148,14 @@ func (r *rig) quiet(n int) {
 		return false
 	}) {
 		r.t.Fatal("the sentinel window never showed")
+	}
+	// The snapshot is stored just before its push
+	if !testkit.Eventually(func() bool {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		return len(r.changes) > 0 && slices.Contains(r.changes[len(r.changes)-1].Open, id)
+	}) {
+		r.t.Fatal("the sentinel window was never pushed")
 	}
 	if got := r.count(); got != n {
 		r.t.Fatalf("%d pushes, want %d", got, n)
@@ -209,19 +219,83 @@ func TestOpenedChangedClosed(t *testing.T) {
 	r.send(windows.Reset)
 	w := win("1", "x")
 	r.send(windows.Opened, w)
+	r.waitFor("open", func(s State) bool { return len(s.Open) == 1 })
+	n := r.count()
 	// A title change that matches nothing pushes nothing (D10)
 	w.Title = "spam"
 	r.send(windows.Changed, w)
 	r.send(windows.Changed, w)
-	r.quiet(0)
+	r.quiet(n)
 	w.Title = "late"
 	r.send(windows.Changed, w)
 	r.waitFor("held", func(s State) bool { return len(s.Holds.DND) == 1 })
 	r.send(windows.Closed, w)
 	r.waitFor("released", func(s State) bool { return len(s.Holds.DND) == 0 })
-	if got := r.count(); got != 2 {
-		t.Errorf("%d pushes, want 2", got)
+	if got := r.count(); got != 3 {
+		t.Errorf("%d pushes, want 3 (open, held, released)", got)
 	}
+}
+
+func TestWindowFocused(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	r.run()
+	idOf := func() string {
+		w, _, ok := r.e.Window("")
+		if !ok {
+			return ""
+		}
+		return w.ID
+	}
+	a, b := win("1", "foot"), win("2", "kitty")
+	b.PID = 5
+	r.procs[5] = procinfo.Process{PID: 5, Name: "kitty", Ancestors: []string{}, Signals: []procinfo.Signal{}}
+	a.Focused = true
+	r.send(windows.Reset, a, b)
+	r.waitFor("both open", func(s State) bool { return len(s.Open) == 2 })
+	if idOf() != "1" {
+		t.Errorf("focused %q after Reset", idOf())
+	}
+	a.Focused, b.Focused = false, true
+	r.send(windows.Changed, a)
+	r.send(windows.Changed, b)
+	r.waitFor("moved", func(State) bool { return idOf() == "2" })
+	// Focus to nothing (a layer surface took it): still the last one
+	b.Focused = false
+	r.send(windows.Changed, b)
+	r.quiet(r.count())
+	if idOf() != "2" {
+		t.Errorf("focused %q after focus left", idOf())
+	}
+	w, facts, ok := r.e.Window("2")
+	if !ok || w.ID != "2" || facts.Process == nil || facts.Process.Name != "kitty" || facts.AppID != "kitty" {
+		t.Errorf("by id: %+v %+v %v", w, facts, ok)
+	}
+	if _, _, ok := r.e.Window("9"); ok {
+		t.Error("an unknown id was found")
+	}
+	r.send(windows.Closed, b)
+	r.waitFor("closed", func(s State) bool { return !slices.Contains(s.Open, "2") })
+	if idOf() != "" {
+		t.Errorf("focused %q after it closed", idOf())
+	}
+}
+
+func TestStateOpen(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	r.run()
+	r.send(windows.Reset)
+	w := win("1", "x")
+	r.send(windows.Opened, w)
+	r.waitFor("open", func(s State) bool { return reflect.DeepEqual(s.Open, []string{"1"}) })
+	n := r.count()
+	// A title nothing matches pushes nothing
+	w.Title = "spam"
+	r.send(windows.Changed, w)
+	r.quiet(n)
+	r.send(windows.Closed, w)
+	r.waitFor("closed", func(s State) bool { return !slices.Contains(s.Open, "1") })
 }
 
 func TestFocusedGrace(t *testing.T) {

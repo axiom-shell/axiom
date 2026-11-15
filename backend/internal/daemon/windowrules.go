@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/place"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/windows"
 	"github.com/axiom-shell/axiom/backend/internal/config"
@@ -12,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/procinfo"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/store"
+	"github.com/axiom-shell/axiom/backend/internal/windowrules"
 	"github.com/axiom-shell/axiom/backend/internal/windowrules/engine"
 )
 
@@ -87,6 +89,24 @@ func (d *Daemon) windowRulesMethods(reg *rpc.Registry) {
 		return struct {
 			Windows []engine.WindowInfo `json:"windows"`
 		}{d.windowRules.Windows()}, nil
+	})
+	type fromParams struct {
+		ID string `json:"id"`
+	}
+	type fromResult struct {
+		Window engine.WindowInfo `json:"window"`
+		Kind   windowrules.Kind  `json:"kind"`
+	}
+	// What a rule made from a window starts with (id "": the focused window)
+	rpc.Handle(reg, "windowRules.fromWindow", func(ctx context.Context, c *rpc.Conn, p fromParams) (fromResult, error) {
+		w, facts, ok := d.windowRules.Window(p.ID)
+		switch {
+		case ok:
+			return fromResult{w, windowrules.KindFor(facts)}, nil
+		case p.ID == "":
+			return fromResult{}, axerr.New(axerr.NotFound, "no focused window")
+		}
+		return fromResult{}, axerr.New(axerr.NotFound, "no such window")
 	})
 	// Apply to open windows: the saved rules, now, on every open window
 	rpc.Handle(reg, "windowRules.applyNow", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct {

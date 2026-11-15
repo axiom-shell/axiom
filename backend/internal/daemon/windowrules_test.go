@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // The engine's reads: no compositor in the test daemon, so it isn't running.
@@ -38,6 +40,12 @@ func TestWindowRulesMethods(t *testing.T) {
 	draft := map[string]any{"section": map[string]any{"rules": []any{map[string]any{"id": "a"}}}}
 	if err := c.Call(context.Background(), "windowRules.match", draft, &m); err != nil || len(m.Rules) != 1 {
 		t.Errorf("match %+v, %v", m, err)
+	}
+	// A rule from a window: no compositor, no window
+	for _, id := range []string{"", "7"} {
+		if err := c.Call(context.Background(), "windowRules.fromWindow", map[string]any{"id": id}, nil); axerr.KindOf(err) != axerr.NotFound {
+			t.Errorf("fromWindow %q: %v", id, err)
+		}
 	}
 	// Apply to open windows without a compositor places nothing
 	var ap struct {

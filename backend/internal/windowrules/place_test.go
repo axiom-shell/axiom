@@ -57,6 +57,10 @@ func TestPlanFor(t *testing.T) {
 			want: Plan{Workspace: "3"}},
 		"written and live kind: written wins": {
 			matches: []RuleMatch{rm("a", fx, 0, 1)}, reports: map[string]Report{"a": row("a", nil, nil)}, support: live},
+		"a missing app's kind counts as not written": {
+			matches: []RuleMatch{rm("a", fx, 2)}, reports: map[string]Report{"a": {Rule: "a", Live: []int{1}, Missing: []int{2}}}, support: live, want: full},
+		"written kind beside a missing one still reads as written": {
+			matches: []RuleMatch{rm("a", fx, 0, 2)}, reports: map[string]Report{"a": {Rule: "a", Live: []int{1}, Missing: []int{2}}}, support: live},
 		"skipped kind counts as not written": {
 			matches: []RuleMatch{rm("a", fx, 2)}, reports: map[string]Report{"a": row("a", nil, nil)}, support: live, want: full},
 		"written match, apply: everything, no follow": {

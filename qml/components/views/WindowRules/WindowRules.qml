@@ -17,7 +17,11 @@ BaseView {
 
   readonly property var editor: WindowRulesManager.editor
 
-  Component.onCompleted: root.editor.ensureLoaded()
+  Component.onCompleted: {
+    root.editor.ensureLoaded();
+    root.editor.acquire(root);
+  }
+  Component.onDestruction: root.editor.release(root)
 
   StreamedLoader {
     Layout.preferredWidth: root.sideWidth

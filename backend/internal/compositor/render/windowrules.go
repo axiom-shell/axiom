@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"slices"
 	"strconv"
 	"strings"
@@ -32,6 +33,7 @@ type Unwritten struct {
 	Rule    string   // the rule's id
 	Live    []int    // kinds (indices into Rule.Kinds) only the daemon can match (Kind.Live)
 	Skipped []int    // kinds this compositor can't match
+	Missing []int    // kinds whose installed app isn't installed (an `app` condition)
 	Placed  []string // effects (schema keys) the daemon places after open
 	Dropped []string // effects (schema keys) the compositor can't do: never applied
 }
@@ -95,9 +97,12 @@ func compile(set RuleSet, p rulePrinter) ([]compiledRule, []Unwritten) {
 					rk.xwayland = &want
 				}
 			}
-			if ok {
+			switch {
+			case ok:
 				c.kinds = append(c.kinds, rk)
-			} else {
+			case errors.Is(err, windowrules.ErrNoApp):
+				u.Missing = append(u.Missing, i)
+			default:
 				u.Skipped = append(u.Skipped, i)
 			}
 		}
@@ -111,7 +116,7 @@ func compile(set RuleSet, p rulePrinter) ([]compiledRule, []Unwritten) {
 				c.effects = append(c.effects, key)
 			}
 		}
-		if len(u.Live)+len(u.Skipped)+len(u.Placed)+len(u.Dropped) > 0 {
+		if len(u.Live)+len(u.Skipped)+len(u.Missing)+len(u.Placed)+len(u.Dropped) > 0 {
 			left = append(left, u)
 		}
 		if len(c.kinds) > 0 && len(c.effects) > 0 {
