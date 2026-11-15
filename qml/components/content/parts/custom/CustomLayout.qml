@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import qs.config
 import qs.services.apps
 import qs.components.methods
@@ -12,7 +13,11 @@ import qs.components.reusable
 // them; the lattice covers every layer, so they stay aligned. A definition
 // with no screens and no elements draws CustomWidgetsConfig.defaultElements
 // (its icon, or a ring, and the text against it).
-// Used by the CustomWidget module and popout and the editor's previews.
+// Keys: with `keysEnabled`, a key press mapped by module.keys runs its
+// action once the layout has the keyboard (a click on it, or at once with
+// `focusOnShow`: a popout); a child holding the focus (an Entry) keeps its
+// keys. Used by the CustomWidget module and popout and the editor's
+// previews.
 Item {
   id: root
 
@@ -23,6 +28,11 @@ Item {
   property bool actionsEnabled: true
   // The host can take typed keys (CustomWidget.keysHost)
   property bool keysHost: false
+  // module.keys are live: the host takes keys, actions are on and the module maps some
+  property bool keysEnabled: false
+  // Takes the keyboard as it is shown (a popout, which the user opened to use
+  // it): no click needed first
+  property bool focusOnShow: false
   property real gap: Widget.px(6)
   // The screen drawn over the base (an index in module.views), -1: the base alone
   property int viewIndex: -1
@@ -51,6 +61,42 @@ Item {
         "elements": root._view?.elements ?? []
       }
     ];
+  }
+
+  activeFocusOnTab: root.keysEnabled
+  Component.onCompleted: root._takeFocus()
+  onVisibleChanged: root._takeFocus()
+  onKeysEnabledChanged: root._takeFocus()
+
+  function _takeFocus() {
+    if (root.focusOnShow && root.keysEnabled && root.visible)
+      root.forceActiveFocus();
+  }
+
+  // A click on it gives it the keyboard, unless a child (an Entry) already
+  // has it: its typing stays with it
+  TapHandler {
+    enabled: root.keysEnabled
+    gesturePolicy: TapHandler.DragThreshold
+    grabPermissions: PointerHandler.ApprovesTakeOverByAnything
+    onTapped: {
+      if (!CustomWidgetData.within(root, root.Window.window?.activeFocusItem ?? null))
+        root.forceActiveFocus();
+    }
+  }
+
+  // Only while the layout itself has the keyboard: a key a child (an Entry)
+  // leaves unhandled, such as Return, bubbles up here and mustn't run an
+  // action. Escape and Tab are never mapped, so a menu's Escape still closes it
+  Keys.onPressed: event => {
+    if (!root.keysEnabled || !root.activeFocus)
+      return;
+    const name = CustomWidgetData.keyName(event.key, event.text, event.modifiers, event.isAutoRepeat);
+    const action = CustomWidgetData.keyAction(root.definition?.module?.keys, name);
+    if (action === "")
+      return;
+    CustomWidgetsManager.invoke(root.definition?.id ?? "", action, undefined, false); // lock-inert: keysEnabled is off on the lock screen
+    event.accepted = true;
   }
 
   // By count: a new sample never rebuilds the elements

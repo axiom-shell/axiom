@@ -4452,6 +4452,9 @@
     "Submit command": "",
     "Entry": "",
     "Clear after sending": "",
+    "Keys": "",
+    "A key → an action, {\"3\": \"check\", \"space\": \"play-pause\", \"ctrl+z\": \"undo\"}. They work in the overlay, edge menus and the bar popout, once the module is clicked (at once in the popout).": "",
+    "A key (\"1\", \"space\", \"ctrl+z\") → an action (overlay, edge menu, bar popout).": "",
     "placeholder": "",
     "enabled": ""
   }

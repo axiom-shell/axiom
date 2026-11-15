@@ -120,8 +120,8 @@ QtObject {
   // no command; any other id runs the definition's action command
   // (invoke.command, {action} {value} {rev} filled in, quoted) and, at
   // exit 0, refreshes the script when the definition asks. `fromIpc`: the
-  // request comes from the named-action IPC (not added yet): refused while
-  // nothing shows the widget. Returns "" when it ran, else why not:
+  // request comes from the named-action IPC (`axiom ipc customWidgets act`):
+  // refused while nothing shows the widget. Returns "" when it ran, else why not:
   // "no widget", "not shown", "locked", "refused", "no action command",
   // "failing" (the script isn't answering), "disabled" (the sample turns
   // it off) or "busy" (another discrete action holds the widget: a double
@@ -159,8 +159,7 @@ QtObject {
     if (continuous) {
       // One run of an action at a time; a value sent meanwhile replaces any
       // waiting one (the latest wins), run when the first ends
-      const flight = root._inFlight[id]?.[action];
-      if (flight) {
+      if (root._own(root._inFlight[id], action)) {
         root._pending[id] = Object.assign({}, root._pending[id], {
           [action]: value
         });
@@ -224,6 +223,12 @@ QtObject {
   property var _inFlight: ({})
   property var _pending: ({})
   property int _runSeq: 0
+
+  // Whether `map` lists `key` itself: an action id is a script's or a
+  // config's word, so `constructor` and `toString` aren't listed
+  function _own(map, key) {
+    return map !== undefined && map !== null && Object.prototype.hasOwnProperty.call(map, key);
+  }
 
   // Puts a hold on widget `id` for discrete run `run` of `action`
   function _hold(id, action, run) {
@@ -311,11 +316,11 @@ QtObject {
     if (!failed && CustomWidgetsConfig.definition(id)?.actions.refreshAfter)
       root.refresh(id);
     if (continuous) {
-      const waiting = root._pending[id]?.[action];
+      const waiting = root._own(root._pending[id], action) ? root._pending[id][action] : undefined;
       const inFlight = Object.assign({}, root._inFlight[id]);
       delete inFlight[action];
       root._inFlight[id] = inFlight;
-      if (id in root._pending && action in root._pending[id]) {
+      if (root._own(root._pending[id], action)) {
         const rest = Object.assign({}, root._pending[id]);
         delete rest[action];
         root._pending[id] = rest;
@@ -594,6 +599,15 @@ QtObject {
     }
   }
 
+  // The IPC's act and actValue: widget `name`'s action `action`, discrete,
+  // refused while nothing shows the widget; "" or why not
+  function _ipcAct(name, action, value) {
+    const def = root.find(name);
+    if (!def)
+      return `no custom widget "${name}"`;
+    return root.invoke(def.id, action, value, false, true); // lock-inert: invoke refuses while the screen is locked
+  }
+
   property IpcTarget _ipc: IpcTarget {
     target: "customWidgets"
 
@@ -615,6 +629,19 @@ QtObject {
         return `no custom widget "${name}"`;
       root.restart(def.id);
       return "";
+    }
+
+    // Run a named action of a custom widget (its name as `refresh`) as a
+    // press would, holding it as one does. Answers "" when it ran, else why
+    // not: "not shown" (nothing shows the widget: a stream isn't running),
+    // "locked", "refused", "no action command", "failing", "disabled" or "busy"
+    function act(name: string, action: string): string {
+      return root._ipcAct(name, action, undefined);
+    }
+
+    // As act, with `value` as the action's {value}
+    function actValue(name: string, action: string, value: string): string {
+      return root._ipcAct(name, action, value);
     }
 
     // The custom widgets: id, refresh name and name, one a line

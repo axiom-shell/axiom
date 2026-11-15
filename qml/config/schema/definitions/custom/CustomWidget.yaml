@@ -164,5 +164,12 @@ properties:
               type: array
               default: []
               items: {$ref: '#/definitions/CustomElement'}
+      keys:
+        x-scope: commands
+        type: object
+        title: Keys
+        default: {}
+        additionalProperties: {type: string, pattern: '^(axiom:)?[A-Za-z0-9_.-]{1,64}$'}
+        description: 'A key ("1", "space", "ctrl+z") → an action (overlay, edge menu, bar popout).'
       font: {type: string, title: Font, default: '', description: 'Text elements'' font family when they set none.'}
 required: [id]
