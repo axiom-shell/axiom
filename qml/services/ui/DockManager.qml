@@ -67,7 +67,7 @@ QtObject {
       return [];
     const output = CompositorManager.outputFor(screen);
     const workspaceId = output?.activeWorkspaceId ?? -1;
-    const windows = CompositorManager.windows.filter(w => DockLayout.inScope(w, dock.running.scope, output?.name ?? "", workspaceId));
+    const windows = WindowRulesManager.shownIn("dock", CompositorManager.windows.filter(w => DockLayout.inScope(w, dock.running.scope, output?.name ?? "", workspaceId)));
     return DockLayout.buildItems(DockConfig.pinnedOf(dock), windows, w => root.appKey(w), dock.running.show);
   }
 

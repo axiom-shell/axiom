@@ -1,0 +1,7 @@
+unbindsym Mod4+Ctrl+s
+unbindsym Mod4+c
+unbindsym Mod4+z
+--- restore
+bindsym --no-warn --no-repeat Mod4+Ctrl+s "exec "'"'"'/home/user/.local/bin/axiom' ipc screenshot take 'region'"'"'
+bindsym --no-warn --no-repeat Mod4+c kill
+bindsym --no-warn --no-repeat Mod4+z floating toggle

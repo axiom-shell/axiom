@@ -55,12 +55,15 @@ Singleton {
     })
 
   // Do Not Disturb: no toasts but critical ones (notifications still go
-  // into the history). Kept across restarts. Set through setDnd/toggleDnd,
-  // or by its schedule (NotificationsConfig.dnd).
-  readonly property bool dnd: root._dnd
-  property bool _dnd: false
-  on_DndChanged: {
-    if (root._stateLoaded && !root._dnd)
+  // into the history). The user's own switch is kept across restarts. Set
+  // through setDnd/toggleDnd, by its schedule or a window rule (NotificationDnd).
+  readonly property bool dnd: root._dndState.on
+  property NotificationDnd _dndState: NotificationDnd {
+    ready: root._stateLoaded
+    onManualChanged: root._saveState()
+  }
+  onDndChanged: {
+    if (root._stateLoaded && !root.dnd)
       root._noteMissed();
     root._dndMissed = 0;
     root._saveState();
@@ -102,7 +105,7 @@ Singleton {
   function _saveState() {
     if (root._stateLoaded)
       root._state.save({
-        dnd: root._dnd,
+        dnd: root._dndState.manual,
         dndMissed: root._dndMissed,
         quietOpen: root._quietOpen,
         quietSeen: root._quietSeen
@@ -110,23 +113,11 @@ Singleton {
   }
 
   function setDnd(on: bool): void {
-    root._dnd = on;
+    root._dndState.setByHand(on);
   }
 
   function toggleDnd(): void {
-    root._dnd = !root._dnd;
-  }
-
-  // NotificationsConfig.dnd's schedule: on and off at its times; a switch
-  // by hand lasts until the next of them
-  DailySchedule {
-    id: _dndSchedule
-    name: "notificationsDnd"
-    enabled: NotificationsConfig.dndSchedule
-    ready: root._stateLoaded
-    startAt: NotificationsConfig.dndStartAt
-    endAt: NotificationsConfig.dndEndAt
-    onDue: on => root.setDnd(on)
+    root.setDnd(!root.dnd);
   }
 
   // Whether a live notification offers an inline reply: a surface listing
@@ -700,7 +691,7 @@ Singleton {
     });
     root._load();
     const saved = root._state.load({});
-    root._dnd = saved.dnd === true;
+    root._dndState.manual = saved.dnd === true;
     root._quietOpen = saved.quietOpen === true;
     root._dndMissed = saved.dndMissed ?? 0;
     root._quietSeen = saved.quietSeen ?? 0;
