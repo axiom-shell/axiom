@@ -400,6 +400,7 @@ Item {
               delegate: StreamedLoader {
                 id: card
                 always: true
+                rise: false
                 label: `settings card ${card.modelData.key}`
                 required property var modelData
                 required property int index
