@@ -4,7 +4,6 @@ import (
 	"math"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -463,29 +462,12 @@ func (t *Tables) SwayUnbindLines(binds, ctx, entries any) []string {
 
 func hashColor(hex any) string { return "#" + strings.TrimPrefix(str(or(hex, "")), "#") }
 
-// parseHexPrefix is parseInt(text, 16): the leading hex digits, NaN with none
-func parseHexPrefix(text string) float64 {
-	end := 0
-	for end < len(text) && strings.IndexByte("0123456789abcdefABCDEF", text[end]) >= 0 {
-		end++
-	}
-	if end == 0 {
-		return math.NaN()
-	}
-	n, _ := strconv.ParseInt(text[:end], 16, 64)
-	return float64(n)
-}
-
-// SwayTextOn is SwayConf.textOn: black or white, whichever reads on hex.
+// SwayTextOn is SwayConf.textOn: black or white, whichever has the higher
+// WCAG contrast (the shell's formula, Tone.bestOn); white on a tie or on a
+// value that isn't a color.
 func SwayTextOn(hex any) string {
-	v := strings.TrimPrefix(str(or(hex, "")), "#")
-	part := func(i int) float64 {
-		if i >= len(v) {
-			return math.NaN()
-		}
-		return parseHexPrefix(v[i:min(i+2, len(v))]) / 255
-	}
-	if 0.2126*part(0)+0.7152*part(2)+0.0722*part(4) > 0.5 {
+	l := Luminance(strings.TrimPrefix(str(or(hex, "")), "#"))
+	if (l+0.05)/0.05 > 1.05/(l+0.05) {
 		return "#000000"
 	}
 	return "#ffffff"

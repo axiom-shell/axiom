@@ -7,13 +7,14 @@ import qs.components.reusable
 
 // One status icon of an OSD's row (OSDTileRow): a system's tile
 // (OSDEngine.tileOf's) as its icon, or its short label (a layout's code),
-// in a rounded square: on the accent while `on`, faint while off (a mute
-// also struck through: SlashedIcon). The one that just changed is ringed
-// (the ring fading in and out) and pops in. Hovered, it takes a faint
-// layer at once and names itself and its state; with `canToggle` a click
-// runs its action (`toggled`). With `highlight` (its system selected in
-// the settings' preview) it's outlined in the accent, apart from the ring.
-Rectangle {
+// in a rounded square: on the accent while `on` (the fill fading in), its
+// icon in the faint text colour while off (a mute also struck through:
+// SlashedIcon). The one that just changed is ringed (the ring fading in
+// and out) and pops in. Hovered, it takes a state layer over it and names
+// itself and its state; with `canToggle` a click runs its action
+// (`toggled`). With `highlight` (its system selected in the settings'
+// preview) it's outlined in the accent, apart from the ring.
+Item {
   id: tile
 
   // Its tile (OSDEngine.tileOf's): { icon, label, on, slash, name,
@@ -49,21 +50,18 @@ Rectangle {
 
   implicitWidth: tile.size
   implicitHeight: tile.size
-  radius: Widget.radius
   readonly property bool lit: tile.t.on === true
-  // Only the state glides: hover is the layer below, at once, so
-  // moving across the row leaves no tile easing back behind it
-  color: tile.lit ? Theme.accent : Qt.alpha(Theme.accent, 0)
-  ColorGlide on color {}
+  // Drawn scaled while it pops in: its glyph and label draw distance field
+  // meanwhile, native at rest (TextRender)
+  readonly property real contentZoom: tile.scale
 
-  // The hover layer: the ink faintly over the fill, so it shows on
-  // any accent (lightening a pale one barely changes it)
-  readonly property color hoverTint: Qt.alpha(tile.ink, 0.12)
-  Rectangle {
+  // The on fill, fading in and out with the state
+  Surface {
     anchors.fill: parent
-    radius: tile.radius
-    visible: area.containsMouse
-    color: tile.hoverTint
+    tone: "accent"
+    radius: Style.radius
+    opacity: tile.lit ? 1 : 0
+    Glide on opacity {}
   }
 
   // Pops in as it becomes the change
@@ -81,41 +79,54 @@ Rectangle {
     easing.type: Easing.OutBack
   }
 
-  readonly property color ink: tile.lit ? Theme.background : Theme.foreground
-  readonly property real inkOpacity: tile.current || tile.lit ? 1 : 0.45
+  // What its glyph and label draw in: on the accent's on-colour while lit,
+  // else the text colour for the one that just changed, the faint one
+  readonly property color _ink: tile.lit ? Style.onAccent : tile.current ? Style.text : Style.textFaint
 
   SlashedIcon {
     anchors.centerIn: parent
     visible: !tile.t.label
     text: tile.t.icon ?? ""
-    textSize: Appearance.fontSizeBy(6)
-    textColor: tile.ink
+    textSize: Style.iconMd
+    textColor: tile._ink
     slashed: tile.t.slash === true
-    // What the slash parts the glyph in: the lit fill as it shows
-    // (hovered too); none on an unlit one, which has no fill
-    cutout: !tile.lit ? Qt.alpha(Theme.background, 0) : area.containsMouse ? Qt.tint(tile.color, tile.hoverTint) : tile.color
-    opacity: tile.inkOpacity
+    // What the slash parts the glyph in: the lit fill (the state layer
+    // over it needs no colour of its own); none on an unlit one, which has
+    // no fill
+    cutout: tile.lit ? Style.accent : "transparent"
   }
 
   StyledLabel {
     anchors.centerIn: parent
     visible: !!tile.t.label
+    width: Math.min(implicitWidth, tile.width - Widget.px(4))
     text: tile.t.label ?? ""
-    font.weight: Font.Bold
-    textColor: tile.ink
-    opacity: tile.inkOpacity
+    role: "label"
+    font.weight: Style.weightStrong
+    textSize: Math.max(Style.typeMicro, Math.min(Style.typeLabel, Math.round(tile.size * 0.45))) // fitted: the tile
+    horizontalAlignment: Text.AlignHCenter
+    textColor: tile._ink
   }
 
-  // The ring round the one that just changed: the foreground, then
-  // a gap in the background inside it, so it reads on the accent
-  // fill too (borderFocus is the accent in most themes). Fades in
-  // and out
+  // The hover and press layer, over the glyph and label (its on-colour
+  // tint over the on-colour glyph changes nothing, over the fill and the
+  // slash's cutout it composites alike)
+  StateLayer {
+    radius: Style.radius
+    hovered: area.containsMouse
+    pressed: area.pressed && tile.canToggle
+    onAccent: tile.lit
+  }
+
+  // The ring round the one that just changed: the text colour, then a gap
+  // in the page colour inside it, so it reads on the accent fill too.
+  // Fades in and out
   Rectangle {
     anchors.fill: parent
-    radius: tile.radius
+    radius: Style.radius
     color: "transparent"
     border.width: Widget.px(2)
-    border.color: Theme.foreground
+    border.color: Style.text
     opacity: tile.current ? 1 : 0
     Glide on opacity {
       duration: Appearance.animNormal
@@ -124,30 +135,30 @@ Rectangle {
     Rectangle {
       anchors.fill: parent
       anchors.margins: Widget.px(2)
-      radius: Math.max(0, tile.radius - Widget.px(2))
+      radius: Math.max(0, Style.radius - Widget.px(2))
       color: "transparent"
       border.width: Widget.px(2)
-      border.color: Theme.background
+      border.color: Style.surfacePage
     }
   }
 
-  // The preview's outline: the accent, a line of the background inside
-  // it so it reads on a lit (accent) tile too
+  // The preview's outline: the accent, a line of the page colour inside it
+  // so it reads on a lit (accent) tile too
   Rectangle {
     anchors.fill: parent
     visible: tile.highlight
-    radius: tile.radius
+    radius: Style.radius
     color: "transparent"
     border.width: Widget.px(2)
-    border.color: Theme.accent
+    border.color: Style.accent
 
     Rectangle {
       anchors.fill: parent
       anchors.margins: Widget.px(2)
-      radius: Math.max(0, tile.radius - Widget.px(2))
+      radius: Math.max(0, Style.radius - Widget.px(2))
       color: "transparent"
       border.width: 1
-      border.color: Theme.background
+      border.color: Style.surfacePage
     }
   }
 

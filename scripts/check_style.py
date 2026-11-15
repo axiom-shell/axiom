@@ -562,7 +562,7 @@ def scope_of(rel):
         return rules
     rules |= {f"R{n}" for n in range(4, 11)} | {"R12", "R14", "R15", "R17", "R18"}
     if p.startswith(("qml/components/bar/look/", "qml/components/bar/widgets/base/")):
-        return rules
+        return rules - {"R6"}  # the bar's drawing kit draws the palette's colours (check.md: exempt from R1-R3 and R6)
     return rules | {"R1", "R2", "R3", "R6"}
 
 
@@ -794,7 +794,8 @@ def survey(files=None):
         hits = scan(rel, index)
         marked = {i for i, line in enumerate(raw_lines, 1) if EXEMPT.search(line)}
         counts, stale = waived_counts(rel, hits, raw_lines, exceptions)
-        out[rel] = (counts, [h for h in hits if h[0] not in marked], stale, hits)
+        skip = set().union(*(set(e["rules"]) for pattern, e in exceptions.items() if fnmatch.fnmatch(rel, pattern)))
+        out[rel] = (counts, [h for h in hits if h[0] not in marked and h[1] not in skip], stale, hits)
     return out, exceptions, errors
 
 

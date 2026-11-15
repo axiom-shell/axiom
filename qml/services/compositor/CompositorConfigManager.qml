@@ -128,13 +128,16 @@ Singleton {
   // The window look's values the theme and the Appearance settings
   // resolve, colors as their text ("#rrggbb", "#aarrggbb")
   readonly property var _look: ({
-      "active": String(WindowLookConfig.activeBorder),
-      "inactive": String(WindowLookConfig.inactiveBorder),
+      "active": String(WindowLookConfig.activeBorder) // style-exempt: compositor payload
+      ,
+      "inactive": String(WindowLookConfig.inactiveBorder) // style-exempt: compositor payload
+      ,
       "borderWidth": WindowLookConfig.borderWidth,
       "radius": WindowLookConfig.radius,
       "shadow": WindowLookConfig.shadowOn ? {
         "size": WindowLookConfig.shadowSize,
-        "color": WindowLookConfig.shadowThemed ? String(WindowLookConfig.shadowColor) : "",
+        "color": WindowLookConfig.shadowThemed ? String(WindowLookConfig.shadowColor) : "" // style-exempt: compositor payload
+        ,
         "alpha": WindowLookConfig.shadowAlpha,
         "soft": WindowLookConfig.shadowMatched,
         "strength": WindowLookConfig.shadowStrength

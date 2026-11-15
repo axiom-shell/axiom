@@ -4,6 +4,7 @@ import QtTest
 import qs.config
 import qs.components.methods
 import qs.components.reusable
+import qs.components.surfaces.osd.design
 import qs.components.content.base
 import qs.components.content.parts
 import qs.components.views.base
@@ -568,6 +569,28 @@ TestCase {
       height: Widget.height + Widget.padding / 2
       icon: "folder"
       label: "A paused bind"
+    }
+  }
+
+  Component {
+    id: osdCardComp
+
+    OSDCard {
+      card: ({
+          "icon": "volume_up",
+          "title": "Volume",
+          "detail": "Speakers",
+          "role": "Sound"
+        })
+    }
+  }
+
+  Component {
+    id: osdTileComp
+
+    OSDTile {
+      width: size
+      height: size
     }
   }
 
@@ -1490,6 +1513,53 @@ TestCase {
     const iconRight = icon.mapToItem(pane, 0, 0).x + icon.width;
     verify(iconRight <= title.mapToItem(pane, 0, 0).x + 0.5, `icon ends ${iconRight}, title at ${title.mapToItem(pane, 0, 0).x}`);
     verify(title.mapToItem(pane, 0, 0).x > plainX, "the title moved right of the icon");
+  }
+
+  // An OSD card holds its title (one line) and its faint line (at most its
+  // cap) in its box, whatever the text, at its narrowest and its widest
+  function test_osd_card_holds_its_text_data() {
+    return rows();
+  }
+
+  function test_osd_card_holds_its_text(data) {
+    harness.configure(data);
+    const card = createTemporaryObject(osdCardComp, root, {
+      "title": strings[data.key],
+      "subtitle": strings[data.key] + " " + strings[data.key]
+    });
+    waitForRendering(card);
+    card.width = card.implicitWidth;
+    card.height = card.implicitHeight;
+    compare(harness.containedProblems(card, true), []);
+    verify(card.implicitWidth <= card.maxWidth + 1, "never wider than its widest");
+    for (const t of harness.texts(card, true)) {
+      if (t.text === card.title)
+        compare(t.lineCount, 1);
+    }
+  }
+
+  // An OSD tile's label stays inside the square and on one line
+  function test_osd_tile_holds_its_label_data() {
+    return rows();
+  }
+
+  function test_osd_tile_holds_its_label(data) {
+    // the floor of a fitted size (Style.typeMicro) is the font's, so at font 32
+    // a Japanese line (the harness has no CJK font: its fallback's line is 1.9
+    // em) is taller than the square; layout codes are Latin
+    if (data.fontSize === 32 && data.key === "ja")
+      skip("no CJK font in the harness");
+    harness.configure(data);
+    const tile = createTemporaryObject(osdTileComp, root, {
+      "t": {
+        "label": strings[data.key],
+        "on": data.width === "wide"
+      }
+    });
+    waitForRendering(tile);
+    compare(harness.containedProblems(tile, true), []);
+    for (const t of harness.texts(tile, true))
+      compare(t.lineCount, 1);
   }
 
   Component {

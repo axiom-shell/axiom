@@ -23,9 +23,6 @@ Item {
   property string text: ""
   required property color iconColor
   required property color textColor
-  // The colors follow a change by gliding unless `glides` is off (a pulse
-  // sets them each frame)
-  property bool glides: true
   readonly property Item head: ownHead ?? (icon !== "" ? iconHead : text !== "" ? textHead : null)
   // Where it starts along the widget
   property real start: barConfig.innerPadding
@@ -79,9 +76,7 @@ Item {
     textColor: root.iconColor
     textSize: root.barConfig.fontSize
 
-    ColorGlide on color {
-      enabled: root.glides
-    }
+    ColorGlide on color {}
   }
 
   Text {
@@ -97,8 +92,6 @@ Item {
       "tnum": 1
     }
 
-    ColorGlide on color {
-      enabled: root.glides
-    }
+    ColorGlide on color {}
   }
 }

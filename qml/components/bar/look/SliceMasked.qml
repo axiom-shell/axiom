@@ -23,14 +23,14 @@ Item {
     id: maskItem
     anchors.fill: parent
     visible: false
-    layer.enabled: true
+    layer.enabled: true // style-exempt: no text
   }
 
   Shape {
     id: paintShape
     anchors.fill: parent
-    layer.enabled: true
-    layer.effect: MultiEffect {
+    layer.enabled: true // style-exempt: no text
+    layer.effect: MultiEffect { // style-exempt: no text
       maskEnabled: true
       maskSource: maskItem
       maskThresholdMin: 0.5

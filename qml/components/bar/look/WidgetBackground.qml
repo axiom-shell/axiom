@@ -16,7 +16,7 @@ Item {
   id: root
 
   required property var barConfig
-  // The colors to draw in (BarsConfig.widgetColors), or null for none
+  // The colors to draw in (BarColors.widgetColors), or null for none
   property var colors: null
   property string startCap: "round"
   property string endCap: "round"

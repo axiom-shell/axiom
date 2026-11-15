@@ -13,7 +13,7 @@ QtObject {
   // While anything shown is urgent and the widget pulses
   property bool running: false
   property real value: 0
-  // Whether it is running, its colors following `value` each frame
+  // Whether it is running, its cells stepping along their pulse ladder
   readonly property bool pulsing: fade.running
 
   readonly property SequentialAnimation _fade: SequentialAnimation {

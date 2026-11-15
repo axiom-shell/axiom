@@ -73,7 +73,7 @@ QtObject {
   readonly property real pressMix: 0.2
 
   // The look's colors resolved (`palette` above): `resolve` maps a color
-  // name to a color (Theme.resolveColor); `barText` reads on the bar (the
+  // name to a color (Style.resolve, through BarColors); `barText` reads on the bar (the
   // theme's foreground), `background` is the theme's
   function palette(look, resolve, barText, background) {
     const line = look.accentLine;
@@ -179,6 +179,26 @@ QtObject {
       out.graphic.subcaption = root.nudged(out.iconBack, out.graphic.subcaption, root.mutedContrast);
     }
     return out;
+  }
+
+  // How many steps a pulse takes between a look and its muted self: parts
+  // glide between them
+  readonly property int pulseSteps: 16
+
+  // The steps of a pulse from `a` to `b`: `steps + 1` entries, [0] being `a`
+  // and [steps] `b` (with `keys`, `a` with `b`'s fields over it), between them
+  // mixColors(a, b, k / steps, keys) (with `keys`, over `a`'s other fields)
+  function pulseLadder(a, b, steps, keys = null) {
+    const ladder = [];
+    for (let k = 0; k <= steps; k++) {
+      if (k === 0)
+        ladder.push(a);
+      else if (k === steps)
+        ladder.push(keys === null ? b : Object.assign({}, a, b));
+      else
+        ladder.push(keys === null ? root.mixColors(a, b, k / steps) : Object.assign({}, a, root.mixColors(a, b, k / steps, keys)));
+    }
+    return ladder;
   }
 
   // A color of a widget's own field as it is drawn (a state color, a

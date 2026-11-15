@@ -82,16 +82,21 @@ Item {
   // A window on it asks for attention (its `look` is the urgent one at rest)
   property bool urgent: false
   // Its look pulses (UrgentPulse): from `look` toward `mutedLook` by `pulse`,
-  // each frame, not gliding
+  // stepping along its ladder (CellLook.ladderOf), gliding between steps
   property bool pulsing: false
   // Its muted self (set only while it pulses) and how far toward it (0-1)
   property var mutedLook: null
   property real pulse: 0
-  // What each part mixes per frame while it pulses: the fields it draws
+  // What each part mixes while it pulses: the fields it draws
   // (null: all of them)
   readonly property var _mixKeys: root.part === "content" ? ["content", "back"] : root.part === "background" ? ["fill", "stroke", "indicator", "hover", "gradient"] : null
-  // Its look as shown: the pulse mix while pulsing, else `look`
-  readonly property var _shown: root.pulsing && root.mutedLook !== null && root.pulse > 0 ? root._mixed() : root.look
+  // How far along its pulse ladder it is (an int: it changes 32 times a
+  // cycle, not every frame)
+  readonly property int _pulseStep: root.pulsing ? Math.round(root.pulse * root.cellLook.pulseSteps) : 0
+  // The steps of its pulse, only while it pulses
+  readonly property var _ladder: root.pulsing && root.mutedLook !== null ? root.cellLook.ladderOf(root.look, root.mutedLook, root._mixKeys) : null
+  // Its look as shown: its pulse's step along the ladder, else `look`
+  readonly property var _shown: root._ladder !== null && root._pulseStep > 0 ? root._ladder[root._pulseStep] : root.look
   // Its slice of the bar's gradient for the part `look.gradient` names
   // (CellLook.sliceOf), or null
   property var slice: null
@@ -118,12 +123,6 @@ Item {
   readonly property var _drawn: root._clearActive ? root.cellLook.cleared(root._shown) : root._shown
 
   signal clicked
-
-  // `look` mixed toward `mutedLook` by `pulse`, in the fields this part draws
-  function _mixed() {
-    const mixed = root.cellLook.pulsed(root.look, root.mutedLook, root.pulse, root._mixKeys);
-    return root._mixKeys === null ? mixed : Object.assign({}, root.look, mixed);
-  }
 
   readonly property bool isVertical: barConfig.vertical
   // A box of its own (in a merged run, which draws its box, only where it
@@ -159,7 +158,7 @@ Item {
     fillSlice: !root._clearActive && root._shown.gradient?.part === "fill" ? root.slice : null
     strokeSlice: !root._clearActive && root._shown.gradient?.part === "stroke" ? root.slice : null
     lineSlice: !root._clearActive && root._shown.gradient?.part === "indicator" ? root.slice : null
-    animated: root.animated && !root.pulsing
+    animated: root.animated
   }
 
   // What it shows, centred clear of its caps
@@ -187,7 +186,7 @@ Item {
       color: root._shown.content
 
       ColorGlide on color {
-        enabled: root.animated && !root.pulsing
+        enabled: root.animated
       }
     }
 
@@ -242,7 +241,7 @@ Item {
         font.weight: (!leadLabel.symbol && root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
         ColorGlide on color {
-          enabled: root.animated && !root.pulsing
+          enabled: root.animated
         }
       }
 
@@ -267,7 +266,7 @@ Item {
         font.weight: (!textLabel.symbol && root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
         ColorGlide on color {
-          enabled: root.animated && !root.pulsing
+          enabled: root.animated
         }
       }
     }
@@ -399,7 +398,7 @@ Item {
       font.weight: (root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
       ColorGlide on color {
-        enabled: root.animated && !root.pulsing
+        enabled: root.animated
       }
     }
 

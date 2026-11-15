@@ -4,7 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 
-// What a bar widget draws in on its bar (BarsConfig.widgetColors): its
+// What a bar widget draws in on its bar (BarColors.widgetColors, memoised): its
 // color for its state, whether that's its Auto own color, where it sits
 // along the bar for the bar's gradient, and from those `colors` (muted and
 // pressed as set), `drawnColors` (and a pulse between it and its muted
@@ -23,7 +23,7 @@ QtObject {
   // (`accentAuto`) gives way to the bar's gradient.
   property string accentField: ""
   property string stateColorName: ""
-  property color accentColor: Theme.resolveColor(root.stateColorName !== "" ? root.stateColorName : root.properties?.[root.accentField] ?? "")
+  property color accentColor: BarColors.resolve(root.stateColorName !== "" ? root.stateColorName : root.properties?.[root.accentField] ?? "")
   // Its Auto fields ({ key: { role, gradient } }, BarsConfig.withAutoColors), and where it sits
   // along its bar as laid out, for the bar's gradient (set by its host)
   property var autoColors: ({})
@@ -53,7 +53,7 @@ QtObject {
   readonly property real barSpot: BarGradient.spot(0, root.length, root.barOffset, root.barLength)
   // (These read only config, the state colour, where it sits and its flags:
   // never what it draws, which reads them.)
-  readonly property var colors: BarsConfig.widgetColors(root.barConfig, root.accentColor, root._foreground, {
+  readonly property var colors: BarColors.widgetColors(root.barConfig, root.accentColor, BarColors.resolve(root._foreground), {
     "splits": root.splits,
     "hovered": root.hovered,
     "spot": root.barSpot,
@@ -63,7 +63,7 @@ QtObject {
     "pressed": root.pressed
   })
   // Its muted self, only while it pulses
-  readonly property var mutedColors: root.pulsing ? BarsConfig.widgetColors(root.barConfig, root.accentColor, root._foreground, {
+  readonly property var mutedColors: root.pulsing ? BarColors.widgetColors(root.barConfig, root.accentColor, BarColors.resolve(root._foreground), {
     "splits": root.splits,
     "hovered": root.hovered,
     "spot": root.barSpot,
@@ -72,11 +72,16 @@ QtObject {
     "muted": true,
     "pressed": root.pressed
   }) : null
-  // `colors` as drawn: a pulse's mix of them
-  readonly property var drawnColors: root.pulse <= 0 || root.mutedColors === null ? root.colors : BarWidgetStyle.mixColors(root.colors, root.mutedColors, root.pulse)
+  // How far along its pulse ladder it is (an int: it changes 32 times a
+  // cycle, not every frame)
+  readonly property int _pulseStep: root.pulsing ? Math.round(root.pulse * BarWidgetStyle.pulseSteps) : 0
+  // The steps of its pulse from `colors` to `mutedColors`, only while it pulses
+  readonly property var _ladder: root.pulsing && root.mutedColors !== null ? BarColors.pulseLadder(root.colors, root.mutedColors) : null
+  // `colors` as drawn: a pulse's step along the ladder
+  readonly property var drawnColors: root._ladder === null || root._pulseStep <= 0 ? root.colors : root._ladder[root._pulseStep]
   // `name`'s color as set on the widget (resolved, "" for none)
   function own(name) {
-    return Theme.resolveColor(root.properties?.[name] ?? "");
+    return BarColors.resolve(root.properties?.[name] ?? "");
   }
 
   // `name`'s color before it is read on its part: the bar's gradient where

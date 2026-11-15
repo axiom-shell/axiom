@@ -9,10 +9,10 @@ import qs.components.reusable
 
 // An OSD's card: a square picture on the left, a title and a faint line
 // under it, and optionally an icon at the end saying what it's doing.
-// Shows a system's card (`card`, OSDEngine.cardOf's: its icon on the
-// accent, or on the warning colour with `tone` "warning", or its `image`
-// cropped in its place; the title; its role, translated, and its detail
-// as the faint line), and takes a click when it's `clickable`. A system's
+// Shows a system's card (`card`, OSDEngine.cardOf's: its icon in a picture
+// well, the accent or warning container with `tone` "warning", or its
+// `image` cropped in its place; the title; its role, translated, and its
+// detail as the faint line), and takes a click when it's `clickable`. A system's
 // own card design (systems/<Type>/design/, Now playing's) is one of these
 // setting its `title`, `subtitle`, `status` and `picture` itself.
 Item {
@@ -44,8 +44,8 @@ Item {
   // width followed its wrapped lines, so the card stayed as narrow as the
   // title and the line wrapped at that). Both read the text, not
   // `visible`, which reads false while the card's slot is folded
-  readonly property int minTextWidth: Widget.px(160)
-  readonly property int maxTextWidth: Widget.px(400)
+  readonly property int minTextWidth: Widget.textPx(160)
+  readonly property int maxTextWidth: Widget.textPx(400)
   readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? Math.ceil(subtitleMetrics.advanceWidth(root.subtitle)) : 0))))
   // The most lines the faint line wraps to (the last ends in "…")
   readonly property int subtitleLines: 3
@@ -104,10 +104,7 @@ Item {
         id: titleText
         width: root.textWidth
         text: root.title
-        textSize: Appearance.fontSizeLarge
-        font.weight: Font.Medium
-        elide: Text.ElideRight
-        maximumLineCount: 1
+        role: "headline"
       }
 
       StyledLabel {
@@ -117,10 +114,8 @@ Item {
         // to fill the line: line breaking allows none before a digit
         // ("9a5f-200d" stayed whole and went to the next line)
         text: root.subtitle.replace(/([\/_-])/g, "$1\u200B")
-        textColor: Theme.foregroundAlt
-        wrapMode: Text.Wrap
-        elide: Text.ElideRight
-        maximumLineCount: root.subtitleLines
+        tone: "muted"
+        maxLines: root.subtitleLines
         visible: text !== ""
       }
     }
@@ -129,33 +124,35 @@ Item {
       Layout.alignment: Qt.AlignVCenter
       visible: root.status !== ""
       text: root.status
-      textSize: Appearance.fontSizeBy(8)
+      size: "lg"
     }
   }
 
-  // A card's own picture: its icon on the accent (the warning colour for
-  // a refusal or a critical battery), or its image cropped to the square
+  // A card's own picture: its icon in a well, the accent container (the
+  // warning container for a refusal or a critical battery), or its image
+  // cropped to the square
   Component {
     id: cardPicture
 
-    Rectangle {
-      radius: Widget.radius
-      color: root.card?.tone === "warning" ? Theme.warning : Theme.accent
+    Surface {
+      id: well
+      tone: root.card?.tone === "warning" ? "warningContainer" : "accentContainer"
+      radius: Style.radius
 
       StyledIcon {
         anchors.centerIn: parent
         visible: !shot.visible
         text: root.card?.icon ?? ""
-        textSize: Appearance.fontSizeBy(8)
-        textColor: Theme.background
+        size: "lg"
+        textColor: well.ink.icon
       }
 
       // A picture in its place (a screenshot's), cropped to the square
       ClippingRectangle {
         id: shot
         anchors.fill: parent
-        radius: Widget.radius
-        color: Theme.backgroundAlt
+        radius: Style.radius
+        color: Style.surfaceHighest
         visible: (root.card?.image ?? "") !== ""
 
         Image {

@@ -1,55 +1,8 @@
 {
- "qml/components/bar/BarContainer.qml": {
-  "R1": 5,
-  "R2": 6,
-  "R7": 10
- },
- "qml/components/bar/BarWidgetHost.qml": {
-  "R6": 1
- },
- "qml/components/bar/look/CellLook.qml": {
-  "R6": 5
- },
- "qml/components/bar/look/SliceMasked.qml": {
-  "R17": 3
- },
- "qml/components/bar/look/WidgetBackground.qml": {
-  "R6": 2
- },
- "qml/components/bar/look/WidgetLook.qml": {
-  "R6": 6
- },
- "qml/components/bar/widgets/base/BarWidget.qml": {
-  "R6": 1,
-  "R7": 2
- },
- "qml/components/bar/widgets/base/ValueGraphic.qml": {
-  "R5": 1
- },
  "qml/components/reusable/OptionGlyph.qml": {
   "R1": 1,
   "R4": 1,
   "R7": 1
- },
- "qml/components/surfaces/osd/design/OSDCard.qml": {
-  "R1": 5,
-  "R14": 5,
-  "R4": 3,
-  "R5": 1,
-  "R7": 4
- },
- "qml/components/surfaces/osd/design/OSDLevelBar.qml": {
-  "R1": 1,
-  "R7": 1
- },
- "qml/components/surfaces/osd/design/OSDTile.qml": {
-  "R1": 9,
-  "R18": 1,
-  "R2": 4,
-  "R3": 1,
-  "R4": 1,
-  "R5": 1,
-  "R7": 5
  },
  "qml/components/views/WindowRules/KindBlock.qml": {
   "R1": 3,
@@ -68,12 +21,5 @@
  "qml/components/views/WindowRules/WindowRules.qml": {
   "R14": 1,
   "R3": 1
- },
- "qml/config/WindowLookConfig.qml": {
-  "R1": 5,
-  "R2": 1
- },
- "qml/services/compositor/CompositorConfigManager.qml": {
-  "R6": 3
  }
 }

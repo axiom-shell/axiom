@@ -7,7 +7,7 @@
 Every surface with an exposed border casts the shell's shadow. It uses the bars' shared style's shadow (`Bars.style.shadow`: `enabled`, `color` (Auto: the accent) and `size`; reader `BarStyle.look`), as the bars and border do. It always spreads evenly, so it never slides onto a stroke the surface joins. Read this before touching how any popout, dock or submenu casts its shadow. (Rule: [qml-pitfalls](../core/qml-pitfalls.md) › Effects.)
 
 ### How it is drawn
-- **`hosts/popout/SurfaceShadow`:** a `MultiEffect`.
+- **`hosts/popout/SurfaceShadow`:** a `MultiEffect`, in `Style.shadowColor(look)` (memoised per look).
   - It is kept only outside the surface's shape (`cut`), so none of it shows through a translucent fill.
   - `cut` covers only pixels the surface covers fully. Under the surface's anti-aliased edge the shadow stays; otherwise a pixel's gap shows.
 - **While the blur window backs a surface,** the blur window casts the shadow instead. See [Translucency and blur](../theming/translucency-blur.md).
