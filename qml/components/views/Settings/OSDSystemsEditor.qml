@@ -183,9 +183,8 @@ ColumnLayout {
               badges: TipIcon {
                 visible: systemRow.item.quiet === true
                 text: "notifications_off"
-                textColor: systemRow.ink
-                textSize: Appearance.fontSizeBy(-1)
-                opacity: 0.7
+                textColor: systemRow.inkMuted
+                size: "xs"
                 tip: I18n.tr("Quiet: its changes don't open the OSD")
               }
 
@@ -204,8 +203,8 @@ ColumnLayout {
           visible: root.shown.length === 0
           Layout.fillWidth: true
           text: I18n.tr("Nothing yet: add what this OSD shows.")
-          textColor: Theme.foregroundAlt
-          wrapMode: Text.WordWrap
+          tone: "muted"
+          overflow: "wrap"
         }
 
         AddEntryButton {
@@ -218,7 +217,8 @@ ColumnLayout {
       }
 
       // The selected system's settings, from its schema
-      StyledContainer {
+      Surface {
+        tone: "sunken"
         visible: root.selected !== null
         Layout.preferredWidth: split.secondWidth
         Layout.alignment: Qt.AlignTop
@@ -236,21 +236,19 @@ ColumnLayout {
 
             StyledIcon {
               text: root.selectedInfo?.icon ?? ""
-              textColor: Theme.accent
+              tone: "accent"
             }
 
             StyledLabel {
               Layout.fillWidth: true
               text: root.selected ? root.labelOf(root.selected.type) : ""
-              font.weight: Font.Bold
-              elide: Text.ElideRight
+              role: "label"
+              overflow: "line"
             }
           }
 
           StyledSeparator {
             Layout.fillWidth: true
-            separatorHeight: 1
-            opacity: 0.3
           }
 
           // Its bars are set in the Bars part
@@ -258,9 +256,8 @@ ColumnLayout {
             visible: root._barSpec?.from !== undefined
             Layout.fillWidth: true
             text: I18n.tr("Its bars are set under Bars, below.")
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-1)
-            wrapMode: Text.WordWrap
+            role: "caption"
+            overflow: "wrap"
           }
 
           // A new form per system, so no row writes onto another

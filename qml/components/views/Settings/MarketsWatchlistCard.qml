@@ -124,9 +124,9 @@ FoldingCard {
   StyledText {
     Layout.fillWidth: true
     visible: root.searching || root.searchError !== "" || (root.query.trim() !== "" && !root.searching && root.matches.length === 0 && !debounce.running)
-    textSize: Appearance.fontSizeBy(-1)
-    textColor: root.searchError ? Theme.error : Theme.foregroundInactive
-    wrapMode: Text.Wrap
+    role: "caption"
+    tone: root.searchError ? "error" : "faint"
+    overflow: "wrap"
     text: root.searching ? I18n.tr("Searching…") : root.searchError ? I18n.tr("Couldn't search: {0}", root.searchError) : I18n.tr("Nothing found")
   }
 
@@ -147,21 +147,21 @@ FoldingCard {
         StatusChip {
           shown: true
           text: match.found.kind === "crypto" ? I18n.tr("Crypto") : match.found.kind === "etf" ? I18n.tr("ETF") : match.found.kind === "index" ? I18n.tr("Index") : match.found.kind === "fx" ? I18n.tr("Currency") : match.found.kind === "future" ? I18n.tr("Future") : match.found.kind === "fund" ? I18n.tr("Fund") : I18n.tr("Stock")
-          color: match.found.kind === "crypto" ? Theme.warning : Theme.accent
+          tone: match.found.kind === "crypto" ? "warning" : "accent"
         }
         StyledLabel {
           text: match.found.display
-          font.weight: Font.DemiBold
+          role: "label"
         }
         StyledLabel {
           Layout.fillWidth: true
           text: match.found.exchange ? I18n.tr("{0} · {1}", match.found.name, match.found.exchange) : match.found.name
-          textColor: Theme.foregroundAlt
-          elide: Text.ElideRight
+          tone: "muted"
+          overflow: "line"
         }
         StyledIconButton {
           iconText: match.added ? "check" : "add"
-          iconColor: match.added ? Theme.success : Theme.accent
+          iconColor: match.added ? Style.successText : Style.textAccent
           tooltipText: match.added ? I18n.tr("On the watchlist") : I18n.tr("Add to the watchlist")
           enabled: !match.added
           onClicked: root.add(match.found)
@@ -178,7 +178,7 @@ FoldingCard {
   StyledText {
     Layout.fillWidth: true
     visible: root.symbols.length === 0
-    textColor: Theme.foregroundInactive
+    tone: "faint"
     text: I18n.tr("The watchlist is empty: search above to add symbols.")
   }
 
@@ -205,20 +205,20 @@ FoldingCard {
           spacing: Widget.spacing
           StyledLabel {
             visible: !!entry.quote
-            textSize: Appearance.fontSizeBy(-1)
-            textColor: entry.quote?.error ? Theme.error : MarketsManager.trendColor(MarketMath.trend(entry.quote?.change ?? 0))
+            role: "caption"
+            tone: entry.quote?.error ? "error" : MarketMath.trendTone(MarketMath.trend(entry.quote?.change ?? 0), MarketsConfig.redForGains)
             text: entry.quote?.error ? entry.quote.error : entry.quote ? I18n.tr("{0} {1}", MarketMath.formatPrice(entry.quote.price, entry.quote.currency), MarketMath.formatPercent(entry.quote.changePercent)) : ""
           }
           StyledIcon {
             visible: entry.item.alertAbove > 0 || entry.item.alertBelow > 0
             text: "notifications_active"
-            textSize: Appearance.fontSizeBy(-1)
+            size: "xs"
             textColor: listRow.ink
           }
           StyledIcon {
             visible: entry.item.quantity > 0
             text: "account_balance_wallet"
-            textSize: Appearance.fontSizeBy(-1)
+            size: "xs"
             textColor: listRow.ink
           }
         }

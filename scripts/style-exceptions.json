@@ -1,1 +1,6 @@
-{}
+{
+  "qml/components/views/Settings/BarLookSample.qml": {
+    "rules": ["R7"],
+    "reason": "draws a bar sample in its bar palette (BarsConfig/BarLook colours: the bar keeps its look, D-24)"
+  }
+}

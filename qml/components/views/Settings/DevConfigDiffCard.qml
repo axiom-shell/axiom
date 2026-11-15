@@ -131,8 +131,8 @@ FieldGroup {
   StyledText {
     visible: !root.comparable
     text: I18n.tr("Set a dev tree to compare its config with live.")
-    opacity: 0.7
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -144,8 +144,8 @@ FieldGroup {
 
     StyledText {
       text: I18n.tr("Live changed since dev last took it over.")
-      textColor: Theme.warning
-      wrapMode: Text.WordWrap
+      tone: "warning"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -162,24 +162,24 @@ FieldGroup {
   StyledText {
     visible: root.comparable && root.loaded && root.versions.dev !== root.versions.install
     text: I18n.tr("The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.", root.versions.install, root.versions.dev)
-    textColor: Theme.warning
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: root.comparable && root.loaded && root.rows.length === 0
     text: I18n.tr("Dev and live agree on every setting.")
-    opacity: 0.7
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: root.message !== ""
     text: root.message
-    textColor: root.error ? Theme.error : Theme.foregroundAlt
-    wrapMode: Text.WordWrap
+    tone: root.error ? "error" : "muted"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -196,15 +196,14 @@ FieldGroup {
 
     ScrollIndicator.vertical: StyledScrollIndicator {}
 
-    delegate: Rectangle {
+    delegate: Surface {
       id: entry
+      tone: "sunken"
       required property int index
       readonly property var row: root.rows[index] ?? ({})
 
       width: ListView.view.width
       implicitHeight: entryColumn.implicitHeight + Widget.smallPadding * 2
-      radius: Widget.radius
-      color: Theme.backgroundAlt
 
       ColumnLayout {
         id: entryColumn
@@ -220,21 +219,22 @@ FieldGroup {
 
           StyledLabel {
             text: root.rowTitle(entry.row)
-            font.weight: Font.Medium
-            elide: Text.ElideMiddle
+            role: "label"
+            overflow: "line"
+            elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
             Layout.fillWidth: true
           }
 
           // I18n.tr("Changed in dev") I18n.tr("Changed in live") I18n.tr("Changed in both")
           StatusChip {
             text: I18n.tr(DevDiff.sideLabel(entry.row.side))
-            color: entry.row.side === "both" ? Theme.warning : entry.row.side === "live" ? Theme.accent : Theme.success
+            tone: entry.row.side === "both" ? "warning" : entry.row.side === "live" ? "accent" : "success"
           }
 
           StatusChip {
             visible: entry.row.devOnly === true
             text: I18n.tr("Dev only")
-            color: Theme.foregroundAlt
+            tone: "neutral"
           }
         }
 
@@ -246,13 +246,13 @@ FieldGroup {
 
           StyledText {
             text: I18n.tr("Dev")
-            opacity: 0.7
+            tone: "muted"
           }
           StyledText {
             text: DevDiff.has(entry.row, "dev") ? DevDiff.valueText(entry.row, "dev") : I18n.tr("not set")
-            opacity: DevDiff.has(entry.row, "dev") ? 1 : 0.6
+            tone: DevDiff.has(entry.row, "dev") ? "text" : "faint"
             textFamily: "monospace"
-            elide: Text.ElideRight
+            overflow: "line"
             Layout.fillWidth: true
           }
           StyledTextButton {
@@ -267,13 +267,13 @@ FieldGroup {
 
           StyledText {
             text: I18n.tr("Live")
-            opacity: 0.7
+            tone: "muted"
           }
           StyledText {
             text: DevDiff.has(entry.row, "live") ? DevDiff.valueText(entry.row, "live") : I18n.tr("not set")
-            opacity: DevDiff.has(entry.row, "live") ? 1 : 0.6
+            tone: DevDiff.has(entry.row, "live") ? "text" : "faint"
             textFamily: "monospace"
-            elide: Text.ElideRight
+            overflow: "line"
             Layout.fillWidth: true
           }
           StyledTextButton {

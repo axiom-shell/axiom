@@ -7,22 +7,22 @@ import qs.components.reusable
 
 // The top of the Polkit card (the section's `x-intro`): whether axiom is the
 // session's polkit agent, and which other agents it stopped. `status` and
-// `statusColor` are the card's header chip
+// `statusTone` are the card's header chip
 ColumnLayout {
   id: root
 
   readonly property string stage: PolkitManager.status
 
-  readonly property color statusColor: {
+  readonly property string statusTone: {
     switch (root.stage) {
     case "running":
-      return Theme.success;
+      return "success";
     case "starting":
-      return Theme.warning;
+      return "warning";
     case "blocked":
-      return Theme.error;
+      return "error";
     }
-    return Theme.foregroundAlt;
+    return "neutral";
   }
 
   readonly property string status: {
@@ -53,17 +53,16 @@ ColumnLayout {
 
   StyledText {
     text: root.detail
-    textColor: root.stage === "blocked" ? Theme.error : Theme.foreground
-    wrapMode: Text.WordWrap
+    tone: root.stage === "blocked" ? "error" : "text"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: PolkitConfig.enabled && PolkitManager.replaced.length > 0
     text: I18n.tr("axiom stopped {0}, likely started by your own compositor config or a systemd unit. Remove its autostart line or disable the unit so the two don't race at login.", PolkitManager.replaced.join(", "))
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 }

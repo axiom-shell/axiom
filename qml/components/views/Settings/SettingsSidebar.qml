@@ -104,8 +104,8 @@ Item {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: linkArea.containsMouse ? 2 : 1
-                color: linkArea.containsMouse ? Theme.accent : Theme.border
+                width: linkArea.containsMouse ? 2 : Style.dividerWidth
+                color: linkArea.containsMouse ? Style.accent : Style.divider
               }
 
               StyledLabel {
@@ -114,10 +114,9 @@ Item {
                 anchors.leftMargin: Widget.padding
                 anchors.verticalCenter: parent.verticalCenter
                 text: I18n.tr(link.modelData.title)
-                textSize: Appearance.fontSizeBy(-1)
-                textColor: linkArea.containsMouse ? Theme.accent : Theme.foreground
-                opacity: linkArea.containsMouse ? 1 : 0.7
-                elide: Text.ElideRight
+                role: "caption"
+                overflow: "line"
+                tone: linkArea.containsMouse ? "accent" : "muted"
               }
 
               MouseArea {
@@ -137,8 +136,6 @@ Item {
       Layout.fillWidth: true
       Layout.topMargin: Widget.spacing / 2
       Layout.bottomMargin: Widget.spacing / 2
-      separatorHeight: 1
-      opacity: 0.3
     }
 
     // Every setting not at its default, from all categories
@@ -151,9 +148,8 @@ Item {
 
       badges: StyledText {
         text: SettingsManager.nonDefaultPaths.length
-        textColor: changedEntry.ink
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
+        role: "caption"
+        textColor: changedEntry.inkMuted
       }
     }
 
@@ -161,10 +157,9 @@ Item {
       Layout.fillWidth: true
       Layout.topMargin: Widget.spacing
       text: SettingsManager.changedCount > 0 ? I18n.tr("{0} unsaved changes", SettingsManager.changedCount) : I18n.tr("Changes apply as you make them. Save keeps them.")
-      textColor: SettingsManager.changedCount > 0 ? Theme.accent : Theme.foreground
-      opacity: SettingsManager.changedCount > 0 ? 1 : 0.6
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      role: "caption"
+      tone: SettingsManager.changedCount > 0 ? "accent" : "muted"
+      overflow: "wrap"
     }
   }
 }

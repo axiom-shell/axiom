@@ -79,6 +79,11 @@ FormRow {
   }
   readonly property real footprintHeight: root.badged || root.removable || root.confirmInferred || root.confirmSystem ? footprintRow.implicitHeight + Widget.spacing : 0
 
+  // The row's height as if every fold were open, 0 while its own conditions
+  // (or what draws it) hide it: what the card's column splits are made from,
+  // so a fold opening or shutting never moves a row across columns
+  readonly property real flowHeight: field.shown !== false && root.foldHasRows && !root.row.drawnBy ? root.fullHeight : 0
+
   bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0) + root.footprintHeight
   // A click anywhere on a switch, toggle or dropdown row acts (SchemaField)
   hoverable: root.isValue && root.custom === "" && field.hoverable
@@ -175,7 +180,7 @@ FormRow {
       StatusChip {
         id: chip
         text: I18n.tr("Stays after axiom stops")
-        color: Theme.warning
+        tone: "warning"
       }
 
       MouseArea {
@@ -211,7 +216,7 @@ FormRow {
       visible: root.confirmInferred
       // I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.")
       text: root.inferredCount === 1 ? I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.") : I18n.tr("axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.", root.inferredCount)
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -236,7 +241,7 @@ FormRow {
     StyledText {
       visible: root.confirmSystem
       text: I18n.tr("Also put back the system defaults axiom changed here ({0})? Keep leaves them as they are.", root.systemCount)
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 

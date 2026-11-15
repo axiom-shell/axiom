@@ -96,9 +96,9 @@ FieldGroup {
       ClippingRectangle {
         anchors.fill: parent
         radius: width / 2
-        color: Theme.backgroundAlt
-        border.color: pictureArea.containsMouse ? Theme.accent : Theme.border
-        border.width: Appearance.borderWidth
+        color: Style.surfaceHighest
+        border.color: pictureArea.containsMouse ? Style.accent : Style.borderStrong
+        border.width: Style.hairline
 
         Image {
           id: avatar
@@ -115,14 +115,20 @@ FieldGroup {
           anchors.centerIn: parent
           visible: !avatar.visible
           text: "person"
-          textSize: Appearance.fontSizeBy(24)
-          textColor: Theme.foregroundAlt
+          textSize: Math.max(Style.typeMicro, Math.round(picture.width * 0.45)) // fitted: the avatar circle
+          textColor: Style.inkHighest.faint
         }
 
-        // A camera over the picture while hovered
-        Rectangle {
-          anchors.fill: parent
-          color: Qt.alpha(Theme.background, 0.55)
+        // A band across the lower third with a camera, while hovered
+        Surface {
+          tone: "raised"
+          solid: true
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          height: Math.round(parent.height * 0.34)
+          radius: 0
+          outlined: false
           opacity: pictureArea.containsMouse ? 1 : 0
           Behavior on opacity {
             NumberAnimation {
@@ -134,7 +140,7 @@ FieldGroup {
           StyledIcon {
             anchors.centerIn: parent
             text: "add_a_photo"
-            textSize: Appearance.fontSizeBy(6)
+            size: "md"
           }
         }
       }
@@ -167,9 +173,7 @@ FieldGroup {
       StyledLabel {
         Layout.fillWidth: true
         text: root.shownName
-        textSize: Appearance.fontSizeBy(8)
-        font.weight: Font.Medium
-        elide: Text.ElideRight
+        role: "headline"
       }
 
       RowLayout {
@@ -179,30 +183,27 @@ FieldGroup {
           visible: AccountManager.login !== root.shownName
           text: AccountManager.login
           textFamily: "monospace"
-          textColor: Theme.foregroundAlt
+          tone: "muted"
         }
 
         StatusChip {
           shown: AccountManager.loaded
           text: AccountManager.admin ? I18n.tr("Administrator") : I18n.tr("Standard account")
-          color: AccountManager.admin ? Theme.accent : Theme.foregroundAlt
+          tone: AccountManager.admin ? "accent" : "neutral"
         }
       }
 
       StyledLabel {
         visible: AccountManager.realName !== "" && AccountManager.realName !== root.shownName
         text: I18n.tr("Real name: {0}", AccountManager.realName)
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
+        role: "caption"
       }
 
       StyledText {
         visible: AccountManager.loaded && !AccountManager.accountsService
         Layout.fillWidth: true
         text: I18n.tr("Without AccountsService the picture stays in ~/.face (the login screen won't show it) and the real name can't be changed here.")
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "caption"
       }
     }
 
@@ -252,17 +253,15 @@ FieldGroup {
     visible: AccountManager.error !== ""
     Layout.fillWidth: true
     text: AccountManager.error
-    textColor: Theme.error
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "error"
+    role: "body"
   }
 
   StyledText {
     visible: root.passwordMessage !== "" && root.editing === ""
     Layout.fillWidth: true
     text: root.passwordMessage
-    textColor: root.passwordFailed ? Theme.error : Theme.success
-    wrapMode: Text.WordWrap
+    tone: root.passwordFailed ? "error" : "success"
   }
 
   // --- The real name, edited ---
@@ -278,7 +277,7 @@ FieldGroup {
 
     StyledText {
       text: I18n.tr("Real name")
-      font.weight: Font.Medium
+      role: "label"
     }
 
     RowLayout {
@@ -322,7 +321,7 @@ FieldGroup {
 
     StyledText {
       text: I18n.tr("Change password")
-      font.weight: Font.Medium
+      role: "label"
     }
 
     GridLayout {
@@ -366,8 +365,7 @@ FieldGroup {
       visible: root.passwordMessage !== ""
       Layout.fillWidth: true
       text: root.passwordMessage
-      textColor: root.passwordFailed ? Theme.error : Theme.success
-      wrapMode: Text.WordWrap
+      tone: root.passwordFailed ? "error" : "success"
     }
 
     RowLayout {
@@ -377,9 +375,7 @@ FieldGroup {
       StyledText {
         Layout.fillWidth: true
         text: I18n.tr("Your system's password rules apply (length, dictionary words). Other sessions stay signed in.")
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "caption"
       }
 
       StyledTextButton {

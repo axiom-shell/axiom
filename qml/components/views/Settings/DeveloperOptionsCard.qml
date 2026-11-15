@@ -54,12 +54,12 @@ FieldGroup {
 
     StatusChip {
       text: DevManager.building ? I18n.tr("Building") : DevManager.enabled ? I18n.tr("Dev mode") : I18n.tr("Dev mode off")
-      color: DevManager.buildFailed ? Theme.error : DevManager.enabled ? Theme.accent : Theme.foregroundAlt
+      tone: DevManager.buildFailed ? "error" : DevManager.enabled ? "accent" : "neutral"
     }
 
     StyledText {
       text: root.detail
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 

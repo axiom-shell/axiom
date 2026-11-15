@@ -63,15 +63,15 @@ FieldGroup {
     id: picture
     property string source
     property int sourceWidth: Widget.px(640)
-    radius: Widget.radius
-    color: Theme.backgroundHighlight
+    radius: Style.radius
+    color: Style.surfaceHighest
 
     StyledIcon {
       anchors.centerIn: parent
       visible: image.status !== Image.Ready
       text: "image"
-      opacity: 0.4
-      textSize: Appearance.fontSize * 2
+      size: "xl"
+      textColor: Style.inkHighest.faint
     }
 
     Image {
@@ -118,15 +118,16 @@ FieldGroup {
     StyledText {
       visible: text !== ""
       text: CommunitySetupsManager.status || (CommunitySetupsManager.loading && !CommunitySetupsManager.loaded ? I18n.tr("Loading the community setups…") : CommunitySetupsManager.loaded && root.results.length === 0 ? (CommunitySetupsManager.setups.length === 0 ? I18n.tr("No setups have been shared yet.") : I18n.tr("No setups match.")) : "")
-      opacity: 0.7
-      textSize: Appearance.fontSizeBy(-1)
-      wrapMode: Text.WordWrap
+      tone: "muted"
+      role: "caption"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
     // The selected setup's details
-    StyledContainer {
+    Surface {
       id: details
+      tone: "sunken"
       visible: root.detail !== null
       Layout.fillWidth: true
       implicitHeight: detailColumn.implicitHeight + Widget.padding * 2
@@ -158,17 +159,16 @@ FieldGroup {
             StyledLabel {
               text: details.setup?.title ?? ""
               textFormat: Text.PlainText
-              font.weight: Font.Bold
-              textSize: Appearance.fontSizeBy(2)
-              elide: Text.ElideRight
+              role: "title"
+              overflow: "line"
               Layout.fillWidth: true
             }
 
             StyledLabel {
-              elide: Text.ElideRight
+              overflow: "line"
               text: I18n.tr("by {0}", details.setup?.author ?? "")
               textFormat: Text.PlainText
-              opacity: 0.7
+              tone: "muted"
               Layout.fillWidth: true
             }
           }
@@ -191,7 +191,7 @@ FieldGroup {
         StyledText {
           text: details.setup?.description ?? ""
           textFormat: Text.PlainText
-          wrapMode: Text.WordWrap
+          overflow: "wrap"
           Layout.fillWidth: true
         }
 
@@ -199,8 +199,8 @@ FieldGroup {
           visible: text !== ""
           text: details.setup?.about ?? ""
           textFormat: Text.MarkdownText
-          opacity: 0.8
-          wrapMode: Text.WordWrap
+          tone: "muted"
+          overflow: "wrap"
           Layout.fillWidth: true
           onLinkActivated: link => {
             if (/^https?:\/\//.test(link))
@@ -218,26 +218,26 @@ FieldGroup {
 
             delegate: StatusChip {
               required property string modelData
-              color: Theme.success
+              tone: "success"
               text: I18n.tr("Tested on {0}", CompositorManager.nameOf(modelData))
             }
           }
 
           StatusChip {
             shown: details.setup?.files.theme !== undefined
-            color: Theme.accent
+            tone: "accent"
             text: I18n.tr("Brings its own palette")
           }
 
           StatusChip {
             shown: details.missing.length > 0
-            color: Theme.warning
+            tone: "warning"
             text: I18n.tr("Font not installed: {0}", details.missing.join(", "))
           }
 
           StatusChip {
             shown: details.setup !== null && !details.setup.compatible
-            color: Theme.error
+            tone: "error"
             text: I18n.tr("Needs a newer axiom")
           }
         }
@@ -257,7 +257,7 @@ FieldGroup {
             spacing: 0
 
             StyledText {
-              wrapMode: Text.WordWrap
+              overflow: "wrap"
               text: I18n.tr("Also use its wallpaper")
               Layout.fillWidth: true
             }
@@ -266,9 +266,9 @@ FieldGroup {
               readonly property var wallpaper: details.setup?.wallpaper ?? null
               text: wallpaper ? I18n.tr("License: {0} · Source: {1}", wallpaper.license, wallpaper.source) + (wallpaper.credit ? " · " + wallpaper.credit : "") : ""
               textFormat: Text.PlainText
-              opacity: 0.6
-              textSize: Appearance.fontSizeBy(-2)
-              elide: Text.ElideRight
+              tone: "muted"
+              role: "caption"
+              overflow: "line"
               Layout.fillWidth: true
             }
           }
@@ -281,9 +281,9 @@ FieldGroup {
           StyledLabel {
             Layout.fillWidth: true
             text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? SavedConfigsManager.keepHint("") : ""
-            opacity: 0.7
-            textSize: Appearance.fontSizeBy(-1)
-            elide: Text.ElideRight
+            tone: "muted"
+            role: "caption"
+            overflow: "line"
           }
 
           StyledTextButton {
@@ -311,15 +311,22 @@ FieldGroup {
       Repeater {
         model: root.results
 
-        delegate: StyledContainer {
+        delegate: Surface {
           id: tile
           required property var modelData
           readonly property bool current: root.selected === modelData.id
 
           width: grid.tileWidth
           implicitHeight: tileColumn.implicitHeight + Widget.padding * 2
-          borderWidth: 2
-          borderColor: current ? Theme.accent : tileMouse.containsMouse ? Theme.border : "transparent"
+          tone: tile.current ? "accentContainer" : "sunken"
+          outlined: false
+          border.width: tile.current ? Style.focusWidth : 0
+          border.color: Style.accent
+
+          StateLayer {
+            hovered: tileMouse.containsMouse
+            radius: tile.radius
+          }
 
           ColumnLayout {
             id: tileColumn
@@ -331,7 +338,7 @@ FieldGroup {
               Layout.fillWidth: true
               Layout.preferredHeight: width * 9 / 16
               source: CommunitySetupsManager.thumbs[tile.modelData.id] ?? ""
-              opacity: tile.modelData.compatible ? 1 : 0.5
+              opacity: tile.modelData.compatible ? 1 : Style.opacityDisabled
             }
 
             RowLayout {
@@ -342,13 +349,13 @@ FieldGroup {
                 Layout.fillWidth: true
                 text: tile.modelData.title
                 textFormat: Text.PlainText
-                font.weight: Font.Bold
-                elide: Text.ElideRight
+                role: "label"
+                overflow: "line"
               }
 
               StatusChip {
                 shown: CommunitySetupsManager.applied === tile.modelData.id
-                color: Theme.accent
+                tone: "accent"
                 text: I18n.tr("Applied")
               }
             }
@@ -357,9 +364,9 @@ FieldGroup {
               Layout.fillWidth: true
               text: tile.modelData.compatible ? I18n.tr("by {0}", tile.modelData.author) : I18n.tr("by {0} · needs a newer axiom", tile.modelData.author)
               textFormat: Text.PlainText
-              opacity: 0.6
-              textSize: Appearance.fontSizeBy(-2)
-              elide: Text.ElideRight
+              tone: "muted"
+              role: "caption"
+              overflow: "line"
             }
           }
 
@@ -387,9 +394,9 @@ FieldGroup {
       StyledLabel {
         Layout.fillWidth: true
         text: SavedConfigsManager.status
-        opacity: 0.7
-        textSize: Appearance.fontSizeBy(-1)
-        elide: Text.ElideRight
+        tone: "muted"
+        role: "caption"
+        overflow: "line"
       }
 
       StyledTextButton {

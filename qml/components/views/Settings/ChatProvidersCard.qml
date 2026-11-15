@@ -74,9 +74,9 @@ FieldGroup {
   headerExtras: [
     StyledText {
       text: SecretsManager.keyringAvailable === null ? "" : SecretsManager.keyringAvailable ? I18n.tr("Stored in your keyring") : I18n.tr("No keyring: stored in {0}", Paths.shortenHome(SecretsManager.secretsPath))
-      textColor: Theme.foregroundAlt
-      textSize: Appearance.fontSizeBy(-2)
-      elide: Text.ElideMiddle
+      role: "caption"
+      overflow: "line"
+      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
       Layout.maximumWidth: Widget.px(320)
     }
   ]
@@ -84,8 +84,9 @@ FieldGroup {
   Repeater {
     model: ChatConfig.providers.length
 
-    delegate: StyledContainer {
+    delegate: Surface {
       id: row
+      tone: "sunken"
       required property int index
       readonly property var provider: ChatConfig.providers[index]
       readonly property string status: SecretsManager.status(provider)
@@ -93,7 +94,6 @@ FieldGroup {
 
       Layout.fillWidth: true
       implicitHeight: rowColumn.implicitHeight + Widget.padding * 1.5
-      backgroundColor: Theme.background
 
       ColumnLayout {
         id: rowColumn
@@ -109,30 +109,30 @@ FieldGroup {
 
           StyledLabel {
             text: row.provider.name
-            font.weight: Font.Bold
+            role: "label"
           }
           StyledLabel {
             Layout.fillWidth: true
             text: row.provider.baseUrl
-            textColor: Theme.foregroundInactive
-            textSize: Appearance.fontSizeBy(-3)
+            tone: "faint"
+            role: "micro"
             textFamily: "monospace"
-            elide: Text.ElideRight
+            overflow: "line"
           }
 
           // Where the key comes from
           StatusChip {
-            color: {
+            tone: {
               switch (row.status) {
               case "env":
               case "keyring":
               case "file":
               case "unneeded":
-                return Theme.success;
+                return "success";
               case "none":
-                return Theme.warning;
+                return "warning";
               }
-              return Theme.foregroundAlt;
+              return "neutral";
             }
             text: {
               switch (row.status) {
@@ -172,8 +172,7 @@ FieldGroup {
             implicitHeight: Widget.height
             visible: keyField.text.trim() !== ""
             text: I18n.tr("Save")
-            backgroundColor: Theme.accent
-            textColor: Theme.background
+            kind: "primary"
             onClicked: {
               SecretsManager.setKey(row.provider, keyField.text);
               keyField.text = "";
@@ -195,11 +194,10 @@ FieldGroup {
           StyledLabel {
             Layout.fillWidth: true
             text: row.result?.busy ? I18n.tr("Connecting…") : row.result?.text ?? ""
-            textColor: row.result?.busy ? Theme.foregroundAlt : row.result?.ok ? Theme.success : Theme.error
-            textSize: Appearance.fontSizeBy(-2)
-            wrapMode: Text.Wrap
-            maximumLineCount: 3
-            elide: Text.ElideRight
+            tone: row.result?.busy ? "muted" : row.result?.ok ? "success" : "error"
+            role: "caption"
+            overflow: "wrap"
+            maxLines: 3
           }
 
           StyledTextButton {
@@ -225,8 +223,8 @@ FieldGroup {
   StyledText {
     Layout.fillWidth: true
     text: I18n.tr("A key in the provider's environment variable wins over a stored one. Keys are never written to config.json.")
-    opacity: 0.6
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    role: "caption"
+    overflow: "wrap"
   }
 }

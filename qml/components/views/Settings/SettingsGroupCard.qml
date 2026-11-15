@@ -7,9 +7,10 @@ import qs.components.methods
 import qs.components.reusable
 
 // One group of settings (a section's own fields, or one nested object) as
-// a card: title, help text, then its rows. Clicking the header folds it
-// (remembered by SettingsManager); search results are always unfolded.
-// With unsaved edits, Discard drops just those.
+// a card: title, help text, then its rows, which flow into up to two
+// columns of blocks (FlowColumns; an `x-beside` pair shares a line).
+// Clicking the header folds it (remembered by SettingsManager); search
+// results are always unfolded. With unsaved edits, Discard drops just those.
 FoldingCard {
   id: root
 
@@ -28,7 +29,7 @@ FoldingCard {
   // The `x-intro`'s own status, when it has one (read, not worked out here)
   // or, on a theme integration's card, its hookup's (HookupStatus decides)
   status: introLoader.intro?.status ?? root._hookup?.word ?? ""
-  statusColor: introLoader.intro?.status !== undefined ? introLoader.intro.statusColor ?? Theme.foregroundAlt : root._hookup?.tone === "success" ? Theme.success : root._hookup?.tone === "warning" ? Theme.warning : Theme.foregroundAlt
+  statusTone: introLoader.intro?.statusTone ?? (root._hookup?.tone || "neutral")
   // Unsaved edits inside: Discard shows, and folded the dot, so they
   // aren't forgotten
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
@@ -67,6 +68,7 @@ FoldingCard {
   headerExtras: StyledTextButton {
     visible: root.foldable && root.marked
     Layout.preferredHeight: Widget.height - Widget.px(4)
+    kind: "text"
     text: I18n.tr("Discard")
     iconText: "undo"
     onClicked: {
@@ -87,36 +89,91 @@ FoldingCard {
     source: active ? Qt.resolvedUrl(root.group.intro + ".qml") : ""
   }
 
-  // The top row drawn (FormRow.first)
-  readonly property int _firstRow: Utils.firstFormRow(fieldRows.count, i => fieldRows.itemAt(i))
+  // The first shown row of each column in the card's first run, keyed by
+  // column ("-1" a heading), for FormRow.first: no divider on the top of
+  // the card. An object, not an array: -1 is no array slot
+  readonly property var _firstRows: {
+    const rows = rowArea.placed.rows;
+    const result = {};
+    for (const key of ["-1"].concat(Array.from({
+      length: rowArea.count
+    }, (_, i) => String(i))))
+      result[key] = Utils.firstFormRow(fieldRows.count, i => rows[i]?.run === 0 && String(rows[i].column) === key ? fieldRows.itemAt(i) : null);
+    return result;
+  }
 
-  // Rows a field marked `x-beside` shares with the field before it, each
-  // taking half; every other field takes the whole width. The pair should
-  // share an `x-showIf`, or one shown alone keeps half the width
-  GridLayout {
+  // The rows in blocks (FlowColumns.blocks), placed in `count` newspaper
+  // columns, headings and `x-wide` rows across them. Positions follow the rows' live heights;
+  // the splits follow their heights as if every fold were open, only while
+  // settling (SettledColumns), so a fold opening never moves a row across
+  // columns
+  Item {
+    id: rowArea
     Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 2
-    // The rows keep their gaps themselves (FormRow's padding)
-    rowSpacing: 0
+    implicitHeight: rowArea.placed.height
+
+    // One column under 840 px (at defaults), two from there
+    readonly property int count: FlowColumns.count(rowArea.width, Style.columnTarget, Style.columnMin, 2, Style.space5)
+    // From the schema only
+    readonly property var blocks: FlowColumns.blocks(root.group.rows)
+    readonly property var lines: FlowColumns.lines(root.group.rows)
+    // Each row's live height, and its height as if every fold were open
+    property var liveHeights: root.group.rows.map(() => 0)
+    property var flowHeights: root.group.rows.map(() => 0)
+    readonly property var placed: FlowColumns.place(rowArea.blocks, rowArea.lines, rowArea.liveHeights, columns.placed, rowArea.width, Style.space5, Style.space4)
+
+    function setHeights(i, live, flow) {
+      if (rowArea.liveHeights[i] !== live) {
+        const next = rowArea.liveHeights.slice();
+        next[i] = live;
+        rowArea.liveHeights = next;
+      }
+      if (rowArea.flowHeights[i] !== flow) {
+        const next = rowArea.flowHeights.slice();
+        next[i] = flow;
+        rowArea.flowHeights = next;
+      }
+    }
+
+    onWidthChanged: columns.relayout()
+
+    SettledColumns {
+      id: columns
+      count: rowArea.count
+      fill: false
+      wide: rowArea.blocks.map(block => block.wide)
+      starts: rowArea.blocks.map(block => block.start)
+      heights: FlowColumns.blockHeights(rowArea.blocks, rowArea.lines, rowArea.liveHeights)
+      splitHeights: FlowColumns.blockHeights(rowArea.blocks, rowArea.lines, rowArea.flowHeights)
+    }
 
     Repeater {
       id: fieldRows
       model: root.group.rows
 
       delegate: SettingsField {
+        id: field
         required property var modelData
         required property int index
-        readonly property bool half: modelData.schema?.["x-beside"] === true || root.group.rows[index + 1]?.schema?.["x-beside"] === true
-        // Beside the top row, it's on the top line too. The `Settings` fold
-        // under an intro keeps its divider, also as the top row (the intro
-        // isn't a row)
-        first: (index === root._firstRow && !(modelData.foldRows && introLoader.visible)) || (modelData.schema?.["x-beside"] === true && index - 1 === root._firstRow)
-        row: modelData
+        readonly property var spot: rowArea.placed.rows[field.index] ?? ({
+            "x": 0,
+            "y": 0,
+            "width": rowArea.width,
+            "run": 0,
+            "column": 0
+          })
+        // The top of its column in the card's first run, or the right half
+        // of a pair whose left half is. The `Settings` fold under an intro
+        // keeps its divider, also as the top row (the intro isn't a row)
+        first: (field.index === root._firstRows[String(field.spot.column)] && !(field.modelData.foldRows && introLoader.visible)) || (rowArea.lines[field.index]?.side === 1 && field.index - 1 === root._firstRows[String(rowArea.placed.rows[field.index - 1]?.column)])
+        row: field.modelData
         form: root.form
-        Layout.columnSpan: half ? 1 : 2
-        Layout.preferredWidth: 1
-        Layout.alignment: Qt.AlignTop
+        x: field.spot.x
+        y: field.spot.y
+        width: field.spot.width
+        onImplicitHeightChanged: rowArea.setHeights(field.index, field.implicitHeight, field.flowHeight)
+        onFlowHeightChanged: rowArea.setHeights(field.index, field.implicitHeight, field.flowHeight)
+        Component.onCompleted: rowArea.setHeights(field.index, field.implicitHeight, field.flowHeight)
       }
     }
   }

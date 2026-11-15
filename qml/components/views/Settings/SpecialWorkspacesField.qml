@@ -55,8 +55,9 @@ ColumnLayout {
   Repeater {
     model: root.ids
 
-    delegate: StyledContainer {
+    delegate: Surface {
       id: entry
+      tone: "sunken"
       required property string modelData
       readonly property var special: root.rows.find(r => r.id === entry.modelData) ?? null
       readonly property bool configured: entry.special?.configured === true
@@ -66,7 +67,6 @@ ColumnLayout {
 
       Layout.fillWidth: true
       implicitHeight: rowLayout.implicitHeight + Widget.smallPadding * 2
-      backgroundColor: Theme.background
 
       RowLayout {
         id: rowLayout
@@ -80,7 +80,7 @@ ColumnLayout {
         StyledLabel {
           Layout.fillWidth: !entry.editable
           Layout.preferredWidth: entry.editable ? Widget.px(120) : -1
-          elide: Text.ElideRight
+          overflow: "line"
           text: entry.modelData
         }
 
@@ -108,7 +108,7 @@ ColumnLayout {
           visible: entry.configured && entry.deletable
           iconText: "close"
           tooltipText: I18n.tr("Remove")
-          hoverColor: Theme.error
+          kind: "danger"
           size: Widget.height - Widget.px(4)
           onClicked: SettingsManager.removeSpecialWorkspace(entry.modelData)
         }
@@ -123,8 +123,7 @@ ColumnLayout {
           StyledIcon {
             anchors.centerIn: parent
             text: "close"
-            textColor: Theme.foreground
-            opacity: 0.4
+            tone: "faint"
           }
 
           HoverHandler {

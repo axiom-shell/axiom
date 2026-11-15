@@ -157,7 +157,7 @@ FoldingCard {
 
         implicitHeight: Widget.height - Widget.px(4)
         text: root.labelOf(tab.entry)
-        opacity: tab.entry.enabled ? 1 : 0.6
+        iconText: tab.entry.enabled ? "" : "visibility_off"
         active: tab.index === root.current
         onClicked: {
           EditsManager.commitTyping();
@@ -201,9 +201,8 @@ FoldingCard {
 
           StyledText {
             text: root.pickerHint
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
-            wrapMode: Text.WordWrap
+            role: "caption"
+            overflow: "wrap"
             Layout.fillWidth: true
           }
 
@@ -230,7 +229,7 @@ FoldingCard {
               implicitHeight: Widget.height - Widget.px(4)
               iconText: "delete"
               text: I18n.tr("Delete")
-              hoverColor: Theme.error
+              kind: "danger"
               onClicked: root.remove()
             }
           }
@@ -261,7 +260,6 @@ FoldingCard {
   }
 
   StyledSeparator {
-    separatorColor: Theme.accent
     visible: root.entry !== null
     Layout.fillWidth: true
   }

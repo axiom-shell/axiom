@@ -726,20 +726,6 @@ TestCase {
     compare(body.lineCount, body.children[0].lineCount);
   }
 
-  // A header's chip keeps its status colour until a card passes a tone
-  function test_fold_header_chip_tone() {
-    harness.configure({});
-    const header = createTemporaryObject(foldHeaderComp, root);
-    waitForRendering(header);
-    header.statusColor = Theme.success;
-    compare(header._chipTone, "success");
-    header.statusColor = Theme.foregroundAlt;
-    compare(header._chipTone, "neutral");
-    header.statusColor = Theme.success;
-    header.statusTone = "warning";
-    compare(header._chipTone, "warning");
-  }
-
   // A text button with no icon builds none; with one it is in the label's colour
   function test_button_builds_its_icon_only_with_one() {
     harness.configure({});

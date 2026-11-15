@@ -299,4 +299,13 @@ TestCase {
     const flat = MarketMath.priceSpan([[0, 10], [1, 10]], 0);
     verify(flat.min < 10 && flat.max > 10, "a flat line sits mid-height");
   }
+
+  function test_trendTone() {
+    compare(MarketMath.trendTone("flat", false), "faint");
+    compare(MarketMath.trendTone("flat", true), "faint");
+    compare(MarketMath.trendTone("up", false), "success");
+    compare(MarketMath.trendTone("down", false), "error");
+    compare(MarketMath.trendTone("up", true), "error", "red for gains");
+    compare(MarketMath.trendTone("down", true), "success");
+  }
 }

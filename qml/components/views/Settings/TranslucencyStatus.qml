@@ -12,14 +12,15 @@ import qs.components.reusable
 // window look's blur part or the user's own config. With its blur off
 // nothing blurs, and it offers to set it. Where the compositor can't blur
 // behind them, the opacity is greyed out and the surfaces are solid
-// (Appearance.surfaceAlpha). `status` and `statusColor` are the card's
-// header chip, only where the compositor blurs
+// (Appearance.surfaceAlpha). A line says when the theme keeps the surfaces
+// more solid than the opacity asks (Style.surfaceAlpha). `status` and
+// `statusTone` are the card's header chip, only where the compositor blurs
 ColumnLayout {
   id: root
 
   readonly property bool off: !CompositorManager.blur.enabled
   readonly property string status: Appearance.blur ? (root.off ? I18n.tr("Off") : I18n.tr("Blur")) : ""
-  readonly property color statusColor: root.off ? Theme.error : Theme.success
+  readonly property string statusTone: root.off ? "error" : "success"
 
   spacing: Widget.spacing
 
@@ -41,8 +42,8 @@ ColumnLayout {
 
     StyledText {
       Layout.fillWidth: true
-      wrapMode: Text.WordWrap
-      textColor: root.off ? Theme.error : Theme.foreground
+      overflow: "wrap"
+      tone: root.off ? "error" : "text"
       text: {
         if (root.off)
           return I18n.tr("{0}'s blur is off, so nothing blurs behind the surfaces.", CompositorManager.displayName);
@@ -60,5 +61,13 @@ ColumnLayout {
         SettingsManager.openSetting("WindowLook.blur");
       }
     }
+  }
+
+  StyledText {
+    visible: Style.surfaceAlpha > Appearance.surfaceAlpha
+    Layout.fillWidth: true
+    role: "caption"
+    overflow: "wrap"
+    text: I18n.tr("This theme keeps surfaces at least {0}% solid so text stays readable", Math.round(Style.surfaceAlpha * 100))
   }
 }

@@ -9,10 +9,10 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
 
-// Settings page, right: the selected category's groups as cards in two
-// newspaper columns (wide ones across both), split by their measured
-// heights so both end together, or every setting matching the search,
-// under its category's name. Acts as the `form` for its SchemaField rows.
+// Settings page, right: the selected category's groups as cards in two to
+// four newspaper columns by the page's width (FlowColumns; wide ones across
+// them all), split by their measured heights so the columns end together,
+// or every setting matching the search, under its category's name. Acts as the `form` for its SchemaField rows.
 Item {
   id: root
 
@@ -141,7 +141,7 @@ Item {
     root.relayout();
   }
 
-  // The shown groups in two columns: one block per category while
+  // The shown groups as blocks: one per category while
   // searching (`name`, its heading), else one for the selected category
   readonly property var blocks: {
     const shown = root._shownKey;
@@ -287,7 +287,7 @@ Item {
       StyledLabel {
         visible: root.links.length > 0
         text: I18n.tr("More in")
-        opacity: 0.6
+        tone: "muted"
       }
 
       Repeater {
@@ -313,10 +313,10 @@ Item {
       }
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         visible: root.listing && root.groups.length === 0
         text: root.searching ? I18n.tr("No settings match \"{0}\"", SettingsManager.query) : I18n.tr("Every setting is at its default")
-        opacity: 0.6
+        tone: "muted"
         Layout.fillWidth: true
         Layout.topMargin: Widget.padding
       }
@@ -331,51 +331,32 @@ Item {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          readonly property real gap: Widget.spacing * 2
-          // Each card's measured height, by index
-          property var heights: block.modelData.groups.map(() => 0)
-          // Which cards span both columns (from the schema only)
+          readonly property real gap: Style.space2
+          // How many columns the page holds (its width, never a card's)
+          readonly property int count: FlowColumns.count(cards.width, Style.columnTarget, Style.columnMin, Style.columnMax, block.gap, Style.columnLeast)
+          // Which cards span every column (from the schema only)
           readonly property var wide: block.modelData.groups.map(group => group.wide === true)
-          // Each run's split, between the wide cards
-          property var splits: []
-          property bool settling: true
-          readonly property var placed: ColumnSplit.place(block.heights, block.wide, block.splits, block.gap)
+          readonly property bool settling: columns.settling
 
-          function setHeight(i, height) {
-            if (block.heights[i] === height)
-              return;
-            const next = block.heights.slice();
-            next[i] = height;
-            block.heights = next;
-            if (block.settling) {
-              block.splits = ColumnSplit.splits(next, block.wide, block.gap);
-              settle.restart();
-            }
-          }
-
-          function relayout() {
-            block.settling = true;
-            block.splits = ColumnSplit.splits(block.heights, block.wide, block.gap);
-            settle.restart();
-          }
-
-          // Fixes `splits` once the heights stop changing (cards loading or
-          // folding): a quiet spell, restarted by every change, so not an
-          // animation duration (which is 0 with motion off)
-          Timer {
-            id: settle
-            interval: 150
-            running: true
-            onTriggered: {
-              block.settling = false;
-              root._takeJump();
-            }
+          // Positions follow the cards' heights live; the splits follow
+          // them only while settling (after a build, a resize or fold all)
+          SettledColumns {
+            id: columns
+            count: block.count
+            gap: block.gap
+            wide: block.wide
+            heights: block.modelData.groups.map(() => 0)
+            // Split by a card's measured height once it's built, and until
+            // then by an estimate from its schema, so a card still to come
+            // doesn't count as 0 and shift the built ones at each arrival
+            splitHeights: block.modelData.groups.map((group, i) => columns.heights[i] > 0 ? columns.heights[i] : ColumnSplit.estimateHeight(group, Style.rowHeight, Style.rowHeight + Style.space3 * 2, 3))
+            onSettled: root._takeJump()
           }
 
           Connections {
             target: root
             function onRelayout() {
-              block.relayout();
+              columns.relayout();
             }
           }
 
@@ -389,31 +370,26 @@ Item {
 
             StyledIcon {
               text: block.modelData.icon
-              textColor: Theme.accent
+              tone: "accent"
+              size: "md"
             }
 
             StyledLabel {
               text: I18n.tr(block.modelData.name)
-              textSize: Appearance.fontSizeBy(2)
-              font.weight: Font.Bold
+              role: "title"
             }
 
             StyledSeparator {
               Layout.fillWidth: true
-              separatorHeight: 1
-              opacity: 0.3
             }
           }
 
-          // The block's cards, each run between wide ones split in two
-          // columns. Positions follow the cards' heights live; `splits`
-          // follow them only while `settling` (after a build, a resize or
-          // fold all)
+          // The block's cards, each run between wide ones split in columns
           Item {
             id: cards
             Layout.fillWidth: true
-            implicitHeight: block.placed.height
-            onWidthChanged: block.relayout()
+            implicitHeight: columns.placed.height
+            onWidthChanged: columns.relayout()
 
             Repeater {
               model: block.modelData.groups
@@ -428,15 +404,16 @@ Item {
                 label: `settings card ${card.modelData.key}`
                 required property var modelData
                 required property int index
-                readonly property var place: block.placed.cards[card.index] ?? ({
+                readonly property var place: columns.placed.cards[card.index] ?? ({
                     "column": 0,
+                    "columns": 1,
                     "y": 0
                   })
-                readonly property real halfWidth: (cards.width - block.gap) / 2
-                width: card.place.column === -1 ? cards.width : card.halfWidth
-                x: card.place.column === 1 ? card.halfWidth + block.gap : 0
+                readonly property real columnWidth: (cards.width - (card.place.columns - 1) * block.gap) / card.place.columns
+                width: card.place.column === -1 ? cards.width : card.columnWidth
+                x: card.place.column === -1 ? 0 : card.place.column * (card.columnWidth + block.gap)
                 y: card.place.y
-                onImplicitHeightChanged: block.setHeight(card.index, card.implicitHeight)
+                onImplicitHeightChanged: columns.setHeight(card.index, card.implicitHeight)
                 Component.onCompleted: {
                   if (!root.listing)
                     root._cards[card.modelData.key] = card;
@@ -450,7 +427,7 @@ Item {
                     } : {}));
                   else
                     card.sourceComponent = rowsCard;
-                  block.setHeight(card.index, card.implicitHeight);
+                  columns.setHeight(card.index, card.implicitHeight);
                 }
                 Component.onDestruction: {
                   if (root._cards[card.modelData.key] === card)

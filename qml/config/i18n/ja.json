@@ -4247,6 +4247,7 @@
     "Hides a special workspace when its last window closes.": "",
     "How much the workspace behind a shown special workspace is darkened. 0: no dimming.": "",
     "Switching to another workspace hides a shown special workspace.": "",
+    "This theme keeps surfaces at least {0}% solid so text stays readable": "",
     "Send it there silently": "",
     "Window rules": "",
     "Show on every workspace": "",

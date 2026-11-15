@@ -176,15 +176,15 @@ ColumnLayout {
 
   StyledText {
     text: I18n.tr("This takes axiom out of your home and session: it gives back your compositor config, undoes the changes listed above, and deletes axiom's files and folders. Your own configs and backups are never deleted.")
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: UninstallManager.error !== ""
     text: UninstallManager.error
-    textColor: Theme.error
-    wrapMode: Text.WordWrap
+    tone: "error"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -196,7 +196,7 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("axiom's login screen is installed for the whole system and stays after this. Remove it first (one admin prompt).")
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -207,8 +207,8 @@ ColumnLayout {
       StyledText {
         visible: GreeterManager.lastError !== ""
         text: GreeterManager.lastError
-        textColor: Theme.error
-        wrapMode: Text.WordWrap
+        tone: "error"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
 
@@ -230,8 +230,8 @@ ColumnLayout {
   StyledText {
     visible: root.plan !== null && root.plan !== undefined && (root.plan.running ?? []).length > 0
     text: I18n.tr("axiom also runs on {0}: quit it there first.", (root.plan?.running ?? []).join(", "))
-    textColor: Theme.warning
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -253,8 +253,8 @@ ColumnLayout {
         id: headerLine
         StyledText {
           text: root.stepTitle(entry.modelData.step)
-          font.weight: Font.Bold
-          color: Theme.foregroundAlt
+          role: "label"
+          tone: "muted"
         }
       }
 
@@ -266,16 +266,17 @@ ColumnLayout {
 
           StyledText {
             text: root.actionText(entry.modelData.action) + (entry.modelData.action.path ? " " + Paths.shortenHome(entry.modelData.action.path) : "")
-            elide: Text.ElideMiddle
+            overflow: "line"
+            elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
             Layout.fillWidth: true
           }
 
           StyledText {
             visible: root.statusLine(entry.modelData.action) !== ""
             text: root.statusLine(entry.modelData.action)
-            color: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-1)
-            elide: Text.ElideMiddle
+            role: "caption"
+            overflow: "line"
+            elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
             Layout.fillWidth: true
           }
         }
@@ -287,14 +288,14 @@ ColumnLayout {
   StyledText {
     visible: (root.plan?.manual ?? []).length > 0
     text: I18n.tr("{0} lines it isn't sure are its own are left for you to remove by hand; the list is saved with the summary.", (root.plan?.manual ?? []).length)
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: (root.plan?.backups ?? []).length > 0
     text: I18n.tr("{0} backups of your files are kept and listed: delete them when you're sure.", (root.plan?.backups ?? []).length)
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -319,7 +320,7 @@ ColumnLayout {
 
       StyledText {
         text: root.questionText(question.modelData)
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         Layout.fillWidth: true
       }
     }
@@ -327,8 +328,8 @@ ColumnLayout {
 
   StyledText {
     text: I18n.tr("axiom closes when this starts. A summary is saved to {0}.", UninstallManager.logPath)
-    color: Theme.foregroundAlt
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -352,7 +353,7 @@ ColumnLayout {
       enabled: root.canStart
       iconText: "delete_forever"
       text: I18n.tr("Remove axiom")
-      hoverColor: Theme.error
+      kind: "dangerPrimary"
       onClicked: {
         root.starting = true;
         UninstallManager.start(UninstallPlan.answers(root.chosen), ok => {

@@ -14,14 +14,14 @@ New translation keys are added by the pre-commit hook.
 ## The annotations
 - `x-card: {file, title, wide, folds, perField}` on a section: loads `views/Settings/<file>Card.qml` (the `Card` suffix is added) as the section's first card.
   - `title` is required and is what the card and the sidebar show; the card's own QML sets none.
-  - `wide: true` spans both columns, for a list or a form that needs the room.
+  - `wide: true` spans every column, for a list or a form that needs the room.
   - `folds: true` makes it fold like the generated cards and gives it `foldKey` (`<Section>:<file>`).
   - `perField: true` instead makes each direct field its own card (`ThemeIntegrations`).
-- `x-intro: <Name>` on a section or an object property: loads `views/Settings/<Name>.qml` at the top of that group's card, above its fields. It hides while its own `shown` property, if it declares one, is false. The object form `x-intro: {file: <Name>, setup: [keys]}` keeps the `setup` rows under the intro and folds the card's other rows behind `Settings`; the intro may expose `status` and `statusColor` (a word and its color) for the chip in the card's header.
+- `x-intro: <Name>` on a section or an object property: loads `views/Settings/<Name>.qml` at the top of that group's card, above its fields. It hides while its own `shown` property, if it declares one, is false. The object form `x-intro: {file: <Name>, setup: [keys]}` keeps the `setup` rows under the intro and folds the card's other rows behind `Settings`; the intro may expose `status` and `statusTone` (a word and its `StatusChip` tone) for the chip in the card's header.
 - `x-row: <Name>` on a field: a hand-built row in place of the control its type would get; see schema-annotations.
 
 ## Steps
-1. Add the annotation, for example `x-card: {file: CommunitySetups, title: Community setups}`; a status over the section's own settings is an `x-intro` (`PolkitStatus`: `x-intro: {file: PolkitStatus, setup: [enabled]}`, exposing `status` and `statusColor`), and write the file under the exact name.
+1. Add the annotation, for example `x-card: {file: CommunitySetups, title: Community setups}`; a status over the section's own settings is an `x-intro` (`PolkitStatus`: `x-intro: {file: PolkitStatus, setup: [enabled]}`, exposing `status` and `statusTone`), and write the file under the exact name.
 2. Build the card from the pieces the settings page already uses: `FieldGroup` for a plain card, `FoldingCard` for one that folds (it needs `foldKey` and these two lines, as in `CalendarAccountsCard.qml`):
    ```qml
    property string foldKey
@@ -33,7 +33,7 @@ New translation keys are added by the pre-commit hook.
 4. Run `scripts/dev/verify.sh`. `check_structure` fails an `x-card`, `x-intro` or `x-row` whose file doesn't exist.
 
 ## Watch out for
-- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy target may still hold old patterns until its area is restyled: don't copy those lines; `check_style.py` fails a new file that has them.
+- **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy targets above show the pattern: text is `role`/`tone`; a status is `StatusChip.tone`; boxes are `Surface` (`sunken` for list items, `<status>Container` for callouts); buttons take a `kind`. `check_style.py` fails a new file that breaks it.
 - **Text fields** follow the push pattern (`StyledTextEntry`: push values in unless focused, act on `textEdited`); see [qml-pitfalls](../dev/core/qml-pitfalls.md).
 - **Takeovers.** A card that takes over something on this PC (compositor mode, locker, idle, polkit, greeter) belongs to an `x-takeover` setting, and only that card changes it.
 - **Secrets** typed in a card go to `SecretsManager`, never the draft (`CalendarAccountsCard`).

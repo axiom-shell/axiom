@@ -102,9 +102,9 @@ Rectangle {
 
   implicitWidth: Widget.px(192)
   implicitHeight: Widget.px(108)
-  color: Theme.background
-  border.color: Theme.border
-  border.width: Appearance.borderWidth
+  color: Style.surfaceSunken
+  border.color: Style.borderStrong
+  border.width: Style.hairline
   radius: Widget.radius / 2
 
   // A press or drag anywhere places it there; the dots, over it, apply
@@ -140,9 +140,9 @@ Rectangle {
       radius: width / 2
       x: modelData.x * (root.width - width)
       y: modelData.y * (root.height - height)
-      color: hovered ? Theme.accentAlt : Theme.backgroundHighlight
-      border.color: Theme.border
-      border.width: 1
+      color: hovered ? Style.accentContainer : Style.surfaceHighest
+      border.color: Style.borderStrong
+      border.width: Style.hairline
 
       MouseArea {
         id: presetArea
@@ -170,6 +170,6 @@ Rectangle {
     radius: width / 2
     x: root.spot.x * (root.width - root.dot) + 2
     y: root.spot.y * (root.height - root.dot) + 2
-    color: Theme.accent
+    color: Style.accent
   }
 }

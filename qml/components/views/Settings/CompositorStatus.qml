@@ -12,7 +12,7 @@ import qs.components.forms
 // The top of the Compositor card (the section's `x-intro`, its `mode` the
 // setup row under it): the mode in effect and what it needs, and, while a
 // new mode waits for Save (`x-applyOnSave`), what saving will do. `status`
-// and `statusColor` are the card's header chip
+// and `statusTone` are the card's header chip
 ColumnLayout {
   id: root
 
@@ -49,15 +49,15 @@ ColumnLayout {
     return I18n.tr(mode.charAt(0).toUpperCase() + mode.slice(1));
   }
 
-  readonly property color statusColor: {
+  readonly property string statusTone: {
     switch (root.stage) {
     case "loaded":
     case "runtime":
-      return Theme.success;
+      return "success";
     case "fallback":
-      return Theme.warning;
+      return "warning";
     }
-    return Theme.foregroundAlt;
+    return "neutral";
   }
 
   readonly property string status: {
@@ -130,17 +130,17 @@ ColumnLayout {
 
   StyledText {
     text: I18n.tr("In effect: {0}", root._modeLabel(root.mode))
-    opacity: 0.7
+    tone: "muted"
   }
 
   // --- A mode change waiting for Save ---
 
-  StyledContainer {
+  Surface {
+    id: pendingBox
+    tone: root.blocked ? "errorContainer" : "accentContainer"
     visible: root.pending
     Layout.fillWidth: true
     implicitHeight: pendingColumn.implicitHeight + Widget.padding * 2
-    backgroundColor: Theme.background
-    borderColor: root.blocked ? Theme.error : Theme.accent
 
     ColumnLayout {
       id: pendingColumn
@@ -151,18 +151,18 @@ ColumnLayout {
       spacing: Widget.spacing / 2
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         text: root.blocked ? I18n.tr("Can't switch to Managed") : I18n.tr("Save switches to {0}:", root._modeLabel(root.pendingMode))
-        textColor: root.blocked ? Theme.error : Theme.accent
-        font.weight: Font.Bold
+        role: "label"
         Layout.fillWidth: true
       }
 
       StyledText {
         visible: root.blocked
         text: CompositorConfigManager.managedBlockedBy === "elsewhere" ? CompositorConfigManager.elsewhereReason : CompositorConfigManager.managedBlockedBy === "git" ? I18n.tr("{0} is inside the git repository at {1}, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir), Paths.shortenHome(CompositorConfigManager.managedBlockedRepo)) : I18n.tr("{0} is a symlink or in a git repository, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir))
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "body"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
 
@@ -172,8 +172,9 @@ ColumnLayout {
         delegate: StyledText {
           required property string modelData
           text: "•  " + modelData
-          textSize: Appearance.fontSizeBy(-1)
-          wrapMode: Text.WordWrap
+          role: "body"
+          tone: "muted"
+          overflow: "wrap"
           Layout.fillWidth: true
         }
       }
@@ -183,12 +184,12 @@ ColumnLayout {
   // --- The mode in effect ---
 
   // Managed waits for the user's go-ahead on this compositor
-  StyledContainer {
+  Surface {
+    id: approvalBox
+    tone: "warningContainer"
     visible: CompositorConfigManager.takeoverPending && !root.pending
     Layout.fillWidth: true
     implicitHeight: approvalColumn.implicitHeight + Widget.padding * 2
-    backgroundColor: Theme.background
-    borderColor: Theme.warning
 
     ColumnLayout {
       id: approvalColumn
@@ -199,17 +200,17 @@ ColumnLayout {
       spacing: Widget.spacing / 2
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         text: I18n.tr("Managed mode needs your approval")
-        textColor: Theme.warning
-        font.weight: Font.Bold
+        role: "label"
         Layout.fillWidth: true
       }
 
       StyledText {
         text: I18n.tr("Taking over {0} moves your config into {1}, where it keeps working, with a dated backup beside it. Until then, axiom applies its layer at runtime. Included mode leaves your config alone.", Paths.shortenHome(CompositorConfigManager.managedPath), Paths.shortenHome(CompositorConfigManager.userDir))
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "body"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
 
@@ -222,12 +223,12 @@ ColumnLayout {
   }
 
   // The Recommended setup, once, after a save into managed mode
-  StyledContainer {
+  Surface {
+    id: recommendedBox
+    tone: "accentContainer"
     visible: root.offersRecommended
     Layout.fillWidth: true
     implicitHeight: recommendedColumn.implicitHeight + Widget.padding * 2
-    backgroundColor: Theme.background
-    borderColor: Theme.accent
 
     ColumnLayout {
       id: recommendedColumn
@@ -238,17 +239,17 @@ ColumnLayout {
       spacing: Widget.spacing
 
       StyledText {
-        wrapMode: Text.WordWrap
+        overflow: "wrap"
         text: I18n.tr("Recommended setup")
-        textColor: Theme.accent
-        font.weight: Font.Bold
+        role: "label"
         Layout.fillWidth: true
       }
 
       StyledText {
         text: I18n.tr("Managed mode is on. Turn on the rest of what axiom can run for you: untick what you'd rather keep your own, then Apply.")
-        textSize: Appearance.fontSizeBy(-1)
-        wrapMode: Text.WordWrap
+        role: "body"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
 
@@ -270,9 +271,9 @@ ColumnLayout {
   StyledText {
     visible: CompositorConfigManager.releaseProblem !== ""
     text: CompositorConfigManager.releaseProblem + "\n" + I18n.tr("axiom tries again by itself.")
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    role: "body"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -280,26 +281,26 @@ ColumnLayout {
     // Detached, a problem is only the runtime layer's (its binds went on unread)
     visible: (root.stage === "fallback" || root.mode === "detached" && CompositorConfigManager.problem !== "") && !CompositorConfigManager.takeoverPending
     text: CompositorConfigManager.problem + (root.stage === "fallback" ? "\n" + I18n.tr("Until then, axiom applies its layer at runtime.") : "")
-    textColor: Theme.warning
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    tone: "warning"
+    role: "body"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: root.mode === "detached"
     text: I18n.tr("Detached: axiom changes none of your compositor's files and takes its binds and look away when it stops. Great for trying it out; for full-time use, pick Included or Managed.")
-    textSize: Appearance.fontSizeBy(-1)
-    wrapMode: Text.WordWrap
+    role: "body"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   StyledText {
     visible: root.mode === "detached"
     text: root.autostartMissing ? I18n.tr("Binds on keys your config uses are skipped.") : I18n.tr("Nothing to set up. Binds on keys your config uses are skipped.")
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    role: "caption"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -347,9 +348,9 @@ ColumnLayout {
 
     StyledText {
       text: I18n.tr("Your own settings go in {0}.", Paths.shortenHome(CompositorConfigManager.userFiles))
-      opacity: 0.7
-      textSize: Appearance.fontSizeBy(-2)
-      wrapMode: Text.WordWrap
+      tone: "muted"
+      role: "caption"
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -363,9 +364,9 @@ ColumnLayout {
   StyledText {
     visible: root.pendingMode !== "managed"
     text: I18n.tr("Managed mode adds the compositor's own settings and what starts with the session.")
-    opacity: 0.6
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    tone: "muted"
+    role: "caption"
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 }

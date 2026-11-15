@@ -52,10 +52,6 @@ ColumnLayout {
     }
     return "neutral";
   }
-  // statusTone as a colour, for views/Settings/ScreenSharingStatus.qml
-  // until its restyle (then deleted)
-  readonly property color statusColor: root.statusTone === "neutral" ? Style.textMuted : Style.toneColor(root.statusTone)
-
   readonly property string statusLabel: {
     switch (root.status) {
     case "ready":

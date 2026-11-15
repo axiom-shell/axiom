@@ -46,7 +46,7 @@ FoldingCard {
   // I18n.tr("None")
   // I18n.tr("{0} changes", count)
   status: FootprintManager.count === 0 ? I18n.tr("None") : I18n.tr("{0} changes", FootprintManager.count)
-  statusColor: CompositorConfig.mode === "detached" && FootprintManager.count > 0 ? Theme.warning : Theme.foregroundAlt
+  statusTone: CompositorConfig.mode === "detached" && FootprintManager.count > 0 ? "warning" : "neutral"
   collapsed: SettingsManager.isCollapsed(root.foldKey)
   onToggled: SettingsManager.setCollapsed(root.foldKey, !root.collapsed)
 
@@ -79,7 +79,7 @@ FoldingCard {
 
   StyledText {
     text: I18n.tr("Files and settings axiom changed outside its own folders. Undo takes out only axiom's own change.")
-    wrapMode: Text.WordWrap
+    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -91,7 +91,7 @@ FoldingCard {
     StyledText {
       visible: root.confirming === "all"
       text: I18n.tr("Undo all skips the system's own choices and what axiom only inferred. Undo all?")
-      wrapMode: Text.WordWrap
+      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -139,8 +139,8 @@ FoldingCard {
         id: headerLine
         StyledText {
           text: root.groupTitle(entry.modelData.owner)
-          font.weight: Font.Bold
-          color: Theme.foregroundAlt
+          role: "label"
+          tone: "muted"
         }
       }
 
@@ -159,7 +159,8 @@ FoldingCard {
 
             StyledText {
               text: FootprintManager.labelOf(line.row)
-              elide: Text.ElideMiddle
+              overflow: "line"
+              elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
               Layout.fillWidth: true
             }
 
@@ -176,7 +177,7 @@ FoldingCard {
               visible: active
               sourceComponent: StatusChip {
                 text: I18n.tr("Changed since")
-                color: Theme.warning
+                tone: "warning"
               }
             }
 
@@ -219,7 +220,7 @@ FoldingCard {
 
               StyledText {
                 text: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
-                wrapMode: Text.WordWrap
+                overflow: "wrap"
                 Layout.fillWidth: true
               }
 
@@ -246,8 +247,8 @@ FoldingCard {
             Layout.fillWidth: true
             sourceComponent: StyledText {
               text: line.note
-              color: Theme.warning
-              wrapMode: Text.WordWrap
+              tone: "warning"
+              overflow: "wrap"
             }
           }
         }
@@ -256,7 +257,6 @@ FoldingCard {
   }
 
   StyledSeparator {
-    separatorColor: Theme.border
     Layout.fillWidth: true
   }
 
@@ -273,7 +273,7 @@ FoldingCard {
       implicitHeight: Widget.height - Widget.px(4)
       iconText: "delete_forever"
       text: I18n.tr("Remove axiom from this system…")
-      hoverColor: Theme.error
+      kind: "danger"
       onClicked: root.removing = true
     }
   }
