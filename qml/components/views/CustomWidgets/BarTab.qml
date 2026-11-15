@@ -121,14 +121,18 @@ ColumnLayout {
       }
 
       JsonField {
+        editor: root.editor
+        definition: root.definition
         label: I18n.tr("Icons")
         description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
-        key: "formatIcons"
+        path: "formatIcons"
       }
       JsonField {
+        editor: root.editor
+        definition: root.definition
         label: I18n.tr("State colours")
         description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
-        key: "states"
+        path: "states"
       }
     }
 
@@ -187,44 +191,6 @@ ColumnLayout {
         "panel": null,
         "screen": null
       })
-    }
-  }
-
-  // A JSON value of the definition, typed: written once it parses
-  component JsonField: ColumnLayout {
-    id: json
-    property string label
-    property string description
-    property string key
-    property bool bad: false
-    Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    StyledText {
-      text: json.label
-    }
-    StyledTextArea {
-      id: area
-      Layout.fillWidth: true
-      expandable: true
-      input.font.family: "monospace"
-      onTextEdited: {
-        try {
-          const value = JSON.parse(area.text.trim() || "{}");
-          json.bad = false;
-          root.editor.set(json.key, value);
-        } catch (e) {
-          json.bad = true;
-        }
-      }
-      Component.onCompleted: area.text = JSON.stringify(root.definition?.[json.key] ?? {})
-    }
-    StyledText {
-      Layout.fillWidth: true
-      text: json.bad ? I18n.tr("Not valid JSON yet.") : json.description
-      tone: json.bad ? "warning" : "faint"
-      role: "caption"
-      overflow: "wrap"
     }
   }
 }

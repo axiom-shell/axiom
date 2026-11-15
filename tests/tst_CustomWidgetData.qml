@@ -1241,6 +1241,8 @@ TestCase {
     compare(CustomWidgetData.actionEnabled(actions, "next"), false, "unlisted: off");
     compare(CustomWidgetData.actionEnabled(actions, "axiom:refresh"), true, "a built-in is always on");
     compare(CustomWidgetData.actionEnabled({}, "axiom:restart"), true, "a built-in with an empty list");
+    compare(CustomWidgetData.actionEnabled(actions, "constructor"), false, "an Object.prototype name isn't listed");
+    compare(CustomWidgetData.actionEnabled(actions, "toString"), false, "toString isn't listed");
   }
 
   function test_shellQuote() {
@@ -1298,6 +1300,69 @@ TestCase {
     compare(CustomWidgetData.builtinAllowed("axiom:refresh", refused), true, "refresh");
     compare(CustomWidgetData.builtinAllowed("poweroff", refused), true, "a script's own id isn't a built-in");
     compare(CustomWidgetData.builtinAllowed("axiom:poweroff", undefined), true, "nothing refused");
+  }
+
+  // --- Keys ---
+
+  function test_keyName() {
+    const none = Qt.NoModifier;
+    compare(CustomWidgetData.keyName(Qt.Key_3, "3", none, false), "3", "a digit");
+    compare(CustomWidgetData.keyName(Qt.Key_Space, " ", none, false), "space", "space");
+    compare(CustomWidgetData.keyName(Qt.Key_Return, "\r", none, false), "return", "return");
+    compare(CustomWidgetData.keyName(Qt.Key_Enter, "\r", none, false), "return", "the keypad's enter");
+    compare(CustomWidgetData.keyName(Qt.Key_Left, "", none, false), "left", "an arrow");
+    compare(CustomWidgetData.keyName(Qt.Key_Backspace, "\b", none, false), "backspace", "backspace");
+    compare(CustomWidgetData.keyName(Qt.Key_Escape, "", none, false), "escape", "escape");
+    compare(CustomWidgetData.keyName(Qt.Key_Z, "\x1a", Qt.ControlModifier, false), "ctrl+z", "ctrl+z: the name from the key, not the control character");
+    compare(CustomWidgetData.keyName(Qt.Key_Z, "z", Qt.ControlModifier | Qt.AltModifier, false), "ctrl+alt+z", "ctrl and alt");
+    compare(CustomWidgetData.keyName(Qt.Key_5, "", Qt.AltModifier, false), "alt+5", "alt+5");
+    compare(CustomWidgetData.keyName(Qt.Key_Backtab, "", Qt.ShiftModifier, false), "shift+tab", "shift+tab");
+    compare(CustomWidgetData.keyName(Qt.Key_Tab, "\t", none, false), "tab", "tab");
+    compare(CustomWidgetData.keyName(Qt.Key_Left, "", Qt.ShiftModifier, false), "shift+left", "shift on a non-printing key");
+    compare(CustomWidgetData.keyName(Qt.Key_Question, "?", Qt.ShiftModifier, false), "?", "a printed key has no shift+");
+    compare(CustomWidgetData.keyName(Qt.Key_A, "A", Qt.ShiftModifier, false), "a", "A is a");
+    compare(CustomWidgetData.keyName(Qt.Key_3, "3", none, true), "", "a held key (auto-repeat) is none");
+    compare(CustomWidgetData.keyName(Qt.Key_Shift, "", Qt.ShiftModifier, false), "", "a modifier alone");
+    compare(CustomWidgetData.keyName(Qt.Key_F1, "", none, false), "", "a key with no name");
+    compare(CustomWidgetData.keyName(Qt.Key_Slash, "/", Qt.ControlModifier, false), "", "ctrl on a key outside A-Z and 0-9");
+    compare(CustomWidgetData.keyName(Qt.Key_A, "a", none, undefined), "a", "no auto-repeat flag");
+  }
+
+  function test_keyAction() {
+    const keys = {
+      "3": "check",
+      "u": "undo",
+      "escape": "close",
+      "tab": "next"
+    };
+    compare(CustomWidgetData.keyAction(keys, "3"), "check", "mapped");
+    compare(CustomWidgetData.keyAction(keys, "x"), "", "not mapped");
+    compare(CustomWidgetData.keyAction(keys, ""), "", "no key");
+    compare(CustomWidgetData.keyAction(keys, "escape"), "", "escape is reserved");
+    compare(CustomWidgetData.keyAction(keys, "tab"), "", "tab is reserved");
+    compare(CustomWidgetData.keyAction(keys, "shift+tab"), "", "shift+tab is reserved");
+    compare(CustomWidgetData.keyAction(keys, "constructor"), "", "an Object.prototype name isn't mapped");
+    compare(CustomWidgetData.keyAction(keys, "toString"), "", "toString either");
+    compare(CustomWidgetData.keyAction(null, "3"), "", "no keys");
+    compare(CustomWidgetData.keyAction(undefined, "3"), "", "undefined keys");
+  }
+
+  function test_within() {
+    const outer = createTemporaryObject(plain, this);
+    const inner = createTemporaryObject(plain, outer);
+    const deep = createTemporaryObject(plain, inner);
+    const other = createTemporaryObject(plain, this);
+    verify(CustomWidgetData.within(outer, outer), "itself");
+    verify(CustomWidgetData.within(outer, deep), "a descendant: the focus sits in the layout (an Entry)");
+    verify(!CustomWidgetData.within(inner, outer), "not an ancestor");
+    verify(!CustomWidgetData.within(outer, other), "a sibling");
+    verify(!CustomWidgetData.within(outer, null), "no focus item");
+    verify(!CustomWidgetData.within(outer, undefined), "undefined");
+  }
+
+  Component {
+    id: plain
+    Item {}
   }
 
   // --- Samples ---

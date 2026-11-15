@@ -972,7 +972,7 @@ QtObject {
   function actionEnabled(actions, id) {
     if (String(id).startsWith("axiom:") || actions === null || actions === undefined)
       return true;
-    return actions[id]?.enabled === true;
+    return Object.prototype.hasOwnProperty.call(actions, id) && actions[id]?.enabled === true;
   }
 
   // `text` as one shell word: a plain number as is, anything else in
@@ -997,6 +997,77 @@ QtObject {
   function builtinAllowed(id, refused) {
     const text = String(id);
     return !(text.startsWith("axiom:") && (refused ?? []).includes(text.slice(6)));
+  }
+
+  // --- Keys ---
+
+  // Keys a module's `keys` never take: Escape closes an edge menu, Tab
+  // moves the focus
+  readonly property var reservedKeys: ["escape", "tab", "shift+tab"]
+
+  // The name a key press goes by in a module's `keys` ("3", "space",
+  // "ctrl+z"), or "" for none: a key held down (auto-repeat) is none, so a
+  // held key acts once. A printed key is its text, lower-cased; with Ctrl
+  // or Alt its name comes from `key` instead (A to Z, 0 to 9: `text` is
+  // then a control character), prefixed "ctrl+" and "alt+". The others are
+  // space, return, backspace, left, right, up, down, escape and tab, which
+  // add "shift+" when Shift is down. `modifiers` is Qt's bit set
+  function keyName(key, text, modifiers, autoRepeat) {
+    if (autoRepeat)
+      return "";
+    const ctrl = (modifiers & Qt.ControlModifier) !== 0;
+    const alt = (modifiers & Qt.AltModifier) !== 0;
+    const shift = (modifiers & Qt.ShiftModifier) !== 0;
+    const named = {};
+    named[Qt.Key_Space] = "space";
+    named[Qt.Key_Return] = "return";
+    named[Qt.Key_Enter] = "return";
+    named[Qt.Key_Backspace] = "backspace";
+    named[Qt.Key_Left] = "left";
+    named[Qt.Key_Right] = "right";
+    named[Qt.Key_Up] = "up";
+    named[Qt.Key_Down] = "down";
+    named[Qt.Key_Escape] = "escape";
+    named[Qt.Key_Tab] = "tab";
+    named[Qt.Key_Backtab] = "tab";
+    let base = named[key] ?? "";
+    let printed = false;
+    if (base === "") {
+      printed = true;
+      if (ctrl || alt) {
+        if (key >= Qt.Key_A && key <= Qt.Key_Z)
+          base = String.fromCharCode(97 + key - Qt.Key_A);
+        else if (key >= Qt.Key_0 && key <= Qt.Key_9)
+          base = String.fromCharCode(48 + key - Qt.Key_0);
+      } else {
+        const t = String(text ?? "");
+        const code = t.codePointAt(0) ?? 0;
+        if ([...t].length === 1 && code >= 32 && code !== 127)
+          base = t.toLowerCase();
+      }
+    }
+    if (base === "")
+      return "";
+    return (ctrl ? "ctrl+" : "") + (alt ? "alt+" : "") + ((shift || key === Qt.Key_Backtab) && !printed ? "shift+" : "") + base;
+  }
+
+  // The action `keys` (a module's key name → action id) gives key `name`,
+  // "" for none: a reserved key, one the module doesn't map, and never a
+  // name every object has (`constructor`, …)
+  function keyAction(keys, name) {
+    if (name === "" || root.reservedKeys.includes(name) || keys === null || typeof keys !== "object")
+      return "";
+    return Object.prototype.hasOwnProperty.call(keys, name) && typeof keys[name] === "string" ? keys[name] : "";
+  }
+
+  // Whether `item` is `ancestor` or sits under it (by `parent`): where the
+  // window's focus is, relative to a module's layout
+  function within(ancestor, item) {
+    for (let it = item; it; it = it.parent) {
+      if (it === ancestor)
+        return true;
+    }
+    return false;
   }
 
   // --- Samples ---

@@ -135,6 +135,21 @@ ColumnLayout {
         values: root.definition?.module ?? ({})
         onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
       }
+      // A key → an action (overlay, edge menu, bar popout)
+      KeyedLoader {
+        Layout.preferredWidth: root.lockWidth
+        Layout.preferredHeight: childrenRect.height
+        key: root.definition ? root.editor.selectedId : ""
+
+        sourceComponent: JsonField {
+          width: parent?.width ?? 0
+          editor: root.editor
+          definition: root.definition
+          label: I18n.tr("Keys")
+          description: I18n.tr("A key → an action, {\"3\": \"check\", \"space\": \"play-pause\", \"ctrl+z\": \"undo\"}. They work in the overlay, edge menus and the bar popout, once the module is clicked (at once in the popout).")
+          path: ["module", "keys"]
+        }
+      }
       StyledTextButton {
         id: defaultLayoutButton
         visible: root.elements.length === 0 && root.views.length === 0
