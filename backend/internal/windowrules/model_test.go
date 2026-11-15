@@ -107,3 +107,11 @@ func TestContextOf(t *testing.T) {
 		t.Errorf("nil: got %+v", got)
 	}
 }
+
+func TestAllDigits(t *testing.T) {
+	for s, want := range map[string]bool{"": false, "1": true, "10": true, "007": true, "1a": false, " 1": false, "-1": false, "١": false} {
+		if got := AllDigits(s); got != want {
+			t.Errorf("AllDigits(%q) = %v, want %v", s, got, want)
+		}
+	}
+}
