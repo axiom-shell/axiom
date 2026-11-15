@@ -296,4 +296,58 @@ TestCase {
     compare(placed.rows[2].width, 239);
     compare(placed.rows[2].y, placed.rows[1].y, "one line");
   }
+
+  function test_blocks_wide_field() {
+    const rows = [field_in("a"), field_in("b", {
+        "schema": {
+          "x-wide": true
+        }
+      }), field_in("c")];
+    const blocks = FlowColumns.blocks(rows);
+    compare(spans(blocks), [[0, 1], [1, 2], [2, 3]]);
+    compare(blocks.map(block => block.wide), [false, true, false]);
+    compare(blocks.map(block => block.start), [false, false, false]);
+  }
+
+  function test_blocks_wide_wins() {
+    const rows = [field_in("a"), field_in("b", {
+        "schema": {
+          "x-showIf": {
+            "a": true
+          },
+          "x-wide": true
+        }
+      }), field_in("c", {
+        "schema": {
+          "x-beside": true
+        }
+      })];
+    const blocks = FlowColumns.blocks(rows);
+    compare(spans(blocks), [[0, 1], [1, 2], [2, 3]]);
+    compare(blocks.map(block => block.wide), [false, true, false]);
+    compare(FlowColumns.lines(rows).map(line => line.side), [-1, -1, -1]);
+  }
+
+  function test_place_wide_field() {
+    const placed = placeRows([field_in("a", {
+        "schema": {
+          "x-wide": true
+        }
+      })], [300], 2, 1000);
+    compare(placed.rows[0].x, 0);
+    compare(placed.rows[0].width, 1000);
+    compare(placed.rows[0].column, -1);
+    compare(placed.height, 300);
+  }
+
+  function test_place_wide_between() {
+    const rows = [field_in("a"), field_in("b"), field_in("w", {
+        "schema": {
+          "x-wide": true
+        }
+      }), field_in("d")];
+    const placed = placeRows(rows, [42, 42, 200, 42], 2, 1000);
+    compare(placed.rows.map(row => [row.x, row.y, row.width, row.column]), [[0, 0, 490, 0], [510, 0, 490, 1], [0, 42, 1000, -1], [0, 242, 490, 0]]);
+    compare(placed.height, 284);
+  }
 }

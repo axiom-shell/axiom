@@ -53,15 +53,20 @@ QtObject {
 
   // Whether row `i` continues the unit of the row before it: an `x-beside`
   // row, a dependent row or a row another field draws, in the same context
+  // A row that spans the row area: a heading, or an `x-wide` field (or `x-row` object)
+  function _wide(row) {
+    return root._heading(row) || row.schema?.["x-wide"] === true;
+  }
+
   function _continues(rows, contexts, i) {
-    if (i === 0 || root._heading(rows[i]) || root._heading(rows[i - 1]) || contexts[i] !== contexts[i - 1])
+    if (i === 0 || root._wide(rows[i]) || root._wide(rows[i - 1]) || contexts[i] !== contexts[i - 1])
       return false;
     const row = rows[i];
     return row.schema?.["x-beside"] === true || !!row.drawnBy || SchemaLayout.followsSibling(row.schema);
   }
 
   // The units rows must stay together in: [{ from, to, wide, start }],
-  // every row once, in order. A heading is a unit alone, `wide` (it spans
+  // every row once, in order. A heading or an `x-wide` row is a unit alone, `wide` (it spans
   // the row area); any other row starts a unit unless it continues the one
   // before. `start`: the unit's context differs from the previous unit's,
   // which is no heading, so a run of columns starts there
@@ -77,8 +82,8 @@ QtObject {
       result.push({
         "from": i,
         "to": i + 1,
-        "wide": root._heading(rows[i]),
-        "start": !!previous && !previous.wide && !root._heading(rows[i]) && contexts[i] !== contexts[previous.to - 1]
+        "wide": root._wide(rows[i]),
+        "start": !!previous && !previous.wide && !root._wide(rows[i]) && contexts[i] !== contexts[previous.to - 1]
       });
     }
     return result;
@@ -92,7 +97,7 @@ QtObject {
     const result = [];
     let line = -1;
     for (let i = 0; i < rows.length; i++) {
-      const beside = i > 0 && rows[i].schema?.["x-beside"] === true && !root._heading(rows[i]) && !root._heading(rows[i - 1]) && contexts[i] === contexts[i - 1] && result[i - 1].side !== 1;
+      const beside = i > 0 && rows[i].schema?.["x-beside"] === true && !root._wide(rows[i]) && !root._wide(rows[i - 1]) && contexts[i] === contexts[i - 1] && result[i - 1].side !== 1;
       if (beside) {
         result[i - 1].side = 0;
         result.push({
