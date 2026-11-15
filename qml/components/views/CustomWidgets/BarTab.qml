@@ -90,6 +90,7 @@ ColumnLayout {
 
   // The other groups flow into columns, as a Settings card's rows do
   GroupColumns {
+    rowGap: 0
     Layout.fillWidth: true
 
     FieldGroup {

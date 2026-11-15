@@ -121,7 +121,7 @@ ColumnLayout {
   ColumnLayout {
     visible: !root.element
     Layout.fillWidth: true
-    spacing: Widget.spacing * 2
+    spacing: Widget.spacing
 
     CardHeader {
       icon: "category"
@@ -193,7 +193,7 @@ ColumnLayout {
 
     sourceComponent: ColumnLayout {
       width: selected.width
-      spacing: Widget.spacing * 2
+      spacing: 0
 
       InspectorHeader {
         icon: root.kind?.icon ?? "widgets"
@@ -438,6 +438,7 @@ ColumnLayout {
 
       StyledTextButton {
         Layout.alignment: Qt.AlignRight
+        Layout.topMargin: Widget.spacing
         implicitHeight: Widget.height
         kind: "text"
         text: I18n.tr("More in Help")

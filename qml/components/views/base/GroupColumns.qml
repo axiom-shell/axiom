@@ -17,6 +17,8 @@ Item {
 
   default property alias content: holder.data
 
+  // The vertical gap between groups; flat groups pass 0 (their own top margin is the gap)
+  property real rowGap: Style.space5
   readonly property int count: FlowColumns.count(root.width, Style.columnTarget, Style.columnMin, Style.columnMax, Style.space5)
   // Every child, and of them the visible units in order (a unit's height by
   // index into `units`)
@@ -51,7 +53,7 @@ Item {
   SettledColumns {
     id: columns
     count: root.count
-    gap: Style.space5
+    gap: root.rowGap
     fill: false
     // None spans the columns
     wide: root.units.map(() => false)

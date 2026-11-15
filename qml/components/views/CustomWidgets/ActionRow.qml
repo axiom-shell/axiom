@@ -34,7 +34,7 @@ Surface {
   Layout.fillWidth: true
   tone: "sunken"
   outlined: true
-  implicitHeight: rows.implicitHeight + Style.space3 * 2
+  implicitHeight: rows.implicitHeight + (root.open ? Style.space3 : Widget.smallPadding) * 2
   clip: true
 
   // A new action takes the focus in its name (the editor's flag, which this
@@ -53,14 +53,16 @@ Surface {
     anchors.top: parent.top
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.margins: Style.space3
+    anchors.leftMargin: Style.space3
+    anchors.rightMargin: Style.space3
+    anchors.topMargin: root.open ? Style.space3 : Widget.smallPadding
     spacing: 0
 
     FoldRow {
       id: head
       open: root.open
-      Layout.topMargin: Style.rowPadding
-      Layout.bottomMargin: Style.rowPadding
+      Layout.topMargin: root.open ? Style.rowPadding : 0
+      Layout.bottomMargin: root.open ? Style.rowPadding : 0
       onToggled: root.open = !root.open
 
       StyledText {

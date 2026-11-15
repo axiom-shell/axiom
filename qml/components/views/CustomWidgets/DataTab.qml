@@ -102,6 +102,7 @@ ColumnLayout {
 
   // The groups flow into columns, as a Settings card's rows do
   GroupColumns {
+    rowGap: 0
     Layout.fillWidth: true
 
     FieldGroup {
@@ -182,6 +183,68 @@ ColumnLayout {
             onPicked: value => root.editor.set("output", value === "text" ? "text" : "waybar")
           }
         }
+
+        FormRow {
+          tinted: false
+          bodyHeight: advanced.implicitHeight
+
+          FoldingSection {
+            id: advanced
+            anchors.left: parent.left
+            anchors.right: parent.right
+            title: I18n.tr("Advanced")
+            collapsed: !root.advancedOpen
+            onToggled: root.advancedOpen = !root.advancedOpen
+
+            SchemaPropertiesForm {
+              Layout.fillWidth: true
+              propertiesSchema: Utils.pick(root.schema, order)
+              order: ["execIf", "refreshName"]
+              values: root.definition ?? ({})
+              onEdited: (path, value) => root.editor.set(path, value)
+            }
+            StyledText {
+              Layout.fillWidth: true
+              text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
+              role: "caption"
+              tone: "faint"
+              overflow: "wrap"
+            }
+            Surface {
+              visible: root.scriptHead !== ""
+              Layout.fillWidth: true
+              tone: "sunken"
+              outlined: true
+              implicitHeight: head.implicitHeight + Style.space3 * 2
+
+              ColumnLayout {
+                id: head
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: Style.space3
+                spacing: Widget.spacing / 2
+
+                StyledText {
+                  Layout.fillWidth: true
+                  text: root.scriptPath
+                  role: "caption"
+                  tone: "faint"
+                  overflow: "wrap"
+                }
+                StyledText {
+                  Layout.fillWidth: true
+                  text: root.scriptHead
+                  textFamily: "monospace"
+                  role: "micro"
+                  tone: "muted"
+                  // A long line wraps inside the box
+                  overflow: "wrap"
+                }
+              }
+            }
+          }
+        }
       }
 
       StyledText {
@@ -190,60 +253,6 @@ ColumnLayout {
         text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
         tone: "warning"
         overflow: "wrap"
-      }
-
-      FoldingSection {
-        title: I18n.tr("Advanced")
-        collapsed: !root.advancedOpen
-        onToggled: root.advancedOpen = !root.advancedOpen
-
-        SchemaPropertiesForm {
-          Layout.fillWidth: true
-          propertiesSchema: Utils.pick(root.schema, order)
-          order: ["execIf", "refreshName"]
-          values: root.definition ?? ({})
-          onEdited: (path, value) => root.editor.set(path, value)
-        }
-        StyledText {
-          Layout.fillWidth: true
-          text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
-          role: "caption"
-          tone: "faint"
-          overflow: "wrap"
-        }
-        Surface {
-          visible: root.scriptHead !== ""
-          Layout.fillWidth: true
-          tone: "sunken"
-          outlined: true
-          implicitHeight: head.implicitHeight + Style.space3 * 2
-
-          ColumnLayout {
-            id: head
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Style.space3
-            spacing: Widget.spacing / 2
-
-            StyledText {
-              Layout.fillWidth: true
-              text: root.scriptPath
-              role: "caption"
-              tone: "faint"
-              overflow: "wrap"
-            }
-            StyledText {
-              Layout.fillWidth: true
-              text: root.scriptHead
-              textFamily: "monospace"
-              role: "micro"
-              tone: "muted"
-              // A long line wraps inside the box
-              overflow: "wrap"
-            }
-          }
-        }
       }
     }
 
