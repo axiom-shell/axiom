@@ -38,7 +38,7 @@ GridDragLayer {
 
     // A box and a header like the canvas's, so the two read as a pair
     Surface {
-      Layout.preferredWidth: Appearance.fontSize * 22
+      Layout.preferredWidth: Math.min(Widget.textPx(340), Math.round(root.width * 0.34))
       Layout.fillHeight: true
       tone: "surface"
 

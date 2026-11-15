@@ -16,8 +16,8 @@ import qs.components.views.base
 // pushes them aside (GridEditor's plans, shown live while dragging).
 // Drag a box on the background (Shift: adding) or Shift/Ctrl+click
 // modules to select several, then drag one to move them all.
-// A WorkArea: undo / redo at the top left of its header, then the icon,
-// title and count, Save and Discard at its right; the nudge, the grid
+// A WorkArea: the icon, title and count in its header, then at its
+// right undo / redo before Save and Discard; the nudge, the grid
 // offset and how it fits in its status line, which says how to use the
 // canvas while nothing is selected. Keys while it has focus: Ctrl+Z,
 // Ctrl+Shift+Z (Ctrl+Y); with a selection, arrows move it, Shift+arrows

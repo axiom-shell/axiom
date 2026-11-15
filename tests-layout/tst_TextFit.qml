@@ -989,4 +989,97 @@ TestCase {
         if (one !== other && one.x === other.x)
           verify(one.y + one.height <= other.y || other.y + other.height <= one.y, `${one.objectName} overlaps ${other.objectName}`);
   }
+
+  Component {
+    id: workAreaToolsComp
+
+    WorkArea {
+      title: "Widgets"
+      dirty: true
+      undoRedo: Item {
+        objectName: "undoProbe"
+        implicitWidth: 40
+        implicitHeight: 20
+      }
+    }
+  }
+
+  // A section's count follows its title, not the far edge; a long title
+  // elides and the count stays in
+  function test_list_section_count_follows_title() {
+    harness.configure({});
+    const section = createTemporaryObject(listSectionComp, root, {
+      "width": Widget.textPx(500),
+      "title": "Your rules",
+      "hint": ""
+    });
+    waitForRendering(section);
+    let title = find(section, it => it.text === "Your rules", [])[0];
+    let count = find(section, it => it.text === "3", [])[0];
+    verify(title && count);
+    const titleAt = title.mapToItem(section, 0, 0);
+    const countAt = count.mapToItem(section, 0, 0);
+    verify(Math.abs(countAt.x - (titleAt.x + title.width + Widget.spacing)) <= 1, `count at ${countAt.x}, title ends ${titleAt.x + title.width}`);
+    verify(countAt.x + count.width < section.width / 2, `count's right edge ${countAt.x + count.width}`);
+
+    const narrow = createTemporaryObject(listSectionComp, root, {
+      "width": Widget.textPx(200),
+      "title": "A very long title for a section that has little room at all",
+      "hint": ""
+    });
+    waitForRendering(narrow);
+    title = find(narrow, it => it.text === narrow.title, [])[0];
+    count = find(narrow, it => it.text === "3", [])[0];
+    verify(title && count);
+    verify(count.visible);
+    verify(title.truncated, "the title elides");
+    compare(harness.containedProblems(narrow, true), []);
+  }
+
+  // Undo / redo sit at the right, before Save, and the title is left of them
+  function test_work_area_tools_sit_by_the_actions() {
+    harness.configure({});
+    const area = createTemporaryObject(workAreaToolsComp, root, {
+      "width": 900,
+      "height": 300
+    });
+    waitForRendering(area);
+    const probe = find(area, it => it.objectName === "undoProbe", [])[0];
+    const save = find(area, it => it.text === "Save" && it.iconText !== undefined, [])[0] ?? find(area, it => it.text === "Save", [])[0];
+    const title = find(area, it => it.text === "Widgets", [])[0];
+    verify(probe && save && title);
+    const probeAt = probe.mapToItem(area, 0, 0);
+    const saveAt = save.mapToItem(area, 0, 0);
+    const titleAt = title.mapToItem(area, 0, 0);
+    verify(probeAt.x > area.width / 2, `probe at ${probeAt.x}`);
+    verify(probeAt.x + probe.width <= saveAt.x + 0.5, `probe ends ${probeAt.x + probe.width}, Save at ${saveAt.x}`);
+    verify(titleAt.x + title.width < probeAt.x, "the title is left of it");
+  }
+
+  // A pane's `headerIcon` shows before its title; empty, nothing and the
+  // title stays where it was
+  function test_tool_pane_title_icon() {
+    harness.configure({});
+    const plain = createTemporaryObject(toolPaneComp, root, {
+      "width": 420,
+      "height": 500
+    });
+    waitForRendering(plain);
+    const plainTitle = find(plain, it => it.text === "Window rules", [])[0];
+    verify(plainTitle);
+    verify(find(plain, it => it.text === "widgets" && it.visible, []).length === 0, "no icon without headerIcon");
+    const plainX = plainTitle.mapToItem(plain, 0, 0).x;
+    const pane = createTemporaryObject(toolPaneComp, root, {
+      "width": 420,
+      "height": 500,
+      "headerIcon": "widgets"
+    });
+    waitForRendering(pane);
+    const icon = find(pane, it => it.text === "widgets" && it.visible, [])[0];
+    const title = find(pane, it => it.text === "Window rules", [])[0];
+    verify(icon && title);
+    const iconRight = icon.mapToItem(pane, 0, 0).x + icon.width;
+    verify(iconRight <= title.mapToItem(pane, 0, 0).x + 0.5, `icon ends ${iconRight}, title at ${title.mapToItem(pane, 0, 0).x}`);
+    verify(title.mapToItem(pane, 0, 0).x > plainX, "the title moved right of the icon");
+  }
 }
