@@ -826,7 +826,20 @@ TestCase {
     });
     verify(fading.item !== null, "built");
     compare(fading._enter, 0);
-    compare(fading.transform[0].y, 0);
+    compare(fading.transform.length, 0);
+  }
+
+  // A loader that only fades makes no slide (no Translate), and shows its item at once
+  function test_streamed_loader_fade_only_builds_no_slide() {
+    harness.configure({});
+    const fading = createTemporaryObject(streamedComp, root, {
+      "rise": false
+    });
+    verify(fading.item !== null, "built");
+    compare(fading.transform.length, 0);
+    verify(fading._entered, "shown");
+    const rising = createTemporaryObject(streamedComp, root);
+    compare(rising.transform.length, 1);
   }
 
   Component {
