@@ -438,9 +438,11 @@ ColumnLayout {
     Layout.fillHeight: true
     elements: root.elements
     editable: root.definition !== null
+    card: root.card
     underlay: root.view && root.view.base ? (root.definition?.module?.elements ?? []).map(e => ({
           "place": e.place,
-          "label": e.options?.label || e.type
+          "label": e.name || e.options?.label || e.type,
+          "element": e
         })) : []
   }
 }

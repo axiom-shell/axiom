@@ -17,7 +17,8 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
 - With "Show other menus" (`OverlayManager.menus.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
   - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their module size can differ.
   - They are not drop targets.
-- `underlay` (`[{ place, label }]`): places drawn dimmed under the tiles, not selectable and counted in the lattice's bounds (the custom widget editor's base elements while a screen is edited).
+- `underlay` (`[{ place, label, element? }]`): places drawn dimmed under the tiles, not selectable and counted in the lattice's bounds (the custom widget editor's base elements while a screen is edited).
+- `tileContent` (a `Component` whose root has a `module`): what a tile (and an underlay item that has an `element`) draws instead of its icon and label; `CanvasModule` and the underlay load it and bind `module` (the custom widget editor draws the element itself). `tileContext(index, tile, x, y)` is a right click on a tile, which it selects.
 - `GridCanvas` is a `WorkArea`: the header runs the icon, title and module count, then at the right undo/redo before Save and Discard (the editor's, `showActions`/`dirty`/`canSave`), with a "?" for the keys. Its status line holds a menu's arrows moving it along its edge and its grid offset (see [Menu editing](../menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu); while nothing is selected the idle hint sits above the status line's contents and says "Drag to move · drag an edge to resize · click to edit". The canvas is the work area's sunken well, its tiles raised (`surfaceRaised`), the selected one outlined in the accent; a page with nothing to edit shows an `EmptyState`. The well fills the canvas card (60 % of the page height, over the inspector).
 
 ### GridCanvas: alignment guides

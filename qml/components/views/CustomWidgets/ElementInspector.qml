@@ -189,6 +189,24 @@ ColumnLayout {
         onClose: root.grid.clearSelection()
       }
 
+      // Shown on the canvas: empty, the kind
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Widget.spacing
+
+        StyledLabel {
+          Layout.preferredWidth: Widget.textPx(70)
+          text: I18n.tr("Name")
+        }
+        StyledTextEntry {
+          id: nameEntry
+          Layout.fillWidth: true
+          placeholderText: I18n.tr(root.kind?.label ?? "")
+          onTextEdited: root.editor.setElement(["name"], nameEntry.text)
+          Component.onCompleted: nameEntry.text = root.element?.name ?? ""
+        }
+      }
+
       FieldGroup {
         visible: (root.kind?.slots.length ?? 0) > 0
         Layout.fillWidth: true

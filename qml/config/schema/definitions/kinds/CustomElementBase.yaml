@@ -36,6 +36,7 @@ x-parts:
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}
+  name: {type: string, title: Name, default: '', description: 'Shown on the canvas. Empty: the kind.'}
   place:
     type: object
     additionalProperties: false

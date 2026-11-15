@@ -51,6 +51,9 @@ Rectangle {
     return Array.isArray(value) ? value.join(", ") : String(value ?? "");
   }
 
+  // What it draws instead of its icon and label (GridCanvas.tileContent)
+  property Component tileContent: null
+
   // A right click on it, at (x, y) in the tile
   signal contextRequested(real x, real y)
 
@@ -99,7 +102,21 @@ Rectangle {
     }
   }
 
+  Loader {
+    id: content
+    anchors.fill: parent
+    active: root.tileContent !== null
+    sourceComponent: root.tileContent
+  }
+  Binding {
+    when: content.item !== null
+    target: content.item
+    property: "module"
+    value: root.module
+  }
+
   Column {
+    visible: root.tileContent === null
     anchors.centerIn: parent
     width: parent.width - Widget.px(8)
     spacing: 2

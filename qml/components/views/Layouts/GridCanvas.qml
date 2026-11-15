@@ -76,6 +76,11 @@ WorkArea {
   // lattice's bounds count it ([{ place, label }]: the custom widget editor's
   // base elements while a screen is edited)
   property var underlay: []
+  // What a tile draws instead of its icon and label (the custom widget
+  // editor draws the element itself): a Component whose root has a
+  // `module` (the tile's module, or an underlay item's `element`), loaded by
+  // CanvasModule and the underlay
+  property Component tileContent: null
 
   // A right click on tile `index` (selected by it), at (x, y) in `tile`
   // (an Item): the owner opens the menu it wants
@@ -593,12 +598,26 @@ WorkArea {
         opacity: Style.opacityDisabled
 
         StyledText {
+          visible: root.tileContent === null
           anchors.fill: parent
           anchors.margins: Widget.px(4)
           text: under.item?.label ?? ""
           role: "micro"
           tone: "muted"
           overflow: "line"
+        }
+
+        Loader {
+          id: underContent
+          anchors.fill: parent
+          active: root.tileContent !== null && under.item?.element !== undefined
+          sourceComponent: root.tileContent
+        }
+        Binding {
+          when: underContent.item !== null
+          target: underContent.item
+          property: "module"
+          value: under.item?.element ?? null
         }
       }
     }
@@ -650,6 +669,7 @@ WorkArea {
           step: root.step
           gap: root.gap
           growth: root.growthOf(tile.index)
+          tileContent: root.tileContent
           onContextRequested: (x, y) => root.tileContext(tile.index, tile, x, y)
         }
       }

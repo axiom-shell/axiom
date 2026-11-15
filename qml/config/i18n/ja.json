@@ -4489,6 +4489,8 @@
     "fixed text": "",
     "Nothing at this path in the previewed sample": "",
     "now: {0}": "",
-    "Click a value to bind it to the slot you were in, or to a new text.": ""
+    "Click a value to bind it to the slot you were in, or to a new text.": "",
+    "hidden": "",
+    "Shown on the canvas. Empty: the kind.": ""
   }
 }

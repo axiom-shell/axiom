@@ -6,6 +6,7 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
+import qs.components.content.parts.custom
 import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the element library and the selected
@@ -19,7 +20,11 @@ GridDragLayer {
   property var elements: []
   property bool editable: false
   // The base elements, drawn dimmed under the canvas while a screen is edited
+  // ([{ place, label, element }])
   property var underlay: []
+  // One grid unit in pixels at the module's design size: an element is drawn
+  // at the size it has there and scaled into its tile
+  property real card: Widget.px(400)
 
   // "Copy to screen ▸": the base, then each screen but the one edited
   readonly property var copyTargets: {
@@ -53,6 +58,67 @@ GridDragLayer {
   // In grid units (4 sub-cells each)
   sizeLabel: (w, h) => I18n.tr("{0} × {1}", w / CustomWidgetData.subCells, h / CustomWidgetData.subCells)
   countLabel: n => I18n.tr("{0} elements", n)
+
+  // An element drawn in its tile (GridCanvas.tileContent): the real element
+  // on the previewed sample, at the size it has in the module and scaled to
+  // the tile, with its name (else its kind) in a chip; one the sample's
+  // `show` hides is dimmed and says so. Never runs anything
+  Component {
+    id: elementTile
+
+    Item {
+      id: content
+
+      // The element (the tile's module, or an underlay item's element)
+      property var module: null
+      readonly property var fields: CustomWidgetsManager.editor.previewFields ?? ({})
+      readonly property bool hidden: !CustomWidgetData.elementShown(content.fields, content.module?.bind)
+      readonly property real designWidth: Math.max(1, (content.module?.place?.w ?? 1) / CustomWidgetData.subCells * root.card)
+      readonly property real designHeight: Math.max(1, (content.module?.place?.h ?? 1) / CustomWidgetData.subCells * root.card)
+      readonly property real zoom: Math.min(content.width / content.designWidth, content.height / content.designHeight)
+      readonly property string title: content.module ? (content.module.name || I18n.tr(CustomWidgetsConfig.elementKind(content.module.type)?.label ?? content.module.type)) : ""
+      opacity: content.hidden ? Style.opacityDisabled : 1
+      clip: true
+
+      Item {
+        width: content.designWidth
+        height: content.designHeight
+        scale: content.zoom
+        transformOrigin: Item.TopLeft
+        readonly property real contentZoom: scale
+
+        CustomElement {
+          anchors.fill: parent
+          anchors.margins: Widget.px(3)
+          element: content.module ?? ({})
+          fields: content.fields
+          history: CustomWidgetsManager.history[CustomWidgetsManager.editor.selectedId] ?? ({})
+          widgetId: CustomWidgetsManager.editor.selectedId
+          actionsEnabled: false
+          fallbackIcon: CustomWidgetsManager.editor.selected?.icon || "widgets"
+          moduleFont: CustomWidgetsManager.editor.selected?.module?.font ?? ""
+        }
+      }
+
+      Row {
+        visible: content.width > Widget.px(56) && content.height > Widget.px(28)
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.margins: Widget.px(2)
+        spacing: Widget.px(2)
+
+        StatusChip {
+          text: content.title
+          tone: "neutral"
+        }
+        StatusChip {
+          visible: content.hidden
+          text: I18n.tr("hidden")
+          tone: "warning"
+        }
+      }
+    }
+  }
 
   // An element's menu (a right click selects it)
   StyledContextMenu {
@@ -143,6 +209,7 @@ GridDragLayer {
         dragLayer: root
         modules: root.editable ? root.elements : null
         underlay: root.underlay
+        tileContent: elementTile
         onTileContext: (index, tile, x, y) => elementMenu.openAt(tile, x, y)
         title: I18n.tr("Module")
         icon: "widgets"
