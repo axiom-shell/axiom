@@ -142,3 +142,26 @@ func TestSwayFloatingRestore(t *testing.T) {
 		t.Errorf("last wins: %q", got)
 	}
 }
+
+// The title text on a border color is black or white, whichever has the
+// higher WCAG contrast (the shell's Tone.bestOn); white where it can't tell.
+func TestSwayTextOn(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, hex, want string
+	}{
+		{"a light golden", "#9ccfd8", "#000000"},
+		{"a dark golden", "#403d52", "#ffffff"},
+		{"red reads black (the old formula said white)", "#ff0000", "#000000"},
+		{"blue reads white", "#0000ff", "#ffffff"},
+		{"mid grey reads black", "#808080", "#000000"},
+		{"empty", "", "#ffffff"},
+		{"short", "#fff", "#ffffff"},
+		{"#aarrggbb is read as its first six digits", "#80ff0000", "#000000"},
+	}
+	for _, c := range cases {
+		if got := SwayTextOn(c.hex); got != c.want {
+			t.Errorf("%s: SwayTextOn(%q) = %s, want %s", c.name, c.hex, got, c.want)
+		}
+	}
+}
