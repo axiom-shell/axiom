@@ -43,7 +43,6 @@ GridDragLayer {
 
     GridCanvas {
       id: canvas
-      wellMaxHeight: Widget.px(400)
       dragLayer: root
       onSave: root.save()
       onReset: root.reset()

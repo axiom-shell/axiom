@@ -238,6 +238,11 @@ TestCase {
           text: "Fits"
         }
       ]
+
+      Item {
+        objectName: "work"
+        anchors.fill: parent
+      }
     }
   }
 
@@ -925,6 +930,21 @@ TestCase {
     pane.rows = 2;
     waitForRendering(pane);
     verify(!edge.visible, "a short list has no edge");
+  }
+
+  // The work area's well fills its box: no band under it, its top meets the status line
+  function test_work_area_well_fills_its_box() {
+    harness.configure({});
+    const area = createTemporaryObject(workAreaComp, root, {
+      "width": 900,
+      "height": 700
+    });
+    waitForRendering(area);
+    const work = find(area, it => it.objectName === "work", [])[0];
+    verify(work);
+    verify(work.height > 0);
+    verify(Math.abs(work.mapToItem(area, 0, work.height).y - area.height) <= Widget.padding + 1, "the well reaches the box's bottom");
+    verify(work.mapToItem(area, 0, 0).y < area.height / 3, "and starts near the top ");
   }
 
   // A status line hidden at load shows once its child does
