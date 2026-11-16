@@ -477,7 +477,7 @@ QtObject {
       case "bar":
         return palette.barText;
       default:
-        return "transparent";
+        return Qt.alpha(color, 0);
       }
     };
     return {
@@ -493,11 +493,13 @@ QtObject {
   }
 
   function _widget(look, palette, state, accent, own, graded) {
-    const none = "transparent";
+    // A part with nothing to draw rests on the colour it fades to, at alpha 0
+    // (a glide to transparent black dips through grey)
+    const none = Qt.alpha(accent, 0);
     const text = c => palette.override ?? c;
     const drawn = root._drawn(look, state);
     const fills = look.hoverFill;
-    const unfilled = fills ? Qt.alpha(accent, 0) : none;
+    const unfilled = none;
     // What content sits on, opaque: the bar, a color over it, a tint of
     // the accent over it
     const bar = root._bar(palette);
@@ -561,7 +563,7 @@ QtObject {
   }
 
   function _cell(look, palette, state, color, own, cellState) {
-    const none = "transparent";
+    const none = Qt.alpha(color, 0);
     const text = c => palette.override ?? c;
     const traits = BarLook.cellTraits(look, state.solid);
     const drawn = root._cellDrawn(look, state);
@@ -581,7 +583,7 @@ QtObject {
     // An empty cell's content: the text mixed toward what it sits on
     const empty = backs => Tone.nudged(backs, Tone.toward(text(under), backs[0], root.emptyMix), root.mutedContrast);
     const onBar = (c, backs) => cellState === "empty" ? empty(backs) : palette.override ?? nudge(c, backs);
-    const unfilled = fills ? Qt.alpha(color, 0) : none;
+    const unfilled = none;
     if (merged)
       return root._makeCell(unfilled, none, none, onBar(color, behind), false, false, behind);
     const box = root._box(drawn, look, palette, color, own, unfilled);
