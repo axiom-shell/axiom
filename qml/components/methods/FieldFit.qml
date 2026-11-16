@@ -20,15 +20,12 @@ QtObject {
   // What a field of `kind` does in `width`, given the label's one-line
   // width (0: no label) and the control's implicit width (fixed kinds):
   //   inline       the control is on the label's line
-  //   notesBelow   inline on a narrow field: the description spans the full
-  //                width under the line
   //   controlWidth the control's width when inline (-1: implicit or fill)
   //   fill         the control takes the whole width (stacked) or the rest
   //   align        "end" or "start" for a control narrower than its cell
   function place(kind, width, labelLine, control, t) {
     const out = {
       "inline": false,
-      "notesBelow": false,
       "controlWidth": -1,
       "fill": true,
       "align": kind === "fixed" ? "end" : "start"
@@ -58,14 +55,12 @@ QtObject {
     if (!inline)
       return {
         "inline": false,
-        "notesBelow": false,
         "controlWidth": -1,
         "fill": true,
         "align": "start"
       };
     return {
       "inline": true,
-      "notesBelow": width < t.inlineFrom,
       "controlWidth": controlWidth,
       "fill": kind === "fill",
       "align": "end"

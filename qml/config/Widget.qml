@@ -81,10 +81,8 @@ QtObject {
   function textPx(n: real): int {
     return StyleTokens.textPx(n, scale, Appearance.baseFontSize);
   }
-  // A form field at least this wide puts a short control (a slider, a
-  // dropdown beside a long description) beside its label with the
-  // description beside it too; narrower, the description spans the full
-  // width under the label's line (FieldFit)
+  // A slider goes beside its label only on a form field at least this wide
+  // (FieldFit); narrower it stacks under the label
   readonly property int fieldInlineFrom: textPx(420)
   // The least width of a form field's label column (a longer label wraps)
   readonly property int fieldLabelLeast: textPx(160)

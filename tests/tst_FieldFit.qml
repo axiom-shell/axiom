@@ -22,7 +22,6 @@ TestCase {
   function test_fixed_fits_beside_a_short_label() {
     const p = FieldFit.place("fixed", 300, 35, 142, t);
     verify(p.inline);
-    verify(p.notesBelow, "narrow: the description goes under the line");
     compare(p.align, "end");
   }
 
@@ -39,7 +38,6 @@ TestCase {
     const p = FieldFit.place("flex", 300, 40, 0, t);
     verify(p.inline);
     compare(p.controlWidth, 126);
-    verify(p.notesBelow);
     verify(!p.fill);
   }
 
@@ -55,7 +53,6 @@ TestCase {
     const p = FieldFit.place("flex", 540, 40, 0, t);
     verify(p.inline);
     compare(p.controlWidth, 227);
-    verify(!p.notesBelow);
   }
 
   function test_flex_without_label_stacks_and_fills() {

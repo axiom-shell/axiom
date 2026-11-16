@@ -13,8 +13,8 @@ import qs.components.methods
 // (FieldHeader.lineWidth) and the control's `controlLeast`. Never a
 // laid-out width: a field that fed its own size back would flip. A short
 // control stays on the label's line whenever it fits; the description then
-// sits beside the label on a wide field (the control centred on both) and
-// spans the full width under the line on a narrow one. Stacked: label,
+// sits beside the label at any width, wrapping earlier on a narrow field,
+// with the control centred on the whole box. Stacked: label,
 // description, control. The control is the default child (`Layout.*` in it
 // work as in a column); `body` goes under everything at full width.
 Item {
@@ -74,16 +74,16 @@ Item {
     }
 
     // The description and links (a FieldHeader with no label shows only
-    // those): beside the label on a wide field, under its line on a narrow
+    // those): under the label, in the control's left column when inline
     FieldHeader {
       id: notes
       description: root.description
       below: root.headerBelow
       Layout.row: 1
       Layout.column: 0
-      Layout.columnSpan: root.fit.inline && !root.fit.notesBelow ? 1 : 2
+      Layout.columnSpan: root.fit.inline ? 1 : 2
       Layout.fillWidth: true
-      Layout.topMargin: header.hasContent ? Widget.px(2) : 0
+      Layout.topMargin: header.hasContent && notes.hasContent ? Widget.px(2) : 0
     }
 
     ColumnLayout {
@@ -93,7 +93,7 @@ Item {
       Layout.row: root.fit.inline ? 0 : 2
       Layout.column: root.fit.inline ? 1 : 0
       Layout.columnSpan: root.fit.inline ? 1 : 2
-      Layout.rowSpan: root.fit.inline && !root.fit.notesBelow ? 2 : 1
+      Layout.rowSpan: root.fit.inline && notes.hasContent ? 2 : 1
       Layout.fillWidth: root.fit.fill
       Layout.preferredWidth: root.fit.controlWidth
       Layout.alignment: root.fit.inline ? Qt.AlignVCenter : Qt.AlignTop

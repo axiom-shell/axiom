@@ -1181,9 +1181,9 @@ TestCase {
     verify(notes.mapToItem(field, 0, notes.height).y <= top, "the notes, link included, end above the toggle");
   }
 
-  // On a narrow line that fits, the toggle sits on the label's line and the
-  // description and links span the full width under it
-  function test_narrow_inline_toggle_keeps_its_link_below_the_line() {
+  // On a narrow line that fits, the toggle sits at the right end, centred on
+  // the label, description and links, which sit under the label to its left
+  function test_narrow_inline_toggle_keeps_its_link_beside() {
     harness.configure({});
     const field = createTemporaryObject(toggleRowComp, root, {
       "width": Widget.textPx(300),
@@ -1195,9 +1195,9 @@ TestCase {
     const header = heads[0];
     const notes = heads[1];
     const control = findAll(field, it => it._segment !== undefined)[0];
-    verify(control.mapToItem(field, 0, control.height).y <= notes.mapToItem(field, 0, 0).y + 1, "the toggle is on the label's line");
-    verify(notes.mapToItem(field, 0, 0).y >= header.mapToItem(field, 0, header.height).y - 1, "the notes sit under the line");
-    verify(notes.width >= field.width - 1, "across the full width");
+    verify(notes.mapToItem(field, notes.width, 0).x <= control.mapToItem(field, 0, 0).x + 1, "the notes sit left of the toggle");
+    verify(notes.mapToItem(field, 0, 0).y >= header.mapToItem(field, 0, header.height).y - 1, "the notes sit under the label");
+    verify(Math.abs(control.mapToItem(field, 0, control.height / 2).y - field.height / 2) <= 1, "the toggle is centred on the whole box");
   }
 
   // The More link is built only when the text is longer than its lines;

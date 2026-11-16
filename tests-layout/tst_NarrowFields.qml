@@ -8,9 +8,9 @@ import qs.components.methods
 
 // Schema fields at narrow and wide widths (FieldLine, FieldFit): a short
 // control stays on its label's line when the line fits beside it, so a
-// narrow form reads like the settings page; below Widget.fieldInlineFrom the
-// description spans the full width under the line; a toggle that has to
-// stack fills the width. A row inside a depth-2 block is placed by its own
+// narrow form reads like the settings page; the description stays beside the
+// control at any width (wrapping earlier), the control centred on the whole
+// box; a toggle that has to stack fills the width. A row inside a depth-2 block is placed by its own
 // body width. Wide layouts keep their geometry.
 TestCase {
   id: root
@@ -26,6 +26,14 @@ TestCase {
   }
 
   readonly property string note: "Empty: monospace when on, else the module's, else the shell's."
+
+  Component {
+    id: switchComp
+    SchemaSwitch {
+      label: "Enabled"
+      checked: false
+    }
+  }
 
   Component {
     id: comboComp
@@ -169,22 +177,37 @@ TestCase {
     compare(harness.containedProblems(field), []);
   }
 
-  function test_combo_narrow_description_spans_the_width_data() {
-    return rows();
+  // The description stays beside the control at every width, the control
+  // centred on the whole box at the field's right edge
+  function test_description_stays_beside_the_control_data() {
+    const out = [];
+    for (const r of rows())
+      for (const kind of ["switch", "toggle", "combo"])
+        for (const w of [300, 380, 540])
+          out.push(Object.assign({}, r, {
+            "tag": `${kind} ${w} ${r.tag}`,
+            "kind": kind,
+            "w": w
+          }));
+    return out;
   }
 
-  function test_combo_narrow_description_spans_the_width(data) {
+  function test_description_stays_beside_the_control(data) {
     harness.configure(data);
-    const field = make(comboComp, Widget.textPx(300), {
+    const comp = data.kind === "switch" ? switchComp : data.kind === "toggle" ? toggleComp : comboComp;
+    const field = make(comp, Widget.textPx(data.w), {
       "description": note
     });
-    const entry = entryOf(field);
+    const control = data.kind === "switch" ? findAll(field, it => it.checked !== undefined && it.toggled !== undefined && it !== field)[0] : data.kind === "toggle" ? findAll(field, it => it._segment !== undefined)[0] : entryOf(field);
     const desc = textOf(field, "Empty:");
-    verify(field.fit.inline && field.fit.notesBelow);
-    const entryBottom = entry.mapToItem(field, 0, entry.height).y;
-    verify(desc.mapToItem(field, 0, 0).y >= entryBottom - 0.5, `the description is under the line: ${desc.mapToItem(field, 0, 0).y} vs ${entryBottom}`);
-    verify(Math.abs(desc.mapToItem(field, 0, 0).x) <= 0.5);
-    verify(desc.width >= field.width - 1, `full width: ${desc.width} of ${field.width}`);
+    verify(field.fit.inline, "the control is on the label's line");
+    verify(control && desc);
+    verify(Math.abs(centre(control, field) - field.height / 2) <= 1, `centred on the whole box: ${centre(control, field)} vs ${field.height / 2}`);
+    verify(Math.abs(control.mapToItem(field, control.width, 0).x - field.width) <= 0.5, "at the field's right edge");
+    verify(Math.abs(desc.mapToItem(field, 0, 0).x) <= 0.5, "description at the left");
+    verify(desc.mapToItem(field, desc.width, 0).x <= control.mapToItem(field, 0, 0).x + 0.5, "description left of the control");
+    if (data.w === 300)
+      verify(desc.height > textOf(field, data.kind === "switch" ? "Enabled" : data.kind === "toggle" ? "Mode" : "Color").height * 1.5, `wraps to several lines: ${desc.height}`);
     compare(harness.containedProblems(field), []);
   }
 
@@ -199,7 +222,7 @@ TestCase {
     });
     const entry = entryOf(field);
     const desc = textOf(field, "Empty:");
-    verify(field.fit.inline && !field.fit.notesBelow);
+    verify(field.fit.inline);
     compare(entry.width, Math.round(Math.min(Widget.textPx(260), Widget.textPx(540) * 0.42)));
     verify(Math.abs(entry.mapToItem(field, entry.width, 0).x - field.width) <= 0.5);
     verify(Math.abs(desc.mapToItem(field, 0, 0).x) <= 0.5);
@@ -289,12 +312,12 @@ TestCase {
     verify(!field.fit.inline);
     field.width = Widget.textPx(540);
     waitForRendering(field);
-    verify(field.fit.inline && !field.fit.notesBelow);
+    verify(field.fit.inline);
     const entry = entryOf(field);
     verify(Math.abs(entry.mapToItem(field, entry.width, 0).x - field.width) <= 0.5);
     field.width = Widget.textPx(300);
     waitForRendering(field);
-    verify(field.fit.notesBelow);
+    verify(field.fit.inline);
     compare(harness.containedProblems(field), []);
   }
 
