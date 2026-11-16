@@ -172,6 +172,8 @@ ColumnLayout {
     // The font is a setting of the module's Text elements, so it sits here
     FieldGroup {
       Layout.fillWidth: true
+      // The column's gap is 4: the group's top is Style.space2 from the library
+      Layout.topMargin: Widget.spacing
       title: I18n.tr("Module")
 
       SchemaPropertiesForm {
@@ -187,12 +189,14 @@ ColumnLayout {
       Notice {
         visible: root.lockWarning !== ""
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         status: "warning"
         title: I18n.tr("On the lock screen")
         text: root.lockWarning
       }
       StyledTextButton {
         visible: root.editor.layerElements.length === 0 && root.views.length === 0
+        Layout.topMargin: Style.space2
         implicitHeight: Widget.height
         iconText: "auto_awesome"
         text: I18n.tr("Start from the default layout")
@@ -210,7 +214,7 @@ ColumnLayout {
 
     sourceComponent: ColumnLayout {
       width: selected.width
-      spacing: 0
+      spacing: Style.space2
 
       InspectorHeader {
         icon: root.kind?.icon ?? "widgets"
@@ -414,7 +418,6 @@ ColumnLayout {
 
       StyledTextButton {
         Layout.alignment: Qt.AlignRight
-        Layout.topMargin: Widget.spacing
         implicitHeight: Widget.height
         kind: "text"
         text: I18n.tr("More in Help")

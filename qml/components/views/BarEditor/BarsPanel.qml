@@ -166,6 +166,7 @@ Item {
             tone: "muted"
             overflow: "wrap"
             Layout.fillWidth: true
+            Layout.topMargin: Style.space2
           }
         }
       }

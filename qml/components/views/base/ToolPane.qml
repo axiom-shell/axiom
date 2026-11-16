@@ -55,10 +55,14 @@ TitledCard {
 
       StyledScrollView {
         // Out by the ring's width on every side, and padded by it, so a
-        // row's focus ring isn't cut at the list's edges
+        // row's focus ring isn't cut at the list's edges (`bleed` for the
+        // sides: the Flickable then doesn't clip at its padding)
         anchors.fill: parent
         anchors.margins: -Style.focusWidth
-        contentPadding: Style.focusWidth
+        contentPadding: 0
+        bleed: Style.focusWidth
+        topPadding: Style.focusWidth
+        bottomPadding: Style.focusWidth
         // A bar only while the capped list overflows
         showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
 

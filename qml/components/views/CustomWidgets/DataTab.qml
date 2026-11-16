@@ -102,7 +102,6 @@ ColumnLayout {
 
   // The groups flow into columns, as a Settings card's rows do
   GroupColumns {
-    rowGap: 0
     Layout.fillWidth: true
 
     FieldGroup {
@@ -280,6 +279,7 @@ ColumnLayout {
       Notice {
         visible: root.signalsWaybar
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         status: "warning"
         text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
       }
@@ -310,12 +310,14 @@ ColumnLayout {
       StyledLabel {
         visible: root.output !== null && !root.output.blocked && root.output.exitCode > 0
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         text: I18n.tr("Exit code {0}", root.output?.exitCode ?? 0)
         tone: "muted"
       }
       StyledText {
         visible: !!root.output?.stderr
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         text: root.output?.stderr ?? ""
         textFamily: "monospace"
         role: "caption"
@@ -358,6 +360,7 @@ ColumnLayout {
         active: root.editingSample
         visible: active
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
 
         sourceComponent: ColumnLayout {
           spacing: Widget.spacing / 2
@@ -398,6 +401,7 @@ ColumnLayout {
       // (config, never live values)
       ColumnLayout {
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         spacing: 0
 
         Repeater {

@@ -28,6 +28,17 @@ ScrollView {
   // padding the content has
   rightPadding: (showScrollBar ? contentPadding + Math.max(contentPadding, Widget.px(12)) : contentPadding) + bleed
 
+  // A ScrollView's Flickable clips at its padding, so the bleed (in the
+  // padding) would be cut: with a bleed the view's own clip (which includes
+  // it) is the only one. Content then scrolls into the padding strips, so a
+  // bleed host keeps its top and bottom padding at 0 (or the ring's width).
+  Binding {
+    target: root.contentItem
+    property: "clip"
+    value: false
+    when: root.bleed > 0
+  }
+
   ScrollBar.vertical.policy: ScrollBar.AsNeeded
   ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 

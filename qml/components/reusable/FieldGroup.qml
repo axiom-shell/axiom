@@ -7,6 +7,12 @@ import qs.components.methods
 // A titled group of fields, as on the settings page (editor inspectors): a
 // boxed card of its own on the page, flat inside a pane (no fill or border: the
 // pane's own); `pageCard` keeps it boxed inside the settings page's own card.
+// Children stack with no gap, as a settings card's rows do (a row pads itself,
+// FormRow); a non-row child that follows another takes its own
+// `Layout.topMargin: Style.space2`. A flat group adds no space around itself:
+// the column it sits in spaces it (Style.space2, the settings page's card gap).
+// A `pageCard` is hand-built content (no rows): its children keep `headerGap`
+// between them.
 Surface {
   id: root
   property string title
@@ -28,7 +34,7 @@ Surface {
   Layout.fillWidth: true
   Layout.alignment: Qt.AlignTop
   tone: root._boxed ? "surface" : root._host.tone
-  implicitHeight: groupColumn.implicitHeight + (root._boxed ? Style.space3 * 2 : Style.space3)
+  implicitHeight: groupColumn.implicitHeight + (root._boxed ? Style.space3 * 2 : 0)
 
   // Flat inside a pane: no fill, border or side margins; `color` returns to
   // Surface's own binding on leaving the state
@@ -37,6 +43,7 @@ Surface {
     PropertyChanges {
       root.color: "transparent"
       root.outlined: false
+      groupColumn.anchors.topMargin: 0
       groupColumn.anchors.leftMargin: 0
       groupColumn.anchors.rightMargin: 0
     }
@@ -48,11 +55,12 @@ Surface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.margins: Style.space3
-    spacing: root.headerGap
+    spacing: root.pageCard ? root.headerGap : 0
 
     RowLayout {
       id: headerRow
       Layout.fillWidth: true
+      Layout.bottomMargin: root.pageCard ? 0 : root.headerGap
       spacing: Widget.spacing
 
       SectionHeading {

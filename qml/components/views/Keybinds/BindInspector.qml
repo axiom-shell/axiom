@@ -75,6 +75,7 @@ ColumnLayout {
     }
 
     StyledText {
+      Layout.topMargin: Style.space2
       text: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
       role: "caption"
       tone: "muted"
@@ -95,6 +96,7 @@ ColumnLayout {
     // The argument: a choice when the action has a fixed set, else text
     SchemaComboBox {
       visible: root.needed && root.argumentOptions !== null
+      Layout.topMargin: Style.space2
       label: ""
       options: root.argumentOptions ?? []
       optionLabels: KeybindManager.argumentLabels(root.bind.action) ?? ({})
@@ -111,6 +113,7 @@ ColumnLayout {
     // bind appears once the keybinds are saved
     RefEntry {
       visible: root.needed && root.argumentOptions === null && root.argumentRef !== ""
+      Layout.topMargin: Style.space2
       kind: root.argumentRef
       value: root.bind.argument ?? ""
       onCommitted: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
@@ -122,6 +125,7 @@ ColumnLayout {
       id: argumentText
       field: "argument"
       visible: root.needed && root.argumentOptions === null && root.argumentRef === ""
+      Layout.topMargin: Style.space2
       placeholderText: {
         switch (KeybindManager.argumentKind(root.bind.action)) {
         case "resize":
@@ -143,6 +147,7 @@ ColumnLayout {
     // The call: toggle, open or close
     SchemaComboBox {
       visible: root.callOptions !== null
+      Layout.topMargin: Style.space2
       // I18n.tr("Does")
       label: "Does"
       options: root.callOptions ?? []
@@ -179,6 +184,7 @@ ColumnLayout {
     }
 
     StyledText {
+      Layout.topMargin: Style.space2
       text: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
       role: "caption"
       tone: "muted"
@@ -197,61 +203,67 @@ ColumnLayout {
   FieldGroup {
     title: I18n.tr("Only when")
 
-    // The compositors: a chip each, any of them, none for every one
-    Repeater {
-      model: KeybindManager.conditionFields.filter(part => part.multi)
+    // Bare controls, a gap between each (not rows)
+    ColumnLayout {
+      Layout.fillWidth: true
+      spacing: Style.space2
 
-      delegate: RowLayout {
-        id: part
-        required property var modelData
-        readonly property var chosen: root.bind[part.modelData.field] ?? []
-        visible: root.bind.action !== "raw"
-        spacing: Widget.spacing
-        Layout.fillWidth: true
+      // The compositors: a chip each, any of them, none for every one
+      Repeater {
+        model: KeybindManager.conditionFields.filter(part => part.multi)
 
-        StyledLabel {
-          text: part.modelData.title
+        delegate: RowLayout {
+          id: part
+          required property var modelData
+          readonly property var chosen: root.bind[part.modelData.field] ?? []
+          visible: root.bind.action !== "raw"
+          spacing: Widget.spacing
           Layout.fillWidth: true
-        }
 
-        Repeater {
-          model: part.modelData.options
+          StyledLabel {
+            text: part.modelData.title
+            Layout.fillWidth: true
+          }
 
-          delegate: SegmentButton {
-            id: chip
-            required property string modelData
-            readonly property bool selected: part.chosen.includes(chip.modelData)
-            text: part.modelData.labels[chip.modelData] ?? chip.modelData
-            active: chip.selected
-            onClicked: {
-              const next = chip.selected ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
-              KeybindManager.editor.setField(root.bindIndex, part.modelData.field, part.modelData.options.filter(v => next.includes(v)));
+          Repeater {
+            model: part.modelData.options
+
+            delegate: SegmentButton {
+              id: chip
+              required property string modelData
+              readonly property bool selected: part.chosen.includes(chip.modelData)
+              text: part.modelData.labels[chip.modelData] ?? chip.modelData
+              active: chip.selected
+              onClicked: {
+                const next = chip.selected ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
+                KeybindManager.editor.setField(root.bindIndex, part.modelData.field, part.modelData.options.filter(v => next.includes(v)));
+              }
             }
           }
         }
       }
-    }
 
-    Repeater {
-      model: KeybindManager.conditionFields.filter(part => !part.multi)
+      Repeater {
+        model: KeybindManager.conditionFields.filter(part => !part.multi)
 
-      delegate: SchemaComboBox {
-        required property var modelData
-        label: modelData.title
-        options: modelData.options
-        optionLabels: modelData.labels
-        currentValue: root.bind[modelData.field] ?? ""
-        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, modelData.field, value)
+        delegate: SchemaComboBox {
+          required property var modelData
+          label: modelData.title
+          options: modelData.options
+          optionLabels: modelData.labels
+          currentValue: root.bind[modelData.field] ?? ""
+          onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, modelData.field, value)
+          Layout.fillWidth: true
+        }
+      }
+
+      StyledText {
+        text: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
         Layout.fillWidth: true
       }
-    }
-
-    StyledText {
-      text: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-      Layout.fillWidth: true
     }
   }
 

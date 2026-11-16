@@ -17,8 +17,9 @@ Item {
 
   default property alias content: holder.data
 
-  // The vertical gap between groups; flat groups pass 0 (their own top margin is the gap)
-  property real rowGap: Style.space5
+  // The vertical gap between groups (flat groups have no inset of their own;
+  // the settings page's card gap)
+  property real rowGap: Style.space2
   readonly property int count: FlowColumns.count(root.width, Style.columnTarget, Style.columnMin, Style.columnMax, Style.space5)
   // Every child, and of them the visible units in order (a unit's height by
   // index into `units`)

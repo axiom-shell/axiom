@@ -79,6 +79,26 @@ TestCase {
     return out;
   }
 
+  // The nearest ancestor that clips what is drawn outside it (a ScrollView's
+  // own Flickable clips at its padding, so the padding is no room)
+  function clipOf(item) {
+    for (let p = item.parent; p; p = p.parent) {
+      if (p.clip)
+        return p;
+    }
+    return null;
+  }
+
+  // The tint overhangs its row by the bleed and lies inside the clip around it
+  function tintInside(row, tint) {
+    const clip = clipOf(tint);
+    verify(clip, "something clips the tint");
+    const left = tint.mapToItem(clip, 0, 0).x;
+    verify(left >= -0.5 && left + tint.width <= clip.width + 0.5, `the tint lies in its clip: ${left} + ${tint.width} of ${clip.width}`);
+    const over = tint.mapToItem(row, 0, 0).x;
+    verify(over <= -Style.rowBleed + 0.5, `the tint overhangs the row: ${over}`);
+  }
+
   function check(bar) {
     harness.configure({});
     const page = createTemporaryObject(pageComp, root, {
@@ -94,8 +114,7 @@ TestCase {
       compare(Math.round(page.row.width), 400);
     tryVerify(() => findAll(page.row, it => it.objectName === "rowTint").length > 0);
     const tint = findAll(page.row, it => it.objectName === "rowTint")[0];
-    const tl = tint.mapToItem(page.scroll, 0, 0);
-    verify(tl.x >= -0.5 && tl.x + tint.width <= page.scroll.width + 0.5, `the tint lies in the view: ${tl.x} + ${tint.width} of ${page.scroll.width}`);
+    tintInside(page.row, tint);
   }
 
   function test_bleed_without_scroll_bar() {
@@ -170,7 +189,10 @@ TestCase {
 
         anchors.fill: parent
         anchors.margins: -Style.focusWidth
-        contentPadding: Style.focusWidth
+        contentPadding: 0
+        bleed: Style.focusWidth
+        topPadding: Style.focusWidth
+        bottomPadding: Style.focusWidth
 
         ColumnLayout {
           width: scroll.availableWidth
@@ -199,8 +221,7 @@ TestCase {
       compare(Math.round(at.x), 0);
       tryVerify(() => findAll(page.row, it => it.objectName === "rowTint").length > 0);
       const tint = findAll(page.row, it => it.objectName === "rowTint")[0];
-      const tl = tint.mapToItem(page.scroll, 0, 0);
-      verify(tl.x >= -0.5 && tl.x + tint.width <= page.scroll.width + 0.5, `the tint lies in the view: ${tl.x} + ${tint.width} of ${page.scroll.width}`);
+      tintInside(page.row, tint);
     }
   }
 
@@ -211,9 +232,11 @@ TestCase {
     const ring = findAll(page.entry, it => it.shown !== undefined && it._host !== undefined)[0];
     verify(ring !== undefined, "the row's FocusRing");
     ring.shown = true;
-    const tl = ring.mapToItem(page.scroll, 0, 0);
+    const clip = clipOf(ring);
+    verify(clip, "something clips the ring");
+    const tl = ring.mapToItem(clip, 0, 0);
     verify(tl.x >= -0.5 && tl.y >= -0.5, `the ring starts inside: ${tl.x},${tl.y}`);
-    verify(tl.x + ring.width <= page.scroll.width + 0.5, "the ring ends inside across");
+    verify(tl.x + ring.width <= clip.width + 0.5, "the ring ends inside across");
   }
 
   // A titled card's scrolling body (the bars panel, window rules, keybinds):
@@ -253,7 +276,6 @@ TestCase {
     compare(Math.round(at.x), Widget.padding);
     tryVerify(() => findAll(card.row, it => it.objectName === "rowTint").length > 0);
     const tint = findAll(card.row, it => it.objectName === "rowTint")[0];
-    const tl = tint.mapToItem(scroll, 0, 0);
-    verify(tl.x >= -0.5 && tl.x + tint.width <= scroll.width + 0.5, `the tint lies in the view: ${tl.x} + ${tint.width} of ${scroll.width}`);
+    tintInside(card.row, tint);
   }
 }

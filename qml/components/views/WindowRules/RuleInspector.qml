@@ -91,6 +91,7 @@ ColumnLayout {
           id: kindItem
           required property int index
           Layout.fillWidth: true
+          Layout.topMargin: kindItem.index > 0 ? Style.space2 : 0
           spacing: Widget.spacing
 
           StyledText {
@@ -108,6 +109,7 @@ ColumnLayout {
 
       Flow {
         Layout.fillWidth: true
+        Layout.topMargin: (root.rule.windows?.length ?? 0) > 0 ? Style.space2 : 0
         spacing: Widget.spacing
 
         StyledTextButton {
@@ -167,6 +169,7 @@ ColumnLayout {
       }
 
       IssueList {
+        Layout.topMargin: Style.space2
         issues: root.placedNotes.concat(root.noFocusNotes)
       }
     }
@@ -184,6 +187,7 @@ ColumnLayout {
       }
 
       IssueList {
+        Layout.topMargin: Style.space2
         issues: root.powerNotes
       }
     }

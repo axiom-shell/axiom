@@ -76,7 +76,6 @@ ColumnLayout {
       readonly property bool listed: screen.when.test === "is" || screen.when.test === "isNot"
 
       width: parent?.width ?? 0
-      rowGap: 0
 
       // A new screen (or Rename) takes the focus in its Name
       function focusName() {

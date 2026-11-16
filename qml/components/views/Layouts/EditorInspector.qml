@@ -223,7 +223,7 @@ Item {
 
       ColumnLayout {
         width: optionsScroll.availableWidth
-        spacing: Widget.spacing
+        spacing: Style.space2
 
         // Where its feature is set (the type's `x-link`)
         FieldLinks {

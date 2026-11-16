@@ -41,6 +41,7 @@ FieldGroup {
   SchemaPropertiesForm {
     id: form
     Layout.fillWidth: true
+    Layout.topMargin: root.problem !== "" ? Style.space2 : 0
     propertiesSchema: root.propertiesSchema
     order: root.order
     values: root.values

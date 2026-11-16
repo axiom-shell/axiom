@@ -150,7 +150,6 @@ Item {
     // A Custom page
     FieldGroup {
       visible: root.isCustom
-      Layout.topMargin: Widget.spacing
       title: I18n.tr("Page")
       description: I18n.tr("Its name and icon show in the page navigator.")
 
@@ -183,6 +182,7 @@ Item {
 
       SettingsLink {
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         setting: "Overlay.navigator"
       }
     }
@@ -190,7 +190,6 @@ Item {
     // A tool page
     FieldGroup {
       visible: root.view !== null && !root.isCustom
-      Layout.topMargin: Widget.spacing
       title: I18n.tr("Tool page")
       description: I18n.tr("A page of its own, with no layout to edit. Tools show as icons after your pages in the navigator.")
 
@@ -212,6 +211,7 @@ Item {
       // Goes to it (only while it's shown)
       SettingsLink {
         Layout.fillWidth: true
+        Layout.topMargin: Style.space2
         page: root.view?.type ?? ""
       }
     }
@@ -219,7 +219,6 @@ Item {
     // How a page opens besides the navigator
     FieldGroup {
       visible: root.view !== null
-      Layout.topMargin: Widget.spacing
       title: I18n.tr("Opening")
       description: I18n.tr("A bar button or keybind that opens the overlay on this page.")
 
@@ -240,7 +239,6 @@ Item {
       delegate: FieldGroup {
         id: group
         required property var modelData
-        Layout.topMargin: Widget.spacing
         title: I18n.tr(group.modelData.title)
 
         Loader {
@@ -254,6 +252,8 @@ Item {
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
+          // Under the Opening group's buttons and list (not a row)
+          Layout.topMargin: group.modelData.title === "Opening" ? Style.space2 : 0
           propertiesSchema: group.modelData.schema
           order: group.modelData.keys
           // The whole menu, so x-showIf sees keys from other groups
@@ -268,7 +268,6 @@ Item {
     // taken away
     FieldGroup {
       visible: root.isDesktop
-      Layout.topMargin: Widget.spacing
       title: I18n.tr("Desktop")
       description: root.screenTarget?.description ?? ""
 
@@ -307,6 +306,7 @@ Item {
 
       StyledTextButton {
         visible: root.isDesktopMonitor && root.screenLayout === null
+        Layout.topMargin: Style.space2
         iconText: "add"
         text: I18n.tr("Give it its own layout")
         onClicked: DesktopManager.createForTarget()
@@ -314,6 +314,7 @@ Item {
 
       StyledTextButton {
         visible: root.isDesktopMonitor && root.screenLayout !== null
+        Layout.topMargin: Style.space2
         iconText: "delete"
         text: I18n.tr("Remove its own layout")
         onClicked: DesktopManager.removeTarget()
@@ -325,7 +326,6 @@ Item {
     // same while it's selected
     FieldGroup {
       visible: root.screenLayout !== null && root.screenTarget.canPreview
-      Layout.topMargin: Widget.spacing
       title: root.screenTarget?.title ?? ""
       description: root.screenTarget?.description ?? ""
 
@@ -342,7 +342,6 @@ Item {
       delegate: FieldGroup {
         id: screenGroup
         required property var modelData
-        Layout.topMargin: Widget.spacing
         title: I18n.tr(screenGroup.modelData.title)
 
         SchemaPropertiesForm {
