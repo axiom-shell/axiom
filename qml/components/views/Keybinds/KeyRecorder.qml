@@ -27,6 +27,8 @@ Surface {
 
   readonly property bool recording: KeybindManager.editor.recordingIndex === root.bindIndex
   // Modifiers held so far while recording
+  // Whether the recorder held focus when a recording began
+  property bool _returnFocus: false
   property var held: []
   // The modifier key pressed alone, as a tap ("Super_L"), until another
   // key comes
@@ -56,10 +58,13 @@ Surface {
   onRecordingChanged: {
     root.held = [];
     root.tap = "";
-    if (root.recording)
+    if (root.recording) {
+      // Give focus back after only if the recorder had it (a key, not a click)
+      root._returnFocus = root.activeFocus;
       catcher.forceActiveFocus();
-    else if (catcher.activeFocus)
+    } else if (catcher.activeFocus && root._returnFocus) {
       root.forceActiveFocus();
+    }
   }
   // Recording may start before it's built (a bind added and recorded)
   Component.onCompleted: {

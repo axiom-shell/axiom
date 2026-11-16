@@ -6,6 +6,7 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.views.BarEditor
 import qs.components.content.base
+import qs.components.views.base
 
 // A scroll view holding FormRows with `bleed: Style.rowBleed` and matching
 // negative margins: the rows keep the full width and their tint stays in the view.
@@ -277,5 +278,41 @@ TestCase {
     tryVerify(() => findAll(card.row, it => it.objectName === "rowTint").length > 0);
     const tint = findAll(card.row, it => it.objectName === "rowTint")[0];
     tintInside(card.row, tint);
+  }
+
+  // A tool pane's body (the custom widgets editor's tabs sit straight in it,
+  // no inset of their own): a row lines up with a titled card's rows and its
+  // tint lies inside the clip
+  Component {
+    id: paneComp
+
+    ToolPane {
+      id: pane
+
+      property alias row: row
+
+      width: 400
+      height: 300
+      title: "Pane"
+
+      FormRow {
+        id: row
+
+        Layout.fillWidth: true
+        first: true
+        bodyHeight: 30
+        hoverable: true
+      }
+    }
+  }
+
+  function test_tool_pane_row_lines_up() {
+    harness.configure({});
+    const pane = createTemporaryObject(paneComp, root);
+    waitForRendering(pane);
+    tryVerify(() => pane.row.width > 0);
+    compare(Math.round(pane.row.mapToItem(pane, 0, 0).x), Widget.padding);
+    tryVerify(() => findAll(pane.row, it => it.objectName === "rowTint").length > 0);
+    tintInside(pane.row, findAll(pane.row, it => it.objectName === "rowTint")[0]);
   }
 }

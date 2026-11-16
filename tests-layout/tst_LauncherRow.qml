@@ -186,6 +186,24 @@ TestCase {
     verify(chip.x + chip.width <= row.width, "chip inside the row");
   }
 
+  // A long hint stays whole inside its chip at the narrowest launcher: the
+  // title gives way, the hint is never capped
+  function test_longHintStaysInItsChip() {
+    const hint = "Press Enter again to confirm";
+    const row = makeRow({
+      title: "Shut down the computer",
+      kind: "command",
+      hint: hint
+    });
+    row.width = 400;
+    wait(50);
+    const chip = findLabel(row, hint);
+    verify(chip, "hint label found");
+    verify(!chip.truncated, "hint truncated");
+    verify(chip.width <= chip.parent.width + 0.5, "hint " + chip.width + " wider than its chip " + chip.parent.width);
+    verify(chip.mapToItem(row, chip.width, 0).x <= row.width, "hint inside the row");
+  }
+
   // The pill's rest colour is the selected fill at alpha 0: a ColorAnimation
   // lerps each channel, so a rest of transparent black dips through grey
   function pillOf(row) {

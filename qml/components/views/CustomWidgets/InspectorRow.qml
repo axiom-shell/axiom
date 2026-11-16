@@ -10,7 +10,8 @@ import qs.components.forms
 // schema row) holding a FieldLine and the control, laid out as SchemaField
 // lays its fields out (FieldFit): the control under its label, or with
 // `shortControl` (a dropdown) on the label's line whenever it fits beside it,
-// as SchemaComboBox. The control (a child) sets its own Layout.fillWidth. Captions and editors that belong to the row but not
+// as SchemaComboBox. The control (a child) sets its own Layout.fillWidth.
+// Captions and editors that belong to the row but not
 // to the field go in `below` (outside the tint, as a hookup under a setting);
 // the host says whether they show (`belowShown`, from data). A row whose
 // control is a schema control with its own label (SchemaComboBox) leaves

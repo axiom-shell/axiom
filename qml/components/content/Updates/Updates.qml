@@ -162,7 +162,7 @@ Panel {
     // A failed check's stderr wraps rather than widening the popout
     Layout.maximumWidth: Widget.textPx(320)
     overflow: "wrap"
-    text: root.failed || I18n.tr("System is up to date")
+    text: root.failed || (UpdatesManager.checking ? I18n.tr("checking…") : I18n.tr("System is up to date"))
     tone: "muted"
   }
 
@@ -183,7 +183,7 @@ Panel {
       maxWidth: parent.width
       availableHeight: parent.height
       icon: !UpdatesManager.supported ? "block" : root.failed !== "" ? "error" : "check"
-      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : root.failed || I18n.tr("System is up to date")
+      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : root.failed || (UpdatesManager.checking ? I18n.tr("checking…") : I18n.tr("System is up to date"))
     }
   }
 }

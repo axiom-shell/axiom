@@ -23,6 +23,10 @@ PanelWindow {
   implicitWidth: card.width
   // Room under the card for its slide in
   implicitHeight: card.height + Style.enterOffset * 2
+  // Only the card takes clicks, not the slide-in room around it
+  mask: Region {
+    item: card
+  }
 
   WlrLayershell.layer: WlrLayer.Overlay
   WlrLayershell.namespace: "axiom-monitor-prompt"

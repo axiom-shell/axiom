@@ -189,7 +189,7 @@ PanelWindow {
   // The screens' map: every screen as big as one alone in the base card,
   // the card growing as screens are added, scaled down only past what
   // this screen fits
-  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - Style.space5 * 2, root.screenMaxHeight + root.tileInset * 2, root.cardMaxWidth - Style.space5 * 2, root.height * 0.6)
+  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - card.padding * 2, root.screenMaxHeight + root.tileInset * 2, root.cardMaxWidth - card.padding * 2, root.height * 0.6)
   // The body's height for the screens: every tab keeps it, so the card
   // doesn't jump between tabs; at least the one-screen card's old body
   // (the screen and its names under it)

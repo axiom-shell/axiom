@@ -198,7 +198,6 @@ Item {
 
     StatusChip {
       Layout.alignment: Qt.AlignVCenter
-      Layout.maximumWidth: root.width * 0.4
       visible: text !== ""
       tone: root.modelData.armed ? "error" : "neutral"
       text: root.modelData.hint ?? ""

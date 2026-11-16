@@ -42,7 +42,6 @@ GridLayout {
     }
 
     delegate: StyledText {
-      id: value
       required property int index
       readonly property var fact: root._shown[index] ?? ({})
       text: fact.value ?? ""

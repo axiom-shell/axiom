@@ -119,16 +119,14 @@ BaseView {
         }
       }
 
-      // Only the shown tab is built; inset, so its rows' hover isn't cut
-      // square at the pane's edge
-      FormInset {
-        KeyedLoader {
-          id: tabs
-          Layout.fillWidth: true
-          Layout.preferredHeight: tabs.childrenRect.height
-          key: root.editor.importing ? "import" : root.editor.gallery ? "gallery" : root.editor.tab === 3 ? "help" : root.editor.selected !== null ? root.editor.tab + ":" + root.editor.selectedId : ""
-          sourceComponent: root.editor.importing ? importForm : root.editor.gallery ? galleryForm : root.editor.tab === 3 ? helpTab : root.editor.tab === 1 ? barTab : root.editor.tab === 2 ? moduleTab : dataTab
-        }
+      // Only the shown tab is built (the pane's own bleed keeps its rows'
+      // hover whole)
+      KeyedLoader {
+        id: tabs
+        Layout.fillWidth: true
+        Layout.preferredHeight: tabs.childrenRect.height
+        key: root.editor.importing ? "import" : root.editor.gallery ? "gallery" : root.editor.tab === 3 ? "help" : root.editor.selected !== null ? root.editor.tab + ":" + root.editor.selectedId : ""
+        sourceComponent: root.editor.importing ? importForm : root.editor.gallery ? galleryForm : root.editor.tab === 3 ? helpTab : root.editor.tab === 1 ? barTab : root.editor.tab === 2 ? moduleTab : dataTab
       }
 
       Component {
