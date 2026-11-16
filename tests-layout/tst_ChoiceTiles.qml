@@ -169,4 +169,88 @@ TestCase {
     const tile = rowsOf(tiles)[0][0];
     compare(tile.height, tiles.previewHeight + Widget.smallPadding + Widget.height);
   }
+
+  function cards() {
+    return [
+      {
+        "value": "a",
+        "label": "Short",
+        "icon": "bolt",
+        "description": "One line."
+      },
+      {
+        "value": "b",
+        "label": "Long",
+        "icon": "tune",
+        "tag": "Recommended",
+        "description": "A much longer description that wraps over several lines in a half-width card, so this card is taller."
+      }
+    ];
+  }
+
+  function test_icon_variant_is_a_card() {
+    harness.configure({});
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": cards()
+    });
+    waitForRendering(tiles);
+    const tile = tiles.children.find(child => child.width === tiles.tileWidth);
+    verify(tile.card, "icon, description or tag make a card");
+    verify(tile.height >= Widget.padding * 2, "has its content's height");
+    compare(harness.containedProblems(tiles, true), []);
+  }
+
+  function test_rows_layout_is_two_up_and_equal_height_data() {
+    return [
+      {
+        "tag": "100%",
+        "scale": 100
+      },
+      {
+        "tag": "150%",
+        "scale": 150,
+        "fontSize": 20
+      }
+    ];
+  }
+
+  function test_rows_layout_is_two_up_and_equal_height(data) {
+    harness.configure(data);
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(480),
+      "options": cards(),
+      "layout": "rows"
+    });
+    waitForRendering(tiles);
+    wait(50);
+    compare(tiles.columns, 2);
+    const row = rowsOf(tiles);
+    compare(row.length, 1, "one line");
+    compare(row[0].length, 2);
+    compare(row[0][0].width, row[0][1].width, "equal halves");
+    compare(row[0][0].height, row[0][1].height, "equal heights");
+    verify(row[0][0].height >= row[0][1].implicitHeight, "as tall as the taller");
+    compare(harness.containedProblems(tiles, true), []);
+  }
+
+  function test_disabled_tile_is_not_picked() {
+    harness.configure({});
+    const options = cards();
+    options[1].disabledReason = "Not here";
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": options
+    });
+    waitForRendering(tiles);
+    const picks = [];
+    tiles.picked.connect(value => picks.push(value));
+    const tile = rowsOf(tiles)[0][1];
+    compare(tile.disabledReason, "Not here");
+    verify(tile.disabled);
+    mouseClick(tile);
+    compare(picks, [], "a click on a disabled tile picks nothing");
+    mouseClick(rowsOf(tiles)[0][0]);
+    compare(picks, ["a"]);
+  }
 }
