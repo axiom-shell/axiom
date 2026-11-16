@@ -218,7 +218,7 @@ Item {
               anchors.fill: parent
               anchors.margins: 1
               visible: root.titles
-              radius: Widget.radius
+              radius: Style.radius
               color: cell.selected ? Style.accentContainer : "transparent"
 
               StateLayer {
@@ -300,7 +300,7 @@ Item {
                   readonly property color calendarColor: Style.resolve(CalendarManager.colors[chip.event?.calendar] ?? "accent")
                   width: parent?.width ?? 0
                   height: cell.lineHeight
-                  radius: Widget.radius / 2
+                  radius: Style.radiusInner
                   color: chip.event?.allDay ? Style.surfaceHighest : "transparent"
 
                   Rectangle {

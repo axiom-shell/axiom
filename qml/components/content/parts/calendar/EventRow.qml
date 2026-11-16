@@ -22,7 +22,7 @@ Rectangle {
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Widget.spacing
-  radius: Widget.radius
+  radius: Style.radius
   color: "transparent"
 
   StateLayer {

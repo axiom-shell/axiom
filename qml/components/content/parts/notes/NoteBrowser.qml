@@ -156,7 +156,7 @@ DropdownSurface {
                 anchors.verticalCenter: parent.verticalCenter
                 implicitWidth: (crumb.index === 0 ? crumbLabel.implicitWidth : crumbName.implicitWidth) + Widget.spacing * 1.5
                 implicitHeight: Math.max(Widget.smallHeight, (crumb.index === 0 ? crumbLabel.implicitHeight : crumbName.implicitHeight) + Widget.spacing)
-                radius: Widget.radius / 2
+                radius: Style.radiusInner
                 color: "transparent"
 
                 StateLayer {

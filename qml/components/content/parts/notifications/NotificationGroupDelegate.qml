@@ -101,7 +101,7 @@ Item {
     width: parent.width
     height: body.implicitHeight + Widget.padding * 2
     clip: true
-    radius: Widget.radius
+    radius: Style.radius
     border.color: Style.error
 
     Glide on height {

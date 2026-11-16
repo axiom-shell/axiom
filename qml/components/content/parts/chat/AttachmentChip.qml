@@ -18,7 +18,7 @@ ClippingRectangle {
 
   implicitWidth: root.size
   implicitHeight: root.size
-  radius: Widget.radius / 2
+  radius: Style.radiusInner
   color: Style.surfaceHighest
   border.color: Style.borderSubtle
   border.width: Style.hairline
