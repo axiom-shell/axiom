@@ -805,8 +805,9 @@ TestCase {
       "label": strings[data.key]
     });
     waitForRendering(toggle);
-    const control = toggle.children[0].children.find(c => c.options !== undefined);
-    compare(toggle.stacked, control.implicitWidth > toggle.width - Widget.textPx(160));
+    const control = findAll(toggle, c => c.options !== undefined && c.labels !== undefined)[0];
+    const line = findAll(toggle, c => c.lineWidth !== undefined)[0].lineWidth;
+    compare(toggle.stacked, !FieldFit.place("fixed", toggle.width, line, control.implicitWidth, Widget.fieldTokens).inline);
     // A toggle wider than the whole row (a few long labels in a narrow
     // form) overflows however it is laid out: only a fitting one is held
     if (control.implicitWidth <= toggle.width)
@@ -885,35 +886,36 @@ TestCase {
     compare(box.implicitHeight, stepper.controlHeight);
   }
 
-  // A stepper that would leave its label less than its least column goes
-  // under the label (N12), the label keeping one line
+  // A stepper that wouldn't leave its label's line the room it needs goes
+  // under the label (N12), the label keeping one line; the width is derived
+  // from FieldFit, not hard-coded
   function test_number_field_stepper_stacks_under_a_narrow_label() {
     harness.configure({});
-    const field = createTemporaryObject(numberComp, root, {
-      "width": 245,
+    const props = {
       "label": "Interval",
       "minimum": 500,
       "maximum": 86400000,
       "step": 500,
       "mode": "stepper"
-    });
+    };
+    const wide = createTemporaryObject(numberComp, root, Object.assign({
+      "width": 700
+    }, props));
+    waitForRendering(wide);
+    verify(wide.inline);
+    const box = findAll(wide, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
+    const line = findAll(wide, it => it.lineWidth !== undefined)[0].lineWidth;
+    const tokens = Widget.fieldTokens;
+    const narrowWidth = Math.ceil(box.implicitWidth + tokens.gap + Math.min(line, tokens.labelLeast)) - 1;
+    const field = createTemporaryObject(numberComp, root, Object.assign({
+      "width": narrowWidth
+    }, props));
     waitForRendering(field);
-    const head = findAll(field, it => it.stepperStacked !== undefined)[0];
-    verify(head.stepperStacked);
+    verify(!field.inline);
     const label = findAll(field, it => it.text === "Interval")[0];
     const stepper = findAll(field, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
     verify(stepper.mapToItem(field, 0, 0).y >= label.mapToItem(field, 0, label.height).y);
     verify(label.height < label.font.pixelSize * 2);
-    const wide = createTemporaryObject(numberComp, root, {
-      "width": 700,
-      "label": "Interval",
-      "minimum": 500,
-      "maximum": 86400000,
-      "step": 500,
-      "mode": "stepper"
-    });
-    waitForRendering(wide);
-    verify(!findAll(wide, it => it.stepperStacked !== undefined)[0].stepperStacked);
   }
 
   // A row tints unless `tinted` is off; its click area shows only while hoverable
@@ -1147,31 +1149,55 @@ TestCase {
       "headerBelow": belowComp
     });
     waitForRendering(field);
-    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
-    const part = findAll(header, it => it.shows !== undefined)[0];
-    verify(part !== undefined && header.height >= 40 + Widget.spacing / 2);
+    // The label's line and the notes (description, links) are two headers
+    const heads = findAll(field, it => it.below !== undefined && it.trailing !== undefined);
+    const header = heads[0];
+    const notes = heads[1];
+    const part = findAll(notes, it => it.shows !== undefined)[0];
+    const top = header.mapToItem(field, 0, 0).y;
+    const bottom = () => notes.mapToItem(field, 0, notes.height).y;
+    verify(part !== undefined && bottom() - top >= 40 + Widget.spacing / 2);
     const middle = item => item.mapToItem(field, 0, item.height / 2).y;
     const control = findAll(field, it => it[data.kind] !== undefined)[0];
     verify(control !== undefined, "a trailing control");
-    verify(Math.abs(middle(control) - middle(header)) <= 1, `${data.tag}: control ${middle(control)} header ${middle(header)}`);
-    const tall = header.height;
+    verify(Math.abs(middle(control) - (top + bottom()) / 2) <= 1, `${data.tag}: control ${middle(control)} block ${(top + bottom()) / 2}`);
+    const tall = bottom() - top;
     part.open = false;
-    tryVerify(() => header.height < tall - 40 + 1);
+    tryVerify(() => bottom() - top < tall - 40 + 1);
   }
 
   // Stacked (a narrow row), the links sit above the control, never beside it
   function test_stacked_toggle_keeps_its_link_above() {
     harness.configure({});
     const field = createTemporaryObject(toggleRowComp, root, {
-      "width": Widget.textPx(200),
+      "width": Widget.textPx(120),
       "headerBelow": belowComp
     });
     waitForRendering(field);
     verify(field.stacked);
-    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
+    const notes = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[1];
     const control = findAll(field, it => it._segment !== undefined)[0];
     const top = control.mapToItem(field, 0, 0).y;
-    verify(header.mapToItem(field, 0, header.height).y <= top, "the header, link included, ends above the toggle");
+    verify(notes.mapToItem(field, 0, notes.height).y <= top, "the notes, link included, end above the toggle");
+  }
+
+  // On a narrow line that fits, the toggle sits on the label's line and the
+  // description and links span the full width under it
+  function test_narrow_inline_toggle_keeps_its_link_below_the_line() {
+    harness.configure({});
+    const field = createTemporaryObject(toggleRowComp, root, {
+      "width": Widget.textPx(300),
+      "headerBelow": belowComp
+    });
+    waitForRendering(field);
+    verify(!field.stacked);
+    const heads = findAll(field, it => it.below !== undefined && it.trailing !== undefined);
+    const header = heads[0];
+    const notes = heads[1];
+    const control = findAll(field, it => it._segment !== undefined)[0];
+    verify(control.mapToItem(field, 0, control.height).y <= notes.mapToItem(field, 0, 0).y + 1, "the toggle is on the label's line");
+    verify(notes.mapToItem(field, 0, 0).y >= header.mapToItem(field, 0, header.height).y - 1, "the notes sit under the line");
+    verify(notes.width >= field.width - 1, "across the full width");
   }
 
   // The More link is built only when the text is longer than its lines;

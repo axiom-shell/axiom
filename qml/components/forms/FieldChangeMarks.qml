@@ -48,6 +48,9 @@ Item {
   signal discard
 
   implicitWidth: marks.implicitWidth
+  // The width with the reset button shown, constant, so a field going off
+  // its default never flips its row between inline and stacked (FieldHeader.lineWidth)
+  readonly property real fullWidth: Style.iconLg + dot.implicitWidth + Widget.spacing / 2
 
   // Centred on the label's line, whatever their height
   Row {

@@ -81,9 +81,26 @@ QtObject {
   function textPx(n: real): int {
     return StyleTokens.textPx(n, scale, Appearance.baseFontSize);
   }
-  // A form field at least this wide puts a short control (a dropdown, a
-  // slider) beside its label, at fieldControlWidth; narrower, under it
+  // A form field at least this wide puts a short control (a slider, a
+  // dropdown beside a long description) beside its label with the
+  // description beside it too; narrower, the description spans the full
+  // width under the label's line (FieldFit)
   readonly property int fieldInlineFrom: textPx(420)
+  // The least width of a form field's label column (a longer label wraps)
+  readonly property int fieldLabelLeast: textPx(160)
+  // The least width of a dropdown or colour box on its label's line
+  readonly property int fieldControlLeast: textPx(120)
+  // What FieldFit places a field by (FieldLine passes it): gap, labelLeast,
+  // controlLeast, controlMax (the widest a box beside its label gets),
+  // controlShare (its share of the field), inlineFrom
+  readonly property var fieldTokens: ({
+      "gap": spacing * 2,
+      "labelLeast": fieldLabelLeast,
+      "controlLeast": fieldControlLeast,
+      "controlMax": textPx(260),
+      "controlShare": 0.42,
+      "inlineFrom": fieldInlineFrom
+    })
   function fieldControlWidth(fieldWidth: real): int {
     return Math.round(Math.min(textPx(260), fieldWidth * 0.42));
   }
