@@ -81,6 +81,12 @@ Item {
     font: subtitleText.font
   }
 
+  StateLayer {
+    visible: root.card?.clickable === true
+    hovered: cardArea.containsMouse
+    pressed: cardArea.pressed
+  }
+
   RowLayout {
     id: row
     anchors.verticalCenter: parent.verticalCenter
@@ -169,7 +175,9 @@ Item {
   }
 
   MouseArea {
+    id: cardArea
     anchors.fill: parent
+    hoverEnabled: true
     enabled: root.card?.clickable === true
     cursorShape: Qt.PointingHandCursor
     onClicked: root.clicked()

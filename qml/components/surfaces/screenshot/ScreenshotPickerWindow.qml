@@ -271,7 +271,7 @@ PanelWindow {
       y: below ? root.selection.y + root.selection.height + Widget.smallPadding : Math.max(0, root.selection.y - height - Widget.smallPadding)
       width: sizeText.implicitWidth + Widget.smallPadding * 2
       height: sizeText.implicitHeight + Widget.smallPadding
-      radius: Appearance.borderRadius / 2
+      radius: Style.radius
       visible: root.marked && root.hasPointer && root.selection.width > 0 && root.selection.height > 0
       // The whole selection's, over every screen it's on
       readonly property size pixels: ScreenshotManager.picker.selection ? ScreenshotManager.picker.pixelSize(ScreenshotManager.picker.selection) : Qt.size(0, 0)

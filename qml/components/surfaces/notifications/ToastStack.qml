@@ -481,14 +481,13 @@ Scope {
               return row.fromEnd ? root.attachedLength - before - row.height : before;
             }
 
-            Rectangle {
+            StyledSeparator {
               visible: row.index > 0
+              backTone: "page"
               anchors.left: parent.left
               anchors.right: parent.right
               anchors.margins: Widget.padding
               y: row.fromEnd ? parent.height - height : 0
-              height: 1
-              color: Style.divider
             }
 
             ToastItem {

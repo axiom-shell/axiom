@@ -375,18 +375,15 @@ Item {
   }
 
   // The special workspaces' box, the grid's own style, centred on the grid's centre
-  Rectangle {
+  Surface {
     id: specialBox
+    tone: "page"
     readonly property var column: root.specialSet.column
     visible: column !== null
     x: column?.x ?? 0
     y: column?.stackY ?? 0
     width: root.cellW + root.pad * 2
     height: (column?.stackH ?? 0) + root.pad * 2
-    radius: Appearance.borderRadius
-    color: gridBox.color
-    border.color: gridBox.border.color
-    border.width: gridBox.border.width
 
     MouseArea {
       anchors.fill: parent

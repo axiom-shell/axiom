@@ -302,6 +302,14 @@ PanelWindow {
           showTitle: false
         }
 
+        // The hover and press tint over the picture
+        StateLayer {
+          z: 1
+          radius: Widget.radius
+          hovered: tile.hovered
+          pressed: tileMouse.pressed
+        }
+
         // The picked one's check
         Rectangle {
           z: 1

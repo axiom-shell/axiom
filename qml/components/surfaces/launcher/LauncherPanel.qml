@@ -248,27 +248,11 @@ FocusScope {
         event.accepted = true;
       }
 
-      cursorDelegate: Rectangle {
-        width: 2
-        color: Style.accent
-        visible: input.activeFocus
-        SequentialAnimation on opacity {
-          loops: Animation.Infinite
-          running: input.activeFocus && root.shown
-          PropertyAnimation {
-            to: 1
-            duration: 500 // the cursor blink
-          }
-          PropertyAnimation {
-            to: 0
-            duration: 500 // the cursor blink
-          }
-        }
-      }
+      cursorDelegate: TextCursor {}
     }
 
     // The mode, when it isn't a plain search
-    Rectangle {
+    StatusChip {
       readonly property var labels: ({
           commands: I18n.tr("Commands"),
           calc: I18n.tr("Calculator"),
@@ -279,19 +263,9 @@ FocusScope {
           emoji: I18n.tr("Emoji"),
           files: I18n.tr("Files")
         })
-      visible: modeLabel.text !== ""
-      implicitWidth: modeLabel.implicitWidth + Widget.spacing * 4
-      implicitHeight: modeLabel.implicitHeight + Widget.spacing * 2
-      radius: Widget.radius
-      color: Style.accentContainer
-
-      StyledLabel {
-        id: modeLabel
-        anchors.centerIn: parent
-        text: parent.labels[LauncherManager.mode] ?? ""
-        textColor: Style.onAccentContainer
-        role: "caption"
-      }
+      visible: text !== ""
+      tone: "accent"
+      text: labels[LauncherManager.mode] ?? ""
     }
 
     // Clears the search, keeping the focus in it

@@ -132,4 +132,29 @@ TestCase {
     const gap = usage.mapToItem(title.parent, 0, 0).x - (title.x + title.width);
     verify(gap < 2 * Widget.spacing + 1, "usage " + gap + " px after the title");
   }
+
+  // The hint is a StatusChip: a pill at least a small control tall, inside the row
+  function findChip(item) {
+    if (item.tone !== undefined && item.ink !== undefined && item.text === "Enter")
+      return item;
+    for (let i = 0; i < item.children.length; i++) {
+      const hit = findChip(item.children[i]);
+      if (hit)
+        return hit;
+    }
+    return null;
+  }
+
+  function test_hintIsStatusChip() {
+    const row = makeRow({
+      title: "Files",
+      kind: "app",
+      hint: "Enter"
+    });
+    const chip = findChip(row);
+    verify(chip, "hint chip found");
+    verify(chip.height >= Widget.smallHeight, "chip " + chip.height + " px tall, a small control is " + Widget.smallHeight);
+    compare(chip.radius, chip.height / 2);
+    verify(chip.x + chip.width <= row.width, "chip inside the row");
+  }
 }

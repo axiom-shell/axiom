@@ -129,12 +129,15 @@ Item {
         fillMode: root._thumbnail || root.modelData.crop ? Image.PreserveAspectCrop : Image.PreserveAspectFit
       }
 
-      Rectangle {
+      Item {
         anchors.fill: parent
         visible: !root._image
-        radius: Widget.radius
-        color: root._emoji ? "transparent" : root.modelData.armed ? Style.errorContainer : Style.surfaceHighest
-        ColorGlide on color {}
+
+        Surface {
+          anchors.fill: parent
+          visible: !root._emoji
+          tone: root.modelData.armed ? "errorContainer" : "highest"
+        }
 
         StyledIcon {
           anchors.centerIn: parent
@@ -189,26 +192,12 @@ Item {
       }
     }
 
-    Rectangle {
+    StatusChip {
       Layout.alignment: Qt.AlignVCenter
       Layout.maximumWidth: root.width * 0.4
-      visible: hint.text !== ""
-      implicitWidth: hint.implicitWidth + Widget.smallPadding * 2
-      implicitHeight: hint.implicitHeight + Widget.smallPadding
-      radius: Widget.radius
-      color: root.modelData.armed ? Style.error : Style.surfaceHighest
-
-      StyledLabel {
-        id: hint
-        anchors.fill: parent
-        anchors.leftMargin: Widget.smallPadding
-        anchors.rightMargin: Widget.smallPadding
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        text: root.modelData.hint ?? ""
-        textColor: root.modelData.armed ? Style.onError : Style.inkHighest.muted
-        role: "micro"
-      }
+      visible: text !== ""
+      tone: root.modelData.armed ? "error" : "neutral"
+      text: root.modelData.hint ?? ""
     }
   }
 }
