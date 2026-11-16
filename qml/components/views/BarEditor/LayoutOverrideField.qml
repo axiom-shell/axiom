@@ -3,18 +3,19 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.methods
-import qs.components.reusable
 import qs.components.forms
 
 // One optional sizing override of a bar widget (a WidgetLayout key), a form
-// row. Unset it leaves the widget's own sizing, so it shows an "Override" button
-// rather than a number that would read as a real value.
+// row in the schema's automatic-number shape (SchemaField's `x-auto`): a
+// switch for setting it by hand, then the stepper. Unset leaves the widget's
+// own sizing, so no number shows that would read as a real value. A null and
+// an undefined `value` both mean unset; unsetting emits undefined.
 FormRow {
   id: root
 
   required property string key
   required property var fieldSchema
-  // The override, or undefined for none
+  // The override, or undefined (or null) for none
   property var value: undefined
   // What overriding starts at
   property int initial: 0
@@ -24,58 +25,35 @@ FormRow {
 
   readonly property bool isSet: root.value !== undefined && root.value !== null
 
+  activates: overrideSwitch
   bodyHeight: body.implicitHeight
 
-  Item {
+  ColumnLayout {
     id: body
     width: parent.width
-    implicitHeight: root.isSet ? setRow.implicitHeight : unsetRow.implicitHeight
+    spacing: Widget.spacing
 
-    RowLayout {
-      id: unsetRow
-      width: parent.width
-      visible: !root.isSet
-      spacing: Widget.spacing
-
-      FieldHeader {
-        label: root.fieldSchema.title ?? root.key
-        description: root.fieldSchema.description ?? ""
-      }
-
-      StyledTextButton {
-        text: I18n.tr("Override")
-        onClicked: root.edited(root.initial)
-      }
+    SchemaSwitch {
+      id: overrideSwitch
+      label: root.fieldSchema.title ?? root.key
+      description: root.fieldSchema.description ?? ""
+      checked: root.isSet
+      onToggled: value => root.edited(value ? root.initial : undefined)
     }
 
-    RowLayout {
-      id: setRow
-      width: parent.width
+    SchemaNumberField {
       visible: root.isSet
-      spacing: Widget.spacing
-
-      SchemaNumberField {
-        Layout.fillWidth: true
-        label: root.fieldSchema.title ?? root.key
-        currentConfigValue: root.isSet ? root.value : root.initial
-        minimum: root.fieldSchema.minimum ?? 0
-        maximum: root.fieldSchema.maximum ?? 9999
-        unit: root.fieldSchema["x-unit"] ?? ""
-        unitScale: SchemaLayout.unitScale(unit)
-        // The bar editor uses steppers throughout
-        mode: "stepper"
-        onCommitted: value => {
-          if (root.isSet && value !== root.value)
-            root.edited(value);
-        }
-      }
-
-      SquareIconButton {
-        Layout.alignment: Qt.AlignBottom
-        kind: "text"
-        iconText: "close"
-        tooltipText: root.key === "priority" ? I18n.tr("Use its type's priority") : I18n.tr("Use the widget's own sizing")
-        onClicked: root.edited(undefined)
+      label: ""
+      currentConfigValue: root.isSet ? root.value : root.initial
+      minimum: root.fieldSchema.minimum ?? 0
+      maximum: root.fieldSchema.maximum ?? 9999
+      unit: root.fieldSchema["x-unit"] ?? ""
+      unitScale: SchemaLayout.unitScale(unit)
+      // The bar editor uses steppers throughout
+      mode: "stepper"
+      onCommitted: value => {
+        if (root.isSet && value !== root.value)
+          root.edited(value);
       }
     }
   }

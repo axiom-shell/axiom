@@ -44,13 +44,13 @@ One shape and one vocabulary for every tool page ([recipe](../../recipes/tool-pa
   - While another page has some, it shows Save all / Discard all after its arrows (`saveAll()` / `discardAll()`).
   - Both skip `separate` pages: Monitors, which applies with a keep/revert step.
 - A new editor adds its manager to both lists.
-- `EditsManager` also keeps how the editors lay themselves out, past their pages (`state/editors.json`): `libraryGrouped` (both libraries) and the Keybinds editor's folded sections.
+- `EditsManager` also keeps how the editors lay themselves out, past their pages (`state/editors.json`): `libraryGrouped` (both libraries), the Keybinds editor's folded sections and the layouts editor's list sections (`layoutsFolds`: open or closed by section id, `SectionFolds`; Tools starts closed, the rest open).
 - And, in memory, where each panel was scrolled to (`scrollOf` / `rememberScroll`): a page's `TitledCard` takes a `scrollKey`, an inspector's ScrollView a `reusable/ScrollMemory` keyed by its selection, so they come back where they were when the overlay reopens.
 
 ### Text fields
 - Fields bound to draft values follow the push pattern ([qml-pitfalls](qml-pitfalls.md)).
   - Set the text on selection change, and on draft change unless focused.
-  - Write on `textEdited` (`LayoutsPanel`, `Monitors`), or on focus loss only if `typed` (`BindInspector`, `StyledComboEntry`).
+  - Write on each edit with a `CommitEntry` `live` (`LayoutsPanel`'s page name), or on `textEdited` (`Monitors`), or on focus loss only if `typed` (`BindInspector`, `StyledComboEntry`).
 
 ### Drag
 - A `reusable/DragLayer` subclass covers the page and draws the ghost.

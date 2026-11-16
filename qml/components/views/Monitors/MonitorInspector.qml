@@ -8,14 +8,15 @@ import qs.components.content.parts
 import qs.components.forms
 import qs.components.methods
 
-// The selected monitor's settings in the selected profile: on/off,
-// primary, mode, scale, rotation, mirroring, position, and (folded) VRR,
-// bit depth and color.
+// The selected monitor's settings in the selected profile, in title-less
+// cards like every inspector: on/off and primary, then mode, scale, rotation,
+// mirroring, position, and (folded) VRR, bit depth and color.
 // Form labels, translated by the Schema* widgets: I18n.tr("Enabled")
 // I18n.tr("Primary") I18n.tr("Resolution") I18n.tr("Refresh rate")
 // I18n.tr("Scale") I18n.tr("Mirror") I18n.tr("Variable refresh rate")
 // I18n.tr("10-bit color") I18n.tr("Color mode") I18n.tr("SDR brightness")
-// I18n.tr("SDR saturation") I18n.tr("X") I18n.tr("Y")
+// I18n.tr("SDR saturation") I18n.tr("X") I18n.tr("Y") I18n.tr("Rotation")
+// I18n.tr("Flipped")
 ColumnLayout {
   id: root
 
@@ -47,7 +48,7 @@ ColumnLayout {
     MonitorManager.setField(root.output, key, value);
   }
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // The nothing-selected state
   EmptyState {
@@ -69,40 +70,22 @@ ColumnLayout {
     onRemove: MonitorManager.forgetOutput(root.output)
   }
 
-  // Each switch a FormRow like the settings below: a click on the row toggles
-  ColumnLayout {
+  // Each switch a SwitchRow: a click on the row toggles
+  FieldGroup {
     visible: !!root.rule
     Layout.fillWidth: true
-    spacing: 0
 
-    FormRow {
-      first: true
-      hoverable: true
-      bodyHeight: enabledField.implicitHeight
-      onRowClicked: enabledField.activate()
-
-      SchemaSwitch {
-        id: enabledField
-        width: parent.width
-        label: "Enabled"
-        checked: !(root.rule?.disabled ?? false)
-        onToggled: value => root.set("disabled", !value)
-      }
+    SwitchRow {
+      label: "Enabled"
+      checked: !(root.rule?.disabled ?? false)
+      onToggled: value => root.set("disabled", !value)
     }
 
-    FormRow {
+    SwitchRow {
       shown: !!root.monitor
-      hoverable: true
-      bodyHeight: primaryField.implicitHeight
-      onRowClicked: primaryField.activate()
-
-      SchemaSwitch {
-        id: primaryField
-        width: parent.width
-        label: "Primary"
-        checked: !!root.monitor && root.monitor.name === General.configuredPrimary
-        onToggled: value => MonitorManager.setPrimary(value ? root.monitor.name : "")
-      }
+      label: "Primary"
+      checked: !!root.monitor && root.monitor.name === General.configuredPrimary
+      onToggled: value => MonitorManager.setPrimary(value ? root.monitor.name : "")
     }
   }
 
@@ -117,13 +100,11 @@ ColumnLayout {
   // Everything else only applies to a monitor that's on. Each setting is
   // a FormRow, as in a schema form: a divider between them, and the ones
   // that come and go (a mirror's position, Advanced) fold open and shut
-  ColumnLayout {
+  FieldGroup {
     visible: !!root.rule && !root.rule.disabled
     Layout.fillWidth: true
-    spacing: 0
 
     FormRow {
-      first: true
       bodyHeight: resolutionField.implicitHeight
 
       SchemaComboBox {
@@ -182,54 +163,31 @@ ColumnLayout {
       }
     }
 
-    FormRow {
-      bodyHeight: rotationRow.implicitHeight
+    FieldRow {
+      label: "Rotation"
 
-      ColumnLayout {
-        id: rotationRow
-        width: parent.width
-        spacing: Widget.spacing
+      SegmentRow {
+        Repeater {
+          model: [0, 90, 180, 270]
 
-        StyledText {
-          text: I18n.tr("Rotation")
-          role: "label"
-        }
-
-        RowLayout {
-          spacing: Widget.spacing
-
-          SegmentRow {
-            Repeater {
-              model: [0, 90, 180, 270]
-
-              delegate: SegmentButton {
-                required property int modelData
-                required property int index
-                readonly property bool selected: (root.rule?.transform ?? 0) % 4 === index
-                implicitHeight: Widget.height
-                text: `${modelData}°`
-                active: selected
-                Layout.fillWidth: false
-                onClicked: root.set("transform", index + ((root.rule?.transform ?? 0) >= 4 ? 4 : 0))
-              }
-            }
-          }
-
-          Item {
-            Layout.fillWidth: true
-          }
-
-          StyledLabel {
-            text: I18n.tr("Flipped")
-            role: "label"
-          }
-
-          StyledSwitch {
-            checked: (root.rule?.transform ?? 0) >= 4
-            onToggled: root.set("transform", (root.rule?.transform ?? 0) % 4 + (checked ? 4 : 0))
+          delegate: SegmentButton {
+            required property int modelData
+            required property int index
+            readonly property bool selected: (root.rule?.transform ?? 0) % 4 === index
+            implicitHeight: Widget.height
+            text: `${modelData}°`
+            active: selected
+            Layout.fillWidth: false
+            onClicked: root.set("transform", index + ((root.rule?.transform ?? 0) >= 4 ? 4 : 0))
           }
         }
       }
+    }
+
+    SwitchRow {
+      label: "Flipped"
+      checked: (root.rule?.transform ?? 0) >= 4
+      onToggled: value => root.set("transform", (root.rule?.transform ?? 0) % 4 + (value ? 4 : 0))
     }
 
     // A set mirror can always be turned off: a profile saved where the

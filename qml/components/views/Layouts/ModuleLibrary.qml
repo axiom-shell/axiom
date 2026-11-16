@@ -1,50 +1,27 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import qs.config
-import qs.services.ui
-import qs.components.reusable
+import qs.components.views.base
 
 // The modules that can be added to the page or menu being edited: drag one
 // onto the canvas, or click it to add it at its default size in the first
-// free spot. By name, or by group.
-ColumnLayout {
+// free spot. By name, or by group (an EditorLibrary).
+EditorLibrary {
   id: root
 
   required property var dragLayer
 
-  readonly property var modules: OverlayConfig.modulesFor(root.dragLayer.editor.host)
+  types: OverlayConfig.modulesFor(root.dragLayer.editor.host)
+  caption: I18n.tr("Drag a module onto the canvas, or click one to add it.")
+  groups: OverlayConfig.libraryGroups
+  minTileWidth: Appearance.fontSize * 16
 
-  spacing: Widget.spacing
-
-  StyledText {
-    Layout.fillWidth: true
-    overflow: "line"
-    text: I18n.tr("Drag a module onto the canvas, or click one to add it.")
-    role: "caption"
-    tone: "muted"
-  }
-
-  TypeLibrary {
-    id: library
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    types: root.modules
-    groups: OverlayConfig.libraryGroups
-    grouped: EditsManager.libraryGrouped
-    // Schema keys (labels, group names)
-    labelOf: type => I18n.tr(type.label)
-    headingOf: name => name ? I18n.tr(name) : I18n.tr("Other")
-    minTileWidth: Appearance.fontSize * 16
-    onGroupingChosen: grouped => EditsManager.setLibraryGrouped(grouped)
-
-    delegate: ModuleChip {
-      id: chip
-      required property var modelData
-      implicitWidth: library.tileWidth
-      dragLayer: root.dragLayer
-      typeInfo: chip.modelData
-      onClicked: root.dragLayer.editor.addModule(chip.modelData.type)
-    }
+  delegate: ModuleChip {
+    id: chip
+    required property var modelData
+    implicitWidth: root.tileWidth
+    dragLayer: root.dragLayer
+    typeInfo: chip.modelData
+    onClicked: root.dragLayer.editor.addModule(chip.modelData.type)
   }
 }

@@ -3,17 +3,16 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
-import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
-import qs.components.content.base
+import qs.components.views.base
 
 // Bar editor, beside the board: the selected widget's options and sizing
-// (as the running bars report it) and the library of widget types to drag
-// onto the bar, side by side (inspector about 55%), or one over the other
-// when the room is taller than wide. With no widget selected the inspector
-// is hidden (the board's status line says what to do) and the library has
-// the room.
+// (as the running bars report it, an InspectorCard) and the library of
+// widget types to drag onto the bar (an EditorLibrary), side by side
+// (inspector about 55%), or one over the other when the room is taller than
+// wide. With no widget selected the inspector is hidden (the board's status
+// line says what to do) and the library has the room.
 Item {
   id: root
 
@@ -50,23 +49,13 @@ Item {
   readonly property real _inspectorLength: root._selected ? Math.round((root._along - root._gap) * 0.55) : 0
   readonly property real _libraryLength: root._along - (root._selected ? root._gap + root._inspectorLength : 0)
 
-  // Each card fills its box
-  Surface {
-    tone: "surface"
+  // Each card fills its box (the inspector's is an InspectorCard)
+  KeyedLoader {
     visible: root._selected
     width: root.stacked ? root.width : root._inspectorLength
     height: root.stacked ? root._inspectorLength : root.height
-
-    Item {
-      anchors.fill: parent
-      anchors.margins: Widget.padding
-
-      KeyedLoader {
-        anchors.fill: parent
-        key: root.selectionKey
-        sourceComponent: editor
-      }
-    }
+    key: root.selectionKey
+    sourceComponent: editor
   }
 
   Surface {
@@ -86,7 +75,7 @@ Item {
   Component {
     id: editor
 
-    ColumnLayout {
+    InspectorCard {
       id: editorRoot
 
       readonly property string zone: root.selection.zone
@@ -101,9 +90,10 @@ Item {
       readonly property bool elastic: editorRoot.typeInfo?.elastic ?? false
 
       anchors.fill: parent
-      spacing: Widget.spacing
+      // Each widget keeps its place across the overlay closing
+      scrollKey: "BarEditor/" + root.selectionKey
 
-      InspectorHeader {
+      header: InspectorHeader {
         icon: root.dragLayer.icon(editorRoot.widget.type)
         title: root.dragLayer.widgetLabel(editorRoot.widget)
         subtitle: {
@@ -151,75 +141,57 @@ Item {
       }
 
       // Options, then sizing, each the inspector's full width
-      CardScroll {
-        id: scroll
+      OptionsGroup {
         Layout.fillWidth: true
-        Layout.fillHeight: true
+        propertiesSchema: editorRoot.propertiesSchema
+        order: editorRoot.propertiesOrder
+        numberMode: "stepper"
+        pairs: true
+        values: editorRoot.widget.properties ?? ({})
+        context: BarsConfig.lookContext(BarManager.selectedBar())
+        emptyText: I18n.tr("This widget has no options")
+        changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
+        // An edge menu picker (its popout's menu, a Button's click
+        // menu) can open a new menu, made and saved at once
+        fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
+            "text": I18n.tr("New menu…"),
+            "icon": "add",
+            "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
+          } : null
+        onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
+        onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
+      }
 
-        // Each widget keeps its place across the overlay closing
-        property ScrollMemory memory: ScrollMemory {
-          flickable: scroll.flickable as Flickable
-          key: "BarEditor/" + root.selectionKey
-        }
+      FieldGroup {
+        Layout.fillWidth: true
+        title: I18n.tr(BarsConfig.widgetLayoutSchema.title)
+        description: root.sizingText(root.measure)
 
-        OptionsGroup {
-          Layout.fillWidth: true
-          propertiesSchema: editorRoot.propertiesSchema
-          order: editorRoot.propertiesOrder
-          numberMode: "stepper"
-          pairs: true
-          values: editorRoot.widget.properties ?? ({})
-          context: BarsConfig.lookContext(BarManager.selectedBar())
-          emptyText: I18n.tr("This widget has no options")
-          changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
-          // An edge menu picker (its popout's menu, a Button's click
-          // menu) can open a new menu, made and saved at once
-          fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
-              "text": I18n.tr("New menu…"),
-              "icon": "add",
-              "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
-            } : null
-          onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
-          onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
-        }
+        // The rows get `first` from the card's FormColumn: the minimum and
+        // maximum only for an elastic widget, the priority always
+        Repeater {
+          // A fixed model: one built from the widget would be rebuilt
+          // by every edit, dropping a field mid-step. The minimum and
+          // maximum only for an elastic widget.
+          model: ["maxSize", "minSize", "priority"]
 
-        FieldGroup {
-          Layout.fillWidth: true
-          title: I18n.tr(BarsConfig.widgetLayoutSchema.title)
-          description: root.sizingText(root.measure)
-
-          Repeater {
-            id: overrideRows
-            // The top row drawn (FormRow.first): the minimum and maximum
-            // only for an elastic widget, the priority always (index 2)
-            readonly property int firstShown: Utils.firstFormRow(3, i => ({
-                  "shown": editorRoot.elastic || i === 2,
-                  "bodyHeight": 1
-                }))
-            // A fixed model: one built from the widget would be rebuilt
-            // by every edit, dropping a field mid-step. The minimum and
-            // maximum only for an elastic widget.
-            model: ["maxSize", "minSize", "priority"]
-
-            delegate: LayoutOverrideField {
-              required property string modelData
-              required property int index
-              key: modelData
-              shown: editorRoot.elastic || modelData === "priority"
-              first: index === overrideRows.firstShown
-              // An override starts at what the bar uses now, a size
-              // without its insets (which maxSize and minSize don't count)
-              initial: {
-                if (modelData === "priority")
-                  return root.measure?.priority ?? BarManager.priorityOf(editorRoot.widget);
-                if (!root.measure)
-                  return modelData === "maxSize" ? 100 : 0;
-                return Math.max(0, root.measure[modelData === "maxSize" ? "preferred" : "minimum"] - root.measure.insets);
-              }
-              fieldSchema: BarsConfig.widgetLayoutSchema.properties?.[modelData] ?? ({})
-              value: editorRoot.widget.layout?.[modelData]
-              onEdited: value => BarManager.updateWidgetLayout(editorRoot.zone, editorRoot.index, modelData, value)
+          delegate: LayoutOverrideField {
+            required property string modelData
+            required property int index
+            key: modelData
+            shown: editorRoot.elastic || modelData === "priority"
+            // An override starts at what the bar uses now, a size
+            // without its insets (which maxSize and minSize don't count)
+            initial: {
+              if (modelData === "priority")
+                return root.measure?.priority ?? BarManager.priorityOf(editorRoot.widget);
+              if (!root.measure)
+                return modelData === "maxSize" ? 100 : 0;
+              return Math.max(0, root.measure[modelData === "maxSize" ? "preferred" : "minimum"] - root.measure.insets);
             }
+            fieldSchema: BarsConfig.widgetLayoutSchema.properties?.[modelData] ?? ({})
+            value: editorRoot.widget.layout?.[modelData]
+            onEdited: value => BarManager.updateWidgetLayout(editorRoot.zone, editorRoot.index, modelData, value)
           }
         }
       }
@@ -229,48 +201,25 @@ Item {
   Component {
     id: library
 
-    ColumnLayout {
-      spacing: Widget.spacing
+    EditorLibrary {
+      id: widgetLibrary
+      title: I18n.tr("Widget library")
+      caption: I18n.tr("Drag a widget onto a section, or click one to add it to the {0} section.", root.dragLayer.zoneLabel(BarManager.lastZone))
+      types: BarsConfig.libraryWidgetTypes
+      groups: OverlayConfig.libraryGroups
+      minColumns: 2
 
-      CardHeader {
-        title: I18n.tr("Widget library")
-        showActions: false
-      }
-
-      StyledText {
-        Layout.fillWidth: true
-        text: I18n.tr("Drag a widget onto a section, or click one to add it to the {0} section.", root.dragLayer.zoneLabel(BarManager.lastZone))
-        role: "caption"
-        tone: "muted"
-        overflow: "wrap"
-      }
-
-      TypeLibrary {
-        id: widgetLibrary
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.topMargin: Widget.spacing / 2
-        types: BarsConfig.libraryWidgetTypes
-        groups: OverlayConfig.libraryGroups
-        grouped: EditsManager.libraryGrouped
-        // Schema keys (labels, group names)
-        labelOf: type => I18n.tr(type.label)
-        headingOf: name => name ? I18n.tr(name) : I18n.tr("Other")
-        minColumns: 2
-        onGroupingChosen: grouped => EditsManager.setLibraryGrouped(grouped)
-
-        delegate: WidgetChip {
-          id: tile
-          required property var modelData
-          dragLayer: root.dragLayer
-          implicitWidth: widgetLibrary.tileWidth
-          type: tile.modelData.type
-          payload: ({
-              "kind": "add",
-              "type": tile.modelData.type
-            })
-          onClicked: BarManager.addWidget(BarManager.lastZone, tile.modelData.type)
-        }
+      delegate: WidgetChip {
+        id: tile
+        required property var modelData
+        dragLayer: root.dragLayer
+        implicitWidth: widgetLibrary.tileWidth
+        type: tile.modelData.type
+        payload: ({
+            "kind": "add",
+            "type": tile.modelData.type
+          })
+        onClicked: BarManager.addWidget(BarManager.lastZone, tile.modelData.type)
       }
     }
   }

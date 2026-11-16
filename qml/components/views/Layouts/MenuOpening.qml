@@ -4,10 +4,11 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.forms
 
 // An edge menu's Opening section: try it on screen, what opens
-// it besides hovering its edge, and buttons that add a bar button or a
-// keybind for it
+// it besides hovering its edge (links to each, SettingsLink), and buttons that
+// add a bar button or a keybind for it
 ColumnLayout {
   id: root
 
@@ -69,50 +70,23 @@ ColumnLayout {
     tone: "muted"
   }
 
-  StyledText {
+  SectionHeading {
     Layout.topMargin: Widget.spacing / 2
-    text: I18n.tr("Also opened by")
+    title: I18n.tr("Also opened by")
   }
 
+  // Each goes to it: the bar editor, the keybind editor or the menu
   Repeater {
     model: root.references.length
 
-    // Goes to it: the bar editor, the keybind editor or the menu
-    Item {
+    SettingsLink {
       id: reference
       required property int index
       readonly property var ref: root.references[reference.index] ?? ({})
       Layout.fillWidth: true
-      implicitHeight: referenceRow.implicitHeight
-
-      RowLayout {
-        id: referenceRow
-        anchors.fill: parent
-        spacing: Widget.spacing
-
-        StyledIcon {
-          text: reference.ref.kind === "bind" ? "keyboard" : reference.ref.kind === "submenu" ? "menu_open" : "toolbar"
-          tone: "accent"
-        }
-        StyledLabel {
-          Layout.fillWidth: true
-          text: reference.ref.label ?? ""
-          font.underline: referenceArea.containsMouse
-          overflow: "line"
-        }
-        StyledIcon {
-          text: "arrow_forward"
-          textColor: referenceArea.containsMouse ? Style.textAccent : Style.textMuted
-        }
-      }
-
-      MouseArea {
-        id: referenceArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: OverlayManager.menus.goToReference(reference.ref)
-      }
+      icon: reference.ref.kind === "bind" ? "keyboard" : reference.ref.kind === "submenu" ? "menu_open" : "toolbar"
+      text: reference.ref.label ?? ""
+      run: () => OverlayManager.menus.goToReference(reference.ref)
     }
   }
 

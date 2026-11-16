@@ -1,0 +1,40 @@
+pragma Singleton
+import QtQuick
+
+// The open or closed state of an editor's foldable list sections (the layouts
+// editor's Overlay pages, Tools, Menus and Screens), kept as an object of
+// stable section id to a boolean the user chose. A section nobody has
+// toggled is open, except the ids in `closedByDefault`. `clean` makes the
+// object read back from a saved file safe to use. No files, processes or
+// services: EditsManager holds the state and saves it.
+QtObject {
+  id: root
+
+  // Sections that start closed (Tools: a fixed set of pages most never touch)
+  readonly property var closedByDefault: ["tools"]
+
+  // Whether section `id` is open, given the choices made so far
+  function isOpen(folds, id) {
+    if (folds && Object.prototype.hasOwnProperty.call(folds, id))
+      return folds[id] === true;
+    return !root.closedByDefault.includes(id);
+  }
+
+  // The choices with `id` set to `open` (a new object; the argument is kept)
+  function withOpen(folds, id, open) {
+    const next = Object.assign({}, folds ?? {});
+    next[id] = open === true;
+    return next;
+  }
+
+  // The choices read from a saved file: only boolean values of own keys
+  function clean(saved) {
+    const out = {};
+    if (!saved || typeof saved !== "object" || Array.isArray(saved))
+      return out;
+    for (const id of Object.keys(saved))
+      if (typeof saved[id] === "boolean")
+        out[id] = saved[id];
+    return out;
+  }
+}

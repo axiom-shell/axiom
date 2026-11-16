@@ -3,6 +3,7 @@ import QtQuick
 import qs.services.core
 import qs.services.compositor
 import qs.services.apps
+import qs.components.methods
 
 // The editors' unsaved edits, by overlay page: which pages hold a dirty
 // draft (the navigator's dots and the unsaved-changes strip), and saving
@@ -16,7 +17,8 @@ import qs.services.apps
 //
 // Also how the editors are laid out, which outlives their pages (saved in
 // state/editors.json): whether the libraries group their types, and the
-// Keybinds editor's folded sections. And, in memory, where each panel was
+// Keybinds editor's folded sections and the layouts editor's list
+// sections (open or closed). And, in memory, where each panel was
 // scrolled to (ScrollMemory).
 QtObject {
   id: root
@@ -63,12 +65,27 @@ QtObject {
   readonly property bool libraryGrouped: root._libraryGrouped
   // The Keybinds editor's folded sections, by section name
   readonly property var keybindsFolded: root._keybindsFolded
+  // The layouts editor's list sections, open or closed by id
+  // (SectionFolds: Overlay pages, Tools, Menus and Screens; Tools starts shut)
+  readonly property var layoutsFolds: root._layoutsFolds
   property bool _libraryGrouped: false
   property var _keybindsFolded: []
+  property var _layoutsFolds: ({})
   readonly property var _state: StateManager.createStateHandler("editors")
 
   function setLibraryGrouped(value) {
     root._libraryGrouped = value;
+    root._saveState();
+  }
+
+  function layoutSectionOpen(id) {
+    return SectionFolds.isOpen(root._layoutsFolds, id);
+  }
+
+  function setLayoutSectionOpen(id, open) {
+    if (root.layoutSectionOpen(id) === open)
+      return;
+    root._layoutsFolds = SectionFolds.withOpen(root._layoutsFolds, id, open);
     root._saveState();
   }
 
@@ -96,7 +113,8 @@ QtObject {
   function _saveState() {
     root._state.save({
       "libraryGrouped": root._libraryGrouped,
-      "keybindsFolded": root._keybindsFolded
+      "keybindsFolded": root._keybindsFolded,
+      "layoutsFolds": root._layoutsFolds
     });
   }
 
@@ -104,6 +122,7 @@ QtObject {
     const saved = root._state.load({});
     root._libraryGrouped = saved.libraryGrouped === true;
     root._keybindsFolded = Array.isArray(saved.keybindsFolded) ? saved.keybindsFolded : [];
+    root._layoutsFolds = SectionFolds.clean(saved.layoutsFolds);
   }
 
   // The box holding typed text (var: callers use commitTyped() and

@@ -66,7 +66,12 @@ Item {
           changed: BarManager.barChanged(entry.index)
           escapeClears: true
           onClicked: BarManager.selectBar(entry.index)
+          canDuplicate: true
+          duplicateTooltip: I18n.tr("Copy this bar")
+          onDuplicated: BarManager.duplicateBar(entry.index)
           // (removeBar keeps the last bar)
+          canRemove: (BarManager.localConfig?.length ?? 0) > 1
+          removeTooltip: I18n.tr("Remove this bar")
           onRemoveRequested: BarManager.removeBar(entry.index)
           onEscapePressed: BarManager.selectBar(-1)
 
@@ -77,28 +82,10 @@ Item {
             tip: I18n.tr("On every monitor")
             textColor: entry.ink
           }
-
-          RowAction {
-            row: entry
-            iconText: "content_copy"
-            tooltipText: I18n.tr("Copy this bar")
-            onClicked: BarManager.duplicateBar(entry.index)
-          }
-
-          RowAction {
-            row: entry
-            visible: (BarManager.localConfig?.length ?? 0) > 1
-            danger: true
-            iconText: "close"
-            tooltipText: I18n.tr("Remove this bar")
-            onClicked: BarManager.removeBar(entry.index)
-          }
         }
       }
 
       AddEntryButton {
-        Layout.topMargin: Widget.spacing
-        Layout.bottomMargin: Widget.spacing
         text: I18n.tr("New bar")
         onClicked: BarManager.addBar()
       }

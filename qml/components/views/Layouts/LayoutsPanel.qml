@@ -9,14 +9,15 @@ import qs.components.content.base
 import qs.components.forms
 import qs.components.views.base
 
-// Layouts editor, left: the overlay pages, the desktop, the lock screen
-// and the menus pinned above (scrolling inside past 40 % of the pane), then
-// what's selected: a page's name and icon and
-// what opens it, a menu's settings in groups (from the schema's Menu
-// definition, its Opening group led by how to try and open it), the
-// desktop's (led by which monitor's layout is edited), or the lock
-// screen's (led by its preview); anything that blocks saving is the pane's
-// footer
+// Layouts editor, left: the overlay pages, the tools, the menus and the
+// screens (desktop, lock screen, login screen) pinned above (scrolling
+// inside past PinnedList's share of the pane), each a section that folds
+// (open or closed kept across restarts, EditsManager.layoutSectionOpen), then
+// what's selected: a page's name and icon and what opens it, a menu's
+// settings in groups (from the schema's Menu definition, led by how to try
+// and open it), the desktop's (led by which monitor's layout is edited), or
+// the lock screen's (led by its preview); anything that blocks saving is the
+// pane's footer
 Item {
   id: root
 
@@ -34,45 +35,32 @@ Item {
   readonly property bool isDesktopMonitor: root.isDesktop && DesktopManager.isMonitorTarget(DesktopManager.selectedTarget)
   readonly property bool isCustom: root.view?.type === "Custom"
   readonly property var problems: OverlayManager.layoutsProblems
-  // The tools section's state, kept while the page is up
-  property bool toolsOpen: false
 
-  // StyledTextEntry writes each keystroke back to its `text`, which drops
-  // any binding on it, so the name is pushed in rather than bound: on every
-  // draft change unless it's being typed, always when another page is
-  // selected. Only typing renames (textEdited), never a name pushed in.
-  function syncName(force) {
-    if (force || !nameEntry.input.activeFocus)
-      nameEntry.text = OverlayManager.selectedView()?.name ?? "";
-  }
   // A tool page selected from outside opens the Tools section (closing it
-  // by hand still works: it only opens on a new selection)
+  // by hand still works: it only opens on a new selection), and that open is
+  // kept like any other
   function revealTool() {
     if (OverlayManager.editTarget === "page" && OverlayConfig.isTool(OverlayManager.selectedView()?.type ?? ""))
-      root.toolsOpen = true;
+      EditsManager.setLayoutSectionOpen("tools", true);
   }
   Connections {
     target: OverlayManager
     function onSelectedViewIndexChanged() {
-      root.syncName(true);
+      // Another page selected shows its name even while the entry is
+      // focused (CommitEntry only takes a pushed name while unfocused)
+      nameEntry.text = OverlayManager.selectedView()?.name ?? "";
       root.revealTool();
     }
     function onEditTargetChanged() {
       root.revealTool();
     }
-    function onLocalViewsChanged() {
-      root.syncName(false);
-    }
   }
-  Component.onCompleted: {
-    root.syncName(true);
-    root.revealTool();
-  }
+  Component.onCompleted: root.revealTool()
 
-  // Group titles: I18n.tr("General") I18n.tr("Opening") I18n.tr("Placement")
-  // I18n.tr("Style") I18n.tr("Behaviour") I18n.tr("Closing") I18n.tr("Advanced")
-  // I18n.tr("Other")
-  // I18n.tr("Grid") I18n.tr("Background")
+  // Group titles (the Menu definition's `x-group`s and the screen layouts'):
+  // I18n.tr("General") I18n.tr("Placement") I18n.tr("Size") I18n.tr("Look")
+  // I18n.tr("Style") I18n.tr("Behaviour") I18n.tr("Motion") I18n.tr("Closing")
+  // I18n.tr("Other") I18n.tr("Grid") I18n.tr("Background")
   // Two boxes a card gap apart, as the bar editor's inspector and library:
   // the lists with the page's title above, and the selection's cards below
   ColumnLayout {
@@ -114,8 +102,6 @@ Item {
           PagesSection {
             Layout.fillWidth: true
             dragLayer: root.dragLayer
-            toolsOpen: root.toolsOpen
-            onToolsToggled: root.toolsOpen = !root.toolsOpen
           }
 
           MenusSection {
@@ -129,6 +115,9 @@ Item {
             title: I18n.tr("Screens")
             count: 1 + (OverlayManager.lockscreenEditable ? 1 : 0) + (OverlayManager.greeterEditable ? 1 : 0)
             hint: I18n.tr("The desktop, lock screen and login screen.")
+            collapsible: true
+            open: EditsManager.layoutSectionOpen("screens")
+            onToggled: EditsManager.setLayoutSectionOpen("screens", !open)
 
             // Not dragged: these aren't the navigator's pages
             ListEntryRow {
@@ -192,15 +181,17 @@ Item {
             title: I18n.tr("Page")
             description: I18n.tr("Its name and icon show in the page navigator.")
 
+            // Only typing renames (live), never a name pushed in
             FormRow {
-              first: true
               bodyHeight: nameEntry.implicitHeight
 
-              StyledTextEntry {
+              CommitEntry {
                 id: nameEntry
                 width: parent.width
+                live: true
+                value: OverlayManager.selectedView()?.name ?? ""
                 placeholderText: I18n.tr("Page name")
-                onTextEdited: OverlayManager.renameView(OverlayManager.selectedViewIndex, nameEntry.text)
+                onEdited: text => OverlayManager.renameView(OverlayManager.selectedViewIndex, text)
               }
             }
 
@@ -234,19 +225,10 @@ Item {
             title: I18n.tr("Tool page")
             description: I18n.tr("A page of its own, with no layout to edit. Tools show as icons after your pages in the navigator.")
 
-            FormRow {
-              first: true
-              hoverable: true
-              bodyHeight: navigatorSwitch.implicitHeight
-              onRowClicked: navigatorSwitch.activate()
-
-              SchemaSwitch {
-                id: navigatorSwitch
-                width: parent.width
-                label: I18n.tr("Show in the navigator")
-                checked: root.view?.visible !== false
-                onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
-              }
+            SwitchRow {
+              label: I18n.tr("Show in the navigator")
+              checked: root.view?.visible !== false
+              onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
             }
 
             // Goes to it (only while it's shown)
@@ -313,7 +295,6 @@ Item {
             description: root.screenTarget?.description ?? ""
 
             FormRow {
-              first: true
               bodyHeight: targetCombo.implicitHeight
 
               StyledComboEntry {
@@ -329,20 +310,12 @@ Item {
               }
             }
 
-            FormRow {
+            SwitchRow {
               shown: root.screenLayout !== null
-              hoverable: true
-              bodyHeight: showSwitch.implicitHeight
-              onRowClicked: showSwitch.activate()
-
-              SchemaSwitch {
-                id: showSwitch
-                width: parent.width
-                label: root.isDesktopMonitor ? I18n.tr("Show on this monitor") : I18n.tr("Show on the desktop")
-                description: root.isDesktopMonitor ? I18n.tr("Off leaves this monitor's desktop empty.") : ""
-                checked: root.screenLayout?.enabled ?? false
-                onToggled: newValue => DesktopManager.setEnabled(newValue)
-              }
+              label: root.isDesktopMonitor ? I18n.tr("Show on this monitor") : I18n.tr("Show on the desktop")
+              description: root.isDesktopMonitor ? I18n.tr("Off leaves this monitor's desktop empty.") : ""
+              checked: root.screenLayout?.enabled ?? false
+              onToggled: newValue => DesktopManager.setEnabled(newValue)
             }
 
             StyledTextButton {

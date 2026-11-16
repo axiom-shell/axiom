@@ -218,27 +218,21 @@ ColumnLayout {
   }
 
   // Monitors that aren't in the layout: off, or mirroring another
-  Flow {
+  SegmentTabs {
     visible: root.others.length > 0
     Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    Repeater {
-      model: root.others.length
-
-      delegate: SegmentButton {
-        required property int index
-        // Null while the list shrinks, before this delegate goes
-        readonly property var rule: root.others[index] ?? null
-        readonly property bool selected: MonitorManager.selectedOutput === rule?.output
-        implicitHeight: Widget.height
-        iconText: rule?.disabled ? "desktop_access_disabled" : "screen_share"
-        text: rule?.disabled ? I18n.tr("{0}: off", MonitorManager.labelFor(rule)) : I18n.tr("{0}: mirrors {1}", MonitorManager.labelFor(rule), MonitorManager.labelFor(MonitorManager.rules.find(other => other.output === rule?.mirror) ?? {
-          "output": rule?.mirror
-        }))
-        active: selected
-        onClicked: MonitorManager.selectedOutput = rule.output
-      }
+    count: root.others.length
+    current: root.others.findIndex(rule => rule.output === MonitorManager.selectedOutput)
+    iconAt: i => root.others[i]?.disabled ? "desktop_access_disabled" : "screen_share"
+    labelAt: i => {
+      // Null while the list shrinks, before a tab goes
+      const rule = root.others[i];
+      if (!rule)
+        return "";
+      return rule.disabled ? I18n.tr("{0}: off", MonitorManager.labelFor(rule)) : I18n.tr("{0}: mirrors {1}", MonitorManager.labelFor(rule), MonitorManager.labelFor(MonitorManager.rules.find(other => other.output === rule.mirror) ?? {
+        "output": rule.mirror
+      }));
     }
+    onPicked: i => MonitorManager.selectedOutput = root.others[i].output
   }
 }
