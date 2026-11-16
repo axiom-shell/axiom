@@ -69,22 +69,40 @@ ColumnLayout {
     onRemove: MonitorManager.forgetOutput(root.output)
   }
 
-  RowLayout {
+  // Each switch a FormRow like the settings below: a click on the row toggles
+  ColumnLayout {
     visible: !!root.rule
     Layout.fillWidth: true
-    spacing: Widget.spacing * 2
+    spacing: 0
 
-    SchemaSwitch {
-      label: "Enabled"
-      checked: !(root.rule?.disabled ?? false)
-      onToggled: value => root.set("disabled", !value)
+    FormRow {
+      first: true
+      hoverable: true
+      bodyHeight: enabledField.implicitHeight
+      onRowClicked: enabledField.activate()
+
+      SchemaSwitch {
+        id: enabledField
+        width: parent.width
+        label: "Enabled"
+        checked: !(root.rule?.disabled ?? false)
+        onToggled: value => root.set("disabled", !value)
+      }
     }
 
-    SchemaSwitch {
-      visible: !!root.monitor
-      label: "Primary"
-      checked: !!root.monitor && root.monitor.name === General.configuredPrimary
-      onToggled: value => MonitorManager.setPrimary(value ? root.monitor.name : "")
+    FormRow {
+      shown: !!root.monitor
+      hoverable: true
+      bodyHeight: primaryField.implicitHeight
+      onRowClicked: primaryField.activate()
+
+      SchemaSwitch {
+        id: primaryField
+        width: parent.width
+        label: "Primary"
+        checked: !!root.monitor && root.monitor.name === General.configuredPrimary
+        onToggled: value => MonitorManager.setPrimary(value ? root.monitor.name : "")
+      }
     }
   }
 
@@ -273,29 +291,25 @@ ColumnLayout {
 
     // Advanced, folded
     FormRow {
+      id: advancedToggle
+      hoverable: true
       bodyHeight: advancedRow.implicitHeight
+      onRowClicked: MonitorManager.advancedOpen = !MonitorManager.advancedOpen
 
-      MouseArea {
+      RowLayout {
+        id: advancedRow
         width: parent.width
-        height: advancedRow.implicitHeight
-        cursorShape: Qt.PointingHandCursor
-        onClicked: MonitorManager.advancedOpen = !MonitorManager.advancedOpen
+        spacing: Widget.spacing
 
-        RowLayout {
-          id: advancedRow
-          anchors.fill: parent
-          spacing: Widget.spacing
+        FoldChevron {
+          open: root.advancedOpen
+          hot: advancedToggle.hovered
+        }
 
-          StyledIcon {
-            text: root.advancedOpen ? "expand_more" : "chevron_right"
-            tone: "accent"
-          }
-
-          StyledLabel {
-            text: I18n.tr("Advanced")
-            role: "label"
-            Layout.fillWidth: true
-          }
+        StyledLabel {
+          text: I18n.tr("Advanced")
+          role: "label"
+          Layout.fillWidth: true
         }
       }
     }

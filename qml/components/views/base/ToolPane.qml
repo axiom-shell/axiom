@@ -54,8 +54,11 @@ TitledCard {
       Layout.bottomMargin: pinnedColumn.implicitHeight > 0 ? 0 : -Widget.spacing
 
       StyledScrollView {
+        // Out by the ring's width on every side, and padded by it, so a
+        // row's focus ring isn't cut at the list's edges
         anchors.fill: parent
-        contentPadding: 0
+        anchors.margins: -Style.focusWidth
+        contentPadding: Style.focusWidth
         // A bar only while the capped list overflows
         showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
 

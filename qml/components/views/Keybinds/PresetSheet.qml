@@ -84,7 +84,6 @@ Popup {
       }
 
       SquareIconButton {
-        size: Widget.height
         iconText: "close"
         tooltipText: I18n.tr("Close")
         onClicked: root.close()
@@ -110,6 +109,7 @@ Popup {
         Layout.preferredWidth: root.width * 0.32
         Layout.fillHeight: true
         contentPadding: 0
+        showScrollBar: true
 
         ColumnLayout {
           width: presetScroll.availableWidth
@@ -207,7 +207,6 @@ Popup {
               }
 
               SquareIconButton {
-                size: Widget.height
                 iconText: "save"
                 tooltipText: KeybindManager.editor.savedPresets.some(p => p.title === newName.text.trim()) ? I18n.tr("Save over the preset by this name") : I18n.tr("Save the binds as a preset")
                 enabled: newName.text.trim() !== ""
@@ -294,10 +293,11 @@ Popup {
           Layout.fillWidth: true
           Layout.fillHeight: true
           contentPadding: 0
+          showScrollBar: true
 
           ColumnLayout {
             width: planScroll.availableWidth
-            spacing: 2
+            spacing: Widget.spacing / 2
 
             Repeater {
               model: root.plan
@@ -318,6 +318,7 @@ Popup {
 
                 StateLayer {
                   hovered: stepArea.containsMouse && step.can
+                  pressed: stepArea.pressed
                 }
 
                 MouseArea {

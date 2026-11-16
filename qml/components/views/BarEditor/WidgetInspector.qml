@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
+import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 import qs.components.content.base
@@ -153,7 +154,11 @@ Item {
         id: scroll
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.leftMargin: -Style.rowBleed
+        Layout.rightMargin: -Style.rowBleed
         contentPadding: 0
+        bleed: Style.rowBleed
+        showScrollBar: true
 
         // Each widget keeps its place across the overlay closing
         property ScrollMemory memory: ScrollMemory {
@@ -166,30 +171,25 @@ Item {
           width: scroll.availableWidth
           spacing: Widget.spacing * 2
 
-          ColumnLayout {
+          OptionsGroup {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            spacing: Widget.spacing
-
-            OptionsGroup {
-              propertiesSchema: editorRoot.propertiesSchema
-              order: editorRoot.propertiesOrder
-              numberMode: "stepper"
-              pairs: true
-              values: editorRoot.widget.properties ?? ({})
-              context: BarsConfig.lookContext(BarManager.selectedBar())
-              emptyText: I18n.tr("This widget has no options")
-              changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
-              // An edge menu picker (its popout's menu, a Button's click
-              // menu) can open a new menu, made and saved at once
-              fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
-                  "text": I18n.tr("New menu…"),
-                  "icon": "add",
-                  "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
-                } : null
-              onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
-              onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
-            }
+            propertiesSchema: editorRoot.propertiesSchema
+            order: editorRoot.propertiesOrder
+            numberMode: "stepper"
+            pairs: true
+            values: editorRoot.widget.properties ?? ({})
+            context: BarsConfig.lookContext(BarManager.selectedBar())
+            emptyText: I18n.tr("This widget has no options")
+            changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
+            // An edge menu picker (its popout's menu, a Button's click
+            // menu) can open a new menu, made and saved at once
+            fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
+                "text": I18n.tr("New menu…"),
+                "icon": "add",
+                "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
+              } : null
+            onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
+            onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
           }
 
           FieldGroup {
@@ -198,6 +198,13 @@ Item {
             description: root.sizingText(root.measure)
 
             Repeater {
+              id: overrideRows
+              // The top row drawn (FormRow.first): the minimum and maximum
+              // only for an elastic widget, the priority always (index 2)
+              readonly property int firstShown: Utils.firstFormRow(3, i => ({
+                    "shown": editorRoot.elastic || i === 2,
+                    "bodyHeight": 1
+                  }))
               // A fixed model: one built from the widget would be rebuilt
               // by every edit, dropping a field mid-step. The minimum and
               // maximum only for an elastic widget.
@@ -205,8 +212,10 @@ Item {
 
               delegate: LayoutOverrideField {
                 required property string modelData
+                required property int index
                 key: modelData
-                visible: editorRoot.elastic || modelData === "priority"
+                shown: editorRoot.elastic || modelData === "priority"
+                first: index === overrideRows.firstShown
                 // An override starts at what the bar uses now, a size
                 // without its insets (which maxSize and minSize don't count)
                 initial: {

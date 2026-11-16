@@ -138,7 +138,11 @@ Item {
           Layout.fillWidth: true
           Layout.fillHeight: true
           Layout.preferredWidth: 2
+          Layout.leftMargin: -Style.rowBleed
+          Layout.rightMargin: -Style.rowBleed
           contentPadding: 0
+          bleed: Style.rowBleed
+          showScrollBar: true
 
           FieldGroup {
             width: sizeScroll.availableWidth
@@ -158,30 +162,39 @@ Item {
                 }
               ]
 
-              SchemaNumberField {
-                id: sizeField
+              FormRow {
+                id: sizeRow
                 required property var modelData
-                readonly property bool across: sizeField.modelData.axis === 0
-                // The size it can grow to before what it pushes would leave
-                // the grid (or it reaches the most a module takes), keeping
-                // the other side
-                readonly property int grows: {
-                  if (!root.place)
-                    return 1;
-                  let n = sizeField.currentConfigValue;
-                  while (n < GridPlacement.maxSpan && root.editor.canResize(root.index, sizeField.across ? n + 1 : root.place.w, sizeField.across ? root.place.h : n + 1))
-                    n++;
-                  return n;
+                required property int index
+                bodyHeight: sizeField.implicitHeight
+                first: index === 0
+
+                SchemaNumberField {
+                  id: sizeField
+                  width: parent.width
+                  readonly property var modelData: sizeRow.modelData
+                  readonly property bool across: sizeField.modelData.axis === 0
+                  // The size it can grow to before what it pushes would leave
+                  // the grid (or it reaches the most a module takes), keeping
+                  // the other side
+                  readonly property int grows: {
+                    if (!root.place)
+                      return 1;
+                    let n = sizeField.currentConfigValue;
+                    while (n < GridPlacement.maxSpan && root.editor.canResize(root.index, sizeField.across ? n + 1 : root.place.w, sizeField.across ? root.place.h : n + 1))
+                      n++;
+                    return n;
+                  }
+                  label: sizeField.modelData.label
+                  currentConfigValue: root.place ? (sizeField.across ? root.place.w : root.place.h) : 1
+                  minimum: 1
+                  maximum: sizeField.grows
+                  mode: "stepper"
+                  showCoarse: false
+                  // The field stays as the selection changes
+                  debounced: false
+                  onCommitted: value => root.editor.resizeModule(root.index, GridPlacement.resizeFrom(root.place, "se", sizeField.across ? value - root.place.w : 0, sizeField.across ? 0 : value - root.place.h))
                 }
-                label: sizeField.modelData.label
-                currentConfigValue: root.place ? (sizeField.across ? root.place.w : root.place.h) : 1
-                minimum: 1
-                maximum: sizeField.grows
-                mode: "stepper"
-                showCoarse: false
-                // The field stays as the selection changes
-                debounced: false
-                onCommitted: value => root.editor.resizeModule(root.index, GridPlacement.resizeFrom(root.place, "se", sizeField.across ? value - root.place.w : 0, sizeField.across ? 0 : value - root.place.h))
               }
             }
           }
@@ -196,7 +209,11 @@ Item {
     StyledScrollView {
       id: optionsScroll
       anchors.fill: parent
+      anchors.leftMargin: -Style.rowBleed
+      anchors.rightMargin: -Style.rowBleed
       contentPadding: 0
+      bleed: Style.rowBleed
+      showScrollBar: true
 
       // Each module keeps its place across the overlay closing
       property ScrollMemory memory: ScrollMemory {

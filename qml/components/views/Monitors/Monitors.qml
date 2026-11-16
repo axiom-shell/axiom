@@ -175,7 +175,11 @@ BaseView {
           // on a small card it keeps their width and the canvas gives way
           Layout.preferredWidth: Math.max(root.grid.unit * 0.85, Appearance.fontSize * 24)
           Layout.fillHeight: true
+          Layout.leftMargin: -Style.rowBleed
+          Layout.rightMargin: -Style.rowBleed
           contentPadding: 0
+          bleed: Style.rowBleed
+          showScrollBar: true
 
           StreamedLoader {
             width: inspectorScroll.availableWidth
