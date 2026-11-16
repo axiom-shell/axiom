@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import qs.config
 import qs.services.ui
 import qs.services.apps
@@ -170,6 +171,7 @@ BaseView {
               contentHeight: calendarList.implicitHeight
               boundsBehavior: Flickable.StopAtBounds
               clip: true
+              ScrollIndicator.vertical: StyledScrollIndicator {}
 
               ColumnLayout {
                 id: calendarList

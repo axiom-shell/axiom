@@ -109,6 +109,7 @@ Item {
     anchors.fill: parent
     tone: "sunken"
     outlined: true
+    border.width: popup.visible ? Style.focusWidth : Style.hairline
     border.color: popup.visible ? Style.accent : Style.borderStrong
     activeFocusOnTab: true
 
@@ -119,6 +120,7 @@ Item {
 
     StateLayer {
       hovered: buttonArea.containsMouse
+      pressed: buttonArea.pressed
     }
 
     FocusRing {

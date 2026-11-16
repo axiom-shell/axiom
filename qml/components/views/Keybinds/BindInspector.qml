@@ -187,52 +187,9 @@ ColumnLayout {
     }
   }
 
-  FieldGroup {
-    title: I18n.tr("When it fires")
-
-    Repeater {
-      // [flag, title, description, the capability it needs or ""]
-      model: [["repeating", I18n.tr("Repeat while held"), I18n.tr("Fires again and again while the key stays down, as volume keys do."), ""], ["locked", I18n.tr("Works while locked"), I18n.tr("Also fires on the lock screen."), ""], ["release", I18n.tr("Fire on release"), I18n.tr("Fires when the key is let go rather than pressed."), "releaseBinds"]]
-
-      delegate: RowLayout {
-        id: flag
-        required property var modelData
-        readonly property bool on: root.bind[flag.modelData[0]] === true
-        // Greyed out, saying why, where the compositor can't do it; a flag
-        // already on (a bind merged from another compositor) can still be
-        // turned off
-        readonly property bool allowed: flag.modelData[3] === "" || CompositorManager.supports[flag.modelData[3]] === true
-        enabled: flag.allowed || flag.on
-        opacity: flag.allowed ? 1 : Style.opacityDisabled
-        Layout.fillWidth: true
-        spacing: Widget.spacing
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: 0
-
-          StyledText {
-            overflow: "wrap"
-            text: flag.modelData[1]
-            Layout.fillWidth: true
-          }
-
-          StyledText {
-            text: flag.allowed ? flag.modelData[2] : CompositorManager.unsupportedNote(flag.modelData[3])
-            role: "caption"
-            tone: "muted"
-            overflow: "wrap"
-            Layout.fillWidth: true
-          }
-        }
-
-        StyledSwitch {
-          checkable: false
-          checked: flag.on
-          onClicked: KeybindManager.editor.setField(root.bindIndex, flag.modelData[0], !flag.on)
-        }
-      }
-    }
+  BindFlags {
+    bind: root.bind
+    onFlagSet: (flag, value) => KeybindManager.editor.setField(root.bindIndex, flag, value)
   }
 
   // Its "Only when": bound only while every part set holds (a raw

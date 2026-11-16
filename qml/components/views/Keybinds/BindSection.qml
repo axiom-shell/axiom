@@ -119,7 +119,7 @@ ListSection {
   ColumnLayout {
     id: rowStack
     Layout.fillWidth: true
-    spacing: 2
+    spacing: Widget.spacing / 2
 
     Repeater {
       id: rowRepeater
@@ -129,7 +129,7 @@ ListSection {
         id: rowItem
         required property var modelData
         Layout.fillWidth: true
-        spacing: 2
+        spacing: Widget.spacing / 2
 
         BindListRow {
           id: head

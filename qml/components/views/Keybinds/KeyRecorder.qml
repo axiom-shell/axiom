@@ -73,6 +73,7 @@ Surface {
 
   StateLayer {
     hovered: area.containsMouse && !root.recording
+    pressed: area.pressed && !root.recording
   }
 
   FocusRing {

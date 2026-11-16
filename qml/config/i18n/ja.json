@@ -4394,6 +4394,7 @@
     "Take axiom's lines out of {0}": "",
     "Put back the keys in {0}": "",
     "Remove axiom's block from {0}": "",
-    "Remove axiom's line from {0}": ""
+    "Remove axiom's line from {0}": "",
+    "{0} of {1}": ""
   }
 }
