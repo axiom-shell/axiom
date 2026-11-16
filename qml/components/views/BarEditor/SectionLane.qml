@@ -33,9 +33,9 @@ Surface {
 
   readonly property var widgets: BarManager.selectedBar()?.widgets?.[root.zone] ?? []
   readonly property bool hovering: root.dragLayer.hoverZone === root.zone
-  readonly property real chipHeight: Widget.height + Widget.padding / 2
+  readonly property real chipHeight: Style.chipRowHeight
   // The lane's buttons and its meter: one height
-  readonly property real toolSize: Widget.height - Widget.px(6)
+  readonly property real toolSize: Widget.compactHeight
   // The widgets a running copy hides for want of room
   readonly property var crowded: [].concat(...root.reports.map(report => report.hidden[root.zone] ?? []))
 

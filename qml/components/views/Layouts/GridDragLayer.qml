@@ -181,7 +181,7 @@ DragLayer {
     visible: root.dragging !== null
     z: 10
     width: ghostRow.implicitWidth + Widget.padding * 2
-    height: Widget.height + Widget.padding / 2
+    height: Style.chipRowHeight
     radius: Style.radius
     readonly property bool refused: root.hoverTarget !== null && (!root.hoverValid || root.hoverTarget.targetKind === "trash")
     tone: ghost.refused ? "error" : "accent"

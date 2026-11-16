@@ -1029,7 +1029,7 @@ TestCase {
     waitForRendering(row);
     verify(!row.revealed);
     // The narrowest: what the badges, the dot and the actions need, and 60 px of text for the name
-    const parts = find(row, it => (it.tone !== undefined && it.border !== undefined) || (it.iconText !== undefined && it.row !== undefined), []);
+    const parts = find(row, it => (it.tone !== undefined && it.border !== undefined) || (it.iconText !== undefined && it.row !== undefined && it.visible), []);
     let needed = Widget.padding * 1.5 + Style.iconSm * 1.5 + Widget.px(20) + Widget.textPx(60);
     for (const part of parts)
       needed += part.width + Widget.spacing;
@@ -1037,7 +1037,7 @@ TestCase {
     waitForRendering(row);
     const chips = find(row, it => it.tone !== undefined && it.text !== undefined && it.lineCount === undefined && it.border !== undefined, []);
     verify(chips.length >= 3, `${chips.length} chips`);
-    const actions = find(row, it => it.iconText !== undefined && it.row !== undefined, []);
+    const actions = find(row, it => it.iconText !== undefined && it.row !== undefined && it.visible, []);
     compare(actions.length, 2);
     for (const action of actions) {
       verify(action.width > 0);

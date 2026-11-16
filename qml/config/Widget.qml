@@ -64,6 +64,9 @@ QtObject {
   // Side of a square icon button (StyledIconButton's default size): the
   // density's, or what its icon needs
   readonly property int iconButton: Math.max(Math.round(_density.iconButton * scale), Appearance.fontSize + 2 * px(4))
+  // Height of a compact control beside a full one (a list row's action, a
+  // lane's tool button, a renaming field): a little under `height`
+  readonly property int compactHeight: height - px(6)
   // Height of chips, pills and small buttons (keybind chips, a
   // notification's actions): the density's, or what a micro line needs
   readonly property int smallHeight: StyleTokens.controlHeight(Math.round(_density.smallHeight * scale), Appearance.fontSizeBy(-3), 0)

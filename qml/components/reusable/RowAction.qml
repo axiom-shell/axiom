@@ -13,7 +13,7 @@ StyledIconButton {
   property bool lit: false
   property bool danger: false
 
-  size: Widget.height - Widget.px(6)
+  size: Widget.compactHeight
   kind: root.lit ? "primary" : root.danger ? "danger" : "text"
   opacity: root.lit || root.row.revealed ? 1 : 0
 

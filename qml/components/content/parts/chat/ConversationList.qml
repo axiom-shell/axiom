@@ -146,7 +146,7 @@ DropdownSurface {
                   active: item.editing
                   visible: active
                   Layout.fillWidth: true
-                  Layout.preferredHeight: Widget.height - Widget.px(6)
+                  Layout.preferredHeight: Widget.compactHeight
                   sourceComponent: StyledTextEntry {
                     id: renameField
                     // Pushed in as it opens: a binding would bring a

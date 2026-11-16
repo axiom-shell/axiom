@@ -311,7 +311,7 @@ Popup {
                 readonly property var taken: KeybindManager.editor.binds[step.modelData.takenBy[0]] ?? null
 
                 Layout.fillWidth: true
-                implicitHeight: Widget.height + Widget.padding / 2
+                implicitHeight: Style.chipRowHeight
                 color: "transparent"
                 radius: Style.radiusInner
                 opacity: step.can || !root.merging ? 1 : Style.opacityDisabled

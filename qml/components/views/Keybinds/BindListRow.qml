@@ -46,7 +46,7 @@ ListEntryRow {
   readonly property string actionLabel: KeybindManager.actionLabels[root.bind.action] ?? String(root.bind.action ?? "")
 
   Layout.leftMargin: root.nested ? Widget.padding * 2 : 0
-  Layout.preferredHeight: Widget.height + Widget.padding / 2
+  Layout.preferredHeight: Style.chipRowHeight
   selected: !root.isRun && KeybindManager.editor.selectedIndex === root.bindIndex
   changed: root.indices.some(i => KeybindManager.editor.changedBinds[i] === true)
   label: root.ownLabel || root.actionLabel

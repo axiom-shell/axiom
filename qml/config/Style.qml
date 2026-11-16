@@ -570,6 +570,8 @@ QtObject {
   readonly property int rowBleed: Widget.smallPadding
   // a list entry row's height (ListEntryRow and the lists that reserve its room)
   readonly property int listRowHeight: Widget.height + Widget.padding
+  // a draggable or listed chip's row height (bar lanes, grid drag chips, keybind rows)
+  readonly property real chipRowHeight: Widget.height + Widget.padding / 2
   // the width a flow column aims for. fixed px: a distance on screen, the
   // gap the eye travels from a label to its control (not on the Interface
   // scale: a raised scale on a wide screen still gets more columns)

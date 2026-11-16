@@ -37,7 +37,7 @@ Rectangle {
   signal menuRequested(real x, real y)
 
   implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
-  implicitHeight: Widget.height + Widget.padding / 2
+  implicitHeight: Style.chipRowHeight
   radius: Style.radius
   color: root.selected ? Style.accentContainer : Style.surfaceHighest
   border.color: root.selected ? Style.accent : Style.borderStrong
