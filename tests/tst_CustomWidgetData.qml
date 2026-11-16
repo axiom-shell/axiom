@@ -2652,4 +2652,60 @@ TestCase {
       }
     }), ["actions"], "the bar's click");
   }
+
+  function test_restorePlace() {
+    const items = [
+      {
+        "id": "a"
+      },
+      {
+        "id": "b",
+        "module": {
+          "elements": [
+            {},
+            {}
+          ],
+          "views": [
+            {
+              "elements": [
+                {}
+              ]
+            }
+          ]
+        }
+      }
+    ];
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "b",
+      "view": 0,
+      "element": 0
+    }), {
+      "index": 1,
+      "view": 0,
+      "element": 0
+    }, "everything still there");
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "b",
+      "view": 3,
+      "element": 1
+    }), {
+      "index": 1,
+      "view": -1,
+      "element": 1
+    }, "a gone screen falls back to the base");
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "b",
+      "view": 0,
+      "element": 4
+    }).element, -1, "a gone element");
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "zz",
+      "view": 0,
+      "element": 0
+    }), {
+      "index": 0,
+      "view": -1,
+      "element": -1
+    }, "a gone definition falls back to the first");
+  }
 }

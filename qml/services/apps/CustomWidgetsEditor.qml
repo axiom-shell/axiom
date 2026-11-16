@@ -307,10 +307,24 @@ QtObject {
   onPageShownChanged: root.testMode = false
 
   // Loads the draft unless it holds unsaved edits (the page is rebuilt
-  // whenever the overlay reopens)
+  // whenever the overlay reopens). Where the editor was (definition, screen,
+  // element; the tab stays) is kept, as far as it still exists; in memory
+  // only, for the shell's session
   function ensureLoaded() {
-    if (!_draft.isDirty)
-      root._load();
+    if (_draft.isDirty)
+      return;
+    const place = {
+      "id": root.selectedId,
+      "view": root.viewIndex,
+      "element": root.elements.selected
+    };
+    root._load();
+    const kept = CustomWidgetData.restorePlace(root.items, place);
+    if (kept.index !== root.selectedIndex)
+      root.selectDefinition(kept.index);
+    root.selectView(kept.view);
+    if (kept.element >= 0)
+      root.elements.select(kept.element);
   }
 
   function save() {

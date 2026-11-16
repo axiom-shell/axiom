@@ -2089,6 +2089,29 @@ QtObject {
     return n;
   }
 
+  // Where the editor was (`place`: { id, view, element }) in `items`, as
+  // far as it still exists: { index (the definition with that id, else 0),
+  // view (-1 the base; the screen, if it is still there), element (the
+  // selected element's index in that layer, or -1) }. The editor keeps its
+  // place when the page reopens; a missing definition falls back to the first
+  function restorePlace(items, place) {
+    const found = (items ?? []).findIndex(d => d.id === place?.id);
+    if (found < 0)
+      return {
+        "index": 0,
+        "view": -1,
+        "element": -1
+      };
+    const module = items[found].module;
+    const view = place.view >= 0 && place.view < (module?.views?.length ?? 0) ? place.view : -1;
+    const layer = view >= 0 ? module.views[view].elements : module?.elements;
+    return {
+      "index": found,
+      "view": view,
+      "element": place.element >= 0 && place.element < (layer?.length ?? 0) ? place.element : -1
+    };
+  }
+
   // The key a screen's sample is kept under: its id, "" for no screen
   // (the base alone)
   function viewKey(module, index) {

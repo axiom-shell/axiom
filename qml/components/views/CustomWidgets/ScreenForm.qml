@@ -99,6 +99,7 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Screen")
+        headerGap: 0
         headerExtras: StyledIconButton {
           Layout.alignment: Qt.AlignVCenter
           kind: "danger"
@@ -113,6 +114,7 @@ ColumnLayout {
 
           InspectorRow {
             first: true
+            shortControl: true
             label: I18n.tr("Name")
 
             StyledTextEntry {
@@ -150,47 +152,66 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Show when")
+        headerGap: 0
 
         ColumnLayout {
           Layout.fillWidth: true
           spacing: 0
 
-          InspectorRow {
-            first: true
-            label: I18n.tr("Key")
-
-            StyledComboEntry {
-              Layout.fillWidth: true
-              editable: true
-              value: screen.when.key ?? ""
-              placeholderText: I18n.tr("Only an action")
-              options: root.keyOptions
-              onPicked: value => root.editor.setViewKey(root.editor.viewIndex, value)
-            }
-          }
-
+          // The key and the test side by side, each its label beside it
           FormRow {
-            shown: !screen.noKey
-            hoverable: true
-            bodyHeight: testField.implicitHeight
-            onRowClicked: testField.activate()
+            first: true
+            bodyHeight: keyTest.implicitHeight
 
-            SchemaComboBox {
-              id: testField
+            RowLayout {
+              id: keyTest
               width: parent.width
-              label: I18n.tr("Test")
-              options: root.testOptions.map(t => t.value)
-              optionLabels: root.testOptions.reduce((labels, t) => {
-                labels[t.value] = t.label;
-                return labels;
-              }, {})
-              currentValue: screen.when.test ?? "is"
-              onSelectionChanged: value => root.editor.setView(["when", "test"], value)
+              spacing: Widget.spacing * 2
+
+              RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                spacing: Widget.spacing
+
+                FieldHeader {
+                  Layout.fillWidth: false
+                  Layout.alignment: Qt.AlignVCenter
+                  label: I18n.tr("Key")
+                }
+                StyledComboEntry {
+                  Layout.fillWidth: true
+                  editable: true
+                  value: screen.when.key ?? ""
+                  placeholderText: I18n.tr("Only an action")
+                  options: root.keyOptions
+                  onPicked: value => root.editor.setViewKey(root.editor.viewIndex, value)
+                }
+              }
+
+              RowLayout {
+                visible: !screen.noKey
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                spacing: Widget.spacing
+
+                FieldHeader {
+                  Layout.fillWidth: false
+                  Layout.alignment: Qt.AlignVCenter
+                  label: I18n.tr("Test")
+                }
+                StyledComboEntry {
+                  Layout.fillWidth: true
+                  value: screen.when.test ?? "is"
+                  options: root.testOptions
+                  onPicked: value => root.editor.setView(["when", "test"], value)
+                }
+              }
             }
           }
 
           InspectorRow {
             shown: !screen.noKey && screen.listed
+            shortControl: true
             label: I18n.tr("Values")
 
             StyledTextEntry {
