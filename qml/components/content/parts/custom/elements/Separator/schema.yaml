@@ -1,6 +1,9 @@
 label: Separator
 icon: horizontal_rule
 defaultSize: [8, 1]
+color:
+  variant: state
+  color: {description: 'Auto: the border color.', x-showIf: {style: {not: space}}}
 settings:
   style: {$ref: '#/definitions/SeparatorStyle'}
   thickness:
@@ -21,11 +24,3 @@ settings:
     maximum: 100
     description: Share of its box the line spans.
     x-showIf: {style: [line, slash, chevron]}
-  color:
-    type: string
-    title: Color
-    x-options: colors
-    default: ''
-    x-emptyLabel: Auto
-    description: 'Auto: the border color.'
-    x-showIf: {style: {not: space}}

@@ -6,9 +6,11 @@ type: object
 required: [type, id]
 additionalProperties: false
 x-settingsAt: /properties/options/properties
+# Colours (a kind's `color: <variant>`): each colour key has its rules in
+# `<key>States` (CustomColorStates); CustomWidgetData.colorFields reads the pairs
 x-parts:
   color:
-    # Graphics: the state's colour when the script gives one
+    # Graphics, Status, List, Separator: the state's colour when the script gives one
     state:
       color:
         type: string
@@ -16,8 +18,9 @@ x-parts:
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-        description: 'Empty: the state''s color, else the accent.'
-    # Text: the text colour, or the state's when asked
+        description: 'Auto: the script''s class or state word (warning, critical), else the accent.'
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+    # Text, Text block: the text colour, and a background behind it
     text:
       color:
         type: string
@@ -25,15 +28,101 @@ x-parts:
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-
-      stateColor:
-        type: boolean
-        title: Color by state
-        default: false
-        description: The state's colour, when the script gives one.
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+      background:
+        type: string
+        title: Background
+        x-options: colors
+        default: ''
+        x-emptyLabel: None
+      backgroundStates: {$ref: '#/definitions/CustomColorStates'}
+    # Button: Auto is the tonal button
+    button:
+      background:
+        type: string
+        title: Background
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: 'Auto: the tonal button.'
+      backgroundStates: {$ref: '#/definitions/CustomColorStates'}
+      textColor:
+        type: string
+        title: Text color
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: 'Auto: the ink that reads on the background.'
+      textColorStates: {$ref: '#/definitions/CustomColorStates'}
+    # Icon
+    icon:
+      color:
+        type: string
+        title: Color
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+      background:
+        type: string
+        title: Background
+        x-options: colors
+        default: ''
+        x-emptyLabel: None
+      backgroundStates: {$ref: '#/definitions/CustomColorStates'}
+  # Placement (a kind's `place: <variant>`): where content smaller than its box
+  # sits. Size (`size: <variant>`): how big its text or glyph is
+  place:
+    # Across and down
+    both:
+      align:
+        type: string
+        title: Across
+        x-control: toggle
+        default: center
+        enum: [left, center, right]
+        x-enumLabels: {left: Left, center: Center, right: Right}
+      valign:
+        type: string
+        title: Down
+        x-control: toggle
+        default: middle
+        enum: [top, middle, bottom]
+        x-enumLabels: {top: Top, middle: Middle, bottom: Bottom}
+    # Fills the width (Entry): down only
+    down:
+      valign:
+        type: string
+        title: Down
+        x-control: toggle
+        default: middle
+        enum: [top, middle, bottom]
+        x-enumLabels: {top: Top, middle: Middle, bottom: Bottom}
+  size:
+    # Text, Text block, Button
+    text:
+      size:
+        type: string
+        title: Size
+        x-control: toggle
+        default: auto
+        enum: [auto, small, normal, large, huge]
+        x-enumLabels: {auto: Fit, small: Small, normal: Normal, large: Large, huge: Huge}
+        description: 'Fit: as large as the box allows. The others: the shell''s text sizes.'
+    # Icon
+    icon:
+      size:
+        type: string
+        title: Size
+        x-control: toggle
+        default: auto
+        enum: [auto, small, normal, large, huge]
+        x-enumLabels: {auto: Fit, small: Small, normal: Normal, large: Large, huge: Huge}
+        description: 'Fit: as large as the box allows. The others: the shell''s icon sizes.'
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}
+  name: {type: string, title: Name, default: '', description: 'Shown on the canvas. Empty: the kind.'}
   place:
     type: object
     additionalProperties: false
@@ -47,14 +136,30 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: 'Per slot: a key, a path (data.temp), a format ({text}%) or a number. Empty: the output''s own key.'
+    description: 'Per field: typed text is shown as it is; {path} inserts a value from the output ({cpu}, {player.title}). Exactly one {path} passes the value itself (a list, a number). Empty: the output''s own key.'
+  showWhen: {$ref: '#/definitions/CustomShowWhen'}
+  # Kinds with actions: off while its test fails (the actions don't run)
+  enabledWhen: {$ref: '#/definitions/CustomShowWhen', title: Enabled}
   options: {type: object, additionalProperties: false, properties: {}}
-  actions:
+  run:
     type: object
     additionalProperties: false
-    description: Commands it runs; {value} is filled in.
+    default: {}
+    description: The widget action each trigger runs.
     properties:
-      click: {x-scope: commands, type: string, title: Click command, default: '', description: '{value}: the label, or the row''s text.'}
-      change: {x-scope: commands, type: string, title: Change command, default: '', description: '{value} is the new value.'}
-      'on': {x-scope: commands, type: string, title: Turn-on command, default: ''}
-      'off': {x-scope: commands, type: string, title: Turn-off command, default: ''}
+      click: {$ref: '#/definitions/ActionId', title: On press}
+      change: {$ref: '#/definitions/ActionId', title: On change}
+      'on': {$ref: '#/definitions/ActionId', title: Turn on}
+      'off': {$ref: '#/definitions/ActionId', title: Turn off}
+      submit: {$ref: '#/definitions/ActionId', title: On Enter}
+  args:
+    type: object
+    additionalProperties: false
+    default: {}
+    description: The text each trigger adds to its action's command, as words (quoted for the shell, never run).
+    properties:
+      click: {type: string, title: On press, default: '', pattern: '^[^\n\r]{0,512}$'}
+      change: {type: string, title: On change, default: '', pattern: '^[^\n\r]{0,512}$'}
+      'on': {type: string, title: Turn on, default: '', pattern: '^[^\n\r]{0,512}$'}
+      'off': {type: string, title: Turn off, default: '', pattern: '^[^\n\r]{0,512}$'}
+      submit: {type: string, title: On Enter, default: '', pattern: '^[^\n\r]{0,512}$'}

@@ -13,10 +13,10 @@ QtObject {
   readonly property int subCells: 4
 
   // The fields a definition can bind: Waybar's five, then axiom's
-  readonly property var fieldNames: ["text", "alt", "tooltip", "class", "percentage", "icon", "value", "min", "max", "unit", "subtext", "state", "badge", "urgent", "image", "items", "hidden"]
+  readonly property var fieldNames: ["text", "alt", "tooltip", "class", "percentage", "icon", "value", "min", "max", "unit", "subtext", "state", "badge", "urgent", "image", "items", "hidden", "rev", "actions", "error"]
 
-  // Waybar's usual classes → theme colour names (a definition's `states`
-  // add to and override these)
+  // Waybar's usual classes → theme colour names (an element's or the bar's
+  // Auto colour follows these)
   readonly property var defaultStates: ({
       "ok": "success",
       "good": "success",
@@ -30,35 +30,46 @@ QtObject {
     })
 
   // A sample (an object) from one output: `text` (the trimmed output),
-  // `value` (it parsed as JSON, or undefined) and the definition's `format`:
-  //   "waybar": a JSON object as is; otherwise lines text, tooltip, class
-  //   "json":   a JSON object as is; any other JSON value as { text, value }
-  //   "text":   { text }
-  // `stream`: each output is one line of a stream (Waybar reads only the
-  // text from such a line when it isn't JSON)
+  // `value` (it parsed as JSON, or undefined) and the definition's `format`.
+  // "waybar" and "json" are both Auto:
+  //   a JSON object: as it is
+  //   a JSON array: { text: its length, value: its length, items: the array }
+  //   any other JSON value: { text, value: v }; a string's text is itself,
+  //             any other scalar keeps the text as printed
+  //   not JSON: Waybar's lines (text, tooltip, class), or only the text for
+  //             a stream line
+  //   "text":   { text }, the JSON ignored
   function parse(text, value, format, stream) {
-    const isObject = value !== null && typeof value === "object" && !Array.isArray(value);
-    if (format !== "text" && isObject)
-      return value;
-    if (format === "json" && value !== undefined)
+    if (format === "text")
       return {
-        "text": typeof value === "string" ? value : JSON.stringify(value),
+        "text": text ?? ""
+      };
+    if (value !== null && typeof value === "object" && !Array.isArray(value))
+      return value;
+    if (Array.isArray(value))
+      return {
+        "text": String(value.length),
+        "value": value.length,
+        "items": value
+      };
+    if (value !== undefined)
+      return {
+        "text": typeof value === "string" ? value : String(text ?? "").trim() || String(value),
         "value": value
       };
-    if (format === "waybar" && !stream) {
-      const lines = (text ?? "").split("\n");
-      const sample = {
-        "text": lines[0] ?? ""
+    if (stream)
+      return {
+        "text": text ?? ""
       };
-      if (lines.length > 1)
-        sample.tooltip = lines[1];
-      if (lines.length > 2)
-        sample.class = lines[2];
-      return sample;
-    }
-    return {
-      "text": text ?? ""
+    const lines = (text ?? "").split("\n");
+    const sample = {
+      "text": lines[0] ?? ""
     };
+    if (lines.length > 1)
+      sample.tooltip = lines[1];
+    if (lines.length > 2)
+      sample.class = lines[2];
+    return sample;
   }
 
   // A value as text: "" for nothing, JSON for an object or list
@@ -66,23 +77,65 @@ QtObject {
     return v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
   }
 
+  // The text a List row shows for its number: the value and the item's own
+  // `unit` ("84%"); nothing for a row with no number
+  function rowValueText(row) {
+    return row.value === undefined ? "" : root.asText(row.value) + root.asText(row.raw?.unit);
+  }
+
   // A list of rows (an output's items, or a bound list) as
-  // { text, icon, value (a number, or undefined), subtext }: a plain entry
-  // is its text; anything not a list is none
-  function rows(v) {
+  // { text, icon, value (a number, or undefined), subtext, id, state (its
+  // tone's word), max (a number above 0 that a numeric value is out of, else
+  // undefined: the row draws a meter), image (a path or URL), raw (the
+  // item) }: a plain entry is its text, the rest empty; anything not a list
+  // is none. `map` (a List's `row`: { text, subtext, icon, id }, each typed
+  // text or {key} of the item, a path reaching into it) says where those four
+  // come from; without it each is the item's key of that name.
+  function rows(v, map) {
     if (!Array.isArray(v))
       return [];
-    return v.map(i => i !== null && typeof i === "object" ? {
-        "text": root.asText(i.text),
-        "icon": root.asText(i.icon),
-        "value": root._number(i.value),
-        "subtext": root.asText(i.subtext)
-      } : {
-        "text": root.asText(i),
-        "icon": "",
-        "value": undefined,
-        "subtext": ""
-      });
+    return v.map(i => {
+      if (i === null || typeof i !== "object")
+        return {
+          "text": root.asText(i),
+          "icon": "",
+          "value": undefined,
+          "subtext": "",
+          "id": "",
+          "state": "",
+          "max": undefined,
+          "image": "",
+          "raw": i
+        };
+      const value = root._number(i.value);
+      const max = root._number(i.max);
+      const own = key => map ? root._rowText(map[key], i) : root.asText(i[key]);
+      return {
+        "text": own("text"),
+        "icon": own("icon"),
+        "value": value,
+        "subtext": own("subtext"),
+        "id": own("id"),
+        "state": root.asText(i.state),
+        "max": value !== undefined && max !== undefined && max > 0 ? max : undefined,
+        "image": root.asText(i.image),
+        "raw": i
+      };
+    });
+  }
+
+  // A row-mapping field against a row: typed text as it is, {key} (one, alone)
+  // the row's value of it, else the text filled; a key the row lacks is empty
+  function _rowText(template, item) {
+    const t = String(template ?? "");
+    if (t.indexOf("{") < 0)
+      return t;
+    const one = /^\{([^{}:]*)\}$/.exec(t);
+    if (one)
+      return root.asText(root.get(item, one[1] === "" || one[1] === "0" ? "text" : one[1]));
+    return root.fill(t, {
+      "_sample": item
+    });
   }
 
   // A number, or one in a string; undefined otherwise
@@ -126,10 +179,13 @@ QtObject {
   // `values`: `{}` and `{0}` are the text; `{name}` (a field, or a path in
   // the sample) its value; a `:spec` after the name is ignored. Unknown
   // names fill nothing.
-  function fill(template, values) {
+  // With `keepUnknown` a name that is no field and no path stays as typed.
+  function fill(template, values, keepUnknown) {
     return String(template ?? "").replace(/\{([^{}:]*)(?::[^{}]*)?\}/g, (match, name) => {
       const key = name === "" || name === "0" ? "text" : name;
-      return root.asText(key in values ? values[key] : root.get(values._sample, key));
+      const known = key in values;
+      const v = known ? values[key] : root.get(values._sample, key);
+      return keepUnknown && !known && v === undefined ? match : root.asText(v);
     });
   }
 
@@ -158,20 +214,113 @@ QtObject {
     return value ? String(value).split(/\s+/).filter(c => c) : [];
   }
 
-  // The theme colour name for a state: `state` itself when it's a known
-  // name or a colour; else the first class `states` (over defaultStates)
-  // maps. "" when none.
-  function stateColor(state, classList, states) {
-    const map = Object.assign({}, root.defaultStates, states ?? {});
+  // Whether `name` is one of the theme's colour names (`colorNames`, the
+  // keys of Theme.stringToColorMap)
+  function isThemeColor(name, colorNames) {
+    return (colorNames ?? []).indexOf(String(name)) >= 0;
+  }
+
+  // The theme colour name for a state. The first that holds: defaultStates
+  // maps `state`; `state` is itself a theme colour name; the first class
+  // defaultStates maps. "" when none: a state that is neither mapped nor a
+  // theme name (a hex too) colours nothing.
+  function stateColor(state, classList, colorNames) {
+    const map = root.defaultStates;
+    const mapped = key => Object.prototype.hasOwnProperty.call(map, key);
     if (state) {
       const s = String(state);
-      return map[s] ?? s;
+      if (mapped(s))
+        return map[s];
+      if (root.isThemeColor(s, colorNames))
+        return s;
     }
     for (const c of classList ?? []) {
-      if (c in map)
+      if (mapped(c))
         return map[c];
     }
     return "";
+  }
+
+  // Whether a script's value counts as on: true, a non-zero number, a string
+  // that isn't "", false, 0, no, off, disabled or inactive (any case), a
+  // non-empty list or object
+  function truthy(v) {
+    if (v === true)
+      return true;
+    if (typeof v === "number")
+      return isFinite(v) && v !== 0;
+    if (typeof v === "string")
+      return ["", "false", "0", "no", "off", "disabled", "inactive"].indexOf(v.trim().toLowerCase()) < 0;
+    if (Array.isArray(v))
+      return v.length > 0;
+    return v !== null && typeof v === "object" && Object.keys(v).length > 0;
+  }
+
+  // An action id (a letter, digit, "_", "." or "-", up to 64; "axiom:" ids
+  // are the shell's own)
+  function _actionId(id) {
+    return /^[A-Za-z0-9_.-]{1,64}$/.test(id);
+  }
+
+  // A sample's `actions` ({<id>: {enabled}}) as { <id>: { enabled } }, or
+  // null when it isn't an object (no list: every action is on). Ids that
+  // aren't action ids, and `axiom:` ids (always on), are dropped; `enabled`
+  // is truthy, and on when missing.
+  function actionsOf(value) {
+    if (value === null || typeof value !== "object" || Array.isArray(value))
+      return null;
+    const out = {};
+    for (const id of Object.keys(value)) {
+      // names every object has (`__proto__`, `constructor`, …) aren't action ids
+      if (!root._actionId(id) || id in Object.prototype)
+        continue;
+      const entry = value[id];
+      out[id] = {
+        "enabled": root.truthy(entry !== null && typeof entry === "object" ? entry.enabled ?? true : true)
+      };
+    }
+    return out;
+  }
+
+  // `template` with {0}, {1}… filled from `args`
+  function _format(template, args) {
+    return String(template ?? "").replace(/\{(\d+)\}/g, (m, i) => i in args ? String(args[i]) : m);
+  }
+
+  // Why a definition's script isn't answering, or null: { kind, message,
+  // exitCode, stderr }. Only an interactive definition fails (a Waybar-style
+  // one draws as it always did). `run` is the script's last run { exitCode,
+  // error, stderr, text, exited }; `context` { interactive, stream, words:
+  // { exited, exitedWith } } (the two message templates, {0} the code and
+  // {1} the stderr line). The first that holds:
+  //   start:   it couldn't start (exitCode -1 and an error)
+  //   stopped: a stream that ended with a non-zero exit
+  //   exit:    a non-zero exit with no output
+  //   script:  the sample's own `error` (a non-empty string, or any other
+  //            truthy value)
+  function failure(sample, run, context) {
+    if (!context?.interactive)
+      return null;
+    const r = run ?? {};
+    const words = context.words ?? {};
+    const code = typeof r.exitCode === "number" ? r.exitCode : undefined;
+    const stderr = r.stderr ? String(r.stderr) : "";
+    const make = (kind, message) => ({
+          "kind": kind,
+          "message": message,
+          "exitCode": code ?? 0,
+          "stderr": stderr
+        });
+    const exitMessage = () => stderr ? root._format(words.exitedWith, [code, stderr]) : root._format(words.exited, [code]);
+    if (code === -1 && r.error)
+      return make("start", String(r.error));
+    if (context.stream && r.exited && code !== undefined && code !== 0)
+      return make("stopped", exitMessage());
+    if (code !== undefined && code !== 0 && !r.text)
+      return make("exit", exitMessage());
+    const e = sample?.error;
+    const error = typeof e === "string" ? e.trim() : root.truthy(e) ? root.asText(e) : "";
+    return error !== "" ? make("script", error) : null;
   }
 
   // Text escaped for rich text (Waybar's `escape`)
@@ -244,20 +393,43 @@ QtObject {
     return String(rich ?? "").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
+  // A name for a widget from its command: the first word's file name without
+  // its extension ("~/bin/cpu.sh x" is "cpu", "checkupdates | wc" is
+  // "checkupdates"), "" when the command has no word
+  function nameFromCommand(command) {
+    const text = String(command ?? "").trim();
+    const quoted = text.match(/^(["'])(.*?)\1/);
+    const word = quoted ? quoted[2] : text.split(/\s+/)[0];
+    const file = word.replace(/\/+$/, "").split("/").pop();
+    const dot = file.lastIndexOf(".");
+    return dot > 0 ? file.slice(0, dot) : file;
+  }
+
+  // `base`, else "base 2", "base 3", … : the first not in `names`
+  function freeName(base, names) {
+    let name = base;
+    for (let n = 2; names.includes(name); n++)
+      name = `${base} ${n}`;
+    return name;
+  }
+
   // The fields of one sample as a definition draws them, each read from
   // the key of the same name (a script shapes its own JSON). Plain text
   // that's a number is the value; text matching a format-icons key is the
   // alt (so a script printing "on" picks the "on" icon); a format-icons
   // pick that's a Material Symbols name is the icon, when there's none.
   //   definition: { format, formatIcons,
-  //                 states, maxLength, escape, hideEmpty }
+  //                 maxLength, escape, hideEmpty }
   // Returns { text (rich, the format filled), plain (it as plain text),
-  // rawText, alt, tooltip (rich), classes, color (a theme name or colour,
+  // rawText, alt, tooltip (rich), classes, color (a theme colour name,
   // "" for none), percentage, value, min, max (0-100 unless given), hasMax
   // (the output gave a max or a percentage), ratio (0-1, or -1 without a
-  // value), unit, subtext, icon (a Material Symbols name), glyph (the
+  // value), state, rev, actions (actionsOf), failure (failure), error (its
+  // message), hiddenByScript (the output's own `hidden`), noSample (the
+  // context's: no script, so `{path}` reads empty and it never hides), interactive and
+  // colorNames (the context's), unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
-  function resolve(definition, sample) {
+  function resolve(definition, sample, context) {
     const d = definition ?? {};
     const s = sample ?? {};
     const f = {};
@@ -304,7 +476,10 @@ QtObject {
     const textPlain = root.plain(text);
     const classList = root.classes(f.class);
     const items = root.rows(f.items);
-    const hidden = f.hidden === true || f.hidden === "true" || (d.hideEmpty !== false && rawText.trim() === "");
+    const hiddenByScript = f.hidden === true || f.hidden === "true";
+    const failure = root.failure(s, context?.run, context);
+    // A failing widget always shows its failure
+    const hidden = !context?.noScript && failure === null && (hiddenByScript || (d.hideEmpty !== false && rawText.trim() === ""));
     return {
       "text": text,
       "plain": textPlain,
@@ -312,7 +487,15 @@ QtObject {
       "alt": str(f.alt),
       "tooltip": root.pango(esc(str(f.tooltip))),
       "classes": classList,
-      "color": root.stateColor(str(f.state), classList, d.states),
+      "color": root.stateColor(str(f.state), classList, context?.colorNames),
+      "state": str(f.state),
+      "rev": str(f.rev),
+      "actions": root.actionsOf(f.actions),
+      "failure": failure,
+      "error": failure?.message ?? "",
+      "interactive": !!context?.interactive,
+      "colorNames": context?.colorNames ?? [],
+      "hiddenByScript": hiddenByScript,
       "percentage": percentage,
       "value": value,
       "min": min,
@@ -328,31 +511,183 @@ QtObject {
       "image": str(f.image),
       "items": items,
       "hidden": hidden,
+      "noSample": !!context?.noScript,
       "sample": s
     };
   }
 
-  // An element's own binding: a format when it has a "{" (filled from the
-  // resolved fields, then the sample), else a field name, else a path in
-  // the sample. Returns the raw value (a format: its string).
+  // What resolve returns for its own use, not an output key of that name: a
+  // binding of one reads the sample's
+  readonly property var _internalFields: ["colorNames", "actions", "interactive", "failure", "noSample"]
+
+  // `fields` as `fill` reads them: the text is the plain one, the icon the
+  // glyph, and resolve's own bookkeeping is left out
+  function fillValues(fields) {
+    const values = Object.assign({}, fields, {
+      "_sample": fields?.sample,
+      "text": fields?.plain,
+      "icon": fields?.glyph
+    });
+    for (const key of root._internalFields)
+      delete values[key];
+    return values;
+  }
+
+  // What a text field of an element reads as (an element's `bind`): "" is
+  // nothing (undefined: the slot falls back to the output's own key); exactly
+  // one {path} alone is the value itself (a field of `fields`, else a path in
+  // the sample: a list, a number, text; undefined when missing); other text
+  // with a "{" is filled ({text} is the plain text; a {x} that is no field and
+  // no path stays as typed, unless `fields.noSample` (a preview with no sample
+  // yet) says there is nothing to fill from: then it reads as empty); anything
+  // else is typed text, a number when it is one.
   function elementValue(fields, binding) {
-    if (!binding)
+    if (binding === undefined || binding === null || binding === "")
       return undefined;
     const b = String(binding);
-    // A number typed as the binding (a max of 100)
-    if (/^-?\d+(\.\d+)?$/.test(b.trim()))
-      return Number(b);
-    if (b.indexOf("{") >= 0) {
-      const values = Object.assign({}, fields, {
-        "_sample": fields?.sample,
-        "text": fields?.plain,
-        "icon": fields?.glyph
-      });
-      return root.fill(b, values);
+    const one = /^\{([^{}:]*)\}$/.exec(b);
+    if (one) {
+      const key = one[1] === "" || one[1] === "0" ? "text" : one[1];
+      if (key === "text" && fields)
+        return fields.plain;
+      // `sample` and resolve's own bookkeeping aren't fields a script prints
+      if (fields && key in fields && key !== "sample" && root._internalFields.indexOf(key) < 0)
+        return fields[key];
+      return root.get(fields?.sample, key);
     }
-    if (fields && b in fields && b !== "sample")
-      return fields[b];
-    return root.get(fields?.sample, b);
+    if (b.indexOf("{") >= 0) {
+      return root.fill(b, root.fillValues(fields), fields?.noSample !== true);
+    }
+    return /^-?\d+(\.\d+)?$/.test(b.trim()) ? Number(b) : b;
+  }
+
+  // The {paths} of a text field that read nothing in `fields` (no field, no
+  // path in the sample): what the editor warns about
+  function unknownPaths(fields, binding) {
+    const out = [];
+    const re = /\{([^{}:]*)(?::[^{}]*)?\}/g;
+    let m;
+    while ((m = re.exec(String(binding ?? ""))) !== null) {
+      const key = m[1] === "" || m[1] === "0" ? "text" : m[1];
+      const field = key === "text" || (fields && key in fields && key !== "sample" && root._internalFields.indexOf(key) < 0);
+      if (!field && root.get(fields?.sample, key) === undefined && out.indexOf(key) < 0)
+        out.push(key);
+    }
+    return out;
+  }
+
+  // An element's slot as the element reads it: its text field when typed,
+  // else the output's own `slot` (an unbound text shows the output's text)
+  function ownValue(fields, bind, slot) {
+    return bind?.[slot] ? root.elementValue(fields, bind[slot]) : fields?.[slot];
+  }
+
+  // Whether `value` passes a test (a colour rule's, or an element's Visible):
+  //   is / isNot: the text of the value, trimmed, against `operand`
+  //   above / below: both as numbers (parseFloat, so "85%" is 85); false
+  //                  when either isn't one
+  //   set / unset: has a value (text counts, even "0"), then not
+  //   on / off: truthy (false, 0, no, off, disabled, inactive and "" are off), then not
+  //   always: true
+  function holds(test, value, operand) {
+    switch (test) {
+    case "always":
+      return true;
+    case "is":
+      return root.asText(value).trim() === String(operand ?? "").trim();
+    case "isNot":
+      return root.asText(value).trim() !== String(operand ?? "").trim();
+    case "above":
+    case "below":
+      {
+        const v = parseFloat(root.asText(value));
+        const o = parseFloat(operand);
+        if (isNaN(v) || isNaN(o))
+          return false;
+        return test === "above" ? v > o : v < o;
+      }
+    case "set":
+      return root._isSet(value);
+    case "unset":
+      return !root._isSet(value);
+    case "on":
+      return root.truthy(value);
+    case "off":
+      return !root.truthy(value);
+    }
+    return false;
+  }
+
+  // Whether a value is set: text (even "0" or "no") when it isn't empty,
+  // else truthy (not 0, false, nothing or an empty list)
+  function _isSet(value) {
+    return typeof value === "string" ? value.trim() !== "" : root.truthy(value);
+  }
+
+  // What a colour rule or Visible reads: `key` "" is `own` (what the element
+  // shows), else the key or path in the output ({key} through elementValue)
+  function readKey(fields, key, own) {
+    return key ? root.elementValue(fields, "{" + key + "}") : own;
+  }
+
+  // A colour as a name ("" for Auto): with `states.enabled` the colour of the
+  // first rule that holds (its own "" is `auto`); else, or when none holds,
+  // `picked`, else `auto`. A hex passes as it is
+  function colorFor(picked, states, fields, own, auto) {
+    if (!states?.enabled)
+      return picked || auto;
+    return root._ruleColor(states, root.readKey(fields, states.key, own), picked, auto);
+  }
+
+  // The colour of the first rule of `states` that holds for `value` (its own
+  // "" is `auto`), else `picked`, else `auto`
+  function _ruleColor(states, value, picked, auto) {
+    for (const rule of states.rules ?? []) {
+      if (root.holds(rule.test, value, rule.value))
+        return rule.color || auto;
+    }
+    return picked || auto;
+  }
+
+  // colorFor over a List row: the key is read from the row's own item
+  // (`row.raw`, a path as {key}), "" reads its text
+  function rowColor(picked, states, row) {
+    const own = row?.text;
+    if (!states?.enabled)
+      return picked || "";
+    const value = states.key ? root.get(row?.raw, states.key) : own;
+    return root._ruleColor(states, value, picked, "");
+  }
+
+  // Whether an element is shown (its showWhen: { test, key, value }): always
+  // when there is none
+  function shown(showWhen, fields, own) {
+    const test = showWhen?.test ?? "always";
+    return test === "always" || root.holds(test, root.readKey(fields, showWhen.key, own), showWhen.value);
+  }
+
+  // The colours of a kind's options schema, in `order`: { colors: [{ key,
+  // statesKey }] (a key with `x-options: colors`; statesKey `<key>States`
+  // when the schema has it, else ""), look: the other keys, the `…States`
+  // ones left out }
+  function colorFields(options, order) {
+    const keys = (order ?? []).length > 0 ? order : Object.keys(options ?? {});
+    const colors = [];
+    const look = [];
+    for (const key of keys) {
+      const states = key + "States";
+      if (options?.[key]?.["x-options"] === "colors")
+        colors.push({
+          "key": key,
+          "statesKey": options?.[states] ? states : ""
+        });
+      else if (!(key.endsWith("States") && options?.[key.slice(0, -6)]?.["x-options"] === "colors"))
+        look.push(key);
+    }
+    return {
+      "colors": colors,
+      "look": look
+    };
   }
 
   // An element's value, min and max as numbers: each slot's binding (a
@@ -440,7 +775,9 @@ QtObject {
   // isn't JSON(C).
   //   exec → command; interval (s) → poll, "once" → once, none → stream;
   //   exec-if, format, format-icons, max-length, escape, tooltip,
-  //   on-click(-right, -middle), on-scroll-up/down; signal → refreshName
+  //   on-click(-right, -middle), on-scroll-up/down (each an action that
+  //   doesn't wait, run by the bar's click or scroll: bar.run); signal →
+  //   refreshName
   function fromWaybar(text) {
     let body = root.stripJsonc(text).trim();
     if (/^"[^"]+"\s*:/.test(body))
@@ -457,7 +794,9 @@ QtObject {
         "mode": interval === "once" ? "once" : typeof interval === "number" && interval > 0 ? "poll" : "stream",
         "output": "waybar",
         "format": typeof m.format === "string" ? m.format : "{}",
-        "actions": {}
+        "actions": {
+          "items": []
+        }
       };
       if (def.mode === "poll")
         def.interval = Math.max(500, Math.round(interval * 1000));
@@ -473,17 +812,34 @@ QtObject {
         def.tooltip = false;
       if (m.signal !== undefined)
         def.refreshName = String(name).replace(/^custom\//, "");
-      const actions = {
-        "on-click": "click",
-        "on-click-right": "rightClick",
-        "on-click-middle": "middleClick",
-        "on-scroll-up": "scrollUp",
-        "on-scroll-down": "scrollDown"
+      // Each click or scroll command becomes an action (named by its
+      // trigger: I18n.tr("Click") I18n.tr("Right click") I18n.tr("Middle click")
+      // I18n.tr("Scroll up") I18n.tr("Scroll down")) the bar runs
+      const triggers = {
+        "on-click": ["click", "Click"],
+        "on-click-right": ["rightClick", "Right click"],
+        "on-click-middle": ["middleClick", "Middle click"],
+        "on-scroll-up": ["scrollUp", "Scroll up"],
+        "on-scroll-down": ["scrollDown", "Scroll down"]
       };
-      for (const key in actions) {
-        if (typeof m[key] === "string")
-          def.actions[actions[key]] = m[key];
+      const run = {};
+      for (const key in triggers) {
+        if (typeof m[key] !== "string")
+          continue;
+        const [trigger, label] = triggers[key];
+        def.actions.items.push({
+          "id": trigger,
+          "name": label,
+          "kind": "command",
+          "command": m[key],
+          "wait": false
+        });
+        run[trigger] = trigger;
       }
+      if (def.actions.items.length > 0)
+        def.bar = {
+          "run": run
+        };
       return def;
     });
   }
@@ -492,7 +848,16 @@ QtObject {
   // no ids). Names: I18n.tr("Notifications (SwayNC)") I18n.tr("Do not disturb (dunst)")
   // I18n.tr("Media (Waybar's mediaplayer.py)") I18n.tr("Package updates")
   // I18n.tr("Weather (wttr.in)") I18n.tr("Failed services") I18n.tr("WireGuard VPN")
-  // I18n.tr("GPU load (NVIDIA)")
+  // I18n.tr("GPU load (NVIDIA)") I18n.tr("Daily habits")
+  // Their actions' names: I18n.tr("Click") I18n.tr("Right click") I18n.tr("Scroll up")
+  // I18n.tr("Scroll down") I18n.tr("Check off") I18n.tr("Add") I18n.tr("Undo")
+  // I18n.tr("Remove") I18n.tr("Open") I18n.tr("Set") I18n.tr("Turn on") I18n.tr("Turn off")
+  // I18n.tr("Previous") I18n.tr("Play or pause") I18n.tr("Next")
+  // Descriptions: I18n.tr("Habits to check off each day, with streaks")
+  // Daily habits' texts, which CustomWidgetsEditor.add translates (the
+  // typed texts, labels and screen names): I18n.tr("Habits")
+  // I18n.tr("All done today") I18n.tr("Add your first habit below")
+  // I18n.tr("New habit") I18n.tr("Open") I18n.tr("Done") I18n.tr("Empty")
   readonly property var presets: [
     {
       "name": "Notifications (SwayNC)",
@@ -511,11 +876,27 @@ QtObject {
         "dnd-inhibited-none": "notifications_off"
       },
       "bar": {
-        "style": "icon"
+        "style": "icon",
+        "run": {
+          "click": "click",
+          "rightClick": "rightClick"
+        }
       },
       "actions": {
-        "click": "swaync-client -t -sw",
-        "rightClick": "swaync-client -d -sw"
+        "items": [
+          {
+            "id": "click",
+            "name": "Click",
+            "command": "swaync-client -t -sw",
+            "wait": false
+          },
+          {
+            "id": "rightClick",
+            "name": "Right click",
+            "command": "swaync-client -d -sw",
+            "wait": false
+          }
+        ]
       }
     },
     {
@@ -532,10 +913,20 @@ QtObject {
       },
       "hideEmpty": false,
       "bar": {
-        "style": "icon"
+        "style": "icon",
+        "run": {
+          "click": "click"
+        }
       },
       "actions": {
-        "click": "dunstctl set-paused toggle"
+        "items": [
+          {
+            "id": "click",
+            "name": "Click",
+            "command": "dunstctl set-paused toggle",
+            "wait": false
+          }
+        ]
       }
     },
     {
@@ -549,10 +940,34 @@ QtObject {
       },
       "maxLength": 40,
       "escape": true,
+      "bar": {
+        "run": {
+          "click": "click",
+          "scrollUp": "scrollUp",
+          "scrollDown": "scrollDown"
+        }
+      },
       "actions": {
-        "click": "playerctl play-pause",
-        "scrollUp": "playerctl next",
-        "scrollDown": "playerctl previous"
+        "items": [
+          {
+            "id": "click",
+            "name": "Click",
+            "command": "playerctl play-pause",
+            "wait": false
+          },
+          {
+            "id": "scrollUp",
+            "name": "Scroll up",
+            "command": "playerctl next",
+            "wait": false
+          },
+          {
+            "id": "scrollDown",
+            "name": "Scroll down",
+            "command": "playerctl previous",
+            "wait": false
+          }
+        ]
       }
     },
     {
@@ -608,6 +1023,670 @@ QtObject {
       "bar": {
         "style": "ring"
       }
+    },
+    {
+      "name": "Daily habits",
+      "description": "Habits to check off each day, with streaks",
+      "template": true,
+      "icon": "task_alt",
+      "command": "bash '{tree}data/custom-widgets/habits.sh' show",
+      "mode": "poll",
+      "interval": 60000,
+      "output": "json",
+      "actions": {
+        "items": [
+          {
+            "id": "check",
+            "name": "Check off",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do check {value}",
+            "wait": true
+          },
+          {
+            "id": "add",
+            "name": "Add",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do add {value}",
+            "wait": true
+          },
+          {
+            "id": "undo",
+            "name": "Undo",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do undo",
+            "wait": true
+          },
+          {
+            "id": "remove",
+            "name": "Remove",
+            "kind": "command",
+            "command": "bash '{tree}data/custom-widgets/habits.sh' do remove {value}",
+            "wait": true
+          }
+        ]
+      },
+      "format": "{text}",
+      "bar": {
+        "style": "label",
+        "popout": true
+      },
+      "module": {
+        "size": [4, 4],
+        "elements": [
+          {
+            "id": "title",
+            "type": "Text",
+            "place": {
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 2
+            },
+            "bind": {
+              "text": "Habits"
+            },
+            "options": {
+              "align": "left",
+              "bold": true,
+              "size": "large"
+            }
+          },
+          {
+            "id": "count",
+            "type": "Text",
+            "place": {
+              "x": 10,
+              "y": 0,
+              "w": 3,
+              "h": 2
+            },
+            "bind": {
+              "text": "{text}"
+            },
+            "options": {
+              "align": "right",
+              "size": "large",
+              "colorStates": root._stateRules("state", [["done", "success"], ["open", "accent"]])
+            }
+          },
+          {
+            "id": "undo",
+            "type": "Button",
+            "place": {
+              "x": 13,
+              "y": 0,
+              "w": 3,
+              "h": 2
+            },
+            "run": {
+              "click": "undo"
+            },
+            "bind": {
+              "icon": "undo"
+            },
+            "options": {
+              "disabled": "hide"
+            }
+          },
+          {
+            "id": "new",
+            "type": "Entry",
+            "place": {
+              "x": 0,
+              "y": 14,
+              "w": 16,
+              "h": 2
+            },
+            "run": {
+              "submit": "add"
+            },
+            "bind": {
+              "placeholder": "New habit"
+            }
+          }
+        ],
+        "views": [
+          {
+            "id": "open",
+            "name": "Open",
+            "when": {
+              "key": "state",
+              "test": "is",
+              "values": ["open"]
+            },
+            "elements": [
+              {
+                "id": "habits",
+                "type": "List",
+                "place": {
+                  "x": 0,
+                  "y": 2,
+                  "w": 16,
+                  "h": 12
+                },
+                "run": {
+                  "click": "check"
+                },
+                "options": {
+                  "colorStates": root._stateRules("state", [["done", "success"], ["open", "accent"]])
+                }
+              }
+            ]
+          },
+          {
+            "id": "done",
+            "name": "Done",
+            "when": {
+              "key": "state",
+              "test": "is",
+              "values": ["done"]
+            },
+            "elements": [
+              {
+                "id": "mark",
+                "type": "Icon",
+                "place": {
+                  "x": 5,
+                  "y": 3,
+                  "w": 6,
+                  "h": 6
+                },
+                "bind": {
+                  "icon": "task_alt"
+                },
+                "options": {
+                  "color": "success"
+                }
+              },
+              {
+                "id": "message",
+                "type": "Text",
+                "place": {
+                  "x": 0,
+                  "y": 10,
+                  "w": 16,
+                  "h": 2
+                },
+                "bind": {
+                  "text": "All done today"
+                },
+                "options": {
+                  "size": "normal"
+                }
+              }
+            ]
+          },
+          {
+            "id": "empty",
+            "name": "Empty",
+            "when": {
+              "key": "state",
+              "test": "is",
+              "values": ["empty"]
+            },
+            "elements": [
+              {
+                "id": "hint",
+                "type": "Text",
+                "place": {
+                  "x": 0,
+                  "y": 5,
+                  "w": 16,
+                  "h": 2
+                },
+                "bind": {
+                  "text": "Add your first habit below"
+                },
+                "options": {
+                  "size": "normal"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "samples": {
+        "open": {
+          "state": "open",
+          "text": "1/3",
+          "value": 1,
+          "min": 0,
+          "max": 3,
+          "items": [
+            {
+              "id": "1",
+              "text": "Read",
+              "icon": "check_circle",
+              "subtext": "4 days",
+              "state": "done"
+            },
+            {
+              "id": "2",
+              "text": "Walk",
+              "icon": "radio_button_unchecked",
+              "subtext": "0 days",
+              "state": "open"
+            },
+            {
+              "id": "3",
+              "text": "Stretch",
+              "icon": "radio_button_unchecked",
+              "subtext": "2 days",
+              "state": "open"
+            }
+          ],
+          "actions": {
+            "add": {},
+            "check": {},
+            "undo": {}
+          }
+        },
+        "done": {
+          "state": "done",
+          "text": "3/3",
+          "value": 3,
+          "min": 0,
+          "max": 3,
+          "items": [
+            {
+              "id": "1",
+              "text": "Read",
+              "icon": "check_circle",
+              "subtext": "5 days",
+              "state": "done"
+            },
+            {
+              "id": "2",
+              "text": "Walk",
+              "icon": "check_circle",
+              "subtext": "1 day",
+              "state": "done"
+            },
+            {
+              "id": "3",
+              "text": "Stretch",
+              "icon": "check_circle",
+              "subtext": "3 days",
+              "state": "done"
+            }
+          ],
+          "actions": {
+            "add": {},
+            "check": {},
+            "undo": {}
+          }
+        },
+        "empty": {
+          "state": "empty",
+          "text": "0/0",
+          "value": 0,
+          "min": 0,
+          "max": 0,
+          "items": [],
+          "actions": {
+            "add": {}
+          }
+        }
+      }
+    },
+    // The gallery's templates (`demo`, but Daily habits): each runs
+    // data/custom-widgets/demo.sh, so it works when added, and has a sample
+    // per screen to preview before the script answers (their texts are
+    // English here and translated by CustomWidgetsEditor.add: the names,
+    // descriptions, labels and action names, listed here): I18n.tr("Toggle") I18n.tr("An on / off switch, such as a VPN")
+    // I18n.tr("Slider") I18n.tr("A value you can drag, such as the brightness")
+    // I18n.tr("List with a row action") I18n.tr("Rows you can press, such as disks")
+    // I18n.tr("Media card") I18n.tr("Playing, paused and nothing playing, with buttons")
+    // I18n.tr("Status with an error screen") I18n.tr("A status line, and a screen for when the script fails")
+    // I18n.tr("Enabled") I18n.tr("Play") I18n.tr("Turn on") I18n.tr("Turn off") I18n.tr("Set") I18n.tr("Open") I18n.tr("Previous") I18n.tr("Play or pause") I18n.tr("Next") I18n.tr("Break it") I18n.tr("Fix it") I18n.tr("Disks") I18n.tr("Nothing playing") I18n.tr("Restart")
+    // I18n.tr("On") I18n.tr("Off") I18n.tr("Playing") I18n.tr("Paused") I18n.tr("Nothing") I18n.tr("Error")
+    {
+      "name": "Toggle",
+      "template": true,
+      "demo": true,
+      "description": "An on / off switch, such as a VPN",
+      "icon": "toggle_on",
+      "command": root._demo("toggle", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
+      "actions": {
+        "items": [root._act("on", "Turn on", root._demo("toggle", "on")), root._act("off", "Turn off", root._demo("toggle", "off"))]
+      },
+      "module": {
+        "size": [4, 2],
+        "elements": [root._el("title", "Text", [0, 0, 11, 3], {
+            "text": "{text}"
+          }, {
+            "align": "left",
+            "bold": true,
+            "size": "large"
+          }), root._el("switch", "Toggle", [0, 4, 16, 4], {
+            "state": "{state}",
+            "label": "Enabled"
+          }, null, {
+            "on": "on",
+            "off": "off"
+          })],
+        "views": [root._view("on", "On", {
+            "key": "state",
+            "test": "is",
+            "values": ["on"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "do_not_disturb_on"
+            }, {
+              "color": "success"
+            })]), root._view("off", "Off", {
+            "key": "state",
+            "test": "is",
+            "values": ["off"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "do_not_disturb_off"
+            })])]
+      },
+      "samples": {
+        "on": {
+          "state": "on",
+          "text": "Focus mode",
+          "actions": {
+            "on": {},
+            "off": {}
+          }
+        },
+        "off": {
+          "state": "off",
+          "text": "Focus mode",
+          "actions": {
+            "on": {},
+            "off": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "Slider",
+      "template": true,
+      "demo": true,
+      "description": "A value you can drag, such as the brightness",
+      "icon": "linear_scale",
+      "command": root._demo("slider", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
+      "actions": {
+        "items": [root._act("set", "Set", root._demo("slider", "set") + " {value}")]
+      },
+      "module": {
+        "size": [4, 2],
+        "elements": [root._el("title", "Text", [0, 0, 11, 3], {
+            "text": "{text}"
+          }, {
+            "align": "left",
+            "bold": true,
+            "size": "large"
+          }), root._el("amount", "Text", [11, 0, 5, 3], {
+            "text": "{value}{unit}"
+          }, {
+            "align": "right",
+            "size": "large"
+          }), root._el("slider", "Bar", [0, 4, 16, 3], null, null, {
+            "change": "set"
+          })]
+      },
+      "samples": {
+        "": {
+          "text": "Desk lamp",
+          "value": 60,
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "actions": {
+            "set": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "List with a row action",
+      "template": true,
+      "demo": true,
+      "description": "Rows you can press, such as disks",
+      "icon": "list",
+      "command": root._demo("list", "show"),
+      "mode": "poll",
+      "interval": 60000,
+      "output": "json",
+      "actions": {
+        "items": [root._act("open", "Open", "xdg-open {value}", false)]
+      },
+      "module": {
+        "size": [4, 4],
+        "elements": [root._el("title", "Text", [0, 0, 16, 2], {
+            "text": "Disks"
+          }, {
+            "align": "left",
+            "bold": true,
+            "size": "large"
+          }), root._el("rows", "List", [0, 2, 16, 14], null, {
+            "colorStates": root._stateRules("state", [["full", "error"], ["ok", "success"]])
+          }, {
+            "click": "open"
+          })]
+      },
+      "samples": {
+        "": {
+          "text": "3 disks",
+          "items": [
+            {
+              "id": "/",
+              "text": "/",
+              "subtext": "120 GB free",
+              "value": 62,
+              "max": 100,
+              "unit": "%",
+              "state": "ok"
+            },
+            {
+              "id": "/home",
+              "text": "/home",
+              "subtext": "12 GB free",
+              "value": 94,
+              "max": 100,
+              "unit": "%",
+              "state": "full"
+            },
+            {
+              "id": "/mnt/data",
+              "text": "/mnt/data",
+              "subtext": "1.4 TB free",
+              "value": 30,
+              "max": 100,
+              "unit": "%",
+              "state": "ok"
+            }
+          ],
+          "actions": {
+            "open": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "Media card",
+      "template": true,
+      "demo": true,
+      "description": "Playing, paused and nothing playing, with buttons",
+      "icon": "music_note",
+      "command": root._demo("media", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
+      "actions": {
+        "items": [root._act("prev", "Previous", root._demo("media", "prev")), root._act("toggle", "Play or pause", root._demo("media", "toggle")), root._act("next", "Next", root._demo("media", "next"))]
+      },
+      "module": {
+        "size": [4, 3],
+        "elements": [root._el("title", "Text", [0, 0, 12, 3], {
+            "text": "{text}"
+          }, {
+            "align": "left",
+            "bold": true,
+            "size": "large"
+          }), root._el("artist", "Text", [0, 3, 16, 2], {
+            "text": "{subtext}"
+          }, {
+            "align": "left",
+            "size": "normal"
+          }), root._el("prev", "Button", [0, 8, 4, 3], {
+            "icon": "skip_previous"
+          }, null, {
+            "click": "prev"
+          }), root._el("toggle", "Button", [6, 8, 4, 3], {
+            "icon": "{icon}"
+          }, null, {
+            "click": "toggle"
+          }), root._el("next", "Button", [12, 8, 4, 3], {
+            "icon": "skip_next"
+          }, null, {
+            "click": "next"
+          })],
+        "views": [root._view("playing", "Playing", {
+            "key": "state",
+            "test": "is",
+            "values": ["playing"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "graphic_eq"
+            }, {
+              "color": "success"
+            })]), root._view("paused", "Paused", {
+            "key": "state",
+            "test": "is",
+            "values": ["paused"]
+          }, [root._el("mark", "Icon", [12, 0, 4, 3], {
+              "icon": "pause_circle"
+            }, {
+              "color": "warning"
+            })]), root._view("nothing", "Nothing", {
+            "key": "state",
+            "test": "isNot",
+            "values": ["playing", "paused"]
+          }, [root._el("mark", "Icon", [6, 0, 4, 4], {
+              "icon": "music_off"
+            }), root._el("message", "Text", [0, 5, 16, 2], {
+              "text": "Nothing playing"
+            }, {
+              "size": "normal"
+            }), root._el("play", "Button", [5, 8, 6, 3], {
+              "label": "Play"
+            }, {
+              "size": "normal"
+            }, {
+              "click": "toggle"
+            })], false)]
+      },
+      "samples": {
+        "playing": {
+          "state": "playing",
+          "text": "Night Drive",
+          "subtext": "Velvet Static",
+          "icon": "pause",
+          "actions": {
+            "prev": {},
+            "toggle": {},
+            "next": {}
+          }
+        },
+        "paused": {
+          "state": "paused",
+          "text": "Night Drive",
+          "subtext": "Velvet Static",
+          "icon": "play_arrow",
+          "actions": {
+            "prev": {},
+            "toggle": {},
+            "next": {}
+          }
+        },
+        "nothing": {
+          "state": "stopped",
+          "actions": {
+            "toggle": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "Status with an error screen",
+      "template": true,
+      "demo": true,
+      "description": "A status line, and a screen for when the script fails",
+      "icon": "radio_button_checked",
+      "command": root._demo("status", "show"),
+      "mode": "poll",
+      "interval": 10000,
+      "output": "json",
+      "actions": {
+        "items": [root._act("break", "Break it", root._demo("status", "break")), root._act("fix", "Fix it", root._demo("status", "fix")),
+          {
+            "id": "restart",
+            "name": "Restart",
+            "kind": "axiom",
+            "axiom": "restart"
+          }
+        ]
+      },
+      "module": {
+        "size": [4, 2],
+        "elements": [root._el("status", "Status", [0, 0, 10, 3], {
+            "text": "{text}"
+          }), root._el("detail", "Text", [0, 3, 16, 3], {
+            "text": "{subtext}"
+          }, {
+            "align": "left",
+            "size": "normal"
+          }), root._el("break", "Button", [10, 0, 6, 3], null, {
+            "size": "normal"
+          }, {
+            "click": "break"
+          })],
+        "views": [root._view("error", "Error", {
+            "key": "error",
+            "test": "set",
+            "values": []
+          }, [root._el("mark", "Icon", [0, 0, 4, 4], {
+              "icon": "error"
+            }), root._el("message", "Text", [4, 0, 12, 4], {
+              "text": "{error}"
+            }, {
+              "align": "left",
+              "size": "normal"
+            }), root._el("fix", "Button", [4, 5, 6, 3], null, {
+              "size": "normal"
+            }, {
+              "click": "fix"
+            }), root._el("restart", "Button", [10, 5, 6, 3], null, {
+              "size": "normal"
+            }, {
+              "click": "restart"
+            })], false)]
+      },
+      "samples": {
+        "": {
+          "state": "ok",
+          "text": "All good",
+          "subtext": "Checked at 09:41",
+          "actions": {
+            "break": {}
+          }
+        },
+        "error": {
+          "error": "The demo service is down",
+          "state": "down",
+          "actions": {
+            "fix": {}
+          }
+        }
+      }
     }
   ]
 
@@ -636,6 +1715,21 @@ QtObject {
   // The whole grid units a page starts the module at: designSize rounded up
   function pageSize(elements, size) {
     return root.designSize(elements, size).map(n => Math.max(1, Math.ceil(n)));
+  }
+
+  // Where content `free` px short of its box starts along an axis: 0 for
+  // left | top (and anything unknown), half for center | middle, all of it for
+  // right | bottom. An element's `align` (across) and `valign` (down)
+  function alignOffset(align, free) {
+    const room = Math.max(0, free);
+    return align === "center" || align === "middle" ? room / 2 : align === "right" || align === "bottom" ? room : 0;
+  }
+
+  // How many lines of text `size` px tall a box `height` px tall holds (at
+  // least 1): a Text's `maxLines`, so a size too big for its box elides on
+  // its first line instead of being cut through
+  function textLines(height, size) {
+    return Math.max(1, Math.floor(height / Math.max(1, size * 1.3)));
   }
 
   // An element's rect in px: `place` { x, y, w, h } in sub-cells on a
@@ -678,7 +1772,9 @@ QtObject {
           "w": side,
           "h": g.rows
         },
-        "bind": {},
+        "bind": hasValue ? {
+          "value": "{value}"
+        } : {},
         "options": {}
       }
     ];
@@ -692,19 +1788,15 @@ QtObject {
           "w": g.cols - side,
           "h": g.rows
         },
-        "bind": {},
+        "bind": {
+          "text": "{text}"
+        },
         "options": {
-          "align": "left"
+          "align": "left",
+          "size": "large"
         }
       });
     return out;
-  }
-
-  // The Module tab's lock-screen column width: its base width, or its widest
-  // child's (the "Start from the default layout" button, whose label never
-  // wraps or elides) when that is wider
-  function lockColumnWidth(base, buttonWidth) {
-    return Math.max(base, Math.ceil(buttonWidth));
   }
 
   // The zoom (at most 0.3, at least 0.05) the Module tab's size previews
@@ -719,4 +1811,761 @@ QtObject {
     const byWidth = (width - reserved - spacing * sizes.length) / Math.max(1, across);
     return Math.max(0.05, Math.min(0.3, byHeight, byWidth));
   }
+
+  // The zoom (at most 1, at least 0.05) a module of `size` ([w, h] in grid
+  // units, `card` px a unit) is drawn at to fit `width` by `height`: the
+  // test preview, one large preview
+  function fitZoom(size, card, width, height) {
+    const w = Math.max(1, GridPlacement.span(size[0], card));
+    const h = Math.max(1, GridPlacement.span(size[1], card));
+    return Math.max(0.05, Math.min(1, width / w, height / h));
+  }
+
+  // --- Screens (module.views) ---
+
+  // The module's elements in every layer: the base, then each screen's
+  // (the lattice and the design size cover all of them)
+  function allElements(module) {
+    let out = (module?.elements ?? []).slice();
+    for (const view of module?.views ?? [])
+      out = out.concat(view.elements ?? []);
+    return out;
+  }
+
+  // Whether a screen's `when` ({ key, test (is, isNot, set, unset),
+  // values }) holds for the resolved `fields` (null: never). The key
+  // "error" is the failure: set while there is one, `is` / `isNot`
+  // compare its message, and never hold while it isn't failing; any other is
+  // a key or path in the sample (set: has a value, text counts, even "0").
+  // An empty key never holds (only a Go to screen action shows that screen)
+  function matches(when, fields) {
+    if (!fields || !(when?.key ?? ""))
+      return false;
+    const test = when?.test ?? "is";
+    const values = when?.values ?? [];
+    if (when.key === "error") {
+      if (test === "set")
+        return fields.failure !== null && fields.failure !== undefined;
+      if (test === "unset")
+        return fields.failure === null || fields.failure === undefined;
+      if (fields.failure === null || fields.failure === undefined)
+        return false;
+      const message = fields.error ?? "";
+      return test === "isNot" ? values.length > 0 && !values.includes(message) : values.includes(message);
+    }
+    const v = root.get(fields.sample, when.key);
+    if (test === "set")
+      return root._isSet(v);
+    if (test === "unset")
+      return !root._isSet(v);
+    const text = root.asText(v);
+    return test === "isNot" ? values.length > 0 && !values.includes(text) : values.includes(text);
+  }
+
+  // The first screen whose condition holds (a non-empty key that
+  // matches), else -1
+  function conditionView(module, fields) {
+    return (module?.views ?? []).findIndex(v => !!(v.when?.key ?? "") && root.matches(v.when, fields));
+  }
+
+  // The screen to draw: { index (-1: the base alone), builtinError (the
+  // failure has no screen of its own: draw the stock one) }. `chosen` is
+  // a Go to screen choice, { view: "<id>" | "" (the base), matched: the
+  // conditionView when it was made } or null: it wins until the condition
+  // picks another screen, and an id that no longer exists is ignored.
+  // While the widget fails only screens keyed on "error" are tried
+  function pickView(module, fields, chosen) {
+    const views = module?.views ?? [];
+    if (fields?.failure) {
+      const index = views.findIndex(v => v.when?.key === "error" && root.matches(v.when, fields));
+      return {
+        "index": index,
+        "builtinError": index < 0
+      };
+    }
+    const c = root.conditionView(module, fields);
+    let index = c;
+    if (chosen && chosen.matched === c) {
+      const own = chosen.view === "" ? -1 : views.findIndex(v => v.id === chosen.view);
+      if (own >= 0 || chosen.view === "")
+        index = own;
+    }
+    return {
+      "index": index,
+      "builtinError": false
+    };
+  }
+
+  // A Go to screen choice that still stands: `chosen` when it is null or the
+  // condition still picks the screen it picked when the choice was made
+  // (`matched`), else null (the choice is dropped, so it doesn't come back
+  // when the condition does). While `fields` fails the failure draws its own
+  // screen, which doesn't count as a change
+  function keepChoice(module, fields, chosen) {
+    if (!chosen || fields?.failure)
+      return chosen;
+    return root.conditionView(module, fields) === chosen.matched ? chosen : null;
+  }
+
+  // Whether a definition is interactive (failure): it has screens, or an
+  // element's trigger names a command action. The bar's `bar.run` doesn't
+  // count: a Waybar module with an on-click still hides on exit 1
+  function interactive(def) {
+    if ((def?.module?.views?.length ?? 0) > 0)
+      return true;
+    return root.allElements(def?.module).some(e => Object.values(e.run ?? {}).some(ref => {
+        const a = root.actionOf(def, ref);
+        return a !== null && a.kind === "command" && a.command !== "";
+      }));
+  }
+
+  // Whether the actions of a failing widget are off: `fields.failure` is set
+  // and isn't the script's own `error` key, and the layer drawn
+  // (`viewIndex`, -1 the base) isn't a screen keyed on error, which draws
+  // the failure itself and so keeps its buttons working
+  function actionsFailing(module, fields, viewIndex) {
+    if (!fields?.failure || fields.failure.kind === "script")
+      return false;
+    return !(viewIndex >= 0 && module?.views?.[viewIndex]?.when?.key === "error");
+  }
+
+  // How a run arrives: "discrete" (a press), "latest" (continuous with a
+  // value: a slider, the latest wins), "detached" (continuous, no value,
+  // `wait` off: every notch started and forgotten) or "queue" (continuous,
+  // no value, `wait` on: every notch runs, one at a time)
+  function runShape(continuous, value, wait) {
+    if (!continuous)
+      return "discrete";
+    if (value !== undefined)
+      return "latest";
+    return wait ? "queue" : "detached";
+  }
+
+  // The run waiting for an action that is in flight, after another request
+  // `value` / `arg` of shape `shape` (runShape) came: a "latest" one replaces
+  // `prev` (the waiting entry, or null), a "queue" one (a notch) counts, at
+  // most 10, and each is run in turn
+  function pendingEntry(prev, value, arg, shape) {
+    const waiting = {
+      "value": value,
+      "arg": arg
+    };
+    if (shape === "queue")
+      waiting.count = Math.min(10, (prev?.count ?? 0) + 1);
+    return waiting;
+  }
+
+  // What to do when the in-flight run ended with `waiting` (the entry
+  // pendingEntry made) behind it: `{ run: { value, arg }, rest }`, the run to
+  // start now and the entry left waiting (null: none; a count of notches
+  // drops by one)
+  function nextPending(waiting) {
+    return {
+      "run": {
+        "value": waiting.value,
+        "arg": waiting.arg
+      },
+      "rest": (waiting.count ?? 0) > 1 ? Object.assign({}, waiting, {
+        "count": waiting.count - 1
+      }) : null
+    };
+  }
+
+  // The key a List row sends as {value}: its `id`, else its value (the
+  // number, without its unit), else its text
+  function rowKey(row) {
+    if ((row?.id ?? "") !== "")
+      return String(row.id);
+    if (row?.value !== undefined && row.value !== null)
+      return root.asText(row.value);
+    return row?.text ?? "";
+  }
+
+  // `name` as a refresh name for the item `ownId`: "" when another item
+  // (not `ownId`) has it as its refresh name, id or name, else `name`
+  function freeRefreshName(name, items, ownId) {
+    if ((name ?? "") === "")
+      return "";
+    const taken = (items ?? []).some(d => d.id !== ownId && (d.refreshName === name || d.id === name || d.name === name));
+    return taken ? "" : name;
+  }
+
+  // A series a script prints: `v` (a list) as its finite numbers (a
+  // numeric string is parsed, anything else dropped), the last `cap`; null
+  // when `v` isn't a list
+  function series(v, cap) {
+    if (!Array.isArray(v))
+      return null;
+    const out = [];
+    for (const item of v) {
+      const n = root._number(item);
+      if (n !== undefined)
+        out.push(n);
+    }
+    return cap > 0 ? out.slice(-cap) : out;
+  }
+
+  // The distinct `value` and `value2` bindings of every Sparkline in every
+  // layer: what the service keeps a history of (a binding whose value is a
+  // list needs none: it is the series)
+  function historyBindings(module) {
+    const out = [];
+    for (const e of root.allElements(module)) {
+      if (e.type !== "Sparkline")
+        continue;
+      for (const b of [e.bind?.value, e.bind?.value2]) {
+        if (b && out.indexOf(b) < 0)
+          out.push(b);
+      }
+    }
+    return out;
+  }
+
+  // --- Named actions ---
+
+  // The action of `def` (`actions.items`) that `ref` names: by id, else by
+  // name (the IPC takes either); null for "" or none
+  function actionOf(def, ref) {
+    const key = String(ref ?? "");
+    if (key === "")
+      return null;
+    const items = def?.actions?.items ?? [];
+    return items.find(a => a.id === key) ?? items.find(a => a.name === key) ?? null;
+  }
+
+  // The values an Axiom action can take, in order: refresh, restart, screen:
+  // (the base), screen:<id> for each of `screenIds`, then each of `shellIds`
+  // (the caller sorts them by label) that isn't in `refused` and takes no
+  // argument (`needsArgument`: an id → bool, or a list of ids)
+  function axiomValues(shellIds, refused, needsArgument, screenIds) {
+    const takes = id => typeof needsArgument === "function" ? !!needsArgument(id) : (needsArgument ?? []).indexOf(id) >= 0;
+    const out = ["refresh", "restart", "screen:"];
+    for (const id of screenIds ?? [])
+      out.push("screen:" + id);
+    for (const id of shellIds ?? []) {
+      if (root.builtinAllowed(id, refused) && !takes(id) && out.indexOf(id) < 0)
+        out.push(id);
+    }
+    return out;
+  }
+
+  // The `run` objects of a definition's elements (every layer) and of its bar
+  function _runs(def) {
+    const out = root.allElements(def?.module).map(e => e.run);
+    out.push(def?.bar?.run);
+    return out.filter(r => r !== null && r !== undefined && typeof r === "object");
+  }
+
+  // How many triggers (elements' `run`, the bar's `bar.run`) name action `id`
+  function actionRefs(def, id) {
+    let n = 0;
+    for (const run of root._runs(def)) {
+      for (const trigger of Object.keys(run)) {
+        if (run[trigger] === id)
+          n++;
+      }
+    }
+    return n;
+  }
+
+  // `def` as a copy whose triggers that name action `id` name none
+  function withoutActionRefs(def, id) {
+    const copy = Utils.clone(def);
+    for (const run of root._runs(copy)) {
+      for (const trigger of Object.keys(run)) {
+        if (run[trigger] === id)
+          run[trigger] = "";
+      }
+    }
+    return copy;
+  }
+
+  // `def` as a copy without its "Go to" actions of screen `viewId` (Axiom
+  // actions `screen:<id>`), the triggers that ran them naming none
+  function withoutScreen(def, viewId) {
+    let copy = Utils.clone(def);
+    const gone = (copy?.actions?.items ?? []).filter(a => a.kind === "axiom" && a.axiom === "screen:" + viewId).map(a => a.id);
+    for (const id of gone)
+      copy = root.withoutActionRefs(copy, id);
+    if (copy?.actions?.items)
+      copy.actions.items = copy.actions.items.filter(a => !gone.includes(a.id));
+    return copy;
+  }
+
+  // Whether the sample lets action `item` (an entry of `actions.items`)
+  // run: an Axiom one always, everything when the sample lists no actions
+  // (null), else only the ids it lists as enabled
+  function actionEnabled(actions, item) {
+    if (item?.kind === "axiom" || actions === null || actions === undefined)
+      return true;
+    const id = item?.id ?? "";
+    return Object.prototype.hasOwnProperty.call(actions, id) && actions[id]?.enabled === true;
+  }
+
+  // `text` as one shell word: a plain number as is, anything else in
+  // single quotes (a ' as '\''), nothing as ''
+  function shellQuote(text) {
+    const t = String(text ?? "");
+    return /^-?(\d+(\.\d+)?|\.\d+)$/.test(t) ? t : "'" + t.replace(/'/g, "'\\''") + "'";
+  }
+
+  // An action command with its placeholders filled in one pass: {value}
+  // and {rev} already quoted (shellQuote), {tree} and {arg} as is ({arg} is
+  // commandLine's already quoted words). `values` holds the ones to fill; a
+  // placeholder it has no value for, one after a $ (${rev}) and any other
+  // {…} stay as typed. A filled value is never searched again
+  function fillCommand(template, values) {
+    return String(template ?? "").replace(/\$?\{(value|rev|tree|arg)\}/g, (m, k) => m[0] === "$" || !(k in values) ? m : k === "tree" || k === "arg" ? values[k] : root.shellQuote(root.asText(values[k])));
+  }
+
+  // A trigger's argument as shell words, each quoted: split on whitespace,
+  // a "…" group is one word, {path}s filled from `fields` in each word
+  // (after the split, so a filled value never makes or merges words); a
+  // quoted word can't end the command or start another
+  function argWords(arg, fields) {
+    const words = [];
+    const re = /"([^"]*)"|(\S+)/g;
+    const text = String(arg ?? "");
+    const values = root.fillValues(fields);
+    for (let m = re.exec(text); m !== null; m = re.exec(text))
+      words.push(root.shellQuote(root.fill(m[1] !== undefined ? m[1] : m[2], values, true)));
+    return words.join(" ");
+  }
+
+  // An action command as it runs: `command` with {value} {rev} {tree} and
+  // {arg} filled in, and the trigger's argument `arg` (argWords) where it
+  // says {arg}, else added at the end. `ctx`: { value, ownValue (the
+  // trigger has a value of its own: a slider, an Entry, a Toggle, a List
+  // row; a Button's click and the bar's clicks have none), rev, tree,
+  // fields (the output, for {path}s) }. Without a value of its own {value}
+  // is the whole argument as one word, and a command that has {value}
+  // gets no argument added
+  function commandLine(command, arg, ctx) {
+    const text = String(command ?? "");
+    const c = ctx ?? ({});
+    const argText = root.argWords(arg, c.fields);
+    const values = {
+      "value": c.ownValue ? root.asText(c.value) : root.fill(String(arg ?? "").trim(), root.fillValues(c.fields), true),
+      "arg": argText
+    };
+    if (c.rev !== undefined)
+      values.rev = c.rev;
+    if (c.tree !== undefined)
+      values.tree = c.tree;
+    const line = root.fillCommand(text, values);
+    const placed = /(^|[^$])\{arg\}/.test(text) || (!c.ownValue && /(^|[^$])\{value\}/.test(text));
+    return argText === "" || placed ? line : line + " " + argText;
+  }
+
+  // Whether a shell action (a bare id: "lock", "overlay") may run from a
+  // widget: not one of `refused` (the session's and the destructive ones,
+  // which a stray press or script must never run)
+  function builtinAllowed(id, refused) {
+    return !(refused ?? []).includes(String(id));
+  }
+
+  // --- Samples ---
+
+  // The UTF-8 byte length of `text` (a lone surrogate counts as 3, as it
+  // would be written as U+FFFD)
+  function utf8Length(text) {
+    const t = String(text ?? "");
+    let n = 0;
+    for (let i = 0; i < t.length; i++) {
+      const c = t.charCodeAt(i);
+      if (c < 0x80) {
+        n += 1;
+      } else if (c < 0x800) {
+        n += 2;
+      } else if (c >= 0xD800 && c < 0xDC00 && i + 1 < t.length && t.charCodeAt(i + 1) >= 0xDC00 && t.charCodeAt(i + 1) < 0xE000) {
+        n += 4;
+        i++;
+      } else {
+        n += 3;
+      }
+    }
+    return n;
+  }
+
+  // Where the editor was (`place`: { id, view, element }) in `items`, as
+  // far as it still exists: { index (the definition with that id, else 0),
+  // view (-1 the base; the screen, if it is still there), element (the
+  // selected element's index in that layer, or -1) }. The editor keeps its
+  // place when the page reopens; a missing definition falls back to the first
+  function restorePlace(items, place) {
+    const found = (items ?? []).findIndex(d => d.id === place?.id);
+    if (found < 0)
+      return {
+        "index": 0,
+        "view": -1,
+        "element": -1
+      };
+    const module = items[found].module;
+    const view = place.view >= 0 && place.view < (module?.views?.length ?? 0) ? place.view : -1;
+    const layer = view >= 0 ? module.views[view].elements : module?.elements;
+    return {
+      "index": found,
+      "view": view,
+      "element": place.element >= 0 && place.element < (layer?.length ?? 0) ? place.element : -1
+    };
+  }
+
+  // The key a screen's sample is kept under: its id, "" for no screen
+  // (the base alone)
+  function viewKey(module, index) {
+    return index < 0 || !module?.views?.[index] ? "" : module.views[index].id;
+  }
+
+  // `sample` kept under `key` in `samples` (a screen id, "" for none):
+  // { samples (a new map; the old one when refused), refused ("count": a
+  // new key past limits.entries, "size": the whole past limits.bytes
+  // as JSON, else "") }. Nothing passed in is changed
+  function keepSample(samples, key, sample, limits) {
+    const old = samples ?? {};
+    const next = Object.assign({}, old);
+    next[key] = sample;
+    const lim = limits ?? {};
+    let refused = "";
+    if (!(key in old) && Object.keys(next).length > (lim.entries ?? Infinity))
+      refused = "count";
+    else if (root.utf8Length(JSON.stringify(next)) > (lim.bytes ?? Infinity))
+      refused = "size";
+    return {
+      "samples": refused === "" ? next : Object.assign({}, old),
+      "refused": refused
+    };
+  }
+
+  // The sample the editor previews screen `index` (-1: no screen) with: the
+  // one kept in the definition, else the last one seen live for it (`seen`:
+  // key -> sample), else the live one when it is what picks that screen
+  // (`liveFields`, resolved: pickView), else null
+  function sampleForView(definition, index, seen, liveFields) {
+    const key = root.viewKey(definition?.module, index);
+    const kept = definition?.samples?.[key];
+    if (kept !== undefined && kept !== null)
+      return kept;
+    const last = seen?.[key];
+    if (last !== undefined && last !== null)
+      return last;
+    return liveFields && root.pickView(definition?.module, liveFields).index === index ? liveFields.sample : null;
+  }
+
+  // --- The editor's pure parts (docs/dev/features/custom-widgets.md › The page) ---
+
+  // `list` with the item at `from` moved to `to` (a new list; the same
+  // when either is out of range or they are equal)
+  function moveItem(list, from, to) {
+    const items = list ?? [];
+    if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length)
+      return items;
+    const next = items.slice();
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    return next;
+  }
+
+  // A copy of screen `index` of `views` for the editor's Duplicate: a new id
+  // and `name`, its elements and condition copied (its sample is not: that
+  // is kept under the screen's id). Null for none
+  function viewCopy(views, index, name) {
+    const source = views?.[index];
+    if (!source)
+      return null;
+    const copy = Utils.clone(source);
+    copy.id = Utils.newId(Utils.slug(name) || source.id, views);
+    copy.name = name;
+    return copy;
+  }
+
+  // `element` as it lands in another layer (`elements`): its place kept, a
+  // new id when `elements` has it already
+  function elementCopy(elements, element) {
+    const copy = Utils.clone(element);
+    if ((elements ?? []).some(e => e.id === copy.id))
+      copy.id = Utils.newId(copy.id, elements);
+    return copy;
+  }
+
+  // The definition keys each editor tab (0 Data, 1 Bar, 2 Module) holds
+  readonly property var _tabKeys: [["name", "icon", "command", "mode", "interval", "output", "execIf", "refreshName", "actions", "samples"], ["bar", "tooltip", "format", "formatIcons", "maxLength", "escape", "hideEmpty"], ["module"]]
+
+  // The tabs (sorted indices) whose keys differ between the saved definition
+  // and the edited `local` one; none for a null `saved` (a new definition:
+  // the list marks it)
+  function changedTabs(saved, local) {
+    if (!saved || !local)
+      return [];
+    const out = [];
+    root._tabKeys.forEach((keys, tab) => {
+      if (keys.some(key => !Utils.deepEqual(saved[key], local[key])))
+        out.push(tab);
+    });
+    return out;
+  }
+
+  // A copy of `targetOptions` with each of `keys` the source has, cloned
+  // from `sourceOptions` (a key the source lacks is left alone)
+  function withLook(targetOptions, sourceOptions, keys) {
+    const out = Utils.clone(targetOptions ?? ({}));
+    for (const key of keys) {
+      if (sourceOptions && key in sourceOptions)
+        out[key] = Utils.clone(sourceOptions[key]);
+    }
+    return out;
+  }
+
+  // The paths the editor offers to bind from, over `samples` (an output
+  // each, null ones skipped), first seen first, each path once, leaves and
+  // lists only: [{ path, type, value (the list's length), preview (a leaf's
+  // text, at most 40 characters) }]
+  function bindChoices(samples, cap) {
+    const out = [];
+    const seen = new Set();
+    for (const sample of samples ?? []) {
+      if (sample === null || sample === undefined || typeof sample !== "object")
+        continue;
+      for (const p of root.flatten(sample)) {
+        if (p.type === "object" || seen.has(p.path))
+          continue;
+        seen.add(p.path);
+        const text = p.type === "array" ? "" : root.asText(p.value);
+        out.push({
+          "path": p.path,
+          "type": p.type,
+          "value": p.value,
+          "preview": text.length > 40 ? text.slice(0, 39) + "…" : text
+        });
+        if (out.length >= (cap ?? 200))
+          return out;
+      }
+    }
+    return out;
+  }
+
+  // Every command a definition holds, what Import lists before anything
+  // runs and Copy warns about: [{ where, command }], the non-empty ones of
+  // `command`, `execIf` and each command action ("actions/<name or id>")
+  function commandsOf(definition) {
+    const out = [];
+    const add = (where, command) => {
+      if (typeof command === "string" && command.trim() !== "")
+        out.push({
+          "where": where,
+          "command": command
+        });
+    };
+    const def = definition ?? {};
+    add("command", def.command);
+    add("execIf", def.execIf);
+    for (const item of def.actions?.items ?? []) {
+      if (item.kind !== "axiom")
+        add("actions/" + (item.name || item.id), item.command);
+    }
+    return out;
+  }
+
+  // The text Copy puts on the clipboard: T30's wrapper around `definition`
+  // without its id (the new owner's list gives it one), as JSON
+  function exportOf(definition) {
+    const copy = Utils.clone(definition);
+    delete copy.id;
+    return JSON.stringify({
+      "axiomCustomWidget": 1,
+      "definition": copy
+    }, null, 2);
+  }
+
+  // Pasted text read as shared widgets: { definitions (partial, ids
+  // dropped), error, detail }. `error` is a code, "" when good: "json"
+  // (`detail` says why), "notWidget" (an item that is no object), "newer",
+  // "noModule" (no module and no command) or "empty". The wrapper Copy
+  // makes, a bare definition, or a list of either; comments and trailing
+  // commas are allowed
+  function fromExport(text) {
+    let parsed;
+    try {
+      parsed = JSON.parse(root.stripJsonc(text).trim());
+    } catch (e) {
+      return {
+        "definitions": [],
+        "error": "json",
+        "detail": e.message
+      };
+    }
+    const definitions = [];
+    for (const item of Array.isArray(parsed) ? parsed : [parsed]) {
+      if (item === null || typeof item !== "object" || Array.isArray(item))
+        return {
+          "definitions": [],
+          "error": "notWidget",
+          "detail": ""
+        };
+      let def = item;
+      if ("axiomCustomWidget" in item) {
+        if (typeof item.axiomCustomWidget !== "number" || item.axiomCustomWidget > 1)
+          return {
+            "definitions": [],
+            "error": "newer",
+            "detail": ""
+          };
+        def = item.definition;
+      }
+      if (def === null || typeof def !== "object" || Array.isArray(def) || (!def.module && !def.command))
+        return {
+          "definitions": [],
+          "error": "noModule",
+          "detail": ""
+        };
+      const copy = Utils.clone(def);
+      delete copy.id;
+      definitions.push(copy);
+    }
+    return {
+      "definitions": definitions,
+      "error": definitions.length ? "" : "empty",
+      "detail": ""
+    };
+  }
+
+  // What the Import form reads from a paste: a shared widget (fromExport)
+  // first, else a Waybar `custom/*` module (fromWaybar). { definitions,
+  // error ("" when good, "json" with its `detail`, else "neither"), detail,
+  // kind ("widget", "waybar", "" when it read neither) }
+  function readImport(text) {
+    const shared = root.fromExport(text);
+    if (shared.error === "")
+      return {
+        "definitions": shared.definitions,
+        "error": "",
+        "detail": "",
+        "kind": "widget"
+      };
+    try {
+      const waybar = root.fromWaybar(text);
+      if (waybar.length)
+        return {
+          "definitions": waybar,
+          "error": "",
+          "detail": "",
+          "kind": "waybar"
+        };
+    } catch (e) {
+      // Not Waybar's either: the first reading's error says why
+    }
+    return {
+      "definitions": [],
+      "error": shared.error === "json" ? "json" : "neither",
+      "detail": shared.error === "json" ? shared.detail : "",
+      "kind": ""
+    };
+  }
+
+  // `list` with `entry` added, the last `cap` kept (the editor's action log)
+  function pushLog(list, entry, cap) {
+    return (list ?? []).concat([entry]).slice(-cap);
+  }
+
+  // Where the sample a screen (-1: none) is previewed with comes from, as
+  // sampleForView picks it: "saved" (kept in the definition), "live" (the
+  // last one seen, or the output now) or "none"
+  function sampleSource(definition, index, seen, liveFields) {
+    const key = root.viewKey(definition?.module, index);
+    const kept = definition?.samples?.[key];
+    if (kept !== undefined && kept !== null)
+      return "saved";
+    return root.sampleForView(definition, index, seen, liveFields) === null ? "none" : "live";
+  }
+
+  // What a definition offered on the lock screen holds that doesn't work
+  // there or shows a script's text to whoever sees the screen: "actions"
+  // (an element or the bar runs an action), "entry" (an
+  // Entry element), "text" (an element's `text` bound to the output, an
+  // unbound Text or Text block, which shows the output, or the default layout
+  // of a module with no elements and no screens). [] when it holds none
+  function lockIssues(definition) {
+    const module = definition?.module;
+    const elements = root.allElements(module);
+    const issues = [];
+    if (root._runs(definition).some(run => Object.values(run).some(id => !!id)))
+      issues.push("actions");
+    if (elements.some(e => e.type === "Entry"))
+      issues.push("entry");
+    const unboundText = e => (e.type === "Text" || e.type === "TextBlock") && !e.bind?.text;
+    const noLayout = !!module && elements.length === 0 && (module?.views ?? []).length === 0;
+    if (elements.some(e => (e.bind?.text ?? "").indexOf("{") >= 0 || unboundText(e)) || noLayout)
+      issues.push("text");
+    return issues;
+  }
+
+  // A template's element ([x, y, w, h] in sub-cells; `run`: its triggers'
+  // action ids)
+  function _el(id, type, place, bind, options, run) {
+    const element = {
+      "id": id,
+      "type": type,
+      "place": {
+        "x": place[0],
+        "y": place[1],
+        "w": place[2],
+        "h": place[3]
+      }
+    };
+    if (bind)
+      element.bind = bind;
+    if (options)
+      element.options = options;
+    if (run)
+      element.run = run;
+    return element;
+  }
+
+  // A "Color by state" setting reading `key`: one `is` rule per [value, colour]
+  function _stateRules(key, pairs) {
+    return {
+      "enabled": true,
+      "key": key,
+      "rules": pairs.map(p => ({
+            "test": "is",
+            "value": p[0],
+            "color": p[1]
+          }))
+    };
+  }
+
+  // A template's command action: `command` is its demo script's call
+  // (demo.sh TEMPLATE VERB, `{value}` for one that takes the element's value)
+  function _act(id, name, command, wait) {
+    return {
+      "id": id,
+      "name": name,
+      "kind": "command",
+      "command": command,
+      "wait": wait !== false
+    };
+  }
+
+  // The command running the demo script's `template` verb (the script
+  // prints the template's output on `show`)
+  function _demo(template, verb) {
+    return "bash '{tree}data/custom-widgets/demo.sh' " + template + " " + verb;
+  }
+
+  // A template's screen
+  function _view(id, name, when, elements, base) {
+    return {
+      "id": id,
+      "name": name,
+      "base": base !== false,
+      "when": when,
+      "elements": elements
+    };
+  }
+
+  // The presets the New chooser's "From a known script" lists (the ones
+  // with a command, Daily habits too, but not a `demo` template: its script
+  // is the gallery's) and the ones its gallery draws
+  // (`template`: a ready look with a sample per screen, drawn before any
+  // script exists)
+  readonly property var scriptPresets: root.presets.filter(p => !!p.command && !p.demo)
+  readonly property var galleryPresets: root.presets.filter(p => p.template)
 }

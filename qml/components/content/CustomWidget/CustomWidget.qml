@@ -10,8 +10,10 @@ import qs.components.content.parts
 import qs.components.content.parts.custom
 
 // A custom widget's module (docs/dev/features/custom-widgets.md): its
-// elements laid out proportionally over the card (CustomLayout), from the
-// definition's script (CustomWidgetsManager). Also the CustomWidget bar
+// elements laid out proportionally over the card (CustomLayout), the screen
+// its output picks (module.views) over the base ones, from the
+// definition's script (CustomWidgetsManager). A failing script with no
+// screen for it shows the stock error screen. Also the CustomWidget bar
 // widget's popout, drawn at the definition's design size. No actions on
 // the lock screen or in an editor's preview.
 // properties: { definition }
@@ -28,10 +30,24 @@ Panel {
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property var output: CustomWidgetsManager.outputs[root.widgetId] ?? null
   readonly property bool actionsEnabled: root.host?.kind !== "lockscreen" && !root.host?.preview
+  // The host can take typed keys: a popout, an overlay card or an edge menu
+  // (not the desktop, the lock screen or a preview); an Entry works only there
+  readonly property bool keysHost: !root.embedded || ["overlay", "menu"].includes(root.host?.kind)
+  // An Entry in any layer
+  readonly property bool hasEntry: CustomWidgetData.allElements(root.definition?.module).some(e => e.type === "Entry")
+  // A popout with an Entry keeps the keyboard (and a focus grab, so a click
+  // outside closes it)
+  wantsKeyboardFocus: !root.embedded && root.actionsEnabled && root.hasEntry
+
+  // The screen to draw (-1: the base alone), and whether a failure has none
+  readonly property var view: root.fields ? CustomWidgetData.pickView(root.definition?.module, root.fields, CustomWidgetsManager.pages[root.widgetId] ?? null) : ({
+      "index": -1,
+      "builtinError": false
+    })
 
   // A popout is the design size, at the screen's card size
   readonly property real _card: OverlayConfig.cardUnitOn(Screen.width, Screen.height)
-  readonly property var _size: CustomWidgetData.designSize(root.definition?.module?.elements, root.definition?.module?.size)
+  readonly property var _size: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
   readonly property real _popoutWidth: GridPlacement.span(root._size[0], root._card)
   readonly property real _popoutHeight: GridPlacement.span(root._size[1], root._card)
   implicitWidth: root._popoutWidth
@@ -53,7 +69,7 @@ Panel {
     // The layout, or why there's nothing to show: only one is built
     Loader {
       anchors.fill: parent
-      sourceComponent: root.fields !== null && !root.fields.hidden ? layout : empty
+      sourceComponent: root.fields !== null && !(root.fields.interactive ? root.fields.hiddenByScript && root.fields.failure === null : root.fields.hidden) && !root.view.builtinError ? layout : empty
     }
 
     Component {
@@ -63,6 +79,8 @@ Panel {
         fields: root.fields ?? ({})
         history: CustomWidgetsManager.history[root.widgetId] ?? ({})
         actionsEnabled: root.actionsEnabled
+        keysHost: root.keysHost
+        viewIndex: root.view.index
       }
     }
 
@@ -73,8 +91,10 @@ Panel {
           anchors.centerIn: parent
           maxWidth: box.width
           availableHeight: box.height
-          icon: root.definition?.icon ?? "widgets"
-          text: root._withheld && root._chosen ? I18n.tr("This custom widget isn't offered on the lock screen") : !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
+          icon: root.view.builtinError ? "error" : (root.definition?.icon ?? "widgets")
+          actionText: root.view.builtinError && root.actionsEnabled ? I18n.tr("Restart") : ""
+          onTriggered: CustomWidgetsManager.restart(root.widgetId) // lock-inert: the button is off without actionsEnabled
+          text: root.view.builtinError ? root.fields.error : root._withheld && root._chosen ? I18n.tr("This custom widget isn't offered on the lock screen") : !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
         }
       }
     }

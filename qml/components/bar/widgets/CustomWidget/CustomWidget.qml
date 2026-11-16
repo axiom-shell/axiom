@@ -9,10 +9,13 @@ import qs.components.bar.widgets.base
 
 // A custom widget on the bar (docs/dev/features/custom-widgets.md): its
 // script's output (CustomWidgetsManager) in the definition's bar style
-// (BarWidget's display styles: label is Waybar's look). Clicks and scrolls run its
-// actions; hovering opens its module, else shows the output's tooltip
+// (BarWidget's display styles: label is Waybar's look). Clicks and scrolls run the
+// actions bar.run picks; hovering opens its module, else shows the output's tooltip
 // (Waybar's; the definition's Tooltip switch). Hidden while the script
-// says so (empty text, as Waybar).
+// says so (empty text, as Waybar). While the script fails (an interactive
+// definition: CustomWidgetData.failure) it shows the error icon and a short
+// "Error" label in the error colour, whatever its style; the message is its
+// tooltip.
 BarWidget {
   id: root
 
@@ -25,9 +28,15 @@ BarWidget {
       "icon": "material",
       "segments": 5,
       "width": null,
-      "popout": false
+      "popout": false,
+      "color": "",
+      "colorStates": {}
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
+  readonly property bool failing: !!root.fields?.failure
+  // The chip's text while failing: a short label, the full message is the
+  // tooltip's (the module and popout show it whole)
+  readonly property string failLabel: I18n.tr("Error")
   readonly property var graphRange: CustomWidgetData.graphRange(root.fields, {})
 
   Component.onCompleted: CustomWidgetsManager.acquire(root, root.widgetId)
@@ -40,27 +49,28 @@ BarWidget {
   history: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
   graphMin: root.graphRange.min
   graphMax: root.graphRange.max
-  styleText: root.fields?.plain ?? ""
+  styleText: root.failing ? root.failLabel : (root.fields?.plain ?? "")
   subtext: root.fields?.subtext || root.fields?.alt || ""
 
   // News: its state went to warning, or to critical (its colour's
   // name, CustomWidgetData's state color), from a calmer one
-  attentionLevel: root.fields === null ? -1 : root.fields.color === "error" ? 2 : root.fields.color === "warning" ? 1 : 0
+  attentionLevel: root.fields === null ? -1 : root.failing || root.stateColorName === "error" ? 2 : root.stateColorName === "warning" ? 1 : 0
 
   hidden: root.fields?.hidden ?? false
-  icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
-  text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
-  // The script's state color (a theme color's name), which the base
-  // resolves; none: the widget's own color
-  stateColorName: root.fields?.color ?? ""
+  icon: root.bar.icon === "material" ? (root.failing ? "error" : root.fields?.icon || root.definition?.icon || "widgets") : ""
+  text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.failing ? root.failLabel : root.fields.plain
+  // The status color (a theme color's name), which the base resolves: the
+  // error while failing, else bar.color (a rule of bar.colorStates, or
+  // Auto: the script's state); none: the widget's own color
+  stateColorName: root.failing ? "error" : CustomWidgetData.colorFor(root.bar.color, root.bar.colorStates, root.fields, root.fields?.plain, root.fields?.color ?? "")
   // Urgent: a slow colour pulse
   pulsing: root.fields?.urgent ?? false
 
-  readonly property var actions: root.definition?.actions ?? ({})
-  clickable: !!(root.actions.click || root.actions.rightClick || root.actions.middleClick)
+  readonly property var run: root.definition?.bar?.run ?? ({})
+  clickable: !!(root.run.click || root.run.rightClick || root.run.middleClick)
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
   onClicked: button => CustomWidgetsManager.act(root.widgetId, button === Qt.RightButton ? "rightClick" : button === Qt.MiddleButton ? "middleClick" : "click")
-  scrollable: !!(root.actions.scrollUp || root.actions.scrollDown)
+  scrollable: !!(root.run.scrollUp || root.run.scrollDown)
   onScrolled: steps => CustomWidgetsManager.act(root.widgetId, steps > 0 ? "scrollUp" : "scrollDown")
 
   // Whether hovering opens its module; the tooltip shows only when not
@@ -77,8 +87,8 @@ BarWidget {
 
   BarToolTip {
     widget: root
-    shown: !!root.definition?.tooltip && !root.popoutOpens
-    text: root.fields?.tooltip ?? ""
-    rich: true
+    shown: (root.failing || !!root.definition?.tooltip) && !root.popoutOpens
+    text: root.failing ? root.fields.error : (root.fields?.tooltip ?? "")
+    rich: !root.failing
   }
 }

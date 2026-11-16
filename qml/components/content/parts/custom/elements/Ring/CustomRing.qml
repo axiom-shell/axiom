@@ -8,7 +8,8 @@ import qs.components.content.parts.custom
 // CustomGauge): the
 // value between min and max as a ring (a gauge opens at the bottom), a
 // label inside: the percentage, the value with the output's unit, or an
-// icon.
+// icon. The ring is as big as the box's short side and sits in the box by
+// Across and Down.
 CustomElementBase {
   id: root
 
@@ -31,7 +32,10 @@ CustomElementBase {
 
   PercentageCircle {
     id: ring
-    anchors.fill: parent
+    x: root.placeX(width)
+    y: root.placeY(height)
+    width: Math.min(root.width, root.height)
+    height: width
     sweep: root.gauge ? 240 : 360
     percentage: root.share * 100
     fillColor: root.colorOf(Style.accent)
@@ -42,7 +46,8 @@ CustomElementBase {
   StyledLabel {
     overflow: "line"
     visible: root.label !== ""
-    anchors.centerIn: parent
+    x: ring.x + (ring.width - width) / 2
+    y: ring.y + (ring.height - height) / 2
     width: ring.side * 0.7
     horizontalAlignment: Text.AlignHCenter
     text: root.label

@@ -13,6 +13,8 @@ Item {
 
   property bool open: false
   property bool foldable: true
+  // Draws its own hover tint (off: the host tints)
+  property bool tinted: true
   readonly property bool hovered: area.containsMouse
   default property alias content: row.data
 
@@ -22,6 +24,7 @@ Item {
   implicitHeight: row.implicitHeight
 
   StateLayer {
+    visible: root.tinted
     hovered: root.hovered
     bleed: Widget.smallPadding
   }

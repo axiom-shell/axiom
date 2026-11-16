@@ -213,6 +213,29 @@ settings:
 	}
 }
 
+// A kind's x-slots are its own (the custom widget elements' bindings; the
+// base lists none), and a kind with none has no key.
+func TestKindSlots(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	def := func(name string) *jsonx.Object {
+		return root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
+	}
+	var got []string
+	for _, v := range def("ButtonCustomElement").Value("x-slots").(*jsonx.Array).Items {
+		got = append(got, v.(string))
+	}
+	if want := []string{"label", "icon"}; !slices.Equal(got, want) {
+		t.Errorf("Button's slots = %v, want its own %v", got, want)
+	}
+	if def("SeparatorCustomElement").Has("x-slots") {
+		t.Errorf("Separator has x-slots, want none")
+	}
+}
+
 // A part's override reaching into a setting that $refs a definition
 // inlines that definition, so a type narrows one of its fields.
 func TestPartOverrideInlinesRef(t *testing.T) {

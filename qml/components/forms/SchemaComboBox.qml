@@ -44,12 +44,7 @@ GridLayout {
 
   // What a click on the whole row does (SchemaField.rowClicked)
   function activate() {
-    // A press outside a dropdown closes it and is the same click that
-    // reaches this row: that click must not open the list again
-    if (entry.listOpen)
-      entry.closeList();
-    else if (Date.now() - entry.hiddenAt > Qt.styleHints.mouseDoubleClickInterval)
-      entry.openList();
+    entry.toggleFromRow();
   }
 
   signal selectionChanged(string newValue)

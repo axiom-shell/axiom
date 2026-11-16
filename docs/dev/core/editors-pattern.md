@@ -22,7 +22,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - Add/remove/move functions keep it on the right entry.
 
 ### Undo
-- An editor that undoes owns an `EditHistory` (`qml/services/ui/EditHistory`): `snapshot` / `restore` hooks over what its edits change (with the selection), `record(fieldKey)` before each edit (the same key as the step before joins it: typing, a stepper), or `take()` then `push(snap)` once an edit turns out to change something; `undo` / `redo`, `canUndo` / `canRedo`, `clear()` when the draft reloads; 50 steps. `GridEditor` (the layouts editor, the desktop, lock screen and custom widget grids) and `BarManager` use one; their buttons are `UndoRedoButtons`.
+- An editor that undoes owns an `EditHistory` (`qml/services/ui/EditHistory`): `snapshot` / `restore` hooks over what its edits change (with the selection), `record(fieldKey)` before each edit (the same key as the step before joins it: typing, a stepper), or `take()` then `push(snap)` once an edit turns out to change something; `undo` / `redo`, `canUndo` / `canRedo`, `clear()` when the draft reloads; 50 steps. `GridEditor` (the layouts editor, the desktop, lock screen and custom widget grids) and `BarManager` use one; their buttons are `UndoRedoButtons`. A `GridEditor` clears its history when its `historyKey` changes (`scopeKey` unless set: the custom widgets editor sets the definition's id, so one history spans a definition's screens and its snapshots carry the whole definition).
 
 ### Page
 One shape and one vocabulary for every tool page ([recipe](../../recipes/tool-page.md)): `[ListPane] [WorkArea over Inspector | Inspector]`, built on `views/base/`.

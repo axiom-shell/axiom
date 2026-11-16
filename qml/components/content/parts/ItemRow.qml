@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 import qs.config
 import qs.components.reusable
 
@@ -72,20 +71,12 @@ Item {
       textColor: root.iconColor
     }
 
-    ClippingRectangle {
+    Thumbnail {
       visible: root.image !== ""
       Layout.preferredWidth: Appearance.fontSize * 3
       Layout.preferredHeight: Appearance.fontSize * 2
-      radius: Widget.radius / 2
-      color: Style.surfaceHighest
-
-      Image {
-        anchors.fill: parent
-        source: root.image
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        sourceSize.width: Appearance.fontSize * 6
-      }
+      source: root.image
+      decodeSize: Qt.size(Appearance.fontSize * 6, 0)
     }
 
     ColumnLayout {

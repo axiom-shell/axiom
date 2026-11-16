@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os/exec"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -30,17 +31,30 @@ const (
 	stderrWindow = 10 * time.Second
 )
 
+// How a streamOnce ended.
+type streamEnd int
+
+const (
+	streamExited    streamEnd = iota // the command exited
+	streamStopped                    // ctx ended or nobody streams it any more
+	streamRestarted                  // Restart: killed, to start again at once
+)
+
 // stream runs command until ctx ends or no watcher streams it any more,
-// restarting it with backoff whenever it exits (a refresh restarts it at
-// once).
+// restarting it with backoff whenever it exits (a refresh or a restart
+// restarts it at once; a restart also starts the backoff over).
 func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 	backoff := firstBackoff
 	stderr := &rateLimited{w: w, command: command}
 	for {
 		started := w.o.Now()
-		exited, ok := w.streamOnce(ctx, command, run, stderr)
-		if !ok {
+		exited, end := w.streamOnce(ctx, command, run, stderr)
+		switch end {
+		case streamStopped:
 			return
+		case streamRestarted:
+			backoff = firstBackoff
+			continue
 		}
 		if exited.Sub(started) >= maxBackoff {
 			backoff = firstBackoff
@@ -58,6 +72,9 @@ func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 				}
 			case <-run.refresh:
 				break wait
+			case <-run.restart:
+				backoff = firstBackoff
+				break wait
 			case <-due:
 				break wait
 			}
@@ -66,9 +83,18 @@ func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 }
 
 // streamOnce runs command once, publishing its lines, until it exits
-// (when, and true) or it's stopped: ctx ended or nobody streams it any
-// more (false), when its group is killed.
-func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, stderr *rateLimited) (time.Time, bool) {
+// (when, streamExited; the exit is published with the last stderr line
+// and, when non-zero, Exited) or it's stopped (streamStopped: ctx ended or nobody
+// streams it any more; streamRestarted: Restart), when its group is
+// killed and nothing is published for it. A non-zero exit still in the
+// entry is cleared once this process has run firstBackoff.
+func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, stderr *rateLimited) (time.Time, streamEnd) {
+	// A restart from before this run is no restart of it
+	select {
+	case <-run.restart:
+	default:
+	}
+	stderr.reset()
 	var opts Options
 	if w.o.Options != nil {
 		opts = w.o.Options()
@@ -87,12 +113,14 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 		mu.Unlock()
 		signal(lines)
 	}}
-	wait, err := start(cmd, opts.Children, true, stdout, &lineWriter{line: stderr.log})
+	errw := &lineWriter{line: stderr.log}
+	wait, err := start(cmd, opts.Children, true, stdout, errw)
 	if err != nil {
 		now := w.o.Now()
-		w.publish(command, run, "", 0, startError("sh", err), now)
-		return now, true
+		w.publish(command, run, "", "", 0, false, startError("sh", err), now)
+		return now, streamExited
 	}
+	settled := w.o.Until(w.o.Now().Add(firstBackoff))
 	exited := make(chan struct{})
 	go func() {
 		wait()
@@ -100,37 +128,45 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 	}()
 	text, published := "", time.Time{}
 	var due <-chan time.Time
-	flush := func(exitCode int) {
+	flush := func(exitCode int, errLine string, ended bool) {
 		mu.Lock()
 		if pending != nil {
 			text, pending = *pending, nil
 		}
 		mu.Unlock()
 		published, due = w.o.Now(), nil
-		w.publish(command, run, text, exitCode, nil, published)
+		w.publish(command, run, text, errLine, exitCode, ended, nil, published)
 	}
 	for {
 		select {
 		case <-ctx.Done():
 			stop(cmd, exited)
-			return time.Time{}, false
+			return time.Time{}, streamStopped
 		case <-run.changed:
 			if !w.isStreamed(command) {
 				stop(cmd, exited)
-				return time.Time{}, false
+				return time.Time{}, streamStopped
 			}
+		case <-run.restart:
+			stop(cmd, exited)
+			return time.Time{}, streamRestarted
 		case <-run.refresh:
-			flush(0)
+			flush(0, "", false)
+		case <-settled:
+			settled = nil
+			w.settle(command, run, w.o.Now())
 		case <-lines:
 			if due == nil {
 				due = w.o.Until(published.Add(coalesce))
 			}
 		case <-due:
-			flush(0)
+			flush(0, "", false)
 		case <-exited:
 			stdout.flush()
-			flush(cmd.ProcessState.ExitCode())
-			return published, true
+			errw.flush() // a last line without a newline
+			code := cmd.ProcessState.ExitCode()
+			flush(code, stderr.lastLine(), code != 0)
+			return published, streamExited
 		}
 	}
 }
@@ -191,9 +227,30 @@ type rateLimited struct {
 	command  string
 	since    time.Time
 	n, drops int
+	mu       sync.Mutex
+	last     string // the latest non-empty line, however many were dropped
+}
+
+// reset forgets the last line (a new run starts).
+func (r *rateLimited) reset() {
+	r.mu.Lock()
+	r.last = ""
+	r.mu.Unlock()
+}
+
+// lastLine is the latest non-empty line this run wrote, cut for an entry.
+func (r *rateLimited) lastLine() string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return lastLine(r.last)
 }
 
 func (r *rateLimited) log(line string) {
+	if strings.TrimSpace(line) != "" {
+		r.mu.Lock()
+		r.last = line
+		r.mu.Unlock()
+	}
 	if now := r.w.o.Now(); now.Sub(r.since) >= stderrWindow {
 		if r.drops > 0 {
 			r.w.o.Log.Warn("a streamed command's stderr lines were dropped", "command", r.command, "lines", r.drops)

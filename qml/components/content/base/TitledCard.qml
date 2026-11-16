@@ -19,6 +19,9 @@ Card {
   property alias canSave: header.canSave
   property alias canReset: header.canReset
   property alias saveLabel: header.saveLabel
+  // Controls at the header's right, before Save and Discard (an Undo/Redo
+  // pair)
+  property alias headerTools: header.trailingTools
   // Fixed content between the divider and the scrolling body
   property alias headerExtras: extras.data
   // Fixed content under the scrolling body (a ToolPane's footer): nothing

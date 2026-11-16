@@ -13,6 +13,8 @@ Surface {
   property string description
   // Items beside the heading (a status chip, a button)
   property alias headerExtras: headerRow.data
+  // The space between the heading and the first field
+  property real headerGap: Style.space2
   // A settings page's hand-built card: boxed whatever it sits on (the page's
   // card around the cards is itself a Surface), as a FoldingCard is
   property bool pageCard: false
@@ -46,7 +48,7 @@ Surface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.margins: Style.space3
-    spacing: Style.space2
+    spacing: root.headerGap
 
     RowLayout {
       id: headerRow
