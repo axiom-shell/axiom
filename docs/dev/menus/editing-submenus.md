@@ -24,7 +24,7 @@ How menus are edited on the Layouts page (draft, field groups, previewing, opene
     - a bar Button: `addBarButton` → `BarManager.addWidgetTo`, into the bar editor's draft, then the bar editor on that bar;
     - a keybind: `addKeybind` → `KeybindManager.editor.addAndRecord`, then the Keybinds page's editor recording its key.
 - A new menu (`addMenu`) is selected and starts previewing; what it starts as depends on what it's for (below).
-- Beside "Show on screen", "Show other menus" draws the others on the grid.
+- Beside "Show on screen", "Show other menus" draws the others on the grid. The two buttons share a row while both fit at their widest and stack one under the other when they do not (`MenuOpening`, decided from implicit widths).
 
 ### Creating a menu from what opens it
 - **What it starts as** is `MenuSeeds.seed(purpose, id, name)` (pure, `tst_MenuSeeds`), over the `Menu` schema's defaults (`ConfigManager.withDefaults`):

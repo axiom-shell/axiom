@@ -34,6 +34,8 @@ Surface {
   readonly property var widgets: BarManager.selectedBar()?.widgets?.[root.zone] ?? []
   readonly property bool hovering: root.dragLayer.hoverZone === root.zone
   readonly property real chipHeight: Widget.height + Widget.padding / 2
+  // The lane's buttons and its meter: one height
+  readonly property real toolSize: Widget.height - Widget.px(6)
   // The widgets a running copy hides for want of room
   readonly property var crowded: [].concat(...root.reports.map(report => report.hidden[root.zone] ?? []))
 
@@ -109,7 +111,7 @@ Surface {
       id: meter
       visible: root.fit !== null && root.widgets.length > 0
       Layout.preferredWidth: Widget.px(40)
-      Layout.preferredHeight: Widget.height - Widget.px(6)
+      Layout.preferredHeight: root.toolSize
       thickness: Widget.px(4)
       share: root.fit && root.fit.room > 0 ? root.fit.used / root.fit.room : 1
       fillTone: root.overfull ? "warning" : "accent"
@@ -131,7 +133,7 @@ Surface {
       readonly property bool locked: BarManager.selectedBar()?.lockCenter ?? false
 
       visible: root.zone === "center"
-      size: Widget.height - Widget.px(6)
+      size: root.toolSize
       iconText: locked ? "lock" : "lock_open"
       kind: locked ? "primary" : "tonal"
       iconSize: Style.iconSm
@@ -141,8 +143,9 @@ Surface {
 
     SquareIconButton {
       id: addButton
-      size: Widget.height - Widget.px(6)
+      size: root.toolSize
       iconText: "add"
+      iconSize: Style.iconSm
       tooltipText: I18n.tr("Add a widget")
       onClicked: root.addRequested(addButton)
     }
@@ -218,13 +221,11 @@ Surface {
   }
 
   // Where the dragged widget would land
-  Rectangle {
+  DropMark {
     visible: root.hovering
-    x: flow.x + root.landing.x - 1
+    vertical: true
+    x: flow.x + root.landing.x - width / 2
     y: flow.y + root.landing.y
-    width: 2
     height: root.landing.height
-    radius: 1
-    color: Style.inkAccentContainer.accent
   }
 }

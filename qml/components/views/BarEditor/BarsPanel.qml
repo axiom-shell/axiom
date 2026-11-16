@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 import qs.services.compositor
 import qs.services.ui
@@ -72,22 +71,11 @@ Item {
           onEscapePressed: BarManager.selectBar(-1)
 
           // One copy per monitor
-          badges: StyledIcon {
-            id: everyMonitor
+          badges: TipIcon {
             visible: entry.entryBar.screen.mode === "all"
             text: "desktop_windows"
+            tip: I18n.tr("On every monitor")
             textColor: entry.ink
-
-            HoverHandler {
-              id: everyMonitorHover
-            }
-            LazyLoader {
-              active: everyMonitorHover.hovered
-              StyledToolTip {
-                target: everyMonitor
-                text: I18n.tr("On every monitor")
-              }
-            }
           }
 
           RowAction {

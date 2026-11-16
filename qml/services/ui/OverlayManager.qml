@@ -156,7 +156,7 @@ QtObject {
       },
       "desktop": {
         "label": "Desktop",
-        "icon": "wallpaper"
+        "icon": "desktop_windows"
       }
     })
 

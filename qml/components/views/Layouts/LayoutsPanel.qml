@@ -105,7 +105,6 @@ Item {
         // Not dragged: these aren't the navigator's pages
         ListEntryRow {
           Layout.fillWidth: true
-          Layout.preferredHeight: Widget.height + Widget.padding
           icon: "desktop_windows"
           label: I18n.tr("Desktop")
           selected: OverlayManager.editTarget === "desktop"
@@ -116,7 +115,6 @@ Item {
         ListEntryRow {
           visible: OverlayManager.lockscreenEditable
           Layout.fillWidth: true
-          Layout.preferredHeight: Widget.height + Widget.padding
           icon: "lock"
           label: I18n.tr("Lock screen")
           selected: OverlayManager.editTarget === "lockscreen"
@@ -128,7 +126,6 @@ Item {
         ListEntryRow {
           visible: OverlayManager.greeterEditable
           Layout.fillWidth: true
-          Layout.preferredHeight: Widget.height + Widget.padding
           icon: "login"
           label: I18n.tr("Login screen")
           selected: OverlayManager.editTarget === "greeter"
@@ -157,11 +154,16 @@ Item {
       title: I18n.tr("Page")
       description: I18n.tr("Its name and icon show in the page navigator.")
 
-      StyledTextEntry {
-        id: nameEntry
-        Layout.fillWidth: true
-        placeholderText: I18n.tr("Page name")
-        onTextEdited: OverlayManager.renameView(OverlayManager.selectedViewIndex, nameEntry.text)
+      FormRow {
+        first: true
+        bodyHeight: nameEntry.implicitHeight
+
+        StyledTextEntry {
+          id: nameEntry
+          width: parent.width
+          placeholderText: I18n.tr("Page name")
+          onTextEdited: OverlayManager.renameView(OverlayManager.selectedViewIndex, nameEntry.text)
+        }
       }
 
       SchemaPropertiesForm {
@@ -192,10 +194,19 @@ Item {
       title: I18n.tr("Tool page")
       description: I18n.tr("A page of its own, with no layout to edit. Tools show as icons after your pages in the navigator.")
 
-      SchemaSwitch {
-        label: I18n.tr("Show in the navigator")
-        checked: root.view?.visible !== false
-        onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
+      FormRow {
+        first: true
+        hoverable: true
+        bodyHeight: navigatorSwitch.implicitHeight
+        onRowClicked: navigatorSwitch.activate()
+
+        SchemaSwitch {
+          id: navigatorSwitch
+          width: parent.width
+          label: I18n.tr("Show in the navigator")
+          checked: root.view?.visible !== false
+          onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
+        }
       }
 
       // Goes to it (only while it's shown)
@@ -261,23 +272,37 @@ Item {
       title: I18n.tr("Desktop")
       description: root.screenTarget?.description ?? ""
 
-      StyledComboEntry {
-        Layout.fillWidth: true
-        icon: "monitor"
-        options: DesktopManager.targets.map(target => ({
-              "value": target.key,
-              "label": I18n.tr("{0} — {1}", target.label, target.status)
-            }))
-        value: DesktopManager.selectedTarget
-        onPicked: value => DesktopManager.selectTarget(value)
+      FormRow {
+        first: true
+        bodyHeight: targetCombo.implicitHeight
+
+        StyledComboEntry {
+          id: targetCombo
+          width: parent.width
+          icon: "monitor"
+          options: DesktopManager.targets.map(target => ({
+                "value": target.key,
+                "label": I18n.tr("{0} — {1}", target.label, target.status)
+              }))
+          value: DesktopManager.selectedTarget
+          onPicked: value => DesktopManager.selectTarget(value)
+        }
       }
 
-      SchemaSwitch {
-        visible: root.screenLayout !== null
-        label: root.isDesktopMonitor ? I18n.tr("Show on this monitor") : I18n.tr("Show on the desktop")
-        description: root.isDesktopMonitor ? I18n.tr("Off leaves this monitor's desktop empty.") : ""
-        checked: root.screenLayout?.enabled ?? false
-        onToggled: newValue => DesktopManager.setEnabled(newValue)
+      FormRow {
+        shown: root.screenLayout !== null
+        hoverable: true
+        bodyHeight: showSwitch.implicitHeight
+        onRowClicked: showSwitch.activate()
+
+        SchemaSwitch {
+          id: showSwitch
+          width: parent.width
+          label: root.isDesktopMonitor ? I18n.tr("Show on this monitor") : I18n.tr("Show on the desktop")
+          description: root.isDesktopMonitor ? I18n.tr("Off leaves this monitor's desktop empty.") : ""
+          checked: root.screenLayout?.enabled ?? false
+          onToggled: newValue => DesktopManager.setEnabled(newValue)
+        }
       }
 
       StyledTextButton {

@@ -124,13 +124,19 @@ ColumnLayout {
         width: placed.width
         height: placed.height
         z: dragging ? 2 : selected ? 1 : 0
-        radius: Widget.radius
+        radius: Style.radius
         color: selected ? Style.accentContainer : Style.surfaceRaised
         border.color: selected ? Style.accent : Style.borderStrong
         border.width: selected ? Style.focusWidth : Style.hairline
         opacity: monitor ? 1 : Style.opacityDisabled
         // What reads on the tile's fill
         readonly property StyleInk ink: Style.inkOf(selected ? "accentContainer" : "raised")
+
+        StateLayer {
+          hovered: area.containsMouse
+          pressed: area.pressed
+          dragged: tile.dragging
+        }
 
         ColumnLayout {
           anchors.centerIn: parent
@@ -177,6 +183,7 @@ ColumnLayout {
         }
 
         DragArea {
+          id: area
           anchors.fill: parent
           onTapped: MonitorManager.selectedOutput = tile.rule.output
           onDragStarted: (x, y) => root.begin(tile.index, mapToItem(board, x, y))

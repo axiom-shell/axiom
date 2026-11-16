@@ -22,11 +22,19 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Widget.spacing
 
-  RowLayout {
+  // One row while both buttons fit at their widest, else one under the other
+  // (decided from implicit widths only, as SchemaToggle's `stacked` is)
+  GridLayout {
+    id: buttons
     Layout.fillWidth: true
-    spacing: Widget.spacing
+    // Its two-column least width must not hold the pane open: below it, it stacks
+    Layout.minimumWidth: 0
+    columnSpacing: Widget.spacing
+    rowSpacing: Widget.spacing
+    columns: buttons.width > 0 && previewButton.implicitWidth + othersButton.implicitWidth + buttons.columnSpacing > buttons.width ? 1 : 2
 
     StyledTextButton {
+      id: previewButton
       Layout.fillWidth: true
       enabled: OverlayManager.menus.canPreview(root.menu)
       // (a text button doesn't dim itself)
@@ -39,6 +47,7 @@ ColumnLayout {
     }
 
     StyledTextButton {
+      id: othersButton
       Layout.fillWidth: true
       kind: OverlayManager.menus.showingOthers ? "primary" : "tonal"
       iconText: "layers"

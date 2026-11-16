@@ -149,7 +149,7 @@ Rectangle {
   }
 
   Layout.fillWidth: true
-  Layout.preferredHeight: Widget.height + Widget.padding
+  Layout.preferredHeight: Style.listRowHeight
   color: root.selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
   radius: Style.radius
 

@@ -639,6 +639,7 @@ TestCase {
     row.label = strings[data.key];
     waitForRendering(host);
     compare(harness.containedProblems(row), []);
+    compare(row.height, Widget.height + Widget.padding, "a list row's height");
     verify(!row.revealed, "actions hidden at rest");
     row.selected = true;
     verify(row.revealed, "actions shown while selected");

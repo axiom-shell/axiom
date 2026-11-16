@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.components.reusable
 
 // A list of rows (EntryListRows as children, each at `y: index * rowStep`)
 // that takes drops of its own rows to reorder them: a "list" target of the
@@ -15,7 +16,7 @@ Item {
   required property string moveKind
   property int count: 0
 
-  readonly property real rowHeight: Widget.height + Widget.padding
+  readonly property real rowHeight: Style.listRowHeight
   readonly property real rowStep: root.rowHeight + Widget.spacing / 2
   readonly property string targetKind: "list"
   readonly property bool hovered: root.dragLayer.hoverTarget === root
@@ -43,13 +44,10 @@ Item {
   Component.onDestruction: root.dragLayer.unregisterTarget(root)
 
   // Where the carried row would land
-  Rectangle {
+  DropMark {
     visible: root.hovered
     z: 2
     width: root.width
-    height: Widget.px(3)
-    radius: 1.5
-    y: Math.max(0, root.dragLayer.hoverIndex * root.rowStep - Widget.spacing / 4 - 1.5)
-    color: Style.accent
+    y: Math.max(0, root.dragLayer.hoverIndex * root.rowStep - Widget.spacing / 4 - height / 2)
   }
 }
