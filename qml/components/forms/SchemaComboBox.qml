@@ -38,7 +38,7 @@ FieldLine {
 
   // What a click on the whole row does (SchemaField.rowClicked)
   function activate() {
-    entry.toggleFromRow();
+    entry.activate();
   }
 
   signal selectionChanged(string newValue)

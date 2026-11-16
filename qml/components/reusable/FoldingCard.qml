@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.components.methods
 
 // A settings card that folds: clicking its header (title, help text,
 // chevron) emits `toggled`, and the body below animates shut while
@@ -33,19 +34,8 @@ Surface {
   // The card ends on a shut fold row (FoldFormRow), so that row's own padding
   // closes it and the card adds none. The last child not hidden decides (a
   // form's `allHidden`, a row's or other child's `shown`), read from those,
-  // never from `visible` or heights. Never while folded.
-  readonly property bool endsShut: {
-    if (root.collapsed)
-      return false;
-    const kids = root.endRows;
-    for (let i = (kids?.length ?? 0) - 1; i >= 0; i--) {
-      const kid = kids[i];
-      if (!kid || kid.allHidden === true || kid.shown === false)
-        continue;
-      return kid.shutFold === true;
-    }
-    return false;
-  }
+  // never from `visible` or heights. Never while folded (FormRows.endsShut).
+  readonly property bool endsShut: FormRows.endsShut(root.endRows, root.collapsed)
   // False: no header at all (a title-less card: the rows start at the padding)
   property bool headed: true
   // The space between the body's children (0: rows abut)

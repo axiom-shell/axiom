@@ -18,7 +18,7 @@ import qs.components.methods
 // HoverHandler is on the row, an ancestor of every control (a handler on a
 // sibling painted under them loses the hover to any child that takes it).
 // A `hoverable` row also acts on a click outside its controls
-// (`rowClicked`). The tint and the click cover the band: the whole row, or
+// (`rowClicked`; with an `activates` control, its `activate()`). The tint and the click cover the band: the whole row, or
 // with a `hitHeight` shorter than the body, the first `hitHeight` of it
 // padded below by as much as above, so the field sits centred in it. What
 // the row holds sits in its body.
@@ -41,16 +41,21 @@ Item {
   property real hitHeight: root.bodyHeight
   // Whether the row tints under the pointer
   property bool tinted: true
+  // The control a click on the row outside the controls acts on: its
+  // `activate()` (a switch flips, a list opens)
+  property var activates: null
   // Whether a click on the row outside its controls is `rowClicked`
-  // (pointing cursor); a hoverable row always tints
-  property bool hoverable: false
+  // (pointing cursor); a hoverable row always tints. On by default for a row
+  // that `activates` something
+  property bool hoverable: root.activates !== null
   // The pointer is over the row's band
   readonly property bool hovered: rowHover.hovered && rowHover.point.position.y < band.height
-  // The form's top row (no row above it shown), which has no gap: set by
-  // the host (Utils.firstFormRow), never read from `y`, which the
-  // layout sets from this row's height (a row flipping between the two
-  // kept the layout polishing forever)
-  property bool first: false
+  // The form's top row (no row above it shown), which has no gap: by default
+  // the `firstRow` of the FormColumn it sits in (FormRows.first); a host
+  // laying rows out otherwise sets it (Utils.firstFormRow). Never read from
+  // `y`, which the layout sets from this row's height (a row flipping between
+  // the two kept the layout polishing forever)
+  property bool first: (root.parent as FormColumn)?.firstRow === root
   default property alias content: body.data
   readonly property real step: Widget.spacing * 2
   readonly property real indent: root.depth * root.step
@@ -60,6 +65,8 @@ Item {
 
   // A click on the row outside its controls (while `hoverable`)
   signal rowClicked
+
+  onRowClicked: root.activates?.activate()
 
   // A relay: the walks of the texts in the row stop here
   readonly property var inkHostAbove: InkHost.find(root.parent)

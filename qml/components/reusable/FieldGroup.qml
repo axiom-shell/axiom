@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import qs.components.forms
+import qs.components.methods
 
 // The settings page's card, for an editor's group of fields: a FoldingCard
 // (header with the title, description and chevron at the top), rows indented
@@ -22,24 +22,9 @@ FoldingCard {
   bodySpacing: 0
   onToggled: root.collapsed = !root.collapsed
 
-  // Every counted child hidden (a form's `allHidden`, a row's `shown`);
-  // other children don't count, nor does a card with none
-  readonly property bool _empty: {
-    let counted = 0;
-    for (const kid of root.contentChildren) {
-      if (kid.allHidden !== undefined) {
-        if (kid.allHidden !== true)
-          return false;
-      } else if ((kid as FormRow) !== null) {
-        if ((kid as FormRow).shown !== false)
-          return false;
-      } else {
-        continue;
-      }
-      counted++;
-    }
-    return counted > 0;
-  }
+  // Every counted child hidden (FormRows.empty: a form's `allHidden`, a
+  // row's `shown`); other children don't count, nor does a card with none
+  readonly property bool _empty: FormRows.empty(root.contentChildren)
 
   // Restores the host's own `visible` when the rows return
   Binding {

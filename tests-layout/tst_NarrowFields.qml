@@ -140,7 +140,7 @@ TestCase {
   }
 
   function entryOf(field) {
-    return findAll(field, it => it.options !== undefined && it.toggleFromRow !== undefined)[0];
+    return findAll(field, it => it.options !== undefined && it.listOpen !== undefined)[0];
   }
 
   function textOf(field, text) {

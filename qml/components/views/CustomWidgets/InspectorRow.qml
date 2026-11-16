@@ -37,7 +37,7 @@ FormRow {
   property var dropdown: null
 
   hoverable: root.dropdown !== null
-  onRowClicked: root.dropdown.toggleFromRow()
+  onRowClicked: root.dropdown.activate()
 
   bodyHeight: column.implicitHeight
   // The tint and the row click cover the field, not what's under it

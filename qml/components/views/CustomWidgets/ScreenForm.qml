@@ -159,9 +159,9 @@ ColumnLayout {
           // shows), as SchemaComboBox's row does
           FormRow {
             first: true
+            activates: testField
             hoverable: !screen.noKey
             bodyHeight: keyTest.implicitHeight
-            onRowClicked: testField.toggleFromRow()
 
             RowLayout {
               id: keyTest
