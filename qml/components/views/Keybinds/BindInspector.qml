@@ -64,132 +64,154 @@ ColumnLayout {
     }
   }
 
+  // The key: one row, its caption the row's description
   FieldGroup {
-    title: I18n.tr("Key")
+    title: ""
+    head: "lead"
 
-    KeyRecorder {
-      bindIndex: root.bindIndex
-      combo: root.bind.key ?? ""
-      invalid: root.hasError
-      Layout.fillWidth: true
-    }
+    BindRow {
+      first: true
+      label: I18n.tr("Key")
+      description: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
 
-    StyledText {
-      Layout.topMargin: Style.space2
-      text: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-      Layout.fillWidth: true
+      KeyRecorder {
+        bindIndex: root.bindIndex
+        combo: root.bind.key ?? ""
+        invalid: root.hasError
+        Layout.fillWidth: true
+      }
     }
   }
 
+  // The action leads; its argument and call sit under it
   FieldGroup {
-    title: I18n.tr("Action")
+    title: ""
+    head: "lead"
 
-    ActionPicker {
-      currentValue: root.bind.action ?? ""
-      onPicked: action => KeybindManager.editor.setField(root.bindIndex, "action", action)
-      Layout.fillWidth: true
+    BindRow {
+      first: true
+      label: I18n.tr("Action")
+
+      ActionPicker {
+        currentValue: root.bind.action ?? ""
+        onPicked: action => KeybindManager.editor.setField(root.bindIndex, "action", action)
+        Layout.fillWidth: true
+      }
     }
 
     // The argument: a choice when the action has a fixed set, else text
-    SchemaComboBox {
-      visible: root.needed && root.argumentOptions !== null
-      Layout.topMargin: Style.space2
-      label: ""
-      options: root.argumentOptions ?? []
-      optionLabels: KeybindManager.argumentLabels(root.bind.action) ?? ({})
-      currentValue: root.bind.argument ?? ""
-      // I18n.tr("left") I18n.tr("right") I18n.tr("up") I18n.tr("down")
-      // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
-      onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
+    FormRow {
+      indented: true
+      shown: root.needed && root.argumentOptions !== null
+      bodyHeight: argumentCombo.implicitHeight
+
+      SchemaComboBox {
+        id: argumentCombo
+        width: parent.width
+        // I18n.tr("Argument")
+        label: "Argument"
+        options: root.argumentOptions ?? []
+        optionLabels: KeybindManager.argumentLabels(root.bind.action) ?? ({})
+        currentValue: root.bind.argument ?? ""
+        // I18n.tr("left") I18n.tr("right") I18n.tr("up") I18n.tr("down")
+        // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
+        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
+      }
     }
 
     // The id of something defined elsewhere: a dropdown that also takes a
     // new one. It lists the ids of the settings draft, so one typed on another
     // bind appears once the keybinds are saved
-    RefEntry {
-      visible: root.needed && root.argumentOptions === null && root.argumentRef !== ""
-      Layout.topMargin: Style.space2
-      kind: root.argumentRef
-      value: root.bind.argument ?? ""
-      onCommitted: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
+    BindRow {
+      indented: true
+      shown: root.needed && root.argumentOptions === null && root.argumentRef !== ""
+      label: I18n.tr("Argument")
+
+      RefEntry {
+        kind: root.argumentRef
+        value: root.bind.argument ?? ""
+        onCommitted: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
+        Layout.fillWidth: true
+        Layout.preferredHeight: Widget.height
+      }
     }
 
-    BindTextField {
-      id: argumentText
-      field: "argument"
-      visible: root.needed && root.argumentOptions === null && root.argumentRef === ""
-      Layout.topMargin: Style.space2
-      placeholderText: {
-        switch (KeybindManager.argumentKind(root.bind.action)) {
-        case "resize":
-          return I18n.tr("Step, e.g. 50 0");
-        case "duration":
-          return I18n.tr("Length, e.g. 10m or 1:30");
-        case "raw":
-          return {
-            "sway": I18n.tr("Command, e.g. splitv"),
-            "niri": I18n.tr("Action, e.g. focus-column-first")
-          }[root.bind.compositor] ?? I18n.tr("Dispatcher, e.g. hl.dsp.layout(\"swapsplit\")");
+    BindRow {
+      indented: true
+      shown: root.needed && root.argumentOptions === null && root.argumentRef === ""
+      label: I18n.tr("Argument")
+
+      BindTextField {
+        id: argumentText
+        field: "argument"
+        placeholderText: {
+          switch (KeybindManager.argumentKind(root.bind.action)) {
+          case "resize":
+            return I18n.tr("Step, e.g. 50 0");
+          case "duration":
+            return I18n.tr("Length, e.g. 10m or 1:30");
+          case "raw":
+            return {
+              "sway": I18n.tr("Command, e.g. splitv"),
+              "niri": I18n.tr("Action, e.g. focus-column-first")
+            }[root.bind.compositor] ?? I18n.tr("Dispatcher, e.g. hl.dsp.layout(\"swapsplit\")");
+          }
+          return root.bind.action === "exec" ? I18n.tr("Command") : I18n.tr("Search text");
         }
-        return root.bind.action === "exec" ? I18n.tr("Command") : I18n.tr("Search text");
+        Layout.fillWidth: true
+        Layout.preferredHeight: Widget.height
       }
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
     }
 
     // The call: toggle, open or close
-    SchemaComboBox {
-      visible: root.callOptions !== null
-      Layout.topMargin: Style.space2
-      // I18n.tr("Does")
-      label: "Does"
-      options: root.callOptions ?? []
-      optionLabels: KeybindManager.callLabels(root.bind.action)
-      currentValue: root.bind.call ?? "toggle"
-      onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "call", value)
-      Layout.fillWidth: true
+    FormRow {
+      indented: true
+      shown: root.callOptions !== null
+      bodyHeight: callCombo.implicitHeight
+
+      SchemaComboBox {
+        id: callCombo
+        width: parent.width
+        // I18n.tr("Does")
+        label: "Does"
+        options: root.callOptions ?? []
+        optionLabels: KeybindManager.callLabels(root.bind.action)
+        currentValue: root.bind.call ?? "toggle"
+        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "call", value)
+      }
     }
   }
 
   FieldGroup {
-    title: I18n.tr("Label")
+    title: ""
+    head: "lead"
 
-    RowLayout {
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
+    BindRow {
+      first: true
+      label: I18n.tr("Label")
+      description: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
 
-      // The section the action files it under, unless the label names its
-      // own ("Section: Label")
-      StyledLabel {
-        visible: !BindActions.hasOwnSection(label.input.text)
-        text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
-        role: "caption"
-        tone: "faint"
-      }
-
-      BindTextField {
-        id: label
-        field: "description"
+      RowLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height
-        placeholderText: BindActions.defaultLabel(KeybindManager.actionTable, root.bind) || I18n.tr("Label")
-      }
-    }
+        spacing: Widget.spacing / 2
 
-    StyledText {
-      Layout.topMargin: Style.space2
-      text: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-      Layout.fillWidth: true
+        // The section the action files it under, unless the label names its
+        // own ("Section: Label")
+        StyledLabel {
+          visible: !BindActions.hasOwnSection(label.input.text)
+          text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
+          role: "caption"
+          tone: "faint"
+        }
+
+        BindTextField {
+          id: label
+          field: "description"
+          Layout.fillWidth: true
+          Layout.preferredHeight: Widget.height
+          placeholderText: BindActions.defaultLabel(KeybindManager.actionTable, root.bind) || I18n.tr("Label")
+        }
+      }
     }
   }
 
@@ -202,23 +224,23 @@ ColumnLayout {
   // command's compositor is its own, above)
   FieldGroup {
     title: I18n.tr("Only when")
+    description: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
 
-    // Bare controls, a gap between each (not rows)
-    ColumnLayout {
-      Layout.fillWidth: true
-      spacing: Style.space2
+    // The compositors: a chip each, any of them, none for every one
+    Repeater {
+      model: KeybindManager.conditionFields.filter(part => part.multi)
 
-      // The compositors: a chip each, any of them, none for every one
-      Repeater {
-        model: KeybindManager.conditionFields.filter(part => part.multi)
+      delegate: FormRow {
+        id: part
+        required property var modelData
+        readonly property var chosen: root.bind[part.modelData.field] ?? []
+        shown: root.bind.action !== "raw"
+        bodyHeight: chipRow.implicitHeight
 
-        delegate: RowLayout {
-          id: part
-          required property var modelData
-          readonly property var chosen: root.bind[part.modelData.field] ?? []
-          visible: root.bind.action !== "raw"
+        RowLayout {
+          id: chipRow
+          width: parent.width
           spacing: Widget.spacing
-          Layout.fillWidth: true
 
           StyledLabel {
             text: part.modelData.title
@@ -242,27 +264,25 @@ ColumnLayout {
           }
         }
       }
+    }
 
-      Repeater {
-        model: KeybindManager.conditionFields.filter(part => !part.multi)
+    Repeater {
+      model: KeybindManager.conditionFields.filter(part => !part.multi)
 
-        delegate: SchemaComboBox {
-          required property var modelData
-          label: modelData.title
-          options: modelData.options
-          optionLabels: modelData.labels
-          currentValue: root.bind[modelData.field] ?? ""
-          onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, modelData.field, value)
-          Layout.fillWidth: true
+      delegate: FormRow {
+        id: other
+        required property var modelData
+        bodyHeight: otherCombo.implicitHeight
+
+        SchemaComboBox {
+          id: otherCombo
+          width: parent.width
+          label: other.modelData.title
+          options: other.modelData.options
+          optionLabels: other.modelData.labels
+          currentValue: root.bind[other.modelData.field] ?? ""
+          onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, other.modelData.field, value)
         }
-      }
-
-      StyledText {
-        text: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
-        role: "caption"
-        tone: "muted"
-        overflow: "wrap"
-        Layout.fillWidth: true
       }
     }
   }

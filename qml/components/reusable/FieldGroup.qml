@@ -23,7 +23,8 @@ import qs.components.forms
 // indent under it; "section" is the plain SectionHeading, for content that
 // isn't rows (a list, a preview, a notice, buttons); "auto" is "lead" when
 // the first child is a form that `leads` and there are no `headerExtras`
-// (they need the head row), else "block". A flat group whose rows are all
+// (they need the head row), else "block". With no title, "auto" and "block"
+// keep the plain heading (a description alone). A flat group whose rows are all
 // hidden hides itself: only its direct children count, a form (`allHidden`)
 // or a FormRow (`shown`), never anything's `visible`. A non-row child of a
 // block takes `Layout.leftMargin: group.inset`.
@@ -47,7 +48,11 @@ Surface {
   // How a flat, titled group's heading reads (`head`, resolved): "block",
   // "lead" or "section"
   readonly property string _mode: {
-    if (root._boxed || root.title === "" || root.head === "section")
+    if (root._boxed || root.head === "section")
+      return "section";
+    if (root.head === "lead")
+      return "lead";
+    if (root.title === "")
       return "section";
     if (root.head !== "auto")
       return root.head;

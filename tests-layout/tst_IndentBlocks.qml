@@ -394,4 +394,48 @@ TestCase {
     compare(host.probe.mapToItem(host.row, 0, 0).x, root.step());
     compare(root.rails(host.row), [0]);
   }
+
+  // A hand-built lead group with no title (the bind inspector's Key): no
+  // heading and no gap above its row, whose own rows indent as before
+  Component {
+    id: bareComp
+
+    Surface {
+      property alias group: group
+      property alias row: row
+      width: 400
+      height: 300
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: group
+          title: ""
+          head: "lead"
+
+          FormRow {
+            id: row
+            first: true
+            bodyHeight: Widget.height
+          }
+        }
+      }
+    }
+  }
+
+  function test_titlelessLeadGroupIsJustItsRows_data() {
+    return rows();
+  }
+
+  function test_titlelessLeadGroupIsJustItsRows(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(bareComp, root);
+    verify(pane);
+    wait(50);
+    compare(pane.row.mapToItem(pane.group, 0, 0).y, 0, "nothing above the row");
+    compare(pane.group.height, pane.row.height);
+    compare(pane.group.rowBase, 0);
+  }
 }
