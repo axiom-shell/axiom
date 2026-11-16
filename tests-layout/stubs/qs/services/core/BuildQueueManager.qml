@@ -5,8 +5,11 @@ import QtQuick
 // is queued (a StreamedLoader under test builds at once, `stream: false`).
 QtObject {
   property int pending: 0
+  // The label of each request, for a test of who streams
+  property var labels: []
 
   function request(owner, job, label) {
+    labels.push(label);
     job();
   }
 

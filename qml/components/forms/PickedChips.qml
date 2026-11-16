@@ -10,8 +10,8 @@ import qs.components.reusable
 // array. `options` are the values that can be picked, in order; `labels`,
 // `icons` and `groups` ({ value: text }, { value: icon }, { value: group
 // heading }, a field's `x-enumGroups`) describe them, a value with no label
-// showing as it is (one no longer in the options still shows, so it can be
-// taken away). With `ordered` the chips drag into place (a FlowDropTarget on
+// showing as it is, or translated with `translate` (one no longer in the
+// options still shows, so it can be taken away). With `ordered` the chips drag into place (a FlowDropTarget on
 // an InlineDragLayer of its own). `addMode` says how more are added:
 // "inline" lists the others under the chips (under their group's header), a
 // click adding one at the end; "picker" is one button opening a
@@ -30,6 +30,9 @@ ColumnLayout {
   property var icons: ({})
   property var groups: ({})
   property bool ordered: false
+  // Values are English source strings, an enum's: one with no label shows
+  // translated
+  property bool translate: false
   // inline | picker
   property string addMode: "inline"
   // The picker button's text
@@ -40,8 +43,8 @@ ColumnLayout {
   readonly property var picked: (root.value ?? []).filter(v => typeof v === "string")
   // The options not picked, as [{ name, values }] in the order each group
   // first comes in the options ("" for those without one)
-  readonly property var available: root.options.filter(v => !root.picked.includes(v)).reduce((out, v) => {
-    const name = root.groups[v] ?? "";
+  readonly property var available: root._unpicked.reduce((out, v) => {
+    const name = root._own(root.groups, v) ? root.groups[v] : "";
     const group = out.find(g => g.name === name);
     if (group)
       group.values.push(v);
@@ -53,14 +56,26 @@ ColumnLayout {
     return out;
   }, [])
   // The picker's entries: the options not picked
-  readonly property var _types: root.options.filter(v => !root.picked.includes(v)).map(v => ({
+  readonly property var _types: root._unpicked.map(v => ({
         "type": v,
         "label": root.labelOf(v),
-        "icon": root.icons[v] ?? ""
+        "icon": root.iconOf(v)
       }))
+  readonly property var _unpicked: root.options.filter(v => !root.picked.includes(v))
+
+  // A key of the map itself, not an inherited one ("constructor")
+  function _own(map, v) {
+    return Object.prototype.hasOwnProperty.call(map, v);
+  }
+
+  function iconOf(v) {
+    return root._own(root.icons, v) ? root.icons[v] : "";
+  }
 
   function labelOf(v) {
-    return root.labels[v] ?? I18n.tr(v);
+    if (root._own(root.labels, v))
+      return root.labels[v];
+    return root.translate ? I18n.tr(v) : v;
   }
 
   function add(v) {
@@ -119,7 +134,7 @@ ColumnLayout {
           id: chip
           required property string modelData
           required property int index
-          icon: root.icons[chip.modelData] ?? ""
+          icon: root.iconOf(chip.modelData)
           label: root.labelOf(chip.modelData)
           dragLayer: carrier
           payload: root.ordered ? ({
@@ -174,7 +189,7 @@ ColumnLayout {
             id: option
             required property string modelData
             kind: "outlined"
-            iconText: root.icons[option.modelData] ?? "add"
+            iconText: root._own(root.icons, option.modelData) ? root.icons[option.modelData] : "add"
             text: root.labelOf(option.modelData)
             onClicked: root.add(option.modelData)
           }

@@ -157,4 +157,24 @@ TestCase {
     chips.value = ["a", "b", "c", "d"];
     compare(buttons[0].enabled, false);
   }
+
+  // Ids show as they are, not translated or looked up on the prototype
+  function test_ids_show_as_they_are() {
+    const chips = createTemporaryObject(chipsComp, root, {
+      "value": ["constructor", "b1"],
+      "options": [],
+      "labels": ({}),
+      "icons": ({}),
+      "groups": ({})
+    });
+    verify(chips);
+    waitForRendering(chips);
+    compare(chips.labelOf("constructor"), "constructor");
+    compare(chips.labelOf("b1"), "b1");
+    compare(chips.iconOf("constructor"), "");
+    compare(chips.iconOf("b1"), "");
+    const found = findAll(chips, it => it.label !== undefined && it.dragLayer !== undefined);
+    compare(found.map(c => c.label), ["constructor", "b1"]);
+    compare(found.map(c => c.icon), ["", ""]);
+  }
 }

@@ -10,9 +10,12 @@ import qs.components.methods
 // icon, the `title` with its tag chip (`tag`, a StatusChip `tagTone`) and the
 // description. Otherwise it is a `preview` over the `title` (`previewHeight`
 // tall, 0 for none). `selected` fills it with the accent container and rings
-// it in the accent; a non-empty `disabledReason` greys it, ignores clicks and
-// says why in a tooltip on hover. `clicked` on a click or Space/Enter,
-// `menuRequested(x, y)` on a right click. `tabStop: false` leaves the Tab stop
+// it in the accent (an unselected one tints under the pointer); a non-empty
+// `disabledReason` ignores clicks and says why: a card greys its content and
+// shows the reason under the description (a warning line, as the
+// onboarding's OptionCard did), a preview tile greys and says it in a tooltip
+// on hover. `clicked` on a click or Space/Enter; `menus` makes a right click
+// `menuRequested(x, y)` (off, the click is left to what is under the tile). `tabStop: false` leaves the Tab stop
 // to a host that moves between tiles itself (ChoiceTiles, which sets `ringed`
 // on the tile its keys are on).
 Surface {
@@ -37,6 +40,8 @@ Surface {
   // The Tab stop and the keyboard ring (a host that owns the keys: `ringed`)
   property bool tabStop: true
   property bool ringed: false
+  // A right click asks for a menu (`menuRequested`)
+  property bool menus: false
   // The height its content needs (a host may stretch it with `height`)
   readonly property bool card: root.icon !== "" || root.description !== "" || root.tag !== ""
   readonly property bool disabled: root.disabledReason !== ""
@@ -55,7 +60,8 @@ Surface {
   Pressable {
     enabled: !root.disabled
     tabStop: root.tabStop
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    tinted: !root.selected
+    acceptedButtons: root.menus ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
     onClicked: root.clicked()
     onMenuRequested: (x, y) => root.menuRequested(x, y)
   }
@@ -71,10 +77,10 @@ Surface {
     anchors.fill: parent
     anchors.margins: Widget.padding
     spacing: Widget.padding
-    opacity: root.disabled ? Style.opacityDisabled : 1
 
     StyledIcon {
       Layout.alignment: Qt.AlignTop
+      opacity: root.disabled ? Style.opacityDisabled : 1
       visible: root.icon !== ""
       text: root.icon
       size: "lg"
@@ -89,6 +95,7 @@ Surface {
 
       RowLayout {
         spacing: Widget.spacing
+        opacity: root.disabled ? Style.opacityDisabled : 1
 
         StyledLabel {
           text: root.title
@@ -109,6 +116,28 @@ Surface {
         text: root.description
         role: "caption"
         tone: "muted"
+        opacity: root.disabled ? Style.opacityDisabled : 1
+      }
+
+      // Why it can't be picked, not greyed
+      RowLayout {
+        objectName: "disabledReason"
+        Layout.fillWidth: true
+        visible: root.card && root.disabled
+        spacing: Widget.spacing / 2
+
+        StyledIcon {
+          Layout.alignment: Qt.AlignTop
+          text: "block"
+          tone: "warning"
+        }
+
+        StyledText {
+          Layout.fillWidth: true
+          text: root.disabledReason
+          role: "caption"
+          tone: "warning"
+        }
       }
     }
   }
@@ -190,7 +219,7 @@ Surface {
   }
 
   LazyLoader {
-    active: hover.hovered && root.disabled
+    active: hover.hovered && root.disabled && !root.card
     StyledToolTip {
       target: root
       text: root.disabledReason

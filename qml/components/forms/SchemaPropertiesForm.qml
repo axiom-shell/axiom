@@ -138,6 +138,7 @@ ColumnLayout {
         required property int index
         row: cell.modelData
         form: root
+        stream: true
         // Unknown until the field streams in, so it takes its height then
         // rather than folding open
         shown: root.folded ? false : cell.fieldShown

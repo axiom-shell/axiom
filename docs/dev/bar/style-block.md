@@ -1,6 +1,6 @@
 # Bar style block
 
-> **Files:** `qml/components/views/Settings/BarStyleBlock.qml`, `qml/components/views/Settings/BarLookSample.qml`, `qml/components/reusable/ChoiceTiles.qml`, `qml/config/schema/definitions/widgets/BarStyle.yaml`, `qml/components/views/BarEditor/BarsPanel.qml`, `backend/internal/schema/yamlsrc/check.go`
+> **Files:** `qml/components/views/Settings/BarStyleBlock.qml`, `qml/components/views/Settings/BarLookSample.qml`, `qml/components/reusable/ChoiceTiles.qml`, `qml/components/reusable/PreviewTile.qml`, `qml/config/schema/definitions/widgets/BarStyle.yaml`, `qml/components/views/BarEditor/BarsPanel.qml`, `backend/internal/schema/yamlsrc/check.go`
 > **Config:** `Bars.style` (a `BarStyle`), and each bar's own `style` (`Bars.items[].style`)
 > **Related:** [Settings page](../core/settings-page.md), [Schema annotations](../core/schema-annotations.md), [Bar editor](bar-editor.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
@@ -21,8 +21,8 @@ Every BarStyle setting in one block: the settings page's wide Bar style card, an
 ### Drawing bars: one file
 `BarLookSample.qml` is the only file of the block that imports bar drawing code. It draws each tile's sample: three boxes on a strip of bar (an icon, an icon with "42%", "12:30"), with one key set to the tile's value, so grouping, merged runs, powerline, tabs, split parts, separators and the gradient all read.
 - **What it draws with:** the style with the tile's key set goes through `BarsConfig.enrichBarConfig`, so the sample bar's `barConfig.look` is `BarLook.resolve`'s: its shape and grouping as drawn, its traits, separators and gradient. The samples' caps and room are `BarRuns.segmentAt` on `BarRuns.context` (as `WidgetDecorations` places a section's), a tab's content shift is `BarTabs.tabShift`, and backgrounds are the drawing kit's `WidgetBackground` (`qs.components.bar.look`: a merged run's one, each box's with its split parts and gradient slice), its colors `WidgetLook`'s (Auto, so the gradient takes their place), with `SeparatorMark` between. On a box sit only a `StyledIcon` and a `StyledText`: no bar widget (nothing from `bar/widgets/`, no `BarWidgetHost`). Like every file outside `BarLook`, it reads the look's traits and resolved fields, never a `widgetStyle` name.
-- **Cheap to build:** `ChoiceTiles` makes a tile's sample once, from the build queue (a frame's worth at a time), not in the frame the card appears.
-- **Cheap on an edit:** `ChoiceTiles` sets `previewProperties` (`values`, `bar`) on a sample in place, only those that differ; everything in it is fixed (three samples, three backgrounds, two separator marks shown or hidden), so an edit only re-evaluates bindings.
+- **Cheap to build:** `ChoiceTiles` hands each `PreviewTile` its sample, made once, from the build queue (a frame's worth at a time), not in the frame the card appears.
+- **Cheap on an edit:** `ChoiceTiles` hands `PreviewTile` `previewProperties` (`values`, `bar`) on a sample in place, only those that differ; everything in it is fixed (three samples, three backgrounds, two separator marks shown or hidden), so an edit only re-evaluates bindings.
   - The block hands the samples a copy of its values (`_sampleValues`): the settings draft changes its own object in place, so the same object would never compare different.
   - A sample works out its bar (`enrichBarConfig`) only when its style, bar or thickness changes, and keeps it only if it differs. As a binding it read the config readers, which every settings edit replaces, so every tile redrew on any edit on the page.
 - **Changing the bar's drawing** changes only this file of the block: `BarStyleBlock`, `ChoiceTiles` and the forms draw nothing of bars.

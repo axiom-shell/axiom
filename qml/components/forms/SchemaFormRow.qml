@@ -13,9 +13,10 @@ import qs.components.reusable
 // settings page's SettingsField are all this, so the marks and links are the
 // same everywhere. The field is built by URL (SchemaField, through
 // SchemaObjectArray and SchemaArrayItem, instantiates this type, so naming it
-// here would make the types depend on each other) and streamed (a page's
-// forms fill in over the frames after it opens). `shown` is the host's:
-// `fieldShown` is the field's own (undefined until it streams in).
+// here would make the types depend on each other) and streamed only where a
+// host asks (`stream`: SchemaPropertiesForm's cells; the others build the
+// field with the row). `shown` is the host's: `fieldShown` is the field's own
+// (undefined until it streams in, when `stream` is on).
 FoldFormRow {
   id: root
 
@@ -32,6 +33,9 @@ FoldFormRow {
   // Off: the field draws nothing (the host draws the row itself); its
   // `fieldShown` still holds
   property bool fieldActive: true
+  // The field fills in from the build queue: a long form's rows; off, it is
+  // built with the row, so `shown` is known at once
+  property bool stream: false
   // What the host puts under the field, and its height (SettingsField's
   // integration hookup and footprint line)
   property real extraHeight: 0
@@ -59,13 +63,14 @@ FoldFormRow {
     id: field
     width: parent.width
     rise: false
+    stream: root.stream
     label: "form field"
     // Kept drawn while the row folds shut (the row hides once it has)
     Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
       "row": root.row,
       "form": root.form,
       "headerExtra": Qt.binding(() => root.reset !== null || root.discard !== null ? marks : null),
-      "headerBelow": Qt.binding(() => root.row.schema?.["x-link"] || root.action !== null ? below : null),
+      "headerBelow": Qt.binding(() => root.row.schema?.["x-link"] || root.action !== null ? linksComp : null),
       "active": Qt.binding(() => root.fieldActive),
       "visible": true
     })
@@ -93,7 +98,7 @@ FoldFormRow {
 
   // The field's `x-link`s and action, read with its label (FieldHeader.below)
   Component {
-    id: below
+    id: linksComp
     ColumnLayout {
       readonly property bool shows: links.shows || actionLink.active
       spacing: Widget.spacing / 2

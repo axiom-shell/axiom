@@ -824,6 +824,7 @@ Loader {
     id: orderedChipsField
     PickedChips {
       ordered: true
+      translate: true
       label: root.label
       description: root.description
       headerExtra: root.headerExtra

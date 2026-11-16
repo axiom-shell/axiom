@@ -253,4 +253,236 @@ TestCase {
     mouseClick(rowsOf(tiles)[0][0]);
     compare(picks, ["a"]);
   }
+
+  function findAll(item, test) {
+    const out = [];
+    const walk = it => {
+      if (test(it))
+        out.push(it);
+      for (const child of it.children)
+        walk(child);
+    };
+    walk(item);
+    return out;
+  }
+
+  function tilesOf(tiles) {
+    return rowsOf(tiles).reduce((all, row) => all.concat(row), []);
+  }
+
+  function pressableOf(tile) {
+    return findAll(tile, it => it.tinted !== undefined && it.tabStop !== undefined && it.acceptedButtons !== undefined)[0];
+  }
+
+  // A card says why it can't be picked under its description, not greyed
+  function test_card_shows_disabled_reason() {
+    harness.configure({});
+    const options = cards();
+    options[0].disabledReason = "Not here";
+    const preview = [
+      {
+        "value": "p",
+        "label": "Prev",
+        "disabledReason": "Nope"
+      },
+      {
+        "value": "q",
+        "label": "Quiet"
+      }
+    ];
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": options
+    });
+    waitForRendering(tiles);
+    const [off, on] = tilesOf(tiles);
+    const row = findAll(off, it => it.objectName === "disabledReason")[0];
+    verify(row, "the reason row");
+    verify(row.visible);
+    compare(findAll(row, it => it.text === "Not here").length, 1);
+    compare(row.opacity, 1);
+    compare(findAll(on, it => it.objectName === "disabledReason")[0].visible, false);
+    const previews = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": preview
+    });
+    waitForRendering(previews);
+    for (const tile of tilesOf(previews))
+      for (const r of findAll(tile, it => it.objectName === "disabledReason"))
+        verify(!r.visible, "a preview tile has no reason row");
+  }
+
+  // Only an unselected tile tints under the pointer
+  function test_selected_tile_does_not_tint() {
+    harness.configure({});
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": cards(),
+      "value": "a"
+    });
+    waitForRendering(tiles);
+    const [first, second] = tilesOf(tiles);
+    compare(pressableOf(first).tinted, false);
+    compare(pressableOf(second).tinted, true);
+  }
+
+  Component {
+    id: menuHostComp
+
+    Item {
+      id: host
+      property alias area: area
+      property alias tiles: tiles
+      property var rights: []
+      width: 900
+      height: 400
+
+      MouseArea {
+        id: area
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onClicked: host.rights.push("right")
+      }
+
+      ChoiceTiles {
+        id: tiles
+        width: parent.width
+        value: "a"
+        options: root.cards()
+      }
+    }
+  }
+
+  // A right click is left to what is under the tiles, until a tile asks
+  function test_right_click_reaches_parent() {
+    harness.configure({});
+    const host = createTemporaryObject(menuHostComp, root);
+    waitForRendering(host);
+    const tile = tilesOf(host.tiles)[1];
+    mouseClick(tile, tile.width / 2, tile.height / 2, Qt.RightButton);
+    compare(host.rights, ["right"]);
+  }
+
+  Component {
+    id: bareTileComp
+
+    PreviewTile {
+      property var menus_: []
+      width: 200
+      height: 80
+      title: "T"
+      icon: "bolt"
+      onMenuRequested: (x, y) => menus_.push([x, y])
+    }
+  }
+
+  function test_menus_emits_menuRequested() {
+    harness.configure({});
+    const tile = createTemporaryObject(bareTileComp, root, {
+      "menus": true
+    });
+    waitForRendering(tile);
+    mouseClick(tile, 10, 10, Qt.RightButton);
+    compare(tile.menus_.length, 1);
+    const off = createTemporaryObject(bareTileComp, root);
+    mouseClick(off, 10, 10, Qt.RightButton);
+    compare(off.menus_.length, 0, "off by default");
+  }
+
+  function test_list_layout() {
+    harness.configure({});
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": cards().concat([
+        {
+          "value": "c",
+          "label": "Third",
+          "icon": "star"
+        }
+      ]),
+      "layout": "list"
+    });
+    waitForRendering(tiles);
+    wait(50);
+    compare(tiles.columns, 1);
+    const all = tilesOf(tiles);
+    compare(all.length, 3);
+    let y = -1;
+    for (const tile of all) {
+      compare(tile.x, 0);
+      compare(tile.width, tiles.width);
+      verify(tile.y > y, "y increases");
+      y = tile.y;
+      compare(tile.height, tile.implicitHeight, "its own height");
+    }
+    verify(all[0].height !== all[1].height, "heights differ");
+  }
+
+  function test_keys() {
+    harness.configure({});
+    const before = createTemporaryObject(entryComp, root, {
+      "y": 600
+    });
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": cards().concat([
+        {
+          "value": "c",
+          "label": "Third",
+          "icon": "star"
+        }
+      ]),
+      "layout": "list"
+    });
+    const picks = [];
+    tiles.picked.connect(value => picks.push(value));
+    waitForRendering(tiles);
+    before.forceActiveFocus();
+    verify(before.activeFocus);
+    keyClick(Qt.Key_Tab);
+    verify(tiles.activeFocus, "Tab enters the tiles");
+    const ringed = () => tilesOf(tiles).findIndex(t => t.ringed);
+    compare(ringed(), 0);
+    keyClick(Qt.Key_Down);
+    compare(ringed(), 1);
+    keyClick(Qt.Key_Right);
+    compare(ringed(), 2);
+    keyClick(Qt.Key_Up);
+    compare(ringed(), 1);
+    keyClick(Qt.Key_Return);
+    compare(picks, ["b"]);
+    keyClick(Qt.Key_Left);
+    keyClick(Qt.Key_Space);
+    compare(picks, ["b", "a"]);
+    keyClick(Qt.Key_Tab);
+    verify(!tiles.activeFocus, "Tab again leaves: one stop");
+  }
+
+  Component {
+    id: entryComp
+
+    FocusScope {
+      width: 10
+      height: 10
+      activeFocusOnTab: true
+    }
+  }
+
+  function test_keys_skip_disabled() {
+    harness.configure({});
+    const options = cards();
+    options[1].disabledReason = "Not here";
+    const tiles = createTemporaryObject(tilesComp, root, {
+      "width": Widget.textPx(900),
+      "options": options,
+      "value": "a"
+    });
+    const picks = [];
+    tiles.picked.connect(value => picks.push(value));
+    waitForRendering(tiles);
+    tiles.forceActiveFocus();
+    keyClick(Qt.Key_Right);
+    keyClick(Qt.Key_Return);
+    compare(picks, [], "a disabled option is not picked");
+  }
 }

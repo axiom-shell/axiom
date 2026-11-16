@@ -6,9 +6,10 @@ import qs.components.methods
 // A single choice as a wrapping row of equal tiles (a TileFlow) in an even
 // grid (ChoiceGrid: one line when all fit, never one per line while two
 // fit), each a PreviewTile: a preview over its label, or a card with an
-// icon, description and tag. The chosen one is filled with the accent
-// container and ringed in the accent, one that can't be picked greyed, saying
-// why in a tooltip on hover. One Tab stop: arrow keys move between the tiles,
+// icon, description and tag (`layout: "list"` stacks cards one per line). The
+// chosen one is filled with the accent container and ringed in the accent,
+// one that can't be picked says why (a card under its description, a preview
+// tile greyed with a tooltip on hover). One Tab stop: arrow keys move between the tiles,
 // Enter or Space picks. The owner keeps the value: set `value`, and update it
 // from `picked`.
 TileFlow {
@@ -18,11 +19,12 @@ TileFlow {
   // disabledReason }]: `preview` (optional) a Component drawn over the
   // label, its root declaring `required property var value` (handed the
   // option's) and any previewProperties; `icon`, `description` or `tag` make
-  // the tile a card instead; a non-empty `disabledReason` greys the tile and
-  // is its tooltip
+  // the tile a card instead; a non-empty `disabledReason` is why it can't be
+  // picked (see PreviewTile)
   property var options: []
   // "grid": the even grid; "rows": two to a line (one option, one), every
-  // tile as tall as the tallest on its line (a pair of onboarding choices)
+  // tile as tall as the tallest on its line (a pair of onboarding choices);
+  // "list": one to a line, each the full width at its own height
   property string layout: "grid"
   property var value
   // Every tile's preview, for options without their own
@@ -56,7 +58,7 @@ TileFlow {
   property var _heights: []
 
   minTileWidth: Style.typeBody * 9
-  columns: root.layout === "rows" ? Math.max(1, Math.min(2, root.options.length)) : ChoiceGrid.columns(root.options.length, root.width, root.minTileWidth, root._leastTile, root.spacing)
+  columns: root.layout === "list" ? 1 : root.layout === "rows" ? Math.max(1, Math.min(2, root.options.length)) : ChoiceGrid.columns(root.options.length, root.width, root.minTileWidth, root._leastTile, root.spacing)
   activeFocusOnTab: true
   onActiveFocusChanged: {
     if (root.activeFocus && (root._cursor < 0 || root._cursor >= root.options.length))

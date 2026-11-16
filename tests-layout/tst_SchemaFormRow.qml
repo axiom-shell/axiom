@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtTest
 import qs.config
+import qs.services.core
 import qs.services.ui
 import qs.components.forms
 import qs.components.reusable
@@ -209,5 +210,41 @@ TestCase {
     compare(SettingsManager.discarded, [["Test", "flag"]]);
     verify(host.field.height > 0);
     verify(host.field.fieldHeight > 0);
+  }
+
+  // Only SchemaPropertiesForm's cells stream; the other hosts build the
+  // field with the row, so `fieldShown` is known at once
+  function test_only_the_form_streams() {
+    BuildQueueManager.labels = [];
+    const rows = createTemporaryObject(rowsComp, root);
+    verify(rows);
+    const host = createTemporaryObject(fieldComp, root);
+    verify(host);
+    compare(BuildQueueManager.labels.filter(l => l === "form field"), [], "no request");
+    const cells = root.findAll(rows, it => it.fieldShown !== undefined);
+    verify(cells.length > 0);
+    for (const cell of cells)
+      compare(typeof cell.fieldShown, "boolean");
+    compare(typeof host.field.fieldShown, "boolean");
+    BuildQueueManager.labels = [];
+    const form = createTemporaryObject(twoFormComp, root);
+    verify(form);
+    compare(BuildQueueManager.labels.filter(l => l === "form field").length, 2);
+  }
+
+  Component {
+    id: twoFormComp
+
+    SchemaPropertiesForm {
+      width: 500
+      propertiesSchema: ({
+          "a": root.flag,
+          "b": root.flag
+        })
+      values: ({
+          "a": false,
+          "b": false
+        })
+    }
   }
 }
