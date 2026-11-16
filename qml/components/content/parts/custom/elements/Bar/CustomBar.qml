@@ -18,6 +18,11 @@ CustomElementBase {
   // The share just set, until the next sample (-1: none)
   property real held: -1
   onFieldsChanged: root.held = -1
+  // A failed or refused run never reached the sample: the slider shows the sample's share again
+  onFailedRunChanged: {
+    if (root.failedRun)
+      root.held = -1;
+  }
 
   function valueOf(share) {
     const step = root.options.step;
@@ -53,7 +58,8 @@ CustomElementBase {
         value: root.held >= 0 ? root.held : root.share
         onReleased: ratio => {
           root.held = ratio;
-          root.runTrigger("change", root.valueOf(ratio), true);
+          if (root.runTrigger("change", root.valueOf(ratio), true) !== "")
+            root.held = -1;
         }
       }
     }

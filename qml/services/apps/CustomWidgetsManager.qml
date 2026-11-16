@@ -80,7 +80,7 @@ QtObject {
   // Run the widget's script again now
   function refresh(id) {
     const def = CustomWidgetsConfig.definition(id);
-    if (!def)
+    if (!def || !def.command)
       return;
     if (root._blocked[id]) {
       root._checkIf(id, def);
@@ -96,6 +96,8 @@ QtObject {
     if (!def)
       return;
     root._clearPage(id);
+    if (!def.command)
+      return;
     if (root._blocked[id]) {
       root._checkIf(id, def);
       return;
@@ -115,6 +117,14 @@ QtObject {
         "matched": CustomWidgetData.conditionView(def.module, root._fields[id])
       }
     });
+  }
+
+  // Drops widget `id`'s Go to screen choice once its condition changed its
+  // mind (CustomWidgetData.keepChoice)
+  function _dropStaleChoice(id, def, fields) {
+    const chosen = root._pages[id];
+    if (chosen && CustomWidgetData.keepChoice(def.module, fields, chosen) === null)
+      root._clearPage(id);
   }
 
   function _clearPage(id) {
@@ -149,8 +159,11 @@ QtObject {
   // run), "no command", "failing" (the script isn't answering), "disabled"
   // (the sample turns it off) or "busy" (another discrete action that waits
   // holds the widget: a double press acts once). A continuous action (a
-  // scroll, a slider) never holds, one runs at a time and the latest value
-  // waits; Axiom actions never hold and are never refused for it
+  // scroll, a slider) never holds. With a value (a slider) one runs at a
+  // time and the latest value waits; without one (a scroll notch) each
+  // notch runs: started and forgotten when the action doesn't wait, else
+  // one at a time with up to 10 waiting. Axiom actions never hold and are
+  // never refused for it
   function invoke(id, ref, value, continuous, fromIpc, arg) {
     const why = root._invoke(id, ref, value, continuous, fromIpc, arg ?? "");
     if (why !== "" && why !== "no widget") {
@@ -185,19 +198,26 @@ QtObject {
     if (item.command === "")
       return "no command";
     const fields = root._fields[id];
-    if (fields && fields.failure && fields.failure.kind !== "script")
+    if (fields && CustomWidgetData.actionsFailing(def.module, fields, CustomWidgetData.pickView(def.module, fields, root._pages[id] ?? null).index))
       return "failing";
     if (!CustomWidgetData.actionEnabled(fields?.actions, item))
       return "disabled";
-    if (continuous) {
+    const shape = CustomWidgetData.runShape(continuous, value, item.wait);
+    if (shape === "latest" || shape === "queue") {
       // One run of an action at a time; a value sent meanwhile replaces any
-      // waiting one (the latest wins), run when the first ends
+      // waiting one (the latest wins), run when the first ends. Without a
+      // value (a scroll notch) the waiting entry counts the notches (at most
+      // 10), each run in turn
       if (root._own(root._inFlight[id], item.id)) {
+        const prev = root._own(root._pending[id], item.id) ? root._pending[id][item.id] : null;
+        const waiting = {
+          "value": value,
+          "arg": arg
+        };
+        if (shape === "queue")
+          waiting.count = Math.min(10, (prev?.count ?? 0) + 1);
         root._pending[id] = Object.assign({}, root._pending[id], {
-          [item.id]: {
-            "value": value,
-            "arg": arg
-          }
+          [item.id]: waiting
         });
         return "";
       }
@@ -208,7 +228,7 @@ QtObject {
       return "";
     }
     // A discrete one is refused while another holds the widget
-    if (root._busy[id])
+    if (shape === "discrete" && root._busy[id])
       return "busy";
     if (item.wait) {
       const run = ++root._runSeq;
@@ -297,7 +317,8 @@ QtObject {
   property var _busy: ({})
   property var _lastAction: ({})
   // id -> { action -> true }: continuous runs in flight; id -> { action ->
-  // { value, arg }: the latest one sent meanwhile
+  // { value, arg, count (notches waiting, without a value) }: the latest one
+  // sent meanwhile
   property var _inFlight: ({})
   property var _pending: ({})
   property int _runSeq: 0
@@ -369,7 +390,7 @@ QtObject {
     if (failed)
       console.log(`[CustomWidgetsManager] ${id}: action ${item.id} failed with code ${exitCode}${line !== "" ? ": " + line : ""}`);
     // a widget no longer shown forgets its runs (_sync)
-    if (!(id in root._watching))
+    if (!root._shown(id))
       return;
     root.actionRan(id, {
       "at": Date.now(),
@@ -410,21 +431,28 @@ QtObject {
       root._inFlight[id] = inFlight;
       if (root._own(root._pending[id], item.id)) {
         const rest = Object.assign({}, root._pending[id]);
-        delete rest[item.id];
+        if ((waiting.count ?? 0) > 1)
+          rest[item.id] = Object.assign({}, waiting, {
+            "count": waiting.count - 1
+          });
+        else
+          delete rest[item.id];
         root._pending[id] = rest;
         root.invoke(id, item.id, waiting.value, true, false, waiting.arg);
       }
     }
   }
 
-  // The ids shown, and what each watches: changes only with the config
+  // The ids shown that have a definition, and what each watches (a
+  // definition with no script has an empty command): changes only with the
+  // config
   readonly property var _wanted: {
     const ids = {};
     for (const r of root._registry.requests) {
       const def = CustomWidgetsConfig.definition(r.id);
-      if (def?.command)
+      if (def)
         ids[r.id] = {
-          "command": root._command(def),
+          "command": def.command ? root._command(def) : "",
           "interval": def.interval,
           "mode": def.mode,
           "format": def.output === "text" ? "text" : "json",
@@ -477,20 +505,27 @@ QtObject {
       if (Utils.deepEqual(wanted[id], last[id]))
         continue;
       root._seen[id] = -1;
-      if (wanted[id].execIf)
+      if (wanted[id].command === "")
+        root._resolveNoScript(id);
+      else if (wanted[id].execIf)
         root._checkIf(id, CustomWidgetsConfig.definition(id));
       else
         root._watch(id);
     }
     // Forget what's no longer shown, so a widget shown again starts fresh
-    const keep = map => Object.keys(map).filter(id => id in wanted).reduce((m, id) => {
+    const keepIn = (map, ids) => Object.keys(map).filter(id => id in ids).reduce((m, id) => {
         m[id] = map[id];
         return m;
       }, {});
-    root._busy = keep(root._busy);
-    root._lastAction = keep(root._lastAction);
-    root._inFlight = keep(root._inFlight);
-    root._pending = keep(root._pending);
+    const keep = map => keepIn(map, wanted);
+    // Actions are kept for what is shown, a definition or not
+    const shown = {};
+    for (const r of root._registry.requests)
+      shown[r.id] = true;
+    root._busy = keepIn(root._busy, shown);
+    root._lastAction = keepIn(root._lastAction, shown);
+    root._inFlight = keepIn(root._inFlight, shown);
+    root._pending = keepIn(root._pending, shown);
     root._scheduleHold();
     root._pages = Object.keys(root._pages).filter(id => CustomWidgetsConfig.definition(id)).reduce((m, id) => {
       m[id] = root._pages[id];
@@ -500,6 +535,34 @@ QtObject {
     root._outputs = keep(root._outputs);
     root._history = keep(root._history);
     root._read();
+  }
+
+  // A definition with no script, drawn from its format and elements alone:
+  // fields as a successful run with no output and no sample (`noScript`:
+  // never hidden, `{path}` reads empty)
+  function _resolveNoScript(id) {
+    const def = CustomWidgetsConfig.definition(id);
+    if (!def)
+      return;
+    root._blocked[id] = false;
+    const fields = Object.assign({}, root._fields);
+    fields[id] = root._noScriptFields(id);
+    root._fields = fields;
+    const outputs = Object.assign({}, root._outputs);
+    delete outputs[id];
+    root._outputs = outputs;
+  }
+
+  function _noScriptFields(id) {
+    return CustomWidgetData.resolve(CustomWidgetsConfig.definition(id), {}, Object.assign(root._context(id, {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }), {
+      "noScript": true
+    }));
   }
 
   function _watch(id) {
@@ -569,6 +632,7 @@ QtObject {
       };
       const resolved = CustomWidgetData.resolve(def, sample, root._context(id, outputs[id]));
       fields[id] = resolved;
+      root._dropStaleChoice(id, def, resolved);
       root._sampled(id);
       history[id] = root._pushHistory(history[id], def, resolved);
     }
@@ -623,8 +687,8 @@ QtObject {
 
   // What resolve needs besides the definition and the sample (its
   // `context`): the theme's colour names, the script's last run (`output`,
-  // an entry of `outputs`), whether the definition is interactive (it has
-  // an action command, or screens) and the failure messages. `{0}` is the exit code,
+  // an entry of `outputs`), whether the definition is interactive
+  // (CustomWidgetData.interactive) and the failure messages. `{0}` is the exit code,
   // `{1}` the script's last stderr line.
   function _context(id, output) {
     return root._contextFor(CustomWidgetsConfig.definition(id), output);
@@ -640,7 +704,7 @@ QtObject {
         "text": output.text,
         "exited": output.exited ?? false
       },
-      "interactive": def.actions.items.some(a => a.kind === "command" && a.command !== "") || def.module.views.length > 0,
+      "interactive": CustomWidgetData.interactive(def),
       "stream": def.mode === "stream",
       "words": {
         "exited": I18n.tr("The script exited with code {0}"),
@@ -699,9 +763,19 @@ QtObject {
     for (const id in root._fields) {
       const def = CustomWidgetsConfig.definition(id);
       const out = root._outputs[id];
+      if (def && !def.command) {
+        // no script: redrawn from the format alone
+        const none = root._noScriptFields(id);
+        if (!Utils.deepEqual(none, root._fields[id])) {
+          fields = fields ?? Object.assign({}, root._fields);
+          fields[id] = none;
+        }
+        continue;
+      }
       if (!def || !out || out.blocked)
         continue;
       const resolved = CustomWidgetData.resolve(def, CustomWidgetData.parse(out.text, out.value, def.output, def.mode === "stream"), root._context(id, out));
+      root._dropStaleChoice(id, def, resolved);
       if (Utils.deepEqual(resolved, root._fields[id]))
         continue;
       fields = fields ?? Object.assign({}, root._fields);

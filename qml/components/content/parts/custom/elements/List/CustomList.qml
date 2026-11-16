@@ -11,7 +11,7 @@ import qs.components.content.parts.custom
 // CustomListTile). The colour part's rules (`colorStates`, read from the
 // row's own keys, `state` by default) tone a row's icon and meter; a row's `unit` follows its value; `max` with a numeric value draws a meter; `image` a
 // thumbnail. A row's click runs the element's click action with {value} the
-// row's id, else its value, else its text; with no action the rows aren't
+// row's id, else its value (without its unit), else its text; with no action the rows aren't
 // pressable. The element's Size scales the rows (text, icons, meters, gaps)
 // as one: Small to Huge are the shell's text sizes against the body size;
 // Fit grows them to fill the box (rows down the element, tiles across it),
@@ -52,7 +52,7 @@ CustomElementBase {
     for (let i = 0; i < rows.length; i++) {
       // Roles named apart from ItemRow's own properties
       const row = {
-        "rowId": rows[i].id,
+        "rowKey": CustomWidgetData.rowKey(rows[i]),
         "rowText": rows[i].text,
         "rowIcon": root.themed ? "" : rows[i].icon,
         "rowValue": CustomWidgetData.rowValueText(rows[i]),
@@ -71,8 +71,8 @@ CustomElementBase {
       rowsModel.remove(rows.length, rowsModel.count - rows.length);
   }
 
-  // The row whose first press with `confirm` was made (its id, else value,
-  // else text), until it runs or 3 s pass: it says "Confirm?" in red
+  // The row whose first press with `confirm` was made (its key: id, else
+  // value, else text), until it runs or 3 s pass: it says "Confirm?" in red
   property string asking: ""
   // A fixed time: how long the question is open
   Timer {
@@ -83,8 +83,7 @@ CustomElementBase {
 
   // A row's press: the named action, else the click command. With `confirm`
   // the first press asks
-  function press(id, value, text) {
-    const key = id || value || text;
+  function press(key) {
     if (root.options.confirm && root.asking !== key) {
       root.asking = key;
       askTimer.restart();
@@ -109,7 +108,7 @@ CustomElementBase {
 
     delegate: Item {
       id: row
-      required property string rowId
+      required property string rowKey
       required property string rowText
       required property string rowIcon
       required property string rowValue
@@ -120,7 +119,7 @@ CustomElementBase {
       required property string rowImage
       // The row's colours: its tone's, else the element's own
       // Asked to confirm: it says so in the error colour
-      readonly property bool asking: root.asking !== "" && root.asking === (row.rowId || row.rowValue || row.rowText)
+      readonly property bool asking: root.asking !== "" && root.asking === row.rowKey
       readonly property color tint: row.asking ? Style.error : row.rowTone ? Style.resolve(row.rowTone) : root.colorOf(Style.textMuted)
       readonly property color meter: row.rowTone ? Style.resolve(row.rowTone) : Style.toneFill("accent")
 
@@ -152,7 +151,7 @@ CustomElementBase {
           iconTint: row.tint
           meterFill: row.meter
           clickable: root.clickable
-          onActivated: root.press(row.rowId, row.rowValue, row.rowText)
+          onActivated: root.press(row.rowKey)
         }
       }
 
@@ -168,7 +167,7 @@ CustomElementBase {
           iconTint: row.tint
           meterFill: row.meter
           clickable: root.clickable
-          onActivated: root.press(row.rowId, row.rowValue, row.rowText)
+          onActivated: root.press(row.rowKey)
         }
       }
     }

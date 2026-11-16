@@ -84,7 +84,7 @@ func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 
 // streamOnce runs command once, publishing its lines, until it exits
 // (when, streamExited; the exit is published with the last stderr line
-// and Exited) or it's stopped (streamStopped: ctx ended or nobody
+// and, when non-zero, Exited) or it's stopped (streamStopped: ctx ended or nobody
 // streams it any more; streamRestarted: Restart), when its group is
 // killed and nothing is published for it. A non-zero exit still in the
 // entry is cleared once this process has run firstBackoff.
@@ -164,7 +164,8 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 		case <-exited:
 			stdout.flush()
 			errw.flush() // a last line without a newline
-			flush(cmd.ProcessState.ExitCode(), stderr.lastLine(), true)
+			code := cmd.ProcessState.ExitCode()
+			flush(code, stderr.lastLine(), code != 0)
 			return published, streamExited
 		}
 	}

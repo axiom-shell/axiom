@@ -85,7 +85,7 @@ Item {
             actionsEnabled: root.actionsEnabled
             fallbackIcon: root.definition?.icon ?? "widgets"
             widgetActions: root.definition?.actions?.items ?? []
-            failing: !!root.fields?.failure && root.fields.failure.kind !== "script"
+            failing: CustomWidgetData.actionsFailing(root.definition?.module, root.fields, root.viewIndex)
             busy: CustomWidgetsManager.busy[root.definition?.id ?? ""] !== undefined
             moduleFont: root.definition?.module?.font ?? ""
             keysHost: root.keysHost

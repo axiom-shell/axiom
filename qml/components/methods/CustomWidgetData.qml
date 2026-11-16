@@ -242,14 +242,15 @@ QtObject {
   }
 
   // Whether a script's value counts as on: true, a non-zero number, a string
-  // that isn't "", false, 0, no or off (any case), a non-empty list or object
+  // that isn't "", false, 0, no, off, disabled or inactive (any case), a
+  // non-empty list or object
   function truthy(v) {
     if (v === true)
       return true;
     if (typeof v === "number")
       return isFinite(v) && v !== 0;
     if (typeof v === "string")
-      return ["", "false", "0", "no", "off"].indexOf(v.trim().toLowerCase()) < 0;
+      return ["", "false", "0", "no", "off", "disabled", "inactive"].indexOf(v.trim().toLowerCase()) < 0;
     if (Array.isArray(v))
       return v.length > 0;
     return v !== null && typeof v === "object" && Object.keys(v).length > 0;
@@ -424,7 +425,8 @@ QtObject {
   // "" for none), percentage, value, min, max (0-100 unless given), hasMax
   // (the output gave a max or a percentage), ratio (0-1, or -1 without a
   // value), state, rev, actions (actionsOf), failure (failure), error (its
-  // message), hiddenByScript (the output's own `hidden`), interactive and
+  // message), hiddenByScript (the output's own `hidden`), noSample (the
+  // context's: no script, so `{path}` reads empty and it never hides), interactive and
   // colorNames (the context's), unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
   function resolve(definition, sample, context) {
@@ -477,7 +479,7 @@ QtObject {
     const hiddenByScript = f.hidden === true || f.hidden === "true";
     const failure = root.failure(s, context?.run, context);
     // A failing widget always shows its failure
-    const hidden = failure === null && (hiddenByScript || (d.hideEmpty !== false && rawText.trim() === ""));
+    const hidden = !context?.noScript && failure === null && (hiddenByScript || (d.hideEmpty !== false && rawText.trim() === ""));
     return {
       "text": text,
       "plain": textPlain,
@@ -509,6 +511,7 @@ QtObject {
       "image": str(f.image),
       "items": items,
       "hidden": hidden,
+      "noSample": !!context?.noScript,
       "sample": s
     };
   }
@@ -584,7 +587,7 @@ QtObject {
   //   above / below: both as numbers (parseFloat, so "85%" is 85); false
   //                  when either isn't one
   //   set / unset: has a value (text counts, even "0"), then not
-  //   on / off: truthy (false, "false", 0, no, off and "" are off), then not
+  //   on / off: truthy (false, 0, no, off, disabled, inactive and "" are off), then not
   //   always: true
   function holds(test, value, operand) {
     switch (test) {
@@ -1832,7 +1835,8 @@ QtObject {
   // Whether a screen's `when` ({ key, test (is, isNot, set, unset),
   // values }) holds for the resolved `fields` (null: never). The key
   // "error" is the failure: set while there is one, `is` / `isNot`
-  // compare its message, and never hold while it isn't failing; any other is a key or path in the sample.
+  // compare its message, and never hold while it isn't failing; any other is
+  // a key or path in the sample (set: has a value, text counts, even "0").
   // An empty key never holds (only a Go to screen action shows that screen)
   function matches(when, fields) {
     if (!fields || !(when?.key ?? ""))
@@ -1851,9 +1855,9 @@ QtObject {
     }
     const v = root.get(fields.sample, when.key);
     if (test === "set")
-      return root.truthy(v);
+      return root._isSet(v);
     if (test === "unset")
-      return !root.truthy(v);
+      return !root._isSet(v);
     const text = root.asText(v);
     return test === "isNot" ? values.length > 0 && !values.includes(text) : values.includes(text);
   }
@@ -1890,6 +1894,70 @@ QtObject {
       "index": index,
       "builtinError": false
     };
+  }
+
+  // A Go to screen choice that still stands: `chosen` when it is null or the
+  // condition still picks the screen it picked when the choice was made
+  // (`matched`), else null (the choice is dropped, so it doesn't come back
+  // when the condition does). While `fields` fails the failure draws its own
+  // screen, which doesn't count as a change
+  function keepChoice(module, fields, chosen) {
+    if (!chosen || fields?.failure)
+      return chosen;
+    return root.conditionView(module, fields) === chosen.matched ? chosen : null;
+  }
+
+  // Whether a definition is interactive (failure): it has screens, or an
+  // element's trigger names a command action. The bar's `bar.run` doesn't
+  // count: a Waybar module with an on-click still hides on exit 1
+  function interactive(def) {
+    if ((def?.module?.views?.length ?? 0) > 0)
+      return true;
+    return root.allElements(def?.module).some(e => Object.values(e.run ?? {}).some(ref => {
+        const a = root.actionOf(def, ref);
+        return a !== null && a.kind === "command" && a.command !== "";
+      }));
+  }
+
+  // Whether the actions of a failing widget are off: `fields.failure` is set
+  // and isn't the script's own `error` key, and the layer drawn
+  // (`viewIndex`, -1 the base) isn't a screen keyed on error, which draws
+  // the failure itself and so keeps its buttons working
+  function actionsFailing(module, fields, viewIndex) {
+    if (!fields?.failure || fields.failure.kind === "script")
+      return false;
+    return !(viewIndex >= 0 && module?.views?.[viewIndex]?.when?.key === "error");
+  }
+
+  // How a run arrives: "discrete" (a press), "latest" (continuous with a
+  // value: a slider, the latest wins), "detached" (continuous, no value,
+  // `wait` off: every notch started and forgotten) or "queue" (continuous,
+  // no value, `wait` on: every notch runs, one at a time)
+  function runShape(continuous, value, wait) {
+    if (!continuous)
+      return "discrete";
+    if (value !== undefined)
+      return "latest";
+    return wait ? "queue" : "detached";
+  }
+
+  // The key a List row sends as {value}: its `id`, else its value (the
+  // number, without its unit), else its text
+  function rowKey(row) {
+    if ((row?.id ?? "") !== "")
+      return String(row.id);
+    if (row?.value !== undefined && row.value !== null)
+      return root.asText(row.value);
+    return row?.text ?? "";
+  }
+
+  // `name` as a refresh name for the item `ownId`: "" when another item
+  // (not `ownId`) has it as its refresh name, id or name, else `name`
+  function freeRefreshName(name, items, ownId) {
+    if ((name ?? "") === "")
+      return "";
+    const taken = (items ?? []).some(d => d.id !== ownId && (d.refreshName === name || d.id === name || d.name === name));
+    return taken ? "" : name;
   }
 
   // A series a script prints: `v` (a list) as its finite numbers (a

@@ -136,7 +136,22 @@ ColumnLayout {
               Layout.alignment: Qt.AlignVCenter
               placeholderText: I18n.tr("e.g. ~/bin/cpu.sh")
               input.font.family: "monospace"
-              onTextEdited: root.editor.set("command", commandEntry.text)
+              // Committed on Return, on leaving the field and when the tab goes
+              // (each keystroke would run the half-typed command), and only
+              // what was typed in it
+              function commit() {
+                if (!commandEntry.typed)
+                  return;
+                commandEntry.typed = false;
+                if (commandEntry.text !== (root.definition?.command ?? ""))
+                  root.editor.set("command", commandEntry.text);
+              }
+              onAccepted: commandEntry.commit()
+              input.onActiveFocusChanged: {
+                if (!commandEntry.input.activeFocus)
+                  commandEntry.commit();
+              }
+              Component.onDestruction: commandEntry.commit()
 
               Binding {
                 target: commandEntry

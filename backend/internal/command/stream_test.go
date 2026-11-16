@@ -175,6 +175,18 @@ func TestStreamExitCarriesStderr(t *testing.T) {
 	}
 }
 
+// A stream that exits 0 isn't published as Exited (Exited is a non-zero
+// exit).
+func TestStreamCleanExitNotExited(t *testing.T) {
+	t.Parallel()
+	script := `echo hi; exit 0`
+	_, s := streamed(t, script, FormatText)
+	e := s.entry(t, script)
+	if e.Text != "hi" || e.ExitCode != 0 || e.Exited {
+		t.Errorf("entry %+v, want text hi, exit 0, not exited", e)
+	}
+}
+
 // A run's entry never carries an earlier run's stderr line.
 func TestStreamStderrResetsPerRun(t *testing.T) {
 	t.Parallel()

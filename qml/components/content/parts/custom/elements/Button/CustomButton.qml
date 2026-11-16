@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 import qs.config
 import qs.components.reusable
 import qs.components.methods
@@ -28,8 +27,6 @@ CustomElementBase {
   // The script or the binding has it off
   readonly property bool off: (root.actionFor("click") !== null && !CustomWidgetData.actionEnabled(root.fields?.actions, root.actionFor("click"))) || root.slotOff
   readonly property bool pressable: root.canRun("click") && !root.slotOff
-  // Its click action's last run, when it failed
-  readonly property var failedRun: root.failed("click")
   // Its background, else null (Auto: the tonal button); the question's red wins
   readonly property var background: root.colorFor("background", null)
   readonly property bool coloured: root.background !== null && !root.asking
@@ -37,8 +34,6 @@ CustomElementBase {
   // The text colour (picked or by a rule), else the ink that reads on the
   // background, else null: the button's own
   readonly property var ink: root.colorFor("textColor", root.coloured ? root.inkOn(root.fill) : null)
-  // Held for a moment after a failed run: a blink (a fixed time)
-  property bool flashing: false
 
   visible: !(root.options.disabled === "hide" && root.off)
 
@@ -53,22 +48,11 @@ CustomElementBase {
     root.runTrigger("click", undefined);
   }
 
-  onFailedRunChanged: {
-    if (root.failedRun) {
-      root.flashing = true;
-      flashTimer.restart();
-    }
-  }
   // A fixed time: how long the question is open
   Timer {
     id: askTimer
     interval: 3000
     onTriggered: root.asking = false
-  }
-  Timer {
-    id: flashTimer
-    interval: 1200
-    onTriggered: root.flashing = false
   }
 
   // One button for every look: Auto is the tonal one; a background (picked
@@ -91,29 +75,6 @@ CustomElementBase {
       property: "color"
       value: root.fill
       when: root.coloured
-    }
-  }
-
-  // A failed run: the box blinks red and says why on hover
-  Rectangle {
-    anchors.fill: parent
-    radius: Style.radius
-    color: root.flashing ? Style.errorWash : "transparent"
-
-    ColorGlide on color {
-      duration: Appearance.animSlow
-      enabled: Appearance.animations
-    }
-  }
-
-  HoverHandler {
-    id: hover
-  }
-  LazyLoader {
-    active: hover.hovered && root.failedRun !== null
-    StyledToolTip {
-      target: root
-      text: root.failedRun?.message ?? ""
     }
   }
 }

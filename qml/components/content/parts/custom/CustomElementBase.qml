@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import qs.config
+import qs.components.reusable
 import qs.components.methods
 import qs.services.apps
 import qs.services.system
@@ -158,12 +160,56 @@ Item {
     return item.kind === "axiom" || (!root.busy && !root.failing);
   }
 
-  // Its `trigger` action's last run, when it failed (CustomWidgetsManager.lastAction:
-  // `message` the stderr line, `at` when), until the action runs again; else null
-  function failed(trigger) {
+  // The trigger this element last ran (runTrigger accepted it) and when
+  property string _ranTrigger: ""
+  property real _ranAt: 0
+  // This element's own last run, when it failed (CustomWidgetsManager.lastAction:
+  // `message` the stderr line, `at` when): the widget's last action names
+  // the action its last accepted trigger picks, and finished since; else
+  // null. A Toggle or a slider lets go of the state it held, an Entry keeps
+  // its text, and the box flashes
+  readonly property var failedRun: {
     const last = CustomWidgetsManager.lastAction[root.widgetId];
-    const id = root.run[trigger] ?? "";
-    return id !== "" && last && last.failed && last.action === root.actionFor(trigger)?.id ? last : null;
+    if (!last || !last.failed || root._ranTrigger === "")
+      return null;
+    return last.action === root.actionFor(root._ranTrigger)?.id && last.at >= root._ranAt ? last : null;
+  }
+  // Held for a moment after a failed run: a blink (a fixed time)
+  property bool flashing: false
+  onFailedRunChanged: {
+    if (root.failedRun) {
+      root.flashing = true;
+      flashTimer.restart();
+    }
+  }
+  Timer {
+    id: flashTimer
+    interval: 1200
+    onTriggered: root.flashing = false
+  }
+
+  // A failed run: the box blinks red (above a kind's own children, taking
+  // no input) and says why on hover
+  Rectangle {
+    z: 10
+    anchors.fill: parent
+    radius: Style.radius
+    color: root.flashing ? Style.errorWash : "transparent"
+
+    ColorGlide on color {
+      duration: Appearance.animSlow
+      enabled: Appearance.animations
+    }
+  }
+  HoverHandler {
+    id: failHover
+  }
+  LazyLoader {
+    active: failHover.hovered && root.failedRun !== null
+    StyledToolTip {
+      target: root
+      text: root.failedRun?.message ?? ""
+    }
   }
 
   // An image's source from a path or URL: a URL as it is, else a file
@@ -191,6 +237,11 @@ Item {
   function runTrigger(trigger, value, continuous) {
     if (!root.actionsEnabled)
       return "locked";
-    return CustomWidgetsManager.invoke(root.widgetId, root.run[trigger] ?? "", value, !!continuous, false, root.args[trigger] ?? ""); // lock-inert: actionsEnabled is off on the lock screen
+    const refused = CustomWidgetsManager.invoke(root.widgetId, root.run[trigger] ?? "", value, !!continuous, false, root.args[trigger] ?? ""); // lock-inert: actionsEnabled is off on the lock screen
+    if (refused === "") {
+      root._ranTrigger = trigger;
+      root._ranAt = Date.now();
+    }
+    return refused;
   }
 }

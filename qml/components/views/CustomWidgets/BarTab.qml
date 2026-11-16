@@ -174,6 +174,9 @@ ColumnLayout {
             writeRun: value => root.editor.set(["bar", "run", trigger.modelData], value)
             arg: root.definition?.bar?.args?.[trigger.modelData] ?? ""
             ownValue: false
+            newFields: ({
+                "wait": false
+              })
             writeArg: value => root.editor.set(["bar", "args", trigger.modelData], value)
           }
         }

@@ -251,12 +251,13 @@ QtObject {
   }
 
   // "New action…" in a trigger's combo: a command action named `name` (""
-  // numbers it), picked through `writeRun(id)` (an element's trigger or the
-  // bar's) and opened for editing under the trigger
-  function newActionFor(name, writeRun) {
-    const id = root.addAction(name !== "" ? {
+  // numbers it) with the extra keys `fields`, picked through `writeRun(id)`
+  // (an element's trigger or the bar's) and opened for editing under the
+  // trigger
+  function newActionFor(name, writeRun, fields) {
+    const id = root.addAction(Object.assign(name !== "" ? {
       "name": name
-    } : {});
+    } : {}, fields ?? {}));
     if (id === "")
       return;
     writeRun(id);
@@ -539,6 +540,8 @@ QtObject {
     delete base.demo;
     delete base.description;
     base.id = Utils.newId(Utils.slug(base.name) || "widget", local.items);
+    // A refresh name another widget has is dropped (the IPC would reach the first)
+    base.refreshName = CustomWidgetData.freeRefreshName(base.refreshName ?? "", local.items, base.id);
     local.items.push(ConfigManager.withDefaults(base, "CustomWidget"));
     root._apply();
     root.selectDefinition(local.items.length - 1);
@@ -673,6 +676,8 @@ QtObject {
     const copy = Utils.clone(source);
     copy.id = Utils.newId(source.id, local.items);
     copy.name = I18n.tr("{0} (copy)", source.name);
+    // A copy never shares the original's refresh name
+    copy.refreshName = "";
     local.items.splice(index + 1, 0, copy);
     root._apply();
     root.selectDefinition(index + 1);

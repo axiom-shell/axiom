@@ -38,6 +38,8 @@ ColumnLayout {
   property bool ownValue: true
   // The name "New action…" gives the action
   property string newName: ""
+  // Extra keys of an action New action… makes (the bar's: wait off)
+  property var newFields: ({})
   // What {value} is filled with in the caption (the element's value)
   property string valueText: ""
 
@@ -78,7 +80,7 @@ ColumnLayout {
       options: root.editor.actionChoices
       onPicked: value => {
         if (value === "__new")
-          root.editor.newActionFor(root.newName, root.writeRun);
+          root.editor.newActionFor(root.newName, root.writeRun, root.newFields);
         else
           root.writeRun(value);
       }

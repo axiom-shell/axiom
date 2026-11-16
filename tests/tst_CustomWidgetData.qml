@@ -281,6 +281,9 @@ TestCase {
       {},
       null, undefined])
       verify(!CustomWidgetData.truthy(off), String(off));
+    for (const off of ["disabled", "Inactive"])
+      verify(!CustomWidgetData.truthy(off), off);
+    verify(CustomWidgetData.truthy("maybe"), "maybe");
   }
 
   function test_actionsOf() {
@@ -1515,6 +1518,23 @@ TestCase {
   }
 
   function test_matches() {
+    const setWhen = test => ({
+          "key": "n",
+          "test": test,
+          "values": []
+        });
+    compare(CustomWidgetData.matches(setWhen("set"), _fields({
+      "n": "0"
+    })), true, "set: text counts, even 0");
+    compare(CustomWidgetData.matches(setWhen("set"), _fields({
+      "n": ""
+    })), false, "set: empty text");
+    compare(CustomWidgetData.matches(setWhen("set"), _fields({
+      "n": 0
+    })), false, "set: the number 0");
+    compare(CustomWidgetData.matches(setWhen("unset"), _fields({
+      "n": "0"
+    })), false, "unset: text 0 is set");
     compare(CustomWidgetData.matches({
       "key": "",
       "test": "unset"
@@ -1573,7 +1593,7 @@ TestCase {
       "test": "set"
     }, _fields({
       "ready": "false"
-    })), false, "set: the string false");
+    })), true, "set: the string false is text, so it is set");
     compare(CustomWidgetData.matches({
       "key": "ready",
       "test": "unset"
@@ -2707,5 +2727,200 @@ TestCase {
       "view": -1,
       "element": -1
     }, "a gone definition falls back to the first");
+  }
+
+  function _defWith(run, actions, views) {
+    return {
+      "actions": {
+        "items": actions
+      },
+      "bar": {
+        "run": run.bar ?? {}
+      },
+      "module": {
+        "elements": run.el ? [
+          {
+            "type": "button",
+            "run": run.el
+          }
+        ] : [],
+        "views": views ?? []
+      }
+    };
+  }
+
+  function test_interactive() {
+    const cmd = {
+      "id": "a",
+      "kind": "command",
+      "command": "x"
+    };
+    verify(!CustomWidgetData.interactive(_defWith({
+      "bar": {
+        "click": "a"
+      }
+    }, [cmd])), "only bar.run names it");
+    verify(CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "a"
+      }
+    }, [cmd])), "an element names it");
+    verify(!CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "a"
+      }
+    }, [
+      {
+        "id": "a",
+        "kind": "axiom",
+        "axiom": "refresh"
+      }
+    ])), "an axiom action");
+    verify(!CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "a"
+      }
+    }, [
+      {
+        "id": "a",
+        "kind": "command",
+        "command": ""
+      }
+    ])), "an empty command");
+    verify(CustomWidgetData.interactive(_defWith({}, [], [
+      {
+        "id": "v"
+      }
+    ])), "a screen");
+    verify(!CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "nope"
+      }
+    }, [cmd])), "an id that doesn't exist");
+  }
+
+  function test_actionsFailing() {
+    const module = {
+      "views": [
+        {
+          "when": {
+            "key": "error"
+          }
+        },
+        {
+          "when": {
+            "key": "state"
+          }
+        }
+      ]
+    };
+    const failing = kind => ({
+          "failure": {
+            "kind": kind
+          }
+        });
+    verify(!CustomWidgetData.actionsFailing(module, {
+      "failure": null
+    }, -1), "no failure");
+    verify(!CustomWidgetData.actionsFailing(module, failing("script"), -1), "the script's own error");
+    verify(CustomWidgetData.actionsFailing(module, failing("exit"), -1), "exit, base");
+    verify(!CustomWidgetData.actionsFailing(module, failing("exit"), 0), "an error screen");
+    verify(CustomWidgetData.actionsFailing(module, failing("exit"), 1), "a screen keyed on state");
+  }
+
+  function test_resolveNoScript() {
+    const f = CustomWidgetData.resolve({
+      "format": "Hi {icon}",
+      "hideEmpty": true,
+      "formatIcons": {}
+    }, {}, {
+      "noScript": true,
+      "run": {
+        "exitCode": 0
+      }
+    });
+    compare(f.hidden, false);
+    compare(f.plain, "Hi ");
+    compare(f.noSample, true);
+    compare(f.failure, null);
+    compare(CustomWidgetData.elementValue(f, "a{foo}"), "a", "a path reads empty");
+  }
+
+  function test_runShape() {
+    compare(CustomWidgetData.runShape(false, undefined, true), "discrete");
+    compare(CustomWidgetData.runShape(true, 5, true), "latest");
+    compare(CustomWidgetData.runShape(true, 5, false), "latest");
+    compare(CustomWidgetData.runShape(true, undefined, false), "detached");
+    compare(CustomWidgetData.runShape(true, undefined, true), "queue");
+  }
+
+  function test_keepChoice() {
+    const module = {
+      "views": [
+        {
+          "id": "a",
+          "when": {
+            "key": "k",
+            "test": "set"
+          }
+        }
+      ]
+    };
+    const chosen = {
+      "view": "b",
+      "matched": -1
+    };
+    compare(CustomWidgetData.keepChoice(module, _fields({}), chosen), chosen, "no screen matches: kept");
+    compare(CustomWidgetData.keepChoice(module, _fields({
+      "k": "x"
+    }), chosen), null, "screen 0 matches: dropped");
+    compare(CustomWidgetData.keepChoice(module, _fields({
+      "k": "x"
+    }, {
+      "kind": "exit"
+    }), chosen), chosen, "failing: kept");
+    compare(CustomWidgetData.keepChoice(module, _fields({}), null), null);
+  }
+
+  function test_rowKey() {
+    compare(CustomWidgetData.rowKey({
+      "id": "a",
+      "value": 84,
+      "text": "x"
+    }), "a");
+    compare(CustomWidgetData.rowKey({
+      "id": "",
+      "value": 84,
+      "raw": {
+        "unit": "%"
+      },
+      "text": "x"
+    }), "84");
+    compare(CustomWidgetData.rowKey({
+      "id": "",
+      "value": undefined,
+      "text": "Firefox"
+    }), "Firefox");
+  }
+
+  function test_freeRefreshName() {
+    const items = [
+      {
+        "id": "a",
+        "name": "Alpha",
+        "refreshName": "vol"
+      },
+      {
+        "id": "b",
+        "name": "Beta",
+        "refreshName": ""
+      }
+    ];
+    compare(CustomWidgetData.freeRefreshName("vol", items, "c"), "", "another's refresh name");
+    compare(CustomWidgetData.freeRefreshName("b", items, "c"), "", "another's id");
+    compare(CustomWidgetData.freeRefreshName("free", items, "c"), "free");
+    compare(CustomWidgetData.freeRefreshName("", items, "c"), "");
+    compare(CustomWidgetData.freeRefreshName("b", items, "b"), "b", "its own id");
+    compare(CustomWidgetData.freeRefreshName("vol", items, "a"), "vol", "its own refresh name");
   }
 }
