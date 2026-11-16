@@ -48,10 +48,9 @@ Card {
     anchors.verticalCenter: parent.verticalCenter
     anchors.margins: root.margin
     height: Math.min(root.boxed ? field.implicitHeight + Widget.padding * 2 : Infinity, parent.height - root.margin * 2)
-    radius: Widget.radius
     tone: "sunken"
     outlined: root.boxed
-    color: root.boxed ? Style.surfaceSunken : "transparent"
+    color: root.boxed ? Style.fillSunken : "transparent"
 
     LoginField {
       id: field

@@ -276,11 +276,12 @@ DropdownSurface {
 
         width: resultList.width
         implicitHeight: hitLayout.implicitHeight + Widget.spacing
-        radius: Widget.radius / 2
+        radius: Style.radiusInner
         color: "transparent"
 
         StateLayer {
           hovered: hitHover.hovered
+          pressed: hitTap.pressed
         }
 
         HoverHandler {
@@ -288,6 +289,7 @@ DropdownSurface {
           cursorShape: Qt.PointingHandCursor
         }
         TapHandler {
+          id: hitTap
           onTapped: root.picked(hit.result.path, hit.result.line)
         }
 
@@ -361,12 +363,13 @@ DropdownSurface {
         readonly property bool confirming: root.confirming === path
 
         width: list.width
-        implicitHeight: Math.max(Widget.height - Widget.px(4), rowLayout.implicitHeight + Widget.spacing / 2)
-        radius: Widget.radius / 2
+        implicitHeight: Math.max(Widget.height, rowLayout.implicitHeight + Widget.spacing / 2)
+        radius: Style.radiusInner
         color: row.confirming ? Style.errorContainer : row.isCurrent ? Style.accentContainer : "transparent"
 
         StateLayer {
           hovered: rowHover.hovered
+          pressed: rowTap.pressed
         }
 
         HoverHandler {
@@ -374,6 +377,7 @@ DropdownSurface {
           cursorShape: Qt.PointingHandCursor
         }
         TapHandler {
+          id: rowTap
           enabled: !row.editing && !row.confirming
           onTapped: {
             if (row.fileIsDir)

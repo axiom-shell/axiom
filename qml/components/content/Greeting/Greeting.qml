@@ -43,7 +43,7 @@ Card {
   readonly property string picture: !root.properties.showPicture ? "" : root.onGreeter ? (root.greeterUser?.name ? GreetdManager.avatarOf(root.greeterUser.name) : "") : AccountManager.iconUrl
   readonly property string shownText: root.template === "" ? (root.displayName ? I18n.tr("Hey {0}", root.displayName) : I18n.tr("Welcome")) : root.template.replace(/\{name\}/g, root.displayName).replace(/\{user\}/g, root.userName).replace(/\{greeting\}/g, root.greeting)
 
-  color: root.boxless ? "transparent" : Style.surface
+  color: root.boxless ? "transparent" : Style.fill
   outlined: !root.boxless
 
   SystemClock {

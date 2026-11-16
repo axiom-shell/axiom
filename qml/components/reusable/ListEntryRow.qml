@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 
 // One entry of an editor's list (bars, overlay pages, edge menus): an
@@ -251,11 +250,9 @@ Rectangle {
   }
 
   // The full name of an elided label
-  LazyLoader {
-    active: hover.hovered && name.truncated
-    StyledToolTip {
-      target: name
-      text: root.label
-    }
+  TruncationTip {
+    target: name
+    text: root.label
+    hovered: hover.hovered
   }
 }

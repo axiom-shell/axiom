@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.components.reusable
 import qs.config
 
@@ -67,13 +66,11 @@ Item {
     }
 
     // The whole title, while the row is too narrow for it
-    LazyLoader {
-      active: titleHover.hovered && titleText.truncated
-      StyledToolTip {
-        target: titleText
-        text: root.title
-        maxWidth: Widget.textPx(320)
-      }
+    TruncationTip {
+      target: titleText
+      text: root.title
+      hovered: titleHover.hovered
+      maxWidth: Widget.textPx(320)
     }
 
     StyledText {
@@ -85,28 +82,14 @@ Item {
     }
 
     // `help`: a "?" telling it on hover
-    StyledIcon {
+    TipIcon {
       id: helpIcon
       visible: root.help !== ""
       text: "help"
-      tone: helpArea.containsMouse ? "accent" : "faint"
       size: "sm"
-
-      MouseArea {
-        id: helpArea
-        anchors.fill: parent
-        anchors.margins: -Widget.px(4)
-        hoverEnabled: true
-      }
-
-      LazyLoader {
-        active: helpArea.containsMouse
-        StyledToolTip {
-          target: helpIcon
-          text: root.help
-          maxWidth: Widget.textPx(320)
-        }
-      }
+      tip: root.help
+      tipWidth: Widget.textPx(320)
+      tone: helpIcon.hovered ? "accent" : "faint"
     }
 
     RowLayout {

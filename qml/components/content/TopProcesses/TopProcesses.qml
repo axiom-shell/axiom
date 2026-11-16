@@ -150,16 +150,17 @@ Card {
                 role: "caption"
                 tone: root.sortBy === "mem" ? "accent" : "text"
               }
-              StyledIcon {
+              FlatIconButton {
                 Layout.preferredWidth: killMetrics.advanceWidth
+                Layout.alignment: Qt.AlignVCenter
+                iconText: "close"
+                kind: "danger"
+                iconSize: Style.iconXs
+                size: Widget.smallHeight
                 opacity: rowHover.hovered ? 1 : 0
-                text: "close"
-                tone: "error"
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: SystemManager.kill(row.proc.pid)
-                }
+                enabled: rowHover.hovered
+                tooltipText: I18n.tr("End process")
+                onClicked: SystemManager.kill(row.proc.pid)
               }
             }
           }

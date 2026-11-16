@@ -105,17 +105,19 @@ DropdownSurface {
               readonly property bool editing: root.renaming === conversation.id
               width: row.width
               implicitHeight: Math.max(Widget.height, itemRowLayout.implicitHeight + Widget.spacing)
-              radius: Widget.radius / 2
+              radius: Style.radiusInner
               color: current ? Style.accentContainer : "transparent"
 
               StateLayer {
                 hovered: itemHover.hovered
+                pressed: itemTap.pressed
               }
 
               HoverHandler {
                 id: itemHover
               }
               TapHandler {
+                id: itemTap
                 enabled: !item.editing
                 onTapped: {
                   ChatManager.open(item.conversation.id);

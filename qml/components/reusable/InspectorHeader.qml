@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 
 // The top of an editor's inspector (bar widget, overlay module or cell):
@@ -134,13 +133,11 @@ ColumnLayout {
   }
 
   // The whole subtitle, while it is elided
-  LazyLoader {
-    active: subtitleHover.hovered && subtitleText.truncated
-    StyledToolTip {
-      target: subtitleText
-      text: root.subtitle
-      maxWidth: Widget.textPx(320)
-    }
+  TruncationTip {
+    target: subtitleText
+    text: root.subtitle
+    hovered: subtitleHover.hovered
+    maxWidth: Widget.textPx(320)
   }
 
   Flow {
