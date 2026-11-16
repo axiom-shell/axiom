@@ -63,45 +63,40 @@ OnboardingPage {
     text: I18n.tr("{0} can't blur, round window corners or cast shadows, so axiom's surfaces are solid. {1}", root.compositor, hint)
   }
 
-  Repeater {
-    model: [
+  ChoiceTiles {
+    Layout.fillWidth: true
+    layout: "list"
+    options: [
       {
-        "mode": "managed",
+        "value": "managed",
         "icon": "auto_awesome",
         "tag": I18n.tr("Recommended"),
-        "title": I18n.tr("Let axiom manage {0}", root.compositor),
+        "tagTone": "accent",
+        "label": I18n.tr("Let axiom manage {0}", root.compositor),
+        "disabledReason": root.configState === "blocked" ? OnboardingManager.blockedReason : "",
         "description": root.configState === "stock" ? I18n.tr("Replaces the example {0} (a dated backup stays beside it) with one axiom writes from its settings, then loads your files in {1}/ after it.", root.config, root.userDir) : root.configState === "custom" ? I18n.tr("Moves your {0} into {1}/, where it keeps working, loaded after axiom's (a dated backup stays too). Its binds move into axiom's Keybinds page and out of that file; any that can't move stay there and win over axiom's.", root.config, root.userDir) : I18n.tr("axiom writes {0} from its settings, and loads your own files in {1}/ after it.", root.config, root.userDir)
       },
       {
-        "mode": "included",
+        "value": "included",
         "icon": "input",
         "tag": I18n.tr("For complex setups"),
-        "title": I18n.tr("Load axiom from my config"),
+        "tagTone": "warning",
+        "label": I18n.tr("Load axiom from my config"),
         // Where the writer puts the lines (its include target): niri's go
         // at the end
         "description": CompositorConfigManager.includeTarget?.place === "end" ? I18n.tr("Your {0} stays yours: a line at its end loads axiom's keybinds, borders and input.", root.config) : I18n.tr("Your {0} stays yours: lines at its top load axiom's keybinds, borders and input.", root.config)
       },
       {
-        "mode": "detached",
+        "value": "detached",
         "icon": "link_off",
         "tag": I18n.tr("For testing"),
-        "title": I18n.tr("Keep them apart"),
+        "tagTone": "warning",
+        "label": I18n.tr("Keep them apart"),
         "description": I18n.tr("axiom writes no {0} files: it adds its keybinds while it runs, skipping keys your config already uses. Your {1} only starts axiom.", root.compositor, root.config)
       }
     ]
-
-    delegate: OptionCard {
-      required property var modelData
-      icon: modelData.icon
-      title: modelData.title
-      description: modelData.description
-      selected: OnboardingManager.chosenMode === modelData.mode
-      tag: modelData.tag
-      tagTone: modelData.mode === "managed" ? "accent" : "warning"
-      available: !(modelData.mode === "managed" && root.configState === "blocked")
-      unavailableReason: modelData.mode === "managed" ? OnboardingManager.blockedReason : ""
-      onClicked: OnboardingManager.chooseMode(modelData.mode)
-    }
+    value: OnboardingManager.chosenMode
+    onPicked: value => OnboardingManager.chooseMode(value)
   }
 
   // What the chosen mode needs in the user's config: copy the lines, or

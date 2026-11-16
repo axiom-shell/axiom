@@ -22,48 +22,42 @@ OnboardingPage {
   title: I18n.tr("Workspaces")
   intro: I18n.tr("Workspaces are the desktops you switch between with Super + a number. The bar, the overview and the keybinds all follow the layout you pick here.")
 
-  Repeater {
-    model: [
+  ChoiceTiles {
+    Layout.fillWidth: true
+    layout: "list"
+    // Scrolling needs strips, and is what a compositor that only has
+    // strips does already
+    options: [
       {
-        "layout": "perMonitor",
+        "value": "perMonitor",
         "icon": "view_week",
-        "title": I18n.tr("Per monitor"),
+        "label": I18n.tr("Per monitor"),
+        "tag": I18n.tr("Recommended"),
         "description": I18n.tr("Each monitor has its own workspaces 1 to N. Super + 3 goes to workspace 3 of the monitor you're on.")
       },
       {
-        "layout": "standard",
+        "value": "standard",
         "icon": "view_column",
-        "title": I18n.tr("Standard"),
+        "label": I18n.tr("Standard"),
         "description": I18n.tr("One set of workspaces, 1 to N, shared by every monitor, as compositors do by default.")
       },
       {
-        "layout": "grid",
+        "value": "grid",
         "icon": "grid_view",
-        "title": I18n.tr("Grid"),
+        "label": I18n.tr("Grid"),
         "description": I18n.tr("Each monitor has a grid of workspaces, and you move up, down, left and right between them.")
       },
       {
-        "layout": "scrolling",
+        "value": "scrolling",
         "icon": "view_carousel",
-        "title": I18n.tr("Scrolling (niri style)"),
+        "label": I18n.tr("Scrolling (niri style)"),
         "description": I18n.tr("As on niri: each monitor has a column of workspaces, made as you fill them, with an empty one at the end, and its windows open side by side on a strip that scrolls sideways to the focused one.")
       }
-    ]
-
-    delegate: OptionCard {
-      required property var modelData
-      // Scrolling needs strips, and is what a compositor that only has
-      // strips does already
-      visible: modelData.layout !== "scrolling" || root.canScroll
-      icon: modelData.icon
-      title: modelData.title
-      description: modelData.description
-      selected: root.layout === modelData.layout
-      recommended: modelData.layout === "perMonitor"
-      onClicked: SettingsManager.commitValues({
-        "Workspaces.layout": modelData.layout
+    ].filter(option => option.value !== "scrolling" || root.canScroll)
+    value: root.layout
+    onPicked: value => SettingsManager.commitValues({
+        "Workspaces.layout": value
       })
-    }
   }
 
   // Two monitors in the chosen layout

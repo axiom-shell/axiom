@@ -54,27 +54,27 @@ OnboardingPage {
     title: I18n.tr("Main modifier key")
   }
 
-  RowLayout {
+  ChoiceTiles {
     Layout.fillWidth: true
     visible: root.binds
-    spacing: Widget.spacing
-
-    OptionCard {
-      icon: "keyboard_command_key"
-      title: I18n.tr("Super")
-      description: I18n.tr("The Windows / Command key. Leaves Alt to your apps.")
-      selected: root.modifier === "SUPER"
-      recommended: true
-      onClicked: root.setModifier("SUPER")
-    }
-
-    OptionCard {
-      icon: "keyboard_option_key"
-      title: I18n.tr("Alt")
-      description: I18n.tr("For keyboards without a Super key.")
-      selected: root.modifier === "ALT"
-      onClicked: root.setModifier("ALT")
-    }
+    layout: "rows"
+    options: [
+      {
+        "value": "SUPER",
+        "icon": "keyboard_command_key",
+        "label": I18n.tr("Super"),
+        "description": I18n.tr("The Windows / Command key. Leaves Alt to your apps."),
+        "tag": I18n.tr("Recommended")
+      },
+      {
+        "value": "ALT",
+        "icon": "keyboard_option_key",
+        "label": I18n.tr("Alt"),
+        "description": I18n.tr("For keyboards without a Super key.")
+      }
+    ]
+    value: root.modifier
+    onPicked: value => root.setModifier(value)
   }
 
   SectionHeading {

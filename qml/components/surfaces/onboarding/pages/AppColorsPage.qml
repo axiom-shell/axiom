@@ -38,53 +38,54 @@ OnboardingPage {
     }, {}))
   }
 
-  GridLayout {
+  // Two columns of rows, the first half of the list in the left one
+  readonly property int half: Math.ceil(ThemeManager.integrations.length / 2)
+
+  Component {
+    id: integrationRow
+
+    SwitchRow {
+      id: integration
+      required property string modelData
+      readonly property bool present: root.installed(modelData)
+
+      label: I18n.tr(ThemeManager.integrationTitle(modelData))
+      checked: ThemeIntegrations[modelData] === true
+      onToggled: on => {
+        const values = {};
+        values["ThemeIntegrations." + integration.modelData] = on;
+        SettingsManager.commitValues(values);
+      }
+
+      leading: StyledIcon {
+        text: integration.present ? "check_circle" : "radio_button_unchecked"
+        textColor: integration.present ? Style.success : Style.textFaint
+      }
+    }
+  }
+
+  RowLayout {
     Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 3
-    rowSpacing: Widget.spacing
+    spacing: Widget.spacing * 3
+    uniformCellSizes: true
 
-    Repeater {
-      model: ThemeManager.integrations
+    FormColumn {
+      Layout.fillWidth: true
+      Layout.alignment: Qt.AlignTop
 
-      delegate: FormRow {
-        id: integration
-        required property string modelData
-        readonly property bool present: root.installed(modelData)
-        readonly property bool isOn: ThemeIntegrations[modelData] === true
+      Repeater {
+        model: ThemeManager.integrations.slice(0, root.half)
+        delegate: integrationRow
+      }
+    }
 
-        function commit(on) {
-          const values = {};
-          values["ThemeIntegrations." + integration.modelData] = on;
-          SettingsManager.commitValues(values);
-        }
+    FormColumn {
+      Layout.fillWidth: true
+      Layout.alignment: Qt.AlignTop
 
-        hoverable: true
-        first: true
-        bodyHeight: line.implicitHeight
-        onRowClicked: integration.commit(!integration.isOn)
-
-        RowLayout {
-          id: line
-          width: parent.width
-          spacing: Widget.spacing
-
-          StyledIcon {
-            text: integration.present ? "check_circle" : "radio_button_unchecked"
-            textColor: integration.present ? Style.success : Style.textFaint
-          }
-
-          StyledLabel {
-            Layout.fillWidth: true
-            text: I18n.tr(ThemeManager.integrationTitle(integration.modelData))
-            tone: integration.present ? "" : "faint"
-          }
-
-          StyledSwitch {
-            checked: integration.isOn
-            onToggled: integration.commit(checked)
-          }
-        }
+      Repeater {
+        model: ThemeManager.integrations.slice(root.half)
+        delegate: integrationRow
       }
     }
   }

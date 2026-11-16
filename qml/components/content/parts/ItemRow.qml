@@ -7,7 +7,7 @@ import qs.components.reusable
 // One entry in a module's list (clipboard clips, calculator answers,
 // recordings): an icon or a rounded thumbnail, a title and a muted
 // subtitle, a faint `detail` on the right (a value), and buttons after it
-// (children), faint until the row is hovered so showing them moves
+// (children), faint until the row is hovered or one has focus so showing them moves
 // nothing. Clicking the row `activated`s it, unless it isn't `clickable`.
 // The name shows whole in a tooltip while it is cut.
 Item {
@@ -28,7 +28,11 @@ Item {
   property string detail: ""
   property bool clickable: true
   readonly property bool hovered: rowHover.hovered
+  // Whether the actions show: hovered, or one of them focused
+  readonly property bool revealed: root.hovered || root._actionFocused
   default property alias actions: actionRow.data
+
+  readonly property bool _actionFocused: Array.prototype.some.call(actionRow.children, child => child.activeFocus)
 
   signal activated
 
@@ -115,8 +119,8 @@ Item {
     RowLayout {
       id: actionRow
       spacing: 0
-      opacity: rowHover.hovered ? 1 : 0
-      enabled: rowHover.hovered
+      // Never disabled: a hidden action must be able to take the focus that reveals it
+      opacity: root.revealed ? 1 : 0
 
       Glide on opacity {}
     }

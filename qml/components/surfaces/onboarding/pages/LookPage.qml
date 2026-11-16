@@ -93,91 +93,86 @@ OnboardingPage {
     title: I18n.tr("Bar")
   }
 
-  GridLayout {
+  ChoiceTiles {
+    id: kinds
     Layout.fillWidth: true
     visible: root.bar !== null
-    columns: 1
-    columnSpacing: Widget.spacing
-    rowSpacing: Widget.spacing
-
+    layout: "list"
     // Each a surface and whether it floats (BarsConfig.kindOf's kinds)
-    Repeater {
-      model: [
-        {
-          "value": "pills",
-          "surface": "pills",
-          "floating": false,
-          "icon": "view_agenda",
-          "title": I18n.tr("Pills"),
-          "description": I18n.tr("A pill per group of widgets")
-        },
-        {
-          "value": "solid",
-          "surface": "bar",
-          "floating": false,
-          "icon": "crop_16_9",
-          "title": I18n.tr("Solid"),
-          "description": I18n.tr("One bar along the edge")
-        },
-        {
-          "value": "transparent",
-          "surface": "none",
-          "floating": false,
-          "icon": "blur_on",
-          "title": I18n.tr("Transparent"),
-          "description": I18n.tr("Widgets on the wallpaper")
-        },
-        {
-          "value": "floating",
-          "surface": "bar",
-          "floating": true,
-          "icon": "toolbar",
-          "title": I18n.tr("Floating bar"),
-          "description": I18n.tr("One bar held off the edge")
-        },
-        {
-          "value": "floatingPills",
-          "surface": "pills",
-          "floating": true,
-          "icon": "more_horiz",
-          "title": I18n.tr("Floating pills"),
-          "description": I18n.tr("A floating pill per group")
-        }
-      ]
-
-      delegate: OptionCard {
-        required property var modelData
-        icon: modelData.icon
-        title: modelData.title
-        description: modelData.description
-        selected: root.bar !== null && BarsConfig.kindOf(root.bar) === modelData.value
-        onClicked: {
-          const values = {};
-          values["Bars.items.0.surface"] = modelData.surface;
-          values["Bars.items.0.floating"] = modelData.floating;
-          SettingsManager.commitValues(values);
-        }
+    options: [
+      {
+        "value": "pills",
+        "surface": "pills",
+        "floating": false,
+        "icon": "view_agenda",
+        "label": I18n.tr("Pills"),
+        "description": I18n.tr("A pill per group of widgets")
+      },
+      {
+        "value": "solid",
+        "surface": "bar",
+        "floating": false,
+        "icon": "crop_16_9",
+        "label": I18n.tr("Solid"),
+        "description": I18n.tr("One bar along the edge")
+      },
+      {
+        "value": "transparent",
+        "surface": "none",
+        "floating": false,
+        "icon": "blur_on",
+        "label": I18n.tr("Transparent"),
+        "description": I18n.tr("Widgets on the wallpaper")
+      },
+      {
+        "value": "floating",
+        "surface": "bar",
+        "floating": true,
+        "icon": "toolbar",
+        "label": I18n.tr("Floating bar"),
+        "description": I18n.tr("One bar held off the edge")
+      },
+      {
+        "value": "floatingPills",
+        "surface": "pills",
+        "floating": true,
+        "icon": "more_horiz",
+        "label": I18n.tr("Floating pills"),
+        "description": I18n.tr("A floating pill per group")
       }
+    ]
+    value: root.bar !== null ? BarsConfig.kindOf(root.bar) : ""
+    onPicked: value => {
+      const option = kinds.options.find(entry => entry.value === value);
+      const values = {};
+      values["Bars.items.0.surface"] = option.surface;
+      values["Bars.items.0.floating"] = option.floating;
+      SettingsManager.commitValues(values);
     }
   }
 
-  RowLayout {
+  FormColumn {
+    Layout.fillWidth: true
     visible: root.bar !== null
-    spacing: Widget.spacing
 
-    StyledLabel {
-      text: I18n.tr("Edge")
-    }
+    FieldRow {
+      label: I18n.tr("Edge")
+      shortControl: true
 
-    Repeater {
-      model: ["top", "bottom", "left", "right"]
+      SegmentRow {
+        Repeater {
+          model: ["top", "bottom", "left", "right"]
 
-      delegate: StyledTextButton {
-        required property string modelData
-        // I18n.tr("Top") I18n.tr("Bottom") I18n.tr("Left") I18n.tr("Right")
-        text: I18n.tr(modelData[0].toUpperCase() + modelData.slice(1))
-        kind: root.bar?.edge === modelData ? "primary" : "tonal"
-        onClicked: root.setBar("edge", modelData)
+          delegate: SegmentButton {
+            required property string modelData
+            // I18n.tr("Top") I18n.tr("Bottom") I18n.tr("Left") I18n.tr("Right")
+            text: I18n.tr(modelData[0].toUpperCase() + modelData.slice(1))
+            implicitHeight: Widget.height
+            Layout.fillWidth: false
+            active: root.bar?.edge === modelData
+            onClicked: root.setBar("edge", modelData)
+          }
+        }
       }
     }
   }
