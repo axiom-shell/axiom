@@ -4,12 +4,13 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.session
 import qs.components.reusable
+import qs.components.forms
 
 // The top of the Idle card (the section's `x-intro`): whether axiom is
 // watching for idle, what holds it off now, and a warning when another
 // program answers apps' requests to keep the screen on. `status` and
 // `statusTone` are the card's header chip
-ColumnLayout {
+IntroColumn {
   id: root
 
   readonly property string stage: IdleManager.status
@@ -64,12 +65,9 @@ ColumnLayout {
     return I18n.tr("axiom dims, locks and turns the screens off on these settings, and locks before the computer sleeps.");
   }
 
-  spacing: Widget.spacing * 1.5
-
-  StyledText {
-    text: root.detail
-    overflow: "wrap"
+  StatusLine {
     Layout.fillWidth: true
+    text: root.detail
   }
 
   // What holds idle off (i18n: the sources, chosen at runtime:
@@ -97,11 +95,10 @@ ColumnLayout {
     }
   }
 
-  StyledText {
+  StatusLine {
     visible: Idle.enabled && IdleManager.screensaverHolder !== ""
     text: I18n.tr("{0} answers apps asking to keep the screen on, so axiom doesn't see them. If it's hypridle, remove its autostart line so the two don't both act when you're away.", IdleManager.screensaverHolder)
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 }

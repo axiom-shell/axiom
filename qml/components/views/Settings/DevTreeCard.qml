@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.components.reusable
+import qs.components.forms
 import qs.components.content.parts
 
 // The Development category's first card (its `cards`): the dev tree (set
@@ -18,6 +19,8 @@ FieldGroup {
 
   // What axiom last answered a click with: a refusal's message, or ""
   property string message: ""
+  // The tree field holds text typed since axiom last set it
+  property bool _typed: false
 
   readonly property string statusLabel: {
     if (DevManager.building)
@@ -48,13 +51,13 @@ FieldGroup {
     const path = treeEntry.text.trim();
     if (path === "")
       return;
-    treeEntry.typed = false;
+    root._typed = false;
     DevManager.setTree(path, error => root._answered(error));
   }
 
   // The tree axiom has, pushed into the field unless it's being typed in
   function _showTree() {
-    if (!treeEntry.input.activeFocus || !treeEntry.typed)
+    if (!treeEntry.input.activeFocus || !root._typed)
       treeEntry.text = Paths.shortenHome(DevManager.tree);
   }
 
@@ -63,7 +66,7 @@ FieldGroup {
   Connections {
     target: DevManager
     function onTreeChanged() {
-      treeEntry.typed = false;
+      root._typed = false;
       root._showTree();
     }
   }
@@ -85,17 +88,19 @@ FieldGroup {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    StyledTextEntry {
+    SubmitEntry {
       id: treeEntry
-      Layout.fillWidth: true
       placeholderText: I18n.tr("A clone of axiom, e.g. ~/dev/axiom")
-      onAccepted: root._setTree()
-    }
+      buttonText: I18n.tr("Set")
+      canSubmit: treeEntry.text.trim() !== "" && Paths.expandHome(treeEntry.text.trim()) !== DevManager.tree
+      onSubmitted: root._setTree()
 
-    StyledTextButton {
-      enabled: treeEntry.text.trim() !== "" && Paths.expandHome(treeEntry.text.trim()) !== DevManager.tree
-      text: I18n.tr("Set")
-      onClicked: root._setTree()
+      Connections {
+        target: treeEntry.input
+        function onTextEdited() {
+          root._typed = true;
+        }
+      }
     }
 
     StyledTextButton {
@@ -133,21 +138,19 @@ FieldGroup {
     ]
   }
 
-  StyledText {
+  StatusLine {
     visible: text !== ""
     text: DevManager.tree !== "" && !DevManager.available ? DevManager.unavailable : ""
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   // What readying the dev config noted (seeded from the defaults: live is
   // newer than the dev tree)
-  StyledText {
+  StatusLine {
     visible: DevManager.configNote !== ""
     text: DevManager.configNote
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -188,11 +191,10 @@ FieldGroup {
     }
   }
 
-  StyledText {
+  StatusLine {
     visible: root.message !== ""
     text: root.message
     tone: "error"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 

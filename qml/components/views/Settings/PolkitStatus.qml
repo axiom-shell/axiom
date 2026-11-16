@@ -3,12 +3,12 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.session
-import qs.components.reusable
+import qs.components.forms
 
 // The top of the Polkit card (the section's `x-intro`): whether axiom is the
 // session's polkit agent, and which other agents it stopped. `status` and
 // `statusTone` are the card's header chip
-ColumnLayout {
+IntroColumn {
   id: root
 
   readonly property string stage: PolkitManager.status
@@ -49,20 +49,16 @@ ColumnLayout {
     return I18n.tr("axiom answers apps' password requests.");
   }
 
-  spacing: Widget.spacing * 1.5
-
-  StyledText {
-    text: root.detail
-    tone: root.stage === "blocked" ? "error" : "text"
-    overflow: "wrap"
+  StatusLine {
     Layout.fillWidth: true
+    text: root.detail
+    tone: root.stage === "blocked" ? "error" : ""
   }
 
-  StyledText {
+  StatusLine {
     visible: PolkitConfig.enabled && PolkitManager.replaced.length > 0
     text: I18n.tr("axiom stopped {0}, likely started by your own compositor config or a systemd unit. Remove its autostart line or disable the unit so the two don't race at login.", PolkitManager.replaced.join(", "))
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 }

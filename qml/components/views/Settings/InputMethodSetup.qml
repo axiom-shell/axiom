@@ -8,6 +8,7 @@ import qs.services.system
 import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
 import qs.components.content.parts
 
 // Under the Keyboard card's input method switch (InputSourcesField),
@@ -16,7 +17,7 @@ import qs.components.content.parts
 // and the command starting it, to add by hand, with Copy (InputSources.
 // methodSetup: the values the managed session's writer has), and
 // Electron's flag.
-ColumnLayout {
+IntroColumn {
   id: root
 
   // As edited, saved or not
@@ -36,13 +37,10 @@ ColumnLayout {
 
   readonly property bool shown: SettingsManager.configValueAt("Input.keyboard.method.enabled") === true && !root.managed && root.setup.command !== ""
 
-  spacing: Widget.spacing
-
   Component.onCompleted: DependencyManager.check(["fcitx5", "ibus-daemon"])
 
-  StyledText {
+  StatusLine {
     Layout.fillWidth: true
-    overflow: "wrap"
     text: I18n.tr("axiom doesn't write your compositor's config in this mode, so it doesn't start {0} or set what apps need to type with it. Add these yourself.", root.framework)
   }
 

@@ -4,11 +4,12 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.components.reusable
+import qs.components.forms
 
 // The top of the axiom updates card (the section's `x-intro`): the
 // installed and newest release, what's new, and Check / Update. `status` and
 // `statusTone` are the card's header chip
-ColumnLayout {
+IntroColumn {
   id: root
 
   readonly property string stage: {
@@ -69,8 +70,6 @@ ColumnLayout {
     return SelfUpdateManager.ahead ? I18n.tr("{0} + development ({1})", tag, commit) : tag;
   }
 
-  spacing: Widget.spacing * 1.5
-
   FactGrid {
     visible: !SelfUpdateManager.managed
     facts: [
@@ -101,19 +100,17 @@ ColumnLayout {
     Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "error"
     text: SelfUpdateManager.error
     tone: "error"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "blocked"
     text: I18n.tr("{0} is available, but your copy of axiom can't update: {1}", SelfUpdateManager.latest, SelfUpdateManager.blockedReason(SelfUpdateManager.blocked))
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -131,15 +128,9 @@ ColumnLayout {
       Layout.fillWidth: true
     }
 
-    Surface {
-      tone: "sunken"
-      Layout.fillWidth: true
-      implicitHeight: notes.implicitHeight + Widget.padding * 2
-
+    ItemBox {
       StyledText {
-        id: notes
-        anchors.fill: parent
-        anchors.margins: Widget.padding
+        Layout.fillWidth: true
         text: SelfUpdateManager.notes
         role: "body"
         overflow: "wrap"

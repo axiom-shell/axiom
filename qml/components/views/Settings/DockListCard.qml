@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.forms
 
 // The Dock section's first card (its `x-card`): the docks as tabs, one
 // shown at a time: where it sits (the screen picker), Show, its
@@ -72,25 +73,14 @@ EntryListCard {
       role: "label"
       Layout.fillWidth: true
     },
-    RowLayout {
+    FormColumn {
       Layout.fillWidth: true
-      spacing: Widget.spacing
 
-      StyledSwitch {
-        id: ownSwitch
+      // Pushed in, so a click doesn't leave it on the next dock's tab
+      SwitchRow {
+        label: root.ownPinned ? I18n.tr("Its own pinned apps") : I18n.tr("Global pinned apps")
         checked: root.ownPinned
-        onToggled: {
-          root.setOwnPinned(checked);
-          // A click sets checked itself, which would leave it on the next
-          // dock's tab
-          ownSwitch.checked = Qt.binding(() => root.ownPinned);
-        }
-      }
-
-      StyledText {
-        text: root.ownPinned ? I18n.tr("Its own pinned apps") : I18n.tr("Global pinned apps")
-        overflow: "wrap"
-        Layout.fillWidth: true
+        onToggled: newValue => root.setOwnPinned(newValue)
       }
     },
     StyledText {
@@ -103,36 +93,32 @@ EntryListCard {
     Repeater {
       model: root.pinned.length
 
-      delegate: AppRow {
+      delegate: ListEntryRow {
         id: pinnedRow
         required property int index
         readonly property string appId: root.pinned[index]
         readonly property var entry: DockManager.entryFor(appId)
 
-        Layout.fillWidth: true
-        iconSource: DockManager.iconFor(appId, null)
-        name: entry?.name || appId
-        detail: entry ? "" : I18n.tr("No app with this id")
+        image: DockManager.iconFor(appId, null)
+        label: entry?.name || appId
+        subtitle: entry ? "" : I18n.tr("No app with this id")
+        canRemove: true
+        onRemoveRequested: root.unpinAt(pinnedRow.index)
 
-        StyledIconButton {
+        RowAction {
+          row: pinnedRow
           iconText: "arrow_upward"
           tooltipText: I18n.tr("Move up")
           enabled: pinnedRow.index > 0
           onClicked: root.movePinned(pinnedRow.index, -1)
         }
 
-        StyledIconButton {
+        RowAction {
+          row: pinnedRow
           iconText: "arrow_downward"
           tooltipText: I18n.tr("Move down")
           enabled: pinnedRow.index < root.pinned.length - 1
           onClicked: root.movePinned(pinnedRow.index, 1)
-        }
-
-        StyledIconButton {
-          iconText: "close"
-          tooltipText: I18n.tr("Remove")
-          kind: "danger"
-          onClicked: root.unpinAt(pinnedRow.index)
         }
       }
     },
@@ -173,41 +159,4 @@ EntryListCard {
       Layout.fillWidth: true
     }
   ]
-
-  // A pinned app: its icon and name, then the buttons given as children
-  component AppRow: RowLayout {
-    id: row
-    property string iconSource: ""
-    property string name: ""
-    property string detail: ""
-    default property alias buttons: extra.data
-
-    spacing: Widget.spacing
-
-    Image {
-      Layout.preferredWidth: Widget.iconButton
-      Layout.preferredHeight: Widget.iconButton
-      sourceSize: Qt.size(64, 64)
-      source: row.iconSource
-      asynchronous: true
-    }
-
-    StyledLabel {
-      text: row.name
-      overflow: "line"
-      Layout.fillWidth: true
-    }
-
-    StyledLabel {
-      visible: row.detail !== ""
-      text: row.detail
-      tone: "error"
-      role: "caption"
-    }
-
-    RowLayout {
-      id: extra
-      spacing: 2
-    }
-  }
 }
