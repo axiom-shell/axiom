@@ -8,10 +8,8 @@ import qs.components.content.parts
 // Settings page, System (a category `card`, wide): the optional programs
 // axiom's features use, which are installed, and the command that installs
 // the rest here (ToolChecks, as the onboarder's Checks)
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   headerExtras: [
     StatusChip {

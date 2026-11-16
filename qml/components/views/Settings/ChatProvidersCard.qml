@@ -13,10 +13,8 @@ import qs.components.reusable
 // API key (where it comes from, and a field to store one: in the keyring,
 // or the secrets file without one), a connection test, and fetching its
 // model list. Keys never go through the settings draft or config.json.
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   // One request at a time per provider: { providerId: { busy, ok, text } }
   property var results: ({})
@@ -87,107 +85,94 @@ FieldGroup {
   Repeater {
     model: ChatConfig.providers.length
 
-    delegate: Surface {
+    delegate: ItemBox {
       id: row
-      tone: "sunken"
       required property int index
       readonly property var provider: ChatConfig.providers[index]
       readonly property string status: SecretsManager.status(provider)
       readonly property var result: root.results[provider.id] ?? null
 
-      Layout.fillWidth: true
-      implicitHeight: rowColumn.implicitHeight + Widget.padding * 2
-
-      ColumnLayout {
-        id: rowColumn
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Widget.padding
+      RowLayout {
+        Layout.fillWidth: true
         spacing: Widget.spacing
 
-        RowLayout {
+        StyledLabel {
+          text: row.provider.name
+          role: "label"
+        }
+        StyledLabel {
           Layout.fillWidth: true
-          spacing: Widget.spacing
+          text: row.provider.baseUrl
+          tone: "faint"
+          role: "micro"
+          textFamily: "monospace"
+          overflow: "line"
+        }
 
-          StyledLabel {
-            text: row.provider.name
-            role: "label"
-          }
-          StyledLabel {
-            Layout.fillWidth: true
-            text: row.provider.baseUrl
-            tone: "faint"
-            role: "micro"
-            textFamily: "monospace"
-            overflow: "line"
-          }
+        // Where the key comes from
+        SecretStatusChip {
+          status: row.status
+          envName: row.provider.keyEnv
+        }
+      }
 
-          // Where the key comes from
-          SecretStatusChip {
-            status: row.status
-            envName: row.provider.keyEnv
+      // A key to store (not for env keys, which win anyway)
+      RowLayout {
+        visible: row.provider.auth !== "none" && row.status !== "env"
+        Layout.fillWidth: true
+        spacing: Widget.spacing / 2
+
+        StyledTextEntry {
+          id: keyField
+          Layout.fillWidth: true
+          placeholderText: row.status === "none" ? I18n.tr("Paste an API key") : I18n.tr("Paste a new key to replace it")
+          input.echoMode: TextInput.Password
+          onAccepted: saveKey.clicked()
+        }
+
+        StyledTextButton {
+          id: saveKey
+          visible: keyField.text.trim() !== ""
+          text: I18n.tr("Save")
+          kind: "primary"
+          onClicked: {
+            SecretsManager.setKey(row.provider, keyField.text);
+            keyField.text = "";
           }
         }
 
-        // A key to store (not for env keys, which win anyway)
-        RowLayout {
-          visible: row.provider.auth !== "none" && row.status !== "env"
+        StyledTextButton {
+          visible: row.status === "keyring" || row.status === "file"
+          text: I18n.tr("Remove")
+          onClicked: SecretsManager.clearKey(row.provider)
+        }
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Widget.spacing / 2
+
+        StyledLabel {
           Layout.fillWidth: true
-          spacing: Widget.spacing / 2
-
-          StyledTextEntry {
-            id: keyField
-            Layout.fillWidth: true
-            placeholderText: row.status === "none" ? I18n.tr("Paste an API key") : I18n.tr("Paste a new key to replace it")
-            input.echoMode: TextInput.Password
-            onAccepted: saveKey.clicked()
-          }
-
-          StyledTextButton {
-            id: saveKey
-            visible: keyField.text.trim() !== ""
-            text: I18n.tr("Save")
-            kind: "primary"
-            onClicked: {
-              SecretsManager.setKey(row.provider, keyField.text);
-              keyField.text = "";
-            }
-          }
-
-          StyledTextButton {
-            visible: row.status === "keyring" || row.status === "file"
-            text: I18n.tr("Remove")
-            onClicked: SecretsManager.clearKey(row.provider)
-          }
+          text: row.result?.busy ? I18n.tr("Connecting…") : row.result?.text ?? ""
+          tone: row.result?.busy ? "muted" : row.result?.ok ? "success" : "error"
+          role: "caption"
+          overflow: "wrap"
+          maxLines: 3
         }
 
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Widget.spacing / 2
+        StyledTextButton {
+          enabled: !row.result?.busy
+          text: I18n.tr("Test")
+          iconText: "network_check"
+          onClicked: root.fetchModels(row.provider, false)
+        }
 
-          StyledLabel {
-            Layout.fillWidth: true
-            text: row.result?.busy ? I18n.tr("Connecting…") : row.result?.text ?? ""
-            tone: row.result?.busy ? "muted" : row.result?.ok ? "success" : "error"
-            role: "caption"
-            overflow: "wrap"
-            maxLines: 3
-          }
-
-          StyledTextButton {
-            enabled: !row.result?.busy
-            text: I18n.tr("Test")
-            iconText: "network_check"
-            onClicked: root.fetchModels(row.provider, false)
-          }
-
-          StyledTextButton {
-            enabled: !row.result?.busy
-            text: I18n.tr("Fetch models")
-            iconText: "download"
-            onClicked: root.fetchModels(row.provider, true)
-          }
+        StyledTextButton {
+          enabled: !row.result?.busy
+          text: I18n.tr("Fetch models")
+          iconText: "download"
+          onClicked: root.fetchModels(row.provider, true)
         }
       }
     }

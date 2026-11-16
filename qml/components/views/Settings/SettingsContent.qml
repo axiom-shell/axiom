@@ -360,26 +360,12 @@ Item {
 
           // A search result's category: its icon and name, then a rule.
           // Names come from the schema's x-categories
-          RowLayout {
+          SectionHeading {
             visible: block.modelData.name !== ""
-            Layout.fillWidth: true
             Layout.topMargin: Widget.spacing
-            spacing: Widget.spacing
-
-            StyledIcon {
-              text: block.modelData.icon
-              tone: "accent"
-              size: "md"
-            }
-
-            StyledLabel {
-              text: I18n.tr(block.modelData.name)
-              role: "title"
-            }
-
-            StyledSeparator {
-              Layout.fillWidth: true
-            }
+            icon: block.modelData.icon
+            title: I18n.tr(block.modelData.name)
+            rule: true
           }
 
           // The block's cards, each run between wide ones split in columns

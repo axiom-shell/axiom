@@ -130,110 +130,139 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Widget.spacing
 
-  FoldingSection {
-    id: fold
+  FormColumn {
+    id: section
     Layout.fillWidth: true
-    title: I18n.tr(root.listSchema.title)
-    description: I18n.tr(root.listSchema.description)
-    collapsed: SettingsManager.isCollapsed(root.foldKey)
-    onToggled: SettingsManager.setCollapsed(root.foldKey, !fold.collapsed)
+    readonly property bool collapsed: SettingsManager.isCollapsed(root.foldKey)
 
-    // The list beside the selected system's form, with the room
-    SplitColumns {
-      id: split
+    FoldFormRow {
+      title: I18n.tr(root.listSchema.title)
+      open: !section.collapsed
+      onToggled: SettingsManager.setCollapsed(root.foldKey, !section.collapsed)
+    }
+
+    FormRow {
+      shown: !section.collapsed
+      tinted: false
+      bodyHeight: foldBody.implicitHeight
 
       ColumnLayout {
-        Layout.preferredWidth: split.firstWidth
-        Layout.alignment: Qt.AlignTop
+        id: foldBody
+        width: parent.width
         spacing: Widget.spacing
 
-        // Carries the rows
-        InlineDragLayer {
-          id: carrier
-          accepts: (target, drag) => target.takes(drag)
-          onDropped: (drag, target, index) => target.dropRequested(drag, index)
-        }
-
-        EntryListTarget {
-          id: systemList
-          dragLayer: carrier
-          moveKind: "osd-system-move"
-          count: root.shown.length
-          onDropRequested: (drag, index) => root.move(drag.index, index)
-
-          Repeater {
-            model: systemList.count
-
-            EntryListRow {
-              id: systemRow
-              readonly property int at: root.shown[systemRow.index] ?? -1
-              readonly property var item: root.systems[systemRow.at] ?? ({})
-              readonly property var info: root.typeInfo[systemRow.item.type] ?? null
-
-              list: systemList
-              entryIndex: systemRow.at
-              icon: systemRow.info?.icon ?? "help"
-              label: root.labelOf(systemRow.item.type)
-              selected: systemRow.item.type === root.selectedType
-              onClicked: {
-                EditsManager.commitTyping();
-                root._picked = systemRow.item.type;
-              }
-
-              badges: TipIcon {
-                visible: systemRow.item.quiet === true
-                text: "notifications_off"
-                textColor: systemRow.inkMuted
-                size: "xs"
-                tip: I18n.tr("Quiet: its changes don't open the OSD")
-              }
-
-              RowAction {
-                row: systemRow
-                danger: true
-                iconText: "close"
-                tooltipText: I18n.tr("Remove")
-                onClicked: root.remove(systemRow.at)
-              }
-            }
-          }
-        }
-
         StyledText {
-          visible: root.shown.length === 0
           Layout.fillWidth: true
-          text: I18n.tr("Nothing yet: add what this OSD shows.")
+          text: I18n.tr(root.listSchema.description)
+          role: "caption"
           tone: "muted"
           overflow: "wrap"
         }
 
-        AddEntryButton {
-          id: addButton
-          visible: root.addable.length > 0
-          Layout.topMargin: Widget.spacing / 2
-          text: I18n.tr("Add")
-          onClicked: picker.openAt(addButton)
-        }
-      }
+        // The list beside the selected system's form, with the room
+        SplitColumns {
+          id: split
 
-      // The selected system's settings, from its schema
-      SelectedSettingsBox {
-        id: selectedBox
-        visible: root.selected !== null
-        Layout.preferredWidth: split.secondWidth
-        Layout.alignment: Qt.AlignTop
-        icon: root.selectedInfo?.icon ?? ""
-        title: root.selected ? root.labelOf(root.selected.type) : ""
-        formKey: root.selected ? root._osdId + ":" + root.selected.type : ""
-        sourceComponent: systemForm
+          ColumnLayout {
+            Layout.preferredWidth: split.firstWidth
+            Layout.alignment: Qt.AlignTop
+            spacing: Widget.spacing
 
-        // Its bars are set in the Bars part
-        StyledText {
-          visible: root._barSpec?.from !== undefined
-          Layout.fillWidth: true
-          text: I18n.tr("Its bars are set under Bars, below.")
-          role: "caption"
-          overflow: "wrap"
+            // Carries the rows
+            InlineDragLayer {
+              id: carrier
+              accepts: (target, drag) => target.takes(drag)
+              onDropped: (drag, target, index) => target.dropRequested(drag, index)
+            }
+
+            EntryListTarget {
+              id: systemList
+              dragLayer: carrier
+              moveKind: "osd-system-move"
+              count: root.shown.length
+              onDropRequested: (drag, index) => root.move(drag.index, index)
+
+              Repeater {
+                model: systemList.count
+
+                EntryListRow {
+                  id: systemRow
+                  readonly property int at: root.shown[systemRow.index] ?? -1
+                  readonly property var item: root.systems[systemRow.at] ?? ({})
+                  readonly property var info: root.typeInfo[systemRow.item.type] ?? null
+
+                  list: systemList
+                  entryIndex: systemRow.at
+                  icon: systemRow.info?.icon ?? "help"
+                  label: root.labelOf(systemRow.item.type)
+                  selected: systemRow.item.type === root.selectedType
+                  onClicked: {
+                    EditsManager.commitTyping();
+                    root._picked = systemRow.item.type;
+                  }
+
+                  badges: TipIcon {
+                    visible: systemRow.item.quiet === true
+                    text: "notifications_off"
+                    textColor: systemRow.inkMuted
+                    size: "xs"
+                    tip: I18n.tr("Quiet: its changes don't open the OSD")
+                  }
+
+                  RowAction {
+                    row: systemRow
+                    danger: true
+                    iconText: "close"
+                    tooltipText: I18n.tr("Remove")
+                    onClicked: root.remove(systemRow.at)
+                  }
+                }
+              }
+            }
+
+            StyledText {
+              visible: root.shown.length === 0
+              Layout.fillWidth: true
+              text: I18n.tr("Nothing yet: add what this OSD shows.")
+              tone: "muted"
+              overflow: "wrap"
+            }
+
+            AddEntryButton {
+              id: addButton
+              visible: root.addable.length > 0
+              text: I18n.tr("Add")
+              onClicked: picker.openAt(addButton)
+            }
+          }
+
+          // The selected system's settings, from its schema
+          ItemBox {
+            visible: root.selected !== null
+            Layout.preferredWidth: split.secondWidth
+            Layout.alignment: Qt.AlignTop
+            icon: root.selectedInfo?.icon ?? ""
+            title: root.selected ? root.labelOf(root.selected.type) : ""
+
+            // Its bars are set in the Bars part
+            StyledText {
+              visible: root._barSpec?.from !== undefined
+              Layout.fillWidth: true
+              text: I18n.tr("Its bars are set under Bars, below.")
+              role: "caption"
+              overflow: "wrap"
+            }
+
+            // Built anew for each selection: a form whose rows commit on change
+            // must not be reused for another
+            KeyedLoader {
+              id: formSlot
+              Layout.fillWidth: true
+              Layout.preferredHeight: formSlot.childrenRect.height
+              key: root.selected ? root._osdId + ":" + root.selected.type : ""
+              sourceComponent: systemForm
+            }
+          }
         }
       }
     }
@@ -243,7 +272,7 @@ ColumnLayout {
     id: systemForm
 
     SchemaPropertiesForm {
-      width: selectedBox.formWidth
+      width: formSlot.width
       readonly property var props: root.selectedInfo?.schema.properties ?? ({})
       // (its list of bars is the Bars part's)
       readonly property string barsKey: root._barSpec?.from ?? ""

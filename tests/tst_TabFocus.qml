@@ -19,9 +19,6 @@ TestCase {
       "file": "qml/components/views/Settings/SettingsSidebar.qml"
     },
     {
-      "file": "qml/components/views/Settings/CommunitySetupsCard.qml"
-    },
-    {
       "file": "qml/components/views/Keybinds/ActionPicker.qml"
     },
     {

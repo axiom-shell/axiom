@@ -55,9 +55,9 @@ ColumnLayout {
   Repeater {
     model: root.ids
 
-    delegate: Surface {
+    delegate: ItemBox {
       id: entry
-      tone: "sunken"
+      dense: true
       required property string modelData
       readonly property var special: root.rows.find(r => r.id === entry.modelData) ?? null
       readonly property bool configured: entry.special?.configured === true
@@ -65,16 +65,9 @@ ColumnLayout {
       readonly property bool editable: entry.special?.editable === true
       readonly property bool deletable: SpecialWorkspaces.deletable(entry.special)
 
-      Layout.fillWidth: true
-      implicitHeight: rowLayout.implicitHeight + Widget.smallPadding * 2
-
       RowLayout {
         id: rowLayout
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.smallPadding
+        Layout.fillWidth: true
         spacing: Widget.spacing
 
         StyledLabel {

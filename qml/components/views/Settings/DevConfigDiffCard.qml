@@ -14,10 +14,8 @@ import qs.components.reusable
 // itself. Asked of axiom when shown and after each change, while a dev
 // tree is set, dev mode on or off (DevManager.diff; rows labelled by
 // methods/DevDiff)
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   // dev.config.diff's rows: [{ path, side, dev?, live?, devOnly }]
   property var rows: []
@@ -199,95 +197,83 @@ FieldGroup {
 
     ScrollIndicator.vertical: StyledScrollIndicator {}
 
-    delegate: Surface {
+    delegate: ItemBox {
       id: entry
-      tone: "sunken"
+      dense: true
       required property int index
       readonly property var row: root.rows[index] ?? ({})
 
       width: ListView.view.width
-      implicitHeight: entryColumn.implicitHeight + Widget.smallPadding * 2
 
-      ColumnLayout {
-        id: entryColumn
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.padding
-        anchors.topMargin: Widget.smallPadding
-        spacing: Widget.spacing / 2
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Widget.spacing
 
-        RowLayout {
+        StyledLabel {
+          text: root.rowTitle(entry.row)
+          role: "label"
+          overflow: "line"
+          elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
           Layout.fillWidth: true
-          spacing: Widget.spacing
-
-          StyledLabel {
-            text: root.rowTitle(entry.row)
-            role: "label"
-            overflow: "line"
-            elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
-            Layout.fillWidth: true
-          }
-
-          // I18n.tr("Changed in dev") I18n.tr("Changed in live") I18n.tr("Changed in both")
-          StatusChip {
-            text: I18n.tr(DevDiff.sideLabel(entry.row.side))
-            tone: entry.row.side === "both" ? "warning" : entry.row.side === "live" ? "accent" : "success"
-          }
-
-          StatusChip {
-            visible: entry.row.devOnly === true
-            text: I18n.tr("Dev only")
-            tone: "neutral"
-          }
         }
 
-        GridLayout {
+        // I18n.tr("Changed in dev") I18n.tr("Changed in live") I18n.tr("Changed in both")
+        StatusChip {
+          text: I18n.tr(DevDiff.sideLabel(entry.row.side))
+          tone: entry.row.side === "both" ? "warning" : entry.row.side === "live" ? "accent" : "success"
+        }
+
+        StatusChip {
+          visible: entry.row.devOnly === true
+          text: I18n.tr("Dev only")
+          tone: "neutral"
+        }
+      }
+
+      GridLayout {
+        Layout.fillWidth: true
+        columns: 3
+        columnSpacing: Widget.spacing * 2
+        rowSpacing: Widget.spacing / 2
+
+        StyledText {
+          text: I18n.tr("Dev")
+          tone: "muted"
+        }
+        StyledText {
+          text: DevDiff.has(entry.row, "dev") ? DevDiff.valueText(entry.row, "dev") : I18n.tr("not set")
+          tone: DevDiff.has(entry.row, "dev") ? "text" : "faint"
+          textFamily: "monospace"
+          overflow: "line"
           Layout.fillWidth: true
-          columns: 3
-          columnSpacing: Widget.spacing * 2
-          rowSpacing: Widget.spacing / 2
+        }
+        StyledTextButton {
+          implicitHeight: Widget.smallHeight
+          enabled: !root.busy && DevDiff.toLive(entry.row)
+          text: I18n.tr("To live")
+          iconText: "arrow_forward"
+          iconAfter: true
+          tooltipText: DevDiff.toLive(entry.row) ? "" : I18n.tr("The installed axiom has no such setting, or one of another shape")
+          onClicked: root.copy(entry.row, "live")
+        }
 
-          StyledText {
-            text: I18n.tr("Dev")
-            tone: "muted"
-          }
-          StyledText {
-            text: DevDiff.has(entry.row, "dev") ? DevDiff.valueText(entry.row, "dev") : I18n.tr("not set")
-            tone: DevDiff.has(entry.row, "dev") ? "text" : "faint"
-            textFamily: "monospace"
-            overflow: "line"
-            Layout.fillWidth: true
-          }
-          StyledTextButton {
-            implicitHeight: Widget.smallHeight
-            enabled: !root.busy && DevDiff.toLive(entry.row)
-            text: I18n.tr("To live")
-            iconText: "arrow_forward"
-            iconAfter: true
-            tooltipText: DevDiff.toLive(entry.row) ? "" : I18n.tr("The installed axiom has no such setting, or one of another shape")
-            onClicked: root.copy(entry.row, "live")
-          }
-
-          StyledText {
-            text: I18n.tr("Live")
-            tone: "muted"
-          }
-          StyledText {
-            text: DevDiff.has(entry.row, "live") ? DevDiff.valueText(entry.row, "live") : I18n.tr("not set")
-            tone: DevDiff.has(entry.row, "live") ? "text" : "faint"
-            textFamily: "monospace"
-            overflow: "line"
-            Layout.fillWidth: true
-          }
-          StyledTextButton {
-            implicitHeight: Widget.smallHeight
-            enabled: !root.busy
-            text: I18n.tr("To dev")
-            iconText: "arrow_back"
-            onClicked: root.copy(entry.row, "dev")
-          }
+        StyledText {
+          text: I18n.tr("Live")
+          tone: "muted"
+        }
+        StyledText {
+          text: DevDiff.has(entry.row, "live") ? DevDiff.valueText(entry.row, "live") : I18n.tr("not set")
+          tone: DevDiff.has(entry.row, "live") ? "text" : "faint"
+          textFamily: "monospace"
+          overflow: "line"
+          Layout.fillWidth: true
+        }
+        StyledTextButton {
+          implicitHeight: Widget.smallHeight
+          enabled: !root.busy
+          text: I18n.tr("To dev")
+          iconText: "arrow_back"
+          onClicked: root.copy(entry.row, "dev")
         }
       }
     }
