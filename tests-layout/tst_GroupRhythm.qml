@@ -237,8 +237,8 @@ TestCase {
     verify(pane);
     tryVerify(() => pane.g2.width > 0 && pane.g2.y > 0);
     wait(100);
-    compare(pane.cols.rowGap, Style.space2);
-    compare(Math.round(pane.g2.y - (pane.g1.y + pane.g1.height)), Style.space2);
+    compare(pane.cols.gap, Style.cardGap);
+    compare(Math.round(pane.g2.y - (pane.g1.y + pane.g1.height)), Style.cardGap);
   }
 
   // A group is an outlined card with its padding above and below

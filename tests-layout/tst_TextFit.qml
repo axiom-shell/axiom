@@ -1259,7 +1259,7 @@ TestCase {
     compare(unit("a").x, 0);
     compare(unit("a").y, 0);
     compare(unit("b").y, unit("a").height + Style.space2);
-    compare(unit("d").x, unit("a").width + Style.space5);
+    compare(unit("d").x, unit("a").width + Style.cardGap);
     compare(unit("d").y, 0);
     verify(unit("a").width >= Style.columnMin && unit("a").width <= Math.round(1.25 * Style.columnTarget), `${unit("a").width}`);
     compare(unit("hidden").width, 0);

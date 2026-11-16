@@ -201,18 +201,18 @@ GridDragLayer {
     anchors.fill: parent
     spacing: Widget.spacing * 3
 
-    // The inspector, the tab's full height; it owns its header
+    // The inspector, the tab's full height; its header scrolls with its cards
     Surface {
       Layout.preferredWidth: Math.min(Widget.textPx(340), Math.round(root.width * 0.34))
       Layout.fillHeight: true
       tone: "surface"
 
-      StyledScrollView {
-        id: sideScroll
+      CardScroll {
         anchors.fill: parent
+        anchors.margins: Widget.padding
 
         ElementInspector {
-          width: sideScroll.availableWidth
+          Layout.fillWidth: true
           dragLayer: root
         }
       }

@@ -169,20 +169,15 @@ BaseView {
           Layout.preferredWidth: Style.dividerWidth
         }
 
-        StyledScrollView {
+        CardScroll {
           id: inspectorScroll
           // Its rows (rotation, the steppers) are sized by the font, so
           // on a small card it keeps their width and the canvas gives way
           Layout.preferredWidth: Math.max(root.grid.unit * 0.85, Appearance.fontSize * 24)
           Layout.fillHeight: true
-          Layout.leftMargin: -Style.rowBleed
-          Layout.rightMargin: -Style.rowBleed
-          contentPadding: 0
-          bleed: Style.rowBleed
-          showScrollBar: true
 
           StreamedLoader {
-            width: inspectorScroll.availableWidth
+            Layout.fillWidth: true
             label: "monitor inspector"
             sourceComponent: MonitorInspector {
               settingsLinks: root.settingsLinks
@@ -191,7 +186,7 @@ BaseView {
         }
 
         ScrollMemory {
-          flickable: inspectorScroll.contentItem as Flickable
+          flickable: inspectorScroll.flickable as Flickable
           key: "Monitors/inspector"
         }
       }

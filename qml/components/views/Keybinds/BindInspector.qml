@@ -33,7 +33,7 @@ ColumnLayout {
     return options && current !== "" && !options.includes(current) ? [current].concat(options) : options;
   }
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   InspectorHeader {
     icon: KeybindManager.actionIcon(root.bind.action)
@@ -64,10 +64,12 @@ ColumnLayout {
     }
   }
 
-  // The key: one row, its caption the row's description
+  // One title-less card: the key, the action (its argument and call under
+  // it), the label
   FieldGroup {
     title: ""
 
+    // The key: its caption the row's description
     BindRow {
       first: true
       label: I18n.tr("Key")
@@ -80,14 +82,9 @@ ColumnLayout {
         Layout.fillWidth: true
       }
     }
-  }
 
-  // The action leads; its argument and call sit under it
-  FieldGroup {
-    title: ""
-
+    // The action leads; its argument and call sit under it
     BindRow {
-      first: true
       label: I18n.tr("Action")
 
       ActionPicker {
@@ -178,13 +175,8 @@ ColumnLayout {
         onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "call", value)
       }
     }
-  }
-
-  FieldGroup {
-    title: ""
 
     BindRow {
-      first: true
       label: I18n.tr("Label")
       description: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
 

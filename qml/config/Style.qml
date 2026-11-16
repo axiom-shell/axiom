@@ -561,6 +561,8 @@ QtObject {
   readonly property int space3: Widget.padding
   readonly property int space4: Widget.cardPadding
   readonly property int space5: Widget.padding * 2
+  // the gap between two cards, down and across: the settings page's
+  readonly property int cardGap: root.space2
   // a settings row's least height
   readonly property int rowHeight: Widget.height + Widget.smallPadding * 2
   readonly property int rowPadding: Widget.smallPadding

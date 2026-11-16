@@ -329,7 +329,7 @@ Item {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          readonly property real gap: Style.space2
+          readonly property real gap: Style.cardGap
           // How many columns the page holds (its width, never a card's)
           readonly property int count: FlowColumns.count(cards.width, Style.columnTarget, Style.columnMin, Style.columnMax, block.gap, Style.columnLeast)
           // Which cards span every column (from the schema only)

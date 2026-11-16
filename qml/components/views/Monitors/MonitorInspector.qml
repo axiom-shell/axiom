@@ -290,28 +290,10 @@ ColumnLayout {
     }
 
     // Advanced, folded
-    FormRow {
-      id: advancedToggle
-      hoverable: true
-      bodyHeight: advancedRow.implicitHeight
-      onRowClicked: MonitorManager.advancedOpen = !MonitorManager.advancedOpen
-
-      RowLayout {
-        id: advancedRow
-        width: parent.width
-        spacing: Widget.spacing
-
-        FoldChevron {
-          open: root.advancedOpen
-          hot: advancedToggle.hovered
-        }
-
-        StyledLabel {
-          text: I18n.tr("Advanced")
-          role: "label"
-          Layout.fillWidth: true
-        }
-      }
+    FoldFormRow {
+      title: I18n.tr("Advanced")
+      open: root.advancedOpen
+      onToggled: MonitorManager.advancedOpen = !MonitorManager.advancedOpen
     }
 
     FormRow {

@@ -45,25 +45,38 @@ ColumnLayout {
     onDiscardAt: path => root.editor.discardAt(["actions"].concat(path))
   }
 
-  FoldingSection {
-    visible: root.items.length > 0
+  // The fold row, then the lines it shows: how a script runs the actions
+  FoldFormRow {
+    shown: root.items.length > 0
     title: I18n.tr("For scripts")
-    collapsed: !root.scriptsOpen
+    open: root.scriptsOpen
     onToggled: root.scriptsOpen = !root.scriptsOpen
+  }
 
-    Repeater {
-      model: root.items.length
+  FormRow {
+    shown: root.items.length > 0 && root.scriptsOpen
+    tinted: false
+    bodyHeight: lines.implicitHeight
 
-      StyledText {
-        id: line
-        required property int modelData
-        readonly property var action: root.items[line.modelData] ?? null
-        Layout.fillWidth: true
-        text: I18n.tr("{0} — {1}", line.action?.id ?? "", `axiom ipc customWidgets act ${root.definition?.id ?? ""} ${line.action?.id ?? ""}`)
-        textFamily: "monospace"
-        role: "caption"
-        tone: "muted"
-        overflow: "wrap"
+    ColumnLayout {
+      id: lines
+      width: parent.width
+      spacing: Widget.spacing
+
+      Repeater {
+        model: root.items.length
+
+        StyledText {
+          id: line
+          required property int modelData
+          readonly property var action: root.items[line.modelData] ?? null
+          Layout.fillWidth: true
+          text: I18n.tr("{0} — {1}", line.action?.id ?? "", `axiom ipc customWidgets act ${root.definition?.id ?? ""} ${line.action?.id ?? ""}`)
+          textFamily: "monospace"
+          role: "caption"
+          tone: "muted"
+          overflow: "wrap"
+        }
       }
     }
   }

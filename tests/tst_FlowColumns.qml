@@ -49,7 +49,7 @@ TestCase {
   // table's W = 2 x unit - 40 agrees); BaseView.editorWidth = 2.8 x unit
   // (the room beside the side panel is wider on every one of them); the
   // pane's body is that less its padding either side (Widget.padding 10).
-  // Columns are gap 20 (Style.space5) apart, 400..700 px (1.25 x target).
+  // Columns are gap 8 (Style.cardGap) apart, 400..700 px (1.25 x target).
   function test_group_columns_at_the_editor_widths() {
     for (const row of [
       {
@@ -67,9 +67,9 @@ TestCase {
     ]) {
       const unit = (row.short - 2 * 80 - 20) / 2;
       const body = Math.round(unit * 2.8) - 2 * 10;
-      const n = FlowColumns.count(body, 560, 400, 4, 20);
+      const n = FlowColumns.count(body, 560, 400, 4, 8);
       compare(n, row.n, `${row.short}: ${body} px`);
-      const column = (body - (n - 1) * 20) / n;
+      const column = (body - (n - 1) * 8) / n;
       verify(n >= 2);
       verify(column >= 400 && column <= Math.round(1.25 * 560), `${row.short}: ${column} px columns`);
     }

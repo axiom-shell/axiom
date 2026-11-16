@@ -33,7 +33,7 @@ ColumnLayout {
   readonly property bool runsCommands: (root.result?.definitions ?? []).some(def => CustomWidgetData.commandsOf(def).length > 0)
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // The text for a CustomWidgetData.readImport error code
   function errorText(code, detail) {

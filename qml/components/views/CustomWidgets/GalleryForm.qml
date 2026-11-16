@@ -21,7 +21,7 @@ ColumnLayout {
   readonly property real card: Widget.px(400)
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   FieldGroup {
     Layout.fillWidth: true

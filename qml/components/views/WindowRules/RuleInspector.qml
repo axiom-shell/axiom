@@ -66,18 +66,23 @@ ColumnLayout {
         "text": root.editor.issueText(issue)
       }))
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // The groups flow into columns, as a Settings card's rows do
   GroupColumns {
     Layout.fillWidth: true
 
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: Utils.pick(root.schema, order)
-      order: ["name", "icon"]
-      values: root.rule
-      onEdited: (path, value) => root.editor.set(path, value)
+    // The rule's own identity: a title-less card (no header, never folds)
+    FieldGroup {
+      title: ""
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["name", "icon"]
+        values: root.rule
+        onEdited: (path, value) => root.editor.set(path, value)
+      }
     }
 
     FieldGroup {

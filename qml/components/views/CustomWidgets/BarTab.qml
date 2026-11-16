@@ -48,7 +48,7 @@ ColumnLayout {
   }
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // One banner across the page: the widget on a bar across and on one down
   // the side, and what it shows

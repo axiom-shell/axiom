@@ -128,7 +128,7 @@ ColumnLayout {
     }
   ])
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // The library and the module's own settings: what the column holds while
   // nothing is selected
@@ -214,7 +214,7 @@ ColumnLayout {
 
     sourceComponent: ColumnLayout {
       width: selected.width
-      spacing: Style.space2
+      spacing: Style.cardGap
 
       InspectorHeader {
         icon: root.kind?.icon ?? "widgets"

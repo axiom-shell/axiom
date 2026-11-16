@@ -132,20 +132,15 @@ Item {
         }
 
         // Right: its size
-        StyledScrollView {
+        CardScroll {
           id: sizeScroll
           visible: root.module !== null
           Layout.fillWidth: true
           Layout.fillHeight: true
           Layout.preferredWidth: 2
-          Layout.leftMargin: -Style.rowBleed
-          Layout.rightMargin: -Style.rowBleed
-          contentPadding: 0
-          bleed: Style.rowBleed
-          showScrollBar: true
 
           FieldGroup {
-            width: sizeScroll.availableWidth
+            Layout.fillWidth: true
             title: I18n.tr("Size")
             description: I18n.tr("In quarter cards. Drag an edge or corner on the canvas, or step it here.")
 
@@ -206,45 +201,35 @@ Item {
   Component {
     id: options
 
-    StyledScrollView {
+    CardScroll {
       id: optionsScroll
       anchors.fill: parent
-      anchors.leftMargin: -Style.rowBleed
-      anchors.rightMargin: -Style.rowBleed
-      contentPadding: 0
-      bleed: Style.rowBleed
-      showScrollBar: true
 
       // Each module keeps its place across the overlay closing
       property ScrollMemory memory: ScrollMemory {
-        flickable: optionsScroll.contentItem as Flickable
+        flickable: optionsScroll.flickable as Flickable
         key: "Layouts/" + root.selectionKey
       }
 
-      ColumnLayout {
-        width: optionsScroll.availableWidth
-        spacing: Style.space2
+      // Where its feature is set (the type's `x-link`)
+      FieldLinks {
+        Layout.fillWidth: true
+        links: OverlayConfig.moduleInfo(root.moduleType)?.link
+      }
 
-        // Where its feature is set (the type's `x-link`)
-        FieldLinks {
-          Layout.fillWidth: true
-          links: OverlayConfig.moduleInfo(root.moduleType)?.link
-        }
-
-        OptionsGroup {
-          Layout.fillWidth: true
-          propertiesSchema: OverlayConfig.moduleInfo(root.moduleType)?.propertiesSchema ?? ({})
-          order: OverlayConfig.moduleInfo(root.moduleType)?.propertiesOrder ?? []
-          values: root.module?.properties ?? ({})
-          emptyText: I18n.tr("This module has no options")
-          // A Submenu module's menu can be a new one, made here
-          fieldAction: (path, schema) => root.moduleType === "Submenu" && path[0] === "menu" && OverlayManager.editTarget === "menu" ? {
-              "text": I18n.tr("New submenu…"),
-              "icon": "add",
-              "run": () => OverlayManager.menus.addSubmenu(root.index)
-            } : null
-          onEdited: (path, value) => root.editor.updateModuleProperty(root.index, path[0], value)
-        }
+      OptionsGroup {
+        Layout.fillWidth: true
+        propertiesSchema: OverlayConfig.moduleInfo(root.moduleType)?.propertiesSchema ?? ({})
+        order: OverlayConfig.moduleInfo(root.moduleType)?.propertiesOrder ?? []
+        values: root.module?.properties ?? ({})
+        emptyText: I18n.tr("This module has no options")
+        // A Submenu module's menu can be a new one, made here
+        fieldAction: (path, schema) => root.moduleType === "Submenu" && path[0] === "menu" && OverlayManager.editTarget === "menu" ? {
+            "text": I18n.tr("New submenu…"),
+            "icon": "add",
+            "run": () => OverlayManager.menus.addSubmenu(root.index)
+          } : null
+        onEdited: (path, value) => root.editor.updateModuleProperty(root.index, path[0], value)
       }
     }
   }

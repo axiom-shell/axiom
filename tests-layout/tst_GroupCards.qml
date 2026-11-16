@@ -6,6 +6,7 @@ import qs.components.forms
 import qs.components.reusable
 import qs.components.views.base
 import qs.components.views.CustomWidgets
+import qs.components.views.Keybinds
 
 // An editor's group is the settings page's card: an outlined surface box, its
 // header at the top, rows inside padded Style.space3, indented only by their
@@ -613,5 +614,54 @@ TestCase {
     wait(30);
     const header = root.headerOf(pane.group);
     compare(Math.round(pane.group.height), Math.round(2 * Style.space3 + header.height + Style.space2 + pane.a.height + Style.space2 + pane.b.height));
+  }
+
+  // The bind inspector's one title-less card of BindRows
+  Component {
+    id: bindsComp
+
+    Surface {
+      property alias group: group
+      property alias key: keyRow
+      property alias action: actionRow
+      width: 400
+      height: 400
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: group
+          title: ""
+
+          BindRow {
+            id: keyRow
+            first: true
+            label: "Key"
+          }
+          BindRow {
+            id: actionRow
+            label: "Action"
+          }
+        }
+      }
+    }
+  }
+
+  function test_titlelessBindRows_data() {
+    return rows().filter(r => r.w === 340);
+  }
+
+  function test_titlelessBindRows(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(bindsComp, root);
+    verify(pane);
+    waitForRendering(pane);
+    wait(30);
+    compare(pane.group.headed, false);
+    compare(pane.group.foldable, false);
+    compare(Math.round(pane.key.mapToItem(pane.group, 0, 0).y), Style.space3, "row 0 starts at the padding");
+    verify(pane.action.y >= pane.key.height, "row 1 under row 0");
   }
 }

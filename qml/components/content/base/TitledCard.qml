@@ -33,10 +33,10 @@ Card {
   // Hides the extras with their space (hiding only what's inside can
   // leave the column its old height)
   property bool showExtras: true
-  property alias contentSpacing: body.spacing
+  property alias contentSpacing: scroll.spacing
   // Children go into the scrolling body (Card's own `content` holds this
   // file's column)
-  default property alias bodyContent: body.data
+  default property alias bodyContent: scroll.content
   // Remembers where the body was scrolled to under this key (ScrollMemory),
   // so it comes back there when the overlay reopens; empty keeps nothing
   property alias scrollKey: scrollMemory.key
@@ -49,20 +49,20 @@ Card {
   function scrollTo(item, center) {
     scrollMemory.cancel();
     // Lays out rows built or shown this frame before measuring
-    body.ensurePolished();
-    const top = item.mapToItem(body, 0, 0).y - (center === true ? Math.max(0, (scroll.availableHeight - item.height) / 2) : 0);
+    scroll.body.ensurePolished();
+    const top = item.mapToItem(scroll.body, 0, 0).y - (center === true ? Math.max(0, (scroll.availableHeight - item.height) / 2) : 0);
     scrollAnimation.to = Math.max(0, Math.min(top, scroll.contentHeight - scroll.availableHeight));
     scrollAnimation.restart();
   }
 
   ScrollMemory {
     id: scrollMemory
-    flickable: scroll.contentItem as Flickable
+    flickable: scroll.flickable as Flickable
   }
 
   NumberAnimation {
     id: scrollAnimation
-    target: scroll.contentItem
+    target: scroll.flickable
     property: "contentY"
     duration: Appearance.animNormal
     easing.type: Appearance.easing
@@ -101,23 +101,11 @@ Card {
       spacing: Widget.spacing
     }
 
-    StyledScrollView {
+    CardScroll {
       id: scroll
       Layout.fillWidth: true
       Layout.fillHeight: true
       Layout.topMargin: extras.visible ? 0 : Widget.spacing
-      // Room for a row's hover tint past the body (Card's padding holds it)
-      Layout.leftMargin: -Style.rowBleed
-      Layout.rightMargin: -Style.rowBleed
-      bleed: Style.rowBleed
-      contentPadding: 0
-      showScrollBar: true
-
-      ColumnLayout {
-        id: body
-        width: scroll.availableWidth
-        spacing: Widget.spacing * 2
-      }
     }
 
     // Takes its own height, never the body's

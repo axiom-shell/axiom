@@ -65,7 +65,7 @@ ColumnLayout {
   }
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // Run state, and Run now
   RowLayout {
@@ -107,169 +107,175 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Script")
+      // A card ending on a shut fold row takes no padding of its own (that
+      // row's is the card's)
+      bottomInset: !root.advancedOpen && !root.signalsWaybar ? 0 : Style.space3
 
-      // One box of rows: the form's, the command's, the form's again
-      ColumnLayout {
+      SchemaPropertiesForm {
         Layout.fillWidth: true
-        spacing: 0
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["name", "icon"]
+        values: root.definition ?? ({})
+        onEdited: (path, value) => root.editor.set(path, value)
+        changedAt: path => root.editor.changedAt(path)
+        onDiscardAt: path => root.editor.discardAt(path)
+      }
 
-        SchemaPropertiesForm {
+      InspectorRow {
+        label: I18n.tr("Command")
+        description: I18n.tr(root.schema.command.description)
+
+        RowLayout {
           Layout.fillWidth: true
-          propertiesSchema: Utils.pick(root.schema, order)
-          order: ["name", "icon"]
-          values: root.definition ?? ({})
-          onEdited: (path, value) => root.editor.set(path, value)
-          changedAt: path => root.editor.changedAt(path)
-          onDiscardAt: path => root.editor.discardAt(path)
-        }
+          spacing: Widget.spacing
 
-        InspectorRow {
-          label: I18n.tr("Command")
-          description: I18n.tr(root.schema.command.description)
-
-          RowLayout {
+          StyledTextEntry {
+            id: commandEntry
             Layout.fillWidth: true
-            spacing: Widget.spacing
-
-            StyledTextEntry {
-              id: commandEntry
-              Layout.fillWidth: true
-              Layout.alignment: Qt.AlignVCenter
-              placeholderText: I18n.tr("e.g. ~/bin/cpu.sh")
-              input.font.family: "monospace"
-              // Committed on Return, on leaving the field and when the tab goes
-              // (each keystroke would run the half-typed command), and only
-              // what was typed in it; the widget being typed in is the one
-              // written (a commit after another is selected is dropped)
-              property string typedFor: ""
-              function commit() {
-                if (!commandEntry.typed)
-                  return;
-                commandEntry.typed = false;
-                if (commandEntry.typedFor !== root.editor.selectedId)
-                  return;
-                if (commandEntry.text !== (root.definition?.command ?? ""))
-                  root.editor.set("command", commandEntry.text);
-              }
-              onTextEdited: commandEntry.typedFor = root.editor.selectedId
-              onAccepted: commandEntry.commit()
-              input.onActiveFocusChanged: {
-                if (!commandEntry.input.activeFocus)
-                  commandEntry.commit();
-              }
-              Component.onDestruction: commandEntry.commit()
-
-              Binding {
-                target: commandEntry
-                property: "text"
-                value: root.definition?.command ?? ""
-                when: !commandEntry.input.activeFocus
-                restoreMode: Binding.RestoreNone
-              }
+            Layout.alignment: Qt.AlignVCenter
+            placeholderText: I18n.tr("e.g. ~/bin/cpu.sh")
+            input.font.family: "monospace"
+            // Committed on Return, on leaving the field and when the tab goes
+            // (each keystroke would run the half-typed command), and only
+            // what was typed in it; the widget being typed in is the one
+            // written (a commit after another is selected is dropped)
+            property string typedFor: ""
+            function commit() {
+              if (!commandEntry.typed)
+                return;
+              commandEntry.typed = false;
+              if (commandEntry.typedFor !== root.editor.selectedId)
+                return;
+              if (commandEntry.text !== (root.definition?.command ?? ""))
+                root.editor.set("command", commandEntry.text);
             }
-            SquareIconButton {
-              Layout.alignment: Qt.AlignVCenter
-              iconText: "folder_open"
-              tooltipText: I18n.tr("Pick a script…")
-              onClicked: FilePickerManager.pick(root, I18n.tr("Pick a script"), {
-                "start": root.scriptPath !== "" ? root.scriptPath.replace(/\/[^/]*$/, "") : "~",
-                "shortenHome": true
-              }, path => root.editor.set("command", path))
+            onTextEdited: commandEntry.typedFor = root.editor.selectedId
+            onAccepted: commandEntry.commit()
+            input.onActiveFocusChanged: {
+              if (!commandEntry.input.activeFocus)
+                commandEntry.commit();
+            }
+            Component.onDestruction: commandEntry.commit()
+
+            Binding {
+              target: commandEntry
+              property: "text"
+              value: root.definition?.command ?? ""
+              when: !commandEntry.input.activeFocus
+              restoreMode: Binding.RestoreNone
             }
           }
-        }
-
-        SchemaPropertiesForm {
-          Layout.fillWidth: true
-          follows: true
-          propertiesSchema: Utils.pick(root.schema, order)
-          order: ["mode", "interval"]
-          values: root.definition ?? ({})
-          onEdited: (path, value) => root.editor.set(path, value)
-          changedAt: path => root.editor.changedAt(path)
-          onDiscardAt: path => root.editor.discardAt(path)
-        }
-
-        // Waybar's and axiom's JSON, or the script's text as it is
-        FormRow {
-          hoverable: true
-          bodyHeight: outputField.implicitHeight
-          onRowClicked: outputField.activate()
-
-          SchemaToggle {
-            id: outputField
-            width: parent.width
-            label: I18n.tr("Output")
-            description: I18n.tr("Auto reads Waybar's or axiom's JSON, else the text.")
-            options: ["auto", "text"]
-            optionLabels: ({
-                "auto": I18n.tr("Auto"),
-                "text": I18n.tr("Plain text")
-              })
-            currentValue: root.definition?.output === "text" ? "text" : "auto"
-            onPicked: value => root.editor.set("output", value === "text" ? "text" : "waybar")
+          SquareIconButton {
+            Layout.alignment: Qt.AlignVCenter
+            iconText: "folder_open"
+            tooltipText: I18n.tr("Pick a script…")
+            onClicked: FilePickerManager.pick(root, I18n.tr("Pick a script"), {
+              "start": root.scriptPath !== "" ? root.scriptPath.replace(/\/[^/]*$/, "") : "~",
+              "shortenHome": true
+            }, path => root.editor.set("command", path))
           }
         }
+      }
 
-        FormRow {
-          tinted: false
-          bodyHeight: advanced.implicitHeight
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        follows: true
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["mode", "interval"]
+        values: root.definition ?? ({})
+        onEdited: (path, value) => root.editor.set(path, value)
+        changedAt: path => root.editor.changedAt(path)
+        onDiscardAt: path => root.editor.discardAt(path)
+      }
 
-          FoldingSection {
-            id: advanced
-            anchors.left: parent.left
-            anchors.right: parent.right
-            title: I18n.tr("Advanced")
-            collapsed: !root.advancedOpen
-            onToggled: root.advancedOpen = !root.advancedOpen
+      // Waybar's and axiom's JSON, or the script's text as it is
+      FormRow {
+        hoverable: true
+        bodyHeight: outputField.implicitHeight
+        onRowClicked: outputField.activate()
 
-            SchemaPropertiesForm {
-              Layout.fillWidth: true
-              propertiesSchema: Utils.pick(root.schema, order)
-              order: ["execIf", "refreshName"]
-              values: root.definition ?? ({})
-              onEdited: (path, value) => root.editor.set(path, value)
-              changedAt: path => root.editor.changedAt(path)
-              onDiscardAt: path => root.editor.discardAt(path)
-            }
-            StyledText {
-              Layout.fillWidth: true
-              text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
-              role: "caption"
-              tone: "faint"
-              overflow: "wrap"
-            }
-            Surface {
-              visible: root.scriptHead !== ""
-              Layout.fillWidth: true
-              tone: "sunken"
-              outlined: true
-              implicitHeight: head.implicitHeight + Style.space3 * 2
+        SchemaToggle {
+          id: outputField
+          width: parent.width
+          label: I18n.tr("Output")
+          description: I18n.tr("Auto reads Waybar's or axiom's JSON, else the text.")
+          options: ["auto", "text"]
+          optionLabels: ({
+              "auto": I18n.tr("Auto"),
+              "text": I18n.tr("Plain text")
+            })
+          currentValue: root.definition?.output === "text" ? "text" : "auto"
+          onPicked: value => root.editor.set("output", value === "text" ? "text" : "waybar")
+        }
+      }
 
-              ColumnLayout {
-                id: head
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: Style.space3
-                spacing: Widget.spacing / 2
+      FoldFormRow {
+        title: I18n.tr("Advanced")
+        open: root.advancedOpen
+        marked: root.editor.changedAt(["execIf"]) || root.editor.changedAt(["refreshName"])
+        onToggled: root.advancedOpen = !root.advancedOpen
+      }
 
-                StyledText {
-                  Layout.fillWidth: true
-                  text: root.scriptPath
-                  role: "caption"
-                  tone: "faint"
-                  overflow: "wrap"
-                }
-                StyledText {
-                  Layout.fillWidth: true
-                  text: root.scriptHead
-                  textFamily: "monospace"
-                  role: "micro"
-                  tone: "muted"
-                  // A long line wraps inside the box
-                  overflow: "wrap"
-                }
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        folded: !root.advancedOpen
+        follows: true
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["execIf", "refreshName"]
+        values: root.definition ?? ({})
+        onEdited: (path, value) => root.editor.set(path, value)
+        changedAt: path => root.editor.changedAt(path)
+        onDiscardAt: path => root.editor.discardAt(path)
+      }
+
+      // How to run it again, and the script's first lines
+      FormRow {
+        shown: root.advancedOpen
+        tinted: false
+        bodyHeight: advancedNotes.implicitHeight
+
+        ColumnLayout {
+          id: advancedNotes
+          width: parent.width
+          spacing: Widget.spacing
+
+          StyledText {
+            Layout.fillWidth: true
+            text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
+            role: "caption"
+            tone: "faint"
+            overflow: "wrap"
+          }
+          Surface {
+            visible: root.scriptHead !== ""
+            Layout.fillWidth: true
+            tone: "sunken"
+            outlined: true
+            implicitHeight: head.implicitHeight + Style.space3 * 2
+
+            ColumnLayout {
+              id: head
+              anchors.top: parent.top
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.margins: Style.space3
+              spacing: Widget.spacing / 2
+
+              StyledText {
+                Layout.fillWidth: true
+                text: root.scriptPath
+                role: "caption"
+                tone: "faint"
+                overflow: "wrap"
+              }
+              StyledText {
+                Layout.fillWidth: true
+                text: root.scriptHead
+                textFamily: "monospace"
+                role: "micro"
+                tone: "muted"
+                // A long line wraps inside the box
+                overflow: "wrap"
               }
             }
           }
