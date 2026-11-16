@@ -18,10 +18,13 @@ Rectangle {
   property bool onAccent: false
   // How far it reaches past the parent on the left and right
   property real bleed: 0
+  // How far it reaches past the parent on the left, `bleed` unless set (a row
+  // indented under a rail starts at its rule)
+  property real leftBleed: root.bleed
 
   // -- Implementation --
   anchors.fill: parent
-  anchors.leftMargin: -root.bleed
+  anchors.leftMargin: -root.leftBleed
   anchors.rightMargin: -root.bleed
   readonly property var _host: root.parent
   radius: root._host && root._host.radius !== undefined ? root._host.radius : Style.radiusInner

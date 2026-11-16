@@ -63,6 +63,14 @@ ColumnLayout {
   // `x-row` is drawn only on the settings page, so here the keys it names,
   // and the fields of an object it draws, keep their own rows
   readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.iconTextKeys(prop)), [])
+  // The rows' indent tree (RowTree), and whether the first row leads them all
+  // (its FieldGroup then drops its heading)
+  readonly property var tree: RowTree.plan(root.rows)
+  readonly property bool leads: root.tree.lead
+  // The FieldGroup it sits in: in a pane a row indents by its place in the
+  // tree, elsewhere (the settings page) one level under the row above it
+  readonly property var _group: IndentHost.find(root.parent)
+
   // Depends on the schema only, so edits update the rows in place
   readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
     const rank = key => {
@@ -101,6 +109,18 @@ ColumnLayout {
 
   spacing: Widget.spacing
 
+  // Every row is known hidden (a row still streaming in counts as shown):
+  // its FieldGroup hides with it. Read through `count` as `_firstRow` is
+  readonly property bool allHidden: {
+    if (fields.count <= 0)
+      return false;
+    for (let i = 0; i < fields.count; i++) {
+      if (fields.itemAt(i)?.shown !== false)
+        return false;
+    }
+    return true;
+  }
+
   // The top row drawn (FormRow.first)
   readonly property int _firstRow: root.follows ? -1 : Utils.firstFormRow(fields.count, i => fields.itemAt(i))
 
@@ -123,7 +143,8 @@ ColumnLayout {
         // Unknown until the field streams in, so it takes its height then
         // rather than folding open
         shown: field.item ? field.item.shown : undefined
-        indented: field.item?.followsSibling ?? false
+        level: root._group?.nests === true ? root.tree.levels[index] : (field.item?.followsSibling ? 1 : 0)
+        beside: half && _beside
         bodyHeight: column.implicitHeight
         tinted: field.item?.tinted ?? false
         hoverable: field.item?.hoverable ?? false

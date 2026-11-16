@@ -10,7 +10,10 @@ import qs.components.methods
 // below, at least `Style.rowHeight` tall, a divider on its top boundary
 // (none on the top row), an accent rail beside a row shown by a sibling's
 // value, and a fold open and shut as its `x-showIf` shows or hides it, so
-// the rows below glide. A `tinted` row (the default) tints under the
+// the rows below glide. Its depth is `base` (the block head it sits under,
+// from its FieldGroup) plus `level` (its own depth in its form): one rail
+// per depth, the body one step in per depth, and the hover tint starting at
+// the row's own innermost rule. A `tinted` row (the default) tints under the
 // pointer, and keeps the tint while the pointer is over its controls: the
 // HoverHandler is on the row, an ancestor of every control (a handler on a
 // sibling painted under them loses the hover to any child that takes it).
@@ -26,8 +29,20 @@ Item {
   // streaming in), which takes its height at once instead of folding
   property var shown: true
   // On the rail, read as part of the row above (a part's fields under its
-  // switch: SchemaField.followsSibling)
+  // switch: SchemaField.followsSibling): `level` 1. A form sets `level`
+  // itself where it knows the tree (SchemaPropertiesForm)
   property bool indented: false
+  property int level: root.indented ? 1 : 0
+  // The depth the row's FieldGroup puts it at (a block head above it), found
+  // through IndentHost
+  readonly property var _host: IndentHost.find(root.parent)
+  property int base: root._host?.rowBase ?? 0
+  // The right half of a pair: draws no rails and no indent, its left half does
+  property bool beside: false
+  readonly property int depth: root.beside ? 0 : root.base + root.level
+  // What a row holds is already placed in its body: a row inside a row starts
+  // at 0 there (a relay for IndentHost)
+  readonly property int rowBase: 0
   // The content's height, and how much of it the rail runs beside
   property real bodyHeight: 0
   property real railHeight: root.bodyHeight
@@ -46,7 +61,8 @@ Item {
   // kept the layout polishing forever)
   property bool first: false
   default property alias content: body.data
-  readonly property real indent: root.indented ? Widget.spacing * 2 : 0
+  readonly property real step: Widget.spacing * 2
+  readonly property real indent: root.depth * root.step
   // The row at full reveal: its body padded, no less than a row's height
   // (none for an empty row, a field drawing nothing)
   readonly property real fullHeight: root.bodyHeight <= 0 ? 0 : Math.max(Style.rowHeight, root.bodyHeight + Style.rowPadding * 2)
@@ -100,13 +116,16 @@ Item {
   // Under the body, so a control takes its own clicks
   Loader {
     id: band
-    width: root.width
+    // From the row's own rule when indented, else the full width
+    x: root.depth > 0 ? (root.depth - 1) * root.step : 0
+    width: root.width - band.x
     height: root.hitHeight >= root.bodyHeight ? root.height : Math.min(root.height, root.hitHeight + body.y * 2)
     active: root.tinted || root.hoverable
     sourceComponent: Item {
       StateLayer {
         objectName: "rowTint"
         bleed: Style.rowBleed
+        leftBleed: root.depth > 0 ? 0 : Style.rowBleed
         hovered: root.hovered
         pressed: click.pressed
       }
@@ -124,19 +143,26 @@ Item {
 
   // On the row's top boundary, over the tint
   StyledSeparator {
-    visible: !root.first && root.fullHeight > 0
+    // Under a block head the head is the top: the first row has its divider
+    visible: !(root.first && root.base === 0) && root.fullHeight > 0
     x: root.indent
     width: root.width - root.indent
   }
 
-  Rectangle {
-    visible: root.indented
-    y: body.y
-    width: 2
-    height: root.railHeight
-    radius: 1
-    color: Style.rail
-    opacity: root._reveal
+  // One rail per depth, each beside the next step in
+  Repeater {
+    model: root.depth
+
+    Rectangle {
+      required property int index
+      x: index * root.step
+      y: body.y
+      width: 2
+      height: root.railHeight
+      radius: 1
+      color: Style.rail
+      opacity: root._reveal
+    }
   }
 
   Item {
