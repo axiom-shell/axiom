@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
@@ -308,6 +309,8 @@ Card {
 
       GridView {
         id: view
+        ScrollIndicator.vertical: StyledScrollIndicator {}
+
         anchors.fill: parent
         clip: true
         flow: root.grid ? GridView.FlowLeftToRight : GridView.FlowTopToBottom

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -317,6 +318,8 @@ Panel {
 
       ListView {
         id: list
+        ScrollIndicator.vertical: StyledScrollIndicator {}
+
         Layout.fillWidth: true
         Layout.fillHeight: true
         clip: true

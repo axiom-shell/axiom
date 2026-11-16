@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
@@ -257,6 +258,8 @@ DropdownSurface {
 
     MotionListView {
       id: resultList
+      ScrollIndicator.vertical: StyledScrollIndicator {}
+
       visible: root.query !== ""
       Layout.fillWidth: true
       Layout.fillHeight: true
@@ -341,6 +344,8 @@ DropdownSurface {
 
     MotionListView {
       id: list
+      ScrollIndicator.vertical: StyledScrollIndicator {}
+
       visible: root.query === ""
       Layout.fillWidth: true
       Layout.fillHeight: true

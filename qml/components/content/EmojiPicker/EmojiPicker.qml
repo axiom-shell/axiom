@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -217,6 +218,8 @@ Panel {
   // Everything that matches, a cell's width apart and centred
   GridView {
     id: grid
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: !root.strip
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -138,6 +139,8 @@ Panel {
 
   GridView {
     id: list
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: !root.strip && !root.off && !root.missing && root.clips.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded

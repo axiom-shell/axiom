@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -135,6 +136,8 @@ Panel {
 
     ListView {
       id: list
+      ScrollIndicator.vertical: StyledScrollIndicator {}
+
       anchors.fill: parent
       visible: root.selected === null && !root.showsEmpty
       clip: true

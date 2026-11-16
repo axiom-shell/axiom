@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
@@ -49,6 +50,8 @@ ColumnLayout {
   // The fields scroll when the editor is short
   Flickable {
     id: fields
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     Layout.fillWidth: true
     Layout.fillHeight: true
     Layout.preferredHeight: form.implicitHeight

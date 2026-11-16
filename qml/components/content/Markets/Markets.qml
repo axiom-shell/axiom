@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
@@ -111,6 +112,8 @@ Card {
       visible: active
       sourceComponent: ListView {
         id: list
+        ScrollIndicator.vertical: StyledScrollIndicator {}
+
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         model: root.items
