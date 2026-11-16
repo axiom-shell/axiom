@@ -9,7 +9,7 @@ import qs.components.forms
 
 // One colour of a custom widget element or of the bar (Colors, Bar tab >
 // Status color), set in one place, as form rows: a dropdown of the theme's
-// colours laid out as a schema colour field (InspectorRow's `shortControl`),
+// colours laid out as a schema colour field (FieldRow's `shortControl`),
 // each row painted in its colour (Auto or None first, Custom… then By state…
 // last: Custom opens a hex field, By state… turns on rules). With By state…
 // picked the row shows the Key the rules read, the rules, each
@@ -18,14 +18,14 @@ import qs.components.forms
 // colour again turns the rules off and keeps them. `write(path, value)` writes `path` (a list of keys
 // beside this colour's own: [key] or [statesKey, "rules"]) into the owner's
 // object (the element's options, the bar). `first` marks the top row of its
-// group (Utils.firstFormRow's job, as for every InspectorRow).
+// group (the host says: this column can't know where it sits in the group).
 // The names and the Auto or None label are runtime keys:
 // I18n.tr("Auto") I18n.tr("None") I18n.tr("Accent") I18n.tr("Accent 2")
 // I18n.tr("Success") I18n.tr("Warning") I18n.tr("Error") I18n.tr("Info")
 // I18n.tr("Red") I18n.tr("Orange") I18n.tr("Yellow") I18n.tr("Green")
 // I18n.tr("Cyan") I18n.tr("Blue") I18n.tr("Magenta") I18n.tr("Text")
 // I18n.tr("Muted") I18n.tr("Background") I18n.tr("Custom…") I18n.tr("By state…")
-ColumnLayout {
+FormColumn {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
@@ -206,12 +206,12 @@ ColumnLayout {
   onValueChanged: if (!root.isHex)
     root.customPicked = false
 
-  InspectorRow {
+  FieldRow {
     first: root.first
     label: root.label
     description: root.description
     shortControl: true
-    dropdown: combo
+    activates: combo
     belowShown: root.custom && !root.statesOn
 
     StyledComboEntry {
@@ -242,22 +242,17 @@ ColumnLayout {
     }
 
     below: [
-      StyledTextEntry {
+      CommitEntry {
         id: hex
         visible: root.custom
         Layout.fillWidth: true
+        live: true
+        value: root.isHex ? root.value : ""
         input.font.family: "monospace"
         placeholderText: I18n.tr("e.g. {0}", "#ff8800") // style-exempt: an example
-        onTextEdited: {
-          if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.text))
-            root.write([root.key], hex.text);
-        }
-        Binding {
-          target: hex
-          property: "text"
-          value: root.isHex ? root.value : ""
-          when: !hex.input.activeFocus
-          restoreMode: Binding.RestoreNone
+        onEdited: text => {
+          if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(text))
+            root.write([root.key], text);
         }
       },
       StyledText {
@@ -271,13 +266,13 @@ ColumnLayout {
     ]
   }
 
-  InspectorRow {
+  FieldRow {
     level: 1
     shown: root.statesOn
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")
     shortControl: true
-    dropdown: keyField
+    activates: keyField
 
     KeyField {
       id: keyField
@@ -325,21 +320,15 @@ ColumnLayout {
                 })
             }
 
-            StyledTextEntry {
-              id: valueEntry
+            CommitEntry {
               Layout.fillWidth: true
               Layout.minimumWidth: 0
+              live: true
+              value: rule.item.value ?? ""
               placeholderText: root.stateKey === "state" && root.editor.seenStates.length > 0 ? I18n.tr("e.g. {0}", root.editor.seenStates[0]) : I18n.tr("Value")
-              onTextEdited: root.setRule(rule.index, {
-                "value": valueEntry.text
-              })
-              Binding {
-                target: valueEntry
-                property: "text"
-                value: rule.item.value ?? ""
-                when: !valueEntry.input.activeFocus
-                restoreMode: Binding.RestoreNone
-              }
+              onEdited: text => root.setRule(rule.index, {
+                  "value": text
+                })
             }
 
             FlatIconButton {

@@ -7,6 +7,7 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.content.parts
 import qs.components.views.base
 
 // Custom widgets page, Data tab: the run state, the script (what runs and
@@ -68,31 +69,19 @@ ColumnLayout {
   spacing: Style.cardGap
 
   // Run state, and Run now
-  RowLayout {
+  StatusLine {
     Layout.fillWidth: true
-    spacing: Widget.spacing
+    chip: !root.definition?.command ? I18n.tr("No command") : root.output === null ? I18n.tr("Waiting") : root.output.blocked ? I18n.tr("Not run") : root.output.error ? I18n.tr("Failed") : I18n.tr("Running")
+    chipTone: !root.definition?.command || root.output?.blocked ? "neutral" : root.output?.error ? "error" : root.output === null ? "warning" : "success"
+    text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateTimeFormat())) : ""
+    tone: "muted"
 
-    StatusChip {
-      Layout.alignment: Qt.AlignVCenter
-      text: !root.definition?.command ? I18n.tr("No command") : root.output === null ? I18n.tr("Waiting") : root.output.blocked ? I18n.tr("Not run") : root.output.error ? I18n.tr("Failed") : I18n.tr("Running")
-      tone: !root.definition?.command || root.output?.blocked ? "neutral" : root.output?.error ? "error" : root.output === null ? "warning" : "success"
-    }
-    StyledLabel {
-      Layout.fillWidth: true
-      Layout.alignment: Qt.AlignVCenter
-      text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateTimeFormat())) : ""
-      tone: "muted"
-    }
     StyledTextButton {
-      Layout.alignment: Qt.AlignVCenter
-      implicitHeight: Widget.height
       iconText: "help"
       text: I18n.tr("What should my script print?")
       onClicked: root.editor.openHelp("output")
     }
     StyledTextButton {
-      Layout.alignment: Qt.AlignVCenter
-      implicitHeight: Widget.height
       enabled: !!root.definition?.command
       iconText: "play_arrow"
       text: I18n.tr("Run now")
@@ -118,7 +107,7 @@ ColumnLayout {
         onDiscardAt: path => root.editor.discardAt(path)
       }
 
-      InspectorRow {
+      FieldRow {
         label: I18n.tr("Command")
         description: I18n.tr(root.schema.command.description)
 
@@ -187,9 +176,8 @@ ColumnLayout {
 
       // Waybar's and axiom's JSON, or the script's text as it is
       FormRow {
-        hoverable: true
+        activates: outputField
         bodyHeight: outputField.implicitHeight
-        onRowClicked: outputField.activate()
 
         SchemaToggle {
           id: outputField
@@ -243,38 +231,12 @@ ColumnLayout {
             tone: "faint"
             overflow: "wrap"
           }
-          Surface {
+          CodeLine {
             visible: root.scriptHead !== ""
-            Layout.fillWidth: true
-            tone: "sunken"
-            outlined: true
-            implicitHeight: head.implicitHeight + Style.space3 * 2
-
-            ColumnLayout {
-              id: head
-              anchors.top: parent.top
-              anchors.left: parent.left
-              anchors.right: parent.right
-              anchors.margins: Style.space3
-              spacing: Widget.spacing / 2
-
-              StyledText {
-                Layout.fillWidth: true
-                text: root.scriptPath
-                role: "caption"
-                tone: "faint"
-                overflow: "wrap"
-              }
-              StyledText {
-                Layout.fillWidth: true
-                text: root.scriptHead
-                textFamily: "monospace"
-                role: "micro"
-                tone: "muted"
-                // A long line wraps inside the box
-                overflow: "wrap"
-              }
-            }
+            text: root.scriptHead
+            title: root.scriptPath
+            copyable: false
+            multiLine: true
           }
         }
       }
@@ -348,7 +310,6 @@ ColumnLayout {
 
       // Paste or edit the layer's sample: JSON, checked on Save
       StyledTextButton {
-        implicitHeight: Widget.height
         enabled: root.definition !== null
         iconText: root.editingSample ? "expand_less" : "edit_note"
         text: I18n.tr("Paste or edit the sample of {0}", root.layerName)
@@ -384,7 +345,6 @@ ColumnLayout {
               overflow: "wrap"
             }
             StyledTextButton {
-              implicitHeight: Widget.height
               iconText: "save"
               text: I18n.tr("Save the sample")
               onClicked: {
@@ -400,10 +360,9 @@ ColumnLayout {
 
       // The kept samples, a form row each. By count, over the kept keys
       // (config, never live values)
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
         Layout.topMargin: Style.space2
-        spacing: 0
 
         Repeater {
           model: root.sampleKeys.length
@@ -412,7 +371,6 @@ ColumnLayout {
             id: sampleRow
             required property int index
             readonly property string key: root.sampleKeys[sampleRow.index] ?? ""
-            first: sampleRow.index === 0
             bodyHeight: sampleLine.implicitHeight
 
             RowLayout {

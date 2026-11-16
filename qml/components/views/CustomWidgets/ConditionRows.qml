@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.forms
-import qs.components.reusable
 
 // A CustomShowWhen condition as form rows ({test, key, value}): one row, its
 // label with the Always | When toggle beside it (SchemaToggle, a click on the
@@ -12,7 +11,7 @@ import qs.components.reusable
 // is not / above / below, the value. Visible and Enabled use it. Page-local:
 // only this page reads CustomShowWhen. `write(field, value)` stores one field
 // (`test`, `key` or `value`) of the condition
-ColumnLayout {
+FormColumn {
   id: root
 
   // The row's label, and what it does
@@ -27,7 +26,8 @@ ColumnLayout {
   property var tests: []
   // The test the toggle's When picks
   property string whenTest: "is"
-  // The top row of its box
+  // The top row of its box (the host says: this column can't know where it
+  // sits in the box)
   property bool first: false
   property var write: function (field, value) {}
 
@@ -40,9 +40,8 @@ ColumnLayout {
 
   FormRow {
     first: root.first
-    hoverable: true
+    activates: toggle
     bodyHeight: toggle.implicitHeight
-    onRowClicked: toggle.activate()
 
     SchemaToggle {
       id: toggle
@@ -59,13 +58,13 @@ ColumnLayout {
     }
   }
 
-  InspectorRow {
+  FieldRow {
     level: 1
     shown: root.on
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")
     shortControl: true
-    dropdown: keyField
+    activates: keyField
 
     KeyField {
       id: keyField
@@ -79,9 +78,8 @@ ColumnLayout {
   FormRow {
     level: 1
     shown: root.on
-    hoverable: true
+    activates: testField
     bodyHeight: testField.implicitHeight
-    onRowClicked: testField.activate()
 
     SchemaComboBox {
       id: testField
@@ -97,22 +95,16 @@ ColumnLayout {
     }
   }
 
-  InspectorRow {
+  FieldRow {
     level: 1
     shown: root.on && root.needsValue
     label: I18n.tr("Value")
 
-    StyledTextEntry {
-      id: whenValue
+    CommitEntry {
       Layout.fillWidth: true
-      onTextEdited: root.write("value", whenValue.text)
-      Binding {
-        target: whenValue
-        property: "text"
-        value: root.value?.value ?? ""
-        when: !whenValue.input.activeFocus
-        restoreMode: Binding.RestoreNone
-      }
+      live: true
+      value: root.value?.value ?? ""
+      onEdited: text => root.write("value", text)
     }
   }
 }

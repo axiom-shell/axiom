@@ -574,7 +574,7 @@ TestCase {
                 text: "x"
               }
             }
-            InspectorRow {
+            FieldRow {
               label: "Key"
               besideLabel: true
 

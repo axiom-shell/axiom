@@ -4670,7 +4670,6 @@
     "{value}: what the element sends. {arg}: the trigger's argument (else added at the end). {rev} and {tree} too. Quoted for you.": "",
     "The text each trigger adds to its action's command, as words (quoted for the shell, never run).": "",
     "The text each click or scroll adds to its action's command, as words (quoted for the shell, never run).": "",
-    "Right-click to rename, duplicate, move or remove": "",
     "No output yet: run the script or keep a sample": "",
     "Pick a color, or By state… to pick it from a value.": "",
     "Copy look to the selected": "",

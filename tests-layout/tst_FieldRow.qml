@@ -6,15 +6,16 @@ import qs.components.forms
 import qs.components.reusable
 import qs.components.views.CustomWidgets
 
-// InspectorRow with `besideLabel` (the custom widgets editor's Name and Values
+// FieldRow with `besideLabel` (the custom widgets editor's Name and Values
 // rows) at a half-pane width: the text field fills what the label leaves, and
-// the row is one control line tall, as the Key/Test row beside it (a FormRow
-// of a RowLayout of label and control). ScreenForm itself needs the editor
+// the row is one control line tall, as a plain one-line row (a FormRow of a
+// RowLayout of label and control). `activates` makes a click on the row off
+// the control act on the control. ScreenForm itself needs the editor
 // service, so the row is built directly.
 TestCase {
   id: root
 
-  name: "InspectorRow"
+  name: "FieldRow"
   when: windowShown
   visible: true
   width: 400
@@ -27,7 +28,7 @@ TestCase {
   Component {
     id: nameComp
 
-    InspectorRow {
+    FieldRow {
       width: 300
       besideLabel: true
       first: true
@@ -41,7 +42,7 @@ TestCase {
     }
   }
 
-  // The Key/Test row's shape (ScreenForm), its control a text entry
+  // A plain one-line row (a label and a text entry), the height `besideLabel` matches
   Component {
     id: keyComp
 
@@ -73,7 +74,7 @@ TestCase {
   Component {
     id: shortComp
 
-    InspectorRow {
+    FieldRow {
       width: Widget.textPx(300)
       shortControl: true
       first: true
@@ -89,6 +90,28 @@ TestCase {
           }
         ]
         value: ""
+      }
+    }
+  }
+
+  // A row whose control answers activate()
+  Component {
+    id: activatesComp
+
+    FieldRow {
+      width: 300
+      first: true
+      label: "Key"
+      activates: target
+
+      Item {
+        id: target
+        property int activated: 0
+        Layout.fillWidth: true
+        implicitHeight: Widget.height
+        function activate() {
+          target.activated++;
+        }
       }
     }
   }
@@ -122,7 +145,7 @@ TestCase {
     const entry = row.control[0];
     verify(entry.width > row.width / 2, "the field fills the row: " + entry.width + " of " + row.width);
     verify(row.height <= Widget.height + Style.rowPadding * 2 + 1, "one control line: " + row.height);
-    compare(row.height, key.height, "as tall as the Key/Test row");
+    compare(row.height, key.height, "as tall as a plain one-line row");
   }
 
   function test_shortControl_keeps_the_label_line_data() {
@@ -153,5 +176,15 @@ TestCase {
         return found;
     }
     return null;
+  }
+
+  function test_activates_on_row_click() {
+    const row = createTemporaryObject(activatesComp, root);
+    verify(row);
+    wait(50);
+    waitForRendering(row);
+    verify(row.hoverable, "a row that activates something is hoverable");
+    mouseClick(row, row.width - 2, Style.rowPadding + 2);
+    compare(row.control[0].activated, 1);
   }
 }
