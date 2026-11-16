@@ -23,6 +23,8 @@ Item {
   required property var grid
   // The height the tab has (the page's, less its header)
   required property real availableHeight
+  // The inspector column's width (BaseView.inspectorWidth)
+  required property real inspectorWidth
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var definition: root.editor.selected
   readonly property var views: root.definition?.module?.views ?? []
@@ -37,6 +39,7 @@ Item {
   ElementEditorLayout {
     id: layout
     anchors.fill: parent
+    inspectorWidth: root.inspectorWidth
     elements: root.editor.layerElements
     editable: root.definition !== null
     card: root.grid?.unit ?? Widget.px(400)

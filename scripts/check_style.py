@@ -25,6 +25,7 @@ docs/dev/testing.md > The checks). Rules:
   R16  a raw Text-family block with no TextRender renderType (every .qml)
   R17  layer.enabled / layer.effect over content
   R18  a scale over content with no `contentZoom` host
+  R19  `Widget.radius` read in UI: use Style.radius / Style.radiusInner
 
 Every hit fails; a line is waived with `// style-exempt: <reason>`, a file with an
 entry in scripts/style-exceptions.json (rules and reason; an entry no longer needed
@@ -47,7 +48,7 @@ ROOT = qml_modules.ROOT
 QML = qml_modules.QML_ROOT
 EXCEPTIONS = ROOT / "scripts" / "style-exceptions.json"
 
-RULES = [f"R{n}" for n in range(1, 19)]
+RULES = [f"R{n}" for n in range(1, 20)]
 EVERYWHERE = {"R11", "R13", "R16"}
 STYLE_LAYER_PIECES = {"Surface", "StateLayer", "FocusRing", "Skeleton", "StyledScrollIndicator", "BackdropScrim"}
 STYLE_LAYER_CONFIG = {"Style", "StyleInk", "StyleTextRole", "BarColors", "Theme", "Appearance", "BarsConfig", "BarStyle"}
@@ -552,7 +553,7 @@ def scope_of(rel):
     m = re.match(r"qml/components/bar/widgets/([^/]+)/", p)
     if m and m.group(1) != "base":
         return rules
-    rules |= {f"R{n}" for n in range(4, 11)} | {"R12", "R14", "R15", "R17", "R18"}
+    rules |= {f"R{n}" for n in range(4, 11)} | {"R12", "R14", "R15", "R17", "R18", "R19"}
     if p.startswith(("qml/components/bar/look/", "qml/components/bar/widgets/base/")):
         return rules - {"R6"}  # the bar's drawing kit draws the palette's colours (check.md: exempt from R1-R3 and R6)
     return rules | {"R1", "R2", "R3", "R6"}
@@ -583,6 +584,8 @@ def scan(rel, index):
         if "R1" in rules:
             for _ in R1.finditer(line):
                 add(hits, i, "R1", line.strip())
+        if "R19" in rules and re.search(r"(?<![\w.])Widget\.radius\b", line):
+            add(hits, i, "R19", "Widget.radius: use Style.radius / Style.radiusInner")
         if "R2" in rules:
             for _ in R2.finditer(line):
                 add(hits, i, "R2", line.strip())

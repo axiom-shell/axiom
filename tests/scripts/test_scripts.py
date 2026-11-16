@@ -709,7 +709,7 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckStyle(unittest.TestCase):
-    """scripts/check_style.py: each rule R1 to R18 on a fixture file, the waivers, the scope, every hit failing and the role check."""
+    """scripts/check_style.py: each rule R1 to R19 on a fixture file, the waivers, the scope, every hit failing and the role check."""
     HEAD = "pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.config\n// A fixture.\n"
     UI = "qml/components/reusable/X.qml"
     STYLED = {"qml/components/reusable/StyledText.qml": HEAD + "Text {\n}\n",
@@ -893,6 +893,13 @@ class CheckStyle(unittest.TestCase):
         self.assertEqual(self.rule("  layer.enabled: false", "R17"), 0)
         self.assertEqual(self.rule("  layer.effect: MultiEffect {\n  }", "R17"), 1)
         self.assertEqual(self.rule("  layer.effect: MultiEffect { // style-exempt: no text\n  }", "R17"), 0)
+
+    def test_r19_widget_radius(self):
+        self.assertEqual(self.rule("  radius: Widget.radius", "R19"), 1)
+        self.assertEqual(self.rule("  radius: Widget.radius / 2", "R19"), 1)
+        self.assertEqual(self.rule("  radius: Style.radius", "R19"), 0)
+        self.assertEqual(self.rule("  // Widget.radius in a comment", "R19"), 0)
+        self.assertEqual(self.rule("  radius: Widget.radius", "R19", path="qml/config/X.qml"), 0)
 
     def test_r18_scale(self):
         self.assertEqual(self.rule("  scale: 0.92", "R18"), 1)

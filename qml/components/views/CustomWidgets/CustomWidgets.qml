@@ -159,6 +159,7 @@ BaseView {
         ModuleTab {
           grid: root.grid
           availableHeight: pane.bodyHeight
+          inspectorWidth: root.inspectorWidth
         }
       }
     }

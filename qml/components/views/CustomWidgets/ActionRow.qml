@@ -52,7 +52,6 @@ Surface {
   // The whole folded box hovers and opens, not only its line
   StateLayer {
     hovered: !root.open && (foldArea.containsMouse || head.hovered)
-    radius: root.radius
   }
 
   MouseArea {

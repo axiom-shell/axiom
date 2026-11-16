@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 import qs.components.reusable
 
@@ -38,8 +37,8 @@ Item {
 
   StateLayer {
     anchors.fill: parent
-    radius: Widget.radius
-    hovered: rowHover.hovered
+    radius: Style.radius
+    hovered: rowHover.hovered && (root.clickable || actionRow.children.length > 0)
   }
 
   HoverHandler {
@@ -123,12 +122,10 @@ Item {
     }
   }
 
-  LazyLoader {
-    active: titleHover.hovered && titleText.truncated
-    StyledToolTip {
-      target: titleText
-      text: root.title
-      maxWidth: Widget.textPx(320)
-    }
+  TruncationTip {
+    target: titleText
+    text: root.title
+    hovered: titleHover.hovered
+    maxWidth: Widget.textPx(320)
   }
 }

@@ -66,7 +66,7 @@ Rectangle {
 
   z: root.selected || root.resizing !== "" ? 2 : 1
   // Set by GridCanvas, matching its lattice
-  radius: Widget.radius
+  radius: Style.radius
   color: root.fill
   border.color: root.selected ? Style.accent : Style.borderStrong
   border.width: root.selected ? Style.focusWidth : Style.hairline

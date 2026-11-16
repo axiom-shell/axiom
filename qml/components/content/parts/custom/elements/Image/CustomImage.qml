@@ -19,7 +19,7 @@ CustomElementBase {
     y: root.placeY(height)
     width: root.options.round ? Math.min(root.width, root.height) : root.width
     height: root.options.round ? width : root.height
-    radius: root.options.round ? width / 2 : Widget.radius
+    radius: root.options.round ? width / 2 : Style.radius
     source: root.source
     fillMode: root.options.fit === "fit" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
     cache: false

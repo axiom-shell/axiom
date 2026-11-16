@@ -69,7 +69,6 @@ ColumnLayout {
           StateLayer {
             hovered: area.containsMouse
             pressed: area.pressed
-            radius: tile.radius
           }
 
           FocusRing {

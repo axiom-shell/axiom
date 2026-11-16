@@ -16,7 +16,7 @@ ClippingRectangle {
   // The size the image is decoded at; a 0 side keeps the picture's ratio
   property size decodeSize: Qt.size(width, height)
 
-  radius: Widget.radius / 2
+  radius: Style.radiusInner
   color: Style.surfaceHighest
 
   Image {
