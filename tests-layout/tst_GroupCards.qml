@@ -2,11 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import QtTest
 import qs.config
+import qs.services.ui
 import qs.components.forms
+import qs.components.methods
 import qs.components.reusable
 import qs.components.views.base
 import qs.components.views.CustomWidgets
 import qs.components.views.Keybinds
+import qs.components.views.Settings
 
 // An editor's group is the settings page's card: an outlined surface box, its
 // header at the top, rows inside padded Style.space3, indented only by their
@@ -191,7 +194,7 @@ TestCase {
     verify(header === undefined || !header.visible, "no header");
   }
 
-  // One group with a FormRow, its title, description, inset and header extras set by the test
+  // One group with a FormRow, its title, description and header extras set by the test
   Component {
     id: oneGroupComp
 
@@ -201,7 +204,6 @@ TestCase {
       property alias row0: oneRow
       property string title: "Size"
       property string description
-      property real inset: Style.space3
       property Component extras
       width: 400
       height: 600
@@ -214,7 +216,6 @@ TestCase {
           id: oneGroup
           title: one.title
           description: one.description
-          bottomInset: one.inset
           headerExtras: Loader {
             sourceComponent: one.extras
           }
@@ -255,18 +256,18 @@ TestCase {
     }
   }
 
-  // A folded card with no padding under its body still closes with the padding
-  function test_foldedBottomInsetZero() {
+  // A folded card whose last row is a shut fold row still closes with the padding
+  function test_foldedEndsWithPadding() {
     harness.configure({});
-    const pane = createTemporaryObject(oneGroupComp, root, {
-      "inset": 0
-    });
+    const pane = createTemporaryObject(foldComp, root);
     verify(pane);
     waitForRendering(pane);
     const group = pane.group;
     const header = root.headerOf(group);
+    verify(group.endsShut, "unfolded and shut: ends on the fold row");
     group.toggled();
     verify(group.collapsed);
+    compare(group.endsShut, false);
     tryVerify(() => Math.abs(group.implicitHeight - (2 * Style.space3 + header.height)) < 1, 3000);
   }
 
@@ -594,7 +595,6 @@ TestCase {
         FieldGroup {
           id: group
           title: "Script"
-          bottomInset: foldPane.open ? Style.space3 : 0
 
           FoldFormRow {
             id: fold
@@ -640,6 +640,225 @@ TestCase {
     compare(pane.after.shown, true);
     verify(root.formRows(pane.form).every(r => r.shown !== false), "the form's rows shown again");
     tryVerify(() => pane.after.height > 0, 1000);
+  }
+
+  // The fold row is one piece: the settings page's card (a real SettingsGroupCard
+  // over a SchemaLayout group) and an editor's FieldGroup draw it with the same
+  // type and close a card that ends on it with the same rule (FoldingCard)
+  Component {
+    id: parityComp
+
+    Surface {
+      id: parityPane
+      property alias settings: settings
+      property alias editor: editor
+      property alias editorFold: editorFold
+      property alias editorLast: editorLast
+      property bool editorOpen: false
+      width: root.parityWidth
+      height: 900
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+        spacing: Style.space3
+
+        SettingsGroupCard {
+          id: settings
+          group: root.parityGroup
+          form: QtObject {
+            property bool listing: false
+            function rowShown(row) {
+              return true;
+            }
+            function valueAt(path) {
+              return undefined;
+            }
+          }
+        }
+
+        FieldGroup {
+          id: editor
+          title: "Sec"
+
+          FormRow {
+            first: true
+            bodyHeight: Widget.height
+          }
+          FoldFormRow {
+            id: editorFold
+            title: "Advanced"
+            open: parityPane.editorOpen
+            onToggled: parityPane.editorOpen = !parityPane.editorOpen
+          }
+          FormRow {
+            id: editorLast
+            shown: parityPane.editorOpen
+            bodyHeight: Widget.height
+          }
+        }
+      }
+    }
+  }
+
+  property real parityWidth: 0
+  property var parityGroup: null
+
+  function parityData() {
+    const out = [];
+    for (const scale of [100, 150])
+      for (const density of ["compact", "normal", "roomy"])
+        out.push({
+          "tag": `${scale}% ${density}`,
+          "scale": scale,
+          "density": density,
+          "w": 540
+        });
+    return out;
+  }
+
+  function test_foldRowParity_data() {
+    return parityData();
+  }
+
+  function test_foldRowParity(data) {
+    harness.configure(data);
+    // The stub keeps fold state across rows: every row starts shut
+    SettingsManager.folds = ({});
+    root.parityWidth = Widget.textPx(data.w);
+    // A card's group as SchemaLayout makes it: a value row, then an `x-fold`
+    // object (its group row) with one row behind it
+    root.parityGroup = {
+      "kind": "rows",
+      "key": "Sec",
+      "title": "Sec",
+      "description": "",
+      "section": "Sec",
+      "path": ["Sec"],
+      "rows": SchemaLayout.rows({
+        "properties": {
+          "a": {
+            "type": "boolean",
+            "title": "A",
+            "default": false
+          },
+          "adv": {
+            "type": "object",
+            "title": "Advanced",
+            "x-fold": true,
+            "properties": {
+              "b": {
+                "type": "boolean",
+                "title": "B",
+                "default": false
+              }
+            }
+          }
+        }
+      }, ["Sec"])
+    };
+    verify(root.parityGroup);
+    const pane = createTemporaryObject(parityComp, root);
+    verify(pane);
+    waitForRendering(pane);
+    wait(50);
+    const card = pane.settings;
+    const sFold = card.rowItem(["Sec", "adv"]);
+    const sLast = card.rowItem(["Sec", "adv", "b"]);
+    verify(sFold && sLast, "the card's rows");
+    verify((sFold as FoldFormRow) !== null, "the settings row is a FoldFormRow");
+    verify((pane.editorFold as FoldFormRow) !== null, "the editor row is a FoldFormRow");
+
+    const below = (c, r) => c.height - r.mapToItem(c, 0, r.height).y;
+    const metrics = r => {
+      const header = root.headerOf(r);
+      const chevron = root.chevronOf(r);
+      verify(header && chevron, "the fold row's header and chevron");
+      return {
+        "height": r.height,
+        "headerY": header.mapToItem(r, 0, 0).y,
+        "headerHeight": header.height,
+        "chevronFromRight": r.width - chevron.mapToItem(r, 0, 0).x,
+        "pixelSize": harness.texts(header, true)[0].font.pixelSize
+      };
+    };
+
+    // Shut: both cards end on the fold row
+    compare(sFold.shutFold, true);
+    compare(pane.editorFold.shutFold, true);
+    tryVerify(() => Math.abs(below(card, sFold)) < 1 && Math.abs(below(pane.editor, pane.editorFold)) < 1, 3000, "shut: both cards end at the fold row");
+    compare(metrics(sFold), metrics(pane.editorFold), "the same fold row");
+
+    // Open: both end Style.space3 under the last shown row
+    sFold.toggled();
+    pane.editorFold.toggled();
+    compare(sFold.open, true);
+    compare(pane.editorFold.open, true);
+    tryVerify(() => Math.abs(below(card, sLast) - Style.space3) < 1 && Math.abs(below(pane.editor, pane.editorLast) - Style.space3) < 1, 3000, "open: both end Style.space3 under the last row");
+    compare(metrics(sFold), metrics(pane.editorFold), "the same fold row, open");
+  }
+
+  // A trailing non-row child ends the card open or shut by its `shown`
+  Component {
+    id: trailComp
+
+    Surface {
+      id: trailPane
+      property bool trailShown: false
+      property alias group: group
+      property alias fold: fold
+      width: 400
+      height: 400
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: group
+          title: "Script"
+
+          FoldFormRow {
+            id: fold
+            title: "Advanced"
+            open: false
+          }
+          Item {
+            readonly property bool shown: trailPane.trailShown
+            visible: shown
+            Layout.fillWidth: true
+            implicitHeight: Widget.height
+          }
+        }
+      }
+    }
+  }
+
+  function test_trailingChildEndsCard_data() {
+    return [
+      {
+        "tag": "hidden after a shut fold: ends shut",
+        "shown": false,
+        "shut": true
+      },
+      {
+        "tag": "shown after a shut fold: ends open",
+        "shown": true,
+        "shut": false
+      }
+    ];
+  }
+
+  function test_trailingChildEndsCard(data) {
+    harness.configure({});
+    const pane = createTemporaryObject(trailComp, root, {
+      "trailShown": data.shown
+    });
+    verify(pane);
+    waitForRendering(pane);
+    compare(pane.group.endsShut, data.shut);
+    const column = pane.group.contentChildren[pane.group.contentChildren.length - 1];
+    tryVerify(() => Math.abs(pane.group.height - pane.group.mapFromItem(column, 0, column.height).y - (data.shut ? 0 : Style.space3)) < 1 || data.shut, 1000);
   }
 
   // A schema control in a card at a narrow width keeps its line

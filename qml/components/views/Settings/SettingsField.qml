@@ -25,8 +25,9 @@ import qs.components.reusable
 // so while the compositor mode is detached (axiom stopping leaves its
 // changes), and, off with changes recorded or inferred, offers to remove
 // them (recorded ones at once, then asks about the inferred ones, then the
-// system defaults)
-FormRow {
+// system defaults). It is a FoldFormRow, and its fold-header case (`fold`) is
+// that piece, the same one the editors' fold rows are
+FoldFormRow {
   id: root
 
   required property var row
@@ -46,6 +47,15 @@ FormRow {
   readonly property bool foldedInOpen: root.listing || !root.row.foldedIn || SettingsManager.isFoldOpen(root.row.foldedIn)
   // A card's settings fold with nothing shown behind it isn't drawn
   readonly property bool foldHasRows: !root.row.foldRows || root.row.foldRows.some(inner => inner.kind !== "group" && root.form.rowShown(inner))
+
+  // The fold row's own: the header of an `x-fold` or an `x-intro`'s Settings row
+  // I18n.tr("Settings") (a card's fold behind its `x-intro`)
+  fold: root.foldHeader
+  title: I18n.tr(root.row.title)
+  open: root.foldOpen
+  foldable: !root.listing
+  marked: root.foldHeader && (root.row.foldRows ? root.row.foldRows.some(inner => SettingsManager.hasChangesUnder(inner.path.join("."))) : SettingsManager.hasChangesUnder(root.row.path.join(".")))
+  onToggled: SettingsManager.setFoldOpen(root.row.path.join("."), !root.foldOpen)
 
   shown: field.shown && (!root.row.foldedBy || root.foldOpen) && root.foldedInOpen && root.foldHasRows && !root.row.drawnBy
   // `x-footprint` (Footprint.persistent): the setting writes outside axiom's folders
@@ -81,14 +91,14 @@ FormRow {
   // so a fold opening or shutting never moves a row across columns
   readonly property real flowHeight: field.shown !== false && root.foldHasRows && !root.row.drawnBy ? root.fullHeight : 0
 
-  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + root.footprintHeight
+  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? root.foldHeight : field.implicitHeight) + hookup.shownHeight + root.footprintHeight
   // Every setting row tints; a click on a switch, toggle or dropdown row
   // acts (SchemaField)
   tinted: root.isValue && root.custom === "" && field.tinted
   hoverable: root.isValue && root.custom === "" && field.hoverable
   hitHeight: field.implicitHeight
   onRowClicked: field.rowClicked()
-  railHeight: root.custom !== "" ? 0 : field.implicitHeight
+  railHeight: root.custom !== "" || root.foldHeader ? 0 : field.implicitHeight
 
   // Outlines the row for a moment (a link to this setting)
   function flash() {
@@ -126,18 +136,6 @@ FormRow {
           "form": root.form
         });
     }
-  }
-
-  FoldHeader {
-    id: foldTitle
-    visible: root.foldHeader
-    width: parent.width
-    // I18n.tr("Settings") (a card's fold behind its `x-intro`)
-    title: I18n.tr(root.row.title)
-    collapsed: !root.foldOpen
-    foldable: !root.listing
-    marked: root.foldHeader && (root.row.foldRows ? root.row.foldRows.some(inner => SettingsManager.hasChangesUnder(inner.path.join("."))) : SettingsManager.hasChangesUnder(root.row.path.join(".")))
-    onToggled: SettingsManager.setFoldOpen(root.row.path.join("."), !root.foldOpen)
   }
 
   Loader {

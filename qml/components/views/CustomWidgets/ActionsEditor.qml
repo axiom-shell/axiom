@@ -8,11 +8,12 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 
-// Custom widgets page, Data tab: the selected definition's actions
-// (actions.items), one ActionRow each, an Add button, the setting that reruns
-// the script after one, and, folded, how a script runs them from outside.
-// Rows are by count over the saved items.
-ColumnLayout {
+// Custom widgets page, Data tab: the Actions card. The selected definition's
+// actions (actions.items), one ActionRow each, an Add button, the setting that
+// reruns the script after one, and, folded, how a script runs them from
+// outside: a FieldGroup, so its fold row is a direct child of the card and
+// FoldingCard closes it. Rows are by count over the saved items.
+FieldGroup {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
@@ -21,22 +22,29 @@ ColumnLayout {
   readonly property var items: root.definition?.actions?.items ?? []
   property bool scriptsOpen: false
 
-  Layout.fillWidth: true
-  spacing: Widget.spacing
+  title: I18n.tr("Actions")
+  description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
 
-  Repeater {
-    model: root.items.length
+  // The list items keep their gap
+  ColumnLayout {
+    Layout.fillWidth: true
+    spacing: Widget.spacing
 
-    ActionRow {}
-  }
+    Repeater {
+      model: root.items.length
 
-  AddEntryButton {
-    text: I18n.tr("Add an action")
-    onClicked: root.editor.addAction({})
+      ActionRow {}
+    }
+
+    AddEntryButton {
+      text: I18n.tr("Add an action")
+      onClicked: root.editor.addAction({})
+    }
   }
 
   SchemaPropertiesForm {
     Layout.fillWidth: true
+    Layout.topMargin: Widget.spacing
     propertiesSchema: Utils.pick(root.schema.actions.properties, order)
     order: ["refreshAfter"]
     values: root.definition?.actions ?? ({})

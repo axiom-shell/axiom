@@ -27,10 +27,25 @@ Surface {
   property string statusTone: "neutral"
   // Beside the header, while unfolded (an Add button)
   property alias headerExtras: extras.data
-  // The padding under the body: a card ending on a shut fold row takes none,
-  // that row's own padding is the card's (SettingsGroupCard); applies while
-  // unfolded, folded the card always closes with `Style.space3`
-  property real bottomInset: Style.space3
+  // The card's rows in order, for `endsShut`. Only a host whose rows aren't
+  // its direct children replaces it (SettingsGroupCard); a list, never a value
+  property var endRows: root.contentChildren
+  // The card ends on a shut fold row (FoldFormRow), so that row's own padding
+  // closes it and the card adds none. The last child not hidden decides (a
+  // form's `allHidden`, a row's or other child's `shown`), read from those,
+  // never from `visible` or heights. Never while folded.
+  readonly property bool endsShut: {
+    if (root.collapsed)
+      return false;
+    const kids = root.endRows;
+    for (let i = (kids?.length ?? 0) - 1; i >= 0; i--) {
+      const kid = kids[i];
+      if (!kid || kid.allHidden === true || kid.shown === false)
+        continue;
+      return kid.shutFold === true;
+    }
+    return false;
+  }
   // False: no header at all (a title-less card: the rows start at the padding)
   property bool headed: true
   // The space between the body's children (0: rows abut)
@@ -43,7 +58,7 @@ Surface {
 
   Layout.fillWidth: true
   tone: "surface"
-  implicitHeight: column.implicitHeight + Style.space3 + (root.collapsed ? Style.space3 : root.bottomInset)
+  implicitHeight: column.implicitHeight + Style.space3 + (root.endsShut ? 0 : Style.space3)
 
   ColumnLayout {
     id: column

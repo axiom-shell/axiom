@@ -107,9 +107,6 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Script")
-      // A card ending on a shut fold row takes no padding of its own (that
-      // row's is the card's)
-      bottomInset: !root.advancedOpen && !root.signalsWaybar ? 0 : Style.space3
 
       SchemaPropertiesForm {
         Layout.fillWidth: true
@@ -283,7 +280,9 @@ ColumnLayout {
       }
 
       Notice {
-        visible: root.signalsWaybar
+        // Declared so FoldingCard's end rule skips it while hidden
+        readonly property bool shown: root.signalsWaybar
+        visible: shown
         Layout.fillWidth: true
         Layout.topMargin: Style.space2
         status: "warning"
@@ -291,12 +290,8 @@ ColumnLayout {
       }
     }
 
-    FieldGroup {
+    ActionsEditor {
       Layout.fillWidth: true
-      title: I18n.tr("Actions")
-      description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
-
-      ActionsEditor {}
     }
 
     FieldGroup {
