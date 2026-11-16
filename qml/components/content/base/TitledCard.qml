@@ -65,7 +65,7 @@ Card {
     target: scroll.contentItem
     property: "contentY"
     duration: Appearance.animNormal
-    easing.type: Easing.OutCubic
+    easing.type: Appearance.easing
   }
 
   // Hidden by Card while its compactContent shows
@@ -106,6 +106,10 @@ Card {
       Layout.fillWidth: true
       Layout.fillHeight: true
       Layout.topMargin: extras.visible ? 0 : Widget.spacing
+      // Room for a row's hover tint past the body (Card's padding holds it)
+      Layout.leftMargin: -Style.rowBleed
+      Layout.rightMargin: -Style.rowBleed
+      bleed: Style.rowBleed
       contentPadding: 0
       showScrollBar: true
 

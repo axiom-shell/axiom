@@ -47,15 +47,12 @@ Item {
     spacing: Widget.spacing
   }
 
-  StyledIcon {
+  FoldChevron {
     id: chevron
     visible: root.foldable
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
-    text: "expand_more"
-    tone: root.hovered ? "accent" : "muted"
-    rotation: root.open ? 0 : -90
-
-    Glide on rotation {}
+    open: root.open
+    hot: root.hovered
   }
 }

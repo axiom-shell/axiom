@@ -37,8 +37,6 @@ ColumnLayout {
       id: previewButton
       Layout.fillWidth: true
       enabled: OverlayManager.menus.canPreview(root.menu)
-      // (a text button doesn't dim itself)
-      opacity: enabled ? 1 : Style.opacityDisabled
       kind: root.previewingThis ? "primary" : "tonal"
       iconText: root.previewingThis ? "visibility_off" : "visibility"
       text: root.previewingThis ? I18n.tr("Hide from screen") : I18n.tr("Show on screen")

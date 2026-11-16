@@ -74,6 +74,7 @@ Surface {
   }
   color: root._filled ? root._fill : "transparent"
   radius: root.borderRadius
+  opacity: root.enabled ? 1 : Style.opacityDisabled
   border.width: root.kind === "outlined" ? Style.hairline : 0
   border.color: Style.borderStrong
   implicitWidth: content.implicitWidth + (textPadding * 2)

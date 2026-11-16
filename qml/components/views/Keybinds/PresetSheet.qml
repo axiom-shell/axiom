@@ -433,7 +433,6 @@ Popup {
             text: I18n.tr("Apply")
             enabled: root.merging ? root.chosen.length > 0 : root.preset !== null
             kind: "primary"
-            opacity: enabled ? 1 : Style.opacityDisabled
             onClicked: {
               if (root.merging)
                 KeybindManager.editor.applyPreset(root.presetId, root.chosen);

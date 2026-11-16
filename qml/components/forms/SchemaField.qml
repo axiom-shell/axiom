@@ -84,7 +84,9 @@ Loader {
       return MenusConfig.menus.reduce((labels, menu) => {
         labels[menu.id] = I18n.tr("{0} · {1}", menu.name || menu.id, I18n.tr(MenusConfig.placementLabels[menu.placement] ?? menu.placement));
         return labels;
-      }, {});
+      }, {
+        "": I18n.tr(fieldSchema["x-emptyLabel"] ?? "None")
+      });
     if (fieldSchema["x-options"] === "customWidgets")
       return CustomWidgetsConfig.items.reduce((labels, item) => {
         labels[item.id] = item.name || item.id;
@@ -465,7 +467,6 @@ Loader {
       }
       SquareIconButton {
         Layout.alignment: Qt.AlignVCenter
-        size: Widget.height - Widget.px(6)
         iconText: "content_copy"
         tooltipText: I18n.tr("Copy")
         onClicked: ClipboardManager.copyText(String(root.current ?? ""))

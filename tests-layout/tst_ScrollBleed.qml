@@ -5,6 +5,7 @@ import qs.config
 import qs.components.reusable
 import qs.components.forms
 import qs.components.views.BarEditor
+import qs.components.content.base
 
 // A scroll view holding FormRows with `bleed: Style.rowBleed` and matching
 // negative margins: the rows keep the full width and their tint stays in the view.
@@ -213,5 +214,46 @@ TestCase {
     const tl = ring.mapToItem(page.scroll, 0, 0);
     verify(tl.x >= -0.5 && tl.y >= -0.5, `the ring starts inside: ${tl.x},${tl.y}`);
     verify(tl.x + ring.width <= page.scroll.width + 0.5, "the ring ends inside across");
+  }
+
+  // A titled card's scrolling body (the bars panel, window rules, keybinds):
+  // a FormRow in it keeps its place under the card's padding, and its tint
+  // lies inside the scroll view's clip
+  Component {
+    id: cardComp
+
+    TitledCard {
+      id: card
+
+      property alias row: row
+
+      width: 400
+      height: 300
+
+      FormRow {
+        id: row
+
+        Layout.fillWidth: true
+        first: true
+        bodyHeight: 30
+        hoverable: true
+      }
+    }
+  }
+
+  function test_titled_card_body_keeps_row_tint() {
+    harness.configure({});
+    const card = createTemporaryObject(cardComp, root);
+    waitForRendering(card);
+    tryVerify(() => card.row.width > 0);
+    const scroll = findAll(card, it => it.bleed !== undefined && it.contentPadding !== undefined)[0];
+    verify(scroll !== undefined, "the body's scroll view");
+    compare(scroll.bleed, Style.rowBleed);
+    const at = card.row.mapToItem(card, 0, 0);
+    compare(Math.round(at.x), Widget.padding);
+    tryVerify(() => findAll(card.row, it => it.objectName === "rowTint").length > 0);
+    const tint = findAll(card.row, it => it.objectName === "rowTint")[0];
+    const tl = tint.mapToItem(scroll, 0, 0);
+    verify(tl.x >= -0.5 && tl.x + tint.width <= scroll.width + 0.5, `the tint lies in the view: ${tl.x} + ${tint.width} of ${scroll.width}`);
   }
 }
