@@ -12,15 +12,11 @@ import qs.components.content.parts
 // the dev config (replace it with live's copy) (DevManager). All of it
 // works with dev mode off: Rebuild only builds, the copy writes the dev
 // config's file
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   // What axiom last answered a click with: a refusal's message, or ""
   property string message: ""
-  // The tree field holds text typed since axiom last set it
-  property bool _typed: false
 
   readonly property string statusLabel: {
     if (DevManager.building)
@@ -51,13 +47,13 @@ FieldGroup {
     const path = treeEntry.text.trim();
     if (path === "")
       return;
-    root._typed = false;
+    treeEntry.typed = false;
     DevManager.setTree(path, error => root._answered(error));
   }
 
   // The tree axiom has, pushed into the field unless it's being typed in
   function _showTree() {
-    if (!treeEntry.input.activeFocus || !root._typed)
+    if (!treeEntry.input.activeFocus || !treeEntry.typed)
       treeEntry.text = Paths.shortenHome(DevManager.tree);
   }
 
@@ -66,7 +62,7 @@ FieldGroup {
   Connections {
     target: DevManager
     function onTreeChanged() {
-      root._typed = false;
+      treeEntry.typed = false;
       root._showTree();
     }
   }
@@ -94,13 +90,6 @@ FieldGroup {
       buttonText: I18n.tr("Set")
       canSubmit: treeEntry.text.trim() !== "" && Paths.expandHome(treeEntry.text.trim()) !== DevManager.tree
       onSubmitted: root._setTree()
-
-      Connections {
-        target: treeEntry.input
-        function onTextEdited() {
-          root._typed = true;
-        }
-      }
     }
 
     StyledTextButton {

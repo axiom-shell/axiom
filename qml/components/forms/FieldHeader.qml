@@ -19,6 +19,10 @@ ColumnLayout {
   property Component below: null
   // A list's title: the title role, a step larger
   property bool title: false
+  // The label is data, a calendar's name: shown as it is, plain text, untranslated
+  property bool plainLabel: false
+  // The label in the faint tone (an entry that is off or unavailable)
+  property bool dimmed: false
   readonly property real _trailingRoom: trailingPart.active ? trailingPart.implicitWidth + Widget.spacing : 0
   // The label's line at one line with the trailing part at its widest (a
   // constant: never `truncated` or a laid-out width), 0 without a label:
@@ -48,7 +52,9 @@ ColumnLayout {
     StyledText {
       id: labelText
       width: Math.max(0, Math.min(Math.ceil(labelWidth.advanceWidth) + 1, labelRow.width - root._trailingRoom))
-      text: I18n.tr(root.label)
+      text: root.plainLabel ? root.label : I18n.tr(root.label)
+      textFormat: root.plainLabel ? Text.PlainText : Text.AutoText
+      tone: root.dimmed ? "faint" : ""
       role: root.title ? "title" : "label"
       overflow: "wrap"
     }

@@ -7,39 +7,27 @@ import qs.services.core
 import qs.components.methods
 import qs.components.reusable
 
-// One example setup (SavedConfigsManager.examples) as a card: a small
-// screen drawn in its theme, with its bars on their edges in their style,
-// its docks and the screen border, then its palette, title and description.
-// A click applies it at once.
-Surface {
+// One example setup (SavedConfigsManager.examples) drawn as the preview of
+// its PreviewTile (LookPage): a small screen in its theme, with its bars on
+// their edges in their style, its docks and the screen border, an Applied
+// chip on its corner, then its palette. The tile owns the click, the title,
+// the caption and the ring.
+Item {
   id: root
-  tone: "surface"
 
   // { name, title, description, theme, screenBorder, bars: [{ location,
   // surface, floating }], docks: [{ edge }] }
   required property var example
+  required property bool applied
 
   // Its theme's preview colors, or the running theme's for one not found
   readonly property var preview: ThemeFamilies.previewOf(ThemeManager.themeFamilies, root.example.theme ?? "") ?? ({})
   // Its theme's roles (StyleTokens.preview), null for one not found
   readonly property var roles: root.preview.roles ?? null
-  readonly property bool applied: SavedConfigsManager.activeSource === root.example.name
-
-  implicitHeight: column.implicitHeight + Widget.padding * 2
-  border.width: Style.focusWidth
-  border.color: root.applied ? Style.accent : area.containsMouse ? Style.borderStrong : Qt.alpha(Style.borderStrong, 0) // style-exempt: the hover border at no alpha, so the fade doesn't pass through black
-
-  ColorGlide on border.color {}
-
-  StateLayer {
-    hovered: area.containsMouse
-    pressed: area.pressed
-  }
 
   ColumnLayout {
     id: column
     anchors.fill: parent
-    anchors.margins: Widget.padding
     spacing: Widget.spacing / 2
 
     // The screen, 16:10
@@ -62,6 +50,17 @@ Surface {
         color: "transparent"
         border.width: Math.max(1, screen.gap / 2)
         border.color: root.roles?.divider ?? Style.divider
+      }
+
+      // On the screen's top-right corner, over everything
+      StatusChip {
+        z: 1
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: screen.gap
+        shown: root.applied
+        tone: "accent"
+        text: I18n.tr("Applied")
       }
 
       Repeater {
@@ -166,39 +165,5 @@ Surface {
         }
       }
     }
-
-    RowLayout {
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
-
-      StyledLabel {
-        Layout.fillWidth: true
-        text: root.example.title
-        textFormat: Text.PlainText
-        role: "label"
-      }
-
-      StatusChip {
-        shown: root.applied
-        tone: "accent"
-        text: I18n.tr("Applied")
-      }
-    }
-
-    StyledText {
-      Layout.fillWidth: true
-      text: root.example.description
-      textFormat: Text.PlainText
-      role: "caption"
-      tone: "muted"
-    }
-  }
-
-  MouseArea {
-    id: area
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
-    onClicked: SavedConfigsManager.applyExample(root.example.name)
   }
 }

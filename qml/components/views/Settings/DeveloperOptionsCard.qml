@@ -10,10 +10,8 @@ import qs.components.forms
 // options switch, which shows the Development category (kept by axiom, not
 // in config; the category shows while dev mode is on too), and a line on
 // dev mode
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   readonly property string detail: {
     if (!DevManager.enabled)

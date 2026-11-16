@@ -102,6 +102,8 @@ EntryListCard {
         image: DockManager.iconFor(appId, null)
         label: entry?.name || appId
         subtitle: entry ? "" : I18n.tr("No app with this id")
+        issue: entry ? "" : "error"
+        issueTip: I18n.tr("No app with this id")
         canRemove: true
         onRemoveRequested: root.unpinAt(pinnedRow.index)
 

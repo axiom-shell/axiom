@@ -38,8 +38,9 @@ OnboardingPage {
     }, {}))
   }
 
-  // Two columns of rows, the first half of the list in the left one
-  readonly property int half: Math.ceil(ThemeManager.integrations.length / 2)
+  // Two columns of rows, read row by row: the left one the even entries, the right one the odd
+  readonly property var leftKeys: ThemeManager.integrations.filter((key, index) => index % 2 === 0)
+  readonly property var rightKeys: ThemeManager.integrations.filter((key, index) => index % 2 === 1)
 
   Component {
     id: integrationRow
@@ -49,7 +50,9 @@ OnboardingPage {
       required property string modelData
       readonly property bool present: root.installed(modelData)
 
-      label: I18n.tr(ThemeManager.integrationTitle(modelData))
+      // (i18n: keys from the schema: integration titles; the row translates)
+      label: ThemeManager.integrationTitle(modelData)
+      dimmed: !integration.present
       checked: ThemeIntegrations[modelData] === true
       onToggled: on => {
         const values = {};
@@ -74,7 +77,7 @@ OnboardingPage {
       Layout.alignment: Qt.AlignTop
 
       Repeater {
-        model: ThemeManager.integrations.slice(0, root.half)
+        model: root.leftKeys
         delegate: integrationRow
       }
     }
@@ -84,7 +87,7 @@ OnboardingPage {
       Layout.alignment: Qt.AlignTop
 
       Repeater {
-        model: ThemeManager.integrations.slice(root.half)
+        model: root.rightKeys
         delegate: integrationRow
       }
     }

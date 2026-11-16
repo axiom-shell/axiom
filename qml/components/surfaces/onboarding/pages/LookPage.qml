@@ -199,12 +199,31 @@ OnboardingPage {
     Repeater {
       model: SavedConfigsManager.examples
 
-      delegate: ExampleCard {
+      delegate: PreviewTile {
+        id: exampleTile
         required property var modelData
+        readonly property bool applied: SavedConfigsManager.activeSource === exampleTile.modelData.name
+
         width: examples.tileWidth
-        example: modelData
+        title: exampleTile.modelData.title
+        caption: exampleTile.modelData.description
+        selected: exampleTile.applied
+        preview: exampleScreen
+        previewProperties: ({
+            "example": exampleTile.modelData,
+            "applied": exampleTile.applied
+          })
+        // The screen 16:10 over its palette row
+        previewHeight: (examples.tileWidth - Widget.smallPadding) * 10 / 16 + Widget.px(10) + Widget.spacing / 2
+        onClicked: SavedConfigsManager.applyExample(exampleTile.modelData.name)
       }
     }
+  }
+
+  Component {
+    id: exampleScreen
+
+    ExampleScreen {}
   }
 
   extras: [

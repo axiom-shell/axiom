@@ -118,6 +118,7 @@ DeviceRow {
             buttonIcon: "lock_open"
             buttonTip: I18n.tr("Unlock")
             focusOnShow: true
+            escapeCancels: true
             onSubmitted: DrivesManager.unlock(text)
             onCancelled: DrivesManager.cancelUnlock()
           }

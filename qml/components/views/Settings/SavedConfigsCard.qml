@@ -14,7 +14,7 @@ import qs.components.forms
  * marked Current, with an unsaved dot once the running config differs, and
  * its Restore is Revert (its edits discarded). Overwrite, restore, delete
  * and reverting to the defaults ask for a second click to confirm (a ConfirmGate: the
- * arming lapses after a few seconds); an
+ * arming waits for the second press); an
  * armed restore or apply says in place of its subtitle where the running
  * config goes first (SavedConfigsManager.keepHint). Restoring (a snapshot
  * or the defaults) leaves machine settings as they are. Below them, exporting
@@ -22,16 +22,15 @@ import qs.components.forms
  * then the example setups (SavedConfigsManager.examples), applied the same
  * way.
  */
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   description: I18n.tr("Snapshots of the look, layout, keybinds, apps and wallpapers, stored in {0}. Restoring one leaves monitors, accounts, theme integrations and other settings for this PC as they are.", SavedConfigsManager.savedDir)
 
   // Which action waits for its confirming click: the gate's key (`keyOf`)
   ConfirmGate {
     id: gate
+    timeout: 0
   }
   // The share options: what an export includes, what an import takes (the
   // latter off for each new file)
@@ -98,6 +97,7 @@ FieldGroup {
   StatusLine {
     visible: !root.shareStatus && SavedConfigsManager.status !== ""
     text: SavedConfigsManager.status
+    role: "caption"
     Layout.fillWidth: true
   }
 
@@ -264,6 +264,7 @@ FieldGroup {
   StatusLine {
     visible: root.shareStatus && SavedConfigsManager.status !== ""
     text: SavedConfigsManager.status
+    role: "caption"
     Layout.fillWidth: true
   }
 
@@ -352,6 +353,7 @@ FieldGroup {
     StatusLine {
       visible: text !== ""
       text: SavedConfigsManager.keepHint("")
+      role: "caption"
       Layout.fillWidth: true
     }
 

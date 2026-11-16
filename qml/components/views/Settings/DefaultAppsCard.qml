@@ -64,8 +64,10 @@ PageCard {
     onToggled: other.open = !other.open
   }
 
+  // The lookup and what opens the type it found: one row
   FormRow {
     shown: other.open
+    tinted: false
     bodyHeight: lookup.implicitHeight
 
     ColumnLayout {
@@ -97,25 +99,21 @@ PageCard {
           onClicked: root.lookUp()
         }
       }
-    }
-  }
 
-  FormRow {
-    shown: other.open && root.otherState !== null
-    bodyHeight: otherPick.implicitHeight
-
-    StyledComboEntry {
-      id: otherPick
-      width: parent.width
-      enabled: !DefaultAppsManager.busy && (root.otherState?.handlers ?? []).length > 0
-      value: root.otherState?.default ?? ""
-      placeholderText: I18n.tr("No app opens this type")
-      options: pickers.optionsOf(root.otherState?.handlers)
-      onPicked: value => {
-        DefaultAppsManager.setType(root.otherMime, value);
-        root.otherState = Object.assign({}, root.otherState, {
-          "default": value
-        });
+      StyledComboEntry {
+        id: otherPick
+        Layout.fillWidth: true
+        visible: root.otherState !== null
+        enabled: !DefaultAppsManager.busy && (root.otherState?.handlers ?? []).length > 0
+        value: root.otherState?.default ?? ""
+        placeholderText: I18n.tr("No app opens this type")
+        options: pickers.optionsOf(root.otherState?.handlers)
+        onPicked: value => {
+          DefaultAppsManager.setType(root.otherMime, value);
+          root.otherState = Object.assign({}, root.otherState, {
+            "default": value
+          });
+        }
       }
     }
   }

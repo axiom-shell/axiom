@@ -15,6 +15,9 @@ FormRow {
   property string label: ""
   property string description: ""
   property bool checked: false
+  // The label is data, shown as it is (FieldHeader.plainLabel); dimmed: its faint tone
+  property bool plainLabel: false
+  property bool dimmed: false
   // Why the switch can't be used; empty while it can
   property string unavailableReason: ""
   // Before the label
@@ -43,6 +46,8 @@ FormRow {
       id: line
       Layout.fillWidth: true
       label: root.label
+      plainLabel: root.plainLabel
+      dimmed: root.dimmed
       description: root.unavailableReason !== "" ? root.unavailableReason : root.description
       checked: root.checked
       onToggled: newValue => root.toggled(newValue)

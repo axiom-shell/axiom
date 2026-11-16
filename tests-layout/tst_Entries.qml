@@ -219,4 +219,57 @@ TestCase {
     compare(entry.edits, ["a", "ab"]);
     compare(entry.commits.length, 0);
   }
+
+  Component {
+    id: escapeComp
+
+    Item {
+      property alias entry: sub
+      property int parentEscapes: 0
+      property int cancels: 0
+      width: 300
+      height: 40
+      Keys.onEscapePressed: parentEscapes++
+
+      SubmitEntry {
+        id: sub
+        width: 300
+        buttonIcon: "link"
+        onCancelled: parent.cancels++
+      }
+    }
+  }
+
+  // Escape goes on to the parents unless the entry is told to cancel
+  function test_submitEntry_escape() {
+    const host = createTemporaryObject(escapeComp, root);
+    host.entry.input.forceActiveFocus();
+    keyClick(Qt.Key_Escape);
+    compare(host.parentEscapes, 1, "Escape passes on");
+    compare(host.cancels, 0);
+    host.entry.escapeCancels = true;
+    keyClick(Qt.Key_Escape);
+    compare(host.cancels, 1);
+    compare(host.parentEscapes, 1, "and stops here");
+  }
+
+  Component {
+    id: pushedComp
+
+    CommitEntry {
+      width: 300
+      value: ""
+      onCommitted: text => value = text
+    }
+  }
+
+  // Tab out commits what was typed and the pushed value is that text, at once and after
+  function test_commitEntry_keeps_typed_text_on_tab_out() {
+    const entry = createTemporaryObject(pushedComp, root);
+    root.type(entry, "typed");
+    entry.input.focus = false;
+    compare(entry.text, "typed");
+    wait(0);
+    compare(entry.text, "typed");
+  }
 }

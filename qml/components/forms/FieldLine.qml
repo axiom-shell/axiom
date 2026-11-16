@@ -21,6 +21,9 @@ Item {
   id: root
 
   property string label: ""
+  // The label is data (FieldHeader.plainLabel) / dimmed (FieldHeader.dimmed)
+  property bool plainLabel: false
+  property bool dimmed: false
   property string description: ""
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
@@ -64,6 +67,8 @@ Item {
     FieldHeader {
       id: header
       label: root.label
+      plainLabel: root.plainLabel
+      dimmed: root.dimmed
       trailing: root.headerExtra
       Layout.row: 0
       Layout.column: 0

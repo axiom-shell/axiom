@@ -21,7 +21,13 @@ FieldLine {
   }
 
   StyledSwitch {
+    id: sw
     checked: root.checked
-    onToggled: root.toggled(checked)
+    onToggled: {
+      root.toggled(sw.checked);
+      // A click sets checked itself; it follows `checked` again, so a host
+      // that refuses or answers later is shown as it is
+      sw.checked = Qt.binding(() => root.checked);
+    }
   }
 }

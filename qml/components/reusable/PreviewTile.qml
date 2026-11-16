@@ -9,11 +9,12 @@ import qs.components.methods
 // choice. Two looks. With an `icon`, `description` or `tag` it is a card: the
 // icon, the `title` with its tag chip (`tag`, a StatusChip `tagTone`) and the
 // description. Otherwise it is a `preview` over the `title` (`previewHeight`
-// tall, 0 for none). `selected` fills it with the accent container and rings
+// tall, 0 for none) and under it a muted `caption` (wrapping, at most
+// `captionLines`; while set the tile reserves all those lines, so tiles in a
+// row stay even). Titles are names: plain text, never markup. `selected` fills it with the accent container and rings
 // it in the accent (an unselected one tints under the pointer); a non-empty
 // `disabledReason` ignores clicks and says why: a card greys its content and
-// shows the reason under the description (a warning line, as the
-// onboarding's OptionCard did), a preview tile greys and says it in a tooltip
+// shows the reason under the description (a warning line), a preview tile greys and says it in a tooltip
 // on hover. `clicked` on a click or Space/Enter; `menus` makes a right click
 // `menuRequested(x, y)` (off, the click is left to what is under the tile). `tabStop: false` leaves the Tab stop
 // to a host that moves between tiles itself (ChoiceTiles, which sets `ringed`
@@ -26,6 +27,10 @@ Surface {
   property string icon: ""
   property string description: ""
   property string tag: ""
+  // The preview look's muted line under the title, and how many lines it
+  // reserves and shows at most (elided after)
+  property string caption: ""
+  property int captionLines: 2
   // StatusChip's tone for the tag
   property string tagTone: "accent"
   property bool selected: false
@@ -45,7 +50,9 @@ Surface {
   // The height its content needs (a host may stretch it with `height`)
   readonly property bool card: root.icon !== "" || root.description !== "" || root.tag !== ""
   readonly property bool disabled: root.disabledReason !== ""
-  readonly property real contentHeight: root.card ? cardRow.implicitHeight + Widget.padding * 2 : (root.previewHeight > 0 ? root.previewHeight + Widget.smallPadding : 0) + Widget.height
+  // The room the caption reserves (its lines, while it is set)
+  readonly property real captionRoom: root.caption === "" ? 0 : root.captionLines * captionMetrics.lineSpacing
+  readonly property real contentHeight: root.card ? cardRow.implicitHeight + Widget.padding * 2 : (root.previewHeight > 0 ? root.previewHeight + Widget.smallPadding : 0) + Widget.height + root.captionRoom
 
   signal clicked
   signal menuRequested(real x, real y)
@@ -68,6 +75,12 @@ Surface {
 
   FocusRing {
     shown: root.ringed
+  }
+
+  FontMetrics {
+    id: captionMetrics
+    font.family: Appearance.fontFamily
+    font.pixelSize: Style.typeCaption
   }
 
   // The card look
@@ -99,6 +112,7 @@ Surface {
 
         StyledLabel {
           text: root.title
+          textFormat: Text.PlainText
           role: "label"
         }
 
@@ -204,13 +218,31 @@ Surface {
       anchors.left: parent.left
       anchors.right: parent.right
       anchors.bottom: parent.bottom
+      anchors.bottomMargin: root.captionRoom
       height: Widget.height - Widget.smallPadding
+      textFormat: Text.PlainText
       horizontalAlignment: Text.AlignHCenter
       verticalAlignment: Text.AlignVCenter
       role: "label"
       overflow: "line"
       text: root.title
       textColor: root.selected ? Style.inkAccentContainer.text : Style.inkSurface.text
+    }
+
+    StyledText {
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      height: root.captionRoom
+      visible: root.caption !== ""
+      horizontalAlignment: Text.AlignHCenter
+      verticalAlignment: Text.AlignTop
+      role: "caption"
+      overflow: "wrap"
+      maxLines: root.captionLines
+      textFormat: Text.PlainText
+      text: root.caption
+      textColor: root.selected ? Style.inkAccentContainer.muted : Style.inkSurface.muted
     }
   }
 

@@ -11,6 +11,7 @@ Notice {
   id: root
   status: "accent"
   clickable: true
+  spinning: DevManager.building
   icon: DevManager.building ? "progress_activity" : DevManager.buildFailed ? "error" : "code"
   text: {
     const parts = [I18n.tr("Dev mode"), Paths.shortenHome(DevManager.tree)];

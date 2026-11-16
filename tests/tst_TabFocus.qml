@@ -41,4 +41,16 @@ TestCase {
       verify(text.includes("FieldFrame {"), file + " is a FieldFrame");
     }
   }
+
+  // The tile pages draw their tiles as PreviewTile, which owns the click and
+  // the Tab stop: none has a MouseArea of its own
+  readonly property var tiles: ["qml/components/views/Settings/CommunitySetupsCard.qml", "qml/components/surfaces/onboarding/pages/LookPage.qml", "qml/components/views/CustomWidgets/GalleryForm.qml"]
+
+  function test_tiles_are_preview_tiles() {
+    for (const file of root.tiles) {
+      const text = repo.text(file);
+      verify(text.includes("PreviewTile {"), file + " draws PreviewTile tiles");
+      verify(!text.includes("MouseArea {"), file + " has no MouseArea of its own");
+    }
+  }
 }

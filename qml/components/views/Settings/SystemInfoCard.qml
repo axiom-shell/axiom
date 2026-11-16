@@ -14,10 +14,8 @@ import qs.components.forms
 // (its name, operating system, hardware and uptime) and this axiom (its
 // version and how it's installed), with Copy system info (the bug report's
 // lines, nothing personal) and Rename (hostnamed, polkit asks)
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   readonly property var info: SystemInfoManager.info
   readonly property var report: SystemInfoManager.report

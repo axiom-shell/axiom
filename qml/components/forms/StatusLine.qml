@@ -14,6 +14,8 @@ RowLayout {
   property string text
   // StyledText's tone ("": the role's)
   property string tone: ""
+  // StyledText's role of the words
+  property string role: "body"
   // A StatusChip's word, shown before the text while set
   property string chip
   // success | warning | error | info | accent | neutral
@@ -34,6 +36,7 @@ RowLayout {
     visible: root.text !== ""
     text: root.text
     tone: root.tone
+    role: root.role
     overflow: "wrap"
     Layout.fillWidth: true
   }

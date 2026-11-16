@@ -1837,4 +1837,144 @@ TestCase {
     keyClick(Qt.Key_Space);
     compare(clicks, 1);
   }
+
+  // -- Wave 3 review fixes (W3R-a) --
+
+  Component {
+    id: formSwitchRowComp
+
+    SwitchRow {
+      width: 400
+      label: "Flip"
+      checked: false
+    }
+  }
+
+  function _switchOf(row) {
+    return findAll(row, it => it instanceof StyledSwitch)[0];
+  }
+
+  // A click sets the switch's own `checked`; it follows the row's again, so a
+  // host that refuses the change shows as it is
+  function test_switchRow_follows_checked_after_a_click() {
+    harness.configure({});
+    const row = createTemporaryObject(formSwitchRowComp, root);
+    waitForRendering(row);
+    const sw = root._switchOf(row);
+    verify(sw);
+    mouseClick(sw);
+    compare(sw.checked, false, "the host ignored the click");
+    row.checked = true;
+    compare(sw.checked, true, "and follows the row after");
+  }
+
+  // A label that is data shows as it is; a dimmed row is faint
+  function test_switchRow_plain_label_and_dimmed() {
+    harness.configure({});
+    const row = createTemporaryObject(formSwitchRowComp, root);
+    row.label = "<b>x</b>";
+    row.plainLabel = true;
+    row.dimmed = true;
+    waitForRendering(row);
+    const label = findAll(row, it => it.text === "<b>x</b>")[0];
+    verify(label, "the label shows as typed");
+    compare(label.textFormat, Text.PlainText);
+    compare(String(label.color), String(Style.textFaint));
+  }
+
+  Component {
+    id: statusLineComp
+
+    StatusLine {
+      width: 400
+      text: "Saved"
+    }
+  }
+
+  function test_statusLine_role() {
+    harness.configure({});
+    const line = createTemporaryObject(statusLineComp, root);
+    line.role = "caption";
+    const text = findAll(line, it => it !== line && it.text === "Saved")[0];
+    verify(text);
+    compare(text.font.pixelSize, Style.typeCaption);
+  }
+
+  Component {
+    id: noticeActionsComp
+
+    Notice {
+      width: 300
+      text: "Something to read here that wraps onto a couple of lines at this width"
+      actionText: "Open it"
+
+      StyledTextButton {
+        text: "Other thing"
+      }
+    }
+  }
+
+  Component {
+    id: noticeIconActionComp
+
+    Notice {
+      width: 600
+      text: "Short"
+
+      StyledIconButton {
+        objectName: "small"
+        iconText: "close"
+      }
+    }
+  }
+
+  function test_notice_spinner_and_chevron() {
+    harness.configure({});
+    const notice = createTemporaryObject(noticeComp, root);
+    notice.spinning = true;
+    const spinner = findAll(notice, it => it !== notice && it.spinning === true)[0];
+    verify(spinner, "its icon is a SpinningIcon");
+    if (Appearance.animations)
+      tryVerify(() => spinner.rotation !== 0, 1000, "turning");
+    compare(findAll(notice, it => it.text === "chevron_right" && it.visible).length, 0);
+    notice.clickable = true;
+    compare(findAll(notice, it => it.text === "chevron_right" && it.visible).length, 1, "a clickable callout says it opens something");
+  }
+
+  function test_notice_actions_below_when_wide() {
+    harness.configure({});
+    const notice = createTemporaryObject(noticeActionsComp, root);
+    waitForRendering(notice);
+    const text = findAll(notice, it => it !== notice && it.text !== undefined && it.text.startsWith("Something"))[0];
+    const button = findAll(notice, it => it.text === "Open it")[0];
+    verify(text && button);
+    wait(30);
+    const textBottom = text.mapToItem(notice, 0, text.height).y;
+    const buttonTop = button.mapToItem(notice, 0, 0).y;
+    verify(buttonTop >= textBottom - 1, "two labelled buttons go under the text at 300");
+    const small = createTemporaryObject(noticeIconActionComp, root);
+    waitForRendering(small);
+    wait(30);
+    const icon = findAll(small, it => it.objectName === "small")[0];
+    const label = findAll(small, it => it !== small && it.text === "Short")[0];
+    verify(icon.mapToItem(small, 0, 0).y < label.mapToItem(small, 0, label.height).y, "a small icon action stays beside the text");
+  }
+
+  Component {
+    id: thumbComp
+
+    Thumbnail {
+      width: 88
+      height: 88
+      placeholderIcon: "person"
+    }
+  }
+
+  function test_thumbnail_placeholder_fits_its_box() {
+    harness.configure({});
+    const thumb = createTemporaryObject(thumbComp, root);
+    const glyph = findAll(thumb, it => it.text === "person")[0];
+    verify(glyph);
+    compare(glyph.textSize, 40);
+  }
 }

@@ -6,7 +6,8 @@ import qs.components.reusable
 import qs.components.content.parts
 
 // ItemRow: its actions show while the row is hovered or one of them has
-// keyboard focus, and stay out of reach otherwise.
+// keyboard focus, and stay out of reach otherwise (hidden actions stay Tab
+// stops and show when one takes focus).
 TestCase {
   id: root
 
@@ -51,5 +52,42 @@ TestCase {
     action.focus = false;
     root.forceActiveFocus();
     verify(!row.revealed);
+  }
+
+  Component {
+    id: afterFieldComp
+
+    Column {
+      property alias before: field
+      property alias row: row
+
+      TextInput {
+        id: field
+        width: 100
+        height: 20
+        activeFocusOnTab: true
+      }
+
+      ItemRow {
+        id: row
+        width: 360
+        title: "Entry"
+
+        StyledIconButton {
+          objectName: "action"
+          iconText: "delete"
+        }
+      }
+    }
+  }
+
+  function test_tab_reveals() {
+    const col = createTemporaryObject(afterFieldComp, root);
+    verify(col);
+    col.before.forceActiveFocus();
+    keyClick(Qt.Key_Tab);
+    const action = findChild(col.row, "action");
+    verify(action.activeFocus, "Tab from the field lands on the hidden action");
+    verify(col.row.revealed, "and shows it");
   }
 }

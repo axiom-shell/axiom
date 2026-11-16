@@ -77,8 +77,8 @@ ColumnLayout {
       Repeater {
         model: CustomWidgetData.galleryPresets.length
 
-        // A template's tile, its description under it
-        Column {
+        // A template's tile, its description as the tile's caption
+        PreviewTile {
           id: cell
           required property int index
           readonly property var template: CustomWidgetData.galleryPresets[cell.index]
@@ -92,27 +92,16 @@ ColumnLayout {
           readonly property var size: CustomWidgetData.designSize(CustomWidgetData.allElements(cell.definition.module), cell.definition.module.size)
 
           width: tiles.tileWidth
-          spacing: Widget.spacing / 2
-
-          PreviewTile {
-            width: parent.width
-            title: I18n.tr(cell.template.name)
-            previewHeight: tiles.tileWidth * 0.6
-            preview: modulePreview
-            previewProperties: ({
-                "definition": cell.definition,
-                "fields": cell.fields,
-                "size": cell.size
-              })
-            onClicked: root.editor.addTemplate(cell.template)
-          }
-          StyledText {
-            width: parent.width
-            text: I18n.tr(cell.template.description ?? "")
-            role: "caption"
-            tone: "muted"
-            overflow: "wrap"
-          }
+          title: I18n.tr(cell.template.name)
+          caption: I18n.tr(cell.template.description ?? "")
+          previewHeight: tiles.tileWidth * 0.6
+          preview: modulePreview
+          previewProperties: ({
+              "definition": cell.definition,
+              "fields": cell.fields,
+              "size": cell.size
+            })
+          onClicked: root.editor.addTemplate(cell.template)
         }
       }
     }

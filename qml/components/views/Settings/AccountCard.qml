@@ -12,10 +12,8 @@ import qs.components.reusable
 // account, and what they change themselves: the picture (also the lock
 // and login screens'), their real name, their password, and the
 // first-time setup run again
-FieldGroup {
+PageCard {
   id: root
-  bodySpacing: Style.space2
-  foldable: false
 
   // Which change is open: "" | "name" | "password"
   property string editing: ""

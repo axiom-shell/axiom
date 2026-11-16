@@ -38,6 +38,7 @@ FoldingCard {
   // Removing an account or a local calendar asks for a second click
   ConfirmGate {
     id: gate
+    timeout: 0
   }
   // False once destroyed, for callbacks that outlive the card
   property bool _alive: true
@@ -286,11 +287,6 @@ FoldingCard {
   }
 
   // The account's calendars
-  StyledSeparator {
-    visible: (root.account?.calendars ?? []).length > 0
-    Layout.fillWidth: true
-  }
-
   Repeater {
     model: (root.account?.calendars ?? []).length
 

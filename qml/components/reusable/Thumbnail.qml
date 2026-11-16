@@ -7,7 +7,8 @@ import qs.config
 // asynchronously at `decodeSize` and cropped (`fillMode`) to the box. The
 // callers size it (and set `radius` to differ): a row's thumbnail, a custom
 // widget's Image element and list tiles. `round` makes it a circle (an
-// avatar); `placeholderIcon` is a glyph shown until the picture is ready.
+// avatar); `placeholderIcon` is a faint glyph, fitted to the box, shown until
+// the picture is ready.
 ClippingRectangle {
   id: root
 
@@ -29,8 +30,8 @@ ClippingRectangle {
     anchors.centerIn: parent
     visible: root.placeholderIcon !== "" && image.status !== Image.Ready
     text: root.placeholderIcon
-    size: "md"
-    tone: "muted"
+    textSize: Math.max(Style.typeMicro, Math.round(Math.min(root.width, root.height) * 0.45)) // fitted: the box
+    tone: "faint"
   }
 
   Image {

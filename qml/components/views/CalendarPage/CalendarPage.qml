@@ -189,6 +189,8 @@ BaseView {
                     readonly property var calendar: calendarRepeater.calendars[index] ?? ({})
 
                     label: calendarRow.calendar.name
+                    plainLabel: true
+                    dimmed: !calendarRow.calendar.enabled
                     checked: calendarRow.calendar.enabled
                     onToggled: on => root.setShown(calendarRow.calendar, on)
 

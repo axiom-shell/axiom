@@ -153,6 +153,7 @@ ColumnLayout {
     placeholderText: root.security === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
     canSubmit: root.complete
     onSubmitted: root.submit()
+    escapeCancels: true
     onCancelled: root.cancelled()
   }
 
