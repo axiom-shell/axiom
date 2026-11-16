@@ -1,5 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
+import qs.components.methods
+import qs.components.content.parts.custom.elements.List // qmllint disable unused-imports
 
 // One element of a custom widget's module, loaded by its kind
 // (elements/<Type>/Custom<Type>.qml, each a CustomElementBase).
@@ -12,8 +15,17 @@ Loader {
   property string widgetId: ""
   property bool actionsEnabled: true
   property string fallbackIcon: "widgets"
+  property var widgetActions: []
+  property bool failing: false
+  property bool busy: false
+  property string moduleFont: ""
+  property bool keysHost: false
 
   readonly property string kind: root.element?.type ?? "Text"
+  // Its kind's bindings (what a colour rule reads by default: the first)
+  readonly property var kindSlots: CustomWidgetsConfig.elementKind(root.kind)?.slots ?? []
+  // Its Visible rule (showWhen) holds for the current sample
+  readonly property bool shown: CustomWidgetData.shown(root.element?.showWhen, root.fields, CustomWidgetData.ownValue(root.fields, root.element?.bind, root.kindSlots[0] ?? ""))
 
   // Built with its config, so it never sees itself empty, and bound to it
   function _load() {
@@ -23,7 +35,13 @@ Loader {
       "history": Qt.binding(() => root.history),
       "widgetId": Qt.binding(() => root.widgetId),
       "actionsEnabled": Qt.binding(() => root.actionsEnabled),
-      "fallbackIcon": Qt.binding(() => root.fallbackIcon)
+      "fallbackIcon": Qt.binding(() => root.fallbackIcon),
+      "widgetActions": Qt.binding(() => root.widgetActions),
+      "failing": Qt.binding(() => root.failing),
+      "busy": Qt.binding(() => root.busy),
+      "moduleFont": Qt.binding(() => root.moduleFont),
+      "keysHost": Qt.binding(() => root.keysHost),
+      "kindSlots": Qt.binding(() => root.kindSlots)
     });
   }
   // A binding sets `kind` during creation, before completion; the element

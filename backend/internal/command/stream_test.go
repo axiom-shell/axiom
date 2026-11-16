@@ -146,3 +146,197 @@ func alive(pid string) bool {
 	fields := strings.Fields(string(stat[strings.LastIndexByte(string(stat), ')')+1:]))
 	return len(fields) > 0 && fields[0] != "Z"
 }
+
+// A stream that exits publishes its exit with the last stderr line and
+// Exited, even when the line has no newline or the exit leaves no text.
+func TestStreamExitCarriesStderr(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, script, text, stderr string
+		code                       int
+	}{
+		{name: "no output", script: `echo x >&2; exit 3`, stderr: "x", code: 3},
+		{name: "no newline", script: `printf boom >&2; exit 4`, stderr: "boom", code: 4},
+		{name: "last line wins", script: `echo one >&2; echo two >&2; echo out; exit 5`, text: "out", stderr: "two", code: 5},
+		{name: "no stderr", script: `exit 6`, code: 6},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			_, s := streamed(t, c.script, FormatText)
+			e := s.entry(t, c.script)
+			for e.ExitCode == 0 && e.Text != "" { // a line before the exit
+				e = s.entry(t, c.script)
+			}
+			if e.ExitCode != c.code || e.Text != c.text || e.Stderr != c.stderr || !e.Exited {
+				t.Errorf("entry %+v, want exit %d text %q stderr %q exited", e, c.code, c.text, c.stderr)
+			}
+		})
+	}
+}
+
+// A stream that exits 0 isn't published as Exited (Exited is a non-zero
+// exit).
+func TestStreamCleanExitNotExited(t *testing.T) {
+	t.Parallel()
+	script := `echo hi; exit 0`
+	_, s := streamed(t, script, FormatText)
+	e := s.entry(t, script)
+	if e.Text != "hi" || e.ExitCode != 0 || e.Exited {
+		t.Errorf("entry %+v, want text hi, exit 0, not exited", e)
+	}
+}
+
+// A run's entry never carries an earlier run's stderr line.
+func TestStreamStderrResetsPerRun(t *testing.T) {
+	t.Parallel()
+	count := filepath.Join(t.TempDir(), "count")
+	script := `n=$(( $(cat ` + count + ` 2>/dev/null || echo 0) + 1 )); echo $n > ` + count +
+		`; if [ $n = 1 ]; then echo first >&2; exit 3; fi; exit 4`
+	h, s := streamed(t, script, FormatText)
+	if e := s.entry(t, script); e.ExitCode != 3 || e.Stderr != "first" {
+		t.Fatalf("first run %+v", e)
+	}
+	h.clock.Advance(firstBackoff)
+	if e := s.entry(t, script); e.ExitCode != 4 || e.Stderr != "" || !e.Exited {
+		t.Errorf("second run %+v", e)
+	}
+}
+
+// pidOf reads an entry's text as the process id the script printed.
+func pidOf(t *testing.T, e Entry) string {
+	t.Helper()
+	if _, err := strconv.Atoi(e.Text); err != nil {
+		t.Fatalf("entry %+v isn't a pid", e)
+	}
+	return e.Text
+}
+
+// Restart replaces a running stream's process at once (no backoff, no
+// exit published for the killed one), and one that exited and waits out
+// its backoff starts again without waiting, with the backoff started
+// over.
+func TestStreamRestart(t *testing.T) {
+	t.Parallel()
+	t.Run("running", func(t *testing.T) {
+		t.Parallel()
+		script := `echo $$; exec sleep 100`
+		h, s := streamed(t, script, FormatText)
+		first := pidOf(t, s.entry(t, script))
+		h.w.Restart(script)
+		e := s.entry(t, script)
+		if second := pidOf(t, e); second == first {
+			t.Errorf("the same process %s", first)
+		}
+		if e.ExitCode != 0 || e.Exited {
+			t.Errorf("an exit published for the killed run: %+v", e)
+		}
+		if !testkit.Eventually(func() bool { return !alive(first) }) {
+			t.Errorf("%s still runs", first)
+		}
+		s.quiet(t)
+	})
+	t.Run("backoff", func(t *testing.T) {
+		t.Parallel()
+		script := `echo $$; exit 3`
+		h, s := streamed(t, script, FormatText)
+		exited := func() string {
+			t.Helper()
+			e := s.entry(t, script)
+			if e.ExitCode == 0 && !e.Exited { // the line, before the exit
+				e = s.entry(t, script)
+			}
+			if e.ExitCode != 3 || !e.Exited {
+				t.Fatalf("entry %+v", e)
+			}
+			return pidOf(t, e)
+		}
+		first := exited()
+		h.clock.Advance(firstBackoff) // the second run: the backoff doubles to 2s
+		second := exited()
+		h.w.Restart(script) // no clock advance: no waiting
+		third := exited()
+		if first == second || second == third {
+			t.Errorf("pids %s %s %s", first, second, third)
+		}
+		// The backoff started over: one firstBackoff, not two
+		h.clock.Advance(firstBackoff)
+		if fourth := exited(); fourth == third {
+			t.Errorf("no new process after %s", third)
+		}
+	})
+}
+
+// settle waits until n waits end firstBackoff from now (a new process
+// armed its settle timer, beside the n-1 left over), then moves the clock
+// firstBackoff.
+func settle(t *testing.T, h *harness, n int) {
+	t.Helper()
+	if !testkit.Eventually(func() bool { return h.clock.armed(firstBackoff) >= n }) {
+		t.Fatal("no process waits to settle")
+	}
+	h.clock.Advance(firstBackoff)
+}
+
+// A new process that runs firstBackoff clears the last one's non-zero
+// exit (Exited, stderr), however it started; one that exits sooner
+// publishes its own exit with nothing cleared between.
+func TestStreamNewProcessClearsExit(t *testing.T) {
+	t.Parallel()
+	flaky := func(t *testing.T) string {
+		count := filepath.Join(t.TempDir(), "count")
+		return `n=$(( $(cat ` + count + ` 2>/dev/null || echo 0) + 1 )); echo $n > ` + count +
+			`; if [ $n = 1 ]; then echo x >&2; exit 3; fi; exec sleep 100`
+	}
+	cleared := func(t *testing.T, s *fakeSub, script string) {
+		t.Helper()
+		e := s.entry(t, script)
+		if e.ExitCode != 0 || e.Exited || e.Stderr != "" {
+			t.Errorf("entry %+v, want exit 0, not exited, no stderr", e)
+		}
+	}
+	t.Run("restart", func(t *testing.T) {
+		t.Parallel()
+		script := flaky(t)
+		h, s := streamed(t, script, FormatText)
+		if e := s.entry(t, script); e.ExitCode != 3 || !e.Exited || e.Stderr != "x" {
+			t.Fatalf("first run %+v", e)
+		}
+		h.w.Restart(script)
+		settle(t, h, 3) // beside the exited run's settle timer and backoff wait
+		cleared(t, s, script)
+	})
+	t.Run("backoff", func(t *testing.T) {
+		t.Parallel()
+		script := flaky(t)
+		h, s := streamed(t, script, FormatText)
+		if e := s.entry(t, script); e.ExitCode != 3 || !e.Exited || e.Stderr != "x" {
+			t.Fatalf("first run %+v", e)
+		}
+		if !testkit.Eventually(func() bool { return h.clock.armed(firstBackoff) >= 2 }) { // the exited run's settle timer and the backoff
+			t.Fatal("no backoff")
+		}
+		h.clock.Advance(firstBackoff) // the backoff start
+		settle(t, h, 1)
+		cleared(t, s, script)
+	})
+	// No harness hook fails a start once: the start error case is skipped.
+	t.Run("crash loop", func(t *testing.T) {
+		t.Parallel()
+		script := `echo $$; exit 3`
+		h, s := streamed(t, script, FormatText)
+		exited := func() Entry {
+			e := s.entry(t, script)
+			if e.ExitCode == 0 && !e.Exited { // the line, before the exit
+				e = s.entry(t, script)
+			}
+			return e
+		}
+		first := exited()
+		h.w.Restart(script) // no clock advance
+		second := exited()
+		if second.ExitCode != 3 || !second.Exited || second.Text == first.Text {
+			t.Errorf("entries %+v then %+v", first, second)
+		}
+	})
+}

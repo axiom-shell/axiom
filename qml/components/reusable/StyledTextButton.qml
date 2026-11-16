@@ -22,6 +22,11 @@ Surface {
   property string iconText: ""
   // Draw the icon after the label instead of before it
   property bool iconAfter: false
+  // A fill of the owner's own colour (set `color` too): hover and press use
+  // the tints made for solid fills, as primary does
+  property bool ownFill: false
+  // The label's and icon's colour; null: the kind's
+  property var inkColor: null
   // The label's and the icon's size
   property real textSize: Style.typeLabel
   property string tooltipText: ""
@@ -50,7 +55,7 @@ Surface {
     }
   }
   // The label's and the icon's colour; SegmentButton sets it for a segment in a row
-  property color _contentColor: Style.toneOn(root.inkScope, root.kind === "text" ? "accent" : "text")
+  property color _contentColor: root.inkColor ?? Style.toneOn(root.inkScope, root.kind === "text" ? "accent" : "text")
 
   // No fill of its own: text and outlined buttons read the Surface they sit on
   tone: {
@@ -80,7 +85,7 @@ Surface {
   StateLayer {
     hovered: mouseArea.containsMouse
     pressed: mouseArea.pressed
-    onAccent: root.kind === "primary" || root.kind === "dangerPrimary"
+    onAccent: root.ownFill || root.kind === "primary" || root.kind === "dangerPrimary"
     radius: root.radius
   }
 

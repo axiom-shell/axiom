@@ -11,7 +11,8 @@ import qs.components.methods
 // label or under a heading per group (LibraryOrder). `types` are
 // { type, label, group }; `labelOf` and `headingOf` give the label and a
 // group's heading as shown (the caller translates them). The caller keeps
-// `grouped` and sets it on `groupingChosen`.
+// `grouped` and sets it on `groupingChosen`; `groupable` off hides the
+// switch, `fitsContent` sizes the library to its tiles.
 ColumnLayout {
   id: root
 
@@ -19,6 +20,11 @@ ColumnLayout {
   // Group names in order (the schema's `x-libraryGroups`)
   property var groups: []
   property bool grouped: false
+  // Whether the A–Z / By category switch shows (off: the types have no groups)
+  property bool groupable: true
+  // Sized to its tiles instead of filling its parent's height, for a library
+  // inside a pane that scrolls
+  property bool fitsContent: false
   // A type's label as shown, which it's sorted by
   property var labelOf: type => type.label
   // A group's heading ("": the types in none)
@@ -46,6 +52,8 @@ ColumnLayout {
     spacing: Widget.spacing
 
     SegmentRow {
+      visible: root.groupable
+
       SegmentButton {
         text: I18n.tr("A–Z")
         active: !root.grouped
@@ -78,11 +86,13 @@ ColumnLayout {
   StyledScrollView {
     id: scroll
     Layout.fillWidth: true
-    Layout.fillHeight: true
+    Layout.fillHeight: !root.fitsContent
+    Layout.preferredHeight: root.fitsContent ? tiles.implicitHeight : -1
     contentPadding: 0
     showScrollBar: true
 
     ColumnLayout {
+      id: tiles
       width: scroll.availableWidth
       spacing: Widget.spacing * 1.5
 

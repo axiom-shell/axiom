@@ -736,6 +736,8 @@ Loader {
       headerExtra: root.headerExtra
       headerBelow: root.headerBelow
       multiline: root.fieldSchema["x-multiline"] === true
+      // What the empty text means (x-emptyLabel), shown while it is empty
+      placeholderText: I18n.tr(root.fieldSchema["x-emptyLabel"] ?? "")
       browse: root.fieldSchema["x-control"] === "folder" ? "folder" : ""
       // Text that doesn't match yet (a half-typed time) isn't committed
       pattern: root.fieldSchema.pattern ?? null

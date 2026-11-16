@@ -1,6 +1,35 @@
 label: List
 icon: list
 defaultSize: [8, 4]
+help: task-list
 slots: [items]
 actions: [click]
-color: state
+color: {variant: state, colorStates: {default: {key: state}}}
+size: {variant: text, size: {default: normal}}
+settings:
+  orientation:
+    type: string
+    title: Direction
+    default: vertical
+    x-control: toggle
+    enum: [vertical, horizontal]
+    x-enumLabels: {vertical: Down, horizontal: Across}
+  iconSource:
+    type: string
+    title: Icons
+    default: material
+    x-control: toggle
+    enum: [material, theme]
+    x-enumLabels: {material: Material, theme: Icon theme}
+    description: 'Material: a row''s icon is a symbol name. Icon theme: an icon of the desktop icon theme (a row''s image wins).'
+  row:
+    type: object
+    additionalProperties: false
+    default: {}
+    description: 'What each row shows: typed text, or {key} of the row ({name}, {size} free).'
+    properties:
+      text: {type: string, title: Row text, default: '{text}'}
+      subtext: {type: string, title: Row second line, default: '{subtext}'}
+      icon: {type: string, title: Row icon, default: '{icon}'}
+      id: {type: string, title: Row value sent, default: '{id}', description: 'What a row press sends as {value}. Empty: the row''s value, else its text.'}
+  confirm: {type: boolean, title: Ask first, default: false, description: 'The first press on a row asks "Confirm?" on it for 3 seconds; the second runs it.'}

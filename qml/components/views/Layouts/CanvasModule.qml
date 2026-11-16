@@ -51,6 +51,15 @@ Rectangle {
     return Array.isArray(value) ? value.join(", ") : String(value ?? "");
   }
 
+  // What it draws instead of its icon and label (GridCanvas.tileContent)
+  property Component tileContent: null
+
+  // A right click on it, at (x, y) in the tile
+  signal contextRequested(real x, real y)
+  // Whether a right click on a tile of a selected group keeps the group (its
+  // menu acts on it); off, the click selects the tile alone
+  property bool contextKeepsGroup: false
+
   // The side being dragged to resize it ("n", "ne", … "nw"), else ""
   property string resizing: ""
   readonly property bool small: root.width < Appearance.fontSize * 7 || root.height < Appearance.fontSize * 4
@@ -96,7 +105,21 @@ Rectangle {
     }
   }
 
+  Loader {
+    id: content
+    anchors.fill: parent
+    active: root.tileContent !== null
+    sourceComponent: root.tileContent
+  }
+  Binding {
+    when: content.item !== null
+    target: content.item
+    property: "module"
+    value: root.module
+  }
+
   Column {
+    visible: root.tileContent === null
     anchors.centerIn: parent
     width: parent.width - Widget.px(8)
     spacing: 2
@@ -127,6 +150,18 @@ Rectangle {
       text: root.detail
       role: "micro"
       textColor: root.filled ? root.ink : Style.textMuted
+    }
+  }
+
+  // A right click selects it (a tile of a selected group keeps the group,
+  // where contextKeepsGroup) and asks the canvas's owner for its menu, at the
+  // point in the tile
+  TapHandler {
+    acceptedButtons: Qt.RightButton
+    onTapped: point => {
+      if (!(root.contextKeepsGroup && root.editor.group.includes(root.index)))
+        root.editor.select(root.index);
+      root.contextRequested(point.position.x, point.position.y);
     }
   }
 

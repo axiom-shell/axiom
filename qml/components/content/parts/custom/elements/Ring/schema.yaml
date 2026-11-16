@@ -3,6 +3,7 @@ icon: donut_large
 defaultSize: [3, 3]
 slots: [value, min, max, label]
 color: state
+place: both
 settings:
   inside:
     type: string

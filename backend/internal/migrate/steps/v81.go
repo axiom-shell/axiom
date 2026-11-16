@@ -149,7 +149,7 @@ func commandOutputWidget(id string, props *jsonx.Object, place any) *jsonx.Objec
 				"id", "output",
 				"type", "TextBlock",
 				"place", jsonx.Obj("x", 0.0, "y", 0.0, "w", w*4, "h", h*4),
-				"bind", jsonx.Obj("text", "text"),
+				"bind", jsonx.Obj("text", "{text}"),
 				"options", jsonx.Obj("monospace", monospace),
 			)),
 		),

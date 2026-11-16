@@ -43,6 +43,9 @@ ColumnLayout {
   // default, and a dot while it has an unsaved edit) when set: a hook
   // telling whether the field at a path ([key]) has one. null: no marks
   property var changedAt: null
+  // The form sits under another row of the same box, so its top row keeps
+  // its divider (a hand-built row above it: the custom widgets' Command)
+  property bool follows: false
   // A hook giving a field an action, drawn as a link under it
   // (SettingsLink's `run`): given its path ([key], or [key, field] in a
   // nested object) and schema, { text, icon, run } or null for none (the
@@ -99,7 +102,7 @@ ColumnLayout {
   spacing: Widget.spacing
 
   // The top row drawn (FormRow.first)
-  readonly property int _firstRow: Utils.firstFormRow(fields.count, i => fields.itemAt(i))
+  readonly property int _firstRow: root.follows ? -1 : Utils.firstFormRow(fields.count, i => fields.itemAt(i))
 
   GridLayout {
     Layout.fillWidth: true

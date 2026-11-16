@@ -5,29 +5,176 @@ import qs.components.methods
 TestCase {
   name: "CustomWidgetData"
 
-  function test_parse() {
-    const json = {
-      "text": "3",
-      "alt": "pending"
-    };
-    compare(CustomWidgetData.parse("{…}", json, "waybar", false), json, "waybar json: the object");
-    compare(CustomWidgetData.parse("a\nb\nwarning", undefined, "waybar", false), {
-      "text": "a",
-      "tooltip": "b",
-      "class": "warning"
-    }, "waybar text: text, tooltip, class lines");
-    compare(CustomWidgetData.parse("▁▂▃", undefined, "waybar", true), {
-      "text": "▁▂▃"
-    }, "a streamed line is only text");
-    compare(CustomWidgetData.parse("42", 42, "json", false), {
-      "text": "42",
-      "value": 42
-    }, "json scalar");
-    compare(CustomWidgetData.parse("{\"a\":1}", {
-      "a": 1
-    }, "text", false), {
-      "text": "{\"a\":1}"
+  function test_parseAuto() {
+    for (const format of ["waybar", "json"]) {
+      compare(CustomWidgetData.parse("[1,2,3]", [1, 2, 3], format, false), {
+        "text": "3",
+        "value": 3,
+        "items": [1, 2, 3]
+      }, format + ": an array is its items");
+      compare(CustomWidgetData.parse("\"hi\"", "hi", format, false), {
+        "text": "hi",
+        "value": "hi"
+      }, format + ": a string");
+      compare(CustomWidgetData.parse("42", 42, format, false), {
+        "text": "42",
+        "value": 42
+      }, format + ": a number");
+      compare(CustomWidgetData.parse("true", true, format, false), {
+        "text": "true",
+        "value": true
+      }, format + ": a boolean");
+      const json = {
+        "text": "3",
+        "alt": "pending"
+      };
+      compare(CustomWidgetData.parse("{…}", json, format, false), json, format + ": waybar json: the object");
+      compare(CustomWidgetData.parse("3.10", 3.1, format, false), {
+        "text": "3.10",
+        "value": 3.1
+      }, format + ": a number keeps its printed text");
+      compare(CustomWidgetData.parse("0.50", 0.5, format, false).text, "0.50", format + ": a trailing zero stays");
+      compare(CustomWidgetData.parse("12345678901234567890", 12345678901234567000, format, false).text, "12345678901234567890", format + ": a long id keeps its digits");
+      compare(CustomWidgetData.parse("a\nb\nwarning", undefined, format, false), {
+        "text": "a",
+        "tooltip": "b",
+        "class": "warning"
+      }, format + ": text lines");
+      compare(CustomWidgetData.parse("a b", undefined, format, true), {
+        "text": "a b"
+      }, format + ": a streamed line is only text");
+    }
+    compare(CustomWidgetData.parse("[1]", [1], "text", false), {
+      "text": "[1]"
     }, "text ignores the JSON");
+  }
+
+  function test_withoutScreen() {
+    const def = {
+      "actions": {
+        "items": [
+          {
+            "id": "go",
+            "kind": "axiom",
+            "axiom": "screen:b"
+          },
+          {
+            "id": "keep",
+            "kind": "axiom",
+            "axiom": "screen:c"
+          },
+          {
+            "id": "cmd",
+            "kind": "command",
+            "command": "true"
+          }
+        ]
+      },
+      "module": {
+        "elements": [
+          {
+            "type": "Button",
+            "run": {
+              "click": "go",
+              "long": "keep"
+            }
+          }
+        ]
+      },
+      "bar": {
+        "run": {
+          "click": "go"
+        }
+      }
+    };
+    const out = CustomWidgetData.withoutScreen(def, "b");
+    compare(out.actions.items.map(a => a.id), ["keep", "cmd"], "its Go to action is gone");
+    compare(out.module.elements[0].run, {
+      "click": "",
+      "long": "keep"
+    }, "its triggers name none, others stay");
+    compare(out.bar.run.click, "", "the bar's trigger too");
+    compare(def.actions.items.length, 3, "the input is not changed");
+  }
+
+  function test_rowsMap() {
+    const items = [
+      {
+        "name": "Docs",
+        "size": "3 GB",
+        "id": "d1",
+        "player": {
+          "title": "T"
+        }
+      },
+      "plain"];
+    const rows = CustomWidgetData.rows(items, {
+      "text": "{name}",
+      "subtext": "{size} used",
+      "icon": "folder",
+      "id": "{player.title}"
+    });
+    compare(rows[0].text, "Docs", "one {key}: the row's value");
+    compare(rows[0].subtext, "3 GB used", "typed text around a key");
+    compare(rows[0].icon, "folder", "typed text is literal");
+    compare(rows[0].id, "T", "a path in the row");
+    compare(rows[0].raw, items[0], "the item is kept");
+    compare(rows[1].text, "plain", "a plain string is its text");
+    compare(rows[1].subtext, "", "a plain string has the rest empty");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a"
+      }
+    ], {
+      "text": "{text}",
+      "subtext": "{subtext}",
+      "icon": "{icon}",
+      "id": ""
+    })[0].subtext, "", "a key the row lacks is empty");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "id": "x"
+      }
+    ], {
+      "text": "{text}",
+      "subtext": "",
+      "icon": "",
+      "id": ""
+    })[0].id, "", "an empty id stays empty");
+  }
+
+  function test_ownValue() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "unit": "%",
+      "cpu": {
+        "temp": 70
+      }
+    });
+    compare(CustomWidgetData.ownValue(f, {}, "unit"), "%", "unbound: the output's own");
+    compare(CustomWidgetData.ownValue(f, {
+      "unit": "{cpu.temp}"
+    }, "unit"), 70, "bound");
+    compare(CustomWidgetData.ownValue(f, {
+      "unit": ""
+    }, "unit"), "%", "empty is unbound");
+    compare(CustomWidgetData.ownValue(f, {
+      "unit": "°C"
+    }, "unit"), "°C", "typed text");
+  }
+
+  function test_unknownPaths() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "cpu": {
+        "temp": 70
+      }
+    });
+    compare(CustomWidgetData.unknownPaths(f, "{cpu.temp}° {text}"), [], "all known");
+    compare(CustomWidgetData.unknownPaths(f, "{nope} {cpu.nope} {nope}"), ["nope", "cpu.nope"], "each unknown once");
+    compare(CustomWidgetData.unknownPaths(f, "plain"), [], "typed text reads nothing");
+    compare(CustomWidgetData.unknownPaths(null, "{a}"), ["a"], "no sample: unknown");
   }
 
   function test_flatten() {
@@ -101,15 +248,314 @@ TestCase {
   }
 
   function test_states() {
+    const names = ["accent", "warning", "error", "success"];
     compare(CustomWidgetData.classes(["a", "b"]), ["a", "b"]);
     compare(CustomWidgetData.classes("a b"), ["a", "b"]);
-    compare(CustomWidgetData.stateColor("", ["custom-spotify", "critical"], {}), "error");
-    compare(CustomWidgetData.stateColor("", ["playing"], {
-      "playing": "accent"
-    }), "accent", "a definition's own state");
-    compare(CustomWidgetData.stateColor("warning", [], {}), "warning", "state over classes");
-    compare(CustomWidgetData.stateColor("#ff0000", [], {}), "#ff0000", "a colour passes");
-    compare(CustomWidgetData.stateColor("", ["x"], {}), "");
+    compare(CustomWidgetData.stateColor("", ["custom-spotify", "critical"], names), "error");
+    compare(CustomWidgetData.stateColor("ok", [], names), "success", "a built-in word");
+    compare(CustomWidgetData.stateColor("front", [], names), "", "an unmapped word colours nothing");
+    compare(CustomWidgetData.stateColor("warning", [], names), "warning", "state over classes");
+    compare(CustomWidgetData.stateColor("accent", [], names), "accent", "a theme name passes");
+    compare(CustomWidgetData.stateColor("#ff0000", [], names), "", "a hex colours nothing");
+    compare(CustomWidgetData.stateColor("", ["x"], names), "");
+    compare(CustomWidgetData.stateColor("zzz", ["critical"], names), "error", "an unmapped state falls to the classes");
+    compare(CustomWidgetData.stateColor("constructor", [], names), "", "not an Object member");
+    compare(CustomWidgetData.stateColor("accent", []), "", "no colour names: a theme name isn't known");
+  }
+
+  function test_isThemeColor() {
+    verify(CustomWidgetData.isThemeColor("accent", ["accent", "error"]));
+    verify(!CustomWidgetData.isThemeColor("#ff0000", ["accent"]));
+    verify(!CustomWidgetData.isThemeColor("front", ["accent"]));
+    verify(!CustomWidgetData.isThemeColor("accent", undefined), "no names: false");
+  }
+
+  function test_truthy() {
+    for (const on of [true, 1, -2, 0.5, "yes", "true", "1", "x", [0],
+      {
+        "a": 1
+      }
+    ])
+      verify(CustomWidgetData.truthy(on), JSON.stringify(on));
+    for (const off of [false, 0, NaN, Infinity, "", "false", "FALSE", "0", "No", "off", " Off ", [],
+      {},
+      null, undefined])
+      verify(!CustomWidgetData.truthy(off), String(off));
+    for (const off of ["disabled", "Inactive"])
+      verify(!CustomWidgetData.truthy(off), off);
+    verify(CustomWidgetData.truthy("maybe"), "maybe");
+  }
+
+  function test_actionsOf() {
+    compare(CustomWidgetData.actionsOf(undefined), null, "missing");
+    compare(CustomWidgetData.actionsOf("x"), null, "not an object");
+    compare(CustomWidgetData.actionsOf([1]), null, "a list");
+    compare(CustomWidgetData.actionsOf({
+      "undo": {
+        "enabled": false
+      },
+      "next": {},
+      "a": {
+        "enabled": "no"
+      },
+      "b": {
+        "enabled": "false"
+      },
+      "c": {
+        "enabled": "yes"
+      },
+      "bad id": {},
+      "axiom:refresh": {},
+      "": {}
+    }), {
+      "undo": {
+        "enabled": false
+      },
+      "next": {
+        "enabled": true
+      },
+      "a": {
+        "enabled": false
+      },
+      "b": {
+        "enabled": false
+      },
+      "c": {
+        "enabled": true
+      }
+    });
+    compare(CustomWidgetData.actionsOf({}), {}, "an empty list: every action off");
+    const own = CustomWidgetData.actionsOf(JSON.parse('{"__proto__":{"enabled":false},"constructor":{},"ok":{}}'));
+    compare(Object.keys(own), ["ok"], "names every object has aren't action ids");
+    verify(Object.getPrototypeOf(own) === Object.prototype, "the prototype stays");
+  }
+
+  readonly property var _words: ({
+      "exited": "exited {0}",
+      "exitedWith": "exited {0}: {1}"
+    })
+
+  function _ctx(interactive, stream) {
+    return {
+      "interactive": interactive,
+      "stream": stream,
+      "words": _words
+    };
+  }
+
+  function test_failure() {
+    const sample = {
+      "text": "x"
+    };
+    const ok = {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": "x",
+      "exited": false
+    };
+    const start = CustomWidgetData.failure(sample, {
+      "exitCode": -1,
+      "error": "no such file",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }, _ctx(true, false));
+    compare(start.kind, "start");
+    compare(start.message, "no such file");
+    const stopped = CustomWidgetData.failure(sample, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "boom",
+      "text": "",
+      "exited": true
+    }, _ctx(true, true));
+    compare(stopped.kind, "stopped");
+    compare(stopped.message, "exited 3: boom");
+    compare(stopped.exitCode, 3);
+    compare(stopped.stderr, "boom");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": true
+    }, _ctx(true, true)).message, "exited 3", "no stderr line");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 1,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }, _ctx(true, false)).kind, "exit", "a poll exiting non-zero with no output");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, ok, _ctx(true, false)).kind, "script");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, ok, _ctx(true, false)).message, "bad");
+    // Precedence
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "boom",
+      "text": "{\"error\":\"bad\"}",
+      "exited": true
+    }, _ctx(true, true)).kind, "stopped", "a stopped stream whose last sample has an error");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, {
+      "exitCode": -1,
+      "error": "x",
+      "stderr": "",
+      "text": "",
+      "exited": false
+    }, _ctx(true, false)).kind, "start", "start before script");
+    // No failure
+    compare(CustomWidgetData.failure(sample, {}, _ctx(true, false)), null, "an empty run");
+    compare(CustomWidgetData.failure(sample, undefined, _ctx(true, false)), null, "no run");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 1,
+      "text": ""
+    }, _ctx(false, false)), null, "non-interactive exit 1 with no text");
+    compare(CustomWidgetData.failure({
+      "error": "bad"
+    }, ok, _ctx(false, false)), null, "non-interactive error");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 1,
+      "error": "",
+      "stderr": "",
+      "text": "some output",
+      "exited": false
+    }, _ctx(true, false)), null, "non-zero with output, not a stream");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 0,
+      "error": "",
+      "stderr": "",
+      "text": "x",
+      "exited": true
+    }, _ctx(true, true)), null, "a stream that exited 0");
+    compare(CustomWidgetData.failure({
+      "error": ""
+    }, ok, _ctx(true, false)), null, "an empty error");
+    for (const off of [false, 0,
+      {},
+      "  "])
+      compare(CustomWidgetData.failure({
+        "error": off
+      }, ok, _ctx(true, false)), null, "error " + JSON.stringify(off) + " is no error");
+    const on = CustomWidgetData.failure({
+      "error": true
+    }, ok, _ctx(true, false));
+    compare(on.kind, "script", "error true");
+    compare(on.message, "true");
+    compare(CustomWidgetData.failure(sample, ok, undefined), null, "no context");
+    compare(CustomWidgetData.failure(sample, {
+      "exitCode": 3,
+      "error": "",
+      "stderr": "",
+      "text": "",
+      "exited": true
+    }, {
+      "interactive": true,
+      "stream": true
+    }).message, "", "words missing");
+  }
+
+  function test_resolveContext() {
+    const names = ["accent", "error"];
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "state": "accent",
+      "rev": 4,
+      "actions": {
+        "undo": {
+          "enabled": false
+        }
+      }
+    }, {
+      "colorNames": names
+    });
+    compare(f.color, "accent", "a theme name as the state");
+    compare(f.state, "accent");
+    compare(f.rev, "4");
+    compare(f.actions.undo.enabled, false);
+    compare(f.failure, null);
+    compare(f.error, "");
+    verify(!f.interactive);
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "state": "back"
+    }, {
+      "colorNames": names
+    }).color, "", "without the entry, the widget's own colour");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "state": "#ff0000"
+    }, {
+      "colorNames": names
+    }).color, "", "a hex colours nothing");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x"
+    }).actions, null);
+    // A failing, interactive widget isn't hidden for want of text
+    const failing = CustomWidgetData.resolve({}, {
+      "error": "boom"
+    }, {
+      "interactive": true,
+      "stream": false,
+      "words": _words,
+      "run": {
+        "exitCode": 0,
+        "error": "",
+        "stderr": "",
+        "text": "{}",
+        "exited": false
+      }
+    });
+    compare(failing.error, "boom");
+    compare(failing.failure.kind, "script");
+    verify(!failing.hidden, "not hidden while failing");
+    verify(!failing.hiddenByScript);
+    verify(failing.interactive);
+    // The same sample, not interactive: hidden as Waybar hides empty text
+    const quiet = CustomWidgetData.resolve({}, {
+      "error": "boom"
+    }, {
+      "interactive": false
+    });
+    verify(quiet.hidden);
+    compare(quiet.error, "");
+    // An error of false doesn't fail, and the script's own hidden stands
+    const off = CustomWidgetData.resolve({}, {
+      "text": "",
+      "error": false,
+      "hidden": true
+    }, {
+      "interactive": true,
+      "stream": false,
+      "words": _words
+    });
+    compare(off.failure, null);
+    verify(off.hidden, "hidden by the script");
+    // hidden by the script, apart from empty text
+    const byScript = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "hidden": "true"
+    });
+    verify(byScript.hiddenByScript);
+    verify(byScript.hidden);
+    // A sample's own bookkeeping-named keys bind to the sample's value
+    compare(CustomWidgetData.elementValue(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "interactive": "mine"
+    }), "{interactive}"), "mine");
+    compare(CustomWidgetData.elementValue(CustomWidgetData.resolve({}, {
+      "text": "x",
+      "failure": "mine"
+    }), "{failure}"), "mine");
   }
 
   function test_pango() {
@@ -229,15 +675,36 @@ TestCase {
       "percentage": 50,
       "cpu": {
         "temp": 70
-      }
+      },
+      "list": [1, 2]
     });
-    compare(CustomWidgetData.elementValue(f, "percentage"), 50, "a field");
-    compare(CustomWidgetData.elementValue(f, "cpu.temp"), 70, "a path");
+    compare(CustomWidgetData.elementValue(f, ""), undefined, "empty: the output's own");
+    compare(CustomWidgetData.elementValue(f, undefined), undefined);
+    compare(CustomWidgetData.elementValue(f, "{percentage}"), 50, "one {path}: a field, raw");
+    compare(CustomWidgetData.elementValue(f, "{cpu.temp}"), 70, "one {path}: a path, raw");
+    compare(CustomWidgetData.elementValue(f, "{list}"), [1, 2], "one {path}: a list");
+    compare(CustomWidgetData.elementValue(f, "{text}"), "x", "one {text}: the plain text");
+    compare(CustomWidgetData.elementValue(f, "{}"), "x", "{} is the text");
+    compare(CustomWidgetData.elementValue(f, "{nope}"), undefined, "one {path} missing");
     compare(CustomWidgetData.elementValue(f, "{cpu.temp}°C"), "70°C", "a format");
+    compare(CustomWidgetData.elementValue(f, "CPU {cpu.temp}"), "CPU 70", "typed text around a path");
+    compare(CustomWidgetData.elementValue(f, "{cpu.temp} {nope}"), "70 {nope}", "an unknown {x} stays as typed");
+    compare(CustomWidgetData.elementValue({
+      "noSample": true
+    }, "Storm {temp}"), "Storm ", "no sample: an unresolved {path} is empty, not the template");
+    compare(CustomWidgetData.elementValue({
+      "noSample": true
+    }, "plain"), "plain", "no sample: typed text stays");
+    compare(CustomWidgetData.elementValue(f, "percentage"), "percentage", "a bare word is literal");
+    compare(CustomWidgetData.elementValue(f, "cpu.temp"), "cpu.temp", "a bare path is literal");
     compare(CustomWidgetData.elementValue(f, "100"), 100, "a number typed");
+    compare(CustomWidgetData.elementValue(f, "-2.5"), -2.5, "a negative decimal");
+    compare(CustomWidgetData.elementValue(f, "5%"), "5%", "not a number");
+    compare(CustomWidgetData.elementValue(f, "=Show answer"), "=Show answer", "= means nothing special");
+    compare(CustomWidgetData.elementValue(f, "=5"), "=5", "= then a number is text");
     compare(CustomWidgetData.elementRatio(f, {}), 0.5, "no binding: the output's own");
     compare(CustomWidgetData.elementRatio(f, {
-      "value": "cpu.temp",
+      "value": "{cpu.temp}",
       "min": "20",
       "max": "120"
     }), 0.5, "value, min and max bound");
@@ -253,11 +720,354 @@ TestCase {
     });
     compare(CustomWidgetData.elementRatio(mem, {}), 0.25, "the output's max, not 100");
     compare(CustomWidgetData.elementRatio(mem, {
-      "value": "items.0.value"
+      "value": "{items.0.value}"
     }), 0.5, "a bound value keeps the output's max");
     compare(CustomWidgetData.elementRange(mem, {
-      "value": "nope"
+      "value": "{nope}"
     }).value, undefined);
+  }
+
+  // resolve hands colorNames on; a sample's own keys of those names still
+  // bind to the sample (C-B9)
+  function test_resolveOwnKeys() {
+    const names = ["accent", "error"];
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x"
+    }, {
+      "colorNames": names
+    });
+    verify(!("states" in f), "no states field");
+    compare(f.colorNames, names, "the context's names");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x"
+    }).colorNames, [], "no context: none");
+    const own = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "states": "mine",
+      "actions": "ours",
+      "failure": "f",
+      "colorNames": "c",
+      "interactive": "i"
+    });
+    compare(CustomWidgetData.elementValue(own, "{states}"), "mine", "a sample's own states");
+    compare(CustomWidgetData.elementValue(own, "{actions}"), "ours", "its own actions");
+    compare(CustomWidgetData.elementValue(own, "{failure}"), "f", "its own failure");
+    compare(CustomWidgetData.elementValue(own, "{colorNames}"), "c", "its own colorNames");
+    compare(CustomWidgetData.elementValue(own, "{interactive}"), "i", "its own interactive");
+    compare(CustomWidgetData.elementValue(own, "{states}"), "mine", "a format reads the sample's too");
+  }
+
+  function test_holds() {
+    compare(CustomWidgetData.holds("always", undefined, ""), true);
+    compare(CustomWidgetData.holds("is", "open ", " open"), true, "trimmed");
+    compare(CustomWidgetData.holds("is", "open", "done"), false);
+    compare(CustomWidgetData.holds("isNot", "open", "done"), true);
+    compare(CustomWidgetData.holds("isNot", "open", "open"), false);
+    compare(CustomWidgetData.holds("is", undefined, ""), true, "nothing is the empty text");
+    compare(CustomWidgetData.holds("is", 5, "5"), true, "a number as text");
+    compare(CustomWidgetData.holds("above", "85%", "80"), true, "a percent is a number");
+    compare(CustomWidgetData.holds("above", 80, "80"), false, "not above itself");
+    compare(CustomWidgetData.holds("below", 79.5, "80"), true);
+    compare(CustomWidgetData.holds("below", "80", "80"), false);
+    compare(CustomWidgetData.holds("above", "high", "80"), false, "a word is no number");
+    compare(CustomWidgetData.holds("below", "high", "80"), false);
+    compare(CustomWidgetData.holds("on", true, ""), true, "on: a true");
+    compare(CustomWidgetData.holds("on", "yes", ""), true, "on: a word of on");
+    for (const off of [false, "false", 0, "0", "no", "off", "", undefined])
+      compare(CustomWidgetData.holds("on", off, ""), false, "on: " + off + " is off");
+    compare(CustomWidgetData.holds("off", "no", ""), true, "off: no");
+    compare(CustomWidgetData.holds("off", undefined, ""), true, "off: nothing");
+    compare(CustomWidgetData.holds("off", "on", ""), false, "off: on");
+    compare(CustomWidgetData.holds("above", "5", ""), false, "no operand");
+    compare(CustomWidgetData.holds("set", "0", ""), true, "text \"0\" is a value");
+    compare(CustomWidgetData.holds("set", 0, ""), false, "the number 0");
+    compare(CustomWidgetData.holds("set", "", ""), false);
+    compare(CustomWidgetData.holds("unset", "", ""), true);
+    compare(CustomWidgetData.holds("unset", "x", ""), false);
+    compare(CustomWidgetData.holds("nonsense", "x", "x"), false);
+  }
+
+  function test_readKey() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "level": 90,
+      "player": {
+        "title": "Song"
+      }
+    });
+    compare(CustomWidgetData.readKey(f, "", "own"), "own", "no key: what the element shows");
+    compare(CustomWidgetData.readKey(f, "level", "own"), 90, "an output key");
+    compare(CustomWidgetData.readKey(f, "player.title", "own"), "Song", "a path");
+    compare(CustomWidgetData.readKey(f, "nope", "own"), undefined, "a missing key");
+  }
+
+  function test_colorFor() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "cpu": 85,
+      "state": "low"
+    });
+    const states = {
+      "enabled": true,
+      "key": "cpu",
+      "rules": [
+        {
+          "test": "above",
+          "value": "90",
+          "color": "error"
+        },
+        {
+          "test": "above",
+          "value": "70",
+          "color": "warning"
+        },
+        {
+          "test": "above",
+          "value": "50",
+          "color": ""
+        }
+      ]
+    };
+    compare(CustomWidgetData.colorFor("accent", states, f, "own", "auto"), "warning", "the first that holds wins");
+    const low = {
+      "enabled": true,
+      "key": "state",
+      "rules": [
+        {
+          "test": "is",
+          "value": "high",
+          "color": "error"
+        }
+      ]
+    };
+    compare(CustomWidgetData.colorFor("accent", low, f, "own", "auto"), "accent", "no match: the picked colour");
+    compare(CustomWidgetData.colorFor("", low, f, "own", "auto"), "auto", "no match, none picked: auto");
+    const blank = {
+      "enabled": true,
+      "key": "cpu",
+      "rules": [
+        {
+          "test": "above",
+          "value": "50",
+          "color": ""
+        }
+      ]
+    };
+    compare(CustomWidgetData.colorFor("accent", blank, f, "own", "auto"), "auto", "a rule's empty colour is auto");
+    compare(CustomWidgetData.colorFor("accent", {
+      "enabled": false,
+      "key": "cpu",
+      "rules": states.rules
+    }, f, "own", "auto"), "accent", "off ignores the rules");
+    compare(CustomWidgetData.colorFor("#ff0000", undefined, f, "own", "auto"), "#ff0000", "a hex passes");
+    compare(CustomWidgetData.colorFor("", undefined, f, "own", ""), "", "nothing at all");
+    compare(CustomWidgetData.colorFor("", {
+      "enabled": true,
+      "key": "",
+      "rules": [
+        {
+          "test": "is",
+          "value": "own",
+          "color": "success"
+        }
+      ]
+    }, f, "own", "auto"), "success", "an empty key reads what the element shows");
+  }
+
+  function test_rowColor() {
+    const row = CustomWidgetData.rows([
+      {
+        "text": "Read",
+        "state": "done",
+        "meta": {
+          "level": 3
+        }
+      }
+    ])[0];
+    const rules = {
+      "enabled": true,
+      "key": "state",
+      "rules": [
+        {
+          "test": "is",
+          "value": "done",
+          "color": "success"
+        },
+        {
+          "test": "is",
+          "value": "open",
+          "color": "accent"
+        }
+      ]
+    };
+    compare(CustomWidgetData.rowColor("", rules, row), "success", "a row's state rule");
+    compare(CustomWidgetData.rowColor("", rules, {
+      "raw": {
+        "state": "open"
+      }
+    }), "accent");
+    compare(CustomWidgetData.rowColor("base0D", rules, {
+      "raw": {
+        "state": "other"
+      }
+    }), "base0D", "no match: the picked colour");
+    compare(CustomWidgetData.rowColor("", Object.assign({}, rules, {
+      "key": "missing"
+    }), row), "", "a missing key matches nothing");
+    compare(CustomWidgetData.rowColor("", Object.assign({}, rules, {
+      "key": "meta.level",
+      "rules": [
+        {
+          "test": "above",
+          "value": "2",
+          "color": "error"
+        }
+      ]
+    }), row), "error", "a path in the row");
+    compare(CustomWidgetData.rowColor("", {
+      "enabled": false,
+      "key": "state",
+      "rules": rules.rules
+    }, row), "", "off");
+    compare(CustomWidgetData.rowColor("base0D", undefined, row), "base0D");
+  }
+
+  function test_shown() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "on": true,
+      "zero": "0",
+      "blank": "",
+      "temp": 85
+    });
+    verify(CustomWidgetData.shown(undefined, f, "own"), "no setting: shown");
+    verify(CustomWidgetData.shown({}, f, "own"), "no test: shown");
+    verify(CustomWidgetData.shown({
+      "test": "always"
+    }, f, "own"), "always");
+    verify(CustomWidgetData.shown({
+      "test": "set",
+      "key": "zero"
+    }, f, "own"), "\"0\" is text, so it is set");
+    verify(!CustomWidgetData.shown({
+      "test": "set",
+      "key": "blank"
+    }, f, "own"), "empty is not set");
+    verify(CustomWidgetData.shown({
+      "test": "unset",
+      "key": "blank"
+    }, f, "own"), "unset");
+    verify(CustomWidgetData.shown({
+      "test": "unset",
+      "key": "missing"
+    }, f, "own"), "a missing key is unset");
+    verify(CustomWidgetData.shown({
+      "test": "above",
+      "key": "temp",
+      "value": "80"
+    }, f, "own"), "above");
+    verify(!CustomWidgetData.shown({
+      "test": "below",
+      "key": "temp",
+      "value": "80"
+    }, f, "own"), "below");
+    verify(CustomWidgetData.shown({
+      "test": "is",
+      "key": "",
+      "value": "own"
+    }, f, "own"), "an empty key reads what the element shows");
+    verify(!CustomWidgetData.shown({
+      "test": "set",
+      "key": ""
+    }, f, ""), "nothing shown: not set");
+    verify(CustomWidgetData.shown({
+      "test": "on",
+      "key": "on"
+    }, f, "own"), "on reads a true");
+    verify(!CustomWidgetData.shown({
+      "test": "on",
+      "key": "blank"
+    }, f, "own"), "an empty value is off");
+    verify(!CustomWidgetData.shown({
+      "test": "on",
+      "key": "zero"
+    }, f, "own"), "\"0\" is off, unlike set");
+    verify(CustomWidgetData.shown({
+      "test": "off",
+      "key": "missing"
+    }, f, "own"), "a missing key is off");
+    verify(!CustomWidgetData.shown({
+      "test": "off",
+      "key": "on"
+    }, f, "own"), "off while on");
+  }
+
+  function test_colorFields() {
+    const color = {
+      "x-options": "colors"
+    };
+    const text = {
+      "color": color,
+      "colorStates": {},
+      "background": color,
+      "backgroundStates": {},
+      "bold": {},
+      "font": {}
+    };
+    compare(CustomWidgetData.colorFields(text, ["bold", "color", "colorStates", "background", "backgroundStates", "font"]), {
+      "colors": [
+        {
+          "key": "color",
+          "statesKey": "colorStates"
+        },
+        {
+          "key": "background",
+          "statesKey": "backgroundStates"
+        }
+      ],
+      "look": ["bold", "font"]
+    }, "Text: pairs, the rest as look");
+    compare(CustomWidgetData.colorFields({
+      "background": color,
+      "backgroundStates": {},
+      "textColor": color,
+      "textColorStates": {},
+      "confirm": {}
+    }, ["confirm", "background", "backgroundStates", "textColor", "textColorStates"]), {
+      "colors": [
+        {
+          "key": "background",
+          "statesKey": "backgroundStates"
+        },
+        {
+          "key": "textColor",
+          "statesKey": "textColorStates"
+        }
+      ],
+      "look": ["confirm"]
+    }, "Button");
+    compare(CustomWidgetData.colorFields({
+      "color": color,
+      "style": {}
+    }, ["style", "color"]), {
+      "colors": [
+        {
+          "key": "color",
+          "statesKey": ""
+        }
+      ],
+      "look": ["style"]
+    }, "a colour with no rules");
+    compare(CustomWidgetData.colorFields({
+      "a": {}
+    }, []), {
+      "colors": [],
+      "look": ["a"]
+    }, "no order: the schema's keys, no colours");
+    compare(CustomWidgetData.colorFields({}, []), {
+      "colors": [],
+      "look": []
+    }, "none");
   }
 
   function test_lattice() {
@@ -315,6 +1125,28 @@ TestCase {
     }, "no place yet: an empty rect");
   }
 
+  function test_rowValueText() {
+    const rows = CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": 84,
+        "unit": "%"
+      },
+      {
+        "text": "b",
+        "value": "3"
+      },
+      {
+        "text": "c",
+        "unit": "%"
+      },
+      "d"]);
+    compare(CustomWidgetData.rowValueText(rows[0]), "84%", "the unit follows the value");
+    compare(CustomWidgetData.rowValueText(rows[1]), "3", "no unit: the value");
+    compare(CustomWidgetData.rowValueText(rows[2]), "", "no number: nothing, whatever the unit");
+    compare(CustomWidgetData.rowValueText(rows[3]), "", "a plain entry has none");
+  }
+
   function test_rows() {
     compare(CustomWidgetData.rows([
       {
@@ -326,16 +1158,85 @@ TestCase {
         "text": "a",
         "icon": "",
         "value": 3,
-        "subtext": ""
+        "subtext": "",
+        "id": "",
+        "state": "",
+        "max": undefined,
+        "image": "",
+        "raw": {
+          "text": "a",
+          "value": "3"
+        }
       },
       {
         "text": "b",
         "icon": "",
         "value": undefined,
-        "subtext": ""
+        "subtext": "",
+        "id": "",
+        "state": "",
+        "max": undefined,
+        "image": "",
+        "raw": "b"
       }
     ], "objects read, plain entries are their text");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "id": "/home"
+      },
+      {
+        "text": "b",
+        "id": 7
+      }
+    ])[0].id, "/home", "an id is kept");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "b",
+        "id": 7
+      }
+    ])[0].id, "7", "an id is text");
+    compare(CustomWidgetData.rows(["plain"])[0].id, "", "a plain string has no id");
     compare(CustomWidgetData.rows("nope"), [], "not a list: none");
+    const full = CustomWidgetData.rows([
+      {
+        "text": "/",
+        "value": 40,
+        "max": "200",
+        "state": "warning",
+        "image": "/tmp/a.png"
+      }
+    ])[0];
+    compare(full.max, 200, "a max is a number");
+    compare(full.state, "warning", "a state is kept");
+    compare(full.image, "/tmp/a.png", "an image is kept");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "max": 10
+      }
+    ])[0].max, undefined, "a max without a value");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": 3,
+        "max": 0
+      }
+    ])[0].max, undefined, "a max of 0");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": "x",
+        "max": 10
+      }
+    ])[0].max, undefined, "a value that is no number");
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": 3,
+        "max": -5
+      }
+    ])[0].max, undefined, "a negative max");
   }
 
   function test_graphRange() {
@@ -374,6 +1275,30 @@ TestCase {
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
     compare(CustomWidgetData.defaultElements([4, 2], false)[0].type, "Icon");
     compare(els[1].options.align, "left", "the text against the icon");
+    compare(els[1].options.size, "large", "the text keeps a size now Fit is uncapped");
+    compare(els[0].bind, {
+      "value": "{value}"
+    }, "the ring shows the output's value");
+    compare(els[1].bind, {
+      "text": "{text}"
+    }, "the text shows the output's text");
+  }
+
+  function test_alignOffset() {
+    compare(CustomWidgetData.alignOffset("left", 40), 0);
+    compare(CustomWidgetData.alignOffset("top", 40), 0);
+    compare(CustomWidgetData.alignOffset("center", 40), 20);
+    compare(CustomWidgetData.alignOffset("middle", 40), 20);
+    compare(CustomWidgetData.alignOffset("right", 40), 40);
+    compare(CustomWidgetData.alignOffset("bottom", 40), 40);
+    compare(CustomWidgetData.alignOffset("center", -10), 0, "a box smaller than its content: the start");
+    compare(CustomWidgetData.alignOffset("", 40), 0, "unknown: the start");
+  }
+
+  function test_textLines() {
+    compare(CustomWidgetData.textLines(100, 20), 3, "26 px a line");
+    compare(CustomWidgetData.textLines(10, 40), 1, "never fewer than one");
+    compare(CustomWidgetData.textLines(0, 0), 1);
   }
 
   function test_stripJsonc() {
@@ -393,7 +1318,32 @@ TestCase {
     compare(defs[0].command, "$HOME/mediaplayer.py 2> /dev/null");
     compare(defs[0].formatIcons.spotify, "S");
     compare(defs[0].maxLength, 40);
-    compare(defs[0].actions.click, "playerctl play-pause");
+    compare(defs[0].actions.items, [
+      {
+        "id": "click",
+        "name": "Click",
+        "kind": "command",
+        "command": "playerctl play-pause",
+        "wait": false
+      }
+    ], "a click command is an action that doesn't wait");
+    compare(defs[0].bar.run, {
+      "click": "click"
+    }, "the bar runs it");
+    const scrolled = CustomWidgetData.fromWaybar('{"exec": "x", "on-click-right": "r", "on-scroll-up": "u", "on-scroll-down": "d", "on-click-middle": "m"}')[0];
+    compare(scrolled.actions.items.map(a => a.id), ["rightClick", "middleClick", "scrollUp", "scrollDown"], "every trigger");
+    compare(scrolled.bar.run, {
+      "rightClick": "rightClick",
+      "middleClick": "middleClick",
+      "scrollUp": "scrollUp",
+      "scrollDown": "scrollDown"
+    });
+    compare(scrolled.actions.items.map(a => a.name), ["Right click", "Middle click", "Scroll up", "Scroll down"]);
+    const quiet = CustomWidgetData.fromWaybar('{"exec": "x"}')[0];
+    compare(quiet.actions, {
+      "items": []
+    }, "no click: no actions");
+    compare(quiet.bar, undefined, "no click: no bar.run");
     const polled = CustomWidgetData.fromWaybar('{"exec": "x", "interval": 60, "signal": 6}')[0];
     compare(polled.mode, "poll");
     compare(polled.interval, 60000, "seconds to ms");
@@ -429,10 +1379,67 @@ TestCase {
 
   function test_presetsLoad() {
     for (const preset of CustomWidgetData.presets) {
-      verify(preset.name && preset.command, preset.name);
+      verify(preset.name && (preset.command || preset.template), preset.name);
+      if (!preset.command)
+        continue;
       const f = CustomWidgetData.resolve(preset, CustomWidgetData.parse("on", undefined, preset.output ?? "waybar", preset.mode === "stream"));
       verify(typeof f.text === "string", preset.name);
     }
+    // Text fields are typed text or {paths}: no bare word reads data, no `=`
+    for (const preset of CustomWidgetData.presets) {
+      verify(preset.states === undefined, preset.name + " has no states map");
+      for (const e of CustomWidgetData.allElements(preset.module)) {
+        for (const slot of Object.keys(e.bind ?? {})) {
+          const b = e.bind[slot];
+          verify(b[0] !== "=", preset.name + "/" + e.id + "." + slot + " has no =");
+          if (slot === "state")
+            verify(b.indexOf("{") === 0, preset.name + "/" + e.id + "." + slot + " reads data as {path}");
+          verify(slot !== "tone" && slot !== "show", preset.name + "/" + e.id + " has no " + slot + " binding");
+        }
+        verify(e.options?.label === undefined && e.options?.placeholder === undefined && (e.type !== "Button" || e.options?.icon === undefined), preset.name + "/" + e.id + " keeps its labels in bind");
+      }
+    }
+  }
+
+  function test_presetDailyHabits() {
+    const preset = CustomWidgetData.presets.find(p => p.name === "Daily habits");
+    verify(preset, "the preset is listed");
+    verify(preset.command.includes("{tree}data/custom-widgets/habits.sh"), "the script is found through {tree}");
+    compare(preset.invoke, undefined, "no invoke command");
+    compare(preset.actions.items.map(a => a.id), ["check", "add", "undo", "remove"], "an action each");
+    verify(preset.actions.items.every(a => a.kind === "command" && a.wait && a.command.includes("habits.sh")), "commands that wait");
+    const views = preset.module.views;
+    compare(views.map(v => v.id), ["open", "done", "empty"], "a screen per state");
+    compare(preset.module.keys, undefined, "no keys");
+    const count = preset.module.elements.find(e => e.id === "count");
+    compare(count.options.colorStates.rules.map(r => r.value + ">" + r.color), ["done>success", "open>accent"], "the count's colour by state");
+    const list = views[0].elements.find(e => e.type === "List");
+    compare(list.options.colorStates.key, "state", "the list reads each row's state");
+    compare(Object.keys(preset.samples).sort(), ["done", "empty", "open"], "a sample per screen");
+    const context = {
+      "interactive": true,
+      "colorNames": ["accent", "success"]
+    };
+    views.forEach((view, index) => {
+      const fields = CustomWidgetData.resolve(preset, preset.samples[view.id], context);
+      compare(CustomWidgetData.pickView(preset.module, fields).index, index, "the " + view.id + " sample picks its screen");
+    });
+    // The actions the elements run are the preset's, and ones the samples list
+    const named = new Set([].concat(...CustomWidgetData.allElements(preset.module).map(e => Object.values(e.run ?? {}))).filter(a => a));
+    compare(Array.from(named).sort(), ["add", "check", "undo"], "what the elements run");
+    for (const action of named) {
+      verify(CustomWidgetData.actionOf(preset, action) !== null, action + " is one of its actions");
+      verify(Object.values(preset.samples).some(sm => action in sm.actions), "a sample lists " + action);
+      verify(/^[A-Za-z0-9_.-]{1,64}$/.test(action), action + " is an action id");
+    }
+    const open = CustomWidgetData.resolve(preset, preset.samples.open, context);
+    compare(CustomWidgetData.colorFor("", count.options.colorStates, open, open.text, ""), "accent", "open is the accent");
+    compare(CustomWidgetData.colorFor("", count.options.colorStates, CustomWidgetData.resolve(preset, preset.samples.done, context), "", ""), "success", "done is success");
+    compare(CustomWidgetData.actionEnabled(CustomWidgetData.resolve(preset, preset.samples.empty, context).actions, CustomWidgetData.actionOf(preset, "check")), false, "nothing to check while empty");
+    compare(CustomWidgetData.fillCommand(CustomWidgetData.actionOf(preset, "add").command, {
+      "value": "it's",
+      "tree": "/opt/axiom/"
+    }), "bash '/opt/axiom/data/custom-widgets/habits.sh' do add 'it'\\''s'", "the action command filled in");
   }
 
   function test_preview_zoom_fits_width() {
@@ -449,5 +1456,1566 @@ TestCase {
     }
     // Wide enough: the height rule alone, as before
     compare(CustomWidgetData.previewZoom(sizes, 450, 100000, 900, 400, 20), Math.min(0.3, 900 * 0.22 / GridPlacement.span(4, 450)), "wide page: height only");
+  }
+
+  // --- Screens ---
+
+  function test_allElements() {
+    compare(CustomWidgetData.allElements(null).length, 0, "none");
+    compare(CustomWidgetData.allElements({
+      "elements": [
+        {
+          "id": "a"
+        }
+      ]
+    }).length, 1, "base only");
+    compare(CustomWidgetData.allElements({
+      "elements": [],
+      "views": [
+        {
+          "elements": [
+            {
+              "id": "b"
+            }
+          ]
+        },
+        {
+          "elements": [
+            {
+              "id": "c"
+            },
+            {
+              "id": "d"
+            }
+          ]
+        }
+      ]
+    }).length, 3, "views only");
+    compare(CustomWidgetData.allElements({
+      "elements": [
+        {
+          "id": "a"
+        }
+      ],
+      "views": [
+        {
+          "elements": [
+            {
+              "id": "b"
+            }
+          ]
+        }
+      ]
+    }).map(e => e.id).join(), "a,b", "base first");
+  }
+
+  function _fields(sample, failure) {
+    return {
+      "sample": sample,
+      "failure": failure ?? null,
+      "error": failure?.message ?? ""
+    };
+  }
+
+  function test_matches() {
+    const setWhen = test => ({
+          "key": "n",
+          "test": test,
+          "values": []
+        });
+    compare(CustomWidgetData.matches(setWhen("set"), _fields({
+      "n": "0"
+    })), true, "set: text counts, even 0");
+    compare(CustomWidgetData.matches(setWhen("set"), _fields({
+      "n": ""
+    })), false, "set: empty text");
+    compare(CustomWidgetData.matches(setWhen("set"), _fields({
+      "n": 0
+    })), false, "set: the number 0");
+    compare(CustomWidgetData.matches(setWhen("unset"), _fields({
+      "n": "0"
+    })), false, "unset: text 0 is set");
+    compare(CustomWidgetData.matches({
+      "key": "",
+      "test": "unset"
+    }, _fields({})), false, "an empty key never holds");
+    compare(CustomWidgetData.matches({
+      "test": "is",
+      "values": [""]
+    }, _fields({})), false, "no key never holds");
+    const errWhen = (test, values) => ({
+          "key": "error",
+          "test": test,
+          "values": values
+        });
+    compare(CustomWidgetData.matches(errWhen("isNot", ["x"]), _fields({})), false, "error isNot: never while healthy");
+    compare(CustomWidgetData.matches(errWhen("is", [""]), _fields({})), false, "error is [\"\"]: never while healthy");
+    compare(CustomWidgetData.matches(errWhen("isNot", ["x"]), _fields({}, {
+      "kind": "script",
+      "message": "y"
+    })), true, "error isNot: another message");
+    const is = values => ({
+          "key": "state",
+          "test": "is",
+          "values": values
+        });
+    compare(CustomWidgetData.matches(is(["front"]), _fields({
+      "state": "front"
+    })), true, "is");
+    compare(CustomWidgetData.matches(is(["front"]), _fields({
+      "state": "back"
+    })), false, "is, another");
+    compare(CustomWidgetData.matches({
+      "key": "state",
+      "test": "isNot",
+      "values": ["front"]
+    }, _fields({
+      "state": "back"
+    })), true, "isNot");
+    compare(CustomWidgetData.matches({
+      "key": "state",
+      "test": "isNot",
+      "values": []
+    }, _fields({
+      "state": "back"
+    })), false, "isNot with no values");
+    compare(CustomWidgetData.matches(is([]), _fields({
+      "state": "front"
+    })), false, "is with no values");
+    compare(CustomWidgetData.matches({
+      "key": "ready",
+      "test": "set"
+    }, _fields({
+      "ready": true
+    })), true, "set: true");
+    compare(CustomWidgetData.matches({
+      "key": "ready",
+      "test": "set"
+    }, _fields({
+      "ready": "false"
+    })), true, "set: the string false is text, so it is set");
+    compare(CustomWidgetData.matches({
+      "key": "ready",
+      "test": "unset"
+    }, _fields({})), true, "unset: missing");
+    compare(CustomWidgetData.matches(is(["true"]), _fields({
+      "state": true
+    })), true, "true is the text true");
+    compare(CustomWidgetData.matches({
+      "key": "player.status",
+      "test": "is",
+      "values": ["playing"]
+    }, _fields({
+      "player": {
+        "status": "playing"
+      }
+    })), true, "a nested path");
+    compare(CustomWidgetData.matches({
+      "key": "",
+      "test": "is",
+      "values": ["x"]
+    }, _fields({
+      "state": "x"
+    })), false, "an empty key is no state: it never holds");
+    compare(CustomWidgetData.matches(is(["front"]), null), false, "null fields");
+    const failing = _fields({}, {
+      "kind": "exit",
+      "message": "boom"
+    });
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "set"
+    }, failing), true, "error set");
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "unset"
+    }, failing), false, "error unset while failing");
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "unset"
+    }, _fields({})), true, "error unset");
+    compare(CustomWidgetData.matches({
+      "key": "error",
+      "test": "is",
+      "values": ["boom"]
+    }, failing), true, "error is its message");
+  }
+
+  function test_pickView() {
+    const view = (id, when) => ({
+          "id": id,
+          "when": when
+        });
+    const front = view("front", {
+      "key": "state",
+      "test": "is",
+      "values": ["front"]
+    });
+    const back = view("back", {
+      "key": "state",
+      "test": "is",
+      "values": ["back", "front"]
+    });
+    const error = view("err", {
+      "key": "error",
+      "test": "set"
+    });
+    const fields = _fields({
+      "state": "front"
+    });
+    compare(CustomWidgetData.pickView({}, fields).index, -1, "no views");
+    compare(CustomWidgetData.pickView({
+      "views": [front]
+    }, fields).index, 0, "front");
+    compare(CustomWidgetData.pickView({
+      "views": [back, front]
+    }, fields).index, 0, "two matches: the first");
+    const failing = _fields({
+      "state": "front"
+    }, {
+      "kind": "script",
+      "message": "x"
+    });
+    compare(CustomWidgetData.pickView({
+      "views": [front, error]
+    }, failing).index, 1, "failure: the error view");
+    const stale = CustomWidgetData.pickView({
+      "views": [front]
+    }, failing);
+    compare(stale.index, -1, "failure: no stale state view");
+    compare(stale.builtinError, true, "failure: the stock screen");
+    compare(CustomWidgetData.pickView({
+      "views": [view("e", {
+          "key": "error",
+          "test": "isNot",
+          "values": ["x"]
+        }), front]
+    }, fields).index, 1, "healthy: an error isNot screen is skipped");
+    const none = CustomWidgetData.pickView({
+      "views": [front]
+    }, null);
+    compare(none.index, -1, "null fields");
+    compare(none.builtinError, false, "null fields: no error");
+    // Go to screen choices over the condition
+    const two = {
+      "views": [front, view("other", {
+          "key": "",
+          "test": "is"
+        })]
+    };
+    compare(CustomWidgetData.pickView(two, fields, null).index, 0, "no choice: the condition's");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "other",
+      "matched": 0
+    }).index, 1, "a manual choice wins while the condition result is the same");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "other",
+      "matched": -1
+    }).index, 0, "the condition changed: it resets");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "",
+      "matched": 0
+    }).index, -1, "Go to the base: the base alone");
+    compare(CustomWidgetData.pickView(two, fields, {
+      "view": "gone",
+      "matched": 0
+    }).index, 0, "a stale id falls through");
+    compare(CustomWidgetData.pickView(two, failing, {
+      "view": "other",
+      "matched": 0
+    }).builtinError, true, "failing: the choice is ignored");
+  }
+
+  function test_conditionView() {
+    const view = (id, key, values) => ({
+          "id": id,
+          "when": {
+            "key": key,
+            "test": "is",
+            "values": values ?? []
+          }
+        });
+    const fields = _fields({
+      "state": "a"
+    });
+    compare(CustomWidgetData.conditionView({}, fields), -1, "no views");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "", ["a"]), view("y", "state", ["a"])]
+    }, fields), 1, "an empty key is skipped");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "state", ["b"]), view("y", "state", ["a"]), view("z", "state", ["a"])]
+    }, fields), 1, "the first match");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "state", ["b"])]
+    }, fields), -1, "no match");
+    compare(CustomWidgetData.conditionView({
+      "views": [view("x", "state", ["a"])]
+    }, null), -1, "null fields");
+  }
+
+  function test_historyBindings() {
+    compare(CustomWidgetData.historyBindings({}).length, 0, "none");
+    const spark = value => ({
+          "type": "Sparkline",
+          "bind": {
+            "value": value
+          }
+        });
+    const module = {
+      "elements": [spark("cpu"),
+        {
+          "type": "Text",
+          "bind": {
+            "value": "x"
+          }
+        },
+        spark("")],
+      "views": [
+        {
+          "elements": [spark("net"), spark("cpu")]
+        }
+      ]
+    };
+    compare(CustomWidgetData.historyBindings(module).join(), "cpu,net", "base and views, duplicates once");
+    compare(CustomWidgetData.historyBindings({
+      "elements": [
+        {
+          "type": "Sparkline",
+          "bind": {
+            "value": "up",
+            "value2": "down"
+          }
+        },
+        {
+          "type": "Sparkline",
+          "bind": {
+            "value2": "up"
+          }
+        },
+        {
+          "type": "Text",
+          "bind": {
+            "value2": "no"
+          }
+        }
+      ]
+    }).join(), "up,down", "value2 too, once, Sparklines only");
+  }
+
+  function test_series() {
+    compare(CustomWidgetData.series([1, "2", "x", null], 240), [1, 2], "numbers kept, numeric strings parsed, others dropped");
+    compare(CustomWidgetData.series(5, 240), null, "a number is no series");
+    compare(CustomWidgetData.series("1,2", 240), null, "nor a string");
+    compare(CustomWidgetData.series(undefined, 240), null, "nor nothing");
+    compare(CustomWidgetData.series({}, 240), null, "nor an object");
+    compare(CustomWidgetData.series([], 240), [], "an empty list is an empty series");
+    const long = [];
+    for (let i = 0; i < 300; i++)
+      long.push(i);
+    const kept = CustomWidgetData.series(long, 240);
+    compare(kept.length, 240, "the last 240");
+    compare(kept[0], 60);
+    compare(kept[239], 299);
+    compare(CustomWidgetData.series([1, Infinity, NaN, 3], 240), [1, 3], "non-finite dropped");
+  }
+
+  // --- Named actions ---
+
+  function test_actionOf() {
+    const def = {
+      "actions": {
+        "items": [
+          {
+            "id": "a1",
+            "name": "Open"
+          },
+          {
+            "id": "go",
+            "name": "a1"
+          },
+          {
+            "id": "b2",
+            "name": "Close"
+          }
+        ]
+      }
+    };
+    compare(CustomWidgetData.actionOf(def, "b2").name, "Close", "by id");
+    compare(CustomWidgetData.actionOf(def, "Close").id, "b2", "by name");
+    compare(CustomWidgetData.actionOf(def, "a1").id, "a1", "an id wins over a name");
+    compare(CustomWidgetData.actionOf(def, "nope"), null, "missing");
+    compare(CustomWidgetData.actionOf(def, ""), null, "an empty ref");
+    compare(CustomWidgetData.actionOf(def, undefined), null, "no ref");
+    compare(CustomWidgetData.actionOf({}, "a1"), null, "a definition with no actions");
+    compare(CustomWidgetData.actionOf(null, "a1"), null, "no definition");
+  }
+
+  function test_axiomValues() {
+    const refused = ["lock", "poweroff"];
+    compare(CustomWidgetData.axiomValues(["overlay", "lock", "seek", "edgeMenu", "poweroff"], refused, id => id === "seek", ["main", "second"]), ["refresh", "restart", "screen:", "screen:main", "screen:second", "overlay", "edgeMenu"], "refused and argument-taking dropped, in order");
+    compare(CustomWidgetData.axiomValues(["a", "seek"], [], ["seek"], []), ["refresh", "restart", "screen:", "a"], "a list of argument-taking ids");
+    compare(CustomWidgetData.axiomValues([], [], id => false, []), ["refresh", "restart", "screen:"], "no shell actions, no screens");
+    compare(CustomWidgetData.axiomValues(undefined, undefined, undefined, undefined), ["refresh", "restart", "screen:"], "nothing given");
+  }
+
+  function test_actionRefs() {
+    const def = {
+      "bar": {
+        "run": {
+          "click": "x",
+          "scrollUp": "x",
+          "rightClick": "y"
+        }
+      },
+      "module": {
+        "elements": [
+          {
+            "id": "a",
+            "run": {
+              "click": "x"
+            }
+          },
+          {
+            "id": "b",
+            "run": {}
+          },
+          {
+            "id": "c"
+          }
+        ],
+        "views": [
+          {
+            "id": "v",
+            "elements": [
+              {
+                "id": "d",
+                "run": {
+                  "on": "x",
+                  "off": "y"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    };
+    compare(CustomWidgetData.actionRefs(def, "none"), 0, "none");
+    compare(CustomWidgetData.actionRefs(def, "y"), 2, "two");
+    compare(CustomWidgetData.actionRefs(def, "x"), 4, "the base, a screen and the bar");
+    compare(CustomWidgetData.actionRefs({}, "x"), 0, "an empty definition");
+    const cleared = CustomWidgetData.withoutActionRefs(def, "x");
+    compare(CustomWidgetData.actionRefs(cleared, "x"), 0, "clears all");
+    compare(cleared.bar.run, {
+      "click": "",
+      "scrollUp": "",
+      "rightClick": "y"
+    }, "leaves the bar's others");
+    compare(cleared.module.views[0].elements[0].run, {
+      "on": "",
+      "off": "y"
+    }, "leaves a screen element's others");
+    compare(def.bar.run.click, "x", "the original is untouched");
+  }
+
+  function test_actionEnabled() {
+    const actions = {
+      "undo": {
+        "enabled": false
+      },
+      "check": {
+        "enabled": true
+      }
+    };
+    const item = id => ({
+          "id": id,
+          "kind": "command"
+        });
+    compare(CustomWidgetData.actionEnabled(null, item("next")), true, "no actions: all on");
+    compare(CustomWidgetData.actionEnabled(undefined, item("next")), true, "no sample: on");
+    compare(CustomWidgetData.actionEnabled(actions, item("check")), true, "listed on");
+    compare(CustomWidgetData.actionEnabled(actions, item("undo")), false, "listed off");
+    compare(CustomWidgetData.actionEnabled(actions, item("next")), false, "unlisted: off");
+    compare(CustomWidgetData.actionEnabled(actions, {
+      "id": "refresh",
+      "kind": "axiom"
+    }), true, "an axiom action is always on");
+    compare(CustomWidgetData.actionEnabled({}, {
+      "id": "x",
+      "kind": "axiom"
+    }), true, "an axiom action with an empty list");
+    compare(CustomWidgetData.actionEnabled(actions, item("constructor")), false, "an Object.prototype name isn't listed");
+    compare(CustomWidgetData.actionEnabled(actions, item("toString")), false, "toString isn't listed");
+  }
+
+  function test_shellQuote() {
+    compare(CustomWidgetData.shellQuote("42.5"), "42.5", "a number is bare");
+    compare(CustomWidgetData.shellQuote("."), "'.'", "a dot is quoted");
+    compare(CustomWidgetData.shellQuote("1.2.3"), "'1.2.3'", "two dots are quoted");
+    compare(CustomWidgetData.shellQuote("-."), "'-.'", "-. is quoted");
+    compare(CustomWidgetData.shellQuote(".5"), ".5", ".5 is a number");
+    compare(CustomWidgetData.shellQuote("-3"), "-3", "a negative number");
+    compare(CustomWidgetData.shellQuote("seek"), "'seek'", "a word is quoted");
+    compare(CustomWidgetData.shellQuote("it's"), "'it'\\''s'", "a quote survives");
+    compare(CustomWidgetData.shellQuote(""), "''", "nothing is ''");
+    compare(CustomWidgetData.shellQuote("a$&b"), "'a$&b'", "shell characters stay inside the quotes");
+  }
+
+  function test_fillCommand() {
+    compare(CustomWidgetData.fillCommand("playerctl-do seek {value}", {
+      "value": "42.5"
+    }), "playerctl-do seek 42.5", "a number is bare");
+    compare(CustomWidgetData.fillCommand("x {value}", {
+      "value": "{rev}",
+      "rev": "9"
+    }), "x '{rev}'", "a filled value is not filled again");
+    compare(CustomWidgetData.fillCommand("x ${rev}", {
+      "rev": "9"
+    }), "x ${rev}", "after a $: untouched");
+    compare(CustomWidgetData.fillCommand("{rev}{value}", {
+      "rev": "a",
+      "value": "b"
+    }), "'a''b'", "both filled");
+    compare(CustomWidgetData.fillCommand("{rev}", {
+      "value": "1"
+    }), "{rev}", "no value for it: kept");
+    compare(CustomWidgetData.fillCommand("x {action}", {
+      "action": "a",
+      "value": "1"
+    }), "x {action}", "{action} stays as typed");
+    compare(CustomWidgetData.fillCommand("x {text}", {
+      "value": "1"
+    }), "x {text}", "{text} stays as typed");
+    compare(CustomWidgetData.fillCommand("{value} {value}", {
+      "value": "z"
+    }), "'z' 'z'", "the same placeholder twice");
+    compare(CustomWidgetData.fillCommand("bash {tree}run {value}", {
+      "tree": "/opt/axiom/",
+      "value": ""
+    }), "bash /opt/axiom/run ''", "{tree} as is, an empty value ''");
+    compare(CustomWidgetData.fillCommand("ls ${tree} {tree}x {value}", {
+      "tree": "/t/"
+    }), "ls ${tree} /t/x {value}", "a shell ${tree} stays, unfilled placeholders stay");
+    compare(CustomWidgetData.fillCommand("x {value}", {
+      "value": "a$&b"
+    }), "x 'a$&b'", "shell characters intact");
+  }
+
+  function test_fillCommandArg() {
+    compare(CustomWidgetData.fillCommand("x {arg}", {
+      "arg": "'a' 'b'"
+    }), "x 'a' 'b'", "{arg} is the words as they are (already quoted)");
+    compare(CustomWidgetData.fillCommand("x ${arg}", {
+      "arg": "'a'"
+    }), "x ${arg}", "a shell ${arg} stays");
+    compare(CustomWidgetData.fillCommand("x {arg}", {
+      "value": "1"
+    }), "x {arg}", "no arg given: kept");
+    compare(CustomWidgetData.fillCommand("{value} {arg}", {
+      "value": "{arg}",
+      "arg": "'z'"
+    }), "'{arg}' 'z'", "a filled value is never searched again");
+  }
+
+  function test_commandLine() {
+    const fields = {
+      "plain": "hello",
+      "sample": {
+        "title": "a b",
+        "evil": "x'; rm -rf ~; echo '",
+        "sub": "$(touch /tmp/pwn) `id` $HOME\nnext",
+        "quote": "say \"hi\" now",
+        "n": 42,
+        "loop": "{arg} {value}"
+      }
+    };
+    const own = {
+      "value": "7",
+      "ownValue": true,
+      "rev": "r1",
+      "tree": "/t/",
+      "fields": fields
+    };
+    const none = {
+      "ownValue": false,
+      "rev": "r1",
+      "tree": "/t/",
+      "fields": fields
+    };
+    const quote = "'\\''";
+    compare(CustomWidgetData.commandLine("kby", "next", none), "kby 'next'", "appended at the end");
+    compare(CustomWidgetData.commandLine("kby --x {arg} --y", "next", none), "kby --x 'next' --y", "{arg} placement");
+    compare(CustomWidgetData.commandLine("kby", "next now", none), "kby 'next' 'now'", "two words");
+    compare(CustomWidgetData.commandLine("kby", "go \"next song\" 3", none), "kby 'go' 'next song' 3", "a quoted group is one word; a number stays bare");
+    compare(CustomWidgetData.commandLine("kby", "-5", none), "kby -5", "a number left bare");
+    compare(CustomWidgetData.commandLine("kby", "", none), "kby", "an empty argument changes nothing");
+    compare(CustomWidgetData.commandLine("kby", "   ", none), "kby", "a blank argument changes nothing");
+    compare(CustomWidgetData.commandLine("kby {arg}", "", none), "kby ", "an empty {arg} is nothing");
+    compare(CustomWidgetData.commandLine("kby {value}", "next", none), "kby 'next'", "a Button's {value} is its argument, nothing added");
+    compare(CustomWidgetData.commandLine("kby {value}", "next now", none), "kby 'next now'", "{value} is the whole argument as one word");
+    compare(CustomWidgetData.commandLine("kby {value} {arg}", "a b", none), "kby 'a b' 'a' 'b'", "both {value} and {arg}");
+    compare(CustomWidgetData.commandLine("kby ${value}", "next", none), "kby ${value} 'next'", "a shell ${value} is no placeholder: added at the end");
+    compare(CustomWidgetData.commandLine("set {value}", "next", own), "set 7 'next'", "a slider's {value} and the argument added");
+    compare(CustomWidgetData.commandLine("set {value}", "", own), "set 7", "a slider's {value} alone");
+    compare(CustomWidgetData.commandLine("set {arg} {value}", "up", own), "set 'up' 7", "{arg} before {value}");
+    compare(CustomWidgetData.commandLine("kby ${arg} {arg}", "a", none), "kby ${arg} 'a'", "${arg} untouched");
+    compare(CustomWidgetData.commandLine("run {rev} {tree}x", "go", none), "run 'r1' /t/x 'go'", "{rev} and {tree} as before");
+    compare(CustomWidgetData.commandLine("kby", "{title}", none), "kby 'a b'", "a {path} is filled, and stays one word");
+    compare(CustomWidgetData.commandLine("kby", "{n} {title}", none), "kby 42 'a b'", "a number from the output is bare");
+    compare(CustomWidgetData.commandLine("kby", "{nope}", none), "kby '{nope}'", "an unknown {x} stays as typed");
+    compare(CustomWidgetData.commandLine("kby {value}", "{title}", none), "kby 'a b'", "{value} filled from the output too");
+    compare(CustomWidgetData.commandLine("kby", "{text}", none), "kby 'hello'", "{text} is the plain text");
+    // Nothing in the argument can end or start a command
+    compare(CustomWidgetData.commandLine("kby", "next; rm -rf ~", none), "kby 'next;' 'rm' '-rf' '~'", "; stays inside a word");
+    compare(CustomWidgetData.commandLine("kby", "$(id) `id` && x | y > z", none), "kby '$(id)' '`id`' '&&' 'x' '|' 'y' '>' 'z'", "substitutions and operators are literal words");
+    compare(CustomWidgetData.commandLine("kby", "it's", none), "kby 'it" + quote + "s'", "a quote is closed and escaped");
+    compare(CustomWidgetData.commandLine("kby", "{evil}", none), "kby 'x" + quote + "; rm -rf ~; echo " + quote + "'", "output text with a quote can't leave its word");
+    compare(CustomWidgetData.commandLine("kby", "{sub}", none), "kby '$(touch /tmp/pwn) `id` $HOME\nnext'", "output text with $() and a newline stays inside the quotes");
+    compare(CustomWidgetData.commandLine("kby", "{quote} x", none), "kby 'say \"hi\" now' 'x'", "output text with quotes and spaces is one word: the split comes first");
+    compare(CustomWidgetData.commandLine("kby {value}", "{evil}", none), "kby 'x" + quote + "; rm -rf ~; echo " + quote + "'", "{value} from the output is quoted too");
+    compare(CustomWidgetData.commandLine("kby {arg}", "{loop}", none), "kby '{arg} {value}'", "a filled {arg} and {value} are never filled again");
+    compare(CustomWidgetData.commandLine("kby {value}", "{loop}", none), "kby '{arg} {value}'", "a {value} in the filled argument stays");
+    compare(CustomWidgetData.commandLine("kby", "{loop}", none), "kby '{arg} {value}'", "appended text is not filled again");
+    compare(CustomWidgetData.commandLine("kby {value}", "x", {
+      "ownValue": true,
+      "value": "a; b",
+      "fields": fields
+    }), "kby 'a; b' 'x'", "an own value is quoted as before");
+  }
+
+  function test_builtinAllowed() {
+    const refused = ["poweroff", "lock", "reboot"];
+    compare(CustomWidgetData.builtinAllowed("poweroff", refused), false, "poweroff");
+    compare(CustomWidgetData.builtinAllowed("lock", refused), false, "lock");
+    compare(CustomWidgetData.builtinAllowed("toggleMute", refused), true, "mute");
+    compare(CustomWidgetData.builtinAllowed("refresh", refused), true, "refresh");
+    compare(CustomWidgetData.builtinAllowed("poweroff", undefined), true, "nothing refused");
+  }
+
+  // --- Samples ---
+
+  function test_viewKey() {
+    const module = {
+      "views": [
+        {
+          "id": "front"
+        },
+        {
+          "id": "back"
+        }
+      ]
+    };
+    compare(CustomWidgetData.viewKey(module, 1), "back", "a screen's id");
+    compare(CustomWidgetData.viewKey(module, -1), "", "no screen");
+    compare(CustomWidgetData.viewKey(module, 5), "", "past the list");
+    compare(CustomWidgetData.viewKey(null, 0), "", "no module");
+  }
+
+  function test_keepSample() {
+    const limits = {
+      "entries": 2,
+      "bytes": 100
+    };
+    const samples = {
+      "a": {
+        "x": 1
+      }
+    };
+    const kept = CustomWidgetData.keepSample(samples, "b", {
+      "y": 2
+    }, limits);
+    compare(kept.refused, "", "kept");
+    compare(Object.keys(kept.samples).join(), "a,b", "added");
+    compare(Object.keys(samples).join(), "a", "the argument is not changed");
+    const replaced = CustomWidgetData.keepSample(kept.samples, "a", {
+      "x": 9
+    }, limits);
+    compare(replaced.refused, "", "an existing key is replaced at the cap");
+    compare(replaced.samples.a.x, 9, "its new value");
+    const full = CustomWidgetData.keepSample(kept.samples, "c", {}, limits);
+    compare(full.refused, "count", "a third key is refused");
+    compare(Object.keys(full.samples).join(), "a,b", "the map is as it was");
+    const big = CustomWidgetData.keepSample({}, "a", {
+      "text": "x".repeat(200)
+    }, limits);
+    compare(big.refused, "size", "too big");
+    compare(Object.keys(big.samples).length, 0, "nothing kept");
+    compare(CustomWidgetData.keepSample(undefined, "", {}, limits).refused, "", "no map yet");
+    const cjk = n => ({
+          "text": "語".repeat(n)
+        });
+    compare(CustomWidgetData.keepSample({}, "a", cjk(30000), {
+      "bytes": 65536
+    }).refused, "size", "30000 CJK characters are over 64 KB of UTF-8");
+    compare(CustomWidgetData.keepSample({}, "a", cjk(20000), {
+      "bytes": 65536
+    }).refused, "", "20000 fit");
+  }
+
+  function test_utf8Length() {
+    compare(CustomWidgetData.utf8Length("a"), 1);
+    compare(CustomWidgetData.utf8Length("é"), 2);
+    compare(CustomWidgetData.utf8Length("語"), 3);
+    compare(CustomWidgetData.utf8Length("😀"), 4);
+  }
+
+  function test_sampleForView() {
+    const module = {
+      "views": [
+        {
+          "id": "front",
+          "when": {
+            "key": "state",
+            "test": "is",
+            "values": ["front"]
+          }
+        },
+        {
+          "id": "back",
+          "when": {
+            "key": "state",
+            "test": "is",
+            "values": ["back"]
+          }
+        }
+      ]
+    };
+    const def = {
+      "module": module,
+      "samples": {
+        "front": {
+          "state": "front",
+          "saved": true
+        }
+      }
+    };
+    const live = _fields({
+      "state": "back",
+      "live": true
+    });
+    compare(CustomWidgetData.sampleForView(def, 0, {
+      "front": {
+        "seen": true
+      }
+    }, live).saved, true, "saved wins over seen and live");
+    compare(CustomWidgetData.sampleForView(def, 1, {
+      "back": {
+        "seen": true
+      }
+    }, live).seen, true, "seen over live");
+    compare(CustomWidgetData.sampleForView(def, 1, {}, live).live, true, "live when it picks that screen");
+    compare(CustomWidgetData.sampleForView({
+      "module": module
+    }, 0, {}, live), null, "live that picks another screen: none");
+    compare(CustomWidgetData.sampleForView(def, -1, {}, _fields({
+      "state": "other"
+    })).state, "other", "live that picks no screen is the base's");
+    compare(CustomWidgetData.sampleForView({
+      "module": module
+    }, 0, {}, null), null, "no live fields");
+    compare(CustomWidgetData.sampleForView({
+      "module": module,
+      "samples": {
+        "": {
+          "kept": 1
+        }
+      }
+    }, -1, {}, null).kept, 1, "the empty key is no screen");
+  }
+
+  function test_moveItem() {
+    compare(CustomWidgetData.moveItem(["a", "b", "c"], 0, 2), ["b", "c", "a"]);
+    compare(CustomWidgetData.moveItem(["a", "b", "c"], 2, 1), ["a", "c", "b"]);
+    compare(CustomWidgetData.moveItem(["a", "b"], 0, 5), ["a", "b"], "out of range: as it is");
+    compare(CustomWidgetData.moveItem(["a", "b"], 1, 1), ["a", "b"], "same place");
+    compare(CustomWidgetData.moveItem(null, 0, 1), [], "none");
+    const list = ["a", "b"];
+    CustomWidgetData.moveItem(list, 0, 1);
+    compare(list, ["a", "b"], "not changed in place");
+  }
+
+  function test_viewCopy() {
+    const views = [
+      {
+        "id": "open",
+        "name": "Open",
+        "base": false,
+        "when": {
+          "key": "state",
+          "test": "is",
+          "values": ["open"]
+        },
+        "elements": [
+          {
+            "id": "a",
+            "type": "Text"
+          }
+        ]
+      }
+    ];
+    const copy = CustomWidgetData.viewCopy(views, 0, "Open (copy)");
+    compare(copy.id, "open-copy", "a new id from the name");
+    compare(copy.name, "Open (copy)");
+    compare(copy.when.values, ["open"], "the condition is copied");
+    compare(copy.base, false);
+    compare(copy.elements, views[0].elements, "its elements are copied");
+    verify(copy.elements !== views[0].elements, "not the same array");
+    compare(CustomWidgetData.viewCopy(views, 0, "Open").id, "open-2", "a clash is numbered");
+    compare(CustomWidgetData.viewCopy(views, 3, "x"), null);
+  }
+
+  function test_elementCopy() {
+    const element = {
+      "id": "a",
+      "type": "Text",
+      "place": {
+        "x": 1,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      }
+    };
+    compare(CustomWidgetData.elementCopy([], element).id, "a", "no clash: the same id");
+    compare(CustomWidgetData.elementCopy([
+      {
+        "id": "a"
+      }
+    ], element).id, "a-2", "a clash: a new id");
+    compare(CustomWidgetData.elementCopy([
+      {
+        "id": "a"
+      }
+    ], element).place, element.place, "the same place");
+  }
+
+  function test_bindChoicesEdges() {
+    compare(CustomWidgetData.bindChoices([
+      {
+        "constructor": 1,
+        "toString": "x"
+      }
+    ]).map(c => c.path), ["constructor", "toString"], "paths named like Object keys");
+    compare(CustomWidgetData.bindChoices([
+      {
+        "a": 1,
+        "b": 2,
+        "c": 3
+      }
+    ], 2).length, 2, "the cap");
+    const long = CustomWidgetData.bindChoices([
+      {
+        "t": "x".repeat(41)
+      }
+    ])[0].preview;
+    compare(long.length, 40, "a long leaf's preview");
+    verify(long.endsWith("…"));
+  }
+
+  function test_bindChoices() {
+    const choices = CustomWidgetData.bindChoices([
+      {
+        "text": "x",
+        "data": {
+          "temp": 21
+        },
+        "items": [1, 2]
+      },
+      null,
+      {
+        "text": "other",
+        "extra": "y".repeat(60)
+      }
+    ]);
+    compare(choices.map(c => c.path), ["text", "data.temp", "items", "items.0", "items.1", "extra"], "each path once, objects left out");
+    compare(choices[0].preview, "x", "the first seen value");
+    compare(choices[2].type, "array");
+    compare(choices[2].preview, "", "a list has no preview");
+    compare(choices[5].preview.length, 40, "long values are cut");
+    compare(CustomWidgetData.bindChoices([
+      {
+        "a": 1,
+        "b": 2,
+        "c": 3
+      }
+    ], 2).length, 2, "capped");
+    compare(CustomWidgetData.bindChoices(null), []);
+  }
+
+  function test_commandsOf() {
+    compare(CustomWidgetData.commandsOf({
+      "command": "a.sh",
+      "execIf": "  ",
+      "actions": {
+        "refreshAfter": true,
+        "items": [
+          {
+            "id": "go",
+            "name": "Go",
+            "kind": "command",
+            "command": "b.sh {value}"
+          },
+          {
+            "id": "plain",
+            "kind": "command",
+            "command": "c"
+          },
+          {
+            "id": "restart",
+            "kind": "axiom",
+            "axiom": "restart"
+          },
+          {
+            "id": "empty",
+            "kind": "command",
+            "command": " "
+          }
+        ]
+      }
+    }), [
+      {
+        "where": "command",
+        "command": "a.sh"
+      },
+      {
+        "where": "actions/Go",
+        "command": "b.sh {value}"
+      },
+      {
+        "where": "actions/plain",
+        "command": "c"
+      }
+    ], "the non-empty commands, each with where it is (an action's name, else id); Axiom actions aren't commands");
+    const template = CustomWidgetData.galleryPresets.find(p => p.name === "Slider");
+    compare(CustomWidgetData.commandsOf(template).map(c => c.where), ["command", "actions/Set"], "a template's script and its action");
+    compare(CustomWidgetData.commandsOf(null), []);
+  }
+
+  function test_exportAndImport() {
+    const def = {
+      "id": "x",
+      "name": "X",
+      "command": "x.sh",
+      "samples": {
+        "": {
+          "text": "1"
+        }
+      }
+    };
+    const text = CustomWidgetData.exportOf(def);
+    const wrapped = JSON.parse(text);
+    compare(wrapped.axiomCustomWidget, 1, "versioned");
+    compare("id" in wrapped.definition, false, "no id");
+    compare(wrapped.definition.samples, def.samples, "samples travel");
+    compare(def.id, "x", "the definition is not changed");
+    const back = CustomWidgetData.fromExport(text);
+    compare(back.error, "");
+    compare(back.definitions.length, 1);
+    compare(back.definitions[0].command, "x.sh");
+    compare(CustomWidgetData.fromExport("{\"command\": \"a\", \"id\": \"q\"}").definitions[0].id, undefined, "a bare definition, id dropped");
+    compare(CustomWidgetData.fromExport("[" + text + ", {\"module\": {}}]").definitions.length, 2, "a list of either");
+    compare(CustomWidgetData.fromExport("// c\n{\"command\": \"a\",}").error, "", "comments and trailing commas");
+    const nope = CustomWidgetData.fromExport("{nope");
+    compare(nope.error, "json", "bad JSON");
+    verify(nope.detail !== "", "with its detail");
+    compare(CustomWidgetData.fromExport("{\"name\": \"x\"}").error, "noModule", "no module and no command");
+    compare(CustomWidgetData.fromExport("[1]").error, "notWidget", "not objects");
+    compare(CustomWidgetData.fromExport("{\"axiomCustomWidget\": 2, \"definition\": {\"command\": \"a\"}}").error, "newer", "a newer wrapper");
+    compare(CustomWidgetData.fromExport("[]").error, "empty");
+  }
+
+  function test_readImport() {
+    compare(CustomWidgetData.readImport(CustomWidgetData.exportOf({
+      "command": "a"
+    })).kind, "widget");
+    const waybar = CustomWidgetData.readImport("\"custom/x\": { \"exec\": \"a.sh\", \"interval\": 5 }");
+    compare(waybar.kind, "waybar", "a Waybar module is the second mode");
+    compare(waybar.definitions[0].command, "a.sh");
+    const bad = CustomWidgetData.readImport("{\"nothing\": 1}");
+    compare(bad.kind, "");
+    compare(bad.error, "neither");
+    compare(CustomWidgetData.readImport("{nope").error, "json");
+  }
+
+  function test_pushLog() {
+    compare(CustomWidgetData.pushLog([1, 2, 3], 4, 3), [2, 3, 4], "the last `cap`");
+    compare(CustomWidgetData.pushLog(null, 1, 3), [1]);
+  }
+
+  function test_templates() {
+    const names = CustomWidgetData.galleryPresets.map(p => p.name);
+    compare(names, ["Daily habits", "Toggle", "Slider", "List with a row action", "Media card", "Status with an error screen"]);
+    verify(CustomWidgetData.scriptPresets.map(p => p.name).includes("Daily habits"), "Daily habits is also a known script");
+    compare(CustomWidgetData.scriptPresets.every(p => !!p.command), true, "the known scripts have commands");
+    compare(CustomWidgetData.scriptPresets.some(p => p.demo), false, "a demo template isn't a known script");
+    for (const t of CustomWidgetData.galleryPresets) {
+      verify(t.demo === true || t.name === "Daily habits", t.name + " is a demo or Daily habits");
+      verify(t.command.length > 0 && t.mode === "poll" && t.output === "json", t.name + " runs a poll script");
+      verify(t.command.includes("{tree}data/custom-widgets/" + (t.demo ? "demo.sh" : "habits.sh")), t.name + ": the script is found through {tree}");
+      for (const a of t.actions.items.filter(a => a.kind === "command"))
+        verify(a.command.length > 0, t.name + ": " + a.id + " has a command");
+      for (const a of t.actions.items.filter(a => a.kind === "axiom"))
+        verify(a.axiom.length > 0, t.name + ": " + a.id + " names an axiom action");
+    }
+    const slider = CustomWidgetData.galleryPresets.find(p => p.name === "Slider");
+    verify(slider.actions.items[0].command.endsWith("slider set {value}"), "the slider's action sends the released value");
+    for (const t of CustomWidgetData.galleryPresets) {
+      const module = t.module;
+      const ids = CustomWidgetData.allElements(module).map(e => e.id);
+      verify(ids.length > 0, t.name + " has elements");
+      // Element ids are unique in a layer (a screen's may repeat the base's)
+      for (const layer of [module.elements].concat((module.views ?? []).map(v => v.elements)))
+        compare(new Set(layer.map(e => e.id)).size, layer.length, t.name + ": unique ids");
+      const keys = Object.keys(t.samples);
+      verify(keys.length > 0, t.name + " has a sample");
+      const context = {
+        "interactive": true,
+        "colorNames": ["accent", "success", "warning", "error"]
+      };
+      for (const key of keys) {
+        const fields = CustomWidgetData.resolve(t, t.samples[key], context);
+        const views = module.views ?? [];
+        const index = views.findIndex(v => v.id === key);
+        verify(key === "" || index >= 0, t.name + ": sample " + key + " is a screen's");
+        // A screen's sample picks its screen; the base's picks none
+        if (key !== "")
+          compare(CustomWidgetData.pickView(module, fields).index, index, t.name + ": the " + key + " sample picks its screen");
+      }
+      // Every action an element runs is one of the template's, and a command one a sample lists
+      const named = [].concat(...CustomWidgetData.allElements(module).map(e => Object.values(e.run ?? {}))).filter(a => a);
+      for (const action of named) {
+        const item = CustomWidgetData.actionOf(t, action);
+        verify(item !== null, t.name + ": " + action + " is one of its actions");
+        if (item?.kind === "command")
+          verify(Object.values(t.samples).some(sm => sm.actions && action in sm.actions), t.name + ": a sample lists " + action);
+      }
+    }
+    const media = CustomWidgetData.galleryPresets.find(p => p.name === "Media card");
+    const nothing = CustomWidgetData.resolve(media, media.samples.nothing, {
+      "interactive": true
+    });
+    compare(CustomWidgetData.pickView(media.module, nothing).index, 2, "nothing playing is the third screen");
+    const status = CustomWidgetData.galleryPresets.find(p => p.name === "Status with an error screen");
+    const failing = CustomWidgetData.resolve(status, status.samples.error, {
+      "interactive": true
+    });
+    compare(CustomWidgetData.pickView(status.module, failing).index, 0, "a script's error picks the error screen");
+  }
+
+  function test_nameFromCommand() {
+    compare(CustomWidgetData.nameFromCommand("~/bin/cpu.sh x"), "cpu", "a path with an extension and an argument");
+    compare(CustomWidgetData.nameFromCommand("checkupdates | wc -l"), "checkupdates", "a pipeline");
+    compare(CustomWidgetData.nameFromCommand("uptime"), "uptime", "a bare command");
+    compare(CustomWidgetData.nameFromCommand("\"/opt/my tools/disk.py\" --fast"), "disk", "a quoted path with a space");
+    compare(CustomWidgetData.nameFromCommand("/usr/bin/.hidden"), ".hidden", "a leading dot stays");
+    compare(CustomWidgetData.nameFromCommand("  "), "", "blank");
+    compare(CustomWidgetData.nameFromCommand(""), "", "empty");
+  }
+
+  function test_freeName() {
+    compare(CustomWidgetData.freeName("Custom widget", []), "Custom widget", "free");
+    compare(CustomWidgetData.freeName("Custom widget", ["Custom widget"]), "Custom widget 2", "taken");
+    compare(CustomWidgetData.freeName("Custom widget", ["Custom widget", "Custom widget 2"]), "Custom widget 3", "two taken");
+    compare(CustomWidgetData.freeName("cpu", ["cpu 2"]), "cpu", "a gap elsewhere is no clash");
+  }
+
+  function test_sampleSource() {
+    const module = {
+      "views": [
+        {
+          "id": "a",
+          "when": {
+            "key": "state",
+            "test": "is",
+            "values": ["playing"]
+          }
+        },
+        {
+          "id": "e",
+          "when": {
+            "key": "error",
+            "test": "set"
+          }
+        }
+      ]
+    };
+    const def = {
+      "module": module,
+      "samples": {
+        "a": {
+          "state": "playing"
+        }
+      }
+    };
+    compare(CustomWidgetData.sampleSource(def, 0, {}, null), "saved");
+    compare(CustomWidgetData.sampleSource(def, 1, {
+      "e": {
+        "error": "x"
+      }
+    }, null), "live", "seen is live");
+    compare(CustomWidgetData.sampleSource(def, 1, {}, null), "none");
+    compare(CustomWidgetData.sampleSource(def, -1, {}, null), "none");
+  }
+
+  function test_fitZoom() {
+    compare(CustomWidgetData.fitZoom([4, 4], 100, 10000, 10000), 1, "never past full size");
+    verify(CustomWidgetData.fitZoom([4, 4], 100, 50, 10000) < 1, "narrow: smaller");
+    verify(CustomWidgetData.fitZoom([4, 4], 100, 10000, 50) < 1, "short: smaller");
+    compare(CustomWidgetData.fitZoom([4, 4], 100, 0, 0), 0.05, "at least 0.05");
+    verify(CustomWidgetData.fitZoom([8, 2], 100, 150, 400) < CustomWidgetData.fitZoom([2, 2], 100, 150, 400), "a wider module is drawn smaller");
+  }
+
+  function test_lockIssues() {
+    compare(CustomWidgetData.lockIssues(null), []);
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Text",
+            "bind": {
+              "text": "Hello"
+            }
+          },
+          {
+            "type": "Ring"
+          }
+        ]
+      }
+    }), [], "literals and graphics are fine");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Button",
+            "run": {
+              "click": "undo"
+            }
+          },
+          {
+            "type": "Entry"
+          }
+        ],
+        "views": [
+          {
+            "id": "a",
+            "elements": [
+              {
+                "type": "Text",
+                "bind": {
+                  "text": "{text}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }), ["actions", "entry", "text"], "each, screens included");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Text"
+          }
+        ]
+      }
+    }), ["text"], "an unbound Text shows the output");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "TextBlock",
+            "bind": {
+              "text": ""
+            }
+          }
+        ]
+      }
+    }), ["text"], "an empty bound Text block shows the output");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [],
+        "views": []
+      }
+    }), ["text"], "the default layout shows the text");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "elements": [
+          {
+            "type": "Button",
+            "run": {
+              "click": ""
+            }
+          }
+        ]
+      }
+    }), [], "an empty action is none");
+    compare(CustomWidgetData.lockIssues({
+      "module": {
+        "views": [
+          {
+            "id": "a",
+            "elements": [
+              {
+                "type": "Toggle",
+                "run": {
+                  "on": "go"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }), ["actions"], "an action on a screen");
+    compare(CustomWidgetData.lockIssues({
+      "bar": {
+        "run": {
+          "click": "go"
+        }
+      }
+    }), ["actions"], "the bar's click");
+  }
+
+  function test_restorePlace() {
+    const items = [
+      {
+        "id": "a"
+      },
+      {
+        "id": "b",
+        "module": {
+          "elements": [
+            {},
+            {}
+          ],
+          "views": [
+            {
+              "elements": [
+                {}
+              ]
+            }
+          ]
+        }
+      }
+    ];
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "b",
+      "view": 0,
+      "element": 0
+    }), {
+      "index": 1,
+      "view": 0,
+      "element": 0
+    }, "everything still there");
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "b",
+      "view": 3,
+      "element": 1
+    }), {
+      "index": 1,
+      "view": -1,
+      "element": 1
+    }, "a gone screen falls back to the base");
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "b",
+      "view": 0,
+      "element": 4
+    }).element, -1, "a gone element");
+    compare(CustomWidgetData.restorePlace(items, {
+      "id": "zz",
+      "view": 0,
+      "element": 0
+    }), {
+      "index": 0,
+      "view": -1,
+      "element": -1
+    }, "a gone definition falls back to the first");
+  }
+
+  function _defWith(run, actions, views) {
+    return {
+      "actions": {
+        "items": actions
+      },
+      "bar": {
+        "run": run.bar ?? {}
+      },
+      "module": {
+        "elements": run.el ? [
+          {
+            "type": "button",
+            "run": run.el
+          }
+        ] : [],
+        "views": views ?? []
+      }
+    };
+  }
+
+  function test_interactive() {
+    const cmd = {
+      "id": "a",
+      "kind": "command",
+      "command": "x"
+    };
+    verify(!CustomWidgetData.interactive(_defWith({
+      "bar": {
+        "click": "a"
+      }
+    }, [cmd])), "only bar.run names it");
+    verify(CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "a"
+      }
+    }, [cmd])), "an element names it");
+    verify(!CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "a"
+      }
+    }, [
+      {
+        "id": "a",
+        "kind": "axiom",
+        "axiom": "refresh"
+      }
+    ])), "an axiom action");
+    verify(!CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "a"
+      }
+    }, [
+      {
+        "id": "a",
+        "kind": "command",
+        "command": ""
+      }
+    ])), "an empty command");
+    verify(CustomWidgetData.interactive(_defWith({}, [], [
+      {
+        "id": "v"
+      }
+    ])), "a screen");
+    verify(!CustomWidgetData.interactive(_defWith({
+      "el": {
+        "click": "nope"
+      }
+    }, [cmd])), "an id that doesn't exist");
+  }
+
+  function test_actionsFailing() {
+    const module = {
+      "views": [
+        {
+          "when": {
+            "key": "error"
+          }
+        },
+        {
+          "when": {
+            "key": "state"
+          }
+        }
+      ]
+    };
+    const failing = kind => ({
+          "failure": {
+            "kind": kind
+          }
+        });
+    verify(!CustomWidgetData.actionsFailing(module, {
+      "failure": null
+    }, -1), "no failure");
+    verify(!CustomWidgetData.actionsFailing(module, failing("script"), -1), "the script's own error");
+    verify(CustomWidgetData.actionsFailing(module, failing("exit"), -1), "exit, base");
+    verify(!CustomWidgetData.actionsFailing(module, failing("exit"), 0), "an error screen");
+    verify(CustomWidgetData.actionsFailing(module, failing("exit"), 1), "a screen keyed on state");
+  }
+
+  function test_resolveNoScript() {
+    const f = CustomWidgetData.resolve({
+      "format": "Hi {icon}",
+      "hideEmpty": true,
+      "formatIcons": {}
+    }, {}, {
+      "noScript": true,
+      "run": {
+        "exitCode": 0
+      }
+    });
+    compare(f.hidden, false);
+    compare(f.plain, "Hi ");
+    compare(f.noSample, true);
+    compare(f.failure, null);
+    compare(CustomWidgetData.elementValue(f, "a{foo}"), "a", "a path reads empty");
+  }
+
+  function test_runShape() {
+    compare(CustomWidgetData.runShape(false, undefined, true), "discrete");
+    compare(CustomWidgetData.runShape(true, 5, true), "latest");
+    compare(CustomWidgetData.runShape(true, 5, false), "latest");
+    compare(CustomWidgetData.runShape(true, undefined, false), "detached");
+    compare(CustomWidgetData.runShape(true, undefined, true), "queue");
+  }
+
+  function test_pendingEntry() {
+    const first = CustomWidgetData.pendingEntry(null, 5, "a", "latest");
+    compare(first.value, 5);
+    compare(first.arg, "a");
+    compare(first.count, undefined, "a value replaces the waiting one, no count");
+    compare(CustomWidgetData.pendingEntry(first, 9, "b", "latest").value, 9, "the latest wins");
+    compare(CustomWidgetData.pendingEntry(null, undefined, "", "queue").count, 1);
+    compare(CustomWidgetData.pendingEntry({
+      "count": 3
+    }, undefined, "", "queue").count, 4, "each notch counts");
+    compare(CustomWidgetData.pendingEntry({
+      "count": 10
+    }, undefined, "", "queue").count, 10, "at most 10");
+  }
+
+  function test_nextPending() {
+    const one = CustomWidgetData.nextPending({
+      "value": 5,
+      "arg": "a"
+    });
+    compare(one.run.value, 5);
+    compare(one.run.arg, "a");
+    compare(one.rest, null, "the last one leaves nothing waiting");
+    const counted = CustomWidgetData.nextPending({
+      "value": undefined,
+      "arg": "x",
+      "count": 3
+    });
+    compare(counted.rest.count, 2, "a notch is taken off the count");
+    compare(counted.rest.arg, "x");
+    compare(CustomWidgetData.nextPending({
+      "arg": "",
+      "count": 1
+    }).rest, null, "a count of 1 is the last");
+  }
+
+  function test_keepChoice() {
+    const module = {
+      "views": [
+        {
+          "id": "a",
+          "when": {
+            "key": "k",
+            "test": "set"
+          }
+        }
+      ]
+    };
+    const chosen = {
+      "view": "b",
+      "matched": -1
+    };
+    compare(CustomWidgetData.keepChoice(module, _fields({}), chosen), chosen, "no screen matches: kept");
+    compare(CustomWidgetData.keepChoice(module, _fields({
+      "k": "x"
+    }), chosen), null, "screen 0 matches: dropped");
+    compare(CustomWidgetData.keepChoice(module, _fields({
+      "k": "x"
+    }, {
+      "kind": "exit"
+    }), chosen), chosen, "failing: kept");
+    compare(CustomWidgetData.keepChoice(module, _fields({}), null), null);
+  }
+
+  function test_rowKey() {
+    compare(CustomWidgetData.rowKey({
+      "id": "a",
+      "value": 84,
+      "text": "x"
+    }), "a");
+    compare(CustomWidgetData.rowKey({
+      "id": "",
+      "value": 84,
+      "raw": {
+        "unit": "%"
+      },
+      "text": "x"
+    }), "84");
+    compare(CustomWidgetData.rowKey({
+      "id": "",
+      "value": undefined,
+      "text": "Firefox"
+    }), "Firefox");
+  }
+
+  function test_freeRefreshName() {
+    const items = [
+      {
+        "id": "a",
+        "name": "Alpha",
+        "refreshName": "vol"
+      },
+      {
+        "id": "b",
+        "name": "Beta",
+        "refreshName": ""
+      }
+    ];
+    compare(CustomWidgetData.freeRefreshName("vol", items, "c"), "", "another's refresh name");
+    compare(CustomWidgetData.freeRefreshName("b", items, "c"), "", "another's id");
+    compare(CustomWidgetData.freeRefreshName("free", items, "c"), "free");
+    compare(CustomWidgetData.freeRefreshName("", items, "c"), "");
+    compare(CustomWidgetData.freeRefreshName("b", items, "b"), "b", "its own id");
+    compare(CustomWidgetData.freeRefreshName("vol", items, "a"), "vol", "its own refresh name");
+  }
+
+  function test_changedTabs() {
+    const saved = {
+      "name": "A",
+      "command": "x",
+      "format": "{text}",
+      "actions": {
+        "items": []
+      },
+      "module": {
+        "size": 2
+      }
+    };
+    compare(CustomWidgetData.changedTabs(saved, Utils.clone(saved)), []);
+    const f = Utils.clone(saved);
+    f.format = "{value}";
+    compare(CustomWidgetData.changedTabs(saved, f), [1]);
+    const c = Utils.clone(saved);
+    c.command = "y";
+    c.module.size = 3;
+    compare(CustomWidgetData.changedTabs(saved, c), [0, 2]);
+    const a = Utils.clone(saved);
+    a.actions.items = [
+      {
+        "id": "a"
+      }
+    ];
+    compare(CustomWidgetData.changedTabs(saved, a), [0]);
+    compare(CustomWidgetData.changedTabs(null, f), [], "a new definition");
+  }
+
+  function test_withLook() {
+    const source = {
+      "color": "base08",
+      "colorStates": [
+        {
+          "when": "x"
+        }
+      ],
+      "align": "right"
+    };
+    const target = {
+      "color": "base0B",
+      "confirm": true
+    };
+    const out = CustomWidgetData.withLook(target, source, ["color", "colorStates", "size"]);
+    compare(out.color, "base08");
+    compare(out.confirm, true, "the target's other keys stay");
+    compare(out.colorStates, [
+      {
+        "when": "x"
+      }
+    ]);
+    compare("align" in out, false, "only the listed keys");
+    compare("size" in out, false, "a key the source lacks");
+    compare(target.color, "base0B", "the target is not changed");
+    out.colorStates[0].when = "y";
+    compare(source.colorStates[0].when, "x", "cloned, not shared");
   }
 }

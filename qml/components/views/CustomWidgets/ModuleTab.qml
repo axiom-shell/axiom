@@ -1,22 +1,23 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
-import qs.components.forms
-import qs.services.core
-import qs.components.content.parts.custom
 
-// Custom widgets page, Module tab: the module as it's drawn (the bar
-// widget's popout, and the sizes a page may give it: it's laid out
-// proportionally) across the top; under it the element library and the
-// selected element down the left, and the layouts editor's canvas filling
-// the rest, editing the elements as it edits a submenu's modules (drag in,
-// move, resize from any side, push, box-select, guides, undo). The
-// module's box fits its elements.
-ColumnLayout {
+// Custom widgets page, Module tab: the element library and the selected
+// element down the left, the full height of the tab, and in the column beside
+// it the previews (the module as it's drawn: the bar widget's popout, and the
+// sizes a page may give it), the layer strip (the base elements and a button
+// per screen), the selected screen's form, and the layouts editor's canvas
+// filling the rest, editing the layer's elements as it edits a submenu's
+// modules (drag in, move, resize from any side, push, box-select, guides,
+// undo). The module's box fits the elements of every layer; the base is drawn
+// dimmed under a screen being edited. The previews draw the edited screen's
+// sample (kept in the definition, else the last one seen live:
+// CustomWidgetsEditor.previewFields), so every screen can be designed before
+// the script reaches it.
+Item {
   id: root
 
   required property var grid
@@ -24,123 +25,93 @@ ColumnLayout {
   required property real availableHeight
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var definition: root.editor.selected
-  readonly property var elements: root.definition?.module?.elements ?? []
-  readonly property var designSize: CustomWidgetData.designSize(root.elements, root.definition?.module?.size)
-  readonly property real card: root.grid?.unit ?? Widget.px(400)
-  // The lock-screen column's width: wide enough for its button's whole label
-  readonly property real lockWidth: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultLayoutButton.implicitWidth)
-  // The previews: the popout at the design size, then the sizes a page may give
-  // I18n.tr("Popout") I18n.tr("Square") I18n.tr("Wide") I18n.tr("Large") I18n.tr("Strip")
-  readonly property var previews: [
-    {
-      "label": "Popout",
-      "size": root.designSize
-    },
-    {
-      "label": "Square",
-      "size": [4, 4]
-    },
-    {
-      "label": "Wide",
-      "size": [8, 2]
-    },
-    {
-      "label": "Large",
-      "size": [8, 4]
-    },
-    {
-      "label": "Strip",
-      "size": [4, 1]
-    }
-  ]
-  // The zoom that fits them in the width and height the tab has beside the
-  // lock-screen column
-  readonly property var previewSizes: root.previews.map(p => p.size)
-  readonly property real previewZoom: CustomWidgetData.previewZoom(root.previewSizes, root.card, root.width, root.availableHeight, root.lockWidth + Widget.spacing * 2, Widget.spacing * 2)
+  readonly property var views: root.definition?.module?.views ?? []
+  readonly property var view: root.views[root.editor.viewIndex] ?? null
+  readonly property var designSize: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
+  // The screen whose button a menu is open for
+  property int menuView: 0
 
   width: parent?.width ?? 0
   height: root.availableHeight
-  spacing: Widget.spacing * 2
-
-  // The previews, the lock screen switch
-  RowLayout {
-    Layout.fillWidth: true
-    Layout.minimumWidth: 0
-    clip: true
-    spacing: Widget.spacing * 2
-
-    Repeater {
-      model: root.previews
-
-      ColumnLayout {
-        id: preview
-        required property var modelData
-        readonly property real zoom: root.previewZoom
-        Layout.alignment: Qt.AlignTop
-        spacing: Widget.spacing / 2
-
-        StyledText {
-          text: I18n.tr(preview.modelData.label)
-          role: "caption"
-          tone: "muted"
-        }
-        // A module card sits on the overlay's page colour, as on a real page
-        Surface {
-          implicitWidth: GridPlacement.span(preview.modelData.size[0], root.card) * preview.zoom
-          implicitHeight: GridPlacement.span(preview.modelData.size[1], root.card) * preview.zoom
-          tone: "page"
-          clip: true
-
-          Item {
-            width: parent.width / preview.zoom
-            height: parent.height / preview.zoom
-            scale: preview.zoom
-            readonly property real contentZoom: scale
-            transformOrigin: Item.TopLeft
-
-            CustomLayout {
-              anchors.fill: parent
-              anchors.margins: Widget.cardPadding
-              definition: root.definition
-              fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? ({})
-              history: CustomWidgetsManager.history[root.editor.selectedId] ?? ({})
-              actionsEnabled: false
-            }
-          }
-        }
-      }
-    }
-
-    Item {
-      Layout.fillWidth: true
-    }
-
-    ColumnLayout {
-      Layout.alignment: Qt.AlignTop
-      spacing: Widget.spacing
-
-      SchemaPropertiesForm {
-        Layout.preferredWidth: root.lockWidth
-        propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen"])
-        order: ["lockscreen"]
-        values: root.definition?.module ?? ({})
-        onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
-      }
-      StyledTextButton {
-        id: defaultLayoutButton
-        visible: root.elements.length === 0
-        implicitHeight: Widget.height
-        iconText: "auto_awesome"
-        text: I18n.tr("Start from the default layout")
-        onClicked: root.editor.useDefaultElements()
-      }
-    }
-  }
 
   ElementEditorLayout {
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    elements: root.elements
+    id: layout
+    anchors.fill: parent
+    elements: root.editor.layerElements
     editable: root.definition !== null
+    card: root.grid?.unit ?? Widget.px(400)
+    underlay: root.view && root.view.base ? (root.definition?.module?.elements ?? []).map(e => ({
+          "place": e.place,
+          "label": e.name || e.options?.label || e.type,
+          "element": e
+        })) : []
+
+    canvasTop: [
+      ModulePreviews {
+        definition: root.definition
+        card: layout.card
+        designSize: root.designSize
+        tabHeight: root.availableHeight
+      },
+      ScreenStrip {
+        views: root.views
+        onMenuRequested: (index, item, x, y) => {
+          root.menuView = index;
+          chipMenu.openAt(item, x, y);
+        }
+      },
+      ScreenForm {}
+    ]
+
+    // A screen button's menu (menuView: the screen)
+    StyledContextMenu {
+      id: chipMenu
+      parent: layout
+      items: [
+        {
+          "id": "rename",
+          "icon": "edit",
+          "text": I18n.tr("Rename")
+        },
+        {
+          "id": "duplicate",
+          "icon": "content_copy",
+          "text": I18n.tr("Duplicate")
+        },
+        {
+          "id": "left",
+          "icon": "arrow_back",
+          "text": I18n.tr("Move left"),
+          "enabled": root.menuView > 0
+        },
+        {
+          "id": "right",
+          "icon": "arrow_forward",
+          "text": I18n.tr("Move right"),
+          "enabled": root.menuView < root.views.length - 1
+        },
+        {
+          "id": "remove",
+          "icon": "delete",
+          "text": I18n.tr("Remove"),
+          "danger": true
+        }
+      ]
+      onTriggered: id => {
+        const index = root.menuView;
+        if (id === "rename") {
+          root.editor.selectView(index);
+          root.editor.focusScreenName = true;
+        } else if (id === "duplicate") {
+          root.editor.duplicateView(index);
+        } else if (id === "left") {
+          root.editor.moveView(index, index - 1);
+        } else if (id === "right") {
+          root.editor.moveView(index, index + 1);
+        } else if (id === "remove") {
+          root.editor.removeView(index);
+        }
+      }
+    }
   }
 }

@@ -58,7 +58,7 @@ qml/              the QML tree quickshell runs (`qs -p <tree>/qml`); `qs.` impor
   services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ 
   config/         reader singletons; schema/ (the schema's YAML), json/ (the built schema, theme defaults), themes/, i18n/
   assets/         fonts/, icons/
-data/             runtime files that aren't QML: greeter/ (session scripts, polkit policy), templates/ (theme integrations), examples/ (example setups)
+data/             runtime files that aren't QML: custom-widgets/ (the Daily habits script), greeter/ (session scripts, polkit policy), templates/ (theme integrations), examples/ (example setups)
 backend/          the axiom binary (Go)
 scripts/          dev tooling only: the checks, generators, scripts/dev/
 tests/            qmltestrunner tests, fixtures, tests/scripts/
