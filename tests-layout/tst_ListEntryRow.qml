@@ -107,6 +107,20 @@ TestCase {
     compare(glyphs().length, 0, "hidden once there is a picture");
   }
 
+  // A row with no icon keeps no slot for one: the label starts at the padding
+  function test_no_icon_no_slot() {
+    harness.configure({});
+    const row = createTemporaryObject(rowComp, root);
+    waitForRendering(row);
+    const labelOf = () => root.texts(row).find(t => t.text === "Row");
+    const before = labelOf().mapToItem(row, 0, 0).x;
+    row.icon = "";
+    wait(50);
+    const x = labelOf().mapToItem(row, 0, 0).x;
+    compare(x, Widget.padding, "the label sits at the padding");
+    verify(x < before, "the icon's slot is gone");
+  }
+
   function texts(item) {
     const out = [];
     const walk = it => {

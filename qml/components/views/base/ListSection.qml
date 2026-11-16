@@ -7,8 +7,9 @@ import qs.components.reusable
 // A titled section of a tool page's list: a header (the title, a count and,
 // at the end, `trailing` controls), one faint `hint` line, then its rows
 // (children). `collapsible` makes the header a toggle: a click emits
-// `toggled` and never writes `open`, so the page keeps its own state (and a
-// binding on `open` survives); the rows hide while it is not `open`.
+// `toggled` (also on Space, Return or Enter: it is a Tab stop) and never
+// writes `open`, so the page keeps its own state (and a binding on `open`
+// survives); the rows and the hint hide while it is not `open`.
 ColumnLayout {
   id: root
 
@@ -33,18 +34,11 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height
 
-    StateLayer {
-      visible: root.collapsible
-      hovered: headerArea.containsMouse
-      pressed: headerArea.pressed
-    }
-
-    MouseArea {
-      id: headerArea
-      anchors.fill: parent
+    // The header folds by click, Space, Return or Enter (a Tab stop)
+    Pressable {
+      id: press
       enabled: root.collapsible
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
+      tabStop: root.collapsible
       onClicked: root.toggled()
     }
 
@@ -55,7 +49,7 @@ ColumnLayout {
       FoldChevron {
         visible: root.collapsible
         open: root.open
-        hot: headerArea.containsMouse
+        hot: press.hovered
       }
 
       StyledLabel {
@@ -88,7 +82,7 @@ ColumnLayout {
   }
 
   StyledText {
-    visible: root.hint !== ""
+    visible: root.hint !== "" && root.open
     Layout.fillWidth: true
     role: "caption"
     tone: "faint"

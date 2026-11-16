@@ -145,6 +145,7 @@ ColumnLayout {
     }
     FactGrid {
       monoLabels: true
+      labelWidth: Appearance.fontSize * 12
       facts: root.contract.map(entry => ({
             "label": entry[0],
             "value": entry[1],

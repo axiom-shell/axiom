@@ -15,6 +15,8 @@ import qs.components.methods
 // makes the column a row of the FormColumn it sits in: it has a `bodyHeight`
 // while it draws a row, and only takes part in the outer one's `firstRow`
 // when it is the outer's top, so its own top row draws no divider only then.
+// Outside a FormColumn it has no top to claim: its `firstRow` is null, so a
+// joined field in a plain column draws its divider.
 ColumnLayout {
   id: root
 
@@ -25,7 +27,12 @@ ColumnLayout {
     return index < 0 ? null : root.children[index];
   }
   readonly property Item firstRow: {
-    const outer = root.joins ? (root.parent as FormColumn)?.firstRow : undefined;
+    if (!root.joins)
+      return root.topRow;
+    const outerColumn = root.parent as FormColumn;
+    if (!outerColumn)
+      return null;
+    const outer = outerColumn.firstRow;
     return outer !== undefined && outer !== root ? null : root.topRow;
   }
   // As a row of an outer column (undefined, no row, unless it `joins`)

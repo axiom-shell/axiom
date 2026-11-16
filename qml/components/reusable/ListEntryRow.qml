@@ -210,7 +210,7 @@ Rectangle {
     }
 
     StyledIcon {
-      visible: root.image.toString() === ""
+      visible: root.image.toString() === "" && root.icon !== ""
       text: root.icon
       textColor: root.selected ? Style.inkAccentContainer.icon : root.dimmed ? Style.textFaint : Style.textAccent
       Layout.preferredWidth: Style.iconSm * 1.5

@@ -81,4 +81,20 @@ TestCase {
     host.field.activates.activate();
     compare(host.emitted, [40, "unset"], "turning it off removes the override");
   }
+
+  // The stepper takes the schema's `multipleOf` as its step, as SchemaField's
+  // automatic number does
+  function test_multipleOf_is_the_step() {
+    const host = createTemporaryObject(hostComp, root);
+    waitForRendering(host);
+    host.field.fieldSchema = {
+      "title": "Maximum length",
+      "minimum": 0,
+      "maximum": 500,
+      "multipleOf": 5
+    };
+    host.field.value = 40;
+    waitForRendering(host);
+    compare(root.stepper(host).stepSize, 5);
+  }
 }

@@ -66,6 +66,7 @@ Popup {
   // The modal card, over the dimmed list (the shared modal pieces)
   background: ModalCard {
     shown: true
+    solid: true
   }
 
   Overlay.modal: ModalScrim {
@@ -302,10 +303,13 @@ Popup {
                 readonly property bool on: step.can && root.chosen.includes(step.modelData.id)
                 readonly property var parts: KeyNames.split(step.modelData.bind.key)
                 readonly property var taken: KeybindManager.editor.binds[step.modelData.takenBy[0]] ?? null
+                readonly property string pauses: I18n.tr("Pauses {0}", step.taken ? (step.taken.description || BindActions.defaultLabel(KeybindManager.actionTable, step.taken) || KeybindManager.actionLabels[step.taken.action]) : "") + (step.modelData.takenBy.length > 1 ? " +" + (step.modelData.takenBy.length - 1) : "")
 
                 icon: !root.merging ? "" : !step.can ? "check" : step.on ? "check_box" : "check_box_outline_blank"
                 label: BindActions.defaultLabel(KeybindManager.actionTable, step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
                 dimmed: root.merging && !step.can
+                issue: root.merging && step.modelData.status === "taken" ? "warning" : ""
+                issueTip: step.pauses
                 subtitle: {
                   if (!root.merging)
                     return "";
@@ -315,7 +319,7 @@ Popup {
                   case "resume":
                     return I18n.tr("Resumes the paused bind");
                   case "taken":
-                    return I18n.tr("Pauses {0}", step.taken ? (step.taken.description || BindActions.defaultLabel(KeybindManager.actionTable, step.taken) || KeybindManager.actionLabels[step.taken.action]) : "") + (step.modelData.takenBy.length > 1 ? " +" + (step.modelData.takenBy.length - 1) : "");
+                    return step.pauses;
                   }
                   return I18n.tr("New");
                 }
@@ -329,6 +333,7 @@ Popup {
                   Layout.maximumWidth: Widget.height * 5
                   spacing: Widget.spacing / 2
                   clip: true
+                  opacity: step.dimmed ? Style.opacityDisabled : 1
 
                   Repeater {
                     model: step.parts.mods

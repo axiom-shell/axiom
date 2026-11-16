@@ -407,42 +407,21 @@ Loader {
   // null automatic value through, as an inheriting one's).
   Component {
     id: autoSpinField
-    ColumnLayout {
-      id: autoField
+    AutoNumberField {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
+      fieldSchema: root.fieldSchema
+      current: root.current
       // (While the row is torn down its schema can go first)
-      readonly property var auto: root.fieldSchema["x-auto"] ?? ({
+      auto: root.fieldSchema["x-auto"] ?? ({
           "value": 0,
           "start": 0
         })
-      readonly property bool custom: root.current !== undefined && root.current !== autoField.auto.value
-      spacing: Widget.spacing
-      // What a click on the row outside its controls does (rowClicked)
-      function activate() {
-        autoSwitch.activate();
-      }
-      SchemaSwitch {
-        id: autoSwitch
-        label: root.label
-        description: root.description
-        headerExtra: root.headerExtra
-        headerBelow: root.headerBelow
-        checked: autoField.custom
-        onToggled: value => root.commit(value ? autoField.auto.start : autoField.auto.value)
-      }
-      SchemaNumberField {
-        visible: autoField.custom
-        label: ""
-        currentConfigValue: autoField.custom ? root.current : autoField.auto.start
-        // (A null automatic value leaves the whole range to the number)
-        minimum: autoField.auto.value === null ? (root.fieldSchema.minimum ?? 0) : Math.max(root.fieldSchema.minimum ?? 0, autoField.auto.value + 1)
-        maximum: root.fieldSchema.maximum ?? 9999
-        stepSize: root.fieldSchema.multipleOf ?? 1
-        unit: root.fieldSchema["x-unit"] ?? ""
-        unitScale: SchemaLayout.unitScale(unit)
-        mode: root.form?.numberMode || (root.fieldSchema["x-control"] ?? "auto")
-        onValueTyped: value => root.type(value)
-        onCommitted: (value, typed) => typed ? root.commitTyped(value) : root.commit(value)
-      }
+      numberMode: root.form?.numberMode ?? ""
+      onTyped: value => root.type(value)
+      onCommitted: (value, typed) => typed ? root.commitTyped(value) : root.commit(value)
     }
   }
 

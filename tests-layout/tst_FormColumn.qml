@@ -145,6 +145,30 @@ TestCase {
     }
   }
 
+  Component {
+    id: plainHostComp
+
+    ColumnLayout {
+      property alias joined: joined
+      property alias topRow: top
+      width: 300
+
+      FormColumn {
+        id: joined
+        joins: true
+        Layout.fillWidth: true
+
+        FormRow {
+          id: top
+          bodyHeight: Widget.height
+        }
+        FormRow {
+          bodyHeight: Widget.height
+        }
+      }
+    }
+  }
+
   function initTestCase() {
     harness.configure({});
   }
@@ -214,6 +238,16 @@ TestCase {
     };
     walk(item);
     return out;
+  }
+
+  // A joined column outside a FormColumn has no top to claim: its top row
+  // keeps its divider
+  function test_joined_column_in_a_plain_column_keeps_its_divider() {
+    const host = createTemporaryObject(plainHostComp, root);
+    verify(host);
+    wait(50);
+    compare(host.joined.firstRow, null);
+    verify(!host.topRow.first, "the top row draws its divider");
   }
 
   function test_card_rows_get_first() {

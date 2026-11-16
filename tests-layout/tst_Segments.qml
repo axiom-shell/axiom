@@ -117,6 +117,40 @@ TestCase {
     }
   }
 
+  Component {
+    id: trailingTabsComp
+
+    SegmentTabs {
+      width: 600
+      count: 3
+      labelAt: i => ["first", "second", "third"][i]
+      tipAt: i => i > 0 ? "tip " + i : ""
+
+      Rectangle {
+        objectName: "trailing"
+        width: 20
+        height: 20
+      }
+    }
+  }
+
+  // Items inside SegmentTabs follow the last tab in the same row, and tipAt
+  // sets each tab's tooltip
+  function test_tabs_trailing_and_tips() {
+    harness.configure({});
+    const tabs = createTemporaryObject(trailingTabsComp, root);
+    waitForRendering(tabs);
+    const buttons = findAll(tabs, it => it instanceof SegmentButton);
+    compare(buttons.length, 3);
+    const trailing = findAll(tabs, it => it.objectName === "trailing")[0];
+    verify(trailing);
+    const last = buttons[2];
+    verify(trailing.x >= last.x + last.width, "right after the last tab: " + trailing.x + " vs " + (last.x + last.width));
+    compare(trailing.y, last.y, "in the same row");
+    compare(buttons[0].tooltipText, "");
+    compare(buttons[1].tooltipText, "tip 1");
+  }
+
   // Tab reaches the toggle once; Left and Right step, never past the ends
   function test_toggle_is_one_tab_stop_and_steps() {
     harness.configure({});

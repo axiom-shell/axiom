@@ -75,9 +75,11 @@ ColumnLayout {
       description: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
 
       KeyRecorder {
+        id: recorder
         bindIndex: root.bindIndex
         combo: root.bind.key ?? ""
-        invalid: root.hasError
+        // Recording wins over the error border
+        invalid: root.hasError && !recorder.recording
         Layout.fillWidth: true
       }
     }
@@ -85,8 +87,10 @@ ColumnLayout {
     // The action leads; its argument and call sit under it
     FieldRow {
       label: I18n.tr("Action")
+      activates: actionPicker
 
       ActionPicker {
+        id: actionPicker
         currentValue: root.bind.action ?? ""
         onPicked: action => KeybindManager.editor.setField(root.bindIndex, "action", action)
         Layout.fillWidth: true

@@ -8,8 +8,8 @@ import qs.components.reusable
 // A bind's action: a field-like button showing it (a FieldFrame holding a
 // Pressable: Tab stop, Space/Return/Enter and a click open it, and so does
 // Down on it), opening the shared TypePickerPopup as wide as the button, the
-// actions under a heading per category (KeybindManager.actionInfo), with its
-// search, Up/Down, Enter and Escape.
+// actions under a heading per category (KeybindManager.actionInfo, in table
+// order, the current one checked and shown on open), with its search, Up/Down, Enter and Escape.
 FieldFrame {
   id: root
 
@@ -20,12 +20,17 @@ FieldFrame {
   readonly property var types: KeybindManager.actionInfo.map(info => ({
         "type": info.action,
         "label": info.label,
-        "icon": KeybindManager.actionIcon(info.action),
+        "icon": info.icon,
         "group": info.section
       }))
 
   implicitHeight: Widget.height
   active: popup.visible
+
+  // Opens the list (an activating FieldRow's click)
+  function activate() {
+    popup.openAt(root);
+  }
 
   Keys.onDownPressed: popup.openAt(root)
 
@@ -61,6 +66,8 @@ FieldFrame {
     id: popup
     types: root.types
     groups: KeybindManager.actionSections
+    current: root.currentValue
+    keepOrder: true
     matchWidth: true
     placeholderText: I18n.tr("Search actions")
     // The labels are already translated (KeybindManager.actionInfo)

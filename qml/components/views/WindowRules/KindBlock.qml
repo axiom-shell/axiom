@@ -45,6 +45,7 @@ ItemBox {
     return list;
   }
 
+  bodySpacing: 0
   title: I18n.tr("Kind {0}", root.k + 1)
   removable: true
   removeTooltip: I18n.tr("Remove this kind")
@@ -60,6 +61,7 @@ ItemBox {
   }
 
   StyledTextButton {
+    Layout.topMargin: Style.space2
     implicitHeight: Widget.height
     iconText: "add"
     text: I18n.tr("Add a condition")
@@ -67,6 +69,7 @@ ItemBox {
   }
 
   IssueList {
+    Layout.topMargin: Style.space2
     issues: root.notes
   }
 

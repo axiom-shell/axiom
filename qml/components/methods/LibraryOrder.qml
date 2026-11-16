@@ -29,10 +29,10 @@ QtObject {
 
   // Sections [{ name, types }]: one per group in `groups` that has types,
   // in that order, then the types in none (name "") last. Each section's
-  // types are by label.
-  function grouped(types, groups, labelOf) {
+  // types are by label, or with `keepOrder` as given.
+  function grouped(types, groups, labelOf, keepOrder) {
     const known = groups ?? [];
-    const byLabel = root.sorted(types, labelOf);
+    const byLabel = keepOrder ? (types ?? []) : root.sorted(types, labelOf);
     const sections = known.map(name => ({
           "name": name,
           "types": byLabel.filter(type => type.group === name)

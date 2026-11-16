@@ -11,8 +11,8 @@ import qs.config
 // (a slot) and, while `removable`, a close button (`remove`). With `foldable`
 // the header folds the body: a click is `toggled` (the host flips `open`,
 // as FoldHeader), and `summary` is the one line it shows while folded. What
-// the box holds goes in its default slot, a column spaced `Widget.spacing`
-// that is a FormColumn (a FormRow in it gets its `first` from it).
+// the box holds goes in its default slot, a column spaced `bodySpacing` that
+// is a FormColumn (a FormRow in it gets its `first` from it).
 Surface {
   id: root
 
@@ -31,6 +31,8 @@ Surface {
   property bool open: true
   // The line shown under the header while folded
   property string summary: ""
+  // The body's spacing: 0 for a box of FormRows (they pad themselves)
+  property alias bodySpacing: fold.spacing
   property alias headerActions: actionRow.data
   default property alias content: fold.content
   readonly property bool hasHeader: root.title !== ""

@@ -33,6 +33,7 @@ ItemBox {
   // What the action runs, in a word or two, for the folded line
   summary: root.item?.kind === "axiom" ? root.axiomLabel : (root.item?.command ?? "")
 
+  bodySpacing: 0
   foldable: true
   title: root.item?.name || I18n.tr("Unnamed")
   caption: root.open ? "" : root.item?.kind === "axiom" ? I18n.tr("Axiom action") : I18n.tr("Command")
@@ -158,6 +159,7 @@ ItemBox {
   StyledText {
     visible: root.uses > 0
     Layout.fillWidth: true
+    Layout.topMargin: Style.space2
     Layout.bottomMargin: Style.rowPadding
     text: I18n.tr("Used by {0}", root.uses)
     role: "caption"

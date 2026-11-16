@@ -56,7 +56,7 @@ ColumnLayout {
     types: root.types
     groups: root.groups
     groupable: root.groupable
-    grouped: EditsManager.libraryGrouped
+    grouped: root.groupable && EditsManager.libraryGrouped
     fitsContent: root.fitsContent
     minColumns: root.minColumns
     minTileWidth: root.minTileWidth

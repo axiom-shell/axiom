@@ -6,11 +6,10 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
-import qs.components.forms
 import qs.components.content.parts.custom
 
 // Custom widgets page, Module tab, above the canvas: a header line (what the
-// previews draw with, Keep, the Test actions switch: one RowLayout, every
+// previews draw with, Keep, the Test actions chip: one RowLayout, every
 // item centred on it) and the module as it's drawn: the popout at its design
 // size, then the sizes a page may give it. Test mode swaps the previews for
 // the popout fitted, as it is live with its actions on, and the log of what it
@@ -99,15 +98,11 @@ ColumnLayout {
       Layout.fillWidth: true
     }
     // Test mode: not saved, off each time the page opens
-    FormColumn {
+    ToggleChip {
       Layout.alignment: Qt.AlignVCenter
-      Layout.preferredWidth: Widget.px(240)
-
-      SwitchRow {
-        label: I18n.tr("Test actions")
-        checked: root.editor.testMode
-        onToggled: newValue => root.editor.testMode = newValue
-      }
+      text: I18n.tr("Test actions")
+      checked: root.editor.testMode
+      onToggled: root.editor.testMode = !root.editor.testMode
     }
     StatusChip {
       visible: root.editor.testMode

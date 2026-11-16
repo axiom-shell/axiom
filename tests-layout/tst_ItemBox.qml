@@ -99,6 +99,17 @@ TestCase {
     verify(rows.rowB.first, "the second row is first once the top hides");
   }
 
+  // A box of FormRows takes `bodySpacing: 0`: the rows abut
+  function test_bodySpacing_zero_abuts_rows() {
+    harness.configure({});
+    const rows = createTemporaryObject(rowsComp, root, {
+      "bodySpacing": 0
+    });
+    verify(rows);
+    wait(50);
+    compare(rows.rowB.y, rows.rowA.y + rows.rowA.height, "no gap between rows");
+  }
+
   function test_header_remove() {
     harness.configure({});
     const box = createTemporaryObject(boxComp, root, {

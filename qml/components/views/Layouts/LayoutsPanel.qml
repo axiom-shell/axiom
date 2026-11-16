@@ -94,7 +94,6 @@ Item {
           Layout.bottomMargin: Widget.spacing / 2
         }
 
-        // Scrolling inside past 40 % of the panel's height
         PinnedList {
           Layout.fillWidth: true
           shareOf: root

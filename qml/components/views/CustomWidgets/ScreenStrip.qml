@@ -23,7 +23,7 @@ RowLayout {
   Layout.fillWidth: true
   spacing: Widget.spacing
 
-  // Tab 0 is the base, tab n + 1 is screen n
+  // Tab 0 is the base, tab n + 1 is screen n; the "+" follows the last tab
   SegmentTabs {
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignTop
@@ -32,23 +32,23 @@ RowLayout {
     current: root.editor.viewIndex + 1
     labelAt: i => i === 0 ? I18n.tr("Base") : (root.views[i - 1]?.name || root.views[i - 1]?.id || "")
     iconAt: i => i > 0 && root.editor.selected?.samples?.[root.views[i - 1]?.id] !== undefined ? "bookmark" : ""
+    tipAt: i => i > 0 ? I18n.tr("Right-click to rename, duplicate, move or remove") : ""
     onPicked: i => root.editor.selectView(i - 1)
     onMenuRequested: (i, item, x, y) => {
       if (i > 0)
         root.menuRequested(i - 1, item, x, y);
     }
-  }
 
-  // A blank screen over the base, named "Screen n", its Name focused: it is
-  // shown by a Go to action until its condition is set
-  SquareIconButton {
-    Layout.alignment: Qt.AlignTop
-    iconText: "add"
-    tooltipText: I18n.tr("Add a screen")
-    enabled: root.editor.selected !== null
-    onClicked: {
-      root.editor.addView(I18n.tr("Screen {0}", root.views.length + 1));
-      root.editor.focusScreenName = true;
+    // A blank screen over the base, named "Screen n", its Name focused: it is
+    // shown by a Go to action until its condition is set
+    SquareIconButton {
+      iconText: "add"
+      tooltipText: I18n.tr("Add a screen")
+      enabled: root.editor.selected !== null
+      onClicked: {
+        root.editor.addView(I18n.tr("Screen {0}", root.views.length + 1));
+        root.editor.focusScreenName = true;
+      }
     }
   }
 }

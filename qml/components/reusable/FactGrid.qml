@@ -10,7 +10,8 @@ import qs.config
  * the monospace font, `wrap` lets it wrap instead of eliding at the end and
  * `middle` elides the middle (a path). `pairsPerLine` is 1 (a pair a line) or
  * 2 (two pairs side by side); `monoLabels` sets the labels in the monospace
- * font too (a list of keys). The cells are made per fact, so the list's
+ * font too (a list of keys); `labelWidth` fixes the label column's width, the
+ * labels wrapping in it. The cells are made per fact, so the list's
  * length is the only thing the grid builds from.
  */
 GridLayout {
@@ -20,6 +21,8 @@ GridLayout {
   // 1 or 2 pairs on a line
   property int pairsPerLine: 1
   property bool monoLabels: false
+  // The label column's width, labels wrap in it; 0: as wide as the longest, eliding
+  property real labelWidth: 0
 
   Layout.fillWidth: true
   columns: root.pairsPerLine === 2 ? 4 : 2
@@ -40,9 +43,11 @@ GridLayout {
       text: (cell.isLabel ? cell.fact.label : cell.fact.value) ?? ""
       tone: cell.isLabel ? "muted" : ""
       textFamily: cell.isLabel ? (root.monoLabels ? "monospace" : Appearance.fontFamily) : cell.fact.mono ? "monospace" : Appearance.fontFamily
-      overflow: !cell.isLabel && cell.fact.wrap ? "wrap" : "line"
+      overflow: cell.isLabel ? (root.labelWidth > 0 ? "wrap" : "line") : cell.fact.wrap ? "wrap" : "line"
       elide: !cell.isLabel && cell.fact.middle ? Text.ElideMiddle : cell.overflow === "line" ? Text.ElideRight : Text.ElideNone // style-exempt: middle elides an identifier, keeping its end
       Layout.fillWidth: !cell.isLabel
+      Layout.preferredWidth: cell.isLabel && root.labelWidth > 0 ? root.labelWidth : -1
+      Layout.maximumWidth: cell.isLabel && root.labelWidth > 0 ? root.labelWidth : -1
     }
   }
 }

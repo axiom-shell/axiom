@@ -97,9 +97,8 @@ ColumnLayout {
       title: I18n.tr("On the bar")
 
       // One box of rows: the form's, then the status colour's
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
-        spacing: 0
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
@@ -131,9 +130,8 @@ ColumnLayout {
       title: I18n.tr("Text")
 
       // One box of rows: the form's, then the icons'
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
-        spacing: 0
 
         SchemaPropertiesForm {
           Layout.fillWidth: true

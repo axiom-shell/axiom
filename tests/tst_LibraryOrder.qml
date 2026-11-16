@@ -67,6 +67,23 @@ TestCase {
     compare(names(sections[2].types), ["Mystery"]);
   }
 
+  function test_grouped_keepOrder_keeps_the_given_order() {
+    const given = [
+      {
+        "type": "b",
+        "label": "b",
+        "group": "G"
+      },
+      {
+        "type": "a",
+        "label": "a",
+        "group": "G"
+      }
+    ];
+    compare(names(LibraryOrder.grouped(given, ["G"], label, true)[0].types), ["b", "a"]);
+    compare(names(LibraryOrder.grouped(given, ["G"], label)[0].types), ["a", "b"], "by label otherwise");
+  }
+
   function test_grouped_unknown_group_goes_last() {
     const sections = LibraryOrder.grouped(types, ["Time"], label);
     compare(sections.map(s => s.name), ["Time", ""]);
