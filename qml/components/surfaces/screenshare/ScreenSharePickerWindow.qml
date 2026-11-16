@@ -239,7 +239,7 @@ PanelWindow {
           radius: Style.radius + root.ring
           color: "transparent"
           border.width: Widget.px(2)
-          border.color: tile.selected ? Style.accent : tile.hovered ? Style.borderStrong : "transparent"
+          border.color: tile.selected ? Style.accent : tile.hovered ? Style.borderStrong : Qt.alpha(Style.borderStrong, 0) // style-exempt: the hover border at no alpha, so the fade doesn't pass through black
 
           ColorGlide on border.color {}
         }

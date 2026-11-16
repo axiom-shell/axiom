@@ -185,4 +185,50 @@ TestCase {
     compare(chip.radius, chip.height / 2);
     verify(chip.x + chip.width <= row.width, "chip inside the row");
   }
+
+  // The pill's rest colour is the selected fill at alpha 0: a ColorAnimation
+  // lerps each channel, so a rest of transparent black dips through grey
+  function pillOf(row) {
+    for (let i = 0; i < row.children.length; i++) {
+      if (row.children[i].radius !== undefined)
+        return row.children[i];
+    }
+    return null;
+  }
+
+  function test_selectionFadesInHue_data() {
+    return [
+      {
+        tag: "default",
+        theme: undefined
+      },
+      {
+        tag: "catppuccin-latte",
+        theme: "catppuccin-latte"
+      }
+    ];
+  }
+
+  function test_selectionFadesInHue(data) {
+    if (data.theme)
+      harness.configure({
+        theme: data.theme
+      });
+    const row = makeRow({
+      title: "x",
+      kind: "app"
+    });
+    const pill = pillOf(row);
+    verify(pill);
+    row.current = true;
+    wait(300);
+    row.current = false;
+    wait(300);
+    const want = Style.accentContainer;
+    fuzzyCompare(pill.color.r, want.r, 0.01);
+    fuzzyCompare(pill.color.g, want.g, 0.01);
+    fuzzyCompare(pill.color.b, want.b, 0.01);
+    compare(pill.color.a, 0);
+    harness.configure({});
+  }
 }

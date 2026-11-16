@@ -30,7 +30,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: Style.radius
-    color: root.selected ? Style.accentContainer : "transparent"
+    color: root.selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so a selection change doesn't fade through black
     border.width: Appearance.borderWidth
     border.color: root.selected ? Style.accent : "transparent"
 

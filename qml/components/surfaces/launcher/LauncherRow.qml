@@ -77,7 +77,7 @@ Item {
     anchors.leftMargin: Widget.smallPadding
     anchors.rightMargin: Widget.smallPadding
     radius: Style.radius
-    color: root.current ? Style.accentContainer : "transparent"
+    color: root.current ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so a selection change doesn't fade through black
     ColorGlide on color {}
 
     StateLayer {

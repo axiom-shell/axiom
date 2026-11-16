@@ -26,6 +26,8 @@ docs/dev/testing.md > The checks). Rules:
   R17  layer.enabled / layer.effect over content
   R18  a scale over content with no `contentZoom` host
   R19  `Widget.radius` read in UI: use Style.radius / Style.radiusInner
+  R20  a colour with a glide (ColorGlide / Behavior / ColorAnimation) bound to a bare
+       "transparent": the fade passes through black; rest on Qt.alpha(<fill>, 0)
 
 Every hit fails; a line is waived with `// style-exempt: <reason>`, a file with an
 entry in scripts/style-exceptions.json (rules and reason; an entry no longer needed
@@ -48,7 +50,7 @@ ROOT = qml_modules.ROOT
 QML = qml_modules.QML_ROOT
 EXCEPTIONS = ROOT / "scripts" / "style-exceptions.json"
 
-RULES = [f"R{n}" for n in range(1, 20)]
+RULES = [f"R{n}" for n in range(1, 21)]
 EVERYWHERE = {"R11", "R13", "R16"}
 STYLE_LAYER_PIECES = {"Surface", "StateLayer", "FocusRing", "Skeleton", "StyledScrollIndicator", "BackdropScrim"}
 STYLE_LAYER_CONFIG = {"Style", "StyleInk", "StyleTextRole", "BarColors", "Theme", "Appearance", "BarsConfig", "BarStyle"}
@@ -553,7 +555,7 @@ def scope_of(rel):
     m = re.match(r"qml/components/bar/widgets/([^/]+)/", p)
     if m and m.group(1) != "base":
         return rules
-    rules |= {f"R{n}" for n in range(4, 11)} | {"R12", "R14", "R15", "R17", "R18", "R19"}
+    rules |= {f"R{n}" for n in range(4, 11)} | {"R12", "R14", "R15", "R17", "R18", "R19", "R20"}
     if p.startswith(("qml/components/bar/look/", "qml/components/bar/widgets/base/")):
         return rules - {"R6"}  # the bar's drawing kit draws the palette's colours (check.md: exempt from R1-R3 and R6)
     return rules | {"R1", "R2", "R3", "R6"}
@@ -637,6 +639,8 @@ def scan(rel, index):
                 add(hits, node.line, "R13", "font { bold }")
             continue
         styled = index.derives(node.type, rel, "StyledText")
+        animated = {c.on for c in node.children if c.kind == "obj" and c.on and (c.type in ("ColorGlide", "ColorAnimation")
+                    or (c.type == "Behavior" and any(g.type == "ColorAnimation" for g in c.children)))}
         for name, line, value in node.props:
             if "R3" in rules and re.search(r"(?:^|\.)\w*[oO]pacity$", name):
                 if any(float(x) not in (0.0, 1.0) for x in re.findall(r"(?<![\w.])(\d*\.\d+)", value)):
@@ -651,6 +655,8 @@ def scan(rel, index):
                 add(hits, line, "R13", "font.bold on a StyledText")
             if "R14" in rules and name in ("wrapMode", "elide", "maximumLineCount") and styled:
                 add(hits, line, "R14", f"{name}: {value}")
+            if "R20" in rules and name in animated and name not in node.decls and any(x.strip() in ('"transparent"', "'transparent'") for x in leaves(value)):
+                add(hits, line, "R20", f"{name}: {value}: a glide to transparent black; rest on Qt.alpha(<fill>, 0)")
             if "R18" in rules and name == "scale" and not zoom_host(node):
                 try:
                     one = float(value) == 1.0

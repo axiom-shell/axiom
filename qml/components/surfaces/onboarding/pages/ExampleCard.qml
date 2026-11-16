@@ -27,7 +27,7 @@ Surface {
 
   implicitHeight: column.implicitHeight + Widget.padding * 2
   border.width: Style.focusWidth
-  border.color: root.applied ? Style.accent : area.containsMouse ? Style.borderStrong : "transparent"
+  border.color: root.applied ? Style.accent : area.containsMouse ? Style.borderStrong : Qt.alpha(Style.borderStrong, 0) // style-exempt: the hover border at no alpha, so the fade doesn't pass through black
 
   ColorGlide on border.color {}
 

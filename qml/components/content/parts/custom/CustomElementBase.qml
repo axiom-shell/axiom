@@ -201,7 +201,7 @@ Item {
     z: 10
     anchors.fill: parent
     radius: Style.radius
-    color: root.flashing ? Style.errorWash : "transparent"
+    color: root.flashing ? Style.errorWash : Qt.alpha(Style.errorWash, 0) // style-exempt: the wash at no alpha, so the blink doesn't fade through black
 
     ColorGlide on color {
       duration: Appearance.animSlow

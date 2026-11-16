@@ -712,7 +712,7 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckStyle(unittest.TestCase):
-    """scripts/check_style.py: each rule R1 to R19 on a fixture file, the waivers, the scope, every hit failing and the role check."""
+    """scripts/check_style.py: each rule R1 to R20 on a fixture file, the waivers, the scope, every hit failing and the role check."""
     HEAD = "pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.config\n// A fixture.\n"
     UI = "qml/components/reusable/X.qml"
     STYLED = {"qml/components/reusable/StyledText.qml": HEAD + "Text {\n}\n",
@@ -896,6 +896,19 @@ class CheckStyle(unittest.TestCase):
         self.assertEqual(self.rule("  layer.enabled: false", "R17"), 0)
         self.assertEqual(self.rule("  layer.effect: MultiEffect {\n  }", "R17"), 1)
         self.assertEqual(self.rule("  layer.effect: MultiEffect { // style-exempt: no text\n  }", "R17"), 0)
+
+    def test_r20_glide_to_transparent(self):
+        glide = "  ColorGlide on color {}"
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  border.color: root.on ? Style.accent : "transparent"\n  ColorGlide on border.color {}', "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Behavior on color {\n    ColorAnimation {\n    }\n  }', "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  ColorAnimation on color {\n  }', "R20"), 1)
+        self.assertEqual(self.rule('  color: "transparent"\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : Qt.alpha(Style.accent, 0) // style-exempt: rests on its hue\n' + glide, "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"', "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Glide on width {}', "R20"), 0)
+        self.assertEqual(self.rule('  color: "transparent"\n  border.color: Style.accent\n  ColorGlide on border.color {}', "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide + "  // R20 waived? no", "R20"), 1)
 
     def test_r19_widget_radius(self):
         self.assertEqual(self.rule("  radius: Widget.radius", "R19"), 1)
