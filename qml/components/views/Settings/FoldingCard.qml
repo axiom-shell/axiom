@@ -28,13 +28,16 @@ Surface {
   property string statusTone: "neutral"
   // Beside the header, while unfolded (an Add button)
   property alias headerExtras: extras.data
+  // The padding under the body: a card ending on a shut fold row takes none,
+  // that row's own padding is the card's (SettingsGroupCard)
+  property real bottomInset: Style.space3
   default property alias content: body.content
 
   signal toggled
 
   Layout.fillWidth: true
   tone: "surface"
-  implicitHeight: column.implicitHeight + Style.space3 * 2
+  implicitHeight: column.implicitHeight + Style.space3 + root.bottomInset
 
   ColumnLayout {
     id: column

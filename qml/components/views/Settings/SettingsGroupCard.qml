@@ -35,6 +35,22 @@ FoldingCard {
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
   onToggled: SettingsManager.setCollapsed(root.group.key, !root.collapsed)
 
+  // The card ends on a shut fold's header row (an `x-intro`'s Settings fold,
+  // an `x-fold`): that row's own padding closes the card. Read from the rows'
+  // `shown` and `foldOpen`, through `count`, never from heights
+  readonly property bool _endsShut: {
+    if (root.collapsed || fieldRows.count <= 0)
+      return false;
+    for (let i = fieldRows.count - 1; i >= 0; i--) {
+      const row = fieldRows.itemAt(i) as SettingsField;
+      if (!row || row.shown === false)
+        continue;
+      return row.foldHeader && !row.foldOpen;
+    }
+    return false;
+  }
+  bottomInset: root._endsShut ? 0 : Style.space3
+
   // The hookup chip of a theme integration's card (its unsaved switch value)
   // I18n.tr("Off") I18n.tr("Checking") I18n.tr("Set up") I18n.tr("Not set up") I18n.tr("Copy the text")
   readonly property bool _hookupOn: !!root.group.hookup && root.form.valueAt(root.group.path.concat([root.group.hookup])) === true

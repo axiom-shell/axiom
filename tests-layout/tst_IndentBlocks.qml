@@ -5,6 +5,7 @@ import qs.config
 import qs.components.forms
 import qs.components.reusable
 import qs.components.views.base
+import qs.components.views.Settings
 
 // Indent blocks: a FormRow's depth is its FieldGroup's block base plus its own
 // level; one rail per depth, the body one step in per depth, the hover tint
@@ -437,5 +438,46 @@ TestCase {
     compare(pane.row.mapToItem(pane.group, 0, 0).y, 0, "nothing above the row");
     compare(pane.group.height, pane.row.height);
     compare(pane.group.rowBase, 0);
+  }
+
+  // A settings card ending on a shut fold row (SettingsGroupCard sets
+  // bottomInset: 0): the row's own padding closes the card, so the space
+  // under the fold's text equals the space above it
+  Component {
+    id: cardComp
+
+    ColumnLayout {
+      property alias card: card
+      property alias row: row
+      width: 400
+
+      FoldingCard {
+        id: card
+        title: "Card"
+
+        FormRow {
+          id: row
+          first: true
+          bodyHeight: Widget.height
+        }
+      }
+    }
+  }
+
+  function test_foldingCardBottomInset_data() {
+    return rows();
+  }
+
+  function test_foldingCardBottomInset(data) {
+    harness.configure(data);
+    const host = createTemporaryObject(cardComp, root);
+    verify(host);
+    wait(50);
+    const bottom = () => host.row.mapToItem(host.card, 0, host.row.height).y;
+    compare(Math.round(host.card.height - bottom()), Style.space3, "padded under the last row by default");
+    host.card.bottomInset = 0;
+    wait(20);
+    compare(Math.round(host.card.height - bottom()), 0, "none when the last row is a shut fold");
+    compare(host.card.implicitHeight, host.card.height);
   }
 }
