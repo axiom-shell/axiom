@@ -46,11 +46,9 @@ OnboardingPage {
     text: I18n.tr("{0} won't start axiom by itself: Apply the autostart line on the Compositor step, or add it to your {1} yourself.", root.compositor, root.config)
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Where things are")
-    role: "title"
+    title: I18n.tr("Where things are")
   }
 
   BindsTable {

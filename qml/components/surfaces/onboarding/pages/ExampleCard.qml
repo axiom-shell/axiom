@@ -31,6 +31,11 @@ Surface {
 
   ColorGlide on border.color {}
 
+  StateLayer {
+    hovered: area.containsMouse
+    pressed: area.pressed
+  }
+
   ColumnLayout {
     id: column
     anchors.fill: parent

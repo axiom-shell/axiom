@@ -34,11 +34,9 @@ OnboardingPage {
   Component.onCompleted: GreeterManager.check()
 
   // A package updates with the system
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     visible: !Paths.packaged
-    text: I18n.tr("Keeping axiom up to date")
-    role: "title"
+    title: I18n.tr("Keeping axiom up to date")
   }
 
   SettingRows {
@@ -47,16 +45,10 @@ OnboardingPage {
     paths: ["SelfUpdate.mode", "SelfUpdate.channel"]
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Clipboard history")
-    role: "title"
-  }
-
-  StyledText {
-    Layout.fillWidth: true
-    text: I18n.tr("Type : in the launcher to search what you've copied. axiom keeps it in memory only and skips what password managers mark as sensitive; turn it off if you copy passwords from apps that don't.")
+    title: I18n.tr("Clipboard history")
+    description: I18n.tr("Type : in the launcher to search what you've copied. axiom keeps it in memory only and skips what password managers mark as sensitive; turn it off if you copy passwords from apps that don't.")
   }
 
   SettingRows {
@@ -64,21 +56,13 @@ OnboardingPage {
     paths: ["Launcher.providers.clipboard.enabled"]
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Idle")
-    role: "title"
+    title: I18n.tr("Idle")
   }
 
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
+  OptionPair {
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "bedtime"
       title: I18n.tr("Let axiom handle idle")
       description: I18n.tr("Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Stop any idle daemon you start yourself.")
@@ -90,9 +74,6 @@ OnboardingPage {
     }
 
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use my own")
       description: I18n.tr("Leaves idle to a daemon you run yourself.")
@@ -130,21 +111,13 @@ OnboardingPage {
     text: I18n.tr("Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.")
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Lock screen")
-    role: "title"
+    title: I18n.tr("Lock screen")
   }
 
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
+  OptionPair {
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "lock"
       title: I18n.tr("Use axiom's lock screen")
       description: I18n.tr("Locks through the session-lock protocol and unlocks with your password (PAM), in your theme and laid out on the Layouts page.")
@@ -156,9 +129,6 @@ OnboardingPage {
     }
 
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use my own")
       description: I18n.tr("Leaves locking to a locker you set up yourself.")
@@ -169,26 +139,14 @@ OnboardingPage {
     }
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Authentication prompts")
-    role: "title"
+    title: I18n.tr("Authentication prompts")
+    description: I18n.tr("When an app needs administrator rights (installing updates, mounting a drive, changing system settings), a polkit agent asks for your password. A session has only one.")
   }
 
-  StyledText {
-    Layout.fillWidth: true
-    text: I18n.tr("When an app needs administrator rights (installing updates, mounting a drive, changing system settings), a polkit agent asks for your password. A session has only one.")
-  }
-
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
+  OptionPair {
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "admin_panel_settings"
       title: I18n.tr("Use axiom's prompt")
       description: I18n.tr("The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent you run.")
@@ -200,9 +158,6 @@ OnboardingPage {
     }
 
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use my own")
       description: I18n.tr("Leaves the prompt to the agent you start yourself.")
@@ -213,23 +168,16 @@ OnboardingPage {
     }
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: !!ScreenShareManager.portal
-    text: I18n.tr("Screen sharing")
-    role: "title"
+    title: I18n.tr("Screen sharing")
   }
 
-  RowLayout {
+  OptionPair {
     visible: !!ScreenShareManager.portal
-    Layout.fillWidth: true
-    spacing: Widget.spacing
 
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "screen_share"
       title: I18n.tr("Use axiom's picker")
       description: I18n.tr("Apps sharing a screen or window pick it in axiom's picker, in your theme.")
@@ -241,9 +189,6 @@ OnboardingPage {
     }
 
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use the portal's own")
       description: I18n.tr("Leaves the choice to {0}'s own picker.", ScreenShareManager.portal?.package ?? "")
@@ -259,26 +204,14 @@ OnboardingPage {
     Layout.fillWidth: true
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
-    text: I18n.tr("Login screen")
-    role: "title"
+    title: I18n.tr("Login screen")
+    description: I18n.tr("Axiom can be the screen you log in on (through greetd), laid out on the Layouts page like the lock screen.")
   }
 
-  StyledText {
-    Layout.fillWidth: true
-    text: I18n.tr("Axiom can be the screen you log in on (through greetd), laid out on the Layouts page like the lock screen.")
-  }
-
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
+  OptionPair {
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "login"
       title: I18n.tr("Use axiom's login screen")
       description: I18n.tr("Your theme, wallpapers and monitor layout from the first screen on. Installing it asks for your password once.")
@@ -287,9 +220,6 @@ OnboardingPage {
     }
 
     OptionCard {
-      // Equal halves, as tall as the taller one
-      Layout.preferredWidth: 1
-      Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Keep my own")
       description: I18n.tr("Leaves the login screen to your display manager (SDDM, GDM, greetd's own greeters).")

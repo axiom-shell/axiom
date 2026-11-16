@@ -48,12 +48,10 @@ OnboardingPage {
     });
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: root.binds
-    text: I18n.tr("Main modifier key")
-    role: "title"
+    title: I18n.tr("Main modifier key")
   }
 
   RowLayout {
@@ -79,12 +77,10 @@ OnboardingPage {
     }
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: root.binds
-    text: I18n.tr("Keys to know")
-    role: "title"
+    title: I18n.tr("Keys to know")
   }
 
   BindsTable {

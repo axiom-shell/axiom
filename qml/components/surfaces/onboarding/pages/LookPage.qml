@@ -87,12 +87,10 @@ OnboardingPage {
     SettingsManager.commitValues(values);
   }
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: root.bar !== null
-    text: I18n.tr("Bar")
-    role: "title"
+    title: I18n.tr("Bar")
   }
 
   GridLayout {
@@ -191,19 +189,11 @@ OnboardingPage {
 
   // --- Example setups ---
 
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: SavedConfigsManager.examples.length > 0
-    text: I18n.tr("Example setups")
-    role: "title"
-  }
-
-  StyledText {
-    Layout.fillWidth: true
-    visible: SavedConfigsManager.examples.length > 0
-    text: I18n.tr("Applies a whole look (bars, theme, menus) at once. Your wallpaper and the rest of this setup stay.")
-    tone: "muted"
+    title: I18n.tr("Example setups")
+    description: I18n.tr("Applies a whole look (bars, theme, menus) at once. Your wallpaper and the rest of this setup stay.")
   }
 
   TileFlow {

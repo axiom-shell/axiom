@@ -140,11 +140,9 @@ OnboardingPage {
     visible: CompositorManager.supports.inputConfig === true
     spacing: Widget.spacing
 
-    StyledText {
-      Layout.fillWidth: true
+    SectionHeading {
       Layout.topMargin: Widget.spacing
-      text: I18n.tr("Keyboard")
-      role: "title"
+      title: I18n.tr("Keyboard")
     }
 
     SettingRows {
@@ -162,12 +160,10 @@ OnboardingPage {
       }
     }
 
-    StyledText {
-      Layout.fillWidth: true
+    SectionHeading {
       Layout.topMargin: Widget.spacing
       visible: BatteryManager.isAvailable
-      text: I18n.tr("Touchpad")
-      role: "title"
+      title: I18n.tr("Touchpad")
     }
 
     SettingRows {

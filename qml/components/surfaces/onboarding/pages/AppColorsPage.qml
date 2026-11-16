@@ -47,31 +47,42 @@ OnboardingPage {
     Repeater {
       model: ThemeManager.integrations
 
-      delegate: RowLayout {
+      delegate: FormRow {
         id: integration
         required property string modelData
         readonly property bool present: root.installed(modelData)
         readonly property bool isOn: ThemeIntegrations[modelData] === true
-        Layout.fillWidth: true
-        spacing: Widget.spacing
 
-        StyledIcon {
-          text: integration.present ? "check_circle" : "radio_button_unchecked"
-          textColor: integration.present ? Style.success : Style.textFaint
+        function commit(on) {
+          const values = {};
+          values["ThemeIntegrations." + integration.modelData] = on;
+          SettingsManager.commitValues(values);
         }
 
-        StyledLabel {
-          Layout.fillWidth: true
-          text: I18n.tr(ThemeManager.integrationTitle(integration.modelData))
-          tone: integration.present ? "" : "faint"
-        }
+        hoverable: true
+        first: true
+        bodyHeight: line.implicitHeight
+        onRowClicked: integration.commit(!integration.isOn)
 
-        StyledSwitch {
-          checked: integration.isOn
-          onToggled: {
-            const values = {};
-            values["ThemeIntegrations." + integration.modelData] = checked;
-            SettingsManager.commitValues(values);
+        RowLayout {
+          id: line
+          width: parent.width
+          spacing: Widget.spacing
+
+          StyledIcon {
+            text: integration.present ? "check_circle" : "radio_button_unchecked"
+            textColor: integration.present ? Style.success : Style.textFaint
+          }
+
+          StyledLabel {
+            Layout.fillWidth: true
+            text: I18n.tr(ThemeManager.integrationTitle(integration.modelData))
+            tone: integration.present ? "" : "faint"
+          }
+
+          StyledSwitch {
+            checked: integration.isOn
+            onToggled: integration.commit(checked)
           }
         }
       }
@@ -80,12 +91,10 @@ OnboardingPage {
 
   // The switched-on integrations' hookups: the line to add, and Apply
   // (i18n: keys from the schema: integration titles)
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: root.hookups.length > 0
-    text: root.hookups.every(key => IntegrationHookupManager.isDone(key)) ? I18n.tr("Every app you turned on is set up") : I18n.tr("Finish setting up")
-    role: "title"
+    title: root.hookups.every(key => IntegrationHookupManager.isDone(key)) ? I18n.tr("Every app you turned on is set up") : I18n.tr("Finish setting up")
   }
 
   Repeater {
