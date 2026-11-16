@@ -28,7 +28,7 @@ Panel {
   // The bar's inner spacing, so the gaps match its row
   property real cellSpacing: Widget.spacing
   // The bar's, so the cells match its row
-  property real radius: Widget.radius
+  property real radius: Style.radius
 
   // How its cells draw: as the bar's row, off the bar (no run), at the
   // bar's cell size and corners

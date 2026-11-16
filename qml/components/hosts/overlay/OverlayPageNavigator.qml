@@ -40,7 +40,7 @@ Surface {
   // Extra room at the ends, so the end buttons clear the rounded border
   readonly property real endInset: Widget.spacing / 2
   readonly property real controlHeight: root.height - root.inset * 2
-  readonly property real innerRadius: Math.max(0, Widget.radius - root.inset / 2)
+  readonly property real innerRadius: Math.max(0, Style.radius - root.inset / 2)
   readonly property real tabPadding: Widget.padding * 1.5
   readonly property real iconSize: Style.iconMd
   readonly property real labelSpacing: Widget.spacing / 2

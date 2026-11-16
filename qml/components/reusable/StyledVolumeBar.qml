@@ -50,7 +50,7 @@ Item {
   Rectangle {
     id: background
     anchors.fill: parent
-    radius: Widget.radius
+    radius: Style.radius
     color: Style.surfaceSunken
     opacity: root.isMuted ? 1 : 0
 
