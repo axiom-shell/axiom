@@ -204,25 +204,16 @@ FoldingCard {
   }
 
   // One tab per account
-  Flow {
+  EntryTabs {
     visible: root.accounts.length > 0
     Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    Repeater {
-      model: root.accounts.length
-
-      delegate: SegmentButton {
-        id: tab
-        required property int index
-        readonly property var entry: root.accounts[tab.index]
-
-        implicitHeight: Widget.height - Widget.px(4)
-        text: tab.entry.name || tab.entry.username || CalendarConfig.hostOf(tab.entry.url) || (tab.entry.kind === "local" ? I18n.tr("This computer") : I18n.tr("Account {0}", tab.index + 1))
-        active: tab.index === root.current
-        onClicked: root.selected = tab.index
-      }
+    count: root.accounts.length
+    current: root.current
+    labelAt: i => {
+      const entry = root.accounts[i];
+      return entry.name || entry.username || CalendarConfig.hostOf(entry.url) || (entry.kind === "local" ? I18n.tr("This computer") : I18n.tr("Account {0}", i + 1));
     }
+    onPicked: i => root.selected = i
   }
 
   SchemaPropertiesForm {
@@ -361,7 +352,6 @@ FoldingCard {
         readonly property string saved: calendarRow.calendar.name ?? ""
         visible: root.isLocal
         Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height - Widget.px(6)
         placeholderText: I18n.tr("Name")
         // One line, cut off rather than wrapped in a narrow field
         input.wrapMode: TextInput.NoWrap
@@ -402,7 +392,6 @@ FoldingCard {
       SegmentButton {
         visible: calendarRow.joined?.writable ?? false
         Layout.fillWidth: false
-        implicitHeight: Widget.height - Widget.px(6)
         text: I18n.tr("Default")
         active: root.defaultCalendar === calendarRow.calendarId
         onClicked: SettingsManager.setValue(["Calendar", "defaultCalendar"], active ? "" : calendarRow.calendarId)
@@ -424,7 +413,6 @@ FoldingCard {
       }
       StyledTextButton {
         visible: root.isLocal
-        implicitHeight: Widget.height - Widget.px(6)
         iconText: "delete"
         text: root.confirmDrop === calendarRow.calendar.href ? I18n.tr("Click again to remove (its files stay)") : ""
         kind: "danger"

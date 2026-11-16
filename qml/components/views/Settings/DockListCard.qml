@@ -118,7 +118,6 @@ EntryListCard {
           iconText: "arrow_upward"
           tooltipText: I18n.tr("Move up")
           enabled: pinnedRow.index > 0
-          size: Widget.height - Widget.px(4)
           onClicked: root.movePinned(pinnedRow.index, -1)
         }
 
@@ -126,7 +125,6 @@ EntryListCard {
           iconText: "arrow_downward"
           tooltipText: I18n.tr("Move down")
           enabled: pinnedRow.index < root.pinned.length - 1
-          size: Widget.height - Widget.px(4)
           onClicked: root.movePinned(pinnedRow.index, 1)
         }
 
@@ -134,7 +132,6 @@ EntryListCard {
           iconText: "close"
           tooltipText: I18n.tr("Remove")
           kind: "danger"
-          size: Widget.height - Widget.px(4)
           onClicked: root.unpinAt(pinnedRow.index)
         }
       }
@@ -144,7 +141,6 @@ EntryListCard {
       placeholderText: I18n.tr("Search apps to pin…")
       clearable: true
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
     },
     Flow {
       Layout.fillWidth: true
@@ -189,8 +185,8 @@ EntryListCard {
     spacing: Widget.spacing
 
     Image {
-      Layout.preferredWidth: Widget.height - Widget.px(8)
-      Layout.preferredHeight: Widget.height - Widget.px(8)
+      Layout.preferredWidth: Widget.iconButton
+      Layout.preferredHeight: Widget.iconButton
       sourceSize: Qt.size(64, 64)
       source: row.iconSource
       asynchronous: true

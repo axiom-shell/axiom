@@ -53,7 +53,6 @@ FieldGroup {
   headerExtras: StyledTextButton {
     visible: CommunitySetupsManager.enabled
     enabled: !CommunitySetupsManager.loading
-    Layout.preferredHeight: Widget.height
     iconText: "refresh"
     text: I18n.tr(CommunitySetupsManager.loading ? "Loading…" : "Refresh")
     onClicked: CommunitySetupsManager.refresh()
@@ -93,7 +92,6 @@ FieldGroup {
 
     StyledTextEntry {
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search by name, author, theme or tag")
       clearable: true
       onTextEdited: root.query = text
@@ -176,14 +174,12 @@ FieldGroup {
 
           StyledTextButton {
             visible: (details.setup?.page ?? "") !== ""
-            Layout.preferredHeight: Widget.height
             iconText: "open_in_new"
             text: I18n.tr("View on GitHub")
             onClicked: Qt.openUrlExternally(details.setup.page)
           }
 
           StyledTextButton {
-            Layout.preferredHeight: Widget.height
             text: I18n.tr("Close")
             onClicked: root.selected = ""
           }
@@ -288,7 +284,6 @@ FieldGroup {
           }
 
           StyledTextButton {
-            Layout.preferredHeight: Widget.height
             enabled: (details.setup?.compatible ?? false) && CommunitySetupsManager.applying === ""
             text: I18n.tr(root.armed === details.setup?.id ? "Confirm" : "Apply")
             onClicked: {
@@ -401,7 +396,6 @@ FieldGroup {
       }
 
       StyledTextButton {
-        Layout.preferredHeight: Widget.height
         iconText: "upload"
         text: I18n.tr("Export and submit…")
         onClicked: {

@@ -195,7 +195,7 @@ ColumnLayout {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.smallPadding
+        anchors.rightMargin: Widget.padding
         spacing: Widget.spacing
 
         StyledIcon {
@@ -240,7 +240,6 @@ ColumnLayout {
           readonly property string own: String(row.source.layout ?? "") === "" ? "" : row.source.layout + "|" + (row.source.variant ?? "")
           visible: row.ime
           Layout.preferredWidth: Widget.px(200)
-          Layout.preferredHeight: Widget.height
           options: {
             const list = [
               {
@@ -273,7 +272,6 @@ ColumnLayout {
           iconText: "arrow_upward"
           tooltipText: I18n.tr("Move up")
           enabled: row.index > 0
-          size: Widget.height - Widget.px(4)
           onClicked: root.move(row.index, -1)
         }
 
@@ -281,7 +279,6 @@ ColumnLayout {
           iconText: "arrow_downward"
           tooltipText: I18n.tr("Move down")
           enabled: row.index < root.shown.length - 1
-          size: Widget.height - Widget.px(4)
           onClicked: root.move(row.index, 1)
         }
 
@@ -289,7 +286,6 @@ ColumnLayout {
           iconText: "close"
           tooltipText: I18n.tr("Remove")
           kind: "danger"
-          size: Widget.height - Widget.px(4)
           onClicked: root.remove(row.at)
         }
       }
@@ -315,7 +311,6 @@ ColumnLayout {
 
       StyledComboEntry {
         Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height
         editable: true
         icon: "keyboard"
         enabled: root.registry !== null
@@ -350,7 +345,6 @@ ColumnLayout {
         // engines too and those already added
         readonly property var engines: InputSourceManager.available.filter(a => !String(a.name).startsWith("keyboard-") && !String(a.name).startsWith("xkb:") && !root.sources.some(s => s.kind === "ime" && s.engine === a.name))
         Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height
         editable: true
         icon: "translate"
         enabled: root.chosenRuns && enginePicker.engines.length > 0

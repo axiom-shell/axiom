@@ -200,7 +200,7 @@ GridLayout {
         required property var modelData
         // A value, or { value, label } to show a name for it
         readonly property string value: typeof modelData === "string" ? modelData : modelData.value
-        implicitHeight: Widget.height - Widget.px(8)
+        implicitHeight: Widget.smallHeight
         text: typeof modelData === "string" ? modelData : modelData.label
         tooltipText: value !== text ? value : ""
         onClicked: {

@@ -22,7 +22,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - Generated cards are `settings/SettingsGroupCard`.
 - A section with `x-card.perField` (Theme integrations) makes a card per field, after one with the section's description; its switches are relabelled "Enabled" (`row.label`), the card carrying the field's title and description; a field with `x-hookup` gives its card `hookup`, and the card's header chip is the hookup's status (`HookupStatus.of`: Off, Checking, Set up, Not set up or Copy the text, read from `IntegrationHookupManager`; the panel inside keeps its own chip).
 - The Dock and OSD list cards are `EntryListCard`s:
-  - entries as tabs
+  - entries as tabs (`EntryTabs`, shared with `CalendarAccountsCard`)
   - the screen picker every placed surface has (a floating `ScreenSpotPicker`: its nine spots, the centre, each edge's middle and the corners), with `spotOf` reading `edge`/`position` and, detached, `distance`; a click or drag on it sets `edge` and `position` (nearest edge), and `detached` and `distance` (attached within its snap of an edge)
   - Show/Duplicate/Delete, and the card's own `headerButtons` before Add in the header (the OSD's Preview: [OSD](../features/osd.md) › Editing)
   - `entryContent` for extras such as the dock's pinned apps and the OSD's systems and bars (`OSDSystemsEditor`, `OSDBarsEditor`); `ownKeys` names the keys it edits, left out of the other settings

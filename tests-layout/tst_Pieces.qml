@@ -5,6 +5,7 @@ import qs.config
 import qs.components.reusable
 import qs.components.forms
 import qs.components.methods
+import qs.components.views.Settings
 
 // The restyled pieces at scale, font and density (the layout harness): each
 // holds its texts in its box, a control's label fits its control, a segment
@@ -1595,5 +1596,31 @@ TestCase {
     id: foldChevronComp
 
     FoldChevron {}
+  }
+
+  Component {
+    id: entryTabsComp
+
+    EntryTabs {
+      count: 3
+      labelAt: i => ["first", "second", "third"][i]
+    }
+  }
+
+  // The entry tabs are default-height segment buttons (not shortened) showing their label whole
+  function test_entry_tabs_default_height() {
+    const tabs = createTemporaryObject(entryTabsComp, root, {
+      "width": 400
+    });
+    waitForRendering(tabs);
+    const buttons = Array.prototype.filter.call(tabs.children, c => c instanceof SegmentButton);
+    compare(buttons.length, 3);
+    // the button's own height (no -4 override): at least a field's, all alike
+    for (const b of buttons) {
+      verify(b.height >= Widget.height, `tab ${b.text} is ${b.height}, under ${Widget.height}`);
+      compare(b.height, buttons[0].height);
+    }
+    for (const t of harness.texts(tabs))
+      verify(!t.truncated, `"${t.text}" is elided`);
   }
 }

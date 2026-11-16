@@ -109,7 +109,6 @@ ColumnLayout {
           iconText: "close"
           tooltipText: I18n.tr("Remove")
           kind: "danger"
-          size: Widget.height - Widget.px(4)
           onClicked: SettingsManager.removeSpecialWorkspace(entry.modelData)
         }
 
@@ -117,8 +116,8 @@ ColumnLayout {
         // button never hears the hover)
         Item {
           visible: entry.configured && !entry.deletable
-          Layout.preferredWidth: Widget.height - Widget.px(4)
-          Layout.preferredHeight: Widget.height - Widget.px(4)
+          Layout.preferredWidth: Widget.iconButton
+          Layout.preferredHeight: Widget.iconButton
 
           StyledIcon {
             anchors.centerIn: parent
@@ -152,7 +151,6 @@ ColumnLayout {
       id: addEntry
       readonly property bool valid: SpecialWorkspaces.validId(addEntry.text) && !root.rows.some(r => r.configured && r.id === addEntry.text)
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("New special workspace id")
       onAccepted: {
         if (addEntry.valid)
@@ -164,7 +162,6 @@ ColumnLayout {
       iconText: "add"
       tooltipText: I18n.tr("Add")
       enabled: addEntry.valid
-      size: Widget.height - Widget.px(4)
       onClicked: root.add(addEntry.text)
     }
   }

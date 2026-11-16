@@ -159,7 +159,6 @@ Surface {
           }
 
           SquareIconButton {
-            size: Widget.height - Widget.px(6)
             iconText: "content_copy"
             tooltipText: I18n.tr("Copy")
             onClicked: ClipboardManager.copyText(target.t.text)

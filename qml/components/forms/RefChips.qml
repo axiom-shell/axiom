@@ -52,13 +52,19 @@ ColumnLayout {
     Repeater {
       model: root.picked
 
-      SegmentButton {
+      DragChip {
         id: chip
         required property string modelData
-        iconText: root.icons[chip.modelData] ?? ""
-        text: root.labels[chip.modelData] ?? chip.modelData
-        active: true
+        icon: root.icons[chip.modelData] ?? ""
+        label: root.labels[chip.modelData] ?? chip.modelData
+        payload: null
         onClicked: root.edited(root.picked.filter(id => id !== chip.modelData))
+
+        StyledIcon {
+          text: "close"
+          textColor: chip.ink
+          size: "xs"
+        }
       }
     }
   }
@@ -66,7 +72,6 @@ ColumnLayout {
   StyledTextButton {
     id: addButton
     Layout.fillWidth: true
-    implicitHeight: Widget.height
     iconText: "add"
     text: root.addText
     enabled: root._types.length > 0

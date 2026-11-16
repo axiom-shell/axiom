@@ -142,27 +142,15 @@ FoldingCard {
   }
 
   // One tab per entry
-  Flow {
+  EntryTabs {
     Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    Repeater {
-      model: root.entries.length
-
-      delegate: SegmentButton {
-        id: tab
-        required property int index
-        readonly property var entry: root.entries[tab.index]
-
-        implicitHeight: Widget.height - Widget.px(4)
-        text: root.labelOf(tab.entry)
-        iconText: tab.entry.enabled ? "" : "visibility_off"
-        active: tab.index === root.current
-        onClicked: {
-          EditsManager.commitTyping();
-          root.selected = tab.index;
-        }
-      }
+    count: root.entries.length
+    current: root.current
+    labelAt: i => root.labelOf(root.entries[i])
+    iconAt: i => root.entries[i].enabled ? "" : "visibility_off"
+    onPicked: i => {
+      EditsManager.commitTyping();
+      root.selected = i;
     }
   }
 
