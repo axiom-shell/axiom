@@ -24,7 +24,7 @@ Rectangle {
   property bool current: false
   // The cell's corner radius; the badge sits clear of its border (the
   // thicker, active one) and of the corner's curve
-  property real cornerRadius: Widget.radius
+  property real cornerRadius: Style.radius
   readonly property real _edge: Appearance.borderWidth * 2 + 2
   readonly property color _textColor: root.current ? Style.onAccent : root.tintText ? root.tint : Style.text
   // Its inset from the cell's corner (placed by OverviewGrid): past the

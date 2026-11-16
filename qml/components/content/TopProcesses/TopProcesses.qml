@@ -111,11 +111,10 @@ Card {
               })
             width: parent.width
             height: root.rowHeight
-            radius: Widget.radius
+            radius: Style.radius
             color: "transparent"
 
             StateLayer {
-              radius: row.radius
               hovered: rowHover.hovered
             }
 

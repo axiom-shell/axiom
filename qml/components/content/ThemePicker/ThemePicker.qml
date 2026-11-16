@@ -158,13 +158,12 @@ TitledCard {
 
     Layout.fillWidth: true
     Layout.preferredHeight: tileColumn.implicitHeight + Widget.padding * 2
-    radius: Widget.radius
+    radius: Style.radius
     color: tile.roles.surfacePage ?? Style.surfacePage
     border.width: tile.current ? Style.focusWidth : Style.hairline
     border.color: tile.current ? Style.accent : Style.borderSubtle
 
     StateLayer {
-      radius: tile.radius
       hovered: tileArea.containsMouse
     }
 

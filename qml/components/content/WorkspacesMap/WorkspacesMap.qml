@@ -46,12 +46,11 @@ Card {
         y: grid.tileY(index)
         width: grid.tileWidth
         height: grid.tileHeight
-        radius: Widget.radius
+        radius: Style.radius
         tone: tile.active ? "accent" : "sunken"
         outlined: !tile.active
 
         StateLayer {
-          radius: tile.radius
           hovered: tileArea.containsMouse
           onAccent: tile.active
         }

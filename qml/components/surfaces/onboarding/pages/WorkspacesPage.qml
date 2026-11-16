@@ -85,7 +85,7 @@ OnboardingPage {
         readonly property int rows: root.layout === "grid" ? WorkspacesConfig.rows : column ? 3 : 1
         width: root.cardWidth * 0.36
         height: width * 0.6
-        radius: Widget.radius / 2
+        radius: Style.radiusInner
 
         Grid {
           anchors.centerIn: parent

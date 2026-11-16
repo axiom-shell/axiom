@@ -75,7 +75,7 @@ Card {
 
     ClippingRectangle {
       anchors.fill: parent
-      radius: Widget.radius
+      radius: Style.radius
       color: thumbnail.fillColor
 
       Image {
@@ -89,7 +89,7 @@ Card {
 
     Rectangle {
       anchors.fill: parent
-      radius: Widget.radius
+      radius: Style.radius
       color: "transparent"
       border.color: thumbnail.borderColor
       border.width: thumbnail.borderWidth

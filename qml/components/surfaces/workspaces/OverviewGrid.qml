@@ -52,7 +52,7 @@ Item {
   readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, usable.w, usable.h, gap, columns, rows, root.specialCount > 0 ? root.sideGap : 0)
   readonly property real cellW: Math.floor(usable.w * miniScale)
   readonly property real cellH: Math.floor(usable.h * miniScale)
-  readonly property real cellRadius: Math.max(2, Widget.radius * 0.75)
+  readonly property real cellRadius: Math.max(2, Style.radius * 0.75)
   // A window preview's (and the drop box's), inside its cell's
   readonly property real previewRadius: Math.max(2, root.cellRadius * 0.6)
 

@@ -47,7 +47,7 @@ Surface {
       id: screen
       Layout.fillWidth: true
       Layout.preferredHeight: width * 10 / 16
-      radius: Widget.radius / 2
+      radius: Style.radiusInner
       color: root.roles?.surfacePage ?? Style.surfacePage
       clip: true
 

@@ -129,12 +129,11 @@ Panel {
     Layout.columnSpan: modelData.span ?? 1
     Layout.preferredWidth: (modelData.span ?? 1) * 10
     Layout.preferredHeight: 10 // a layout weight, not a size
-    radius: Widget.radius
+    radius: Style.radius
     tone: key.kind === "equals" ? "accent" : key.kind === "op" ? "accentContainer" : "highest"
     outlined: false
 
     StateLayer {
-      radius: key.radius
       hovered: hover.hovered
       pressed: tap.pressed
       onAccent: key.kind === "equals"

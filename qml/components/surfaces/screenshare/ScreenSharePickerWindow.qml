@@ -254,7 +254,7 @@ PanelWindow {
         Rectangle {
           anchors.fill: parent
           anchors.margins: -root.ring
-          radius: Widget.radius + root.ring
+          radius: Style.radius + root.ring
           color: "transparent"
           border.width: Widget.px(2)
           border.color: tile.selected ? Style.accent : tile.hovered ? Style.borderStrong : "transparent"
@@ -266,7 +266,7 @@ PanelWindow {
         ClippingRectangle {
           visible: tile.isScreen
           anchors.fill: parent
-          radius: Widget.radius
+          radius: Style.radius
           color: Style.surfaceSunken
 
           ScreencopyView {
@@ -291,7 +291,7 @@ PanelWindow {
         WindowPreview {
           visible: !tile.isScreen
           anchors.fill: parent
-          radius: Widget.radius
+          radius: Style.radius
           windowData: tile.isScreen ? null : (tile.modelData.match ?? {
               "id": "",
               "appId": tile.modelData.appId,
@@ -305,7 +305,7 @@ PanelWindow {
         // The hover and press tint over the picture
         StateLayer {
           z: 1
-          radius: Widget.radius
+          radius: Style.radius
           hovered: tile.hovered
           pressed: tileMouse.pressed
         }
@@ -343,7 +343,7 @@ PanelWindow {
         y: tile.isScreen ? picture.y + picture.height - height - Widget.spacing : picture.y + picture.height + root.ring + Widget.spacing / 2
         width: picture.width - (tile.isScreen ? Widget.spacing * 2 : 0)
         height: labels.implicitHeight + (tile.isScreen ? Widget.smallPadding : 0)
-        radius: Widget.radius
+        radius: Style.radius
         color: tile.isScreen ? Style.surfaceRaised : "transparent"
 
         ColumnLayout {
@@ -439,7 +439,7 @@ PanelWindow {
         Rectangle {
           Layout.preferredWidth: Widget.px(40)
           Layout.preferredHeight: Widget.px(40)
-          radius: Widget.radius
+          radius: Style.radius
           color: Style.accentContainer
 
           StyledIcon {
@@ -541,7 +541,7 @@ PanelWindow {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Widget.px(72)
             Layout.preferredHeight: Widget.px(72)
-            radius: Widget.radius
+            radius: Style.radius
             color: Style.accentWash
             border.width: Widget.px(2)
             border.color: Style.accent

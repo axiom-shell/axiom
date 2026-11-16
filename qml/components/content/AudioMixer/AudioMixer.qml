@@ -295,11 +295,10 @@ Panel {
 
                 Layout.fillWidth: true
                 implicitHeight: deviceLayout.implicitHeight + Widget.spacing * 2
-                radius: Widget.radius
+                radius: Style.radius
                 color: selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: no fill as the container at no alpha, so selecting doesn't fade through black
 
                 StateLayer {
-                  radius: deviceRow.radius
                   hovered: deviceMouse.containsMouse
                   pressed: deviceMouse.pressed
                 }

@@ -29,7 +29,7 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    radius: Widget.radius
+    radius: Style.radius
     color: root.selected ? Style.accentContainer : "transparent"
     border.width: Appearance.borderWidth
     border.color: root.selected ? Style.accent : "transparent"
@@ -37,7 +37,6 @@ Item {
     ColorGlide on color {}
 
     StateLayer {
-      radius: Widget.radius
       hovered: mouse.containsMouse && !root.selected
     }
   }
@@ -58,7 +57,7 @@ Item {
       capturing: WindowSwitcherConfig.previews && WindowSwitcherManager.shown
       live: root.selected
       showTitle: false
-      radius: Widget.radius
+      radius: Style.radius
     }
 
     Image {

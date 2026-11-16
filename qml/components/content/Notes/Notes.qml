@@ -153,11 +153,10 @@ Card {
         visible: root.showHeader
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.iconButton
-        radius: Widget.radius / 2
+        radius: Style.radiusInner
         color: nameChip.held ? Style.surfaceHighest : "transparent"
 
         StateLayer {
-          radius: nameChip.radius
           hovered: !root.locked && chipHover.hovered
         }
 

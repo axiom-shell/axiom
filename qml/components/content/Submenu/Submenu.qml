@@ -53,11 +53,10 @@ Card {
   Rectangle {
     anchors.fill: parent
     anchors.margins: root.bare ? 0 : Appearance.borderWidth
-    radius: Widget.radius
+    radius: Style.radius
     color: root.isOpen ? Style.accentContainer : "transparent"
 
     StateLayer {
-      radius: parent.radius
       hovered: area.containsMouse
       pressed: area.pressed
     }

@@ -76,7 +76,7 @@ Item {
     anchors.fill: parent
     anchors.leftMargin: Widget.smallPadding
     anchors.rightMargin: Widget.smallPadding
-    radius: Widget.radius
+    radius: Style.radius
     color: root.current ? Style.accentContainer : "transparent"
     ColorGlide on color {}
 
