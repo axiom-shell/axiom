@@ -37,4 +37,18 @@ QtObject {
         out[id] = saved[id];
     return out;
   }
+
+  // The choices from a whole saved state, read back from the shapes before
+  // the one object: `sectionFolds`, else `layoutsFolds` (the same object);
+  // `keybindsFolded` (an array of shut section names) adds "bind:<name>"
+  // closed for any not chosen already
+  function fromSaved(saved) {
+    saved = saved ?? {};
+    let folds = root.clean(saved.sectionFolds ?? saved.layoutsFolds);
+    if (Array.isArray(saved.keybindsFolded))
+      for (const section of saved.keybindsFolded)
+        if (typeof section === "string" && !Object.prototype.hasOwnProperty.call(folds, "bind:" + section))
+          folds = root.withOpen(folds, "bind:" + section, false);
+    return folds;
+  }
 }

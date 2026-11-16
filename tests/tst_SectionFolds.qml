@@ -54,4 +54,29 @@ TestCase {
       "menus": false
     });
   }
+
+  function test_fromSaved_reads_the_old_shapes() {
+    compare(SectionFolds.fromSaved({
+      "keybindsFolded": ["a", 3]
+    }), {
+      "bind:a": false
+    });
+    compare(SectionFolds.fromSaved({
+      "sectionFolds": {
+        "bind:a": true
+      },
+      "keybindsFolded": ["a", "b"]
+    }), {
+      "bind:a": true,
+      "bind:b": false
+    });
+    compare(SectionFolds.fromSaved({
+      "layoutsFolds": {
+        "tools": true
+      }
+    }), {
+      "tools": true
+    });
+    compare(SectionFolds.fromSaved(null), {});
+  }
 }

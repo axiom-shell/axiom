@@ -125,7 +125,7 @@ LOCAL_PIECES = ROOT / "scripts" / "ui-local-pieces.json"
 LOCAL_PIECE_RULES = {
     "StateLayer": (re.compile(r"\bStateLayer\s*\{"), "a hand-built hover tint: use Pressable (or a piece that has one)"),
     "Keys.onSpacePressed": (re.compile(r"\bKeys\.onSpacePressed\b"), "hand-built keys: use Pressable"),
-    "tone-sunken": (re.compile(r"\btone:\s*\"sunken\""), "a sunken box: use ItemBox, InspectorCard or a card piece"),
+    "tone-sunken": (re.compile(r"\btone:[^\n]*\"sunken\""), "a sunken box: use ItemBox, InspectorCard or a card piece"),
     "onRowClicked": (re.compile(r"\bonRowClicked\s*:"), "a hand-set row click: give the row `activates`"),
     "first-literal": (re.compile(r"^\s*first\s*:\s*(?:true|false)\b"), "a `first:` literal: the row's column decides"),
 }
@@ -864,9 +864,9 @@ def main():
             continue
         for m in re.finditer(r"^\s*(?:readonly\s+|required\s+)?property\s+[\w.<>]+\s+on([A-Z]\w*)", text, re.M):
             low = m.group(1)[0].lower() + m.group(1)[1:]
-            local = re.search(r"(?:\bproperty\s+[\w.<>]+\s+|\bsignal\s+|\bfunction\s+)" + low + r"\b", text)
+            own = re.search(r"(?:\bproperty\s+[\w.<>]+\s+|\bsignal\s+|\bfunction\s+)" + low + r"\b", text)
             root_type = re.search(r"^([A-Z]\w*)\s*\{", text, re.M)
-            if local or low in inherited or (low == "screen" and root_type and root_type.group(1) in windows):
+            if own or low in inherited or (low == "screen" and root_type and root_type.group(1) in windows):
                 errors.append(f"{path}:{text.count(chr(10), 0, m.start()) + 1}: property on{m.group(1)} beside `{low}`: a QML on<X> property next to <x> never takes its value; name it otherwise")
 
     # One way to run an action: the UI runs a catalogue action through

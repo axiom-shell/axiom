@@ -65,6 +65,7 @@ RowLayout {
     StyledText {
       Layout.fillWidth: true
       text: root.title
+      textFormat: Text.PlainText
       role: "headline"
       overflow: "wrap"
     }
@@ -73,6 +74,7 @@ RowLayout {
       Layout.fillWidth: true
       visible: text !== ""
       text: root.message
+      textFormat: Text.PlainText
       role: root.messageRole
       tone: root.messageTone
       overflow: root.messageWraps ? "wrap" : "line"

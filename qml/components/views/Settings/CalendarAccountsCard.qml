@@ -242,6 +242,7 @@ FoldingCard {
       secret: true
       placeholderText: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? I18n.tr("Type a new one to replace it") : I18n.tr("The account's password")
       buttonText: I18n.tr("Save")
+      canSubmit: passwordField.text.trim() !== ""
       onSubmitted: {
         SecretsManager.setSecret("calendar", root.accountId, I18n.tr("{0} calendar", root.account.name || CalendarConfig.hostOf(root.account.url)), passwordField.text);
         passwordField.text = "";

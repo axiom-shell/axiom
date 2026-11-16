@@ -66,7 +66,6 @@ ColumnLayout {
       readonly property bool deletable: SpecialWorkspaces.deletable(entry.special)
 
       RowLayout {
-        id: rowLayout
         Layout.fillWidth: true
         spacing: Widget.spacing
 

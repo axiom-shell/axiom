@@ -782,7 +782,7 @@ TestCase {
   function test_foldRowParity(data) {
     harness.configure(data);
     // The stub keeps fold state across rows: every row starts shut
-    SettingsManager.folds = ({});
+    SettingsManager.collapsed = ({});
     root.parityWidth = Widget.textPx(data.w);
     // A card's group as SchemaLayout makes it: a value row, then an `x-fold`
     // object (its group row) with one row behind it

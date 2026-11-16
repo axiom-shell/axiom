@@ -14,6 +14,7 @@ FieldLine {
   signal toggled(bool newValue)
 
   kind: "switch"
+  controlLeast: sw.implicitWidth
 
   // What a click on the row outside the switch does
   function activate() {

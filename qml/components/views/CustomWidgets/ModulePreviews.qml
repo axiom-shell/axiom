@@ -70,6 +70,8 @@ ColumnLayout {
 
   RowLayout {
     Layout.fillWidth: true
+    // Keep comes and goes: the line keeps its height
+    Layout.preferredHeight: Widget.height
     spacing: Widget.spacing
 
     StyledText {

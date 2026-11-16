@@ -120,14 +120,7 @@ QtObject {
   Component.onCompleted: {
     const saved = root._state.load({});
     root._libraryGrouped = saved.libraryGrouped === true;
-    // Read back from the shapes before the one object: `layoutsFolds` (the
-    // same object) and `keybindsFolded` (an array of shut section names)
-    let folds = SectionFolds.clean(saved.sectionFolds ?? saved.layoutsFolds);
-    if (Array.isArray(saved.keybindsFolded))
-      for (const section of saved.keybindsFolded)
-        if (typeof section === "string" && !Object.prototype.hasOwnProperty.call(folds, "bind:" + section))
-          folds = SectionFolds.withOpen(folds, "bind:" + section, false);
-    root._sectionFolds = folds;
+    root._sectionFolds = SectionFolds.fromSaved(saved);
   }
 
   // The box holding typed text (var: callers use commitTyped() and

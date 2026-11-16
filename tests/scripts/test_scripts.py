@@ -445,6 +445,7 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/views/Local/Tint.qml", qml("StateLayer {}"), "views/Local/Tint.qml:6: StateLayer"),
         ("qml/components/views/Local/Space.qml", qml("Keys.onSpacePressed: x()"), "views/Local/Space.qml:6: Keys.onSpacePressed"),
         ("qml/components/views/Local/Well.qml", qml('Surface { tone: "sunken" }'), "views/Local/Well.qml:6: tone-sunken"),
+        ("qml/components/views/Local/Cond.qml", qml('Surface { tone: x ? "sunken" : "raised" }'), "views/Local/Cond.qml:6: tone-sunken"),
         ("qml/components/views/Local/Click.qml", qml("onRowClicked: x()"), "views/Local/Click.qml:6: onRowClicked"),
         ("qml/components/views/Local/First.qml", qml("FormRow {\n      first: true\n    }"), "views/Local/First.qml:7: first-literal"),
         ("qml/components/surfaces/onboarding/Tint.qml", qml("StateLayer {}"), "onboarding/Tint.qml:6: StateLayer"),
@@ -924,7 +925,7 @@ class CheckStyle(unittest.TestCase):
         self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"', "R20"), 0)
         self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Glide on width {}', "R20"), 0)
         self.assertEqual(self.rule('  color: "transparent"\n  border.color: Style.accent\n  ColorGlide on border.color {}', "R20"), 0)
-        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide + "  // R20 waived? no", "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide, "R20"), 1)
 
     def test_r19_widget_radius(self):
         self.assertEqual(self.rule("  radius: Widget.radius", "R19"), 1)

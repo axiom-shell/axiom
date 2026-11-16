@@ -52,6 +52,15 @@ TestCase {
     }
   }
 
+  Component {
+    id: trimmedSubmitComp
+
+    SubmitEntry {
+      width: 300
+      canSubmit: text.trim() !== ""
+    }
+  }
+
   // Types into the entry as the user does: the text, then the signal the
   // field emits for an edit
   function type(entry, text) {
@@ -113,6 +122,21 @@ TestCase {
 
   function test_submit_entry_does_not_submit_when_it_cannot() {
     const entry = createTemporaryObject(submitComp, root);
+    const spy = createTemporaryObject(spyComp, root, {
+      "target": entry,
+      "signalName": "submitted"
+    });
+    entry.input.forceActiveFocus();
+    keyClick(Qt.Key_Return);
+    compare(spy.count, 0);
+  }
+
+  // A blank entry (whitespace too) is never submitted by Enter, so a stored
+  // key isn't cleared
+  function test_submit_entry_blank_never_submits() {
+    const entry = createTemporaryObject(trimmedSubmitComp, root, {
+      "text": "  "
+    });
     const spy = createTemporaryObject(spyComp, root, {
       "target": entry,
       "signalName": "submitted"

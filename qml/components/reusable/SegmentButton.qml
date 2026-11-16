@@ -50,8 +50,6 @@ StyledTextButton {
   _contentColor: root.inRow ? root._rowInk : Style.toneOn(root.inkScope, "text")
 
   readonly property color _rowInk: {
-    if (!root.available)
-      return Style.inkOf(Style.segmentTrackTone).faint;
     return root.active ? Style.inkOf(Style.segmentThumbTone).text : Style.inkOf(Style.segmentTrackTone).muted;
   }
 }

@@ -108,6 +108,8 @@ ColumnLayout {
   // Every row is known hidden (a row still streaming in counts as shown):
   // its FieldGroup hides with it. Read through `count` as `_firstRow` is
   readonly property bool allHidden: {
+    if (root.rows.length === 0)
+      return true;
     if (fields.count <= 0)
       return false;
     for (let i = 0; i < fields.count; i++) {

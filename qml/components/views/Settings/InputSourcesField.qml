@@ -187,7 +187,6 @@ ColumnLayout {
       readonly property var engine: ime ? root.engineOf(source) : null
 
       RowLayout {
-        id: rowLayout
         Layout.fillWidth: true
         spacing: Widget.spacing
 

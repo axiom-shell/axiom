@@ -6,7 +6,6 @@ import QtQuick
 // (setFoldOpen stores it, so a fold row flips through it like the real one);
 // nothing is ever changed or collapsed, and the schema and config are empty.
 QtObject {
-  property var folds: ({})
   property var collapsed: ({})
   // Dotted path -> schema / value / { title, category } a link leads to
   // (empty: nothing found), for tests of the rows that read them
@@ -14,23 +13,27 @@ QtObject {
   property var values: ({})
   property var located: ({})
 
-  function isFoldOpen(key) {
-    return folds[key] === true;
+  function isFoldOpen(path) {
+    return collapsed[path + ":open"] === true;
   }
 
-  function setFoldOpen(key, open) {
-    const next = Object.assign({}, folds);
-    next[key] = open;
-    folds = next;
+  function setFoldOpen(path, open) {
+    setCollapsed(path + ":open", open);
   }
 
   function isCollapsed(key) {
     return collapsed[key] === true;
   }
 
-  function setCollapsed(key, value) {
+  // `keys`: one key or a list; true sets, false deletes
+  function setCollapsed(keys, value) {
     const next = Object.assign({}, collapsed);
-    next[key] = value;
+    for (const key of [].concat(keys)) {
+      if (value)
+        next[key] = true;
+      else
+        delete next[key];
+    }
     collapsed = next;
   }
 
@@ -43,7 +46,7 @@ QtObject {
   }
 
   function schemaAt(path) {
-    return schemas[path.join(".")] ?? ({});
+    return schemas[path.join(".")];
   }
 
   function configValueAt(key) {

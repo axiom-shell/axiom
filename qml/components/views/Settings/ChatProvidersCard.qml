@@ -122,20 +122,13 @@ PageCard {
         Layout.fillWidth: true
         spacing: Widget.spacing / 2
 
-        StyledTextEntry {
+        SubmitEntry {
           id: keyField
-          Layout.fillWidth: true
+          secret: true
           placeholderText: row.status === "none" ? I18n.tr("Paste an API key") : I18n.tr("Paste a new key to replace it")
-          input.echoMode: TextInput.Password
-          onAccepted: saveKey.clicked()
-        }
-
-        StyledTextButton {
-          id: saveKey
-          visible: keyField.text.trim() !== ""
-          text: I18n.tr("Save")
-          kind: "primary"
-          onClicked: {
+          buttonText: I18n.tr("Save")
+          canSubmit: text.trim() !== ""
+          onSubmitted: {
             SecretsManager.setKey(row.provider, keyField.text);
             keyField.text = "";
           }

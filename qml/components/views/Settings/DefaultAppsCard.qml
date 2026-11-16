@@ -101,7 +101,6 @@ PageCard {
       }
 
       StyledComboEntry {
-        id: otherPick
         Layout.fillWidth: true
         visible: root.otherState !== null
         enabled: !DefaultAppsManager.busy && (root.otherState?.handlers ?? []).length > 0

@@ -1977,4 +1977,38 @@ TestCase {
     verify(glyph);
     compare(glyph.textSize, 40);
   }
+
+  // -- Branch review fixes (S-RB) --
+
+  Component {
+    id: modalHeaderComp
+
+    ModalHeader {
+      width: 400
+      title: "<i>t</i>"
+      message: "<b>x</b>"
+    }
+  }
+
+  // A title or message is data (a device's name): never read as markup
+  function test_modalHeader_text_is_plain() {
+    harness.configure({});
+    const header = createTemporaryObject(modalHeaderComp, root);
+    waitForRendering(header);
+    for (const s of ["<i>t</i>", "<b>x</b>"]) {
+      const t = findAll(header, it => it.text === s)[0];
+      verify(t, s);
+      compare(t.textFormat, Text.PlainText);
+    }
+  }
+
+  // The switch's width counts in the row's least width
+  function test_schemaSwitch_least_width_has_the_switch() {
+    harness.configure({});
+    const row = createTemporaryObject(switchRowComp, root);
+    waitForRendering(row);
+    const sw = findAll(row, it => it instanceof StyledSwitch)[0];
+    compare(row.controlLeast, sw.implicitWidth);
+    verify(row.leastWidth >= sw.implicitWidth + Widget.fieldTokens.gap, "the label's least plus the switch");
+  }
 }
