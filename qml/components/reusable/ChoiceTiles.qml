@@ -4,9 +4,10 @@ import Quickshell
 import qs.config
 import qs.components.methods
 
-// A single choice as a wrapping row of equal tiles (a TileFlow), each a
-// preview over its label: the chosen one filled with the accent container
-// and ringed in the accent, one that
+// A single choice as a wrapping row of equal tiles (a TileFlow) in an even
+// grid (ChoiceGrid: one line when all fit, never one per line while two
+// fit), each a preview over its label: the chosen one filled with the
+// accent container and ringed in the accent, one that
 // can't be picked greyed, saying why in a tooltip on hover. Arrow keys
 // move between the tiles, Enter or Space picks. The owner keeps the
 // value: set `value`, and update it from `picked`.
@@ -26,6 +27,9 @@ TileFlow {
   property var previewProperties: ({})
   // The preview's height, on every tile while any tile has one
   property real previewHeight: Widget.px(36)
+  // The narrowest a preview is drawn (a fixed number: previews are built
+  // later from the queue, so it can't be measured)
+  property real previewMinWidth: Widget.px(96)
 
   signal picked(var value)
 
@@ -33,8 +37,18 @@ TileFlow {
   readonly property bool _previews: root.preview !== null || Array.prototype.some.call(root.options, option => !!option.preview)
   // The tile the keys are on
   property int _cursor: -1
+  // The narrowest tile: the widest label (measured) in its margins, and the
+  // preview's floor while there are previews
+  readonly property real _leastTile: {
+    let widest = 0;
+    for (let i = 0; i < measures.count; i++)
+      widest = Math.max(widest, (measures.objectAt(i) as TextMetrics)?.advanceWidth ?? 0);
+    const label = Math.ceil(widest) + Widget.smallPadding * 2;
+    return root._previews ? Math.max(label, root.previewMinWidth + Widget.smallPadding * 2) : label;
+  }
 
   minTileWidth: Style.typeBody * 9
+  columns: ChoiceGrid.columns(root.options.length, root.width, root.minTileWidth, root._leastTile, root.spacing)
   activeFocusOnTab: true
   onActiveFocusChanged: {
     if (root.activeFocus && (root._cursor < 0 || root._cursor >= root.options.length))
@@ -61,6 +75,20 @@ TileFlow {
   Keys.onReturnPressed: root._pick(root._cursor)
   Keys.onEnterPressed: root._pick(root._cursor)
   Keys.onSpacePressed: root._pick(root._cursor)
+
+  // One metrics per option, unseen, by count (options come from config)
+  Instantiator {
+    id: measures
+    model: root.options.length
+
+    TextMetrics {
+      required property int index
+      font.family: Appearance.fontFamily
+      font.pixelSize: Style.roleLabel.size
+      font.weight: Style.weightMedium
+      text: root.options[index]?.label ?? String(root.options[index]?.value ?? "")
+    }
+  }
 
   Repeater {
     // By count: an option's reason changes as other settings do
