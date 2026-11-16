@@ -60,8 +60,11 @@ FormRow {
       FieldHeader {
         label: root.label
         description: root.description
-        // Centred on a control taller than it (a label alone)
+        // Centred on a control taller than it (a label alone). At its own
+        // width beside a filling control (a header that fills too takes
+        // half the row from it)
         Layout.alignment: Qt.AlignVCenter
+        Layout.fillWidth: !root.besideLabel
       }
 
       ColumnLayout {
