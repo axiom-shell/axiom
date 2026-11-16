@@ -19,8 +19,6 @@ GridDragLayer {
   // The selected definition's elements, and whether there's one
   property var elements: []
   property bool editable: false
-  // The inspector column's width: the host's BaseView.inspectorWidth
-  property real inspectorWidth: 0
   // The base elements, drawn dimmed under the canvas while a screen is edited
   // ([{ place, label, element }])
   property var underlay: []
@@ -205,7 +203,7 @@ GridDragLayer {
 
     // The inspector, the tab's full height; it owns its header
     Surface {
-      Layout.preferredWidth: root.inspectorWidth
+      Layout.preferredWidth: Math.min(Widget.textPx(340), Math.round(root.width * 0.34))
       Layout.fillHeight: true
       tone: "surface"
 
