@@ -1751,4 +1751,46 @@ TestCase {
     compare(String(slider.handleColor), String(Style.text));
     harness.configure({});
   }
+
+  Component {
+    id: pinnedListComp
+
+    PinnedList {
+      id: list
+      property int count: 2
+      width: 300
+      maxHeight: 100
+
+      Repeater {
+        model: list.count
+        Rectangle {
+          required property int index
+          Layout.fillWidth: true
+          implicitHeight: 30
+          color: "transparent"
+        }
+      }
+    }
+  }
+
+  // A list taller than its cap scrolls inside it (cut, with a scroll bar); a short one takes its own height
+  function test_pinnedList() {
+    const tall = createTemporaryObject(pinnedListComp, root, {
+      "count": 20
+    });
+    verify(tall);
+    waitForRendering(tall);
+    wait(30);
+    compare(tall.height, 100);
+    compare(tall.cut, true);
+    compare(findAll(tall, it => it.showScrollBar === true).length, 1, "a scroll bar");
+    const short = createTemporaryObject(pinnedListComp, root, {
+      "count": 2
+    });
+    waitForRendering(short);
+    wait(30);
+    compare(short.height, short.contentHeight);
+    compare(short.cut, false);
+    compare(findAll(short, it => it.showScrollBar === true).length, 0, "no scroll bar");
+  }
 }

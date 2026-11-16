@@ -26,9 +26,9 @@ Surface {
   property string placeholder: I18n.tr("Click to record")
 
   readonly property bool recording: KeybindManager.editor.recordingIndex === root.bindIndex
-  // Modifiers held so far while recording
   // Whether the recorder held focus when a recording began
   property bool _returnFocus: false
+  // Modifiers held so far while recording
   property var held: []
   // The modifier key pressed alone, as a tap ("Super_L"), until another
   // key comes

@@ -162,7 +162,7 @@ Panel {
     // A failed check's stderr wraps rather than widening the popout
     Layout.maximumWidth: Widget.textPx(320)
     overflow: "wrap"
-    text: root.failed || (UpdatesManager.checking ? I18n.tr("checking…") : I18n.tr("System is up to date"))
+    text: root.failed || I18n.tr("System is up to date")
     tone: "muted"
   }
 

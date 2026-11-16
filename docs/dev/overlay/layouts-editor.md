@@ -36,7 +36,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - Streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)): the side panel, each canvas tile (the tile's place and size are the loader's, so it glides as before) and the module library, built once and kept while a module's options show over it. The canvas and inspector themselves stay, reached through `LayoutsEditorLayout.canvas` / `inspector`.
 
 ### Left panel (`LayoutsPanel`)
-- The lists are the top box (capped at 40 % of the panel's height, scrolling inside), each a `ListSection` with its count; the rows take the lists' keyboard route (Delete runs the row's remove; Escape is left to the overlay, as the editor always has something selected). "Can't save yet" is the bottom box's footer.
+- The lists are the top box (a `PinnedList`, capped at 40 % of the panel's height, scrolling inside), each a `ListSection` with its count; the rows take the lists' keyboard route (Delete runs the row's remove; Escape is left to the overlay, as the editor always has something selected). "Can't save yet" is the bottom box's footer.
 - **`PagesSection`**:
   - "Overlay pages": your pages, with show/hide, duplicate and remove actions, and New page under them.
   - Then "Tools", the tool pages with only show/hide, a collapsible section closed by default (`LayoutsPanel.toolsOpen` keeps it open while the page is up). Every tool page is always in config (a migration put back any that were removed, hidden).

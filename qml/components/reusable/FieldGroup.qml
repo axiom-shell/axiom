@@ -6,8 +6,8 @@ import qs.components.forms
 // The settings page's card, for an editor's group of fields: a FoldingCard
 // (header with the title, description and chevron at the top), rows indented
 // only by RowTree, a fold row (FoldFormRow) for extra options; a title-less
-// card has no header and doesn't fold (the selection's own identity rows,
-// OptionsGroup). The fold is the card's own `collapsed` (open whenever the card
+// card doesn't fold and has a header only for a description (the selection's
+// own identity rows, OptionsGroup). The fold is the card's own `collapsed` (open whenever the card
 // is built, never saved); a host that must stay visible sets `foldable: false`.
 // Children stack with no gap, as a settings card's rows do (a row pads itself,
 // FormRow); a non-row child that follows another takes its own
@@ -17,7 +17,7 @@ import qs.components.forms
 FoldingCard {
   id: root
 
-  headed: root.title !== ""
+  headed: root.title !== "" || root.description !== ""
   foldable: root.title !== ""
   bodySpacing: 0
   onToggled: root.collapsed = !root.collapsed

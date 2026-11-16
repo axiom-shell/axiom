@@ -191,6 +191,130 @@ TestCase {
     verify(header === undefined || !header.visible, "no header");
   }
 
+  // One group with a FormRow, its title, description, inset and header extras set by the test
+  Component {
+    id: oneGroupComp
+
+    Surface {
+      id: one
+      property alias group: oneGroup
+      property alias row0: oneRow
+      property string title: "Size"
+      property string description
+      property real inset: Style.space3
+      property Component extras
+      width: 400
+      height: 600
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: oneGroup
+          title: one.title
+          description: one.description
+          bottomInset: one.inset
+          headerExtras: Loader {
+            sourceComponent: one.extras
+          }
+
+          FormRow {
+            id: oneRow
+            first: true
+            bodyHeight: Widget.height
+          }
+        }
+      }
+    }
+  }
+
+  Component {
+    id: realButtonComp
+
+    StyledIconButton {
+      kind: "danger"
+      iconText: "delete"
+    }
+  }
+
+  // The zero-height wrapper ScreenForm used to have
+  Component {
+    id: wrappedButtonComp
+
+    Item {
+      implicitWidth: 28
+      implicitHeight: 0
+      Layout.alignment: Qt.AlignVCenter
+
+      StyledIconButton {
+        anchors.verticalCenter: parent.verticalCenter
+        kind: "danger"
+        iconText: "delete"
+      }
+    }
+  }
+
+  // A folded card with no padding under its body still closes with the padding
+  function test_foldedBottomInsetZero() {
+    harness.configure({});
+    const pane = createTemporaryObject(oneGroupComp, root, {
+      "inset": 0
+    });
+    verify(pane);
+    waitForRendering(pane);
+    const group = pane.group;
+    const header = root.headerOf(group);
+    group.toggled();
+    verify(group.collapsed);
+    tryVerify(() => Math.abs(group.implicitHeight - (2 * Style.space3 + header.height)) < 1, 3000);
+  }
+
+  // A header button sits inside the card's padding and clear of the first row; a zero-height wrapper doesn't
+  function test_headerExtrasButton() {
+    harness.configure({});
+    const pane = createTemporaryObject(oneGroupComp, root, {
+      "extras": realButtonComp
+    });
+    verify(pane);
+    waitForRendering(pane);
+    wait(30);
+    const group = pane.group;
+    const btn = root.findAll(group, it => it.kind === "danger" && it.iconText === "delete")[0];
+    verify(btn, "the button");
+    verify(btn.mapToItem(group, 0, 0).y >= Style.space3 - 0.5, "inside the padding");
+    verify(pane.row0.mapToItem(group, 0, 0).y >= btn.mapToItem(group, 0, btn.height).y + Style.space2 - 0.5, "the first row is under the button");
+
+    const wrapped = createTemporaryObject(oneGroupComp, root, {
+      "extras": wrappedButtonComp
+    });
+    waitForRendering(wrapped);
+    wait(30);
+    const wbtn = root.findAll(wrapped.group, it => it.kind === "danger" && it.iconText === "delete")[0];
+    verify(wbtn.mapToItem(wrapped.group, 0, 0).y < Style.space3, "the wrapper pokes above the padding");
+  }
+
+  // A title-less card with a description shows it as its header, with no fold
+  function test_titlelessDescription() {
+    harness.configure({});
+    const pane = createTemporaryObject(oneGroupComp, root, {
+      "title": "",
+      "description": "DescriptionText"
+    });
+    verify(pane);
+    waitForRendering(pane);
+    wait(30);
+    const group = pane.group;
+    compare(group.foldable, false);
+    compare(group.headed, true);
+    const texts = root.findAll(group, it => it.text === "DescriptionText" && it.visible);
+    verify(texts.length > 0, "the description shows");
+    verify(!root.chevronOf(group).visible, "no chevron");
+    const header = root.headerOf(group);
+    verify(header, "a header");
+    compare(Math.round(pane.row0.mapToItem(group, 0, 0).y), Math.round(header.mapToItem(group, 0, header.height).y + Style.space2));
+  }
+
   function test_hideRule_data() {
     return rows();
   }

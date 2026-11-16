@@ -23,7 +23,7 @@ TitledCard {
   property var tabMarked: []
   // Fixed content above the tabs, scrolling inside past `pinnedShare` of the
   // pane's height
-  property alias pinned: pinnedColumn.data
+  property alias pinned: pinnedArea.content
   property real pinnedShare: 0.4
   // "" | "none" | "select" | "results"
   property string emptyKind: ""
@@ -41,44 +41,21 @@ TitledCard {
 
   // Through the base's aliases (a plain child would land in `paneContent`)
   headerExtras: [
-    Item {
+    PinnedList {
       id: pinnedArea
       Layout.fillWidth: true
-      Layout.fillHeight: false
-      // From the pane's height and the rows, never from the content's own rect
-      implicitHeight: Math.min(pinnedColumn.implicitHeight, Math.round(root.height * root.pinnedShare))
-      Layout.preferredHeight: pinnedArea.implicitHeight
+      maxHeight: Math.round(root.height * root.pinnedShare)
       // Never hidden (its rows would all read hidden and it would stay so):
       // with nothing showing in it, a negative margin takes back the gap
       // the column puts after it
-      Layout.bottomMargin: pinnedColumn.implicitHeight > 0 ? 0 : -Widget.spacing
-
-      StyledScrollView {
-        // Out by the ring's width on every side, and padded by it, so a
-        // row's focus ring isn't cut at the list's edges (`bleed` for the
-        // sides: the Flickable then doesn't clip at its padding)
-        anchors.fill: parent
-        anchors.margins: -Style.focusWidth
-        contentPadding: 0
-        bleed: Style.focusWidth
-        topPadding: Style.focusWidth
-        bottomPadding: Style.focusWidth
-        // A bar only while the capped list overflows
-        showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
-
-        ColumnLayout {
-          id: pinnedColumn
-          width: parent?.width ?? 0
-          spacing: Widget.spacing / 2
-        }
-      }
+      Layout.bottomMargin: pinnedArea.contentHeight > 0 ? 0 : -Widget.spacing
     },
     // The pinned area's edge, drawn only while its list is cut
     StyledSeparator {
       objectName: "pinnedEdge"
       Layout.fillWidth: true
       Layout.topMargin: -Widget.spacing / 2
-      visible: pinnedColumn.implicitHeight > pinnedArea.height
+      visible: pinnedArea.cut
     },
     StyledTabBar {
       id: tabStrip

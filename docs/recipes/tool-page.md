@@ -28,7 +28,7 @@ A tool page that edits a list of things (custom widgets, monitors) is built from
 4. Save and Discard belong in the header of the top-right pane (`dirty`, `onSave`, `onReset`).
 
 ## Watch out for
-- A pane's own `StyledScrollView` that holds forms (FormRows) sets `bleed: Style.rowBleed` and `Layout.leftMargin/rightMargin: -Style.rowBleed` (`anchors.` margins when anchored), so a row's hover tint isn't cut at the view's edge; `showScrollBar: true` for a body that can overflow.
+- A pane's own scrolling column of cards is a `CardScroll` (the gutter, the tint's room and the scroll bar's lane); never write bleed margins by hand.
 - One left edge: nothing in `pinned`, the body or `footer` sets a side margin of its own.
 - `ToolPane`'s own children go through its default slot; never add one to `headerExtras` or `bodyContent` by hand.
 - A hidden child of a hidden parent reads as hidden: decide a pinned or filter row's visibility from its own condition, not from `visibleChildren` of what it sits in.

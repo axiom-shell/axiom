@@ -82,7 +82,6 @@ Item {
     Surface {
       id: listsBox
       Layout.fillWidth: true
-      Layout.fillHeight: false
       Layout.preferredHeight: listsColumn.implicitHeight + Widget.padding * 2
       tone: "surface"
       clip: true
@@ -108,79 +107,58 @@ Item {
         }
 
         // Scrolling inside past 40 % of the panel's height
-        Item {
-          id: pinnedArea
+        PinnedList {
           Layout.fillWidth: true
-          Layout.fillHeight: false
-          implicitHeight: Math.min(pinnedColumn.implicitHeight, Math.round(root.height * 0.4))
-          Layout.preferredHeight: pinnedArea.implicitHeight
+          maxHeight: Math.round(root.height * 0.4)
 
-          StyledScrollView {
-            // Out by the ring's width on every side, and padded by it, so a
-            // row's focus ring isn't cut at the list's edges
-            anchors.fill: parent
-            anchors.margins: -Style.focusWidth
-            contentPadding: 0
-            bleed: Style.focusWidth
-            topPadding: Style.focusWidth
-            bottomPadding: Style.focusWidth
-            showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
+          PagesSection {
+            Layout.fillWidth: true
+            dragLayer: root.dragLayer
+            toolsOpen: root.toolsOpen
+            onToolsToggled: root.toolsOpen = !root.toolsOpen
+          }
 
-            ColumnLayout {
-              id: pinnedColumn
-              width: parent?.width ?? 0
-              spacing: Widget.spacing / 2
+          MenusSection {
+            Layout.fillWidth: true
+            dragLayer: root.dragLayer
+          }
 
-              PagesSection {
-                Layout.fillWidth: true
-                dragLayer: root.dragLayer
-                toolsOpen: root.toolsOpen
-                onToolsToggled: root.toolsOpen = !root.toolsOpen
-              }
+          ListSection {
+            Layout.fillWidth: true
+            Layout.topMargin: Widget.spacing
+            title: I18n.tr("Screens")
+            count: 1 + (OverlayManager.lockscreenEditable ? 1 : 0) + (OverlayManager.greeterEditable ? 1 : 0)
+            hint: I18n.tr("The desktop, lock screen and login screen.")
 
-              MenusSection {
-                Layout.fillWidth: true
-                dragLayer: root.dragLayer
-              }
+            // Not dragged: these aren't the navigator's pages
+            ListEntryRow {
+              Layout.fillWidth: true
+              icon: "desktop_windows"
+              label: I18n.tr("Desktop")
+              selected: OverlayManager.editTarget === "desktop"
+              changed: DesktopManager.editor.isDirty
+              onClicked: OverlayManager.editDesktop()
+            }
 
-              ListSection {
-                Layout.fillWidth: true
-                Layout.topMargin: Widget.spacing
-                title: I18n.tr("Screens")
-                count: 1 + (OverlayManager.lockscreenEditable ? 1 : 0) + (OverlayManager.greeterEditable ? 1 : 0)
-                hint: I18n.tr("The desktop, lock screen and login screen.")
+            ListEntryRow {
+              visible: OverlayManager.lockscreenEditable
+              Layout.fillWidth: true
+              icon: "lock"
+              label: I18n.tr("Lock screen")
+              selected: OverlayManager.editTarget === "lockscreen"
+              changed: LockManager.editor.isDirty
+              onClicked: OverlayManager.editLockscreen()
+            }
 
-                // Not dragged: these aren't the navigator's pages
-                ListEntryRow {
-                  Layout.fillWidth: true
-                  icon: "desktop_windows"
-                  label: I18n.tr("Desktop")
-                  selected: OverlayManager.editTarget === "desktop"
-                  changed: DesktopManager.editor.isDirty
-                  onClicked: OverlayManager.editDesktop()
-                }
-
-                ListEntryRow {
-                  visible: OverlayManager.lockscreenEditable
-                  Layout.fillWidth: true
-                  icon: "lock"
-                  label: I18n.tr("Lock screen")
-                  selected: OverlayManager.editTarget === "lockscreen"
-                  changed: LockManager.editor.isDirty
-                  onClicked: OverlayManager.editLockscreen()
-                }
-
-                // Once it's set up (Settings → Login screen)
-                ListEntryRow {
-                  visible: OverlayManager.greeterEditable
-                  Layout.fillWidth: true
-                  icon: "login"
-                  label: I18n.tr("Login screen")
-                  selected: OverlayManager.editTarget === "greeter"
-                  changed: GreeterManager.editor.isDirty
-                  onClicked: OverlayManager.editGreeter()
-                }
-              }
+            // Once it's set up (Settings → Login screen)
+            ListEntryRow {
+              visible: OverlayManager.greeterEditable
+              Layout.fillWidth: true
+              icon: "login"
+              label: I18n.tr("Login screen")
+              selected: OverlayManager.editTarget === "greeter"
+              changed: GreeterManager.editor.isDirty
+              onClicked: OverlayManager.editGreeter()
             }
           }
         }

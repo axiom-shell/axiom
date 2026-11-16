@@ -7,8 +7,8 @@ import qs.config
 // chevron) emits `toggled`, and the body below animates shut while
 // `collapsed`. Folded with `marked` set, it shows the unsaved-edits dot;
 // with a `status` its chip (`statusTone`) sits by the chevron, folded or not.
-// The generated cards (SettingsGroupCard) and the list cards
-// (EntryListCard) are built on it.
+// The generated cards (SettingsGroupCard), the list cards (EntryListCard)
+// and every editor's group (FieldGroup) are built on it.
 Surface {
   id: root
 
@@ -28,7 +28,8 @@ Surface {
   // Beside the header, while unfolded (an Add button)
   property alias headerExtras: extras.data
   // The padding under the body: a card ending on a shut fold row takes none,
-  // that row's own padding is the card's (SettingsGroupCard)
+  // that row's own padding is the card's (SettingsGroupCard); applies while
+  // unfolded, folded the card always closes with `Style.space3`
   property real bottomInset: Style.space3
   // False: no header at all (a title-less card: the rows start at the padding)
   property bool headed: true
@@ -42,7 +43,7 @@ Surface {
 
   Layout.fillWidth: true
   tone: "surface"
-  implicitHeight: column.implicitHeight + Style.space3 + root.bottomInset
+  implicitHeight: column.implicitHeight + Style.space3 + (root.collapsed ? Style.space3 : root.bottomInset)
 
   ColumnLayout {
     id: column

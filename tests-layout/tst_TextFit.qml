@@ -1204,7 +1204,7 @@ TestCase {
     const edge = find(pane, it => it.objectName === "pinnedEdge", [])[0];
     verify(edge);
     verify(edge.visible, "the cut list shows its edge");
-    const area = find(pane, it => it.Layout && it.Layout.preferredHeight > 0 && it.implicitHeight === it.Layout.preferredHeight && it.clip !== undefined && it.width > 300 && it.height <= 240.5 && it.height > 100, [])[0];
+    const area = find(pane, it => it.cut !== undefined && it.maxHeight !== undefined, [])[0];
     verify(area, "the pinned area");
     verify(area.height <= Math.round(600 * 0.4));
     const child = find(pane, it => it.objectName === "paneChild", [])[0];

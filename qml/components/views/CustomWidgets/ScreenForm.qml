@@ -98,21 +98,11 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Screen")
-        // Adds no height of its own (the button is taller than the heading):
-        // centred on the title line, so both headers are as tall
-        headerExtras: Item {
-          implicitWidth: removeButton.implicitWidth
-          implicitHeight: 0
-          Layout.alignment: Qt.AlignVCenter
-
-          StyledIconButton {
-            id: removeButton
-            anchors.verticalCenter: parent.verticalCenter
-            kind: "danger"
-            iconText: "delete"
-            tooltipText: I18n.tr("Remove this screen")
-            onClicked: root.editor.removeView(root.editor.viewIndex)
-          }
+        headerExtras: StyledIconButton {
+          kind: "danger"
+          iconText: "delete"
+          tooltipText: I18n.tr("Remove this screen")
+          onClicked: root.editor.removeView(root.editor.viewIndex)
         }
 
         ColumnLayout {
