@@ -5,6 +5,7 @@ import qs.config
 import qs.services.session
 import qs.services.ui
 import qs.components.reusable
+import qs.components.content.base
 import qs.components.forms
 import qs.components.views.base
 
@@ -72,288 +73,363 @@ Item {
   // I18n.tr("Style") I18n.tr("Behaviour") I18n.tr("Closing") I18n.tr("Advanced")
   // I18n.tr("Other")
   // I18n.tr("Grid") I18n.tr("Background")
-  ToolPane {
+  // Two boxes a card gap apart, as the bar editor's inspector and library:
+  // the lists with the page's title above, and the selection's cards below
+  ColumnLayout {
     anchors.fill: parent
-    title: I18n.tr("Layouts")
-    headerIcon: "dashboard_customize"
-    scrollKey: "Layouts"
-    showActions: false
+    spacing: OverlayConfig.cardSpacing
 
-    pinned: ColumnLayout {
+    Surface {
+      id: listsBox
       Layout.fillWidth: true
-      spacing: Widget.spacing / 2
+      Layout.fillHeight: false
+      Layout.preferredHeight: listsColumn.implicitHeight + Widget.padding * 2
+      tone: "surface"
+      clip: true
 
-      PagesSection {
-        Layout.fillWidth: true
-        dragLayer: root.dragLayer
-        toolsOpen: root.toolsOpen
-        onToolsToggled: root.toolsOpen = !root.toolsOpen
-      }
+      ColumnLayout {
+        id: listsColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Widget.padding
+        spacing: 0
 
-      MenusSection {
-        Layout.fillWidth: true
-        dragLayer: root.dragLayer
-      }
+        CardHeader {
+          title: I18n.tr("Layouts")
+          icon: "dashboard_customize"
+          showActions: false
+        }
 
-      ListSection {
-        Layout.fillWidth: true
-        Layout.topMargin: Widget.spacing
-        title: I18n.tr("Screens")
-        count: 1 + (OverlayManager.lockscreenEditable ? 1 : 0) + (OverlayManager.greeterEditable ? 1 : 0)
-        hint: I18n.tr("The desktop, lock screen and login screen.")
-
-        // Not dragged: these aren't the navigator's pages
-        ListEntryRow {
+        StyledSeparator {
           Layout.fillWidth: true
-          icon: "desktop_windows"
-          label: I18n.tr("Desktop")
-          selected: OverlayManager.editTarget === "desktop"
-          changed: DesktopManager.editor.isDirty
-          onClicked: OverlayManager.editDesktop()
+          Layout.topMargin: Widget.spacing / 2
+          Layout.bottomMargin: Widget.spacing / 2
         }
 
-        ListEntryRow {
-          visible: OverlayManager.lockscreenEditable
+        // Scrolling inside past 40 % of the panel's height
+        Item {
+          id: pinnedArea
           Layout.fillWidth: true
-          icon: "lock"
-          label: I18n.tr("Lock screen")
-          selected: OverlayManager.editTarget === "lockscreen"
-          changed: LockManager.editor.isDirty
-          onClicked: OverlayManager.editLockscreen()
-        }
+          Layout.fillHeight: false
+          implicitHeight: Math.min(pinnedColumn.implicitHeight, Math.round(root.height * 0.4))
+          Layout.preferredHeight: pinnedArea.implicitHeight
 
-        // Once it's set up (Settings → Login screen)
-        ListEntryRow {
-          visible: OverlayManager.greeterEditable
+          StyledScrollView {
+            // Out by the ring's width on every side, and padded by it, so a
+            // row's focus ring isn't cut at the list's edges
+            anchors.fill: parent
+            anchors.margins: -Style.focusWidth
+            contentPadding: 0
+            bleed: Style.focusWidth
+            topPadding: Style.focusWidth
+            bottomPadding: Style.focusWidth
+            showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
+
+            ColumnLayout {
+              id: pinnedColumn
+              width: parent?.width ?? 0
+              spacing: Widget.spacing / 2
+
+              PagesSection {
+                Layout.fillWidth: true
+                dragLayer: root.dragLayer
+                toolsOpen: root.toolsOpen
+                onToolsToggled: root.toolsOpen = !root.toolsOpen
+              }
+
+              MenusSection {
+                Layout.fillWidth: true
+                dragLayer: root.dragLayer
+              }
+
+              ListSection {
+                Layout.fillWidth: true
+                Layout.topMargin: Widget.spacing
+                title: I18n.tr("Screens")
+                count: 1 + (OverlayManager.lockscreenEditable ? 1 : 0) + (OverlayManager.greeterEditable ? 1 : 0)
+                hint: I18n.tr("The desktop, lock screen and login screen.")
+
+                // Not dragged: these aren't the navigator's pages
+                ListEntryRow {
+                  Layout.fillWidth: true
+                  icon: "desktop_windows"
+                  label: I18n.tr("Desktop")
+                  selected: OverlayManager.editTarget === "desktop"
+                  changed: DesktopManager.editor.isDirty
+                  onClicked: OverlayManager.editDesktop()
+                }
+
+                ListEntryRow {
+                  visible: OverlayManager.lockscreenEditable
+                  Layout.fillWidth: true
+                  icon: "lock"
+                  label: I18n.tr("Lock screen")
+                  selected: OverlayManager.editTarget === "lockscreen"
+                  changed: LockManager.editor.isDirty
+                  onClicked: OverlayManager.editLockscreen()
+                }
+
+                // Once it's set up (Settings → Login screen)
+                ListEntryRow {
+                  visible: OverlayManager.greeterEditable
+                  Layout.fillWidth: true
+                  icon: "login"
+                  label: I18n.tr("Login screen")
+                  selected: OverlayManager.editTarget === "greeter"
+                  changed: GreeterManager.editor.isDirty
+                  onClicked: OverlayManager.editGreeter()
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    Surface {
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      tone: "surface"
+      clip: true
+
+      ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: Widget.padding
+        spacing: Widget.spacing
+
+        CardScroll {
+          id: editorScroll
           Layout.fillWidth: true
-          icon: "login"
-          label: I18n.tr("Login screen")
-          selected: OverlayManager.editTarget === "greeter"
-          changed: GreeterManager.editor.isDirty
-          onClicked: OverlayManager.editGreeter()
+          Layout.fillHeight: true
+
+          ScrollMemory {
+            flickable: editorScroll.flickable as Flickable
+            key: "Layouts"
+          }
+
+          // A Custom page
+          FieldGroup {
+            visible: root.isCustom
+            title: I18n.tr("Page")
+            description: I18n.tr("Its name and icon show in the page navigator.")
+
+            FormRow {
+              first: true
+              bodyHeight: nameEntry.implicitHeight
+
+              StyledTextEntry {
+                id: nameEntry
+                width: parent.width
+                placeholderText: I18n.tr("Page name")
+                onTextEdited: OverlayManager.renameView(OverlayManager.selectedViewIndex, nameEntry.text)
+              }
+            }
+
+            SchemaPropertiesForm {
+              Layout.fillWidth: true
+              // Under the name row
+              follows: true
+              propertiesSchema: ({
+                  "icon": OverlayConfig.customViewSchema.icon,
+                  "fineGrid": OverlayConfig.customViewSchema.layout.properties.grid.properties.fine
+                })
+              order: ["icon", "fineGrid"]
+              // fineGrid stands for layout.grid.fine (updateViewField rescales the
+              // modules with it)
+              values: Object.assign({}, root.view ?? {}, {
+                "fineGrid": root.view?.layout?.grid?.fine ?? false
+              })
+              onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
+            }
+
+            SettingsLink {
+              Layout.fillWidth: true
+              Layout.topMargin: Style.space2
+              setting: "Overlay.navigator"
+            }
+          }
+
+          // A tool page
+          FieldGroup {
+            visible: root.view !== null && !root.isCustom
+            title: I18n.tr("Tool page")
+            description: I18n.tr("A page of its own, with no layout to edit. Tools show as icons after your pages in the navigator.")
+
+            FormRow {
+              first: true
+              hoverable: true
+              bodyHeight: navigatorSwitch.implicitHeight
+              onRowClicked: navigatorSwitch.activate()
+
+              SchemaSwitch {
+                id: navigatorSwitch
+                width: parent.width
+                label: I18n.tr("Show in the navigator")
+                checked: root.view?.visible !== false
+                onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
+              }
+            }
+
+            // Goes to it (only while it's shown)
+            SettingsLink {
+              Layout.fillWidth: true
+              Layout.topMargin: Style.space2
+              page: root.view?.type ?? ""
+            }
+          }
+
+          // How a page opens besides the navigator
+          FieldGroup {
+            visible: root.view !== null
+            title: I18n.tr("Opening")
+            description: I18n.tr("A bar button or keybind that opens the overlay on this page.")
+
+            OpenerButtons {
+              saved: OverlayManager.isSaved(root.view)
+              unsavedHint: I18n.tr("Name and save the page to add a bar button or keybind for it.")
+              onBarButtonRequested: barIndex => OverlayManager.addBarButton(barIndex, "right")
+              onKeybindRequested: OverlayManager.addKeybind()
+            }
+          }
+
+          // An edge menu's opening: try it on screen, what opens it, a bar button
+          // or keybind that does (open.onHover is among the Behaviour fields)
+          FieldGroup {
+            visible: root.menu !== null
+            title: I18n.tr("Opening")
+
+            MenuOpening {
+              menu: root.menu
+            }
+          }
+
+          // An edge menu. A ColumnLayout's Repeater re-runs its model on every
+          // draft edit: the condition keeps the model the same while one is
+          // selected
+          Repeater {
+            model: root.menu !== null ? MenusConfig.fieldGroups : []
+
+            delegate: FieldGroup {
+              id: group
+              required property var modelData
+              title: I18n.tr(group.modelData.title)
+
+              SchemaPropertiesForm {
+                Layout.fillWidth: true
+                propertiesSchema: group.modelData.schema
+                order: group.modelData.keys
+                // The whole menu, so x-showIf sees keys from other groups
+                values: root.menu ?? ({})
+                onEdited: (path, value) => OverlayManager.menus.updateMenuField(path[0], value)
+              }
+            }
+          }
+
+          // The desktop: which layout is edited (all monitors, the primary one,
+          // a monitor), whether it shows, and a monitor's own layout added or
+          // taken away
+          FieldGroup {
+            visible: root.isDesktop
+            title: I18n.tr("Desktop")
+            description: root.screenTarget?.description ?? ""
+
+            FormRow {
+              first: true
+              bodyHeight: targetCombo.implicitHeight
+
+              StyledComboEntry {
+                id: targetCombo
+                width: parent.width
+                icon: "monitor"
+                options: DesktopManager.targets.map(target => ({
+                      "value": target.key,
+                      "label": I18n.tr("{0} — {1}", target.label, target.status)
+                    }))
+                value: DesktopManager.selectedTarget
+                onPicked: value => DesktopManager.selectTarget(value)
+              }
+            }
+
+            FormRow {
+              shown: root.screenLayout !== null
+              hoverable: true
+              bodyHeight: showSwitch.implicitHeight
+              onRowClicked: showSwitch.activate()
+
+              SchemaSwitch {
+                id: showSwitch
+                width: parent.width
+                label: root.isDesktopMonitor ? I18n.tr("Show on this monitor") : I18n.tr("Show on the desktop")
+                description: root.isDesktopMonitor ? I18n.tr("Off leaves this monitor's desktop empty.") : ""
+                checked: root.screenLayout?.enabled ?? false
+                onToggled: newValue => DesktopManager.setEnabled(newValue)
+              }
+            }
+
+            StyledTextButton {
+              visible: root.isDesktopMonitor && root.screenLayout === null
+              Layout.topMargin: Style.space2
+              iconText: "add"
+              text: I18n.tr("Give it its own layout")
+              onClicked: DesktopManager.createForTarget()
+            }
+
+            StyledTextButton {
+              visible: root.isDesktopMonitor && root.screenLayout !== null
+              Layout.topMargin: Style.space2
+              iconText: "delete"
+              text: I18n.tr("Remove its own layout")
+              onClicked: DesktopManager.removeTarget()
+            }
+          }
+
+          // A screen layout (`screenTarget`): Show on screen where it has one,
+          // then its fields. As for the menu, the condition keeps the model the
+          // same while it's selected
+          FieldGroup {
+            visible: root.screenLayout !== null && root.screenTarget.canPreview
+            title: root.screenTarget?.title ?? ""
+            description: root.screenTarget?.description ?? ""
+
+            StyledTextButton {
+              iconText: "visibility"
+              text: I18n.tr("Show on screen")
+              onClicked: root.screenTarget.screenEditor.startPreview()
+            }
+          }
+
+          Repeater {
+            model: root.screenLayout !== null ? root.screenTarget.fieldGroups : []
+
+            delegate: FieldGroup {
+              id: screenGroup
+              required property var modelData
+              title: I18n.tr(screenGroup.modelData.title)
+
+              SchemaPropertiesForm {
+                Layout.fillWidth: true
+                propertiesSchema: screenGroup.modelData.schema
+                order: screenGroup.modelData.keys
+                values: root.screenLayout ?? ({})
+                onEdited: (path, value) => root.screenTarget.screenEditor.updateLayoutField(path[0], value)
+              }
+            }
+          }
         }
-      }
-    }
 
-    footer: FieldGroup {
-      visible: root.problems.length > 0
-      title: I18n.tr("Can't save yet")
-      // A blocker stays visible
-      foldable: false
+        FieldGroup {
+          visible: root.problems.length > 0
+          title: I18n.tr("Can't save yet")
+          // A blocker stays visible
+          foldable: false
 
-      IssueList {
-        issues: root.problems.map(text => ({
-              "level": "error",
-              "text": text
-            }))
-      }
-    }
-
-    // A Custom page
-    FieldGroup {
-      visible: root.isCustom
-      title: I18n.tr("Page")
-      description: I18n.tr("Its name and icon show in the page navigator.")
-
-      FormRow {
-        first: true
-        bodyHeight: nameEntry.implicitHeight
-
-        StyledTextEntry {
-          id: nameEntry
-          width: parent.width
-          placeholderText: I18n.tr("Page name")
-          onTextEdited: OverlayManager.renameView(OverlayManager.selectedViewIndex, nameEntry.text)
-        }
-      }
-
-      SchemaPropertiesForm {
-        Layout.fillWidth: true
-        // Under the name row
-        follows: true
-        propertiesSchema: ({
-            "icon": OverlayConfig.customViewSchema.icon,
-            "fineGrid": OverlayConfig.customViewSchema.layout.properties.grid.properties.fine
-          })
-        order: ["icon", "fineGrid"]
-        // fineGrid stands for layout.grid.fine (updateViewField rescales the
-        // modules with it)
-        values: Object.assign({}, root.view ?? {}, {
-          "fineGrid": root.view?.layout?.grid?.fine ?? false
-        })
-        onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
-      }
-
-      SettingsLink {
-        Layout.fillWidth: true
-        Layout.topMargin: Style.space2
-        setting: "Overlay.navigator"
-      }
-    }
-
-    // A tool page
-    FieldGroup {
-      visible: root.view !== null && !root.isCustom
-      title: I18n.tr("Tool page")
-      description: I18n.tr("A page of its own, with no layout to edit. Tools show as icons after your pages in the navigator.")
-
-      FormRow {
-        first: true
-        hoverable: true
-        bodyHeight: navigatorSwitch.implicitHeight
-        onRowClicked: navigatorSwitch.activate()
-
-        SchemaSwitch {
-          id: navigatorSwitch
-          width: parent.width
-          label: I18n.tr("Show in the navigator")
-          checked: root.view?.visible !== false
-          onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
-        }
-      }
-
-      // Goes to it (only while it's shown)
-      SettingsLink {
-        Layout.fillWidth: true
-        Layout.topMargin: Style.space2
-        page: root.view?.type ?? ""
-      }
-    }
-
-    // How a page opens besides the navigator
-    FieldGroup {
-      visible: root.view !== null
-      title: I18n.tr("Opening")
-      description: I18n.tr("A bar button or keybind that opens the overlay on this page.")
-
-      OpenerButtons {
-        saved: OverlayManager.isSaved(root.view)
-        unsavedHint: I18n.tr("Name and save the page to add a bar button or keybind for it.")
-        onBarButtonRequested: barIndex => OverlayManager.addBarButton(barIndex, "right")
-        onKeybindRequested: OverlayManager.addKeybind()
-      }
-    }
-
-    // An edge menu's opening: try it on screen, what opens it, a bar button
-    // or keybind that does (open.onHover is among the Behaviour fields)
-    FieldGroup {
-      visible: root.menu !== null
-      title: I18n.tr("Opening")
-
-      MenuOpening {
-        menu: root.menu
-      }
-    }
-
-    // An edge menu. A ColumnLayout's Repeater re-runs its model on every
-    // draft edit: the condition keeps the model the same while one is
-    // selected
-    Repeater {
-      model: root.menu !== null ? MenusConfig.fieldGroups : []
-
-      delegate: FieldGroup {
-        id: group
-        required property var modelData
-        title: I18n.tr(group.modelData.title)
-
-        SchemaPropertiesForm {
-          Layout.fillWidth: true
-          propertiesSchema: group.modelData.schema
-          order: group.modelData.keys
-          // The whole menu, so x-showIf sees keys from other groups
-          values: root.menu ?? ({})
-          onEdited: (path, value) => OverlayManager.menus.updateMenuField(path[0], value)
-        }
-      }
-    }
-
-    // The desktop: which layout is edited (all monitors, the primary one,
-    // a monitor), whether it shows, and a monitor's own layout added or
-    // taken away
-    FieldGroup {
-      visible: root.isDesktop
-      title: I18n.tr("Desktop")
-      description: root.screenTarget?.description ?? ""
-
-      FormRow {
-        first: true
-        bodyHeight: targetCombo.implicitHeight
-
-        StyledComboEntry {
-          id: targetCombo
-          width: parent.width
-          icon: "monitor"
-          options: DesktopManager.targets.map(target => ({
-                "value": target.key,
-                "label": I18n.tr("{0} — {1}", target.label, target.status)
-              }))
-          value: DesktopManager.selectedTarget
-          onPicked: value => DesktopManager.selectTarget(value)
-        }
-      }
-
-      FormRow {
-        shown: root.screenLayout !== null
-        hoverable: true
-        bodyHeight: showSwitch.implicitHeight
-        onRowClicked: showSwitch.activate()
-
-        SchemaSwitch {
-          id: showSwitch
-          width: parent.width
-          label: root.isDesktopMonitor ? I18n.tr("Show on this monitor") : I18n.tr("Show on the desktop")
-          description: root.isDesktopMonitor ? I18n.tr("Off leaves this monitor's desktop empty.") : ""
-          checked: root.screenLayout?.enabled ?? false
-          onToggled: newValue => DesktopManager.setEnabled(newValue)
-        }
-      }
-
-      StyledTextButton {
-        visible: root.isDesktopMonitor && root.screenLayout === null
-        Layout.topMargin: Style.space2
-        iconText: "add"
-        text: I18n.tr("Give it its own layout")
-        onClicked: DesktopManager.createForTarget()
-      }
-
-      StyledTextButton {
-        visible: root.isDesktopMonitor && root.screenLayout !== null
-        Layout.topMargin: Style.space2
-        iconText: "delete"
-        text: I18n.tr("Remove its own layout")
-        onClicked: DesktopManager.removeTarget()
-      }
-    }
-
-    // A screen layout (`screenTarget`): Show on screen where it has one,
-    // then its fields. As for the menu, the condition keeps the model the
-    // same while it's selected
-    FieldGroup {
-      visible: root.screenLayout !== null && root.screenTarget.canPreview
-      title: root.screenTarget?.title ?? ""
-      description: root.screenTarget?.description ?? ""
-
-      StyledTextButton {
-        iconText: "visibility"
-        text: I18n.tr("Show on screen")
-        onClicked: root.screenTarget.screenEditor.startPreview()
-      }
-    }
-
-    Repeater {
-      model: root.screenLayout !== null ? root.screenTarget.fieldGroups : []
-
-      delegate: FieldGroup {
-        id: screenGroup
-        required property var modelData
-        title: I18n.tr(screenGroup.modelData.title)
-
-        SchemaPropertiesForm {
-          Layout.fillWidth: true
-          propertiesSchema: screenGroup.modelData.schema
-          order: screenGroup.modelData.keys
-          values: root.screenLayout ?? ({})
-          onEdited: (path, value) => root.screenTarget.screenEditor.updateLayoutField(path[0], value)
+          IssueList {
+            issues: root.problems.map(text => ({
+                  "level": "error",
+                  "text": text
+                }))
+          }
         }
       }
     }

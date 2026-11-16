@@ -19,7 +19,7 @@
 - **`Panel`**: lays its children out in a column and works in either host.
   - In a bar popout it sizes to its content with the popout box (`wrapper` set, `hovered` read for dismissal).
   - In a card the host passes `embedded: true`: it fills the slot with the card box, and `compactContent` (e.g. a `CompactFigure`) replaces the column when `compact` (see [Writing modules](writing-modules.md)).
-- **`TitledCard`**: for titled scrolling panels (ThemePicker, the bar editor panels, the settings page's content). Its `footer` is a fixed row under the scrolling body (nothing in it, no room) and `bodyHeight` the body's height; `ToolPane` (`views/base/`) builds a tool page's pane on it. The body's scroll view has `bleed: Style.rowBleed` (outset by as much), so a `FormRow` in it keeps its hover tint inside the clip.
+- **`TitledCard`**: for titled scrolling panels (ThemePicker, the bar editor panels, the settings page's content). Its `footer` is a fixed row under the scrolling body (nothing in it, no room) and `bodyHeight` the body's height; `ToolPane` (`views/base/`) builds a tool page's pane on it. The body is a `CardScroll` (`reusable/CardScroll`: bleed of `Style.rowBleed` outset by as much, the scroll bar's lane on the right, `Style.cardGap` between its cards), so a `FormRow` in it keeps its hover tint inside the clip.
   - A `CardHeader` with `title`, `dirty`, `save()` / `reset()`, `headerExtras`, and `headerTools` (controls at the right, before Save and Discard).
   - Children go into the scrolling body.
   - `scrollTo(item, center)` (animated) brings a descendant to the top, or to the middle with `center`.
