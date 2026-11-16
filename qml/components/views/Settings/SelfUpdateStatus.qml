@@ -91,13 +91,12 @@ IntroColumn {
     ]
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "managed"
+    Layout.fillWidth: true
     text: I18n.tr("This copy of axiom isn't a git clone: its updates come from your package manager.")
     tone: "muted"
     role: "caption"
-    overflow: "wrap"
-    Layout.fillWidth: true
   }
 
   StatusLine {
@@ -138,18 +137,12 @@ IntroColumn {
     }
   }
 
-  RowLayout {
+  StatusLine {
     visible: !SelfUpdateManager.managed
     Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StyledText {
-      text: SelfUpdate.mode === "off" ? I18n.tr("Automatic checks are off.") : I18n.tr("Checked at startup and once a day.")
-      tone: "muted"
-      role: "caption"
-      overflow: "wrap"
-      Layout.fillWidth: true
-    }
+    text: SelfUpdate.mode === "off" ? I18n.tr("Automatic checks are off.") : I18n.tr("Checked at startup and once a day.")
+    tone: "muted"
+    role: "caption"
 
     StyledTextButton {
       visible: !SelfUpdateManager.busy

@@ -134,7 +134,7 @@ Panel {
     implicitWidth: root.cell
     implicitHeight: root.cell
     radius: Style.radius
-    color: root.copied === cellItem.emoji ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: no fill as the container at no alpha, so the fade doesn't pass through black
+    color: root.copied === cellItem.emoji ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: no fill as the container at no alpha, so the fade doesn't pass through black
 
     StateLayer {
       hovered: cellHover.hovered

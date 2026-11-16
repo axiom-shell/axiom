@@ -643,7 +643,7 @@ Loader {
         id: modeToggle
         visible: iconColumn.modeKey !== ""
         // Under the label: the segments share the width
-        Layout.fillWidth: !iconColumn.fit.inline
+        Layout.fillWidth: iconColumn.fit.fill
         options: iconColumn.modes
         labels: ({
             "icon": I18n.tr("Icon"),

@@ -33,7 +33,6 @@ ClippingRectangle {
   StateLayer {
     hovered: mouse.containsMouse
     pressed: mouse.pressed
-    radius: root.radius
   }
 
   // Between the name and the price, edge to edge

@@ -118,9 +118,7 @@ Item {
     }
 
     StateLayer {
-      anchors.fill: parent
       hovered: hover.hovered
-      radius: card.radius
     }
 
     HoverHandler {
@@ -215,15 +213,10 @@ Item {
             }
           }
 
-          StyledIcon {
+          FoldChevron {
             visible: root.count > 1
-            text: "expand_more"
-            tone: "muted"
-            rotation: root.expanded ? 180 : 0
-
-            Glide on rotation {
-              duration: Appearance.animNormal
-            }
+            open: root.expanded
+            upward: true
           }
         }
       }

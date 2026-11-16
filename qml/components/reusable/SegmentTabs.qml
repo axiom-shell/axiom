@@ -4,7 +4,7 @@ import qs.config
 
 // One SegmentButton tab per entry in a wrapping row: `count` tabs, the
 // `current` one active, `labelAt(i)` / `iconAt(i)` giving each one's text and
-// glyph; `picked(i)` when one is clicked, `menuRequested(i, tab, x, y)` on a
+// glyph, `availableAt(i)` whether it can be chosen; `picked(i)` when one is clicked, `menuRequested(i, tab, x, y)` on a
 // right click (x and y in the tab); `tipAt(i)` is a tab's tooltip (none while
 // ""). Items declared inside it (`trailing`: an add button) follow the last
 // tab in the same wrapping row. The entry list cards (EntryListCard,
@@ -16,6 +16,8 @@ Flow {
   property int current: 0
   property var labelAt: i => ""
   property var iconAt: i => ""
+  // Whether a tab can be chosen (off: faint, no click)
+  property var availableAt: i => true
   // Right click is `menuRequested` (off: a right click goes to what is under
   // the tabs)
   property bool menus: false
@@ -38,6 +40,7 @@ Flow {
 
       text: root.labelAt(tab.index)
       iconText: root.iconAt(tab.index)
+      available: root.availableAt(tab.index)
       tooltipText: root.tipAt(tab.index)
       active: tab.index === root.current
       acceptedButtons: root.menus ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.methods
 
 import qs.services.compositor
 import qs.config
@@ -30,7 +31,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: Style.radius
-    color: root.selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so a selection change doesn't fade through black
+    color: root.selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: the selected fill at no alpha, so a selection change doesn't fade through black
     border.width: Appearance.borderWidth
     border.color: root.selected ? Style.accent : "transparent"
 

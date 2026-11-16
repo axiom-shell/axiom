@@ -237,7 +237,7 @@ TestCase {
     harness.configure(data);
     const field = make(toggleComp, Widget.textPx(300));
     const toggle = findAll(field, it => it._segment !== undefined)[0];
-    verify(!field.stacked, "beside the label");
+    verify(!field.fit.fill, "beside the label");
     const label = textOf(field, "Mode");
     verify(Math.abs(centre(toggle, field) - centre(label, field)) <= 1);
     verify(field.implicitHeight <= Widget.height, "one control line");
@@ -254,7 +254,7 @@ TestCase {
       "label": "A label thirty characters long"
     });
     const toggle = findAll(field, it => it._segment !== undefined)[0];
-    verify(field.stacked);
+    verify(field.fit.fill);
     verify(Math.abs(toggle.width - field.width) <= 0.5, `${toggle.width} of ${field.width}`);
   }
 

@@ -55,11 +55,10 @@ IntroColumn {
     }
   }
 
-  StyledText {
+  StatusLine {
     visible: Style.surfaceAlpha > Appearance.surfaceAlpha
     Layout.fillWidth: true
     role: "caption"
-    overflow: "wrap"
     text: I18n.tr("This theme keeps surfaces at least {0}% solid so text stays readable", Math.round(Style.surfaceAlpha * 100))
   }
 }

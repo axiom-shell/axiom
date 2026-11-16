@@ -387,13 +387,11 @@ PanelWindow {
 
           // A switch: on, the capture opens in the annotator instead of
           // being notified
-          SegmentButton {
-            Layout.fillWidth: false
+          ToggleChip {
             visible: root.picture && ScreenshotManager.annotator !== ""
-            iconText: ScreenshotManager.annotate ? "check_box" : "check_box_outline_blank"
             text: I18n.tr("Edit in {0}", ScreenshotManager.annotatorName)
-            active: ScreenshotManager.annotate
-            onClicked: ScreenshotManager.annotate = !ScreenshotManager.annotate
+            checked: ScreenshotManager.annotate
+            onToggled: ScreenshotManager.annotate = !ScreenshotManager.annotate
           }
         }
 

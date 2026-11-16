@@ -8,7 +8,7 @@ import qs.config
 // Only inside a SegmentRow (a single choice) or SegmentTabs (one entry of
 // many): a multi-select is ToggleChips. In a SegmentRow, the row draws the
 // track and the thumb (which slides between its buttons) and the button only
-// its label; elsewhere (a RowLayout or Flow of toggles) it fills itself,
+// its label; in SegmentTabs (its own wrapping row, no track) it fills itself,
 // accent while active.
 StyledTextButton {
   id: root

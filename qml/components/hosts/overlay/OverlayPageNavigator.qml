@@ -148,7 +148,6 @@ Surface {
       border.width: Style.hairline
 
       StateLayer {
-        radius: root.innerRadius
         hovered: backArea.containsMouse
         pressed: backArea.pressed
       }

@@ -1,0 +1,23 @@
+{
+  "_comment": "Files in the config UI (views/, surfaces/onboarding/) that may build by hand what a shared piece does, per rule, each with a reason: special drawing a piece can't carry. Rules: StateLayer, Keys.onSpacePressed, tone-sunken, SegmentButton, onRowClicked, first-literal, restore-text. scripts/check_structure.py fails on a hit not listed here and on an entry that no longer hits; growth of this list is judged in review (docs/dev/core/shared-ui-pieces.md > When a page may own a local piece).",
+  "files": {
+    "qml/components/views/Keybinds/BindEditor.qml": {
+      "rules": [
+        "tone-sunken"
+      ],
+      "reason": "the notices strip is one sunken band of merge, issue and undo lines, not a card or an item box"
+    },
+    "qml/components/views/Monitors/MonitorCanvas.qml": {
+      "rules": [
+        "StateLayer"
+      ],
+      "reason": "special drawing: a draggable monitor tile on a canvas, its tint follows the drag"
+    },
+    "qml/components/views/base/WorkArea.qml": {
+      "rules": [
+        "tone-sunken"
+      ],
+      "reason": "the sunken well the work sits on, a surface of the work area itself"
+    }
+  }
+}

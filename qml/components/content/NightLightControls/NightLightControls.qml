@@ -150,7 +150,6 @@ Card {
       border.width: Style.hairline
 
       StateLayer {
-        radius: hero.radius
         hovered: heroHover.hovered
         pressed: heroTap.pressed
         onAccent: root.active

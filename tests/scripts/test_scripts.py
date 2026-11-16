@@ -441,6 +441,17 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
+        # The config UI's local pieces (scripts/ui-local-pieces.json)
+        ("qml/components/views/Local/Tint.qml", qml("StateLayer {}"), "views/Local/Tint.qml:6: StateLayer"),
+        ("qml/components/views/Local/Space.qml", qml("Keys.onSpacePressed: x()"), "views/Local/Space.qml:6: Keys.onSpacePressed"),
+        ("qml/components/views/Local/Well.qml", qml('Surface { tone: "sunken" }'), "views/Local/Well.qml:6: tone-sunken"),
+        ("qml/components/views/Local/Click.qml", qml("onRowClicked: x()"), "views/Local/Click.qml:6: onRowClicked"),
+        ("qml/components/views/Local/First.qml", qml("FormRow {\n      first: true\n    }"), "views/Local/First.qml:7: first-literal"),
+        ("qml/components/surfaces/onboarding/Tint.qml", qml("StateLayer {}"), "onboarding/Tint.qml:6: StateLayer"),
+        ("qml/components/views/Local/Pushed.qml", qml('Binding {\n      property: "text"\n      restoreMode: Binding.RestoreNone\n    }'),
+         "views/Local/Pushed.qml:8: restore-text"),
+        ("qml/components/content/Local/Loose.qml", qml("RowLayout {\n      SegmentButton {}\n    }"), "content/Local/Loose.qml:7: SegmentButton"),
+        ("qml/components/content/Local/InRow.qml", qml("SegmentRow {\n      SegmentButton {}\n    }"), None),
         # The bar widget template (check_structure.bar_widget_template): T2 and T3 are
         # planted in copies of real widgets
         ("qml/components/bar/widgets/Tone/Tone.qml", qml(), "Tone/Tone.qml: T1"),
@@ -468,6 +479,8 @@ class CheckStructure(unittest.TestCase):
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
+        "ui-local-pieces.json: qml/components/views/Gone.qml no longer breaks StateLayer",
+        "ui-local-pieces.json: qml/components/views/NoReason.qml has no reason",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
         "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
@@ -497,6 +510,9 @@ class CheckStructure(unittest.TestCase):
                 del defs["UpdatesWidget"]["properties"]["properties"]["properties"]["failedColor"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
+                "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
+                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""}}))
             edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
                 "Button": {"reason": "planted", "rules": ["T8"]},
                 "Spacer": {"reason": "", "rules": ["T5"]},

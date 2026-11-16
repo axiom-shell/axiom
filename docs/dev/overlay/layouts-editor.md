@@ -56,7 +56,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 
 ### Folding sections
 - Every list section of the left panel folds: "Overlay pages" (`pages`), "Tools" (`tools`), "Menus" (`menus`) and "Screens" (`screens`: Desktop, Lock screen, Login screen). Each is a collapsible `ListSection`; its New page / New menu button is inside, so it folds with the rows.
-- The open or closed state is UI state, not config: `EditsManager.layoutSectionOpen(id)` / `setLayoutSectionOpen(id, open)` keep it in `state/editors.json` (`layoutsFolds`, an object of section id to boolean, only the sections the user toggled), so it survives restarts. A section never toggled is open, except Tools, which starts closed (`SectionFolds.closedByDefault`, the pure rule, tested in `tests/tst_SectionFolds.qml`).
+- The open or closed state is UI state, not config: `EditsManager.layoutSectionOpen(id)` / `setLayoutSectionOpen(id, open)` keep it in `state/editors.json` (`sectionFolds`, an object of section id to boolean, only the sections the user toggled; the Keybinds editor's sections are `bind:<name>` in it, and an old `layoutsFolds` or `keybindsFolded` is read back), so it survives restarts. A section never toggled is open, except Tools, which starts closed (`SectionFolds.closedByDefault`, the pure rule, tested in `tests/tst_SectionFolds.qml`).
 - `LayoutsPanel.revealTool` opens Tools when a tool page is selected from outside (a link, the launcher); that open is saved too, and closing it by hand still works until the next selection.
 
 ### Module and view pickers

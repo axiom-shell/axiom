@@ -800,7 +800,7 @@ TestCase {
     waitForRendering(toggle);
     const control = findAll(toggle, c => c.options !== undefined && c.labels !== undefined)[0];
     const line = findAll(toggle, c => c.lineWidth !== undefined)[0].lineWidth;
-    compare(toggle.stacked, !FieldFit.place("fixed", toggle.width, line, control.implicitWidth, Widget.fieldTokens).inline);
+    compare(toggle.fit.fill, FieldFit.place("fixed", toggle.width, line, control.implicitWidth, Widget.fieldTokens).fill);
     // A toggle wider than the whole row (a few long labels in a narrow
     // form) overflows however it is laid out: only a fitting one is held
     if (control.implicitWidth <= toggle.width)
@@ -1169,7 +1169,7 @@ TestCase {
       "headerBelow": belowComp
     });
     waitForRendering(field);
-    verify(field.stacked);
+    verify(field.fit.fill);
     const notes = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[1];
     const control = findAll(field, it => it._segment !== undefined)[0];
     const top = control.mapToItem(field, 0, 0).y;
@@ -1185,7 +1185,7 @@ TestCase {
       "headerBelow": belowComp
     });
     waitForRendering(field);
-    verify(!field.stacked);
+    verify(!field.fit.fill);
     const heads = findAll(field, it => it.below !== undefined && it.trailing !== undefined);
     const header = heads[0];
     const notes = heads[1];

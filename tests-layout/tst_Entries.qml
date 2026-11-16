@@ -272,4 +272,29 @@ TestCase {
     wait(0);
     compare(entry.text, "typed");
   }
+
+  Component {
+    id: scopedComp
+
+    CommitEntry {
+      property var commits: []
+      width: 300
+      value: "a"
+      scope: "one"
+      onCommitted: text => commits.push(text)
+    }
+  }
+
+  // Text typed under one scope is dropped when the scope changed before it
+  // committed, never written onto the new one
+  function test_commitEntry_drops_a_commit_after_the_scope_changed() {
+    const entry = createTemporaryObject(scopedComp, root);
+    root.type(entry, "typed");
+    entry.scope = "two";
+    entry.input.focus = false;
+    compare(entry.commits.length, 0);
+    root.type(entry, "again");
+    entry.input.focus = false;
+    compare(entry.commits, ["again"], "typed under the current scope: committed");
+  }
 }

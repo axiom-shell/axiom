@@ -223,7 +223,6 @@ Item {
 
               StateLayer {
                 hovered: cellArea.containsMouse
-                radius: parent.radius
               }
             }
             Rectangle {
@@ -236,7 +235,6 @@ Item {
 
               StateLayer {
                 hovered: cellArea.containsMouse
-                radius: width / 2
                 onAccent: cell.modelData.isToday
               }
             }

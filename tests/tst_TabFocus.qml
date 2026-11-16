@@ -2,9 +2,9 @@ import QtQuick
 import QtTest
 
 // The settings page's keyboard pattern on the pieces that import services
-// (so the layout harness can't build them): each is a Tab stop, runs its
-// action on Space and Enter, and draws a FocusRing. The behaviour of the
-// loadable one, FoldHeader, is tested in tests-layout/tst_Pieces.
+// (so the layout harness can't build them): each takes its Tab stop, Space and
+// Enter and FocusRing from Pressable, whose behaviour is tested in
+// tests-layout/tst_Pieces.
 TestCase {
   id: root
 
@@ -14,23 +14,18 @@ TestCase {
     id: repo
   }
 
-  readonly property var pieces: [
-    {
-      "file": "qml/components/views/Settings/SettingsSidebar.qml"
-    }
-  ]
+  // A hand-drawn rail and label over a Pressable (the sidebar's card links)
+  readonly property var railed: ["qml/components/views/Settings/SettingsSidebar.qml"]
 
   // Their triggers are a Pressable (Tab stop, Space/Return/Enter, FocusRing,
   // tested in tests-layout/tst_Pieces) inside a FieldFrame
   readonly property var pressables: ["qml/components/views/Keybinds/ActionPicker.qml", "qml/components/views/Keybinds/KeyRecorder.qml"]
 
-  function test_pieces_take_tab_and_keys() {
-    for (const piece of root.pieces) {
-      const text = repo.text(piece.file);
-      verify(text.includes("activeFocusOnTab: true"), piece.file + " is a Tab stop");
-      verify(text.includes("Keys.onSpacePressed"), piece.file + " acts on Space");
-      verify(text.includes("Keys.onReturnPressed"), piece.file + " acts on Return");
-      verify(text.includes("FocusRing {"), piece.file + " draws a focus ring");
+  function test_rails_take_keys_from_pressable() {
+    for (const file of root.railed) {
+      const text = repo.text(file);
+      verify(text.includes("Pressable {"), file + " takes its keys from Pressable");
+      verify(!text.includes("Keys.onSpacePressed") && !text.includes("FocusRing {"), file + " has no key handling of its own");
     }
   }
 

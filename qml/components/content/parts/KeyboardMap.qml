@@ -154,11 +154,11 @@ ColumnLayout {
     Repeater {
       model: KeyNames.modifiers
 
-      delegate: SegmentButton {
+      delegate: ToggleChip {
         required property string modelData
         text: KeyNames.modifierLabel(modelData)
-        active: root.mods.includes(modelData)
-        onClicked: KeybindManager.page.toggleKeyMapMod(modelData)
+        checked: root.mods.includes(modelData)
+        onToggled: KeybindManager.page.toggleKeyMapMod(modelData)
       }
     }
   }

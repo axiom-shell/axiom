@@ -115,40 +115,20 @@ ColumnLayout {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledTextEntry {
+          // Committed on Return, on leaving the field and when the tab goes
+          // (each keystroke would run the half-typed command); the widget
+          // being typed in is the one written (CommitEntry's `scope`)
+          CommitEntry {
             id: commandEntry
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
             placeholderText: I18n.tr("e.g. ~/bin/cpu.sh")
             input.font.family: "monospace"
-            // Committed on Return, on leaving the field and when the tab goes
-            // (each keystroke would run the half-typed command), and only
-            // what was typed in it; the widget being typed in is the one
-            // written (a commit after another is selected is dropped)
-            property string typedFor: ""
-            function commit() {
-              if (!commandEntry.typed)
-                return;
-              commandEntry.typed = false;
-              if (commandEntry.typedFor !== root.editor.selectedId)
-                return;
-              if (commandEntry.text !== (root.definition?.command ?? ""))
-                root.editor.set("command", commandEntry.text);
-            }
-            onTextEdited: commandEntry.typedFor = root.editor.selectedId
-            onAccepted: commandEntry.commit()
-            input.onActiveFocusChanged: {
-              if (!commandEntry.input.activeFocus)
-                commandEntry.commit();
-            }
-            Component.onDestruction: commandEntry.commit()
-
-            Binding {
-              target: commandEntry
-              property: "text"
-              value: root.definition?.command ?? ""
-              when: !commandEntry.input.activeFocus
-              restoreMode: Binding.RestoreNone
+            value: root.definition?.command ?? ""
+            scope: root.editor.selectedId
+            onCommitted: text => {
+              if (text !== commandEntry.value)
+                root.editor.set("command", text);
             }
           }
           SquareIconButton {

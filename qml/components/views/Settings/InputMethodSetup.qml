@@ -7,7 +7,6 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.ui
 import qs.components.methods
-import qs.components.reusable
 import qs.components.forms
 import qs.components.content.parts
 
@@ -44,9 +43,8 @@ IntroColumn {
     text: I18n.tr("axiom doesn't write your compositor's config in this mode, so it doesn't start {0} or set what apps need to type with it. Add these yourself.", root.framework)
   }
 
-  StyledText {
+  StatusLine {
     Layout.fillWidth: true
-    overflow: "wrap"
     role: "caption"
     text: I18n.tr("The session's environment (for example ~/.config/environment.d/input-method.conf, or your compositor's own environment settings):")
   }
@@ -55,9 +53,8 @@ IntroColumn {
     text: root.setup.env.map(e => e.name + "=" + e.value).join("\n")
   }
 
-  StyledText {
+  StatusLine {
     Layout.fillWidth: true
-    overflow: "wrap"
     role: "caption"
     text: I18n.tr("Started with the compositor (its autostart, exec-once or spawn-at-startup):")
   }
@@ -66,16 +63,14 @@ IntroColumn {
     text: root.setup.command
   }
 
-  StyledText {
+  StatusLine {
     Layout.fillWidth: true
-    overflow: "wrap"
     role: "caption"
     text: I18n.tr("Only if an X11 or older app can't type with it, also {0}: on Wayland they can break typing in GTK apps.", root.legacy.map(e => e.name + "=" + e.value).join(" "))
   }
 
-  StyledText {
+  StatusLine {
     Layout.fillWidth: true
-    overflow: "wrap"
     role: "caption"
     text: I18n.tr("Electron apps (VS Code, Discord, Obsidian, …) type with an input method only when started with --enable-wayland-ime: no variable turns it on.")
   }

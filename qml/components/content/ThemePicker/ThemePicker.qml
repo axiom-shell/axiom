@@ -109,13 +109,12 @@ TitledCard {
 
       // A switch of its own: picking Dark or Light by hand lasts until the
       // schedule's next change
-      SegmentButton {
+      ToggleChip {
         id: autoButton
-        Layout.fillWidth: false
         iconText: "schedule"
         text: I18n.tr("Auto")
-        active: Appearance.themeScheduled
-        onClicked: SettingsManager.commitValues({
+        checked: Appearance.themeScheduled
+        onToggled: SettingsManager.commitValues({
           "Appearance.theme.schedule.enabled": !Appearance.themeScheduled
         })
       }

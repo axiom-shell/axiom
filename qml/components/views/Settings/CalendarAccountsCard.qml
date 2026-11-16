@@ -329,44 +329,25 @@ FoldingCard {
         }
         // A local calendar's name is the user's to change, committed like
         // every settings text field: on Enter, focus loss or the page's Save
-        // (EditsManager.holdTyping shows Save while typed). Pushed in (the
-        // row shows another calendar when one above it is removed), never
-        // while being typed in
-        StyledTextEntry {
+        // (CommitEntry). An empty name puts the saved one back; the row
+        // showing another calendar (one above it removed) drops a commit
+        CommitEntry {
           id: nameField
-          readonly property string saved: calendarRow.calendar.name ?? ""
           visible: root.isLocal
           Layout.fillWidth: true
           placeholderText: I18n.tr("Name")
           // One line, cut off rather than wrapped in a narrow field
           input.wrapMode: TextInput.NoWrap
-          Component.onCompleted: text = saved
-          Component.onDestruction: nameField.commitTyped()
-          onSavedChanged: {
-            if (!nameField.typed)
-              nameField.text = nameField.saved;
-          }
-          onTextEdited: EditsManager.holdTyping(nameField, nameField.Window.window)
-          onAccepted: nameField.commitTyped()
-          input.onActiveFocusChanged: {
-            if (!nameField.input.activeFocus)
-              nameField.commitTyped();
-          }
-
-          // The typed name (an empty one puts the saved name back)
-          function commitTyped() {
-            const name = nameField.text.trim();
-            if (nameField.typed && name !== "" && name !== nameField.saved)
+          value: calendarRow.calendar.name ?? ""
+          scope: calendarRow.calendar.href
+          onCommitted: text => {
+            const name = text.trim();
+            if (name !== "" && name !== nameField.value)
               root.setCalendar(calendarRow.calendar.href, {
                 "name": name
               });
-            nameField.discardTyped();
-          }
-
-          function discardTyped() {
-            nameField.typed = false;
-            nameField.text = nameField.saved;
-            EditsManager.releaseTyping(nameField);
+            else
+              nameField.discardTyped();
           }
         }
         StatusChip {

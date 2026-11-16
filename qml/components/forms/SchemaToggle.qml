@@ -19,7 +19,6 @@ FieldLine {
 
   kind: "fixed"
   controlLeast: toggle.implicitWidth
-  readonly property bool stacked: root.width > 0 && !root.fit.inline
 
   // What a click on the row outside the toggle does: the next option, the
   // first after the last
@@ -31,7 +30,7 @@ FieldLine {
   StyledToggle {
     id: toggle
     // Stacked: the segments share the width, as a dropdown under its label
-    Layout.fillWidth: root.stacked
+    Layout.fillWidth: root.fit.fill
     options: root.options
     labels: root.optionLabels
     value: root.currentValue

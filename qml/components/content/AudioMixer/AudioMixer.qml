@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import qs.components.methods
 
 import qs.services.system
 import qs.services.ui
@@ -296,7 +297,7 @@ Panel {
                 Layout.fillWidth: true
                 implicitHeight: deviceLayout.implicitHeight + Widget.spacing * 2
                 radius: Style.radius
-                color: selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: no fill as the container at no alpha, so selecting doesn't fade through black
+                color: selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: no fill as the container at no alpha, so selecting doesn't fade through black
 
                 StateLayer {
                   hovered: deviceMouse.containsMouse

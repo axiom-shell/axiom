@@ -89,6 +89,29 @@ TestCase {
     }
   }
 
+  // A card whose last row is a fold row
+  Component {
+    id: foldCardComp
+
+    FieldGroup {
+      property alias row1: row1
+      property alias fold: fold
+      width: 300
+      title: "Card"
+
+      FormRow {
+        id: row1
+        bodyHeight: Widget.height
+      }
+      FoldFormRow {
+        id: fold
+        title: "More"
+        open: false
+        onToggled: open = !open
+      }
+    }
+  }
+
   // An inspector box: a FormColumn whose first child is a FormColumn of rows
   // (ConditionRows, as ElementInspector's Visible and BarTab's triggers are)
   // draws no divider on that top row, and the rows under it do
@@ -256,6 +279,16 @@ TestCase {
     wait(50);
     verify(card.row1.first, "a FieldGroup's top row has no divider");
     verify(!card.row2.first);
+  }
+
+  function test_card_ends_shut_on_a_shut_fold_row() {
+    const card = createTemporaryObject(foldCardComp, root);
+    verify(card);
+    wait(50);
+    verify(card.row1.first, "the top row has no divider");
+    verify(card.endsShut, "the shut fold row closes the card");
+    card.fold.open = true;
+    verify(!card.endsShut, "an open fold row no longer ends it");
   }
 
   function test_switchRow_click_off_the_switch_flips() {

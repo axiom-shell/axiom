@@ -161,7 +161,6 @@ DropdownSurface {
 
                 StateLayer {
                   hovered: crumbHover.hovered && !crumb.last
-                  radius: parent.radius
                 }
 
                 // The top is an icon; a folder's name is text (a name like

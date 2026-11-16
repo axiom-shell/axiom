@@ -50,7 +50,6 @@ RowLayout {
     radius: height / 2
 
     StateLayer {
-      radius: chip.radius
       hovered: chipHover.hovered
     }
 

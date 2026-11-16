@@ -40,7 +40,6 @@ Item {
   implicitHeight: Math.max(content.implicitHeight, Appearance.fontSize * 2) + Widget.spacing * 2
 
   StateLayer {
-    anchors.fill: parent
     radius: Style.radius
     hovered: rowHover.hovered && (root.clickable || actionRow.children.length > 0)
   }

@@ -11,7 +11,10 @@ import qs.components.reusable
 // edit; otherwise the typed text is held and `committed(text)` fires on
 // Enter, on losing focus, when the page's Save runs (EditsManager.holdTyping
 // asks the field to commitTyped()) and, unless `commitOnDestroy` is false,
-// when the entry goes away with text still held.
+// when the entry goes away with text still held. `scope` names what the entry
+// edits (a selection's id, a row's key): a commit of text typed under another
+// scope is dropped, so a selection changing mid-edit never writes the typed
+// text onto the new one.
 StyledTextEntry {
   id: root
 
@@ -22,6 +25,9 @@ StyledTextEntry {
   // false: an entry torn down with text held only lets go of it (an editor
   // that rebuilds on selection, not on save)
   property bool commitOnDestroy: true
+  // What the entry edits: text typed under one scope is never committed under
+  // another
+  property var scope: null
 
   // Each edit, live only
   signal edited(string text)
@@ -30,14 +36,18 @@ StyledTextEntry {
 
   // Typed since the last commit or value pushed in (not live)
   property bool _pending: false
+  // The scope the pending text was typed under
+  property var _typedScope: null
 
-  // Writes what was typed, if anything was
+  // Writes what was typed, if anything was (nothing, when `scope` changed
+  // since)
   function commitTyped() {
     if (!root._pending)
       return;
     root._pending = false;
     EditsManager.releaseTyping(root);
-    root.committed(root.text);
+    if (root._typedScope === root.scope)
+      root.committed(root.text);
   }
 
   // Drops what was typed: back to the value
@@ -61,6 +71,8 @@ StyledTextEntry {
       root.edited(root.text);
       return;
     }
+    if (!root._pending)
+      root._typedScope = root.scope;
     root._pending = true;
     EditsManager.holdTyping(root, root.Window.window);
   }

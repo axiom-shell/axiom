@@ -33,6 +33,12 @@ running anything:
     service's member (one owning a ConsumerRegistry or DeadlineTicker),
     in the expression or through a property of the file; a model may
     count one (`.length`, `.count`)
+  - the config UI and onboarding build no hover tint (StateLayer), key
+    handler, sunken box, `onRowClicked`, `first:` literal or kept pushed
+    `text`, and no SegmentButton outside a SegmentRow, SegmentTabs or
+    StyledToggle (views, content, surfaces), unless the file is listed in
+    scripts/ui-local-pieces.json with a reason (special drawing); the list
+    only shrinks
   - nothing formats a date with Qt.formatDateTime / formatDate /
     formatTime (I18n.formatDate follows the language), and only General
     reads Quickshell.screens (its outputs leave out the stand-ins shown
@@ -113,6 +119,19 @@ IO_KINDS = {
 # Bar widgets allowed to break a rule of the bar widget template, each with
 # its reason; an entry no longer needed is an error
 WIDGET_EXCEPTIONS = ROOT / "scripts" / "bar-widget-exceptions.json"
+LOCAL_PIECES = ROOT / "scripts" / "ui-local-pieces.json"
+# Hand-built versions of what a shared piece does, in the config UI and the
+# onboarding (rule name -> pattern on a line without comments)
+LOCAL_PIECE_RULES = {
+    "StateLayer": (re.compile(r"\bStateLayer\s*\{"), "a hand-built hover tint: use Pressable (or a piece that has one)"),
+    "Keys.onSpacePressed": (re.compile(r"\bKeys\.onSpacePressed\b"), "hand-built keys: use Pressable"),
+    "tone-sunken": (re.compile(r"\btone:\s*\"sunken\""), "a sunken box: use ItemBox, InspectorCard or a card piece"),
+    "onRowClicked": (re.compile(r"\bonRowClicked\s*:"), "a hand-set row click: give the row `activates`"),
+    "first-literal": (re.compile(r"^\s*first\s*:\s*(?:true|false)\b"), "a `first:` literal: the row's column decides"),
+}
+LOCAL_PIECE_SCOPES = ("qml/components/views/", "qml/components/surfaces/onboarding/")
+SEGMENT_ROW_SCOPES = ("qml/components/views/", "qml/components/content/", "qml/components/surfaces/")
+SEGMENT_HOSTS = ("SegmentRow", "SegmentTabs", "StyledToggle")
 WIDGETS_DIR = "qml/components/bar/widgets"
 WIDGET_RULES = {f"T{n}" for n in range(1, 9)}
 WIDGET_ROOTS = {"BarWidget", "AudioLevelWidget"}
@@ -425,6 +444,51 @@ def main():
         for kind in kinds:
             if kind not in used.get(path, []):
                 errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
+
+    # The config UI and the onboarding build no hover tint, key handler,
+    # sunken box, hand-set row click or `first:` literal, no loose
+    # SegmentButton and no pushed `text` that keeps its value: each is a
+    # shared piece's job (docs/dev/core/shared-ui-pieces.md > When a page may
+    # own a local piece). A file is listed in scripts/ui-local-pieces.json
+    # per rule with a reason (special drawing); an entry whose rule no
+    # longer hits is an error
+    local = json.loads(LOCAL_PIECES.read_text())["files"]
+    local_hits = {}
+    for path, text in sorted(sources.items()):
+        in_ui = path.startswith(LOCAL_PIECE_SCOPES)
+        in_segments = path.startswith(SEGMENT_ROW_SCOPES)
+        if not (in_ui or in_segments):
+            continue
+        lines = re.sub(r"/\*.*?\*/", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S).split("\n")
+        code = [line.split("//", 1)[0] for line in lines]
+        for n, line in enumerate(code, 1):
+            if in_ui:
+                for name, (pattern, advice) in LOCAL_PIECE_RULES.items():
+                    if pattern.search(line):
+                        local_hits.setdefault((path, name), (n, advice))
+                if "restoreMode: Binding.RestoreNone" in line and any('property: "text"' in c for c in code[max(0, n - 7):n]):
+                    local_hits.setdefault((path, "restore-text"), (n, "a pushed `text` kept past its Binding: use CommitEntry"))
+            if re.match(r"\s*(?:\w+:\s*)?SegmentButton\s*\{", line):
+                indent = len(line) - len(line.lstrip())
+                host = None
+                for back in range(n - 2, -1, -1):
+                    m = re.match(r"(\s*)(?:[\w.]+:\s*)?([A-Z]\w*)\s*\{", code[back])
+                    if m and len(m.group(1)) < indent:
+                        indent = len(m.group(1))
+                        if m.group(2) in SEGMENT_HOSTS:
+                            host = m.group(2)
+                            break
+                if host is None:
+                    local_hits.setdefault((path, "SegmentButton"), (n, "a SegmentButton outside a SegmentRow or SegmentTabs: a toggle is a ToggleChip, a choice a SegmentRow"))
+    for (path, name), (n, advice) in sorted(local_hits.items()):
+        if name not in local.get(path, {}).get("rules", []):
+            errors.append(f"{path}:{n}: {name}: {advice} (special drawing only: list the file in {rel(LOCAL_PIECES)} with a reason)")
+    for path, entry in sorted(local.items()):
+        if not entry.get("reason"):
+            errors.append(f"{rel(LOCAL_PIECES)}: {path} has no reason")
+        for name in entry.get("rules", []):
+            if (path, name) not in local_hits:
+                errors.append(f"{rel(LOCAL_PIECES)}: {path} no longer breaks {name}: remove it from the list (it only shrinks)")
 
     # Services live in their group's folder (.claude/rules/services.md › Folders):
     # one directly in services/ would escape the singleton checks below,

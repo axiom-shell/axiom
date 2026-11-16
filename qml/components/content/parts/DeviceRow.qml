@@ -66,8 +66,6 @@ Rectangle {
   Glide on implicitHeight {}
 
   StateLayer {
-    anchors.fill: parent
-    radius: root.radius
     hovered: rowHover.hovered
   }
 

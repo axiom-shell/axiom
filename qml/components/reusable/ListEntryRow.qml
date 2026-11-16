@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.components.methods
 
 // One entry of an editor's list (bars, overlay pages, edge menus): an
 // icon (or, with `image`, a picture: an app's icon) and a name, filled with the accent container while selected, then
@@ -161,7 +162,7 @@ Rectangle {
 
   Layout.fillWidth: true
   Layout.preferredHeight: Style.listRowHeight
-  color: root.selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
+  color: root.selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
   radius: Style.radius
 
   ColorGlide on color {

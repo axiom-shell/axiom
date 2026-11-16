@@ -27,7 +27,7 @@ docs/dev/testing.md > The checks). Rules:
   R18  a scale over content with no `contentZoom` host
   R19  `Widget.radius` read in UI: use Style.radius / Style.radiusInner
   R20  a colour with a glide (ColorGlide / Behavior / ColorAnimation) bound to a bare
-       "transparent": the fade passes through black; rest on Qt.alpha(<fill>, 0)
+       "transparent": the fade passes through black; rest on Tone.cleared(<fill>)
 
 Every hit fails; a line is waived with `// style-exempt: <reason>`, a file with an
 entry in scripts/style-exceptions.json (rules and reason; an entry no longer needed
@@ -656,7 +656,7 @@ def scan(rel, index):
             if "R14" in rules and name in ("wrapMode", "elide", "maximumLineCount") and styled:
                 add(hits, line, "R14", f"{name}: {value}")
             if "R20" in rules and name in animated and name not in node.decls and any(x.strip() in ('"transparent"', "'transparent'") for x in leaves(value)):
-                add(hits, line, "R20", f"{name}: {value}: a glide to transparent black; rest on Qt.alpha(<fill>, 0)")
+                add(hits, line, "R20", f"{name}: {value}: a glide to transparent black; rest on Tone.cleared(<fill>)")
             if "R18" in rules and name == "scale" and not zoom_host(node):
                 try:
                     one = float(value) == 1.0
