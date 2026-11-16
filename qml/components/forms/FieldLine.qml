@@ -39,7 +39,8 @@ Item {
   // Under the line, the description and the control, at full width
   property alias body: bodyColumn.data
 
-  // FieldFit.place for this field
+  // FieldFit.place for this field. root.width must never come from the
+  // field's own implicit width (a stacked/inline flip would loop forever).
   readonly property var fit: FieldFit.place(root.kind, root.width, header.lineWidth, root.controlLeast, Widget.fieldTokens)
   readonly property bool inline: root.fit.inline
   readonly property real leastWidth: FieldFit.least(root.kind, header.lineWidth, root.controlLeast, Widget.fieldTokens)

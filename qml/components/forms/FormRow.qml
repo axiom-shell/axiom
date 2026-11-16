@@ -136,7 +136,7 @@ Item {
   StyledSeparator {
     visible: !root.first && root.fullHeight > 0
     x: root.indent
-    width: root.width - root.indent
+    width: Math.max(0, root.width - root.indent)
   }
 
   // One rail per depth, each beside the next step in
@@ -159,7 +159,7 @@ Item {
     id: body
     x: root.indent
     y: Math.round((root.fullHeight - root.bodyHeight) / 2)
-    width: root.width - root.indent
+    width: Math.max(0, root.width - root.indent)
     height: root.bodyHeight
     opacity: root._reveal
   }

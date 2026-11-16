@@ -483,6 +483,65 @@ TestCase {
     compare(root.rails(found[2]), [0, root.step()], "two rails on Across");
   }
 
+  // The Widget style shape: a colour field (a flex string) hidden under a
+  // switch that is off. The grid gives the hidden row width 0; its body must
+  // not go negative, or the field's width loops between inline and stacked.
+  Component {
+    id: hiddenComp
+
+    Surface {
+      property alias group: hiddenGroup
+      width: Widget.textPx(540)
+      height: 300
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: hiddenGroup
+          title: "Colors"
+
+          SchemaPropertiesForm {
+            Layout.fillWidth: true
+            order: ["gradient", "gradientTo"]
+            propertiesSchema: ({
+                "gradient": {
+                  "type": "boolean",
+                  "title": "Gradient",
+                  "default": false
+                },
+                "gradientTo": {
+                  "type": "string",
+                  "title": "To",
+                  "default": "base0D",
+                  "x-options": "colors",
+                  "x-beside": true,
+                  "x-showIf": {
+                    "gradient": true
+                  }
+                }
+              })
+          }
+        }
+      }
+    }
+  }
+
+  function test_hiddenIndentedRowKeepsBodyWidth() {
+    harness.configure({});
+    const pane = createTemporaryObject(hiddenComp, root);
+    verify(pane);
+    const lines = root.findAll(pane, it => it.fit !== undefined && it.inline !== undefined);
+    const flips = lines.map(() => 0);
+    lines.forEach((l, i) => l.inlineChanged.connect(() => flips[i]++));
+    wait(300);
+    const found = root.formRows(pane);
+    verify(found.some(r => r.depth > 0 && r.width === 0), "a hidden indented row at width 0");
+    verify(found.filter(r => r.depth > 0 && r.width === 0).every(r => r.content.length > 0 && r.content[0].parent.width >= 0), "no negative body width");
+    verify(flips.every(n => n <= 1), "a field's inline flips at most once: " + flips);
+  }
+
   // A card straight in a scroll view: every tint lies inside what clips it
   Component {
     id: scrollComp
