@@ -591,10 +591,11 @@ Loader {
   }
 
   // An array of ids of something defined elsewhere (`x-ref`): chips and a
-  // picker of the others (RefChips)
+  // picker of the others (PickedChips)
   Component {
     id: refChipsField
-    RefChips {
+    PickedChips {
+      addMode: "picker"
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
@@ -821,7 +822,8 @@ Loader {
   // Chips whose order counts (`x-ordered`): dragged into place
   Component {
     id: orderedChipsField
-    SchemaOrderedChips {
+    PickedChips {
+      ordered: true
       label: root.label
       description: root.description
       headerExtra: root.headerExtra

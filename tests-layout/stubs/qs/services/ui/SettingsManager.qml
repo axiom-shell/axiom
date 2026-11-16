@@ -8,6 +8,11 @@ import QtQuick
 QtObject {
   property var folds: ({})
   property var collapsed: ({})
+  // Dotted path -> schema / value / { title, category } a link leads to
+  // (empty: nothing found), for tests of the rows that read them
+  property var schemas: ({})
+  property var values: ({})
+  property var located: ({})
 
   function isFoldOpen(key) {
     return folds[key] === true;
@@ -38,14 +43,25 @@ QtObject {
   }
 
   function schemaAt(path) {
-    return ({});
+    return schemas[path.join(".")] ?? ({});
   }
 
   function configValueAt(key) {
-    return undefined;
+    return values[key];
   }
 
+  function commitValues(values) {
+  }
+
+  function locate(key) {
+    return located[key] ?? null;
+  }
+
+  // The paths discard() was given, for tests
+  property var discarded: []
+
   function discard(paths) {
+    discarded = discarded.concat(paths);
   }
 
   function optionsFor(schema) {

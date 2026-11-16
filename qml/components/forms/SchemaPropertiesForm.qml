@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.methods
-import qs.components.reusable
 
 // A form for one object, generated from its `properties` schema: one
 // SchemaField per key (keys marked `x-settings: false` skipped), a nested
@@ -132,27 +131,28 @@ ColumnLayout {
       id: fields
       model: root.rows
 
-      // The field, then its `x-link`s, as a FormRow
-      delegate: FormRow {
+      // The field, then its `x-link`s and action, as a FormRow
+      delegate: SchemaFormRow {
         id: cell
         required property var modelData
         required property int index
+        row: cell.modelData
+        form: root
         // Unknown until the field streams in, so it takes its height then
         // rather than folding open
-        shown: root.folded ? false : (field.item ? field.item.shown : undefined)
+        shown: root.folded ? false : cell.fieldShown
         level: root.tree.levels[index]
         beside: _beside && half
-        bodyHeight: column.implicitHeight
-        tinted: field.item?.tinted ?? false
-        hoverable: field.item?.hoverable ?? false
-        onRowClicked: field.item?.rowClicked()
+        // The form is gone (null) a moment before its fields
+        changed: root?.changedAt ? root.changedAt(cell.modelData.path) : false
+        reset: root?.changedAt ? value => root.edit(cell.modelData.path, value) : null
+        discard: root?.changedAt ? () => root.discardAt(cell.modelData.path) : null
+        action: root?.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
         readonly property bool _beside: modelData.schema?.["x-beside"] === true
         // Read again once every field exists (`count` changes after the
         // Repeater made them): itemAt doesn't notify, and the field after
         // this one doesn't exist yet when it's made
         readonly property var _partner: fields.count < 0 ? null : _beside ? fields.itemAt(index - 1) : root.rows[index + 1]?.schema?.["x-beside"] === true ? fields.itemAt(index + 1) : null
-        // The field's least width (FieldFit.least), for a pair's halves
-        readonly property real leastWidth: field.item?.leastWidth ?? 0
         // The left half of a pair (its body is indented by its depth; the
         // right half is `beside`: none of its own)
         readonly property var _left: _beside ? _partner : cell
@@ -164,75 +164,6 @@ ColumnLayout {
         Layout.columnSpan: half ? 1 : 2
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
-
-        ColumnLayout {
-          id: column
-          width: parent.width
-          spacing: Widget.spacing / 2
-
-          // Loaded by URL: SchemaField (through SchemaObjectArray and
-          // SchemaArrayItem) instantiates this type, so naming it here would
-          // make the types depend on each other. Streamed: a page's forms
-          // fill in over the frames after it opens. Kept drawn while the
-          // row folds shut (the row hides once it has)
-          StreamedLoader {
-            id: field
-            Layout.fillWidth: true
-            rise: false
-            label: "form field"
-            Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
-              "row": cell.modelData,
-              "form": root,
-              "headerExtra": root.changedAt ? marks : null,
-              "headerBelow": cell.modelData.schema?.["x-link"] || root.fieldAction ? below : null,
-              "visible": true
-            })
-          }
-
-          Component {
-            id: marks
-            FieldChangeMarks {
-              readonly property var _field: field.item
-              schema: cell.modelData.schema
-              current: _field?.current
-              optionLabels: _field?.optionLabels ?? ({})
-              // The form is gone (null) a moment before its fields
-              changed: root?.changedAt ? root.changedAt(cell.modelData.path) : false
-              onReset: value => root.edit(cell.modelData.path, value)
-              onDiscard: root.discardAt(cell.modelData.path)
-            }
-          }
-
-          // The field's `x-link`s and action, read with its label
-          // (FieldHeader.below)
-          Component {
-            id: below
-            ColumnLayout {
-              readonly property bool shows: links.shows || actionLink.active
-              spacing: Widget.spacing / 2
-
-              FieldLinks {
-                id: links
-                Layout.fillWidth: true
-                links: cell.modelData.schema?.["x-link"]
-              }
-
-              // Made only for a field with an action, not under every field
-              Loader {
-                id: actionLink
-                readonly property var action: root.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
-                Layout.fillWidth: true
-                active: actionLink.action !== null
-                visible: active
-                sourceComponent: SettingsLink {
-                  text: actionLink.action.text
-                  icon: actionLink.action.icon ?? ""
-                  run: actionLink.action.run
-                }
-              }
-            }
-          }
-        }
       }
     }
   }

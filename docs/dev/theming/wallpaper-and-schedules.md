@@ -64,4 +64,4 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 - The Themes page edits all of it inline:
   - `WallpaperPicker`'s Fixed/Rotate/Light-Dark switch;
   - `ThemePicker`'s Auto.
-- Through `forms/SettingRows`: dotted-path `SchemaField` rows saved by `SettingsManager.commitValues`.
+- Through `forms/SettingRows`: dotted-path `SchemaFormRow`s saved by `SettingsManager.commitValues`.

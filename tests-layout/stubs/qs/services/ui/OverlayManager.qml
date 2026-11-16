@@ -5,6 +5,22 @@ import QtQuick
 // editor's answers MenuOpening reads, all fixed (nothing previewing, nothing
 // referencing the menu, saved).
 QtObject {
+  function pageLinkAvailable(page) {
+    return false;
+  }
+
+  function pageLinkIcon(page) {
+    return "";
+  }
+
+  function pageLinkLabel(page) {
+    return "";
+  }
+
+  function openedBy(widget) {
+    return null;
+  }
+
   readonly property QtObject menus: QtObject {
     property string previewing: ""
     property bool showingOthers: false

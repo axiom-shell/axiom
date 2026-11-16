@@ -5,8 +5,8 @@ import QtQuick.Layouts
 import qs.services.ui
 import qs.components.methods
 
-// Settings by dotted config path ("Apps.networkEditor"), each a SchemaField
-// row as on the settings page, saved as they change
+// Settings by dotted config path ("Apps.networkEditor"), each a SchemaFormRow
+// as on the settings page (reset button, `x-link`s), saved as they change
 // (SettingsManager.commitValues), for pages that apply as the user goes
 // (the onboarder, the Themes page). Edits are gathered for a moment, so
 // typing doesn't write config.json per key. Acts as the rows' `form`.
@@ -79,26 +79,17 @@ ColumnLayout {
     id: rowItems
     model: root.rows
 
-    delegate: FormRow {
+    delegate: SchemaFormRow {
       id: rowItem
       required property var modelData
       required property int index
+      row: rowItem.modelData
+      form: root
       first: index === root._firstRow
-      shown: field.shown
       level: root.tree.levels[index]
-      bodyHeight: field.implicitHeight
-      tinted: field.tinted
-      hoverable: field.hoverable
-      onRowClicked: field.rowClicked()
-
-      SchemaField {
-        id: field
-        width: parent.width
-        row: rowItem.modelData
-        form: root
-        // Kept drawn while the row folds shut (the row hides once it has)
-        visible: true
-      }
+      // The reset to default, as on the settings page; its edits save at
+      // once, so no dot
+      reset: value => root.edit(rowItem.modelData.path, value)
     }
   }
 }

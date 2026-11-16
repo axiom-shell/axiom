@@ -9,4 +9,10 @@ QtObject {
 
   function releaseTyping(item) {
   }
+
+  function discardTyping(item) {
+  }
+
+  function discardTypingIn(item) {
+  }
 }
