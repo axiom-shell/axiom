@@ -24,6 +24,8 @@ Item {
   property bool onAccent: false
   // How far the tint reaches past the parent's sides (a settings row's)
   property real bleed: 0
+  // The tint's and the ring's bottom corners square (a header band over a body)
+  property bool squareBottom: false
   // The tint's and the ring's rounding: the parent's
   readonly property real radius: root._host && root._host.radius !== undefined ? root._host.radius : Style.radiusInner
   readonly property bool hovered: area.containsMouse
@@ -53,6 +55,7 @@ Item {
     pressed: root.pressed
     onAccent: root.onAccent
     bleed: root.bleed
+    squareBottom: root.squareBottom
   }
 
   MouseArea {
@@ -71,5 +74,6 @@ Item {
 
   FocusRing {
     shown: root.activeFocus
+    squareBottom: root.squareBottom
   }
 }

@@ -14,6 +14,9 @@ Flow {
   property int current: 0
   property var labelAt: i => ""
   property var iconAt: i => ""
+  // Right click is `menuRequested` (off: a right click goes to what is under
+  // the tabs)
+  property bool menus: false
 
   signal picked(int index)
   signal menuRequested(int index, Item item, real x, real y)
@@ -30,7 +33,7 @@ Flow {
       text: root.labelAt(tab.index)
       iconText: root.iconAt(tab.index)
       active: tab.index === root.current
-      acceptedButtons: Qt.LeftButton | Qt.RightButton
+      acceptedButtons: root.menus ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
       onClicked: root.picked(tab.index)
       onMenuRequested: (x, y) => root.menuRequested(tab.index, tab, x, y)
     }

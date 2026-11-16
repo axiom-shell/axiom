@@ -222,7 +222,8 @@ TestCase {
   // A right click on a tab asks for its menu, with the tab's index
   function test_tab_right_click_requests_menu() {
     const tabs = createTemporaryObject(tabsComp, root, {
-      "width": 400
+      "width": 400,
+      "menus": true
     });
     waitForRendering(tabs);
     const asked = [];
@@ -230,6 +231,9 @@ TestCase {
     const second = Array.prototype.filter.call(tabs.children, c => c instanceof SegmentButton)[1];
     mouseClick(second, second.width / 2, second.height / 2, Qt.RightButton);
     compare(asked, [1]);
+    tabs.menus = false;
+    mouseClick(second, second.width / 2, second.height / 2, Qt.RightButton);
+    compare(asked, [1], "no menus: a right click isn't taken");
   }
 
   function findAll(item, match) {

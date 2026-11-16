@@ -26,6 +26,8 @@ ColumnLayout {
     title: root.title
     description: root.description
     collapsed: root.collapsed
+    reachLeft: Widget.smallPadding
+    reachRight: Widget.smallPadding
     onToggled: root.toggled()
   }
 

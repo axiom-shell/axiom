@@ -70,6 +70,34 @@ TestCase {
     compare(buttons(row, []).map(b => b.iconText), ["visibility", "close"]);
   }
 
+  // A row with neither standard action builds none; with both, Tab walks them in order
+  function test_standard_actions_are_built_only_when_asked() {
+    harness.configure({});
+    const row = createTemporaryObject(rowComp, root);
+    compare(findByName(row, "standardDuplicate"), null, "no Duplicate built");
+    compare(findByName(row, "standardRemove"), null, "no Remove built");
+    row.canDuplicate = true;
+    row.canRemove = true;
+    waitForRendering(row);
+    const dup = findByName(row, "standardDuplicate");
+    const rem = findByName(row, "standardRemove");
+    verify(dup && rem);
+    dup.forceActiveFocus(Qt.TabFocusReason);
+    keyClick(Qt.Key_Tab);
+    verify(rem.activeFocus, "Tab walks Duplicate to Remove");
+  }
+
+  function findByName(item, name) {
+    if (item.objectName === name)
+      return item;
+    for (const c of item.children) {
+      const hit = findByName(c, name);
+      if (hit)
+        return hit;
+    }
+    return null;
+  }
+
   function test_image_replaces_the_glyph() {
     harness.configure({});
     const row = createTemporaryObject(rowComp, root);

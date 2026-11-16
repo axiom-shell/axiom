@@ -137,7 +137,7 @@ Item {
       readonly property int fit: Math.max(1, Math.floor((root.width + Widget.spacing / 2) / (idleColumn.chipWidth + Widget.spacing / 2)))
       readonly property var rowSizes: ChipRows.split(idleColumn.chips, idleColumn.fit)
       readonly property var rowStarts: ChipRows.starts(idleColumn.rowSizes)
-      readonly property real chipHeight: Widget.height - Widget.px(4)
+      readonly property real chipHeight: Widget.slimHeight
       // What the field reads as: { ms, label }
       property var typed: ({
           "ms": 0,

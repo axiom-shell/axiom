@@ -170,6 +170,7 @@ FocusScope {
         placeholder: modelData.label
         centered: false
         reveal: !modelData.secret
+        secret: modelData.secret === true
         readOnly: root.busy || !root.settled
         busy: root.busy && last
         message: last ? (root.request?.error ?? "") : ""

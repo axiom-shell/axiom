@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.components.reusable
 
 // The fold row of every card, on the settings page and in the editors: a
@@ -44,6 +45,11 @@ FormRow {
       collapsed: !root.open
       foldable: root.foldable
       marked: root.marked
+      // The trigger is the row's band, as a tinted row's
+      reachTop: (root.fullHeight - root.bodyHeight) / 2
+      reachBottom: (root.fullHeight - root.bodyHeight) / 2
+      reachLeft: root.depth > 0 ? root.step : Style.rowBleed
+      reachRight: Style.rowBleed
       onToggled: root.toggled()
     }
   }

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtTest
 import qs.config
+import qs.components.forms
 import qs.components.reusable
 
 // ItemBox, a sunken box inside a card: padded Widget.padding all round, or a
@@ -31,6 +32,25 @@ TestCase {
         objectName: "fill"
         Layout.fillWidth: true
         Layout.preferredHeight: 20
+      }
+    }
+  }
+
+  Component {
+    id: rowsComp
+
+    ItemBox {
+      property alias rowA: rowTop
+      property alias rowB: rowNext
+      width: 300
+
+      FormRow {
+        id: rowTop
+        bodyHeight: Widget.height
+      }
+      FormRow {
+        id: rowNext
+        bodyHeight: Widget.height
       }
     }
   }
@@ -68,7 +88,15 @@ TestCase {
   function test_first_row_is_the_first_that_draws() {
     harness.configure({});
     const box = createTemporaryObject(boxComp, root);
-    compare(box.firstRow, null, "the filler has no bodyHeight, so it is no row");
+    const rows = createTemporaryObject(rowsComp, root);
+    verify(rows);
+    wait(50);
+    verify(rows.rowA.first, "the top row has no divider");
+    verify(!rows.rowB.first);
+    rows.rowA.shown = false;
+    wait(50);
+    verify(!rows.rowA.first);
+    verify(rows.rowB.first, "the second row is first once the top hides");
   }
 
   function test_header_remove() {

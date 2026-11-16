@@ -6,9 +6,10 @@ import qs.config
 // One button of a segmented choice (Dark/Light, a wallpaper mode): the
 // chosen one reads as the thumb's label; one that can't be chosen is faint.
 // Only inside a SegmentRow (a single choice) or SegmentTabs (one entry of
-// many): a multi-select is ToggleChips. In a SegmentRow, the row draws the track and the thumb (which slides
-// between its buttons) and the button only its label; elsewhere (a
-// RowLayout or Flow of toggles) it fills itself, accent while active.
+// many): a multi-select is ToggleChips. In a SegmentRow, the row draws the
+// track and the thumb (which slides between its buttons) and the button only
+// its label; elsewhere (a RowLayout or Flow of toggles) it fills itself,
+// accent while active.
 StyledTextButton {
   id: root
 

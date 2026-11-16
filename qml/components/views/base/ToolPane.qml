@@ -44,7 +44,8 @@ TitledCard {
     PinnedList {
       id: pinnedArea
       Layout.fillWidth: true
-      maxHeight: Math.round(root.height * root.pinnedShare)
+      shareOf: root
+      maxShare: root.pinnedShare
       // Never hidden (its rows would all read hidden and it would stay so):
       // with nothing showing in it, a negative margin takes back the gap
       // the column puts after it

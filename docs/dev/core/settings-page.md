@@ -39,7 +39,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
   - Both are `forms/FieldChangeMarks`, which any schema form gives its fields through its `changedAt` hook.
 
 ### Folding
-- Clicking a card's header folds it (`SettingsManager.collapsed`, by group key, saved to `~/.local/state/axiom/ui/settings.json`). Search results never fold.
+- Clicking a card's header (the whole band, a button: it tints on hover; `FoldHeader`) folds it (`SettingsManager.collapsed`, by group key, saved to `~/.local/state/axiom/ui/settings.json`). Search results never fold.
 - Inside a card, an object marked `x-fold` is a fold of rows (`SettingsField`: a `FoldHeader` row, the rows inside it shown only while it's open), shut until opened (`SettingsManager.isFoldOpen`, kept in the same state as `<path>:open`) and open in search results and the changed list: the Keyboard card's Input method options. A field with `x-row` is drawn by a hand-built row of its own (`SettingsField` loads `<Name>.qml` with `row` and `form`): the Keyboard card's layouts, whose `x-rowDraws` names the input method switch it draws too ([schema annotations](schema-annotations.md)). An object with `x-row` is one row drawing every setting under it, on a card of its own: the Bar style card (`Bars.style`, `BarStyleBlock`, also the bar editor's Style tab: [Bar style block](../bar/style-block.md)). Its sections after Look are folds of their own (the block's, not `x-fold`s), kept as `Bars.style:<section>:open`.
 
 ### Columns

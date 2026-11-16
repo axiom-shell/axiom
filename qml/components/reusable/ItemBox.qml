@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.components.methods
 
 // A box inside a card that holds one item (a list entry, the selected item
 // of an editor, notes, an import): a sunken Surface. Padded as the style says:
@@ -13,7 +12,7 @@ import qs.components.methods
 // the header folds the body: a click is `toggled` (the host flips `open`,
 // as FoldHeader), and `summary` is the one line it shows while folded. What
 // the box holds goes in its default slot, a column spaced `Widget.spacing`
-// that publishes `firstRow` (a FormRow in it takes it for its `first`).
+// that is a FormColumn (a FormRow in it gets its `first` from it).
 Surface {
   id: root
 
@@ -34,11 +33,6 @@ Surface {
   property string summary: ""
   property alias headerActions: actionRow.data
   default property alias content: fold.content
-  // The first row of the body that draws something (no divider on it)
-  readonly property Item firstRow: {
-    const at = Utils.firstFormRow(fold.contentChildren.length, i => fold.contentChildren[i]);
-    return at < 0 ? null : fold.contentChildren[at];
-  }
   readonly property bool hasHeader: root.title !== ""
 
   signal remove
@@ -67,28 +61,21 @@ Surface {
       visible: root.hasHeader
       Layout.fillWidth: true
       implicitHeight: headerRow.implicitHeight
-      activeFocusOnTab: root.foldable
+      // The trigger tints as the box
+      readonly property real radius: root.radius
 
-      Keys.onSpacePressed: event => header._key(event)
-      Keys.onReturnPressed: event => header._key(event)
-      Keys.onEnterPressed: event => header._key(event)
-
-      function _key(event) {
-        event.accepted = root.foldable;
-        if (root.foldable)
-          root.toggled();
-      }
-
-      FocusRing {
-        shown: header.activeFocus
-      }
-
-      MouseArea {
-        id: headerArea
-        anchors.fill: parent
+      // The whole header is the fold trigger (a button), reaching the box's
+      // padding; open, down to the body, bottom square
+      Pressable {
+        id: press
+        objectName: "foldTrigger"
         enabled: root.foldable
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        tabStop: root.foldable
+        squareBottom: !root._folded
+        anchors.leftMargin: -root._sidePad
+        anchors.rightMargin: -root._sidePad
+        anchors.topMargin: -root._vertPad
+        anchors.bottomMargin: root._folded ? -(root.height - root._vertPad - header.height) : -fold.topPadding
         onClicked: root.toggled()
       }
 
@@ -138,7 +125,7 @@ Surface {
         FoldChevron {
           visible: root.foldable
           open: root.open
-          hot: headerArea.containsMouse || header.activeFocus
+          hot: press.hovered || press.activeFocus
         }
       }
     }

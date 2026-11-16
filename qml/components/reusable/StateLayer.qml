@@ -21,6 +21,8 @@ Rectangle {
   // How far it reaches past the parent on the left, `bleed` unless set (a row
   // indented under a rail starts at its rule)
   property real leftBleed: root.bleed
+  // The bottom corners square (a header band over a body)
+  property bool squareBottom: false
 
   // -- Implementation --
   anchors.fill: parent
@@ -30,6 +32,8 @@ Rectangle {
   radius: root._host && root._host.radius !== undefined ? root._host.radius : Style.radiusInner
   // The rest colour is the hover colour at alpha 0, so the glide never passes
   // through transparent black
+  bottomLeftRadius: root.squareBottom ? 0 : root.radius
+  bottomRightRadius: root.squareBottom ? 0 : root.radius
   color: {
     if (root.onAccent)
       return root.pressed ? Style.stateOnAccentPressed : root.hovered ? Style.stateOnAccentHover : Style.stateOnAccentRest;

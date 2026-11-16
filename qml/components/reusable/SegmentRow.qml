@@ -20,7 +20,7 @@ Item {
   property alias spacing: row.spacing
 
   implicitWidth: row.implicitWidth + track.inset * 2
-  implicitHeight: Widget.height - Widget.px(4)
+  implicitHeight: Widget.slimHeight
   Layout.minimumWidth: root.implicitWidth
 
   // The visible buttons in order, and the chosen one's place among them:

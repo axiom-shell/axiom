@@ -1641,16 +1641,17 @@ TestCase {
     const head = createTemporaryObject(foldHeaderComp, root);
     const folds = [];
     head.toggled.connect(() => folds.push(1));
-    verify(head.activeFocusOnTab);
+    const trigger = findAll(head, it => it.objectName === "foldTrigger")[0];
+    verify(trigger.activeFocusOnTab);
     keyClick(Qt.Key_Tab);
-    verify(head.activeFocus, "Tab focuses the header");
+    verify(trigger.activeFocus, "Tab focuses the header");
     keyClick(Qt.Key_Space);
     keyClick(Qt.Key_Return);
     compare(folds.length, 2);
     const fixed = createTemporaryObject(foldHeaderComp, root, {
       "foldable": false
     });
-    compare(fixed.activeFocusOnTab, false);
+    compare(findAll(fixed, it => it.objectName === "foldTrigger")[0].activeFocusOnTab, false);
   }
 
   // Style holds each role as its derivation made it: a property named on<X>
@@ -1768,5 +1769,72 @@ TestCase {
     compare(short.height, short.contentHeight);
     compare(short.cut, false);
     compare(findAll(short, it => it.showScrollBar === true).length, 0, "no scroll bar");
+  }
+
+  Component {
+    id: pinnedInColumnComp
+
+    ColumnLayout {
+      id: col
+      property int count: 20
+      property bool shared: true
+      width: 300
+
+      Item {
+        id: box
+        implicitWidth: 300
+        implicitHeight: 250
+      }
+
+      PinnedList {
+        shareOf: col.shared ? box : null
+        Layout.fillWidth: true
+
+        Repeater {
+          model: col.count
+          Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 30
+            color: "transparent"
+          }
+        }
+      }
+    }
+  }
+
+  // Its cap comes from `shareOf`, never its layout parent: no `shareOf` means its content height
+  function test_pinnedList_shareOf() {
+    const col = createTemporaryObject(pinnedInColumnComp, root);
+    verify(col);
+    waitForRendering(col);
+    wait(30);
+    const list = findAll(col, it => it.maxShare !== undefined)[0];
+    compare(list.height, 100, "0.4 of the 250-px box");
+    col.shared = false;
+    wait(30);
+    compare(list.height, list.contentHeight, "no shareOf: its content height");
+  }
+
+  Component {
+    id: noticeComp
+
+    Notice {
+      width: 300
+      text: "Hello"
+    }
+  }
+
+  // A clickable callout is a Tab stop and Space presses it; a plain one isn't
+  function test_notice_clickable_is_keyboard() {
+    const plain = createTemporaryObject(noticeComp, root);
+    let clicks = 0;
+    plain.clicked.connect(() => clicks++);
+    keyClick(Qt.Key_Tab);
+    compare(findAll(plain, it => it.activeFocus).length, 0, "a plain notice takes no focus");
+    plain.clickable = true;
+    keyClick(Qt.Key_Tab);
+    verify(findAll(plain, it => it.activeFocus && it.hovered !== undefined).length > 0, "Tab focuses the clickable one");
+    keyClick(Qt.Key_Space);
+    compare(clicks, 1);
   }
 }

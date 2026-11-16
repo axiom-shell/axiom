@@ -32,6 +32,19 @@ TestCase {
     compare(FormRows.first(rows), 1, "the next row is the top once the first hides");
   }
 
+  function test_first_stops_at_a_shown_form() {
+    compare(FormRows.first([
+      {
+        "allHidden": false
+      },
+      row(true, 20)]), -1, "a form drawing rows comes first: the row after it keeps its divider");
+    compare(FormRows.first([
+      {
+        "allHidden": true
+      },
+      row(true, 20)]), 1, "a form with every row hidden is skipped");
+  }
+
   function test_endsShut() {
     verify(FormRows.endsShut([row(true, 20), row(true, 20, true)], false));
     verify(!FormRows.endsShut([row(true, 20, true), row(true, 20)], false), "the last decides");

@@ -14,10 +14,14 @@ QtObject {
 
   // The index of the top row: the first that draws something, shown or not
   // yet known (undefined) and not empty; -1 for none. Items that aren't rows
-  // (no `bodyHeight`) are skipped
+  // (no `bodyHeight`) are skipped. A form drawing rows (`allHidden === false`)
+  // stops the walk with -1: its rows come first, it numbers its own, so a row
+  // after it keeps its divider; a form with every row hidden is skipped
   function first(rows) {
     for (let i = 0; i < (rows?.length ?? 0); i++) {
       const row = rows[i];
+      if (row && row.allHidden === false)
+        return -1;
       if (row && row.shown !== false && row.bodyHeight > 0)
         return i;
     }

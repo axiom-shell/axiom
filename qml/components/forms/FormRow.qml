@@ -13,15 +13,15 @@ import qs.components.methods
 // the rows below glide. Its depth is `level`, its place in its form's
 // RowTree (SchemaPropertiesForm, SettingsGroupCard) or, for a hand-built row,
 // its own: one rail per depth, the body one step in per depth, and the hover
-// tint starting at the row's own innermost rule. A `tinted` row (the default) tints under the
-// pointer, and keeps the tint while the pointer is over its controls: the
-// HoverHandler is on the row, an ancestor of every control (a handler on a
-// sibling painted under them loses the hover to any child that takes it).
-// A `hoverable` row also acts on a click outside its controls
-// (`rowClicked`; with an `activates` control, its `activate()`). The tint and the click cover the band: the whole row, or
-// with a `hitHeight` shorter than the body, the first `hitHeight` of it
-// padded below by as much as above, so the field sits centred in it. What
-// the row holds sits in its body.
+// tint starting at the row's own innermost rule. A `tinted` row (the default)
+// tints under the pointer, and keeps the tint while the pointer is over its
+// controls: the HoverHandler is on the row, an ancestor of every control (a
+// handler on a sibling painted under them loses the hover to any child that
+// takes it). A `hoverable` row also acts on a click outside its controls
+// (`rowClicked`; with an `activates` control, its `activate()`). The tint and
+// the click cover the band: the whole row, or with a `hitHeight` shorter than
+// the body, the first `hitHeight` of it padded below by as much as above, so
+// the field sits centred in it. What the row holds sits in its body.
 Item {
   id: root
 
@@ -37,7 +37,8 @@ Item {
   // The content's height, and how much of it the rail runs beside
   property real bodyHeight: 0
   property real railHeight: root.bodyHeight
-  // The part of the body, from its top, that a row click and the hover tint cover; the rest takes no row click
+  // The part of the body, from its top, that a row click and the hover tint
+  // cover; the rest takes no row click
   property real hitHeight: root.bodyHeight
   // Whether the row tints under the pointer
   property bool tinted: true
@@ -53,8 +54,8 @@ Item {
   // The form's top row (no row above it shown), which has no gap: by default
   // the `firstRow` of the FormColumn it sits in (FormRows.first); a host
   // laying rows out otherwise sets it (Utils.firstFormRow). Never read from
-  // `y`, which the layout sets from this row's height (a row flipping between
-  // the two kept the layout polishing forever)
+  // `y`, which the layout sets from this row's height (a row flipping
+  // between the two kept the layout polishing forever)
   property bool first: (root.parent as FormColumn)?.firstRow === root
   default property alias content: body.data
   readonly property real step: Widget.spacing * 2

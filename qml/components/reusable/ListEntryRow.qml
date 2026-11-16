@@ -64,7 +64,7 @@ Rectangle {
   // them focused
   readonly property bool revealed: root.hovered || root.selected || root.activeFocus || root._actionFocused
 
-  readonly property bool _actionFocused: actionRow.children.concat(standardRow.children).some(child => child.activeFocus)
+  readonly property bool _actionFocused: actionRow.children.concat((standard.item as Item)?.children ?? []).some(child => child.activeFocus)
 
   // Marks a row for the Up/Down walk along the focus chain
   readonly property bool _listRow: true
@@ -128,7 +128,7 @@ Rectangle {
   // actions or leading controls): the next or previous stop of this row (its
   // leading controls, then its actions), else out
   function _tabFrom(from, forward) {
-    const actions = leadingRow.children.concat(actionRow.children, standardRow.children).filter(child => child.visible && child.enabled && child.activeFocusOnTab);
+    const actions = leadingRow.children.concat(actionRow.children, (standard.item as Item)?.children ?? []).filter(child => child.visible && child.enabled && child.activeFocusOnTab);
     const at = actions.indexOf(from);
     const next = forward ? actions[at + 1] : at > 0 ? actions[at - 1] : (at === 0 ? root : undefined);
     if (next) {
@@ -270,26 +270,33 @@ Rectangle {
       spacing: Widget.spacing
     }
 
-    // After the caller's actions (they land in actionRow, after what it declares)
-    RowLayout {
-      id: standardRow
-      spacing: Widget.spacing
+    // After the caller's actions (they land in actionRow, after what it
+    // declares); built only when a standard action is asked for
+    Loader {
+      id: standard
+      active: root.canDuplicate || root.canRemove
+      visible: active
+      sourceComponent: RowLayout {
+        spacing: Widget.spacing
 
-      RowAction {
-        visible: root.canDuplicate
-        row: root
-        iconText: "content_copy"
-        tooltipText: root.duplicateTooltip
-        onClicked: root.duplicated()
-      }
+        RowAction {
+          objectName: "standardDuplicate"
+          visible: root.canDuplicate
+          row: root
+          iconText: "content_copy"
+          tooltipText: root.duplicateTooltip
+          onClicked: root.duplicated()
+        }
 
-      RowAction {
-        visible: root.canRemove
-        row: root
-        danger: true
-        iconText: "close"
-        tooltipText: root.removeTooltip
-        onClicked: root.removeRequested()
+        RowAction {
+          objectName: "standardRemove"
+          visible: root.canRemove
+          row: root
+          danger: true
+          iconText: "close"
+          tooltipText: root.removeTooltip
+          onClicked: root.removeRequested()
+        }
       }
     }
   }

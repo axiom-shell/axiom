@@ -99,6 +99,18 @@ TestCase {
     compare(entry.input.inputMethodHints & root.hidden, root.hidden);
   }
 
+  // An answer that is never hidden (a user name) is no secret: the input
+  // method isn't shut out of it
+  function test_non_secret_password_entry_takes_input_methods() {
+    const entry = createTemporaryObject(passwordComp, root, {
+      "reveal": true,
+      "secret": false
+    });
+    compare(entry.input.inputMethodHints & root.hidden, 0);
+    const secret = createTemporaryObject(passwordComp, root);
+    compare(secret.input.inputMethodHints & root.hidden, root.hidden);
+  }
+
   function test_submit_entry_does_not_submit_when_it_cannot() {
     const entry = createTemporaryObject(submitComp, root);
     const spy = createTemporaryObject(spyComp, root, {

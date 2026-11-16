@@ -155,6 +155,8 @@ ColumnLayout {
       collapsed: !piece.open
       // Shut, a dot while any of its settings has an unsaved edit
       marked: piece.keys.some(key => root.changedAt?.([key]) === true)
+      reachLeft: Widget.smallPadding
+      reachRight: Widget.smallPadding
       onToggled: SettingsManager.setFoldOpen(piece.foldKey, !piece.open)
     }
 

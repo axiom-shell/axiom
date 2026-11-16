@@ -13,7 +13,7 @@ Switch {
 
   // -- Implementation --
   implicitWidth: Math.round(implicitHeight * 1.9)
-  implicitHeight: root.compact ? Widget.smallHeight : Widget.height - Widget.px(4)
+  implicitHeight: root.compact ? Widget.smallHeight : Widget.slimHeight
 
   indicator: Rectangle {
     x: root.checked ? root.width - width - Widget.px(2) : Widget.px(2)

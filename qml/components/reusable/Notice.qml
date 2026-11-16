@@ -38,19 +38,9 @@ Surface {
   outlined: true
   implicitHeight: row.implicitHeight + Widget.padding
 
-  // Until Pressable lands (wave 3) the callout's own press and tint
-  StateLayer {
-    visible: root.clickable
-    hovered: press.containsMouse
-    pressed: press.pressed
-  }
-
-  MouseArea {
-    id: press
-    anchors.fill: parent
+  Pressable {
     enabled: root.clickable
-    hoverEnabled: true
-    cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+    tabStop: root.clickable
     onClicked: root.clicked()
   }
 

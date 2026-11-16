@@ -49,6 +49,26 @@ TestCase {
   }
 
   Component {
+    id: afterFormComp
+
+    FormColumn {
+      property alias form: form
+      property alias after: after
+      width: 300
+
+      Item {
+        id: form
+        property bool allHidden: false
+        implicitHeight: 10
+      }
+      FormRow {
+        id: after
+        bodyHeight: Widget.height
+      }
+    }
+  }
+
+  Component {
     id: cardComp
 
     FieldGroup {
@@ -86,6 +106,33 @@ TestCase {
     col.row2.shown = false;
     wait(50);
     verify(col.flip.first, "a SwitchRow is a row too");
+  }
+
+  // A row after a form that draws rows keeps its divider; once the form hides
+  // every row it is the top one
+  function test_first_stops_at_a_shown_form() {
+    const col = createTemporaryObject(afterFormComp, root);
+    verify(col);
+    wait(50);
+    verify(!col.after.first, "the form's rows come first");
+    const dividers = () => root.findAll(col.after, it => it.backTone !== undefined && it.visible);
+    verify(dividers().length > 0, "its separator shows");
+    col.form.allHidden = true;
+    wait(50);
+    verify(col.after.first, "the form drew nothing: this row is the top");
+    compare(dividers().length, 0);
+  }
+
+  function findAll(item, test) {
+    const out = [];
+    const walk = it => {
+      if (test(it))
+        out.push(it);
+      for (const child of it.children)
+        walk(child);
+    };
+    walk(item);
+    return out;
   }
 
   function test_card_rows_get_first() {

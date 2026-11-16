@@ -59,11 +59,13 @@ Surface {
     spacing: 0
 
     RowLayout {
+      id: headerRow
       visible: root.headed
       Layout.fillWidth: true
       spacing: Style.space1
 
       FoldHeader {
+        id: foldHeader
         Layout.alignment: Qt.AlignTop
         title: root.title
         description: root.description
@@ -73,6 +75,16 @@ Surface {
         marked: root.marked
         status: root.status
         statusTone: root.statusTone
+        // The trigger is the whole header band (the card's padding and the
+        // extras' column excepted, which are drawn later and take their own
+        // clicks): folded, the whole card in its rounded shape; open, down to
+        // where the body's first row starts, bottom square
+        radius: root.radius
+        reachLeft: Style.space3
+        reachTop: Style.space3
+        reachRight: Style.space3 + (extras.visible ? extras.width + headerRow.spacing : 0)
+        reachBottom: root.collapsed ? root.height - Style.space3 - foldHeader.height : headerRow.height - foldHeader.height + body.topPadding
+        squareBottom: !root.collapsed
         onToggled: root.toggled()
       }
 

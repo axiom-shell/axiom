@@ -10,6 +10,8 @@ Rectangle {
 
   // -- Public API --
   property bool shown: false
+  // The bottom corners square (a ring round a header band over a body)
+  property bool squareBottom: false
 
   // -- Implementation --
   // (var: qmllint knows only Item's members)
@@ -20,6 +22,8 @@ Rectangle {
   anchors.fill: parent
   anchors.margins: -Style.focusWidth
   radius: root._parentRadius + Style.focusWidth
+  bottomLeftRadius: root.squareBottom ? 0 : root.radius
+  bottomRightRadius: root.squareBottom ? 0 : root.radius
   color: "transparent"
   border.width: Style.focusWidth
   border.color: Style.focusRing

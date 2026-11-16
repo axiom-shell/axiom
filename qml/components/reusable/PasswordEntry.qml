@@ -18,6 +18,9 @@ Item {
   property bool readOnly: false
   // Shows what's typed instead of dots
   property bool reveal: false
+  // The text is a secret: the input method is shut out of the field. Off for
+  // an answer that is never hidden (a user name)
+  property bool secret: true
   property string message: ""
   property bool messageIsError: false
   property bool wrapMessage: false
@@ -64,7 +67,7 @@ Item {
       width: parent.width
       height: root.fieldHeight
       // A password is a secret shown or not
-      sensitive: true
+      sensitive: root.secret
       placeholderText: root.inlineMessage && root._line !== "" ? root._line : root.placeholder
       input.horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
       readOnly: root.readOnly

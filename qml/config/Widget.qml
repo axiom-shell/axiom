@@ -67,6 +67,9 @@ QtObject {
   // Height of a compact control beside a full one (a list row's action, a
   // lane's tool button, a renaming field): a little under `height`
   readonly property int compactHeight: height - px(6)
+  // A switch's or segmented row's track, a chip or button sized to sit in a
+  // full-height line
+  readonly property int slimHeight: height - px(4)
   // Height of chips, pills and small buttons (keybind chips, a
   // notification's actions): the density's, or what a micro line needs
   readonly property int smallHeight: StyleTokens.controlHeight(Math.round(_density.smallHeight * scale), Appearance.fontSizeBy(-3), 0)

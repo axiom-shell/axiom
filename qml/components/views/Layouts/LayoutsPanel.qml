@@ -109,7 +109,7 @@ Item {
         // Scrolling inside past 40 % of the panel's height
         PinnedList {
           Layout.fillWidth: true
-          maxHeight: Math.round(root.height * 0.4)
+          shareOf: root
 
           PagesSection {
             Layout.fillWidth: true
