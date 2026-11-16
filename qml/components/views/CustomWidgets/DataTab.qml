@@ -105,6 +105,7 @@ ColumnLayout {
     Layout.fillWidth: true
 
     FieldGroup {
+      id: scriptGroup
       Layout.fillWidth: true
       title: I18n.tr("Script")
 
@@ -280,6 +281,7 @@ ColumnLayout {
         visible: root.signalsWaybar
         Layout.fillWidth: true
         Layout.topMargin: Style.space2
+        Layout.leftMargin: scriptGroup.inset
         status: "warning"
         text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
       }
@@ -288,6 +290,7 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Actions")
+      head: "section"
       description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
 
       ActionsEditor {}
@@ -296,6 +299,7 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Last output")
+      head: "section"
       description: I18n.tr("The last thing the script printed, as it came.")
 
       StyledText {
@@ -331,6 +335,7 @@ ColumnLayout {
       visible: root.paths.length > 0
       Layout.fillWidth: true
       title: I18n.tr("What's in it")
+      head: "section"
       description: I18n.tr("Each value the output holds, by its path: the module's elements show them. The bar reads Waybar's keys (text, alt, tooltip, class, percentage) and axiom's (icon, value, min, max, unit, subtext, state, badge, urgent, image, items, hidden).")
 
       CustomWidgetPaths {
@@ -343,6 +348,7 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Samples")
+      head: "section"
       description: I18n.tr("A sample per screen is saved in the config with the definition: the Module tab previews each screen with it before the script reaches it.")
 
       // Paste or edit the layer's sample: JSON, checked on Save
@@ -441,6 +447,7 @@ ColumnLayout {
     FieldGroup {
       Layout.fillWidth: true
       title: I18n.tr("Actions run")
+      head: "section"
       description: I18n.tr("The last actions this widget ran, from its buttons, rows, toggles and the test preview. Not saved.")
 
       ActionLog {}

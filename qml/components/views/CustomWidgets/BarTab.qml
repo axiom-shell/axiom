@@ -55,6 +55,7 @@ ColumnLayout {
   FieldGroup {
     Layout.fillWidth: true
     title: I18n.tr("Preview")
+    head: "section"
 
     // Stands in for a bar's background at its default look: the page tone
     Surface {

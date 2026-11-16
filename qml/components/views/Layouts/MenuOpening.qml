@@ -5,7 +5,7 @@ import qs.config
 import qs.services.ui
 import qs.components.reusable
 
-// The top of an edge menu's Opening group: try it on screen, what opens
+// An edge menu's Opening section: try it on screen, what opens
 // it besides hovering its edge, and buttons that add a bar button or a
 // keybind for it
 ColumnLayout {

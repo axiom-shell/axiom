@@ -138,6 +138,7 @@ Item {
     footer: FieldGroup {
       visible: root.problems.length > 0
       title: I18n.tr("Can't save yet")
+      head: "section"
 
       IssueList {
         issues: root.problems.map(text => ({
@@ -149,6 +150,7 @@ Item {
 
     // A Custom page
     FieldGroup {
+      id: pageGroup
       visible: root.isCustom
       title: I18n.tr("Page")
       description: I18n.tr("Its name and icon show in the page navigator.")
@@ -183,12 +185,14 @@ Item {
       SettingsLink {
         Layout.fillWidth: true
         Layout.topMargin: Style.space2
+        Layout.leftMargin: pageGroup.inset
         setting: "Overlay.navigator"
       }
     }
 
     // A tool page
     FieldGroup {
+      id: toolGroup
       visible: root.view !== null && !root.isCustom
       title: I18n.tr("Tool page")
       description: I18n.tr("A page of its own, with no layout to edit. Tools show as icons after your pages in the navigator.")
@@ -212,6 +216,7 @@ Item {
       SettingsLink {
         Layout.fillWidth: true
         Layout.topMargin: Style.space2
+        Layout.leftMargin: toolGroup.inset
         page: root.view?.type ?? ""
       }
     }
@@ -220,6 +225,7 @@ Item {
     FieldGroup {
       visible: root.view !== null
       title: I18n.tr("Opening")
+      head: "section"
       description: I18n.tr("A bar button or keybind that opens the overlay on this page.")
 
       OpenerButtons {
@@ -227,6 +233,18 @@ Item {
         unsavedHint: I18n.tr("Name and save the page to add a bar button or keybind for it.")
         onBarButtonRequested: barIndex => OverlayManager.addBarButton(barIndex, "right")
         onKeybindRequested: OverlayManager.addKeybind()
+      }
+    }
+
+    // An edge menu's opening: try it on screen, what opens it, a bar button
+    // or keybind that does (open.onHover is among the Behaviour fields)
+    FieldGroup {
+      visible: root.menu !== null
+      title: I18n.tr("Opening")
+      head: "section"
+
+      MenuOpening {
+        menu: root.menu
       }
     }
 
@@ -241,19 +259,8 @@ Item {
         required property var modelData
         title: I18n.tr(group.modelData.title)
 
-        Loader {
-          Layout.fillWidth: true
-          active: group.modelData.title === "Opening"
-          visible: active
-          sourceComponent: MenuOpening {
-            menu: root.menu
-          }
-        }
-
         SchemaPropertiesForm {
           Layout.fillWidth: true
-          // Under the Opening group's buttons and list (not a row)
-          Layout.topMargin: group.modelData.title === "Opening" ? Style.space2 : 0
           propertiesSchema: group.modelData.schema
           order: group.modelData.keys
           // The whole menu, so x-showIf sees keys from other groups
@@ -267,6 +274,7 @@ Item {
     // a monitor), whether it shows, and a monitor's own layout added or
     // taken away
     FieldGroup {
+      id: desktopGroup
       visible: root.isDesktop
       title: I18n.tr("Desktop")
       description: root.screenTarget?.description ?? ""
@@ -307,6 +315,7 @@ Item {
       StyledTextButton {
         visible: root.isDesktopMonitor && root.screenLayout === null
         Layout.topMargin: Style.space2
+        Layout.leftMargin: desktopGroup.inset
         iconText: "add"
         text: I18n.tr("Give it its own layout")
         onClicked: DesktopManager.createForTarget()
@@ -315,6 +324,7 @@ Item {
       StyledTextButton {
         visible: root.isDesktopMonitor && root.screenLayout !== null
         Layout.topMargin: Style.space2
+        Layout.leftMargin: desktopGroup.inset
         iconText: "delete"
         text: I18n.tr("Remove its own layout")
         onClicked: DesktopManager.removeTarget()
@@ -327,6 +337,7 @@ Item {
     FieldGroup {
       visible: root.screenLayout !== null && root.screenTarget.canPreview
       title: root.screenTarget?.title ?? ""
+      head: "section"
       description: root.screenTarget?.description ?? ""
 
       StyledTextButton {

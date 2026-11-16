@@ -39,6 +39,9 @@ Surface {
   // card around the cards is itself a Surface), as a FoldingCard is
   property bool pageCard: false
   property string head: "auto"
+  // Whether the group has header extras that show (a host whose extras are
+  // all conditional says so): one that does keeps its head row
+  property bool hasExtras: extras.children.length > 0
   default property alias content: groupColumn.data
 
   // How a flat, titled group's heading reads (`head`, resolved): "block",
@@ -48,7 +51,7 @@ Surface {
       return "section";
     if (root.head !== "auto")
       return root.head;
-    return extras.children.length === 0 && root._firstContent?.leads === true ? "lead" : "block";
+    return !root.hasExtras && root._firstContent?.leads === true ? "lead" : "block";
   }
   readonly property bool _block: root._mode === "block" && !root._boxed
   // The depth a row of the group starts at (FormRow.base), and whether the

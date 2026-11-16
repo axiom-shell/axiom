@@ -53,6 +53,7 @@ ColumnLayout {
   FieldGroup {
     Layout.fillWidth: true
     title: I18n.tr("Import a widget")
+    head: "section"
     description: I18n.tr("Paste a custom widget someone copied with Copy, or a custom/… module from a Waybar config (or the whole config). Nothing is added or run until you press Import.")
 
     StyledTextArea {

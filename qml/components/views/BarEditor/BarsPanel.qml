@@ -120,6 +120,7 @@ Item {
           id: group
           readonly property var modelData: groupLoader.modelData
           title: I18n.tr(group.modelData.title)
+          hasExtras: group.modelData.title === "Surface"
 
           // The Surface group carries the bar's look (BarManager.styleKeys:
           // its style and its Size and Surface settings) to other bars
@@ -167,6 +168,7 @@ Item {
             overflow: "wrap"
             Layout.fillWidth: true
             Layout.topMargin: Style.space2
+            Layout.leftMargin: group.inset
           }
         }
       }
@@ -183,6 +185,7 @@ Item {
 
       sourceComponent: FieldGroup {
         title: I18n.tr("Bar style")
+        head: "section"
 
         BarStyleBlock {
           id: block

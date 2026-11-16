@@ -154,6 +154,7 @@ OnboardingPage {
     // there)
     FieldGroup {
       title: I18n.tr("Input sources")
+      head: "section"
 
       InputSourcesField {
         layoutsOnly: true
