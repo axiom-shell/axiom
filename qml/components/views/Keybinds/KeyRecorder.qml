@@ -16,12 +16,11 @@ import qs.components.content.parts
 // turn over it records a scroll (SUPER + mouse_down), and a modifier let go
 // with no other key between records a tap (Super_L) where the compositor
 // binds one. Esc cancels.
-Surface {
+FieldFrame {
   id: root
 
   required property int bindIndex
   required property string combo
-  property bool invalid: false
   // Shown while it holds no combo
   property string placeholder: I18n.tr("Click to record")
 
@@ -35,18 +34,8 @@ Surface {
   property string tap: ""
   readonly property var parts: KeyNames.split(root.combo)
 
-  tone: "sunken"
-  outlined: true
   implicitHeight: Widget.height
-  border.color: root.recording ? Style.accent : root.invalid ? Style.error : Style.borderStrong
-  border.width: root.recording ? Style.focusWidth : Style.hairline
-  activeFocusOnTab: true
-
-  // Space or Enter record, as a click does (while recording, the catcher
-  // holds the keys)
-  Keys.onSpacePressed: root.toggleRecording()
-  Keys.onReturnPressed: root.toggleRecording()
-  Keys.onEnterPressed: root.toggleRecording()
+  active: root.recording
 
   function toggleRecording() {
     if (root.recording)
@@ -60,10 +49,10 @@ Surface {
     root.tap = "";
     if (root.recording) {
       // Give focus back after only if the recorder had it (a key, not a click)
-      root._returnFocus = root.activeFocus;
+      root._returnFocus = press.activeFocus;
       catcher.forceActiveFocus();
     } else if (catcher.activeFocus && root._returnFocus) {
-      root.forceActiveFocus();
+      press.forceActiveFocus();
     }
   }
   // Recording may start before it's built (a bind added and recorded)
@@ -76,13 +65,12 @@ Surface {
       KeybindManager.editor.stopRecording();
   }
 
-  StateLayer {
-    hovered: area.containsMouse && !root.recording
-    pressed: area.pressed && !root.recording
-  }
-
-  FocusRing {
-    shown: root.activeFocus
+  // The trigger: a click, Space, Return or Enter record (while recording,
+  // the catcher holds the keys)
+  Pressable {
+    id: press
+    tinted: !root.recording
+    onClicked: root.toggleRecording()
   }
 
   RowLayout {
@@ -135,16 +123,10 @@ Surface {
     }
   }
 
-  MouseArea {
-    id: area
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
-    onClicked: root.toggleRecording()
+  // A wheel turn records a scroll
+  WheelHandler {
+    enabled: root.recording
     onWheel: wheel => {
-      wheel.accepted = root.recording;
-      if (!root.recording)
-        return;
       const combo = KeyNames.fromWheel(wheel.angleDelta.x, wheel.angleDelta.y, wheel.modifiers, root.held);
       if (combo !== "")
         KeybindManager.editor.finishRecording(combo);

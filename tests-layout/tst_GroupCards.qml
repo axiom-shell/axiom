@@ -8,7 +8,6 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.views.base
 import qs.components.views.CustomWidgets
-import qs.components.views.Keybinds
 import qs.components.views.Settings
 
 // An editor's group is the settings page's card: an outlined surface box, its
@@ -1018,7 +1017,7 @@ TestCase {
     compare(Math.round(pane.group.height), Math.round(2 * Style.space3 + header.height + Style.space2 + pane.a.height + Style.space2 + pane.b.height));
   }
 
-  // The bind inspector's one title-less card of BindRows
+  // The bind inspector's one title-less card of FieldRows
   Component {
     id: bindsComp
 
@@ -1037,12 +1036,12 @@ TestCase {
           id: group
           title: ""
 
-          BindRow {
+          FieldRow {
             id: keyRow
             first: true
             label: "Key"
           }
-          BindRow {
+          FieldRow {
             id: actionRow
             label: "Action"
           }
@@ -1051,11 +1050,11 @@ TestCase {
     }
   }
 
-  function test_titlelessBindRows_data() {
+  function test_titlelessFieldRows_data() {
     return rows().filter(r => r.w === 340);
   }
 
-  function test_titlelessBindRows(data) {
+  function test_titlelessFieldRows(data) {
     harness.configure(data);
     const pane = createTemporaryObject(bindsComp, root);
     verify(pane);

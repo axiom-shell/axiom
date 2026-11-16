@@ -1016,7 +1016,6 @@
     "Every key can be changed on the overlay's Keybinds page.": "すべてのキーはオーバーレイのキーバインドページで変更できます。",
     "Duplicate this page": "このページを複製",
     "Search actions": "アクションを検索",
-    "No actions match \"{0}\"": "「{0}」に一致するアクションはありません",
     "Search binds by key, action or label": "キー、アクション、ラベルでバインドを検索",
     "Showing {0} of {1}": "{1} 件中 {0} 件を表示",
     "No binds match \"{0}\"": "「{0}」に一致するバインドはありません",

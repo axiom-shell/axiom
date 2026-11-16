@@ -4,14 +4,15 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.services.compositor
-import qs.services.ui
 import qs.components.methods
+import qs.components.forms
 import qs.components.reusable
 
-// One kind of window in a rule (RuleInspector): its conditions, each a row
-// (what to test, how, against what), Add a condition, and the kind's own
-// problems and notes. Every condition is read by index from the draft.
-Surface {
+// One kind of window in a rule (RuleInspector): an ItemBox holding its
+// conditions, each a row (what to test, how, against what), Add a condition,
+// and the kind's own problems and notes. Every condition is read by index
+// from the draft.
+ItemBox {
   id: root
 
   // The kind's place in the rule's windows
@@ -44,58 +45,34 @@ Surface {
     return list;
   }
 
-  Layout.fillWidth: true
-  implicitHeight: column.implicitHeight + Widget.padding * 2
-  tone: "sunken"
+  title: I18n.tr("Kind {0}", root.k + 1)
+  removable: true
+  removeTooltip: I18n.tr("Remove this kind")
+  onRemove: root.editor.removeKind(root.k)
 
-  ColumnLayout {
-    id: column
-    anchors.fill: parent
-    anchors.margins: Widget.padding
-    spacing: Widget.spacing
+  Repeater {
+    model: root.kind.conditions?.length ?? 0
 
-    RowLayout {
-      Layout.fillWidth: true
-
-      StyledLabel {
-        Layout.fillWidth: true
-        text: I18n.tr("Kind {0}", root.k + 1)
-        role: "label"
-      }
-
-      StyledIconButton {
-        iconText: "close"
-        tooltipText: I18n.tr("Remove this kind")
-        kind: "danger"
-        onClicked: root.editor.removeKind(root.k)
-      }
+    delegate: ConditionRow {
+      required property int index
+      c: index
     }
+  }
 
-    Repeater {
-      model: root.kind.conditions?.length ?? 0
+  StyledTextButton {
+    implicitHeight: Widget.height
+    iconText: "add"
+    text: I18n.tr("Add a condition")
+    onClicked: root.editor.addCondition(root.k)
+  }
 
-      delegate: ConditionRow {
-        required property int index
-        Layout.fillWidth: true
-        c: index
-      }
-    }
-
-    StyledTextButton {
-      implicitHeight: Widget.height
-      iconText: "add"
-      text: I18n.tr("Add a condition")
-      onClicked: root.editor.addCondition(root.k)
-    }
-
-    IssueList {
-      issues: root.notes
-    }
+  IssueList {
+    issues: root.notes
   }
 
   // A condition: the window's field, the test, its value, remove; its own
   // problems under it
-  component ConditionRow: ColumnLayout {
+  component ConditionRow: FormRow {
     id: cond
 
     required property int c
@@ -118,93 +95,79 @@ Surface {
           }));
     }
 
-    spacing: Widget.spacing / 2
+    bodyHeight: condColumn.implicitHeight
 
-    RowLayout {
-      Layout.fillWidth: true
+    ColumnLayout {
+      id: condColumn
+      width: parent.width
       spacing: Widget.spacing / 2
 
-      StyledComboEntry {
-        Layout.alignment: Qt.AlignTop
+      RowLayout {
         Layout.fillWidth: true
-        Layout.preferredWidth: Widget.px(150)
-        value: cond.condition.field ?? "appId"
-        options: cond.options("field", field => SchemaLayout.showIfHolds(cond.schema.field["x-enumShowIf"]?.[field], key => CompositorManager.supports[key.slice("/$supports.".length)]))
-        onPicked: value => root.editor.setCondition(root.k, cond.c, "field", value)
-      }
+        spacing: Widget.spacing / 2
 
-      StyledComboEntry {
-        Layout.alignment: Qt.AlignTop
-        Layout.fillWidth: true
-        Layout.preferredWidth: Widget.px(110)
-        value: cond.condition.op ?? "is"
-        options: cond.options("op", op => SchemaLayout.showIfHolds(cond.schema.op["x-enumShowIf"]?.[op], key => cond.condition[key]))
-        onPicked: value => root.editor.setCondition(root.k, cond.c, "op", value)
-      }
-
-      // An installed app: picked by name, its desktop file the value
-      StyledComboEntry {
-        visible: cond.valueShown && cond.condition.field === "app"
-        Layout.alignment: Qt.AlignTop
-        Layout.fillWidth: true
-        Layout.preferredWidth: Widget.px(150)
-        editable: true
-        placeholderText: I18n.tr("Pick an app")
-        search: query => WindowRulesManager.apps(query)
-        options: cond.condition.value ? [WindowRulesManager.appOption(cond.condition.value)] : []
-        value: cond.condition.value ?? ""
-        onPicked: value => root.editor.setCondition(root.k, cond.c, "value", value)
-      }
-
-      StyledTextEntry {
-        id: valueText
-        visible: cond.valueShown && cond.condition.field !== "app"
-        Layout.alignment: Qt.AlignTop
-        Layout.fillWidth: true
-        Layout.preferredWidth: Widget.px(150)
-        readonly property string saved: cond.condition.value ?? ""
-        placeholderText: cond.condition.op === "matches" ? I18n.tr("A pattern") : ({
-            "steamGame": I18n.tr("A number, such as 570"),
-            "process": I18n.tr("A process name, such as steam"),
-            "startedFrom": I18n.tr("A program, such as lutris")
-          })[cond.condition.field] ?? ""
-
-        Component.onCompleted: valueText.input.text = valueText.saved
-        // Released, not committed: a removal has shifted the indexes by the
-        // time this goes (the editor commits first)
-        Component.onDestruction: EditsManager.releaseTyping(valueText)
-        onSavedChanged: {
-          if (!valueText.typed)
-            valueText.input.text = valueText.saved;
-        }
-        onTextEdited: EditsManager.holdTyping(valueText, valueText.Window.window)
-        input.onEditingFinished: valueText.commitTyped()
-
-        function commitTyped() {
-          if (valueText.typed)
-            root.editor.setCondition(root.k, cond.c, "value", valueText.input.text);
-          valueText.typed = false;
-          EditsManager.releaseTyping(valueText);
+        StyledComboEntry {
+          Layout.alignment: Qt.AlignTop
+          Layout.fillWidth: true
+          Layout.preferredWidth: Widget.px(150)
+          value: cond.condition.field ?? "appId"
+          options: cond.options("field", field => SchemaLayout.showIfHolds(cond.schema.field["x-enumShowIf"]?.[field], key => CompositorManager.supports[key.slice("/$supports.".length)]))
+          onPicked: value => root.editor.setCondition(root.k, cond.c, "field", value)
         }
 
-        function discardTyped() {
-          valueText.typed = false;
-          valueText.input.text = valueText.saved;
-          EditsManager.releaseTyping(valueText);
+        StyledComboEntry {
+          Layout.alignment: Qt.AlignTop
+          Layout.fillWidth: true
+          Layout.preferredWidth: Widget.px(110)
+          value: cond.condition.op ?? "is"
+          options: cond.options("op", op => SchemaLayout.showIfHolds(cond.schema.op["x-enumShowIf"]?.[op], key => cond.condition[key]))
+          onPicked: value => root.editor.setCondition(root.k, cond.c, "op", value)
+        }
+
+        // An installed app: picked by name, its desktop file the value
+        StyledComboEntry {
+          visible: cond.valueShown && cond.condition.field === "app"
+          Layout.alignment: Qt.AlignTop
+          Layout.fillWidth: true
+          Layout.preferredWidth: Widget.px(150)
+          editable: true
+          placeholderText: I18n.tr("Pick an app")
+          search: query => WindowRulesManager.apps(query)
+          options: cond.condition.value ? [WindowRulesManager.appOption(cond.condition.value)] : []
+          value: cond.condition.value ?? ""
+          onPicked: value => root.editor.setCondition(root.k, cond.c, "value", value)
+        }
+
+        // Released, not committed, when torn down: a removal has shifted the
+        // indexes by then (the editor commits first)
+        CommitEntry {
+          id: valueText
+          visible: cond.valueShown && cond.condition.field !== "app"
+          Layout.alignment: Qt.AlignTop
+          Layout.fillWidth: true
+          Layout.preferredWidth: Widget.px(150)
+          value: cond.condition.value ?? ""
+          commitOnDestroy: false
+          placeholderText: cond.condition.op === "matches" ? I18n.tr("A pattern") : ({
+              "steamGame": I18n.tr("A number, such as 570"),
+              "process": I18n.tr("A process name, such as steam"),
+              "startedFrom": I18n.tr("A program, such as lutris")
+            })[cond.condition.field] ?? ""
+          onCommitted: text => root.editor.setCondition(root.k, cond.c, "value", text)
+        }
+
+        StyledIconButton {
+          Layout.alignment: Qt.AlignTop
+          iconText: "close"
+          tooltipText: I18n.tr("Remove this condition")
+          kind: "danger"
+          onClicked: root.editor.removeCondition(root.k, cond.c)
         }
       }
 
-      StyledIconButton {
-        Layout.alignment: Qt.AlignTop
-        iconText: "close"
-        tooltipText: I18n.tr("Remove this condition")
-        kind: "danger"
-        onClicked: root.editor.removeCondition(root.k, cond.c)
+      IssueList {
+        issues: cond.issues
       }
-    }
-
-    IssueList {
-      issues: cond.issues
     }
   }
 }

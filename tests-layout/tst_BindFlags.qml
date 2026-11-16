@@ -4,7 +4,7 @@ import QtTest
 import qs.config
 import qs.components.views.Keybinds
 
-// BindFlags: each flag is a boxed form row (padded, at least Style.rowHeight
+// BindFlags: each flag is a SwitchRow (a boxed form row (padded, at least Style.rowHeight
 // tall) with its switch at the row's right end; the old bare rows were only as
 // tall as their text.
 TestCase {
@@ -61,5 +61,18 @@ TestCase {
         verify(rows[i].y >= rows[i - 1].y + rows[i - 1].height, "row " + i + " sits under the one above");
     }
     verify(rows[0].first && !rows[1].first, "only the top row has no divider");
+  }
+
+  // Release needs a capability the stub compositor lacks: that row is greyed
+  // and says why in place of its description (SwitchRow's unavailableReason)
+  function test_unsupported_flag_is_greyed_with_a_reason() {
+    const host = createTemporaryObject(hostComp, root);
+    waitForRendering(host);
+    const rows = root.rows(host, []);
+    compare(rows[0].unavailableReason, "");
+    compare(rows[2].unavailableReason, "Not supported here");
+    verify(!rows[2].enabled, "an unsupported flag that is off can't be switched");
+    verify(rows[2].opacity < 1, "and is greyed");
+    compare(rows[0].opacity, 1);
   }
 }

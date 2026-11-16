@@ -17,14 +17,12 @@ TestCase {
   readonly property var pieces: [
     {
       "file": "qml/components/views/Settings/SettingsSidebar.qml"
-    },
-    {
-      "file": "qml/components/views/Keybinds/ActionPicker.qml"
-    },
-    {
-      "file": "qml/components/views/Keybinds/KeyRecorder.qml"
     }
   ]
+
+  // Their triggers are a Pressable (Tab stop, Space/Return/Enter, FocusRing,
+  // tested in tests-layout/tst_Pieces) inside a FieldFrame
+  readonly property var pressables: ["qml/components/views/Keybinds/ActionPicker.qml", "qml/components/views/Keybinds/KeyRecorder.qml"]
 
   function test_pieces_take_tab_and_keys() {
     for (const piece of root.pieces) {
@@ -33,6 +31,14 @@ TestCase {
       verify(text.includes("Keys.onSpacePressed"), piece.file + " acts on Space");
       verify(text.includes("Keys.onReturnPressed"), piece.file + " acts on Return");
       verify(text.includes("FocusRing {"), piece.file + " draws a focus ring");
+    }
+  }
+
+  function test_field_triggers_are_pressables() {
+    for (const file of root.pressables) {
+      const text = repo.text(file);
+      verify(text.includes("Pressable {"), file + " takes its keys from Pressable");
+      verify(text.includes("FieldFrame {"), file + " is a FieldFrame");
     }
   }
 }

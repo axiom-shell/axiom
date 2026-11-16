@@ -70,8 +70,7 @@ ColumnLayout {
     title: ""
 
     // The key: its caption the row's description
-    BindRow {
-      first: true
+    FieldRow {
       label: I18n.tr("Key")
       description: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
 
@@ -84,7 +83,7 @@ ColumnLayout {
     }
 
     // The action leads; its argument and call sit under it
-    BindRow {
+    FieldRow {
       label: I18n.tr("Action")
 
       ActionPicker {
@@ -117,7 +116,7 @@ ColumnLayout {
     // The id of something defined elsewhere: a dropdown that also takes a
     // new one. It lists the ids of the settings draft, so one typed on another
     // bind appears once the keybinds are saved
-    BindRow {
+    FieldRow {
       level: 1
       shown: root.needed && root.argumentOptions === null && root.argumentRef !== ""
       label: I18n.tr("Argument")
@@ -131,7 +130,7 @@ ColumnLayout {
       }
     }
 
-    BindRow {
+    FieldRow {
       level: 1
       shown: root.needed && root.argumentOptions === null && root.argumentRef === ""
       label: I18n.tr("Argument")
@@ -176,7 +175,7 @@ ColumnLayout {
       }
     }
 
-    BindRow {
+    FieldRow {
       label: I18n.tr("Label")
       description: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
 
@@ -187,7 +186,7 @@ ColumnLayout {
         // The section the action files it under, unless the label names its
         // own ("Section: Label")
         StyledLabel {
-          visible: !BindActions.hasOwnSection(label.input.text)
+          visible: !BindActions.hasOwnSection(label.text)
           text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
           role: "caption"
           tone: "faint"
@@ -219,34 +218,32 @@ ColumnLayout {
     Repeater {
       model: KeybindManager.conditionFields.filter(part => part.multi)
 
-      delegate: FormRow {
+      delegate: FieldRow {
         id: part
         required property var modelData
         readonly property var chosen: root.bind[part.modelData.field] ?? []
         shown: root.bind.action !== "raw"
-        bodyHeight: chipRow.implicitHeight
+        label: part.modelData.title
+        shortControl: true
 
         RowLayout {
-          id: chipRow
-          width: parent.width
+          Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledLabel {
-            text: part.modelData.title
+          Item {
             Layout.fillWidth: true
           }
 
           Repeater {
             model: part.modelData.options
 
-            delegate: SegmentButton {
+            delegate: ToggleChip {
               id: chip
               required property string modelData
-              readonly property bool selected: part.chosen.includes(chip.modelData)
+              checked: part.chosen.includes(chip.modelData)
               text: part.modelData.labels[chip.modelData] ?? chip.modelData
-              active: chip.selected
-              onClicked: {
-                const next = chip.selected ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
+              onToggled: {
+                const next = chip.checked ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
                 KeybindManager.editor.setField(root.bindIndex, part.modelData.field, part.modelData.options.filter(v => next.includes(v)));
               }
             }
@@ -285,36 +282,15 @@ ColumnLayout {
 
   // A text field on one of the bind's fields: it keeps what's being typed,
   // else follows the bind, and commits on Enter, focus loss or the page's
-  // Save (EditsManager.holdTyping shows Save while typed)
-  component BindTextField: StyledTextEntry {
+  // Save (CommitEntry; EditsManager.holdTyping shows Save while typed).
+  // Torn down it only lets go: a move, removal or undo has shifted the index
+  // by then (a selection change commits first: KeybindEditor.selectBind)
+  component BindTextField: CommitEntry {
     id: entry
     required property string field
-    readonly property string saved: root.bind[entry.field] ?? ""
 
-    Component.onCompleted: entry.input.text = entry.saved
-    // Released, not committed: a move, removal or undo has shifted the
-    // index by the time the inspector goes (a selection change commits
-    // first: KeybindEditor.selectBind)
-    Component.onDestruction: EditsManager.releaseTyping(entry)
-    onSavedChanged: {
-      if (!entry.typed)
-        entry.input.text = entry.saved;
-    }
-    onTextEdited: EditsManager.holdTyping(entry, entry.Window.window)
-    input.onEditingFinished: entry.commitTyped()
-
-    function commitTyped() {
-      if (entry.typed)
-        KeybindManager.editor.setField(root.bindIndex, entry.field, entry.input.text);
-      // The text stays: the bind follows it a tick later (ConfigDraft.changed)
-      entry.typed = false;
-      EditsManager.releaseTyping(entry);
-    }
-
-    function discardTyped() {
-      entry.typed = false;
-      entry.input.text = entry.saved;
-      EditsManager.releaseTyping(entry);
-    }
+    value: root.bind[entry.field] ?? ""
+    commitOnDestroy: false
+    onCommitted: text => KeybindManager.editor.setField(root.bindIndex, entry.field, text)
   }
 }
