@@ -24,6 +24,9 @@ FormRow {
   property string description: ""
   // A short control (a dropdown): beside the label on a wide form
   property bool shortControl: false
+  // The label beside the control whatever the width, the control filling the
+  // rest (a row that lines up with a one-line row beside it)
+  property bool besideLabel: false
   default property alias control: controls.data
   // Items under the field, at full width
   property alias below: belowColumn.data
@@ -36,7 +39,7 @@ FormRow {
   hoverable: root.dropdown !== null
   onRowClicked: root.dropdown.toggleFromRow()
 
-  readonly property bool _inline: root.shortControl && root.label !== "" && root.width >= Widget.fieldInlineFrom
+  readonly property bool _inline: root.besideLabel || (root.shortControl && root.label !== "" && root.width >= Widget.fieldInlineFrom)
 
   bodyHeight: column.implicitHeight
   // The tint and the row click cover the field, not what's under it
@@ -63,8 +66,8 @@ FormRow {
 
       ColumnLayout {
         id: controls
-        Layout.fillWidth: !root._inline
-        Layout.preferredWidth: root._inline ? Widget.fieldControlWidth(root.width) : -1
+        Layout.fillWidth: !root._inline || root.besideLabel
+        Layout.preferredWidth: root._inline && !root.besideLabel ? Widget.fieldControlWidth(root.width) : -1
         Layout.alignment: Qt.AlignVCenter
         spacing: Widget.spacing / 2
       }

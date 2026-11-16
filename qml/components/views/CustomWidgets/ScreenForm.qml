@@ -100,12 +100,21 @@ ColumnLayout {
         Layout.fillWidth: true
         title: I18n.tr("Screen")
         headerGap: 0
-        headerExtras: StyledIconButton {
+        // Adds no height of its own (the button is taller than the heading):
+        // centred on the title line, so both headers are as tall
+        headerExtras: Item {
+          implicitWidth: removeButton.implicitWidth
+          implicitHeight: 0
           Layout.alignment: Qt.AlignVCenter
-          kind: "danger"
-          iconText: "delete"
-          tooltipText: I18n.tr("Remove this screen")
-          onClicked: root.editor.removeView(root.editor.viewIndex)
+
+          StyledIconButton {
+            id: removeButton
+            anchors.verticalCenter: parent.verticalCenter
+            kind: "danger"
+            iconText: "delete"
+            tooltipText: I18n.tr("Remove this screen")
+            onClicked: root.editor.removeView(root.editor.viewIndex)
+          }
         }
 
         ColumnLayout {
@@ -114,7 +123,7 @@ ColumnLayout {
 
           InspectorRow {
             first: true
-            shortControl: true
+            besideLabel: true
             label: I18n.tr("Name")
 
             StyledTextEntry {
@@ -211,7 +220,7 @@ ColumnLayout {
 
           InspectorRow {
             shown: !screen.noKey && screen.listed
-            shortControl: true
+            besideLabel: true
             label: I18n.tr("Values")
 
             StyledTextEntry {
