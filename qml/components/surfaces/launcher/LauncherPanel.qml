@@ -206,7 +206,7 @@ FocusScope {
       font.family: Appearance.fontFamily
       font.pixelSize: Style.typeHeadline
       selectByMouse: true
-      selectedTextColor: Style.onAccent
+      selectedTextColor: Style.inkAccent.text
       selectionColor: Style.accent
       placeholderText: LauncherConfig.commands ? I18n.tr("Search apps, or type / for commands") : I18n.tr("Search apps")
       placeholderTextColor: Style.textFaint

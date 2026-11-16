@@ -83,7 +83,7 @@ Each is a folder of `qml/components/surfaces/osd/systems/` (Engine › A system'
 
 #### Battery
 `charger` and `battery` (its `shows` setting, default both). Hidden with no battery.
-- `charger` (`BatteryManager.onBattery`): unusual on battery; plugging in is its card (`onAdd: "card"`: the level, Charging / Fully charged / Plugged in, and the time to full), unplugging the icon; its card folds back as it's unplugged (`retractsCardWhenOff`).
+- `charger` (`BatteryManager.runningOnBattery`): unusual on battery; plugging in is its card (`onAdd: "card"`: the level, Charging / Fully charged / Plugged in, and the time to full), unplugging the icon; its card folds back as it's unplugged (`retractsCardWhenOff`).
 - `battery` (an `event` key: `BatteryManager.levelEvent` (`level`, `kind` the same, what `alertKinds: ["low", "critical"]` reads, so a drop is an alert: it opens the OSD while a window rule pauses OSDs), set by `_sayLevel` as `level` turns `low` / `critical` at `Battery.lowThreshold` / `criticalThreshold`, once settled, never at the start, its `serial` the `seq`): its card, the level, Battery low or Battery critically low, and the time left; critical's on the warning container (`tone: "warning"`). The tile is lit and unusual while low or critical (`battery_low`, `battery_alert` when critical, else `battery_full` unlit). A critical battery also sends an urgent notification beside its card (`NotificationManager.announce`: `urgency` `critical`), unless `Battery.notify` is off. Its card goes where Battery shows `battery` (Where events go).
 
 #### PowerProfile

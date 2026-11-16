@@ -78,7 +78,7 @@ Item {
     anchors.left: box.left
     anchors.right: box.right
     text: root.windowData?.title || root.windowData?.appId || ""
-    textColor: root.selected ? Style.onAccentContainer : Style.textMuted
+    textColor: root.selected ? Style.inkAccentContainer.text : Style.textMuted
     role: "caption"
     overflow: "line"
     horizontalAlignment: Text.AlignHCenter

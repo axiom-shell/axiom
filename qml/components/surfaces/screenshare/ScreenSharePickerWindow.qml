@@ -313,7 +313,7 @@ PanelWindow {
             anchors.centerIn: parent
             text: "check"
             role: "caption"
-            textColor: Style.onAccent
+            textColor: Style.inkAccent.text
           }
         }
       }

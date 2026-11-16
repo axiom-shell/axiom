@@ -329,7 +329,7 @@ Panel {
                     horizontalAlignment: Text.AlignHCenter
                     text: root.deviceIcon(deviceRow.node, false, 1)
                     size: "md"
-                    textColor: deviceRow.selected ? Style.onAccentContainer : Style.textMuted
+                    textColor: deviceRow.selected ? Style.inkAccentContainer.text : Style.textMuted
                   }
 
                   StyledLabel {
@@ -337,14 +337,14 @@ Panel {
                     text: root.deviceName(deviceRow.node)
                     overflow: "line"
                     role: "caption"
-                    textColor: deviceRow.selected ? Style.onAccentContainer : Style.textMuted
+                    textColor: deviceRow.selected ? Style.inkAccentContainer.text : Style.textMuted
                   }
 
                   // Always laid out, so selecting a row doesn't reflow it
                   StyledIcon {
                     opacity: deviceRow.selected ? 1 : 0
                     text: "check"
-                    textColor: Style.onAccentContainer
+                    textColor: Style.inkAccentContainer.text
                   }
                 }
               }

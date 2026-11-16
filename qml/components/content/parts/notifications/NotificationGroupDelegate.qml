@@ -81,16 +81,25 @@ Item {
   Repeater {
     model: root.stackDepth
 
-    Surface {
+    Item {
       required property int index
-      tone: root.quiet ? "sunken" : "raised"
-      outlined: true
       z: -1 - index
-      anchors.horizontalCenter: parent.horizontalCenter
-      width: card.width - 16 * (index + 1)
-      height: Widget.smallHeight
-      y: card.height - height + root.stackStep * (index + 1)
-      radius: Style.radius
+      clip: true
+      // What peeks below the card (or the one in front): the part behind
+      // it is never drawn, so a translucent card doesn't show it
+      y: card.height + root.stackStep * index
+      width: parent.width
+      height: root.stackStep
+
+      Surface {
+        tone: root.quiet ? "sunken" : "raised"
+        outlined: true
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: card.width - 16 * (parent.index + 1)
+        height: Widget.smallHeight
+        y: root.stackStep - height
+        radius: Style.radius
+      }
     }
   }
 

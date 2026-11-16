@@ -39,6 +39,9 @@ running anything:
     while no monitor is connected), but a line marked
     `// allowed: <reason>` (a file name, a window that must exist with no
     monitor)
+  - no property is named on<X> beside a property, signal or function <x>
+    (its file's, or a Qt type's it inherits: width, a window's screen, …): Qt never
+    gives it its value
   - every bar widget is data on BarWidget: rules T1-T8 of
     bar_widget_template (the root, no colour resolved, no opacity fade, no
     base output written, no unused or unknown colour field), its exceptions
@@ -786,6 +789,21 @@ def main():
                 errors.append(f"{path}:{n}: Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name)) (or mark a use that must stay `// allowed: <reason>`)")
             if path != "qml/config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
                 errors.append(f"{path}:{n}: Quickshell.screens: build on General.outputs or General.screensFor(target) (or mark a window that must exist with no monitor `// allowed: <reason>`)")
+
+    # A property named on<X> next to a property, signal or function <x> (in
+    # its file, or inherited from the Qt types the shell builds on) never
+    # takes its value: it reads the type's default (qml-pitfalls.md)
+    windows = {"PanelWindow", "Window", "FloatingWindow", "PopupWindow", "WlrLayershell"}
+    inherited = {"width", "height", "visible", "color", "enabled", "focus", "opacity", "scale", "rotation", "clip", "parent", "state", "text", "x", "y", "z"}
+    for path, text in sources.items():
+        if path.startswith("tests/"):
+            continue
+        for m in re.finditer(r"^\s*(?:readonly\s+|required\s+)?property\s+[\w.<>]+\s+on([A-Z]\w*)", text, re.M):
+            low = m.group(1)[0].lower() + m.group(1)[1:]
+            local = re.search(r"(?:\bproperty\s+[\w.<>]+\s+|\bsignal\s+|\bfunction\s+)" + low + r"\b", text)
+            root_type = re.search(r"^([A-Z]\w*)\s*\{", text, re.M)
+            if local or low in inherited or (low == "screen" and root_type and root_type.group(1) in windows):
+                errors.append(f"{path}:{text.count(chr(10), 0, m.start()) + 1}: property on{m.group(1)} beside `{low}`: a QML on<X> property next to <x> never takes its value; name it otherwise")
 
     # One way to run an action: the UI runs a catalogue action through
     # ActionsManager.run (docs/dev/core/actions.md), never its service's

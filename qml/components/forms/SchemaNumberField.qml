@@ -272,7 +272,7 @@ ColumnLayout {
       selectByMouse: true
       cursorDelegate: TextCursor {}
       selectionColor: Style.accent
-      selectedTextColor: Style.onAccent
+      selectedTextColor: Style.inkAccent.text
       inputMethodHints: Qt.ImhFormattedNumbersOnly
       validator: RegularExpressionValidator {
         regularExpression: /-?\d*/

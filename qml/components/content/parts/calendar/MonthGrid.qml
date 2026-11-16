@@ -255,7 +255,7 @@ Item {
                 id: numberText
                 anchors.centerIn: parent
                 text: cell.modelData.day
-                textColor: cell.modelData.isToday ? Style.onAccent : cell.selected ? Style.onAccentContainer : cell.modelData.inMonth ? Style.text : Style.textDisabled
+                textColor: cell.modelData.isToday ? Style.inkAccent.text : cell.selected ? Style.inkAccentContainer.text : cell.modelData.inMonth ? Style.text : Style.textDisabled
                 role: "caption"
                 font.weight: cell.modelData.isToday ? Style.weightStrong : Style.roleCaption.weight
               }
@@ -276,7 +276,7 @@ Item {
                   width: Math.max(Widget.px(3), Appearance.fontSize * 0.28)
                   height: width
                   radius: width / 2
-                  color: cell.modelData.isToday && !root.titles ? Style.onAccent : Style.resolve(modelData)
+                  color: cell.modelData.isToday && !root.titles ? Style.inkAccent.text : Style.resolve(modelData)
                 }
               }
             }
@@ -318,7 +318,7 @@ Item {
                     text: chip.event ? (chip.event.allDay || CalendarEvents.spanOn(chip.event, cell.key) !== "single" && CalendarEvents.spanOn(chip.event, cell.key) !== "starts" ? "" : I18n.formatDate(new Date(chip.event.start), CalendarConfig.timeFormat) + " ") + (chip.event.title || I18n.tr("(No title)")) : ""
                     textFormat: Text.PlainText
                     role: "micro"
-                    textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.onAccentContainer : Style.text
+                    textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.inkAccentContainer.text : Style.text
                   }
                 }
               }

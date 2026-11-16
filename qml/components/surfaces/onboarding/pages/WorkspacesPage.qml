@@ -109,7 +109,7 @@ OnboardingPage {
                 visible: root.layout !== "grid" && parent.width > Appearance.fontSize
                 text: String(parent.index + 1)
                 textSize: Math.max(Style.typeMicro, parent.width * 0.45) // fitted: the number fills its square
-                textColor: parent.active ? Style.onAccent : Style.inkHighest.text
+                textColor: parent.active ? Style.inkAccent.text : Style.inkHighest.text
               }
             }
           }

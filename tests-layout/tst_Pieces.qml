@@ -1672,4 +1672,79 @@ TestCase {
     });
     compare(fixed.activeFocusOnTab, false);
   }
+
+  // Style holds each role as its derivation made it: a property named on<X>
+  // beside <x> never takes its value (qml-pitfalls.md), reading black
+  function test_styleColoursMatchRoles() {
+    harness.configure({
+      theme: "rose-pine"
+    });
+    const bad = [];
+    for (const k of Object.keys(Style._roles)) {
+      const v = String(Style._roles[k]);
+      if (Style[k] === undefined || !/^#[0-9a-fA-F]{6,8}$/.test(v))
+        continue;
+      if (String(Style[k]) !== v)
+        bad.push(k + ": " + String(Style[k]) + " vs " + v);
+    }
+    compare(bad.join(", "), "");
+    harness.configure({});
+  }
+
+  Component {
+    id: volumeBarComp
+
+    StyledVolumeBar {
+      isMuted: true
+      showPercent: true
+      volumeLevel: 0.5
+    }
+  }
+
+  // The muted highlight is a step lighter than the card, over the whole bar
+  function test_volumeBarMuted() {
+    harness.configure({
+      theme: "rose-pine"
+    });
+    for (const o of [Qt.Vertical, Qt.Horizontal]) {
+      const bar = createTemporaryObject(volumeBarComp, root, {
+        orientation: o
+      });
+      verify(bar);
+      wait(Appearance.animNormal + 200);
+      const bg = bar.children.find(c => c.tone === "highest");
+      verify(bg, "a highest-tone background");
+      compare(String(bg.color), String(Style.fillHighest));
+      compare(bg.width, bar.width);
+      compare(bg.height, bar.height);
+      if (o === Qt.Horizontal)
+        compare(bar.implicitWidth, Widget.px(160));
+      compare(bar.implicitHeight, Widget.px(o === Qt.Vertical ? 160 : 48));
+    }
+    harness.configure({});
+  }
+
+  // The knob is the foreground in dark and light themes alike
+  function test_sliderKnob_data() {
+    return [
+      {
+        tag: "dark",
+        theme: "catppuccin-mocha"
+      },
+      {
+        tag: "light",
+        theme: "catppuccin-latte"
+      }
+    ];
+  }
+
+  function test_sliderKnob(data) {
+    harness.configure({
+      theme: data.theme
+    });
+    const slider = createTemporaryObject(hSliderComp, root);
+    verify(slider);
+    compare(String(slider.handleColor), String(Style.text));
+    harness.configure({});
+  }
 }

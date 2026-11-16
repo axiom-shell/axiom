@@ -113,7 +113,7 @@ Surface {
       font.family: Appearance.fontFamily
       font.pixelSize: Style.typeBody
       selectByMouse: true
-      selectedTextColor: Style.onAccent
+      selectedTextColor: Style.inkAccent.text
       selectionColor: Style.accent
       wrapMode: root.expandable ? TextEdit.Wrap : TextEdit.NoWrap
       // Past `maxLines`, the line being typed stays in view

@@ -47,11 +47,11 @@ Item {
     }
   }
 
-  Rectangle {
+  // The muted highlight, a step lighter than the card
+  Surface {
     id: background
     anchors.fill: parent
-    radius: Style.radius
-    color: Style.surfaceSunken
+    tone: "highest"
     opacity: root.isMuted ? 1 : 0
 
     Glide on opacity {

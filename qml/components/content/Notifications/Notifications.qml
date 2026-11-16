@@ -31,6 +31,14 @@ Panel {
     label: I18n.tr(NotificationManager.dnd ? "muted" : "notifications")
   }
 
+  // The Quiet block flips with the panel (Panel.flips): a nested layout
+  // flips with its own LayoutOrder, so from a bottom bar its separator stays
+  // between it and the alerts
+  property LayoutOrder _quietOrder: LayoutOrder {
+    layout: quietBlock
+    reversed: root.flips && root.growsUp
+  }
+
   readonly property int maxListHeight: Widget.px(440)
   // One notification's card (a one-line summary and body, no actions:
   // NotificationGroupDelegate's padding, app header and entry), the height

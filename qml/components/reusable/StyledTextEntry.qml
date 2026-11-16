@@ -101,7 +101,7 @@ Surface {
     font.family: Appearance.fontFamily
     font.pixelSize: Style.typeBody
     selectByMouse: true
-    selectedTextColor: Style.onAccent
+    selectedTextColor: Style.inkAccent.text
     selectionColor: Style.accent
     wrapMode: Text.Wrap
 

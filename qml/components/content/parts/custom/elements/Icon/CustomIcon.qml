@@ -57,7 +57,7 @@ CustomElementBase {
     anchors.verticalCenter: root.themed ? picture.top : glyph.top
     text: root.badge
     color: Style.error
-    textColor: Style.onError
+    textColor: Style.inkError.text
     shown: root.badge !== "" && root.badge !== "0"
   }
 }

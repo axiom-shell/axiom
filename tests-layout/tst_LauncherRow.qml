@@ -86,6 +86,34 @@ TestCase {
     verify(title.implicitWidth < 200);
     verify(title.width > 0, "title width " + title.width);
     verify(!title.truncated, "title truncated at width " + title.width);
+    // The title starts where a row with a second line starts it, whether or not it has one
+    const ref = makeRow({
+      title: "Ref",
+      kind: "app",
+      subtitle: "x"
+    });
+    const refTitle = findLabel(ref, "Ref");
+    verify(refTitle);
+    const at = title.mapToItem(row, 0, 0).x;
+    const refAt = refTitle.mapToItem(ref, 0, 0).x;
+    verify(Math.abs(at - refAt) < 0.5, "title x " + at + " vs " + refAt);
+  }
+
+  function test_currentTitleReadsOnItsFill() {
+    harness.configure({
+      theme: "rose-pine"
+    });
+    const row = makeRow({
+      title: "Zen Browser",
+      kind: "app"
+    });
+    row.current = true;
+    wait(Appearance.animFast + 200);
+    const title = findLabel(row, "Zen Browser");
+    verify(title);
+    compare(String(title.color), String(Style.inkAccentContainer.text));
+    verify(String(title.color) !== "#000000", "title is black");
+    harness.configure({});
   }
 
   function test_titleShowsWhenAssignedLate() {

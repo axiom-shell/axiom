@@ -403,7 +403,7 @@ DropdownSurface {
             text: row.fileIsDir ? "folder" : "description"
             fill: row.fileIsDir ? 1 : 0
             size: "sm"
-            textColor: row.confirming ? Style.onErrorContainer : row.isCurrent ? Style.onAccentContainer : row.fileIsDir ? Style.accent : Style.textMuted
+            textColor: row.confirming ? Style.inkErrorContainer.text : row.isCurrent ? Style.inkAccentContainer.text : row.fileIsDir ? Style.accent : Style.textMuted
           }
 
           StyledLabel {
@@ -411,7 +411,7 @@ DropdownSurface {
             Layout.fillWidth: true
             text: row.confirming ? (NotesManager.canTrash ? I18n.tr("Move {0} to the trash?", row.fileName) : I18n.tr("Delete {0} for good?", row.fileName)) : row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName)
             role: "caption"
-            textColor: row.confirming ? Style.onErrorContainer : row.isCurrent ? Style.onAccentContainer : Style.text
+            textColor: row.confirming ? Style.inkErrorContainer.text : row.isCurrent ? Style.inkAccentContainer.text : Style.text
             overflow: "line"
           }
 
@@ -447,7 +447,7 @@ DropdownSurface {
             visible: row.confirming
             size: Widget.iconButton
             iconText: "check"
-            iconColor: Style.onErrorContainer
+            iconColor: Style.inkErrorContainer.text
             iconSize: Style.iconSm
             tooltipText: I18n.tr("Delete")
             onClicked: root.remove(row.path)
@@ -456,7 +456,7 @@ DropdownSurface {
             visible: row.confirming
             size: Widget.iconButton
             iconText: "close"
-            iconColor: Style.onErrorContainer
+            iconColor: Style.inkErrorContainer.text
             iconSize: Style.iconSm
             tooltipText: I18n.tr("Cancel")
             onClicked: root.confirming = ""

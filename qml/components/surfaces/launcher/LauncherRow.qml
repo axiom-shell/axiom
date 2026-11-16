@@ -45,7 +45,7 @@ Item {
   readonly property bool _image: _source !== ""
   // An emoji is its own picture: bigger, on no tile
   readonly property bool _emoji: modelData.kind === "emoji"
-  readonly property color _titleColor: current ? Style.onAccentContainer : Style.text
+  readonly property color _titleColor: current ? Style.inkAccentContainer.text : Style.text
 
   // Rows are reused as the results change: one showing a different result
   // than before dips and comes back, icon and text together. Not on its
@@ -150,6 +150,10 @@ Item {
 
     ColumnLayout {
       Layout.fillWidth: true
+      // The title caps its own width so the usage follows it; without this a
+      // row with no usage and no subtitle caps the whole column to the title,
+      // and the row spreads that column to the middle
+      Layout.maximumWidth: Number.POSITIVE_INFINITY
       Layout.alignment: Qt.AlignVCenter
       spacing: 1
 

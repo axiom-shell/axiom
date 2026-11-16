@@ -81,7 +81,7 @@ Item {
 
   // What its glyph and label draw in: on the accent's on-colour while lit,
   // else the text colour for the one that just changed, the faint one
-  readonly property color _ink: tile.lit ? Style.onAccent : tile.current ? Style.text : Style.textFaint
+  readonly property color _ink: tile.lit ? Style.inkAccent.text : tile.current ? Style.text : Style.textFaint
 
   SlashedIcon {
     anchors.centerIn: parent

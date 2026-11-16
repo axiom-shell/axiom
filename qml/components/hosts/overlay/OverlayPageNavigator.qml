@@ -71,7 +71,7 @@ Surface {
   // Only the current tab keeps its name when all of them don't fit
   readonly property bool compact: root.maxWidth > 0 && root.chrome + measureRow.fullWidth > root.maxWidth
   // What reads on the current page's pill
-  readonly property color currentInk: Style.onAccentContainer
+  readonly property color currentInk: Style.inkAccentContainer.text
 
   width: row.implicitWidth + (root.inset + root.endInset) * 2
   height: OverlayConfig.navigatorHeight

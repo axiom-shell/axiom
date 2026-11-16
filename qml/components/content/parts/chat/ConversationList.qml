@@ -137,7 +137,7 @@ DropdownSurface {
                   Layout.fillWidth: true
                   text: item.conversation.title || I18n.tr("Untitled")
                   role: "caption"
-                  textColor: item.current ? Style.onAccentContainer : Style.text
+                  textColor: item.current ? Style.inkAccentContainer.text : Style.text
                   overflow: "line"
                 }
 

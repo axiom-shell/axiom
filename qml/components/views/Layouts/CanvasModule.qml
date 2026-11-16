@@ -204,7 +204,7 @@ Rectangle {
       anchors.centerIn: parent
       readonly property var place: root.dragLayer?.landingPlace ?? root.place
       text: root.dragLayer?.sizeLabel(sizeText.place.w, sizeText.place.h) ?? ""
-      textColor: Style.onAccent
+      textColor: Style.inkAccent.text
       role: "micro"
     }
   }
