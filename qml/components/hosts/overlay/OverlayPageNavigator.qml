@@ -150,6 +150,7 @@ Surface {
       StateLayer {
         radius: root.innerRadius
         hovered: backArea.containsMouse
+        pressed: backArea.pressed
       }
 
       Row {
@@ -261,6 +262,7 @@ Surface {
               StateLayer {
                 radius: root.innerRadius
                 hovered: !tab.isCurrent && tabArea.containsMouse
+                pressed: tabArea.pressed
               }
 
               Row {

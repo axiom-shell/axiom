@@ -182,11 +182,8 @@ ReservedAreaWindow {
     transform: Translate {
       id: slideTranslate
       y: root.slideOffset
-      Behavior on y {
-        NumberAnimation {
-          duration: Appearance.animSlow
-          easing.type: Easing.InOutQuad
-        }
+      Glide on y {
+        duration: Appearance.animSlow
       }
     }
 

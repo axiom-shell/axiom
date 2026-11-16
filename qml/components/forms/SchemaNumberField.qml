@@ -120,8 +120,12 @@ ColumnLayout {
   // The label, then the stepper beside it, or the slider: beside it on a
   // wide form (Widget.fieldInlineFrom), under it on a narrow one
   GridLayout {
+    id: head
     Layout.fillWidth: true
-    columns: root.isSlider && !root.inline ? 1 : 2
+    // Under its label when the stepper at its widest leaves the label less than
+    // its least column (as SchemaToggle.stacked): implicit widths only
+    readonly property bool stepperStacked: !root.isSlider && control.implicitWidth > root.width - Widget.textPx(160)
+    columns: (root.isSlider && !root.inline) || stepperStacked ? 1 : 2
     rowSpacing: Widget.spacing
     columnSpacing: Widget.spacing * 2
 
@@ -137,8 +141,9 @@ ColumnLayout {
     // Centred on the label and description beside it; the stepper sits
     // right, the slider fills (or takes the field's control width inline)
     Loader {
+      id: control
       sourceComponent: root.isSlider ? sliderControl : stepperControl
-      Layout.alignment: root.isSlider ? Qt.AlignVCenter : Qt.AlignRight | Qt.AlignVCenter
+      Layout.alignment: root.isSlider ? Qt.AlignVCenter : (head.stepperStacked ? Qt.AlignLeft : Qt.AlignRight) | Qt.AlignVCenter
       Layout.fillWidth: root.isSlider && !root.inline
       Layout.preferredWidth: root.isSlider && root.inline ? Widget.fieldControlWidth(root.width) : -1
     }
@@ -247,7 +252,7 @@ ColumnLayout {
     tone: "sunken"
     outlined: true
     Layout.fillWidth: false
-    readonly property int unitGap: root.unitText === "" ? 0 : 3
+    readonly property real unitGap: root.unitText === "" ? 0 : Widget.spacing / 2
     Layout.preferredWidth: widest.advanceWidth + unitLabel.implicitWidth + box.unitGap + Widget.padding * 2
     border.width: box.outlined ? (input.activeFocus ? Style.focusWidth : Style.hairline) : 0
     border.color: input.activeFocus ? Style.accent : Style.borderStrong
@@ -265,6 +270,7 @@ ColumnLayout {
       font.family: Appearance.fontFamily
       font.pixelSize: Style.typeBody
       selectByMouse: true
+      cursorDelegate: TextCursor {}
       selectionColor: Style.accent
       selectedTextColor: Style.onAccent
       inputMethodHints: Qt.ImhFormattedNumbersOnly

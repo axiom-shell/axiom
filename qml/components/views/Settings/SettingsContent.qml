@@ -232,7 +232,7 @@ Item {
       property: "y"
       to: 0
       duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
+      easing.type: Appearance.easing
     }
 
     NumberAnimation {
@@ -241,7 +241,7 @@ Item {
       from: 0
       to: 1
       duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
+      easing.type: Appearance.easing
     }
   }
 

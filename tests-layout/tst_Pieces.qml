@@ -884,6 +884,37 @@ TestCase {
     compare(box.implicitHeight, stepper.controlHeight);
   }
 
+  // A stepper that would leave its label less than its least column goes
+  // under the label (N12), the label keeping one line
+  function test_number_field_stepper_stacks_under_a_narrow_label() {
+    harness.configure({});
+    const field = createTemporaryObject(numberComp, root, {
+      "width": 245,
+      "label": "Interval",
+      "minimum": 500,
+      "maximum": 86400000,
+      "step": 500,
+      "mode": "stepper"
+    });
+    waitForRendering(field);
+    const head = findAll(field, it => it.stepperStacked !== undefined)[0];
+    verify(head.stepperStacked);
+    const label = findAll(field, it => it.text === "Interval")[0];
+    const stepper = findAll(field, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
+    verify(stepper.mapToItem(field, 0, 0).y >= label.mapToItem(field, 0, label.height).y);
+    verify(label.height < label.font.pixelSize * 2);
+    const wide = createTemporaryObject(numberComp, root, {
+      "width": 700,
+      "label": "Interval",
+      "minimum": 500,
+      "maximum": 86400000,
+      "step": 500,
+      "mode": "stepper"
+    });
+    waitForRendering(wide);
+    verify(!findAll(wide, it => it.stepperStacked !== undefined)[0].stepperStacked);
+  }
+
   // A row tints unless `tinted` is off; its click area shows only while hoverable
   function test_form_row_tints_unless_untinted() {
     harness.configure({});

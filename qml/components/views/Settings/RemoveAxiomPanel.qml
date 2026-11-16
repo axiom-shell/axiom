@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.session
@@ -69,7 +70,7 @@ ColumnLayout {
 
   // What an action does, worded here from its step and kind (the daemon
   // sends those and the data, never a sentence)
-  function actionText(action) {
+  function actionText(action, path) {
     switch (action.step) {
     case "managed":
       return I18n.tr("Give back the config axiom manages");
@@ -80,13 +81,13 @@ ColumnLayout {
       case "dir":
         return I18n.tr("Remove the folder axiom made");
       case "hookup":
-        return I18n.tr("Take axiom's lines out of");
+        return I18n.tr("Take axiom's lines out of {0}", path);
       case "gsetting":
         return I18n.tr("Put back the setting");
       case "ini-groups":
-        return I18n.tr("Put back the keys in");
+        return I18n.tr("Put back the keys in {0}", path);
       case "marked-block":
-        return I18n.tr("Remove axiom's block from");
+        return I18n.tr("Remove axiom's block from {0}", path);
       case "fcitx-config":
         return I18n.tr("Put back the fcitx5 option");
       case "fcitx-group":
@@ -99,7 +100,7 @@ ColumnLayout {
         return I18n.tr("Leave the record of axiom's changes: it can't be read, so nothing is undone from it");
       }
     case "lines":
-      return I18n.tr("Remove axiom's line from");
+      return I18n.tr("Remove axiom's line from {0}", path);
     case "session":
       return I18n.tr("Undo what an unclean stop of axiom left");
     case "files":
@@ -240,6 +241,7 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.preferredHeight: Math.min(list.contentHeight, Widget.px(280))
     clip: true
+    ScrollIndicator.vertical: StyledScrollIndicator {}
     spacing: Widget.spacing / 2
     model: root.entries
     delegate: Loader {
@@ -264,7 +266,7 @@ ColumnLayout {
           width: list.width
 
           StyledText {
-            text: root.actionText(entry.modelData.action) + (entry.modelData.action.path ? " " + Paths.shortenHome(entry.modelData.action.path) : "")
+            text: root.actionText(entry.modelData.action, entry.modelData.action.path ? Paths.shortenHome(entry.modelData.action.path) : "")
             overflow: "line"
             elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
             Layout.fillWidth: true

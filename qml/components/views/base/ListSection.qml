@@ -52,10 +52,10 @@ ColumnLayout {
       anchors.fill: parent
       spacing: Widget.spacing
 
-      StyledIcon {
+      FoldChevron {
         visible: root.collapsible
-        text: root.open ? "expand_more" : "chevron_right"
-        tone: "muted"
+        open: root.open
+        hot: headerArea.containsMouse
       }
 
       StyledLabel {

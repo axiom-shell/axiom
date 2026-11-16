@@ -63,7 +63,7 @@ FieldGroup {
     id: picture
     property string source
     property int sourceWidth: Widget.px(640)
-    radius: Style.radius
+    radius: Style.concentric(Style.radius, Widget.padding)
     color: Style.surfaceHighest
 
     StyledIcon {
@@ -321,7 +321,7 @@ FieldGroup {
 
           StateLayer {
             hovered: tileMouse.containsMouse
-            radius: tile.radius
+            pressed: tileMouse.pressed
           }
 
           ColumnLayout {

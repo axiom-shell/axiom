@@ -131,12 +131,7 @@ FieldGroup {
           radius: 0
           outlined: false
           opacity: pictureArea.containsMouse ? 1 : 0
-          Behavior on opacity {
-            NumberAnimation {
-              duration: Appearance.animFast
-              easing.type: Appearance.easing
-            }
-          }
+          Glide on opacity {}
 
           StyledIcon {
             anchors.centerIn: parent

@@ -4199,16 +4199,12 @@
     "Give back the config axiom manages": "",
     "Delete the file axiom made": "",
     "Remove the folder axiom made": "",
-    "Take axiom's lines out of": "",
     "Put back the setting": "",
-    "Put back the keys in": "",
-    "Remove axiom's block from": "",
     "Put back the fcitx5 option": "",
     "Put back the fcitx5 input methods": "",
     "Put back the default app": "",
     "Rebuild once the files are out": "",
     "Leave the record of axiom's changes: it can't be read, so nothing is undone from it": "",
-    "Remove axiom's line from": "",
     "Undo what an unclean stop of axiom left": "",
     "Restart the screen-share portal (a share running ends)": "",
     "Remove axiom's {0} items from the keyring": "",
@@ -4394,6 +4390,10 @@
     "How it looks on the bar, with the last output.": "",
     "An empty module: drag elements here from the left, or click one to add it where there's room.": "",
     "Rule": "",
-    "Nothing to edit yet": ""
+    "Nothing to edit yet": "",
+    "Take axiom's lines out of {0}": "",
+    "Put back the keys in {0}": "",
+    "Remove axiom's block from {0}": "",
+    "Remove axiom's line from {0}": ""
   }
 }

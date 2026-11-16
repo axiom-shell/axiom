@@ -24,8 +24,6 @@ Surface {
   implicitHeight: row.implicitHeight + Widget.smallPadding * 2
 
   StateLayer {
-    anchors.fill: parent
-    radius: Style.radius
     hovered: mouse.containsMouse
     pressed: mouse.pressed
   }
