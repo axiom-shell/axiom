@@ -68,6 +68,31 @@ TestCase {
     }
   }
 
+  // A dropdown row (the Button element's Color and Click rows) at a narrow
+  // pane: the control on the label's line, one control line tall (FieldFit)
+  Component {
+    id: shortComp
+
+    InspectorRow {
+      width: Widget.textPx(300)
+      shortControl: true
+      first: true
+      label: "Color"
+
+      StyledComboEntry {
+        objectName: "combo"
+        Layout.fillWidth: true
+        options: [
+          {
+            "value": "",
+            "label": "Auto"
+          }
+        ]
+        value: ""
+      }
+    }
+  }
+
   function initTestCase() {
     harness.configure({});
   }
@@ -98,5 +123,35 @@ TestCase {
     verify(entry.width > row.width / 2, "the field fills the row: " + entry.width + " of " + row.width);
     verify(row.height <= Widget.height + Style.rowPadding * 2 + 1, "one control line: " + row.height);
     compare(row.height, key.height, "as tall as the Key/Test row");
+  }
+
+  function test_shortControl_keeps_the_label_line_data() {
+    return test_besideLabelFills_data();
+  }
+
+  function test_shortControl_keeps_the_label_line(data) {
+    harness.configure({
+      scale: data.scale
+    });
+    const row = createTemporaryObject(shortComp, root);
+    verify(row);
+    wait(50);
+    waitForRendering(row);
+    const combo = row.control[0];
+    const label = findText(row, "Color");
+    const centre = item => item.mapToItem(row, 0, item.height / 2).y;
+    verify(Math.abs(centre(combo) - centre(label)) <= 1, "on the label's line");
+    compare(row.height, Widget.height + Style.rowPadding * 2, "one control line");
+  }
+
+  function findText(item, text) {
+    if (item.text === text && item.visible)
+      return item;
+    for (const child of item.children) {
+      const found = findText(child, text);
+      if (found)
+        return found;
+    }
+    return null;
   }
 }
