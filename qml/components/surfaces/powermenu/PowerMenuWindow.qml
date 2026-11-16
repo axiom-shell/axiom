@@ -153,13 +153,7 @@ PanelWindow {
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? cardBlur : null)
-  BoxBlurRegion {
-    id: cardBlur
-    target: card
-    opacity: card.opacity
-    moving: card.reveal
-  }
+    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? card.blur : null)
 
   Item {
     anchors.fill: parent

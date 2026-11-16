@@ -184,10 +184,11 @@ Item {
     }
   }
 
-  // The bar the boxes sit on
+  // The bar the boxes sit on: concentric with its tile (Style.radius, the
+  // preview inset by Widget.smallPadding)
   Rectangle {
     anchors.fill: parent
-    radius: Style.radius
+    radius: Style.concentric(Style.radius, Widget.smallPadding)
     color: root._barConfig.palette.background
   }
 

@@ -66,6 +66,19 @@ TestCase {
     tryCompare(card, "reveal", 0);
   }
 
+  function test_blur_region_follows_the_card() {
+    harness.configure({});
+    const card = createTemporaryObject(cardComp, root, {
+      "shown": true
+    });
+    tryCompare(card, "reveal", 1);
+    compare(card.blur.target, card, "the card is the region's box");
+    tryCompare(card.blur, "width", 300);
+    compare(card.blur.height, 200);
+    card.shown = false;
+    tryCompare(card.blur, "width", 0, 2000, "empty once faded out");
+  }
+
   function test_registers_its_window() {
     harness.configure({});
     const win = Qt.createQmlObject("import QtQuick; QtObject {}", root);

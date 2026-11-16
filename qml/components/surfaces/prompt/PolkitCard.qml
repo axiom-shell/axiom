@@ -90,7 +90,7 @@ ColumnLayout {
   }
 
   // What is asking
-  PromptHeader {
+  ModalHeader {
     Layout.fillWidth: true
     icon: "admin_panel_settings"
     iconSource: root.iconName !== "" ? Quickshell.iconPath(root.iconName, true) : ""
@@ -207,7 +207,7 @@ ColumnLayout {
     onAccepted: root.submit()
   }
 
-  PromptFooter {
+  ModalFooter {
     Layout.fillWidth: true
     hints: [
       {

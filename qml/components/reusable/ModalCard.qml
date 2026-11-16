@@ -13,7 +13,10 @@ import qs.services.ui
 // `asking` draws the accent border (a question waiting for an answer). Give
 // it the `window` it sits in and the window is a modal while it exists:
 // every focus grab lets input through to it (SurfaceManager.registerModal).
-// A host's blur region follows `opacity` and `reveal`.
+// `blur` is the card's blur region (following `opacity` and `reveal`), for
+// a window to hand to BackgroundEffect.blurRegion where the compositor
+// blurs only what a window asks (attached only there: attached at all, it
+// claims the window's blur, and Hyprland's layer rules no longer blur it).
 Surface {
   id: root
 
@@ -27,6 +30,12 @@ Surface {
   readonly property int padding: Style.space5
   // 0 → 1 while it slides in (a blur region's `moving`)
   property real reveal: root.shown ? 1 : 0
+  // The card as a blur region
+  readonly property BoxBlurRegion blur: BoxBlurRegion {
+    target: root
+    opacity: root.opacity
+    moving: root.reveal
+  }
   // Where the content goes, inset by `padding`
   default property alias slot: body.data
 

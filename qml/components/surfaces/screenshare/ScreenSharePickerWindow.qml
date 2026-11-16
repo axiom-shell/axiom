@@ -7,7 +7,6 @@ import Quickshell.Widgets
 
 import qs.components.methods
 import qs.components.reusable
-import qs.components.surfaces.prompt
 import qs.components.surfaces.workspaces
 import qs.config
 import qs.services.apps
@@ -396,7 +395,7 @@ PanelWindow {
       height: parent.height
       spacing: card.padding
 
-      PromptHeader {
+      ModalHeader {
         Layout.fillWidth: true
         icon: "screen_share"
         title: I18n.tr("Share your screen")
@@ -500,7 +499,7 @@ PanelWindow {
         }
       }
 
-      PromptFooter {
+      ModalFooter {
         Layout.fillWidth: true
         hints: [
           {

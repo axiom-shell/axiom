@@ -9,7 +9,7 @@
 ### What reads what
 | Piece | What | Reads |
 |---|---|---|
-| `methods/Tone` | the colour math: `mix`, `over`, `alpha`, `faded`, `toward`, `luminance`, `contrast`, `nudged`, `apart`, `step`, `readableOn`, `bestOn`, `isDark`, `reaches`, `alphaFloor`, the contrast constants. Its `*Rgb` twins work on plain `[r, g, b]` arrays. | nothing (pure) |
+| `methods/Tone` | the colour math: `mix`, `over`, `alpha`, `cleared`, `faded`, `toward`, `luminance`, `contrast`, `nudged`, `apart`, `step`, `readableOn`, `bestOn`, `isDark`, `reaches`, `alphaFloor`, the contrast constants. Its `*Rgb` twins work on plain `[r, g, b]` arrays. | nothing (pure) |
 | `methods/StyleTokens` | `theme(themeData, defaults)` resolves the semantic map as `Theme` does; `derive(theme)` is every colour role, one object; `preview(theme)` is `derive` cut to a theme tile's nine roles; `concentric`, `textPx`, `roleSize`, `reversedRamp` | `Tone` |
 | `qml/config/Style` | `_roles: _derive(ThemeManager.currentTheme, ThemeManager.defaults)` (`StyleTokens.derive` of `StyleTokens.theme`, timed and logged), then typed properties | `ThemeManager`, `Theme` (pickers' passthrough, not read yet), `Appearance`, `Widget`, `StyleTokens`, `Tone`, `StyleInk`, `StyleTextRole` and nothing else (`test_scripts.py` › `StyleLayer` holds it): it is built on the lock screen and in the greeter |
 | `StyleInk`, `StyleTextRole` | typed value holders Style instantiates once each | nothing |

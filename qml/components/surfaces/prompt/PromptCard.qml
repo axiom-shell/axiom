@@ -128,7 +128,7 @@ FocusScope {
     spacing: Style.space5
 
     // What is asking
-    PromptHeader {
+    ModalHeader {
       Layout.fillWidth: true
       icon: root.request?.icon || "info"
       title: root.request?.title ?? ""
@@ -205,7 +205,7 @@ FocusScope {
       tone: "error"
     }
 
-    PromptFooter {
+    ModalFooter {
       Layout.fillWidth: true
       hints: (root.primary !== null ? [
           {
