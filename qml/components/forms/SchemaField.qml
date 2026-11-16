@@ -800,14 +800,14 @@ Loader {
         spacing: Widget.spacing / 2
         Repeater {
           model: root._chipOptions
-          SegmentButton {
+          ToggleChip {
             id: chip
             required property string modelData
             readonly property bool selected: (root.current ?? []).includes(chip.modelData)
             iconText: root._chipIcons[chip.modelData] ?? ""
             text: root.optionLabels[chip.modelData] ?? I18n.tr(chip.modelData)
-            active: chip.selected
-            onClicked: {
+            checked: chip.selected
+            onToggled: {
               const current = root.current ?? [];
               const next = chip.selected ? current.filter(v => v !== chip.modelData) : current.concat([chip.modelData]);
               root.commit(root._chipOptions.filter(v => next.includes(v)));

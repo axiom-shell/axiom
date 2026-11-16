@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
-// The track and sliding thumb of SegmentRow and StyledToggle (private to
-// them): equal segments, `count` of them, the thumb under segment `index`.
-// The hosts lay their labels over it and draw no track of their own. The
+// The track and sliding thumb of SegmentRow (private to it): equal segments,
+// `count` of them, the thumb under segment `index`. The row lays its buttons
+// over it and draws no track of its own. The
 // track is the root Surface, so a host may set its `radius`; the thumb
 // follows concentrically.
 Surface {

@@ -142,7 +142,7 @@ FoldingCard {
   }
 
   // One tab per entry
-  EntryTabs {
+  SegmentTabs {
     Layout.fillWidth: true
     count: root.entries.length
     current: root.current

@@ -6,13 +6,16 @@ import qs.config
 import qs.components.methods
 
 // A button with a text label and an optional Material Symbols icon, drawn
-// from its `kind`, with a state layer for hover and press and an optional
-// tooltip. The label is one line and never elided unless `overflow: "line"`.
+// from its `kind`, with a state layer for hover and press, a Tab stop with
+// the focus ring and an optional tooltip. The label is one line and never
+// elided unless `overflow: "line"`.
 Surface {
   id: root
 
   // -- Signals --
   signal clicked
+  // A right click (with `acceptedButtons` including it): where, in the button
+  signal menuRequested(real x, real y)
 
   // -- Public API --
   property alias text: label.text
@@ -34,6 +37,10 @@ Surface {
   property alias overflow: label.overflow
   // The label's text role (SegmentButton's inactive segments read `body`)
   property alias labelRole: label.role
+  // A Tab stop with the focus ring (Space, Return and Enter click); a button
+  // among others that share one stop (a SegmentRow's) turns it off
+  property alias tabStop: press.tabStop
+  property alias acceptedButtons: press.acceptedButtons
 
   // -- Configurable Appearance --
   property int textPadding: Math.round(Widget.smallPadding * 4 / 3)
@@ -83,11 +90,11 @@ Surface {
   // A capped button may go under its label, which then elides
   Layout.minimumWidth: root.overflow === "line" ? 0 : root.implicitWidth
 
-  StateLayer {
-    hovered: mouseArea.containsMouse
-    pressed: mouseArea.pressed
+  Pressable {
+    id: press
     onAccent: root.ownFill || root.kind === "primary" || root.kind === "dangerPrimary"
-    radius: root.radius
+    onClicked: root.clicked()
+    onMenuRequested: (x, y) => root.menuRequested(x, y)
   }
 
   RowLayout {
@@ -117,16 +124,8 @@ Surface {
     }
   }
 
-  MouseArea {
-    id: mouseArea
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
-    onClicked: root.clicked()
-  }
-
   LazyLoader {
-    active: mouseArea.containsMouse && root.tooltipText !== ""
+    active: press.hovered && root.tooltipText !== ""
     StyledToolTip {
       target: root
       text: root.tooltipText

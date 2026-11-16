@@ -989,10 +989,12 @@ TestCase {
     const spy = createTemporaryObject(pickSpyComp, root, {
       "target": toggle
     });
-    mouseClick(toggle, toggle._inset + toggle._segment * 0.5, toggle.height / 2);
+    const inset = Widget.px(2);
+    const segment = (toggle.width - inset * 2) / data.values.length;
+    mouseClick(toggle, inset + segment * 0.5, toggle.height / 2);
     compare(spy.count, 0);
     for (let i = 1; i < data.values.length; i++) {
-      mouseClick(toggle, toggle._inset + toggle._segment * (i + 0.5), toggle.height / 2);
+      mouseClick(toggle, inset + segment * (i + 0.5), toggle.height / 2);
       compare(spy.count, i);
       compare(spy.signalArguments[i - 1][0], data.values[i]);
     }
@@ -1632,32 +1634,6 @@ TestCase {
     id: foldChevronComp
 
     FoldChevron {}
-  }
-
-  Component {
-    id: entryTabsComp
-
-    EntryTabs {
-      count: 3
-      labelAt: i => ["first", "second", "third"][i]
-    }
-  }
-
-  // The entry tabs are default-height segment buttons (not shortened) showing their label whole
-  function test_entry_tabs_default_height() {
-    const tabs = createTemporaryObject(entryTabsComp, root, {
-      "width": 400
-    });
-    waitForRendering(tabs);
-    const buttons = Array.prototype.filter.call(tabs.children, c => c instanceof SegmentButton);
-    compare(buttons.length, 3);
-    // the button's own height (no -4 override): at least a field's, all alike
-    for (const b of buttons) {
-      verify(b.height >= Widget.height, `tab ${b.text} is ${b.height}, under ${Widget.height}`);
-      compare(b.height, buttons[0].height);
-    }
-    for (const t of harness.texts(tabs))
-      verify(!t.truncated, `"${t.text}" is elided`);
   }
 
   // A foldable header is a Tab stop: Tab focuses it, Space and Enter fold it; a fixed one is not

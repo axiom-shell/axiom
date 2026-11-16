@@ -204,7 +204,7 @@ FoldingCard {
   }
 
   // One tab per account
-  EntryTabs {
+  SegmentTabs {
     visible: root.accounts.length > 0
     Layout.fillWidth: true
     count: root.accounts.length
