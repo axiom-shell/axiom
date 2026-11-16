@@ -12,6 +12,10 @@ ScrollView {
 
   property int contentPadding: Widget.padding
   property bool showScrollBar: false
+  // Room past the content on the left and right, inside the clip, for a
+  // row's hover tint. The host sets the view `bleed` further out on both
+  // sides (negative margins), so the content stays where it was.
+  property int bleed: 0
 
   contentWidth: availableWidth
   // Rows scrolled out of view stay inside it, never over what's around it
@@ -19,10 +23,10 @@ ScrollView {
 
   topPadding: contentPadding
   bottomPadding: contentPadding
-  leftPadding: contentPadding
+  leftPadding: contentPadding + bleed
   // Room for the bar beside the content while it shows, however little
   // padding the content has
-  rightPadding: showScrollBar ? contentPadding + Math.max(contentPadding, Widget.px(12)) : contentPadding
+  rightPadding: (showScrollBar ? contentPadding + Math.max(contentPadding, Widget.px(12)) : contentPadding) + bleed
 
   ScrollBar.vertical.policy: ScrollBar.AsNeeded
   ScrollBar.horizontal.policy: ScrollBar.AlwaysOff

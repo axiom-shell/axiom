@@ -28,16 +28,7 @@ Rectangle {
   signal clicked
   signal opened
 
-  // The fill while active, and the hover / selected outline
-  readonly property color _activeColor: root.activeTone === "error" ? Style.error : Style.accent
   readonly property bool hot: area.containsMouse || wellArea.containsMouse
-  readonly property string _containerTone: root.activeTone + "Container"
-  readonly property color _containerFill: root.activeTone === "error" ? Style.errorContainer : Style.accentContainer
-  // Glyph on the well: highest at rest, the container's ink hovered, the
-  // fill's ink while active
-  readonly property color contentColor: root.active ? Style.inkOf(root.activeTone).icon : root.hot ? Style.inkOf(root._containerTone).icon : Style.inkHighest.icon
-  readonly property color labelColor: root.active ? Style.inkOf(root.activeTone).text : root.hot ? Style.inkOf(root._containerTone).text : Style.inkSurface.text
-  readonly property color mutedColor: root.active ? Style.inkOf(root.activeTone).muted : root.hot ? Style.inkOf(root._containerTone).muted : Style.inkSurface.muted
   readonly property real _wellSize: Math.max(0, Math.min(root.height - Widget.spacing * 2, Appearance.fontSize * 2.6))
   // Room for the name beside the well
   readonly property bool _textShown: root.width - root._wellSize - Widget.spacing * 3 >= Appearance.fontSize * 3
@@ -49,9 +40,16 @@ Rectangle {
   readonly property int _nameLines: Math.max(1, Math.min(2, Math.floor((root._room - (root._statusShown ? statusMetrics.height : 0)) / nameMetrics.height)))
   readonly property int _statusLines: Math.max(1, Math.min(3 - nameText.lineCount, Math.floor((root._room - nameText.lineCount * nameMetrics.height) / statusMetrics.height)))
 
+  ActionTone {
+    id: actionTone
+    activeTone: root.activeTone
+    active: root.active
+    hot: root.hot
+  }
+
   radius: Style.radius
-  color: root.active ? root._activeColor : Style.fill
-  border.color: root.active || root.hot ? root._activeColor : Style.borderSubtle
+  color: root.active ? actionTone.activeColor : Style.fill
+  border.color: root.active || root.hot ? actionTone.activeColor : Style.borderSubtle
   border.width: Style.hairline
   clip: true
 
@@ -84,15 +82,15 @@ Rectangle {
       Layout.preferredHeight: root._wellSize
       Layout.alignment: Qt.AlignVCenter
       Layout.fillWidth: !root._textShown
-      radius: Math.min(Widget.radius * 1.5, width / 2)
-      color: root.active ? Style.stateOnAccentHover : wellArea.containsMouse ? root._containerFill : Style.surfaceHighest
+      radius: actionTone.wellRadius(width)
+      color: root.active ? Style.stateOnAccentHover : wellArea.containsMouse ? actionTone.containerFill : Style.surfaceHighest
 
       ColorGlide on color {}
 
       StyledIcon {
         anchors.centerIn: parent
         text: root.icon
-        textColor: root.contentColor
+        textColor: actionTone.contentColor
         textSize: Math.max(Style.iconXs, Math.min(well.width, well.height) * 0.5) // fitted: the glyph is half its well
         fill: root.hot || root.active ? 1 : 0
       }
@@ -120,7 +118,7 @@ Rectangle {
         role: "label"
         overflow: "wrap"
         maxLines: root._nameLines
-        textColor: root.labelColor
+        textColor: actionTone.labelColor
       }
       StyledLabel {
         id: statusText
@@ -130,7 +128,7 @@ Rectangle {
         role: "caption"
         overflow: "wrap"
         maxLines: root._statusLines
-        textColor: root.mutedColor
+        textColor: actionTone.mutedColor
       }
     }
 
@@ -146,7 +144,7 @@ Rectangle {
     StyledIcon {
       visible: root.opens && root._textShown
       text: "chevron_right"
-      textColor: root.mutedColor
+      textColor: actionTone.mutedColor
     }
   }
 

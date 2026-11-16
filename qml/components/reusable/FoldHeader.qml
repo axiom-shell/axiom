@@ -82,14 +82,11 @@ Item {
         Layout.alignment: Qt.AlignVCenter
       }
 
-      StyledIcon {
+      FoldChevron {
         visible: root.foldable
-        text: "expand_more"
-        tone: headerArea.containsMouse ? "accent" : "muted"
-        rotation: root.collapsed ? -90 : 0
+        open: !root.collapsed
+        hot: headerArea.containsMouse
         Layout.alignment: Qt.AlignVCenter
-
-        Glide on rotation {}
       }
     }
   }

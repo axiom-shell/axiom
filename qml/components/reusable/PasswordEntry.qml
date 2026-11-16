@@ -151,19 +151,19 @@ Item {
     NumberAnimation {
       target: body
       property: "x"
-      to: 20
+      to: Widget.px(20)
       duration: Appearance.animFast
     }
     NumberAnimation {
       target: body
       property: "x"
-      to: -20
+      to: Widget.px(-20)
       duration: Appearance.animFast
     }
     NumberAnimation {
       target: body
       property: "x"
-      to: 20
+      to: Widget.px(20)
       duration: Appearance.animFast
     }
     NumberAnimation {

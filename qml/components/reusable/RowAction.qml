@@ -6,7 +6,7 @@ import qs.config
 // actions (hovered, focused or selected). `lit` keeps it shown in the
 // primary kind (the state it toggles is on); `danger` hovers in the error
 // container.
-SquareIconButton {
+StyledIconButton {
   id: root
 
   required property ListEntryRow row

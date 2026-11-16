@@ -35,7 +35,8 @@ StyledTextButton {
   }
 
   Layout.fillWidth: true
-  Layout.preferredHeight: Widget.height
+  Layout.preferredHeight: root.inRow ? -1 : Widget.height
+  Layout.fillHeight: root.inRow
   // plus the icon and StyledTextButton's content spacing (`Widget.spacing / 2`) beside the label
   implicitWidth: Math.ceil(widest.advanceWidth) + root.textPadding * 2 + (root.iconText !== "" ? Math.ceil(iconMetrics.advanceWidth) + (root.text !== "" ? Widget.spacing / 2 : 0) : 0)
   enabled: available

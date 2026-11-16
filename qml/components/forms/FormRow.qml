@@ -105,6 +105,7 @@ Item {
     active: root.tinted || root.hoverable
     sourceComponent: Item {
       StateLayer {
+        objectName: "rowTint"
         bleed: Style.rowBleed
         hovered: root.hovered
         pressed: click.pressed

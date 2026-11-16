@@ -961,10 +961,11 @@ TestCase {
     bar.currentIndex = 3;
     tryVerify(() => flick.contentX > 0);
     const tab = bar._current;
-    verify(tab.x - flick.contentX >= -0.5 && tab.x + tab.width - flick.contentX <= flick.width + 0.5, "the current tab is in view");
+    const inStrip = tab.mapToItem(flick.contentItem, 0, 0).x - flick.contentX;
+    verify(inStrip >= -0.5 && inStrip + tab.width <= flick.width + 0.5, "the current tab is in view");
     const mark = find(bar, it => it.radius !== undefined && it.height === Widget.px(2) && it.visible, [])[0];
     verify(mark);
-    tryVerify(() => Math.abs(mark.x + mark.width / 2 - (tab.x + tab.width / 2)) < 1);
+    tryVerify(() => Math.abs(mark.x + mark.width / 2 - (tab.mapToItem(flick.contentItem, 0, 0).x + tab.width / 2)) < 1);
     bar.width = Widget.textPx(2000);
     waitForRendering(bar);
     fuzzyCompare(bar._current.width, bar._current.implicitWidth, 1, "a tab keeps its own width");

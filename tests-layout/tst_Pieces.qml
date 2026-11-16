@@ -1496,4 +1496,104 @@ TestCase {
     });
     compare(first._animate, Appearance.animations);
   }
+
+  // A StateLayer rounds as its parent; with none to follow it takes the inner radius
+  function test_state_layer_radius() {
+    harness.configure({});
+    const rect = createTemporaryObject(stateLayerComp, root, {
+      "radius": 13
+    });
+    compare(findAll(rect, it => it.objectName === "layer")[0].radius, 13);
+    const plain = createTemporaryObject(plainLayerComp, root);
+    compare(findAll(plain, it => it.objectName === "layer")[0].radius, Style.radiusInner);
+    const chip = createTemporaryObject(toggleChipComp, root);
+    const layer = findAll(chip, it => it.hovered !== undefined && it.onAccent !== undefined && it.parent === chip)[0];
+    verify(layer !== undefined, "the chip's StateLayer");
+    compare(layer.radius, chip.height / 2);
+  }
+
+  Component {
+    id: stateLayerComp
+
+    Rectangle {
+      width: 40
+      height: 40
+
+      StateLayer {
+        objectName: "layer"
+      }
+    }
+  }
+
+  Component {
+    id: plainLayerComp
+
+    Item {
+      width: 40
+      height: 40
+
+      StateLayer {
+        objectName: "layer"
+      }
+    }
+  }
+
+  Component {
+    id: toggleChipComp
+
+    ToggleChip {
+      text: "chip"
+    }
+  }
+
+  function test_segment_row_matches_toggle_height() {
+    harness.configure({});
+    const row = createTemporaryObject(segmentComp, root, {
+      "labels": ["a", "b"]
+    });
+    const toggle = createTemporaryObject(toggleComp, root);
+    row.width = Math.max(row.implicitWidth, 200);
+    waitForRendering(row);
+    compare(row.height, toggle.height);
+  }
+
+  // A scrollable tab bar's focus ring stays inside the strip for the first and last tab
+  function test_scrollable_tab_ring_inside_strip() {
+    harness.configure({});
+    const bar = createTemporaryObject(tabBarComp, root, {
+      "width": Widget.textPx(160),
+      "scrollable": true
+    });
+    waitForRendering(bar);
+    const strip = bar.children.find(c => c.flickableDirection !== undefined);
+    for (const index of [0, 2]) {
+      bar.currentIndex = index;
+      waitForRendering(bar);
+      tryVerify(() => strip.contentX >= 0);
+      const tabs = findAll(strip.contentItem, it => it.checked !== undefined && it.text !== undefined);
+      const tab = tabs.find(t => t.text === ["First", "Second", "Third"][index]);
+      verify(tab !== undefined);
+      const ring = findAll(tab, it => it.shown !== undefined && it._host !== undefined)[0];
+      verify(ring !== undefined, "the tab's FocusRing");
+      ring.shown = true;
+      const tl = ring.mapToItem(strip, 0, 0);
+      verify(tl.x >= 0 && tl.y >= 0, `tab ${index} ring starts inside: ${tl.x},${tl.y}`);
+      verify(tl.x + ring.width <= strip.width + 0.5, `tab ${index} ring ends inside (${tl.x + ring.width} of ${strip.width})`);
+      verify(tl.y + ring.height <= strip.height + 0.5, `tab ${index} ring is inside vertically`);
+    }
+  }
+
+  function test_fold_chevron_rotation() {
+    const chev = createTemporaryObject(foldChevronComp, root);
+    chev.open = true;
+    tryCompare(chev, "rotation", 0);
+    chev.open = false;
+    tryCompare(chev, "rotation", -90);
+  }
+
+  Component {
+    id: foldChevronComp
+
+    FoldChevron {}
+  }
 }

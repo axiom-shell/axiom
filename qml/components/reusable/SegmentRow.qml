@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
+import qs.config
+
 // A single choice as one control: SegmentButtons on a shared track
 // (SegmentTrack), the chosen one's thumb sliding from button to button. The
 // buttons go straight inside (a Repeater of them is fine); each draws only
@@ -15,7 +17,7 @@ Item {
   property alias spacing: row.spacing
 
   implicitWidth: row.implicitWidth + track.inset * 2
-  implicitHeight: row.implicitHeight + track.inset * 2
+  implicitHeight: Widget.height - Widget.px(4)
   Layout.minimumWidth: root.implicitWidth
 
   // The visible buttons in order, and the chosen one's place among them:
