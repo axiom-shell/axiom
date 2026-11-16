@@ -422,6 +422,12 @@ QtObject {
     return opaque || root.edgeAlpha >= 1 ? color : Tone.alpha(color, Qt.color(color).a * root.edgeAlpha);
   }
 
+  // The smallest square a small icon button is hit at: the small control height, or what the glyph
+  // needs with a gap each side
+  function minHit(icon: real): real {
+    return Math.max(Widget.smallHeight, icon + Widget.spacing * 2);
+  }
+
   // ---- alphas ----
 
   // a whole disabled control

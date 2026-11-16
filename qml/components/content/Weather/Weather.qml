@@ -112,14 +112,14 @@ Card {
           visible: list.bars
           Layout.preferredWidth: list.width * 0.35
           Layout.preferredHeight: Widget.px(4)
-          radius: 2
+          radius: height / 2
           color: Style.surfaceSunken
           Rectangle {
             readonly property real span: Math.max(1, root.weekMax - root.weekMin)
             x: parent.width * (day.low - root.weekMin) / span
             width: Math.max(parent.height, parent.width * (day.high - day.low) / span)
             height: parent.height
-            radius: 2
+            radius: height / 2
             gradient: Gradient {
               orientation: Gradient.Horizontal
               GradientStop {

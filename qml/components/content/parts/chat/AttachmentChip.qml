@@ -54,7 +54,7 @@ ClippingRectangle {
     anchors.right: parent.right
     anchors.margins: Widget.spacing
     // Never under what its glyph needs
-    size: Math.max(Widget.smallHeight, Style.iconXs + Widget.spacing * 2)
+    size: Style.minHit(Style.iconXs)
     borderRadius: size / 2
     iconText: "close"
     iconSize: Style.iconXs
