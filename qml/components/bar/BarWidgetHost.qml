@@ -378,9 +378,9 @@ Item {
   ShapeOverlay {
     shown: root.editorOutlined && !root.hasBackground
     bar: root.barConfig
-    fill: BarWidgetStyle.faded(root.barConfig.palette.highlight, 0.15) // style-exempt: the bar's palette (D-24)
+    fill: BarWidgetStyle.selectionFill(root.barConfig.palette) // style-exempt: the bar's palette (D-24)
     stroke: root.barConfig.palette.highlight
-    strokeWidth: 2
+    strokeWidth: BarWidgetStyle.selectionStroke // style-exempt: the bar's palette (D-24)
     glides: false
   }
 }

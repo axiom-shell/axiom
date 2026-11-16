@@ -35,6 +35,15 @@ TestCase {
     close(Tone.over(Qt.rgba(1, 1, 1, 0.5), "#000000"), Qt.rgba(0.5, 0.5, 0.5, 1), "half");
   }
 
+  function test_selection_fill_is_the_highlight_at_fifteen_percent() {
+    const fill = Qt.color(BarWidgetStyle.selectionFill({
+      highlight: "#ff0000"
+    }));
+    fuzzyCompare(fill.a, 0.15, 0.01, "tint");
+    compare(fill.r, 1);
+    compare(BarWidgetStyle.selectionStroke, 2);
+  }
+
   function test_faded_keeps_a_clear_color_clear() {
     fuzzyCompare(Qt.color(BarWidgetStyle.faded("#80ff0000", 0.5)).a, 0.25, 0.01, "from its own alpha");
     compare(Qt.color(BarWidgetStyle.faded("transparent", 0.5)).a, 0, "clear stays clear");

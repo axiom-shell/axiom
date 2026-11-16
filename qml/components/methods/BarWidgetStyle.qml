@@ -632,6 +632,14 @@ QtObject {
     return Qt.alpha(color, 1);
   }
 
+  // The bar editor's highlight of the selected widget: the palette's
+  // highlight, tinted, and its outline's width. Fixed pixels: an editor
+  // marker that doesn't scale with the bar's or the widget's size
+  function selectionFill(palette) {
+    return root.faded(palette.highlight, 0.15);
+  }
+  readonly property int selectionStroke: 2
+
   // `color` at `alpha` of its own opacity: a clear color (a widget with no
   // color of its own, Workspaces' box with its background off) stays
   // clear, where Qt.alpha would make it black at that opacity

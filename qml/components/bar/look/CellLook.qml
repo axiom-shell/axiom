@@ -50,6 +50,11 @@ QtObject {
   readonly property bool slides: _flags.slides
   readonly property bool clearsActive: _flags.clearsActive
 
+  // The sizes a cell draws and measures its label and its symbols at
+  // (WorkspaceCells), from the bar's text size
+  readonly property real labelSize: barConfig ? WorkspaceCells.labelSize(barConfig.fontSize) : Appearance.fontSize
+  readonly property int symbolSize: barConfig ? WorkspaceCells.symbolSize(barConfig.fontSize) : Appearance.fontSize
+
   // A cell's corners (BarsConfig.cellRadius; a popout's, from the bar's
   // payload) and its length at rest (BarCells.cellLength)
   property real radius: barConfig ? BarsConfig.cellRadius(barConfig, thickness, inset) : 0
