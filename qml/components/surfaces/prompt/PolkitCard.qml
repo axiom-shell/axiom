@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 
 import qs.components.reusable
 import qs.config
@@ -17,7 +16,6 @@ ColumnLayout {
 
   // The window shows it, on this screen: it may take the keyboard
   property bool live: false
-  property int pad: Widget.px(18)
 
   readonly property var flow: PolkitManager.flow
 
@@ -29,9 +27,9 @@ ColumnLayout {
   property bool checking: false
   // Briefly after it opens the field takes no keys, so typing meant for
   // another window doesn't land in it
-  property bool settled: false
+  readonly property bool settled: settle.settled
 
-  spacing: root.pad
+  spacing: Style.space5
 
   onFlowChanged: root._take()
   Component.onCompleted: root._take()
@@ -44,15 +42,12 @@ ColumnLayout {
     root.actionId = root.flow.actionId;
     root.iconName = root.flow.iconName;
     entry.input.text = "";
-    root.settled = false;
-    settle.restart();
+    settle.rearm();
     Qt.callLater(root.takeFocus);
   }
 
-  Timer {
+  PromptSettle {
     id: settle
-    interval: 400
-    onTriggered: root.settled = true
   }
 
   function takeFocus() {
@@ -95,47 +90,12 @@ ColumnLayout {
   }
 
   // What is asking
-  RowLayout {
+  PromptHeader {
     Layout.fillWidth: true
-    spacing: root.pad
-
-    Item {
-      Layout.alignment: Qt.AlignTop
-      implicitWidth: Widget.px(40)
-      implicitHeight: Widget.px(40)
-
-      IconImage {
-        id: appIcon
-        anchors.fill: parent
-        source: root.iconName !== "" ? Quickshell.iconPath(root.iconName, true) : ""
-        visible: source.toString() !== ""
-      }
-
-      StyledIcon {
-        anchors.centerIn: parent
-        visible: !appIcon.visible
-        text: "admin_panel_settings"
-        size: "xl"
-        tone: "accent"
-      }
-    }
-
-    ColumnLayout {
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
-
-      StyledText {
-        Layout.fillWidth: true
-        text: I18n.tr("Authentication required")
-        role: "headline"
-        overflow: "wrap"
-      }
-
-      StyledText {
-        Layout.fillWidth: true
-        text: root.message
-      }
-    }
+    icon: "admin_panel_settings"
+    iconSource: root.iconName !== "" ? Quickshell.iconPath(root.iconName, true) : ""
+    title: I18n.tr("Authentication required")
+    message: root.message
   }
 
   // The action
@@ -247,23 +207,18 @@ ColumnLayout {
     onAccepted: root.submit()
   }
 
-  RowLayout {
+  PromptFooter {
     Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    Row {
-      Layout.fillWidth: true
-      spacing: Widget.padding
-
-      KeyHint {
-        key: "↵"
-        label: I18n.tr("authenticate")
+    hints: [
+      {
+        "key": "↵",
+        "label": I18n.tr("authenticate")
+      },
+      {
+        "key": "Esc",
+        "label": I18n.tr("cancel")
       }
-      KeyHint {
-        key: "Esc"
-        label: I18n.tr("cancel")
-      }
-    }
+    ]
 
     StyledTextButton {
       text: I18n.tr("Cancel")

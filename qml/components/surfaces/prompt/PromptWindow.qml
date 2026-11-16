@@ -21,7 +21,6 @@ PanelWindow {
   // The card shows here: the picked screen, else (it's gone) the primary
   readonly property bool hasCard: !!screen && General.screensNamed(PromptManager.screenName)[0] === screen
   readonly property bool live: shown && hasCard
-  readonly property int pad: Widget.px(18)
 
   // The request drawn: the shown one, kept while the card fades out after
   // it ends
@@ -42,10 +41,6 @@ PanelWindow {
     if (root.live)
       root.focusWanted();
   }
-
-  // Every focus grab lets input through to it while it shows, so a prompt
-  // over the overlay (the greeter's install, from Settings) closes nothing
-  Component.onDestruction: SurfaceManager.unregisterModal(root)
 
   anchors {
     left: true
@@ -68,31 +63,15 @@ PanelWindow {
     // A window made while a request shows (a monitor plugged in, a
     // reload): onRequestChanged never ran for its first value
     root.drawn = root.request;
-    SurfaceManager.registerModal(root);
     // Where the compositor blurs only what a window asks: the whole dimmed
     // screen, while backdrops blur (LayerStack.blurBackdrops)
-    // (attached only there: attached at all, it claims the window's blur,
-    // and Hyprland's layer rules no longer blur it)
     if (CompositorManager.supports.blurRegion === true)
-      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) ? dimBlur : null);
-  }
-  BoxBlurRegion {
-    id: dimBlur
-    target: dim
-    opacity: dim.opacity
-    alpha: dim.color.a
-    threshold: 0.01
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) ? dim.blur : null);
   }
 
-  Rectangle {
+  ModalScrim {
     id: dim
-    anchors.fill: parent
-    color: Style.scrim
-    opacity: root.shown ? 1 : 0
-
-    Glide on opacity {
-      duration: Appearance.animNormal
-    }
+    shown: root.shown
   }
 
   // Modal: the dimmed screen takes clicks; one cancels the request unless
@@ -106,38 +85,21 @@ PanelWindow {
     }
   }
 
-  Surface {
+  // Every focus grab lets input through to it while it shows, so a prompt
+  // over the overlay (the greeter's install, from Settings) closes nothing
+  ModalCard {
     id: card
-    tone: "page"
+    window: root
+    shown: root.shown
 
     visible: root.hasCard
     anchors.centerIn: parent
     width: Math.min(Widget.textPx(480), root.width - Widget.px(32))
-    height: loader.implicitHeight + root.pad * 2
-
-    opacity: root.shown ? 1 : 0
-    // The show: a fade and a slide (never a scale: scaled text goes soft)
-    property real _reveal: root.shown ? 1 : 0
-    transform: Translate {
-      y: Math.round((1 - card._reveal) * Style.enterOffset)
-    }
-    Glide on opacity {
-      duration: Appearance.animNormal
-    }
-    Glide on _reveal {
-      duration: Appearance.animNormal
-    }
-
-    // A click on the card is the card's, never the outside's
-    MouseArea {
-      anchors.fill: parent
-    }
+    height: loader.implicitHeight + card.padding * 2
 
     Loader {
       id: loader
-      x: root.pad
-      y: root.pad
-      width: card.width - root.pad * 2
+      width: parent.width
       active: root.drawn !== null
       sourceComponent: root.drawn?.content === "polkit" ? polkitCard : promptCard
       onLoaded: Qt.callLater(root.takeFocus)
@@ -150,7 +112,6 @@ PanelWindow {
     PolkitCard {
       id: polkit
       live: root.live
-      pad: root.pad
 
       Connections {
         target: root
@@ -168,7 +129,6 @@ PanelWindow {
       id: own
       request: root.drawn
       live: root.live
-      pad: root.pad
 
       Connections {
         target: root

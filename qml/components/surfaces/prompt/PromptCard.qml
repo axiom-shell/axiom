@@ -19,7 +19,6 @@ FocusScope {
   property var request: null
   // The window shows it, on this screen: it may take the keyboard
   property bool live: false
-  property int pad: Widget.px(18)
 
   readonly property string requestId: request?.id ?? ""
   readonly property var fields: request?.fields ?? []
@@ -29,15 +28,14 @@ FocusScope {
   readonly property int attempt: request?.attempt ?? 0
   // Every field holds something: the primary action may run
   readonly property bool filled: root._filled
-  property bool settled: false
+  readonly property bool settled: settle.settled
   property bool _filled: root.fields.length === 0
 
   implicitHeight: content.implicitHeight
 
   onRequestIdChanged: {
     root._clear();
-    root.settled = false;
-    settle.restart();
+    settle.rearm();
     Qt.callLater(root.takeFocus);
   }
 
@@ -57,10 +55,8 @@ FocusScope {
       root.takeFocus();
   }
 
-  Timer {
+  PromptSettle {
     id: settle
-    interval: 400
-    onTriggered: root.settled = true
   }
 
   function takeFocus() {
@@ -129,43 +125,14 @@ FocusScope {
   ColumnLayout {
     id: content
     width: root.width
-    spacing: root.pad
+    spacing: Style.space5
 
     // What is asking
-    RowLayout {
+    PromptHeader {
       Layout.fillWidth: true
-      spacing: root.pad
-
-      Item {
-        Layout.alignment: Qt.AlignTop
-        implicitWidth: Widget.px(40)
-        implicitHeight: Widget.px(40)
-
-        StyledIcon {
-          anchors.centerIn: parent
-          text: root.request?.icon || "info"
-          size: "xl"
-          tone: "accent"
-        }
-      }
-
-      ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing / 2
-
-        StyledText {
-          Layout.fillWidth: true
-          text: root.request?.title ?? ""
-          role: "headline"
-          overflow: "wrap"
-        }
-
-        StyledText {
-          Layout.fillWidth: true
-          visible: text !== ""
-          text: root.request?.message ?? ""
-        }
-      }
+      icon: root.request?.icon || "info"
+      title: root.request?.title ?? ""
+      message: root.request?.message ?? ""
     }
 
     // The code to compare or type, the digits typed lit
@@ -238,24 +205,19 @@ FocusScope {
       tone: "error"
     }
 
-    RowLayout {
+    PromptFooter {
       Layout.fillWidth: true
-      spacing: Widget.spacing
-
-      Row {
-        Layout.fillWidth: true
-        spacing: Widget.padding
-
-        KeyHint {
-          visible: root.primary !== null
-          key: "↵"
-          label: (root.primary?.label ?? "").toLowerCase()
+      hints: (root.primary !== null ? [
+          {
+            "key": "↵",
+            "label": (root.primary?.label ?? "").toLowerCase()
+          }
+        ] : []).concat([
+        {
+          "key": "Esc",
+          "label": I18n.tr("cancel")
         }
-        KeyHint {
-          key: "Esc"
-          label: I18n.tr("cancel")
-        }
-      }
+      ])
 
       Repeater {
         model: root.actions

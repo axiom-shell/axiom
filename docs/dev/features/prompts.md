@@ -1,6 +1,6 @@
 # Prompts
 
-> **Files:** `qml/services/ui/PromptManager.qml`, `qml/shell/Prompt.qml`, `qml/components/surfaces/prompt/PromptWindow.qml`, `qml/components/surfaces/prompt/PromptCard.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`
+> **Files:** `qml/services/ui/PromptManager.qml`, `qml/shell/Prompt.qml`, `qml/components/surfaces/prompt/PromptWindow.qml`, `qml/components/surfaces/prompt/PromptCard.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/surfaces/prompt/PromptHeader.qml`, `qml/components/surfaces/prompt/PromptFooter.qml`, `qml/components/surfaces/prompt/PromptSettle.qml`
 > **Config:** none (its sources' own: `Polkit.enabled`, `Bluetooth.pairingAgent`)
 > **Related:** [Polkit](polkit.md), [Networking and Bluetooth](networking-bluetooth.md) › The pairing agent, [VPN](vpn.md), [Removable drives](drives.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
@@ -35,8 +35,8 @@ One prompt for every password, PIN or confirmation the system asks for. **The ru
 
 ### The window (`PromptWindow`)
 - One per screen (`qml/shell/Prompt`, `Variants` over `General.outputs`), lifted from polkit's: each dims its screen, the card on `screenName`'s only (`General.screensNamed`, the primary when that screen is gone).
-- `WlrLayer.Overlay`, namespace `axiom-polkit` (named for the prompt it began as: the layer rules and their recorded test cases know it so; [layer stacking](../generated/layers.md)); exclusive keyboard only on the card's screen; registered with `SurfaceManager.registerModal`, so a prompt over the overlay closes no focus grab; the dim blurs where backdrops blur (`BlurManager.backdropRegionsOn`).
-- It keeps the request drawn while the card fades out after it ends.
+- `WlrLayer.Overlay`, namespace `axiom-polkit` (named for the prompt it began as: the layer rules and their recorded test cases know it so; [layer stacking](../generated/layers.md)); exclusive keyboard only on the card's screen; registered with `SurfaceManager.registerModal` (by its `ModalCard`), so a prompt over the overlay closes no focus grab; the dim blurs where backdrops blur (`BlurManager.backdropRegionsOn`).
+- It keeps the request drawn while the card fades out after it ends. The dim is a `ModalScrim` and the card a `ModalCard` (shared with the power menu, the monitor prompt and the screen-share picker: padding `Style.space5`, fade and slide in); both cards' head, foot and 400 ms settle are `PromptHeader`, `PromptFooter` and `PromptSettle`.
 - The card is a `Loader`: `PolkitCard` for `content: "polkit"`, else `PromptCard`. The window asks the card for the keyboard (`focusWanted`) when a request comes to the front, the card loads or the screen becomes its.
 - **`PromptCard`:** the icon, title and message; the code (each digit a monospace glyph, the typed ones in the accent, the untyped faint); the fields; the error; key hints and the buttons. For 400 ms after a request shows it takes no keys and runs no action, and neither Escape nor a click on the dim cancels it, so typing, an Enter, an Escape or a click meant for another window doesn't answer it.
 

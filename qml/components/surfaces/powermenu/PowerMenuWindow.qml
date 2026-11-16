@@ -24,8 +24,6 @@ PanelWindow {
   // "3h 12m", read from /proc/uptime when it opens
   property string uptime: ""
 
-  readonly property int pad: Widget.px(18)
-
   function toggle() {
     shown = !shown;
   }
@@ -160,7 +158,7 @@ PanelWindow {
     id: cardBlur
     target: card
     opacity: card.opacity
-    moving: card._reveal
+    moving: card.reveal
   }
 
   Item {
@@ -195,39 +193,19 @@ PanelWindow {
       onClicked: root.shown = false
     }
 
-    Surface {
+    ModalCard {
       id: card
-      tone: "page"
+      shown: root.shown
 
       anchors.centerIn: parent
-      width: Math.min(tiles.implicitWidth + root.pad * 2, root.width - Widget.px(32))
-      height: content.implicitHeight + root.pad * 2
+      width: Math.min(tiles.implicitWidth + card.padding * 2, root.width - Widget.px(32))
+      height: content.implicitHeight + card.padding * 2
       clip: true
-
-      opacity: root.shown ? 1 : 0
-      // The show: a fade and a slide (never a scale: scaled text goes soft)
-      property real _reveal: root.shown ? 1 : 0
-      transform: Translate {
-        y: Math.round((1 - card._reveal) * Style.enterOffset)
-      }
-      Glide on opacity {
-        duration: Appearance.animNormal
-      }
-      Glide on _reveal {
-        duration: Appearance.animNormal
-      }
-
-      // Swallow clicks so they don't reach the background
-      MouseArea {
-        anchors.fill: parent
-      }
 
       Column {
         id: content
-        x: root.pad
-        y: root.pad
-        width: card.width - root.pad * 2
-        spacing: root.pad
+        width: parent.width
+        spacing: card.padding
 
         Item {
           id: header
@@ -239,7 +217,7 @@ PanelWindow {
             id: greeting
             anchors.left: parent.left
             anchors.right: uptimeRow.left
-            anchors.rightMargin: root.pad
+            anchors.rightMargin: card.padding
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.tr("Goodbye, {0}", General.displayName)
             role: "headline"
