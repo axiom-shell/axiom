@@ -221,6 +221,10 @@ Loader {
   // list of objects, whose items' own rows tint
   readonly property bool tinted: row.kind !== "group" && root.sourceComponent !== arrayField && root.allowed && !root.placeKept
 
+  // The narrowest the control stays usable in (FieldFit.least; 0: a control
+  // that isn't a FieldLine), for a pair's halves (SchemaPropertiesForm)
+  readonly property real leastWidth: root.item?.leastWidth ?? 0
+
   // A click on the row outside its control (FormRow.rowClicked): the
   // control does what its own click does
   function rowClicked() {
@@ -620,9 +624,18 @@ Loader {
   // the mode
   Component {
     id: iconField
-    ColumnLayout {
+    FieldLine {
       id: iconColumn
-      spacing: Widget.spacing
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
+      // The mode switch on the label's line (under it when it doesn't fit),
+      // the boxes at full width under them
+      kind: iconColumn.modeKey !== "" ? "fixed" : "block"
+      controlLeast: modeToggle.implicitWidth
+      hasControl: iconColumn.modeKey !== ""
+      bodyShown: true
       readonly property string value: root.current ?? ""
       readonly property var iconText: root.fieldSchema["x-iconText"] ?? null
       readonly property string modeKey: iconColumn.iconText?.mode ?? ""
@@ -648,13 +661,25 @@ Loader {
         root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), iconColumn.modes[(index + 1) % iconColumn.modes.length]);
       }
 
-      FieldHeader {
-        label: root.label
-        description: root.description
-        trailing: root.headerExtra
-        below: root.headerBelow
+      StyledToggle {
+        id: modeToggle
+        visible: iconColumn.modeKey !== ""
+        // Under the label: the segments share the width
+        Layout.fillWidth: !iconColumn.fit.inline
+        options: iconColumn.modes
+        labels: ({
+            "icon": I18n.tr("Icon"),
+            "text": I18n.tr("Text"),
+            "both": I18n.tr("Both")
+          })
+        value: iconColumn.mode
+        onPicked: value => {
+          if (root.form && value !== iconColumn.mode)
+            root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
+        }
       }
-      RowLayout {
+
+      body: RowLayout {
         Layout.fillWidth: true
         spacing: Widget.spacing
 
@@ -687,21 +712,6 @@ Loader {
               if (root.form)
                 root.form.edit(iconColumn.siblingPath(iconColumn.textKey), value);
             }
-          }
-        }
-
-        StyledToggle {
-          visible: iconColumn.modeKey !== ""
-          options: iconColumn.modes
-          labels: ({
-              "icon": I18n.tr("Icon"),
-              "text": I18n.tr("Text"),
-              "both": I18n.tr("Both")
-            })
-          value: iconColumn.mode
-          onPicked: value => {
-            if (root.form && value !== iconColumn.mode)
-              root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
           }
         }
       }

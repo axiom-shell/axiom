@@ -144,7 +144,7 @@ ColumnLayout {
         // rather than folding open
         shown: field.item ? field.item.shown : undefined
         level: root._group?.nests === true ? root.tree.levels[index] : (field.item?.followsSibling ? 1 : 0)
-        beside: half && _beside
+        beside: _beside && half
         bodyHeight: column.implicitHeight
         tinted: field.item?.tinted ?? false
         hoverable: field.item?.hoverable ?? false
@@ -154,7 +154,14 @@ ColumnLayout {
         // Repeater made them): itemAt doesn't notify, and the field after
         // this one doesn't exist yet when it's made
         readonly property var _partner: fields.count < 0 ? null : _beside ? fields.itemAt(index - 1) : root.rows[index + 1]?.schema?.["x-beside"] === true ? fields.itemAt(index + 1) : null
-        readonly property bool half: root.pairs && _partner?.shown === true
+        // The field's least width (FieldFit.least), for a pair's halves
+        readonly property real leastWidth: field.item?.leastWidth ?? 0
+        // The left half of a pair (its body is indented by its depth; the
+        // right half is `beside`: none of its own)
+        readonly property var _left: _beside ? _partner : cell
+        // Side by side only while both halves keep their least width
+        // (FieldFit.pairFits); else each takes the whole width
+        readonly property bool half: root.pairs && _partner?.shown === true && FieldFit.pairFits(root.width - 2 * (_left?.indent ?? 0), Widget.spacing * 2, cell.leastWidth, _partner?.leastWidth ?? 0)
         // Beside the top row, it's on the top line too
         first: index === root._firstRow || (half && _beside && index - 1 === root._firstRow)
         Layout.columnSpan: half ? 1 : 2

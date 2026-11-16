@@ -7,11 +7,10 @@ import qs.components.forms
 // A hand-built row of the custom widgets editor, for a field no schema
 // control draws (a text field with a { } button, a typed key, a colour with
 // its swatch): a FormRow (the hover tint, padding, divider and fold of every
-// schema row) holding a FieldHeader and the control, laid out as SchemaField
-// lays its fields out: the control under its label, or with `shortControl` (a
-// dropdown) beside it on a form at least Widget.fieldInlineFrom wide, at
-// Widget.fieldControlWidth, as SchemaComboBox. The control (a child) sets its
-// own Layout.fillWidth. Captions and editors that belong to the row but not
+// schema row) holding a FieldLine and the control, laid out as SchemaField
+// lays its fields out (FieldFit): the control under its label, or with
+// `shortControl` (a dropdown) on the label's line whenever it fits beside it,
+// as SchemaComboBox. The control (a child) sets its own Layout.fillWidth. Captions and editors that belong to the row but not
 // to the field go in `below` (outside the tint, as a hookup under a setting);
 // the host says whether they show (`belowShown`, from data). A row whose
 // control is a schema control with its own label (SchemaComboBox) leaves
@@ -39,8 +38,6 @@ FormRow {
   hoverable: root.dropdown !== null
   onRowClicked: root.dropdown.toggleFromRow()
 
-  readonly property bool _inline: root.besideLabel || (root.shortControl && root.label !== "" && root.width >= Widget.fieldInlineFrom)
-
   bodyHeight: column.implicitHeight
   // The tint and the row click cover the field, not what's under it
   hitHeight: root.belowShown ? field.implicitHeight : root.bodyHeight
@@ -50,28 +47,17 @@ FormRow {
     width: parent.width
     spacing: Widget.spacing
 
-    GridLayout {
+    // Placed against the row's body width (indent excluded): FieldLine reads
+    // its own
+    FieldLine {
       id: field
-      Layout.fillWidth: true
-      columns: root._inline ? 2 : 1
-      rowSpacing: Widget.spacing
-      columnSpacing: Widget.spacing * 2
-
-      FieldHeader {
-        label: root.label
-        description: root.description
-        // Centred on a control taller than it (a label alone). At its own
-        // width beside a filling control (a header that fills too takes
-        // half the row from it)
-        Layout.alignment: Qt.AlignVCenter
-        Layout.fillWidth: !root.besideLabel
-      }
+      label: root.label
+      description: root.description
+      kind: root.besideLabel ? "fill" : root.shortControl ? "flex" : "block"
 
       ColumnLayout {
         id: controls
-        Layout.fillWidth: !root._inline || root.besideLabel
-        Layout.preferredWidth: root._inline && !root.besideLabel ? Widget.fieldControlWidth(root.width) : -1
-        Layout.alignment: Qt.AlignVCenter
+        Layout.fillWidth: true
         spacing: Widget.spacing / 2
       }
     }

@@ -29,6 +29,7 @@ FieldLine {
   // On the label's line when it fits (a short value: a number)
   property bool beside: false
   kind: root.beside ? "flex" : "block"
+  bodyShown: (!root.multiline && root.suggestions.length > 0) || root._pickFailed
 
   // What was typed, once it matches `pattern`: on Enter (Ctrl+Enter in a
   // multiline field), as the field loses focus or is torn down. A picked

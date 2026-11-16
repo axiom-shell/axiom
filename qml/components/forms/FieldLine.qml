@@ -31,6 +31,11 @@ Item {
   // A fixed control's implicit width (the one `fit` must keep room for)
   property real controlLeast: 0
   default property alias control: holder.data
+  // Whether there is a control at all (from data, never layout: a hidden
+  // layout's size isn't kept)
+  property bool hasControl: true
+  // Whether `body` shows anything (from data)
+  property bool bodyShown: false
   // Under the line, the description and the control, at full width
   property alias body: bodyColumn.data
 
@@ -83,6 +88,7 @@ Item {
 
     ColumnLayout {
       id: holder
+      visible: root.hasControl
       spacing: Widget.spacing / 2
       Layout.row: root.fit.inline ? 0 : 2
       Layout.column: root.fit.inline ? 1 : 0
@@ -97,7 +103,7 @@ Item {
     ColumnLayout {
       id: bodyColumn
       spacing: Widget.spacing
-      visible: bodyColumn.implicitHeight > 0
+      visible: root.bodyShown
       Layout.row: 3
       Layout.column: 0
       Layout.columnSpan: 2
