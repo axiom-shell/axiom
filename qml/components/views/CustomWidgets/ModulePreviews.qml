@@ -6,6 +6,7 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
 import qs.components.content.parts.custom
 
 // Custom widgets page, Module tab, above the canvas: a header line (what the
@@ -70,8 +71,6 @@ ColumnLayout {
 
   RowLayout {
     Layout.fillWidth: true
-    // Keep comes and goes: the line keeps its height
-    Layout.preferredHeight: Widget.height
     spacing: Widget.spacing
 
     StyledText {
@@ -100,21 +99,14 @@ ColumnLayout {
       Layout.fillWidth: true
     }
     // Test mode: not saved, off each time the page opens
-    StyledSwitch {
+    FormColumn {
       Layout.alignment: Qt.AlignVCenter
-      compact: true
-      checked: root.editor.testMode
-      onToggled: root.editor.testMode = checked
-    }
-    StyledLabel {
-      Layout.alignment: Qt.AlignVCenter
-      text: I18n.tr("Test actions")
+      Layout.preferredWidth: Widget.px(240)
 
-      TapHandler {
-        onTapped: root.editor.testMode = !root.editor.testMode
-      }
-      HoverHandler {
-        cursorShape: Qt.PointingHandCursor
+      SwitchRow {
+        label: I18n.tr("Test actions")
+        checked: root.editor.testMode
+        onToggled: newValue => root.editor.testMode = newValue
       }
     }
     StatusChip {
@@ -159,18 +151,16 @@ ColumnLayout {
           tone: "muted"
         }
         // A module card sits on the overlay's page colour, as on a real page
-        Surface {
+        ZoomFrame {
           width: GridPlacement.span(preview.modelData.size[0], root.card) * preview.zoom
           height: GridPlacement.span(preview.modelData.size[1], root.card) * preview.zoom
-          tone: "page"
-          clip: true
+          naturalWidth: GridPlacement.span(preview.modelData.size[0], root.card)
+          naturalHeight: GridPlacement.span(preview.modelData.size[1], root.card)
+          minZoom: 0.05
 
-          Item {
-            width: parent.width / preview.zoom
-            height: parent.height / preview.zoom
-            scale: preview.zoom
-            readonly property real contentZoom: scale
-            transformOrigin: Item.TopLeft
+          Surface {
+            anchors.fill: parent
+            tone: "page"
 
             CustomLayout {
               anchors.fill: parent
@@ -197,21 +187,19 @@ ColumnLayout {
     Layout.preferredHeight: active ? GridPlacement.span(root.designSize[1], root.card) * root.testZoom : 0
 
     sourceComponent: Item {
-      Surface {
+      ZoomFrame {
         id: testBox
         anchors.left: parent.left
         anchors.top: parent.top
         width: GridPlacement.span(root.designSize[0], root.card) * root.testZoom
         height: GridPlacement.span(root.designSize[1], root.card) * root.testZoom
-        tone: "page"
-        clip: true
+        naturalWidth: GridPlacement.span(root.designSize[0], root.card)
+        naturalHeight: GridPlacement.span(root.designSize[1], root.card)
+        minZoom: 0.05
 
-        Item {
-          width: parent.width / root.testZoom
-          height: parent.height / root.testZoom
-          scale: root.testZoom
-          readonly property real contentZoom: scale
-          transformOrigin: Item.TopLeft
+        Surface {
+          anchors.fill: parent
+          tone: "page"
 
           CustomLayout {
             anchors.fill: parent

@@ -7,8 +7,8 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
-import qs.components.content.base
 import qs.components.views.Layouts
+import qs.components.views.base
 
 // Custom widgets page, Module tab: while nothing is selected the element
 // library and the module's own settings (lock screen, font); the selected
@@ -137,28 +137,15 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    CardHeader {
+    // Kind labels are the schema's; kinds have no groups
+    EditorLibrary {
+      id: library
       icon: "category"
       title: I18n.tr("Elements")
-      showActions: false
-    }
-
-    StyledText {
-      Layout.fillWidth: true
-      text: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-    }
-
-    // Kind labels are the schema's; kinds have no groups
-    TypeLibrary {
-      id: library
-      Layout.fillWidth: true
+      caption: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
       types: CustomWidgetsConfig.elementKinds
       groupable: false
       fitsContent: true
-      labelOf: type => I18n.tr(type.label)
 
       delegate: ModuleChip {
         required property var modelData
@@ -253,27 +240,19 @@ ColumnLayout {
         Layout.fillWidth: true
         title: I18n.tr("General")
 
-        ColumnLayout {
+        FormColumn {
           Layout.fillWidth: true
-          spacing: 0
 
           // Shown on the canvas: empty, the kind
-          InspectorRow {
-            first: true
+          FieldRow {
             label: I18n.tr("Name")
 
-            StyledTextEntry {
-              id: nameEntry
+            CommitEntry {
               Layout.fillWidth: true
               placeholderText: I18n.tr(root.kind?.label ?? "")
-              onTextEdited: root.editor.setElement(["name"], nameEntry.text)
-              Binding {
-                target: nameEntry
-                property: "text"
-                value: root.element?.name ?? ""
-                when: !nameEntry.input.activeFocus
-                restoreMode: Binding.RestoreNone
-              }
+              value: root.element?.name ?? ""
+              live: true
+              onEdited: text => root.editor.setElement(["name"], text)
             }
           }
 
@@ -298,9 +277,8 @@ ColumnLayout {
           tip: I18n.tr("Type text, or insert {a value}.")
         }
 
-        ColumnLayout {
+        FormColumn {
           Layout.fillWidth: true
-          spacing: 0
 
           // By count over the kind's slots
           Repeater {
@@ -311,7 +289,6 @@ ColumnLayout {
               required property string modelData
               required property int index
               Layout.fillWidth: true
-              first: field.index === 0
               slot: field.modelData
               label: root.slotTitle(field.modelData)
               placeholder: root.slotPlaceholder(field.modelData)
@@ -329,9 +306,8 @@ ColumnLayout {
           tip: I18n.tr("Never on the lock screen.")
         }
 
-        ColumnLayout {
+        FormColumn {
           Layout.fillWidth: true
-          spacing: 0
 
           Repeater {
             model: root.kind?.actions ?? []
@@ -340,7 +316,6 @@ ColumnLayout {
               id: trigger
               required property string modelData
               required property int index
-              first: trigger.index === 0
               label: root.triggerTitles[trigger.modelData].title
               current: root.element?.run?.[trigger.modelData] ?? ""
               newName: root.actionName
@@ -372,9 +347,8 @@ ColumnLayout {
           tip: I18n.tr("Pick a color, or By state… to pick it from a value.")
         }
 
-        ColumnLayout {
+        FormColumn {
           Layout.fillWidth: true
-          spacing: 0
 
           // By count over the kind's colours (the schema's)
           Repeater {
@@ -385,7 +359,6 @@ ColumnLayout {
               required property var modelData
               required property int index
               readonly property var schema: root.kind?.options?.[color.modelData.key] ?? ({})
-              first: color.index === 0
               key: color.modelData.key
               statesKey: color.modelData.statesKey
               label: I18n.tr(color.schema.title ?? "")

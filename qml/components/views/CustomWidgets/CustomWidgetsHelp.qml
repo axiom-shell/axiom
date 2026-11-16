@@ -3,8 +3,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
-import qs.services.system
 import qs.components.reusable
+import qs.components.content.parts
 
 // Custom widgets page, Help tab (also the empty pane's "How custom widgets
 // work"): a guide per task (show output on the bar, a button, colours, a list,
@@ -34,45 +34,6 @@ ColumnLayout {
     required property string key
     collapsed: root.section !== key
     onToggled: root.editor.helpSection = root.section === key ? "" : key
-  }
-
-  // A script to copy
-  component Example: ColumnLayout {
-    id: example
-    property string title
-    property string code
-    Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    RowLayout {
-      Layout.fillWidth: true
-      StyledLabel {
-        Layout.fillWidth: true
-        text: example.title
-        overflow: "line"
-      }
-      StyledTextButton {
-        implicitHeight: Widget.smallHeight
-        iconText: "content_copy"
-        text: I18n.tr("Copy")
-        onClicked: ClipboardManager.copyText(example.code)
-      }
-    }
-    Surface {
-      Layout.fillWidth: true
-      tone: "highest"
-      implicitHeight: codeText.implicitHeight + Widget.padding * 2
-
-      StyledText {
-        id: codeText
-        anchors.fill: parent
-        anchors.margins: Widget.padding
-        text: example.code
-        textFamily: "monospace"
-        role: "caption"
-        overflow: "wrap"
-      }
-    }
   }
 
   // A paragraph
@@ -182,29 +143,13 @@ ColumnLayout {
     Para {
       text: I18n.tr("Run it as poll (every interval), stream (one sample a line) or once, and print text (the last line), Waybar's JSON or JSON: one object per run. These keys mean something; anything else is data you bind to.")
     }
-    // By count over a fixed list
-    Repeater {
-      model: root.contract.length
-
-      RowLayout {
-        id: row
-        required property int index
-        readonly property var entry: root.contract[row.index]
-        Layout.fillWidth: true
-        spacing: Widget.spacing
-
-        StyledText {
-          Layout.preferredWidth: Appearance.fontSize * 12
-          Layout.alignment: Qt.AlignTop
-          text: row.entry[0]
-          textFamily: "monospace"
-          role: "caption"
-          overflow: "wrap"
-        }
-        Para {
-          text: row.entry[1]
-        }
-      }
+    FactGrid {
+      monoLabels: true
+      facts: root.contract.map(entry => ({
+            "label": entry[0],
+            "value": entry[1],
+            "wrap": true
+          }))
     }
   }
 
@@ -219,9 +164,10 @@ ColumnLayout {
     Para {
       text: I18n.tr("Nothing runs on the lock screen, while the script isn't answering, when the output turns the action off, with no command, or while another action holds the widget: a double press acts once. Refresh, Restart and the shell's own actions need no command. axiom ipc customWidgets act NAME ACTION runs one from a terminal while the widget is shown.")
     }
-    Example {
+    CodeLine {
       title: I18n.tr("An action that adds a line to a file")
-      code: root.actionExample
+      multiLine: true
+      text: root.actionExample
     }
   }
 
@@ -230,13 +176,15 @@ ColumnLayout {
     title: I18n.tr("Example scripts")
     description: I18n.tr("Copy one, point the Script's command at it.")
 
-    Example {
+    CodeLine {
       title: I18n.tr("Poll: a number and its state")
-      code: root.pollExample
+      multiLine: true
+      text: root.pollExample
     }
-    Example {
+    CodeLine {
       title: I18n.tr("Stream: one line per change")
-      code: root.streamExample
+      multiLine: true
+      text: root.streamExample
     }
   }
 

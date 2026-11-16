@@ -40,21 +40,12 @@ Item {
           dimmed: !entry.item.command
           changed: root.editor.changed(entry.index)
           onClicked: root.editor.selectDefinition(entry.index)
+          canDuplicate: true
+          duplicateTooltip: I18n.tr("Duplicate")
+          canRemove: true
+          removeTooltip: I18n.tr("Remove this custom widget")
+          onDuplicated: root.editor.duplicate(entry.index)
           onRemoveRequested: root.editor.remove(entry.index)
-
-          RowAction {
-            row: entry
-            iconText: "content_copy"
-            tooltipText: I18n.tr("Duplicate")
-            onClicked: root.editor.duplicate(entry.index)
-          }
-          RowAction {
-            row: entry
-            danger: true
-            iconText: "close"
-            tooltipText: I18n.tr("Remove this custom widget")
-            onClicked: root.editor.remove(entry.index)
-          }
         }
       }
 
@@ -62,8 +53,6 @@ Item {
       // once)
       AddEntryButton {
         id: newButton
-        Layout.topMargin: Widget.spacing
-        Layout.bottomMargin: Widget.spacing
         text: I18n.tr("New custom widget")
         onClicked: newMenu.openAt(newButton, 0, newButton.height)
       }

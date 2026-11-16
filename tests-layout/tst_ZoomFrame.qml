@@ -28,11 +28,11 @@ TestCase {
     }
   }
 
-  function make(w, h) {
-    const frame = createTemporaryObject(frameComp, root, {
+  function make(w, h, extra) {
+    const frame = createTemporaryObject(frameComp, root, Object.assign({
       "width": w,
       "height": h
-    });
+    }, extra ?? ({})));
     waitForRendering(frame);
     return frame;
   }
@@ -60,5 +60,20 @@ TestCase {
   function test_declares_contentZoom() {
     const frame = make(100, 400);
     fuzzyCompare(frame.children[0].contentZoom, 0.25, 0.001);
+  }
+
+  function test_maxZoom_scales_up() {
+    const frame = make(800, 800, {
+      "maxZoom": Infinity
+    });
+    fuzzyCompare(frame.zoom, 2, 0.001);
+    fuzzyCompare(frame.children[0].contentZoom, 2, 0.001);
+  }
+
+  function test_minZoom_floors() {
+    const frame = make(20, 400, {
+      "minZoom": 0.2
+    });
+    fuzzyCompare(frame.zoom, 0.2, 0.001);
   }
 }
