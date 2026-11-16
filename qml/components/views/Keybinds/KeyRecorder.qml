@@ -38,12 +38,28 @@ Surface {
   implicitHeight: Widget.height
   border.color: root.recording ? Style.accent : root.invalid ? Style.error : Style.borderStrong
   border.width: root.recording ? Style.focusWidth : Style.hairline
+  activeFocusOnTab: true
+
+  // Space or Enter record, as a click does (while recording, the catcher
+  // holds the keys)
+  Keys.onSpacePressed: root.toggleRecording()
+  Keys.onReturnPressed: root.toggleRecording()
+  Keys.onEnterPressed: root.toggleRecording()
+
+  function toggleRecording() {
+    if (root.recording)
+      KeybindManager.editor.stopRecording();
+    else
+      KeybindManager.editor.startRecording(root.bindIndex);
+  }
 
   onRecordingChanged: {
     root.held = [];
     root.tap = "";
     if (root.recording)
       catcher.forceActiveFocus();
+    else if (catcher.activeFocus)
+      root.forceActiveFocus();
   }
   // Recording may start before it's built (a bind added and recorded)
   Component.onCompleted: {
@@ -57,6 +73,10 @@ Surface {
 
   StateLayer {
     hovered: area.containsMouse && !root.recording
+  }
+
+  FocusRing {
+    shown: root.activeFocus
   }
 
   RowLayout {
@@ -114,12 +134,7 @@ Surface {
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-    onClicked: {
-      if (root.recording)
-        KeybindManager.editor.stopRecording();
-      else
-        KeybindManager.editor.startRecording(root.bindIndex);
-    }
+    onClicked: root.toggleRecording()
     onWheel: wheel => {
       wheel.accepted = root.recording;
       if (!root.recording)

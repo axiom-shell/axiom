@@ -1654,4 +1654,21 @@ TestCase {
     for (const t of harness.texts(tabs))
       verify(!t.truncated, `"${t.text}" is elided`);
   }
+
+  // A foldable header is a Tab stop: Tab focuses it, Space and Enter fold it; a fixed one is not
+  function test_fold_header_keyboard() {
+    const head = createTemporaryObject(foldHeaderComp, root);
+    const folds = [];
+    head.toggled.connect(() => folds.push(1));
+    verify(head.activeFocusOnTab);
+    keyClick(Qt.Key_Tab);
+    verify(head.activeFocus, "Tab focuses the header");
+    keyClick(Qt.Key_Space);
+    keyClick(Qt.Key_Return);
+    compare(folds.length, 2);
+    const fixed = createTemporaryObject(foldHeaderComp, root, {
+      "foldable": false
+    });
+    compare(fixed.activeFocusOnTab, false);
+  }
 }

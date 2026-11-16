@@ -318,10 +318,19 @@ FieldGroup {
           outlined: false
           border.width: tile.current ? Style.focusWidth : 0
           border.color: Style.accent
+          activeFocusOnTab: true
+
+          Keys.onSpacePressed: root.selected = tile.current ? "" : tile.modelData.id
+          Keys.onReturnPressed: root.selected = tile.current ? "" : tile.modelData.id
+          Keys.onEnterPressed: root.selected = tile.current ? "" : tile.modelData.id
 
           StateLayer {
             hovered: tileMouse.containsMouse
             pressed: tileMouse.pressed
+          }
+
+          FocusRing {
+            shown: tile.activeFocus
           }
 
           ColumnLayout {

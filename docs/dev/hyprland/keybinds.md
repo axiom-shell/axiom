@@ -74,6 +74,7 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
 
 ### Recording a key
 - `startRecording(index)` calls `CompositorManager.captureKeys(true)` (needs `keyCapture`), so bound combos reach `keybinds/KeyRecorder` instead of firing.
+- `KeyRecorder` and `ActionPicker` are Tab stops with a `FocusRing`: Space or Enter start recording (open the picker; Down too); Esc cancels a recording as before.
   - The recorder's window also inhibits the compositor's shortcuts while it records (a `ShortcutInhibitor`): niri's only way, as it has no empty mode to enter.
   - On Hyprland (`HyprlandManager.captureKeys`) that is an empty `axiom_record` submap. Hyprland only registers a submap that has a bind, so the submap has one unreachable bind; it's defined once per Lua state (`AXIOM_CAPTURE_DEFINED`), as redefining a submap adds to it.
   - A Lua timer leaves the submap after 30 s, even if qs dies, unless that recording ended or another began (`AXIOM_CAPTURE_GEN`, bumped by each start and leave).

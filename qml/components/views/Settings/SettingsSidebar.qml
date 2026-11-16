@@ -98,6 +98,20 @@ Item {
               required property var modelData
               Layout.fillWidth: true
               implicitHeight: Appearance.fontSize * 2
+              activeFocusOnTab: true
+
+              Keys.onSpacePressed: SettingsManager.jumpTo(link.modelData.key)
+              Keys.onReturnPressed: SettingsManager.jumpTo(link.modelData.key)
+              Keys.onEnterPressed: SettingsManager.jumpTo(link.modelData.key)
+
+              StateLayer {
+                hovered: linkArea.containsMouse
+                pressed: linkArea.pressed
+              }
+
+              FocusRing {
+                shown: link.activeFocus
+              }
 
               Rectangle {
                 anchors.left: parent.left

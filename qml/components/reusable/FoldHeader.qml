@@ -7,7 +7,8 @@ import qs.config
 // with its description only while unfolded, an optional line above it, the
 // unsaved-edits dot while folded with `marked`, a status chip (`status`,
 // kept while folded) centred on the chevron, and the chevron. A click
-// emits `toggled`, unless it isn't `foldable`.
+// emits `toggled`, unless it isn't `foldable`; a foldable one is a Tab stop
+// (Space or Enter fold it).
 Item {
   id: root
 
@@ -26,6 +27,21 @@ Item {
 
   Layout.fillWidth: true
   implicitHeight: header.implicitHeight
+  activeFocusOnTab: root.foldable
+
+  Keys.onSpacePressed: event => root._key(event)
+  Keys.onReturnPressed: event => root._key(event)
+  Keys.onEnterPressed: event => root._key(event)
+
+  function _key(event) {
+    event.accepted = root.foldable;
+    if (root.foldable)
+      root.toggled();
+  }
+
+  FocusRing {
+    shown: root.activeFocus
+  }
 
   MouseArea {
     id: headerArea
@@ -85,7 +101,7 @@ Item {
       FoldChevron {
         visible: root.foldable
         open: !root.collapsed
-        hot: headerArea.containsMouse
+        hot: headerArea.containsMouse || root.activeFocus
         Layout.alignment: Qt.AlignVCenter
       }
     }

@@ -110,9 +110,19 @@ Item {
     tone: "sunken"
     outlined: true
     border.color: popup.visible ? Style.accent : Style.borderStrong
+    activeFocusOnTab: true
+
+    Keys.onSpacePressed: root.open()
+    Keys.onReturnPressed: root.open()
+    Keys.onEnterPressed: root.open()
+    Keys.onDownPressed: root.open()
 
     StateLayer {
       hovered: buttonArea.containsMouse
+    }
+
+    FocusRing {
+      shown: button.activeFocus
     }
 
     RowLayout {
