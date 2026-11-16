@@ -41,6 +41,8 @@ ColumnLayout {
     order: ["refreshAfter"]
     values: root.definition?.actions ?? ({})
     onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
+    changedAt: path => root.editor.changedAt(["actions"].concat(path))
+    onDiscardAt: path => root.editor.discardAt(["actions"].concat(path))
   }
 
   FoldingSection {

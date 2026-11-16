@@ -49,6 +49,8 @@ QtObject {
       })
     shiftsBack: (root.selected?.module?.views?.length ?? 0) === 0
     scopeKey: root.selectedId + "/" + root.viewIndex
+    // One undo history for the whole definition, its screens included
+    historyKey: root.selectedId
     // The definition's own keys go with each snapshot (every one but the
     // elements, which the history keeps as modules), so undo covers an
     // edit to a format or an option as well as a move
@@ -234,13 +236,27 @@ QtObject {
     root._write(["actions", "items", index, key], value);
   }
 
+  // Moves action `from` to place `to` (ids stay, so triggers still point
+  // at it)
+  function moveAction(from, to) {
+    const items = root._local().items[root.selectedIndex]?.actions.items;
+    if (!items)
+      return;
+    const moved = CustomWidgetData.moveItem(items, from, to);
+    if (moved === items)
+      return;
+    root._recordStructure();
+    items.splice(0, Infinity, ...moved);
+    root._apply();
+  }
+
   // Removes action `index` and clears every trigger that named it, as one step
   function removeAction(index) {
     const def = root._local().items[root.selectedIndex];
     const item = def?.actions.items[index];
     if (!item)
       return;
-    root._beforeStructure();
+    root._recordStructure();
     const cleared = CustomWidgetData.withoutActionRefs(def, item.id);
     cleared.actions.items.splice(index, 1);
     // In place: the draft keeps its object
@@ -355,13 +371,12 @@ QtObject {
     root.elements.clearHistory();
   }
 
-  // Edits screen `index` (-1: the base elements): its history and
-  // selection start over
+  // Edits screen `index` (-1: the base elements): its selection starts
+  // over; the undo history is the definition's
   function selectView(index) {
     const count = root.selected?.module?.views?.length ?? 0;
     root.viewIndex = index >= 0 && index < count ? index : -1;
     root.elements.clearSelection();
-    root.elements.clearHistory();
   }
 
   // The screen just added: its form takes the focus in the name once it
@@ -376,6 +391,7 @@ QtObject {
     if (!def)
       return;
     const views = def.module.views;
+    root._recordStructure();
     views.push({
       "id": Utils.newId(Utils.slug(name) || "screen", views),
       "name": name ?? "",
@@ -397,7 +413,7 @@ QtObject {
       return;
     const id = def.module.views[index].id;
     // One undo step: the screen, its "Go to" actions and what ran them
-    root._beforeStructure();
+    root._recordStructure();
     const cleared = CustomWidgetData.withoutScreen(def, id);
     cleared.module.views.splice(index, 1);
     if (cleared.samples && id in cleared.samples)
@@ -409,17 +425,11 @@ QtObject {
   }
 
   // The screens' structure edited from a chip's menu or an element's: one
-  // undo step each, recorded under its own key (the history keeps the
-  // whole definition but the edited layer's elements, so the base is the
-  // layer edited while the screens' order or number changes)
+  // undo step each, recorded under its own key (a snapshot holds the
+  // whole definition and the screen being edited)
   property int _structureSeq: 0
   function _recordStructure() {
     root.elements.recordField("def:structure:" + (++root._structureSeq));
-  }
-  function _beforeStructure() {
-    if (root.viewIndex >= 0)
-      root.selectView(-1);
-    root._recordStructure();
   }
 
   // A copy of screen `index`, named "<name> (copy)", right after it (its
@@ -430,10 +440,11 @@ QtObject {
     if (!source)
       return;
     const copy = CustomWidgetData.viewCopy(def.module.views, index, I18n.tr("{0} (copy)", source.name || source.id));
-    root._beforeStructure();
+    root._recordStructure();
     def.module.views.splice(index + 1, 0, copy);
     root._fitSize();
     root._apply();
+    root.selectView(index + 1);
   }
 
   // Moves screen `from` to place `to` (they are tried in order: the first
@@ -445,9 +456,10 @@ QtObject {
     const moved = CustomWidgetData.moveItem(def.module.views, from, to);
     if (moved === def.module.views)
       return;
-    root._beforeStructure();
+    root._recordStructure();
     def.module.views.splice(0, Infinity, ...moved);
     root._apply();
+    root.selectView(to);
   }
 
   // The selected element, copied into the layer `target` (-1: the base,
@@ -501,8 +513,8 @@ QtObject {
     if (!def || root.viewIndex >= 0 || def.module.views.length > 0)
       return;
     const fields = CustomWidgetsManager.fields[def.id];
+    root._recordStructure();
     root._elements().splice(0, Infinity, ...CustomWidgetsConfig.defaultElements(def.module?.size, (fields?.ratio ?? -1) >= 0));
-    root.elements.clearHistory();
     root._fitSize();
     root._apply();
   }
@@ -517,8 +529,79 @@ QtObject {
     if (Utils.deepEqual(root._valueAt(keys), value))
       return;
     // One undo step per field, typing in it included
-    root.elements.recordField("el:" + index + ":" + path.join("."));
+    root.elements.recordField("el:" + root.viewIndex + ":" + index + ":" + path.join("."));
     root._write(keys, value);
+  }
+
+  // The selected definition as saved, or null (a new one)
+  readonly property var savedSelected: (_draft.saved?.items ?? []).find(i => i.id === root.selectedId) ?? null
+  // The tabs (indices) of the selected definition that differ from saved
+  readonly property var changedTabs: CustomWidgetData.changedTabs(root.savedSelected, root.selected)
+
+  // Whether the selected definition's value at `keys` differs from saved
+  // (false for a definition never saved)
+  function changedAt(keys) {
+    if (!root.savedSelected)
+      return false;
+    return !Utils.deepEqual(root._valueAt(keys), root._savedAt(keys));
+  }
+
+  // Puts the saved value at `keys` back
+  function discardAt(keys) {
+    if (!root.savedSelected)
+      return;
+    root.set(keys, Utils.clone(root._savedAt(keys)));
+  }
+
+  function _savedAt(keys) {
+    return keys.reduce((v, key) => v === null || typeof v !== "object" ? undefined : v[key], root.savedSelected);
+  }
+
+  // The saved element matching the selected one (by id, in the same layer),
+  // or null
+  function _savedElement() {
+    const saved = root.savedSelected;
+    const id = root.element?.id;
+    if (!saved || !id)
+      return null;
+    const view = root.viewIndex >= 0 ? root.selected?.module?.views?.[root.viewIndex] : null;
+    const layer = view ? saved.module?.views?.find(v => v.id === view.id)?.elements : saved.module?.elements;
+    return (layer ?? []).find(e => e.id === id) ?? null;
+  }
+
+  // Whether the selected element's value at `path` differs from the saved
+  // element's (false for an element not saved)
+  function elementChangedAt(path) {
+    const saved = root._savedElement();
+    if (!saved || !root.element)
+      return false;
+    const at = obj => path.reduce((v, key) => v === null || typeof v !== "object" ? undefined : v[key], obj);
+    return !Utils.deepEqual(at(root.element), at(saved));
+  }
+
+  // Puts the saved element's value at `path` back
+  function discardElementAt(path) {
+    const saved = root._savedElement();
+    if (!saved)
+      return;
+    const value = path.reduce((v, key) => v === null || typeof v !== "object" ? undefined : v[key], saved);
+    root.setElement(path, Utils.clone(value));
+  }
+
+  // The look (colours, alignment, size) of element `from` copied onto the
+  // elements `indices` of the layer, as one undo step
+  function copyLook(from, indices) {
+    const list = root._elements();
+    const source = list?.[from];
+    if (!source)
+      return;
+    root._recordStructure();
+    for (const i of indices) {
+      const target = list[i];
+      if (target && i !== from)
+        target.options = CustomWidgetData.withLook(target.options, source.options, CustomWidgetsConfig.lookKeys(target.type));
+    }
+    root._apply();
   }
 
   // Whether a definition differs from its saved version (matched by id)
@@ -783,27 +866,32 @@ QtObject {
     root._apply();
   }
 
-  // The selected definition for the undo history: all of it, the edited
-  // layer's elements left out (null; the history keeps them as modules)
+  // The selected definition for the undo history: all of it, every layer
+  // (the edited layer's elements are also kept as modules), and the screen
+  // being edited
   function _definitionSnapshot() {
     const def = root._local()?.items[root.selectedIndex];
     if (!def)
       return null;
-    const copy = Utils.clone(def);
-    const path = root.layerPath();
-    const holder = path.slice(0, -1).reduce((v, key) => v?.[key], copy);
-    if (holder)
-      holder[path[path.length - 1]] = null;
-    return copy;
+    return {
+      "view": root.viewIndex,
+      "def": Utils.clone(def)
+    };
   }
 
-  // Puts a snapshot's keys back into the selected definition in place (the
-  // edited layer's elements are spliced back by the history already)
+  // Puts a snapshot back into the selected definition in place, and the
+  // screen it was taken on back on show (the history has spliced its modules
+  // into the layer shown just before: the whole definition overwrites them)
   function _restoreDefinition(extra) {
     const def = root._local()?.items[root.selectedIndex];
-    if (!def || !extra)
+    if (!def || !extra?.def)
       return;
-    root._restoreInto(def, extra, root.layerPath());
+    if (extra.view !== root.viewIndex) {
+      const count = def.module?.views?.length ?? 0;
+      root.viewIndex = extra.view >= 0 && extra.view < count ? extra.view : -1;
+      root.elements.clearSelection();
+    }
+    root._restoreInto(def, extra.def, []);
   }
 
   // `from`'s keys into `target` (objects or lists), but for the array at

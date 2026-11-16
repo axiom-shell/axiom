@@ -2256,6 +2256,34 @@ QtObject {
     return copy;
   }
 
+  // The definition keys each editor tab (0 Data, 1 Bar, 2 Module) holds
+  readonly property var _tabKeys: [["name", "icon", "command", "mode", "interval", "output", "execIf", "refreshName", "actions", "samples"], ["bar", "tooltip", "format", "formatIcons", "maxLength", "escape", "hideEmpty"], ["module"]]
+
+  // The tabs (sorted indices) whose keys differ between the saved definition
+  // and the edited `local` one; none for a null `saved` (a new definition:
+  // the list marks it)
+  function changedTabs(saved, local) {
+    if (!saved || !local)
+      return [];
+    const out = [];
+    root._tabKeys.forEach((keys, tab) => {
+      if (keys.some(key => !Utils.deepEqual(saved[key], local[key])))
+        out.push(tab);
+    });
+    return out;
+  }
+
+  // A copy of `targetOptions` with each of `keys` the source has, cloned
+  // from `sourceOptions` (a key the source lacks is left alone)
+  function withLook(targetOptions, sourceOptions, keys) {
+    const out = Utils.clone(targetOptions ?? ({}));
+    for (const key of keys) {
+      if (sourceOptions && key in sourceOptions)
+        out[key] = Utils.clone(sourceOptions[key]);
+    }
+    return out;
+  }
+
   // The paths the editor offers to bind from, over `samples` (an output
   // each, null ones skipped), first seen first, each path once, leaves and
   // lists only: [{ path, type, value (the list's length), preview (a leaf's

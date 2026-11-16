@@ -2923,4 +2923,63 @@ TestCase {
     compare(CustomWidgetData.freeRefreshName("b", items, "b"), "b", "its own id");
     compare(CustomWidgetData.freeRefreshName("vol", items, "a"), "vol", "its own refresh name");
   }
+
+  function test_changedTabs() {
+    const saved = {
+      "name": "A",
+      "command": "x",
+      "format": "{text}",
+      "actions": {
+        "items": []
+      },
+      "module": {
+        "size": 2
+      }
+    };
+    compare(CustomWidgetData.changedTabs(saved, Utils.clone(saved)), []);
+    const f = Utils.clone(saved);
+    f.format = "{value}";
+    compare(CustomWidgetData.changedTabs(saved, f), [1]);
+    const c = Utils.clone(saved);
+    c.command = "y";
+    c.module.size = 3;
+    compare(CustomWidgetData.changedTabs(saved, c), [0, 2]);
+    const a = Utils.clone(saved);
+    a.actions.items = [
+      {
+        "id": "a"
+      }
+    ];
+    compare(CustomWidgetData.changedTabs(saved, a), [0]);
+    compare(CustomWidgetData.changedTabs(null, f), [], "a new definition");
+  }
+
+  function test_withLook() {
+    const source = {
+      "color": "base08",
+      "colorStates": [
+        {
+          "when": "x"
+        }
+      ],
+      "align": "right"
+    };
+    const target = {
+      "color": "base0B",
+      "confirm": true
+    };
+    const out = CustomWidgetData.withLook(target, source, ["color", "colorStates", "size"]);
+    compare(out.color, "base08");
+    compare(out.confirm, true, "the target's other keys stay");
+    compare(out.colorStates, [
+      {
+        "when": "x"
+      }
+    ]);
+    compare("align" in out, false, "only the listed keys");
+    compare("size" in out, false, "a key the source lacks");
+    compare(target.color, "base0B", "the target is not changed");
+    out.colorStates[0].when = "y";
+    compare(source.colorStates[0].when, "x", "cloned, not shared");
+  }
 }

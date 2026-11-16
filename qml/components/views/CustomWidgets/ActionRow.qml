@@ -49,6 +49,21 @@ Surface {
     }
   }
 
+  // The whole folded box hovers and opens, not only its line
+  StateLayer {
+    hovered: !root.open && (foldArea.containsMouse || head.hovered)
+    radius: root.radius
+  }
+
+  MouseArea {
+    id: foldArea
+    anchors.fill: parent
+    enabled: !root.open
+    hoverEnabled: true
+    cursorShape: Qt.PointingHandCursor
+    onClicked: root.open = true
+  }
+
   ColumnLayout {
     id: rows
     anchors.top: parent.top
@@ -62,13 +77,14 @@ Surface {
     FoldRow {
       id: head
       open: root.open
+      tinted: root.open
       Layout.topMargin: root.open ? Style.rowPadding : 0
       Layout.bottomMargin: root.open ? Style.rowPadding : 0
       onToggled: root.open = !root.open
 
       StyledText {
         text: root.item?.name || I18n.tr("Unnamed")
-        role: "title"
+        role: "label"
         overflow: "line"
         Layout.maximumWidth: head.width / 2
       }
@@ -117,6 +133,20 @@ Surface {
               when: !nameEntry.input.activeFocus
               restoreMode: Binding.RestoreNone
             }
+          }
+          StyledIconButton {
+            visible: !root.openAtStart
+            iconText: "arrow_upward"
+            tooltipText: I18n.tr("Move up")
+            enabled: root.index > 0
+            onClicked: root.editor.moveAction(root.index, root.index - 1)
+          }
+          StyledIconButton {
+            visible: !root.openAtStart
+            iconText: "arrow_downward"
+            tooltipText: I18n.tr("Move down")
+            enabled: root.index < root.editor.selected.actions.items.length - 1
+            onClicked: root.editor.moveAction(root.index, root.index + 1)
           }
           StyledIconButton {
             iconText: "delete"

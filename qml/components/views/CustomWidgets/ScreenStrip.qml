@@ -1,13 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services.apps
 import qs.components.reusable
 
 // Custom widgets page, Module tab: the layers being edited. "Base" and a
 // button per screen (the first whose condition holds is drawn over the base;
-// a bookmark marks one with a sample kept; right-click for its menu), then
+// a bookmark marks one with a sample kept; right-click for its menu, which a
+// tooltip says), then
 // "+", which adds a blank screen and selects it at once. A Flow ignores
 // Layout.*, so every item is Widget.height tall with the same radius
 // (SegmentButton and SquareIconButton both).
@@ -48,6 +50,18 @@ Flow {
       TapHandler {
         acceptedButtons: Qt.RightButton
         onTapped: point => root.menuRequested(chip.index, chip, point.position.x, point.position.y)
+      }
+
+      HoverHandler {
+        id: chipHover
+      }
+
+      LazyLoader {
+        active: chipHover.hovered
+        StyledToolTip {
+          target: chip
+          text: I18n.tr("Right-click to rename, duplicate, move or remove")
+        }
       }
     }
   }

@@ -108,6 +108,8 @@ ColumnLayout {
           order: ["style", "icon", "segments", "width", "popout"]
           values: root.definition?.bar ?? ({})
           onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+          changedAt: path => root.editor.changedAt(["bar"].concat(path))
+          onDiscardAt: path => root.editor.discardAt(["bar"].concat(path))
         }
 
         ColorField {
@@ -140,6 +142,8 @@ ColumnLayout {
           order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
           values: root.definition ?? ({})
           onEdited: (path, value) => root.editor.set(path, value)
+          changedAt: path => root.editor.changedAt(path)
+          onDiscardAt: path => root.editor.discardAt(path)
         }
 
         JsonField {

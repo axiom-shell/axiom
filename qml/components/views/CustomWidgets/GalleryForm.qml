@@ -61,9 +61,19 @@ ColumnLayout {
           implicitHeight: column.implicitHeight + Widget.padding * 2
           tone: "surface"
 
+          activeFocusOnTab: true
+          Keys.onReturnPressed: root.editor.addTemplate(tile.template)
+          Keys.onEnterPressed: root.editor.addTemplate(tile.template)
+          Keys.onSpacePressed: root.editor.addTemplate(tile.template)
+
           StateLayer {
             hovered: area.containsMouse
             pressed: area.pressed
+            radius: tile.radius
+          }
+
+          FocusRing {
+            shown: tile.activeFocus
           }
 
           ColumnLayout {

@@ -1,6 +1,7 @@
 label: Toggle
 icon: toggle_on
 defaultSize: [5, 1]
+help: actions
 slots: [state, label]
 actions: ['on', 'off']
 settings:

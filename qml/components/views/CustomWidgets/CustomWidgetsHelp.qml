@@ -110,7 +110,7 @@ ColumnLayout {
     description: I18n.tr("The shortest way to a working widget.")
 
     Steps {
-      lines: [I18n.tr("Click New and pick Bar text from a script."), I18n.tr("On the Data tab, type the command in Command (a script that prints some text)."), I18n.tr("Press Run now: the output shows under the status line."), I18n.tr("Open the Bar tab to choose the style, the icon and the colour."), I18n.tr("Put it on a bar from the link in the header.")]
+      lines: [I18n.tr("Click New and pick Bar text from a script."), I18n.tr("On the Data tab, type the command in Command (a script that prints some text)."), I18n.tr("Press Run now: what it printed shows under Last output."), I18n.tr("Open the Bar tab to choose the style, the icon and the colour."), I18n.tr("Save, then put it on a bar from the link in the header.")]
     }
   }
 
@@ -130,7 +130,7 @@ ColumnLayout {
     description: I18n.tr("Red above a limit, green below it.")
 
     Steps {
-      lines: [I18n.tr("Select the Text on the Module tab."), I18n.tr("In Colors, turn on Color by state."), I18n.tr("Pick the Key the script prints (a number or a word)."), I18n.tr("Add rules, such as is above 80 → Error and is below 80 → Success.")]
+      lines: [I18n.tr("Select the Text on the Module tab."), I18n.tr("In Colors, pick By state… in the color's list."), I18n.tr("Pick the Key the script prints (a number or a word)."), I18n.tr("Add rules, such as is above 80 → Error and is below 80 → Success.")]
     }
   }
 
@@ -160,7 +160,7 @@ ColumnLayout {
     description: I18n.tr("Where the widget shows.")
 
     Steps {
-      lines: [I18n.tr("Use the links in the page header: Put it on a bar and Put it on a page."), I18n.tr("In the Bars editor or the Layouts editor, open the library and look under Custom."), I18n.tr("Drag your widget in, then save.")]
+      lines: [I18n.tr("Save, then use the links in the page header: Put it on a bar and Put it on a page."), I18n.tr("In the Bars editor or the Layouts editor, open the library and look under Custom."), I18n.tr("Drag your widget in, then save.")]
     }
   }
 

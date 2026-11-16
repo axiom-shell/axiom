@@ -146,11 +146,20 @@ GridDragLayer {
     }
   }
 
-  // An element's menu (a right click selects it)
+  // An element's menu (a right click selects it, or keeps its group):
+  // `source` the element it was opened on, `others` the rest of its group
   StyledContextMenu {
     id: elementMenu
     parent: root
-    items: [
+    property int source: -1
+    property var others: []
+    items: (elementMenu.others.length > 0 ? [
+        {
+          "id": "look",
+          "icon": "format_paint",
+          "text": I18n.tr("Copy look to the selected")
+        }
+      ] : []).concat([
       {
         "id": "duplicate",
         "icon": "content_copy",
@@ -169,9 +178,16 @@ GridDragLayer {
         "text": I18n.tr("Remove"),
         "danger": true
       }
-    ]
+    ])
     onTriggered: id => {
-      const grid = CustomWidgetsManager.editor.elements;
+      const editor = CustomWidgetsManager.editor;
+      const grid = editor.elements;
+      if (id === "look") {
+        editor.copyLook(elementMenu.source, elementMenu.others);
+        return;
+      }
+      // The others of a group are left: the element acts alone
+      grid.select(elementMenu.source);
       if (id === "duplicate")
         grid.duplicateModule(grid.selected);
       else if (id === "remove")
@@ -195,9 +211,13 @@ GridDragLayer {
         id: sideScroll
         anchors.fill: parent
 
-        ElementInspector {
+        FormInset {
           width: sideScroll.availableWidth
-          dragLayer: root
+
+          ElementInspector {
+            Layout.fillWidth: true
+            dragLayer: root
+          }
         }
       }
     }
@@ -230,8 +250,13 @@ GridDragLayer {
           underlay: root.underlay
           tileContent: elementTile
           showActions: false
+          showUndo: false
           showMargins: false
-          onTileContext: (index, tile, x, y) => elementMenu.openAt(tile, x, y)
+          onTileContext: (index, tile, x, y) => {
+            elementMenu.source = index;
+            elementMenu.others = CustomWidgetsManager.editor.elements.group.filter(i => i !== index);
+            elementMenu.openAt(tile, x, y);
+          }
           title: I18n.tr("Module")
           icon: "widgets"
           emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")

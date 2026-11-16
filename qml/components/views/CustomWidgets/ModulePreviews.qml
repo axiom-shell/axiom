@@ -109,6 +109,13 @@ ColumnLayout {
     StyledLabel {
       Layout.alignment: Qt.AlignVCenter
       text: I18n.tr("Test actions")
+
+      TapHandler {
+        onTapped: root.editor.testMode = !root.editor.testMode
+      }
+      HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+      }
     }
     StatusChip {
       visible: root.editor.testMode

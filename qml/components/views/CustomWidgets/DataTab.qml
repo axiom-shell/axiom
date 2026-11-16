@@ -120,6 +120,8 @@ ColumnLayout {
           order: ["name", "icon"]
           values: root.definition ?? ({})
           onEdited: (path, value) => root.editor.set(path, value)
+          changedAt: path => root.editor.changedAt(path)
+          onDiscardAt: path => root.editor.discardAt(path)
         }
 
         InspectorRow {
@@ -180,6 +182,8 @@ ColumnLayout {
           order: ["mode", "interval"]
           values: root.definition ?? ({})
           onEdited: (path, value) => root.editor.set(path, value)
+          changedAt: path => root.editor.changedAt(path)
+          onDiscardAt: path => root.editor.discardAt(path)
         }
 
         // Waybar's and axiom's JSON, or the script's text as it is
@@ -221,6 +225,8 @@ ColumnLayout {
               order: ["execIf", "refreshName"]
               values: root.definition ?? ({})
               onEdited: (path, value) => root.editor.set(path, value)
+              changedAt: path => root.editor.changedAt(path)
+              onDiscardAt: path => root.editor.discardAt(path)
             }
             StyledText {
               Layout.fillWidth: true
@@ -266,12 +272,11 @@ ColumnLayout {
         }
       }
 
-      StyledText {
+      Notice {
         visible: root.signalsWaybar
         Layout.fillWidth: true
+        status: "warning"
         text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.refreshTarget}`)
-        tone: "warning"
-        overflow: "wrap"
       }
     }
 

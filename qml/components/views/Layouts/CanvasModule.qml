@@ -150,12 +150,13 @@ Rectangle {
     }
   }
 
-  // A right click selects it and asks the canvas's owner for its menu, at
-  // the point in the tile
+  // A right click selects it (a tile of a selected group keeps the group) and
+  // asks the canvas's owner for its menu, at the point in the tile
   TapHandler {
     acceptedButtons: Qt.RightButton
     onTapped: point => {
-      root.editor.select(root.index);
+      if (!root.editor.group.includes(root.index))
+        root.editor.select(root.index);
       root.contextRequested(point.position.x, point.position.y);
     }
   }

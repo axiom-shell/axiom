@@ -10,12 +10,12 @@ import qs.components.forms
 // One colour of a custom widget element or of the bar (Colors, Bar tab >
 // Status color), set in one place, as form rows: a dropdown of the theme's
 // colours laid out as a schema colour field (InspectorRow's `shortControl`),
-// each row painted in its colour (Auto or None first, Custom… last, which
-// opens a hex field), then "Color by state": a switch row (SchemaSwitch, a
-// click on the row flips it) that turns on rules, each
+// each row painted in its colour (Auto or None first, Custom… then By state…
+// last: Custom opens a hex field, By state… turns on rules). With By state…
+// picked the row shows the Key the rules read, the rules, each
 // "when the key is / isn't / above / below a value, this colour", the first
-// that holds winning and the colour above the fallback. The rules are kept
-// while it is off. `write(path, value)` writes `path` (a list of keys
+// that holds winning, and an Otherwise row, the fallback colour. Picking a
+// colour again turns the rules off and keeps them. `write(path, value)` writes `path` (a list of keys
 // beside this colour's own: [key] or [statesKey, "rules"]) into the owner's
 // object (the element's options, the bar). `first` marks the top row of its
 // group (Utils.firstFormRow's job, as for every InspectorRow).
@@ -24,7 +24,7 @@ import qs.components.forms
 // I18n.tr("Success") I18n.tr("Warning") I18n.tr("Error") I18n.tr("Info")
 // I18n.tr("Red") I18n.tr("Orange") I18n.tr("Yellow") I18n.tr("Green")
 // I18n.tr("Cyan") I18n.tr("Blue") I18n.tr("Magenta") I18n.tr("Text")
-// I18n.tr("Muted") I18n.tr("Background") I18n.tr("Custom…")
+// I18n.tr("Muted") I18n.tr("Background") I18n.tr("Custom…") I18n.tr("By state…")
 ColumnLayout {
   id: root
 
@@ -157,17 +157,25 @@ ColumnLayout {
 
   // The dropdown's rows: the theme's colours, a stored name that isn't one
   // (a base0X) under its own name, and, first, Auto / None, last Custom…
-  function entries(current, withEmpty, withCustom) {
+  // (withCustom) and By state… (withStates). Without Custom… a hex shows as
+  // its own swatched row
+  function entries(current, withEmpty, withCustom, withStates) {
     const listed = root.names.some(name => name.value === current);
+    const own = current !== "" && !listed && (current.charAt(0) !== "#" || !withCustom);
     return (withEmpty ? [
         {
           "value": "",
           "label": I18n.tr(root.emptyLabel)
         }
-      ] : []).concat(current === "" || current.charAt(0) === "#" || listed ? [] : [root.swatched(current, current)], root.names, withCustom ? [
+      ] : []).concat(own ? [root.swatched(current, current)] : [], root.names, withCustom ? [
       {
         "value": "__custom",
         "label": I18n.tr("Custom…")
+      }
+    ] : [], withStates ? [
+      {
+        "value": "__states",
+        "label": I18n.tr("By state…")
       }
     ] : []);
   }
@@ -204,25 +212,32 @@ ColumnLayout {
     description: root.description
     shortControl: true
     dropdown: combo
-    belowShown: root.custom
+    belowShown: root.custom && !root.statesOn
 
     StyledComboEntry {
       id: combo
       Layout.fillWidth: true
-      // Custom… shows while a hex is the colour or has been asked for
-      value: root.custom ? "__custom" : root.value
-      options: root.entries(root.value, true, true)
+      // By state… shows while the rules are on, else Custom… while a hex is
+      // the colour or has been asked for
+      value: root.statesOn ? "__states" : root.custom ? "__custom" : root.value
+      options: root.entries(root.value, true, true, true)
       // Room for the colour square drawn in the field
       input.leftPadding: Style.iconSm * 1.6
       onPicked: value => {
+        if (value === "__states") {
+          root.setEnabled(true);
+          return;
+        }
+        if (root.statesOn)
+          root.setEnabled(false);
         root.customPicked = value === "__custom";
         if (value !== "__custom")
           root.write([root.key], value);
       }
 
       SwatchSquare {
-        // Auto and None show an empty square
-        color: Style.resolve(root.custom && !root.isHex ? "" : root.value)
+        // Auto, None and By state… show an empty square
+        color: Style.resolve(root.statesOn || (root.custom && !root.isHex) ? "" : root.value)
       }
     }
 
@@ -256,28 +271,16 @@ ColumnLayout {
     ]
   }
 
-  FormRow {
-    hoverable: true
-    bodyHeight: stateSwitch.implicitHeight
-    onRowClicked: stateSwitch.activate()
-
-    SchemaSwitch {
-      id: stateSwitch
-      width: parent.width
-      label: I18n.tr("Color by state")
-      description: I18n.tr("Pick the color from a value in the output.")
-      checked: root.statesOn
-      onToggled: on => root.setEnabled(on)
-    }
-  }
-
   InspectorRow {
     indented: true
     shown: root.statesOn
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")
+    shortControl: true
+    dropdown: keyField
 
     KeyField {
+      id: keyField
       Layout.fillWidth: true
       keys: root.keys
       value: root.stateKey
@@ -378,12 +381,27 @@ ColumnLayout {
         ]))
       }
 
-      StyledText {
+      // What no rule matches: the colour the row has
+      RowLayout {
         Layout.fillWidth: true
-        text: I18n.tr("Otherwise: the color above.")
-        role: "caption"
-        tone: "muted"
-        overflow: "wrap"
+        spacing: Widget.spacing
+
+        StyledLabel {
+          text: I18n.tr("Otherwise")
+        }
+
+        StyledComboEntry {
+          Layout.fillWidth: true
+          Layout.minimumWidth: 0
+          value: root.value
+          options: root.entries(root.value, true, false, false)
+          input.leftPadding: Style.iconSm * 1.6
+          onPicked: value => root.write([root.key], value)
+
+          SwatchSquare {
+            color: Style.resolve(root.value)
+          }
+        }
       }
     }
   }

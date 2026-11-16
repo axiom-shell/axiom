@@ -1,6 +1,7 @@
 label: Entry
 icon: edit_note
 defaultSize: [8, 1]
+help: actions
 slots: [placeholder]
 actions: [submit]
 place: down

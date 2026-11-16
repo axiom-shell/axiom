@@ -135,19 +135,29 @@ ColumnLayout {
     label: I18n.tr("Argument")
     description: I18n.tr("Added to the end of the command, or where it says {arg}. Words are quoted for you: it can't run anything.")
 
-    StyledTextEntry {
-      id: argEntry
+    RowLayout {
       Layout.fillWidth: true
-      placeholderText: I18n.tr("e.g. next")
-      input.font.family: "monospace"
-      onTextEdited: root.writeArg(argEntry.text)
+      spacing: Widget.spacing
 
-      Binding {
-        target: argEntry
-        property: "text"
-        value: root.arg
-        when: !argEntry.input.activeFocus
-        restoreMode: Binding.RestoreNone
+      StyledTextEntry {
+        id: argEntry
+        Layout.fillWidth: true
+        placeholderText: I18n.tr("e.g. next")
+        input.font.family: "monospace"
+        onTextEdited: root.writeArg(argEntry.text)
+
+        Binding {
+          target: argEntry
+          property: "text"
+          value: root.arg
+          when: !argEntry.input.activeFocus
+          restoreMode: Binding.RestoreNone
+        }
+      }
+
+      PathInsertButton {
+        entry: argEntry
+        onInserted: text => root.writeArg(text)
       }
     }
   }

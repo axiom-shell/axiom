@@ -64,8 +64,11 @@ ColumnLayout {
     shown: root.on
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")
+    shortControl: true
+    dropdown: keyField
 
     KeyField {
+      id: keyField
       Layout.fillWidth: true
       keys: root.keys
       value: root.value?.key ?? ""

@@ -35,7 +35,8 @@ QtObject {
   // triggers it runs actions on, `x-actions`: keys of its `run`), options (its
   // look, a properties schema), optionsOrder, colors ([{ key, statesKey }]: its colour
   // settings and their "Color by state" rules, CustomWidgetData.colorFields),
-  // lookOrder (optionsOrder without them) }. Labels and titles are English: the editor
+  // lookOrder (optionsOrder without them), help (the Help section its "More
+  // in Help" opens, `x-help`; "text" without one) }. Labels and titles are English: the editor
   // translates them
   readonly property var elementKinds: {
     const schema = ConfigManager.configSchema;
@@ -54,7 +55,8 @@ QtObject {
         "options": options,
         "optionsOrder": order,
         "colors": colors.colors,
-        "lookOrder": colors.look
+        "lookOrder": colors.look,
+        "help": def["x-help"] ?? "text"
       };
     }).sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -62,6 +64,28 @@ QtObject {
   // An element kind (elementKinds), or null
   function elementKind(type) {
     return root.elementKinds.find(k => k.type === type) ?? null;
+  }
+
+  // The option keys "Copy look" copies onto an element of `type`: its colour
+  // keys and their rules' keys, and align, valign and size where it has them
+  // (CustomElementBase.yaml's place and size parts; the builder drops
+  // `x-parts` (backend/internal/schema/yamlsrc/kinds.go), so no annotation
+  // names them)
+  function lookKeys(type) {
+    const kind = root.elementKind(type);
+    if (!kind)
+      return [];
+    const keys = [];
+    for (const c of kind.colors) {
+      keys.push(c.key);
+      if (c.statesKey)
+        keys.push(c.statesKey);
+    }
+    for (const key of ["align", "valign", "size"]) {
+      if (key in kind.options)
+        keys.push(key);
+    }
+    return keys;
   }
 
   // A new element of `type` at `place`, at its schema defaults

@@ -8,8 +8,8 @@ import qs.components.reusable
 
 // One text field of the selected element (its `bind.<slot>`, the Shows
 // group): a field to type text in, or a {value} of the output, and a { }
-// button picking a path of the output to insert at the cursor (or over the
-// selection). Under it what a format reads as in the previewed sample
+// button (PathInsertButton) picking a path of the output to insert at the
+// cursor (or over the selection). Under it what a format reads as in the previewed sample
 // ("now: CPU 42%"), or a warning when a {path} in it reads nothing there.
 // Empty: the slot falls back to the output's own key (`placeholder` says
 // what that is). An InspectorRow: its label above the field, as a schema
@@ -29,9 +29,6 @@ InspectorRow {
   readonly property var unknown: root.sample ? CustomWidgetData.unknownPaths(root.sample, root.current) : []
   // What it reads as, for a format: "" when it has no { } or reads nothing yet
   readonly property string now: root.sample && root.current.indexOf("{") >= 0 && root.unknown.length === 0 ? CustomWidgetData.asText(CustomWidgetData.elementValue(root.sample, root.current)) : ""
-  // Where the picked path goes: the cursor (or selection) when the { } button was pressed
-  property int insertFrom: 0
-  property int insertTo: 0
 
   belowShown: root.unknown.length > 0 || root.now !== ""
 
@@ -45,32 +42,24 @@ InspectorRow {
     spacing: Widget.spacing
 
     StyledTextEntry {
-      id: entry
+      id: textEntry
       Layout.fillWidth: true
       Layout.alignment: Qt.AlignVCenter
       placeholderText: root.placeholder
-      onTextEdited: root.write(entry.text)
+      onTextEdited: root.write(textEntry.text)
 
       Binding {
-        target: entry
+        target: textEntry
         property: "text"
         value: root.current
-        when: !entry.input.activeFocus
+        when: !textEntry.input.activeFocus
         restoreMode: Binding.RestoreNone
       }
     }
 
-    SquareIconButton {
-      id: pick
-      Layout.alignment: Qt.AlignVCenter
-      iconText: "data_object"
-      tooltipText: I18n.tr("Insert a value from the output")
-      enabled: root.editor.bindPaths.length > 0
-      onClicked: {
-        root.insertFrom = Math.min(entry.input.selectionStart, entry.input.selectionEnd);
-        root.insertTo = Math.max(entry.input.selectionStart, entry.input.selectionEnd);
-        picker.openAt(entry);
-      }
+    PathInsertButton {
+      entry: textEntry
+      onInserted: text => root.write(text)
     }
   }
 
@@ -85,25 +74,4 @@ InspectorRow {
       overflow: "line"
     }
   ]
-
-  // A pick is inserted as {path}; an insert isn't `textEdited`, so it writes
-  // itself. Labels are the paths as they are
-  TypePickerPopup {
-    id: picker
-    parent: root
-    matchWidth: true
-    types: root.editor.bindPaths.map(p => ({
-          "type": p.path,
-          "label": p.path,
-          "detail": p.type === "array" ? I18n.tr("a list of {0}", p.value) : p.preview
-        }))
-    labelOf: type => type.label
-    onTypeSelected: path => {
-      const insert = "{" + path + "}";
-      const text = entry.text.slice(0, root.insertFrom) + insert + entry.text.slice(root.insertTo);
-      entry.text = text;
-      entry.input.cursorPosition = root.insertFrom + insert.length;
-      root.write(text);
-    }
-  }
 }

@@ -89,6 +89,8 @@ WorkArea {
   // (an Item): the owner opens the menu it wants
   signal tileContext(int index, var tile, real x, real y)
 
+  // Whether the canvas shows its own Undo/Redo (off: the host has a pair)
+  property bool showUndo: true
   readonly property bool editable: root.modules !== null && root.modules !== undefined
   readonly property var list: root.editable ? root.modules : []
   readonly property var bounds: GridPlacement.bounds(root.underlay.length > 0 ? root.list.concat(root.underlay) : root.list)
@@ -172,7 +174,7 @@ WorkArea {
   idle: root.editable && root.dragLayer.editor.selected < 0 && root.dragLayer.editor.group.length === 0
 
   undoRedo: UndoRedoButtons {
-    visible: root.editable
+    visible: root.editable && root.showUndo
     canUndo: root.dragLayer.editor.canUndo
     canRedo: root.dragLayer.editor.canRedo
     onUndo: root.dragLayer.editor.undo()

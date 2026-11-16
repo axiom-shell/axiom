@@ -151,20 +151,21 @@ ColumnLayout {
       overflow: "wrap"
     }
 
-    Flow {
+    // Kind labels are the schema's; kinds have no groups
+    TypeLibrary {
+      id: library
       Layout.fillWidth: true
-      spacing: Widget.spacing
+      types: CustomWidgetsConfig.elementKinds
+      groupable: false
+      fitsContent: true
+      labelOf: type => I18n.tr(type.label)
 
-      Repeater {
-        model: CustomWidgetsConfig.elementKinds
-
-        ModuleChip {
-          required property var modelData
-          dragLayer: root.dragLayer
-          // Kind labels: the schema's
-          typeInfo: modelData
-          onClicked: root.grid.addModule(modelData.type)
-        }
+      delegate: ModuleChip {
+        required property var modelData
+        implicitWidth: library.tileWidth
+        dragLayer: root.dragLayer
+        typeInfo: modelData
+        onClicked: root.grid.addModule(modelData.type)
       }
     }
 
@@ -179,6 +180,8 @@ ColumnLayout {
         order: ["lockscreen", "font"]
         values: root.definition?.module ?? ({})
         onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
+        changedAt: path => root.editor.changedAt(["module"].concat(path))
+        onDiscardAt: path => root.editor.discardAt(["module"].concat(path))
       }
       // Offered on the lock screen: what doesn't work there
       Notice {
@@ -224,36 +227,62 @@ ColumnLayout {
         onDuplicate: root.grid.duplicateModule(root.grid.selected)
         onRemove: root.grid.removeModule(root.grid.selected)
         onClose: root.grid.clearSelection()
-      }
 
-      // Shown on the canvas: empty, the kind
-      InspectorRow {
-        first: true
-        label: I18n.tr("Name")
+        // Copy to another screen (the screens it can go to: the layout's menu)
+        StyledIconButton {
+          id: copyButton
+          visible: root.dragLayer.copyTargets.length > 0
+          iconText: "move_item"
+          tooltipText: I18n.tr("Copy to screen")
+          onClicked: copyMenu.openAt(copyButton, 0, copyButton.height)
 
-        StyledTextEntry {
-          id: nameEntry
-          Layout.fillWidth: true
-          placeholderText: I18n.tr(root.kind?.label ?? "")
-          onTextEdited: root.editor.setElement(["name"], nameEntry.text)
-          Binding {
-            target: nameEntry
-            property: "text"
-            value: root.element?.name ?? ""
-            when: !nameEntry.input.activeFocus
-            restoreMode: Binding.RestoreNone
+          StyledContextMenu {
+            id: copyMenu
+            parent: root
+            items: root.dragLayer.copyTargets
+            onTriggered: id => root.editor.copyElementToView(Number(id.slice(3)))
           }
         }
       }
 
-      // One row: Always, or When a value in the output holds
-      ConditionRows {
-        label: I18n.tr("Visible")
-        description: I18n.tr("Show it only while a value in the output holds.")
-        value: root.element?.showWhen ?? ({})
-        keys: root.colorKeys
-        tests: root.conditionTests
-        write: (field, value) => root.editor.setElement(["showWhen", field], value)
+      FieldGroup {
+        Layout.fillWidth: true
+        title: I18n.tr("General")
+
+        ColumnLayout {
+          Layout.fillWidth: true
+          spacing: 0
+
+          // Shown on the canvas: empty, the kind
+          InspectorRow {
+            first: true
+            label: I18n.tr("Name")
+
+            StyledTextEntry {
+              id: nameEntry
+              Layout.fillWidth: true
+              placeholderText: I18n.tr(root.kind?.label ?? "")
+              onTextEdited: root.editor.setElement(["name"], nameEntry.text)
+              Binding {
+                target: nameEntry
+                property: "text"
+                value: root.element?.name ?? ""
+                when: !nameEntry.input.activeFocus
+                restoreMode: Binding.RestoreNone
+              }
+            }
+          }
+
+          // One row: Always, or When a value in the output holds
+          ConditionRows {
+            label: I18n.tr("Visible")
+            description: I18n.tr("Show it only while a value in the output holds.")
+            value: root.element?.showWhen ?? ({})
+            keys: root.colorKeys
+            tests: root.conditionTests
+            write: (field, value) => root.editor.setElement(["showWhen", field], value)
+          }
+        }
       }
 
       FieldGroup {
@@ -336,7 +365,7 @@ ColumnLayout {
         title: I18n.tr("Colors")
         headerExtras: TipIcon {
           text: "help"
-          tip: I18n.tr("Pick a color, or turn on Color by state to pick it from a value.")
+          tip: I18n.tr("Pick a color, or By state… to pick it from a value.")
         }
 
         ColumnLayout {
@@ -378,6 +407,8 @@ ColumnLayout {
           order: root.kind?.lookOrder ?? []
           values: root.element?.options ?? ({})
           onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
+          changedAt: path => root.editor.elementChangedAt(["options"].concat(path))
+          onDiscardAt: path => root.editor.discardElementAt(["options"].concat(path))
         }
       }
 
@@ -387,7 +418,7 @@ ColumnLayout {
         implicitHeight: Widget.height
         kind: "text"
         text: I18n.tr("More in Help")
-        onClicked: root.editor.openHelp("text")
+        onClicked: root.editor.openHelp(root.kind?.help ?? "text")
       }
     }
   }

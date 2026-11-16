@@ -167,10 +167,14 @@ ColumnLayout {
           Layout.fillWidth: true
           spacing: 0
 
-          // The key and the test side by side, each its label beside it
+          // The key and the test side by side, each its label beside it; a
+          // click on the row off the controls opens the Test list (while it
+          // shows), as SchemaComboBox's row does
           FormRow {
             first: true
+            hoverable: !screen.noKey
             bodyHeight: keyTest.implicitHeight
+            onRowClicked: testField.toggleFromRow()
 
             RowLayout {
               id: keyTest
@@ -209,6 +213,7 @@ ColumnLayout {
                   label: I18n.tr("Test")
                 }
                 StyledComboEntry {
+                  id: testField
                   Layout.fillWidth: true
                   value: screen.when.test ?? "is"
                   options: root.testOptions

@@ -47,6 +47,15 @@ BaseView {
       dirty: root.editor.isDirty
       onSave: root.editor.save()
       onReset: root.editor.reset()
+      // Undo/Redo for every tab: the one history is the definition's
+      headerTools: UndoRedoButtons {
+        visible: root.editor.selected !== null && !root.editor.formOpen
+        canUndo: root.editor.elements.canUndo
+        canRedo: root.editor.elements.canRedo
+        onUndo: root.editor.elements.undo()
+        onRedo: root.editor.elements.redo()
+      }
+      tabMarked: root.editor.changedTabs
 
       tabModel: (root.editor.selected !== null || root.editor.tab === 3) && !root.editor.formOpen ? root.tabNames : []
       tabIndex: root.editor.tab
@@ -110,13 +119,16 @@ BaseView {
         }
       }
 
-      // Only the shown tab is built
-      KeyedLoader {
-        id: tabs
-        Layout.fillWidth: true
-        Layout.preferredHeight: tabs.childrenRect.height
-        key: root.editor.importing ? "import" : root.editor.gallery ? "gallery" : root.editor.tab === 3 ? "help" : root.editor.selected !== null ? root.editor.tab + ":" + root.editor.selectedId : ""
-        sourceComponent: root.editor.importing ? importForm : root.editor.gallery ? galleryForm : root.editor.tab === 3 ? helpTab : root.editor.tab === 1 ? barTab : root.editor.tab === 2 ? moduleTab : dataTab
+      // Only the shown tab is built; inset, so its rows' hover isn't cut
+      // square at the pane's edge
+      FormInset {
+        KeyedLoader {
+          id: tabs
+          Layout.fillWidth: true
+          Layout.preferredHeight: tabs.childrenRect.height
+          key: root.editor.importing ? "import" : root.editor.gallery ? "gallery" : root.editor.tab === 3 ? "help" : root.editor.selected !== null ? root.editor.tab + ":" + root.editor.selectedId : ""
+          sourceComponent: root.editor.importing ? importForm : root.editor.gallery ? galleryForm : root.editor.tab === 3 ? helpTab : root.editor.tab === 1 ? barTab : root.editor.tab === 2 ? moduleTab : dataTab
+        }
       }
 
       Component {

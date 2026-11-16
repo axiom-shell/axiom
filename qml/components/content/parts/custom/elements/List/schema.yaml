@@ -1,6 +1,7 @@
 label: List
 icon: list
 defaultSize: [8, 4]
+help: task-list
 slots: [items]
 actions: [click]
 color: {variant: state, colorStates: {default: {key: state}}}

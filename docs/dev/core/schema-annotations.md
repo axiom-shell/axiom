@@ -136,6 +136,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `x-canvasDetail`: a module property the layouts editor shows on its tile (a list joined). `x-canvasFill`: a color property the tile is filled with (`OverlayConfig`).
 - On custom widget elements (`CustomElement`, `qml/components/content/parts/custom/elements/<Type>/schema.yaml`; `CustomWidgetsConfig.elementKinds`):
   - `x-defaultSize` (`[w, h]` in sub-cells, four to a grid unit): the size it's added at.
+  - `x-help`: the Custom widgets page's Help section the element kind's "More in Help" opens (`help` in its `schema.yaml`; `text` without one).
   - `x-slots`: its own bindings, in order (keys of its `bind`), each a `ValueField` row of the inspector's Shows (typed text or `{path}`); the base lists none.
   - `x-actions`: the commands it runs, in order (keys of its `actions`), each a row of the inspector's Runs.
   - Its `options` are its look, a form of its own; `color: <variant>` adds its colours (`CustomElementBase.yaml`'s `x-parts.color`: `state`, `text`, `button`, `icon`; `place: both|down` and `size: text|icon`, the placement and size of what an element draws; a kind overrides a part's setting as `color: {variant: state, colorStates: {default: …}}`). A colour key's rules sit in the sibling `<key>States` (`CustomColorStates`, "Color by state"), which `CustomWidgetData.colorFields` pairs with it; `showWhen` (`CustomShowWhen`) is the element's Visible.
