@@ -34,24 +34,24 @@ CustomElementBase {
       if (action.kind === "axiom" || !action.wait)
         field.text = "";
       else
-        root._clearAfter = Date.now();
+        root._clearRun = root._ranRun;
     }
   }
 
-  // When the accepted run that waits started, until it finished: the text is
-  // cleared by its success (0: none waiting)
-  property real _clearAfter: 0
+  // The accepted run that waits (CustomElementBase._ranRun), until it
+  // finished: the text is cleared by its success (0: none waiting)
+  property int _clearRun: 0
   Connections {
     target: CustomWidgetsManager
     function onLastActionChanged() {
-      if (root._clearAfter <= 0)
+      if (root._clearRun <= 0)
         return;
       const last = CustomWidgetsManager.lastAction[root.widgetId];
-      if (!last || last.action !== root.actionFor("submit")?.id || last.at < root._clearAfter)
+      if (!last || last.run !== root._clearRun)
         return;
       if (!last.failed)
         field.text = "";
-      root._clearAfter = 0;
+      root._clearRun = 0;
     }
   }
 }

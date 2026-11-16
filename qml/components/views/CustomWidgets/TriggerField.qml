@@ -63,6 +63,16 @@ ColumnLayout {
     });
   }
 
+  // What the Argument does here: without a value of its own and with {value}
+  // in the command it is that one word; else words added at the end, or
+  // where the command says {arg}
+  readonly property string argDescription: {
+    const command = String(root.action?.command ?? "");
+    if (!root.ownValue && /(^|[^$])\{value\}/.test(command))
+      return I18n.tr("Becomes {value}, all of it as one word. Quoted for you: it can't run anything.");
+    return I18n.tr("Added to the end of the command, or where it says {arg}. Words are quoted for you: it can't run anything.");
+  }
+
   Layout.fillWidth: true
   spacing: 0
 
@@ -133,7 +143,7 @@ ColumnLayout {
     indented: true
     shown: root.action?.kind === "command"
     label: I18n.tr("Argument")
-    description: I18n.tr("Added to the end of the command, or where it says {arg}. Words are quoted for you: it can't run anything.")
+    description: root.argDescription
 
     RowLayout {
       Layout.fillWidth: true

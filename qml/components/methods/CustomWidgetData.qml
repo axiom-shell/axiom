@@ -1941,6 +1941,36 @@ QtObject {
     return wait ? "queue" : "detached";
   }
 
+  // The run waiting for an action that is in flight, after another request
+  // `value` / `arg` of shape `shape` (runShape) came: a "latest" one replaces
+  // `prev` (the waiting entry, or null), a "queue" one (a notch) counts, at
+  // most 10, and each is run in turn
+  function pendingEntry(prev, value, arg, shape) {
+    const waiting = {
+      "value": value,
+      "arg": arg
+    };
+    if (shape === "queue")
+      waiting.count = Math.min(10, (prev?.count ?? 0) + 1);
+    return waiting;
+  }
+
+  // What to do when the in-flight run ended with `waiting` (the entry
+  // pendingEntry made) behind it: `{ run: { value, arg }, rest }`, the run to
+  // start now and the entry left waiting (null: none; a count of notches
+  // drops by one)
+  function nextPending(waiting) {
+    return {
+      "run": {
+        "value": waiting.value,
+        "arg": waiting.arg
+      },
+      "rest": (waiting.count ?? 0) > 1 ? Object.assign({}, waiting, {
+        "count": waiting.count - 1
+      }) : null
+    };
+  }
+
   // The key a List row sends as {value}: its `id`, else its value (the
   // number, without its unit), else its text
   function rowKey(row) {

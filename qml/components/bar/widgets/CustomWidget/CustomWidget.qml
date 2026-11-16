@@ -13,8 +13,9 @@ import qs.components.bar.widgets.base
 // actions bar.run picks; hovering opens its module, else shows the output's tooltip
 // (Waybar's; the definition's Tooltip switch). Hidden while the script
 // says so (empty text, as Waybar). While the script fails (an interactive
-// definition: CustomWidgetData.failure) it shows the error, in the error
-// colour, whatever its style.
+// definition: CustomWidgetData.failure) it shows the error icon and a short
+// "Error" label in the error colour, whatever its style; the message is its
+// tooltip.
 BarWidget {
   id: root
 
@@ -33,6 +34,9 @@ BarWidget {
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property bool failing: !!root.fields?.failure
+  // The chip's text while failing: a short label, the full message is the
+  // tooltip's (the module and popout show it whole)
+  readonly property string failLabel: I18n.tr("Error")
   readonly property var graphRange: CustomWidgetData.graphRange(root.fields, {})
 
   Component.onCompleted: CustomWidgetsManager.acquire(root, root.widgetId)
@@ -45,7 +49,7 @@ BarWidget {
   history: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
   graphMin: root.graphRange.min
   graphMax: root.graphRange.max
-  styleText: root.failing ? root.fields.error : (root.fields?.plain ?? "")
+  styleText: root.failing ? root.failLabel : (root.fields?.plain ?? "")
   subtext: root.fields?.subtext || root.fields?.alt || ""
 
   // News: its state went to warning, or to critical (its colour's
@@ -54,7 +58,7 @@ BarWidget {
 
   hidden: root.fields?.hidden ?? false
   icon: root.bar.icon === "material" ? (root.failing ? "error" : root.fields?.icon || root.definition?.icon || "widgets") : ""
-  text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.failing ? root.fields.error : root.fields.plain
+  text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.failing ? root.failLabel : root.fields.plain
   // The status color (a theme color's name), which the base resolves: the
   // error while failing, else bar.color (a rule of bar.colorStates, or
   // Auto: the script's state); none: the widget's own color
@@ -83,8 +87,8 @@ BarWidget {
 
   BarToolTip {
     widget: root
-    shown: !!root.definition?.tooltip && !root.popoutOpens
-    text: root.fields?.tooltip ?? ""
-    rich: true
+    shown: (root.failing || !!root.definition?.tooltip) && !root.popoutOpens
+    text: root.failing ? root.fields.error : (root.fields?.tooltip ?? "")
+    rich: !root.failing
   }
 }

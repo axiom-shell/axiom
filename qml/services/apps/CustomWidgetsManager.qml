@@ -210,14 +210,8 @@ QtObject {
       // 10), each run in turn
       if (root._own(root._inFlight[id], item.id)) {
         const prev = root._own(root._pending[id], item.id) ? root._pending[id][item.id] : null;
-        const waiting = {
-          "value": value,
-          "arg": arg
-        };
-        if (shape === "queue")
-          waiting.count = Math.min(10, (prev?.count ?? 0) + 1);
         root._pending[id] = Object.assign({}, root._pending[id], {
-          [item.id]: waiting
+          [item.id]: CustomWidgetData.pendingEntry(prev, value, arg, shape)
         });
         return "";
       }
@@ -430,15 +424,14 @@ QtObject {
       delete inFlight[item.id];
       root._inFlight[id] = inFlight;
       if (root._own(root._pending[id], item.id)) {
+        const next = CustomWidgetData.nextPending(waiting);
         const rest = Object.assign({}, root._pending[id]);
-        if ((waiting.count ?? 0) > 1)
-          rest[item.id] = Object.assign({}, waiting, {
-            "count": waiting.count - 1
-          });
+        if (next.rest !== null)
+          rest[item.id] = next.rest;
         else
           delete rest[item.id];
         root._pending[id] = rest;
-        root.invoke(id, item.id, waiting.value, true, false, waiting.arg);
+        root.invoke(id, item.id, next.run.value, true, false, next.run.arg);
       }
     }
   }

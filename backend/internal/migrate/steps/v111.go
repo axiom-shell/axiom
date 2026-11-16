@@ -21,7 +21,9 @@ import (
 //
 // A definition whose `actions.items` is already an array is done and skipped
 // whole; every definition changed gets that array (empty when no action was
-// made), which keeps a second run from wrapping the moved labels again.
+// made), which keeps a second run from wrapping the moved labels again. Each
+// also gets `bar.popout: true` unless its bar has one (the default became
+// false, and the hover popout stays).
 func v111(cfg *jsonx.Object) []string {
 	section := object(cfg, "CustomWidgets")
 	if section == nil {
@@ -134,6 +136,10 @@ func v111Definition(def *jsonx.Object) []string {
 	}
 	if v111States(def, bar, elements) {
 		add("state colours became rules")
+	}
+	if bar != nil && !bar.Has("popout") {
+		bar.Set("popout", true)
+		add("bar.popout kept on")
 	}
 	if len(parts) == 0 {
 		return nil
@@ -415,12 +421,12 @@ func v111ButtonArgument(el *jsonx.Object, usesValue bool) {
 	args.Set("click", v111ArgumentText(value))
 }
 
-// v111ArgumentText is `text` as one argument word: quoted when it holds
-// whitespace or a quote (a v1.2.1 {value} was always one word)
+// v111ArgumentText is `text` as an argument: {value} takes the whole argument
+// as one quoted word, so the text goes in as is, on one line, at most 512 long
 func v111ArgumentText(text string) string {
-	text = strings.TrimSpace(text)
-	if strings.ContainsAny(text, " \t\n\"") {
-		return "\"" + strings.ReplaceAll(text, "\"", "") + "\""
+	text = strings.NewReplacer("\r", " ", "\n", " ").Replace(strings.TrimSpace(text))
+	if r := []rune(text); len(r) > 512 {
+		text = string(r[:512])
 	}
 	return text
 }

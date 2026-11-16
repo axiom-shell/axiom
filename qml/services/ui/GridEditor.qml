@@ -409,7 +409,8 @@ QtObject {
     modules.splice(0, modules.length, ...Utils.clone(snap.modules));
     root.restoreExtra(snap.extra);
     root._group = [];
-    if (root._selected >= modules.length)
+    // restoreExtra may replace the array behind _modules(): ask again
+    if (root._selected >= (root._modules()?.length ?? 0))
       root._selected = -1;
     root.edited();
   }

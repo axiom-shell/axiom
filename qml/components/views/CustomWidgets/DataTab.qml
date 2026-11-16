@@ -140,14 +140,19 @@ ColumnLayout {
               input.font.family: "monospace"
               // Committed on Return, on leaving the field and when the tab goes
               // (each keystroke would run the half-typed command), and only
-              // what was typed in it
+              // what was typed in it; the widget being typed in is the one
+              // written (a commit after another is selected is dropped)
+              property string typedFor: ""
               function commit() {
                 if (!commandEntry.typed)
                   return;
                 commandEntry.typed = false;
+                if (commandEntry.typedFor !== root.editor.selectedId)
+                  return;
                 if (commandEntry.text !== (root.definition?.command ?? ""))
                   root.editor.set("command", commandEntry.text);
               }
+              onTextEdited: commandEntry.typedFor = root.editor.selectedId
               onAccepted: commandEntry.commit()
               input.onActiveFocusChanged: {
                 if (!commandEntry.input.activeFocus)

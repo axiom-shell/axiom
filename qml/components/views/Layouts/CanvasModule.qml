@@ -56,6 +56,9 @@ Rectangle {
 
   // A right click on it, at (x, y) in the tile
   signal contextRequested(real x, real y)
+  // Whether a right click on a tile of a selected group keeps the group (its
+  // menu acts on it); off, the click selects the tile alone
+  property bool contextKeepsGroup: false
 
   // The side being dragged to resize it ("n", "ne", … "nw"), else ""
   property string resizing: ""
@@ -150,12 +153,13 @@ Rectangle {
     }
   }
 
-  // A right click selects it (a tile of a selected group keeps the group) and
-  // asks the canvas's owner for its menu, at the point in the tile
+  // A right click selects it (a tile of a selected group keeps the group,
+  // where contextKeepsGroup) and asks the canvas's owner for its menu, at the
+  // point in the tile
   TapHandler {
     acceptedButtons: Qt.RightButton
     onTapped: point => {
-      if (!root.editor.group.includes(root.index))
+      if (!(root.contextKeepsGroup && root.editor.group.includes(root.index)))
         root.editor.select(root.index);
       root.contextRequested(point.position.x, point.position.y);
     }

@@ -163,6 +163,9 @@ Item {
   // The trigger this element last ran (runTrigger accepted it) and when
   property string _ranTrigger: ""
   property real _ranAt: 0
+  // The run the manager held the widget for when it accepted that trigger
+  // (a discrete action that waits; 0: none, a continuous or detached run)
+  property int _ranRun: 0
   // This element's own last run, when it failed (CustomWidgetsManager.lastAction:
   // `message` the stderr line, `at` when): the widget's last action names
   // the action its last accepted trigger picks, and finished since; else
@@ -172,7 +175,11 @@ Item {
     const last = CustomWidgetsManager.lastAction[root.widgetId];
     if (!last || !last.failed || root._ranTrigger === "")
       return null;
-    return last.action === root.actionFor(root._ranTrigger)?.id && last.at >= root._ranAt ? last : null;
+    // A run with a number is matched by it, so only the element that started
+    // it answers; one without (0) by its action and time
+    if (root._ranRun > 0)
+      return last.run === root._ranRun ? last : null;
+    return !last.run && last.action === root.actionFor(root._ranTrigger)?.id && last.at >= root._ranAt ? last : null;
   }
   // Held for a moment after a failed run: a blink (a fixed time)
   property bool flashing: false
@@ -237,10 +244,13 @@ Item {
   function runTrigger(trigger, value, continuous) {
     if (!root.actionsEnabled)
       return "locked";
+    const heldBefore = CustomWidgetsManager.busy[root.widgetId]?.run ?? 0;
     const refused = CustomWidgetsManager.invoke(root.widgetId, root.run[trigger] ?? "", value, !!continuous, false, root.args[trigger] ?? ""); // lock-inert: actionsEnabled is off on the lock screen
     if (refused === "") {
       root._ranTrigger = trigger;
       root._ranAt = Date.now();
+      const held = CustomWidgetsManager.busy[root.widgetId];
+      root._ranRun = held && held.run !== heldBefore && held.action === root.actionFor(trigger)?.id ? held.run : 0;
     }
     return refused;
   }

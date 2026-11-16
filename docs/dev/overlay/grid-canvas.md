@@ -62,7 +62,7 @@ Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement
 - For a grid of something other than overlay modules (a custom widget's elements, `views/CustomWidgets/ElementEditorLayout`), three hooks name what it holds: `describe(type)` → `{ icon, label }`, `sizeLabel(w, h)` (a tile's size while resized; cards by default) and `countLabel(n)` (the canvas's count and a carried group; modules by default).
 
 ### GridEditor (`qml/services/ui/GridEditor`, non-singleton)
-`GridCanvas.showUndo` off hides the canvas's own Undo/Redo (the host has a pair); a right click on a tile of a selected group keeps the group (`CanvasModule`).
+`GridCanvas.showUndo` off hides the canvas's own Undo/Redo (the host has a pair); a right click on a tile of a selected group keeps the group only with `contextKeepsGroup` (the custom widget editor's menu acts on it; `CanvasModule`), else it selects the tile alone.
 The canvas pieces name no service: they edit through `dragLayer.editor`.
 - Holds one grid of modules and its `selected` index.
 - Edits: `addModule` / `moveModule` / `resizeModule` / `duplicateModule` / `removeModule` / `updateModuleProperty`.

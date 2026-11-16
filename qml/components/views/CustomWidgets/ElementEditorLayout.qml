@@ -250,6 +250,7 @@ GridDragLayer {
           underlay: root.underlay
           tileContent: elementTile
           showActions: false
+          contextKeepsGroup: true
           showUndo: false
           showMargins: false
           onTileContext: (index, tile, x, y) => {

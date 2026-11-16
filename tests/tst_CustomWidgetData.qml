@@ -2854,6 +2854,42 @@ TestCase {
     compare(CustomWidgetData.runShape(true, undefined, true), "queue");
   }
 
+  function test_pendingEntry() {
+    const first = CustomWidgetData.pendingEntry(null, 5, "a", "latest");
+    compare(first.value, 5);
+    compare(first.arg, "a");
+    compare(first.count, undefined, "a value replaces the waiting one, no count");
+    compare(CustomWidgetData.pendingEntry(first, 9, "b", "latest").value, 9, "the latest wins");
+    compare(CustomWidgetData.pendingEntry(null, undefined, "", "queue").count, 1);
+    compare(CustomWidgetData.pendingEntry({
+      "count": 3
+    }, undefined, "", "queue").count, 4, "each notch counts");
+    compare(CustomWidgetData.pendingEntry({
+      "count": 10
+    }, undefined, "", "queue").count, 10, "at most 10");
+  }
+
+  function test_nextPending() {
+    const one = CustomWidgetData.nextPending({
+      "value": 5,
+      "arg": "a"
+    });
+    compare(one.run.value, 5);
+    compare(one.run.arg, "a");
+    compare(one.rest, null, "the last one leaves nothing waiting");
+    const counted = CustomWidgetData.nextPending({
+      "value": undefined,
+      "arg": "x",
+      "count": 3
+    });
+    compare(counted.rest.count, 2, "a notch is taken off the count");
+    compare(counted.rest.arg, "x");
+    compare(CustomWidgetData.nextPending({
+      "arg": "",
+      "count": 1
+    }).rest, null, "a count of 1 is the last");
+  }
+
   function test_keepChoice() {
     const module = {
       "views": [

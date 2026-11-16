@@ -88,6 +88,9 @@ WorkArea {
   // A right click on tile `index` (selected by it), at (x, y) in `tile`
   // (an Item): the owner opens the menu it wants
   signal tileContext(int index, var tile, real x, real y)
+  // Whether that right click keeps a selected group (the owner's menu acts on
+  // it); off, it selects the tile alone
+  property bool contextKeepsGroup: false
 
   // Whether the canvas shows its own Undo/Redo (off: the host has a pair)
   property bool showUndo: true
@@ -675,6 +678,7 @@ WorkArea {
           gap: root.gap
           growth: root.growthOf(tile.index)
           tileContent: root.tileContent
+          contextKeepsGroup: root.contextKeepsGroup
           onContextRequested: (x, y) => root.tileContext(tile.index, tile, x, y)
         }
       }

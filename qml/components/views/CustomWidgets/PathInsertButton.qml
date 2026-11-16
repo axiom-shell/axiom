@@ -10,13 +10,17 @@ import qs.components.reusable
 // bindPaths) and inserts it as {path} at the field's cursor, or over its
 // selection, then says the whole new text on `inserted` (an insert isn't
 // `textEdited`, so the owner writes it). Disabled with the reason in its
-// tooltip while the output has no paths yet.
+// tooltip while the output has no paths yet. The list spans the entry's row
+// (its parent).
 SquareIconButton {
   id: root
 
   // The StyledTextEntry it inserts into
   required property var entry
   readonly property var editor: CustomWidgetsManager.editor
+  // The row holding the entry and this button: the list opens under it, as
+  // wide as it
+  readonly property Item row: root.parent ?? root.entry
   // Where the picked path goes: the cursor (or selection) when the button was pressed
   property int insertFrom: 0
   property int insertTo: 0
@@ -31,13 +35,13 @@ SquareIconButton {
   onClicked: {
     root.insertFrom = Math.min(root.entry.input.selectionStart, root.entry.input.selectionEnd);
     root.insertTo = Math.max(root.entry.input.selectionStart, root.entry.input.selectionEnd);
-    picker.openAt(root.entry);
+    picker.openAt(root.row);
   }
 
   // Labels are the paths as they are
   TypePickerPopup {
     id: picker
-    parent: root.entry
+    parent: root.row
     matchWidth: true
     types: root.editor.bindPaths.map(p => ({
           "type": p.path,

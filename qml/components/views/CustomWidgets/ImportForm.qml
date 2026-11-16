@@ -24,9 +24,7 @@ ColumnLayout {
     for (const def of root.result?.definitions ?? []) {
       lines.push("# " + (def.name || I18n.tr("Custom widget")));
       const commands = CustomWidgetData.commandsOf(def);
-      commands.slice(0, 12).forEach(c => lines.push(c.where + ": " + c.command));
-      if (commands.length > 12)
-        lines.push(I18n.tr("…and {0} more", commands.length - 12));
+      commands.forEach(c => lines.push(c.where + ": " + c.command));
       if (commands.length === 0)
         lines.push(I18n.tr("(no commands)"));
     }
