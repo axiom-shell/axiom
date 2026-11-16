@@ -192,7 +192,9 @@ FieldGroup {
     clip: true
     spacing: Widget.spacing
     boundsBehavior: Flickable.StopAtBounds
-    model: root.rows.length
+    model: CountModel {
+      count: root.rows.length
+    }
 
     ScrollIndicator.vertical: StyledScrollIndicator {}
 
@@ -210,7 +212,9 @@ FieldGroup {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: Widget.smallPadding
+        anchors.leftMargin: Widget.padding
+        anchors.rightMargin: Widget.padding
+        anchors.topMargin: Widget.smallPadding
         spacing: Widget.spacing / 2
 
         RowLayout {

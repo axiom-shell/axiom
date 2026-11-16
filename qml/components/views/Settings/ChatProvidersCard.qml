@@ -5,6 +5,7 @@ import qs.config
 import qs.services.core
 import qs.services.ui
 import qs.services.apps
+import qs.components.forms
 import qs.components.methods
 import qs.components.reusable
 
@@ -94,14 +95,14 @@ FieldGroup {
       readonly property var result: root.results[provider.id] ?? null
 
       Layout.fillWidth: true
-      implicitHeight: rowColumn.implicitHeight + Widget.padding * 1.5
+      implicitHeight: rowColumn.implicitHeight + Widget.padding * 2
 
       ColumnLayout {
         id: rowColumn
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: Widget.padding * 0.75
+        anchors.margins: Widget.padding
         spacing: Widget.spacing
 
         RowLayout {
@@ -122,34 +123,9 @@ FieldGroup {
           }
 
           // Where the key comes from
-          StatusChip {
-            tone: {
-              switch (row.status) {
-              case "env":
-              case "keyring":
-              case "file":
-              case "unneeded":
-                return "success";
-              case "none":
-                return "warning";
-              }
-              return "neutral";
-            }
-            text: {
-              switch (row.status) {
-              case "env":
-                return I18n.tr("From ${0}", row.provider.keyEnv);
-              case "keyring":
-                return I18n.tr("In keyring");
-              case "file":
-                return I18n.tr("In secrets file");
-              case "none":
-                return I18n.tr("No key");
-              case "unneeded":
-                return I18n.tr("No key needed");
-              }
-              return I18n.tr("Checking…");
-            }
+          SecretStatusChip {
+            status: row.status
+            envName: row.provider.keyEnv
           }
         }
 
@@ -162,7 +138,6 @@ FieldGroup {
           StyledTextEntry {
             id: keyField
             Layout.fillWidth: true
-            Layout.preferredHeight: Widget.height
             placeholderText: row.status === "none" ? I18n.tr("Paste an API key") : I18n.tr("Paste a new key to replace it")
             input.echoMode: TextInput.Password
             onAccepted: saveKey.clicked()
@@ -170,7 +145,6 @@ FieldGroup {
 
           StyledTextButton {
             id: saveKey
-            implicitHeight: Widget.height
             visible: keyField.text.trim() !== ""
             text: I18n.tr("Save")
             kind: "primary"
@@ -181,7 +155,6 @@ FieldGroup {
           }
 
           StyledTextButton {
-            implicitHeight: Widget.height
             visible: row.status === "keyring" || row.status === "file"
             text: I18n.tr("Remove")
             onClicked: SecretsManager.clearKey(row.provider)

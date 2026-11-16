@@ -105,56 +105,31 @@ FieldGroup {
     }
   }
 
-  GridLayout {
-    Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing / 2
-
-    StyledText {
-      text: I18n.tr("Checkout")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      text: DevManager.checkout || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Dev build")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "wrap"
-      text: DevManager.tree === "" ? "—" : DevManager.buildFresh ? I18n.tr("Built from the tree as it is") : (DevManager.buildWhy || I18n.tr("Not built yet"))
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Dev config")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
-      text: Paths.shortenHome(DevManager.configPath) || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Install tree")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
-      text: Paths.shortenHome(DevManager.installTree) || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
+  FactGrid {
+    facts: [
+      {
+        label: I18n.tr("Checkout"),
+        value: DevManager.checkout || "—",
+        mono: true
+      },
+      {
+        label: I18n.tr("Dev build"),
+        value: DevManager.tree === "" ? "—" : DevManager.buildFresh ? I18n.tr("Built from the tree as it is") : (DevManager.buildWhy || I18n.tr("Not built yet")),
+        wrap: true
+      },
+      {
+        label: I18n.tr("Dev config"),
+        value: Paths.shortenHome(DevManager.configPath) || "—",
+        mono: true,
+        middle: true
+      },
+      {
+        label: I18n.tr("Install tree"),
+        value: Paths.shortenHome(DevManager.installTree) || "—",
+        mono: true,
+        middle: true
+      }
+    ]
   }
 
   StyledText {

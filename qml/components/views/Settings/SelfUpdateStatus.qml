@@ -71,44 +71,25 @@ ColumnLayout {
 
   spacing: Widget.spacing * 1.5
 
-  GridLayout {
+  FactGrid {
     visible: !SelfUpdateManager.managed
-    Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing / 2
-
-    StyledText {
-      text: I18n.tr("Installed")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      text: root.installed || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: SelfUpdateManager.channel === "main" ? I18n.tr("Latest on main") : I18n.tr("Latest release")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      text: SelfUpdateManager.latest || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Last checked")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "wrap"
-      text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateTimeFormat()) : I18n.tr("Never")
-      Layout.fillWidth: true
-    }
+    facts: [
+      {
+        label: I18n.tr("Installed"),
+        value: root.installed || "—",
+        mono: true
+      },
+      {
+        label: SelfUpdateManager.channel === "main" ? I18n.tr("Latest on main") : I18n.tr("Latest release"),
+        value: SelfUpdateManager.latest || "—",
+        mono: true
+      },
+      {
+        label: I18n.tr("Last checked"),
+        value: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateTimeFormat()) : I18n.tr("Never"),
+        wrap: true
+      }
+    ]
   }
 
   StyledText {

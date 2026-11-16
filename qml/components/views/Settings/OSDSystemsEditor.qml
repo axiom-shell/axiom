@@ -217,57 +217,23 @@ ColumnLayout {
       }
 
       // The selected system's settings, from its schema
-      Surface {
-        tone: "sunken"
+      SelectedSettingsBox {
+        id: selectedBox
         visible: root.selected !== null
         Layout.preferredWidth: split.secondWidth
         Layout.alignment: Qt.AlignTop
-        implicitHeight: selectedColumn.implicitHeight + Widget.padding * 2
+        icon: root.selectedInfo?.icon ?? ""
+        title: root.selected ? root.labelOf(root.selected.type) : ""
+        formKey: root.selected ? root._osdId + ":" + root.selected.type : ""
+        sourceComponent: systemForm
 
-        ColumnLayout {
-          id: selectedColumn
-          anchors.fill: parent
-          anchors.margins: Widget.padding
-          spacing: Widget.spacing
-
-          RowLayout {
-            Layout.fillWidth: true
-            spacing: Widget.spacing
-
-            StyledIcon {
-              text: root.selectedInfo?.icon ?? ""
-              tone: "accent"
-            }
-
-            StyledLabel {
-              Layout.fillWidth: true
-              text: root.selected ? root.labelOf(root.selected.type) : ""
-              role: "label"
-              overflow: "line"
-            }
-          }
-
-          StyledSeparator {
-            Layout.fillWidth: true
-          }
-
-          // Its bars are set in the Bars part
-          StyledText {
-            visible: root._barSpec?.from !== undefined
-            Layout.fillWidth: true
-            text: I18n.tr("Its bars are set under Bars, below.")
-            role: "caption"
-            overflow: "wrap"
-          }
-
-          // A new form per system, so no row writes onto another
-          KeyedLoader {
-            id: formSlot
-            Layout.fillWidth: true
-            Layout.preferredHeight: formSlot.childrenRect.height
-            key: root.selected ? root._osdId + ":" + root.selected.type : ""
-            sourceComponent: systemForm
-          }
+        // Its bars are set in the Bars part
+        StyledText {
+          visible: root._barSpec?.from !== undefined
+          Layout.fillWidth: true
+          text: I18n.tr("Its bars are set under Bars, below.")
+          role: "caption"
+          overflow: "wrap"
         }
       }
     }
@@ -277,7 +243,7 @@ ColumnLayout {
     id: systemForm
 
     SchemaPropertiesForm {
-      width: formSlot.width
+      width: selectedBox.formWidth
       readonly property var props: root.selectedInfo?.schema.properties ?? ({})
       // (its list of bars is the Bars part's)
       readonly property string barsKey: root._barSpec?.from ?? ""

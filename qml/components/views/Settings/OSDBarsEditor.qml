@@ -306,56 +306,17 @@ ColumnLayout {
       }
 
       // The selected bar's settings, from its schema
-      Surface {
-        tone: "sunken"
+      SelectedSettingsBox {
+        id: selectedBox
         visible: root.selected !== null
         Layout.preferredWidth: split.secondWidth
         Layout.alignment: Qt.AlignTop
-        implicitHeight: selectedColumn.implicitHeight + Widget.padding * 2
-
-        ColumnLayout {
-          id: selectedColumn
-          anchors.fill: parent
-          anchors.margins: Widget.padding
-          spacing: Widget.spacing
-
-          RowLayout {
-            Layout.fillWidth: true
-            spacing: Widget.spacing
-
-            StyledIcon {
-              text: root.selected?.icon ?? ""
-              tone: "accent"
-            }
-
-            StyledLabel {
-              Layout.fillWidth: true
-              text: root.selected?.name ?? ""
-              role: "label"
-              overflow: "line"
-            }
-
-            // Whose setting it is (a list's bar)
-            StyledLabel {
-              visible: (root.selected?.index ?? -1) >= 0
-              text: root.selected ? OSDConfig.nameOf(root.selected.type) : ""
-              role: "caption"
-            }
-          }
-
-          StyledSeparator {
-            Layout.fillWidth: true
-          }
-
-          // A new form per bar, so no row writes onto another
-          KeyedLoader {
-            id: formSlot
-            Layout.fillWidth: true
-            Layout.preferredHeight: formSlot.childrenRect.height
-            key: root.selected ? root._osdId + ":" + root.selected.type + ":" + root.selected.index : ""
-            sourceComponent: barForm
-          }
-        }
+        icon: root.selected?.icon ?? ""
+        title: root.selected?.name ?? ""
+        // Whose setting it is (a list's bar)
+        caption: (root.selected?.index ?? -1) >= 0 ? OSDConfig.nameOf(root.selected.type) : ""
+        formKey: root.selected ? root._osdId + ":" + root.selected.type + ":" + root.selected.index : ""
+        sourceComponent: barForm
       }
     }
   }
@@ -364,7 +325,7 @@ ColumnLayout {
     id: barForm
 
     SchemaPropertiesForm {
-      width: formSlot.width
+      width: selectedBox.formWidth
       readonly property bool isEntry: (root.selected?.index ?? -1) >= 0
       // A list's bar: its entry's schema; a one-bar system: its settings
       // (its bar's switch, quiet, then its own), less its card's switch

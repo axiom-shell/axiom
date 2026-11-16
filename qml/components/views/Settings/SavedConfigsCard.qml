@@ -44,8 +44,36 @@ FieldGroup {
     text: hinting ? hint : idle
     tone: hinting ? "text" : "muted"
     role: "caption"
-    overflow: "line"
+    overflow: hinting ? "wrap" : "line"
     Layout.fillWidth: true
+  }
+
+  // One sunken row: the text items (`info`, a title and a subtitle) at the
+  // left, the child items (buttons) at the right. Its height follows its
+  // text, so a wrapped hint grows the row; a one-line row keeps one
+  // control's height.
+  component ConfigRow: Surface {
+    id: configRow
+    tone: "sunken"
+    property alias info: infoColumn.data
+    default property alias buttons: rowLayout.data
+
+    Layout.fillWidth: true
+    implicitHeight: Math.max(Widget.height, infoColumn.implicitHeight) + Widget.padding * 2
+
+    RowLayout {
+      id: rowLayout
+      anchors.fill: parent
+      anchors.leftMargin: Widget.padding
+      anchors.rightMargin: Widget.padding
+      spacing: Widget.spacing
+
+      ColumnLayout {
+        id: infoColumn
+        Layout.fillWidth: true
+        spacing: 0
+      }
+    }
   }
 
   // The last outcome, shown beside the controls that caused it
@@ -64,13 +92,11 @@ FieldGroup {
     StyledTextEntry {
       id: nameEntry
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Configuration name")
       onAccepted: root.save()
     }
 
     StyledTextButton {
-      Layout.preferredHeight: Widget.height
       text: I18n.tr(SavedConfigsManager.exists(nameEntry.text) ? "Overwrite" : "Save")
       onClicked: root.save()
     }
@@ -91,137 +117,103 @@ FieldGroup {
   Repeater {
     model: SavedConfigsManager.model
 
-    delegate: Surface {
+    delegate: ConfigRow {
       id: row
-      tone: "sunken"
       required property string fileBaseName
       required property date fileModified
       readonly property bool active: SavedConfigsManager.active === fileBaseName
       readonly property string pendingAction: root.pending?.name === fileBaseName ? root.pending.action : ""
 
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height + Widget.padding * 2
-
-      RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.padding
-        spacing: Widget.spacing
-
-        ColumnLayout {
+      info: [
+        // The name at its full width while it fits, then elided, with
+        // the badges right after it
+        Item {
+          id: nameLine
           Layout.fillWidth: true
-          spacing: 0
+          implicitWidth: nameText.implicitWidth + (badges.visible ? Widget.spacing + badges.implicitWidth : 0)
+          implicitHeight: Math.max(nameText.implicitHeight, badges.implicitHeight)
 
-          // The name at its full width while it fits, then elided, with
-          // the badges right after it
-          Item {
-            id: nameLine
-            Layout.fillWidth: true
-            implicitWidth: nameText.implicitWidth + (badges.visible ? Widget.spacing + badges.implicitWidth : 0)
-            implicitHeight: Math.max(nameText.implicitHeight, badges.implicitHeight)
-
-            StyledLabel {
-              id: nameText
-              anchors.verticalCenter: parent.verticalCenter
-              width: Math.min(implicitWidth, nameLine.width - (badges.visible ? Widget.spacing + badges.implicitWidth : 0))
-              text: row.fileBaseName
-              role: "label"
-              overflow: "line"
-            }
-
-            Row {
-              id: badges
-              visible: row.active
-              x: nameText.width + Widget.spacing
-              anchors.verticalCenter: parent.verticalCenter
-              spacing: Widget.spacing
-
-              StatusChip {
-                anchors.verticalCenter: parent.verticalCenter
-                tone: "accent"
-                text: I18n.tr("Current")
-              }
-
-              UnsavedDot {
-                anchors.verticalCenter: parent.verticalCenter
-                shown: SavedConfigsManager.modified
-              }
-            }
+          StyledLabel {
+            id: nameText
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, nameLine.width - (badges.visible ? Widget.spacing + badges.implicitWidth : 0))
+            text: row.fileBaseName
+            role: "label"
+            overflow: "line"
           }
 
-          Subtitle {
-            armed: row.pendingAction === "restore"
-            restoring: row.fileBaseName
-            idle: I18n.formatDate(row.fileModified, I18n.dateTimeFormat())
+          Row {
+            id: badges
+            visible: row.active
+            x: nameText.width + Widget.spacing
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Widget.spacing
+
+            StatusChip {
+              anchors.verticalCenter: parent.verticalCenter
+              tone: "accent"
+              text: I18n.tr("Current")
+            }
+
+            UnsavedDot {
+              anchors.verticalCenter: parent.verticalCenter
+              shown: SavedConfigsManager.modified
+            }
           }
+        },
+        Subtitle {
+          armed: row.pendingAction === "restore"
+          restoring: row.fileBaseName
+          idle: I18n.formatDate(row.fileModified, I18n.dateTimeFormat())
         }
+      ]
 
-        StyledTextButton {
-          visible: row.active
-          Layout.preferredHeight: Widget.height
-          text: I18n.tr(row.pendingAction === "overwrite" ? "Confirm" : "Overwrite")
-          onClicked: root.confirm(row.fileBaseName, "overwrite")
-        }
+      StyledTextButton {
+        visible: row.active
+        text: I18n.tr(row.pendingAction === "overwrite" ? "Confirm" : "Overwrite")
+        onClicked: root.confirm(row.fileBaseName, "overwrite")
+      }
 
-        // On the active one, Revert: there's nothing to restore unchanged
-        StyledTextButton {
-          visible: !row.active || SavedConfigsManager.modified
-          Layout.preferredHeight: Widget.height
-          text: row.pendingAction === "restore" ? I18n.tr("Confirm") : row.active ? I18n.tr("Revert") : I18n.tr("Restore")
-          onClicked: root.confirm(row.fileBaseName, "restore")
-        }
+      // On the active one, Revert: there's nothing to restore unchanged
+      StyledTextButton {
+        visible: !row.active || SavedConfigsManager.modified
+        text: row.pendingAction === "restore" ? I18n.tr("Confirm") : row.active ? I18n.tr("Revert") : I18n.tr("Restore")
+        onClicked: root.confirm(row.fileBaseName, "restore")
+      }
 
-        // Not the active one: one is always active
-        StyledTextButton {
-          visible: !row.active
-          Layout.preferredHeight: Widget.height
-          text: I18n.tr(row.pendingAction === "delete" ? "Confirm" : "Delete")
-          kind: "danger"
-          onClicked: root.confirm(row.fileBaseName, "delete")
-        }
+      // Not the active one: one is always active
+      StyledTextButton {
+        visible: !row.active
+        text: I18n.tr(row.pendingAction === "delete" ? "Confirm" : "Delete")
+        kind: "danger"
+        onClicked: root.confirm(row.fileBaseName, "delete")
       }
     }
   }
 
-  Surface {
-    tone: "sunken"
-    Layout.fillWidth: true
-    Layout.preferredHeight: Widget.height + Widget.padding * 2
+  ConfigRow {
+    id: defaultsRow
 
-    RowLayout {
-      id: defaultsRow
+    readonly property bool armed: root.pending?.name === "" && root.pending?.action === "restore"
 
-      readonly property bool armed: root.pending?.name === "" && root.pending?.action === "restore"
-
-      anchors.fill: parent
-      anchors.leftMargin: Widget.padding
-      anchors.rightMargin: Widget.padding
-      spacing: Widget.spacing
-
-      ColumnLayout {
+    info: [
+      StyledLabel {
+        text: I18n.tr("Defaults")
+        role: "label"
+        overflow: "line"
         Layout.fillWidth: true
-        spacing: 0
-
-        StyledLabel {
-          text: I18n.tr("Defaults")
-          role: "label"
-          overflow: "line"
-          Layout.fillWidth: true
-        }
-
-        Subtitle {
-          armed: defaultsRow.armed
-          restoring: ""
-          idle: I18n.tr("The look, layout, keybinds and apps a first run starts with")
-        }
+      },
+      Subtitle {
+        armed: defaultsRow.armed
+        restoring: ""
+        idle: I18n.tr("The look, layout, keybinds and apps a first run starts with")
       }
+    ]
 
-      StyledTextButton {
-        Layout.preferredHeight: Widget.height
-        text: I18n.tr(defaultsRow.armed ? "Confirm" : "Restore")
-        kind: "danger"
-        onClicked: root.confirm("", "restore")
-      }
+    StyledTextButton {
+      text: I18n.tr(defaultsRow.armed ? "Confirm" : "Restore")
+      kind: "danger"
+      onClicked: root.confirm("", "restore")
     }
   }
 
@@ -248,7 +240,6 @@ FieldGroup {
     }
 
     StyledTextButton {
-      Layout.preferredHeight: Widget.height
       text: I18n.tr("Export")
       onClicked: {
         root.shareStatus = true;
@@ -257,7 +248,6 @@ FieldGroup {
     }
 
     StyledTextButton {
-      Layout.preferredHeight: Widget.height
       enabled: !SavedConfigsManager.picking
       text: I18n.tr("Import…")
       onClicked: {
@@ -351,7 +341,6 @@ FieldGroup {
         }
 
         StyledTextButton {
-          Layout.preferredHeight: Widget.height
           text: I18n.tr("Apply")
           onClicked: {
             root.shareStatus = true;
@@ -360,7 +349,6 @@ FieldGroup {
         }
 
         StyledTextButton {
-          Layout.preferredHeight: Widget.height
           text: I18n.tr("Cancel")
           onClicked: SavedConfigsManager.cancelImport()
         }
@@ -429,45 +417,29 @@ FieldGroup {
   Repeater {
     model: SavedConfigsManager.examples
 
-    delegate: Surface {
+    delegate: ConfigRow {
       id: exampleRow
-      tone: "sunken"
       required property var modelData
       readonly property bool armed: root.pending?.name === "example:" + modelData.name
 
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height + Widget.padding * 2
-
-      RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.padding
-        spacing: Widget.spacing
-
-        ColumnLayout {
+      info: [
+        StyledLabel {
+          text: exampleRow.modelData.title
+          role: "label"
+          overflow: "line"
           Layout.fillWidth: true
-          spacing: 0
-
-          StyledLabel {
-            text: exampleRow.modelData.title
-            role: "label"
-            overflow: "line"
-            Layout.fillWidth: true
-          }
-
-          Subtitle {
-            visible: text !== ""
-            armed: exampleRow.armed
-            restoring: ""
-            idle: exampleRow.modelData.description
-          }
+        },
+        Subtitle {
+          visible: text !== ""
+          armed: exampleRow.armed
+          restoring: ""
+          idle: exampleRow.modelData.description
         }
+      ]
 
-        StyledTextButton {
-          Layout.preferredHeight: Widget.height
-          text: I18n.tr(exampleRow.armed ? "Confirm" : "Apply")
-          onClicked: root.confirm("example:" + exampleRow.modelData.name, "apply")
-        }
+      StyledTextButton {
+        text: I18n.tr(exampleRow.armed ? "Confirm" : "Apply")
+        onClicked: root.confirm("example:" + exampleRow.modelData.name, "apply")
       }
     }
   }

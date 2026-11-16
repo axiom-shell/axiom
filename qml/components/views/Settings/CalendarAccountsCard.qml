@@ -245,14 +245,12 @@ FoldingCard {
     StyledTextEntry {
       id: passwordField
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
       placeholderText: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? I18n.tr("Type a new one to replace it") : I18n.tr("The account's password")
       input.echoMode: TextInput.Password
       onAccepted: savePassword.clicked()
     }
     StyledTextButton {
       id: savePassword
-      implicitHeight: Widget.height
       visible: passwordField.text !== ""
       text: I18n.tr("Save")
       kind: "primary"
@@ -261,9 +259,9 @@ FoldingCard {
         passwordField.text = "";
       }
     }
-    StatusChip {
-      tone: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? "success" : root.passwordStatus === "none" ? "warning" : "neutral"
-      text: root.passwordStatus === "keyring" ? I18n.tr("In keyring") : root.passwordStatus === "file" ? I18n.tr("In secrets file") : root.passwordStatus === "none" ? I18n.tr("No password") : I18n.tr("Checking…")
+    SecretStatusChip {
+      status: root.passwordStatus
+      missingText: I18n.tr("No password")
     }
   }
 
