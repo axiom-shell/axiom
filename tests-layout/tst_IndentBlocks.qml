@@ -145,4 +145,253 @@ TestCase {
     compare(half.probe.mapToItem(half.row, 0, 0).x, 0);
     compare(root.rails(half.row), []);
   }
+
+  Component {
+    id: paneComp
+
+    Surface {
+      id: pane
+      property alias group: group
+      property string head: "auto"
+      property bool lead: false
+      property var levels: [0, 0]
+      property bool hostVisible: true
+      property bool allHidden: false
+      width: 400
+      height: 500
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: group
+          title: "Size"
+          head: pane.head
+          visible: pane.hostVisible
+
+          FakeForm {
+            levels: pane.levels
+            leads: pane.lead
+            allHidden: pane.allHidden
+          }
+        }
+      }
+    }
+  }
+
+  function findNamed(item, name) {
+    if (item.objectName === name)
+      return item;
+    for (const child of item.children) {
+      const found = root.findNamed(child, name);
+      if (found)
+        return found;
+    }
+    return null;
+  }
+
+  // The FormRows of a pane's form, top to bottom
+  function formRows(pane) {
+    const out = [];
+    const walk = it => {
+      if (it.bodyHeight !== undefined && it.depth !== undefined && it.objectName !== "blockHead")
+        out.push(it);
+      for (const child of it.children)
+        walk(child);
+    };
+    walk(pane);
+    return out.sort((a, b) => a.mapToItem(pane, 0, 0).y - b.mapToItem(pane, 0, 0).y);
+  }
+
+  function probeX(row) {
+    return root.findNamed(row, "probe").mapToItem(row, 0, 0).x;
+  }
+
+  function hasHeading(group) {
+    const walk = it => {
+      if (it.visible && it.title !== undefined && it.description !== undefined && it !== group && (it.title === true || it.title !== ""))
+        return true;
+      return Array.from(it.children).some(walk);
+    };
+    return walk(group);
+  }
+
+  function test_blockHeadIsARowWithoutAControl_data() {
+    return rows();
+  }
+
+  function test_blockHeadIsARowWithoutAControl(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(paneComp, root);
+    verify(pane);
+    wait(50);
+    const head = root.findNamed(pane.group, "blockHead");
+    verify(head && head.visible, "a block head");
+    verify(root.findNamed(head, "rowTint") === null, "no hover tint");
+    compare(head.hoverable, false);
+    compare(head.tinted, false);
+    compare(pane.group.rowBase, 1);
+    const rows = root.formRows(pane);
+    compare(rows.length, 2);
+    for (const row of rows)
+      compare(root.probeX(row), root.step(), "each row is one step under the head");
+    verify(rows[0].mapToItem(pane, 0, 0).y >= head.mapToItem(pane, 0, head.height).y - 1, "rows below the head");
+    compare(Math.round(rows[0].mapToItem(pane, 0, 0).y - head.mapToItem(pane, 0, head.height).y), 0, "abutting it");
+    const divider = Array.from(rows[0].children).find(it => it.objectName === "" && it.height === 1 && it.x === root.step());
+    verify(divider, "the first row's divider starts at the indent");
+  }
+
+  function test_leadDropsTheHeading_data() {
+    return rows();
+  }
+
+  function test_leadDropsTheHeading(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(paneComp, root, {
+      "lead": true,
+      "levels": [0, 1, 1, 2]
+    });
+    verify(pane);
+    wait(50);
+    verify(!root.findNamed(pane.group, "blockHead").visible, "no head row");
+    verify(!root.hasHeading(pane.group), "no heading drawn");
+    compare(pane.group.rowBase, 0);
+    const rows = root.formRows(pane);
+    compare(rows.map(r => root.probeX(r)), [0, 1, 1, 2].map(n => n * root.step()), "indent by tree level");
+    compare(root.rails(rows[3]), [0, root.step()], "two rails on the double-indented row");
+  }
+
+  Component {
+    id: extrasComp
+
+    Surface {
+      property alias group: group
+      property alias chip: chip
+      width: 400
+      height: 300
+      tone: "surface"
+
+      ColumnLayout {
+        width: parent.width
+
+        FieldGroup {
+          id: group
+          title: "Surface"
+          headerExtras: Item {
+            id: chip
+            implicitWidth: 20
+            implicitHeight: 10
+          }
+
+          FakeForm {
+            levels: [0, 1]
+            leads: true
+          }
+        }
+      }
+    }
+  }
+
+  function test_aLeadingFormWithExtrasStaysABlock_data() {
+    return rows();
+  }
+
+  function test_aLeadingFormWithExtrasStaysABlock(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(extrasComp, root);
+    verify(pane);
+    wait(50);
+    const head = root.findNamed(pane.group, "blockHead");
+    verify(head.visible, "extras need the head row");
+    const at = pane.chip.mapToItem(head, 0, 0);
+    verify(at.y >= 0 && at.y + pane.chip.height <= head.height, "the extras sit on the head row: " + at.y);
+    verify(at.x > head.width / 2, "at its right");
+  }
+
+  function test_handBuiltRowInABlockIsDoubleIndented_data() {
+    return rows();
+  }
+
+  function test_handBuiltRowInABlockIsDoubleIndented(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(paneComp, root, {
+      "levels": [0, 1]
+    });
+    verify(pane);
+    wait(50);
+    const rows = root.formRows(pane);
+    compare(root.probeX(rows[0]), root.step());
+    compare(root.probeX(rows[1]), 2 * root.step(), "indented under a block: base 1 + level 1");
+  }
+
+  function test_allHiddenHidesTheGroup_data() {
+    return rows();
+  }
+
+  function test_allHiddenHidesTheGroup(data) {
+    harness.configure(data);
+    const pane = createTemporaryObject(paneComp, root, {
+      "allHidden": true
+    });
+    verify(pane);
+    wait(50);
+    compare(pane.group.visible, false, "every row hidden: the head goes too");
+    pane.allHidden = false;
+    compare(pane.group.visible, true);
+    pane.hostVisible = false;
+    compare(pane.group.visible, false, "a host's own visible still wins");
+    pane.allHidden = true;
+    pane.allHidden = false;
+    compare(pane.group.visible, false, "and after the rows come and go");
+  }
+
+  function test_boxedGroupKeepsItsSectionHeading_data() {
+    return rows();
+  }
+
+  function test_boxedGroupKeepsItsSectionHeading(data) {
+    harness.configure(data);
+    const col = createTemporaryObject(boxedComp, root);
+    verify(col);
+    wait(50);
+    verify(root.hasHeading(col.group), "a SectionHeading");
+    verify(!root.findNamed(col.group, "blockHead").visible);
+    compare(col.group.rowBase, 0);
+  }
+
+  Component {
+    id: boxedComp
+
+    ColumnLayout {
+      property alias group: group
+      width: 400
+
+      FieldGroup {
+        id: group
+        title: "Group"
+
+        FormRow {
+          first: true
+          bodyHeight: Widget.height
+        }
+      }
+    }
+  }
+
+  // Outside any FieldGroup (the settings page) a dependent row has one rail
+  function test_settingsPageRowsKeepOneLevel_data() {
+    return rows();
+  }
+
+  function test_settingsPageRowsKeepOneLevel(data) {
+    harness.configure(data);
+    const host = createTemporaryObject(hostComp, root, {
+      "rowBase": 0
+    });
+    host.row.indented = true;
+    wait(20);
+    compare(host.probe.mapToItem(host.row, 0, 0).x, root.step());
+    compare(root.rails(host.row), [0]);
+  }
 }

@@ -33,6 +33,9 @@ TestCase {
     FieldGroup {
       Layout.fillWidth: true
       title: "Group"
+      // Rows at depth 0, the ones whose tint bleeds past the edge (an indented
+      // row's tint starts at its own rule)
+      head: "lead"
 
       ColumnLayout {
         Layout.fillWidth: true

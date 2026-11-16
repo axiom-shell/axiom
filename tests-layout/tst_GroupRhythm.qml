@@ -40,6 +40,8 @@ TestCase {
         FieldGroup {
           id: group
           title: "Group"
+          // The heading over content that isn't rows (a block's head abuts its rows)
+          head: "section"
 
           FormRow {
             id: row1
