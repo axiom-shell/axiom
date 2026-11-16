@@ -15,7 +15,8 @@ import qs.components.content.parts
 // set, stand in for the terminal, file manager and browser
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   // Other file types: the MIME type typed, and what opens it
   property string otherMime: ""

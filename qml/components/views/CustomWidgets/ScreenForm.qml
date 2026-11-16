@@ -98,7 +98,6 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Screen")
-        headerGap: 0
         // Adds no height of its own (the button is taller than the heading):
         // centred on the title line, so both headers are as tall
         headerExtras: Item {
@@ -160,7 +159,6 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Show when")
-        headerGap: 0
 
         ColumnLayout {
           Layout.fillWidth: true

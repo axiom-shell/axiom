@@ -48,9 +48,6 @@ FormRow {
   readonly property bool foldHasRows: !root.row.foldRows || root.row.foldRows.some(inner => inner.kind !== "group" && root.form.rowShown(inner))
 
   shown: field.shown && (!root.row.foldedBy || root.foldOpen) && root.foldedInOpen && root.foldHasRows && !root.row.drawnBy
-  // A row shown by a sibling's value (Night light's times, under "On a
-  // schedule")
-  indented: root.isValue && field.followsSibling
   // `x-footprint` (Footprint.persistent): the setting writes outside axiom's folders
   readonly property bool footprinted: root.isValue && Footprint.persistent(root.row.schema, SettingsManager.schemaAt([root.row.path[0]]), key => SettingsManager.configValueAt(key.startsWith("/") ? key.slice(1) : key))
   readonly property string ownerPath: root.row.path.join(".")

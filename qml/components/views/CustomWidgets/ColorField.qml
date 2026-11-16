@@ -272,7 +272,7 @@ ColumnLayout {
   }
 
   InspectorRow {
-    indented: true
+    level: 1
     shown: root.statesOn
     label: I18n.tr("Key")
     description: I18n.tr("Empty: what the element shows.")
@@ -289,7 +289,7 @@ ColumnLayout {
   }
 
   FormRow {
-    indented: true
+    level: 1
     shown: root.statesOn
     tinted: false
     bodyHeight: rulesColumn.implicitHeight

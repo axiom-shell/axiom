@@ -706,8 +706,8 @@ TestCase {
     }
   }
 
-  // A titled group is a boxed card: surface on the page or with no Surface,
-  // flat (the host's fill and ink) on any other
+  // A group is the settings page's card: surface-toned and outlined whatever
+  // it sits on
   function test_field_group_is_boxed() {
     harness.configure({});
     const alone = createTemporaryObject(groupComp, root, {
@@ -723,14 +723,8 @@ TestCase {
         "tone": tone
       });
       waitForRendering(host);
-      compare(host.group.tone, tone === "page" ? "surface" : tone, tone);
-      if (tone === "page") {
-        compare(host.group.border.width, Style.hairline);
-      } else {
-        compare(host.group.color.a, 0, tone);
-        compare(host.group.border.width, 0, tone);
-        compare(host.group.ink, host.ink, tone);
-      }
+      compare(host.group.tone, "surface", tone);
+      compare(host.group.border.width, Style.hairline, tone);
     }
   }
 
@@ -757,8 +751,7 @@ TestCase {
       return null;
     }
     const heading = titleItem(bare);
-    verify(heading !== null);
-    compare(heading.visible, false);
+    verify(heading === null || heading.visible === false);
     verify(bare.implicitHeight < titled.implicitHeight);
   }
 
@@ -1289,21 +1282,6 @@ TestCase {
     // one move of animNormal, not a chase that trails behind it
     verify(settledAt >= 0 && settledAt <= Appearance.animNormal + 60, "settled after " + settledAt + " ms");
     tryVerify(() => Math.abs(mark.x - left) < 0.5 && Math.abs(mark.width - width) < 0.5);
-  }
-
-  // A settings page's card sits in the page's own card (a Surface): `pageCard`
-  // keeps it boxed there, where any other group goes flat
-  function test_field_group_page_card_stays_boxed() {
-    harness.configure({});
-    const host = createTemporaryObject(hostComp, root, {
-      "tone": "surface"
-    });
-    waitForRendering(host);
-    compare(host.group.border.width, 0);
-    host.group.pageCard = true;
-    compare(host.group.tone, "surface");
-    compare(host.group.border.width, Style.hairline);
-    verify(host.group.color.a > 0);
   }
 
   Component {

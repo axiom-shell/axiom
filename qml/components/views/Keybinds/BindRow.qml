@@ -5,7 +5,7 @@ import qs.config
 import qs.components.forms
 
 // One field of the bind inspector as a form row (the hover tint, padding and
-// divider of every settings row, indented under its group): a label with its
+// divider of every settings row): a label with its
 // description over the control, which sets its own Layout.fillWidth. A row of
 // a schema control that draws its own label (SchemaComboBox) is a plain
 // FormRow instead.

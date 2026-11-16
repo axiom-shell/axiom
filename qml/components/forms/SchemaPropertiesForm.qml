@@ -63,13 +63,10 @@ ColumnLayout {
   // `x-row` is drawn only on the settings page, so here the keys it names,
   // and the fields of an object it draws, keep their own rows
   readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.iconTextKeys(prop)), [])
-  // The rows' indent tree (RowTree), and whether the first row leads them all
-  // (its FieldGroup then drops its heading)
+  // The rows' indent tree (RowTree)
   readonly property var tree: RowTree.plan(root.rows)
-  readonly property bool leads: root.tree.lead
-  // The FieldGroup it sits in: in a pane a row indents by its place in the
-  // tree, elsewhere (the settings page) one level under the row above it
-  readonly property var _group: IndentHost.find(root.parent)
+  // Behind a shut fold row (FoldFormRow): every row hidden
+  property bool folded: false
 
   // Depends on the schema only, so edits update the rows in place
   readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
@@ -142,8 +139,8 @@ ColumnLayout {
         required property int index
         // Unknown until the field streams in, so it takes its height then
         // rather than folding open
-        shown: field.item ? field.item.shown : undefined
-        level: root._group?.nests === true ? root.tree.levels[index] : (field.item?.followsSibling ? 1 : 0)
+        shown: root.folded ? false : (field.item ? field.item.shown : undefined)
+        level: root.tree.levels[index]
         beside: _beside && half
         bodyHeight: column.implicitHeight
         tinted: field.item?.tinted ?? false

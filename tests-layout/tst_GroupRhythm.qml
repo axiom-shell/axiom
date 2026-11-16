@@ -7,9 +7,9 @@ import qs.components.reusable
 import qs.components.views.base
 
 // Small editors stack as the settings page does: rows in a group abut, the
-// heading sits Style.space2 above its first row, a flat group (on a pane's
-// Surface) draws no inset, and the column it sits in spaces it by Style.space2
-// (the settings page's card gap). A boxed group keeps Style.space3 all round.
+// heading sits Style.space2 above its first row, a group is a card padded
+// Style.space3 all round, and the column it sits in spaces cards by
+// Style.space2 (the settings page's card gap).
 TestCase {
   id: root
 
@@ -40,8 +40,6 @@ TestCase {
         FieldGroup {
           id: group
           title: "Group"
-          // The heading over content that isn't rows (a block's head abuts its rows)
-          head: "section"
 
           FormRow {
             id: row1
@@ -214,22 +212,19 @@ TestCase {
     compare(Math.round(top - bottom), Style.space2);
   }
 
-  function test_flatGroupsStackBySpace2_data() {
+  function test_cardsStackBySpace2_data() {
     return rows();
   }
 
-  function test_flatGroupsStackBySpace2(data) {
+  function test_cardsStackBySpace2(data) {
     harness.configure(data);
     const pane = createTemporaryObject(stackComp, root);
     verify(pane);
     wait(50);
-    compare(Math.round(root.heading(pane.g1).mapToItem(pane.col, 0, 0).y), 0);
-    const heading = root.heading(pane.g2);
-    const lastBottom = pane.last1.mapToItem(pane.col, 0, pane.last1.height).y;
-    const headingTop = heading.mapToItem(pane.col, 0, 0).y;
-    compare(Math.round(headingTop - lastBottom), Style.space2);
-    // The group's own height: heading, gap, row, no inset
+    compare(Math.round(root.heading(pane.g1).mapToItem(pane.col, 0, 0).y), Style.space3);
+    // Each card pads its own rows: the cards sit Style.space2 apart
     compare(pane.g2.y - (pane.g1.y + pane.g1.height), Style.space2);
+    compare(Math.round(pane.g1.height - pane.last1.mapToItem(pane.g1, 0, pane.last1.height).y), Style.space3);
   }
 
   function test_groupColumnsGap_data() {
@@ -243,23 +238,20 @@ TestCase {
     tryVerify(() => pane.g2.width > 0 && pane.g2.y > 0);
     wait(100);
     compare(pane.cols.rowGap, Style.space2);
-    const heading = root.heading(pane.g2);
-    const lastBottom = pane.last1.mapToItem(pane.cols, 0, pane.last1.height).y;
-    const headingTop = heading.mapToItem(pane.cols, 0, 0).y;
-    compare(Math.round(headingTop - lastBottom), Style.space2);
+    compare(Math.round(pane.g2.y - (pane.g1.y + pane.g1.height)), Style.space2);
   }
 
-  // A boxed group (not on a pane) keeps its padding above and below
-  function test_boxedGroupKeepsItsPadding_data() {
+  // A group is an outlined card with its padding above and below
+  function test_groupKeepsItsPadding_data() {
     return rows();
   }
 
-  function test_boxedGroupKeepsItsPadding(data) {
+  function test_groupKeepsItsPadding(data) {
     harness.configure(data);
     const col = createTemporaryObject(boxedComp, root);
     verify(col);
     wait(50);
-    verify(col.group._boxed, "boxed on the page");
+    compare(col.group.border.width, Style.hairline);
     const heading = root.heading(col.group);
     compare(Math.round(heading.mapToItem(col.group, 0, 0).y), Style.space3);
     compare(Math.round(col.group.height - (col.row.mapToItem(col.group, 0, col.row.height).y)), Style.space3);

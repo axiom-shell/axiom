@@ -3,8 +3,8 @@ import QtQuick
 
 // The indent tree of a form's rows, from the schema's conditions alone: a
 // row sits under the earlier row whose value shows it, at any depth. Used by
-// SchemaPropertiesForm (`rows` in, levels for FormRow, `lead` for FieldGroup).
-// No file access, processes or services.
+// SchemaPropertiesForm, SettingsGroupCard, SettingRows and FlowColumns (`rows` in,
+// levels for FormRow). No file access, processes or services.
 QtObject {
   id: root
 
@@ -57,10 +57,11 @@ QtObject {
   }
 
   // `rows`: SchemaPropertiesForm.rows ({ path, schema, groupShowIf }). Gives
-  // { lead, levels, parents }: `parents[i]` the row i sits under (-1 for
-  // none), `levels[i]` its depth (0 for none, else its parent's + 1), and
-  // `lead` whether the first row leads the rest: two or more rows, the first
-  // unconditional, every other row under it somewhere up the chain
+  // { levels, parents }: `parents[i]` the row i sits under (-1 for none),
+  // `levels[i]` its depth (0 for none, else its parent's + 1). A row's own
+  // condition is its schema's `x-showIf`, or its `showIf` (a SchemaLayout
+  // `group` row carries one, relative to its parent path, as a field's), so a
+  // nested object's heading sits at the level of the rows it heads
   function plan(rows) {
     const list = rows ?? [];
     const paths = list.map(row => row.path.join("."));
@@ -68,21 +69,13 @@ QtObject {
     const levels = [];
     for (let i = 0; i < list.length; i++) {
       const row = list[i];
-      let parent = root._parentOf(row.schema?.["x-showIf"], row.path.slice(0, -1), paths, i, parents);
+      let parent = root._parentOf(row.schema?.["x-showIf"] ?? row.showIf, row.path.slice(0, -1), paths, i, parents);
       for (const entry of row.groupShowIf ?? [])
         parent = Math.max(parent, root._parentOf(entry.condition, entry.path, paths, i, parents));
       parents.push(parent);
       levels.push(parent < 0 ? 0 : levels[parent] + 1);
     }
-    let lead = list.length >= 2 && !list[0].schema?.["x-showIf"] && !list[0].schema?.["x-hintedIf"] && (list[0].groupShowIf ?? []).length === 0;
-    for (let i = 1; lead && i < list.length; i++) {
-      let top = i;
-      while (parents[top] >= 0)
-        top = parents[top];
-      lead = top === 0;
-    }
     return {
-      "lead": lead,
       "levels": levels,
       "parents": parents
     };

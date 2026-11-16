@@ -72,7 +72,6 @@ TestCase {
 
   function test_menuPlacement() {
     const plan = RowTree.plan(menu());
-    compare(plan.lead, true);
     compare(plan.levels, [0, 1, 1, 2, 2, 1, 2, 1, 2, 1]);
   }
 
@@ -141,32 +140,57 @@ TestCase {
     compare(RowTree.plan(rows).parents[2], 0, "the nested object's condition names placement");
   }
 
-  function test_leadNeedsAnUnconditionalFirstRow() {
-    const rows = menu();
-    rows[0] = row(["placement"], {
-      "x": true
-    });
-    compare(RowTree.plan(rows).lead, false);
-    const hinted = menu();
-    hinted[0].schema["x-hintedIf"] = {
-      "/$supports.x": true
-    };
-    compare(RowTree.plan(hinted).lead, false);
+  // A nested object's heading carries its own condition (SchemaLayout `group`
+  // row), so it sits at the level of the rows it heads
+  function test_groupRowTakesItsShowIf() {
+    const under = [
+      {
+        "condition": {
+          "mode": "rotate"
+        },
+        "path": ["S"]
+      }
+    ];
+    const rows = [row(["S", "mode"]),
+      {
+        "kind": "group",
+        "path": ["S", "rotation"],
+        "showIf": {
+          "mode": "rotate"
+        }
+      },
+      row(["S", "rotation", "interval"], null, under), row(["S", "rotation", "order"], null, under)];
+    const plan = RowTree.plan(rows);
+    compare(plan.levels, [0, 1, 1, 1]);
+    compare(plan.parents, [-1, 0, 0, 0]);
   }
 
-  function test_leadNeedsTwoRows() {
-    compare(RowTree.plan([row(["a"])]).lead, false);
-  }
-
-  function test_leadNeedsEveryRowUnderIt() {
-    const rows = menu();
-    rows.push(row(["loose"]));
-    compare(RowTree.plan(rows).lead, false);
+  // Idle: Dim's heading and its rows sit under "enabled", the level under its mode
+  function test_idleDimLevels() {
+    const under = [
+      {
+        "condition": {
+          "enabled": true
+        },
+        "path": ["Idle"]
+      }
+    ];
+    const rows = [row(["Idle", "enabled"]),
+      {
+        "kind": "group",
+        "path": ["Idle", "dim"],
+        "showIf": {
+          "enabled": true
+        }
+      },
+      row(["Idle", "dim", "timeout"], null, under), row(["Idle", "dim", "mode"], null, under), row(["Idle", "dim", "level"], {
+        "mode": "dim"
+      }, under)];
+    compare(RowTree.plan(rows).levels, [0, 1, 1, 1, 2]);
   }
 
   function test_empty() {
     const plan = RowTree.plan([]);
-    compare(plan.lead, false);
     compare(plan.levels, []);
   }
 }

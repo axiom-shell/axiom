@@ -69,6 +69,9 @@ ColumnLayout {
   // The rows pad themselves (FormRow: Style.rowPadding)
   spacing: 0
 
+  // The rows' indent tree (RowTree)
+  readonly property var tree: RowTree.plan(root.rows)
+
   // The top row drawn (FormRow.first)
   readonly property int _firstRow: Utils.firstFormRow(rowItems.count, i => rowItems.itemAt(i))
 
@@ -82,7 +85,7 @@ ColumnLayout {
       required property int index
       first: index === root._firstRow
       shown: field.shown
-      indented: field.followsSibling
+      level: root.tree.levels[index]
       bodyHeight: field.implicitHeight
       tinted: field.tinted
       hoverable: field.hoverable

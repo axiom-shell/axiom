@@ -12,7 +12,8 @@ import qs.components.forms
 // dev mode
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   readonly property string detail: {
     if (!DevManager.enabled)

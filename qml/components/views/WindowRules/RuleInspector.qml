@@ -82,7 +82,6 @@ ColumnLayout {
 
     FieldGroup {
       title: I18n.tr(root.schema.windows.title)
-      head: "section"
       description: I18n.tr(root.schema.windows.description)
 
       Repeater {
@@ -158,7 +157,6 @@ ColumnLayout {
     }
 
     FieldGroup {
-      id: windowGroup
       title: I18n.tr(root.schema.window.title)
       description: I18n.tr(root.schema.window.description)
 
@@ -172,13 +170,11 @@ ColumnLayout {
 
       IssueList {
         Layout.topMargin: Style.space2
-        Layout.leftMargin: windowGroup.inset
         issues: root.placedNotes.concat(root.noFocusNotes)
       }
     }
 
     FieldGroup {
-      id: shellGroup
       title: I18n.tr(root.schema.shell.title)
 
       SchemaPropertiesForm {
@@ -192,7 +188,6 @@ ColumnLayout {
 
       IssueList {
         Layout.topMargin: Style.space2
-        Layout.leftMargin: shellGroup.inset
         issues: root.powerNotes
       }
     }
@@ -200,7 +195,6 @@ ColumnLayout {
     FieldGroup {
       visible: root.generalNotes.length > 0
       title: I18n.tr("Problems")
-      head: "section"
       description: I18n.tr("A rule with problems is saved but not applied.")
 
       IssueList {

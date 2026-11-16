@@ -13,7 +13,8 @@ import qs.components.content.parts
 // config's file
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   // What axiom last answered a click with: a refusal's message, or ""
   property string message: ""
@@ -28,7 +29,7 @@ FieldGroup {
     return DevManager.active ? I18n.tr("Running") : I18n.tr("Waiting for the build");
   }
 
-  readonly property string statusTone: {
+  readonly property string chipTone: {
     if (DevManager.building)
       return "accent";
     if (!DevManager.enabled)
@@ -75,7 +76,7 @@ FieldGroup {
   headerExtras: [
     StatusChip {
       text: root.statusLabel
-      tone: root.statusTone
+      tone: root.chipTone
     }
   ]
 

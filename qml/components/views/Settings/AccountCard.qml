@@ -15,7 +15,8 @@ import qs.components.reusable
 // first-time setup run again
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   // Which change is open: "" | "name" | "password"
   property string editing: ""

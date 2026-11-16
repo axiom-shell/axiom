@@ -88,11 +88,10 @@ TestCase {
     }
   }
 
-  // A stand-in for a block's FieldGroup (rowBase), one level on: depth 2
+  // A row two levels deep (depth 2)
   Component {
     id: nestedComp
     Item {
-      property int rowBase: 1
       property alias row: row
       property alias combo: combo
       width: Widget.textPx(300)
@@ -101,7 +100,7 @@ TestCase {
       FormRow {
         id: row
         width: parent.width
-        level: 1
+        level: 2
         first: true
         bodyHeight: combo.implicitHeight
 

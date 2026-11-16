@@ -67,7 +67,6 @@ ColumnLayout {
   // The key: one row, its caption the row's description
   FieldGroup {
     title: ""
-    head: "lead"
 
     BindRow {
       first: true
@@ -86,7 +85,6 @@ ColumnLayout {
   // The action leads; its argument and call sit under it
   FieldGroup {
     title: ""
-    head: "lead"
 
     BindRow {
       first: true
@@ -101,7 +99,7 @@ ColumnLayout {
 
     // The argument: a choice when the action has a fixed set, else text
     FormRow {
-      indented: true
+      level: 1
       shown: root.needed && root.argumentOptions !== null
       bodyHeight: argumentCombo.implicitHeight
 
@@ -123,7 +121,7 @@ ColumnLayout {
     // new one. It lists the ids of the settings draft, so one typed on another
     // bind appears once the keybinds are saved
     BindRow {
-      indented: true
+      level: 1
       shown: root.needed && root.argumentOptions === null && root.argumentRef !== ""
       label: I18n.tr("Argument")
 
@@ -137,7 +135,7 @@ ColumnLayout {
     }
 
     BindRow {
-      indented: true
+      level: 1
       shown: root.needed && root.argumentOptions === null && root.argumentRef === ""
       label: I18n.tr("Argument")
 
@@ -165,7 +163,7 @@ ColumnLayout {
 
     // The call: toggle, open or close
     FormRow {
-      indented: true
+      level: 1
       shown: root.callOptions !== null
       bodyHeight: callCombo.implicitHeight
 
@@ -184,7 +182,6 @@ ColumnLayout {
 
   FieldGroup {
     title: ""
-    head: "lead"
 
     BindRow {
       first: true

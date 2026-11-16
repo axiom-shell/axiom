@@ -35,6 +35,9 @@ FoldingCard {
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
   onToggled: SettingsManager.setCollapsed(root.group.key, !root.collapsed)
 
+  // The rows' indent tree (RowTree), from the schema rows only (never live values)
+  readonly property var tree: RowTree.plan(root.group.rows)
+
   // The card ends on a shut fold's header row (an `x-intro`'s Settings fold,
   // an `x-fold`): that row's own padding closes the card. Read from the rows'
   // `shown` and `foldOpen`, through `count`, never from heights
@@ -183,6 +186,7 @@ FoldingCard {
         first: (field.index === root._firstRows[String(field.spot.column)] && !(field.modelData.foldRows && introLoader.visible)) || (rowArea.lines[field.index]?.side === 1 && field.index - 1 === root._firstRows[String(rowArea.placed.rows[field.index - 1]?.column)])
         row: field.modelData
         form: root.form
+        level: root.tree.levels[field.index]
         x: field.spot.x
         y: field.spot.y
         width: field.spot.width

@@ -26,7 +26,6 @@ ColumnLayout {
   FieldGroup {
     Layout.fillWidth: true
     title: I18n.tr("Interactive card")
-    head: "section"
     description: I18n.tr("Pick a look to start from. Each has a sample for each of its screens, so it shows before your script exists: point it at yours, and it comes alive.")
     headerExtras: StyledTextButton {
       implicitHeight: Widget.smallHeight

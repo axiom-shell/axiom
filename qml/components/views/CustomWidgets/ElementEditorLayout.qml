@@ -211,13 +211,9 @@ GridDragLayer {
         id: sideScroll
         anchors.fill: parent
 
-        FormInset {
+        ElementInspector {
           width: sideScroll.availableWidth
-
-          ElementInspector {
-            Layout.fillWidth: true
-            dragLayer: root
-          }
+          dragLayer: root
         }
       }
     }

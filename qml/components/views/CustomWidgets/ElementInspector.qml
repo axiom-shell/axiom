@@ -171,7 +171,6 @@ ColumnLayout {
 
     // The font is a setting of the module's Text elements, so it sits here
     FieldGroup {
-      id: moduleGroup
       Layout.fillWidth: true
       // The column's gap is 4: the group's top is Style.space2 from the library
       Layout.topMargin: Widget.spacing
@@ -191,7 +190,6 @@ ColumnLayout {
         visible: root.lockWarning !== ""
         Layout.fillWidth: true
         Layout.topMargin: Style.space2
-        Layout.leftMargin: moduleGroup.inset
         status: "warning"
         title: I18n.tr("On the lock screen")
         text: root.lockWarning
@@ -199,7 +197,6 @@ ColumnLayout {
       StyledTextButton {
         visible: root.editor.layerElements.length === 0 && root.views.length === 0
         Layout.topMargin: Style.space2
-        Layout.leftMargin: moduleGroup.inset
         implicitHeight: Widget.height
         iconText: "auto_awesome"
         text: I18n.tr("Start from the default layout")

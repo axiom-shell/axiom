@@ -10,7 +10,8 @@ import qs.components.content.parts
 // the rest here (ToolChecks, as the onboarder's Checks)
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   headerExtras: [
     StatusChip {

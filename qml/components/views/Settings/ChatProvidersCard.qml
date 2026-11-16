@@ -15,7 +15,8 @@ import qs.components.reusable
 // model list. Keys never go through the settings draft or config.json.
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   // One request at a time per provider: { providerId: { busy, ok, text } }
   property var results: ({})

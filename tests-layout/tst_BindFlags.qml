@@ -42,7 +42,7 @@ TestCase {
 
   // The rows: the items of the group that hold a switch
   function rows(item, out) {
-    if (item.bodyHeight !== undefined && item.hoverable !== undefined && item.objectName !== "blockHead")
+    if (item.bodyHeight !== undefined && item.hoverable !== undefined)
       out.push(item);
     for (const child of item.children)
       root.rows(child, out);

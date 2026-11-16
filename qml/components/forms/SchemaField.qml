@@ -186,13 +186,11 @@ Loader {
   // greyed with it, without repeating it.
   readonly property string _blockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf) || SchemaLayout.failingKey(fieldSchema["x-hintedIf"], root._valueOf)
   readonly property bool allowed: _blockedBy === ""
-  // Shown by a sibling's value (a part's fields, under its switch)
-  readonly property bool followsSibling: SchemaLayout.followsSibling(fieldSchema)
   // I18n.tr("{0} only.")
   readonly property string disabledNote: {
     // (A field one compositor alone has says so even under its part's
     // switch: the switch itself isn't greyed out for it)
-    if (root.allowed || (root.followsSibling && _blockedBy !== "/$compositor"))
+    if (root.allowed || (SchemaLayout.followsSibling(root.fieldSchema) && _blockedBy !== "/$compositor"))
       return "";
     // false: none (the section's intro says why)
     const own = fieldSchema["x-disabledNote"] ?? "";

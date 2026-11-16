@@ -136,6 +136,33 @@ TestCase {
     compare(spans(FlowColumns.blocks(global)), [[0, 1], [1, 2]], "a condition on another section starts its own unit");
   }
 
+  // A condition on a key among no card row starts its own unit; a row two
+  // deep (under a row that is under row 0) still joins the unit
+  function test_blocks_dependent_tree() {
+    const stray = [field_in("a"), field_in("b", {
+        "schema": {
+          "x-showIf": {
+            "other": true
+          }
+        }
+      })];
+    compare(spans(FlowColumns.blocks(stray)), [[0, 1], [1, 2]]);
+    const deep = [field_in("a"), field_in("b", {
+        "schema": {
+          "x-showIf": {
+            "a": true
+          }
+        }
+      }), field_in("c", {
+        "schema": {
+          "x-showIf": {
+            "b": true
+          }
+        }
+      }), field_in("d")];
+    compare(spans(FlowColumns.blocks(deep)), [[0, 3], [3, 4]]);
+  }
+
   // The intro-fold shape of SchemaLayout.withIntro
   function introFold() {
     const fold = "A:settings";

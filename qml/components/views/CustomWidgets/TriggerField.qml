@@ -140,7 +140,7 @@ ColumnLayout {
 
   // Axiom actions ignore it (the text is kept)
   InspectorRow {
-    indented: true
+    level: 1
     shown: root.action?.kind === "command"
     label: I18n.tr("Argument")
     description: root.argDescription

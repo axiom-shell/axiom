@@ -29,9 +29,8 @@ FieldGroup {
   signal edited(var path, var value)
   signal discardAt(var path)
 
-  // The pane's one group of settings: no heading, the rows lead, indents only where they depend on each other
-  head: "lead"
-  title: I18n.tr("Options")
+  // The pane's one group of settings: a title-less card (no heading, never folds)
+  title: ""
 
   StyledText {
     visible: root.problem !== ""

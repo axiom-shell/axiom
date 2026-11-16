@@ -16,6 +16,8 @@ Item {
   property real bottomPadding: 0
   property alias spacing: body.spacing
   default property alias content: body.data
+  // The inner column's children: a list that notifies (unlike `data`)
+  readonly property alias contentChildren: body.children
   // False only once fully shut, so content shown while folding can be
   // dropped then, not before
   readonly property bool shown: root._reveal > 0

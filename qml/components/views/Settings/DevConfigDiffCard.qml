@@ -16,7 +16,8 @@ import qs.components.reusable
 // methods/DevDiff)
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   // dev.config.diff's rows: [{ path, side, dev?, live?, devOnly }]
   property var rows: []

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.components.reusable
 
 // A settings card that folds: clicking its header (title, help text,
 // chevron) emits `toggled`, and the body below animates shut while
@@ -31,7 +30,13 @@ Surface {
   // The padding under the body: a card ending on a shut fold row takes none,
   // that row's own padding is the card's (SettingsGroupCard)
   property real bottomInset: Style.space3
+  // False: no header at all (a title-less card: the rows start at the padding)
+  property bool headed: true
+  // The space between the body's children (0: rows abut)
+  property alias bodySpacing: body.spacing
   default property alias content: body.content
+  // The body's children, as a list that notifies
+  readonly property alias contentChildren: body.contentChildren
 
   signal toggled
 
@@ -48,6 +53,7 @@ Surface {
     spacing: 0
 
     RowLayout {
+      visible: root.headed
       Layout.fillWidth: true
       spacing: Style.space1
 
@@ -79,7 +85,7 @@ Surface {
     FoldingColumn {
       id: body
       open: !root.collapsed
-      topPadding: Style.space2
+      topPadding: root.headed ? Style.space2 : 0
       Layout.fillWidth: true
       spacing: Style.space2
     }

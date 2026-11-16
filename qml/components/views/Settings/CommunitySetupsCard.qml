@@ -21,7 +21,8 @@ import qs.components.reusable
  */
 FieldGroup {
   id: root
-  pageCard: true
+  bodySpacing: Style.space2
+  foldable: false
 
   description: CommunitySetupsManager.enabled ? I18n.tr("Setups other people built with axiom. Applying one changes the look and layout only: keybinds, apps, commands, monitors and accounts stay yours, and your current setup is saved first.") : I18n.tr("Turn on Browse community setups below to see the gallery.")
 
