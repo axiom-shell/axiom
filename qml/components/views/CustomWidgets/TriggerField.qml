@@ -24,10 +24,10 @@ import qs.components.forms
 FormColumn {
   id: root
 
-  // The trigger's title, and the top row of its box (the host says: this
-  // column's rows can't know where it sits in the box)
+  joins: true
+
+  // The trigger's title
   property string label: ""
-  property bool first: false
   readonly property var editor: CustomWidgetsManager.editor
   // The action picked (its id; "" nothing)
   property string current: ""
@@ -79,7 +79,6 @@ FormColumn {
   spacing: 0
 
   FieldRow {
-    first: root.first
     label: root.label
     shortControl: true
     activates: combo

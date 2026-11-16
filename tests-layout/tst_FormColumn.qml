@@ -4,6 +4,7 @@ import QtTest
 import qs.config
 import qs.components.forms
 import qs.components.reusable
+import qs.components.views.CustomWidgets
 
 // FormColumn publishes its top row drawn, which a FormRow in it takes for
 // `first` (no divider), moving to the next row when the top one hides; a
@@ -88,6 +89,62 @@ TestCase {
     }
   }
 
+  // An inspector box: a FormColumn whose first child is a FormColumn of rows
+  // (ConditionRows, as ElementInspector's Visible and BarTab's triggers are)
+  // draws no divider on that top row, and the rows under it do
+  Component {
+    id: nestedFirstComp
+
+    FormColumn {
+      property alias head: top
+      property alias lower: lower
+      property alias plain: plain
+      width: 300
+
+      ConditionRows {
+        id: top
+        label: "Top"
+        value: ({
+            "test": "when"
+          })
+        keys: ["a"]
+        tests: [
+          {
+            "value": "is",
+            "label": "is"
+          }
+        ]
+      }
+      ConditionRows {
+        id: lower
+        label: "Second"
+      }
+      FieldRow {
+        id: plain
+        label: "Plain"
+      }
+    }
+  }
+
+  Component {
+    id: nestedAfterComp
+
+    FormColumn {
+      property alias name: name
+      property alias cond: cond
+      width: 300
+
+      FieldRow {
+        id: name
+        label: "Name"
+      }
+      ConditionRows {
+        id: cond
+        label: "Visible"
+      }
+    }
+  }
+
   function initTestCase() {
     harness.configure({});
   }
@@ -121,6 +178,30 @@ TestCase {
     wait(50);
     verify(col.after.first, "the form drew nothing: this row is the top");
     compare(dividers().length, 0);
+  }
+
+  // The top row of a nested column draws no divider, its other rows do, and
+  // a nested column under another row is not the top at all
+  function test_nested_column_top_row_has_no_divider() {
+    const col = createTemporaryObject(nestedFirstComp, root);
+    verify(col);
+    wait(50);
+    const rows = it => root.findAll(it, r => r.bodyHeight !== undefined && r.first !== undefined && r.hitHeight !== undefined);
+    const topRows = rows(col.head);
+    verify(topRows.length >= 2, "the When condition builds its rows");
+    verify(topRows[0].first, "the top row of the top column has no divider");
+    for (let i = 1; i < topRows.length; i++)
+      verify(!topRows[i].first, "the rows under it do");
+    for (const r of rows(col.lower))
+      verify(!r.first, "a lower column's rows all draw one");
+    verify(!col.plain.first);
+
+    const under = createTemporaryObject(nestedAfterComp, root);
+    verify(under);
+    wait(50);
+    verify(under.name.first);
+    for (const r of rows(under.cond))
+      verify(!r.first, "a column under the top row draws its divider, ElementInspector's Visible");
   }
 
   function findAll(item, test) {

@@ -10,13 +10,26 @@ import qs.components.methods
 // from `y`, `height` or `visible` (a row flipping between its place and its
 // height kept the layout polishing forever). FoldingColumn's inner column is
 // one, so a FieldGroup's and FoldingCard's rows get it too.
+//
+// `joins` (a hand-built field of several rows: a TriggerField, ConditionRows)
+// makes the column a row of the FormColumn it sits in: it has a `bodyHeight`
+// while it draws a row, and only takes part in the outer one's `firstRow`
+// when it is the outer's top, so its own top row draws no divider only then.
 ColumnLayout {
   id: root
 
-  readonly property Item firstRow: {
+  property bool joins: false
+  // The top row among its own children, whatever the column sits in
+  readonly property var topRow: {
     const index = FormRows.first(root.children);
     return index < 0 ? null : root.children[index];
   }
+  readonly property Item firstRow: {
+    const outer = root.joins ? (root.parent as FormColumn)?.firstRow : undefined;
+    return outer !== undefined && outer !== root ? null : root.topRow;
+  }
+  // As a row of an outer column (undefined, no row, unless it `joins`)
+  readonly property var bodyHeight: root.joins ? root.topRow?.bodyHeight ?? 0 : undefined
 
   spacing: 0
 }

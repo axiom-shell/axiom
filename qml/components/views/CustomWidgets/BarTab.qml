@@ -160,9 +160,8 @@ ColumnLayout {
       title: I18n.tr("Clicks")
       description: I18n.tr("What clicks and scrolls on the bar widget run.")
 
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
-        spacing: 0
 
         Repeater {
           model: ["click", "rightClick", "middleClick", "scrollUp", "scrollDown"]
@@ -171,7 +170,6 @@ ColumnLayout {
             id: trigger
             required property string modelData
             required property int index
-            first: trigger.index === 0
             label: root.schema.bar.properties.run.properties[trigger.modelData].title
             current: root.definition?.bar?.run?.[trigger.modelData] ?? ""
             writeRun: value => root.editor.set(["bar", "run", trigger.modelData], value)

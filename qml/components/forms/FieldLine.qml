@@ -4,8 +4,8 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.methods
 
-// The one layout of a schema field and its control (every Schema* control,
-// the custom widgets' InspectorRow): the label line, the description and
+// The one layout of a schema field and its control (every Schema* control
+// and FieldRow): the label line, the description and
 // links, the control, and what goes under all of them. Where the control
 // sits, on the label's line or under it, is FieldFit's decision (`kind`
 // names the control's behaviour there), read from constant widths only: the

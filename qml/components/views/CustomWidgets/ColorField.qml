@@ -17,8 +17,8 @@ import qs.components.forms
 // that holds winning, and an Otherwise row, the fallback colour. Picking a
 // colour again turns the rules off and keeps them. `write(path, value)` writes `path` (a list of keys
 // beside this colour's own: [key] or [statesKey, "rules"]) into the owner's
-// object (the element's options, the bar). `first` marks the top row of its
-// group (the host says: this column can't know where it sits in the group).
+// object (the element's options, the bar). Its top row
+// draws no divider when the column is the top of its FormColumn.
 // The names and the Auto or None label are runtime keys:
 // I18n.tr("Auto") I18n.tr("None") I18n.tr("Accent") I18n.tr("Accent 2")
 // I18n.tr("Success") I18n.tr("Warning") I18n.tr("Error") I18n.tr("Info")
@@ -27,6 +27,8 @@ import qs.components.forms
 // I18n.tr("Muted") I18n.tr("Background") I18n.tr("Custom…") I18n.tr("By state…")
 FormColumn {
   id: root
+
+  joins: true
 
   readonly property var editor: CustomWidgetsManager.editor
 
@@ -58,7 +60,6 @@ FormColumn {
   property string emptyLabel: "Auto"
   // The keys a rule can read (KeyField.keys)
   property var keys: []
-  property bool first: false
   property var write: (path, value) => {}
 
   readonly property bool isHex: root.value.charAt(0) === "#"
@@ -207,7 +208,6 @@ FormColumn {
     root.customPicked = false
 
   FieldRow {
-    first: root.first
     label: root.label
     description: root.description
     shortControl: true

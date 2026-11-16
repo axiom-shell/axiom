@@ -159,7 +159,7 @@ Item {
   }
 
   // A click on the form row holding it, off the field (SchemaComboBox's
-  // and the custom widgets' InspectorRow's rowClicked, FormRow.activates):
+  // and FieldRow's rowClicked, FormRow.activates):
   // opens or closes the list. A press outside an open list closes it and is
   // the same click that reaches the row: that click must not open the list
   // again

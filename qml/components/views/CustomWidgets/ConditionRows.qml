@@ -14,6 +14,8 @@ import qs.components.forms
 FormColumn {
   id: root
 
+  joins: true
+
   // The row's label, and what it does
   property string label: ""
   property string description: ""
@@ -26,9 +28,6 @@ FormColumn {
   property var tests: []
   // The test the toggle's When picks
   property string whenTest: "is"
-  // The top row of its box (the host says: this column can't know where it
-  // sits in the box)
-  property bool first: false
   property var write: function (field, value) {}
 
   readonly property string test: root.value?.test ?? "always"
@@ -39,7 +38,6 @@ FormColumn {
   spacing: 0
 
   FormRow {
-    first: root.first
     activates: toggle
     bodyHeight: toggle.implicitHeight
 
