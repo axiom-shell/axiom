@@ -12,7 +12,7 @@ import qs.components.reusable
 // method, an outer identity and how the server is checked (the system's
 // CAs, a CA file, or not at all). `hidden` adds the network's name and a
 // choice of security, for a network that doesn't broadcast. Enter in any
-// field submits, Escape cancels. The password is a SecretField.
+// field submits, Escape cancels. The password is a SubmitEntry.
 ColumnLayout {
   id: root
 
@@ -144,10 +144,12 @@ ColumnLayout {
     placeholderText: I18n.tr("User name")
   }
 
-  SecretField {
+  SubmitEntry {
     id: passwordField
     visible: root.needsPassword
-    entryHeight: root.fieldHeight
+    secret: true
+    buttonIcon: "link"
+    buttonTip: I18n.tr("Connect")
     placeholderText: root.security === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
     canSubmit: root.complete
     onSubmitted: root.submit()

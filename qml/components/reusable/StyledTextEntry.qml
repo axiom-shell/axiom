@@ -4,15 +4,17 @@ import QtQuick.Controls
 import qs.config
 import qs.components.methods
 
-// A single-line text field in a sunken, outlined Surface (a caller makes it
+// A single-line text field in a FieldFrame (a caller makes it
 // frameless with `color: "transparent"; outlined: false`). It writes every keystroke
 // back to `text`: push values in and act on textEdited (see docs/dev/core/qml-pitfalls.md).
 // `clearable` (search boxes) adds an X at the right while it holds text,
 // which empties it as a typed edit and keeps the focus in it; with
 // `escapeClears`, Escape does too (passed on when it's already empty).
-// A field hiding its text (a password) warns while Caps Lock is on, by
-// itself: CapsLockHint at the right, loaded only while it has focus.
-Surface {
+// A field hiding its text (`input.echoMode` not Normal: a password, a key,
+// a passphrase) warns while Caps Lock is on, by itself: CapsLockHint at the
+// right, loaded only while it has focus, and keeps every input method out
+// (sensitive, no prediction, hidden; bullets with no delay on the last key).
+FieldFrame {
   id: root
 
   // --- Public API ---
@@ -20,6 +22,10 @@ Surface {
   property alias placeholderText: textField.placeholderText
   property alias input: textField
   property alias readOnly: textField.readOnly
+  // Holds a secret: no input method sees or predicts it (sensitive, no
+  // prediction, hidden hints). By default whatever hides its text; a field
+  // that can reveal what it holds (PasswordEntry) sets it true
+  property bool sensitive: textField.echoMode !== TextInput.Normal
 
   signal accepted
   // Typed (or put in by the input method): never a value pushed in through
@@ -55,14 +61,7 @@ Surface {
   // A combo's height (Widget.height), growing as long text wraps; the
   // TextField's own padding is zeroed, so the box's is the only one
   implicitHeight: Math.max(Widget.height, textField.contentHeight + Widget.spacing * 2)
-  tone: "sunken"
-  outlined: true
-  border.width: root.outlined ? (textField.activeFocus ? Style.focusWidth : Style.hairline) : 0
-  border.color: textField.activeFocus ? Style.accent : Style.borderStrong
-
-  ColorGlide on border.color {
-    duration: Appearance.animNormal
-  }
+  active: textField.activeFocus
 
   TextField {
     id: textField
@@ -104,6 +103,12 @@ Surface {
     selectedTextColor: Style.inkAccent.text
     selectionColor: Style.accent
     wrapMode: Text.Wrap
+    // No input method sees or predicts hidden text (input sources: a
+    // password types through the compositor's layout alone). A caller that
+    // adds to the hints (digits) assigns over this
+    inputMethodHints: root.sensitive ? (Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhHiddenText) : Qt.ImhNone
+    passwordCharacter: "•"
+    passwordMaskDelay: 0
 
     // --- Placeholder Properties ---
     placeholderTextColor: root.ink.faint

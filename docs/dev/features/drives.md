@@ -1,6 +1,6 @@
 # Removable drives
 
-> **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/content/parts/SecretField.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/systems/Drives/`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
+> **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/systems/Drives/`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
 > **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.commands.fileManager`; the OSD's Drives system
 > **Related:** [OSD](osd.md), [Notifications](notifications.md), [Prompts](prompts.md), [VPN](vpn.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
@@ -51,7 +51,7 @@ Every drive notification has the desktop entry `axiom-drives`: a click on one wi
 ### What shows them
 - **`DriveInfo`** (`qml/components/methods/`, `tst_DriveInfo`): the pure parts: a drive's name (its one labelled volume's label, else vendor and model; the daemon sends no drive label) and size in decimal units ("SanDisk Ultra · 32 GB"), its icon (`usb`, `sd_card`, `album`, `hard_drive`), the volumes a list shows (a LUKS container standing for its cleartext volume, `effective`), each volume's action (`unlock`, `open`, `mount`), the volume opening the drive acts on (`pick`), and which volumes count as mounted while a pulled drive leaves (`mountedIds`).
 - **Drives module and popout** (`qml/components/content/Drives/`): a `Panel` with a `DeviceList` of `DriveRow`s, Eject all in its header; compact, the count and how many are mounted. Its keyboard is held while a passphrase field shows.
-- **`DriveRow`:** a `DeviceRow` whose end button ejects (`actionIcon`). Clicking opens; on hover, unmount and lock. A drive of several volumes lists them under it, each with its own action; the passphrase field is a `SecretField`.
+- **`DriveRow`:** a `DeviceRow` whose end button ejects (`actionIcon`). Clicking opens; on hover, unmount and lock. A drive of several volumes lists them under it, each with its own action; the passphrase field is a `SubmitEntry` with `secret`.
 - **Drives bar widget:** an icon and the count, hidden with none (`hideWhenEmpty`); hovering opens the Drives popout, a left click opens the first drive, a middle click ejects them all.
 - **OSD:** the `drive` status (`DrivesManager.lastEvent`) with its card, which takes a click ([OSD](osd.md) › Systems › Drives). In the default systems.
 - **Launcher:** `/eject [drive]` lists the drives and ejects the one picked. **IPC:** `axiom ipc drives list | mount <id> | eject <id> | ejectAll`.

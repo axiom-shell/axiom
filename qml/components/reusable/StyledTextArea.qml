@@ -4,11 +4,11 @@ import QtQuick.Controls
 import qs.config
 import qs.components.methods
 
-// A multi-line text field in a sunken, outlined Surface, optionally growing with its
+// A multi-line text field in a FieldFrame, optionally growing with its
 // text. Pushed-in values follow the StyledTextEntry pattern (textEdited).
 // `singleLine` makes it a one-line value that wraps instead (a command): no
 // line breaks, Enter submits, Tab moves on.
-Surface {
+FieldFrame {
   id: root
 
   // --- Public API ---
@@ -45,14 +45,7 @@ Surface {
     return Math.max(root.minHeight, Math.ceil(shown) + root.verticalMargin * 2);
   }
 
-  tone: "sunken"
-  outlined: true
-  border.width: root.outlined ? (textInput.activeFocus ? Style.focusWidth : Style.hairline) : 0
-  border.color: textInput.activeFocus ? Style.accent : Style.borderStrong
-
-  ColorGlide on border.color {
-    duration: Appearance.animNormal
-  }
+  active: textInput.activeFocus
 
   Behavior on implicitHeight {
     NumberAnimation {

@@ -14,7 +14,7 @@ Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging sess
 - **`Unable to assign [undefined] to …` at a singleton's property on every reload** is Qt 6.12.0's own bug ([QTBUG-149607](https://bugreports.qt.io/browse/QTBUG-149607): with the old and new generations' engines both alive, a composite type's cast fails), not the binding: Arch's `qt6-declarative` 6.12.0-2 carries the fix. Don't work around it in QML.
 
 ### Bindings and properties
-- `StyledTextEntry` writes every keystroke back to `text`, dropping any binding: push the value in (on selection/draft changes, unless focused) and act on its `textEdited` (typing only, never a value pushed in). A field that commits on focus loss commits only if `typed`, or text it was left showing lands on whatever it edits by then.
+- `StyledTextEntry` writes every keystroke back to `text`, dropping any binding: push the value in (on selection/draft changes, unless focused) and act on its `textEdited` (typing only, never a value pushed in). `CommitEntry` (forms) is this rule written once: use it for a field editing a value kept elsewhere. A field that commits on focus loss commits only if `typed`, or text it was left showing lands on whatever it edits by then.
 - An object literal as a property value needs parentheses: `payload: ({ … })`; `payload: { … }` is a code block.
 - Assigning a bound property (`currentIndex = i`) breaks its binding: change the source it's bound to instead.
 - A derived type must not redeclare a property its base declares (it shadows the base's, e.g. an alias).
