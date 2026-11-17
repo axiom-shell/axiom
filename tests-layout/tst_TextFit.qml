@@ -1041,7 +1041,7 @@ TestCase {
     compare(actions.length, 2);
     for (const action of actions) {
       verify(action.width > 0);
-      compare(action.opacity, 0);
+      compare(action.opacity, 0.35);
       const at = action.mapToItem(row, 0, 0);
       verify(at.x >= 0 && at.x + action.width <= row.width + 0.5, "action inside");
     }

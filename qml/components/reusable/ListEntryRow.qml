@@ -7,8 +7,8 @@ import qs.components.methods
 // One entry of an editor's list (bars, overlay pages, edge menus): an
 // icon (or, with `image`, a picture: an app's icon) and a name, filled with the accent container while selected, then
 // `badges`, the unsaved-edits dot, an `issue` mark and the row's actions
-// (RowActions, as children), which show while the row is hovered, focused or
-// selected. `leading` is a slot before the icon (a switch, keycaps) and a
+// (RowActions, as children), which are dimmed at rest and show fully while the row is hovered, focused
+// or selected. `leading` is a slot before the icon (a switch, keycaps) and a
 // `subtitle` follows the name on its line. The standard actions come after
 // the row's own: Duplicate while `canDuplicate` (`duplicated`) and Remove
 // while `canRemove` (`removeRequested`, the same as the Delete key), each a
