@@ -202,7 +202,7 @@ ColumnLayout {
         }
 
         SquareIconButton {
-          size: Widget.height - Widget.px(4)
+          size: Widget.slimHeight
           iconText: "close"
           tooltipText: I18n.tr("Dismiss")
           onClicked: KeybindManager.editor.dismissUndo()

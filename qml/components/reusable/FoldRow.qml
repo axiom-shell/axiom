@@ -5,9 +5,10 @@ import qs.config
 
 // A compact row that folds something open and shut (the Wi-Fi menu's
 // connection details, VPN section and More): whatever goes inside, then a
-// chevron, the whole row clickable. Smaller than FoldHeader, which heads
-// a card's section. Children can read `hovered` (to turn accent with the
-// chevron); buttons among them take their own clicks.
+// chevron, the whole row clickable and a Tab stop (Space or Enter fold it).
+// Smaller than FoldHeader, which heads a card's section. Children can read
+// `hovered` (to turn accent with the chevron); buttons among them take their
+// own clicks.
 Item {
   id: root
 
@@ -15,7 +16,7 @@ Item {
   property bool foldable: true
   // Draws its own hover tint (off: the host tints)
   property bool tinted: true
-  readonly property bool hovered: area.containsMouse
+  readonly property bool hovered: press.hovered
   default property alias content: row.data
 
   signal toggled
@@ -23,18 +24,11 @@ Item {
   Layout.fillWidth: true
   implicitHeight: row.implicitHeight
 
-  StateLayer {
-    visible: root.tinted
-    hovered: root.hovered
-    bleed: Widget.smallPadding
-  }
-
-  MouseArea {
-    id: area
-    anchors.fill: parent
+  Pressable {
+    id: press
     enabled: root.foldable
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
+    tinted: root.tinted
+    bleed: Widget.smallPadding
     onClicked: root.toggled()
   }
 
@@ -47,15 +41,12 @@ Item {
     spacing: Widget.spacing
   }
 
-  StyledIcon {
+  FoldChevron {
     id: chevron
     visible: root.foldable
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
-    text: "expand_more"
-    tone: root.hovered ? "accent" : "muted"
-    rotation: root.open ? 0 : -90
-
-    Glide on rotation {}
+    open: root.open
+    hot: root.hovered
   }
 }

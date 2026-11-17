@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -119,6 +120,8 @@ Panel {
   // The sections in columns, scrolling
   Flickable {
     id: flick
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: !root.keyboard && !root.strip && root.sections.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded

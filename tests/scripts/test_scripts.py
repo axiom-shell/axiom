@@ -391,6 +391,9 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/FlatMap.qml", qml("function f(x) { return x.flatMap(y => y) }"), "Object.fromEntries or flatMap"),
         ("qml/shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
          "qml/shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
+        ("qml/shell/OnClash.qml", qml("property bool battery: false\n    readonly property bool onBattery: true"),
+         "qml/shell/OnClash.qml:7: property onBattery beside `battery`"),
+        ("qml/shell/OnInherited.qml", qml("readonly property bool onWidth: true"), "qml/shell/OnInherited.qml:6: property onWidth beside `width`"),
         ("qml/shell/NoPurpose.qml", qml(purpose=""), "qml/shell/NoPurpose.qml: no purpose comment"),
         ("qml/shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no qml/components/content/Ghost/Ghost.qml'),
         ("qml/components/content/Unused/Unused.qml", qml(), "qml/components/content/Unused/: not an overlay module"),
@@ -438,6 +441,18 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
+        # The config UI's local pieces (scripts/ui-local-pieces.json)
+        ("qml/components/views/Local/Tint.qml", qml("StateLayer {}"), "views/Local/Tint.qml:6: StateLayer"),
+        ("qml/components/views/Local/Space.qml", qml("Keys.onSpacePressed: x()"), "views/Local/Space.qml:6: Keys.onSpacePressed"),
+        ("qml/components/views/Local/Well.qml", qml('Surface { tone: "sunken" }'), "views/Local/Well.qml:6: tone-sunken"),
+        ("qml/components/views/Local/Cond.qml", qml('Surface { tone: x ? "sunken" : "raised" }'), "views/Local/Cond.qml:6: tone-sunken"),
+        ("qml/components/views/Local/Click.qml", qml("onRowClicked: x()"), "views/Local/Click.qml:6: onRowClicked"),
+        ("qml/components/views/Local/First.qml", qml("FormRow {\n      first: true\n    }"), "views/Local/First.qml:7: first-literal"),
+        ("qml/components/surfaces/onboarding/Tint.qml", qml("StateLayer {}"), "onboarding/Tint.qml:6: StateLayer"),
+        ("qml/components/views/Local/Pushed.qml", qml('Binding {\n      property: "text"\n      restoreMode: Binding.RestoreNone\n    }'),
+         "views/Local/Pushed.qml:8: restore-text"),
+        ("qml/components/content/Local/Loose.qml", qml("RowLayout {\n      SegmentButton {}\n    }"), "content/Local/Loose.qml:7: SegmentButton"),
+        ("qml/components/content/Local/InRow.qml", qml("SegmentRow {\n      SegmentButton {}\n    }"), None),
         # The bar widget template (check_structure.bar_widget_template): T2 and T3 are
         # planted in copies of real widgets
         ("qml/components/bar/widgets/Tone/Tone.qml", qml(), "Tone/Tone.qml: T1"),
@@ -465,6 +480,8 @@ class CheckStructure(unittest.TestCase):
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
+        "ui-local-pieces.json: qml/components/views/Gone.qml no longer breaks StateLayer",
+        "ui-local-pieces.json: qml/components/views/NoReason.qml has no reason",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
         "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
@@ -494,6 +511,9 @@ class CheckStructure(unittest.TestCase):
                 del defs["UpdatesWidget"]["properties"]["properties"]["properties"]["failedColor"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
+                "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
+                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""}}))
             edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
                 "Button": {"reason": "planted", "rules": ["T8"]},
                 "Spacer": {"reason": "", "rules": ["T5"]},
@@ -709,7 +729,7 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckStyle(unittest.TestCase):
-    """scripts/check_style.py: each rule R1 to R18 on a fixture file, the waivers, the scope, every hit failing and the role check."""
+    """scripts/check_style.py: each rule R1 to R20 on a fixture file, the waivers, the scope, every hit failing and the role check."""
     HEAD = "pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.config\n// A fixture.\n"
     UI = "qml/components/reusable/X.qml"
     STYLED = {"qml/components/reusable/StyledText.qml": HEAD + "Text {\n}\n",
@@ -893,6 +913,26 @@ class CheckStyle(unittest.TestCase):
         self.assertEqual(self.rule("  layer.enabled: false", "R17"), 0)
         self.assertEqual(self.rule("  layer.effect: MultiEffect {\n  }", "R17"), 1)
         self.assertEqual(self.rule("  layer.effect: MultiEffect { // style-exempt: no text\n  }", "R17"), 0)
+
+    def test_r20_glide_to_transparent(self):
+        glide = "  ColorGlide on color {}"
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  border.color: root.on ? Style.accent : "transparent"\n  ColorGlide on border.color {}', "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Behavior on color {\n    ColorAnimation {\n    }\n  }', "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  ColorAnimation on color {\n  }', "R20"), 1)
+        self.assertEqual(self.rule('  color: "transparent"\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : Qt.alpha(Style.accent, 0) // style-exempt: rests on its hue\n' + glide, "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"', "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Glide on width {}', "R20"), 0)
+        self.assertEqual(self.rule('  color: "transparent"\n  border.color: Style.accent\n  ColorGlide on border.color {}', "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide, "R20"), 1)
+
+    def test_r19_widget_radius(self):
+        self.assertEqual(self.rule("  radius: Widget.radius", "R19"), 1)
+        self.assertEqual(self.rule("  radius: Widget.radius / 2", "R19"), 1)
+        self.assertEqual(self.rule("  radius: Style.radius", "R19"), 0)
+        self.assertEqual(self.rule("  // Widget.radius in a comment", "R19"), 0)
+        self.assertEqual(self.rule("  radius: Widget.radius", "R19", path="qml/config/X.qml"), 0)
 
     def test_r18_scale(self):
         self.assertEqual(self.rule("  scale: 0.92", "R18"), 1)

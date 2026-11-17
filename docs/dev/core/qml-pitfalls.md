@@ -14,7 +14,7 @@ Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging sess
 - **`Unable to assign [undefined] to …` at a singleton's property on every reload** is Qt 6.12.0's own bug ([QTBUG-149607](https://bugreports.qt.io/browse/QTBUG-149607): with the old and new generations' engines both alive, a composite type's cast fails), not the binding: Arch's `qt6-declarative` 6.12.0-2 carries the fix. Don't work around it in QML.
 
 ### Bindings and properties
-- `StyledTextEntry` writes every keystroke back to `text`, dropping any binding: push the value in (on selection/draft changes, unless focused) and act on its `textEdited` (typing only, never a value pushed in). A field that commits on focus loss commits only if `typed`, or text it was left showing lands on whatever it edits by then.
+- `StyledTextEntry` writes every keystroke back to `text`, dropping any binding: push the value in (on selection/draft changes, unless focused) and act on its `textEdited` (typing only, never a value pushed in). `CommitEntry` (forms) is this rule written once: use it for a field editing a value kept elsewhere. A field that commits on focus loss commits only if `typed`, or text it was left showing lands on whatever it edits by then.
 - An object literal as a property value needs parentheses: `payload: ({ … })`; `payload: { … }` is a code block.
 - Assigning a bound property (`currentIndex = i`) breaks its binding: change the source it's bound to instead.
 - A derived type must not redeclare a property its base declares (it shadows the base's, e.g. an alias).
@@ -48,8 +48,12 @@ Bar widgets, content and views are loaded by URL.
 
 ### Effects
 - A `MultiEffect` handed a visible item's own layer (`layer.enabled` source) pads that layer and redraws the item shrunk and offset; handed a `ShaderEffectSource` with `autoPaddingEnabled`, it stretches it. Shadows of visible surfaces go through `OutsideShadow` (explicit padding).
+- A scroll view holding FormRows sets `bleed: Style.rowBleed` with matching negative `Layout` margins, so a row's tint paints inside the clip instead of being cut.
 - Rounded clipping is Quickshell.Widgets' `ClippingRectangle`, never a `MultiEffect` mask; set its `color`, which defaults to white.
 - `ShapePath.strokeGradient` is Qt 6.12; Fedora 44/45 ship 6.11, where an unknown property fails the whole file. Gradient strokes go through `SliceMasked`; axiom supports Fedora's current Qt (6.11) and later, so use no newer API.
 - A visibility or size that feeds back into the size a Layout gives a Text, decided from that Text's `truncated` (or a wrap/elide-dependent metric), can re-polish forever (Qt's polish guard is INT_MAX iterations; the shell freezes). Decide it from a hidden `Text` whose width is bound to the visible one (`ClampedText`).
 - A binding that walks visual parents adds a guard per ancestor for every instance; stop it at a publisher (InkHost/TextRender stop rules) rather than at the root.
 - A hover source must be an ancestor of the controls it should survive: a `HoverHandler` on a sibling painted under them loses the hover to any child that takes it (Qt 6.12), so put it on the row, not beside the body.
+- A `ScrollView`'s contentItem (its Flickable) clips at the view's padding, so anything drawn into the padding (a row's tint, a focus ring) is cut. `StyledScrollView.bleed` switches that clip off and clips the view itself; test with the nearest clipping ancestor (`tst_ScrollBleed`), not the view's rect.
+- A property named `on<X>` in an object that has a property `<x>` (own or inherited) never takes its value: it reads the type's default (Qt 6.12: the style's onAccent colour read black for months, the battery service's onBattery was always false, a bar's onScreen never held; `check_structure.py` catches a clash in the file and with a few Qt names). Name it otherwise (`inkAccent.text`, `runningOnBattery`).
+- A colour glide to or from `"transparent"` passes through black (a ColorAnimation lerps r, g, b and a apart, and `"transparent"` is #00000000): a deselected row flashes grey on a light theme. Rest on the fill at alpha 0 (`Qt.alpha(Style.accentContainer, 0)` with a `// style-exempt:` reason); `check_style.py` R20 fails the bare literal beside a glide.

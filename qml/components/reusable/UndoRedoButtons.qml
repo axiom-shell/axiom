@@ -17,14 +17,12 @@ RowLayout {
   spacing: 0
 
   FlatIconButton {
-    size: Widget.iconButton
     iconText: "undo"
     tooltipText: I18n.tr("Undo")
     enabled: root.canUndo
     onClicked: root.undo()
   }
   FlatIconButton {
-    size: Widget.iconButton
     iconText: "redo"
     tooltipText: I18n.tr("Redo")
     enabled: root.canRedo

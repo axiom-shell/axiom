@@ -56,7 +56,7 @@ ColumnLayout {
   readonly property real buttonRadius: Style.concentric(Style.radius, root.containerMargins)
 
   readonly property int steps: Math.round((highest - lowest) / step)
-  readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
+  readonly property bool inline: head.fit.inline
   readonly property bool isSlider: mode === "slider" || (mode === "auto" && steps >= 7 && steps <= 200)
   // Word units are translated; symbols (px, %, ms, ‰) pass through
   // I18n.tr("min") I18n.tr("days") I18n.tr("tokens")
@@ -117,30 +117,24 @@ ColumnLayout {
     onTriggered: root.commit()
   }
 
-  // The label, then the stepper beside it, or the slider: beside it on a
-  // wide form (Widget.fieldInlineFrom), under it on a narrow one
-  GridLayout {
-    Layout.fillWidth: true
-    columns: root.isSlider && !root.inline ? 1 : 2
-    rowSpacing: Widget.spacing
-    columnSpacing: Widget.spacing * 2
+  // The label, then the stepper beside it, or the slider: placed by FieldLine
+  // (FieldFit): on the label's line when it fits, else under it
+  FieldLine {
+    id: head
+    label: root.label
+    description: root.description
+    headerExtra: root.headerExtra
+    headerBelow: root.headerBelow
+    kind: root.isSlider ? "slider" : "fixed"
+    controlLeast: valueControl.implicitWidth
 
-    FieldHeader {
-      label: root.label
-      description: root.description
-      trailing: root.headerExtra
-      below: root.headerBelow
-      // Centred on a control taller than it (a label alone)
-      Layout.alignment: Qt.AlignVCenter
-    }
-
-    // Centred on the label and description beside it; the stepper sits
-    // right, the slider fills (or takes the field's control width inline)
+    // Centred on the label and description beside it; the stepper sits at
+    // the line's end (at the start under its label), the slider fills
     Loader {
+      id: valueControl
       sourceComponent: root.isSlider ? sliderControl : stepperControl
-      Layout.alignment: root.isSlider ? Qt.AlignVCenter : Qt.AlignRight | Qt.AlignVCenter
-      Layout.fillWidth: root.isSlider && !root.inline
-      Layout.preferredWidth: root.isSlider && root.inline ? Widget.fieldControlWidth(root.width) : -1
+      Layout.alignment: head.fit.align === "end" ? Qt.AlignRight : Qt.AlignLeft
+      Layout.fillWidth: root.isSlider
     }
   }
 
@@ -247,7 +241,7 @@ ColumnLayout {
     tone: "sunken"
     outlined: true
     Layout.fillWidth: false
-    readonly property int unitGap: root.unitText === "" ? 0 : 3
+    readonly property real unitGap: root.unitText === "" ? 0 : Widget.spacing / 2
     Layout.preferredWidth: widest.advanceWidth + unitLabel.implicitWidth + box.unitGap + Widget.padding * 2
     border.width: box.outlined ? (input.activeFocus ? Style.focusWidth : Style.hairline) : 0
     border.color: input.activeFocus ? Style.accent : Style.borderStrong
@@ -265,8 +259,9 @@ ColumnLayout {
       font.family: Appearance.fontFamily
       font.pixelSize: Style.typeBody
       selectByMouse: true
+      cursorDelegate: TextCursor {}
       selectionColor: Style.accent
-      selectedTextColor: Style.onAccent
+      selectedTextColor: Style.inkAccent.text
       inputMethodHints: Qt.ImhFormattedNumbersOnly
       validator: RegularExpressionValidator {
         regularExpression: /-?\d*/

@@ -1,35 +1,24 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import qs.config
 import qs.components.reusable
 
 // A setting of two or three values (`x-control: toggle`): its label and
 // description, a StyledToggle with the options at the row's right end,
-// centred on them; a click on the row off the toggle cycles to the next
-// option (the FormRow's `rowClicked`, routed to `activate` by SchemaField)
-Item {
+// centred on them (a FieldLine, kind fixed: stacked under a label it would
+// crowd, the toggle then fills the width); a click on the row off the toggle
+// cycles to the next option (the FormRow's `rowClicked`, routed to
+// `activate` by SchemaField)
+FieldLine {
   id: root
-  required property string label
   required property var options
   required property var optionLabels
   property var currentValue
-  property string description: ""
-  // After the label (FieldHeader.trailing)
-  property Component headerExtra: null
-  // Under the description (FieldHeader.below)
-  property Component headerBelow: null
 
   signal picked(var value)
 
-  // Under its label when the toggle at its widest (constant per control:
-  // StyledToggle's implicit width) leaves the label less than its least
-  // column (D-83); decided from implicit widths only, never `truncated`
-  readonly property bool stacked: root.width > 0 && toggle.implicitWidth > root.width - Widget.textPx(160)
-
-  Layout.fillWidth: true
-  implicitWidth: row.implicitWidth
-  implicitHeight: row.implicitHeight
+  kind: "fixed"
+  controlLeast: toggle.implicitWidth
 
   // What a click on the row outside the toggle does: the next option, the
   // first after the last
@@ -38,29 +27,13 @@ Item {
     root.picked(root.options[(index + 1) % root.options.length]);
   }
 
-  GridLayout {
-    id: row
-    anchors.left: parent.left
-    anchors.right: parent.right
-    columns: root.stacked ? 1 : 2
-    rowSpacing: Widget.spacing
-    columnSpacing: Widget.spacing * 2
-
-    FieldHeader {
-      label: root.label
-      description: root.description
-      trailing: root.headerExtra
-      below: root.headerBelow
-    }
-
-    // Centred on the label and description together
-    StyledToggle {
-      id: toggle
-      Layout.alignment: root.stacked ? Qt.AlignLeft | Qt.AlignVCenter : Qt.AlignVCenter
-      options: root.options
-      labels: root.optionLabels
-      value: root.currentValue
-      onPicked: value => root.picked(value)
-    }
+  StyledToggle {
+    id: toggle
+    // Stacked: the segments share the width, as a dropdown under its label
+    Layout.fillWidth: root.fit.fill
+    options: root.options
+    labels: root.optionLabels
+    value: root.currentValue
+    onPicked: value => root.picked(value)
   }
 }

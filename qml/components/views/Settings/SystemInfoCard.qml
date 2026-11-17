@@ -8,14 +8,14 @@ import qs.services.core
 import qs.services.system
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
 
 // Settings page, System (the category's first `card`, wide): this machine
 // (its name, operating system, hardware and uptime) and this axiom (its
 // version and how it's installed), with Copy system info (the bug report's
 // lines, nothing personal) and Rename (hostnamed, polkit asks)
-FieldGroup {
+PageCard {
   id: root
-  pageCard: true
 
   readonly property var info: SystemInfoManager.info
   readonly property var report: SystemInfoManager.report
@@ -197,18 +197,12 @@ FieldGroup {
         Layout.fillWidth: true
         spacing: Widget.spacing
 
-        StyledTextEntry {
+        SubmitEntry {
           id: nameEntry
-          Layout.fillWidth: true
           placeholderText: I18n.tr("Computer name")
-          onAccepted: renameButton.clicked()
-        }
-
-        StyledTextButton {
-          id: renameButton
-          text: SystemInfoManager.renaming ? I18n.tr("Renaming…") : I18n.tr("Rename")
-          enabled: !SystemInfoManager.renaming && nameEntry.text.trim() !== ""
-          onClicked: SystemInfoManager.rename(nameEntry.text, error => {
+          buttonText: SystemInfoManager.renaming ? I18n.tr("Renaming…") : I18n.tr("Rename")
+          canSubmit: !SystemInfoManager.renaming && nameEntry.text.trim() !== ""
+          onSubmitted: SystemInfoManager.rename(nameEntry.text, error => {
             if (!error)
               root.renaming = false;
           })
@@ -235,11 +229,10 @@ FieldGroup {
         Layout.fillWidth: true
       }
 
-      StyledText {
+      StatusLine {
         visible: SystemInfoManager.renameError !== ""
         text: SystemInfoManager.renameError
         tone: "error"
-        overflow: "wrap"
         Layout.fillWidth: true
       }
     }
@@ -264,41 +257,14 @@ FieldGroup {
 
   // --- The facts, two to a line ---
 
-  GridLayout {
-    Layout.fillWidth: true
-    columns: root.width > Widget.px(640) ? 4 : 2
-    columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing
-
-    Repeater {
-      model: root.facts
-
-      delegate: RowLayout {
-        id: fact
-        required property var modelData
-        readonly property string value: root.valueOf(fact.modelData.key)
-        Layout.columnSpan: 2
-        Layout.fillWidth: true
-        Layout.preferredWidth: 1
-        Layout.alignment: Qt.AlignTop
-        spacing: Widget.spacing * 2
-
-        StyledLabel {
-          Layout.preferredWidth: Widget.px(130)
-          Layout.alignment: Qt.AlignTop
-          // I18n.tr: the labels are declared above
-          text: I18n.tr(fact.modelData.label)
-          tone: "muted"
-          overflow: "line"
-        }
-
-        StyledText {
-          Layout.fillWidth: true
-          text: fact.value || "—"
-          overflow: "wrap"
-        }
-      }
-    }
+  FactGrid {
+    pairsPerLine: root.width > Widget.px(640) ? 2 : 1
+    // I18n.tr: the labels are declared above
+    facts: root.facts.map(fact => ({
+          "label": I18n.tr(fact.label),
+          "value": root.valueOf(fact.key) || "—",
+          "wrap": true
+        }))
   }
 
   // --- Copying the report ---

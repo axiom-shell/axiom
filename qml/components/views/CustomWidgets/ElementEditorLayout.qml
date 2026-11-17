@@ -7,6 +7,7 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.content.parts.custom
 import qs.components.views.Layouts
+import qs.components.views.base
 
 // Custom widgets page, Module tab: the element library and the selected
 // element down the left (the tab's full height), and on the right what the
@@ -69,51 +70,41 @@ GridDragLayer {
     id: elementTile
 
     Item {
-      id: content
+      id: tile
 
       // The element (the tile's module, or an underlay item's element)
       property var module: null
       readonly property var fields: CustomWidgetsManager.editor.previewFields ?? ({})
       readonly property bool hidden: !tileElement.shown
-      readonly property real designWidth: Math.max(1, (content.module?.place?.w ?? 1) / CustomWidgetData.subCells * root.card)
-      readonly property real designHeight: Math.max(1, (content.module?.place?.h ?? 1) / CustomWidgetData.subCells * root.card)
-      readonly property real zoom: Math.min(content.width / content.designWidth, content.height / content.designHeight)
-      readonly property string title: content.module ? (content.module.name || I18n.tr(CustomWidgetsConfig.elementKind(content.module.type)?.label ?? content.module.type)) : ""
+      readonly property real designWidth: Math.max(1, (tile.module?.place?.w ?? 1) / CustomWidgetData.subCells * root.card)
+      readonly property real designHeight: Math.max(1, (tile.module?.place?.h ?? 1) / CustomWidgetData.subCells * root.card)
+      readonly property string title: tile.module ? (tile.module.name || I18n.tr(CustomWidgetsConfig.elementKind(tile.module.type)?.label ?? tile.module.type)) : ""
       // Room above the tile inside the canvas, for the name chip (it re-reads
       // when the element moves or resizes: the place is read for that)
       readonly property real roomAbove: {
-        const place = content.module?.place;
-        return place && content.height >= 0 ? content.mapToItem(canvasHolder, 0, 0).y : 0;
+        const place = tile.module?.place;
+        return place && tile.height >= 0 ? tile.mapToItem(canvasHolder, 0, 0).y : 0;
       }
-      opacity: content.hidden ? Style.opacityDisabled : 1
+      opacity: tile.hidden ? Style.opacityDisabled : 1
 
-      // Centred in the tile, cut to it
-      Item {
-        id: clipped
+      // Centred in the tile, cut to it, scaled up as well as down
+      ZoomFrame {
         anchors.fill: parent
-        clip: true
+        naturalWidth: tile.designWidth
+        naturalHeight: tile.designHeight
+        maxZoom: Infinity
 
-        Item {
-          x: (content.width - content.designWidth * content.zoom) / 2
-          y: (content.height - content.designHeight * content.zoom) / 2
-          width: content.designWidth
-          height: content.designHeight
-          scale: content.zoom
-          transformOrigin: Item.TopLeft
-          readonly property real contentZoom: scale
-
-          CustomElement {
-            id: tileElement
-            anchors.fill: parent
-            anchors.margins: Widget.px(3)
-            element: content.module ?? ({})
-            fields: content.fields
-            history: CustomWidgetsManager.history[CustomWidgetsManager.editor.selectedId] ?? ({})
-            widgetId: CustomWidgetsManager.editor.selectedId
-            actionsEnabled: false
-            fallbackIcon: CustomWidgetsManager.editor.selected?.icon || "widgets"
-            moduleFont: CustomWidgetsManager.editor.selected?.module?.font ?? ""
-          }
+        CustomElement {
+          id: tileElement
+          anchors.fill: parent
+          anchors.margins: Widget.px(3)
+          element: tile.module ?? ({})
+          fields: tile.fields
+          history: CustomWidgetsManager.history[CustomWidgetsManager.editor.selectedId] ?? ({})
+          widgetId: CustomWidgetsManager.editor.selectedId
+          actionsEnabled: false
+          fallbackIcon: CustomWidgetsManager.editor.selected?.icon || "widgets"
+          moduleFont: CustomWidgetsManager.editor.selected?.module?.font ?? ""
         }
       }
 
@@ -126,19 +117,19 @@ GridDragLayer {
       // (inside, at the top, only where the canvas has no room above)
       Row {
         id: chips
-        readonly property bool above: content.roomAbove >= chips.height + Widget.px(2)
-        visible: (tileHover.hovered || (content.module?.id ?? "") === (CustomWidgetsManager.editor.element?.id ?? null)) && content.width > Widget.px(56) && content.height > Widget.px(28)
+        readonly property bool above: tile.roomAbove >= chips.height + Widget.px(2)
+        visible: (tileHover.hovered || (tile.module?.id ?? "") === (CustomWidgetsManager.editor.element?.id ?? null)) && tile.width > Widget.px(56) && tile.height > Widget.px(28)
         x: Widget.px(2)
         y: chips.above ? -chips.height - Widget.px(1) : Widget.px(2)
         z: 3
         spacing: Widget.px(2)
 
         StatusChip {
-          text: content.title
+          text: tile.title
           tone: "neutral"
         }
         StatusChip {
-          visible: content.hidden
+          visible: tile.hidden
           text: I18n.tr("hidden")
           tone: "warning"
         }
@@ -201,24 +192,14 @@ GridDragLayer {
     anchors.fill: parent
     spacing: Widget.spacing * 3
 
-    // The inspector, the tab's full height; it owns its header
-    Surface {
+    // The inspector, the tab's full height; its header scrolls with its cards
+    InspectorCard {
       Layout.preferredWidth: Math.min(Widget.textPx(340), Math.round(root.width * 0.34))
       Layout.fillHeight: true
-      tone: "surface"
 
-      StyledScrollView {
-        id: sideScroll
-        anchors.fill: parent
-
-        FormInset {
-          width: sideScroll.availableWidth
-
-          ElementInspector {
-            Layout.fillWidth: true
-            dragLayer: root
-          }
-        }
+      ElementInspector {
+        Layout.fillWidth: true
+        dragLayer: root
       }
     }
 

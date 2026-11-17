@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
@@ -49,6 +50,8 @@ ColumnLayout {
   // The fields scroll when the editor is short
   Flickable {
     id: fields
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     Layout.fillWidth: true
     Layout.fillHeight: true
     Layout.preferredHeight: form.implicitHeight
@@ -142,30 +145,25 @@ ColumnLayout {
 
       // Repeat: the simple rules; one written elsewhere shows as Custom
       // and is kept unless another is picked
-      Flow {
+      SegmentTabs {
+        id: repeatTabs
+        readonly property var rules: ["none", "daily", "weekly", "monthly", "yearly"].concat(root.session.draft?.origRepeat === "custom" ? ["custom"] : [])
         Layout.fillWidth: true
-        spacing: Widget.spacing / 2
-
-        Repeater {
-          model: ["none", "daily", "weekly", "monthly", "yearly"].concat(root.session.draft?.origRepeat === "custom" ? ["custom"] : [])
-          SegmentButton {
-            required property string modelData
-            // I18n.tr("Never") I18n.tr("Every day") I18n.tr("Every week") I18n.tr("Every month") I18n.tr("Every year") I18n.tr("Custom")
-            text: I18n.tr({
-              "none": "Never",
-              "daily": "Every day",
-              "weekly": "Every week",
-              "monthly": "Every month",
-              "yearly": "Every year",
-              "custom": "Custom"
-            }[modelData])
-            active: root.session.repeat === modelData
-            available: !root.session.readOnly && (modelData !== "custom" || root.session.repeat === "custom")
-            onClicked: {
-              if (available)
-                root.session.repeat = modelData;
-            }
-          }
+        count: repeatTabs.rules.length
+        current: repeatTabs.rules.indexOf(root.session.repeat)
+        // I18n.tr("Never") I18n.tr("Every day") I18n.tr("Every week") I18n.tr("Every month") I18n.tr("Every year") I18n.tr("Custom")
+        labelAt: i => I18n.tr({
+            "none": "Never",
+            "daily": "Every day",
+            "weekly": "Every week",
+            "monthly": "Every month",
+            "yearly": "Every year",
+            "custom": "Custom"
+          }[repeatTabs.rules[i]])
+        availableAt: i => !root.session.readOnly && (repeatTabs.rules[i] !== "custom" || root.session.repeat === "custom")
+        onPicked: i => {
+          if (repeatTabs.availableAt(i))
+            root.session.repeat = repeatTabs.rules[i];
         }
       }
 

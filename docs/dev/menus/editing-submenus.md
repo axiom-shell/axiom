@@ -13,7 +13,7 @@ How menus are edited on the Layouts page (draft, field groups, previewing, opene
 
 ### Field groups
 - The menu's fields come in `x-group`s: General, Opening, Placement, Style, Behaviour, Closing, Advanced (the read-only `id`), in the order their first field comes in the schema (`SchemaLayout.objectGroups`). Behaviour holds what the menu's buttons and header do: `pinButton`, `closeButton`, `popOutButton` and `draggable`, so `draggable` sits beside the `popOutButton` it shows with.
-- The Opening group leads with `MenuOpening`:
+- An Opening section (a `FieldGroup` card, above the schema's groups; `open.onHover` itself is in Behaviour) holds `MenuOpening`:
   - **"Show on screen"**: sets `previewing` to the selected menu (following the selection and id renames) and opens it.
     - `isHeld(id)` (pinned or previewing) makes a menu ignore `closeOnLeave` and outside clicks.
     - The page's `onDestruction` stops it.
@@ -24,7 +24,7 @@ How menus are edited on the Layouts page (draft, field groups, previewing, opene
     - a bar Button: `addBarButton` → `BarManager.addWidgetTo`, into the bar editor's draft, then the bar editor on that bar;
     - a keybind: `addKeybind` → `KeybindManager.editor.addAndRecord`, then the Keybinds page's editor recording its key.
 - A new menu (`addMenu`) is selected and starts previewing; what it starts as depends on what it's for (below).
-- Beside "Show on screen", "Show other menus" draws the others on the grid.
+- Beside "Show on screen", "Show other menus" draws the others on the grid. The two buttons share a row while both fit at their widest and stack one under the other when they do not (`MenuOpening`, decided from implicit widths).
 
 ### Creating a menu from what opens it
 - **What it starts as** is `MenuSeeds.seed(purpose, id, name)` (pure, `tst_MenuSeeds`), over the `Menu` schema's defaults (`ConfigManager.withDefaults`):

@@ -20,6 +20,9 @@ ColumnLayout {
   property alias trailing: trailingRow.data
   // A caption at the end (the shown count); hidden below 0
   property int count: -1
+  // How many there are before the search and chips narrow them (-1 when not
+  // known): while `count` is under it, the caption reads "count of total"
+  property int total: -1
   // A plain slot (the active filter chips, in a page that has them)
   property alias filters: filtersRow.data
   // Narrower than this, `trailing` and `count` go to a second line
@@ -82,7 +85,7 @@ ColumnLayout {
         visible: root.count >= 0
         role: "caption"
         tone: "muted"
-        text: String(root.count)
+        text: root.total >= 0 && root.count < root.total ? I18n.tr("{0} of {1}", root.count, root.total) : String(root.count)
       }
     }
   }

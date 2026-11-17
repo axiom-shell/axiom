@@ -5,10 +5,11 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
 
 // What one trigger runs (an element's On press, the bar's Click…): a row
 // with the dropdown of the widget's actions (Nothing, each one, New action…)
-// laid out as the settings page lays one out (InspectorRow's `shortControl`:
+// laid out as the settings page lays one out (FieldRow's `shortControl`:
 // under its label in a narrow form, beside it in a wide one; a click on the
 // row opens it), under it what the pick runs (its command as it would be
 // filled from the previewed sample, with the argument, or the Axiom action's
@@ -20,12 +21,13 @@ import qs.components.reusable
 // removed) says so. `writeRun(value)` writes the pick: the element's
 // `run.<trigger>` or the bar's `bar.run.<trigger>`; `writeArg(text)` the
 // argument (`args.<trigger>`, `bar.args.<trigger>`).
-ColumnLayout {
+FormColumn {
   id: root
 
-  // The trigger's title, and the top row of its box
+  joins: true
+
+  // The trigger's title
   property string label: ""
-  property bool first: false
   readonly property var editor: CustomWidgetsManager.editor
   // The action picked (its id; "" nothing)
   property string current: ""
@@ -76,11 +78,10 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: 0
 
-  InspectorRow {
-    first: root.first
+  FieldRow {
     label: root.label
     shortControl: true
-    dropdown: combo
+    activates: combo
     belowShown: root.action !== null || root.removed
 
     StyledComboEntry {
@@ -139,8 +140,8 @@ ColumnLayout {
   }
 
   // Axiom actions ignore it (the text is kept)
-  InspectorRow {
-    indented: true
+  FieldRow {
+    level: 1
     shown: root.action?.kind === "command"
     label: I18n.tr("Argument")
     description: root.argDescription
@@ -149,20 +150,14 @@ ColumnLayout {
       Layout.fillWidth: true
       spacing: Widget.spacing
 
-      StyledTextEntry {
+      CommitEntry {
         id: argEntry
         Layout.fillWidth: true
+        live: true
+        value: root.arg
         placeholderText: I18n.tr("e.g. next")
         input.font.family: "monospace"
-        onTextEdited: root.writeArg(argEntry.text)
-
-        Binding {
-          target: argEntry
-          property: "text"
-          value: root.arg
-          when: !argEntry.input.activeFocus
-          restoreMode: Binding.RestoreNone
-        }
+        onEdited: text => root.writeArg(text)
       }
 
       PathInsertButton {

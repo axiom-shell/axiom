@@ -14,7 +14,9 @@ import qs.components.methods
 // second text after the label, elided), shown in the order given, or
 // with `groups` (the schema's `x-libraryGroups`) under a heading per
 // group (LibraryOrder.grouped). The caller tracks what it opened this
-// for. `openAt(item)` opens it under `item` (or above it when there's no
+// for. `current` is the type shown as picked: its row ends in a check, and
+// the list opens on it (an empty search) with it highlighted; `keepOrder`
+// keeps the types in a group as given, not by label. `openAt(item)` opens it under `item` (or above it when there's no
 // room below; with `matchWidth`, as wide as `item`, long labels elided),
 // else set x/y and call open().
 Popup {
@@ -28,6 +30,9 @@ Popup {
 
   // Group names in order; empty: one list, as given
   property var groups: []
+  // The type shown as picked ("" none), and its order inside a group as given
+  property string current: ""
+  property bool keepOrder: false
   // A type's label and a group's heading as shown (the caller's schema
   // keys are translated here by default)
   property var labelOf: type => I18n.tr(type.label)
@@ -39,7 +44,7 @@ Popup {
   // The types the search finds, in the order shown
   readonly property var matches: root.groups.length > 0 ? [].concat(...root._sections.map(section => section.types)) : root._found
   readonly property var _found: LibraryOrder.filtered(root.types, root.query, root.labelOf, root.headingOf)
-  readonly property var _sections: root.groups.length > 0 ? LibraryOrder.grouped(root._found, root.groups, root.labelOf) : []
+  readonly property var _sections: root.groups.length > 0 ? LibraryOrder.grouped(root._found, root.groups, root.labelOf, root.keepOrder) : []
   // The list's rows: { heading } over each group, then { at } (an index
   // into `matches`) per type
   readonly property var rows: {
@@ -112,13 +117,25 @@ Popup {
   padding: Widget.spacing
   focus: true
 
+  // Opens on the current type, else the top
+  function _showCurrent() {
+    const at = root.current === "" ? -1 : root.matches.findIndex(type => type.type === root.current);
+    root.highlighted = Math.max(0, at);
+    if (at >= 0)
+      list.positionViewAtIndex(root._rowOf(at), ListView.Center);
+    else
+      list.positionViewAtBeginning();
+  }
+
   onAboutToShow: {
     search.input.text = "";
     root.query = "";
-    root.highlighted = 0;
-    list.positionViewAtBeginning();
+    root._showCurrent();
   }
-  onOpened: search.input.forceActiveFocus()
+  onOpened: {
+    search.input.forceActiveFocus();
+    root._showCurrent();
+  }
 
   // Solid, as every dropdown's list: nothing blurs behind a Popup
   background: DropdownSurface {}
@@ -189,6 +206,17 @@ Popup {
               root.highlighted = rowDelegate.at;
           }
           onActivated: root.activate(rowDelegate.at)
+        }
+
+        // The picked type's mark, at the row's end
+        StyledIcon {
+          visible: !rowDelegate.heading && root.current !== "" && rowDelegate.entry?.type === root.current
+          anchors.right: parent.right
+          anchors.rightMargin: Widget.padding
+          anchors.verticalCenter: parent.verticalCenter
+          objectName: "currentMark"
+          text: "check"
+          tone: "accent"
         }
       }
     }

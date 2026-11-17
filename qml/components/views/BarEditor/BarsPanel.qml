@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 import qs.services.compositor
 import qs.services.ui
@@ -67,50 +66,26 @@ Item {
           changed: BarManager.barChanged(entry.index)
           escapeClears: true
           onClicked: BarManager.selectBar(entry.index)
+          canDuplicate: true
+          duplicateTooltip: I18n.tr("Copy this bar")
+          onDuplicated: BarManager.duplicateBar(entry.index)
           // (removeBar keeps the last bar)
+          canRemove: (BarManager.localConfig?.length ?? 0) > 1
+          removeTooltip: I18n.tr("Remove this bar")
           onRemoveRequested: BarManager.removeBar(entry.index)
           onEscapePressed: BarManager.selectBar(-1)
 
           // One copy per monitor
-          badges: StyledIcon {
-            id: everyMonitor
+          badges: TipIcon {
             visible: entry.entryBar.screen.mode === "all"
             text: "desktop_windows"
+            tip: I18n.tr("On every monitor")
             textColor: entry.ink
-
-            HoverHandler {
-              id: everyMonitorHover
-            }
-            LazyLoader {
-              active: everyMonitorHover.hovered
-              StyledToolTip {
-                target: everyMonitor
-                text: I18n.tr("On every monitor")
-              }
-            }
-          }
-
-          RowAction {
-            row: entry
-            iconText: "content_copy"
-            tooltipText: I18n.tr("Copy this bar")
-            onClicked: BarManager.duplicateBar(entry.index)
-          }
-
-          RowAction {
-            row: entry
-            visible: (BarManager.localConfig?.length ?? 0) > 1
-            danger: true
-            iconText: "close"
-            tooltipText: I18n.tr("Remove this bar")
-            onClicked: BarManager.removeBar(entry.index)
           }
         }
       }
 
       AddEntryButton {
-        Layout.topMargin: Widget.spacing
-        Layout.bottomMargin: Widget.spacing
         text: I18n.tr("New bar")
         onClicked: BarManager.addBar()
       }
@@ -178,6 +153,7 @@ Item {
             tone: "muted"
             overflow: "wrap"
             Layout.fillWidth: true
+            Layout.topMargin: Style.space2
           }
         }
       }

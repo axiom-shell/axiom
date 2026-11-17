@@ -46,12 +46,11 @@ Card {
         y: grid.tileY(index)
         width: grid.tileWidth
         height: grid.tileHeight
-        radius: Widget.radius
+        radius: Style.radius
         tone: tile.active ? "accent" : "sunken"
         outlined: !tile.active
 
         StateLayer {
-          radius: tile.radius
           hovered: tileArea.containsMouse
           onAccent: tile.active
         }
@@ -72,7 +71,7 @@ Card {
         Column {
           id: icons
           readonly property int count: Math.min(tile.windows.length, 6)
-          readonly property real available: tile.width - 8
+          readonly property real available: tile.width - Widget.px(8)
           readonly property int iconSize: Math.floor(Math.max(Widget.px(12), Math.min(tile.height * 0.4, icons.available / Math.max(1, Math.min(icons.count, 3)) - 2)))
           readonly property int fitPerRow: Math.max(1, Math.floor((icons.available + icons.spacing) / (icons.iconSize + icons.spacing)))
           readonly property int rows: icons.count === 0 ? 0 : Math.ceil(icons.count / Math.min(icons.count, icons.fitPerRow))

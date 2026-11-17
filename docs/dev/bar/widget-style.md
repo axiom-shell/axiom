@@ -144,7 +144,7 @@ A bar that needs the wallpaper's tone (no surface, or any bar while the surfaces
 
 ### Fill on hover
 - `hoverFill` (shown for tinted and outline: the `hoverFills` trait, the boxed styles that aren't filled already; not split, which is filled where it shows its color) fills a widget under the pointer with its color, its text and icon turning to its own text color (`own`), as if filled.
-- The decision is the look's `hoverFill`; `colors()` reads `state.hovered` (`BarColors.widgetColors`' `widget` holds it), and the base passes its hit area's `hovered` (`BarWidget`), so the background, text and icon all follow one output. With the option on, an unfilled outline's fill is its color cleared, so the fill fades in (`ColorGlide`, `animFast`) from nothing rather than through black.
+- The decision is the look's `hoverFill`; `colors()` reads `state.hovered` (`BarColors.widgetColors`' `widget` holds it), and the base passes its hit area's `hovered` (`BarWidget`), so the background, text and icon all follow one output. With the option on, an unfilled outline's fill is its color cleared, so the fill fades in (`ColorGlide`, `animFast`) from nothing rather than through black. Every part with nothing to draw (fill, stroke, indicator of a widget or cell) rests the same way, on the colour it fades to at alpha 0, never on bare `transparent`.
 - In a merged run only the hovered widget's own part fills, in the caps it has alone (`levelStartCap` / `levelEndCap`, as a level), its outline left to the run; a press tints that part on top.
 - A `BarWidget` opts out with `fillsOnHover: false`: Workspaces, whose cells fill instead.
 

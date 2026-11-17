@@ -16,46 +16,41 @@ PanelWindow {
 
   readonly property bool asking: MonitorManager.pending
   readonly property bool shown: asking || MonitorManager.identifying
-  readonly property int pad: Widget.px(18)
 
   visible: shown || card.opacity > 0
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   implicitWidth: card.width
-  implicitHeight: card.height
+  // Room under the card for its slide in
+  implicitHeight: card.height + Style.enterOffset * 2
+  // Only the card takes clicks, not the slide-in room around it
+  mask: Region {
+    item: card
+  }
 
   WlrLayershell.layer: WlrLayer.Overlay
   WlrLayershell.namespace: "axiom-monitor-prompt"
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-  // Every focus grab lets input through to it while it shows, so Keep /
-  // Revert work over the overlay the Monitors page applied from
-  Component.onDestruction: SurfaceManager.unregisterModal(root)
-
   Component.onCompleted: {
-    SurfaceManager.registerModal(root);
     // Where the compositor blurs only what a window asks: the card
     // (attached only there: attached at all, it claims the window's blur,
     // and Hyprland's layer rules no longer blur it)
     if (CompositorManager.supports.blurRegion === true)
-      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? cardBlur : null);
-  }
-  BoxBlurRegion {
-    id: cardBlur
-    target: card
-    opacity: card.opacity
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? card.blur : null);
   }
 
-  Surface {
+  // Every focus grab lets input through to it while it shows, so Keep /
+  // Revert work over the overlay the Monitors page applied from
+  ModalCard {
     id: card
-    tone: "page"
+    window: root
+    shown: root.shown
+    asking: root.asking
 
-    width: content.implicitWidth + root.pad * 2
-    height: content.implicitHeight + root.pad * 2
-    border.color: root.asking ? Style.accent : Style.borderSubtle
-    opacity: root.shown ? 1 : 0
-
-    Glide on opacity {}
+    anchors.centerIn: parent
+    width: content.implicitWidth + card.padding * 2
+    height: content.implicitHeight + card.padding * 2
 
     ColumnLayout {
       id: content

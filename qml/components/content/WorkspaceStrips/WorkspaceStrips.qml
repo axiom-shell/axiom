@@ -26,6 +26,7 @@ WorkspacePopoutPanel {
   CellContents {
     id: contents
     barConfig: root.barConfig
+    cellLook: root.cellLook
     properties: root.properties
     base: root.base
     thickness: root.cellSize

@@ -48,7 +48,7 @@ ColumnLayout {
   }
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // One banner across the page: the widget on a bar across and on one down
   // the side, and what it shows
@@ -90,7 +90,6 @@ ColumnLayout {
 
   // The other groups flow into columns, as a Settings card's rows do
   GroupColumns {
-    rowGap: 0
     Layout.fillWidth: true
 
     FieldGroup {
@@ -98,9 +97,8 @@ ColumnLayout {
       title: I18n.tr("On the bar")
 
       // One box of rows: the form's, then the status colour's
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
-        spacing: 0
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
@@ -132,9 +130,8 @@ ColumnLayout {
       title: I18n.tr("Text")
 
       // One box of rows: the form's, then the icons'
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
-        spacing: 0
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
@@ -161,9 +158,8 @@ ColumnLayout {
       title: I18n.tr("Clicks")
       description: I18n.tr("What clicks and scrolls on the bar widget run.")
 
-      ColumnLayout {
+      FormColumn {
         Layout.fillWidth: true
-        spacing: 0
 
         Repeater {
           model: ["click", "rightClick", "middleClick", "scrollUp", "scrollDown"]
@@ -172,7 +168,6 @@ ColumnLayout {
             id: trigger
             required property string modelData
             required property int index
-            first: trigger.index === 0
             label: root.schema.bar.properties.run.properties[trigger.modelData].title
             current: root.definition?.bar?.run?.[trigger.modelData] ?? ""
             writeRun: value => root.editor.set(["bar", "run", trigger.modelData], value)

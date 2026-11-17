@@ -22,7 +22,7 @@ Item {
   property color color: Style.surfaceSunken
   // 0-1: how dark it is drawn when it isn't the active workspace
   property real dim: 0.5
-  property real radius: Widget.radius
+  property real radius: Style.radius
   // The monitor's active workspace
   property bool current: false
   property bool hovered: false

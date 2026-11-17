@@ -10,9 +10,8 @@ import qs.components.forms
 // options switch, which shows the Development category (kept by axiom, not
 // in config; the category shows while dev mode is on too), and a line on
 // dev mode
-FieldGroup {
+PageCard {
   id: root
-  pageCard: true
 
   readonly property string detail: {
     if (!DevManager.enabled)
@@ -24,45 +23,22 @@ FieldGroup {
     return DevManager.active ? I18n.tr("Dev mode runs {0} on its own config.", Paths.shortenHome(DevManager.tree)) : I18n.tr("Dev mode is on; the installed axiom runs until the dev build is ready.");
   }
 
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    // I18n.tr("Enabled")
-    // I18n.tr("Shows the Development category: a dev tree axiom runs and rebuilds as you edit it, on its own config.")
-    FieldHeader {
-      label: "Enabled"
-      description: "Shows the Development category: a dev tree axiom runs and rebuilds as you edit it, on its own config."
-    }
-
-    // The one switch for the Development category
-    StyledSwitch {
-      id: optionsSwitch
-      enabled: BackendManager.ready
-      checked: DevManager.options
-      onToggled: {
-        DevManager.setOptions(optionsSwitch.checked);
-        // Follows axiom's answer, not the click
-        optionsSwitch.checked = Qt.binding(() => DevManager.options);
-      }
-    }
+  // The one switch for the Development category; follows axiom's answer,
+  // not the click
+  SwitchRow {
+    label: I18n.tr("Enabled")
+    description: I18n.tr("Shows the Development category: a dev tree axiom runs and rebuilds as you edit it, on its own config.")
+    enabled: BackendManager.ready
+    checked: DevManager.options
+    onToggled: newValue => DevManager.setOptions(newValue)
   }
 
-  RowLayout {
+  StatusLine {
     visible: DevManager.showsDevelopment
     Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StatusChip {
-      text: DevManager.building ? I18n.tr("Building") : DevManager.enabled ? I18n.tr("Dev mode") : I18n.tr("Dev mode off")
-      tone: DevManager.buildFailed ? "error" : DevManager.enabled ? "accent" : "neutral"
-    }
-
-    StyledText {
-      text: root.detail
-      overflow: "wrap"
-      Layout.fillWidth: true
-    }
+    chip: DevManager.building ? I18n.tr("Building") : DevManager.enabled ? I18n.tr("Dev mode") : I18n.tr("Dev mode off")
+    chipTone: DevManager.buildFailed ? "error" : DevManager.enabled ? "accent" : "neutral"
+    text: root.detail
 
     StyledTextButton {
       text: I18n.tr("Open Development")

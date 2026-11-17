@@ -45,7 +45,7 @@ ToolButton {
     case "dangerPrimary":
       return Style.error;
     default:
-      return Qt.alpha(Style.accent, 0); // style-exempt: no fill as the accent at no alpha, so a kind change (RowAction lit) doesn't fade through black
+      return Tone.cleared(Style.accent); // style-exempt: no fill as the accent at no alpha, so a kind change (RowAction lit) doesn't fade through black
     }
   }
   readonly property color _ink: {
@@ -118,7 +118,6 @@ ToolButton {
       hovered: root.hovered
       pressed: root.pressed
       onAccent: root._onFill
-      radius: parent.radius
     }
 
     FocusRing {

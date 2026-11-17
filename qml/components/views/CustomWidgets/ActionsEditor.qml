@@ -8,11 +8,12 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 
-// Custom widgets page, Data tab: the selected definition's actions
-// (actions.items), one ActionRow each, an Add button, the setting that reruns
-// the script after one, and, folded, how a script runs them from outside.
-// Rows are by count over the saved items.
-ColumnLayout {
+// Custom widgets page, Data tab: the Actions card. The selected definition's
+// actions (actions.items), one ActionRow each, an Add button, the setting that
+// reruns the script after one, and, folded, how a script runs them from
+// outside: a FieldGroup, so its fold row is a direct child of the card and
+// FoldingCard closes it. Rows are by count over the saved items.
+FieldGroup {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
@@ -21,22 +22,29 @@ ColumnLayout {
   readonly property var items: root.definition?.actions?.items ?? []
   property bool scriptsOpen: false
 
-  Layout.fillWidth: true
-  spacing: Widget.spacing
+  title: I18n.tr("Actions")
+  description: I18n.tr("Buttons, list rows, toggles, sliders and the bar's clicks run these.")
 
-  Repeater {
-    model: root.items.length
+  // The list items keep their gap
+  ColumnLayout {
+    Layout.fillWidth: true
+    spacing: Widget.spacing
 
-    ActionRow {}
-  }
+    Repeater {
+      model: root.items.length
 
-  AddEntryButton {
-    text: I18n.tr("Add an action")
-    onClicked: root.editor.addAction({})
+      ActionRow {}
+    }
+
+    AddEntryButton {
+      text: I18n.tr("Add an action")
+      onClicked: root.editor.addAction({})
+    }
   }
 
   SchemaPropertiesForm {
     Layout.fillWidth: true
+    Layout.topMargin: Widget.spacing
     propertiesSchema: Utils.pick(root.schema.actions.properties, order)
     order: ["refreshAfter"]
     values: root.definition?.actions ?? ({})
@@ -45,25 +53,38 @@ ColumnLayout {
     onDiscardAt: path => root.editor.discardAt(["actions"].concat(path))
   }
 
-  FoldingSection {
-    visible: root.items.length > 0
+  // The fold row, then the lines it shows: how a script runs the actions
+  FoldFormRow {
+    shown: root.items.length > 0
     title: I18n.tr("For scripts")
-    collapsed: !root.scriptsOpen
+    open: root.scriptsOpen
     onToggled: root.scriptsOpen = !root.scriptsOpen
+  }
 
-    Repeater {
-      model: root.items.length
+  FormRow {
+    shown: root.items.length > 0 && root.scriptsOpen
+    tinted: false
+    bodyHeight: lines.implicitHeight
 
-      StyledText {
-        id: line
-        required property int modelData
-        readonly property var action: root.items[line.modelData] ?? null
-        Layout.fillWidth: true
-        text: I18n.tr("{0} — {1}", line.action?.id ?? "", `axiom ipc customWidgets act ${root.definition?.id ?? ""} ${line.action?.id ?? ""}`)
-        textFamily: "monospace"
-        role: "caption"
-        tone: "muted"
-        overflow: "wrap"
+    ColumnLayout {
+      id: lines
+      width: parent.width
+      spacing: Widget.spacing
+
+      Repeater {
+        model: root.items.length
+
+        StyledText {
+          id: line
+          required property int modelData
+          readonly property var action: root.items[line.modelData] ?? null
+          Layout.fillWidth: true
+          text: I18n.tr("{0} — {1}", line.action?.id ?? "", `axiom ipc customWidgets act ${root.definition?.id ?? ""} ${line.action?.id ?? ""}`)
+          textFamily: "monospace"
+          role: "caption"
+          tone: "muted"
+          overflow: "wrap"
+        }
       }
     }
   }

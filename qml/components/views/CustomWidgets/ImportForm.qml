@@ -33,7 +33,7 @@ ColumnLayout {
   readonly property bool runsCommands: (root.result?.definitions ?? []).some(def => CustomWidgetData.commandsOf(def).length > 0)
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // The text for a CustomWidgetData.readImport error code
   function errorText(code, detail) {
@@ -66,6 +66,7 @@ ColumnLayout {
 
     RowLayout {
       Layout.fillWidth: true
+      Layout.topMargin: Style.space2
       spacing: Widget.spacing
 
       StyledTextButton {
@@ -85,6 +86,7 @@ ColumnLayout {
 
     Notice {
       visible: root.result !== null && root.result.error !== ""
+      Layout.topMargin: Style.space2
       status: "error"
       title: I18n.tr("Couldn't read it")
       text: root.errorText(root.result?.error ?? "", root.result?.detail ?? "")
@@ -93,6 +95,7 @@ ColumnLayout {
     // A good paste: what it would run
     Notice {
       visible: root.result !== null && root.result.error === ""
+      Layout.topMargin: Style.space2
       status: root.runsCommands ? "warning" : "success"
       title: root.runsCommands ? I18n.tr("This widget runs commands") : I18n.tr("This widget runs no commands")
       text: root.result?.kind === "waybar" ? I18n.tr("A Waybar module: its exec runs as the widget's script.") : I18n.tr("They run when the widget is shown, as you set it up here.")
@@ -100,6 +103,7 @@ ColumnLayout {
     StyledText {
       visible: root.result !== null && root.result.error === ""
       Layout.fillWidth: true
+      Layout.topMargin: Style.space2
       text: root.commandLines
       textFamily: "monospace"
       role: "caption"
@@ -107,6 +111,7 @@ ColumnLayout {
     }
     StyledTextButton {
       visible: root.result !== null && root.result.error === ""
+      Layout.topMargin: Style.space2
       implicitHeight: Widget.height
       iconText: "download"
       text: I18n.tr("Import")

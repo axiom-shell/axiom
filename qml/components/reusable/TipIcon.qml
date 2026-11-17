@@ -8,6 +8,9 @@ StyledIcon {
   id: root
 
   property string tip: ""
+  // Wraps the tooltip at this width while above 0
+  property real tipWidth: 0
+  readonly property bool hovered: hover.hovered
 
   HoverHandler {
     id: hover
@@ -19,6 +22,7 @@ StyledIcon {
     StyledToolTip {
       target: root
       text: root.tip
+      maxWidth: root.tipWidth
     }
   }
 }

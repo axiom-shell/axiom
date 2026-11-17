@@ -298,7 +298,7 @@ Singleton {
   // Whether the rotation waits (Appearance.wallpaper.rotation.pause): a
   // fullscreen window on any screen, the screen locked, on battery. Once
   // nothing holds it and its time has passed, it moves on at once.
-  readonly property bool rotationHeld: (Appearance.rotationPauseFullscreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))) || (Appearance.rotationPauseLocked && LockManager.builtinLocked) || (Appearance.rotationPauseBattery && BatteryManager.onBattery)
+  readonly property bool rotationHeld: (Appearance.rotationPauseFullscreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))) || (Appearance.rotationPauseLocked && LockManager.builtinLocked) || (Appearance.rotationPauseBattery && BatteryManager.runningOnBattery)
   onRotationHeldChanged: root._rotateIfDue()
 
   function _rotateIfDue() {

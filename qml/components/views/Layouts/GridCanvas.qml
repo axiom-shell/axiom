@@ -121,7 +121,7 @@ WorkArea {
   readonly property real unitSize: root.fit.unitSize
   // The corners of the lattice's squares and of the modules on it, the
   // same so they line up
-  readonly property real cellRadius: Math.min(Widget.radius, root.unitSize / 4)
+  readonly property real cellRadius: Math.min(Style.radius, root.unitSize / 4)
   // The screen, in the area's px (its sides midway in the gaps)
   readonly property var screenRect: root.hasScreen ? GridPlacement.canvasScreenRect(root.fit, root.screenBox) : root.noRect
   readonly property var noRect: ({
@@ -195,14 +195,12 @@ WorkArea {
       spacing: 0
 
       FlatIconButton {
-        size: Widget.iconButton
         iconText: root.nudgeVertical ? "keyboard_arrow_up" : "chevron_left"
         tooltipText: root.nudgeVertical ? I18n.tr("Move up") : I18n.tr("Move left")
         enabled: root.canNudgeBack
         onClicked: root.nudge(-1)
       }
       FlatIconButton {
-        size: Widget.iconButton
         iconText: root.nudgeVertical ? "keyboard_arrow_down" : "chevron_right"
         tooltipText: root.nudgeVertical ? I18n.tr("Move down") : I18n.tr("Move right")
         enabled: root.canNudgeForward
@@ -216,7 +214,6 @@ WorkArea {
       }
       FlatIconButton {
         visible: root.canCentre
-        size: Widget.iconButton
         iconText: root.nudgeVertical ? "align_vertical_center" : "align_horizontal_center"
         tooltipText: I18n.tr("Centre")
         onClicked: root.centre()

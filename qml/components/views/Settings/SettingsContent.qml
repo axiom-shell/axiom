@@ -232,7 +232,7 @@ Item {
       property: "y"
       to: 0
       duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
+      easing.type: Appearance.easing
     }
 
     NumberAnimation {
@@ -241,7 +241,7 @@ Item {
       from: 0
       to: 1
       duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
+      easing.type: Appearance.easing
     }
   }
 
@@ -329,7 +329,7 @@ Item {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          readonly property real gap: Style.space2
+          readonly property real gap: Style.cardGap
           // How many columns the page holds (its width, never a card's)
           readonly property int count: FlowColumns.count(cards.width, Style.columnTarget, Style.columnMin, Style.columnMax, block.gap, Style.columnLeast)
           // Which cards span every column (from the schema only)
@@ -360,26 +360,12 @@ Item {
 
           // A search result's category: its icon and name, then a rule.
           // Names come from the schema's x-categories
-          RowLayout {
+          SectionHeading {
             visible: block.modelData.name !== ""
-            Layout.fillWidth: true
             Layout.topMargin: Widget.spacing
-            spacing: Widget.spacing
-
-            StyledIcon {
-              text: block.modelData.icon
-              tone: "accent"
-              size: "md"
-            }
-
-            StyledLabel {
-              text: I18n.tr(block.modelData.name)
-              role: "title"
-            }
-
-            StyledSeparator {
-              Layout.fillWidth: true
-            }
+            icon: block.modelData.icon
+            title: I18n.tr(block.modelData.name)
+            rule: true
           }
 
           // The block's cards, each run between wide ones split in columns

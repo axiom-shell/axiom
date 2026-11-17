@@ -66,18 +66,23 @@ ColumnLayout {
         "text": root.editor.issueText(issue)
       }))
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // The groups flow into columns, as a Settings card's rows do
   GroupColumns {
     Layout.fillWidth: true
 
-    SchemaPropertiesForm {
-      Layout.fillWidth: true
-      propertiesSchema: Utils.pick(root.schema, order)
-      order: ["name", "icon"]
-      values: root.rule
-      onEdited: (path, value) => root.editor.set(path, value)
+    // The rule's own identity: a title-less card (no header, never folds)
+    FieldGroup {
+      title: ""
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: Utils.pick(root.schema, order)
+        order: ["name", "icon"]
+        values: root.rule
+        onEdited: (path, value) => root.editor.set(path, value)
+      }
     }
 
     FieldGroup {
@@ -91,6 +96,7 @@ ColumnLayout {
           id: kindItem
           required property int index
           Layout.fillWidth: true
+          Layout.topMargin: kindItem.index > 0 ? Style.space2 : 0
           spacing: Widget.spacing
 
           StyledText {
@@ -108,6 +114,7 @@ ColumnLayout {
 
       Flow {
         Layout.fillWidth: true
+        Layout.topMargin: (root.rule.windows?.length ?? 0) > 0 ? Style.space2 : 0
         spacing: Widget.spacing
 
         StyledTextButton {
@@ -167,6 +174,7 @@ ColumnLayout {
       }
 
       IssueList {
+        Layout.topMargin: Style.space2
         issues: root.placedNotes.concat(root.noFocusNotes)
       }
     }
@@ -184,6 +192,7 @@ ColumnLayout {
       }
 
       IssueList {
+        Layout.topMargin: Style.space2
         issues: root.powerNotes
       }
     }

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
@@ -155,12 +156,11 @@ DropdownSurface {
                 anchors.verticalCenter: parent.verticalCenter
                 implicitWidth: (crumb.index === 0 ? crumbLabel.implicitWidth : crumbName.implicitWidth) + Widget.spacing * 1.5
                 implicitHeight: Math.max(Widget.smallHeight, (crumb.index === 0 ? crumbLabel.implicitHeight : crumbName.implicitHeight) + Widget.spacing)
-                radius: Widget.radius / 2
+                radius: Style.radiusInner
                 color: "transparent"
 
                 StateLayer {
                   hovered: crumbHover.hovered && !crumb.last
-                  radius: parent.radius
                 }
 
                 // The top is an icon; a folder's name is text (a name like
@@ -257,6 +257,8 @@ DropdownSurface {
 
     MotionListView {
       id: resultList
+      ScrollIndicator.vertical: StyledScrollIndicator {}
+
       visible: root.query !== ""
       Layout.fillWidth: true
       Layout.fillHeight: true
@@ -276,11 +278,12 @@ DropdownSurface {
 
         width: resultList.width
         implicitHeight: hitLayout.implicitHeight + Widget.spacing
-        radius: Widget.radius / 2
+        radius: Style.radiusInner
         color: "transparent"
 
         StateLayer {
           hovered: hitHover.hovered
+          pressed: hitTap.pressed
         }
 
         HoverHandler {
@@ -288,6 +291,7 @@ DropdownSurface {
           cursorShape: Qt.PointingHandCursor
         }
         TapHandler {
+          id: hitTap
           onTapped: root.picked(hit.result.path, hit.result.line)
         }
 
@@ -339,6 +343,8 @@ DropdownSurface {
 
     MotionListView {
       id: list
+      ScrollIndicator.vertical: StyledScrollIndicator {}
+
       visible: root.query === ""
       Layout.fillWidth: true
       Layout.fillHeight: true
@@ -361,12 +367,13 @@ DropdownSurface {
         readonly property bool confirming: root.confirming === path
 
         width: list.width
-        implicitHeight: Math.max(Widget.height - Widget.px(4), rowLayout.implicitHeight + Widget.spacing / 2)
-        radius: Widget.radius / 2
+        implicitHeight: Math.max(Widget.height, rowLayout.implicitHeight + Widget.spacing / 2)
+        radius: Style.radiusInner
         color: row.confirming ? Style.errorContainer : row.isCurrent ? Style.accentContainer : "transparent"
 
         StateLayer {
           hovered: rowHover.hovered
+          pressed: rowTap.pressed
         }
 
         HoverHandler {
@@ -374,6 +381,7 @@ DropdownSurface {
           cursorShape: Qt.PointingHandCursor
         }
         TapHandler {
+          id: rowTap
           enabled: !row.editing && !row.confirming
           onTapped: {
             if (row.fileIsDir)
@@ -394,7 +402,7 @@ DropdownSurface {
             text: row.fileIsDir ? "folder" : "description"
             fill: row.fileIsDir ? 1 : 0
             size: "sm"
-            textColor: row.confirming ? Style.onErrorContainer : row.isCurrent ? Style.onAccentContainer : row.fileIsDir ? Style.accent : Style.textMuted
+            textColor: row.confirming ? Style.inkErrorContainer.text : row.isCurrent ? Style.inkAccentContainer.text : row.fileIsDir ? Style.accent : Style.textMuted
           }
 
           StyledLabel {
@@ -402,7 +410,7 @@ DropdownSurface {
             Layout.fillWidth: true
             text: row.confirming ? (NotesManager.canTrash ? I18n.tr("Move {0} to the trash?", row.fileName) : I18n.tr("Delete {0} for good?", row.fileName)) : row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName)
             role: "caption"
-            textColor: row.confirming ? Style.onErrorContainer : row.isCurrent ? Style.onAccentContainer : Style.text
+            textColor: row.confirming ? Style.inkErrorContainer.text : row.isCurrent ? Style.inkAccentContainer.text : Style.text
             overflow: "line"
           }
 
@@ -438,7 +446,7 @@ DropdownSurface {
             visible: row.confirming
             size: Widget.iconButton
             iconText: "check"
-            iconColor: Style.onErrorContainer
+            iconColor: Style.inkErrorContainer.text
             iconSize: Style.iconSm
             tooltipText: I18n.tr("Delete")
             onClicked: root.remove(row.path)
@@ -447,7 +455,7 @@ DropdownSurface {
             visible: row.confirming
             size: Widget.iconButton
             iconText: "close"
-            iconColor: Style.onErrorContainer
+            iconColor: Style.inkErrorContainer.text
             iconSize: Style.iconSm
             tooltipText: I18n.tr("Cancel")
             onClicked: root.confirming = ""

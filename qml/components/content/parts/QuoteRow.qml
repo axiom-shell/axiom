@@ -34,7 +34,7 @@ Item {
   StateLayer {
     hovered: mouse.containsMouse
     pressed: mouse.pressed
-    radius: Widget.radius
+    radius: Style.radius
   }
 
   MouseArea {

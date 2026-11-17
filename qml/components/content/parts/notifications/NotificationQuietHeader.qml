@@ -39,7 +39,7 @@ FoldRow {
   }
 
   StyledIconButton {
-    size: Math.max(Widget.smallHeight, Style.iconSm + Widget.spacing * 2)
+    size: Style.minHit(Style.iconSm)
     iconText: "clear_all"
     iconSize: Style.iconSm
     borderRadius: width / 2

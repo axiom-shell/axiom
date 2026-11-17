@@ -10,7 +10,7 @@ Item {
   id: root
 
   property string source
-  property real radius: Widget.radius
+  property real radius: Style.radius
 
   ClippingRectangle {
     anchors.fill: parent

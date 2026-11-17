@@ -9,8 +9,9 @@ Flow {
 
   property real minTileWidth: Appearance.fontSize * 14
   property int minColumns: 1
-  readonly property int columns: Math.max(root.minColumns, Math.floor(root.width / root.minTileWidth))
-  readonly property real tileWidth: (root.width - root.spacing * (root.columns - 1)) / root.columns
+  // A subtype may bind its own (ChoiceTiles: ChoiceGrid)
+  property int columns: Math.max(root.minColumns, Math.floor(root.width / root.minTileWidth))
+  readonly property real tileWidth: Math.floor((root.width - root.spacing * (root.columns - 1)) / root.columns)
 
   spacing: Widget.spacing
 }

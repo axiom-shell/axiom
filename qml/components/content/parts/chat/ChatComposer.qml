@@ -35,7 +35,7 @@ ColumnLayout {
     outlined: true
     border.color: area.input.activeFocus ? Style.accent : Style.borderStrong
     border.width: area.input.activeFocus ? Style.focusWidth : Style.hairline
-    radius: Widget.radius + 2
+    radius: Style.radius + 2
 
     ColumnLayout {
       id: box
@@ -67,7 +67,7 @@ ColumnLayout {
           width: Widget.px(56)
           height: Widget.px(56)
           tone: "highest"
-          radius: Widget.radius / 2
+          radius: Style.radiusInner
 
           StyledIcon {
             anchors.centerIn: parent

@@ -18,6 +18,9 @@ Item {
   property bool readOnly: false
   // Shows what's typed instead of dots
   property bool reveal: false
+  // The text is a secret: the input method is shut out of the field. Off for
+  // an answer that is never hidden (a user name)
+  property bool secret: true
   property string message: ""
   property bool messageIsError: false
   property bool wrapMessage: false
@@ -63,12 +66,9 @@ Item {
       id: entry
       width: parent.width
       height: root.fieldHeight
+      // A password is a secret shown or not
+      sensitive: root.secret
       placeholderText: root.inlineMessage && root._line !== "" ? root._line : root.placeholder
-      input.passwordCharacter: "•"
-      input.passwordMaskDelay: 0
-      // No input method sees or predicts a password, shown or not (input
-      // sources: a password types through the compositor's layout alone)
-      input.inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhHiddenText
       input.horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
       readOnly: root.readOnly
       onAccepted: root.accepted()
@@ -151,19 +151,19 @@ Item {
     NumberAnimation {
       target: body
       property: "x"
-      to: 20
+      to: Widget.px(20)
       duration: Appearance.animFast
     }
     NumberAnimation {
       target: body
       property: "x"
-      to: -20
+      to: Widget.px(-20)
       duration: Appearance.animFast
     }
     NumberAnimation {
       target: body
       property: "x"
-      to: 20
+      to: Widget.px(20)
       duration: Appearance.animFast
     }
     NumberAnimation {

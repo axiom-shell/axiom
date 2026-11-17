@@ -119,7 +119,7 @@ Item {
     font.strikeout: root.checked
     selectByMouse: true
     selectionColor: Style.accent
-    selectedTextColor: Style.onAccent
+    selectedTextColor: Style.inkAccent.text
 
     FontMetrics {
       id: fontMetrics

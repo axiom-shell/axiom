@@ -56,13 +56,22 @@ QtObject {
     return t - 2 * Math.round(t * 0.175);
   }
 
+  // The text a cell draws at a bar text size `fontSize`, and its symbols
+  // (rounded, so the size a cell measures is the size it draws)
+  function labelSize(fontSize) {
+    return fontSize - 1;
+  }
+  function symbolSize(fontSize) {
+    return Math.round(fontSize * 1.2);
+  }
+
   // The tallest a cell's content shows across, on a bar `thickness` thick
   // with text `fontSize`: its label (a symbol's, the largest drawn,
   // WorkspaceCell), or with `appIcons` an app icon if that's taller. From
   // the bar's sizes, never measured: what a cell keeps clear of its caps
   // (BarCells.cellRoom)
   function contentSize(thickness, fontSize, appIcons) {
-    const label = Math.round(fontSize * 1.2);
+    const label = root.symbolSize(fontSize);
     return appIcons ? Math.max(label, root.iconSize(thickness)) : label;
   }
 

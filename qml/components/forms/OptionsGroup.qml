@@ -29,7 +29,8 @@ FieldGroup {
   signal edited(var path, var value)
   signal discardAt(var path)
 
-  title: I18n.tr("Options")
+  // The pane's one group of settings: a title-less card (no heading, never folds)
+  title: ""
 
   StyledText {
     visible: root.problem !== ""
@@ -41,6 +42,7 @@ FieldGroup {
   SchemaPropertiesForm {
     id: form
     Layout.fillWidth: true
+    Layout.topMargin: root.problem !== "" ? Style.space2 : 0
     propertiesSchema: root.propertiesSchema
     order: root.order
     values: root.values

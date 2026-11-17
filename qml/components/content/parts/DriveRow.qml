@@ -112,11 +112,13 @@ DeviceRow {
         sourceComponent: ColumnLayout {
           spacing: Widget.spacing
 
-          SecretField {
+          SubmitEntry {
+            secret: true
             placeholderText: row.volumes.length > 1 ? I18n.tr("Passphrase for {0}", row.asked?.label || row.asked?.device || "") : I18n.tr("Passphrase")
             buttonIcon: "lock_open"
             buttonTip: I18n.tr("Unlock")
             focusOnShow: true
+            escapeCancels: true
             onSubmitted: DrivesManager.unlock(text)
             onCancelled: DrivesManager.cancelUnlock()
           }

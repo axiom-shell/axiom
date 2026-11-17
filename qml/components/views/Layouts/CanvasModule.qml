@@ -66,7 +66,7 @@ Rectangle {
 
   z: root.selected || root.resizing !== "" ? 2 : 1
   // Set by GridCanvas, matching its lattice
-  radius: Widget.radius
+  radius: Style.radius
   color: root.fill
   border.color: root.selected ? Style.accent : Style.borderStrong
   border.width: root.selected ? Style.focusWidth : Style.hairline
@@ -204,7 +204,7 @@ Rectangle {
       anchors.centerIn: parent
       readonly property var place: root.dragLayer?.landingPlace ?? root.place
       text: root.dragLayer?.sizeLabel(sizeText.place.w, sizeText.place.h) ?? ""
-      textColor: Style.onAccent
+      textColor: Style.inkAccent.text
       role: "micro"
     }
   }

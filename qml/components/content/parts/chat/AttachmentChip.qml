@@ -18,7 +18,7 @@ ClippingRectangle {
 
   implicitWidth: root.size
   implicitHeight: root.size
-  radius: Widget.radius / 2
+  radius: Style.radiusInner
   color: Style.surfaceHighest
   border.color: Style.borderSubtle
   border.width: Style.hairline
@@ -54,7 +54,7 @@ ClippingRectangle {
     anchors.right: parent.right
     anchors.margins: Widget.spacing
     // Never under what its glyph needs
-    size: Math.max(Widget.smallHeight, Style.iconXs + Widget.spacing * 2)
+    size: Style.minHit(Style.iconXs)
     borderRadius: size / 2
     iconText: "close"
     iconSize: Style.iconXs

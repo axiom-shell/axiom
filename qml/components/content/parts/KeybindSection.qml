@@ -169,12 +169,9 @@ Surface {
                 Layout.fillWidth: true
               }
 
-              StyledIcon {
-                text: "expand_more"
-                tone: headerArea.containsMouse ? "accent" : "muted"
-                rotation: entry.folded ? -90 : 0
-
-                Glide on rotation {}
+              FoldChevron {
+                open: !entry.folded
+                hot: headerArea.containsMouse
               }
             }
 

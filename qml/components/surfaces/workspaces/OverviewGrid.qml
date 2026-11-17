@@ -52,7 +52,7 @@ Item {
   readonly property real miniScale: WorkspaceGeometry.fitScale(availableWidth - pad * 2, availableHeight - pad * 2, usable.w, usable.h, gap, columns, rows, root.specialCount > 0 ? root.sideGap : 0)
   readonly property real cellW: Math.floor(usable.w * miniScale)
   readonly property real cellH: Math.floor(usable.h * miniScale)
-  readonly property real cellRadius: Math.max(2, Widget.radius * 0.75)
+  readonly property real cellRadius: Math.max(2, Style.radius * 0.75)
   // A window preview's (and the drop box's), inside its cell's
   readonly property real previewRadius: Math.max(2, root.cellRadius * 0.6)
 
@@ -375,18 +375,15 @@ Item {
   }
 
   // The special workspaces' box, the grid's own style, centred on the grid's centre
-  Rectangle {
+  Surface {
     id: specialBox
+    tone: "page"
     readonly property var column: root.specialSet.column
     visible: column !== null
     x: column?.x ?? 0
     y: column?.stackY ?? 0
     width: root.cellW + root.pad * 2
     height: (column?.stackH ?? 0) + root.pad * 2
-    radius: Appearance.borderRadius
-    color: gridBox.color
-    border.color: gridBox.border.color
-    border.width: gridBox.border.width
 
     MouseArea {
       anchors.fill: parent

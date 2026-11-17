@@ -5,7 +5,8 @@ import QtQuick
 // growing up keeps its controls last, by the bar: Panel.flips). Each item
 // is taken out and appended again, last first, so it keeps its Layout
 // properties. Only for a layout of plain items: a Repeater directly in it
-// would put its rows back in place.
+// would put its rows back in place. A nested layout flips with its own
+// LayoutOrder: the column's reversal doesn't reach inside it.
 QtObject {
   id: root
 

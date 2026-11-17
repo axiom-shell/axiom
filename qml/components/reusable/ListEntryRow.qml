@@ -1,15 +1,18 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
+import qs.components.methods
 
 // One entry of an editor's list (bars, overlay pages, edge menus): an
-// icon and a name, filled with the accent container while selected, then
+// icon (or, with `image`, a picture: an app's icon) and a name, filled with the accent container while selected, then
 // `badges`, the unsaved-edits dot, an `issue` mark and the row's actions
 // (RowActions, as children), which show while the row is hovered, focused or
 // selected. `leading` is a slot before the icon (a switch, keycaps) and a
-// `subtitle` follows the name on its line.
+// `subtitle` follows the name on its line. The standard actions come after
+// the row's own: Duplicate while `canDuplicate` (`duplicated`) and Remove
+// while `canRemove` (`removeRequested`, the same as the Delete key), each a
+// RowAction.
 // A tap is `clicked`; with `dragArea.dragLayer` and `payload` set, the row
 // can also be carried. It takes keyboard focus (one Tab stop for the whole
 // list: Tab goes through the row's leading controls and actions, then out of the list): Up and
@@ -21,6 +24,8 @@ Rectangle {
   id: root
 
   property string icon
+  // A picture shown instead of the glyph (an app's icon)
+  property url image: ""
   property string label
   property bool selected: false
   // A disabled entry: its name is dimmed
@@ -43,6 +48,12 @@ Rectangle {
   default property alias actions: actionRow.data
   property alias dragArea: area
 
+  // The standard actions
+  property bool canDuplicate: false
+  property string duplicateTooltip: I18n.tr("Duplicate")
+  property bool canRemove: false
+  property string removeTooltip: I18n.tr("Remove")
+
   // A HoverHandler, not the drag area's containsMouse, so the row stays
   // hovered while the pointer is on one of its actions
   readonly property bool hovered: hover.hovered
@@ -54,13 +65,14 @@ Rectangle {
   // them focused
   readonly property bool revealed: root.hovered || root.selected || root.activeFocus || root._actionFocused
 
-  readonly property bool _actionFocused: actionRow.children.some(child => child.activeFocus)
+  readonly property bool _actionFocused: actionRow.children.concat((standard.item as Item)?.children ?? []).some(child => child.activeFocus)
 
   // Marks a row for the Up/Down walk along the focus chain
   readonly property bool _listRow: true
 
   signal clicked
   signal removeRequested
+  signal duplicated
   signal escapePressed
 
   // The row at the end of `item`'s ancestry that is a list row, or null
@@ -117,7 +129,7 @@ Rectangle {
   // actions or leading controls): the next or previous stop of this row (its
   // leading controls, then its actions), else out
   function _tabFrom(from, forward) {
-    const actions = leadingRow.children.concat(actionRow.children).filter(child => child.visible && child.enabled && child.activeFocusOnTab);
+    const actions = leadingRow.children.concat(actionRow.children, (standard.item as Item)?.children ?? []).filter(child => child.visible && child.enabled && child.activeFocusOnTab);
     const at = actions.indexOf(from);
     const next = forward ? actions[at + 1] : at > 0 ? actions[at - 1] : (at === 0 ? root : undefined);
     if (next) {
@@ -149,8 +161,8 @@ Rectangle {
   }
 
   Layout.fillWidth: true
-  Layout.preferredHeight: Widget.height + Widget.padding
-  color: root.selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
+  Layout.preferredHeight: Style.listRowHeight
+  color: root.selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
   radius: Style.radius
 
   ColorGlide on color {
@@ -189,7 +201,17 @@ Rectangle {
       spacing: Widget.spacing
     }
 
+    Image {
+      visible: root.image.toString() !== ""
+      source: root.image
+      sourceSize: Qt.size(Widget.iconButton * 2, Widget.iconButton * 2)
+      asynchronous: true
+      Layout.preferredWidth: Style.iconSm * 1.5
+      Layout.preferredHeight: Style.iconSm * 1.5
+    }
+
     StyledIcon {
+      visible: root.image.toString() === "" && root.icon !== ""
       text: root.icon
       textColor: root.selected ? Style.inkAccentContainer.icon : root.dimmed ? Style.textFaint : Style.textAccent
       Layout.preferredWidth: Style.iconSm * 1.5
@@ -248,14 +270,42 @@ Rectangle {
       id: actionRow
       spacing: Widget.spacing
     }
+
+    // After the caller's actions (they land in actionRow, after what it
+    // declares); built only when a standard action is asked for
+    Loader {
+      id: standard
+      active: root.canDuplicate || root.canRemove
+      visible: active
+      sourceComponent: RowLayout {
+        spacing: Widget.spacing
+
+        RowAction {
+          objectName: "standardDuplicate"
+          visible: root.canDuplicate
+          row: root
+          iconText: "content_copy"
+          tooltipText: root.duplicateTooltip
+          onClicked: root.duplicated()
+        }
+
+        RowAction {
+          objectName: "standardRemove"
+          visible: root.canRemove
+          row: root
+          danger: true
+          iconText: "close"
+          tooltipText: root.removeTooltip
+          onClicked: root.removeRequested()
+        }
+      }
+    }
   }
 
   // The full name of an elided label
-  LazyLoader {
-    active: hover.hovered && name.truncated
-    StyledToolTip {
-      target: name
-      text: root.label
-    }
+  TruncationTip {
+    target: name
+    text: root.label
+    hovered: hover.hovered
   }
 }

@@ -7,8 +7,9 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.views.base
 
-// Layouts editor, left: the menus (drag to reorder, click to edit),
-// and New menu, asking what the menu is for
+// Layouts editor, left: the menus (drag to reorder, click to edit), a
+// section that folds (open or closed kept across restarts,
+// EditsManager.layoutSectionOpen), and New menu, asking what the menu is for
 ColumnLayout {
   id: root
 
@@ -20,6 +21,9 @@ ColumnLayout {
     Layout.topMargin: Widget.spacing
     title: I18n.tr("Menus")
     count: OverlayManager.menus.localMenus?.length ?? 0
+    collapsible: true
+    open: EditsManager.layoutSectionOpen("menus")
+    onToggled: EditsManager.setLayoutSectionOpen("menus", !open)
 
     EntryListTarget {
       id: menuList
@@ -42,6 +46,11 @@ ColumnLayout {
           dimmed: entry.entryMenu.enabled === false
           changed: OverlayManager.menus.menuChanged(entry.index)
           onClicked: OverlayManager.editMenu(entry.index)
+          canDuplicate: true
+          duplicateTooltip: I18n.tr("Duplicate this menu")
+          onDuplicated: OverlayManager.menus.duplicateMenu(entry.index)
+          canRemove: true
+          removeTooltip: I18n.tr("Remove this menu")
           onRemoveRequested: OverlayManager.menus.removeMenu(entry.index)
 
           // Held open on screen by the editor
@@ -50,31 +59,15 @@ ColumnLayout {
             text: "visibility"
             textColor: entry.ink
           }
-
-          RowAction {
-            row: entry
-            iconText: "content_copy"
-            tooltipText: I18n.tr("Duplicate this menu")
-            onClicked: OverlayManager.menus.duplicateMenu(entry.index)
-          }
-
-          RowAction {
-            row: entry
-            danger: true
-            iconText: "close"
-            tooltipText: I18n.tr("Remove this menu")
-            onClicked: OverlayManager.menus.removeMenu(entry.index)
-          }
         }
       }
     }
-  }
 
-  AddEntryButton {
-    id: addButton
-    Layout.topMargin: Widget.spacing / 2
-    text: I18n.tr("New menu")
-    onClicked: purposeMenu.openAt(addButton, 0, addButton.height)
+    AddEntryButton {
+      id: addButton
+      text: I18n.tr("New menu")
+      onClicked: purposeMenu.openAt(addButton, 0, addButton.height)
+    }
   }
 
   // What the new menu is for (MenuSeeds.purposes): how it starts out

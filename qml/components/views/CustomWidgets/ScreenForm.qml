@@ -76,7 +76,6 @@ ColumnLayout {
       readonly property bool listed: screen.when.test === "is" || screen.when.test === "isNot"
 
       width: parent?.width ?? 0
-      rowGap: 0
 
       // A new screen (or Rename) takes the focus in its Name
       function focusName() {
@@ -99,59 +98,33 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Screen")
-        headerGap: 0
-        // Adds no height of its own (the button is taller than the heading):
-        // centred on the title line, so both headers are as tall
-        headerExtras: Item {
-          implicitWidth: removeButton.implicitWidth
-          implicitHeight: 0
-          Layout.alignment: Qt.AlignVCenter
-
-          StyledIconButton {
-            id: removeButton
-            anchors.verticalCenter: parent.verticalCenter
-            kind: "danger"
-            iconText: "delete"
-            tooltipText: I18n.tr("Remove this screen")
-            onClicked: root.editor.removeView(root.editor.viewIndex)
-          }
+        headerExtras: StyledIconButton {
+          kind: "danger"
+          iconText: "delete"
+          tooltipText: I18n.tr("Remove this screen")
+          onClicked: root.editor.removeView(root.editor.viewIndex)
         }
 
-        ColumnLayout {
+        FormColumn {
           Layout.fillWidth: true
-          spacing: 0
 
-          InspectorRow {
-            first: true
+          FieldRow {
             besideLabel: true
             label: I18n.tr("Name")
 
-            StyledTextEntry {
+            CommitEntry {
               id: nameEntry
               Layout.fillWidth: true
-              onTextEdited: root.editor.setView(["name"], nameEntry.text)
-              Binding {
-                target: nameEntry
-                property: "text"
-                value: root.view?.name ?? ""
-                when: !nameEntry.input.activeFocus
-                restoreMode: Binding.RestoreNone
-              }
+              live: true
+              value: root.view?.name ?? ""
+              onEdited: text => root.editor.setView(["name"], text)
             }
           }
 
-          FormRow {
-            hoverable: true
-            bodyHeight: baseField.implicitHeight
-            onRowClicked: baseField.activate()
-
-            SchemaSwitch {
-              id: baseField
-              width: parent.width
-              label: I18n.tr("Show the base elements")
-              checked: root.view?.base ?? true
-              onToggled: value => root.editor.setView(["base"], value)
-            }
+          SwitchRow {
+            label: I18n.tr("Show the base elements")
+            checked: root.view?.base ?? true
+            onToggled: value => root.editor.setView(["base"], value)
           }
         }
       }
@@ -161,85 +134,54 @@ ColumnLayout {
       FieldGroup {
         Layout.fillWidth: true
         title: I18n.tr("Show when")
-        headerGap: 0
 
-        ColumnLayout {
+        FormColumn {
           Layout.fillWidth: true
-          spacing: 0
 
-          // The key and the test side by side, each its label beside it; a
-          // click on the row off the controls opens the Test list (while it
-          // shows), as SchemaComboBox's row does
-          FormRow {
-            first: true
-            hoverable: !screen.noKey
-            bodyHeight: keyTest.implicitHeight
-            onRowClicked: testField.toggleFromRow()
+          // The key, then the test, one row each (a click on the row off the
+          // controls opens the list)
+          FieldRow {
+            shortControl: true
+            label: I18n.tr("Key")
+            activates: keyField
 
-            RowLayout {
-              id: keyTest
-              width: parent.width
-              spacing: Widget.spacing * 2
-
-              RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: Widget.spacing
-
-                FieldHeader {
-                  Layout.fillWidth: false
-                  Layout.alignment: Qt.AlignVCenter
-                  label: I18n.tr("Key")
-                }
-                StyledComboEntry {
-                  Layout.fillWidth: true
-                  editable: true
-                  value: screen.when.key ?? ""
-                  placeholderText: I18n.tr("Only an action")
-                  options: root.keyOptions
-                  onPicked: value => root.editor.setViewKey(root.editor.viewIndex, value)
-                }
-              }
-
-              RowLayout {
-                visible: !screen.noKey
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: Widget.spacing
-
-                FieldHeader {
-                  Layout.fillWidth: false
-                  Layout.alignment: Qt.AlignVCenter
-                  label: I18n.tr("Test")
-                }
-                StyledComboEntry {
-                  id: testField
-                  Layout.fillWidth: true
-                  value: screen.when.test ?? "is"
-                  options: root.testOptions
-                  onPicked: value => root.editor.setView(["when", "test"], value)
-                }
-              }
+            StyledComboEntry {
+              id: keyField
+              Layout.fillWidth: true
+              editable: true
+              value: screen.when.key ?? ""
+              placeholderText: I18n.tr("Only an action")
+              options: root.keyOptions
+              onPicked: value => root.editor.setViewKey(root.editor.viewIndex, value)
             }
           }
 
-          InspectorRow {
+          FieldRow {
+            shown: !screen.noKey
+            shortControl: true
+            label: I18n.tr("Test")
+            activates: testField
+
+            StyledComboEntry {
+              id: testField
+              Layout.fillWidth: true
+              value: screen.when.test ?? "is"
+              options: root.testOptions
+              onPicked: value => root.editor.setView(["when", "test"], value)
+            }
+          }
+
+          FieldRow {
             shown: !screen.noKey && screen.listed
             besideLabel: true
             label: I18n.tr("Values")
 
-            StyledTextEntry {
-              id: valuesEntry
+            CommitEntry {
               Layout.fillWidth: true
+              live: true
+              value: (screen.when.values ?? []).join(", ")
               placeholderText: root.editor.seenStates.length > 0 ? I18n.tr("e.g. {0}", root.editor.seenStates.slice(0, 2).join(", ")) : I18n.tr("Values, separated by commas")
-              onTextEdited: root.editor.setView(["when", "values"], valuesEntry.text.split(",").map(v => v.trim()).filter(v => v !== ""))
-              Binding {
-                target: valuesEntry
-                property: "text"
-                value: (screen.when.values ?? []).join(", ")
-                when: !valuesEntry.input.activeFocus
-                restoreMode: Binding.RestoreNone
-              }
+              onEdited: text => root.editor.setView(["when", "values"], text.split(",").map(v => v.trim()).filter(v => v !== ""))
             }
           }
 

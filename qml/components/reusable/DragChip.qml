@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 
 // A pill with an icon and a name that can be carried: a bar widget or a
@@ -38,7 +37,7 @@ Rectangle {
   signal menuRequested(real x, real y)
 
   implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
-  implicitHeight: Widget.height + Widget.padding / 2
+  implicitHeight: Style.chipRowHeight
   radius: Style.radius
   color: root.selected ? Style.accentContainer : Style.surfaceHighest
   border.color: root.selected ? Style.accent : Style.borderStrong
@@ -87,12 +86,10 @@ Rectangle {
   }
 
   // The full name of an elided label
-  LazyLoader {
-    active: root.hovered && name.truncated
-    StyledToolTip {
-      target: name
-      text: root.label
-    }
+  TruncationTip {
+    target: name
+    text: root.label
+    hovered: root.hovered
   }
 
   // Over the drag area, taking only the right button (a left press goes

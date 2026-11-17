@@ -5,6 +5,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.forms
 
 // The top of the Translucency card (its `x-intro`): a warning that it's
 // experimental, and while the surfaces blur, the blur they get: the
@@ -15,14 +16,12 @@ import qs.components.reusable
 // (Appearance.surfaceAlpha). A line says when the theme keeps the surfaces
 // more solid than the opacity asks (Style.surfaceAlpha). `status` and
 // `statusTone` are the card's header chip, only where the compositor blurs
-ColumnLayout {
+IntroColumn {
   id: root
 
   readonly property bool off: !CompositorManager.blur.enabled
   readonly property string status: Appearance.blur ? (root.off ? I18n.tr("Off") : I18n.tr("Blur")) : ""
   readonly property string statusTone: root.off ? "error" : "success"
-
-  spacing: Widget.spacing
 
   IssueList {
     issues: [
@@ -33,23 +32,17 @@ ColumnLayout {
     ]
   }
 
-  RowLayout {
+  StatusLine {
     Layout.fillWidth: true
     // Where the compositor blurs axiom's surfaces (the settings below are
     // hidden elsewhere)
     visible: Appearance.blur
-    spacing: Widget.spacing
-
-    StyledText {
-      Layout.fillWidth: true
-      overflow: "wrap"
-      tone: root.off ? "error" : "text"
-      text: {
-        if (root.off)
-          return I18n.tr("{0}'s blur is off, so nothing blurs behind the surfaces.", CompositorManager.displayName);
-        const strength = I18n.tr("{0}'s blur: size {1}, {2} passes.", CompositorManager.displayName, CompositorManager.blur.size, CompositorManager.blur.passes);
-        return strength + " " + (WindowLookConfig.blurSet ? I18n.tr("Set in Compositor → Window look.") : I18n.tr("From your compositor's config."));
-      }
+    tone: root.off ? "error" : ""
+    text: {
+      if (root.off)
+        return I18n.tr("{0}'s blur is off, so nothing blurs behind the surfaces.", CompositorManager.displayName);
+      const strength = I18n.tr("{0}'s blur: size {1}, {2} passes.", CompositorManager.displayName, CompositorManager.blur.size, CompositorManager.blur.passes);
+      return strength + " " + (WindowLookConfig.blurSet ? I18n.tr("Set in Compositor → Window look.") : I18n.tr("From your compositor's config."));
     }
 
     StyledTextButton {
@@ -62,11 +55,10 @@ ColumnLayout {
     }
   }
 
-  StyledText {
+  StatusLine {
     visible: Style.surfaceAlpha > Appearance.surfaceAlpha
     Layout.fillWidth: true
     role: "caption"
-    overflow: "wrap"
     text: I18n.tr("This theme keeps surfaces at least {0}% solid so text stays readable", Math.round(Style.surfaceAlpha * 100))
   }
 }

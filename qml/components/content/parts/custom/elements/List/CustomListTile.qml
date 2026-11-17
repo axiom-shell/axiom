@@ -26,7 +26,7 @@ Item {
 
   StateLayer {
     anchors.fill: parent
-    radius: Widget.radius
+    radius: Style.radius
     hovered: area.containsMouse && root.clickable
     pressed: area.pressed && root.clickable
   }

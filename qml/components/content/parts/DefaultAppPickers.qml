@@ -5,6 +5,7 @@ import qs.config
 import qs.services.system
 import qs.services.ui
 import qs.components.reusable
+import qs.components.forms
 
 // One picker per default app role (DefaultAppsManager.roleList, or those
 // of `roles`): its icon, name, and the installed apps that open it, the
@@ -12,6 +13,8 @@ import qs.components.reusable
 // also offers a command of axiom's own (Apps.commands, by role id), typed
 // in a field under the picker and saved at once too; picking an app
 // clears it.
+// Each role is a FormRow, so it tints under the pointer as the settings
+// page's rows do.
 // Settings' Default apps card and the onboarder's Apps page
 ColumnLayout {
   id: root
@@ -34,14 +37,16 @@ ColumnLayout {
   Component.onCompleted: DefaultAppsManager.refresh()
 
   Layout.fillWidth: true
-  spacing: Widget.spacing
+  // The rows adjoin, as on the settings page
+  spacing: 0
 
   Repeater {
     model: DefaultAppsManager.roleList.filter(role => root.roles.length === 0 || root.roles.includes(role.id))
 
-    delegate: ColumnLayout {
+    delegate: FormRow {
       id: row
       required property var modelData
+      required property int index
       readonly property var roleState: DefaultAppsManager.roles[row.modelData.id] ?? null
       // The Apps setting holding this role's command
       readonly property string commandKey: "Apps.commands." + row.modelData.id
@@ -50,8 +55,8 @@ ColumnLayout {
       // "Custom command…" picked, its field open before anything is saved
       property bool commandPicked: false
       readonly property bool commandShown: row.command !== "" || row.commandPicked
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
+      first: row.index === 0
+      bodyHeight: column.implicitHeight
 
       function pick(value) {
         if (value === root.commandChoice) {
@@ -81,76 +86,82 @@ ColumnLayout {
 
       onCommandChanged: commandEntry.text = row.command
 
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing
+      ColumnLayout {
+        id: column
+        width: parent.width
+        spacing: Widget.spacing / 2
 
-        StyledIcon {
-          text: row.modelData.icon
-          tone: "accent"
-        }
-
-        StyledLabel {
-          Layout.preferredWidth: Widget.px(130)
-          // I18n.tr: the labels are declared in DefaultAppsManager
-          text: I18n.tr(row.modelData.label)
-          overflow: "line"
-        }
-
-        StyledComboEntry {
+        RowLayout {
           Layout.fillWidth: true
-          enabled: DefaultAppsManager.loaded && !DefaultAppsManager.busy
-          value: row.commandShown ? root.commandChoice : row.roleState?.default ?? ""
-          placeholderText: DefaultAppsManager.loaded ? I18n.tr("None installed") : I18n.tr("Reading…")
-          options: root.optionsOf(row.roleState?.handlers).concat([
-            {
-              "value": root.commandChoice,
-              "label": I18n.tr("Custom command…"),
-              "icon": "terminal"
-            }
-          ])
-          onPicked: value => row.pick(value)
+          spacing: Widget.spacing
+
+          StyledIcon {
+            text: row.modelData.icon
+            tone: "accent"
+          }
+
+          StyledLabel {
+            Layout.preferredWidth: Widget.px(130)
+            // I18n.tr: the labels are declared in DefaultAppsManager
+            text: I18n.tr(row.modelData.label)
+            overflow: "line"
+          }
+
+          StyledComboEntry {
+            Layout.fillWidth: true
+            enabled: DefaultAppsManager.loaded && !DefaultAppsManager.busy
+            value: row.commandShown ? root.commandChoice : row.roleState?.default ?? ""
+            placeholderText: DefaultAppsManager.loaded ? I18n.tr("None installed") : I18n.tr("Reading…")
+            options: root.optionsOf(row.roleState?.handlers).concat([
+              {
+                "value": root.commandChoice,
+                "label": I18n.tr("Custom command…"),
+                "icon": "terminal"
+              }
+            ])
+            onPicked: value => row.pick(value)
+          }
+
+          // Some of the role's types open elsewhere: said on hover, as
+          // nearly every system has a few
+          TipIcon {
+            visible: row.roleState?.mixed === true && !row.commandShown
+            text: "call_split"
+            tone: "muted"
+            tip: I18n.tr("Some of these files open in other apps; picking one sets them all.")
+          }
         }
 
-        // Some of the role's types open elsewhere: said on hover, as
-        // nearly every system has a few
-        TipIcon {
-          visible: row.roleState?.mixed === true && !row.commandShown
-          text: "call_split"
-          tone: "muted"
-          tip: I18n.tr("Some of these files open in other apps; picking one sets them all.")
-        }
-      }
+        // --- The command, typed ---
 
-      // --- The command, typed ---
-
-      RowLayout {
-        visible: row.commandShown
-        Layout.fillWidth: true
-        Layout.leftMargin: Appearance.fontSize * 1.6
-        spacing: Widget.spacing
-
-        StyledTextEntry {
-          id: commandEntry
+        RowLayout {
+          visible: row.commandShown
           Layout.fillWidth: true
-          text: row.command
-          placeholderText: row.modelData.id === "terminal" ? I18n.tr("A command, such as foot") : I18n.tr("A command, such as firefox --new-window")
-          onAccepted: row.saveCommand()
+          Layout.leftMargin: Appearance.fontSize * 1.6
+          spacing: Widget.spacing
+
+          StyledTextEntry {
+            id: commandEntry
+            Layout.fillWidth: true
+            text: row.command
+            placeholderText: row.modelData.id === "terminal" ? I18n.tr("A command, such as foot") : I18n.tr("A command, such as firefox --new-window")
+            onAccepted: row.saveCommand()
+          }
+
+          StyledTextButton {
+            text: I18n.tr("Save")
+            enabled: commandEntry.text.trim() !== row.command
+            onClicked: row.saveCommand()
+          }
         }
 
-        StyledTextButton {
-          text: I18n.tr("Save")
-          enabled: commandEntry.text.trim() !== row.command
-          onClicked: row.saveCommand()
+        StyledText {
+          visible: row.commandShown
+          Layout.fillWidth: true
+          Layout.leftMargin: Appearance.fontSize * 1.6
+          text: row.modelData.id === "terminal" ? I18n.tr("For terminal apps axiom runs: command -e program. Other apps still open the default terminal.") : I18n.tr("axiom starts it given what it opens (links, folders or files). Other apps still open the default.")
+          role: "caption"
         }
-      }
-
-      StyledText {
-        visible: row.commandShown
-        Layout.fillWidth: true
-        Layout.leftMargin: Appearance.fontSize * 1.6
-        text: row.modelData.id === "terminal" ? I18n.tr("For terminal apps axiom runs: command -e program. Other apps still open the default terminal.") : I18n.tr("axiom starts it given what it opens (links, folders or files). Other apps still open the default.")
-        role: "caption"
       }
     }
   }

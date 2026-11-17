@@ -50,6 +50,13 @@ QtObject {
     return Qt.alpha(c, c.a * f);
   }
 
+  // `color` at no opacity: a fill or border that is only not drawn now, so a
+  // change to it fades in from nothing rather than through black (the
+  // `transparent` keyword is black at no opacity)
+  function cleared(color) {
+    return Qt.alpha(color, 0);
+  }
+
   // `color` mixed `t` toward `back`, its alpha kept (a clear color stays
   // clear)
   function toward(color, back, t) {

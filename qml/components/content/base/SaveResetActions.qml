@@ -72,7 +72,6 @@ RowLayout {
 
     text: root.compact ? "" : button.label
     tooltipText: root.compact ? button.label : ""
-    opacity: button.enabled ? 1 : Style.opacityDisabled
     Layout.preferredWidth: root.compact ? button.implicitHeight : button.fullWidth
     Layout.preferredHeight: Widget.height
 

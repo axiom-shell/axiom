@@ -53,11 +53,10 @@ Card {
   Rectangle {
     anchors.fill: parent
     anchors.margins: root.bare ? 0 : Appearance.borderWidth
-    radius: Widget.radius
+    radius: Style.radius
     color: root.isOpen ? Style.accentContainer : "transparent"
 
     StateLayer {
-      radius: parent.radius
       hovered: area.containsMouse
       pressed: area.pressed
     }
@@ -98,7 +97,7 @@ Card {
 
   // Wider than tall: a menu row, the arrow at the side it opens on
   readonly property bool stacked: root.shape !== "horizontal"
-  readonly property color tint: root.isOpen ? Style.onAccentContainer : Style.text
+  readonly property color tint: root.isOpen ? Style.inkAccentContainer.text : Style.text
 
   RowLayout {
     visible: !root.stacked

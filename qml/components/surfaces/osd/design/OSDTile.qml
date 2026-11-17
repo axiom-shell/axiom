@@ -76,12 +76,12 @@ Item {
     from: 0.8
     to: 1
     duration: Appearance.animNormal
-    easing.type: Easing.OutBack
+    easing.type: Easing.OutBack // behaviour timing: the overshoot makes the tile bounce in as the change, which a plain ease would not
   }
 
   // What its glyph and label draw in: on the accent's on-colour while lit,
   // else the text colour for the one that just changed, the faint one
-  readonly property color _ink: tile.lit ? Style.onAccent : tile.current ? Style.text : Style.textFaint
+  readonly property color _ink: tile.lit ? Style.inkAccent.text : tile.current ? Style.text : Style.textFaint
 
   SlashedIcon {
     anchors.centerIn: parent
@@ -121,45 +121,20 @@ Item {
   // The ring round the one that just changed: the text colour, then a gap
   // in the page colour inside it, so it reads on the accent fill too.
   // Fades in and out
-  Rectangle {
-    anchors.fill: parent
-    radius: Style.radius
-    color: "transparent"
-    border.width: Widget.px(2)
-    border.color: Style.text
+  RingOutline {
+    ringColor: Style.text
+    gap: Widget.px(2)
     opacity: tile.current ? 1 : 0
     Glide on opacity {
       duration: Appearance.animNormal
-    }
-
-    Rectangle {
-      anchors.fill: parent
-      anchors.margins: Widget.px(2)
-      radius: Math.max(0, Style.radius - Widget.px(2))
-      color: "transparent"
-      border.width: Widget.px(2)
-      border.color: Style.surfacePage
     }
   }
 
   // The preview's outline: the accent, a line of the page colour inside it
   // so it reads on a lit (accent) tile too
-  Rectangle {
-    anchors.fill: parent
+  RingOutline {
     visible: tile.highlight
-    radius: Style.radius
-    color: "transparent"
-    border.width: Widget.px(2)
-    border.color: Style.accent
-
-    Rectangle {
-      anchors.fill: parent
-      anchors.margins: Widget.px(2)
-      radius: Math.max(0, Style.radius - Widget.px(2))
-      color: "transparent"
-      border.width: 1
-      border.color: Style.surfacePage
-    }
+    gap: 1
   }
 
   MouseArea {

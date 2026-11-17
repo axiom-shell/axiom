@@ -63,13 +63,14 @@ Popup {
   closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
   onAboutToShow: root.choose(root.presetId !== "" ? root.presetId : (KeybindManager.editor.presets[0]?.id ?? ""))
 
-  // Solid, over a dimmed list: the page itself may be see-through
-  background: DropdownSurface {
+  // The modal card, over the dimmed list (the shared modal pieces)
+  background: ModalCard {
+    shown: true
     solid: true
   }
 
-  Overlay.modal: Rectangle {
-    color: Style.scrim
+  Overlay.modal: ModalScrim {
+    shown: true
   }
 
   contentItem: ColumnLayout {
@@ -84,7 +85,6 @@ Popup {
       }
 
       SquareIconButton {
-        size: Widget.height
         iconText: "close"
         tooltipText: I18n.tr("Close")
         onClicked: root.close()
@@ -110,6 +110,7 @@ Popup {
         Layout.preferredWidth: root.width * 0.32
         Layout.fillHeight: true
         contentPadding: 0
+        showScrollBar: true
 
         ColumnLayout {
           width: presetScroll.availableWidth
@@ -207,7 +208,6 @@ Popup {
               }
 
               SquareIconButton {
-                size: Widget.height
                 iconText: "save"
                 tooltipText: KeybindManager.editor.savedPresets.some(p => p.title === newName.text.trim()) ? I18n.tr("Save over the preset by this name") : I18n.tr("Save the binds as a preset")
                 enabled: newName.text.trim() !== ""
@@ -271,22 +271,15 @@ Popup {
           }
         }
 
-        SegmentRow {
+        StyledToggle {
           visible: root.saved
-
-          Repeater {
-            // I18n.tr("Replace all binds") I18n.tr("Merge")
-            model: [["replace", "Replace all binds"], ["merge", "Merge"]]
-
-            delegate: SegmentButton {
-              required property var modelData
-              implicitHeight: Widget.height
-              text: I18n.tr(modelData[1])
-              active: root.mode === modelData[0]
-              Layout.fillWidth: false
-              onClicked: root.mode = modelData[0]
-            }
-          }
+          options: ["replace", "merge"]
+          labels: ({
+              "replace": I18n.tr("Replace all binds"),
+              "merge": I18n.tr("Merge")
+            })
+          value: root.mode
+          onPicked: value => root.mode = value
         }
 
         StyledScrollView {
@@ -294,100 +287,69 @@ Popup {
           Layout.fillWidth: true
           Layout.fillHeight: true
           contentPadding: 0
+          showScrollBar: true
 
           ColumnLayout {
             width: planScroll.availableWidth
-            spacing: 2
+            spacing: Widget.spacing / 2
 
             Repeater {
               model: root.plan
 
-              delegate: Rectangle {
+              delegate: ListEntryRow {
                 id: step
                 required property var modelData
                 readonly property bool can: root.merging && step.modelData.status !== "same"
                 readonly property bool on: step.can && root.chosen.includes(step.modelData.id)
                 readonly property var parts: KeyNames.split(step.modelData.bind.key)
                 readonly property var taken: KeybindManager.editor.binds[step.modelData.takenBy[0]] ?? null
+                readonly property string pauses: I18n.tr("Pauses {0}", step.taken ? (step.taken.description || BindActions.defaultLabel(KeybindManager.actionTable, step.taken) || KeybindManager.actionLabels[step.taken.action]) : "") + (step.modelData.takenBy.length > 1 ? " +" + (step.modelData.takenBy.length - 1) : "")
 
-                Layout.fillWidth: true
-                implicitHeight: Widget.height + Widget.padding / 2
-                color: "transparent"
-                radius: Style.radiusInner
-                opacity: step.can || !root.merging ? 1 : Style.opacityDisabled
-
-                StateLayer {
-                  hovered: stepArea.containsMouse && step.can
-                }
-
-                MouseArea {
-                  id: stepArea
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  enabled: step.can
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.toggle(step.modelData.id)
-                }
-
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: Widget.padding / 2
-                  anchors.rightMargin: Widget.padding / 2
-                  spacing: Widget.spacing
-
-                  StyledIcon {
-                    visible: root.merging
-                    text: !step.can ? "check" : step.on ? "check_box" : "check_box_outline_blank"
-                    tone: step.on ? "accent" : ""
+                icon: !root.merging ? "" : !step.can ? "check" : step.on ? "check_box" : "check_box_outline_blank"
+                label: BindActions.defaultLabel(KeybindManager.actionTable, step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
+                dimmed: root.merging && !step.can
+                issue: root.merging && step.modelData.status === "taken" ? "warning" : ""
+                issueTip: step.pauses
+                subtitle: {
+                  if (!root.merging)
+                    return "";
+                  switch (step.modelData.status) {
+                  case "same":
+                    return I18n.tr("Already bound");
+                  case "resume":
+                    return I18n.tr("Resumes the paused bind");
+                  case "taken":
+                    return step.pauses;
                   }
+                  return I18n.tr("New");
+                }
+                onClicked: {
+                  if (step.can)
+                    root.toggle(step.modelData.id);
+                }
 
-                  RowLayout {
-                    Layout.preferredWidth: Widget.height * 5
-                    Layout.maximumWidth: Widget.height * 5
-                    spacing: Widget.spacing / 2
-                    clip: true
+                leading: RowLayout {
+                  Layout.preferredWidth: Widget.height * 5
+                  Layout.maximumWidth: Widget.height * 5
+                  spacing: Widget.spacing / 2
+                  clip: true
+                  opacity: step.dimmed ? Style.opacityDisabled : 1
 
-                    Repeater {
-                      model: step.parts.mods
+                  Repeater {
+                    model: step.parts.mods
 
-                      delegate: KeyCap {
-                        required property string modelData
-                        text: KeyNames.modifierLabel(modelData)
-                      }
-                    }
-
-                    KeyCap {
-                      text: KeybindManager.displayKey(step.parts.key)
-                    }
-
-                    Item {
-                      Layout.fillWidth: true
+                    delegate: KeyCap {
+                      required property string modelData
+                      text: KeyNames.modifierLabel(modelData)
                     }
                   }
 
-                  StyledLabel {
-                    text: BindActions.defaultLabel(KeybindManager.actionTable, step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
-                    overflow: "line"
+                  KeyCap {
+                    text: KeybindManager.displayKey(step.parts.key)
+                  }
+
+                  Item {
                     Layout.fillWidth: true
-                  }
-
-                  StyledLabel {
-                    visible: root.merging
-                    text: {
-                      switch (step.modelData.status) {
-                      case "same":
-                        return I18n.tr("Already bound");
-                      case "resume":
-                        return I18n.tr("Resumes the paused bind");
-                      case "taken":
-                        return I18n.tr("Pauses {0}", step.taken ? (step.taken.description || BindActions.defaultLabel(KeybindManager.actionTable, step.taken) || KeybindManager.actionLabels[step.taken.action]) : "") + (step.modelData.takenBy.length > 1 ? " +" + (step.modelData.takenBy.length - 1) : "");
-                      }
-                      return I18n.tr("New");
-                    }
-                    tone: step.modelData.status === "taken" ? "warning" : "muted"
-                    role: "caption"
-                    overflow: "line"
-                    Layout.maximumWidth: parent.width * 0.4
                   }
                 }
               }
@@ -432,7 +394,6 @@ Popup {
             text: I18n.tr("Apply")
             enabled: root.merging ? root.chosen.length > 0 : root.preset !== null
             kind: "primary"
-            opacity: enabled ? 1 : Style.opacityDisabled
             onClicked: {
               if (root.merging)
                 KeybindManager.editor.applyPreset(root.presetId, root.chosen);

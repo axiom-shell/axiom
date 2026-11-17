@@ -81,16 +81,25 @@ Item {
   Repeater {
     model: root.stackDepth
 
-    Surface {
+    Item {
       required property int index
-      tone: root.quiet ? "sunken" : "raised"
-      outlined: true
       z: -1 - index
-      anchors.horizontalCenter: parent.horizontalCenter
-      width: card.width - 16 * (index + 1)
-      height: Widget.smallHeight
-      y: card.height - height + root.stackStep * (index + 1)
-      radius: Style.radius
+      clip: true
+      // What peeks below the card (or the one in front): the part behind
+      // it is never drawn, so a translucent card doesn't show it
+      y: card.height + root.stackStep * index
+      width: parent.width
+      height: root.stackStep
+
+      Surface {
+        tone: root.quiet ? "sunken" : "raised"
+        outlined: true
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: card.width - 16 * (parent.index + 1)
+        height: Widget.smallHeight
+        y: root.stackStep - height
+        radius: Style.radius
+      }
     }
   }
 
@@ -101,7 +110,7 @@ Item {
     width: parent.width
     height: body.implicitHeight + Widget.padding * 2
     clip: true
-    radius: Widget.radius
+    radius: Style.radius
     border.color: Style.error
 
     Glide on height {
@@ -109,9 +118,7 @@ Item {
     }
 
     StateLayer {
-      anchors.fill: parent
       hovered: hover.hovered
-      radius: card.radius
     }
 
     HoverHandler {
@@ -192,7 +199,7 @@ Item {
             StyledIconButton {
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
-              size: Math.max(Widget.smallHeight, Style.iconXs + Widget.spacing * 2)
+              size: Style.minHit(Style.iconXs)
               visible: opacity > 0
               opacity: hover.hovered ? 1 : 0
               iconText: "close"
@@ -206,15 +213,10 @@ Item {
             }
           }
 
-          StyledIcon {
+          FoldChevron {
             visible: root.count > 1
-            text: "expand_more"
-            tone: "muted"
-            rotation: root.expanded ? 180 : 0
-
-            Glide on rotation {
-              duration: Appearance.animNormal
-            }
+            open: root.expanded
+            upward: true
           }
         }
       }

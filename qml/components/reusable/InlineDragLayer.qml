@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// A DragLayer inside a form or card (SchemaOrderedChips' chips, the bind
+// A DragLayer inside a form or card (PickedChips' chips, the bind
 // editor's rows, an OSD's systems): it takes no room in its layout (only
 // the coordinate space, `z` above its siblings) and draws the carried
 // payload's `label` in an accent pill by the pointer.

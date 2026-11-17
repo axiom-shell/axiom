@@ -58,7 +58,7 @@ Rectangle {
   // A DeviceList's delegate: as wide as the list
   width: ListView.view?.width ?? implicitWidth
   implicitHeight: root.rowHeight + (root.expanded ? belowItem.childrenRect.height + Widget.spacing : 0)
-  radius: Widget.radius
+  radius: Style.radius
   // A lifted reading tone, so the status line's colours stay guaranteed pairs
   color: root.connected || root.selected ? Style.surfaceRaised : "transparent"
   clip: true
@@ -66,8 +66,6 @@ Rectangle {
   Glide on implicitHeight {}
 
   StateLayer {
-    anchors.fill: parent
-    radius: root.radius
     hovered: rowHover.hovered
   }
 

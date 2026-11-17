@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.components.reusable
+import qs.components.forms
 import qs.components.content.parts
 
 // The Development category's first card (its `cards`): the dev tree (set
@@ -11,9 +12,8 @@ import qs.components.content.parts
 // the dev config (replace it with live's copy) (DevManager). All of it
 // works with dev mode off: Rebuild only builds, the copy writes the dev
 // config's file
-FieldGroup {
+PageCard {
   id: root
-  pageCard: true
 
   // What axiom last answered a click with: a refusal's message, or ""
   property string message: ""
@@ -28,7 +28,7 @@ FieldGroup {
     return DevManager.active ? I18n.tr("Running") : I18n.tr("Waiting for the build");
   }
 
-  readonly property string statusTone: {
+  readonly property string chipTone: {
     if (DevManager.building)
       return "accent";
     if (!DevManager.enabled)
@@ -75,7 +75,7 @@ FieldGroup {
   headerExtras: [
     StatusChip {
       text: root.statusLabel
-      tone: root.statusTone
+      tone: root.chipTone
     }
   ]
 
@@ -84,17 +84,12 @@ FieldGroup {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    StyledTextEntry {
+    SubmitEntry {
       id: treeEntry
-      Layout.fillWidth: true
       placeholderText: I18n.tr("A clone of axiom, e.g. ~/dev/axiom")
-      onAccepted: root._setTree()
-    }
-
-    StyledTextButton {
-      enabled: treeEntry.text.trim() !== "" && Paths.expandHome(treeEntry.text.trim()) !== DevManager.tree
-      text: I18n.tr("Set")
-      onClicked: root._setTree()
+      buttonText: I18n.tr("Set")
+      canSubmit: treeEntry.text.trim() !== "" && Paths.expandHome(treeEntry.text.trim()) !== DevManager.tree
+      onSubmitted: root._setTree()
     }
 
     StyledTextButton {
@@ -105,73 +100,46 @@ FieldGroup {
     }
   }
 
-  GridLayout {
-    Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing / 2
-
-    StyledText {
-      text: I18n.tr("Checkout")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      text: DevManager.checkout || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Dev build")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "wrap"
-      text: DevManager.tree === "" ? "—" : DevManager.buildFresh ? I18n.tr("Built from the tree as it is") : (DevManager.buildWhy || I18n.tr("Not built yet"))
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Dev config")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
-      text: Paths.shortenHome(DevManager.configPath) || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Install tree")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
-      text: Paths.shortenHome(DevManager.installTree) || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
+  FactGrid {
+    facts: [
+      {
+        label: I18n.tr("Checkout"),
+        value: DevManager.checkout || "—",
+        mono: true
+      },
+      {
+        label: I18n.tr("Dev build"),
+        value: DevManager.tree === "" ? "—" : DevManager.buildFresh ? I18n.tr("Built from the tree as it is") : (DevManager.buildWhy || I18n.tr("Not built yet")),
+        wrap: true
+      },
+      {
+        label: I18n.tr("Dev config"),
+        value: Paths.shortenHome(DevManager.configPath) || "—",
+        mono: true,
+        middle: true
+      },
+      {
+        label: I18n.tr("Install tree"),
+        value: Paths.shortenHome(DevManager.installTree) || "—",
+        mono: true,
+        middle: true
+      }
+    ]
   }
 
-  StyledText {
+  StatusLine {
     visible: text !== ""
     text: DevManager.tree !== "" && !DevManager.available ? DevManager.unavailable : ""
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   // What readying the dev config noted (seeded from the defaults: live is
   // newer than the dev tree)
-  StyledText {
+  StatusLine {
     visible: DevManager.configNote !== ""
     text: DevManager.configNote
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -212,11 +180,10 @@ FieldGroup {
     }
   }
 
-  StyledText {
+  StatusLine {
     visible: root.message !== ""
     text: root.message
     tone: "error"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 

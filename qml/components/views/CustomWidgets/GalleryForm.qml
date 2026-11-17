@@ -20,8 +20,42 @@ ColumnLayout {
   // One grid unit's card in pixels the previews are fitted from
   readonly property real card: Widget.px(400)
 
+  // A module card on the overlay's page colour, as on a page, at the size it
+  // has there, scaled into the tile
+  Component {
+    id: modulePreview
+
+    Item {
+      id: sample
+      required property var definition
+      required property var fields
+      required property var size
+
+      ZoomFrame {
+        anchors.fill: parent
+        naturalWidth: GridPlacement.span(sample.size[0], root.card)
+        naturalHeight: GridPlacement.span(sample.size[1], root.card)
+        minZoom: 0.05
+
+        Surface {
+          anchors.fill: parent
+          tone: "page"
+
+          CustomLayout {
+            anchors.fill: parent
+            anchors.margins: Widget.cardPadding
+            definition: sample.definition
+            fields: sample.fields
+            actionsEnabled: false
+            viewIndex: CustomWidgetData.pickView(sample.definition.module, sample.fields).index
+          }
+        }
+      }
+    }
+  }
+
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   FieldGroup {
     Layout.fillWidth: true
@@ -43,97 +77,31 @@ ColumnLayout {
       Repeater {
         model: CustomWidgetData.galleryPresets.length
 
-        Surface {
-          id: tile
+        // A template's tile, its description as the tile's caption
+        PreviewTile {
+          id: cell
           required property int index
-          readonly property var template: CustomWidgetData.galleryPresets[tile.index]
+          readonly property var template: CustomWidgetData.galleryPresets[cell.index]
           // The template as a definition (texts in the user's language,
           // defaults filled), and its first sample resolved
           readonly property var definition: ConfigManager.withDefaults(Object.assign({
             "id": "template"
-          }, root.editor.translated(tile.template)), "CustomWidget")
-          readonly property var sample: Object.values(tile.template.samples ?? ({}))[0] ?? ({})
-          readonly property var fields: CustomWidgetsManager.resolveFor(tile.definition, tile.sample)
-          readonly property var size: CustomWidgetData.designSize(CustomWidgetData.allElements(tile.definition.module), tile.definition.module.size)
-          readonly property real zoom: CustomWidgetData.fitZoom(tile.size, root.card, preview.width, preview.width * 0.6)
+          }, root.editor.translated(cell.template)), "CustomWidget")
+          readonly property var sample: Object.values(cell.template.samples ?? ({}))[0] ?? ({})
+          readonly property var fields: CustomWidgetsManager.resolveFor(cell.definition, cell.sample)
+          readonly property var size: CustomWidgetData.designSize(CustomWidgetData.allElements(cell.definition.module), cell.definition.module.size)
 
           width: tiles.tileWidth
-          implicitHeight: column.implicitHeight + Widget.padding * 2
-          tone: "surface"
-
-          activeFocusOnTab: true
-          Keys.onReturnPressed: root.editor.addTemplate(tile.template)
-          Keys.onEnterPressed: root.editor.addTemplate(tile.template)
-          Keys.onSpacePressed: root.editor.addTemplate(tile.template)
-
-          StateLayer {
-            hovered: area.containsMouse
-            pressed: area.pressed
-            radius: tile.radius
-          }
-
-          FocusRing {
-            shown: tile.activeFocus
-          }
-
-          ColumnLayout {
-            id: column
-            anchors.fill: parent
-            anchors.margins: Widget.padding
-            spacing: Widget.spacing / 2
-
-            Item {
-              id: preview
-              Layout.fillWidth: true
-              implicitHeight: preview.width * 0.6
-
-              // A module card on the overlay's page colour, as on a page
-              Surface {
-                anchors.centerIn: parent
-                implicitWidth: GridPlacement.span(tile.size[0], root.card) * tile.zoom
-                implicitHeight: GridPlacement.span(tile.size[1], root.card) * tile.zoom
-                tone: "page"
-                clip: true
-
-                Item {
-                  width: parent.width / tile.zoom
-                  height: parent.height / tile.zoom
-                  scale: tile.zoom
-                  readonly property real contentZoom: scale
-                  transformOrigin: Item.TopLeft
-
-                  CustomLayout {
-                    anchors.fill: parent
-                    anchors.margins: Widget.cardPadding
-                    definition: tile.definition
-                    fields: tile.fields
-                    actionsEnabled: false
-                    viewIndex: CustomWidgetData.pickView(tile.definition.module, tile.fields).index
-                  }
-                }
-              }
-            }
-            StyledLabel {
-              Layout.fillWidth: true
-              text: I18n.tr(tile.template.name)
-              overflow: "line"
-            }
-            StyledText {
-              Layout.fillWidth: true
-              text: I18n.tr(tile.template.description ?? "")
-              role: "caption"
-              tone: "muted"
-              overflow: "wrap"
-            }
-          }
-
-          MouseArea {
-            id: area
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.editor.addTemplate(tile.template)
-          }
+          title: I18n.tr(cell.template.name)
+          caption: I18n.tr(cell.template.description ?? "")
+          previewHeight: tiles.tileWidth * 0.6
+          preview: modulePreview
+          previewProperties: ({
+              "definition": cell.definition,
+              "fields": cell.fields,
+              "size": cell.size
+            })
+          onClicked: root.editor.addTemplate(cell.template)
         }
       }
     }

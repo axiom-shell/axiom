@@ -55,11 +55,10 @@ Card {
         y: grid.tileY(index)
         width: grid.tileWidth
         height: grid.tileHeight
-        radius: Widget.radius
+        radius: Style.radius
         color: "transparent"
 
         StateLayer {
-          radius: app.radius
           hovered: appArea.containsMouse
           pressed: appArea.pressed
         }

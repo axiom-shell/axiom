@@ -44,6 +44,27 @@ FoldingCard {
     SettingsManager.setValue(["Markets", "symbols"], symbols);
   }
 
+  // The search result's kind as a word
+  // I18n.tr("Crypto") I18n.tr("ETF") I18n.tr("Index") I18n.tr("Currency") I18n.tr("Future") I18n.tr("Fund") I18n.tr("Stock")
+  function kindLabel(kind) {
+    switch (kind) {
+    case "crypto":
+      return I18n.tr("Crypto");
+    case "etf":
+      return I18n.tr("ETF");
+    case "index":
+      return I18n.tr("Index");
+    case "fx":
+      return I18n.tr("Currency");
+    case "future":
+      return I18n.tr("Future");
+    case "fund":
+      return I18n.tr("Fund");
+    default:
+      return I18n.tr("Stock");
+    }
+  }
+
   function has(match) {
     return root.symbols.some(item => item.symbol === match.symbol && (item.source === "coingecko") === (match.source === "coingecko"));
   }
@@ -145,8 +166,7 @@ FoldingCard {
         Layout.fillWidth: true
         spacing: Widget.spacing * 1.5
         StatusChip {
-          shown: true
-          text: match.found.kind === "crypto" ? I18n.tr("Crypto") : match.found.kind === "etf" ? I18n.tr("ETF") : match.found.kind === "index" ? I18n.tr("Index") : match.found.kind === "fx" ? I18n.tr("Currency") : match.found.kind === "future" ? I18n.tr("Future") : match.found.kind === "fund" ? I18n.tr("Fund") : I18n.tr("Stock")
+          text: root.kindLabel(match.found.kind)
           tone: match.found.kind === "crypto" ? "warning" : "accent"
         }
         StyledLabel {

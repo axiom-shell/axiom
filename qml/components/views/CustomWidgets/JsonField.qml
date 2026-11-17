@@ -3,14 +3,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
+import qs.components.forms
 
 // Custom widgets page: a JSON value of the selected definition at `path`
-// (a key, or a path of keys), a form row (InspectorRow: its label and
+// (a key, or a path of keys), a form row (FieldRow: its label and
 // description above a monospace area, as a schema text field's), written to
 // it once it parses (CustomWidgetsEditor.set); "Not valid JSON yet." under it
 // while it doesn't. Read once, as it's built: the page builds it again for
 // each definition it shows.
-InspectorRow {
+FieldRow {
   id: root
 
   required property var editor

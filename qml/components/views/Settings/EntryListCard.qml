@@ -142,27 +142,15 @@ FoldingCard {
   }
 
   // One tab per entry
-  Flow {
+  SegmentTabs {
     Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    Repeater {
-      model: root.entries.length
-
-      delegate: SegmentButton {
-        id: tab
-        required property int index
-        readonly property var entry: root.entries[tab.index]
-
-        implicitHeight: Widget.height - Widget.px(4)
-        text: root.labelOf(tab.entry)
-        iconText: tab.entry.enabled ? "" : "visibility_off"
-        active: tab.index === root.current
-        onClicked: {
-          EditsManager.commitTyping();
-          root.selected = tab.index;
-        }
-      }
+    count: root.entries.length
+    current: root.current
+    labelAt: i => root.labelOf(root.entries[i])
+    iconAt: i => root.entries[i].enabled ? "" : "visibility_off"
+    onPicked: i => {
+      EditsManager.commitTyping();
+      root.selected = i;
     }
   }
 
@@ -267,21 +255,27 @@ FoldingCard {
     spacing: Widget.spacing * 1.5
   }
 
-  // A group of the entry's settings, folding under its title
-  component GroupFold: FoldingSection {
-    id: fold
+  // A group of the entry's settings, folding under its title: a fold row
+  // over the group's rows
+  component GroupFold: FormColumn {
+    id: section
     property var group: null
-    readonly property string foldKey: root.foldKey + ":" + (fold.group?.title ?? "")
+    readonly property string foldKey: root.foldKey + ":" + (section.group?.title ?? "")
+    readonly property bool collapsed: SettingsManager.isCollapsed(section.foldKey)
     Layout.fillWidth: true
-    // The group's title is its `x-group`, read by check_i18n from the schema
-    title: I18n.tr(fold.group?.title ?? "")
-    collapsed: SettingsManager.isCollapsed(fold.foldKey)
-    onToggled: SettingsManager.setCollapsed(fold.foldKey, !fold.collapsed)
+
+    FoldFormRow {
+      // The group's title is its `x-group`, read by check_i18n from the schema
+      title: I18n.tr(section.group?.title ?? "")
+      open: !section.collapsed
+      onToggled: SettingsManager.setCollapsed(section.foldKey, !section.collapsed)
+    }
 
     SchemaPropertiesForm {
       Layout.fillWidth: true
-      propertiesSchema: fold.group?.schema ?? ({})
-      order: fold.group?.keys ?? []
+      folded: section.collapsed
+      propertiesSchema: section.group?.schema ?? ({})
+      order: section.group?.keys ?? []
       // The whole entry, so x-showIf sees keys from other groups
       values: root.entry ?? ({})
       onEdited: (path, value) => root.edit({

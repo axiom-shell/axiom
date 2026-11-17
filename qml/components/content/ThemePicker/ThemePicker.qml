@@ -109,13 +109,12 @@ TitledCard {
 
       // A switch of its own: picking Dark or Light by hand lasts until the
       // schedule's next change
-      SegmentButton {
+      ToggleChip {
         id: autoButton
-        Layout.fillWidth: false
         iconText: "schedule"
         text: I18n.tr("Auto")
-        active: Appearance.themeScheduled
-        onClicked: SettingsManager.commitValues({
+        checked: Appearance.themeScheduled
+        onToggled: SettingsManager.commitValues({
           "Appearance.theme.schedule.enabled": !Appearance.themeScheduled
         })
       }
@@ -158,13 +157,12 @@ TitledCard {
 
     Layout.fillWidth: true
     Layout.preferredHeight: tileColumn.implicitHeight + Widget.padding * 2
-    radius: Widget.radius
+    radius: Style.radius
     color: tile.roles.surfacePage ?? Style.surfacePage
     border.width: tile.current ? Style.focusWidth : Style.hairline
     border.color: tile.current ? Style.accent : Style.borderSubtle
 
     StateLayer {
-      radius: tile.radius
       hovered: tileArea.containsMouse
     }
 

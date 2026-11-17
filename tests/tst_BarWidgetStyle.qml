@@ -35,6 +35,15 @@ TestCase {
     close(Tone.over(Qt.rgba(1, 1, 1, 0.5), "#000000"), Qt.rgba(0.5, 0.5, 0.5, 1), "half");
   }
 
+  function test_selection_fill_is_the_highlight_at_fifteen_percent() {
+    const fill = Qt.color(BarWidgetStyle.selectionFill({
+      highlight: "#ff0000"
+    }));
+    fuzzyCompare(fill.a, 0.15, 0.01, "tint");
+    compare(fill.r, 1);
+    compare(BarWidgetStyle.selectionStroke, 2);
+  }
+
   function test_faded_keeps_a_clear_color_clear() {
     fuzzyCompare(Qt.color(BarWidgetStyle.faded("#80ff0000", 0.5)).a, 0.25, 0.01, "from its own alpha");
     compare(Qt.color(BarWidgetStyle.faded("transparent", 0.5)).a, 0, "clear stays clear");
@@ -224,6 +233,35 @@ TestCase {
     same(c.content, want, "mixed toward the bar");
   }
 
+  // A part with nothing to draw rests on the colour it fades to at alpha 0:
+  // a ColorAnimation lerps each channel, so a rest of transparent black dips
+  // through grey (light themes show it)
+  function restsOnHue(c, hue, tag, parts) {
+    const want = Qt.color(hue);
+    for (const part of parts) {
+      const got = Qt.color(c[part]);
+      verify(got.a === 0, `${tag}: ${part} rests clear`);
+      verify(Math.abs(got.r - want.r) < 0.01 && Math.abs(got.g - want.g) < 0.01 && Math.abs(got.b - want.b) < 0.01, `${tag}: ${part} rests on ${hue}, not ${c[part]}`);
+    }
+  }
+
+  function test_widget_rest_colors_fade_on_the_accent_hue() {
+    for (const keys of ["widgetStyle=tinted;hoverFill=true", "widgetStyle=outline;hoverFill=true", "widgetStyle=filled;hoverFill=true"]) {
+      const c = root.colorsOf(root.parse(keys), {});
+      root.restsOnHue(c, "#fb4934", keys, ["indicator"]);
+    }
+    root.restsOnHue(root.colorsOf(root.parse("widgetStyle=tinted;hoverFill=true"), {}), "#fb4934", "tinted", ["stroke"]);
+  }
+
+  function test_cell_rest_colors_fade_on_the_cell_hue() {
+    const bar = Bars.bar({
+      "widgetStyle": "plain",
+      "hoverFill": true
+    });
+    const c = BarWidgetStyle.cell(bar.look, bar.palette, BarWidgetStyle.state(bar.palette, {}), "#665c54", Bars.theme.foreground, "empty");
+    root.restsOnHue(c, "#665c54", "cell", ["fill", "stroke", "indicator"]);
+  }
+
   // WidgetCell pulses with mixColors of the cell and its muted self
   function test_cell_pulse_goes_between_the_cell_and_its_muted_self() {
     const bar = Bars.bar({
@@ -285,29 +323,29 @@ TestCase {
   // fill, stroke, textOnFill]
   readonly property var hoverRows: [["tinted", "widgetStyle=tinted",
       {},
-      "#fb4934", "transparent", true], ["tinted, no fill on hover", "widgetStyle=tinted;hoverFill=false",
+      "#fb4934", "#00fb4934", true], ["tinted, no fill on hover", "widgetStyle=tinted;hoverFill=false",
       {},
-      "tint", "transparent", false], ["outline", "widgetStyle=outline",
+      "tint", "#00fb4934", false], ["outline", "widgetStyle=outline",
       {},
       "#fb4934", "#fb4934", true], ["filled", "widgetStyle=filled",
       {},
-      "#fb4934", "transparent", true], ["split icon part", "widgetStyle=split;splitIcon=joined;splitLabelFill=tint",
+      "#fb4934", "#00fb4934", true], ["split icon part", "widgetStyle=split;splitIcon=joined;splitLabelFill=tint",
       {
         "splits": true
       },
-      "tint", "transparent", false], ["split label color", "widgetStyle=split;splitIcon=joined;splitLabelFill=color",
+      "tint", "#00fb4934", false], ["split label color", "widgetStyle=split;splitIcon=joined;splitLabelFill=color",
       {
         "splits": true
       },
-      "labelColor", "transparent", true], ["split without parts", "widgetStyle=split",
+      "labelColor", "#00fb4934", true], ["split without parts", "widgetStyle=split",
       {
         "splits": false
       },
-      "#fb4934", "transparent", true], ["merged tinted", "widgetStyle=tinted;widgetGrouping=merged",
+      "#fb4934", "#00fb4934", true], ["merged tinted", "widgetStyle=tinted;widgetGrouping=merged",
       {},
-      "#fb4934", "transparent", true], ["merged outline", "widgetStyle=outline;widgetGrouping=merged",
+      "#fb4934", "#00fb4934", true], ["merged outline", "widgetStyle=outline;widgetGrouping=merged",
       {},
-      "#fb4934", "transparent", true]]
+      "#fb4934", "#00fb4934", true]]
 
   function parse(keys) {
     return keys.split(";").reduce((o, kv) => Object.assign(o, {
@@ -457,7 +495,7 @@ TestCase {
         const expected = look.as === "tint" ? BarWidgetStyle.faded("#fb4934", 0.25) : look.as === "icon" ? Tone.nudged(c.iconBack, "#fb4934", 3) : "#fb4934";
         if (key === null) {
           const other = BarWidgetStyle.widgetColors(bar, "#458588", "#282828", {});
-          if (!Qt.colorEqual(c.text, other.text) || !Qt.colorEqual(c.icon, other.icon) || !Qt.colorEqual(c.fill, other.fill))
+          if (!Qt.colorEqual(c.text, other.text) || !Qt.colorEqual(c.icon, other.icon) || Qt.color(c.fill).a !== Qt.color(other.fill).a)
             fails.push(`${tag}: the accent shows on plain text`);
         } else if (!Qt.colorEqual(c[key], expected)) {
           fails.push(`${tag}: ${key} is ${c[key]}, not ${expected}`);
@@ -503,7 +541,7 @@ TestCase {
         // A split label's fill per splitLabelFill: a tint of the slice, the label color, or none
         if (split && look.split) {
           const label = look.key.startsWith("split.joined.") ? look.key.split(".")[2] : "none";
-          const fill = label === "tint" ? BarWidgetStyle.faded(c.accent, 0.25) : label === "color" ? bar.palette.labelColor : "transparent";
+          const fill = label === "tint" ? BarWidgetStyle.faded(c.accent, 0.25) : label === "color" ? bar.palette.labelColor : Qt.alpha(c.accent, 0);
           if (!Qt.colorEqual(c.fill, fill))
             fails.push(`${look.key}: label fill ${c.fill}, not ${fill}`);
         }

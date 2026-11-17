@@ -17,9 +17,9 @@ Item {
 
   default property alias content: holder.data
 
-  // The vertical gap between groups; flat groups pass 0 (their own top margin is the gap)
-  property real rowGap: Style.space5
-  readonly property int count: FlowColumns.count(root.width, Style.columnTarget, Style.columnMin, Style.columnMax, Style.space5)
+  // The gap between groups, down and across (the settings page's card gap)
+  property real gap: Style.cardGap
+  readonly property int count: FlowColumns.count(root.width, Style.columnTarget, Style.columnMin, Style.columnMax, root.gap)
   // Every child, and of them the visible units in order (a unit's height by
   // index into `units`)
   property var all: []
@@ -53,7 +53,7 @@ Item {
   SettledColumns {
     id: columns
     count: root.count
-    gap: root.rowGap
+    gap: root.gap
     fill: false
     // None spans the columns
     wide: root.units.map(() => false)
@@ -75,7 +75,7 @@ Item {
       required property int index
       readonly property var unit: root.all[slot.index] ?? null
       readonly property var place: root.placed.cards[root.units.indexOf(slot.unit)] ?? null
-      readonly property real columnWidth: (root.width - Style.space5 * (root.count - 1)) / root.count
+      readonly property real columnWidth: (root.width - root.gap * (root.count - 1)) / root.count
 
       Connections {
         target: slot.unit
@@ -90,7 +90,7 @@ Item {
       Binding {
         target: slot.unit
         property: "x"
-        value: slot.place ? Math.round(slot.place.column * (slot.columnWidth + Style.space5)) : 0
+        value: slot.place ? Math.round(slot.place.column * (slot.columnWidth + root.gap)) : 0
         when: slot.place !== null
       }
       Binding {

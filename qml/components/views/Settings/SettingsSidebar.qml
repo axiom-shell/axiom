@@ -33,7 +33,6 @@ Item {
     headerExtras: StyledTextEntry {
       id: search
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search settings")
       clearable: true
       Component.onCompleted: input.text = SettingsManager.query
@@ -100,12 +99,18 @@ Item {
               Layout.fillWidth: true
               implicitHeight: Appearance.fontSize * 2
 
+              // Tab stop, Space/Return/Enter and the tint and ring are Pressable's
+              Pressable {
+                id: linkPress
+                onClicked: SettingsManager.jumpTo(link.modelData.key)
+              }
+
               Rectangle {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: linkArea.containsMouse ? 2 : Style.dividerWidth
-                color: linkArea.containsMouse ? Style.accent : Style.divider
+                width: linkPress.hovered ? 2 : Style.dividerWidth
+                color: linkPress.hovered ? Style.accent : Style.divider
               }
 
               StyledLabel {
@@ -116,15 +121,7 @@ Item {
                 text: I18n.tr(link.modelData.title)
                 role: "caption"
                 overflow: "line"
-                tone: linkArea.containsMouse ? "accent" : "muted"
-              }
-
-              MouseArea {
-                id: linkArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: SettingsManager.jumpTo(link.modelData.key)
+                tone: linkPress.hovered ? "accent" : "muted"
               }
             }
           }

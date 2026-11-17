@@ -12,7 +12,7 @@ Rectangle {
   }
 
   z: 1
-  radius: Widget.radius
+  radius: Style.radius
   color: "transparent"
   border.color: Style.focusRing
   border.width: Style.focusWidth

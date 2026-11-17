@@ -201,7 +201,7 @@ Item {
     z: 10
     anchors.fill: parent
     radius: Style.radius
-    color: root.flashing ? Style.errorWash : "transparent"
+    color: root.flashing ? Style.errorWash : Tone.cleared(Style.errorWash) // style-exempt: the wash at no alpha, so the blink doesn't fade through black
 
     ColorGlide on color {
       duration: Appearance.animSlow

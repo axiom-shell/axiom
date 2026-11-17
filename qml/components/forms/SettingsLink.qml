@@ -66,6 +66,9 @@ Item {
 
   RowLayout {
     id: content
+    // Never wider than the room it is given, so a long label elides (the
+    // implicit sizes stay the label's whole: no loop)
+    width: Math.min(root.width, content.implicitWidth)
     spacing: Widget.spacing / 2
 
     StyledIcon {

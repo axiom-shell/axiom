@@ -111,6 +111,6 @@ DragChip {
     shown: root.dropOrder > 0
     text: String(root.dropOrder)
     color: Style.accent
-    textColor: Style.onAccent
+    textColor: Style.inkAccent.text
   }
 }

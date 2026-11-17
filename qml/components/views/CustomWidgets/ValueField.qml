@@ -5,6 +5,7 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
 
 // One text field of the selected element (its `bind.<slot>`, the Shows
 // group): a field to type text in, or a {value} of the output, and a { }
@@ -12,10 +13,9 @@ import qs.components.reusable
 // cursor (or over the selection). Under it what a format reads as in the previewed sample
 // ("now: CPU 42%"), or a warning when a {path} in it reads nothing there.
 // Empty: the slot falls back to the output's own key (`placeholder` says
-// what that is). An InspectorRow: its label above the field, as a schema
-// text field's; put the rows of one group in a ColumnLayout with no spacing
-// and mark the first `first`.
-InspectorRow {
+// what that is). A FieldRow: its label above the field, as a schema
+// text field's; put the rows of one group in a FormColumn.
+FieldRow {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
@@ -41,20 +41,14 @@ InspectorRow {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    StyledTextEntry {
+    CommitEntry {
       id: textEntry
       Layout.fillWidth: true
       Layout.alignment: Qt.AlignVCenter
+      live: true
+      value: root.current
       placeholderText: root.placeholder
-      onTextEdited: root.write(textEntry.text)
-
-      Binding {
-        target: textEntry
-        property: "text"
-        value: root.current
-        when: !textEntry.input.activeFocus
-        restoreMode: Binding.RestoreNone
-      }
+      onEdited: text => root.write(text)
     }
 
     PathInsertButton {

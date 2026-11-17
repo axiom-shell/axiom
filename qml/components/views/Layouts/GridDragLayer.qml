@@ -176,15 +176,15 @@ DragLayer {
 
   // What's being carried, as a pill under the pointer (the canvas draws
   // where it would land)
-  Rectangle {
+  Surface {
     id: ghost
     visible: root.dragging !== null
     z: 10
     width: ghostRow.implicitWidth + Widget.padding * 2
-    height: Widget.height + Widget.padding / 2
-    radius: Widget.radius
+    height: Style.chipRowHeight
+    radius: Style.radius
     readonly property bool refused: root.hoverTarget !== null && (!root.hoverValid || root.hoverTarget.targetKind === "trash")
-    color: ghost.refused ? Style.error : Style.accent
+    tone: ghost.refused ? "error" : "accent"
 
     RowLayout {
       id: ghostRow
@@ -193,12 +193,10 @@ DragLayer {
 
       StyledIcon {
         text: root.dragging?.icon ?? ""
-        textColor: ghost.refused ? Style.onError : Style.onAccent
         size: "md"
       }
       StyledLabel {
         text: root.hoverTarget?.targetKind === "trash" ? I18n.tr("Remove") : root.hoverTarget && !root.hoverValid ? I18n.tr("Doesn't fit here") : (root.dragging?.label ?? "")
-        textColor: ghost.refused ? Style.onError : Style.onAccent
         role: "label"
       }
     }

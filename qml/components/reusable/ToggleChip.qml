@@ -5,7 +5,8 @@ import qs.config
 
 // A multi-select filter chip: a pill with a word, on the highest surface
 // while off and in the accent container, with a leading check, while on (the
-// state is never the colour alone). A tap is `toggled`; the page owns
+// state is never the colour alone), then its own icon (`iconText`) if any. A
+// tap, or Space or Enter on its Tab stop, is `toggled`; the page owns
 // `checked`, so a binding on it survives.
 Surface {
   id: root
@@ -13,6 +14,8 @@ Surface {
   // -- Public API --
   property string text: ""
   property bool checked: false
+  // A Material Symbols name drawn before the label
+  property string iconText: ""
 
   signal toggled
 
@@ -23,9 +26,8 @@ Surface {
   implicitHeight: Math.max(Widget.smallHeight, Math.ceil(label.implicitHeight) + Widget.px(2))
   Layout.alignment: Qt.AlignVCenter
 
-  StateLayer {
-    hovered: area.containsMouse
-    pressed: area.pressed
+  Pressable {
+    onClicked: root.toggled()
   }
 
   RowLayout {
@@ -39,6 +41,12 @@ Surface {
       size: "xs"
     }
 
+    StyledIcon {
+      visible: root.iconText !== ""
+      text: root.iconText
+      size: "xs"
+    }
+
     StyledLabel {
       id: label
       text: root.text
@@ -46,13 +54,5 @@ Surface {
       tone: root.checked ? "" : "muted"
       overflow: "none"
     }
-  }
-
-  MouseArea {
-    id: area
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
-    onClicked: root.toggled()
   }
 }

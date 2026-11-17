@@ -35,9 +35,11 @@ FoldingCard {
 
   // Connect's state: { busy, ok, text }
   property var result: null
-  property bool confirmRemove: false
-  // The local calendar a second click removes ("" for none)
-  property string confirmDrop: ""
+  // Removing an account or a local calendar asks for a second click
+  ConfirmGate {
+    id: gate
+    timeout: 0
+  }
   // False once destroyed, for callbacks that outlive the card
   property bool _alive: true
   Component.onDestruction: root._alive = false
@@ -46,8 +48,7 @@ FoldingCard {
   onToggled: SettingsManager.setCollapsed(root.foldKey, !root.collapsed)
   onCurrentChanged: {
     root.result = null;
-    root.confirmRemove = false;
-    root.confirmDrop = "";
+    gate.disarm();
     // A password typed for one account is never saved to another
     passwordField.text = "";
   }
@@ -76,15 +77,12 @@ FoldingCard {
   }
 
   function remove() {
-    if (!root.confirmRemove) {
-      root.confirmRemove = true;
+    if (!gate.pass("account", true))
       return;
-    }
     const accounts = Utils.clone(root.accounts);
     accounts.splice(root.current, 1);
     root._commit(accounts);
     root.selected = Math.max(0, root.current - 1);
-    root.confirmRemove = false;
   }
 
   // A provider's address, filled in when it's picked over an empty one or
@@ -170,14 +168,11 @@ FoldingCard {
 
   // Removes a local calendar on a second click; its folder stays
   function dropLocal(href) {
-    if (root.confirmDrop !== href) {
-      root.confirmDrop = href;
+    if (!gate.pass("calendar:" + href, true))
       return;
-    }
     const accounts = Utils.clone(root.accounts);
     accounts[root.current].calendars = accounts[root.current].calendars.filter(calendar => calendar.href !== href);
     root._commit(accounts);
-    root.confirmDrop = "";
   }
 
   function setCalendar(href, values) {
@@ -204,25 +199,16 @@ FoldingCard {
   }
 
   // One tab per account
-  Flow {
+  SegmentTabs {
     visible: root.accounts.length > 0
     Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    Repeater {
-      model: root.accounts.length
-
-      delegate: SegmentButton {
-        id: tab
-        required property int index
-        readonly property var entry: root.accounts[tab.index]
-
-        implicitHeight: Widget.height - Widget.px(4)
-        text: tab.entry.name || tab.entry.username || CalendarConfig.hostOf(tab.entry.url) || (tab.entry.kind === "local" ? I18n.tr("This computer") : I18n.tr("Account {0}", tab.index + 1))
-        active: tab.index === root.current
-        onClicked: root.selected = tab.index
-      }
+    count: root.accounts.length
+    current: root.current
+    labelAt: i => {
+      const entry = root.accounts[i];
+      return entry.name || entry.username || CalendarConfig.hostOf(entry.url) || (entry.kind === "local" ? I18n.tr("This computer") : I18n.tr("Account {0}", i + 1));
     }
+    onPicked: i => root.selected = i
   }
 
   SchemaPropertiesForm {
@@ -251,28 +237,20 @@ FoldingCard {
     StyledLabel {
       text: I18n.tr("Password")
     }
-    StyledTextEntry {
+    SubmitEntry {
       id: passwordField
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
+      secret: true
       placeholderText: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? I18n.tr("Type a new one to replace it") : I18n.tr("The account's password")
-      input.echoMode: TextInput.Password
-      onAccepted: savePassword.clicked()
-    }
-    StyledTextButton {
-      id: savePassword
-      implicitHeight: Widget.height
-      visible: passwordField.text !== ""
-      text: I18n.tr("Save")
-      kind: "primary"
-      onClicked: {
+      buttonText: I18n.tr("Save")
+      canSubmit: passwordField.text.trim() !== ""
+      onSubmitted: {
         SecretsManager.setSecret("calendar", root.accountId, I18n.tr("{0} calendar", root.account.name || CalendarConfig.hostOf(root.account.url)), passwordField.text);
         passwordField.text = "";
       }
     }
-    StatusChip {
-      tone: root.passwordStatus === "keyring" || root.passwordStatus === "file" ? "success" : root.passwordStatus === "none" ? "warning" : "neutral"
-      text: root.passwordStatus === "keyring" ? I18n.tr("In keyring") : root.passwordStatus === "file" ? I18n.tr("In secrets file") : root.passwordStatus === "none" ? I18n.tr("No password") : I18n.tr("Checking…")
+    SecretStatusChip {
+      status: root.passwordStatus
+      missingText: I18n.tr("No password")
     }
   }
 
@@ -303,22 +281,17 @@ FoldingCard {
     }
     StyledTextButton {
       iconText: "delete"
-      text: root.confirmRemove ? I18n.tr("Click again to remove") : I18n.tr("Remove")
+      text: gate.armed === "account" ? I18n.tr("Click again to remove") : I18n.tr("Remove")
       kind: "danger"
       onClicked: root.remove()
     }
   }
 
   // The account's calendars
-  StyledSeparator {
-    visible: (root.account?.calendars ?? []).length > 0
-    Layout.fillWidth: true
-  }
-
   Repeater {
     model: (root.account?.calendars ?? []).length
 
-    delegate: RowLayout {
+    delegate: FormRow {
       id: calendarRow
       required property int index
       readonly property var calendar: root.account.calendars[index] ?? ({})
@@ -328,108 +301,90 @@ FoldingCard {
       readonly property bool holdsEvents: calendarRow.joined?.events ?? true
 
       // Lists without events (iCloud's reminders) wait for to-dos
-      visible: calendarRow.holdsEvents
-      Layout.fillWidth: true
-      spacing: Widget.spacing
+      shown: calendarRow.holdsEvents
+      bodyHeight: line.implicitHeight
 
-      StyledSwitch {
-        checked: calendarRow.calendar.enabled ?? false
-        onToggled: root.setCalendar(calendarRow.calendar.href, {
-          "enabled": checked
-        })
-      }
-      Rectangle {
-        Layout.preferredWidth: Appearance.fontSize * 0.8
-        Layout.preferredHeight: width
-        radius: width / 2
-        color: Style.resolve(calendarRow.joined?.color ?? "accent")
-      }
-      StyledLabel {
-        visible: !root.isLocal
-        Layout.fillWidth: true
-        text: calendarRow.joined?.name || calendarRow.calendar.href
-        textFormat: Text.PlainText
-        overflow: "line"
-      }
-      // A local calendar's name is the user's to change, committed like
-      // every settings text field: on Enter, focus loss or the page's Save
-      // (EditsManager.holdTyping shows Save while typed). Pushed in (the
-      // row shows another calendar when one above it is removed), never
-      // while being typed in
-      StyledTextEntry {
-        id: nameField
-        readonly property string saved: calendarRow.calendar.name ?? ""
-        visible: root.isLocal
-        Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height - Widget.px(6)
-        placeholderText: I18n.tr("Name")
-        // One line, cut off rather than wrapped in a narrow field
-        input.wrapMode: TextInput.NoWrap
-        Component.onCompleted: text = saved
-        Component.onDestruction: nameField.commitTyped()
-        onSavedChanged: {
-          if (!nameField.typed)
-            nameField.text = nameField.saved;
-        }
-        onTextEdited: EditsManager.holdTyping(nameField, nameField.Window.window)
-        onAccepted: nameField.commitTyped()
-        input.onActiveFocusChanged: {
-          if (!nameField.input.activeFocus)
-            nameField.commitTyped();
-        }
+      RowLayout {
+        id: line
+        width: parent.width
+        spacing: Widget.spacing
 
-        // The typed name (an empty one puts the saved name back)
-        function commitTyped() {
-          const name = nameField.text.trim();
-          if (nameField.typed && name !== "" && name !== nameField.saved)
-            root.setCalendar(calendarRow.calendar.href, {
-              "name": name
-            });
-          nameField.discardTyped();
-        }
-
-        function discardTyped() {
-          nameField.typed = false;
-          nameField.text = nameField.saved;
-          EditsManager.releaseTyping(nameField);
-        }
-      }
-      StatusChip {
-        shown: calendarRow.joined?.readOnly ?? false
-        tone: "neutral"
-        text: I18n.tr("Read-only")
-      }
-      SegmentButton {
-        visible: calendarRow.joined?.writable ?? false
-        Layout.fillWidth: false
-        implicitHeight: Widget.height - Widget.px(6)
-        text: I18n.tr("Default")
-        active: root.defaultCalendar === calendarRow.calendarId
-        onClicked: SettingsManager.setValue(["Calendar", "defaultCalendar"], active ? "" : calendarRow.calendarId)
-      }
-      // The color picker every color setting uses, its rows in their colors
-      SchemaComboBox {
-        Layout.fillWidth: false
-        Layout.preferredWidth: Appearance.fontSize * 11
-        label: ""
-        options: [""].concat(Theme.baseColorNames)
-        optionLabels: ({
-            "": root.isLocal ? I18n.tr("Accent") : I18n.tr("Server color")
+        StyledSwitch {
+          checked: calendarRow.calendar.enabled ?? false
+          onToggled: root.setCalendar(calendarRow.calendar.href, {
+            "enabled": checked
           })
-        swatches: true
-        currentValue: calendarRow.calendar.color ?? ""
-        onSelectionChanged: value => root.setCalendar(calendarRow.calendar.href, {
-            "color": value
-          })
-      }
-      StyledTextButton {
-        visible: root.isLocal
-        implicitHeight: Widget.height - Widget.px(6)
-        iconText: "delete"
-        text: root.confirmDrop === calendarRow.calendar.href ? I18n.tr("Click again to remove (its files stay)") : ""
-        kind: "danger"
-        tooltipText: root.confirmDrop === calendarRow.calendar.href ? "" : I18n.tr("Remove this calendar")
-        onClicked: root.dropLocal(calendarRow.calendar.href)
+        }
+        Rectangle {
+          Layout.preferredWidth: Appearance.fontSize * 0.8
+          Layout.preferredHeight: width
+          radius: width / 2
+          color: Style.resolve(calendarRow.joined?.color ?? "accent")
+        }
+        StyledLabel {
+          visible: !root.isLocal
+          Layout.fillWidth: true
+          text: calendarRow.joined?.name || calendarRow.calendar.href
+          textFormat: Text.PlainText
+          overflow: "line"
+        }
+        // A local calendar's name is the user's to change, committed like
+        // every settings text field: on Enter, focus loss or the page's Save
+        // (CommitEntry). An empty name puts the saved one back; the row
+        // showing another calendar (one above it removed) drops a commit
+        CommitEntry {
+          id: nameField
+          visible: root.isLocal
+          Layout.fillWidth: true
+          placeholderText: I18n.tr("Name")
+          // One line, cut off rather than wrapped in a narrow field
+          input.wrapMode: TextInput.NoWrap
+          value: calendarRow.calendar.name ?? ""
+          scope: calendarRow.calendar.href
+          onCommitted: text => {
+            const name = text.trim();
+            if (name !== "" && name !== nameField.value)
+              root.setCalendar(calendarRow.calendar.href, {
+                "name": name
+              });
+            else
+              nameField.discardTyped();
+          }
+        }
+        StatusChip {
+          shown: calendarRow.joined?.readOnly ?? false
+          tone: "neutral"
+          text: I18n.tr("Read-only")
+        }
+        ToggleChip {
+          visible: calendarRow.joined?.writable ?? false
+          text: I18n.tr("Default")
+          checked: root.defaultCalendar === calendarRow.calendarId
+          onToggled: SettingsManager.setValue(["Calendar", "defaultCalendar"], checked ? "" : calendarRow.calendarId)
+        }
+        // The color picker every color setting uses, its rows in their colors
+        SchemaComboBox {
+          Layout.fillWidth: false
+          Layout.preferredWidth: Appearance.fontSize * 11
+          label: ""
+          options: [""].concat(Theme.baseColorNames)
+          optionLabels: ({
+              "": root.isLocal ? I18n.tr("Accent") : I18n.tr("Server color")
+            })
+          swatches: true
+          currentValue: calendarRow.calendar.color ?? ""
+          onSelectionChanged: value => root.setCalendar(calendarRow.calendar.href, {
+              "color": value
+            })
+        }
+        StyledTextButton {
+          visible: root.isLocal
+          iconText: "delete"
+          text: gate.armed === "calendar:" + calendarRow.calendar.href ? I18n.tr("Click again to remove (its files stay)") : ""
+          kind: "danger"
+          tooltipText: gate.armed === "calendar:" + calendarRow.calendar.href ? "" : I18n.tr("Remove this calendar")
+          onClicked: root.dropLocal(calendarRow.calendar.href)
+        }
       }
     }
   }

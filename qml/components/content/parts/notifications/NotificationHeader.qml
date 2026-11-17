@@ -21,7 +21,7 @@ ModuleHeader {
     shown: NotificationManager.count > 0
     text: NotificationManager.countLabel
     color: Style.accent
-    textColor: Style.onAccent
+    textColor: Style.inkAccent.text
   }
 
   StyledIconButton {

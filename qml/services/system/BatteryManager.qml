@@ -59,7 +59,7 @@ QtObject {
   readonly property string profile: !hasPowerProfiles ? "" : PowerProfiles.profile === PowerProfile.PowerSaver ? "powerSaver" : PowerProfiles.profile === PowerProfile.Performance ? "performance" : "balanced"
   // Running on the battery, not on a charger (UPower's own, so it holds
   // while a full battery stops charging)
-  readonly property bool onBattery: UPower.onBattery
+  readonly property bool runningOnBattery: UPower.onBattery
 
   // The last level notified about, so each drop into low and then
   // critical notifies once (charging, or a reload, starts over)

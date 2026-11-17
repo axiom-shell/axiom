@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 
@@ -92,6 +93,8 @@ Panel {
   // A ListView, so only the days in view are built
   ListView {
     id: days
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: !root.session.active && root.groups.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: true

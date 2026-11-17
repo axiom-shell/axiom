@@ -79,7 +79,7 @@ Rectangle {
   property bool floats: false
   // How near an edge (0-1 of the screen) a floating drag attaches it
   readonly property real snap: 0.04
-  readonly property real dot: 14
+  readonly property real dot: Widget.px(14)
   property string _lastDrag: ""
 
   // A preset was clicked, or a drag moved it: the values to apply
@@ -105,7 +105,7 @@ Rectangle {
   color: Style.surfaceSunken
   border.color: Style.borderStrong
   border.width: Style.hairline
-  radius: Widget.radius / 2
+  radius: Style.radiusInner
 
   // A press or drag anywhere places it there; the dots, over it, apply
   // their presets
@@ -168,8 +168,8 @@ Rectangle {
     width: root.dot - Widget.px(4)
     height: root.dot - Widget.px(4)
     radius: width / 2
-    x: root.spot.x * (root.width - root.dot) + 2
-    y: root.spot.y * (root.height - root.dot) + 2
+    x: root.spot.x * (root.width - root.dot) + (root.dot - width) / 2
+    y: root.spot.y * (root.height - root.dot) + (root.dot - height) / 2
     color: Style.accent
   }
 }

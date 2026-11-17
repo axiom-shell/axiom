@@ -49,7 +49,6 @@ Flickable {
         implicitHeight: label.implicitHeight + Widget.padding
         radius: height / 2
         StateLayer {
-          radius: pill.radius
           hovered: area.containsMouse
           pressed: area.pressed
         }

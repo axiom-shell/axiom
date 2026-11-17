@@ -52,6 +52,7 @@ FieldGroup {
   }
 
   IssueList {
+    Layout.topMargin: Style.space2
     issues: root.problems
   }
 }

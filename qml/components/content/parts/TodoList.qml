@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
@@ -47,6 +48,8 @@ ColumnLayout {
   // A ListView, so only the items in view are built
   MotionListView {
     id: flick
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: root.items.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.fill

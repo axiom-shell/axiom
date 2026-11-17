@@ -17,25 +17,13 @@ KeyboardMap {
 
   signal editRequested(int bindIndex)
 
-  function tone(source) {
-    switch (source) {
-    case "axiom":
-      return "accentContainer";
-    case "both":
-      return "errorContainer";
-    case "user":
-      return "warningContainer";
-    }
-    return "sunken";
-  }
-
   // The modifiers held, and chips to change them (the page's, shared with
   // the editor's key map); a Cheatsheet passes its own without chips
   mods: KeybindManager.page.keyMapMods
   showMods: true
   tall: true
   sourceOf: key => root.labels[key]?.source ?? ""
-  toneFor: source => root.tone(source)
+  toneFor: source => KeySourceTone.tone(source)
   legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
   labelOf: key => root.labels[key]?.label ?? ""
   iconOf: key => root.labels[key]?.action ? KeybindManager.actionIcon(root.labels[key].action) : ""

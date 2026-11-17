@@ -33,7 +33,7 @@ ColumnLayout {
     return options && current !== "" && !options.includes(current) ? [current].concat(options) : options;
   }
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   InspectorHeader {
     icon: KeybindManager.actionIcon(root.bind.action)
@@ -64,211 +64,192 @@ ColumnLayout {
     }
   }
 
+  // One title-less card: the key, the action (its argument and call under
+  // it), the label
   FieldGroup {
-    title: I18n.tr("Key")
+    title: ""
 
-    KeyRecorder {
-      bindIndex: root.bindIndex
-      combo: root.bind.key ?? ""
-      invalid: root.hasError
-      Layout.fillWidth: true
+    // The key: its caption the row's description
+    FieldRow {
+      label: I18n.tr("Key")
+      description: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
+
+      KeyRecorder {
+        id: recorder
+        bindIndex: root.bindIndex
+        combo: root.bind.key ?? ""
+        // Recording wins over the error border
+        invalid: root.hasError && !recorder.recording
+        Layout.fillWidth: true
+      }
     }
 
-    StyledText {
-      text: I18n.tr("Click, then press the combo. A scroll records a wheel bind; a modifier tapped alone records a tap.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-      Layout.fillWidth: true
-    }
-  }
+    // The action leads; its argument and call sit under it
+    FieldRow {
+      label: I18n.tr("Action")
+      activates: actionPicker
 
-  FieldGroup {
-    title: I18n.tr("Action")
-
-    ActionPicker {
-      currentValue: root.bind.action ?? ""
-      onPicked: action => KeybindManager.editor.setField(root.bindIndex, "action", action)
-      Layout.fillWidth: true
+      ActionPicker {
+        id: actionPicker
+        currentValue: root.bind.action ?? ""
+        onPicked: action => KeybindManager.editor.setField(root.bindIndex, "action", action)
+        Layout.fillWidth: true
+      }
     }
 
     // The argument: a choice when the action has a fixed set, else text
-    SchemaComboBox {
-      visible: root.needed && root.argumentOptions !== null
-      label: ""
-      options: root.argumentOptions ?? []
-      optionLabels: KeybindManager.argumentLabels(root.bind.action) ?? ({})
-      currentValue: root.bind.argument ?? ""
-      // I18n.tr("left") I18n.tr("right") I18n.tr("up") I18n.tr("down")
-      // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
-      onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
+    FormRow {
+      level: 1
+      shown: root.needed && root.argumentOptions !== null
+      bodyHeight: argumentCombo.implicitHeight
+
+      SchemaComboBox {
+        id: argumentCombo
+        width: parent.width
+        // I18n.tr("Argument")
+        label: "Argument"
+        options: root.argumentOptions ?? []
+        optionLabels: KeybindManager.argumentLabels(root.bind.action) ?? ({})
+        currentValue: root.bind.argument ?? ""
+        // I18n.tr("left") I18n.tr("right") I18n.tr("up") I18n.tr("down")
+        // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
+        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
+      }
     }
 
     // The id of something defined elsewhere: a dropdown that also takes a
     // new one. It lists the ids of the settings draft, so one typed on another
     // bind appears once the keybinds are saved
-    RefEntry {
-      visible: root.needed && root.argumentOptions === null && root.argumentRef !== ""
-      kind: root.argumentRef
-      value: root.bind.argument ?? ""
-      onCommitted: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
+    FieldRow {
+      level: 1
+      shown: root.needed && root.argumentOptions === null && root.argumentRef !== ""
+      label: I18n.tr("Argument")
+
+      RefEntry {
+        kind: root.argumentRef
+        value: root.bind.argument ?? ""
+        onCommitted: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
+        Layout.fillWidth: true
+        Layout.preferredHeight: Widget.height
+      }
     }
 
-    BindTextField {
-      id: argumentText
-      field: "argument"
-      visible: root.needed && root.argumentOptions === null && root.argumentRef === ""
-      placeholderText: {
-        switch (KeybindManager.argumentKind(root.bind.action)) {
-        case "resize":
-          return I18n.tr("Step, e.g. 50 0");
-        case "duration":
-          return I18n.tr("Length, e.g. 10m or 1:30");
-        case "raw":
-          return {
-            "sway": I18n.tr("Command, e.g. splitv"),
-            "niri": I18n.tr("Action, e.g. focus-column-first")
-          }[root.bind.compositor] ?? I18n.tr("Dispatcher, e.g. hl.dsp.layout(\"swapsplit\")");
+    FieldRow {
+      level: 1
+      shown: root.needed && root.argumentOptions === null && root.argumentRef === ""
+      label: I18n.tr("Argument")
+
+      BindTextField {
+        id: argumentText
+        field: "argument"
+        placeholderText: {
+          switch (KeybindManager.argumentKind(root.bind.action)) {
+          case "resize":
+            return I18n.tr("Step, e.g. 50 0");
+          case "duration":
+            return I18n.tr("Length, e.g. 10m or 1:30");
+          case "raw":
+            return {
+              "sway": I18n.tr("Command, e.g. splitv"),
+              "niri": I18n.tr("Action, e.g. focus-column-first")
+            }[root.bind.compositor] ?? I18n.tr("Dispatcher, e.g. hl.dsp.layout(\"swapsplit\")");
+          }
+          return root.bind.action === "exec" ? I18n.tr("Command") : I18n.tr("Search text");
         }
-        return root.bind.action === "exec" ? I18n.tr("Command") : I18n.tr("Search text");
+        Layout.fillWidth: true
+        Layout.preferredHeight: Widget.height
       }
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
     }
 
     // The call: toggle, open or close
-    SchemaComboBox {
-      visible: root.callOptions !== null
-      // I18n.tr("Does")
-      label: "Does"
-      options: root.callOptions ?? []
-      optionLabels: KeybindManager.callLabels(root.bind.action)
-      currentValue: root.bind.call ?? "toggle"
-      onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "call", value)
-      Layout.fillWidth: true
-    }
-  }
+    FormRow {
+      level: 1
+      shown: root.callOptions !== null
+      bodyHeight: callCombo.implicitHeight
 
-  FieldGroup {
-    title: I18n.tr("Label")
-
-    RowLayout {
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
-
-      // The section the action files it under, unless the label names its
-      // own ("Section: Label")
-      StyledLabel {
-        visible: !BindActions.hasOwnSection(label.input.text)
-        text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
-        role: "caption"
-        tone: "faint"
-      }
-
-      BindTextField {
-        id: label
-        field: "description"
-        Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height
-        placeholderText: BindActions.defaultLabel(KeybindManager.actionTable, root.bind) || I18n.tr("Label")
+      SchemaComboBox {
+        id: callCombo
+        width: parent.width
+        // I18n.tr("Does")
+        label: "Does"
+        options: root.callOptions ?? []
+        optionLabels: KeybindManager.callLabels(root.bind.action)
+        currentValue: root.bind.call ?? "toggle"
+        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "call", value)
       }
     }
 
-    StyledText {
-      text: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-      Layout.fillWidth: true
-    }
-  }
+    FieldRow {
+      label: I18n.tr("Label")
+      description: I18n.tr("Empty uses the action's name. \"Section: Label\" files it under a section of its own.")
 
-  FieldGroup {
-    title: I18n.tr("When it fires")
-
-    Repeater {
-      // [flag, title, description, the capability it needs or ""]
-      model: [["repeating", I18n.tr("Repeat while held"), I18n.tr("Fires again and again while the key stays down, as volume keys do."), ""], ["locked", I18n.tr("Works while locked"), I18n.tr("Also fires on the lock screen."), ""], ["release", I18n.tr("Fire on release"), I18n.tr("Fires when the key is let go rather than pressed."), "releaseBinds"]]
-
-      delegate: RowLayout {
-        id: flag
-        required property var modelData
-        readonly property bool on: root.bind[flag.modelData[0]] === true
-        // Greyed out, saying why, where the compositor can't do it; a flag
-        // already on (a bind merged from another compositor) can still be
-        // turned off
-        readonly property bool allowed: flag.modelData[3] === "" || CompositorManager.supports[flag.modelData[3]] === true
-        enabled: flag.allowed || flag.on
-        opacity: flag.allowed ? 1 : Style.opacityDisabled
+      RowLayout {
         Layout.fillWidth: true
-        spacing: Widget.spacing
+        spacing: Widget.spacing / 2
 
-        ColumnLayout {
+        // The section the action files it under, unless the label names its
+        // own ("Section: Label")
+        StyledLabel {
+          visible: !BindActions.hasOwnSection(label.text)
+          text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
+          role: "caption"
+          tone: "faint"
+        }
+
+        BindTextField {
+          id: label
+          field: "description"
           Layout.fillWidth: true
-          spacing: 0
-
-          StyledText {
-            overflow: "wrap"
-            text: flag.modelData[1]
-            Layout.fillWidth: true
-          }
-
-          StyledText {
-            text: flag.allowed ? flag.modelData[2] : CompositorManager.unsupportedNote(flag.modelData[3])
-            role: "caption"
-            tone: "muted"
-            overflow: "wrap"
-            Layout.fillWidth: true
-          }
-        }
-
-        StyledSwitch {
-          checkable: false
-          checked: flag.on
-          onClicked: KeybindManager.editor.setField(root.bindIndex, flag.modelData[0], !flag.on)
+          Layout.preferredHeight: Widget.height
+          placeholderText: BindActions.defaultLabel(KeybindManager.actionTable, root.bind) || I18n.tr("Label")
         }
       }
     }
+  }
+
+  BindFlags {
+    bind: root.bind
+    onFlagSet: (flag, value) => KeybindManager.editor.setField(root.bindIndex, flag, value)
   }
 
   // Its "Only when": bound only while every part set holds (a raw
   // command's compositor is its own, above)
   FieldGroup {
     title: I18n.tr("Only when")
+    description: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
 
     // The compositors: a chip each, any of them, none for every one
     Repeater {
       model: KeybindManager.conditionFields.filter(part => part.multi)
 
-      delegate: RowLayout {
+      delegate: FieldRow {
         id: part
         required property var modelData
         readonly property var chosen: root.bind[part.modelData.field] ?? []
-        visible: root.bind.action !== "raw"
-        spacing: Widget.spacing
-        Layout.fillWidth: true
+        shown: root.bind.action !== "raw"
+        label: part.modelData.title
+        shortControl: true
 
-        StyledLabel {
-          text: part.modelData.title
+        RowLayout {
           Layout.fillWidth: true
-        }
+          spacing: Widget.spacing
 
-        Repeater {
-          model: part.modelData.options
+          Item {
+            Layout.fillWidth: true
+          }
 
-          delegate: SegmentButton {
-            id: chip
-            required property string modelData
-            readonly property bool selected: part.chosen.includes(chip.modelData)
-            text: part.modelData.labels[chip.modelData] ?? chip.modelData
-            active: chip.selected
-            onClicked: {
-              const next = chip.selected ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
-              KeybindManager.editor.setField(root.bindIndex, part.modelData.field, part.modelData.options.filter(v => next.includes(v)));
+          Repeater {
+            model: part.modelData.options
+
+            delegate: ToggleChip {
+              id: chip
+              required property string modelData
+              checked: part.chosen.includes(chip.modelData)
+              text: part.modelData.labels[chip.modelData] ?? chip.modelData
+              onToggled: {
+                const next = chip.checked ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
+                KeybindManager.editor.setField(root.bindIndex, part.modelData.field, part.modelData.options.filter(v => next.includes(v)));
+              }
             }
           }
         }
@@ -278,23 +259,21 @@ ColumnLayout {
     Repeater {
       model: KeybindManager.conditionFields.filter(part => !part.multi)
 
-      delegate: SchemaComboBox {
+      delegate: FormRow {
+        id: other
         required property var modelData
-        label: modelData.title
-        options: modelData.options
-        optionLabels: modelData.labels
-        currentValue: root.bind[modelData.field] ?? ""
-        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, modelData.field, value)
-        Layout.fillWidth: true
-      }
-    }
+        bodyHeight: otherCombo.implicitHeight
 
-    StyledText {
-      text: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
-      role: "caption"
-      tone: "muted"
-      overflow: "wrap"
-      Layout.fillWidth: true
+        SchemaComboBox {
+          id: otherCombo
+          width: parent.width
+          label: other.modelData.title
+          options: other.modelData.options
+          optionLabels: other.modelData.labels
+          currentValue: root.bind[other.modelData.field] ?? ""
+          onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, other.modelData.field, value)
+        }
+      }
     }
   }
 
@@ -307,36 +286,15 @@ ColumnLayout {
 
   // A text field on one of the bind's fields: it keeps what's being typed,
   // else follows the bind, and commits on Enter, focus loss or the page's
-  // Save (EditsManager.holdTyping shows Save while typed)
-  component BindTextField: StyledTextEntry {
+  // Save (CommitEntry; EditsManager.holdTyping shows Save while typed).
+  // Torn down it only lets go: a move, removal or undo has shifted the index
+  // by then (a selection change commits first: KeybindEditor.selectBind)
+  component BindTextField: CommitEntry {
     id: entry
     required property string field
-    readonly property string saved: root.bind[entry.field] ?? ""
 
-    Component.onCompleted: entry.input.text = entry.saved
-    // Released, not committed: a move, removal or undo has shifted the
-    // index by the time the inspector goes (a selection change commits
-    // first: KeybindEditor.selectBind)
-    Component.onDestruction: EditsManager.releaseTyping(entry)
-    onSavedChanged: {
-      if (!entry.typed)
-        entry.input.text = entry.saved;
-    }
-    onTextEdited: EditsManager.holdTyping(entry, entry.Window.window)
-    input.onEditingFinished: entry.commitTyped()
-
-    function commitTyped() {
-      if (entry.typed)
-        KeybindManager.editor.setField(root.bindIndex, entry.field, entry.input.text);
-      // The text stays: the bind follows it a tick later (ConfigDraft.changed)
-      entry.typed = false;
-      EditsManager.releaseTyping(entry);
-    }
-
-    function discardTyped() {
-      entry.typed = false;
-      entry.input.text = entry.saved;
-      EditsManager.releaseTyping(entry);
-    }
+    value: root.bind[entry.field] ?? ""
+    commitOnDestroy: false
+    onCommitted: text => KeybindManager.editor.setField(root.bindIndex, entry.field, text)
   }
 }

@@ -5,6 +5,8 @@ import qs.config
 import qs.services.ui
 import qs.services.system
 import qs.components.reusable
+import qs.components.forms
+import qs.components.views.base
 import qs.components.methods
 
 // Settings page, General (a category card, wide): what axiom changed
@@ -23,21 +25,6 @@ FoldingCard {
   property string foldKey: "General:OutsideChanges"
 
   readonly property var groups: Footprint.groups(FootprintManager.rows)
-  // Headers and rows in one list, for the ListView
-  readonly property var entries: {
-    let out = [];
-    for (const group of root.groups) {
-      out.push({
-        "kind": "header",
-        "owner": group.owner
-      });
-      out = out.concat(group.rows.map(row => ({
-            "kind": "row",
-            "row": row
-          })));
-    }
-    return out;
-  }
   // id of the row (or "all") waiting for its confirmation
   property string confirming: ""
   // The uninstall's confirm step is open
@@ -77,45 +64,35 @@ FoldingCard {
 
   Component.onCompleted: FootprintManager.refresh()
 
-  StyledText {
+  StatusLine {
     text: I18n.tr("Files and settings axiom changed outside its own folders. Undo takes out only axiom's own change.")
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
+  ConfirmLine {
+    visible: FootprintManager.count > 0 && root.confirming === "all"
+    question: I18n.tr("Undo all skips the system's own choices and what axiom only inferred. Undo all?")
+    keepText: I18n.tr("Cancel")
+    confirmText: I18n.tr("Undo all")
+    onKept: root.confirming = ""
+    onConfirmed: {
+      root.confirming = "";
+      FootprintManager.undoAll();
+    }
+  }
+
   RowLayout {
-    visible: FootprintManager.count > 0
+    visible: FootprintManager.count > 0 && root.confirming !== "all"
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    StyledText {
-      visible: root.confirming === "all"
-      text: I18n.tr("Undo all skips the system's own choices and what axiom only inferred. Undo all?")
-      overflow: "wrap"
-      Layout.fillWidth: true
-    }
-
     Item {
-      visible: root.confirming !== "all"
       Layout.fillWidth: true
-    }
-
-    StyledTextButton {
-      visible: root.confirming === "all"
-      text: I18n.tr("Cancel")
-      onClicked: root.confirming = ""
     }
 
     StyledTextButton {
       text: I18n.tr("Undo all")
-      onClicked: {
-        if (root.confirming !== "all") {
-          root.confirming = "all";
-          return;
-        }
-        root.confirming = "";
-        FootprintManager.undoAll();
-      }
+      onClicked: root.confirming = "all"
     }
   }
 
@@ -126,29 +103,22 @@ FoldingCard {
     implicitHeight: contentHeight
     interactive: false
     spacing: Widget.spacing
-    model: root.entries
-    delegate: Loader {
-      id: entry
+    model: root.groups
+    delegate: ListSection {
+      id: section
       required property var modelData
       width: list.width
-      sourceComponent: entry.modelData.kind === "header" ? headerLine : rowLine
+      title: root.groupTitle(section.modelData.owner)
 
-      Component {
-        id: headerLine
-        StyledText {
-          text: root.groupTitle(entry.modelData.owner)
-          role: "label"
-          tone: "muted"
-        }
-      }
+      Repeater {
+        model: section.modelData.rows
 
-      Component {
-        id: rowLine
-        ColumnLayout {
+        delegate: ColumnLayout {
           id: line
-          readonly property var row: entry.modelData.row
+          required property var modelData
+          readonly property var row: line.modelData
           readonly property string note: root.outcomeText(line.row.id)
-          width: list.width
+          Layout.fillWidth: true
           spacing: Widget.spacing / 2
 
           RowLayout {
@@ -212,26 +182,14 @@ FoldingCard {
             active: root.confirming === line.row.id
             visible: active
             Layout.fillWidth: true
-            sourceComponent: RowLayout {
-              spacing: Widget.spacing
-
-              StyledText {
-                text: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
-                overflow: "wrap"
-                Layout.fillWidth: true
-              }
-
-              StyledTextButton {
-                text: I18n.tr("Cancel")
-                onClicked: root.confirming = ""
-              }
-
-              StyledTextButton {
-                text: I18n.tr("Undo")
-                onClicked: {
-                  root.confirming = "";
-                  FootprintManager.undo([line.row.id], true);
-                }
+            sourceComponent: ConfirmLine {
+              question: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
+              keepText: I18n.tr("Cancel")
+              confirmText: I18n.tr("Undo")
+              onKept: root.confirming = ""
+              onConfirmed: {
+                root.confirming = "";
+                FootprintManager.undo([line.row.id], true);
               }
             }
           }
@@ -240,10 +198,9 @@ FoldingCard {
             active: line.note !== ""
             visible: active
             Layout.fillWidth: true
-            sourceComponent: StyledText {
+            sourceComponent: StatusLine {
               text: line.note
               tone: "warning"
-              overflow: "wrap"
             }
           }
         }
