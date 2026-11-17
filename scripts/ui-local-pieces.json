@@ -7,6 +7,12 @@
       ],
       "reason": "the notices strip is one sunken band of merge, issue and undo lines, not a card or an item box"
     },
+    "qml/components/views/Settings/ScreenSpotPicker.qml": {
+      "rules": [
+        "StateLayer"
+      ],
+      "reason": "special drawing: a round preset dot on a drag pad, hover tints it like a button"
+    },
     "qml/components/views/Monitors/MonitorCanvas.qml": {
       "rules": [
         "StateLayer"

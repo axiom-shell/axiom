@@ -142,6 +142,9 @@ TestCase {
       "highest": "surfaceHighest",
       "accent": "accent",
       "accentContainer": "accentContainer",
+      "accentTint": "accentTint",
+      "warningTint": "warningTint",
+      "errorTint": "errorTint",
       "success": "success",
       "successContainer": "successContainer",
       "warning": "warning",
@@ -202,7 +205,7 @@ TestCase {
       rows.push([`ink.${tone}.divider`, root.toneFills[tone], 1.12, "text"]);
     }
     const dark = o.dark;
-    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["segment.thumb", "segment.track", 1.25, "text"], ["borderSubtle", "surfacePage", 1.12, "text"]);
+    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["borderSubtle", "surfacePage", 1.12, "text"], ["accentContainer", "surfacePage", 1.25, "text"], ["accentContainer", "surface", 1.25, "text"]);
     for (const b of root.neutral)
       rows.push(["borderStrong", b, 1.30, "text"]);
     rows.push(["text", "veil@grey", 4.5, "text"], ["text", "floor@pole:surfacePage", 3.0, "text"], ["text", "floor@pole:surface", 3.0, "text"]);
@@ -214,10 +217,6 @@ TestCase {
 
   // The colour a pair row names
   function value(o, key) {
-    if (key.indexOf("segment.") === 0) {
-      const tone = key === "segment.thumb" ? o.segmentThumb : o.segmentTrack;
-      return o[root.toneFills[tone]];
-    }
     if (key.indexOf("ink.") === 0) {
       const [, tone, k] = key.split(".");
       return o.ink[tone][k];
@@ -320,7 +319,7 @@ TestCase {
           failures.push(`${theme.name}: ${front} on ${back} = ${ratio.toFixed(2)} (min ${min})`);
       }
     }
-    compare(rows, 223 + 2, "the static rows (223) and the two unknown-tone shade rows");
+    compare(rows, 245 + 2, "the static rows (245) and the two unknown-tone shade rows");
     compare(failures, [], `${failures.length} of ${checked} pairs fail`);
   }
 
@@ -366,6 +365,36 @@ TestCase {
     }
   }
 
+  // The five key tones (the keyboard map's sources) are pairwise at least
+  // 0.06 apart in OKLab on every theme the pair sweep covers
+  function test_key_tints_apart() {
+    const failures = [];
+    let checked = 0;
+    for (const theme of allThemes()) {
+      const o = derived(theme.data);
+      const tones = {
+        "sunken": o.surfaceSunken,
+        "highest": o.surfaceHighest,
+        "accentTint": o.accentTint,
+        "warningTint": o.warningTint,
+        "errorTint": o.errorTint
+      };
+      const names = Object.keys(tones);
+      for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
+          const a = oklab(root.q(tones[names[i]]));
+          const b = oklab(root.q(tones[names[j]]));
+          const d = Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+          checked++;
+          if (d < 0.06)
+            failures.push(`${theme.name}: ${names[i]} / ${names[j]} = ${d.toFixed(3)}`);
+        }
+      }
+    }
+    verify(checked > 0);
+    compare(failures, [], `${failures.length} of ${checked} key-tone pairs closer than 0.06`);
+  }
+
   function test_variants() {
     for (const theme of allThemes()) {
       const o = derived(theme.data);
@@ -382,14 +411,13 @@ TestCase {
         verify(lum(o.surfaceSunken) < lum(o.surface), `${theme.name}: a light sunken tone darker than the card`);
         verify(con(o.surfaceHighest, o.surface) >= 1.45, `${theme.name}: highest vs surface`);
       }
-      compare(o.alphaHover, o.dark ? 0.08 : 0.06, theme.name);
-      compare(o.alphaPressed, o.dark ? 0.14 : 0.10, theme.name);
-      compare(o.alphaDrag, o.dark ? 0.18 : 0.14, theme.name);
+      compare(o.alphaHover, o.dark ? 0.08 : 0.10, theme.name);
+      compare(o.alphaPressed, o.dark ? 0.14 : 0.17, theme.name);
+      compare(o.alphaDrag, o.dark ? 0.18 : 0.23, theme.name);
       compare(o.alphaScrim, o.dark ? 0.45 : 0.32, theme.name);
       compare(o.alphaShadowSoft, o.dark ? 0.30 : 0.16, theme.name);
       compare(o.alphaWash, o.dark ? 0.16 : 0.14, theme.name);
       compare(o.segmentTrack, o.dark ? "sunken" : "highest", theme.name);
-      compare(o.segmentThumb, o.dark ? "highest" : "surface", theme.name);
     }
   }
 

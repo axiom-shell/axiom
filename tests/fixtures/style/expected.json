@@ -241,8 +241,8 @@
         "textAccent": "#1a59d5",
         "accent": "#1e66f5",
         "onAccent": "#ffffff",
-        "accentContainer": "#c5d3ef",
-        "onAccentContainer": "#3c579a",
+        "accentContainer": "#b5c9f0",
+        "onAccentContainer": "#385190",
         "accentAlt": "#8839ef",
         "success": "#398f26",
         "successText": "#2d701e",
@@ -282,9 +282,9 @@
         "#d20f39"
       ],
       "translucent": {
-        "stateHover": "#4c4f690f",
-        "statePressed": "#4c4f691a",
-        "stateDrag": "#4c4f6924",
+        "stateHover": "#4c4f691a",
+        "statePressed": "#4c4f692b",
+        "stateDrag": "#4c4f693b",
         "stateRest": "#4c4f6900",
         "stateOnAccentHover": "#ffffff1f",
         "stateOnAccentPressed": "#ffffff33",
@@ -296,9 +296,9 @@
         "errorWash": "#d20f3924"
       },
       "alphas": {
-        "alphaHover": 0.06,
-        "alphaPressed": 0.1,
-        "alphaDrag": 0.14,
+        "alphaHover": 0.1,
+        "alphaPressed": 0.17,
+        "alphaDrag": 0.23,
         "alphaOnAccentHover": 0.12,
         "alphaOnAccentPressed": 0.2,
         "alphaScrim": 0.32,
@@ -360,17 +360,17 @@
           "faint": "#bcd1fc",
           "accent": "#ffffff",
           "icon": "#ffffff",
-          "graphic": "#ffffff",
+          "graphic": "#eff1f5",
           "divider": "#3978f6"
         },
         "accentContainer": {
-          "text": "#3c579a",
-          "muted": "#485a85",
-          "faint": "#64759e",
-          "accent": "#3c579a",
-          "icon": "#3c579a",
-          "graphic": "#3c579a",
-          "divider": "#b5c4e5"
+          "text": "#385190",
+          "muted": "#41537d",
+          "faint": "#5b6e98",
+          "accent": "#385190",
+          "icon": "#385190",
+          "graphic": "#385190",
+          "divider": "#a6bae4"
         },
         "success": {
           "text": "#000000",
@@ -378,7 +378,7 @@
           "faint": "#112b0c",
           "accent": "#000000",
           "icon": "#000000",
-          "graphic": "#000000",
+          "graphic": "#eff1f5",
           "divider": "#327e22"
         },
         "successContainer": {
@@ -396,7 +396,7 @@
           "faint": "#342107",
           "accent": "#000000",
           "icon": "#000000",
-          "graphic": "#000000",
+          "graphic": "#eff1f5",
           "divider": "#9a6214"
         },
         "warningContainer": {
@@ -432,7 +432,7 @@
           "faint": "#072a2c",
           "accent": "#000000",
           "icon": "#000000",
-          "graphic": "#000000",
+          "graphic": "#eff1f5",
           "divider": "#137a80"
         },
         "infoContainer": {

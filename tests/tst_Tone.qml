@@ -175,4 +175,29 @@ TestCase {
     for (const b of backs)
       verify(root.readsAt("#1e1e2e", "#cdd6f4", b, both, 4.5), `reaches on ${b}`);
   }
+
+  function test_deltaRgb() {
+    compare(Tone.deltaRgb([0.2, 0.4, 0.6], [0.2, 0.4, 0.6]), 0);
+    // black to white spans 1 in OKLab's lightness
+    verify(Math.abs(Tone.deltaRgb([0, 0, 0], [1, 1, 1]) - 1) < 1e-3, `${Tone.deltaRgb([0, 0, 0], [1, 1, 1])}`);
+    const lab = Tone.oklabRgb([1, 1, 1]);
+    verify(Math.abs(lab[0] - 1) < 1e-3 && Math.abs(lab[1]) < 1e-3 && Math.abs(lab[2]) < 1e-3, `${lab}`);
+  }
+
+  function test_distinctRgb() {
+    const base = [0.9, 0.9, 0.9];
+    const hue = [0.1, 0.4, 0.9];
+    // nothing to keep apart from: the first mix
+    const first = Tone.distinctRgb([], base, hue, 0.2, 0.06);
+    verify(Tone.deltaRgb(first, Tone.mixRgb(base, hue, 0.2)) < 1e-9);
+    // keeps apart, with the least mix that does
+    const others = [Tone.mixRgb(base, hue, 0.2), Tone.mixRgb(base, hue, 0.3)];
+    const c = Tone.distinctRgb(others, base, hue, 0.2, 0.06);
+    for (const o of others)
+      verify(Tone.deltaRgb(c, o) >= 0.06, `${Tone.deltaRgb(c, o)}`);
+    // a flat card: the hue itself can't be told from it, so a pole step
+    const flat = [0.5, 0.5, 0.5];
+    const poled = Tone.distinctRgb([flat], flat, [0.5, 0.5, 0.5], 0.24, 0.06);
+    verify(Tone.deltaRgb(poled, flat) >= 0.06, `${Tone.deltaRgb(poled, flat)}`);
+  }
 }

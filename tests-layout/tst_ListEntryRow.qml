@@ -38,6 +38,70 @@ TestCase {
     }
   }
 
+  Component {
+    id: selectedComp
+
+    ListEntryRow {
+      id: entry
+      width: 400
+      height: Style.listRowHeight
+      icon: "bar_chart"
+      label: "Row"
+      selected: true
+      changed: true
+
+      leading: [
+        StyledSwitch {
+          checked: true
+        }
+      ]
+
+      RowAction {
+        objectName: "litAction"
+        row: entry
+        iconText: "visibility"
+        lit: true
+      }
+
+      RowAction {
+        objectName: "plainAction"
+        row: entry
+        iconText: "tune"
+      }
+    }
+  }
+
+  function findAllBy(item, pred, out) {
+    if (pred(item))
+      out.push(item);
+    for (const c of item.children)
+      findAllBy(c, pred, out);
+    return out;
+  }
+
+  // A selected row is a solid accent: its inks, actions, dot and switch read on it
+  function test_selected_row_reads_on_the_accent() {
+    harness.configure({});
+    const row = createTemporaryObject(selectedComp, root);
+    waitForRendering(row);
+    verify(row.inkScope === Style.inkAccent, "the row's ink is the accent's");
+    const lit = findByName(row, "litAction");
+    const plain = findByName(row, "plainAction");
+    compare(lit.kind, "text", "a lit action isn't primary on the accent");
+    const layer = findAllBy(plain, it => it.onAccent !== undefined && it.hovered !== undefined, [])[0];
+    verify(layer !== undefined && layer.onAccent, "a plain action's state layer is the on-accent one");
+    const dot = findAllBy(row, it => it.tone !== undefined && it.shown !== undefined, [])[0];
+    verify(dot !== undefined);
+    verify(Qt.colorEqual(dot.color, Style.inkAccent.accent), "the unsaved dot reads on the accent");
+    const toggle = findAllBy(row, it => it.checked !== undefined && it._scope !== undefined, [])[0];
+    verify(toggle !== undefined, "the switch");
+    compare(toggle.background.border.width, Style.hairline, "the on track is outlined on the accent");
+    row.selected = false;
+    waitForRendering(row);
+    compare(lit.kind, "primary", "a lit action is primary off the accent");
+    compare(toggle.background.border.width, 0, "no outline off the accent");
+  }
+
   function buttons(item, out) {
     if (item.iconText !== undefined && item.visible)
       out.push(item);

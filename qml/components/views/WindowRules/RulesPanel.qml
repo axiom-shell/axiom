@@ -82,7 +82,7 @@ Item {
                 visible: open > 0
                 text: I18n.tr("{0} open", open)
                 role: "caption"
-                textColor: ruleRow.selected ? Style.inkAccentContainer.muted : Style.textMuted
+                textColor: ruleRow.inkMuted
               }
             ]
 

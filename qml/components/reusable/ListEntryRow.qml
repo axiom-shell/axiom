@@ -5,10 +5,10 @@ import qs.config
 import qs.components.methods
 
 // One entry of an editor's list (bars, overlay pages, edge menus): an
-// icon (or, with `image`, a picture: an app's icon) and a name, filled with the accent container while selected, then
+// icon (or, with `image`, a picture: an app's icon) and a name, filled with the accent while selected, then
 // `badges`, the unsaved-edits dot, an `issue` mark and the row's actions
-// (RowActions, as children), which show while the row is hovered, focused or
-// selected. `leading` is a slot before the icon (a switch, keycaps) and a
+// (RowActions, as children), which are dimmed at rest and show fully while the row is hovered, focused
+// or selected. `leading` is a slot before the icon (a switch, keycaps) and a
 // `subtitle` follows the name on its line. The standard actions come after
 // the row's own: Duplicate while `canDuplicate` (`duplicated`) and Remove
 // while `canRemove` (`removeRequested`, the same as the Delete key), each a
@@ -57,10 +57,15 @@ Rectangle {
   // A HoverHandler, not the drag area's containsMouse, so the row stays
   // hovered while the pointer is on one of its actions
   readonly property bool hovered: hover.hovered
+  // What its text and icons inherit: the accent's ink while selected, else the host's
+  readonly property var _outer: InkHost.find(root.parent)
+  readonly property var inkScope: root.selected ? Style.inkAccent : (root._outer ? root._outer.inkScope : null)
+  readonly property string tone: root.selected ? "accent" : (root._outer && root._outer.tone ? root._outer.tone : "surface")
+  readonly property real drawnZoom: TextRender.zoomAt(root.parent)
   // The colour of text and icons on the row
-  readonly property color ink: root.selected ? Style.inkAccentContainer.text : root.dimmed ? Style.textFaint : Style.text
+  readonly property color ink: root.selected ? Style.inkAccent.text : root.dimmed ? Style.textFaint : Style.text
   // The colour of a sub-line on the row
-  readonly property color inkMuted: root.selected ? Style.inkAccentContainer.muted : Style.textMuted
+  readonly property color inkMuted: root.selected ? Style.inkAccent.muted : Style.textMuted
   // Whether the row's actions show: hovered, focused or selected, or one of
   // them focused
   readonly property bool revealed: root.hovered || root.selected || root.activeFocus || root._actionFocused
@@ -162,7 +167,7 @@ Rectangle {
 
   Layout.fillWidth: true
   Layout.preferredHeight: Style.listRowHeight
-  color: root.selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
+  color: root.selected ? Style.accent : Tone.cleared(Style.accent) // style-exempt: the selected fill at no alpha, so deselecting doesn't fade through black
   radius: Style.radius
 
   ColorGlide on color {
@@ -172,6 +177,7 @@ Rectangle {
   StateLayer {
     hovered: root.hovered
     dragged: area.dragged
+    onAccent: root.selected
   }
 
   HoverHandler {
@@ -213,7 +219,7 @@ Rectangle {
     StyledIcon {
       visible: root.image.toString() === "" && root.icon !== ""
       text: root.icon
-      textColor: root.selected ? Style.inkAccentContainer.icon : root.dimmed ? Style.textFaint : Style.textAccent
+      textColor: root.selected ? Style.inkAccent.icon : root.dimmed ? Style.textFaint : Style.textAccent
       Layout.preferredWidth: Style.iconSm * 1.5
     }
 
@@ -249,7 +255,7 @@ Rectangle {
 
     UnsavedDot {
       shown: root.changed
-      onAccent: root.selected
+      tone: root.selected ? "accent" : ""
     }
 
     // Built only while there is an issue
@@ -262,7 +268,7 @@ Rectangle {
         level: root.issue
         tip: root.issueTip
         size: "sm"
-        textColor: root.selected ? Style.inkAccentContainer.text : Style.toneColor(issueIcon.tone)
+        textColor: root.selected ? Style.inkAccent.text : Style.toneColor(issueIcon.tone)
       }
     }
 

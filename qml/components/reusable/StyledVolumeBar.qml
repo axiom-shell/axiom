@@ -84,6 +84,8 @@ Item {
 
       radius: Style.radius
       color: Style.surfaceSunken
+      border.width: Style.hairline
+      border.color: Style.borderStrong
 
       Rectangle {
         id: barFill

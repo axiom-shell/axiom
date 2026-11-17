@@ -21,6 +21,8 @@ Item {
   property string fillTone: "accent"
   property color litColor: Style.toneFill(root.fillTone)
   property color offColor: Style.surfaceSunken
+  // The unlit blocks carry a borderStrong hairline (the bar draws without)
+  property bool outlined: true
 
   readonly property int lit: Math.round(Math.max(0, Math.min(1, root.share)) * root.count)
   readonly property real cell: Math.max(0, ((root.vertical ? root.height : root.width) - root.gap * (root.count - 1)) / root.count)
@@ -40,7 +42,10 @@ Item {
         height: root.vertical ? root.cell : thick
         radius: root.round ? Math.min(width, height) / 2 : root.cornerRadius
         // A column fills from the bottom
-        color: (root.vertical ? root.count - 1 - index : index) < root.lit ? root.litColor : root.offColor
+        readonly property bool lit: (root.vertical ? root.count - 1 - index : index) < root.lit
+        color: lit ? root.litColor : root.offColor
+        border.width: !lit && root.outlined ? Style.hairline : 0
+        border.color: Style.borderStrong
 
         ColorGlide on color {}
       }

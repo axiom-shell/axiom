@@ -7,8 +7,8 @@ import qs.components.methods
 // A row of equal-width tabs (StyledTabButtons), one per label in `tabs`.
 // The owner keeps the current index: set `currentIndex`, and update it
 // from tabClicked. The current tab's highlight is the bar's own, sliding
-// from tab to tab: a 2 px accent underline under the current tab's label,
-// on a full-width baseline. `scrollable` keeps every label whole instead:
+// from tab to tab: a highest pill under the current tab and a 2 px accent
+// underline under its label, both sliding, on a full-width baseline. `scrollable` keeps every label whole instead:
 // the tabs take their own widths, packed at the start, in a row that
 // scrolls sideways, the current tab kept in view.
 Item {
@@ -76,6 +76,28 @@ Item {
     flickableDirection: Flickable.HorizontalFlick
     boundsBehavior: Flickable.StopAtBounds
     clip: root.scrollable
+
+    // The current tab's pill, in the content: it scrolls with its tab
+    Rectangle {
+      id: pill
+      objectName: "tabPill"
+      visible: root._current !== null
+      x: root._current ? row.x + root._current.x : 0
+      y: row.y
+      width: root._current ? root._current.width : 0
+      height: row.height
+      radius: Style.radiusInner
+      color: Style.fillHighest
+
+      Glide on x {
+        enabled: root._settled
+        duration: Appearance.animNormal
+      }
+      Glide on width {
+        enabled: root._settled
+        duration: Appearance.animNormal
+      }
+    }
 
     // The current tab's underline, in the content: it scrolls with its tab. x centres on the target width (_markWidth), never the gliding width, so the two glides never chase each other
     Rectangle {

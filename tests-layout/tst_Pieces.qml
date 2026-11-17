@@ -662,6 +662,10 @@ TestCase {
     const strip = bar.children.find(c => c.flickableDirection !== undefined);
     const underline = strip.contentItem.children.find(c => c.height === Widget.px(2) && c.visible);
     verify(underline !== undefined, "the underline shows");
+    const pill = strip.contentItem.children.find(c => c.objectName === "tabPill");
+    verify(pill !== undefined, "the pill shows");
+    tryCompare(pill, "x", tab.mapToItem(strip.contentItem, 0, 0).x);
+    compare(pill.width, tab.width);
     // under the current label, no wider than its cell
     const centre = underline.x + underline.width / 2;
     verify(Math.abs(centre - (tab.x + tab.width / 2)) <= 1, "centred under the current tab");
@@ -1510,7 +1514,7 @@ TestCase {
     harness.configure({});
     const track = createTemporaryObject(trackComp, root);
     waitForRendering(track);
-    const thumb = findAll(track, it => it.tone === Style.segmentThumbTone && it !== track)[0];
+    const thumb = findAll(track, it => it.tone === "accent" && it !== track)[0];
     verify(thumb !== undefined, "has a thumb");
     compare(thumb.width, Math.round(track._segment));
     tryCompare(thumb, "x", Math.round(track.inset));
@@ -1701,6 +1705,92 @@ TestCase {
       if (o === Qt.Horizontal)
         compare(bar.implicitWidth, Widget.px(160));
       compare(bar.implicitHeight, Widget.px(o === Qt.Vertical ? 160 : 48));
+    }
+    harness.configure({});
+  }
+
+  Component {
+    id: levelMeterComp
+
+    LevelMeter {
+      width: Widget.px(100)
+      height: Widget.px(10)
+      share: 0.5
+    }
+  }
+
+  Component {
+    id: segmentMeterComp
+
+    SegmentMeter {
+      width: Widget.px(100)
+      height: Widget.px(16)
+      count: 5
+      share: 0.4
+    }
+  }
+
+  Component {
+    id: meterRingComp
+
+    PercentageCircle {
+      width: Widget.px(80)
+      height: Widget.px(80)
+      percentage: 40
+    }
+  }
+
+  function test_meterTroughs_data() {
+    return [
+      {
+        tag: "dark",
+        theme: "catppuccin-mocha"
+      },
+      {
+        tag: "light",
+        theme: "catppuccin-latte"
+      }
+    ];
+  }
+
+  // A meter's trough is sunken with a borderStrong hairline, like a slider's; none where the bar draws it
+  function test_meterTroughs(data) {
+    harness.configure({
+      theme: data.theme
+    });
+    const level = createTemporaryObject(levelMeterComp, root);
+    verify(level);
+    let track = findAll(level, it => it.radius !== undefined && Qt.colorEqual(it.color, Style.surfaceSunken))[0];
+    verify(track, "a sunken trough");
+    compare(track.border.width, Style.hairline);
+    verify(Qt.colorEqual(track.border.color, Style.borderStrong));
+    level.outlined = false;
+    compare(track.border.width, 0);
+
+    const segments = createTemporaryObject(segmentMeterComp, root);
+    verify(segments);
+    const blocks = findAll(segments, it => it.lit !== undefined && it.border !== undefined);
+    compare(blocks.length, 5);
+    compare(blocks.filter(b => b.border.width === 0).length, 2);
+    compare(blocks.filter(b => b.border.width === Style.hairline).length, 3);
+    verify(Qt.colorEqual(blocks.find(b => !b.lit).border.color, Style.borderStrong));
+    segments.outlined = false;
+    compare(blocks.filter(b => b.border.width === 0).length, 5);
+
+    const ring = createTemporaryObject(meterRingComp, root);
+    verify(ring);
+    compare(ring._outlineWidth, Style.hairline);
+    verify(Qt.colorEqual(ring._outlineColor, Style.borderStrong));
+    ring.outlined = false;
+    compare(ring._outlineWidth, 0);
+
+    const bar = createTemporaryObject(volumeBarComp, root);
+    verify(bar);
+    for (const muted of [true, false]) {
+      bar.isMuted = muted;
+      const trough = findAll(bar, it => it.border !== undefined && it.radius !== undefined && Qt.colorEqual(it.color, Style.surfaceSunken))[0];
+      verify(trough, "a sunken trough, muted " + muted);
+      compare(trough.border.width, Style.hairline);
     }
     harness.configure({});
   }

@@ -15,11 +15,16 @@ Item {
   property color iconColor: Style.inkSunken.icon
   property color fillColor: Style.toneFill(root.fillTone)
   property color trackColor: Style.surfaceSunken
+  // The track carries a borderStrong hairline (the bar draws without)
+  property bool outlined: true
   // The stroke, as a share of the side, but never thinner than a slider's trough
   property real thickness: Math.max(Widget.px(4), side * 0.07)
   // Degrees the track spans, centred on the top
   property real sweep: 360
 
+  // What onPaint reads of the style, so a theme change repaints it
+  readonly property color _outlineColor: Style.borderStrong
+  readonly property real _outlineWidth: root.outlined ? Style.hairline : 0
   readonly property real side: Math.min(root.width, root.height)
 
   implicitWidth: Widget.px(120)
@@ -42,11 +47,21 @@ Item {
 
       const span = Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180;
       const start = -Math.PI / 2 - span / 2 + (root.sweep >= 360 ? span / 2 : 0);
+      const cap = root.sweep >= 360 ? "butt" : "round";
+      if (root._outlineWidth > 0 && root.thickness > 2 * root._outlineWidth) {
+        ctx.beginPath();
+        ctx.arc(centre, centre, radius, start, start + span, false);
+        ctx.lineCap = cap;
+        ctx.strokeStyle = root._outlineColor;
+        ctx.stroke();
+        ctx.lineWidth = root.thickness - 2 * root._outlineWidth;
+      }
       ctx.beginPath();
       ctx.arc(centre, centre, radius, start, start + span, false);
-      ctx.lineCap = root.sweep >= 360 ? "butt" : "round";
+      ctx.lineCap = cap;
       ctx.strokeStyle = root.trackColor;
       ctx.stroke();
+      ctx.lineWidth = root.thickness;
 
       // A round cap would draw a dot at zero
       const share = Math.max(0, Math.min(1, root.percentage / 100));
@@ -74,6 +89,12 @@ Item {
         ring.requestPaint();
       }
       function onSweepChanged() {
+        ring.requestPaint();
+      }
+      function on_OutlineColorChanged() {
+        ring.requestPaint();
+      }
+      function on_OutlineWidthChanged() {
         ring.requestPaint();
       }
     }

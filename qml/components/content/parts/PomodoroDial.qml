@@ -60,6 +60,8 @@ ColumnLayout {
         height: width
         radius: width / 2
         color: index < root.towardsLong ? Style.accent : Style.surfaceSunken
+        border.width: index < root.towardsLong ? 0 : Style.hairline
+        border.color: Style.borderStrong
       }
     }
   }

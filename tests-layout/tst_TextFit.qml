@@ -985,7 +985,7 @@ TestCase {
     });
     waitForRendering(bar);
     // (find walks a tab's content item twice)
-    const dots = find(bar, it => it.shown !== undefined && it.onAccent !== undefined, []).filter((d, i, all) => all.indexOf(d) === i);
+    const dots = find(bar, it => it.shown !== undefined && it.tone !== undefined, []).filter((d, i, all) => all.indexOf(d) === i);
     compare(dots.length, 4);
     tryVerify(() => dots.filter(dot => dot.visible).length === 1);
     const dot = dots.find(d => d.visible);
@@ -1041,7 +1041,7 @@ TestCase {
     compare(actions.length, 2);
     for (const action of actions) {
       verify(action.width > 0);
-      compare(action.opacity, 0);
+      compare(action.opacity, 0.35);
       const at = action.mapToItem(row, 0, 0);
       verify(at.x >= 0 && at.x + action.width <= row.width + 0.5, "action inside");
     }

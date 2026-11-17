@@ -117,7 +117,7 @@ ToolButton {
     StateLayer {
       hovered: root.hovered
       pressed: root.pressed
-      onAccent: root._onFill
+      onAccent: root._onFill || (root.kind === "text" && root._scope === Style.inkAccent)
     }
 
     FocusRing {

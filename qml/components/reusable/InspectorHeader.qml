@@ -56,7 +56,7 @@ ColumnLayout {
     Surface {
       Layout.preferredWidth: Widget.height + Widget.px(4)
       Layout.preferredHeight: Widget.height + Widget.px(4)
-      tone: root.filled ? "accentContainer" : "highest"
+      tone: root.filled ? "accent" : "highest"
 
       StyledIcon {
         anchors.centerIn: parent

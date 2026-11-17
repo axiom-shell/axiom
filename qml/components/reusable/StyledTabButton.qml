@@ -8,12 +8,12 @@ import qs.components.methods
 // One tab of a StyledTabBar: its label (and, while `marked`, an UnsavedDot
 // after it, inside the label's width so the underline covers both), a hover
 // layer and the keyboard focus ring, the bar drawing the current tab's
-// underline, which slides between its tabs
+// pill and underline, which slide between its tabs
 TabButton {
   id: root
 
   // -- Configurable Appearance --
-  property color activeColor: Style.toneOn(root._scope, "text")
+  property color activeColor: Style.inkHighest.accent
   property color inactiveColor: Style.toneOn(root._scope, "muted")
 
   // Unsaved edits under this tab
@@ -53,6 +53,7 @@ TabButton {
       anchors.verticalCenter: parent.verticalCenter
       x: tabText.x + tabText.width + Style.space1
       shown: root.marked
+      tone: root.checked ? "highest" : ""
     }
   }
 

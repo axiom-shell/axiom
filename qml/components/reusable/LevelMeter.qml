@@ -16,6 +16,8 @@ Item {
   // A role name: accent | success | warning | error | info
   property string fillTone: "accent"
   property color trackColor: Style.surfaceSunken
+  // The trough carries a borderStrong hairline, like StyledSlider's (the bar draws without)
+  property bool outlined: true
   property color fillColor: Style.toneFill(root.fillTone)
 
   readonly property real _share: Math.max(0, Math.min(1, root.share))
@@ -27,6 +29,8 @@ Item {
     height: root.vertical ? root.height : root.thickness
     radius: root.thickness / 2
     color: root.trackColor
+    border.width: root.outlined ? Style.hairline : 0
+    border.color: Style.borderStrong
 
     Rectangle {
       // Never shorter than its rounded ends while there's anything to show

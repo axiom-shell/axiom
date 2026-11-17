@@ -101,7 +101,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - A view with `visible: false` stays in config but isn't shown.
 
 ### Navigator
-- `OverlayPageNavigator`, pinned to the screen's bottom or top edge (`Overlay.navigator`), shows a tab per page with a sliding accent-container pill. It's pinned to the edge, not the box, since the box changes height with each page.
+- `OverlayPageNavigator`, pinned to the screen's bottom or top edge (`Overlay.navigator`), shows a tab per page with a sliding accent pill. It's pinned to the edge, not the box, since the box changes height with each page.
 - Tabs come from `OverlayPages.pages`: icon, name and `tool` from `OverlayConfig.viewIcon` / `viewLabel` / `isTool`, shared with the layouts editor.
 - Tool tabs follow a divider as icons only (named in a tooltip), even when current.
 - `Overlay.navigatorLabels`: `auto` drops the other tabs to icons when all names don't fit; `current` names only the current tab; `icons` names none.

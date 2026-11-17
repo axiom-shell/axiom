@@ -44,12 +44,14 @@ StyledTextButton {
   enabled: available
   // A segment in a row shares the row's one Tab stop
   tabStop: !root.inRow
+  // on the accent thumb: the on-fill hover tints
+  ownFill: root.inRow && root.active
   kind: root.inRow ? "text" : root.active ? "primary" : "tonal"
   labelRole: root.inRow && !root.active ? "body" : "label"
   // The else-branch matches StyledTextButton's default for primary/tonal; spelled out because a binding can't fall back to the base default.
   _contentColor: root.inRow ? root._rowInk : Style.toneOn(root.inkScope, "text")
 
   readonly property color _rowInk: {
-    return root.active ? Style.inkOf(Style.segmentThumbTone).text : Style.inkOf(Style.segmentTrackTone).muted;
+    return root.active ? Style.inkAccent.text : Style.inkOf(Style.segmentTrackTone).muted;
   }
 }

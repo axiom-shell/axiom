@@ -103,6 +103,7 @@ Item {
       }
 
       PercentageCircle {
+        outlined: false
         x: Math.round((ringBox.width - ringBox.side) / 2)
         y: Math.round(ringBox.centre - ringBox.side / 2)
         width: ringBox.side
@@ -119,6 +120,7 @@ Item {
   Component {
     id: fill
     LevelMeter {
+      outlined: false
       share: root.ratio
       vertical: root.vertical
       thickness: Math.max(3, root.fontSize * 0.35)
@@ -130,6 +132,7 @@ Item {
   Component {
     id: segments
     SegmentMeter {
+      outlined: false
       count: root.segmentCount
       share: root.ratio
       vertical: root.vertical

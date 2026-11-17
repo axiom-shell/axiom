@@ -22,13 +22,15 @@ Rectangle {
   // editor's live widgets)
   property bool showsLabel: true
   property alias dragLayer: area.dragLayer
+  // Selected, it's filled with the accent; off, the host draws its own tint (a live bar widget)
+  property bool solid: true
   // What dragging it carries; null: it can't be dragged
   property alias payload: area.payload
   default property alias trailing: row.data
 
   readonly property bool hovered: area.containsMouse
   // The colour of text and icons after the name
-  readonly property color ink: root.selected ? Style.inkAccentContainer.text : Style.inkHighest.text
+  readonly property color ink: root.selected ? (root.solid ? Style.inkAccent.text : Style.inkAccentContainer.text) : Style.inkHighest.text
 
   // A right click asks for a menu (`menuRequested`, at the point in it)
   property bool hasMenu: false
@@ -39,9 +41,9 @@ Rectangle {
   implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
   implicitHeight: Style.chipRowHeight
   radius: Style.radius
-  color: root.selected ? Style.accentContainer : Style.surfaceHighest
+  color: root.selected ? Style.accent : Style.surfaceHighest
   border.color: root.selected ? Style.accent : Style.borderStrong
-  border.width: Style.hairline
+  border.width: root.selected && !root.solid ? Style.focusWidth : Style.hairline
 
   ColorGlide on color {}
   ColorGlide on border.color {}
@@ -50,6 +52,7 @@ Rectangle {
     hovered: root.hovered || root.highlighted
     pressed: area.pressed
     dragged: area.dragged
+    onAccent: root.selected && root.solid
   }
 
   RowLayout {
@@ -62,7 +65,7 @@ Rectangle {
     StyledIcon {
       visible: root.showsLabel
       text: root.icon
-      textColor: root.selected ? Style.inkAccentContainer.icon : Style.inkHighest.graphic
+      textColor: root.selected ? Style.inkAccent.icon : Style.inkHighest.graphic
       Layout.preferredWidth: Style.iconSm * 1.3
     }
 

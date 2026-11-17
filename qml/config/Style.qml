@@ -42,6 +42,9 @@ QtObject {
   readonly property color textAccent: root._roles.textAccent
   readonly property color accent: root._roles.accent
   readonly property color accentContainer: root._roles.accentContainer
+  readonly property color accentTint: root._roles.accentTint
+  readonly property color warningTint: root._roles.warningTint
+  readonly property color errorTint: root._roles.errorTint
   readonly property color accentAlt: root._roles.accentAlt
   readonly property color success: root._roles.success
   readonly property color successText: root._roles.successText
@@ -76,9 +79,8 @@ QtObject {
   // 8 colours: accent, accentAlt, cyan, green, yellow, orange, magenta, red
   readonly property var series: root._roles.series
 
-  // the tones of a segmented control: its track and its (lighter) thumb
+  // the tone of a segmented control's track
   readonly property string segmentTrackTone: root._roles.segmentTrack
-  readonly property string segmentThumbTone: root._roles.segmentThumb
 
   // ---- inks: what reads on each tone ----
 
@@ -153,6 +155,36 @@ QtObject {
     icon: root._roles.ink.accentContainer.icon
     graphic: root._roles.ink.accentContainer.graphic
     divider: root._roles.ink.accentContainer.divider
+  }
+
+  readonly property StyleInk inkAccentTint: StyleInk {
+    text: root._roles.ink.accentTint.text
+    muted: root._roles.ink.accentTint.muted
+    faint: root._roles.ink.accentTint.faint
+    accent: root._roles.ink.accentTint.accent
+    icon: root._roles.ink.accentTint.icon
+    graphic: root._roles.ink.accentTint.graphic
+    divider: root._roles.ink.accentTint.divider
+  }
+
+  readonly property StyleInk inkWarningTint: StyleInk {
+    text: root._roles.ink.warningTint.text
+    muted: root._roles.ink.warningTint.muted
+    faint: root._roles.ink.warningTint.faint
+    accent: root._roles.ink.warningTint.accent
+    icon: root._roles.ink.warningTint.icon
+    graphic: root._roles.ink.warningTint.graphic
+    divider: root._roles.ink.warningTint.divider
+  }
+
+  readonly property StyleInk inkErrorTint: StyleInk {
+    text: root._roles.ink.errorTint.text
+    muted: root._roles.ink.errorTint.muted
+    faint: root._roles.ink.errorTint.faint
+    accent: root._roles.ink.errorTint.accent
+    icon: root._roles.ink.errorTint.icon
+    graphic: root._roles.ink.errorTint.graphic
+    divider: root._roles.ink.errorTint.divider
   }
 
   readonly property StyleInk inkSuccess: StyleInk {
@@ -252,6 +284,12 @@ QtObject {
       return root.inkAccent;
     case "accentContainer":
       return root.inkAccentContainer;
+    case "accentTint":
+      return root.inkAccentTint;
+    case "warningTint":
+      return root.inkWarningTint;
+    case "errorTint":
+      return root.inkErrorTint;
     case "success":
       return root.inkSuccess;
     case "successContainer":

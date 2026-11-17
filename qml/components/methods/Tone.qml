@@ -243,6 +243,54 @@ QtObject {
     return root.mixRgb(c, pole, high);
   }
 
+  // A colour as OKLab [L, a, b] (the perceptual space `deltaRgb` measures in)
+  function oklabRgb(c) {
+    const lin = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    const r = lin(c[0]);
+    const g = lin(c[1]);
+    const b = lin(c[2]);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+  }
+
+  // The distance of two colours in OKLab (Euclidean)
+  function deltaRgb(a, b) {
+    const x = root.oklabRgb(a);
+    const y = root.oklabRgb(b);
+    return Math.sqrt((x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) + (x[2] - y[2]) * (x[2] - y[2]));
+  }
+
+  // `base` mixed toward `hue` by the least t from `from` (in steps of 0.01)
+  // that is at least `min` (OKLab) from every colour of `others`. When no mix
+  // reaches it (a flat theme's card equal to its page), `hue` mixed toward
+  // black or white, whichever pole needs the smaller step; `hue` itself if
+  // nothing does.
+  function distinctRgb(others, base, hue, from, min) {
+    const apart = c => others.every(o => root.deltaRgb(c, o) >= min);
+    for (let t = from; t <= 1.0001; t += 0.01) {
+      const c = root.mixRgb(base, hue, Math.min(1, t));
+      if (apart(c))
+        return c;
+    }
+    let best = null;
+    let bestStep = 2;
+    for (const pole of [[0, 0, 0], [1, 1, 1]]) {
+      for (let s = 0.01; s <= 1.0001; s += 0.01) {
+        const c = root.mixRgb(hue, pole, Math.min(1, s));
+        if (apart(c)) {
+          if (s < bestStep) {
+            best = c;
+            bestStep = s;
+          }
+          break;
+        }
+      }
+    }
+    return best ? best : hue;
+  }
+
   // `step` on arrays
   function stepRgb(base, target, min, max, pole) {
     const lb = root.lumRgb(base);

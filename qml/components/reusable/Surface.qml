@@ -13,7 +13,8 @@ Rectangle {
 
   // -- Public API --
   // page | sunken | surface | raised | highest | accent | accentContainer |
-  // successContainer | warningContainer | errorContainer | infoContainer
+  // successContainer | warningContainer | errorContainer | infoContainer |
+  // accentTint | warningTint | errorTint (the keyboard map's source tints)
   // (success | warning | error | info: the solid status fills)
   property string tone: "surface"
   // A hairline: borderSubtle on page and surface, borderStrong on the rest
@@ -47,6 +48,12 @@ Rectangle {
       return Style.accent;
     case "accentContainer":
       return Style.accentContainer;
+    case "accentTint":
+      return Style.accentTint;
+    case "warningTint":
+      return Style.warningTint;
+    case "errorTint":
+      return Style.errorTint;
     case "success":
       return Style.success;
     case "successContainer":

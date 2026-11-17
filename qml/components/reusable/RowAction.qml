@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
-// A small flat button on a ListEntryRow, hidden until the row shows its
+// A small flat button on a ListEntryRow, dimmed until the row shows its
 // actions (hovered, focused or selected). `lit` keeps it shown in the
 // primary kind (the state it toggles is on); `danger` hovers in the error
 // container.
@@ -14,8 +14,8 @@ StyledIconButton {
   property bool danger: false
 
   size: Widget.compactHeight
-  kind: root.lit ? "primary" : root.danger ? "danger" : "text"
-  opacity: root.lit || root.row.revealed ? 1 : 0
+  kind: root.lit && !root.row.selected ? "primary" : root.danger ? "danger" : "text"
+  opacity: root.lit || root.row.revealed ? 1 : 0.35 // style-exempt: a live action dimmed at rest, not disabled (Style.opacityDisabled is for disabled)
 
   // A focused action handles Tab itself, so its row never sees it
   Keys.onTabPressed: root.row._tabFrom(root, true)
