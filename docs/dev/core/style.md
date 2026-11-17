@@ -20,7 +20,7 @@ The roles are computed by formulas of the theme's resolved semantic map (never b
 
 ### The roles
 The member list is `docs/dev/generated/api/Style.md`. The groups:
-- **Surfaces** (tonal layering): `surfacePage` (the theme's raw background: chrome touching the screen), `surface` (cards), `surfaceSunken` (fields, troughs, wells), `surfaceRaised` (dropdowns, tooltips), `surfaceHighest` (switch tracks, chips, tonal buttons). `surfaceSunken` lies between the page and the card in dark themes and is a step darker than the card in light themes.
+- **Surfaces** (tonal layering): `surfacePage` (the theme's raw background: chrome touching the screen), `surface` (cards), `surfaceSunken` (fields, troughs (slider and meter troughs carry a `borderStrong` hairline), wells), `surfaceRaised` (dropdowns, tooltips), `surfaceHighest` (switch tracks, chips, tonal buttons). `surfaceSunken` lies between the page and the card in dark themes and is a step darker than the card in light themes.
 - **Text**: `text`, `textMuted`, `textFaint`, `textDisabled`, `textAccent`.
 - **Accent and status**: `accent`, `accentAlt`, `success`, `warning`, `error`, `info`, each with `…Text`, `…Container`, `on…` and `on…Container`; `series` (8 colours for charts); `segmentTrackTone` / `segmentThumbTone` (a segmented control's chosen option is always the lighter of the pair).
 - **Lines**: `divider`, `borderSubtle`, `borderStrong`, `focusRing`, `rail`, `frameStroke` (the theme's raw foreground, for what joins the screen frame).

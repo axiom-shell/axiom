@@ -1705,6 +1705,92 @@ TestCase {
     harness.configure({});
   }
 
+  Component {
+    id: levelMeterComp
+
+    LevelMeter {
+      width: Widget.px(100)
+      height: Widget.px(10)
+      share: 0.5
+    }
+  }
+
+  Component {
+    id: segmentMeterComp
+
+    SegmentMeter {
+      width: Widget.px(100)
+      height: Widget.px(16)
+      count: 5
+      share: 0.4
+    }
+  }
+
+  Component {
+    id: meterRingComp
+
+    PercentageCircle {
+      width: Widget.px(80)
+      height: Widget.px(80)
+      percentage: 40
+    }
+  }
+
+  function test_meterTroughs_data() {
+    return [
+      {
+        tag: "dark",
+        theme: "catppuccin-mocha"
+      },
+      {
+        tag: "light",
+        theme: "catppuccin-latte"
+      }
+    ];
+  }
+
+  // A meter's trough is sunken with a borderStrong hairline, like a slider's; none where the bar draws it
+  function test_meterTroughs(data) {
+    harness.configure({
+      theme: data.theme
+    });
+    const level = createTemporaryObject(levelMeterComp, root);
+    verify(level);
+    let track = findAll(level, it => it.radius !== undefined && Qt.colorEqual(it.color, Style.surfaceSunken))[0];
+    verify(track, "a sunken trough");
+    compare(track.border.width, Style.hairline);
+    verify(Qt.colorEqual(track.border.color, Style.borderStrong));
+    level.outlined = false;
+    compare(track.border.width, 0);
+
+    const segments = createTemporaryObject(segmentMeterComp, root);
+    verify(segments);
+    const blocks = findAll(segments, it => it.lit !== undefined && it.border !== undefined);
+    compare(blocks.length, 5);
+    compare(blocks.filter(b => b.border.width === 0).length, 2);
+    compare(blocks.filter(b => b.border.width === Style.hairline).length, 3);
+    verify(Qt.colorEqual(blocks.find(b => !b.lit).border.color, Style.borderStrong));
+    segments.outlined = false;
+    compare(blocks.filter(b => b.border.width === 0).length, 5);
+
+    const ring = createTemporaryObject(meterRingComp, root);
+    verify(ring);
+    compare(ring._outlineWidth, Style.hairline);
+    verify(Qt.colorEqual(ring._outlineColor, Style.borderStrong));
+    ring.outlined = false;
+    compare(ring._outlineWidth, 0);
+
+    const bar = createTemporaryObject(volumeBarComp, root);
+    verify(bar);
+    for (const muted of [true, false]) {
+      bar.isMuted = muted;
+      const trough = findAll(bar, it => it.border !== undefined && it.radius !== undefined && Qt.colorEqual(it.color, Style.surfaceSunken))[0];
+      verify(trough, "a sunken trough, muted " + muted);
+      compare(trough.border.width, Style.hairline);
+    }
+    harness.configure({});
+  }
+
   // The knob is the foreground in dark and light themes alike
   function test_sliderKnob_data() {
     return [
