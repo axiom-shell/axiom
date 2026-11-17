@@ -382,9 +382,9 @@ TestCase {
         verify(lum(o.surfaceSunken) < lum(o.surface), `${theme.name}: a light sunken tone darker than the card`);
         verify(con(o.surfaceHighest, o.surface) >= 1.45, `${theme.name}: highest vs surface`);
       }
-      compare(o.alphaHover, o.dark ? 0.08 : 0.06, theme.name);
-      compare(o.alphaPressed, o.dark ? 0.14 : 0.10, theme.name);
-      compare(o.alphaDrag, o.dark ? 0.18 : 0.14, theme.name);
+      compare(o.alphaHover, o.dark ? 0.08 : 0.10, theme.name);
+      compare(o.alphaPressed, o.dark ? 0.14 : 0.17, theme.name);
+      compare(o.alphaDrag, o.dark ? 0.18 : 0.23, theme.name);
       compare(o.alphaScrim, o.dark ? 0.45 : 0.32, theme.name);
       compare(o.alphaShadowSoft, o.dark ? 0.30 : 0.16, theme.name);
       compare(o.alphaWash, o.dark ? 0.16 : 0.14, theme.name);

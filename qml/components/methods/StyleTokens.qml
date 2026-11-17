@@ -75,13 +75,14 @@ QtObject {
   // the opacity of a whole disabled control
   readonly property real opacityDisabled: 0.38
   // state layers (alpha of the text colour over a hovered / pressed / dragged
-  // surface), dark then light
+  // surface), dark then light: light is stronger, a step on a light surface
+  // reads weaker
   readonly property real hoverDark: 0.08
-  readonly property real hoverLight: 0.06
+  readonly property real hoverLight: 0.10
   readonly property real pressedDark: 0.14
-  readonly property real pressedLight: 0.10
+  readonly property real pressedLight: 0.17
   readonly property real dragDark: 0.18
-  readonly property real dragLight: 0.14
+  readonly property real dragLight: 0.23
   // the same over an accent or status fill, in both variants
   readonly property real onAccentHover: 0.12
   readonly property real onAccentPressed: 0.20

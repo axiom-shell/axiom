@@ -282,9 +282,9 @@
         "#d20f39"
       ],
       "translucent": {
-        "stateHover": "#4c4f690f",
-        "statePressed": "#4c4f691a",
-        "stateDrag": "#4c4f6924",
+        "stateHover": "#4c4f691a",
+        "statePressed": "#4c4f692b",
+        "stateDrag": "#4c4f693b",
         "stateRest": "#4c4f6900",
         "stateOnAccentHover": "#ffffff1f",
         "stateOnAccentPressed": "#ffffff33",
@@ -296,9 +296,9 @@
         "errorWash": "#d20f3924"
       },
       "alphas": {
-        "alphaHover": 0.06,
-        "alphaPressed": 0.1,
-        "alphaDrag": 0.14,
+        "alphaHover": 0.1,
+        "alphaPressed": 0.17,
+        "alphaDrag": 0.23,
         "alphaOnAccentHover": 0.12,
         "alphaOnAccentPressed": 0.2,
         "alphaScrim": 0.32,
