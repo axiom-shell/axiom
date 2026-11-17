@@ -7,7 +7,7 @@ import qs.services.ui
 import qs.components.reusable
 
 // Fixed page navigator for the overlay's pages: arrows at the ends and a tab
-// per page (icon and name), the current one under a sliding accent-container
+// per page (icon and name), the current one under a sliding accent
 // pill.
 // Tool pages follow the user's own after a divider, as icons (named in a
 // tooltip), even when current. When every name doesn't fit `maxWidth`, the
@@ -71,7 +71,7 @@ Surface {
   // Only the current tab keeps its name when all of them don't fit
   readonly property bool compact: root.maxWidth > 0 && root.chrome + measureRow.fullWidth > root.maxWidth
   // What reads on the current page's pill
-  readonly property color currentInk: Style.inkAccentContainer.text
+  readonly property color currentInk: Style.inkAccent.text
 
   width: row.implicitWidth + (root.inset + root.endInset) * 2
   height: OverlayConfig.navigatorHeight
@@ -208,7 +208,7 @@ Surface {
         width: parent.currentTab?.tabWidth ?? 0
         height: parent.height
         radius: root.innerRadius
-        color: Style.accentContainer
+        color: Style.accent
         visible: parent.currentTab !== null
 
         Glide on x {
@@ -262,6 +262,7 @@ Surface {
                 radius: root.innerRadius
                 hovered: !tab.isCurrent && tabArea.containsMouse
                 pressed: tabArea.pressed
+                onAccent: tab.isCurrent
               }
 
               Row {
@@ -288,7 +289,7 @@ Surface {
                 UnsavedDot {
                   anchors.verticalCenter: parent.verticalCenter
                   shown: EditsManager.isUnsaved(tab.modelData.type)
-                  onAccent: tab.isCurrent
+                  tone: tab.isCurrent ? "accent" : ""
                 }
 
                 // In a window of its own

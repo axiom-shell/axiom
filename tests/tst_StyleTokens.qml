@@ -202,7 +202,7 @@ TestCase {
       rows.push([`ink.${tone}.divider`, root.toneFills[tone], 1.12, "text"]);
     }
     const dark = o.dark;
-    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["segment.thumb", "segment.track", 1.25, "text"], ["borderSubtle", "surfacePage", 1.12, "text"]);
+    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["segment.thumb", "segment.track", 1.25, "text"], ["borderSubtle", "surfacePage", 1.12, "text"], ["accentContainer", "surfacePage", 1.25, "text"], ["accentContainer", "surface", 1.25, "text"]);
     for (const b of root.neutral)
       rows.push(["borderStrong", b, 1.30, "text"]);
     rows.push(["text", "veil@grey", 4.5, "text"], ["text", "floor@pole:surfacePage", 3.0, "text"], ["text", "floor@pole:surface", 3.0, "text"]);
@@ -320,7 +320,7 @@ TestCase {
           failures.push(`${theme.name}: ${front} on ${back} = ${ratio.toFixed(2)} (min ${min})`);
       }
     }
-    compare(rows, 223 + 2, "the static rows (223) and the two unknown-tone shade rows");
+    compare(rows, 225 + 2, "the static rows (225) and the two unknown-tone shade rows");
     compare(failures, [], `${failures.length} of ${checked} pairs fail`);
   }
 

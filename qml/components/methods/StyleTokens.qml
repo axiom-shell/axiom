@@ -48,9 +48,11 @@ QtObject {
   // faint text: how far the foreground is mixed toward the card; disabled
   readonly property real faintMix: 0.5
   readonly property real disabledMix: 0.62
-  // containers: how far the card is mixed toward the accent / a status
-  readonly property real containerMixDark: 0.24
-  readonly property real containerMixLight: 0.16
+  // containers: how far the card is mixed toward the accent (both variants) /
+  // a status
+  readonly property real containerMix: 0.24
+  // the accent container against the page and against the card, both variants
+  readonly property real containerApart: 1.25
   readonly property real statusMixDark: 0.22
   readonly property real statusMixLight: 0.15
   // the on-colour of an accent container and of a status container: how far
@@ -239,12 +241,11 @@ QtObject {
     set("textDisabled", nudged([s.surface], Tone.mixRgb(g("foreground"), s.surface, root.disabledMix), root.disabledContrast));
     set("textAccent", t.accent);
     // accent and status
-    const containerMix = dark ? root.containerMixDark : root.containerMixLight;
     const statusMix = dark ? root.statusMixDark : root.statusMixLight;
     const accent = nudged(reading, g("accent"), Tone.iconContrast);
     set("accent", accent);
     set("onAccent", root._onColour(accent, s.page, [text]));
-    set("accentContainer", Tone.mixRgb(s.surface, g("accent"), containerMix));
+    set("accentContainer", root._accentContainer(g, s, dark));
     set("onAccentContainer", nudged([rgbs.accentContainer], Tone.mixRgb(text, g("accent"), root.onAccentContainerMix), Tone.textContrast));
     set("accentAlt", nudged(reading, g("accentAlt"), Tone.iconContrast));
     for (const status of ["success", "warning", "error", "info"]) {
@@ -284,7 +285,9 @@ QtObject {
     };
     const solidInk = (fill, on) => {
       const muted = nudged([fill], Tone.mixRgb(on, fill, root.solidMutedMix), Tone.iconContrast);
-      return makeInk(on, muted, muted, on, on, on, fill);
+      // graphics (a switch's knob) take the page colour where it reaches 3.0 on the fill
+      const graphic = Tone.conRgb(s.page, fill) >= Tone.iconContrast ? s.page : on;
+      return makeInk(on, muted, muted, on, on, graphic, fill);
     };
     const containerInk = (fill, on) => makeInk(on, nudged([fill], Tone.mixRgb(on, fill, root.containerMutedMix), Tone.textContrast), nudged([fill], Tone.mixRgb(on, fill, root.containerFaintMix), root.faintContrast), on, on, on, fill);
     const ink = {
@@ -352,8 +355,7 @@ QtObject {
     const t = root._texts(g, s);
     const nudged = (backs, c, min) => Tone.nudgedRgb(backs, c, min + root.margin);
     const accent = nudged(s.reading, g("accent"), Tone.iconContrast);
-    const containerMix = dark ? root.containerMixDark : root.containerMixLight;
-    const accentContainer = Tone.mixRgb(s.surface, g("accent"), containerMix);
+    const accentContainer = root._accentContainer(g, s, dark);
     const inkText = nudged([s.surface], t.text, Tone.textContrast);
     const dividerMix = dark ? root.dividerMixDark : root.dividerMixLight;
     const divider = Tone.apartRgb(s.surface, Tone.mixRgb(s.surface, inkText, dividerMix), root.dividerContrast + root.margin / 2, Tone.lumRgb(inkText) > Tone.lumRgb(s.surface) ? [1, 1, 1] : [0, 0, 0]);
@@ -399,6 +401,15 @@ QtObject {
       "faint": nudged(s.reading, Tone.mixRgb(g("foreground"), s.surface, root.faintMix), root.faintContrast),
       "accent": nudged(s.reading, g("accent"), Tone.textContrast)
     };
+  }
+
+  // The accent container: the card mixed toward the accent, moved apart from
+  // the card and then from the page (containerApart, with half the margin)
+  function _accentContainer(g, s, dark) {
+    const pole = dark ? [1, 1, 1] : [0, 0, 0];
+    const min = root.containerApart + root.margin / 2;
+    const c = Tone.apartRgb(s.surface, Tone.mixRgb(s.surface, g("accent"), root.containerMix), min, pole);
+    return Tone.apartRgb(s.page, c, min, pole);
   }
 
   // `preferred` on `background` where it reads at 4.5 + margin, else the

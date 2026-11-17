@@ -249,7 +249,7 @@ Rectangle {
 
     UnsavedDot {
       shown: root.changed
-      onAccent: root.selected
+      tone: root.selected ? "accentContainer" : ""
     }
 
     // Built only while there is an issue
