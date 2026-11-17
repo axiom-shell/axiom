@@ -79,6 +79,7 @@ ColumnLayout {
       visible: !keyButton.blank
       tone: root.toneFor(keyButton.source)
       outlined: false
+      solid: true
       radius: Style.radiusInner
     }
 
@@ -245,6 +246,7 @@ ColumnLayout {
           anchors.verticalCenter: parent.verticalCenter
           tone: root.toneFor(legendEntry.modelData[0])
           outlined: true
+          solid: true
           implicitWidth: Style.iconSm
           implicitHeight: Style.iconSm
           radius: Style.radiusMin

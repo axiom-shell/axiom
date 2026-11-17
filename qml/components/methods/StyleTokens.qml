@@ -260,7 +260,7 @@ QtObject {
       set("on" + name, root._onColour(rgbs[status], s.page, [text]));
       set("on" + name + "Container", nudged([rgbs[status + "Container"]], Tone.mixRgb(text, c, root.onStatusContainerMix), Tone.textContrast));
     }
-    // key tints (tokens.md > Key tints): the hue in the card, pulled apart
+    // key tints (style.md › The roles): the hue in the card, pulled apart
     // from sunken, highest and each other
     const tintMin = root.tintApart + root.margin / 10;
     const tintOf = (name, hue, from, others) => {

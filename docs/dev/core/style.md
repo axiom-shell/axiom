@@ -49,7 +49,7 @@ Every colour a piece draws sits on a pair this list guarantees, on every bundled
 - `accent`, `accentAlt`, `focusRing`, `<s>` and every `series` colour 3.0 on the reading tones.
 - an on-colour on its fill 4.5 (the best that exists, at least 3.0, where nothing reaches it), and the ink of every tone on its fill (`text`, `muted`, `accent`, `icon` 4.5; `faint`, `graphic` 3.0; a divider 1.12).
 - the surfaces against each other (`surface` vs the page 1.08 dark / 1.06 light, `surfaceHighest` vs `surface` 1.20 / 1.45, `surfaceSunken` vs `surface` (its minimum is in the test), `accentContainer` vs the page and vs the card 1.25 in both variants), `borderSubtle` 1.12 vs the page, `borderStrong` 1.30 on the reading tones.
-- the key tints (`accentTint`, `warningTint`, `errorTint`) and `surfaceSunken` / `surfaceHighest` pairwise at least 0.06 apart in OKLab (`test_key_tints_apart`; the tints' inks follow the container rules);
+- the key tints (`accentTint`, `warningTint`, `errorTint`) and `surfaceSunken` / `surfaceHighest` pairwise at least 0.06 apart in OKLab (`test_key_tints_apart`; the tints' inks follow the container rules).
 - `text` over the `veil` over mid grey 4.5; `text` over the page and over the card at the translucency floor over the opposite pole 3.0 (the inks of the nested tones too); `text` over the unknown-tone shade, bare and under the lock's dim, 4.5.
 
 **Content on a fill reads that fill's ink**, never a global text role: global roles only on the four reading tones, and on `surfaceHighest`, a container or a solid fill the fill's own ink. A new pair is a row in `tst_StyleTokens`, a formula that meets it and a line here.

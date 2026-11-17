@@ -4,8 +4,8 @@ import qs.config
 
 // The dot beside something with unsaved edits (a settings category, card
 // or field; a bar, page or edge menu in its editor). `tone` is the fill it
-// sits on ("", "accentContainer" for a selected row, "accent" for the current
-// tab). Pops in and out by `shown`.
+// sits on ("" on a reading tone, "accent" on a selected row or the navigator's
+// current tab, "highest" on a StyledTabBar's current tab). Pops in and out by `shown`.
 PopInRectangle {
   id: root
 
