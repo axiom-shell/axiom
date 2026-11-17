@@ -662,6 +662,10 @@ TestCase {
     const strip = bar.children.find(c => c.flickableDirection !== undefined);
     const underline = strip.contentItem.children.find(c => c.height === Widget.px(2) && c.visible);
     verify(underline !== undefined, "the underline shows");
+    const pill = strip.contentItem.children.find(c => c.objectName === "tabPill");
+    verify(pill !== undefined, "the pill shows");
+    tryCompare(pill, "x", tab.mapToItem(strip.contentItem, 0, 0).x);
+    compare(pill.width, tab.width);
     // under the current label, no wider than its cell
     const centre = underline.x + underline.width / 2;
     verify(Math.abs(centre - (tab.x + tab.width / 2)) <= 1, "centred under the current tab");
