@@ -7,13 +7,13 @@ QtObject {
   function tone(source) {
     switch (source) {
     case "axiom":
-      return "accentContainer";
+      return "accentTint";
     case "both":
-      return "errorContainer";
+      return "errorTint";
     case "paused":
       return "highest";
     case "user":
-      return "warningContainer";
+      return "warningTint";
     }
     return "sunken";
   }

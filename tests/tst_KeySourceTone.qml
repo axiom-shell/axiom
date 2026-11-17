@@ -12,11 +12,11 @@ TestCase {
     return [
       {
         "source": "axiom",
-        "tone": "accentContainer"
+        "tone": "accentTint"
       },
       {
         "source": "both",
-        "tone": "errorContainer"
+        "tone": "errorTint"
       },
       {
         "source": "paused",
@@ -24,7 +24,7 @@ TestCase {
       },
       {
         "source": "user",
-        "tone": "warningContainer"
+        "tone": "warningTint"
       },
       {
         "source": "free",

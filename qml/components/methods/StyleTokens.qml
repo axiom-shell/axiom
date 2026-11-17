@@ -51,6 +51,10 @@ QtObject {
   readonly property real containerMix: 0.24
   // the accent container against the page and against the card, both variants
   readonly property real containerApart: 1.25
+  // the key tints (the keyboard map's sources): the five key tones sit at
+  // least this far apart in OKLab, and each tint is its hue mixed into the
+  // card until they do
+  readonly property real tintApart: 0.06
   readonly property real statusMixDark: 0.22
   readonly property real statusMixLight: 0.15
   // the on-colour of an accent container and of a status container: how far
@@ -256,6 +260,20 @@ QtObject {
       set("on" + name, root._onColour(rgbs[status], s.page, [text]));
       set("on" + name + "Container", nudged([rgbs[status + "Container"]], Tone.mixRgb(text, c, root.onStatusContainerMix), Tone.textContrast));
     }
+    // key tints (tokens.md > Key tints): the hue in the card, pulled apart
+    // from sunken, highest and each other
+    const tintMin = root.tintApart + root.margin / 10;
+    const tintOf = (name, hue, from, others) => {
+      const c = Tone.distinctRgb(others, s.surface, hue, from, tintMin);
+      const cap = name.charAt(0).toUpperCase() + name.slice(1);
+      set(name + "Tint", c);
+      set("on" + cap + "Tint", nudged([c], Tone.mixRgb(text, hue, root.onStatusContainerMix), Tone.textContrast));
+      return c;
+    };
+    const tints = [s.sunken, s.highest];
+    tints.push(tintOf("accent", g("accent"), root.containerMix, tints));
+    tints.push(tintOf("warning", g("warning"), statusMix, tints));
+    tintOf("error", g("error"), statusMix, tints);
     out.series = ["accent", "accentAlt", "cyan", "green", "yellow", "orange", "magenta", "red"].map(name => Tone.fromRgb(nudged(reading, g(name), Tone.iconContrast)));
     // lines
     const subtleMix = dark ? root.subtleMixDark : root.subtleMixLight;
@@ -303,6 +321,8 @@ QtObject {
       ink[status] = solidInk(rgbs[status], rgbs["on" + name]);
       ink[status + "Container"] = containerInk(rgbs[status + "Container"], rgbs["on" + name + "Container"]);
     }
+    for (const tint of ["accent", "warning", "error"])
+      ink[tint + "Tint"] = containerInk(rgbs[tint + "Tint"], rgbs["on" + tint.charAt(0).toUpperCase() + tint.slice(1) + "Tint"]);
     out.ink = ink;
     out.divider = ink.surface.divider;
     // the segmented control's track tone

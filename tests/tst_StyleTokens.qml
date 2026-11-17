@@ -142,6 +142,9 @@ TestCase {
       "highest": "surfaceHighest",
       "accent": "accent",
       "accentContainer": "accentContainer",
+      "accentTint": "accentTint",
+      "warningTint": "warningTint",
+      "errorTint": "errorTint",
       "success": "success",
       "successContainer": "successContainer",
       "warning": "warning",
@@ -316,7 +319,7 @@ TestCase {
           failures.push(`${theme.name}: ${front} on ${back} = ${ratio.toFixed(2)} (min ${min})`);
       }
     }
-    compare(rows, 224 + 2, "the static rows (224) and the two unknown-tone shade rows");
+    compare(rows, 245 + 2, "the static rows (245) and the two unknown-tone shade rows");
     compare(failures, [], `${failures.length} of ${checked} pairs fail`);
   }
 
@@ -360,6 +363,36 @@ TestCase {
           near(o.ink[tone][key], e.ink[tone][key], `${name}.ink.${tone}.${key}`);
       }
     }
+  }
+
+  // The five key tones (the keyboard map's sources) are pairwise at least
+  // 0.06 apart in OKLab on every theme the pair sweep covers
+  function test_key_tints_apart() {
+    const failures = [];
+    let checked = 0;
+    for (const theme of allThemes()) {
+      const o = derived(theme.data);
+      const tones = {
+        "sunken": o.surfaceSunken,
+        "highest": o.surfaceHighest,
+        "accentTint": o.accentTint,
+        "warningTint": o.warningTint,
+        "errorTint": o.errorTint
+      };
+      const names = Object.keys(tones);
+      for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
+          const a = oklab(root.q(tones[names[i]]));
+          const b = oklab(root.q(tones[names[j]]));
+          const d = Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+          checked++;
+          if (d < 0.06)
+            failures.push(`${theme.name}: ${names[i]} / ${names[j]} = ${d.toFixed(3)}`);
+        }
+      }
+    }
+    verify(checked > 0);
+    compare(failures, [], `${failures.length} of ${checked} key-tone pairs closer than 0.06`);
   }
 
   function test_variants() {
