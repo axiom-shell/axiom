@@ -140,9 +140,13 @@ Rectangle {
       radius: width / 2
       x: modelData.x * (root.width - width)
       y: modelData.y * (root.height - height)
-      color: hovered ? Style.accentContainer : Style.surfaceHighest
+      color: Style.surfaceHighest
       border.color: Style.borderStrong
       border.width: Style.hairline
+
+      StateLayer {
+        hovered: preset.hovered
+      }
 
       MouseArea {
         id: presetArea
