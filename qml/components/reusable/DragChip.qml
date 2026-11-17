@@ -41,7 +41,7 @@ Rectangle {
   radius: Style.radius
   color: root.selected ? Style.accentContainer : Style.surfaceHighest
   border.color: root.selected ? Style.accent : Style.borderStrong
-  border.width: Style.hairline
+  border.width: root.selected ? Style.focusWidth : Style.hairline
 
   ColorGlide on color {}
   ColorGlide on border.color {}

@@ -138,7 +138,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
   - Signals: `started` / `moved` / `dropped`.
 - `InlineDragLayer`: a `DragLayer` inside a form or card that takes no room in its layout (only the coordinate space, above its siblings) and draws the carried payload's `label` in an accent pill by the pointer, so `views/Layouts/EntryListTarget` rows work on it. `PickedChips`, the bind editor's rows and an OSD's systems (`OSDSystemsEditor`).
 - `TrashTarget`: a "Drop to remove" pill (the error container while hovered) shown while `active`, `targetKind: "trash"`, above overlapping targets. The layer's `accepts` says what it takes and its `dropped` removes it.
-- `DragChip`: a carryable icon + name pill; `highlighted` draws it hovered for a pointer elsewhere, and with `hasMenu` a right click is `menuRequested(x, y)`.
+- `DragChip`: a carryable icon + name pill, ringed in the accent at focus width while `selected`; `highlighted` draws it hovered for a pointer elsewhere, and with `hasMenu` a right click is `menuRequested(x, y)`.
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.
 - `GridCanvas.underlay` (`[{ place, label, element? }]`): places drawn dimmed under the modules, not selectable, widening the lattice (the custom widget editor shows the base elements under a screen). `GridCanvas.tileContent` (a Component with a `module`) replaces a tile's icon and label (and an underlay item's label), and `tileContext` is a right click on a tile.
 - `views/CustomWidgets/CustomWidgetPaths`: the paths of an output with the value at each (`paths`, `maxRows`, `pickable`, `picked(path)`): the Data tab's list.
