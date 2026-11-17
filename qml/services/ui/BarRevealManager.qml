@@ -197,12 +197,13 @@ QtObject {
   // --- Workspace changes (revealOnWorkspace) ---
 
   // Each output's active and special workspace as last seen ({ name:
-  // "id/special" }); the first look only records them
+  // "id/special", `OutputWindows.workspaceKey` }); the first look only
+  // records them
   property var _workspaces: null
 
   function _checkWorkspaces() {
     const now = CompositorManager.outputs.reduce((all, out) => {
-      all[out.name] = out.activeWorkspaceId + "/" + out.specialWorkspaceId;
+      all[out.name] = OutputWindows.workspaceKey(out);
       return all;
     }, {});
     const before = root._workspaces;

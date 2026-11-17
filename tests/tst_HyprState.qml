@@ -255,6 +255,48 @@ TestCase {
     }), {}), null, "an unmapped client isn't a window");
   }
 
+  // Hyprland 0.57: a special workspace has a name and no id
+  function test_windowSpecialNoId() {
+    const w = HyprState.window({
+      "address": "0x6b",
+      "mapped": true,
+      "hidden": false,
+      "class": "game",
+      "initialClass": "game",
+      "title": "game",
+      "workspace": {
+        "name": "special:gaming"
+      },
+      "monitor": 1,
+      "floating": false,
+      "fullscreen": 2,
+      "focusHistoryID": 0,
+      "at": [0, 0],
+      "size": [800, 600]
+    }, {
+      "1": "DP-1"
+    });
+    compare(w.workspaceId, -1);
+    compare(w.workspaceName, "special:gaming");
+    compare(w.fullscreen, true);
+  }
+
+  function test_outputSpecialNoId() {
+    const o = HyprState.output({
+      "name": "DP-1",
+      "activeWorkspace": {
+        "id": 4
+      },
+      "lastIpcObject": {
+        "specialWorkspace": {
+          "name": "special:gaming"
+        }
+      }
+    }, true);
+    compare(o.specialWorkspaceId, 0);
+    compare(o.specialWorkspaceName, "special:gaming");
+  }
+
   function test_output() {
     compare(HyprState.output({
       "name": "DP-1",

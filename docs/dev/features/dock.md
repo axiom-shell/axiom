@@ -69,7 +69,7 @@ Along the edge:
 - **`hover`:** an `EdgeTrigger`.
 - **`intellihide`:**
   - Hover, plus shown while no window covers it (`obscured`, `CompositorManager.windowsCover`).
-  - What counts as covering: a window on the output's active workspace, or on its open special workspace (the output's `specialWorkspaceId`; Hyprland's monitors are refreshed on `activespecial`).
+  - What counts as covering: a window on the output's active workspace, or on its open special workspace (`OutputWindows.shown`; Hyprland's monitors are refreshed on `activespecial`).
   - Where windows are: their geometry with `supports.windowGeometry`, else their `cover` with `supports.windowCover` (niri's tiled windows: their column, or the whole output while the strip is wider than it); with neither, nothing covers the dock.
   - Coverage is computed from the output's `reserved` ([contract](../compositor/contract.md#shapes)).
 

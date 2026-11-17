@@ -12,7 +12,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 - **Window**: `{ id, appId, initialAppId, title, workspaceId, workspaceName, output, floating, fullscreen, maximized, hidden, focusRank, x, y, w, h }`.
   - `id` is a string, stable while the window lives (Hyprland: its `"0x…"` address).
   - `output` is the output's name.
-  - `workspaceId`: a named or special workspace has a negative id of its own (Hyprland's; sway's minus its con id), not -1 (unknown), so consumers tell them apart (`hasFullscreen`, a dock's `workspace` scope).
+  - `workspaceId`: a named workspace has a negative id of its own (Hyprland's; sway's minus its con id), not -1 (unknown), so consumers tell them apart (`hasFullscreen`, a dock's `workspace` scope). Hyprland 0.57 gives special-workspace windows -1: which windows show on an output is `OutputWindows.shown` (by name where given, else by id), never a hand-made id list.
   - `fullscreen` means real fullscreen. A maximized window is `maximized`; it leaves reserved space alone.
   - `focusRank` 0 is the focused window, higher means used less recently. Undefined when unknown.
   - The geometry is global, in logical pixels.
@@ -24,7 +24,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
   - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`). The workspace overview reads it (and `Special.windows` for its scratch cells): its cells show the usable area (the output less `reserved`), so a window's global `x`/`y` must already include it (niri's tiled ones do, `NiriState.windows`).
   - `activeWorkspaceId` is -1 while unknown.
   - `specialWorkspaceId` is 0 when none is open.
-  - Optional `specialWorkspaceName` (Hyprland's: `special:magic`, `""` when none is open): Hyprland 0.57 gives a special workspace no id, so `HyprState.specials` matches by name.
+  - Optional `specialWorkspaceName` (Hyprland's: `special:magic`, `""` when none is open): Hyprland 0.57 gives a special workspace no id, so `HyprState.specials` and `OutputWindows` (which windows show on an output, `hasFullscreen`) match by name.
   - `description` is what `MonitorLayout.outputId` keys a stable identity on.
 - **Workspace**: `{ id, name, output, windowCount, active, focused, urgent }`. `urgent`: a window on it asks for attention (Hyprland's and sway's workspace `urgent`, niri's `is_urgent`; a dynamic list's added empty one never is).
   - `id` is the number axiom's layout uses (`WorkspacesConfig`).

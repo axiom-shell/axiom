@@ -18,7 +18,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
   - the workspace layout: `goToWorkspace`, `stepWorkspace`, `nthWorkspace`, `workspaceBase`, `workspaceIds`, `stepStrip`
   - the remap on a layout change (`WorkspaceGeometry.remapWorkspaces`)
   - the `workspaces` IPC target
-  - `focusWindow` (switching workspace first), `hasFullscreen`, `stripWindows`, `stripDirection` ("" without `supports.strips`, whatever the config lists), `withHoveredScreen`.
+  - `focusWindow` (switching workspace first), `hasFullscreen` (reads `OutputWindows.hasFullscreen`), `stripWindows`, `stripDirection` ("" without `supports.strips`, whatever the config lists), `withHoveredScreen`.
 - With no backend everything is empty and does nothing, so an unknown compositor still gets the bar, launcher and notifications. The facade's defaults are what "unsupported" looks like.
 
 ### Capabilities
