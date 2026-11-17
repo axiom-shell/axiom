@@ -1510,7 +1510,7 @@ TestCase {
     harness.configure({});
     const track = createTemporaryObject(trackComp, root);
     waitForRendering(track);
-    const thumb = findAll(track, it => it.tone === Style.segmentThumbTone && it !== track)[0];
+    const thumb = findAll(track, it => it.tone === "accent" && it !== track)[0];
     verify(thumb !== undefined, "has a thumb");
     compare(thumb.width, Math.round(track._segment));
     tryCompare(thumb, "x", Math.round(track.inset));

@@ -3,7 +3,7 @@ import QtQuick
 import qs.config
 
 // The track and sliding thumb of SegmentRow (private to it): equal segments,
-// `count` of them, the thumb under segment `index`. The row lays its buttons
+// `count` of them, an accent thumb under segment `index`. The row lays its buttons
 // over it and draws no track of its own. The
 // track is the root Surface, so a host may set its `radius`; the thumb
 // follows concentrically.
@@ -34,8 +34,8 @@ Surface {
     y: root.inset
     width: Math.round(root._segment)
     height: root.height - root.inset * 2
-    tone: Style.segmentThumbTone
-    outlined: Style.segmentThumbTone === "surface"
+    tone: "accent"
+    outlined: false
     radius: Style.concentric(root.radius, root.inset)
 
     Glide on x {

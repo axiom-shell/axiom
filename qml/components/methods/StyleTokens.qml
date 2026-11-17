@@ -41,8 +41,6 @@ QtObject {
   // a light theme's sunken tone: the card mixed this far toward the text,
   // then moved apart from it
   readonly property real sunkenTextMix: 0.06
-  // the lighter segment of a segmented control against the other
-  readonly property real segmentThumbContrast: 1.25
   // how far the light raised surface lifts from the page toward white
   readonly property real raisedLightMix: 0.6
   // faint text: how far the foreground is mixed toward the card; disabled
@@ -209,7 +207,7 @@ QtObject {
   // Every colour of tokens.md for `theme` (theme()'s result): one flat
   // object of the roles as colors, the alpha numbers, `alphaFloor`, `series`
   // (8 colors), `ink` ({ <tone>: { text, muted, faint, accent, icon,
-  // graphic, divider } }), `segmentTrack`/`segmentThumb` (tone names),
+  // graphic, divider } }), `segmentTrack` (a tone name),
   // `dark`, and `names`/`semantic` passed through.
   function derive(theme) {
     const dark = theme.dark;
@@ -307,9 +305,8 @@ QtObject {
     }
     out.ink = ink;
     out.divider = ink.surface.divider;
-    // the segmented control's tones: the thumb is always the lighter of the pair
+    // the segmented control's track tone
     out.segmentTrack = dark ? "sunken" : "highest";
-    out.segmentThumb = dark ? "highest" : "surface";
     // state layers and washes (colors with alpha) and the alpha numbers
     const alphas = {
       "alphaHover": dark ? root.hoverDark : root.hoverLight,

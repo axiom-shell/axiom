@@ -202,7 +202,7 @@ TestCase {
       rows.push([`ink.${tone}.divider`, root.toneFills[tone], 1.12, "text"]);
     }
     const dark = o.dark;
-    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["segment.thumb", "segment.track", 1.25, "text"], ["borderSubtle", "surfacePage", 1.12, "text"], ["accentContainer", "surfacePage", 1.25, "text"], ["accentContainer", "surface", 1.25, "text"]);
+    rows.push(["surface", "surfacePage", dark ? 1.08 : 1.06, "text"], ["surfaceHighest", "surface", dark ? 1.20 : 1.45, "text"], ["surfaceSunken", "surface", dark ? 1.05 : 1.07, "text"], ["borderSubtle", "surfacePage", 1.12, "text"], ["accentContainer", "surfacePage", 1.25, "text"], ["accentContainer", "surface", 1.25, "text"]);
     for (const b of root.neutral)
       rows.push(["borderStrong", b, 1.30, "text"]);
     rows.push(["text", "veil@grey", 4.5, "text"], ["text", "floor@pole:surfacePage", 3.0, "text"], ["text", "floor@pole:surface", 3.0, "text"]);
@@ -214,10 +214,6 @@ TestCase {
 
   // The colour a pair row names
   function value(o, key) {
-    if (key.indexOf("segment.") === 0) {
-      const tone = key === "segment.thumb" ? o.segmentThumb : o.segmentTrack;
-      return o[root.toneFills[tone]];
-    }
     if (key.indexOf("ink.") === 0) {
       const [, tone, k] = key.split(".");
       return o.ink[tone][k];
@@ -320,7 +316,7 @@ TestCase {
           failures.push(`${theme.name}: ${front} on ${back} = ${ratio.toFixed(2)} (min ${min})`);
       }
     }
-    compare(rows, 225 + 2, "the static rows (225) and the two unknown-tone shade rows");
+    compare(rows, 224 + 2, "the static rows (224) and the two unknown-tone shade rows");
     compare(failures, [], `${failures.length} of ${checked} pairs fail`);
   }
 
@@ -389,7 +385,6 @@ TestCase {
       compare(o.alphaShadowSoft, o.dark ? 0.30 : 0.16, theme.name);
       compare(o.alphaWash, o.dark ? 0.16 : 0.14, theme.name);
       compare(o.segmentTrack, o.dark ? "sunken" : "highest", theme.name);
-      compare(o.segmentThumb, o.dark ? "highest" : "surface", theme.name);
     }
   }
 

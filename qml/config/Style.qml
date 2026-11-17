@@ -76,9 +76,8 @@ QtObject {
   // 8 colours: accent, accentAlt, cyan, green, yellow, orange, magenta, red
   readonly property var series: root._roles.series
 
-  // the tones of a segmented control: its track and its (lighter) thumb
+  // the tone of a segmented control's track
   readonly property string segmentTrackTone: root._roles.segmentTrack
-  readonly property string segmentThumbTone: root._roles.segmentThumb
 
   // ---- inks: what reads on each tone ----
 
