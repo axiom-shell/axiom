@@ -42,16 +42,17 @@ DragChip {
   readonly property bool empty: !previewLoader.hasContent
 
   hasMenu: true
+  solid: root.showsLabel
   showsLabel: !root.live || root.empty
   icon: root.dragLayer.icon(root.type)
   label: root.dragLayer.label(root.type)
   // Carried, hidden on the bar or showing nothing: dimmed
   opacity: root.faded || root.hiddenWidget || (root.live && root.empty && previewLoader.item !== null) ? Style.opacityDisabled : 1
   // A live widget keeps its own colours: selected, it's tinted, not filled
-  color: root.selected ? (root.showsLabel ? Style.accentContainer : Style.accentWash) : Style.surfaceHighest
+  color: root.selected ? (root.showsLabel ? Style.accent : Style.accentWash) : Style.surfaceHighest
 
   // What reads on the chip's fill (DragChip's `ink` is a colour)
-  readonly property StyleInk markInk: Style.inkOf(root.selected ? "accentContainer" : "highest")
+  readonly property StyleInk markInk: Style.inkOf(!root.selected ? "highest" : root.showsLabel ? "accent" : "accentContainer")
 
   // The widget as the bar draws it alone in a section: a section of its
   // own (WidgetGroup), so its background takes the look as the bar's do
@@ -110,7 +111,7 @@ DragChip {
   CountBadge {
     shown: root.dropOrder > 0
     text: String(root.dropOrder)
-    color: Style.accent
-    textColor: Style.inkAccent.text
+    color: root.selected && root.showsLabel ? Style.inkAccent.text : Style.accent
+    textColor: root.selected && root.showsLabel ? Style.accent : Style.inkAccent.text
   }
 }

@@ -14,7 +14,7 @@ StyledIconButton {
   property bool danger: false
 
   size: Widget.compactHeight
-  kind: root.lit ? "primary" : root.danger ? "danger" : "text"
+  kind: root.lit && !root.row.selected ? "primary" : root.danger ? "danger" : "text"
   opacity: root.lit || root.row.revealed ? 1 : 0.35 // style-exempt: the resting dimness the user chose
 
   // A focused action handles Tab itself, so its row never sees it
