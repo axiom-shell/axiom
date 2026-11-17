@@ -123,7 +123,7 @@ Item {
       viewSize: Qt.size(root.width, root.height)
       fillColor: MenusConfig.colorsOf(root.menu).fill
       // At the card's drawn size (ModuleGrid.zoom)
-      radius: Widget.radius * moduleGrid.zoom
+      radius: Style.radius * moduleGrid.zoom
       animate: moduleGrid.settled
     }
   }

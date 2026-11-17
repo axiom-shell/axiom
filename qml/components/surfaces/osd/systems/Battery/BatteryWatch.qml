@@ -12,7 +12,7 @@ OSDWatch {
   state: ({
       "charger": {
         "available": BatteryManager.isAvailable,
-        "value": !BatteryManager.onBattery,
+        "value": !BatteryManager.runningOnBattery,
         "percent": BatteryManager.percentage,
         "charging": BatteryManager.isCharging,
         "full": BatteryManager.isFull,

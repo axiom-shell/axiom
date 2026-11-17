@@ -22,8 +22,8 @@ Rectangle {
   required property var barConfig
   property var screen
   property var panel
-  // Any of it in view (BarPanel.onScreen; a container with no panel is)
-  readonly property bool _onScreen: root.panel?.onScreen ?? true
+  // Any of it in view (BarPanel.inView; a container with no panel is)
+  readonly property bool _onScreen: root.panel?.inView ?? true
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real length: isVertical ? height : width
@@ -253,7 +253,7 @@ Rectangle {
   // surfaces are solid, with the border off, on a bar the border's stroke
   // isn't on (stacked inside another, BarEnds' offBorder), until the
   // bar's place on screen is known, or once an auto-hiding bar has slid
-  // out of view (BarPanel.onScreen), the stroke whole again.
+  // out of view (BarPanel.inView), the stroke whole again.
   function borderOpening(from, to) {
     if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
       return null;

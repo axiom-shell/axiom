@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.config
@@ -55,6 +56,8 @@ Item {
 
   Flickable {
     id: flick
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     anchors.fill: parent
     contentWidth: width
     contentHeight: menuLayout.implicitHeight

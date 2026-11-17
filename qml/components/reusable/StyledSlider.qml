@@ -74,7 +74,8 @@ Item {
     width: root.handleSize
     height: root.handleSize
     radius: root.handleSize / 2
-    color: Style.onAccent
+    // The foreground, as a knob reads on the trough and the fill alike
+    color: Style.text
     border.width: Style.hairline
     border.color: Style.borderSubtle
     scale: mouseArea.isDragging ? 1.2 : (mouseArea.containsMouse ? 1.1 : 1.0) // style-exempt: no text

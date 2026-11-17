@@ -197,10 +197,10 @@ Item {
             readonly property bool selected: cell.key === root.selectedKey
             readonly property real numberSize: Appearance.fontSize * 1.5
             // Titles: the number's inset, clear of the cell's rounded border
-            readonly property real inset: Math.max(Widget.px(4), Widget.radius / 2 + 2)
+            readonly property real inset: Math.max(Widget.px(4), Style.radiusInner + Widget.px(2))
             // Titles: as many lines as fit under the day's number
             readonly property real lineHeight: Appearance.fontSize * 1.25
-            readonly property int lines: root.titles ? Math.floor((cell.height - cell.inset * 2 - cell.numberSize - 2) / (cell.lineHeight + 1)) : 0
+            readonly property int lines: root.titles ? Math.floor((cell.height - cell.inset * 2 - cell.numberSize - Widget.px(2)) / (cell.lineHeight + 1)) : 0
             readonly property bool showTitles: root.showEvents && cell.lines >= 1
             readonly property var dayEvents: cell.showTitles ? CalendarManager.eventsOn(cell.key) : []
             // All of them when they fit, else one line fewer and "+n more"
@@ -218,12 +218,11 @@ Item {
               anchors.fill: parent
               anchors.margins: 1
               visible: root.titles
-              radius: Widget.radius
+              radius: Style.radius
               color: cell.selected ? Style.accentContainer : "transparent"
 
               StateLayer {
                 hovered: cellArea.containsMouse
-                radius: parent.radius
               }
             }
             Rectangle {
@@ -236,7 +235,6 @@ Item {
 
               StateLayer {
                 hovered: cellArea.containsMouse
-                radius: width / 2
                 onAccent: cell.modelData.isToday
               }
             }
@@ -255,7 +253,7 @@ Item {
                 id: numberText
                 anchors.centerIn: parent
                 text: cell.modelData.day
-                textColor: cell.modelData.isToday ? Style.onAccent : cell.selected ? Style.onAccentContainer : cell.modelData.inMonth ? Style.text : Style.textDisabled
+                textColor: cell.modelData.isToday ? Style.inkAccent.text : cell.selected ? Style.inkAccentContainer.text : cell.modelData.inMonth ? Style.text : Style.textDisabled
                 role: "caption"
                 font.weight: cell.modelData.isToday ? Style.weightStrong : Style.roleCaption.weight
               }
@@ -276,7 +274,7 @@ Item {
                   width: Math.max(Widget.px(3), Appearance.fontSize * 0.28)
                   height: width
                   radius: width / 2
-                  color: cell.modelData.isToday && !root.titles ? Style.onAccent : Style.resolve(modelData)
+                  color: cell.modelData.isToday && !root.titles ? Style.inkAccent.text : Style.resolve(modelData)
                 }
               }
             }
@@ -286,7 +284,7 @@ Item {
               visible: cell.showTitles
               // Clear of the cell's rounded border, like the number
               x: cell.inset
-              y: number.y + cell.numberSize + 2
+              y: number.y + cell.numberSize + Widget.px(2)
               width: cell.width - cell.inset * 2
               spacing: 1
               opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
@@ -300,7 +298,7 @@ Item {
                   readonly property color calendarColor: Style.resolve(CalendarManager.colors[chip.event?.calendar] ?? "accent")
                   width: parent?.width ?? 0
                   height: cell.lineHeight
-                  radius: Widget.radius / 2
+                  radius: Style.radiusInner
                   color: chip.event?.allDay ? Style.surfaceHighest : "transparent"
 
                   Rectangle {
@@ -318,7 +316,7 @@ Item {
                     text: chip.event ? (chip.event.allDay || CalendarEvents.spanOn(chip.event, cell.key) !== "single" && CalendarEvents.spanOn(chip.event, cell.key) !== "starts" ? "" : I18n.formatDate(new Date(chip.event.start), CalendarConfig.timeFormat) + " ") + (chip.event.title || I18n.tr("(No title)")) : ""
                     textFormat: Text.PlainText
                     role: "micro"
-                    textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.onAccentContainer : Style.text
+                    textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.inkAccentContainer.text : Style.text
                   }
                 }
               }

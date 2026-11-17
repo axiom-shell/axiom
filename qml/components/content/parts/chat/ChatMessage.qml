@@ -56,7 +56,7 @@ Item {
       Layout.maximumWidth: root.width * 0.85
       implicitWidth: Math.min(root.width * 0.85, userColumn.implicitWidth + Widget.padding * 2)
       implicitHeight: userColumn.implicitHeight + Widget.padding * 1.5
-      radius: Widget.radius + 2
+      radius: Style.radius + 2
 
       ColumnLayout {
         id: userColumn

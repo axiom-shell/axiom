@@ -90,8 +90,8 @@ ColumnLayout {
     // Its name: centred, or in the corner of a tall key that does something
     StyledText {
       readonly property bool corner: root.tall && (keyButton.does !== "" || keyButton.icon !== "")
-      x: corner ? 4 : (parent.width - width) / 2
-      y: corner ? 2 : (parent.height - height) / 2
+      x: corner ? Widget.px(4) : (parent.width - width) / 2
+      y: corner ? Widget.px(2) : (parent.height - height) / 2
       width: corner ? implicitWidth : parent.width - Widget.px(4)
       horizontalAlignment: Text.AlignHCenter
       text: keyButton.entry.label
@@ -154,11 +154,11 @@ ColumnLayout {
     Repeater {
       model: KeyNames.modifiers
 
-      delegate: SegmentButton {
+      delegate: ToggleChip {
         required property string modelData
         text: KeyNames.modifierLabel(modelData)
-        active: root.mods.includes(modelData)
-        onClicked: KeybindManager.page.toggleKeyMapMod(modelData)
+        checked: root.mods.includes(modelData)
+        onToggled: KeybindManager.page.toggleKeyMapMod(modelData)
       }
     }
   }

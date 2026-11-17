@@ -48,6 +48,8 @@ BaseView {
   readonly property bool narrowed: root.query !== "" || KeybindManager.page.filtering || root.lookupId !== ""
 
   readonly property int shownCount: root.sections.reduce((sum, section) => sum + section.binds.length, 0)
+  // The same before the search and chips narrow it
+  readonly property int totalCount: KeybindManager.keybindings.reduce((sum, section) => sum + section.binds.length, 0)
 
   // Masonry: each section goes to the shortest column, by row count
   readonly property var columns: KeybindFilter.columns(root.sections, root.columnCount)
@@ -197,6 +199,7 @@ BaseView {
         searchable: true
         searchPlaceholder: root.editing ? I18n.tr("Search binds by key, action or label") : I18n.tr("Search keybinds")
         count: root.editing ? KeybindManager.page.visibleIndices.length : root.shownCount
+        total: root.editing ? -1 : root.totalCount
         onSearchEdited: {
           if (root.editing)
             KeybindManager.page.editQuery = bar.searchText;
@@ -241,14 +244,12 @@ BaseView {
           },
           StyledIconButton {
             visible: root.tabIndex === 0 && KeybindManager.page.lookupCombo !== ""
-            size: Widget.height
             iconText: "close"
             tooltipText: I18n.tr("Show every bind")
             onClicked: KeybindManager.page.lookupCombo = ""
           },
           StyledIconButton {
             visible: root.tabIndex === 0
-            size: Widget.height
             kind: KeybindManager.page.refDensity === "compact" ? "primary" : "text"
             iconText: KeybindManager.page.refDensity === "compact" ? "density_small" : "density_medium"
             tooltipText: KeybindManager.page.refDensity === "compact" ? I18n.tr("Comfortable rows") : I18n.tr("Compact rows")
@@ -256,7 +257,6 @@ BaseView {
           },
           StyledIconButton {
             visible: root.tabIndex === 0
-            size: Widget.height
             kind: KeybindManager.page.refGlyphs ? "primary" : "text"
             iconText: "keyboard_command_key"
             tooltipText: KeybindManager.page.refGlyphs ? I18n.tr("Modifiers as words") : I18n.tr("Modifiers as symbols")

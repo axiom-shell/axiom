@@ -5,6 +5,7 @@ import qs.config
 import qs.components.reusable
 import qs.components.forms
 import qs.components.methods
+import qs.components.views.Settings
 
 // The restyled pieces at scale, font and density (the layout harness): each
 // holds its texts in its box, a control's label fits its control, a segment
@@ -638,6 +639,7 @@ TestCase {
     row.label = strings[data.key];
     waitForRendering(host);
     compare(harness.containedProblems(row), []);
+    compare(row.height, Widget.height + Widget.padding, "a list row's height");
     verify(!row.revealed, "actions hidden at rest");
     row.selected = true;
     verify(row.revealed, "actions shown while selected");
@@ -704,8 +706,8 @@ TestCase {
     }
   }
 
-  // A titled group is a boxed card: surface on the page or with no Surface,
-  // flat (the host's fill and ink) on any other
+  // A group is the settings page's card: surface-toned and outlined whatever
+  // it sits on
   function test_field_group_is_boxed() {
     harness.configure({});
     const alone = createTemporaryObject(groupComp, root, {
@@ -721,14 +723,8 @@ TestCase {
         "tone": tone
       });
       waitForRendering(host);
-      compare(host.group.tone, tone === "page" ? "surface" : tone, tone);
-      if (tone === "page") {
-        compare(host.group.border.width, Style.hairline);
-      } else {
-        compare(host.group.color.a, 0, tone);
-        compare(host.group.border.width, 0, tone);
-        compare(host.group.ink, host.ink, tone);
-      }
+      compare(host.group.tone, "surface", tone);
+      compare(host.group.border.width, Style.hairline, tone);
     }
   }
 
@@ -755,8 +751,7 @@ TestCase {
       return null;
     }
     const heading = titleItem(bare);
-    verify(heading !== null);
-    compare(heading.visible, false);
+    verify(heading === null || heading.visible === false);
     verify(bare.implicitHeight < titled.implicitHeight);
   }
 
@@ -803,8 +798,9 @@ TestCase {
       "label": strings[data.key]
     });
     waitForRendering(toggle);
-    const control = toggle.children[0].children.find(c => c.options !== undefined);
-    compare(toggle.stacked, control.implicitWidth > toggle.width - Widget.textPx(160));
+    const control = findAll(toggle, c => c.options !== undefined && c.labels !== undefined)[0];
+    const line = findAll(toggle, c => c.lineWidth !== undefined)[0].lineWidth;
+    compare(toggle.fit.fill, FieldFit.place("fixed", toggle.width, line, control.implicitWidth, Widget.fieldTokens).fill);
     // A toggle wider than the whole row (a few long labels in a narrow
     // form) overflows however it is laid out: only a fitting one is held
     if (control.implicitWidth <= toggle.width)
@@ -881,6 +877,38 @@ TestCase {
     const row = box.children.find(c => c.spacing === 2);
     compare(box.implicitWidth, row.implicitWidth + stepper.containerMargins * 2);
     compare(box.implicitHeight, stepper.controlHeight);
+  }
+
+  // A stepper that wouldn't leave its label's line the room it needs goes
+  // under the label (N12), the label keeping one line; the width is derived
+  // from FieldFit, not hard-coded
+  function test_number_field_stepper_stacks_under_a_narrow_label() {
+    harness.configure({});
+    const props = {
+      "label": "Interval",
+      "minimum": 500,
+      "maximum": 86400000,
+      "step": 500,
+      "mode": "stepper"
+    };
+    const wide = createTemporaryObject(numberComp, root, Object.assign({
+      "width": 700
+    }, props));
+    waitForRendering(wide);
+    verify(wide.inline);
+    const box = findAll(wide, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
+    const line = findAll(wide, it => it.lineWidth !== undefined)[0].lineWidth;
+    const tokens = Widget.fieldTokens;
+    const narrowWidth = Math.ceil(box.implicitWidth + tokens.gap + Math.min(line, tokens.labelLeast)) - 1;
+    const field = createTemporaryObject(numberComp, root, Object.assign({
+      "width": narrowWidth
+    }, props));
+    waitForRendering(field);
+    verify(!field.inline);
+    const label = findAll(field, it => it.text === "Interval")[0];
+    const stepper = findAll(field, it => it.tone === "sunken" && it.children.some(c => c.spacing === 2))[0];
+    verify(stepper.mapToItem(field, 0, 0).y >= label.mapToItem(field, 0, label.height).y);
+    verify(label.height < label.font.pixelSize * 2);
   }
 
   // A row tints unless `tinted` is off; its click area shows only while hoverable
@@ -961,10 +989,12 @@ TestCase {
     const spy = createTemporaryObject(pickSpyComp, root, {
       "target": toggle
     });
-    mouseClick(toggle, toggle._inset + toggle._segment * 0.5, toggle.height / 2);
+    const inset = Widget.px(2);
+    const segment = (toggle.width - inset * 2) / data.values.length;
+    mouseClick(toggle, inset + segment * 0.5, toggle.height / 2);
     compare(spy.count, 0);
     for (let i = 1; i < data.values.length; i++) {
-      mouseClick(toggle, toggle._inset + toggle._segment * (i + 0.5), toggle.height / 2);
+      mouseClick(toggle, inset + segment * (i + 0.5), toggle.height / 2);
       compare(spy.count, i);
       compare(spy.signalArguments[i - 1][0], data.values[i]);
     }
@@ -1114,31 +1144,55 @@ TestCase {
       "headerBelow": belowComp
     });
     waitForRendering(field);
-    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
-    const part = findAll(header, it => it.shows !== undefined)[0];
-    verify(part !== undefined && header.height >= 40 + Widget.spacing / 2);
+    // The label's line and the notes (description, links) are two headers
+    const heads = findAll(field, it => it.below !== undefined && it.trailing !== undefined);
+    const header = heads[0];
+    const notes = heads[1];
+    const part = findAll(notes, it => it.shows !== undefined)[0];
+    const top = header.mapToItem(field, 0, 0).y;
+    const bottom = () => notes.mapToItem(field, 0, notes.height).y;
+    verify(part !== undefined && bottom() - top >= 40 + Widget.spacing / 2);
     const middle = item => item.mapToItem(field, 0, item.height / 2).y;
     const control = findAll(field, it => it[data.kind] !== undefined)[0];
     verify(control !== undefined, "a trailing control");
-    verify(Math.abs(middle(control) - middle(header)) <= 1, `${data.tag}: control ${middle(control)} header ${middle(header)}`);
-    const tall = header.height;
+    verify(Math.abs(middle(control) - (top + bottom()) / 2) <= 1, `${data.tag}: control ${middle(control)} block ${(top + bottom()) / 2}`);
+    const tall = bottom() - top;
     part.open = false;
-    tryVerify(() => header.height < tall - 40 + 1);
+    tryVerify(() => bottom() - top < tall - 40 + 1);
   }
 
   // Stacked (a narrow row), the links sit above the control, never beside it
   function test_stacked_toggle_keeps_its_link_above() {
     harness.configure({});
     const field = createTemporaryObject(toggleRowComp, root, {
-      "width": Widget.textPx(200),
+      "width": Widget.textPx(120),
       "headerBelow": belowComp
     });
     waitForRendering(field);
-    verify(field.stacked);
-    const header = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[0];
+    verify(field.fit.fill);
+    const notes = findAll(field, it => it.below !== undefined && it.trailing !== undefined)[1];
     const control = findAll(field, it => it._segment !== undefined)[0];
     const top = control.mapToItem(field, 0, 0).y;
-    verify(header.mapToItem(field, 0, header.height).y <= top, "the header, link included, ends above the toggle");
+    verify(notes.mapToItem(field, 0, notes.height).y <= top, "the notes, link included, end above the toggle");
+  }
+
+  // On a narrow line that fits, the toggle sits at the right end, centred on
+  // the label, description and links, which sit under the label to its left
+  function test_narrow_inline_toggle_keeps_its_link_beside() {
+    harness.configure({});
+    const field = createTemporaryObject(toggleRowComp, root, {
+      "width": Widget.textPx(300),
+      "headerBelow": belowComp
+    });
+    waitForRendering(field);
+    verify(!field.fit.fill);
+    const heads = findAll(field, it => it.below !== undefined && it.trailing !== undefined);
+    const header = heads[0];
+    const notes = heads[1];
+    const control = findAll(field, it => it._segment !== undefined)[0];
+    verify(notes.mapToItem(field, notes.width, 0).x <= control.mapToItem(field, 0, 0).x + 1, "the notes sit left of the toggle");
+    verify(notes.mapToItem(field, 0, 0).y >= header.mapToItem(field, 0, header.height).y - 1, "the notes sit under the label");
+    verify(Math.abs(control.mapToItem(field, 0, control.height / 2).y - field.height / 2) <= 1, "the toggle is centred on the whole box");
   }
 
   // The More link is built only when the text is longer than its lines;
@@ -1230,21 +1284,6 @@ TestCase {
     // one move of animNormal, not a chase that trails behind it
     verify(settledAt >= 0 && settledAt <= Appearance.animNormal + 60, "settled after " + settledAt + " ms");
     tryVerify(() => Math.abs(mark.x - left) < 0.5 && Math.abs(mark.width - width) < 0.5);
-  }
-
-  // A settings page's card sits in the page's own card (a Surface): `pageCard`
-  // keeps it boxed there, where any other group goes flat
-  function test_field_group_page_card_stays_boxed() {
-    harness.configure({});
-    const host = createTemporaryObject(hostComp, root, {
-      "tone": "surface"
-    });
-    waitForRendering(host);
-    compare(host.group.border.width, 0);
-    host.group.pageCard = true;
-    compare(host.group.tone, "surface");
-    compare(host.group.border.width, Style.hairline);
-    verify(host.group.color.a > 0);
   }
 
   Component {
@@ -1495,5 +1534,481 @@ TestCase {
       "animateFirstFill": true
     });
     compare(first._animate, Appearance.animations);
+  }
+
+  // A StateLayer rounds as its parent; with none to follow it takes the inner radius
+  function test_state_layer_radius() {
+    harness.configure({});
+    const rect = createTemporaryObject(stateLayerComp, root, {
+      "radius": 13
+    });
+    compare(findAll(rect, it => it.objectName === "layer")[0].radius, 13);
+    const plain = createTemporaryObject(plainLayerComp, root);
+    compare(findAll(plain, it => it.objectName === "layer")[0].radius, Style.radiusInner);
+    const chip = createTemporaryObject(toggleChipComp, root);
+    const layer = findAll(chip, it => it.hovered !== undefined && it.onAccent !== undefined && it.parent === chip)[0];
+    verify(layer !== undefined, "the chip's StateLayer");
+    compare(layer.radius, chip.height / 2);
+  }
+
+  Component {
+    id: stateLayerComp
+
+    Rectangle {
+      width: 40
+      height: 40
+
+      StateLayer {
+        objectName: "layer"
+      }
+    }
+  }
+
+  Component {
+    id: plainLayerComp
+
+    Item {
+      width: 40
+      height: 40
+
+      StateLayer {
+        objectName: "layer"
+      }
+    }
+  }
+
+  Component {
+    id: toggleChipComp
+
+    ToggleChip {
+      text: "chip"
+    }
+  }
+
+  function test_segment_row_matches_toggle_height() {
+    harness.configure({});
+    const row = createTemporaryObject(segmentComp, root, {
+      "labels": ["a", "b"]
+    });
+    const toggle = createTemporaryObject(toggleComp, root);
+    row.width = Math.max(row.implicitWidth, 200);
+    waitForRendering(row);
+    compare(row.height, toggle.height);
+  }
+
+  // A scrollable tab bar's focus ring stays inside the strip for the first and last tab
+  function test_scrollable_tab_ring_inside_strip() {
+    harness.configure({});
+    const bar = createTemporaryObject(tabBarComp, root, {
+      "width": Widget.textPx(160),
+      "scrollable": true
+    });
+    waitForRendering(bar);
+    const strip = bar.children.find(c => c.flickableDirection !== undefined);
+    for (const index of [0, 2]) {
+      bar.currentIndex = index;
+      waitForRendering(bar);
+      tryVerify(() => strip.contentX >= 0);
+      const tabs = findAll(strip.contentItem, it => it.checked !== undefined && it.text !== undefined);
+      const tab = tabs.find(t => t.text === ["First", "Second", "Third"][index]);
+      verify(tab !== undefined);
+      const ring = findAll(tab, it => it.shown !== undefined && it._host !== undefined)[0];
+      verify(ring !== undefined, "the tab's FocusRing");
+      ring.shown = true;
+      const tl = ring.mapToItem(strip, 0, 0);
+      verify(tl.x >= 0 && tl.y >= 0, `tab ${index} ring starts inside: ${tl.x},${tl.y}`);
+      verify(tl.x + ring.width <= strip.width + 0.5, `tab ${index} ring ends inside (${tl.x + ring.width} of ${strip.width})`);
+      verify(tl.y + ring.height <= strip.height + 0.5, `tab ${index} ring is inside vertically`);
+    }
+  }
+
+  function test_fold_chevron_rotation() {
+    const chev = createTemporaryObject(foldChevronComp, root);
+    chev.open = true;
+    tryCompare(chev, "rotation", 0);
+    chev.open = false;
+    tryCompare(chev, "rotation", -90);
+  }
+
+  Component {
+    id: foldChevronComp
+
+    FoldChevron {}
+  }
+
+  // A foldable header is a Tab stop: Tab focuses it, Space and Enter fold it; a fixed one is not
+  function test_fold_header_keyboard() {
+    const head = createTemporaryObject(foldHeaderComp, root);
+    const folds = [];
+    head.toggled.connect(() => folds.push(1));
+    const trigger = findAll(head, it => it.objectName === "foldTrigger")[0];
+    verify(trigger.activeFocusOnTab);
+    keyClick(Qt.Key_Tab);
+    verify(trigger.activeFocus, "Tab focuses the header");
+    keyClick(Qt.Key_Space);
+    keyClick(Qt.Key_Return);
+    compare(folds.length, 2);
+    const fixed = createTemporaryObject(foldHeaderComp, root, {
+      "foldable": false
+    });
+    compare(findAll(fixed, it => it.objectName === "foldTrigger")[0].activeFocusOnTab, false);
+  }
+
+  // Style holds each role as its derivation made it: a property named on<X>
+  // beside <x> never takes its value (qml-pitfalls.md), reading black
+  function test_styleColoursMatchRoles() {
+    harness.configure({
+      theme: "rose-pine"
+    });
+    const bad = [];
+    for (const k of Object.keys(Style._roles)) {
+      const v = String(Style._roles[k]);
+      if (Style[k] === undefined || !/^#[0-9a-fA-F]{6,8}$/.test(v))
+        continue;
+      if (String(Style[k]) !== v)
+        bad.push(k + ": " + String(Style[k]) + " vs " + v);
+    }
+    compare(bad.join(", "), "");
+    harness.configure({});
+  }
+
+  Component {
+    id: volumeBarComp
+
+    StyledVolumeBar {
+      isMuted: true
+      showPercent: true
+      volumeLevel: 0.5
+    }
+  }
+
+  // The muted highlight is a step lighter than the card, over the whole bar
+  function test_volumeBarMuted() {
+    harness.configure({
+      theme: "rose-pine"
+    });
+    for (const o of [Qt.Vertical, Qt.Horizontal]) {
+      const bar = createTemporaryObject(volumeBarComp, root, {
+        orientation: o
+      });
+      verify(bar);
+      wait(Appearance.animNormal + 200);
+      const bg = bar.children.find(c => c.tone === "highest");
+      verify(bg, "a highest-tone background");
+      compare(String(bg.color), String(Style.fillHighest));
+      compare(bg.width, bar.width);
+      compare(bg.height, bar.height);
+      if (o === Qt.Horizontal)
+        compare(bar.implicitWidth, Widget.px(160));
+      compare(bar.implicitHeight, Widget.px(o === Qt.Vertical ? 160 : 48));
+    }
+    harness.configure({});
+  }
+
+  // The knob is the foreground in dark and light themes alike
+  function test_sliderKnob_data() {
+    return [
+      {
+        tag: "dark",
+        theme: "catppuccin-mocha"
+      },
+      {
+        tag: "light",
+        theme: "catppuccin-latte"
+      }
+    ];
+  }
+
+  function test_sliderKnob(data) {
+    harness.configure({
+      theme: data.theme
+    });
+    const slider = createTemporaryObject(hSliderComp, root);
+    verify(slider);
+    compare(String(slider.handleColor), String(Style.text));
+    harness.configure({});
+  }
+
+  Component {
+    id: pinnedListComp
+
+    PinnedList {
+      id: list
+      property int count: 2
+      width: 300
+      maxHeight: 100
+
+      Repeater {
+        model: list.count
+        Rectangle {
+          required property int index
+          Layout.fillWidth: true
+          implicitHeight: 30
+          color: "transparent"
+        }
+      }
+    }
+  }
+
+  // A list taller than its cap scrolls inside it (cut, with a scroll bar); a short one takes its own height
+  function test_pinnedList() {
+    const tall = createTemporaryObject(pinnedListComp, root, {
+      "count": 20
+    });
+    verify(tall);
+    waitForRendering(tall);
+    wait(30);
+    compare(tall.height, 100);
+    compare(tall.cut, true);
+    compare(findAll(tall, it => it.showScrollBar === true).length, 1, "a scroll bar");
+    const short = createTemporaryObject(pinnedListComp, root, {
+      "count": 2
+    });
+    waitForRendering(short);
+    wait(30);
+    compare(short.height, short.contentHeight);
+    compare(short.cut, false);
+    compare(findAll(short, it => it.showScrollBar === true).length, 0, "no scroll bar");
+  }
+
+  Component {
+    id: pinnedInColumnComp
+
+    ColumnLayout {
+      id: col
+      property int count: 20
+      property bool shared: true
+      width: 300
+
+      Item {
+        id: box
+        implicitWidth: 300
+        implicitHeight: 250
+      }
+
+      PinnedList {
+        shareOf: col.shared ? box : null
+        Layout.fillWidth: true
+
+        Repeater {
+          model: col.count
+          Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 30
+            color: "transparent"
+          }
+        }
+      }
+    }
+  }
+
+  // Its cap comes from `shareOf`, never its layout parent: no `shareOf` means its content height
+  function test_pinnedList_shareOf() {
+    const col = createTemporaryObject(pinnedInColumnComp, root);
+    verify(col);
+    waitForRendering(col);
+    wait(30);
+    const list = findAll(col, it => it.maxShare !== undefined)[0];
+    compare(list.height, 100, "0.4 of the 250-px box");
+    col.shared = false;
+    wait(30);
+    compare(list.height, list.contentHeight, "no shareOf: its content height");
+  }
+
+  Component {
+    id: noticeComp
+
+    Notice {
+      width: 300
+      text: "Hello"
+    }
+  }
+
+  // A clickable callout is a Tab stop and Space presses it; a plain one isn't
+  function test_notice_clickable_is_keyboard() {
+    const plain = createTemporaryObject(noticeComp, root);
+    let clicks = 0;
+    plain.clicked.connect(() => clicks++);
+    keyClick(Qt.Key_Tab);
+    compare(findAll(plain, it => it.activeFocus).length, 0, "a plain notice takes no focus");
+    plain.clickable = true;
+    keyClick(Qt.Key_Tab);
+    verify(findAll(plain, it => it.activeFocus && it.hovered !== undefined).length > 0, "Tab focuses the clickable one");
+    keyClick(Qt.Key_Space);
+    compare(clicks, 1);
+  }
+
+  // -- Wave 3 review fixes (W3R-a) --
+
+  Component {
+    id: formSwitchRowComp
+
+    SwitchRow {
+      width: 400
+      label: "Flip"
+      checked: false
+    }
+  }
+
+  function _switchOf(row) {
+    return findAll(row, it => it instanceof StyledSwitch)[0];
+  }
+
+  // A click sets the switch's own `checked`; it follows the row's again, so a
+  // host that refuses the change shows as it is
+  function test_switchRow_follows_checked_after_a_click() {
+    harness.configure({});
+    const row = createTemporaryObject(formSwitchRowComp, root);
+    waitForRendering(row);
+    const sw = root._switchOf(row);
+    verify(sw);
+    mouseClick(sw);
+    compare(sw.checked, false, "the host ignored the click");
+    row.checked = true;
+    compare(sw.checked, true, "and follows the row after");
+  }
+
+  // A label that is data shows as it is; a dimmed row is faint
+  function test_switchRow_plain_label_and_dimmed() {
+    harness.configure({});
+    const row = createTemporaryObject(formSwitchRowComp, root);
+    row.label = "<b>x</b>";
+    row.plainLabel = true;
+    row.dimmed = true;
+    waitForRendering(row);
+    const label = findAll(row, it => it.text === "<b>x</b>")[0];
+    verify(label, "the label shows as typed");
+    compare(label.textFormat, Text.PlainText);
+    compare(String(label.color), String(Style.textFaint));
+  }
+
+  Component {
+    id: statusLineComp
+
+    StatusLine {
+      width: 400
+      text: "Saved"
+    }
+  }
+
+  function test_statusLine_role() {
+    harness.configure({});
+    const line = createTemporaryObject(statusLineComp, root);
+    line.role = "caption";
+    const text = findAll(line, it => it !== line && it.text === "Saved")[0];
+    verify(text);
+    compare(text.font.pixelSize, Style.typeCaption);
+  }
+
+  Component {
+    id: noticeActionsComp
+
+    Notice {
+      width: 300
+      text: "Something to read here that wraps onto a couple of lines at this width"
+      actionText: "Open it"
+
+      StyledTextButton {
+        text: "Other thing"
+      }
+    }
+  }
+
+  Component {
+    id: noticeIconActionComp
+
+    Notice {
+      width: 600
+      text: "Short"
+
+      StyledIconButton {
+        objectName: "small"
+        iconText: "close"
+      }
+    }
+  }
+
+  function test_notice_spinner_and_chevron() {
+    harness.configure({});
+    const notice = createTemporaryObject(noticeComp, root);
+    notice.spinning = true;
+    const spinner = findAll(notice, it => it !== notice && it.spinning === true)[0];
+    verify(spinner, "its icon is a SpinningIcon");
+    if (Appearance.animations)
+      tryVerify(() => spinner.rotation !== 0, 1000, "turning");
+    compare(findAll(notice, it => it.text === "chevron_right" && it.visible).length, 0);
+    notice.clickable = true;
+    compare(findAll(notice, it => it.text === "chevron_right" && it.visible).length, 1, "a clickable callout says it opens something");
+  }
+
+  function test_notice_actions_below_when_wide() {
+    harness.configure({});
+    const notice = createTemporaryObject(noticeActionsComp, root);
+    waitForRendering(notice);
+    const text = findAll(notice, it => it !== notice && it.text !== undefined && it.text.startsWith("Something"))[0];
+    const button = findAll(notice, it => it.text === "Open it")[0];
+    verify(text && button);
+    wait(30);
+    const textBottom = text.mapToItem(notice, 0, text.height).y;
+    const buttonTop = button.mapToItem(notice, 0, 0).y;
+    verify(buttonTop >= textBottom - 1, "two labelled buttons go under the text at 300");
+    const small = createTemporaryObject(noticeIconActionComp, root);
+    waitForRendering(small);
+    wait(30);
+    const icon = findAll(small, it => it.objectName === "small")[0];
+    const label = findAll(small, it => it !== small && it.text === "Short")[0];
+    verify(icon.mapToItem(small, 0, 0).y < label.mapToItem(small, 0, label.height).y, "a small icon action stays beside the text");
+  }
+
+  Component {
+    id: thumbComp
+
+    Thumbnail {
+      width: 88
+      height: 88
+      placeholderIcon: "person"
+    }
+  }
+
+  function test_thumbnail_placeholder_fits_its_box() {
+    harness.configure({});
+    const thumb = createTemporaryObject(thumbComp, root);
+    const glyph = findAll(thumb, it => it.text === "person")[0];
+    verify(glyph);
+    compare(glyph.textSize, 40);
+  }
+
+  // -- Branch review fixes (S-RB) --
+
+  Component {
+    id: modalHeaderComp
+
+    ModalHeader {
+      width: 400
+      title: "<i>t</i>"
+      message: "<b>x</b>"
+    }
+  }
+
+  // A title or message is data (a device's name): never read as markup
+  function test_modalHeader_text_is_plain() {
+    harness.configure({});
+    const header = createTemporaryObject(modalHeaderComp, root);
+    waitForRendering(header);
+    for (const s of ["<i>t</i>", "<b>x</b>"]) {
+      const t = findAll(header, it => it.text === s)[0];
+      verify(t, s);
+      compare(t.textFormat, Text.PlainText);
+    }
+  }
+
+  // The switch's width counts in the row's least width
+  function test_schemaSwitch_least_width_has_the_switch() {
+    harness.configure({});
+    const row = createTemporaryObject(switchRowComp, root);
+    waitForRendering(row);
+    const sw = findAll(row, it => it instanceof StyledSwitch)[0];
+    compare(row.controlLeast, sw.implicitWidth);
+    verify(row.leastWidth >= sw.implicitWidth + Widget.fieldTokens.gap, "the label's least plus the switch");
   }
 }

@@ -1,0 +1,8 @@
+# The ActionId definition (#/definitions/ActionId): a reference to one of the
+# custom widget's actions (CustomWidget.actions.items) by its id.
+
+x-inline: true
+type: string
+default: ''
+pattern: '^$|^[A-Za-z0-9][A-Za-z0-9._-]*$'
+description: "One of the widget's actions, by id. Empty: nothing."

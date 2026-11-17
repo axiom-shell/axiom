@@ -40,13 +40,6 @@ Card {
     font.pixelSize: Style.typeCaption
   }
 
-  TextMetrics {
-    id: killMetrics
-    text: "close"
-    font.family: Appearance.iconFamily
-    font.pixelSize: Style.typeBody
-  }
-
   // Compact: the busiest process
   compactContent: CompactFigure {
     readonly property var busiest: root.processes[0] ?? null
@@ -69,7 +62,7 @@ Card {
       StyledText {
         visible: !root.narrow || root.sortBy === "cpu"
         Layout.preferredWidth: numberMetrics.advanceWidth
-        Layout.rightMargin: root.narrow ? Widget.spacing * 1.5 + killMetrics.advanceWidth : Widget.spacing / 2
+        Layout.rightMargin: root.narrow ? Widget.spacing * 1.5 + Widget.smallHeight : Widget.spacing / 2
         horizontalAlignment: Text.AlignRight
         text: "CPU"
         role: "caption"
@@ -78,7 +71,7 @@ Card {
       StyledText {
         visible: !root.narrow || root.sortBy === "mem"
         Layout.preferredWidth: numberMetrics.advanceWidth
-        Layout.rightMargin: Widget.spacing * 1.5 + killMetrics.advanceWidth
+        Layout.rightMargin: Widget.spacing * 1.5 + Widget.smallHeight
         horizontalAlignment: Text.AlignRight
         text: I18n.tr("Mem")
         role: "caption"
@@ -111,11 +104,10 @@ Card {
               })
             width: parent.width
             height: root.rowHeight
-            radius: Widget.radius
+            radius: Style.radius
             color: "transparent"
 
             StateLayer {
-              radius: row.radius
               hovered: rowHover.hovered
             }
 
@@ -150,16 +142,16 @@ Card {
                 role: "caption"
                 tone: root.sortBy === "mem" ? "accent" : "text"
               }
-              StyledIcon {
-                Layout.preferredWidth: killMetrics.advanceWidth
+              FlatIconButton {
+                Layout.alignment: Qt.AlignVCenter
+                iconText: "close"
+                kind: "danger"
+                iconSize: Style.iconXs
+                size: Widget.smallHeight
                 opacity: rowHover.hovered ? 1 : 0
-                text: "close"
-                tone: "error"
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: SystemManager.kill(row.proc.pid)
-                }
+                enabled: rowHover.hovered
+                tooltipText: I18n.tr("End process")
+                onClicked: SystemManager.kill(row.proc.pid)
               }
             }
           }

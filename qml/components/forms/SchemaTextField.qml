@@ -7,17 +7,11 @@ import qs.services.apps
 import qs.components.reusable
 
 // A typed value: the box under its label, or with `beside` (a short
-// value, a number) beside it on a wide form (Widget.fieldInlineFrom), as
-// a dropdown is
-GridLayout {
+// value, a number) on its label's line when that fits, as a dropdown is
+// (a FieldLine: kind flex with `beside`, else block)
+FieldLine {
   id: root
-  required property string label
   required property string currentConfigValue
-  property string description: ""
-  // After the label (FieldHeader.trailing)
-  property Component headerExtra: null
-  // Under the description (FieldHeader.below)
-  property Component headerBelow: null
   property var pattern: null
   // Shown in the empty box
   property string placeholderText: ""
@@ -32,9 +26,10 @@ GridLayout {
   // "folder": a Browse button beside the field opens the desktop's folder
   // picker (`x-control: "folder"`); the folder picked commits at once
   property string browse: ""
-  // Beside the label on a wide form (a short value: a number)
+  // On the label's line when it fits (a short value: a number)
   property bool beside: false
-  readonly property bool inline: root.beside && root.label !== "" && root.width >= Widget.fieldInlineFrom
+  kind: root.beside ? "flex" : "block"
+  bodyShown: (!root.multiline && root.suggestions.length > 0) || root._pickFailed
 
   // What was typed, once it matches `pattern`: on Enter (Ctrl+Enter in a
   // multiline field), as the field loses focus or is torn down. A picked
@@ -119,25 +114,8 @@ GridLayout {
     FilePickerManager.forget(root);
   }
 
-  Layout.fillWidth: true
-  columns: root.inline ? 2 : 1
-  rowSpacing: Widget.spacing
-  columnSpacing: Widget.spacing * 2
-
-  FieldHeader {
-    label: root.label
-    description: root.description
-    trailing: root.headerExtra
-    below: root.headerBelow
-    Layout.fillWidth: true
-    // Centred on the box beside it
-    Layout.alignment: Qt.AlignVCenter
-  }
-
   RowLayout {
-    Layout.fillWidth: !root.inline
-    Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
-    Layout.alignment: Qt.AlignVCenter
+    Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
     StyledTextArea {
@@ -187,44 +165,43 @@ GridLayout {
     }
   }
 
-  Flow {
-    visible: !root.multiline && root.suggestions.length > 0
-    Layout.fillWidth: true
-    Layout.columnSpan: root.columns
-    spacing: Widget.spacing / 2
+  body: [
+    Flow {
+      visible: !root.multiline && root.suggestions.length > 0
+      Layout.fillWidth: true
+      spacing: Widget.spacing / 2
 
-    Repeater {
-      model: root.multiline ? [] : root.suggestions
+      Repeater {
+        model: root.multiline ? [] : root.suggestions
 
-      delegate: StyledTextButton {
-        required property var modelData
-        // A value, or { value, label } to show a name for it
-        readonly property string value: typeof modelData === "string" ? modelData : modelData.value
-        implicitHeight: Widget.height - Widget.px(8)
-        text: typeof modelData === "string" ? modelData : modelData.label
-        tooltipText: value !== text ? value : ""
-        onClicked: {
-          if (!root.commaList) {
-            textArea.text = value;
-            root._accept(value);
-            return;
-          }
-          const items = textArea.text.split(",").map(v => v.trim()).filter(v => v !== "");
-          if (!items.includes(value)) {
-            textArea.text = items.concat([value]).join(", ");
-            root._accept(textArea.text);
+        delegate: StyledTextButton {
+          required property var modelData
+          // A value, or { value, label } to show a name for it
+          readonly property string value: typeof modelData === "string" ? modelData : modelData.value
+          implicitHeight: Widget.smallHeight
+          text: typeof modelData === "string" ? modelData : modelData.label
+          tooltipText: value !== text ? value : ""
+          onClicked: {
+            if (!root.commaList) {
+              textArea.text = value;
+              root._accept(value);
+              return;
+            }
+            const items = textArea.text.split(",").map(v => v.trim()).filter(v => v !== "");
+            if (!items.includes(value)) {
+              textArea.text = items.concat([value]).join(", ");
+              root._accept(textArea.text);
+            }
           }
         }
       }
+    },
+    StyledText {
+      visible: root._pickFailed
+      text: I18n.tr("No file picker could be opened")
+      role: "caption"
+      tone: "warning"
+      Layout.fillWidth: true
     }
-  }
-
-  StyledText {
-    visible: root._pickFailed
-    text: I18n.tr("No file picker could be opened")
-    role: "caption"
-    tone: "warning"
-    Layout.fillWidth: true
-    Layout.columnSpan: root.columns
-  }
+  ]
 }

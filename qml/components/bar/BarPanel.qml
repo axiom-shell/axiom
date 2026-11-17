@@ -112,7 +112,7 @@ PanelWindow {
   readonly property bool present: root.visible && root.revealed
   // Mapped with any of it still in view (sliding in or out): the border's
   // stroke stays open under it until it has gone
-  readonly property bool onScreen: root.visible && root._shown > 0
+  readonly property bool inView: root.visible && root._shown > 0
 
   // A window over its slot, or a fullscreen one on its screen
   // (whenCovered). Fullscreen, it stays on its layer under that window:

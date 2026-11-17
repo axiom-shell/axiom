@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import qs.components.methods
 
 import qs.components.reusable
 import qs.config
@@ -45,7 +46,7 @@ Item {
   readonly property bool _image: _source !== ""
   // An emoji is its own picture: bigger, on no tile
   readonly property bool _emoji: modelData.kind === "emoji"
-  readonly property color _titleColor: current ? Style.onAccentContainer : Style.text
+  readonly property color _titleColor: current ? Style.inkAccentContainer.text : Style.text
 
   // Rows are reused as the results change: one showing a different result
   // than before dips and comes back, icon and text together. Not on its
@@ -76,8 +77,8 @@ Item {
     anchors.fill: parent
     anchors.leftMargin: Widget.smallPadding
     anchors.rightMargin: Widget.smallPadding
-    radius: Widget.radius
-    color: root.current ? Style.accentContainer : "transparent"
+    radius: Style.radius
+    color: root.current ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: the selected fill at no alpha, so a selection change doesn't fade through black
     ColorGlide on color {}
 
     StateLayer {
@@ -129,12 +130,15 @@ Item {
         fillMode: root._thumbnail || root.modelData.crop ? Image.PreserveAspectCrop : Image.PreserveAspectFit
       }
 
-      Rectangle {
+      Item {
         anchors.fill: parent
         visible: !root._image
-        radius: Widget.radius
-        color: root._emoji ? "transparent" : root.modelData.armed ? Style.errorContainer : Style.surfaceHighest
-        ColorGlide on color {}
+
+        Surface {
+          anchors.fill: parent
+          visible: !root._emoji
+          tone: root.modelData.armed ? "errorContainer" : "highest"
+        }
 
         StyledIcon {
           anchors.centerIn: parent
@@ -147,6 +151,10 @@ Item {
 
     ColumnLayout {
       Layout.fillWidth: true
+      // The title caps its own width so the usage follows it; without this a
+      // row with no usage and no subtitle caps the whole column to the title,
+      // and the row spreads that column to the middle
+      Layout.maximumWidth: Number.POSITIVE_INFINITY
       Layout.alignment: Qt.AlignVCenter
       spacing: 1
 
@@ -189,26 +197,11 @@ Item {
       }
     }
 
-    Rectangle {
+    StatusChip {
       Layout.alignment: Qt.AlignVCenter
-      Layout.maximumWidth: root.width * 0.4
-      visible: hint.text !== ""
-      implicitWidth: hint.implicitWidth + Widget.smallPadding * 2
-      implicitHeight: hint.implicitHeight + Widget.smallPadding
-      radius: Widget.radius
-      color: root.modelData.armed ? Style.error : Style.surfaceHighest
-
-      StyledLabel {
-        id: hint
-        anchors.fill: parent
-        anchors.leftMargin: Widget.smallPadding
-        anchors.rightMargin: Widget.smallPadding
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        text: root.modelData.hint ?? ""
-        textColor: root.modelData.armed ? Style.onError : Style.inkHighest.muted
-        role: "micro"
-      }
+      visible: text !== ""
+      tone: root.modelData.armed ? "error" : "neutral"
+      text: root.modelData.hint ?? ""
     }
   }
 }

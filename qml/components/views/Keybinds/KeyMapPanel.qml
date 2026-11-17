@@ -35,20 +35,6 @@ ColumnLayout {
       });
   }
 
-  function tone(source) {
-    switch (source) {
-    case "axiom":
-      return "accentContainer";
-    case "both":
-      return "errorContainer";
-    case "paused":
-      return "highest";
-    case "user":
-      return "warningContainer";
-    }
-    return "sunken";
-  }
-
   SectionHeading {
     title: I18n.tr("Free keys")
     description: I18n.tr("Pick the modifiers to look under. Click a free key to bind it, or one of axiom's to edit its bind.")
@@ -59,7 +45,7 @@ ColumnLayout {
     showMods: true
     mods: KeybindManager.page.keyMapMods
     sourceOf: key => root.held(key).source
-    toneFor: source => root.tone(source)
+    toneFor: source => KeySourceTone.tone(source)
     legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["paused", I18n.tr("Paused or not bound now")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
     clickableOf: key => root.held(key).source !== "user"
     onClicked: key => root.pick(key)

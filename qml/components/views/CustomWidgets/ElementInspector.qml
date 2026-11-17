@@ -2,17 +2,21 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services.core
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 import qs.components.views.Layouts
+import qs.components.views.base
 
-// Custom widgets page, Module tab: the element library (shown while no
-// element is selected), then the selected
-// element's bindings (each slot: the output's own key, a path in it, a
-// format or a number), its look (its kind's options,
-// CustomWidgetsConfig.elementKinds) and the commands it runs.
+// Custom widgets page, Module tab: while nothing is selected the element
+// library and the module's own settings (lock screen, font); the selected
+// element's settings in their place: its name and when it is shown (Visible,
+// one row), its text fields (Shows: a ValueField per slot of its kind), the
+// actions it runs and when they can (Enabled), its colours (a ColorField
+// each) and its look (the rest of its kind's options,
+// CustomWidgetsConfig.elementKinds).
 ColumnLayout {
   id: root
 
@@ -20,54 +24,170 @@ ColumnLayout {
   required property var dragLayer
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var grid: root.editor.elements
-  readonly property var element: root.grid.selected >= 0 ? (root.editor.selected?.module?.elements?.[root.grid.selected] ?? null) : null
+  readonly property var element: root.editor.element
+  readonly property var definition: root.editor.selected
+  readonly property var views: root.definition?.module?.views ?? []
+  // What the lock screen does to this definition, while it is offered there
+  // ("" when it holds nothing affected): CustomWidgetData.lockIssues
+  readonly property string lockWarning: {
+    const issues = root.definition?.module?.lockscreen ? CustomWidgetData.lockIssues(root.definition) : [];
+    const parts = [];
+    if (issues.some(i => i === "actions" || i === "entry"))
+      parts.push(I18n.tr("Actions and entries do nothing there."));
+    if (issues.includes("text"))
+      parts.push(I18n.tr("Text the script prints is readable by anyone who sees the lock screen."));
+    return parts.join(" ");
+  }
   readonly property var kind: CustomWidgetsConfig.elementKind(root.element?.type ?? "")
-  readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
-  // The binding choices: the output's own key, or any path in it (a
-  // format or a number can be typed)
-  readonly property var bindOptions: [
+  readonly property string elementKey: root.element ? root.editor.selectedId + "/" + root.editor.viewIndex + "/" + root.element.id : ""
+
+  // The titles of an element's triggers ("On press", "On change"…): every
+  // kind's `run` has the base's
+  readonly property var triggerTitles: {
+    const defs = ConfigManager.configSchema.definitions;
+    const first = defs.CustomElement.oneOf[0].$ref.replace("#/definitions/", "");
+    return defs[first].properties.run.properties;
+  }
+  // What the previewed sample makes of one of the element's text fields ("" unbound)
+  function readBind(slot) {
+    const binding = root.element?.bind?.[slot] ?? "";
+    return binding && root.editor.previewFields ? CustomWidgetData.asText(CustomWidgetData.elementValue(root.editor.previewFields, binding)) : "";
+  }
+
+  // The name "New action…" gives an action made for this element: its name,
+  // else its label, else its kind
+  readonly property string actionName: root.element?.name || root.readBind("label") || I18n.tr(root.kind?.label ?? "")
+  // What {value} reads as in the previewed sample, for the Runs line under a trigger
+  readonly property string valueText: root.readBind("value")
+
+  // The keys a colour rule or Visible can read: the output's paths, for a
+  // List the keys of its rows (a rule reads each row's own item, and the
+  // row's `state`)
+  readonly property var colorKeys: {
+    if (root.element?.type !== "List")
+      return root.editor.bindPaths.map(p => p.path);
+    const fields = root.editor.previewFields;
+    const rows = CustomWidgetData.rows(root.element.bind?.items ? CustomWidgetData.elementValue(fields, root.element.bind.items) : fields?.sample?.items, root.element.options?.row);
+    const keys = Object.keys(rows.find(row => row.raw !== null && typeof row.raw === "object")?.raw ?? ({}));
+    return keys.includes("state") ? keys : ["state"].concat(keys);
+  }
+
+  // A slot's title in the Shows group. The names are the kinds' slots:
+  // I18n.tr("Text") I18n.tr("Value") I18n.tr("Unit") I18n.tr("Label") I18n.tr("Icon")
+  // I18n.tr("Badge") I18n.tr("Items") I18n.tr("Image") I18n.tr("State") I18n.tr("Min")
+  // I18n.tr("Max") I18n.tr("Placeholder") I18n.tr("Enabled") I18n.tr("Second value")
+  function slotTitle(name) {
+    const titles = {
+      "text": I18n.tr("Text"),
+      "value": I18n.tr("Value"),
+      "value2": I18n.tr("Second value"),
+      "unit": I18n.tr("Unit"),
+      "label": I18n.tr("Label"),
+      "icon": I18n.tr("Icon"),
+      "badge": I18n.tr("Badge"),
+      "items": I18n.tr("Items"),
+      "image": I18n.tr("Image"),
+      "state": I18n.tr("State"),
+      "min": I18n.tr("Min"),
+      "max": I18n.tr("Max"),
+      "placeholder": I18n.tr("Placeholder")
+    };
+    return titles[name] ?? name;
+  }
+
+  // What an empty slot means. Most fall back to the output's own key; a
+  // Button's label to its action's name; a Button's
+  // icon and value, a Toggle's label and an Entry's placeholder are empty
+  function slotPlaceholder(name) {
+    const type = root.element?.type ?? "";
+    if (type === "Button")
+      return name === "label" ? I18n.tr("The action's name") : "";
+    if (type === "Entry" || (type === "Toggle" && name === "label"))
+      return "";
+    return I18n.tr("The output's own");
+  }
+
+  // The tests a Visible or Enabled condition offers: the rule tests, then
+  // has a value / is empty and is on / is off (CustomWidgetData.holds)
+  readonly property var conditionTests: root.editor.ruleTests.concat([
     {
-      "value": "",
-      "label": I18n.tr("The output's own")
+      "value": "set",
+      "label": I18n.tr("has a value")
+    },
+    {
+      "value": "unset",
+      "label": I18n.tr("is empty")
+    },
+    {
+      "value": "on",
+      "label": I18n.tr("is on")
+    },
+    {
+      "value": "off",
+      "label": I18n.tr("is off")
     }
-  ].concat((root.fields?.sample ? CustomWidgetData.flatten(root.fields.sample) : []).filter(p => p.type !== "object").map(p => ({
-        "value": p.path,
-        "label": p.path
-      })))
+  ])
 
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
-  // Slot names, shown as is: I18n.tr("text") I18n.tr("value")
-  // I18n.tr("unit") I18n.tr("label") I18n.tr("icon") I18n.tr("badge")
-  // I18n.tr("items") I18n.tr("image") I18n.tr("state") I18n.tr("min")
-  // I18n.tr("max")
-
-  // The library: drag one onto the module, or click it to add it where
-  // there's room
-  // Only while no element is selected, as the layouts editor's library
-  Loader {
-    active: root.element === null
-    visible: active
+  // The library and the module's own settings: what the column holds while
+  // nothing is selected
+  ColumnLayout {
+    visible: !root.element
     Layout.fillWidth: true
-    // A Flow's height comes from its width
-    Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
+    spacing: Widget.spacing
 
-    // (Its title and description are the column's header, in
-    // ElementEditorLayout)
-    sourceComponent: Flow {
-      width: parent?.width ?? 0
-      spacing: Widget.spacing
+    // Kind labels are the schema's; kinds have no groups
+    EditorLibrary {
+      id: library
+      icon: "category"
+      title: I18n.tr("Elements")
+      caption: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
+      types: CustomWidgetsConfig.elementKinds
+      groupable: false
+      fitsContent: true
 
-      Repeater {
-        model: CustomWidgetsConfig.elementKinds
+      delegate: ModuleChip {
+        required property var modelData
+        implicitWidth: library.tileWidth
+        dragLayer: root.dragLayer
+        typeInfo: modelData
+        onClicked: root.grid.addModule(modelData.type)
+      }
+    }
 
-        ModuleChip {
-          required property var modelData
-          dragLayer: root.dragLayer
-          // Kind labels: the schema's
-          typeInfo: modelData
-          onClicked: root.grid.addModule(modelData.type)
-        }
+    // The font is a setting of the module's Text elements, so it sits here
+    FieldGroup {
+      Layout.fillWidth: true
+      // The column's gap is 4: the group's top is Style.space2 from the library
+      Layout.topMargin: Widget.spacing
+      title: I18n.tr("Module")
+
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen", "font"])
+        order: ["lockscreen", "font"]
+        values: root.definition?.module ?? ({})
+        onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
+        changedAt: path => root.editor.changedAt(["module"].concat(path))
+        onDiscardAt: path => root.editor.discardAt(["module"].concat(path))
+      }
+      // Offered on the lock screen: what doesn't work there
+      Notice {
+        visible: root.lockWarning !== ""
+        Layout.fillWidth: true
+        Layout.topMargin: Style.space2
+        status: "warning"
+        title: I18n.tr("On the lock screen")
+        text: root.lockWarning
+      }
+      StyledTextButton {
+        visible: root.editor.layerElements.length === 0 && root.views.length === 0
+        Layout.topMargin: Style.space2
+        implicitHeight: Widget.height
+        iconText: "auto_awesome"
+        text: I18n.tr("Start from the default layout")
+        onClicked: root.editor.useDefaultElements()
       }
     }
   }
@@ -77,11 +197,11 @@ ColumnLayout {
     id: selected
     Layout.fillWidth: true
     Layout.preferredHeight: selected.childrenRect.height
-    key: root.element ? root.editor.selectedId + "/" + root.element.id : ""
+    key: root.elementKey
 
     sourceComponent: ColumnLayout {
       width: selected.width
-      spacing: Widget.spacing * 2
+      spacing: Style.cardGap
 
       InspectorHeader {
         icon: root.kind?.icon ?? "widgets"
@@ -98,49 +218,82 @@ ColumnLayout {
         onDuplicate: root.grid.duplicateModule(root.grid.selected)
         onRemove: root.grid.removeModule(root.grid.selected)
         onClose: root.grid.clearSelection()
-      }
 
-      FieldGroup {
-        visible: (root.kind?.slots.length ?? 0) > 0
-        Layout.fillWidth: true
-        title: I18n.tr("Shows")
+        // Copy to another screen (the screens it can go to: the layout's menu)
+        StyledIconButton {
+          id: copyButton
+          visible: root.dragLayer.copyTargets.length > 0
+          iconText: "move_item"
+          tooltipText: I18n.tr("Copy to screen")
+          onClicked: copyMenu.openAt(copyButton, 0, copyButton.height)
 
-        Repeater {
-          model: root.kind?.slots ?? []
-
-          RowLayout {
-            id: slot
-            required property string modelData
-            Layout.fillWidth: true
-            spacing: Widget.spacing
-
-            StyledLabel {
-              Layout.preferredWidth: Widget.textPx(70)
-              text: I18n.tr(slot.modelData)
-            }
-            StyledComboEntry {
-              Layout.fillWidth: true
-              editable: true
-              placeholderText: I18n.tr("The output's own")
-              value: root.element?.bind?.[slot.modelData] ?? ""
-              options: root.bindOptions
-              onPicked: value => root.editor.setElement(["bind", slot.modelData], value === "" ? undefined : value)
-            }
+          StyledContextMenu {
+            id: copyMenu
+            parent: root
+            items: root.dragLayer.copyTargets
+            onTriggered: id => root.editor.copyElementToView(Number(id.slice(3)))
           }
         }
       }
 
       FieldGroup {
-        visible: Object.keys(root.kind?.options ?? {}).length > 0
         Layout.fillWidth: true
-        title: I18n.tr("Look")
+        title: I18n.tr("General")
 
-        SchemaPropertiesForm {
+        FormColumn {
           Layout.fillWidth: true
-          propertiesSchema: root.kind?.options ?? ({})
-          order: root.kind?.optionsOrder ?? []
-          values: root.element?.options ?? ({})
-          onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
+
+          // Shown on the canvas: empty, the kind
+          FieldRow {
+            label: I18n.tr("Name")
+
+            CommitEntry {
+              Layout.fillWidth: true
+              placeholderText: I18n.tr(root.kind?.label ?? "")
+              value: root.element?.name ?? ""
+              live: true
+              onEdited: text => root.editor.setElement(["name"], text)
+            }
+          }
+
+          // One row: Always, or When a value in the output holds
+          ConditionRows {
+            label: I18n.tr("Visible")
+            description: I18n.tr("Show it only while a value in the output holds.")
+            value: root.element?.showWhen ?? ({})
+            keys: root.colorKeys
+            tests: root.conditionTests
+            write: (field, value) => root.editor.setElement(["showWhen", field], value)
+          }
+        }
+      }
+
+      FieldGroup {
+        visible: (root.kind?.slots ?? []).length > 0
+        Layout.fillWidth: true
+        title: I18n.tr("Shows")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Type text, or insert {a value}.")
+        }
+
+        FormColumn {
+          Layout.fillWidth: true
+
+          // By count over the kind's slots
+          Repeater {
+            model: (root.kind?.slots ?? [])
+
+            ValueField {
+              id: field
+              required property string modelData
+              required property int index
+              Layout.fillWidth: true
+              slot: field.modelData
+              label: root.slotTitle(field.modelData)
+              placeholder: root.slotPlaceholder(field.modelData)
+            }
+          }
         }
       }
 
@@ -148,15 +301,100 @@ ColumnLayout {
         visible: (root.kind?.actions.length ?? 0) > 0
         Layout.fillWidth: true
         title: I18n.tr("Runs")
-        description: I18n.tr("Never on the lock screen.")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Never on the lock screen.")
+        }
+
+        FormColumn {
+          Layout.fillWidth: true
+
+          Repeater {
+            model: root.kind?.actions ?? []
+
+            TriggerField {
+              id: trigger
+              required property string modelData
+              required property int index
+              label: root.triggerTitles[trigger.modelData].title
+              current: root.element?.run?.[trigger.modelData] ?? ""
+              newName: root.actionName
+              valueText: root.valueText
+              ownValue: root.element?.type !== "Button"
+              writeRun: value => root.editor.setElement(["run", trigger.modelData], value)
+              arg: root.element?.args?.[trigger.modelData] ?? ""
+              writeArg: value => root.editor.setElement(["args", trigger.modelData], value)
+            }
+          }
+
+          ConditionRows {
+            label: I18n.tr("Enabled")
+            value: root.element?.enabledWhen ?? ({})
+            keys: root.colorKeys
+            tests: root.conditionTests
+            whenTest: "on"
+            write: (field, value) => root.editor.setElement(["enabledWhen", field], value)
+          }
+        }
+      }
+
+      FieldGroup {
+        visible: (root.kind?.colors.length ?? 0) > 0
+        Layout.fillWidth: true
+        title: I18n.tr("Colors")
+        headerExtras: TipIcon {
+          text: "help"
+          tip: I18n.tr("Pick a color, or By state… to pick it from a value.")
+        }
+
+        FormColumn {
+          Layout.fillWidth: true
+
+          // By count over the kind's colours (the schema's)
+          Repeater {
+            model: root.kind?.colors ?? []
+
+            ColorField {
+              id: color
+              required property var modelData
+              required property int index
+              readonly property var schema: root.kind?.options?.[color.modelData.key] ?? ({})
+              key: color.modelData.key
+              statesKey: color.modelData.statesKey
+              label: I18n.tr(color.schema.title ?? "")
+              description: color.schema.description ? I18n.tr(color.schema.description) : ""
+              emptyLabel: color.schema["x-emptyLabel"] ?? "Auto"
+              value: root.element?.options?.[color.key] ?? ""
+              statesValue: root.element?.options?.[color.statesKey] ?? ({})
+              keys: root.colorKeys
+              write: (path, value) => root.editor.setElement(["options"].concat(path), value)
+            }
+          }
+        }
+      }
+
+      FieldGroup {
+        visible: (root.kind?.lookOrder.length ?? 0) > 0
+        Layout.fillWidth: true
+        title: I18n.tr("Look")
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
-          propertiesSchema: root.kind?.actionsSchema ?? ({})
-          order: root.kind?.actions ?? []
-          values: root.element?.actions ?? ({})
-          onEdited: (path, value) => root.editor.setElement(["actions"].concat(path), value)
+          propertiesSchema: Utils.pick(root.kind?.options ?? ({}), order)
+          order: root.kind?.lookOrder ?? []
+          values: root.element?.options ?? ({})
+          onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
+          changedAt: path => root.editor.elementChangedAt(["options"].concat(path))
+          onDiscardAt: path => root.editor.discardElementAt(["options"].concat(path))
         }
+      }
+
+      StyledTextButton {
+        Layout.alignment: Qt.AlignRight
+        implicitHeight: Widget.height
+        kind: "text"
+        text: I18n.tr("More in Help")
+        onClicked: root.editor.openHelp(root.kind?.help ?? "text")
       }
     }
   }

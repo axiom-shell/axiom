@@ -84,7 +84,9 @@ Loader {
       return MenusConfig.menus.reduce((labels, menu) => {
         labels[menu.id] = I18n.tr("{0} · {1}", menu.name || menu.id, I18n.tr(MenusConfig.placementLabels[menu.placement] ?? menu.placement));
         return labels;
-      }, {});
+      }, {
+        "": I18n.tr(fieldSchema["x-emptyLabel"] ?? "None")
+      });
     if (fieldSchema["x-options"] === "customWidgets")
       return CustomWidgetsConfig.items.reduce((labels, item) => {
         labels[item.id] = item.name || item.id;
@@ -184,13 +186,11 @@ Loader {
   // greyed with it, without repeating it.
   readonly property string _blockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf) || SchemaLayout.failingKey(fieldSchema["x-hintedIf"], root._valueOf)
   readonly property bool allowed: _blockedBy === ""
-  // Shown by a sibling's value (a part's fields, under its switch)
-  readonly property bool followsSibling: SchemaLayout.followsSibling(fieldSchema)
   // I18n.tr("{0} only.")
   readonly property string disabledNote: {
     // (A field one compositor alone has says so even under its part's
     // switch: the switch itself isn't greyed out for it)
-    if (root.allowed || (root.followsSibling && _blockedBy !== "/$compositor"))
+    if (root.allowed || (SchemaLayout.followsSibling(root.fieldSchema) && _blockedBy !== "/$compositor"))
       return "";
     // false: none (the section's intro says why)
     const own = fieldSchema["x-disabledNote"] ?? "";
@@ -218,6 +218,10 @@ Loader {
   // setting, while it can be used, but a group heading (no setting) and a
   // list of objects, whose items' own rows tint
   readonly property bool tinted: row.kind !== "group" && root.sourceComponent !== arrayField && root.allowed && !root.placeKept
+
+  // The narrowest the control stays usable in (FieldFit.least; 0: a control
+  // that isn't a FieldLine), for a pair's halves (SchemaPropertiesForm)
+  readonly property real leastWidth: root.item?.leastWidth ?? 0
 
   // A click on the row outside its control (FormRow.rowClicked): the
   // control does what its own click does
@@ -403,42 +407,21 @@ Loader {
   // null automatic value through, as an inheriting one's).
   Component {
     id: autoSpinField
-    ColumnLayout {
-      id: autoField
+    AutoNumberField {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
+      fieldSchema: root.fieldSchema
+      current: root.current
       // (While the row is torn down its schema can go first)
-      readonly property var auto: root.fieldSchema["x-auto"] ?? ({
+      auto: root.fieldSchema["x-auto"] ?? ({
           "value": 0,
           "start": 0
         })
-      readonly property bool custom: root.current !== undefined && root.current !== autoField.auto.value
-      spacing: Widget.spacing
-      // What a click on the row outside its controls does (rowClicked)
-      function activate() {
-        autoSwitch.activate();
-      }
-      SchemaSwitch {
-        id: autoSwitch
-        label: root.label
-        description: root.description
-        headerExtra: root.headerExtra
-        headerBelow: root.headerBelow
-        checked: autoField.custom
-        onToggled: value => root.commit(value ? autoField.auto.start : autoField.auto.value)
-      }
-      SchemaNumberField {
-        visible: autoField.custom
-        label: ""
-        currentConfigValue: autoField.custom ? root.current : autoField.auto.start
-        // (A null automatic value leaves the whole range to the number)
-        minimum: autoField.auto.value === null ? (root.fieldSchema.minimum ?? 0) : Math.max(root.fieldSchema.minimum ?? 0, autoField.auto.value + 1)
-        maximum: root.fieldSchema.maximum ?? 9999
-        stepSize: root.fieldSchema.multipleOf ?? 1
-        unit: root.fieldSchema["x-unit"] ?? ""
-        unitScale: SchemaLayout.unitScale(unit)
-        mode: root.form?.numberMode || (root.fieldSchema["x-control"] ?? "auto")
-        onValueTyped: value => root.type(value)
-        onCommitted: (value, typed) => typed ? root.commitTyped(value) : root.commit(value)
-      }
+      numberMode: root.form?.numberMode ?? ""
+      onTyped: value => root.type(value)
+      onCommitted: (value, typed) => typed ? root.commitTyped(value) : root.commit(value)
     }
   }
 
@@ -465,7 +448,6 @@ Loader {
       }
       SquareIconButton {
         Layout.alignment: Qt.AlignVCenter
-        size: Widget.height - Widget.px(6)
         iconText: "content_copy"
         tooltipText: I18n.tr("Copy")
         onClicked: ClipboardManager.copyText(String(root.current ?? ""))
@@ -588,10 +570,11 @@ Loader {
   }
 
   // An array of ids of something defined elsewhere (`x-ref`): chips and a
-  // picker of the others (RefChips)
+  // picker of the others (PickedChips)
   Component {
     id: refChipsField
-    RefChips {
+    PickedChips {
+      addMode: "picker"
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
@@ -619,9 +602,18 @@ Loader {
   // the mode
   Component {
     id: iconField
-    ColumnLayout {
+    FieldLine {
       id: iconColumn
-      spacing: Widget.spacing
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      headerBelow: root.headerBelow
+      // The mode switch on the label's line (under it when it doesn't fit),
+      // the boxes at full width under them
+      kind: iconColumn.modeKey !== "" ? "fixed" : "block"
+      controlLeast: modeToggle.implicitWidth
+      hasControl: iconColumn.modeKey !== ""
+      bodyShown: true
       readonly property string value: root.current ?? ""
       readonly property var iconText: root.fieldSchema["x-iconText"] ?? null
       readonly property string modeKey: iconColumn.iconText?.mode ?? ""
@@ -647,13 +639,25 @@ Loader {
         root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), iconColumn.modes[(index + 1) % iconColumn.modes.length]);
       }
 
-      FieldHeader {
-        label: root.label
-        description: root.description
-        trailing: root.headerExtra
-        below: root.headerBelow
+      StyledToggle {
+        id: modeToggle
+        visible: iconColumn.modeKey !== ""
+        // Under the label: the segments share the width
+        Layout.fillWidth: iconColumn.fit.fill
+        options: iconColumn.modes
+        labels: ({
+            "icon": I18n.tr("Icon"),
+            "text": I18n.tr("Text"),
+            "both": I18n.tr("Both")
+          })
+        value: iconColumn.mode
+        onPicked: value => {
+          if (root.form && value !== iconColumn.mode)
+            root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
+        }
       }
-      RowLayout {
+
+      body: RowLayout {
         Layout.fillWidth: true
         spacing: Widget.spacing
 
@@ -686,21 +690,6 @@ Loader {
               if (root.form)
                 root.form.edit(iconColumn.siblingPath(iconColumn.textKey), value);
             }
-          }
-        }
-
-        StyledToggle {
-          visible: iconColumn.modeKey !== ""
-          options: iconColumn.modes
-          labels: ({
-              "icon": I18n.tr("Icon"),
-              "text": I18n.tr("Text"),
-              "both": I18n.tr("Both")
-            })
-          value: iconColumn.mode
-          onPicked: value => {
-            if (root.form && value !== iconColumn.mode)
-              root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
           }
         }
       }
@@ -736,6 +725,8 @@ Loader {
       headerExtra: root.headerExtra
       headerBelow: root.headerBelow
       multiline: root.fieldSchema["x-multiline"] === true
+      // What the empty text means (x-emptyLabel), shown while it is empty
+      placeholderText: I18n.tr(root.fieldSchema["x-emptyLabel"] ?? "")
       browse: root.fieldSchema["x-control"] === "folder" ? "folder" : ""
       // Text that doesn't match yet (a half-typed time) isn't committed
       pattern: root.fieldSchema.pattern ?? null
@@ -789,14 +780,14 @@ Loader {
         spacing: Widget.spacing / 2
         Repeater {
           model: root._chipOptions
-          SegmentButton {
+          ToggleChip {
             id: chip
             required property string modelData
             readonly property bool selected: (root.current ?? []).includes(chip.modelData)
             iconText: root._chipIcons[chip.modelData] ?? ""
             text: root.optionLabels[chip.modelData] ?? I18n.tr(chip.modelData)
-            active: chip.selected
-            onClicked: {
+            checked: chip.selected
+            onToggled: {
               const current = root.current ?? [];
               const next = chip.selected ? current.filter(v => v !== chip.modelData) : current.concat([chip.modelData]);
               root.commit(root._chipOptions.filter(v => next.includes(v)));
@@ -810,7 +801,9 @@ Loader {
   // Chips whose order counts (`x-ordered`): dragged into place
   Component {
     id: orderedChipsField
-    SchemaOrderedChips {
+    PickedChips {
+      ordered: true
+      translate: true
       label: root.label
       description: root.description
       headerExtra: root.headerExtra

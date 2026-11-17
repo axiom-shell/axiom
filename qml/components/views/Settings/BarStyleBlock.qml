@@ -125,8 +125,8 @@ ColumnLayout {
   Component.onCompleted: root._openFoldFor(SettingsManager.pendingJump)
 
   // One section: its heading (with the bar's own switch) and its form;
-  // with `folds`, a fold instead, its form built only while open
-  component Section: ColumnLayout {
+  // with `folds`, a fold row instead, its form built only while open
+  component Section: FormColumn {
     id: piece
 
     property string title: ""
@@ -147,48 +147,37 @@ ColumnLayout {
 
     visible: piece.shown
     Layout.fillWidth: true
-    spacing: Widget.spacing
 
-    FoldHeader {
-      visible: piece.folds
+    FoldFormRow {
+      shown: piece.folds
       title: I18n.tr(piece.title)
-      collapsed: !piece.open
+      open: piece.open
       // Shut, a dot while any of its settings has an unsaved edit
       marked: piece.keys.some(key => root.changedAt?.([key]) === true)
       onToggled: SettingsManager.setFoldOpen(piece.foldKey, !piece.open)
     }
 
-    RowLayout {
+    SectionHeading {
       visible: !piece.folds
-      Layout.fillWidth: true
-      spacing: Widget.spacing * 2
+      Layout.bottomMargin: Widget.spacing
+      title: piece.heading !== "" ? piece.heading : I18n.tr(piece.title)
+    }
 
-      SectionHeading {
-        title: piece.heading !== "" ? piece.heading : I18n.tr(piece.title)
-      }
-
-      // (Not on the style's options: they're Look's too)
-      SchemaSwitch {
-        visible: root.owned !== null && piece.heading === ""
-        Layout.fillWidth: false
-        label: I18n.tr("This bar's own")
-        checked: root.owned?.[piece.title] === true
-        onToggled: value => root.ownToggled(piece.title, value)
-      }
+    // (Not on the style's options: they're Look's too)
+    SwitchRow {
+      shown: !piece.folds && root.owned !== null && piece.heading === ""
+      label: I18n.tr("This bar's own")
+      checked: root.owned?.[piece.title] === true
+      onToggled: value => root.ownToggled(piece.title, value)
     }
 
     // Owned, but some of its keys still shared: they can all be the bar's
-    RowLayout {
+    StatusLine {
       visible: !piece.shared && piece.heading === "" && root.partlyOwned?.[piece.title] === true
       Layout.fillWidth: true
-      spacing: Widget.spacing
-
-      StyledText {
-        Layout.fillWidth: true
-        text: I18n.tr("Some of these follow the shared style.")
-        tone: "muted"
-        overflow: "wrap"
-      }
+      Layout.topMargin: Widget.spacing
+      text: I18n.tr("Some of these follow the shared style.")
+      tone: "muted"
 
       StyledTextButton {
         text: I18n.tr("Make all this bar's own")
@@ -197,19 +186,15 @@ ColumnLayout {
     }
 
     // Where the shared values are set: the settings page's Bar style card
-    RowLayout {
+    StatusLine {
       visible: piece.shared && piece.heading === ""
       Layout.fillWidth: true
-      spacing: Widget.spacing
-
-      StyledText {
-        text: I18n.tr("Shared with every bar.")
-        tone: "muted"
-      }
+      Layout.topMargin: Widget.spacing
+      text: I18n.tr("Shared with every bar.")
+      tone: "muted"
 
       SettingsLink {
         id: sharedLink
-        Layout.fillWidth: true
         setting: "Bars.style." + (piece.keys[0] ?? "")
         text: I18n.tr("{0} in {1}", I18n.tr(piece.title), I18n.tr(sharedLink.target?.category ?? ""))
       }

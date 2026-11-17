@@ -353,4 +353,20 @@ TestCase {
     }, "a name, drawn as words even where it's an icon's name");
     compare(WorkspaceCells.pick("", [], "").kind, "labels");
   }
+
+  // A cell draws its symbols at symbolSize and measures its room from
+  // contentSize: the two must be the same whole pixels (the unrounded
+  // `fontSize * 1.2` drew 15.6 where 16 was measured)
+  function test_symbol_size_is_whole_and_is_what_content_measures() {
+    for (const size of [10, 11, 12, 13, 13.5, 14, 15, 16.5]) {
+      const drawn = WorkspaceCells.symbolSize(size);
+      compare(drawn, Math.round(drawn), `symbol at ${size} is whole`);
+      compare(WorkspaceCells.contentSize(40, size, false), drawn, `measured = drawn at ${size}`);
+    }
+    compare(WorkspaceCells.symbolSize(13), 16);
+  }
+
+  function test_label_size_is_one_less_than_the_bar_text() {
+    compare(WorkspaceCells.labelSize(13), 12);
+  }
 }

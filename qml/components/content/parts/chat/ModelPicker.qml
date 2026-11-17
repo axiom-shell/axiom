@@ -112,58 +112,20 @@ DropdownSurface {
 
           Component {
             id: choiceRow
-            Rectangle {
+            MenuRow {
               id: choice
               readonly property var preset: row.rowData.preset ?? null
               readonly property bool selected: preset ? preset.name === ChatManager.preset.name : row.rowData.provider.id === ChatManager.provider?.id && row.rowData.model === ChatManager.model
               width: row.width
-              implicitHeight: Widget.height
-              radius: Widget.radius / 2
-              color: choice.selected ? Style.accentContainer : "transparent"
-
-              StateLayer {
-                hovered: choiceHover.hovered
-              }
-
-              HoverHandler {
-                id: choiceHover
-                cursorShape: Qt.PointingHandCursor
-              }
-              TapHandler {
-                onTapped: {
-                  if (choice.preset)
-                    ChatManager.setPreset(choice.preset.name);
-                  else
-                    ChatManager.setModel(row.rowData.provider.id, row.rowData.model);
-                  root.picked();
-                }
-              }
-
-              RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Widget.spacing
-                anchors.rightMargin: Widget.spacing
-                spacing: Widget.spacing
-
-                StyledIcon {
-                  visible: choice.preset !== null
-                  text: choice.preset?.icon || "chat"
-                  size: "sm"
-                  textColor: choice.selected ? Style.onAccentContainer : Style.textMuted
-                }
-                StyledLabel {
-                  Layout.fillWidth: true
-                  text: choice.preset ? choice.preset.name : row.rowData.model
-                  role: "caption"
-                  textColor: choice.selected ? Style.onAccentContainer : Style.text
-                  overflow: "line"
-                }
-                StyledIcon {
-                  visible: choice.selected
-                  text: "check"
-                  size: "sm"
-                  textColor: Style.onAccentContainer
-                }
+              icon: choice.preset ? (choice.preset.icon || "chat") : ""
+              text: choice.preset ? choice.preset.name : row.rowData.model
+              current: choice.selected
+              onActivated: {
+                if (choice.preset)
+                  ChatManager.setPreset(choice.preset.name);
+                else
+                  ChatManager.setModel(row.rowData.provider.id, row.rowData.model);
+                root.picked();
               }
             }
           }

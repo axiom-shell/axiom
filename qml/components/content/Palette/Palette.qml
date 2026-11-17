@@ -52,7 +52,7 @@ Card {
       Layout.fillWidth: true
       Layout.fillHeight: true
       Layout.minimumHeight: Appearance.fontSize * 1.5
-      radius: Widget.radius
+      radius: Style.radius
       color: chip.value
       border.width: Style.hairline
       border.color: Style.borderSubtle

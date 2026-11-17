@@ -40,7 +40,7 @@ Surface {
   // Extra room at the ends, so the end buttons clear the rounded border
   readonly property real endInset: Widget.spacing / 2
   readonly property real controlHeight: root.height - root.inset * 2
-  readonly property real innerRadius: Math.max(0, Widget.radius - root.inset / 2)
+  readonly property real innerRadius: Math.max(0, Style.radius - root.inset / 2)
   readonly property real tabPadding: Widget.padding * 1.5
   readonly property real iconSize: Style.iconMd
   readonly property real labelSpacing: Widget.spacing / 2
@@ -71,7 +71,7 @@ Surface {
   // Only the current tab keeps its name when all of them don't fit
   readonly property bool compact: root.maxWidth > 0 && root.chrome + measureRow.fullWidth > root.maxWidth
   // What reads on the current page's pill
-  readonly property color currentInk: Style.onAccentContainer
+  readonly property color currentInk: Style.inkAccentContainer.text
 
   width: row.implicitWidth + (root.inset + root.endInset) * 2
   height: OverlayConfig.navigatorHeight
@@ -148,8 +148,8 @@ Surface {
       border.width: Style.hairline
 
       StateLayer {
-        radius: root.innerRadius
         hovered: backArea.containsMouse
+        pressed: backArea.pressed
       }
 
       Row {
@@ -261,6 +261,7 @@ Surface {
               StateLayer {
                 radius: root.innerRadius
                 hovered: !tab.isCurrent && tabArea.containsMouse
+                pressed: tabArea.pressed
               }
 
               Row {

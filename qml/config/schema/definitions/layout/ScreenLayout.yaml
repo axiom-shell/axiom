@@ -26,7 +26,7 @@ x-properties:
       source:
         x-group: Background
         type: string
-        title: Background
+        title: Source
         x-control: toggle
         enum: [wallpaper, color]
         x-enumLabels: {wallpaper: Wallpaper, color: Color}

@@ -4,6 +4,8 @@ import QtQuick
 // The press-twice gate of a destructive action: pass(key, true) arms the
 // key and refuses; the same key again within `timeout` passes. Arming
 // another key moves it; it disarms by itself after `timeout` (`expired`).
+// `timeout` <= 0 never lapses: it stays armed until another key, `pass` or
+// `disarm` (a confirm with a hint to read first).
 // Each owner builds its own: the power menu, the QuickActions and Power
 // modules, and LauncherManager's commands.
 QtObject {
@@ -21,7 +23,10 @@ QtObject {
   function pass(key, needsConfirm) {
     if (needsConfirm && root.armed !== key) {
       root.armed = key;
-      root._timer.restart();
+      if (root.timeout > 0)
+        root._timer.restart();
+      else
+        root._timer.stop();
       return false;
     }
     root.disarm();

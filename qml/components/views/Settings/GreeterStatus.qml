@@ -4,12 +4,11 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.session
 import qs.components.forms
-import qs.components.reusable
 
 // The top of the Login screen card (the section's `x-intro`): whether axiom
 // is the login screen, and setting it up, updating or removing it
 // (GreeterSetup). `status` and `statusTone` are the card's header chip
-ColumnLayout {
+IntroColumn {
   id: root
 
   readonly property string stage: GreeterManager.status
@@ -52,21 +51,17 @@ ColumnLayout {
     return I18n.tr("Off");
   }
 
-  spacing: Widget.spacing * 1.5
-
   Component.onCompleted: GreeterManager.check()
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "off"
     text: I18n.tr("Your display manager shows its own login screen. Axiom's runs under greetd, laid out on the Layouts page like the lock screen.")
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "installed" || root.stage === "outdated"
     text: I18n.tr("Axiom is greetd's login screen. Lay it out on the Layouts page; it shows your theme, wallpapers and monitor layout as they are when you save.")
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 

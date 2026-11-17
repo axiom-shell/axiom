@@ -4,11 +4,12 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.components.reusable
+import qs.components.forms
 
 // The top of the axiom updates card (the section's `x-intro`): the
 // installed and newest release, what's new, and Check / Update. `status` and
 // `statusTone` are the card's header chip
-ColumnLayout {
+IntroColumn {
   id: root
 
   readonly property string stage: {
@@ -69,70 +70,46 @@ ColumnLayout {
     return SelfUpdateManager.ahead ? I18n.tr("{0} + development ({1})", tag, commit) : tag;
   }
 
-  spacing: Widget.spacing * 1.5
-
-  GridLayout {
+  FactGrid {
     visible: !SelfUpdateManager.managed
-    Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing / 2
-
-    StyledText {
-      text: I18n.tr("Installed")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      text: root.installed || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: SelfUpdateManager.channel === "main" ? I18n.tr("Latest on main") : I18n.tr("Latest release")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "line"
-      text: SelfUpdateManager.latest || "—"
-      textFamily: "monospace"
-      Layout.fillWidth: true
-    }
-
-    StyledText {
-      text: I18n.tr("Last checked")
-      tone: "muted"
-    }
-    StyledText {
-      overflow: "wrap"
-      text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateTimeFormat()) : I18n.tr("Never")
-      Layout.fillWidth: true
-    }
+    facts: [
+      {
+        label: I18n.tr("Installed"),
+        value: root.installed || "—",
+        mono: true
+      },
+      {
+        label: SelfUpdateManager.channel === "main" ? I18n.tr("Latest on main") : I18n.tr("Latest release"),
+        value: SelfUpdateManager.latest || "—",
+        mono: true
+      },
+      {
+        label: I18n.tr("Last checked"),
+        value: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateTimeFormat()) : I18n.tr("Never"),
+        wrap: true
+      }
+    ]
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "managed"
+    Layout.fillWidth: true
     text: I18n.tr("This copy of axiom isn't a git clone: its updates come from your package manager.")
     tone: "muted"
     role: "caption"
-    overflow: "wrap"
-    Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "error"
     text: SelfUpdateManager.error
     tone: "error"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: root.stage === "blocked"
     text: I18n.tr("{0} is available, but your copy of axiom can't update: {1}", SelfUpdateManager.latest, SelfUpdateManager.blockedReason(SelfUpdateManager.blocked))
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
@@ -150,15 +127,9 @@ ColumnLayout {
       Layout.fillWidth: true
     }
 
-    Surface {
-      tone: "sunken"
-      Layout.fillWidth: true
-      implicitHeight: notes.implicitHeight + Widget.padding * 2
-
+    ItemBox {
       StyledText {
-        id: notes
-        anchors.fill: parent
-        anchors.margins: Widget.padding
+        Layout.fillWidth: true
         text: SelfUpdateManager.notes
         role: "body"
         overflow: "wrap"
@@ -166,18 +137,12 @@ ColumnLayout {
     }
   }
 
-  RowLayout {
+  StatusLine {
     visible: !SelfUpdateManager.managed
     Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StyledText {
-      text: SelfUpdate.mode === "off" ? I18n.tr("Automatic checks are off.") : I18n.tr("Checked at startup and once a day.")
-      tone: "muted"
-      role: "caption"
-      overflow: "wrap"
-      Layout.fillWidth: true
-    }
+    text: SelfUpdate.mode === "off" ? I18n.tr("Automatic checks are off.") : I18n.tr("Checked at startup and once a day.")
+    tone: "muted"
+    role: "caption"
 
     StyledTextButton {
       visible: !SelfUpdateManager.busy

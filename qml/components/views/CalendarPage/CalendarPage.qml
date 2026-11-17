@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import qs.config
 import qs.services.ui
 import qs.services.apps
@@ -9,6 +10,7 @@ import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts.calendar
 import qs.components.views.base
+import qs.components.forms
 
 // The Calendar page: the month large, each day's events in it where they
 // fit, and beside it the selected day's events (opening in the editor)
@@ -170,40 +172,34 @@ BaseView {
               contentHeight: calendarList.implicitHeight
               boundsBehavior: Flickable.StopAtBounds
               clip: true
+              ScrollIndicator.vertical: StyledScrollIndicator {}
 
-              ColumnLayout {
+              FormColumn {
                 id: calendarList
                 width: parent.width
-                spacing: 0
 
                 Repeater {
                   id: calendarRepeater
                   readonly property var calendars: CalendarManager.calendars.filter(calendar => calendar.events)
                   model: calendars.length
-                  RowLayout {
+
+                  SwitchRow {
                     id: calendarRow
                     required property int index
                     readonly property var calendar: calendarRepeater.calendars[index] ?? ({})
-                    Layout.fillWidth: true
-                    spacing: Widget.spacing
 
-                    Rectangle {
-                      Layout.preferredWidth: Appearance.fontSize * 0.7
-                      Layout.preferredHeight: width
+                    label: calendarRow.calendar.name
+                    plainLabel: true
+                    dimmed: !calendarRow.calendar.enabled
+                    checked: calendarRow.calendar.enabled
+                    onToggled: on => root.setShown(calendarRow.calendar, on)
+
+                    leading: Rectangle {
+                      implicitWidth: Appearance.fontSize * 0.7
+                      implicitHeight: implicitWidth
                       radius: width / 2
                       color: Style.resolve(calendarRow.calendar.color)
                       opacity: calendarRow.calendar.enabled ? 1 : Style.opacityDisabled
-                    }
-                    StyledLabel {
-                      Layout.fillWidth: true
-                      text: calendarRow.calendar.name
-                      textFormat: Text.PlainText
-                      overflow: "line"
-                      tone: calendarRow.calendar.enabled ? "" : "faint"
-                    }
-                    StyledSwitch {
-                      checked: calendarRow.calendar.enabled
-                      onToggled: root.setShown(calendarRow.calendar, checked)
                     }
                   }
                 }

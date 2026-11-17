@@ -19,7 +19,7 @@ TextEdit {
   textFormat: root.markdown ? TextEdit.MarkdownText : TextEdit.PlainText
   color: root.textColor
   selectionColor: Style.accent
-  selectedTextColor: Style.onAccent
+  selectedTextColor: Style.inkAccent.text
   font.family: Appearance.fontFamily
   font.pixelSize: Style.typeBody
 

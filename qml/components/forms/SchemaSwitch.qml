@@ -1,51 +1,34 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
-import qs.config
 import qs.components.reusable
 
 // A boolean setting: its label and description, the switch at the row's
 // right end, centred on them; a click anywhere on the row toggles it (the
-// FormRow's `rowClicked`, routed to `activate` by SchemaField)
-Item {
+// FormRow's `rowClicked`, routed to `activate` by SchemaField). A FieldLine,
+// kind switch: always beside the label, the description beside it (wrapping
+// earlier when narrow), at any width
+FieldLine {
   id: root
-  required property string label
   required property bool checked
-  property string description: ""
-  // After the label (FieldHeader.trailing)
-  property Component headerExtra: null
-  // Under the description (FieldHeader.below)
-  property Component headerBelow: null
 
   signal toggled(bool newValue)
 
-  Layout.fillWidth: true
-  implicitWidth: row.implicitWidth
-  implicitHeight: row.implicitHeight
+  kind: "switch"
+  controlLeast: sw.implicitWidth
 
   // What a click on the row outside the switch does
   function activate() {
     root.toggled(!root.checked);
   }
 
-  RowLayout {
-    id: row
-    anchors.left: parent.left
-    anchors.right: parent.right
-    spacing: Widget.spacing * 2
-
-    FieldHeader {
-      label: root.label
-      description: root.description
-      trailing: root.headerExtra
-      below: root.headerBelow
-    }
-
-    // Centred on the label and description together
-    StyledSwitch {
-      checked: root.checked
-      Layout.alignment: Qt.AlignVCenter
-      onToggled: root.toggled(checked)
+  StyledSwitch {
+    id: sw
+    checked: root.checked
+    onToggled: {
+      root.toggled(sw.checked);
+      // A click sets checked itself; it follows `checked` again, so a host
+      // that refuses or answers later is shown as it is
+      sw.checked = Qt.binding(() => root.checked);
     }
   }
 }

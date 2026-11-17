@@ -31,14 +31,20 @@ QtObject {
   // The element kinds a module is built from (the CustomElement oneOf:
   // components/content/parts/custom/elements/<Type>/schema.yaml), by
   // label: { type, label, icon, size ([w, h] sub-cells it's added at,
-  // `x-defaultSize`), slots (its bindings, `x-slots`), actions (the
-  // commands it runs, `x-actions`), actionsSchema (theirs, a properties
-  // schema), options (its look, a properties schema), optionsOrder }. Labels and titles are English: the editor
+  // `x-defaultSize`), slots (its bindings, its own `x-slots`), actions (the
+  // triggers it runs actions on, `x-actions`: keys of its `run`), options (its
+  // look, a properties schema), optionsOrder, colors ([{ key, statesKey }]: its colour
+  // settings and their "Color by state" rules, CustomWidgetData.colorFields),
+  // lookOrder (optionsOrder without them), help (the Help section its "More
+  // in Help" opens, `x-help`; "text" without one) }. Labels and titles are English: the editor
   // translates them
   readonly property var elementKinds: {
     const schema = ConfigManager.configSchema;
-    return (schema?.definitions?.CustomElement?.oneOf ?? []).map(option => {
-      const def = schema.definitions[option.$ref.replace("#/definitions/", "")];
+    const defs = (schema?.definitions?.CustomElement?.oneOf ?? []).map(option => schema.definitions[option.$ref.replace("#/definitions/", "")]);
+    return defs.map(def => {
+      const options = def.properties.options?.properties ?? ({});
+      const order = def.properties.options?.["x-order"] ?? [];
+      const colors = CustomWidgetData.colorFields(options, order);
       return {
         "type": def.properties.type.const,
         "label": def.properties.type.description,
@@ -46,9 +52,11 @@ QtObject {
         "size": def["x-defaultSize"] ?? [4, 4],
         "slots": def["x-slots"] ?? [],
         "actions": def["x-actions"] ?? [],
-        "actionsSchema": Utils.pick(def.properties.actions.properties, def["x-actions"] ?? []),
-        "options": def.properties.options?.properties ?? ({}),
-        "optionsOrder": def.properties.options?.["x-order"] ?? []
+        "options": options,
+        "optionsOrder": order,
+        "colors": colors.colors,
+        "lookOrder": colors.look,
+        "help": def["x-help"] ?? "text"
       };
     }).sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -56,6 +64,28 @@ QtObject {
   // An element kind (elementKinds), or null
   function elementKind(type) {
     return root.elementKinds.find(k => k.type === type) ?? null;
+  }
+
+  // The option keys "Copy look" copies onto an element of `type`: its colour
+  // keys and their rules' keys, and align, valign and size where it has them
+  // (CustomElementBase.yaml's place and size parts; the builder drops
+  // `x-parts` (backend/internal/schema/yamlsrc/kinds.go), so no annotation
+  // names them)
+  function lookKeys(type) {
+    const kind = root.elementKind(type);
+    if (!kind)
+      return [];
+    const keys = [];
+    for (const c of kind.colors) {
+      keys.push(c.key);
+      if (c.statesKey)
+        keys.push(c.statesKey);
+    }
+    for (const key of ["align", "valign", "size"]) {
+      if (key in kind.options)
+        keys.push(key);
+    }
+    return keys;
   }
 
   // A new element of `type` at `place`, at its schema defaults

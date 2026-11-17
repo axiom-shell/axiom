@@ -1,5 +1,13 @@
 label: Sparkline
 icon: show_chart
 defaultSize: [6, 2]
-slots: [value, min, max]
+slots: [value, min, max, value2]
 color: state
+settings:
+  style:
+    type: string
+    title: Style
+    default: line
+    x-control: toggle
+    enum: [line, bars]
+    x-enumLabels: {line: Line, bars: Bars}

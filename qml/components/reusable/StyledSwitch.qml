@@ -13,7 +13,7 @@ Switch {
 
   // -- Implementation --
   implicitWidth: Math.round(implicitHeight * 1.9)
-  implicitHeight: root.compact ? Widget.smallHeight : Widget.height - Widget.px(4)
+  implicitHeight: root.compact ? Widget.smallHeight : Widget.slimHeight
 
   indicator: Rectangle {
     x: root.checked ? root.width - width - Widget.px(2) : Widget.px(2)
@@ -22,7 +22,7 @@ Switch {
     height: root.height - Widget.px(4)
     // Concentric in the track, whatever its radius
     radius: Style.concentric(track.radius, Widget.px(2))
-    color: root.checked ? Style.onAccent : Style.inkHighest.icon
+    color: root.checked ? Style.inkAccent.text : Style.inkHighest.icon
 
     ColorGlide on color {
       duration: Appearance.animNormal

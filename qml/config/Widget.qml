@@ -64,6 +64,12 @@ QtObject {
   // Side of a square icon button (StyledIconButton's default size): the
   // density's, or what its icon needs
   readonly property int iconButton: Math.max(Math.round(_density.iconButton * scale), Appearance.fontSize + 2 * px(4))
+  // Height of a compact control beside a full one (a list row's action, a
+  // lane's tool button, a renaming field): a little under `height`
+  readonly property int compactHeight: height - px(6)
+  // A switch's or segmented row's track, a chip or button sized to sit in a
+  // full-height line
+  readonly property int slimHeight: height - px(4)
   // Height of chips, pills and small buttons (keybind chips, a
   // notification's actions): the density's, or what a micro line needs
   readonly property int smallHeight: StyleTokens.controlHeight(Math.round(_density.smallHeight * scale), Appearance.fontSizeBy(-3), 0)
@@ -81,12 +87,24 @@ QtObject {
   function textPx(n: real): int {
     return StyleTokens.textPx(n, scale, Appearance.baseFontSize);
   }
-  // A form field at least this wide puts a short control (a dropdown, a
-  // slider) beside its label, at fieldControlWidth; narrower, under it
+  // A slider goes beside its label only on a form field at least this wide
+  // (FieldFit); narrower it stacks under the label
   readonly property int fieldInlineFrom: textPx(420)
-  function fieldControlWidth(fieldWidth: real): int {
-    return Math.round(Math.min(textPx(260), fieldWidth * 0.42));
-  }
+  // The least width of a form field's label column (a longer label wraps)
+  readonly property int fieldLabelLeast: textPx(160)
+  // The least width of a dropdown or colour box on its label's line
+  readonly property int fieldControlLeast: textPx(120)
+  // What FieldFit places a field by (FieldLine passes it): gap, labelLeast,
+  // controlLeast, controlMax (the widest a box beside its label gets),
+  // controlShare (its share of the field), inlineFrom
+  readonly property var fieldTokens: ({
+      "gap": spacing * 2,
+      "labelLeast": fieldLabelLeast,
+      "controlLeast": fieldControlLeast,
+      "controlMax": textPx(260),
+      "controlShare": 0.42,
+      "inlineFrom": fieldInlineFrom
+    })
   // Corners of what sits inside something (cards, controls, rows, bar
   // widgets); outer edges use Appearance.borderRadius
   // (Appearance.innerRadius)

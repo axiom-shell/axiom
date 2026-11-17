@@ -1,6 +1,7 @@
 label: Custom widget
 icon: widgets
 group: Custom
+scopeIf: {when: {type: [CustomWidget]}, scope: personal}
 defaultSize: [4, 2]
 hosts: [lockscreen]
 settings:

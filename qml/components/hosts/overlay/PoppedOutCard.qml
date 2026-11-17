@@ -54,14 +54,12 @@ Item {
       spacing: Widget.spacing
 
       StyledTextButton {
-        implicitHeight: Widget.height
         iconText: "pip_exit"
         text: I18n.tr("Bring here")
         onClicked: PageWindowManager.popIn(root.type, false)
       }
 
       StyledTextButton {
-        implicitHeight: Widget.height
         iconText: "jump_to_element"
         text: I18n.tr("Go to window")
         onClicked: PageWindowManager.focus(root.type)

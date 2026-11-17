@@ -31,8 +31,6 @@ Panel {
   readonly property var info: NetworkingManager.netInfo
   readonly property var networks: NetworkingManager.networks
   readonly property bool radioOn: NetworkingManager.wifiEnabled && NetworkingManager.available
-  // The header's icon buttons, as high as its switch (StyledSwitch's)
-  readonly property int headerButton: Widget.height - Widget.px(4)
   readonly property string offMessage: I18n.tr(!NetworkingManager.available ? "No Wi-Fi adapter found" : NetworkingManager.hardwareBlocked ? "Wi-Fi is blocked (rfkill)" : NetworkingManager.airplane ? "Airplane mode is on" : "Wi-Fi is off")
   readonly property string kindIcon: info.kind === "wifi" ? NetworkingManager.signalIcon(info.signal / 100) : info.kind === "ethernet" ? "lan" : "signal_wifi_0_bar"
 
@@ -194,14 +192,12 @@ Panel {
 
     FlatIconButton {
       visible: Apps.networkEditor !== ""
-      size: root.headerButton
       iconText: "settings"
       tooltipText: I18n.tr("Edit connections ({0})", Apps.networkEditor)
       onClicked: CommandManager.runDetached(Apps.networkEditor)
     }
     FlatIconButton {
       visible: root.showsVpn && VpnManager.available
-      size: root.headerButton
       iconText: "vpn_key"
       iconColor: VpnManager.importError !== "" ? Style.error : Style.textMuted
       tooltipText: VpnManager.importError || I18n.tr("Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file")
@@ -209,7 +205,6 @@ Panel {
     }
     FlatIconButton {
       visible: NetworkingManager.available || BluetoothManager.available
-      size: root.headerButton
       iconText: "flight"
       iconColor: NetworkingManager.airplane ? Style.accent : Style.textMuted
       tooltipText: NetworkingManager.airplane ? I18n.tr("Airplane mode: on") : I18n.tr("Airplane mode: off")

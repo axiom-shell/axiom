@@ -202,7 +202,7 @@ Card {
       readonly property bool hasSuffix: root.seconds !== "" || root.meridiem !== ""
       readonly property real suffixScale: 0.34
       // The size that fits the line across and the height
-      readonly property real size: Math.max(1, Math.min(root.faceWidth * 100 / Math.max(1, timeMetrics.advanceWidth + (line.hasSuffix ? suffixMetrics.advanceWidth * line.suffixScale + 12 : 0)), root.faceHeight / (root.capRatio * 1.24)) * 0.95)
+      readonly property real size: Math.max(1, Math.min(root.faceWidth * 100 / Math.max(1, timeMetrics.advanceWidth + (line.hasSuffix ? suffixMetrics.advanceWidth * line.suffixScale + Widget.px(12) : 0)), root.faceHeight / (root.capRatio * 1.24)) * 0.95)
       spacing: line.size * 0.06
 
       Metrics {

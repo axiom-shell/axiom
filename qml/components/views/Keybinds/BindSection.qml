@@ -8,7 +8,7 @@ import qs.components.reusable
 import qs.components.views.base
 
 // A section of the Keybinds editor's list (KeybindManager.page.editLayout): a
-// ListSection whose header folds it (remembered, EditsManager.keybindsFolded)
+// ListSection whose header folds it (remembered, EditsManager.keybindSectionFolded)
 // and ends in its issue mark and count, the unsaved dot and a switch pausing
 // or resuming all of it, over its rows (BindListRow, a run's binds under it
 // while unfolded). Rows carried within the section drop here (a drag layer
@@ -21,7 +21,7 @@ ListSection {
   property var dragLayer: null
   property var scrollTo: null
 
-  readonly property bool folded: EditsManager.keybindsFolded.includes(root.section.key)
+  readonly property bool folded: EditsManager.keybindSectionFolded(root.section.key)
   readonly property bool allPaused: root.section.indices.every(i => KeybindManager.editor.binds[i]?.paused === true)
   readonly property int issueCount: root.section.indices.filter(i => KeybindManager.editor.hasIssue(KeybindManager.editor.issues[i])).length
   readonly property bool changed: root.section.indices.some(i => KeybindManager.editor.changedBinds[i] === true)
@@ -119,7 +119,7 @@ ListSection {
   ColumnLayout {
     id: rowStack
     Layout.fillWidth: true
-    spacing: 2
+    spacing: Widget.spacing / 2
 
     Repeater {
       id: rowRepeater
@@ -129,7 +129,7 @@ ListSection {
         id: rowItem
         required property var modelData
         Layout.fillWidth: true
-        spacing: 2
+        spacing: Widget.spacing / 2
 
         BindListRow {
           id: head
@@ -160,15 +160,12 @@ ListSection {
     Layout.preferredHeight: 0
     z: 2
 
-    Rectangle {
+    DropMark {
       visible: root.hovered && root.dragLayer.hoverIndex >= 0
       readonly property var target: rowRepeater.itemAt(Math.min(root.dragLayer?.hoverIndex ?? 0, rowRepeater.count - 1))
       readonly property real at: !target ? 0 : (root.dragLayer.hoverIndex >= rowRepeater.count ? target.y + target.height : target.y)
       width: parent.width
-      height: Widget.px(3)
-      radius: 1.5
-      y: rowStack.y + at - 1.5 - parent.y
-      color: Style.accent
+      y: rowStack.y + at - height / 2 - parent.y
     }
   }
 }

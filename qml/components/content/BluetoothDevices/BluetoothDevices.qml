@@ -24,8 +24,6 @@ Panel {
 
   readonly property var shownDevices: currentTab === 0 ? BluetoothManager.pairedDevices : BluetoothManager.discoveredDevices
   readonly property string offMessage: I18n.tr(!BluetoothManager.available ? "No Bluetooth adapter found" : BluetoothManager.hardBlocked ? "Bluetooth is blocked by a hardware switch" : BluetoothManager.blocked ? "Bluetooth is blocked (rfkill)" : "Bluetooth is off")
-  // The header's icon buttons, as high as its switch (StyledSwitch's)
-  readonly property int headerButton: Widget.height - Widget.px(4)
 
   // The address of the device being renamed, "" none
   property string renaming: ""
@@ -202,7 +200,6 @@ Panel {
       }
     }
     FlatIconButton {
-      size: root.headerButton
       enabled: BluetoothManager.enabled
       iconText: BluetoothManager.discoverable ? "visibility" : "visibility_off"
       iconColor: BluetoothManager.discoverable ? Style.accent : Style.textMuted

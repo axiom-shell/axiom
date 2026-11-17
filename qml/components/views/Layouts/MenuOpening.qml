@@ -4,10 +4,11 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.forms
 
-// The top of an edge menu's Opening group: try it on screen, what opens
-// it besides hovering its edge, and buttons that add a bar button or a
-// keybind for it
+// An edge menu's Opening section: try it on screen, what opens
+// it besides hovering its edge (links to each, SettingsLink), and buttons that
+// add a bar button or a keybind for it
 ColumnLayout {
   id: root
 
@@ -22,15 +23,21 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Widget.spacing
 
-  RowLayout {
+  // One row while both buttons fit at their widest, else one under the other
+  // (decided from implicit widths only, as SchemaToggle's `stacked` is)
+  GridLayout {
+    id: buttons
     Layout.fillWidth: true
-    spacing: Widget.spacing
+    // Its two-column least width must not hold the pane open: below it, it stacks
+    Layout.minimumWidth: 0
+    columnSpacing: Widget.spacing
+    rowSpacing: Widget.spacing
+    columns: buttons.width > 0 && previewButton.implicitWidth + othersButton.implicitWidth + buttons.columnSpacing > buttons.width ? 1 : 2
 
     StyledTextButton {
+      id: previewButton
       Layout.fillWidth: true
       enabled: OverlayManager.menus.canPreview(root.menu)
-      // (a text button doesn't dim itself)
-      opacity: enabled ? 1 : Style.opacityDisabled
       kind: root.previewingThis ? "primary" : "tonal"
       iconText: root.previewingThis ? "visibility_off" : "visibility"
       text: root.previewingThis ? I18n.tr("Hide from screen") : I18n.tr("Show on screen")
@@ -39,6 +46,7 @@ ColumnLayout {
     }
 
     StyledTextButton {
+      id: othersButton
       Layout.fillWidth: true
       kind: OverlayManager.menus.showingOthers ? "primary" : "tonal"
       iconText: "layers"
@@ -62,50 +70,23 @@ ColumnLayout {
     tone: "muted"
   }
 
-  StyledText {
+  SectionHeading {
     Layout.topMargin: Widget.spacing / 2
-    text: I18n.tr("Also opened by")
+    title: I18n.tr("Also opened by")
   }
 
+  // Each goes to it: the bar editor, the keybind editor or the menu
   Repeater {
     model: root.references.length
 
-    // Goes to it: the bar editor, the keybind editor or the menu
-    Item {
+    SettingsLink {
       id: reference
       required property int index
       readonly property var ref: root.references[reference.index] ?? ({})
       Layout.fillWidth: true
-      implicitHeight: referenceRow.implicitHeight
-
-      RowLayout {
-        id: referenceRow
-        anchors.fill: parent
-        spacing: Widget.spacing
-
-        StyledIcon {
-          text: reference.ref.kind === "bind" ? "keyboard" : reference.ref.kind === "submenu" ? "menu_open" : "toolbar"
-          tone: "accent"
-        }
-        StyledLabel {
-          Layout.fillWidth: true
-          text: reference.ref.label ?? ""
-          font.underline: referenceArea.containsMouse
-          overflow: "line"
-        }
-        StyledIcon {
-          text: "arrow_forward"
-          textColor: referenceArea.containsMouse ? Style.textAccent : Style.textMuted
-        }
-      }
-
-      MouseArea {
-        id: referenceArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: OverlayManager.menus.goToReference(reference.ref)
-      }
+      icon: reference.ref.kind === "bind" ? "keyboard" : reference.ref.kind === "submenu" ? "menu_open" : "toolbar"
+      text: reference.ref.label ?? ""
+      run: () => OverlayManager.menus.goToReference(reference.ref)
     }
   }
 

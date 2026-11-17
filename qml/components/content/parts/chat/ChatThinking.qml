@@ -58,11 +58,10 @@ ColumnLayout {
       role: "caption"
     }
 
-    StyledIcon {
+    FoldChevron {
       visible: root.text !== ""
-      text: root.expanded ? "expand_less" : "expand_more"
-      tone: "muted"
-      size: "sm"
+      open: root.expanded
+      upward: true
     }
 
     TapHandler {

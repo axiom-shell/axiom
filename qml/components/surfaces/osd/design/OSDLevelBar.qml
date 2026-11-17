@@ -96,13 +96,9 @@ Item {
   }
 
   // The preview's outline
-  Rectangle {
-    anchors.fill: parent
+  RingOutline {
     visible: root.highlight && root.shown
     z: 1
-    radius: Style.radius
-    color: "transparent"
-    border.width: Widget.px(2)
-    border.color: Style.accent
+    gap: 0
   }
 }

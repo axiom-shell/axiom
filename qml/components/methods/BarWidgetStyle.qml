@@ -458,11 +458,11 @@ QtObject {
   // icon, onFill, keepsIcon }. `onFill`: the content reads on the box's
   // own fill (`own`), not on the bar; `keepsIcon`: the icon keeps its
   // color under the bar's text color (colored icons: it carries the
-  // state). `unfilled` is an unfilled box's fill: its color cleared where
-  // it fills on hover, so the fill fades in from nothing rather than
+  // state). An unfilled box's fill is its color cleared (Tone.cleared), so
+  // where it fills on hover the fill fades in from nothing rather than
   // through black. A widget's and a cell's boxes are the same; an icon
   // part and a label apart (iconPart) are the widget's alone (_widget).
-  function _box(traits, look, palette, color, own, unfilled) {
+  function _box(traits, look, palette, color, own) {
     const b = traits.box;
     const of = role => {
       switch (role) {
@@ -470,14 +470,13 @@ QtObject {
         return color;
       case "tint":
         return root.faded(color, look.tint);
-      case "unfilled":
-        return unfilled;
       case "own":
         return own;
       case "bar":
         return palette.barText;
       default:
-        return "transparent";
+        // "unfilled" and any other: the color, cleared
+        return Tone.cleared(color);
       }
     };
     return {
@@ -493,11 +492,12 @@ QtObject {
   }
 
   function _widget(look, palette, state, accent, own, graded) {
-    const none = "transparent";
+    // A part with nothing to draw rests on the colour it fades to, at alpha 0
+    // (a glide to transparent black dips through grey)
+    const none = Tone.cleared(accent);
     const text = c => palette.override ?? c;
     const drawn = root._drawn(look, state);
     const fills = look.hoverFill;
-    const unfilled = fills ? Qt.alpha(accent, 0) : none;
     // What content sits on, opaque: the bar, a color over it, a tint of
     // the accent over it
     const bar = root._bar(palette);
@@ -530,7 +530,7 @@ QtObject {
       const group = state.gradient ?? palette.group;
       const onRun = root._onFill(drawn);
       const label = text(onRun ? root._readable(palette, group, palette.barText) : palette.barText);
-      return root._make(unfilled, none, none, label, graded && onRun ? label : accent, none, onRun, onRun ? on(group) : bar, onRun ? on(group) : bar, onRun);
+      return root._make(none, none, none, label, graded && onRun ? label : accent, none, onRun, onRun ? on(group) : bar, onRun ? on(group) : bar, onRun);
     }
     if (drawn.iconPart) {
       // The icon part filled, the label on a tint of it, on a color of
@@ -540,7 +540,7 @@ QtObject {
         return root._make(palette.labelColor, none, none, text(root._readable(palette, palette.labelColor, palette.barText)), text(own), accent, true, on(palette.labelColor), on(accent), true);
       return root._make(label === "tint" ? root.faded(accent, look.tint) : none, none, none, text(accent), text(own), accent, false, label === "tint" ? tint : bar, on(accent), true);
     }
-    const box = root._box(drawn, look, palette, accent, own, unfilled);
+    const box = root._box(drawn, look, palette, accent, own);
     const back = box.fillRole === "color" ? on(accent) : box.fillRole === "tint" ? tint : bar;
     return root._make(box.fill, box.stroke, box.indicator, text(box.text), box.keepsIcon ? box.icon : text(box.icon), none, box.onFill, back, back, box.fillRole === "color");
   }
@@ -561,7 +561,7 @@ QtObject {
   }
 
   function _cell(look, palette, state, color, own, cellState) {
-    const none = "transparent";
+    const none = Tone.cleared(color);
     const text = c => palette.override ?? c;
     const traits = BarLook.cellTraits(look, state.solid);
     const drawn = root._cellDrawn(look, state);
@@ -581,10 +581,9 @@ QtObject {
     // An empty cell's content: the text mixed toward what it sits on
     const empty = backs => Tone.nudged(backs, Tone.toward(text(under), backs[0], root.emptyMix), root.mutedContrast);
     const onBar = (c, backs) => cellState === "empty" ? empty(backs) : palette.override ?? nudge(c, backs);
-    const unfilled = fills ? Qt.alpha(color, 0) : none;
     if (merged)
-      return root._makeCell(unfilled, none, none, onBar(color, behind), false, false, behind);
-    const box = root._box(drawn, look, palette, color, own, unfilled);
+      return root._makeCell(none, none, none, onBar(color, behind), false, false, behind);
+    const box = root._box(drawn, look, palette, color, own);
     if (!drawn.colored)
       return root._makeCell(box.fill, box.stroke, box.indicator, cellState === "active" ? text(palette.barText) : cellState === "urgent" ? nudge(color, behind) : cellState === "occupied" ? nudge(Tone.toward(text(palette.barText), behind[0], 0.3), behind) : empty(behind), false, false, behind);
     const back = over(box.fill, behind);
@@ -631,6 +630,14 @@ QtObject {
   function _opaque(color) {
     return Qt.alpha(color, 1);
   }
+
+  // The bar editor's highlight of the selected widget: the palette's
+  // highlight, tinted, and its outline's width. Fixed pixels: an editor
+  // marker that doesn't scale with the bar's or the widget's size
+  function selectionFill(palette) {
+    return root.faded(palette.highlight, 0.15);
+  }
+  readonly property int selectionStroke: 2
 
   // `color` at `alpha` of its own opacity: a clear color (a widget with no
   // color of its own, Workspaces' box with its background off) stays

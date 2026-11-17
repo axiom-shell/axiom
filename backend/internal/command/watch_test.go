@@ -57,6 +57,19 @@ func (c *fakeClock) Advance(d time.Duration) {
 	c.waits = kept
 }
 
+// armed is how many waits end d from now.
+func (c *fakeClock) armed(d time.Duration) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	n := 0
+	for _, w := range c.waits {
+		if w.at.Equal(c.now.Add(d)) {
+			n++
+		}
+	}
+	return n
+}
+
 // fakeSub records the outputs pushed to it.
 type fakeSub struct{ pushes chan Outputs }
 
@@ -84,6 +97,8 @@ type harness struct {
 	runs  chan string // each command run (its sh -c argument)
 	mu    sync.Mutex
 	out   map[string]string // what each command prints (default: a count)
+	errs  map[string]string // what each writes to stderr (default: nothing)
+	codes map[string]int    // how each exits (default: 0)
 	n     int
 }
 
@@ -91,7 +106,7 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	h := &harness{clock: &fakeClock{now: time.Unix(1000, 0)}, runs: make(chan string, 64), out: map[string]string{}}
+	h := &harness{clock: &fakeClock{now: time.Unix(1000, 0)}, runs: make(chan string, 64), out: map[string]string{}, errs: map[string]string{}, codes: map[string]int{}}
 	h.w = NewWatches(WatchOptions{
 		Method: "exec.outputs", Context: ctx, Now: h.clock.Now, Until: h.clock.Until,
 		Run: func(ctx context.Context, argv []string) (Result, error) {
@@ -101,12 +116,13 @@ func newHarness(t *testing.T) *harness {
 			if !ok {
 				out = string(rune('a'+h.n%26)) + "\n"
 			}
+			stderr, code := h.errs[argv[2]], h.codes[argv[2]]
 			h.mu.Unlock()
 			h.runs <- argv[2]
 			if out == "!fail" {
 				return Result{}, errors.New("sh isn't installed")
 			}
-			return Result{Stdout: out}, nil
+			return Result{Stdout: out, Stderr: stderr, ExitCode: code}, nil
 		},
 	})
 	return h
@@ -315,5 +331,90 @@ func TestWatchNewWatcherGetsOutput(t *testing.T) {
 	case p := <-a.pushes:
 		t.Errorf("unchanged output pushed: %+v", p)
 	default:
+	}
+}
+
+// A poll's entry carries the last non-empty line of its stderr, cut to
+// maxStderrLine; the same output with a new stderr line is pushed again
+// for a failing run only.
+func TestWatchStderr(t *testing.T) {
+	t.Parallel()
+	long := strings.Repeat("é", maxStderrLine) // 2 bytes each: cut at a character
+	cases := []struct {
+		name, stderr string
+		want         string
+	}{
+		{name: "last line", stderr: "first\nsecond\n\n", want: "second"},
+		{name: "none", stderr: "", want: ""},
+		{name: "only blank lines", stderr: "\n \n", want: ""},
+		{name: "cut", stderr: long, want: long[:maxStderrLine]},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t)
+			h.out["x"], h.errs["x"] = "out\n", c.stderr
+			s := newSub()
+			h.w.Watch(s, WatchRequest{Command: "x"})
+			h.ran(t, "x")
+			if e := s.entry(t, "x"); e.Stderr != c.want || e.Exited {
+				t.Errorf("entry %+v, want stderr %q", e, c.want)
+			}
+		})
+	}
+
+	for _, code := range []int{0, 3} {
+		h := newHarness(t)
+		h.out["x"], h.errs["x"], h.codes["x"] = "out\n", "one", code
+		s := newSub()
+		h.w.Watch(s, WatchRequest{Command: "x", Interval: ms(1000)})
+		h.ran(t, "x")
+		s.next(t)
+		h.mu.Lock()
+		h.errs["x"] = "two"
+		h.mu.Unlock()
+		h.clock.Advance(time.Second)
+		h.ran(t, "x")
+		if code == 0 {
+			s.quiet(t) // a zero exit's cadence is unchanged
+			continue
+		}
+		if e := s.entry(t, "x"); e.Stderr != "two" || e.ExitCode != 3 {
+			t.Errorf("a new stderr line after a failing run: %+v", e)
+		}
+	}
+}
+
+// Restart runs a poll again at once, as a refresh does.
+func TestWatchRestartPoll(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	s := newSub()
+	h.w.Watch(s, WatchRequest{Command: "x", Mode: ModeOnce})
+	h.ran(t, "x")
+	s.next(t)
+	h.w.Restart("x")
+	h.ran(t, "x")
+	h.w.Restart("unknown") // nothing watched: nothing happens
+	h.idle(t)
+}
+
+// lastLine cuts a long line at the byte limit, backing up to a character
+// start there only (not at an invalid byte earlier in the line).
+func TestLastLine(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ name, in, want string }{
+		{"invalid byte inside", strings.Repeat("a", 49) + "\xff" + strings.Repeat("b", 400), strings.Repeat("a", 49) + "\xff" + strings.Repeat("b", 250)},
+		{"cut mid character", strings.Repeat("a", 299) + "é" + strings.Repeat("b", 10), strings.Repeat("a", 299)},
+		{"short", "boom", "boom"},
+		{"last of several, trimmed", "one\n two \n\n", "two"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			if got := lastLine(c.in); got != c.want {
+				t.Errorf("lastLine = %q (%d bytes), want %q (%d bytes)", got, len(got), c.want, len(c.want))
+			}
+		})
 	}
 }

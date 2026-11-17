@@ -152,7 +152,7 @@ Panel {
       Rectangle {
         visible: drop.containsDrag
         anchors.fill: parent
-        radius: Widget.radius
+        radius: Style.radius
         color: Style.accentWash
         border.color: Style.accent
         border.width: Style.focusWidth

@@ -38,24 +38,22 @@ Rectangle {
 
   // The label fits whole (QuickActions mirrors this for its "auto" names)
   readonly property bool labelFits: labelMetrics.advanceWidth <= root.width - Widget.spacing * 2 && root.height >= Appearance.fontSize * 4.5
-  // The fill while active, and the hover / selected outline
-  readonly property color _activeColor: root.activeTone === "error" ? Style.error : Style.accent
   readonly property bool hot: root.selected || area.containsMouse
-  readonly property string _containerTone: root.activeTone + "Container"
-  readonly property color _containerFill: root.activeTone === "error" ? Style.errorContainer : Style.accentContainer
-  // Glyph on the well: highest at rest, the container's ink hovered, the
-  // fill's ink while active
-  readonly property color contentColor: root.active ? Style.inkOf(root.activeTone).icon : root.hot ? Style.inkOf(root._containerTone).icon : Style.inkHighest.icon
-  readonly property color labelColor: root.active ? Style.inkOf(root.activeTone).text : root.hot ? Style.inkOf(root._containerTone).text : Style.inkSurface.text
-  readonly property color mutedColor: root.active ? Style.inkOf(root.activeTone).muted : root.hot ? Style.inkOf(root._containerTone).muted : Style.inkSurface.muted
   readonly property bool _labelShown: root.showLabel && root.label !== "" && (root.forceLabel || root.labelFits)
   // The well fills most of what the label leaves, never less than an icon
   // (unless the tile itself is smaller)
   readonly property real _wellSize: Math.max(Math.min(Appearance.fontSize * 1.6, Math.min(root.width, root.height) - Widget.px(4)), Math.min(root.width - Widget.spacing * 2, root.height - Widget.spacing * 2 - (root._labelShown ? labelText.implicitHeight + Widget.spacing : 0)) * (root._labelShown ? 0.7 : 0.66))
 
+  ActionTone {
+    id: actionTone
+    activeTone: root.activeTone
+    active: root.active
+    hot: root.hot
+  }
+
   radius: Style.radius
-  color: root.active ? root._activeColor : Style.fill
-  border.color: root.active || root.hot ? root._activeColor : Style.borderSubtle
+  color: root.active ? actionTone.activeColor : Style.fill
+  border.color: root.active || root.hot ? actionTone.activeColor : Style.borderSubtle
   border.width: Style.hairline
   clip: true
 
@@ -93,8 +91,8 @@ Rectangle {
         anchors.centerIn: parent
         width: root._wellSize * (root.hot && !root.active ? 1.06 : 1)
         height: width
-        radius: Math.min(Widget.radius * 1.5, width / 2)
-        color: root.active ? Style.stateOnAccentHover : root.hot ? root._containerFill : Style.surfaceHighest
+        radius: actionTone.wellRadius(width)
+        color: root.active ? Style.stateOnAccentHover : root.hot ? actionTone.containerFill : Style.surfaceHighest
 
         ColorGlide on color {}
         Glide on width {}
@@ -102,7 +100,7 @@ Rectangle {
         StyledIcon {
           anchors.centerIn: parent
           text: root.icon
-          textColor: root.contentColor
+          textColor: actionTone.contentColor
           textSize: Math.max(Style.iconXs, well.width * 0.5) // fitted: the glyph is half its well
           fill: root.hot || root.active ? 1 : 0
         }
@@ -119,7 +117,7 @@ Rectangle {
       overflow: "wrap"
       maxLines: 2
       text: root.label
-      textColor: root.labelColor
+      textColor: actionTone.labelColor
     }
   }
 

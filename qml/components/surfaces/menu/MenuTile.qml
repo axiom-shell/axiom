@@ -25,7 +25,7 @@ Item {
   property point scroll: Qt.point(0, 0)
   property size viewSize: Qt.size(0, 0)
   property color fillColor: Style.surfacePage
-  property real radius: Widget.radius
+  property real radius: Style.radius
   // Eases its growing (after it's first laid out)
   property bool animate: false
 

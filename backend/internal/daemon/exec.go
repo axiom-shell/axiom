@@ -19,8 +19,8 @@ func (d *Daemon) execMethods(reg *rpc.Registry) {
 
 // execHandlers are exec.run and exec.spawn, run with options' (the
 // shell's, the greeter's quickshell's environment), and exec.watch,
-// exec.unwatch and exec.refresh on watches' commands (which run with the
-// same options).
+// exec.unwatch, exec.refresh and exec.restart on watches' commands
+// (which run with the same options).
 func execHandlers(reg *rpc.Registry, options func() command.Options, watches func() *command.Watches) {
 	type runParams struct {
 		Argv []string `json:"argv"`
@@ -50,6 +50,11 @@ func execHandlers(reg *rpc.Registry, options func() command.Options, watches fun
 	})
 	rpc.Handle(reg, "exec.refresh", func(ctx context.Context, c *rpc.Conn, p commandParams) (struct{}, error) {
 		watches().Refresh(p.Command)
+		return struct{}{}, nil
+	})
+	// Stops a stream's process and starts a new one (a poll runs again)
+	rpc.Handle(reg, "exec.restart", func(ctx context.Context, c *rpc.Conn, p commandParams) (struct{}, error) {
+		watches().Restart(p.Command)
 		return struct{}{}, nil
 	})
 }

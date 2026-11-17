@@ -38,54 +38,67 @@ OnboardingPage {
     }, {}))
   }
 
-  GridLayout {
+  // Two columns of rows, read row by row: the left one the even entries, the right one the odd
+  readonly property var leftKeys: ThemeManager.integrations.filter((key, index) => index % 2 === 0)
+  readonly property var rightKeys: ThemeManager.integrations.filter((key, index) => index % 2 === 1)
+
+  Component {
+    id: integrationRow
+
+    SwitchRow {
+      id: integration
+      required property string modelData
+      readonly property bool present: root.installed(modelData)
+
+      // (i18n: keys from the schema: integration titles; the row translates)
+      label: ThemeManager.integrationTitle(modelData)
+      dimmed: !integration.present
+      checked: ThemeIntegrations[modelData] === true
+      onToggled: on => {
+        const values = {};
+        values["ThemeIntegrations." + integration.modelData] = on;
+        SettingsManager.commitValues(values);
+      }
+
+      leading: StyledIcon {
+        text: integration.present ? "check_circle" : "radio_button_unchecked"
+        textColor: integration.present ? Style.success : Style.textFaint
+      }
+    }
+  }
+
+  RowLayout {
     Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 3
-    rowSpacing: Widget.spacing
+    spacing: Widget.spacing * 3
+    uniformCellSizes: true
 
-    Repeater {
-      model: ThemeManager.integrations
+    FormColumn {
+      Layout.fillWidth: true
+      Layout.alignment: Qt.AlignTop
 
-      delegate: RowLayout {
-        id: integration
-        required property string modelData
-        readonly property bool present: root.installed(modelData)
-        readonly property bool isOn: ThemeIntegrations[modelData] === true
-        Layout.fillWidth: true
-        spacing: Widget.spacing
+      Repeater {
+        model: root.leftKeys
+        delegate: integrationRow
+      }
+    }
 
-        StyledIcon {
-          text: integration.present ? "check_circle" : "radio_button_unchecked"
-          textColor: integration.present ? Style.success : Style.textFaint
-        }
+    FormColumn {
+      Layout.fillWidth: true
+      Layout.alignment: Qt.AlignTop
 
-        StyledLabel {
-          Layout.fillWidth: true
-          text: I18n.tr(ThemeManager.integrationTitle(integration.modelData))
-          tone: integration.present ? "" : "faint"
-        }
-
-        StyledSwitch {
-          checked: integration.isOn
-          onToggled: {
-            const values = {};
-            values["ThemeIntegrations." + integration.modelData] = checked;
-            SettingsManager.commitValues(values);
-          }
-        }
+      Repeater {
+        model: root.rightKeys
+        delegate: integrationRow
       }
     }
   }
 
   // The switched-on integrations' hookups: the line to add, and Apply
   // (i18n: keys from the schema: integration titles)
-  StyledText {
-    Layout.fillWidth: true
+  SectionHeading {
     Layout.topMargin: Widget.spacing
     visible: root.hookups.length > 0
-    text: root.hookups.every(key => IntegrationHookupManager.isDone(key)) ? I18n.tr("Every app you turned on is set up") : I18n.tr("Finish setting up")
-    role: "title"
+    title: root.hookups.every(key => IntegrationHookupManager.isDone(key)) ? I18n.tr("Every app you turned on is set up") : I18n.tr("Finish setting up")
   }
 
   Repeater {

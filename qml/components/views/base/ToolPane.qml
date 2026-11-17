@@ -23,7 +23,7 @@ TitledCard {
   property var tabMarked: []
   // Fixed content above the tabs, scrolling inside past `pinnedShare` of the
   // pane's height
-  property alias pinned: pinnedColumn.data
+  property alias pinned: pinnedArea.content
   property real pinnedShare: 0.4
   // "" | "none" | "select" | "results"
   property string emptyKind: ""
@@ -41,37 +41,22 @@ TitledCard {
 
   // Through the base's aliases (a plain child would land in `paneContent`)
   headerExtras: [
-    Item {
+    PinnedList {
       id: pinnedArea
       Layout.fillWidth: true
-      Layout.fillHeight: false
-      // From the pane's height and the rows, never from the content's own rect
-      implicitHeight: Math.min(pinnedColumn.implicitHeight, Math.round(root.height * root.pinnedShare))
-      Layout.preferredHeight: pinnedArea.implicitHeight
+      shareOf: root
+      maxShare: root.pinnedShare
       // Never hidden (its rows would all read hidden and it would stay so):
       // with nothing showing in it, a negative margin takes back the gap
       // the column puts after it
-      Layout.bottomMargin: pinnedColumn.implicitHeight > 0 ? 0 : -Widget.spacing
-
-      StyledScrollView {
-        anchors.fill: parent
-        contentPadding: 0
-        // A bar only while the capped list overflows
-        showScrollBar: pinnedColumn.implicitHeight > pinnedArea.height
-
-        ColumnLayout {
-          id: pinnedColumn
-          width: parent?.width ?? 0
-          spacing: Widget.spacing / 2
-        }
-      }
+      Layout.bottomMargin: pinnedArea.contentHeight > 0 ? 0 : -Widget.spacing
     },
     // The pinned area's edge, drawn only while its list is cut
     StyledSeparator {
       objectName: "pinnedEdge"
       Layout.fillWidth: true
       Layout.topMargin: -Widget.spacing / 2
-      visible: pinnedColumn.implicitHeight > pinnedArea.height
+      visible: pinnedArea.cut
     },
     StyledTabBar {
       id: tabStrip

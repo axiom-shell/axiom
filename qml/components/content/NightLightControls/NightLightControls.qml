@@ -44,7 +44,7 @@ Card {
   readonly property real heroSize: root.sideBySide ? Math.min(root.innerHeight, root.innerWidth * 0.35, Appearance.fontSize * 12) : Math.min(root.innerWidth * 0.6, root.innerHeight - controls.implicitHeight - Widget.spacing * 4, Appearance.fontSize * 14)
   readonly property color lightColor: ColorTemperature.color(root.kelvin)
   // What reads on the light's color: a dark or light tint of it
-  readonly property color onLightColor: Tone.mix(root.lightColor, Tone.bestOn(root.lightColor), 0.8)
+  readonly property color lightInk: Tone.mix(root.lightColor, Tone.bestOn(root.lightColor), 0.8)
 
   fullMinWidth: Appearance.fontSize * 9
   fullMinHeight: Appearance.fontSize * 2.4
@@ -150,7 +150,6 @@ Card {
       border.width: Style.hairline
 
       StateLayer {
-        radius: hero.radius
         hovered: heroHover.hovered
         pressed: heroTap.pressed
         onAccent: root.active
@@ -165,13 +164,13 @@ Card {
           Layout.alignment: Qt.AlignHCenter
           text: root.active ? "bedtime" : "bedtime_off"
           textSize: hero.width * 0.32
-          textColor: root.active ? root.onLightColor : Style.inkHighest.muted
+          textColor: root.active ? root.lightInk : Style.inkHighest.muted
         }
         StyledText {
           Layout.alignment: Qt.AlignHCenter
           text: root.active ? I18n.tr("{0} K", root.kelvin) : I18n.tr("Off")
           textSize: Math.max(Style.typeCaption, hero.width * 0.11) // fitted: the hero
-          textColor: root.active ? root.onLightColor : Style.inkHighest.muted
+          textColor: root.active ? root.lightInk : Style.inkHighest.muted
           font.weight: Style.roleDisplay.weight
         }
       }

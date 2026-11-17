@@ -20,13 +20,13 @@ properties:
     enum: [poll, stream, once]
     default: poll
     x-enumLabels: {poll: Every interval, stream: Continuously (one sample a line), once: Once (then on refresh)}
-  interval: {type: integer, title: Interval, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
+  interval: {type: integer, title: Interval, x-unit: s, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
   output:
     type: string
     title: Output
     enum: [waybar, json, text]
     default: waybar
-    x-enumLabels: {waybar: Waybar (JSON or text lines), json: JSON, text: Plain text}
+    x-enumLabels: {waybar: Auto, json: Auto (JSON), text: Plain text}
   execIf:
     x-scope: commands
     type: string
@@ -40,7 +40,7 @@ properties:
     description: 'Empty: its id.'
   bar:
     $ref: '#/definitions/BarDisplay'
-    x-order: [style, segments, width, icon, popout]
+    x-order: [style, segments, width, icon, popout, color, colorStates, run, args]
     x-properties:
       icon:
         type: string
@@ -50,7 +50,37 @@ properties:
         default: material
         x-enumLabels: {none: None, glyph: Inline, material: Icon}
         description: 'Inline: the format''s {icon}, drawn with the text.'
-      popout: {type: boolean, title: Module on hover, default: true}
+      popout: {type: boolean, title: Module on hover, default: false}
+      color:
+        type: string
+        title: Status color
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: "Colors the widget, like a battery turning red. Auto: the script's class (warning, critical)."
+      colorStates: {$ref: '#/definitions/CustomColorStates'}
+      run:
+        type: object
+        additionalProperties: false
+        default: {}
+        description: The action each click or scroll runs.
+        properties:
+          click: {$ref: '#/definitions/ActionId', title: Click}
+          rightClick: {$ref: '#/definitions/ActionId', title: Right click}
+          middleClick: {$ref: '#/definitions/ActionId', title: Middle click}
+          scrollUp: {$ref: '#/definitions/ActionId', title: Scroll up}
+          scrollDown: {$ref: '#/definitions/ActionId', title: Scroll down}
+      args:
+        type: object
+        additionalProperties: false
+        default: {}
+        description: The text each click or scroll adds to its action's command, as words (quoted for the shell, never run).
+        properties:
+          click: {type: string, title: Click, default: '', pattern: '^[^\n\r]{0,512}$'}
+          rightClick: {type: string, title: Right click, default: '', pattern: '^[^\n\r]{0,512}$'}
+          middleClick: {type: string, title: Middle click, default: '', pattern: '^[^\n\r]{0,512}$'}
+          scrollUp: {type: string, title: Scroll up, default: '', pattern: '^[^\n\r]{0,512}$'}
+          scrollDown: {type: string, title: Scroll down, default: '', pattern: '^[^\n\r]{0,512}$'}
   tooltip:
     type: boolean
     title: Tooltip
@@ -67,20 +97,21 @@ properties:
   actions:
     type: object
     additionalProperties: false
-    description: Commands run on click and scroll. Never on the lock screen.
+    description: What the widget can run. Elements and the bar pick one by its id. Never on the lock screen.
     properties:
-      click: {x-scope: commands, type: string, title: Click command, default: ''}
-      rightClick: {x-scope: commands, type: string, title: Right-click command, default: ''}
-      middleClick: {x-scope: commands, type: string, title: Middle-click command, default: ''}
-      scrollUp: {x-scope: commands, type: string, title: Scroll up command, default: ''}
-      scrollDown: {x-scope: commands, type: string, title: Scroll down command, default: ''}
-      refreshAfter: {type: boolean, title: Rerun after actions, default: true}
-  states:
+      items:
+        type: array
+        default: []
+        maxItems: 32
+        items: {$ref: '#/definitions/CustomWidgetAction'}
+      refreshAfter: {type: boolean, title: Rerun the script after an action, default: true}
+  samples:
     type: object
-    title: State colors
+    title: Samples
     default: {}
-    additionalProperties: {type: string}
-    description: A class or state → a theme color.
+    x-settings: false
+    additionalProperties: {type: object}
+    description: 'A sample output per screen (a screen id, "" for none): what the editor previews it with.'
   module:
     type: object
     additionalProperties: false
@@ -101,5 +132,35 @@ properties:
       elements:
         type: array
         default: []
+        description: Drawn under every screen.
         items: {$ref: '#/definitions/CustomElement'}
+      views:
+        type: array
+        default: []
+        description: Screens drawn over the base elements, the first whose condition holds.
+        items:
+          type: object
+          additionalProperties: false
+          required: [id]
+          properties:
+            id: {$ref: '#/definitions/ItemId'}
+            name: {type: string, title: Name, default: ''}
+            base: {type: boolean, title: Show the base elements, default: true}
+            when:
+              type: object
+              additionalProperties: false
+              properties:
+                key: {type: string, title: Key, default: '', description: 'Empty: only a Go to screen action shows it. error: the failure.'}
+                test:
+                  type: string
+                  title: Test
+                  default: is
+                  enum: [is, isNot, set, unset]
+                  x-enumLabels: {is: Is one of, isNot: Is none of, set: Is set, unset: Is not set}
+                values: {type: array, title: Values, default: [], items: {type: string}, x-showIf: {test: [is, isNot]}}
+            elements:
+              type: array
+              default: []
+              items: {$ref: '#/definitions/CustomElement'}
+      font: {type: string, title: Font, default: '', x-emptyLabel: Theme font, description: 'Text elements'' font family when they set none.'}
 required: [id]

@@ -5,18 +5,12 @@ import qs.config
 import qs.components.reusable
 import qs.components.methods
 
-// A choice from a list: the box beside its label on a wide form
-// (Widget.fieldInlineFrom), under it on a narrow one
-GridLayout {
+// A choice from a list: the box on its label's line when that fits beside
+// it, else under it (a FieldLine, kind flex)
+FieldLine {
   id: root
-  required property string label
   required property var options
   required property string currentValue
-  property string description: ""
-  // After the label (FieldHeader.trailing)
-  property Component headerExtra: null
-  // Under the description (FieldHeader.below)
-  property Component headerBelow: null
   // Options are color names (Style.resolve): each row is painted in the
   // color it names (an empty one, automatic, shows its label)
   property bool swatches: false
@@ -44,38 +38,16 @@ GridLayout {
 
   // What a click on the whole row does (SchemaField.rowClicked)
   function activate() {
-    // A press outside a dropdown closes it and is the same click that
-    // reaches this row: that click must not open the list again
-    if (entry.listOpen)
-      entry.closeList();
-    else if (Date.now() - entry.hiddenAt > Qt.styleHints.mouseDoubleClickInterval)
-      entry.openList();
+    entry.activate();
   }
 
   signal selectionChanged(string newValue)
 
-  readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
-
-  Layout.fillWidth: true
-  columns: root.inline ? 2 : 1
-  rowSpacing: Widget.spacing
-  columnSpacing: Widget.spacing * 2
-
-  FieldHeader {
-    label: root.label
-    description: root.description
-    trailing: root.headerExtra
-    below: root.headerBelow
-    // Centred on a control taller than it (a label alone)
-    Layout.alignment: Qt.AlignVCenter
-  }
+  kind: "flex"
 
   StyledComboEntry {
     id: entry
-    Layout.fillWidth: !root.inline
-    Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
-    // Beside the label: centred on it and its description
-    Layout.alignment: Qt.AlignVCenter
+    Layout.fillWidth: true
     options: root._entries
     value: root.currentValue
     onPicked: value => root.selectionChanged(value)

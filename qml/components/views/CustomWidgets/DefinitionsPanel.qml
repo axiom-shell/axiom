@@ -2,46 +2,18 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services.core
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
-import qs.components.forms
 import qs.components.views.base
 
-// Custom widgets page, left: the definitions (add, duplicate, remove) pinned
-// above, then the selected one's script: what runs and how, picked from a file or
-// typed, with the head of the script when it's a file.
+// Custom widgets page, left: the definitions (select, duplicate, remove) and
+// New, which opens its chooser (a bar text, an interactive card, a known
+// script, an import). The selected one's script is on the Data tab.
 Item {
   id: root
 
   readonly property var editor: CustomWidgetsManager.editor
-  property bool importing: false
-  property string importNote: ""
-  readonly property var definition: root.editor.selected
-  readonly property var schema: ConfigManager.configSchema.definitions.CustomWidget.properties
-  readonly property string scriptPath: root.editor.scriptPath(root.definition?.command)
-  // The script, read (its first 256 KiB, off the UI thread) when its path
-  // changes: only a script, text starting with #!, not a program the
-  // command names (an ELF)
-  property string scriptText: ""
-  onScriptPathChanged: root._readScript()
-  Component.onCompleted: root._readScript()
-
-  function _readScript() {
-    const path = root.scriptPath;
-    root.scriptText = "";
-    if (path !== "")
-      CommandManager.run(["head", "-c", "262144", "--", path], (code, out) => {
-        if (path === root.scriptPath)
-          root.scriptText = code === 0 && out.startsWith("#!") ? out : "";
-      });
-  }
-  // Its first lines
-  readonly property string scriptHead: root.scriptText.split("\n").slice(0, 40).join("\n")
-  // The script refreshes Waybar by signal (pkill -RTMIN+N waybar), which
-  // reaches nothing here
-  readonly property bool signalsWaybar: /RTMIN/.test(root.scriptText)
 
   ToolPane {
     anchors.fill: parent
@@ -68,170 +40,63 @@ Item {
           dimmed: !entry.item.command
           changed: root.editor.changed(entry.index)
           onClicked: root.editor.selectDefinition(entry.index)
+          canDuplicate: true
+          duplicateTooltip: I18n.tr("Duplicate")
+          canRemove: true
+          removeTooltip: I18n.tr("Remove this custom widget")
+          onDuplicated: root.editor.duplicate(entry.index)
           onRemoveRequested: root.editor.remove(entry.index)
-
-          RowAction {
-            row: entry
-            iconText: "content_copy"
-            tooltipText: I18n.tr("Copy this custom widget")
-            onClicked: root.editor.duplicate(entry.index)
-          }
-          RowAction {
-            row: entry
-            danger: true
-            iconText: "close"
-            tooltipText: I18n.tr("Remove this custom widget")
-            onClicked: root.editor.remove(entry.index)
-          }
         }
       }
 
+      // The New flow: what kind of widget (a chooser, not a blank one at
+      // once)
       AddEntryButton {
-        Layout.topMargin: Widget.spacing
+        id: newButton
         text: I18n.tr("New custom widget")
-        onClicked: root.editor.add()
+        onClicked: newMenu.openAt(newButton, 0, newButton.height)
       }
 
-      // Presets: names declared in CustomWidgetData.presets
-      StyledComboEntry {
-        Layout.fillWidth: true
-        value: ""
-        icon: "auto_awesome"
-        placeholderText: I18n.tr("From a preset…")
-        options: CustomWidgetData.presets.map((preset, index) => ({
-              "value": String(index),
-              "label": I18n.tr(preset.name),
-              "icon": preset.icon
-            }))
-        onPicked: value => {
-          const preset = CustomWidgetData.presets[Number(value)];
-          if (preset)
-            root.editor.add(Object.assign({}, preset, {
-              "name": I18n.tr(preset.name)
-            }));
-        }
-      }
-
-      StyledTextButton {
-        Layout.fillWidth: true
-        Layout.bottomMargin: Widget.spacing
-        implicitHeight: Widget.height
-        iconText: root.importing ? "expand_less" : "input"
-        text: I18n.tr("Import from Waybar…")
-        onClicked: {
-          root.importing = !root.importing;
-          root.importNote = "";
-        }
-      }
-
-      // Paste a custom/* block, or a whole config: built while open
-      Loader {
-        active: root.importing
-        visible: active
-        Layout.fillWidth: true
-        Layout.bottomMargin: Widget.spacing
-
-        sourceComponent: ColumnLayout {
-          spacing: Widget.spacing / 2
-
-          StyledTextArea {
-            id: waybarText
-            Layout.fillWidth: true
-            Layout.preferredHeight: Widget.height * 4
-            input.font.family: "monospace"
-            placeholderText: I18n.tr("Paste a \"custom/…\" module from your Waybar config, or the whole config")
+      StyledContextMenu {
+        id: newMenu
+        parent: root
+        // Known scripts: names declared in CustomWidgetData.scriptPresets
+        items: [
+          {
+            "id": "bar",
+            "icon": "text_fields",
+            "text": I18n.tr("Bar text from a script")
+          },
+          {
+            "id": "card",
+            "icon": "dashboard_customize",
+            "text": I18n.tr("Interactive card")
+          },
+          {
+            "id": "script",
+            "icon": "auto_awesome",
+            "text": I18n.tr("From a known script"),
+            "submenu": CustomWidgetData.scriptPresets.map((preset, index) => ({
+                  "id": "preset:" + index,
+                  "icon": preset.icon,
+                  "text": I18n.tr(preset.name)
+                }))
+          },
+          {
+            "id": "import",
+            "icon": "input",
+            "text": I18n.tr("Import a widget…")
           }
-          RowLayout {
-            Layout.fillWidth: true
-            StyledText {
-              Layout.fillWidth: true
-              text: root.importNote
-              role: "caption"
-              tone: "muted"
-              overflow: "wrap"
-            }
-            StyledTextButton {
-              implicitHeight: Widget.height
-              iconText: "download"
-              text: I18n.tr("Import")
-              onClicked: {
-                const result = root.editor.importWaybar(waybarText.text);
-                root.importNote = result.error ? I18n.tr("Couldn't read it: {0}", result.error) : I18n.tr("Added {0}.", result.count);
-                if (!result.error)
-                  waybarText.text = "";
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // A ColumnLayout's Repeater re-runs on every draft edit: built once a
-    // definition is selected, keyed by it
-    KeyedLoader {
-      id: script
-      Layout.fillWidth: true
-      Layout.preferredHeight: script.childrenRect.height
-      key: root.definition ? root.definition.id : ""
-
-      sourceComponent: ColumnLayout {
-        width: script.width
-        spacing: Widget.spacing
-
-        FieldGroup {
-          Layout.fillWidth: true
-          title: I18n.tr("Script")
-
-          SchemaPropertiesForm {
-            Layout.fillWidth: true
-            propertiesSchema: Utils.pick(root.schema, order)
-            order: ["name", "icon", "command", "mode", "interval", "output", "execIf", "refreshName"]
-            values: root.definition ?? ({})
-            onEdited: (path, value) => root.editor.set(path, value)
-          }
-
-          StyledTextButton {
-            implicitHeight: Widget.height
-            iconText: "folder_open"
-            text: I18n.tr("Pick a script…")
-            onClicked: FilePickerManager.pick(root, I18n.tr("Pick a script"), {
-              "start": root.scriptPath !== "" ? root.scriptPath.replace(/\/[^/]*$/, "") : "~",
-              "shortenHome": true
-            }, path => root.editor.set("command", path))
-          }
-
-          StyledText {
-            Layout.fillWidth: true
-            text: I18n.tr("Run it again from anywhere: {0}", `axiom ipc customWidgets refresh ${root.definition?.refreshName || root.definition?.id || ""}`)
-            role: "caption"
-            tone: "faint"
-            overflow: "wrap"
-          }
-        }
-
-        StyledText {
-          visible: root.signalsWaybar
-          Layout.fillWidth: true
-          text: I18n.tr("This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.", `axiom ipc customWidgets refresh ${root.definition?.refreshName || root.definition?.id || ""}`)
-          tone: "warning"
-          overflow: "wrap"
-        }
-
-        FieldGroup {
-          visible: root.scriptHead !== ""
-          Layout.fillWidth: true
-          title: I18n.tr("The script")
-          description: root.scriptPath
-
-          StyledText {
-            Layout.fillWidth: true
-            text: root.scriptHead
-            textFamily: "monospace"
-            role: "micro"
-            tone: "muted"
-            // A long line wraps inside the card
-            overflow: "wrap"
-          }
+        ]
+        onTriggered: id => {
+          if (id === "bar")
+            root.editor.addBlank();
+          else if (id === "card")
+            root.editor.openGallery();
+          else if (id === "import")
+            root.editor.openImport();
+          else if (id.startsWith("preset:"))
+            root.editor.addScript(CustomWidgetData.scriptPresets[Number(id.slice(7))]);
         }
       }
     }

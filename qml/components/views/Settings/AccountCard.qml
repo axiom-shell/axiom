@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 import qs.config
 import qs.services.session
 import qs.services.ui
@@ -13,9 +12,8 @@ import qs.components.reusable
 // account, and what they change themselves: the picture (also the lock
 // and login screens'), their real name, their password, and the
 // first-time setup run again
-FieldGroup {
+PageCard {
   id: root
-  pageCard: true
 
   // Which change is open: "" | "name" | "password"
   property string editing: ""
@@ -88,75 +86,47 @@ FieldGroup {
 
     // --- The picture: a click changes it ---
 
-    Item {
+    Thumbnail {
       id: picture
       Layout.alignment: Qt.AlignVCenter
-      implicitWidth: Widget.px(88)
-      implicitHeight: Widget.px(88)
+      Layout.preferredWidth: Widget.px(88)
+      Layout.preferredHeight: Widget.px(88)
+      round: true
+      source: AccountManager.iconUrl
+      cache: false
+      decodeSize: Qt.size(picture.width * 2, picture.height * 2)
+      placeholderIcon: "person"
+      border.color: press.hovered ? Style.accent : Style.borderStrong
+      border.width: Style.hairline
 
-      ClippingRectangle {
-        anchors.fill: parent
-        radius: width / 2
-        color: Style.surfaceHighest
-        border.color: pictureArea.containsMouse ? Style.accent : Style.borderStrong
-        border.width: Style.hairline
-
-        Image {
-          id: avatar
-          anchors.fill: parent
-          visible: status === Image.Ready
-          source: AccountManager.iconUrl
-          fillMode: Image.PreserveAspectCrop
-          asynchronous: true
-          cache: false
-          sourceSize: Qt.size(width * 2, height * 2)
-        }
-
-        StyledIcon {
-          anchors.centerIn: parent
-          visible: !avatar.visible
-          text: "person"
-          textSize: Math.max(Style.typeMicro, Math.round(picture.width * 0.45)) // fitted: the avatar circle
-          textColor: Style.inkHighest.faint
-        }
-
-        // A band across the lower third with a camera, while hovered
-        Surface {
-          tone: "raised"
-          solid: true
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.bottom: parent.bottom
-          height: Math.round(parent.height * 0.34)
-          radius: 0
-          outlined: false
-          opacity: pictureArea.containsMouse ? 1 : 0
-          Behavior on opacity {
-            NumberAnimation {
-              duration: Appearance.animFast
-              easing.type: Appearance.easing
-            }
-          }
-
-          StyledIcon {
-            anchors.centerIn: parent
-            text: "add_a_photo"
-            size: "md"
-          }
-        }
-      }
-
-      MouseArea {
-        id: pictureArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+      Pressable {
+        id: press
         enabled: !AccountManager.busy
         onClicked: AccountManager.pickIcon()
       }
 
+      // A band across the lower third with a camera, while hovered
+      Surface {
+        tone: "raised"
+        solid: true
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: Math.round(parent.height * 0.34)
+        radius: 0
+        outlined: false
+        opacity: press.hovered ? 1 : 0
+        Glide on opacity {}
+
+        StyledIcon {
+          anchors.centerIn: parent
+          text: "add_a_photo"
+          size: "md"
+        }
+      }
+
       LazyLoader {
-        active: pictureArea.containsMouse
+        active: press.hovered
         StyledToolTip {
           target: picture
           text: I18n.tr("Change picture")
@@ -285,18 +255,12 @@ FieldGroup {
       Layout.fillWidth: true
       spacing: Widget.spacing
 
-      StyledTextEntry {
+      SubmitEntry {
         id: nameEntry
-        Layout.fillWidth: true
         placeholderText: I18n.tr("Your full name")
-        onAccepted: saveName.clicked()
-      }
-
-      StyledTextButton {
-        id: saveName
-        text: I18n.tr("Save")
-        enabled: !AccountManager.busy && nameEntry.text.trim() !== AccountManager.realName
-        onClicked: {
+        buttonText: I18n.tr("Save")
+        canSubmit: !AccountManager.busy && nameEntry.text.trim() !== AccountManager.realName
+        onSubmitted: {
           AccountManager.setRealName(nameEntry.text.trim());
           root.editing = "";
         }

@@ -26,7 +26,6 @@ PanelWindow {
   readonly property bool shown: request !== null && !ScreenShareManager.pickingRegion
   // The card shows here: the picked screen, else (it's gone) the primary
   readonly property bool hasCard: !!screen && General.screensNamed(ScreenShareManager.screenName)[0] === screen
-  readonly property int pad: Widget.px(24)
 
   // "screen" | "window" | "region": the tab shown
   property string tab: "screen"
@@ -97,9 +96,6 @@ PanelWindow {
   // I18n.tr("Screens") I18n.tr("Windows") I18n.tr("Region")
   readonly property var tabs: [["screen", "Screens", "monitor"], ["window", "Windows", "select_window"]].concat(root.request?.region ? [["region", "Region", "screenshot_region"]] : [])
 
-  // Every focus grab lets input through to it while it shows
-  Component.onDestruction: SurfaceManager.unregisterModal(root)
-
   anchors {
     left: true
     right: true
@@ -118,30 +114,15 @@ PanelWindow {
   WlrLayershell.keyboardFocus: root.shown && root.hasCard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
   Component.onCompleted: {
-    SurfaceManager.registerModal(root);
     // Where the compositor blurs only what a window asks: the whole dimmed
     // screen, while backdrops blur (LayerStack.blurBackdrops), and none
     // the moment it steps aside for a region drag
     if (CompositorManager.supports.blurRegion === true)
-      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) && !ScreenShareManager.pickingRegion ? dimBlur : null);
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) && !ScreenShareManager.pickingRegion ? dim.blur : null);
   }
-  BoxBlurRegion {
-    id: dimBlur
-    target: dim
-    opacity: dim.opacity
-    alpha: dim.color.a
-    threshold: 0.01
-  }
-
-  Rectangle {
+  ModalScrim {
     id: dim
-    anchors.fill: parent
-    color: Style.scrim
-    opacity: root.shown ? 1 : 0
-
-    Glide on opacity {
-      duration: Appearance.animNormal
-    }
+    shown: root.shown
 
     // A click on the dimmed screen cancels
     MouseArea {
@@ -207,7 +188,7 @@ PanelWindow {
   // The screens' map: every screen as big as one alone in the base card,
   // the card growing as screens are added, scaled down only past what
   // this screen fits
-  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - root.pad * 2, root.screenMaxHeight + root.tileInset * 2, root.cardMaxWidth - root.pad * 2, root.height * 0.6)
+  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - card.padding * 2, root.screenMaxHeight + root.tileInset * 2, root.cardMaxWidth - card.padding * 2, root.height * 0.6)
   // The body's height for the screens: every tab keeps it, so the card
   // doesn't jump between tabs; at least the one-screen card's old body
   // (the screen and its names under it)
@@ -254,10 +235,10 @@ PanelWindow {
         Rectangle {
           anchors.fill: parent
           anchors.margins: -root.ring
-          radius: Widget.radius + root.ring
+          radius: Style.radius + root.ring
           color: "transparent"
           border.width: Widget.px(2)
-          border.color: tile.selected ? Style.accent : tile.hovered ? Style.borderStrong : "transparent"
+          border.color: tile.selected ? Style.accent : tile.hovered ? Style.borderStrong : Tone.cleared(Style.borderStrong) // style-exempt: the hover border at no alpha, so the fade doesn't pass through black
 
           ColorGlide on border.color {}
         }
@@ -266,7 +247,7 @@ PanelWindow {
         ClippingRectangle {
           visible: tile.isScreen
           anchors.fill: parent
-          radius: Widget.radius
+          radius: Style.radius
           color: Style.surfaceSunken
 
           ScreencopyView {
@@ -291,7 +272,7 @@ PanelWindow {
         WindowPreview {
           visible: !tile.isScreen
           anchors.fill: parent
-          radius: Widget.radius
+          radius: Style.radius
           windowData: tile.isScreen ? null : (tile.modelData.match ?? {
               "id": "",
               "appId": tile.modelData.appId,
@@ -300,6 +281,14 @@ PanelWindow {
           capturing: !tile.isScreen && root.shown
           live: tile.selected || tile.hovered
           showTitle: false
+        }
+
+        // The hover and press tint over the picture
+        StateLayer {
+          z: 1
+          radius: Style.radius
+          hovered: tile.hovered
+          pressed: tileMouse.pressed
         }
 
         // The picked one's check
@@ -323,7 +312,7 @@ PanelWindow {
             anchors.centerIn: parent
             text: "check"
             role: "caption"
-            textColor: Style.onAccent
+            textColor: Style.inkAccent.text
           }
         }
       }
@@ -335,7 +324,7 @@ PanelWindow {
         y: tile.isScreen ? picture.y + picture.height - height - Widget.spacing : picture.y + picture.height + root.ring + Widget.spacing / 2
         width: picture.width - (tile.isScreen ? Widget.spacing * 2 : 0)
         height: labels.implicitHeight + (tile.isScreen ? Widget.smallPadding : 0)
-        radius: Widget.radius
+        radius: Style.radius
         color: tile.isScreen ? Style.surfaceRaised : "transparent"
 
         ColumnLayout {
@@ -387,79 +376,33 @@ PanelWindow {
     }
   }
 
-  Surface {
+  // Every focus grab lets input through to it while it shows
+  ModalCard {
     id: card
-    tone: "page"
+    window: root
+    shown: root.shown
 
     visible: root.hasCard
     anchors.centerIn: parent
     // The base width, wider as the screens' map asks
-    width: Math.min(Math.max(root.cardBaseWidth, root.mapSize.width + root.pad * 2), root.cardMaxWidth)
-    height: Math.min(content.implicitHeight + root.pad * 2, root.height - Widget.px(64))
+    width: Math.min(Math.max(root.cardBaseWidth, root.mapSize.width + card.padding * 2), root.cardMaxWidth)
+    height: Math.min(content.implicitHeight + card.padding * 2, root.height - Widget.px(64))
     clip: true
-
-    opacity: root.shown ? 1 : 0
-    // The show: a fade and a slide (never a scale: scaled text goes soft)
-    property real _reveal: root.shown ? 1 : 0
-    transform: Translate {
-      y: Math.round((1 - card._reveal) * Style.enterOffset)
-    }
-    Glide on opacity {
-      duration: Appearance.animNormal
-    }
-    Glide on _reveal {
-      duration: Appearance.animNormal
-    }
-
-    // Swallow clicks so they don't reach the dimmed screen
-    MouseArea {
-      anchors.fill: parent
-    }
 
     ColumnLayout {
       id: content
-      x: root.pad
-      y: root.pad
-      width: card.width - root.pad * 2
-      height: card.height - root.pad * 2
-      spacing: root.pad
+      width: parent.width
+      height: parent.height
+      spacing: card.padding
 
-      RowLayout {
+      ModalHeader {
         Layout.fillWidth: true
-        spacing: Widget.padding
-
-        Rectangle {
-          Layout.preferredWidth: Widget.px(40)
-          Layout.preferredHeight: Widget.px(40)
-          radius: Widget.radius
-          color: Style.accentContainer
-
-          StyledIcon {
-            anchors.centerIn: parent
-            text: "screen_share"
-            size: "md"
-            textColor: Style.onAccentContainer
-          }
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: 0
-
-          StyledLabel {
-            Layout.fillWidth: true
-            text: I18n.tr("Share your screen")
-            role: "headline"
-          }
-
-          StyledLabel {
-            Layout.fillWidth: true
-            text: root.request?.appId ? I18n.tr("{0} asks what to share", root.request.appId) : I18n.tr("Pick what to share")
-            tone: "faint"
-            role: "caption"
-            overflow: "line"
-          }
-        }
+        icon: "screen_share"
+        title: I18n.tr("Share your screen")
+        message: root.request?.appId ? I18n.tr("{0} asks what to share", root.request.appId) : I18n.tr("Pick what to share")
+        messageRole: "caption"
+        messageTone: "faint"
+        messageWraps: false
 
         SegmentRow {
           Layout.alignment: Qt.AlignVCenter
@@ -533,7 +476,7 @@ PanelWindow {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Widget.px(72)
             Layout.preferredHeight: Widget.px(72)
-            radius: Widget.radius
+            radius: Style.radius
             color: Style.accentWash
             border.width: Widget.px(2)
             border.color: Style.accent
@@ -556,26 +499,26 @@ PanelWindow {
         }
       }
 
-      RowLayout {
+      ModalFooter {
         Layout.fillWidth: true
-        spacing: Widget.spacing
-
-        Flow {
-          Layout.fillWidth: true
-          Layout.alignment: Qt.AlignVCenter
-          spacing: Widget.padding
-
-          // I18n.tr("pick") I18n.tr("tab") I18n.tr("share") I18n.tr("cancel")
-          Repeater {
-            model: [["← →", "pick"], ["Tab", "tab"], ["↵", "share"], ["Esc", "cancel"]]
-
-            KeyHint {
-              required property var modelData
-              key: modelData[0]
-              label: I18n.tr(modelData[1])
-            }
+        hints: [
+          {
+            "key": "← →",
+            "label": I18n.tr("pick")
+          },
+          {
+            "key": "Tab",
+            "label": I18n.tr("tab")
+          },
+          {
+            "key": "↵",
+            "label": I18n.tr("share")
+          },
+          {
+            "key": "Esc",
+            "label": I18n.tr("cancel")
           }
-        }
+        ]
 
         StyledTextButton {
           text: I18n.tr("Cancel")

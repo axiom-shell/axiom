@@ -5,7 +5,7 @@
 // then to critical (its card; critical's on the warning colour).
 //
 // State by key (BatteryWatch, BatteryManager):
-//   charger  { available (isAvailable), value (plugged: !onBattery), percent,
+//   charger  { available (isAvailable), value (plugged: !runningOnBattery), percent,
 //            charging (isCharging), full (isFull), untilFull (timeToFull, as
 //            shown) }
 //   battery  { available, level ("none" | "low" | "critical", now),

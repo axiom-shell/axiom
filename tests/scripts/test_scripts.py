@@ -8,6 +8,8 @@
   - check_style.py: every style rule on a fixture file, its waivers, scope, every-hit-fails and role check
   - check_icons.py finds icon names the bundled font doesn't have
   - only PAM's success unlocks the built-in lock screen
+  - the Daily habits script (data/custom-widgets/habits.sh): add, check,
+    streaks, undo, remove, bad ids, JSON, overlapping changes
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -389,6 +391,9 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/FlatMap.qml", qml("function f(x) { return x.flatMap(y => y) }"), "Object.fromEntries or flatMap"),
         ("qml/shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
          "qml/shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
+        ("qml/shell/OnClash.qml", qml("property bool battery: false\n    readonly property bool onBattery: true"),
+         "qml/shell/OnClash.qml:7: property onBattery beside `battery`"),
+        ("qml/shell/OnInherited.qml", qml("readonly property bool onWidth: true"), "qml/shell/OnInherited.qml:6: property onWidth beside `width`"),
         ("qml/shell/NoPurpose.qml", qml(purpose=""), "qml/shell/NoPurpose.qml: no purpose comment"),
         ("qml/shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no qml/components/content/Ghost/Ghost.qml'),
         ("qml/components/content/Unused/Unused.qml", qml(), "qml/components/content/Unused/: not an overlay module"),
@@ -436,6 +441,18 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
+        # The config UI's local pieces (scripts/ui-local-pieces.json)
+        ("qml/components/views/Local/Tint.qml", qml("StateLayer {}"), "views/Local/Tint.qml:6: StateLayer"),
+        ("qml/components/views/Local/Space.qml", qml("Keys.onSpacePressed: x()"), "views/Local/Space.qml:6: Keys.onSpacePressed"),
+        ("qml/components/views/Local/Well.qml", qml('Surface { tone: "sunken" }'), "views/Local/Well.qml:6: tone-sunken"),
+        ("qml/components/views/Local/Cond.qml", qml('Surface { tone: x ? "sunken" : "raised" }'), "views/Local/Cond.qml:6: tone-sunken"),
+        ("qml/components/views/Local/Click.qml", qml("onRowClicked: x()"), "views/Local/Click.qml:6: onRowClicked"),
+        ("qml/components/views/Local/First.qml", qml("FormRow {\n      first: true\n    }"), "views/Local/First.qml:7: first-literal"),
+        ("qml/components/surfaces/onboarding/Tint.qml", qml("StateLayer {}"), "onboarding/Tint.qml:6: StateLayer"),
+        ("qml/components/views/Local/Pushed.qml", qml('Binding {\n      property: "text"\n      restoreMode: Binding.RestoreNone\n    }'),
+         "views/Local/Pushed.qml:8: restore-text"),
+        ("qml/components/content/Local/Loose.qml", qml("RowLayout {\n      SegmentButton {}\n    }"), "content/Local/Loose.qml:7: SegmentButton"),
+        ("qml/components/content/Local/InRow.qml", qml("SegmentRow {\n      SegmentButton {}\n    }"), None),
         # The bar widget template (check_structure.bar_widget_template): T2 and T3 are
         # planted in copies of real widgets
         ("qml/components/bar/widgets/Tone/Tone.qml", qml(), "Tone/Tone.qml: T1"),
@@ -463,6 +480,8 @@ class CheckStructure(unittest.TestCase):
         "tool page Keybinds isn't in the Overlay.items default",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
+        "ui-local-pieces.json: qml/components/views/Gone.qml no longer breaks StateLayer",
+        "ui-local-pieces.json: qml/components/views/NoReason.qml has no reason",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
         "DevMode/: T4 ghostColor is a colour field of DevMode that nothing uses",
@@ -492,6 +511,9 @@ class CheckStructure(unittest.TestCase):
                 del defs["UpdatesWidget"]["properties"]["properties"]["properties"]["failedColor"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
+                "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
+                "qml/components/views/NoReason.qml": {"rules": [], "reason": ""}}))
             edit_json(root / "scripts/bar-widget-exceptions.json", lambda a: a["types"].update({
                 "Button": {"reason": "planted", "rules": ["T8"]},
                 "Spacer": {"reason": "", "rules": ["T5"]},
@@ -707,7 +729,7 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckStyle(unittest.TestCase):
-    """scripts/check_style.py: each rule R1 to R18 on a fixture file, the waivers, the scope, every hit failing and the role check."""
+    """scripts/check_style.py: each rule R1 to R20 on a fixture file, the waivers, the scope, every hit failing and the role check."""
     HEAD = "pragma ComponentBehavior: Bound\nimport QtQuick\nimport qs.config\n// A fixture.\n"
     UI = "qml/components/reusable/X.qml"
     STYLED = {"qml/components/reusable/StyledText.qml": HEAD + "Text {\n}\n",
@@ -891,6 +913,26 @@ class CheckStyle(unittest.TestCase):
         self.assertEqual(self.rule("  layer.enabled: false", "R17"), 0)
         self.assertEqual(self.rule("  layer.effect: MultiEffect {\n  }", "R17"), 1)
         self.assertEqual(self.rule("  layer.effect: MultiEffect { // style-exempt: no text\n  }", "R17"), 0)
+
+    def test_r20_glide_to_transparent(self):
+        glide = "  ColorGlide on color {}"
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  border.color: root.on ? Style.accent : "transparent"\n  ColorGlide on border.color {}', "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Behavior on color {\n    ColorAnimation {\n    }\n  }', "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  ColorAnimation on color {\n  }', "R20"), 1)
+        self.assertEqual(self.rule('  color: "transparent"\n' + glide, "R20"), 1)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : Qt.alpha(Style.accent, 0) // style-exempt: rests on its hue\n' + glide, "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"', "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? Style.accent : "transparent"\n  Glide on width {}', "R20"), 0)
+        self.assertEqual(self.rule('  color: "transparent"\n  border.color: Style.accent\n  ColorGlide on border.color {}', "R20"), 0)
+        self.assertEqual(self.rule('  color: root.on ? "transparent" : Style.accent\n' + glide, "R20"), 1)
+
+    def test_r19_widget_radius(self):
+        self.assertEqual(self.rule("  radius: Widget.radius", "R19"), 1)
+        self.assertEqual(self.rule("  radius: Widget.radius / 2", "R19"), 1)
+        self.assertEqual(self.rule("  radius: Style.radius", "R19"), 0)
+        self.assertEqual(self.rule("  // Widget.radius in a comment", "R19"), 0)
+        self.assertEqual(self.rule("  radius: Widget.radius", "R19", path="qml/config/X.qml"), 0)
 
     def test_r18_scale(self):
         self.assertEqual(self.rule("  scale: 0.92", "R18"), 1)
@@ -1276,6 +1318,221 @@ class GreeterSession(unittest.TestCase):
         self.fake("start-hyprland")
         self.fake("agreety")
         self.assertEqual(self.run_session(), ["sway", "agreety"])
+
+
+class HabitsScript(unittest.TestCase):
+    """data/custom-widgets/habits.sh, the Daily habits widget's script, run
+    on a state folder of its own."""
+
+    SCRIPT = ROOT / "data" / "custom-widgets" / "habits.sh"
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.env = dict(os.environ, XDG_STATE_HOME=str(self.tmp))
+        self.tsv = self.tmp / "axiom" / "habits.tsv"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_script(self, *args):
+        return subprocess.run(["bash", str(self.SCRIPT), *args], env=self.env,
+                              capture_output=True, text=True, timeout=30)
+
+    def show(self):
+        result = self.run_script("show")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_starts_empty_with_only_add(self):
+        out = self.show()
+        self.assertEqual((out["state"], out["text"], out["items"]), ("empty", "0/0", []))
+        self.assertEqual(out["actions"], {"add": {}})
+
+    def test_add_check_and_the_screens(self):
+        self.assertEqual(self.run_script("do", "add", "  Read\ta \"book\"  ").returncode, 0)
+        self.run_script("do", "add", "Walk")
+        out = self.show()
+        self.assertEqual((out["state"], out["text"]), ("open", "0/2"))
+        self.assertEqual([i["text"] for i in out["items"]], ['Read a "book"', "Walk"])
+        self.assertEqual(out["actions"], {"add": {}, "check": {}, "remove": {}, "undo": {}})
+        self.run_script("do", "check", "1")
+        out = self.show()
+        self.assertEqual((out["state"], out["text"]), ("open", "1/2"))
+        self.assertEqual(out["items"][0]["state"], "done")
+        self.assertEqual(out["items"][0]["subtext"], "1 day")
+        self.run_script("do", "check", "2")
+        self.run_script("do", "check", "2")
+        self.assertEqual(self.show()["state"], "done")
+
+    def test_a_streak_counts_days_in_a_row(self):
+        self.run_script("do", "add", "Read")
+        yesterday = subprocess.run(["date", "-d", "yesterday", "+%F"], capture_output=True, text=True).stdout.strip()
+        self.tsv.write_text(f"1\tRead\t{yesterday}\t4\n")
+        self.assertEqual(self.show()["items"][0]["subtext"], "4 days")
+        self.run_script("do", "check", "1")
+        self.assertEqual(self.show()["items"][0]["subtext"], "5 days")
+        self.tsv.write_text("1\tRead\t2000-01-01\t9\n")
+        self.assertEqual(self.show()["items"][0]["subtext"], "0 days")
+        self.run_script("do", "check", "1")
+        self.assertEqual(self.show()["items"][0]["subtext"], "1 day")
+
+    def test_undo_and_remove(self):
+        self.run_script("do", "add", "Read")
+        self.run_script("do", "add", "Walk")
+        self.run_script("do", "remove", "1")
+        self.assertEqual([i["text"] for i in self.show()["items"]], ["Walk"])
+        self.assertEqual(self.run_script("do", "undo").returncode, 0)
+        self.assertEqual([i["text"] for i in self.show()["items"]], ["Read", "Walk"])
+        self.assertNotIn("undo", self.show()["actions"])
+        self.assertEqual(self.run_script("do", "undo").returncode, 2)
+
+    def test_bad_input_exits_2_with_a_line_on_stderr(self):
+        self.run_script("do", "add", "Read")
+        for args in (("check", "9"), ("check", "x"), ("remove", "9"), ("add", "  "), ("fly", ""), ("add",)):
+            result = self.run_script("do", *args)
+            self.assertEqual(result.returncode, 2, args)
+            self.assertTrue(result.stderr.strip().startswith("habits:"), args)
+        self.assertEqual(len(self.show()["items"]), 1)
+
+    def test_overlapping_adds_keep_every_habit(self):
+        procs = [subprocess.Popen(["bash", str(self.SCRIPT), "do", "add", f"h{n}"], env=self.env) for n in range(8)]
+        for proc in procs:
+            self.assertEqual(proc.wait(timeout=30), 0)
+        self.assertEqual(sorted(i["id"] for i in self.show()["items"]), [str(n) for n in range(1, 9)])
+        self.assertFalse((self.tmp / "axiom" / "habits.tsv.lock").exists())
+
+    def test_remove_is_listed_only_with_habits(self):
+        self.assertNotIn("remove", self.show()["actions"])
+        self.run_script("do", "add", "Read")
+        self.assertIn("remove", self.show()["actions"])
+
+    def test_last_line_without_newline(self):
+        self.tsv.parent.mkdir(parents=True)
+        self.tsv.write_text("1\tread\t-\t0\n2\tgym\t-\t0")
+        self.assertEqual(len(self.show()["items"]), 2)
+        self.assertEqual(self.run_script("do", "check", "1").returncode, 0)
+        self.assertIn("2\tgym", self.tsv.read_text())
+        self.assertEqual(self.run_script("do", "add", "c").returncode, 0)
+        text = self.tsv.read_text()
+        self.assertTrue(text.endswith("\n"))
+        self.assertEqual([line.split("\t")[0] for line in text.splitlines()], ["1", "2", "3"])
+
+    def test_state_dir_a_file_exits_2(self):
+        (self.tmp / "axiom").write_text("")
+        result = subprocess.run(["bash", str(self.SCRIPT), "do", "add", "a"], env=self.env,
+                                capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(result.stderr.startswith("habits:"))
+
+    def test_read_only_state_dir_exits_2(self):
+        if os.geteuid() == 0:
+            self.skipTest("root ignores directory modes")
+        state = self.tmp / "axiom"
+        state.mkdir()
+        state.chmod(0o555)
+        self.addCleanup(lambda: state.exists() and state.chmod(0o755))
+        result = subprocess.run(["bash", str(self.SCRIPT), "do", "add", "a"], env=self.env,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(result.stderr.startswith("habits:"))
+
+
+class DemoScript(unittest.TestCase):
+    """data/custom-widgets/demo.sh, the templates' script, run on a state
+    folder of its own."""
+
+    SCRIPT = ROOT / "data" / "custom-widgets" / "demo.sh"
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.env = dict(os.environ, XDG_STATE_HOME=str(self.tmp))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_script(self, *args):
+        return subprocess.run(["bash", str(self.SCRIPT), *args], env=self.env,
+                              capture_output=True, text=True, timeout=30)
+
+    def show(self, template):
+        result = self.run_script(template, "show")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.endswith("\n") and not result.stdout.endswith("\n\n"))
+        return json.loads(result.stdout)
+
+    def test_toggle_round_trip(self):
+        self.assertEqual(self.show("toggle"), {"text": "Focus mode", "state": "off"})
+        self.assertEqual(self.run_script("toggle", "on").returncode, 0)
+        self.assertEqual(self.show("toggle")["state"], "on")
+        self.run_script("toggle", "off")
+        self.assertEqual(self.show("toggle")["state"], "off")
+
+    def test_slider_set_truncates_clamps_and_rejects(self):
+        self.assertEqual(self.show("slider")["value"], 50)
+        for given, want in (("37.9", 37), ("150", 100), ("-5", 0), ("007", 7), (".5", 0), ("99999999999999", 100)):
+            self.assertEqual(self.run_script("slider", "set", given).returncode, 0, given)
+            self.assertEqual(self.show("slider")["value"], want, given)
+        for bad in ("abc", "", "1e3", "5%"):
+            result = self.run_script("slider", "set", bad)
+            self.assertEqual(result.returncode, 2, bad)
+            self.assertTrue(result.stderr.startswith("demo: "), bad)
+        self.assertEqual(self.show("slider")["value"], 100, "a rejected value changes nothing")
+
+    def test_list_prints_the_mounts(self):
+        out = self.show("list")
+        self.assertIsInstance(out["items"], list)
+        self.assertEqual(out["text"].split()[0], str(len(out["items"])))
+        for item in out["items"]:
+            self.assertTrue(item["id"].startswith("/"))
+            self.assertIn(item["state"], ("ok", "full"))
+            self.assertEqual(item["unit"], "%", "the used share reads as a percentage")
+            self.assertEqual(item["state"] == "full", item["value"] >= 90)
+
+    def test_media_walks_the_tracks(self):
+        first = self.show("media")
+        self.assertEqual((first["state"], first["icon"]), ("playing", "pause"))
+        self.run_script("media", "toggle")
+        paused = self.show("media")
+        self.assertEqual((paused["state"], paused["icon"], paused["text"]), ("paused", "play_arrow", first["text"]))
+        self.run_script("media", "toggle")
+        self.run_script("media", "next")
+        self.assertNotEqual(self.show("media")["text"], first["text"])
+        self.run_script("media", "next")
+        stopped = self.show("media")
+        self.assertEqual(stopped["state"], "stopped", "next past the last track stops")
+        self.run_script("media", "toggle")
+        self.assertEqual(self.show("media")["state"], "playing", "toggle from stopped plays")
+        for _ in range(3):
+            self.run_script("media", "next")
+        self.assertEqual(self.show("media")["state"], "stopped")
+        self.run_script("media", "prev")
+        self.assertEqual(self.show("media")["state"], "playing", "prev from stopped plays the last track")
+
+    def test_status_break_and_fix(self):
+        ok = self.show("status")
+        self.assertEqual((ok["state"], ok["text"]), ("ok", "All good"))
+        self.run_script("status", "break")
+        result = self.run_script("status", "show")
+        self.assertEqual(result.returncode, 0, "a failing demo still exits 0")
+        self.assertTrue(json.loads(result.stdout)["error"])
+        self.run_script("status", "fix")
+        self.assertEqual(self.show("status")["state"], "ok")
+
+    def test_bad_input_exits_2_with_demo_on_stderr(self):
+        for args in (("nope", "show"), ("toggle", "nope"), ("toggle",), ()):
+            result = self.run_script(*args)
+            self.assertEqual(result.returncode, 2, args)
+            self.assertTrue(result.stderr.startswith("demo: "), args)
+            self.assertEqual(result.stdout, "")
+
+    def test_every_template_command_is_a_verb_the_script_takes(self):
+        source = (ROOT / "qml" / "components" / "methods" / "CustomWidgetData.qml").read_text()
+        calls = re.findall(r'_demo\("(\w+)", "(\w+)"\)(?: \+ " \{value\}")?', source)
+        self.assertGreaterEqual(len(calls), 12)
+        for template, verb in calls:
+            args = [template, verb] + (["42"] if verb == "set" else [])
+            result = self.run_script(*args)
+            self.assertEqual(result.returncode, 0, "%s %s: %s" % (template, verb, result.stderr))
 
 
 if __name__ == "__main__":

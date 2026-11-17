@@ -135,135 +135,45 @@ ColumnLayout {
 
   // --- A mode change waiting for Save ---
 
-  Surface {
+  Notice {
     id: pendingBox
-    tone: root.blocked ? "errorContainer" : "accentContainer"
+    status: root.blocked ? "error" : "accent"
+    icon: root.blocked ? "error" : "info"
     visible: root.pending
-    Layout.fillWidth: true
-    implicitHeight: pendingColumn.implicitHeight + Widget.padding * 2
-
-    ColumnLayout {
-      id: pendingColumn
-      anchors.top: parent.top
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.margins: Widget.padding
-      spacing: Widget.spacing / 2
-
-      StyledText {
-        overflow: "wrap"
-        text: root.blocked ? I18n.tr("Can't switch to Managed") : I18n.tr("Save switches to {0}:", root._modeLabel(root.pendingMode))
-        role: "label"
-        Layout.fillWidth: true
-      }
-
-      StyledText {
-        visible: root.blocked
-        text: CompositorConfigManager.managedBlockedBy === "elsewhere" ? CompositorConfigManager.elsewhereReason : CompositorConfigManager.managedBlockedBy === "git" ? I18n.tr("{0} is inside the git repository at {1}, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir), Paths.shortenHome(CompositorConfigManager.managedBlockedRepo)) : I18n.tr("{0} is a symlink or in a git repository, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir))
-        role: "body"
-        tone: "muted"
-        overflow: "wrap"
-        Layout.fillWidth: true
-      }
-
-      Repeater {
-        model: root.blocked ? [] : root.saveSteps
-
-        delegate: StyledText {
-          required property string modelData
-          text: "•  " + modelData
-          role: "body"
-          tone: "muted"
-          overflow: "wrap"
-          Layout.fillWidth: true
-        }
-      }
-    }
+    title: root.blocked ? I18n.tr("Can't switch to Managed") : I18n.tr("Save switches to {0}:", root._modeLabel(root.pendingMode))
+    text: root.blocked ? (CompositorConfigManager.managedBlockedBy === "elsewhere" ? CompositorConfigManager.elsewhereReason : CompositorConfigManager.managedBlockedBy === "git" ? I18n.tr("{0} is inside the git repository at {1}, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir), Paths.shortenHome(CompositorConfigManager.managedBlockedRepo)) : I18n.tr("{0} is a symlink or in a git repository, so axiom won't take it over. Use Included instead.", Paths.shortenHome(CompositorConfigManager.configDir))) : root.saveSteps.map(step => "•  " + step).join("\n")
   }
 
   // --- The mode in effect ---
 
   // Managed waits for the user's go-ahead on this compositor
-  Surface {
+  Notice {
     id: approvalBox
-    tone: "warningContainer"
+    status: "warning"
     visible: CompositorConfigManager.takeoverPending && !root.pending
-    Layout.fillWidth: true
-    implicitHeight: approvalColumn.implicitHeight + Widget.padding * 2
-
-    ColumnLayout {
-      id: approvalColumn
-      anchors.top: parent.top
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.margins: Widget.padding
-      spacing: Widget.spacing / 2
-
-      StyledText {
-        overflow: "wrap"
-        text: I18n.tr("Managed mode needs your approval")
-        role: "label"
-        Layout.fillWidth: true
-      }
-
-      StyledText {
-        text: I18n.tr("Taking over {0} moves your config into {1}, where it keeps working, with a dated backup beside it. Until then, axiom applies its layer at runtime. Included mode leaves your config alone.", Paths.shortenHome(CompositorConfigManager.managedPath), Paths.shortenHome(CompositorConfigManager.userDir))
-        role: "body"
-        tone: "muted"
-        overflow: "wrap"
-        Layout.fillWidth: true
-      }
-
-      StyledTextButton {
-        text: I18n.tr("Allow takeover")
-        onClicked: CompositorConfigManager.allowTakeover()
-      }
-    }
+    title: I18n.tr("Managed mode needs your approval")
+    text: I18n.tr("Taking over {0} moves your config into {1}, where it keeps working, with a dated backup beside it. Until then, axiom applies its layer at runtime. Included mode leaves your config alone.", Paths.shortenHome(CompositorConfigManager.managedPath), Paths.shortenHome(CompositorConfigManager.userDir))
+    actionText: I18n.tr("Allow takeover")
+    onTriggered: CompositorConfigManager.allowTakeover()
   }
 
-  // The Recommended setup, once, after a save into managed mode
-  Surface {
+  // The Recommended setup, once, after a save into managed mode: the callout
+  // (its button closes it), then the list to apply
+  Notice {
     id: recommendedBox
-    tone: "accentContainer"
+    status: "accent"
     visible: root.offersRecommended
+    title: I18n.tr("Recommended setup")
+    text: I18n.tr("Managed mode is on. Turn on the rest of what axiom can run for you: untick what you'd rather keep your own, then Apply.")
+    actionText: root.recommendedRan ? I18n.tr("Close") : I18n.tr("Not now")
+    onTriggered: RecommendedSetupManager.dismiss()
+  }
+
+  // Built only while offered: its begin() resets the shared state
+  StreamedLoader {
     Layout.fillWidth: true
-    implicitHeight: recommendedColumn.implicitHeight + Widget.padding * 2
-
-    ColumnLayout {
-      id: recommendedColumn
-      anchors.top: parent.top
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.margins: Widget.padding
-      spacing: Widget.spacing
-
-      StyledText {
-        overflow: "wrap"
-        text: I18n.tr("Recommended setup")
-        role: "label"
-        Layout.fillWidth: true
-      }
-
-      StyledText {
-        text: I18n.tr("Managed mode is on. Turn on the rest of what axiom can run for you: untick what you'd rather keep your own, then Apply.")
-        role: "body"
-        tone: "muted"
-        overflow: "wrap"
-        Layout.fillWidth: true
-      }
-
-      // Built only while offered: its begin() resets the shared state
-      StreamedLoader {
-        Layout.fillWidth: true
-        wanted: root.offersRecommended
-        sourceComponent: RecommendedSetupList {}
-      }
-
-      StyledTextButton {
-        text: root.recommendedRan ? I18n.tr("Close") : I18n.tr("Not now")
-        onClicked: RecommendedSetupManager.dismiss()
-      }
-    }
+    wanted: root.offersRecommended
+    sourceComponent: RecommendedSetupList {}
   }
 
   StyledText {

@@ -34,7 +34,6 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
     enabled: root.saved
-    opacity: enabled ? 1 : Style.opacityDisabled
 
     Repeater {
       model: root.bars.length

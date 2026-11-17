@@ -35,6 +35,15 @@ FoldingCard {
   marked: root.group.rows.some(row => SettingsManager.hasChangesUnder(row.path.join(".")))
   onToggled: SettingsManager.setCollapsed(root.group.key, !root.collapsed)
 
+  // The rows' indent tree (RowTree), from the schema rows only (never live values)
+  readonly property var tree: RowTree.plan(root.group.rows)
+
+  // Its rows are in `rowArea`, not direct children: FoldingCard's end rule
+  // reads each SettingsField's `shown` and `shutFold`, through `count`
+  endRows: Array.from({
+    length: fieldRows.count
+  }, (_, i) => fieldRows.itemAt(i))
+
   // The hookup chip of a theme integration's card (its unsaved switch value)
   // I18n.tr("Off") I18n.tr("Checking") I18n.tr("Set up") I18n.tr("Not set up") I18n.tr("Copy the text")
   readonly property bool _hookupOn: !!root.group.hookup && root.form.valueAt(root.group.path.concat([root.group.hookup])) === true
@@ -167,6 +176,7 @@ FoldingCard {
         first: (field.index === root._firstRows[String(field.spot.column)] && !(field.modelData.foldRows && introLoader.visible)) || (rowArea.lines[field.index]?.side === 1 && field.index - 1 === root._firstRows[String(rowArea.placed.rows[field.index - 1]?.column)])
         row: field.modelData
         form: root.form
+        level: root.tree.levels[field.index]
         x: field.spot.x
         y: field.spot.y
         width: field.spot.width

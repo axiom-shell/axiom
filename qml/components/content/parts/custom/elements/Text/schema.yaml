@@ -3,19 +3,10 @@ icon: text_fields
 defaultSize: [6, 1]
 slots: [text]
 color: text
+place: both
+size: text
 settings:
   bold: {type: boolean, title: Bold, default: false}
   monospace: {type: boolean, title: Monospace, default: false}
-  align:
-    type: string
-    title: Alignment
-    default: center
-    x-control: toggle
-    enum: [left, center, right]
-    x-enumLabels: {left: Left, center: Center, right: Right}
-  size:
-    type: string
-    title: Size
-    default: auto
-    enum: [auto, small, normal, large, huge]
-    x-enumLabels: {auto: Fit the box, small: Small, normal: Normal, large: Large, huge: Huge}
+  markup: {type: boolean, title: Markup, default: false, description: 'Draw a bound value''s Pango markup.'}
+  font: {type: string, title: Font, default: '', description: 'Empty: monospace when on, else the module''s, else the shell''s.'}

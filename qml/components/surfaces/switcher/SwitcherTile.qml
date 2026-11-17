@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.methods
 
 import qs.services.compositor
 import qs.config
@@ -29,15 +30,14 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    radius: Widget.radius
-    color: root.selected ? Style.accentContainer : "transparent"
+    radius: Style.radius
+    color: root.selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: the selected fill at no alpha, so a selection change doesn't fade through black
     border.width: Appearance.borderWidth
     border.color: root.selected ? Style.accent : "transparent"
 
     ColorGlide on color {}
 
     StateLayer {
-      radius: Widget.radius
       hovered: mouse.containsMouse && !root.selected
     }
   }
@@ -58,7 +58,7 @@ Item {
       capturing: WindowSwitcherConfig.previews && WindowSwitcherManager.shown
       live: root.selected
       showTitle: false
-      radius: Widget.radius
+      radius: Style.radius
     }
 
     Image {
@@ -79,7 +79,7 @@ Item {
     anchors.left: box.left
     anchors.right: box.right
     text: root.windowData?.title || root.windowData?.appId || ""
-    textColor: root.selected ? Style.onAccentContainer : Style.textMuted
+    textColor: root.selected ? Style.inkAccentContainer.text : Style.textMuted
     role: "caption"
     overflow: "line"
     horizontalAlignment: Text.AlignHCenter

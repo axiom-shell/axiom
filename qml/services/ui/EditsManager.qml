@@ -3,6 +3,7 @@ import QtQuick
 import qs.services.core
 import qs.services.compositor
 import qs.services.apps
+import qs.components.methods
 
 // The editors' unsaved edits, by overlay page: which pages hold a dirty
 // draft (the navigator's dots and the unsaved-changes strip), and saving
@@ -16,7 +17,8 @@ import qs.services.apps
 //
 // Also how the editors are laid out, which outlives their pages (saved in
 // state/editors.json): whether the libraries group their types, and the
-// Keybinds editor's folded sections. And, in memory, where each panel was
+// Keybinds editor's folded sections and the layouts editor's list
+// sections (open or closed). And, in memory, where each panel was
 // scrolled to (ScrollMemory).
 QtObject {
   id: root
@@ -61,10 +63,12 @@ QtObject {
   // The widget and module libraries show their types by group (the
   // schema's `x-libraryGroups`), else by name
   readonly property bool libraryGrouped: root._libraryGrouped
-  // The Keybinds editor's folded sections, by section name
-  readonly property var keybindsFolded: root._keybindsFolded
+  // The editors' foldable list sections, open or closed by id (SectionFolds:
+  // the layouts editor's Overlay pages, Tools, Menus and Screens, Tools
+  // starting shut; the Keybinds editor's sections as "bind:<section name>")
+  readonly property var sectionFolds: root._sectionFolds
   property bool _libraryGrouped: false
-  property var _keybindsFolded: []
+  property var _sectionFolds: ({})
   readonly property var _state: StateManager.createStateHandler("editors")
 
   function setLibraryGrouped(value) {
@@ -72,11 +76,24 @@ QtObject {
     root._saveState();
   }
 
-  function setKeybindsFolded(section, folded) {
-    if (root._keybindsFolded.includes(section) === folded)
+  function layoutSectionOpen(id) {
+    return SectionFolds.isOpen(root._sectionFolds, id);
+  }
+
+  function setLayoutSectionOpen(id, open) {
+    if (root.layoutSectionOpen(id) === open)
       return;
-    root._keybindsFolded = folded ? root._keybindsFolded.concat([section]) : root._keybindsFolded.filter(s => s !== section);
+    root._sectionFolds = SectionFolds.withOpen(root._sectionFolds, id, open);
     root._saveState();
+  }
+
+  // The Keybinds editor's sections, by section name
+  function keybindSectionFolded(section) {
+    return !root.layoutSectionOpen("bind:" + section);
+  }
+
+  function setKeybindsFolded(section, folded) {
+    root.setLayoutSectionOpen("bind:" + section, !folded);
   }
 
   // Where each scrolling panel was scrolled to, by its ScrollMemory key, so
@@ -96,14 +113,14 @@ QtObject {
   function _saveState() {
     root._state.save({
       "libraryGrouped": root._libraryGrouped,
-      "keybindsFolded": root._keybindsFolded
+      "sectionFolds": root._sectionFolds
     });
   }
 
   Component.onCompleted: {
     const saved = root._state.load({});
     root._libraryGrouped = saved.libraryGrouped === true;
-    root._keybindsFolded = Array.isArray(saved.keybindsFolded) ? saved.keybindsFolded : [];
+    root._sectionFolds = SectionFolds.fromSaved(saved);
   }
 
   // The box holding typed text (var: callers use commitTyped() and

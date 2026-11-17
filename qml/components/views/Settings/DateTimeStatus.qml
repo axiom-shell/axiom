@@ -12,7 +12,7 @@ import qs.components.forms
 // formats below, the time zone, network time and setting the time by
 // hand while it's off. Each change asks polkit. `status` and `statusTone`
 // are the card's header chip
-ColumnLayout {
+IntroColumn {
   id: root
 
   // The time typed while network time is off, "" until edited
@@ -58,8 +58,6 @@ ColumnLayout {
   }
 
   readonly property string statusTone: !DateTimeManager.available ? "neutral" : DateTimeManager.ntp ? (DateTimeManager.ntpSynchronized ? "success" : "warning") : "accent"
-
-  spacing: Widget.spacing * 1.5
 
   // --- Now ---
 
@@ -122,30 +120,20 @@ ColumnLayout {
 
   // --- Network time ---
 
-  RowLayout {
+  // Follows timedated's answer, not the click
+  FormColumn {
     visible: DateTimeManager.available
     Layout.fillWidth: true
-    spacing: Widget.spacing
 
-    FieldHeader {
-      // I18n.tr("Set the time automatically")
-      label: "Set the time automatically"
-      // I18n.tr("Keeps the clock right from time servers on the internet (systemd-timesyncd or another NTP service).")
-      // I18n.tr("No time sync service is installed (systemd-timesyncd, chrony or ntpd).")
-      description: DateTimeManager.canNtp ? "Keeps the clock right from time servers on the internet (systemd-timesyncd or another NTP service)." : "No time sync service is installed (systemd-timesyncd, chrony or ntpd)."
-    }
-
-    StyledSwitch {
-      id: ntpSwitch
+    SwitchRow {
+      label: I18n.tr("Set the time automatically")
+      description: DateTimeManager.canNtp ? I18n.tr("Keeps the clock right from time servers on the internet (systemd-timesyncd or another NTP service).") : I18n.tr("No time sync service is installed (systemd-timesyncd, chrony or ntpd).")
       enabled: DateTimeManager.canNtp && !DateTimeManager.busy
       checked: DateTimeManager.ntp
-      onToggled: {
-        const on = ntpSwitch.checked;
-        DateTimeManager.setNtp(on);
-        // Follows timedated's answer, not the click
-        ntpSwitch.checked = Qt.binding(() => DateTimeManager.ntp);
+      onToggled: newValue => {
+        DateTimeManager.setNtp(newValue);
         // The fields below start at the time now
-        if (!on)
+        if (!newValue)
           root.startEditing();
       }
     }
@@ -202,11 +190,10 @@ ColumnLayout {
     overflow: "wrap"
   }
 
-  StyledText {
+  StatusLine {
     visible: DateTimeManager.error !== ""
     Layout.fillWidth: true
     text: DateTimeManager.error
     tone: "error"
-    overflow: "wrap"
   }
 }

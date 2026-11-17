@@ -63,7 +63,9 @@ Panel {
     label: I18n.tr("updates")
   }
 
-  implicitWidth: Math.max(Widget.textPx(320), body.implicitWidth + margins * 2)
+  // A popout is capped (a long package name doesn't widen it); a card is sized by its host
+  readonly property real wanted: Math.max(Widget.textPx(320), body.implicitWidth + margins * 2)
+  implicitWidth: root.embedded ? root.wanted : Math.min(Widget.textPx(480), root.wanted)
 
   component Section: ColumnLayout {
     id: section
@@ -82,7 +84,7 @@ Panel {
     Layout.alignment: Qt.AlignTop
 
     StyledText {
-      text: `${section.title} (${section.packages.length})`
+      text: I18n.tr("{0} ({1})", section.title, section.packages.length)
       role: "label"
       tone: "accent"
     }
@@ -126,7 +128,7 @@ Panel {
   ModuleHeader {
     visible: root.embedded
     icon: "update"
-    title: !UpdatesManager.supported ? I18n.tr("Updates") : root.total > 0 ? I18n.tr("{0} updates", root.total) : I18n.tr("Up to date")
+    title: !UpdatesManager.supported || UpdatesManager.checking && root.total === 0 ? I18n.tr("Updates") : root.total > 0 ? I18n.tr("{0} updates", root.total) : I18n.tr("Up to date")
     StyledText {
       visible: UpdatesManager.checking
       text: I18n.tr("checking…")
@@ -181,7 +183,7 @@ Panel {
       maxWidth: parent.width
       availableHeight: parent.height
       icon: !UpdatesManager.supported ? "block" : root.failed !== "" ? "error" : "check"
-      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : root.failed || I18n.tr("System is up to date")
+      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : root.failed || (UpdatesManager.checking ? I18n.tr("checking…") : I18n.tr("System is up to date"))
     }
   }
 }

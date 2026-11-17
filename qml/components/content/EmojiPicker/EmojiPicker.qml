@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -34,7 +35,7 @@ Panel {
   // One row: the most used, as many as fit
   readonly property bool strip: root.embedded && root.innerHeight < Appearance.fontSize * 7
   readonly property bool showSearch: !root.strip
-  readonly property bool showGroups: (root.properties.showGroups ?? true) && !root.strip && (!root.embedded || (root.innerHeight >= Appearance.fontSize * 11 && root.innerWidth >= root.groupIcons.length * 26 + 30))
+  readonly property bool showGroups: (root.properties.showGroups ?? true) && !root.strip && (!root.embedded || (root.innerHeight >= Appearance.fontSize * 11 && root.innerWidth >= root.groupIcons.length * Widget.iconButton + Widget.spacing * 8))
   readonly property bool showFooter: !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 12)
   readonly property var recent: EmojiManager.recent(Math.max(1, Math.floor(root.innerWidth / root.cell)))
 
@@ -132,11 +133,10 @@ Panel {
 
     implicitWidth: root.cell
     implicitHeight: root.cell
-    radius: Widget.radius
-    color: root.copied === cellItem.emoji ? Style.accentContainer : "transparent"
+    radius: Style.radius
+    color: root.copied === cellItem.emoji ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: no fill as the container at no alpha, so the fade doesn't pass through black
 
     StateLayer {
-      radius: cellItem.radius
       hovered: cellHover.hovered
       pressed: cellTap.pressed
     }
@@ -217,6 +217,8 @@ Panel {
   // Everything that matches, a cell's width apart and centred
   GridView {
     id: grid
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: !root.strip
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded

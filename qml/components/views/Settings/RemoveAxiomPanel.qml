@@ -1,10 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 import qs.services.session
 import qs.services.system
 import qs.components.reusable
+import qs.components.forms
+import qs.components.views.base
 import qs.components.methods
 
 // The confirm step of Settings › General's "Remove axiom from this system"
@@ -26,21 +29,6 @@ ColumnLayout {
   readonly property var plan: UninstallManager.plan
   readonly property var groups: UninstallPlan.groups(root.plan)
   readonly property var questions: UninstallPlan.questions(root.plan)
-  // Headers and rows in one list, for the ListView
-  readonly property var entries: {
-    let out = [];
-    for (const group of root.groups) {
-      out.push({
-        "kind": "header",
-        "step": group.step
-      });
-      out = out.concat(group.actions.map(action => ({
-            "kind": "row",
-            "action": action
-          })));
-    }
-    return out;
-  }
   readonly property bool canStart: UninstallPlan.canStart(root.plan, GreeterManager.elevating) && !root.starting
 
   Layout.fillWidth: true
@@ -69,7 +57,7 @@ ColumnLayout {
 
   // What an action does, worded here from its step and kind (the daemon
   // sends those and the data, never a sentence)
-  function actionText(action) {
+  function actionText(action, path) {
     switch (action.step) {
     case "managed":
       return I18n.tr("Give back the config axiom manages");
@@ -80,13 +68,13 @@ ColumnLayout {
       case "dir":
         return I18n.tr("Remove the folder axiom made");
       case "hookup":
-        return I18n.tr("Take axiom's lines out of");
+        return I18n.tr("Take axiom's lines out of {0}", path);
       case "gsetting":
         return I18n.tr("Put back the setting");
       case "ini-groups":
-        return I18n.tr("Put back the keys in");
+        return I18n.tr("Put back the keys in {0}", path);
       case "marked-block":
-        return I18n.tr("Remove axiom's block from");
+        return I18n.tr("Remove axiom's block from {0}", path);
       case "fcitx-config":
         return I18n.tr("Put back the fcitx5 option");
       case "fcitx-group":
@@ -99,7 +87,7 @@ ColumnLayout {
         return I18n.tr("Leave the record of axiom's changes: it can't be read, so nothing is undone from it");
       }
     case "lines":
-      return I18n.tr("Remove axiom's line from");
+      return I18n.tr("Remove axiom's line from {0}", path);
     case "session":
       return I18n.tr("Undo what an unclean stop of axiom left");
     case "files":
@@ -174,29 +162,25 @@ ColumnLayout {
     }
   }
 
-  StyledText {
+  StatusLine {
     text: I18n.tr("This takes axiom out of your home and session: it gives back your compositor config, undoes the changes listed above, and deletes axiom's files and folders. Your own configs and backups are never deleted.")
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: UninstallManager.error !== ""
     text: UninstallManager.error
     tone: "error"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   // The login screen is installed for the whole system: removed first
-  ColumnLayout {
+  IntroColumn {
     visible: root.plan !== null && root.plan !== undefined && !!root.plan.greeter
     Layout.fillWidth: true
-    spacing: Widget.spacing
 
-    StyledText {
+    StatusLine {
       text: I18n.tr("axiom's login screen is installed for the whole system and stays after this. Remove it first (one admin prompt).")
-      overflow: "wrap"
       Layout.fillWidth: true
     }
 
@@ -226,53 +210,48 @@ ColumnLayout {
     }
   }
 
-  StyledText {
+  StatusLine {
     visible: root.plan !== null && root.plan !== undefined && (root.plan.running ?? []).length > 0
     text: I18n.tr("axiom also runs on {0}: quit it there first.", (root.plan?.running ?? []).join(", "))
     tone: "warning"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
-  // What goes: an unbounded list, as tall as it is up to a limit
+  // What goes: an unbounded list, as tall as it is up to a limit; one
+  // section a step
   ListView {
     id: list
     Layout.fillWidth: true
     Layout.preferredHeight: Math.min(list.contentHeight, Widget.px(280))
     clip: true
-    spacing: Widget.spacing / 2
-    model: root.entries
-    delegate: Loader {
-      id: entry
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+    spacing: Widget.spacing
+    model: root.groups
+    delegate: ListSection {
+      id: section
       required property var modelData
       width: list.width
-      sourceComponent: entry.modelData.kind === "header" ? headerLine : actionLine
+      title: root.stepTitle(section.modelData.step)
 
-      Component {
-        id: headerLine
-        StyledText {
-          text: root.stepTitle(entry.modelData.step)
-          role: "label"
-          tone: "muted"
-        }
-      }
+      Repeater {
+        model: section.modelData.actions
 
-      Component {
-        id: actionLine
-        ColumnLayout {
+        delegate: ColumnLayout {
+          id: action
+          required property var modelData
           spacing: 0
-          width: list.width
+          Layout.fillWidth: true
 
           StyledText {
-            text: root.actionText(entry.modelData.action) + (entry.modelData.action.path ? " " + Paths.shortenHome(entry.modelData.action.path) : "")
+            text: root.actionText(action.modelData, action.modelData.path ? Paths.shortenHome(action.modelData.path) : "")
             overflow: "line"
             elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
             Layout.fillWidth: true
           }
 
           StyledText {
-            visible: root.statusLine(entry.modelData.action) !== ""
-            text: root.statusLine(entry.modelData.action)
+            visible: root.statusLine(action.modelData) !== ""
+            text: root.statusLine(action.modelData)
             role: "caption"
             overflow: "line"
             elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
@@ -284,51 +263,38 @@ ColumnLayout {
   }
 
   // Lines it isn't sure are its own, and what it keeps
-  StyledText {
+  StatusLine {
     visible: (root.plan?.manual ?? []).length > 0
     text: I18n.tr("{0} lines it isn't sure are its own are left for you to remove by hand; the list is saved with the summary.", (root.plan?.manual ?? []).length)
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
-  StyledText {
+  StatusLine {
     visible: (root.plan?.backups ?? []).length > 0
     text: I18n.tr("{0} backups of your files are kept and listed: delete them when you're sure.", (root.plan?.backups ?? []).length)
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 
   // The questions, as switches (on: keep, or undo, as the text says)
-  ListView {
-    id: questionList
+  FormColumn {
     Layout.fillWidth: true
-    implicitHeight: questionList.contentHeight
-    interactive: false
-    spacing: Widget.spacing
-    model: root.questions
-    delegate: RowLayout {
-      id: question
-      required property var modelData
-      width: questionList.width
-      spacing: Widget.spacing
 
-      StyledSwitch {
+    Repeater {
+      model: root.questions
+
+      delegate: SwitchRow {
+        id: question
+        required property var modelData
+        label: root.questionText(question.modelData)
         checked: root.chosen[question.modelData.answer] ?? UninstallPlan.defaults[question.modelData.answer]
-        onToggled: root.setChosen(question.modelData.answer, checked)
-      }
-
-      StyledText {
-        text: root.questionText(question.modelData)
-        overflow: "wrap"
-        Layout.fillWidth: true
+        onToggled: newValue => root.setChosen(question.modelData.answer, newValue)
       }
     }
   }
 
-  StyledText {
+  StatusLine {
     text: I18n.tr("axiom closes when this starts. A summary is saved to {0}.", UninstallManager.logPath)
     tone: "muted"
-    overflow: "wrap"
     Layout.fillWidth: true
   }
 

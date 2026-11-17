@@ -41,9 +41,7 @@ QtObject {
   readonly property color textDisabled: root._roles.textDisabled
   readonly property color textAccent: root._roles.textAccent
   readonly property color accent: root._roles.accent
-  readonly property color onAccent: root._roles.onAccent
   readonly property color accentContainer: root._roles.accentContainer
-  readonly property color onAccentContainer: root._roles.onAccentContainer
   readonly property color accentAlt: root._roles.accentAlt
   readonly property color success: root._roles.success
   readonly property color successText: root._roles.successText
@@ -54,8 +52,6 @@ QtObject {
   readonly property color error: root._roles.error
   readonly property color errorText: root._roles.errorText
   readonly property color errorContainer: root._roles.errorContainer
-  readonly property color onError: root._roles.onError
-  readonly property color onErrorContainer: root._roles.onErrorContainer
   readonly property color info: root._roles.info
   readonly property color infoText: root._roles.infoText
   readonly property color infoContainer: root._roles.infoContainer
@@ -86,6 +82,9 @@ QtObject {
 
   // ---- inks: what reads on each tone ----
 
+  // No property here is named on<X>: a QML property on<X> next to a property
+  // <x> never takes its value (qml-pitfalls.md), so content on a fill reads
+  // that fill's ink (inkAccent.text, not an onAccent).
   readonly property StyleInk inkPage: StyleInk {
     text: root._roles.ink.page.text
     muted: root._roles.ink.page.muted
@@ -286,7 +285,7 @@ QtObject {
     case "accent":
       return root.textAccent;
     case "onAccent":
-      return root.onAccent;
+      return root.inkAccent.text;
     case "success":
       return root.successText;
     case "warning":
@@ -420,6 +419,12 @@ QtObject {
   // `color` at the edge family's alpha, unless `opaque`
   function edgeFill(color, opaque) {
     return opaque || root.edgeAlpha >= 1 ? color : Tone.alpha(color, Qt.color(color).a * root.edgeAlpha);
+  }
+
+  // The smallest square a small icon button is hit at: the small control height, or what the glyph
+  // needs with a gap each side
+  function minHit(icon: real): real {
+    return Math.max(Widget.smallHeight, icon + Widget.spacing * 2);
   }
 
   // ---- alphas ----
@@ -556,11 +561,17 @@ QtObject {
   readonly property int space3: Widget.padding
   readonly property int space4: Widget.cardPadding
   readonly property int space5: Widget.padding * 2
+  // the gap between two cards, down and across: the settings page's
+  readonly property int cardGap: root.space2
   // a settings row's least height
   readonly property int rowHeight: Widget.height + Widget.smallPadding * 2
   readonly property int rowPadding: Widget.smallPadding
   // how far a row's hover layer reaches past its content
   readonly property int rowBleed: Widget.smallPadding
+  // a list entry row's height (ListEntryRow and the lists that reserve its room)
+  readonly property int listRowHeight: Widget.height + Widget.padding
+  // a draggable or listed chip's row height (bar lanes, grid drag chips, keybind rows)
+  readonly property real chipRowHeight: Widget.height + Widget.padding / 2
   // the width a flow column aims for. fixed px: a distance on screen, the
   // gap the eye travels from a label to its control (not on the Interface
   // scale: a raised scale on a wide screen still gets more columns)

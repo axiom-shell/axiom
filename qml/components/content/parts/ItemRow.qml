@@ -1,15 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Widgets
 import qs.config
 import qs.components.reusable
 
 // One entry in a module's list (clipboard clips, calculator answers,
 // recordings): an icon or a rounded thumbnail, a title and a muted
 // subtitle, a faint `detail` on the right (a value), and buttons after it
-// (children), faint until the row is hovered so showing them moves
+// (children), faint until the row is hovered or one has focus so showing them moves
 // nothing. Clicking the row `activated`s it, unless it isn't `clickable`.
 // The name shows whole in a tooltip while it is cut.
 Item {
@@ -30,7 +28,11 @@ Item {
   property string detail: ""
   property bool clickable: true
   readonly property bool hovered: rowHover.hovered
+  // Whether the actions show: hovered, or one of them focused
+  readonly property bool revealed: root.hovered || root._actionFocused
   default property alias actions: actionRow.data
+
+  readonly property bool _actionFocused: Array.prototype.some.call(actionRow.children, child => child.activeFocus)
 
   signal activated
 
@@ -38,9 +40,8 @@ Item {
   implicitHeight: Math.max(content.implicitHeight, Appearance.fontSize * 2) + Widget.spacing * 2
 
   StateLayer {
-    anchors.fill: parent
-    radius: Widget.radius
-    hovered: rowHover.hovered
+    radius: Style.radius
+    hovered: rowHover.hovered && (root.clickable || actionRow.children.length > 0)
   }
 
   HoverHandler {
@@ -72,20 +73,12 @@ Item {
       textColor: root.iconColor
     }
 
-    ClippingRectangle {
+    Thumbnail {
       visible: root.image !== ""
       Layout.preferredWidth: Appearance.fontSize * 3
       Layout.preferredHeight: Appearance.fontSize * 2
-      radius: Widget.radius / 2
-      color: Style.surfaceHighest
-
-      Image {
-        anchors.fill: parent
-        source: root.image
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        sourceSize.width: Appearance.fontSize * 6
-      }
+      source: root.image
+      decodeSize: Qt.size(Appearance.fontSize * 6, 0)
     }
 
     ColumnLayout {
@@ -125,19 +118,17 @@ Item {
     RowLayout {
       id: actionRow
       spacing: 0
-      opacity: rowHover.hovered ? 1 : 0
-      enabled: rowHover.hovered
+      // Never disabled: a hidden action must be able to take the focus that reveals it
+      opacity: root.revealed ? 1 : 0
 
       Glide on opacity {}
     }
   }
 
-  LazyLoader {
-    active: titleHover.hovered && titleText.truncated
-    StyledToolTip {
-      target: titleText
-      text: root.title
-      maxWidth: Widget.textPx(320)
-    }
+  TruncationTip {
+    target: titleText
+    text: root.title
+    hovered: titleHover.hovered
+    maxWidth: Widget.textPx(320)
   }
 }

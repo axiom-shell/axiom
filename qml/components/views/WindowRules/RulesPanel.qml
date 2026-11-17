@@ -68,6 +68,11 @@ Item {
             issue: ruleRow.problems > 0 ? "error" : ""
             issueTip: I18n.tr("{0} problems", ruleRow.problems)
             onClicked: root.editor.select(ruleRow.index)
+            canDuplicate: true
+            duplicateTooltip: I18n.tr("Copy this rule")
+            canRemove: true
+            removeTooltip: I18n.tr("Remove this rule")
+            onDuplicated: root.editor.duplicate(ruleRow.index)
             onRemoveRequested: root.editor.remove(ruleRow.index)
 
             badges: [
@@ -88,19 +93,6 @@ Item {
               tooltipText: ruleRow.item.enabled === false ? I18n.tr("Turn on") : I18n.tr("Turn off")
               onClicked: root.editor.setEnabled(ruleRow.index, ruleRow.item.enabled === false)
             }
-            RowAction {
-              row: ruleRow
-              iconText: "content_copy"
-              tooltipText: I18n.tr("Copy this rule")
-              onClicked: root.editor.duplicate(ruleRow.index)
-            }
-            RowAction {
-              row: ruleRow
-              danger: true
-              iconText: "close"
-              tooltipText: I18n.tr("Remove this rule")
-              onClicked: root.editor.remove(ruleRow.index)
-            }
           }
         }
       }
@@ -113,8 +105,6 @@ Item {
       }
 
       AddEntryButton {
-        Layout.topMargin: Widget.spacing
-        Layout.fillWidth: true
         text: I18n.tr("New rule")
         onClicked: root.editor.add()
       }

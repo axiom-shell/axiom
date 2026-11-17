@@ -74,7 +74,7 @@ Surface {
       textFormat: TextEdit.PlainText
       color: Style.text
       selectionColor: Style.accent
-      selectedTextColor: Style.onAccent
+      selectedTextColor: Style.inkAccent.text
       font.family: "monospace"
       font.pixelSize: Style.typeCaption
 

@@ -105,7 +105,7 @@ Item {
         ctx.closePath();
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
         gradient.addColorStop(0, Qt.alpha(root.lineColor, root.fillOpacity)); // style-exempt: the chart fill fades its data colour
-        gradient.addColorStop(1, Qt.alpha(root.lineColor, 0)); // style-exempt: the chart fill fades its data colour
+        gradient.addColorStop(1, Tone.cleared(root.lineColor)); // style-exempt: the chart fill fades its data colour
         ctx.fillStyle = gradient;
         ctx.fill();
         ctx.restore();

@@ -136,7 +136,7 @@ Item {
       anchors.centerIn: parent
       text: `${root.windowData?.w ?? 0} × ${root.windowData?.h ?? 0}`
       role: "caption"
-      textColor: Style.onAccent
+      textColor: Style.inkAccent.text
     }
   }
 }

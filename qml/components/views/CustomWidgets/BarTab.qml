@@ -13,8 +13,8 @@ import qs.components.bar.look
 
 // Custom widgets page, Bar tab: one banner across the page holding the
 // widget as it's drawn on a bar across and on one down the side (the real
-// bar widget, on the first bar's look) and a caption, then its bar style, its text (Waybar's format, icons and
-// states) and its actions.
+// bar widget, on the first bar's look) and a caption, then its bar style with its status colour (and Color by state), its text
+// (Waybar's format and icons) and its clicks.
 ColumnLayout {
   id: root
 
@@ -48,7 +48,7 @@ ColumnLayout {
   }
 
   width: parent?.width ?? 0
-  spacing: Widget.spacing * 2
+  spacing: Style.cardGap
 
   // One banner across the page: the widget on a bar across and on one down
   // the side, and what it shows
@@ -56,13 +56,10 @@ ColumnLayout {
     Layout.fillWidth: true
     title: I18n.tr("Preview")
 
-    Rectangle {
+    // Stands in for a bar's background at its default look: the page tone
+    Surface {
       Layout.fillWidth: true
-      radius: Appearance.borderRadius
-      // Stands in for a bar's background at its default look: the page colour
-      color: Style.surfacePage
-      border.color: Style.borderSubtle
-      border.width: Style.hairline
+      tone: "page"
       implicitHeight: bannerRow.implicitHeight + Widget.padding * 2
 
       RowLayout {
@@ -99,12 +96,32 @@ ColumnLayout {
       Layout.fillWidth: true
       title: I18n.tr("On the bar")
 
-      SchemaPropertiesForm {
+      // One box of rows: the form's, then the status colour's
+      FormColumn {
         Layout.fillWidth: true
-        propertiesSchema: root.schema.bar.properties
-        order: ["style", "icon", "segments", "width", "popout"]
-        values: root.definition?.bar ?? ({})
-        onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(root.schema.bar.properties, order)
+          order: ["style", "icon", "segments", "width", "popout"]
+          values: root.definition?.bar ?? ({})
+          onEdited: (path, value) => root.editor.set(["bar"].concat(path), value)
+          changedAt: path => root.editor.changedAt(["bar"].concat(path))
+          onDiscardAt: path => root.editor.discardAt(["bar"].concat(path))
+        }
+
+        ColorField {
+          readonly property var colorSchema: root.schema.bar.properties.color
+          label: I18n.tr(colorSchema.title)
+          description: I18n.tr(colorSchema.description)
+          key: "color"
+          statesKey: "colorStates"
+          emptyLabel: colorSchema["x-emptyLabel"] ?? "Auto"
+          value: root.definition?.bar?.color ?? ""
+          statesValue: root.definition?.bar?.colorStates ?? ({})
+          keys: root.editor.bindPaths.map(p => p.path)
+          write: (path, value) => root.editor.set(["bar"].concat(path), value)
+        }
       }
     }
 
@@ -112,36 +129,56 @@ ColumnLayout {
       Layout.fillWidth: true
       title: I18n.tr("Text")
 
-      SchemaPropertiesForm {
+      // One box of rows: the form's, then the icons'
+      FormColumn {
         Layout.fillWidth: true
-        propertiesSchema: Utils.pick(root.schema, order)
-        order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
-        values: root.definition ?? ({})
-        onEdited: (path, value) => root.editor.set(path, value)
-      }
 
-      JsonField {
-        label: I18n.tr("Icons")
-        description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
-        key: "formatIcons"
-      }
-      JsonField {
-        label: I18n.tr("State colours")
-        description: I18n.tr("A class or state → a theme colour, {\"charging\": \"success\"}. ok, warning and critical are already known.")
-        key: "states"
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: Utils.pick(root.schema, order)
+          order: ["format", "maxLength", "escape", "hideEmpty", "tooltip"]
+          values: root.definition ?? ({})
+          onEdited: (path, value) => root.editor.set(path, value)
+          changedAt: path => root.editor.changedAt(path)
+          onDiscardAt: path => root.editor.discardAt(path)
+        }
+
+        JsonField {
+          editor: root.editor
+          definition: root.definition
+          label: I18n.tr("Icons")
+          description: I18n.tr("Waybar's format-icons, as {icon} in the format: a list picked by percentage [\"a\", \"b\"], or by alt {\"playing\": \"a\", \"default\": \"b\"}.")
+          path: "formatIcons"
+        }
       }
     }
 
     FieldGroup {
       Layout.fillWidth: true
-      title: I18n.tr("Actions")
-      description: I18n.tr("Run by clicks and scrolls on the bar widget, as Waybar's on-click.")
+      title: I18n.tr("Clicks")
+      description: I18n.tr("What clicks and scrolls on the bar widget run.")
 
-      SchemaPropertiesForm {
+      FormColumn {
         Layout.fillWidth: true
-        propertiesSchema: root.schema.actions.properties
-        values: root.definition?.actions ?? ({})
-        onEdited: (path, value) => root.editor.set(["actions"].concat(path), value)
+
+        Repeater {
+          model: ["click", "rightClick", "middleClick", "scrollUp", "scrollDown"]
+
+          TriggerField {
+            id: trigger
+            required property string modelData
+            required property int index
+            label: root.schema.bar.properties.run.properties[trigger.modelData].title
+            current: root.definition?.bar?.run?.[trigger.modelData] ?? ""
+            writeRun: value => root.editor.set(["bar", "run", trigger.modelData], value)
+            arg: root.definition?.bar?.args?.[trigger.modelData] ?? ""
+            ownValue: false
+            newFields: ({
+                "wait": false
+              })
+            writeArg: value => root.editor.set(["bar", "args", trigger.modelData], value)
+          }
+        }
       }
     }
   }
@@ -187,44 +224,6 @@ ColumnLayout {
         "panel": null,
         "screen": null
       })
-    }
-  }
-
-  // A JSON value of the definition, typed: written once it parses
-  component JsonField: ColumnLayout {
-    id: json
-    property string label
-    property string description
-    property string key
-    property bool bad: false
-    Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    StyledText {
-      text: json.label
-    }
-    StyledTextArea {
-      id: area
-      Layout.fillWidth: true
-      expandable: true
-      input.font.family: "monospace"
-      onTextEdited: {
-        try {
-          const value = JSON.parse(area.text.trim() || "{}");
-          json.bad = false;
-          root.editor.set(json.key, value);
-        } catch (e) {
-          json.bad = true;
-        }
-      }
-      Component.onCompleted: area.text = JSON.stringify(root.definition?.[json.key] ?? {})
-    }
-    StyledText {
-      Layout.fillWidth: true
-      text: json.bad ? I18n.tr("Not valid JSON yet.") : json.description
-      tone: json.bad ? "warning" : "faint"
-      role: "caption"
-      overflow: "wrap"
     }
   }
 }

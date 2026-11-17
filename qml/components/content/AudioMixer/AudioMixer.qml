@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import qs.components.methods
 
 import qs.services.system
 import qs.services.ui
@@ -295,11 +296,10 @@ Panel {
 
                 Layout.fillWidth: true
                 implicitHeight: deviceLayout.implicitHeight + Widget.spacing * 2
-                radius: Widget.radius
-                color: selected ? Style.accentContainer : Qt.alpha(Style.accentContainer, 0) // style-exempt: no fill as the container at no alpha, so selecting doesn't fade through black
+                radius: Style.radius
+                color: selected ? Style.accentContainer : Tone.cleared(Style.accentContainer) // style-exempt: no fill as the container at no alpha, so selecting doesn't fade through black
 
                 StateLayer {
-                  radius: deviceRow.radius
                   hovered: deviceMouse.containsMouse
                   pressed: deviceMouse.pressed
                 }
@@ -330,7 +330,7 @@ Panel {
                     horizontalAlignment: Text.AlignHCenter
                     text: root.deviceIcon(deviceRow.node, false, 1)
                     size: "md"
-                    textColor: deviceRow.selected ? Style.onAccentContainer : Style.textMuted
+                    textColor: deviceRow.selected ? Style.inkAccentContainer.text : Style.textMuted
                   }
 
                   StyledLabel {
@@ -338,14 +338,14 @@ Panel {
                     text: root.deviceName(deviceRow.node)
                     overflow: "line"
                     role: "caption"
-                    textColor: deviceRow.selected ? Style.onAccentContainer : Style.textMuted
+                    textColor: deviceRow.selected ? Style.inkAccentContainer.text : Style.textMuted
                   }
 
                   // Always laid out, so selecting a row doesn't reflow it
                   StyledIcon {
                     opacity: deviceRow.selected ? 1 : 0
                     text: "check"
-                    textColor: Style.onAccentContainer
+                    textColor: Style.inkAccentContainer.text
                   }
                 }
               }

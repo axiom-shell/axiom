@@ -59,16 +59,13 @@ ColumnLayout {
       Layout.preferredHeight: Widget.height
       text: I18n.formatDate(new Date(root.value), I18n.dateFormat("shortDate"))
       iconText: "calendar_today"
-      kind: "outlined"
+      // Open picker: the accent state (an open marker, not focus)
+      kind: picker.open ? "primary" : "outlined"
       enabled: !root.readOnly
       onClicked: {
         if (!picker.open)
           grid.showDay(CalendarEvents.dayKey(root.value));
         picker.open = !picker.open;
-      }
-
-      FocusRing {
-        shown: picker.open
       }
     }
     StyledTextEntry {

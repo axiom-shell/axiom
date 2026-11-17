@@ -6,14 +6,14 @@ import qs.config
 // actions (hovered, focused or selected). `lit` keeps it shown in the
 // primary kind (the state it toggles is on); `danger` hovers in the error
 // container.
-SquareIconButton {
+StyledIconButton {
   id: root
 
   required property ListEntryRow row
   property bool lit: false
   property bool danger: false
 
-  size: Widget.height - Widget.px(6)
+  size: Widget.compactHeight
   kind: root.lit ? "primary" : root.danger ? "danger" : "text"
   opacity: root.lit || root.row.revealed ? 1 : 0
 

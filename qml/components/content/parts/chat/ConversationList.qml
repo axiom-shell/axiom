@@ -105,17 +105,19 @@ DropdownSurface {
               readonly property bool editing: root.renaming === conversation.id
               width: row.width
               implicitHeight: Math.max(Widget.height, itemRowLayout.implicitHeight + Widget.spacing)
-              radius: Widget.radius / 2
+              radius: Style.radiusInner
               color: current ? Style.accentContainer : "transparent"
 
               StateLayer {
                 hovered: itemHover.hovered
+                pressed: itemTap.pressed
               }
 
               HoverHandler {
                 id: itemHover
               }
               TapHandler {
+                id: itemTap
                 enabled: !item.editing
                 onTapped: {
                   ChatManager.open(item.conversation.id);
@@ -135,7 +137,7 @@ DropdownSurface {
                   Layout.fillWidth: true
                   text: item.conversation.title || I18n.tr("Untitled")
                   role: "caption"
-                  textColor: item.current ? Style.onAccentContainer : Style.text
+                  textColor: item.current ? Style.inkAccentContainer.text : Style.text
                   overflow: "line"
                 }
 
@@ -144,7 +146,7 @@ DropdownSurface {
                   active: item.editing
                   visible: active
                   Layout.fillWidth: true
-                  Layout.preferredHeight: Widget.height - Widget.px(6)
+                  Layout.preferredHeight: Widget.compactHeight
                   sourceComponent: StyledTextEntry {
                     id: renameField
                     // Pushed in as it opens: a binding would bring a

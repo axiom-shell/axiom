@@ -19,14 +19,25 @@ ColumnLayout {
   property Component below: null
   // A list's title: the title role, a step larger
   property bool title: false
+  // The label is data, a calendar's name: shown as it is, plain text, untranslated
+  property bool plainLabel: false
+  // The label in the faint tone (an entry that is off or unavailable)
+  property bool dimmed: false
   readonly property real _trailingRoom: trailingPart.active ? trailingPart.implicitWidth + Widget.spacing : 0
+  // The label's line at one line with the trailing part at its widest (a
+  // constant: never `truncated` or a laid-out width), 0 without a label:
+  // what FieldFit places a field by
+  readonly property var _trailingItem: trailingPart.item
+  readonly property real lineWidth: root.label === "" ? 0 : Math.ceil(labelWidth.advanceWidth) + 1 + (trailingPart.active ? (root._trailingItem?.fullWidth ?? trailingPart.implicitWidth) + Widget.spacing : 0)
 
   Layout.fillWidth: true
   spacing: Widget.px(2)
   // (`item.shows`, never `belowPart.visible`: that depends on this one)
   readonly property var _belowItem: belowPart.item
   readonly property bool _belowShows: root._belowItem?.shows === true
-  visible: root.label !== "" || root.description !== "" || root._belowShows
+  // Something to show (what `visible` follows)
+  readonly property bool hasContent: root.label !== "" || root.description !== "" || root._belowShows
+  visible: root.hasContent
 
   // The label at its one-line width, or what's left beside the trailing
   // part: it wraps, never elides. (Placed by hand: a layout sizing the
@@ -41,7 +52,9 @@ ColumnLayout {
     StyledText {
       id: labelText
       width: Math.max(0, Math.min(Math.ceil(labelWidth.advanceWidth) + 1, labelRow.width - root._trailingRoom))
-      text: I18n.tr(root.label)
+      text: root.plainLabel ? root.label : I18n.tr(root.label)
+      textFormat: root.plainLabel ? Text.PlainText : Text.AutoText
+      tone: root.dimmed ? "faint" : ""
       role: root.title ? "title" : "label"
       overflow: "wrap"
     }

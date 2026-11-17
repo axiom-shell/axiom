@@ -72,10 +72,31 @@ WorkArea {
   // grid's origin), else null: the units past it are tinted as past the
   // screen are
   property var latticeSpan: null
+  // What's drawn under the modules, dimmed and not selectable, as the
+  // lattice's bounds count it ([{ place, label }]: the custom widget editor's
+  // base elements while a screen is edited)
+  property var underlay: []
+  // What a tile draws instead of its icon and label (the custom widget
+  // editor draws the element itself): a Component whose root has a
+  // `module` (the tile's module, or an underlay item's `element`), loaded by
+  // CanvasModule and the underlay
+  property Component tileContent: null
+  // The selected module's room to each side (margins). Off in the custom
+  // widget editor, where the lines read as stray guides
+  property bool showMargins: true
 
+  // A right click on tile `index` (selected by it), at (x, y) in `tile`
+  // (an Item): the owner opens the menu it wants
+  signal tileContext(int index, var tile, real x, real y)
+  // Whether that right click keeps a selected group (the owner's menu acts on
+  // it); off, it selects the tile alone
+  property bool contextKeepsGroup: false
+
+  // Whether the canvas shows its own Undo/Redo (off: the host has a pair)
+  property bool showUndo: true
   readonly property bool editable: root.modules !== null && root.modules !== undefined
   readonly property var list: root.editable ? root.modules : []
-  readonly property var bounds: GridPlacement.bounds(root.list)
+  readonly property var bounds: GridPlacement.bounds(root.underlay.length > 0 ? root.list.concat(root.underlay) : root.list)
 
   // How a growing module (`properties.grow`) grows alone: { up, down } rows
   // (GridPlacement.growthAround; a bottom menu grows towards its bottom
@@ -100,7 +121,7 @@ WorkArea {
   readonly property real unitSize: root.fit.unitSize
   // The corners of the lattice's squares and of the modules on it, the
   // same so they line up
-  readonly property real cellRadius: Math.min(Widget.radius, root.unitSize / 4)
+  readonly property real cellRadius: Math.min(Style.radius, root.unitSize / 4)
   // The screen, in the area's px (its sides midway in the gaps)
   readonly property var screenRect: root.hasScreen ? GridPlacement.canvasScreenRect(root.fit, root.screenBox) : root.noRect
   readonly property var noRect: ({
@@ -139,7 +160,7 @@ WorkArea {
   readonly property var margins: {
     const editor = root.dragLayer.editor;
     const place = root.places[editor.selected] ?? null;
-    if (!place || root.dragLayer.landingPlace)
+    if (!root.showMargins || !place || root.dragLayer.landingPlace)
       return [];
     return GridPlacement.canvasMargins(root.fit, place, editor.guideFrame(root.places, [editor.selected]));
   }
@@ -156,7 +177,7 @@ WorkArea {
   idle: root.editable && root.dragLayer.editor.selected < 0 && root.dragLayer.editor.group.length === 0
 
   undoRedo: UndoRedoButtons {
-    visible: root.editable
+    visible: root.editable && root.showUndo
     canUndo: root.dragLayer.editor.canUndo
     canRedo: root.dragLayer.editor.canRedo
     onUndo: root.dragLayer.editor.undo()
@@ -174,14 +195,12 @@ WorkArea {
       spacing: 0
 
       FlatIconButton {
-        size: Widget.iconButton
         iconText: root.nudgeVertical ? "keyboard_arrow_up" : "chevron_left"
         tooltipText: root.nudgeVertical ? I18n.tr("Move up") : I18n.tr("Move left")
         enabled: root.canNudgeBack
         onClicked: root.nudge(-1)
       }
       FlatIconButton {
-        size: Widget.iconButton
         iconText: root.nudgeVertical ? "keyboard_arrow_down" : "chevron_right"
         tooltipText: root.nudgeVertical ? I18n.tr("Move down") : I18n.tr("Move right")
         enabled: root.canNudgeForward
@@ -195,7 +214,6 @@ WorkArea {
       }
       FlatIconButton {
         visible: root.canCentre
-        size: Widget.iconButton
         iconText: root.nudgeVertical ? "align_vertical_center" : "align_horizontal_center"
         tooltipText: I18n.tr("Centre")
         onClicked: root.centre()
@@ -565,6 +583,50 @@ WorkArea {
       tone: "muted"
     }
 
+    // The underlay: places drawn dimmed under the tiles, by count
+    Repeater {
+      model: root.editable ? root.underlay.length : 0
+
+      Rectangle {
+        id: under
+        required property int index
+        readonly property var item: root.underlay[under.index] ?? null
+        readonly property rect r: under.item ? root.rectFor(under.item.place) : Qt.rect(0, 0, 0, 0)
+        x: under.r.x
+        y: under.r.y
+        width: under.r.width
+        height: under.r.height
+        radius: root.cellRadius
+        color: Style.surfaceRaised
+        border.width: 1
+        border.color: Style.rail
+        opacity: Style.opacityDisabled
+
+        StyledText {
+          visible: root.tileContent === null
+          anchors.fill: parent
+          anchors.margins: Widget.px(4)
+          text: under.item?.label ?? ""
+          role: "micro"
+          tone: "muted"
+          overflow: "line"
+        }
+
+        Loader {
+          id: underContent
+          anchors.fill: parent
+          active: root.tileContent !== null && under.item?.element !== undefined
+          sourceComponent: root.tileContent
+        }
+        Binding {
+          when: underContent.item !== null
+          target: underContent.item
+          property: "module"
+          value: under.item?.element ?? null
+        }
+      }
+    }
+
     // Keyed by count: edits update the modules in place. Each tile is
     // streamed in (StreamedLoader) as the page opens, in its place
     Repeater {
@@ -612,6 +674,9 @@ WorkArea {
           step: root.step
           gap: root.gap
           growth: root.growthOf(tile.index)
+          tileContent: root.tileContent
+          contextKeepsGroup: root.contextKeepsGroup
+          onContextRequested: (x, y) => root.tileContext(tile.index, tile, x, y)
         }
       }
     }

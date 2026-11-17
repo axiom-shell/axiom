@@ -2,14 +2,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.components.reusable
+import qs.components.methods
 
 // A settings card that folds: clicking its header (title, help text,
 // chevron) emits `toggled`, and the body below animates shut while
 // `collapsed`. Folded with `marked` set, it shows the unsaved-edits dot;
 // with a `status` its chip (`statusTone`) sits by the chevron, folded or not.
-// The generated cards (SettingsGroupCard) and the list cards
-// (EntryListCard) are built on it.
+// The generated cards (SettingsGroupCard), the list cards (EntryListCard)
+// and every editor's group (FieldGroup) are built on it.
 Surface {
   id: root
 
@@ -28,13 +28,27 @@ Surface {
   property string statusTone: "neutral"
   // Beside the header, while unfolded (an Add button)
   property alias headerExtras: extras.data
+  // The card's rows in order, for `endsShut`. Only a host whose rows aren't
+  // its direct children replaces it (SettingsGroupCard); a list, never a value
+  property var endRows: root.contentChildren
+  // The card ends on a shut fold row (FoldFormRow), so that row's own padding
+  // closes it and the card adds none. The last child not hidden decides (a
+  // form's `allHidden`, a row's or other child's `shown`), read from those,
+  // never from `visible` or heights. Never while folded (FormRows.endsShut).
+  readonly property bool endsShut: FormRows.endsShut(root.endRows, root.collapsed)
+  // False: no header at all (a title-less card: the rows start at the padding)
+  property bool headed: true
+  // The space between the body's children (0: rows abut)
+  property alias bodySpacing: body.spacing
   default property alias content: body.content
+  // The body's children, as a list that notifies
+  readonly property alias contentChildren: body.contentChildren
 
   signal toggled
 
   Layout.fillWidth: true
   tone: "surface"
-  implicitHeight: column.implicitHeight + Style.space3 * 2
+  implicitHeight: column.implicitHeight + Style.space3 + (root.endsShut ? 0 : Style.space3)
 
   ColumnLayout {
     id: column
@@ -45,10 +59,13 @@ Surface {
     spacing: 0
 
     RowLayout {
+      id: headerRow
+      visible: root.headed
       Layout.fillWidth: true
       spacing: Style.space1
 
       FoldHeader {
+        id: foldHeader
         Layout.alignment: Qt.AlignTop
         title: root.title
         description: root.description
@@ -58,6 +75,16 @@ Surface {
         marked: root.marked
         status: root.status
         statusTone: root.statusTone
+        // The trigger is the whole header band (the card's padding and the
+        // extras' column excepted, which are drawn later and take their own
+        // clicks): folded, the whole card in its rounded shape; open, down to
+        // where the body's first row starts, bottom square
+        radius: root.radius
+        reachLeft: Style.space3
+        reachTop: Style.space3
+        reachRight: Style.space3 + (extras.visible ? extras.width + headerRow.spacing : 0)
+        reachBottom: root.collapsed ? root.height - Style.space3 - foldHeader.height : headerRow.height - foldHeader.height + body.topPadding
+        squareBottom: !root.collapsed
         onToggled: root.toggled()
       }
 
@@ -76,7 +103,7 @@ Surface {
     FoldingColumn {
       id: body
       open: !root.collapsed
-      topPadding: Style.space2
+      topPadding: root.headed ? Style.space2 : 0
       Layout.fillWidth: true
       spacing: Style.space2
     }

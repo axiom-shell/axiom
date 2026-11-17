@@ -3,8 +3,10 @@ import QtQuick
 import qs.config
 
 // The hover, press and drag tint over a control's base, under its content:
-// declare it before the content. Fills its parent (a settings row's `bleed`
-// extends it past the parent's sides: the parent must not clip).
+// declare it before the content. Fills its parent and rounds as its parent
+// (an inset use sets `radius`; a parent with no radius gets Style.radiusInner).
+// A settings row's `bleed` extends it past the parent's sides: the parent must
+// not clip.
 Rectangle {
   id: root
 
@@ -16,14 +18,22 @@ Rectangle {
   property bool onAccent: false
   // How far it reaches past the parent on the left and right
   property real bleed: 0
+  // How far it reaches past the parent on the left, `bleed` unless set (a row
+  // indented under a rail starts at its rule)
+  property real leftBleed: root.bleed
+  // The bottom corners square (a header band over a body)
+  property bool squareBottom: false
 
   // -- Implementation --
   anchors.fill: parent
-  anchors.leftMargin: -root.bleed
+  anchors.leftMargin: -root.leftBleed
   anchors.rightMargin: -root.bleed
-  radius: Style.radiusInner
+  readonly property var _host: root.parent
+  radius: root._host && root._host.radius !== undefined ? root._host.radius : Style.radiusInner
   // The rest colour is the hover colour at alpha 0, so the glide never passes
   // through transparent black
+  bottomLeftRadius: root.squareBottom ? 0 : root.radius
+  bottomRightRadius: root.squareBottom ? 0 : root.radius
   color: {
     if (root.onAccent)
       return root.pressed ? Style.stateOnAccentPressed : root.hovered ? Style.stateOnAccentHover : Style.stateOnAccentRest;

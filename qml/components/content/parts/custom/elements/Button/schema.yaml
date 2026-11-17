@@ -1,8 +1,18 @@
 label: Button
 icon: smart_button
 defaultSize: [3, 1]
+help: task-button
 slots: [label, icon]
 actions: [click]
+color: button
+size: text
 settings:
-  label: {type: string, title: Label, default: ''}
-  icon: {type: string, x-control: icon, title: Icon, default: ''}
+  confirm: {type: boolean, title: Ask first, default: false, description: 'The first press asks "Confirm?" for 3 seconds; the second runs it.'}
+  disabled:
+    type: string
+    title: When off
+    default: dim
+    x-control: toggle
+    enum: [dim, hide]
+    x-enumLabels: {dim: Dimmed, hide: Hidden}
+    description: 'When the script or the output turns the action off.'

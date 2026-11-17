@@ -48,10 +48,12 @@ Item {
     if (!root.scrollable || !tab)
       return;
     const max = Math.max(0, flick.contentWidth - flick.width);
-    if (tab.x < flick.contentX)
-      flick.contentX = Math.min(max, tab.x);
-    else if (tab.x + tab.width > flick.contentX + flick.width)
-      flick.contentX = Math.min(max, tab.x + tab.width - flick.width);
+    const left = row.x + tab.x - Style.focusWidth;
+    const right = row.x + tab.x + tab.width + Style.focusWidth;
+    if (left < flick.contentX)
+      flick.contentX = Math.max(0, Math.min(max, left));
+    else if (right > flick.contentX + flick.width)
+      flick.contentX = Math.min(max, right - flick.width);
   }
   onCurrentIndexChanged: Qt.callLater(root._reveal)
   onScrollableChanged: Qt.callLater(root._reveal)
@@ -68,7 +70,7 @@ Item {
   Flickable {
     id: flick
     anchors.fill: parent
-    contentWidth: row.width
+    contentWidth: root.scrollable ? row.width + 2 * Style.focusWidth : row.width
     contentHeight: height
     interactive: root.scrollable && flick.contentWidth > flick.width
     flickableDirection: Flickable.HorizontalFlick
@@ -79,7 +81,7 @@ Item {
     Rectangle {
       id: indicator
       visible: root._current !== null
-      x: root._current ? root._current.x + (root._current.width - root._markWidth) / 2 : 0
+      x: root._current ? row.x + root._current.x + (root._current.width - root._markWidth) / 2 : 0
       y: flick.height - height
       width: root._markWidth
       height: Widget.px(2)
@@ -98,8 +100,12 @@ Item {
 
     RowLayout {
       id: row
+      // Scrollable, the tabs sit a focus ring's width inside the Flickable, so
+      // the ring of the first and last tab isn't cut
+      x: root.scrollable ? Style.focusWidth : 0
+      y: root.scrollable ? Style.focusWidth : 0
       width: root.scrollable ? row.implicitWidth : flick.width
-      height: flick.height
+      height: root.scrollable ? flick.height - 2 * Style.focusWidth : flick.height
       spacing: Widget.spacing
       uniformCellSizes: !root.scrollable
 

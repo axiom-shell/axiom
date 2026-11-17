@@ -961,10 +961,11 @@ TestCase {
     bar.currentIndex = 3;
     tryVerify(() => flick.contentX > 0);
     const tab = bar._current;
-    verify(tab.x - flick.contentX >= -0.5 && tab.x + tab.width - flick.contentX <= flick.width + 0.5, "the current tab is in view");
+    const inStrip = tab.mapToItem(flick.contentItem, 0, 0).x - flick.contentX;
+    verify(inStrip >= -0.5 && inStrip + tab.width <= flick.width + 0.5, "the current tab is in view");
     const mark = find(bar, it => it.radius !== undefined && it.height === Widget.px(2) && it.visible, [])[0];
     verify(mark);
-    tryVerify(() => Math.abs(mark.x + mark.width / 2 - (tab.x + tab.width / 2)) < 1);
+    tryVerify(() => Math.abs(mark.x + mark.width / 2 - (tab.mapToItem(flick.contentItem, 0, 0).x + tab.width / 2)) < 1);
     bar.width = Widget.textPx(2000);
     waitForRendering(bar);
     fuzzyCompare(bar._current.width, bar._current.implicitWidth, 1, "a tab keeps its own width");
@@ -1028,7 +1029,7 @@ TestCase {
     waitForRendering(row);
     verify(!row.revealed);
     // The narrowest: what the badges, the dot and the actions need, and 60 px of text for the name
-    const parts = find(row, it => (it.tone !== undefined && it.border !== undefined) || (it.iconText !== undefined && it.row !== undefined), []);
+    const parts = find(row, it => (it.tone !== undefined && it.border !== undefined) || (it.iconText !== undefined && it.row !== undefined && it.visible), []);
     let needed = Widget.padding * 1.5 + Style.iconSm * 1.5 + Widget.px(20) + Widget.textPx(60);
     for (const part of parts)
       needed += part.width + Widget.spacing;
@@ -1036,7 +1037,7 @@ TestCase {
     waitForRendering(row);
     const chips = find(row, it => it.tone !== undefined && it.text !== undefined && it.lineCount === undefined && it.border !== undefined, []);
     verify(chips.length >= 3, `${chips.length} chips`);
-    const actions = find(row, it => it.iconText !== undefined && it.row !== undefined, []);
+    const actions = find(row, it => it.iconText !== undefined && it.row !== undefined && it.visible, []);
     compare(actions.length, 2);
     for (const action of actions) {
       verify(action.width > 0);
@@ -1203,7 +1204,7 @@ TestCase {
     const edge = find(pane, it => it.objectName === "pinnedEdge", [])[0];
     verify(edge);
     verify(edge.visible, "the cut list shows its edge");
-    const area = find(pane, it => it.Layout && it.Layout.preferredHeight > 0 && it.implicitHeight === it.Layout.preferredHeight && it.clip !== undefined && it.width > 300 && it.height <= 240.5 && it.height > 100, [])[0];
+    const area = find(pane, it => it.cut !== undefined && it.maxHeight !== undefined, [])[0];
     verify(area, "the pinned area");
     verify(area.height <= Math.round(600 * 0.4));
     const child = find(pane, it => it.objectName === "paneChild", [])[0];
@@ -1257,8 +1258,8 @@ TestCase {
     compare(columns.count, 2);
     compare(unit("a").x, 0);
     compare(unit("a").y, 0);
-    compare(unit("b").y, unit("a").height + Style.space5);
-    compare(unit("d").x, unit("a").width + Style.space5);
+    compare(unit("b").y, unit("a").height + Style.space2);
+    compare(unit("d").x, unit("a").width + Style.cardGap);
     compare(unit("d").y, 0);
     verify(unit("a").width >= Style.columnMin && unit("a").width <= Math.round(1.25 * Style.columnTarget), `${unit("a").width}`);
     compare(unit("hidden").width, 0);
@@ -1560,40 +1561,6 @@ TestCase {
     compare(harness.containedProblems(tile, true), []);
     for (const t of harness.texts(tile, true))
       compare(t.lineCount, 1);
-  }
-
-  Component {
-    id: lockColumnComp
-
-    ColumnLayout {
-      property alias button: defaultButton
-      readonly property real fit: CustomWidgetData.lockColumnWidth(Appearance.fontSize * 16, defaultButton.implicitWidth)
-
-      width: fit
-      spacing: 4
-
-      StyledTextButton {
-        id: defaultButton
-        iconText: "auto_awesome"
-        text: "Start from the default layout"
-      }
-    }
-  }
-
-  // The Module tab's lock-screen column is as wide as its "Start from the
-  // default layout" button, whose label stays whole at any font size
-  function test_lock_column_holds_default_layout_button() {
-    harness.configure({
-      "fontSize": 20
-    });
-    const col = createTemporaryObject(lockColumnComp, root);
-    verify(col);
-    waitForRendering(col);
-    const label = find(col.button, it => it.text === "Start from the default layout", [])[0];
-    verify(label);
-    verify(col.width >= col.button.implicitWidth, `column ${col.width}, button ${col.button.implicitWidth}`);
-    verify(col.button.width >= col.button.implicitWidth, `button ${col.button.width}`);
-    verify(label.width >= label.implicitWidth - 0.5, `label ${label.width} of ${label.implicitWidth}`);
   }
 
   // The tools' right edge is the same whatever the title, and whether or

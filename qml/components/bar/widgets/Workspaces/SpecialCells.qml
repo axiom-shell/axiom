@@ -70,6 +70,7 @@ Loader {
       CellContents {
         id: contents
         barConfig: root.barConfig
+        cellLook: root.cellLook
         properties: root.properties
         base: 0
         thickness: root.cellLook.thickness

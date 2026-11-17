@@ -50,7 +50,7 @@ StyledTextButton {
     anchors.rightMargin: -Math.round(width / 3)
     shown: root.activeCount > 0
     text: String(root.activeCount)
-    color: Style.onAccent
+    color: Style.inkAccent.text
     textColor: Style.accent
   }
 

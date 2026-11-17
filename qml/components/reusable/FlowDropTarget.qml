@@ -50,15 +50,13 @@ Item {
   }
 
   // Where a drop lands: before the item at the hover index, or after the last
-  Rectangle {
+  DropMark {
     readonly property int at: root.hovered ? root.dragLayer.hoverIndex : -1
     readonly property Item before: at >= 0 && at < root.repeater.count ? root.repeater.itemAt(at) : null
     readonly property Item last: root.repeater.count > 0 ? root.repeater.itemAt(root.repeater.count - 1) : null
     readonly property Item beside: before ?? last
     visible: at >= 0 && beside !== null
-    width: Widget.px(2)
-    radius: width / 2
-    color: Style.accent
+    vertical: true
     x: beside ? holder.mapFromItem(beside.parent, before ? beside.x : beside.x + beside.width, 0).x - width / 2 + (before ? -Widget.spacing / 4 : Widget.spacing / 4) : 0
     y: beside ? holder.mapFromItem(beside.parent, 0, beside.y).y : 0
     height: beside ? beside.height : 0

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import qs.config
@@ -160,6 +161,8 @@ Panel {
   // A ListView, so only the laps in view are built
   ListView {
     id: lapList
+    ScrollIndicator.vertical: StyledScrollIndicator {}
+
     visible: !root.timerMode && StopwatchManager.laps.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded

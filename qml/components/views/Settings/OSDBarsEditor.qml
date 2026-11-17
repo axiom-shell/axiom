@@ -206,154 +206,144 @@ ColumnLayout {
     Layout.fillWidth: true
   }
 
-  FoldingSection {
-    id: fold
+  FormColumn {
+    id: section
     Layout.fillWidth: true
-    title: I18n.tr("Bars")
-    description: I18n.tr("Every bar this OSD shows, in order, and how they're laid out.")
-    collapsed: SettingsManager.isCollapsed(root.foldKey)
-    onToggled: SettingsManager.setCollapsed(root.foldKey, !fold.collapsed)
+    readonly property bool collapsed: SettingsManager.isCollapsed(root.foldKey)
 
-    // The list beside the selected bar's form, with the room
-    SplitColumns {
-      id: split
+    FoldFormRow {
+      title: I18n.tr("Bars")
+      open: !section.collapsed
+      onToggled: SettingsManager.setCollapsed(root.foldKey, !section.collapsed)
+    }
+
+    FormRow {
+      shown: !section.collapsed
+      tinted: false
+      bodyHeight: foldBody.implicitHeight
 
       ColumnLayout {
-        Layout.preferredWidth: split.firstWidth
-        Layout.alignment: Qt.AlignTop
+        id: foldBody
+        width: parent.width
         spacing: Widget.spacing
 
-        // Carries the rows
-        InlineDragLayer {
-          id: carrier
-          accepts: (target, drag) => target.takes(drag)
-          onDropped: (drag, target, index) => target.dropRequested(drag, index)
-        }
-
-        EntryListTarget {
-          id: barList
-          dragLayer: carrier
-          moveKind: "osd-bar-move"
-          count: root.rows.length
-          onDropRequested: (drag, index) => root.move(drag.index, index)
-
-          Repeater {
-            model: barList.count
-
-            EntryListRow {
-              id: barRow
-              readonly property var row: root.rows[barRow.index] ?? ({})
-
-              list: barList
-              icon: barRow.row.icon ?? "help"
-              label: barRow.row.name ?? ""
-              dimmed: barRow.row.off === true
-              selected: barRow.index === root.selectedRow
-              onClicked: {
-                EditsManager.commitTyping();
-                root._pick(barRow.row.type, barRow.row.index);
-              }
-
-              badges: TipIcon {
-                visible: barRow.row.off === true
-                text: "visibility_off"
-                textColor: barRow.inkMuted
-                size: "xs"
-                tip: I18n.tr("Hidden: its system's bars are switched off")
-              }
-
-              RowAction {
-                row: barRow
-                danger: true
-                iconText: "close"
-                tooltipText: I18n.tr("Remove")
-                onClicked: root.remove(barRow.index)
-              }
-            }
-          }
-        }
-
         StyledText {
-          visible: root.rows.length === 0
           Layout.fillWidth: true
-          text: I18n.tr("No bars yet: add one to show a level.")
+          text: I18n.tr("Every bar this OSD shows, in order, and how they're laid out.")
+          role: "caption"
           tone: "muted"
           overflow: "wrap"
         }
 
-        AddEntryButton {
-          id: addButton
-          visible: root.addable.length > 0
-          Layout.topMargin: Widget.spacing / 2
-          text: I18n.tr("Add")
-          onClicked: picker.openAt(addButton)
-        }
+        // The list beside the selected bar's form, with the room
+        SplitColumns {
+          id: split
 
-        // How the bars are laid out (its fields at their paths in the
-        // entry, so `../edge` reaches the entry's own)
-        SchemaPropertiesForm {
-          visible: root.entry !== null
-          Layout.fillWidth: true
-          Layout.topMargin: Widget.spacing
-          propertiesSchema: ({
-              "barLayout": root.layoutSchema
-            })
-          values: root.entry ?? ({})
-          onEdited: (path, value) => root.edited({
-              [path[0]]: value
-            })
-        }
-      }
-
-      // The selected bar's settings, from its schema
-      Surface {
-        tone: "sunken"
-        visible: root.selected !== null
-        Layout.preferredWidth: split.secondWidth
-        Layout.alignment: Qt.AlignTop
-        implicitHeight: selectedColumn.implicitHeight + Widget.padding * 2
-
-        ColumnLayout {
-          id: selectedColumn
-          anchors.fill: parent
-          anchors.margins: Widget.padding
-          spacing: Widget.spacing
-
-          RowLayout {
-            Layout.fillWidth: true
+          ColumnLayout {
+            Layout.preferredWidth: split.firstWidth
+            Layout.alignment: Qt.AlignTop
             spacing: Widget.spacing
 
-            StyledIcon {
-              text: root.selected?.icon ?? ""
-              tone: "accent"
+            // Carries the rows
+            InlineDragLayer {
+              id: carrier
+              accepts: (target, drag) => target.takes(drag)
+              onDropped: (drag, target, index) => target.dropRequested(drag, index)
             }
 
-            StyledLabel {
+            EntryListTarget {
+              id: barList
+              dragLayer: carrier
+              moveKind: "osd-bar-move"
+              count: root.rows.length
+              onDropRequested: (drag, index) => root.move(drag.index, index)
+
+              Repeater {
+                model: barList.count
+
+                EntryListRow {
+                  id: barRow
+                  readonly property var row: root.rows[barRow.index] ?? ({})
+
+                  list: barList
+                  icon: barRow.row.icon ?? "help"
+                  label: barRow.row.name ?? ""
+                  dimmed: barRow.row.off === true
+                  selected: barRow.index === root.selectedRow
+                  onClicked: {
+                    EditsManager.commitTyping();
+                    root._pick(barRow.row.type, barRow.row.index);
+                  }
+
+                  badges: TipIcon {
+                    visible: barRow.row.off === true
+                    text: "visibility_off"
+                    textColor: barRow.inkMuted
+                    size: "xs"
+                    tip: I18n.tr("Hidden: its system's bars are switched off")
+                  }
+
+                  RowAction {
+                    row: barRow
+                    danger: true
+                    iconText: "close"
+                    tooltipText: I18n.tr("Remove")
+                    onClicked: root.remove(barRow.index)
+                  }
+                }
+              }
+            }
+
+            StyledText {
+              visible: root.rows.length === 0
               Layout.fillWidth: true
-              text: root.selected?.name ?? ""
-              role: "label"
-              overflow: "line"
+              text: I18n.tr("No bars yet: add one to show a level.")
+              tone: "muted"
+              overflow: "wrap"
             }
 
+            AddEntryButton {
+              id: addButton
+              visible: root.addable.length > 0
+              text: I18n.tr("Add")
+              onClicked: picker.openAt(addButton)
+            }
+
+            // How the bars are laid out (its fields at their paths in the
+            // entry, so `../edge` reaches the entry's own)
+            SchemaPropertiesForm {
+              visible: root.entry !== null
+              Layout.fillWidth: true
+              Layout.topMargin: Widget.spacing
+              propertiesSchema: ({
+                  "barLayout": root.layoutSchema
+                })
+              values: root.entry ?? ({})
+              onEdited: (path, value) => root.edited({
+                  [path[0]]: value
+                })
+            }
+          }
+
+          // The selected bar's settings, from its schema
+          ItemBox {
+            visible: root.selected !== null
+            Layout.preferredWidth: split.secondWidth
+            Layout.alignment: Qt.AlignTop
+            icon: root.selected?.icon ?? ""
+            title: root.selected?.name ?? ""
             // Whose setting it is (a list's bar)
-            StyledLabel {
-              visible: (root.selected?.index ?? -1) >= 0
-              text: root.selected ? OSDConfig.nameOf(root.selected.type) : ""
-              role: "caption"
+            caption: (root.selected?.index ?? -1) >= 0 ? OSDConfig.nameOf(root.selected.type) : ""
+
+            // Built anew for each selection: a form whose rows commit on change
+            // must not be reused for another
+            KeyedLoader {
+              id: formSlot
+              Layout.fillWidth: true
+              Layout.preferredHeight: formSlot.childrenRect.height
+              key: root.selected ? root._osdId + ":" + root.selected.type + ":" + root.selected.index : ""
+              sourceComponent: barForm
             }
-          }
-
-          StyledSeparator {
-            Layout.fillWidth: true
-          }
-
-          // A new form per bar, so no row writes onto another
-          KeyedLoader {
-            id: formSlot
-            Layout.fillWidth: true
-            Layout.preferredHeight: formSlot.childrenRect.height
-            key: root.selected ? root._osdId + ":" + root.selected.type + ":" + root.selected.index : ""
-            sourceComponent: barForm
           }
         }
       }

@@ -131,9 +131,8 @@ QtObject {
   }
 
   // Whether a field's `x-showIf` names a sibling (a plain key, not a `/`
-  // path): it is shown by that sibling's value, so it reads as part of the
-  // row above (SchemaField.followsSibling; the settings page keeps such rows
-  // together)
+  // path): it is shown by that sibling's value, so a dependent row doesn't
+  // repeat its switch's "X only" (SchemaField.disabledNote)
   function followsSibling(fieldSchema) {
     return Object.keys(fieldSchema?.["x-showIf"] ?? {}).some(key => !key.startsWith("/"));
   }

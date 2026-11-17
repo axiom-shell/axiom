@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
@@ -74,7 +75,7 @@ Card {
 
     ClippingRectangle {
       anchors.fill: parent
-      radius: Widget.radius
+      radius: Style.radius
       color: thumbnail.fillColor
 
       Image {
@@ -88,7 +89,7 @@ Card {
 
     Rectangle {
       anchors.fill: parent
-      radius: Widget.radius
+      radius: Style.radius
       color: "transparent"
       border.color: thumbnail.borderColor
       border.width: thumbnail.borderWidth
@@ -308,6 +309,8 @@ Card {
 
       GridView {
         id: view
+        ScrollIndicator.vertical: StyledScrollIndicator {}
+
         anchors.fill: parent
         clip: true
         flow: root.grid ? GridView.FlowLeftToRight : GridView.FlowTopToBottom

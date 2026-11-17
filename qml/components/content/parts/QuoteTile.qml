@@ -25,7 +25,7 @@ ClippingRectangle {
   readonly property color trendText: Style.toneColor(root.trendTone)
   readonly property color trendLine: Style.trendLine(root.trendTone)
 
-  radius: Widget.radius
+  radius: Style.radius
   color: Style.surfaceSunken
   border.width: Style.hairline
   border.color: Style.borderSubtle
@@ -33,7 +33,6 @@ ClippingRectangle {
   StateLayer {
     hovered: mouse.containsMouse
     pressed: mouse.pressed
-    radius: root.radius
   }
 
   // Between the name and the price, edge to edge

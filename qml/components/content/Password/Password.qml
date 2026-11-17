@@ -49,10 +49,9 @@ Card {
     anchors.verticalCenter: parent.verticalCenter
     anchors.margins: root.margin
     height: root.boxed ? field.implicitHeight + root.boxPad * 2 : parent.height - root.margin * 2
-    radius: Widget.radius
     tone: "sunken"
     outlined: root.boxed
-    color: root.boxed ? Style.surfaceSunken : "transparent"
+    color: root.boxed ? Style.fillSunken : "transparent"
 
     PasswordField {
       id: field

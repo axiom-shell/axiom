@@ -196,7 +196,7 @@ Item {
       anchors.verticalCenterOffset: root.isVertical ? root._shift : 0
       visible: root._shows === "glyph"
       text: root.glyph
-      font.pixelSize: root.barConfig.fontSize * 1.2
+      font.pixelSize: root.cellLook.symbolSize
       color: root._shown.content
     }
 
@@ -236,7 +236,7 @@ Item {
         rotation: leadLabel.symbol && textRow.rotation !== 0 ? 90 : 0
         text: root.leadIcon
         textFamily: leadLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
-        textSize: leadLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+        textSize: leadLabel.symbol ? root.cellLook.symbolSize : root.cellLook.labelSize
         textColor: root._shown.content
         font.weight: (!leadLabel.symbol && root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
@@ -261,7 +261,7 @@ Item {
 
         text: root.text
         textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
-        textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+        textSize: textLabel.symbol ? root.cellLook.symbolSize : root.cellLook.labelSize
         textColor: root._shown.content
         font.weight: (!textLabel.symbol && root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
@@ -394,7 +394,7 @@ Item {
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
       textColor: root._shown.content
-      textSize: root.barConfig.fontSize - 1
+      textSize: root.cellLook.labelSize
       font.weight: (root.isActive && !root.boxed) ? Font.Bold : Font.Normal
 
       ColorGlide on color {

@@ -89,35 +89,32 @@ ColumnLayout {
               Layout.fillWidth: true
             }
 
-            SquareIconButton {
-              visible: entry.index > 0
-              size: Widget.iconButton
+            StyledIconButton {
+              enabled: entry.index > 0
               kind: "text"
-              iconText: "expand_less"
-              iconSize: Style.iconSm
+              iconText: "arrow_upward"
+              tooltipText: I18n.tr("Move up")
 
               onClicked: {
                 root.itemMoved(entry.index, entry.index - 1);
               }
             }
 
-            SquareIconButton {
-              visible: entry.index < root.items.length - 1
-              size: Widget.iconButton
+            StyledIconButton {
+              enabled: entry.index < root.items.length - 1
               kind: "text"
-              iconText: "expand_more"
-              iconSize: Style.iconSm
+              iconText: "arrow_downward"
+              tooltipText: I18n.tr("Move down")
 
               onClicked: {
                 root.itemMoved(entry.index, entry.index + 1);
               }
             }
 
-            SquareIconButton {
-              size: Widget.iconButton
+            StyledIconButton {
               kind: "danger"
               iconText: "close"
-              iconSize: Style.iconMd
+              tooltipText: I18n.tr("Remove")
 
               onClicked: {
                 root.itemRemoved(entry.index);

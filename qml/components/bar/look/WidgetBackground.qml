@@ -142,9 +142,9 @@ Item {
     tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
-    fill: BarWidgetStyle.faded(root.barConfig.palette.highlight, 0.15)
+    fill: BarWidgetStyle.selectionFill(root.barConfig.palette)
     stroke: root.barConfig.palette.highlight
-    strokeWidth: 2
+    strokeWidth: BarWidgetStyle.selectionStroke
     glides: false
   }
 

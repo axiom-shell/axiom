@@ -57,12 +57,13 @@ QtObject {
   }
 
   // Whether row `i` continues the unit of the row before it: an `x-beside`
-  // row, a dependent row or a row another field draws, in the same context
-  function _continues(rows, contexts, i) {
+  // row, a dependent row (under an earlier row of the card, RowTree; `levels`)
+  // or a row another field draws, in the same context
+  function _continues(rows, contexts, levels, i) {
     if (i === 0 || root._wide(rows[i]) || root._wide(rows[i - 1]) || contexts[i] !== contexts[i - 1])
       return false;
     const row = rows[i];
-    return row.schema?.["x-beside"] === true || !!row.drawnBy || SchemaLayout.followsSibling(row.schema);
+    return row.schema?.["x-beside"] === true || !!row.drawnBy || levels[i] > 0;
   }
 
   // The units rows must stay together in: [{ from, to, wide, start }],
@@ -73,8 +74,9 @@ QtObject {
   function blocks(rows) {
     const result = [];
     const contexts = root._contexts(rows);
+    const levels = RowTree.plan(rows).levels;
     for (let i = 0; i < rows.length; i++) {
-      if (root._continues(rows, contexts, i)) {
+      if (root._continues(rows, contexts, levels, i)) {
         result[result.length - 1].to = i + 1;
         continue;
       }

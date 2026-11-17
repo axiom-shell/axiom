@@ -56,6 +56,12 @@ TestCase {
     compare(Qt.color(Tone.faded("#00336699", 0.5)).b, Qt.color("#336699").b, "and keeps its channels");
   }
 
+  function test_cleared() {
+    compare(Tone.cleared("#336699").a, 0, "no opacity");
+    compare(Qt.color(Tone.cleared("#336699")).b, Qt.color("#336699").b, "its channels kept, so a fade in doesn't pass through black");
+    compare(Tone.cleared(Qt.rgba(1, 0, 0, 0.5)).r, 1, "from a translucent one too");
+  }
+
   function test_toward() {
     close(Tone.toward("#000000", "#ffffff", 0.5), "#808080", "mixed");
     close(Tone.toward("#80000000", "#ffffff", 0.5), "#80808080", "alpha kept");

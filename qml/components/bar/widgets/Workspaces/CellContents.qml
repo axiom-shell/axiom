@@ -6,6 +6,7 @@ import qs.services.system
 import qs.services.ui
 import qs.config
 import qs.components.methods
+import qs.components.bar.look
 
 // What a Workspaces switcher's cells show and how long each is along the
 // bar, for the row on the bar (WorkspaceCellRow) and the popouts alike:
@@ -16,6 +17,7 @@ QtObject {
   id: root
 
   required property var barConfig
+  required property CellLook cellLook
   // The widget's options (a popout's are empty until it has loaded)
   required property var properties
   // The monitor's first workspace id (relative numbers count from it)
@@ -28,7 +30,7 @@ QtObject {
   // as an active one on the bar may be, so it never outgrows its room
   readonly property FontMetrics _metrics: FontMetrics {
     font.family: Appearance.fontFamily
-    font.pixelSize: root.barConfig ? root.barConfig.fontSize - 1 : Appearance.fontSize
+    font.pixelSize: root.cellLook.labelSize
     font.bold: true
   }
 
@@ -168,7 +170,7 @@ QtObject {
   // The same, not bold (a boxed cell's words are never bold: its ink's margins)
   readonly property FontMetrics _inkMetrics: FontMetrics {
     font.family: Appearance.fontFamily
-    font.pixelSize: root.barConfig ? root.barConfig.fontSize - 1 : Appearance.fontSize
+    font.pixelSize: root.cellLook.labelSize
   }
 
   // The icon font at a symbol label's size, to find how far its ink sits in
@@ -176,7 +178,7 @@ QtObject {
   // about a seventh of its size each side)
   readonly property FontMetrics _iconMetrics: FontMetrics {
     font.family: Appearance.iconFamily
-    font.pixelSize: root.barConfig ? Math.round(root.barConfig.fontSize * 1.2) : Appearance.fontSize
+    font.pixelSize: root.cellLook.symbolSize
   }
 
   // How far the ink of `name` is in from its box's start and end along a
@@ -204,7 +206,7 @@ QtObject {
   // gaps are measured to. A label that doesn't turn on a vertical bar is as
   // tall as it is.
   function _labelLength(shown) {
-    const size = Math.round(root.barConfig.fontSize * 1.2);
+    const size = root.cellLook.symbolSize;
     const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
     const plain = root._plain(shown);
     const own = root._inkInset(shown.text, plain);

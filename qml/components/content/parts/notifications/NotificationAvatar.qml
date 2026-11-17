@@ -16,7 +16,7 @@ Item {
   property string desktopEntry: ""
   property string image: ""
   property int size: Widget.px(32)
-  property real radius: Widget.radius
+  property real radius: Style.radius
   property bool badge: false
 
   // An icon name, a path or a URL, resolved to a source ("" if none)

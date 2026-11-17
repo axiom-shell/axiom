@@ -176,9 +176,9 @@ ColumnLayout {
   Repeater {
     model: root.shown.length
 
-    delegate: Surface {
+    delegate: ItemBox {
       id: row
-      tone: "sunken"
+      dense: true
       // The listed row, and the source's index in the list
       required property int index
       readonly property int at: root.shown[index] ?? -1
@@ -186,16 +186,8 @@ ColumnLayout {
       readonly property bool ime: source.kind === "ime"
       readonly property var engine: ime ? root.engineOf(source) : null
 
-      Layout.fillWidth: true
-      implicitHeight: rowLayout.implicitHeight + Widget.smallPadding * 2
-
       RowLayout {
-        id: rowLayout
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: Widget.padding
-        anchors.rightMargin: Widget.smallPadding
+        Layout.fillWidth: true
         spacing: Widget.spacing
 
         StyledIcon {
@@ -240,7 +232,6 @@ ColumnLayout {
           readonly property string own: String(row.source.layout ?? "") === "" ? "" : row.source.layout + "|" + (row.source.variant ?? "")
           visible: row.ime
           Layout.preferredWidth: Widget.px(200)
-          Layout.preferredHeight: Widget.height
           options: {
             const list = [
               {
@@ -273,7 +264,6 @@ ColumnLayout {
           iconText: "arrow_upward"
           tooltipText: I18n.tr("Move up")
           enabled: row.index > 0
-          size: Widget.height - Widget.px(4)
           onClicked: root.move(row.index, -1)
         }
 
@@ -281,7 +271,6 @@ ColumnLayout {
           iconText: "arrow_downward"
           tooltipText: I18n.tr("Move down")
           enabled: row.index < root.shown.length - 1
-          size: Widget.height - Widget.px(4)
           onClicked: root.move(row.index, 1)
         }
 
@@ -289,7 +278,6 @@ ColumnLayout {
           iconText: "close"
           tooltipText: I18n.tr("Remove")
           kind: "danger"
-          size: Widget.height - Widget.px(4)
           onClicked: root.remove(row.at)
         }
       }
@@ -315,7 +303,6 @@ ColumnLayout {
 
       StyledComboEntry {
         Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height
         editable: true
         icon: "keyboard"
         enabled: root.registry !== null
@@ -350,7 +337,6 @@ ColumnLayout {
         // engines too and those already added
         readonly property var engines: InputSourceManager.available.filter(a => !String(a.name).startsWith("keyboard-") && !String(a.name).startsWith("xkb:") && !root.sources.some(s => s.kind === "ime" && s.engine === a.name))
         Layout.fillWidth: true
-        Layout.preferredHeight: Widget.height
         editable: true
         icon: "translate"
         enabled: root.chosenRuns && enginePicker.engines.length > 0
@@ -462,58 +448,31 @@ ColumnLayout {
   }
 
   // The framework's list isn't axiom's: which wins
-  Surface {
+  Notice {
     id: askBox
-    tone: "warningContainer"
+    status: "warning"
     visible: root.asks !== ""
-    Layout.fillWidth: true
-    implicitHeight: askColumn.implicitHeight + Widget.padding * 1.5
+    title: root.asks === "outside" ? I18n.tr("{0}'s list was changed outside axiom since axiom gave it these sources.", root.framework) : I18n.tr("{0} has a list of its own that isn't these sources. Which should it keep?", root.framework)
+    text: root.asks === "outside" ? I18n.tr("Using its list puts it here unsaved: Save to keep it. Using axiom's gives {0} these sources again now.", root.framework) : I18n.tr("Using its list puts it here unsaved. Either way, {0} gets these sources when you Save.", root.framework)
 
-    ColumnLayout {
-      id: askColumn
-      anchors.top: parent.top
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.margins: Widget.padding * 0.75
-      spacing: Widget.spacing
-
-      StyledText {
-        Layout.fillWidth: true
-        overflow: "wrap"
-        text: root.asks === "outside" ? I18n.tr("{0}'s list was changed outside axiom since axiom gave it these sources.", root.framework) : I18n.tr("{0} has a list of its own that isn't these sources. Which should it keep?", root.framework)
+    StyledTextButton {
+      text: I18n.tr("Use {0}'s list", root.framework)
+      iconText: "download"
+      onClicked: {
+        const imported = InputSourceManager.importFromFramework();
+        if (imported.length > 0)
+          root.setSources(imported);
       }
+    }
 
-      RowLayout {
-        spacing: Widget.spacing
-
-        StyledTextButton {
-          text: I18n.tr("Use {0}'s list", root.framework)
-          iconText: "download"
-          onClicked: {
-            const imported = InputSourceManager.importFromFramework();
-            if (imported.length > 0)
-              root.setSources(imported);
-          }
-        }
-
-        StyledTextButton {
-          text: I18n.tr("Use axiom's")
-          iconText: "upload"
-          onClicked: {
-            if (root.asks === "outside")
-              InputSourceManager.useOwn();
-            else
-              root.answered = true;
-          }
-        }
-      }
-
-      StyledText {
-        Layout.fillWidth: true
-        overflow: "wrap"
-        role: "caption"
-        tone: "muted"
-        text: root.asks === "outside" ? I18n.tr("Using its list puts it here unsaved: Save to keep it. Using axiom's gives {0} these sources again now.", root.framework) : I18n.tr("Using its list puts it here unsaved. Either way, {0} gets these sources when you Save.", root.framework)
+    StyledTextButton {
+      text: I18n.tr("Use axiom's")
+      iconText: "upload"
+      onClicked: {
+        if (root.asks === "outside")
+          InputSourceManager.useOwn();
+        else
+          root.answered = true;
       }
     }
   }
