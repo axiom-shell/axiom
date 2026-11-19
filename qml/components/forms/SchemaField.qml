@@ -174,26 +174,43 @@ Loader {
     return own !== "" ? I18n.tr(own) : I18n.tr("Doesn't apply here");
   }
 
-  // `x-enabledIf` (as x-showIf), or a shown `x-hintedIf`: while it doesn't
+  // `x-enabledIf` (as x-showIf; the row's own, then the objects it is
+  // inside, `groupEnabledIf`), or a shown `x-hintedIf`: while it doesn't
   // hold the row is greyed out, its value kept, and says why
   // (`x-disabledNote`, else what the compositor can't do and what can,
   // CompositorManager.unsupportedNote). Only a row shown on its own says
-  // it: one shown by a sibling (a part's fields, under its switch) is
-  // greyed with it, without repeating it.
-  readonly property string _blockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf) || SchemaLayout.failingKey(fieldSchema["x-hintedIf"], root._valueOf)
+  // the compositor's reason: one shown by a sibling (a part's fields, under
+  // its switch) is greyed with it, without repeating it; an
+  // `x-disabledNote` is always said.
+  readonly property string _ownBlockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf) || SchemaLayout.failingKey(fieldSchema["x-hintedIf"], root._valueOf)
+  // The first object the row is inside that greys it: { key, note }
+  readonly property var _groupBlock: {
+    for (const outer of row.groupEnabledIf ?? []) {
+      const key = SchemaLayout.failingKey(outer.condition, k => root._valueFrom(outer.path, k));
+      if (key !== "")
+        return {
+          "key": key,
+          "note": outer.note
+        };
+    }
+    return null;
+  }
+  readonly property string _blockedBy: root._ownBlockedBy || (root._groupBlock?.key ?? "")
   readonly property bool allowed: _blockedBy === ""
   // I18n.tr("{0} only.")
   readonly property string disabledNote: {
-    // (A field one compositor alone has says so even under its part's
-    // switch: the switch itself isn't greyed out for it)
-    if (root.allowed || (SchemaLayout.followsSibling(root.fieldSchema) && _blockedBy !== "/$compositor"))
+    if (root.allowed)
       return "";
     // false: none (the section's intro says why)
-    const own = fieldSchema["x-disabledNote"] ?? "";
+    const own = root._ownBlockedBy !== "" ? (fieldSchema["x-disabledNote"] ?? "") : (root._groupBlock.note ?? "");
     if (own === false)
       return "";
     if (own !== "")
       return I18n.tr(own);
+    // (A field one compositor alone has says so even under its part's
+    // switch: the switch itself isn't greyed out for it)
+    if (SchemaLayout.followsSibling(root.fieldSchema) && _blockedBy !== "/$compositor")
+      return "";
     if (_blockedBy.startsWith("/$supports."))
       return CompositorManager.unsupportedNote(_blockedBy.slice("/$supports.".length));
     if (_blockedBy === "/$compositor")
@@ -218,6 +235,25 @@ Loader {
   // The narrowest the control stays usable in (FieldFit.least; 0: a control
   // that isn't a FieldLine), for a pair's halves (SchemaPropertiesForm)
   readonly property real leastWidth: root.item?.leastWidth ?? 0
+
+  // What is wrong with the value, { level, text } or null (SchemaFormRow
+  // draws it, FieldProblem): a picker marked `x-mustExist` naming nothing
+  // or something off (SchemaLayout.optionProblem), else the control's own
+  // (IconEntry's)
+  readonly property var problem: {
+    const kind = root.fieldSchema["x-mustExist"] ? SchemaLayout.optionProblem(root.current, SettingsManager.optionsFor(root.fieldSchema), SettingsManager.optionsFor(root.fieldSchema, true)) : "";
+    if (kind === "missing")
+      return {
+        "level": "error",
+        "text": I18n.tr("{0} no longer exists.", root.current)
+      };
+    if (kind === "off")
+      return {
+        "level": "error",
+        "text": I18n.tr("{0} isn't enabled.", root.current)
+      };
+    return root.item?.problem ?? null;
+  }
 
   // A click on the row outside its control (FormRow.rowClicked): the
   // control does what its own click does
@@ -618,6 +654,8 @@ Loader {
       readonly property string mode: iconColumn.modeKey !== "" ? (root._valueOf(iconColumn.modeKey) ?? "icon") : iconColumn.textKey !== "" ? "both" : "icon"
       readonly property bool showsIcon: iconColumn.mode !== "text"
       readonly property bool showsText: iconColumn.textKey !== "" && iconColumn.mode !== "icon"
+      // The icon box's, while it shows (SchemaFormRow draws it)
+      readonly property var problem: iconColumn.showsIcon ? iconEntry.problem : null
 
       // A sibling's path, for the form's edits
       function siblingPath(key) {
@@ -659,6 +697,7 @@ Loader {
 
         // Sharing the row evenly with the text box when both show
         IconEntry {
+          id: iconEntry
           Layout.fillWidth: true
           Layout.preferredWidth: 1
           Layout.alignment: Qt.AlignTop

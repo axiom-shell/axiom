@@ -8,8 +8,8 @@ import qs.components.forms
 // Custom widgets page: a JSON value of the selected definition at `path`
 // (a key, or a path of keys), a form row (FieldRow: its label and
 // description above a monospace area, as a schema text field's), written to
-// it once it parses (CustomWidgetsEditor.set); "Not valid JSON yet." under it
-// while it doesn't. Read once, as it's built: the page builds it again for
+// it once it parses (CustomWidgetsEditor.set); "Not valid JSON yet." as its
+// problem while it doesn't. Read once, as it's built: the page builds it again for
 // each definition it shows.
 FieldRow {
   id: root
@@ -23,7 +23,10 @@ FieldRow {
 
   readonly property var _keys: Array.isArray(root.path) ? root.path : [root.path]
 
-  belowShown: root.bad
+  problem: root.bad ? ({
+      "level": "warning",
+      "text": I18n.tr("Not valid JSON yet.")
+    }) : null
 
   StyledTextArea {
     id: area
@@ -40,13 +43,5 @@ FieldRow {
       }
     }
     Component.onCompleted: area.text = JSON.stringify(root._keys.reduce((node, key) => node?.[key], root.definition) ?? {})
-  }
-
-  below: StyledText {
-    Layout.fillWidth: true
-    text: I18n.tr("Not valid JSON yet.")
-    tone: "warning"
-    role: "caption"
-    overflow: "wrap"
   }
 }

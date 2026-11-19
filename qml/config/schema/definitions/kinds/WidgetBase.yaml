@@ -20,8 +20,13 @@ x-parts:
             x-options: menus
             x-emptyLabel: Its own popout
             description: Opens in place of the popout. A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.
+            x-mustExist: true
             x-showIf: {enabled: true}
-          sizing: {$ref: '#/definitions/PopoutSizing', x-showIf: {enabled: true, menu: ''}}
+          sizing:
+            $ref: '#/definitions/PopoutSizing'
+            x-showIf: {enabled: true}
+            x-enabledIf: {$widget.opensOwnPopout: {not: false}}
+            x-disabledNote: Off while Open instead names a menu.
     menu:
       popout:
         type: object
@@ -38,6 +43,7 @@ x-parts:
             default: ''
             x-options: menus
             x-emptyLabel: None
+            x-mustExist: true
             description: A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.
             x-showIf: {enabled: true}
     plain:

@@ -35,7 +35,9 @@ settings:
     title: VPNs
     default: true
     description: With the Import VPN action.
-    x-showIf: {popout.enabled: true, popout.menu: ''}
+    x-showIf: {popout.enabled: true}
+    x-enabledIf: {$widget.opensOwnPopout: {not: false}}
+    x-disabledNote: Off while Open instead names a menu.
   vpnColor:
     $ref: '#/definitions/WidgetColor'
     title: VPN lock color

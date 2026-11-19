@@ -31,6 +31,9 @@ FormRow {
   property alias below: belowColumn.data
   // Whether anything in `below` shows
   property bool belowShown: false
+  // What is wrong with the field's value, { level, text } or null (FieldProblem),
+  // shown under its label and description
+  property var problem: null
   bodyHeight: column.implicitHeight
   // The tint and the row click cover the field, not what's under it
   hitHeight: root.belowShown ? field.implicitHeight : root.bodyHeight
@@ -47,11 +50,19 @@ FormRow {
       label: root.label
       description: root.description
       kind: root.besideLabel ? "fill" : root.shortControl ? "flex" : "block"
+      headerBelow: root.problem !== null ? problemLine : null
 
       ColumnLayout {
         id: controls
         Layout.fillWidth: true
         spacing: Widget.spacing / 2
+      }
+    }
+
+    Component {
+      id: problemLine
+      FieldProblem {
+        problem: root.problem
       }
     }
 

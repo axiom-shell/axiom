@@ -1,12 +1,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import qs.config
 import qs.components.reusable
 
 // An editor inspector's "Options" card for a bar widget's or an overlay
-// module's `properties`: a `problem` in the error colour, the form, or
-// `emptyText` when the type has no options
+// module's `properties`: the form, or `emptyText` when the type has no options
 FieldGroup {
   id: root
 
@@ -25,7 +23,6 @@ FieldGroup {
   property var fieldAction: null
   // Each field's note (SchemaPropertiesForm.fieldNote)
   property var fieldNote: null
-  property string problem
   property string emptyText
 
   signal edited(var path, var value)
@@ -34,17 +31,9 @@ FieldGroup {
   // The pane's one group of settings: a title-less card (no heading, never folds)
   title: ""
 
-  StyledText {
-    visible: root.problem !== ""
-    Layout.fillWidth: true
-    text: root.problem
-    tone: "error"
-  }
-
   SchemaPropertiesForm {
     id: form
     Layout.fillWidth: true
-    Layout.topMargin: root.problem !== "" ? Style.space2 : 0
     propertiesSchema: root.propertiesSchema
     order: root.order
     values: root.values

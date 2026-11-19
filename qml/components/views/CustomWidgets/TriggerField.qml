@@ -82,7 +82,11 @@ FormColumn {
     label: root.label
     shortControl: true
     activates: combo
-    belowShown: root.action !== null || root.removed
+    belowShown: root.action !== null
+    problem: root.removed ? ({
+        "level": "warning",
+        "text": I18n.tr("This action was removed")
+      }) : null
 
     StyledComboEntry {
       id: combo
@@ -117,13 +121,6 @@ FormColumn {
           text: root.editing ? I18n.tr("Done") : I18n.tr("Edit")
           onClicked: root.editor.editingAction = root.editing ? "" : root.action.id
         }
-      },
-      StyledText {
-        visible: root.removed
-        Layout.fillWidth: true
-        text: I18n.tr("This action was removed")
-        role: "caption"
-        tone: "warning"
       },
       Loader {
         active: root.editing

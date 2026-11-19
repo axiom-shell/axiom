@@ -197,6 +197,51 @@ TestCase {
     compare(rows.map(r => (r.groupShowIf ?? []).map(outer => JSON.stringify(outer.condition) + "@" + outer.path.join(".")).join(",")), ["", "", "{\"on\":true}@S", "{\"on\":true}@S", "{\"on\":true}@S"]);
   }
 
+  // A nested object's `x-enabledIf` (and its `x-disabledNote`) goes on every
+  // row inside it as `groupEnabledIf`, in both an `x-row` object and a plain one
+  function test_rows_group_enabledIf() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "plain": {
+          "type": "object",
+          "x-enabledIf": {
+            "$k": {
+              "not": false
+            }
+          },
+          "x-disabledNote": "Off.",
+          "properties": {
+            "a": {
+              "type": "string"
+            }
+          }
+        },
+        "drawn": {
+          "type": "object",
+          "x-row": "Block",
+          "x-enabledIf": {
+            "on": true
+          },
+          "properties": {
+            "b": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.path.join(".") + ":" + (r.groupEnabledIf ?? []).map(outer => JSON.stringify(outer.condition) + "@" + outer.path.join(".") + "#" + outer.note).join(",")), ["S.plain:", "S.plain.a:{\"$k\":{\"not\":false}}@S#Off.", "S.drawn:", "S.drawn.b:{\"on\":true}@S#undefined"]);
+  }
+
+  // A picker's value naming nothing, or something that's off (`x-mustExist`)
+  function test_optionProblem() {
+    const options = ["", "a", "b"];
+    const enabled = ["", "a"];
+    const rows = [["", "", "empty"], ["a", "", "listed and on"], ["gone", "missing", "not listed"], ["b", "off", "listed, not on"]];
+    for (const [value, expected, message] of rows)
+      compare(SchemaLayout.optionProblem(value, options, enabled), expected, message);
+  }
+
   // An icon field's `x-iconText` draws its mode and text siblings: their
   // rows are `drawnBy` it, and drawnKeys names them
   function test_rows_icon_text() {
@@ -429,6 +474,20 @@ TestCase {
       "on": true,
       "/$compositor": "sway"
     }, valueOf), "");
+  }
+
+  // `{ not: false }` on a form context key that isn't there holds (every
+  // other form than the bar editor's widget options, which sets
+  // `$widget.opensOwnPopout`)
+  function test_failingKey_absent_not_false() {
+    const condition = {
+      "$widget.opensOwnPopout": {
+        "not": false
+      }
+    };
+    compare(SchemaLayout.failingKey(condition, key => undefined), "");
+    compare(SchemaLayout.failingKey(condition, key => true), "");
+    compare(SchemaLayout.failingKey(condition, key => false), "$widget.opensOwnPopout");
   }
 
   function test_showIfHolds() {
@@ -1572,8 +1631,9 @@ TestCase {
         return;
       for (const key in node.properties ?? {}) {
         const prop = node.properties[key];
-        const condition = prop["x-showIf"] ?? {};
-        const targets = [].concat(Object.keys(condition).filter(target => target !== "anyOf"), ...(condition.anyOf ?? []).map(any => Object.keys(any)));
+        // `x-enabledIf` names its targets the same way
+        const conditions = [prop["x-showIf"] ?? {}, prop["x-enabledIf"] ?? {}];
+        const targets = [].concat(...conditions.map(condition => [].concat(Object.keys(condition).filter(target => target !== "anyOf"), ...(condition.anyOf ?? []).map(any => Object.keys(any)))));
         for (const target of targets) {
           // The running compositor's, not the config's (SettingsManager.configValueAt)
           if (target.startsWith("/$"))
@@ -1582,9 +1642,11 @@ TestCase {
           // a bar widget's options have it, and it names a BarStyle field
           // or a trait the look gives (BarLook.contextTraits), never the
           // style's name: what a style shows is its traits'
+          // (and `$widget.opensOwnPopout`, the widget's own: WidgetInspector)
           if (target.startsWith("$")) {
             const name = target.slice(5);
-            if (!/^\w+Widget\.properties$/.test(where) || !target.startsWith("$bar.") || name === "widgetStyle" || !(name in schema.definitions.BarStyle.properties || name in BarLook.contextTraits))
+            const known = target === "$widget.opensOwnPopout" ? /^\w+Widget\.properties(\.|$)/.test(where) : /^\w+Widget\.properties$/.test(where) && target.startsWith("$bar.") && name !== "widgetStyle" && (name in schema.definitions.BarStyle.properties || name in BarLook.contextTraits);
+            if (!known)
               bad.push(`${where}.${key}: ${target}`);
             continue;
           }

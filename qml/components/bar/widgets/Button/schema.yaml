@@ -47,6 +47,7 @@ settings:
     description: Opens and closes on click.
     x-options: menus
     x-emptyLabel: None
+    x-mustExist: true
     x-showIf: {action: menu}
   command:
     x-scope: commands

@@ -30,7 +30,11 @@ FieldRow {
   // What it reads as, for a format: "" when it has no { } or reads nothing yet
   readonly property string now: root.sample && root.current.indexOf("{") >= 0 && root.unknown.length === 0 ? CustomWidgetData.asText(CustomWidgetData.elementValue(root.sample, root.current)) : ""
 
-  belowShown: root.unknown.length > 0 || root.now !== ""
+  belowShown: root.now !== ""
+  problem: root.unknown.length > 0 ? ({
+      "level": "warning",
+      "text": I18n.tr("{0} isn't in the previewed sample", "{" + root.unknown[0] + "}")
+    }) : null
 
   // Writes the typed text; an empty field removes the key
   function write(text) {
@@ -59,12 +63,12 @@ FieldRow {
 
   below: [
     StyledText {
-      visible: root.unknown.length > 0 || root.now !== ""
+      visible: root.now !== ""
       Layout.fillWidth: true
-      text: root.unknown.length > 0 ? I18n.tr("{0} isn't in the previewed sample", "{" + root.unknown[0] + "}") : I18n.tr("now: {0}", root.now)
+      text: I18n.tr("now: {0}", root.now)
       role: "caption"
-      tone: root.unknown.length > 0 ? "warning" : "muted"
-      textFamily: root.unknown.length > 0 ? Appearance.fontFamily : "monospace"
+      tone: "muted"
+      textFamily: "monospace"
       overflow: "line"
     }
   ]

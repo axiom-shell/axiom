@@ -24,6 +24,8 @@ settings:
     title: Presets
     default: ['30m', '1h', '4h']
     description: e.g. 30m, 1h30m, 4h.
-    x-showIf: {popout.enabled: true, popout.menu: ''}
+    x-showIf: {popout.enabled: true}
+    x-enabledIf: {$widget.opensOwnPopout: {not: false}}
+    x-disabledNote: Off while Open instead names a menu.
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}

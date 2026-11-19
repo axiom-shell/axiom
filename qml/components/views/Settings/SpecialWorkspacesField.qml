@@ -77,6 +77,7 @@ ColumnLayout {
         }
 
         IconEntry {
+          id: iconEntry
           visible: entry.editable
           Layout.fillWidth: true
           Layout.preferredWidth: 1
@@ -130,6 +131,12 @@ ColumnLayout {
             }
           }
         }
+      }
+
+      // Under the whole row, not the icon box
+      FieldProblem {
+        Layout.fillWidth: true
+        problem: entry.editable ? iconEntry.problem : null
       }
     }
   }

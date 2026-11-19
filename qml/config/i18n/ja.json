@@ -4695,6 +4695,9 @@
     "Relative to the Content size in Look & Feel. Off follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.": "",
     "Opens in place of the popout. A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.": "",
     "Can differ from the click menu. A free menu slides out of the bar at this widget; other menus open where they're placed.": "",
-    "A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.": ""
+    "A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.": "",
+    "{0} no longer exists.": "",
+    "{0} isn't enabled.": "",
+    "Off while Open instead names a menu.": ""
   }
 }
