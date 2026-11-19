@@ -1753,45 +1753,28 @@ TestCase {
     ];
   }
 
-  // A meter's trough is sunken with a borderStrong hairline, like a slider's; none where the bar draws it
+  // A meter's trough is Style.trough, plain: no border on the track, the blocks or the bar's trough (tst_Meters has the parity rows)
   function test_meterTroughs(data) {
     harness.configure({
       theme: data.theme
     });
     const level = createTemporaryObject(levelMeterComp, root);
     verify(level);
-    let track = findAll(level, it => it.radius !== undefined && Qt.colorEqual(it.color, Style.surfaceSunken))[0];
-    verify(track, "a sunken trough");
-    compare(track.border.width, Style.hairline);
-    verify(Qt.colorEqual(track.border.color, Style.borderStrong));
-    level.outlined = false;
+    const track = findAll(level, it => it.radius !== undefined && Qt.colorEqual(it.color, Style.trough))[0];
+    verify(track, "a trough");
     compare(track.border.width, 0);
 
     const segments = createTemporaryObject(segmentMeterComp, root);
     verify(segments);
     const blocks = findAll(segments, it => it.lit !== undefined && it.border !== undefined);
     compare(blocks.length, 5);
-    compare(blocks.filter(b => b.border.width === 0).length, 2);
-    compare(blocks.filter(b => b.border.width === Style.hairline).length, 3);
-    verify(Qt.colorEqual(blocks.find(b => !b.lit).border.color, Style.borderStrong));
-    segments.outlined = false;
     compare(blocks.filter(b => b.border.width === 0).length, 5);
-
-    const ring = createTemporaryObject(meterRingComp, root);
-    verify(ring);
-    compare(ring._outlineWidth, Style.hairline);
-    verify(Qt.colorEqual(ring._outlineColor, Style.borderStrong));
-    ring.outlined = false;
-    compare(ring._outlineWidth, 0);
 
     const bar = createTemporaryObject(volumeBarComp, root);
     verify(bar);
-    for (const muted of [true, false]) {
-      bar.isMuted = muted;
-      const trough = findAll(bar, it => it.border !== undefined && it.radius !== undefined && Qt.colorEqual(it.color, Style.surfaceSunken))[0];
-      verify(trough, "a sunken trough, muted " + muted);
-      compare(trough.border.width, Style.hairline);
-    }
+    const trough = findChild(bar, "trough");
+    verify(trough);
+    compare(trough.border.width, 0);
     harness.configure({});
   }
 

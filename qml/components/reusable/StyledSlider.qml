@@ -45,13 +45,13 @@ Item {
 
   Rectangle {
     id: troughRect
+    objectName: "trough"
     anchors.verticalCenter: parent.verticalCenter
     width: parent.width
     height: Widget.px(6)
     radius: Style.radius
-    color: Style.surfaceSunken
-    border.width: Style.hairline
-    border.color: Style.borderStrong
+    color: Style.trough
+    border.width: 0
   }
 
   // The handle travels within the trough, so it never sticks out past

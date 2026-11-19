@@ -9,7 +9,7 @@ How a bar widget with a value, a time or a long text draws it: one set of styles
 ### The styles
 - `label`: the icon and its text (every widget's look before styles).
 - `icon`: the icon alone.
-- `ring` (`PercentageCircle`), `fill` (`LevelMeter`), `segments` (`SegmentMeter`, `segments` of them), `sparkline` (`Sparkline` over the widget's history): a graphic before the icon (drawn without the outline, `outlined: false`), in `IconTextRow`'s `lead` slot; fill, segments and sparkline are `width` long (0: from the bar's font).
+- `ring` (`PercentageCircle`), `fill` (`LevelMeter`), `segments` (`SegmentMeter`, `segments` of them), `sparkline` (`Sparkline` over the widget's history): a graphic before the icon, in `IconTextRow`'s `lead` slot; fill, segments and sparkline are `width` long (0: from the bar's font).
 - `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its background's `LevelFill` in the background's own shape).
 - `ticker`: the text, up to `width` long, scrolling past that and centred in its room while it fits; `stacked`: the text over a caption. Both sit after the icon, where the label goes (`leadAfterIcon`); a vertical bar turns the ticker along it and draws stacked as a label.
 - The ring is drawn on whole pixels, centred exactly on the icon's middle beside it (`IconTextRow.iconMiddle`, passed as `ValueGraphic.middle`), its side's parity following whether that's on a whole or a half pixel. IconTextRow centres the label's letters on the same middle (`TextBandPadding`), so ring, icon and label line up; the ticker centres on its letters the same way.
