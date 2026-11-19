@@ -90,9 +90,9 @@ QtObject {
   onAirplaneChanged: {
     if (!airplane && _airplaneOn) {
       _airplaneOn = false;
-      _airplaneState.save(Object.assign(_airplaneState.load({}), {
+      _airplaneState.update({
         "on": false
-      }));
+      });
     }
   }
 
@@ -128,9 +128,9 @@ QtObject {
     }
     const was = root._airplaneState.load({});
     _airplaneOn = false;
-    root._airplaneState.save(Object.assign({}, was, {
+    root._airplaneState.update({
       "on": false
-    }));
+    });
     const bluetooth = was.bluetooth ?? true;
     setWifiEnabled((was.wifi ?? true) || !bluetooth);
     BluetoothManager.setEnabled(bluetooth);

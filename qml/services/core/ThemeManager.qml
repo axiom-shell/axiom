@@ -432,8 +432,7 @@ QtObject {
   function _saveLook(changes) {
     if (Paths.greeter)
       return;
-    root._look = Object.assign({}, root._look, changes);
-    root._lookState.save(root._look);
+    root._look = root._lookState.update(changes);
   }
 
   // Brings a generated theme in line with the wallpapers shown on any

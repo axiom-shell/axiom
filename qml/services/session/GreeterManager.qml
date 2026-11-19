@@ -242,10 +242,9 @@ QtObject {
       "key": "greeter-outdated",
       "silent": true
     });
-    root._saved = Object.assign({}, root._saved, {
+    root._saved = root._state.update({
       "notifiedHash": hash
     });
-    root._state.save(root._saved);
   }
 
   // --- The bundle ---
