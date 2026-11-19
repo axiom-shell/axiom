@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.components.methods
+import qs.components.reusable
 // Imported (though modules load by URL) so qs scans what they import
 // (scripts/check_structure.py)
 import qs.components.content.parts.calendar // qmllint disable unused-imports
@@ -80,16 +80,11 @@ Item {
     _load();
   }
 
-  // `contentZoom`: see StyledIcon
-  Loader {
+  ZoomLoader {
     id: loader
     width: root.width / root.zoom
     height: root.height / root.zoom
-    scale: root.zoom
-    transformOrigin: Item.TopLeft
-    readonly property real contentZoom: root.zoom
-    readonly property real drawnZoom: loader.contentZoom * TextRender.zoomAt(loader.parent)
-    readonly property var inkHostAbove: InkHost.find(loader.parent)
+    zoom: root.zoom
     onLoaded: {
       item.properties = Qt.binding(() => root.config?.properties || {});
       item.slotRect = Qt.binding(() => root.rect);

@@ -327,7 +327,8 @@ QtObject {
    * (EdgeAttach.modesAt), which a box between pills flips between as its
    * length crosses the clear-of threshold. For what must be fitted
    * without the box's length (a popout's room), as `atIsland` is decided
-   * without it. `p`: layout's pills, centre, detachedPush, stroke, bar.
+   * without it. `between` is always on, as `layout` passes it to
+   * EdgeAttach.place. `p`: layout's pills, centre, detachedPush, stroke, bar.
    */
   function contentFrom(p) {
     const bar = p.bar ?? null;

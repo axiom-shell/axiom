@@ -507,11 +507,11 @@ PopoutWrapperBase {
         return root.screen.width - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.left ? ScreenEdge.Right : ScreenEdge.Left) - mainPopup._barNear;
       return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear;
     }
-    // ...less where the popout attaches (what the box has left, read
-    // imperatively: popoutRoom), and along the bar the span between the
-    // frame lines
-    readonly property real _spanAcross: mainPopup._screenAcross - root.attachAt
-    readonly property real _spanAlong: {
+    // ...less where the popout attaches (`_roomAcross`: what the box has
+    // left, read imperatively by popoutRoom), and along the bar the screen
+    // between its frame lines (`_screenAlong`)
+    readonly property real _roomAcross: mainPopup._screenAcross - root.attachAt
+    readonly property real _screenAlong: {
       if (!root.screen)
         return 0;
       if (root.barConfig.vertical)
@@ -526,7 +526,7 @@ PopoutWrapperBase {
     // out: it follows the box, and so the zoom
     readonly property var contentRoom: {
       const across = mainPopup._screenAcross - placement.contentFromBar - surface.contentInset * 2;
-      const along = mainPopup._spanAlong - surface.contentInset * 2;
+      const along = mainPopup._screenAlong - surface.contentInset * 2;
       return {
         "width": root.barConfig.vertical ? across : along,
         "height": root.barConfig.vertical ? along : across
@@ -537,7 +537,7 @@ PopoutWrapperBase {
     // content's px (it's drawn at the zoom). Content that grows on its own
     // reads it through its window: StyledComboEntry opens its list inline
     // here, no taller than this
-    readonly property real popoutRoom: (root.barConfig.vertical ? mainPopup._spanAlong - root.targetBoxHeight : mainPopup._spanAcross - root._boxAcross) / root.zoom
+    readonly property real popoutRoom: (root.barConfig.vertical ? mainPopup._screenAlong - root.targetBoxHeight : mainPopup._roomAcross - root._boxAcross) / root.zoom
     // The surface in this window: where it is in the bar's, moved by where
     // the bar is on the screen
     readonly property real surfaceX: barOrigin.x - windowOrigin.x + barX
@@ -578,7 +578,7 @@ PopoutWrapperBase {
       anchors.fill: parent
       clip: true
 
-      Loader {
+      ZoomLoader {
         id: loader
         // Merged (a pill bar showing no pills), the content starts past
         // where the pills would be
@@ -587,14 +587,10 @@ PopoutWrapperBase {
         // contentStart), however far the box grows past it either side
         readonly property real along: surface.contentInset + root.place.contentStart - root.drawnBoxStart
         // Laid out at its own size and drawn zoomed from its top left,
-        // so the drawn pair places it (`contentZoom`: see StyledIcon)
+        // so the drawn pair places it
         width: mainPopup.contentWidth
         height: mainPopup.contentHeight
-        scale: root.zoom
-        transformOrigin: Item.TopLeft
-        readonly property real contentZoom: root.zoom
-        readonly property real drawnZoom: loader.contentZoom * TextRender.zoomAt(loader.parent)
-        readonly property var inkHostAbove: InkHost.find(loader.parent)
+        zoom: root.zoom
         x: root.barConfig.left ? barSide : root.barConfig.right ? clipBox.width - barSide - mainPopup.drawnWidth : along
         y: root.barConfig.top ? barSide : root.barConfig.bottom ? clipBox.height - barSide - mainPopup.drawnHeight : along
         opacity: still.contentOpacity

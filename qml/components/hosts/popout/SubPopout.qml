@@ -392,18 +392,13 @@ Item {
           anchors.fill: parent
           clip: true
 
-          Loader {
+          ZoomLoader {
             id: loader
             x: surface.contentInset
             y: surface.contentInset + root.place.contentStart - root.shownBoxStart
             width: submenuPopup.contentWidth
             height: submenuPopup.contentHeight
-            scale: outer.zoom
-            transformOrigin: Item.TopLeft
-            // `contentZoom`: see StyledIcon
-            readonly property real contentZoom: outer.zoom
-            readonly property real drawnZoom: loader.contentZoom * TextRender.zoomAt(loader.parent)
-            readonly property var inkHostAbove: InkHost.find(loader.parent)
+            zoom: outer.zoom
             opacity: still.contentOpacity
             active: root.occupied
             asynchronous: false
