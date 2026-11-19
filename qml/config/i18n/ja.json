@@ -4680,7 +4680,6 @@
     "Modules shrunk to {0} % to fit {1}: move them closer together or lower Card size": "",
     "Relative to the Content size in Look & Feel. Auto follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.": "",
     "Text and controls outside the bars. The dock's icons are their own px.": "",
-    "Relative to the card size in Look & Feel. Auto follows it.": "",
     "Relative to the Content size in Look & Feel. Auto follows it.": "",
     "Relative to the Content size in Look & Feel. Auto follows it. The whole surface zooms with it.": "",
     "Text and controls grow and shrink with the cards.": "",
@@ -4697,6 +4696,7 @@
     "Cards {0} px": "",
     "Shrunk to {0}% to fit {1}": "",
     "Content at {0}% ({1}% × {2}% here × {3}% this module)": "",
-    "Text {0} px: {1} px × {2}/{3} thickness × {4}%": ""
+    "Text {0} px: {1} px × {2}/{3} thickness × {4}%": "",
+    "Relative to the Card size in Look & Feel. Auto follows it.": ""
   }
 }

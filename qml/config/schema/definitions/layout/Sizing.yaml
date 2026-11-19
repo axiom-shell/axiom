@@ -1,4 +1,4 @@
-# The Sizing definition (#/definitions/Sizing).
+# The Sizing definition (#/definitions/Sizing): a surface's own Card size and Content size (a menu, a screen layout, a custom widget's popout), each a % of Look & Feel's, the content following the cards while `linked`.
 
 x-inline: true
 type: object
@@ -6,31 +6,10 @@ title: Size
 x-group: Size
 additionalProperties: false
 properties:
-  cardSize:
-    x-link: {setting: Interface.cardSize}
-    type: integer
-    x-control: stepper
-    x-auto: {value: null, start: 100}
-    title: Card size
-    default: null
-    minimum: 50
-    maximum: 200
-    x-unit: '%'
-    description: Relative to the card size in Look & Feel. Auto follows it.
+  cardSize: {$ref: '#/definitions/CardSize'}
   linked:
     type: boolean
     title: Content grows with cards
     default: true
     description: Text and controls grow and shrink with the cards.
-  contentSize:
-    x-link: {setting: Interface.contentSize}
-    type: integer
-    x-control: stepper
-    x-auto: {value: null, start: 100}
-    title: Content size
-    default: null
-    minimum: 50
-    maximum: 200
-    x-unit: '%'
-    x-showIf: {linked: false}
-    description: Relative to the Content size in Look & Feel. Auto follows it.
+  contentSize: {$ref: '#/definitions/ContentSize', x-showIf: {linked: false}}

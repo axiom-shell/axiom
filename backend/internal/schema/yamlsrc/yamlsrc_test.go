@@ -245,24 +245,28 @@ func TestViewSizing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defs := root.Value("definitions").(*jsonx.Object)
-	options := defs.Value("OverlayView").(*jsonx.Object).Value("oneOf").(*jsonx.Array)
+	def := func(name string) *jsonx.Object {
+		return root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
+	}
+	props := func(o *jsonx.Object) *jsonx.Object {
+		return o.Value("properties").(*jsonx.Object)
+	}
+	options := def("OverlayView").Value("oneOf").(*jsonx.Array)
 	if len(options.Items) == 0 {
 		t.Fatal("OverlayView has no options")
 	}
 	for _, option := range options.Items {
 		name := strings.TrimPrefix(option.(*jsonx.Object).Value("$ref").(string), "#/definitions/")
-		view := defs.Value(name).(*jsonx.Object)
-		sizing, _ := view.Value("properties").(*jsonx.Object).Value("sizing").(*jsonx.Object)
+		sizing, _ := props(def(name)).Value("sizing").(*jsonx.Object)
 		if sizing == nil {
 			t.Errorf("%s has no sizing", name)
 			continue
 		}
 		var got []string
-		for _, key := range sizing.Value("properties").(*jsonx.Object).Keys() {
-			field := sizing.Value("properties").(*jsonx.Object).Value(key).(*jsonx.Object)
-			if max, _ := field.Value("maximum").(float64); max != 100 && key != "linked" {
-				t.Errorf("%s sizing.%s maximum = %v, want 100", name, key, max)
+		for _, key := range props(sizing).Keys() {
+			field := props(sizing).Value(key).(*jsonx.Object)
+			if limit, _ := field.Value("maximum").(float64); field.Value("type") != "boolean" && limit != 100 {
+				t.Errorf("%s sizing.%s maximum = %v, want 100", name, key, limit)
 			}
 			got = append(got, key)
 		}
@@ -275,9 +279,18 @@ func TestViewSizing(t *testing.T) {
 		}
 	}
 	// A Custom page's layout has none of its own: the page's sizing is it
-	layout := defs.Value("CustomOverlayView").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("layout").(*jsonx.Object)
-	if layout.Value("properties").(*jsonx.Object).Has("sizing") {
+	if props(props(def("CustomOverlayView")).Value("layout").(*jsonx.Object)).Has("sizing") {
 		t.Error("a Custom page's layout has its own sizing")
+	}
+	// A field definition expands with its sibling keys: the Card size keeps
+	// its link and its range, the page's override only lowers the maximum
+	card := props(props(def("Menu")).Value("layout").(*jsonx.Object))
+	cardSize := props(card.Value("sizing").(*jsonx.Object)).Value("cardSize").(*jsonx.Object)
+	if got, want := string(jsonx.MarshalCompact(cardSize.Value("x-link"))), `{"setting":"Interface.cardSize"}`; got != want {
+		t.Errorf("Sizing's cardSize links %s, want %s", got, want)
+	}
+	if limit, _ := cardSize.Value("maximum").(float64); limit != 200 {
+		t.Errorf("Sizing's cardSize maximum = %v, want 200", limit)
 	}
 }
 
@@ -290,18 +303,22 @@ func TestPopoutSizing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defs := root.Value("definitions").(*jsonx.Object)
+	def := func(name string) *jsonx.Object {
+		return root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
+	}
+	props := func(o *jsonx.Object) *jsonx.Object {
+		return o.Value("properties").(*jsonx.Object)
+	}
 	sizing := func(name string) *jsonx.Object {
-		widget := defs.Value(name).(*jsonx.Object)
-		popout := widget.Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("popout").(*jsonx.Object)
-		got, _ := popout.Value("properties").(*jsonx.Object).Value("sizing").(*jsonx.Object)
+		popout := props(props(props(def(name)))).Value("popout").(*jsonx.Object)
+		got, _ := props(popout).Value("sizing").(*jsonx.Object)
 		if got == nil {
 			t.Fatalf("%s's popout has no sizing", name)
 		}
 		return got
 	}
 	keys := func(sizing *jsonx.Object) []string {
-		return sizing.Value("properties").(*jsonx.Object).Keys()
+		return props(sizing).Keys()
 	}
 	if got, want := keys(sizing("VolumeWidget")), []string{"contentSize"}; !slices.Equal(got, want) {
 		t.Errorf("Volume's popout sizing = %v, want %v", got, want)

@@ -7,14 +7,4 @@ title: Size
 x-group: Size
 additionalProperties: false
 properties:
-  contentSize:
-    x-link: {setting: Interface.contentSize}
-    type: integer
-    x-control: stepper
-    x-auto: {value: null, start: 100}
-    title: Content size
-    default: null
-    minimum: 50
-    maximum: 200
-    x-unit: '%'
-    description: Relative to the Content size in Look & Feel. Auto follows it. The whole surface zooms with it.
+  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Auto follows it. The whole surface zooms with it.'}
