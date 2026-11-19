@@ -50,7 +50,7 @@ const greeterSocket = "axiom.sock"
 // lock screen, compositor layer or Wayland connection: it answers only
 // what the greeter asks, its commands (exec.*, watched ones pushed as
 // exec.outputs), lookups (tz.*, net.addresses), the weather topic (its
-// Weather module), the lockKeys topic (its password field's Caps Lock
+// Weather module), the wallpaper's tone (theme.backdrop), the lockKeys topic (its password field's Caps Lock
 // warning) and the compositor's socket (hypr.request, niri.*), and only
 // to that quickshell. Greeter mode reads its
 // config once and writes nothing (docs/dev/features/greeter-runtime.md).
@@ -150,7 +150,7 @@ func greeterProfiles(ctx context.Context, getenv func(string) string, log *slog.
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands (watched ones too),
 // run with its own environment, its files (its state), lookups, the
-// weather, the lock keys (the password field's Caps Lock hint) and the
+// weather, the wallpaper's tone (theme.backdrop, its own cache), the lock keys (the password field's Caps Lock hint) and the
 // compositor's socket (Hyprland's requests, niri's requests and event
 // stream on niriStreams, nil when not under niri), and greeter.compositor,
 // which hands profiles the bundle's monitor profiles on Hyprland and sway. Anything else is unavailable, as it was with
@@ -187,6 +187,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), niriStreams)
 	outputHandlers(reg, o.Getenv)
 	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema }, profiles)
+	backdropMethods(reg, newBackdropPart())
 	topics.Register(reg, hub, weather.Source(weather.Options{Log: o.Log}))
 	topics.Register(reg, hub, lockkeys.Source(lockkeys.Options{}))
 	return reg

@@ -43,10 +43,15 @@ func (d *Daemon) themeMethods(reg *rpc.Registry) {
 		files, err := theme.Generate(p.Wallpaper, d.dirs.GeneratedThemes, time.Now())
 		return ThemeGenerateResult{Files: files}, err
 	})
-	// the wallpaper as a grid of luminance levels (package backdrop), for
-	// what is readable over it
+	backdropMethods(reg, d.backdrop)
+}
+
+// backdropMethods: the wallpaper as a grid of luminance levels (package
+// backdrop), for what is readable over it. The session daemon and the
+// greeter's axiom each serve it from their own part.
+func backdropMethods(reg *rpc.Registry, b *backdropPart) {
 	rpc.Handle(reg, "theme.backdrop", func(ctx context.Context, c *rpc.Conn, p ThemeBackdropRequest) (backdrop.Grid, error) {
-		return d.backdrop.grid(ctx, p.Wallpaper)
+		return b.grid(ctx, p.Wallpaper)
 	})
 }
 

@@ -2,6 +2,9 @@ package daemon
 
 import (
 	"context"
+	img2d "image"
+	"image/color"
+	"image/png"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,6 +16,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
+	"github.com/axiom-shell/axiom/backend/internal/theme/backdrop"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
@@ -108,10 +112,63 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 func TestGreeterServesWeather(t *testing.T) {
 	t.Parallel()
 	reg := greeterRegistry(GreeterOptions{Getenv: func(string) string { return "" }}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}), nil, func(any) {})
-	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "lockKeys.subscribe", "lockKeys.unsubscribe", "file.write", "hypr.request", "niri.request", "niri.command", "niri.watch"} {
+	for _, m := range []string{"theme.backdrop", "weather.subscribe", "weather.unsubscribe", "weather.refresh", "lockKeys.subscribe", "lockKeys.unsubscribe", "file.write", "hypr.request", "niri.request", "niri.command", "niri.watch"} {
 		if _, _, ok := reg.Types(m); !ok {
 			t.Errorf("no %s", m)
 		}
+	}
+}
+
+// The greeter's axiom answers theme.backdrop for the login screen's shade:
+// the grid of a wallpaper, NotFound for a missing one.
+func TestGreeterServesBackdrop(t *testing.T) {
+	t.Parallel()
+	img := img2d.NewRGBA(img2d.Rect(0, 0, 4, 2))
+	for x := 0; x < 4; x++ {
+		for y := 0; y < 2; y++ {
+			img.Set(x, y, color.RGBA{R: uint8(60 * x), G: uint8(60 * x), B: uint8(60 * x), A: 255})
+		}
+	}
+	dir := t.TempDir()
+	file := filepath.Join(dir, "w.png")
+	f, err := os.Create(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+
+	path := filepath.Join(shortDir(t), "s.sock")
+	ln, err := rpc.Listen(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
+	reg := greeterRegistry(o, os.Environ(), func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{Context: ctx}), files.New(files.Options{}), nil, func(any) {})
+	go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
+	conn, err := rpc.Dial(ctx, path, rpc.NewRegistry(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { conn.Close() })
+	var hello HelloResult
+	if err := conn.Call(ctx, "daemon.hello", HelloParams{Protocol: buildinfo.Protocol(), Client: "shell", SchemaHash: "abc"}, &hello); err != nil {
+		t.Fatal(err)
+	}
+	var grid backdrop.Grid
+	if err := conn.Call(ctx, "theme.backdrop", ThemeBackdropRequest{Wallpaper: file}, &grid); err != nil {
+		t.Fatal(err)
+	}
+	if n := grid.Cols * grid.Rows; n == 0 || len(grid.Mean) != n {
+		t.Errorf("grid %dx%d with %d means", grid.Cols, grid.Rows, len(grid.Mean))
+	}
+	err = conn.Call(ctx, "theme.backdrop", ThemeBackdropRequest{Wallpaper: filepath.Join(dir, "missing.png")}, &grid)
+	if axerr.KindOf(err) != axerr.NotFound {
+		t.Errorf("a missing wallpaper: %v, want not_found", err)
 	}
 }
 
