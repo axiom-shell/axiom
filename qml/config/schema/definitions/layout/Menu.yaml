@@ -87,13 +87,6 @@ properties:
     enum: [content, edge]
     x-enumLabels: {content: Fit, edge: Full}
     x-showIf: {placement: edge}
-  popoutAtWidget:
-    x-group: Placement
-    type: boolean
-    title: At its widget
-    default: false
-    description: Opened as a bar widget's popout, it opens centered on that widget.
-    x-showIf: {placement: edge, length: content}
   background:
     x-group: Placement
     type: string

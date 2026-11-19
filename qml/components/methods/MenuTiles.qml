@@ -14,10 +14,11 @@ QtObject {
     return menu?.background === "none" && (menu.placement === "edge" || menu.placement === "free");
   }
 
-  // Whether an edge menu is held off its edge: `detached`, or tiled (a
-  // tile can't grow out of the edge)
+  // Whether a menu is held off its edge: an edge menu's `detached`, or
+  // any tiled one (a tile can't grow out of the edge, nor a free menu
+  // opened at its widget join the bar's border)
   function detached(menu) {
-    return menu?.placement === "edge" && (!!menu.detached || root.tiled(menu));
+    return (menu?.placement === "edge" && !!menu.detached) || root.tiled(menu);
   }
 
   // The cards as shown, in the scrolling view's coordinates: each of

@@ -179,11 +179,15 @@ QtObject {
   //                null
   //   opened       openedOn()'s answer as it opened, "" until decided
   //                (closed, or asking where the cursor is)
+  //   atWidget     shown at a bar widget by the edge host: the free host
+  //                shows nothing (it hides with its own animation)
   //   screens      the connected screens' names
   //   configured   its `screen` setting's screen
   // A popped-out menu stays on the screen it popped out on, a free menu
   // on the one it opened on; either gone (unplugged), its configured one
   function shownOn(p) {
+    if (p.atWidget)
+      return "";
     const wanted = p.popOut ? p.popOut.screen : (p.opened ?? "");
     if (wanted === "")
       return "";
@@ -193,13 +197,43 @@ QtObject {
   // Which hosts a menu has loaded (surfaces/menu/MenuHosts): { edge,
   // strip, free }. Its placement's, but a popped-out edge menu shows in
   // the free host; its edge host stays until the free one has shown
-  // (`freeShown`), so the box hands over with no gap
-  function hosts(placement, poppedOut, freeShown) {
+  // (`freeShown`), so the box hands over with no gap. A free menu at a
+  // bar widget (`atWidget`) shows in the edge host, and the other way
+  // round: its free host stays until its box has gone (`freeShown`)
+  function hosts(placement, poppedOut, freeShown, atWidget) {
     const popped = placement === "edge" && !!poppedOut;
+    const free = placement === "free";
     return {
-      "edge": placement === "edge" && (!popped || !freeShown),
+      "edge": (placement === "edge" && (!popped || !freeShown)) || (free && !!atWidget && !freeShown),
       "strip": placement === "strip",
-      "free": placement === "free" || popped
+      "free": (free && (!atWidget || freeShown)) || popped
     };
+  }
+
+  // What MenuManager.open does with a request for a menu: "open" (take
+  // it from the request), "engage" (it comes forward where it is) or
+  // "none" (leave it). `p`:
+  //   poppedOut    the menu is popped out (it stays where it is)
+  //   free         a free menu
+  //   open         already open
+  //   held         pinned or held open (MenuManager.isHeld)
+  //   claimKind    how the request ranks: "bar" (a widget's popout) or
+  //                "menu" (MenuManager.claimKinds)
+  //   atWidget     open at a bar widget now (MenuManager.widgetAnchor)
+  //   sameAnchor   the request is from that widget
+  // A free menu asked for by a widget (hover) goes to it: from its own
+  // window or another widget, unless pinned in its own window (it stays
+  // there); asked for again by the widget it's at, it comes forward.
+  // Asked for any other way while at a widget, it stays there.
+  function openAction(p) {
+    if (p.poppedOut)
+      return "engage";
+    if (!p.free || !p.open)
+      return "open";
+    if (p.claimKind !== "bar")
+      return p.atWidget ? "engage" : "open";
+    if (p.held && !p.atWidget)
+      return "none";
+    return p.sameAnchor ? "engage" : "open";
   }
 }

@@ -49,14 +49,10 @@ Loader {
   // typed text
   readonly property string refKind: SchemaLayout.refKind(fieldSchema, root._valueOf)
   readonly property bool isColor: fieldSchema["x-options"] === "colors"
-  // `x-enumShowIf` hides options whose condition doesn't hold, and
-  // `x-menuPlacements` the menus of other placements (the current value
-  // stays listed)
+  // `x-enumShowIf` hides options whose condition doesn't hold (the current
+  // value stays listed)
   readonly property var options: {
-    let all = SettingsManager.optionsFor(fieldSchema);
-    const placements = fieldSchema["x-menuPlacements"];
-    if (all && placements)
-      all = all.filter(value => value === "" || value === root.current || MenusConfig.offeredIn(value, placements));
+    const all = SettingsManager.optionsFor(fieldSchema);
     const conditions = fieldSchema["x-enumShowIf"];
     if (!all || !conditions)
       return all;

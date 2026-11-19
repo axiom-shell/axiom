@@ -13,7 +13,8 @@ import qs.components.hosts.popout
 // A free menu (placement `free`): a box of its own on no edge, in a
 // full-screen Top-layer window (axiom-menu) that never resizes, its input
 // masked to the box. It opens where FreeMenuPlace puts it: at the bar
-// widget that opened it as its popout, else at its `freeAnchor` (the
+// widget that opened it (a Button's click; as a widget's popout it is the
+// edge host's, FloatingEdgeMenu), else at its `freeAnchor` (the
 // free area's centre, the cursor, or a point), clamped clear of the bars;
 // and comes in as its `animation` says (a fade, a scale, or a slide from
 // its widget's side or the nearest screen edge). The box is a detached

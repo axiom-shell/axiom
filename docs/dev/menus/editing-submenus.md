@@ -45,8 +45,8 @@ How menus are edited on the Layouts page (draft, field groups, previewing, opene
   - It sets the field in the bar draft (`BarManager.updateWidgetProperty`, undoable; a nested field as its whole object), then opens the menu in Layouts as `editOpenedBy` does (`followLink`).
   - So the bar draft never points at an unsaved menu.
 - **The pickers** (`x-options: menus`: a widget's `popout.menu`, a Button's click `menu`, a Submenu module's `menu`) label each menu by its name and placement ("Tools · Free", `SchemaField.optionLabels` with `MenusConfig.placementLabels`); the stored value is the id.
-  - A widget's `popout.menu` offers only `edge` and `free` menus (`x-menuPlacements: [edge, free]`, `MenusConfig.offeredIn`): a strip pushes the bars and windows inwards, so opened by hovering a widget it moves the bars as the pointer rests ("Bars must not move/redraw when making an action", review round 1), and on its edge takes the widget from under the pointer (`popoutMenuOf` would still open one). A menu it already names stays listed.
-  - A Button's click `menu` offers every placement: a click toggles a strip as a bind does. A Submenu module's `menu` too: it shows any menu's modules in its submenu.
+  - Every picker offers every placement. A widget's `popout.menu` naming a strip menu opens it as placed (a strip pushes the bars inwards: the user's choice); a free menu slides out at the widget.
+  - A Button's click `menu` toggles a menu as a bind does; a Submenu module's `menu` shows any menu's modules in its submenu.
 - The links are `SettingsLink`s with a `run` function; a form draws one under a field when its `fieldAction` hook (`SchemaPropertiesForm`) gives one.
 
 ### The canvas never moves modules on screen

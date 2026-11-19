@@ -3459,7 +3459,6 @@
     "New menu…": "",
     "Closes the menu, unpinning it if it's pinned.": "",
     "Close button": "",
-    "A menu to open in place of the popout.": "",
     "No menus": "",
     "No menus yet: add one with New menu.": "",
     "Edit the overlay pages and menus": "",
@@ -3603,7 +3602,6 @@
     "Empty: none.": "",
     "Fill, pill: track position. Ticker: scrolls the title. Stacked: title over artist.": "",
     "Hide with one layout": "",
-    "Can differ from the click menu.": "",
     "Stacked: the count over the AUR's share.": "",
     "Passes through this halfway.": "",
     "Hidden when nothing starts within this time.": "",
@@ -3639,7 +3637,6 @@
     "Room it keeps when the bar is crowded.": "",
     "Not shown as using the mic, screen or camera. Comma-separated.": "",
     "Code": "",
-    "At its widget": "",
     "Off: opens on click.": "",
     "Adobe RGB": "",
     "Content": "",
@@ -3662,7 +3659,6 @@
     "Holding values and the portfolio total.": "",
     "New track": "",
     "Bind or script opens it here; a bar widget's opens at the widget.": "",
-    "Opened as a bar widget's popout, it opens centered on that widget.": "",
     "Day band": "",
     "Off: only axiom's surfaces blur.": "",
     "0: at the window border. 50: centered.": "",
@@ -4696,6 +4692,9 @@
     "Text and controls outside the bars. The dock's icons keep their own size.": "",
     "Relative to the Content size in Look & Feel. Off follows it. The whole surface zooms with it.": "",
     "Relative to the Card size in Look & Feel. Off follows it.": "",
-    "Relative to the Content size in Look & Feel. Off follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.": ""
+    "Relative to the Content size in Look & Feel. Off follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.": "",
+    "Opens in place of the popout. A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.": "",
+    "Can differ from the click menu. A free menu slides out of the bar at this widget; other menus open where they're placed.": "",
+    "A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.": ""
   }
 }

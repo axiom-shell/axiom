@@ -6,6 +6,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
+import qs.components.hosts.popout
 
 // One menu from MenusConfig, on its screen, at its placement. Only the
 // host in use is created (FreeMenuPlace.hosts): a popped-out edge menu
@@ -14,7 +15,11 @@ import qs.components.methods
 // screen; only the one on the screen the menu opened on shows it
 // (FreeMenuPlace.openedOn, decided as it opens: its widget's screen, the
 // cursor's for `at: cursor`, else its `screen`), so an open menu never
-// moves to another screen.
+// moves to another screen. A free menu opened as a bar widget's popout
+// shows in the edge host instead, out of that widget's bar edge on its
+// screen (`_openerRect`); the free host's box goes first when it was open
+// there, and it moves to another widget the same way (the box out at the
+// first, in at the next).
 Scope {
   id: root
 
@@ -56,7 +61,34 @@ Scope {
     if (root._freeShown && root.poppedOut)
       root._handedOver = true;
   }
-  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root._handedOver)
+  // ---- At a bar widget ----
+  // The widget a free menu is open at as its popout (PopoutAnchor), else
+  // null; the one the edge host's box comes from, which follows it only
+  // while that box is closed (the box in place never moves)
+  readonly property var _wantedAnchor: MenuManager.widgetAnchor(root.menuId)
+  readonly property var _edgeHost: edgeLoader.item
+  readonly property bool _edgeOccupied: root._edgeHost?.occupied ?? false
+  property ClosedLatch _openerAnchor: ClosedLatch {
+    source: root._wantedAnchor
+    closed: !root._edgeOccupied
+    // The widget's place as it opens (PopoutAnchor.screenRect: its bar's
+    // edge and screen with it), taken here, not bound: cleared first, so a
+    // new screen gets a new window; null once the widget is gone
+    onValueChanged: {
+      root._openerRect = null;
+      const anchor = value;
+      if (anchor)
+        Qt.callLater(() => {
+          if (anchor === root._openerAnchor.value)
+            root._openerRect = anchor.screenRect?.() ?? null;
+        });
+    }
+  }
+  property var _openerRect: null
+  readonly property bool _atWidget: root._wantedAnchor !== null || root._openerRect !== null
+  // The edge host shows it while it is still the widget wanted
+  readonly property bool _edgeShows: root._openerRect !== null && root._wantedAnchor === root._openerAnchor.value
+  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeShown, root._atWidget)
 
   // ---- The free host's screen ----
   // Where a free menu opened (FreeMenuPlace.openedOn), "" while closed or
@@ -108,16 +140,21 @@ Scope {
   readonly property string freeScreen: FreeMenuPlace.shownOn({
     "popOut": MenuManager.poppedOut[root.menuId] ?? null,
     "opened": root._openedOn,
+    "atWidget": root._atWidget,
     "screens": General.outputs.map(s => s.name),
     "configured": root.screen?.name ?? ""
   })
 
+  // (a free menu's edge host waits for its widget's place: its screen)
   LazyLoader {
-    active: !!root._live && !!root.screen && root.hosts.edge
+    id: edgeLoader
+    active: !!root._live && !!root.screen && root.hosts.edge && (root.menu.placement !== "free" || root._openerRect !== null)
 
     FloatingEdgeMenu {
       menu: root.menu
-      screen: root.screen
+      screen: root._openerRect?.screen ?? root.screen
+      openerRect: root._openerRect
+      shows: root._openerRect === null || root._edgeShows
     }
   }
 

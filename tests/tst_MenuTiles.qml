@@ -56,6 +56,16 @@ TestCase {
       "background": "none",
       "detached": true
     }), "a strip is never held off");
+    verify(MenuTiles.detached({
+      "placement": "free",
+      "background": "none",
+      "detached": false
+    }), "a tiled free menu is held");
+    verify(!MenuTiles.detached({
+      "placement": "free",
+      "background": "panel",
+      "detached": true
+    }), "a free menu's stale `detached` is ignored");
   }
 
   function test_shown_cards() {

@@ -339,6 +339,29 @@ var all = []Step{
 	// v114: the overlay's Module size (Overlay.moduleScale) moved onto each of
 	// its pages' sizing (v114.go)
 	{Version: 114, Run: v114},
+	// v115: a menu's At its widget (popoutAtWidget) is gone: a free menu
+	// opened as a widget's popout always opens at that widget, and an edge
+	// or strip menu always opens where it is placed
+	{Version: 115, Run: func(cfg *jsonx.Object) []string {
+		root := object(cfg, "Menus")
+		if root == nil {
+			return nil
+		}
+		items, _ := root.Value("items").(*jsonx.Array)
+		if items == nil {
+			return nil
+		}
+		changed := 0
+		for _, item := range items.Items {
+			if entry, _ := item.(*jsonx.Object); entry != nil && entry.Delete("popoutAtWidget") {
+				changed++
+			}
+		}
+		if changed == 0 {
+			return nil
+		}
+		return []string{fmt.Sprintf("%d menu(s): popoutAtWidget removed (a free menu opens at its widget; other menus open where placed)", changed)}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

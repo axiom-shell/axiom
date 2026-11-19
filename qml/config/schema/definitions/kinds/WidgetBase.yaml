@@ -18,9 +18,8 @@ x-parts:
             title: Open instead
             default: ''
             x-options: menus
-            x-menuPlacements: [edge, free]
             x-emptyLabel: Its own popout
-            description: A menu to open in place of the popout.
+            description: Opens in place of the popout. A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.
             x-showIf: {enabled: true}
           sizing: {$ref: '#/definitions/PopoutSizing', x-showIf: {enabled: true, menu: ''}}
     menu:
@@ -38,8 +37,8 @@ x-parts:
             title: Menu
             default: ''
             x-options: menus
-            x-menuPlacements: [edge, free]
             x-emptyLabel: None
+            description: A free menu slides out of the bar at this widget, ignoring its Opens at and Monitors; other menus open where they're placed.
             x-showIf: {enabled: true}
     plain:
       popout:

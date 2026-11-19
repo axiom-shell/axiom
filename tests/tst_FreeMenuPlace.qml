@@ -371,6 +371,76 @@ TestCase {
       "strip": false,
       "free": true
     });
+    compare(FreeMenuPlace.hosts("free", false, false, true), {
+      "edge": true,
+      "strip": false,
+      "free": false
+    }, "free at a widget: the edge host alone");
+    compare(FreeMenuPlace.hosts("free", false, true, true), {
+      "edge": false,
+      "strip": false,
+      "free": true
+    }, "free at a widget, its own window still shown: the free host until its box has gone");
+    compare(FreeMenuPlace.hosts("edge", false, false, true), {
+      "edge": true,
+      "strip": false,
+      "free": false
+    }, "an edge menu is unaffected by atWidget");
+    compare(FreeMenuPlace.hosts("strip", false, false, true), {
+      "edge": false,
+      "strip": true,
+      "free": false
+    }, "a strip is unaffected by atWidget");
+  }
+
+  function test_openAction() {
+    const base = {
+      "poppedOut": false,
+      "free": true,
+      "open": true,
+      "held": false,
+      "claimKind": "bar",
+      "atWidget": false,
+      "sameAnchor": false
+    };
+    const act = over => FreeMenuPlace.openAction(Object.assign({}, base, over));
+    compare(act({
+      "free": false
+    }), "open", "an edge menu: as it was");
+    compare(act({
+      "poppedOut": true,
+      "free": false
+    }), "engage", "popped out: stays, brought forward");
+    compare(act({
+      "open": false
+    }), "open", "closed");
+    compare(act({}), "open", "open in its own window, a widget asks: handover");
+    compare(act({
+      "held": true
+    }), "none", "pinned in its own window: left there");
+    compare(act({
+      "atWidget": true,
+      "sameAnchor": true
+    }), "engage", "at that widget, it asks again");
+    compare(act({
+      "atWidget": true
+    }), "open", "at another widget: moves");
+    compare(act({
+      "held": true,
+      "atWidget": true
+    }), "open", "pinned at a widget, another asks: moves");
+    compare(act({
+      "held": true,
+      "atWidget": true,
+      "sameAnchor": true
+    }), "engage", "pinned at a widget, it asks again");
+    compare(act({
+      "claimKind": "menu",
+      "atWidget": true
+    }), "engage", "at a widget, opened another way: stays");
+    compare(act({
+      "claimKind": "menu"
+    }), "open", "in its own window, opened another way");
   }
 
   // Two screens side by side: DP-1 at 0,0 and HDMI-A-1 to its right
@@ -461,5 +531,12 @@ TestCase {
       "screens": names,
       "configured": "DP-1"
     }), "HDMI-A-1", "popped out: where it popped out");
+    compare(FreeMenuPlace.shownOn({
+      "popOut": null,
+      "opened": "HDMI-A-1",
+      "atWidget": true,
+      "screens": names,
+      "configured": "DP-1"
+    }), "", "at a widget: the free host shows nothing");
   }
 }

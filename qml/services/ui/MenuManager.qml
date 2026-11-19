@@ -277,13 +277,36 @@ Singleton {
     return false;
   }
 
+  // The widget's anchor (PopoutAnchor) a free menu is open at, as its
+  // popout (claimKinds "bar"), else null: it opens there in the edge host
+  // (MenuHosts)
+  function widgetAnchor(id) {
+    if (!root.isOpen(id) || !MenusConfig.isFree(MenusConfig.menuById(id)) || root.claimKinds[id] !== "bar")
+      return null;
+    return root.anchors[id] ?? null;
+  }
+
   // `kind`: how it ranks (claimKinds), "menu" when left out
-  // A popped-out menu stays where it is (no second copy), only brought
-  // forward if a popout covered it
+  // What it does is FreeMenuPlace.openAction's: a popped-out menu stays
+  // where it is (no second copy), only brought forward if a popout covered
+  // it; a free menu goes to the widget that asks as its popout
   function open(id, anchor, kind) {
     if (!root._exists(id))
       return;
-    if (root.isPoppedOut(id)) {
+    const at = root.widgetAnchor(id);
+    const free = MenusConfig.isFree(MenusConfig.menuById(id));
+    const action = FreeMenuPlace.openAction({
+      "poppedOut": root.isPoppedOut(id),
+      "free": free,
+      "open": root.isOpen(id),
+      "held": root.isHeld(id),
+      "claimKind": kind ?? "menu",
+      "atWidget": at !== null,
+      "sameAnchor": at !== null && at === (anchor ?? null)
+    });
+    if (action === "none")
+      return;
+    if (action === "engage") {
       root.engageRequested(id);
       return;
     }
@@ -293,7 +316,9 @@ Singleton {
     const kinds = Object.assign({}, root.claimKinds);
     kinds[id] = kind ?? "menu";
     root.claimKinds = kinds;
-    if (root.isOpen(id))
+    // A free menu moving to a widget (from its own window or another
+    // widget) isn't brought forward: its host is closing
+    if (root.isOpen(id) && !(free && kind === "bar"))
       root.engageRequested(id);
     _run.open = root._set(root.openMenus, id, true);
   }

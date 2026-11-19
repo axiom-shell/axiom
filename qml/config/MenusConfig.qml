@@ -18,10 +18,12 @@ QtObject {
   // A menu's own fields in groups (`x-group`), for the menu editor
   readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.Menu, ["layout.modules"])
 
-  // A menu with no edge of its own (`placement` free): it opens in a window
-  // of its own (surfaces/menu/FreeMenu) at the bar widget that opens
-  // it as its popout or at its `freeAnchor`, or beside another menu from
-  // a Submenu module there (content/Submenu/MenuSubmenu)
+  // A menu with no edge of its own (`placement` free): opened as a bar
+  // widget's popout it slides out of that widget's bar edge (the edge
+  // host, surfaces/menu/FloatingEdgeMenu), else it opens in a window of
+  // its own (surfaces/menu/FreeMenu) at its `freeAnchor` (or a Button's
+  // widget), or beside another menu from a Submenu module there
+  // (content/Submenu/MenuSubmenu)
   function isFree(menu) {
     return menu?.placement === "free";
   }
@@ -34,19 +36,12 @@ QtObject {
   // through I18n.tr), for the menu pickers
   readonly property var placementLabels: ConfigManager.configSchema.definitions.Menu.properties.placement["x-enumLabels"]
 
-  // Whether a menu picker limited to `placements` (its `x-menuPlacements`:
-  // a widget's hover popout takes no strip, which pushes the bars
-  // inwards) offers menu `id`
-  function offeredIn(id, placements) {
-    const menu = root.menuById(id);
-    return menu !== null && Array.prototype.includes.call(placements, menu.placement);
-  }
-
   // The menu a bar widget opens as its popout (its `popout.menu`, with
   // `popout.enabled` on), else "": it opens its own popout, if any. A menu
   // that's gone or disabled leaves it its own. Widgets without the fields
   // (Separator, the tray) have none; a Button has no popout of its own.
-  // A free menu opens at the widget (FreeMenuPlace)
+  // A free menu slides out at the widget, any other opens where it is
+  // placed (MenuHosts)
   function popoutMenuOf(properties) {
     const id = properties?.popout?.enabled ? (properties.popout.menu ?? "") : "";
     return id !== "" && root.enabledMenus.some(menu => menu.id === id) ? id : "";
@@ -98,8 +93,8 @@ QtObject {
     return MenuTiles.tiled(menu);
   }
 
-  // Whether an edge menu is held off its edge: `detached`, or tiled
-  // (MenuTiles.detached). Every read of a menu's detached state goes
+  // Whether a menu is held off its edge: an edge menu's `detached`, or
+  // tiled (MenuTiles.detached). Every read of a menu's detached state goes
   // through here
   function detachedOf(menu) {
     return MenuTiles.detached(menu);
