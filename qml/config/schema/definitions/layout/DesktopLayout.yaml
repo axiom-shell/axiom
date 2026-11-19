@@ -31,3 +31,12 @@ x-properties:
         items: {type: string, x-options: screens}
         x-showIf: {mode: named}
   grid: {$ref: '#/definitions/ScreenGrid', x-group: Grid}
+  shade:
+    x-group: Style
+    type: string
+    title: Shade
+    enum: ['off', light, medium, strong]
+    x-enumLabels: {'off': 'Off', light: Light, medium: Medium, strong: Strong}
+    default: medium
+    x-showIf: {moduleBorders: false}
+    description: A soft shade of the theme background behind modules without a border, only as strong as the wallpaper under them needs for their text to read.

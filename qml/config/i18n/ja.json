@@ -4676,6 +4676,10 @@
     "By state…": "",
     "Otherwise": "",
     "Becomes {value}, all of it as one word. Quoted for you: it can't run anything.": "",
-    "Right-click to rename, duplicate, move or remove": ""
+    "Right-click to rename, duplicate, move or remove": "",
+    "Strong": "",
+    "Blur strength": "",
+    "Shade": "",
+    "A soft shade of the theme background behind modules without a border, only as strong as the wallpaper under them needs for their text to read.": ""
   }
 }
