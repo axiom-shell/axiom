@@ -12,15 +12,15 @@ import qs.components.methods
 // strong as the wallpaper under `area` (after the layout's dim) needs for
 // `ink` to read there, so a module on a calm wallpaper gets none, and never
 // stronger than the layout's preset (`look`: Backdrop.shade) allows; only
-// Strong guarantees `ink` reads. A
-// `RectangularShadow`, never a layer (it holds no text). Its alpha is
-// `Tone.alphaFloor` over the wallpaper's backs (`WallpaperToneManager`:
-// cached once the daemon has answered, never waited for): until then none
-// (as today), or with `worstCase` (the lock, the greeter) the pole under the
-// dim, only until the daemon answers; a wallpaper the daemon can't decode is the pole too. `fixedRegion`
-// replaces the wallpaper (a layout's colour backdrop: flat grey levels).
-// `area` is in the screen's px; the item sits on it, and the shade reaches
-// past by half its blur, so the module's own edge is under the full alpha.
+// Strong guarantees `ink` reads. A `RectangularShadow`, never a layer (it
+// holds no text). Its alpha is `Tone.alphaFloor` over the wallpaper's backs
+// (`WallpaperToneManager`: cached once the daemon has answered, never
+// waited for): until then none (as today), or with `worstCase` (the lock,
+// the greeter) the pole under the dim; a wallpaper the daemon can't decode
+// is the pole too. `fixedRegion` replaces the wallpaper (a layout's colour
+// backdrop: flat grey levels). `area` is in the screen's px; the item sits
+// on it, and the shade reaches past by half its blur, so the module's own
+// edge is under the full alpha.
 Item {
   id: root
 
@@ -38,8 +38,8 @@ Item {
   property color ink: Style.text
   // The layout's shade preset: Backdrop.shade(...)
   property var look: Backdrop.shade("strong")
-  // The wallpaper's tone isn't known yet: assume the worst (the pole), for a
-  // host that must never show unreadable text (the lock, the greeter)
+  // The wallpaper's tone isn't known yet: assume the worst (the pole),
+  // still capped by `look`
   property bool worstCase: false
   // A region ({ mean, low, high } grey levels) in place of the wallpaper's,
   // or null for the wallpaper

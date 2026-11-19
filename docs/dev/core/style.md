@@ -50,7 +50,7 @@ Every colour a piece draws sits on a pair this list guarantees, on every bundled
 - an on-colour on its fill 4.5 (the best that exists, at least 3.0, where nothing reaches it), and the ink of every tone on its fill (`text`, `muted`, `accent`, `icon` 4.5; `faint`, `graphic` 3.0; a divider 1.12).
 - the surfaces against each other (`surface` vs the page 1.08 dark / 1.06 light, `surfaceHighest` vs `surface` 1.20 / 1.45, `surfaceSunken` vs `surface` (its minimum is in the test), `accentContainer` vs the page and vs the card 1.25 in both variants), `borderSubtle` 1.12 vs the page, `borderStrong` 1.30 on the reading tones.
 - the key tints (`accentTint`, `warningTint`, `errorTint`) and `surfaceSunken` / `surfaceHighest` pairwise at least 0.06 apart in OKLab (`test_key_tints_apart`; the tints' inks follow the container rules).
-- `text` over the `veil` over mid grey 4.5; `text` over the page and over the card at the translucency floor over the opposite pole 3.0 (the inks of the nested tones too); `text` over the unknown-tone shade, bare and under the lock's dim, 4.5.
+- `text` over the `veil` over mid grey 4.5; `text` over the page and over the card at the translucency floor over the opposite pole 3.0 (the inks of the nested tones too); `text` over the unknown-tone shade, bare and under the lock's dim, 4.5, at the Strong shade preset.
 
 **Content on a fill reads that fill's ink**, never a global text role: global roles only on the four reading tones, and on `surfaceHighest`, a container or a solid fill the fill's own ink. A new pair is a row in `tst_StyleTokens`, a formula that meets it and a line here.
 
@@ -65,7 +65,7 @@ Two families, one opacity setting:
   - Edge family files: `AttachedSurface` and what is built on it (bar popouts, `EdgePopout`, `EdgeSurface`, `SubPopout`), the launcher, floating edge and free menus, docks, `MenuTile`, `IntegratedEdgeMenu`'s strip and frame, `RoundedBorders`, `BorderPanel`. Toasts take its fill and translucency but join nothing: their outline is `borderSubtle`.
   - Free-standing (`Surface { tone: "page" }`: `fillPage`, `borderSubtle`, `radiusOuter`): the prompt and polkit cards, the power menu card, the monitor prompt, the screen-share and screenshot pickers' boxes, the workspace overview box, onboarding, the lock and greeter cards; `raised` for popup menus (the dock's context menu).
 
-Only `text` is guaranteed over the translucent fill, the veil and the shade; muted and accent lines are guaranteed opaque.
+Only `text` is guaranteed over the translucent fill, the veil and the shade (at the Strong preset); muted and accent lines are guaranteed opaque.
 
 ### Previews
 `StyleTokens.preview(theme)` is `derive` cut to `surfacePage`, `surface`, `text`, `textMuted`, `accent`, `onAccent`, `accentContainer`, `onAccentContainer` and `divider`. `ThemeManager._preview(json)` adds it as `roles` beside the keys the theme list reads today, so a theme tile can read `modelData.preview.roles.surface` and call nothing. The theme folders' scan logs its time once under `scripts/log.sh --debug`.

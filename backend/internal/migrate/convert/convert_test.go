@@ -162,11 +162,21 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			bind.(*jsonx.Object).Delete(key)
 		}
 	}
-	desktop, _ := defaults.(*jsonx.Object).Value("Desktop").(*jsonx.Object)
-	desktopItems, _ := desktop.Value("items").(*jsonx.Array)
+	desktop, ok := defaults.(*jsonx.Object).Value("Desktop").(*jsonx.Object)
+	if !ok {
+		t.Fatalf("defaults: Desktop.items missing")
+	}
+	desktopItems, ok := desktop.Value("items").(*jsonx.Array)
+	if !ok {
+		t.Fatalf("defaults: Desktop.items missing")
+	}
 	for _, item := range desktopItems.Items {
+		obj, ok := item.(*jsonx.Object)
+		if !ok {
+			t.Fatalf("defaults: Desktop.items has a non-object item")
+		}
 		for _, key := range desktopLayoutKeysAddedSinceV1 {
-			item.(*jsonx.Object).Delete(key)
+			obj.Delete(key)
 		}
 	}
 	osdItemFields(converted)
