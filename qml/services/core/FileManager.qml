@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Io
+import qs.components.methods
 
 // Files: synchronous whole-file reads, for the places that need a file's
 // contents during a binding or initializer (config, schema, theme, state);
@@ -10,19 +11,18 @@ QtObject {
 
   // Replaces the file at path (absolute) with text, atomically, making
   // its folders; done(error) after, error null or { kind, message }.
-  // Writes to one path go out one at a time, in the order asked; one cut
-  // off by axiom re-execing goes again once it's back
+  // Writes to one path go out one at a time; one cut off by axiom
+  // re-execing goes again once it's back. Writes asked while one is out
+  // collapse into one carrying the newest text (WriteQueue): every done
+  // is called, with the error of the write that carried the newer text
   function write(path, text, done) {
     const queue = root._writes[path];
     if (queue) {
-      queue.push({
-        "text": text,
-        "done": done
-      });
+      WriteQueue.push(queue, text, done);
       return;
     }
     root._writes[path] = [];
-    root._write(path, text, done);
+    root._write(path, text, done ? [done] : []);
   }
 
   // Calls fn() whenever path (absolute) changes on disk, except by a
@@ -58,22 +58,24 @@ QtObject {
     }, root._logFailure);
   }
 
-  // Waiting writes by path ({ text, done }), while one is out
+  // By path, from a write's send to its last answer: the writes waiting
+  // behind the one out (WriteQueue entries); the key's presence means one
+  // is out
   property var _writes: ({})
   // Watchers by path
   property var _watched: ({})
 
-  function _write(path, text, done) {
+  function _write(path, text, dones) {
     BackendManager.call("file.write", {
       "path": path,
       "text": text
     }, error => {
       if (error)
         console.warn("[FileManager] Could not write", path + ":", error.message);
-      done?.(error);
-      const next = root._writes[path].shift();
+      dones.forEach(done => done(error));
+      const next = WriteQueue.next(root._writes[path]);
       if (next)
-        root._write(path, next.text, next.done);
+        root._write(path, next.text, next.dones);
       else
         delete root._writes[path];
     }, {
@@ -111,18 +113,22 @@ QtObject {
   function read(url) {
     const text = String(url);
     // A plain path may hold a "%" (a note's name)
-    const path = text.startsWith("file://") ? decodeURIComponent(text.slice(7)) : text;
-    const view = root._reader.createObject(root, {
-      "path": path
-    });
+    let path = text;
+    let view = null;
     try {
-      const text = view.text();
-      return view.loaded ? text : null;
+      if (text.startsWith("file://"))
+        path = decodeURIComponent(text.slice(7));
+      view = root._reader.createObject(root, {
+        "path": path
+      });
+      const content = view.text();
+      return view.loaded ? content : null;
     } catch (e) {
       console.error("[FileManager] Could not read file:", path, e);
       return null;
     } finally {
-      view.destroy();
+      if (view)
+        view.destroy();
     }
   }
 
