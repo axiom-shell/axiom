@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
@@ -168,5 +169,94 @@ func TestLockRefusesSymlink(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "elsewhere")); err == nil {
 		t.Error("created the symlink's target")
+	}
+}
+
+type readShape struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
+func TestReadJSON(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	write := func(name, text string) string {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(text), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+
+	t.Run("missing", func(t *testing.T) {
+		got, r, err := ReadJSON[readShape](filepath.Join(dir, "none.json"), ReadOptions{})
+		if err != nil || r.Status != Missing || got != (readShape{}) {
+			t.Errorf("got %v %v %v", got, r, err)
+		}
+	})
+	t.Run("ok", func(t *testing.T) {
+		got, r, err := ReadJSON[readShape](write("ok.json", `{"name":"a","count":2}`), ReadOptions{})
+		if err != nil || r.Status != OK || got != (readShape{"a", 2}) {
+			t.Errorf("got %v %v %v", got, r, err)
+		}
+	})
+	t.Run("corrupt", func(t *testing.T) {
+		p := write("bad.json", `{oops`)
+		got, r, err := ReadJSON[readShape](p, ReadOptions{})
+		if err == nil || r.Status != Corrupt || r.Bad != "" || got != (readShape{}) {
+			t.Errorf("got %v %v %v", got, r, err)
+		}
+		if _, serr := os.Stat(p); serr != nil {
+			t.Errorf("left in place without Quarantine: %v", serr)
+		}
+	})
+	t.Run("quarantine", func(t *testing.T) {
+		p := write("q.json", `nope`)
+		now := func() time.Time { return time.Date(2026, 11, 19, 10, 30, 5, 0, time.UTC) }
+		_, r, err := ReadJSON[readShape](p, ReadOptions{Quarantine: true, Now: now})
+		want := p + ".bad-20261119-103005"
+		if err == nil || r.Status != Corrupt || r.Bad != want {
+			t.Fatalf("got %v %v", r, err)
+		}
+		if _, serr := os.Stat(want); serr != nil {
+			t.Errorf("not renamed: %v", serr)
+		}
+		if _, serr := os.Stat(p); !errors.Is(serr, os.ErrNotExist) {
+			t.Errorf("original still there: %v", serr)
+		}
+	})
+	t.Run("type mismatch is corrupt with the zero value", func(t *testing.T) {
+		got, r, err := ReadJSON[readShape](write("t.json", `{"name":"a","count":"x"}`), ReadOptions{})
+		if err == nil || r.Status != Corrupt || got != (readShape{}) {
+			t.Errorf("got %v %v %v", got, r, err)
+		}
+	})
+	t.Run("a directory is an error", func(t *testing.T) {
+		_, r, err := ReadJSON[readShape](dir, ReadOptions{})
+		if err == nil || r.Status != Missing {
+			t.Errorf("got %v %v", r, err)
+		}
+	})
+}
+
+func TestWriteFileInMakesTheFolder(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "a", "b", "f.json")
+	if err := WriteFileIn(path, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Dir(path))
+	if err != nil || info.Mode().Perm() != 0o700 {
+		t.Errorf("folder: %v %v", info, err)
+	}
+	if err := os.Chmod(path, 0o640); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteFileIn(path, []byte("y"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if info, _ := os.Stat(path); info.Mode().Perm() != 0o640 {
+		t.Errorf("mode: %v", info.Mode().Perm())
 	}
 }

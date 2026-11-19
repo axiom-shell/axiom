@@ -196,7 +196,7 @@ func TestSwayOldFormatUnbindListIsDropped(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"instance":"sway:a","swayUnbind":["unbindsym Mod4+x"]}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if got := loadState(path, "sway:a"); got.Instance != "sway:a" || got.SwayUnbinds != nil {
+	if got := loadState(path, "sway:a", nil); got.Instance != "sway:a" || got.SwayUnbinds != nil {
 		t.Fatalf("state = %+v, want the old list dropped", got)
 	}
 }

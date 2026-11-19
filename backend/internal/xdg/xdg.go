@@ -48,7 +48,7 @@ func Resolve(getenv func(string) string) Dirs {
 
 // Bases are the XDG base directories themselves (no trailing "/"), where
 // other apps keep their files (the theme integrations write there).
-type Bases struct{ Home, Config, State, Data string }
+type Bases struct{ Home, Config, State, Data, Cache string }
 
 // ResolveBases is Resolve's folders without axiom's own.
 func ResolveBases(getenv func(string) string) Bases {
@@ -57,6 +57,7 @@ func ResolveBases(getenv func(string) string) Bases {
 		Config: base(getenv, "XDG_CONFIG_HOME", ".config"),
 		State:  base(getenv, "XDG_STATE_HOME", ".local/state"),
 		Data:   base(getenv, "XDG_DATA_HOME", ".local/share"),
+		Cache:  base(getenv, "XDG_CACHE_HOME", ".cache"),
 	}
 }
 
@@ -98,6 +99,7 @@ func SearchDirs(getenv func(string) string) []string {
 // Runtime is a display's private runtime directory,
 // $XDG_RUNTIME_DIR/axiom/<display>/, holding the daemon's socket and lock.
 type Runtime struct {
+	Root    string // $XDG_RUNTIME_DIR/axiom, checked private (RuntimeRoot)
 	Dir     string // $XDG_RUNTIME_DIR/axiom/<display>
 	Display string // the display's name, as the directory names it
 }
@@ -158,7 +160,7 @@ func ForDisplay(getenv func(string) string, create bool) (Runtime, error) {
 		return Runtime{}, err
 	}
 	dir := filepath.Join(root, display)
-	r := Runtime{Dir: dir, Display: display}
+	r := Runtime{Root: root, Dir: dir, Display: display}
 	// A unix socket's path fits in sun_path (108 bytes with its NUL)
 	if n := len(r.Socket()); n > MaxSocketPath {
 		return Runtime{}, axerr.New(axerr.Unavailable, "the socket path %s is %d bytes, more than a unix socket allows (%d): use a shorter $XDG_RUNTIME_DIR", r.Socket(), n, MaxSocketPath)

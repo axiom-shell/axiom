@@ -23,7 +23,7 @@ type clipboardState struct {
 func (d *Daemon) newClipboard() {
 	log := d.opts.Log.With("part", "clipboard")
 	d.clipboard = clipboard.New(clipboard.Options{
-		Dir: filepath.Join(d.opts.Getenv("XDG_RUNTIME_DIR"), "axiom", "clipboard"),
+		Dir: filepath.Join(d.runtime.Root, "clipboard"),
 		Set: func(mimes []string, data map[string][]byte) error { return d.clip.Set(mimes, data) },
 		Current: func() clipboard.Offer {
 			// A nil *Offer isn't a nil Offer

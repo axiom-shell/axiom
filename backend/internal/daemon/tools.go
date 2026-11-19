@@ -48,7 +48,7 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 		Path string `json:"path"` // in $XDG_RUNTIME_DIR/axiom/media-art/
 	}
 	rpc.Handle(reg, "media.art", func(ctx context.Context, c *rpc.Conn, p artParams) (struct{}, error) {
-		o := media.Options{Dir: media.ArtDir(d.opts.Getenv("XDG_RUNTIME_DIR"))}
+		o := media.Options{Dir: media.ArtDir(d.runtime.Root)}
 		return struct{}{}, media.Art(ctx, o, p.URL, p.Path)
 	})
 	// A screenshot across monitors: each picker's piece composed into one

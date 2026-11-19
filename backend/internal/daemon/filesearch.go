@@ -17,6 +17,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/thumbnail"
+	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
 // The launcher's file search (Launcher.providers.files): the index, kept
@@ -44,7 +45,7 @@ const (
 // newFileSearch is the index on the user's folders, and the thumbnails.
 func (d *Daemon) newFileSearch() {
 	env := mimeapps.FromEnv(d.opts.Getenv)
-	cacheHome := strings.TrimSuffix(d.dirs.Cache, "/axiom/")
+	cacheHome := xdg.ResolveBases(d.opts.Getenv).Cache
 	skip := []string{filepath.Join(cacheHome, "thumbnails")}
 	if rt := d.opts.Getenv("XDG_RUNTIME_DIR"); filepath.IsAbs(rt) {
 		skip = append(skip, filepath.Clean(rt))

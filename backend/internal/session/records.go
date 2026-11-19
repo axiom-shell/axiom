@@ -115,13 +115,12 @@ type PortalLine struct {
 // ReadRuntime reads the runtime record: nil when it isn't there, isn't
 // readable, or is of another version (logged, never acted on).
 func ReadRuntime(path string, log Logf) *Runtime {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	var r Runtime
-	if err := json.Unmarshal(data, &r); err != nil {
+	r, read, err := fsx.ReadJSON[Runtime](path, fsx.ReadOptions{})
+	switch {
+	case read.Status == fsx.Corrupt:
 		log.log("session: %s isn't readable: %v", path, err)
+		return nil
+	case read.Status != fsx.OK:
 		return nil
 	}
 	if r.Version != Version {

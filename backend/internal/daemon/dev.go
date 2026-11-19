@@ -275,9 +275,8 @@ type devChoice struct {
 // loadDevChoice is the saved choice (all off when there is none, or it
 // isn't JSON).
 func loadDevChoice(dirs xdg.Dirs) devChoice {
-	var choice devChoice
-	data, err := os.ReadFile(dirs.State + devChoiceFile)
-	if err != nil || json.Unmarshal(data, &choice) != nil {
+	choice, r, _ := fsx.ReadJSON[devChoice](dirs.State+devChoiceFile, fsx.ReadOptions{})
+	if r.Status != fsx.OK {
 		return devChoice{}
 	}
 	return choice

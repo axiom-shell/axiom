@@ -272,20 +272,18 @@ func (l *Ledger) lock() (release func(), err error) {
 // read error is returned, so nothing is written over what couldn't be read.
 func (l *Ledger) read() (f *file, readOnly bool, err error) {
 	f = &file{Version: Version}
-	data, err := os.ReadFile(l.path)
-	if errors.Is(err, fs.ErrNotExist) {
-		return f, false, nil
-	}
-	if err != nil {
-		return nil, false, err
-	}
-	var got file
-	if err := json.Unmarshal(data, &got); err != nil {
-		bad := l.path + ".bad-" + l.o.Now().Format("20060102-150405")
-		if rerr := os.Rename(l.path, bad); rerr != nil {
-			return nil, false, rerr
+	got, r, err := fsx.ReadJSON[file](l.path, fsx.ReadOptions{Quarantine: true, Now: l.o.Now})
+	switch r.Status {
+	case fsx.Missing:
+		if err != nil {
+			return nil, false, err
 		}
-		l.log("footprint: %s isn't readable (%v): moved to %s, starting fresh", l.path, err, bad)
+		return f, false, nil
+	case fsx.Corrupt:
+		if r.Bad == "" {
+			return nil, false, err
+		}
+		l.log("footprint: %s isn't readable (%v): moved to %s, starting fresh", l.path, err, r.Bad)
 		return f, false, nil
 	}
 	if got.Version != Version {

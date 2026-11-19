@@ -8,6 +8,7 @@ package fsx
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
@@ -190,4 +192,78 @@ func syncDir(dir string) error {
 		return fmt.Errorf("syncing %s: %w", dir, err)
 	}
 	return nil
+}
+
+// Status is how a ReadJSON found the file.
+type Status int
+
+const (
+	// Missing: there is no file (the zero Status)
+	Missing Status = iota
+	// OK: the file parsed
+	OK
+	// Corrupt: the file is there and isn't JSON of the wanted type
+	Corrupt
+)
+
+// Read is what ReadJSON found.
+type Read struct {
+	Status Status
+	// Bad is where a corrupt file was moved (ReadOptions.Quarantine), "" if
+	// it wasn't
+	Bad string
+}
+
+// ReadOptions are ReadJSON's choices.
+type ReadOptions struct {
+	// Quarantine renames a corrupt file to <path>.bad-<stamp>, so a write
+	// over it can't lose what the user had
+	Quarantine bool
+	// Now stamps the name (time.Now when nil)
+	Now func() time.Time
+}
+
+// ReadJSON reads path as JSON into a T. A missing file is Missing and the
+// zero T, no error. A file that doesn't parse as a T (not JSON, or of
+// another type: json.Unmarshal fills partly then, so the half-filled value
+// is dropped) is Corrupt with the zero T and the parse error; with
+// Quarantine it is renamed first (Read.Bad; a rename that fails is the
+// error, with Bad ""). Any other read error (a permission, a directory) is
+// returned with the zero Read, so nothing writes over what couldn't be
+// read. Version checks stay with the caller.
+func ReadJSON[T any](path string, o ReadOptions) (T, Read, error) {
+	var zero T
+	data, err := os.ReadFile(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return zero, Read{Status: Missing}, nil
+	}
+	if err != nil {
+		return zero, Read{}, err
+	}
+	var got T
+	if err := json.Unmarshal(data, &got); err != nil {
+		r := Read{Status: Corrupt}
+		if o.Quarantine {
+			now := o.Now
+			if now == nil {
+				now = time.Now
+			}
+			bad := path + ".bad-" + now().Format("20060102-150405")
+			if rerr := os.Rename(path, bad); rerr != nil {
+				return zero, r, rerr
+			}
+			r.Bad = bad
+		}
+		return zero, r, err
+	}
+	return got, Read{Status: OK}, nil
+}
+
+// WriteFileIn is WriteFile for a file whose folder may not exist: the
+// folder is made first, 0700.
+func WriteFileIn(path string, data []byte, perm fs.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return &axerr.Error{Kind: axerr.Unavailable, Err: err}
+	}
+	return WriteFile(path, data, perm)
 }

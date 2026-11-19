@@ -55,7 +55,7 @@ type UninstallStartResult struct {
 const uninstallLog = "axiom-uninstall.log"
 
 func (d *Daemon) uninstallLog() string {
-	return filepath.Join(d.opts.Getenv("XDG_RUNTIME_DIR"), uninstallLog)
+	return filepath.Join(filepath.Dir(d.runtime.Root), uninstallLog)
 }
 
 func (d *Daemon) packaged() bool {
@@ -116,7 +116,7 @@ func (d *Daemon) startUninstall(ctx context.Context, a uninstall.Answers) (Unins
 			d.uninstalling.Store(false)
 		}
 	}()
-	rt := d.opts.Getenv("XDG_RUNTIME_DIR")
+	rt := filepath.Dir(d.runtime.Root)
 	if !filepath.IsAbs(rt) {
 		return UninstallStartResult{}, axerr.New(axerr.Unavailable, "no runtime folder to keep the answers in")
 	}

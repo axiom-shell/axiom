@@ -390,3 +390,36 @@ func TestCancelledKeepsRenewal(t *testing.T) {
 		t.Errorf("the renewal was lost: %+v", a)
 	}
 }
+
+// A state file that is JSON null (or not JSON) is no saved state, and an
+// account can still be added
+func TestUnusableStateFileStartsEmpty(t *testing.T) {
+	t.Parallel()
+	for name, text := range map[string]string{"null": "null", "not json": "{oops", "wrong type": `["a"]`} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, reply{200, "", okReply})
+			if err := os.MkdirAll(filepath.Dir(h.state), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(h.state, []byte(text), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			h.restart()
+			if a := h.get(account(t, "tok", time.Time{}), 5*time.Minute); a.Status != "ok" {
+				t.Errorf("got %+v", a)
+			}
+		})
+	}
+}
+
+// Credentials of the wrong shape are no login
+func TestMismatchedCredentialsAreMissing(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, reply{200, "", okReply})
+	dir := t.TempDir()
+	writeJSON(t, filepath.Join(dir, ".credentials.json"), map[string]any{"claudeAiOauth": "oops"})
+	if a := h.get(dir, 5*time.Minute); a.Status != "missing" {
+		t.Errorf("got %+v", a)
+	}
+}

@@ -61,6 +61,19 @@ func TestRuntimeIsPrivate(t *testing.T) {
 	if !strings.HasSuffix(r.Socket(), "axiom/wayland-9/axiom.sock") {
 		t.Errorf("socket %s", r.Socket())
 	}
+	if r.Root != filepath.Join(rt, "axiom") {
+		t.Errorf("root %s", r.Root)
+	}
+}
+
+func TestBasesCache(t *testing.T) {
+	t.Parallel()
+	if got := ResolveBases(env(map[string]string{"HOME": "/home/u", "XDG_CACHE_HOME": "/c/"})).Cache; got != "/c" {
+		t.Errorf("set: %s", got)
+	}
+	if got := ResolveBases(env(map[string]string{"HOME": "/home/u"})).Cache; got != "/home/u/.cache" {
+		t.Errorf("default: %s", got)
+	}
 }
 
 func TestRuntimeRefusesSymlinkAndNarrowsMode(t *testing.T) {
