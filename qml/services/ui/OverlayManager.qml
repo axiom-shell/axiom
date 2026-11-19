@@ -252,9 +252,9 @@ QtObject {
 
   // { screenName: { pageKey: fit } }: the factor (at most 1) each built
   // tool page is shrunk by on a screen, as OverlayPages reports it from that
-  // page's PageBox.fitScale. Reported by OverlayPages for its tool pages, never by PageBox, which
-  // page windows and the onboarder share. A Custom page's is worked out
-  // from its modules (fitOf)
+  // page's PageBox.fitScale. Reported by OverlayPages for its tool pages,
+  // never by PageBox, which page windows and the onboarder share. A Custom
+  // page's is worked out from its modules (fitOf)
   readonly property var fits: root._fits
   property var _fits: ({})
 

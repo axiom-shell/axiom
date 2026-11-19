@@ -65,12 +65,12 @@ QtObject {
   // `sizing`), `global` ({ card, content }: the Look & Feel sizes in %), the
   // `fitScale` (a factor, at most 1; null for none) the surface is shrunk by
   // and whether its height `capped` its cards. { kind, card, content,
-  // shrunkTo (whole %), shrunk, capped }: `kind` is how it combines, "zoom" (no `linked`: the
-  // whole surface zooms), "linked", "unlinked" or "following" (linked, its
-  // Card size unset: the global sizes alone); `card` and `content` each
-  // { global, here (the surface's factor), total } with total = global ×
-  // here, so the two differ where the global sizes do. The fit is not in
-  // the totals: it is its own clause (the cap is drawn px only)
+  // shrunkTo (whole %), shrunk, capped }: `kind` is how it combines, "zoom"
+  // (no `linked`: the whole surface zooms), "linked", "unlinked" or
+  // "following" (linked, its Card size unset: the global sizes alone); `card`
+  // and `content` each { global, here (the surface's factor), total } with
+  // total = global × here, so the two differ where the global sizes do. The
+  // fit is not in the totals: it is its own clause (the cap is drawn px only)
   function breakdown(own, global, fitScale, capped) {
     const factors = root.factors(own);
     let kind = "following";

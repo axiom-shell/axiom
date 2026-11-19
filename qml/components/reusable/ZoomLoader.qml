@@ -9,8 +9,10 @@ import qs.components.methods
 Loader {
   id: root
 
+  // -- Public API --
   property real zoom: 1
 
+  // -- Implementation --
   scale: root.zoom
   transformOrigin: Item.TopLeft
   readonly property real contentZoom: root.zoom
