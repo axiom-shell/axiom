@@ -475,9 +475,7 @@ func (s *Store) keepTakeovers(cfg *jsonx.Object) {
 	if bytes.Equal(data, s.keptTakeovers) {
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(s.opts.TakeoversFile), 0o700); err != nil {
-		s.opts.Log.Error("keeping the takeover settings", "err", err)
-	} else if err := fsx.WriteFile(s.opts.TakeoversFile, data, 0o600); err != nil {
+	if err := fsx.WriteFileIn(s.opts.TakeoversFile, data, 0o600); err != nil {
 		s.opts.Log.Error("keeping the takeover settings", "err", err)
 	} else {
 		s.keptTakeovers = data

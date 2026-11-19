@@ -312,11 +312,9 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, only ...string) (Sync
 
 // load is objects.json (empty when it's missing or unreadable)
 func (s *Service) load() store {
-	saved := store{Version: 1, Calendars: map[string]*cached{}}
-	if data, err := os.ReadFile(filepath.Join(s.o.StateDir, "objects.json")); err == nil {
-		if json.Unmarshal(data, &saved) != nil || saved.Calendars == nil {
-			saved = store{Version: 1, Calendars: map[string]*cached{}}
-		}
+	saved, r, _ := fsx.ReadJSON[store](filepath.Join(s.o.StateDir, "objects.json"), fsx.ReadOptions{})
+	if r.Status != fsx.OK || saved.Calendars == nil {
+		return store{Version: 1, Calendars: map[string]*cached{}}
 	}
 	return saved
 }
@@ -769,8 +767,5 @@ func writeJSON(path string, v any) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return err
-	}
-	return axerr.Wrap(axerr.Internal, fsx.WriteFile(path, data, 0o600), "writing %s", path)
+	return axerr.Wrap(axerr.Internal, fsx.WriteFileIn(path, data, 0o600), "writing %s", path)
 }

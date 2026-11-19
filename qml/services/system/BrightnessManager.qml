@@ -13,7 +13,9 @@ import qs.services.compositor
 // once at startup and again when the screens change; values are read then
 // and when the OSD opens (`refresh`), never polled. Writes show at once and
 // are coalesced per monitor, so held brightness keys don't queue slow DDC
-// calls. Idle dimming's levels before it are kept across a QML reload.
+// calls. Idle dimming's levels before it are kept for the login session
+// (StateManager's session handler: they survive QML reloads and restarts,
+// and are gone at logout).
 Singleton {
   id: root
 
@@ -78,7 +80,7 @@ Singleton {
   // (darker ones stay), or with `relative` down by `fraction` of its own
   // brightness, then back to what each was on undim()
   function dim(fraction, relative) {
-    const dimmed = JSON.parse(_kept.dimmed);
+    const dimmed = Object.assign({}, root._dimmed);
     for (const name of Object.keys(displays)) {
       if (dimmed[name] !== undefined)
         continue;
@@ -88,23 +90,68 @@ Singleton {
       if (value > target)
         set(name, target, true);
     }
-    _kept.dimmed = JSON.stringify(dimmed);
+    root._dimmed = dimmed;
+    root._saveDimmed();
   }
 
+  // Back to the levels before dim(). A monitor not found yet (after a
+  // restart while dimmed, before detect answers) keeps its level for when
+  // it is (_found)
   function undim() {
-    const dimmed = JSON.parse(_kept.dimmed);
-    _kept.dimmed = "{}";
-    for (const name of Object.keys(dimmed))
+    const dimmed = root._dimmed;
+    const left = {};
+    const back = [];
+    for (const name of Object.keys(dimmed)) {
+      if (available(name))
+        back.push(name);
+      else
+        left[name] = dimmed[name];
+    }
+    root._dimmed = left;
+    root._staleCheck = back.length < Object.keys(dimmed).length;
+    root._saveDimmed();
+    for (const name of back)
       set(name, dimmed[name], true);
   }
 
-  // A default child (a named property doesn't survive a reload), so an
-  // undim after a reload still restores the levels from before dim()
-  PersistentProperties {
-    id: _kept
-    reloadableId: "axiomBrightness"
-    // { screenName: value before dim() }, as JSON
-    property string dimmed: "{}"
+  // { screenName: value before dim() }: kept in the session file at once
+  // (never later: a reload would lose it). Nothing is applied when it's
+  // loaded: the screens stay as they are until the daemon's resume calls
+  // undim()
+  property var _dimmed: ({})
+  // Levels left from before a restart whose monitors detect hasn't found:
+  // once it has, they go back unless idle is dimming now
+  property bool _staleCheck: false
+  // rpc: idle.get
+  function _restoreStale() {
+    if (!root._staleCheck)
+      return;
+    root._staleCheck = false;
+    BackendManager.call("idle.get", {}, (error, state) => {
+      if (error || (state.fired ?? []).length > 0) {
+        root._staleCheck = !error;
+        return;
+      }
+      root.undim();
+    });
+  }
+
+  readonly property var _session: StateManager.createSessionHandler("brightness")
+
+  function _saveDimmed() {
+    if (!Paths.greeter)
+      root._session.save(root._dimmed);
+  }
+
+  // The kept levels, those that are numbers 0-1
+  function _loadDimmed() {
+    const saved = root._session.load({});
+    const dimmed = {};
+    for (const name of Object.keys(saved)) {
+      if (typeof saved[name] === "number" && saved[name] >= 0 && saved[name] <= 1)
+        dimmed[name] = saved[name];
+    }
+    return dimmed;
   }
 
   function stepBy(name, delta) {
@@ -199,6 +246,7 @@ Singleton {
       if (found[name].kind === "ddc")
         refresh(name);
     }
+    root._restoreStale();
   }
 
   // ddcutil needs a moment after a monitor is plugged in
@@ -215,7 +263,13 @@ Singleton {
     }
   }
 
-  Component.onCompleted: detect()
+  Component.onCompleted: {
+    if (!Paths.greeter) {
+      root._dimmed = root._loadDimmed();
+      root._staleCheck = Object.keys(root._dimmed).length > 0;
+    }
+    detect();
+  }
 
   // Brightness keys (keybind actions brightnessUp, ...), on the focused
   // monitor: the OSD shows the change

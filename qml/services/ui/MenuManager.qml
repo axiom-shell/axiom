@@ -129,6 +129,9 @@ Singleton {
     root._state.save({
       "pinned": Array.isArray(old.pinned) ? old.pinned : []
     });
+    // There's no delete: JSON null loads as no state, so the old pins never
+    // come back if menus.json is lost
+    root._oldState.save(null);
     return old.pinned;
   }
 

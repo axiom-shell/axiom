@@ -196,7 +196,7 @@ QtObject {
     const folders = Paths.dataSearchDirs.map(dir => dir + "/wayland-sessions");
     CommandManager.run(["find"].concat(folders, ["-maxdepth", "1", "-name", "*.desktop"]), (exitCode, out) => {
       const files = GreeterSessions.files(out.split("\n").filter(file => file !== ""));
-      root._sessions = GreeterSessions.sorted(files.map(entry => GreeterSessions.parse(FileManager.read("file://" + entry.file), entry.id)));
+      root._sessions = GreeterSessions.sorted(files.map(entry => GreeterSessions.parse(FileManager.read(entry.file), entry.id)));
       if (root._sessions.length === 0)
         console.warn("[GreetdManager] No sessions in", folders.join(", "));
     }, null, true);
@@ -217,7 +217,7 @@ QtObject {
     if (!Paths.greeter)
       return;
     root._saved = root._state.load({});
-    root._users = GreeterUsers.parse(FileManager.read("file:///etc/passwd"), GreeterUsers.uidRange(FileManager.read("file:///etc/login.defs")));
+    root._users = GreeterUsers.parse(FileManager.read("/etc/passwd"), GreeterUsers.uidRange(FileManager.read("/etc/login.defs")));
     if (GreeterConfig.rememberUser && root._saved.lastUser)
       root.selectUser(root._saved.lastUser);
     root._readSessions();

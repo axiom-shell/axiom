@@ -2,8 +2,6 @@ package manager
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
@@ -15,6 +13,7 @@ import (
 // compositor instance it was written for only (a new session starts over).
 type runtimeState struct {
 	path string
+	logf func(string, ...any)
 
 	Instance string `json:"instance"`
 	// AppliedMode: the mode apply() last set up, "" before the first, so a
@@ -49,14 +48,15 @@ type swayPaused struct {
 	Mode    string   `json:"mode"`
 }
 
-func loadState(path, instance string) *runtimeState {
+// loadState is the saved state when it is for instance, else a fresh one
+// (a file that isn't JSON is logged through logf, when there is one).
+func loadState(path, instance string, logf func(string, ...any)) *runtimeState {
 	s := &runtimeState{path: path, Instance: instance}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return s
+	saved, r, err := fsx.ReadJSON[runtimeState](path, fsx.ReadOptions{})
+	if r.Status == fsx.Corrupt && logf != nil {
+		logf("%s isn't readable (%v): starting fresh", path, err)
 	}
-	var saved runtimeState
-	if json.Unmarshal(data, &saved) == nil && saved.Instance == instance {
+	if r.Status == fsx.OK && saved.Instance == instance {
 		saved.path = path
 		return &saved
 	}
@@ -71,22 +71,26 @@ func (s *runtimeState) save() {
 	if err != nil {
 		return
 	}
-	os.MkdirAll(filepath.Dir(s.path), 0o700)
-	fsx.WriteFile(s.path, data, 0o600)
+	if err := fsx.WriteFileIn(s.path, data, 0o600); err != nil && s.logf != nil {
+		s.logf("could not save %s: %v", s.path, err)
+	}
 }
 
 // approvals are the compositors whose config the user let axiom take over
 // ($XDG_STATE_HOME/axiom/ui/takeover.json: { approved: [kind] }): state,
 // not config, so an imported mode never counts as one
-type approvals struct{ path string }
+type approvals struct {
+	path string
+	logf func(string, ...any)
+}
 
 func (a approvals) list() []string {
-	var v struct {
+	type file struct {
 		Approved []string `json:"approved"`
 	}
-	data, err := os.ReadFile(a.path)
-	if err == nil {
-		json.Unmarshal(data, &v)
+	v, r, err := fsx.ReadJSON[file](a.path, fsx.ReadOptions{})
+	if r.Status == fsx.Corrupt && a.logf != nil {
+		a.logf("%s isn't readable (%v): no takeover is approved", a.path, err)
 	}
 	return v.Approved
 }
@@ -126,8 +130,5 @@ func (a approvals) save(kinds []string) error {
 		kinds = []string{}
 	}
 	data, _ := json.MarshalIndent(map[string][]string{"approved": kinds}, "", "  ")
-	if err := os.MkdirAll(filepath.Dir(a.path), 0o755); err != nil {
-		return err
-	}
-	return fsx.WriteFile(a.path, data, 0o644)
+	return fsx.WriteFileIn(a.path, data, 0o600)
 }

@@ -432,8 +432,7 @@ QtObject {
   function _saveLook(changes) {
     if (Paths.greeter)
       return;
-    root._look = Object.assign({}, root._look, changes);
-    root._lookState.save(root._look);
+    root._look = root._lookState.update(changes);
   }
 
   // Brings a generated theme in line with the wallpapers shown on any
@@ -472,7 +471,7 @@ QtObject {
 
   function _readDefaults() {
     try {
-      return JSON.parse(FileManager.read("file://" + Paths.resourcePath + "json/theme-defaults.json"));
+      return JSON.parse(FileManager.read(Paths.resourcePath + "json/theme-defaults.json"));
     } catch (e) {
       console.error("[ThemeManager] Could not read theme-defaults.json:", e);
       return {
@@ -598,7 +597,7 @@ QtObject {
       if (fileName === "theme.schema.json")
         continue;
       try {
-        const json = JSON.parse(FileManager.read("file://" + loader.get(i, "filePath")));
+        const json = JSON.parse(FileManager.read(loader.get(i, "filePath")));
         themes.push({
           "name": prefix + loader.get(i, "fileBaseName"),
           "label": json.name || loader.get(i, "fileBaseName"),

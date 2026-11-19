@@ -285,7 +285,7 @@ QtObject {
   // The schema axiom built from the tree, else the tree's own build
   function _loadSchema() {
     const built = Quickshell.env("AXIOM_SCHEMA") ?? "";
-    const text = FileManager.read(built ? "file://" + built : Qt.resolvedUrl("../../config/json/config.schema.json"));
+    const text = FileManager.read(built || Qt.resolvedUrl("../../config/json/config.schema.json"));
     try {
       return text ? JSON.parse(text) : {};
     } catch (e) {
@@ -299,7 +299,7 @@ QtObject {
   function _readSnapshot() {
     if (root._snapshotPath === "")
       return null;
-    const text = FileManager.read("file://" + root._snapshotPath);
+    const text = FileManager.read(root._snapshotPath);
     try {
       if (text)
         return JSON.parse(text);

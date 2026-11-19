@@ -179,7 +179,8 @@ func New(o Options) *Manager {
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
 	r := ipc.RunningFromEnv(o.Getenv)
 	m.kind = r.Kind
-	m.st = loadState(o.RuntimeFile, Instance(o.Getenv))
+	m.st = loadState(o.RuntimeFile, Instance(o.Getenv), m.logf)
+	m.st.logf = m.logf
 	m.runtimeOn = m.st.RuntimeOn
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
 	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st, carried: o.Carried}
@@ -1023,7 +1024,7 @@ func (m *Manager) modeChanged(fromFile bool) {
 // --- Approving a takeover ---
 
 func (m *Manager) approvals() approvals {
-	return approvals{path: filepath.Join(m.o.StateDir, "ui", "takeover.json")}
+	return approvals{path: filepath.Join(m.o.StateDir, "ui", "takeover.json"), logf: m.logf}
 }
 
 func (m *Manager) approve() {

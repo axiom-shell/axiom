@@ -32,7 +32,7 @@ Every notification has a level (`methods/NotificationLevel`, the single source o
   - `dismiss(uid)`
   - `clearAll()`
   - the `notifications` IPC target.
-- The history is saved to `$XDG_STATE_HOME/axiom/notifications.json` (atomically, through axiom: `FileManager.write`), half a second after a change, by `NotificationFiles` (the manager's `_files`, which also holds the image cache).
+- The history is saved to `$XDG_STATE_HOME/axiom/notifications.json` (atomically, through axiom: a `StateManager` file handler's `saveLater`), half a second after a change (one in the last half second before a QML reload is lost), by `NotificationFiles` (the manager's `_files`, which also holds the image cache).
 - `liveNotification(uid)` gives the still-open `Notification` (needed for actions). Entries restored from disk open their app instead (`openApp`).
 - **A click** goes through `activate(entry, live)`: it runs the default action, then with `clickFocuses` focuses the app's window itself, since the server sends no xdg-activation token with the action and niri (Hyprland without focus_on_activate too) refuses the app's own raise. Without a default action it's `openApp`: a registered handler, else the app's window, else a launch.
 - **Which windows are an entry's app** (`windowOf`, clear on focus): `methods/NotificationMatch` reduces both sides to keys (the desktop entry, app name, the desktop entry's id and `startupClass`; the window's class and its desktop entry's id), lowercased, last reverse-DNS part, without `-desktop`/`-bin`, and they match when they share one (`Vesktop` ↔ `dev.vencord.Vesktop`, `Telegram` ↔ `org.telegram.desktop`).

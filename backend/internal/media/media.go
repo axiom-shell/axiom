@@ -36,13 +36,14 @@ type Options struct {
 	Client *http.Client
 }
 
-// ArtDir is the art folder for runtimeDir ($XDG_RUNTIME_DIR), the shell's
-// Paths.runtimePath + "media-art/".
-func ArtDir(runtimeDir string) string {
-	if runtimeDir == "" {
+// ArtDir is the art folder under root (the runtime root,
+// $XDG_RUNTIME_DIR/axiom), the shell's Paths.runtimePath + "media-art/";
+// "" for no root (art is off).
+func ArtDir(root string) string {
+	if root == "" {
 		return ""
 	}
-	return filepath.Join(runtimeDir, "axiom", "media-art")
+	return filepath.Join(root, "media-art")
 }
 
 // Art puts the art at src into path, which must be a file directly in

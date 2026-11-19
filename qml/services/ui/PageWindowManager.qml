@@ -131,7 +131,10 @@ Singleton {
     if (old && old[0] === size[0] && old[1] === size[1])
       return;
     root._sizes[type] = size;
-    _saveSizes.restart();
+    // A resize drag reports every step: written once it settles
+    root._state.saveLater({
+      "sizes": root._sizes
+    });
   }
 
   // --- Private ---
@@ -160,14 +163,6 @@ Singleton {
 
   readonly property var _state: StateManager.createStateHandler("pageWindows")
   property var _sizes: ({})
-
-  // A resize drag reports every step: written once it settles
-  property Timer _saveSizes: Timer {
-    interval: 1000 // a resize settling
-    onTriggered: root._state.save({
-      "sizes": root._sizes
-    })
-  }
 
   Component.onCompleted: {
     const saved = root._state.load({});

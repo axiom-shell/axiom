@@ -433,7 +433,7 @@ QtObject {
   }
 
   function _loadEvents() {
-    const content = FileManager.read("file://" + root._stateDir + "/events.json");
+    const content = FileManager.read(root._stateDir + "/events.json");
     if (!content)
       return;
     try {

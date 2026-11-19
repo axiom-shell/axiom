@@ -23,39 +23,25 @@ QtObject {
 
   // The saved entries ([] for none or an unreadable file), as written
   function read() {
-    const content = FileManager.read("file://" + root.historyPath);
-    if (!content)
-      return [];
-    try {
-      const saved = JSON.parse(content);
-      return Array.isArray(saved) ? saved : [];
-    } catch (e) {
-      console.warn("[NotificationManager] Could not parse", root.historyPath, e);
-      return [];
-    }
+    return root._handler().load([]);
   }
 
-  // Saves the entries (without `live`) shortly
+  // Saves the entries (without `live`) shortly (StateManager's saveLater:
+  // a change in the last 500 ms before a QML reload is lost)
   function save() {
-    _writeTimer.restart();
+    root._handler().saveLater(() => root.entries.map(e => Object.assign({}, e, {
+          live: undefined
+        })));
   }
 
   // Writes a pending save now (the shell closing)
   function flush() {
-    if (_writeTimer.running)
-      root._write();
+    root._handler().flush();
   }
 
-  property Timer _writeTimer: Timer {
-    interval: 500
-    onTriggered: root._write()
-  }
-
-  function _write() {
-    _writeTimer.stop();
-    FileManager.write(root.historyPath, JSON.stringify(root.entries.map(e => Object.assign({}, e, {
-        live: undefined
-      })), null, 2));
+  // Looked up at use: userStatePath isn't known until config is
+  function _handler() {
+    return StateManager.createFileHandler(root.historyPath);
   }
 
   signal saved(string uid, string url)

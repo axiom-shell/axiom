@@ -339,7 +339,7 @@ Singleton {
   function _readConversation(id) {
     if (!_validId(id))
       return null;
-    const text = FileManager.read("file://" + root.chatDir + id + ".json");
+    const text = FileManager.read(root.chatDir + id + ".json");
     try {
       return text ? JSON.parse(text) : null;
     } catch (e) {
@@ -571,7 +571,7 @@ Singleton {
   }
 
   function _loadIndex() {
-    const text = FileManager.read("file://" + root.chatDir + "index.json");
+    const text = FileManager.read(root.chatDir + "index.json");
     if (!text)
       return [];
     try {

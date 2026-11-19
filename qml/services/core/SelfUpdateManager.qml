@@ -116,8 +116,7 @@ Singleton {
   readonly property string _desktopEntry: "axiom-update"
 
   function _save(changes) {
-    root._saved = Object.assign({}, root._saved, changes);
-    root._state.save(root._saved);
+    root._saved = root._state.update(changes);
   }
 
   // A failed call as a result: the last one's facts, with its message

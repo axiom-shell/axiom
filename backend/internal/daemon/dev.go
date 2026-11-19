@@ -275,9 +275,8 @@ type devChoice struct {
 // loadDevChoice is the saved choice (all off when there is none, or it
 // isn't JSON).
 func loadDevChoice(dirs xdg.Dirs) devChoice {
-	var choice devChoice
-	data, err := os.ReadFile(dirs.State + devChoiceFile)
-	if err != nil || json.Unmarshal(data, &choice) != nil {
+	choice, r, _ := fsx.ReadJSON[devChoice](dirs.State+devChoiceFile, fsx.ReadOptions{})
+	if r.Status != fsx.OK {
 		return devChoice{}
 	}
 	return choice
@@ -287,13 +286,10 @@ func loadDevChoice(dirs xdg.Dirs) devChoice {
 // change and writes it back, keeping the keys it doesn't know (a dev
 // build of another branch may have written more).
 func saveDevChoice(dirs xdg.Dirs, change func(*devChoice)) error {
-	if err := os.MkdirAll(dirs.State, 0o700); err != nil {
-		return axerr.Wrap(axerr.Unavailable, err, "making %s", dirs.State)
-	}
 	path := dirs.State + devChoiceFile
-	raw := map[string]json.RawMessage{}
-	if data, err := os.ReadFile(path); err == nil && json.Unmarshal(data, &raw) != nil {
-		raw = map[string]json.RawMessage{} // not JSON: written anew
+	raw, r, _ := fsx.ReadJSON[map[string]json.RawMessage](path, fsx.ReadOptions{})
+	if r.Status != fsx.OK || raw == nil {
+		raw = map[string]json.RawMessage{} // none, or not JSON: written anew
 	}
 	choice := loadDevChoice(dirs)
 	change(&choice)
@@ -305,7 +301,7 @@ func saveDevChoice(dirs xdg.Dirs, change func(*devChoice)) error {
 		raw[k] = v
 	}
 	data, _ := json.Marshal(raw)
-	if err := fsx.WriteFile(path, append(data, '\n'), 0o600); err != nil {
+	if err := fsx.WriteFileIn(path, append(data, '\n'), 0o600); err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "saving the dev mode choice")
 	}
 	return nil

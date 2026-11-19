@@ -265,15 +265,17 @@ type credentials struct {
 // cancelled mid-request (the shell unsubscribed): that is not a failure, so
 // no status, backoff or save, and the next fetch goes ahead at once.
 func (u *usage) fetchOne(ctx context.Context, a *Account, every time.Duration) bool {
-	var creds credentials
-	readJSON(filepath.Join(a.Dir, ".credentials.json"), &creds)
+	// A file of the wrong shape (a type mismatch) counts as unreadable
+	// whole, not partly filled: no login (the account reads "missing")
+	creds, _, _ := fsx.ReadJSON[credentials](filepath.Join(a.Dir, ".credentials.json"), fsx.ReadOptions{})
 	if a.Org == "" {
-		var claude struct {
+		type claudeJSON struct {
 			OAuthAccount *struct {
 				OrganizationName string `json:"organizationName"`
 			} `json:"oauthAccount"`
 		}
-		if readJSON(filepath.Join(a.Dir, ".claude.json"), &claude) && claude.OAuthAccount != nil {
+		claude, r, _ := fsx.ReadJSON[claudeJSON](filepath.Join(a.Dir, ".claude.json"), fsx.ReadOptions{})
+		if r.Status == fsx.OK && claude.OAuthAccount != nil {
 			a.Org = claude.OAuthAccount.OrganizationName
 		}
 	}
@@ -426,15 +428,13 @@ func str(v any) string {
 
 func round(f float64) int { return int(math.Round(f)) }
 
-func readJSON(path string, v any) bool {
-	data, err := os.ReadFile(path)
-	return err == nil && json.Unmarshal(data, v) == nil
-}
-
 func (u *usage) load() {
 	u.accounts = map[string]*Account{}
 	if u.o.StateFile != "" {
-		readJSON(u.o.StateFile, &u.accounts)
+		// Missing, unreadable or JSON null: none saved
+		if saved, _, _ := fsx.ReadJSON[map[string]*Account](u.o.StateFile, fsx.ReadOptions{}); saved != nil {
+			u.accounts = saved
+		}
 	}
 	for dir, a := range u.accounts {
 		if a == nil {
