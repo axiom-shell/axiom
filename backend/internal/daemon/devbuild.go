@@ -159,21 +159,14 @@ func fingerprint(treeDir string) (string, error) {
 
 // readBuild is build.json (false: none, or not readable).
 func readBuild(dirs xdg.Dirs) (devBuild, bool) {
-	var b devBuild
-	data, err := os.ReadFile(dirs.State + buildFile)
-	if err != nil || json.Unmarshal(data, &b) != nil {
-		return devBuild{}, false
-	}
-	return b, true
+	b, r, _ := fsx.ReadJSON[devBuild](dirs.State+buildFile, fsx.ReadOptions{})
+	return b, r.Status == fsx.OK
 }
 
 // writeBuild records the dev build just made.
 func writeBuild(dirs xdg.Dirs, b devBuild) error {
-	if err := os.MkdirAll(dirs.State+"dev", 0o700); err != nil {
-		return err
-	}
 	data, _ := json.MarshalIndent(b, "", "  ")
-	return fsx.WriteFile(dirs.State+buildFile, append(data, '\n'), 0o600)
+	return fsx.WriteFileIn(dirs.State+buildFile, append(data, '\n'), 0o600)
 }
 
 // buildCheck is whether the dev build is fresh for the dev tree (why not,

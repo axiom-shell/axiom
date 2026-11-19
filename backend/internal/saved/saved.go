@@ -158,8 +158,10 @@ func New(opts Options) *Service {
 	var remembered struct {
 		Active string `json:"active"`
 	}
-	if data, err := os.ReadFile(opts.UIState); err == nil {
-		_ = json.Unmarshal(data, &remembered)
+	if got, r, _ := fsx.ReadJSON[struct {
+		Active string `json:"active"`
+	}](opts.UIState, fsx.ReadOptions{}); r.Status == fsx.OK {
+		remembered = got
 	}
 	s.setActive(remembered.Active, nil, "", "")
 	return s
@@ -496,9 +498,7 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind st
 	}
 	if s.opts.UIState != "" {
 		data, _ := json.Marshal(map[string]string{"active": s.state.Active})
-		if err := os.MkdirAll(filepath.Dir(s.opts.UIState), 0o700); err == nil {
-			_ = fsx.WriteFile(s.opts.UIState, data, 0o600)
-		}
+		_ = fsx.WriteFileIn(s.opts.UIState, data, 0o600)
 	}
 	s.state.Modified = s.modified()
 	s.state.Keep = s.plan()

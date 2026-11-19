@@ -47,7 +47,7 @@ func (d *Daemon) newFileSearch() {
 	env := mimeapps.FromEnv(d.opts.Getenv)
 	cacheHome := xdg.ResolveBases(d.opts.Getenv).Cache
 	skip := []string{filepath.Join(cacheHome, "thumbnails")}
-	if rt := d.opts.Getenv("XDG_RUNTIME_DIR"); filepath.IsAbs(rt) {
+	if rt := filepath.Dir(d.runtime.Root); filepath.IsAbs(rt) {
 		skip = append(skip, filepath.Clean(rt))
 	}
 	o := fileindex.Options{

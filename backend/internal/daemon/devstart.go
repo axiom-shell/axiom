@@ -115,17 +115,13 @@ func (m bootMarker) of(b devBuild) bool {
 
 // guarded: a marker for build b is there (its exec never came up).
 func guarded(dirs xdg.Dirs, b devBuild) bool {
-	data, err := os.ReadFile(dirs.State + bootFile)
-	var m bootMarker
-	return err == nil && json.Unmarshal(data, &m) == nil && m.of(b)
+	m, r, _ := fsx.ReadJSON[bootMarker](dirs.State+bootFile, fsx.ReadOptions{})
+	return r.Status == fsx.OK && m.of(b)
 }
 
 func writeBoot(dirs xdg.Dirs, b devBuild) error {
-	if err := os.MkdirAll(dirs.State+"dev", 0o700); err != nil {
-		return err
-	}
 	data, _ := json.Marshal(bootMarker{Tree: b.Tree, Fingerprint: b.Fingerprint, Built: b.At, At: time.Now()})
-	return fsx.WriteFile(dirs.State+bootFile, append(data, '\n'), 0o600)
+	return fsx.WriteFileIn(dirs.State+bootFile, append(data, '\n'), 0o600)
 }
 
 // clearBoot removes the marker (the dev image's shell said hello).

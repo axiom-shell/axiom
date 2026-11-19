@@ -274,10 +274,9 @@ func (l *Ledger) read() (f *file, readOnly bool, err error) {
 	f = &file{Version: Version}
 	got, r, err := fsx.ReadJSON[file](l.path, fsx.ReadOptions{Quarantine: true, Now: l.o.Now})
 	switch r.Status {
+	case fsx.Unreadable:
+		return nil, false, err
 	case fsx.Missing:
-		if err != nil {
-			return nil, false, err
-		}
 		return f, false, nil
 	case fsx.Corrupt:
 		if r.Bad == "" {

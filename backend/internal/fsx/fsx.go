@@ -204,6 +204,9 @@ const (
 	OK
 	// Corrupt: the file is there and isn't JSON of the wanted type
 	Corrupt
+	// Unreadable: the file couldn't be read (a permission, a directory);
+	// callers must not write over an Unreadable file
+	Unreadable
 )
 
 // Read is what ReadJSON found.
@@ -229,7 +232,7 @@ type ReadOptions struct {
 // is dropped) is Corrupt with the zero T and the parse error; with
 // Quarantine it is renamed first (Read.Bad; a rename that fails is the
 // error, with Bad ""). Any other read error (a permission, a directory) is
-// returned with the zero Read, so nothing writes over what couldn't be
+// returned with Status Unreadable, so nothing writes over what couldn't be
 // read. Version checks stay with the caller.
 func ReadJSON[T any](path string, o ReadOptions) (T, Read, error) {
 	var zero T
@@ -238,7 +241,7 @@ func ReadJSON[T any](path string, o ReadOptions) (T, Read, error) {
 		return zero, Read{Status: Missing}, nil
 	}
 	if err != nil {
-		return zero, Read{}, err
+		return zero, Read{Status: Unreadable}, err
 	}
 	var got T
 	if err := json.Unmarshal(data, &got); err != nil {

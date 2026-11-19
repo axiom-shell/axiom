@@ -233,10 +233,43 @@ func TestReadJSON(t *testing.T) {
 	})
 	t.Run("a directory is an error", func(t *testing.T) {
 		_, r, err := ReadJSON[readShape](dir, ReadOptions{})
-		if err == nil || r.Status != Missing {
+		if err == nil || r.Status != Unreadable {
 			t.Errorf("got %v %v", r, err)
 		}
 	})
+	t.Run("quarantine whose rename fails stays corrupt", func(t *testing.T) {
+		if os.Getuid() == 0 {
+			t.Skip("root ignores directory modes")
+		}
+		sub := filepath.Join(dir, "ro")
+		if err := os.Mkdir(sub, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		p := filepath.Join(sub, "f.json")
+		if err := os.WriteFile(p, []byte("nope"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(sub, 0o500); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { os.Chmod(sub, 0o700) })
+		_, r, err := ReadJSON[readShape](p, ReadOptions{Quarantine: true})
+		if err == nil || r.Status != Corrupt || r.Bad != "" {
+			t.Errorf("got %v %v", r, err)
+		}
+	})
+}
+
+func TestWriteFileInUnderAFile(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	parent := filepath.Join(dir, "file")
+	if err := os.WriteFile(parent, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteFileIn(filepath.Join(parent, "f.json"), []byte("{}"), 0o600); err == nil {
+		t.Error("wrote below a regular file")
+	}
 }
 
 func TestWriteFileInMakesTheFolder(t *testing.T) {

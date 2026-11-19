@@ -314,7 +314,7 @@ QtObject {
   // whose hash the next hello then says
   property string _schemaHash: {
     const path = Quickshell.env("AXIOM_SCHEMA") ?? "";
-    const text = path ? FileManager.read("file://" + path) : null;
+    const text = path ? FileManager.read(path) : null;
     return text ? Qt.md5(text) : "";
   }
 

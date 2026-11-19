@@ -194,7 +194,7 @@ QtObject {
 
   // Reads the downloaded (or, `cached`, the last) index.json
   function _readIndex(cached) {
-    const content = FileManager.read("file://" + root._indexFile);
+    const content = FileManager.read(root._indexFile);
     if (!content)
       return false;
     let setups = null;
