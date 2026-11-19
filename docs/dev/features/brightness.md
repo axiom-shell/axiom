@@ -26,7 +26,7 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
   - `average(names)`.
   - `setMany(names, value, silent)`.
 - **IPC `brightness`:** `up`, `down`, `set <percent>`, all on the focused monitor. The bind actions are `brightnessUp` / `brightnessDown`.
-  - `dim <percent>` / `undim` are used by idle (see [Idle](idle.md)). The levels from before `dim` are kept in a `PersistentProperties` (a default child of the Singleton root), so an `undim` after a QML reload still restores them.
+  - `dim <percent>` / `undim` are used by idle (see [Idle](idle.md)). The levels from before `dim` are kept for the login session in `StateManager`'s session handler (`brightness.json`, written at once by `dim` and `undim`; not in the greeter), so an `undim` after a QML reload or a qs restart still restores them. Nothing is applied at start: after a restart while dimmed the screens stay as they are until the daemon's resume calls `undim`. `undim` keeps the level of a monitor that detect hasn't found yet, and the first detect after a start with levels left puts them back unless idle is dimming now (`idle.get`, `fired`). A restart of the daemon (not qs) while dimmed never sends `undim`: the saved levels then make the next `dim` skip those monitors and the following `undim` restore the old levels.
 - Created from `qml/shell.qml`'s `_services`.
 
 ### Brightness module (`content/Brightness`)

@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import qs.config
 import qs.services.core
 
 /*
@@ -14,9 +15,10 @@ import qs.services.core
  * `evaluated(key)` fires when one lands. One qalc runs at a time; a key
  * asked again while its last is running is run again for the newest only.
  * `history` is the last answers a caller kept ({ expr, result }, newest
- * first), and `draft` the Calculator module's unfinished expression (so
- * it's still there when the overlay opens again); both are kept across QML
- * reloads but not restarts.
+ * first), kept for the login session (StateManager's session handler: QML
+ * reloads and restarts, not a new login), and `draft` the Calculator
+ * module's unfinished expression (so it's still there when the overlay
+ * opens again), kept across QML reloads only.
  */
 Singleton {
   id: root
@@ -25,7 +27,7 @@ Singleton {
   // evaluate, or a caller's DependencyManager.check)
   readonly property var qalc: DependencyManager.found.qalc
 
-  readonly property var history: JSON.parse(_kept.history)
+  readonly property var history: root._history
   readonly property string draft: _kept.draft
   readonly property int _maxHistory: 20
 
@@ -82,7 +84,7 @@ Singleton {
       expr: expr,
       result: result
     });
-    _kept.history = JSON.stringify(kept.slice(0, root._maxHistory));
+    root._setHistory(kept.slice(0, root._maxHistory));
   }
 
   function setDraft(text) {
@@ -90,10 +92,26 @@ Singleton {
   }
 
   function clearHistory() {
-    _kept.history = "[]";
+    root._setHistory([]);
   }
 
   // --- Private ---
+
+  property var _history: []
+  readonly property var _session: StateManager.createSessionHandler("calculator")
+
+  // Saved at once (a reload would lose a later write)
+  function _setHistory(entries) {
+    root._history = entries;
+    if (!Paths.greeter)
+      root._session.save(entries);
+  }
+
+  Component.onCompleted: {
+    if (Paths.greeter)
+      return;
+    root._history = root._session.load([]).filter(h => h && typeof h.expr === "string" && typeof h.result === "string").slice(0, root._maxHistory);
+  }
 
   // { key: { expr, doneExpr, result } }
   property var _slots: ({})
@@ -103,7 +121,6 @@ Singleton {
   PersistentProperties {
     id: _kept
     reloadableId: "axiomCalculator"
-    property string history: "[]"
     property string draft: ""
   }
 
