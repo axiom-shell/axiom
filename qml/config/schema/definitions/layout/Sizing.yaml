@@ -7,9 +7,9 @@ x-group: Size
 additionalProperties: false
 properties:
   cardSize: {$ref: '#/definitions/CardSize'}
+  contentSize: {$ref: '#/definitions/ContentSize', x-showIf: {linked: false}}
   linked:
     type: boolean
     title: Content grows with cards
     default: true
     description: Text and controls grow and shrink with the cards.
-  contentSize: {$ref: '#/definitions/ContentSize', x-showIf: {linked: false}}

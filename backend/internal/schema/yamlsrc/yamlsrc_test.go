@@ -272,7 +272,7 @@ func TestViewSizing(t *testing.T) {
 		}
 		want := []string{"contentSize"}
 		if name == "CustomOverlayView" {
-			want = []string{"cardSize", "linked", "contentSize"}
+			want = []string{"cardSize", "contentSize", "linked"}
 		}
 		if !slices.Equal(got, want) {
 			t.Errorf("%s sizing = %v, want %v", name, got, want)
@@ -323,7 +323,7 @@ func TestPopoutSizing(t *testing.T) {
 	if got, want := keys(sizing("VolumeWidget")), []string{"contentSize"}; !slices.Equal(got, want) {
 		t.Errorf("Volume's popout sizing = %v, want %v", got, want)
 	}
-	if got, want := keys(sizing("CustomWidgetWidget")), []string{"cardSize", "linked", "contentSize"}; !slices.Equal(got, want) {
+	if got, want := keys(sizing("CustomWidgetWidget")), []string{"cardSize", "contentSize", "linked"}; !slices.Equal(got, want) {
 		t.Errorf("Custom widget's popout sizing = %v, want %v", got, want)
 	}
 	for _, name := range []string{"VolumeWidget", "CustomWidgetWidget"} {
