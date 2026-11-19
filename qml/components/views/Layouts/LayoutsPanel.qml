@@ -211,7 +211,7 @@ Item {
               values: Object.assign({}, root.view ?? {}, {
                 "fineGrid": root.view?.layout?.grid?.fine ?? false
               })
-              fieldNote: (path, schema) => root.target.sizingNote(path, schema)
+              fieldNote: root.target.sizingNote
               onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
@@ -244,7 +244,7 @@ Item {
                 }) : ({})
               order: ["sizing"]
               values: root.view ?? ({})
-              fieldNote: (path, schema) => root.target.sizingNote(path, schema)
+              fieldNote: root.target.sizingNote
               onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
@@ -298,7 +298,7 @@ Item {
                 order: group.modelData.keys
                 // The whole menu, so x-showIf sees keys from other groups
                 values: root.menu ?? ({})
-                fieldNote: (path, schema) => root.target.sizingNote(path, schema)
+                fieldNote: root.target.sizingNote
                 onEdited: (path, value) => OverlayManager.menus.updateMenuField(path[0], value)
               }
             }
@@ -381,7 +381,7 @@ Item {
                 propertiesSchema: screenGroup.modelData.schema
                 order: screenGroup.modelData.keys
                 values: root.screenLayout ?? ({})
-                fieldNote: (path, schema) => root.target.sizingNote(path, schema)
+                fieldNote: root.target.sizingNote
                 onEdited: (path, value) => root.screenTarget.screenEditor.updateLayoutField(path[0], value)
               }
             }

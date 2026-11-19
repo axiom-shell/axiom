@@ -252,9 +252,9 @@ QtObject {
 
   // { screenName: { pageKey: fit } }: the factor (at most 1) each built
   // tool page is shrunk by on a screen, as OverlayPages reports it from that
-  // page's PageBox.fitScale. Reported by OverlayPage(s), not by PageBox,
-  // which page windows and the onboarder share. A Custom page's is worked
-  // out from its modules (fitOf)
+  // page's PageBox.fitScale. Reported by OverlayPages for its tool pages, never by PageBox, which
+  // page windows and the onboarder share. A Custom page's is worked out
+  // from its modules (fitOf)
   readonly property var fits: root._fits
   property var _fits: ({})
 
@@ -381,9 +381,11 @@ QtObject {
     }
     if (JSON.stringify(view[key]) === JSON.stringify(value))
       return;
-    // A form emits an edit inside the sizing as the whole sizing: it keeps
-    // what its link means
-    view[key] = key === "sizing" ? Sizing.editedIn(view[key], value, []) : value;
+    // A form emits an edit inside the sizing as the whole sizing: keep what
+    // the sizing's link means
+    if (key === "sizing")
+      value = Sizing.edited(view[key], value);
+    view[key] = value;
     applyChanges();
   }
 

@@ -373,8 +373,8 @@ QtObject {
       key = "layout.grid.fine";
     if (!menu || JSON.stringify(root._fieldOf(menu, key)) === JSON.stringify(value))
       return;
-    // A form emits an edit inside the layout as the whole layout: the
-    // sizing in it keeps what its link means
+    // A form emits an edit inside the layout as the whole layout: keep what
+    // the sizing's link means
     if (key === "layout")
       value = Sizing.editedIn(root._fieldOf(menu, key), value, ["sizing"]);
     const wasPreviewing = root.previewing !== "" && root.previewing === menu.id;

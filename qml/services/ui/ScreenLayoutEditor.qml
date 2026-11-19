@@ -187,12 +187,12 @@ QtObject {
     const parts = key.split(".");
     if (!layout || JSON.stringify(parts.reduce((v, part) => v?.[part], layout)) === JSON.stringify(value))
       return;
+    // A form emits an edit inside the sizing as the whole sizing: keep what
+    // the sizing's link means
+    if (key === "sizing")
+      value = Sizing.edited(layout.sizing, value);
     // One undo step with the places it moves (snapshotExtra)
     root.layout.recordField(`layout:${key}`);
-    // A form emits an edit inside the sizing as the whole sizing: it keeps
-    // what its link means
-    if (key === "sizing")
-      value = Sizing.editedIn(layout.sizing, value, []);
     if (key === "grid.fine") {
       (layout.modules ?? []).forEach(module => {
         if (module?.place)

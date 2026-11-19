@@ -224,7 +224,7 @@ Item {
           })
         order: ["contentSize"]
         values: root.module ?? ({})
-        fieldNote: (path, schema) => root.moduleNote(root.module?.contentSize ?? null)
+        fieldNote: () => root.moduleNote(root.module?.contentSize ?? null)
         onEdited: (path, value) => root.editor.updateModuleField(root.index, path[0], value)
       }
 

@@ -169,7 +169,9 @@ Item {
   }
 
   // A tool page that is hidden or unsupported isn't built, so the fit it
-  // last reported goes (OverlayManager.fitOf would show it)
+  // last reported goes (OverlayManager.fitOf would show it). Not from a
+  // page's Component.onDestruction: a config change rebuilds every page
+  // under the same ids, and the old ones go after the new ones have reported
   function _pruneFits() {
     const name = root.screen?.name ?? "";
     const built = root.viewsModel.filter(view => OverlayConfig.isTool(view.viewConfig.type)).map(view => view.viewConfig.id);

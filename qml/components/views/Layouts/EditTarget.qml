@@ -23,9 +23,9 @@ QtObject {
   property real reservedDepth: 0
   property string reservedLabel: ""
   property var ghosts: []
-  // Its own `sizing` (Card size, Content size) and what shrinks it (
-  // { screen, scale, capped, card: px or null }, or null for nothing): the
-  // lines under its Size rows (sizingNote, moduleSizingNote)
+  // Its own `sizing` (Card size, Content size) and what shrinks it
+  // ({ screen, scale, capped, card }, card px or null; null for nothing):
+  // the lines under its Size rows (sizingNote, moduleSizingNote)
   property var sizing: null
   property var sizingFit: null
   // How it fits, under the canvas title
@@ -56,9 +56,9 @@ QtObject {
   property bool editable: false
   property string notEditableHint: ""
 
-  // The line under the Size row at `path` of a form (SchemaPropertiesForm.
-  // fieldNote), "" for any other row
-  function sizingNote(path, schema) {
+  // The line under the Size row at `path` of a form
+  // (SchemaPropertiesForm.fieldNote), "" for any other row
+  function sizingNote(path) {
     return root._sizingNotes.noteFor(path);
   }
 

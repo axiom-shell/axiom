@@ -222,7 +222,7 @@ ColumnLayout {
           values: root.values
           changedAt: root.changedAt
           tilePreview: root._tilePreview
-          fieldNote: path => root._fieldNote(path)
+          fieldNote: root._fieldNote
           onEdited: (path, value) => root.edited(path, value)
           onDiscardAt: path => root.discardAt(path)
         }
