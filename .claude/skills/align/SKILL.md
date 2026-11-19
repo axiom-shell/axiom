@@ -36,7 +36,7 @@ Show the user: the census table (sites, names, how they differ), the one way, an
 
 ## 4. Build (with `--fix` or after the yes)
 
-In a worktree, never the user's checkout. Per commit group, a fresh `implementer` with the target as its spec ("the ledger at `<path>` is binding; anything it doesn't cover is a stop"), then `/keep-order gate` on that group. After the last group: `/keep-order audit`, then `/review-branch`, then a PR whose body carries the census table and the behaviour changes.
+In a worktree, never the user's checkout. Per commit group, a fresh `implementer` with the target as its spec ("the ledger at `<path>` is binding; anything it doesn't cover is a stop"), then `/keep-order gate` on that group. After the last group: `/keep-order audit` (it runs `/review-branch`), then a PR whose body carries the census table and the behaviour changes.
 
 ## 5. Report
 
