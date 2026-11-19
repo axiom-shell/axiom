@@ -2,8 +2,9 @@ pragma Singleton
 import QtQuick
 
 // How a surface's own `sizing` ({ cardSize, linked, contentSize }: each size
-// a % or null for "as the level above") becomes the factors its host draws
-// at, and how an edit of it keeps its link's meaning. The global Card and
+// a % or null for "as the level above"; a tool page's or popout's is
+// { contentSize } alone) becomes the factors its host draws at, and how an
+// edit of it keeps its link's meaning. The global Card and
 // Content sizes are already inside the card size and Widget; hosts apply
 // only these factors on top. No config, no text.
 QtObject {
@@ -15,8 +16,16 @@ QtObject {
   }
 
   // What a surface's `sizing` draws at: { card, content } factors. Linked,
-  // its content grows with its cards
+  // its content grows with its cards. One without a `linked` is zoomed whole
+  // (a tool page, a popout): its cards and content are the one factor
   function factors(own) {
+    if (own && !("linked" in own)) {
+      const zoom = root.factor(own.contentSize);
+      return {
+        "card": zoom,
+        "content": zoom
+      };
+    }
     const card = root.factor(own?.cardSize);
     return {
       "card": card,

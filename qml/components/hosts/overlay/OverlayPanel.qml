@@ -229,31 +229,24 @@ ReservedAreaWindow {
         id: overlayPages
         anchors.centerIn: parent
         open: root.visible
-        grid: grid
+        screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
         maxHeight: pageArea.roomHeight - OverlayConfig.cardSpacing * 2
       }
     }
 
-    // This screen's card size, so that a page two cards high fits the
-    // space the pages get (maxWidth/Height: the page area less its
-    // margin) inside the box's padding unshrunk
-    OverlayGrid {
-      id: grid
-      screen: root.screen
-      availableWidth: overlayPages.maxWidth - OverlayConfig.boxPadding * 2
-      availableHeight: overlayPages.maxHeight - OverlayConfig.boxPadding * 2
-      drawnZoom: overlayPages.contentZoom
-
-      readonly property string areaKey: [grid.roomWidth, grid.roomHeight, grid.unit].join(",")
-      onAreaKeyChanged: report()
+    // The room a page has before it's shrunk (PageBox.fitScale), in drawn
+    // px, and the screen's size: the layouts editor's "fits" line works
+    // each page's fit from them (OverlayManager.fitOf)
+    QtObject {
+      id: area
+      readonly property string key: [overlayPages.roomWidth, overlayPages.roomHeight, root.screen?.width, root.screen?.height].join(",")
+      onKeyChanged: report()
       Component.onCompleted: report()
       Component.onDestruction: OverlayManager.clearArea(root.screen?.name ?? "")
 
-      // The room a page has before it's shrunk (OverlayPages.fitScale), in
-      // layout px: the layouts editor's "fits" line reads each screen's
       function report() {
-        OverlayManager.reportArea(root.screen?.name ?? "", grid.roomWidth, grid.roomHeight, grid.unit);
+        OverlayManager.reportArea(root.screen?.name ?? "", overlayPages.roomWidth, overlayPages.roomHeight, root.screen?.width ?? 0, root.screen?.height ?? 0);
       }
     }
 

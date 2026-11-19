@@ -1,4 +1,5 @@
 label: Themes
 icon: palette
 tool: true
+sizing: tool
 window: true

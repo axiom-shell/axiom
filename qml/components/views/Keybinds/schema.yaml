@@ -1,5 +1,6 @@
 label: Keybinds
 icon: keyboard
 tool: true
+sizing: tool
 window: true
 needs: keybinds

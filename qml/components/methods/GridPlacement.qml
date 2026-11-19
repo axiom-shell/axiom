@@ -845,16 +845,19 @@ QtObject {
   // The overlay's cards in `height` px of room (drawn px): `card` px,
   // content drawn at `zoom`, but never so big that a page two cards high
   // (span(8), its gap drawn at the zoom too) overflows the height. A page
-  // too wide is shrunk on its own (OverlayPages.fitScale). { drawn, the
+  // too wide is shrunk on its own (PageBox.fitScale). { drawn, the
   // card size shown; unit, the size content lays out at (drawn / zoom);
-  // zoom }. Rounded down where the height limits it, so a page two cards
-  // high fits exactly rather than a pixel over (and shrunk by a hair)
+  // zoom; capped, whether the height shrank the cards }. Rounded down where
+  // the height limits it, so a page two cards high fits exactly rather
+  // than a pixel over (and shrunk by a hair)
   function overlayLayout(height, card, zoom) {
-    const drawn = Math.max(1, Math.min(Math.round(card), Math.floor((height - root.gapOf(zoom)) / 2)));
+    const wanted = Math.round(card);
+    const drawn = Math.max(1, Math.min(wanted, Math.floor((height - root.gapOf(zoom)) / 2)));
     return {
       "drawn": drawn,
       "unit": Math.max(1, Math.floor(drawn / zoom + 1e-6)),
-      "zoom": zoom
+      "zoom": zoom,
+      "capped": drawn < wanted
     };
   }
 

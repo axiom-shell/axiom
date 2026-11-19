@@ -190,8 +190,8 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	for _, page := range pages.Items {
 		page.(*jsonx.Object).Delete("visible")
 	}
-	// The layouts' sizing (Layout's default, filled at load; v113 moves
-	// moduleScale there)
+	// The surfaces' and pages' sizing (their default, filled at load; v113 and
+	// v114 move moduleScale there)
 	dropSizing(defaults)
 	// The v109 step appends the Window rules page; the defaults list it
 	// beside Keybinds
@@ -209,10 +209,15 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 }
 
 // dropSizing removes the `sizing` every layout that draws modules on a
-// surface of its own (Desktop items, the lock and login screens) gained
-// after format 1 was frozen
+// surface of its own (Desktop items, the lock and login screens) and every
+// overlay page gained after format 1 was frozen
 func dropSizing(cfg any) {
 	root, _ := cfg.(*jsonx.Object)
+	overlay, _ := root.Value("Overlay").(*jsonx.Object)
+	pages, _ := overlay.Value("items").(*jsonx.Array)
+	for _, page := range pages.Items {
+		page.(*jsonx.Object).Delete("sizing")
+	}
 	desktop, _ := root.Value("Desktop").(*jsonx.Object)
 	items, _ := desktop.Value("items").(*jsonx.Array)
 	for _, item := range items.Items {

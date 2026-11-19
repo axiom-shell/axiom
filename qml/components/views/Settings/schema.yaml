@@ -1,4 +1,5 @@
 label: Settings
 icon: settings
 tool: true
+sizing: tool
 window: true

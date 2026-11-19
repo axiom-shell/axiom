@@ -1,0 +1,20 @@
+# The ContentSizing definition (#/definitions/ContentSizing): the Content size
+# of a surface whose cards zoom with it (a tool page, a bar widget's popout).
+
+x-inline: true
+type: object
+title: Size
+x-group: Size
+additionalProperties: false
+properties:
+  contentSize:
+    x-link: {setting: Interface.contentSize}
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 100}
+    title: Content size
+    default: null
+    minimum: 50
+    maximum: 200
+    x-unit: '%'
+    description: Relative to the Content size in Look & Feel. Auto follows it. The whole surface zooms with it.

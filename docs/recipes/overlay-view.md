@@ -7,7 +7,7 @@ An overlay page type is a whole page of the overlay (the full-screen layer with 
 
 ## Files
 1. `qml/components/views/<Type>/<Type>.qml`: the page, on `BaseView`, with its pieces beside it. The type is the file name.
-2. `qml/components/views/<Type>/schema.yaml`: `label` and `icon`, plus `tool: true` and `window: true` where they apply. The schema build finds it and adds `<Type>OverlayView` to `OverlayView`; there is nothing to list by hand.
+2. `qml/components/views/<Type>/schema.yaml`: `label` and `icon`, `sizing: tool` (a tool page, zoomed whole by its Content size) or `sizing: page` (a page laid out in cards, with Card size, the link and Content size; Custom's), plus `tool: true` and `window: true` where they apply. The schema build finds it and adds `<Type>OverlayView` to `OverlayView`; there is nothing to list by hand.
 3. For a tool page only:
    - an entry in the `items` default of `qml/config/schema/sections/Overlay.yaml` (`{id: …, type: <Type>}`), which `check_structure` insists on;
    - a format-2 migration step that appends the same entry to existing configs, its test, and the `version` bump ([migration](migration.md));

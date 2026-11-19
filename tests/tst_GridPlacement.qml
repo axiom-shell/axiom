@@ -571,7 +571,12 @@ TestCase {
     compare([fhd.drawn, fhd.unit, fhd.zoom], [425, 425, 1], "1080p: smaller cards, content at its own size");
     compare(GridPlacement.overlayLayout(2000, 450, 1).drawn, 450, "room to spare: the card size");
     const bigger = GridPlacement.overlayLayout(1199, 756, 1.2);
-    compare([bigger.drawn, bigger.unit, bigger.zoom], [587, 489, 1.2], "a bigger Module size zooms the content, its gap too");
+    compare([bigger.drawn, bigger.unit, bigger.zoom], [587, 489, 1.2], "a bigger Content size zooms the content, its gap too");
+    // A tool page (its sizing zooms it whole: card and zoom the one factor)
+    // lays out at the unscaled card, as its cards are drawn at the zoom
+    const tool = GridPlacement.overlayLayout(2000, 400 * 0.8, 0.8);
+    compare([tool.drawn, tool.unit, tool.zoom], [320, 400, 0.8], "a tool page's unit is the card size it started from");
+    compare([ultrawide.capped, fhd.capped, bigger.capped, tool.capped], [true, true, true, false], "capped where the height shrank the cards");
     // At the defaults a page two cards high, coarse or double grid, fits
     // unshrunk wherever the height limits the cards
     [[1207, 630, 1], [1191, 630, 1], [1199, 756, 1.2], [871, 450, 1]].forEach(([height, card, zoom]) => {

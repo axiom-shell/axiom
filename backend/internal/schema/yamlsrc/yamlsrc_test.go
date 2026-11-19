@@ -236,6 +236,51 @@ func TestKindSlots(t *testing.T) {
 	}
 }
 
+// Every overlay page type has its sizing, picked by its view part: a Custom
+// page's lays out in cards (a Card size, a link, a Content size), a tool
+// page's zooms whole (a Content size). Both top out at 100.
+func TestViewSizing(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs := root.Value("definitions").(*jsonx.Object)
+	options := defs.Value("OverlayView").(*jsonx.Object).Value("oneOf").(*jsonx.Array)
+	if len(options.Items) == 0 {
+		t.Fatal("OverlayView has no options")
+	}
+	for _, option := range options.Items {
+		name := strings.TrimPrefix(option.(*jsonx.Object).Value("$ref").(string), "#/definitions/")
+		view := defs.Value(name).(*jsonx.Object)
+		sizing, _ := view.Value("properties").(*jsonx.Object).Value("sizing").(*jsonx.Object)
+		if sizing == nil {
+			t.Errorf("%s has no sizing", name)
+			continue
+		}
+		var got []string
+		for _, key := range sizing.Value("properties").(*jsonx.Object).Keys() {
+			field := sizing.Value("properties").(*jsonx.Object).Value(key).(*jsonx.Object)
+			if max, _ := field.Value("maximum").(float64); max != 100 && key != "linked" {
+				t.Errorf("%s sizing.%s maximum = %v, want 100", name, key, max)
+			}
+			got = append(got, key)
+		}
+		want := []string{"contentSize"}
+		if name == "CustomOverlayView" {
+			want = []string{"cardSize", "linked", "contentSize"}
+		}
+		if !slices.Equal(got, want) {
+			t.Errorf("%s sizing = %v, want %v", name, got, want)
+		}
+	}
+	// A Custom page's layout has none of its own: the page's sizing is it
+	layout := defs.Value("CustomOverlayView").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("layout").(*jsonx.Object)
+	if layout.Value("properties").(*jsonx.Object).Has("sizing") {
+		t.Error("a Custom page's layout has its own sizing")
+	}
+}
+
 // A part's override reaching into a setting that $refs a definition
 // inlines that definition, so a type narrows one of its fields.
 func TestPartOverrideInlinesRef(t *testing.T) {

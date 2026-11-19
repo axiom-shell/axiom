@@ -224,20 +224,21 @@ QtObject {
 
   // --- Room on each screen ---
 
-  // { screenName: { width, height, unit } }: the room each overlay has
-  // for a page and the card size its content lays out at, in layout px
-  // (OverlayGrid), as its OverlayPanel reports them
+  // { screenName: { width, height, screenWidth, screenHeight } }: the room
+  // each overlay has for a page (drawn px, before the page is shrunk to fit
+  // it) and its screen's size, as its OverlayPanel reports them
   readonly property var areas: root._areas
   property var _areas: ({})
 
-  function reportArea(screenName, width, height, unit) {
+  function reportArea(screenName, width, height, screenWidth, screenHeight) {
     const old = root._areas[screenName];
-    if (old && old.width === width && old.height === height && old.unit === unit)
+    if (old && old.width === width && old.height === height && old.screenWidth === screenWidth && old.screenHeight === screenHeight)
       return;
     root._areas = Utils.withEntry(root._areas, screenName, {
       "width": width,
       "height": height,
-      "unit": unit
+      "screenWidth": screenWidth,
+      "screenHeight": screenHeight
     });
   }
 
@@ -248,14 +249,20 @@ QtObject {
   }
 
   // How much each screen's overlay shrinks a Custom page: [{ screen,
-  // scale }], 1 where it fits
+  // scale }], 1 where it fits. The page's cards and zoom on that screen
+  // (OverlayConfig.layoutFor, from the page's own sizing), then the share
+  // of its room its modules leave
   function fitOf(view) {
     const bounds = GridPlacement.bounds(view.layout?.modules);
     return Object.keys(root.areas).sort().map(screenName => {
       const area = root.areas[screenName];
+      const layout = OverlayConfig.layoutFor({
+        "width": area.screenWidth,
+        "height": area.screenHeight
+      }, area.width, area.height, view.sizing);
       return {
         "screen": screenName,
-        "scale": GridPlacement.fitScale(bounds, area.width, area.height, OverlayConfig.pageUnit(view, area.unit))
+        "scale": GridPlacement.fitScale(bounds, area.width / layout.zoom, area.height / layout.zoom, OverlayConfig.pageUnit(view, layout.unit))
       };
     });
   }
@@ -327,7 +334,7 @@ QtObject {
     applyChanges();
   }
 
-  // One of a page's own fields (name, icon, visible), or its double grid
+  // One of a page's own fields (name, icon, sizing, visible), or its double grid
   // ("fineGrid": layout.grid.fine), which rescales the modules' places so
   // they stay put
   function updateViewField(index, key, value) {
@@ -350,7 +357,9 @@ QtObject {
     }
     if (JSON.stringify(view[key]) === JSON.stringify(value))
       return;
-    view[key] = value;
+    // A form emits an edit inside the sizing as the whole sizing: it keeps
+    // what its link means
+    view[key] = key === "sizing" ? Sizing.editedIn(view[key], value, []) : value;
     applyChanges();
   }
 

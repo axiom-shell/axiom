@@ -29,9 +29,6 @@ EditTarget {
     return root.shrunk.map(fit => I18n.tr("Shrunk to {0}% on {1}", Math.round(fit.scale * 100), fit.screen)).join(" · ");
   }
   fitWarning: root.shrunk.length > 0
-  fitLink: root.shrunk.length > 0 ? {
-    "setting": "Overlay.moduleScale"
-  } : null
   editable: root.isCustom
   notEditableHint: I18n.tr("Pick one of your pages to add modules to it")
 }

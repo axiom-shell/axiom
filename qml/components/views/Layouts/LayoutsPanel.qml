@@ -200,9 +200,10 @@ Item {
               follows: true
               propertiesSchema: ({
                   "icon": OverlayConfig.customViewSchema.icon,
-                  "fineGrid": OverlayConfig.customViewSchema.layout.properties.grid.properties.fine
+                  "fineGrid": OverlayConfig.customViewSchema.layout.properties.grid.properties.fine,
+                  "sizing": OverlayConfig.customViewSchema.sizing
                 })
-              order: ["icon", "fineGrid"]
+              order: ["icon", "fineGrid", "sizing"]
               // fineGrid stands for layout.grid.fine (updateViewField rescales the
               // modules with it)
               values: Object.assign({}, root.view ?? {}, {
@@ -228,6 +229,19 @@ Item {
               label: I18n.tr("Show in the navigator")
               checked: root.view?.visible !== false
               onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
+            }
+
+            // How big it draws: its Content size zooms the whole page
+            SchemaPropertiesForm {
+              Layout.fillWidth: true
+              // Under the switch
+              follows: true
+              propertiesSchema: root.view !== null && !root.isCustom ? ({
+                  "sizing": OverlayConfig.viewSchema(root.view.type).sizing
+                }) : ({})
+              order: ["sizing"]
+              values: root.view ?? ({})
+              onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
             // Goes to it (only while it's shown)

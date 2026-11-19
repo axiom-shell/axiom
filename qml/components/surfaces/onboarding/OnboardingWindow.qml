@@ -10,20 +10,21 @@ import qs.components.reusable
 
 // The onboarder (OnboardingManager): one page at a time over the dimmed
 // screen, with the step bar where the overlay has its page navigator. It
-// sits in the same reserved area as the overlay (ReservedAreaWindow) with the
-// same OverlayGrid, so its cards are the size the overlay's will be, and
-// the Welcome page's size setting shows on it at once.
+// sits in the same reserved area as the overlay (ReservedAreaWindow) with an
+// OverlayGrid of the overlay's first Custom page's sizing, so its cards are
+// the size the overlay's will be, and the Welcome page's size setting shows
+// on it at once.
 ReservedAreaWindow {
   id: root
 
   layerNamespace: "axiom-onboarding"
 
-  // How much the overlay shrinks its first page on this screen (OverlayPages'
-  // fitScale): a page wider than the screen shrinks as a whole
-  readonly property real overlayFit: {
-    const first = OverlayConfig.views.find(view => !OverlayConfig.isTool(view.type));
-    return GridPlacement.fitScale(GridPlacement.bounds(first?.layout?.modules), overlayGrid.roomWidth, overlayGrid.roomHeight, OverlayConfig.pageUnit(first, overlayGrid.unit));
-  }
+  // The overlay's first Custom page: what the pages here are sized and fitted
+  // like
+  readonly property var _first: OverlayConfig.views.find(view => !OverlayConfig.isTool(view.type))
+  // How much the overlay shrinks that page on this screen (PageBox.fitScale):
+  // a page wider than the screen shrinks as a whole
+  readonly property real overlayFit: GridPlacement.fitScale(GridPlacement.bounds(root._first?.layout?.modules), overlayGrid.roomWidth, overlayGrid.roomHeight, OverlayConfig.pageUnit(root._first, overlayGrid.unit))
 
   // Esc (or Skip setup) asks first
   property bool confirmingQuit: false
@@ -46,48 +47,56 @@ ReservedAreaWindow {
         bottomMargin: Widget.padding * 2
       }
 
-      Loader {
-        id: page
-        anchors.centerIn: parent
-        // Drawn at the overlay's zoom, shrunk by as much as the overlay
-        // shrinks its first page, or more if it doesn't fit, so the cards
-        // show at the overlay's size. `contentZoom`: see StyledIcon
-        scale: overlayGrid.zoom * Math.min(root.overlayFit, (pageArea.width - OverlayConfig.cardSpacing * 2) / Math.max(1, implicitWidth * overlayGrid.zoom), (pageArea.height - OverlayConfig.cardSpacing * 2) / Math.max(1, implicitHeight * overlayGrid.zoom))
-        readonly property real contentZoom: scale
-        sourceComponent: {
-          switch (OnboardingManager.pageId) {
-          case "compositor":
-            return compositorPage;
-          case "monitors":
-            return monitorsPage;
-          case "apps":
-            return appsPage;
-          case "workspaces":
-            return workspacesPage;
-          case "look":
-            return lookPage;
-          case "system":
-            return systemPage;
-          case "appColors":
-            return appColorsPage;
-          case "checks":
-            return checksPage;
-          case "finish":
-            return finishPage;
+      // Drawn at the overlay's zoom, shrunk by as much as the overlay
+      // shrinks its first page, or more if it doesn't fit, so the cards
+      // show at the overlay's size
+      PageBox {
+        id: pageBox
+        zoom: overlayGrid.zoom
+        roomWidth: pageArea.width - OverlayConfig.cardSpacing * 2
+        roomHeight: pageArea.height - OverlayConfig.cardSpacing * 2
+        fitCap: root.overlayFit
+        width: page.implicitWidth
+        height: page.implicitHeight
+
+        Loader {
+          id: page
+          sourceComponent: {
+            switch (OnboardingManager.pageId) {
+            case "compositor":
+              return compositorPage;
+            case "monitors":
+              return monitorsPage;
+            case "apps":
+              return appsPage;
+            case "workspaces":
+              return workspacesPage;
+            case "look":
+              return lookPage;
+            case "system":
+              return systemPage;
+            case "appColors":
+              return appColorsPage;
+            case "checks":
+              return checksPage;
+            case "finish":
+              return finishPage;
+            }
+            return welcomePage;
           }
-          return welcomePage;
-        }
-        opacity: status === Loader.Ready ? 1 : 0
-        Glide on opacity {
-          duration: Appearance.animNormal
+          opacity: status === Loader.Ready ? 1 : 0
+          Glide on opacity {
+            duration: Appearance.animNormal
+          }
         }
       }
     }
 
-    // This screen's card size, worked out as the overlay's is
+    // This screen's card size, worked out as the overlay's first page's is
     OverlayGrid {
       id: overlayGrid
       screen: root.screen
+      sizing: root._first?.sizing ?? null
       availableWidth: pageArea.width - OverlayConfig.cardSpacing * 2 - OverlayConfig.boxPadding * 2
       availableHeight: pageArea.height - OverlayConfig.cardSpacing * 2 - OverlayConfig.boxPadding * 2
     }

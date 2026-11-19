@@ -1,4 +1,5 @@
 label: Calendar
 icon: calendar_month
 tool: true
+sizing: tool
 window: true

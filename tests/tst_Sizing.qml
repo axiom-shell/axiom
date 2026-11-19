@@ -42,6 +42,17 @@ TestCase {
     compare([content.card, content.content], [1, 0.75], "each set alone");
   }
 
+  function test_factors_whole_surface() {
+    const zoomed = Sizing.factors({
+      "contentSize": 80
+    });
+    compare([zoomed.card, zoomed.content], [0.8, 0.8], "no link: cards and content are the one factor");
+    const following = Sizing.factors({
+      "contentSize": null
+    });
+    compare([following.card, following.content], [1, 1], "following: 100 % over the global size");
+  }
+
   function test_factors_without_a_sizing() {
     compare(Sizing.factors(null), {
       "card": 1,

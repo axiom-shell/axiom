@@ -1,5 +1,6 @@
 label: Window rules
 icon: rule_settings
 tool: true
+sizing: tool
 window: true
 needs: configModes

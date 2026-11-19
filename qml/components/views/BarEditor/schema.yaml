@@ -1,4 +1,5 @@
 label: Bar editor
 icon: toolbar
 tool: true
+sizing: tool
 window: true

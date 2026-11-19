@@ -1,7 +1,7 @@
 # Page windows
 
 > **Files:** `qml/services/ui/PageWindowManager.qml`, `qml/shell/PageWindows.qml`, `qml/components/hosts/window/PageWindow.qml`, `qml/components/hosts/overlay/PoppedOutCard.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayPageNavigator.qml`, `qml/components/hosts/overlay/OverlayGrid.qml`, `qml/components/views/base/BaseView.qml`, `qml/services/ui/ShellManager.qml`, `data/applications/`
-> **Config:** `Overlay.items`, `Overlay.screen`, `Overlay.moduleScale`
+> **Config:** `Overlay.items`, `Overlay.screen`
 > **Related:** [Overlay pages and the module grid](pages-and-grid.md), [Editors pattern](../core/editors-pattern.md), [Shell manager targeting](../core/shell-manager-targeting.md)
 
 How a tool page leaves the overlay for a window of its own (an xdg toplevel, Quickshell's `FloatingWindow`) and comes back. Read this before changing which pages pop out, the window's sizing, or how pages are opened by name.
@@ -29,10 +29,10 @@ How a tool page leaves the overlay for a window of its own (an xdg toplevel, Qui
 - `qml/shell/PageWindows` makes one `PageWindow` per windowable type, each behind a `LazyLoader` active while it's out. The Variants model is `OverlayConfig.windowTypes`, from the schema, not the live list.
 - The window has a header (icon, name, unsaved dot, and a `pip_exit` button back into the overlay), then the page.
 - **Sizing:**
-  - The page lays out on an `OverlayGrid` with `windowed: true`. The card size comes from the screen the window opened on (the overlay's there, `PageWindowManager.screenOf`), never from the window's size, so content keeps the overlay's size and doesn't stretch.
+  - The page lays out on an `OverlayGrid` with `windowed: true` and the page's own `sizing` (its Content size, which zooms a tool page whole). The card size comes from the screen the window opened on (the overlay's there, `PageWindowManager.screenOf`), never from the window's size, so content keeps the overlay's size and doesn't stretch.
   - `BaseView.windowed` makes `pageHeight` fill the window's height (`grid.roomHeight`), and lets the main area grow wider than in the overlay: `editorWidth`'s cap rises from 2.8 to 3.4 card units, and Settings' content takes the room beside its sidebar (`BaseView.windowedWidth`), up to 3 units.
-  - A window narrower than the page's least width draws the page smaller as a whole (`pageBox.fitScale`, from the width only). The grid's height is divided by that scale, so the page still fills the window's height.
-  - The first size (with none kept) is room for the page at its overlay size, within 75% × 85% of the screen. Tiling compositors pick their own.
+  - A window narrower than the page's least width draws the page smaller as a whole (the `PageBox`'s `fitScale`, from the width only: `fitHeight` is off). The grid's height is divided by that scale, so the page still fills the window's height.
+  - The first size (with none kept) is room for the page at its size in the overlay, within 75% × 85% of the screen. Tiling compositors pick their own.
 - `Window.active` on the header reports the window with the keyboard (`PageWindowManager.activeType`).
 
 ### Links from a window

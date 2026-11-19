@@ -1,4 +1,5 @@
 label: Custom widgets
 icon: widgets
 tool: true
+sizing: tool
 window: true

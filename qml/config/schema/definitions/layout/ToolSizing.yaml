@@ -1,0 +1,17 @@
+# The ToolSizing definition (#/definitions/ToolSizing): a tool page's
+# ContentSizing, capped at 100 (the whole page zooms, and must fit its screen).
+
+x-inline: true
+$ref: '#/definitions/ContentSizing'
+x-properties:
+  contentSize:
+    x-link: {setting: Interface.contentSize}
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 100}
+    title: Content size
+    default: null
+    minimum: 50
+    maximum: 100
+    x-unit: '%'
+    description: Relative to the Content size in Look & Feel. Auto follows it. The whole page zooms with it.

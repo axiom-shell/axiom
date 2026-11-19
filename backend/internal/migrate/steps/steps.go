@@ -336,6 +336,9 @@ var all = []Step{
 	// screen's Module size (moduleScale) became its Card size (sizing.cardSize,
 	// v113.go)
 	{Version: 113, Run: v113},
+	// v114: the overlay's Module size (Overlay.moduleScale) moved onto each of
+	// its pages' sizing (v114.go)
+	{Version: 114, Run: v114},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

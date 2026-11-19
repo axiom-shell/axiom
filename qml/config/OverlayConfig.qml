@@ -8,9 +8,6 @@ import qs.components.methods
 QtObject {
   // The pages, Overlay.items: [OverlayView], each with its id
   readonly property var views: ConfigManager.live.Overlay.items
-  // The overlay's own Module size, in %: its cards are the card size
-  // (cardUnitOn) times it, and their content drawn at it (see layoutFor)
-  readonly property int moduleScale: ConfigManager.live.Overlay.moduleScale
   // Whether its pages draw their modules' card boxes (off: bare, as
   // edge menus' moduleBorders)
   readonly property bool moduleBorders: ConfigManager.live.Overlay.moduleBorders
@@ -93,8 +90,14 @@ QtObject {
   // The groups the editors' libraries sort bar widgets and modules into
   // (the schema's `x-libraryGroups`), in order
   readonly property var libraryGroups: ConfigManager.configSchema?.["x-libraryGroups"] ?? []
-  // A Custom page's own fields (name, icon, layout), for the layouts editor
-  readonly property var customViewSchema: ConfigManager.configSchema.definitions.CustomOverlayView.properties
+  // A Custom page's own fields (name, icon, layout, sizing), for the layouts
+  // editor
+  readonly property var customViewSchema: viewSchema("Custom")
+  // A page type's own fields, as the schema expands them (its sizing among
+  // them)
+  function viewSchema(type) {
+    return ConfigManager.configSchema.definitions[`${type}OverlayView`].properties;
+  }
   readonly property var availableViewTypes: _oneOfTypes("OverlayView")
   // The custom widgets as module library entries, one per definition,
   // keyed "CustomWidget:<id>" (CustomWidgetsConfig.splitKey): the CustomWidget type's
@@ -222,20 +225,22 @@ QtObject {
   // takes off the pages' area with the gaps around it (OverlayPanel)
   readonly property int navigatorHeight: Math.round(Widget.height * 1.5)
   readonly property int navigatorRoom: navigatorHeight + Widget.padding * 4
-  // The overlay's cards on `screen` in `width` × `height` px of room (the
-  // page area less its margin and the box's padding): the card size there
-  // times the overlay's Module size, content drawn at that Module size,
-  // two cards high at most. { drawn, unit, zoom }, see
-  // GridPlacement.overlayLayout
-  function layoutFor(screen, width, height) {
-    const card = cardUnitOn(screen?.width ?? width, screen?.height ?? height) * moduleScale / 100;
-    return GridPlacement.overlayLayout(height, card, GridPlacement.zoomOf(moduleScale / 100));
+  // A page's cards on `screen` in `width` × `height` px of room (the page
+  // area less its margin and the box's padding): the card size there times
+  // the page's own Card size factor, content drawn at its Content size
+  // factor (Sizing.factors of its `sizing`; null, as on the Layouts page,
+  // follows the global sizes), two cards high at most. { drawn, unit, zoom,
+  // capped }, see GridPlacement.overlayLayout
+  function layoutFor(screen, width, height, sizing) {
+    const factors = Sizing.factors(sizing);
+    const card = cardUnitOn(screen?.width ?? width, screen?.height ?? height) * factors.card;
+    return GridPlacement.overlayLayout(height, card, GridPlacement.zoomOf(factors.content));
   }
   // The card size (px) every module grid on a `width` × `height` screen
   // starts from: two cards fill its short side (GridPlacement.baseCard)
-  // at the card size (Widget.cardSize). The overlay, edge menus, the
-  // desktop, the lock screen and the greeter scale it by their own Module
-  // size, so on one monitor they all agree, turned either way
+  // at the card size (Widget.cardSize). The overlay's pages, edge menus, the
+  // desktop, the lock screen and the greeter scale it by their own sizing,
+  // so on one monitor they all agree, turned either way
   function cardUnitOn(width, height) {
     return GridPlacement.baseCard(width, height) * Widget.cardSize / 100;
   }

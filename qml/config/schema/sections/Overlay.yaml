@@ -41,17 +41,6 @@ properties:
     enum: [auto, current, icons]
     x-enumLabels: {auto: 'All, while they fit', current: Current page only, icons: Icons only}
     default: auto
-  moduleScale:
-    x-link: {setting: Interface.cardSize}
-    x-scope: look
-    x-group: Size
-    type: integer
-    title: Module size
-    default: 100
-    minimum: 50
-    maximum: 100
-    x-unit: '%'
-    description: Relative to the card size in Look & Feel.
   closeOnEscape:
     x-group: Closing
     type: boolean
