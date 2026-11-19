@@ -113,7 +113,7 @@ Card {
           Layout.preferredWidth: list.width * 0.35
           Layout.preferredHeight: Widget.px(4)
           radius: height / 2
-          color: Style.surfaceSunken
+          color: Style.trough // style-exempt: a low-to-high range, not a level meter
           Rectangle {
             readonly property real span: Math.max(1, root.weekMax - root.weekMin)
             x: parent.width * (day.low - root.weekMin) / span

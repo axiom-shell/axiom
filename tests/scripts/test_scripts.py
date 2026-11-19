@@ -934,6 +934,15 @@ class CheckStyle(unittest.TestCase):
         self.assertEqual(self.rule("  // Widget.radius in a comment", "R19"), 0)
         self.assertEqual(self.rule("  radius: Widget.radius", "R19", path="qml/config/X.qml"), 0)
 
+    def test_r21_trough(self):
+        self.assertEqual(self.rule("  color: Style.trough", "R21"), 1)
+        self.assertEqual(self.rule("  color: Style.trough", "R21", path="qml/components/content/X/X.qml"), 1)
+        for piece in ("StyledVolumeBar", "StyledSlider", "LevelMeter", "SegmentMeter", "PercentageCircle"):
+            self.assertEqual(self.rule("  color: Style.trough", "R21", path=f"qml/components/reusable/{piece}.qml"), 0, piece)
+        self.assertEqual(self.rule("  // Style.trough in a comment", "R21"), 0)
+        self.assertEqual(self.rule("  color: Style.trough // style-exempt: a band, not a meter", "R21"), 0)
+        self.assertEqual(self.rule("  color: Style.trough", "R21", path="qml/config/X.qml"), 0)
+
     def test_r18_scale(self):
         self.assertEqual(self.rule("  scale: 0.92", "R18"), 1)
         self.assertEqual(self.rule("  scale: 1", "R18"), 0)
@@ -954,6 +963,12 @@ class CheckStyle(unittest.TestCase):
         self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["R1"], "reason": "a fixture"}}),
                   self.UI: self.HEAD + "Item {\n  property var x: Theme.accent\n}\n"})
         self.assertEqual(run_check(self.root, "check_style.py")[0], 0)
+
+    def test_a_file_level_r21_exception_is_accepted(self):
+        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["R21"], "reason": "a fixture"}}),
+                  self.UI: self.HEAD + "Item {\n  color: Style.trough\n}\n"})
+        code, out = run_check(self.root, "check_style.py")
+        self.assertEqual(code, 0, out)
 
     def test_a_malformed_exception_is_an_error_not_a_traceback(self):
         self.put({"scripts/style-exceptions.json": json.dumps({self.UI: "R1"}),

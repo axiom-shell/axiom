@@ -83,9 +83,14 @@ Item {
       implicitHeight: Widget.px(root.orientation === Qt.Vertical ? 120 : 12)
 
       radius: Style.radius
-      color: Style.surfaceSunken
-      border.width: Style.hairline
-      border.color: Style.borderStrong
+      objectName: "trough"
+      border.width: 0
+      // Muted, the highlight is the highest surface: the trough steps toward the text
+      color: root.isMuted ? Style.inkHighest.divider : Style.trough
+
+      ColorGlide on color {
+        duration: Appearance.animNormal
+      }
 
       Rectangle {
         id: barFill
