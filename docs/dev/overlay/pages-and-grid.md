@@ -1,7 +1,7 @@
 # Overlay pages and the module grid
 
-> **Files:** `qml/shell/Overlay.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayGrid.qml`, `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/overlay/OverlayPageNavigator.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/views/Custom/Custom.qml`, `qml/components/methods/GridPlacement.qml`, `qml/config/OverlayConfig.qml`
-> **Config:** `Overlay.items`, `Overlay.moduleScale`, `Widget.cardSize`, `Widget.scale`, `Overlay.navigator`, `Overlay.navigatorLabels`, `Overlay.animation`, `Overlay.showBackdrop`, `Overlay.backdrop`
+> **Files:** `qml/shell/Overlay.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayGrid.qml`, `qml/components/hosts/overlay/PageBox.qml`, `qml/components/hosts/overlay/OverlayPage.qml`, `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/overlay/OverlayPageNavigator.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/views/Custom/Custom.qml`, `qml/components/methods/GridPlacement.qml`, `qml/components/methods/Sizing.qml`, `qml/config/OverlayConfig.qml`
+> **Config:** `Overlay.items`, `Widget.cardSize`, `Widget.contentSize`, `Overlay.navigator`, `Overlay.navigatorLabels`, `Overlay.animation`, `Overlay.showBackdrop`, `Overlay.backdrop`
 > **Related:** [Streamed building](../core/streamed-building.md), [Content roots](content-roots.md), [Writing modules](writing-modules.md), [Layouts editor](layouts-editor.md), [Menus](../menus/overview.md)
 
 How the overlay turns `Overlay.items` into pages, and a page's modules into a grid of slots: views, the pure grid maths in `GridPlacement`, per-screen card sizing and what is loaded when. Read this before touching a view, the grid or overlay loading.
@@ -12,6 +12,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 - With `grid.fine` ("Double grid") there are eight units to a card:
   - `Custom.qml` lays the page out at `OverlayConfig.pageUnit`, `GridPlacement.fineUnit`: two of its units and their gap span one card unit (rounded down, never over).
   - `OverlayManager.fitOf` and the onboarding fit use it too.
+- Each page has its own `sizing` (`Overlay.items[].sizing`, picked by its view type's schema: a Custom page's `PageSizing`, a tool page's `ToolSizing`): see [Sizing](#sizing).
   - Toggling it rescales the places (`GridPlacement.scalePlace`), as for menus and screen layouts.
 - Everything loads by naming convention, so there are no lookup tables.
 - Views and modules are `oneOf`s discriminated by `type`, like `BarWidget`.
@@ -38,7 +39,8 @@ Pure, tested by `tst_GridPlacement`.
 - `normalize`: shifts a grid so its top left module sits at 0, 0.
 - `trackSizes(bounds, unit, stretch)`: one unit's width and height and the grid's size, growing either axis evenly into `stretch` room (never shrinking). Units may be fractional; the grid's size is rounded to whole px.
 - `rectPx(place, sizes)`: places a module, each edge rounded to a whole px (not its size, so neighbours keep their gap). Each slot clips its module, and a clip on a fractional edge shaves the pixel a module draws its stroke in (a borderless Chat's composer in an edge menu).
-- `fitScale`: how much an overlay's room shrinks a page.
+- `fitScale`: how much an area's room shrinks modules reaching some bounds.
+- `overlayLayout(height, card, zoom)`: a page's drawn card, unit and zoom, and whether the height capped the cards (see [Sizing](#sizing)).
 - Edge menu geometry (see [Menu hosts](../menus/hosts.md)):
   - `menuLattice` / `latticeOf`: the cells a menu sits on along its edge. As many as fit between the frame's pads, centred there, moved `gridOffset` px.
   - `menuCell` / `alongStart` / `menuAlong`: where its modules start (centred on the lattice, `offset` cells on, kept on it).
@@ -55,7 +57,7 @@ Pure, tested by `tst_GridPlacement`.
 - Sizes itself from `grid.sizes(bounds, stretch)`.
 - Places one clipped `OverlaySlot` per module (keyed by count), passing `GridPlacement.rectOf(place)` as the module's `slotRect`.
 - Warns once for a module that overlaps another.
-- Its `host` (handed to each module) is `{ kind: "overlay" }`; a Custom page adds its name as `page`, `bare: !OverlayConfig.moduleBorders` (`Overlay.moduleBorders`, one setting for every page, like `Overlay.moduleScale`) and `padded: true`, so with module borders off its modules drop their card box but keep their padding.
+- Its `host` (handed to each module) is `{ kind: "overlay" }`; a Custom page adds its name as `page`, `bare: !OverlayConfig.moduleBorders` (`Overlay.moduleBorders`, one setting for every page) and `padded: true`, so with module borders off its modules drop their card box but keep their padding.
 - Growing modules are laid out here too: see [Growing and expanding](grow-expand.md).
 
 ### Module (`OverlaySlot`)
@@ -63,22 +65,44 @@ Pure, tested by `tst_GridPlacement`.
 - `OverlaySlot` imports `qs.components.content` so that `qs` scans the URL-loaded content; without it, their own `qs.*` imports fail with "not installed".
 - Adding a module type: see [Writing modules](writing-modules.md).
 
-### Sizing (per screen)
-Cards follow the screen; text and controls don't. A monitor's cards are its card size (`OverlayConfig.cardUnitOn`: two cards fill its short side less `GridPlacement.screenMargin` each side, `GridPlacement.baseCard`, times `Widget.cardSize`%), the same turned either way and on every surface. Content lays out at the card's real size, so text is the Interface scale's (`Widget.scale`) on every monitor; only a Module size zooms it.
-- Each `OverlayPanel` has an `OverlayGrid` (`hosts/overlay/`) on the page area beside the navigator (`OverlayConfig.navigatorRoom`), less a `cardSpacing` margin and the box's padding (`OverlayConfig.boxPadding`, at the Interface scale, not zoomed) on each side (`OverlayConfig.layoutFor`, `GridPlacement.overlayLayout`, tested in `tst_GridPlacement`):
-  - `drawnUnit`: the card size on its screen times `Overlay.moduleScale`%, at most what lets a page two cards high (two cards and a gap) fill the height, rounded down so such a page fits exactly instead of being shrunk by a hair.
-  - `zoom`: `Overlay.moduleScale` as a factor (`GridPlacement.zoomOf`: 1 within 2 %, so content isn't resampled for nothing).
-  - `unit`: the card size content lays out at, `drawnUnit / zoom` (rounded down). Bigger text (the Interface scale) fits less in each card.
+### Sizing
+Two sizes everywhere: **Card size** (how big module cards are) and **Content size** (text and controls inside them). Look & Feel holds the global pair (`Interface.cardSize`, `Interface.contentSize`, read as `Widget.cardSize` and `Widget.contentSize`); a surface may scale them with its own `sizing`, each level a multiplier on the one above (a level left alone counts as 100%).
+
+| Level | Card size | Content size | Linked | Definition |
+|---|---|---|---|---|
+| Global (`Interface`) | `cardSize` % | `contentSize` % | — | personal |
+| Custom page | factor 50-100 | factor 50-100 | yes | `PageSizing` |
+| Tool page | follows Content | factor 50-100, zooms the whole page | — | `ToolSizing` |
+| Edge menu, desktop item, lock screen, login screen | factor 50-200 | factor 50-200 | yes | `Sizing` ([menus](../menus/hosts.md)) |
+| Built-in bar popout (popout on, no menu) | follows Content | factor 50-200, zooms the whole popout | — | `ContentSizing` (`PopoutSizing`) ([popouts](../popouts/hosts-and-switching.md#sizing)) |
+| Custom widget popout | factor 50-200 | factor 50-200 | yes | `Sizing`, personal like the widget ([popouts](../popouts/hosts-and-switching.md#sizing)) |
+| Module (on any surface) | its grid's w × h | factor 50-200 | — | ModuleBase `contentSize` |
+
+- The Layouts page isn't in config: it follows the global sizes alone.
+- A page's factors top out at 100: the two-cards-high cap shrinks its cards, not the zoom.
+- **Applied, not shown.** The global percentages are already inside `OverlayConfig.cardUnitOn` (the card) and `Widget` / `Appearance` / `Style` (the content). A host applies only its surface's factors, `Sizing.factors(sizing)` → `{ card, content }`, never multiplies by hand:
+  - with a `linked` (a Custom page, a menu): the card is `cardSize`'s factor, the content follows it while `linked`, else is `contentSize`'s;
+  - without one (a tool page): the whole page zooms, card and content the one `contentSize` factor, which keeps a tool page's drawn cards at the card size times its zoom and its `unit` the card size itself.
+- A `null` size follows the level above. Turning a size's switch on stores 100, so nothing moves. Unlinking writes `contentSize` the cards' size in the same edit and linking again drops it (`Sizing.edited` / `editedIn`, called at each edit point: `OverlayManager.updateViewField` for a page, `BarManager.updateWidgetProperty` for a widget's popout).
+- A module's own `contentSize` (`modules[].contentSize`, beside `place`; a % or null) multiplies onto its surface's zoom for that slot alone: `ModuleGrid` hands `OverlaySlot` `Sizing.moduleZoom(grid zoom, contentSize)`, the one place the factors meet. On an overlay page (the page zooms as a whole, the grid's zoom is 1) it is the factor alone. An expanded module draws at the surface's zoom times the opener's `contentSize` (`ModuleGrid.expand` puts it in the request; `ExpandedModule` applies `Sizing.moduleZoom`), whatever type it shows. It is edited in the Layouts inspector's Content size row, a `SchemaPropertiesForm` on `OverlayConfig.moduleInfo(type).contentSize` (the schema comes from the expanded type, as the kind base is gone then), through `GridEditor.updateModuleField` (undo key `index:@contentSize`).
+- **The line.** Under each Size row an editor says what it comes to, from `Sizing.breakdown` and `moduleBreakdown` (numbers only: the global % times the surface's factor; the fit and the cap are their own clauses). `forms/SizingNote` words it, one `I18n.tr` per sentence (`SizingNote.shrinkClause` the shrink clause, which the targets reach as `EditTarget.shrinkClause`). The fit: `OverlayManager.fitOf` (a Custom page), what `OverlayPages` reported with `reportFit` (a tool page; never `PageBox`), `MenusConfig.layoutOf` (a menu), `ScreenLayoutEditor.fitScale` (a screen layout; its `shrunk`, `shrunkTo` come from `Sizing.shrinkOf`).
+
+Cards follow the screen; text and controls don't. A monitor's cards are its card size (`OverlayConfig.cardUnitOn`: two cards fill its short side less `GridPlacement.screenMargin` each side, `GridPlacement.baseCard`, times `Widget.cardSize`%), the same turned either way and on every surface. Content lays out at the card's real size, so text is the Content size's (`Widget.contentSize`) on every monitor; only a surface's Content size factor zooms it.
+- Every overlay page, page window and the onboarder has an `OverlayGrid` (`hosts/overlay/`) of its own `sizing`. In the overlay it is the page area beside the navigator (`OverlayConfig.navigatorRoom`), less a `cardSpacing` margin and the box's padding (`OverlayConfig.boxPadding`, at the Content size, not zoomed) on each side, that gives its room (`OverlayConfig.layoutFor(screen, width, height, sizing)`, `GridPlacement.overlayLayout`, tested in `tst_GridPlacement`; one object, so a page's card, zoom and cap never come from two bindings):
+  - `drawnUnit`: the card size on its screen times the page's Card size factor, at most what lets a page two cards high (two cards and a gap) fill the height, rounded down so such a page fits exactly instead of being shrunk by a hair. `layoutFor` also says whether the height `capped` it.
+  - `zoom`: the Content size factor (`GridPlacement.zoomOf`: 1 within 2 %, so content isn't resampled for nothing). The cap doesn't reduce it.
+  - `unit`: the card size content lays out at, `drawnUnit / zoom` (rounded down). Bigger text (the Content size) fits less in each card.
   - `roomWidth` / `roomHeight`: the room in layout px, what views size against (`BaseView.editorWidth`).
 - Views receive it as `grid` (`BaseView`) and size everything from `grid.unit` / `grid.span(n)` / `grid.sizes(bounds, stretch)`, passing plain numbers down to content. Text and widget sizes stay the shell's px tokens; the zoom scales them with the cards.
-- `OverlayPages` draws the current page at `contentZoom` (`zoom × fitScale`, Item.scale on the views' container); its box (a `page` Surface with the `borderSubtle` hairline) is sized in drawn px, so its border and radius stay crisp. It casts a soft shadow (`Style.shadowSoft`, an `OutsideShadow` of a plain copy of the box's shape) while the shell's shadow switch is on, except where the compositor's blur would frost it (`Appearance.blur && BlurManager.shadowsApart`).
-  - The container scales from its top left, placed on a whole px, and the grid knows what it's drawn at (`OverlayGrid.drawnZoom`, which `PageWindow` sets too), so `GridPlacement.rectPx` puts every slot's edges on whole drawn px: each card's border falls on the screen's pixels alike, never smeared over two at some zooms.
+- Each `OverlayPage` draws its page in a `PageBox` at `contentZoom` (`zoom × fitScale`, Item.scale on the box); the overlay's box (a `page` Surface with the `borderSubtle` hairline) is sized in drawn px to the current page's (`OverlayPage.drawnWidth` / `drawnHeight`), so its border and radius stay crisp. It casts a soft shadow (`Style.shadowSoft`, an `OutsideShadow` of a plain copy of the box's shape) while the shell's shadow switch is on, except where the compositor's blur would frost it (`Appearance.blur && BlurManager.shadowsApart`). `PageBox` is the one piece that scales a page: the overlay's pages, `PageWindow` and the onboarder all use it, with the room (`roomWidth` / `roomHeight`), `fitHeight` (off for a window, which fills its height) and `fitCap` (the onboarder's) they differ in.
+  - The box scales from its top left, placed on a whole px, and the grid knows what it's drawn at (`OverlayGrid.drawnZoom`, which each host binds to its `PageBox.contentZoom`), so `GridPlacement.rectPx` puts every slot's edges on whole drawn px: each card's border falls on the screen's pixels alike, never smeared over two at some zooms.
   - Menus, the desktop, the lock screen and the greeter zoom each module's content instead (`ModuleGrid.zoom`), keeping their grid in drawn px with its gaps scaled to its cards (`OverlayGrid.gap`, `GridPlacement.gapOf`), so the grid is the overlay's scaled: see [Menu hosts](../menus/hosts.md).
   - `StyledIcon` finds the `contentZoom`s up its parents (multiplied) and, scaled, draws unfilled symbols with the distance-field renderer (a native glyph blurs when scaled; a filled one stays native, as distance fields blot its contours).
-- A page that still doesn't fit (wider than the screen, higher than two cards) is shrunk as a whole by `OverlayPages.fitScale`.
-- The panel reports its room before shrinking, in layout px, and its `unit` to `OverlayManager.reportArea`: the layouts editor's "fits" line (`fitOf`), which the layouts editor's page fits read. Menus, the desktop, the lock screen and the greeter don't use it: they start from `OverlayConfig.cardUnitOn` (the card size without the overlay's own Module size, and without bars), so they look the same whether an overlay is open or not, and their cards match the overlay's at the same Module size wherever the overlay isn't capped by its height.
-- `cardSpacing` and the card padding (`OverlayConfig.cardPad`, from `Widget.cardPadding`: the density's, at the Interface scale) are layout px: they scale with the zoom. A grid drawn in drawn px (`OverlayGrid.fixedUnit`) takes `gapOf` its zoom as its `gap`; every `GridPlacement` size helper takes that gap (`unitOf`, `span`, `stepOf`, `fineUnit`, `trackSizes`, whose `sizes.gap` `rectPx` reads, and the menu and screen lattices).
-- The onboarder (`OnboardingWindow`) works out the same grid and draws its pages at the same zoom, so its Welcome page previews `Widget.cardSize` and `Widget.scale`.
+- A page that still doesn't fit (wider than the screen, higher than two cards) is shrunk as a whole by its `PageBox.fitScale` (the room over what the page draws, width and height; at most 1, or `fitCap`).
+- A page slides in `OverlayPage`, which moves its own `PageBox`: during a slide between pages of different sizes the box resizes, as it does for pages of different widths. Tool pages (`BaseView.pageWidth`) are the same width at the same Content size, so switching between them never resizes the box; two tool pages at different Content sizes differ in width.
+- Each `OverlayPanel` reports its room before shrinking, in drawn px, with its screen's size to `OverlayManager.reportArea`, and `OverlayManager.fitOf(view)` works a Custom page's own layout and fit on each screen from them (`layoutFor` with the page's `sizing`, then `GridPlacement.fitScale`): the layouts editor's "fits" line. Menus, the desktop, the lock screen and the greeter don't use it: they start from `OverlayConfig.cardUnitOn` (the card size without a page's own sizing, and without bars), so they look the same whether an overlay is open or not, and their cards match a page's at the same sizing wherever the overlay isn't capped by its height.
+- `cardSpacing` and the card padding (`OverlayConfig.cardPad`, from `Widget.cardPadding`: the density's, at the Content size) are layout px: they scale with the zoom. A grid drawn in drawn px (`OverlayGrid.fixedUnit`) takes `gapOf` its zoom as its `gap`; every `GridPlacement` size helper takes that gap (`unitOf`, `span`, `stepOf`, `fineUnit`, `trackSizes`, whose `sizes.gap` `rectPx` reads, and the menu and screen lattices).
+- The onboarder (`OnboardingWindow`) works out a grid of the overlay's first Custom page's sizing and draws its pages at the same zoom, so its Welcome page previews `Widget.cardSize` and `Widget.contentSize`.
 
 ### Loading
 - One overlay per screen in `General.screens` (`qml/shell/Overlay.qml`): a transparent `OverlayPanel` inside the reserved area, placed by its base `ReservedAreaWindow` (shared with the onboarder).

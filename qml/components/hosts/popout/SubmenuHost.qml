@@ -29,6 +29,9 @@ Item {
   property point popupScreenPlaced: Qt.point(0, 0)
   // Glide the stretch (once the host's box has settled)
   property bool animate: false
+  // What the host draws its content at (BarPopouts.zoom): the submenu draws
+  // its own at the same, so a tray submenu matches its tray popout
+  property real zoom: 1
 
   // The host's EdgePlacement, and how far its coordinates are from its
   // window's along the edge: what the submenu meets on the box's side

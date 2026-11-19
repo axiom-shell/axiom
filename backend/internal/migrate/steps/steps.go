@@ -314,6 +314,31 @@ var all = []Step{
 	// and Toggle option labels moved into bind, bar and element commands
 	// became actions, colour-by-state became rules (v111.go)
 	{Version: 111, Run: v111},
+	// v112: Interface.scale (the Interface scale) became Interface.contentSize
+	// (Content size). A contentSize already beside it wins; a scale that
+	// isn't a number is left alone
+	{Version: 112, Run: func(cfg *jsonx.Object) []string {
+		iface := object(cfg, "Interface")
+		if iface == nil {
+			return nil
+		}
+		scale, isNumber := iface.Value("scale").(float64)
+		if !isNumber {
+			return nil
+		}
+		iface.Delete("scale")
+		if !iface.Has("contentSize") {
+			iface.Set("contentSize", scale)
+		}
+		return []string{"Interface.scale renamed Interface.contentSize"}
+	}},
+	// v113: a menu's, a desktop item's, the lock screen's and the login
+	// screen's Module size (moduleScale) became its Card size (sizing.cardSize,
+	// v113.go)
+	{Version: 113, Run: v113},
+	// v114: the overlay's Module size (Overlay.moduleScale) moved onto each of
+	// its pages' sizing (v114.go)
+	{Version: 114, Run: v114},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

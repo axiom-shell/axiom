@@ -50,9 +50,11 @@ EdgePopout {
   readonly property real startPad: root.alongOrigin + root.startInset + root.contentPadding
   readonly property real endPad: (root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide)) + root.endInset + root.contentPadding
   // From config, so the hover strip lines up before the body has loaded
-  // Its card size (MenusConfig.cardUnitOf)
-  readonly property int unit: MenusConfig.cardUnitOf(root.menu)
-  readonly property real cardGap: MenusConfig.gapOf(root.menu)
+  // Its grid on its screen (MenusConfig.layoutOf)
+  readonly property var layout: MenusConfig.layoutOf(root.menu)
+  // Its card size
+  readonly property int unit: root.layout.unit
+  readonly property real cardGap: root.layout.gap
   readonly property real gridLength: MenusConfig.gridLengthOf(root.menu, root.vertical, root.unit, root.cardGap)
   readonly property real modulesStart: GridPlacement.menuAlong(root.menu, root.screenLength, root.unit, root.startPad, root.endPad, root.cardGap)
 

@@ -1,0 +1,13 @@
+# The ContentSize definition (#/definitions/ContentSize): a surface's own Content size, a % of Look & Feel's (null follows it). Uses override `maximum` and `description`.
+
+x-link: {setting: Interface.contentSize}
+type: integer
+x-control: stepper
+x-auto: {value: null, start: 100}
+title: Content size
+default: null
+minimum: 50
+maximum: 200
+x-unit: '%'
+description: Relative to the Content size in Look & Feel. Off follows it.
+x-inline: true

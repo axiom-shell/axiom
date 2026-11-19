@@ -27,8 +27,9 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - `editTarget` falls back to `"page"` when its row hides.
 - Entry points: the launcher's `/layouts` and `/menus`, `axiom ipc menu edit`.
 - Each target is an `EditTarget`: `PageTarget`, `MenuTarget`, and `DesktopTarget` / `LockscreenTarget` / `GreeterTarget` on `ScreenLayoutTarget` (all in `views/Layouts/`). It carries the editor, modules, title, icon, screen box, fit line, …, and `Layouts.qml` binds the canvas and inspector to it.
-  - `fitLink` (an `x-link`) puts a `SettingsLink` beside the fit line: a shrunk page to `Overlay.moduleScale`, a shrunk screen layout to `Widget.cardSize`, an outdated login screen to its settings card, the lock screen under another locker to `Lockscreen.mode`.
+  - `fitLink` (an `x-link`) puts a `SettingsLink` beside the fit line: an outdated login screen to its settings card, the lock screen under another locker to `Lockscreen.mode`.
 - Links out (followed as links, so the navigator offers the way back): a Custom page's group to the page switcher's settings, a tool page's to the page itself, each module type's `x-link` in the inspector, and an edge menu's "Also opened by" rows to the bar widget, keybind or menu that opens it (`OverlayManager.menus.goToReference`). Settings' Lock screen and Login screen links open this editor on them (`OverlayManager.followPageLink("Layouts:lockscreen")`).
+- The inspector's options pane starts with the module's own Content size (`contentSize`, a `SchemaPropertiesForm` on `OverlayConfig.moduleInfo(type).contentSize`), written by `GridEditor.updateModuleField`; the Size pane beside it is the grid w × h. See [Sizing](pages-and-grid.md#sizing).
 - The five drafts are one list, `OverlayManager.drafts` (each with `isDirty`, `problems`, `ensureLoaded()`, `saveChanges()`, `resetChanges()`), and everything takes them from it: `layoutsDirty`, `layoutsProblems` (the dirty ones': what blocks Save and "Can't save yet" lists, so a saved layout nobody touched never blocks the others), `loadLayouts()` (on page open), `saveLayouts()` / `resetLayouts()` (the dirty ones). Save/Discard on the canvas and `EditsManager`'s Save all / Discard all call those, and `EditsManager` lists the page as unsaved while `layoutsDirty`. A new draft is a new entry in `drafts`.
 
 ### Layout of the page
@@ -44,8 +45,9 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
   - Then a "Screens" `ListSection` after Menus (hint line) holding the Desktop, Lock screen and Login screen rows (not pages, not dragged). Selecting a tool page from outside opens the Tools section (`LayoutsPanel.revealTool`; that open is kept like any other).
 - **`MenusSection`** ("Menus"): the edge menus, dragged to reorder, duplicate/remove, New menu (a `StyledContextMenu` of what it's for: [editing and submenus](../menus/editing-submenus.md) › Creating a menu from what opens it).
 - Then the selection's fields (the bottom box):
-  - A page's name, icon and Double grid.
-  - A tool page's Show in the navigator.
+  - A page's name, icon, Double grid and Size (`Overlay.items[].sizing`, a `SchemaPropertiesForm` on `OverlayConfig.customViewSchema.sizing`: Card size, Content grows with cards, Content size; `OverlayManager.updateViewField` keeps the link's meaning, `Sizing.editedIn`).
+  - A tool page's Show in the navigator and its Content size (`OverlayConfig.viewSchema(type).sizing`).
+  - Under every Size row (a page's, a menu's, a screen layout's) and a module's Content size, a muted line saying what it comes to ([Sizing](pages-and-grid.md#sizing) › The line): the forms' `fieldNote` hook, `EditTarget.sizingNote(path, schema)` (the target's `sizing` and `sizingFit`, set by `PageTarget`, `MenuTarget` and `ScreenLayoutTarget`; the page's is the monitor that shrinks it most) and `moduleSizingNote(contentSize)` (handed to `EditorInspector.moduleNote`). `LayoutsPanel` takes the target for it.
   - For any page, buttons adding a bar Button or keybind that opens it (`OverlayManager.addBarButton` / `addKeybind`). They use the `overlayPage` action on its `OverlayConfig.pageKey`: a Custom page's name, else its type. Only for a saved page, so an unnamed Custom page has none.
   - A menu's field groups (see [Menu editing](../menus/editing-submenus.md)).
   - A screen layout's (`LayoutsPanel.screenTarget`):

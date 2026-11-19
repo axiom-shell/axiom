@@ -148,7 +148,7 @@ QtObject {
       "innerGap": innerGap,
       // The gap between an icon and its label (6 px at the default inner spacing of 4)
       "iconGap": iconGap,
-      "fontSize": Math.round(env.baseFontSize * scale * look.textScale / 100),
+      "fontSize": root.fontSize(env.baseFontSize, thickness, look.textScale),
       // Widget chips only, else the interior radius: pills and fillets keep
       // Appearance's, to meet the border
       "radius": look.radius,
@@ -379,6 +379,12 @@ QtObject {
   // The thickness a bar's inner sizes (text scale, inner padding and gap)
   // are set at: they scale with the bar's thickness from there
   readonly property int referenceThickness: 26
+
+  // A bar's text size (px): the base font size scaled by how much thicker the
+  // bar is than the reference, then by its text scale (a %)
+  function fontSize(baseFontSize, thickness, textScale) {
+    return Math.round(baseFontSize * (thickness / root.referenceThickness) * textScale / 100);
+  }
 
   // The bar's sections, start to end
   readonly property var sectionNames: ["left", "center", "right"]

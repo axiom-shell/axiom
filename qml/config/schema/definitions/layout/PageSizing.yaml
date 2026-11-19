@@ -1,0 +1,10 @@
+# The PageSizing definition (#/definitions/PageSizing): a Custom page's Sizing,
+# its factors capped at 100 (the overlay's two-cards-high cap shrinks its cards).
+# x-properties replaces a field whole, so the override restates its $ref with
+# the keys that differ.
+
+x-inline: true
+$ref: '#/definitions/Sizing'
+x-properties:
+  cardSize: {$ref: '#/definitions/CardSize', maximum: 100}
+  contentSize: {$ref: '#/definitions/ContentSize', maximum: 100, x-showIf: {linked: false}}

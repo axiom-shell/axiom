@@ -152,17 +152,32 @@ QtObject {
   //   joinEnd } or null) }
   function place(s) {
     const pills = s.pills ?? [];
-    // A pill bar showing no pills still grows from its outer edge
-    const pillBar = !s.island && (s.pillBar ?? pills.length > 0);
-    const pill = pills.length > 0 && (s.island || pillBar) ? root.pillAt(pills, s.centre, true) : null;
-    if (pill === null)
-      return root._offPills(s, pillBar ? "merged" : "plain", pillBar ? !!s.straightMerged : !!s.straight);
-    if (s.between && root.pillAt(pills, s.centre, false) === null) {
+    const modes = root.modesAt(s);
+    if (modes[0] === "merged" || modes[0] === "plain")
+      return root._offPills(s, modes[0], modes[0] === "merged" ? !!s.straightMerged : !!s.straight);
+    if (modes[0] === "between") {
       const free = root._offPills(s, "between", !!s.straightMerged);
       if (root._clearOf(pills, free, root.filletMargin(s.stroke, s.radius) * 2, s.merge ?? 0))
         return free;
     }
-    return root._onPill(s, pills, pill, !s.island);
+    return root._onPill(s, pills, root.pillAt(pills, s.centre, true), !s.island);
+  }
+
+  // The modes `place` may pick for a box centred at `s.centre`, whatever
+  // its length (`s`: place's pills, pillBar, island, centre, between): the
+  // one it takes when the box keeps clear of the pills where it is
+  // centred between them comes first. Which of the rest it takes depends
+  // on the box's length, so a caller that must not depend on that (the
+  // room a popout is fitted in) reads them all
+  function modesAt(s) {
+    const pills = s.pills ?? [];
+    // A pill bar showing no pills still grows from its outer edge
+    const pillBar = !s.island && (s.pillBar ?? pills.length > 0);
+    const pill = pills.length > 0 && (s.island || pillBar) ? root.pillAt(pills, s.centre, true) : null;
+    if (pill === null)
+      return [pillBar ? "merged" : "plain"];
+    const onPill = s.island ? "island" : "pill";
+    return s.between && root.pillAt(pills, s.centre, false) === null ? ["between", onPill] : [onPill];
   }
 
   // A box grown from the edge itself (or a bar's outer edge) rather than

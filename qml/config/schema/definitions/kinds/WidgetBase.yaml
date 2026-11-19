@@ -22,6 +22,7 @@ x-parts:
             x-emptyLabel: Its own popout
             description: A menu to open in place of the popout.
             x-showIf: {enabled: true}
+          sizing: {$ref: '#/definitions/PopoutSizing', x-showIf: {enabled: true, menu: ''}}
     menu:
       popout:
         type: object
@@ -45,7 +46,9 @@ x-parts:
         type: object
         title: Popout
         additionalProperties: false
-        properties: {enabled: {type: boolean, title: Popout, default: true}}
+        properties:
+          enabled: {type: boolean, title: Popout, default: true}
+          sizing: {$ref: '#/definitions/ContentSizing', x-showIf: {enabled: true}}
   # How it draws its value (`appearance: {variant: value, style: {enum:
   # [...]}}` narrows the styles to the ones it can draw)
   appearance:

@@ -8,10 +8,10 @@ import qs.components.reusable
 // FormRow that draws the field): the SchemaField for `row` in the form
 // `form`, with its change marks after the label (a button putting it back to
 // the schema default, a dot while it has an unsaved edit: FieldChangeMarks)
-// and under it the field's `x-link`s and `action` (FieldLinks, a
-// SettingsLink). SchemaPropertiesForm's cells, SettingRows' rows and the
-// settings page's SettingsField are all this, so the marks and links are the
-// same everywhere. The field is built by URL (SchemaField, through
+// and under it the field's `x-link`s, `action` (FieldLinks, a SettingsLink)
+// and `note` (a muted line). SchemaPropertiesForm's cells, SettingRows' rows
+// and the settings page's SettingsField are all this, so the marks and links
+// are the same everywhere. The field is built by URL (SchemaField, through
 // SchemaObjectArray and SchemaArrayItem, instantiates this type, so naming it
 // here would make the types depend on each other) and streamed only where a
 // host asks (`stream`: SchemaPropertiesForm's cells; the others build the
@@ -30,6 +30,8 @@ FoldFormRow {
   property var discard: null
   // { text, icon, run } for a link under the field (SettingsLink), or null
   property var action: null
+  // A muted line under the field, with its links ("" for none)
+  property string note: ""
   // Off: the field draws nothing (the host draws the row itself); its
   // `fieldShown` still holds
   property bool fieldActive: true
@@ -70,7 +72,7 @@ FoldFormRow {
       "row": root.row,
       "form": root.form,
       "headerExtra": Qt.binding(() => root.reset !== null || root.discard !== null ? marks : null),
-      "headerBelow": Qt.binding(() => root.row.schema?.["x-link"] || root.action !== null ? linksComp : null),
+      "headerBelow": Qt.binding(() => root.row.schema?.["x-link"] || root.action !== null || root.note !== "" ? linksComp : null),
       "active": Qt.binding(() => root.fieldActive),
       "visible": true
     })
@@ -96,13 +98,23 @@ FoldFormRow {
     }
   }
 
-  // The field's `x-link`s and action, read with its label (FieldHeader.below)
+  // The field's `x-link`s, note and action, read with its label (FieldHeader.below)
   Component {
     id: linksComp
     ColumnLayout {
-      readonly property bool shows: links.shows || actionLink.active
+      readonly property bool shows: links.shows || actionLink.active || root.note !== ""
       spacing: Widget.spacing / 2
 
+      StyledText {
+        Layout.fillWidth: true
+        visible: root.note !== ""
+        text: root.note
+        role: "caption"
+        tone: "muted"
+        overflow: "wrap"
+      }
+
+      // Below the note, so a link never splits the row's text
       FieldLinks {
         id: links
         Layout.fillWidth: true

@@ -5,14 +5,13 @@ import Quickshell
 import qs.config
 import qs.services.ui
 import qs.components.reusable
-import qs.components.methods
 import qs.components.hosts.overlay
 
 // One overlay tool page in a window of its own (PageWindowManager): a
 // header with its name, its unsaved dot and the way back into the
-// overlay, and the page below, laid out on a grid of the overlay's card
-// size on the screen it opened on (so it never stretches with the
-// window), filling the window's height and growing wider to a cap
+// overlay, and the page below, laid out on a grid of the page's own sizing
+// on the screen it opened on (so it never stretches with the window),
+// filling the window's height and growing wider to a cap
 // (BaseView.windowed), shrunk as a whole only below its least size.
 FloatingWindow {
   id: root
@@ -26,7 +25,7 @@ FloatingWindow {
   readonly property real _padding: Widget.padding * 2
   readonly property real _headerHeight: Widget.height
   // The size it was left at (read as it opens: keepSize doesn't notify),
-  // else room for the page at its overlay size
+  // else room for the page at the size it has in the overlay
   readonly property var _kept: PageWindowManager.sizeOf(root.type)
 
   title: PageWindowManager.titleOf(root.type)
@@ -105,6 +104,7 @@ FloatingWindow {
       id: pageGrid
       windowed: true
       screen: root.screen
+      sizing: root._entry?.viewConfig.sizing ?? null
       availableWidth: body.width
       // Taller by what a page wider than the window is shrunk by, so the
       // shrunk page still fills the window's height
@@ -112,26 +112,16 @@ FloatingWindow {
       drawnZoom: pageBox.contentZoom
     }
 
-    // Laid out at the grid's unit and drawn at its zoom (the overlay's
-    // Module size), less only when the window is narrower than the page's
-    // least width (its height follows: pageHeight fills it); from its top
-    // left, on a whole px, as OverlayPages' views. `contentZoom`: what
-    // StyledIcon looks for to draw its glyphs for a scaled page
-    Item {
+    // Drawn at the grid's zoom (the page's own sizing), less only when the
+    // window is narrower than the page's least width (its height follows:
+    // pageHeight fills it)
+    PageBox {
       id: pageBox
-      x: Math.round((parent.width - width * scale) / 2)
-      y: Math.round((parent.height - height * scale) / 2)
+      zoom: pageGrid.zoom
+      roomWidth: body.width
+      fitHeight: false
       width: view.implicitWidth
       height: view.implicitHeight
-      transformOrigin: Item.TopLeft
-      readonly property real fitScale: {
-        const width = view.implicitWidth * pageGrid.zoom;
-        return width > 0 && body.width > 0 ? Math.min(1, body.width / width) : 1;
-      }
-      readonly property real contentZoom: pageGrid.zoom * pageBox.fitScale
-      scale: pageBox.contentZoom
-      readonly property real drawnZoom: pageBox.contentZoom * TextRender.zoomAt(pageBox.parent)
-      readonly property var inkHostAbove: InkHost.find(pageBox.parent)
 
       Loader {
         id: view

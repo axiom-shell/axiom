@@ -1,7 +1,7 @@
 # Popout hosts, window sizing and switching in place
 
-> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/shell/OSD.qml`
-> **Config:** none directly
+> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/reusable/ZoomLoader.qml`, `qml/config/PopoutsConfig.qml`, `qml/components/methods/Sizing.qml`, `qml/shell/OSD.qml`
+> **Config:** `Bars.*.widgets[].properties.popout.sizing`
 > **Related:** [Surface context](surface-context.md), [Edge attach](edge-attach.md), [Submenus](submenus.md), [Registry](registry.md), [Content roots](../overlay/content-roots.md), [Pill and floating bars](pill-and-floating-bars.md)
 
 This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a bar popout's window is sized, how it switches to another payload without closing, and how screen-edge popouts sit.
@@ -44,6 +44,15 @@ This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a 
   - **Its positioners are laid out** (`_layOut`). Row/Column/Grid lay out on polish, which an unmapped window never runs.
 
   So it never maps small and grows a frame later. On a bottom or right bar the popup would also have to move, and the compositor didn't always follow that.
+
+### Sizing
+- **Where it's set:** a bar widget's own popout (`popout.sizing`: its sizes and ranges are in [Sizing](../overlay/pages-and-grid.md#sizing)). The Content size row's description points to a menu for a box and content sized apart (a menu tied as the popout, its own Size group).
+- **How it reaches the popout:** `BarWidgetHost.popoutSizing` is the widget's `popout.sizing`; `PopoutAnchor.open()` finds the nearest ancestor declaring it (as `InkHost.find` walks) and puts it in the payload as `sizing`, only when it finds one (a `Submenu` or tray anchor, outside a bar widget, adds no key: `SubPopout` hands every payload key to its content). The payload is a snapshot: an edit in the bar editor reaches a popout on its next open.
+- **Laid out small, drawn zoomed:** `PopoutsConfig.layoutFor(screen, content, room, sizing)` → `{ zoom, unit, fit }` (its math: `Sizing.popoutLayout`). The content Loader keeps its own `implicit` size (the layout pair, `contentWidth`/`contentHeight`) and is scaled by `zoom` from its top left, declaring `contentZoom`, `drawnZoom` and `inkHostAbove` (a `ZoomLoader`). Everything about the box and window uses the drawn pair, `Math.ceil(content × zoom)` (`drawnWidth`/`drawnHeight`: the layout pair is an `int`, the product isn't): `targetBox*`, `boxLength`, and the window's declared room (`maxImplicit*` × zoom).
+- **Fit:** a popout too big for its screen is shrunk, not run off it. `fit` (at most 1, at least 0.1) is the factor at which the content's layout size, the most it declares (`maxImplicit*` where given, so one that grows while open keeps its zoom), drawn at its zoom fits `contentRoom`: the screen's room for it less the box's chrome, from terms that read neither the box, its length nor the zoom (`Sizing.fitInto`; no binding loop). Across, the room is less `EdgePlacement.contentFromBar`, the deepest the box could attach at its anchor whatever its length, not where it does (`attachAt`, which a box between pills flips with its length), so a box between pills is fitted at a pill's depth. It multiplies card and zoom alike, so `cardUnit` (what content laid out in cards reads: CustomWidget's `_card`) never depends on it. The window still reserves its room up front, at the zoom.
+- **Content's room:** `popoutRoom` (read by `StyledComboEntry`) is in the content's px: the room divided by `zoom`.
+- **Switching:** `SwitchStill.zoom` (bound to the host's) sizes the still and its grab as the content is drawn; `prepare()` runs before the payload changes, so it reads the outgoing zoom.
+- **Submenus:** `SubmenuHost.zoom` (set by `BarPopouts`) gives `SubPopout` the same zoom, for its content Loader, its box and still, and divides `maxContentHeight` by it, so a tray submenu matches its tray popout. Edge popouts and free menus leave it at 1.
 
 ### Switching in place
 - **When it happens:** a bar popout opened from a widget under the open box, or within a connector gap of it along the bar (`BarPopouts.canSwitchTo`), doesn't close first.

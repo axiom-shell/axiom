@@ -28,8 +28,10 @@ Item {
   readonly property real pad: OverlayConfig.cardPad(false, false)
   // The room left around the grown box, where the modules show
   property real inset: Widget.spacing
-  // What the content is drawn at (ModuleGrid.zoom)
+  // The surface's zoom (ModuleGrid.zoom); the content is drawn at it times
+  // the opener's Content size (the request's `contentSize`)
   property real zoom: 1
+  readonly property real _zoom: Sizing.moduleZoom(root.zoom, root._shownRequest?.contentSize ?? null)
 
   signal closed
 
@@ -135,11 +137,11 @@ Item {
       id: zoomHost
       x: root.inset - box.x
       y: root.inset - box.y
-      width: (root.width - root.inset * 2) / root.zoom
-      height: (root.height - root.inset * 2) / root.zoom
-      scale: root.zoom
+      width: (root.width - root.inset * 2) / root._zoom
+      height: (root.height - root.inset * 2) / root._zoom
+      scale: root._zoom
       transformOrigin: Item.TopLeft
-      readonly property real contentZoom: root.zoom
+      readonly property real contentZoom: root._zoom
       readonly property real drawnZoom: zoomHost.contentZoom * TextRender.zoomAt(zoomHost.parent)
       readonly property var inkHostAbove: InkHost.find(zoomHost.parent)
 

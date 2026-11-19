@@ -94,6 +94,7 @@ PopoutWrapperBase {
     animate: still.settled
     geometry: placement
     windowShift: mainPopup.alongShift
+    zoom: root.zoom
   }
   // ---- end submenu ----
 
@@ -152,6 +153,26 @@ PopoutWrapperBase {
     if (typeof item.forceLayout === "function")
       item.forceLayout();
   }
+
+  // ---- Its Size ----
+  // The popout is laid out at its content's own size and drawn zoomed
+  // (PopoutsConfig.layoutFor: its widget's `popout.sizing`, from the
+  // payload, shrunk to fit its screen), the box drawn around that. The
+  // fit reads the most the content will take (a content that grows while
+  // open declares it, Panel.maxImplicitHeight) and the room the screen
+  // leaves it (mainPopup.contentRoom), neither of which depends on the box,
+  // its length or the zoom: across, the room is less the deepest the box
+  // could attach at its anchor, not where it does (which its length picks
+  // between pills)
+  readonly property var _layout: PopoutsConfig.layoutFor(root.screen, {
+    "width": Math.max(mainPopup.contentWidth, root._content?.maxImplicitWidth ?? 0),
+    "height": Math.max(mainPopup.contentHeight, root._content?.maxImplicitHeight ?? 0)
+  }, mainPopup.contentRoom, root.currentData?.sizing ?? null)
+  // What the content is drawn at
+  readonly property real zoom: root._layout.zoom
+  // The card size content laid out in cards lays out at (CustomWidget)
+  readonly property real cardUnit: root._layout.unit
+  // ---- end its size ----
 
   // Where the anchor widget was when it opened, in bar-window coordinates
   // (from currentData.anchorItem; the anchorX/anchorY snapshot in the
@@ -267,8 +288,8 @@ PopoutWrapperBase {
   // (Panel.maxImplicitHeight/Width), with the surface on the bar side of
   // that room. Content resizing changes only the scene, and the box
   // animates to its new size (and place along the bar) in it.
-  readonly property real targetBoxWidth: mainPopup.contentWidth + surface.contentInset * 2 + (root.barConfig.vertical ? root.pillClearance : mainPopup.boxGrow)
-  readonly property real targetBoxHeight: mainPopup.contentHeight + surface.contentInset * 2 + (root.barConfig.vertical ? mainPopup.boxGrow : root.pillClearance)
+  readonly property real targetBoxWidth: mainPopup.drawnWidth + surface.contentInset * 2 + (root.barConfig.vertical ? root.pillClearance : mainPopup.boxGrow)
+  readonly property real targetBoxHeight: mainPopup.drawnHeight + surface.contentInset * 2 + (root.barConfig.vertical ? mainPopup.boxGrow : root.pillClearance)
   // What's drawn: the targets, animated once the popout shows
   property real shownBoxWidth: still.holding ? still.held.width : root.targetBoxWidth
   property real shownBoxHeight: still.holding ? still.held.height : root.targetBoxHeight
@@ -294,8 +315,8 @@ PopoutWrapperBase {
   readonly property real _declaredAcross: {
     const item = root._content;
     const declared = root.barConfig.vertical ? item?.maxImplicitWidth ?? 0 : item?.maxImplicitHeight ?? 0;
-    const content = root.barConfig.vertical ? mainPopup.contentWidth : mainPopup.contentHeight;
-    return root._boxAcross + Math.max(0, declared - content);
+    const content = root.barConfig.vertical ? mainPopup.drawnWidth : mainPopup.drawnHeight;
+    return root._boxAcross + Math.max(0, Math.ceil(declared * root.zoom) - content);
   }
   property real _peakAcross: 0
   function _notePeak() {
@@ -322,7 +343,7 @@ PopoutWrapperBase {
   property real _openLength: 0
   readonly property real _maxAlong: {
     const declared = root.barConfig.vertical ? root._content?.maxImplicitHeight ?? 0 : 0;
-    return declared > 0 ? declared + surface.contentInset * 2 : 0;
+    return declared > 0 ? Math.ceil(declared * root.zoom) + surface.contentInset * 2 : 0;
   }
   readonly property var _growth: EdgeAttach.growth({
     "vertical": root.barConfig.vertical,
@@ -389,6 +410,10 @@ PopoutWrapperBase {
     // Content dimensions
     readonly property int contentWidth: root.currentItem?.implicitWidth ?? 200 // a placeholder until content loads
     readonly property int contentHeight: root.currentItem?.implicitHeight ?? 100 // a placeholder until content loads
+    // What they're drawn at, in whole px (the layout pair is an int, the
+    // product isn't): the box is sized to these
+    readonly property int drawnWidth: Math.ceil(mainPopup.contentWidth * root.zoom)
+    readonly property int drawnHeight: Math.ceil(mainPopup.contentHeight * root.zoom)
 
     // Along the bar, in bar-window coordinates: the box centred on the
     // anchor (on a vertical bar, as it opened: see Growing while open),
@@ -396,7 +421,7 @@ PopoutWrapperBase {
     // EdgeAttach (root.place). One that would be pushed back from
     // an end, or come within a connector gap of it, joins it instead: flush
     // on the perpendicular stroke, merging into that edge.
-    readonly property real boxLength: (root.barConfig.vertical ? mainPopup.contentHeight : mainPopup.contentWidth) + surface.contentInset * 2
+    readonly property real boxLength: (root.barConfig.vertical ? mainPopup.drawnHeight : mainPopup.drawnWidth) + surface.contentInset * 2
     readonly property real alignedBoxStart: {
       if (!root.currentData)
         return 0;
@@ -473,17 +498,46 @@ PopoutWrapperBase {
     implicitWidth: root.barConfig.vertical ? depth : 0
     implicitHeight: root.barConfig.vertical ? 0 : depth
 
-    // How much more the box can grow before it meets what's on the
-    // screen's far side (along a vertical bar, its ends'). Content that
-    // grows on its own reads it through its window: StyledComboEntry opens
-    // its list inline here, no taller than this
-    readonly property real popoutRoom: {
+    // The screen's px across the bar from past it to the far side's frame
+    // line, read from neither the box nor the zoom
+    readonly property real _screenAcross: {
       if (!root.screen)
         return 0;
       if (root.barConfig.vertical)
-        return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Top) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Bottom) - root.targetBoxHeight;
-      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear - root.attachAt - root._boxAcross;
+        return root.screen.width - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.left ? ScreenEdge.Right : ScreenEdge.Left) - mainPopup._barNear;
+      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear;
     }
+    // ...less where the popout attaches (`_roomAcross`: what the box has
+    // left, read imperatively by popoutRoom), and along the bar the screen
+    // between its frame lines (`_screenAlong`)
+    readonly property real _roomAcross: mainPopup._screenAcross - root.attachAt
+    readonly property real _screenAlong: {
+      if (!root.screen)
+        return 0;
+      if (root.barConfig.vertical)
+        return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Top) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Bottom);
+      return root.screen.width - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Left) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Right);
+    }
+    // What's left of that for the content, as drawn: across, less the
+    // deepest the popout could attach there whatever its length
+    // (EdgePlacement.contentFromBar, not attachAt, which follows the box's
+    // length) and the box's chrome (the popout's Size fits it into this,
+    // BarPopouts._layout). A submenu's stretch (slot.stretchAcross) is left
+    // out: it follows the box, and so the zoom
+    readonly property var contentRoom: {
+      const across = mainPopup._screenAcross - placement.contentFromBar - surface.contentInset * 2;
+      const along = mainPopup._screenAlong - surface.contentInset * 2;
+      return {
+        "width": root.barConfig.vertical ? across : along,
+        "height": root.barConfig.vertical ? along : across
+      };
+    }
+    // How much more the box can grow before it meets what's on the
+    // screen's far side (along a vertical bar, its ends'), in the
+    // content's px (it's drawn at the zoom). Content that grows on its own
+    // reads it through its window: StyledComboEntry opens its list inline
+    // here, no taller than this
+    readonly property real popoutRoom: (root.barConfig.vertical ? mainPopup._screenAlong - root.targetBoxHeight : mainPopup._roomAcross - root._boxAcross) / root.zoom
     // The surface in this window: where it is in the bar's, moved by where
     // the bar is on the screen
     readonly property real surfaceX: barOrigin.x - windowOrigin.x + barX
@@ -524,7 +578,7 @@ PopoutWrapperBase {
       anchors.fill: parent
       clip: true
 
-      Loader {
+      ZoomLoader {
         id: loader
         // Merged (a pill bar showing no pills), the content starts past
         // where the pills would be
@@ -532,10 +586,13 @@ PopoutWrapperBase {
         // Along the bar, where it wants to be (EdgeAttach.place's
         // contentStart), however far the box grows past it either side
         readonly property real along: surface.contentInset + root.place.contentStart - root.drawnBoxStart
+        // Laid out at its own size and drawn zoomed from its top left,
+        // so the drawn pair places it
         width: mainPopup.contentWidth
         height: mainPopup.contentHeight
-        x: root.barConfig.left ? barSide : root.barConfig.right ? clipBox.width - barSide - width : along
-        y: root.barConfig.top ? barSide : root.barConfig.bottom ? clipBox.height - barSide - height : along
+        zoom: root.zoom
+        x: root.barConfig.left ? barSide : root.barConfig.right ? clipBox.width - barSide - mainPopup.drawnWidth : along
+        y: root.barConfig.top ? barSide : root.barConfig.bottom ? clipBox.height - barSide - mainPopup.drawnHeight : along
         opacity: still.contentOpacity
 
         active: root.occupied
@@ -569,6 +626,7 @@ PopoutWrapperBase {
         id: still
         contentReady: root.contentReady
         occupied: root.occupied
+        zoom: root.zoom
         snapshot: () => ({
               "start": root.shownBoxStart,
               "width": root.shownBoxWidth,

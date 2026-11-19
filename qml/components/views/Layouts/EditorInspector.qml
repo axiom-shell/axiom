@@ -21,6 +21,9 @@ Item {
   property bool editable: true
   // The subtitle with nothing selected, when not editable
   property string notEditableHint: ""
+  // The line under a module's Content size, given its own size (a % or
+  // null): what it comes to on this surface (EditTarget.moduleSizingNote)
+  property var moduleNote: contentSize => ""
   readonly property int index: root.editor.selected
   readonly property var module: root.editor.selectedModule()
   readonly property string moduleType: root.module?.type ?? ""
@@ -210,6 +213,22 @@ Item {
       FieldLinks {
         Layout.fillWidth: true
         links: OverlayConfig.moduleInfo(root.moduleType)?.link
+      }
+
+      // Its own Content size, on top of its page's or menu's
+      Loader {
+        Layout.fillWidth: true
+        active: !!OverlayConfig.moduleInfo(root.moduleType)?.contentSize
+        visible: active
+        sourceComponent: SchemaPropertiesForm {
+          propertiesSchema: ({
+              "contentSize": OverlayConfig.moduleInfo(root.moduleType)?.contentSize
+            })
+          order: ["contentSize"]
+          values: root.module ?? ({})
+          fieldNote: () => root.moduleNote(root.module?.contentSize ?? null)
+          onEdited: (path, value) => root.editor.updateModuleField(root.index, path[0], value)
+        }
       }
 
       OptionsGroup {

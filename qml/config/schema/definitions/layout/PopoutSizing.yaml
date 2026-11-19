@@ -1,0 +1,9 @@
+# The PopoutSizing definition (#/definitions/PopoutSizing): a bar widget's own
+# popout's ContentSizing, which says how to size its box and content apart.
+# x-properties replaces a field whole, so the override restates its $ref with
+# the keys that differ.
+
+x-inline: true
+$ref: '#/definitions/ContentSizing'
+x-properties:
+  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Off follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.'}

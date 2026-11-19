@@ -24,7 +24,8 @@ QtObject {
     const screen = MenusConfig.screenFor(menu);
     if (!menu || !screen || MenusConfig.isFree(menu))
       return null;
-    const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), MenusConfig.cardUnitOf(menu), MenuManager.frameOf(menu), screen.width, screen.height, MenusConfig.gapOf(menu));
+    const layout = MenusConfig.layoutOf(menu);
+    const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), layout.unit, MenuManager.frameOf(menu), screen.width, screen.height, layout.gap);
     place.screen = screen;
     return place;
   }
@@ -36,7 +37,8 @@ QtObject {
     const place = root.placementOf(menu);
     if (!place)
       return null;
-    const onScreen = GridPlacement.menuOnScreen(menu, place, MenusConfig.cardUnitOf(menu), MenusConfig.gapOf(menu));
+    const layout = MenusConfig.layoutOf(menu);
+    const onScreen = GridPlacement.menuOnScreen(menu, place, layout.unit, layout.gap);
     onScreen.name = root.menuLabel(menu, index);
     return onScreen;
   }
@@ -47,7 +49,8 @@ QtObject {
     const place = root.placementOf(menu);
     if (!place)
       return null;
-    return GridPlacement.screenBox(place.screenWidth, place.screenHeight, MenusConfig.cardUnitOf(menu), GridPlacement.bounds(menu.layout.modules), menu.edge, place.along, place.across, MenusConfig.gapOf(menu));
+    const layout = MenusConfig.layoutOf(menu);
+    return GridPlacement.screenBox(place.screenWidth, place.screenHeight, layout.unit, GridPlacement.bounds(menu.layout.modules), menu.edge, place.along, place.across, layout.gap);
   }
 
   // The draft's other enabled menus on the screen of the one at `index`,
@@ -79,7 +82,10 @@ QtObject {
   // How far a menu's lattice can be moved, in px either way: half a cell,
   // as a whole one is what the arrows do
   function gridOffsetLimit(menu) {
-    return menu ? Math.floor(GridPlacement.stepOf(MenusConfig.cardUnitOf(menu), MenusConfig.gapOf(menu)) / 2) : 0;
+    if (!menu)
+      return 0;
+    const layout = MenusConfig.layoutOf(menu);
+    return Math.floor(GridPlacement.stepOf(layout.unit, layout.gap) / 2);
   }
 
   function setGridOffset(px) {
@@ -373,6 +379,10 @@ QtObject {
       key = "layout.grid.fine";
     if (!menu || JSON.stringify(root._fieldOf(menu, key)) === JSON.stringify(value))
       return;
+    // A form emits an edit inside the layout as the whole layout: keep what
+    // the sizing's link means
+    if (key === "layout")
+      value = Sizing.editedIn(root._fieldOf(menu, key), value, ["sizing"]);
     const wasPreviewing = root.previewing !== "" && root.previewing === menu.id;
     if (wasPreviewing && key === "id")
       root._showPreview("");

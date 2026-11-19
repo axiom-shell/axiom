@@ -602,4 +602,15 @@ QtObject {
     module.properties[key] = value;
     root.edited();
   }
+
+  // Sets one of the module's own keys beside its place (its `contentSize`);
+  // `@` keeps its undo step apart from a property of the same name
+  function updateModuleField(index, key, value) {
+    const module = root.module(index);
+    if (!module || JSON.stringify(module[key]) === JSON.stringify(value))
+      return;
+    root.recordField(`${index}:@${key}`);
+    module[key] = value;
+    root.edited();
+  }
 }

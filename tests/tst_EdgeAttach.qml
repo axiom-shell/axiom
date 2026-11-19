@@ -900,4 +900,48 @@ TestCase {
     compare(inside.start, 400);
     compare(inside.end, 600);
   }
+
+  // The modes a box centred at a point may take whatever its length
+  function test_modesAt() {
+    const pills = [pill(100, 200), pill(700, 200)];
+    // A pill bar showing none grows from its outer edge; elsewhere plain
+    compare(EdgeAttach.modesAt(spec({
+      "pillBar": true,
+      "centre": 500
+    })), ["merged"]);
+    compare(EdgeAttach.modesAt(spec({
+      "centre": 500
+    })), ["plain"]);
+    // Centred on a pill (or an island), or in a gap without `between`
+    compare(EdgeAttach.modesAt(spec({
+      "pills": pills,
+      "pillBar": true,
+      "centre": 200,
+      "between": true
+    })), ["pill"]);
+    compare(EdgeAttach.modesAt(spec({
+      "pills": pills,
+      "island": true,
+      "centre": 200,
+      "between": true
+    })), ["island"]);
+    compare(EdgeAttach.modesAt(spec({
+      "pills": pills,
+      "pillBar": true,
+      "centre": 500
+    })), ["pill"]);
+    // In a gap: between, or the nearest pill or island
+    compare(EdgeAttach.modesAt(spec({
+      "pills": pills,
+      "pillBar": true,
+      "centre": 500,
+      "between": true
+    })), ["between", "pill"]);
+    compare(EdgeAttach.modesAt(spec({
+      "pills": pills,
+      "island": true,
+      "centre": 500,
+      "between": true
+    })), ["between", "island"]);
+  }
 }

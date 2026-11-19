@@ -220,11 +220,15 @@ QtObject {
     return ScreenEdgeManager.heldInset(root.screen, side, gap, root.bare);
   }
 
+  // The followed bar's pills or islands, in screen coordinates
+  readonly property var _pills: root.pillBar ? (root.container?.pillRects ?? []).map(p => Object.assign({}, p, {
+      "start": p.start + root.barStart
+    })) : []
+  // How far a transparent bar's box moves in to line up with the windows
+  readonly property real _detachedPush: root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + (CompositorManager.gapsOut[root.edgeName] ?? 0) - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), root.connectorGap) : 0
   // --- Its box (SurfaceContext.layout) ---
   readonly property var _layout: SurfaceContext.layout(root.frame, Object.assign({}, root._params, {
-    "pills": root.pillBar ? (root.container?.pillRects ?? []).map(p => Object.assign({}, p, {
-        "start": p.start + root.barStart
-      })) : [],
+    "pills": root._pills,
     "centre": root._toScreen(root.centre),
     "aligned": root._toScreen(root.aligned),
     "length": root.contentLength,
@@ -235,7 +239,7 @@ QtObject {
     // stacked on the edge; else the innermost's
     "frameLine": root.bare ? 0 : root.barConfig ? ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig) : ScreenEdgeManager.frameLineOn(root.screen, root.edge),
     "reserved": root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge),
-    "detachedPush": root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + (CompositorManager.gapsOut[root.edgeName] ?? 0) - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), root.connectorGap) : 0,
+    "detachedPush": root._detachedPush,
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
     "layerOrder": CompositorManager.supports.layerOrder === true,
@@ -244,6 +248,17 @@ QtObject {
     "bare": root.bare,
     "under": root.under
   }))
+  // The deepest its attach edge may go from its bar's outer edge whatever
+  // the box's length (SurfaceContext.contentFrom), for what is fitted
+  // without it, which a box between pills would otherwise loop on: its
+  // length picks how deep it attaches. Decided without the box, as
+  // `atIsland` is, so it reads none of `contentLength`, `aligned`, the
+  // probe, `under` or `_layout`
+  readonly property real contentFromBar: SurfaceContext.contentFrom(Object.assign({}, root._params, {
+    "pills": root._pills,
+    "centre": root._toScreen(root.centre),
+    "detachedPush": root._detachedPush
+  })) + root._attachShift
   // EdgeAttach.place's answer in the host's coordinates
   readonly property var place: {
     const l = root._layout;

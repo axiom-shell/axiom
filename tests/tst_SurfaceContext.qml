@@ -710,6 +710,84 @@ TestCase {
     compare(near.pill.index, 1);
   }
 
+  // The room a popout is fitted in reads no box length: the deepest attach
+  // at the anchor, whichever way the length flips the box between pills
+  function test_content_from_ignores_length() {
+    const base = params();
+    const f = SurfaceContext.frame(base);
+    const pillBar = Object.assign(bar("pills"), {
+      "extent": 40,
+      "pillDepth": 30,
+      "joinGap": 12
+    });
+    const at = (barSpec, pills, extra) => Object.assign({}, base, {
+        "bar": barSpec,
+        "pills": pills,
+        "centre": 500,
+        "aligned": 450,
+        "length": 100,
+        "joinStart": false,
+        "joinEnd": false,
+        "frameLine": 40,
+        "reserved": 40
+      }, extra ?? {});
+    const apart = [
+      {
+        "start": 100,
+        "length": 200
+      },
+      {
+        "start": 700,
+        "length": 200
+      }
+    ];
+    // Between pills at length 100 (attach 0), on a pill at 500 (28)
+    const short = SurfaceContext.layout(f, at(pillBar, apart));
+    const long = SurfaceContext.layout(f, at(pillBar, apart, {
+      "aligned": 250,
+      "length": 500
+    }));
+    compare(short.mode, "between");
+    compare(long.mode, "pill");
+    compare(short.attachFromBar, 0);
+    compare(long.attachFromBar, 28);
+    const deepest = SurfaceContext.contentFrom(at(pillBar, apart));
+    compare(deepest, 28);
+    for (const l of [short, long])
+      verify(deepest >= l.attachFromBar + l.attachClearance);
+    // Where the length can't flip it, it is the layout's own: merged (a
+    // pill bar with no pills), on a pill, and plain past a transparent bar
+    const onFrame = Object.assign({}, pillBar, {
+      "pillDepth": 40,
+      "stripCover": 7
+    });
+    const merged = SurfaceContext.layout(f, at(onFrame, []));
+    compare(SurfaceContext.contentFrom(at(onFrame, [])), merged.attachFromBar + merged.attachClearance);
+    compare(SurfaceContext.contentFrom(at(onFrame, [])), 7 + (40 - base.stroke - 7));
+    for (const kind of ["pills", "floatingPills"]) {
+      const barSpec = Object.assign(bar(kind), {
+        "extent": 40,
+        "pillDepth": 30,
+        "joinGap": 12
+      });
+      compare(SurfaceContext.contentFrom(at(barSpec, [
+        {
+          "start": 400,
+          "length": 200
+        }
+      ])), kind === "pills" ? 28 : 38, kind);
+    }
+    const clear = Object.assign(bar("transparent"), {
+      "extent": 40,
+      "innerStroke": false
+    });
+    const past = at(clear, [], {
+      "detachedPush": 6 - 12
+    });
+    compare(SurfaceContext.contentFrom(past), SurfaceContext.layout(f, past).attachFromBar);
+    compare(SurfaceContext.contentFrom(past), 34);
+  }
+
   // On a pill (or island): grown from its far stroke, a row of fill behind
   // its attach edge over the pill's stroke, no stroke of its own to open,
   // its shadow the bar's

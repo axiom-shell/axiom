@@ -50,6 +50,10 @@ ColumnLayout {
   // nested object) and schema, { text, icon, run } or null for none (the
   // edge menu pickers' New menu…)
   property var fieldAction: null
+  // A hook giving a field a muted line of its own, drawn with its links
+  // and action under its label: given its path and schema, the text, or
+  // "" for none (a Size row's calculation, SizingNote)
+  property var fieldNote: null
 
   // Emitted with the key ([key]) of the edited field and its value: a
   // nested object's field as the whole object
@@ -143,7 +147,7 @@ ColumnLayout {
         stream: true
         // Unknown until the field streams in, so it takes its height then
         // rather than folding open
-        shown: root.folded ? false : cell.fieldShown
+        shown: root?.folded ? false : cell.fieldShown
         level: root.tree.levels[index]
         beside: _beside && half
         // The form is gone (null) a moment before its fields
@@ -151,6 +155,7 @@ ColumnLayout {
         reset: root?.changedAt ? value => root.edit(cell.modelData.path, value) : null
         discard: root?.changedAt ? () => root.discardAt(cell.modelData.path) : null
         action: root?.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
+        note: root?.fieldNote ? root.fieldNote(cell.modelData.path, cell.modelData.schema) : ""
         readonly property bool _beside: modelData.schema?.["x-beside"] === true
         // Read again once every field exists (`count` changes after the
         // Repeater made them): itemAt doesn't notify, and the field after

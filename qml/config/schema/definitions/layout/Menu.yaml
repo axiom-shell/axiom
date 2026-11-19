@@ -128,16 +128,6 @@ properties:
     $ref: '#/definitions/Layout'
     x-properties:
       grid: {$ref: '#/definitions/Grid', x-group: Size}
-      moduleScale:
-        x-link: {setting: Interface.cardSize}
-        x-group: Size
-        type: integer
-        title: Module size
-        default: 100
-        minimum: 50
-        maximum: 200
-        x-unit: '%'
-        description: Relative to the card size in Look & Feel.
       moduleBorders:
         x-group: Look
         type: boolean

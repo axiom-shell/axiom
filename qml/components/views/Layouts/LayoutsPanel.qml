@@ -29,6 +29,8 @@ Item {
   required property var view
   required property var menu
   required property var screenTarget
+  // The EditTarget being edited: the lines under its Size rows
+  required property var target
   readonly property var screenLayout: root.screenTarget?.layout ?? null
   readonly property bool isDesktop: OverlayManager.editTarget === "desktop"
   // A monitor of the desktop's (not all monitors or the primary one)
@@ -200,14 +202,16 @@ Item {
               follows: true
               propertiesSchema: ({
                   "icon": OverlayConfig.customViewSchema.icon,
-                  "fineGrid": OverlayConfig.customViewSchema.layout.properties.grid.properties.fine
+                  "fineGrid": OverlayConfig.customViewSchema.layout.properties.grid.properties.fine,
+                  "sizing": OverlayConfig.customViewSchema.sizing
                 })
-              order: ["icon", "fineGrid"]
+              order: ["icon", "fineGrid", "sizing"]
               // fineGrid stands for layout.grid.fine (updateViewField rescales the
               // modules with it)
               values: Object.assign({}, root.view ?? {}, {
                 "fineGrid": root.view?.layout?.grid?.fine ?? false
               })
+              fieldNote: root.target.sizingNote
               onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
@@ -228,6 +232,20 @@ Item {
               label: I18n.tr("Show in the navigator")
               checked: root.view?.visible !== false
               onToggled: newValue => OverlayManager.setViewVisible(OverlayManager.selectedViewIndex, newValue)
+            }
+
+            // How big it draws: its Content size zooms the whole page
+            SchemaPropertiesForm {
+              Layout.fillWidth: true
+              // Under the switch
+              follows: true
+              propertiesSchema: root.view !== null && !root.isCustom ? ({
+                  "sizing": OverlayConfig.viewSchema(root.view.type).sizing
+                }) : ({})
+              order: ["sizing"]
+              values: root.view ?? ({})
+              fieldNote: root.target.sizingNote
+              onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
             // Goes to it (only while it's shown)
@@ -280,6 +298,7 @@ Item {
                 order: group.modelData.keys
                 // The whole menu, so x-showIf sees keys from other groups
                 values: root.menu ?? ({})
+                fieldNote: root.target.sizingNote
                 onEdited: (path, value) => OverlayManager.menus.updateMenuField(path[0], value)
               }
             }
@@ -362,6 +381,7 @@ Item {
                 propertiesSchema: screenGroup.modelData.schema
                 order: screenGroup.modelData.keys
                 values: root.screenLayout ?? ({})
+                fieldNote: root.target.sizingNote
                 onEdited: (path, value) => root.screenTarget.screenEditor.updateLayoutField(path[0], value)
               }
             }

@@ -114,7 +114,7 @@ properties:
     maximum: 60
     x-unit: px
     x-showIf: {enabled: true, floating: true, surface: {not: none}}
-    description: Distance from the screen border. Auto uses the compositor's gap.
+    description: Distance from the screen border. Off uses the compositor's gap.
   lockCenter:
     x-group: Behaviour
     type: boolean

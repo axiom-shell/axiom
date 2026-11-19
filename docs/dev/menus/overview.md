@@ -20,11 +20,12 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
 - `length` (`edge` menus only: a `strip` menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {placement: edge}`):
   - `content`: as long as its modules;
   - `edge`: fitted to the whole edge. Its rows (columns on a top/bottom edge) grow or shrink evenly to take exactly the room (`GridPlacement.trackSizes` with `fit`, down to half a unit, scrolling only past that; `menuOnScreen` draws it the same in the editor). Modules go compact below their minimum.
-- `moduleScale`: % of the card size on its screen (`OverlayConfig.cardUnitOn`, from `Widget.cardSize`; the overlay's own Module size doesn't apply), shrunk where the menu would be deeper than its screen (`MenusConfig.scaleOf`).
+- `sizing` (`Sizing`): its own Card size and Content size ([Sizing](../overlay/pages-and-grid.md#sizing); the overlay's own sizes don't apply). The cards and content shrink together where the menu would be deeper than its screen (`MenusConfig.layoutOf`).
 - `grid.fine`: each unit split in two each way.
-  - `cardUnitOf` takes `GridPlacement.fineUnit`, so the places scaled keep their size exactly.
+  - `layoutOf`'s `unit` takes `GridPlacement.fineUnit`, so the places scaled keep their size exactly.
   - The editor's `GridEditor.sizeScale` doubles default sizes.
   - `updateMenuField` rescales the places (`GridPlacement.scalePlace`) and `offset` so modules stay put, as the lock screen's does.
+- `sizing` edits go through `Sizing.editedIn` in `updateMenuField` (and `Sizing.edited` in `ScreenLayoutEditor.updateLayoutField`).
 - Style:
   - `moduleBorders`, `pinButton` (the padding is `Popouts.padding`), and `closeButton` (any placement, last after the pin; closes it, unpinned, and hides while it's popped out: [Free menus](free-menus.md) › Pinning);
   - `background` (`panel` | `none`; `edge` and `free` menus only, never a strip): `none` draws the menu as tiles (Tiles, below);

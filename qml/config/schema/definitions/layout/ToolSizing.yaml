@@ -1,0 +1,9 @@
+# The ToolSizing definition (#/definitions/ToolSizing): a tool page's
+# ContentSizing, capped at 100 (the whole page zooms, and must fit its screen).
+# x-properties replaces a field whole, so the override restates its $ref with
+# the keys that differ.
+
+x-inline: true
+$ref: '#/definitions/ContentSizing'
+x-properties:
+  contentSize: {$ref: '#/definitions/ContentSize', maximum: 100, description: 'Relative to the Content size in Look & Feel. Off follows it. The whole page zooms with it.'}

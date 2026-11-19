@@ -88,6 +88,11 @@ Item {
       // It shrinks when crowded (`x-elastic`), so it takes a minimum and
       // maximum length
       readonly property bool elastic: editorRoot.typeInfo?.elastic ?? false
+      // What its popout's Size rows come to. No fit: that is worked out
+      // each time the popout opens, from what it holds and its screen
+      readonly property SizingNote popoutNote: SizingNote {
+        own: editorRoot.widget.properties?.popout?.sizing ?? null
+      }
 
       anchors.fill: parent
       // Each widget keeps its place across the overlay closing
@@ -158,6 +163,7 @@ Item {
             "icon": "add",
             "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
           } : null
+        fieldNote: path => path[0] === "popout" ? editorRoot.popoutNote.noteFor(path) : ""
         onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
         onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
       }

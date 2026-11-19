@@ -90,11 +90,27 @@ Item {
       anchorItem: root
     };
 
+    // The popout's Size, from the bar widget it opens for (none from an
+    // anchor outside one: a submenu hands every key to its content)
+    const host = root._widgetHost();
+    if (host)
+      payload.sizing = host.popoutSizing;
+
     for (let key in root.extraData) {
       payload[key] = root.extraData[key];
     }
 
     root.popouts.safeOpenPopout(root.panel, payload);
+  }
+
+  // The bar widget (BarWidgetHost, which declares `popoutSizing`) this is
+  // in, found up its visual parents as InkHost.find walks them, or null
+  function _widgetHost() {
+    for (let item = root.parent; item; item = item.parent) {
+      if ("popoutSizing" in item)
+        return item;
+    }
+    return null;
   }
 
   // Where it is on its screen, in px, with its bar's edge (a ScreenEdge)

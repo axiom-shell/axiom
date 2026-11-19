@@ -376,20 +376,35 @@ TestCase {
     verify(across <= 1040 && across > 1040 - 16);
   }
 
-  // A Module size shrunk until its grid fits the room, its cards and gaps
-  // together; one that fits, or no units, kept
-  function test_fitModuleScale() {
+  // The most of a length that fits a room: 1 when it fits, floored to 3
+  // decimals, at least a tenth
+  function test_fitLength() {
+    compare(GridPlacement.fitLength(500, 800), 1, "fits");
+    compare(GridPlacement.fitLength(500, 500), 1, "exactly");
+    compare(GridPlacement.fitLength(1000, 500), 0.5);
+    compare(GridPlacement.fitLength(10000, 9995), 0.999, "0.9995 floors");
+    compare(GridPlacement.fitLength(1000, 5), 0.1, "never below a tenth");
+    compare(GridPlacement.fitLength(0, 500), 1, "no length");
+  }
+
+  // The factor its cards and content shrink by until its grid fits the room,
+  // cards and gaps together; 1 when it fits or has no units
+  function test_fitFactor() {
     // One card deep, on a 1080 px screen at 150 % card size: 675 px cards
-    compare(GridPlacement.fitModuleScale(1, 4, 675, false, 1000), 1);
-    compare(GridPlacement.fitModuleScale(2, 0, 675, false, 1000), 2);
+    compare(GridPlacement.fitFactor(4, 675, 1, false, 1000), 1);
+    compare(GridPlacement.fitFactor(0, 675, 2, false, 1000), 1);
     [false, true].forEach(fine => {
       const count = fine ? 8 : 4;
-      const scale = GridPlacement.fitModuleScale(2, count, 675, fine, 1000);
-      verify(scale < 2, `fine ${fine}`);
-      const gap = GridPlacement.gapOf(scale);
-      const length = GridPlacement.span(count, GridPlacement.gridUnitOf(675 * scale, fine, gap), gap);
+      // Cards of 1350 px at zoom 2 (a card size and a content size of 200 %)
+      const f = GridPlacement.fitFactor(count, 1350, 2, fine, 1000);
+      verify(f < 1 && f >= 0.1, `fine ${fine}`);
+      const gap = GridPlacement.gapOf(2 * f);
+      const length = GridPlacement.span(count, GridPlacement.gridUnitOf(1350 * f, fine, gap), gap);
       verify(length <= 1001 && length > 990, `fine ${fine}: ${length}`);
     });
+    compare(GridPlacement.fitFactor(4, 675, 1, false, 10), 0.1, "never below a tenth");
+    // Content drawn bigger than its cards takes more room: its gaps grow
+    verify(GridPlacement.fitFactor(8, 400, 2, false, 700) < GridPlacement.fitFactor(8, 400, 1, false, 700));
   }
 
   // Two units of a double grid and the gap between them are one unit, so
@@ -567,7 +582,12 @@ TestCase {
     compare([fhd.drawn, fhd.unit, fhd.zoom], [425, 425, 1], "1080p: smaller cards, content at its own size");
     compare(GridPlacement.overlayLayout(2000, 450, 1).drawn, 450, "room to spare: the card size");
     const bigger = GridPlacement.overlayLayout(1199, 756, 1.2);
-    compare([bigger.drawn, bigger.unit, bigger.zoom], [587, 489, 1.2], "a bigger Module size zooms the content, its gap too");
+    compare([bigger.drawn, bigger.unit, bigger.zoom], [587, 489, 1.2], "a bigger Content size zooms the content, its gap too");
+    // A tool page (its sizing zooms it whole: card and zoom the one factor)
+    // lays out at the unscaled card, as its cards are drawn at the zoom
+    const tool = GridPlacement.overlayLayout(2000, 400 * 0.8, 0.8);
+    compare([tool.drawn, tool.unit, tool.zoom], [320, 400, 0.8], "a tool page's unit is the card size it started from");
+    compare([ultrawide.capped, fhd.capped, bigger.capped, tool.capped], [true, true, true, false], "capped where the height shrank the cards");
     // At the defaults a page two cards high, coarse or double grid, fits
     // unshrunk wherever the height limits the cards
     [[1207, 630, 1], [1191, 630, 1], [1199, 756, 1.2], [871, 450, 1]].forEach(([height, card, zoom]) => {
@@ -780,7 +800,7 @@ TestCase {
     compare([fits.cols, fits.rows, fits.unit, fits.gap, fits.zoom, fits.shrunk], [22, 8, 425, 20, 1, false]);
     compare(fits.places[1].x, 17, "kept to the right edge");
     const zoomed = GridPlacement.screenArrangement(places, from, 425, 2560, 1080, 20, false, 1.2);
-    compare([zoomed.gap, zoomed.zoom], [24, 1.2], "content and gaps drawn at its Module size");
+    compare([zoomed.gap, zoomed.zoom], [24, 1.2], "content and gaps drawn at its Content size");
     // Big cards: 8 across can't hold both, so the cards shrink until 10
     // across do, and no further, content and gaps with them
     const shrunk = GridPlacement.screenArrangement(places, from, 850, 1920, 1080, 20, false, 1);
@@ -835,6 +855,8 @@ TestCase {
     };
     compare(GridPlacement.fitScale(bounds, 1200, 600, 500), 1, "fits");
     compare(GridPlacement.fitScale(bounds, 510, 600, 500), 0.5, "half as wide as two cards");
+    compare(GridPlacement.fitScale(bounds, 340, 600, 500), 0.333, "floored to 3 decimals, as Sizing.fitInto");
+    compare(GridPlacement.fitScale(bounds, 10, 600, 500), 0.1, "never below 0.1");
     compare(GridPlacement.fitScale({
       "cols": 0,
       "rows": 0

@@ -6,7 +6,7 @@ A tool page that edits a list of things (custom widgets, monitors) is built from
 **Background:** [editors pattern](../dev/core/editors-pattern.md) (the vocabulary this page follows), [shared UI pieces](../dev/core/shared-ui-pieces.md) › Tool pages, [overlay-view](overlay-view.md) (the page type itself, its schema and launcher command), [style](../dev/core/style.md)
 
 ## The shape
-`[ListPane] [WorkArea over Inspector | Inspector]`, every pane a `ToolPane` and the page `BaseView.pageWidth` wide (a pane from `sideWidth`, `editorWidth`, `inspectorWidth` or `listWidth`).
+`[ListPane] [WorkArea over Inspector | Inspector]`, every pane a `ToolPane` and the page `BaseView.pageWidth` wide (a pane from `sideWidth`, `editorWidth`, `inspectorWidth` or `listWidth`). The page's own Content size (`sizing: tool`, Layouts) zooms it whole, so tool pages at different sizes differ in width.
 
 ## Which piece for which job
 | You need | Use |

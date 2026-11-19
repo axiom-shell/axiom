@@ -61,8 +61,8 @@ Set a style once under **Settings → Look & Feel → Bar style**, and give any 
 - Floating bars and pills have their own gap, and nearby pills can merge into one.
 - **Translucency** (**Settings → Look & Feel → Translucency**): one opacity for every surface (bars, the screen border, popouts, menus, panels), down to 60%, with the compositor blurring behind it (Hyprland, niri, SwayFX). The blur is the compositor's own: set it from axiom under **Settings → Compositor → Window look → Blur** (size, passes, noise, …, and whether windows blur too), where window opacity lives as well, and both travel with exported and imported configs. The backdrops behind the overlay, launcher and power menu can frost the whole screen. With Opacity below 100% free-standing surfaces stay readable: their fill never drops below the level where the text on it still reads, and bars and what joins them become only as opaque as your wallpapers need for their text to read, the same on every screen; a transparent bar changes its text colours or gets a soft shade of the theme background along its edge where the wallpaper would make them unreadable, and the borderless desktop clock, the lock screen's greeting and password field and other bare modules get the same soft shade only when the wallpaper would make them unreadable.
 - **Size** (**Settings → Look & Feel → Panels & controls**), for everything outside the bars:
-  - **Interface scale** (75–150 %): text and controls in the overlay, menus, popouts, the launcher, settings and notifications.
-  - **Card size** (50–150 %): how big module cards are, as a share of the screen. At 100 % two cards fill its shorter side, so a monitor gets the same cards turned either way. Text keeps its size, so on a smaller screen a higher card size gives modules back their room (the overlay stays within its screen). The overlay, edge menus, desktop, lock and login screens each scale it with their own **Module size**, which zooms their text and content with the cards.
+  - **Content size** (75–150 %): text and controls in the overlay, menus, popouts, the launcher, settings and notifications.
+  - **Card size** (50–150 %): how big module cards are, as a share of the screen. At 100 % two cards fill its shorter side, so a monitor gets the same cards turned either way. Text keeps its size, so on a smaller screen a higher card size gives modules back their room (the overlay stays within its screen). The overlay's pages, edge menus, desktop, lock and login screens each scale it with their own **Card size** (**Layouts**), and their text and content grow with the cards unless you turn **Content grows with cards** off and give them a **Content size** of their own. A tool page, such as Settings, has a **Content size** only, which zooms the whole page.
   - **Density** (compact, normal, roomy): how tightly controls, padding and gaps are packed.
 
   These are yours: an imported setup keeps your sizes unless you take its personal parts too.
@@ -122,7 +122,7 @@ One editor, one grid, for everything made of modules: your **overlay pages**, yo
 - Drag a box (or Shift/Ctrl+click) to select several modules and move them together, or drop them on the trash can to remove them.
 - Undo and redo every edit (buttons, or Ctrl+Z / Ctrl+Shift+Z), and move or resize the selected module with the arrow keys (Shift to resize).
 - Click a module to edit its options in the inspector, which also has steppers for its exact size.
-- Menus on an edge are drawn against their screen edge. The desktop and the lock and login screens are fitted to each monitor: every screen gets as many grid units as fit at your card size, and modules keep to their nearest edge, so a corner stays a corner on a wider or turned screen. Each has its own Module size and an optional double grid for finer placement.
+- Menus on an edge are drawn against their screen edge. The desktop and the lock and login screens are fitted to each monitor: every screen gets as many grid units as fit at your card size, and modules keep to their nearest edge, so a corner stays a corner on a wider or turned screen. Each has its own Card size and Content size (see **Size** above) and an optional double grid for finer placement.
 - **Desktop widgets:** modules on your desktop, under your windows, fitted inside the bars and border so they line up with your tiled windows. They sit straight on the wallpaper (or in frosted cards) and take clicks, while the empty desktop is clicked through. One layout can cover all monitors, the primary monitor, or a monitor of its own (by name, so a laptop's screen keeps its layout when you dock and undock).
 - Every change shows live on your desktop (or on screen, for the lock and login screens, with **Show on screen**). **Save** keeps it, **Discard** throws it away.
 - Each page and menu lists what opens it, and adds a bar button or a keybind for it.
@@ -141,7 +141,7 @@ Menus are the overlay's other half. Every overlay module fits in them, placed on
 - **Per-menu settings.** Each menu has its own:
   - edge, monitor and position along the edge
   - length: fit its modules, or take the whole edge
-  - module size and colors (Background and Border default to Auto: the theme's surface and the screen frame's outline; a config step moves the old defaults there)
+  - card and content size, and colors (Background and Border default to Auto: the theme's surface and the screen frame's outline; a config step moves the old defaults there)
   - hover timings
 
   A strip menu can also draw a framed box along the whole edge.

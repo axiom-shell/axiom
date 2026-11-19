@@ -8,7 +8,7 @@ import qs.components.reusable
 import qs.components.hosts.overlay
 
 // A menu's modules on a grid of quarter cards, as on a Custom overlay
-// page, with its screen's overlay cards (MenusConfig.cardUnitOf). Taking
+// page, with its screen's overlay cards (MenusConfig.layoutOf). Taking
 // its whole edge (`length: "edge"`, and an integrated menu always:
 // GridPlacement.menuFillsEdge) the grid fits the edge exactly, its rows
 // (or columns) growing or shrinking evenly to `maxLength` (scrolling only
@@ -31,7 +31,7 @@ Item {
   property bool submenu: false
   // In the free host (FreeMenu)
   property bool free: false
-  // The screen its cards are sized on (MenusConfig.cardUnitOf): a
+  // The screen its cards are sized on (MenusConfig.layoutOf): a
   // submenu's, that of the menu it opens from; null for the menu's own
   property var screen: null
   // Tiled (`background: none`), how its host draws the tiles under its
@@ -68,10 +68,13 @@ Item {
       "submenu": root.submenu
     })
 
+  // Its grid on its screen (MenusConfig.layoutOf)
+  readonly property var layout: MenusConfig.layoutOf(root.menu, root.screen)
+
   OverlayGrid {
     id: overlayGrid
-    fixedUnit: MenusConfig.cardUnitOf(root.menu, root.screen)
-    gap: MenusConfig.gapOf(root.menu, root.screen)
+    fixedUnit: root.layout.unit
+    gap: root.layout.gap
   }
 
   // Whether the menu takes its whole edge (a submenu has none)
@@ -144,7 +147,7 @@ Item {
       grid: overlayGrid
       stretch: root._stretch
       host: root.host
-      zoom: MenusConfig.zoomOf(root.menu, root.screen)
+      zoom: root.layout.zoom
       // A bottom menu's edge is under its modules
       growTowards: root.edge === "bottom" ? 1 : -1
     }

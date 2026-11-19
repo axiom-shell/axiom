@@ -21,7 +21,5 @@ ScreenLayoutTarget {
   // Its status card has Update
   fitLink: root.outdated ? {
     "setting": "Greeter"
-  } : root.screenEditor.shrunk ? {
-    "setting": "Widget.cardSize"
   } : null
 }

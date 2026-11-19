@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Keep sizes outside the bars on the Interface scale and Density.
+"""Keep sizes outside the bars on the Content size and Density.
 
-Text grows with `Widget.scale` (Appearance.fontSize), and so do the
+Text grows with `Widget.contentSize` (Appearance.fontSize), and so do the
 `Widget` sizes (height, padding, spacing, iconButton, smallHeight,
 smallPadding, `Widget.px(n)`). A size written as a bare number stays the
 same at every scale, so next to the text around it it comes out cramped at

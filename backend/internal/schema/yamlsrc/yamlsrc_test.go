@@ -236,6 +236,103 @@ func TestKindSlots(t *testing.T) {
 	}
 }
 
+// Every overlay page type has its sizing, picked by its view part: a Custom
+// page's lays out in cards (a Card size, a link, a Content size), a tool
+// page's zooms whole (a Content size). Both top out at 100.
+func TestViewSizing(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	def := func(name string) *jsonx.Object {
+		return root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
+	}
+	props := func(o *jsonx.Object) *jsonx.Object {
+		return o.Value("properties").(*jsonx.Object)
+	}
+	options := def("OverlayView").Value("oneOf").(*jsonx.Array)
+	if len(options.Items) == 0 {
+		t.Fatal("OverlayView has no options")
+	}
+	for _, option := range options.Items {
+		name := strings.TrimPrefix(option.(*jsonx.Object).Value("$ref").(string), "#/definitions/")
+		sizing, _ := props(def(name)).Value("sizing").(*jsonx.Object)
+		if sizing == nil {
+			t.Errorf("%s has no sizing", name)
+			continue
+		}
+		var got []string
+		for _, key := range props(sizing).Keys() {
+			field := props(sizing).Value(key).(*jsonx.Object)
+			if limit, _ := field.Value("maximum").(float64); field.Value("type") != "boolean" && limit != 100 {
+				t.Errorf("%s sizing.%s maximum = %v, want 100", name, key, limit)
+			}
+			got = append(got, key)
+		}
+		want := []string{"contentSize"}
+		if name == "CustomOverlayView" {
+			want = []string{"cardSize", "contentSize", "linked"}
+		}
+		if !slices.Equal(got, want) {
+			t.Errorf("%s sizing = %v, want %v", name, got, want)
+		}
+	}
+	// A Custom page's layout has none of its own: the page's sizing is it
+	if props(props(def("CustomOverlayView")).Value("layout").(*jsonx.Object)).Has("sizing") {
+		t.Error("a Custom page's layout has its own sizing")
+	}
+	// A field definition expands with its sibling keys: the Card size keeps
+	// its link and its range, the page's override only lowers the maximum
+	card := props(props(def("Menu")).Value("layout").(*jsonx.Object))
+	cardSize := props(card.Value("sizing").(*jsonx.Object)).Value("cardSize").(*jsonx.Object)
+	if got, want := string(jsonx.MarshalCompact(cardSize.Value("x-link"))), `{"setting":"Interface.cardSize"}`; got != want {
+		t.Errorf("Sizing's cardSize links %s, want %s", got, want)
+	}
+	if limit, _ := cardSize.Value("maximum").(float64); limit != 200 {
+		t.Errorf("Sizing's cardSize maximum = %v, want 200", limit)
+	}
+}
+
+// A bar widget's own popout is sized by its Content size alone, shown while
+// the popout is on and no menu replaces it; a custom widget's popout lays
+// out in cards, so it has the full Size group.
+func TestPopoutSizing(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	def := func(name string) *jsonx.Object {
+		return root.Value("definitions").(*jsonx.Object).Value(name).(*jsonx.Object)
+	}
+	props := func(o *jsonx.Object) *jsonx.Object {
+		return o.Value("properties").(*jsonx.Object)
+	}
+	sizing := func(name string) *jsonx.Object {
+		popout := props(props(props(def(name)))).Value("popout").(*jsonx.Object)
+		got, _ := props(popout).Value("sizing").(*jsonx.Object)
+		if got == nil {
+			t.Fatalf("%s's popout has no sizing", name)
+		}
+		return got
+	}
+	keys := func(sizing *jsonx.Object) []string {
+		return props(sizing).Keys()
+	}
+	if got, want := keys(sizing("VolumeWidget")), []string{"contentSize"}; !slices.Equal(got, want) {
+		t.Errorf("Volume's popout sizing = %v, want %v", got, want)
+	}
+	if got, want := keys(sizing("CustomWidgetWidget")), []string{"cardSize", "contentSize", "linked"}; !slices.Equal(got, want) {
+		t.Errorf("Custom widget's popout sizing = %v, want %v", got, want)
+	}
+	for _, name := range []string{"VolumeWidget", "CustomWidgetWidget"} {
+		if got, want := string(jsonx.MarshalCompact(sizing(name).Value("x-showIf"))), `{"enabled":true,"menu":""}`; got != want {
+			t.Errorf("%s's popout sizing shows if %s, want %s", name, got, want)
+		}
+	}
+}
+
 // A part's override reaching into a setting that $refs a definition
 // inlines that definition, so a type narrows one of its fields.
 func TestPartOverrideInlinesRef(t *testing.T) {

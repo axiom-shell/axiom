@@ -3,21 +3,24 @@ import QtQuick
 import qs.config
 import qs.services.compositor
 import qs.components.reusable
-import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.views.Layouts
 import qs.services.ui
 
 // The overlay's pages on one screen: a view per Overlay.views entry, the
-// current one and its neighbours loaded, sliding between them.
+// current one and its neighbours loaded, sliding between them. Each page
+// has its own card grid and PageBox (OverlayPage), from its own sizing.
 Item {
   id: root
-  // This screen's card grid (OverlayGrid), handed to every view
-  required property OverlayGrid grid
+  // The screen whose card size the pages start from
+  property var screen: null
   // The most room a page's box may take; a page bigger than that is
-  // shrunk (fitScale) so any config fits any screen
+  // shrunk (PageBox.fitScale) so any config fits any screen
   property real maxWidth: 0
   property real maxHeight: 0
+  // The drawn px a page may take inside the box's padding
+  readonly property real roomWidth: root.maxWidth - OverlayConfig.boxPadding * 2
+  readonly property real roomHeight: root.maxHeight - OverlayConfig.boxPadding * 2
   // Whether the overlay window is showing; pages unload when it isn't
   property bool open: false
   property var viewsConfig: OverlayConfig.views || []
@@ -67,7 +70,7 @@ Item {
   ])
   // itemAt() isn't a notifying read: `count` makes this re-evaluate once
   // the Repeater has created its pages (on launch they don't exist yet)
-  readonly property Item currentPage: root.currentIndex >= root.editorIndex ? editorPage : (viewsRepeater.count > root.currentIndex ? viewsRepeater.itemAt(root.currentIndex) : null)
+  readonly property OverlayPage currentPage: root.currentIndex >= root.editorIndex ? editorPage : (viewsRepeater.count > root.currentIndex ? (viewsRepeater.itemAt(root.currentIndex) as OverlayPage) : null)
 
   // A new launch opens on the first page; closing and re-opening keeps the
   // page (this item lives as long as the overlay window). The views
@@ -110,34 +113,8 @@ Item {
     }
   }
 
-  implicitWidth: currentViewWidth * contentZoom + OverlayConfig.boxPadding * 2
-  implicitHeight: currentViewHeight * contentZoom + OverlayConfig.boxPadding * 2
-
-  // Store current view dimensions to avoid binding loops
-  property real currentViewWidth: root.currentPage ? root.currentPage.implicitWidth : 0
-  property real currentViewHeight: root.currentPage ? root.currentPage.implicitHeight : 0
-
-  // The grid already sizes cards to the screen; this is the last resort
-  // for a page that still doesn't fit (many columns, a page more than two
-  // cards high). Item.scale doesn't feed back into implicit sizes, so no
-  // binding loop.
-  readonly property real fitScale: {
-    const room = OverlayConfig.boxPadding * 2;
-    const width = root.currentViewWidth * root.grid.zoom;
-    const height = root.currentViewHeight * root.grid.zoom;
-    const scaleW = width > 0 && root.maxWidth > room ? (root.maxWidth - room) / width : 1;
-    const scaleH = height > 0 && root.maxHeight > room ? (root.maxHeight - room) / height : 1;
-    return Math.min(1, scaleW, scaleH);
-  }
-  // What the pages, laid out at the grid's unit, are drawn at
-  readonly property real contentZoom: root.grid.zoom * root.fitScale
-  onFitScaleChanged: console.log(`Overlay page ${root.currentIndex} scaled to ${root.fitScale.toFixed(3)} (card unit ${root.grid.unit})`)
-  Connections {
-    target: root.grid
-    function onDrawnUnitChanged() {
-      console.log(`Overlay card unit ${root.grid.unit} drawn at ${root.grid.drawnUnit} (zoom ${root.grid.zoom.toFixed(3)}) for ${root.maxWidth}x${root.maxHeight}`);
-    }
-  }
+  implicitWidth: (root.currentPage?.drawnWidth ?? 0) + OverlayConfig.boxPadding * 2
+  implicitHeight: (root.currentPage?.drawnHeight ?? 0) + OverlayConfig.boxPadding * 2
 
   // Only the current page and its neighbours (navigation wraps around) are
   // loaded, and only while the overlay is open, so hidden pages don't keep
@@ -191,6 +168,21 @@ Item {
     return shown.filter(view => !OverlayConfig.isTool(view.viewConfig.type)).concat(shown.filter(view => OverlayConfig.isTool(view.viewConfig.type)));
   }
 
+  // A tool page that is hidden or unsupported isn't built, so the fit it
+  // last reported goes (OverlayManager.fitOf would show it). Not from a
+  // page's Component.onDestruction: a config change rebuilds every page
+  // under the same ids, and the old ones go after the new ones have reported
+  function _pruneFits() {
+    const name = root.screen?.name ?? "";
+    const built = root.viewsModel.filter(view => OverlayConfig.isTool(view.viewConfig.type)).map(view => view.viewConfig.id);
+    for (const key of Object.keys(OverlayManager.fits[name] ?? {})) {
+      if (!built.includes(key))
+        OverlayManager.reportFit(name, key, undefined);
+    }
+  }
+  onViewsModelChanged: root._pruneFits()
+  Component.onCompleted: root._pruneFits()
+
   // The box the pages are drawn in (the overlay's blur region)
   readonly property Item box: mainContentBox
 
@@ -234,68 +226,67 @@ Item {
       width: contentContainer.width
       height: contentContainer.height
 
-      // Laid out at the grid's unit and scaled as a whole, so the box's
-      // own border and radius stay crisp; from its top left, placed on a
-      // whole px, so its modules' edges on whole drawn px
-      // (OverlayGrid.drawnZoom) are on the screen's. `contentZoom`: what
-      // StyledIcon looks for to draw its glyphs for a scaled page
-      Item {
-        id: viewsContainer
-        x: Math.round((parent.width - width * scale) / 2)
-        y: Math.round((parent.height - height * scale) / 2)
-        width: root.currentViewWidth
-        height: root.currentViewHeight
-        transformOrigin: Item.TopLeft
-        scale: root.contentZoom
-        readonly property real contentZoom: root.contentZoom
-        readonly property real drawnZoom: viewsContainer.contentZoom * TextRender.zoomAt(viewsContainer.parent)
-        readonly property var inkHostAbove: InkHost.find(viewsContainer.parent)
+      Repeater {
+        id: viewsRepeater
+        model: root.viewsModel
 
-        Repeater {
-          id: viewsRepeater
-          model: root.viewsModel
+        OverlayPage {
+          id: viewPage
+          required property int index
+          required property var modelData
+          pageIndex: index
+          currentIndex: root.currentIndex
+          direction: root.direction
+          loaded: root.isLoaded(index)
+          screen: root.screen
+          roomWidth: root.roomWidth
+          roomHeight: root.roomHeight
+          sizing: viewPage.modelData.viewConfig.sizing
+          // The layouts editor's line for a tool page says how far its
+          // screen shrinks it (OverlayManager.fitOf); a Custom page's fit
+          // comes from its modules there, so only tool pages report
+          onFitChanged: viewPage._reportFit()
+          Component.onCompleted: viewPage._reportFit()
+          function _reportFit() {
+            if (!OverlayConfig.isTool(viewPage.modelData.viewConfig.type))
+              return;
+            OverlayManager.reportFit(root.screen?.name ?? "", viewPage.modelData.viewConfig.id, viewPage.fit);
+          }
+          // A page in a window of its own is built there, not here
+          readonly property string type: viewPage.modelData.viewConfig.type
+          content: PageWindowManager.isOpen(viewPage.type) ? viewPage._poppedOut : viewPage._view
 
-          OverlayPage {
-            id: viewPage
-            required property int index
-            required property var modelData
-            pageIndex: index
-            currentIndex: root.currentIndex
-            direction: root.direction
-            loaded: root.isLoaded(index)
-            // A page in a window of its own is built there, not here
-            readonly property string type: viewPage.modelData.viewConfig.type
-            content: PageWindowManager.isOpen(viewPage.type) ? viewPage._poppedOut : viewPage._view
-
-            readonly property Component _view: Component {
-              OverlayView {
-                anchors.centerIn: parent
-                grid: root.grid
-                viewModel: viewPage.modelData
-              }
+          readonly property Component _view: Component {
+            OverlayView {
+              anchors.centerIn: parent
+              grid: viewPage.grid
+              viewModel: viewPage.modelData
             }
+          }
 
-            readonly property Component _poppedOut: Component {
-              PoppedOutCard {
-                anchors.centerIn: parent
-                grid: root.grid
-                type: viewPage.type
-              }
+          readonly property Component _poppedOut: Component {
+            PoppedOutCard {
+              anchors.centerIn: parent
+              grid: viewPage.grid
+              type: viewPage.type
             }
           }
         }
+      }
 
-        OverlayPage {
-          id: editorPage
-          pageIndex: root.editorIndex
-          currentIndex: root.currentIndex
-          direction: root.direction
-          loaded: root.isLoaded(root.editorIndex)
+      OverlayPage {
+        id: editorPage
+        pageIndex: root.editorIndex
+        currentIndex: root.currentIndex
+        direction: root.direction
+        loaded: root.isLoaded(root.editorIndex)
+        screen: root.screen
+        roomWidth: root.roomWidth
+        roomHeight: root.roomHeight
 
-          Layouts {
-            anchors.centerIn: parent
-            grid: root.grid
-          }
+        Layouts {
+          anchors.centerIn: parent
+          grid: editorPage.grid
         }
       }
     }

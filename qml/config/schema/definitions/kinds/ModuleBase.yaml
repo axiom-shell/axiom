@@ -21,4 +21,14 @@ properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}
   place: {$ref: '#/definitions/GridPlace'}
+  contentSize:
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 100}
+    title: Content size
+    default: null
+    minimum: 50
+    maximum: 200
+    x-unit: '%'
+    description: Text and controls in this module, on top of its page's or menu's Content size. Off follows it.
   properties: {type: object, additionalProperties: false, properties: {}}

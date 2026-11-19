@@ -224,20 +224,21 @@ QtObject {
 
   // --- Room on each screen ---
 
-  // { screenName: { width, height, unit } }: the room each overlay has
-  // for a page and the card size its content lays out at, in layout px
-  // (OverlayGrid), as its OverlayPanel reports them
+  // { screenName: { width, height, screenWidth, screenHeight } }: the room
+  // each overlay has for a page (drawn px, before the page is shrunk to fit
+  // it) and its screen's size, as its OverlayPanel reports them
   readonly property var areas: root._areas
   property var _areas: ({})
 
-  function reportArea(screenName, width, height, unit) {
+  function reportArea(screenName, width, height, screenWidth, screenHeight) {
     const old = root._areas[screenName];
-    if (old && old.width === width && old.height === height && old.unit === unit)
+    if (old && old.width === width && old.height === height && old.screenWidth === screenWidth && old.screenHeight === screenHeight)
       return;
     root._areas = Utils.withEntry(root._areas, screenName, {
       "width": width,
       "height": height,
-      "unit": unit
+      "screenWidth": screenWidth,
+      "screenHeight": screenHeight
     });
   }
 
@@ -245,17 +246,47 @@ QtObject {
   function clearArea(screenName) {
     if (screenName in root._areas)
       root._areas = Utils.withEntry(root._areas, screenName, undefined);
+    if (screenName in root._fits)
+      root._fits = Utils.withEntry(root._fits, screenName, undefined);
   }
 
-  // How much each screen's overlay shrinks a Custom page: [{ screen,
-  // scale }], 1 where it fits
+  // { screenName: { pageKey: fit } }: the factor (at most 1) each built
+  // tool page is shrunk by on a screen, as OverlayPages reports it from that
+  // page's PageBox.fitScale. Reported by OverlayPages for its tool pages,
+  // never by PageBox, which page windows and the onboarder share. A Custom
+  // page's is worked out from its modules (fitOf)
+  readonly property var fits: root._fits
+  property var _fits: ({})
+
+  // `fit` undefined: the page isn't built (any more), so it has none
+  function reportFit(screenName, pageKey, fit) {
+    const onScreen = root._fits[screenName] ?? {};
+    if (onScreen[pageKey] === fit)
+      return;
+    const shown = Utils.withEntry(onScreen, pageKey, fit);
+    root._fits = Utils.withEntry(root._fits, screenName, Object.keys(shown).length > 0 ? shown : undefined);
+  }
+
+  // How much each screen's overlay shrinks a page: [{ screen, scale,
+  // capped, card }], scale 1 where it fits. The page's cards and zoom on
+  // that screen (OverlayConfig.layoutFor, from the page's own sizing: its
+  // drawn card px as `card`, and whether the height shrank them as
+  // `capped`), then for a Custom page the share of its room its modules
+  // leave, for a tool page what its overlay reported (reportFit; 1 until
+  // it is built)
   function fitOf(view) {
     const bounds = GridPlacement.bounds(view.layout?.modules);
     return Object.keys(root.areas).sort().map(screenName => {
       const area = root.areas[screenName];
+      const layout = OverlayConfig.layoutFor({
+        "width": area.screenWidth,
+        "height": area.screenHeight
+      }, area.width, area.height, view.sizing);
       return {
         "screen": screenName,
-        "scale": GridPlacement.fitScale(bounds, area.width, area.height, OverlayConfig.pageUnit(view, area.unit))
+        "scale": view.type === "Custom" ? GridPlacement.fitScale(bounds, area.width / layout.zoom, area.height / layout.zoom, OverlayConfig.pageUnit(view, layout.unit)) : (root.fits[screenName]?.[view.id] ?? 1),
+        "capped": layout.capped,
+        "card": layout.drawn
       };
     });
   }
@@ -327,7 +358,7 @@ QtObject {
     applyChanges();
   }
 
-  // One of a page's own fields (name, icon, visible), or its double grid
+  // One of a page's own fields (name, icon, sizing, visible), or its double grid
   // ("fineGrid": layout.grid.fine), which rescales the modules' places so
   // they stay put
   function updateViewField(index, key, value) {
@@ -350,6 +381,10 @@ QtObject {
     }
     if (JSON.stringify(view[key]) === JSON.stringify(value))
       return;
+    // A form emits an edit inside the sizing as the whole sizing: keep what
+    // the sizing's link means
+    if (key === "sizing")
+      value = Sizing.edited(view[key], value);
     view[key] = value;
     applyChanges();
   }

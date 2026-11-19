@@ -31,7 +31,7 @@ QtObject {
     if (!root._schema)
       root._schema = root.json("qml/config/json/config.schema.json");
     const live = SchemaValidation.applyDefaults({}, root._schema);
-    live.Interface.scale = row.scale ?? 100;
+    live.Interface.contentSize = row.scale ?? 100;
     live.Interface.density = row.density ?? "normal";
     live.Appearance.font.size = row.fontSize ?? 14;
     live.Appearance.font.family = "DejaVu Sans Mono";

@@ -1,0 +1,13 @@
+# The CardSize definition (#/definitions/CardSize): a surface's own Card size, a % of Look & Feel's (null follows it). Uses override `maximum`.
+
+x-link: {setting: Interface.cardSize}
+type: integer
+x-control: stepper
+x-auto: {value: null, start: 100}
+title: Card size
+default: null
+minimum: 50
+maximum: 200
+x-unit: '%'
+description: Relative to the Card size in Look & Feel. Off follows it.
+x-inline: true

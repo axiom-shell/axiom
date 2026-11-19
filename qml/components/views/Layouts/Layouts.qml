@@ -72,6 +72,7 @@ BaseView {
     canvas.canSave: OverlayManager.layoutsProblems.length === 0
     inspector.editable: root.target.editable
     inspector.notEditableHint: root.target.notEditableHint
+    inspector.moduleNote: root.target.moduleSizingNote
     onSave: OverlayManager.saveLayouts()
     onReset: OverlayManager.resetLayouts()
 
@@ -85,6 +86,7 @@ BaseView {
         view: OverlayManager.editTarget === "page" ? pageTarget.view : null
         menu: OverlayManager.editTarget === "menu" ? menuTarget.menu : null
         screenTarget: OverlayManager.editTarget === "desktop" ? desktopTarget : OverlayManager.editTarget === "lockscreen" ? lockscreenTarget : OverlayManager.editTarget === "greeter" ? greeterTarget : null
+        target: root.target
         dragLayer: layout
       }
     }

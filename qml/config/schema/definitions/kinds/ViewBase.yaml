@@ -4,4 +4,12 @@ type: object
 required: [type, id]
 additionalProperties: false
 x-settingsAt: /properties
+x-parts:
+  # How big it draws: a Custom page is laid out in cards (`sizing: page`), a
+  # tool page zooms whole (`sizing: tool`)
+  sizing:
+    page:
+      sizing: {$ref: '#/definitions/PageSizing'}
+    tool:
+      sizing: {$ref: '#/definitions/ToolSizing'}
 properties: {type: {}, id: {$ref: '#/definitions/ItemId'}, visible: {type: boolean, default: true, x-settings: false}}

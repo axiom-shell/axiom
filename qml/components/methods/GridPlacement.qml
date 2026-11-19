@@ -17,7 +17,7 @@ QtObject {
   readonly property int cardSpacing: 20
   // The px a screen keeps clear on each side of its short one when
   // working out its card size (baseCard): fixed, so text and controls
-  // growing (the Interface scale) never shrink the cards
+  // growing (the Content size) never shrink the cards
   readonly property int screenMargin: 80
   // The largest a module's w or h may be (the schema's GridPlace maximum)
   readonly property int maxSpan: 32
@@ -42,10 +42,10 @@ QtObject {
     return Math.max(1, (Math.min(width, height) - 2 * root.screenMargin - root.cardSpacing) / 2);
   }
 
-  // What a grid's content is drawn at for a Module size of `scale` (a
-  // factor): content lays out at the card size over it, so text and
-  // controls grow and shrink with the cards only by the Module size,
-  // never by the screen. 1 within 2 %, so it isn't resampled for nothing
+  // What a grid's content is drawn at for a content factor `scale`: content
+  // lays out at the card size over it, so text and controls grow and
+  // shrink with the cards only by that factor, never by the screen. 1
+  // within 2 %, so it isn't resampled for nothing
   function zoomOf(scale) {
     return Math.abs(scale - 1) < 0.02 ? 1 : scale;
   }
@@ -56,14 +56,21 @@ QtObject {
     return root.cardSpacing * zoom;
   }
 
-  // The most of Module size `scale` (a factor) at which `count` units of
-  // a grid fit `room` px, its cards `card` px at 100 % (a double grid's
-  // split with `fine`): its units and gaps (gapOf) both grow with it, so
-  // its span does in proportion. `scale` when they fit
-  function fitModuleScale(scale, count, card, fine, room) {
-    const gap = root.gapOf(scale);
-    const length = root.span(count, root.gridUnitOf(card * scale, fine, gap), gap);
-    return count > 0 && length > room ? Math.max(0.1, Math.floor(scale * room / length * 1000) / 1000) : scale;
+  // The most (a factor, at most 1, floored to 3 decimals, at least 0.1) of
+  // `length` px that fits `room` px: 1 when it fits
+  function fitLength(length, room) {
+    return length > room ? Math.max(0.1, Math.floor(room / length * 1000) / 1000) : 1;
+  }
+
+  // The most (a factor, at most 1) of its size at which `count` units of a
+  // grid fit `room` px, its cards `card` px at 1 (a double grid's split
+  // with `fine`) and its content drawn at `zoom`: its units and gaps
+  // (gapOf) both shrink with it, so its span does in proportion. 1 when
+  // they fit
+  function fitFactor(count, card, zoom, fine, room) {
+    const gap = root.gapOf(zoom);
+    const length = root.span(count, root.gridUnitOf(card, fine, gap), gap);
+    return count > 0 ? root.fitLength(length, room) : 1;
   }
 
   // A grid's own card size at card size `card` px, `gap` px between
@@ -693,7 +700,7 @@ QtObject {
   // time, until they do (on `from` itself at the latest, where nothing
   // moves), else as a last resort they stay on `from` (or as far as they
   // reach) fitted into the room (latticeUnit). Its content is drawn at
-  // `zoom` (zoomOf its Module size), and shrunk cards shrink it and the
+  // `zoom` (zoomOf its Content size), and shrunk cards shrink it and the
   // gaps with them. { cols, rows, unit (its cards' px), gap, zoom, places,
   // shrunk (smaller than `unit` asked) }
   function screenArrangement(places, from, unit, width, height, margin, fine, zoom) {
@@ -836,24 +843,29 @@ QtObject {
   }
 
   // How much an area `width` × `height` px with card size `unit` shrinks
-  // modules reaching `bounds`: 1 where they fit
+  // modules reaching `bounds` (Sizing.fitInto): 1 where they fit
   function fitScale(bounds, width, height, unit) {
-    const sizes = root.trackSizes(bounds, unit);
-    return sizes.width <= 0 ? 1 : Math.min(1, width / sizes.width, height / sizes.height);
+    return Sizing.fitInto(root.trackSizes(bounds, unit), {
+      "width": width,
+      "height": height
+    });
   }
   // The overlay's cards in `height` px of room (drawn px): `card` px,
   // content drawn at `zoom`, but never so big that a page two cards high
   // (span(8), its gap drawn at the zoom too) overflows the height. A page
-  // too wide is shrunk on its own (OverlayPages.fitScale). { drawn, the
+  // too wide is shrunk on its own (PageBox.fitScale). { drawn, the
   // card size shown; unit, the size content lays out at (drawn / zoom);
-  // zoom }. Rounded down where the height limits it, so a page two cards
-  // high fits exactly rather than a pixel over (and shrunk by a hair)
+  // zoom; capped, whether the height shrank the cards }. Rounded down where
+  // the height limits it, so a page two cards high fits exactly rather
+  // than a pixel over (and shrunk by a hair)
   function overlayLayout(height, card, zoom) {
-    const drawn = Math.max(1, Math.min(Math.round(card), Math.floor((height - root.gapOf(zoom)) / 2)));
+    const wanted = Math.round(card);
+    const drawn = Math.max(1, Math.min(wanted, Math.floor((height - root.gapOf(zoom)) / 2)));
     return {
       "drawn": drawn,
       "unit": Math.max(1, Math.floor(drawn / zoom + 1e-6)),
-      "zoom": zoom
+      "zoom": zoom,
+      "capped": drawn < wanted
     };
   }
 

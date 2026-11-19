@@ -1,0 +1,10 @@
+# The ContentSizing definition (#/definitions/ContentSizing): the Content size
+# of a surface whose cards zoom with it (a tool page, a bar widget's popout).
+
+x-inline: true
+type: object
+title: Size
+x-group: Size
+additionalProperties: false
+properties:
+  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Off follows it. The whole surface zooms with it.'}

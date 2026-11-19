@@ -7,7 +7,7 @@ import QtQuick
 QtObject {
   property var live: ({
       "Interface": {
-        "scale": 100,
+        "contentSize": 100,
         "cardSize": 100,
         "density": "normal"
       },

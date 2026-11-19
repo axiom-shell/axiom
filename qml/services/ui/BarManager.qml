@@ -678,6 +678,10 @@ QtObject {
     const widget = _widget(zone, index);
     if (!widget || Utils.deepEqual(widget.properties?.[key], value))
       return;
+    // A form emits an edit inside the popout as the whole popout: keep what
+    // the sizing's link means
+    if (key === "popout")
+      value = Sizing.editedIn(widget.properties?.[key], value, ["sizing"]);
     _record(`widget:${root.selectedBarIndex}:${zone}:${index}:${key}`);
     if (!widget.properties)
       widget.properties = {};
