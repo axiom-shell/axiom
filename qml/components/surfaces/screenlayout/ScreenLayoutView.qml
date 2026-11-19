@@ -131,7 +131,7 @@ Item {
       layer.enabled: root.blurWallpaper // style-exempt: no text
       layer.effect: MultiEffect { // style-exempt: no text
         blurEnabled: true
-        blur: 1
+        blur: root.blurAmount
         blurMax: 64
         autoPaddingEnabled: false
       }
@@ -143,6 +143,11 @@ Item {
       opacity: (root.layout?.backdrop?.dim ?? 0) / 100
     }
   }
+
+  // The layout's shade preset (Backdrop.shade), and how much the wallpaper is
+  // blurred (0-1; the desktop never blurs it)
+  readonly property var shadeLook: Backdrop.shade(root.layout?.shade)
+  readonly property real blurAmount: root.blurWallpaper && root.layout ? root.layout.backdrop.blurStrength / 100 : 0
 
   // No compositor blur reaches a lock surface (or the greeter's), so while
   // the shell's surfaces blur, the modules frost the background here
@@ -212,10 +217,11 @@ Item {
         required property int index
         readonly property var r: grid.cardRects[shade.index] ?? null
         screen: root.screen
-        shown: shade.r !== null && root.bare(root.placedModules[shade.index])
+        shown: shade.r !== null && root.bare(root.placedModules[shade.index]) && root.shadeLook.shown
         area: shade.r ? Qt.rect(grid.x + shade.r.x, grid.y + shade.r.y, shade.r.width, shade.r.height) : Qt.rect(0, 0, 0, 0)
         dim: root.shadeDim
-        blurred: root.showBackdrop && root.blurWallpaper
+        look: root.shadeLook
+        blurWeight: root.showBackdrop ? root.blurAmount : 0
         ink: grid.inks[shade.index] ?? Style.text
         fixedRegion: root.flatRegion
         worstCase: root.host?.kind === "lockscreen" || root.host?.kind === "greeter"

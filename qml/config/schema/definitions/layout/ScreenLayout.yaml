@@ -37,6 +37,16 @@ x-properties:
         title: Blur wallpaper
         default: true
         x-showIf: {source: wallpaper}
+      blurStrength:
+        x-group: Background
+        type: integer
+        title: Blur strength
+        default: 60
+        minimum: 10
+        maximum: 100
+        x-unit: '%'
+        x-control: slider
+        x-showIf: {source: wallpaper, blur: true}
       color:
         x-group: Background
         type: string
@@ -69,3 +79,11 @@ x-properties:
         type: boolean
         title: Greeting border
         default: false
+  shade:
+    x-group: Style
+    type: string
+    title: Shade
+    enum: ['off', light, medium, strong]
+    x-enumLabels: {'off': 'Off', light: Light, medium: Medium, strong: Strong}
+    default: medium
+    description: A soft shade of the theme background behind modules without a border, only as strong as the wallpaper under them needs for their text to read.

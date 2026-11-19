@@ -162,6 +162,23 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			bind.(*jsonx.Object).Delete(key)
 		}
 	}
+	desktop, ok := defaults.(*jsonx.Object).Value("Desktop").(*jsonx.Object)
+	if !ok {
+		t.Fatalf("defaults: Desktop.items missing")
+	}
+	desktopItems, ok := desktop.Value("items").(*jsonx.Array)
+	if !ok {
+		t.Fatalf("defaults: Desktop.items missing")
+	}
+	for _, item := range desktopItems.Items {
+		obj, ok := item.(*jsonx.Object)
+		if !ok {
+			t.Fatalf("defaults: Desktop.items has a non-object item")
+		}
+		for _, key := range desktopLayoutKeysAddedSinceV1 {
+			obj.Delete(key)
+		}
+	}
 	osdItemFields(converted)
 	osdItemFields(defaults.(*jsonx.Object))
 	detachedPlaceFields(converted)
@@ -197,7 +214,11 @@ var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFil
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load (the Bars
 // section's style's: barStyleKeysAddedSinceV1)
-var addedSinceV1 = []string{"Appearance.shape.innerRadius", "Updates.interval", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method", "Launcher.providers.files", "Workspaces.specialWorkspaces", "WorkspaceOverlay.specialWorkspaces", "WorkspaceOverlay.specialWorkspaceColor"}
+var addedSinceV1 = []string{"Appearance.shape.innerRadius", "Updates.interval", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method", "Launcher.providers.files", "Workspaces.specialWorkspaces", "WorkspaceOverlay.specialWorkspaces", "WorkspaceOverlay.specialWorkspaceColor", "Lockscreen.layout.shade", "Lockscreen.layout.backdrop.blurStrength", "Greeter.layout.shade", "Greeter.layout.backdrop.blurStrength"}
+
+// Keys a Desktop layout gained since format 1 (addedSinceV1 walks object
+// keys only, not array items)
+var desktopLayoutKeysAddedSinceV1 = []string{"shade"}
 
 // prefixed puts prefix before each of keys
 func prefixed(prefix string, keys []string) []string {
