@@ -7,16 +7,17 @@ title: Panels & controls
 description: Sizing outside the bars. Each bar has its own, in the bar editor.
 additionalProperties: false
 properties:
-  scale:
+  contentSize:
     x-scope: personal
     type: integer
     x-control: stepper
-    title: Scale
+    title: Content size
     default: 100
     minimum: 75
     maximum: 150
     x-unit: '%'
-    description: Size of text and controls outside the bars.
+    x-link: {page: Layouts}
+    description: Text and controls outside the bars. The dock's icons are their own px.
   density:
     x-scope: personal
     type: string
@@ -30,8 +31,10 @@ properties:
     x-scope: personal
     type: integer
     title: Card size
+    x-control: stepper
     default: 100
     minimum: 50
     maximum: 150
     x-unit: '%'
+    x-link: {page: Layouts}
     description: 'Share of the screen: at 100 two cards fill its shorter side.'

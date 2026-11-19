@@ -76,7 +76,7 @@ TestCase {
   }
 
   function test_count_raised_scale() {
-    // The real widths at a raised Interface scale (min = px(400) there)
+    // The real widths at a raised Content size (min = px(400) there)
     compare(FlowColumns.count(848, 560, 500, 4, 10, 2), 2);
     compare(FlowColumns.count(840, 560, 600, 4, 12, 2), 2);
     compare(FlowColumns.count(1208, 560, 500, 4, 10, 2), 2);

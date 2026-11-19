@@ -216,7 +216,7 @@ QtObject {
     return bare ? 0 : compact ? Widget.cardPadding * 0.75 : Widget.cardPadding * 1.5;
   }
   // The overlay box's padding around a page (OverlayPages), at the
-  // Interface scale: the page inside it is scaled, the box isn't
+  // Content size: the page inside it is scaled, the box isn't
   readonly property int boxPadding: Widget.px(cardSpacing)
   // The page switcher's height (OverlayPageNavigator), and the room it
   // takes off the pages' area with the gaps around it (OverlayPanel)

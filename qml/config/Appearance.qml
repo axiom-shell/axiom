@@ -67,15 +67,15 @@ QtObject {
 
   // --- Font ---
   readonly property string fontFamily: _c.font.family
-  // At the Interface scale (Widget.scale); bars size their text from
+  // At the Content size (Widget.contentSize); bars size their text from
   // baseFontSize, the setting itself
   readonly property int baseFontSize: _c.font.size
-  readonly property int fontSize: Math.round(baseFontSize * Widget.scale)
+  readonly property int fontSize: Math.round(baseFontSize * Widget.contentSize)
   // The font size `n` px bigger (smaller when negative) than the setting,
-  // at the Interface scale: the offset grows with the text, where
+  // at the Content size: the offset grows with the text, where
   // `fontSize + n` would leave it the same at every scale
   function fontSizeBy(n: real): int {
-    return Math.round((baseFontSize + n) * Widget.scale);
+    return Math.round((baseFontSize + n) * Widget.contentSize);
   }
   // Icons are Material Symbols names drawn in this font (StyledIcon), so
   // they don't depend on the text font: the copy axiom bundles

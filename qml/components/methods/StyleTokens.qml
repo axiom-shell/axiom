@@ -185,7 +185,7 @@ QtObject {
   }
 
   // A width that holds `n` characters at the default font: `n` px at
-  // Interface scale `scale` (a factor), grown with the font setting
+  // Content size `scale` (a factor), grown with the font setting
   // `baseFontSize` (equal to Math.round(n * scale) at 14)
   function textPx(n, scale, baseFontSize) {
     return Math.round(n * scale * baseFontSize / 14);

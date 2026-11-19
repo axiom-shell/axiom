@@ -9,7 +9,7 @@ An index of reusable pieces. Reach for one of these before drawing your own; whe
 ### Sizes
 Colours, text and icon sizes: `Style` ([style](style.md)).
 
-Everything outside the bars follows the Interface scale and Density through `Widget` (`qml/config/Widget.qml`); a size written as a number doesn't, and `scripts/check_sizes.py` fails on one of 3 px or more, set alone or added, subtracted or chosen in a size's expression (`Widget.height - 4` is `Widget.height - Widget.px(4)`; factors like `* 2` and grid units like `span(8)` are fine).
+Everything outside the bars follows the Content size and Density through `Widget` (`qml/config/Widget.qml`); a size written as a number doesn't, and `scripts/check_sizes.py` fails on one of 3 px or more, set alone or added, subtracted or chosen in a size's expression (`Widget.height - 4` is `Widget.height - Widget.px(4)`; factors like `* 2` and grid units like `span(8)` are fine).
 
 | What | Use |
 |---|---|
@@ -24,11 +24,11 @@ Everything outside the bars follows the Interface scale and Density through `Wid
 | A draggable or listed chip's row (bar lanes, grid drag chips, keybind rows) | `Style.chipRowHeight` |
 | A text or icon size | a `role` / `size` (`Style.textRole`, `Style.iconSize`) |
 | A fitted text or icon size only | `Appearance.fontSizeBy(n)` for n px more or less (never `fontSize ± n`: the offset wouldn't scale), on a line marked `// fitted:` |
-| A width, an avatar, a dot, a thin bar | `Widget.px(n)` (the Interface scale only) |
+| A width, an avatar, a dot, a thin bar | `Widget.px(n)` (the Content size only) |
 | A hairline (0–2 px, `border.width`) | the number |
 | Measured against the screen, a measuring font, a placeholder or stand-in, a layout weight | the number, marked `// fixed px: <reason>` |
 
-A size setting in px outside the bars (`Launcher.width`, `Notifications.width`, tile sizes, `Popouts.padding`) is scaled in its reader (`Widget.px(_c.width)`), so it follows the Interface scale too; gaps that line up with the compositor's (the toasts' `gap`) stay as set, and hover strips are a fixed `ScreenEdge.triggerSize` deep.
+A size setting in px outside the bars (`Launcher.width`, `Notifications.width`, tile sizes, `Popouts.padding`) is scaled in its reader (`Widget.px(_c.width)`), so it follows the Content size too; gaps that line up with the compositor's (the toasts' `gap`) stay as set, and hover strips are a fixed `ScreenEdge.triggerSize` deep.
 
 Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: a shared piece the bar uses takes its size from the bar (`CountBadge.textSize`, the bar's `iconGap`).
 

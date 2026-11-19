@@ -42,7 +42,7 @@ OnboardingPage {
 
   SettingRows {
     Layout.fillWidth: true
-    paths: ["Interface.cardSize", "Interface.scale"]
+    paths: ["Interface.cardSize", "Interface.contentSize"]
   }
 
   // The Recommended setup, where the compositor can be set up

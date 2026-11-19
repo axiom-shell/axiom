@@ -385,7 +385,7 @@ Item {
     color: _colors?.fill ?? "transparent"
     textColor: _colors?.text ?? "transparent"
     ringColor: _colors?.ring ?? "transparent"
-    // The bar's own text size, not the Interface scale
+    // The bar's own text size, not the Content size
     textSize: Math.round(root.barConfig.fontSize * 0.7)
   }
 

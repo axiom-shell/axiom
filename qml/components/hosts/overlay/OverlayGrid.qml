@@ -6,8 +6,8 @@ import qs.components.methods
 // One overlay's card grid, sized to its screen: cards of the card size
 // there times the overlay's Module size, at most two filling the height
 // (OverlayConfig.layoutFor), their content laid out at `unit` and drawn
-// `zoom` (the Module size) times that, so text keeps the Interface
-// scale's size on every monitor. Each OverlayPanel has its own; pages
+// `zoom` (the Module size) times that, so text keeps the Content
+// size's size on every monitor. Each OverlayPanel has its own; pages
 // that still overflow are shrunk by OverlayPages.
 QtObject {
   id: root

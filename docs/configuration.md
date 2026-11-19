@@ -49,7 +49,7 @@ axiom ships the setups from the README in `data/examples/`. Apply one from **Set
 
 ### Sharing a setup
 
-- **Settings → System → Share → Export** writes the current look and layout to `~/axiom-<name>-<date>-<time>.json`, holding only what differs from the defaults. Monitors, wallpapers, accounts and paths are never in it. Keybinds, apps and commands are left out unless you switch them on, and so are your personal preferences, such as your interface scale, card size and density.
+- **Settings → System → Share → Export** writes the current look and layout to `~/axiom-<name>-<date>-<time>.json`, holding only what differs from the defaults. Monitors, wallpapers, accounts and paths are never in it. Keybinds, apps and commands are left out unless you switch them on, and so are your personal preferences, such as your content size, card size and density.
 - **Import…** opens a file (an export, an example or a whole `config.json`) and applies it the way an example applies, saving changes first the same way. The result is saved as `import-<name>`, and stays until you delete it. A file without a `version`, or from a newer axiom, is refused.
 - If the file holds keybinds, apps and commands, you can take those too, but the switch is off by default: a command runs as you, so read every command in a file someone else made before turning it on.
 

@@ -17,7 +17,7 @@ QtObject {
   readonly property int cardSpacing: 20
   // The px a screen keeps clear on each side of its short one when
   // working out its card size (baseCard): fixed, so text and controls
-  // growing (the Interface scale) never shrink the cards
+  // growing (the Content size) never shrink the cards
   readonly property int screenMargin: 80
   // The largest a module's w or h may be (the schema's GridPlace maximum)
   readonly property int maxSpan: 32

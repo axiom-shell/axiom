@@ -474,8 +474,8 @@ QtObject {
 
   // ---- text ----
 
-  readonly property int typeMicro: StyleTokens.roleSize(-3, Appearance.baseFontSize, Widget.scale)
-  readonly property int typeCaption: StyleTokens.roleSize(-2, Appearance.baseFontSize, Widget.scale)
+  readonly property int typeMicro: StyleTokens.roleSize(-3, Appearance.baseFontSize, Widget.contentSize)
+  readonly property int typeCaption: StyleTokens.roleSize(-2, Appearance.baseFontSize, Widget.contentSize)
   readonly property int typeBody: Appearance.fontSize
   readonly property int typeLabel: Appearance.fontSize
   readonly property int typeTitle: Appearance.fontSizeBy(2)
