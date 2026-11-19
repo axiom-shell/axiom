@@ -15,7 +15,7 @@ QtObject {
   readonly property int padding: Widget.px(_c.padding)
 
   // How a bar popout lays out and draws on `screen` at its Size (`sizing`:
-  // its widget's `popout.sizing`, or null for none), as a menu's gridOf does
+  // its widget's `popout.sizing`, or null for none), as a menu's layoutOf does
   // (arguments in OverlayConfig.layoutFor's order):
   //   zoom  what its content is drawn at (its Content size, less what it
   //         takes to fit)

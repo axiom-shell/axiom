@@ -147,7 +147,7 @@ QtObject {
   //         its padding (GridPlacement.fitFactor), as a screen layout's
   //         cards shrink to fit its screen. Along its edge it scrolls or is
   //         fitted instead (MenuBody)
-  function gridOf(menu, screen) {
+  function layoutOf(menu, screen) {
     screen = screen ?? root.screenFor(menu);
     const factors = Sizing.factors(menu.layout.sizing);
     const card = (screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit) * factors.card;
@@ -168,17 +168,17 @@ QtObject {
     };
   }
 
-  // gridOf's `unit`, `gap` and `zoom` alone, for callers that read one
+  // layoutOf's `unit`, `gap` and `zoom` alone, for callers that read one
   function cardUnitOf(menu, screen) {
-    return root.gridOf(menu, screen).unit;
+    return root.layoutOf(menu, screen).unit;
   }
 
   function gapOf(menu, screen) {
-    return root.gridOf(menu, screen).gap;
+    return root.layoutOf(menu, screen).gap;
   }
 
   function zoomOf(menu, screen) {
-    return root.gridOf(menu, screen).zoom;
+    return root.layoutOf(menu, screen).zoom;
   }
 
   // The menu's modules' grid along its edge, unstretched, at card size

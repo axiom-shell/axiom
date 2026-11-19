@@ -85,7 +85,7 @@ QtObject {
       "card": root._level(global.card, factors.card),
       "content": root._level(global.content, factors.content),
       "capped": capped
-    }, root._shrink(fitScale));
+    }, root.shrinkOf(fitScale));
   }
 
   // `breakdown` for a module's Content size (`contentSize`, a % or null)
@@ -99,7 +99,7 @@ QtObject {
     return Object.assign(root._level(global.content, factors.content), {
       "module": Math.round(module * 100),
       "total": Math.round(global.content * factors.content * (fitScale ?? 1) * module)
-    }, root._shrink(fitScale));
+    }, root.shrinkOf(fitScale));
   }
 
   // How a popout lays out and draws: `own` its `sizing` (or null), `card`
@@ -120,8 +120,9 @@ QtObject {
     };
   }
 
-  // A fit (a factor, null for none) as whole % and whether it shrinks
-  function _shrink(fitScale) {
+  // A fit (a factor, null for none) as { shrunkTo: whole %, shrunk: below 100 }:
+  // the one rule for "is it shrunk"
+  function shrinkOf(fitScale) {
     const shrunkTo = Math.round((fitScale ?? 1) * 100);
     return {
       "shrunkTo": shrunkTo,

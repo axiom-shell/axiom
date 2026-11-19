@@ -17,7 +17,10 @@ EditTarget {
   // the canvas, only in its Size line)
   readonly property var _fits: root.view ? OverlayManager.fitOf(root.view) : []
   readonly property var fits: root.isCustom ? root._fits : []
-  readonly property var shrunk: root.fits.filter(fit => fit.scale < 0.999)
+  // The fits that shrink it, with their shrunkTo (Sizing.shrinkOf)
+  readonly property var shrunk: root.fits.map(fit => Object.assign({
+      "screen": fit.screen
+    }, Sizing.shrinkOf(fit.scale))).filter(fit => fit.shrunk)
 
   editor: OverlayManager.layout
   sizing: root.view?.sizing ?? null
@@ -32,7 +35,7 @@ EditTarget {
       return "";
     if (root.shrunk.length === 0)
       return I18n.tr("Fits {0}", root.fits.map(fit => fit.screen).join(", "));
-    return root.shrunk.map(fit => I18n.tr("Shrunk to {0}% to fit {1}", Math.round(fit.scale * 100), fit.screen)).join(" · ");
+    return root.shrunk.map(fit => I18n.tr("Shrunk to {0}% to fit {1}", fit.shrunkTo, fit.screen)).join(" · ");
   }
   fitWarning: root.shrunk.length > 0
   editable: root.isCustom

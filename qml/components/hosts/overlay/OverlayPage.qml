@@ -35,7 +35,7 @@ Item {
   readonly property bool current: root.currentIndex === root.pageIndex
   // Still on screen, sliding out after another page took its place
   property bool _leaving: false
-  readonly property real _shift: Math.max(Widget.spacing * 3, Math.round(root.width * 0.06))
+  readonly property real _shift: Math.max(Widget.spacing * 3, Math.round(root.drawnWidth * 0.06))
 
   anchors.fill: parent
   visible: root.current || root._leaving
@@ -71,7 +71,8 @@ Item {
     roomHeight: root.roomHeight
     width: contentLoader.item ? contentLoader.item.implicitWidth : 0
     height: contentLoader.item ? contentLoader.item.implicitHeight : 0
-    onFitScaleChanged: console.log(`Overlay page ${root.pageIndex} scaled to ${pageBox.fitScale.toFixed(3)} (card unit ${pageGrid.unit} drawn at ${pageGrid.drawnUnit}, zoom ${pageGrid.zoom.toFixed(3)})`)
+    onFitScaleChanged: if (root.current)
+      console.log(`Overlay page ${root.pageIndex} scaled to ${pageBox.fitScale.toFixed(3)} (card unit ${pageGrid.unit} drawn at ${pageGrid.drawnUnit}, zoom ${pageGrid.zoom.toFixed(3)})`)
 
     Loader {
       id: contentLoader

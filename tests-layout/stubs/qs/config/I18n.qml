@@ -2,10 +2,10 @@ pragma Singleton
 import QtQuick
 
 // Stand-in for qs.config I18n in the layout harness (the real one imports
-// Quickshell.Io): the English text with its `{n}` filled.
+// Quickshell.Io): the English text with every `{n}` filled.
 QtObject {
   function tr(text, ...args) {
-    return args.reduce((out, arg, i) => out.replace("{" + i + "}", arg), text);
+    return args.reduce((out, arg, i) => out.split("{" + i + "}").join(arg), text);
   }
 
   function formatDate(date, format) {

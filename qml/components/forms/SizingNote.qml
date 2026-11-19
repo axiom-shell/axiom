@@ -21,7 +21,7 @@ QtObject {
   // The Look & Feel sizes in %
   readonly property var _global: ({
       "card": Widget.cardSize,
-      "content": Widget.contentSize * 100
+      "content": Widget.contentSize
     })
   readonly property var _breakdown: Sizing.breakdown(root.own, root._global, root.fit?.scale ?? null, root.fit?.capped ?? false)
 

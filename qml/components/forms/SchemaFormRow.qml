@@ -105,12 +105,6 @@ FoldFormRow {
       readonly property bool shows: links.shows || actionLink.active || root.note !== ""
       spacing: Widget.spacing / 2
 
-      FieldLinks {
-        id: links
-        Layout.fillWidth: true
-        links: root.row.schema?.["x-link"]
-      }
-
       StyledText {
         Layout.fillWidth: true
         visible: root.note !== ""
@@ -118,6 +112,13 @@ FoldFormRow {
         role: "caption"
         tone: "muted"
         overflow: "wrap"
+      }
+
+      // Below the note, so a link never splits the row's text
+      FieldLinks {
+        id: links
+        Layout.fillWidth: true
+        links: root.row.schema?.["x-link"]
       }
 
       // Made only for a field with an action, not under every field

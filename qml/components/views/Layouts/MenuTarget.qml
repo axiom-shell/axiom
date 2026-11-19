@@ -29,10 +29,10 @@ EditTarget {
 
   editor: OverlayManager.menus.layout
   sizing: root.menu?.layout.sizing ?? null
-  // Across its edge (MenusConfig.gridOf)
+  // Across its edge (MenusConfig.layoutOf)
   sizingFit: root.menu && root.screen ? ({
       "screen": root.screen.name,
-      "scale": MenusConfig.gridOf(root.menu, root.screen).fit,
+      "scale": MenusConfig.layoutOf(root.menu, root.screen).fit,
       "capped": false,
       "card": null
     }) : null

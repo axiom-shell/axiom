@@ -327,6 +327,21 @@ TestCase {
     verify(!Sizing.breakdown(own, root._global, 0.996, false).shrunk, "rounds to 100%: no shrink to name");
   }
 
+  function test_shrinkOf_is_the_one_rule() {
+    compare(Sizing.shrinkOf(null), {
+      "shrunkTo": 100,
+      "shrunk": false
+    });
+    compare(Sizing.shrinkOf(0.996), {
+      "shrunkTo": 100,
+      "shrunk": false
+    }, "rounds to 100%: not shrunk, so no page says 'Shrunk to 100%'");
+    compare(Sizing.shrinkOf(0.994), {
+      "shrunkTo": 99,
+      "shrunk": true
+    });
+  }
+
   function test_breakdown_tool_page_fit() {
     // A tool page's fit is what its OverlayPages reported (OverlayManager.reportFit)
     const b = Sizing.breakdown({

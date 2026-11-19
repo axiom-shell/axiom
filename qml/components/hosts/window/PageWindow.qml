@@ -25,7 +25,7 @@ FloatingWindow {
   readonly property real _padding: Widget.padding * 2
   readonly property real _headerHeight: Widget.height
   // The size it was left at (read as it opens: keepSize doesn't notify),
-  // else room for the page at its overlay size
+  // else room for the page at the size it has in the overlay
   readonly property var _kept: PageWindowManager.sizeOf(root.type)
 
   title: PageWindowManager.titleOf(root.type)

@@ -10,9 +10,9 @@ import qs.components.methods
 QtObject {
   readonly property var _c: ConfigManager.live.Interface
 
-  // The Content size, as a factor: text (Appearance.fontSize) and the
+  // The Content size in %: text (Appearance.fontSize) and the
   // sizes below grow with it
-  readonly property real contentSize: _c.contentSize / 100
+  readonly property int contentSize: _c.contentSize
   // How big module cards are, in % of two filling the screen's short
   // side (OverlayConfig.cardUnitOn)
   readonly property int cardSize: _c.cardSize
@@ -54,16 +54,16 @@ QtObject {
 
   // Height of buttons, fields and other controls: the density's, or what
   // the font's line needs (StyleTokens.controlHeight)
-  readonly property int height: StyleTokens.controlHeight(Math.round(_density.height * contentSize), Appearance.fontSize, px(1))
+  readonly property int height: StyleTokens.controlHeight(Math.round(_density.height * contentSize / 100), Appearance.fontSize, px(1))
   // Inner padding of panels, cards and controls
-  readonly property int padding: Math.round(_density.padding * contentSize)
+  readonly property int padding: Math.round(_density.padding * contentSize / 100)
   // Gap between items inside panels, cards and controls
-  readonly property int spacing: Math.round(_density.spacing * contentSize)
+  readonly property int spacing: Math.round(_density.spacing * contentSize / 100)
   // A module card's padding (OverlayConfig.cardPad)
-  readonly property int cardPadding: Math.round(_density.card * contentSize)
+  readonly property int cardPadding: Math.round(_density.card * contentSize / 100)
   // Side of a square icon button (StyledIconButton's default size): the
   // density's, or what its icon needs
-  readonly property int iconButton: Math.max(Math.round(_density.iconButton * contentSize), Appearance.fontSize + 2 * px(4))
+  readonly property int iconButton: Math.max(Math.round(_density.iconButton * contentSize / 100), Appearance.fontSize + 2 * px(4))
   // Height of a compact control beside a full one (a list row's action, a
   // lane's tool button, a renaming field): a little under `height`
   readonly property int compactHeight: height - px(6)
@@ -72,20 +72,20 @@ QtObject {
   readonly property int slimHeight: height - px(4)
   // Height of chips, pills and small buttons (keybind chips, a
   // notification's actions): the density's, or what a micro line needs
-  readonly property int smallHeight: StyleTokens.controlHeight(Math.round(_density.smallHeight * contentSize), Appearance.fontSizeBy(-3), 0)
+  readonly property int smallHeight: StyleTokens.controlHeight(Math.round(_density.smallHeight * contentSize / 100), Appearance.fontSizeBy(-3), 0)
   // Inner margins of rows, fields and dropdowns
-  readonly property int smallPadding: Math.round(_density.smallPadding * contentSize)
+  readonly property int smallPadding: Math.round(_density.smallPadding * contentSize / 100)
 
   // A size that isn't a control's, padding or gap (a panel's width, an
   // avatar, a dot) at the Content size. Bars never use it: they size
   // their own widgets
   function px(n: real): int {
-    return Math.round(n * contentSize);
+    return Math.round(n * contentSize / 100);
   }
   // A width that holds text (N characters at the default font): follows the
   // Content size and the font size; equal to px(n) at 14 px
   function textPx(n: real): int {
-    return StyleTokens.textPx(n, contentSize, Appearance.baseFontSize);
+    return StyleTokens.textPx(n, contentSize / 100, Appearance.baseFontSize);
   }
   // A slider goes beside its label only on a form field at least this wide
   // (FieldFit); narrower it stacks under the label

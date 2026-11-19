@@ -6,8 +6,8 @@ import qs.components.methods
 // One page's card grid, sized to its screen: cards of the card size there
 // times the page's own sizing, at most two filling the height
 // (OverlayConfig.layoutFor), their content laid out at `unit` and drawn
-// `zoom` (its Content size factor) times that, so text keeps the Content
-// size's size on every monitor. Each overlay page, page window and the
+// `zoom` (its Content size factor) times that, so text stays at the Content
+// size on every monitor. Each overlay page, page window and the
 // onboarder has its own; a page that still overflows is shrunk by its
 // PageBox.
 QtObject {

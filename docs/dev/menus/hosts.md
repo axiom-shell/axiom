@@ -12,7 +12,7 @@ How a menu is put on screen: the shared body and sync, the lattice its modules s
 
 ### The body (`MenuBody`)
 - Every host (`FreeMenu` too) puts `MenuBody` inside: a `ModuleGrid` on an `OverlayGrid`.
-- `fixedUnit` is the card size on its screen (`MenusConfig.cardUnitOf`, from `MenusConfig.gridOf`, which gives `{ unit, zoom, gap, fit }`):
+- `fixedUnit` is the card size on its screen (`MenusConfig.cardUnitOf`, from `MenusConfig.layoutOf`, which gives `{ unit, zoom, gap, fit }`):
   - `OverlayConfig.cardUnitOn` of the screen: the card size there (two cards fill its short side, times `Widget.cardSize`%). It's the same whether an overlay is open or not, and an overlay page's own sizing doesn't reach menus;
   - times the menu's Card size ([Sizing](../overlay/pages-and-grid.md#sizing)), shrunk by `fit` where its modules' depth across its edge (a free menu's width) would pass its screen less its padding (`GridPlacement.fitFactor`), its cards, gaps and zoom together. Along the edge it scrolls or is fitted instead (below).
   - The grid and everything placed by it (the lattice, the menu's size, reserved strips) use that drawn card size, and `MenusConfig.gapOf` between cards: the layout's gap drawn at the menu's zoom (`GridPlacement.gapOf`), as an overlay page's are (`OverlayGrid.gap`).
