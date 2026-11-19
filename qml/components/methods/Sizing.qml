@@ -4,8 +4,9 @@ import QtQuick
 // How a surface's own `sizing` ({ cardSize, linked, contentSize }: each size
 // a % or null for "as the level above"; a tool page's or popout's is
 // { contentSize } alone) becomes the factors its host draws at, and how an
-// edit of it keeps its link's meaning, and how much of its room a popout
-// is shrunk to fit. The global Card and
+// edit of it keeps its link's meaning, how much of its room a popout
+// is shrunk to fit, and the numbers of the line that says it all
+// (breakdown). The global Card and
 // Content sizes are already inside the card size and Widget; hosts apply
 // only these factors on top. No config, no text.
 QtObject {
@@ -46,6 +47,61 @@ QtObject {
   function fitInto(size, room) {
     const fits = Math.min(size.width > room.width ? room.width / size.width : 1, size.height > room.height ? room.height / size.height : 1);
     return fits < 1 ? Math.max(0.1, Math.floor(fits * 1000) / 1000) : 1;
+  }
+
+  // The numbers behind a Size row's line, in whole %: `own` (the surface's
+  // `sizing`), `global` ({ card, content }: the Look & Feel sizes in %), the
+  // `fit` (a factor, at most 1; null for none) the surface is shrunk by and
+  // whether its height `capped` its cards. { kind, card, content, fit,
+  // shrunk, capped }: `kind` is how it combines, "zoom" (no `linked`: the
+  // whole surface zooms), "linked", "unlinked" or "following" (linked, its
+  // Card size unset: the global sizes alone); `card` and `content` each
+  // { global, here (the surface's factor), total } with total = global ×
+  // here, so the two differ where the global sizes do. The fit is not in
+  // the totals: it is its own clause (the cap is drawn px only)
+  function breakdown(own, global, fit, capped) {
+    const factors = root.factors(own);
+    const shrinks = fit ?? 1;
+    let kind = "following";
+    if (own && !("linked" in own))
+      kind = "zoom";
+    else if (own && !own.linked)
+      kind = "unlinked";
+    else if (own && own.cardSize !== null && own.cardSize !== undefined)
+      kind = "linked";
+    return {
+      "kind": kind,
+      "card": root._level(global.card, factors.card),
+      "content": root._level(global.content, factors.content),
+      "fit": Math.round(shrinks * 100),
+      "shrunk": shrinks < 0.999,
+      "capped": capped
+    };
+  }
+
+  // `breakdown` for a module's Content size (`contentSize`, a % or null)
+  // on that surface: its `content` is { global, here, module, total }, `here`
+  // the surface's content factor with its `fit` in, as that is what its
+  // modules are drawn at
+  function moduleBreakdown(own, global, fit, contentSize) {
+    const content = root.factors(own).content * (fit ?? 1);
+    const module = root.factor(contentSize);
+    return {
+      "content": Object.assign(root._level(global.content, content), {
+        "module": Math.round(module * 100),
+        "total": Math.round(global.content * content * module)
+      })
+    };
+  }
+
+  // { global, here, total } in whole %: one size's global % and the
+  // surface's `factor` of it
+  function _level(global, factor) {
+    return {
+      "global": Math.round(global),
+      "here": Math.round(factor * 100),
+      "total": Math.round(global * factor)
+    };
   }
 
   // `next` (an edited sizing) with what unlinking or linking again must

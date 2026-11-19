@@ -4687,6 +4687,16 @@
     "Content size": "",
     "Text and controls in this module, on top of its page's or menu's Content size. Auto follows it.": "",
     "Relative to the Content size in Look & Feel. Auto follows it. The whole page zooms with it.": "",
-    "Content grows with cards": ""
+    "Content grows with cards": "",
+    "Content at {0}% ({1}% × {2}% here); cards zoom with it": "",
+    "Cards at {0}% ({1}% × {2}% here), content at {3}% ({4}% × {2}% here)": "",
+    "Cards at {0}% and content at {1}%, as in Look & Feel": "",
+    "Cards at {0}% ({1}% × {2}% here)": "",
+    "Content at {0}% ({1}% × {2}% here)": "",
+    "Capped at two cards high ({0} px)": "",
+    "Cards {0} px": "",
+    "Shrunk to {0}% to fit {1}": "",
+    "Content at {0}% ({1}% × {2}% here × {3}% this module)": "",
+    "Text {0} px: {1} px × {2}/{3} thickness × {4}%": ""
   }
 }

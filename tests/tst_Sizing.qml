@@ -3,6 +3,7 @@ import QtTest
 import qs.components.methods
 
 TestCase {
+  id: root
   name: "Sizing"
 
   function test_factor() {
@@ -231,5 +232,121 @@ TestCase {
     };
     verify(Sizing.editedIn(null, next, ["sizing"]) === next, "no sizing at all");
     compare(Sizing.editedIn(null, null, ["sizing"]), null);
+  }
+
+  // Card and Content differ globally (Look & Feel: 120% and 90%)
+  readonly property var _global: ({
+      "card": 120,
+      "content": 90
+    })
+
+  function test_breakdown_linked_keeps_card_and_content_totals_apart() {
+    const b = Sizing.breakdown({
+      "cardSize": 150,
+      "linked": true,
+      "contentSize": null
+    }, root._global, null, false);
+    compare(b.kind, "linked");
+    compare(b.card.global, 120);
+    compare(b.card.here, 150);
+    compare(b.card.total, 180);
+    compare(b.content.global, 90);
+    compare(b.content.here, 150, "linked: its content grows with its cards");
+    compare(b.content.total, 135, "the global Content size, not the Card size");
+    verify(!b.shrunk);
+    verify(!b.capped);
+  }
+
+  function test_breakdown_global_card_not_content() {
+    const b = Sizing.breakdown({
+      "cardSize": 100,
+      "linked": true,
+      "contentSize": null
+    }, root._global, null, false);
+    compare([b.card.total, b.content.total], [120, 90], "100% here: each its own global size");
+  }
+
+  function test_breakdown_following() {
+    for (const own of [null, undefined,
+      {
+        "cardSize": null,
+        "linked": true,
+        "contentSize": null
+      }
+    ]) {
+      const b = Sizing.breakdown(own, root._global, null, false);
+      compare(b.kind, "following");
+      compare([b.card.total, b.content.total], [120, 90], "the global sizes alone");
+      compare([b.card.here, b.content.here], [100, 100]);
+    }
+  }
+
+  function test_breakdown_unlinked_set_by_hand() {
+    const b = Sizing.breakdown({
+      "cardSize": 80,
+      "linked": false,
+      "contentSize": 120
+    }, root._global, null, false);
+    compare(b.kind, "unlinked");
+    compare([b.card.here, b.card.total], [80, 96]);
+    compare([b.content.here, b.content.total], [120, 108]);
+    const own = Sizing.breakdown({
+      "cardSize": null,
+      "linked": false,
+      "contentSize": null
+    }, root._global, null, false);
+    compare(own.kind, "unlinked", "both unset and unlinked is still unlinked");
+    compare([own.card.total, own.content.total], [120, 90]);
+  }
+
+  function test_breakdown_whole_surface_zoom() {
+    const b = Sizing.breakdown({
+      "contentSize": 80
+    }, root._global, null, false);
+    compare(b.kind, "zoom", "no linked: a tool page or a built-in popout");
+    compare([b.card.here, b.content.here], [80, 80]);
+    compare(b.content.total, 72);
+    compare(b.card.total, 96, "its cards zoom with it");
+  }
+
+  function test_breakdown_fit_and_cap() {
+    const own = {
+      "cardSize": 150,
+      "linked": true,
+      "contentSize": null
+    };
+    const fits = Sizing.breakdown(own, root._global, 1, false);
+    verify(!fits.shrunk);
+    compare(fits.fit, 100);
+    const shrunk = Sizing.breakdown(own, root._global, 0.8, true);
+    verify(shrunk.shrunk);
+    compare(shrunk.fit, 80);
+    verify(shrunk.capped);
+    compare(shrunk.card.total, 180, "the fit is its own clause, not in the totals");
+    verify(!Sizing.breakdown(own, root._global, 0.9995, false).shrunk, "a hair under 1 is no shrink");
+  }
+
+  function test_breakdown_tool_page_fit() {
+    // A tool page's fit is what its OverlayPages reported (OverlayManager.reportFit)
+    const b = Sizing.breakdown({
+      "contentSize": 100
+    }, root._global, 0.6, false);
+    compare(b.kind, "zoom");
+    compare(b.fit, 60);
+    verify(b.shrunk);
+  }
+
+  function test_moduleBreakdown_includes_its_surface_fit() {
+    const own = {
+      "cardSize": 120,
+      "linked": true,
+      "contentSize": null
+    };
+    const plain = Sizing.moduleBreakdown(own, root._global, null, 150).content;
+    compare([plain.global, plain.here, plain.module, plain.total], [90, 120, 150, 162]);
+    const fitted = Sizing.moduleBreakdown(own, root._global, 0.5, 150).content;
+    compare([fitted.here, fitted.module, fitted.total], [60, 150, 81], "the surface's fit is in its share");
+    const none = Sizing.moduleBreakdown(null, root._global, null, null).content;
+    compare([none.here, none.module, none.total], [100, 100, 90], "no sizing and no module Content size: the global size");
   }
 }

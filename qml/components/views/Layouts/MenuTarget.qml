@@ -28,6 +28,14 @@ EditTarget {
   readonly property int offset: root.onLattice ? GridPlacement.offsetFor(root.place.lattice, root.place.cell, root.place.units) : 0
 
   editor: OverlayManager.menus.layout
+  sizing: root.menu?.layout.sizing ?? null
+  // Across its edge (MenusConfig.gridOf)
+  sizingFit: root.menu && root.screen ? ({
+      "screen": root.screen.name,
+      "scale": MenusConfig.gridOf(root.menu, root.screen).fit,
+      "capped": false,
+      "card": null
+    }) : null
   modules: root.menu ? root.menu.layout.modules : null
   icon: root.free ? "menu_open" : root.menu ? Utils.edgeArrow(root.menu.edge) : "side_navigation"
   title: root.menu ? OverlayManager.menus.menuLabel(root.menu, OverlayManager.menus.selectedMenuIndex) : I18n.tr("No menus")

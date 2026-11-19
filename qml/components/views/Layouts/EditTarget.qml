@@ -1,10 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.forms
 
 // What the layouts editor edits (OverlayManager.editTarget), as its canvas
 // and inspector show it: PageTarget, MenuTarget, LockscreenTarget, GreeterTarget. See
 // GridCanvas for what each field draws.
 QtObject {
+  id: root
+
   // The grid being edited
   property var editor: null
   // Its modules, or null when there's nothing to edit (a tool page)
@@ -20,6 +23,11 @@ QtObject {
   property real reservedDepth: 0
   property string reservedLabel: ""
   property var ghosts: []
+  // Its own `sizing` (Card size, Content size) and what shrinks it (
+  // { screen, scale, capped, card: px or null }, or null for nothing): the
+  // lines under its Size rows (sizingNote, moduleSizingNote)
+  property var sizing: null
+  property var sizingFit: null
   // How it fits, under the canvas title
   property string fitText: ""
   property bool fitWarning: false
@@ -47,4 +55,20 @@ QtObject {
   // Whether modules can be added (else `notEditableHint` in the inspector)
   property bool editable: false
   property string notEditableHint: ""
+
+  // The line under the Size row at `path` of a form (SchemaPropertiesForm.
+  // fieldNote), "" for any other row
+  function sizingNote(path, schema) {
+    return path[path.length - 2] === "sizing" ? root._sizingNotes.lineFor(path[path.length - 1]) : "";
+  }
+
+  // The line under a module's own Content size (`contentSize`, a % or null)
+  function moduleSizingNote(contentSize) {
+    return root._sizingNotes.moduleLine(contentSize);
+  }
+
+  readonly property SizingNote _sizingNotes: SizingNote {
+    own: root.sizing
+    fit: root.sizingFit
+  }
 }

@@ -222,11 +222,24 @@ ColumnLayout {
           values: root.values
           changedAt: root.changedAt
           tilePreview: root._tilePreview
+          fieldNote: path => root._fieldNote(path)
           onEdited: (path, value) => root.edited(path, value)
           onDiscardAt: path => root.discardAt(path)
         }
       }
     }
+  }
+
+  // The line under Text size: the px a bar's text comes to, from the font
+  // size, how much thicker than the reference its bar is (`bar`'s
+  // thickness: on the settings page the first bar's, which a bar with its
+  // own Text size draws at its own) and the edited Text size. "" for any
+  // other field
+  function _fieldNote(path) {
+    if (path[0] !== "textScale")
+      return "";
+    const thickness = root.bar.thickness;
+    return I18n.tr("Text {0} px: {1} px × {2}/{3} thickness × {4}%", BarEnrich.fontSize(Appearance.baseFontSize, thickness, root.values.textScale), Appearance.baseFontSize, thickness, BarEnrich.referenceThickness, root.values.textScale);
   }
 
   // A jump to a setting in a shut fold (a link, Changed from default)

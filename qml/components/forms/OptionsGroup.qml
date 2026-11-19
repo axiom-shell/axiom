@@ -23,6 +23,8 @@ FieldGroup {
   property var changedAt: null
   // Each field's action (SchemaPropertiesForm.fieldAction)
   property var fieldAction: null
+  // Each field's note (SchemaPropertiesForm.fieldNote)
+  property var fieldNote: null
   property string problem
   property string emptyText
 
@@ -51,6 +53,7 @@ FieldGroup {
     pairs: root.pairs
     changedAt: root.changedAt
     fieldAction: root.fieldAction
+    fieldNote: root.fieldNote
     onEdited: (path, value) => root.edited(path, value)
     onDiscardAt: path => root.discardAt(path)
   }

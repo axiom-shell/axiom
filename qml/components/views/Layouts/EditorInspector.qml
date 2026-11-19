@@ -21,6 +21,9 @@ Item {
   property bool editable: true
   // The subtitle with nothing selected, when not editable
   property string notEditableHint: ""
+  // The line under a module's Content size, given its own size (a % or
+  // null): what it comes to on this surface (EditTarget.moduleSizingNote)
+  property var moduleNote: contentSize => ""
   readonly property int index: root.editor.selected
   readonly property var module: root.editor.selectedModule()
   readonly property string moduleType: root.module?.type ?? ""
@@ -221,6 +224,7 @@ Item {
           })
         order: ["contentSize"]
         values: root.module ?? ({})
+        fieldNote: (path, schema) => root.moduleNote(root.module?.contentSize ?? null)
         onEdited: (path, value) => root.editor.updateModuleField(root.index, path[0], value)
       }
 

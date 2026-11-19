@@ -246,12 +246,34 @@ QtObject {
   function clearArea(screenName) {
     if (screenName in root._areas)
       root._areas = Utils.withEntry(root._areas, screenName, undefined);
+    if (screenName in root._fits)
+      root._fits = Utils.withEntry(root._fits, screenName, undefined);
   }
 
-  // How much each screen's overlay shrinks a Custom page: [{ screen,
-  // scale }], 1 where it fits. The page's cards and zoom on that screen
-  // (OverlayConfig.layoutFor, from the page's own sizing), then the share
-  // of its room its modules leave
+  // { screenName: { pageKey: fit } }: the factor (at most 1) each built
+  // page is shrunk by on a screen, as its OverlayPages reports it from its
+  // own PageBox.fitScale (never from the PageBox: page windows and the
+  // onboarding share it). A tool page's fit is only known this way, a
+  // Custom page's is worked out from its modules (fitOf)
+  readonly property var fits: root._fits
+  property var _fits: ({})
+
+  // `fit` undefined: the page isn't built (any more), so it has none
+  function reportFit(screenName, pageKey, fit) {
+    const onScreen = root._fits[screenName] ?? {};
+    if (onScreen[pageKey] === fit)
+      return;
+    const shown = Utils.withEntry(onScreen, pageKey, fit);
+    root._fits = Utils.withEntry(root._fits, screenName, Object.keys(shown).length > 0 ? shown : undefined);
+  }
+
+  // How much each screen's overlay shrinks a page: [{ screen, scale,
+  // capped, card }], scale 1 where it fits. The page's cards and zoom on
+  // that screen (OverlayConfig.layoutFor, from the page's own sizing: its
+  // drawn card px as `card`, and whether the height shrank them as
+  // `capped`), then for a Custom page the share of its room its modules
+  // leave, for a tool page what its overlay reported (reportFit; 1 until
+  // it is built)
   function fitOf(view) {
     const bounds = GridPlacement.bounds(view.layout?.modules);
     return Object.keys(root.areas).sort().map(screenName => {
@@ -262,7 +284,9 @@ QtObject {
       }, area.width, area.height, view.sizing);
       return {
         "screen": screenName,
-        "scale": GridPlacement.fitScale(bounds, area.width / layout.zoom, area.height / layout.zoom, OverlayConfig.pageUnit(view, layout.unit))
+        "scale": view.type === "Custom" ? GridPlacement.fitScale(bounds, area.width / layout.zoom, area.height / layout.zoom, OverlayConfig.pageUnit(view, layout.unit)) : (root.fits[screenName]?.[view.id] ?? 1),
+        "capped": layout.capped,
+        "card": layout.drawn
       };
     });
   }

@@ -47,6 +47,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - Then the selection's fields (the bottom box):
   - A page's name, icon, Double grid and Size (`Overlay.items[].sizing`, a `SchemaPropertiesForm` on `OverlayConfig.customViewSchema.sizing`: Card size, Content grows with cards, Content size; `OverlayManager.updateViewField` keeps the link's meaning, `Sizing.editedIn`).
   - A tool page's Show in the navigator and its Content size (`OverlayConfig.viewSchema(type).sizing`).
+  - Under every Size row (a page's, a menu's, a screen layout's) and a module's Content size, a muted line saying what it comes to ([Sizing](pages-and-grid.md#sizing) › The line): the forms' `fieldNote` hook, `EditTarget.sizingNote(path, schema)` (the target's `sizing` and `sizingFit`, set by `PageTarget`, `MenuTarget` and `ScreenLayoutTarget`; the page's is the monitor that shrinks it most) and `moduleSizingNote(contentSize)` (handed to `EditorInspector.moduleNote`). `LayoutsPanel` takes the target for it.
   - For any page, buttons adding a bar Button or keybind that opens it (`OverlayManager.addBarButton` / `addKeybind`). They use the `overlayPage` action on its `OverlayConfig.pageKey`: a Custom page's name, else its type. Only for a saved page, so an unnamed Custom page has none.
   - A menu's field groups (see [Menu editing](../menus/editing-submenus.md)).
   - A screen layout's (`LayoutsPanel.screenTarget`):

@@ -25,6 +25,9 @@ Item {
 
   // What the content sizes itself against
   readonly property OverlayGrid grid: pageGrid
+  // The factor (at most 1) its PageBox shrinks it by, once its content is
+  // built: undefined before and after (OverlayPages reports it)
+  readonly property var fit: contentLoader.item ? pageBox.fitScale : undefined
   // The px the page takes as drawn, at its zoom and fit
   readonly property real drawnWidth: pageBox.width * pageBox.contentZoom
   readonly property real drawnHeight: pageBox.height * pageBox.contentZoom

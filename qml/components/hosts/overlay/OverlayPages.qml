@@ -227,6 +227,13 @@ Item {
           roomWidth: root.roomWidth
           roomHeight: root.roomHeight
           sizing: viewPage.modelData.viewConfig.sizing
+          // The layouts editor's line for a tool page says how far its
+          // screen shrinks it (OverlayManager.fitOf)
+          onFitChanged: viewPage._reportFit()
+          Component.onCompleted: viewPage._reportFit()
+          function _reportFit() {
+            OverlayManager.reportFit(root.screen?.name ?? "", viewPage.modelData.viewConfig.id, viewPage.fit);
+          }
           // A page in a window of its own is built there, not here
           readonly property string type: viewPage.modelData.viewConfig.type
           content: PageWindowManager.isOpen(viewPage.type) ? viewPage._poppedOut : viewPage._view

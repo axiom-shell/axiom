@@ -12,11 +12,16 @@ EditTarget {
   readonly property var view: OverlayManager.selectedView()
   readonly property bool isCustom: root.view?.type === "Custom"
 
-  // How the page fits each monitor's overlay
-  readonly property var fits: root.isCustom ? OverlayManager.fitOf(root.view) : []
+  // How the page fits each monitor's overlay (a tool page's isn't drawn on
+  // the canvas, only in its Size line)
+  readonly property var _fits: root.view ? OverlayManager.fitOf(root.view) : []
+  readonly property var fits: root.isCustom ? root._fits : []
   readonly property var shrunk: root.fits.filter(fit => fit.scale < 0.999)
 
   editor: OverlayManager.layout
+  sizing: root.view?.sizing ?? null
+  // The monitor that shrinks it most (the smallest cards where equal)
+  sizingFit: root._fits.reduce((tight, fit) => tight === null || fit.scale < tight.scale || (fit.scale === tight.scale && fit.card < tight.card) ? fit : tight, null)
   modules: root.isCustom ? root.view.layout.modules : null
   icon: root.view ? OverlayConfig.pageIcon(root.view) : "dashboard"
   title: root.view ? OverlayConfig.viewLabel(root.view, OverlayManager.selectedViewIndex) : I18n.tr("No pages")

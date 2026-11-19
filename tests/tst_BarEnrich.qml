@@ -234,6 +234,18 @@ TestCase {
     compare(tall.iconGap, tall.innerGap * 1.5);
   }
 
+  function test_font_size_scales_with_thickness_and_text_scale() {
+    compare(BarEnrich.fontSize(14, 26, 100), 14, "the reference thickness at 100%");
+    compare(BarEnrich.fontSize(14, 52, 100), 28, "twice as thick");
+    compare(BarEnrich.fontSize(14, 26, 150), 21, "a text scale of 150%");
+    compare(BarEnrich.fontSize(14, 40, 120), 26, "rounded: 14 × 40/26 × 120%");
+    const bar = Bars.bar({
+      "thickness": 40,
+      "textScale": 120
+    });
+    compare(bar.fontSize, BarEnrich.fontSize(Bars.env({}).baseFontSize, 40, 120), "enrich takes the same size");
+  }
+
   // No wallpaper backdrop (an opaque bar, or one not asked): today's object,
   // with none of the backdrop's keys
   function test_without_a_backdrop_no_backs_or_scrim_keys() {

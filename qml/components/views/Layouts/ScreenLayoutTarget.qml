@@ -28,6 +28,14 @@ EditTarget {
   readonly property string shrinkText: I18n.tr("Modules shrunk to {0} % to fit {1}: move them closer together or lower Card size", root.screenEditor.shrunkTo, root.screenEditor.screen?.name ?? "")
 
   editor: root.screenEditor.layout
+  sizing: root.layout?.sizing ?? null
+  // To its screen (the editor's shrunkTo)
+  sizingFit: root.layout ? ({
+      "screen": root.screenEditor.screen?.name ?? "",
+      "scale": root.screenEditor.shrunkTo / 100,
+      "capped": false,
+      "card": null
+    }) : null
   modules: root.layout ? root.layout.modules : null
   screenBox: root.layout ? ({
       "x": 0,

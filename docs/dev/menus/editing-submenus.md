@@ -13,6 +13,7 @@ How menus are edited on the Layouts page (draft, field groups, previewing, opene
 
 ### Field groups
 - The menu's fields come in `x-group`s: General, Opening, Placement, Style, Behaviour, Closing, Advanced (the read-only `id`), in the order their first field comes in the schema (`SchemaLayout.objectGroups`). Behaviour holds what the menu's buttons and header do: `pinButton`, `closeButton`, `popOutButton` and `draggable`, so `draggable` sits beside the `popOutButton` it shows with.
+- The Size group (`layout.sizing`: Card size, Content grows with cards, Content size) has a line under its rows saying what the menu comes to, shrunk across its edge or not (`MenuTarget.sizingNote`, [Sizing](../overlay/pages-and-grid.md#sizing) › The line).
 - An Opening section (a `FieldGroup` card, above the schema's groups; `open.onHover` itself is in Behaviour) holds `MenuOpening`:
   - **"Show on screen"**: sets `previewing` to the selected menu (following the selection and id renames) and opens it.
     - `isHeld(id)` (pinned or previewing) makes a menu ignore `closeOnLeave` and outside clicks.

@@ -29,6 +29,8 @@ Item {
   required property var view
   required property var menu
   required property var screenTarget
+  // The EditTarget being edited: the lines under its Size rows
+  required property var target
   readonly property var screenLayout: root.screenTarget?.layout ?? null
   readonly property bool isDesktop: OverlayManager.editTarget === "desktop"
   // A monitor of the desktop's (not all monitors or the primary one)
@@ -209,6 +211,7 @@ Item {
               values: Object.assign({}, root.view ?? {}, {
                 "fineGrid": root.view?.layout?.grid?.fine ?? false
               })
+              fieldNote: (path, schema) => root.target.sizingNote(path, schema)
               onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
@@ -241,6 +244,7 @@ Item {
                 }) : ({})
               order: ["sizing"]
               values: root.view ?? ({})
+              fieldNote: (path, schema) => root.target.sizingNote(path, schema)
               onEdited: (path, value) => OverlayManager.updateViewField(OverlayManager.selectedViewIndex, path[0], value)
             }
 
@@ -294,6 +298,7 @@ Item {
                 order: group.modelData.keys
                 // The whole menu, so x-showIf sees keys from other groups
                 values: root.menu ?? ({})
+                fieldNote: (path, schema) => root.target.sizingNote(path, schema)
                 onEdited: (path, value) => OverlayManager.menus.updateMenuField(path[0], value)
               }
             }
@@ -376,6 +381,7 @@ Item {
                 propertiesSchema: screenGroup.modelData.schema
                 order: screenGroup.modelData.keys
                 values: root.screenLayout ?? ({})
+                fieldNote: (path, schema) => root.target.sizingNote(path, schema)
                 onEdited: (path, value) => root.screenTarget.screenEditor.updateLayoutField(path[0], value)
               }
             }
