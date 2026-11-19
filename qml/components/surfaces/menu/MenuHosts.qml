@@ -61,6 +61,12 @@ Scope {
     if (root._freeShown && root.poppedOut)
       root._handedOver = true;
   }
+  // At a widget the handover waits for the free host to finish closing.
+  // `hosts` reads _freeKept, not _freeOccupied: the free loader it drives
+  // is what _freeOccupied reads, so it is set a tick later
+  readonly property bool _freeOccupied: root._freeHosts?.occupied ?? false
+  property bool _freeKept: false
+  on_FreeOccupiedChanged: Qt.callLater(() => root._freeKept = root._freeOccupied)
   // ---- At a bar widget ----
   // The widget a free menu is open at as its popout (PopoutAnchor), else
   // null; the one the edge host's box comes from, which follows it only
@@ -95,7 +101,7 @@ Scope {
   readonly property bool _atWidget: root._openerRect !== null || (root._wantedAnchor !== null && !root._openerGone)
   // The edge host shows it while it is still the widget wanted
   readonly property bool _edgeShows: root._openerRect === null || root._wantedAnchor === root._openerAnchor.value
-  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeShown, root._atWidget, root._openerRect !== null)
+  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeKept, root._atWidget, root._openerRect !== null)
 
   // ---- The free host's screen ----
   // Where a free menu opened (FreeMenuPlace.openedOn), "" while closed or
@@ -185,6 +191,8 @@ Scope {
       // Its box drawn on some screen (instances is a list object, not a
       // JS Array)
       readonly property bool boxShown: Array.prototype.some.call(freeVariants.instances, host => host?.boxShown === true)
+      // Some free host is occupied (open or closing)
+      readonly property bool occupied: Array.prototype.some.call(freeVariants.instances, host => host?.occupied === true)
 
       Variants {
         id: freeVariants
