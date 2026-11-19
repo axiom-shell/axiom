@@ -101,7 +101,8 @@ func toCurrent(cfg *jsonx.Object) *jsonx.Object {
 // section format 1 never had (Tailscale, from v79) is filled from its
 // defaults at load, like any missing section, and so is a key added to a
 // format-1 section since (addedSinceV1), to a bar widget
-// (widgetKeysAddedSinceV1) or to a module (moduleKeysAddedSinceV1).
+// (widgetKeysAddedSinceV1, its popout's widgetPopoutKeysAddedSinceV1) or to a module
+// (moduleKeysAddedSinceV1).
 func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	t.Parallel()
 	s := v2Schema(t)
@@ -150,6 +151,11 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 					typ, _ := w.(*jsonx.Object).Value("type").(string)
 					for _, key := range widgetTypeKeysAddedSinceV1[typ] {
 						props.Delete(key)
+					}
+					if popout, ok := props.Value("popout").(*jsonx.Object); ok {
+						for _, key := range widgetPopoutKeysAddedSinceV1 {
+							popout.Delete(key)
+						}
 					}
 				}
 			}
@@ -337,6 +343,10 @@ func osdItemFields(cfg *jsonx.Object) {
 // Workspaces widget's labels, urgency, icon layouts, solid boxes, spacing
 // and reverse scrolling)
 var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes", "specialWorkspaces", "specialWorkspaceLabel", "specialWorkspaceSplit"}
+
+// A widget's popout's settings added since format 1 (its Content size, in a
+// sizing object, null by default)
+var widgetPopoutKeysAddedSinceV1 = []string{"sizing"}
 
 // A type's settings added since format 1 under a name another type had
 // then (Bluetooth's showDevice, Button's label)

@@ -281,6 +281,41 @@ func TestViewSizing(t *testing.T) {
 	}
 }
 
+// A bar widget's own popout is sized by its Content size alone, shown while
+// the popout is on and no menu replaces it; a custom widget's popout lays
+// out in cards, so it has the full Size group.
+func TestPopoutSizing(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs := root.Value("definitions").(*jsonx.Object)
+	sizing := func(name string) *jsonx.Object {
+		widget := defs.Value(name).(*jsonx.Object)
+		popout := widget.Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("popout").(*jsonx.Object)
+		got, _ := popout.Value("properties").(*jsonx.Object).Value("sizing").(*jsonx.Object)
+		if got == nil {
+			t.Fatalf("%s's popout has no sizing", name)
+		}
+		return got
+	}
+	keys := func(sizing *jsonx.Object) []string {
+		return sizing.Value("properties").(*jsonx.Object).Keys()
+	}
+	if got, want := keys(sizing("VolumeWidget")), []string{"contentSize"}; !slices.Equal(got, want) {
+		t.Errorf("Volume's popout sizing = %v, want %v", got, want)
+	}
+	if got, want := keys(sizing("CustomWidgetWidget")), []string{"cardSize", "linked", "contentSize"}; !slices.Equal(got, want) {
+		t.Errorf("Custom widget's popout sizing = %v, want %v", got, want)
+	}
+	for _, name := range []string{"VolumeWidget", "CustomWidgetWidget"} {
+		if got, want := string(jsonx.MarshalCompact(sizing(name).Value("x-showIf"))), `{"enabled":true,"menu":""}`; got != want {
+			t.Errorf("%s's popout sizing shows if %s, want %s", name, got, want)
+		}
+	}
+}
+
 // A part's override reaching into a setting that $refs a definition
 // inlines that definition, so a type narrows one of its fields.
 func TestPartOverrideInlinesRef(t *testing.T) {

@@ -21,6 +21,9 @@ Image {
   required property bool contentReady
   // A hook: what the host keeps of its box as a switch begins
   property var snapshot: () => null
+  // What the host draws its content at (its Loader's scale), which the
+  // still is drawn at too: read as a switch begins, so the outgoing one's
+  property real zoom: 1
 
   readonly property bool switching: _switching
   readonly property bool holding: _switching && !contentReady
@@ -67,6 +70,7 @@ Image {
     }
     const dpr = root.Window.window?.devicePixelRatio ?? Screen.devicePixelRatio;
     const generation = root._generation;
+    const zoom = root.zoom;
     root._grabbing = item.grabToImage(result => {
       if (generation !== root._generation)
         return;
@@ -75,11 +79,11 @@ Image {
       fade.stop();
       root._grab = result;
       root.source = result.url;
-      root.width = item.width;
-      root.height = item.height;
+      root.width = item.width * zoom;
+      root.height = item.height * zoom;
       root.opacity = 1;
       root._swap(done);
-    }, Qt.size(Math.ceil(item.width * dpr), Math.ceil(item.height * dpr)));
+    }, Qt.size(Math.ceil(item.width * zoom * dpr), Math.ceil(item.height * zoom * dpr)));
     if (!root._grabbing)
       root._swap(done);
   }

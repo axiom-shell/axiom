@@ -46,6 +46,9 @@ Item {
   // leave in its strokes and shadow (submenuHole, submenuBox,
   // submenuJoinSpan)
   required property var slot
+  // What the host draws its content at, which this draws its own at
+  // (SubmenuHost.zoom; 1 for a host that doesn't zoom)
+  readonly property real zoom: outer.slot?.zoom ?? 1
 
   // What the parent draws for us while we show: how far its box reaches
   // past its top and bottom, whether it squares its corner there, and,
@@ -122,7 +125,7 @@ Item {
     readonly property rect attachRect: outer.slot?.attachBox ?? Qt.rect(0, 0, 0, 0)
     readonly property real attachEnd: root.attachRect.y + root.attachRect.height
 
-    readonly property real boxLength: submenuPopup.contentHeight + surface.contentInset * 2
+    readonly property real boxLength: submenuPopup.drawnHeight + surface.contentInset * 2
     // The screen's room up and down (y in the parent's window): inside
     // what's reserved at its top and bottom. A box longer than the side
     // stays within it, and content (MenuSubmenu) scrolls past
@@ -135,7 +138,9 @@ Item {
     readonly property ShellScreen _screen: General.outputs.includes(outer.screen) ? outer.screen : null
     readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(root._screen, ScreenEdge.Top) - root._placedY
     readonly property real screenTo: (root._screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(root._screen, ScreenEdge.Bottom) - root._placedY
-    readonly property real maxContentHeight: Math.max(Widget.height, root.screenTo - root.screenFrom - surface.contentInset * 2)
+    // The most height its content takes, in its own px: it's drawn at the
+    // host's zoom
+    readonly property real maxContentHeight: Math.max(Widget.height, root.screenTo - root.screenFrom - surface.contentInset * 2) / outer.zoom
     // Along the parent's side (y in its window), placed as a bar popout is
     // along a pill (SurfaceContext.submenuPlace)
     readonly property var place: SurfaceContext.submenuPlace({
@@ -161,7 +166,7 @@ Item {
     // The box at its content's size (grown to a flush end) and placed, and
     // as drawn: animated to them once it shows (not on opening), and held
     // as it was while a switch waits for its entries
-    readonly property real targetBoxWidth: submenuPopup.contentWidth + surface.contentInset * 2
+    readonly property real targetBoxWidth: submenuPopup.drawnWidth + surface.contentInset * 2
     // The box's outer wall (outer edge of its stroke), x in the parent's
     // window: our attach edge lies a stroke inside the parent's side
     readonly property real outerWall: outer.openToLeft ? root.attachRect.x + Appearance.borderWidth - surface.boxStart - root.targetBoxWidth : root.attachRect.x + root.attachRect.width - Appearance.borderWidth + surface.boxStart + root.targetBoxWidth
@@ -229,6 +234,10 @@ Item {
       // TrayMenuList sizes itself to its entries, within its limits
       readonly property int contentWidth: root.currentItem?.implicitWidth ?? 0
       readonly property int contentHeight: root.currentItem?.implicitHeight ?? 0
+      // What they're drawn at, in whole px (the layout pair is an int, the
+      // product isn't)
+      readonly property int drawnWidth: Math.ceil(submenuPopup.contentWidth * outer.zoom)
+      readonly property int drawnHeight: Math.ceil(submenuPopup.contentHeight * outer.zoom)
       // The surface at the target box size and place (it's drawn at the
       // shown one), along the side from the parent's box top
       readonly property real surfaceWidth: surface.implicitWidth - root.shownBoxWidth + root.targetBoxWidth
@@ -389,6 +398,12 @@ Item {
             y: surface.contentInset + root.place.contentStart - root.shownBoxStart
             width: submenuPopup.contentWidth
             height: submenuPopup.contentHeight
+            scale: outer.zoom
+            transformOrigin: Item.TopLeft
+            // `contentZoom`: see StyledIcon
+            readonly property real contentZoom: outer.zoom
+            readonly property real drawnZoom: loader.contentZoom * TextRender.zoomAt(loader.parent)
+            readonly property var inkHostAbove: InkHost.find(loader.parent)
             opacity: still.contentOpacity
             active: root.occupied
             asynchronous: false
@@ -402,6 +417,7 @@ Item {
           SwitchStill {
             id: still
             contentReady: root.contentReady
+            zoom: outer.zoom
             snapshot: () => ({
                   "start": root.shownBoxStart,
                   "width": root.shownBoxWidth,

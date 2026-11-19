@@ -13,12 +13,64 @@ TestCase {
   }
 
   function test_moduleZoom() {
-    compare(Sizing.moduleZoom(1, null), 1, "no module size: the grid's zoom");
+    compare(Sizing.moduleZoom(1, null), 1, "no module factor: the grid's zoom");
     compare(Sizing.moduleZoom(1.5, null), 1.5);
     compare(Sizing.moduleZoom(1, 150), 1.5, "on a page the grid zooms nothing: the factor alone");
     compare(Sizing.moduleZoom(1.25, 80), 1, "a module under a zoomed grid multiplies, snapping to 1 within 2 %");
     compare(Sizing.moduleZoom(0.8, 150), 1.2);
     compare(Sizing.moduleZoom(1, 101), 1, "within 2 % is 1");
+  }
+
+  function test_fitInto() {
+    compare(Sizing.fitInto({
+      "width": 300,
+      "height": 200
+    }, {
+      "width": 400,
+      "height": 400
+    }), 1, "it fits: 1");
+    compare(Sizing.fitInto({
+      "width": 300,
+      "height": 200
+    }, {
+      "width": 300,
+      "height": 200
+    }), 1, "exactly: 1");
+    compare(Sizing.fitInto({
+      "width": 400,
+      "height": 200
+    }, {
+      "width": 300,
+      "height": 400
+    }), 0.75, "too wide: the width's share");
+    compare(Sizing.fitInto({
+      "width": 400,
+      "height": 800
+    }, {
+      "width": 300,
+      "height": 400
+    }), 0.5, "the tighter axis wins");
+    compare(Sizing.fitInto({
+      "width": 300,
+      "height": 100
+    }, {
+      "width": 100,
+      "height": 100
+    }), 0.333, "floored to 3 decimals, never rounded up past what fits");
+    compare(Sizing.fitInto({
+      "width": 1000,
+      "height": 100
+    }, {
+      "width": 10,
+      "height": 100
+    }), 0.1, "at least 0.1");
+    compare(Sizing.fitInto({
+      "width": 0,
+      "height": 0
+    }, {
+      "width": 0,
+      "height": 0
+    }), 1, "nothing to fit");
   }
 
   function test_factors_linked() {

@@ -4,7 +4,8 @@ import QtQuick
 // How a surface's own `sizing` ({ cardSize, linked, contentSize }: each size
 // a % or null for "as the level above"; a tool page's or popout's is
 // { contentSize } alone) becomes the factors its host draws at, and how an
-// edit of it keeps its link's meaning. The global Card and
+// edit of it keeps its link's meaning, and how much of its room a popout
+// is shrunk to fit. The global Card and
 // Content sizes are already inside the card size and Widget; hosts apply
 // only these factors on top. No config, no text.
 QtObject {
@@ -37,6 +38,14 @@ QtObject {
   // module's own Content size (`contentSize`, a % or null for none)
   function moduleZoom(zoom, contentSize) {
     return GridPlacement.zoomOf(zoom * root.factor(contentSize));
+  }
+
+  // The most (a factor, at most 1, floored to 3 decimals, at least 0.1) of
+  // its size at which `size` ({ width, height }) fits `room`, as
+  // GridPlacement.fitFactor does for a grid: 1 when it fits
+  function fitInto(size, room) {
+    const fits = Math.min(size.width > room.width ? room.width / size.width : 1, size.height > room.height ? room.height / size.height : 1);
+    return fits < 1 ? Math.max(0.1, Math.floor(fits * 1000) / 1000) : 1;
   }
 
   // `next` (an edited sizing) with what unlinking or linking again must

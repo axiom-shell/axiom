@@ -45,8 +45,10 @@ Panel {
       "builtinError": false
     })
 
-  // A popout is the design size, at the screen's card size
-  readonly property real _card: OverlayConfig.cardUnitOn(Screen.width, Screen.height)
+  // A popout is the design size, at the card size its host lays it out at
+  // (BarPopouts.cardUnit: its Card size, drawn at its zoom, as the Panel's
+  // growth is read); in a card, at the screen's
+  readonly property real _card: !root.embedded && root.wrapper ? root.wrapper.cardUnit : OverlayConfig.cardUnitOn(Screen.width, Screen.height)
   readonly property var _size: CustomWidgetData.designSize(CustomWidgetData.allElements(root.definition?.module), root.definition?.module?.size)
   readonly property real _popoutWidth: GridPlacement.span(root._size[0], root._card)
   readonly property real _popoutHeight: GridPlacement.span(root._size[1], root._card)
