@@ -11,16 +11,16 @@ import qs.components.methods
 // logout): it survives qs reloads and restarts. createFileHandler(path)
 // is the same for a file elsewhere (a plain absolute path).
 //
-// A handler keeps the TEXT of its file, so after the first load (or any
-// save) a load is a parse of the cache: a caller changing what load
+// A handler keeps the TEXT of its file, so after the first load of a file
+// that exists, or any save, a load is a parse of the cache: a caller changing what load
 // returned changes nothing, and an edit of the file by hand during a run
 // isn't seen. A file that isn't JSON is kept as <file>.bad (once per run)
 // and the fallback is used; JSON of another kind than the fallback's is
 // the fallback too (StateShape).
 //
 // save/update write at once. saveLater is for frequent changes: it writes
-// 500 ms after the last call, and a change in that window is lost if the
-// shell reloads (a singleton's onDestruction doesn't run at a reload).
+// within 500 ms of the first unsaved call, and a change in that window is
+// lost if the shell reloads (a singleton's onDestruction doesn't run at a reload).
 QtObject {
   id: root
 
@@ -84,14 +84,16 @@ QtObject {
         handler.save(next);
         return next;
       },
-      // Writes data (or what the function returns) 500 ms after the last
-      // call; a load meanwhile sees it
+      // Writes data (or what the function returns) within 500 ms of the
+      // first unsaved call (later calls don't postpone it); a load
+      // meanwhile sees it
       "saveLater": function (data) {
         handler.later = data;
         handler.stale = true;
         handler.pending = true;
         root._pending[filepath] = handler;
-        root._saveTimer.restart();
+        if (!root._saveTimer.running)
+          root._saveTimer.start();
       },
       // Writes a pending saveLater now
       "flush": function () {
@@ -124,8 +126,13 @@ QtObject {
   function flushAll() {
     Object.keys(root._pending).forEach(path => {
       const handler = root._pending[path];
-      if (handler)
+      if (!handler)
+        return;
+      try {
         handler.flush();
+      } catch (e) {
+        console.warn("[StateManager] Could not save", path + ":", e);
+      }
     });
   }
 

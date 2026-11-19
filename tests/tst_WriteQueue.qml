@@ -28,6 +28,17 @@ TestCase {
     compare(queue[0].text, "c", "the newest text");
   }
 
+  function test_laterDoneAdded() {
+    const queue = [];
+    const done = () => 1;
+    WriteQueue.push(queue, "a");
+    WriteQueue.push(queue, "b", done);
+    compare(queue.length, 1);
+    compare(queue[0].text, "b");
+    compare(queue[0].dones.length, 1);
+    verify(queue[0].dones[0] === done);
+  }
+
   function test_donesKeepOrder() {
     const queue = [];
     const first = () => 1;

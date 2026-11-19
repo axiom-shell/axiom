@@ -38,6 +38,23 @@ TestCase {
     compare(StateShape.accept(null, null), null);
   }
 
+  function test_undefinedFallback() {
+    compare(StateShape.accept({
+      "a": 1
+    }, undefined), {
+      "a": 1
+    });
+    compare(StateShape.accept(5, undefined), undefined);
+    compare(StateShape.accept("s", undefined), undefined);
+    compare(StateShape.accept(null, undefined), undefined);
+    compare(StateShape.parse("{\"a\":1}", undefined).value, {
+      "a": 1
+    });
+    compare(StateShape.parse("5", undefined).value, undefined);
+    compare(StateShape.parse("\"s\"", undefined).value, undefined);
+    compare(StateShape.parse("null", undefined).value, undefined);
+  }
+
   function test_clearShapedFallback() {
     const clear = {
       "failures": 0,

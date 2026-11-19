@@ -13,7 +13,7 @@ This doc covers the services behind the launcher's `=`, `:`, `;` and `~` rows (t
 - **Queue:** one qalc runs at a time from a queue, debounced 120 ms.
   - When qalc only echoes its input back, that counts as no answer.
   - `evaluated(key)` fires as each answer lands.
-- **Persistence:** these live in a `PersistentProperties`, so they survive reloads but not restarts:
+- **Persistence:** only `draft` lives in a `PersistentProperties` (it survives reloads, not restarts); `history` is kept by `StateManager`:
   - `history` (`keep(expr, result)`, newest first, 20 entries; kept for the login session in `StateManager`'s session handler, so it survives QML reloads and qs restarts; `draft` survives reloads only)
   - the module's unfinished `draft`.
 - **Launcher side:** the launcher asks under the key `launcher`, and its rows are rebuilt when it answers (`evaluated`). Enter copies the answer and keeps it in the calculator's history.
