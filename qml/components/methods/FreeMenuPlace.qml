@@ -199,12 +199,13 @@ QtObject {
   // the free host; its edge host stays until the free one has shown
   // (`freeShown`), so the box hands over with no gap. A free menu at a
   // bar widget (`atWidget`) shows in the edge host, and the other way
-  // round: its free host stays until its box has gone (`freeShown`)
-  function hosts(placement, poppedOut, freeShown, atWidget) {
+  // round: its free host stays until its box has gone (`freeShown`); the
+  // edge host waits for the widget's place (`openerKnown`)
+  function hosts(placement, poppedOut, freeShown, atWidget, openerKnown) {
     const popped = placement === "edge" && !!poppedOut;
     const free = placement === "free";
     return {
-      "edge": (placement === "edge" && (!popped || !freeShown)) || (free && !!atWidget && !freeShown),
+      "edge": (placement === "edge" && (!popped || !freeShown)) || (free && !!atWidget && !!openerKnown && !freeShown),
       "strip": placement === "strip",
       "free": (free && (!atWidget || freeShown)) || popped
     };

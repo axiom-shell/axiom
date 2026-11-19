@@ -76,19 +76,24 @@ Scope {
     // new screen gets a new window; null once the widget is gone
     onValueChanged: {
       root._openerRect = null;
+      root._openerGone = false;
       const anchor = value;
       if (anchor)
         Qt.callLater(() => {
-          if (anchor === root._openerAnchor.value)
-            root._openerRect = anchor.screenRect?.() ?? null;
+          if (anchor !== root._openerAnchor.value)
+            return;
+          root._openerRect = anchor.screenRect?.() ?? null;
+          root._openerGone = root._openerRect === null;
         });
     }
   }
   property var _openerRect: null
-  readonly property bool _atWidget: root._wantedAnchor !== null || root._openerRect !== null
+  // The widget's place came back null: the menu shows in its own window
+  property bool _openerGone: false
+  readonly property bool _atWidget: root._openerRect !== null || (root._wantedAnchor !== null && !root._openerGone)
   // The edge host shows it while it is still the widget wanted
-  readonly property bool _edgeShows: root._openerRect !== null && root._wantedAnchor === root._openerAnchor.value
-  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeShown, root._atWidget)
+  readonly property bool _edgeShows: root._openerRect === null || root._wantedAnchor === root._openerAnchor.value
+  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeShown, root._atWidget, root._openerRect !== null)
 
   // ---- The free host's screen ----
   // Where a free menu opened (FreeMenuPlace.openedOn), "" while closed or
@@ -148,13 +153,13 @@ Scope {
   // (a free menu's edge host waits for its widget's place: its screen)
   LazyLoader {
     id: edgeLoader
-    active: !!root._live && !!root.screen && root.hosts.edge && (root.menu.placement !== "free" || root._openerRect !== null)
+    active: !!root._live && !!root.screen && root.hosts.edge
 
     FloatingEdgeMenu {
       menu: root.menu
       screen: root._openerRect?.screen ?? root.screen
       openerRect: root._openerRect
-      shows: root._openerRect === null || root._edgeShows
+      shows: root._edgeShows
     }
   }
 

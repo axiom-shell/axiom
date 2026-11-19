@@ -371,12 +371,17 @@ TestCase {
       "strip": false,
       "free": true
     });
-    compare(FreeMenuPlace.hosts("free", false, false, true), {
+    compare(FreeMenuPlace.hosts("free", false, false, true, true), {
       "edge": true,
       "strip": false,
       "free": false
     }, "free at a widget: the edge host alone");
-    compare(FreeMenuPlace.hosts("free", false, true, true), {
+    compare(FreeMenuPlace.hosts("free", false, false, true, false), {
+      "edge": false,
+      "strip": false,
+      "free": false
+    }, "free at a widget whose place is not taken yet: no host");
+    compare(FreeMenuPlace.hosts("free", false, true, true, true), {
       "edge": false,
       "strip": false,
       "free": true
