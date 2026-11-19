@@ -32,7 +32,7 @@ EditTarget {
       return "";
     if (root.shrunk.length === 0)
       return I18n.tr("Fits {0}", root.fits.map(fit => fit.screen).join(", "));
-    return root.shrunk.map(fit => I18n.tr("Shrunk to {0}% on {1}", Math.round(fit.scale * 100), fit.screen)).join(" · ");
+    return root.shrunk.map(fit => I18n.tr("Shrunk to {0}% to fit {1}", Math.round(fit.scale * 100), fit.screen)).join(" · ");
   }
   fitWarning: root.shrunk.length > 0
   editable: root.isCustom

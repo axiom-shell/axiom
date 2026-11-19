@@ -7,4 +7,4 @@ title: Size
 x-group: Size
 additionalProperties: false
 properties:
-  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Auto follows it. The whole surface zooms with it.'}
+  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Off follows it. The whole surface zooms with it.'}

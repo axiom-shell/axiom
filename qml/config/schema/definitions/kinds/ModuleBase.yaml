@@ -30,5 +30,5 @@ properties:
     minimum: 50
     maximum: 200
     x-unit: '%'
-    description: Text and controls in this module, on top of its page's or menu's Content size. Auto follows it.
+    description: Text and controls in this module, on top of its page's or menu's Content size. Off follows it.
   properties: {type: object, additionalProperties: false, properties: {}}

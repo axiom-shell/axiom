@@ -9,5 +9,5 @@ default: null
 minimum: 50
 maximum: 200
 x-unit: '%'
-description: Relative to the Content size in Look & Feel. Auto follows it.
+description: Relative to the Content size in Look & Feel. Off follows it.
 x-inline: true

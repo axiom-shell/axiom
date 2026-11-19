@@ -6,4 +6,4 @@
 x-inline: true
 $ref: '#/definitions/ContentSizing'
 x-properties:
-  contentSize: {$ref: '#/definitions/ContentSize', maximum: 100, description: 'Relative to the Content size in Look & Feel. Auto follows it. The whole page zooms with it.'}
+  contentSize: {$ref: '#/definitions/ContentSize', maximum: 100, description: 'Relative to the Content size in Look & Feel. Off follows it. The whole page zooms with it.'}

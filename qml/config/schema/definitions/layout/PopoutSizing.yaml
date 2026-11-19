@@ -6,4 +6,4 @@
 x-inline: true
 $ref: '#/definitions/ContentSizing'
 x-properties:
-  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Auto follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.'}
+  contentSize: {$ref: '#/definitions/ContentSize', description: 'Relative to the Content size in Look & Feel. Off follows it. The whole popout zooms with it. For separate box and content sizes, use a menu.'}
