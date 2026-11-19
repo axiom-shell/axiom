@@ -5,17 +5,7 @@ description: A grid of modules.
 additionalProperties: false
 properties:
   grid: {$ref: '#/definitions/Grid', x-group: Grid}
-  moduleScale:
-    x-link: {setting: Interface.cardSize}
-    x-group: Grid
-    type: integer
-    x-control: stepper
-    title: Module size
-    default: 100
-    minimum: 50
-    maximum: 200
-    x-unit: '%'
-    description: Relative to the card size in Look & Feel.
+  sizing: {$ref: '#/definitions/Sizing'}
   moduleBorders:
     x-group: Style
     type: boolean

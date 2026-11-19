@@ -332,6 +332,10 @@ var all = []Step{
 		}
 		return []string{"Interface.scale renamed Interface.contentSize"}
 	}},
+	// v113: a menu's, a desktop item's, the lock screen's and the login
+	// screen's Module size (moduleScale) became its Card size (sizing.cardSize,
+	// v113.go)
+	{Version: 113, Run: v113},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

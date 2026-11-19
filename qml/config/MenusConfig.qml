@@ -11,7 +11,7 @@ QtObject {
   id: root
 
   // Menus.items: [Menu], each { id, name, enabled, screen, edge,
-  // placement, …, layout: { grid, moduleScale, moduleBorders, modules }, open,
+  // placement, …, layout: { grid, sizing, moduleBorders, modules }, open,
   // close }
   readonly property var menus: ConfigManager.live.Menus.items
   readonly property var enabledMenus: root.menus.filter(menu => menu.enabled && menu.id)
@@ -131,43 +131,53 @@ QtObject {
   // (with it on, the border's strip inside it draws it)
   readonly property int innerStroke: Appearance.screenBorder ? 0 : Appearance.borderWidth
 
-  // A menu's card size: the card size on its screen (OverlayConfig.
-  // cardUnitOn, the card size setting's, not the overlay's own Module
-  // size), at the menu's Module size (scaleOf). A submenu's is on the
-  // screen of the menu it opens from (`screen`)
+  // A menu's grid on `screen` (a submenu's is on the screen of the menu it
+  // opens from; none: the menu's own): { unit, zoom, gap, fit }.
+  //   unit  its card size (px): the card size on its screen (OverlayConfig.
+  //         cardUnitOn, the Card size setting's, not the overlay's) at its
+  //         own Card size (layout.sizing), a double grid's (fineGrid) units
+  //         split in two each way
+  //   zoom  what its modules are drawn at: its Content size, so it scales
+  //         their text and controls with its cards, while the screen only
+  //         changes how big the cards are
+  //   gap   the px between its cards, drawn at the zoom as the overlay's
+  //         pages are
+  //   fit   the factor, at most 1, both were shrunk by so its modules'
+  //         depth across its edge (a submenu's width) fits its screen less
+  //         its padding (GridPlacement.fitFactor), as a screen layout's
+  //         cards shrink to fit its screen. Along its edge it scrolls or is
+  //         fitted instead (MenuBody)
+  function gridOf(menu, screen) {
+    screen = screen ?? root.screenFor(menu);
+    const factors = Sizing.factors(menu.layout.sizing);
+    const card = (screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit) * factors.card;
+    const fine = menu.layout.grid.fine;
+    let fit = 1;
+    if (screen) {
+      const wide = root.isFree(menu) || menu.edge === "left" || menu.edge === "right";
+      const bounds = GridPlacement.bounds(menu.layout.modules);
+      fit = GridPlacement.fitFactor(wide ? bounds.cols : bounds.rows, card, GridPlacement.zoomOf(factors.content), fine, (wide ? screen.width : screen.height) - PopoutsConfig.padding * 2);
+    }
+    const zoom = GridPlacement.zoomOf(factors.content * fit);
+    const gap = GridPlacement.gapOf(zoom);
+    return {
+      "unit": GridPlacement.gridUnitOf(card * fit, fine, gap),
+      "zoom": zoom,
+      "gap": gap,
+      "fit": fit
+    };
+  }
+
   function cardUnitOf(menu, screen) {
-    screen = screen ?? root.screenFor(menu);
-    const unit = screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
-    // A double grid (fineGrid) splits each unit in two each way
-    return GridPlacement.gridUnitOf(unit * root.scaleOf(menu, screen), menu.layout.grid.fine, root.gapOf(menu, screen));
+    return root.gridOf(menu, screen).unit;
   }
 
-  // A menu's Module size as a factor: its moduleScale, shrunk so its
-  // modules' depth across its edge (a submenu's width) fits its screen
-  // less its padding (GridPlacement.fitModuleScale), as a screen layout's cards
-  // shrink to fit its screen. Along its edge it scrolls or is fitted
-  // instead (MenuBody)
-  function scaleOf(menu, screen) {
-    screen = screen ?? root.screenFor(menu);
-    const scale = menu.layout.moduleScale / 100;
-    if (!screen)
-      return scale;
-    const wide = root.isFree(menu) || menu.edge === "left" || menu.edge === "right";
-    const bounds = GridPlacement.bounds(menu.layout.modules);
-    return GridPlacement.fitModuleScale(scale, wide ? bounds.cols : bounds.rows, OverlayConfig.cardUnitOn(screen.width, screen.height), menu.layout.grid.fine, (wide ? screen.width : screen.height) - PopoutsConfig.padding * 2);
-  }
-
-  // The px between a menu's cards: the layout's gap drawn at the menu's
-  // zoom (GridPlacement.gapOf), so the menu is an overlay page's grid
   function gapOf(menu, screen) {
-    return GridPlacement.gapOf(root.zoomOf(menu, screen));
+    return root.gridOf(menu, screen).gap;
   }
 
-  // What a menu's modules are drawn at: its Module size (scaleOf,
-  // GridPlacement.zoomOf), so it scales their text and controls with its
-  // cards, while the screen only changes how big the cards are
   function zoomOf(menu, screen) {
-    return GridPlacement.zoomOf(root.scaleOf(menu, screen));
+    return root.gridOf(menu, screen).zoom;
   }
 
   // The menu's modules' grid along its edge, unstretched, at card size

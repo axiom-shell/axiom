@@ -72,7 +72,7 @@ QtObject {
   // places onto it (rebase). Modules being moved don't change it, so the
   // grid never jumps under an edit
   readonly property var lattice: root.localLayout && root.screen ? OverlayConfig.screenArrangement(root.localLayout, [], root.screen, root.room.width, root.room.height) : null
-  // Whether its modules had to shrink below the layout's Module size to
+  // Whether its modules had to shrink below the layout's Card size to
   // fit this screen, and to how much of it (%)
   readonly property var _shown: root.localLayout && root.screen ? OverlayConfig.screenArrangement(root.localLayout, root.localLayout.modules, root.screen, root.room.width, root.room.height) : null
   readonly property var shrunk: root._shown?.shrunk ?? false
@@ -98,7 +98,7 @@ QtObject {
     modulesOf: () => root.localLayout?.modules ?? null
     scopeKey: root.host + ":" + root.scope
     onEdited: draft.changed()
-    // The layout's own settings (its Module size, grid, background, …)
+    // The layout's own settings (its sizing, grid, background, …)
     // go with each snapshot, so undoing one puts back the places it moved
     snapshotExtra: () => {
       const layout = root.localLayout;
@@ -177,7 +177,7 @@ QtObject {
   }
 
   // One of the layout's own fields, by key or dotted path into its groups
-  // ("moduleScale", "backdrop.source", "grid.fine"). Doubling the grid
+  // ("sizing", "backdrop.source", "grid.fine"). Doubling the grid
   // (grid.fine; "fineGrid" too) rescales the modules' places so they stay
   // put
   function updateLayoutField(key, value) {
@@ -189,6 +189,10 @@ QtObject {
       return;
     // One undo step with the places it moves (snapshotExtra)
     root.layout.recordField(`layout:${key}`);
+    // A form emits an edit inside the sizing as the whole sizing: it keeps
+    // what its link means
+    if (key === "sizing")
+      value = Sizing.editedIn(layout.sizing, value, []);
     if (key === "grid.fine") {
       (layout.modules ?? []).forEach(module => {
         if (module?.place)
@@ -201,7 +205,7 @@ QtObject {
       return v[part];
     }, layout);
     holder[parts[parts.length - 1]] = value;
-    // A new Module size or grid moves the places onto this screen's grid
+    // A new Card size or grid moves the places onto this screen's grid
     // now, inside that step, not later as an outside change would
     root.rebase(true);
     draft.changed();

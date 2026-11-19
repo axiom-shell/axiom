@@ -15,7 +15,7 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
   - the screen edge as a faint accent bar with the menu's part solid;
   - a shaded band along it (`reservedDepth`, `GridPlacement.menuReservedDepth`, with a line where the windows start): the strip an integrated menu reserves, or the bars and border a floating one sits past.
 - With "Show other menus" (`OverlayManager.menus.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
-  - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their module size can differ.
+  - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their sizes can differ.
   - They are not drop targets.
 - `underlay` (`[{ place, label, element? }]`): places drawn dimmed under the tiles, not selectable and counted in the lattice's bounds (the custom widget editor's base elements while a screen is edited).
 - `tileContent` (a `Component` whose root has a `module`): what a tile (and an underlay item that has an `element`) draws instead of its icon and label; `CanvasModule` and the underlay load it and bind `module` (the custom widget editor draws the element itself). `tileContext(index, tile, x, y)` is a right click on a tile, which it selects.

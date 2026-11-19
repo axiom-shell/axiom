@@ -1793,6 +1793,20 @@ TestCase {
     compare(bad, []);
   }
 
+  // A surface's sizing (a menu's, the desktop's, the lock and login screens')
+  // links each of its two sizes to the global one it multiplies onto
+  function test_sizing_links_resolve() {
+    const sizing = schema.definitions.Layout.properties.sizing.properties;
+    compare(sizing.cardSize["x-link"], {
+      "setting": "Interface.cardSize"
+    });
+    compare(sizing.contentSize["x-link"], {
+      "setting": "Interface.contentSize"
+    });
+    for (const link of ["Interface.cardSize", "Interface.contentSize"])
+      verify(SchemaLayout.locate(schema, link) !== null, link);
+  }
+
   // The bar editor's links to the shared bar style (BarsPanel's style
   // groups, WidgetInspector) find their cards
   function test_bar_style_links_resolve() {

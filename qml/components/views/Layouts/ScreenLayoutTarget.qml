@@ -24,8 +24,8 @@ EditTarget {
   readonly property var grid: root.screenEditor.grid
   // The fit line for a layout fitted to each monitor, "" without one
   readonly property string stretchText: !root.layout ? "" : root.screenEditor.shrunk ? root.shrinkText : I18n.tr("{0} × {1} units on {2}; modules keep to their nearest edge on other monitors", root.grid.cols, root.grid.rows, root.screenEditor.screen?.name ?? "")
-  // When its modules don't fit the screen at their Module size
-  readonly property string shrinkText: I18n.tr("Modules shrunk to {0} % to fit {1}: move them closer together or lower Module size", root.screenEditor.shrunkTo, root.screenEditor.screen?.name ?? "")
+  // When its modules don't fit the screen at their Card size
+  readonly property string shrinkText: I18n.tr("Modules shrunk to {0} % to fit {1}: move them closer together or lower Card size", root.screenEditor.shrunkTo, root.screenEditor.screen?.name ?? "")
 
   editor: root.screenEditor.layout
   modules: root.layout ? root.layout.modules : null
@@ -36,9 +36,5 @@ EditTarget {
       "h": root.grid.rows
     }) : null
   fitText: root.stretchText
-  // Smaller cards fit more on the screen
-  fitLink: root.screenEditor.shrunk ? {
-    "setting": "Widget.cardSize"
-  } : null
   editable: root.layout !== null
 }

@@ -1,0 +1,36 @@
+# The Sizing definition (#/definitions/Sizing).
+
+x-inline: true
+type: object
+title: Size
+x-group: Size
+additionalProperties: false
+properties:
+  cardSize:
+    x-link: {setting: Interface.cardSize}
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 100}
+    title: Card size
+    default: null
+    minimum: 50
+    maximum: 200
+    x-unit: '%'
+    description: Relative to the card size in Look & Feel. Auto follows it.
+  linked:
+    type: boolean
+    title: Content grows with cards
+    default: true
+    description: Text and controls grow and shrink with the cards.
+  contentSize:
+    x-link: {setting: Interface.contentSize}
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 100}
+    title: Content size
+    default: null
+    minimum: 50
+    maximum: 200
+    x-unit: '%'
+    x-showIf: {linked: false}
+    description: Relative to the Content size in Look & Feel. Auto follows it.

@@ -17,7 +17,5 @@ ScreenLayoutTarget {
   fitWarning: LockscreenConfig.mode !== "quickshell" || root.screenEditor.shrunk
   fitLink: LockscreenConfig.mode !== "quickshell" ? {
     "setting": "Lockscreen.mode"
-  } : root.screenEditor.shrunk ? {
-    "setting": "Widget.cardSize"
   } : null
 }

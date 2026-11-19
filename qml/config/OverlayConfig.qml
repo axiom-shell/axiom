@@ -243,12 +243,12 @@ QtObject {
   // A screen layout's (a desktop item's, the lock screen's, the
   // greeter's) `modules` on `screen` in a `width` × `height` px room (its
   // room inside the bars and border): the units that fit there at its
-  // card size (cardUnitOn times its Module size, its units split in two
+  // card size (cardUnitOn times its Card size, its units split in two
   // each way with grid.fine), each module kept to its nearest edge from the grid it was
-  // placed on (`grid.columns` × `grid.rows`), content drawn at its Module size.
+  // placed on (`grid.columns` × `grid.rows`), content drawn at its Content size.
   // GridPlacement.screenArrangement's { cols, rows, unit, gap, zoom,
   // places, shrunk }, plus `margin`, the px left all round the grid
-  // reads: Desktop.items.moduleScale, Desktop.items.grid, Lockscreen.layout.moduleScale, Lockscreen.layout.grid, Greeter.layout.moduleScale, Greeter.layout.grid
+  // reads: Desktop.items.sizing, Desktop.items.grid, Lockscreen.layout.sizing, Lockscreen.layout.grid, Greeter.layout.sizing, Greeter.layout.grid
   function screenArrangement(layout, modules, screen, width, height) {
     if (!layout)
       return {
@@ -261,9 +261,10 @@ QtObject {
         "zoom": 1,
         "margin": cardSpacing
       };
-    const card = cardUnitOn(screen?.width ?? width, screen?.height ?? height) * layout.moduleScale / 100;
+    const factors = Sizing.factors(layout.sizing);
+    const card = cardUnitOn(screen?.width ?? width, screen?.height ?? height) * factors.card;
     const places = (modules ?? []).map(module => module?.place ?? null);
-    const arranged = GridPlacement.screenArrangement(places, GridPlacement.screenGrid(layout.grid), card, width, height, cardSpacing, layout.grid.fine, GridPlacement.zoomOf(layout.moduleScale / 100));
+    const arranged = GridPlacement.screenArrangement(places, GridPlacement.screenGrid(layout.grid), card, width, height, cardSpacing, layout.grid.fine, GridPlacement.zoomOf(factors.content));
     arranged.margin = cardSpacing;
     return arranged;
   }

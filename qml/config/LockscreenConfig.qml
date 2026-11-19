@@ -19,7 +19,7 @@ QtObject {
 
   // The built-in lock screen, a ScreenLayout: { grid: { columns, rows,
   // fine } (fitted to each monitor; `fine` splits its units in two),
-  // moduleScale, moduleBorders, modules, otherScreens ("layout": the
+  // sizing, moduleBorders, modules, otherScreens ("layout": the
   // modules without the password | "background"), backdrop: { source
   // ("wallpaper" | "color"), blur, color, dim (%) }, borders: { password,
   // greeting } }. LockSurface takes it whole, so the layouts editor's

@@ -8,4 +8,4 @@ settings:
     title: Icon
     default: ''
     description: 'Empty: the default icon.'
-  layout: {$ref: '#/definitions/Layout', x-properties: {moduleScale: null, moduleBorders: null}}
+  layout: {$ref: '#/definitions/Layout', x-properties: {sizing: null, moduleBorders: null}}

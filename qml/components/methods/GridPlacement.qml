@@ -42,10 +42,10 @@ QtObject {
     return Math.max(1, (Math.min(width, height) - 2 * root.screenMargin - root.cardSpacing) / 2);
   }
 
-  // What a grid's content is drawn at for a Module size of `scale` (a
-  // factor): content lays out at the card size over it, so text and
-  // controls grow and shrink with the cards only by the Module size,
-  // never by the screen. 1 within 2 %, so it isn't resampled for nothing
+  // What a grid's content is drawn at for a content factor `scale`: content
+  // lays out at the card size over it, so text and controls grow and
+  // shrink with the cards only by that factor, never by the screen. 1
+  // within 2 %, so it isn't resampled for nothing
   function zoomOf(scale) {
     return Math.abs(scale - 1) < 0.02 ? 1 : scale;
   }
@@ -56,14 +56,15 @@ QtObject {
     return root.cardSpacing * zoom;
   }
 
-  // The most of Module size `scale` (a factor) at which `count` units of
-  // a grid fit `room` px, its cards `card` px at 100 % (a double grid's
-  // split with `fine`): its units and gaps (gapOf) both grow with it, so
-  // its span does in proportion. `scale` when they fit
-  function fitModuleScale(scale, count, card, fine, room) {
-    const gap = root.gapOf(scale);
-    const length = root.span(count, root.gridUnitOf(card * scale, fine, gap), gap);
-    return count > 0 && length > room ? Math.max(0.1, Math.floor(scale * room / length * 1000) / 1000) : scale;
+  // The most (a factor, at most 1) of its size at which `count` units of a
+  // grid fit `room` px, its cards `card` px at 1 (a double grid's split
+  // with `fine`) and its content drawn at `zoom`: its units and gaps
+  // (gapOf) both shrink with it, so its span does in proportion. 1 when
+  // they fit
+  function fitFactor(count, card, zoom, fine, room) {
+    const gap = root.gapOf(zoom);
+    const length = root.span(count, root.gridUnitOf(card, fine, gap), gap);
+    return count > 0 && length > room ? Math.max(0.1, Math.floor(room / length * 1000) / 1000) : 1;
   }
 
   // A grid's own card size at card size `card` px, `gap` px between
@@ -693,7 +694,7 @@ QtObject {
   // time, until they do (on `from` itself at the latest, where nothing
   // moves), else as a last resort they stay on `from` (or as far as they
   // reach) fitted into the room (latticeUnit). Its content is drawn at
-  // `zoom` (zoomOf its Module size), and shrunk cards shrink it and the
+  // `zoom` (zoomOf its Content size), and shrunk cards shrink it and the
   // gaps with them. { cols, rows, unit (its cards' px), gap, zoom, places,
   // shrunk (smaller than `unit` asked) }
   function screenArrangement(places, from, unit, width, height, margin, fine, zoom) {

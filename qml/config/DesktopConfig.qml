@@ -9,7 +9,7 @@ import qs.components.methods
 // that's enabled, one naming it, else the primary monitor's (on the
 // primary monitor), else the one for all monitors; a layout naming a
 // monitor that's turned off leaves it empty. Each is a DesktopLayout
-// ({ id, enabled, screen, grid, moduleScale, moduleBorders, modules }).
+// ({ id, enabled, screen, grid, sizing, moduleBorders, modules }).
 // The layouts editor's unsaved draft shows live (DesktopManager sets it as
 // a preview).
 QtObject {
