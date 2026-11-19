@@ -74,8 +74,10 @@ QtObject {
   // units, 0-1 both ways) on the screen `screenName`: null while unknown (no
   // grid has been ready on that screen yet), or, with `worstCase`, the pole. A wallpaper
   // that can't be decoded is the pole; no wallpaper is the theme's
-  // background. `blurred`: the compositor blurs what's behind the surface.
-  function regionOn(screenName, rect, blurred, worstCase) {
+  // background. `blur`: how much the wallpaper is blurred under the surface (a
+  // bool: the compositor blurs what's behind it, or a weight 0-1), passed on
+  // to Backdrop.region.
+  function regionOn(screenName, rect, blur, worstCase) {
     void root.revision;
     const screen = General.outputs.find(s => s.name === screenName);
     if (!screen)
@@ -96,7 +98,7 @@ QtObject {
     return Backdrop.region(entry.grid, image, rect, {
       "x": screen.width > 0 ? px / 2 / screen.width : 0,
       "y": screen.height > 0 ? px / 2 / screen.height : 0
-    }, blurred, Backdrop.greyOf(Style.surfacePage));
+    }, blur, Backdrop.greyOf(Style.surfacePage));
   }
 
   // ---- the edge floor ----

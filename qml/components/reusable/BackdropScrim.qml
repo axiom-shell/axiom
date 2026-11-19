@@ -10,12 +10,14 @@ import qs.components.methods
 // A soft shade of the theme background behind a bare module on the desktop,
 // the lock screen or the greeter (no card box of its own): drawn only as
 // strong as the wallpaper under `area` (after the layout's dim) needs for
-// `ink` to read there, so a module on a calm wallpaper gets none. A
+// `ink` to read there, so a module on a calm wallpaper gets none, and never
+// stronger than the layout's preset (`look`: Backdrop.shade) allows; only
+// Strong guarantees `ink` reads. A
 // `RectangularShadow`, never a layer (it holds no text). Its alpha is
 // `Tone.alphaFloor` over the wallpaper's backs (`WallpaperToneManager`:
 // cached once the daemon has answered, never waited for): until then none
 // (as today), or with `worstCase` (the lock, the greeter) the pole under the
-// dim; a wallpaper the daemon can't decode is the pole too. `fixedRegion`
+// dim, only until the daemon answers; a wallpaper the daemon can't decode is the pole too. `fixedRegion`
 // replaces the wallpaper (a layout's colour backdrop: flat grey levels).
 // `area` is in the screen's px; the item sits on it, and the shade reaches
 // past by half its blur, so the module's own edge is under the full alpha.
@@ -30,11 +32,12 @@ Item {
   property rect area: Qt.rect(0, 0, 0, 0)
   // The layout's backdrop dim (0-1: a black veil over the background)
   property real dim: 0
-  // The compositor blurs the wallpaper under it (a blurred backdrop)
-  property bool blurred: false
+  // How much of the wallpaper's blur is under it (0-1, Backdrop.region's k)
+  property real blurWeight: 0
   // What reads on the shade: the module's text colour (its `backdropInk`)
   property color ink: Style.text
-  property real minContrast: 4.5
+  // The layout's shade preset: Backdrop.shade(...)
+  property var look: Backdrop.shade("strong")
   // The wallpaper's tone isn't known yet: assume the worst (the pole), for a
   // host that must never show unreadable text (the lock, the greeter)
   property bool worstCase: false
@@ -59,12 +62,12 @@ Item {
     const w = Math.max(1, root.screen.width);
     const h = Math.max(1, root.screen.height);
     const g = root._grow;
-    return WallpaperToneManager.regionOn(root.screen.name, Qt.rect((root.area.x - g) / w, (root.area.y - g) / h, (root.area.width + g * 2) / w, (root.area.height + g * 2) / h), root.blurred, root.worstCase);
+    return WallpaperToneManager.regionOn(root.screen.name, Qt.rect((root.area.x - g) / w, (root.area.y - g) / h, (root.area.width + g * 2) / w, (root.area.height + g * 2) / h), root.blurWeight, root.worstCase);
   }
 
   // The shade's alpha: the least at which `ink` reads on every back under
   // it (0 where it already does, 1 where only the opaque shade could)
-  readonly property real alpha: root._region ? Tone.alphaFloor(Style.surfacePage, root.ink, Backdrop.backs(root._region, "#000000", root.dim), root.minContrast + StyleTokens.margin) : 0
+  readonly property real alpha: root._region ? Backdrop.shadeAlpha(root.look, Tone.alphaFloor(Style.surfacePage, root.ink, Backdrop.backs(root._region, "#000000", root.dim), root.look.minContrast + StyleTokens.margin)) : 0
 
   opacity: root.alpha
   visible: root.shown && root.opacity > 0
