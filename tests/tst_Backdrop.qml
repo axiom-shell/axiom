@@ -114,6 +114,54 @@ TestCase {
     compare(r.high, 200);
   }
 
+  function test_partialBlur() {
+    // One cell (mean 200, low 100, high 250)
+    const cell = {
+      "x": 0.5,
+      "y": 0,
+      "width": 0.25,
+      "height": 0.5
+    };
+    const raw = Backdrop.region(grid, full, cell, none, false, 0);
+    const full1 = Backdrop.region(grid, full, cell, none, 1, 0);
+    const half = Backdrop.region(grid, full, cell, none, 0.5, 0);
+    compare(Backdrop.region(grid, full, cell, none, 0, 0).low, raw.low);
+    compare(raw.low, 100);
+    compare(raw.high, 250);
+    compare(full1.low, 200);
+    compare(full1.high, 200);
+    compare(half.low, 150);
+    compare(half.high, 225);
+    compare(Backdrop.region(grid, full, cell, none, true, 0).low, full1.low);
+    compare(Backdrop.region(grid, full, cell, none, undefined, 0).high, raw.high);
+  }
+
+  function test_shade() {
+    compare(Backdrop.shade("off").shown, false);
+    compare(Backdrop.shade("off").maxAlpha, 0);
+    compare(Backdrop.shade("light").minContrast, 3.0);
+    compare(Backdrop.shade("light").maxAlpha, 0.5);
+    compare(Backdrop.shade("medium").minContrast, Tone.textContrast);
+    compare(Backdrop.shade("medium").maxAlpha, 0.8);
+    compare(Backdrop.shade("strong").maxAlpha, 1);
+    compare(Backdrop.shade(undefined).maxAlpha, 1);
+    compare(Backdrop.shade(undefined).shown, true);
+    compare(Backdrop.shade("bogus").minContrast, Tone.textContrast);
+  }
+
+  function test_shadeAlpha() {
+    compare(Backdrop.shadeAlpha(Backdrop.shade("medium"), 1), 0.8);
+    compare(Backdrop.shadeAlpha(Backdrop.shade("medium"), 0.3), 0.3);
+    compare(Backdrop.shadeAlpha(Backdrop.shade("strong"), 1), 1);
+    compare(Backdrop.shadeAlpha(Backdrop.shade("light"), 0.9), 0.5);
+    compare(Backdrop.shadeAlpha(Backdrop.shade("off"), 1), 0);
+    const backs = Backdrop.backs(Backdrop.flat(255), "#000000", 0);
+    // Gruvbox dark's text over the white pole needs 0.74, under Medium's cap
+    const floor = Tone.alphaFloor("#282828", "#ebdbb2", backs, 4.55);
+    verify(floor > 0.7 && floor < 0.8);
+    compare(Backdrop.shadeAlpha(Backdrop.shade("medium"), floor), floor);
+  }
+
   function test_letterbox() {
     // A fitted image (wide): bars above and below; a rect in the top bar is the
     // letterbox grey wholly, one across its edge counts both
