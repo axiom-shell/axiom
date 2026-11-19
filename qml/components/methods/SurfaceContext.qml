@@ -292,6 +292,59 @@ QtObject {
   }
 
   /**
+   * How deep a box grown in `mode` (EdgeAttach.place's) attaches, from the
+   * followed bar's `bar` outer edge, across it. `p`: stroke, detachedPush.
+   * Returns { attachFromBar: where the attach edge goes (the border's
+   * stroke, past the frame a pill bar on the border reaches back over: its
+   * stripCover, for a box grown from the outer edge; a pill's or island's
+   * far stroke; a solid bar's own inner stroke; or a transparent bar's
+   * inner edge, moved so its box is in line with the windows,
+   * BarsConfig.detachedPush), attachClearance: the extra depth a merged
+   * box's content keeps clear of where the pills would be by }
+   */
+  function _attachFor(mode, bar, p) {
+    if (!bar)
+      return {
+        "attachFromBar": 0,
+        "attachClearance": 0
+      };
+    const island = !!bar.island;
+    const pillFoot = bar.pills || island ? (island ? bar.extent : bar.pillDepth) - p.stroke : 0;
+    const stripCover = bar.stripCover ?? 0;
+    const merged = mode === "merged";
+    const fromOuter = merged || mode === "between";
+    const onPill = mode === "pill" || mode === "island";
+    return {
+      "attachFromBar": fromOuter ? stripCover : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0),
+      "attachClearance": merged ? pillFoot - stripCover : 0
+    };
+  }
+
+  /**
+   * The deepest a box centred at `p.centre` may attach, from the followed
+   * bar's outer edge, whatever its length: the most of `_attachFor`'s
+   * attachFromBar + attachClearance over the modes it may land in
+   * (EdgeAttach.modesAt), which a box between pills flips between as its
+   * length crosses the clear-of threshold. For what must be fitted
+   * without the box's length (a popout's room), as `atIsland` is decided
+   * without it. `p`: layout's pills, centre, detachedPush, stroke, bar.
+   */
+  function contentFrom(p) {
+    const bar = p.bar ?? null;
+    const modes = EdgeAttach.modesAt({
+      "pills": p.pills ?? [],
+      "pillBar": !!bar?.pills,
+      "island": !!bar?.island,
+      "centre": p.centre,
+      "between": true
+    });
+    return Math.max(...modes.map(m => {
+      const a = root._attachFor(m, bar, p);
+      return a.attachFromBar + a.attachClearance;
+    }));
+  }
+
+  /**
    * The box placed in its frame (`f`, frame()) and all that follows from
    * where it lands. `p`, as frame()'s, and:
    *   pills (the followed bar's pills or islands, along the edge), centre,
@@ -320,7 +373,6 @@ QtObject {
   function layout(f, p) {
     const bar = p.bar ?? null;
     const island = !!bar?.island;
-    const pillBar = !!bar && (!!bar.pills || island);
     const place = EdgeAttach.place({
       "pills": p.pills ?? [],
       "pillBar": !!bar?.pills,
@@ -358,14 +410,9 @@ QtObject {
     const fromOuter = merged || place.mode === "between";
     const onPill = place.mode === "pill" || place.mode === "island";
     const detached = root.detached(p.held, bar, place.mode);
-    const pillFoot = pillBar ? (island ? bar.extent : bar.pillDepth) - p.stroke : 0;
     const barOuter = bar ? p.frameLine - bar.extent : 0;
-    // Where the attach edge goes, from the followed bar's outer edge: that
-    // edge grown from it (the border's stroke, past the frame a pill bar
-    // on the border reaches back over: its stripCover), a pill's or
-    // island's far stroke, a solid bar's own inner stroke, or a transparent bar's inner edge (moved so its box is
-    // in line with the windows, BarsConfig.detachedPush)
-    const attachFromBar = !bar ? 0 : fromOuter ? (bar.stripCover ?? 0) : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0);
+    const attach = root._attachFor(place.mode, bar, p);
+    const attachFromBar = attach.attachFromBar;
     // Held, a connector gap short of where the box goes; following a bar,
     // as that meets it; else on the stroke of what reserves the edge
     const attachBase = p.reserved - (p.bareEdge ? 0 : p.stroke);
@@ -401,7 +448,7 @@ QtObject {
       "detached": detached,
       "straight": fromOuter ? !p.border : place.mode === "plain" && p.bareEdge,
       "backfill": !detached && onPill ? 1 : 0,
-      "attachClearance": merged ? pillFoot - (bar.stripCover ?? 0) : 0,
+      "attachClearance": attach.attachClearance,
       "attachFill": plainJoin ? Math.max(0, attachAt) : 0,
       "attachAt": attachAt,
       "attachBase": attachBase,

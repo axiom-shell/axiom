@@ -160,8 +160,10 @@ PopoutWrapperBase {
   // payload, shrunk to fit its screen), the box drawn around that. The
   // fit reads the most the content will take (a content that grows while
   // open declares it, Panel.maxImplicitHeight) and the room the screen
-  // leaves it (mainPopup.contentRoom), neither of which depends on the box
-  // or the zoom
+  // leaves it (mainPopup.contentRoom), neither of which depends on the box,
+  // its length or the zoom: across, the room is less the deepest the box
+  // could attach at its anchor, not where it does (which its length picks
+  // between pills)
   readonly property var _layout: PopoutsConfig.layoutOf(root.currentData?.sizing ?? null, root.screen, {
     "width": Math.max(mainPopup.contentWidth, root._content?.maxImplicitWidth ?? 0),
     "height": Math.max(mainPopup.contentHeight, root._content?.maxImplicitHeight ?? 0)
@@ -496,16 +498,19 @@ PopoutWrapperBase {
     implicitWidth: root.barConfig.vertical ? depth : 0
     implicitHeight: root.barConfig.vertical ? 0 : depth
 
-    // The screen's px for the box, read from neither the box nor the zoom:
-    // across the bar from past it and where the popout attaches to the far
-    // side's frame line, and along it between the frame lines
-    readonly property real _spanAcross: {
+    // The screen's px across the bar from past it to the far side's frame
+    // line, read from neither the box nor the zoom
+    readonly property real _screenAcross: {
       if (!root.screen)
         return 0;
       if (root.barConfig.vertical)
-        return root.screen.width - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.left ? ScreenEdge.Right : ScreenEdge.Left) - mainPopup._barNear - root.attachAt;
-      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear - root.attachAt;
+        return root.screen.width - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.left ? ScreenEdge.Right : ScreenEdge.Left) - mainPopup._barNear;
+      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear;
     }
+    // ...less where the popout attaches (what the box has left, read
+    // imperatively: popoutRoom), and along the bar the span between the
+    // frame lines
+    readonly property real _spanAcross: mainPopup._screenAcross - root.attachAt
     readonly property real _spanAlong: {
       if (!root.screen)
         return 0;
@@ -513,10 +518,13 @@ PopoutWrapperBase {
         return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Top) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Bottom);
       return root.screen.width - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Left) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Right);
     }
-    // What's left of that for the content, as drawn: less the box's chrome
-    // (the popout's Size fits it into this, BarPopouts._layout)
+    // What's left of that for the content, as drawn: across, less the
+    // deepest the popout could attach there whatever its length
+    // (EdgePlacement.contentFromBar, not attachAt, which follows the box's
+    // length) and the box's chrome (the popout's Size fits it into this,
+    // BarPopouts._layout)
     readonly property var contentRoom: {
-      const across = mainPopup._spanAcross - surface.contentInset * 2 - root.pillClearance;
+      const across = mainPopup._screenAcross - placement.contentFromBar - surface.contentInset * 2;
       const along = mainPopup._spanAlong - surface.contentInset * 2;
       return {
         "width": root.barConfig.vertical ? across : along,
