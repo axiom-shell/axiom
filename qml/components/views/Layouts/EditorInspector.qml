@@ -216,16 +216,19 @@ Item {
       }
 
       // Its own Content size, on top of its page's or menu's
-      SchemaPropertiesForm {
+      Loader {
         Layout.fillWidth: true
-        visible: !!OverlayConfig.moduleInfo(root.moduleType)?.contentSize
-        propertiesSchema: ({
-            "contentSize": OverlayConfig.moduleInfo(root.moduleType)?.contentSize
-          })
-        order: ["contentSize"]
-        values: root.module ?? ({})
-        fieldNote: () => root.moduleNote(root.module?.contentSize ?? null)
-        onEdited: (path, value) => root.editor.updateModuleField(root.index, path[0], value)
+        active: !!OverlayConfig.moduleInfo(root.moduleType)?.contentSize
+        visible: active
+        sourceComponent: SchemaPropertiesForm {
+          propertiesSchema: ({
+              "contentSize": OverlayConfig.moduleInfo(root.moduleType)?.contentSize
+            })
+          order: ["contentSize"]
+          values: root.module ?? ({})
+          fieldNote: () => root.moduleNote(root.module?.contentSize ?? null)
+          onEdited: (path, value) => root.editor.updateModuleField(root.index, path[0], value)
+        }
       }
 
       OptionsGroup {

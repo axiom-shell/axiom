@@ -1,16 +1,16 @@
 pragma Singleton
 import QtQuick
 
-// How a surface's own `sizing` ({ cardSize, linked, contentSize }: each size
+// What a surface's own `sizing` ({ cardSize, linked, contentSize }: each size
 // a % or null for "as the level above"; a tool page's or popout's is
-// { contentSize } alone) becomes the factors its host draws at (factors,
-// moduleZoom), how much of its room it is shrunk to fit (fitInto, and
-// popoutLayout for a popout), how an edit of it keeps its link's meaning
-// (edited, editedIn), and the numbers of the line that says it all
-// (breakdown, moduleBreakdown), and which of a page's fits shrinks it most
-// (tightest). The global Card and Content sizes are
+// { contentSize } alone) comes to. The global Card and Content sizes are
 // already inside the card size and Widget; hosts apply only these factors
 // on top. No config, no text.
+//   factors, moduleZoom: the factors its host draws at
+//   fitInto, popoutLayout: how much of its room it is shrunk to fit
+//   edited, editedIn: how an edit keeps its link's meaning
+//   breakdown, moduleBreakdown, shrinkOf: the numbers of the line that says it all
+//   tightest: which of a page's fits shrinks it most
 QtObject {
   id: root
 

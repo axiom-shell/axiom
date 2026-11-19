@@ -843,10 +843,12 @@ QtObject {
   }
 
   // How much an area `width` × `height` px with card size `unit` shrinks
-  // modules reaching `bounds`: 1 where they fit
+  // modules reaching `bounds` (Sizing.fitInto): 1 where they fit
   function fitScale(bounds, width, height, unit) {
-    const sizes = root.trackSizes(bounds, unit);
-    return sizes.width <= 0 ? 1 : Math.min(1, width / sizes.width, height / sizes.height);
+    return Sizing.fitInto(root.trackSizes(bounds, unit), {
+      "width": width,
+      "height": height
+    });
   }
   // The overlay's cards in `height` px of room (drawn px): `card` px,
   // content drawn at `zoom`, but never so big that a page two cards high

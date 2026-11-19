@@ -22,7 +22,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
   - `edge`: fitted to the whole edge. Its rows (columns on a top/bottom edge) grow or shrink evenly to take exactly the room (`GridPlacement.trackSizes` with `fit`, down to half a unit, scrolling only past that; `menuOnScreen` draws it the same in the editor). Modules go compact below their minimum.
 - `sizing` (`Sizing`): its own Card size and Content size ([Sizing](../overlay/pages-and-grid.md#sizing); the overlay's own sizes don't apply). The cards and content shrink together where the menu would be deeper than its screen (`MenusConfig.layoutOf`).
 - `grid.fine`: each unit split in two each way.
-  - `cardUnitOf` takes `GridPlacement.fineUnit`, so the places scaled keep their size exactly.
+  - `layoutOf`'s `unit` takes `GridPlacement.fineUnit`, so the places scaled keep their size exactly.
   - The editor's `GridEditor.sizeScale` doubles default sizes.
   - `updateMenuField` rescales the places (`GridPlacement.scalePlace`) and `offset` so modules stay put, as the lock screen's does.
 - `sizing` edits go through `Sizing.editedIn` in `updateMenuField` (and `Sizing.edited` in `ScreenLayoutEditor.updateLayoutField`).

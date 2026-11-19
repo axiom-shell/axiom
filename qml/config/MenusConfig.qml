@@ -150,7 +150,7 @@ QtObject {
   function layoutOf(menu, screen) {
     screen = screen ?? root.screenFor(menu);
     const factors = Sizing.factors(menu.layout.sizing);
-    const card = (screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit) * factors.card;
+    const card = OverlayConfig.cardUnitFor(screen) * factors.card;
     const fine = menu.layout.grid.fine;
     let fit = 1;
     if (screen) {
@@ -166,19 +166,6 @@ QtObject {
       "gap": gap,
       "fit": fit
     };
-  }
-
-  // layoutOf's `unit`, `gap` and `zoom` alone, for callers that read one
-  function cardUnitOf(menu, screen) {
-    return root.layoutOf(menu, screen).unit;
-  }
-
-  function gapOf(menu, screen) {
-    return root.layoutOf(menu, screen).gap;
-  }
-
-  function zoomOf(menu, screen) {
-    return root.layoutOf(menu, screen).zoom;
   }
 
   // The menu's modules' grid along its edge, unstretched, at card size

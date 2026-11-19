@@ -1,6 +1,6 @@
 # Menu hosts (edge and strip)
 
-> **Files:** `qml/shell/Menus.qml`, `qml/components/surfaces/menu/MenuHosts.qml`, `qml/components/surfaces/menu/MenuBody.qml`, `qml/components/surfaces/menu/MenuSync.qml`, `qml/components/surfaces/menu/FloatingEdgeMenu.qml`, `qml/components/surfaces/menu/IntegratedEdgeMenu.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/services/ui/MenuManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
+> **Files:** `qml/shell/Menus.qml`, `qml/components/surfaces/menu/MenuHosts.qml`, `qml/components/surfaces/menu/MenuBody.qml`, `qml/components/surfaces/menu/MenuSync.qml`, `qml/components/surfaces/menu/FloatingEdgeMenu.qml`, `qml/components/surfaces/menu/IntegratedEdgeMenu.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/services/ui/MenuManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`, `qml/config/MenusConfig.qml`, `qml/components/methods/Sizing.qml`, `qml/components/methods/GridPlacement.qml`
 > **Config:** `Menus.items[].placement` (`edge` | `strip` | `free`), `length`, `offset`, `gridOffset`, `sizing`, `pinButton`, `closeButton`, `frame`, `detached`, `distance`, `animation`, `background`
 > **Related:** [Overview](overview.md), [Free menus](free-menus.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
 
@@ -12,12 +12,12 @@ How a menu is put on screen: the shared body and sync, the lattice its modules s
 
 ### The body (`MenuBody`)
 - Every host (`FreeMenu` too) puts `MenuBody` inside: a `ModuleGrid` on an `OverlayGrid`.
-- `fixedUnit` is the card size on its screen (`MenusConfig.cardUnitOf`, from `MenusConfig.layoutOf`, which gives `{ unit, zoom, gap, fit }`):
+- `fixedUnit` is the card size on its screen (`MenusConfig.layoutOf`, which gives `{ unit, zoom, gap, fit }`; each host keeps it as `layout` and reads its keys):
   - `OverlayConfig.cardUnitOn` of the screen: the card size there (two cards fill its short side, times `Widget.cardSize`%). It's the same whether an overlay is open or not, and an overlay page's own sizing doesn't reach menus;
   - times the menu's Card size ([Sizing](../overlay/pages-and-grid.md#sizing)), shrunk by `fit` where its modules' depth across its edge (a free menu's width) would pass its screen less its padding (`GridPlacement.fitFactor`), its cards, gaps and zoom together. Along the edge it scrolls or is fitted instead (below).
-  - The grid and everything placed by it (the lattice, the menu's size, reserved strips) use that drawn card size, and `MenusConfig.gapOf` between cards: the layout's gap drawn at the menu's zoom (`GridPlacement.gapOf`), as an overlay page's are (`OverlayGrid.gap`).
-- Each module's content is zoomed as on the overlay (`ModuleGrid.zoom` → `OverlaySlot.zoom`, `ExpandedModule.zoom`): laid out at its slot's size over `MenusConfig.zoomOf` and scaled back to fill it.
-  - `zoomOf`: the menu's Content size times `fit`, as a factor (`GridPlacement.zoomOf`, 1 within 2 %): [Sizing](../overlay/pages-and-grid.md#sizing).
+  - The grid and everything placed by it (the lattice, the menu's size, reserved strips) use that drawn card size, and `layout.gap` between cards: the layout's gap drawn at the menu's zoom (`GridPlacement.gapOf`), as an overlay page's are (`OverlayGrid.gap`).
+- Each module's content is zoomed as on the overlay (`ModuleGrid.zoom` → `OverlaySlot.zoom`, `ExpandedModule.zoom`): laid out at its slot's size over `layout.zoom` and scaled back to fill it.
+  - `layout.zoom`: the menu's Content size times `fit`, as a factor (`GridPlacement.zoomOf`, 1 within 2 %): [Sizing](../overlay/pages-and-grid.md#sizing).
   - Submenus (`MenuSubmenu`) are an `MenuBody` too, with `submenu` set and `screen` that of their parent menu: the same grid and zoom on its screen, only capped (never stretched), with no pin or Escape of its own.
 - Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
 - Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.

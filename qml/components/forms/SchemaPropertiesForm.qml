@@ -147,7 +147,7 @@ ColumnLayout {
         stream: true
         // Unknown until the field streams in, so it takes its height then
         // rather than folding open
-        shown: root.folded ? false : cell.fieldShown
+        shown: root?.folded ? false : cell.fieldShown
         level: root.tree.levels[index]
         beside: _beside && half
         // The form is gone (null) a moment before its fields

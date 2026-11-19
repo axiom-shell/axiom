@@ -25,6 +25,11 @@ QtObject {
     })
   readonly property var _breakdown: Sizing.breakdown(root.own, root._global, root.fit?.scale ?? null, root.fit?.capped ?? false)
 
+  // The clause saying a surface is shrunk to `shrunkTo` % to fit `screen`
+  function shrinkClause(shrunkTo, screen) {
+    return I18n.tr("Shrunk to {0}% to fit {1}", shrunkTo, screen);
+  }
+
   // The line for the Size row `key` (cardSize, or contentSize where it
   // shows), "" for a row that has none. A linked sizing's one line sits
   // under Card size; unlinked, each row says its own
@@ -49,7 +54,7 @@ QtObject {
     if (root.fit?.card)
       parts.push(b.capped ? I18n.tr("Capped at two cards high ({0} px)", root.fit.card) : I18n.tr("Cards {0} px", root.fit.card));
     if (b.shrunk)
-      parts.push(I18n.tr("Shrunk to {0}% to fit {1}", b.shrunkTo, root.fit.screen));
+      parts.push(root.shrinkClause(b.shrunkTo, root.fit.screen));
     return parts.join(" · ");
   }
 
@@ -59,7 +64,7 @@ QtObject {
   function moduleLine(contentSize) {
     const b = Sizing.moduleBreakdown(root.own, root._global, root.fit?.scale ?? null, contentSize);
     const text = I18n.tr("Content at {0}% ({1}% × {2}% here × {3}% this module)", b.total, b.global, b.here, b.module);
-    return b.shrunk ? text + " · " + I18n.tr("Shrunk to {0}% to fit {1}", b.shrunkTo, root.fit.screen) : text;
+    return b.shrunk ? text + " · " + root.shrinkClause(b.shrunkTo, root.fit.screen) : text;
   }
 
   // The line for the form row at `path` (SchemaPropertiesForm.fieldNote): a

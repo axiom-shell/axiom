@@ -53,7 +53,8 @@ QtObject {
   function triggerLength(vertical, pad, room) {
     if (GridPlacement.menuFillsEdge(root.menu))
       return room;
-    return Math.min(room, MenusConfig.gridLengthOf(root.menu, vertical, MenusConfig.cardUnitOf(root.menu), MenusConfig.gapOf(root.menu)) + pad * 2);
+    const layout = MenusConfig.layoutOf(root.menu);
+    return Math.min(room, MenusConfig.gridLengthOf(root.menu, vertical, layout.unit, layout.gap) + pad * 2);
   }
 
   function _sync() {

@@ -29,10 +29,8 @@ Item {
 
   // The share of its zoom it's drawn at, so it fits its room
   readonly property real fitScale: {
-    const drawnWidth = root.width * root.zoom;
-    const drawnHeight = root.height * root.zoom;
-    const fitWidth = drawnWidth > 0 && root.roomWidth > 0 ? root.roomWidth / drawnWidth : 1;
-    const fitTall = root.fitHeight && drawnHeight > 0 && root.roomHeight > 0 ? root.roomHeight / drawnHeight : 1;
+    const fitWidth = root.roomWidth > 0 ? GridPlacement.fitLength(root.width * root.zoom, root.roomWidth) : 1;
+    const fitTall = root.fitHeight && root.roomHeight > 0 ? GridPlacement.fitLength(root.height * root.zoom, root.roomHeight) : 1;
     return Math.min(root.fitCap, fitWidth, fitTall);
   }
   // What the page, laid out at the grid's unit, is drawn at

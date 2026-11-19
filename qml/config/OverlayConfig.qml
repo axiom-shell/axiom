@@ -248,6 +248,12 @@ QtObject {
     return GridPlacement.baseCard(width, height) * Widget.cardSize / 100;
   }
 
+  // cardUnitOn for `screen` (null: GridPlacement.cardUnit, its start before a
+  // screen is known)
+  function cardUnitFor(screen) {
+    return screen ? cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
+  }
+
   // A screen layout's (a desktop item's, the lock screen's, the
   // greeter's) `modules` on `screen` in a `width` × `height` px room (its
   // room inside the bars and border): the units that fit there at its

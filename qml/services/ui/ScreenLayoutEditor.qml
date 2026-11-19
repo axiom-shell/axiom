@@ -75,8 +75,9 @@ QtObject {
   // Whether its modules had to shrink below the layout's Card size to
   // fit this screen, and to how much of it (%)
   readonly property var _shown: root.localLayout && root.screen ? OverlayConfig.screenArrangement(root.localLayout, root.localLayout.modules, root.screen, root.room.width, root.room.height) : null
-  readonly property var shrunk: root._shown?.shrunk ?? false
-  readonly property var shrunkTo: root._shown && root.lattice ? Math.round(100 * root._shown.unit / root.lattice.unit) : 100
+  readonly property real fitScale: root._shown && root.lattice ? root._shown.unit / root.lattice.unit : 1
+  readonly property var shrunk: Sizing.shrinkOf(root.fitScale).shrunk
+  readonly property var shrunkTo: Sizing.shrinkOf(root.fitScale).shrunkTo
   readonly property var _latticeKey: root.lattice ? [root.scope, root.lattice.cols, root.lattice.rows, root.grid.cols, root.grid.rows].join(":") : ""
   on_LatticeKeyChanged: Qt.callLater(root.rebase)
 

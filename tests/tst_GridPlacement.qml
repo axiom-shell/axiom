@@ -855,6 +855,8 @@ TestCase {
     };
     compare(GridPlacement.fitScale(bounds, 1200, 600, 500), 1, "fits");
     compare(GridPlacement.fitScale(bounds, 510, 600, 500), 0.5, "half as wide as two cards");
+    compare(GridPlacement.fitScale(bounds, 340, 600, 500), 0.333, "floored to 3 decimals, as Sizing.fitInto");
+    compare(GridPlacement.fitScale(bounds, 10, 600, 500), 0.1, "never below 0.1");
     compare(GridPlacement.fitScale({
       "cols": 0,
       "rows": 0

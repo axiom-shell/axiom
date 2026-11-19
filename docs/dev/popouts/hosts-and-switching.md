@@ -1,7 +1,7 @@
 # Popout hosts, window sizing and switching in place
 
-> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/shell/OSD.qml`
-> **Config:** none directly
+> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/reusable/ZoomLoader.qml`, `qml/config/PopoutsConfig.qml`, `qml/components/methods/Sizing.qml`, `qml/shell/OSD.qml`
+> **Config:** `Bars.*.widgets[].properties.popout.sizing`
 > **Related:** [Surface context](surface-context.md), [Edge attach](edge-attach.md), [Submenus](submenus.md), [Registry](registry.md), [Content roots](../overlay/content-roots.md), [Pill and floating bars](pill-and-floating-bars.md)
 
 This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a bar popout's window is sized, how it switches to another payload without closing, and how screen-edge popouts sit.

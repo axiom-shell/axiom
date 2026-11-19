@@ -62,6 +62,11 @@ QtObject {
     return root._sizingNotes.noteFor(path);
   }
 
+  // The "Shrunk to N% to fit screen" clause (SizingNote.shrinkClause)
+  function shrinkClause(shrunkTo, screen) {
+    return root._sizingNotes.shrinkClause(shrunkTo, screen);
+  }
+
   // The line under a module's own Content size (`contentSize`, a % or null)
   function moduleSizingNote(contentSize) {
     return root._sizingNotes.moduleLine(contentSize);
