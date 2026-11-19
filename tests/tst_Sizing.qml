@@ -317,10 +317,10 @@ TestCase {
     };
     const fits = Sizing.breakdown(own, root._global, 1, false);
     verify(!fits.shrunk);
-    compare(fits.fit, 100);
+    compare(fits.shrunkTo, 100);
     const shrunk = Sizing.breakdown(own, root._global, 0.8, true);
     verify(shrunk.shrunk);
-    compare(shrunk.fit, 80);
+    compare(shrunk.shrunkTo, 80);
     verify(shrunk.capped);
     compare(shrunk.card.total, 180, "the fit is its own clause, not in the totals");
     verify(!Sizing.breakdown(own, root._global, 0.9995, false).shrunk, "a hair under 1 is no shrink");
@@ -333,7 +333,7 @@ TestCase {
       "contentSize": 100
     }, root._global, 0.6, false);
     compare(b.kind, "zoom");
-    compare(b.fit, 60);
+    compare(b.shrunkTo, 60);
     verify(b.shrunk);
   }
 
@@ -343,14 +343,40 @@ TestCase {
       "linked": true,
       "contentSize": null
     };
-    const plain = Sizing.moduleBreakdown(own, root._global, null, 150).content;
+    const plain = Sizing.moduleBreakdown(own, root._global, null, 150);
     compare([plain.global, plain.here, plain.module, plain.total], [90, 120, 150, 162]);
-    const fitted = Sizing.moduleBreakdown(own, root._global, 0.5, 150).content;
-    compare([fitted.here, fitted.module, fitted.fit, fitted.total], [120, 150, 50, 81], "here is the surface's own factor; the fit is in the total");
+    const fitted = Sizing.moduleBreakdown(own, root._global, 0.5, 150);
+    compare([fitted.here, fitted.module, fitted.shrunkTo, fitted.total], [120, 150, 50, 81], "here is the surface's own factor; the fit is in the total");
     verify(fitted.shrunk);
     verify(!plain.shrunk);
-    const none = Sizing.moduleBreakdown(null, root._global, null, null).content;
+    const none = Sizing.moduleBreakdown(null, root._global, null, null);
     compare([none.here, none.module, none.total], [100, 100, 90], "no sizing and no module Content size: the global size");
+  }
+
+  function test_tightest() {
+    compare(Sizing.tightest([]), null);
+    const a = {
+      "screen": "A",
+      "scale": 0.8,
+      "capped": false,
+      "card": 400
+    };
+    const b = {
+      "screen": "B",
+      "scale": 0.6,
+      "capped": false,
+      "card": 500
+    };
+    compare(Sizing.tightest([a, b]).screen, "B", "the smallest scale");
+    compare(Sizing.tightest([b, a]).screen, "B");
+    const c = {
+      "screen": "C",
+      "scale": 0.6,
+      "capped": true,
+      "card": 300
+    };
+    compare(Sizing.tightest([b, c]).screen, "C", "equal scales: the smaller card");
+    compare(Sizing.tightest([c, b]).screen, "C");
   }
 
   function test_popoutLayout() {

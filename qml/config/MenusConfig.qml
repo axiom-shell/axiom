@@ -168,6 +168,7 @@ QtObject {
     };
   }
 
+  // gridOf's `unit`, `gap` and `zoom` alone, for callers that read one
   function cardUnitOf(menu, screen) {
     return root.gridOf(menu, screen).unit;
   }

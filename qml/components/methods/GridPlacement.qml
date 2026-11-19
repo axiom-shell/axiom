@@ -56,6 +56,12 @@ QtObject {
     return root.cardSpacing * zoom;
   }
 
+  // The most (a factor, at most 1, floored to 3 decimals, at least 0.1) of
+  // `length` px that fits `room` px: 1 when it fits
+  function fitLength(length, room) {
+    return length > room ? Math.max(0.1, Math.floor(room / length * 1000) / 1000) : 1;
+  }
+
   // The most (a factor, at most 1) of its size at which `count` units of a
   // grid fit `room` px, its cards `card` px at 1 (a double grid's split
   // with `fine`) and its content drawn at `zoom`: its units and gaps
@@ -64,7 +70,7 @@ QtObject {
   function fitFactor(count, card, zoom, fine, room) {
     const gap = root.gapOf(zoom);
     const length = root.span(count, root.gridUnitOf(card, fine, gap), gap);
-    return count > 0 && length > room ? Math.max(0.1, Math.floor(room / length * 1000) / 1000) : 1;
+    return count > 0 ? root.fitLength(length, room) : 1;
   }
 
   // A grid's own card size at card size `card` px, `gap` px between

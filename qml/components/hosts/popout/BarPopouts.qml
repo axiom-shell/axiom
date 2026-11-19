@@ -156,7 +156,7 @@ PopoutWrapperBase {
 
   // ---- Its Size ----
   // The popout is laid out at its content's own size and drawn zoomed
-  // (PopoutsConfig.layoutOf: its widget's `popout.sizing`, from the
+  // (PopoutsConfig.layoutFor: its widget's `popout.sizing`, from the
   // payload, shrunk to fit its screen), the box drawn around that. The
   // fit reads the most the content will take (a content that grows while
   // open declares it, Panel.maxImplicitHeight) and the room the screen
@@ -164,10 +164,10 @@ PopoutWrapperBase {
   // its length or the zoom: across, the room is less the deepest the box
   // could attach at its anchor, not where it does (which its length picks
   // between pills)
-  readonly property var _layout: PopoutsConfig.layoutOf(root.currentData?.sizing ?? null, root.screen, {
+  readonly property var _layout: PopoutsConfig.layoutFor(root.screen, {
     "width": Math.max(mainPopup.contentWidth, root._content?.maxImplicitWidth ?? 0),
     "height": Math.max(mainPopup.contentHeight, root._content?.maxImplicitHeight ?? 0)
-  }, mainPopup.contentRoom)
+  }, mainPopup.contentRoom, root.currentData?.sizing ?? null)
   // What the content is drawn at
   readonly property real zoom: root._layout.zoom
   // The card size content laid out in cards lays out at (CustomWidget)

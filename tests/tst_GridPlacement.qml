@@ -376,6 +376,17 @@ TestCase {
     verify(across <= 1040 && across > 1040 - 16);
   }
 
+  // The most of a length that fits a room: 1 when it fits, floored to 3
+  // decimals, at least a tenth
+  function test_fitLength() {
+    compare(GridPlacement.fitLength(500, 800), 1, "fits");
+    compare(GridPlacement.fitLength(500, 500), 1, "exactly");
+    compare(GridPlacement.fitLength(1000, 500), 0.5);
+    compare(GridPlacement.fitLength(10000, 9995), 0.999, "0.9995 floors");
+    compare(GridPlacement.fitLength(1000, 5), 0.1, "never below a tenth");
+    compare(GridPlacement.fitLength(0, 500), 1, "no length");
+  }
+
   // The factor its cards and content shrink by until its grid fits the room,
   // cards and gaps together; 1 when it fits or has no units
   function test_fitFactor() {

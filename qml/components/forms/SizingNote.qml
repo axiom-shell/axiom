@@ -49,7 +49,7 @@ QtObject {
     if (root.fit?.card)
       parts.push(b.capped ? I18n.tr("Capped at two cards high ({0} px)", root.fit.card) : I18n.tr("Cards {0} px", root.fit.card));
     if (b.shrunk)
-      parts.push(I18n.tr("Shrunk to {0}% to fit {1}", b.fit, root.fit.screen));
+      parts.push(I18n.tr("Shrunk to {0}% to fit {1}", b.shrunkTo, root.fit.screen));
     return parts.join(" · ");
   }
 
@@ -57,9 +57,9 @@ QtObject {
   // or null): the surface's own content factor and the module's, with a
   // shrink clause when the surface is shrunk
   function moduleLine(contentSize) {
-    const b = Sizing.moduleBreakdown(root.own, root._global, root.fit?.scale ?? null, contentSize).content;
+    const b = Sizing.moduleBreakdown(root.own, root._global, root.fit?.scale ?? null, contentSize);
     const text = I18n.tr("Content at {0}% ({1}% × {2}% here × {3}% this module)", b.total, b.global, b.here, b.module);
-    return b.shrunk ? text + " · " + I18n.tr("Shrunk to {0}% to fit {1}", b.fit, root.fit.screen) : text;
+    return b.shrunk ? text + " · " + I18n.tr("Shrunk to {0}% to fit {1}", b.shrunkTo, root.fit.screen) : text;
   }
 
   // The line for the form row at `path` (SchemaPropertiesForm.fieldNote): a

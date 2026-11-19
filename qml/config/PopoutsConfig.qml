@@ -14,8 +14,9 @@ QtObject {
   // Space between a popout's box (inside its stroke) and its content
   readonly property int padding: Widget.px(_c.padding)
 
-  // How a bar popout lays out and draws at its Size (`sizing`: its widget's
-  // `popout.sizing`, or null for none) on `screen`, as a menu's gridOf does:
+  // How a bar popout lays out and draws on `screen` at its Size (`sizing`:
+  // its widget's `popout.sizing`, or null for none), as a menu's gridOf does
+  // (arguments in OverlayConfig.layoutFor's order):
   //   zoom  what its content is drawn at (its Content size, less what it
   //         takes to fit)
   //   unit  the card size its content lays out at, for content laid out in
@@ -25,7 +26,7 @@ QtObject {
   //         `content` ({ width, height }: the most its layout size will be)
   //         drawn at its zoom, fits `room` ({ width, height }: the screen's
   //         px for it, which must not depend on the popout's own box)
-  function layoutOf(sizing, screen, content, room) {
+  function layoutFor(screen, content, room, sizing) {
     const card = screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
     return Sizing.popoutLayout(sizing, card, content, room);
   }

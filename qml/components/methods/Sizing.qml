@@ -7,7 +7,8 @@ import QtQuick
 // moduleZoom), how much of its room it is shrunk to fit (fitInto, and
 // popoutLayout for a popout), how an edit of it keeps its link's meaning
 // (edited, editedIn), and the numbers of the line that says it all
-// (breakdown, moduleBreakdown). The global Card and Content sizes are
+// (breakdown, moduleBreakdown), and which of a page's fits shrinks it most
+// (tightest). The global Card and Content sizes are
 // already inside the card size and Widget; hosts apply only these factors
 // on top. No config, no text.
 QtObject {
@@ -18,11 +19,16 @@ QtObject {
     return value === null || value === undefined ? 1 : value / 100;
   }
 
+  // A sizing without a `linked` zooms its whole surface (a tool page, a popout)
+  function _zooms(own) {
+    return !!own && !("linked" in own);
+  }
+
   // What a surface's `sizing` draws at: { card, content } factors. Linked,
   // its content grows with its cards. One without a `linked` is zoomed whole
   // (a tool page, a popout): its cards and content are the one factor
   function factors(own) {
-    if (own && !("linked" in own)) {
+    if (root._zooms(own)) {
       const zoom = root.factor(own.contentSize);
       return {
         "card": zoom,
@@ -43,66 +49,63 @@ QtObject {
   }
 
   // The most (a factor, at most 1, floored to 3 decimals, at least 0.1) of
-  // its size at which `size` ({ width, height }) fits `room`, as
-  // GridPlacement.fitFactor does for a grid: 1 when it fits
+  // its size at which `size` ({ width, height }) fits `room`: per axis,
+  // GridPlacement.fitLength, as fitFactor does for a grid; 1 when it fits
   function fitInto(size, room) {
-    const fits = Math.min(size.width > room.width ? room.width / size.width : 1, size.height > room.height ? room.height / size.height : 1);
-    return fits < 1 ? Math.max(0.1, Math.floor(fits * 1000) / 1000) : 1;
+    return Math.min(GridPlacement.fitLength(size.width, room.width), GridPlacement.fitLength(size.height, room.height));
+  }
+
+  // The entry of `fits` ([{ screen, scale, capped, card }], OverlayManager.fitOf's)
+  // that shrinks most, the smallest cards where equal; null for none
+  function tightest(fits) {
+    return fits.reduce((tight, fit) => tight === null || fit.scale < tight.scale || (fit.scale === tight.scale && fit.card < tight.card) ? fit : tight, null);
   }
 
   // The numbers behind a Size row's line, in whole %: `own` (the surface's
   // `sizing`), `global` ({ card, content }: the Look & Feel sizes in %), the
-  // `fit` (a factor, at most 1; null for none) the surface is shrunk by and
-  // whether its height `capped` its cards. { kind, card, content, fit,
-  // shrunk, capped }: `kind` is how it combines, "zoom" (no `linked`: the
+  // `fitScale` (a factor, at most 1; null for none) the surface is shrunk by
+  // and whether its height `capped` its cards. { kind, card, content,
+  // shrunkTo (whole %), shrunk, capped }: `kind` is how it combines, "zoom" (no `linked`: the
   // whole surface zooms), "linked", "unlinked" or "following" (linked, its
   // Card size unset: the global sizes alone); `card` and `content` each
   // { global, here (the surface's factor), total } with total = global ×
   // here, so the two differ where the global sizes do. The fit is not in
   // the totals: it is its own clause (the cap is drawn px only)
-  function breakdown(own, global, fit, capped) {
+  function breakdown(own, global, fitScale, capped) {
     const factors = root.factors(own);
-    const shrinks = fit ?? 1;
     let kind = "following";
-    if (own && !("linked" in own))
+    if (root._zooms(own))
       kind = "zoom";
     else if (own && !own.linked)
       kind = "unlinked";
     else if (own && own.cardSize !== null && own.cardSize !== undefined)
       kind = "linked";
-    return {
+    return Object.assign({
       "kind": kind,
       "card": root._level(global.card, factors.card),
       "content": root._level(global.content, factors.content),
-      "fit": Math.round(shrinks * 100),
-      "shrunk": Math.round(shrinks * 100) < 100,
       "capped": capped
-    };
+    }, root._shrink(fitScale));
   }
 
   // `breakdown` for a module's Content size (`contentSize`, a % or null)
   // on that surface: its `content` is { global, here (the surface's own
-  // content factor, as its line shows), module, fit, shrunk (as breakdown),
-  // total }; the total has the surface's fit in, as that is what its
-  // modules are drawn at
-  function moduleBreakdown(own, global, fit, contentSize) {
+  // content factor, as its line shows), module, shrunkTo, shrunk (as
+  // breakdown), total }; the total has the surface's fit in, as that is
+  // what its modules are drawn at
+  function moduleBreakdown(own, global, fitScale, contentSize) {
     const factors = root.factors(own);
-    const shrinks = fit ?? 1;
     const module = root.factor(contentSize);
-    return {
-      "content": Object.assign(root._level(global.content, factors.content), {
-        "module": Math.round(module * 100),
-        "fit": Math.round(shrinks * 100),
-        "shrunk": Math.round(shrinks * 100) < 100,
-        "total": Math.round(global.content * factors.content * shrinks * module)
-      })
-    };
+    return Object.assign(root._level(global.content, factors.content), {
+      "module": Math.round(module * 100),
+      "total": Math.round(global.content * factors.content * (fitScale ?? 1) * module)
+    }, root._shrink(fitScale));
   }
 
   // How a popout lays out and draws: `own` its `sizing` (or null), `card`
   // the card unit on its screen, `content` ({ width, height }: the most its
   // layout size will be) and `room` ({ width, height }: the px the screen
-  // has for it). { zoom, unit, fit } as PopoutsConfig.layoutOf describes
+  // has for it). { zoom, unit, fit } as PopoutsConfig.layoutFor describes
   function popoutLayout(own, card, content, room) {
     const factors = root.factors(own);
     const zoom = GridPlacement.zoomOf(factors.content);
@@ -114,6 +117,15 @@ QtObject {
       "zoom": GridPlacement.zoomOf(factors.content * fit),
       "unit": card * factors.card / zoom,
       "fit": fit
+    };
+  }
+
+  // A fit (a factor, null for none) as whole % and whether it shrinks
+  function _shrink(fitScale) {
+    const shrunkTo = Math.round((fitScale ?? 1) * 100);
+    return {
+      "shrunkTo": shrunkTo,
+      "shrunk": shrunkTo < 100
     };
   }
 

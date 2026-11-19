@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 import qs.services.ui
 
 // The layouts editor on an overlay page (OverlayManager's selected view):
@@ -20,8 +21,8 @@ EditTarget {
 
   editor: OverlayManager.layout
   sizing: root.view?.sizing ?? null
-  // The monitor that shrinks it most (the smallest cards where equal)
-  sizingFit: root._fits.reduce((tight, fit) => tight === null || fit.scale < tight.scale || (fit.scale === tight.scale && fit.card < tight.card) ? fit : tight, null)
+  // The monitor that shrinks it most
+  sizingFit: Sizing.tightest(root._fits)
   modules: root.isCustom ? root.view.layout.modules : null
   icon: root.view ? OverlayConfig.pageIcon(root.view) : "dashboard"
   title: root.view ? OverlayConfig.viewLabel(root.view, OverlayManager.selectedViewIndex) : I18n.tr("No pages")

@@ -613,8 +613,8 @@ QtObject {
   // a draggable or listed chip's row height (bar lanes, grid drag chips, keybind rows)
   readonly property real chipRowHeight: Widget.height + Widget.padding / 2
   // the width a flow column aims for. fixed px: a distance on screen, the
-  // gap the eye travels from a label to its control (not on the Interface
-  // scale: a raised scale on a wide screen still gets more columns)
+  // gap the eye travels from a label to its control (not on the Content
+  // size: a larger Content size on a wide screen still gets more columns)
   readonly property int columnTarget: 560
   // a flow column is never narrower: about the commonest screen's row column
   readonly property int columnMin: Widget.textPx(400)
