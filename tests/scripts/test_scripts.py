@@ -10,6 +10,8 @@
   - only PAM's success unlocks the built-in lock screen
   - the Daily habits script (data/custom-widgets/habits.sh): add, check,
     streaks, undo, remove, bad ids, JSON, overlapping changes
+  - new_names.py lists a branch's added names: also defined, moved, components, schema keys,
+    similar strings, generated paths skipped
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -1548,6 +1550,65 @@ class DemoScript(unittest.TestCase):
             args = [template, verb] + (["42"] if verb == "set" else [])
             result = self.run_script(*args)
             self.assertEqual(result.returncode, 0, "%s %s: %s" % (template, verb, result.stderr))
+
+
+class NewNames(unittest.TestCase):
+    """scripts/dev/new_names.py lists the names a branch adds, in a scratch git repo."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name)
+        self.write("qml/A.qml", "Item {\n  property int oldName: 1\n  function shared() {}\n"
+                                "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
+        self.write("qml/config/schema/s.yaml", "A:\n  type: object\n")
+        self.write("docs/dev/generated/g.py", "def keepme():\n")
+        self.git("init", "-q", "-b", "main")
+        self.git("add", "-A")
+        self.git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base")
+
+    def git(self, *args):
+        subprocess.run(["git", "-C", str(self.repo), *args], check=True, env=scratch_env(self.tmp.name))
+
+    def write(self, path, text):
+        f = self.repo / path
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(text)
+
+    def run_names(self):
+        out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py"), "--json"],
+                             cwd=self.repo, capture_output=True, text=True, check=True).stdout
+        return json.loads(out)
+
+    def find(self, rows, kind, name):
+        hits = [r for r in rows if r["kind"] == kind and r["name"] == name]
+        self.assertEqual(len(hits), 1, (kind, name, rows))
+        return hits[0]
+
+    def test_rows(self):
+        self.write("qml/A.qml", "Item {\n  property int newName: 1\n  function shared() {}\n"
+                                "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
+        self.write("qml/B.qml", "Item {\n  function shared() {}\n  Text { text: I18n.tr(\"shrunk to  {0} % on {1}\") }\n}\n")
+        self.write("qml/config/schema/s.yaml", "A:\n  type: object\n  newKey:\n    type: string\n    default: x\n    x-scope: machine\n")
+        self.write("docs/dev/generated/g.py", "def keepme():\n\ndef skipped():\n")
+        rows = self.run_names()
+        self.assertEqual(self.find(rows, "function", "shared")["also"], ["qml/A.qml:3"])
+        self.assertTrue(self.find(rows, "property", "newName")["moved"] is False)
+        self.assertEqual(self.find(rows, "component", "B")["file"], "qml/B.qml")
+        self.assertTrue(any(r["also"] for r in rows if r["kind"] == "string" and r["file"] == "qml/B.qml"))
+        self.assertEqual([r["name"] for r in rows if r["file"].endswith(".yaml")], ["newKey"])
+        self.assertFalse([r for r in rows if r["file"].startswith("docs/dev/generated/")])
+
+    def test_rename_is_moved(self):
+        self.write("qml/A.qml", "Item {\n  property string oldName: \"\"\n}\n")
+        self.assertTrue(self.find(self.run_names(), "property", "oldName")["moved"])
+
+    def test_text_summary(self):
+        self.write("qml/B.qml", "Item {}\n")
+        out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py")],
+                             cwd=self.repo, capture_output=True, text=True).stdout
+        self.assertIn("  component B  qml/B.qml:1", out)
+        self.assertTrue(out.rstrip().endswith("1 names, 0 also defined elsewhere"))
 
 
 if __name__ == "__main__":
