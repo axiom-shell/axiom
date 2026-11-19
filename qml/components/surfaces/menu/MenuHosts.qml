@@ -68,9 +68,11 @@ Scope {
   readonly property var _wantedAnchor: MenuManager.widgetAnchor(root.menuId)
   readonly property var _edgeHost: edgeLoader.item
   readonly property bool _edgeOccupied: root._edgeHost?.occupied ?? false
+  // The latch's change unloads the edge host, so it must never run inside
+  // that host's own occupied change: latch a tick later
+  on_EdgeOccupiedChanged: Qt.callLater(() => root._openerAnchor.closed = !root._edgeOccupied)
   property ClosedLatch _openerAnchor: ClosedLatch {
     source: root._wantedAnchor
-    closed: !root._edgeOccupied
     // The widget's place as it opens (PopoutAnchor.screenRect: its bar's
     // edge and screen with it), taken here, not bound: cleared first, so a
     // new screen gets a new window; null once the widget is gone
