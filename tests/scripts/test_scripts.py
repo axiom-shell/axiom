@@ -964,6 +964,12 @@ class CheckStyle(unittest.TestCase):
                   self.UI: self.HEAD + "Item {\n  property var x: Theme.accent\n}\n"})
         self.assertEqual(run_check(self.root, "check_style.py")[0], 0)
 
+    def test_a_file_level_r21_exception_is_accepted(self):
+        self.put({"scripts/style-exceptions.json": json.dumps({self.UI: {"rules": ["R21"], "reason": "a fixture"}}),
+                  self.UI: self.HEAD + "Item {\n  color: Style.trough\n}\n"})
+        code, out = run_check(self.root, "check_style.py")
+        self.assertEqual(code, 0, out)
+
     def test_a_malformed_exception_is_an_error_not_a_traceback(self):
         self.put({"scripts/style-exceptions.json": json.dumps({self.UI: "R1"}),
                   self.UI: self.HEAD + "Item {\n}\n"})

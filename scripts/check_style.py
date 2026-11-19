@@ -52,7 +52,7 @@ ROOT = qml_modules.ROOT
 QML = qml_modules.QML_ROOT
 EXCEPTIONS = ROOT / "scripts" / "style-exceptions.json"
 
-RULES = [f"R{n}" for n in range(1, 21)]
+RULES = [f"R{n}" for n in range(1, 22)]
 EVERYWHERE = {"R11", "R13", "R16"}
 TROUGH_PIECES = {"StyledVolumeBar", "StyledSlider", "LevelMeter", "SegmentMeter", "PercentageCircle"}
 STYLE_LAYER_PIECES = {"Surface", "StateLayer", "FocusRing", "Skeleton", "StyledScrollIndicator", "BackdropScrim"}

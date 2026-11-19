@@ -34,6 +34,7 @@ Item {
       model: root.count
 
       Rectangle {
+        objectName: "block"
         required property int index
         readonly property real thick: Math.min(root.vertical ? root.width : root.height, root.round ? root.cell : root.across)
         width: root.vertical ? thick : root.cell
