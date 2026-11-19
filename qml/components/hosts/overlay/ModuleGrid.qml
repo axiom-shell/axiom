@@ -132,7 +132,8 @@ Item {
   Component.onDestruction: BuildQueueManager.cancel(root)
 
   // A module's detail grown over the others (ExpandedModule): { type,
-  // properties, from: [x, y, w, h] px in the grid }, null for none. Only on
+  // properties, from: [x, y, w, h] px in the grid, contentSize: the
+  // opener's (a % or null) }, null for none. Only on
   // overlay pages and edge menus, and only types allowed on the host
   // (`x-hosts`)
   property var expanded: null
@@ -144,11 +145,21 @@ Item {
     if (!root.canExpand(type))
       return;
     const at = from ? from.mapToItem(root, 0, 0) : Qt.point(0, 0);
+    const box = [at.x, at.y, from?.width ?? root.width, from?.height ?? root.height];
     root.expanded = {
       "type": type,
       "properties": properties ?? {},
-      "from": [at.x, at.y, from?.width ?? root.width, from?.height ?? root.height]
+      "from": box,
+      "contentSize": root._moduleOf(from)?.contentSize ?? null
     };
+  }
+  // The module entry `item` is in (its slot's), or null
+  function _moduleOf(item) {
+    for (let at = item; at; at = at.parent) {
+      if (at.parent === modulesLayer)
+        return at.module ?? null;
+    }
+    return null;
   }
   // Shrinks the detail back into where it came from, then drops it
   function collapse() {
@@ -184,6 +195,7 @@ Item {
 
   // The modules, dimmed and out of reach under an expanded detail
   Item {
+    id: modulesLayer
     anchors.fill: parent
     enabled: root.expanded === null
     opacity: expandedLayer.shown ? Style.opacityDisabled : 1

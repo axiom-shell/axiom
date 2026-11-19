@@ -45,6 +45,7 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
 ### Expanding: `hosts/overlay/ExpandedModule`
 - Grows a card box out of `from` (an item in the module; the whole module when left out) to the grid's rect less an `inset` on every side (the grid's gap), with `animNormal`.
 - A header holds only a back button, over `content/<type>/<type>.qml` (which names itself).
+- It is drawn at the grid's zoom times the opener's Content size (`contentSize` in the request, from `ModuleGrid.expand`; `Sizing.moduleZoom`), whatever type it shows.
 - The content is loaded at its full size, bare but padded (`host.padded`, which keeps SlotContext's `pad`).
   - The grid's whole bounds are its `slotRect`, and it gets no `expander`, so it isn't compact and can't expand again.
 - It's revealed by the box rather than resized.
