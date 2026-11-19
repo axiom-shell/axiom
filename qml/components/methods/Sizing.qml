@@ -33,6 +33,12 @@ QtObject {
     };
   }
 
+  // What a module's content is drawn at: its grid's `zoom` times the
+  // module's own Content size (`contentSize`, a % or null for none)
+  function moduleZoom(zoom, contentSize) {
+    return GridPlacement.zoomOf(zoom * root.factor(contentSize));
+  }
+
   // `next` (an edited sizing) with what unlinking or linking again must
   // carry: unlinked, the content keeps the size it had (the cards'), linked
   // again its own size goes. `old` is the sizing before the edit

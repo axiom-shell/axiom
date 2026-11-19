@@ -274,7 +274,7 @@ Item {
           rect: GridPlacement.rectOf(slot.place)
           host: root.host
           expander: root.expandable ? root : null
-          zoom: root.zoom
+          zoom: Sizing.moduleZoom(root.zoom, slot.module.contentSize)
           active: !root.stream || root._streamed || (root._order[slot.index] ?? 0) < root.revealed
         }
       }

@@ -47,6 +47,9 @@ QtObject {
         "type": type.const,
         "label": type.description || type.const,
         "propertiesSchema": def.properties?.properties?.properties ?? null,
+        // Its own Content size's field (the module's `contentSize`, beside
+        // `place`; the kind base is gone once the type is expanded)
+        "contentSize": def.properties?.contentSize ?? null,
         // Its options shown first, in order (their `x-order`)
         "propertiesOrder": def.properties?.properties?.["x-order"] ?? [],
         // The size a module is added at ([w, h] in grid units, four to a

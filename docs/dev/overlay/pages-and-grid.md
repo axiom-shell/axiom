@@ -74,12 +74,14 @@ Two sizes everywhere: **Card size** (how big module cards are) and **Content siz
 | Custom page | factor 50-100 | factor 50-100 | yes | `PageSizing` |
 | Tool page | follows Content | factor 50-100, zooms the whole page | none | `ToolSizing` |
 | Edge menu, desktop item, lock screen, login screen | factor 50-200 | factor 50-200 | yes | `Sizing` ([menus](../menus/hosts.md)) |
+| Module (on any surface) | its grid's w × h | factor 50-200 | none | ModuleBase `contentSize` |
 
 - The Layouts page isn't in config: it follows the global sizes alone.
 - **Applied, not shown.** The global percentages are already inside `OverlayConfig.cardUnitOn` (the card) and `Widget` / `Appearance` / `Style` (the content). A host applies only its surface's factors, `Sizing.factors(sizing)` → `{ card, content }`, never multiplies by hand:
   - with a `linked` (a Custom page, a menu): the card is `cardSize`'s factor, the content follows it while `linked`, else is `contentSize`'s;
   - without one (a tool page): the whole page zooms, card and content the one `contentSize` factor, which keeps a tool page's drawn cards at the card size times its zoom and its `unit` the card size itself.
 - A `null` size follows the level above. Turning "Set by hand" on stores 100, so nothing moves. Unlinking writes `contentSize` the cards' size in the same edit and linking again drops it (`Sizing.edited` / `editedIn`, called at each edit point: `OverlayManager.updateViewField` for a page).
+- A module's own `contentSize` (`modules[].contentSize`, beside `place`; a % or null) multiplies onto its surface's zoom for that slot alone: `ModuleGrid` hands `OverlaySlot` `Sizing.moduleZoom(grid zoom, contentSize)`, the one place the factors meet. On an overlay page (the page zooms as a whole, the grid's zoom is 1) it is the factor alone. An expanded module keeps the surface's zoom, not the module's. It is edited in the Layouts inspector's Content size row, a `SchemaPropertiesForm` on `OverlayConfig.moduleInfo(type).contentSize` (the schema comes from the expanded type, as the kind base is gone then), through `GridEditor.updateModuleField` (undo key `index:@contentSize`).
 - Ranges: pages 50-100 (the two-cards-high cap below shrinks cards, not the zoom); menus and screen layouts 50-200.
 
 Cards follow the screen; text and controls don't. A monitor's cards are its card size (`OverlayConfig.cardUnitOn`: two cards fill its short side less `GridPlacement.screenMargin` each side, `GridPlacement.baseCard`, times `Widget.cardSize`%), the same turned either way and on every surface. Content lays out at the card's real size, so text is the Content size's (`Widget.contentSize`) on every monitor; only a surface's Content size factor zooms it.

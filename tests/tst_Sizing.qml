@@ -12,6 +12,15 @@ TestCase {
     compare(Sizing.factor(50), 0.5);
   }
 
+  function test_moduleZoom() {
+    compare(Sizing.moduleZoom(1, null), 1, "no module size: the grid's zoom");
+    compare(Sizing.moduleZoom(1.5, null), 1.5);
+    compare(Sizing.moduleZoom(1, 150), 1.5, "on a page the grid zooms nothing: the factor alone");
+    compare(Sizing.moduleZoom(1.25, 80), 1, "a module under a zoomed grid multiplies, snapping to 1 within 2 %");
+    compare(Sizing.moduleZoom(0.8, 150), 1.2);
+    compare(Sizing.moduleZoom(1, 101), 1, "within 2 % is 1");
+  }
+
   function test_factors_linked() {
     const none = Sizing.factors({
       "cardSize": null,

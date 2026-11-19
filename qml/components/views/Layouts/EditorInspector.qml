@@ -212,6 +212,18 @@ Item {
         links: OverlayConfig.moduleInfo(root.moduleType)?.link
       }
 
+      // Its own Content size, on top of its page's or menu's
+      SchemaPropertiesForm {
+        Layout.fillWidth: true
+        visible: !!OverlayConfig.moduleInfo(root.moduleType)?.contentSize
+        propertiesSchema: ({
+            "contentSize": OverlayConfig.moduleInfo(root.moduleType)?.contentSize
+          })
+        order: ["contentSize"]
+        values: root.module ?? ({})
+        onEdited: (path, value) => root.editor.updateModuleField(root.index, path[0], value)
+      }
+
       OptionsGroup {
         Layout.fillWidth: true
         propertiesSchema: OverlayConfig.moduleInfo(root.moduleType)?.propertiesSchema ?? ({})

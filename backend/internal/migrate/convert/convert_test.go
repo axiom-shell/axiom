@@ -346,8 +346,13 @@ var widgetTypeKeysAddedSinceV1 = map[string][]string{"Notifications": {"label"},
 // 1, which a default layout's modules get from their defaults at load
 var moduleKeysAddedSinceV1 = map[string][]string{"Greeting": {"showPicture"}}
 
-// dropModuleKeys deletes moduleKeysAddedSinceV1 from every module in a
-// "modules" array anywhere under v
+// moduleOwnKeysAddedSinceV1 are the keys every module gained beside its
+// type and place (its Content size, null by default)
+var moduleOwnKeysAddedSinceV1 = []string{"contentSize"}
+
+// dropModuleKeys deletes moduleKeysAddedSinceV1 (from a module's
+// properties) and moduleOwnKeysAddedSinceV1 from every module in a "modules"
+// array anywhere under v
 func dropModuleKeys(v any) {
 	switch t := v.(type) {
 	case *jsonx.Object:
@@ -358,6 +363,9 @@ func dropModuleKeys(v any) {
 					m, _ := item.(*jsonx.Object)
 					if m == nil {
 						continue
+					}
+					for _, k := range moduleOwnKeysAddedSinceV1 {
+						m.Delete(k)
 					}
 					props, _ := m.Value("properties").(*jsonx.Object)
 					for _, k := range moduleKeysAddedSinceV1[jsonx.ToString(m.Value("type"))] {
