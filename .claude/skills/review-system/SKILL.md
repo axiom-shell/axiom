@@ -23,12 +23,12 @@ Group the files into slices of at most ~1500 lines, along the docs' boundaries: 
 
 ## 3. Reviewers, in parallel
 
-Lenses: `bugs`+`edges` (and `security` for the `security` and `greeter` systems), `contract`+`tests`, `cleanup`+`deletion`+`design`, `rules`+`seams` (this folder's `lenses.md` and `../review-branch/lenses.md`). Per slice: one reviewer per group; a slice under ~400 lines gets one reviewer with all of them. With **Mode** `parity` or `collection`, one more reviewer builds that table across all the system's files (outlines only, `grep -n`), then reads the cells and outliers. At most ~8 reviewers in all: past that, merge lens groups (`cleanup`… with `rules`…, then all in one per slice) before merging slices.
+Lenses: `bugs`+`edges` (and `security` for the `security` and `greeter` systems), `contract`+`tests`, `cleanup`+`deletion`+`design`, `rules`+`seams` (this folder's `lenses.md` and `../review-branch/lenses.md`). Per slice: one reviewer per group; a slice under ~400 lines gets one reviewer with all of them. With **Mode** `parity` or `collection`, one more reviewer builds that table across all the system's files (outlines only, `grep -n`), then reads the cells and outliers. Always one more reviewer over all the system's files with `consistency` (`../review-branch/lenses.md`; no `new_names.py` here: it lists the system's public names from `grep -n` outlines and checks each against the rest of the codebase); it is never merged away. At most ~8 other reviewers: past that, merge lens groups (`cleanup`… with `rules`…, then all in one per slice) before merging slices.
 
 Launch them all in one message (`subagent_type: reviewer`). Each brief:
 - **System:** its name, scope line, the focus text if any, and its Checks (each reviewer verifies those its slice holds).
 - **Slice:** its files and docs; the Seams, for the `seams` lens.
-- **Lenses:** read `.claude/skills/review-branch/lenses.md` › Every reviewer, and the sections for each lens named (`bugs`, `cleanup`, `rules`, `design` there; the others in `.claude/skills/review-system/lenses.md`).
+- **Lenses:** read `.claude/skills/review-branch/lenses.md` › Every reviewer, and the sections for each lens named (`bugs`, `cleanup`, `rules`, `design`, `consistency` there; the others in `.claude/skills/review-system/lenses.md`).
 - Reply in the Reply shape, under 800 words; "Outside the slice" holds problems in other systems' files.
 
 ## 4. Judge

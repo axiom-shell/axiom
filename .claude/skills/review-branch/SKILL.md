@@ -29,12 +29,14 @@ Group the files into slices of at most ~400 changed lines (the `--stat` counts):
 
 ## 3. Reviewers and checks, in parallel
 
-Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules`, `design`. Per slice:
+Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules`, `design`, `consistency`. Per slice:
 - a code slice over ~150 lines: three reviewers, lenses `bugs`+`regressions`, `cleanup`+`design`, `rules`;
 - a smaller code slice: one reviewer, all five lenses;
 - a docs-only slice: one reviewer, `design` (are the docs true to the code, and complete) and `rules` (do the files, members and steps they name exist and agree).
 
-At most ~8 reviewers in all: past that, merge lenses (`cleanup`+`design`+`rules` in one, then everything in one per slice) before merging slices.
+Always one more reviewer over the whole branch, not a slice, with the `consistency` lens: its brief gives the purpose, the base `<mb>`, and the ledger path if the branch has one (`/keep-order`). Alignment is axiom's top priority, so this reviewer is never merged away.
+
+At most ~8 slice reviewers in all: past that, merge lenses (`cleanup`+`design`+`rules` in one, then everything in one per slice) before merging slices.
 
 Launch them all in one message (`subagent_type: reviewer`), plus one `checker` running `scripts/dev/verify.sh --all` (a failing check is a Blocker). Each reviewer's brief:
 - **Purpose:** the branch's purpose and its claims ("fixes X", "supports Y").
@@ -51,7 +53,7 @@ Merge the replies: one finding per cause (the same line or function from two len
 ```
 # Review: <branch> vs <base> (<n> commits, <files> files, +<a> −<d>)
 
-**Verdict:** ready / ready after the fixes below / needs rework: <one sentence why>
+**Verdict:** ready / ready after the fixes below / needs rework: <one sentence why> (never "ready" with a consistency finding open)
 **Purpose check:** <does the branch do what it says; any claim that doesn't hold>
 
 ## Blockers / ## Major / ## Cleanups / ## Minor

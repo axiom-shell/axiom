@@ -1,6 +1,6 @@
 # Review lenses
 
-What a reviewer agent reads besides its brief: "Every reviewer", then the lens sections its brief names. `review-branch` uses the five lenses here over a slice of a diff; `review-system` (`../review-system/lenses.md`) adds its own and reads "the branch" as "the system", where nothing is pre-existing.
+What a reviewer agent reads besides its brief: "Every reviewer", then the lens sections its brief names. `review-branch` uses the six lenses here over a slice of a diff; `review-system` (`../review-system/lenses.md`) adds its own and reads "the branch" as "the system", where nothing is pre-existing.
 
 ## Every reviewer
 
@@ -8,11 +8,11 @@ You review a slice of axiom, a Quickshell/QML desktop for Hyprland, sway and nir
 
 **Reading.** For code that matters, read the enclosing function (`grep -n` its bounds, `sed -n 'a,bp'`), a whole file only under ~150 lines or at the heart of the matter; callers by `grep -rn '<name>' --include='*.qml' --include='*.go' --include='*.py' --include='*.sh' --include='*.json' . | head -30`. Files loaded by name don't show as imports: bar widget and module `type`, `popoutName`, views, `x-card`/`x-intro`, IPC targets, `x-*` annotations, daemon method names (`// rpc:`), `Qt.createComponent` strings. Docs and `.claude/rules/` files: `grep -n '^##'` for the outline, then the one section; a choice that looks odd may be documented there. Never the generated files (`docs/dev/config/`, `docs/dev/generated/`, `qml/config/i18n/`, `qml/config/json/config.schema.json`, `qml/config/themes/template/`): the schema's source is its YAML under `qml/config/schema/`. Tests and `.json` data by grep, never whole. Stop reading once a finding is proven or ruled out.
 
-**What is a finding.** Something provable from the code: the file and line, a concrete case (input, state, compositor, sequence) and what goes wrong. No case, no finding. In a branch, only what it adds or changes is a finding; what was wrong before goes under "Outside the slice". Nothing the checks enforce (`scripts/check_all.sh`: format, lint, structure, sizes, i18n keys, docs paths and members, the shell–daemon method names), no "consider adding a test / comment / error handling" without the failure it prevents, no taste, no restating the code. A cleanup shows the simpler version and why it keeps every behaviour. Five proven findings beat twenty maybes; none is a valid answer.
+**What is a finding.** Something provable from the code: the file and line, a concrete case (input, state, compositor, sequence) and what goes wrong. No case, no finding. In a branch, only what it adds or changes is a finding; what was wrong before goes under "Outside the slice". Nothing the checks enforce (`scripts/check_all.sh`: format, lint, structure, sizes, i18n keys, docs paths and members, the shell–daemon method names), no "consider adding a test / comment / error handling" without the failure it prevents, no taste, no restating the code. Inconsistency with a precedent you cite (`path:line`) is not taste: alignment with the codebase is axiom's top priority. A cleanup shows the simpler version and why it keeps every behaviour. Five proven findings beat twenty maybes; none is a valid answer.
 
 **Proving it.** Before a finding goes in, try to refute it: is the path reachable, handled elsewhere, the "dead" code reached by name, the rule actually stated (quote it), does the simpler version keep every behaviour? Every fact in it is one a command just showed, never one remembered: `sed -n '<n>p'` the cited line (the number is that line's, not the function's), count lines and calls with `wc -l` / `grep -c`, and one finding per cause (two fixes to one function are one finding). What only running the shell can settle is marked PLAUSIBLE with what would settle it, and kept only at Major or above. Read-only: no running the shell, no IPC that changes state; `scripts/log.sh`, `scripts/run_tests.sh <Name>`, `go test` and the `check_*` scripts are fine.
 
-**Severity.** Blocker: wrong behaviour users hit, a regression, a failing check, a safety or security rule broken. Major: a bug on a rarer path, a rule broken that no check catches, design that will bite, an added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path), code a fix leaves behind that nothing needs any more. Cleanup: other dead code, duplication, a simpler shape. Minor: misleading names, comments or docs, small inconsistencies.
+**Severity.** Blocker: wrong behaviour users hit, a regression, a failing check, a safety or security rule broken. Major: a bug on a rarer path, a rule broken that no check catches, design that will bite, an added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path), code a fix leaves behind that nothing needs any more, and every misalignment: code that repeats an existing piece or another part of the branch, a second name or unit for a concept that has one, one job done two ways, a new file or edit site that doesn't follow the precedent of its kind. Cleanup: other dead code, a simpler shape. Minor: misleading names, comments or docs, small inconsistencies.
 
 **Reply.** Most severe first, each:
 
@@ -63,3 +63,17 @@ Walk the rules in `CLAUDE.md`, the area's rules file against the code; report a 
 - Illogical choices: a value computed in one place and corrected in another, a workaround where the cause is fixable, a fix in the consumer for the producer's problem, two sources of truth, a name saying the opposite of what it does, a timing hack (`Qt.callLater` chains, magic delays) standing in for an ordering the code could state.
 - Docs: every doc covering the changed files still true, describing the final code; a user-visible feature missing from `README.md` / `docs/features.md` / `docs/usage.md` where its kind is listed.
 - Intent: what the branch's purpose implies and the change doesn't do (a compositor left out, a setting not exposed), and changes the purpose doesn't explain.
+
+## consistency: one way, one name, the codebase's way
+
+The whole branch, never a slice: what one slice can't see is the point. Start from `python3 scripts/dev/new_names.py --base <mb>` (every name the branch adds, and where else that name is defined) and the ledger if the brief names one; read code only to settle a candidate.
+- Duplicates: for each new function, property, component and test helper, does the codebase or another part of the branch already do that job? Grep `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the readers and the services by verb and by noun, not only by name. A block of three or more lines written twice across files is a duplicate.
+- Names: one concept, one name in every file; one name, one meaning (the `also defined` column shows clashes); a family of readers or helpers doing one job under different names, result shapes or argument orders; a member whose unit differs from its siblings' (factor vs %, px vs grid cells) or from the name's other uses.
+- Patterns: every site of one kind (a config write, a call into a helper, a form hook, a wrapper) written the same way; each new file mirrors the precedent of its kind (member order, comment style, test layout).
+- Decisions: a helper's decision worked out again in a host or the UI (`CLAUDE.md` › Layering).
+- Schema: a field definition written out again instead of referenced and overridden; a new key named unlike its siblings.
+- User strings and docs: one wording per message (grep the existing `I18n.tr` strings); every UI label a description or doc names exists in the QML; one home per fact, linked from the others.
+- Ledger: every added public name is in it, with the same name and unit; every ledger entry is built.
+
+Every finding here is Major, except wording in comments (Minor). Each names both locations and which one is the precedent the other should follow.
+
