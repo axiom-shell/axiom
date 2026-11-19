@@ -128,8 +128,17 @@ Three units for a size: control sizes from `Widget` (`Widget.px(n)`), text measu
 Where text sits straight on the wallpaper, the style layer decides from what is under it (D-72…D-75; `theme.backdrop`, [Themes](../theming/themes.md)): Go samples each shown wallpaper into a small luminance grid, `WallpaperToneManager` maps a rectangle onto it (`Backdrop.region`, through the wallpaper's own placement and parallax travel) and `Tone` decides.
 - One alpha function serves three uses: `Tone.alphaFloor(fill, ink, backs, 4.5 + margin)`, the least alpha of `fill` over every back at which `ink` reads. A translucent bar's fill floor (`Style.edgeAlpha`, [Translucency and blur](../theming/translucency-blur.md)), a transparent bar's shade ([Bar widget style](../bar/widget-style.md)), and a bare module's shade (`BackdropScrim`, [Shared UI pieces](shared-ui-pieces.md)).
 - The shade is the theme background (`Style.surfacePage`), never a halo; colours the user picked stay as set and get the shade computed from them, which stops at the opaque background where they can't read.
-- Unknown tone: at shell start, until the daemon answers, nothing changes (no shade, no floor) and then it glides (on a wallpaper change the previous wallpaper's grid stands in until the new one's arrives); a wallpaper the daemon can't decode, no daemon, or the lock before an answer is the pole under the dim (white behind a dark theme, black behind a light one), the worst case, deterministic. `BackdropScrim` never waits for the daemon (lock-on-start budget).
-- No setting turns any of it off.
+- Unknown tone: at shell start, until the daemon answers, nothing changes (no shade, no floor) and then it glides (on a wallpaper change the previous wallpaper's grid stands in until the new one's arrives); a wallpaper the daemon can't decode, no daemon, or the lock or the greeter before an answer is the pole under the dim (white behind a dark theme, black behind a light one), the worst case, deterministic. `BackdropScrim` never waits for the daemon (lock-on-start budget). Readability over the result is guaranteed only at the Strong shade preset (below).
+- No setting turns the bars' floor and shade off. A bare module's shade follows its layout's `shade` preset (`Backdrop.shade(preset)` → `{ shown, minContrast, maxAlpha }`, capped by `Backdrop.shadeAlpha(look, floor)`; the default is Medium):
+
+  | preset | shown | min contrast | max alpha |
+  |---|---|---|---|
+  | off | no | | 0 |
+  | light | yes | 3.0 | 0.5 |
+  | medium | yes | `Tone.textContrast` (4.5) | 0.8 |
+  | strong | yes | `Tone.textContrast` | 1 |
+
+  Strong is the guarantee. Medium's cap gives about 5.6:1 (gruvbox dark) to 6.4:1 (gruvbox light) for the theme's own text over the worst-case pole, less for a user-picked mid-tone `backdropInk`. Light, Medium and Off trade the guarantee for show-through. Off asks for no tone at all. A blurred wallpaper (lock, greeter) lerps each cell's low and high toward its mean by the blur weight (`Backdrop.region`'s `k`, strength/100, an estimate that errs toward more shade).
 
 ### Bar colours
 `qml/config/BarColors.qml` holds what the bar draws in, beside `Style` and never read by it (`Style` builds on the lock screen and in the greeter, D-44; `StyleLayer.test_style_imports` catches a reference). The bar keeps today's raw theme colours (D-24):

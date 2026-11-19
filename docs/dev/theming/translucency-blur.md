@@ -87,4 +87,4 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
   - the backdrop is blurred at about Hyprland's strength (`hyprBlur`);
   - the lock surface reads it from `CompositorManager.blur`;
   - masked by the modules at the blur threshold.
-- Not when the wallpaper is blurred already.
+- Not when the wallpaper is blurred already: over a blurred wallpaper lock cards don't frost, whatever its strength, and show it at the Blur strength set.
