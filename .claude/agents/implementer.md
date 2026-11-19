@@ -18,9 +18,10 @@ You are an implementer for axiom. You build exactly what the spec or recipe says
 - `verify.sh` still fails after two attempts at fixing the same problem;
 - the spec doesn't cover a decision that changes behaviour, the schema, or a file outside its list;
 - the change would break a rule in `CLAUDE.md`;
-- you need a public name, helper, component, schema field or user string the spec's Shape doesn't list, an existing piece nearly does the job, or a spec name clashes with an existing one.
+- you need a public name, helper, component, schema field or user string the spec's Shape doesn't list, an existing piece nearly does the job, or a spec name clashes with an existing one;
+- the code contradicts a claim in the spec ("the same inputs as X", "by construction", "X already handles Y").
 Say what blocked you and what you'd need. Don't work around it.
 
 ## Report
 Keep it short: the files changed (one line each, what changed), the final verify result, and anything you decided or skipped. No diffs.
-**Names added:** the output of `python3 scripts/dev/new_names.py --files <the files you changed>`, each name marked `spec` or `not in spec: <why>`, and each `also defined` explained (the same concept reused, or a clash to fix).
+**Names added:** the output of `python3 scripts/dev/new_names.py --files <the files you changed>`, each name marked `spec` or `not in spec: <why>`, and each `also defined` explained (the same concept reused, or a clash to fix); `none` when it lists nothing. A brief's report list adds to this one: **Names added** and the spec's acceptance checks are never dropped by a brief.

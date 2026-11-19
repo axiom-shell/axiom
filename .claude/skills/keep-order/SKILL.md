@@ -18,7 +18,7 @@ One file beside the plan, `<plan name>-ledger.md` (or `--ledger <file>`), owned 
 
 ```
 # <feature>: ledger
-## Reuse        job | existing piece (path:line) | how it is used (called / extended / referenced by $ref)
+## Reuse        job | existing piece (path:line) | how it is used (called / extended / referenced by $ref) | differs by (what it does unlike the path it replaces; "nothing" proven)
 ## Names        name | kind | file | type and unit | meaning (one line) | status (planned / built)
 ## Patterns     kind of site (config write, helper call, form hook, …) | the one way it is written (path:line of the precedent)
 ## Precedents   new file or member | the existing one it mirrors (path)
@@ -28,7 +28,9 @@ One file beside the plan, `<plan name>-ledger.md` (or `--ledger <file>`), owned 
 
 ## plan `<plan file>`
 
-Before any code. One `architect`: "Read the plan `<file>` and the code it touches. Write its ledger to `<ledger path>` in the shape below (paste the shape). For every job the plan needs, search for what already does it: `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the readers and services of the areas, the schema's shared definitions, the tests' helpers, the existing `I18n.tr` strings; by verb and by noun. "None" comes with the grep. Every name the plan uses or implies goes in Names with its unit; a name the codebase already uses for another thing is renamed; one concept gets one name everywhere. Report: counts per section, every plan name you renamed and why, every plan step that would have duplicated an existing piece."
+Before any code. One `architect`: "Read the plan `<file>` and the code it touches. Write its ledger to `<ledger path>` in the shape below (paste the shape). For every job the plan needs, search for what already does it: `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the readers and services of the areas, the schema's shared definitions, the tests' helpers, the existing `I18n.tr` strings; by verb and by noun. "None" comes with the grep. Every name the plan uses or implies goes in Names with its unit; a name the codebase already uses for another thing is renamed; one concept gets one name everywhere. For each Reuse row, list how the piece differs from the code path it replaces; a difference the request doesn't ask for is reported as an open question, never accepted. Report: counts per section, every plan name you renamed and why, every plan step that would have duplicated an existing piece, the open questions."
+
+Open questions go to the user word for word, and nothing starts (ledger, build) until they are answered.
 
 Then give the plan's implementers the ledger as part of their brief ("the ledger at `<path>` is binding: its names, units, reuse and patterns; anything it doesn't cover is a stop"). A plan that changes after the ledger gets its ledger updated by the architect first.
 
@@ -37,6 +39,7 @@ No plan (a small change): the architect's spec carries its own Shape; no ledger 
 ## gate
 
 After each implementer group or fix round, before the next one starts, so drift never compounds.
+Skip the gate when `new_names.py` lists no names for the group.
 1. Run `python3 scripts/dev/new_names.py --base <base>` (base: the commit the group started from; `--files` for a group's own files).
 2. Compare it with the ledger yourself, by name only: every added public name must be in Names with the same name; every `also defined` must be a reuse the ledger names. Also compare the implementer's **Names added** report.
 3. Anything else goes to one `architect` with the list: "Rule on each name: in ledger / rename to `<x>` / replace with the existing `<path:line>` / add to the ledger (why it is new). For each `also defined`: same concept (then one of the two goes) or a clash (rename). Read only the cited lines and the existing piece." It updates the ledger with its rulings.
@@ -46,23 +49,14 @@ Nothing unlisted is "fine for now": an unlisted name is a ruling, a copy is a fi
 
 ## audit
 
-Before opening or updating a PR, and on any branch on request (no ledger: the architect first writes one from the branch's code, in the shape above, and lists every place the branch disagrees with itself or the codebase).
-1. Two `reviewer`s in one message, both over the **whole branch**, never slices, each reading `.claude/skills/review-branch/lenses.md` › Every reviewer and › consistency:
-   - **code**: Duplicates, Names, Patterns, Decisions, Schema and Ledger from the lens, starting from `new_names.py --base <mb>`;
-   - **words**: User strings and docs from the lens: every new `I18n.tr` string against the existing ones, every UI label a schema description or doc names against the QML, one home per fact.
-   Each gets the purpose, the base `<mb>` and the ledger path.
-2. One `architect` judges the merged findings (`.claude/agents/architect.md` › Judging findings).
-3. Report:
-   ```
-   # Keep order: <branch> vs <base>
-   **Aligned:** yes / no: <n> to fix
-   ## To fix   (each: what, both locations, which is the precedent, the fix)
-   ## Ledger    (rulings added)
-   ## Unsure    (what would settle each)
-   ```
-4. `--fix`: confirmed findings to a fresh `implementer` as a fix list file, then verify, then `gate` on the fix. A finding whose fix changes behaviour users notice goes to the user instead.
+Before opening or updating a PR, and on any branch on request. The audit is `/review-branch`: its whole-branch reviewers carry the `consistency` lens, so nothing here runs a second set.
+1. No ledger yet: one `architect` first writes one from the branch's code, in the shape above, listing every place the branch disagrees with itself or the codebase.
+2. Run `/review-branch` with the ledger path in its purpose line. Its consistency findings are Major; it won't say "ready" with one open.
+3. `--fix`: confirmed findings to a fresh `implementer` as a fix list file, then verify, then `gate` on the fix. A finding whose fix changes behaviour users notice goes to the user instead.
 
-A branch with an open audit finding is not ready: `review-branch` won't say "ready" with a consistency finding open.
+## Branches started before the ledger
+
+On a branch built before it had a ledger, the first audit's consistency findings are debt the branch carried, not drift it added: report them to the user as one batch with the size of each fix. They are fixed in that branch only when the user says so; otherwise they become an `/align` follow-up. Later rounds hold the branch to the ledger as usual.
 
 ## Rules for every brief this skill writes
 

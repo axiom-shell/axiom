@@ -5,7 +5,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 ## Working here
 
 - **Alignment first** (above speed and scope): reuse an existing function or piece, never a near copy; one name, one unit and one pattern per concept; a new file follows the precedent of its kind. `/keep-order` holds a feature to it from plan to PR; `/align` fixes drift already there.
-- After every change run `scripts/dev/verify.sh` until `verify ok` (`--all` = CI). It formats QML and prints the shell's log; a clean reload is `Reloading configuration...` + `Configuration Loaded`; `console.warn` only for real problems.
+- After every change run `scripts/dev/verify.sh` until `verify ok` (`--all` = CI, prints `all checks passed`; run it once, at the end). It formats QML and prints the shell's log; a clean reload is `Reloading configuration...` + `Configuration Loaded`; `console.warn` only for real problems.
 - Log `scripts/log.sh`, screenshots `scripts/dev/shot.sh`, a second shell only via `scripts/dev/nested.sh` (`docs/dev/testing.md`).
 - qs watches by inode: edit QML in place, never temp file + rename; after `sed -i` or `git checkout`, force a reload.
 - Read `docs/dev/core/qml-pitfalls.md` before writing QML and the area's doc before changing it; update it when behaviour changes. Which file does X: `grep -n '<word>' docs/dev/generated/files.md`. Recipes: `docs/recipes/`.
@@ -64,4 +64,4 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ## Agents and skills
 
-`.claude/agents/`: **architect** (opus) writes specs, judges findings; **implementer** (sonnet) builds a spec or recipe; **reviewer** (sonnet) reviews a slice through one lens; **checker** (haiku) runs checks. Beyond a small edit: architect specs if the shape is open, implementer builds, checker verifies. Recipe skills (`/bar-widget`, `/setting`, …) run on implementer; `/review-branch` fans out reviewers, architect confirms. `/keep-order`: a feature's ledger of names and reused pieces (plan), checked after each implementer group (gate) and over the whole branch before a PR (audit). `/align <description>`: every place that does one job made to do it one way, through one shared piece.
+`.claude/agents/`: **architect** (opus) writes specs, judges findings; **implementer** (sonnet) builds a spec or recipe; **reviewer** (sonnet) reviews a slice for bugs or the whole branch for alignment; **checker** (haiku) runs checks. Beyond a small edit: architect specs if the shape is open, implementer builds, checker verifies. Recipe skills (`/bar-widget`, `/setting`, …) run on implementer; `/review-branch` fans out reviewers, architect confirms. `/keep-order`: a feature's ledger of names and reused pieces (plan), checked after each implementer group (gate) and through `/review-branch` before a PR (audit). `/align <description>`: every place that does one job made to do it one way, through one shared piece.
