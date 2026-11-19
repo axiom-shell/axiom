@@ -522,7 +522,8 @@ PopoutWrapperBase {
     // deepest the popout could attach there whatever its length
     // (EdgePlacement.contentFromBar, not attachAt, which follows the box's
     // length) and the box's chrome (the popout's Size fits it into this,
-    // BarPopouts._layout)
+    // BarPopouts._layout). A submenu's stretch (slot.stretchAcross) is left
+    // out: it follows the box, and so the zoom
     readonly property var contentRoom: {
       const across = mainPopup._screenAcross - placement.contentFromBar - surface.contentInset * 2;
       const along = mainPopup._spanAlong - surface.contentInset * 2;

@@ -8,10 +8,10 @@ import qs.components.reusable
 // FormRow that draws the field): the SchemaField for `row` in the form
 // `form`, with its change marks after the label (a button putting it back to
 // the schema default, a dot while it has an unsaved edit: FieldChangeMarks)
-// and under it the field's `x-link`s, `action` (FieldLinks, a
-// SettingsLink) and `note` (a muted line). SchemaPropertiesForm's cells, SettingRows' rows and the
-// settings page's SettingsField are all this, so the marks and links are the
-// same everywhere. The field is built by URL (SchemaField, through
+// and under it the field's `x-link`s, `action` (FieldLinks, a SettingsLink)
+// and `note` (a muted line). SchemaPropertiesForm's cells, SettingRows' rows
+// and the settings page's SettingsField are all this, so the marks and links
+// are the same everywhere. The field is built by URL (SchemaField, through
 // SchemaObjectArray and SchemaArrayItem, instantiates this type, so naming it
 // here would make the types depend on each other) and streamed only where a
 // host asks (`stream`: SchemaPropertiesForm's cells; the others build the

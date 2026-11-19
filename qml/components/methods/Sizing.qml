@@ -3,12 +3,13 @@ import QtQuick
 
 // How a surface's own `sizing` ({ cardSize, linked, contentSize }: each size
 // a % or null for "as the level above"; a tool page's or popout's is
-// { contentSize } alone) becomes the factors its host draws at, and how an
-// edit of it keeps its link's meaning, how much of its room a popout
-// is shrunk to fit, and the numbers of the line that says it all
-// (breakdown). The global Card and
-// Content sizes are already inside the card size and Widget; hosts apply
-// only these factors on top. No config, no text.
+// { contentSize } alone) becomes the factors its host draws at (factors,
+// moduleZoom), how much of its room it is shrunk to fit (fitInto, and
+// popoutLayout for a popout), how an edit of it keeps its link's meaning
+// (edited, editedIn), and the numbers of the line that says it all
+// (breakdown, moduleBreakdown). The global Card and Content sizes are
+// already inside the card size and Widget; hosts apply only these factors
+// on top. No config, no text.
 QtObject {
   id: root
 
@@ -74,23 +75,45 @@ QtObject {
       "card": root._level(global.card, factors.card),
       "content": root._level(global.content, factors.content),
       "fit": Math.round(shrinks * 100),
-      "shrunk": shrinks < 0.999,
+      "shrunk": Math.round(shrinks * 100) < 100,
       "capped": capped
     };
   }
 
   // `breakdown` for a module's Content size (`contentSize`, a % or null)
-  // on that surface: its `content` is { global, here, module, total }, `here`
-  // the surface's content factor with its `fit` in, as that is what its
+  // on that surface: its `content` is { global, here (the surface's own
+  // content factor, as its line shows), module, fit, shrunk (as breakdown),
+  // total }; the total has the surface's fit in, as that is what its
   // modules are drawn at
   function moduleBreakdown(own, global, fit, contentSize) {
-    const content = root.factors(own).content * (fit ?? 1);
+    const factors = root.factors(own);
+    const shrinks = fit ?? 1;
     const module = root.factor(contentSize);
     return {
-      "content": Object.assign(root._level(global.content, content), {
+      "content": Object.assign(root._level(global.content, factors.content), {
         "module": Math.round(module * 100),
-        "total": Math.round(global.content * content * module)
+        "fit": Math.round(shrinks * 100),
+        "shrunk": Math.round(shrinks * 100) < 100,
+        "total": Math.round(global.content * factors.content * shrinks * module)
       })
+    };
+  }
+
+  // How a popout lays out and draws: `own` its `sizing` (or null), `card`
+  // the card unit on its screen, `content` ({ width, height }: the most its
+  // layout size will be) and `room` ({ width, height }: the px the screen
+  // has for it). { zoom, unit, fit } as PopoutsConfig.layoutOf describes
+  function popoutLayout(own, card, content, room) {
+    const factors = root.factors(own);
+    const zoom = GridPlacement.zoomOf(factors.content);
+    const fit = root.fitInto({
+      "width": content.width * zoom,
+      "height": content.height * zoom
+    }, room);
+    return {
+      "zoom": GridPlacement.zoomOf(factors.content * fit),
+      "unit": card * factors.card / zoom,
+      "fit": fit
     };
   }
 

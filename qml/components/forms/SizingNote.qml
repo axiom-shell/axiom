@@ -54,9 +54,17 @@ QtObject {
   }
 
   // The line for a module's Content size row (`contentSize`: its own, a %
-  // or null): the surface's content size with its fit in, then the module's
+  // or null): the surface's own content factor and the module's, with a
+  // shrink clause when the surface is shrunk
   function moduleLine(contentSize) {
     const b = Sizing.moduleBreakdown(root.own, root._global, root.fit?.scale ?? null, contentSize).content;
-    return I18n.tr("Content at {0}% ({1}% × {2}% here × {3}% this module)", b.total, b.global, b.here, b.module);
+    const text = I18n.tr("Content at {0}% ({1}% × {2}% here × {3}% this module)", b.total, b.global, b.here, b.module);
+    return b.shrunk ? text + " · " + I18n.tr("Shrunk to {0}% to fit {1}", b.fit, root.fit.screen) : text;
+  }
+
+  // The line for the form row at `path` (SchemaPropertiesForm.fieldNote): a
+  // Size row's, else none
+  function noteFor(path) {
+    return path[path.length - 2] === "sizing" ? root.lineFor(path[path.length - 1]) : "";
   }
 }

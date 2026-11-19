@@ -168,6 +168,19 @@ Item {
     return shown.filter(view => !OverlayConfig.isTool(view.viewConfig.type)).concat(shown.filter(view => OverlayConfig.isTool(view.viewConfig.type)));
   }
 
+  // A tool page that is hidden or unsupported isn't built, so the fit it
+  // last reported goes (OverlayManager.fitOf would show it)
+  function _pruneFits() {
+    const name = root.screen?.name ?? "";
+    const built = root.viewsModel.filter(view => OverlayConfig.isTool(view.viewConfig.type)).map(view => view.viewConfig.id);
+    for (const key of Object.keys(OverlayManager.fits[name] ?? {})) {
+      if (!built.includes(key))
+        OverlayManager.reportFit(name, key, undefined);
+    }
+  }
+  onViewsModelChanged: root._pruneFits()
+  Component.onCompleted: root._pruneFits()
+
   // The box the pages are drawn in (the overlay's blur region)
   readonly property Item box: mainContentBox
 
@@ -228,10 +241,13 @@ Item {
           roomHeight: root.roomHeight
           sizing: viewPage.modelData.viewConfig.sizing
           // The layouts editor's line for a tool page says how far its
-          // screen shrinks it (OverlayManager.fitOf)
+          // screen shrinks it (OverlayManager.fitOf); a Custom page's fit
+          // comes from its modules there, so only tool pages report
           onFitChanged: viewPage._reportFit()
           Component.onCompleted: viewPage._reportFit()
           function _reportFit() {
+            if (!OverlayConfig.isTool(viewPage.modelData.viewConfig.type))
+              return;
             OverlayManager.reportFit(root.screen?.name ?? "", viewPage.modelData.viewConfig.id, viewPage.fit);
           }
           // A page in a window of its own is built there, not here

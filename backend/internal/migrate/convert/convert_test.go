@@ -190,15 +190,14 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	detachedPlaceFields(converted)
 	detachedPlaceFields(defaults.(*jsonx.Object))
 	dropModuleKeys(defaults)
-	// The overlay pages' visible (ViewBase's default, true), filled at load
+	// The overlay pages' keys added since format 1 (overlayPageKeysAddedSinceV1)
 	overlay, _ := defaults.(*jsonx.Object).Value("Overlay").(*jsonx.Object)
 	pages, _ := overlay.Value("items").(*jsonx.Array)
 	for _, page := range pages.Items {
-		page.(*jsonx.Object).Delete("visible")
+		for _, key := range overlayPageKeysAddedSinceV1 {
+			page.(*jsonx.Object).Delete(key)
+		}
 	}
-	// The surfaces' and pages' sizing (their default, filled at load; v113 and
-	// v114 move moduleScale there)
-	dropSizing(defaults)
 	// The v109 step appends the Window rules page; the defaults list it
 	// beside Keybinds
 	for i, page := range pages.Items {
@@ -214,28 +213,6 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	}
 }
 
-// dropSizing removes the `sizing` every layout that draws modules on a
-// surface of its own (Desktop items, the lock and login screens) and every
-// overlay page gained after format 1 was frozen
-func dropSizing(cfg any) {
-	root, _ := cfg.(*jsonx.Object)
-	overlay, _ := root.Value("Overlay").(*jsonx.Object)
-	pages, _ := overlay.Value("items").(*jsonx.Array)
-	for _, page := range pages.Items {
-		page.(*jsonx.Object).Delete("sizing")
-	}
-	desktop, _ := root.Value("Desktop").(*jsonx.Object)
-	items, _ := desktop.Value("items").(*jsonx.Array)
-	for _, item := range items.Items {
-		item.(*jsonx.Object).Delete("sizing")
-	}
-	for _, key := range []string{"Lockscreen", "Greeter"} {
-		section, _ := root.Value(key).(*jsonx.Object)
-		layout, _ := section.Value("layout").(*jsonx.Object)
-		layout.Delete("sizing")
-	}
-}
-
 // Keys a BarStyle (the Bars section's style and each bar's own) gained
 // after format 1 was frozen: textScale (in place of a font size of null,
 // the default) and the widget styles' (split, tab, outline strokes, fill
@@ -245,11 +222,15 @@ var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFil
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load (the Bars
 // section's style's: barStyleKeysAddedSinceV1)
-var addedSinceV1 = []string{"Appearance.shape.innerRadius", "Updates.interval", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method", "Launcher.providers.files", "Workspaces.specialWorkspaces", "WorkspaceOverlay.specialWorkspaces", "WorkspaceOverlay.specialWorkspaceColor", "Lockscreen.layout.shade", "Lockscreen.layout.backdrop.blurStrength", "Greeter.layout.shade", "Greeter.layout.backdrop.blurStrength"}
+var addedSinceV1 = []string{"Appearance.shape.innerRadius", "Updates.interval", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method", "Launcher.providers.files", "Workspaces.specialWorkspaces", "WorkspaceOverlay.specialWorkspaces", "WorkspaceOverlay.specialWorkspaceColor", "Lockscreen.layout.shade", "Lockscreen.layout.backdrop.blurStrength", "Greeter.layout.shade", "Greeter.layout.backdrop.blurStrength", "Lockscreen.layout.sizing", "Greeter.layout.sizing"}
 
 // Keys a Desktop layout gained since format 1 (addedSinceV1 walks object
 // keys only, not array items)
-var desktopLayoutKeysAddedSinceV1 = []string{"shade"}
+var desktopLayoutKeysAddedSinceV1 = []string{"shade", "sizing"}
+
+// Keys an overlay page gained since format 1: ViewBase's visible and the
+// pages' sizing, both filled at load (v114 moves moduleScale into sizing)
+var overlayPageKeysAddedSinceV1 = []string{"visible", "sizing"}
 
 // prefixed puts prefix before each of keys
 func prefixed(prefix string, keys []string) []string {

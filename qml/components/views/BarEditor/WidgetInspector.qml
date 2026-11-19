@@ -163,7 +163,7 @@ Item {
             "icon": "add",
             "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
           } : null
-        fieldNote: (path, schema) => path[0] === "popout" && path[path.length - 2] === "sizing" ? editorRoot.popoutNote.lineFor(path[path.length - 1]) : ""
+        fieldNote: (path, schema) => path[0] === "popout" ? editorRoot.popoutNote.noteFor(path) : ""
         onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
         onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
       }

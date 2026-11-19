@@ -26,17 +26,7 @@ QtObject {
   //         drawn at its zoom, fits `room` ({ width, height }: the screen's
   //         px for it, which must not depend on the popout's own box)
   function layoutOf(sizing, screen, content, room) {
-    const factors = Sizing.factors(sizing);
-    const zoom = GridPlacement.zoomOf(factors.content);
-    const fit = Sizing.fitInto({
-      "width": content.width * zoom,
-      "height": content.height * zoom
-    }, room);
     const card = screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
-    return {
-      "zoom": GridPlacement.zoomOf(factors.content * fit),
-      "unit": card * factors.card / zoom,
-      "fit": fit
-    };
+    return Sizing.popoutLayout(sizing, card, content, room);
   }
 }

@@ -59,7 +59,7 @@ QtObject {
   // The line under the Size row at `path` of a form (SchemaPropertiesForm.
   // fieldNote), "" for any other row
   function sizingNote(path, schema) {
-    return path[path.length - 2] === "sizing" ? root._sizingNotes.lineFor(path[path.length - 1]) : "";
+    return root._sizingNotes.noteFor(path);
   }
 
   // The line under a module's own Content size (`contentSize`, a % or null)

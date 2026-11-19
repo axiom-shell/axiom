@@ -324,6 +324,7 @@ TestCase {
     verify(shrunk.capped);
     compare(shrunk.card.total, 180, "the fit is its own clause, not in the totals");
     verify(!Sizing.breakdown(own, root._global, 0.9995, false).shrunk, "a hair under 1 is no shrink");
+    verify(!Sizing.breakdown(own, root._global, 0.996, false).shrunk, "rounds to 100%: no shrink to name");
   }
 
   function test_breakdown_tool_page_fit() {
@@ -345,8 +346,44 @@ TestCase {
     const plain = Sizing.moduleBreakdown(own, root._global, null, 150).content;
     compare([plain.global, plain.here, plain.module, plain.total], [90, 120, 150, 162]);
     const fitted = Sizing.moduleBreakdown(own, root._global, 0.5, 150).content;
-    compare([fitted.here, fitted.module, fitted.total], [60, 150, 81], "the surface's fit is in its share");
+    compare([fitted.here, fitted.module, fitted.fit, fitted.total], [120, 150, 50, 81], "here is the surface's own factor; the fit is in the total");
+    verify(fitted.shrunk);
+    verify(!plain.shrunk);
     const none = Sizing.moduleBreakdown(null, root._global, null, null).content;
     compare([none.here, none.module, none.total], [100, 100, 90], "no sizing and no module Content size: the global size");
+  }
+
+  function test_popoutLayout() {
+    const card = 100;
+    const big = Sizing.popoutLayout(null, card, {
+      "width": 800,
+      "height": 600
+    }, {
+      "width": 400,
+      "height": 600
+    });
+    compare([big.fit, big.zoom, big.unit], [0.5, 0.5, card], "a popout too big for its screen shrinks at 100%");
+    const fits = Sizing.popoutLayout({
+      "contentSize": 150
+    }, card, {
+      "width": 200,
+      "height": 100
+    }, {
+      "width": 1000,
+      "height": 1000
+    });
+    compare([fits.fit, fits.zoom, fits.unit], [1, 1.5, card], "fits: no shrink; the layout unit is the drawn card over the zoom");
+    const linked = Sizing.popoutLayout({
+      "cardSize": 150,
+      "linked": true,
+      "contentSize": null
+    }, card, {
+      "width": 400,
+      "height": 400
+    }, {
+      "width": 300,
+      "height": 300
+    });
+    compare([linked.fit, linked.zoom, linked.unit], [0.5, 0.75, card], "the fit never reaches the unit");
   }
 }
