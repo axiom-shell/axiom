@@ -1,6 +1,6 @@
 # Review lenses
 
-What a reviewer agent reads besides its brief: "Every reviewer", then the lens sections its brief names. `review-branch` uses the six lenses here over a slice of a diff; `review-system` (`../review-system/lenses.md`) adds its own and reads "the branch" as "the system", where nothing is pre-existing.
+What a reviewer agent reads besides its brief: "Every reviewer", then the lens sections its brief names. `review-branch` uses the six lenses here, over slices of a diff (`bugs`, `regressions`) and over the whole branch (the rest); `review-system` (`../review-system/lenses.md`) adds its own and reads "the branch" as "the system", where nothing is pre-existing.
 
 ## Every reviewer
 
@@ -71,6 +71,7 @@ The whole branch, never a slice: what one slice can't see is the point. Start fr
 - Names: one concept, one name in every file; one name, one meaning (the `also defined` column shows clashes); a family of readers or helpers doing one job under different names, result shapes or argument orders; a member whose unit differs from its siblings' (factor vs %, px vs grid cells) or from the name's other uses.
 - Patterns: every site of one kind (a config write, a call into a helper, a form hook, a wrapper) written the same way; each new file mirrors the precedent of its kind (member order, comment style, test layout).
 - Decisions: a helper's decision worked out again in a host or the UI (`CLAUDE.md` › Layering).
+- Wrong reuse: a reused piece run in a mode or with flags (`submenu: true`, a different host) that changes behaviour from what the purpose names; "X becomes Y" built from a third piece instead of X's own. No duplicate exists, so name the behaviour lost, with both call sites.
 - Schema: a field definition written out again instead of referenced and overridden; a new key named unlike its siblings.
 - User strings and docs: one wording per message (grep the existing `I18n.tr` strings); every UI label a description or doc names exists in the QML; one home per fact, linked from the others.
 - Ledger: every added public name is in it, with the same name and unit; every ledger entry is built.

@@ -11,38 +11,41 @@ You lead the review: you split the branch into slices, hand them to `reviewer` a
 Arguments: `$ARGUMENTS`
 - Free text: what the branch is for. It's a claim to check, not a fact; its words are never flags.
 - `--base <ref>`: review against `<ref>` instead of `main`.
+- `--since <sha>`: the branch passed a review at `<sha>`; review only what changed after it (step 1).
 - `--fix`: after the report, have the confirmed findings fixed (step 6). Without it nothing changes.
 
 ## 1. Scope
 
 - `mb=$(git merge-base <base> HEAD)`; `git diff --stat $mb` (committed and uncommitted, the same as `git diff <base>...HEAD --stat` plus the working tree), `git ls-files -o --exclude-standard` for new files, and `git log --oneline $mb..HEAD` for the commits' own account of the purpose. Nothing changed: say so and stop.
+- With `--since <sha>`: the scope is `git diff <sha>` less what a merge of the base brought in (`git diff <sha> HEAD -- $(git diff --name-only <sha>..HEAD --no-merges)` plus the merge's conflicted files); slices already reviewed and unchanged are never reviewed again. Record the reviewed sha in the plan after each round.
 - Uncommitted edits under `.claude/` are tooling, not the branch, unless its commits touch them.
 - Leave out generated files (`docs/dev/generated/`, `docs/dev/config/`, `qml/config/i18n/*.json`, `qml/config/json/config.schema.json`, `qml/config/themes/template/`) and pure renames.
 - The purpose: the arguments, plus the commit subjects. Where they disagree, tell the reviewers both.
 
-## 2. Slices
+## 2. Size
 
-Group the files into slices of at most ~400 changed lines (the `--stat` counts):
-- A file stays whole, whatever its size (a big one is a slice of its own).
-- Related files go together: a QML file with its `schema.yaml`, its test and its doc; a service with its reader; a Go package with its tests.
-- Docs-only changes form their own slice.
+Count the changed lines from `--stat` (generated files left out).
+- **Tiny** (under ~50 lines, `new_names.py` lists no names): one reviewer, all lenses, and the checker; no judge unless it finds something.
+- **Small** (under ~300 lines): one reviewer, all six lenses, over the whole branch. Skip to step 3.
+- **Larger**: slices for correctness, plus whole-branch reviewers for everything that spans files.
+
+Slices (larger branches only): at most ~600 changed lines each. A file stays whole, whatever its size; related files go together (a QML file with its `schema.yaml`, its test and its doc; a service with its reader; a Go package with its tests). Docs-only files are not sliced: the words reviewer covers them.
 
 ## 3. Reviewers and checks, in parallel
 
-Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules`, `design`, `consistency`. Per slice:
-- a code slice over ~150 lines: three reviewers, lenses `bugs`+`regressions`, `cleanup`+`design`, `rules`;
-- a smaller code slice: one reviewer, all five lenses;
-- a docs-only slice: one reviewer, `design` (are the docs true to the code, and complete) and `rules` (do the files, members and steps they name exist and agree).
+Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules`, `design`, `consistency`. Bugs need close reading line by line, so they are sliced; duplicates, names, patterns, rules and design span files, so they are read over the whole branch, where a slice can't hide them.
+- **Each slice:** one reviewer, `bugs`+`regressions`.
+- **Code, whole branch:** one reviewer, `consistency`+`cleanup`+`rules`+`design` (code and schema), starting from `new_names.py --base <mb>`.
+- **Words, whole branch** (only when the branch changes docs, schema descriptions or `I18n.tr` strings): one reviewer, `consistency` › User strings and docs + `design` › Docs.
+- Plus one `checker` running `scripts/dev/verify.sh --all` (a failing check is a Blocker).
 
-Always one more reviewer over the whole branch, not a slice, with the `consistency` lens: its brief gives the purpose, the base `<mb>`, and the ledger path if the branch has one (`/keep-order`). Alignment is axiom's top priority, so this reviewer is never merged away.
+At most ~6 slice reviewers: past that, merge neighbouring slices. A ~3k-line branch is then about 5 + 2 reviewers, a checker and the judge; a small one is 1 reviewer, a checker and the judge.
 
-At most ~8 slice reviewers in all: past that, merge lenses (`cleanup`+`design`+`rules` in one, then everything in one per slice) before merging slices.
-
-Launch them all in one message (`subagent_type: reviewer`), plus one `checker` running `scripts/dev/verify.sh --all` (a failing check is a Blocker). Each reviewer's brief:
+Launch them all in one message (`subagent_type: reviewer`). Each reviewer's brief:
 - **Purpose:** the branch's purpose and its claims ("fixes X", "supports Y").
-- **Slice:** its files, read with `git diff <mb> -- <files>` (new files in full), and the base, `<mb>`.
+- **Scope:** a slice's files, read with `git diff <mb> -- <files>` (new files in full), or "the whole branch" with `git diff --stat <mb>` as the map; the base `<mb>`; the ledger path if the branch has one (`/keep-order`).
 - **Lenses:** read `.claude/skills/review-branch/lenses.md` › Every reviewer and › `<lens>` for each lens named.
-- Look only at your slice's changes, and what they call; reply in the lenses file's Reply shape, under 600 words.
+- A slice reviewer looks only at its slice's changes and what they call; a whole-branch reviewer reads code only to settle a candidate. Reply in the lenses file's Reply shape, under 600 words.
 
 ## 4. Judge
 
