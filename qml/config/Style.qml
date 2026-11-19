@@ -35,6 +35,8 @@ QtObject {
   readonly property color surfaceSunken: root._roles.surfaceSunken
   readonly property color surfaceRaised: root._roles.surfaceRaised
   readonly property color surfaceHighest: root._roles.surfaceHighest
+  // A slider's trough, a meter's track and unlit segments: plain, no outline
+  readonly property color trough: root.surfaceHighest
   readonly property color text: root._roles.text
   readonly property color textMuted: root._roles.textMuted
   readonly property color textFaint: root._roles.textFaint

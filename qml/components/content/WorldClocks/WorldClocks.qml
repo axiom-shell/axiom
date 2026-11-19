@@ -116,7 +116,7 @@ Card {
     Rectangle {
       anchors.fill: parent
       radius: height / 2
-      color: Style.surfaceSunken
+      color: Style.trough // style-exempt: a day/night band with a marker, not a meter
     }
     Rectangle {
       x: parent.width * 7 / 24

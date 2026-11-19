@@ -48,22 +48,15 @@ ColumnLayout {
     onRightClicked: ActionsManager.run("pomodoroSkip")
   }
 
-  Row {
+  // A dot per session until the long break
+  SegmentMeter {
     Layout.alignment: Qt.AlignHCenter
-    spacing: Widget.spacing / 2
-
-    Repeater {
-      model: PomodoroConfig.longBreakEvery
-      Rectangle {
-        required property int index
-        width: Appearance.fontSize * 0.6
-        height: width
-        radius: width / 2
-        color: index < root.towardsLong ? Style.accent : Style.surfaceSunken
-        border.width: index < root.towardsLong ? 0 : Style.hairline
-        border.color: Style.borderStrong
-      }
-    }
+    count: PomodoroConfig.longBreakEvery
+    share: count > 0 ? root.towardsLong / count : 0
+    round: true
+    gap: Widget.spacing / 2
+    Layout.preferredHeight: Appearance.fontSize * 0.6
+    Layout.preferredWidth: count * Layout.preferredHeight + gap * (count - 1)
   }
 
   Loader {

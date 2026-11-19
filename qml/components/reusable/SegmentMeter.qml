@@ -20,9 +20,7 @@ Item {
   // A role name: accent | success | warning | error | info
   property string fillTone: "accent"
   property color litColor: Style.toneFill(root.fillTone)
-  property color offColor: Style.surfaceSunken
-  // The unlit blocks carry a borderStrong hairline (the bar draws without)
-  property bool outlined: true
+  property color offColor: Style.trough
 
   readonly property int lit: Math.round(Math.max(0, Math.min(1, root.share)) * root.count)
   readonly property real cell: Math.max(0, ((root.vertical ? root.height : root.width) - root.gap * (root.count - 1)) / root.count)
@@ -44,8 +42,7 @@ Item {
         // A column fills from the bottom
         readonly property bool lit: (root.vertical ? root.count - 1 - index : index) < root.lit
         color: lit ? root.litColor : root.offColor
-        border.width: !lit && root.outlined ? Style.hairline : 0
-        border.color: Style.borderStrong
+        border.width: 0
 
         ColorGlide on color {}
       }
