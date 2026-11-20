@@ -12,3 +12,4 @@ settings:
     enum: [auto, timer, stopwatch]
     x-enumLabels: {auto: Auto, timer: Timer, stopwatch: Stopwatch}
     description: 'Auto: whichever is running.'
+  showLaps: {type: boolean, title: Laps, default: true}

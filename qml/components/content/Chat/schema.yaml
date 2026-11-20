@@ -3,3 +3,5 @@ keyboard: true
 icon: smart_toy
 group: Tools
 defaultSize: [4, 8]
+settings:
+  showHeader: {type: boolean, title: Header, default: true}

@@ -541,7 +541,7 @@ QtObject {
     const label = ClipboardManager.labelOf(entry);
     return {
       kind: "clipboard",
-      glyph: entry.format || entry.html ? "image" : entry.pinned ? "keep" : "content_paste",
+      glyph: ClipboardManager.isImage(entry) ? "image" : entry.pinned ? "keep" : "content_paste",
       image: entry.image,
       crop: true,
       title: label.length > 120 ? label.slice(0, 120) + "…" : label,

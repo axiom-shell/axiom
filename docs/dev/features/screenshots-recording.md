@@ -85,7 +85,7 @@ Recording lives in the service, not in the card, because the overlay destroys th
 - The `screenRecord` bind action (with a call).
 - Launcher `/record`.
 - The Screenshot card's Record tile.
-- The `ScreenRecord` overlay module: region or screen, the sound, and recent recordings.
+- The `ScreenRecord` overlay module: region or screen, the sound, and recent recordings (`count` of them, 0-12; `showHeader`).
 
 ### Recent recordings
 - `refreshRecordings()` lists the newest 12 `Recording_*.mp4` in `recordingFolder` into `recordings` (`[{ path, name, time, size }]`, newest first).

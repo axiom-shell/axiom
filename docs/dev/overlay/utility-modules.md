@@ -6,6 +6,8 @@
 
 Tool-like overlay modules. Each keeps its lasting state in its service, so closing the overlay loses nothing.
 
+Options the tools share: `showHeader` (Calculator, Chat, ClipboardHistory, ScreenRecord, Notifications; Todo and Notes too) hides the title row, and `showSearch` (ClipboardHistory, EmojiPicker, Cheatsheet) hides the search field. Each is ANDed with the room rule, so a card never shows more than it did, and a popout honours them too.
+
 ### Calculator (`CalculatorManager`)
 - The field, the answer and a keypad. Keys type at the cursor; = takes the answer into the field.
 - Wide: keys beside the field, history under it.
@@ -16,6 +18,7 @@ Tool-like overlay modules. Each keeps its lasting state in its service, so closi
 ### ClipboardHistory (`ClipboardManager`)
 - A search field, pins first.
 - `GridView` columns in a wide card, with two-line previews.
+- `showImages` (default on) leaves image entries out of the list.
 
 ### EmojiPicker (`EmojiManager`)
 - A search field, Unicode group tabs and a virtualised `GridView`.
@@ -26,11 +29,23 @@ Tool-like overlay modules. Each keeps its lasting state in its service, so closi
 - `style`: rows with a day band when there's room, tiles side by side in a wide, short card; Auto (default) picks by the card's size (`shownStyle`). `showSeconds` adds the seconds.
 - Offsets come from `TimeZoneManager`: see [Clock and time zones](../features/clock-timezones.md).
 
+### Notifications
+- `showQuiet` (default on) turns the Quiet section and its count off; the alerts stay.
+
+### Stopwatch
+- `showLaps` (default on) hides the lap list and its copy button.
+
+### Palette
+- `labels`: `show` (default) or `hide` the semantic role names under each colour. No Auto: the card has no fit rule.
+
+### ThemePicker
+- `groups` picks which theme groups list (built-in, imported, generated); `showControls` hides the Dark/Light switch, Auto and the schedule rows.
+
 ### NightLightControls
 - Reads the `NightLight` reader. Described in [Night light](../theming/night-light.md).
 
 ### ScreenRecord (`ScreenshotManager`)
-- Region or screen, the sound, and recent recordings. Described in [Screenshots and recording](../features/screenshots-recording.md).
+- Region or screen, the sound, and recent recordings (`count`, 0-12, how many are listed; 0 hides the list). Described in [Screenshots and recording](../features/screenshots-recording.md).
 
 ### Cheatsheet (`KeybindManager`, read-only)
 - Its own search (`showSearch`, when there's room).

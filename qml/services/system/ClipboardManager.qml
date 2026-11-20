@@ -99,9 +99,14 @@ Singleton {
     });
   }
 
+  // An image, or HTML that is just one
+  function isImage(entry) {
+    return !!(entry.format || entry.html);
+  }
+
   // Whether a clip can be pinned (text, not an image), and whether it is
   function canPin(entry) {
-    return !!entry && !entry.format && !entry.html;
+    return !!entry && !root.isImage(entry);
   }
 
   function isPinned(entry) {

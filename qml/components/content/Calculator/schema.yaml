@@ -14,3 +14,4 @@ settings:
     title: History
     default: true
     description: Answers you copied or finished with =. Only when there is room.
+  showHeader: {type: boolean, title: Header, default: true}

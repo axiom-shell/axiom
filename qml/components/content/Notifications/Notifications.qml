@@ -19,6 +19,7 @@ import qs.components.methods
 // pinned to the end (silent ones, folded shut by default, opening toward
 // the alerts up to half the list's room). Compact, the count; a click on
 // it toggles do not disturb.
+// properties: { showHeader, showQuiet }
 Panel {
   id: root
 
@@ -55,7 +56,7 @@ Panel {
   // bar (Panel.growth)
   flips: true
   readonly property bool hasAlerts: root.groupKeys.length > 0
-  readonly property bool hasQuiet: NotificationManager.quietCount > 0
+  readonly property bool hasQuiet: root.properties.showQuiet && NotificationManager.quietCount > 0
   // The most the open Quiet section's list takes: half the list's room
   readonly property real quietCap: root.embedded ? root.body.height / 2 : root.maxListHeight / 2
   // What the alerts and the Quiet section take now, and the most they can
@@ -214,10 +215,12 @@ Panel {
   }
 
   NotificationHeader {
+    visible: root.properties.showHeader
     onClearAll: root.clearAll()
   }
 
   StyledSeparator {
+    visible: root.properties.showHeader
     Layout.fillWidth: true
   }
 

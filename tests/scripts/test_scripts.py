@@ -562,6 +562,16 @@ class CheckI18n(unittest.TestCase):
             code, out = run_check(root, "check_i18n.py")
             self.assertEqual(code, 0, out)
 
+    def test_array_labels_cover_string_enum_items(self):
+        schema = {"properties": {"A": {"type": "array", "items": {"type": "string", "enum": ["builtin"]},
+                                      "x-enumLabels": {"builtin": "Built-in"}}}}
+        sys.path.insert(0, str(SCRIPTS))
+        from check_i18n import schema_strings
+        out = set()
+        schema_strings(schema, out)
+        self.assertIn("Built-in", out)
+        self.assertNotIn("Builtin", out)
+
 
 class CheckQmllint(unittest.TestCase):
     """scripts/check_qmllint.py's baseline: a warning past its count fails,

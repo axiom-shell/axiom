@@ -4,3 +4,5 @@ icon: palette
 group: Look & layout
 defaultSize: [8, 4]
 hosts: [lockscreen, greeter]
+settings:
+  labels: {$ref: '#/definitions/ItemNames', enum: [show, hide], default: show}

@@ -14,7 +14,7 @@ import qs.components.methods
 // Unicode's groups as tabs and a grid, most used first until you search or
 // pick a group. Click one to copy it; the line under the grid names the one
 // under the pointer. A short card is a row of the most used.
-// properties: { showGroups }
+// properties: { showSearch, showGroups }
 Panel {
   id: root
 
@@ -34,7 +34,7 @@ Panel {
   readonly property real cell: Appearance.fontSize * 2.4
   // One row: the most used, as many as fit
   readonly property bool strip: root.embedded && root.innerHeight < Appearance.fontSize * 7
-  readonly property bool showSearch: !root.strip
+  readonly property bool showSearch: root.properties.showSearch && !root.strip
   readonly property bool showGroups: root.properties.showGroups && !root.strip && (!root.embedded || (root.innerHeight >= Appearance.fontSize * 11 && root.innerWidth >= root.groupIcons.length * Widget.iconButton + Widget.spacing * 8))
   readonly property bool showFooter: !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 12)
   readonly property var recent: EmojiManager.recent(Math.max(1, Math.floor(root.innerWidth / root.cell)))
