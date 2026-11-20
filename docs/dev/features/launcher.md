@@ -55,6 +55,7 @@ The first character picks the provider:
 
 - **No prefix:** the text searches apps and windows.
   - Apps are scored, plus frecency from `usage` `{id: {count, last}}` in `state/launcher.json`, as `Search.useBonus` (the one bonus apps, commands and emoji add).
+  - The frequent apps (empty `:` text) are `LauncherManager.frequentIds()`: shown apps with usage, by frecency then name. A Favourites card with `source: frequent` shows the same list.
   - Windows come from `CompositorManager.windows`, less the ones a window rule hides from the launcher (`WindowRulesManager.shownIn`); their app rows stay.
 - **Extra rows:** a calculator row is added when the text is plain math, the best `Launcher.providers.files.inSearch` files (from two characters; `LauncherFiles.mainRows`) follow the apps and windows, and a web row goes last. The files land after the rest: `LauncherManager` keeps the calculator, app and window rows of the text (`_mainRows`) and only adds the files and the web row again when they do (`_setMain`), so a keystroke searches the apps once.
 - **Toggles:** each provider has a `Launcher` config toggle (`LauncherConfig`).

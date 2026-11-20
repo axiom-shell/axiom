@@ -3,9 +3,26 @@ icon: star
 group: Tools
 defaultSize: [4, 2]
 settings:
+  source:
+    type: string
+    title: Source
+    default: auto
+    description: 'Frequent: the launcher''s frequent apps.'
+    x-control: toggle
+    enum: [auto, recent, frequent, dock]
+    x-enumLabels: {auto: Auto, recent: Recent, frequent: Frequent, dock: Dock}
+  count:
+    type: integer
+    title: Apps shown
+    x-auto: {value: null, start: 6}
+    default: null
+    minimum: 1
+    maximum: 24
+    description: 'Auto: as many as fit; a list of apps shows whole.'
   labels: {$ref: '#/definitions/ItemNames'}
   apps:
     x-scope: personal
+    x-showIf: {source: auto}
     type: array
     title: Apps
     default: []

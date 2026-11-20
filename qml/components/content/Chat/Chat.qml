@@ -11,7 +11,7 @@ import qs.components.content.parts.chat
 // The AI chat (ChatManager): an overlay module, and ready to be a bar
 // popout (it's a Panel). In a wide slot the conversation list is docked on
 // the left; otherwise it slides over the chat. Images can be dropped on it.
-// properties: { showHeader }
+// properties: { showHeader, preset }
 Panel {
   id: root
 
@@ -82,6 +82,7 @@ Panel {
           listDocked: root.listDocked
           listOpen: root.listOpen
           pickerOpen: root.pickerOpen
+          newPreset: root.properties.preset
           onToggleList: {
             root.pickerOpen = false;
             root.listOpen = !root.listOpen;

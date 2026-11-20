@@ -71,6 +71,7 @@ Notes are Markdown files edited in place by the Notes overlay / menu module, wit
 ### Per-module state
 - The last note per place (`overlay`, `menu:<id>`, `desktop:<screen>`) is kept in `~/.local/state/axiom/ui/notes-modules.json`.
 - `lockNote` pins a module to its `note`.
+- `folder` scopes a module to a folder: its `NoteBrowser` (`rootFolder`) starts there and never goes above it, its search keeps the notes within it, the header's New note is made in the open note's folder within it, and the note shown when none is set is the last one opened within it, else its first, else its own `notes.md`.
 
 ### Lifecycle
 - Created from `qml/shell.qml`'s `_services`.

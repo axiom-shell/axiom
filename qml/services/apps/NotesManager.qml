@@ -64,9 +64,9 @@ QtObject {
     return slash < 0 ? "" : path.slice(0, slash);
   }
 
-  // `path` is `folder` or inside it
+  // `path` is `folder` or inside it (the top, "", holds every path)
   function within(path, folder) {
-    return path === folder || path.startsWith(folder + "/");
+    return folder === "" || path === folder || path.startsWith(folder + "/");
   }
 
   // --- Documents ---

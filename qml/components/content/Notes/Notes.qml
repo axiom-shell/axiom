@@ -14,11 +14,17 @@ import qs.components.content.base
 // Ctrl+F (or the toolbar) finds in the note.
 // with `lockNote` the module only ever shows its `note`, and the header and
 // toolbar can go, for a bare scratchpad (e.g. in an edge menu).
-// properties: { note, lockNote, showHeader, showToolbar, showCompleted }
+// properties: { note, folder, lockNote, showHeader, showToolbar, showCompleted }
 Card {
   id: root
 
   readonly property string configuredNote: NotesManager.clean(root.properties.note)
+  // The folder the card works in ("" for the whole notes folder)
+  readonly property string rootFolder: NotesManager.clean(root.properties.folder)
+  // The open note's folder, kept within rootFolder
+  readonly property string currentFolder: NotesManager.within(NotesManager.parentOf(root.path), root.rootFolder) ? NotesManager.parentOf(root.path) : root.rootFolder
+  // The note shown when the folder has none
+  readonly property string defaultNote: root.rootFolder === "" ? NotesManager.defaultNote : root.rootFolder + "/" + NotesManager.defaultNote
   readonly property bool locked: root.properties.lockNote && root.configuredNote !== ""
   // The last note is remembered per place the module is shown
   readonly property string placeKey: root.host.kind === "menu" ? "menu:" + root.host.id : root.host.kind === "desktop" ? "desktop:" + root.host.screen : "overlay"
@@ -71,7 +77,8 @@ Card {
   }
 
   function _initial() {
-    return root.configuredNote || NotesManager.lastOpened(root.placeKey) || NotesManager.defaultNote;
+    const last = NotesManager.lastOpened(root.placeKey);
+    return root.configuredNote || (last && NotesManager.within(last, root.rootFolder) ? last : "") || NotesManager.allNotes.find(note => NotesManager.within(note, root.rootFolder)) || root.defaultNote;
   }
 
   // A different configured note (or lock) takes effect at once
@@ -119,7 +126,7 @@ Card {
         NotesManager.release(root.path);
         root.note = null;
         root.path = "";
-        root.show(NotesManager.allNotes.find(note => !NotesManager.within(note, path)) ?? NotesManager.defaultNote);
+        root.show(NotesManager.allNotes.find(note => NotesManager.within(note, root.rootFolder) && !NotesManager.within(note, path)) ?? root.defaultNote);
       }
     }
   }
@@ -248,7 +255,7 @@ Card {
         iconText: "note_add"
         iconColor: Style.text
         tooltipText: I18n.tr("New note")
-        onClicked: NotesManager.createNote(NotesManager.parentOf(root.path), "", path => root.show(path))
+        onClicked: NotesManager.createNote(root.currentFolder, "", path => root.show(path))
       }
     }
 
@@ -353,6 +360,8 @@ Card {
         width: Math.min(parent.width, Widget.px(320))
         sourceComponent: NoteBrowser {
           current: root.path
+          rootFolder: root.rootFolder
+          folder: root.currentFolder
           maxHeight: editor.height
           onPicked: (path, line) => {
             root.reveal(path, line);

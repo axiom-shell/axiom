@@ -14,6 +14,8 @@ RowLayout {
   property bool listDocked: false
   property bool listOpen: false
   property bool pickerOpen: false
+  // The preset New chat starts in; empty, the open chat's
+  property string newPreset: ""
 
   readonly property int rowHeight: Widget.iconButton
 
@@ -96,6 +98,6 @@ RowLayout {
     iconText: "edit_square"
     iconColor: Style.text
     tooltipText: I18n.tr("New conversation")
-    onClicked: ChatManager.newConversation(ChatManager.preset.name)
+    onClicked: ChatManager.newConversation(root.newPreset || ChatManager.preset.name)
   }
 }

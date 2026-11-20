@@ -487,7 +487,8 @@ QtObject {
       // An empty default is the default provider (`x-emptyLabel`)
       return (fieldSchema.default === "" ? [""] : []).concat(ChatConfig.providers.map(provider => provider.id));
     case "chatPresets":
-      return ChatConfig.presets.map(preset => preset.name);
+      // An empty default is the open chat's preset (`x-emptyLabel`)
+      return (fieldSchema.default === "" ? [""] : []).concat(ChatConfig.presets.map(preset => preset.name));
     case "colors":
       // `x-emptyLabel`: empty picks a color automatically; without it the
       // default comes first, the way back to it
@@ -520,6 +521,16 @@ QtObject {
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":
       return ["", ...NotesManager.allNotes];
+    case "noteFolders":
+      // Every folder holding a note at any depth, and the ones above it
+      {
+        const folders = new Set();
+        for (const note of NotesManager.allNotes) {
+          const parts = NotesManager.parentOf(note).split("/").filter(part => part !== "");
+          parts.forEach((part, i) => folders.add(parts.slice(0, i + 1).join("/")));
+        }
+        return ["", ...[...folders].sort((a, b) => a.localeCompare(b))];
+      }
     case "calendars":
       // `x-allCalendars`: every shown calendar (a card's filter, an array's
       // items); else those new events can go to

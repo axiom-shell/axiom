@@ -11,6 +11,14 @@ settings:
     default: ''
     x-options: notes
     description: 'Path in the notes folder, e.g. work/ideas.md. Empty: the last one shown.'
+  folder:
+    x-scope: machine
+    type: string
+    title: Folder
+    default: ''
+    x-options: noteFolders
+    x-emptyLabel: The whole folder
+    description: Path in the notes folder.
   lockNote:
     type: boolean
     title: Only this note

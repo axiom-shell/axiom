@@ -5,3 +5,9 @@ group: Tools
 defaultSize: [4, 8]
 settings:
   showHeader: {type: boolean, title: Header, default: true}
+  preset:
+    type: string
+    title: Preset
+    default: ''
+    x-options: chatPresets
+    x-emptyLabel: Current preset
