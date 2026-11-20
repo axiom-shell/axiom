@@ -5,6 +5,7 @@ group: Tools
 popout:
   variant: own
   enabled: {description: The timer and stopwatch on hover.}
+popoutModule: {type: Stopwatch}
 appearance:
   variant: value
   style:

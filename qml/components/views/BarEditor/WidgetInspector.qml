@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
+import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 import qs.components.views.base
@@ -85,6 +86,9 @@ Item {
       readonly property var typeInfo: root.dragLayer.typeInfo(editorRoot.widget.type)
       readonly property var propertiesSchema: editorRoot.typeInfo?.propertiesSchema ?? ({})
       readonly property var propertiesOrder: editorRoot.typeInfo?.propertiesOrder ?? []
+      // Card 1's keys (all but `popout`) and card 2's (`popout` only)
+      readonly property var optionsSchema: SchemaLayout.widgetCards(editorRoot.propertiesSchema).options
+      readonly property var popoutSchema: SchemaLayout.widgetCards(editorRoot.propertiesSchema).popout
       // It shrinks when crowded (`x-elastic`), so it takes a minimum and
       // maximum length
       readonly property bool elastic: editorRoot.typeInfo?.elastic ?? false
@@ -145,31 +149,41 @@ Item {
         }
       }
 
-      // Options, then sizing, each the inspector's full width
-      OptionsGroup {
-        Layout.fillWidth: true
-        propertiesSchema: editorRoot.propertiesSchema
-        order: editorRoot.propertiesOrder
-        numberMode: "stepper"
-        pairs: true
-        values: editorRoot.widget.properties ?? ({})
-        // `$widget.opensOwnPopout`: whether its own popout opens (not a menu
-        // in its place), for the popout's x-enabledIf
-        context: Object.assign({}, BarsConfig.lookContext(BarManager.selectedBar()), {
-          "$widget.opensOwnPopout": MenusConfig.opensOwnPopout(editorRoot.widget.properties)
-        })
-        emptyText: I18n.tr("This widget has no options")
-        changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
-        // An edge menu picker (its popout's menu, a Button's click
-        // menu) can open a new menu, made and saved at once
-        fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
-            "text": I18n.tr("New menu…"),
-            "icon": "add",
-            "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
-          } : null
-        fieldNote: path => path[0] === "popout" ? editorRoot.popoutNote.noteFor(path) : ""
-        onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
-        onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
+      // Its options, its popout's, then sizing, each the inspector's full width
+      Repeater {
+        // A fixed model: one built from the widget would be rebuilt by every
+        // edit, dropping a field mid-step
+        model: ["options", "popout"]
+
+        delegate: OptionsGroup {
+          required property string modelData
+
+          Layout.fillWidth: true
+          propertiesSchema: modelData === "popout" ? editorRoot.popoutSchema : editorRoot.optionsSchema
+          // The Popout card is titled (and folds) by the popout part's own title
+          title: modelData === "popout" ? I18n.tr(editorRoot.popoutSchema.popout?.title ?? "") : ""
+          order: editorRoot.propertiesOrder
+          numberMode: "stepper"
+          pairs: true
+          values: editorRoot.widget.properties ?? ({})
+          // `$widget.opensOwnPopout`: whether its own popout opens (not a menu
+          // in its place), for the popout's x-enabledIf
+          context: Object.assign({}, BarsConfig.lookContext(BarManager.selectedBar()), {
+            "$widget.opensOwnPopout": MenusConfig.opensOwnPopout(editorRoot.widget.properties)
+          })
+          emptyText: modelData === "popout" ? "" : I18n.tr("This widget has no options")
+          changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path)
+          // An edge menu picker (its popout's menu, a Button's click
+          // menu) can open a new menu, made and saved at once
+          fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
+              "text": I18n.tr("New menu…"),
+              "icon": "add",
+              "run": () => OverlayManager.newMenuFor(editorRoot.zone, editorRoot.index, path)
+            } : null
+          fieldNote: path => path[0] === "popout" ? editorRoot.popoutNote.noteFor(path) : ""
+          onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
+          onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path)
+        }
       }
 
       FieldGroup {

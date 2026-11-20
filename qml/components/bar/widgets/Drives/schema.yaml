@@ -3,6 +3,7 @@ keywords: ['Removable Drives']
 icon: usb
 group: Network & devices
 popout: {variant: own, enabled: {description: 'Drives to open, eject or unlock.'}}
+popoutModule: {type: Drives}
 appearance:
   variant: value
   style:

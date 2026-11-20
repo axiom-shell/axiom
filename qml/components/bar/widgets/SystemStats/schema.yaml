@@ -2,6 +2,7 @@ label: System stats
 icon: memory_alt
 group: System
 popout: {variant: own, enabled: {description: Live graphs of the shown metrics on hover.}}
+popoutModule: {type: SystemGraphs, fromWidget: [metrics, memoryFormat, units]}
 appearance:
   variant: value
   style:

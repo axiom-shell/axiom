@@ -14,9 +14,9 @@ import qs.components.content.parts
 // Wi-Fi menu for the Network widget: radio switch, the connection editor,
 // VPN import and airplane mode (icon buttons as high as the switch), the
 // current connection (address and throughput, folding open its details,
-// folded at first; left out by a card's showConnection), the VPNs (one summary row
+// folded at first; left out by showConnection), the VPNs (one summary row
 // with a toggle for the VPN up or last used, folding open every VPN and
-// the public IP check; left out by showVpn / the widget's popoutVpn), the
+// the public IP check; left out by showVpn), the
 // networks in range (scanning while shown), and a footer (hidden
 // network). Click a
 // network to connect or disconnect; a secured new one asks inline for
@@ -26,6 +26,7 @@ import qs.components.content.parts
 // popout keeps one size and rows keep their order, as in BluetoothDevices;
 // its window keeps room for whatever folds open. Compact, its figure
 // toggles the radio.
+// properties: { showConnection, showVpn }
 Panel {
   id: root
 
@@ -41,10 +42,7 @@ Panel {
     if (root.detailsOpen)
       NetworkingManager.refreshDetails();
   }
-  // A popout's (the bar widget's popoutVpn); a card reads properties
-  property bool vpnShown: true
-  readonly property bool showsVpn: root.embedded ? root.properties.showVpn : root.vpnShown
-  // The popout's arrives after it's built
+  readonly property bool showsVpn: root.properties.showVpn
   onShowsVpnChanged: {
     if (root.showsVpn)
       VpnManager.acquire(root);

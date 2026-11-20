@@ -3,6 +3,7 @@ keywords: ['Package Updates']
 icon: package_2
 group: System
 popout: {variant: own, enabled: {description: Pending packages on hover.}}
+popoutModule: {type: Updates}
 appearance:
   variant: value
   style:

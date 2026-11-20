@@ -2,6 +2,7 @@ label: Microphone
 icon: mic
 group: Media & audio
 popout: {variant: own, enabled: {description: Open the input mixer when hovered.}}
+popoutModule: {type: AudioMixer, fromWidget: [mode, maxVolume]}
 appearance:
   variant: value
   style:

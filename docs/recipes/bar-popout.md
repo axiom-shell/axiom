@@ -2,7 +2,7 @@
 
 A bar popout is the panel that opens when you hover a bar widget: the weather forecast, the package list, the Bluetooth devices. It is a content file named after the popout, opened by a `PopoutAnchor` in the widget. At the end you have a `Panel` and the anchor that opens it.
 
-**Copy from:** `qml/components/content/WeatherForecast/WeatherForecast.qml` (a `Panel` fed by a service), `qml/components/content/Caffeine/Caffeine.qml` (a panel filled from the anchor's `extraData`, and also usable as an overlay card), `qml/components/bar/widgets/IdleInhibitor/IdleInhibitor.qml` (the anchor with `extraData`), `qml/components/hosts/popout/PopoutAnchor.qml` (the anchor's API).
+**Copy from:** `qml/components/content/WeatherForecast/WeatherForecast.qml` (a `Panel` fed by a service), `qml/components/content/Caffeine/Caffeine.qml` (a module panel reading `properties`, also an overlay card), `qml/components/bar/widgets/IdleInhibitor/IdleInhibitor.qml` (the anchor; its schema.yaml declares `popoutModule`), `qml/components/content/MarketsPopout/MarketsPopout.qml` with `qml/components/bar/widgets/Markets/Markets.qml` (popout-only content filled by `extraData`), `qml/components/hosts/popout/PopoutAnchor.qml` (the anchor's API).
 **Background:** [overlay/content-roots](../dev/overlay/content-roots.md), [popouts/hosts-and-switching](../dev/popouts/hosts-and-switching.md)
 
 ## Files
@@ -14,7 +14,7 @@ A popout-only panel needs no schema entry. If the same file should also be an ov
 ## Steps
 1. Write a `Panel` (`qml/components/content/base/Panel.qml`) and give it an `implicitWidth`. Build it from `body` and `margins` so it fits its content; `WeatherForecast.qml` sizes itself with `Widget.px(300)`, so use `Widget.px` rather than a bare number.
 2. Data comes from a service the widget keeps acquired. The panel only reads it (`WeatherForecast` reads `WeatherManager`).
-3. Values the widget wants to hand over go in the anchor's `extraData`. Declare a property of the same name on the panel for each key (`presets` in `Caffeine.qml`); the host copies each key onto it and skips readonly ones.
+3. A popout that is also an overlay module declares `popoutModule: {type, fromWidget}` in the widget's schema.yaml and hands the keys the widget supplies itself through the anchor's `fromWidget: ({…})` (checked by `check_structure`); the panel reads `root.properties.<key>`. Values for a popout-only panel go in the anchor's `extraData`: a popout-only panel that takes `extraData` declares a property of the same name for each key (`symbols` in `MarketsPopout.qml`); the host copies each key onto it and skips readonly ones. A module popout reads `root.properties.<key>` instead.
 4. In the widget, add the anchor with a literal `popoutName: "<Name>"`:
    ```qml
    PopoutAnchor {
@@ -27,7 +27,7 @@ A popout-only panel needs no schema entry. If the same file should also be an ov
 
 ## Watch out for
 - **Colours, text and icon sizes.** `Style` roles and the style pieces (`docs/dev/core/style.md`); never `Theme.`, a `fontSizeBy`, an opacity dim or `font.bold`. The copy targets (`Battery`, `Disks`, `Caffeine`, `WeatherForecast`) show the pattern; `check_style.py` fails a file that has them.
-- **Read `extraData` through your own properties**, never the wrapper's `currentData`.
+- **Read `extraData` through your own properties** (popout-only content), never the wrapper's `currentData`.
 - **Text fields and growth.** A text field inside needs `wantsKeyboardFocus: true`. A panel that grows needs `maxImplicitHeight` (and `maxImplicitWidth` if it widens), and should keep its controls still: it sizes to what it shows and sets `flips` so they stay beside the bar when it grows upwards ([Bar popout window sizing](../dev/popouts/hosts-and-switching.md#bar-popout-window-sizing)).
 - **Submenus.** A popout opened from inside popout or menu content becomes that popout's submenu (one level deep). It is the same `PopoutAnchor`, with no extra code.
 - **Computed names are unchecked.** `check_structure` only checks literal `popoutName` values.

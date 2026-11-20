@@ -676,13 +676,25 @@ QtObject {
 
   function updateWidgetProperty(zone, index, key, value) {
     const widget = _widget(zone, index);
-    if (!widget || Utils.deepEqual(widget.properties?.[key], value))
+    if (!widget)
+      return;
+    const old = widget.properties?.[key];
+    if (Utils.deepEqual(old, value))
       return;
     // A form emits an edit inside the popout as the whole popout: keep what
     // the sizing's link means
     if (key === "popout")
-      value = Sizing.editedIn(widget.properties?.[key], value, ["sizing"]);
-    _record(`widget:${root.selectedBarIndex}:${zone}:${index}:${key}`);
+      value = Sizing.editedIn(old, value, ["sizing"]);
+    // Undo per setting: an edit that changes one setting inside `key` is
+    // keyed by its path, so edits to different settings are separate steps;
+    // a list, or several changes (a sizing link flip), keeps `key`
+    const ops = ConfigOps.diff({
+      [key]: old
+    }, {
+      [key]: value
+    });
+    const field = ops.length === 1 ? ops[0].path.join(".") : key;
+    _record(`widget:${root.selectedBarIndex}:${zone}:${index}:${field}`);
     if (!widget.properties)
       widget.properties = {};
     widget.properties[key] = value;
@@ -731,18 +743,33 @@ QtObject {
     return root._allWidgets(saved).find(w => w.id === widget.id) ?? null;
   }
 
-  // Whether a widget's property differs from its saved value (false for a
-  // widget not saved yet)
-  function widgetPropertyChanged(zone, index, key) {
+  // Whether a widget's property at `path` (an array of keys) differs from
+  // its saved value (false for a widget not saved yet)
+  function widgetPropertyChanged(zone, index, path) {
     const saved = _savedWidget(zone, index);
-    return saved !== null && !Utils.deepEqual(_widget(zone, index)?.properties?.[key], saved.properties?.[key]);
+    return saved !== null && !Utils.deepEqual(Utils.valueAt(_widget(zone, index)?.properties, path), Utils.valueAt(saved.properties, path));
   }
 
-  // Puts a widget's property back to its saved value
-  function discardWidgetProperty(zone, index, key) {
+  // Puts a widget's property at `path` (an array of keys) back to its saved
+  // value, that setting only
+  function discardWidgetProperty(zone, index, path) {
     const saved = _savedWidget(zone, index);
-    if (saved)
-      updateWidgetProperty(zone, index, key, Utils.clone(saved.properties?.[key]));
+    const widget = _widget(zone, index);
+    if (!saved || !widget)
+      return;
+    const key = path[0];
+    const savedValue = Utils.valueAt(saved.properties, path);
+    const op = savedValue === undefined ? {
+      "op": "delete",
+      "path": path
+    } : {
+      "op": "set",
+      "path": path,
+      "value": Utils.clone(savedValue)
+    };
+    updateWidgetProperty(zone, index, key, ConfigOps.apply({
+      [key]: Utils.clone(widget.properties?.[key])
+    }, [op])[key]);
   }
 
   // A widget's priority: its own (layout.priority), else its type's

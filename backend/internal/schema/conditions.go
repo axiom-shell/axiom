@@ -92,6 +92,31 @@ func Holds(condition any, valueOf ValueOf) bool {
 	return true
 }
 
+// NamesKey reports whether a condition (as Holds reads it) looks key up:
+// one of its own keys, or one in the items of an anyOf.
+func NamesKey(condition any, key string) bool {
+	cond, ok := condition.(*jsonx.Object)
+	if !ok {
+		return false
+	}
+	for _, k := range cond.Keys() {
+		if k == key {
+			return true
+		}
+		if k != "anyOf" {
+			continue
+		}
+		if list, ok := cond.Value(k).(*jsonx.Array); ok {
+			for _, c := range list.Items {
+				if NamesKey(c, key) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 // length is value?.length ?? 0 for a string or a list (UTF-16 units for a
 // string, as JS counts; only zero or not matters here).
 func length(value any, present bool) int {

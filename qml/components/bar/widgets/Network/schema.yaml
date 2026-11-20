@@ -3,13 +3,14 @@ keywords: ['Network Status']
 icon: wifi
 group: Network & devices
 popout: {variant: own, enabled: {description: Open the Wi-Fi menu when hovered.}}
+popoutModule: {type: WifiNetworks}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, segments, sparkline, ticker, stacked]
     description: 'Ring, segments: signal. Sparkline: download speed. Ticker, stacked: network name.'
 colors: {variant: standard, backgroundColor: {title: Connected color}}
-order: [appearance, showDevice, showVpnLock, vpnColor, middleCommand, popout, popoutVpn, backgroundColor, foregroundColor, disconnectedColor]
+order: [appearance, showDevice, showVpnLock, vpnColor, middleCommand, popout, backgroundColor, foregroundColor, disconnectedColor]
 settings:
   showDevice:
     type: boolean
@@ -30,14 +31,6 @@ settings:
     type: boolean
     title: VPN lock
     default: true
-  popoutVpn:
-    type: boolean
-    title: VPNs
-    default: true
-    description: With the Import VPN action.
-    x-showIf: {popout.enabled: true}
-    x-enabledIf: {$widget.opensOwnPopout: {not: false}}
-    x-disabledNote: Off while Open instead names a menu.
   vpnColor:
     $ref: '#/definitions/WidgetColor'
     title: VPN lock color

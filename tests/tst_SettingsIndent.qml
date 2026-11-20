@@ -83,11 +83,7 @@ TestCase {
   function formLevels(title) {
     const group = SchemaLayout.objectGroups(root.schema.definitions.BarStyle, []).find(g => g.title === title);
     verify(group, "section " + title);
-    const rows = group.keys.reduce((all, key) => all.concat(SchemaLayout.rows({
-        "properties": {
-          [key]: root.schema.definitions.BarStyle.properties[key]
-        }
-      }, []).filter(row => row.kind !== "group" && row.kind !== "object")), []);
+    const rows = SchemaLayout.formRows(Utils.pick(root.schema.definitions.BarStyle.properties, group.keys), group.keys);
     const plan = RowTree.plan(rows);
     const out = {};
     rows.forEach((row, i) => out[row.path.join(".")] = plan.levels[i]);

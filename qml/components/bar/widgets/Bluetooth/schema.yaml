@@ -2,6 +2,7 @@ label: Bluetooth
 icon: bluetooth
 group: Network & devices
 popout: {variant: own, enabled: {description: Opens the Bluetooth menu.}}
+popoutModule: {type: BluetoothDevices}
 appearance:
   variant: value
   style:

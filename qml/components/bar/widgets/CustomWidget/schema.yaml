@@ -3,6 +3,7 @@ icon: widgets
 group: Custom
 scopeIf: {when: {type: [CustomWidget]}, scope: personal}
 popout: {variant: own, enabled: {description: Shows the custom widget's module.}, sizing: {$ref: '#/definitions/Sizing'}}
+popoutModule: {type: CustomWidget, fromWidget: [definition]}
 colors: standard
 order: [definition, popout, backgroundColor, foregroundColor]
 settings:

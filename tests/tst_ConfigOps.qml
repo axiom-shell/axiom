@@ -129,6 +129,76 @@ TestCase {
     compare(shared.calls.ConfigOps.apply(before, ops), after);
   }
 
+  // The call shape the editors' nested edits use (SchemaPropertiesForm.edit,
+  // OverlayManager.newMenuFor, BarManager.discardWidgetProperty): a set or a
+  // delete at a path inside a clone of one top-level object
+  function test_apply_into_a_cloned_top() {
+    const top = {
+      "enabled": true
+    };
+    const out = ConfigOps.apply({
+      "popout": Utils.clone(top)
+    }, [
+      {
+        "op": "set",
+        "path": ["popout", "properties", "showVpn"],
+        "value": false
+      }
+    ]).popout;
+    compare(out, {
+      "enabled": true,
+      "properties": {
+        "showVpn": false
+      }
+    }, "missing objects are made");
+    compare(top, {
+      "enabled": true
+    }, "the input is left alone");
+    compare(ConfigOps.apply({
+      "popout": out
+    }, [
+      {
+        "op": "delete",
+        "path": ["popout", "properties", "showVpn"]
+      }
+    ]).popout.properties, {}, "a delete removes the leaf");
+  }
+
+  // The bar editor's undo key (BarManager.updateWidgetProperty): one op
+  // names the edited setting's path. A list edit keeps the key whole: the
+  // "a list whole" row of test_diff
+  function test_diff_undo_key() {
+    const popout = vpn => ({
+          "properties": {
+            "showVpn": vpn,
+            "showConnection": true
+          }
+        });
+    const ops = ConfigOps.diff({
+      "popout": popout(true)
+    }, {
+      "popout": popout(false)
+    });
+    compare(ops.length, 1);
+    compare(ops[0].path, ["popout", "properties", "showVpn"]);
+    const sizing = {
+      "cardSize": 80,
+      "linked": true,
+      "contentSize": null
+    };
+    verify(ConfigOps.diff({
+      "popout": {
+        "sizing": sizing
+      }
+    }, {
+      "popout": {
+        "sizing": Sizing.edited(sizing, Object.assign({}, sizing, {
+          "linked": false
+        }))
+      }
+    }).length > 1, "a sizing link flip is more than one op");
+  }
+
   function test_apply() {
     const config = {
       "Bars": {

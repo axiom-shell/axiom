@@ -27,6 +27,37 @@ QtObject {
     return [iconText?.mode, iconText?.text].filter(key => typeof key === "string" && key !== "");
   }
 
+  // A form's rows (SchemaPropertiesForm): each key of the schema map's own
+  // rows, minus group and object rows, the keys an icon field draws in its
+  // own row (`x-iconText`) left out, the keys in `order` first. Not
+  // `x-rowDraws`, nor an `x-row` object's own row: an `x-row` is drawn only
+  // on the settings page, so here the keys it names, and the fields of an
+  // object it draws, keep their own rows
+  function formRows(propertiesSchema, order) {
+    const drawn = Object.values(propertiesSchema).reduce((keys, prop) => keys.concat(root.iconTextKeys(prop)), []);
+    const rank = key => {
+      const index = order.indexOf(key);
+      return index < 0 ? Infinity : index;
+    };
+    return Object.keys(propertiesSchema).filter(key => !drawn.includes(key)).sort((a, b) => rank(a) - rank(b)).reduce((rows, key) => rows.concat(root.rows({
+        "properties": {
+          [key]: propertiesSchema[key]
+        }
+      }, []).filter(row => row.kind !== "group" && row.kind !== "object")), []);
+  }
+
+  // A bar widget's properties schema split into the bar editor's two
+  // cards: { options: every key but `popout`, popout: `popout` }
+  function widgetCards(propertiesSchema) {
+    const cards = {
+      "options": {},
+      "popout": {}
+    };
+    for (const key of Object.keys(propertiesSchema))
+      cards[key === "popout" ? "popout" : "options"][key] = propertiesSchema[key];
+    return cards;
+  }
+
   // Flattens an object schema into form rows:
   //   { kind: "group", title, path, showIf } for a nested object
   //   { kind: "object", title, path, schema } for a nested object with

@@ -83,8 +83,5 @@ BarWidget {
     hitArea: root.hitArea
     popoutName: "WifiNetworks"
     active: MenusConfig.opensOwnPopout(root.properties)
-    extraData: ({
-        "vpnShown": root.properties.popoutVpn
-      })
   }
 }

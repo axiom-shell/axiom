@@ -7,7 +7,8 @@ import qs.components.methods
 // (header with the title, description and chevron at the top), rows indented
 // only by RowTree, a fold row (FoldFormRow) for extra options; a title-less
 // card doesn't fold and has a header only for a description (the selection's
-// own identity rows, OptionsGroup). The fold is the card's own `collapsed` (open whenever the card
+// own identity rows, OptionsGroup, unless its host names it: the bar editor's
+// Popout card). The fold is the card's own `collapsed` (open whenever the card
 // is built, never saved); a host that must stay visible sets `foldable: false`.
 // Children stack with no gap, as a settings card's rows do (a row pads itself,
 // FormRow); a non-row child that follows another takes its own

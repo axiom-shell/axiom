@@ -11,7 +11,7 @@ import qs.components.content.parts
 // The todo list (TodoManager): the Todo widget's popout, or an overlay
 // card. A header with the open count and Clear completed, then the list
 // (TodoList). Compact, the open count.
-// properties (card): { showHeader }
+// properties: { showHeader }
 Panel {
   id: root
 
@@ -34,7 +34,7 @@ Panel {
   }
 
   ModuleHeader {
-    visible: !root.embedded || root.properties.showHeader
+    visible: root.properties.showHeader
     icon: "checklist"
     title: TodoManager.openCount > 0 ? I18n.tr("{0} to do", TodoManager.openCount) : I18n.tr("Todo")
 

@@ -3,6 +3,7 @@ keywords: ['Pomodoro timer']
 icon: timer
 group: Tools
 popout: {variant: own, enabled: {description: The timer's controls on hover.}}
+popoutModule: {type: Pomodoro}
 appearance:
   variant: value
   style:

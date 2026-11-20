@@ -12,7 +12,7 @@ import qs.components.content.parts
 // popout, or an overlay card, the ring filling it (beside its buttons when
 // the card is wide and short). Compact, the time left; a click on it starts or
 // pauses the timer.
-// properties (card): { showTask }
+// properties: { showTask }
 Panel {
   id: root
 
@@ -39,6 +39,6 @@ Panel {
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     fill: root.embedded
-    showTask: !root.embedded || root.properties.showTask
+    showTask: root.properties.showTask
   }
 }

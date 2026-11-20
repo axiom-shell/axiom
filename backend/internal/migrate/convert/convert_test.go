@@ -320,14 +320,14 @@ func osdItemFields(cfg *jsonx.Object) {
 }
 
 // Bar widget settings added since, the same way (a widget's display style,
-// the Network widget's VPN lock and its popout's VPN section, the
+// the Network widget's VPN lock, the
 // Workspaces widget's labels, urgency, icon layouts, solid boxes, spacing
 // and reverse scrolling)
-var widgetKeysAddedSinceV1 = []string{"appearance", "showVpnLock", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes", "specialWorkspaces", "specialWorkspaceLabel", "specialWorkspaceSplit"}
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpnLock", "vpnColor", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes", "specialWorkspaces", "specialWorkspaceLabel", "specialWorkspaceSplit"}
 
-// A widget's popout's settings added since format 1 (its Content size, in a
-// sizing object, null by default)
-var widgetPopoutKeysAddedSinceV1 = []string{"sizing"}
+// A widget's popout's settings added since format 1 (its Content size, and
+// its module's options)
+var widgetPopoutKeysAddedSinceV1 = []string{"sizing", "properties"}
 
 // A type's settings added since format 1 under a name another type had
 // then (Bluetooth's showDevice, Button's label)

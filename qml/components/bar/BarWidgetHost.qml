@@ -42,6 +42,9 @@ Item {
   // Its popout's `sizing` (null without one): a PopoutAnchor in the widget
   // finds it by walking up to here and hands it to the popout it opens
   readonly property var popoutSizing: root.properties.popout?.sizing ?? null
+  // Its popout's `properties` (its module's options; null without any), which
+  // a PopoutAnchor joins with its `fromWidget` as the popout's `properties`
+  readonly property var popoutProperties: root.properties.popout?.properties ?? null
   // Where it starts along its bar as laid out (never as it glides), and the
   // bar's length, which the bar's gradient spans: 0 for no gradient (set by
   // WidgetGroup). Its module reads its slice of the gradient from them.

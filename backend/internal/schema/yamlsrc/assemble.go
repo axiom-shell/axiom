@@ -58,6 +58,9 @@ type assembler struct {
 	fsys fs.FS
 	pos  Positions
 	errs Errors
+	// Each kind's x-settingsAt (kind name → JSON pointer), kept as
+	// expandKinds deletes the base the types are expanded from
+	settingsAt map[string]string
 }
 
 func (a *assembler) read(name string) any {
@@ -182,6 +185,7 @@ func (a *assembler) assemble() *jsonx.Object {
 	root.Set("definitions", definitions)
 	props, _ := root.Value("properties").(*jsonx.Object)
 	a.expandKinds(kinds, definitions, props)
+	a.fillPopoutModules(kinds, definitions)
 	a.inlineExtensions(root)
 	a.deriveInherits(root)
 	a.fillAxiomActions(root)

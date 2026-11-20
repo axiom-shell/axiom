@@ -27,6 +27,14 @@ x-parts:
             x-showIf: {enabled: true}
             x-enabledIf: {$widget.opensOwnPopout: {not: false}}
             x-disabledNote: Off while Open instead names a menu.
+          # The options of the module its popout shows (`popoutModule` in the type's schema.yaml fills them)
+          properties:
+            type: object
+            additionalProperties: false
+            properties: {}
+            x-showIf: {enabled: true}
+            x-enabledIf: {$widget.opensOwnPopout: {not: false}}
+            x-disabledNote: Off while Open instead names a menu.
     menu:
       popout:
         type: object

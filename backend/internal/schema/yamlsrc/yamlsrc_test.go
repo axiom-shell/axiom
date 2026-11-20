@@ -339,6 +339,136 @@ func TestPopoutSizing(t *testing.T) {
 	}
 }
 
+// popoutFixture builds a bar widget kind (WBase with a popout part whose
+// `properties` field is for the module's options) and an overlay module
+// kind, from the given widget and module schema.yaml bodies.
+func popoutFixture(widget string, modules map[string]string) fstest.MapFS {
+	fsys := fstest.MapFS{
+		IndexFile:                   {Data: []byte("type: object\nproperties: {}\nsections: [Clock]\nkinds:\n  BarWidget: {root: w, suffix: Widget, base: WBase}\n  OverlayModule: {root: m, suffix: OverlayModule, base: MBase}\n")},
+		SectionsDir + "/Clock.yaml": {Data: []byte("type: object\n")},
+		AnnotationsFile:             {Data: []byte("x-order: \"\"\nx-link: \"\"\nx-popoutModule: \"\"\nx-showIf: \"\"\nx-enabledIf: \"\"\n")},
+		DefinitionsDir + "/WBase.yaml": {Data: []byte(`type: object
+x-settingsAt: /properties/properties/properties
+x-parts:
+  popout:
+    own:
+      popout:
+        type: object
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, default: true}
+          properties: {type: object, additionalProperties: false, properties: {}}
+    menu:
+      popout:
+        type: object
+        additionalProperties: false
+        properties:
+          enabled: {type: boolean, default: true}
+properties:
+  properties:
+    type: object
+    properties: {}
+`)},
+		DefinitionsDir + "/MBase.yaml": {Data: []byte(`type: object
+x-settingsAt: /properties/properties/properties
+x-parts:
+  grow:
+    standard:
+      grow: {type: integer, default: 0}
+properties:
+  properties:
+    type: object
+    properties: {}
+`)},
+		"w/Clock/schema.yaml": {Data: []byte("label: Clock\npopout: own\n" + widget)},
+	}
+	for name, body := range modules {
+		fsys["m/"+name+"/schema.yaml"] = &fstest.MapFile{Data: []byte("label: " + name + "\n" + body)}
+	}
+	return fsys
+}
+
+// popoutField is the widget's popout.properties field in the assembled
+// schema (nil when it has none) and the build's error.
+func popoutField(t *testing.T, fsys fstest.MapFS) (*jsonx.Object, error) {
+	t.Helper()
+	root, err := Assemble(fsys)
+	if err != nil {
+		return nil, err
+	}
+	def := root.Value("definitions").(*jsonx.Object).Value("ClockWidget").(*jsonx.Object)
+	popout := pointer(def, "/properties/properties/properties/popout")
+	field, _ := popout.Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object)
+	return field, nil
+}
+
+// A widget's popoutModule fills popout.properties with the module's
+// settings in the module's order, less `grow` and the `fromWidget` keys;
+// with nothing left, or no popoutModule, there is no field.
+func TestFillPopoutModules(t *testing.T) {
+	t.Parallel()
+	mixer := map[string]string{"Mixer": "grow: standard\norder: [mode, ignore, level, grow]\nsettings:\n  mode: {type: string, default: output}\n  level: {type: integer, default: 100}\n  ignore: {type: array, items: {type: string}, default: []}\n"}
+	field, err := popoutField(t, popoutFixture("popoutModule: {type: Mixer, fromWidget: [mode]}\nsettings:\n  x: {type: boolean, default: false}\n", mixer))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if field == nil {
+		t.Fatal("no popout.properties")
+	}
+	inner := field.Value("properties").(*jsonx.Object)
+	if got, want := inner.Keys(), []string{"ignore", "level"}; !slices.Equal(got, want) {
+		t.Errorf("popout.properties = %v, want %v (module order, no grow, no fromWidget)", got, want)
+	}
+	for name, widget := range map[string]string{
+		"all supplied":  "popoutModule: {type: Mixer, fromWidget: [mode, ignore, level]}\n",
+		"no annotation": "settings:\n  x: {type: boolean, default: false}\n",
+	} {
+		if got, err := popoutField(t, popoutFixture(widget, mixer)); err != nil || got != nil {
+			t.Errorf("%s: field %v, error %v, want no field", name, got, err)
+		}
+	}
+	// grow alone is nothing to show
+	only := map[string]string{"Grower": "grow: standard\n"}
+	if got, err := popoutField(t, popoutFixture("popoutModule: {type: Grower}\n", only)); err != nil || got != nil {
+		t.Errorf("grow only: field %v, error %v, want no field", got, err)
+	}
+	// a module with no settings slot has no field, and nothing to supply
+	bare := map[string]string{"Bare": ""}
+	if got, err := popoutField(t, popoutFixture("popoutModule: {type: Bare}\n", bare)); err != nil || got != nil {
+		t.Errorf("no settings: field %v, error %v, want no field", got, err)
+	}
+}
+
+func TestFillPopoutModulesRefusals(t *testing.T) {
+	t.Parallel()
+	mixer := map[string]string{
+		"Mixer": "settings:\n  mode: {type: string, default: output}\n  level: {type: integer, default: 100}\n",
+		"Gated": "settings:\n  mode: {type: string, default: output}\n  level: {type: integer, default: 100, x-showIf: {mode: output}}\n",
+		"Bare":  "",
+	}
+	for name, c := range map[string]struct{ widget, want string }{
+		"unknown module type":                              {"popoutModule: {type: Nope}\n", "Nope"},
+		"popout part without its own variant":              {"popoutModule: {type: Mixer}\n", "popout: own"},
+		"unknown fromWidget key":                           {"popoutModule: {type: Mixer, fromWidget: [nope]}\n", "nope"},
+		"fromWidget with no settings":                      {"popoutModule: {type: Bare, fromWidget: [mode]}\n", "no settings"},
+		"a kept setting's x-showIf names a fromWidget key": {"popoutModule: {type: Gated, fromWidget: [mode]}\n", "level"},
+	} {
+		fsys := popoutFixture(c.widget, mixer)
+		if name == "popout part without its own variant" {
+			fsys["w/Clock/schema.yaml"] = &fstest.MapFile{Data: []byte("label: Clock\npopout: menu\n" + c.widget)}
+		}
+		_, err := popoutField(t, fsys)
+		if err == nil || !strings.Contains(err.Error(), c.want) || !strings.Contains(err.Error(), "w/Clock/schema.yaml") {
+			t.Errorf("%s: error %v, want one naming %q in the widget's file", name, err, c.want)
+		}
+		if name == "unknown module type" || name == "unknown fromWidget key" {
+			if e, ok := err.(Errors); !ok || len(e) == 0 || e[0].Line == 0 {
+				t.Errorf("%s: error %#v has no line", name, err)
+			}
+		}
+	}
+}
+
 // A part's override reaching into a setting that $refs a definition
 // inlines that definition, so a type narrows one of its fields.
 func TestPartOverrideInlinesRef(t *testing.T) {

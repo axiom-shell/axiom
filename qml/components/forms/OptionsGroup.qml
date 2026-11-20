@@ -28,7 +28,8 @@ FieldGroup {
   signal edited(var path, var value)
   signal discardAt(var path)
 
-  // The pane's one group of settings: a title-less card (no heading, never folds)
+  // The pane's one group of settings: a title-less card (no heading, never
+  // folds) unless its host names it (the bar editor's Popout card)
   title: ""
 
   SchemaPropertiesForm {

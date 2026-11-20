@@ -62,9 +62,9 @@ BarWidget {
     hitArea: root.hitArea
     popoutName: "AudioMixer"
     active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
-    extraData: ({
+    fromWidget: ({
         "mode": root.mode,
-        "maxVolume": root.maxVolume
+        "maxVolume": root.properties.maxVolume
       })
   }
 }

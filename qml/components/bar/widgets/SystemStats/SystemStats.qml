@@ -198,8 +198,10 @@ BarWidget {
     hitArea: root.hitArea
     popoutName: "SystemGraphs"
     active: MenusConfig.opensOwnPopout(root.properties) && root.graphMetrics.length > 0
-    extraData: ({
-        "popoutMetrics": root.graphMetrics
+    fromWidget: ({
+        "metrics": root.graphMetrics,
+        "memoryFormat": root.properties.memoryFormat,
+        "units": root.properties.units
       })
   }
 }
