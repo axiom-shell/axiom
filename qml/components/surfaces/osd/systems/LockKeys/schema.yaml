@@ -5,10 +5,6 @@ tile: standard
 order: [tile, shows, quiet]
 settings:
   shows:
-    type: array
-    title: Shows
-    items: {type: string, enum: [capsLock, numLock, scrollLock]}
-    x-enumLabels: {capsLock: Caps Lock, numLock: Num Lock, scrollLock: Scroll Lock}
-    x-enumIcons: {capsLock: keyboard_capslock, numLock: dialpad, scrollLock: swap_vert}
+    $ref: '#/definitions/LockKeysShows'
     default: [capsLock, numLock]
     x-showIf: {tile: true}

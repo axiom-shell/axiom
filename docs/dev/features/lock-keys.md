@@ -1,7 +1,7 @@
 # Lock keys
 
 > **Files:** `backend/internal/lockkeys/lockkeys.go`, `backend/internal/daemon/topics.go`, `backend/internal/daemon/greeter.go`, `qml/services/system/LockKeysManager.qml`, `qml/components/reusable/CapsLockHint.qml`, `qml/components/reusable/StyledTextEntry.qml`, `qml/components/reusable/PasswordEntry.qml`, `qml/components/bar/widgets/LockKeys/LockKeys.qml`, `qml/components/surfaces/osd/systems/LockKeys/`
-> **Config:** none of its own; the LockKeys widget's settings (`showCaps`, `showNum`, `showScroll`, `hideWhenOff`, its colors)
+> **Config:** none of its own; the LockKeys widget's settings (`shows`, `hideWhenOff`, its colors)
 > **Related:** [Services pattern](../core/services-pattern.md) (polled topics), [Protocol](../backend/protocol.md), [Shared UI pieces](../core/shared-ui-pieces.md) (`StyledTextEntry`, `PasswordEntry`), [Greeter runtime](greeter-runtime.md)
 
 Whether Caps Lock, Num Lock and Scroll Lock are on: every password field warns about Caps Lock by itself, the LockKeys bar widget shows the keys that are on, and the OSD shows a key toggling.

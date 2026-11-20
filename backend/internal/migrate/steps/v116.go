@@ -18,7 +18,9 @@ import (
 //     labels cellLabels (bar widgets only: a Network module gets its own
 //     showVpn, and QuickActions keeps labels);
 //   - the SystemStats bar widget's five metric booleans (showCpu, showMemory,
-//     showTemp, showGpu, showDisk) became one metrics id array.
+//     showTemp, showGpu, showDisk) became one metrics id array, the LockKeys
+//     widget's three (showCaps, showNum, showScroll) and the Privacy
+//     widget's three (showMic, showScreen, showCamera) one shows array.
 //
 // Each part acts on the old shape only, so a second run changes nothing.
 func v116(cfg *jsonx.Object) []string {
@@ -73,6 +75,20 @@ func v116(cfg *jsonx.Object) []string {
 			{"showDisk", "disk", false},
 		})
 	}), "SystemStats widget(s): showCpu…showDisk became metrics")
+	note(eachTyped(cfg.Value("Bars"), "LockKeys", func(p *jsonx.Object) bool {
+		return listFromBooleans(p, "shows", []boolItem{
+			{"showCaps", "capsLock", true},
+			{"showNum", "numLock", false},
+			{"showScroll", "scrollLock", false},
+		})
+	}), "LockKeys widget(s): showCaps…showScroll became shows")
+	note(eachTyped(cfg.Value("Bars"), "Privacy", func(p *jsonx.Object) bool {
+		return listFromBooleans(p, "shows", []boolItem{
+			{"showMic", "micUse", true},
+			{"showScreen", "screenShare", true},
+			{"showCamera", "camera", true},
+		})
+	}), "Privacy widget(s): showMic…showCamera became shows")
 	return changes
 }
 

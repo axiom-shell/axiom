@@ -4,15 +4,16 @@ icon: visibility
 group: System
 popout: menu
 colors: text
-order: [showMic, showScreen, showCamera, boxes, ignoreApps, popout, foregroundColor, activeColor]
+order: [shows, boxes, ignoreApps, popout, foregroundColor, activeColor]
 boxes:
   variant: each
   boxes:
-    x-boxItems: {options: {mic: showMic, screen: showScreen, camera: showCamera}}
+    x-boxItems: {list: shows}
 settings:
-  showMic: {type: boolean, title: Microphone, default: true}
-  showScreen: {type: boolean, title: Screen share, default: true}
-  showCamera: {type: boolean, title: Camera, default: true}
+  shows:
+    $ref: '#/definitions/PrivacyShows'
+    default: [micUse, screenShare, camera]
+    items: {type: string, enum: [micUse, screenShare, camera]}
   ignoreApps:
     x-scope: personal
     type: array

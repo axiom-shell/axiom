@@ -3,15 +3,13 @@ icon: keyboard_capslock
 group: System
 popout: menu
 colors: text
-order: [showCaps, showNum, showScroll, boxes, hideWhenOff, popout, foregroundColor, activeColor, inactiveColor]
+order: [shows, boxes, hideWhenOff, popout, foregroundColor, activeColor, inactiveColor]
 boxes:
   variant: each
   boxes:
-    x-boxItems: {options: {caps: showCaps, num: showNum, scroll: showScroll}}
+    x-boxItems: {list: shows}
 settings:
-  showCaps: {type: boolean, title: Caps Lock, default: true}
-  showNum: {type: boolean, title: Num Lock, default: false}
-  showScroll: {type: boolean, title: Scroll Lock, default: false}
+  shows: {$ref: '#/definitions/LockKeysShows', default: [capsLock]}
   hideWhenOff:
     type: boolean
     title: Hide when off
