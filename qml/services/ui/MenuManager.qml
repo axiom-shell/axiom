@@ -9,7 +9,8 @@ import qs.services.core
 // Which menus (MenusConfig) are open and which are pinned. The
 // menus themselves (shell/Menus) follow this and report back when they
 // close on their own. Kept across QML reloads, so a reload doesn't close an
-// integrated menu and reflow the windows. Pins are also saved to
+// integrated menu and reflow the windows. A free menu open at a bar widget
+// closes on a reload, as a bar popout does (`atWidget`). Pins are also saved to
 // $XDG_STATE_HOME/axiom/ui/menus.json (read from its old name,
 // edgemenus.json, while it isn't there), and a pinned menu opens again
 // when qs starts.
@@ -90,16 +91,22 @@ Singleton {
     // box's top-left) they popped out at (kept here only so a reload can
     // dock them, closed)
     property string poppedOut: "{}"
+    // JSON list of the free menus open at a bar widget as its popout
+    // (widgetAnchor; kept here only so a reload can close them, as a bar
+    // popout goes with its bar)
+    property string atWidget: "[]"
     // False only on the first load after qs starts
     property bool started: false
 
     onLoaded: {
-      // A reload docks a popped-out menu, closed (read from the text: the
-      // maps bound to it aren't up to date yet)
-      const popped = Object.keys(root._parseObject(_run.poppedOut));
-      if (popped.length > 0) {
-        _run.open = JSON.stringify(Object.keys(root._parse(_run.open)).filter(id => !popped.includes(id)));
+      // A reload docks a popped-out menu, closed, and closes a free menu
+      // open at a widget (read from the text: the maps bound to it aren't
+      // up to date yet)
+      const dropped = Object.keys(root._parseObject(_run.poppedOut)).concat(Object.keys(root._parse(_run.atWidget)));
+      if (dropped.length > 0) {
+        _run.open = JSON.stringify(Object.keys(root._parse(_run.open)).filter(id => !dropped.includes(id)));
         _run.poppedOut = "{}";
+        _run.atWidget = "[]";
       }
       if (_run.started)
         return;
@@ -316,6 +323,7 @@ Singleton {
     const kinds = Object.assign({}, root.claimKinds);
     kinds[id] = kind ?? "menu";
     root.claimKinds = kinds;
+    _run.atWidget = root._set(root._parse(_run.atWidget), id, free && kind === "bar");
     // A free menu moving to a widget (from its own window or another
     // widget) isn't brought forward: its host is closing
     if (root.isOpen(id) && !(free && kind === "bar"))
@@ -362,6 +370,7 @@ Singleton {
     }
     if (!root.isOpen(id))
       return;
+    _run.atWidget = root._set(root._parse(_run.atWidget), id, false);
     _run.open = root._set(root.openMenus, id, false);
   }
 

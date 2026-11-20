@@ -37,7 +37,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
 - `modules`: placed as on a Custom page.
 
 ### State (`MenuManager`)
-- Holds which menus are open and pinned, in a `PersistentProperties`, so a reload doesn't reflow windows.
+- Holds which menus are open and pinned, in a `PersistentProperties`, so a reload doesn't reflow windows; a free menu open at a bar widget closes on a reload (`atWidget`).
 - Holds which edge menus are popped out (`poppedOut`, runtime only: a reload docks them, closed) and the free menus' session spots (`positions`, in `$XDG_RUNTIME_DIR`, gone at logout; `resetPosition`). See [Free menus](free-menus.md).
 - Owns the `menu` IPC target (and `edgeMenu`, its old name, whose functions call it). Its `open` and `toggle` reveal a closed menu (`reveal`: the cursor moves into it), so one that closes on leave stays up when a bind or script opens it.
 - The layouts editor's draft of the menus is not here: `OverlayManager.menus` (`MenuEditor`, [Editing and submenus](editing-submenus.md)).
