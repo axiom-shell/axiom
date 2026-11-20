@@ -45,7 +45,7 @@ A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` bes
 - `ItemRow`: a plain list entry (a hover state layer, `label` title, `caption` subtitle, `micro` detail; `dimmed` for a done one; the name shows whole in a tooltip while cut). An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a faint `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
 - `KeybindSection` (a section of binds as a card, grouped by modifiers), `KeybindRow` (keys first), `KeyCap` (a folded direction set in one cap) and `ModifierCap` draw keybinds read-only, for the Keybinds page and the Cheatsheet module.
 - `FigureValue`: the value + unit row of `StatFigure` and `CompactFigure` (the value in `Style.roleDisplay.weight`; sizes fitted to their box, marked `// fitted:`).
-- `CompactFigure`: fills its box (inside `pad`); its label is plain text.
+- `CompactFigure`: fills its box (inside `pad`); its label is plain text. `clickable` makes it a `Pressable` button (`clicked`: tint, ring, Tab stop, Space/Enter): a toggle module's small mode is `CompactFigure { clickable; onClicked: ActionsManager.run(id, {"fromScreen": true}) }`.
   - Icon, value and label stacked, or the icon beside them in a wide box.
   - Drops the label and then the icon as room runs out, shrinking the value to fit.
 - `EmptyState`: a faint `xl` icon over a `caption` line, with an optional `hint` and an `actionText` button (`triggered`); takes an `availableHeight` and drops to its icon when short.

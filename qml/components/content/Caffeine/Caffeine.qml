@@ -15,7 +15,7 @@ import qs.components.content.parts
 // of day, one of the `presets` or a recent one, then the time left and
 // when it ends, pause, more time and reset (which turns it off). On with
 // no timer it says so, with turn off and set a timer. Compact, the time
-// left or on/off.
+// left or on/off; a click on it toggles Caffeine.
 // properties (card): { presets }
 Panel {
   id: root
@@ -52,6 +52,10 @@ Panel {
     iconColor: IdleManager.caffeine ? Style.accent : Style.textMuted
     value: IdleManager.caffeineTimed ? IdleManager.caffeineText : IdleManager.caffeine ? I18n.tr("On") : I18n.tr("Off")
     label: I18n.tr("Caffeine")
+    clickable: true
+    onClicked: ActionsManager.run("idleInhibit", {
+      "fromScreen": true
+    })
   }
 
   ModuleHeader {

@@ -24,7 +24,8 @@ import qs.components.content.parts
 // the icon says it's secured), and saved ones can be forgotten or kept
 // from joining on their own on hover ("manual" in their status). The
 // popout keeps one size and rows keep their order, as in BluetoothDevices;
-// its window keeps room for whatever folds open.
+// its window keeps room for whatever folds open. Compact, its figure
+// toggles the radio.
 Panel {
   id: root
 
@@ -109,6 +110,10 @@ Panel {
     iconColor: root.info.kind !== "" ? Style.accent : Style.textMuted
     value: ""
     label: root.info.name || I18n.tr(root.radioOn ? "Disconnected" : "off")
+    clickable: NetworkingManager.available && !NetworkingManager.hardwareBlocked
+    onClicked: ActionsManager.run("wifi", {
+      "fromScreen": true
+    })
   }
 
   // A flat footer action: an icon and a label, an accent text button

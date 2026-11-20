@@ -16,7 +16,8 @@ import qs.components.content.parts
 // a Discover tab that scans while it's open and pairs + connects on click.
 // A soft rfkill block offers Unblock. The popout keeps one size whatever
 // the tab, the device count or the adapter state, and rows keep their
-// order, so nothing moves under the pointer.
+// order, so nothing moves under the pointer. Compact, its figure toggles
+// the power.
 Panel {
   id: root
 
@@ -38,6 +39,10 @@ Panel {
     iconColor: BluetoothManager.connectedDevices.length > 0 ? Style.accent : Style.textMuted
     value: BluetoothManager.enabled ? String(BluetoothManager.connectedDevices.length) : ""
     label: BluetoothManager.enabled ? I18n.tr("connected") : I18n.tr("off")
+    clickable: BluetoothManager.available && !BluetoothManager.blocked
+    onClicked: ActionsManager.run("bluetooth", {
+      "fromScreen": true
+    })
   }
 
   implicitWidth: Widget.textPx(380)

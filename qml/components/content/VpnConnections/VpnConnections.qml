@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
@@ -14,7 +15,7 @@ import qs.components.content.parts
 // the shared prompt); Import asks for a .conf or .ovpn file
 // (VpnManager.pickImport), Edit connections runs Apps.networkEditor.
 // The Vpn widget's popout, and an overlay card (compact: the VPN up, or
-// off).
+// off; a click on it toggles the VPN).
 Panel {
   id: root
 
@@ -36,6 +37,10 @@ Panel {
     iconColor: VpnManager.anyActive ? Style.accent : Style.textMuted
     value: ""
     label: VpnManager.primary?.name ?? I18n.tr("off")
+    clickable: ActionsManager.available("vpn")
+    onClicked: ActionsManager.run("vpn", {
+      "fromScreen": true
+    })
   }
 
   ModuleHeader {
