@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.core
 import qs.services.apps
 import qs.config
+import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
@@ -28,9 +29,6 @@ BarWidget {
       "label": a.label || a.configDir
     }))
 
-  function percentOf(row) {
-    return (properties.metric === "weekly" ? row.weekly : row.session)?.percent ?? -1;
-  }
   // Its initial among several accounts; in a box of its own, its name
   function abbreviation(row) {
     if (root.ownBox)
@@ -38,12 +36,12 @@ BarWidget {
     return rows.length > 1 ? String(row.label).charAt(0).toUpperCase() + " " : "";
   }
   function figure(row) {
-    const p = percentOf(row);
+    const p = ClaudeUsageMath.percentOf(row, properties.metric);
     return abbreviation(row) + (p < 0 ? "–" : p + "%");
   }
 
-  readonly property var fullest: rows.reduce((best, r) => best === null || percentOf(r) > percentOf(best) ? r : best, null)
-  readonly property int maxPercent: fullest ? percentOf(fullest) : -1
+  readonly property var fullest: ClaudeUsageMath.fullest(rows, properties.metric)
+  readonly property int maxPercent: fullest ? ClaudeUsageMath.percentOf(fullest, properties.metric) : -1
   // Every shown account is behind (an expired token or a failed fetch)
   readonly property bool stale: rows.length > 0 && (properties.display === "all" ? rows.every(r => r.status !== "ok") : (fullest?.status ?? "") !== "ok")
 
@@ -58,7 +56,7 @@ BarWidget {
   // Each shown figure at two digits (100% may widen the widget)
   minimumText: rows.length === 0 ? "" : (properties.display === "all" ? rows : [rows[0]]).map(r => abbreviation(r) + "00%").join(" · ")
 
-  readonly property int shownPercent: properties.display === "first" ? (rows.length > 0 ? percentOf(rows[0]) : -1) : maxPercent
+  readonly property int shownPercent: properties.display === "first" ? (rows.length > 0 ? ClaudeUsageMath.percentOf(rows[0], properties.metric) : -1) : maxPercent
   ratio: shownPercent < 0 ? -1 : shownPercent / 100
   subtext: properties.metric === "weekly" ? I18n.tr("Weekly") : I18n.tr("Session")
 
