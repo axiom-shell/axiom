@@ -84,6 +84,7 @@ TestCase {
     compare(fill("Stopwatch", {}).mode, "auto");
     compare(fill("SystemGraphs", {}).metrics, ["cpu", "mem"]);
     compare(fill("Todo", {}).showHeader, true);
+    compare(fill("Submenu", {}).openDelay, null, "an unset Submenu openDelay follows Popouts (x-inherit)");
     compare(fill("Pomodoro", {}).showTask, true);
     const calc = fill("Calculator", {});
     compare(calc.showKeypad, true);

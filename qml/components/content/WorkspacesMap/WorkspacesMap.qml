@@ -6,10 +6,11 @@ import qs.services.system
 import qs.components.reusable
 import qs.components.content.parts
 import qs.components.content.base
+import qs.components.methods
 
 // Workspaces as tiles with their windows' app icons; click one to go there.
-// Shows the focused monitor's workspaces (WorkspacesConfig).
-// properties: { showEmpty }
+// Shows a monitor's workspaces (`monitor`, else the focused one's; WorkspacesConfig).
+// properties: { showEmpty, monitor, useNames, appIconsCount, appIconsMax }
 Card {
   id: root
 
@@ -17,7 +18,7 @@ Card {
   // A string, so the tiles are only rebuilt when the set of workspaces
   // shown changes, not on every window event
   readonly property string _idsKey: {
-    const ids = CompositorManager.workspaceIds(CompositorManager.focusedOutput);
+    const ids = CompositorManager.workspaceIds(root.properties.monitor || CompositorManager.focusedOutput);
     if (root.properties.showEmpty === false)
       return ids.filter(id => CompositorManager.windows.some(w => w.workspaceId === id) || id === root.activeId).join(",");
     return ids.join(",");
@@ -33,14 +34,14 @@ Card {
     maxAspect: 1.8
 
     Repeater {
-      model: root.ids
+      model: root.ids.length
 
       Surface {
         id: tile
-        required property int modelData
         required property int index
-        readonly property bool active: tile.modelData === root.activeId
-        readonly property var windows: WindowRulesManager.shownIn("workspaces", CompositorManager.windows.filter(w => w.workspaceId === tile.modelData))
+        readonly property int wsId: root.ids[tile.index]
+        readonly property bool active: tile.wsId === root.activeId
+        readonly property var windows: WindowRulesManager.shownIn("workspaces", CompositorManager.windows.filter(w => w.workspaceId === tile.wsId))
 
         x: grid.tileX(index)
         y: grid.tileY(index)
@@ -61,7 +62,7 @@ Card {
           anchors.left: parent.left
           anchors.top: parent.top
           anchors.margins: Widget.spacing
-          text: tile.modelData
+          text: root.properties.useNames ? WorkspaceCells.badgeText(tile.wsId, tile.wsId, CompositorManager.workspaces.find(w => w.id === tile.wsId)?.name, false) : tile.wsId
           role: "micro"
           textColor: tile.ink.text
         }
@@ -70,7 +71,8 @@ Card {
         // a partial last row isn't left alone
         Column {
           id: icons
-          readonly property int count: Math.min(tile.windows.length, 6)
+          readonly property var shown: WorkspaceCells.chosen(WorkspaceCells.bySize(tile.windows), root.properties.appIconsMax, root.properties.appIconsCount === "windows", tile.windows)
+          readonly property int count: icons.shown.length
           readonly property real available: tile.width - Widget.px(8)
           readonly property int iconSize: Math.floor(Math.max(Widget.px(12), Math.min(tile.height * 0.4, icons.available / Math.max(1, Math.min(icons.count, 3)) - 2)))
           readonly property int fitPerRow: Math.max(1, Math.floor((icons.available + icons.spacing) / (icons.iconSize + icons.spacing)))
@@ -95,7 +97,7 @@ Card {
 
                 Image {
                   required property int index
-                  readonly property var window: tile.windows[iconRow.index * icons.perRow + index]
+                  readonly property var window: icons.shown[iconRow.index * icons.perRow + index]
                   width: icons.iconSize
                   height: icons.iconSize
                   fillMode: Image.PreserveAspectFit
@@ -112,7 +114,7 @@ Card {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: CompositorManager.goToWorkspace(tile.modelData)
+          onClicked: CompositorManager.goToWorkspace(tile.wsId)
         }
       }
     }

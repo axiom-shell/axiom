@@ -203,6 +203,7 @@ properties:
         maximum: 5000
         x-unit: ms
         x-showIf: {onLeave: true}
+        description: As a submenu it closes on leave after this delay.
       onOutsideClick:
         x-group: Closing
         type: boolean

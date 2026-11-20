@@ -4713,6 +4713,9 @@
     "As in the Wallpaper settings": "",
     "Empty: the Wallpaper settings' collection.": "",
     "This screen": "",
-    "Date: newest first.": ""
+    "Date: newest first.": "",
+    "Icons per workspace": "",
+    "As a submenu it closes on leave after this delay.": "",
+    "How long the pointer rests on the row before the menu opens.": ""
   }
 }

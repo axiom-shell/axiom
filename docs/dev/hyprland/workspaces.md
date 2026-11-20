@@ -7,7 +7,7 @@
 One workspace layout serves everything that shows workspaces or moves between them:
 - the `Workspaces` bar widget, with its `WorkspaceGrid` and `WorkspaceStrips` popouts
 - the workspace overview (`surfaces/workspaces/`; where the compositor has its own, `supports.overview`, `WorkspaceOverlay.compositorOverview` opens that instead: [contract](../compositor/contract.md) › Capabilities)
-- the `WorkspacesMap` module
+- the `WorkspacesMap` module (options `monitor`, `useNames`, `appIconsCount`, `appIconsMax`, as the widget's; icons chosen by `WorkspaceCells.chosen`)
 - the launcher's `/ws`
 - the `workspaces` IPC target.
 

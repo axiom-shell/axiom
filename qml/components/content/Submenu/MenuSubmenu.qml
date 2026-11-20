@@ -19,6 +19,9 @@ Item {
 
   readonly property var menu: MenusConfig.menuById(root.menuId)
   readonly property var parentMenu: MenusConfig.menuById(root.parentId)
+  // Its menu's own Close delay (as FloatingEdgeMenu reads it); `menu` is null while it loads
+  readonly property int dismissDelay: root.menu ? root.menu.close.delay : PopoutsConfig.dismissDelay
+
   readonly property bool empty: (root.menu?.layout?.modules ?? []).length === 0
 
   implicitWidth: root.empty ? emptyText.implicitWidth : body.implicitWidth

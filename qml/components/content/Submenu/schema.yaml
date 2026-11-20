@@ -26,3 +26,13 @@ settings:
     title: Open on hover
     default: true
     description: 'Off: opens on click.'
+  openDelay:
+    type: integer
+    title: Open delay
+    x-unit: ms
+    default: null
+    minimum: 0
+    maximum: 2000
+    x-inherit: Popouts.timing.openDelay
+    x-showIf: {openOnHover: true}
+    description: How long the pointer rests on the row before the menu opens.
