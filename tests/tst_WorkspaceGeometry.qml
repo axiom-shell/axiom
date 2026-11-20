@@ -1162,23 +1162,57 @@ TestCase {
     compare(_focus(plan), "B:2 A:13");
   }
 
-  function test_centreWorkspace() {
-    compare(WorkspaceGeometry.centreWorkspace(1, 3, 3), 5, "3 × 3: the middle");
-    compare(WorkspaceGeometry.centreWorkspace(10, 3, 3), 14, "a second block's middle");
-    compare(WorkspaceGeometry.centreWorkspace(1, 4, 4), 11, "4 × 4: after the middle, right and down");
-    compare(WorkspaceGeometry.centreWorkspace(1, 5, 1), 3, "one row");
-    compare(WorkspaceGeometry.centreWorkspace(1, 1, 1), 1, "one cell");
+  function test_startWorkspace() {
+    // null: the middle (the default), as the grid always started before
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, null, null), 5, "3 × 3, null: the middle");
+    compare(WorkspaceGeometry.startWorkspace(10, 3, 3, null, null), 14, "null: a second block's middle");
+    compare(WorkspaceGeometry.startWorkspace(1, 4, 4, null, null), 11, "4 × 4, null: after the middle, right and down");
+    compare(WorkspaceGeometry.startWorkspace(1, 5, 5, null, null), 13, "5 × 5, null: the middle");
+    compare(WorkspaceGeometry.startWorkspace(1, 5, 1, null, null), 3, "one row, null: the middle");
+    compare(WorkspaceGeometry.startWorkspace(1, 1, 1, null, null), 1, "one cell, null");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 1, null), 4, "column 1, middle row");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, null, 1), 2, "middle column, row 1");
+    // A chosen cell
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 1, 1), 1, "3 × 3: the top left");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 2, 2), 5, "3 × 3: the middle, chosen");
+    compare(WorkspaceGeometry.startWorkspace(10, 3, 3, 2, 2), 14, "a second block's middle");
+    compare(WorkspaceGeometry.startWorkspace(10, 3, 3, 1, 1), 10, "a second block's top left");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 3, 1), 3, "top right");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 1, 3), 7, "bottom left");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 3, 3), 9, "bottom right");
+    compare(WorkspaceGeometry.startWorkspace(1, 4, 2, 3, 2), 7, "columns and rows apart: 4 × 2");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, 5, 7), 9, "past the grid: its last column and row");
+    compare(WorkspaceGeometry.startWorkspace(1, 3, 3, -1, -2), 5, "under 0: the middle");
+    compare(WorkspaceGeometry.startWorkspace(1, 5, 1, 4, 3), 4, "one row");
+    compare(WorkspaceGeometry.startWorkspace(1, 1, 1, 3, 3), 1, "one cell");
   }
 
-  function test_centreFocus() {
+  function test_middleOf() {
+    compare(WorkspaceGeometry.middleOf(3), 2, "3: the second");
+    compare(WorkspaceGeometry.middleOf(4), 3, "4: after the middle");
+    compare(WorkspaceGeometry.middleOf(5), 3);
+    compare(WorkspaceGeometry.middleOf(1), 1, "one");
+    compare(WorkspaceGeometry.middleOf(0), 1, "none: the first");
+  }
+
+  function test_startFocus() {
     // 3 × 3 blocks: A owns 1-9, B 10-18
-    const start = WorkspaceGeometry.centreFocus(_monitors(1, 2), 9, 3, 3, true);
-    compare(_focus(start), "B:14 A:5", "both where the compositor started them, the focused one last");
-    verify(start.changed);
-    const moved = WorkspaceGeometry.centreFocus(_monitors(1, 12), 9, 3, 3, true);
+    // null, null (the default): the middle
+    const centre = WorkspaceGeometry.startFocus(_monitors(1, 2), 9, 3, 3, null, null, true);
+    compare(_focus(centre), "B:14 A:5", "both where the compositor started them, the focused one last");
+    verify(centre.changed);
+    const moved = WorkspaceGeometry.startFocus(_monitors(1, 12), 9, 3, 3, null, null, true);
     compare(_focus(moved), "B:12 A:5", "B already moved within its block: kept");
-    const all = WorkspaceGeometry.centreFocus(_monitors(3, 12), 9, 3, 3, false);
+    const all = WorkspaceGeometry.startFocus(_monitors(3, 12), 9, 3, 3, null, null, false);
     compare(_focus(all), "B:14 A:5", "turning the grid on: every monitor");
-    verify(!WorkspaceGeometry.centreFocus(_monitors(5, 14), 9, 3, 3, false).changed, "already there");
+    verify(!WorkspaceGeometry.startFocus(_monitors(5, 14), 9, 3, 3, null, null, false).changed, "already there");
+    // The top left: where the compositor starts them, so nothing moves
+    const topLeft = WorkspaceGeometry.startFocus(_monitors(1, 10), 9, 3, 3, 1, 1, true);
+    compare(_focus(topLeft), "B:10 A:1");
+    verify(!topLeft.changed, "already on their first ids");
+    const outside = WorkspaceGeometry.startFocus(_monitors(1, 2), 9, 3, 3, 1, 1, true);
+    compare(_focus(outside), "B:10 A:1", "B numbered on outside its block: to its top left");
+    verify(outside.changed);
+    compare(_focus(WorkspaceGeometry.startFocus(_monitors(5, 14), 9, 3, 3, 1, 1, false)), "B:10 A:1", "turning the grid on: every monitor to its top left");
   }
 }

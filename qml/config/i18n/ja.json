@@ -4713,6 +4713,11 @@
     "Date: newest first.": "",
     "Icons per workspace": "",
     "As a submenu it closes on leave after this delay.": "",
-    "How long the pointer rests on the row before the menu opens.": ""
+    "How long the pointer rests on the row before the menu opens.": "",
+    "Start cell": "",
+    "Column": "",
+    "Where every monitor's grid starts, its column and row counted from the top left. Off: the middle.": "",
+    "Start column": "",
+    "Start row": ""
   }
 }

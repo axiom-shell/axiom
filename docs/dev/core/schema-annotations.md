@@ -117,6 +117,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - a slider with a value box for 7–200 steps, else a stepper, with ±10 buttons past 20 steps
   - steppers commit debounced, sliders on release
   - `x-unit` (`px`, `%`, `ms`, …) is shown after the value. The duration units `s`, `min`, `h`, `d` mean the value is stored in ms and shown in that unit (`SchemaLayout.unitScale`): its default, bounds and `multipleOf` are in ms.
+- `x-maximumFrom: <key>`: an integer's maximum is also the value of that sibling key (`SchemaLayout.maximum`, read by `SchemaField` and `Settings/GridStartField`): a grid's start column goes up to its `columns` (`Workspaces.startColumn`). Validation keeps only the schema's `maximum`, so a value left above a sibling made smaller shows as the narrowed maximum (`SchemaNumberField.shownConfigValue`) and whatever reads it clamps it too (`WorkspaceGeometry.startWorkspace`).
 - `x-auto: { value, start }`: a switch in front of an integer whose `value` means automatic. Turning it on stores `start`, then the number shows (the toasts' `gap`). `value` is `null` in each (a bar's `floatingGap`, the toasts' `gap`, a per-app rule's `timeout`): validation lets the `null` through, as an inheriting setting's, and the number keeps the field's whole range.
 
 ### Types (bar widgets, overlay modules, views, custom widget elements)

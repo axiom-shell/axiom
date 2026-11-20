@@ -780,6 +780,38 @@ TestCase {
     compare(SchemaLayout.groups(object, "S")[0].rows.map(row => row.path.join(".")), ["S.on", "S.a"]);
   }
 
+  // A section's direct field drawing a sibling (`x-rowDraws`) marks its
+  // row drawn, as within a nested object (Workspaces' Start cell row)
+  function test_groups_direct_rowDraws() {
+    const object = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "Sec",
+          "properties": {
+            "a": {
+              "type": "integer",
+              "title": "A",
+              "x-row": "Both",
+              "x-rowDraws": ["b"]
+            },
+            "b": {
+              "type": "integer",
+              "title": "B"
+            },
+            "c": {
+              "type": "integer",
+              "title": "C"
+            }
+          }
+        }
+      }
+    };
+    const rows = SchemaLayout.groups(object, "S")[0].rows;
+    compare(rows.map(row => row.path.join(".")), ["S.a", "S.b", "S.c"], "the drawn row stays a row");
+    compare(rows.map(row => row.drawnBy ?? ""), ["", "S.a", ""]);
+  }
+
   // A row inside the fold is located with the fold to open; the setup row
   // and the card itself are not
   function test_locate_a_row_in_an_intros_fold() {
@@ -951,6 +983,33 @@ TestCase {
   }
 
   // Durations are stored in ms and shown in their unit
+  function test_maximum() {
+    const values = {
+      "columns": 3
+    };
+    const valueOf = key => values[key];
+    compare(SchemaLayout.maximum({
+      "maximum": 10
+    }, valueOf), 10, "the schema's");
+    compare(SchemaLayout.maximum({}, valueOf), 9999, "none: 9999");
+    compare(SchemaLayout.maximum({
+      "maximum": 10,
+      "x-maximumFrom": "columns"
+    }, valueOf), 3, "capped by the sibling");
+    compare(SchemaLayout.maximum({
+      "maximum": 2,
+      "x-maximumFrom": "columns"
+    }, valueOf), 2, "the schema's when lower");
+    compare(SchemaLayout.maximum({
+      "maximum": 10,
+      "x-maximumFrom": "rows"
+    }, valueOf), 10, "a sibling with no value: the schema's");
+    compare(SchemaLayout.maximum({
+      "maximum": 10,
+      "x-maximumFrom": "columns"
+    }, null), 10, "no lookup: the schema's");
+  }
+
   function test_unitScale() {
     compare(SchemaLayout.unitScale("s"), 1000);
     compare(SchemaLayout.unitScale("min"), 60000);

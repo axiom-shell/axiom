@@ -59,6 +59,33 @@ properties:
     minimum: 1
     maximum: 10
     x-showIf: {layout: grid}
+  startColumn:
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 1}
+    x-maximumFrom: columns
+    x-row: GridStartField
+    x-rowDraws: [startRow]
+    title: Start column
+    x-enabledIf: {/$supports.dynamicWorkspaces: false}
+    x-disabledNote: false
+    default: null
+    minimum: 1
+    maximum: 10
+    description: 'Where every monitor''s grid starts, its column and row counted from the top left. Off: the middle.'
+    x-showIf: {layout: grid}
+  startRow:
+    type: integer
+    x-control: stepper
+    x-auto: {value: null, start: 1}
+    x-maximumFrom: rows
+    title: Start row
+    x-enabledIf: {/$supports.dynamicWorkspaces: false}
+    x-disabledNote: false
+    default: null
+    minimum: 1
+    maximum: 10
+    x-showIf: {layout: grid}
   wrap:
     type: boolean
     title: Wrap around
