@@ -16,9 +16,9 @@ import qs.services.ui
 // its own (the Keybinds page's filters are left alone). `sections` keeps to
 // some sections (by title); undescribed binds show only with
 // `showUndescribed`. A short card runs the first binds along one row;
-// compact, the count. `view` "keyboard" shows a keyboard under `mods`
+// compact, the count. `style` "keyboard" shows a keyboard under `mods`
 // instead. A click on one of axiom's binds opens it in the Keybinds editor.
-// properties: { sections, showUndescribed, view, mods }
+// properties: { sections, showUndescribed, style, mods }
 Panel {
   id: root
 
@@ -32,7 +32,7 @@ Panel {
   // The binds of every section, for the strip
   readonly property var allBinds: [].concat(...root.sections.map(section => section.binds))
 
-  readonly property bool keyboard: root.properties.view === "keyboard"
+  readonly property bool keyboard: root.properties.style === "keyboard"
   // One row: binds side by side
   readonly property bool strip: !root.keyboard && root.embedded && root.innerHeight < Appearance.fontSize * 6
   readonly property bool showSearch: !root.keyboard && !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 10)

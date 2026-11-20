@@ -5,7 +5,7 @@ icon: event_note
 group: Time & weather
 defaultSize: [4, 4]
 grow: standard
-order: [days, maxEvents, grow]
+order: [days, count, grow]
 settings:
   days:
     type: integer
@@ -14,4 +14,4 @@ settings:
     minimum: 1
     maximum: 60
     x-unit: days
-  maxEvents: {type: integer, title: Max events, default: 20, minimum: 1, maximum: 100}
+  count: {type: integer, title: Events, default: 20, minimum: 1, maximum: 100}

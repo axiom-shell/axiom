@@ -23,7 +23,7 @@ Card {
   Component.onDestruction: MarketsManager.release(root)
 
   readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.properties.symbols)
-  readonly property string layout: root.properties.layout
+  readonly property string shownStyle: root.properties.style
   // Holdings are private: on the lock screen only with the Markets
   // setting saying so, never on the greeter
   readonly property bool holdings: root.properties.showHoldings && (root.host.kind === "lockscreen" ? MarketsConfig.holdingsOnLockscreen : root.host.kind !== "greeter")
@@ -71,7 +71,7 @@ Card {
 
     ModuleHeader {
       Layout.fillWidth: true
-      visible: root.layout !== "focus" || root.selected !== null
+      visible: root.shownStyle !== "focus" || root.selected !== null
       icon: root.selected ? "" : "show_chart"
       title: root.selected ? MarketMath.displayName(root.selected, MarketsManager.quoteFor(root.selected)) : I18n.tr("Markets")
 
@@ -95,7 +95,7 @@ Card {
     Loader {
       Layout.fillWidth: true
       Layout.fillHeight: true
-      active: root.selected !== null || root.layout === "focus"
+      active: root.selected !== null || root.shownStyle === "focus"
       visible: active
       sourceComponent: QuoteDetail {
         item: root.selected ?? root.first
@@ -108,7 +108,7 @@ Card {
     Loader {
       Layout.fillWidth: true
       Layout.fillHeight: true
-      active: root.selected === null && root.layout === "list"
+      active: root.selected === null && root.shownStyle === "list"
       visible: active
       sourceComponent: ListView {
         id: list
@@ -131,7 +131,7 @@ Card {
     Loader {
       Layout.fillWidth: true
       Layout.fillHeight: true
-      active: root.selected === null && root.layout === "tiles"
+      active: root.selected === null && root.shownStyle === "tiles"
       visible: active
       sourceComponent: GridLayout {
         id: grid

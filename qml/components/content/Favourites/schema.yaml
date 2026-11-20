@@ -3,7 +3,7 @@ icon: star
 group: Tools
 defaultSize: [4, 2]
 settings:
-  showLabels: {type: boolean, title: Names, default: true}
+  labels: {$ref: '#/definitions/ItemNames'}
   apps:
     x-scope: personal
     type: array

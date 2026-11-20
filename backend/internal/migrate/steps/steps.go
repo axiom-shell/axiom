@@ -362,6 +362,9 @@ var all = []Step{
 		}
 		return []string{fmt.Sprintf("%d menu(s): popoutAtWidget removed (a free menu opens at its widget; other menus open where placed)", changed)}
 	}},
+	// v116: module options audit: Markets layout and Cheatsheet view became
+	// style, Agenda maxEvents count, Favourites showLabels labels (v116.go)
+	{Version: 116, Run: v116},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.
