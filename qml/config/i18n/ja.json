@@ -4690,6 +4690,10 @@
     "{0} no longer exists.": "",
     "{0} isn't enabled.": "",
     "Off while Open instead names a menu.": "",
-    "A metric this machine can't report is hidden.": ""
+    "A metric this machine can't report is hidden.": "",
+    "Daily": "",
+    "Empty: the Weather settings' location.": "",
+    "Hourly": "",
+    "Details": ""
   }
 }

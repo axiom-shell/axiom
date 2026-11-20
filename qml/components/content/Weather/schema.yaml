@@ -2,3 +2,15 @@ label: Weather
 icon: partly_cloudy_day
 group: Time & weather
 hosts: [lockscreen, greeter]
+order: [showHourly, showDaily, showDetails, location, units]
+settings:
+  showHourly: {type: boolean, title: Hourly, default: true}
+  showDaily: {type: boolean, title: Daily, default: true}
+  showDetails: {type: boolean, title: Details, default: true}
+  location:
+    x-scope: personal
+    type: string
+    title: Location
+    default: ''
+    description: "Empty: the Weather settings' location."
+  units: {$ref: '#/definitions/TemperatureUnits'}

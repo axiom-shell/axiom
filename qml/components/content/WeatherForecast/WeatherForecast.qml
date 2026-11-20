@@ -9,17 +9,24 @@ import qs.components.content.base
 import qs.components.content.parts
 
 // Current conditions and a 5-day forecast: the Weather widget's popout,
-// from WeatherManager (the widget keeps it acquired).
+// from WeatherManager (the widget keeps its place acquired).
 Panel {
   id: root
 
-  readonly property var daily: WeatherManager.weather?.daily ?? null
+  // From the widget's extraData: its units choice, so the figures match
+  property string units: "default"
+  readonly property var weatherState: WeatherManager.stateFor({
+    "location": "",
+    "units": root.units
+  })
+  readonly property var daily: root.weatherState?.weather?.daily ?? null
 
   spacing: Widget.padding
 
   implicitWidth: Math.max(Widget.px(300), body.implicitWidth + margins * 2)
 
   WeatherCurrent {
+    weatherState: root.weatherState
     Layout.fillWidth: true
     spacing: Widget.padding
     labelInline: true
@@ -45,7 +52,7 @@ Panel {
 
         StyledText {
           Layout.alignment: Qt.AlignHCenter
-          text: WeatherManager.dayLabel(day.index)
+          text: WeatherManager.dayLabel(root.daily, day.index)
           role: "caption"
         }
         StyledIcon {

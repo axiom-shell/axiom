@@ -17,25 +17,9 @@ import qs.services.core
 //   WeatherManager.acquire(owner, { location, units })   // no request: the Weather settings' place and unit
 //   WeatherManager.release(owner)
 //   WeatherManager.stateFor({ location, units })  // { place, weather, error, units } or null
+//   WeatherManager.conditionOf(weather) / detailsOf(weather) / dayLabel(daily, index)   // a state's weather, as text
 QtObject {
   id: root
-
-  // The Weather settings' place, as stateFor({}) answers it (its readers
-  // go with their consumers)
-  readonly property var _own: root.stateFor({})
-  // { latitude, longitude, name }
-  readonly property var place: _own?.place ?? null
-  // Open-Meteo's forecast: current, hourly (12h), daily (5 days)
-  readonly property var weather: _own?.weather ?? null
-  // Why there's no weather for the settings ("" while there is, or it's
-  // still loading)
-  readonly property string error: _own?.error ?? ""
-  readonly property var current: weather?.current ?? null
-  readonly property var condition: current ? conditionFor(current.weather_code, current.is_day) : null
-  readonly property string unitSymbol: WeatherConfig.units === "fahrenheit" ? "°F" : "°C"
-
-  // Feels-like, humidity and wind, as a line under the temperature
-  readonly property string details: current ? I18n.tr("Feels like {0}°  ·  {1}% humidity  ·  {2} {3}", Math.round(current.apparent_temperature), current.relative_humidity_2m, Math.round(current.wind_speed_10m), weather.current_units?.wind_speed_10m ?? "") : ""
 
   // `request.location` '' is the Weather settings' place; `units`
   // "default" follows Weather › Units (WeatherConfig.unitsOf)
@@ -70,11 +54,24 @@ QtObject {
   // A forecast day's short name: "Today", else its weekday. Parsed at
   // local noon: a bare "YYYY-MM-DD" is UTC midnight, the day before west
   // of UTC.
-  function dayLabel(index) {
-    const date = weather?.daily?.time?.[index];
+  function dayLabel(daily, index) {
+    const date = daily?.time?.[index];
     if (!date)
       return "";
     return index === 0 ? I18n.tr("Today") : I18n.formatDate(new Date(date + "T12:00"), "ddd");
+  }
+
+  // Feels-like, humidity and wind of a forecast, as a line under the
+  // temperature
+  function detailsOf(weather) {
+    const current = weather?.current;
+    return current ? I18n.tr("Feels like {0}°  ·  {1}% humidity  ·  {2} {3}", Math.round(current.apparent_temperature), current.relative_humidity_2m, Math.round(current.wind_speed_10m), weather.current_units?.wind_speed_10m ?? "") : "";
+  }
+
+  // { icon, label } of a forecast's current weather, or null with none
+  function conditionOf(weather) {
+    const current = weather?.current;
+    return current ? root.conditionFor(current.weather_code, current.is_day) : null;
   }
 
   // WMO weather interpretation codes
