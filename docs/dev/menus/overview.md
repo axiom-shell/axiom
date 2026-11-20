@@ -34,6 +34,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
   - integrated: `frame`.
 - Opening: `open.onHover`, after the popouts' open delay (`Popouts.timing.openDelay`; a menu's own `open.delay` went in config v103). The hover strip is `ScreenEdge.triggerSize` deep and as long as the menu, worked out from config alone so it's the same open or closed (`MenuSync.triggerLength`, the whole room along the edge for a whole-edge menu).
 - Closing: `closeOnLeave`, `closeDelay`, `closeOnOutsideClick`. An outside click needs a `FocusGrab`, which holds the keyboard while the menu is open and unpinned, so the windows behind can't be typed in (the setting's description says so); new free menus start with it off and a close button ([Editing and submenus](editing-submenus.md) › Creating a menu from what opens it).
+- A `Submenu` module's row opens its menu after the row's own `openDelay` (unset follows `Popouts.timing.openDelay`); a menu opened as a submenu closes on leave after its own `dismissDelay` ([Editing and submenus](editing-submenus.md), [Submenus](../popouts/submenus.md) › Delays).
 - `modules`: placed as on a Custom page.
 
 ### State (`MenuManager`)

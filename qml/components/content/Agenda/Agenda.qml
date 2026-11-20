@@ -55,7 +55,7 @@ Panel {
   // Only while a first sync runs and nothing failed: a sync that never writes
   // events.json leaves lastSync 0 for good
   readonly property bool loading: CalendarManager.hasCalendars && CalendarManager.lastSync === 0 && CalendarManager.syncing && CalendarManager.errors.length === 0 && root.groups.length === 0 && !root.session.active
-  readonly property var next: CalendarEvents.nextEvent(CalendarManager.upcoming(root.now, root.now + root.properties.days * CalendarEvents.dayMs, false, root.properties.calendars), root.now, root.properties.days * CalendarEvents.dayMs, false)
+  readonly property var next: CalendarEvents.nextEvent(CalendarManager.upcoming(root.now, root.now + root.properties.days * CalendarEvents.dayMs, root.properties.showAllDay, root.properties.calendars), root.now, root.properties.days * CalendarEvents.dayMs, root.properties.showAllDay)
 
   compactContent: CompactFigure {
     icon: "event_note"

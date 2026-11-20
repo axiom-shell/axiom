@@ -125,6 +125,8 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 - Events are private.
 - An event's title is anyone's (a subscribed feed's): it shows as plain text (`textFormat: Text.PlainText` in `EventRow`, `MonthGrid`'s chips, `CompactFigure`'s label and the Next event bar widget), never styled text that could load a remote image.
 - Calendar and Agenda don't list `lockscreen` or `greeter` in `x-hosts`.
+- Agenda's compact figure (the next event) follows `showAllDay` like the list: on, an all-day event shows as "Now · title".
+- Calendar's `showEvents` off is a plain month: no dots, and its `DayPane` (list and editor) is not built.
 - Agenda shows a `Skeleton` (not "Nothing coming up") while a first sync runs with no events yet: calendars set up, `lastSync` 0, `syncing`, no `errors`.
 - ClockCalendar does list them, but shows events on the lock screen only with `Calendar.showOnLockscreen`, and read-only there:
   - `readOnly` on `DayPane` / `DayAgenda` / `EventRow`;

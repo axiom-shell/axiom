@@ -1,0 +1,7 @@
+# The ShowEvents definition (#/definitions/ShowEvents): whether a calendar card shows its events (dots, the day's list and editor).
+
+x-inline: true
+type: boolean
+title: Events
+default: true
+description: Dots on days with events, and the day's events where they fit.
