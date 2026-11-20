@@ -43,8 +43,10 @@ QtObject {
   property bool shows: true
   readonly property bool wanted: MenuManager.openMenus[root.menuId] === true && root.shows
   readonly property bool revealing: MenuManager.revealing[root.menuId] === true
+  // Whether leaving closes the menu (the host may say otherwise)
+  property bool closeOnLeave: root.menu.close.onLeave
   // Closes when the pointer leaves, unless held or being revealed
-  readonly property bool autoDismiss: root.menu.close.onLeave && !root.held && !root.revealing
+  readonly property bool autoDismiss: root.closeOnLeave && !root.held && !root.revealing
 
   // The hover strip's length, from config alone, so it's the same open
   // or closed: its box's, its modules' grid with `pad` on both ends, no

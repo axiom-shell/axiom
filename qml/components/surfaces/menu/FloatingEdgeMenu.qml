@@ -118,7 +118,8 @@ EdgePopout {
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
   triggerCentre: GridPlacement.menuFillsEdge(root.menu) ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2
-  dismissDelay: root.menu.close.delay
+  // At a widget it closes on leave like a bar popout, with its delay
+  dismissDelay: root.atWidget ? PopoutsConfig.dismissDelay : root.menu.close.delay
   keyboardOnDemand: true
   closeOnClickOutside: root.menu.close.onOutsideClick && !sync.held
   // Over the overlay its grab (which lets input through to the menu) is
@@ -137,6 +138,7 @@ EdgePopout {
     shows: root.shows
     // Never into a free menu (FreeMenu)
     warps: !root.atWidget
+    closeOnLeave: root.atWidget || root.menu.close.onLeave
     onWarpRequested: {
       const box = root.boxInWindow;
       CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, box.x + box.width / 2, box.y + box.height / 2);

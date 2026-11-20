@@ -96,6 +96,12 @@ Item {
       ]
 
       transitions: Transition {
+        id: slideTransition
+        // Between shown and hidden only: entering the first state as it is made
+        // (from the base state "") is instant, so a surface made hidden and shown
+        // at once slides in from its hidden place
+        from: "visible,hidden"
+        to: "visible,hidden"
         NumberAnimation {
           properties: "slideX,slideY,opacity"
           duration: root.animationDuration
@@ -115,6 +121,8 @@ Item {
       // Gone already: a surface built and dropped in one pass (a bar
       // switching to or from pills remakes its window)
       if (!root)
+        return;
+      if (slideTransition.running)
         return;
       contentWrapper.slideX = root.active ? 0 : contentWrapper.hiddenX;
       contentWrapper.slideY = root.active ? 0 : contentWrapper.hiddenY;
