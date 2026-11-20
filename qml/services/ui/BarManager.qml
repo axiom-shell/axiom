@@ -676,9 +676,11 @@ QtObject {
 
   function updateWidgetProperty(zone, index, key, value) {
     const widget = _widget(zone, index);
-    if (!widget || Utils.deepEqual(widget.properties?.[key], value))
+    if (!widget)
       return;
     const old = widget.properties?.[key];
+    if (Utils.deepEqual(old, value))
+      return;
     // A form emits an edit inside the popout as the whole popout: keep what
     // the sizing's link means
     if (key === "popout")

@@ -14,7 +14,7 @@ A popout-only panel needs no schema entry. If the same file should also be an ov
 ## Steps
 1. Write a `Panel` (`qml/components/content/base/Panel.qml`) and give it an `implicitWidth`. Build it from `body` and `margins` so it fits its content; `WeatherForecast.qml` sizes itself with `Widget.px(300)`, so use `Widget.px` rather than a bare number.
 2. Data comes from a service the widget keeps acquired. The panel only reads it (`WeatherForecast` reads `WeatherManager`).
-3. A popout that is also an overlay module declares `popoutModule: {type, fromWidget}` in the widget's schema.yaml and hands the keys the widget supplies itself through the anchor's `fromWidget: ({…})` (checked by `check_structure`); the panel reads `root.properties.<key>`. Values for a popout-only panel go in the anchor's `extraData`. Declare a property of the same name on the panel for each key (`presets` in `Caffeine.qml`); the host copies each key onto it and skips readonly ones.
+3. A popout that is also an overlay module declares `popoutModule: {type, fromWidget}` in the widget's schema.yaml and hands the keys the widget supplies itself through the anchor's `fromWidget: ({…})` (checked by `check_structure`); the panel reads `root.properties.<key>`. Values for a popout-only panel go in the anchor's `extraData`: a popout-only panel that takes `extraData` declares a property of the same name for each key (`symbols` in `MarketsPopout.qml`); the host copies each key onto it and skips readonly ones. A module popout reads `root.properties.<key>` instead.
 4. In the widget, add the anchor with a literal `popoutName: "<Name>"`:
    ```qml
    PopoutAnchor {
