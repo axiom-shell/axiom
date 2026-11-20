@@ -29,7 +29,7 @@ FieldLine {
   // On the label's line when it fits (a short value: a number)
   property bool beside: false
   kind: root.beside ? "flex" : "block"
-  bodyShown: (!root.multiline && root.suggestions.length > 0) || root._pickFailed
+  bodyShown: !root.multiline && root.suggestions.length > 0
 
   // What was typed, once it matches `pattern`: on Enter (Ctrl+Enter in a
   // multiline field), as the field loses focus or is torn down. A picked
@@ -52,6 +52,11 @@ FieldLine {
   }
   // The Browse button's picker couldn't be shown (until a value commits)
   property bool _pickFailed: false
+  // The Browse failure, while it stands (the row draws it, FieldProblem)
+  readonly property var problem: root._pickFailed ? ({
+      "level": "warning",
+      "text": I18n.tr("No file picker could be opened")
+    }) : null
 
   readonly property string _text: textArea.text
   // The text as it reads back once committed: a list's typed "a, b," is
@@ -195,13 +200,6 @@ FieldLine {
           }
         }
       }
-    },
-    StyledText {
-      visible: root._pickFailed
-      text: I18n.tr("No file picker could be opened")
-      role: "caption"
-      tone: "warning"
-      Layout.fillWidth: true
     }
   ]
 }

@@ -80,7 +80,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 ### Opening it from elsewhere
 - `SettingsManager.openSetting(path, link)` opens the page on the card showing a setting, object or section (`"Appearance.font.size"`, `"Calendar"`), found by `SchemaLayout.locate` (cached per path in `SettingsManager.locate` until the schema or the sections shown change), and jumps to it. So callers don't depend on category names or card keys.
   - `link` true: followed from another overlay page (`ShellManager.followLink`), which the navigator then offers to go back to. Services opening it from outside (a notification, the launcher) leave it off.
-  - A field's bad value shows as one `FieldProblem` line under its label and description, drawn by every `SchemaFormRow` (an `x-mustExist` picker's error, an unknown icon's warning: [Shared UI pieces](shared-ui-pieces.md)).
+  - A field's bad value shows as one `FieldProblem` line under its label and description, drawn by every `SchemaFormRow` (an `x-mustExist` picker's error, an unknown icon's warning, a folder Browse with no file picker: [Shared UI pieces](shared-ui-pieces.md)).
   - In the schema, `x-link` puts such links under fields and on widget/module types (`SettingsLink`, `FieldLinks`: [Schema annotations](schema-annotations.md)); `x-links` puts page links in a category's header.
 - The launcher's `/config <setting>` lists **Show in settings** last, which calls `openSetting`.
 - A category has no IPC; for testing use a temporary `IpcTarget` ([testing](../testing.md) › Seeing a page or surface).

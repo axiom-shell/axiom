@@ -36,13 +36,14 @@ QtObject {
   // A nested object's `x-showIf` goes on its group row and, as
   // `groupShowIf` ([{ condition, path }], path: the object's parent), on
   // every row inside it; its `x-enabledIf` likewise as `groupEnabledIf`
-  // ([{ condition, path, note }], note: its `x-disabledNote`). A nested object marked `x-fold` folds its rows
-  // behind its title: its group row has `fold: true`, and each row inside
-  // it `foldedBy`, the dotted path of the innermost such object. A row
-  // another field draws (drawnKeys) has `drawnBy`, that field's dotted
-  // path; every row under an `x-row` object has `drawnBy` its path (and
-  // no `foldedBy`: its folds aren't drawn). Keys go in
-  // their object's `x-order` first (the schema reaches QML as a map)
+  // ([{ condition, path, note }], note: its `x-disabledNote`). A nested
+  // object marked `x-fold` folds its rows behind its title: its group row
+  // has `fold: true`, and each row inside it `foldedBy`, the dotted path of
+  // the innermost such object. A row another field draws (drawnKeys) has
+  // `drawnBy`, that field's dotted path; every row under an `x-row` object
+  // has `drawnBy` its path (and no `foldedBy`: its folds aren't drawn).
+  // Keys go in their object's `x-order` first (the schema reaches QML as a
+  // map)
   function rows(objectSchema, path) {
     const result = [];
     const order = objectSchema["x-order"] ?? [];

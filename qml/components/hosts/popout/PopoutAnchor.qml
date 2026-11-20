@@ -138,6 +138,13 @@ Item {
     }
   }
 
+  // A free menu open here as this widget's popout closes with it (its bar
+  // rebuilt, the widget removed), as a bar popout goes with its bar
+  Component.onDestruction: {
+    if (root.menu !== "" && MenuManager.widgetAnchor(root.menu) === root)
+      MenuManager.close(root.menu);
+  }
+
   HoverHandler {
     id: hoverHandler
     enabled: !root.hitArea

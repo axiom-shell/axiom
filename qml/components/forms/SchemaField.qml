@@ -239,7 +239,7 @@ Loader {
   // What is wrong with the value, { level, text } or null (SchemaFormRow
   // draws it, FieldProblem): a picker marked `x-mustExist` naming nothing
   // or something off (SchemaLayout.optionProblem), else the control's own
-  // (IconEntry's)
+  // (IconEntry's, SchemaTextField's Browse)
   readonly property var problem: {
     const kind = root.fieldSchema["x-mustExist"] ? SchemaLayout.optionProblem(root.current, SettingsManager.optionsFor(root.fieldSchema), SettingsManager.optionsFor(root.fieldSchema, true)) : "";
     if (kind === "missing")

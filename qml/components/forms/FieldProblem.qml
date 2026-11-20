@@ -2,11 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.reusable
 
-// The one line saying what is wrong with a field's value, under its label
-// and description (a FieldHeader's `below` slot): `problem`, { level, text }
-// (an IssueList issue's shape: "error" red, "warning" amber) or null for
-// none. SchemaFormRow and FieldRow draw it; a control or host only sets
-// `problem`.
+// The one line saying what is wrong with a field's value or what its
+// control couldn't do (SchemaTextField's Browse with no file picker), under
+// its label and description (a FieldHeader's `below` slot): `problem`,
+// { level, text } (an IssueList issue's shape: "error" red, "warning"
+// amber) or null for none. SchemaFormRow and FieldRow draw it; a control or
+// host only sets `problem`.
 StyledText {
   id: root
 

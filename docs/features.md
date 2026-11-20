@@ -135,7 +135,7 @@ Menus are the overlay's other half. Every overlay module fits in them, placed on
 
 - **Edge** menus open over your windows. They grow out of the screen border or a solid bar like the popouts, or sit apart as a box.
 - **Strip** menus open outside the border and bars. They push the bars and your windows inwards, like a sidebar, and give the space back when they close.
-- **Free** menus float in a window of their own: at the bar widget that opens them as its popout, beside another menu as its submenu, or where a keybind puts them. Pinned, they stay under the popouts you open over them.
+- **Free** menus slide out of the bar at the widget that names them as its popout; otherwise they float in a window of their own, beside another menu as its submenu, or where a keybind puts them. Pinned, they stay under the popouts you open over them.
 - **Opening a menu.** Rest the pointer on its edge, or use a bar **Button**, a keybind, or IPC (`menu toggle <id>`).
 - **Closing it.** A menu can close when the pointer leaves or when you click outside it. Its pin button, or the pin quick action, keeps it open.
 - **Per-menu settings.** Each menu has its own:
