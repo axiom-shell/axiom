@@ -60,7 +60,7 @@ How a menu is put on screen: the shared body and sync, the lattice its modules s
 - `MenuHosts` keeps `openerRect` until the box has gone (`ClosedLatch`) and follows the widget that asks only while it is closed: hovering another widget naming the same menu slides the box out at the first and in at the second (`FloatingEdgeMenu.shows` false meanwhile). See [Free menus](free-menus.md) › As a bar widget's popout.
 - Across its edge it sits past `ScreenEdgeManager.reservedWithMenusOn(edge)`.
 - Asked for again while open (`MenuManager.engageRequested`), it engages (`EdgePopout.engage`) and comes forward; the integrated host holds no claim, so it ignores it.
-- Its `PopoutClaim` ranks as it was opened (`MenuManager.claimKinds`, passed to `open`): `menu`, except opened on hover as a bar widget's popout (`PopoutAnchor.menu`, a `Button`'s `popout.menu` included), which ranks `bar`, so a neighbouring widget's popout replaces it ([Registry › Ranks](../popouts/registry.md#ranks)).
+- Its `PopoutClaim` ranks as it was opened (`MenuManager.claimKinds`, passed to `open`): `menu`, except opened on hover as a bar widget's popout (`PopoutAnchor.menu`, a `Button`'s `popout.menu` included), which ranks `bar`, so a neighbouring widget's popout replaces it ([Registry › Ranks](../popouts/registry.md#ranks)); it closes with its widget or on a reload ([Free menus](free-menus.md)).
 
 ### `strip`: `IntegratedEdgeMenu`
 - A `PopoutWrapperBase` with a Top-layer `axiom-edge-menu` window along the whole edge.
