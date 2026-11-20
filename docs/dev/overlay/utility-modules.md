@@ -6,7 +6,7 @@
 
 Tool-like overlay modules. Each keeps its lasting state in its service, so closing the overlay loses nothing.
 
-Options the tools share: `showHeader` (Calculator, Chat, ClipboardHistory, ScreenRecord, Notifications; Todo and Notes too) hides the title row, and `showSearch` (ClipboardHistory, EmojiPicker, Cheatsheet) hides the search field. Each is ANDed with the room rule, so a card never shows more than it did, and a popout honours them too.
+Options the tools share: `showHeader` (Calculator, Chat, ClipboardHistory, ScreenRecord, Notifications, Agenda; Todo and Notes too) hides the title row, and `showSearch` (ClipboardHistory, EmojiPicker, Cheatsheet) hides the search field. Each is ANDed with the room rule, so a card never shows more than it did, and a popout honours them too.
 
 ### Calculator (`CalculatorManager`)
 - The field, the answer and a keypad. Keys type at the cursor; = takes the answer into the field.

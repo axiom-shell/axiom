@@ -50,6 +50,13 @@ Card {
   property int _listings: 0
   readonly property string _imagesKey: JSON.stringify([Appearance.wallpaperPath, root.collection, root.properties.sortBy, WallpaperManager.extensions, Appearance.wallpaperSubfolders])
   on_ImagesKeyChanged: root.relist()
+  // A reconnected daemon (a re-exec): the folder may have changed meanwhile
+  property Connections _backend: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root.relist();
+    }
+  }
   // Only the newest answer is kept
   function relist() {
     const listing = ++root._listings;

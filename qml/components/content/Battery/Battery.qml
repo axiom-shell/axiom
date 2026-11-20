@@ -124,7 +124,7 @@ Card {
       Layout.maximumHeight: enabled ? Infinity : 0
       clip: true
       Layout.fillWidth: true
-      Layout.topMargin: BatteryManager.isAvailable ? Widget.spacing : 0
+      Layout.topMargin: root.showsProfile && BatteryManager.isAvailable ? Widget.spacing : 0
 
       SegmentButton {
         text: I18n.tr("Power saver")

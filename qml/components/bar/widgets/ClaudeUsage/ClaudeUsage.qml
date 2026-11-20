@@ -86,7 +86,6 @@ BarWidget {
     popoutName: "ClaudeUsage"
     active: MenusConfig.opensOwnPopout(root.properties)
     extraData: ({
-        "accounts": ClaudeUsageConfig.accounts,
         "warnThreshold": root.properties.warnThreshold,
         "criticalThreshold": root.properties.criticalThreshold
       })

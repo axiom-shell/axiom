@@ -92,11 +92,7 @@ settings:
           type: string
           title: Text
           default: ''
-  useNames:
-    type: boolean
-    title: Workspace names
-    default: false
-    description: The compositor's name where it says more than the number.
+  useNames: {$ref: '#/definitions/WorkspaceNames'}
   showAppIcons:
     type: boolean
     title: App icons
@@ -111,23 +107,8 @@ settings:
     default: largest
     x-showIf: {showAppIcons: true}
     description: 'Square: up to four in a cell.'
-  appIconsCount:
-    type: string
-    title: Icon count
-    x-control: toggle
-    enum: [apps, windows]
-    x-enumLabels: {apps: Apps, windows: Windows}
-    default: apps
-    x-showIf: {showAppIcons: true, appIconsLayout: [row, square]}
-    description: 'Apps: each app once. Windows: an icon per window.'
-  appIconsMax:
-    type: integer
-    title: Icons in a row
-    default: 3
-    minimum: 2
-    maximum: 8
-    x-control: stepper
-    x-showIf: {showAppIcons: true, appIconsLayout: row}
+  appIconsCount: {$ref: '#/definitions/AppIconsCount', x-showIf: {showAppIcons: true, appIconsLayout: [row, square]}}
+  appIconsMax: {$ref: '#/definitions/AppIconsMax', x-showIf: {showAppIcons: true, appIconsLayout: row}}
   stripWindows:
     type: string
     title: Strip windows

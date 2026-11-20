@@ -1,0 +1,7 @@
+# The WorkspaceNames definition (#/definitions/WorkspaceNames): a workspace shows the compositor's name where it says more than the number.
+
+x-inline: true
+type: boolean
+title: Workspace names
+default: false
+description: The compositor's name where it says more than the number.

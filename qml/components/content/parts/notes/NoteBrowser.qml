@@ -515,7 +515,7 @@ DropdownSurface {
       Layout.topMargin: Widget.spacing
       Layout.bottomMargin: Widget.spacing
       horizontalAlignment: Text.AlignHCenter
-      text: NotesManager.directoryMissing ? I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory) : root.folder === "" ? I18n.tr("No notes yet") : I18n.tr("This folder is empty")
+      text: NotesManager.directoryMissing ? I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory) : root.folder === root.rootFolder ? I18n.tr("No notes yet") : I18n.tr("This folder is empty")
       role: "caption"
     }
   }
