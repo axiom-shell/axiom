@@ -9,7 +9,9 @@ import qs.components.reusable
 // `form`, with its change marks after the label (a button putting it back to
 // the schema default, a dot while it has an unsaved edit: FieldChangeMarks)
 // and under it the field's `x-link`s, `action` (FieldLinks, a SettingsLink)
-// and `note` (a muted line). SchemaPropertiesForm's cells, SettingRows' rows
+// and `note` (a muted line, hidden while the row is greyed or kept in place:
+// the reason is shown instead) and above them the field's `problem`
+// (FieldProblem). SchemaPropertiesForm's cells, SettingRows' rows
 // and the settings page's SettingsField are all this, so the marks and links
 // are the same everywhere. The field is built by URL (SchemaField, through
 // SchemaObjectArray and SchemaArrayItem, instantiates this type, so naming it
@@ -50,6 +52,11 @@ FoldFormRow {
   readonly property var current: root.form?.valueAt(root.row.path)
   readonly property real fieldHeight: field.implicitHeight
   readonly property real leastWidth: root.fieldItem?.leastWidth ?? 0
+  // What is wrong with the field's value, { level, text } or null
+  readonly property var problem: root.fieldItem?.problem ?? null
+  // The note shows only while the field is usable (a greyed or kept row
+  // says why instead)
+  readonly property bool _noteShown: root.note !== "" && root.fieldItem?.allowed !== false && root.fieldItem?.placeKept !== true
 
   fold: false
   shown: root.fieldShown
@@ -72,7 +79,7 @@ FoldFormRow {
       "row": root.row,
       "form": root.form,
       "headerExtra": Qt.binding(() => root.reset !== null || root.discard !== null ? marks : null),
-      "headerBelow": Qt.binding(() => root.row.schema?.["x-link"] || root.action !== null || root.note !== "" ? linksComp : null),
+      "headerBelow": Qt.binding(() => root.row.schema?.["x-link"] || root.action !== null || root._noteShown || root.problem !== null ? linksComp : null),
       "active": Qt.binding(() => root.fieldActive),
       "visible": true
     })
@@ -102,12 +109,18 @@ FoldFormRow {
   Component {
     id: linksComp
     ColumnLayout {
-      readonly property bool shows: links.shows || actionLink.active || root.note !== ""
+      readonly property bool shows: problemLine.shows || links.shows || actionLink.active || root._noteShown
       spacing: Widget.spacing / 2
+
+      FieldProblem {
+        id: problemLine
+        Layout.fillWidth: true
+        problem: root.problem
+      }
 
       StyledText {
         Layout.fillWidth: true
-        visible: root.note !== ""
+        visible: root._noteShown
         text: root.note
         role: "caption"
         tone: "muted"

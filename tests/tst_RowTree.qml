@@ -48,9 +48,6 @@ TestCase {
         }
       ]), row(["length"], {
         "placement": "edge"
-      }), row(["popoutAtWidget"], {
-        "placement": "edge",
-        "length": "content"
       }), row(["background"], {
         "placement": ["edge", "free"]
       }), row(["detached"], {
@@ -72,11 +69,11 @@ TestCase {
 
   function test_menuPlacement() {
     const plan = RowTree.plan(menu());
-    compare(plan.levels, [0, 1, 1, 2, 2, 1, 2, 1, 2, 1]);
+    compare(plan.levels, [0, 1, 1, 2, 2, 1, 1, 2, 1]);
   }
 
   function test_andTakesTheLatest() {
-    compare(RowTree.plan(menu()).parents[6], 5, "popoutAtWidget {placement, length} sits under length");
+    compare(RowTree.plan(menu()).parents[7], 6, "detached {placement, background} sits under background");
   }
 
   function test_anyOfRoots() {

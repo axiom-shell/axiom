@@ -15,17 +15,28 @@ import qs.components.hosts.popout
 // (ScreenEdgeManager.heldGaps): `distance` across the free screen from its
 // edge, at 0 lined up with a floating bar's islands, or with the windows,
 // sliding or fading in (`animation`).
+// A free menu opened as a bar widget's popout (`openerRect`) is this
+// host's too: out of that widget's bar edge, centred on the widget as a
+// bar popout is, always sliding, its own place settings ignored.
 EdgePopout {
   id: root
 
   required property var menu
   readonly property string menuId: root.menu.id
+  // The widget it opened at (PopoutAnchor.screenRect(): { x, y, width,
+  // height } in screen px, its bar's edge (a ScreenEdge) and screen), taken
+  // as it opened by MenuHosts, else null: it is where it is placed
+  property var openerRect: null
+  readonly property bool atWidget: root.openerRect !== null
+  // This host shows the menu: false while it hands over to another
+  // widget's (MenuHosts), then it hides with its slide
+  property bool shows: true
 
   // Held off the edge, `distance` across the free screen from it
-  // (EdgePlacement.gaps)
+  // (EdgePlacement.gaps); at a widget it sits on its bar's edge
   held: MenusConfig.detachedOf(root.menu)
-  distance: root.menu.distance / 100
-  fade: root.menu.animation !== "slide"
+  distance: root.atWidget ? 0 : root.menu.distance / 100
+  fade: !root.atWidget && root.menu.animation !== "slide"
 
   // Closes what it covers below it (PopoutManager); pinned, it ranks
   // lowest, and pinned or previewing it gives way and comes back
@@ -59,7 +70,7 @@ EdgePopout {
   readonly property real modulesStart: GridPlacement.menuAlong(root.menu, root.screenLength, root.unit, root.startPad, root.endPad, root.cardGap)
 
   // Where the modules can sit, for the layouts editor (MenuManager.frames)
-  readonly property var frame: ({
+  readonly property var frame: root.atWidget ? null : ({
       "screen": root.screen?.name ?? "",
       "startPad": root.startPad,
       "endPad": root.endPad,
@@ -69,32 +80,31 @@ EdgePopout {
       "reserves": false
     })
 
-  edge: MenusConfig.edgeOf(root.menu)
+  edge: root.atWidget ? root.openerRect.edge : MenusConfig.edgeOf(root.menu)
   // The box's centre, so it starts where the modules should, less its
   // padding. From its natural length (the joins at the ends depend on
-  // where it is); one filling its edge joins both and needs none. Opened
-  // as a widget's popout with `popoutAtWidget`, centred on that widget
-  // instead, as a bar popout is (its ends clamped and joined alike).
+  // where it is); one filling its edge joins both and needs none. At a
+  // widget, centred on that widget instead, as a bar popout is (its ends
+  // clamped and joined alike).
   position: 0
   positionOffset: isNaN(root._widgetCentre) ? root.modulesStart - root.alongOrigin - root.contentPadding + (isFinite(root.naturalBox) ? root.naturalBox / 2 : 0) : root._widgetCentre - root.alongOrigin
 
-  // The centre along the edge, in screen px, of the widget that opened it
-  // as its popout, when it places itself there (on this edge and screen
-  // only), else NaN. Taken as it opens, so an open popout never moves; a
-  // close (no data) keeps it until the box has gone.
-  property real _widgetCentre: NaN
-  onCurrentDataChanged: {
-    const data = root.currentData;
-    if (!data)
-      return;
-    const rect = root.menu.popoutAtWidget && !GridPlacement.menuFillsEdge(root.menu) && data.claimKind === "bar" ? data.anchorItem?.screenRect?.() ?? null : null;
-    root._widgetCentre = rect && rect.edge === root.edge && rect.screen?.name === root.screen?.name ? (root.vertical ? rect.y + rect.height / 2 : rect.x + rect.width / 2) : NaN;
-  }
+  // The centre along the edge, in screen px, of the widget it opened at,
+  // else NaN
+  readonly property real _widgetCentre: root.atWidget ? (root.vertical ? root.openerRect.y + root.openerRect.height / 2 : root.openerRect.x + root.openerRect.width / 2) : NaN
+  // Laid out down a column at a widget (as a free menu's window), else
+  // as its edge says
+  readonly property bool _bodyVertical: root.atWidget || root.vertical
   // Fill cells grow to whatever room there is, so its ends always reach
-  // (and, not held, join) the perpendicular edges
-  reachLength: root._body ? (root._body.fillsEdge ? Infinity : root._body.naturalLength) : 0
+  // (and, not held, join) the perpendicular edges. A column under a top
+  // or bottom edge is as wide as it is
+  reachLength: root._body ? (root._bodyVertical !== root.vertical ? root._body.implicitWidth : root._body.fillsEdge ? Infinity : root._body.naturalLength) : 0
   // Growing modules make a top or bottom menu deeper: room for the most
   maxContentDepth: !root.vertical && root._body ? root._body.maxGrownHeight : 0
+  // The body's length cap, as a free menu's (FreeMenu.maxLength): along
+  // the edge its box's room less padding, a column under a top or bottom
+  // edge the screen's height from the edge to the far side's reserve
+  readonly property real maxLength: root._bodyVertical !== root.vertical ? (root.screen?.height ?? 0) - root.attachAt - (root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, ScreenEdge.opposite(root.edge))) - root.attachExtra - root.contentPadding * 2 : root.maxBoxLength - root.contentPadding * 2
   // Room for its submenus' stretch from the start (EdgePopout.roomForSubmenus):
   // from config, as the body loads with the window
   roomForSubmenus: root.menu.layout.modules.some(module => module?.type === "Submenu")
@@ -103,12 +113,13 @@ EdgePopout {
   contentPadding: Appearance.borderWidth + PopoutsConfig.padding
   fillColor: MenusConfig.colorsOf(root.menu).fill
   strokeColor: MenusConfig.colorsOf(root.menu).stroke
-  triggerEnabled: root.menu.open.onHover
+  triggerEnabled: !root.atWidget && root.menu.open.onHover
   triggerLength: sync.triggerLength(root.vertical, root.contentPadding, root.screenLength - root.startPad - root.endPad + root.contentPadding * 2)
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
   triggerCentre: GridPlacement.menuFillsEdge(root.menu) ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2
-  dismissDelay: root.menu.close.delay
+  // At a widget it closes on leave like a bar popout, with its delay
+  dismissDelay: root.atWidget ? PopoutsConfig.dismissDelay : root.menu.close.delay
   keyboardOnDemand: true
   closeOnClickOutside: root.menu.close.onOutsideClick && !sync.held
   // Over the overlay its grab (which lets input through to the menu) is
@@ -124,6 +135,10 @@ EdgePopout {
     window: root.window
     triggerWindow: root.triggerWindow
     frame: root.frame
+    shows: root.shows
+    // Never into a free menu (FreeMenu)
+    warps: !root.atWidget
+    closeOnLeave: root.atWidget || root.menu.close.onLeave
     onWarpRequested: {
       const box = root.boxInWindow;
       CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, box.x + box.width / 2, box.y + box.height / 2);
@@ -179,9 +194,11 @@ EdgePopout {
   content: Component {
     MenuBody {
       menu: root.menu
+      screen: root.screen
       tiles: root._tiles
-      vertical: root.vertical
-      maxLength: root.maxBoxLength - root.contentPadding * 2
+      free: root.atWidget
+      vertical: root._bodyVertical
+      maxLength: root.maxLength
     }
   }
 }

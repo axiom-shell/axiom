@@ -474,8 +474,9 @@ QtObject {
     return null;
   }
 
-  // The choices for a string setting (`enum` or `x-options`), else null
-  function optionsFor(fieldSchema) {
+  // The choices for a string setting (`enum` or `x-options`), else null.
+  // `enabledOnly`: the menus without the disabled ones (the others as is)
+  function optionsFor(fieldSchema, enabledOnly) {
     if (fieldSchema?.enum)
       return fieldSchema.enum;
     switch (fieldSchema?.["x-options"]) {
@@ -510,7 +511,7 @@ QtObject {
       // Empty: the language's
       return ["", ...DateFormats.regions];
     case "menus":
-      return ["", ...MenusConfig.menus.map(menu => menu.id)];
+      return ["", ...(enabledOnly ? MenusConfig.enabledMenus : MenusConfig.menus).map(menu => menu.id)];
     case "customWidgets":
       return CustomWidgetsConfig.items.map(item => item.id);
     case "marketSymbols":

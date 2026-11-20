@@ -59,8 +59,10 @@ Item {
   // another widget's hover replaced never opened, so nothing would clear it
   readonly property bool popoutOpen: {
     // Covered by a popout over it, it's brought forward
+    // (a free menu counts only at this widget: in its own window, or at
+    // another, hovering this one opens it here)
     if (root.menu !== "")
-      return MenuManager.isOpen(root.menu) && !MenuManager.covered(root.menu);
+      return MenuManager.isOpen(root.menu) && !MenuManager.covered(root.menu) && (!MenusConfig.isFree(MenusConfig.menuById(root.menu)) || MenuManager.widgetAnchor(root.menu) === root);
     const popouts = root.popouts;
     if (!popouts)
       return false;
@@ -134,6 +136,13 @@ Item {
       // Destroyed (the bar rebuilt on a config reload)
       return null;
     }
+  }
+
+  // A free menu open here as this widget's popout closes with it (its bar
+  // rebuilt, the widget removed), as a bar popout goes with its bar
+  Component.onDestruction: {
+    if (root.menu !== "" && MenuManager.widgetAnchor(root.menu) === root)
+      MenuManager.close(root.menu);
   }
 
   HoverHandler {

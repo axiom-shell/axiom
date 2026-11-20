@@ -7,10 +7,11 @@ import qs.services.ui
 import qs.components.reusable
 
 // An icon picked by name from the icon font or pasted as a glyph: a
-// searchable box with the icon drawn in it, and a note under it while the
-// value reads as a name the font doesn't have (it then shows as text). The
-// value is pushed in (`value`); picking one emits `picked` (the icon
-// fields of SchemaField, and each row of the special workspaces' list).
+// searchable box with the icon drawn in it, reporting a `problem` while the
+// value reads as a name the font doesn't have (it then shows as text; the
+// row draws it, FieldProblem). The value is pushed in (`value`); picking one
+// emits `picked` (the icon fields of SchemaField, and each row of the
+// special workspaces' list).
 ColumnLayout {
   id: root
 
@@ -20,6 +21,12 @@ ColumnLayout {
 
   // The value is a symbol name the font has, or a single glyph
   readonly property bool drawsIcon: Utils.isSymbolName(root.value) ? IconManager.isKnown(root.value) : Array.from(root.value).length === 1
+
+  // Reads as a name, but the font has none by it: drawn as text
+  readonly property var problem: Utils.isSymbolName(root.value) && !IconManager.isKnown(root.value) ? ({
+      "level": "warning",
+      "text": I18n.tr("No icon is named \"{0}\": it shows as text", root.value)
+    }) : null
 
   signal picked(string value)
 
@@ -37,14 +44,5 @@ ColumnLayout {
           }))
     value: root.value
     onPicked: value => root.picked(value)
-  }
-
-  StyledText {
-    // Reads as a name, but the font has none by it: drawn as text
-    visible: Utils.isSymbolName(root.value) && !IconManager.isKnown(root.value)
-    text: I18n.tr("No icon is named \"{0}\": it shows as text", root.value)
-    role: "caption"
-    tone: "warning"
-    Layout.fillWidth: true
   }
 }

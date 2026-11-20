@@ -12,6 +12,7 @@ settings:
     default: ''
     x-options: menus
     x-emptyLabel: None
+    x-mustExist: true
     description: The menu that opens beside this one.
   label: {type: string, title: Label, default: '', description: 'Empty: none.'}
   icon:

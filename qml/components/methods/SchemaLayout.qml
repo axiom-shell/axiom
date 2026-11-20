@@ -35,13 +35,15 @@ QtObject {
   //   { kind: "array", title, path, schema }  for an array of objects
   // A nested object's `x-showIf` goes on its group row and, as
   // `groupShowIf` ([{ condition, path }], path: the object's parent), on
-  // every row inside it. A nested object marked `x-fold` folds its rows
-  // behind its title: its group row has `fold: true`, and each row inside
-  // it `foldedBy`, the dotted path of the innermost such object. A row
-  // another field draws (drawnKeys) has `drawnBy`, that field's dotted
-  // path; every row under an `x-row` object has `drawnBy` its path (and
-  // no `foldedBy`: its folds aren't drawn). Keys go in
-  // their object's `x-order` first (the schema reaches QML as a map)
+  // every row inside it; its `x-enabledIf` likewise as `groupEnabledIf`
+  // ([{ condition, path, note }], note: its `x-disabledNote`). A nested
+  // object marked `x-fold` folds its rows behind its title: its group row
+  // has `fold: true`, and each row inside it `foldedBy`, the dotted path of
+  // the innermost such object. A row another field draws (drawnKeys) has
+  // `drawnBy`, that field's dotted path; every row under an `x-row` object
+  // has `drawnBy` its path (and no `foldedBy`: its folds aren't drawn).
+  // Keys go in their object's `x-order` first (the schema reaches QML as a
+  // map)
   function rows(objectSchema, path) {
     const result = [];
     const order = objectSchema["x-order"] ?? [];
@@ -61,6 +63,7 @@ QtObject {
         // then every row under it, there for search, the changed list,
         // Discard and jumps, which take them as that row
         const showIf = prop["x-showIf"] ?? null;
+        const enabledIf = prop["x-enabledIf"] ?? null;
         const children = rows(prop, propPath);
         for (const child of children) {
           child.drawnBy = propPath.join(".");
@@ -72,6 +75,14 @@ QtObject {
                 "path": path
               }
             ].concat(child.groupShowIf ?? []);
+          if (enabledIf)
+            child.groupEnabledIf = [
+              {
+                "condition": enabledIf,
+                "path": path,
+                "note": prop["x-disabledNote"]
+              }
+            ].concat(child.groupEnabledIf ?? []);
         }
         result.push({
           "kind": "object",
@@ -101,6 +112,15 @@ QtObject {
                   "path": path
                 }
               ].concat(child.groupShowIf ?? []));
+          const enabledIf = prop["x-enabledIf"] ?? null;
+          if (enabledIf)
+            children.forEach(child => child.groupEnabledIf = [
+                {
+                  "condition": enabledIf,
+                  "path": path,
+                  "note": prop["x-disabledNote"]
+                }
+              ].concat(child.groupEnabledIf ?? []));
           result.push(...children);
         }
       } else if (prop.type === "array" && prop.items?.properties) {
@@ -128,6 +148,17 @@ QtObject {
       result.filter(r => r.kind !== "group" && drawn.includes(r.path.join("."))).forEach(r => r.drawnBy = row.path.join("."));
     }
     return result;
+  }
+
+  // What is wrong with a picker's value (`x-mustExist`): "" for none or
+  // an empty value, "missing" when `options` doesn't list it, "off" when
+  // it's listed but not in `enabled` (the options still on)
+  function optionProblem(value, options, enabled) {
+    if (!value)
+      return "";
+    if (!Array.prototype.includes.call(options ?? [], value))
+      return "missing";
+    return Array.prototype.includes.call(enabled ?? [], value) ? "" : "off";
   }
 
   // Whether a field's `x-showIf` names a sibling (a plain key, not a `/`

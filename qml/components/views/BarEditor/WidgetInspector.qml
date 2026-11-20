@@ -153,7 +153,11 @@ Item {
         numberMode: "stepper"
         pairs: true
         values: editorRoot.widget.properties ?? ({})
-        context: BarsConfig.lookContext(BarManager.selectedBar())
+        // `$widget.opensOwnPopout`: whether its own popout opens (not a menu
+        // in its place), for the popout's x-enabledIf
+        context: Object.assign({}, BarsConfig.lookContext(BarManager.selectedBar()), {
+          "$widget.opensOwnPopout": MenusConfig.opensOwnPopout(editorRoot.widget.properties)
+        })
         emptyText: I18n.tr("This widget has no options")
         changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
         // An edge menu picker (its popout's menu, a Button's click

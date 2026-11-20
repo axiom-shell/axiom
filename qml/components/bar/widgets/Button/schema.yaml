@@ -6,7 +6,7 @@ popout:
   variant: menu
   menu:
     title: Menu
-    description: Can differ from the click menu.
+    description: Can differ from the click menu. A free menu slides out of the bar at this widget; other menus open where they're placed.
     x-emptyLabel: null
 colors: standard
 order: [icon, label, tooltip, action, page, menu, command, hoverActivate, rightCommand, middleCommand, labelCommand, labelInterval, popout, backgroundColor, foregroundColor]
@@ -47,6 +47,7 @@ settings:
     description: Opens and closes on click.
     x-options: menus
     x-emptyLabel: None
+    x-mustExist: true
     x-showIf: {action: menu}
   command:
     x-scope: commands

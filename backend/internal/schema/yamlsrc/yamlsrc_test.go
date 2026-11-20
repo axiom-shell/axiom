@@ -295,8 +295,8 @@ func TestViewSizing(t *testing.T) {
 }
 
 // A bar widget's own popout is sized by its Content size alone, shown while
-// the popout is on and no menu replaces it; a custom widget's popout lays
-// out in cards, so it has the full Size group.
+// the popout is on, greyed with a note while a menu replaces it; a custom
+// widget's popout lays out in cards, so it has the full Size group.
 func TestPopoutSizing(t *testing.T) {
 	t.Parallel()
 	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
@@ -327,8 +327,14 @@ func TestPopoutSizing(t *testing.T) {
 		t.Errorf("Custom widget's popout sizing = %v, want %v", got, want)
 	}
 	for _, name := range []string{"VolumeWidget", "CustomWidgetWidget"} {
-		if got, want := string(jsonx.MarshalCompact(sizing(name).Value("x-showIf"))), `{"enabled":true,"menu":""}`; got != want {
+		if got, want := string(jsonx.MarshalCompact(sizing(name).Value("x-showIf"))), `{"enabled":true}`; got != want {
 			t.Errorf("%s's popout sizing shows if %s, want %s", name, got, want)
+		}
+		if got, want := string(jsonx.MarshalCompact(sizing(name).Value("x-enabledIf"))), `{"$widget.opensOwnPopout":{"not":false}}`; got != want {
+			t.Errorf("%s's popout sizing is enabled if %s, want %s", name, got, want)
+		}
+		if got, want := sizing(name).Value("x-disabledNote"), "Off while Open instead names a menu."; got != want {
+			t.Errorf("%s's popout sizing disabled note = %v, want %q", name, got, want)
 		}
 	}
 }

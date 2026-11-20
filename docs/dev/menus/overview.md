@@ -37,7 +37,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
 - `modules`: placed as on a Custom page.
 
 ### State (`MenuManager`)
-- Holds which menus are open and pinned, in a `PersistentProperties`, so a reload doesn't reflow windows.
+- Holds which menus are open and pinned, in a `PersistentProperties`, so a reload doesn't reflow windows; a free menu open at a bar widget closes on a reload (`atWidget`).
 - Holds which edge menus are popped out (`poppedOut`, runtime only: a reload docks them, closed) and the free menus' session spots (`positions`, in `$XDG_RUNTIME_DIR`, gone at logout; `resetPosition`). See [Free menus](free-menus.md).
 - Owns the `menu` IPC target (and `edgeMenu`, its old name, whose functions call it). Its `open` and `toggle` reveal a closed menu (`reveal`: the cursor moves into it), so one that closes on leave stays up when a bind or script opens it.
 - The layouts editor's draft of the menus is not here: `OverlayManager.menus` (`MenuEditor`, [Editing and submenus](editing-submenus.md)).
@@ -45,7 +45,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
 - They work over the overlay:
   - their windows and hover strips are its grab partners (`MenuSync`'s `window` and `triggerWindow`);
   - a floating one draws over it and, while it's open on its screen, takes no focus grab of its own (`grabEnabled`), which would clear the overlay's and close it.
-- An open floating menu closes what it covers below it and gives way to what's above (PopoutManager; see [Popout registry](../popouts/registry.md)). Pinned, it ranks lowest; pinned or previewing, it comes back once uncovered. Opened on hover as a bar widget's popout (its `PopoutAnchor`, a `Button`'s `popout.menu` included), it ranks as a bar popout, so a neighbouring widget's popout replaces it. With `popoutAtWidget` it then opens at that widget, as a bar popout does, rather than at its layout place; a menu meant mainly as a widget's popout is better `free` (the setting's description says so; [Free menus](free-menus.md)).
+- An open floating menu closes what it covers below it and gives way to what's above (PopoutManager; see [Popout registry](../popouts/registry.md)). Pinned, it ranks lowest; pinned or previewing, it comes back once uncovered. Opened on hover as a bar widget's popout (its `PopoutAnchor`, a `Button`'s `popout.menu` included), it ranks as a bar popout, so a neighbouring widget's popout replaces it. A free menu then slides out of that widget's bar edge ([Free menus](free-menus.md)); an edge or strip menu opens where it is placed.
 - A bar `Button` with `action: "menu"` and `menu: <id>` toggles one on a click, passing itself as the anchor, so a floating menu stays open while the button is hovered. Its `hoverActivate` never runs this action: a menu on hover is its `popout` (`enabled`, `menu`).
 
 ### Pin

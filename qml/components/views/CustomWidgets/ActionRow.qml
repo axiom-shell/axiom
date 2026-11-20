@@ -106,7 +106,10 @@ ItemBox {
     shown: root.item?.kind !== "axiom"
     label: I18n.tr("Command")
     description: I18n.tr("{value}: what the element sends. {arg}: the trigger's argument (else added at the end). {rev} and {tree} too. Quoted for you.")
-    belowShown: (root.item?.command ?? "") === ""
+    problem: (root.item?.command ?? "") === "" ? ({
+        "level": "warning",
+        "text": I18n.tr("No command yet")
+      }) : null
 
     CommitEntry {
       Layout.fillWidth: true
@@ -115,12 +118,6 @@ ItemBox {
       placeholderText: I18n.tr("e.g. notify-send hi")
       input.font.family: "monospace"
       onEdited: text => root.editor.setAction(root.index, "command", text)
-    }
-    below: StyledText {
-      Layout.fillWidth: true
-      text: I18n.tr("No command yet")
-      role: "caption"
-      tone: "warning"
     }
   }
 
