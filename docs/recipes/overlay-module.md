@@ -7,7 +7,7 @@ A module is a card you can place on an overlay page, in a menu and on the deskto
 
 ## Files
 1. `qml/components/content/<Type>/<Type>.qml`: the module. The file name is the type.
-2. `qml/components/content/<Type>/schema.yaml`: only what is particular to the type. The build expands it over `qml/config/schema/definitions/kinds/ModuleBase.yaml`, which supplies `type`, `id`, `place`, the `properties` object and the default `x-hosts`, and adds `<Type>OverlayModule` to `OverlayModule`. Write no `$ref` or `oneOf` by hand.
+2. `qml/components/content/<Type>/schema.yaml`: only what is particular to the type. The build expands it over `qml/config/schema/definitions/kinds/ModuleBase.yaml`, which supplies `type`, `id`, `place`, the `properties` object and the default `x-hosts`, and adds `<Type>OverlayModule` to `OverlayModule`. Write no `$ref` or `oneOf` for the type itself by hand; a setting may `$ref` a shared `x-inline` definition (`HourFormat`, `TextAlignment`, …) with sibling overrides.
 3. A service, if it needs data ([service](service.md)). A module only reads a service and acquires it.
 
 Translation files need nothing: the pre-commit hook adds new strings to every language.

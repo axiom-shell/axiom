@@ -75,13 +75,7 @@ x-parts:
   place:
     # Across and down
     both:
-      align:
-        type: string
-        title: Across
-        x-control: toggle
-        default: center
-        enum: [left, center, right]
-        x-enumLabels: {left: Left, center: Center, right: Right}
+      align: {$ref: '#/definitions/TextAlignment', title: Across}
       valign:
         type: string
         title: Down

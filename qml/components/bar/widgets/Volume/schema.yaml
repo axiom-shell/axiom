@@ -20,7 +20,7 @@ settings:
     maximum: 25
   maxVolume:
     type: integer
-    title: Maximum
+    title: Maximum volume
     x-unit: '%'
     default: 100
     minimum: 100
