@@ -13,7 +13,7 @@ import qs.components.hosts.popout
 // hover, or on a click with openOnHover off. In a submenu it replaces
 // that submenu in place (one level deep). Only a menu placed on an edge
 // has a submenu: elsewhere (a strip menu) the row is dimmed and inert.
-// properties: { menu, label, icon, openOnHover }
+// properties: { menu, label, icon, openOnHover, openDelay }
 Card {
   id: root
 
@@ -74,6 +74,8 @@ Card {
     popoutName: "Submenu/MenuSubmenu"
     active: root.opens
     openOnHover: root.properties.openOnHover
+    // null follows Popouts › Timing's open delay (x-inherit)
+    openDelay: root.properties.openDelay === null ? PopoutsConfig.openDelay : root.properties.openDelay
     extraData: ({
         "menuId": root.menuId,
         "parentId": root.host?.id ?? ""

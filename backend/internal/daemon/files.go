@@ -41,10 +41,11 @@ func fileHandlers(reg *rpc.Registry, f func() *files.Files) {
 		Recursive  bool     `json:"recursive"`
 		Folders    bool     `json:"folders"` // every folder, empty ones too
 		Hidden     bool     `json:"hidden"`
+		SortBy     string   `json:"sortBy"` // "name" (default) or "date": newest first
 	}
 	// A folder's files of those kinds (the wallpaper list, the notes browser)
 	rpc.Handle(reg, "file.list", func(ctx context.Context, c *rpc.Conn, p listParams) (files.Listing, error) {
-		return files.List(p.Path, p.Extensions, files.ListOptions{Recursive: p.Recursive, Folders: p.Folders, Hidden: p.Hidden})
+		return files.List(p.Path, p.Extensions, files.ListOptions{Recursive: p.Recursive, Folders: p.Folders, Hidden: p.Hidden, SortBy: p.SortBy})
 	})
 	rpc.Handle(reg, "file.unwatch", func(ctx context.Context, c *rpc.Conn, p pathParams) (struct{}, error) {
 		f().Unwatch(c, p.Path)

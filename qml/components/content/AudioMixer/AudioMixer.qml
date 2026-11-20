@@ -17,13 +17,13 @@ import qs.components.content.base
 // ("output") and Microphone ("input") widgets' popout, or an overlay card
 // with its own output/input switch (a wide card puts the device beside
 // the list; a short one is just the device's slider; compact, its figure, which mutes on a click).
-// properties: { mode: "output" | "input" }
+// properties (card): mode "output" | "input", maxVolume (%), ignoreApps (apps left out of the list); a popout's payload sets mode and maxVolume
 Panel {
   id: root
 
   // A card's configured mode; a popout sets it from its anchor's payload
   property string mode: root.properties.mode
-  property real maxVolume: 1.0
+  property real maxVolume: root.properties.maxVolume / 100
 
   property int currentTab: 0
 
@@ -31,7 +31,7 @@ Panel {
   // What the OSD calls its changes (ShellManager.onScreen)
   readonly property string osdKind: isInput ? "microphone" : "audio"
   readonly property var defaultDevice: isInput ? AudioManager.defaultSource : AudioManager.defaultSink
-  readonly property var apps: isInput ? AudioManager.recordingApps : AudioManager.playbackApps
+  readonly property var apps: (isInput ? AudioManager.recordingApps : AudioManager.playbackApps).filter(app => !app.nodes.some(node => AudioManager.ignored(node, root.properties.ignoreApps)))
   readonly property var devices: isInput ? AudioManager.sources : AudioManager.sinks
   readonly property string mutedGlyph: isInput ? "mic_off" : "volume_off"
   readonly property string unmutedGlyph: isInput ? "mic" : "volume_up"

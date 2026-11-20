@@ -10,7 +10,8 @@ import qs.components.content.base
 
 // Usage bar per mount point, under a header where there's room; side by
 // side when they don't fit stacked; compact, the first one's figure.
-// properties: { paths: ["/", "/home"] }
+// properties: { paths: ["/", "/home"], warnThreshold, criticalThreshold (% used),
+// value: "used" | "free" }
 Card {
   id: root
 
@@ -40,11 +41,12 @@ Card {
   Component.onCompleted: register()
   Component.onDestruction: SystemManager.release(root)
 
+  // At or past a threshold, as the ClaudeUsage meters
   function barColor(ratio) {
-    return ratio > 0.9 ? Style.error : ratio > 0.75 ? Style.warning : Style.accent;
+    return ratio * 100 >= root.properties.criticalThreshold ? Style.error : ratio * 100 >= root.properties.warnThreshold ? Style.warning : Style.accent;
   }
   function barTone(ratio) {
-    return ratio > 0.9 ? "error" : ratio > 0.75 ? "warning" : "accent";
+    return ratio * 100 >= root.properties.criticalThreshold ? "error" : ratio * 100 >= root.properties.warnThreshold ? "warning" : "accent";
   }
 
   // Compact: the first path's usage
@@ -101,11 +103,12 @@ Card {
                 elide: Text.ElideMiddle // style-exempt: middle
                 text: disk.modelData
               }
-              // Narrow: the used size only, then nothing beside the path
+              // Narrow: the figure alone (used, or free), then nothing beside the path
               StyledLabel {
                 readonly property bool narrow: disk.width < Appearance.fontSize * 12
+                readonly property bool free: root.properties.value === "free"
                 visible: disk.width >= Appearance.fontSize * 7
-                text: !disk.usage ? "…" : narrow ? Utils.formatSize(disk.usage.used) : Utils.formatSize(disk.usage.used) + " / " + Utils.formatSize(disk.usage.total)
+                text: !disk.usage ? "…" : free ? (narrow ? Utils.formatSize(disk.usage.total - disk.usage.used) : I18n.tr("{0} free of {1}", Utils.formatSize(disk.usage.total - disk.usage.used), Utils.formatSize(disk.usage.total))) : narrow ? Utils.formatSize(disk.usage.used) : Utils.formatSize(disk.usage.used) + " / " + Utils.formatSize(disk.usage.total)
                 role: "caption"
               }
             }

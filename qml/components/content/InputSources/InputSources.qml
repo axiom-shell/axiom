@@ -11,13 +11,21 @@ import qs.components.content.parts
 
 // The input sources (InputSourceManager), the one in use marked: a click
 // on one switches to it; the header's button opens the Input settings.
-// The KeyboardLayout widget's popout.
+// The KeyboardLayout widget's popout, and an overlay card (compact: the
+// current source's icon and short label).
 Panel {
   id: root
 
   readonly property var sources: InputSourceManager.sources
 
   implicitWidth: Widget.textPx(280)
+  fullMinWidth: Appearance.fontSize * 10
+  fullMinHeight: Appearance.fontSize * 6
+
+  compactContent: CompactFigure {
+    icon: InputSourceManager.iconFor(InputSourceManager.current)
+    value: InputSourceManager.labelFor(InputSourceManager.current, "short")
+  }
 
   // Switches made in fcitx5 itself are heard without a tray too
   Component.onCompleted: InputSourceManager.acquire(root)

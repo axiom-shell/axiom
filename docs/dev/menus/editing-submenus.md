@@ -1,7 +1,7 @@
 # Menus: editing and submenus
 
 > **Files:** `qml/services/ui/MenuEditor.qml`, `qml/services/ui/MenuManager.qml`, `qml/config/MenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/views/Layouts/MenusSection.qml`, `qml/components/methods/MenuSeeds.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
-> **Config:** `Menus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
+> **Config:** `Menus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`, `openDelay`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 
 How menus are edited on the Layouts page (draft, field groups, previewing, openers, moving along the edge), and how one menu opens another as a submenu.
@@ -63,10 +63,11 @@ How menus are edited on the Layouts page (draft, field groups, previewing, opene
 - A menu taking its whole edge (`GridPlacement.menuFillsEdge`: an integrated menu always) has no place along it, and no arrows. A whole-edge floating menu keeps a gap before its modules along the edge through edits (the layouts editor's `hold`, `GridPlacement.menuKeepsLead`); an integrated menu's are normalised to its start as a content-length menu's are.
 
 ### Submenus: the Submenu module
-- `content/Submenu`: icon, label, an arrow pointing where it opens; `openOnHover`, else a click.
+- `content/Submenu`: icon, label, an arrow pointing where it opens; `openOnHover`, else a click; `openDelay` (null: Popouts › Timing's open delay) is how long the pointer rests on the row first.
 - In a floating menu it opens another menu (`menu`) in the menu's `SubPopout` beside it, as `content/Submenu/MenuSubmenu`:
   - that menu's `MenuBody` (`submenu` set): its modules on a grid at the card size of the opening menu's screen and its own `sizing`;
-  - their `host` is that menu's with `submenu: true` (no pin).
+  - their `host` is that menu's with `submenu: true` (no pin);
+  - it closes on leave after its menu's own Close delay (`MenuSubmenu.dismissDelay`, read by `PopoutWrapperBase`), not Popouts' close delay.
 - In an integrated menu (no `SubPopout`) the row is dimmed and inert.
 - How the `SubPopout` itself is placed and joined: see [Popout submenus](../popouts/submenus.md).
 

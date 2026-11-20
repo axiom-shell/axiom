@@ -1,0 +1,9 @@
+# The AppIconsMax definition (#/definitions/AppIconsMax): how many app icons a workspace shows. Uses override `default`, `title`, `x-showIf`.
+
+x-inline: true
+type: integer
+title: Icons in a row
+default: 3
+minimum: 2
+maximum: 8
+x-control: stepper

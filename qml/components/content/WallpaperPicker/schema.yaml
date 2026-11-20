@@ -3,3 +3,10 @@ link: {page: Themes}
 icon: photo_library
 group: Look & layout
 defaultSize: [4, 8]
+order: [monitor, collection, sortBy, showControls, showPreview]
+settings:
+  monitor: {type: string, title: Monitor, default: '', x-options: screens, x-scope: machine, x-emptyLabel: This screen}
+  collection: {type: string, title: Collection, default: '', x-scope: machine, x-suggestions: wallpaperCollections, description: "Empty: the Wallpaper settings' collection."}
+  sortBy: {type: string, title: Sort by, default: name, x-control: toggle, enum: [name, date], x-enumLabels: {name: Name, date: Date}, description: 'Date: newest first.'}
+  showControls: {type: boolean, title: Controls, default: true}
+  showPreview: {type: boolean, title: Preview, default: true}

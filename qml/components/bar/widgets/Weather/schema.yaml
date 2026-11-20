@@ -8,10 +8,11 @@ appearance:
     enum: [label, icon, stacked]
     description: "Stacked puts the temperature over the condition."
 colors: standard
-order: [appearance, showCondition, popout, backgroundColor, foregroundColor]
+order: [appearance, showCondition, units, popout, backgroundColor, foregroundColor]
 settings:
   showCondition:
     type: boolean
     title: Condition
     default: false
     x-showIf: {appearance.style: [label, stacked]}
+  units: {$ref: '#/definitions/TemperatureUnits'}

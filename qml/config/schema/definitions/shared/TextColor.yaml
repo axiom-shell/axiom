@@ -1,0 +1,8 @@
+# The TextColor definition (#/definitions/TextColor): a text's own colour, empty follows the theme's text. Uses override `x-showIf`, `x-group`.
+
+x-inline: true
+type: string
+title: Text color
+x-options: colors
+x-emptyLabel: Text
+default: ''

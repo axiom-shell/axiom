@@ -223,7 +223,11 @@ Singleton {
   // The folders under the wallpaper folder holding images, as paths inside
   // it ("trips", "trips/2024"): the collections to choose from
   readonly property var collections: root._collections
-  readonly property string _listedPath: Appearance.wallpaperPath + (Appearance.wallpaperCollection ? "/" + Appearance.wallpaperCollection : "")
+  // The wallpaper folder, or one collection's folder inside it.
+  function _collectionPath(collection) {
+    return Appearance.wallpaperPath + (collection ? "/" + collection : "");
+  }
+  readonly property string _listedPath: root._collectionPath(Appearance.wallpaperCollection)
   // The image extensions listed: what Qt reads itself, plus each format it
   // reads only through an image plugin (webp: qt6-imageformats; avif, jxl:
   // kimageformats, with libavif, libjxl) once a one-pixel sample of it
@@ -253,6 +257,22 @@ Singleton {
   readonly property bool _subfolders: Appearance.wallpaperSubfolders
   on_SubfoldersChanged: root.refresh()
 
+  // Lists the images of `collection` (a folder inside the wallpaper folder,
+  // '' = the whole folder), sortBy "name" or "date" (newest first), and
+  // calls done(urls) with them as file URLs ([] when the listing fails)
+  function listImages(collection, sortBy, done) {
+    BackendManager.call("file.list", {
+      "path": root._collectionPath(collection),
+      "extensions": root.extensions,
+      "recursive": Appearance.wallpaperSubfolders,
+      "sortBy": sortBy
+    }, (error, result) => {
+      // %, # and ? escaped first: a name holding # or ? isn't a fragment
+      // or a query
+      done(error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path.replace(/[%#?]/g, encodeURIComponent)).toString()));
+    });
+  }
+
   // Lists the images again, then calls done(images). A listing asked for
   // meanwhile answers every caller waiting, with the newest list
   function refresh(done) {
@@ -261,16 +281,9 @@ Singleton {
     if (done)
       root._waiting.push(done);
     const listing = ++root._listings;
-    BackendManager.call("file.list", {
-      "path": root._listedPath,
-      "extensions": root.extensions,
-      "recursive": Appearance.wallpaperSubfolders
-    }, (error, result) => {
+    root.listImages(Appearance.wallpaperCollection, "name", images => {
       if (listing !== root._listings)
         return;
-      // %, # and ? escaped first: a name holding # or ? isn't a fragment
-      // or a query
-      const images = error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path.replace(/[%#?]/g, encodeURIComponent)).toString());
       if (JSON.stringify(images) !== JSON.stringify(root._images))
         root._images = images;
       const waiting = root._waiting;

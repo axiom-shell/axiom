@@ -9,13 +9,14 @@ import qs.components.reusable
 
 // One watched symbol as a tile (the markets module's tiles): its name,
 // the day's line edge to edge, then its price and change, the trend in the
-// change figure and the line.
+// change figure and the line. `value` picks the figures as QuoteRow's.
 // A click is `clicked`.
 ClippingRectangle {
   id: root
 
   required property var item
   property bool showChart: true
+  property string value: "pricePercent"
   signal clicked
 
   readonly property var quote: MarketsManager.quoteFor(root.item)
@@ -83,6 +84,7 @@ ClippingRectangle {
     spacing: 0
     StyledText {
       Layout.fillWidth: true
+      visible: !root.hasPrice || root.value === "pricePercent" || root.value === "price"
       text: root.hasPrice ? MarketMath.formatPrice(root.quote.price, root.quote.currency) : "—"
       role: "title"
       font.features: ({
@@ -90,8 +92,8 @@ ClippingRectangle {
         })
     }
     StyledText {
-      visible: root.hasPrice
-      text: (root.trend === "up" ? "▲ " : root.trend === "down" ? "▼ " : "") + MarketMath.formatPercent(root.quote?.changePercent ?? 0).replace(/^[+−]/, "")
+      visible: root.hasPrice && root.value !== "price"
+      text: MarketMath.arrowed(root.trend, MarketMath.formatChangeAs(root.quote?.change, root.quote?.changePercent ?? 0, root.quote?.currency, root.value))
       role: "caption"
       textColor: root.trendText
       font.weight: Style.weightStrong

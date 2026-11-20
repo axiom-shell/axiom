@@ -9,25 +9,36 @@ import qs.components.content.base
 
 // Current weather, plus the next hours and days where they fit (the days
 // beside it in wide slots), centred as one block; compact, the figure (in
-// a row along a strip). Same source as the bar widget: the Weather
-// settings' location and units.
+// a row along a strip). Its place and unit are its own `location` and
+// `units`, empty and default: the Weather settings'.
+// properties (card): { showHourly, showDaily, showDetails, location, units }
 Card {
   id: root
 
-  Component.onCompleted: WeatherManager.acquire(root)
+  // Re-acquiring replaces the old request
+  readonly property var weatherRequest: ({
+      "location": root.properties.location,
+      "units": root.properties.units
+    })
+  onWeatherRequestChanged: WeatherManager.acquire(root, weatherRequest)
+  Component.onCompleted: WeatherManager.acquire(root, weatherRequest)
   Component.onDestruction: WeatherManager.release(root)
 
-  readonly property var current: WeatherManager.current
-  readonly property var daily: WeatherManager.weather?.daily ?? null
+  // Null while loading; with an error, a state with no weather
+  readonly property var weatherState: WeatherManager.stateFor(root.weatherRequest)
+  readonly property string weatherError: root.weatherState?.error ?? ""
+  readonly property var current: root.weatherState?.weather?.current ?? null
+  readonly property var daily: root.weatherState?.weather?.daily ?? null
+  readonly property var condition: WeatherManager.conditionOf(root.weatherState?.weather ?? null)
   // What each section needs (px), and what fits in the room inside
   readonly property real currentHeight: Appearance.fontSize * 6
   readonly property real hourlyHeight: Appearance.fontSize * 4.2
-  readonly property real dailyHeight: Appearance.fontSize * 1.5 * 7
+  readonly property real dailyHeight: Appearance.fontSize * 1.5 * (root.daily?.time?.length ?? 0)
   readonly property real sectionGap: Widget.spacing * 3
   // Wide slots put the days beside the current weather
   readonly property bool sideBySide: !root.compact && root.innerWidth >= Appearance.fontSize * 36 && root.innerHeight >= root.dailyHeight
-  readonly property bool showDaily: !root.compact && (root.sideBySide || root.innerHeight >= root.currentHeight + root.sectionGap + root.dailyHeight)
-  readonly property bool showHourly: !root.compact && root.innerWidth >= Appearance.fontSize * 12 && root.innerHeight >= (root.sideBySide ? Math.max(root.currentHeight, root.dailyHeight) : root.currentHeight + (root.showDaily ? root.sectionGap + root.dailyHeight : 0)) + root.sectionGap + root.hourlyHeight
+  readonly property bool showDaily: root.properties.showDaily && !root.compact && (root.sideBySide || root.innerHeight >= root.currentHeight + root.sectionGap + root.dailyHeight)
+  readonly property bool showHourly: root.properties.showHourly && !root.compact && root.innerWidth >= Appearance.fontSize * 12 && root.innerHeight >= (root.sideBySide ? Math.max(root.currentHeight, root.dailyHeight) : root.currentHeight + (root.showDaily ? root.sectionGap + root.dailyHeight : 0)) + root.sectionGap + root.hourlyHeight
   // Room to spare: a bigger hero and airier days
   readonly property bool roomy: root.innerHeight >= Appearance.fontSize * 30
   // The current weather stacked and centred (tall, narrow and side by side
@@ -46,26 +57,26 @@ Card {
   Skeleton {
     anchors.centerIn: parent
     width: Math.min(root.innerWidth, Widget.px(260))
-    visible: !root.current && WeatherManager.error === ""
+    visible: !root.current && root.weatherError === ""
     lines: 2
     avatar: true
   }
 
   EmptyState {
     anchors.centerIn: parent
-    visible: !root.current && WeatherManager.error !== ""
+    visible: !root.current && root.weatherError !== ""
     maxWidth: root.innerWidth
     availableHeight: root.innerHeight
     icon: "cloud_off"
-    text: I18n.tr("Couldn't load the weather: {0}", WeatherManager.error)
+    text: I18n.tr("Couldn't load the weather: {0}", root.weatherError)
   }
 
   // Compact: the condition and temperature
   // (until it's loaded, a cloud)
   compactContent: CompactFigure {
-    icon: root.current ? (WeatherManager.condition?.icon ?? "") : "cloud"
+    icon: root.current ? (root.condition?.icon ?? "") : "cloud"
     value: root.current ? `${Math.round(root.current.temperature_2m)}°` : ""
-    label: WeatherManager.condition?.label ?? ""
+    label: root.condition?.label ?? ""
   }
 
   // A flexible gap between sections, up to maxGap
@@ -92,7 +103,7 @@ Card {
         spacing: Widget.spacing * 1.5
         StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 3.5
-          text: WeatherManager.dayLabel(day.index)
+          text: WeatherManager.dayLabel(root.daily, day.index)
         }
         StyledIcon {
           Layout.preferredWidth: Appearance.fontSize * 1.5
@@ -158,6 +169,8 @@ Card {
       Layout.fillWidth: true
       spacing: root.pad * 2
       WeatherCurrent {
+        weatherState: root.weatherState
+        showDetails: root.properties.showDetails
         stacked: root.stacked
         iconSize: Style.typeBody * (root.stacked ? 4 * root.heroScale : 3) // fitted: the hero
         temperatureSize: Style.typeBody * (root.stacked ? 2.4 * root.heroScale : 2) // fitted: the hero
@@ -196,12 +209,12 @@ Card {
         model: hours.count
         Column {
           required property int index
-          readonly property var hourly: WeatherManager.weather?.hourly
+          readonly property var hourly: root.weatherState?.weather?.hourly
           width: hours.width / Math.max(1, hours.count)
           spacing: 2
           StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: parent.hourly ? I18n.formatDate(new Date(parent.hourly.time[parent.index]), "HH") : ""
+            text: parent.hourly ? I18n.formatHour(new Date(parent.hourly.time[parent.index]), I18n.use24Hour, I18n.use24Hour) : ""
             role: "caption"
             tone: "muted"
           }

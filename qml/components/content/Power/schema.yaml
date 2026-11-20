@@ -5,7 +5,17 @@ defaultSize: [3, 1]
 canvasDetail: actions
 hosts: {only: [lockscreen, greeter]}
 lockActions: [session]
+order: [style, labels, actions]
 settings:
+  style:
+    type: string
+    title: Style
+    default: auto
+    x-control: toggle
+    enum: [auto, tiles, pills]
+    x-enumLabels: {auto: Auto, tiles: Tiles, pills: Pills}
+    description: "Auto: by the card's size."
+  labels: {$ref: '#/definitions/ItemNames', description: "Auto: each tile's name when it fits."}
   actions:
     type: array
     title: Actions

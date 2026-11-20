@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.services.ui
 import qs.components.reusable
 // Imported (though modules load by URL) so qs scans what they import
 // (scripts/check_structure.py)
@@ -32,6 +33,11 @@ Item {
   // What the module is drawn at: laid out at the slot's size over this,
   // then scaled to it (an edge menu's modules, see ModuleGrid.zoom)
   property real zoom: 1
+  // Saves one of this module's own options in its host's config (a card's
+  // `saveProperty`); false when it can't be saved
+  function saveProperty(key, value) {
+    return OverlayManager.saveModuleProperty(root.host, root.config?.id ?? "", key, value);
+  }
   // The module built, untyped (its own members are read dynamically)
   readonly property var _built: loader.item
   // The colour of the text it draws, where it draws it straight on the
@@ -65,7 +71,8 @@ Item {
       "slotRect": root.rect,
       "embedded": true,
       "host": root.host,
-      "expander": root.expander
+      "expander": root.expander,
+      "saver": root
     });
   }
   // A binding sets componentPath during creation, before completion; the

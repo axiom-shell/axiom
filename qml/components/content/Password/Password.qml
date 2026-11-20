@@ -1,7 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 
 import qs.config
+import qs.services.session
 import qs.components.reusable
 import qs.components.methods
 import qs.components.content.base
@@ -11,7 +13,8 @@ import qs.components.content.parts
 // so every lock screen layout has one). It only unlocks on the screen the
 // lock surface makes the target, on a real lock: in the layouts editor's
 // preview, or anywhere else, it's an inert field.
-// properties: { placeholder, alignment, showMessages }
+// With showPicture, the account picture goes before the field.
+// properties: { placeholder, alignment, showMessages, showPicture }
 Card {
   id: root
 
@@ -54,16 +57,34 @@ Card {
     outlined: root.boxed
     color: root.boxed ? Style.fillSunken : "transparent"
 
-    PasswordField {
-      id: field
+    RowLayout {
       anchors.fill: parent
       anchors.margins: root.boxPad
-      active: root.live
-      fieldHeight: root.room > 0 ? Math.min(root.rowHeight, root.room) : root.rowHeight
-      inlineMessage: root.inlineMessage
-      placeholder: root.properties.placeholder
-      horizontalAlignment: Utils.horizontalAlignment(root.properties.alignment)
-      showMessages: root.properties.showMessages
+      spacing: Widget.spacing * 2
+
+      Thumbnail {
+        id: pic
+        visible: root.properties.showPicture && pic.ready
+        Layout.preferredWidth: field.fieldHeight
+        Layout.preferredHeight: field.fieldHeight
+        Layout.alignment: Qt.AlignTop
+        source: AccountManager.iconUrl
+        round: true
+        cache: false
+        decodeSize: Qt.size(width * 2, height * 2)
+      }
+
+      PasswordField {
+        id: field
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        active: root.live
+        fieldHeight: root.room > 0 ? Math.min(root.rowHeight, root.room) : root.rowHeight
+        inlineMessage: root.inlineMessage
+        placeholder: root.properties.placeholder
+        horizontalAlignment: Utils.horizontalAlignment(root.properties.alignment)
+        showMessages: root.properties.showMessages
+      }
     }
   }
 }

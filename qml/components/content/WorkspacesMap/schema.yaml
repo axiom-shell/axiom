@@ -3,4 +3,9 @@ link: {setting: Workspaces}
 icon: grid_view
 group: Desktop
 defaultSize: [4, 2]
-settings: {showEmpty: {type: boolean, title: Empty workspaces, default: true}}
+settings:
+  showEmpty: {type: boolean, title: Empty workspaces, default: true}
+  monitor: {type: string, title: Monitor, default: '', x-options: screens, x-scope: machine, x-emptyLabel: Focused monitor}
+  useNames: {$ref: '#/definitions/WorkspaceNames'}
+  appIconsCount: {$ref: '#/definitions/AppIconsCount', default: windows}
+  appIconsMax: {$ref: '#/definitions/AppIconsMax', title: Icons per workspace, default: 6}

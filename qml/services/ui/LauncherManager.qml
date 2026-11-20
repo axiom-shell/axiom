@@ -248,8 +248,14 @@ QtObject {
     return scored.slice(0, _searchLimit).map(m => m.row());
   }
 
+  // The launcher's frequent apps, best first: shown ones with usage, by
+  // frecency then name (desktop ids; the launcher's rows and Favourites)
+  function frequentIds() {
+    return _apps().filter(app => usage[app.id]).sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).map(app => app.id);
+  }
+
   function _frequentRows() {
-    return _apps().filter(app => usage[app.id]).sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).slice(0, LauncherConfig.maxResults).map(app => _appRow(app));
+    return frequentIds().slice(0, LauncherConfig.maxResults).map(id => _appRow(DesktopEntries.byId(id)));
   }
 
   // --- Files ---
@@ -541,7 +547,7 @@ QtObject {
     const label = ClipboardManager.labelOf(entry);
     return {
       kind: "clipboard",
-      glyph: entry.format || entry.html ? "image" : entry.pinned ? "keep" : "content_paste",
+      glyph: ClipboardManager.isImage(entry) ? "image" : entry.pinned ? "keep" : "content_paste",
       image: entry.image,
       crop: true,
       title: label.length > 120 ? label.slice(0, 120) + "…" : label,

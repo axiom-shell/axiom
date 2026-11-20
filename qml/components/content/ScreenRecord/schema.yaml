@@ -4,3 +4,12 @@ icon: screen_record
 group: Tools
 defaultSize: [4, 4]
 grow: standard
+settings:
+  showHeader: {type: boolean, title: Header, default: true}
+  count:
+    type: integer
+    title: Recordings
+    default: 12
+    minimum: 0
+    maximum: 12
+    description: '0: none.'

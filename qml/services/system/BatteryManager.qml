@@ -126,8 +126,13 @@ QtObject {
   property var levelEvent: null
   property int _levelSerial: 0
 
+  // Sets the power profile by name, as `profile` gives it
+  function setProfile(name) {
+    PowerProfiles.profile = name === "powerSaver" ? PowerProfile.PowerSaver : name === "performance" ? PowerProfile.Performance : PowerProfile.Balanced;
+  }
+
   function setPowerSaver(on) {
-    PowerProfiles.profile = on ? PowerProfile.PowerSaver : PowerProfile.Balanced;
+    root.setProfile(on ? "powerSaver" : "balanced");
   }
 
   // Keybind action powerSaver: axiom ipc powerSaver toggle|enable|disable

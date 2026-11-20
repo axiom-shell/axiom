@@ -1,0 +1,9 @@
+# The WarnThreshold definition (#/definitions/WarnThreshold): the percentage where a figure turns to warning. Uses override `default`.
+
+x-inline: true
+type: integer
+title: Warning at
+x-unit: '%'
+default: 75
+minimum: 1
+maximum: 100

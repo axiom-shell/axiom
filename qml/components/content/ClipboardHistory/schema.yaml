@@ -4,3 +4,11 @@ icon: content_paste
 group: Tools
 defaultSize: [4, 6]
 grow: standard
+settings:
+  showHeader: {type: boolean, title: Header, default: true}
+  showSearch:
+    type: boolean
+    title: Search
+    default: true
+    description: When there's room.
+  showImages: {type: boolean, title: Images, default: true}

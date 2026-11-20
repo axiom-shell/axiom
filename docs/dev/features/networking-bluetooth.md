@@ -1,7 +1,7 @@
 # Networking and Bluetooth
 
 > **Files:** `qml/services/system/NetworkingManager.qml`, `qml/services/system/BluetoothManager.qml`, `qml/config/BluetoothConfig.qml`, `qml/components/methods/DeviceBatteries.qml`, `backend/internal/nmnet/`, `backend/internal/daemon/net.go`, `backend/internal/bluez/`, `backend/internal/daemon/bluetooth.go`, `qml/components/content/BluetoothDevices/BluetoothDevices.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `qml/components/content/parts/WifiJoinForm.qml`, `qml/components/content/parts/ConnectionDetails.qml`, `qml/services/system/BatteryManager.qml`, `qml/components/content/Battery/Battery.qml`, `qml/components/bar/widgets/Battery/Battery.qml`
-> **Config:** `Apps.networkEditor` (the Wi-Fi menu's Settings button), `Bluetooth.pairingAgent` (no reader: the daemon reads it), `Bluetooth.notify` / `lowThreshold` / `criticalThreshold` (`BluetoothConfig`), the Battery widget's and module's `showPeripherals`
+> **Config:** `Apps.networkEditor` (the Wi-Fi menu's Settings button), `Bluetooth.pairingAgent` (no reader: the daemon reads it), `Bluetooth.notify` / `lowThreshold` / `criticalThreshold` (`BluetoothConfig`), the Battery widget's and module's `showPeripherals`, the module's `showTime` and `showPowerProfile` (a power profile row, `BatteryManager.setProfile`; hidden on the lock screen and greeter)
 > **Related:** [Services pattern](../core/services-pattern.md), [VPN](vpn.md), [Prompts](prompts.md)
 
 Wi-Fi and wired state, built on Quickshell's Networking module, and Bluetooth, which axiom's daemon follows (`bluez`). Throughput is not here: it stays in SystemManager. VPNs are VpnManager's ([VPN](vpn.md)).
@@ -35,8 +35,8 @@ What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the s
 ### The Wi-Fi menu
 `content/WifiNetworks`, the Network widget's popout:
 - **Header:** the radio switch (none, and titled Network, without a Wi-Fi adapter), then icon buttons as high as it: Settings (`Apps.networkEditor`), Import VPN (red while `VpnManager.importError`) and airplane mode.
-- **The connection:** a `FoldRow` folding open `ConnectionDetails`, folded until clicked.
-- **VPN section:** folded to one row ([VPN](vpn.md)). Left out, with Import VPN, when the card's `showVpn` or the widget's `popoutVpn` is off (`showsVpn`; the popout's arrives through `extraData` after it's built, so VPN data is acquired as it changes).
+- **The connection:** a `FoldRow` folding open `ConnectionDetails`, folded until clicked; left out by the card's `showConnection` (on in the popout, its default).
+- **VPN section:** folded to one row ([VPN](vpn.md)), its unfolded public IP check a `PublicIpRow`. Left out, with Import VPN, when the card's `showVpn` or the widget's `popoutVpn` is off (`showsVpn`; the popout's arrives through `extraData` after it's built, so VPN data is acquired as it changes).
 - **Networks:** `NetworkRow`s; a secured one has a lock (`badge` for enterprise) on its signal icon (`DeviceRow.iconBadge`), so every row's name and buttons line up. A known one's hover shows autoconnect before forget (`DeviceRow.hoverActions`, over the end of the name), and one that doesn't join on its own says "manual" in its status. An unsaved secured one opens a password field (WPA) or a `WifiJoinForm`, Connect beside its last field.
 - **Footer:** Hidden network (a `WifiJoinForm` with `hidden`, closed once NetworkManager takes it).
 - **Room:** the window never grows while shown: `maxImplicitHeight` keeps, beside the list's growth, each folding part's most less what it shows now (details, the VPN rows, the hidden form). Focus lost to the file picker (a CA certificate) doesn't cancel the form.
@@ -74,7 +74,7 @@ BlueZ on the system bus (`backend/internal/bluez`, wired in `daemon/bluetooth.go
 
 ### Peripheral batteries
 `BatteryManager.peripherals`: the connected Bluetooth devices reporting a battery (`BluetoothManager.connectedDevices` with `batteryAvailable`), by name, as `{address, name, glyph, percentage, level}` (`level`: `DeviceBatteries.level` at `Bluetooth.lowThreshold` / `criticalThreshold`); `lowestPeripheral` the one lowest. Only BlueZ's `Battery1` is read: a peripheral only UPower sees isn't listed.
-- **The Battery module** (`showPeripherals`, default on) lists them under the laptop's battery, a line each: the device's glyph and name, a `LevelMeter` and the percent, coloured by level. With no laptop battery it shows only them (its "On AC power" state only when there are none); compact, the lowest one's figure. The circle part is hidden by its height, not `visible` (a Layout misses a child shown while hidden).
+- **The Battery module** (`showPeripherals`, default on; `showTime` off drops the time estimate, `showPowerProfile` adds a power saver / balanced / performance row) lists them under the laptop's battery, a line each: the device's glyph and name, a `LevelMeter` and the percent, coloured by level. With no laptop battery it shows only them (its "On AC power" state only when there are none); compact, the lowest one's figure. The circle part is hidden by its height, not `visible` (a Layout misses a child shown while hidden).
 - **The Battery widget** (`showPeripherals`, default on; it has no popout of its own) lists them in its tooltip (with its menu popout off) and in its click's status toast. With no laptop battery it shows the lowest one (its glyph, percent and level colours) instead of hiding, and hides only when there are none either; laptops are unchanged.
 
 ### Connection events

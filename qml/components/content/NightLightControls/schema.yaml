@@ -3,3 +3,12 @@ link: {setting: NightLight}
 icon: bedtime
 group: System
 defaultSize: [4, 2]
+settings:
+  showGamma:
+    type: boolean
+    title: Gamma
+    default: true
+  showSchedule:
+    type: boolean
+    title: Schedule
+    default: true

@@ -21,15 +21,9 @@ import qs.components.bar.widgets.base
 BarWidget {
   id: root
 
-  readonly property var ignoredApps: properties.ignoreApps.map(a => a.trim().toLowerCase()).filter(a => a !== "")
-
-  function ignored(node) {
-    const names = [node.name, node.properties?.["application.name"], node.properties?.["application.process.binary"]];
-    return names.some(n => n && root.ignoredApps.includes(n.toLowerCase()));
-  }
   // Unique app names of the streams, past the ignored ones
   function users(nodes) {
-    return [...new Set(nodes.filter(n => !root.ignored(n)).map(n => AudioManager.appName(n)))];
+    return [...new Set(nodes.filter(n => !AudioManager.ignored(n, root.properties.ignoreApps)).map(n => AudioManager.appName(n)))];
   }
 
   // The indicators its settings show (a box of its own shows its one)

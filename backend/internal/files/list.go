@@ -6,13 +6,15 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // Listing is a folder's files of some kinds (file.list): their absolute
 // paths, and the folders under it holding any, as paths inside it ("a",
-// "a/b"), each sorted by name, case aside.
+// "a/b"), each sorted by name, case aside (the files by date with
+// ListOptions.SortBy).
 type Listing struct {
 	Files   []string `json:"files"`
 	Folders []string `json:"folders"`
@@ -32,6 +34,9 @@ type ListOptions struct {
 	Folders bool
 	// Hidden files and folders too
 	Hidden bool
+	// The order of the files: "name" (the default) or "date", newest
+	// modified first, ties by name
+	SortBy string
 }
 
 // List is dir's regular files (links to them too) whose extension is one
@@ -59,6 +64,7 @@ func List(dir string, exts []string, o ListOptions) (Listing, error) {
 	}
 	out := Listing{Files: []string{}, Folders: []string{}}
 	folders := map[string]bool{}
+	modified := map[string]time.Time{}
 	walk := func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// An unreadable folder inside is skipped, not the whole list
@@ -85,6 +91,7 @@ func List(dir string, exts []string, o ListOptions) (Listing, error) {
 		}
 		// A link counts when it leads to a regular file (or a folder, with
 		// o.Folders)
+		var mtime time.Time
 		if d.Type()&fs.ModeSymlink != 0 {
 			target, err := os.Stat(path)
 			if err == nil && target.IsDir() && o.Folders {
@@ -93,8 +100,13 @@ func List(dir string, exts []string, o ListOptions) (Listing, error) {
 			if err != nil || !target.Mode().IsRegular() {
 				return nil
 			}
+			mtime = target.ModTime()
 		} else if !d.Type().IsRegular() {
 			return nil
+		} else if o.SortBy == "date" {
+			if info, err := d.Info(); err == nil {
+				mtime = info.ModTime()
+			}
 		}
 		if !want[strings.ToLower(filepath.Ext(name))] {
 			return nil
@@ -107,7 +119,9 @@ func List(dir string, exts []string, o ListOptions) (Listing, error) {
 		if err != nil {
 			return nil
 		}
-		out.Files = append(out.Files, filepath.Join(root, rel))
+		file := filepath.Join(root, rel)
+		out.Files = append(out.Files, file)
+		modified[file] = mtime
 		for p := filepath.Dir(rel); p != "." && p != "/"; p = filepath.Dir(p) {
 			folders[p] = true
 		}
@@ -128,7 +142,12 @@ func List(dir string, exts []string, o ListOptions) (Listing, error) {
 			return list[i] < list[j]
 		})
 	}
-	byName(out.Files)
 	byName(out.Folders)
+	byName(out.Files)
+	if o.SortBy == "date" {
+		sort.SliceStable(out.Files, func(i, j int) bool {
+			return modified[out.Files[i]].After(modified[out.Files[j]])
+		})
+	}
 	return out, nil
 }

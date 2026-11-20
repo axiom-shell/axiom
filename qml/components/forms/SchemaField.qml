@@ -112,7 +112,7 @@ Loader {
         "": I18n.tr("Last opened")
       };
     // I18n.tr("The first calendar")
-    if (fieldSchema["x-options"] === "calendars")
+    if ((fieldSchema["x-options"] ?? fieldSchema.items?.["x-options"]) === "calendars")
       return CalendarManager.calendars.reduce((labels, calendar) => {
         labels[calendar.id] = CalendarConfig.accounts.length > 1 ? I18n.tr("{0} · {1}", calendar.name, calendar.accountName) : calendar.name;
         return labels;
@@ -356,7 +356,7 @@ Loader {
       // list too: its names may be of monitors not plugged in)
       if (fieldSchema.items?.enum && fieldSchema["x-ordered"])
         return orderedChipsField;
-      return fieldSchema.items?.enum || fieldSchema.items?.["x-options"] === "marketSymbols" ? chipsField : stringListField;
+      return fieldSchema.items?.enum || ["marketSymbols", "calendars"].includes(fieldSchema.items?.["x-options"]) ? chipsField : stringListField;
     case "boolean":
       return switchField;
     case "integer":
@@ -794,7 +794,7 @@ Loader {
     }
   }
 
-  // An array of strings from `items.enum` (or the `marketSymbols` list):
+  // An array of strings from `items.enum` (or the `marketSymbols` or `calendars` list):
   // one toggle chip per option (with its `x-enumIcons` icon), committed in
   // the options' order
   readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : SettingsManager.optionsFor(fieldSchema.items) ?? []

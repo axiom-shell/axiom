@@ -16,4 +16,10 @@ QtObject {
   readonly property string units: _c.units
   // How often it's fetched (ms)
   readonly property int interval: _c.interval
+
+  // A widget's units choice ("default" | "celsius" | "fahrenheit") as
+  // "celsius" | "fahrenheit": "default" follows `units`
+  function unitsOf(choice) {
+    return choice === "default" ? root.units : choice;
+  }
 }

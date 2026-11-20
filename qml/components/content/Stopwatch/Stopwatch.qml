@@ -21,7 +21,7 @@ import qs.components.content.parts
 // round, reset, start-pause and lap, then the laps (copyable, the fastest
 // and slowest tinted). Compact, the time of whichever is going; a click on it starts or
 // pauses it.
-// properties (card): { mode: "auto" | "timer" | "stopwatch" }
+// properties (card): { mode: "auto" | "timer" | "stopwatch", showLaps }
 Panel {
   id: root
 
@@ -37,6 +37,8 @@ Panel {
     return !StopwatchManager.timerIdle || StopwatchManager.stopwatchIdle ? "timer" : "stopwatch";
   }
   readonly property bool timerMode: root.mode === "timer"
+  // The lap list: only the stopwatch has one
+  readonly property bool showLaps: root.properties.showLaps && !root.timerMode && StopwatchManager.laps.length > 0
 
   spacing: Widget.spacing
   wantsKeyboardFocus: true
@@ -144,7 +146,7 @@ Panel {
   // The laps: a heading with copy, then the latest first, the fastest and
   // slowest tinted
   RowLayout {
-    visible: !root.timerMode && StopwatchManager.laps.length > 0
+    visible: root.showLaps
     Layout.fillWidth: true
     spacing: Widget.spacing
 
@@ -168,7 +170,7 @@ Panel {
     id: lapList
     ScrollIndicator.vertical: StyledScrollIndicator {}
 
-    visible: !root.timerMode && StopwatchManager.laps.length > 0
+    visible: root.showLaps
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     Layout.preferredHeight: root.embedded ? 0 : Math.min(lapList.contentHeight, Appearance.fontSize * 12)

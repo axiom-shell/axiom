@@ -3,3 +3,11 @@ link: {page: Themes}
 icon: palette
 group: Look & layout
 defaultSize: [4, 8]
+settings:
+  groups:
+    type: array
+    title: Groups
+    items: {type: string, enum: [builtin, imported, generated]}
+    x-enumLabels: {builtin: Built-in, imported: Imported, generated: Generated}
+    default: [builtin, imported, generated]
+  showControls: {type: boolean, title: Controls, default: true}

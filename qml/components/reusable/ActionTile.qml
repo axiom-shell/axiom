@@ -36,7 +36,7 @@ Rectangle {
   signal hovered
   signal opened
 
-  // The label fits whole (QuickActions mirrors this for its "auto" names)
+  // The label fits whole (the "auto" names of ActionTiles)
   readonly property bool labelFits: labelMetrics.advanceWidth <= root.width - Widget.spacing * 2 && root.height >= Appearance.fontSize * 4.5
   readonly property bool hot: root.selected || area.containsMouse
   readonly property bool _labelShown: root.showLabel && root.label !== "" && (root.forceLabel || root.labelFits)

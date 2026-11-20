@@ -10,6 +10,7 @@ import qs.components.content.parts
 // and up to two of the semantic names that map to it (Theme.roles)
 // beneath: the neutrals in the first row, the accents in the second where
 // it's wide enough. Compact, a strip of the 16.
+// properties: { labels }
 Card {
   id: root
 
@@ -81,6 +82,7 @@ Card {
 
     // Padded to roleLines; long role names break rather than hide
     StyledText {
+      visible: root.properties.labels === "show"
       Layout.fillWidth: true
       text: chip.roles.concat(Array(Math.max(0, root.roleLines - chip.roles.length)).fill("")).join("\n")
       role: "micro"

@@ -6,7 +6,6 @@ import qs.services.session
 import qs.services.system
 import qs.services.ui
 import qs.components.content.parts
-import qs.components.reusable
 import qs.components.content.base
 
 // A grid of action tiles: any action of the shell's catalogue that takes
@@ -17,16 +16,16 @@ import qs.components.content.base
 // (ActionsManager.available: night light without a way to tint the
 // screen, power saver without power-profiles-daemon, …; pin outside an
 // edge menu). Log out, restart and shut down ask for a second click.
-// Names show on every tile or none ("auto": only when all fit whole),
-// always ("show", elided) or never ("hide").
-// "pills" draws wide tiles with a status line, as Android's quick settings
-// do. Some tiles have a detail that grows over the grid (Wi-Fi's networks,
+// Names show on each tile where it fits ("auto"), always ("show", elided)
+// or never ("hide"). "pills" draws wide tiles with a status line, as
+// Android's quick settings do; "auto" picks by the card's height
+// (ActionTiles). Some tiles have a detail that grows over the grid (Wi-Fi's networks,
 // Bluetooth's devices, Do not disturb's notifications, the VPNs, the audio
 // mixer for the mutes, the recorder's options): a pill opens it from
 // beside its icon, a tile on a right click or long press. The tiles of
 // its own have nothing to switch: a tap opens theirs.
 // properties: { actions: [ActionsManager ids, or "brightness", "volume", "themePicker", "wallpaperPicker", "pin"],
-//               labels: "auto" | "show" | "hide", style: "tiles" | "pills" }
+//               labels: "auto" | "show" | "hide", style: "auto" | "tiles" | "pills" }
 Card {
   id: root
 
@@ -145,8 +144,6 @@ Card {
     };
   }
 
-  readonly property bool pills: root.properties.style === "pills"
-
   // Every monitor's, for the brightness tile
   readonly property real brightnessLevel: BrightnessManager.average(BrightnessManager.names)
   // Opens the action's detail from `from`, or runs it
@@ -185,21 +182,6 @@ Card {
   readonly property bool showsVpn: root.actions.includes("vpn")
   onShowsVpnChanged: root.showsVpn ? VpnManager.acquire(root) : VpnManager.release(root)
 
-  // Every tile is the same size, so the names all fit when the widest does
-  // (ActionTile.labelFits, measured in its label font)
-  readonly property string labels: root.properties.labels
-  // "Confirm?" counts for the actions that ask, so arming one doesn't hide
-  // every name
-  readonly property var _fitLabels: root.shown.map(a => root.def(a).label).concat(root.shown.some(a => SessionManager.destructiveActions.includes(a)) ? [I18n.tr("Confirm?")] : [])
-  readonly property real widestLabel: Math.max(0, ...root._fitLabels.map(label => labelFont.advanceWidth(label)))
-  readonly property bool labelsFit: root.widestLabel <= grid.tileWidth - Widget.spacing * 2 && grid.tileHeight >= Appearance.fontSize * 4.5
-
-  FontMetrics {
-    id: labelFont
-    font.family: Appearance.fontFamily
-    font.pixelSize: Style.typeCaption
-  }
-
   // Runs a tile's action: pin's own, else the catalogue's (ActionsManager.
   // run), behind a second click where it asks for one
   function run(name) {
@@ -228,63 +210,24 @@ Card {
     id: gate
   }
 
-  TileGrid {
-    id: grid
+  ActionTiles {
     anchors.fill: parent
     anchors.margins: root.pad
-    count: root.shown.length
-    maxAspect: root.pills ? 4 : 1.6
-    minAspect: root.pills ? 2.2 : 0
-
-    Repeater {
-      model: root.pills ? 0 : root.shown.length
-
-      ActionTile {
-        id: tile
-        required property int index
-        readonly property string action: root.shown[index] ?? ""
-        readonly property var def: root.def(action)
-        readonly property string detail: root.detailOf(def)
-        x: grid.tileX(index)
-        y: grid.tileY(index)
-        width: grid.tileWidth
-        height: grid.tileHeight
-        icon: def.icon
-        label: def.label
-        active: def.active
-        showLabel: root.labels === "show" || (root.labels === "auto" && root.labelsFit)
-        forceLabel: root.labels === "show"
-        activeTone: def.tone
-        countdown: def.destructive ? gate.timeout : 0
-        opens: detail !== ""
-        onClicked: root.tap(action, tile)
-        onOpened: root.expand(tile.detail, tile.def.detailProperties ?? {}, tile)
-      }
-    }
-
-    Repeater {
-      model: root.pills ? root.shown.length : 0
-
-      ActionPill {
-        id: pill
-        required property int index
-        readonly property string action: root.shown[index] ?? ""
-        readonly property var def: root.def(action)
-        readonly property string detail: root.detailOf(def)
-        x: grid.tileX(index)
-        y: grid.tileY(index)
-        width: grid.tileWidth
-        height: grid.tileHeight
-        icon: def.icon
-        label: def.label
-        status: def.status ?? ""
-        active: def.active
-        activeTone: def.tone
-        countdown: def.destructive ? gate.timeout : 0
-        opens: detail !== ""
-        onClicked: root.tap(action, pill)
-        onOpened: root.expand(pill.detail, pill.def.detailProperties ?? {}, pill)
-      }
-    }
+    style: root.properties.style
+    labels: root.properties.labels
+    tiles: root.shown.map(a => {
+      const d = root.def(a);
+      return {
+        "icon": d.icon,
+        "label": d.label,
+        "status": d.status ?? "",
+        "active": d.active,
+        "tone": d.tone,
+        "countdown": d.destructive ? gate.timeout : 0,
+        "opens": root.detailOf(d) !== ""
+      };
+    })
+    onClicked: (index, tile) => root.tap(root.shown[index], tile)
+    onOpened: (index, tile) => root.expand(root.detailOf(root.def(root.shown[index])), root.def(root.shown[index]).detailProperties ?? {}, tile)
   }
 }

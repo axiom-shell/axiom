@@ -4,3 +4,8 @@ group: Media & audio
 defaultSize: [4, 2]
 hosts: [lockscreen]
 lockActions: [volume]
+order: [showInput, scrollStep, maxVolume]
+settings:
+  showInput: {type: boolean, title: Input, default: true}
+  scrollStep: {$ref: '#/definitions/ScrollStep'}
+  maxVolume: {$ref: '#/definitions/MaxVolume'}

@@ -77,6 +77,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Unlike a bare menu module, it keeps its padding (`SlotContext.pad`), since nothing else pads it.
 - **`Password` and `Greeting`** ignore `bare` here. Their boxes follow the layout's own `passwordBorder` / `greetingBorder` (off by default).
 - **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`, showing nothing private. What each may do there is its `x-lockActions` ([Schema annotations](../core/schema-annotations.md)); with none it only shows. `check_structure` fails any `XManager.method(` call in such a type or a part it uses that is neither a read (its allowlist) nor one of its actions' methods, but one marked `// lock-inert: <reason>` (a call that gates itself off there).
+  - Network shows no IP address (nor Tailscale's) here or on the greeter, whatever its `showIp`.
   - Power's `session` restarts and shuts down asking twice, and never logs out.
   - KeyboardLayout's `layout` switches the compositor's layouts alone, an engine's own typing layout among them: the password types through no input method ([input sources](input-sources.md)). It's in the lock screen's library, not its default layout.
 - A new module stays off the lock screen unless it is added there deliberately.
@@ -89,6 +90,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Keys used to be screen names. A monitor that dropped out and came back while turning off then had its old surface's teardown clear the new surface's report, which flickered the fallback in.
 - **Fallback field:** a surface whose key has no report shows a `PasswordField` of its own, so a hand-edited or broken layout can never lock anyone out. The field sits in a `Surface { tone: "page" }`; lock surfaces may use only `Surface` and Style roles (the lock-on-start budget: no `AttachedSurface`, shadow or `*Config` the greeter's bundle lacks).
   - It appears a tick after loading, near the bottom, over the modules.
+- **Picture:** with `showPicture` the account picture (`AccountManager.iconUrl`, a `reusable/Thumbnail`) goes before the field, at the field's height, once it has loaded.
 - **Stable layout:** the field never moves or grows with its messages (`reusable/PasswordEntry`).
 - **Caps Lock:** while it's on, the field shows a warning icon and, with no other message, its message line says so ([Lock keys](lock-keys.md)).
   - The message line's room is kept (`reserveMessage`).

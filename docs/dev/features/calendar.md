@@ -88,8 +88,9 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 
 ### Reads
 - `byDay` (`CalendarEvents.byDay` over the shown calendars)
-- `eventsOn(key)`, `dotsFor(key)`
-- `upcoming(now, until, allDay)`
+- `eventsOn(key, calendars)`, `dotsFor(key, calendars)`
+- `upcoming(now, until, allDay, calendars)`
+- `calendars` (ids; empty or absent = every shown calendar) narrows each to those calendars' events, over the one `byDay` index. A card's `calendars` option (Agenda, Calendar, Clock & calendar: the `Calendars` shared definition, `x-allCalendars` chips) reaches them through `MonthGrid`, `DayPane` and `DayAgenda`'s `calendars`.
 - `timeText(event, key)`
 
 ### Reminders
@@ -124,6 +125,8 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 - Events are private.
 - An event's title is anyone's (a subscribed feed's): it shows as plain text (`textFormat: Text.PlainText` in `EventRow`, `MonthGrid`'s chips, `CompactFigure`'s label and the Next event bar widget), never styled text that could load a remote image.
 - Calendar and Agenda don't list `lockscreen` or `greeter` in `x-hosts`.
+- Agenda's compact figure (the next event) follows `showAllDay` like the list: on, an all-day event shows as "Now · title".
+- Calendar's `showEvents` off is a plain month: no dots, and its `DayPane` (list and editor) is not built.
 - Agenda shows a `Skeleton` (not "Nothing coming up") while a first sync runs with no events yet: calendars set up, `lastSync` 0, `syncing`, no `errors`.
 - ClockCalendar does list them, but shows events on the lock screen only with `Calendar.showOnLockscreen`, and read-only there:
   - `readOnly` on `DayPane` / `DayAgenda` / `EventRow`;
@@ -137,8 +140,9 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
   - Shows a dot per calendar with events on a day, modelled by the joined colour names.
   - With `titles`, it shows the events in cells that are tall enough, modelled by count, with "+n more".
   - `showEvents: false` makes it a plain date picker.
+  - `calendars` filters its dots and titles; `showWeekNumbers` adds a column of ISO week numbers (`DateFormats.weekNumber` of each row's 4th day) before the weekdays.
 - **`EventRow`:** calendar color, title, time and place.
-- **`DayAgenda`:** a day's rows under its date, a + to add, and empty / no-calendar states.
+- **`DayAgenda`:** a day's rows (of its `calendars`) under its date, a + to add, and empty / no-calendar states.
 - **`EventEditor`:**
   - Its fields, save and delete are its `session`'s (an `EventDraft`, `qml/services/apps/EventDraft.qml`: its own, or the page's).
   - Its owner opens its session (`open(draft)` takes a `CalendarEvents.newDraft` / `draftOf`) and builds it only while that's `active` (Agenda's and DayPane's Loaders). Each opening, or a build for one already open, starts it at the top, and a new event takes the keyboard.

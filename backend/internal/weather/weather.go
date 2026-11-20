@@ -1,10 +1,12 @@
 // Package weather is the weather for the shell, the `weather` polled
-// topic (WeatherManager): Open-Meteo's forecast (no API key) for one
-// place, from the Weather settings' coordinates, else their location
-// (geocoded by Open-Meteo), else the machine's IP (ipinfo.io, then
-// ipapi.co, as either may rate limit). A failed fetch keeps the last
-// good weather for the same settings; with none, its state carries the
-// error and no weather, so the shell can say why it has none.
+// topic (WeatherManager): Open-Meteo's forecast (no API key) for each
+// requested place, from its coordinates, else its location (geocoded by
+// Open-Meteo), else the machine's IP (ipinfo.io, then ipapi.co, as either
+// may rate limit). The request lists the places (every card's own, merged
+// by the shell) and the state is one State per distinct place. A failed
+// fetch keeps that place's last good weather for the same settings; with
+// none, its state carries the error and no weather, so the shell can say
+// why it has none.
 package weather
 
 import (
@@ -13,9 +15,11 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/url"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,7 +44,7 @@ const (
 	ipPlaceTTL = time.Hour
 )
 
-// Request is the Weather settings, as the shell sends them.
+// Request is one place's settings, as the shell sends them.
 type Request struct {
 	Location  string `json:"location"`
 	Latitude  string `json:"latitude"`
@@ -93,6 +97,11 @@ type State struct {
 	Error string `json:"error"`
 }
 
+// request is the topic's request: every place the shell wants.
+type request struct {
+	Places []Request `json:"places"`
+}
+
 // Options are where the source fetches from; zero values are the real
 // ones.
 type Options struct {
@@ -130,15 +139,10 @@ func Source(o Options) topics.Source {
 		Name:    "weather",
 		Floor:   topics.MinInterval,
 		Default: 15 * time.Minute,
-		Request: reflect.TypeFor[Request](),
-		State:   reflect.TypeFor[State](),
+		Request: reflect.TypeFor[request](),
+		State:   reflect.TypeFor[[]State](),
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
-			// The settings are global: every subscriber asks the same
-			var r Request
-			if len(requests) > 0 {
-				json.Unmarshal(requests[0], &r)
-			}
-			return w.state(ctx, r)
+			return w.states(ctx, requests)
 		},
 	}
 }
@@ -147,38 +151,88 @@ type fetcher struct {
 	o Options
 	// A loop stopped and started again can briefly overlap the old one
 	mu sync.Mutex
-	// The place last resolved, for placeKey, and when
-	place    *Place
-	placeKey string
-	placeAt  time.Time
-	// The last state, and the last failure logged (each said once)
-	last   *State
-	failed string
+	// The place resolved for each location ("" is the IP's), and when
+	places map[string]resolved
+	// Each request's last state, and the last failure logged for it (each
+	// said once)
+	last   map[Request]*State
+	failed map[Request]string
 }
 
-// state is fetch's state for r. A failed fetch keeps the last state when
-// it has weather for r (the hub pushes nothing new), else it is r's with
-// the error.
-func (w *fetcher) state(ctx context.Context, r Request) (any, error) {
+// resolved is a place looked up for a location, and when.
+type resolved struct {
+	place *Place
+	at    time.Time
+}
+
+// states is fetch's state: one for each distinct place the requests ask
+// for, in the order asked. Places no longer asked for are forgotten.
+func (w *fetcher) states(ctx context.Context, requests []json.RawMessage) ([]State, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	var asked []Request
+	for _, raw := range requests {
+		var r request
+		if json.Unmarshal(raw, &r) != nil {
+			continue
+		}
+		for _, p := range r.Places {
+			if !slices.Contains(asked, p) {
+				asked = append(asked, p)
+			}
+		}
+	}
+	out := []State{}
+	for _, r := range asked {
+		st, err := w.state(ctx, r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *st)
+	}
+	w.forgetUnasked(asked)
+	return out, nil
+}
+
+// forgetUnasked drops what the maps keep for places no longer in asked
+// (edited locations don't pile up); the IP's place stays while asked for.
+func (w *fetcher) forgetUnasked(asked []Request) {
+	locations := map[string]bool{}
+	for _, r := range asked {
+		locations[r.Location] = true
+	}
+	maps.DeleteFunc(w.places, func(location string, _ resolved) bool { return !locations[location] })
+	maps.DeleteFunc(w.last, func(r Request, _ *State) bool { return !slices.Contains(asked, r) })
+	maps.DeleteFunc(w.failed, func(r Request, _ string) bool { return !slices.Contains(asked, r) })
+}
+
+// state is r's state. A failed fetch keeps the last state when it has
+// weather for r, else it is r's with the error. The error returned is the
+// context's.
+func (w *fetcher) state(ctx context.Context, r Request) (*State, error) {
 	st, err := w.fetch(ctx, r)
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
 	if err != nil {
-		if err.Error() != w.failed {
-			w.failed = err.Error()
-			w.o.Log.Warn("fetching the weather", "err", err)
+		if w.failed == nil {
+			w.failed = map[Request]string{}
 		}
-		if w.last != nil && w.last.Request == r && w.last.Error == "" {
-			return w.last, nil
+		if err.Error() != w.failed[r] {
+			w.failed[r] = err.Error()
+			w.o.Log.Warn("fetching the weather", "err", err, "location", r.Location)
+		}
+		if last := w.last[r]; last != nil && last.Error == "" {
+			return last, nil
 		}
 		st = &State{Request: r, Error: err.Error()}
 	} else {
-		w.failed = ""
+		delete(w.failed, r)
 	}
-	w.last = st
+	if w.last == nil {
+		w.last = map[Request]*State{}
+	}
+	w.last[r] = st
 	return st, nil
 }
 
@@ -227,8 +281,8 @@ func (w *fetcher) resolve(ctx context.Context, r Request) (*Place, error) {
 	}
 	key := r.Location
 	now := w.o.Now()
-	if w.place != nil && w.placeKey == key && (key != "" || now.Sub(w.placeAt) < ipPlaceTTL) {
-		return w.place, nil
+	if p, ok := w.places[key]; ok && (key != "" || now.Sub(p.at) < ipPlaceTTL) {
+		return p.place, nil
 	}
 	var place *Place
 	var err error
@@ -240,7 +294,10 @@ func (w *fetcher) resolve(ctx context.Context, r Request) (*Place, error) {
 	if err != nil {
 		return nil, err
 	}
-	w.place, w.placeKey, w.placeAt = place, key, now
+	if w.places == nil {
+		w.places = map[string]resolved{}
+	}
+	w.places[key] = resolved{place, now}
 	return place, nil
 }
 

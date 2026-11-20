@@ -72,13 +72,13 @@ Set a style once under **Settings → Look & Feel → Bar style**, and give any 
 <p align="center"><img src="screenshots/overlay-home.webp" alt="The overlay's Home page: Wi-Fi, quick actions, media, notifications, a clock and calendar, the mixer, network, weather and disks" width="900"></p>
 
 - A full-screen overlay made of pages. Each page is a grid you place modules on, with gaps wherever you like. Pages have their own name and icon in the navigator.
-- **43 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
+- **49 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
 
   | Group | Modules |
   | --- | --- |
   | Media and sound | Now playing, Audio mixer, Volume dials |
-  | System | System graphs, Top processes, Disks, Removable drives, Battery (with connected Bluetooth devices' batteries), Updates, Network, Tailscale |
-  | Controls | Quick actions (toggles, power, pin), Screenshot, Screen recording (region or screen, with sound, recent recordings), Night light, Brightness, Bluetooth devices (pair, connect, rename, auto-connect, block, forget; discoverable, unblock), Wi-Fi networks, Favourite apps |
+  | System | System graphs, Top processes, Disks, Removable drives, Battery (with connected Bluetooth devices' batteries), Updates, Network, Tailscale, Claude usage |
+  | Controls | Quick actions (toggles, power, pin), Screenshot, Screen recording (region or screen, with sound, recent recordings), Night light, Brightness, Bluetooth devices (pair, connect, rename, auto-connect, block, forget; discoverable, unblock), Wi-Fi networks, VPN connections, Favourite apps, Keyboard layout, Input sources |
   | Time and plans | Clock (digital, stacked or analog, in any time zone), World clocks, Clock & calendar, Calendar, Agenda, Weather, Markets (stock and crypto prices, holdings, charts from a day to a year) |
   | Workspace | Workspaces map, Notifications |
   | Writing | Notes, AI chat |

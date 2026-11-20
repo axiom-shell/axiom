@@ -106,12 +106,18 @@ QtObject {
   readonly property var byDay: CalendarEvents.byDay(root.events, root.shownCalendars.map(calendar => calendar.id))
   readonly property bool hasCalendars: root.shownCalendars.length > 0
 
-  function eventsOn(key) {
-    return root.byDay[key] ?? [];
+  // `calendars` (ids; empty or absent = every shown calendar) narrows
+  // eventsOn, dotsFor and upcoming to those
+  function _only(events, calendars) {
+    return calendars?.length > 0 ? events.filter(event => calendars.includes(event.calendar)) : events;
   }
 
-  function dotsFor(key) {
-    return CalendarEvents.dotColors(root.byDay[key], root.colors, CalendarConfig.maxDots);
+  function eventsOn(key, calendars) {
+    return root._only(root.byDay[key] ?? [], calendars);
+  }
+
+  function dotsFor(key, calendars) {
+    return CalendarEvents.dotColors(root._only(root.byDay[key] ?? [], calendars), root.colors, CalendarConfig.maxDots);
   }
 
   // When an event happens on a day, for its row: "All day", "9:00 – 10:00",
@@ -131,9 +137,9 @@ QtObject {
   }
 
   // Shown events from now until `until` (epoch ms), by start
-  function upcoming(now, until, allDay) {
+  function upcoming(now, until, allDay, calendars) {
     const shown = root.shownCalendars.map(calendar => calendar.id);
-    return CalendarEvents.upcoming(root.events.filter(event => shown.includes(event.calendar)), now, until, allDay);
+    return CalendarEvents.upcoming(root._only(root.events.filter(event => shown.includes(event.calendar)), calendars), now, until, allDay);
   }
 
   function acquire(owner) {

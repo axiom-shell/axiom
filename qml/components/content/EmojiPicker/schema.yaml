@@ -9,3 +9,8 @@ settings:
     title: Groups
     default: true
     description: Tabs over the grid, when there's room.
+  showSearch:
+    type: boolean
+    title: Search
+    default: true
+    description: When there's room.

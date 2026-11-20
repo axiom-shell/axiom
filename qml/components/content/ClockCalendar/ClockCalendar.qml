@@ -19,7 +19,8 @@ import qs.services.apps
 // the day clicked
 // until it's clicked again. Without room a clicked day covers the card.
 // Events open in the editor, over the whole card.
-// properties: { hourFormat, showSeconds, showEvents }
+// properties: { hourFormat, showSeconds, showEvents, showDate, dateFormat,
+// calendars }
 Card {
   id: root
 
@@ -88,6 +89,7 @@ Card {
 
     sourceComponent: DayAgenda {
       dayKey: root.shownDay
+      calendars: root.properties.calendars
       closable: root.openDay !== ""
       readOnly: root.eventsReadOnly
       onEventClicked: event => (pane.item as DayPane)?.edit(event)
@@ -129,7 +131,7 @@ Card {
             Layout.fillWidth: true
             // No taller than the digits fitted to the width need, so the date
             // stays right under them (beside them in a row: the strip's height)
-            Layout.preferredHeight: root.clockRow ? clockBox.parent.height : Math.min(clockBox.width * 0.42, Math.max(Appearance.fontSize * 2, clockBox.parent.height - dateText.height) * 0.8)
+            Layout.preferredHeight: root.clockRow ? clockBox.parent.height : Math.min(clockBox.width * 0.42, Math.max(Appearance.fontSize * 2, clockBox.parent.height - (dateText.visible ? dateText.height : 0)) * 0.8)
             horizontalAlignment: root.clockRow ? Text.AlignRight : Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             fontSizeMode: Text.Fit
@@ -140,12 +142,12 @@ Card {
           }
           StyledText {
             id: dateText
-            visible: clockBox.parent.height >= Appearance.fontSize * 3 || root.clockRow
+            visible: root.properties.showDate && (clockBox.parent.height >= Appearance.fontSize * 3 || root.clockRow)
             Layout.fillWidth: !root.clockRow
             Layout.maximumWidth: root.clockRow ? clockBox.width * 0.45 : -1
             horizontalAlignment: root.clockRow ? Text.AlignLeft : Text.AlignHCenter
             overflow: "line"
-            text: I18n.formatDate(root.now, I18n.dateFormat(root.compact ? "shortDate" : "longDate"))
+            text: I18n.formatDate(root.now, root.properties.dateFormat || I18n.dateFormat(root.compact ? "shortDate" : "longDate"))
             textSize: root.compact ? Style.typeCaption : Style.typeBody
             tone: "muted"
           }
@@ -168,6 +170,7 @@ Card {
       headerHeight: root.headerHeight
       weekdayHeight: root.weekdayHeight
       showEvents: root.showEvents
+      calendars: root.properties.calendars
       selectedKey: root.openDay
       // Listed: a click shows the day, a second (or today) goes back to
       // today; else it toggles the day over the card
@@ -197,6 +200,7 @@ Card {
 
     sourceComponent: DayPane {
       dayKey: root.shownDay
+      calendars: root.properties.calendars
       closable: true
       readOnly: root.eventsReadOnly
       onClosed: root.openDay = ""

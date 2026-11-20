@@ -90,13 +90,14 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
 - `x-options`: a dynamic option list.
   - `"colors"`: a picker over `base00`–`base0F`, read with `Theme.resolveColor` (which also takes semantic names and hex).
   - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `BarsConfig.expandBars`, docks, menus). Docks and OSDs pick all monitors through `monitors` instead.
-  - On an array's `items` (strings), `"marketSymbols"`'s options become toggle chips, committed in the options' order (a `"screens"` list stays free text: it may name monitors not plugged in): `"marketSymbols"` (the Markets watchlist's ids, labelled by label or symbol: a markets widget's or module's `symbols`).
-  - Others: `"languages"`, `"menus"`, `"customWidgets"`, `"marketSymbols"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"regions"` (Qt locale codes, `DateFormats.regions`, labelled by their own language and country), `"calendars"`, `"chatProviders"` (an empty default adds the empty choice, labelled by `x-emptyLabel`), `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
+  - On an array's `items` (strings), `"marketSymbols"`'s and `"calendars"`'s options become toggle chips, committed in the options' order (a `"screens"` list stays free text: it may name monitors not plugged in): `"marketSymbols"` (the Markets watchlist's ids, labelled by label or symbol: a markets widget's or module's `symbols`), `"calendars"` (the shown calendars' ids, with `x-allCalendars`, labelled by name; a card's `calendars`).
+  - Others: `"languages"`, `"menus"`, `"customWidgets"`, `"marketSymbols"`, `"overlayPages"`, `"notes"`, `"noteFolders"` (every folder holding a note, at any depth, and the ones above it), `"timezones"`, `"regions"` (Qt locale codes, `DateFormats.regions`, labelled by their own language and country), `"calendars"`, `"chatProviders"` (an empty default adds the empty choice, labelled by `x-emptyLabel`), `"chatPresets"` (an empty default adds the empty choice too), `"cursorThemes"` (`SettingsManager.optionsFor`).
   - `"menus"` labels each menu by its name and placement (`"{0} · {1}"`, the placement's `x-enumLabels` through `MenusConfig.placementLabels`); the value stays its id.
 - `x-emptyLabel`: offers or renames the empty value under that label (on a text field, its placeholder).
   - On a color: automatic (a bar's `widgetTextColor`).
   - A color without it lists its `default` first, labelled as the default, so an override can be undone.
   - On `"screens"`: renames empty where it means something else, as in `General.primaryMonitor` itself.
+- `x-allCalendars`: on `"calendars"`, lists every shown calendar (no empty choice: a card's `calendars` array's items) instead of the writable ones.
 - `x-allScreens`: adds All monitors (`"*"`) to a `"screens"` picker.
 - `x-enumLabels` (`{ value: label }`): labels shown instead of raw enum values in dropdowns (and on an array of enum strings' chips, on the array or its `items`).
 - `x-enumIcons` (`{ value: icon }`, on an array of enum strings or its `items`): a Material Symbols icon on each option's chip (an OSD's status icons).

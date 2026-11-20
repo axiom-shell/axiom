@@ -16,6 +16,7 @@ settings:
   hourFormat: {$ref: '#/definitions/HourFormat', x-showIf: {style: {not: analog}}}
   showSeconds: {type: boolean, title: Seconds, default: false}
   showDate: {type: boolean, title: Date, default: true}
+  dateFormat: {$ref: '#/definitions/DateFormat', x-showIf: {showDate: true}}
   timezone:
     x-scope: personal
     type: string
@@ -30,7 +31,7 @@ settings:
     title: Label
     default: ''
     description: A caption under the clock.
-  color: {type: string, title: Text color, x-options: colors, x-emptyLabel: Text, default: ''}
+  color: {$ref: '#/definitions/TextColor'}
   accentColor:
     type: string
     title: Accent color

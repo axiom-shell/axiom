@@ -9,7 +9,7 @@ import qs.components.content.base
 
 // The busiest processes, with a kill button on hover. Narrow, only the
 // sorted figure; short, no header; compact, the busiest one's figure.
-// properties: { count, sortBy: "cpu" | "mem" }
+// properties: { count, sortBy: "cpu" | "mem", grow }
 Card {
   id: root
 
@@ -19,6 +19,9 @@ Card {
   readonly property bool narrow: root.innerWidth < Appearance.fontSize * 18
   // The header only above two rows or more
   readonly property bool showHeader: root.innerHeight >= Appearance.fontSize * 2 + Widget.spacing + root.rowHeight * 2
+
+  // Grows to list as many as asked for (from compact, to the full layout)
+  wantedHeight: root.compact ? 1 : root.height > 0 ? root.height + Math.max(0, root.properties.count - root.fitting) * (root.rowHeight + Widget.spacing / 2) : 0
 
   fullMinWidth: Appearance.fontSize * 9
   fullMinHeight: Widget.height + Appearance.fontSize * 1.5

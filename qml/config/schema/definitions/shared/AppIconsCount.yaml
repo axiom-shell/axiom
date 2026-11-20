@@ -1,0 +1,10 @@
+# The AppIconsCount definition (#/definitions/AppIconsCount): whether a workspace's app icons count each app once or each window. Uses override `default`, `x-showIf`.
+
+x-inline: true
+type: string
+title: Icon count
+x-control: toggle
+enum: [apps, windows]
+x-enumLabels: {apps: Apps, windows: Windows}
+default: apps
+description: 'Apps: each app once. Windows: an icon per window.'

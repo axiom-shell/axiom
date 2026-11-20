@@ -1,0 +1,6 @@
+label: Claude usage
+icon: data_usage
+group: System
+settings:
+  warnThreshold: {$ref: '#/definitions/WarnThreshold'}
+  criticalThreshold: {$ref: '#/definitions/CriticalThreshold'}

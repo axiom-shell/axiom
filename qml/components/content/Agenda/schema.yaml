@@ -5,7 +5,7 @@ icon: event_note
 group: Time & weather
 defaultSize: [4, 4]
 grow: standard
-order: [days, count, grow]
+order: [days, count, calendars, showAllDay, showHeader, grow]
 settings:
   days:
     type: integer
@@ -15,3 +15,6 @@ settings:
     maximum: 60
     x-unit: days
   count: {type: integer, title: Events, default: 20, minimum: 1, maximum: 100}
+  calendars: {$ref: '#/definitions/Calendars'}
+  showAllDay: {type: boolean, title: All-day events, default: true}
+  showHeader: {type: boolean, title: Header, default: true}

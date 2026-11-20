@@ -34,8 +34,8 @@ Card {
 
   // One row: the switch, and the warmth beside it when there's width
   readonly property bool strip: root.innerHeight < Appearance.fontSize * 6
-  readonly property bool showGamma: !root.strip && root.innerHeight >= Appearance.fontSize * 11
-  readonly property bool showSchedule: !root.strip && root.innerHeight >= Appearance.fontSize * 8.5
+  readonly property bool showGamma: root.properties.showGamma && !root.strip && root.innerHeight >= Appearance.fontSize * 11
+  readonly property bool showSchedule: root.properties.showSchedule && !root.strip && root.innerHeight >= Appearance.fontSize * 8.5
 
   // The big button: beside the controls in a wide card, over them in a
   // tall one

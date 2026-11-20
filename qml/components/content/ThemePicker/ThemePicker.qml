@@ -15,6 +15,7 @@ import qs.components.content.base
 // switches it by time of day (WallpaperManager). Themes apply immediately,
 // so there's nothing to save.
 // Compact, the current theme's name; its figure switches Dark/Light on a click.
+// properties: { groups, showControls }
 TitledCard {
   id: root
 
@@ -48,7 +49,7 @@ TitledCard {
         "empty": I18n.tr("None yet"),
         "families": families.filter(family => family.generated)
       }
-    ];
+    ].filter(group => root.properties.groups.includes(group.key));
   }
   // As many tiles across as fit
   readonly property int tileColumns: Math.max(1, Math.floor((root.width - Widget.padding * 2) / (Appearance.fontSize * 13)))
@@ -71,6 +72,7 @@ TitledCard {
   headerExtras: [
     GridLayout {
       id: modeGrid
+      visible: root.properties.showControls
       Layout.fillWidth: true
       // Side by side while both fit whole, else Auto on its own line: no label is cut
       readonly property bool _oneLine: modeRow.implicitWidth + autoButton.implicitWidth + modeGrid.columnSpacing <= modeGrid.width
@@ -115,7 +117,7 @@ TitledCard {
       }
     },
     RowLayout {
-      visible: Appearance.themeScheduled
+      visible: root.properties.showControls && Appearance.themeScheduled
       Layout.fillWidth: true
       spacing: Widget.spacing
 
@@ -132,7 +134,7 @@ TitledCard {
       }
     },
     StyledText {
-      visible: root.family !== null && !(root.hasDark && root.hasLight)
+      visible: root.properties.showControls && root.family !== null && !(root.hasDark && root.hasLight)
       Layout.fillWidth: true
       text: root.hasDark ? I18n.tr("This theme has no light variant.") : I18n.tr("This theme has no dark variant.")
       role: "caption"

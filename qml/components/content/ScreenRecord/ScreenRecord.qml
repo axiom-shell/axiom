@@ -21,6 +21,7 @@ import qs.services.ui
 // under it when there's room: click to open, copy the path or move one to
 // the trash. Also the ScreenRecord widget's popout.
 // A short card is one row; compact, a figure that starts or stops it on a click.
+// properties: { showHeader, count }
 Panel {
   id: root
 
@@ -28,15 +29,17 @@ Panel {
   readonly property bool missing: DependencyManager.found["wf-recorder"] === false
   readonly property string elapsed: StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)
   readonly property var recordings: ScreenshotManager.recordings
+  // The newest `count` of them
+  readonly property var shown: root.recordings.slice(0, root.properties.count)
   // The sound recorded with: the system's only with pactl
   readonly property bool systemAudio: ScreenshotManager.hasSystemAudio !== false
   readonly property string audio: ScreenshotManager.recordAudio === "system" && !root.systemAudio ? "none" : ScreenshotManager.recordAudio
 
   // One row: the state and its buttons
   readonly property bool strip: root.embedded && root.innerHeight < Appearance.fontSize * 7
-  readonly property bool showHeader: !root.embedded || root.innerHeight >= Appearance.fontSize * 12
+  readonly property bool showHeader: root.properties.showHeader && (!root.embedded || root.innerHeight >= Appearance.fontSize * 12)
   readonly property bool showAudio: !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 9.5)
-  readonly property bool showList: !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 15 || (root.sideBySide && root.innerHeight >= Appearance.fontSize * 9))
+  readonly property bool showList: root.properties.count > 0 && !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 15 || (root.sideBySide && root.innerHeight >= Appearance.fontSize * 9))
   // The list beside the controls in a wide card
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 34 && root.innerWidth >= root.innerHeight * 1.4
 
@@ -317,12 +320,12 @@ Panel {
         clip: true
         spacing: 2
         boundsBehavior: Flickable.StopAtBounds
-        model: root.recordings.length
+        model: root.shown.length
 
         delegate: ItemRow {
           id: row
           required property int index
-          readonly property var recording: root.recordings[index] ?? ({
+          readonly property var recording: root.shown[index] ?? ({
               "path": "",
               "name": "",
               "time": 0,
@@ -349,7 +352,7 @@ Panel {
         }
 
         EmptyState {
-          visible: root.recordings.length === 0
+          visible: root.shown.length === 0
           anchors.centerIn: parent
           maxWidth: parent.width
           availableHeight: parent.height

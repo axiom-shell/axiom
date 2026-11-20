@@ -25,22 +25,22 @@ Panel {
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 14
 
-  // A card: side by side when wide, stacked when tall enough, else the
-  // month or the day in turn
-  readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 30 && root.innerWidth > root.innerHeight * 1.2
-  readonly property bool stacked: !root.sideBySide && (!root.embedded || root.innerHeight >= Appearance.fontSize * 26)
+  // A card with events: side by side when wide, stacked when tall enough, else
+  // the month or the day in turn; without events the month alone
+  readonly property bool sideBySide: root.properties.showEvents && root.embedded && root.innerWidth >= Appearance.fontSize * 30 && root.innerWidth > root.innerHeight * 1.2
+  readonly property bool stacked: root.properties.showEvents && !root.sideBySide && (!root.embedded || root.innerHeight >= Appearance.fontSize * 26)
   property bool _dayOpen: false
-  readonly property bool showGrid: root.sideBySide || root.stacked || !root._dayOpen
-  readonly property bool showDay: root.sideBySide || root.stacked || root._dayOpen
+  readonly property bool showGrid: root.sideBySide || root.stacked || !root._dayOpen || !root.properties.showEvents
+  readonly property bool showDay: root.properties.showEvents && (root.sideBySide || root.stacked || root._dayOpen)
   readonly property real gridHeight: !root.embedded ? Appearance.fontSize * 17 : root.sideBySide ? root.innerHeight : root.stacked ? Math.min(root.innerHeight * 0.55, root.innerWidth * 0.95) : root.innerHeight
 
-  wantsKeyboardFocus: pane.editing
-  onFocusLost: pane.stopEditing()
+  wantsKeyboardFocus: (pane.item as DayPane)?.editing ?? false
+  onFocusLost: (pane.item as DayPane)?.stopEditing()
 
   // Wider while the editor's buttons need it (a long translation)
-  implicitWidth: Math.max(Appearance.fontSize * 20, pane.actionsWidth)
+  implicitWidth: Math.max(Appearance.fontSize * 20, (pane.item as DayPane)?.actionsWidth ?? 0)
   // In a popout, room for the editor from the start
-  maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + pane.growth
+  maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + ((pane.item as DayPane)?.growth ?? 0)
   // In a popout the day grows away from the month, which stays by the bar
   // (Panel.growth: growing up, the day above it and the sync row on top)
   flips: true
@@ -57,7 +57,7 @@ Panel {
     const request = CalendarManager.takeRequest();
     root.selectDay(request.key);
     if (request.kind === "new")
-      Qt.callLater(pane.newEvent);
+      Qt.callLater(() => (pane.item as DayPane)?.newEvent());
   }
   Connections {
     target: CalendarManager
@@ -77,8 +77,8 @@ Panel {
     precision: SystemClock.Minutes
   }
   readonly property string todayKey: CalendarEvents.dayKey(clock.date)
-  readonly property var todayEvents: CalendarManager.eventsOn(root.todayKey)
-  readonly property var nextEvent: CalendarEvents.nextEvent(CalendarManager.upcoming(clock.date.getTime(), clock.date.getTime() + 86400000, false), clock.date.getTime(), 86400000, false)
+  readonly property var todayEvents: CalendarManager.eventsOn(root.todayKey, root.properties.calendars)
+  readonly property var nextEvent: CalendarEvents.nextEvent(CalendarManager.upcoming(clock.date.getTime(), clock.date.getTime() + 86400000, false, root.properties.calendars), clock.date.getTime(), 86400000, false)
 
   compactContent: CompactFigure {
     icon: "calendar_month"
@@ -102,6 +102,9 @@ Panel {
       Layout.preferredWidth: root.sideBySide ? Math.min(root.innerWidth * 0.5, root.innerHeight * 1.15) : -1
       Layout.preferredHeight: root.gridHeight
       Layout.alignment: Qt.AlignTop
+      showEvents: root.properties.showEvents
+      calendars: root.properties.calendars
+      showWeekNumbers: root.properties.showWeekNumbers
       selectedKey: root.selectedKey
       onDaySelected: key => {
         root.selectedKey = key;
@@ -109,8 +112,10 @@ Panel {
       }
     }
 
-    DayPane {
+    // Built only where events show
+    Loader {
       id: pane
+      active: root.properties.showEvents
       visible: root.showDay
       Layout.row: root.sideBySide || root.growsUp ? 0 : 1
       Layout.column: root.sideBySide ? 1 : 0
@@ -118,11 +123,15 @@ Panel {
       Layout.fillHeight: root.embedded
       Layout.preferredHeight: root.embedded ? -1 : implicitHeight
       Layout.minimumHeight: root.embedded ? 0 : Appearance.fontSize * 6
-      reservesRoom: !root.embedded
-      dayKey: root.selectedKey
-      closable: root.embedded && !root.sideBySide && !root.stacked
-      maxListHeight: root.embedded ? Number.POSITIVE_INFINITY : Appearance.fontSize * 14
-      onClosed: root._dayOpen = false
+
+      sourceComponent: DayPane {
+        reservesRoom: !root.embedded
+        dayKey: root.selectedKey
+        calendars: root.properties.calendars
+        closable: root.embedded && !root.sideBySide && !root.stacked
+        maxListHeight: root.embedded ? Number.POSITIVE_INFINITY : Appearance.fontSize * 14
+        onClosed: root._dayOpen = false
+      }
     }
   }
 

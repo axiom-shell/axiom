@@ -37,7 +37,7 @@ Panel {
   readonly property bool mini: root.embedded && !root.compact && root.height < Appearance.fontSize * 7
   readonly property real artSize: Widget.px(96)
   // The blurred cover shows: every line over it takes the veil's ink
-  readonly property bool washed: root.hasPlayer && root.artSource !== ""
+  readonly property bool washed: root.hasPlayer && root.artSource !== "" && root.properties.showCoverBlur
   // A seek bar is being dragged, so the popout mustn't dismiss
   property bool seeking: false
 
@@ -215,7 +215,7 @@ Panel {
   // The cover blurred, rounded to the box and tinted with the theme's
   // background, so text reads on it in light and dark themes alike
   background: Item {
-    visible: root.hasPlayer && root.artSource !== ""
+    visible: root.washed
     ClippingRectangle {
       anchors.fill: parent
       anchors.margins: root.embedded ? Appearance.borderWidth : 0
@@ -337,13 +337,14 @@ Panel {
         }
       }
       MediaButton {
-        visible: parent.wide
+        visible: parent.wide && root.properties.showControls
         size: Math.min(Widget.height, root.innerHeight)
         iconText: "skip_previous"
         enabled: MediaManager.canGoPrevious
         onClicked: MediaManager.previous() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
+        visible: root.properties.showControls
         primary: true
         size: Math.min(Widget.height * 1.2, root.innerHeight)
         iconText: MediaManager.isPlaying ? "pause" : "play_arrow"
@@ -351,7 +352,7 @@ Panel {
         onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
-        visible: parent.wide
+        visible: parent.wide && root.properties.showControls
         size: Math.min(Widget.height, root.innerHeight)
         iconText: "skip_next"
         enabled: MediaManager.canGoNext
@@ -400,7 +401,7 @@ Panel {
           Layout.fillHeight: !root.large
         }
         Loader {
-          active: root.embedded
+          active: root.embedded && root.properties.showControls
           visible: active
           Layout.fillWidth: true
           Layout.topMargin: root.large ? Widget.spacing : 0
@@ -416,7 +417,7 @@ Panel {
 
   // --- Popout: the controls beneath ---
   Loader {
-    active: root.hasPlayer && !root.embedded
+    active: root.hasPlayer && !root.embedded && root.properties.showControls
     visible: active
     Layout.fillWidth: true
     sourceComponent: Transport {}

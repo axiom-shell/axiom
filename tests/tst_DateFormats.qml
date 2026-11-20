@@ -57,4 +57,43 @@ TestCase {
     compare(DateFormats.timeName(true), "time24");
     compare(DateFormats.timeName(false), "time12");
   }
+
+  function test_weekNumber_data() {
+    return [
+      {
+        "tag": "new year in week 1",
+        "date": new Date(2026, 0, 1),
+        "week": 1
+      },
+      {
+        "tag": "mid year",
+        "date": new Date(2026, 5, 15),
+        "week": 25
+      },
+      {
+        "tag": "year end in 53",
+        "date": new Date(2026, 11, 31),
+        "week": 53
+      },
+      {
+        "tag": "next new year still 53",
+        "date": new Date(2027, 0, 1),
+        "week": 53
+      },
+      {
+        "tag": "December in next year's week 1",
+        "date": new Date(2024, 11, 30),
+        "week": 1
+      },
+      {
+        "tag": "January in last year's week 53",
+        "date": new Date(2021, 0, 3),
+        "week": 53
+      }
+    ];
+  }
+
+  function test_weekNumber(data) {
+    compare(DateFormats.weekNumber(data.date), data.week);
+  }
 }

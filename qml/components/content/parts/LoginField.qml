@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 
 import qs.config
 import qs.services.session
@@ -90,22 +89,16 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     spacing: Widget.spacing * 2
 
-    ClippingRectangle {
-      visible: root.avatar !== "" && avatarImage.status === Image.Ready
+    Thumbnail {
+      id: pic
+      visible: root.avatar !== "" && pic.ready
       Layout.preferredWidth: root.stacked ? users.implicitHeight - root._below : root.fieldHeight
       Layout.preferredHeight: Layout.preferredWidth
       Layout.alignment: Qt.AlignTop
-      radius: width / 2
-      color: Style.surfaceHighest
-
-      Image {
-        id: avatarImage
-        anchors.fill: parent
-        source: root.avatar
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        sourceSize: Qt.size(width * 2, height * 2)
-      }
+      source: root.avatar
+      round: true
+      cache: false
+      decodeSize: Qt.size(width * 2, height * 2)
     }
 
     GridLayout {

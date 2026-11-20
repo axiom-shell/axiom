@@ -3,6 +3,14 @@ icon: travel_explore
 group: Time & weather
 defaultSize: [4, 4]
 settings:
+  style:
+    type: string
+    title: Style
+    default: auto
+    description: 'Auto: by the card''s size.'
+    x-control: toggle
+    enum: [auto, list, tiles]
+    x-enumLabels: {auto: Auto, list: List, tiles: Tiles}
   clocks:
     x-scope: personal
     type: array
@@ -32,6 +40,10 @@ settings:
     default: true
     description: The system's time first.
   hourFormat: {$ref: '#/definitions/HourFormat'}
+  showSeconds:
+    type: boolean
+    title: Seconds
+    default: false
   showTimeline:
     type: boolean
     title: Day band

@@ -19,6 +19,8 @@ Item {
   property bool closable: false
   property real maxListHeight: Number.POSITIVE_INFINITY
   property bool readOnly: false
+  // The calendars whose events list (ids; empty: every shown calendar)
+  property var calendars: []
   property EventDraft session: EventDraft {}
   // A host reads `growth` (the Calendar popout), so the editor stays built
   // to be measured
@@ -66,6 +68,7 @@ Item {
     closable: root.closable
     maxListHeight: root.maxListHeight
     readOnly: root.readOnly
+    calendars: root.calendars
     onEventClicked: event => root.edit(event)
     onAddClicked: root.newEvent()
     onClosed: root.closed()

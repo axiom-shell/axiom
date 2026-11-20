@@ -8,7 +8,7 @@ appearance:
     enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
     description: 'Pill: with one metric shown, else fill. Disk: fill, not sparkline.'
 colors: standard
-order: [appearance, metrics, memoryFormat, diskPath, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
+order: [appearance, metrics, memoryFormat, units, diskPath, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
 settings:
   metrics:
     $ref: '#/definitions/SystemMetrics'
@@ -17,13 +17,8 @@ settings:
       type: string
       enum: [cpu, mem, cpuTemp, gpu, disk]
     description: A metric this machine can't report is hidden.
-  memoryFormat:
-    type: string
-    title: Memory format
-    default: percent
-    x-control: toggle
-    enum: [percent, used]
-    x-showIf: {metrics: {includes: mem}}
+  memoryFormat: {$ref: '#/definitions/MemoryFormat', x-showIf: {metrics: {includes: mem}}}
+  units: {$ref: '#/definitions/TemperatureUnits'}
   diskPath:
     x-scope: machine
     type: string
@@ -45,5 +40,5 @@ settings:
     default: 90
     minimum: 1
     maximum: 100
-    description: Usage or temperature at or above this turns on the warning color.
+    description: Usage or temperature at or above this turns on the warning color. Temperatures in °C.
   warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}

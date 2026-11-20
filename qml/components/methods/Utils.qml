@@ -239,6 +239,17 @@ QtObject {
     return root.rateParts(bytesPerSecond).join(" ");
   }
 
+  // A sensor's °C in `units` ("celsius" | "fahrenheit", as
+  // TemperatureUnits resolved by WeatherConfig.unitsOf)
+  function fromCelsius(celsius, units) {
+    return units === "fahrenheit" ? celsius * 9 / 5 + 32 : celsius;
+  }
+
+  // The unit text of `units`: "°C" or "°F"
+  function temperatureSymbol(units) {
+    return units === "fahrenheit" ? "°F" : "°C";
+  }
+
   // A disk size: whole GiB ("512G"), or TiB with one decimal from 1000 GiB
   // ("1.8T")
   function formatSize(bytes) {

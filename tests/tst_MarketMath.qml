@@ -153,6 +153,26 @@ TestCase {
         "want": "0.00%"
       },
       {
+        "tag": "formatChangeAs change",
+        "got": MarketMath.formatChangeAs(1.2, 1.234, "USD", "change"),
+        "want": "+$1.20"
+      },
+      {
+        "tag": "formatChangeAs percent",
+        "got": MarketMath.formatChangeAs(1.2, 1.234, "USD", "percent") + " " + MarketMath.formatChangeAs(1.2, 1.234, "USD", "pricePercent"),
+        "want": "+1.23% +1.23%"
+      },
+      {
+        "tag": "formatChangeAs no change",
+        "got": MarketMath.formatChangeAs(undefined, 1.234, "USD", "change"),
+        "want": "—"
+      },
+      {
+        "tag": "arrowed",
+        "got": [MarketMath.arrowed("up", "+1.23%"), MarketMath.arrowed("down", "−0.40%"), MarketMath.arrowed("flat", "0.00%")].join("|"),
+        "want": "▲ 1.23%|▼ 0.40%|0.00%"
+      },
+      {
         "tag": "compact",
         "got": [950, 1234, 3400000, 5.6e9, 123e12].map(MarketMath.compact).join(" "),
         "want": "950 1.2K 3.4M 5.6B 123T"
@@ -307,5 +327,41 @@ TestCase {
     compare(MarketMath.trendTone("down", false), "error");
     compare(MarketMath.trendTone("up", true), "error", "red for gains");
     compare(MarketMath.trendTone("down", true), "success");
+  }
+
+  function test_sorted() {
+    const ids = list => list.map(i => i.id);
+    const mk = (id, symbol) => ({
+          "id": id,
+          "symbol": symbol,
+          "source": "yahoo"
+        });
+    const list = [mk("a", "A"), mk("b", "B"), mk("c", "C"), mk("d", "D"), mk("e", "E")];
+    const quotes = {
+      "A": {
+        "changePercent": 1
+      },
+      "B": {
+        "changePercent": -5
+      },
+      "C": {
+        "changePercent": 1
+      },
+      "D": {
+        "changePercent": 9,
+        "error": "gone"
+      }
+    };
+    compare(ids(MarketMath.sorted(list, quotes, "watchlist")), ["a", "b", "c", "d", "e"], "as given");
+    compare(ids(MarketMath.sorted(list, quotes, "change")), ["b", "a", "c", "d", "e"], "by size, ties in given order, errored and unquoted last");
+    compare(ids(MarketMath.sorted([list[0], list[1]], {
+      "A": {
+        "changePercent": null
+      },
+      "B": {
+        "changePercent": 0.5
+      }
+    }, "change")), ["b", "a"], "a non-finite change last");
+    compare(MarketMath.sorted([], quotes, "change").length, 0);
   }
 }

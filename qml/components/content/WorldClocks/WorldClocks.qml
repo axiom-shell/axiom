@@ -15,8 +15,8 @@ import qs.components.content.parts
 // 19, a mark at now) when there's room; side by side as tiles in a wide,
 // short card. Rows that don't fit are left off; compact, the first place
 // away from here.
-// properties: { clocks: [{ timezone, label }], showLocal, hourFormat,
-// showTimeline }
+// properties: { style, clocks: [{ timezone, label }], showLocal, hourFormat,
+// showSeconds, showTimeline }
 Card {
   id: root
 
@@ -29,13 +29,30 @@ Card {
   readonly property var zones: root.clocks.map(c => c.timezone).filter(z => z !== "")
   readonly property int count: root.clocks.length
 
-  // Tiles side by side when rows wouldn't fit the height but tiles fit
-  // the width; else rows, as many as fit
+  // Auto: tiles side by side when rows wouldn't fit the height but tiles
+  // fit the width; else rows, as many as fit (count 1 never reaches tiles)
   readonly property real rowMin: Appearance.fontSize * 2.4
   readonly property real tileMinWidth: Appearance.fontSize * 7
   readonly property real tileHeight: Appearance.fontSize * 4.4
-  readonly property bool tiles: root.count > 1 && root.innerHeight < root.count * root.rowMin && root.innerWidth >= root.tileMinWidth * 2 && root.innerHeight >= root.tileHeight
-  readonly property int columns: root.tiles ? Math.min(root.count, Math.floor(root.innerWidth / root.tileMinWidth)) : 1
+  readonly property string shownStyle: ModuleStyles.resolvedStyle(root.properties.style, [
+    {
+      "style": "list",
+      "minWidth": 0,
+      "minHeight": root.count * root.rowMin
+    },
+    {
+      "style": "tiles",
+      "minWidth": root.tileMinWidth * 2,
+      "minHeight": root.tileHeight
+    },
+    {
+      "style": "list",
+      "minWidth": 0,
+      "minHeight": 0
+    }
+  ], root.innerWidth, root.innerHeight)
+  readonly property bool tiles: root.shownStyle === "tiles"
+  readonly property int columns: root.tiles ? Math.max(1, Math.min(root.count, Math.floor(root.innerWidth / root.tileMinWidth))) : 1
   readonly property int shown: root.tiles ? Math.min(root.count, root.columns * Math.max(1, Math.floor(root.innerHeight / root.tileHeight))) : Math.max(1, Math.min(root.count, Math.floor(root.innerHeight / root.rowMin)))
   // Shared out, but never so tall the rows drift apart
   readonly property real rowHeight: root.tiles ? 0 : Math.min(Appearance.fontSize * 5, (root.innerHeight - Widget.spacing * (root.shown - 1)) / root.shown)
@@ -58,7 +75,7 @@ Card {
   }
 
   function timeText(date) {
-    return I18n.formatDate(date, I18n.clockFormat(root.properties.hourFormat, false));
+    return I18n.formatDate(date, I18n.clockFormat(root.properties.hourFormat, root.properties.showSeconds));
   }
 
   // "+9 h", "−5:30 h" from here, and "Tomorrow"/"Yesterday" when its date
@@ -95,7 +112,7 @@ Card {
 
   SystemClock {
     id: clock
-    precision: SystemClock.Minutes
+    precision: root.properties.showSeconds ? SystemClock.Seconds : SystemClock.Minutes
   }
 
   compactContent: CompactFigure {

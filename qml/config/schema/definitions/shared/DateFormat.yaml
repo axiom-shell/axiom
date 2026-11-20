@@ -1,0 +1,7 @@
+# The DateFormat definition (#/definitions/DateFormat): a clock's own date format, empty is the language's. Uses override `x-showIf`, `description`.
+
+x-inline: true
+type: string
+title: Date format
+default: ''
+description: 'A Qt date format, e.g. ddd d MMM. Empty: the language''s.'

@@ -31,5 +31,5 @@ The night light: a screen color temperature, set by the axiom daemon (wlsunset w
 
 ### NightLightControls module
 - `NightLightControls` (`content/NightLightControls`; its reader is `NightLight`).
-- A switch, warmth and dim sliders (saved on release through `SettingsManager.commitValues`), and a schedule switch.
+- A switch, warmth and dim sliders (saved on release through `SettingsManager.commitValues`), and a schedule switch. `showGamma` and `showSchedule` (default on) hide the dim slider and the schedule row, which also hide when the card is too short.
 - A big card adds a round button in the light's color.

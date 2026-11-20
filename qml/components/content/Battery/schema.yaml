@@ -9,3 +9,11 @@ settings:
     title: Peripherals
     default: true
     description: Bluetooth device batteries too. With no laptop battery, only them.
+  showTime:
+    type: boolean
+    title: Time left
+    default: true
+  showPowerProfile:
+    type: boolean
+    title: Power profile
+    default: false

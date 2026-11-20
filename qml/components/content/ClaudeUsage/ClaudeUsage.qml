@@ -4,27 +4,29 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.apps
+import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
 
 // Claude plan usage per account (from ClaudeUsageManager): the session and
-// weekly limits with their reset times, extra usage and where the week went.
-// The ClaudeUsage widget's popout; the widget acquires the manager.
+// weekly limits with their reset times, extra usage and where the week went,
+// for the accounts of ClaudeUsageConfig. The ClaudeUsage widget's popout (the
+// widget acquires the manager), and an overlay card (it acquires the manager
+// itself; compact: the fullest account's session percent). Its thresholds are
+// the card's `properties`; a popout's payload sets them.
 Panel {
   id: root
 
-  // [{ label, configDir }], from the widget's config
-  property var accounts: []
-  property int warnThreshold: 75
-  property int criticalThreshold: 90
+  property int warnThreshold: root.properties.warnThreshold
+  property int criticalThreshold: root.properties.criticalThreshold
 
   // Re-read on every update, so the relative times stay current
   readonly property real now: {
     void ClaudeUsageManager.states;
     return Date.now();
   }
-  readonly property var accountRows: accounts.map(a => Object.assign({}, ClaudeUsageManager.stateFor(a.configDir) ?? {
+  readonly property var accountRows: ClaudeUsageConfig.accounts.map(a => Object.assign({}, ClaudeUsageManager.stateFor(a.configDir) ?? {
       "status": "pending"
     }, {
       "label": a.label || a.configDir
@@ -32,6 +34,29 @@ Panel {
 
   spacing: Widget.padding
   implicitWidth: Math.max(Widget.textPx(320), body.implicitWidth + margins * 2)
+  fullMinWidth: Appearance.fontSize * 14
+  fullMinHeight: Appearance.fontSize * 8
+
+  // Re-acquiring replaces the old request
+  readonly property var usageRequest: ({
+      "accounts": ClaudeUsageConfig.accounts,
+      "interval": ClaudeUsageConfig.interval
+    })
+  onUsageRequestChanged: if (root.embedded)
+    ClaudeUsageManager.acquire(root, usageRequest)
+  Component.onCompleted: if (root.embedded)
+    ClaudeUsageManager.acquire(root, usageRequest)
+  Component.onDestruction: ClaudeUsageManager.release(root)
+
+  // Compact: the fullest account's session percent
+  compactContent: CompactFigure {
+    readonly property var fullest: ClaudeUsageMath.fullest(root.accountRows, "session")
+    readonly property int p: ClaudeUsageMath.percentOf(fullest, "session")
+    icon: "data_usage"
+    value: p < 0 ? "–" : String(p)
+    unit: p < 0 ? "" : "%"
+    label: fullest?.label ?? ""
+  }
 
   function duration(ms) {
     const minutes = Math.max(0, Math.round(ms / 60000));

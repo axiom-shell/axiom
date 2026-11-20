@@ -14,7 +14,7 @@ import qs.components.content.parts
 // copy it back; on hover, pin it (kept through restarts and Clear) or
 // remove it. Images show a thumbnail. A short card is the
 // newest clip with a copy button.
-// properties: { grow }
+// properties: { showHeader, showSearch, showImages, grow }
 Panel {
   id: root
 
@@ -22,7 +22,9 @@ Panel {
   readonly property bool off: !ClipboardManager.enabled
   // The compositor offers no clipboard control
   readonly property bool missing: ClipboardManager.unsupported
-  readonly property var clips: root.query === "" ? ClipboardManager.shown : ClipboardManager.shown.filter(e => ClipboardManager.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
+  // What the list can show: image entries only with showImages
+  readonly property var shown: root.properties.showImages ? ClipboardManager.shown : ClipboardManager.shown.filter(e => !ClipboardManager.isImage(e))
+  readonly property var clips: root.query === "" ? root.shown : root.shown.filter(e => ClipboardManager.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
   readonly property var newest: ClipboardManager.pins.length > 0 || ClipboardManager.entries.length > 0 ? (ClipboardManager.entries[0] ?? ClipboardManager.pins[0]) : null
   // The clip copied last, for a moment, as feedback
   property string copiedId: ""
@@ -31,8 +33,8 @@ Panel {
 
   // One row: the newest clip and a copy button
   readonly property bool strip: root.embedded && root.innerHeight < Appearance.fontSize * 7
-  readonly property bool showHeader: !root.embedded || root.innerHeight >= Appearance.fontSize * 10
-  readonly property bool showSearch: !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 9)
+  readonly property bool showHeader: root.properties.showHeader && (!root.embedded || root.innerHeight >= Appearance.fontSize * 10)
+  readonly property bool showSearch: root.properties.showSearch && !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 9)
   // Columns of clips in a wide card
   readonly property int columns: root.embedded ? Math.max(1, Math.floor((root.innerWidth + Widget.spacing) / (Appearance.fontSize * 22))) : 1
   // Two lines of a clip when a column is wide enough for them to read as a
@@ -51,7 +53,7 @@ Panel {
 
   // The text with its lines run together (a preview), or what an image is
   function previewOf(entry) {
-    if (entry.format || entry.html)
+    if (ClipboardManager.isImage(entry))
       return ClipboardManager.labelOf(entry);
     return entry.text.trim().slice(0, 400).replace(/\s+/g, " ");
   }
@@ -76,7 +78,7 @@ Panel {
   compactContent: CompactFigure {
     icon: "content_paste"
     iconColor: root.off ? Style.textMuted : Style.accent
-    value: root.off ? "" : String(ClipboardManager.shown.length)
+    value: root.off ? "" : String(root.shown.length)
     label: root.off ? I18n.tr("off") : I18n.tr("clips")
   }
 
@@ -85,8 +87,8 @@ Panel {
     icon: "content_paste"
     title: I18n.tr("Clipboard")
     StyledText {
-      visible: ClipboardManager.shown.length > 0
-      text: String(ClipboardManager.shown.length)
+      visible: root.shown.length > 0
+      text: String(root.shown.length)
       role: "caption"
       tone: "muted"
       Layout.maximumWidth: Widget.textPx(160)
@@ -161,11 +163,11 @@ Panel {
           "text": ""
         })
       readonly property bool pinned: ClipboardManager.isPinned(row.entry)
-      icon: root.copiedId === row.entry.id ? "check" : row.entry.pinned ? "keep" : row.entry.format || row.entry.html ? "image" : "content_paste"
+      icon: root.copiedId === row.entry.id ? "check" : row.entry.pinned ? "keep" : ClipboardManager.isImage(row.entry) ? "image" : "content_paste"
       image: row.entry.image ?? ""
       marked: row.entry.pinned === true || root.copiedId === row.entry.id
       title: row.titleLines > 1 ? root.previewOf(row.entry) : ClipboardManager.labelOf(row.entry)
-      titleLines: row.entry.format || row.entry.html ? 1 : root.titleLines
+      titleLines: ClipboardManager.isImage(row.entry) ? 1 : root.titleLines
       subtitle: [row.entry.pinned ? I18n.tr("Pinned") : "", ClipboardManager.detailOf(row.entry)].filter(part => part !== "").join(" · ")
       onActivated: root.copy(row.entry)
 

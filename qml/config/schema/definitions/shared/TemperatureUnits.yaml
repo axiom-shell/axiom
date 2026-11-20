@@ -1,0 +1,11 @@
+# The TemperatureUnits definition (#/definitions/TemperatureUnits): a card's own temperature unit, `default` follows Weather › Units. Uses override `x-showIf`, `x-group`.
+
+x-inline: true
+x-scope: personal
+type: string
+title: Units
+x-control: toggle
+enum: [default, celsius, fahrenheit]
+x-enumLabels: {default: Default, celsius: °C, fahrenheit: °F}
+default: default
+x-link: {setting: Weather.units}

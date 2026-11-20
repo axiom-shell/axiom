@@ -4,6 +4,7 @@
 
 x-actions: the commands a custom widget element runs, in order (keys of its `actions`; `CustomWidgetsConfig.elementKinds`).
 x-axiomActions: 'an action picked from axiom''s own actions, filled from the bind actions table: {except, noArgument, extra, compositor} (the builder''s; never in the built schema).'
+x-allCalendars: on a `"calendars"` option list, offers every shown calendar (an array's items) instead of the writable ones.
 x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'

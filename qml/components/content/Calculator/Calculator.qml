@@ -18,7 +18,7 @@ import qs.components.content.parts
 // keypad sits under the field, typing where the cursor is; its = moves the
 // answer into the field to carry on from, as a pocket calculator does. A
 // short card is one row: the field and the answer.
-// properties: { showHistory, showKeypad }
+// properties: { showHistory, showKeypad, showHeader }
 Panel {
   id: root
 
@@ -49,7 +49,7 @@ Panel {
   // Under the field; in a tall card only without the keypad
   readonly property bool showHistory: root.properties.showHistory && root.history.length > 0 && !root.strip && root.embedded && (root.sideBySide ? root.innerHeight >= Appearance.fontSize * 9 : !root.showKeypad && root.innerHeight >= Appearance.fontSize * 11)
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 30 && root.innerWidth >= root.innerHeight * 1.3
-  readonly property bool showHeader: root.embedded && !root.strip && root.innerHeight >= Appearance.fontSize * 9
+  readonly property bool showHeader: root.properties.showHeader && root.embedded && !root.strip && root.innerHeight >= Appearance.fontSize * 9
 
   implicitWidth: Widget.textPx(360)
   fullMinWidth: Appearance.fontSize * 11

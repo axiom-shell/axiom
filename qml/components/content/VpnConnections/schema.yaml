@@ -2,3 +2,8 @@ label: VPN connections
 icon: vpn_lock
 group: Network & devices
 grow: standard
+settings:
+  showPublicIp:
+    type: boolean
+    title: Public IP
+    default: false

@@ -3,3 +3,7 @@ keyboard: true
 icon: calendar_month
 group: Time & weather
 defaultSize: [4, 8]
+settings:
+  showEvents: {$ref: '#/definitions/ShowEvents'}
+  calendars: {$ref: '#/definitions/Calendars'}
+  showWeekNumbers: {type: boolean, title: Week numbers, default: false}

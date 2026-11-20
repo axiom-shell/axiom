@@ -23,6 +23,10 @@ Item {
   property bool showHeader: true
   // Events at all: off on the lock screen and the login screen
   property bool showEvents: true
+  // The calendars whose events show (ids; empty: every shown calendar)
+  property var calendars: []
+  // ISO week numbers in a column before the weekdays
+  property bool showWeekNumbers: false
   // Event titles in cells tall enough for one, instead of dots
   property bool titles: false
   property real headerHeight: Appearance.fontSize * 2
@@ -153,188 +157,220 @@ Item {
       }
     }
 
-    GridLayout {
+    RowLayout {
       Layout.fillWidth: true
       Layout.fillHeight: true
-      columns: 7
-      rowSpacing: 0
-      columnSpacing: 0
-      uniformCellWidths: true
+      spacing: 0
 
-      Repeater {
-        model: 7
-        StyledLabel {
-          required property int index
-          Layout.fillWidth: true
-          Layout.preferredHeight: root.weekdayHeight
-          leftPadding: root.titles ? Widget.spacing : 0
-          horizontalAlignment: root.titles ? Text.AlignLeft : Text.AlignHCenter
-          verticalAlignment: Text.AlignVCenter
-          text: I18n.locale.dayName((root.firstDay + index) % 7, root.titles ? Locale.ShortFormat : Locale.NarrowFormat)
-          role: "caption"
-          tone: "faint"
+      // Each week's number, by its 4th day (the ISO week for Monday- and
+      // Sunday-first rows alike)
+      Column {
+        visible: root.showWeekNumbers
+        Layout.fillHeight: true
+        Layout.preferredWidth: Appearance.fontSize * 2
+
+        Item {
+          width: parent.width
+          height: root.weekdayHeight
+        }
+        Repeater {
+          model: 6
+          StyledLabel {
+            required property int index
+            width: parent.width
+            height: root.cellHeight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: DateFormats.weekNumber(CalendarEvents.dateOf(root.days[index * 7 + 3].key))
+            role: "caption"
+            tone: "faint"
+          }
         }
       }
 
-      // By count: paging a month updates the same 42 cells instead of
-      // rebuilding them
-      Repeater {
-        model: 42
+      GridLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        columns: 7
+        rowSpacing: 0
+        columnSpacing: 0
+        uniformCellWidths: true
 
-        // Each cell streamed in (StreamedLoader) as a page opens
-        StreamedLoader {
-          id: cellLoader
-          required property int index
-          Layout.fillWidth: true
-          Layout.preferredHeight: root.cellHeight
-          label: "calendar day"
+        Repeater {
+          model: 7
+          StyledLabel {
+            required property int index
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.weekdayHeight
+            leftPadding: root.titles ? Widget.spacing : 0
+            horizontalAlignment: root.titles ? Text.AlignLeft : Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: I18n.locale.dayName((root.firstDay + index) % 7, root.titles ? Locale.ShortFormat : Locale.NarrowFormat)
+            role: "caption"
+            tone: "faint"
+          }
+        }
 
-          sourceComponent: Item {
-            id: cell
-            readonly property int index: cellLoader.index
-            readonly property var modelData: root.days[cell.index]
-            readonly property string key: cell.modelData.key
-            readonly property bool selected: cell.key === root.selectedKey
-            readonly property real numberSize: Appearance.fontSize * 1.5
-            // Titles: the number's inset, clear of the cell's rounded border
-            readonly property real inset: Math.max(Widget.px(4), Style.radiusInner + Widget.px(2))
-            // Titles: as many lines as fit under the day's number
-            readonly property real lineHeight: Appearance.fontSize * 1.25
-            readonly property int lines: root.titles ? Math.floor((cell.height - cell.inset * 2 - cell.numberSize - Widget.px(2)) / (cell.lineHeight + 1)) : 0
-            readonly property bool showTitles: root.showEvents && cell.lines >= 1
-            readonly property var dayEvents: cell.showTitles ? CalendarManager.eventsOn(cell.key) : []
-            // All of them when they fit, else one line fewer and "+n more"
-            readonly property int shownCount: cell.dayEvents.length <= cell.lines ? cell.dayEvents.length : Math.max(0, cell.lines - 1)
-            // A joined key, so the dots rebuild only when they change
-            readonly property string dotKey: root.showEvents && !cell.showTitles ? CalendarManager.dotsFor(cell.key).join(",") : ""
+        // By count: paging a month updates the same 42 cells instead of
+        // rebuilding them
+        Repeater {
+          model: 42
 
-            opacity: root._dayOpacity
-            transform: Translate {
-              x: root._dayShift
-            }
+          // Each cell streamed in (StreamedLoader) as a page opens
+          StreamedLoader {
+            id: cellLoader
+            required property int index
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.cellHeight
+            label: "calendar day"
 
-            // Hover and selection
-            Rectangle {
-              anchors.fill: parent
-              anchors.margins: 1
-              visible: root.titles
-              radius: Style.radius
-              color: cell.selected ? Style.accentContainer : "transparent"
+            sourceComponent: Item {
+              id: cell
+              readonly property int index: cellLoader.index
+              readonly property var modelData: root.days[cell.index]
+              readonly property string key: cell.modelData.key
+              readonly property bool selected: cell.key === root.selectedKey
+              readonly property real numberSize: Appearance.fontSize * 1.5
+              // Titles: the number's inset, clear of the cell's rounded border
+              readonly property real inset: Math.max(Widget.px(4), Style.radiusInner + Widget.px(2))
+              // Titles: as many lines as fit under the day's number
+              readonly property real lineHeight: Appearance.fontSize * 1.25
+              readonly property int lines: root.titles ? Math.floor((cell.height - cell.inset * 2 - cell.numberSize - Widget.px(2)) / (cell.lineHeight + 1)) : 0
+              readonly property bool showTitles: root.showEvents && cell.lines >= 1
+              readonly property var dayEvents: cell.showTitles ? CalendarManager.eventsOn(cell.key, root.calendars) : []
+              // All of them when they fit, else one line fewer and "+n more"
+              readonly property int shownCount: cell.dayEvents.length <= cell.lines ? cell.dayEvents.length : Math.max(0, cell.lines - 1)
+              // A joined key, so the dots rebuild only when they change
+              readonly property string dotKey: root.showEvents && !cell.showTitles ? CalendarManager.dotsFor(cell.key, root.calendars).join(",") : ""
 
-              StateLayer {
-                hovered: cellArea.containsMouse
+              opacity: root._dayOpacity
+              transform: Translate {
+                x: root._dayShift
               }
-            }
-            Rectangle {
-              visible: !root.titles
-              anchors.centerIn: parent
-              width: Math.min(parent.width, parent.height, Appearance.fontSize * 2.6) * 0.9
-              height: width
-              radius: width / 2
-              color: cell.modelData.isToday ? Style.accent : cell.selected ? Style.accentContainer : "transparent"
 
-              StateLayer {
-                hovered: cellArea.containsMouse
-                onAccent: cell.modelData.isToday
+              // Hover and selection
+              Rectangle {
+                anchors.fill: parent
+                anchors.margins: 1
+                visible: root.titles
+                radius: Style.radius
+                color: cell.selected ? Style.accentContainer : "transparent"
+
+                StateLayer {
+                  hovered: cellArea.containsMouse
+                }
               }
-            }
-
-            // The day's number: centred, or top-left in a cell with titles
-            Rectangle {
-              id: number
-              x: root.titles ? cell.inset : (cell.width - width) / 2
-              y: root.titles ? cell.inset : (cell.height - height) / 2 - (cell.dotKey ? cell.height * 0.08 : 0)
-              width: root.titles ? Math.max(cell.numberSize, numberText.implicitWidth + Widget.spacing * 2) : numberText.implicitWidth
-              height: root.titles ? cell.numberSize : numberText.implicitHeight
-              radius: height / 2
-              color: root.titles && cell.modelData.isToday ? Style.accent : "transparent"
-
-              StyledLabel {
-                id: numberText
+              Rectangle {
+                visible: !root.titles
                 anchors.centerIn: parent
-                text: cell.modelData.day
-                textColor: cell.modelData.isToday ? Style.inkAccent.text : cell.selected ? Style.inkAccentContainer.text : cell.modelData.inMonth ? Style.text : Style.textDisabled
-                role: "caption"
-                font.weight: cell.modelData.isToday ? Style.weightStrong : Style.roleCaption.weight
-              }
-            }
+                width: Math.min(parent.width, parent.height, Appearance.fontSize * 2.6) * 0.9
+                height: width
+                radius: width / 2
+                color: cell.modelData.isToday ? Style.accent : cell.selected ? Style.accentContainer : "transparent"
 
-            // Dots: one per calendar with events that day
-            Row {
-              visible: cell.dotKey !== ""
-              anchors.horizontalCenter: parent.horizontalCenter
-              y: Math.min(cell.height - 5, number.y + number.height + 1)
-              spacing: 2
-              opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
-
-              Repeater {
-                model: cell.dotKey ? cell.dotKey.split(",") : []
-                Rectangle {
-                  required property string modelData
-                  width: Math.max(Widget.px(3), Appearance.fontSize * 0.28)
-                  height: width
-                  radius: width / 2
-                  color: cell.modelData.isToday && !root.titles ? Style.inkAccent.text : Style.resolve(modelData)
+                StateLayer {
+                  hovered: cellArea.containsMouse
+                  onAccent: cell.modelData.isToday
                 }
               }
-            }
 
-            // Titles: the events that fit, then "+n more"
-            Column {
-              visible: cell.showTitles
-              // Clear of the cell's rounded border, like the number
-              x: cell.inset
-              y: number.y + cell.numberSize + Widget.px(2)
-              width: cell.width - cell.inset * 2
-              spacing: 1
-              opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
+              // The day's number: centred, or top-left in a cell with titles
+              Rectangle {
+                id: number
+                x: root.titles ? cell.inset : (cell.width - width) / 2
+                y: root.titles ? cell.inset : (cell.height - height) / 2 - (cell.dotKey ? cell.height * 0.08 : 0)
+                width: root.titles ? Math.max(cell.numberSize, numberText.implicitWidth + Widget.spacing * 2) : numberText.implicitWidth
+                height: root.titles ? cell.numberSize : numberText.implicitHeight
+                radius: height / 2
+                color: root.titles && cell.modelData.isToday ? Style.accent : "transparent"
 
-              Repeater {
-                model: cell.shownCount
-                Rectangle {
-                  id: chip
-                  required property int index
-                  readonly property var event: cell.dayEvents[index] ?? null
-                  readonly property color calendarColor: Style.resolve(CalendarManager.colors[chip.event?.calendar] ?? "accent")
-                  width: parent?.width ?? 0
-                  height: cell.lineHeight
-                  radius: Style.radiusInner
-                  color: chip.event?.allDay ? Style.surfaceHighest : "transparent"
+                StyledLabel {
+                  id: numberText
+                  anchors.centerIn: parent
+                  text: cell.modelData.day
+                  textColor: cell.modelData.isToday ? Style.inkAccent.text : cell.selected ? Style.inkAccentContainer.text : cell.modelData.inMonth ? Style.text : Style.textDisabled
+                  role: "caption"
+                  font.weight: cell.modelData.isToday ? Style.weightStrong : Style.roleCaption.weight
+                }
+              }
 
+              // Dots: one per calendar with events that day
+              Row {
+                visible: cell.dotKey !== ""
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: Math.min(cell.height - 5, number.y + number.height + 1)
+                spacing: 2
+                opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
+
+                Repeater {
+                  model: cell.dotKey ? cell.dotKey.split(",") : []
                   Rectangle {
-                    x: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Widget.px(3)
-                    height: parent.height - Widget.px(4)
-                    radius: 1.5
-                    color: chip.calendarColor
-                  }
-                  StyledLabel {
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Widget.px(8)
-                    width: parent.width - x - 2
-                    text: chip.event ? (chip.event.allDay || CalendarEvents.spanOn(chip.event, cell.key) !== "single" && CalendarEvents.spanOn(chip.event, cell.key) !== "starts" ? "" : I18n.formatDate(new Date(chip.event.start), CalendarConfig.timeFormat) + " ") + (chip.event.title || I18n.tr("(No title)")) : ""
-                    textFormat: Text.PlainText
-                    role: "micro"
-                    textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.inkAccentContainer.text : Style.text
+                    required property string modelData
+                    width: Math.max(Widget.px(3), Appearance.fontSize * 0.28)
+                    height: width
+                    radius: width / 2
+                    color: cell.modelData.isToday && !root.titles ? Style.inkAccent.text : Style.resolve(modelData)
                   }
                 }
               }
-              StyledText {
-                visible: cell.dayEvents.length > cell.shownCount
-                x: 4
-                text: I18n.tr("+{0} more", cell.dayEvents.length - cell.shownCount)
-                role: "micro"
-                textColor: cell.selected ? Style.inkAccentContainer.muted : Style.textMuted
-              }
-            }
 
-            MouseArea {
-              id: cellArea
-              anchors.fill: parent
-              hoverEnabled: true
-              cursorShape: Qt.PointingHandCursor
-              onClicked: root.daySelected(cell.key)
+              // Titles: the events that fit, then "+n more"
+              Column {
+                visible: cell.showTitles
+                // Clear of the cell's rounded border, like the number
+                x: cell.inset
+                y: number.y + cell.numberSize + Widget.px(2)
+                width: cell.width - cell.inset * 2
+                spacing: 1
+                opacity: cell.modelData.inMonth ? 1 : Style.opacityDisabled
+
+                Repeater {
+                  model: cell.shownCount
+                  Rectangle {
+                    id: chip
+                    required property int index
+                    readonly property var event: cell.dayEvents[index] ?? null
+                    readonly property color calendarColor: Style.resolve(CalendarManager.colors[chip.event?.calendar] ?? "accent")
+                    width: parent?.width ?? 0
+                    height: cell.lineHeight
+                    radius: Style.radiusInner
+                    color: chip.event?.allDay ? Style.surfaceHighest : "transparent"
+
+                    Rectangle {
+                      x: 2
+                      anchors.verticalCenter: parent.verticalCenter
+                      width: Widget.px(3)
+                      height: parent.height - Widget.px(4)
+                      radius: 1.5
+                      color: chip.calendarColor
+                    }
+                    StyledLabel {
+                      anchors.verticalCenter: parent.verticalCenter
+                      x: Widget.px(8)
+                      width: parent.width - x - 2
+                      text: chip.event ? (chip.event.allDay || CalendarEvents.spanOn(chip.event, cell.key) !== "single" && CalendarEvents.spanOn(chip.event, cell.key) !== "starts" ? "" : I18n.formatDate(new Date(chip.event.start), CalendarConfig.timeFormat) + " ") + (chip.event.title || I18n.tr("(No title)")) : ""
+                      textFormat: Text.PlainText
+                      role: "micro"
+                      textColor: chip.event?.allDay ? Style.inkHighest.text : cell.selected ? Style.inkAccentContainer.text : Style.text
+                    }
+                  }
+                }
+                StyledText {
+                  visible: cell.dayEvents.length > cell.shownCount
+                  x: 4
+                  text: I18n.tr("+{0} more", cell.dayEvents.length - cell.shownCount)
+                  role: "micro"
+                  textColor: cell.selected ? Style.inkAccentContainer.muted : Style.textMuted
+                }
+              }
+
+              MouseArea {
+                id: cellArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.daySelected(cell.key)
+              }
             }
           }
         }

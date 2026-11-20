@@ -4,7 +4,7 @@ keyboard: true
 icon: keyboard
 group: Tools
 defaultSize: [8, 6]
-order: [style, mods, sections, showUndescribed]
+order: [style, showSearch, mods, sections, showUndescribed]
 settings:
   sections:
     type: array
@@ -12,6 +12,11 @@ settings:
     default: []
     items: {type: string}
     description: Comma-separated section titles. Empty shows them all.
+  showSearch:
+    type: boolean
+    title: Search
+    default: true
+    description: When there's room.
   showUndescribed:
     type: boolean
     title: Undescribed binds
@@ -21,10 +26,10 @@ settings:
     type: string
     title: Style
     x-control: toggle
-    enum: [list, keyboard]
-    x-enumLabels: {list: List, keyboard: Keyboard}
-    default: list
-    description: 'Keyboard: what each key does.'
+    enum: [auto, list, keyboard]
+    x-enumLabels: {auto: Auto, list: List, keyboard: Keyboard}
+    default: auto
+    description: 'Auto: by the card''s size. Keyboard: what each key does.'
   mods:
     type: array
     title: Modifiers
@@ -32,5 +37,5 @@ settings:
     items:
       type: string
       enum: [SUPER, CTRL, ALT, SHIFT]
-    x-showIf: {style: keyboard}
+    x-showIf: {style: [auto, keyboard]}
     description: Held down on the keyboard.

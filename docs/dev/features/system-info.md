@@ -21,3 +21,6 @@ Settings › System opens on this machine and this axiom: what a user (or a bug 
 
 ### Optional packages
 - `ToolChecks` (shared with the onboarder's Checks page): `DependencyManager.tools` with whether each is installed (`deps.check`) and the line installing the missing ones on this distribution (`Packages.installLines`).
+
+### System graphs and stats temperatures
+- The System graphs card and the System stats bar widget take `units` (`TemperatureUnits`: `default` follows Weather › Units, via `WeatherConfig.unitsOf`) for the temperatures they write; `Utils.fromCelsius` converts and `Utils.temperatureSymbol` names the unit. Levels, history and the warning threshold stay in °C. Both take `memoryFormat` (`MemoryFormat`): memory as a percentage or the GiB used (with `used` the graphs' memory sub line shows the percentage, otherwise "used / total GiB"). A bar popout's graphs follow the card's defaults until a popout is given its widget's options.

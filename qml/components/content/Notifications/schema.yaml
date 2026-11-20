@@ -3,3 +3,6 @@ icon: notifications
 group: Desktop
 keyboard: true
 grow: standard
+settings:
+  showHeader: {type: boolean, title: Header, default: true}
+  showQuiet: {type: boolean, title: Quiet, default: true}

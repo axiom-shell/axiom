@@ -77,7 +77,7 @@ def unescape(s):
 
 
 def enum_label(value):
-    """An enum value as the form shows it without x-enumLabels (Utils.enumLabel)."""
+    """An enum value as the form (SchemaField) shows it without x-enumLabels (Utils.enumLabel)."""
     if not re.fullmatch(r"[a-z][a-zA-Z0-9]*", value):
         return value
     spaced = re.sub(r"([a-z])([A-Z])", r"\1 \2", re.sub(r"([a-zA-Z]{2,})(\d)", r"\1 \2", value)).split(" ")
@@ -85,7 +85,7 @@ def enum_label(value):
     return " ".join([spaced[0][0].upper() + spaced[0][1:]] + rest)
 
 
-def schema_strings(node, out):
+def schema_strings(node, out, inherited=None):
     if isinstance(node, dict):
         for key in ("title", "description", "x-group", "x-hookupNote", "x-emptyLabel", "x-disabledNote", "x-tileHint"):
             if isinstance(node.get(key), str):
@@ -104,10 +104,12 @@ def schema_strings(node, out):
             if isinstance(node.get(key), dict):
                 out.update(v for v in node[key].values() if isinstance(v, str))
         if node.get("type") == "string" and isinstance(node.get("enum"), list):
-            labels = node.get("x-enumLabels") if isinstance(node.get("x-enumLabels"), dict) else {}
+            labels = {**(inherited or {}), **(node.get("x-enumLabels") if isinstance(node.get("x-enumLabels"), dict) else {})}
             out.update(enum_label(v) for v in node["enum"] if isinstance(v, str) and v not in labels)
-        for value in node.values():
-            schema_strings(value, out)
+        # An array's x-enumLabels cover its string-enum items (SchemaField.qml)
+        own = node.get("x-enumLabels") if node.get("type") == "array" and isinstance(node.get("x-enumLabels"), dict) else None
+        for key, value in node.items():
+            schema_strings(value, out, own if key == "items" else None)
     elif isinstance(node, list):
         for value in node:
             schema_strings(value, out)

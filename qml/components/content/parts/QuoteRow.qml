@@ -10,7 +10,8 @@ import qs.components.reusable
 // and symbol (or the market's state while it doesn't trade), the day's
 // line, the price and the day's change as a pill in the trend's colour,
 // and with `showHoldings` what the holding is worth and made today
-// under the name.
+// under the name. `value` picks the figures: "pricePercent", "price",
+// "percent" or "change" (the change in its currency).
 // `quote` is MarketsManager.quoteFor(item); a click is `clicked`.
 Item {
   id: root
@@ -19,6 +20,7 @@ Item {
   property var quote: MarketsManager.quoteFor(root.item)
   property bool showChart: true
   property bool showHoldings: false
+  property string value: "pricePercent"
   signal clicked
 
   readonly property string trend: MarketMath.trend(root.quote?.change ?? 0)
@@ -111,6 +113,7 @@ Item {
       spacing: Widget.spacing / 2
       StyledLabel {
         Layout.alignment: Qt.AlignRight
+        visible: !root.hasPrice || root.value === "pricePercent" || root.value === "price"
         text: root.hasPrice ? MarketMath.formatPrice(root.quote.price, root.quote.currency) : "—"
         role: "label"
         font.weight: Style.weightStrong
@@ -122,7 +125,7 @@ Item {
         id: chip
         tone: root.trendTone === "faint" ? "highest" : root.trendTone + "Container"
         Layout.alignment: Qt.AlignRight
-        visible: root.hasPrice
+        visible: root.hasPrice && root.value !== "price"
         implicitWidth: change.implicitWidth + Widget.smallPadding * 2
         implicitHeight: change.implicitHeight + Widget.px(2)
         radius: height / 2
@@ -135,7 +138,7 @@ Item {
           font.features: ({
               "tnum": 1
             })
-          text: (root.trend === "up" ? "▲ " : root.trend === "down" ? "▼ " : "") + MarketMath.formatPercent(root.quote?.changePercent ?? 0).replace(/^[+−]/, "")
+          text: MarketMath.arrowed(root.trend, MarketMath.formatChangeAs(root.quote?.change, root.quote?.changePercent ?? 0, root.quote?.currency, root.value))
         }
       }
     }

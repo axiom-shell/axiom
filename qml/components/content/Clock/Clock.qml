@@ -13,8 +13,8 @@ import qs.components.content.base
 // face with hands, the second hand in the accent color). The date and a
 // `label` go under it. A `timezone` shows another zone's time
 // (TimeZoneManager), the system's until its offset is read.
-// properties: { style, hourFormat, showSeconds, showDate, timezone, label,
-// color, accentColor }
+// properties: { style, hourFormat, showSeconds, showDate, dateFormat, timezone,
+// label, color, accentColor }
 Card {
   id: root
 
@@ -50,7 +50,7 @@ Card {
   // The lines under the clock: the date (shorter where it's narrow) and
   // the label, each only while the time keeps at least a caption's room
   // (the label goes first, then the date)
-  readonly property string dateText: root.properties.showDate ? I18n.formatDate(root.now, I18n.dateFormat(root.innerWidth < Appearance.fontSize * 14 ? "shortDate" : "longDate")) : ""
+  readonly property string dateText: root.properties.showDate ? I18n.formatDate(root.now, root.properties.dateFormat || I18n.dateFormat(root.innerWidth < Appearance.fontSize * 14 ? "shortDate" : "longDate")) : ""
   readonly property string label: root.properties.label
   readonly property real captionSize: Math.max(Style.typeCaption, Math.min(Style.typeBody * 1.6, root.innerHeight / 12)) // fitted: the caption lines
   readonly property real spacing: Widget.spacing / 2

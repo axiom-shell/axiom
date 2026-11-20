@@ -1,0 +1,9 @@
+# The MaxVolume definition (#/definitions/MaxVolume): the loudest an audio control sets, in percent. Uses override `title`, `default`.
+
+x-inline: true
+type: integer
+title: Maximum volume
+x-unit: '%'
+default: 100
+minimum: 100
+maximum: 150

@@ -16,6 +16,8 @@ DropdownSurface {
 
   // The open note, highlighted
   property string current: ""
+  // The folder the browser never goes above (relative, "" for the top); the host starts `folder` within it
+  property string rootFolder: ""
   // The folder shown (relative, "" for the top)
   property string folder: NotesManager.parentOf(root.current)
   property real maxHeight: Widget.px(400)
@@ -29,7 +31,11 @@ DropdownSurface {
   // "note" | "folder" while naming a new one, else ""
   property string creating: ""
 
-  readonly property var crumbs: root.folder === "" ? [] : root.folder.split("/")
+  // The folders from the root down to the one shown
+  readonly property var crumbs: {
+    const below = root.folder.slice(root.rootFolder === "" ? 0 : root.rootFolder.length + 1);
+    return below === "" ? [] : below.split("/");
+  }
 
   // The search field's text, and its results ([] while it's empty)
   readonly property string query: searchField.text.trim()
@@ -50,7 +56,7 @@ DropdownSurface {
     id: searchDelay
     interval: 200
     onTriggered: NotesManager.search(root.query, results => {
-      root.results = results;
+      root.results = results.filter(result => NotesManager.within(result.path, root.rootFolder));
       root.searching = false;
     })
   }
@@ -188,7 +194,7 @@ DropdownSurface {
                 }
                 TapHandler {
                   enabled: !crumb.last
-                  onTapped: root.open(root.crumbs.slice(0, crumb.index).join("/"))
+                  onTapped: root.open([root.rootFolder, ...root.crumbs.slice(0, crumb.index)].filter(part => part !== "").join("/"))
                 }
               }
             }
@@ -509,7 +515,7 @@ DropdownSurface {
       Layout.topMargin: Widget.spacing
       Layout.bottomMargin: Widget.spacing
       horizontalAlignment: Text.AlignHCenter
-      text: NotesManager.directoryMissing ? I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory) : root.folder === "" ? I18n.tr("No notes yet") : I18n.tr("This folder is empty")
+      text: NotesManager.directoryMissing ? I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory) : root.folder === root.rootFolder ? I18n.tr("No notes yet") : I18n.tr("This folder is empty")
       role: "caption"
     }
   }
