@@ -72,7 +72,7 @@ WorkspacePopoutPanel {
         }) : null
         thickness: root.cellSize
         length: shows.length
-        labels: root.properties.labels
+        cellLabels: root.properties.cellLabels
         label: shows.number
         text: shows.kind === "text" || shows.kind === "name" ? shows.text : ""
         textPlain: shows.plain
@@ -81,7 +81,7 @@ WorkspacePopoutPanel {
         iconPaths: shows.icons
         iconLayout: contents.iconLayout
         iconSlots: contents.iconSlots
-        clickable: root.properties.clickToSwitch ?? false
+        clickable: root.properties.clickToSwitch
         animated: root._settled
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.output)
       }

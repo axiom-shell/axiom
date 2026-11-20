@@ -31,14 +31,7 @@ settings:
     title: Local time
     default: true
     description: The system's time first.
-  hourFormat:
-    type: string
-    title: Hour format
-    x-control: toggle
-    enum: [default, '12', '24']
-    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
-    default: default
-    x-link: {setting: DateTime.hourFormat}
+  hourFormat: {$ref: '#/definitions/HourFormat'}
   showTimeline:
     type: boolean
     title: Day band

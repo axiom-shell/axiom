@@ -1,0 +1,8 @@
+# The PrivacyShows definition (#/definitions/PrivacyShows): which capture indicators show, as an id array. Uses override `default` and, for the bar's order, `items`.
+
+x-inline: true
+type: array
+title: Shows
+items: {type: string, enum: [camera, micUse, screenShare]}
+x-enumLabels: {camera: Camera, micUse: Microphone in use, screenShare: Screen sharing}
+x-enumIcons: {camera: videocam, micUse: record_voice_over, screenShare: screen_share}

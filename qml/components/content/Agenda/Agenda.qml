@@ -15,7 +15,7 @@ import qs.components.content.parts.calendar
 // What's coming up: the shown calendars' events from today through `days`,
 // grouped by day; a click opens one in the editor, + adds one today.
 // Compact, the next event.
-// properties: { days, maxEvents }
+// properties: { days, count }
 Panel {
   id: root
 
@@ -39,7 +39,7 @@ Panel {
   // all-day and running events included)
   readonly property var groups: {
     const out = [];
-    let left = root.properties.maxEvents;
+    let left = root.properties.count;
     for (let i = 0; i < root.properties.days && left > 0; i++) {
       const key = CalendarEvents.addDays(root.todayKey, i);
       const events = CalendarManager.eventsOn(key).filter(event => i > 0 || event.end > root.now).slice(0, left);

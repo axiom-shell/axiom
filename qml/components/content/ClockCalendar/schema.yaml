@@ -5,14 +5,7 @@ icon: calendar_clock
 group: Time & weather
 hosts: [lockscreen, greeter]
 settings:
-  hourFormat:
-    type: string
-    title: Hour format
-    x-control: toggle
-    enum: [default, '12', '24']
-    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
-    default: default
-    x-link: {setting: DateTime.hourFormat}
+  hourFormat: {$ref: '#/definitions/HourFormat'}
   showSeconds: {type: boolean, title: Seconds, default: false}
   showEvents:
     type: boolean

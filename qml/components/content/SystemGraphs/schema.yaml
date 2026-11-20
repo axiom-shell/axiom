@@ -5,10 +5,8 @@ canvasDetail: metrics
 hosts: [lockscreen]
 settings:
   metrics:
-    type: array
-    title: Metrics
+    $ref: '#/definitions/SystemMetrics'
     default: [cpu, mem]
     items:
       type: string
       enum: [cpu, mem, gpu, cpuTemp, net]
-    x-enumLabels: {cpu: CPU, mem: Memory, gpu: GPU, cpuTemp: CPU temperature, net: Network}

@@ -168,7 +168,7 @@ FocusScope {
         readonly property bool last: index === root.fields.length - 1
         Layout.fillWidth: true
         placeholder: modelData.label
-        centered: false
+        horizontalAlignment: Text.AlignLeft
         reveal: !modelData.secret
         secret: modelData.secret === true
         readOnly: root.busy || !root.settled

@@ -14,7 +14,7 @@ import qs.components.content.parts
 // settings as they're let go; a switch turns the schedule on and off. A
 // big card adds a round button in the light's own color (over the controls,
 // or beside them when wide) that switches it. A short card is one row (with
-// the warmth when it's wide); compact, a figure to click.
+// the warmth when it's wide); compact, a figure that toggles it on a click.
 Card {
   id: root
 
@@ -69,24 +69,16 @@ Card {
     root.draggedGamma = -1;
   }
 
-  compactContent: Item {
-    CompactFigure {
-      anchors.fill: parent
-      icon: root.active ? "bedtime" : "bedtime_off"
-      iconColor: root.active ? Style.accent : Style.textMuted
-      value: root.active ? String(root.kelvin) : ""
-      unit: root.active ? "K" : ""
-      label: root.active ? I18n.tr("Night light") : I18n.tr("Night light off")
-    }
-    TapHandler {
-      enabled: !root.missing
-      onTapped: ActionsManager.run("nightLight", {
-        "fromScreen": true
-      })
-    }
-    HoverHandler {
-      cursorShape: root.missing ? Qt.ArrowCursor : Qt.PointingHandCursor
-    }
+  compactContent: CompactFigure {
+    icon: root.active ? "bedtime" : "bedtime_off"
+    iconColor: root.active ? Style.accent : Style.textMuted
+    value: root.active ? String(root.kelvin) : ""
+    unit: root.active ? "K" : ""
+    label: root.active ? I18n.tr("Night light") : I18n.tr("Night light off")
+    clickable: !root.missing
+    onClicked: ActionsManager.run("nightLight", {
+      "fromScreen": true
+    })
   }
 
   // A labelled slider: an icon, the track, the value

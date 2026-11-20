@@ -17,7 +17,8 @@ import qs.components.content.parts
 // (TailscaleConfig.actions, which need operator rights: a Grant access
 // button asks polkit for them), and the tailnet's devices, online first;
 // clicking one copies its address. The Tailscale widget's popout, and an
-// overlay card (compact: devices online).
+// overlay card (compact: devices online; a click on it connects or
+// disconnects).
 Panel {
   id: root
 
@@ -61,6 +62,8 @@ Panel {
     iconColor: TailscaleManager.connected ? Style.accent : Style.textMuted
     value: TailscaleManager.connected ? String(TailscaleManager.onlineCount) : ""
     label: !TailscaleManager.known ? "" : TailscaleManager.connected ? I18n.tr("online") : TailscaleManager.available ? TailscaleManager.stateText : I18n.tr("not installed")
+    clickable: root.canAct && !TailscaleManager.busy && !TailscaleManager.profilesDenied
+    onClicked: TailscaleManager.connected ? TailscaleManager.disconnect() : TailscaleManager.connect()
   }
 
   function ago(iso) {

@@ -43,9 +43,9 @@ QtObject {
   }
 
   // What a Markets widget shows: { item } per item `ids` picks (pick), a
-  // { portfolio } first with `showPortfolio` while any item has a quantity
-  function entries(items, ids, showPortfolio) {
-    const portfolio = showPortfolio && items.some(item => item.quantity > 0) ? [
+  // { portfolio } first with `showHoldings` while any item has a quantity
+  function entries(items, ids, showHoldings) {
+    const portfolio = showHoldings && items.some(item => item.quantity > 0) ? [
       {
         "portfolio": true
       }

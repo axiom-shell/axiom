@@ -23,7 +23,7 @@ Item {
   property bool showAvatar: true
   // Shown in the empty password field ("" for Enter password...)
   property string placeholder: ""
-  property bool centered: true
+  property int horizontalAlignment: Text.AlignHCenter
   property bool showMessages: true
   // A slot with no room under the password: messages show in it (see
   // PasswordEntry)
@@ -147,7 +147,7 @@ Item {
         reserveMessage: root.showMessages
         capsMessage: root.showMessages
         placeholder: root.prompt || root.placeholder || I18n.tr("Enter password...")
-        centered: root.centered
+        horizontalAlignment: root.horizontalAlignment
         reveal: root.active && root.prompt !== "" && GreetdManager.promptEcho
         readOnly: !root.active
         enabled: !root.busy

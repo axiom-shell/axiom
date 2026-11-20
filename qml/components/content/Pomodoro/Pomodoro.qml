@@ -4,12 +4,14 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.apps
+import qs.services.ui
 import qs.components.content.base
 import qs.components.content.parts
 
 // The pomodoro timer (PomodoroManager, PomodoroDial): the Pomodoro widget's
 // popout, or an overlay card, the ring filling it (beside its buttons when
-// the card is wide and short). Compact, the time left.
+// the card is wide and short). Compact, the time left; a click on it starts or
+// pauses the timer.
 // properties (card): { showTask }
 Panel {
   id: root
@@ -27,12 +29,16 @@ Panel {
     iconColor: PomodoroManager.isBreak ? Style.accentAlt : Style.accent
     value: PomodoroManager.remainingText
     label: PomodoroManager.phaseLabel
+    clickable: true
+    onClicked: ActionsManager.run("pomodoro", {
+      "fromScreen": true
+    })
   }
 
   PomodoroDial {
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     fill: root.embedded
-    showTask: !root.embedded || (root.properties.showTask ?? true)
+    showTask: !root.embedded || root.properties.showTask
   }
 }

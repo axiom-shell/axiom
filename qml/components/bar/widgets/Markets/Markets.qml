@@ -23,7 +23,7 @@ BarWidget {
 
   // What it shows, from config only: { item } per symbol, a { portfolio }
   // first when asked
-  readonly property var _all: MarketMath.entries(MarketsConfig.symbols, root.properties.symbols, root.properties.showPortfolio)
+  readonly property var _all: MarketMath.entries(MarketsConfig.symbols, root.properties.symbols, root.properties.showHoldings)
   items: root._all.map(entry => entry.portfolio ? "portfolio" : entry.item.id)
   // Its one entry in a box of its own
   readonly property var entries: root._all.filter(entry => root.shownItems.includes(entry.portfolio ? "portfolio" : entry.item.id))
@@ -147,7 +147,7 @@ BarWidget {
     popoutName: "MarketsPopout"
     extraData: ({
         "symbols": root.properties.symbols,
-        "showPortfolio": root.properties.showPortfolio
+        "showHoldings": root.properties.showHoldings
       })
     active: MenusConfig.opensOwnPopout(root.properties)
   }

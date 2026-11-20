@@ -45,9 +45,9 @@ Panel {
   readonly property real keypadRoom: !root.embedded ? 0 : root.sideBySide ? root.innerHeight : root.innerHeight - (root.showHeader ? Appearance.fontSize * 2 : 0) - Widget.height - Appearance.fontSize * 4 - root.spacing * 3
   // Keys beside the field in a wide card, under it in a tall one, while
   // five rows of them fit; always in the popout
-  readonly property bool showKeypad: (root.properties.showKeypad ?? true) && !root.strip && (!root.embedded || (root.keypadRoom >= Appearance.fontSize * 2 * 5 && root.innerWidth >= Appearance.fontSize * 10))
+  readonly property bool showKeypad: root.properties.showKeypad && !root.strip && (!root.embedded || (root.keypadRoom >= Appearance.fontSize * 2 * 5 && root.innerWidth >= Appearance.fontSize * 10))
   // Under the field; in a tall card only without the keypad
-  readonly property bool showHistory: (root.properties.showHistory ?? true) && root.history.length > 0 && !root.strip && root.embedded && (root.sideBySide ? root.innerHeight >= Appearance.fontSize * 9 : !root.showKeypad && root.innerHeight >= Appearance.fontSize * 11)
+  readonly property bool showHistory: root.properties.showHistory && root.history.length > 0 && !root.strip && root.embedded && (root.sideBySide ? root.innerHeight >= Appearance.fontSize * 9 : !root.showKeypad && root.innerHeight >= Appearance.fontSize * 11)
   readonly property bool sideBySide: root.embedded && root.innerWidth >= Appearance.fontSize * 30 && root.innerWidth >= root.innerHeight * 1.3
   readonly property bool showHeader: root.embedded && !root.strip && root.innerHeight >= Appearance.fontSize * 9
 

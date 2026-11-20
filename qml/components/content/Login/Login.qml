@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 import qs.components.content.base
 import qs.components.content.parts
 
@@ -10,7 +11,7 @@ import qs.components.content.parts
 // greeter layout has one): who logs in and their password. It only logs
 // in on the screen the greeter makes the target, in the real greeter: in
 // the layouts editor's preview it's an inert box.
-// properties: { userField, showPicture, placeholder, centered, showMessages }
+// properties: { userField, showPicture, placeholder, alignment, showMessages }
 Card {
   id: root
 
@@ -60,7 +61,7 @@ Card {
       userField: root.properties.userField
       showAvatar: root.properties.showPicture
       placeholder: root.properties.placeholder
-      centered: root.properties.centered
+      horizontalAlignment: Utils.horizontalAlignment(root.properties.alignment)
       showMessages: root.properties.showMessages
       inlineMessage: root.inlineMessage
     }

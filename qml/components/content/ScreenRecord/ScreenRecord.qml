@@ -20,7 +20,7 @@ import qs.services.ui
 // recordings in the recording folder (the Screenshots section) are listed
 // under it when there's room: click to open, copy the path or move one to
 // the trash. Also the ScreenRecord widget's popout.
-// A short card is one row; compact, a figure that starts or stops it.
+// A short card is one row; compact, a figure that starts or stops it on a click.
 Panel {
   id: root
 
@@ -69,22 +69,14 @@ Panel {
     ScreenshotManager.refreshRecordings();
   }
 
-  compactContent: Item {
-    CompactFigure {
-      anchors.fill: parent
-      icon: root.recording ? "stop_circle" : "screen_record"
-      iconColor: root.recording ? Style.error : Style.accent
-      value: root.recording ? root.elapsed : ""
-      label: root.recording ? I18n.tr("Recording") : I18n.tr("Record")
-      valueColor: Style.errorText
-    }
-    TapHandler {
-      enabled: !root.missing
-      onTapped: root.toggle()
-    }
-    HoverHandler {
-      cursorShape: root.missing ? Qt.ArrowCursor : Qt.PointingHandCursor
-    }
+  compactContent: CompactFigure {
+    icon: root.recording ? "stop_circle" : "screen_record"
+    iconColor: root.recording ? Style.error : Style.accent
+    value: root.recording ? root.elapsed : ""
+    label: root.recording ? I18n.tr("Recording") : I18n.tr("Record")
+    valueColor: Style.errorText
+    clickable: !root.missing
+    onClicked: root.toggle()
   }
 
   // A dot that pulses while recording

@@ -9,7 +9,7 @@ import qs.components.bar.look
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
 // widgets have no boxes, straight on the bar, under a line of its color for
-// underline. Its label (`labels`) is its number, a dot or nothing; a
+// underline. Its label (`cellLabels`) is its number, a dot or nothing; a
 // glyph, text (a label of one's own, an icon, text or the icon before
 // the text, or a name: a Material Symbols name the font has draws as that
 // icon, anything else as text) or app icons show instead
@@ -44,8 +44,8 @@ Item {
   // "numbers", "dots" or "none" (dots where a cell would have neither box
   // nor line to show: `none`'s option is hidden there, but the bar's style
   // can change after)
-  property string labels: "numbers"
-  readonly property bool _dot: labels === "dots" || labels === "none" && !_framed
+  property string cellLabels: "numbers"
+  readonly property bool _dot: cellLabels === "dots" || cellLabels === "none" && !_framed
   property string label: ""
   // A label of one's own or the compositor's name; `textPlain` (a name, or
   // a label that isn't an icon the font has: CellContents.plain) in the
@@ -391,7 +391,7 @@ Item {
     StyledLabel {
       anchors.centerIn: parent
       overflow: "none"
-      visible: root.labels === "numbers" && root._shows === "labels"
+      visible: root.cellLabels === "numbers" && root._shows === "labels"
       text: root.label
       textColor: root._shown.content
       textSize: root.cellLook.labelSize

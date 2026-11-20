@@ -4,13 +4,13 @@ icon: show_chart
 group: Tools
 defaultSize: [4, 6]
 minSize: [2, 2]
-canvasDetail: layout
+canvasDetail: style
 hosts: [lockscreen]
-order: [layout, showChart, range, symbols, showHoldings]
+order: [style, showChart, range, symbols, showHoldings]
 settings:
-  layout:
+  style:
     type: string
-    title: Layout
+    title: Style
     default: list
     x-control: toggle
     enum: [list, tiles, focus]
@@ -20,14 +20,14 @@ settings:
     title: Charts
     default: true
     description: Each symbol's line for the day.
-    x-showIf: {layout: [list, tiles]}
+    x-showIf: {style: [list, tiles]}
   range:
     type: string
     title: Range
     default: 1d
     enum: [1d, 5d, 1mo, 6mo, 1y]
     x-enumLabels: {1d: Day, 5d: 5 days, 1mo: Month, 6mo: 6 months, 1y: Year}
-    x-showIf: {layout: focus}
+    x-showIf: {style: focus}
   symbols:
     # Ids from the user's watchlist: personal, as the watchlist is
     x-scope: personal

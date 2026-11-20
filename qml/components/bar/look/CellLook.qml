@@ -16,7 +16,7 @@ QtObject {
   id: root
 
   required property var barConfig
-  // The widget's options: solidBoxes, labels, showAppIcons, spacing
+  // The widget's options: solidBoxes, cellLabels, showAppIcons, spacing
   property var properties: ({})
   // Drawn in its widget on the bar, not a popout: in a merged run on a
   // merged bar
@@ -58,7 +58,7 @@ QtObject {
   // A cell's corners (BarsConfig.cellRadius; a popout's, from the bar's
   // payload) and its length at rest (BarCells.cellLength)
   property real radius: barConfig ? BarsConfig.cellRadius(barConfig, thickness, inset) : 0
-  readonly property real length: _look ? BarCells.cellLength(_look, solid, properties?.labels, properties?.showAppIcons, thickness) : thickness
+  readonly property real length: _look ? BarCells.cellLength(_look, solid, properties?.cellLabels, properties?.showAppIcons, thickness) : thickness
   // Between cells (BarsConfig.workspaceCellSpacing), chained in a
   // powerline as segments (BarCells.cellGap), and between a row and the
   // strip after it

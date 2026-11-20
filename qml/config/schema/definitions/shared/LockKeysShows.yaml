@@ -1,0 +1,8 @@
+# The LockKeysShows definition (#/definitions/LockKeysShows): which lock keys show, as an id array. Uses override `default`, `x-showIf`.
+
+x-inline: true
+type: array
+title: Shows
+items: {type: string, enum: [capsLock, numLock, scrollLock]}
+x-enumLabels: {capsLock: Caps Lock, numLock: Num Lock, scrollLock: Scroll Lock}
+x-enumIcons: {capsLock: keyboard_capslock, numLock: dialpad, scrollLock: swap_vert}

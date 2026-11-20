@@ -4,7 +4,7 @@ keyboard: true
 icon: keyboard
 group: Tools
 defaultSize: [8, 6]
-order: [view, mods, sections, showUndescribed]
+order: [style, mods, sections, showUndescribed]
 settings:
   sections:
     type: array
@@ -17,9 +17,9 @@ settings:
     title: Undescribed binds
     default: false
     description: Listed by their dispatcher.
-  view:
+  style:
     type: string
-    title: View
+    title: Style
     x-control: toggle
     enum: [list, keyboard]
     x-enumLabels: {list: List, keyboard: Keyboard}
@@ -32,5 +32,5 @@ settings:
     items:
       type: string
       enum: [SUPER, CTRL, ALT, SHIFT]
-    x-showIf: {view: keyboard}
+    x-showIf: {style: keyboard}
     description: Held down on the keyboard.

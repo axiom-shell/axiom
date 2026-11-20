@@ -299,7 +299,7 @@ PageCard {
         id: currentEntry
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        centered: false
+        horizontalAlignment: Text.AlignLeft
         placeholder: I18n.tr("Current password")
         busy: AccountManager.busy
         onAccepted: newEntry.input.forceActiveFocus()
@@ -309,7 +309,7 @@ PageCard {
         id: newEntry
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        centered: false
+        horizontalAlignment: Text.AlignLeft
         placeholder: I18n.tr("New password")
         onAccepted: againEntry.input.forceActiveFocus()
       }
@@ -318,7 +318,7 @@ PageCard {
         id: againEntry
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        centered: false
+        horizontalAlignment: Text.AlignLeft
         placeholder: I18n.tr("New password again")
         message: root.passwordProblem
         messageIsError: true

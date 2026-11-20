@@ -9,7 +9,8 @@ import qs.components.reusable
 // compactContent is filled for it). A wide box puts the icon beside the
 // value and label, otherwise they stack. As room runs out the label goes,
 // then the icon (when there's a value), and the value shrinks to fit;
-// sizes come from the room, not scaling, so icons stay sharp.
+// sizes come from the room, not scaling, so icons stay sharp. With
+// `clickable` the figure is a button (a toggle card's small mode).
 Item {
   id: root
 
@@ -19,6 +20,10 @@ Item {
   property string label: ""
   property color iconColor: Style.accent
   property color valueColor: Style.text
+  // The figure is a button: tint, ring, Tab stop, `clicked` on a click or Space/Enter
+  property bool clickable: false
+
+  signal clicked
 
   readonly property bool wide: root.width > root.height * 1.6
   readonly property real gap: Widget.spacing / 2
@@ -66,6 +71,12 @@ Item {
     id: labelMetrics
     font.family: Appearance.fontFamily
     font.pixelSize: Style.typeCaption
+  }
+
+  Pressable {
+    enabled: root.clickable
+    tabStop: root.clickable
+    onClicked: root.clicked()
   }
 
   GridLayout {

@@ -1,0 +1,9 @@
+# The TextAlignment definition (#/definitions/TextAlignment): where a text sits across its box. Uses override `title`.
+
+x-inline: true
+type: string
+title: Alignment
+x-control: toggle
+enum: [left, center, right]
+x-enumLabels: {left: Left, center: Center, right: Right}
+default: center

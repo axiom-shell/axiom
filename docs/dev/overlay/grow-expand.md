@@ -38,7 +38,7 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
 - An integrated menu's zone follows it, so windows move.
 
 ### Expanding: API
-- `expand(type, properties, from)` on `Card` / `Panel`. Call `canExpand(type)` first, to offer it only where it works.
+- `expand(type, properties, from)` on `Card` / `Panel`. Call `canExpand(type)` first, to offer it only where it works. The caller's `properties` are filled with the module's defaults (`OverlayConfig.moduleProperties`); the caller's keys win.
 - It goes through `expander`, the hosting `ModuleGrid` (passed down by `OverlaySlot`).
   - `expander` is null on the lock screen and greeter, and for types the host's `x-hosts` don't take.
 

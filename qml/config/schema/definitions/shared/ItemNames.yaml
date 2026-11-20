@@ -1,0 +1,9 @@
+# The ItemNames definition (#/definitions/ItemNames): whether names show under or beside items. Uses override `description`, `enum`, `default`.
+
+x-inline: true
+type: string
+title: Names
+default: auto
+x-control: toggle
+enum: [auto, show, hide]
+x-enumLabels: {auto: Auto, show: Show, hide: Hide}

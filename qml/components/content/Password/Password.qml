@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 import qs.components.content.base
 import qs.components.content.parts
 
@@ -10,7 +11,7 @@ import qs.components.content.parts
 // so every lock screen layout has one). It only unlocks on the screen the
 // lock surface makes the target, on a real lock: in the layouts editor's
 // preview, or anywhere else, it's an inert field.
-// properties: { placeholder, centered, showMessages }
+// properties: { placeholder, alignment, showMessages }
 Card {
   id: root
 
@@ -61,7 +62,7 @@ Card {
       fieldHeight: root.room > 0 ? Math.min(root.rowHeight, root.room) : root.rowHeight
       inlineMessage: root.inlineMessage
       placeholder: root.properties.placeholder
-      centered: root.properties.centered
+      horizontalAlignment: Utils.horizontalAlignment(root.properties.alignment)
       showMessages: root.properties.showMessages
     }
   }

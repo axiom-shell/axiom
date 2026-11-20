@@ -12,9 +12,8 @@ import qs.components.bar.look
 Panel {
   id: root
 
-  // From the widget's payload (BarPopouts copies it onto these, and the
-  // widget's options onto `properties`, once the popout has loaded: until
-  // then `properties` is empty, hence the few `??` in the popouts)
+  // From the widget's payload (BarPopouts copies it onto these once the
+  // popout has loaded; `properties` is there from creation)
   // The output's name: the payload is a snapshot taken at opening, so its
   // state (the active workspace) is looked up live
   property string output: ""
@@ -41,14 +40,14 @@ Panel {
   readonly property int base: CompositorManager.workspaceBase(root.output)
   readonly property int activeId: root.monitor?.activeWorkspaceId ?? -1
 
-  // The payload and `properties` land just after creation (BarPopouts'
-  // onLoaded), so the cells first bind to fallbacks: animate only once
-  // they've settled, or the opening cells fade in from the wrong color
+  // The payload lands just after creation (BarPopouts' onLoaded), so the
+  // cells first bind to fallbacks: animate only once they've settled, or the
+  // opening cells fade in from the wrong color
   property bool _settled: false
 
   // Every urgent cell's pulse, in step
   readonly property UrgentPulse pulse: UrgentPulse {
-    running: (root.properties.urgentPulse ?? false) && CompositorManager.workspaces.some(ws => ws.urgent)
+    running: root.properties.urgentPulse && CompositorManager.workspaces.some(ws => ws.urgent)
   }
   Component.onCompleted: Qt.callLater(() => root._settled = true)
 }

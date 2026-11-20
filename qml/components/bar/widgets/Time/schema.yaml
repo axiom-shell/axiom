@@ -13,15 +13,7 @@ colors:
         - {$bar.underlined: true}
 order: [lead, leadIcon, timeFormat, hourFormat, showSeconds, timezone, showDate, dateFormat, verticalDate, popout, backgroundColor, foregroundColor]
 settings:
-  hourFormat:
-    type: string
-    title: Hour format
-    x-control: toggle
-    enum: [default, '12', '24']
-    x-enumLabels: {default: Default, '12': 12h, '24': 24h}
-    default: default
-    x-link: {setting: DateTime.hourFormat}
-    x-showIf: {timeFormat: ''}
+  hourFormat: {$ref: '#/definitions/HourFormat', x-showIf: {timeFormat: ''}}
   showSeconds: {type: boolean, title: Seconds, default: true, x-showIf: {timeFormat: ''}}
   showDate: {type: boolean, title: Date, default: true}
   lead:

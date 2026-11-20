@@ -52,10 +52,7 @@ Item {
   // -- Placement and size (CustomElementBase.yaml's place and size parts) --
   // `align` (Left | Center | Right) and `valign` (Top | Middle | Bottom) of
   // content smaller than the box, as Text's alignments for a text kind
-  readonly property int hAlign: ({
-      "left": Text.AlignLeft,
-      "right": Text.AlignRight
-    })[root.options.align] ?? Text.AlignHCenter
+  readonly property int hAlign: Utils.horizontalAlignment(root.options.align)
   readonly property int vAlign: ({
       "top": Text.AlignTop,
       "bottom": Text.AlignBottom

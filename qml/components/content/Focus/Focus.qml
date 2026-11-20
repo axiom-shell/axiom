@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.apps
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
@@ -12,15 +13,16 @@ import qs.components.content.parts.calendar
 // The pomodoro timer, the todo list and today's events (DayPane) in one
 // card: the timer and list side by side with the day when the card is
 // wide, stacked otherwise. Each part can be turned off. Compact, the time
-// left and the open count.
+// left and the open count; a click on the figure, while the timer is shown,
+// starts or pauses it.
 // properties: { showTimer, showTodos, showAgenda }
 Panel {
   id: root
 
   readonly property bool wide: root.innerWidth >= Appearance.fontSize * 34
-  readonly property bool showTimer: root.properties.showTimer ?? true
-  readonly property bool showTodos: root.properties.showTodos ?? true
-  readonly property bool showAgenda: root.properties.showAgenda ?? true
+  readonly property bool showTimer: root.properties.showTimer
+  readonly property bool showTodos: root.properties.showTodos
+  readonly property bool showAgenda: root.properties.showAgenda
 
   spacing: Widget.spacing
   wantsKeyboardFocus: true
@@ -50,6 +52,10 @@ Panel {
     icon: PomodoroManager.isBreak ? "coffee" : "center_focus_strong"
     value: PomodoroManager.idle ? String(TodoManager.openCount) : PomodoroManager.remainingText
     label: PomodoroManager.idle ? I18n.tr("to do") : PomodoroManager.phaseLabel
+    clickable: root.showTimer
+    onClicked: ActionsManager.run("pomodoro", {
+      "fromScreen": true
+    })
   }
 
   GridLayout {

@@ -12,6 +12,16 @@ import (
 // greeter's layouts).
 var moduleHosts = []string{"Overlay", "Menus", "Desktop", "Lockscreen", "Greeter"}
 
+// eachModule runs fn on the properties of every module of type typ in
+// moduleHosts and returns how many it changed.
+func eachModule(cfg *jsonx.Object, typ string, fn func(props *jsonx.Object) bool) int {
+	n := 0
+	for _, host := range moduleHosts {
+		n += eachTyped(cfg.Value(host), typ, fn)
+	}
+	return n
+}
+
 // v105 is the config audit's renames, moves and re-defaults:
 //   - Bars.items[].location became edge;
 //   - the Network widget's showName became showDevice, the Login module's
@@ -52,13 +62,7 @@ func v105(cfg *jsonx.Object) []string {
 	widgets := func(typ string, fn func(props *jsonx.Object) bool) int {
 		return eachTyped(bars, typ, fn)
 	}
-	modules := func(typ string, fn func(props *jsonx.Object) bool) int {
-		n := 0
-		for _, host := range moduleHosts {
-			n += eachTyped(cfg.Value(host), typ, fn)
-		}
-		return n
-	}
+	modules := func(typ string, fn func(props *jsonx.Object) bool) int { return eachModule(cfg, typ, fn) }
 
 	if bars, _ := bars.(*jsonx.Object); bars != nil {
 		if items, _ := bars.Value("items").(*jsonx.Array); items != nil {

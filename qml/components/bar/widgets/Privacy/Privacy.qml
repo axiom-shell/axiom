@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.system
 import qs.services.apps
 import qs.config
+import qs.components.methods
 import qs.components.bar.widgets.base
 
 // Mic / screen share / camera indicators, derived from active Pipewire
@@ -32,13 +33,9 @@ BarWidget {
   }
 
   // The indicators its settings show (a box of its own shows its one)
-  items: ["mic", "screen", "camera"].filter(k => root.properties[{
-        "mic": "showMic",
-        "screen": "showScreen",
-        "camera": "showCamera"
-      }[k]])
-  readonly property var micUsers: root.shownItems.includes("mic") ? users(AudioManager.micCaptures) : []
-  readonly property var screenUsers: root.shownItems.includes("screen") ? users(PrivacyManager.screenCaptures).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
+  items: BarBoxes.fromList(["micUse", "screenShare", "camera"], root.properties.shows)
+  readonly property var micUsers: root.shownItems.includes("micUse") ? users(AudioManager.micCaptures) : []
+  readonly property var screenUsers: root.shownItems.includes("screenShare") ? users(PrivacyManager.screenCaptures).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
   readonly property var cameraUsers: root.shownItems.includes("camera") ? users(PrivacyManager.cameraCaptures) : []
 
   readonly property var glyphs: [...(micUsers.length ? ["mic"] : []), ...(screenUsers.length ? ["monitor"] : []), ...(cameraUsers.length ? ["camera"] : [])]
@@ -48,8 +45,8 @@ BarWidget {
   // In a box of its own, its short name, so it splits
   // I18n.tr("Mic") I18n.tr("Screen") I18n.tr("Camera")
   text: root.ownBox ? I18n.tr({
-    "mic": "Mic",
-    "screen": "Screen",
+    "micUse": "Mic",
+    "screenShare": "Screen",
     "camera": "Camera"
   }[root.shownItems[0]] ?? "") : ""
   showText: root.ownBox

@@ -195,7 +195,7 @@ ColumnLayout {
     id: entry
     Layout.fillWidth: true
     placeholder: (root.flow?.inputPrompt ?? "").trim().replace(/:$/, "") || I18n.tr("Password")
-    centered: false
+    horizontalAlignment: Text.AlignLeft
     readOnly: !(root.flow?.isResponseRequired ?? false) || root.checking || !root.settled
     reveal: root.flow?.responseVisible ?? false
     message: root.flow?.supplementaryMessage ?? ""

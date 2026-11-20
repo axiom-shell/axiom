@@ -103,14 +103,7 @@ QtObject {
           const p = widget?.properties;
           if (widget?.type !== "SystemStats" || !p?.popout?.enabled)
             return;
-          if (p.showCpu)
-            found.push("cpu");
-          if (p.showMemory)
-            found.push("mem");
-          if (p.showTemp)
-            found.push("cpuTemp");
-          if (p.showGpu)
-            found.push("gpu");
+          found.push(...p.metrics);
         })));
     return ["cpu", "mem", "gpu", "cpuTemp", "net"].filter(m => found.includes(m));
   }

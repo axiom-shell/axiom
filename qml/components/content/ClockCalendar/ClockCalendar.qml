@@ -27,7 +27,7 @@ Card {
   // Events can't be edited where nothing can be typed (the desktop) or
   // nothing may be written (the lock screen)
   readonly property bool eventsReadOnly: root.onLockscreen || root.host?.kind === "desktop"
-  readonly property bool showEvents: (root.properties.showEvents ?? true) && (!root.onLockscreen || CalendarConfig.showOnLockscreen) && root.host?.kind !== "greeter" && !Paths.greeter
+  readonly property bool showEvents: root.properties.showEvents && (!root.onLockscreen || CalendarConfig.showOnLockscreen) && root.host?.kind !== "greeter" && !Paths.greeter
   // The day clicked in the calendar, "" for today
   property string openDay: ""
   readonly property string todayKey: CalendarEvents.dayKey(root.now)

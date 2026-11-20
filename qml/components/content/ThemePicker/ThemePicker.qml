@@ -14,7 +14,7 @@ import qs.components.content.base
 // colors, plus the Dark/Light switch that picks the variant and Auto, which
 // switches it by time of day (WallpaperManager). Themes apply immediately,
 // so there's nothing to save.
-// Compact, the current theme's name; a click switches Dark/Light.
+// Compact, the current theme's name; its figure switches Dark/Light on a click.
 TitledCard {
   id: root
 
@@ -56,18 +56,13 @@ TitledCard {
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 14
 
-  compactContent: Item {
-    CompactFigure {
-      anchors.fill: parent
-      icon: Appearance.darkMode ? "dark_mode" : "light_mode"
-      label: root.family?.label ?? I18n.tr("Theme")
-    }
-    MouseArea {
-      anchors.fill: parent
-      enabled: root.hasDark && root.hasLight
-      cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-      onClicked: ActionsManager.run("darkMode")
-    }
+  compactContent: CompactFigure {
+    icon: Appearance.darkMode ? "dark_mode" : "light_mode"
+    label: root.family?.label ?? I18n.tr("Theme")
+    clickable: root.hasDark && root.hasLight
+    onClicked: ActionsManager.run("darkMode", {
+      "fromScreen": true
+    })
   }
 
   title: I18n.tr("Theme")

@@ -317,18 +317,20 @@ QtObject {
   }
   // The items a widget `entry` ({ type, properties }) draws one box each
   // (BarBoxes.expand), from config only: with Boxes: One per item, its
-  // options that are on, or the list its `source` names (Markets' symbols,
-  // its portfolio first; ClaudeUsage's accounts); [] for one box
+  // the ids its `list` setting holds, or the list its `source` names
+  // (Markets' symbols, its portfolio first; ClaudeUsage's accounts); []
+  // for one box
   function boxItems(entry) {
-    const spec = BarsConfig.availableWidgetTypes.find(t => t.type === entry.type)?.boxItems ?? null;
+    const info = BarsConfig.availableWidgetTypes.find(t => t.type === entry.type) ?? null;
+    const spec = info?.boxItems ?? null;
     const p = entry.properties ?? {};
     if (!spec || p.boxes !== "each")
       return [];
-    if (spec.options)
-      return BarBoxes.fromOptions(spec.options, p);
+    if (spec.list)
+      return BarBoxes.fromList(info.propertiesSchema[spec.list].items.enum, p[spec.list]);
     switch (spec.source) {
     case "marketSymbols":
-      return MarketMath.entries(MarketsConfig.symbols, p.symbols, p.showPortfolio).map(e => e.portfolio ? "portfolio" : e.item.id);
+      return MarketMath.entries(MarketsConfig.symbols, p.symbols, p.showHoldings).map(e => e.portfolio ? "portfolio" : e.item.id);
     case "claudeAccounts":
       return ClaudeUsageConfig.accounts.map(account => account.id);
     default:

@@ -15,7 +15,7 @@ Item {
   property bool active: false
   // Shown in the empty field ("" for Enter password...)
   property string placeholder: ""
-  property bool centered: true
+  property int horizontalAlignment: Text.AlignHCenter
   // PAM's prompts, failures and errors under the field
   property bool showMessages: true
   // A slot with no room under the field: messages show in it (see
@@ -67,7 +67,7 @@ Item {
     width: parent.width
     anchors.verticalCenter: parent.verticalCenter
     placeholder: root.placeholder || I18n.tr("Enter password...")
-    centered: root.centered
+    horizontalAlignment: root.horizontalAlignment
     fieldHeight: root.fieldHeight
     inlineMessage: root.inlineMessage
     reserveMessage: root.showMessages

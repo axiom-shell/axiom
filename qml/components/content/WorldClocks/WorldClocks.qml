@@ -25,7 +25,7 @@ Card {
         "timezone": "",
         "label": ""
       }
-    ] : []).concat(root.properties.clocks ?? [])
+    ] : []).concat(root.properties.clocks)
   readonly property var zones: root.clocks.map(c => c.timezone).filter(z => z !== "")
   readonly property int count: root.clocks.length
 
@@ -39,7 +39,7 @@ Card {
   readonly property int shown: root.tiles ? Math.min(root.count, root.columns * Math.max(1, Math.floor(root.innerHeight / root.tileHeight))) : Math.max(1, Math.min(root.count, Math.floor(root.innerHeight / root.rowMin)))
   // Shared out, but never so tall the rows drift apart
   readonly property real rowHeight: root.tiles ? 0 : Math.min(Appearance.fontSize * 5, (root.innerHeight - Widget.spacing * (root.shown - 1)) / root.shown)
-  readonly property bool timeline: (root.properties.showTimeline ?? true) && !root.tiles && root.innerWidth >= Appearance.fontSize * 18 && root.rowHeight >= Appearance.fontSize * 3.6
+  readonly property bool timeline: root.properties.showTimeline && !root.tiles && root.innerWidth >= Appearance.fontSize * 18 && root.rowHeight >= Appearance.fontSize * 3.6
 
   fullMinWidth: Appearance.fontSize * 9
   fullMinHeight: Appearance.fontSize * 2.4

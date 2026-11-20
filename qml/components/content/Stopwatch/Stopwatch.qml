@@ -19,7 +19,8 @@ import qs.components.content.parts
 // reset, centred in the card and beside each other in a wide, short one).
 // Stopwatch: DialControls with the time in tenths and the minute swept
 // round, reset, start-pause and lap, then the laps (copyable, the fastest
-// and slowest tinted). Compact, the time of whichever is going.
+// and slowest tinted). Compact, the time of whichever is going; a click on it starts or
+// pauses it.
 // properties (card): { mode: "auto" | "timer" | "stopwatch" }
 Panel {
   id: root
@@ -30,7 +31,7 @@ Panel {
   readonly property string mode: {
     if (root.picked !== "")
       return root.picked;
-    const wanted = root.properties.mode ?? "auto";
+    const wanted = root.properties.mode;
     if (wanted !== "auto")
       return wanted;
     return !StopwatchManager.timerIdle || StopwatchManager.stopwatchIdle ? "timer" : "stopwatch";
@@ -59,6 +60,10 @@ Panel {
     icon: !StopwatchManager.timerIdle ? "hourglass_top" : "timer_play"
     value: !StopwatchManager.timerIdle ? StopwatchManager.timerText : StopwatchManager.elapsedText
     label: !StopwatchManager.timerIdle ? (StopwatchManager.timer.label || I18n.tr("Timer")) : I18n.tr("Stopwatch")
+    clickable: true
+    onClicked: ActionsManager.run(StopwatchManager.timerIdle ? "stopwatch" : "timerToggle", {
+      "fromScreen": true
+    })
   }
 
   SegmentRow {

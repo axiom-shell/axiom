@@ -6,22 +6,15 @@ import qs.components.methods
 TestCase {
   name: "BarBoxes"
 
-  function test_items_from_options() {
-    const options = {
-      "cpu": "showCpu",
-      "mem": "showMemory",
-      "gpu": "showGpu"
-    };
-    compare(BarBoxes.fromOptions(options, {
-      "showCpu": true,
-      "showMemory": false,
-      "showGpu": true
-    }), ["cpu", "gpu"]);
-    // An option left out is off
-    compare(BarBoxes.fromOptions(options, {}), []);
-    compare(BarBoxes.fromOptions(null, {
-      "showCpu": true
-    }), []);
+  function test_items_from_list() {
+    const ids = ["cpu", "mem", "gpu"];
+    // In `ids`' order, whatever the chosen list's
+    compare(BarBoxes.fromList(ids, ["gpu", "cpu"]), ["cpu", "gpu"]);
+    // An id not in `ids` is dropped
+    compare(BarBoxes.fromList(ids, ["disk", "mem"]), ["mem"]);
+    compare(BarBoxes.fromList(ids, []), []);
+    compare(BarBoxes.fromList(ids, undefined), []);
+    compare(BarBoxes.fromList(ids, null), []);
   }
 
   function test_sectionModel() {

@@ -219,7 +219,7 @@ Item {
           length: root._layout.lengths[index] ?? root.cellLook.length
           shape: root._shapes?.[index] ?? null
           room: root._rooms?.[index] ?? null
-          labels: root.properties.labels
+          cellLabels: root.properties.cellLabels
           label: _content ? _content.number : ""
           glyph: _content?.kind === "glyph" ? _content.text : ""
           text: _content?.kind === "text" || _content?.kind === "name" ? _content.text : ""

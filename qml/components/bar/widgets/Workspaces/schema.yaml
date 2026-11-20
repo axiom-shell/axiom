@@ -19,7 +19,7 @@ popout:
         - {/Workspaces.layout: grid}
         - {/Workspaces.strips: {notEmpty: true}}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
-order: [showBackground, backgroundColor, solidBoxes, leadIcon, showEmpty, monitorOnly, labels, relativeNumbers, workspaceLabels, useNames, showAppIcons, appIconsLayout, appIconsCount, appIconsMax, stripWindows, activeWorkspaceIcons, specialWorkspaces, specialWorkspaceLabel, specialWorkspaceSplit, spacing, wideActive, urgentPulse, clickToSwitch, scrollToSwitch, scrollReverse, popout, foregroundColor, hoverColor, activeColor, occupiedColor, emptyColor, urgentColor]
+order: [showBackground, backgroundColor, solidBoxes, leadIcon, showEmpty, monitorOnly, cellLabels, relativeNumbers, workspaceLabels, useNames, showAppIcons, appIconsLayout, appIconsCount, appIconsMax, stripWindows, activeWorkspaceIcons, specialWorkspaces, specialWorkspaceLabel, specialWorkspaceSplit, spacing, wideActive, urgentPulse, clickToSwitch, scrollToSwitch, scrollReverse, popout, foregroundColor, hoverColor, activeColor, occupiedColor, emptyColor, urgentColor]
 settings:
   showEmpty:
     type: boolean
@@ -33,7 +33,7 @@ settings:
     default: false
     x-showIf: {/Workspaces.layout: standard, /$supports.dynamicWorkspaces: false}
     description: Hide workspaces on other monitors.
-  labels:
+  cellLabels:
     type: string
     title: Labels
     x-control: toggle
@@ -53,7 +53,7 @@ settings:
     title: Relative numbers
     default: false
     x-showIf:
-      labels: numbers
+      cellLabels: numbers
       anyOf:
         - {/Workspaces.layout: [perMonitor, grid, scrolling]}
         - {/$supports.dynamicWorkspaces: true}
@@ -283,7 +283,7 @@ settings:
       $bar.widgetTextColor: ''
       anyOf:
         - {solidBoxes: true}
-        - {$bar.cellsFilled: true, labels: [numbers, dots]}
+        - {$bar.cellsFilled: true, cellLabels: [numbers, dots]}
         - {$bar.cellsFilled: true, workspaceLabels: {notEmpty: true}}
         - {$bar.cellsFilled: true, useNames: true}
   hoverColor:

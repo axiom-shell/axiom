@@ -17,7 +17,8 @@ import qs.components.methods
 // card): a header with do not disturb and clear all, then one card per app
 // (the shell's own, per source), newest first, then the Quiet section
 // pinned to the end (silent ones, folded shut by default, opening toward
-// the alerts up to half the list's room).
+// the alerts up to half the list's room). Compact, the count; a click on
+// it toggles do not disturb.
 Panel {
   id: root
 
@@ -29,6 +30,10 @@ Panel {
     iconColor: NotificationManager.count > 0 ? Style.accent : Style.textMuted
     value: String(NotificationManager.count)
     label: I18n.tr(NotificationManager.dnd ? "muted" : "notifications")
+    clickable: true
+    onClicked: ActionsManager.run("toggleDnd", {
+      "fromScreen": true
+    })
   }
 
   // The Quiet block flips with the panel (Panel.flips): a nested layout

@@ -6,9 +6,5 @@ card: standard
 order: [tile, card, quiet, shows]
 settings:
   shows:
-    type: array
-    title: Shows
-    items: {type: string, enum: [camera, micUse, screenShare]}
-    x-enumLabels: {camera: Camera, micUse: Microphone in use, screenShare: Screen sharing}
-    x-enumIcons: {camera: videocam, micUse: record_voice_over, screenShare: screen_share}
+    $ref: '#/definitions/PrivacyShows'
     default: [camera, micUse, screenShare]

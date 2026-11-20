@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.services.system
 import qs.config
+import qs.components.methods
 import qs.components.bar.widgets.base
 
 // Caps Lock, Num Lock and Scroll Lock (those its settings show), from
@@ -21,28 +22,24 @@ BarWidget {
   Component.onDestruction: LockKeysManager.release(root)
 
   readonly property var _glyphs: ({
-      "caps": "keyboard_capslock",
-      "num": "dialpad",
-      "scroll": "swap_vert"
+      "capsLock": "keyboard_capslock",
+      "numLock": "dialpad",
+      "scrollLock": "swap_vert"
     })
 
   function isOn(key: string): bool {
-    return key === "caps" ? LockKeysManager.capsLock : key === "num" ? LockKeysManager.numLock : LockKeysManager.scrollLock;
+    return key === "capsLock" ? LockKeysManager.capsLock : key === "numLock" ? LockKeysManager.numLock : LockKeysManager.scrollLock;
   }
   // A key's short name, its label in a box of its own
   function shortName(key: string): string {
-    return key === "caps" ? I18n.tr("Caps") : key === "num" ? I18n.tr("Num") : I18n.tr("Scroll");
+    return key === "capsLock" ? I18n.tr("Caps") : key === "numLock" ? I18n.tr("Num") : I18n.tr("Scroll");
   }
   function keyName(key: string): string {
-    return key === "caps" ? I18n.tr("Caps Lock") : key === "num" ? I18n.tr("Num Lock") : I18n.tr("Scroll Lock");
+    return key === "capsLock" ? I18n.tr("Caps Lock") : key === "numLock" ? I18n.tr("Num Lock") : I18n.tr("Scroll Lock");
   }
 
   // The keys its settings show
-  items: ["caps", "num", "scroll"].filter(k => root.properties[{
-        "caps": "showCaps",
-        "num": "showNum",
-        "scroll": "showScroll"
-      }[k]])
+  items: BarBoxes.fromList(["capsLock", "numLock", "scrollLock"], root.properties.shows)
   readonly property bool anyOn: root.shownItems.some(k => root.isOn(k))
 
   hidden: !LockKeysManager.available || root.shownItems.length === 0 || (root.properties.hideWhenOff && !root.anyOn)

@@ -9,6 +9,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 ### Adding a module type
 A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` beside it (the build expands it over `definitions/kinds/ModuleBase.yaml`, which adds the `place` property and the hosts; see [Config manager](../core/config-manager.md) › The shape of config.json). The steps: [overlay-module recipe](../../recipes/overlay-module.md).
 - Every module takes every size, from one unit up. `defaultSize` in its `schema.yaml` is only the size it is added at (left out, a card: `OverlayConfig.defaultSize`); `minSize` is only how far a drop into a gap shrinks it.
+- A module reads `root.properties.<key>` with no `??`: every host fills the schema defaults. `OverlaySlot` gets them from config (filled at load), `ModuleGrid.expand` and `BarPopouts` through `OverlayConfig.moduleProperties(type, properties)`; a new host loading content by URL goes through it too.
 - Helpers used only by content go in `content/parts/` (subfolders for groups, e.g. `parts/settings/`).
 - New types show up in the pickers automatically (see [Layouts editor](layouts-editor.md), module and view pickers).
 
@@ -28,6 +29,7 @@ A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` bes
   - a one-row form for strips where it has one (NowPlaying, AudioMixer's slider, Network).
 - Thresholds that depend on text are in px from `Appearance.fontSize`, not grid units.
 - A module reads `Style` for its look: a header is `ModuleHeader`; text by `role` and `tone`, never `font.bold` or `Theme.`; a figure's size is fitted to its box (`// fitted:`); status colours are tone strings (`"error"`, `"warning"`, `"success"`) or `Style` roles (Battery, Disks). Battery, Disks, Caffeine and WeatherForecast are the copy targets.
+- One key `style` for presentations that differ in kind. `auto` is resolved by `ModuleStyles.resolvedStyle(root.properties.style, [...], root.innerWidth, root.innerHeight)` into `readonly property string shownStyle`. Candidates go in preference order, in px from `Appearance.fontSize` (never cols/rows), ending with the fallback at `minWidth: 0, minHeight: 0`. Where a shared part draws the styles, that part resolves them from its own size and the module passes `style`. `SlotContext.compact` stays the compact decision.
 - An edge menu's units aren't square. A layout choice that must match the slot's real proportions reads `innerWidth` / `innerHeight` rather than `shape` (NowPlaying's side-by-side).
 - A bare edge menu module drops its padding, unless it draws a box of its own (`drawsBox`, e.g. NowPlaying's blurred cover), which keeps it inside that box.
 - On an overlay page with `Overlay.moduleBorders` off a module is bare too, but keeps its padding (`host.padded`).
@@ -43,7 +45,7 @@ A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` bes
 - `ItemRow`: a plain list entry (a hover state layer, `label` title, `caption` subtitle, `micro` detail; `dimmed` for a done one; the name shows whole in a tooltip while cut). An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a faint `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
 - `KeybindSection` (a section of binds as a card, grouped by modifiers), `KeybindRow` (keys first), `KeyCap` (a folded direction set in one cap) and `ModifierCap` draw keybinds read-only, for the Keybinds page and the Cheatsheet module.
 - `FigureValue`: the value + unit row of `StatFigure` and `CompactFigure` (the value in `Style.roleDisplay.weight`; sizes fitted to their box, marked `// fitted:`).
-- `CompactFigure`: fills its box (inside `pad`); its label is plain text.
+- `CompactFigure`: fills its box (inside `pad`); its label is plain text. `clickable` makes it a `Pressable` button (`clicked`: tint, ring, Tab stop, Space/Enter): a toggle module's small mode is `CompactFigure { clickable; onClicked: ActionsManager.run(id, {"fromScreen": true}) }`.
   - Icon, value and label stacked, or the icon beside them in a wide box.
   - Drops the label and then the icon as room runs out, shrinking the value to fit.
 - `EmptyState`: a faint `xl` icon over a `caption` line, with an optional `hint` and an `actionText` button (`triggered`); takes an `availableHeight` and drops to its icon when short.

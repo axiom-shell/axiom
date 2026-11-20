@@ -1,0 +1,10 @@
+# The HourFormat definition (#/definitions/HourFormat): a clock's own hour format, `default` follows Date & time. Uses override `x-showIf`, `x-scope`, `x-group`.
+
+x-inline: true
+type: string
+title: Hour format
+x-control: toggle
+enum: [default, '12', '24']
+x-enumLabels: {default: Default, '12': 12h, '24': 24h}
+default: default
+x-link: {setting: DateTime.hourFormat}

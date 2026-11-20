@@ -5,9 +5,9 @@ group: Session
 defaultSize: [6, 3]
 required: true
 hosts: {only: [greeter]}
-order: [centered, userField, showPicture, placeholder, showMessages]
+order: [alignment, userField, showPicture, placeholder, showMessages]
 settings:
-  centered: {type: boolean, title: Centered text, default: true}
+  alignment: {$ref: '#/definitions/TextAlignment'}
   userField:
     type: string
     title: User

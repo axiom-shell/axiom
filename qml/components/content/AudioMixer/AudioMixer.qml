@@ -16,13 +16,13 @@ import qs.components.content.base
 // Devices tab (pick the default, adjust each device). As the Volume
 // ("output") and Microphone ("input") widgets' popout, or an overlay card
 // with its own output/input switch (a wide card puts the device beside
-// the list; a short one is just the device's slider; compact, its figure).
+// the list; a short one is just the device's slider; compact, its figure, which mutes on a click).
 // properties: { mode: "output" | "input" }
 Panel {
   id: root
 
   // A card's configured mode; a popout sets it from its anchor's payload
-  property string mode: root.properties.mode ?? "output"
+  property string mode: root.properties.mode
   property real maxVolume: 1.0
 
   property int currentTab: 0
@@ -75,6 +75,7 @@ Panel {
   compactContent: Item {
     readonly property var node: root.defaultDevice
     readonly property bool muted: node?.audio?.muted ?? false
+    readonly property string action: root.isInput ? "toggleMicMute" : "toggleMute"
     CompactFigure {
       anchors.fill: parent
       icon: parent.muted ? root.mutedGlyph : root.unmutedGlyph
@@ -82,14 +83,10 @@ Panel {
       value: String(Math.round((parent.node?.audio?.volume ?? 0) * 100))
       unit: "%"
       label: I18n.tr(root.isInput ? "Input" : "Output")
-    }
-    MouseArea {
-      anchors.fill: parent
-      cursorShape: Qt.PointingHandCursor
-      onClicked: {
-        ShellManager.onScreen(root.osdKind);
-        AudioManager.toggleNodeMute(parent.node);
-      }
+      clickable: ActionsManager.available(parent.action)
+      onClicked: ActionsManager.run(parent.action, {
+        "fromScreen": true
+      })
     }
   }
 

@@ -11,7 +11,7 @@ import qs.components.content.base
 
 // App launcher buttons. `apps` lists desktop entry ids (e.g. firefox,
 // kitty); left empty, it shows the most recently launched apps.
-// properties: { apps: [...], showLabels }
+// properties: { apps: [...], labels }
 Card {
   id: root
 
@@ -50,7 +50,7 @@ Card {
         id: app
         required property var modelData
         required property int index
-        readonly property bool labelled: root.properties.showLabels && height > Appearance.fontSize * 5
+        readonly property bool labelled: root.properties.labels === "show" || root.properties.labels === "auto" && height > Appearance.fontSize * 5
         x: grid.tileX(index)
         y: grid.tileY(index)
         width: grid.tileWidth

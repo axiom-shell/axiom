@@ -112,9 +112,18 @@ PopoutWrapperBase {
       // The same type for another widget (a switch in place) is built anew
       if (loader.source.toString() === url.toString())
         loader.source = "";
-      loader.setSource(url, {
+      // A module's options arrive at their defaults, as a card has them; a
+      // schema-less content keeps what its widget sends (SystemTray is a
+      // bare Item and gets nothing: its payload has none)
+      const props = {
         "wrapper": root
-      });
+      };
+      const given = root.currentData?.properties;
+      if (OverlayConfig.moduleInfo(name) !== null)
+        props.properties = OverlayConfig.moduleProperties(name, given ?? {});
+      else if (given !== undefined)
+        props.properties = given;
+      loader.setSource(url, props);
     } else if (!loader.active)
       // Cleared, so reactivating doesn't first rebuild the previous popout
       loader.source = "";
@@ -604,6 +613,9 @@ PopoutWrapperBase {
           if (item) {
             if (root.currentData) {
               for (let key in root.currentData) {
+                // A module's `properties` was set, filled, at setSource
+                if (key === "properties" && OverlayConfig.moduleInfo(root.currentData.name) !== null)
+                  continue;
                 if (item.hasOwnProperty(key)) {
                   // Content may derive one itself (a readonly property):
                   // skip it rather than abort

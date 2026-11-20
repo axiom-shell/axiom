@@ -9,7 +9,7 @@ appearance:
     enum: [label, icon, ring, segments, sparkline, ticker, stacked]
     description: 'Ring, segments: signal. Sparkline: download speed. Ticker, stacked: network name.'
 colors: {variant: standard, backgroundColor: {title: Connected color}}
-order: [appearance, showDevice, showVpn, vpnColor, middleCommand, popout, popoutVpn, backgroundColor, foregroundColor, disconnectedColor]
+order: [appearance, showDevice, showVpnLock, vpnColor, middleCommand, popout, popoutVpn, backgroundColor, foregroundColor, disconnectedColor]
 settings:
   showDevice:
     type: boolean
@@ -26,7 +26,7 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: Disconnected color
     x-autoColor: critical
-  showVpn:
+  showVpnLock:
     type: boolean
     title: VPN lock
     default: true
@@ -43,4 +43,4 @@ settings:
     title: VPN lock color
     x-autoColor: alt
     x-autoGradient: true
-    x-showIf: {showVpn: true}
+    x-showIf: {showVpnLock: true}

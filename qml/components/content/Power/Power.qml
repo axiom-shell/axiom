@@ -23,7 +23,7 @@ Card {
   // The schema's four, whatever the file says (never log out or lock
   // here), less what this machine can't do (hibernate without
   // SessionManager.canHibernate)
-  readonly property var actions: (root.properties.actions ?? []).filter(a => ["suspend", "hibernate", "reboot", "poweroff"].includes(a) && SessionManager.sessionActionInfo(a) !== null)
+  readonly property var actions: root.properties.actions.filter(a => ["suspend", "hibernate", "reboot", "poweroff"].includes(a) && SessionManager.sessionActionInfo(a) !== null)
 
   function press(action) {
     if (!gate.pass(action, SessionManager.destructiveActions.includes(action)) || !root.live)

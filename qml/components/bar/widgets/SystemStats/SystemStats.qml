@@ -16,55 +16,45 @@ import qs.components.bar.widgets.base
 BarWidget {
   id: root
 
-  // Every metric: the option that shows it, SystemManager's name for it,
-  // whether the popout graphs it (disk has no history), and the
-  // SystemManager list its sparkline draws
+  // Every metric: its id (the `metrics` setting's), whether the popout
+  // graphs it (disk has no history), and the SystemManager list its
+  // sparkline draws
   readonly property var _metrics: [
     {
-      "key": "cpu",
-      "history": "cpuHistory",
-      "option": "showCpu",
       "metric": "cpu",
+      "history": "cpuHistory",
       "graphed": true
     },
     {
-      "key": "mem",
-      "history": "memHistory",
-      "option": "showMemory",
       "metric": "mem",
+      "history": "memHistory",
       "graphed": true
     },
     {
-      "key": "temp",
-      "history": "cpuTempHistory",
-      "option": "showTemp",
       "metric": "cpuTemp",
+      "history": "cpuTempHistory",
       "graphed": true
     },
     {
-      "key": "gpu",
-      "history": "gpuHistory",
-      "option": "showGpu",
       "metric": "gpu",
+      "history": "gpuHistory",
       "graphed": true
     },
     {
-      "key": "disk",
-      "history": "",
-      "option": "showDisk",
       "metric": "disk",
+      "history": "",
       "graphed": false
     }
   ]
-  function _metric(key) {
-    return root._metrics.find(m => m.key === key);
+  function _metric(id) {
+    return root._metrics.find(m => m.metric === id);
   }
 
   // Whether this machine can report a metric. Disk reads the live disks
   // map, so only call it where re-evaluating on every sample is harmless.
   function _reportable(key) {
     switch (key) {
-    case "temp":
+    case "cpuTemp":
       return SystemManager.hasCpuTemp;
     case "gpu":
       return SystemManager.hasGpu;
@@ -80,7 +70,7 @@ BarWidget {
   readonly property var _captions: ({
       "cpu": "CPU",
       "mem": "RAM",
-      "temp": "Temp",
+      "cpuTemp": "Temp",
       "gpu": "GPU",
       "disk": "Disk"
     })
@@ -108,7 +98,7 @@ BarWidget {
           "level": SystemManager.memUsage
         };
       }
-    case "temp":
+    case "cpuTemp":
       return {
         "icon": "thermometer",
         "value": `${SystemManager.cpuTemp}°`,
@@ -134,9 +124,9 @@ BarWidget {
       }
     }
   }
-  // Its metrics from config, the ones switched on: the template counts
-  // them. One the machine can't report is a hidden segment, never left out, so the count stays config's.
-  items: root._metrics.filter(m => root.properties[m.option]).map(m => m.key)
+  // Its metrics from config, the ones chosen in the fixed order: the template
+  // counts them. One the machine can't report is a hidden segment, never left out, so the count stays config's.
+  items: BarBoxes.fromList(root._metrics.map(m => m.metric), root.properties.metrics)
 
   // The shown ones this machine reports, as a string: it notifies only when
   // the set changes, not on every sample (disk reads the live disks map)
@@ -188,7 +178,7 @@ BarWidget {
   // Ask only for what's shown; re-acquiring replaces the old request
   readonly property var statsRequest: ({
       "interval": root.properties.interval,
-      "metrics": root.items.map(k => root._metric(k).metric),
+      "metrics": root.items,
       "diskPaths": root.items.includes("disk") ? [root.properties.diskPath] : [],
       "history": root.properties.appearance.style === "sparkline"
     })
@@ -199,7 +189,7 @@ BarWidget {
   // The popout graphs what the bar shows. `graphed` is checked first, so
   // this never reads the disks map and stays from config and what the
   // machine can report only
-  readonly property var graphMetrics: root.items.filter(k => root._metric(k).graphed && root._reportable(k)).map(k => root._metric(k).metric)
+  readonly property var graphMetrics: root.items.filter(k => root._metric(k).graphed && root._reportable(k))
 
   PopoutAnchor {
     hitArea: root.hitArea
