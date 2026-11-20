@@ -61,28 +61,13 @@ ColumnLayout {
   // A field's unsaved-edit dot was clicked (with `changedAt`)
   signal discardAt(var path)
 
-  // Keys an icon field draws in its own row (`x-iconText`): no rows of
-  // their own. Not `x-rowDraws`, nor an `x-row` object's own row: an
-  // `x-row` is drawn only on the settings page, so here the keys it names,
-  // and the fields of an object it draws, keep their own rows
-  readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.iconTextKeys(prop)), [])
   // The rows' indent tree (RowTree)
   readonly property var tree: RowTree.plan(root.rows)
   // Behind a shut fold row (FoldFormRow): every row hidden
   property bool folded: false
 
   // Depends on the schema only, so edits update the rows in place
-  readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
-    const rank = key => {
-      const index = (root.order ?? []).indexOf(key);
-      return index < 0 ? Infinity : index;
-    };
-    return rank(a) - rank(b);
-  }).reduce((rows, key) => rows.concat(SchemaLayout.rows({
-      "properties": {
-        [key]: root.propertiesSchema[key]
-      }
-    }, []).filter(row => row.kind !== "group" && row.kind !== "object")), [])
+  readonly property var rows: SchemaLayout.formRows(root.propertiesSchema ?? {}, root.order ?? [])
 
   function valueAt(path) {
     return Utils.valueAt(root.values, path) ?? SchemaLayout.defaultAt({
@@ -120,7 +105,7 @@ ColumnLayout {
     if (fields.count <= 0)
       return false;
     for (let i = 0; i < fields.count; i++) {
-      if (fields.itemAt(i)?.shown !== false)
+      if ((fields.itemAt(i) as SchemaFormRow)?.shown !== false)
         return false;
     }
     return true;

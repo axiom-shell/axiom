@@ -278,6 +278,43 @@ TestCase {
     compare(SchemaLayout.drawnKeys(undefined), []);
   }
 
+  // formRows: keys an icon field draws are left out, `order` goes first,
+  // group and object rows are dropped
+  function test_formRows() {
+    const props = {
+      "icon": {
+        "type": "string",
+        "x-iconText": {
+          "mode": "show",
+          "text": "text"
+        }
+      },
+      "show": {
+        "type": "string"
+      },
+      "text": {
+        "type": "string"
+      },
+      "a": {
+        "type": "string"
+      },
+      "b": {
+        "type": "string"
+      }
+    };
+    const paths = order => SchemaLayout.formRows(props, order).map(r => r.path.join("."));
+    compare(paths([]), ["icon", "a", "b"], "mode and text keys are drawn by icon");
+    compare(paths(["b", "icon"]), ["b", "icon", "a"], "order first");
+    compare(Object.keys(SchemaLayout.widgetCards({
+      "a": {},
+      "popout": {}
+    }).options), ["a"]);
+    compare(Object.keys(SchemaLayout.widgetCards({
+      "a": {},
+      "popout": {}
+    }).popout), ["popout"]);
+  }
+
   // A `$ref` property's fields are rows once the schema is resolved (the
   // settings page's Changed from default and /config list Bars.style.*)
   function test_rows_of_a_resolved_ref() {
