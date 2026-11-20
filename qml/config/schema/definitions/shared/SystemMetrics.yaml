@@ -1,0 +1,9 @@
+# The SystemMetrics definition (#/definitions/SystemMetrics): which system metrics show, as an id array. Uses override `items` and `default`.
+
+x-inline: true
+type: array
+title: Metrics
+x-enumLabels: {cpu: CPU, mem: Memory, gpu: GPU, cpuTemp: CPU temperature, net: Network, disk: Disk}
+items:
+  type: string
+  enum: [cpu, mem, gpu, cpuTemp, net, disk]

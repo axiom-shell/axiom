@@ -8,28 +8,22 @@ appearance:
     enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
     description: 'Pill: with one metric shown, else fill. Disk: fill, not sparkline.'
 colors: standard
-order: [appearance, showCpu, showMemory, memoryFormat, showTemp, showGpu, showDisk, diskPath, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
+order: [appearance, metrics, memoryFormat, diskPath, interval, warnThreshold, popout, backgroundColor, foregroundColor, warnColor]
 settings:
-  showCpu: {type: boolean, title: CPU usage, default: true}
-  showMemory: {type: boolean, title: Memory, default: true}
+  metrics:
+    $ref: '#/definitions/SystemMetrics'
+    default: [cpu, mem, cpuTemp]
+    items:
+      type: string
+      enum: [cpu, mem, cpuTemp, gpu, disk]
+    description: A metric this machine can't report is hidden.
   memoryFormat:
     type: string
     title: Memory format
     default: percent
     x-control: toggle
     enum: [percent, used]
-    x-showIf: {showMemory: true}
-  showTemp:
-    type: boolean
-    title: CPU temperature
-    default: true
-    description: Hidden when no temperature sensor is found.
-  showGpu:
-    type: boolean
-    title: GPU usage
-    default: false
-    description: Hidden when no GPU is found.
-  showDisk: {type: boolean, title: Disk usage, default: false}
+    x-showIf: {metrics: {includes: mem}}
   diskPath:
     x-scope: machine
     type: string
@@ -37,7 +31,7 @@ settings:
     x-control: folder
     default: /
     description: The disk holding this path.
-    x-showIf: {showDisk: true}
+    x-showIf: {metrics: {includes: disk}}
   interval:
     type: integer
     title: Interval

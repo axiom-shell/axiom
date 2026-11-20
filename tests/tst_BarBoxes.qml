@@ -24,6 +24,17 @@ TestCase {
     }), []);
   }
 
+  function test_items_from_list() {
+    const ids = ["cpu", "mem", "gpu"];
+    // In `ids`' order, whatever the chosen list's
+    compare(BarBoxes.fromList(ids, ["gpu", "cpu"]), ["cpu", "gpu"]);
+    // An id not in `ids` is dropped
+    compare(BarBoxes.fromList(ids, ["disk", "mem"]), ["mem"]);
+    compare(BarBoxes.fromList(ids, []), []);
+    compare(BarBoxes.fromList(ids, undefined), []);
+    compare(BarBoxes.fromList(ids, null), []);
+  }
+
   function test_sectionModel() {
     const itemsOf = e => e.type === "multi" ? ["a", "b"] : [];
     const m = BarBoxes.sectionModel([

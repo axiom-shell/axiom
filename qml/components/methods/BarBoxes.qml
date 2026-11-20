@@ -16,6 +16,13 @@ QtObject {
     return Object.keys(options ?? {}).filter(item => properties?.[options[item]] === true);
   }
 
+  // The ids of `ids` that `chosen` (an id-array setting) holds, in `ids`'
+  // order whatever `chosen`'s: a bar widget's `items`, and the bar's box
+  // expansion (BarsConfig.boxItems). A missing `chosen` holds none.
+  function fromList(ids, chosen) {
+    return ids.filter(id => (chosen ?? []).includes(id));
+  }
+
   // A section's shown widgets from its config array (`itemsOf(config)`: see
   // `expand`): each { type, properties, autoColors, layout, configIndex,
   // visible } with `configIndex` its place in the array, which hidden
