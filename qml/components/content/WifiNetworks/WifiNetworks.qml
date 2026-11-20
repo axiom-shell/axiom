@@ -14,7 +14,7 @@ import qs.components.content.parts
 // Wi-Fi menu for the Network widget: radio switch, the connection editor,
 // VPN import and airplane mode (icon buttons as high as the switch), the
 // current connection (address and throughput, folding open its details,
-// folded at first), the VPNs (one summary row
+// folded at first; left out by a card's showConnection), the VPNs (one summary row
 // with a toggle for the VPN up or last used, folding open every VPN and
 // the public IP check; left out by showVpn / the widget's popoutVpn), the
 // networks in range (scanning while shown), and a footer (hidden
@@ -223,6 +223,7 @@ Panel {
   // folding open its details
   FoldRow {
     id: connectionRow
+    visible: root.properties.showConnection
     Layout.fillHeight: false
     foldable: root.info.kind !== ""
     open: root.detailsOpen
@@ -281,7 +282,7 @@ Panel {
     id: detailsLoader
     Layout.fillWidth: true
     Layout.leftMargin: Widget.iconButton + Widget.padding
-    active: root.detailsOpen && root.info.kind !== ""
+    active: root.properties.showConnection && root.detailsOpen && root.info.kind !== ""
     visible: active
 
     sourceComponent: ConnectionDetails {
@@ -373,32 +374,10 @@ Panel {
       }
 
       // What the internet sees, to check the traffic goes through the VPN
-      RowLayout {
-        visible: root.vpnOpen && VpnManager.anyActive && VpnConfig.publicIpUrl !== ""
-        Layout.fillWidth: true
-        Layout.leftMargin: Widget.padding
-        Layout.preferredHeight: root.smallLine
-        spacing: Widget.spacing
-
-        StyledLabel {
-          text: I18n.tr("Public IP")
-          role: "micro"
-          tone: "muted"
-        }
-        StyledLabel {
-          Layout.fillWidth: true
-          text: VpnManager.publicIpBusy ? I18n.tr("Checking…") : VpnManager.publicIp || "—"
-          overflow: "line"
-          role: "micro"
-        }
-        FlatIconButton {
-          size: root.smallLine
-          enabled: !VpnManager.publicIpBusy
-          iconText: "travel_explore"
-          iconSize: Style.iconXs
-          tooltipText: I18n.tr("Check (asks {0})", VpnConfig.publicIpUrl)
-          onClicked: VpnManager.checkPublicIp()
-        }
+      PublicIpRow {
+        id: ip
+        visible: root.vpnOpen && ip.available
+        lineHeight: root.smallLine
       }
 
       // As far below as the panel's separator is above, so the folded row

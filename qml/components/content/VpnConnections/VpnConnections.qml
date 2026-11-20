@@ -14,6 +14,7 @@ import qs.components.content.parts
 // that connects or disconnects on click (a password asked for shows in
 // the shared prompt); Import asks for a .conf or .ovpn file
 // (VpnManager.pickImport), Edit connections runs Apps.networkEditor.
+// A card's showPublicIp adds the public IP check (PublicIpRow).
 // The Vpn widget's popout, and an overlay card (compact: the VPN up, or
 // off; a click on it toggles the VPN).
 Panel {
@@ -72,6 +73,11 @@ Panel {
 
   StyledSeparator {
     Layout.fillWidth: true
+  }
+
+  PublicIpRow {
+    id: ip
+    visible: root.properties.showPublicIp && ip.available
   }
 
   // Grows to list every row (from compact, to the full layout)

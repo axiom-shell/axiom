@@ -3,3 +3,11 @@ icon: vpn_lock
 group: Network & devices
 defaultSize: [4, 4]
 grow: standard
+settings:
+  copyValue:
+    type: string
+    title: Copies
+    default: ip
+    x-control: toggle
+    enum: [ip, dnsName]
+    x-enumLabels: {ip: IP address, dnsName: DNS name}

@@ -13,27 +13,45 @@ import qs.components.content.base
 // graph, and the VPNs up (VpnManager, Tailscale among them unless
 // VpnConfig.showTailscale is off: then Tailscale's own state). A strip is one row over
 // the graphs (opening the Wi-Fi networks over the grid); compact, the
-// connection and its download rate.
+// connection and its download rate. Settings leave out the address (never shown
+// on the lock screen or greeter), the VPN lines and the graphs.
 Card {
   id: root
 
   readonly property var info: NetworkingManager.netInfo
   readonly property string kindIcon: root.info.kind === "wifi" ? "signal_wifi_4_bar" : root.info.kind === "ethernet" ? "lan" : "dns"
+  // Never on the lock screen or greeter (screen shares, shoulder surfing)
+  readonly property bool showsIp: root.properties.showIp && root.host.kind !== "lockscreen" && root.host.kind !== "greeter"
+  readonly property bool showsVpn: root.properties.showVpn
   // "Connected 100.x.y.z", or "" when Tailscale isn't installed or is a
-  // VPN row
-  readonly property string tailscale: TailscaleManager.available && !VpnConfig.showTailscale ? (TailscaleManager.stateText + " " + TailscaleManager.ip).trim() : ""
+  // VPN row; the state alone without the address
+  readonly property string tailscale: TailscaleManager.available && !VpnConfig.showTailscale ? (TailscaleManager.stateText + " " + (root.showsIp ? TailscaleManager.ip : "")).trim() : ""
   // "Work, Home", or "" with no VPN up
   readonly property string vpns: VpnManager.activeRows.map(r => r.name).join(", ")
+  // The edited options reach a shown card: acquires follow them
+  readonly property var netRequest: ({
+      "metrics": ["net"],
+      "history": root.properties.showChart,
+      "interval": 1000
+    })
+  onNetRequestChanged: SystemManager.acquire(root, root.netRequest)
+  onShowsVpnChanged: {
+    if (root.showsVpn) {
+      TailscaleManager.acquire(root);
+      VpnManager.acquire(root);
+    } else {
+      TailscaleManager.release(root);
+      VpnManager.release(root);
+    }
+  }
 
   Component.onCompleted: {
     NetworkingManager.refreshIp();
-    SystemManager.acquire(root, {
-      "metrics": ["net"],
-      "history": true,
-      "interval": 1000
-    });
-    TailscaleManager.acquire(root);
-    VpnManager.acquire(root);
+    SystemManager.acquire(root, root.netRequest);
+    if (root.showsVpn) {
+      TailscaleManager.acquire(root);
+      VpnManager.acquire(root);
+    }
   }
   Component.onDestruction: {
     SystemManager.release(root);
@@ -87,6 +105,7 @@ Card {
 
     sourceComponent: Item {
       Graphs {
+        visible: root.properties.showChart
         anchors.fill: parent
         anchors.margins: Appearance.borderWidth
         opacity: 0.5 // style-exempt: backdrop graphs behind the figures
@@ -149,13 +168,13 @@ Card {
         Layout.fillWidth: true
         spacing: Widget.spacing * 1.5
         StyledText {
-          visible: root.info.ip !== ""
+          visible: root.showsIp && root.info.ip !== ""
           text: root.info.ip
           role: "caption"
           tone: "faint"
         }
         StyledText {
-          visible: root.vpns !== ""
+          visible: root.showsVpn && root.vpns !== ""
           width: Math.min(implicitWidth, parent.width)
           overflow: "line"
           text: I18n.tr("VPN · {0}", root.vpns)
@@ -163,7 +182,7 @@ Card {
           tone: "success"
         }
         StyledText {
-          visible: root.tailscale !== ""
+          visible: root.showsVpn && root.tailscale !== ""
           width: Math.min(implicitWidth, parent.width)
           overflow: "line"
           text: I18n.tr("Tailscale · {0}", root.tailscale)
@@ -173,9 +192,15 @@ Card {
       }
 
       Graphs {
+        visible: root.properties.showChart
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.topMargin: Widget.spacing / 2
+      }
+      // The rates stay at the foot without the graphs
+      Item {
+        visible: !root.properties.showChart
+        Layout.fillHeight: true
       }
 
       RowLayout {

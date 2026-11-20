@@ -99,19 +99,21 @@ Panel {
     required property int index
     readonly property var peer: root.shownPeers[index] ?? null
     property bool copied: false
+    // What a click copies: the DNS name when the card asks and it has one, else the address
+    readonly property string copyValue: root.embedded && root.properties.copyValue === "dnsName" && row.peer?.dnsName ? row.peer.dnsName : row.peer?.ips[0] ?? ""
 
     rowHeight: list.rowHeight
     connectable: false
     icon: root.osIcon(row.peer?.os ?? "")
     title: row.peer?.name ?? ""
-    status: row.copied ? I18n.tr("Copied {0}", row.peer?.ips[0] ?? "") : row.peer ? root.peerStatus(row.peer) : ""
+    status: row.copied ? I18n.tr("Copied {0}", row.copyValue) : row.peer ? root.peerStatus(row.peer) : ""
     statusColor: row.copied ? Style.textAccent : Style.textMuted
     connected: row.peer?.online ?? false
     onPeerChanged: row.copied = false
     onActivated: {
-      if ((row.peer?.ips.length ?? 0) === 0)
+      if (row.copyValue === "")
         return;
-      ClipboardManager.copyText(row.peer.ips[0]);
+      ClipboardManager.copyText(row.copyValue);
       row.copied = true;
     }
 

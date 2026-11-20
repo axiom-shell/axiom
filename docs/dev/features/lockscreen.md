@@ -77,6 +77,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Unlike a bare menu module, it keeps its padding (`SlotContext.pad`), since nothing else pads it.
 - **`Password` and `Greeting`** ignore `bare` here. Their boxes follow the layout's own `passwordBorder` / `greetingBorder` (off by default).
 - **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`, showing nothing private. What each may do there is its `x-lockActions` ([Schema annotations](../core/schema-annotations.md)); with none it only shows. `check_structure` fails any `XManager.method(` call in such a type or a part it uses that is neither a read (its allowlist) nor one of its actions' methods, but one marked `// lock-inert: <reason>` (a call that gates itself off there).
+  - Network shows no IP address (nor Tailscale's) here or on the greeter, whatever its `showIp`.
   - Power's `session` restarts and shuts down asking twice, and never logs out.
   - KeyboardLayout's `layout` switches the compositor's layouts alone, an engine's own typing layout among them: the password types through no input method ([input sources](input-sources.md)). It's in the lock screen's library, not its default layout.
 - A new module stays off the lock screen unless it is added there deliberately.

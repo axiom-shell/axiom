@@ -4698,6 +4698,11 @@
     "Auto: each tile's name when it fits.": "",
     "Opens each screenshot from this card in the annotation tool. Not recordings.": "",
     "Auto: by the card's size. Keyboard: what each key does.": "",
-    "When there's room.": ""
+    "When there's room.": "",
+    "DNS name": "",
+    "Copies": "",
+    "IP address": "",
+    "Connection": "",
+    "The connection in use and its details.": ""
   }
 }

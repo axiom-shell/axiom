@@ -42,7 +42,8 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
   - The `Vpn` bar widget: click toggles the last VPN, hover opens the popout, `hideWhenOff`.
   - The Network widget (`showVpnLock`): a lock on its icon, and the VPN's name in ticker and stacked styles; its Wi-Fi menu's VPN section unless `popoutVpn` is off (the `WifiNetworks` card's `showVpn`).
   - The Wi-Fi menu: a VPN section folded to one row (`VpnManager.folded`, remembered): what's up, or "Off · N saved", and a connect / disconnect button for the VPN up or the last used. Unfolded (a click on the row), every VPN and the public IP check. Hidden with no VPNs; its header's Import VPN button calls `pickImport`.
-  - The Network card's "VPN ·" line.
+  - The VPN card's `showPublicIp` adds the same public IP check (`PublicIpRow`) under its header; off by default.
+  - The Network card's "VPN ·" line (its `showVpn`; `showChart` and `showIp` leave out the graphs and the address, [lock screen](lockscreen.md)).
   - `/vpn [name]` in the launcher.
 
 ### Testing

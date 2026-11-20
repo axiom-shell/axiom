@@ -3,8 +3,13 @@ keyboard: true
 icon: wifi
 group: Network & devices
 grow: standard
-order: [showVpn, grow]
+order: [showConnection, showVpn, grow]
 settings:
+  showConnection:
+    type: boolean
+    title: Connection
+    default: true
+    description: The connection in use and its details.
   showVpn:
     type: boolean
     title: VPNs
