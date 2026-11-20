@@ -12,3 +12,6 @@ settings:
     title: Events
     default: true
     description: Dots on days with events, and the day's events where they fit.
+  showDate: {type: boolean, title: Date, default: true}
+  dateFormat: {$ref: '#/definitions/DateFormat', x-showIf: {showDate: true}}
+  calendars: {$ref: '#/definitions/Calendars', x-showIf: {showEvents: true}}

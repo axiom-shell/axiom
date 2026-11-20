@@ -20,12 +20,14 @@ ColumnLayout {
   property bool closable: false
   property real maxListHeight: Number.POSITIVE_INFINITY
   property bool readOnly: false
+  // The calendars whose events list (ids; empty: every shown calendar)
+  property var calendars: []
 
   signal eventClicked(var event)
   signal addClicked
   signal closed
 
-  readonly property var dayEvents: CalendarManager.eventsOn(root.dayKey)
+  readonly property var dayEvents: CalendarManager.eventsOn(root.dayKey, root.calendars)
 
   spacing: Widget.spacing / 2
 

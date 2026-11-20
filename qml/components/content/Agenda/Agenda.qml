@@ -15,7 +15,7 @@ import qs.components.content.parts.calendar
 // What's coming up: the shown calendars' events from today through `days`,
 // grouped by day; a click opens one in the editor, + adds one today.
 // Compact, the next event.
-// properties: { days, count }
+// properties: { days, count, calendars, showAllDay, showHeader }
 Panel {
   id: root
 
@@ -42,7 +42,7 @@ Panel {
     let left = root.properties.count;
     for (let i = 0; i < root.properties.days && left > 0; i++) {
       const key = CalendarEvents.addDays(root.todayKey, i);
-      const events = CalendarManager.eventsOn(key).filter(event => i > 0 || event.end > root.now).slice(0, left);
+      const events = CalendarManager.eventsOn(key, root.properties.calendars).filter(event => (root.properties.showAllDay || !event.allDay) && (i > 0 || event.end > root.now)).slice(0, left);
       if (events.length > 0)
         out.push({
           "key": key,
@@ -55,7 +55,7 @@ Panel {
   // Only while a first sync runs and nothing failed: a sync that never writes
   // events.json leaves lastSync 0 for good
   readonly property bool loading: CalendarManager.hasCalendars && CalendarManager.lastSync === 0 && CalendarManager.syncing && CalendarManager.errors.length === 0 && root.groups.length === 0 && !root.session.active
-  readonly property var next: CalendarEvents.nextEvent(CalendarManager.upcoming(root.now, root.now + root.properties.days * CalendarEvents.dayMs, false), root.now, root.properties.days * CalendarEvents.dayMs, false)
+  readonly property var next: CalendarEvents.nextEvent(CalendarManager.upcoming(root.now, root.now + root.properties.days * CalendarEvents.dayMs, false, root.properties.calendars), root.now, root.properties.days * CalendarEvents.dayMs, false)
 
   compactContent: CompactFigure {
     icon: "event_note"
@@ -73,7 +73,7 @@ Panel {
   }
 
   ModuleHeader {
-    visible: !root.session.active
+    visible: !root.session.active && root.properties.showHeader
     icon: "event_note"
     title: I18n.tr("Agenda")
     FlatIconButton {

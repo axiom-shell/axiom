@@ -521,7 +521,10 @@ QtObject {
     case "notes":
       return ["", ...NotesManager.allNotes];
     case "calendars":
-      // Those new events can go to
+      // `x-allCalendars`: every shown calendar (a card's filter, an array's
+      // items); else those new events can go to
+      if (fieldSchema["x-allCalendars"])
+        return CalendarManager.shownCalendars.map(calendar => calendar.id);
       return ["", ...CalendarManager.calendars.filter(calendar => calendar.writable).map(calendar => calendar.id)];
     }
     return null;

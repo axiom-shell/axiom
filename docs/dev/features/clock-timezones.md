@@ -35,6 +35,7 @@ How clocks show another time zone (the JS engine has no Intl), plus the Clock mo
   - **`analog`:** marks and hands as rotated Items. The hands turn clockwise through 0 with a `RotationAnimation`.
 - All styles are sized to the slot from the font's digit height (`capRatio`), so the lines sit tight on their baselines.
 - The date and a `label` go under it, each only while the time keeps at least a caption's height (the label goes first, then the date).
+- `dateFormat` (the `DateFormat` shared definition, with `showDate`): a Qt date format for the date line, empty the language's short or long date by width; the Clock & calendar module's date line takes the same `showDate` and `dateFormat`.
 - `timezone` is handled through TimeZoneManager.
 - The bar `Time` widget takes a `timezone` the same way.
 

@@ -4709,6 +4709,9 @@
     "Controls": "",
     "Left out of the Applications list. Matched against a stream's binary or name.": "",
     "Balanced": "",
-    "Time left": ""
+    "Time left": "",
+    "Dots on days with events.": "",
+    "Empty: every shown calendar.": "",
+    "Week numbers": ""
   }
 }

@@ -16,6 +16,7 @@ settings:
   hourFormat: {$ref: '#/definitions/HourFormat', x-showIf: {style: {not: analog}}}
   showSeconds: {type: boolean, title: Seconds, default: false}
   showDate: {type: boolean, title: Date, default: true}
+  dateFormat: {$ref: '#/definitions/DateFormat', x-showIf: {showDate: true}}
   timezone:
     x-scope: personal
     type: string

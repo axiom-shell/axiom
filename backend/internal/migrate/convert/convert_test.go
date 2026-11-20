@@ -335,7 +335,7 @@ var widgetTypeKeysAddedSinceV1 = map[string][]string{"Notifications": {"label"},
 
 // moduleKeysAddedSinceV1 are a module type's settings added since format
 // 1, which a default layout's modules get from their defaults at load
-var moduleKeysAddedSinceV1 = map[string][]string{"Greeting": {"showPicture"}, "KeyboardLayout": {"format", "showIcon"}, "NowPlaying": {"showControls", "showCoverBlur"}, "Password": {"showPicture"}, "Power": {"style", "labels"}, "SystemGraphs": {"memoryFormat", "units"}, "VolumeDials": {"showInput", "scrollStep", "maxVolume"}}
+var moduleKeysAddedSinceV1 = map[string][]string{"Clock": {"dateFormat"}, "ClockCalendar": {"showDate", "dateFormat", "calendars"}, "Greeting": {"showPicture"}, "KeyboardLayout": {"format", "showIcon"}, "NowPlaying": {"showControls", "showCoverBlur"}, "Password": {"showPicture"}, "Power": {"style", "labels"}, "SystemGraphs": {"memoryFormat", "units"}, "VolumeDials": {"showInput", "scrollStep", "maxVolume"}}
 
 // moduleOwnKeysAddedSinceV1 are the keys every module gained beside its
 // type and place (its Content size, null by default)

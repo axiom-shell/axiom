@@ -77,8 +77,8 @@ Panel {
     precision: SystemClock.Minutes
   }
   readonly property string todayKey: CalendarEvents.dayKey(clock.date)
-  readonly property var todayEvents: CalendarManager.eventsOn(root.todayKey)
-  readonly property var nextEvent: CalendarEvents.nextEvent(CalendarManager.upcoming(clock.date.getTime(), clock.date.getTime() + 86400000, false), clock.date.getTime(), 86400000, false)
+  readonly property var todayEvents: CalendarManager.eventsOn(root.todayKey, root.properties.calendars)
+  readonly property var nextEvent: CalendarEvents.nextEvent(CalendarManager.upcoming(clock.date.getTime(), clock.date.getTime() + 86400000, false, root.properties.calendars), clock.date.getTime(), 86400000, false)
 
   compactContent: CompactFigure {
     icon: "calendar_month"
@@ -102,6 +102,9 @@ Panel {
       Layout.preferredWidth: root.sideBySide ? Math.min(root.innerWidth * 0.5, root.innerHeight * 1.15) : -1
       Layout.preferredHeight: root.gridHeight
       Layout.alignment: Qt.AlignTop
+      showEvents: root.properties.showEvents
+      calendars: root.properties.calendars
+      showWeekNumbers: root.properties.showWeekNumbers
       selectedKey: root.selectedKey
       onDaySelected: key => {
         root.selectedKey = key;
@@ -120,6 +123,7 @@ Panel {
       Layout.minimumHeight: root.embedded ? 0 : Appearance.fontSize * 6
       reservesRoom: !root.embedded
       dayKey: root.selectedKey
+      calendars: root.properties.calendars
       closable: root.embedded && !root.sideBySide && !root.stacked
       maxListHeight: root.embedded ? Number.POSITIVE_INFINITY : Appearance.fontSize * 14
       onClosed: root._dayOpen = false
