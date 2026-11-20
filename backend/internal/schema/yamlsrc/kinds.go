@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/schema"
 )
 
 // A type's schema.yaml writes only what's particular to it; its kind's
@@ -27,6 +28,10 @@ import (
 //     it says `link` or the section isn't on the settings page.
 //
 // The kind's own definition is generated: a oneOf of every type, by name.
+//
+// fillPopoutModules then gives each bar widget whose `popoutModule` names
+// an overlay module the module's settings as its popout's `properties`
+// (less `grow` and the `fromWidget` keys the widget supplies itself).
 
 // Keys of a type's schema.yaml the builder reads itself (the rest become
 // annotations)
@@ -46,6 +51,12 @@ func (a *assembler) expandKinds(kinds []Kind, defs, sections *jsonx.Object) {
 		if !ok {
 			a.errs = append(a.errs, &Error{File: IndexFile, Msg: fmt.Sprintf("kinds.%s.base: no definition %s", k.Name, k.Base)})
 			continue
+		}
+		if at, ok := base.Value("x-settingsAt").(string); ok {
+			if a.settingsAt == nil {
+				a.settingsAt = map[string]string{}
+			}
+			a.settingsAt[k.Name] = at
 		}
 		// The base is a template, not a definition of its own
 		defs.Delete(k.Base)
@@ -638,4 +649,119 @@ func onSettingsPage(section any) bool {
 // annotationNames: type keys whose annotation isn't x-<key>
 var annotationNames = map[string]string{
 	"group": "x-libraryGroup",
+}
+
+// fillPopoutModules fills each bar widget's popout.properties (the field
+// the base's popout part has) from its `popoutModule: {type, fromWidget}`:
+// the settings of that overlay module, in its order, less `grow` and the
+// `fromWidget` keys, which the widget supplies itself. A widget without a
+// popoutModule, or with nothing left, has no field. It runs before
+// inlineExtensions, so the copied `$ref`s inline like any other.
+func (a *assembler) fillPopoutModules(kinds []Kind, defs *jsonx.Object) {
+	var widgets, modules *Kind
+	for i := range kinds {
+		switch kinds[i].Name {
+		case "BarWidget":
+			widgets = &kinds[i]
+		case "OverlayModule":
+			modules = &kinds[i]
+		}
+	}
+	if widgets == nil || modules == nil {
+		return
+	}
+	types, _ := typeFolders(a.fsys, *widgets)
+	for _, t := range types {
+		def, ok := defs.Value(t + widgets.Suffix).(*jsonx.Object)
+		if !ok {
+			continue
+		}
+		file := widgets.Root + "/" + t + "/" + TypeFile
+		decl, declared := def.Value("x-popoutModule").(*jsonx.Object)
+		fail := func(key, format string, args ...any) {
+			a.errs = append(a.errs, a.pos.At(decl, key, file, fmt.Sprintf(format, args...)))
+		}
+		// popout.properties.properties: the popout part's `properties` field
+		var holder *jsonx.Object
+		if popout := pointer(def, a.settingsAt[widgets.Name]+"/popout"); popout != nil {
+			holder, _ = popout.Value("properties").(*jsonx.Object)
+		}
+		var field *jsonx.Object
+		if holder != nil {
+			field, _ = holder.Value("properties").(*jsonx.Object)
+		}
+		if !declared {
+			if field != nil {
+				holder.Delete("properties")
+			}
+			continue
+		}
+		if field == nil {
+			fail("popoutModule", "popoutModule needs the popout part's own variant (popout: own)")
+			continue
+		}
+		holder.Delete("properties")
+		typ, _ := decl.Value("type").(string)
+		module, _ := defs.Value(typ + modules.Suffix).(*jsonx.Object)
+		if module == nil {
+			fail("type", "popoutModule.type %q is not an overlay module type", typ)
+			continue
+		}
+		var from []string
+		bad := false
+		if list, ok := decl.Value("fromWidget").(*jsonx.Array); ok {
+			for _, v := range list.Items {
+				key, ok := v.(string)
+				if !ok {
+					fail("fromWidget", "popoutModule.fromWidget is a list of %s's setting names", typ)
+					bad = true
+					break
+				}
+				from = append(from, key)
+			}
+		} else if decl.Has("fromWidget") {
+			fail("fromWidget", "popoutModule.fromWidget is a list of %s's setting names", typ)
+			bad = true
+		}
+		if bad {
+			continue
+		}
+		settings := pointer(module, a.settingsAt[modules.Name])
+		if settings == nil {
+			if len(from) > 0 {
+				fail("fromWidget", "popoutModule.fromWidget names %s, but %s has no settings", strings.Join(from, ", "), typ)
+			}
+			continue
+		}
+		for _, key := range from {
+			if !settings.Has(key) {
+				fail("fromWidget", "popoutModule.fromWidget names %s, which isn't one of %s's settings (it has %s)", key, typ, strings.Join(settings.Keys(), ", "))
+				bad = true
+			}
+		}
+		if bad {
+			continue
+		}
+		kept := jsonx.NewObject()
+		for _, key := range settings.Keys() {
+			if key == "grow" || slices.Contains(from, key) {
+				continue
+			}
+			setting := jsonx.Clone(settings.Value(key)).(*jsonx.Object)
+			for _, gate := range []string{"x-showIf", "x-enabledIf"} {
+				for _, name := range from {
+					if schema.NamesKey(setting.Value(gate), name) {
+						fail("fromWidget", "popoutModule: %s's %s names %s, which the widget supplies (card 2 has no value for it)", key, gate, name)
+						bad = true
+					}
+				}
+			}
+			kept.Set(key, setting)
+		}
+		if bad || kept.Len() == 0 {
+			continue
+		}
+		field.Set("properties", kept)
+		holder.Set("properties", field)
+	}
 }

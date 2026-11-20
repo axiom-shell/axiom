@@ -3,6 +3,7 @@ link: {setting: Input}
 icon: keyboard
 group: System
 popout: {variant: own, enabled: {description: Input sources; a click picks one.}}
+popoutModule: {type: InputSources}
 colors: standard
 order: [showIcon, format, hideSingle, popout, backgroundColor, foregroundColor]
 settings:

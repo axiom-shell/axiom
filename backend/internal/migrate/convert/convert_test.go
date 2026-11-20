@@ -325,9 +325,9 @@ func osdItemFields(cfg *jsonx.Object) {
 // and reverse scrolling)
 var widgetKeysAddedSinceV1 = []string{"appearance", "showVpnLock", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes", "specialWorkspaces", "specialWorkspaceLabel", "specialWorkspaceSplit"}
 
-// A widget's popout's settings added since format 1 (its Content size, in a
-// sizing object, null by default)
-var widgetPopoutKeysAddedSinceV1 = []string{"sizing"}
+// A widget's popout's settings added since format 1 (its Content size, and
+// its module's options)
+var widgetPopoutKeysAddedSinceV1 = []string{"sizing", "properties"}
 
 // A type's settings added since format 1 under a name another type had
 // then (Bluetooth's showDevice, Button's label)

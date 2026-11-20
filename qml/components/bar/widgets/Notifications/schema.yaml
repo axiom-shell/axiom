@@ -3,6 +3,7 @@ keywords: ['Notification Center']
 icon: notifications
 group: Desktop
 popout: {variant: own, enabled: {description: Open the notification list when hovered.}}
+popoutModule: {type: Notifications}
 colors: standard
 order: [label, showCount, badgeColor, popout, backgroundColor, foregroundColor, dndColor]
 settings:

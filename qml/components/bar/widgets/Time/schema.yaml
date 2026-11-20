@@ -4,6 +4,7 @@ icon: schedule
 priority: 5
 group: Time & weather
 popout: {variant: own, enabled: {description: Calendar on hover.}}
+popoutModule: {type: Calendar}
 colors:
   variant: standard
   backgroundColor:

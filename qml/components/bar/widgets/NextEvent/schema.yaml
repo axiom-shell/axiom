@@ -3,6 +3,7 @@ link: {setting: Calendar}
 icon: event
 group: Time & weather
 popout: {variant: own, enabled: {description: Open the calendar when hovered.}}
+popoutModule: {type: Calendar}
 appearance:
   variant: value
   style:

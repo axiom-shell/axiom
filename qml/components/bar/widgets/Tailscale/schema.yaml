@@ -3,6 +3,7 @@ keywords: ['Tailscale Status']
 icon: vpn_lock
 group: Network & devices
 popout: {variant: own, enabled: {description: The tailnet and its devices on hover.}}
+popoutModule: {type: Tailscale}
 appearance:
   variant: value
   style:

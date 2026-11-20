@@ -5,6 +5,7 @@ group: System
 popout:
   variant: own
   enabled: {description: Caffeine presets.}
+popoutModule: {type: Caffeine}
 appearance:
   variant: value
   style:

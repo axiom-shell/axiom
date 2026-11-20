@@ -4,6 +4,7 @@ elastic: true
 icon: music_note
 group: Media & audio
 popout: {variant: own, enabled: {description: Media controls.}}
+popoutModule: {type: NowPlaying}
 appearance:
   variant: value
   style:

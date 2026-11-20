@@ -3,6 +3,7 @@ keywords: ['Todo list']
 icon: checklist
 group: Tools
 popout: {variant: own, enabled: {description: The list on hover.}}
+popoutModule: {type: Todo}
 colors: standard
 order: [hideWhenEmpty, popout, backgroundColor, foregroundColor]
 settings: {hideWhenEmpty: {type: boolean, title: Hide when nothing is open, default: false}}

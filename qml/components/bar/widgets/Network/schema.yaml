@@ -3,6 +3,7 @@ keywords: ['Network Status']
 icon: wifi
 group: Network & devices
 popout: {variant: own, enabled: {description: Open the Wi-Fi menu when hovered.}}
+popoutModule: {type: WifiNetworks}
 appearance:
   variant: value
   style:

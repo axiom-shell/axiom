@@ -52,6 +52,8 @@ running anything:
     bar_widget_template (the root, no colour resolved, no opacity fade, no
     base output written, no unused or unknown colour field), its exceptions
     in scripts/bar-widget-exceptions.json
+  - a bar widget's `popoutModule` (x-popoutModule) is a popoutName it
+    opens, and one whose popoutName is an overlay module declares it
   - no UI switches one of the shell's actions through its service's own
     toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
     light, dark mode, the mutes, the VPN, a recording, a session action,
@@ -334,6 +336,27 @@ def bar_widget_template(schema, sources, errors):
         for rule, message in items:
             if rule not in skip:
                 errors.append(message)
+
+
+def popout_modules(schema, sources, errors):
+    """A bar widget's x-popoutModule.type is the literal popoutName of its
+    folder's QML or of the base file its root type is (AudioLevelWidget for
+    Volume and Microphone), and a widget whose popoutName is an overlay
+    module type declares x-popoutModule."""
+    modules = set(schema_types(schema, "OverlayModule"))
+    for t in schema_types(schema, "BarWidget"):
+        folder = f"{WIDGETS_DIR}/{t}/"
+        files = [path for path in sources if path.startswith(folder)]
+        main_text = sources.get(f"{folder}{t}.qml", "")
+        root_type = re.search(r"^([A-Z][\w.]*)\s*\{", main_text, re.M)
+        if root_type and f"{WIDGETS_DIR}/base/{root_type.group(1)}.qml" in sources:
+            files.append(f"{WIDGETS_DIR}/base/{root_type.group(1)}.qml")
+        names = {m for path in files for m in re.findall(r'popoutName:\s*"([^"]+)"', sources[path])}
+        declared = schema["definitions"].get(f"{t}Widget", {}).get("x-popoutModule", {}).get("type")
+        if declared and declared not in names:
+            errors.append(f"{WIDGETS_DIR}/{t}: x-popoutModule.type {declared} is not a popoutName it opens ({', '.join(sorted(names)) or 'none'})")
+        if not declared and names & modules:
+            errors.append(f"{WIDGETS_DIR}/{t}: its popoutName {', '.join(sorted(names & modules))} is an overlay module: declare popoutModule in its schema.yaml")
 
 
 def main():
@@ -897,6 +920,7 @@ def main():
                 errors.append(f"{path}:{n}: reads `{m.group(0)}`: a style is BarLook's alone; read the look's traits (or mark a use that must stay `// allowed: <reason>`)")
 
     bar_widget_template(schema, sources, errors)
+    popout_modules(schema, sources, errors)
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

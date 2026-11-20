@@ -60,6 +60,7 @@ x-options: a dynamic option list.
 x-order: the keys shown first, in order.
 x-ordered: on an array of enum strings, keeps the order the user gives it (chosen options drag into place, the rest are added from a list).
 x-placeUnder: 'a sibling key: in the Bar style block, the field''s row goes directly under that sibling''s (and the rows beside it), not with the style''s options (`SchemaLayout.placedUnder`; Tab sides and Ends under the shape).'
+x-popoutModule: 'the overlay module a bar widget''s own popout shows: `{ type, fromWidget }`; its settings (less `grow` and the `fromWidget` keys the widget supplies itself) fill the widget''s `popout.properties` (the bar editor''s Popout card).'
 x-priority: a bar widget type's own priority when its bar is crowded (higher stays longer; default 0), which its `layout.priority` overrides (`BarsConfig.defaultPriority`).
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-recommended: 'the value the Recommended setup list turns it to (managed mode''s list, onboarder and Compositor card); on a section `installed`: its boolean fields on for installed apps (`x-commands`), a field with `false` left out (`methods/RecommendedSetup`).'

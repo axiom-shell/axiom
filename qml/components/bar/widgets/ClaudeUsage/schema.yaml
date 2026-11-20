@@ -2,6 +2,7 @@ label: Claude usage
 icon: data_usage
 group: System
 popout: {variant: own, enabled: {description: Lists every limit per account.}}
+popoutModule: {type: ClaudeUsage, fromWidget: [warnThreshold, criticalThreshold]}
 appearance:
   variant: value
   style:

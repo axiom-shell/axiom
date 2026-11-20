@@ -3,6 +3,7 @@ keywords: ['VPN Status']
 icon: vpn_lock
 group: Network & devices
 popout: {variant: own, enabled: {description: Every VPN on hover.}}
+popoutModule: {type: VpnConnections}
 appearance:
   variant: value
   style:

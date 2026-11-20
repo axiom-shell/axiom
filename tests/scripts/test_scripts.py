@@ -493,6 +493,9 @@ class CheckStructure(unittest.TestCase):
         "Spacer has no reason",
         "Time names T9, not a rule",
         "Weather lists fieldsReadIn, which supplies none of its otherwise-unused colour fields",
+        # x-popoutModule: (a) names a popoutName the widget opens (Volume's is in its base file), (b) declared when the popout is a module
+        "bar/widgets/Volume: x-popoutModule.type Caffeine is not a popoutName it opens (AudioMixer)",
+        "bar/widgets/Todo: its popoutName Todo is an overlay module: declare popoutModule in its schema.yaml",
     ]
 
     def test_each_rule_fails(self):
@@ -511,6 +514,8 @@ class CheckStructure(unittest.TestCase):
                 fields = defs["DevModeWidget"]["properties"]["properties"]["properties"]
                 fields["ghostColor"] = {"x-options": "colors"}
                 del defs["UpdatesWidget"]["properties"]["properties"]["properties"]["failedColor"]
+                defs["VolumeWidget"]["x-popoutModule"]["type"] = "Caffeine"
+                del defs["TodoWidget"]["x-popoutModule"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({

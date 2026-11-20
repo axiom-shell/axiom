@@ -2,6 +2,7 @@ label: Volume
 icon: volume_up
 group: Media & audio
 popout: {variant: own, enabled: {description: The output mixer on hover.}}
+popoutModule: {type: AudioMixer, fromWidget: [mode, maxVolume]}
 appearance:
   variant: value
   style:
