@@ -34,7 +34,7 @@ Panel {
   }
 
   ModuleHeader {
-    visible: !root.embedded || (root.properties.showHeader ?? true)
+    visible: !root.embedded || root.properties.showHeader
     icon: "checklist"
     title: TodoManager.openCount > 0 ? I18n.tr("{0} to do", TodoManager.openCount) : I18n.tr("Todo")
 

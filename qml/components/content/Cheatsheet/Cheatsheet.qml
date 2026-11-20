@@ -24,7 +24,7 @@ Panel {
 
   readonly property string query: field.text.trim()
   readonly property var sections: KeybindFilter.filter(KeybindManager.keybindings.filter(section => !section.undescribed || root.properties.showUndescribed), root.query, {
-    "sections": root.properties.sections ?? []
+    "sections": root.properties.sections
   })
   readonly property int bindCount: root.sections.reduce((sum, section) => sum + section.binds.length, 0)
   readonly property int columnCount: Math.max(1, Math.floor((root.innerWidth + Widget.spacing * 2) / (Appearance.fontSize * 22)))

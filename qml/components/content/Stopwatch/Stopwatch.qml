@@ -30,7 +30,7 @@ Panel {
   readonly property string mode: {
     if (root.picked !== "")
       return root.picked;
-    const wanted = root.properties.mode ?? "auto";
+    const wanted = root.properties.mode;
     if (wanted !== "auto")
       return wanted;
     return !StopwatchManager.timerIdle || StopwatchManager.stopwatchIdle ? "timer" : "stopwatch";

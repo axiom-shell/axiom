@@ -33,6 +33,6 @@ Panel {
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     fill: root.embedded
-    showTask: !root.embedded || (root.properties.showTask ?? true)
+    showTask: !root.embedded || root.properties.showTask
   }
 }

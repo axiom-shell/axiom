@@ -66,7 +66,7 @@ One set of rules the schema follows everywhere it fits:
 **What the builder supplies.** `axiom schema build` finds every `schema.yaml` under the three roots (`index.yaml` lists no type definitions) and expands it over its kind's base in `qml/config/schema/definitions/kinds/` (`WidgetBase`, `ModuleBase`, `ViewBase`, …), which adds `type: object`, `additionalProperties: false`, `required`, the type const and `id`, and the kind's common keys (a widget's `visible`, `layout`, `popout` and colour fields; a module's `place` and hosts). A `schema.yaml` writes only what is particular to its type (`label`, `icon`, `group`, `settings`, and the base's parts switched on by name such as `popout`, `colors`, `appearance`); the recipes show the files: [bar widget](../../recipes/bar-widget.md), [overlay module](../../recipes/overlay-module.md), [overlay view](../../recipes/overlay-view.md). Format 1 files are converted once by `migrate/convert` ([migration recipe](../../recipes/migration.md)).
 
 ### New entries
-Editors create new entries at their definition's defaults with `withDefaults(value, "Bar" | "BarWidget" | "Menu" | "OverlayView" | "OverlayModule")`.
+Editors create new entries at their definition's defaults with `withDefaults(value, "Bar" | "BarWidget" | "Menu" | "OverlayView" | "OverlayModule")`. A module shown outside a config entry (`ModuleGrid.expand`, a bar popout) gets its `properties` the same way, through `OverlayConfig.moduleProperties(type, properties)`.
 
 ### Writes
 - Config is only written through `setTheme()` / `setWallpaper(s)()` / `commit(object)`, or `SettingsManager.setValue(path, value)` from settings UI.

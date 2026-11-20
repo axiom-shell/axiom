@@ -83,7 +83,7 @@ WorkspacePopoutPanel {
           textPlain: line.shows.plain
           leadIcon: line.shows.kind === "text" ? line.shows.lead : ""
           leadPlain: line.shows.leadPlain
-          clickable: root.properties.clickToSwitch ?? false
+          clickable: root.properties.clickToSwitch
           animated: root._settled
           onClicked: CompositorManager.goToWorkspace(line.wsId, "go", root.output)
         }
@@ -94,7 +94,7 @@ WorkspacePopoutPanel {
           workspaceId: line.wsId
           stripVertical: root.stripVertical
           isVertical: root.vertical
-          clickable: root.properties.clickToSwitch ?? false
+          clickable: root.properties.clickToSwitch
           animated: root._settled
         }
       }

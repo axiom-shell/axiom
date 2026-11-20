@@ -9,6 +9,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 ### Adding a module type
 A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` beside it (the build expands it over `definitions/kinds/ModuleBase.yaml`, which adds the `place` property and the hosts; see [Config manager](../core/config-manager.md) › The shape of config.json). The steps: [overlay-module recipe](../../recipes/overlay-module.md).
 - Every module takes every size, from one unit up. `defaultSize` in its `schema.yaml` is only the size it is added at (left out, a card: `OverlayConfig.defaultSize`); `minSize` is only how far a drop into a gap shrinks it.
+- A module reads `root.properties.<key>` with no `??`: every host fills the schema defaults. `OverlaySlot` gets them from config (filled at load), `ModuleGrid.expand` and `BarPopouts` through `OverlayConfig.moduleProperties(type, properties)`; a new host loading content by URL goes through it too.
 - Helpers used only by content go in `content/parts/` (subfolders for groups, e.g. `parts/settings/`).
 - New types show up in the pickers automatically (see [Layouts editor](layouts-editor.md), module and view pickers).
 

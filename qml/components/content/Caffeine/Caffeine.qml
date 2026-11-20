@@ -22,7 +22,7 @@ Panel {
 
   // Popout: filled from the anchor's extraData, the widget's presets
   property var presets: []
-  readonly property var shownPresets: root.embedded ? root.properties.presets ?? [] : root.presets
+  readonly property var shownPresets: root.embedded ? root.properties.presets : root.presets
   // On with no timer: picking one (set a timer) shows the presets again
   property bool pickingTimer: false
   readonly property bool untilOff: IdleManager.caffeine && !IdleManager.caffeineTimed && !root.pickingTimer

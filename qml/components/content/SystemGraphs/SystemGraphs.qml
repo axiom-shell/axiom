@@ -21,7 +21,7 @@ Panel {
   readonly property var knownMetrics: ["cpu", "mem", "gpu", "cpuTemp", "net"]
   // Depends on the config only (never on live values), so the graphs and
   // the SystemManager registration aren't rebuilt on every sample
-  readonly property var metrics: (root.popoutMetrics ?? root.properties.metrics ?? ["cpu", "mem"]).filter(m => root.knownMetrics.includes(m))
+  readonly property var metrics: (root.popoutMetrics ?? root.properties.metrics).filter(m => root.knownMetrics.includes(m))
   readonly property var shown: root.compact ? root.metrics.slice(0, 1) : root.metrics
 
   implicitWidth: Widget.textPx(root.columns > 1 ? 520 : 360)

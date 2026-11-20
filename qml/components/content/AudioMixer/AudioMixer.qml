@@ -22,7 +22,7 @@ Panel {
   id: root
 
   // A card's configured mode; a popout sets it from its anchor's payload
-  property string mode: root.properties.mode ?? "output"
+  property string mode: root.properties.mode
   property real maxVolume: 1.0
 
   property int currentTab: 0

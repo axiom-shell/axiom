@@ -12,9 +12,8 @@ import qs.components.bar.look
 Panel {
   id: root
 
-  // From the widget's payload (BarPopouts copies it onto these, and the
-  // widget's options onto `properties`, once the popout has loaded: until
-  // then `properties` is empty, hence the few `??` in the popouts)
+  // From the widget's payload (BarPopouts copies it onto these once the
+  // popout has loaded; `properties` is there from creation)
   // The output's name: the payload is a snapshot taken at opening, so its
   // state (the active workspace) is looked up live
   property string output: ""

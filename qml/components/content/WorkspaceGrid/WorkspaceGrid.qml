@@ -81,7 +81,7 @@ WorkspacePopoutPanel {
         iconPaths: shows.icons
         iconLayout: contents.iconLayout
         iconSlots: contents.iconSlots
-        clickable: root.properties.clickToSwitch ?? false
+        clickable: root.properties.clickToSwitch
         animated: root._settled
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.output)
       }

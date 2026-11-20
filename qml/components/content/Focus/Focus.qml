@@ -18,9 +18,9 @@ Panel {
   id: root
 
   readonly property bool wide: root.innerWidth >= Appearance.fontSize * 34
-  readonly property bool showTimer: root.properties.showTimer ?? true
-  readonly property bool showTodos: root.properties.showTodos ?? true
-  readonly property bool showAgenda: root.properties.showAgenda ?? true
+  readonly property bool showTimer: root.properties.showTimer
+  readonly property bool showTodos: root.properties.showTodos
+  readonly property bool showAgenda: root.properties.showAgenda
 
   spacing: Widget.spacing
   wantsKeyboardFocus: true

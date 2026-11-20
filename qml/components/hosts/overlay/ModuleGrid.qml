@@ -148,7 +148,7 @@ Item {
     const box = [at.x, at.y, from?.width ?? root.width, from?.height ?? root.height];
     root.expanded = {
       "type": type,
-      "properties": properties ?? {},
+      "properties": OverlayConfig.moduleProperties(type, properties ?? {}),
       "from": box,
       "contentSize": root._moduleOf(from)?.contentSize ?? null
     };

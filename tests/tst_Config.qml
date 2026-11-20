@@ -65,6 +65,36 @@ TestCase {
     compare(filled.id, "test");
   }
 
+  // A module shown by a host with no config entry (ModuleGrid.expand, a bar
+  // popout) gets its schema defaults through OverlayConfig.moduleProperties
+  function test_module_properties_fill() {
+    const moduleSchema = {
+      "$ref": "#/definitions/OverlayModule"
+    };
+    const fill = (type, properties) => shared.applyDefaults({
+        "type": type,
+        "properties": properties
+      }, moduleSchema, schema).properties;
+    const mixer = fill("AudioMixer", {});
+    compare(mixer.mode, "output", "AudioMixer opens on output");
+    compare(mixer.grow, 0, "AudioMixer grow");
+    compare(fill("AudioMixer", {
+      "mode": "input"
+    }).mode, "input", "the caller's mode wins");
+    compare(fill("Stopwatch", {}).mode, "auto");
+    compare(fill("SystemGraphs", {}).metrics, ["cpu", "mem"]);
+    compare(fill("Todo", {}).showHeader, true);
+    compare(fill("Pomodoro", {}).showTask, true);
+    const calc = fill("Calculator", {});
+    compare(calc.showKeypad, true);
+    compare(calc.showHistory, true);
+    compare(fill("WorkspaceGrid", {
+      "clickToSwitch": true
+    }), {
+      "clickToSwitch": true
+    }, "a type with no schema comes back unchanged");
+  }
+
   // A widget drawing a value style draws its icon and label in its
   // foregroundColor on a filled bar: without the field they're transparent
   function test_value_widgets_have_foreground_color() {

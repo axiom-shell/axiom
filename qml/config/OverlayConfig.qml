@@ -132,6 +132,16 @@ QtObject {
     return !info || info.hosts.includes(host);
   }
 
+  // A module type's `properties` with its schema defaults filled (a deep
+  // copy), so a module reads `root.properties.<key>` with no `??`; a type
+  // with no schema comes back unchanged. For hosts that show a module
+  // without a config entry (ModuleGrid.expand, BarPopouts)
+  function moduleProperties(type, properties) {
+    return ConfigManager.withDefaults({
+      "type": type,
+      "properties": properties
+    }, "OverlayModule").properties;
+  }
   function moduleInfo(type) {
     return availableModuleTypes.find(t => t.type === type) ?? customModuleTypes.find(t => t.type === type) ?? null;
   }
