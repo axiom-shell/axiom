@@ -36,20 +36,8 @@ settings:
     title: Icon
     default: data_usage
     description: A Material Symbols name, or text.
-  warnThreshold:
-    type: integer
-    title: Warning at
-    x-unit: '%'
-    default: 75
-    minimum: 1
-    maximum: 100
-  criticalThreshold:
-    type: integer
-    title: Critical at
-    x-unit: '%'
-    default: 90
-    minimum: 1
-    maximum: 100
+  warnThreshold: {$ref: '#/definitions/WarnThreshold'}
+  criticalThreshold: {$ref: '#/definitions/CriticalThreshold'}
   clickCommand:
     x-scope: commands
     type: string

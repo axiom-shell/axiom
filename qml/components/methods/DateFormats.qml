@@ -68,6 +68,14 @@ QtObject {
     return Number(regionFirstDay ?? 1) % 7;
   }
 
+  // The ISO 8601 week number (1-53) of a date's local day: its week's
+  // Thursday decides the year, so 2027-01-01 is still week 53 of 2026
+  function weekNumber(date) {
+    const thursday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 3 - (date.getDay() + 6) % 7, 12);
+    const jan4 = new Date(thursday.getFullYear(), 0, 4, 12);
+    return 1 + Math.round((thursday - jan4) / 604800000 + ((jan4.getDay() + 6) % 7 - 3) / 7);
+  }
+
   // The time pattern for a clock: 24 or 12 hour, with seconds or not, from
   // the language's four (clock24, clock24s, clock12, clock12s)
   function clockName(use24Hour, seconds) {

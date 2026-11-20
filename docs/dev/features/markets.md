@@ -13,6 +13,7 @@ Stock, ETF, index, currency and crypto prices for the bar widget, its popout and
 - A quote is keyed by `MarketMath.key` (Yahoo's symbol, or `coingecko:<id>`) and carries `marketState` (pre, regular, post, closed; crypto always regular), worked out at each fetch from the cached trading periods, so a closed market's state stays right without fetching it.
 - **Market hours:** with `pauseWhenClosed`, a symbol outside its regular session is fetched once after the close (the final prices) and then hourly; crypto every time.
 - **Rate limits:** a host answering 429 or 5xx is left alone for 1 minute, doubling to 30. Its symbols keep their last prices marked `stale` (the rows show a history mark). A symbol with no price at all carries its `error`; the state's `error` is set only when no symbol has a price.
+- `MarketMath.sorted(items, quotes, sortBy)` orders items: `watchlist` as given, `change` by absolute change percent, largest first (no quote, an error or a non-finite change last).
 - **Holdings:** with any `quantity` set, the daemon adds each quote currency's rate to the base currency (Yahoo's `<CUR><BASE>=X`, cached for 15 minutes; pence-quoted `GBp`/`GBX`, `ZAc` and `ILA` are their unit's rate over 100). `MarketMath.portfolio` totals value, today's change and, when every holding has an `averageCost`, the total gain.
 - The last prices are kept in `<state dir>/markets.json` (0600), so the bar has them at once after a restart.
 

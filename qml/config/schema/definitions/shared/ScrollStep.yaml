@@ -1,0 +1,9 @@
+# The ScrollStep definition (#/definitions/ScrollStep): how far one wheel notch moves a volume, in percent. Uses override `title`, `default`.
+
+x-inline: true
+type: integer
+title: Scroll step
+x-unit: '%'
+default: 5
+minimum: 1
+maximum: 25

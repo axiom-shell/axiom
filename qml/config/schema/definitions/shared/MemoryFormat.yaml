@@ -1,0 +1,8 @@
+# The MemoryFormat definition (#/definitions/MemoryFormat): memory as a percentage or as used. Uses override `x-showIf`.
+
+x-inline: true
+type: string
+title: Memory format
+default: percent
+x-control: toggle
+enum: [percent, used]

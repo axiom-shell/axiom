@@ -308,4 +308,40 @@ TestCase {
     compare(MarketMath.trendTone("up", true), "error", "red for gains");
     compare(MarketMath.trendTone("down", true), "success");
   }
+
+  function test_sorted() {
+    const ids = list => list.map(i => i.id);
+    const mk = (id, symbol) => ({
+          "id": id,
+          "symbol": symbol,
+          "source": "yahoo"
+        });
+    const list = [mk("a", "A"), mk("b", "B"), mk("c", "C"), mk("d", "D"), mk("e", "E")];
+    const quotes = {
+      "A": {
+        "changePercent": 1
+      },
+      "B": {
+        "changePercent": -5
+      },
+      "C": {
+        "changePercent": 1
+      },
+      "D": {
+        "changePercent": 9,
+        "error": "gone"
+      }
+    };
+    compare(ids(MarketMath.sorted(list, quotes, "watchlist")), ["a", "b", "c", "d", "e"], "as given");
+    compare(ids(MarketMath.sorted(list, quotes, "change")), ["b", "a", "c", "d", "e"], "by size, ties in given order, errored and unquoted last");
+    compare(ids(MarketMath.sorted([list[0], list[1]], {
+      "A": {
+        "changePercent": null
+      },
+      "B": {
+        "changePercent": 0.5
+      }
+    }, "change")), ["b", "a"], "a non-finite change last");
+    compare(MarketMath.sorted([], quotes, "change").length, 0);
+  }
 }

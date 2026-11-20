@@ -45,12 +45,7 @@ settings:
     title: Time format
     default: ''
     description: 'A Qt time format, e.g. HH:mm. Empty: the language''s.'
-  dateFormat:
-    type: string
-    title: Date format
-    default: ''
-    description: 'A Qt date format, e.g. ddd d MMM. Empty: the language''s.'
-    x-showIf: {showDate: true}
+  dateFormat: {$ref: '#/definitions/DateFormat', x-showIf: {showDate: true}}
   verticalDate:
     type: string
     title: Vertical date

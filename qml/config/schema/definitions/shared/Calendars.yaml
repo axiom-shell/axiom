@@ -1,0 +1,9 @@
+# The Calendars definition (#/definitions/Calendars): the calendars a card shows, empty is every shown calendar. Uses override `description`.
+
+x-inline: true
+x-scope: machine
+type: array
+title: Calendars
+default: []
+items: {type: string, x-options: calendars, x-allCalendars: true}
+description: 'Empty: every shown calendar.'

@@ -11,20 +11,8 @@ order: [appearance, showPercentage, showDevice, maxVolume, scrollStep, middleCom
 settings:
   showPercentage: {type: boolean, title: Percentage, default: false, x-showIf: {appearance.style: [label, ring, fill, pill, segments]}}
   showDevice: {type: boolean, title: Device, default: false, x-showIf: {appearance.style: [label, ring, fill, pill, segments]}}
-  scrollStep:
-    type: integer
-    title: Scroll step
-    x-unit: '%'
-    default: 5
-    minimum: 1
-    maximum: 25
-  maxVolume:
-    type: integer
-    title: Maximum volume
-    x-unit: '%'
-    default: 100
-    minimum: 100
-    maximum: 150
+  scrollStep: {$ref: '#/definitions/ScrollStep'}
+  maxVolume: {$ref: '#/definitions/MaxVolume'}
   middleCommand:
     x-scope: commands
     type: string

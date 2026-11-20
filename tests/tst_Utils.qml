@@ -357,4 +357,17 @@ TestCase {
     verify(!Utils.isSymbolName(""), "a glyph");
     verify(!Utils.isSymbolName(""));
   }
+
+  function test_fromCelsius() {
+    compare(Utils.fromCelsius(0, "celsius"), 0);
+    compare(Utils.fromCelsius(0, "fahrenheit"), 32);
+    compare(Utils.fromCelsius(100, "fahrenheit"), 212);
+    compare(Utils.fromCelsius(-40, "fahrenheit"), -40);
+    compare(Utils.fromCelsius(36.6, "celsius"), 36.6);
+  }
+
+  function test_temperatureSymbol() {
+    compare(Utils.temperatureSymbol("celsius"), "°C");
+    compare(Utils.temperatureSymbol("fahrenheit"), "°F");
+  }
 }

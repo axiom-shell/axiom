@@ -17,13 +17,7 @@ settings:
       type: string
       enum: [cpu, mem, cpuTemp, gpu, disk]
     description: A metric this machine can't report is hidden.
-  memoryFormat:
-    type: string
-    title: Memory format
-    default: percent
-    x-control: toggle
-    enum: [percent, used]
-    x-showIf: {metrics: {includes: mem}}
+  memoryFormat: {$ref: '#/definitions/MemoryFormat', x-showIf: {metrics: {includes: mem}}}
   diskPath:
     x-scope: machine
     type: string

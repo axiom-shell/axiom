@@ -42,6 +42,25 @@ QtObject {
     return wanted.length === 0 ? valid : valid.filter(item => wanted.includes(item.id));
   }
 
+  // `items` in `sortBy` order: "watchlist" as given, "change" by
+  // |changePercent| descending (quotes keyed by `key`), an item with no
+  // quote, an errored quote or a non-finite change last; ties keep the
+  // given order
+  function sorted(items, quotes, sortBy) {
+    if (sortBy !== "change")
+      return items;
+    const size = item => {
+      const quote = quotes?.[root.key(item)];
+      const change = quote && !quote.error ? Math.abs(quote.changePercent) : NaN;
+      return isFinite(change) ? change : -1;
+    };
+    return items.map((item, index) => ({
+          "item": item,
+          "size": size(item),
+          "index": index
+        })).sort((a, b) => b.size - a.size || a.index - b.index).map(row => row.item);
+  }
+
   // What a Markets widget shows: { item } per item `ids` picks (pick), a
   // { portfolio } first with `showHoldings` while any item has a quantity
   function entries(items, ids, showHoldings) {

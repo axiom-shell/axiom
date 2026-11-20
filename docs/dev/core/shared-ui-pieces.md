@@ -306,5 +306,6 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
   - `valueAt(object, path)`: a value by its key path (every form's `valueAt`, `SettingsManager.configValueAt`, `ConfigDraft`'s read); a schema property's default by path is `SchemaLayout.defaultAt`
   - `spaceWords` (CamelCase → words), `edgeArrow(edge)`
   - `formatRate` / `rateParts` / `formatSize`, `formatBytes` (a file size, "4.2 MiB")
+  - `fromCelsius(celsius, units)` / `temperatureSymbol(units)`: a sensor temperature and the unit text (`units` a resolved `celsius`/`fahrenheit`, `WeatherConfig.unitsOf`)
   - `recordUse`, `truncate`.
 - `Paths.expandHome` / `shortenHome`; `KeyNames.modifierLabel`.
