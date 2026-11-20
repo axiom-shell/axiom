@@ -12,7 +12,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - The `screenshot` bind action, with an argument `region` / `window` / `screen`.
 - IPC `screenshot`: `take <kind>` and `cancel`.
 - Launcher `/screenshot`.
-- The Screenshot card.
+- The Screenshot card (`ActionTiles`): its `actions` (region, window, screen, record; the ones this machine can't do are hidden), `labels` (names: each tile's when it fits, always, never) and `annotate` (opens each screenshot it starts in the annotation tool, not recordings: the card sets `ScreenshotManager.annotate` after the run, because every capture clears it).
 - The chat's region attachments use `pick(path, callback)`. It saves to `path` and calls back instead of copying (see [Chat](chat.md)).
 - The screen-share picker's Region uses `pickArea(callback)`: the same region drag, kept to one screen (below), handing back the screen and the rect (its logical pixels from the screen's top left; `finishArea`) instead of a picture, and a cancel as no screen ([Screen sharing](screen-sharing.md)).
 

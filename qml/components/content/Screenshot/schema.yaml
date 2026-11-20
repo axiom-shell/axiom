@@ -3,3 +3,20 @@ link: {setting: Screenshots}
 icon: camera
 group: Tools
 defaultSize: [4, 2]
+order: [actions, labels, annotate]
+settings:
+  actions:
+    type: array
+    title: Actions
+    items: {type: string, enum: [region, window, screen, record]}
+    x-ordered: true
+    x-enumLabels: {region: Region, window: Window, screen: Screen, record: Record}
+    x-enumIcons: {region: screenshot_region, window: wrap_text, screen: screenshot_monitor, record: fiber_manual_record}
+    default: [region, window, screen, record]
+    description: Tiles that can't work here are hidden.
+  labels: {$ref: '#/definitions/ItemNames', description: "Auto: each tile's name when it fits."}
+  annotate:
+    type: boolean
+    title: Annotate
+    default: false
+    description: Opens each screenshot from this card in the annotation tool. Not recordings.

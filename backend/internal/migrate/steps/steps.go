@@ -364,6 +364,8 @@ var all = []Step{
 	}},
 	// v116: module options audit: renames and reshapes of module and bar widget options (v116.go)
 	{Version: 116, Run: v116},
+	// v117: module options: existing cards' style re-defaulted to auto (v117.go)
+	{Version: 117, Run: v117},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

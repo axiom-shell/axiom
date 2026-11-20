@@ -131,6 +131,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `ActionTile`: an icon well over a label (`activeTone`: `accent` or `error`, the fill while `active`; hovered, the well takes the tone's container). With `opens`, a right click or long press is `opened`.
 - `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens. Where the pill already has the height (it never grows for them), the name wraps to two lines and the status takes the lines left, three in all.
   - Both drain a `CountdownBar` (a bar along the bottom emptying over `duration` while `running`) over their `countdown` while active.
+- `ActionTiles` (`content/parts`): the tiles of QuickActions, Power and Screenshot, a `TileGrid` of `ActionTile`s or `ActionPill`s. `tiles` is `[{icon, label, status, active, tone, countdown, opens}]`, answered by `clicked(index, tile)` / `opened(index, tile)`. `style` (`auto`/`tiles`/`pills`) resolves into `shownStyle` (`auto`: tiles where the card is 4.5 em tall, else pills). One names rule: `labels` `auto` shows each tile's name where it fits (`ActionTile.labelFits`), `show` always, `hide` never; pills always carry theirs.
 
 ### Editor lists and drags (`reusable/`)
 - `Style.listRowHeight` is a list entry row's height (`ListEntryRow` and the lists that reserve its room); `Style.minHit(icon)` is the least square a small icon button is hit at.

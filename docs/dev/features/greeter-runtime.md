@@ -89,7 +89,7 @@ Built on `Quickshell.Services.Greetd`.
     - In a slot too short to stack them, the two fields go side by side.
     - In a slot shorter than one field, they shrink to fit.
   - `Session`: in a slot shorter than its card, just the field, with no card.
-  - `Power`: suspend, hibernate (only where logind's `CanHibernate` says it can: `SessionManager.canHibernate`), restart and shut down, in the order set; restart and shut down ask twice. It is also on the lock screen.
+  - `Power`: suspend, hibernate (only where logind's `CanHibernate` says it can: `SessionManager.canHibernate`), restart and shut down, in the order set, as tiles or pills (`style`, names `labels`; `ActionTiles`); restart and shut down ask twice. It is also on the lock screen.
   - `KeyboardLayout` (also on the lock screen and in the overlay, menus and the desktop): the compositor's layouts alone here, a click or the wheel switching ([input sources](input-sources.md)).
 - **Solid:** in greeter mode `Appearance.compositorBlurs` is false (`CompositorManager`), so every surface is opaque and nothing frosts; `GreeterSurface` also sets `frost: false`, so the layouts editor's preview isn't frosted either, though its cards keep the session's translucency (`Style.fillPage` is global). The wallpaper still follows `Greeter.layout.backdrop.blur` and `blurStrength` (Qt's own blur, needing nothing of the compositor).
 - **Look:** the login screen draws with the shell's Style (it reads only `Appearance`/`Interface`, both in the bundle); an installed greeter takes a new look at the user's next greeter Update (Settings › Greeter › Update), not before.

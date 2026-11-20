@@ -7,12 +7,12 @@ settings:
   style:
     type: string
     title: Style
-    default: tiles
+    default: auto
     x-control: toggle
-    enum: [tiles, pills]
-    x-enumLabels: {tiles: Tiles, pills: Pills}
-    description: 'Pills: wide, with a status line beside the icon.'
-  labels: {$ref: '#/definitions/ItemNames', description: 'Auto: only when every tile fits its name.'}
+    enum: [auto, tiles, pills]
+    x-enumLabels: {auto: Auto, tiles: Tiles, pills: Pills}
+    description: "Auto: by the card's size. Pills: wide, with a status line beside the icon."
+  labels: {$ref: '#/definitions/ItemNames', description: "Auto: each tile's name when it fits."}
   actions:
     type: array
     title: Actions

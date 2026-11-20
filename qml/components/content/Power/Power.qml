@@ -4,7 +4,6 @@ import QtQuick
 import qs.config
 import qs.services.core
 import qs.services.session
-import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
 
@@ -14,7 +13,8 @@ import qs.components.content.parts
 // ask for a second click. The lock screen runs them as the session
 // (SessionManager.sessionAction), the greeter as greetd's user
 // (GreetdManager.power); in the layouts editor's preview they do nothing.
-// properties: { actions: ["suspend" | "hibernate" | "reboot" | "poweroff"] }
+// properties: { style: "auto" | "tiles" | "pills", labels: "auto" | "show" | "hide",
+//               actions: ["suspend" | "hibernate" | "reboot" | "poweroff"] }
 Card {
   id: root
 
@@ -38,31 +38,18 @@ Card {
     id: gate
   }
 
-  TileGrid {
-    id: grid
+  ActionTiles {
     anchors.fill: parent
     anchors.margins: root.pad
-    count: root.actions.length
-
-    Repeater {
-      model: root.actions.length
-
-      ActionTile {
-        required property int index
-        readonly property string action: root.actions[index] ?? ""
-        readonly property var info: SessionManager.sessionActionInfo(action)
-
-        x: grid.tileX(index)
-        y: grid.tileY(index)
-        width: grid.tileWidth
-        height: grid.tileHeight
-        icon: info?.icon ?? ""
-        label: info?.label ?? ""
-        active: gate.armed === action
-        activeTone: SessionManager.destructiveActions.includes(action) ? "error" : "accent"
-        countdown: gate.armed === action ? gate.timeout : 0
-        onClicked: root.press(action)
-      }
-    }
+    style: root.properties.style
+    labels: root.properties.labels
+    tiles: root.actions.map(a => ({
+          "icon": SessionManager.sessionActionInfo(a).icon,
+          "label": SessionManager.sessionActionInfo(a).label,
+          "active": gate.armed === a,
+          "tone": SessionManager.destructiveActions.includes(a) ? "error" : "accent",
+          "countdown": gate.armed === a ? gate.timeout : 0
+        }))
+    onClicked: index => root.press(root.actions[index])
   }
 }
