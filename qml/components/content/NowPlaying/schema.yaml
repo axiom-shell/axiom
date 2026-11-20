@@ -4,3 +4,7 @@ group: Media & audio
 defaultSize: [4, 2]
 hosts: [lockscreen]
 lockActions: [media]
+order: [showControls, showCoverBlur]
+settings:
+  showControls: {type: boolean, title: Controls, default: true}
+  showCoverBlur: {type: boolean, title: Blurred cover, default: true}

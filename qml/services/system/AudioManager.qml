@@ -400,6 +400,14 @@ QtObject {
   }
   readonly property bool micInUse: micCaptures.length > 0
 
+  // Whether a stream's app is one of `names` (its node name, application
+  // name or binary; case and surrounding spaces ignored)
+  function ignored(node, names) {
+    const wanted = names.map(n => n.trim().toLowerCase()).filter(n => n !== "");
+    const own = [node.name, node.properties?.["application.name"], node.properties?.["application.process.binary"]];
+    return own.some(n => n && wanted.includes(n.toLowerCase()));
+  }
+
   // An app stream's name: its application, else its binary or node name
   function appName(node) {
     const props = node?.properties ?? {};

@@ -2,6 +2,15 @@ label: Audio mixer
 icon: tune
 group: Media & audio
 grow: standard
-order: [mode, grow]
+order: [mode, maxVolume, ignoreApps, grow]
 settings:
   mode: {type: string, title: Opens on, default: output, x-control: toggle, enum: [output, input], x-enumLabels: {output: Output, input: Input}}
+  maxVolume: {$ref: '#/definitions/MaxVolume'}
+  ignoreApps:
+    x-scope: personal
+    type: array
+    items: {type: string}
+    title: Ignored apps
+    default: []
+    x-suggestions: audioApps
+    description: Left out of the Applications list. Matched against a stream's binary or name.

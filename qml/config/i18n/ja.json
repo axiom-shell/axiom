@@ -4704,6 +4704,9 @@
     "Connection": "",
     "The connection in use and its details.": "",
     "{name} display name, {user} user name, {greeting} time-of-day greeting, {date} today's date. Empty: greets by name.": "",
-    "Account picture before the field.": ""
+    "Account picture before the field.": "",
+    "Blurred cover": "",
+    "Controls": "",
+    "Left out of the Applications list. Matched against a stream's binary or name.": ""
   }
 }

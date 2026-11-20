@@ -47,7 +47,7 @@ Card {
           anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
           onClicked: dial.toggled()
-          onWheel: wheel => dial.stepped(wheel.angleDelta.y > 0 ? 0.05 : -0.05)
+          onWheel: wheel => dial.stepped(wheel.angleDelta.y > 0 ? root.properties.scrollStep / 100 : -root.properties.scrollStep / 100)
         }
       }
       StyledLabel {
@@ -83,11 +83,11 @@ Card {
       }
       onStepped: delta => {
         ShellManager.onScreen("audio");
-        AudioManager.stepNodeVolume(AudioManager.defaultSink, delta);
+        AudioManager.stepNodeVolume(AudioManager.defaultSink, delta, root.properties.maxVolume / 100);
       }
     }
     Dial {
-      visible: !root.compact
+      visible: !root.compact && root.properties.showInput
       Layout.fillWidth: true
       Layout.fillHeight: true
       level: AudioManager.sourceVolume
@@ -100,7 +100,7 @@ Card {
       }
       onStepped: delta => {
         ShellManager.onScreen("microphone");
-        AudioManager.stepNodeVolume(AudioManager.defaultSource, delta);
+        AudioManager.stepNodeVolume(AudioManager.defaultSource, delta, root.properties.maxVolume / 100);
       }
     }
   }

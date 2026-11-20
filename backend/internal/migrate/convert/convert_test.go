@@ -335,15 +335,15 @@ var widgetTypeKeysAddedSinceV1 = map[string][]string{"Notifications": {"label"},
 
 // moduleKeysAddedSinceV1 are a module type's settings added since format
 // 1, which a default layout's modules get from their defaults at load
-var moduleKeysAddedSinceV1 = map[string][]string{"Greeting": {"showPicture"}, "Password": {"showPicture"}, "Power": {"style", "labels"}, "SystemGraphs": {"memoryFormat", "units"}}
+var moduleKeysAddedSinceV1 = map[string][]string{"Greeting": {"showPicture"}, "NowPlaying": {"showControls", "showCoverBlur"}, "Password": {"showPicture"}, "Power": {"style", "labels"}, "SystemGraphs": {"memoryFormat", "units"}, "VolumeDials": {"showInput", "scrollStep", "maxVolume"}}
 
 // moduleOwnKeysAddedSinceV1 are the keys every module gained beside its
 // type and place (its Content size, null by default)
 var moduleOwnKeysAddedSinceV1 = []string{"contentSize"}
 
 // dropModuleKeys deletes moduleKeysAddedSinceV1 (from a module's
-// properties) and moduleOwnKeysAddedSinceV1 from every module in a "modules"
-// array anywhere under v
+// properties, which goes when it ends empty) and moduleOwnKeysAddedSinceV1
+// from every module in a "modules" array anywhere under v
 func dropModuleKeys(v any) {
 	switch t := v.(type) {
 	case *jsonx.Object:
@@ -363,6 +363,10 @@ func dropModuleKeys(v any) {
 						if props != nil {
 							props.Delete(k)
 						}
+					}
+					// A module that had none gets none
+					if props != nil && len(props.Keys()) == 0 {
+						m.Delete("properties")
 					}
 				}
 			}
