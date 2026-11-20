@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
@@ -69,5 +70,42 @@ func TestList(t *testing.T) {
 	}
 	if _, err := List("relative", nil, ListOptions{}); axerr.KindOf(err) != axerr.BadRequest {
 		t.Errorf("a relative path: %v", err)
+	}
+}
+
+// SortBy date lists the newest file first, ties by name; "name" and
+// nothing are the name order.
+func TestListSortBy(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	base := time.Unix(1_700_000_000, 0)
+	for name, age := range map[string]time.Duration{"a.png": 2 * time.Hour, "b.png": 0, "c.png": time.Hour, "d.png": time.Hour} {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(path, base, base.Add(-age)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, c := range []struct {
+		sortBy string
+		want   []string
+	}{
+		{"date", []string{"b.png", "c.png", "d.png", "a.png"}},
+		{"name", []string{"a.png", "b.png", "c.png", "d.png"}},
+		{"", []string{"a.png", "b.png", "c.png", "d.png"}},
+	} {
+		got, err := List(dir, []string{"png"}, ListOptions{SortBy: c.sortBy})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{}
+		for _, n := range c.want {
+			want = append(want, filepath.Join(dir, n))
+		}
+		if !reflect.DeepEqual(got.Files, want) {
+			t.Errorf("sortBy %q: got %v, want %v", c.sortBy, got.Files, want)
+		}
 	}
 }

@@ -5,26 +5,31 @@ import QtQuick
 import qs.config
 import qs.services.core
 
-// Weather shared by every widget that shows it, for the Weather settings:
-// axiom's `weather` topic, which fetches Open-Meteo's forecast for their
-// coordinates, else their location (geocoded), else the machine's IP,
-// every `interval` while some widget wants it. A failed fetch keeps the
-// last good data for the same settings (with none, `error` says why), and
-// so does stopping, so a widget created again (the overlay reopening)
-// shows it at once while it refreshes.
-//   WeatherManager.acquire(owner)
+// Weather for every widget that shows it: axiom's `weather` topic, which
+// fetches Open-Meteo's forecast for each place the widgets ask for (their
+// coordinates, else their location, geocoded, else the machine's IP),
+// every `interval` while some widget wants it. Each widget registers its
+// own place and unit and reads its own state; one request carries every
+// distinct place. A failed fetch keeps the last good data of that place
+// (with none, its state's `error` says why), and so does stopping, so a
+// widget created again (the overlay reopening) shows it at once while it
+// refreshes.
+//   WeatherManager.acquire(owner, { location, units })   // no request: the Weather settings' place and unit
 //   WeatherManager.release(owner)
-//   WeatherManager.weather .current .condition .place …
+//   WeatherManager.stateFor({ location, units })  // { place, weather, error, units } or null
 QtObject {
   id: root
 
+  // The Weather settings' place, as stateFor({}) answers it (its readers
+  // go with their consumers)
+  readonly property var _own: root.stateFor({})
   // { latitude, longitude, name }
-  readonly property var place: _weather?.place ?? null
+  readonly property var place: _own?.place ?? null
   // Open-Meteo's forecast: current, hourly (12h), daily (5 days)
-  readonly property var weather: _weather?.weather ?? null
+  readonly property var weather: _own?.weather ?? null
   // Why there's no weather for the settings ("" while there is, or it's
   // still loading)
-  readonly property string error: _shown?.error ?? ""
+  readonly property string error: _own?.error ?? ""
   readonly property var current: weather?.current ?? null
   readonly property var condition: current ? conditionFor(current.weather_code, current.is_day) : null
   readonly property string unitSymbol: WeatherConfig.units === "fahrenheit" ? "°F" : "°C"
@@ -32,12 +37,34 @@ QtObject {
   // Feels-like, humidity and wind, as a line under the temperature
   readonly property string details: current ? I18n.tr("Feels like {0}°  ·  {1}% humidity  ·  {2} {3}", Math.round(current.apparent_temperature), current.relative_humidity_2m, Math.round(current.wind_speed_10m), weather.current_units?.wind_speed_10m ?? "") : ""
 
-  function acquire(owner) {
-    _registry.acquire(owner, true);
+  // `request.location` '' is the Weather settings' place; `units`
+  // "default" follows Weather › Units (WeatherConfig.unitsOf)
+  function acquire(owner, request) {
+    _registry.acquire(owner, {
+      "location": request?.location ?? "",
+      "units": request?.units ?? "default"
+    });
   }
 
   function release(owner) {
     _registry.release(owner);
+  }
+
+  // The pushed state for `request` ({ location, units }), as
+  // { place, weather, error, units }, or null while there is none (a
+  // place or unit change shows nothing until it lands). An error state has
+  // no place or weather (its zero Forecast marshals with null arrays).
+  function stateFor(request) {
+    const want = root._settingsOf(request);
+    const s = root._states.find(x => x.location === want.location && x.latitude === want.latitude && x.longitude === want.longitude && x.units === want.units);
+    if (!s)
+      return null;
+    return {
+      "place": s.error ? null : s.place,
+      "weather": s.error ? null : s.weather,
+      "error": s.error,
+      "units": s.units
+    };
   }
 
   // A forecast day's short name: "Today", else its weekday. Parsed at
@@ -107,24 +134,39 @@ QtObject {
   // -- Private --
   property ConsumerRegistry _registry: ConsumerRegistry {}
 
-  // The last state pushed, shown only while it answers the settings as
-  // they are (a location or units change shows nothing until it lands)
-  property var _state: null
-  readonly property var _shown: {
-    const s = root._state;
-    return s && s.location === WeatherConfig.location && s.latitude === WeatherConfig.latitude && s.longitude === WeatherConfig.longitude && s.units === WeatherConfig.units ? s : null;
+  // The states last pushed, one per place asked for, each carrying its
+  // request
+  property var _states: []
+
+  // `request` ({ location, units }) as the daemon's place: location ''
+  // is the Weather settings' (its coordinates too), units resolved
+  function _settingsOf(request) {
+    const location = request?.location ?? "";
+    const own = location === "";
+    return {
+      "location": own ? WeatherConfig.location : location,
+      "latitude": own ? WeatherConfig.latitude : "",
+      "longitude": own ? WeatherConfig.longitude : "",
+      "units": WeatherConfig.unitsOf(request?.units ?? "default")
+    };
   }
-  readonly property var _weather: root._shown?.error ? null : root._shown
 
   // The request as one string, so axiom is asked again only when it
-  // really changes
-  readonly property string _requestKey: _registry.active ? JSON.stringify({
-    "location": WeatherConfig.location,
-    "latitude": WeatherConfig.latitude,
-    "longitude": WeatherConfig.longitude,
-    "units": WeatherConfig.units,
-    "interval": WeatherConfig.interval
-  }) : ""
+  // really changes: every distinct place registered
+  readonly property string _requestKey: {
+    if (!_registry.active)
+      return "";
+    const places = [];
+    _registry.requests.forEach(r => {
+      const p = JSON.stringify(root._settingsOf(r));
+      if (!places.includes(p))
+        places.push(p);
+    });
+    return JSON.stringify({
+      "interval": WeatherConfig.interval,
+      "places": places.map(p => JSON.parse(p))
+    });
+  }
 
   on_RequestKeyChanged: {
     if (root._requestKey !== "")
@@ -133,5 +175,5 @@ QtObject {
       BackendManager.release("weather");
   }
 
-  Component.onCompleted: BackendManager.listen("weather.state", state => root._state = state)
+  Component.onCompleted: BackendManager.listen("weather.state", state => root._states = state)
 }

@@ -52,12 +52,15 @@ func (f *fake) set(path, body string) {
 	f.replies[path] = body
 }
 
-func (f *fake) calls(path string) int {
+func (f *fake) calls(path string) int { return f.callsWith(path, "") }
+
+// callsWith is how many asks of path had a query containing query.
+func (f *fake) callsWith(path, query string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	n := 0
 	for _, a := range f.asked {
-		if strings.HasPrefix(a, path+"?") {
+		if strings.HasPrefix(a, path+"?") && strings.Contains(a, query) {
 			n++
 		}
 	}
@@ -196,50 +199,156 @@ func TestFetchFails(t *testing.T) {
 	}
 }
 
-// The source fetches for the first request (every subscriber sends the
-// same settings).
-func TestSource(t *testing.T) {
-	t.Parallel()
-	f := newFake(t, map[string]string{"/forecast": forecastReply})
-	src := Source(Options{Forecast: f.URL + "/forecast"})
-	if src.Name != "weather" {
-		t.Fatal(src.Name)
+// asking is the topic's requests for these places, one request each.
+func asking(places ...Request) []json.RawMessage {
+	var out []json.RawMessage
+	for _, p := range places {
+		raw, _ := json.Marshal(request{Places: []Request{p}})
+		out = append(out, raw)
 	}
-	st, err := src.Fetch(context.Background(), []json.RawMessage{json.RawMessage(`{"latitude":"5","longitude":"6","units":"fahrenheit","interval":900000}`)})
+	return out
+}
+
+// statesOf is the states the fetcher has for the requests.
+func statesOf(t *testing.T, w *fetcher, requests []json.RawMessage) []State {
+	t.Helper()
+	got, err := w.states(context.Background(), requests)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s := st.(*State); s.Units != "fahrenheit" || s.Place.Latitude != 5 {
-		t.Fatalf("%+v", s)
+	return got
+}
+
+// The source fetches every distinct place of every request, one state
+// each in the order asked, each carrying its request.
+func TestSource(t *testing.T) {
+	t.Parallel()
+	f := newFake(t, map[string]string{"/forecast": forecastReply, "/geo": `{"results":[{"latitude":35.7,"longitude":139.7,"name":"Tokyo"}]}`})
+	src := Source(Options{Forecast: f.URL + "/forecast", Geocode: f.URL + "/geo"})
+	if src.Name != "weather" {
+		t.Fatal(src.Name)
+	}
+	here := Request{Latitude: "5", Longitude: "6", Units: "celsius"}
+	hereF := Request{Latitude: "5", Longitude: "6", Units: "fahrenheit"}
+	tokyo := Request{Location: "Tokyo", Units: "celsius"}
+	tokyoF := Request{Location: "Tokyo", Units: "fahrenheit"}
+	// The source is wired to the fetcher
+	fetched, err := src.Fetch(context.Background(), asking(here))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st, ok := fetched.([]State); !ok || len(st) != 1 || st[0].Request != here {
+		t.Fatalf("source fetch: %+v", fetched)
+	}
+	for _, tc := range []struct {
+		name     string
+		requests []json.RawMessage
+		want     []Request
+	}{
+		{"two units of one place", asking(here, hereF), []Request{here, hereF}},
+		{"two named places", asking(here, tokyo), []Request{here, tokyo}},
+		{"identical places in two requests", asking(tokyo, tokyo, here), []Request{tokyo, here}},
+		{"several places in one request", []json.RawMessage{json.RawMessage(`{"places":[{"location":"Tokyo","units":"celsius"},{"location":"Tokyo","units":"fahrenheit"}],"interval":900000}`)}, []Request{tokyo, tokyoF}},
+		{"no requests", nil, nil},
+		{"no places", []json.RawMessage{json.RawMessage(`{"places":[]}`)}, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f.mu.Lock()
+			f.asked = nil
+			f.mu.Unlock()
+			w := &fetcher{o: Options{Forecast: f.URL + "/forecast", Geocode: f.URL + "/geo", Client: f.Client(), Now: time.Now}}
+			got := statesOf(t, w, tc.requests)
+			if got == nil || len(got) != len(tc.want) {
+				t.Fatalf("got %+v, want states for %+v", got, tc.want)
+			}
+			for i, st := range got {
+				if st.Request != tc.want[i] || st.Error != "" || st.Weather.Current == nil {
+					t.Errorf("state %d: %+v, want weather for %+v", i, st, tc.want[i])
+				}
+			}
+		})
+	}
+	// Equal places fetch once; two units of one place fetch once each
+	f.mu.Lock()
+	f.asked = nil
+	f.mu.Unlock()
+	w := &fetcher{o: Options{Forecast: f.URL + "/forecast", Geocode: f.URL + "/geo", Client: f.Client(), Now: time.Now}}
+	statesOf(t, w, asking(here, hereF, here))
+	if n := f.calls("/forecast"); n != 2 {
+		t.Errorf("forecast fetched %d times for two distinct places, want 2", n)
+	}
+	if n := f.callsWith("/forecast", "temperature_unit=fahrenheit"); n != 1 {
+		t.Errorf("fahrenheit fetched %d times, want 1", n)
+	}
+	// Two named locations are geocoded once each
+	f.mu.Lock()
+	f.asked = nil
+	f.mu.Unlock()
+	statesOf(t, w, asking(Request{Location: "Tokyo"}, Request{Location: "Osaka"}, Request{Location: "Tokyo", Units: "fahrenheit"}))
+	if n := f.calls("/geo"); n != 2 {
+		t.Errorf("geocoded %d times for two locations, want 2", n)
 	}
 }
 
-// A failed fetch keeps the last weather for the same settings; with none
-// (offline at login, an unknown location), the state says why
+// A failed fetch keeps the last weather of that place for the same
+// settings, while another place keeps working; with none (offline at
+// login, an unknown location), its state says why
 func TestFailureState(t *testing.T) {
 	t.Parallel()
 	f := newFake(t, map[string]string{"/forecast": forecastReply, "/geo": `{"results":[]}`})
 	w := newFetcher(f, &clock{})
 	w.o.Log = slog.New(slog.DiscardHandler)
-	ctx := context.Background()
 	here := Request{Latitude: "1", Longitude: "2"}
-	good, err := w.state(ctx, here)
-	if err != nil || good.(*State).Error != "" {
-		t.Fatalf("good fetch: %+v, %v", good, err)
+	nowhere := Request{Location: "Nowhere"}
+	good := statesOf(t, w, asking(here))
+	if len(good) != 1 || good[0].Error != "" {
+		t.Fatalf("good fetch: %+v", good)
 	}
 	f.set("/forecast", "")
-	if again, _ := w.state(ctx, here); again != good {
+	if again := statesOf(t, w, asking(here)); len(again) != 1 || again[0].Error != "" || again[0].Weather.Current == nil {
 		t.Errorf("a failure replaced the weather: %+v", again)
 	}
-	st, err := w.state(ctx, Request{Location: "Nowhere"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if s := st.(*State); s.Location != "Nowhere" || s.Weather.Current != nil || !strings.Contains(s.Error, `unknown location "Nowhere"`) {
-		t.Errorf("unknown location: %+v", s)
+	got := statesOf(t, w, asking(here, nowhere))
+	if len(got) != 2 || got[0].Weather.Current == nil || got[1].Request != nowhere || got[1].Weather.Current != nil || !strings.Contains(got[1].Error, `unknown location "Nowhere"`) {
+		t.Errorf("one place failing: %+v", got)
 	}
 	f.set("/forecast", forecastReply)
-	if st, _ := w.state(ctx, here); st.(*State).Error != "" || st.(*State).Weather.Current == nil {
-		t.Errorf("recovered: %+v", st)
+	if got := statesOf(t, w, asking(here, nowhere)); got[0].Error != "" || got[0].Weather.Current == nil {
+		t.Errorf("recovered: %+v", got)
+	}
+}
+
+// The IP's place is looked up again after ipPlaceTTL, and a place no
+// longer asked for is dropped from every map.
+func TestForgetUnasked(t *testing.T) {
+	t.Parallel()
+	f := newFake(t, map[string]string{
+		"/forecast": forecastReply,
+		"/geo":      `{"results":[{"latitude":1,"longitude":2,"name":"A"}]}`,
+		"/ipinfo":   `{"loc":"3,4","city":"B"}`,
+	})
+	c := &clock{time.Unix(0, 0)}
+	w := newFetcher(f, c)
+	ip := Request{Units: "celsius"}
+	named := Request{Location: "A", Units: "celsius"}
+	statesOf(t, w, asking(ip, named))
+	c.now = c.now.Add(2 * ipPlaceTTL)
+	statesOf(t, w, asking(ip, named))
+	if n := f.calls("/ipinfo"); n != 2 {
+		t.Errorf("IP looked up %d times across the TTL, want 2", n)
+	}
+	if n := f.calls("/geo"); n != 1 {
+		t.Errorf("named place geocoded %d times, want 1", n)
+	}
+	statesOf(t, w, asking(ip))
+	if _, ok := w.places["A"]; ok || len(w.places) != 1 || len(w.last) != 1 || len(w.failed) != 0 {
+		t.Errorf("after dropping A: places %v, last %d, failed %d", w.places, len(w.last), len(w.failed))
+	}
+	if _, ok := w.places[""]; !ok {
+		t.Errorf("the IP's place was dropped while asked for: %v", w.places)
+	}
+	statesOf(t, w, nil)
+	if len(w.places) != 0 || len(w.last) != 0 {
+		t.Errorf("with nothing asked: places %v, last %d", w.places, len(w.last))
 	}
 }
