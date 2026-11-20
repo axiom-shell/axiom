@@ -25,7 +25,7 @@ Panel {
   // From the widget's extraData: the symbols it shows (none: all) and
   // whether it shows the portfolio
   property var symbols: []
-  property bool showPortfolio: false
+  property bool showHoldings: false
 
   readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.symbols)
   readonly property var portfolio: MarketsManager.portfolio
@@ -46,7 +46,7 @@ Panel {
   spacing: Widget.padding
   implicitWidth: Widget.textPx(400)
   // Room for the tallest view, and for the portfolio the detail hides
-  maxImplicitHeight: root.implicitHeight - root.bodyHeight + Math.max(root.detailHeight, root.listHeight, root.emptyHeight) + (root.selected !== null && root.showPortfolio && root.portfolio !== null ? summary.implicitHeight + root.spacing : 0)
+  maxImplicitHeight: root.implicitHeight - root.bodyHeight + Math.max(root.detailHeight, root.listHeight, root.emptyHeight) + (root.selected !== null && root.showHoldings && root.portfolio !== null ? summary.implicitHeight + root.spacing : 0)
   flips: true
 
   ModuleHeader {
@@ -75,7 +75,7 @@ Panel {
   // The holdings' total, today's change and the total gain
   Surface {
     id: summary
-    visible: root.selected === null && root.showPortfolio && root.portfolio !== null
+    visible: root.selected === null && root.showHoldings && root.portfolio !== null
     Layout.fillWidth: true
     implicitHeight: portfolioRow.implicitHeight + Widget.padding * 2
     tone: root.dayTone === "faint" ? "sunken" : root.dayTone + "Container"
@@ -148,7 +148,7 @@ Panel {
         required property var modelData
         item: modelData
         width: list.width
-        showHoldings: root.showPortfolio
+        showHoldings: root.showHoldings
         onClicked: root.selectedId = modelData.id
       }
     }

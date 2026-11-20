@@ -1,7 +1,7 @@
 # VPN
 
 > **Files:** `backend/internal/nmvpn/`, `backend/internal/daemon/vpn.go`, `qml/services/system/VpnManager.qml`, `qml/components/content/parts/VpnRow.qml`, `qml/components/content/VpnConnections/VpnConnections.qml`, `qml/components/bar/widgets/Vpn/Vpn.qml`, `qml/components/bar/widgets/Network/Network.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `scripts/dev/vpn-fixtures.sh`, `qml/config/VpnConfig.qml`
-> **Config:** `Vpn` (`VpnConfig`), `Apps.networkEditor`; the Network widget's `showVpn` / `vpnColor`
+> **Config:** `Vpn` (`VpnConfig`), `Apps.networkEditor`; the Network widget's `showVpnLock` / `vpnColor`
 > **Related:** [Networking and Bluetooth](networking-bluetooth.md), [Prompts](prompts.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
 NetworkManager's VPNs (WireGuard, OpenVPN and every other plugin), with Tailscale beside them, as one list to switch from the bar, the Wi-Fi menu, an overlay card or the launcher.
@@ -40,7 +40,7 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
 - **Where VPNs show:**
   - The `VpnConnections` popout and card (`DeviceList` of `VpnRow`s; Import, and Edit connections running `Apps.networkEditor`).
   - The `Vpn` bar widget: click toggles the last VPN, hover opens the popout, `hideWhenOff`.
-  - The Network widget: a lock on its icon, and the VPN's name in ticker and stacked styles; its Wi-Fi menu's VPN section unless `popoutVpn` is off (the `WifiNetworks` card's `showVpn`).
+  - The Network widget (`showVpnLock`): a lock on its icon, and the VPN's name in ticker and stacked styles; its Wi-Fi menu's VPN section unless `popoutVpn` is off (the `WifiNetworks` card's `showVpn`).
   - The Wi-Fi menu: a VPN section folded to one row (`VpnManager.folded`, remembered): what's up, or "Off · N saved", and a connect / disconnect button for the VPN up or the last used. Unfolded (a click on the row), every VPN and the public IP check. Hidden with no VPNs; its header's Import VPN button calls `pickImport`.
   - The Network card's "VPN ·" line.
   - `/vpn [name]` in the launcher.

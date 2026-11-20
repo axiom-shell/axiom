@@ -9,7 +9,7 @@ appearance:
     enum: [label, icon, ticker, stacked, sparkline]
     description: 'Ticker: scrolls every symbol. Stacked: price under the name. Sparkline: the day''s line.'
 colors: standard
-order: [appearance, symbols, showPortfolio, value, colorize, upColor, downColor, boxes, rotate, rotateInterval, popout, backgroundColor, foregroundColor]
+order: [appearance, symbols, showHoldings, value, colorize, upColor, downColor, boxes, rotate, rotateInterval, popout, backgroundColor, foregroundColor]
 boxes:
   variant: each
   boxes:
@@ -52,9 +52,9 @@ settings:
     maximum: 60000
     multipleOf: 1000
     x-showIf: {rotate: true, boxes: one, appearance.style: [label, icon, stacked, sparkline]}
-  showPortfolio:
+  showHoldings:
     type: boolean
-    title: Portfolio
+    title: Holdings
     default: false
     description: Total and today's change first.
     x-link: {setting: Markets}

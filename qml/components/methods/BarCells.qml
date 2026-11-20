@@ -119,10 +119,10 @@ QtObject {
 
   // A Workspaces cell's length along the bar at rest, `thickness` across,
   // on `look`: square where it's boxed (`solid` too), shows numbers
-  // (`labels`) or app icons (`appIcons`), else narrower, for a dot or
+  // (`cellLabels`) or app icons (`appIcons`), else narrower, for a dot or
   // nothing straight on the bar
-  function cellLength(look, solid, labels, appIcons, thickness) {
-    return look.traits.boxed || solid || labels === "numbers" || appIcons ? thickness : Math.round(thickness * 0.6);
+  function cellLength(look, solid, cellLabels, appIcons, thickness) {
+    return look.traits.boxed || solid || cellLabels === "numbers" || appIcons ? thickness : Math.round(thickness * 0.6);
   }
 
   // How a cell's box is drawn (LookBox) in `look` (the bar's), in its

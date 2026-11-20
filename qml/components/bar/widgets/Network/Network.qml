@@ -8,7 +8,7 @@ import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
 // The primary connection's kind and device, with a lock on the icon while
-// a VPN is up (showVpn). Hovering opens the Wi-Fi menu, middle click runs
+// a VPN is up (showVpnLock). Hovering opens the Wi-Fi menu, middle click runs
 // a command. Its display style draws the Wi-Fi signal, the download speed
 // (sparkline) or the network's name (and the VPN's).
 BarWidget {
@@ -28,7 +28,7 @@ BarWidget {
   readonly property bool graphed: root.appearance.style === "sparkline"
   history: graphed ? SystemManager.netRxHistory : null
   graphMax: Math.max(1, ...(root.history ?? []))
-  readonly property var vpn: root.properties.showVpn ? VpnManager.primary : null
+  readonly property var vpn: root.properties.showVpnLock ? VpnManager.primary : null
   styleText: root.vpn ? I18n.tr("{0} · {1}", NetworkingManager.primaryName, root.vpn.name) : NetworkingManager.primaryName
   subtext: NetworkingManager.netInfo.ip
   onGraphedChanged: root._acquire()
@@ -40,7 +40,7 @@ BarWidget {
     SystemManager.release(root);
     VpnManager.release(root);
   }
-  readonly property bool _vpnShown: root.properties.showVpn
+  readonly property bool _vpnShown: root.properties.showVpnLock
   on_VpnShownChanged: root._acquireVpn()
   function _acquireVpn() {
     if (root._vpnShown)
@@ -73,7 +73,7 @@ BarWidget {
   acceptedButtons: Qt.MiddleButton
   onClicked: CommandManager.runDetached(root.properties.middleCommand)
 
-  // A lock on the icon while a VPN is up (showVpn)
+  // A lock on the icon while a VPN is up (showVpnLock)
   mark: root.vpn !== null ? ({
       "icon": "lock",
       "field": "vpnColor"

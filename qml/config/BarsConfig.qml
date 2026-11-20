@@ -328,7 +328,7 @@ QtObject {
       return BarBoxes.fromOptions(spec.options, p);
     switch (spec.source) {
     case "marketSymbols":
-      return MarketMath.entries(MarketsConfig.symbols, p.symbols, p.showPortfolio).map(e => e.portfolio ? "portfolio" : e.item.id);
+      return MarketMath.entries(MarketsConfig.symbols, p.symbols, p.showHoldings).map(e => e.portfolio ? "portfolio" : e.item.id);
     case "claudeAccounts":
       return ClaudeUsageConfig.accounts.map(account => account.id);
     default:

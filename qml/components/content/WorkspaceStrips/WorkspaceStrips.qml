@@ -77,7 +77,7 @@ WorkspacePopoutPanel {
           }) : null
           thickness: root.cellSize
           length: line._text ? line.shows.length : root.cellLength
-          labels: root.properties.labels
+          cellLabels: root.properties.cellLabels
           label: line.shows.number
           text: line._text ? line.shows.text : ""
           textPlain: line.shows.plain

@@ -72,7 +72,7 @@ WorkspacePopoutPanel {
         }) : null
         thickness: root.cellSize
         length: shows.length
-        labels: root.properties.labels
+        cellLabels: root.properties.cellLabels
         label: shows.number
         text: shows.kind === "text" || shows.kind === "name" ? shows.text : ""
         textPlain: shows.plain

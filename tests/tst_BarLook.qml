@@ -434,7 +434,7 @@ TestCase {
     const shows = (own, options) => {
       const context = BarLook.context(root.look(own, null));
       return SchemaLayout.showIfHolds(condition, key => key.startsWith("$bar.") ? context[key] : (options ?? {
-            "labels": "numbers"
+            "cellLabels": "numbers"
           })[key]);
     };
     verify(shows({
@@ -459,7 +459,7 @@ TestCase {
       "widgetStyle": "tinted",
       "hoverFill": true
     }, {
-      "labels": "none"
+      "cellLabels": "none"
     }), "no label to color");
     verify(!shows({
       "widgetStyle": "tinted",
