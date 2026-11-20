@@ -20,6 +20,6 @@ Settings › General opens on the user's account: their picture, names and kind 
 
 ### Where the picture shows
 - Settings › General's Account card (a click on it changes it).
-- The Greeting module with `showPicture` (lock screen, greeter: the user logging in's there).
+- The Greeting module with `showPicture` (lock screen, greeter: the user logging in's there) and the lock screen's Password module with `showPicture`, both a `reusable/Thumbnail` (`round`, `ready`), as the Account card's.
 - The greeter's Login module (AccountsService's copy), and the greeter's preview of it in the layouts editor (the user running the shell).
 - Without AccountsService the login screen can't see `~/.face` (the greeter runs as another user), which the card says.

@@ -3657,7 +3657,6 @@
     "On-screen changes": "",
     "e.g. /, /home. Empty: /.": "",
     "Per action: a direction, workspace, page, menu id, theme, command or search text.": "",
-    "{name} display name, {user} user name, {greeting} time-of-day greeting. Empty: greets by name.": "",
     "A band of each place's day and night, when there's room.": "",
     "Desktop entry ids. Empty: recent apps.": "",
     "Modifiers": "",
@@ -4703,6 +4702,8 @@
     "Copies": "",
     "IP address": "",
     "Connection": "",
-    "The connection in use and its details.": ""
+    "The connection in use and its details.": "",
+    "{name} display name, {user} user name, {greeting} time-of-day greeting, {date} today's date. Empty: greets by name.": "",
+    "Account picture before the field.": ""
   }
 }

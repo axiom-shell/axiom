@@ -90,6 +90,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Keys used to be screen names. A monitor that dropped out and came back while turning off then had its old surface's teardown clear the new surface's report, which flickered the fallback in.
 - **Fallback field:** a surface whose key has no report shows a `PasswordField` of its own, so a hand-edited or broken layout can never lock anyone out. The field sits in a `Surface { tone: "page" }`; lock surfaces may use only `Surface` and Style roles (the lock-on-start budget: no `AttachedSurface`, shadow or `*Config` the greeter's bundle lacks).
   - It appears a tick after loading, near the bottom, over the modules.
+- **Picture:** with `showPicture` the account picture (`AccountManager.iconUrl`, a `reusable/Thumbnail`) goes before the field, at the field's height, once it has loaded.
 - **Stable layout:** the field never moves or grows with its messages (`reusable/PasswordEntry`).
 - **Caps Lock:** while it's on, the field shows a warning icon and, with no other message, its message line says so ([Lock keys](lock-keys.md)).
   - The message line's room is kept (`reserveMessage`).

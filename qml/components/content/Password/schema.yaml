@@ -6,7 +6,7 @@ defaultSize: [6, 1]
 required: true
 hosts: {only: [lockscreen]}
 lockActions: [unlock]
-order: [alignment, placeholder, showMessages]
+order: [alignment, placeholder, showMessages, showPicture]
 settings:
   alignment: {$ref: '#/definitions/TextAlignment'}
   placeholder:
@@ -19,3 +19,8 @@ settings:
     title: Messages
     default: true
     description: Prompts, failures and errors under the field.
+  showPicture:
+    type: boolean
+    title: Picture
+    default: false
+    description: Account picture before the field.

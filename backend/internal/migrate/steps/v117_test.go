@@ -29,3 +29,27 @@ func TestV117StyleToAuto(t *testing.T) {
 			`{"Overlay":{"items":[{"id":"p","layout":[{"type":"QuickActions","properties":3}]}]}}`, false},
 	})
 }
+
+func TestV117GreetingColor(t *testing.T) {
+	t.Parallel()
+	runStepCases(t, 117, []stepCase{
+		{"base05 became empty", `{"Lockscreen":{"layout":[{"type":"Greeting","properties":{"color":"base05","bold":true}}]}}`,
+			`{"Lockscreen":{"layout":[{"type":"Greeting","properties":{"color":"","bold":true}}]}}`, true},
+		{"base08 unchanged", `{"Lockscreen":{"layout":[{"type":"Greeting","properties":{"color":"base08"}}]}}`,
+			`{"Lockscreen":{"layout":[{"type":"Greeting","properties":{"color":"base08"}}]}}`, false},
+		{"no color unchanged", `{"Lockscreen":{"layout":[{"type":"Greeting","properties":{"bold":true}}]}}`,
+			`{"Lockscreen":{"layout":[{"type":"Greeting","properties":{"bold":true}}]}}`, false},
+		{"a Clock's base05 unchanged", `{"Overlay":{"items":[{"id":"p","layout":[{"type":"Clock","properties":{"color":"base05"}}]}]}}`,
+			`{"Overlay":{"items":[{"id":"p","layout":[{"type":"Clock","properties":{"color":"base05"}}]}]}}`, false},
+		{"a Greeting in an Overlay page", `{"Overlay":{"items":[{"id":"p","layout":[{"type":"Greeting","properties":{"color":"base05"}}]}]}}`,
+			`{"Overlay":{"items":[{"id":"p","layout":[{"type":"Greeting","properties":{"color":""}}]}]}}`, true},
+		{"a Greeting in a Menu", `{"Menus":{"items":[{"id":"m","layout":[{"type":"Greeting","properties":{"color":"base05"}}]}]}}`,
+			`{"Menus":{"items":[{"id":"m","layout":[{"type":"Greeting","properties":{"color":""}}]}]}}`, true},
+		{"a Greeting on the Desktop", `{"Desktop":{"modules":[{"type":"Greeting","properties":{"color":"base05"}}]}}`,
+			`{"Desktop":{"modules":[{"type":"Greeting","properties":{"color":""}}]}}`, true},
+		{"a Greeting on the greeter", `{"Greeter":{"layout":[{"type":"Greeting","properties":{"color":"base05"}}]}}`,
+			`{"Greeter":{"layout":[{"type":"Greeting","properties":{"color":""}}]}}`, true},
+		{"properties not an object", `{"Lockscreen":{"layout":[{"type":"Greeting","properties":3}]}}`,
+			`{"Lockscreen":{"layout":[{"type":"Greeting","properties":3}]}}`, false},
+	})
+}

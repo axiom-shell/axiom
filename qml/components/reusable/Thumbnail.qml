@@ -22,13 +22,15 @@ ClippingRectangle {
   // A Material Symbols name shown while the picture isn't loaded (none, or
   // failed, or empty source); empty shows nothing
   property string placeholderIcon: ""
+  // The picture has loaded (a host hides the box until then)
+  readonly property bool ready: image.status === Image.Ready
 
   radius: root.round ? Math.min(root.width, root.height) / 2 : Style.radiusInner
   color: Style.surfaceHighest
 
   StyledIcon {
     anchors.centerIn: parent
-    visible: root.placeholderIcon !== "" && image.status !== Image.Ready
+    visible: root.placeholderIcon !== "" && !root.ready
     text: root.placeholderIcon
     textSize: Math.max(Style.typeMicro, Math.round(Math.min(root.width, root.height) * 0.45)) // fitted: the box
     tone: "faint"

@@ -12,10 +12,10 @@ settings:
     type: string
     title: Text
     default: ''
-    description: '{name} display name, {user} user name, {greeting} time-of-day greeting. Empty: greets by name.'
+    description: "{name} display name, {user} user name, {greeting} time-of-day greeting, {date} today's date. Empty: greets by name."
   showPicture:
     type: boolean
     title: Picture
     default: false
     description: Account picture before the text.
-  color: {type: string, title: Text color, x-options: colors, default: base05}
+  color: {$ref: '#/definitions/TextColor'}

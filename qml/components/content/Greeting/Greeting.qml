@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 
 import qs.config
 import qs.services.session
@@ -12,7 +11,7 @@ import qs.components.content.base
 
 // A line of text, as big as its slot allows: resizing the module resizes
 // the text. {name} is the display name, {user} the user name and
-// {greeting} good morning, afternoon or evening; empty text says hey to
+// {greeting} good morning, afternoon or evening and {date} today's date; empty text says hey to
 // the display name. On the greeter, the names are the user logging in's.
 // With showPicture, the user's picture goes before it (AccountManager's,
 // on the greeter the user logging in's).
@@ -27,7 +26,7 @@ Card {
   readonly property bool boxless: root.host?.kind === "lockscreen" || root.host?.kind === "greeter" ? root.host.greetingBorder !== true : root.bare
   // The colour of its text, the user's pick as set: what the shade behind it
   // is computed from while it has no box (BackdropScrim)
-  readonly property color backdropInk: Style.resolve(root.properties.color)
+  readonly property color backdropInk: root.properties.color ? Style.resolve(root.properties.color) : Style.text
   readonly property string template: root.properties.text
   readonly property bool wantsGreeting: root.template.includes("{greeting}")
 
@@ -42,14 +41,14 @@ Card {
   readonly property string displayName: root.onGreeter ? (root.greeterUser?.realName ?? "") : General.displayName
   readonly property string userName: root.onGreeter ? (root.greeterUser?.name ?? "") : (Quickshell.env("USER") ?? "")
   readonly property string picture: !root.properties.showPicture ? "" : root.onGreeter ? (root.greeterUser?.name ? GreetdManager.avatarOf(root.greeterUser.name) : "") : AccountManager.iconUrl
-  readonly property string shownText: root.template === "" ? (root.displayName ? I18n.tr("Hey {0}", root.displayName) : I18n.tr("Welcome")) : root.template.replace(/\{name\}/g, root.displayName).replace(/\{user\}/g, root.userName).replace(/\{greeting\}/g, root.greeting)
+  readonly property string shownText: root.template === "" ? (root.displayName ? I18n.tr("Hey {0}", root.displayName) : I18n.tr("Welcome")) : root.template.replace(/\{name\}/g, root.displayName).replace(/\{user\}/g, root.userName).replace(/\{greeting\}/g, root.greeting).replace(/\{date\}/g, I18n.formatDate(clock.date, I18n.dateFormat("longDate")))
 
   color: root.boxless ? "transparent" : Style.fill
   outlined: !root.boxless
 
   SystemClock {
     id: clock
-    enabled: root.wantsGreeting
+    enabled: root.wantsGreeting || root.template.includes("{date}")
     precision: SystemClock.Hours
   }
 
@@ -58,23 +57,16 @@ Card {
     anchors.margins: root.pad
     spacing: Widget.spacing * 2
 
-    ClippingRectangle {
-      visible: root.picture !== "" && pictureImage.status === Image.Ready
+    Thumbnail {
+      id: pic
+      visible: root.picture !== "" && pic.ready
       Layout.preferredHeight: Math.min(parent.height, Widget.px(160))
       Layout.preferredWidth: Layout.preferredHeight
       Layout.alignment: Qt.AlignVCenter
-      radius: width / 2
-      color: Style.surfaceHighest
-
-      Image {
-        id: pictureImage
-        anchors.fill: parent
-        source: root.picture
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        cache: false
-        sourceSize: Qt.size(width * 2, height * 2)
-      }
+      source: root.picture
+      round: true
+      cache: false
+      decodeSize: Qt.size(width * 2, height * 2)
     }
 
     StyledText {
