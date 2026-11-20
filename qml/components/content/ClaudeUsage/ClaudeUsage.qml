@@ -14,12 +14,9 @@ import qs.components.content.parts
 // for the accounts of ClaudeUsageConfig. The ClaudeUsage widget's popout (the
 // widget acquires the manager), and an overlay card (it acquires the manager
 // itself; compact: the fullest account's session percent). Its thresholds are
-// the card's `properties`; a popout's payload sets them.
+// `properties`; the widget's popout gets them from the widget.
 Panel {
   id: root
-
-  property int warnThreshold: root.properties.warnThreshold
-  property int criticalThreshold: root.properties.criticalThreshold
 
   // Re-read on every update, so the relative times stay current
   readonly property real now: {
@@ -71,7 +68,7 @@ Panel {
     return isNaN(t) ? "" : I18n.tr("resets in {0}", duration(t - root.now));
   }
   function toneFor(percent) {
-    return percent >= root.criticalThreshold ? "error" : percent >= root.warnThreshold ? "warning" : "accent";
+    return percent >= root.properties.criticalThreshold ? "error" : percent >= root.properties.warnThreshold ? "warning" : "accent";
   }
 
   component Meter: ColumnLayout {

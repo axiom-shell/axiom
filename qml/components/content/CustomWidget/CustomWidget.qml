@@ -20,9 +20,7 @@ import qs.components.content.parts.custom
 Panel {
   id: root
 
-  // A popout's (the bar widget's extraData); a card reads properties
-  property string definitionId: ""
-  readonly property string _chosen: root.embedded ? root.properties.definition : root.definitionId
+  readonly property string _chosen: root.properties.definition
   // On the lock screen a definition not offered there is none: nothing runs
   readonly property bool _withheld: root.host?.kind === "lockscreen" && !CustomWidgetsConfig.definition(root._chosen)?.module.lockscreen
   readonly property string widgetId: root._withheld ? "" : root._chosen

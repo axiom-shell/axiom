@@ -16,13 +16,10 @@ import qs.components.content.parts
 // when it ends, pause, more time and reset (which turns it off). On with
 // no timer it says so, with turn off and set a timer. Compact, the time
 // left or on/off; a click on it toggles Caffeine.
-// properties (card): { presets }
+// properties: { presets }
 Panel {
   id: root
 
-  // Popout: filled from the anchor's extraData, the widget's presets
-  property var presets: []
-  readonly property var shownPresets: root.embedded ? root.properties.presets : root.presets
   // On with no timer: picking one (set a timer) shows the presets again
   property bool pickingTimer: false
   readonly property bool untilOff: IdleManager.caffeine && !IdleManager.caffeineTimed && !root.pickingTimer
@@ -140,7 +137,7 @@ Panel {
   CountdownTimer {
     visible: !root.untilOff
     timer: IdleManager.caffeineTimer
-    presets: root.shownPresets
+    presets: root.properties.presets
     recent: IdleManager.caffeineRecent
     text: IdleManager.caffeineText
     remaining: IdleManager.caffeineRemaining

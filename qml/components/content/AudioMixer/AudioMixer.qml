@@ -17,13 +17,13 @@ import qs.components.content.base
 // ("output") and Microphone ("input") widgets' popout, or an overlay card
 // with its own output/input switch (a wide card puts the device beside
 // the list; a short one is just the device's slider; compact, its figure, which mutes on a click).
-// properties (card): mode "output" | "input", maxVolume (%), ignoreApps (apps left out of the list); a popout's payload sets mode and maxVolume
+// properties: mode "output" | "input", maxVolume (%), ignoreApps (apps left out of the list); the widget's popout gets mode and maxVolume from the widget
 Panel {
   id: root
 
-  // A card's configured mode; a popout sets it from its anchor's payload
+  // The configured mode (the widget's, for a popout), switched by its tabs
   property string mode: root.properties.mode
-  property real maxVolume: root.properties.maxVolume / 100
+  readonly property real maxVolume: root.properties.maxVolume / 100
 
   property int currentTab: 0
 

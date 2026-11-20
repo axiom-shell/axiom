@@ -34,7 +34,7 @@
 
 ### Hosts
 - **`hosts/overlay/OverlaySlot`** (card): passes `properties`, `slotRect`, `embedded: true`. Also used by edge menus, the lock screen, the greeter and the desktop.
-- **`hosts/popout/BarPopouts`** (popout): passes `wrapper`, then, once loaded, copies the anchor's payload keys onto matching properties. Popouts declare what they take rather than reading `wrapper.currentData`.
+- **`hosts/popout/BarPopouts`** (popout): passes `wrapper` and, for a module, its `properties` (`moduleProperties` of the payload's `properties`: the widget's `popout.properties` overlaid with the anchor's `fromWidget`), then, once loaded, copies the other payload keys (popout-only content's `extraData`) onto matching properties. Popouts declare what they take rather than reading `wrapper.currentData`.
 - The tray's menu (`content/SystemTray`) is the one popout-only content rooted in a plain Item. It opens its submenus (`content/parts/TraySubmenu`) in `wrapper.submenu`.
 - `content/parts/MenuSubmenu` (an edge menu's modules, opened by a `Submenu` module) is the other submenu content: see [Menu submenus](../menus/editing-submenus.md).
 - Modules learn where they're shown from `host` (see [Menus overview](../menus/overview.md)).

@@ -85,7 +85,7 @@ BarWidget {
     hitArea: root.hitArea
     popoutName: "ClaudeUsage"
     active: MenusConfig.opensOwnPopout(root.properties)
-    extraData: ({
+    fromWidget: ({
         "warnThreshold": root.properties.warnThreshold,
         "criticalThreshold": root.properties.criticalThreshold
       })

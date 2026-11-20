@@ -17,6 +17,9 @@ import qs.services.ui
  *     popoutName: "WorkspaceGrid"
  *     extraData: ({ output: root.output, vertical: root.isVertical })
  *   }
+ * A popout that shows an overlay module (a widget with x-popoutModule) hands
+ * the module's keys the widget supplies itself by `fromWidget` instead, in
+ * the module key's unit; `extraData` is for popout-only content.
  *
  * The content-type name travels as a `name` field inside the payload
  * (not a separate argument) so Popout.qml's open/close/queue logic can
@@ -37,6 +40,10 @@ Item {
   readonly property var popouts: root.panel?.popoutHost ?? null
 
   property var extraData: ({})
+  // A module popout's settings the widget supplies itself (its
+  // x-popoutModule.fromWidget keys, in the module's unit), joined with the
+  // widget's popout `properties` as the payload's `properties`
+  property var fromWidget: ({})
   property int openDelay: PopoutsConfig.openDelay
   property bool active: true
   // Off, hovering doesn't open it: its owner calls open() (on a click)
@@ -95,8 +102,11 @@ Item {
     // The popout's Size, from the bar widget it opens for (none from an
     // anchor outside one: a submenu hands every key to its content)
     const host = root._widgetHost();
-    if (host)
+    if (host) {
       payload.sizing = host.popoutSizing;
+      if (host.popoutProperties !== null || Object.keys(root.fromWidget).length > 0)
+        payload.properties = Object.assign({}, host.popoutProperties, root.fromWidget);
+    }
 
     for (let key in root.extraData) {
       payload[key] = root.extraData[key];

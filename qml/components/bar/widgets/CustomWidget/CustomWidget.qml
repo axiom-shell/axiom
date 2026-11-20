@@ -80,8 +80,8 @@ BarWidget {
     hitArea: root.hitArea
     popoutName: "CustomWidget"
     active: root.popoutOpens
-    extraData: ({
-        "definitionId": root.widgetId
+    fromWidget: ({
+        "definition": root.widgetId
       })
   }
 

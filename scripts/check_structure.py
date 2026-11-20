@@ -53,7 +53,9 @@ running anything:
     base output written, no unused or unknown colour field), its exceptions
     in scripts/bar-widget-exceptions.json
   - a bar widget's `popoutModule` (x-popoutModule) is a popoutName it
-    opens, and one whose popoutName is an overlay module declares it
+    opens, and one whose popoutName is an overlay module declares it; its
+    anchors hand its values by `fromWidget` (the keys popoutModule lists),
+    never `extraData`, and a widget without popoutModule has no `fromWidget`
   - no UI switches one of the shell's actions through its service's own
     toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
     light, dark mode, the mutes, the VPN, a recording, a session action,
@@ -192,6 +194,18 @@ def binding(code, start):
 def blank_strings(code):
     """`code` with each string literal emptied (same lines)."""
     return re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
+
+
+def qml_blocks(text, type_name):
+    """Each `<type_name> { … }` in a QML file: (where its body starts, its body)."""
+    blocks = []
+    for m in re.finditer(rf"\b{type_name}\s*\{{", text):
+        depth, i = 1, m.end()
+        while i < len(text) and depth:
+            depth += {"{": 1, "}": -1}.get(text[i], 0)
+            i += 1
+        blocks.append((m.end(), text[m.end():i]))
+    return blocks
 
 
 def bar_widget_template(schema, sources, errors):
@@ -341,8 +355,11 @@ def bar_widget_template(schema, sources, errors):
 def popout_modules(schema, sources, errors):
     """A bar widget's x-popoutModule.type is the literal popoutName of its
     folder's QML or of the base file its root type is (AudioLevelWidget for
-    Volume and Microphone), and a widget whose popoutName is an overlay
-    module type declares x-popoutModule."""
+    Volume and Microphone), a widget whose popoutName is an overlay module
+    type declares x-popoutModule, and a module popout is handed widget
+    values by `fromWidget: ({…})` on its anchor: the keys the widget's
+    x-popoutModule.fromWidget lists, never `extraData` (a widget without
+    x-popoutModule has no `fromWidget`)."""
     modules = set(schema_types(schema, "OverlayModule"))
     for t in schema_types(schema, "BarWidget"):
         folder = f"{WIDGETS_DIR}/{t}/"
@@ -352,11 +369,23 @@ def popout_modules(schema, sources, errors):
         if root_type and f"{WIDGETS_DIR}/base/{root_type.group(1)}.qml" in sources:
             files.append(f"{WIDGETS_DIR}/base/{root_type.group(1)}.qml")
         names = {m for path in files for m in re.findall(r'popoutName:\s*"([^"]+)"', sources[path])}
-        declared = schema["definitions"].get(f"{t}Widget", {}).get("x-popoutModule", {}).get("type")
+        module = schema["definitions"].get(f"{t}Widget", {}).get("x-popoutModule")
+        declared = (module or {}).get("type")
         if declared and declared not in names:
             errors.append(f"{WIDGETS_DIR}/{t}: x-popoutModule.type {declared} is not a popoutName it opens ({', '.join(sorted(names)) or 'none'})")
         if not declared and names & modules:
             errors.append(f"{WIDGETS_DIR}/{t}: its popoutName {', '.join(sorted(names & modules))} is an overlay module: declare popoutModule in its schema.yaml")
+        for path in files:
+            for _, anchor in qml_blocks(sources[path], "PopoutAnchor"):
+                given = re.search(r"\bfromWidget:\s*\(\{(.*?)\}\)", anchor, re.S)
+                if module and re.search(r"\bextraData:", anchor):
+                    errors.append(f"{path}: a PopoutAnchor in a widget with popoutModule hands its values by fromWidget, not extraData")
+                if given and not module:
+                    errors.append(f"{path}: a PopoutAnchor has fromWidget, but {WIDGETS_DIR}/{t} declares no popoutModule")
+                elif module:
+                    keys = set(re.findall(r'[{,]\s*"(\w+)"\s*:', "{" + given.group(1))) if given else set()
+                    if keys != set(module.get("fromWidget", [])):
+                        errors.append(f"{path}: a PopoutAnchor's fromWidget keys ({', '.join(sorted(keys)) or 'none'}) differ from {t}'s popoutModule.fromWidget ({', '.join(sorted(module.get('fromWidget', []))) or 'none'})")
 
 
 def main():
@@ -682,16 +711,12 @@ def main():
     # typed parameter converts without refusing anything (`int` makes a word
     # 0, `bool` makes "false" true): they're strings, read through _int
     for path, text in sources.items():
-        for m in re.finditer(r"\bIpcTarget\s*\{", text):
-            depth, end = 1, m.end()
-            while depth and end < len(text):
-                depth += {"{": 1, "}": -1}.get(text[end], 0)
-                end += 1
-            for fn in re.finditer(r"function\s+(\w+)\s*\(([^)]*)\)", text[m.end():end]):
+        for start, body in qml_blocks(text, "IpcTarget"):
+            for fn in re.finditer(r"function\s+(\w+)\s*\(([^)]*)\)", body):
                 typed = re.findall(r"(\w+)\s*:\s*(\w+)", fn.group(2))
                 for name, kind in typed:
                     if kind != "string":
-                        line = text.count("\n", 0, m.end() + fn.start()) + 1
+                        line = text.count("\n", 0, start + fn.start()) + 1
                         errors.append(f"{path}:{line}: IPC function {fn.group(1)}'s {name} is {kind}: take a string "
                                       "(arguments arrive as text; a number through _int, services/core/IpcTarget.qml)")
 

@@ -496,6 +496,10 @@ class CheckStructure(unittest.TestCase):
         # x-popoutModule: (a) names a popoutName the widget opens (Volume's is in its base file), (b) declared when the popout is a module
         "bar/widgets/Volume: x-popoutModule.type Caffeine is not a popoutName it opens (AudioMixer)",
         "bar/widgets/Todo: its popoutName Todo is an overlay module: declare popoutModule in its schema.yaml",
+        # (c) an anchor's fromWidget keys are the widget's, a module widget's anchor has no extraData, a widget without popoutModule has no fromWidget
+        "SystemStats/SystemStats.qml: a PopoutAnchor's fromWidget keys (memoryFormat, metrics, units) differ from SystemStats's popoutModule.fromWidget (memoryFormat, metrics)",
+        "Weather/Weather.qml: a PopoutAnchor in a widget with popoutModule hands its values by fromWidget, not extraData",
+        "base/AudioLevelWidget.qml: a PopoutAnchor has fromWidget, but qml/components/bar/widgets/Microphone declares no popoutModule",
     ]
 
     def test_each_rule_fails(self):
@@ -516,6 +520,9 @@ class CheckStructure(unittest.TestCase):
                 del defs["UpdatesWidget"]["properties"]["properties"]["properties"]["failedColor"]
                 defs["VolumeWidget"]["x-popoutModule"]["type"] = "Caffeine"
                 del defs["TodoWidget"]["x-popoutModule"]
+                defs["SystemStatsWidget"]["x-popoutModule"]["fromWidget"].remove("units")
+                defs["WeatherWidget"]["x-popoutModule"] = {"type": "WeatherForecast"}
+                del defs["MicrophoneWidget"]["x-popoutModule"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
