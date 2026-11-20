@@ -1,7 +1,7 @@
 # Networking and Bluetooth
 
 > **Files:** `qml/services/system/NetworkingManager.qml`, `qml/services/system/BluetoothManager.qml`, `qml/config/BluetoothConfig.qml`, `qml/components/methods/DeviceBatteries.qml`, `backend/internal/nmnet/`, `backend/internal/daemon/net.go`, `backend/internal/bluez/`, `backend/internal/daemon/bluetooth.go`, `qml/components/content/BluetoothDevices/BluetoothDevices.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `qml/components/content/parts/WifiJoinForm.qml`, `qml/components/content/parts/ConnectionDetails.qml`, `qml/services/system/BatteryManager.qml`, `qml/components/content/Battery/Battery.qml`, `qml/components/bar/widgets/Battery/Battery.qml`
-> **Config:** `Apps.networkEditor` (the Wi-Fi menu's Settings button), `Bluetooth.pairingAgent` (no reader: the daemon reads it), `Bluetooth.notify` / `lowThreshold` / `criticalThreshold` (`BluetoothConfig`), the Battery widget's and module's `showPeripherals`
+> **Config:** `Apps.networkEditor` (the Wi-Fi menu's Settings button), `Bluetooth.pairingAgent` (no reader: the daemon reads it), `Bluetooth.notify` / `lowThreshold` / `criticalThreshold` (`BluetoothConfig`), the Battery widget's and module's `showPeripherals`, the module's `showTime` and `showPowerProfile` (a power profile row, `BatteryManager.setProfile`; hidden on the lock screen and greeter)
 > **Related:** [Services pattern](../core/services-pattern.md), [VPN](vpn.md), [Prompts](prompts.md)
 
 Wi-Fi and wired state, built on Quickshell's Networking module, and Bluetooth, which axiom's daemon follows (`bluez`). Throughput is not here: it stays in SystemManager. VPNs are VpnManager's ([VPN](vpn.md)).
@@ -74,7 +74,7 @@ BlueZ on the system bus (`backend/internal/bluez`, wired in `daemon/bluetooth.go
 
 ### Peripheral batteries
 `BatteryManager.peripherals`: the connected Bluetooth devices reporting a battery (`BluetoothManager.connectedDevices` with `batteryAvailable`), by name, as `{address, name, glyph, percentage, level}` (`level`: `DeviceBatteries.level` at `Bluetooth.lowThreshold` / `criticalThreshold`); `lowestPeripheral` the one lowest. Only BlueZ's `Battery1` is read: a peripheral only UPower sees isn't listed.
-- **The Battery module** (`showPeripherals`, default on) lists them under the laptop's battery, a line each: the device's glyph and name, a `LevelMeter` and the percent, coloured by level. With no laptop battery it shows only them (its "On AC power" state only when there are none); compact, the lowest one's figure. The circle part is hidden by its height, not `visible` (a Layout misses a child shown while hidden).
+- **The Battery module** (`showPeripherals`, default on; `showTime` off drops the time estimate, `showPowerProfile` adds a power saver / balanced / performance row) lists them under the laptop's battery, a line each: the device's glyph and name, a `LevelMeter` and the percent, coloured by level. With no laptop battery it shows only them (its "On AC power" state only when there are none); compact, the lowest one's figure. The circle part is hidden by its height, not `visible` (a Layout misses a child shown while hidden).
 - **The Battery widget** (`showPeripherals`, default on; it has no popout of its own) lists them in its tooltip (with its menu popout off) and in its click's status toast. With no laptop battery it shows the lowest one (its glyph, percent and level colours) instead of hiding, and hides only when there are none either; laptops are unchanged.
 
 ### Connection events

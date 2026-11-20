@@ -12,7 +12,8 @@ import qs.components.content.base
 // compact, the figure only. Under them the peripherals' batteries
 // (connected Bluetooth devices, with showPeripherals): icon, name, a
 // meter and the percent; with no laptop battery only them (compact, the
-// lowest one's figure).
+// lowest one's figure). showPowerProfile adds a row to pick the power
+// profile (not on the lock screen or the login screen).
 Card {
   id: root
 
@@ -28,7 +29,10 @@ Card {
     return level === "critical" ? "error" : level === "low" ? "warning" : "success";
   }
 
-  readonly property string stateText: BatteryManager.isCharging ? I18n.tr("Charging · {0} to full", BatteryManager.timeToFull) : BatteryManager.isFull ? I18n.tr("Fully charged") : I18n.tr("{0} left", BatteryManager.timeRemaining)
+  // showTime off: the state alone, no estimate
+  readonly property string stateText: BatteryManager.isCharging ? (root.properties.showTime ? I18n.tr("Charging · {0} to full", BatteryManager.timeToFull) : I18n.tr("Charging")) : BatteryManager.isFull ? I18n.tr("Fully charged") : root.properties.showTime ? I18n.tr("{0} left", BatteryManager.timeRemaining) : ""
+  // The profile row: not on the lock screen or the login screen, which don't change the system
+  readonly property bool showsProfile: root.properties.showPowerProfile && BatteryManager.hasPowerProfiles && root.host.kind !== "lockscreen" && root.host.kind !== "greeter"
   readonly property color levelColor: BatteryManager.isCritical ? Style.error : BatteryManager.isLow ? Style.warning : Style.success
   readonly property string levelTone: BatteryManager.isCritical ? "error" : BatteryManager.isLow ? "warning" : "success"
   readonly property bool sideBySide: root.shape === "horizontal"
@@ -44,20 +48,26 @@ Card {
     label: BatteryManager.isAvailable ? root.stateText : root.onlyPeripherals ? root.lowest.name : I18n.tr("On AC power")
   }
 
-  EmptyState {
-    visible: !BatteryManager.isAvailable && !root.onlyPeripherals
-    anchors.centerIn: parent
-    maxWidth: root.innerWidth
-    availableHeight: root.innerHeight
-    icon: "power"
-    text: I18n.tr("On AC power")
-  }
-
   ColumnLayout {
     anchors.fill: parent
     anchors.margins: root.pad
     // The gap is the peripherals' own, only with both parts shown
     spacing: 0
+
+    // "On AC power", over the profile row when it shows
+    Item {
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      Layout.maximumHeight: !BatteryManager.isAvailable && !root.onlyPeripherals ? Infinity : 0
+      EmptyState {
+        visible: !BatteryManager.isAvailable && !root.onlyPeripherals
+        anchors.centerIn: parent
+        maxWidth: root.innerWidth
+        availableHeight: parent.height
+        icon: "power"
+        text: I18n.tr("On AC power")
+      }
+    }
 
     GridLayout {
       // Hidden by size, not `visible`: a Layout misses a child shown while
@@ -105,6 +115,32 @@ Card {
           overflow: "line"
           text: root.stateText
         }
+      }
+    }
+
+    SegmentRow {
+      enabled: root.showsProfile
+      opacity: enabled ? 1 : 0
+      Layout.maximumHeight: enabled ? Infinity : 0
+      clip: true
+      Layout.fillWidth: true
+      Layout.topMargin: BatteryManager.isAvailable ? Widget.spacing : 0
+
+      SegmentButton {
+        text: I18n.tr("Power saver")
+        active: BatteryManager.profile === "powerSaver"
+        onClicked: BatteryManager.setProfile("powerSaver") // lock-inert: hidden on the lock screen and greeter
+      }
+      SegmentButton {
+        text: I18n.tr("Balanced")
+        active: BatteryManager.profile === "balanced"
+        onClicked: BatteryManager.setProfile("balanced") // lock-inert: hidden on the lock screen and greeter
+      }
+      SegmentButton {
+        visible: BatteryManager.hasPerformance
+        text: I18n.tr("Performance")
+        active: BatteryManager.profile === "performance"
+        onClicked: BatteryManager.setProfile("performance") // lock-inert: hidden on the lock screen and greeter
       }
     }
 

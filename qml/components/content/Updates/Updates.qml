@@ -12,7 +12,7 @@ import qs.components.content.parts
 // the Updates widget's popout (the widget acquires the manager), or an
 // overlay card, which acquires it with its own settings and says so where
 // this distribution's updates can't be checked (UpdatesManager.supported).
-// properties (card): none; the interval and the AUR helper are UpdatesConfig's
+// properties (card): grow; the interval and the AUR helper are UpdatesConfig's
 Panel {
   id: root
 
@@ -40,6 +40,14 @@ Panel {
     const room = root.innerHeight - Appearance.fontSize * 2 - root.spacing * (stacked + 1) - stacked * root.rowLine * 2;
     return Math.max(1, Math.floor(room / stacked / root.rowLine));
   }
+
+  // Grows to list every package: the height the rows each section hides want (stacked summed, side by side the larger)
+  readonly property real overflow: {
+    const repo = Math.max(0, root.repoPackages.length - root.maxRows);
+    const aur = Math.max(0, root.aurPackages.length - root.maxRows);
+    return root.rowLine * (root.sideBySide ? Math.max(repo, aur) : repo + aur);
+  }
+  wantedHeight: root.compact ? 1 : root.height > 0 ? root.height + root.overflow : 0
 
   fullMinWidth: Appearance.fontSize * 10
   fullMinHeight: Appearance.fontSize * 6
@@ -90,16 +98,21 @@ Panel {
     }
 
     Repeater {
-      model: section.packages.slice(0, root.maxRows)
+      model: Math.min(section.packages.length, root.maxRows)
 
       RowLayout {
         id: row
-        required property var modelData
+        required property int index
+        readonly property var pkg: section.packages[row.index] ?? ({
+            "name": "",
+            "from": "",
+            "to": ""
+          })
         Layout.fillWidth: true
         spacing: Widget.padding
 
         StyledLabel {
-          text: row.modelData.name
+          text: row.pkg.name
           Layout.fillWidth: true
           Layout.minimumWidth: Appearance.fontSize * 4
           overflow: "line"
@@ -110,7 +123,7 @@ Panel {
           overflow: "line"
           elide: Text.ElideLeft // style-exempt: the new version stays in view
           // dnf doesn't say the installed version
-          text: section.narrow || row.modelData.from === "" ? row.modelData.to : `${row.modelData.from} → ${row.modelData.to}`
+          text: section.narrow || row.pkg.from === "" ? row.pkg.to : `${row.pkg.from} → ${row.pkg.to}`
           role: "caption"
           tone: "muted"
         }
@@ -136,6 +149,19 @@ Panel {
       tone: "faint"
       Layout.maximumWidth: Widget.textPx(160)
       overflow: "line"
+    }
+    FlatIconButton {
+      iconText: "refresh"
+      visible: UpdatesManager.supported
+      enabled: !UpdatesManager.checking
+      tooltipText: I18n.tr("Check again")
+      onClicked: UpdatesManager.refresh()
+    }
+    FlatIconButton {
+      visible: UpdatesManager.supported
+      iconText: "upgrade"
+      tooltipText: I18n.tr("Upgrade")
+      onClicked: UpdatesManager.upgrade()
     }
   }
 

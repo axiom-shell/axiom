@@ -4707,6 +4707,8 @@
     "Account picture before the field.": "",
     "Blurred cover": "",
     "Controls": "",
-    "Left out of the Applications list. Matched against a stream's binary or name.": ""
+    "Left out of the Applications list. Matched against a stream's binary or name.": "",
+    "Balanced": "",
+    "Time left": ""
   }
 }

@@ -1,13 +1,13 @@
 # Growing and expanding modules
 
 > **Files:** `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/ExpandedModule.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/content/base/Card.qml`, `qml/components/content/base/Panel.qml`, `qml/components/content/parts/ExpandButton.qml`, `qml/components/methods/GridPlacement.qml`
-> **Config:** module `properties.grow` (Notifications, Agenda, WifiNetworks, BluetoothDevices, AudioMixer)
+> **Config:** module `properties.grow` (Notifications, Agenda, WifiNetworks, BluetoothDevices, AudioMixer, TopProcesses, Updates)
 > **Related:** [Writing modules](writing-modules.md), [Pages and grid](pages-and-grid.md), [Grid canvas](grid-canvas.md), [Menu hosts](../menus/hosts.md), [Popout edge attach](../popouts/edge-attach.md)
 
 Two runtime ways a module gets more room than its `place`: **growing** (taking extra rows while its content wants them) and **expanding** (a detail view over the whole grid, like Android's quick settings). Neither changes the config.
 
 ### Growing: who and how much
-- A module with `properties.grow` takes up to that many rows while its content wants them: Notifications, Agenda, WifiNetworks, BluetoothDevices, AudioMixer.
+- A module with `properties.grow` takes up to that many rows while its content wants them: Notifications, Agenda, WifiNetworks, BluetoothDevices, AudioMixer, TopProcesses, Updates.
   - The field is in each one's schema, since forms don't follow `$ref`.
 - It says how tall through `wantedHeight` on Card/Panel:
   - its height plus what its scrolling list is short of, or less what it has spare (`DeviceList.overflow`);

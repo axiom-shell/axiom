@@ -5,3 +5,15 @@ group: Session
 defaultSize: [2, 1]
 hosts: [lockscreen, greeter]
 lockActions: [layout]
+settings:
+  format:
+    type: string
+    title: Layout name
+    default: full
+    x-control: toggle
+    enum: [short, full]
+    x-enumLabels: {short: Code, full: Name}
+  showIcon:
+    type: boolean
+    title: Icon
+    default: true

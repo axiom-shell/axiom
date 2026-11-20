@@ -7,7 +7,8 @@ import qs.services.system
 import qs.components.reusable
 import qs.components.content.base
 
-// The input source in use (InputSourceManager), by its full name: a click
+// The input source in use (InputSourceManager), by its full name (format
+// short: its code; showIcon: the icon before it): a click
 // switches to the next one, a right click or the wheel steps either way.
 // On the lock screen and the login screen only the xkb sources: a password
 // field types through the compositor's layout alone, never an input
@@ -59,6 +60,7 @@ Card {
     spacing: Widget.spacing
 
     StyledIcon {
+      visible: root.properties.showIcon
       text: root.live ? InputSourceManager.iconFor(root.current) : "keyboard"
       tone: area.containsMouse ? "accent" : "text"
     }
@@ -66,7 +68,7 @@ Card {
     StyledLabel {
       Layout.fillWidth: true
       overflow: "line"
-      text: root.live && root.current !== "" ? InputSourceManager.nameFor(root.current) : I18n.tr("Keyboard layout")
+      text: root.live && root.current !== "" ? (root.properties.format === "short" ? InputSourceManager.labelFor(root.current, "short") : InputSourceManager.nameFor(root.current)) : I18n.tr("Keyboard layout")
       tone: area.containsMouse ? "accent" : "text"
     }
   }

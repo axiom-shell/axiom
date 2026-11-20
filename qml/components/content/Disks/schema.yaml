@@ -12,3 +12,12 @@ settings:
     default: [/]
     items: {type: string}
     description: 'e.g. /, /home. Empty: /.'
+  warnThreshold: {$ref: '#/definitions/WarnThreshold'}
+  criticalThreshold: {$ref: '#/definitions/CriticalThreshold'}
+  value:
+    type: string
+    title: Value
+    default: used
+    x-control: toggle
+    enum: [used, free]
+    x-enumLabels: {used: Used, free: Free}
