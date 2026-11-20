@@ -534,16 +534,15 @@ QtObject {
       return;
     // A nested field is set as its whole top-level object
     const key = path[0];
-    let value = menu.id;
-    if (path.length > 1) {
-      value = Utils.clone(widget.properties?.[key] ?? {});
-      let node = value;
-      for (const part of path.slice(1, -1)) {
-        node[part] = node[part] ?? {};
-        node = node[part];
+    const value = ConfigOps.apply({
+      [key]: Utils.clone(widget.properties?.[key] ?? {})
+    }, [
+      {
+        "op": "set",
+        "path": path,
+        "value": menu.id
       }
-      node[path[path.length - 1]] = menu.id;
-    }
+    ])[key];
     BarManager.updateWidgetProperty(zone, index, key, value);
     root.editMenu(root.menus.selectedMenuIndex);
     ShellManager.followLink("Layouts");

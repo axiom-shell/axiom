@@ -97,14 +97,17 @@ ColumnLayout {
       root.edited(path, value);
       return;
     }
-    const top = Utils.clone(root.valueAt([path[0]]) ?? {});
-    let node = top;
-    for (const key of path.slice(1, -1)) {
-      node[key] = node[key] ?? {};
-      node = node[key];
-    }
-    node[path[path.length - 1]] = value;
-    root.edited([path[0]], top);
+    const key = path[0];
+    const top = ConfigOps.apply({
+      [key]: Utils.clone(root.valueAt([key]) ?? {})
+    }, [
+      {
+        "op": "set",
+        "path": path,
+        "value": value
+      }
+    ])[key];
+    root.edited([key], top);
   }
 
   spacing: Widget.spacing

@@ -159,7 +159,7 @@ Item {
           "$widget.opensOwnPopout": MenusConfig.opensOwnPopout(editorRoot.widget.properties)
         })
         emptyText: I18n.tr("This widget has no options")
-        changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
+        changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path)
         // An edge menu picker (its popout's menu, a Button's click
         // menu) can open a new menu, made and saved at once
         fieldAction: (path, schema) => schema?.["x-options"] === "menus" ? {
@@ -169,7 +169,7 @@ Item {
           } : null
         fieldNote: path => path[0] === "popout" ? editorRoot.popoutNote.noteFor(path) : ""
         onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
-        onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
+        onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path)
       }
 
       FieldGroup {
