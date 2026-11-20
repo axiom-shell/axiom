@@ -28,7 +28,9 @@ ColumnLayout {
   readonly property int lowest: Math.ceil(root.minimum / root.unitScale)
   readonly property int highest: Math.floor(root.maximum / root.unitScale)
   readonly property int step: Math.max(1, Math.round(root.stepSize / root.unitScale))
-  readonly property int shownConfigValue: Math.round(root.currentConfigValue / root.unitScale)
+  // Within the bounds: a maximum another key narrows (`x-maximumFrom`)
+  // can fall under the value stored, which then counts as the maximum
+  readonly property int shownConfigValue: Math.max(root.lowest, Math.min(root.highest, Math.round(root.currentConfigValue / root.unitScale)))
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
   // Under the description (FieldHeader.below)

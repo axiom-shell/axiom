@@ -297,6 +297,16 @@ QtObject {
     return schema?.["x-applyOnSave"] === true || schema?.["x-takeover"] === true;
   }
 
+  // An integer field's maximum: its schema's (9999 without one), and at
+  // most the value of the sibling key its `x-maximumFrom` names, read
+  // through `valueOf(key)` (a grid's start column at most its `columns`)
+  function maximum(fieldSchema, valueOf) {
+    const top = fieldSchema?.maximum ?? 9999;
+    const from = fieldSchema?.["x-maximumFrom"];
+    const cap = typeof from === "string" && valueOf ? valueOf(from) : undefined;
+    return typeof cap === "number" ? Math.min(top, cap) : top;
+  }
+
   // Stored values per shown one for a number with `x-unit`: a duration
   // is stored in ms and shown in its unit (`s`, `min`, `h`, `d`); any
   // other unit shows the value as stored
@@ -541,6 +551,12 @@ QtObject {
         return index < 0 ? Infinity : index;
       };
       const keys = Object.keys(objectSchema.properties ?? {}).sort((a, b) => rank(a) - rank(b));
+      // Each key's rows are made alone, so a field drawing a sibling
+      // (drawnKeys: an `x-row`'s `x-rowDraws`) marks it here, as rows()
+      // does within one object: by the drawn row's dotted path
+      const drawnBy = {};
+      for (const key of keys)
+        root.drawnKeys(objectSchema.properties[key]).forEach(drawn => drawnBy[path.concat(drawn.split(".")).join(".")] = path.concat(key).join("."));
       for (const key of keys) {
         const prop = objectSchema.properties[key];
         if (prop["x-settings"] === false)
@@ -552,6 +568,7 @@ QtObject {
         }, path);
         if (fieldRows.length === 0)
           continue;
+        fieldRows.filter(row => row.kind !== "group" && drawnBy[row.path.join(".")]).forEach(row => row.drawnBy = drawnBy[row.path.join(".")]);
         if (perField && path.length === 1) {
           const title = prop.title ?? key;
           const card = cardFor(title, base);

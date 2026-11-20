@@ -4715,6 +4715,11 @@
     "As a submenu it closes on leave after this delay.": "",
     "How long the pointer rests on the row before the menu opens.": "",
     "Reduce effects over fullscreen": "",
-    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.": ""
+    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.": "",
+    "Start cell": "",
+    "Column": "",
+    "Where every monitor's grid starts, its column and row counted from the top left. Off: the middle.": "",
+    "Start column": "",
+    "Start row": ""
   }
 }

@@ -7,7 +7,7 @@ import qs.components.methods
 import qs.services.core
 
 // Keeps the compositor's workspaces laid out for the Workspaces layout:
-// remaps them when it changes, and starts a grid at its centre cell when
+// remaps them when it changes, and starts a grid at its start cell when
 // it's turned on or a run of the compositor starts in one, re-homes an
 // unplugged monitor's windows and returns them when it's back
 // (docs/dev/hyprland/workspaces.md › Layout changes, Hotplugs, The grid's
@@ -37,7 +37,7 @@ QtObject {
 
   // A layout or count change saved together is one remap. Turning the
   // grid on (from off as last kept, so the config settling at the shell's
-  // start never counts) starts every output at its block's centre
+  // start never counts) starts every output at its block's start cell
   property Timer _timer: Timer {
     interval: 200
     onTriggered: {
@@ -274,9 +274,9 @@ QtObject {
   // Moves every window from its workspace under the `from` layout to the
   // matching one in its output's ids under `to` (WorkspaceGeometry.
   // remapWorkspaces), and switches each output to the workspace matching
-  // the one it showed (the backend's applyRemap), or with `centre` to its
-  // grid block's centre (WorkspaceGeometry.centreFocus)
-  function remap(from, to, centre) {
+  // the one it showed (the backend's applyRemap), or with `start` to its
+  // grid block's start cell (WorkspaceGeometry.startFocus)
+  function remap(from, to, start) {
     const manager = root.manager;
     // Workspaces that belong to their output keep their place in it
     if (!manager.backend || manager.supports.outputWorkspaces === true)
@@ -292,10 +292,10 @@ QtObject {
     const ids = layout => [layout.blocks, layout.size].concat(Object.keys(layout.bases ?? {}).sort().map(name => name + "=" + layout.bases[name])).join(" ");
     if (ids(from) !== ids(to) && Object.keys(root._returns).length > 0)
       root._setReturns({});
-    if (centre) {
-      const start = WorkspaceGeometry.centreFocus(outputs, to.size, WorkspacesConfig.columns, WorkspacesConfig.rows, false);
-      plan.focus = start.focus;
-      plan.changed = plan.moves.length > 0 || start.changed;
+    if (start) {
+      const begin = root._startFocus(outputs, to.size, false);
+      plan.focus = begin.focus;
+      plan.changed = plan.moves.length > 0 || begin.changed;
     }
     if (!plan.changed)
       return;
@@ -324,7 +324,7 @@ QtObject {
   // The run of the compositor the shell last started in and whether its
   // workspaces were last laid out in a grid ({ session, grid }), kept
   // across reloads and restarts of the shell: only a new run starts the
-  // grid at its centre, and only a grid turned on from off does
+  // grid at its start cell, and only a grid turned on from off does
   readonly property var _state: StateManager.createStateHandler("workspaces")
   property var _kept: ({})
   // Set at a new run's start, until the outputs are known
@@ -351,6 +351,12 @@ QtObject {
     }
   }
 
+  // Every output to its block's start cell (Workspaces.startColumn and
+  // startRow), for remap's `start` and _start
+  function _startFocus(outputs, size, untouched) {
+    return WorkspaceGeometry.startFocus(outputs, size, WorkspacesConfig.columns, WorkspacesConfig.rows, WorkspacesConfig.startColumn, WorkspacesConfig.startRow, untouched);
+  }
+
   function _keep(grid) {
     root._kept = {
       "session": root.sessionKey,
@@ -360,7 +366,7 @@ QtObject {
   }
 
   // Sends the outputs the compositor just started on their block's first
-  // id (or outside their block) to its centre, all at once (the backend's
+  // id (or outside their block) to its start cell, all at once (the backend's
   // applyRemap with no moves; goToWorkspace's slides would cancel each
   // other)
   function _start() {
@@ -372,11 +378,11 @@ QtObject {
     if (!manager.workspaceGrid || !manager.backend || manager.supports.outputWorkspaces === true)
       return;
     const outputs = manager.orderedOutputs();
-    const start = WorkspaceGeometry.centreFocus(outputs, manager.blockSize, WorkspacesConfig.columns, WorkspacesConfig.rows, true);
+    const start = root._startFocus(outputs, manager.blockSize, true);
     if (!start.changed)
       return;
     manager.noteSwitch(start.focus[start.focus.length - 1]?.id ?? -1);
-    console.log(`[CompositorManager] starting the grid at its centre: ${start.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
+    console.log(`[CompositorManager] starting the grid at its start cell: ${start.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
     manager.backend.applyRemap({
       "moves": [],
       "focus": start.focus
