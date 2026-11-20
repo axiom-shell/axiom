@@ -12,21 +12,12 @@ appearance:
     enum: [label, icon, ring, fill]
     description: 'Ring, fill: show the time left on a timed caffeine.'
 colors: text
-order: [appearance, showLabel, popout, presets, foregroundColor, activeColor, inactiveColor]
+order: [appearance, showLabel, popout, foregroundColor, activeColor, inactiveColor]
 settings:
   showLabel:
     type: boolean
     title: Label
     default: false
     x-showIf: {appearance.style: [label, ring, fill]}
-  presets:
-    type: array
-    items: {type: string}
-    title: Presets
-    default: ['30m', '1h', '4h']
-    description: e.g. 30m, 1h30m, 4h.
-    x-showIf: {popout.enabled: true}
-    x-enabledIf: {$widget.opensOwnPopout: {not: false}}
-    x-disabledNote: Off while Open instead names a menu.
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}

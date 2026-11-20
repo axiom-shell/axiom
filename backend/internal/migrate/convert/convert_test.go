@@ -320,10 +320,10 @@ func osdItemFields(cfg *jsonx.Object) {
 }
 
 // Bar widget settings added since, the same way (a widget's display style,
-// the Network widget's VPN lock and its popout's VPN section, the
+// the Network widget's VPN lock, the
 // Workspaces widget's labels, urgency, icon layouts, solid boxes, spacing
 // and reverse scrolling)
-var widgetKeysAddedSinceV1 = []string{"appearance", "showVpnLock", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes", "specialWorkspaces", "specialWorkspaceLabel", "specialWorkspaceSplit"}
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpnLock", "vpnColor", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes", "specialWorkspaces", "specialWorkspaceLabel", "specialWorkspaceSplit"}
 
 // A widget's popout's settings added since format 1 (its Content size, and
 // its module's options)

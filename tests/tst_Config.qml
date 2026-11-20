@@ -96,6 +96,25 @@ TestCase {
     }, "a type with no schema comes back unchanged");
   }
 
+  // A bar widget whose popout shows a module gets that module's options in
+  // its popout.properties (x-popoutModule): a Network widget's VPN section,
+  // an IdleInhibitor's presets
+  function test_widget_popout_properties_fill() {
+    const fill = type => shared.applyDefaults({
+        "type": type,
+        "properties": {}
+      }, {
+        "$ref": "#/definitions/BarWidget"
+      }, schema).properties.popout.properties;
+    compare(fill("Network"), {
+      "showVpn": true,
+      "showConnection": true
+    });
+    compare(fill("IdleInhibitor"), {
+      "presets": ["30m", "1h", "4h"]
+    });
+  }
+
   // A widget drawing a value style draws its icon and label in its
   // foregroundColor on a filled bar: without the field they're transparent
   function test_value_widgets_have_foreground_color() {

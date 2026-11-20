@@ -366,6 +366,8 @@ var all = []Step{
 	{Version: 116, Run: v116},
 	// v117: module options: existing cards' style re-defaulted to auto (v117.go)
 	{Version: 117, Run: v117},
+	// v118: module options: Network popoutVpn and IdleInhibitor presets moved into popout.properties (v118.go)
+	{Version: 118, Run: v118},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

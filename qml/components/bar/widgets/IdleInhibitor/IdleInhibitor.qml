@@ -35,8 +35,5 @@ BarWidget {
     hitArea: root.hitArea
     popoutName: "Caffeine"
     active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
-    extraData: ({
-        "presets": root.properties.presets
-      })
   }
 }
