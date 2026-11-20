@@ -7,6 +7,7 @@ import Quickshell.Widgets
 import qs.config
 import qs.services.session
 import qs.components.reusable
+import qs.components.methods
 import qs.components.content.base
 
 // A line of text, as big as its slot allows: resizing the module resizes
@@ -86,7 +87,7 @@ Card {
       fontSizeMode: Text.Fit
       minimumPixelSize: Style.typeMicro
       overflow: "wrap"
-      horizontalAlignment: root.properties.alignment === "left" ? Text.AlignLeft : root.properties.alignment === "right" ? Text.AlignRight : Text.AlignHCenter
+      horizontalAlignment: Utils.horizontalAlignment(root.properties.alignment)
       verticalAlignment: Text.AlignVCenter
     }
   }

@@ -10,7 +10,9 @@ import (
 //   - the Markets module's layout and the Cheatsheet module's view became
 //     style, the Agenda module's maxEvents count;
 //   - the Favourites module's showLabels (on/off) became labels
-//     (auto/hide).
+//     (auto/hide);
+//   - the Login and Password modules' centered (on/off) became alignment
+//     (center/left).
 //
 // Each part acts on the old shape only, so a second run changes nothing.
 func v116(cfg *jsonx.Object) []string {
@@ -48,5 +50,28 @@ func v116(cfg *jsonx.Object) []string {
 		}
 		return true
 	}), "Favourites module(s): showLabels became labels")
+	note(eachModule(cfg, "Login", centeredToAlignment)+eachModule(cfg, "Password", centeredToAlignment),
+		"Login/Password module(s): centered became alignment")
 	return changes
+}
+
+// centeredToAlignment turns a module's centered flag into alignment (true
+// centers, false left); with alignment already set, or a non-boolean, the
+// flag is just dropped.
+func centeredToAlignment(p *jsonx.Object) bool {
+	if !p.Has("centered") {
+		return false
+	}
+	on, ok := p.Value("centered").(bool)
+	if p.Has("alignment") || !ok {
+		p.Delete("centered")
+		return true
+	}
+	renameInPlace(p, "centered", "alignment")
+	if on {
+		p.Set("alignment", "center")
+	} else {
+		p.Set("alignment", "left")
+	}
+	return true
 }

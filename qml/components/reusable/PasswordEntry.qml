@@ -14,7 +14,7 @@ Item {
   // The TextInput, for focus and text
   readonly property TextField input: entry.input
   property string placeholder: ""
-  property bool centered: true
+  property int horizontalAlignment: Text.AlignHCenter
   property bool readOnly: false
   // Shows what's typed instead of dots
   property bool reveal: false
@@ -69,7 +69,7 @@ Item {
       // A password is a secret shown or not
       sensitive: root.secret
       placeholderText: root.inlineMessage && root._line !== "" ? root._line : root.placeholder
-      input.horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
+      input.horizontalAlignment: root.horizontalAlignment
       readOnly: root.readOnly
       onAccepted: root.accepted()
     }
@@ -97,7 +97,7 @@ Item {
       text: root._line || " "
       textColor: root._lineColor
       role: "caption"
-      horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
+      horizontalAlignment: root.horizontalAlignment
       overflow: root.wrapMessage ? "wrap" : "line"
     }
   }

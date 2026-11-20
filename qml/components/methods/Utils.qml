@@ -149,6 +149,17 @@ QtObject {
     return [words[0][0].toUpperCase() + words[0].slice(1)].concat(words.slice(1).map(word => /^[A-Z][a-z]/.test(word) ? word.toLowerCase() : word)).join(" ");
   }
 
+  // A config alignment ("left" | "center" | "right") as Text's horizontalAlignment
+  function horizontalAlignment(alignment) {
+    switch (alignment) {
+    case "left":
+      return Text.AlignLeft;
+    case "right":
+      return Text.AlignRight;
+    }
+    return Text.AlignHCenter;
+  }
+
   // The Material Symbols arrow pointing at a screen edge ("top", "left", ...)
   function edgeArrow(edge) {
     switch (edge) {

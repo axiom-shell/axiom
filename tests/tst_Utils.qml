@@ -48,6 +48,13 @@ TestCase {
     compare(Utils.edgeArrow("right"), "arrow_forward");
   }
 
+  function test_horizontalAlignment() {
+    compare(Utils.horizontalAlignment("left"), Text.AlignLeft);
+    compare(Utils.horizontalAlignment("center"), Text.AlignHCenter);
+    compare(Utils.horizontalAlignment("right"), Text.AlignRight);
+    compare(Utils.horizontalAlignment("sideways"), Text.AlignHCenter, "an unknown value centres, as Greeting, Login, Password and custom elements' align all did");
+  }
+
   function test_freeId() {
     compare(Utils.freeId("dock", []), "dock");
     compare(Utils.freeId("dock", ["dock"]), "dock2");
