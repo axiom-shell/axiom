@@ -167,6 +167,16 @@ QtObject {
     return sign + fixed + "%";
   }
 
+  // A signed change in the figure `value` names: its currency amount for "change", else the percentage
+  function formatChangeAs(change, percent, currency, value) {
+    return value === "change" ? formatChange(change, currency) : formatPercent(percent);
+  }
+
+  // A change with its trend arrow ("▲ ", "▼ ", none when flat) and no sign
+  function arrowed(trend, text) {
+    return (trend === "up" ? "▲ " : trend === "down" ? "▼ " : "") + text.replace(/^[+−]/, "");
+  }
+
   // A large number, short: "950", "1.2K", "3.4M", "5.6B", "7.8T"
   function compact(value) {
     const units = [[1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]];

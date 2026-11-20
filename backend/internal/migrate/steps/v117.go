@@ -9,7 +9,8 @@ import (
 // v117 is the module options' re-defaults to Auto (user: "Migrate to
 // Auto"; existing cards, deliberate picks included):
 //   - the Quick actions module's style tiles became auto (it then follows
-//     the card's size).
+//     the card's size);
+//   - the Markets and Cheatsheet modules' style list became auto.
 //
 // Each part acts on the old value only, so a second run changes nothing.
 func v117(cfg *jsonx.Object) []string {
@@ -30,5 +31,7 @@ func v117(cfg *jsonx.Object) []string {
 	}
 
 	note(toAuto("QuickActions", "tiles"), "Quick actions module(s): style tiles became auto")
+	note(toAuto("Markets", "list"), "Markets module(s): style list became auto")
+	note(toAuto("Cheatsheet", "list"), "Cheatsheet module(s): style list became auto")
 	return changes
 }

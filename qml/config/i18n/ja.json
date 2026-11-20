@@ -3675,7 +3675,6 @@
     "Indicator": "",
     "Flipped 270°": "",
     "The tab's name. Empty: what it shows.": "",
-    "Keyboard: what each key does.": "",
     "sRGB": "",
     "Keypad": "",
     "Edge: over windows. Strip: pushes bars and windows in. Free: floats, no edge.": "",
@@ -4697,6 +4696,8 @@
     "Annotate": "",
     "Auto: by the card's size.": "",
     "Auto: each tile's name when it fits.": "",
-    "Opens each screenshot from this card in the annotation tool. Not recordings.": ""
+    "Opens each screenshot from this card in the annotation tool. Not recordings.": "",
+    "Auto: by the card's size. Keyboard: what each key does.": "",
+    "When there's room.": ""
   }
 }

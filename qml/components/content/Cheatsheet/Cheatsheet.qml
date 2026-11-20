@@ -17,8 +17,9 @@ import qs.services.ui
 // some sections (by title); undescribed binds show only with
 // `showUndescribed`. A short card runs the first binds along one row;
 // compact, the count. `style` "keyboard" shows a keyboard under `mods`
-// instead. A click on one of axiom's binds opens it in the Keybinds editor.
-// properties: { sections, showUndescribed, style, mods }
+// instead; "auto" picks it when its full layout fits. A click on one of axiom's
+// binds opens it in the Keybinds editor.
+// properties: { sections, showUndescribed, showSearch, style, mods }
 Panel {
   id: root
 
@@ -32,10 +33,23 @@ Panel {
   // The binds of every section, for the strip
   readonly property var allBinds: [].concat(...root.sections.map(section => section.binds))
 
-  readonly property bool keyboard: root.properties.style === "keyboard"
+  // Auto: the keyboard when its own full layout fits, else the list
+  readonly property string shownStyle: ModuleStyles.resolvedStyle(root.properties.style, [
+    {
+      "style": "keyboard",
+      "minWidth": Appearance.fontSize * 28,
+      "minHeight": root.keyboardHeight
+    },
+    {
+      "style": "list",
+      "minWidth": 0,
+      "minHeight": 0
+    }
+  ], root.innerWidth, root.innerHeight)
+  readonly property bool keyboard: root.shownStyle === "keyboard"
   // One row: binds side by side
   readonly property bool strip: !root.keyboard && root.embedded && root.innerHeight < Appearance.fontSize * 6
-  readonly property bool showSearch: !root.keyboard && !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 10)
+  readonly property bool showSearch: root.properties.showSearch && !root.keyboard && !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 10)
 
   function edit(bindIndex) {
     KeybindManager.editor.editBind(bindIndex);
@@ -48,8 +62,9 @@ Panel {
   readonly property real keyboardHeight: (KeyMap.rows.length + Math.ceil(KeyMap.extras.length / 10)) * (Math.round(Widget.height * 1.9) + Widget.spacing / 2) + Widget.spacing + Appearance.fontSize * 2
 
   implicitWidth: Appearance.fontSize * 30
-  fullMinWidth: Appearance.fontSize * (root.keyboard ? 28 : 14)
-  fullMinHeight: root.keyboard ? root.keyboardHeight : Appearance.fontSize * 3
+  // By the setting, never the pick: `compact` must not depend on Auto
+  fullMinWidth: Appearance.fontSize * (root.properties.style === "keyboard" ? 28 : 14)
+  fullMinHeight: root.properties.style === "keyboard" ? root.keyboardHeight : Appearance.fontSize * 3
   wantsKeyboardFocus: root.showSearch
   spacing: Widget.spacing
 

@@ -22,13 +22,32 @@ Card {
   Component.onCompleted: MarketsManager.acquire(root)
   Component.onDestruction: MarketsManager.release(root)
 
-  readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.properties.symbols)
-  readonly property string shownStyle: root.properties.style
+  // In `sortBy` order; `first` (the compact figure, the focus chart) stays the
+  // watchlist's first, so it never hops symbols
+  readonly property var items: MarketMath.sorted(MarketMath.pick(MarketsConfig.symbols, root.properties.symbols), MarketsManager.quotes, root.properties.sortBy)
+  // Auto: the list when it has room for rows, else tiles when wide, else the list
+  readonly property string shownStyle: ModuleStyles.resolvedStyle(root.properties.style, [
+    {
+      "style": "list",
+      "minWidth": 0,
+      "minHeight": Appearance.fontSize * 8
+    },
+    {
+      "style": "tiles",
+      "minWidth": Appearance.fontSize * 12,
+      "minHeight": 0
+    },
+    {
+      "style": "list",
+      "minWidth": 0,
+      "minHeight": 0
+    }
+  ], root.innerWidth, root.innerHeight)
   // Holdings are private: on the lock screen only with the Markets
   // setting saying so, never on the greeter
   readonly property bool holdings: root.properties.showHoldings && (root.host.kind === "lockscreen" ? MarketsConfig.holdingsOnLockscreen : root.host.kind !== "greeter")
   readonly property var portfolio: root.holdings ? MarketsManager.portfolio : null
-  readonly property var first: root.items.length > 0 ? root.items[0] : null
+  readonly property var first: MarketMath.pick(MarketsConfig.symbols, root.properties.symbols)[0] ?? null
   readonly property var firstQuote: MarketsManager.quoteFor(root.first)
   readonly property bool failed: MarketsManager.error !== ""
 
@@ -116,14 +135,17 @@ Card {
 
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        model: root.items
+        model: CountModel {
+          count: root.items.length
+        }
         delegate: QuoteRow {
-          required property var modelData
-          item: modelData
+          required property int index
+          item: root.items[index]
+          value: root.properties.value
           width: list.width
           showChart: root.properties.showChart && list.width >= Appearance.fontSize * 16
           showHoldings: root.holdings
-          onClicked: root.selectedId = modelData.id
+          onClicked: root.selectedId = root.items[index].id
         }
       }
     }
@@ -141,16 +163,17 @@ Card {
         rowSpacing: Widget.spacing
 
         Repeater {
-          model: root.items
+          model: root.items.length
           QuoteTile {
-            required property var modelData
-            item: modelData
+            required property int index
+            item: root.items[index]
+            value: root.properties.value
             showChart: root.properties.showChart
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 1
             Layout.preferredHeight: 1
-            onClicked: root.selectedId = modelData.id
+            onClicked: root.selectedId = root.items[index].id
           }
         }
       }

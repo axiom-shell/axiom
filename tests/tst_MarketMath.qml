@@ -153,6 +153,26 @@ TestCase {
         "want": "0.00%"
       },
       {
+        "tag": "formatChangeAs change",
+        "got": MarketMath.formatChangeAs(1.2, 1.234, "USD", "change"),
+        "want": "+$1.20"
+      },
+      {
+        "tag": "formatChangeAs percent",
+        "got": MarketMath.formatChangeAs(1.2, 1.234, "USD", "percent") + " " + MarketMath.formatChangeAs(1.2, 1.234, "USD", "pricePercent"),
+        "want": "+1.23% +1.23%"
+      },
+      {
+        "tag": "formatChangeAs no change",
+        "got": MarketMath.formatChangeAs(undefined, 1.234, "USD", "change"),
+        "want": "—"
+      },
+      {
+        "tag": "arrowed",
+        "got": [MarketMath.arrowed("up", "+1.23%"), MarketMath.arrowed("down", "−0.40%"), MarketMath.arrowed("flat", "0.00%")].join("|"),
+        "want": "▲ 1.23%|▼ 0.40%|0.00%"
+      },
+      {
         "tag": "compact",
         "got": [950, 1234, 3400000, 5.6e9, 123e12].map(MarketMath.compact).join(" "),
         "want": "950 1.2K 3.4M 5.6B 123T"

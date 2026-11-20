@@ -38,6 +38,10 @@ How clocks show another time zone (the JS engine has no Intl), plus the Clock mo
 - `timezone` is handled through TimeZoneManager.
 - The bar `Time` widget takes a `timezone` the same way.
 
+### WorldClocks module (`content/WorldClocks`)
+- **`style`:** `list` (rows), `tiles` (side by side) or `auto` (the default): `ModuleStyles` candidates reproduce the old rule, rows when the card is tall enough for every place, else tiles when two tiles wide and one tile high, else rows. One place never reaches tiles at Auto.
+- **`showSeconds`:** the seconds in each time (`I18n.clockFormat(hourFormat, showSeconds)`), the clock ticking every second while on.
+
 ### Picking a zone
 - Long option lists use `x-control: "search"`; the time zones are one.
 - In `SchemaField` that is a typed `StyledComboEntry`, which takes only listed values.

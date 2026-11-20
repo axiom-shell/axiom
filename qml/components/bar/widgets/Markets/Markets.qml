@@ -79,8 +79,7 @@ BarWidget {
     if (!f || isNaN(f.price))
       return "…";
     const price = MarketMath.formatPrice(f.price, f.currency);
-    const percent = MarketMath.formatPercent(f.percent);
-    const change = root.properties.value === "change" ? MarketMath.formatChange(f.change, f.currency) : percent;
+    const change = MarketMath.formatChangeAs(f.change, f.percent, f.currency, root.properties.value);
     let colored = change;
     if (rich && root.properties.colorize) {
       const field = root.trendField(f.trend);
