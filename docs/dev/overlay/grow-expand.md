@@ -41,6 +41,7 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
 - `expand(type, properties, from)` on `Card` / `Panel`. Call `canExpand(type)` first, to offer it only where it works. The caller's `properties` are filled with the module's defaults (`OverlayConfig.moduleProperties`); the caller's keys win.
 - It goes through `expander`, the hosting `ModuleGrid` (passed down by `OverlaySlot`).
   - `expander` is null on the lock screen and greeter, and for types the host's `x-hosts` don't take.
+- `saveProperty(key, value)` on `Card` / `Panel` saves one of the module's own options through `saver`, the `OverlaySlot` (null elsewhere), which calls `OverlayManager.saveModuleProperty(host, moduleId, key, value)`: it writes `<module path>.properties.<key>` through `SettingsManager.commitValues`, finding the module in its host's layout (an overlay page or menu by `host.id`, the desktop layout the screen matches). Nothing is written in a preview, for a module with no id, or while the layouts editor has unsaved edits; it returns false then. Only WallpaperPicker's collection list uses it.
 
 ### Expanding: `hosts/overlay/ExpandedModule`
 - Grows a card box out of `from` (an item in the module; the whole module when left out) to the grid's rect less an `inset` on every side (the grid's gap), with `animNormal`.

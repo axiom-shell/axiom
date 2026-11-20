@@ -25,6 +25,7 @@ BaseView {
     // Module borders off: no card boxes, the content keeping its padding
     host: ({
         "kind": "overlay",
+        "id": root.viewConfig?.id ?? "",
         "page": root.viewConfig?.name ?? "",
         "bare": !OverlayConfig.moduleBorders,
         "padded": true

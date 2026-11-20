@@ -19,7 +19,10 @@ import qs.components.content.parts
 // preview of that monitor's wallpaper, and set it on the picked monitor
 // instead of this overlay's (Rotate adds its settings and Next); Light/Dark
 // shows the two wallpapers, and a click sets the selected one's. Compact,
-// just this monitor's wallpaper.
+// just this monitor's wallpaper. Its own options: the monitor it sets, its
+// collection (what it lists, and what its collection list changes, rather
+// than the Wallpaper settings'), the order of the list, and whether the
+// controls and the preview show.
 Card {
   id: root
 
@@ -31,10 +34,30 @@ Card {
   readonly property bool tall: root.shape === "vertical" && root.height >= Appearance.fontSize * 42
   readonly property bool grid: root.height >= Appearance.fontSize * 20
 
-  // The picked monitor while it's connected, else this overlay's
+  // The header, mode, collection, rotation and monitor rows (the tall
+  // layout's, unless the card hides them)
+  readonly property bool showControls: root.tall && root.properties.showControls
+
+  // The picked monitor while it's connected, else the card's own monitor
+  // while set and connected, else this overlay's
   property string chosenMonitor: ""
   readonly property var screenNames: General.outputs.map(screen => screen.name)
-  readonly property string targetMonitor: root.tall && root.screenNames.includes(root.chosenMonitor) ? root.chosenMonitor : root.monitor
+  readonly property string targetMonitor: root.tall && root.screenNames.includes(root.chosenMonitor) ? root.chosenMonitor : root.screenNames.includes(root.properties.monitor) ? root.properties.monitor : root.monitor
+
+  // What it lists: the card's collection, else the Wallpaper settings'
+  readonly property string collection: root.properties.collection || Appearance.wallpaperCollection
+  property var images: []
+  property int _listings: 0
+  readonly property string _imagesKey: JSON.stringify([Appearance.wallpaperPath, root.collection, root.properties.sortBy, WallpaperManager.extensions, Appearance.wallpaperSubfolders])
+  on_ImagesKeyChanged: root.relist()
+  // Only the newest answer is kept
+  function relist() {
+    const listing = ++root._listings;
+    WallpaperManager.listImages(root.collection, root.properties.sortBy, images => {
+      if (listing === root._listings && JSON.stringify(images) !== JSON.stringify(root.images))
+        root.images = images;
+    });
+  }
 
   // Where a click on `item` is on this screen ({ x, y } in screen units),
   // for a transition that starts where you click; null when it changes
@@ -114,7 +137,7 @@ Card {
     spacing: Widget.spacing
 
     ModuleHeader {
-      visible: root.tall
+      visible: root.showControls
       icon: "wallpaper"
       title: I18n.tr("Wallpaper")
 
@@ -135,7 +158,7 @@ Card {
     }
 
     SegmentRow {
-      visible: root.tall
+      visible: root.showControls
       Layout.fillWidth: true
 
       Repeater {
@@ -168,33 +191,33 @@ Card {
 
     // Which subfolder to pick from, when the folder has any
     StyledComboEntry {
-      visible: root.tall && WallpaperManager.collections.length > 0
+      visible: root.showControls && WallpaperManager.collections.length > 0
       Layout.fillWidth: true
       icon: "folder"
-      value: Appearance.wallpaperCollection
+      value: root.collection
       options: [
         {
           "value": "",
-          "label": I18n.tr("The whole folder")
+          "label": root.properties.collection ? I18n.tr("As in the Wallpaper settings") : I18n.tr("The whole folder")
         }
       ].concat(WallpaperManager.collections.map(folder => ({
             "value": folder,
             "label": folder
           })))
-      onPicked: value => SettingsManager.commitValues({
+      onPicked: value => root.properties.collection ? root.saveProperty("collection", value) : SettingsManager.commitValues({
           "Appearance.wallpaper.collection": value
         })
     }
 
     SettingRows {
-      visible: root.tall && root.mode === "rotate"
+      visible: root.showControls && root.mode === "rotate"
       Layout.fillWidth: true
       paths: ["Appearance.wallpaper.rotation.interval", "Appearance.wallpaper.rotation.order", "Appearance.wallpaper.rotation.sameOnAll"]
     }
 
     // Light/Dark: the two wallpapers; the selected one is what a click sets
     RowLayout {
-      visible: root.tall && root.variantMode
+      visible: root.showControls && root.variantMode
       Layout.fillWidth: true
       spacing: Widget.spacing
 
@@ -257,7 +280,7 @@ Card {
     }
 
     SchemaComboBox {
-      visible: root.tall && !root.variantMode
+      visible: root.showControls && !root.variantMode
       label: I18n.tr("Monitor")
       options: root.screenNames
       currentValue: root.targetMonitor
@@ -270,7 +293,7 @@ Card {
 
     // The picked monitor's wallpaper
     Thumbnail {
-      visible: root.tall && !root.variantMode
+      visible: root.tall && root.properties.showPreview && !root.variantMode
       Layout.fillWidth: true
       Layout.preferredHeight: width * 10 / 16
       source: root.tall ? root.wallpaper : ""
@@ -286,7 +309,7 @@ Card {
     }
 
     StyledText {
-      visible: root.tall && !root.variantMode && root.wallpaper !== ""
+      visible: root.tall && root.properties.showPreview && !root.variantMode && root.wallpaper !== ""
       Layout.fillWidth: true
       text: root.wallpaper.split("/").pop()
       overflow: "line"
@@ -302,8 +325,8 @@ Card {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         overflow: "wrap"
-        visible: WallpaperManager.images.length === 0
-        text: Appearance.wallpaperCollection ? I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder + "/" + Appearance.wallpaperCollection) : I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder)
+        visible: root.images.length === 0
+        text: root.collection ? I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder + "/" + root.collection) : I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder)
         tone: "faint"
       }
 
@@ -318,7 +341,7 @@ Card {
         cellHeight: thumbHeight
         // Two across in the tall layout
         cellWidth: root.tall ? width / 2 : thumbHeight * 16 / 10
-        model: WallpaperManager.images
+        model: root.images
 
         delegate: Item {
           id: thumb
@@ -350,5 +373,8 @@ Card {
   }
 
   // New files show as the picker opens
-  Component.onCompleted: WallpaperManager.refresh()
+  Component.onCompleted: {
+    WallpaperManager.refresh();
+    root.relist();
+  }
 }

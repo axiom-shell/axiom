@@ -113,6 +113,35 @@ QtObject {
     return JSON.stringify(root.localViews?.[index]) !== JSON.stringify(root.savedViews?.[index]);
   }
 
+  // Saves one option of a module shown in `host` (an OverlaySlot's host) at
+  // once, to the module's place in the saved config (its card's
+  // `saveProperty`). False, nothing written, in a preview, with no module
+  // id, while the layouts have unsaved edits (their save would overwrite
+  // it), for a host with no layout to write to, or when the module isn't
+  // there or saves can't be made.
+  function saveModuleProperty(host, moduleId, key, value) {
+    if (host?.preview || !moduleId || root.layoutsDirty)
+      return false;
+    const config = ConfigManager.config;
+    let prefix = "";
+    let modules = null;
+    if (host?.kind === "overlay" || host?.kind === "menu") {
+      const section = host.kind === "overlay" ? "Overlay" : "Menus";
+      const items = config[section].items;
+      const page = items.findIndex(item => item.id === host.id);
+      modules = items[page]?.layout?.modules;
+      prefix = section + ".items." + page + ".layout.modules.";
+    } else if (host?.kind === "desktop") {
+      const layout = DesktopConfig.matchFor(host.screen, config.Desktop);
+      modules = layout?.modules;
+      prefix = "Desktop.items." + config.Desktop.items.indexOf(layout) + ".modules.";
+    }
+    const index = modules?.findIndex(module => module.id === moduleId) ?? -1;
+    return index >= 0 && SettingsManager.commitValues({
+      [prefix + index + ".properties." + key]: value
+    });
+  }
+
   // --- What the editor shows ---
 
   function editPage(index) {

@@ -48,6 +48,11 @@ Item {
   function expand(type, properties, from) {
     root.expander?.expand(type, properties ?? {}, from ?? root);
   }
+  // The slot saving this module's own options, as on Card
+  property var saver: null
+  function saveProperty(key, value) {
+    return root.saver?.saveProperty(key, value) ?? false;
+  }
   // Derived from the slot, as on Card (see SlotContext); a popout is never
   // bare or compact
   readonly property alias bare: slot.bare

@@ -41,6 +41,13 @@ Surface {
   function expand(type, properties, from) {
     root.expander?.expand(type, properties ?? {}, from ?? root);
   }
+  // The slot saving this module's own options (OverlaySlot); null where
+  // nothing can
+  property var saver: null
+  // Saves one of this module's options (false when it can't be saved here)
+  function saveProperty(key, value) {
+    return root.saver?.saveProperty(key, value) ?? false;
+  }
   // Derived from the slot (see SlotContext): no card box (an edge menu
   // with moduleBorders off), the span in grid units, "square" |
   // "horizontal" | "vertical", compact (a quarter card or less, or under
