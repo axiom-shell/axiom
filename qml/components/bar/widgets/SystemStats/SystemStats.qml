@@ -99,12 +99,15 @@ BarWidget {
         };
       }
     case "cpuTemp":
-      return {
-        "icon": "thermometer",
-        "value": `${SystemManager.cpuTemp}°`,
-        "widest": "00°",
-        "level": SystemManager.cpuTemp
-      };
+      {
+        const units = WeatherConfig.unitsOf(p.units);
+        return {
+          "icon": "thermometer",
+          "value": `${Math.round(Utils.fromCelsius(SystemManager.cpuTemp, units))}°`,
+          "widest": units === "fahrenheit" ? "000°" : "00°",
+          "level": SystemManager.cpuTemp
+        };
+      }
     case "gpu":
       return {
         "icon": "developer_board",

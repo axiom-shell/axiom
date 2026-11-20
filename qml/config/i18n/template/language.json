@@ -3923,7 +3923,7 @@
     "Uptime": "",
     "Urgency": "",
     "Urgent color": "",
-    "Usage or temperature at or above this turns on the warning color.": "",
+    "Usage or temperature at or above this turns on the warning color. Temperatures in °C.": "",
     "Use Look & Feel's border width and corner radius.": "",
     "Use Tailscale DNS": "",
     "Use an app's own duration; drop ones it withdraws.": "",

@@ -11,7 +11,9 @@ import qs.components.content.base
 // history per metric. As an overlay card, in the grid that best fits the
 // slot (compact shows the first metric's figure over its graph); as the
 // SystemStats widget's popout, the metrics that widget shows.
-// properties: { metrics: ["cpu", "mem", "gpu", "cpuTemp", "net"] }
+// Memory is a percentage or the GiB used (`memoryFormat`), its sub line the
+// other format; temperatures show in `units` (the level, history and scale stay °C).
+// properties: { metrics: ["cpu", "mem", "gpu", "cpuTemp", "net"], memoryFormat, units }
 Panel {
   id: root
 
@@ -31,6 +33,8 @@ Panel {
   // A popout's graphs are a fixed height
   readonly property real graphHeight: Widget.px(56)
 
+  readonly property string units: WeatherConfig.unitsOf(root.properties.units)
+
   // What each metric shows: label, value, unit, subtitle, history, scale
   function info(metric) {
     switch (metric) {
@@ -39,27 +43,31 @@ Panel {
         "label": "CPU",
         "value": Math.round(SystemManager.cpuUsage),
         "unit": "%",
-        "sub": SystemManager.hasCpuTemp ? `${SystemManager.cpuTemp}°C` : "",
+        "sub": SystemManager.hasCpuTemp ? `${Math.round(Utils.fromCelsius(SystemManager.cpuTemp, root.units))}${Utils.temperatureSymbol(root.units)}` : "",
         "history": SystemManager.cpuHistory,
         "max": 100,
         "color": Style.series[0]
       };
     case "mem":
-      return {
-        "label": I18n.tr("Memory"),
-        "value": Math.round(SystemManager.memUsage),
-        "unit": "%",
-        "sub": `${(SystemManager.memUsedBytes / Utils.bytesPerGiB).toFixed(1)} / ${(SystemManager.memTotalBytes / Utils.bytesPerGiB).toFixed(1)} GiB`,
-        "history": SystemManager.memHistory,
-        "max": 100,
-        "color": Style.series[3]
-      };
+      {
+        const gib = SystemManager.memUsedBytes / Utils.bytesPerGiB;
+        const used = root.properties.memoryFormat === "used";
+        return {
+          "label": I18n.tr("Memory"),
+          "value": used ? gib.toFixed(1) : Math.round(SystemManager.memUsage),
+          "unit": used ? "GiB" : "%",
+          "sub": used ? `${Math.round(SystemManager.memUsage)}%` : `${gib.toFixed(1)} / ${(SystemManager.memTotalBytes / Utils.bytesPerGiB).toFixed(1)} GiB`,
+          "history": SystemManager.memHistory,
+          "max": 100,
+          "color": Style.series[3]
+        };
+      }
     case "gpu":
       return {
         "label": "GPU",
         "value": Math.round(SystemManager.gpuUsage),
         "unit": "%",
-        "sub": SystemManager.gpuTemp > 0 ? `${SystemManager.gpuTemp}°C` : "",
+        "sub": SystemManager.gpuTemp > 0 ? `${Math.round(Utils.fromCelsius(SystemManager.gpuTemp, root.units))}${Utils.temperatureSymbol(root.units)}` : "",
         "history": SystemManager.gpuHistory,
         "max": 100,
         "color": Style.series[2]
@@ -67,8 +75,8 @@ Panel {
     case "cpuTemp":
       return {
         "label": I18n.tr("CPU temp"),
-        "value": SystemManager.cpuTemp,
-        "unit": "°C",
+        "value": Math.round(Utils.fromCelsius(SystemManager.cpuTemp, root.units)),
+        "unit": Utils.temperatureSymbol(root.units),
         "sub": "",
         "history": SystemManager.cpuTempHistory,
         "max": 100,

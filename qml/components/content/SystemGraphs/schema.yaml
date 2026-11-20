@@ -10,3 +10,5 @@ settings:
     items:
       type: string
       enum: [cpu, mem, gpu, cpuTemp, net]
+  memoryFormat: {$ref: '#/definitions/MemoryFormat', x-showIf: {metrics: {includes: mem}}}
+  units: {$ref: '#/definitions/TemperatureUnits'}

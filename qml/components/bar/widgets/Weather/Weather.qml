@@ -28,10 +28,10 @@ BarWidget {
   readonly property var condition: WeatherManager.conditionOf(root.weatherState?.weather ?? null)
 
   icon: condition?.icon ?? (root.weatherError ? "cloud_off" : "cloud")
-  text: current ? `${Math.round(current.temperature_2m)}°` + (properties.showCondition ? ` ${condition.label}` : "") : "…"
+  text: current ? `${Math.round(current.temperature_2m)}°` + (properties.showCondition ? ` ${condition?.label ?? ""}` : "") : "…"
 
   styleText: current ? `${Math.round(current.temperature_2m)}°` : "…"
-  subtext: current ? condition.label : ""
+  subtext: current ? (condition?.label ?? "") : ""
 
   PopoutAnchor {
     hitArea: root.hitArea

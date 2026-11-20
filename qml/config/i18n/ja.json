@@ -3510,7 +3510,6 @@
     "Hidden while neither is running or paused.": "",
     "Drawn between widgets.": "",
     "12h": "",
-    "Usage or temperature at or above this turns on the warning color.": "",
     "Each item gets the bar's widget style.": "",
     "Auto: the date on a split bar, else none.": "",
     "Ticker: scrolls every symbol. Stacked: price under the name. Sparkline: the day's line.": "",
@@ -4694,6 +4693,7 @@
     "Daily": "",
     "Empty: the Weather settings' location.": "",
     "Hourly": "",
-    "Details": ""
+    "Details": "",
+    "Usage or temperature at or above this turns on the warning color. Temperatures in °C.": ""
   }
 }

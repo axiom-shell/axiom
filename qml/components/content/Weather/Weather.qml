@@ -24,7 +24,7 @@ Card {
   Component.onCompleted: WeatherManager.acquire(root, weatherRequest)
   Component.onDestruction: WeatherManager.release(root)
 
-  // Null while loading (and for good with an error)
+  // Null while loading; with an error, a state with no weather
   readonly property var weatherState: WeatherManager.stateFor(root.weatherRequest)
   readonly property string weatherError: root.weatherState?.error ?? ""
   readonly property var current: root.weatherState?.weather?.current ?? null

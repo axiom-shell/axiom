@@ -335,7 +335,7 @@ var widgetTypeKeysAddedSinceV1 = map[string][]string{"Notifications": {"label"},
 
 // moduleKeysAddedSinceV1 are a module type's settings added since format
 // 1, which a default layout's modules get from their defaults at load
-var moduleKeysAddedSinceV1 = map[string][]string{"Greeting": {"showPicture"}}
+var moduleKeysAddedSinceV1 = map[string][]string{"Greeting": {"showPicture"}, "SystemGraphs": {"memoryFormat", "units"}}
 
 // moduleOwnKeysAddedSinceV1 are the keys every module gained beside its
 // type and place (its Content size, null by default)
