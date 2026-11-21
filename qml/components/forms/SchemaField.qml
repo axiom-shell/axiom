@@ -139,10 +139,6 @@ Loader {
     return out;
   }
 
-  // A number's maximum: the schema's, at most its `x-maximumFrom`
-  // sibling's value (SchemaLayout.maximum)
-  readonly property real maximum: SchemaLayout.maximum(root.fieldSchema, root._valueOf)
-
   // A sibling key of this row's path (dotted, or climbing with `../`:
   // SchemaLayout.keyPath), or a `/`-rooted config path, or a `$` key from
   // the form's `context`, for `x-showIf` and `x-enumShowIf`, in any form
@@ -425,7 +421,7 @@ Loader {
       description: root.description
       currentConfigValue: root.current ?? SettingsManager.inheritedValue(root.fieldSchema) ?? 0
       minimum: root.fieldSchema.minimum ?? 0
-      maximum: root.maximum
+      maximum: root.fieldSchema.maximum ?? 9999
       stepSize: root.fieldSchema.multipleOf ?? 1
       headerExtra: root.headerExtra
       headerBelow: root.headerBelow
@@ -449,7 +445,6 @@ Loader {
       headerExtra: root.headerExtra
       headerBelow: root.headerBelow
       fieldSchema: root.fieldSchema
-      maximum: root.maximum
       current: root.current
       // (While the row is torn down its schema can go first)
       auto: root.fieldSchema["x-auto"] ?? ({

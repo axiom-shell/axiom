@@ -9,7 +9,7 @@ import qs.components.methods
 // `auto` is { value, start }: turning the switch on commits `start`, off
 // `value`, which may be null (an inheriting setting's); the number shows while
 // `current` is neither undefined nor `auto.value`. `fieldSchema` gives the
-// number's bounds (`maximum` may narrow it), step (`multipleOf`), unit and, unless `numberMode` is set
+// number's bounds, step (`multipleOf`), unit and, unless `numberMode` is set
 // (the form's choice: "stepper"), its `x-control`. `label`, `description`,
 // `headerExtra` and `headerBelow` are the switch's FieldHeader's. SchemaField
 // and the bar editor's LayoutOverrideField are this; `activate()` is what a
@@ -22,9 +22,6 @@ ColumnLayout {
   property Component headerExtra: null
   property Component headerBelow: null
   property var fieldSchema: ({})
-  // The number's maximum: the schema's unless the host narrows it
-  // (SchemaField: SchemaLayout.maximum)
-  property real maximum: root.fieldSchema.maximum ?? 9999
   // The value as stored (undefined: none)
   property var current: undefined
   // (While a row is torn down its schema can go first)
@@ -64,7 +61,7 @@ ColumnLayout {
     currentConfigValue: root.custom ? root.current : root.auto.start
     // (A null automatic value leaves the whole range to the number)
     minimum: root.auto.value === null ? (root.fieldSchema.minimum ?? 0) : Math.max(root.fieldSchema.minimum ?? 0, root.auto.value + 1)
-    maximum: root.maximum
+    maximum: root.fieldSchema.maximum ?? 9999
     stepSize: root.fieldSchema.multipleOf ?? 1
     unit: root.fieldSchema["x-unit"] ?? ""
     unitScale: SchemaLayout.unitScale(unit)

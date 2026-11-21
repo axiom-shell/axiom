@@ -7,11 +7,12 @@ import qs.components.methods
 import qs.services.core
 
 // Keeps the compositor's workspaces laid out for the Workspaces layout:
-// remaps them when it changes, and starts a grid at its start cell when
-// it's turned on or a run of the compositor starts in one, re-homes an
+// remaps them when it changes, starts each monitor on its start workspace
+// (Workspaces.startCell) when a grid is turned on or a run of the
+// compositor starts in a grid or perMonitor layout, re-homes an
 // unplugged monitor's windows and returns them when it's back
-// (docs/dev/hyprland/workspaces.md › Layout changes, Hotplugs, The grid's
-// start).
+// (docs/dev/hyprland/workspaces.md › Layout changes, Hotplugs, The start
+// workspace).
 // Not a singleton: CompositorManager holds one as `_remap` and calls
 // begin() once it's built.
 QtObject {
@@ -37,7 +38,7 @@ QtObject {
 
   // A layout or count change saved together is one remap. Turning the
   // grid on (from off as last kept, so the config settling at the shell's
-  // start never counts) starts every output at its block's start cell
+  // start never counts) starts every output on its block's start workspace
   property Timer _timer: Timer {
     interval: 200
     onTriggered: {
@@ -275,7 +276,7 @@ QtObject {
   // matching one in its output's ids under `to` (WorkspaceGeometry.
   // remapWorkspaces), and switches each output to the workspace matching
   // the one it showed (the backend's applyRemap), or with `start` to its
-  // grid block's start cell (WorkspaceGeometry.startFocus)
+  // block's start workspace (WorkspaceGeometry.startFocus)
   function remap(from, to, start) {
     const manager = root.manager;
     // Workspaces that belong to their output keep their place in it
@@ -309,7 +310,7 @@ QtObject {
     root.remap(root._layout(), root._layout(), false);
   }
 
-  // --- The grid's start ---
+  // --- The start workspace ---
 
   // Which run of the compositor this is (CompositorKind.sessionKey: a new
   // one each time it starts), "" when unknown
@@ -324,7 +325,8 @@ QtObject {
   // The run of the compositor the shell last started in and whether its
   // workspaces were last laid out in a grid ({ session, grid }), kept
   // across reloads and restarts of the shell: only a new run starts the
-  // grid at its start cell, and only a grid turned on from off does
+  // outputs on their start workspace, and only a grid turned on from off
+  // does
   readonly property var _state: StateManager.createStateHandler("workspaces")
   property var _kept: ({})
   // Set at a new run's start, until the outputs are known
@@ -351,10 +353,10 @@ QtObject {
     }
   }
 
-  // Every output to its block's start cell (Workspaces.startColumn and
-  // startRow), for remap's `start` and _start
+  // Every output to its block's start workspace (Workspaces.startCell),
+  // for remap's `start` and _start
   function _startFocus(outputs, size, untouched) {
-    return WorkspaceGeometry.startFocus(outputs, size, WorkspacesConfig.columns, WorkspacesConfig.rows, WorkspacesConfig.startColumn, WorkspacesConfig.startRow, untouched);
+    return WorkspaceGeometry.startFocus(outputs, size, WorkspacesConfig.columns, WorkspacesConfig.rows, WorkspacesConfig.startCell, untouched);
   }
 
   function _keep(grid) {
@@ -366,23 +368,25 @@ QtObject {
   }
 
   // Sends the outputs the compositor just started on their block's first
-  // id (or outside their block) to its start cell, all at once (the backend's
-  // applyRemap with no moves; goToWorkspace's slides would cancel each
-  // other)
+  // id (or outside their block) to its start workspace, all at once (the
+  // backend's applyRemap with no moves; goToWorkspace's slides would
+  // cancel each other). In a grid or perMonitor layout of fixed workspaces
+  // (the layouts Workspaces.startCell shows for)
   function _start() {
     if (!root._pending)
       return;
     root._pending = false;
     const manager = root.manager;
     root._keep(manager.workspaceGrid);
-    if (!manager.workspaceGrid || !manager.backend || manager.supports.outputWorkspaces === true)
+    const starts = manager.workspaceGrid || (WorkspacesConfig.layout === "perMonitor" && !manager.dynamicWorkspaces);
+    if (!starts || !manager.backend || manager.supports.outputWorkspaces === true)
       return;
     const outputs = manager.orderedOutputs();
     const start = root._startFocus(outputs, manager.blockSize, true);
     if (!start.changed)
       return;
     manager.noteSwitch(start.focus[start.focus.length - 1]?.id ?? -1);
-    console.log(`[CompositorManager] starting the grid at its start cell: ${start.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
+    console.log(`[CompositorManager] starting on the start workspaces: ${start.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
     manager.backend.applyRemap({
       "moves": [],
       "focus": start.focus
