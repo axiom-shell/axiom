@@ -121,7 +121,8 @@ Item {
   // polling. Neighbours stay loaded so the slide in has something to show.
   // They follow the page the user settled on (`_settled`, a slide after
   // opening or navigating), so opening or switching builds only the page
-  // shown, and its neighbours once it has slid in
+  // shown, and its neighbours once it has slid in: just their frame, their
+  // cards wait until they're current (OverlayPage.buildHeld)
   property int _settled: -1
   onOpenChanged: {
     root._settled = -1;
@@ -238,6 +239,7 @@ Item {
           currentIndex: root.currentIndex
           direction: root.direction
           loaded: root.isLoaded(index)
+          overlayOpen: root.open
           screen: root.screen
           roomWidth: root.roomWidth
           roomHeight: root.roomHeight
@@ -280,6 +282,7 @@ Item {
         currentIndex: root.currentIndex
         direction: root.direction
         loaded: root.isLoaded(root.editorIndex)
+        overlayOpen: root.open
         screen: root.screen
         roomWidth: root.roomWidth
         roomHeight: root.roomHeight

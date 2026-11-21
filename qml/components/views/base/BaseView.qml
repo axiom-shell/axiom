@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.core
+import qs.components.methods
 import qs.components.hosts.overlay
 
 // The base of every overlay page (views/<type>.qml): its grid and
@@ -47,21 +48,33 @@ Item {
   // While the page is first being built: its StreamedLoaders queue their
   // builds (BuildQueueManager) and fade in. Once the queue has drained,
   // loaders made later (a search narrowing a list, a tab switch) build at
-  // once, as the page is already shown
+  // once, as the page is already shown. Not while its overlay page holds
+  // its jobs (a neighbour, a closed overlay): they aren't in `pending`
   property bool buildStreaming: true
+  // The overlay page it's on (BuildOrder.holderOf, found once it's built)
+  // and whether that page holds its jobs now
+  property var _holder: null
+  readonly property bool _held: root._holder?.buildHeld === true
+  on_HeldChanged: {
+    if (!root._held && BuildQueueManager.pending === 0)
+      root.buildStreaming = false;
+  }
   Connections {
     target: BuildQueueManager
     enabled: root.buildStreaming
     function onPendingChanged() {
-      if (BuildQueueManager.pending === 0)
+      if (BuildQueueManager.pending === 0 && !root._held)
         root.buildStreaming = false;
     }
   }
   // A page queuing nothing is done at once
-  Component.onCompleted: Qt.callLater(() => {
-    if (BuildQueueManager.pending === 0)
-      root.buildStreaming = false;
-  })
+  Component.onCompleted: {
+    root._holder = BuildOrder.holderOf(root);
+    Qt.callLater(() => {
+      if (BuildQueueManager.pending === 0 && !root._held)
+        root.buildStreaming = false;
+    });
+  }
 
   implicitWidth: rowLayout.implicitWidth
   implicitHeight: rowLayout.implicitHeight

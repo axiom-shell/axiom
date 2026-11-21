@@ -22,6 +22,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 ### Over the overlay
 - The overlay (Overlay layer) covers the blur window. So while it's open on a screen (`BlurManager.aboveOverlay`), a second `BlurBackingWindow` there, `axiom-blur-backing-overlay`, draws the shapes of the surfaces on the Overlay layer (`BlurShape.overlayLayer`: bar popouts and their submenus, edge popouts, the OSD; a dock's preview has no origin and fills and blurs itself), and the first window drops them.
   - Its order (see `docs/dev/generated/layers.md`) puts it after the overlay and before every surface it draws for, and it maps without Hyprland's animation.
+  - Both over windows (`fills` and `shadows`, or `all`) are always in `BlurBacking`'s model, unmapped while the overlay isn't open there (`wanted`, drawing no shapes), so an overlay opening makes no window delegates.
   - Its blur rule never uses xray (`LayerStack.blurOverOverlay`): what it blurs is the overlay.
 - Only the Overlay-layer shapes move up. Drawn over the Top layer, a bar's fill would cover the bar's content.
 - Each window casts only its own shapes' shadows, but cuts them by every shape on the screen (`BlurBackingWindow.cutBy`, the other window's), as the one window does. So a popout's shadow never falls on the bar it's joined to.
