@@ -14,3 +14,8 @@ docs/dev/config/
 docs/dev/generated/
 .pytest_cache/
 CLAUDE.local.md
+
+# Claude Code: the plans folder, worktrees, personal settings
+.plans/
+.claude/worktrees/
+.claude/settings.local.json
