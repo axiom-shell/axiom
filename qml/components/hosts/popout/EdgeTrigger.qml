@@ -14,7 +14,9 @@ PanelWindow {
 
   signal triggered
 
-  readonly property alias containsMouse: mouseArea.containsMouse
+  // The pointer is on the strip (never while it takes no input: a disabled
+  // MouseArea keeps its last hover until a leave)
+  readonly property bool containsMouse: root.takesInput && mouseArea.containsMouse
 
   // A ScreenEdge value, shared with bars and popouts
   property int edge: ScreenEdge.Right
