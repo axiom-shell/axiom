@@ -15,7 +15,7 @@ import qs.components.reusable
 // One blur window (BlurBacking): click-through, drawing each of `shapes`
 // (BlurShapes) filled, at the surface opacity, with their shadows cast
 // once per look and kept outside every shape, its own and the other
-// window's (`cutBy`). `part` keeps one of the two: where the compositor
+// window's. `part` keeps one of the two: where the compositor
 // blurs every pixel that isn't clear, the shadows go to a window it
 // doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes
@@ -25,17 +25,24 @@ import qs.components.reusable
 // alpha threshold there, the whole window would blur, its shadows too.
 PanelWindow {
   id: backing
-  // The shapes it draws
+  // Every shape on its screen: it keeps a copy of each and draws its own
+  // (`draws`), so the overlay opening builds and destroys none
   required property var shapes
-  // Shapes another blur window draws on this screen, which its shadows
-  // are cut by all the same: a shadow never falls on a surface joined to
-  // the one casting it, whichever window draws that one
-  property var cutBy: []
+  // It's the window over the overlay ("-overlay")
+  property bool over: false
+  // The overlay is open on its screen (BlurManager.aboveOverlay)
+  property bool aboveOverlay: false
+  // Whether it draws `shape` now (the other blur window on its screen draws
+  // the rest); its shadows are cut by the shapes the other one draws all
+  // the same: a shadow never falls on a surface joined to the one casting it
+  function draws(shape) {
+    return backing.aboveOverlay ? shape.overlayLayer === backing.over : !backing.over;
+  }
   // What it draws: "all", the "fills" alone or the "shadows" alone
   property string part: "all"
   // Whether shadows are cut by `union` rather than their own group (never
   // captured while it draws no shadows)
-  readonly property bool cutByUnion: backing.part !== "fills" && (groups.count > 1 || backing.cutBy.length > 0)
+  readonly property bool cutByUnion: backing.part !== "fills" && (groups.count > 1 || backing.aboveOverlay)
 
   // Which shadow a shape casts with: shapes of one look cast theirs
   // together; "none" for no shadow
@@ -70,7 +77,7 @@ PanelWindow {
   // (supports.blurRegion): each shape's pieces as drawn, at its place on
   // the screen and cut to its clipRect; none while it draws nothing
   readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted
-  readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.map(shape => backing._piecesOf(shape))) : []
+  readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.filter(shape => backing.draws(shape)).map(shape => backing._piecesOf(shape))) : []
 
   // reads: a shape's source (AttachedSurface, Rectangle, RoundedBorders)
   function _piecesOf(shape) {
@@ -189,11 +196,12 @@ PanelWindow {
     Item {
       id: cutShapes
       anchors.fill: parent
-      visible: backing.cutBy.length > 0
+      visible: backing.aboveOverlay
 
       // (none for a fills-only window, which never reads them)
       Copies {
-        shapes: backing.part !== "fills" ? backing.cutBy : []
+        shapes: backing.part !== "fills" ? backing.shapes : []
+        draws: shape => backing.aboveOverlay && !backing.draws(shape)
         onChanged: nudge.burst()
       }
     }
@@ -231,6 +239,7 @@ PanelWindow {
 
         Copies {
           shapes: group.members
+          draws: shape => backing.draws(shape)
           onChanged: nudge.burst()
         }
       }
@@ -301,6 +310,8 @@ PanelWindow {
   component Copies: Item {
     id: copies
     required property var shapes
+    // Which of `shapes` it draws now (a copy exists for each either way)
+    property var draws: shape => true
     // A copy moved, resized, showed or hid
     signal changed
     anchors.fill: parent
@@ -326,7 +337,7 @@ PanelWindow {
         height: area ? area.height : copies.height
         clip: !!area
         // (read rather than `visible`, which is false inside a hidden layer)
-        readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source
+        readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && copies.draws(slot.shape)
         visible: slot.showing
 
         // Where and how big its copy is, as drawn: on any change the

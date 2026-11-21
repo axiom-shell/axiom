@@ -4,7 +4,7 @@ import qs.components.methods
 
 // Spreads building UI over frames: a page's modules (ModuleGrid.stream)
 // and tool pages' sections (StreamedLoader) queue a job each, and the jobs
-// run a few per 16 ms step, within a 6 ms budget (at least one a step,
+// run a few per 16 ms step, within a 12 ms budget (at least one a step,
 // however long it takes), so showing a page never waits on all of it.
 // Jobs run in the order queued, those whose owner is visible first (the
 // page shown before its neighbours); a `first` job (the settings sidebar)
@@ -41,7 +41,7 @@ QtObject {
 
   // -- Private --
   property var _queue: []
-  readonly property int _budget: 6
+  readonly property int _budget: 12
 
   function _next() {
     return BuildOrder.next(root._queue);
