@@ -30,6 +30,25 @@ TestCase {
       "outputs": ["eDP-1"]
     })
 
+  // KeybindManager reads the output names through a "\n"-joined key
+  // (notifies only on a real change): the facts it makes hold the same
+  function test_outputs_from_a_key() {
+    const docked = {
+      "action": "launcher",
+      "whenMonitors": "external"
+    };
+    for (const outputs of [[], ["eDP-1"], ["eDP-1", "HDMI-A-1"], ["HDMI-A-1", "eDP-1"]]) {
+      const key = outputs.join("\n");
+      const fromKey = key === "" ? [] : key.split("\n");
+      compare(fromKey, outputs, "order kept");
+      compare(_holds(docked, Object.assign({}, tiling, {
+        "outputs": fromKey
+      })), _holds(docked, Object.assign({}, tiling, {
+        "outputs": outputs
+      })), JSON.stringify(outputs));
+    }
+  }
+
   function _holds(bind, facts) {
     return shared.calls.BindConditions.holds(bind, facts);
   }

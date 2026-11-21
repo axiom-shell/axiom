@@ -120,19 +120,77 @@ Singleton {
 
   // --- State (contract.md › Shapes) ---
 
+  // Each list stays the same object while its content is equal
+  // (Utils.keepEqual, as ScreenEdgeManager.bars), so a backend rebuilding
+  // one on a switch or an unrelated event reaches no reader. `windows` and
+  // `workspaces` are kept once per event turn (Qt.callLater: the transient
+  // states of one switch notify once); `outputs` and `specials` at once.
+
   // Every mapped window: [{ id, appId, initialAppId, title, workspaceId,
   // workspaceName, output, floating, fullscreen, maximized, hidden,
   // focusRank, x, y, w, h }]
-  readonly property var windows: root.backend?.windows ?? []
+  readonly property var windows: root._windows
+  property var _windows: []
+  property var _windowKeys: []
+  readonly property var _freshWindows: root.backend?.windows ?? []
+  on_FreshWindowsChanged: Qt.callLater(root._keepWindows)
+  function _keepWindows() {
+    const k = Utils.keepEqual({
+      "items": root._windows,
+      "keys": root._windowKeys
+    }, root._freshWindows, w => w.id);
+    root._windowKeys = k.keys;
+    if (k.items !== root._windows)
+      root._windows = k.items;
+  }
   // Every monitor: [{ name, description, x, y, width, height, scale,
   // focused, activeWorkspaceId, specialWorkspaceId, reserved }]
-  readonly property var outputs: root.backend?.outputs ?? []
+  readonly property var outputs: root._outputs
+  property var _outputs: []
+  property var _outputKeys: []
+  readonly property var _freshOutputs: root.backend?.outputs ?? []
+  on_FreshOutputsChanged: root._keepOutputs()
+  function _keepOutputs() {
+    const k = Utils.keepEqual({
+      "items": root._outputs,
+      "keys": root._outputKeys
+    }, root._freshOutputs, o => o.name);
+    root._outputKeys = k.keys;
+    if (k.items !== root._outputs)
+      root._outputs = k.items;
+  }
   // Every workspace: [{ id, name, output, windowCount, active, focused,
   // urgent }] (urgent: a window on it asks for attention)
-  readonly property var workspaces: root.backend?.workspaces ?? []
+  readonly property var workspaces: root._workspaces
+  property var _workspaces: []
+  property var _workspaceKeys: []
+  readonly property var _freshWorkspaces: root.backend?.workspaces ?? []
+  on_FreshWorkspacesChanged: Qt.callLater(root._keepWorkspaces)
+  function _keepWorkspaces() {
+    const k = Utils.keepEqual({
+      "items": root._workspaces,
+      "keys": root._workspaceKeys
+    }, root._freshWorkspaces, w => w.id);
+    root._workspaceKeys = k.keys;
+    if (k.items !== root._workspaces)
+      root._workspaces = k.items;
+  }
   // The special workspaces (contract.md › Shapes, Special), [] without
   // namedSpecial
-  readonly property var specials: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
+  readonly property var specials: root._specials
+  property var _specials: []
+  property var _specialKeys: []
+  readonly property var _freshSpecials: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
+  on_FreshSpecialsChanged: root._keepSpecials()
+  function _keepSpecials() {
+    const k = Utils.keepEqual({
+      "items": root._specials,
+      "keys": root._specialKeys
+    }, root._freshSpecials, s => s.name);
+    root._specialKeys = k.keys;
+    if (k.items !== root._specials)
+      root._specials = k.items;
+  }
   // The fields of the config that hold a special workspace's id (the
   // schema's `x-ref`s of that kind: SchemaRefs.sites)
   readonly property var specialRefSites: SchemaRefs.sites(ConfigManager.configSchema, "specialWorkspace")
@@ -762,7 +820,13 @@ Singleton {
     manager: root
   }
 
-  Component.onCompleted: _remap.begin()
+  Component.onCompleted: {
+    root._keepWindows();
+    root._keepOutputs();
+    root._keepWorkspaces();
+    root._keepSpecials();
+    _remap.begin();
+  }
 
   // `axiom ipc workspaces …`, for workspace keybinds. mode:
   // "go", "move" (take the focused window along) or "moveSilent"

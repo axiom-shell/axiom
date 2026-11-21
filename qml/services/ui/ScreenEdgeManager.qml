@@ -3,7 +3,6 @@ import QtQuick
 
 import qs.config
 import qs.components.methods
-import qs.services.core
 import qs.services.compositor
 
 /* What's on each screen edge: the running bars (`bars`, while the bar
@@ -44,7 +43,7 @@ QtObject {
   // binding over those re-runs once per link as a gap change reaches them,
   // the first with the new gapsOut and the old float gaps (a swap of the
   // bars that is no input change)
-  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), ConfigManager.live.Bars.items, WindowRulesManager.hideBarOn)
+  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), BarsConfig.liveBars, WindowRulesManager.hideBarOn)
   function _freshBarsFor(gapsOut, floatGaps, items, hiddenOn) {
     return BarEnds.withEnds(BarsConfig.expandBars(items).map(bar => {
       const enriched = BarsConfig.enrichBarConfig(hiddenOn.includes(bar.monitor) ? Object.assign({}, bar, {

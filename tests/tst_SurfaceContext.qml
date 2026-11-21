@@ -1005,33 +1005,36 @@ TestCase {
     verify(at({}).slidesUnder, "past a transparent bar");
     verify(at({}).slidesFromEdge);
     // From the screen edge to its attach edge, a bar inside the border too
-    compare(at({}).slideFrom, at({}).attachAt);
-    compare(at({}).slideFrom, 40);
-    compare(at({
+    compare(SurfaceContext.slideFrom(at({})), at({}).attachAt);
+    compare(SurfaceContext.slideFrom(at({})), 40);
+    compare(SurfaceContext.slideFrom(at({
       "bar": Object.assign(bar("transparent"), {
         "extent": 40,
         "insideBorder": true
       })
-    }).slideFrom, 40);
+    })), 40);
     // Over the bars (the overlay open, or stacked by map order): from the
     // frame line, coming out of the bar
-    compare(at({
+    compare(SurfaceContext.slideFrom(at({
       "overOverlay": true
-    }).slideFrom, 0);
-    compare(at({
+    })), 0);
+    compare(SurfaceContext.slideFrom(at({
       "layerOrder": false
-    }).slideFrom, 0);
+    })), 0);
     // As its window is (`under`, which the host keeps while open), not as
     // it would open now: opened over a fullscreen window and still over
     // the bars once that's gone, from the frame line; opened under them
     // with the overlay open since, from the screen edge
-    compare(at({
-      "under": false
-    }).slideFrom, 0);
-    compare(at({
-      "under": true,
+    compare(SurfaceContext.slideFrom(at({}), false), 0);
+    compare(SurfaceContext.slideFrom(at({
       "overOverlay": true
-    }).slideFrom, 40);
+    }), true), 40);
+    // A box not detached doesn't slide back at all
+    compare(SurfaceContext.slideFrom({
+      "detached": false,
+      "attachAt": 40,
+      "frameLine": 40
+    }, true), 0);
     // Held off its edge (a detached OSD or edge menu), under a solid bar,
     // a pill bar or the border alike: a connector gap short of its box
     const held = at({
@@ -1041,7 +1044,7 @@ TestCase {
     });
     verify(held.slidesUnder, "held: under whatever is on its edge");
     verify(held.slidesFromEdge);
-    compare(held.slideFrom, 40 + 10 - base.gap / 2);
+    compare(SurfaceContext.slideFrom(held), 40 + 10 - base.gap / 2);
     // Past a floating bar showing no islands
     const plainIsland = Object.assign(bar("floating"), {
       "extent": 40,
@@ -1062,9 +1065,9 @@ TestCase {
     verify(!at({
       "bar": solid
     }).slidesFromEdge);
-    compare(at({
+    compare(SurfaceContext.slideFrom(at({
       "bar": solid
-    }).slideFrom, 0);
+    })), 0);
     // Stacked by map order, or over the overlay: from the screen edge
     // still, over the bars
     verify(!at({
@@ -1087,8 +1090,8 @@ TestCase {
       "layerOrder": false
     });
     verify(close.slidesFromEdge);
-    compare(close.slideFrom, close.attachAt - 40);
-    compare(close.slideFrom, 30 - base.gap / 2);
+    compare(SurfaceContext.slideFrom(close), close.attachAt - 40);
+    compare(SurfaceContext.slideFrom(close), 30 - base.gap / 2);
     // Over a fullscreen window: nothing to go under (and no Top window
     // maps over one), from the screen edge everywhere
     const bare = at({
@@ -1102,7 +1105,7 @@ TestCase {
     });
     verify(!bare.slidesUnder, "over a fullscreen window");
     verify(bare.slidesFromEdge);
-    compare(bare.slideFrom, 30 - base.gap / 2);
+    compare(SurfaceContext.slideFrom(bare), 30 - base.gap / 2);
     // A held box on a bare edge: nothing in the way
     const open = at({
       "held": true,
