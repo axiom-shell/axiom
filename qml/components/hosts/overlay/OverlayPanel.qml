@@ -45,12 +45,9 @@ ReservedAreaWindow {
   // Closed, it waits off the edge it slides in from (Overlay.animation),
   // or in place, faded out
   readonly property bool _fades: OverlayConfig.animation === "fade"
-  // Its height while it's full size: the slide's distance, held while it's
-  // idle, a pixel
-  property real _fullHeight: 0
-  onHeightChanged: if (!root.idle)
-    root._fullHeight = root.height
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? _fullHeight : -_fullHeight
+  // The window's height, as last mapped full size (`pageArea.roomHeight`
+  // holds it while idle, a pixel)
+  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? pageArea.roomHeight + OverlayConfig.navigatorRoom : -(pageArea.roomHeight + OverlayConfig.navigatorRoom)
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
@@ -81,6 +78,8 @@ ReservedAreaWindow {
     isOpen = false;
     // Not while a fullscreen window is up: nothing keeps a mapped window over it
     root.kept = !root.fullscreen;
+    if (root.kept)
+      keptTimer.restart();
     hideTimer.start();
   }
 
@@ -105,12 +104,8 @@ ReservedAreaWindow {
     id: hideTimer
     interval: Appearance.animSlow
     repeat: false
-    onTriggered: {
-      if (root.kept)
-        keptTimer.start();
-      else
-        root.visible = false;
-    }
+    onTriggered: if (!root.kept)
+      root.visible = false
   }
 
   Timer {
@@ -304,7 +299,7 @@ ReservedAreaWindow {
       currentIndex: overlayPages.currentIndex
       pages: overlayPages.pages
       labels: OverlayConfig.navigatorLabels
-      maxWidth: slideContainer.width - Widget.padding * 4
+      maxWidth: pageArea.roomWidth - Widget.padding * 4
       onPrevious: overlayPages.step(-1)
       onNext: overlayPages.step(1)
       onSelect: index => overlayPages.goTo(index)
