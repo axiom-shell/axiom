@@ -98,7 +98,7 @@ QtObject {
 
   // Where each scrolling panel was scrolled to, by its ScrollMemory key, so
   // it comes back there when the overlay reopens (its pages are unloaded
-  // while it's closed). In memory only: a restart starts at the top
+  // when the overlay's window goes (`keptFor` after a close)). In memory only: a restart starts at the top
   property var _scroll: ({})
 
   function scrollOf(key) {

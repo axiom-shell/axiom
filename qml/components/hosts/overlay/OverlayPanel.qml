@@ -76,11 +76,12 @@ ReservedAreaWindow {
     if (!root.isOpen)
       return;
     isOpen = false;
+    // (the timer first: `idle` reads it)
+    hideTimer.start();
     // Not while a fullscreen window is up: nothing keeps a mapped window over it
     root.kept = !root.fullscreen;
     if (root.kept)
       keptTimer.restart();
-    hideTimer.start();
   }
 
   function toggle() {
