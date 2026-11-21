@@ -16,11 +16,11 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 `.claude/hooks/guard.py` enforces the details; on a refusal ask the user, don't work around it. Scratch alternatives: `docs/dev/testing.md`.
 
 - Lock the session (only the user can unlock) or simulate the cursor (reason from logs).
-- Start, stop or restart qs or the live daemon, or change its dev mode: use a nested shell or scratch daemon (`XDG_RUNTIME_DIR`, `--socket`).
-- Change the live compositor config mode, allow a takeover, enable an `x-takeover` setting live unasked, or write `~/.config/axiom/config.json` from Bash (skips the takeover check).
+- Start, stop or restart qs or the live daemon, or change its dev mode: use a nested shell or a scratch daemon (start it with a scratch `XDG_RUNTIME_DIR`, reach it with `--socket`).
+- Change the live compositor config mode, allow a takeover, enable an `x-takeover` setting live unasked, or write `~/.config/axiom/config.json` by hand (Bash, Edit and Write skip the takeover check; use `axiom config set`).
 - Quit the live compositor (niri, Hyprland, sway), or change niri's outputs or config; install the greeter for real or restart greetd (ends the session); restart xdg-desktop-portal or write portal configs (ends shares).
 - Change clock, time zone, hostname, password, account or default apps; touch real Bluetooth devices or the live input method (a keyboard could drop out): use fakes or a scratch bus.
-- Push to main (a bare `git push` on main too), force-push, `git clean -x`/`-X`, `git stash` (shared by every worktree).
+- Push to main (a bare `git push` on main too), force-push (`--force-with-lease` to a branch is fine), `git clean -x`/`-X`, `git stash` (shared by every worktree).
 - Merge a PR: the maintainer merges.
 - Edit generated files (`docs/dev/testing.md` › The checks).
 - Translate, or run `check_i18n.py --fill`/`--prune` (the pre-commit hook does).
