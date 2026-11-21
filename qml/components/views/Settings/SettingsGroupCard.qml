@@ -42,7 +42,7 @@ FoldingCard {
   // reads each SettingsField's `shown` and `shutFold`, through `count`
   endRows: Array.from({
     length: fieldRows.count
-  }, (_, i) => fieldRows.itemAt(i))
+  }, (_, i) => root._fieldAt(i))
 
   // The hookup chip of a theme integration's card (its unsaved switch value)
   // I18n.tr("Off") I18n.tr("Checking") I18n.tr("Set up") I18n.tr("Not set up") I18n.tr("Copy the text")
@@ -61,11 +61,17 @@ FoldingCard {
     };
   }
 
+  // The i-th row's SettingsField, null until its job has built it (each row
+  // is a StreamedLoader: `item` notifies the bindings reading it)
+  function _fieldAt(i) {
+    return (fieldRows.itemAt(i) as StreamedLoader)?.item ?? null;
+  }
+
   // The row showing a setting (a key path), or null (a jump flashes it)
   function rowItem(path) {
     const key = path.join(".");
     for (let i = 0; i < fieldRows.count; i++) {
-      const row = fieldRows.itemAt(i) as SettingsField;
+      const row = root._fieldAt(i) as SettingsField;
       if (row && row.row.path.join(".") === key)
         return row;
     }
@@ -106,7 +112,7 @@ FoldingCard {
     for (const key of ["-1"].concat(Array.from({
       length: rowArea.count
     }, (_, i) => String(i))))
-      result[key] = Utils.firstFormRow(fieldRows.count, i => rows[i]?.run === 0 && String(rows[i].column) === key ? fieldRows.itemAt(i) : null);
+      result[key] = Utils.firstFormRow(fieldRows.count, i => rows[i]?.run === 0 && String(rows[i].column) === key ? root._fieldAt(i) : null);
     return result;
   }
 
@@ -159,30 +165,37 @@ FoldingCard {
       id: fieldRows
       model: root.group.rows
 
-      delegate: SettingsField {
-        id: field
+      // A job a row (a card's shells are most of its build)
+      delegate: StreamedLoader {
+        id: slot
         required property var modelData
         required property int index
-        readonly property var spot: rowArea.placed.rows[field.index] ?? ({
+        readonly property var spot: rowArea.placed.rows[slot.index] ?? ({
             "x": 0,
             "y": 0,
             "width": rowArea.width,
             "run": 0,
             "column": 0
           })
-        // The top of its column in the card's first run, or the right half
-        // of a pair whose left half is. The `Settings` fold under an intro
-        // keeps its divider, also as the top row (the intro isn't a row)
-        first: (field.index === root._firstRows[String(field.spot.column)] && !(field.modelData.foldRows && introLoader.visible)) || (rowArea.lines[field.index]?.side === 1 && field.index - 1 === root._firstRows[String(rowArea.placed.rows[field.index - 1]?.column)])
-        row: field.modelData
-        form: root.form
-        level: root.tree.levels[field.index]
-        x: field.spot.x
-        y: field.spot.y
-        width: field.spot.width
-        onImplicitHeightChanged: rowArea.setHeights(field.index, field.implicitHeight, field.flowHeight)
-        onFlowHeightChanged: rowArea.setHeights(field.index, field.implicitHeight, field.flowHeight)
-        Component.onCompleted: rowArea.setHeights(field.index, field.implicitHeight, field.flowHeight)
+        readonly property real flowHeight: (slot.item as SettingsField)?.flowHeight ?? 0
+        rise: false
+        label: `settings field ${slot.modelData.path.join(".")}`
+        x: slot.spot.x
+        y: slot.spot.y
+        width: slot.spot.width
+        onImplicitHeightChanged: rowArea.setHeights(slot.index, slot.implicitHeight, slot.flowHeight)
+        onFlowHeightChanged: rowArea.setHeights(slot.index, slot.implicitHeight, slot.flowHeight)
+        Component.onCompleted: rowArea.setHeights(slot.index, slot.implicitHeight, slot.flowHeight)
+
+        sourceComponent: SettingsField {
+          // The top of its column in the card's first run, or the right half
+          // of a pair whose left half is. The `Settings` fold under an intro
+          // keeps its divider, also as the top row (the intro isn't a row)
+          first: (slot.index === root._firstRows[String(slot.spot.column)] && !(slot.modelData.foldRows && introLoader.visible)) || (rowArea.lines[slot.index]?.side === 1 && slot.index - 1 === root._firstRows[String(rowArea.placed.rows[slot.index - 1]?.column)])
+          row: slot.modelData
+          form: root.form
+          level: root.tree.levels[slot.index]
+        }
       }
     }
   }
