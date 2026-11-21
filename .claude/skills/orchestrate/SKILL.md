@@ -18,7 +18,7 @@ Layouts: every hand-off has one file in `.claude/templates/`: `brief.md`, `spec.
 ## The lead
 
 - **What you read.** Never source files or diffs: `--stat`/`--shortstat`, `new_names.py` output, reports, and check output (`tail`, `grep`). An unclear bug or claim goes to an `architect`.
-- **Skills and agents.** Run skills with the Skill tool, each with `--tree <tree>`, never by reading their files. Each role and round gets a fresh agent.
+- **Skills and agents.** Run skills with the Skill tool, each with `--tree <tree>` (a recipe skill gets it as the brief's `Tree:`), never by reading their files. Each role and round gets a fresh agent.
 - **Briefs** are `.claude/templates/brief.md`, complete the first time. Quote decisions verbatim; add no step of your own.
 - **A stopped agent** goes to an `architect`, or to the user if the decision is product.
 - **Nested shells** follow CLAUDE.md › Working here.
@@ -44,12 +44,12 @@ Layouts: every hand-off has one file in `.claude/templates/`: `brief.md`, `spec.
 
 Every tier has a ledger; tiers scale planning and review, never alignment.
 
-| Tier | Signals | Size (`/review-branch` › 2. Size) | Plan check | Review `--size` |
-|---|---|---|---|---|
-| T0 Fix | a bug or alignment fix in one place; no new public name; no Becomes phrase in the request | Tiny | yours, against the templates | tiny |
-| T1 Improvement | changes something existing, one area | Small | one round (+1 if a Blocker/Major was revised) | small |
-| T2 Feature | new feature or rework in one system | Larger | up to two rounds | larger |
-| T3 Cross-system | two or more `.claude/rules/` areas, schema + backend + UI, tooling contracts, or a stack | Larger | up to two rounds | larger |
+| Tier | Signals | Size (`/review-branch` › 2. Size; lowercased, the `--size`) | Plan check |
+|---|---|---|---|
+| T0 Fix | a bug or alignment fix in one place; no new public name; no Becomes phrase in the request | Tiny | yours, against the templates |
+| T1 Improvement | changes something existing, one area | Small | one round (+1 if a Blocker/Major was revised) |
+| T2 Feature | new feature or rework in one system | Larger | up to two rounds |
+| T3 Cross-system | two or more `.claude/rules/` areas, schema + backend + UI, tooling contracts, or a stack | Larger | up to two rounds |
 
 - You propose the tier; the planning architect confirms or raises it in spec.md's Tier line. Tiers only go up; the user may lower one.
 - Re-tier up when the spec's files exceed the size; the gate rules a new ledger row (at T0, any name); an implementer stops for a new name; or `git -C <tree> diff --shortstat <Base>` (generated files out) passes the size. Run the new tier's missing planning steps before the next group, and record it.
@@ -66,7 +66,7 @@ Every tier has a ledger; tiers scale planning and review, never alignment.
 3. **Plan check.** Per tier. A fresh `architect` (brief: `Tree:`, `Base:`) runs › Checking a plan and writes `plan-check-<n>.md`. NOT READY: a fresh architect revises the spec and ledger, then the next round if the tier allows. After the last round, any Blocker, Major or open question goes to the user.
 4. **Groups.** For each spec group:
    1. Brief (`Tree:`, `Base:` = state.md's Base) to a fresh `implementer`, or `/<recipe> "<the filled brief>"` when the group names a recipe.
-   2. Read the report. Each acceptance check needs a PASS with evidence. FAIL, NOT RUN, weak or "by construction" is not done: a fresh implementer for it. It becomes a `LIVE:` line only on an architect's ruling that no test or log can reach it (CLAUDE.md › Working here). Log lines from another tree are not evidence.
+   2. Read the report. Each acceptance check needs a PASS with evidence. FAIL, NOT RUN, weak or "by construction" is not done: a fresh implementer for it. It becomes a `LIVE:` line only on an architect's ruling that no test or log can reach it, and a nested check only on its ruling that one is necessary (CLAUDE.md › Working here). Log lines from another tree are not evidence.
    3. Re-tier check.
    4. `/keep-order gate --tree <tree> --state <state folder>`, and its Fix round (judged as in 4.2).
    5. Commit: `git -C <tree> add -A && git -C <tree> -c core.hooksPath=.githooks commit -F -`, ending with the session's attribution lines; set state.md's `Head:`.
@@ -74,8 +74,8 @@ Every tier has a ledger; tiers scale planning and review, never alignment.
    - `/keep-order audit --state <state folder> --tree <tree> --fix` (it passes `--base <Base> --size <Tier's size> --state <state folder>` and, once recorded, `--since <Last reviewed>` to `/review-branch`).
    - After each Fix round, commit as in 4.5.
    - Never a second full review. A round that fixed a Blocker or Major gets one more audit (now with `--since`); if that round still finds one, go to the user.
-6. **Verify.** Only if commits came after the review's checker: a `checker` (brief: `Tree:`) runs `scripts/dev/verify.sh --all` and must print `all checks passed`.
-7. **PR.** `git -C <tree> push -u origin <branch>`; write `<state folder>/pr-body.md` (`.claude/templates/pr-body.md`); `cd <tree> && gh pr create --base <main | previous branch> --body-file <state folder>/pr-body.md`.
+6. **Verify.** Only if state.md's `Head:` differs from `Last reviewed:` (the review's checker ran at that sha): a `checker` (brief: `Tree:`) runs `scripts/dev/verify.sh --all` and must print `all checks passed`.
+7. **PR.** `git -C <tree> push -u origin <branch>`; write `<state folder>/pr-body.md` (`.claude/templates/pr-body.md`); `cd <tree> && gh pr create --base <main | previous branch> --title "<subject>" --body-file <state folder>/pr-body.md`. The subject is one line in the style of `git -C <tree> log --oneline -5 origin/main`, with an `<n>/<m>: ` part prefix for a stack.
 8. **CI.** `cd <tree> && gh pr checks <n> --watch`. On a failure: a Fix round with source `ci<c>` (fix list from `gh run view <id> --log-failed | tail -60`), `--all`, commit, push. At most twice, then stop.
 9. **Ready.** Report and stop. Never merge.
 

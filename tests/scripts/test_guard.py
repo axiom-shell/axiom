@@ -160,11 +160,11 @@ class Bash(LiveSession, unittest.TestCase):
 
     def test_shell_kill(self):
         self.blocks("pkill quickshell", "pkill -x qs", "killall qs", "killall -9 quickshell", "pkill -f 'qs -c axiom'", "pkill -x '^axiom$'",
-                    "pkill -f /usr/bin/qs", "kill $(pgrep -x qs)", "kill -9 $(pidof qs)", "kill `pidof quickshell`", 'kill "$(pgrep -x qs)"',
+                    "pkill -f /usr/bin/qs", 'pkill -x "qs|axiom"', "pkill '^foot$|^qs$'", "kill $(pgrep -x qs)", "kill -9 $(pidof qs)", "kill `pidof quickshell`", 'kill "$(pgrep -x qs)"',
                     "pgrep -x qs | xargs kill", "pidof qs | xargs -r kill -9", "pgrep -x axiom | kill",
                     "sudo pkill qs", "true && killall qs")
         self.allows("pkill -f nested-niri", "killall foot", "pgrep -x qs", "pidof qs", "pgrep -x qs; kill 12345", "pkill -f axiom-notes",
-                    "kill $(pgrep -x foot)", "pgrep -x foot | xargs kill", "kill 12345", "echo qs")
+                    "kill $(pgrep -x foot)", 'pkill -x "foot|kitty"', "pgrep -x foot | xargs kill", "kill 12345", "echo qs")
 
     def test_check_i18n_fill_prune(self):
         self.blocks("python3 scripts/check_i18n.py --fill", "python3 scripts/check_i18n.py --prune", "scripts/check_i18n.py --fill",
@@ -191,7 +191,8 @@ class Bash(LiveSession, unittest.TestCase):
     def test_git_stash(self):
         self.blocks("git stash", "git stash -u", "git stash push -m x", "git stash pop", "git stash drop", "git stash apply",
                     "git -C /tmp stash", "git stash clear")
-        self.allows("git stash list", "git stash show -p", "git stash show stash@{0}", "git status", "git -C /tmp stash list")
+        self.allows("git stash list", "git stash show -p", "git stash show stash@{0}", "git status", "git -C /tmp stash list",
+                    "git stash --help", "git stash -h")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",

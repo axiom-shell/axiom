@@ -18,7 +18,7 @@ Filled by: the lead of the review, from the confirmed findings.
 ## Outside the branch (problems the reviewers saw that the branch didn't cause: title and `path:line`)
 ```
 
-Outside the branch is for the user only: those are never fixed here and never filed anywhere.
+Outside the branch is for the user only: those are never fixed here; the lead reports them (and `/orchestrate` writes them to the follow-ups file when CLAUDE.local.md names one), never files them elsewhere.
 
 ## System
 
@@ -37,4 +37,4 @@ Outside the branch is for the user only: those are never fixed here and never fi
 ## Outside the system (problems in other systems' files: title and `path:line`)
 ```
 
-Outside the system is for the user only: those are never fixed here and never filed anywhere.
+Outside the system is for the user only: those are never fixed here; the lead reports them (and `/orchestrate` writes them to the follow-ups file when CLAUDE.local.md names one), never files them elsewhere.

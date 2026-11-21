@@ -6,7 +6,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 - **Alignment first** (above speed and scope): reuse an existing function or piece, never a near copy; one name, one unit and one pattern per concept; a new file follows the precedent of its kind. `/orchestrate` holds every change to it through a ledger, from plan to PR; `/align` fixes drift already there.
 - After every change run `scripts/dev/verify.sh` until `verify ok` (`--all` = CI, prints `all checks passed`; run it once, at the end). It formats QML and prints the shell's log; a clean reload is `Reloading configuration...` + `Configuration Loaded`; `console.warn` only for real problems.
-- Log `scripts/log.sh`, screenshots `scripts/dev/shot.sh`, a second shell only via `scripts/dev/nested.sh`, and only when no test or log can show it; otherwise the check becomes a `LIVE:` line in the PR (`docs/dev/testing.md`).
+- Log `scripts/log.sh`, screenshots `scripts/dev/shot.sh`, a second shell only via `scripts/dev/nested.sh`, and only when absolutely necessary; a check no test or log can show becomes a `LIVE:` line in the PR (`docs/dev/testing.md`).
 - qs watches by inode: edit QML in place, never temp file + rename; after `sed -i` or `git checkout`, force a reload.
 - Read `docs/dev/core/qml-pitfalls.md` before writing QML and the area's doc before changing it; update it when behaviour changes. Which file does X: `grep -n '<word>' docs/dev/generated/files.md`. Recipes: `docs/recipes/`.
 - A problem outside the task: tell the user, don't fix it unasked.

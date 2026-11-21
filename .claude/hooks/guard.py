@@ -18,7 +18,9 @@ user's own Claude settings and another `claude` are refused too. Best effort:
 it stops mistakes, not an adversary. Known gaps: a write from inside an
 interpreter (`python3 -c`, `node -e`); a bare push under `push.default=upstream`
 on a branch tracking main (orchestrate creates its branches with `--no-track`);
-`git switch main && git push` in one line.
+`git switch main && git push` in one line; a `kill` fed by a lookup through a
+loop or a redirection (`for p in $(pgrep qs); do kill $p; done`,
+`xargs kill < <(pgrep qs)`).
 """
 import itertools
 import json
@@ -71,12 +73,14 @@ SAFE_QS = {"ipc", "log", "list", "msg"}
 
 def names_shell(name, args):
     """Whether a pkill/killall/pgrep/pidof names a shell process: a non-option
-    argument equal to one (`^`/`$` stripped), or with -f/--full a pattern's words."""
+    argument whose `|` alternatives include one (`^`/`$` stripped), or with
+    -f/--full a pattern's `|` alternatives and words."""
     if name not in LOOKUPS:
         return False
     full = any(a == "--full" or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in args)
-    patterns = [a.strip("^$") for a in args if not a.startswith("-")]
-    return any(p in SHELL_PROCESSES or full and set(re.split(r"[\s/]+", p)) & SHELL_PROCESSES for p in patterns)
+    patterns = [a for a in args if not a.startswith("-")]
+    split = r"[|\s/]+" if full else r"\|"
+    return any(w.strip("^$") in SHELL_PROCESSES for p in patterns for w in re.split(split, p))
 
 
 class Denied(Exception):
@@ -450,7 +454,7 @@ def check_git(args, cwd):
         i += 2 if args[i] in GIT_VALUE_OPTS else 1
     if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
         deny("Never", "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).")
-    if args[i:i + 1] == ["stash"] and args[i + 1:i + 2] not in (["list"], ["show"]):
+    if args[i:i + 1] == ["stash"] and args[i + 1:i + 2] not in (["list"], ["show"], ["--help"], ["-h"]):
         deny("Never", "`git stash` is shared by every worktree of the repo; commit, or `git diff > <scratch>/x.patch`.")
     if args[i:i + 1] == ["push"] and push_refused(args[i + 1:], cwd):
         deny("Never", "no force-push and no push to main: everything reaches main through a PR.")

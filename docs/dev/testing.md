@@ -34,6 +34,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
 
 ### Reloads and logs
 - The shell runs under `axiom run` (the daemon, which owns config.json) and hot-reloads QML files it has loaded. Starting, stopping or restarting the shell or the daemon is yours to do by hand, in your own session; a second axiom only runs nested (`scripts/dev/nested.sh <sway|niri|hyprland>`) or on scratch folders, never on the live ones.
+- A check only the live session can show (no test, log or scratch instance reaches it) goes in the pull request as a `LIVE:` line, for the reviewer to try on their session.
 - A scratch environment in zsh: `E="XDG_RUNTIME_DIR=/x XDG_CONFIG_HOME=/y"; env $E …` passes one argument, so the command falls back to the live folders (two test writes once landed in the real config.json this way). Put the assignments inline, use `env ${=E}`, or source a file in `bash -c`, and check `axiom config path` resolves to the scratch folder before any write.
 - `~/.config/axiom/config.json` belongs to the settings UI but may be edited to test. Edit it in an editor that goes through the daemon's checks, not with a blind `cp`, `sed -i` or redirect: the daemon holds `x-takeover` settings (the compositor mode, …) as they are, and a raw overwrite skips that. An invalid file never replaces the running config (`savesBlocked` refuses saves until it's fixed).
 - `console.log` is for tracing (`scripts/log.sh --debug` shows it), `console.warn` only for real problems.

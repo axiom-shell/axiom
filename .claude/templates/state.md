@@ -9,7 +9,7 @@ Tier: T<n> (history) · Phase: plan | check <r> | group <g> | review <r> | verif
 Tree: · Branch: · Base: (origin/main sha at creation) · Head: (last commit) · PR (#, base) per part
 Plan check: round, verdict
 Groups: G<n> | status | commit | gate (clean / fix file) | NOT RUN or weak ids
-Last reviewed: <sha> · Review checker ran at: <sha>
+Last reviewed: <sha>
 Open questions (asked <date>)
 LIVE: lines · What users notice · Changed pieces → users checked
 Next: <one step>

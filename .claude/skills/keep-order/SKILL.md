@@ -25,7 +25,7 @@ After each implementer group or fix round, before the next starts. Base is state
 2. Compare the names with the ledger by name only: every added public name is in Names with the same name; every `also defined` is a reuse the ledger names. Also compare the implementer's **Names added**. Without a state folder: against Names added and the fix list only.
 3. With `--state` only: files outside spec › Files, and files the implementer's **Changed pieces** field lists with users outside the change but no ledger row, go to one `architect`. It rules on each (in ledger / rename to `<x>` / replace with the existing `<path:line>` / add to the ledger with why), updates the ledger, and adds a check per user.
 4. Skip only when steps 1-3 find nothing.
-5. Rulings that change code, and rulings that add a check, go to a Fix round (`Do:` the fixes and `run A<n>`); that check's PASS, weak or NOT RUN result is judged like a group report before the commit.
+5. Rulings that change code, and rulings that add a check, go to a Fix round (`Do:` the fixes and `run A<n>`); that check's PASS, weak or NOT RUN result is judged like a group report before the commit. A group gets at most two Fix rounds from its gate; a ruling after the second goes to the user.
 
 ## audit
 
