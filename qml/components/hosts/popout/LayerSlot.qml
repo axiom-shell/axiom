@@ -30,6 +30,9 @@ QtObject {
   // Kept mapped while not wanted, where the compositor stacks by map order
   // alone, so it keeps its place (its owner draws nothing then: `idle`)
   property bool held: false
+  // Kept mapped while not wanted on every compositor, for its owner will
+  // want it again soon (`idle` then too)
+  property bool keepMapped: false
 
   property int _uid: 0
   readonly property var _slot: {
@@ -44,6 +47,7 @@ QtObject {
       "rankGroup": root.rankGroup,
       "wanted": root.wanted,
       "held": root.held,
+      "keepMapped": root.keepMapped,
       "mapped": root.window?.visible ?? false
     };
   }

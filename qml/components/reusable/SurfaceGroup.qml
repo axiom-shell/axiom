@@ -21,6 +21,9 @@ QtObject {
   property var window: null
   // Whether this instance is open
   property bool shown: false
+  // Whether it's closed but kept (its window mapped, inert): reported as
+  // SurfaceManager.keptSurfaces
+  property bool kept: false
 
   // Open (true) or close this instance to match the others
   signal syncRequested(bool shown)
@@ -42,6 +45,8 @@ QtObject {
     if (root.everywhere)
       SurfaceManager.surfaceShown(root.kind, root.shown);
   }
+
+  onKeptChanged: SurfaceManager.setSurfaceKept(root, root.kind, root.kept)
 
   onWindowChanged: SurfaceManager.registerSurfaceWindow(root, root.kind, root.window)
   Component.onCompleted: {

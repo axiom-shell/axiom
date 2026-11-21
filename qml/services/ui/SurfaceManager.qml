@@ -30,6 +30,7 @@ QtObject {
   function unregisterSurfaceWindow(group) {
     surfaceWindows = surfaceWindows.filter(e => e.group !== group);
     setSurfaceOpen(group, "", false);
+    setSurfaceKept(group, "", false);
   }
 
   // SurfaceGroups open anywhere, `{ group, kind }`: whether a launcher,
@@ -57,6 +58,30 @@ QtObject {
   function surfaceOpenOn(kind, screen) {
     const name = typeof screen === "string" ? screen : screen?.name ?? "";
     return openSurfaces.some(e => e.kind === kind && (e.group.screen?.name ?? "") === name);
+  }
+
+  // SurfaceGroups kept after closing, `{ group, kind }`: the overlay while
+  // its window waits mapped and inert for the next open. Not open: nothing
+  // that reacts to an open surface sees it
+  property var keptSurfaces: []
+
+  function setSurfaceKept(group, kind, kept) {
+    const others = keptSurfaces.filter(e => e.group !== group);
+    if (kept)
+      keptSurfaces = others.concat([
+        {
+          group,
+          kind
+        }
+      ]);
+    else if (others.length !== keptSurfaces.length)
+      keptSurfaces = others;
+  }
+
+  // Whether one is kept on `screen` (a ShellScreen or its name)
+  function surfaceKeptOn(kind, screen) {
+    const name = typeof screen === "string" ? screen : screen?.name ?? "";
+    return keptSurfaces.some(e => e.kind === kind && (e.group.screen?.name ?? "") === name);
   }
 
   // `{ owner, screen, edge, start, end }` (a screen name, a ScreenEdge.name,

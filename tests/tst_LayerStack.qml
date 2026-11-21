@@ -103,6 +103,7 @@ TestCase {
       "order": order,
       "wanted": true,
       "held": false,
+      "keepMapped": false,
       "mapped": false,
       "seq": 0
     }, extra ?? {});
@@ -166,6 +167,17 @@ TestCase {
     const bar = entry("bar", 5);
     compare(shared.calls.LayerStack.sequence([menu, bar], false).show, ["menu"]);
     compare(shared.calls.LayerStack.sequence([menu, bar], true).show, ["bar"]);
+  }
+
+  // A keepMapped window stays mapped when not wanted, on any compositor
+  function test_sequence_keep_mapped() {
+    const kept = entry("kept", 7, {
+      "wanted": false,
+      "keepMapped": true
+    });
+    const bar = entry("bar", 5);
+    compare(shared.calls.LayerStack.sequence([kept, bar], false).show, ["kept"]);
+    compare(shared.calls.LayerStack.sequence([kept, bar], true).show, ["kept"]);
   }
 
   // A window ordered before others starting to show (a backdrop, opening
