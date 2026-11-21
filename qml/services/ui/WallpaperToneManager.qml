@@ -26,7 +26,7 @@ QtObject {
   // translucent surfaces, or a bare module (retain)
   readonly property bool needed: root._barsNeed || Appearance.translucent || root._moduleUsers > 0
   // The bars' config (the greeter has no Bars section, nor bars)
-  readonly property var _bars: Paths.greeter ? [] : ConfigManager.live.Bars.items
+  readonly property var _bars: Paths.greeter ? [] : BarsConfig.liveBars
   readonly property bool _barsNeed: root._bars.some(bar => bar.surface === "none")
 
   // The grey level the wallpaper is taken to be where it can't be known

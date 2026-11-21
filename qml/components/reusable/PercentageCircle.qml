@@ -23,8 +23,10 @@ Item {
 
   readonly property real side: Math.min(root.width, root.height)
   readonly property real _radius: root.side / 2 - root.thickness / 2
+  // Radians the track spans (sweep, 1 to 360 degrees)
+  readonly property real _trackAngle: Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180
   // The fill's length along the ring, in px, rounded and glided
-  property int _arcLength: Math.round(Math.max(0, Math.min(1, root.percentage / 100)) * Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180 * Math.max(0, root._radius))
+  property int _arcLength: Math.round(Math.max(0, Math.min(1, root.percentage / 100)) * root._trackAngle * Math.max(0, root._radius))
 
   implicitWidth: Widget.px(120)
   implicitHeight: Widget.px(120)
@@ -38,13 +40,13 @@ Item {
     onPaint: {
       const ctx = getContext("2d");
       const centre = width / 2;
-      const radius = centre - root.thickness / 2;
+      const radius = root._radius;
       ctx.clearRect(0, 0, width, height);
       if (radius <= 0)
         return;
       ctx.lineWidth = root.thickness;
 
-      const span = Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180;
+      const span = root._trackAngle;
       const start = -Math.PI / 2 - span / 2 + (root.sweep >= 360 ? span / 2 : 0);
       const cap = root.sweep >= 360 ? "butt" : "round";
       ctx.beginPath();
