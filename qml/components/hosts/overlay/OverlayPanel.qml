@@ -87,8 +87,8 @@ ReservedAreaWindow {
     isOpen = false;
     // (the timer first: `idle` reads it)
     hideTimer.start();
-    // Not while a fullscreen window is up: nothing keeps a mapped window over it
-    root.kept = !root.fullscreen;
+    // Not while a fullscreen window is up (nothing keeps a mapped window over it), nor after a reduced opening (a kept window keeps its namespace)
+    root.kept = !root.fullscreen && !root.reduced;
     if (root.kept)
       keptTimer.restart();
   }
