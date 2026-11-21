@@ -90,6 +90,12 @@ QtObject {
     return root.backingOn(screen) && SurfaceManager.surfaceOpenOn("overlay", root._name(screen));
   }
 
+  // Whether the overlay is kept on `screen` (closed, its window mapped and
+  // inert): the window over it stays mapped, a pixel, for the next open
+  function aboveOverlayKept(screen) {
+    return root.backingOn(screen) && SurfaceManager.surfaceKeptOn("overlay", root._name(screen));
+  }
+
   // Whether the blur window on `screen` stands on the Overlay layer: a
   // fullscreen window shown there hides the Top layer, and the surfaces
   // over it still blur

@@ -21,8 +21,11 @@ Item {
   // The drawn px a page may take inside the box's padding
   readonly property real roomWidth: root.maxWidth - OverlayConfig.boxPadding * 2
   readonly property real roomHeight: root.maxHeight - OverlayConfig.boxPadding * 2
-  // Whether the overlay window is showing; pages unload when it isn't
+  // Whether the overlay is open (shown, not closing)
   property bool open: false
+  // Whether its window is mapped (open, closing or kept): the pages stay
+  // loaded while it is, and unload when it isn't
+  property bool mapped: false
   property var viewsConfig: OverlayConfig.views || []
   // Every config change is a new views array, so the pages are keyed by
   // their JSON: a string only notifies when it really changes, and pages
@@ -117,15 +120,15 @@ Item {
   implicitHeight: (root.currentPage?.drawnHeight ?? 0) + OverlayConfig.boxPadding * 2
 
   // Only the current page and its neighbours (navigation wraps around) are
-  // loaded, and only while the overlay is open, so hidden pages don't keep
-  // polling. Neighbours stay loaded so the slide in has something to show.
+  // loaded, and only while the overlay's window is mapped (open, or kept
+  // for a while after closing), so closed pages stop polling soon after.
+  // Neighbours stay loaded so the slide in has something to show.
   // They follow the page the user settled on (`_settled`, a slide after
   // opening or navigating), so opening or switching builds only the page
   // shown, and its neighbours once it has slid in: just their frame, their
   // cards wait until they're current (OverlayPage.buildHeld)
   property int _settled: -1
   onOpenChanged: {
-    root._settled = -1;
     if (root.open) {
       settleTimer.restart();
     } else {
@@ -134,6 +137,8 @@ Item {
       ShellManager.setLinkOrigin("");
     }
   }
+  onMappedChanged: if (!root.mapped)
+    root._settled = -1
   Timer {
     id: settleTimer
     interval: Appearance.animSlow
@@ -141,7 +146,7 @@ Item {
   }
 
   function isLoaded(pageIndex) {
-    if (!root.open)
+    if (!root.mapped)
       return false;
     if (pageIndex === root.currentIndex)
       return true;
@@ -194,7 +199,7 @@ Item {
   ShapeShadow {
     box: contentContainer
     radius: Style.radiusOuter
-    active: root.open
+    active: root.mapped
     shadowColor: Style.shadowSoft
     look: ({
         "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart),

@@ -63,6 +63,9 @@ PanelWindow {
   // it would land over the bars and cover their content
   property bool wanted: true
   property bool held: true
+  // Kept mapped, a pixel, while not wanted on any compositor (the window
+  // over the overlay, while the overlay is kept: BlurManager.aboveOverlayKept)
+  property bool keepMapped: false
 
   visible: layerSlot.shown
   LayerSlot {
@@ -72,6 +75,7 @@ PanelWindow {
     layer: backing.stackLayer
     wanted: backing.wanted
     held: backing.held
+    keepMapped: backing.keepMapped
   }
 
   // Its shapes as its blur region, where the compositor blurs only that

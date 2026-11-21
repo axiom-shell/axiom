@@ -16,7 +16,7 @@ import qs.services.compositor
 QtObject {
   id: root
 
-  // { owner uid: { screen, shown, slide, fillColor, fillOpacity, since } }
+  // { owner uid: { screen, shown, slide, keepMapped, fillColor, fillOpacity, since } }
   property var _requests: ({})
   property int _lastUid: 0
   property int _lastShown: 0
@@ -49,6 +49,12 @@ QtObject {
         best = r;
     }
     return best;
+  }
+
+  // Whether a request on `screenName` keeps its backdrop window mapped
+  // while nothing is shown there
+  function keepMappedOn(screenName) {
+    return Object.values(root._requests).some(r => r.keepMapped && r.screen === screenName);
   }
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---

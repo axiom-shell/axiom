@@ -219,7 +219,8 @@ QtObject {
    * have to map again. `entries`: { id, output, layer, order, rank (among
    * windows of one order, lower first: optional, 0), wanted (its
    * owner wants it shown), held (kept mapped even when not wanted, where
-   * the compositor stacks by map order alone), showing (visible now),
+   * the compositor stacks by map order alone), keepMapped (kept mapped
+   * even when not wanted, on every compositor), showing (visible now),
    * mapped (shown long enough for the compositor to have mapped it), seq
    * (when it mapped) }.
    * On each output and layer a window shows once every window ordered
@@ -233,7 +234,7 @@ QtObject {
    * Returns { show: [ids], remap: [ids] }.
    */
   function sequence(entries, ordered) {
-    const wants = e => e.wanted || (!ordered && e.held);
+    const wants = e => e.wanted || e.keepMapped || (!ordered && e.held);
     const peers = e => entries.filter(o => o !== e && o.output === e.output && o.layer === e.layer);
     // `o` belongs before `e`: a higher order, or a lower rank of the same
     // in its rank group (the border's corners after its strips, drawn over
