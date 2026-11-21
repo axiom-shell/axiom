@@ -4,6 +4,7 @@ CLAUDE.md › "Never". Run: python3 tests/scripts/test_guard.py"""
 import importlib.util
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -85,7 +86,7 @@ class Bash(LiveSession, unittest.TestCase):
                  "bluetoothctl remove AA:BB:CC:DD:EE:FF", "rfkill block bluetooth",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
                  "axiom ipc lockscreen lock", "qs kill", "git push --force", "git push origin main",
-                 "git clean -fdx", "qmlformat -i shell.qml"]
+                 "git clean -fdx", "qmlformat -i shell.qml", "pkill -x qs", "swaymsg exit", "git stash"]
         forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
                  "nice -n 5 {}", "FOO=1 {}"]
         with mock.patch.dict(os.environ, {"NIRI_SOCKET": sub("@RUN@/niri.@LIVE@.100.sock")}):
@@ -136,10 +137,61 @@ class Bash(LiveSession, unittest.TestCase):
                     "git push origin x:main", "git push origin x:refs/heads/main", "git push origin x:heads/main",
                     "git push origin refs/heads/main", "git -C . push --force origin x", "env -C /tmp git push origin main",
                     "cd /tmp && git push -f 2>&1 | tail -2", "git clean -fdx", "git clean -X", "git -C . clean -x -f")
-        self.allows("git push", "git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
-                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x", "git push --tags origin",
+        self.allows("git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
+                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x",
                     "git -C /tmp/w push -u origin feature/1-x", "git switch main && git push origin feature/1-x",
                     "git status", "git pull --ff-only", "git clean -fd", "git clean -n")
+
+    def test_bare_push_on_main(self):
+        """A push without a destination goes to the checked-out branch: refused on main, not elsewhere."""
+        with tempfile.TemporaryDirectory() as main, tempfile.TemporaryDirectory() as feature:
+            for path, branch in ((main, "main"), (feature, "feature/x")):
+                subprocess.run(["git", "init", "-q", "-b", branch, path], check=True)
+            for command in ("git push", "git push origin", "git push -u origin", "git push origin HEAD", "git push -o ci.skip origin",
+                            "git push --all origin", "git push --branches origin", "git push --mirror origin"):
+                self.assertTrue(denied(command, cwd=main), command)
+                self.assertTrue(denied(f"git -C {main} {command[4:]}", cwd=feature), command)
+            for command in ("git push", "git push origin", "git push origin HEAD", "git push -o ci.skip origin"):
+                self.assertFalse(denied(command, cwd=feature), command)
+                self.assertFalse(denied(f"git -C {feature} {command[4:]}", cwd=main), command)
+            self.assertFalse(denied("git push --tags origin", cwd=main))
+            self.assertFalse(denied("git push --tags origin", cwd=feature))
+            self.assertFalse(denied("git push", cwd=tempfile.gettempdir() + "/none-here"))
+
+    def test_shell_kill(self):
+        self.blocks("pkill quickshell", "pkill -x qs", "killall qs", "killall -9 quickshell", "pkill -f 'qs -c axiom'", "pkill -x '^axiom$'",
+                    "pkill -f /usr/bin/qs", "kill $(pgrep -x qs)", "kill -9 $(pidof qs)", "kill `pidof quickshell`", 'kill "$(pgrep -x qs)"',
+                    "pgrep -x qs | xargs kill", "pidof qs | xargs -r kill -9", "pgrep -x axiom | kill",
+                    "sudo pkill qs", "true && killall qs")
+        self.allows("pkill -f nested-niri", "killall foot", "pgrep -x qs", "pidof qs", "pgrep -x qs; kill 12345", "pkill -f axiom-notes",
+                    "kill $(pgrep -x foot)", "pgrep -x foot | xargs kill", "kill 12345", "echo qs")
+
+    def test_check_i18n_fill_prune(self):
+        self.blocks("python3 scripts/check_i18n.py --fill", "python3 scripts/check_i18n.py --prune", "scripts/check_i18n.py --fill",
+                    "python3 -u scripts/check_i18n.py --prune --format", "python3 ./scripts/check_i18n.py --fill ja")
+        self.allows("python3 scripts/check_i18n.py", "python3 scripts/check_i18n.py --format", "python3 scripts/check_docs.py --fill",
+                    "grep -n -- --fill scripts/check_i18n.py")
+
+    def test_compositor_exit(self):
+        """Ending the live Hyprland or sway session is refused; a nested one (its own signature or socket, `-i`, `-s`) isn't."""
+        live = {"HYPRLAND_INSTANCE_SIGNATURE": "live", "SWAYSOCK": "/run/sway.live.sock"}
+        with mock.patch.dict(os.environ, live):
+            self.blocks("hyprctl dispatch exit", "hyprctl dispatch 'hl.dsp.exit()'", "hyprctl eval 'hl.dsp.exit()'", "hyprctl -j dispatch exit",
+                        "hyprctl --batch 'dispatch exit'", "hyprctl --batch 'keyword a b ; dispatch exit'", "hyprshutdown", "swaymsg exit",
+                        "swaymsg -- exit", "swaymsg 'exit'", "swaymsg -q exit", "HYPRLAND_INSTANCE_SIGNATURE=live hyprctl dispatch exit",
+                        "SWAYSOCK=/run/sway.live.sock swaymsg exit")
+            self.allows("HYPRLAND_INSTANCE_SIGNATURE=nested hyprctl dispatch exit", "hyprctl -i 1 dispatch exit",
+                        "hyprctl --instance 1 eval 'hl.dsp.exit()'", "HYPRLAND_INSTANCE_SIGNATURE=nested hyprshutdown",
+                        "swaymsg -s /tmp/sway.sock exit", "SWAYSOCK=/tmp/sway.sock swaymsg exit", "swaymsg --socket /tmp/sway.sock exit",
+                        "hyprctl dispatch workspace 1", "hyprctl --batch 'keyword a b ; dispatch workspace 1'", "hyprctl monitors",
+                        "swaymsg -t get_tree", "swaymsg workspace 1")
+        with mock.patch.dict(os.environ, live), mock.patch.dict(os.environ, {"HYPRLAND_INSTANCE_SIGNATURE": ""}):
+            self.blocks("hyprctl dispatch exit")
+
+    def test_git_stash(self):
+        self.blocks("git stash", "git stash -u", "git stash push -m x", "git stash pop", "git stash drop", "git stash apply",
+                    "git -C /tmp stash", "git stash clear")
+        self.allows("git stash list", "git stash show -p", "git stash show stash@{0}", "git status", "git -C /tmp stash list")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
@@ -256,8 +308,10 @@ class Bash(LiveSession, unittest.TestCase):
                     f"install -m 644 /tmp/x.json {live}", f"echo '{{}}' > {live}", f"jq . /tmp/x >>{live}",
                     f"jq . /tmp/x | tee {live}", f"sed -i 's/a/b/' {live}", f"sed -Ei.bak 's/a/b/' {live}",
                     f"sed --in-place 's/a/b/' {live}", "rm -r ~/.config", f"rm -rf {guard.HOME}",
-                    "find ~/.config/axiom -name config.json -delete", "find ~/.config -name '*.json' -exec rm {} +")
-        self.allows(f"cat {live}", f"jq . {live}", f"jq .Bar {live} > /tmp/out.json", f"cp {live} /tmp/backup.json",
+                    "find ~/.config/axiom -name config.json -delete", "find ~/.config -name '*.json' -exec rm {} +",
+                    f"dd if=/tmp/x of={live}", f"perl -pi -e s/a/b/ {live}", f"perl -i.bak -pe s/a/b/ {live}",
+                    f"rsync /tmp/x.json {live}", f"rsync -a /tmp/config.json {guard.LIVE_CONFIG.parent}/")
+        self.allows(f"cat {live}", f"dd if={live} of=/tmp/backup.json", f"perl -ne 'print' {live}", f"rsync {live} /tmp/backup.json", f"jq . {live}", f"jq .Bar {live} > /tmp/out.json", f"cp {live} /tmp/backup.json",
                     "cp /tmp/x.json /tmp/y.json", f"sed -n 1p {live}", f"diff {live} /tmp/x 2>/dev/null",
                     "find . -name '*.pyc' -delete", "find ~/.config -name '*.json' -exec grep -l Bar {} +")
 
@@ -483,9 +537,9 @@ class ConfigEdits(unittest.TestCase):
 
 
 class GeneratedEdits(unittest.TestCase):
-    def denied(self, path):
+    def denied(self, path, root=REPO):
         try:
-            guard.check({"tool_name": "Edit", "tool_input": {"file_path": str(REPO / path), "old_string": "a", "new_string": "b"}})
+            guard.check({"tool_name": "Edit", "tool_input": {"file_path": str(root / path), "old_string": "a", "new_string": "b"}})
         except guard.Denied:
             return True
         return False
@@ -494,12 +548,24 @@ class GeneratedEdits(unittest.TestCase):
         for path in ("qml/config/json/config.schema.json", "backend/internal/migrate/legacy/schema-v75.json",
                      "backend/internal/migrate/legacy/legacy.js", "tests/fixtures/shared/schema/Config/x.0.json",
                      "backend/internal/migrate/legacy/testdata/frozen.jsonl.gz",
-                     "tests/fixtures/shared/blobs/abc.json", "backend/internal/assets/data/config/json/backend.json"):
+                     "tests/fixtures/shared/blobs/abc.json", "backend/internal/assets/data/config/json/backend.json",
+                     "qml/config/themes/template/theme.json", "qml/config/i18n/template/language.json",
+                     "qml/components/surfaces/wallpaper/shaders/stamps.txt", "qml/components/surfaces/wallpaper/shaders/blur.frag.qsb",
+                     "docs/dev/generated/files.md", "docs/dev/config/Bars.md"):
             self.assertTrue(self.denied(path), path)
 
     def test_sources_pass(self):
-        for path in ("qml/config/schema/sections/Bars.yaml", "qml/components/methods/SchemaValidation.qml", "data/examples/basic.json"):
+        for path in ("qml/config/schema/sections/Bars.yaml", "qml/components/methods/SchemaValidation.qml", "data/examples/basic.json",
+                     "qml/components/surfaces/wallpaper/shaders/blur.frag", "qml/config/i18n/ja.json"):
             self.assertFalse(self.denied(path), path)
+
+    def test_other_tree(self):
+        """An edit is judged against the tree holding the file (a worktree), not only the hook's checkout"""
+        with tempfile.TemporaryDirectory() as tree:
+            (Path(tree) / ".git").write_text("gitdir: /nowhere\n")
+            self.assertTrue(self.denied("docs/dev/generated/files.md", Path(tree)))
+            self.assertTrue(self.denied("qml/components/surfaces/wallpaper/shaders/blur.frag.qsb", Path(tree)))
+            self.assertFalse(self.denied("docs/dev/x.md", Path(tree)))
 
 
 class Hook(unittest.TestCase):

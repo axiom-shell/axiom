@@ -15,7 +15,10 @@ VAR=value assignments (and `export VAR=…` earlier in the same command) as its
 environment; a wrapper (sudo, nice, flock, …) is judged by the command it
 runs, and a `>`/`>>` redirection as a write to its target. Writes to the
 user's own Claude settings and another `claude` are refused too. Best effort:
-it stops mistakes, not an adversary.
+it stops mistakes, not an adversary. Known gaps: a write from inside an
+interpreter (`python3 -c`, `node -e`); a bare push under `push.default=upstream`
+on a branch tracking main (orchestrate creates its branches with `--no-track`);
+`git switch main && git push` in one line.
 """
 import itertools
 import json
@@ -23,7 +26,9 @@ import os
 import re
 import shlex
 import shutil
+import subprocess
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
@@ -53,8 +58,25 @@ SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
 QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|\$'(?:\\.|[^'\\])*'|'[^']*'""", re.S)
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
+# What pkill, killall and kill-by-lookup must not stop: the shell and its daemon
+SHELL_PROCESSES = QS | {"axiom"}
+LOOKUPS = {"pkill", "killall", "pgrep", "pidof"}
+# On the raw command text: `kill` (options allowed) of a $(…) or `…` pgrep/pidof
+# lookup, or a pgrep/pidof piped into `kill` or `xargs … kill`
+KILL_LOOKUP = re.compile(r"\bkill\b(?:\s+-\S+)*\s+\"?(?:\$\(|`)\s*((?:pgrep|pidof)\b[^)`]*)"
+                         r"|\b((?:pgrep|pidof)\b[^|;&)`\n]*)\|\s*(?:xargs\b[^|;&\n]*?\s)?kill\b")
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
 SAFE_QS = {"ipc", "log", "list", "msg"}
+
+
+def names_shell(name, args):
+    """Whether a pkill/killall/pgrep/pidof names a shell process: a non-option
+    argument equal to one (`^`/`$` stripped), or with -f/--full a pattern's words."""
+    if name not in LOOKUPS:
+        return False
+    full = any(a == "--full" or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in args)
+    patterns = [a.strip("^$") for a in args if not a.startswith("-")]
+    return any(p in SHELL_PROCESSES or full and set(re.split(r"[\s/]+", p)) & SHELL_PROCESSES for p in patterns)
 
 
 class Denied(Exception):
@@ -376,30 +398,61 @@ def check_axiom(env, args, cwd):
 GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 
 
-def push_refused(args):
-    """A force (--force, -f, --force-with-lease, a `+refspec`) or a push whose
-    destination is main."""
+PUSH_VALUE_OPTS = {"-o", "--push-option", "--repo", "--receive-pack", "--exec"}
+
+
+def current_branch(cwd):
+    """The branch checked out in cwd ("" when detached or unknown)."""
+    try:
+        out = subprocess.run(["git", "-C", cwd, "symbolic-ref", "--short", "-q", "HEAD"], capture_output=True, text=True, timeout=2)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return out.stdout.strip()
+
+
+def push_refused(args, cwd):
+    """A force (--force, -f, --force-with-lease, a `+refspec`), --all/--branches/--mirror,
+    or a push whose destination is main: the one named, or the checked-out
+    branch of cwd when none is (a bare `git push`, `HEAD`)."""
     if any(a.startswith("--force") or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in args):
         return True
-    for a in args:
+    if any(a in {"--all", "--branches", "--mirror"} for a in args):
+        return True
+    positional, i = [], 0
+    while i < len(args):
+        if args[i] in PUSH_VALUE_OPTS:
+            i += 1
+        elif not args[i].startswith("-"):
+            positional.append(args[i])
+        i += 1
+    for a in positional:
         if a.startswith("+"):
             return True
-        # git completes `heads/main` to refs/heads/main
-        dest = a.split(":")[-1].removeprefix("refs/").removeprefix("heads/")
-        if not a.startswith("-") and dest in {"main", "master"}:
-            return True
-    return False
+    # git completes `heads/main` to refs/heads/main
+    dests = [a.split(":")[-1].removeprefix("refs/").removeprefix("heads/") for a in positional]
+    if len(dests) < 2:
+        if "--tags" in args:
+            return False
+        dests = [current_branch(cwd)]
+    else:
+        dests = [current_branch(cwd) if d == "HEAD" else d for d in dests[1:]]
+    return any(d in {"main", "master"} for d in dests)
 
 
-def check_git(args):
+def check_git(args, cwd):
     """A force-push or a push to main (every change reaches main through a
-    reviewed PR), and `git clean -x`, which deletes the ignored files."""
+    reviewed PR), `git clean -x`, which deletes the ignored files, and
+    `git stash`, which every worktree of the repo shares."""
     i = 0
     while i < len(args) and args[i].startswith("-"):
+        if args[i] == "-C" and i + 1 < len(args):
+            cwd = str(resolve(args[i + 1], cwd))
         i += 2 if args[i] in GIT_VALUE_OPTS else 1
     if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
         deny("Never", "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).")
-    if args[i:i + 1] == ["push"] and push_refused(args[i + 1:]):
+    if args[i:i + 1] == ["stash"] and args[i + 1:i + 2] not in (["list"], ["show"]):
+        deny("Never", "`git stash` is shared by every worktree of the repo; commit, or `git diff > <scratch>/x.patch`.")
+    if args[i:i + 1] == ["push"] and push_refused(args[i + 1:], cwd):
         deny("Never", "no force-push and no push to main: everything reaches main through a PR.")
 
 
@@ -427,7 +480,16 @@ def check_argv(env, argv, cwd, guarded):
 
     # Force-pushing, pushing to main past a PR, or git clean -x
     if name == "git":
-        check_git(args)
+        check_git(args, cwd)
+
+    # The shell and its daemon, stopped by name
+    if name in {"pkill", "killall"} and names_shell(name, args):
+        deny("Never", "don't stop qs or the daemon by name; `qs kill -i <id>` for a nested shell, `axiom --socket <scratch> quit` for a scratch daemon.")
+
+    # The translations are filled and pruned by the pre-commit hook
+    script = next((a for a in args if not a.startswith("-")), "") if name.startswith("python") else name
+    if Path(script).name == "check_i18n.py" and any(a in {"--fill", "--prune"} for a in args):
+        deny("Never", "translations are filled and pruned by the pre-commit hook; run check_i18n.py without --fill/--prune.")
 
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):
@@ -448,6 +510,32 @@ def check_argv(env, argv, cwd, guarded):
         socket = env.get("NIRI_SOCKET", os.environ.get("NIRI_SOCKET", ""))
         if changes and (not socket or socket == os.environ.get("NIRI_SOCKET", "")):
             deny("Never", "niri msg output / action quit / load-config-file only on a nested niri (NIRI_SOCKET=<its socket>), never the live session.")
+
+    # Ending the Hyprland or sway session itself: only a nested one (another
+    # instance signature or SWAYSOCK, `hyprctl -i`, `swaymsg -s`) may be told to
+    if name in {"hyprctl", "hyprshutdown", "swaymsg"}:
+        sway = name == "swaymsg"
+        instance_opts = {"-s", "--socket"} if sway else {"-i", "--instance"}
+        value_opts = instance_opts | ({"-t", "--type"} if sway else set())
+        words, batch, i = [], [], 0
+        while i < len(args):
+            if name == "hyprctl" and args[i] == "--batch":
+                batch += args[i + 1].split(";") if i + 1 < len(args) else []
+                i += 2
+            elif args[i].startswith("-"):
+                i += 2 if args[i] in value_opts else 1
+            else:
+                words.append(args[i])
+                i += 1
+        signature = "SWAYSOCK" if sway else "HYPRLAND_INSTANCE_SIGNATURE"
+        nested = any(a.split("=")[0] in instance_opts for a in args) or env.get(signature, os.environ.get(signature, "")) != os.environ.get(signature, "")
+        if sway or name == "hyprshutdown":
+            ends = name == "hyprshutdown" or words[:1] == ["exit"]
+        else:
+            ends = any(c[:1] in (["dispatch"], ["eval"]) and c[1:2] and (c[1] == "exit" or "dsp.exit" in c[1])
+                       for c in [words] + [p.split() for p in batch])
+        if ends and not nested:
+            deny("Never", "hyprctl dispatch exit / hyprshutdown / swaymsg exit only on a nested compositor (its HYPRLAND_INSTANCE_SIGNATURE or SWAYSOCK, `hyprctl -i`, `swaymsg -s`), never the live session.")
 
     # The daemon's hookup.apply, selfupdate.apply and greeter.apply (they edit the
     # real configs, update the live repo, install the greeter as root) sent to
@@ -531,21 +619,23 @@ MODE = re.compile(r"[0-7]+|([ugoa]*[-+=][rwxXst]*,?)+")
 
 
 def touched_paths(name, args, cwd, env):
-    """(written, removed): the paths a command writes (cp / mv / install / ln's
-    destination, a file copied into a folder as its own path there, the files
-    of > / tee / truncate / sed -i / chmod / chown) and the ones it deletes or
+    """(written, removed): the paths a command writes (cp / mv / install / ln / rsync's
+    destination, dd's of=, a file copied into a folder as its own path there, the files
+    of > / tee / truncate / sed -i / perl -i / chmod / chown) and the ones it deletes or
     moves away (rm and the like, mv's sources, find -delete)."""
     paths = [a for a in args if not a.startswith("-")]
     if name == "find" and any(a == "-delete" or a in {"-exec", "-execdir"} and Path(b).name in REMOVES
                               for a, b in zip(args, args[1:] + [""])):
         return [], args[:next((i for i, a in enumerate(args) if a[:1] in {"-", "(", "!"}), len(args))]
-    if name in {"cp", "mv", "install", "ln"} and len(paths) > 1:
+    if name == "dd":
+        return [a[3:] for a in args if a.startswith("of=")], []
+    if name in {"cp", "mv", "install", "ln", "rsync"} and len(paths) > 1:
         *sources, dest = paths
         into = dest.endswith("/") or resolve(dest, cwd, env).is_dir()
         return [os.path.join(dest, Path(p).name) for p in sources] if into else [dest], sources if name == "mv" else []
     if name in REMOVES:
         return [], paths
-    if name in {">", "tee", "truncate"} or name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
+    if name in {">", "tee", "truncate"} or name in {"sed", "perl"} and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
         return paths, []
     if name == "chmod":  # its mode may look like an option (-x), so files are what isn't one
         return [p for p in paths if not MODE.fullmatch(p)], []
@@ -681,20 +771,36 @@ def check_config_edit(tool, tool_input):
 
 # ------------------------------------------- Edit/Write generated or frozen
 
-# Files built from a source (edit the source) and frozen ones (never edit)
+# Files built from a source (edit the source) and frozen ones (never edit),
+# by path relative to the root of the repo holding the edited file
 GENERATED = {
-    REPO / "qml/config/json/config.schema.json": "it's built from qml/config/schema/ (edit the YAML there; scripts/generate.sh rebuilds it)",
+    "qml/config/json/config.schema.json": "it's built from qml/config/schema/ (edit the YAML there; scripts/generate.sh rebuilds it)",
+    "qml/config/themes/template/theme.json": "it's built by scripts/gen_theme_template.py (the pre-commit hook rebuilds it)",
+    "qml/config/i18n/template/language.json": "it's kept by scripts/check_i18n.py (the pre-commit hook rebuilds it)",
+    "qml/components/surfaces/wallpaper/shaders/stamps.txt": "it's written by scripts/check_shaders.py --build",
 }
 # Generated directories (scripts/generate.sh), never committed
 GENERATED_DIRS = {
-    REPO / "backend/internal/assets/data": "the binary's embedded copies (go generate writes them from the repo files)",
-    REPO / "tests/fixtures/shared": "the shared fixtures, recorded from SchemaValidation.qml (scripts/dev/fixtures.py record)",
-    REPO / "backend/internal/migrate/legacy/testdata": "the format-1 migration's frozen cases, recorded from the shell before its copy was removed",
+    "backend/internal/assets/data": "the binary's embedded copies (go generate writes them from the repo files)",
+    "tests/fixtures/shared": "the shared fixtures, recorded from SchemaValidation.qml (scripts/dev/fixtures.py record)",
+    "backend/internal/migrate/legacy/testdata": "the format-1 migration's frozen cases, recorded from the shell before its copy was removed",
+    "docs/dev/generated": "the reference docs (scripts/gen_docs.py writes them; scripts/generate.sh rebuilds them)",
+    "docs/dev/config": "the config reference (scripts/gen_docs.py writes it; scripts/generate.sh rebuilds it)",
+}
+# Generated files matched by glob
+GENERATED_GLOBS = {
+    "qml/components/surfaces/wallpaper/shaders/*.frag.qsb": "built from the .frag beside it (scripts/check_shaders.py --build)",
 }
 FROZEN = {
-    REPO / "backend/internal/migrate/legacy/legacy.js": "the format-1 migrations are frozen (docs/recipes/migration.md)",
-    REPO / "backend/internal/migrate/legacy/schema-v75.json": "the format-1 schema is frozen with its migrations (docs/recipes/migration.md)",
+    "backend/internal/migrate/legacy/legacy.js": "the format-1 migrations are frozen (docs/recipes/migration.md)",
+    "backend/internal/migrate/legacy/schema-v75.json": "the format-1 schema is frozen with its migrations (docs/recipes/migration.md)",
 }
+
+
+def repo_root(path):
+    """The nearest folder upward holding `.git` (a folder, or the file of a
+    worktree); REPO when there is none."""
+    return next((p for p in [path, *path.parents] if (p / ".git").exists()), REPO)
 
 
 def check_generated_edit(tool_input):
@@ -702,13 +808,20 @@ def check_generated_edit(tool_input):
     if not path:
         return
     resolved = Path(path).resolve()
-    if resolved in GENERATED:
-        deny("Never", f"`{resolved.relative_to(REPO)}` is generated: {GENERATED[resolved]}.")
-    if resolved in FROZEN:
-        deny("Config", f"`{resolved.relative_to(REPO)}` is frozen: {FROZEN[resolved]}.")
+    root = repo_root(resolved)
+    if not resolved.is_relative_to(root):
+        return
+    rel = resolved.relative_to(root).as_posix()
+    if rel in GENERATED:
+        deny("Never", f"`{rel}` is generated: {GENERATED[rel]}.")
+    if rel in FROZEN:
+        deny("Config", f"`{rel}` is frozen: {FROZEN[rel]}.")
     for generated, why in GENERATED_DIRS.items():
-        if resolved.is_relative_to(generated):
-            deny("Never", f"`{resolved.relative_to(REPO)}` is generated: {why}.")
+        if rel.startswith(generated + "/"):
+            deny("Never", f"`{rel}` is generated: {why}.")
+    for glob, why in GENERATED_GLOBS.items():
+        if fnmatch(rel, glob):
+            deny("Never", f"`{rel}` is generated: {why}.")
 
 
 # ------------------------------------------------------------------ main
@@ -740,6 +853,10 @@ def check(call):
         targets = [str(t) for _, argv in filter(is_cd, commands)
                    if (t := resolve(os.path.normpath(os.path.expanduser(argv[1])), cwd)).is_dir()]
         cwds = [cwd, *targets]
+        for m in KILL_LOOKUP.finditer(command):
+            lookup = lex(m[1] or m[2])
+            if names_shell(Path(lookup[0]).name, lookup[1:]):
+                deny("Never", "don't stop qs or the daemon by name; `qs kill -i <id>` for a nested shell, `axiom --socket <scratch> quit` for a scratch daemon.")
         if (cds and LEADING_CD.fullmatch(command)
                 and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[len(cds):])):
             cwds = [targets[-1]] if targets else [cwd]

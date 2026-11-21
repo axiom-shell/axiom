@@ -17,7 +17,14 @@
       "Bash(python3 scripts/gen_docs.py *)",
       "Bash(python3 scripts/check_doc_drift.py)",
       "Bash(python3 scripts/check_doc_drift.py *)",
-      "Bash(python3 tests/scripts/test_guard.py)"
+      "Bash(python3 tests/scripts/test_guard.py)",
+      "Bash(python3 tests/scripts/test_guard.py *)",
+      "Bash(python3 scripts/dev/new_names.py)",
+      "Bash(python3 scripts/dev/new_names.py *)",
+      "Bash(python3 tests/scripts/test_scripts.py)",
+      "Bash(python3 tests/scripts/test_scripts.py *)",
+      "Bash(scripts/check_go.sh)",
+      "Bash(scripts/check_go.sh *)"
     ]
   },
   "hooks": {
