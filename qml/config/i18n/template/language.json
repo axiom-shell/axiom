@@ -2495,7 +2495,7 @@
     "On AC power": "",
     "On Enter": "",
     "On SwayFX, open windows keep their rounding until sway reloads.": "",
-    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding and draws no shadow.": "",
+    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.": "",
     "On a screen edge": "",
     "On battery": "",
     "On change": "",

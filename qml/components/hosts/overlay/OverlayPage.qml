@@ -21,7 +21,7 @@ Item {
   required property bool overlayOpen
   // The overlay opened reduced (OverlayPanel.reduced): a page switch fades
   // only
-  property bool reduced: false
+  required property bool reduced
   // The screen it's on and the drawn px the page may take (OverlayPages)
   required property var screen
   required property real roomWidth

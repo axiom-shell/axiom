@@ -95,8 +95,7 @@ Set a style once under **Settings → Look & Feel → Bar style**, and give any 
 - **Page windows:** Settings, Themes, the Bar editor, Keybinds, Window rules, Custom widgets and Calendar open in a window of their own from the navigator's pop-out button (or their app launcher entries, e.g. *Axiom Settings*), to keep them beside what they change. The window's own button puts the page back in the overlay, as does closing it. While a page is in a window, the overlay shows a box in its place (**Bring here**, **Go to window**), and anything that opens the page by name (its `/` command, a keybind, a link) goes to the window. A link in a window to another page opens the overlay, whose back chip returns to the window. Unsaved edits carry over both ways.
 - Every page has an opener: a bar button or a keybind that opens the overlay on it, added from the editor in one click.
 - **Page switcher** on the bottom or top edge, naming every page while they fit, only the current one, or none (icons only). Scroll over it to step through the pages.
-- The overlay slides in from the top or bottom, or fades in, over a dimmed screen whose darkness you set (or no dimming at all). On a monitor with a fullscreen window it fades in instead, switches pages without sliding and draws no shadow, to stay light for the game (**Settings → Overlay & Popouts → Reduce effects over fullscreen**).
-
+- The overlay slides in from the top or bottom, or fades in, over a dimmed screen whose darkness you set (or no dimming at all). On a monitor with a fullscreen window it fades in instead, switches pages without sliding and draws no blur or shadow, to stay light for the game (**Settings → Overlay & Popouts → Reduce effects over fullscreen**).
 
 <details>
 <summary><b>Built-in pages</b></summary>
