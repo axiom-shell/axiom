@@ -96,10 +96,11 @@ Item {
       ]
 
       transitions: Transition {
-        id: slideTransition
         // Between shown and hidden only: entering the first state as it is made
         // (from the base state "") is instant, so a surface made hidden and shown
-        // at once slides in from its hidden place
+        // at once slides in from its hidden place; and bound, so while hidden the
+        // content follows its size: nothing writes slideX/slideY/opacity but
+        // these states
         from: "visible,hidden"
         to: "visible,hidden"
         NumberAnimation {
@@ -114,19 +115,5 @@ Item {
         anchors.fill: parent
       }
     }
-  }
-
-  Component.onCompleted: {
-    Qt.callLater(function () {
-      // Gone already: a surface built and dropped in one pass (a bar
-      // switching to or from pills remakes its window)
-      if (!root)
-        return;
-      if (slideTransition.running)
-        return;
-      contentWrapper.slideX = root.active ? 0 : contentWrapper.hiddenX;
-      contentWrapper.slideY = root.active ? 0 : contentWrapper.hiddenY;
-      contentWrapper.opacity = root.active || !root.fade ? 1 : 0;
-    });
   }
 }
