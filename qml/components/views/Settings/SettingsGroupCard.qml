@@ -44,6 +44,9 @@ FoldingCard {
     length: fieldRows.count
   }, (_, i) => root._fieldAt(i))
 
+  // A row's slot has no field yet (its job hasn't run): a jump to a row waits
+  readonly property bool rowsPending: root.endRows.includes(null)
+
   // The hookup chip of a theme integration's card (its unsaved switch value)
   // I18n.tr("Off") I18n.tr("Checking") I18n.tr("Set up") I18n.tr("Not set up") I18n.tr("Copy the text")
   readonly property bool _hookupOn: !!root.group.hookup && root.form.valueAt(root.group.path.concat([root.group.hookup])) === true

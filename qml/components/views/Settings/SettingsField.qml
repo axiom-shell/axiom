@@ -126,6 +126,7 @@ SchemaFormRow {
     rise: false
     label: `settings row ${root.custom}`
     wanted: root.custom !== ""
+    stream: root.custom !== ""
     Component.onCompleted: {
       if (root.custom !== "")
         customRow.setSource(Qt.resolvedUrl(root.custom + ".qml"), {

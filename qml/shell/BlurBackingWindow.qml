@@ -12,10 +12,11 @@ import qs.components.hosts.popout
 import qs.components.methods
 import qs.components.reusable
 
-// One blur window (BlurBacking): click-through, drawing each of `shapes`
-// (BlurShapes) filled, at the surface opacity, with their shadows cast
-// once per look and kept outside every shape, its own and the other
-// window's. `part` keeps one of the two: where the compositor
+// One blur window (BlurBacking): click-through, keeping a copy of each of
+// `shapes` (every BlurShape on its screen) and drawing those it `draws`
+// filled, at the surface opacity, with their shadows cast once per look
+// and kept outside every shape, its own and those the other blur window
+// draws. `part` keeps one of the two: where the compositor
 // blurs every pixel that isn't clear, the shadows go to a window it
 // doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes

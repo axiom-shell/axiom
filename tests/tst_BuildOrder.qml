@@ -5,6 +5,17 @@ import qs.components.methods
 TestCase {
   name: "BuildOrder"
 
+  QtObject {
+    id: heldPage
+    property bool buildHeld: true
+  }
+
+  QtObject {
+    id: probe
+    property var queue: []
+    readonly property int pending: BuildOrder.runnable(probe.queue)
+  }
+
   function labels(queue) {
     return queue.map(entry => entry.label);
   }
@@ -171,5 +182,20 @@ TestCase {
       "parent": null
     }), null);
     compare(BuildOrder.holderOf(null), null);
+  }
+
+  // `pending`, a binding over `runnable` as BuildQueueManager's, follows a real holder's `buildHeld`
+  function test_runnable_binding_follows_holder() {
+    probe.queue = [
+      {
+        "label": "a",
+        "holder": heldPage
+      }
+    ];
+    compare(probe.pending, 0);
+    heldPage.buildHeld = false;
+    compare(probe.pending, 1);
+    heldPage.buildHeld = true;
+    compare(probe.pending, 0);
   }
 }
