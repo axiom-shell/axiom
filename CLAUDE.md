@@ -4,9 +4,9 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ## Working here
 
-- **Alignment first** (above speed and scope): reuse an existing function or piece, never a near copy; one name, one unit and one pattern per concept; a new file follows the precedent of its kind. `/keep-order` holds a feature to it from plan to PR; `/align` fixes drift already there.
+- **Alignment first** (above speed and scope): reuse an existing function or piece, never a near copy; one name, one unit and one pattern per concept; a new file follows the precedent of its kind. `/orchestrate` holds every change to it through a ledger, from plan to PR; `/align` fixes drift already there.
 - After every change run `scripts/dev/verify.sh` until `verify ok` (`--all` = CI, prints `all checks passed`; run it once, at the end). It formats QML and prints the shell's log; a clean reload is `Reloading configuration...` + `Configuration Loaded`; `console.warn` only for real problems.
-- Log `scripts/log.sh`, screenshots `scripts/dev/shot.sh`, a second shell only via `scripts/dev/nested.sh` (`docs/dev/testing.md`).
+- Log `scripts/log.sh`, screenshots `scripts/dev/shot.sh`, a second shell only via `scripts/dev/nested.sh`, and only when absolutely necessary; a check no test or log can show becomes a `LIVE:` line in the PR (`docs/dev/testing.md`).
 - qs watches by inode: edit QML in place, never temp file + rename; after `sed -i` or `git checkout`, force a reload.
 - Read `docs/dev/core/qml-pitfalls.md` before writing QML and the area's doc before changing it; update it when behaviour changes. Which file does X: `grep -n '<word>' docs/dev/generated/files.md`. Recipes: `docs/recipes/`.
 - A problem outside the task: tell the user, don't fix it unasked.
@@ -16,11 +16,12 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 `.claude/hooks/guard.py` enforces the details; on a refusal ask the user, don't work around it. Scratch alternatives: `docs/dev/testing.md`.
 
 - Lock the session (only the user can unlock) or simulate the cursor (reason from logs).
-- Start, stop or restart qs or the live daemon, or change its dev mode: use a nested shell or scratch daemon (`XDG_RUNTIME_DIR`, `--socket`).
-- Change the live compositor config mode, allow a takeover, enable an `x-takeover` setting live unasked, or write `~/.config/axiom/config.json` from Bash (skips the takeover check).
-- Quit the live niri or change its outputs or config; install the greeter for real or restart greetd (ends the session); restart xdg-desktop-portal or write portal configs (ends shares).
+- Start, stop or restart qs or the live daemon, or change its dev mode: use a nested shell or a scratch daemon (start it with a scratch `XDG_RUNTIME_DIR`, reach it with `--socket`).
+- Change the live compositor config mode, allow a takeover, enable an `x-takeover` setting live unasked, or write `~/.config/axiom/config.json` by hand (Bash, Edit and Write skip the takeover check; use `axiom config set`).
+- Quit the live compositor (niri, Hyprland, sway), or change niri's outputs or config; install the greeter for real or restart greetd (ends the session); restart xdg-desktop-portal or write portal configs (ends shares).
 - Change clock, time zone, hostname, password, account or default apps; touch real Bluetooth devices or the live input method (a keyboard could drop out): use fakes or a scratch bus.
-- Push to main, force-push, `git clean -x`/`-X`.
+- Push to main (a bare `git push` on main too), force-push (`--force-with-lease` to a branch is fine), `git clean -x`/`-X`, `git stash` (shared by every worktree).
+- Merge a PR: the maintainer merges.
 - Edit generated files (`docs/dev/testing.md` › The checks).
 - Translate, or run `check_i18n.py --fill`/`--prune` (the pre-commit hook does).
 - Put secrets in config.json or argv (`SecretsManager`, stdin).
@@ -64,4 +65,4 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ## Agents and skills
 
-`.claude/agents/`: **architect** (opus) writes specs, judges findings; **implementer** (sonnet) builds a spec or recipe; **reviewer** (sonnet) reviews a slice for bugs or the whole branch for alignment; **checker** (haiku) runs checks. Beyond a small edit: architect specs if the shape is open, implementer builds, checker verifies. Recipe skills (`/bar-widget`, `/setting`, …) run on implementer; `/review-branch` fans out reviewers, architect confirms. `/keep-order`: a feature's ledger of names and reused pieces (plan), checked after each implementer group (gate) and through `/review-branch` before a PR (audit). `/align <description>`: every place that does one job made to do it one way, through one shared piece.
+Every change starts with `/orchestrate <request>`. It sizes the change into a tier (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system; every tier has a ledger), plans, builds in gated groups in a worktree, reviews and opens the PR. It keeps its state in the plans folder (`.plans/<slug>/`, gitignored). `.claude/agents/`: **architect** (opus) specs, checks plans and judges findings; **implementer** (sonnet) builds; **reviewer** (sonnet) reviews; **checker** (haiku) runs checks. Every hand-off's layout is in `.claude/templates/`. Recipe skills (`/bar-widget`, `/setting`, …), `/keep-order` (plan, gate, audit), `/review-branch`, `/review-system`, `/align` and `/verify` run inside it.

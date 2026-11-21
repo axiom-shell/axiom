@@ -20,7 +20,7 @@ Docs drift silently; this catches the drift a reader would trip on:
 
 Covers docs/**/*.md (not the generated docs/dev/config and docs/dev/generated),
 the agent instructions (CLAUDE.md, AGENTS.md, .claude/rules, .claude/agents,
-.claude/skills), README.md and CONTRIBUTING.md. Fenced
+.claude/skills, .claude/templates), README.md and CONTRIBUTING.md. Fenced
 code blocks are skipped.
 
   scripts/check_docs.py
@@ -54,7 +54,7 @@ NOT_MEMBERS = {"Quickshell", "Qt", "Math", "JSON", "Object", "Array", "String", 
 def docs():
     files = [p for p in (ROOT / "docs").rglob("*.md") if not str(p.relative_to(ROOT)).startswith(GENERATED)]
     files += [ROOT / name for name in ("CLAUDE.md", "AGENTS.md", "README.md", "CONTRIBUTING.md")]
-    for folder in ("rules", "agents", "skills"):
+    for folder in ("rules", "agents", "skills", "templates"):
         files += list((ROOT / ".claude" / folder).rglob("*.md"))
     return sorted(p for p in files if p.exists())
 

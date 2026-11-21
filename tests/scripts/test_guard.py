@@ -4,6 +4,7 @@ CLAUDE.md › "Never". Run: python3 tests/scripts/test_guard.py"""
 import importlib.util
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -75,17 +76,16 @@ class Bash(LiveSession, unittest.TestCase):
     def test_every_rule_holds_in_compound_forms(self):
         """Each CLAUDE.md › Never rule's plain form, inside a group, after &&,
         in a substitution or an if, behind a wrapper or an assignment."""
-        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
         rules = ["loginctl lock-session", "hyprlock", "ydotool mousemove 1 1", "hyprctl dispatch movecursor 1 1",
                  "axiom compositor claim --kind sway ~/.config/sway h", "axiom compositor binds remove --kind sway ~/.config/sway x",
                  "axiom config set Idle.enabled on --takeover", "axiom ipc monitors keep", "axiom ipc selfUpdate update",
                  f"rm {guard.LIVE_CONFIG}", f"cp /tmp/x.json {guard.LIVE_CONFIG}", "niri msg action quit",
-                 f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
-                 f"python3 -c {call % 'greeter.apply'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
                  "bluetoothctl remove AA:BB:CC:DD:EE:FF", "rfkill block bluetooth",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
                  "axiom ipc lockscreen lock", "qs kill", "git push --force", "git push origin main",
-                 "git clean -fdx", "qmlformat -i shell.qml"]
+                 "git clean -fdx", "qmlformat -i shell.qml", "pkill -x qs", "swaymsg exit", "git stash", "gh pr merge 1",
+                 "npx -p @anthropic-ai/claude-code claude"]
         forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
                  "nice -n 5 {}", "FOO=1 {}"]
         with mock.patch.dict(os.environ, {"NIRI_SOCKET": sub("@RUN@/niri.@LIVE@.100.sock")}):
@@ -103,12 +103,15 @@ class Bash(LiveSession, unittest.TestCase):
 
     def test_cursor(self):
         self.blocks("ydotool mousemove 10 10", "hyprctl dispatch movecursor 10 10", "wlrctl pointer move 5 5",
-                    "hyprctl eval 'hl.dsp.cursor.move(1, 1)'")
+                    "hyprctl eval 'hl.dsp.cursor.move(1, 1)'", "hc dispatch 'hl.dsp.cursor.move(1, 1)'", "hc eval 'hl.dsp.cursor.move(1,1)'")
+        self.allows("grep -rn movecursor qml", "rg 'hl.dsp.cursor.move' docs", "git commit -m 'drop hl.dsp.cursor.move and movecursor'",
+                    "echo movecursor", "echo dispatch movecursor", "grep -rn dispatch movecursor qml")
 
     def test_shell_lifecycle(self):
-        self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p qml/shell.qml &")
+        self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p qml/shell.qml &",
+                    "qs -n -c axiom", "qs --debug 1234 -c axiom")
         self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/qml/greeter.qml"',
-                    'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list")
+                    'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list", "qs -n ipc call x y")
 
     def test_leading_cd(self):
         """A leading `cd` moves the relative paths after it"""
@@ -118,7 +121,7 @@ class Bash(LiveSession, unittest.TestCase):
             with mock.patch.object(guard, "LIVE_CONFIG", cfg / "config.json"):
                 self.blocks(f"cd {cfg} && cp /tmp/x config.json", f"cd {cfg} && rm config.json",
                             f"cd {cfg}/sub/.. && cat x > config.json 2>&1 | tail -1", f"cd {tmp} && rm -r axiom")
-                self.allows(f"cd {other} && cp /tmp/x config.json")
+                self.allows(f"cd {other} && cp /tmp/x config.json", f"cd {other} && git status {cfg}/config.json")
 
     def test_leading_cd_then_semicolon_or_more_cds(self):
         """`cd /dir;`, a newline or several leading cds move them the same as `&&`"""
@@ -131,19 +134,81 @@ class Bash(LiveSession, unittest.TestCase):
                 self.allows(f"cd {cfg}; cd /tmp; rm config.json", f"cd {cfg} && cd /tmp && rm config.json")
 
     def test_git_push_and_clean(self):
-        self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
-                    "git push --force-if-includes origin x", "git push origin +x", "git push origin main", "git push origin master",
+        self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push origin +x", "git push origin main", "git push origin master",
                     "git push origin x:main", "git push origin x:refs/heads/main", "git push origin x:heads/main",
                     "git push origin refs/heads/main", "git -C . push --force origin x", "env -C /tmp git push origin main",
-                    "cd /tmp && git push -f 2>&1 | tail -2", "git clean -fdx", "git clean -X", "git -C . clean -x -f")
-        self.allows("git push", "git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
-                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x", "git push --tags origin",
+                    "cd /tmp && git push -f 2>&1 | tail -2", "git clean -fdx", "git clean -X", "git -C . clean -x -f",
+                    "git push --force-with-lease origin main", "git push --force-with-lease origin x:main", "git push --force origin feature/x")
+        self.allows("git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
+                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x",
                     "git -C /tmp/w push -u origin feature/1-x", "git switch main && git push origin feature/1-x",
-                    "git status", "git pull --ff-only", "git clean -fd", "git clean -n")
+                    "git status", "git pull --ff-only", "git clean -fd", "git clean -n", "git push --force-with-lease origin x",
+                    "git push --force-if-includes origin x", "git push --force-with-lease origin feature/x",
+                    "git push --force-with-lease=feature/x:abc123 origin feature/x")
+
+    def test_bare_push_on_main(self):
+        """A push without a destination goes to the checked-out branch: refused on main, not elsewhere."""
+        with tempfile.TemporaryDirectory() as main, tempfile.TemporaryDirectory() as feature:
+            for path, branch in ((main, "main"), (feature, "feature/x")):
+                subprocess.run(["git", "init", "-q", "-b", branch, path], check=True)
+            for command in ("git push", "git push origin", "git push -u origin", "git push origin HEAD", "git push -o ci.skip origin",
+                            "git push --all origin", "git push --branches origin", "git push --mirror origin"):
+                self.assertTrue(denied(command, cwd=main), command)
+                self.assertTrue(denied(f"git -C {main} {command[4:]}", cwd=feature), command)
+            self.assertTrue(denied("git push C HEAD", cwd=main))
+            for command in ("git push", "git push origin", "git push origin HEAD", "git push -o ci.skip origin"):
+                self.assertFalse(denied(command, cwd=feature), command)
+                self.assertFalse(denied(f"git -C {feature} {command[4:]}", cwd=main), command)
+            self.assertFalse(denied("git push --tags origin", cwd=main))
+            self.assertFalse(denied("git push --tags origin", cwd=feature))
+            self.assertFalse(denied("git push", cwd=tempfile.gettempdir() + "/none-here"))
+            self.assertTrue(denied("git push --force-with-lease", cwd=main))
+            self.assertFalse(denied("git push --force-with-lease", cwd=feature))
+            self.assertFalse(denied(f"cd {feature} && git push", cwd=main))
+            self.assertTrue(denied(f"cd {main} && git push", cwd=feature))
+
+    def test_shell_kill(self):
+        self.blocks("pkill quickshell", "pkill -x qs", "killall qs", "killall -9 quickshell", "pkill -f 'qs -c axiom'", "pkill -x '^axiom$'",
+                    "pkill -f /usr/bin/qs", 'pkill -x "qs|axiom"', "pkill '^foot$|^qs$'", "kill $(pgrep -x qs)", "kill -9 $(pidof qs)", "kill `pidof quickshell`", 'kill "$(pgrep -x qs)"',
+                    "pgrep -x qs | xargs kill", "pidof qs | xargs -r kill -9", "pgrep -x axiom | kill",
+                    "sudo pkill qs", "true && killall qs", "pgrep -x qs; kill 12345", "for p in $(pgrep qs); do kill $p; done",
+                    "xargs kill < <(pgrep -x qs)")
+        self.allows("pkill -f nested-niri", "killall foot", "pgrep -x qs", "pidof qs", "pkill -f axiom-notes",
+                    "kill $(pgrep -x foot)", 'pkill -x "foot|kitty"', "pgrep -x foot | xargs kill", "kill 12345", "echo qs")
+
+    def test_check_i18n_fill_prune(self):
+        self.blocks("python3 scripts/check_i18n.py --fill", "python3 scripts/check_i18n.py --prune", "scripts/check_i18n.py --fill",
+                    "python3 -u scripts/check_i18n.py --prune --format", "python3 ./scripts/check_i18n.py --fill ja",
+                    "python3.13 scripts/check_i18n.py --fill")
+        self.allows("python3 scripts/check_i18n.py", "python3 scripts/check_i18n.py --format", "python3 scripts/check_docs.py --fill",
+                    "grep -n -- --fill scripts/check_i18n.py")
+
+    def test_compositor_exit(self):
+        """Ending the live Hyprland or sway session is refused; a nested one (its own signature or socket, `-i`, `-s`) isn't."""
+        live = {"HYPRLAND_INSTANCE_SIGNATURE": "live", "SWAYSOCK": "/run/sway.live.sock"}
+        with mock.patch.dict(os.environ, live):
+            self.blocks("hyprctl dispatch exit", "hyprctl dispatch 'hl.dsp.exit()'", "hyprctl eval 'hl.dsp.exit()'", "hyprctl -j dispatch exit",
+                        "hc dispatch 'hl.dsp.exit()'", "hc dispatch exit", "hyprshutdown", "swaymsg exit",
+                        "swaymsg -- exit", "swaymsg 'exit'", "swaymsg -q exit", "HYPRLAND_INSTANCE_SIGNATURE=live hyprctl dispatch exit",
+                        "SWAYSOCK=/run/sway.live.sock swaymsg exit")
+            self.allows("HYPRLAND_INSTANCE_SIGNATURE=nested hyprctl dispatch exit", "hyprctl -i 1 dispatch exit",
+                        "hyprctl --instance 1 eval 'hl.dsp.exit()'", "HYPRLAND_INSTANCE_SIGNATURE=nested hyprshutdown",
+                        "swaymsg -s /tmp/sway.sock exit", "SWAYSOCK=/tmp/sway.sock swaymsg exit", "swaymsg --socket /tmp/sway.sock exit",
+                        "hyprctl dispatch workspace 1", "hyprctl --batch 'keyword a b ; dispatch workspace 1'", "hyprctl monitors",
+                        "swaymsg -t get_tree", "swaymsg workspace 1", "grep -n 'dispatch exit' docs",
+                        "grep -rn dispatch exit qml", "rg eval exit")
+        with mock.patch.dict(os.environ, live), mock.patch.dict(os.environ, {"HYPRLAND_INSTANCE_SIGNATURE": ""}):
+            self.blocks("hyprctl dispatch exit")
+
+    def test_git_stash(self):
+        self.blocks("git stash", "git stash -u", "git stash push -m x", "git stash pop", "git stash drop", "git stash apply",
+                    "git -C /tmp stash", "git stash clear")
+        self.allows("git stash list", "git stash show -p", "git stash show stash@{0}", "git status", "git -C /tmp stash list",
+                    "git stash --help", "git stash -h")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
-                    "data/greeter/greeter_install.sh install . me")
+                    "data/greeter/greeter_install.sh install . me", "kill $(pidof greetd)", "pgrep greetd | xargs kill")
         self.allows("systemctl status greetd", "data/greeter/greeter_install.sh check .",
                     "AXIOM_GREETER_ROOT=/tmp/x data/greeter/greeter_install.sh install . me",
                     'export AXIOM_GREETER_ROOT="$tmp"; data/greeter/greeter_install.sh uninstall . me')
@@ -187,9 +252,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "python3 - <<'PY'\nx = 1\nPY\naxiom lock", "cat <<EOF\n$(axiom lock)\nEOF",
                     "cat <<A; bash <<B\ntext\nA\naxiom lock\nB")
         # A command that runs text it's given anywhere, a body that substitutes, a `<<` that isn't a heredoc
-        self.blocks("eval \"$(cat)\" <<EOF\naxiom lock\nEOF", "cat <<EOF |\naxiom lock\nEOF\nsh", "cat <<EOF \\\n| sh\naxiom lock\nEOF",
-                    "cat > x.sh <<'EOF'\naxiom lock\nEOF\nbash x.sh", "cat > x.sh <<'EOF'\naxiom lock\nEOF\n. ./x.sh",
-                    "cat > x.sh <<'EOF'\naxiom lock\nEOF\nchmod +x x.sh && ./x.sh", "cat > /tmp/x <<'EOF'\naxiom lock\nEOF\nsudo /tmp/x",
+        self.blocks("eval \"$(cat)\" <<EOF\naxiom lock\nEOF", "cat <<EOF \\\n| sh\naxiom lock\nEOF",
                     "cat <<EOF\n$(\naxiom lock\n)\nEOF", "git commit -m \"a <<b\"\naxiom lock\nb", "echo 'x <<EOF'\naxiom lock\nEOF",
                     "echo $((1<<2))\naxiom lock\n2", "cat <<E'OF'\nx\nEOF\naxiom lock", "cat <<EOF\naxiom lock",
                     "bash <<< 'axiom lock'", "sh <<<\"qs kill\"")
@@ -211,7 +274,7 @@ class Bash(LiveSession, unittest.TestCase):
         """A `<<` in a comment starts no heredoc; a quote this reads unlike the shell
         (`$'…'`, quotes nested in `"$(…)"`) can't hide what follows behind a comment."""
         self.blocks("echo # <<EOF\naxiom lock\nEOF", "echo $'\\' #'; axiom lock", "echo $'\\' #\n'; axiom lock\n'",
-                    'echo "$(echo " #")"; axiom lock', f'cp /tmp/x "{guard.LIVE_CONFIG}" # don\'t',
+                    f'cp /tmp/x "{guard.LIVE_CONFIG}" # don\'t',
                     "cat > /tmp/x.sh <<'EOF'\ndon't\nEOF\nbash /tmp/x.sh; echo ' #'; axiom lock")
         self.allows("git commit -F - <<'EOF'\nFix #12: don't lock\n\n# it's text\nEOF", "printf $'a\\tb'", "printf $'$(axiom lock)'",
                     "gh pr create --body \"$(cat <<'EOF'\n## Summary\n- don't break #241\nEOF\n)\"",
@@ -221,15 +284,8 @@ class Bash(LiveSession, unittest.TestCase):
         with mock.patch.object(guard, "CONFIG_HOMES", guard.CONFIG_HOMES | {Path("/srv/conf")}):
             self.assertTrue(denied("axiom compositor claim --kind sway /srv/conf/sway axiom"))
 
-    def test_daemon_rpc_sent_by_hand(self):
-        """hookup.apply, selfupdate.apply and greeter.apply change the real system: only a scratch daemon"""
-        for method in ("hookup.apply", "selfupdate.apply", "greeter.apply"):
-            call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'""" % method
-            self.blocks(f"python3 -c {call}", f"printf %s {call}", f"HOME=/tmp/h python3 -c {call}")
-            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", f"AXIOM_SOCKET=/tmp/run/axiom.sock printf %s {call}",
-                        f"grep -rn {method} backend")
-        self.blocks("axiom ipc selfUpdate update")
-        self.allows("python3 -c 'hookup.status'", "python3 -c 'selfupdate.check'", "go test ./internal/selfupdate")
+    def test_text_mentioning_daemon_methods_passes(self):
+        self.allows("echo hookup.apply", """printf '%s' '{"method":"selfupdate.apply"}'""", """python3 -c 'print("greeter.apply")'""")
 
     def test_greeter_install_command(self):
         self.blocks("axiom greeter-install install . me", "sudo axiom greeter-install uninstall . me",
@@ -237,16 +293,10 @@ class Bash(LiveSession, unittest.TestCase):
         self.allows("AXIOM_GREETER_ROOT=/tmp/x axiom greeter-install install . me", "axiom greeter-install --help",
                     "go test ./internal/greeterinstall")
 
-    def test_greeter_apply(self):
-        call = """'{"jsonrpc":"2.0","id":1,"method":"greeter.apply","params":{"action":"install"}}'"""
-        self.blocks(f"python3 -c {call}", f"printf %s {call}")
-        self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'greeter.status'",
-                    "grep -rn greeter.apply backend", "go test ./internal/greeterinstall")
-
     def test_live_config_file(self):
         self.blocks(f"rm {guard.LIVE_CONFIG}", f"rm -rf {guard.LIVE_CONFIG.parent}", f"mv {guard.LIVE_CONFIG} /tmp/x",
                     "rm ~/.config/axiom/config.json" if not os.environ.get("XDG_CONFIG_HOME") else f"rm {guard.LIVE_CONFIG}",
-                    )
+                    f"rm -- {guard.LIVE_CONFIG}")
         self.allows("rm /tmp/config.json", f"cp {guard.LIVE_CONFIG} /tmp/backup.json",
                     f"rm {guard.LIVE_CONFIG.parent}/saved/old.json", "git clean -fd", "mv /tmp/new.json /tmp/other.json")
 
@@ -256,16 +306,17 @@ class Bash(LiveSession, unittest.TestCase):
                     f"install -m 644 /tmp/x.json {live}", f"echo '{{}}' > {live}", f"jq . /tmp/x >>{live}",
                     f"jq . /tmp/x | tee {live}", f"sed -i 's/a/b/' {live}", f"sed -Ei.bak 's/a/b/' {live}",
                     f"sed --in-place 's/a/b/' {live}", "rm -r ~/.config", f"rm -rf {guard.HOME}",
-                    "find ~/.config/axiom -name config.json -delete", "find ~/.config -name '*.json' -exec rm {} +")
-        self.allows(f"cat {live}", f"jq . {live}", f"jq .Bar {live} > /tmp/out.json", f"cp {live} /tmp/backup.json",
+                    f"dd if=/tmp/x of={live}", f"perl -pi -e s/a/b/ {live}", f"perl -i.bak -pe s/a/b/ {live}",
+                    f"rsync /tmp/x.json {live}", f"rsync -a /tmp/config.json {guard.LIVE_CONFIG.parent}/")
+        self.allows(f"cat {live}", f"dd if={live} of=/tmp/backup.json", f"perl -ne 'print' {live}", f"rsync {live} /tmp/backup.json", f"jq . {live}", f"jq .Bar {live} > /tmp/out.json", f"cp {live} /tmp/backup.json",
                     "cp /tmp/x.json /tmp/y.json", f"sed -n 1p {live}", f"diff {live} /tmp/x 2>/dev/null",
                     "find . -name '*.pyc' -delete", "find ~/.config -name '*.json' -exec grep -l Bar {} +")
 
     def test_machine_settings(self):
         self.blocks("timedatectl set-timezone Europe/Berlin", "sudo timedatectl set-ntp false", "hostnamectl set-hostname box",
-                    "passwd", "echo x | passwd --stdin", "sudo usermod -c Name me", "chfn -f Name")
+                    "hostnamectl hostname box", "sudo hostnamectl hostname box", "hostnamectl --static hostname box", "passwd", "echo x | passwd --stdin", "sudo usermod -c Name me", "chfn -f Name")
         self.allows("timedatectl", "timedatectl status", "timedatectl list-timezones", "hostnamectl", "hostnamectl status",
-                    "go test ./internal/timedate", "grep -rn passwd backend")
+                    "hostnamectl hostname", "hostnamectl hostname --help", "go test ./internal/timedate", "grep -rn passwd backend")
 
     def test_bluetooth(self):
         self.blocks("bluetoothctl power off", "bluetoothctl remove AA:BB:CC:DD:EE:FF", "bluetoothctl block AA:BB:CC:DD:EE:FF",
@@ -290,7 +341,7 @@ class Bash(LiveSession, unittest.TestCase):
 
     def test_screen_share_portal(self):
         self.blocks("systemctl --user restart xdg-desktop-portal", "systemctl --user stop xdg-desktop-portal-hyprland.service",
-                    "pkill xdg-desktop-portal", "killall xdg-desktop-portal-wlr",
+                    "pkill xdg-desktop-portal", "killall xdg-desktop-portal-wlr", 'kill "$(pidof xdg-desktop-portal)"',
                     "echo x >> ~/.config/hypr/xdph.conf", "cp /tmp/c ~/.config/xdg-desktop-portal-wlr/config",
                     "sed -i s/a/b/ ~/.config/xdg-desktop-portal/niri-portals.conf", "tee ~/.config/xdg-desktop-portal/portals.conf",
                     "cp /tmp/xdph.conf ~/.config/hypr/", "cp /tmp/niri-portals.conf ~/.config/xdg-desktop-portal/")
@@ -301,6 +352,19 @@ class Bash(LiveSession, unittest.TestCase):
             with self.assertRaises(guard.Denied):
                 guard.check({"tool_name": "Write", "tool_input": {"file_path": path, "content": "x"}})
         guard.check({"tool_name": "Write", "tool_input": {"file_path": "/tmp/cfg/hypr/xdph.conf", "content": "x"}})
+
+    def test_pr_merge(self):
+        self.blocks("gh pr merge", "gh pr merge 495 --squash", "gh pr merge --auto --delete-branch", "gh pr merge -R o/r 1",
+                    "GH_TOKEN=x gh pr merge 1", "(gh pr merge 1)")
+        self.allows("gh pr merge --help", "gh pr merge -h", "gh pr view 495", "gh pr checks 495", "gh pr create --fill",
+                    "grep -rn 'gh pr merge' docs", "git commit -m 'never gh pr merge'")
+
+    def test_help_is_exempt(self):
+        """--help / -h skips the rules and the push and kill checks, not the path checks"""
+        with mock.patch.dict(os.environ, {"NIRI_SOCKET": sub("@RUN@/niri.@LIVE@.100.sock")}):
+            self.allows("axiom dev set --help", "axiom dev set -h", "niri msg action load-config-file --help", "axiom quit --help",
+                        "git push --force -h", "qs kill --help")
+            self.blocks(f"cp -h /tmp/x {guard.LIVE_CONFIG}")
 
     def test_qmlformat_inplace(self):
         self.blocks("qmlformat -i shell.qml", "/usr/lib/qt6/bin/qmlformat --inplace shell.qml")
@@ -357,10 +421,10 @@ class GuardItself(unittest.TestCase):
         for command in ("claude", "claude -p hi", "/usr/bin/claude --dangerously-skip-permissions", "env -C /tmp claude",
                         "timeout 60 claude -p x", "nohup claude &", "setsid claude", "echo x | xargs claude -p",
                         "cd /tmp && claude", "npx @anthropic-ai/claude-code", "npx -y @anthropic-ai/claude-code@latest -p x",
-                        "bash -c 'claude -p x'", "x=$(claude -p hi)"):
+                        "bash -c 'claude -p x'", "x=$(claude -p hi)", "npx -p @anthropic-ai/claude-code claude"):
             self.assertTrue(self.denied("Bash", command), command)
         for command in ("grep claude docs", "cat .claude/settings.json", "ls ~/.claude-personal", "git log --grep claude",
-                        "echo claude", "npx prettier x", "which claude"):
+                        "echo claude", "npx prettier x", "which claude", "claude --help"):
             self.assertFalse(self.denied("Bash", command), command)
 
 
@@ -381,7 +445,8 @@ class Axiom(LiveSession, unittest.TestCase):
     def test_scratch_instances_pass(self):
         for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/x axiom quit",
                     "axiom --socket /tmp/x/axiom.sock restart", "XDG_RUNTIME_DIR=/tmp/x axiom lock",
-                    "XDG_RUNTIME_DIR=/tmp/x axiom dev on"):
+                    "XDG_RUNTIME_DIR=/tmp/x axiom dev on", "axiom --socket /tmp/x/axiom.sock quit",
+                    "AXIOM_SOCKET=/tmp/x/axiom.sock axiom lock", "AXIOM_SOCKET=/tmp/x/axiom.sock axiom dev on"):
             self.assertFalse(self.denied(cmd), cmd)
 
     def test_live_lock_refused(self):
@@ -441,6 +506,9 @@ class Axiom(LiveSession, unittest.TestCase):
             self.assertTrue(self.denied("WAYLAND_DISPLAY=@OTHER@ axiom dev on"))
             self.assertTrue(self.denied("axiom dev set ."))
             self.assertFalse(self.denied("AXIOM_SOCKET=@RUN@/axiom/@OTHER@/axiom.sock axiom dev on"))
+            self.assertTrue(self.denied("XDG_RUNTIME_DIR=/tmp/x axiom dev set ."))
+            self.assertTrue(self.denied("XDG_RUNTIME_DIR=/tmp/x axiom lock"))
+            self.assertFalse(self.denied("XDG_RUNTIME_DIR=/tmp/x axiom run --no-shell"))
 
     def test_unknown_live_display_refuses_the_runtime_dir(self):
         with mock.patch.object(guard, "LIVE_DISPLAY", ""):
@@ -467,25 +535,25 @@ class ConfigEdits(unittest.TestCase):
             return True
         return False
 
-    def test_takeover_paths_come_from_the_schema(self):
-        paths = guard.takeover_paths(json.loads(guard.SCHEMA.read_text()))
-        self.assertIn(["Idle", "enabled"], paths)
-        self.assertGreaterEqual(len(paths), 5)
-
     def test_takeover_change_refused(self):
         self.assertTrue(self.edit('"enabled": false', '"enabled": true'))
 
-    def test_other_changes_pass(self):
-        self.assertFalse(self.edit('"x": 1', '"x": 2'))
+    def test_other_changes_refused(self):
+        self.assertTrue(self.edit('"x": 1', '"x": 2'))
+
+    def test_write_refused(self):
+        with self.assertRaises(guard.Denied):
+            guard.check({"tool_name": "Write", "tool_input": {"file_path": str(self.config), "content": "{}"}})
 
     def test_other_files_pass(self):
-        guard.check({"tool_name": "Write", "tool_input": {"file_path": os.devnull, "content": "{}"}})
+        for path in (os.devnull, self.config.parent / "saved/x.json", self.config.parent / "dev/config.json"):
+            guard.check({"tool_name": "Write", "tool_input": {"file_path": str(path), "content": "{}"}})
 
 
 class GeneratedEdits(unittest.TestCase):
-    def denied(self, path):
+    def denied(self, path, root=REPO):
         try:
-            guard.check({"tool_name": "Edit", "tool_input": {"file_path": str(REPO / path), "old_string": "a", "new_string": "b"}})
+            guard.check({"tool_name": "Edit", "tool_input": {"file_path": str(root / path), "old_string": "a", "new_string": "b"}})
         except guard.Denied:
             return True
         return False
@@ -494,25 +562,49 @@ class GeneratedEdits(unittest.TestCase):
         for path in ("qml/config/json/config.schema.json", "backend/internal/migrate/legacy/schema-v75.json",
                      "backend/internal/migrate/legacy/legacy.js", "tests/fixtures/shared/schema/Config/x.0.json",
                      "backend/internal/migrate/legacy/testdata/frozen.jsonl.gz",
-                     "tests/fixtures/shared/blobs/abc.json", "backend/internal/assets/data/config/json/backend.json"):
+                     "tests/fixtures/shared/blobs/abc.json", "backend/internal/assets/data/config/json/backend.json",
+                     "qml/config/themes/template/theme.json", "qml/config/i18n/template/language.json",
+                     "qml/components/surfaces/wallpaper/shaders/stamps.txt", "qml/components/surfaces/wallpaper/shaders/blur.frag.qsb",
+                     "docs/dev/generated/files.md", "docs/dev/config/Bars.md"):
             self.assertTrue(self.denied(path), path)
 
     def test_sources_pass(self):
-        for path in ("qml/config/schema/sections/Bars.yaml", "qml/components/methods/SchemaValidation.qml", "data/examples/basic.json"):
+        for path in ("qml/config/schema/sections/Bars.yaml", "qml/components/methods/SchemaValidation.qml", "data/examples/basic.json",
+                     "qml/components/surfaces/wallpaper/shaders/blur.frag", "qml/config/i18n/ja.json"):
             self.assertFalse(self.denied(path), path)
+
+    def test_bash_writes(self):
+        for command in ("echo x > docs/dev/generated/files.md", "cp /tmp/x qml/config/json/config.schema.json",
+                        "sed -i s/a/b/ backend/internal/migrate/legacy/legacy.js"):
+            self.assertTrue(denied(command), command)
+        for command in ("cat docs/dev/generated/files.md", "rm docs/dev/generated/x.md"):
+            self.assertFalse(denied(command), command)
+
+    def test_other_tree(self):
+        """An edit is judged against the tree holding the file (a worktree), not only the hook's checkout"""
+        with tempfile.TemporaryDirectory() as tree:
+            (Path(tree) / ".git").write_text("gitdir: /nowhere\n")
+            self.assertTrue(self.denied("docs/dev/generated/files.md", Path(tree)))
+            self.assertTrue(self.denied("qml/components/surfaces/wallpaper/shaders/blur.frag.qsb", Path(tree)))
+            self.assertFalse(self.denied("docs/dev/x.md", Path(tree)))
 
 
 class Hook(unittest.TestCase):
     def test_deny_json(self):
-        import subprocess
-        out = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True,
-                             input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "qs kill"}}))
-        decision = json.loads(out.stdout)["hookSpecificOutput"]
-        self.assertEqual(decision["permissionDecision"], "deny")
-        self.assertIn("CLAUDE.md › Never", decision["permissionDecisionReason"])
-        allowed = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True,
-                                 input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "ls"}}))
-        self.assertEqual(allowed.stdout, "")
+        for command, refused in (("qs kill", True), ("ls", False), ("axiom dev set --help", False), ("gh pr merge --help", False),
+                                 ("hc dispatch 'hl.dsp.cursor.move(1,1)'", True), ("gh pr merge 1", True)):
+            out = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True,
+                                 input=json.dumps({"tool_name": "Bash", "tool_input": {"command": command}})).stdout
+            self.assertEqual(bool(out), refused, command)
+            if refused:
+                decision = json.loads(out)["hookSpecificOutput"]
+                self.assertEqual(decision["permissionDecision"], "deny")
+                self.assertIn("CLAUDE.md › Never", decision["permissionDecisionReason"])
+        for call in ("x", {"tool_name": "Bash", "tool_input": "qs kill"}, {"tool_name": "Bash", "tool_input": {"command": None}},
+                     {"tool_name": "Write", "tool_input": {"file_path": 5}}):
+            out = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True, input=json.dumps(call)).stdout
+            self.assertTrue(out, call)
+            self.assertEqual(json.loads(out)["hookSpecificOutput"]["permissionDecision"], "deny", call)
 
 
 if __name__ == "__main__":
