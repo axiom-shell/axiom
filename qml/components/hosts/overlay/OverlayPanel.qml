@@ -40,12 +40,12 @@ ReservedAreaWindow {
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
     PopoutManager.closeOn(root.screen?.name ?? "")
-  // This opening draws reduced effects (Overlay.reduceFullscreen): decided
-  // at open, so a window going fullscreen while it's open changes nothing
-  // until the next open
+  // This opening draws reduced effects (Overlay.reduceFullscreen): decided as
+  // its window maps (a namespace's rules are read only then): a window going
+  // fullscreen while it's open, or kept, changes nothing until it maps again
   property ClosedLatch _reduced: ClosedLatch {
     source: OverlayConfig.reduceFullscreen && root.fullscreenNow
-    closed: !root.isOpen
+    closed: !root.visible
   }
   readonly property bool reduced: root._reduced.value ?? false
   // Closed, it waits off the edge it slides in from (Overlay.animation),
@@ -60,8 +60,8 @@ ReservedAreaWindow {
 
   visible: false
   // Its layer rule arranges it after docks and draws it over them
-  // (see render.LayerRulesLua)
-  layerNamespace: "axiom-overlay"
+  // (see render.LayerRulesLua); reduced, it's the unblurred twin
+  layerNamespace: root.reduced ? "axiom-overlay-reduced" : "axiom-overlay"
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
@@ -186,7 +186,7 @@ ReservedAreaWindow {
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? boxesBlur : null)
+    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) && !root.reduced ? boxesBlur : null)
   Region {
     id: boxesBlur
 

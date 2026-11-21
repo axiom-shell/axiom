@@ -65,7 +65,7 @@ properties:
     type: boolean
     title: Reduce effects over fullscreen
     default: true
-    description: On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding and draws no shadow.
+    description: On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding, and draws no blur or shadow.
   moduleBorders:
     x-scope: look
     x-group: Look
