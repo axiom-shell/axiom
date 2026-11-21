@@ -26,10 +26,10 @@ QtObject {
   // What one get_tree reply holds: { windows (the contract's windows, without
   // focusRank), counts ({ [workspace num]: windows on it }), workspaceRects
   // ({ [name]: { output (the Window shape's name for it), x, y, width,
-  // height } }) and outputRects ({ [name]: { x, y, width, height } }), order (window ids
-  // in the order sway's focus stacks say they were used, most recent first),
-  // focusedId ("" with none), layouts ({ [tiled window id]: its parent's
-  // layout }, scratch (the windows in the scratchpad, in the contract's
+  // height } }) and outputRects ({ [name]: { x, y, width, height } }), order
+  // (window ids in the order sway's focus stacks say they were used, most
+  // recent first), focusedId ("" with none), layouts ({ [tiled window id]:
+  // its parent's layout }, scratch (the windows in the scratchpad, in the contract's
   // shape with hidden true and output "": kept out of windows, for specials
   // alone), scratchIds (the ids of every window that came from the
   // scratchpad, hidden in it or shown from it: its scratchpad_state is fresh
