@@ -1123,6 +1123,7 @@ class CheckDocs(unittest.TestCase):
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
                               "`IconConfig.x`\n"),
         ("qml/components/reusable/GhostPiece.qml", qml()),
+        (".claude/templates/ghost.md", "`.claude/templates/gone.md`\n"),
     ]
 
     def test_each_rule_fails(self):
@@ -1136,6 +1137,7 @@ class CheckDocs(unittest.TestCase):
             "docs/dev/ghost.md:2: `services/core/GhostlyManager.qml` doesn't exist",
             "docs/dev/ghost.md:3: `AudioManager.noSuchMember`: AudioManager has no member noSuchMember",
             "docs/dev/ghost.md:4: `IconConfig.x`: IconConfig was renamed to IconsConfig",
+            ".claude/templates/ghost.md:1: `.claude/templates/gone.md` doesn't exist",
             "qml/components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
             "`x-ghost` isn't in docs/dev/core/schema-annotations.md",
         ]), [], out)

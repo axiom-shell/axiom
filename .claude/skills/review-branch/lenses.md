@@ -14,15 +14,7 @@ You review a slice of axiom, a Quickshell/QML desktop for Hyprland, sway and nir
 
 **Severity.** Blocker: wrong behaviour users hit, a regression, a failing check, a safety or security rule broken. Major: a bug on a rarer path, a rule broken that no check catches, design that will bite, an added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path), code a fix leaves behind that nothing needs any more, and every misalignment: code that repeats an existing piece or another part of the branch, a second name or unit for a concept that has one, one job done two ways, a new file or edit site that doesn't follow the precedent of its kind. Cleanup: other dead code, a simpler shape. Minor: misleading names, comments or docs, small inconsistencies.
 
-**Reply.** Most severe first, each:
-
-```
-- [Blocker|Major|Cleanup|Minor] `path:line` (`symbol`): the defect in one sentence
-  **Case:** the input or state, and what happens instead of what should (quoted code, a grep count, a doc line; "PLAUSIBLE: <what settles it>" when it applies)
-  **Fix:** the smallest change (code when short; for a deletion, the lines it removes)
-```
-
-Then `Outside the slice:` problems you saw that the branch didn't cause (a title and `path:line` each). Nothing found: say so in one line.
+**Reply.** `.claude/templates/finding.md`.
 
 ## bugs: correctness
 
@@ -67,7 +59,7 @@ Walk the rules in `CLAUDE.md`, the area's rules file against the code; report a 
 ## consistency: one way, one name, the codebase's way
 
 The whole branch, never a slice: what one slice can't see is the point. Start from `python3 scripts/dev/new_names.py --base <mb>` (every name the branch adds, and where else that name is defined) and the ledger if the brief names one; read code only to settle a candidate.
-- Duplicates: for each new function, property, component and test helper, does the codebase or another part of the branch already do that job? Grep `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the readers and the services by verb and by noun, not only by name. A block of three or more lines written twice across files is a duplicate.
+- Duplicates: for each new function, property, component and test helper, does the codebase or another part of the branch already do that job? Search `.claude/templates/ledger.md` › Where to search. A block of three or more lines written twice across files is a duplicate.
 - Names: one concept, one name in every file; one name, one meaning (the `also defined` column shows clashes); a family of readers or helpers doing one job under different names, result shapes or argument orders; a member whose unit differs from its siblings' (factor vs %, px vs grid cells) or from the name's other uses.
 - Patterns: every site of one kind (a config write, a call into a helper, a form hook, a wrapper) written the same way; each new file mirrors the precedent of its kind (member order, comment style, test layout).
 - Decisions: a helper's decision worked out again in a host or the UI (`CLAUDE.md` › Layering).

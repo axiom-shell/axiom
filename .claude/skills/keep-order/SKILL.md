@@ -1,65 +1,39 @@
 ---
 name: keep-order
 description: Keep a change aligned with the axiom codebase - no duplicate code, existing functions reused, one name and one pattern per concept - from plan to PR. Use when the user says "keep order", "keep it aligned", "no duplicates", "check consistency", "does this match the codebase", before building any feature bigger than a small edit (plan), after each implementer group (gate), and before opening or updating a PR (audit). Runs /keep-order plan|gate|audit.
-argument-hint: "plan <plan file> | gate [--base <ref>] [--ledger <file>] | audit [--base <ref>] [--ledger <file>] [--fix]"
+argument-hint: "plan --state <folder> --tree <path> | gate --tree <path> (--state <folder> | --base <ref>) | audit --state <folder> --tree <path> [--fix]"
 ---
 
 # Keep order
 
-Alignment with the codebase is axiom's top priority, above speed and above scope: a change reuses what axiom already has, names things the way axiom already names them, and does each job one way. Agents drift when nothing pins this down: each fresh implementer invents its own names, copies a piece it didn't find, and writes its edit site its own way, and a review split into slices can't see a copy spread across three files. This skill pins it down before code (the **ledger**), checks it after every group of code (the **gate**), and checks the whole branch before a PR (the **audit**).
+Alignment with the codebase is axiom's top priority: the **ledger** (`.claude/templates/ledger.md`) pins names, reuse and patterns before code, the **gate** checks every group after it, the **audit** checks the whole branch before a PR. Nothing unlisted is "fine for now": an unlisted name is a ruling, a copy is a fix.
 
-You lead: agents read the code, you read their reports and `scripts/dev/new_names.py` output, never diffs.
+You lead: you read agents' reports and `new_names.py` output, never diffs (`/orchestrate` › The lead).
 
-Arguments: `$ARGUMENTS`. The first word is the mode.
+Arguments: `$ARGUMENTS`. The first word is the mode. `--tree` is where every command runs (default: `git rev-parse --show-toplevel`); git as `git -C <tree>`, the rest as `cd <tree> && …`. `--state` is the state folder, always a folder: `ledger.md`, `spec.md` and `state.md` (`.claude/templates/state.md`) are read from it. Every brief is `.claude/templates/brief.md`, with `Tree:` and `Base:`.
 
-## The ledger
+## plan
 
-One file beside the plan, `<plan name>-ledger.md` (or `--ledger <file>`), owned by the architect, updated only by an architect's ruling. It is the implementers' Shape (`.claude/agents/architect.md` › Writing a spec) for the whole feature, so every group builds against the same names:
+Before any code. One `architect` writes `spec.md` and `ledger.md` in the state folder from `decisions.md` (`.claude/templates/decisions.md`) and `census.md` when present. It confirms or raises the tier, and proposes a stack split when one PR would exceed what `/review-branch` covers in one review (~6 slices).
 
-```
-# <feature>: ledger
-## Reuse        job | existing piece (path:line) | how it is used (called / extended / referenced by $ref) | differs by (what it does unlike the path it replaces; "nothing" proven)
-## Names        name | kind | file | type and unit | meaning (one line) | status (planned / built)
-## Patterns     kind of site (config write, helper call, form hook, …) | the one way it is written (path:line of the precedent)
-## Precedents   new file or member | the existing one it mirrors (path)
-## Strings      user string | reused from (path:line) or new
-## Not to build what looks needed but already exists, with where (a near copy someone will be tempted to write)
-```
-
-## plan `<plan file>`
-
-Before any code. One `architect`: "Read the plan `<file>` and the code it touches. Write its ledger to `<ledger path>` in the shape below (paste the shape). For every job the plan needs, search for what already does it: `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the readers and services of the areas, the schema's shared definitions, the tests' helpers, the existing `I18n.tr` strings; by verb and by noun. "None" comes with the grep. Every name the plan uses or implies goes in Names with its unit; a name the codebase already uses for another thing is renamed; one concept gets one name everywhere. For each Reuse row, list how the piece differs from the code path it replaces; a difference the request doesn't ask for is reported as an open question, never accepted. Report: counts per section, every plan name you renamed and why, every plan step that would have duplicated an existing piece, the open questions."
-
-Open questions go to the user word for word, and nothing starts (ledger, build) until they are answered.
-
-Then give the plan's implementers the ledger as part of their brief ("the ledger at `<path>` is binding: its names, units, reuse and patterns; anything it doesn't cover is a stop"). A plan that changes after the ledger gets its ledger updated by the architect first.
-
-No plan (a small change): the architect's spec carries its own Shape; no ledger file.
+Open questions go to the user word for word, and nothing starts until they are answered. Implementers' briefs quote the ledger's lines; a plan that changes after the ledger gets its ledger updated by the architect first.
 
 ## gate
 
-After each implementer group or fix round, before the next one starts, so drift never compounds.
-Skip the gate when `new_names.py` lists no names for the group.
-1. Run `python3 scripts/dev/new_names.py --base <base>` (base: the commit the group started from; `--files` for a group's own files).
-2. Compare it with the ledger yourself, by name only: every added public name must be in Names with the same name; every `also defined` must be a reuse the ledger names. Also compare the implementer's **Names added** report.
-3. Anything else goes to one `architect` with the list: "Rule on each name: in ledger / rename to `<x>` / replace with the existing `<path:line>` / add to the ledger (why it is new). For each `also defined`: same concept (then one of the two goes) or a clash (rename). Read only the cited lines and the existing piece." It updates the ledger with its rulings.
-4. Rulings that change code go to a **fresh** `implementer` as a fix list, then `scripts/dev/verify.sh`. Only then does the next group start.
-
-Nothing unlisted is "fine for now": an unlisted name is a ruling, a copy is a fix.
+After each implementer group or fix round, before the next starts. Base is state.md's `Head:` (the last group commit); without `--state`, `--base`.
+1. In the tree: `git -C <tree> diff --name-only <base>` plus untracked files, and `cd <tree> && python3 scripts/dev/new_names.py --base <base>`.
+2. Compare the names with the ledger by name only: every added public name is in Names with the same name; every `also defined` is a reuse the ledger names. Also compare the implementer's **Names added**. Without a state folder: against Names added and the fix list only.
+3. With `--state` only: files outside spec › Files, and files the implementer's **Changed pieces** field lists with users outside the change but no ledger row, go to one `architect`. It rules on each (in ledger / rename to `<x>` / replace with the existing `<path:line>` / add to the ledger with why), updates the ledger, and adds a check per user.
+4. Skip only when steps 1-3 find nothing.
+5. Rulings that change code, and rulings that add a check, go to a Fix round (`Do:` the fixes and `run A<n>`); that check's PASS, weak or NOT RUN result is judged like a group report before the commit.
 
 ## audit
 
-Before opening or updating a PR, and on any branch on request. The audit is `/review-branch`: its whole-branch reviewers carry the `consistency` lens, so nothing here runs a second set.
-1. No ledger yet: one `architect` first writes one from the branch's code, in the shape above, listing every place the branch disagrees with itself or the codebase.
-2. Run `/review-branch` with the ledger path in its purpose line. Its consistency findings are Major; it won't say "ready" with one open.
-3. `--fix`: confirmed findings to a fresh `implementer` as a fix list file, then verify, then `gate` on the fix. A finding whose fix changes behaviour users notice goes to the user instead.
+Before opening or updating a PR. Read state.md, then run `/review-branch "<purpose>" --tree <tree> --base <Base> --state <folder> --size <Tier's size> [--since <Last reviewed>] [--fix]`. Its whole-branch reviewers carry the `consistency` lens, so nothing here runs a second set; its consistency findings are Major, never deferred.
 
-## Branches started before the ledger
+## Fix round
 
-On a branch built before it had a ledger, the first audit's consistency findings are debt the branch carried, not drift it added: report them to the user as one batch with the size of each fix. They are fixed in that branch only when the user says so; otherwise they become an `/align` follow-up. Later rounds hold the branch to the ledger as usual.
-
-## Rules for every brief this skill writes
-
-- Quote the ledger's lines; never paraphrase a name.
-- Fix rounds use a fresh implementer with a fix-list file, never a resumed one.
-- Consistency findings are Major. They are never deferred, filed for later or traded for speed.
+The one home of fixing, for `--fix` here and in `/review-branch` and `/review-system`.
+- With a state folder: the fix list `<folder>/fix-<source>-<n>.md` (`.claude/templates/fix-list.md`, source `gate<g>`, `review<r>` or `ci<c>`) goes to a fresh `implementer` (never resumed), then a `checker` runs `scripts/dev/verify.sh` in the tree, then `gate --state`.
+- Without one (a hand-run `--fix`): the fix list goes inline in the brief, then the checker, then `gate --base <the review's --base; review-system: HEAD>` steps 1-2 only, with file rulings to an architect without a spec.
+- A fix that changes behaviour users notice goes to the user instead.
