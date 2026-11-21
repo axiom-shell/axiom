@@ -4714,10 +4714,7 @@
     "Icons per workspace": "",
     "As a submenu it closes on leave after this delay.": "",
     "How long the pointer rests on the row before the menu opens.": "",
-    "Start cell": "",
-    "Column": "",
-    "Where every monitor's grid starts, its column and row counted from the top left. Off: the middle.": "",
-    "Start column": "",
-    "Start row": ""
+    "Start on": "",
+    "The workspace every monitor starts on: the middle of its workspaces (the middle cell of a grid), or its first.": ""
   }
 }

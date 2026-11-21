@@ -757,7 +757,7 @@ Singleton {
     };
   }
 
-  // Remaps the workspaces on a layout change, starts a grid at its start cell
+  // Remaps the workspaces on a layout change, starts them on their start workspace
   property WorkspaceRemap _remap: WorkspaceRemap {
     manager: root
   }

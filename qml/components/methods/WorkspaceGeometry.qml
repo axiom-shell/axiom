@@ -464,40 +464,36 @@ QtObject {
     return best;
   }
 
-  // The start workspace of a `cols` × `rows` grid block whose first id
-  // is `base` (ids run along each row, then down the rows): the cell at
-  // `col`, `row` (1-based from the top left), each clamped into the grid
-  // (a start past a grid made smaller is its last column or row); null
-  // on either is the middle of that axis, after the middle with an even
-  // count (right, down)
-  function startWorkspace(base, cols, rows, col, row) {
-    const c = Math.max(1, cols);
-    const r = Math.max(1, rows);
-    const at = (n, count) => (n > 0 ? Math.min(n, count) : root.middleOf(count)) - 1;
-    return base + at(row, r) * c + at(col, c);
+  // The start workspace of a `cols` × `rows` block whose first id is
+  // `base` (ids run along each row, then down the rows; a perMonitor
+  // block is one row): with `cell` "first" its first id, with "middle"
+  // its middle cell (middleOf each axis)
+  function startWorkspace(base, cols, rows, cell) {
+    if (cell === "first")
+      return base;
+    return base + (root.middleOf(rows) - 1) * Math.max(1, cols) + root.middleOf(cols) - 1;
   }
 
   // The middle of `count` columns or rows, 1-based: after the middle with
-  // an even count (right, down). A grid's start cell when none is chosen
+  // an even count (right, down)
   function middleOf(count) {
     return Math.floor(Math.max(1, count) / 2) + 1;
   }
 
-  // Every monitor to its grid block's start cell (startWorkspace at
-  // `col`, `row`), for a grid's start: remapWorkspaces' { focus, changed }
-  // (focus: every monitor, the focused one last, as applyRemap takes it).
-  // With `untouched`, only monitors still where the compositor started
-  // them go: on their block's first id, or outside their block (one
-  // Hyprland numbered on); the rest keep the one they show. monitors:
-  // [{ name, block, active, focused }] (remapWorkspaces'); `size` ids a
-  // block
-  function startFocus(monitors, size, cols, rows, col, row, untouched) {
+  // Every monitor to its block's start workspace (startWorkspace with
+  // `cell`): remapWorkspaces' { focus, changed } (focus: every monitor,
+  // the focused one last, as applyRemap takes it). With `untouched`, only
+  // monitors still where the compositor started them go: on their block's
+  // first id, or outside their block (one Hyprland numbered on); the rest
+  // keep the one they show. monitors: [{ name, block, active, focused }]
+  // (remapWorkspaces'); `size` ids a block
+  function startFocus(monitors, size, cols, rows, cell, untouched) {
     const focus = (monitors ?? []).map(m => {
       const base = m.block * size + 1;
       const fresh = m.active === base || m.active < base || m.active >= base + size;
       return {
         "monitor": m.name,
-        "id": !untouched || fresh ? root.startWorkspace(base, cols, rows, col, row) : m.active,
+        "id": !untouched || fresh ? root.startWorkspace(base, cols, rows, cell) : m.active,
         "active": m.active,
         "focused": !!m.focused
       };
