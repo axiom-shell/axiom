@@ -43,6 +43,8 @@ ColumnLayout {
   readonly property real unit: Math.max(Math.floor((root.width - Widget.spacing / 2 * 14) / 15), root._minUnit)
   // "Super", the widest blank label, on its 1.25-unit key (Shift and Caps sit on wider keys)
   readonly property real _minUnit: Math.ceil((modMetrics.advanceWidth + Widget.px(4) - Widget.spacing / 2 * 0.25) / 1.25)
+  // A key's height (a row's, before it is built)
+  readonly property real _keyHeight: Math.round(Widget.height * (root.tall ? 1.9 : 0.9))
   // The main block's width, which every row is centred to
   readonly property real blockWidth: root.unit * 15 + Widget.spacing / 2 * 14
 
@@ -71,7 +73,7 @@ ColumnLayout {
     readonly property string icon: keyButton.blank ? "" : root.iconOf(keyButton.entry.key)
     readonly property string source: keyButton.blank ? "" : root.sourceOf(keyButton.entry.key)
 
-    implicitHeight: Math.round(Widget.height * (root.tall ? 1.9 : 0.9))
+    implicitHeight: root._keyHeight
 
     Surface {
       id: face
@@ -188,19 +190,27 @@ ColumnLayout {
       Repeater {
         model: KeyMap.rows
 
-        delegate: Row {
+        // A job a row, held at a key's height so the rows don't jump as
+        // they arrive
+        delegate: StreamedLoader {
           id: keyRow
           required property var modelData
           Layout.alignment: Qt.AlignHCenter
-          spacing: Widget.spacing / 2
+          Layout.preferredHeight: root._keyHeight
+          rise: false
+          label: "keyboard row"
 
-          Repeater {
-            model: keyRow.modelData
+          sourceComponent: Row {
+            spacing: Widget.spacing / 2
 
-            delegate: KeyButton {
-              required property var modelData
-              entry: modelData
-              width: root.unit * modelData.width + Widget.spacing / 2 * (modelData.width - 1)
+            Repeater {
+              model: keyRow.modelData
+
+              delegate: KeyButton {
+                required property var modelData
+                entry: modelData
+                width: root.unit * modelData.width + Widget.spacing / 2 * (modelData.width - 1)
+              }
             }
           }
         }

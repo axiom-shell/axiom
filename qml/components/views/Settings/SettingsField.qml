@@ -119,10 +119,13 @@ SchemaFormRow {
     anchors.margins: -Widget.spacing / 2
   }
 
-  Loader {
+  // Its own job: an `x-row` is a whole block of its own
+  StreamedLoader {
     id: customRow
     width: parent.width
-    active: root.custom !== ""
+    rise: false
+    label: `settings row ${root.custom}`
+    wanted: root.custom !== ""
     Component.onCompleted: {
       if (root.custom !== "")
         customRow.setSource(Qt.resolvedUrl(root.custom + ".qml"), {
