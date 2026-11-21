@@ -19,6 +19,9 @@ Item {
   required property bool loaded
   // The overlay is open (shown) on its screen
   required property bool overlayOpen
+  // The overlay opened reduced (OverlayPanel.reduced): a page switch fades
+  // only
+  property bool reduced: false
   // The screen it's on and the drawn px the page may take (OverlayPages)
   required property var screen
   required property real roomWidth
@@ -41,7 +44,7 @@ Item {
   readonly property bool buildHeld: !(root.current && root.overlayOpen)
   // Still on screen, sliding out after another page took its place
   property bool _leaving: false
-  readonly property real _shift: Math.max(Widget.spacing * 3, Math.round(root.drawnWidth * 0.06))
+  readonly property real _shift: root.reduced ? 0 : Math.max(Widget.spacing * 3, Math.round(root.drawnWidth * 0.06))
 
   anchors.fill: parent
   visible: root.current || root._leaving

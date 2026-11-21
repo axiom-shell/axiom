@@ -8,6 +8,7 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.hosts.popout
 // Imported (though views load by URL) so qs scans what they import and
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
@@ -42,12 +43,20 @@ ReservedAreaWindow {
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
     PopoutManager.closeOn(root.screen?.name ?? "")
+  // This opening draws reduced effects (Overlay.reduceFullscreen): decided
+  // at open, so a window going fullscreen while it's open changes nothing
+  // until the next open
+  property ClosedLatch _reduced: ClosedLatch {
+    source: OverlayConfig.reduceFullscreen && root.fullscreen
+    closed: !root.isOpen
+  }
+  readonly property bool reduced: root._reduced.value ?? false
   // Closed, it waits off the edge it slides in from (Overlay.animation),
-  // or in place, faded out
-  readonly property bool _fades: OverlayConfig.animation === "fade"
+  // or in place, faded out: also reduced
+  readonly property bool fades: OverlayConfig.animation === "fade" || root.reduced
   // The window's height, as last mapped full size (`pageArea.roomHeight`
   // holds it while idle, a pixel)
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? pageArea.roomHeight + OverlayConfig.navigatorRoom : -(pageArea.roomHeight + OverlayConfig.navigatorRoom)
+  property real slideOffset: isOpen || fades ? 0 : OverlayConfig.animation === "bottom" ? pageArea.roomHeight + OverlayConfig.navigatorRoom : -(pageArea.roomHeight + OverlayConfig.navigatorRoom)
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
@@ -206,7 +215,7 @@ ReservedAreaWindow {
   Item {
     id: slideContainer
     anchors.fill: parent
-    opacity: root.steppedAside || (root._fades && !root.isOpen) ? 0 : 1
+    opacity: root.steppedAside || (root.fades && !root.isOpen) ? 0 : 1
     Glide on opacity {
       duration: Appearance.animNormal
     }
@@ -271,6 +280,7 @@ ReservedAreaWindow {
         id: overlayPages
         anchors.centerIn: parent
         open: root.isOpen
+        reduced: root.reduced
         mapped: root.visible
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
