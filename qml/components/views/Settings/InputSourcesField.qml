@@ -176,109 +176,118 @@ ColumnLayout {
   Repeater {
     model: root.shown.length
 
-    delegate: ItemBox {
-      id: row
-      dense: true
-      // The listed row, and the source's index in the list
+    // A job a row (the engine rows' combo boxes are the heavy part)
+    delegate: StreamedLoader {
+      id: slot
       required property int index
-      readonly property int at: root.shown[index] ?? -1
-      readonly property var source: root.sources[at] ?? {}
-      readonly property bool ime: source.kind === "ime"
-      readonly property var engine: ime ? root.engineOf(source) : null
+      Layout.fillWidth: true
+      rise: false
+      label: "keyboard layout row"
 
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing
+      sourceComponent: ItemBox {
+        id: row
+        dense: true
+        // The listed row, and the source's index in the list
+        readonly property int index: slot.index
+        readonly property int at: root.shown[index] ?? -1
+        readonly property var source: root.sources[at] ?? {}
+        readonly property bool ime: source.kind === "ime"
+        readonly property var engine: ime ? root.engineOf(source) : null
 
-        StyledIcon {
-          text: row.ime ? "translate" : "keyboard"
-          tone: "muted"
-        }
-
-        ColumnLayout {
+        RowLayout {
           Layout.fillWidth: true
-          spacing: 0
+          spacing: Widget.spacing
 
-          StyledLabel {
-            Layout.fillWidth: true
-            overflow: "line"
-            text: row.ime ? (row.engine?.displayName || row.source.engine) : InputSources.describe(root.registry, row.source.layout, row.source.variant)
+          StyledIcon {
+            text: row.ime ? "translate" : "keyboard"
+            tone: "muted"
           }
 
-          StyledLabel {
+          ColumnLayout {
             Layout.fillWidth: true
-            overflow: "line"
-            tone: row.ime && root.chosenRuns && !row.engine ? "warning" : "muted"
-            role: "caption"
-            text: {
-              if (!row.ime)
-                return [row.source.layout, row.source.variant].filter(t => t).join(" ");
-              if (root.chosenRuns && !row.engine)
-                return I18n.tr("{0}: not installed in {1}", row.source.engine, root.framework);
-              return row.source.engine;
+            spacing: 0
+
+            StyledLabel {
+              Layout.fillWidth: true
+              overflow: "line"
+              text: row.ime ? (row.engine?.displayName || row.source.engine) : InputSources.describe(root.registry, row.source.layout, row.source.variant)
+            }
+
+            StyledLabel {
+              Layout.fillWidth: true
+              overflow: "line"
+              tone: row.ime && root.chosenRuns && !row.engine ? "warning" : "muted"
+              role: "caption"
+              text: {
+                if (!row.ime)
+                  return [row.source.layout, row.source.variant].filter(t => t).join(" ");
+                if (root.chosenRuns && !row.engine)
+                  return I18n.tr("{0}: not installed in {1}", row.source.engine, root.framework);
+                return row.source.engine;
+              }
             }
           }
-        }
 
-        // An engine's typing layout: one of the xkb sources', or the first
-        StyledLabel {
-          visible: row.ime
-          text: I18n.tr("Types on")
-          role: "caption"
-        }
+          // An engine's typing layout: one of the xkb sources', or the first
+          StyledLabel {
+            visible: row.ime
+            text: I18n.tr("Types on")
+            role: "caption"
+          }
 
-        StyledComboEntry {
-          id: typing
-          readonly property string own: String(row.source.layout ?? "") === "" ? "" : row.source.layout + "|" + (row.source.variant ?? "")
-          visible: row.ime
-          Layout.preferredWidth: Widget.px(200)
-          options: {
-            const list = [
-              {
-                "value": "",
-                "label": I18n.tr("The first layout")
-              }
-            ].concat(root.typingLayouts);
-            // One no xkb source has (taken from a framework's list) stays shown
-            if (typing.own !== "" && !list.some(o => o.value === typing.own))
-              list.push({
-                "value": typing.own,
-                "label": InputSources.describe(root.registry, row.source.layout, row.source.variant)
+          StyledComboEntry {
+            id: typing
+            readonly property string own: String(row.source.layout ?? "") === "" ? "" : row.source.layout + "|" + (row.source.variant ?? "")
+            visible: row.ime
+            Layout.preferredWidth: Widget.px(200)
+            options: {
+              const list = [
+                {
+                  "value": "",
+                  "label": I18n.tr("The first layout")
+                }
+              ].concat(root.typingLayouts);
+              // One no xkb source has (taken from a framework's list) stays shown
+              if (typing.own !== "" && !list.some(o => o.value === typing.own))
+                list.push({
+                  "value": typing.own,
+                  "label": InputSources.describe(root.registry, row.source.layout, row.source.variant)
+                });
+              return list;
+            }
+            value: typing.own
+            onPicked: value => {
+              const at = value.indexOf("|");
+              root.edit(row.at, at < 0 ? {
+                "layout": "",
+                "variant": ""
+              } : {
+                "layout": value.slice(0, at),
+                "variant": value.slice(at + 1)
               });
-            return list;
+            }
           }
-          value: typing.own
-          onPicked: value => {
-            const at = value.indexOf("|");
-            root.edit(row.at, at < 0 ? {
-              "layout": "",
-              "variant": ""
-            } : {
-              "layout": value.slice(0, at),
-              "variant": value.slice(at + 1)
-            });
+
+          StyledIconButton {
+            iconText: "arrow_upward"
+            tooltipText: I18n.tr("Move up")
+            enabled: row.index > 0
+            onClicked: root.move(row.index, -1)
           }
-        }
 
-        StyledIconButton {
-          iconText: "arrow_upward"
-          tooltipText: I18n.tr("Move up")
-          enabled: row.index > 0
-          onClicked: root.move(row.index, -1)
-        }
+          StyledIconButton {
+            iconText: "arrow_downward"
+            tooltipText: I18n.tr("Move down")
+            enabled: row.index < root.shown.length - 1
+            onClicked: root.move(row.index, 1)
+          }
 
-        StyledIconButton {
-          iconText: "arrow_downward"
-          tooltipText: I18n.tr("Move down")
-          enabled: row.index < root.shown.length - 1
-          onClicked: root.move(row.index, 1)
-        }
-
-        StyledIconButton {
-          iconText: "close"
-          tooltipText: I18n.tr("Remove")
-          kind: "danger"
-          onClicked: root.remove(row.at)
+          StyledIconButton {
+            iconText: "close"
+            tooltipText: I18n.tr("Remove")
+            kind: "danger"
+            onClicked: root.remove(row.at)
+          }
         }
       }
     }
@@ -477,10 +486,14 @@ ColumnLayout {
     }
   }
 
-  // Outside managed mode: what to add by hand
-  InputMethodSetup {
+  // Outside managed mode: what to add by hand (a job of its own)
+  StreamedLoader {
     id: setupLines
+    readonly property bool shown: (setupLines.item as InputMethodSetup)?.shown === true
     visible: !root.layoutsOnly && root.supported && setupLines.shown
     Layout.fillWidth: true
+    rise: false
+    label: "input method setup"
+    sourceComponent: InputMethodSetup {}
   }
 }

@@ -4,17 +4,20 @@ import qs.components.methods
 
 // Spreads building UI over frames: a page's modules (ModuleGrid.stream)
 // and tool pages' sections (StreamedLoader) queue a job each, and the jobs
-// run a few per 16 ms step, within a 6 ms budget (at least one a step,
+// run a few per 16 ms step, within a 12 ms budget (at least one a step,
 // however long it takes), so showing a page never waits on all of it.
 // Jobs run in the order queued, those whose owner is visible first (the
 // page shown before its neighbours); a `first` job (the settings sidebar)
 // goes ahead of all of them, in the order the first ones were queued. A job
 // that alone takes over a frame is logged (`--debug`), naming its label.
+// Jobs of an owner on an overlay page that isn't current, or while the
+// overlay is closed, wait (BuildOrder.holderOf: the page's `buildHeld`).
 QtObject {
   id: root
 
-  // Jobs still waiting
-  readonly property int pending: root._queue.length
+  // Jobs that can run now: queued and not held (BuildOrder.runnable; tracks
+  // each holder's `buildHeld`)
+  readonly property int pending: BuildOrder.runnable(root._queue)
 
   // Queues `job` (a function building something) for `owner` (an Item;
   // its jobs are dropped when it cancels). `first` puts it ahead of every
@@ -24,7 +27,8 @@ QtObject {
       "owner": owner,
       "job": job,
       "label": label ?? "",
-      "first": first === true
+      "first": first === true,
+      "holder": BuildOrder.holderOf(owner)
     };
     root._queue = BuildOrder.enqueue(root._queue, entry);
   }
@@ -37,7 +41,7 @@ QtObject {
 
   // -- Private --
   property var _queue: []
-  readonly property int _budget: 6
+  readonly property int _budget: 12
 
   function _next() {
     return BuildOrder.next(root._queue);
@@ -47,6 +51,8 @@ QtObject {
     const start = Date.now();
     do {
       const entry = root._next();
+      if (entry === null)
+        return;
       const before = Date.now();
       try {
         entry.job();
@@ -59,13 +65,13 @@ QtObject {
       const took = Date.now() - before;
       if (took > 16)
         console.log(`Built ${entry.label || "a queued job"} in ${took} ms`);
-    } while (root._queue.length > 0 && Date.now() - start < root._budget)
+    } while (root.pending > 0 && Date.now() - start < root._budget)
   }
 
   property Timer _timer: Timer {
     interval: 16
     repeat: true
-    running: root._queue.length > 0
+    running: root.pending > 0
     onTriggered: root._step()
   }
 }

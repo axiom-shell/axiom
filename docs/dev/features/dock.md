@@ -45,6 +45,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
   - while the overlay is open on its screen, unless the dock reserves its strip;
   - while any popout covers it. Its `PopoutClaim`, a resident, has yielded (see [Popout registry](../popouts/registry.md)).
   - A reserving dock keeps its zone while put away.
+  - Its `EdgeTrigger` stays mapped, with no input (`takesInput: false`: an empty mask, its MouseArea disabled and `containsMouse` false), so an overlay opening or a popout over the dock doesn't delete the trigger's window and make it again.
 
 ### Placement
 **Held** (`detached`, the default):
