@@ -293,7 +293,9 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   property bool _optionsAgain: false
 
   function _readOptions([gaps, split, blurEnabled, blurSize, blurPasses, animationsEnabled, animations]) {
-    root.gapsOut = HyprState.gapSides(gaps) ?? root.gapsOut;
+    const nextGaps = HyprState.gapSides(gaps);
+    if (nextGaps && !Utils.deepEqual(nextGaps, root.gapsOut))
+      root.gapsOut = nextGaps;
     const multiplier = Number(split?.float);
     if (multiplier > 0)
       root.splitWidthMultiplier = multiplier;
@@ -758,8 +760,9 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     function onRawEvent(event) {
       root._announce(event);
       // Layer surfaces (including our own popouts) don't affect clients,
-      // and custom events are axiom's own (the window switcher's keys)
-      if (event.name === "openlayer" || event.name === "closelayer" || event.name === "custom")
+      // custom events are axiom's own (the window switcher's keys) and a
+      // keyboard layout switch changes none
+      if (event.name === "openlayer" || event.name === "closelayer" || event.name === "custom" || event.name === "activelayout")
         return;
       if (event.name === "configreloaded")
         root.layerApplied();

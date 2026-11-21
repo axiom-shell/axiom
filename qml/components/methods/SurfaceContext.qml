@@ -360,16 +360,14 @@ QtObject {
    *     overlay is open on its screen), menuZone (what integrated edge
    *     menus reserve on its edge), bare (over a fullscreen window, which
    *     covers the bars and the border: the host passes its frame and
-   *     reservations as 0), under (whether the host's window is under the
-   *     bars now: it keeps slidesUnder's answer while open, and goes over a
-   *     fullscreen window; absent, slidesUnder)
+   *     reservations as 0)
    * Returns EdgeAttach.place's result and: merged, onPill, detached,
    *   straight, backfill, attachClearance, attachFill, attachAt (across, from the
    *   screen edge), attachBase (where it goes by default: on the stroke of
    *   what reserves the edge), attachFromBar (the same from the followed
    *   bar's outer edge), barOuter, ownSink, shadow, stretchFrom, stretchTo
    *   (where a joined submenu's reach along its pill stays), slidesUnder,
-   *   slidesFromEdge, slideFrom
+   *   slidesFromEdge, frameLine (the one it used; slideFrom starts from it)
    */
   function layout(f, p) {
     const bar = p.bar ?? null;
@@ -478,12 +476,20 @@ QtObject {
       // overlay, its window on the Overlay layer) from the frame line, cut
       // there, so it comes out of the bar or border rather than over it
       "slidesFromEdge": detached,
-      // How far back from its attach edge it starts: the screen edge under
-      // the bars, else the frame line. Not gated on slidesFromEdge, which a
-      // host latches while open; under the bars as its window is (`under`,
-      // which a host keeps while open), not as it would open now
-      "slideFrom": detached ? Math.max(0, attachAt - ((p.under ?? slidesUnder) ? 0 : (p.frameLine ?? 0))) : 0
+      "frameLine": p.frameLine ?? 0
     });
+  }
+
+  /**
+   * How far back from its attach edge a detached box starts, from its
+   * layout: the screen edge under the bars, else the frame line. Not gated
+   * on slidesFromEdge, which a host latches while open; under the bars as
+   * its window is (`under`, which a host keeps while open, and which goes
+   * false over a fullscreen window), not as it would open now. `under`
+   * undefined: the layout's slidesUnder.
+   */
+  function slideFrom(layout, under) {
+    return layout.detached ? Math.max(0, layout.attachAt - ((under ?? layout.slidesUnder) ? 0 : layout.frameLine)) : 0;
   }
 
   /**

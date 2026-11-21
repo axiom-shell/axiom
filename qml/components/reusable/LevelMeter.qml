@@ -31,8 +31,9 @@ Item {
     border.width: 0
 
     Rectangle {
-      // Never shorter than its rounded ends while there's anything to show
-      readonly property real length: root._share > 0 ? Math.max(root.thickness, (root.vertical ? track.height : track.width) * root._share) : 0
+      // Never shorter than its rounded ends while there's anything to show,
+      // in whole px: a value moving less than one starts no glide
+      readonly property real length: root._share > 0 ? Math.round(Math.max(root.thickness, (root.vertical ? track.height : track.width) * root._share)) : 0
       x: 0
       y: root.vertical ? track.height - height : 0
       width: root.vertical ? track.width : length
