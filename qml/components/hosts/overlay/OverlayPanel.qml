@@ -19,10 +19,25 @@ import qs.components.views.Settings // qmllint disable unused-imports
 
 // The overlay's window on one screen (shell/Overlay): opens and closes the
 // sliding box that holds OverlayPages, and closes on Escape or a click outside.
+// After a close it stays mapped and inert, its pages built, for `keptFor`
+// (`kept`), so opening again is a slide, not a rebuild.
 ReservedAreaWindow {
   id: root
 
   property bool isOpen: false
+  // How long it stays kept after closing, in ms
+  readonly property int keptFor: 10000
+  // Closed, its window staying mapped, its pages built: through the close
+  // slide, then inert (`idle`) until `keptFor` passes, or a fullscreen window
+  // shows on its screen. From the close on, so the windows that keep their
+  // place for it (the backdrop's, the blur window over it) never unmap between
+  property bool kept: false
+  readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
+  onFullscreenChanged: if (root.fullscreen && root.kept) {
+    keptTimer.stop();
+    root.kept = false;
+    root.visible = false;
+  }
   // What's open on its screen and would end up under it (a popout keeps
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
@@ -30,7 +45,9 @@ ReservedAreaWindow {
   // Closed, it waits off the edge it slides in from (Overlay.animation),
   // or in place, faded out
   readonly property bool _fades: OverlayConfig.animation === "fade"
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? height : -height
+  // The window's height, as last mapped full size (`pageArea.roomHeight`
+  // holds it while idle, a pixel)
+  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? pageArea.roomHeight + OverlayConfig.navigatorRoom : -(pageArea.roomHeight + OverlayConfig.navigatorRoom)
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
@@ -40,18 +57,31 @@ ReservedAreaWindow {
   layerNamespace: "axiom-overlay"
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
-  WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+  WlrLayershell.keyboardFocus: !root.takesInput ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+  // Once the close slide is over: it keeps taking input until then
+  idle: root.kept && !hideTimer.running
 
   function open() {
     hideTimer.stop();
+    keptTimer.stop();
+    // Before it takes focus: an invisible item can't
+    root.kept = false;
     visible = true;
     isOpen = true;
     slideContainer.forceActiveFocus();
   }
 
   function close() {
+    // (closing a closed one, kept or not, changes nothing)
+    if (!root.isOpen)
+      return;
     isOpen = false;
+    // (the timer first: `idle` reads it)
     hideTimer.start();
+    // Not while a fullscreen window is up: nothing keeps a mapped window over it
+    root.kept = !root.fullscreen;
+    if (root.kept)
+      keptTimer.restart();
   }
 
   function toggle() {
@@ -75,7 +105,16 @@ ReservedAreaWindow {
     id: hideTimer
     interval: Appearance.animSlow
     repeat: false
+    onTriggered: if (!root.kept)
+      root.visible = false
+  }
+
+  Timer {
+    id: keptTimer
+    interval: root.keptFor
+    repeat: false
     onTriggered: {
+      root.kept = false;
       root.visible = false;
     }
   }
@@ -126,6 +165,7 @@ ReservedAreaWindow {
     screen: root.screen
     window: root
     shown: root.isOpen
+    kept: root.kept
     onSyncRequested: shown => shown ? root.open() : root.close()
   }
 
@@ -172,6 +212,8 @@ ReservedAreaWindow {
     }
     // Keys nothing inside the overlay handled end up here
     focus: true
+    // Nothing is drawn while idle (an opacity of 0 would still render it)
+    visible: !root.idle
     Keys.onEscapePressed: event => {
       if (OverlayConfig.closeOnEscape && root.isOpen)
         root.close();
@@ -220,15 +262,16 @@ ReservedAreaWindow {
       // until the first map, estimate from the screen less its margins
       property real roomWidth: root.screen.width - root.margins.left - root.margins.right
       property real roomHeight: root.screen.height - root.margins.top - root.margins.bottom - OverlayConfig.navigatorRoom
-      onWidthChanged: if (pageArea.width > 0)
+      onWidthChanged: if (pageArea.width > 0 && !root.idle)
         pageArea.roomWidth = pageArea.width
-      onHeightChanged: if (pageArea.height > 0)
+      onHeightChanged: if (pageArea.height > 0 && !root.idle)
         pageArea.roomHeight = pageArea.height
 
       OverlayPages {
         id: overlayPages
         anchors.centerIn: parent
-        open: root.visible
+        open: root.isOpen
+        mapped: root.visible
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
         maxHeight: pageArea.roomHeight - OverlayConfig.cardSpacing * 2
@@ -257,7 +300,7 @@ ReservedAreaWindow {
       currentIndex: overlayPages.currentIndex
       pages: overlayPages.pages
       labels: OverlayConfig.navigatorLabels
-      maxWidth: slideContainer.width - Widget.padding * 4
+      maxWidth: pageArea.roomWidth - Widget.padding * 4
       onPrevious: overlayPages.step(-1)
       onNext: overlayPages.step(1)
       onSelect: index => overlayPages.goTo(index)

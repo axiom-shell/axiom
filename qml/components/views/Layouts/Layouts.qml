@@ -35,7 +35,7 @@ BaseView {
   }
 
   Component.onCompleted: OverlayManager.loadLayouts()
-  // The page unloads when the overlay closes (or it pages two away)
+  // The page unloads when the overlay's window goes (`keptFor` after a close) (or it pages two away)
   Component.onDestruction: OverlayManager.menus.stopPreviewing()
 
   LayoutsEditorLayout {
