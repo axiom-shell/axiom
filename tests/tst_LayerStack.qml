@@ -45,6 +45,13 @@ TestCase {
     verify(LayerStack.layers.find(l => l.namespace === "blur-backing-overlay").noAnim);
   }
 
+  // The overlay's unblurred twin: stacked as the overlay, in no blur list
+  function test_overlay_reduced() {
+    compare(order("overlay-reduced"), order("overlay"));
+    for (const list of [LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay, LayerStack.blurChrome, LayerStack.blurBacked])
+      verify(!list.includes("overlay-reduced"));
+  }
+
   // The shadows apart from the blur (no blurThreshold): where each blur
   // window sits, under the chrome it shades, and never blurred
   function test_shadows_apart_order() {

@@ -23,6 +23,9 @@ Item {
   readonly property real roomHeight: root.maxHeight - OverlayConfig.boxPadding * 2
   // Whether the overlay is open (shown, not closing)
   property bool open: false
+  // Whether it opened reduced (OverlayPanel.reduced): no shadow, and the
+  // pages fade between each other
+  property bool reduced: false
   // Whether its window is mapped (open, closing or kept): the pages stay
   // loaded while it is, and unload when it isn't
   property bool mapped: false
@@ -202,7 +205,7 @@ Item {
     active: root.mapped
     shadowColor: Style.shadowSoft
     look: ({
-        "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart),
+        "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart) && !root.reduced,
         "shadowSize": Widget.px(16)
       })
   }
@@ -245,6 +248,7 @@ Item {
           direction: root.direction
           loaded: root.isLoaded(index)
           overlayOpen: root.open
+          reduced: root.reduced
           screen: root.screen
           roomWidth: root.roomWidth
           roomHeight: root.roomHeight
@@ -288,6 +292,7 @@ Item {
         direction: root.direction
         loaded: root.isLoaded(root.editorIndex)
         overlayOpen: root.open
+        reduced: root.reduced
         screen: root.screen
         roomWidth: root.roomWidth
         roomHeight: root.roomHeight
