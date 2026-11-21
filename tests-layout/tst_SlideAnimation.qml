@@ -2,9 +2,9 @@ import QtQuick
 import QtTest
 import qs.components.hosts.popout
 
-// SlideAnimation: the states own the slide offset and opacity, so a surface
-// made hidden follows its size while hidden and its first open slides from
-// where every later one does.
+// SlideAnimation: the states own where it slides, from its place (slideX,
+// slideY) and its opacity, so a surface made hidden follows its size while
+// hidden and its first open slides from where every later one does.
 TestCase {
   id: root
 
@@ -14,12 +14,20 @@ TestCase {
   width: 400
   height: 400
 
+  Harness {
+    id: harness
+  }
+
   Component {
     id: slideComp
 
     SlideAnimation {
       animationDuration: 100
     }
+  }
+
+  function initTestCase() {
+    harness.configure({});
   }
 
   function make(props) {
@@ -69,10 +77,8 @@ TestCase {
     s[sizeProp] = size;
     compare(s[prop], size);
     s.active = true;
-    wait(20);
-    verify(s[prop] > 0);
+    compare(s[prop], size);
     tryCompare(s, prop, 0, 1000);
-    return s;
   }
 
   function test_growsWhileHidden() {
@@ -112,15 +118,12 @@ TestCase {
     wait(50);
     s.width = 120;
     s.active = true;
-    wait(20);
     const first = s.slideX;
-    verify(first > 0);
+    compare(first, 120);
     tryCompare(s, "slideX", 0, 1000);
     s.active = false;
     tryCompare(s, "slideX", 120, 1000);
     s.active = true;
-    wait(20);
-    // Timing jitter: the same time into the slide, within a few px
-    verify(Math.abs(s.slideX - first) < 15);
+    compare(s.slideX, first);
   }
 }

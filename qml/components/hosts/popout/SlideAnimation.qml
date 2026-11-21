@@ -98,9 +98,9 @@ Item {
       transitions: Transition {
         // Between shown and hidden only: entering the first state as it is made
         // (from the base state "") is instant, so a surface made hidden and shown
-        // at once slides in from its hidden place; and bound, so while hidden the
-        // content follows its size: nothing writes slideX/slideY/opacity but
-        // these states
+        // at once slides in from its hidden place. Only the states set where it
+        // slides (slideX, slideY) and its opacity, bound, so while hidden the
+        // content follows its size.
         from: "visible,hidden"
         to: "visible,hidden"
         NumberAnimation {
