@@ -17,6 +17,9 @@ QtObject {
   readonly property string navigatorLabels: ConfigManager.live.Overlay.navigatorLabels
   // "top" | "bottom" (the edge it slides in from) | "fade"
   readonly property string animation: ConfigManager.live.Overlay.animation
+  // Whether it fades in, switches pages without sliding and draws no
+  // shadow on a monitor with a fullscreen window
+  readonly property bool reduceFullscreen: ConfigManager.live.Overlay.reduceFullscreen
   readonly property bool showBackdrop: ConfigManager.live.Overlay.showBackdrop
   // 0-1 opacity of the backdrop
   readonly property real backdrop: ConfigManager.live.Overlay.backdrop / 100

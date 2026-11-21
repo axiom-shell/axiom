@@ -4713,6 +4713,8 @@
     "Date: newest first.": "",
     "Icons per workspace": "",
     "As a submenu it closes on leave after this delay.": "",
-    "How long the pointer rests on the row before the menu opens.": ""
+    "How long the pointer rests on the row before the menu opens.": "",
+    "On a monitor with a fullscreen window, the overlay fades in instead of sliding, switches pages without sliding and draws no shadow.": "",
+    "Reduce effects over fullscreen": ""
   }
 }
