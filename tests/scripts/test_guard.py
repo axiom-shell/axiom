@@ -105,12 +105,13 @@ class Bash(LiveSession, unittest.TestCase):
         self.blocks("ydotool mousemove 10 10", "hyprctl dispatch movecursor 10 10", "wlrctl pointer move 5 5",
                     "hyprctl eval 'hl.dsp.cursor.move(1, 1)'", "hc dispatch 'hl.dsp.cursor.move(1, 1)'", "hc eval 'hl.dsp.cursor.move(1,1)'")
         self.allows("grep -rn movecursor qml", "rg 'hl.dsp.cursor.move' docs", "git commit -m 'drop hl.dsp.cursor.move and movecursor'",
-                    "echo movecursor")
+                    "echo movecursor", "echo dispatch movecursor", "grep -rn dispatch movecursor qml")
 
     def test_shell_lifecycle(self):
-        self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p qml/shell.qml &")
+        self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p qml/shell.qml &",
+                    "qs -n -c axiom", "qs --debug 1234 -c axiom")
         self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/qml/greeter.qml"',
-                    'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list")
+                    'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list", "qs -n ipc call x y")
 
     def test_leading_cd(self):
         """A leading `cd` moves the relative paths after it"""
@@ -154,6 +155,7 @@ class Bash(LiveSession, unittest.TestCase):
                             "git push --all origin", "git push --branches origin", "git push --mirror origin"):
                 self.assertTrue(denied(command, cwd=main), command)
                 self.assertTrue(denied(f"git -C {main} {command[4:]}", cwd=feature), command)
+            self.assertTrue(denied("git push C HEAD", cwd=main))
             for command in ("git push", "git push origin", "git push origin HEAD", "git push -o ci.skip origin"):
                 self.assertFalse(denied(command, cwd=feature), command)
                 self.assertFalse(denied(f"git -C {feature} {command[4:]}", cwd=main), command)
@@ -186,14 +188,15 @@ class Bash(LiveSession, unittest.TestCase):
         live = {"HYPRLAND_INSTANCE_SIGNATURE": "live", "SWAYSOCK": "/run/sway.live.sock"}
         with mock.patch.dict(os.environ, live):
             self.blocks("hyprctl dispatch exit", "hyprctl dispatch 'hl.dsp.exit()'", "hyprctl eval 'hl.dsp.exit()'", "hyprctl -j dispatch exit",
-                        "hc dispatch 'hl.dsp.exit()'", "hyprshutdown", "swaymsg exit",
+                        "hc dispatch 'hl.dsp.exit()'", "hc dispatch exit", "hyprshutdown", "swaymsg exit",
                         "swaymsg -- exit", "swaymsg 'exit'", "swaymsg -q exit", "HYPRLAND_INSTANCE_SIGNATURE=live hyprctl dispatch exit",
                         "SWAYSOCK=/run/sway.live.sock swaymsg exit")
             self.allows("HYPRLAND_INSTANCE_SIGNATURE=nested hyprctl dispatch exit", "hyprctl -i 1 dispatch exit",
                         "hyprctl --instance 1 eval 'hl.dsp.exit()'", "HYPRLAND_INSTANCE_SIGNATURE=nested hyprshutdown",
                         "swaymsg -s /tmp/sway.sock exit", "SWAYSOCK=/tmp/sway.sock swaymsg exit", "swaymsg --socket /tmp/sway.sock exit",
                         "hyprctl dispatch workspace 1", "hyprctl --batch 'keyword a b ; dispatch workspace 1'", "hyprctl monitors",
-                        "swaymsg -t get_tree", "swaymsg workspace 1", "grep -n 'dispatch exit' docs")
+                        "swaymsg -t get_tree", "swaymsg workspace 1", "grep -n 'dispatch exit' docs",
+                        "grep -rn dispatch exit qml", "rg eval exit")
         with mock.patch.dict(os.environ, live), mock.patch.dict(os.environ, {"HYPRLAND_INSTANCE_SIGNATURE": ""}):
             self.blocks("hyprctl dispatch exit")
 
@@ -338,7 +341,7 @@ class Bash(LiveSession, unittest.TestCase):
 
     def test_screen_share_portal(self):
         self.blocks("systemctl --user restart xdg-desktop-portal", "systemctl --user stop xdg-desktop-portal-hyprland.service",
-                    "pkill xdg-desktop-portal", "killall xdg-desktop-portal-wlr",
+                    "pkill xdg-desktop-portal", "killall xdg-desktop-portal-wlr", 'kill "$(pidof xdg-desktop-portal)"',
                     "echo x >> ~/.config/hypr/xdph.conf", "cp /tmp/c ~/.config/xdg-desktop-portal-wlr/config",
                     "sed -i s/a/b/ ~/.config/xdg-desktop-portal/niri-portals.conf", "tee ~/.config/xdg-desktop-portal/portals.conf",
                     "cp /tmp/xdph.conf ~/.config/hypr/", "cp /tmp/niri-portals.conf ~/.config/xdg-desktop-portal/")
@@ -597,6 +600,11 @@ class Hook(unittest.TestCase):
                 decision = json.loads(out)["hookSpecificOutput"]
                 self.assertEqual(decision["permissionDecision"], "deny")
                 self.assertIn("CLAUDE.md › Never", decision["permissionDecisionReason"])
+        for call in ("x", {"tool_name": "Bash", "tool_input": "qs kill"}, {"tool_name": "Bash", "tool_input": {"command": None}},
+                     {"tool_name": "Write", "tool_input": {"file_path": 5}}):
+            out = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True, input=json.dumps(call)).stdout
+            self.assertTrue(out, call)
+            self.assertEqual(json.loads(out)["hookSpecificOutput"]["permissionDecision"], "deny", call)
 
 
 if __name__ == "__main__":

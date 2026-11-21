@@ -16,7 +16,8 @@ Known gaps: writes from inside an interpreter (`python3 -c`, `node -e`);
 `hyprctl --batch`; a pipeline continued after a heredoc body (`cat <<EOF |` …
 `sh`); quotes nested in `"$(…)"` hiding a command behind a comment; chmod,
 chown, truncate and `find -delete` on protected paths; a `cd` inside a subshell
-moving later commands; rules see leading words only (`systemctl restart a greetd`);
+moving later commands; an option with a value before an interpreter's script
+(`bash -o pipefail x.sh`, `python3 -W ignore x.py`); `eval "…"`; rules see leading words only (`systemctl restart a greetd`);
 a bare push under `push.default=upstream` on a branch tracking main; the dev config
 (`~/.config/axiom/dev/config.json`), which the live shell runs in dev mode, is not protected.
 """
@@ -66,7 +67,7 @@ HELP_OPTS = {"--help", "-h"}
 VALUE_OPTS = {
     "axiom": {"--socket", "-socket", "--config-dir", "-config-dir", "--tree", "-tree", "--qs", "-qs", "-o", "--kind", "-kind", "--dir", "-dir"},
     "git": {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "-o", "--push-option", "--repo", "--receive-pack", "--exec"},
-    **dict.fromkeys(QS, {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}),
+    **dict.fromkeys(QS, {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "--debug"}),
     "hyprctl": {"-i", "--instance"}, "swaymsg": {"-s", "--socket", "-t", "--type"}, "bluetoothctl": {"-t", "--timeout", "-a", "--agent"},
     "rfkill": {"-o", "--output"}, "gh": {"-R", "--repo"},
     "systemctl": {"-H", "--host", "-M", "--machine", "-p", "--property", "-t", "--type", "-s", "--signal"},
@@ -211,23 +212,22 @@ ASSIGN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", re.S)
 def simple(tokens, exported):
     env = dict(exported)
     i = 0
-    while i < len(tokens) and ASSIGN.match(tokens[i]):
-        env.update([ASSIGN.match(tokens[i]).groups()])
+    while i < len(tokens) and (m := ASSIGN.match(tokens[i])):
+        env.update([m.groups()])
         i += 1
     argv = tokens[i:]
     if not argv:
         exported.update(env)
         return []
     if argv[0] == "export":
-        exported.update(ASSIGN.match(t).groups() for t in argv[1:] if ASSIGN.match(t))
+        exported.update(m.groups() for t in argv[1:] if (m := ASSIGN.match(t)))
         return []
     # Wrappers: judge the command they run
     while argv and Path(argv[0]).name in WRAPPERS:
         wrapper = Path(argv[0]).name
         argv = argv[1:]
-        while argv and (argv[0].startswith("-") or ASSIGN.match(argv[0])):
-            if ASSIGN.match(argv[0]):
-                env.update([ASSIGN.match(argv[0]).groups()])
+        while argv and ((m := ASSIGN.match(argv[0])) or argv[0].startswith("-")):
+            env.update([m.groups()] if m else [])
             argv = argv[2:] if argv[0] in WRAPPERS[wrapper] else argv[1:]
         argv = argv[WRAPPER_POSITIONALS.get(wrapper, 0):]
         if wrapper == "flock" and argv[:1] in (["-c"], ["--command"]):
@@ -249,8 +249,7 @@ def simple(tokens, exported):
 
 
 def resolve(path, cwd, env=None):
-    path = os.path.expanduser(expand_vars(path, env or {}))
-    return (Path(cwd) / path).resolve() if not os.path.isabs(path) else Path(path).resolve()
+    return (Path(cwd) / os.path.expanduser(expand_vars(path, env or {}))).resolve()
 
 
 def expand_vars(value, env):
@@ -264,8 +263,8 @@ CONFIG_HOMES = {HOME / ".config", LIVE_CONFIG.parent.parent}
 
 def path_forms(path, cwd, env):
     """A path as written (`..` folded) and with its links followed."""
-    expanded = os.path.expanduser(expand_vars(path, env))
-    return {Path(os.path.normpath(os.path.join(cwd, expanded))), resolve(path, cwd, env)}
+    target = Path(cwd) / os.path.expanduser(expand_vars(path, env))
+    return {Path(os.path.normpath(target)), target.resolve()}
 
 
 def live_config_path(path, cwd, env):
@@ -366,7 +365,7 @@ def greeter_unsafe(env, args, rest, cwd):
 
 # ----------------------------------------------------------------- rules
 
-# One refusal: `command` is `|`-separated basenames or `*`; `words` are space-separated
+# One refusal: `command` is `|`-separated basenames; `words` are space-separated
 # patterns for the command's leading words (`|`-separated globs, `!` = absent or none of
 # them); `opt` a regex some option must fullmatch; `when(env, args, rest, cwd)` an extra
 # condition (`rest` = the words after the matched ones); `why` follows "Blocked by CLAUDE.md › <section>: "
@@ -377,18 +376,20 @@ BASH_RULES = [
     Rule("hyprlock", "", "don't lock the screen; only the user can type the password."),
     # Simulate cursor movement
     *(Rule(c, w, "don't simulate cursor movement; check logs and reason through bindings, or ask the user to look.")
-      for c, w in (("ydotool|dotool|dotoolc|wlrctl", ""), ("*", "dispatch|eval movecursor*|*cursor.move*"))),
+      for c, w in (("ydotool|dotool|dotoolc|wlrctl", ""), ("hyprctl|hc", "dispatch|eval movecursor*|*cursor.move*"))),
     # Ending the Hyprland, sway or niri session itself: only a nested one may be told to
     *(Rule(c, w, "hyprctl dispatch exit / hyprshutdown / swaymsg exit only on a nested compositor (its HYPRLAND_INSTANCE_SIGNATURE or SWAYSOCK, `hyprctl -i`, `swaymsg -s`), never the live session.",
            when=live_compositor(v, o))
-      for c, w, v, o in (("*", "dispatch|eval exit|*dsp.exit*", "HYPRLAND_INSTANCE_SIGNATURE", {"-i", "--instance"}),
+      for c, w, v, o in (("hyprctl|hc", "dispatch|eval exit|*dsp.exit*", "HYPRLAND_INSTANCE_SIGNATURE", {"-i", "--instance"}),
                          ("hyprshutdown", "", "HYPRLAND_INSTANCE_SIGNATURE", {"-i", "--instance"}),
                          ("swaymsg", "exit", "SWAYSOCK", {"-s", "--socket"}))),
     *(Rule("niri", w, "niri msg output / action quit / load-config-file only on a nested niri (NIRI_SOCKET=<its socket>), never the live session.",
            when=live_compositor("NIRI_SOCKET", set())) for w in ("msg output", "msg action quit|load-config-file")),
     # The shell itself, and its daemon
-    Rule("qs|quickshell", "kill", "the shell runs detached; never stop it from this session (`qs kill` only the greeter instance you started: `qs kill -p <…>/greeter.qml` or `-i <id>`).", when=lambda env, args, rest, cwd: not any(a in {"-i", "--id", "--pid"} or a.endswith("greeter.qml") for a in args)),
-    Rule("qs|quickshell", "", "the shell runs detached; never start another from this session (the windowed greeter: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch>).", when=lambda env, args, rest, cwd: not rest and not (env.get("AXIOM_GREETER") == "1" and any(a.endswith("greeter.qml") for a in args))),
+    Rule("qs|quickshell", "kill", "the shell runs detached; never stop it from this session (`qs kill` only the greeter instance you started: `qs kill -p <…>/greeter.qml` or `-i <id>`).",
+         when=lambda env, args, rest, cwd: not any(a in {"-i", "--id", "--pid"} or a.endswith("greeter.qml") for a in args)),
+    Rule("qs|quickshell", "", "the shell runs detached; never start another from this session (the windowed greeter: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch>).",
+         when=lambda env, args, rest, cwd: not rest and not (env.get("AXIOM_GREETER") == "1" and any(a.endswith("greeter.qml") for a in args))),
     Rule("pkill|killall", "", "don't stop qs or the daemon by name; `qs kill -i <id>` for a nested shell, `axiom --socket <scratch> quit` for a scratch daemon.",
          when=lambda env, args, rest, cwd: names_shell(args)),
     Rule("axiom", "run", "`axiom run` starts a shell on the live display; start a scratch one with XDG_RUNTIME_DIR=<scratch> axiom run --no-shell, or use scripts/dev/nested.sh.", when=axiom_run_live),
@@ -408,7 +409,8 @@ BASH_RULES = [
     *(Rule("axiom", w, "`axiom compositor claim/release` and `compositor binds remove` only on a scratch dir, never the live compositor config.",
            when=lambda env, args, rest, cwd: rest and live_config_path(rest[0], cwd, env))
       for w in ("compositor claim|release", "compositor binds remove")),
-    Rule("axiom", "config", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.", opt="--takeover", when=lambda env, args, rest, cwd: not scratch(axiom_flag(args, "--config-dir") or env.get("XDG_CONFIG_HOME", "")) or axiom_live_display(env, args, rest, cwd)),
+    Rule("axiom", "config", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.", opt="--takeover",
+         when=lambda env, args, rest, cwd: not scratch(axiom_flag(args, "--config-dir") or env.get("XDG_CONFIG_HOME", "")) or axiom_live_display(env, args, rest, cwd)),
     # git clean -x, and git stash, which every worktree of the repo shares
     Rule("git", "clean", "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).", opt="-[a-zA-Z]*[xX][a-zA-Z]*"),
     Rule("git", "stash !list|show", "`git stash` is shared by every worktree of the repo; commit, or `git diff > <scratch>/x.patch`."),
@@ -450,7 +452,7 @@ def check_rules(env, name, args, cwd):
     words, options = command_words(name, args), command_options(args)
     for r in BASH_RULES:
         patterns = r.words.split()
-        if (r.command != "*" and name not in r.command.split("|")
+        if (name not in r.command.split("|")
                 or not all(word_matches(p, words[i] if i < len(words) else None) for i, p in enumerate(patterns))
                 or r.opt and not any(re.fullmatch(r.opt, o) for o in options)):
             continue
@@ -492,9 +494,10 @@ def check_argv(env, argv, cwd):
     name, args = Path(argv[0]).name, argv[1:]
     if not HELP_OPTS & set(command_options(args)):
         check_rules(env, name, args, cwd)
-        if name == "git":
-            cwd = str(resolve(axiom_flag(args, "-C"), cwd)) if axiom_flag(args, "-C") else cwd
-            if command_words("git", args)[:1] == ["push"] and push_refused(args[args.index("push") + 1:], cwd):
+        if name == "git" and command_words("git", args)[:1] == ["push"]:
+            at = args.index("push")
+            cwd = str(resolve(args[args.index("-C") + 1], cwd)) if "-C" in args[:at] else cwd
+            if push_refused(args[at + 1:], cwd):
                 deny("Never", "no force-push and no push to main: everything reaches main through a PR.")
     written, removed = touched_paths(name, args, cwd, env)
     for kind, paths in (("write", written), ("remove", removed)):
@@ -633,7 +636,7 @@ def main():
         return 0
     try:
         check(call)
-    except Denied as refusal:
+    except Exception as refusal:  # a Denied, or a call it can't read: refused, never let through
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
