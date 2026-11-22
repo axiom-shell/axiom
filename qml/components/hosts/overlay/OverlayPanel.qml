@@ -8,6 +8,7 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.hosts.popout
 // Imported (though views load by URL) so qs scans what they import and
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
@@ -19,39 +20,72 @@ import qs.components.views.Settings // qmllint disable unused-imports
 
 // The overlay's window on one screen (shell/Overlay): opens and closes the
 // sliding box that holds OverlayPages, and closes on Escape or a click outside.
+// After a close its pages stay built for `keptFor` (`kept`), so opening
+// again maps the window and slides, with no rebuild.
 ReservedAreaWindow {
   id: root
 
   property bool isOpen: false
+  // How long it stays kept after closing, in ms
+  readonly property int keptFor: 10000
+  // Closed, its pages built: from the close until `keptFor` passes, or a
+  // fullscreen window shows on its screen
+  property bool kept: false
+  readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screen?.name ?? "")
+  onFullscreenNowChanged: if (root.fullscreenNow && root.kept) {
+    keptTimer.stop();
+    root.kept = false;
+  }
   // What's open on its screen and would end up under it (a popout keeps
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
     PopoutManager.closeOn(root.screen?.name ?? "")
+  // This opening draws reduced effects (Overlay.reduceFullscreen): decided as
+  // its window maps (a namespace's rules are read only then): a window going
+  // fullscreen while it's open, or kept, changes nothing until it maps again
+  property ClosedLatch _reduced: ClosedLatch {
+    source: OverlayConfig.reduceFullscreen && root.fullscreenNow
+    closed: !root.visible
+  }
+  readonly property bool reduced: root._reduced.value ?? false
   // Closed, it waits off the edge it slides in from (Overlay.animation),
-  // or in place, faded out
-  readonly property bool _fades: OverlayConfig.animation === "fade"
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? height : -height
+  // or in place, faded out: also reduced
+  readonly property bool fades: OverlayConfig.animation === "fade" || root.reduced
+  // The window's height, as last mapped full size (`pageArea.roomHeight`
+  // holds it while unmapped)
+  readonly property real _slideDistance: pageArea.roomHeight + OverlayConfig.navigatorRoom
+  property real slideOffset: isOpen || fades ? 0 : OverlayConfig.animation === "bottom" ? _slideDistance : -_slideDistance
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
   visible: false
   // Its layer rule arranges it after docks and draws it over them
-  // (see render.LayerRulesLua)
-  layerNamespace: "axiom-overlay"
+  // (see render.LayerRulesLua); reduced, it's the unblurred twin
+  layerNamespace: root.reduced ? "axiom-overlay-reduced" : "axiom-overlay"
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
 
   function open() {
     hideTimer.stop();
+    keptTimer.stop();
     visible = true;
+    // After it's visible: `built` would drop between and unload the kept pages
+    root.kept = false;
     isOpen = true;
     slideContainer.forceActiveFocus();
   }
 
   function close() {
+    // (closing a closed one, kept or not, changes nothing)
+    if (!root.isOpen)
+      return;
     isOpen = false;
     hideTimer.start();
+    // Not while a fullscreen window is up: the pages would keep polling over a game
+    root.kept = !root.fullscreenNow;
+    if (root.kept)
+      keptTimer.restart();
   }
 
   function toggle() {
@@ -75,9 +109,14 @@ ReservedAreaWindow {
     id: hideTimer
     interval: Appearance.animSlow
     repeat: false
-    onTriggered: {
-      root.visible = false;
-    }
+    onTriggered: root.visible = false
+  }
+
+  Timer {
+    id: keptTimer
+    interval: root.keptFor
+    repeat: false
+    onTriggered: root.kept = false
   }
 
   Connections {
@@ -147,7 +186,7 @@ ReservedAreaWindow {
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? boxesBlur : null)
+    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) && !root.reduced ? boxesBlur : null)
   Region {
     id: boxesBlur
 
@@ -166,7 +205,7 @@ ReservedAreaWindow {
   Item {
     id: slideContainer
     anchors.fill: parent
-    opacity: root.steppedAside || (root._fades && !root.isOpen) ? 0 : 1
+    opacity: root.steppedAside || (root.fades && !root.isOpen) ? 0 : 1
     Glide on opacity {
       duration: Appearance.animNormal
     }
@@ -228,7 +267,9 @@ ReservedAreaWindow {
       OverlayPages {
         id: overlayPages
         anchors.centerIn: parent
-        open: root.visible
+        open: root.isOpen
+        built: root.visible || root.kept
+        reduced: root.reduced
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
         maxHeight: pageArea.roomHeight - OverlayConfig.cardSpacing * 2
@@ -257,7 +298,7 @@ ReservedAreaWindow {
       currentIndex: overlayPages.currentIndex
       pages: overlayPages.pages
       labels: OverlayConfig.navigatorLabels
-      maxWidth: slideContainer.width - Widget.padding * 4
+      maxWidth: pageArea.roomWidth - Widget.padding * 4
       onPrevious: overlayPages.step(-1)
       onNext: overlayPages.step(1)
       onSelect: index => overlayPages.goTo(index)

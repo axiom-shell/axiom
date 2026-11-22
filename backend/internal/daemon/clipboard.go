@@ -115,6 +115,9 @@ func (d *Daemon) clipboardMethods(reg *rpc.Registry) {
 		}
 		return struct{}{}, axerr.New(axerr.BadRequest, "copy an id, a text or a file")
 	})
+	// Screenshots copy as their saves finish, which can be ms apart: the
+	// newer copy must land last
+	reg.InOrder("clipboard.copy")
 	type textResult struct {
 		Text string `json:"text"`
 	}

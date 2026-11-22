@@ -92,7 +92,7 @@ Every notification has a level (`methods/NotificationLevel`, the single source o
 - **Not kept:** "Added …" from the calendar's quick add (`ShellManager.confirm`), refusals (`ShellManager.refuse`: no chat or notes module, …), the Battery and Privacy widgets' clicks (`transient`).
 
 ### Images
-- Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.
+- Cached as PNGs (at most 160 px on the long side) in `$XDG_STATE_HOME/axiom/notifications/`. The source loads asynchronously, so a large screenshot's decode doesn't stall the GUI thread; a load whose entry was cached again or forgotten meanwhile is dropped unsaved (`NotificationFiles.cache` compares its `source` with `_sources[uid]`).
 - On load, an entry whose image file is gone loses its `image` (`_dropMissingImages`), so its avatar shows the app icon without a `Cannot open` warning.
 - Rendered through an `imageHost` item that `qml/shell/Notifications` lends the service, since grabbing an image needs a window.
 

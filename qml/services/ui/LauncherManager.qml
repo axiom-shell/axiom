@@ -273,6 +273,8 @@ QtObject {
   onShownChanged: {
     if (!root.shown)
       root._files.forget();
+    else
+      root._afterClose = [];
   }
 
   // --- Commands ---
@@ -605,7 +607,7 @@ QtObject {
       run: shift => {
         EmojiManager.copy(entry.e);
         if (shift && canType)
-          EmojiManager.type(entry.e);
+          root.afterClose(() => EmojiManager.type(entry.e));
         return true;
       }
     };
@@ -620,7 +622,31 @@ QtObject {
     }
   }
 
+  // --- After close ---
+
+  // Runs fn once no launcher window is mapped (at once if none is): the
+  // close slide outlasts `shown`, and until the windows unmap they hold the
+  // keyboard. Dropped when the launcher reopens; one reopened while it was
+  // still closing (a queued open) is not caught, and fn runs into it.
+  function afterClose(fn) {
+    if (_mapped)
+      _afterClose = _afterClose.concat([fn]);
+    else
+      fn();
+  }
+
   // --- Private ---
+
+  readonly property bool _mapped: SurfaceManager.surfaceWindows.some(e => e.kind === "launcher" && e.window?.visible)
+  property var _afterClose: []
+
+  on_MappedChanged: {
+    if (_mapped)
+      return;
+    const queued = _afterClose;
+    _afterClose = [];
+    queued.forEach(fn => fn());
+  }
 
   property var _stateHandler: StateManager.createStateHandler("launcher")
 

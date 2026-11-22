@@ -119,10 +119,14 @@ SchemaFormRow {
     anchors.margins: -Widget.spacing / 2
   }
 
-  Loader {
+  // Its own job: an `x-row` is a whole block of its own
+  StreamedLoader {
     id: customRow
     width: parent.width
-    active: root.custom !== ""
+    rise: false
+    label: `settings row ${root.custom}`
+    wanted: root.custom !== ""
+    stream: root.custom !== ""
     Component.onCompleted: {
       if (root.custom !== "")
         customRow.setSource(Qt.resolvedUrl(root.custom + ".qml"), {
@@ -150,82 +154,86 @@ SchemaFormRow {
       }
     },
 
-    // The footprint's chip and button, under the field
-    RowLayout {
+    // The footprint's chip and button, under the field (built only while it shows)
+    Loader {
       id: footprintRow
-      visible: root.badged || root.removable || root.confirmInferred || root.confirmSystem
+      active: root.badged || root.removable || root.confirmInferred || root.confirmSystem
+      visible: footprintRow.active
       y: hookup.shownHeight + Widget.spacing
       width: parent.width
-      spacing: Widget.spacing
+      sourceComponent: RowLayout {
+        width: footprintRow.width
+        spacing: Widget.spacing
 
-      Item {
-        visible: root.badged
-        implicitWidth: chip.implicitWidth
-        implicitHeight: chip.implicitHeight
+        Item {
+          visible: root.badged
+          implicitWidth: chip.implicitWidth
+          implicitHeight: chip.implicitHeight
 
-        // I18n.tr("Stays after axiom stops")
-        StatusChip {
-          id: chip
-          text: I18n.tr("Stays after axiom stops")
-          tone: "warning"
-        }
+          // I18n.tr("Stays after axiom stops")
+          StatusChip {
+            id: chip
+            text: I18n.tr("Stays after axiom stops")
+            tone: "warning"
+          }
 
-        MouseArea {
-          id: chipHover
-          anchors.fill: parent
-          hoverEnabled: true
-        }
+          MouseArea {
+            id: chipHover
+            anchors.fill: parent
+            hoverEnabled: true
+          }
 
-        LazyLoader {
-          active: chipHover.containsMouse
-          StyledToolTip {
-            target: chip
-            maxWidth: Widget.px(320)
-            // I18n.tr("This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.")
-            text: I18n.tr("This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.")
+          LazyLoader {
+            active: chipHover.containsMouse
+            StyledToolTip {
+              target: chip
+              maxWidth: Widget.px(320)
+              // I18n.tr("This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.")
+              text: I18n.tr("This writes outside axiom: quitting axiom or turning it off leaves those changes. Undo them under Changes outside axiom.")
+            }
           }
         }
-      }
 
-      StyledTextButton {
-        visible: root.removable
-        text: I18n.tr("Remove its changes")
-        onClicked: {
-          root.askedSystem = root.systemCount > 0;
-          root.askedInferred = true;
-          if (root.recordedCount > 0)
-            FootprintManager.undoOwner(root.ownerPath);
+        StyledTextButton {
+          visible: root.removable
+          text: I18n.tr("Remove its changes")
+          onClicked: {
+            root.askedSystem = root.systemCount > 0;
+            root.askedInferred = true;
+            if (root.recordedCount > 0)
+              FootprintManager.undoOwner(root.ownerPath);
+          }
         }
-      }
 
-      ConfirmLine {
-        visible: root.confirmInferred
-        Layout.fillWidth: true
-        // I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.")
-        question: root.inferredCount === 1 ? I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.") : I18n.tr("axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.", root.inferredCount)
-        confirmText: I18n.tr("Remove")
-        onKept: root.askedInferred = false
-        onConfirmed: {
-          root.askedInferred = false;
-          FootprintManager.undo(FootprintManager.inferredFor(root.ownerPath).map(row => row.id), true);
+        ConfirmLine {
+          visible: root.confirmInferred
+          Layout.fillWidth: true
+          // I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.")
+          question: root.inferredCount === 1 ? I18n.tr("axiom also found 1 change here it has no record of making. Remove it too? Keep leaves it as it is.") : I18n.tr("axiom also found {0} changes here it has no record of making. Remove them too? Keep leaves them as they are.", root.inferredCount)
+          confirmText: I18n.tr("Remove")
+          onKept: root.askedInferred = false
+          onConfirmed: {
+            root.askedInferred = false;
+            FootprintManager.undo(FootprintManager.inferredFor(root.ownerPath).map(row => row.id), true);
+          }
         }
-      }
 
-      ConfirmLine {
-        visible: root.confirmSystem
-        Layout.fillWidth: true
-        question: I18n.tr("Also put back the system defaults axiom changed here ({0})? Keep leaves them as they are.", root.systemCount)
-        confirmText: I18n.tr("Put back")
-        onKept: root.askedSystem = false
-        onConfirmed: {
-          root.askedSystem = false;
-          FootprintManager.undo(FootprintManager.systemFor(root.ownerPath).map(row => row.id));
+        ConfirmLine {
+          visible: root.confirmSystem
+          Layout.fillWidth: true
+          question: I18n.tr("Also put back the system defaults axiom changed here ({0})? Keep leaves them as they are.", root.systemCount)
+          confirmText: I18n.tr("Put back")
+          onKept: root.askedSystem = false
+          onConfirmed: {
+            root.askedSystem = false;
+            FootprintManager.undo(FootprintManager.systemFor(root.ownerPath).map(row => row.id));
+          }
         }
-      }
 
-      Item {
-        visible: !root.confirmSystem && !root.confirmInferred
-        Layout.fillWidth: true
+        Item {
+          visible: !root.confirmSystem && !root.confirmInferred
+          Layout.fillWidth: true
+        }
       }
     }
   ]

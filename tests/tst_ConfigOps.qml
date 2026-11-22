@@ -129,6 +129,27 @@ TestCase {
     compare(shared.calls.ConfigOps.apply(before, ops), after);
   }
 
+  // ConfigManager.commit's step: the config with the save's ops applied is
+  // the saved config, and the sections the save leaves alone stay the
+  // same objects (no reader of one re-runs); the root is new
+  function test_commit_shares_untouched_sections() {
+    const before = SchemaValidation.applyDefaults({}, shared.schema);
+    const filled = SchemaValidation.applyDefaults(Utils.clone(before), shared.schema);
+    filled.Notifications.quietFullscreen = !before.Notifications.quietFullscreen;
+    filled.Bars.items = [];
+    const ops = ConfigOps.diff(before, filled);
+    verify(ops.length > 0);
+    const next = ConfigOps.apply(before, ops);
+    verify(next !== null, "diff's ops always apply");
+    compare(next, filled, "applied: the saved config");
+    verify(next !== before, "a new root");
+    verify(next.Appearance === before.Appearance, "an untouched section is the same object");
+    verify(next.General === before.General, "another one too");
+    verify(next.Notifications !== before.Notifications, "a touched section is new");
+    verify(next.Bars !== before.Bars, "this one too");
+    verify(next.Bars.items === filled.Bars.items, "a value set is the saved one's, never the caller's object");
+  }
+
   // The call shape the editors' nested edits use (SchemaPropertiesForm.edit,
   // OverlayManager.newMenuFor, BarManager.discardWidgetProperty): a set or a
   // delete at a path inside a clone of one top-level object

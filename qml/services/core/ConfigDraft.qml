@@ -41,8 +41,8 @@ QtObject {
 
   // load(), unless the draft holds unsaved edits or already holds the
   // current config: a page reopening (an editor's ensureLoaded) then
-  // rebuilds nothing. The config is a new object on every change, so the
-  // one it was loaded from tells whether it's current
+  // rebuilds nothing. A change makes new objects along its path only (the
+  // root always), so the one it was loaded from tells whether it's current
   function loadIfStale() {
     if (!root.isDirty && (root.local === null || _read() !== root._loadedFrom))
       load();

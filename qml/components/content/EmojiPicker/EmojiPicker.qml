@@ -92,10 +92,13 @@ Panel {
   wantsKeyboardFocus: true
   spacing: Widget.spacing
 
+  // Never in the strip, which shows `recent`; the grid scrolls back once built
   function refresh() {
+    if (root.strip)
+      return;
     root.noList = EmojiManager.entries().length === 0;
     root.results = EmojiManager.search(root.query, Infinity, root.query === "" ? root.group : "");
-    grid.positionViewAtBeginning();
+    (gridLoader.item as GridView)?.positionViewAtBeginning();
   }
 
   function copy(emoji) {
@@ -111,7 +114,6 @@ Panel {
 
   onQueryChanged: refresh()
   onGroupChanged: refresh()
-  Component.onCompleted: refresh()
 
   Timer {
     id: copiedReset
@@ -214,42 +216,51 @@ Panel {
     }
   }
 
-  // Everything that matches, a cell's width apart and centred
-  GridView {
-    id: grid
-    ScrollIndicator.vertical: StyledScrollIndicator {}
-
+  // Everything that matches, a cell's width apart and centred. Built in a
+  // job of its own, and only while there's room for it
+  StreamedLoader {
+    id: gridLoader
     visible: !root.strip
+    wanted: !root.strip
+    rise: false
+    label: "emoji grid"
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     Layout.preferredHeight: root.embedded ? -1 : Appearance.fontSize * 16
-    readonly property int columns: Math.max(1, Math.floor(width / root.cell))
-    cellWidth: width / grid.columns
-    cellHeight: root.cell
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    model: root.results.length
+    onLoaded: root.refresh()
 
-    delegate: Item {
-      id: slot
-      required property int index
-      width: grid.cellWidth
-      height: grid.cellHeight
+    sourceComponent: GridView {
+      id: grid
+      ScrollIndicator.vertical: StyledScrollIndicator {}
 
-      EmojiCell {
-        anchors.centerIn: parent
-        emoji: root.results[slot.index]?.e ?? ""
-        entry: root.results[slot.index] ?? null
+      readonly property int columns: Math.max(1, Math.floor(width / root.cell))
+      cellWidth: width / grid.columns
+      cellHeight: root.cell
+      clip: true
+      boundsBehavior: Flickable.StopAtBounds
+      model: root.results.length
+
+      delegate: Item {
+        id: slot
+        required property int index
+        width: grid.cellWidth
+        height: grid.cellHeight
+
+        EmojiCell {
+          anchors.centerIn: parent
+          emoji: root.results[slot.index]?.e ?? ""
+          entry: root.results[slot.index] ?? null
+        }
       }
-    }
 
-    EmptyState {
-      visible: root.results.length === 0
-      anchors.centerIn: parent
-      maxWidth: parent.width
-      availableHeight: parent.height
-      icon: "search_off"
-      text: root.noList ? I18n.tr("No emoji list: run scripts/generate_emoji.py") : I18n.tr("No matches")
+      EmptyState {
+        visible: root.results.length === 0
+        anchors.centerIn: parent
+        maxWidth: parent.width
+        availableHeight: parent.height
+        icon: "search_off"
+        text: root.noList ? I18n.tr("No emoji list: run scripts/generate_emoji.py") : I18n.tr("No matches")
+      }
     }
   }
 

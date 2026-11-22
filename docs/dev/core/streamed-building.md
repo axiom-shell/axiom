@@ -1,6 +1,6 @@
 # Streamed building
 
-> **Files:** `qml/services/core/BuildQueueManager.qml`, `qml/components/reusable/StreamedLoader.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayPage.qml`, `qml/services/core/ConfigDraft.qml`, `scripts/dev/bench_overlay.sh`
+> **Files:** `qml/services/core/BuildQueueManager.qml`, `qml/components/methods/BuildOrder.qml`, `qml/components/reusable/StreamedLoader.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayPage.qml`, `qml/services/core/ConfigDraft.qml`, `tests/tst_BuildOrder.qml`, `scripts/dev/bench_overlay.sh`
 > **Config:** none
 > **Related:** [Overlay pages and the module grid](../overlay/pages-and-grid.md) (Loading), [Shared UI pieces](shared-ui-pieces.md), [Editors pattern](editors-pattern.md), [QML pitfalls](qml-pitfalls.md), [Testing](../testing.md)
 
@@ -8,9 +8,11 @@ How the overlay shows a page at once and fills it in over the next frames, inste
 
 ### The queue (`BuildQueueManager`)
 - One queue for the whole shell. A caller queues a job (`request(owner, job, label)`: a function that builds something) and drops its jobs when it goes away (`cancel(owner)` from `onDestruction`).
-- A Timer runs jobs every 16 ms while any are waiting, within a 6 ms budget a step, and always at least one, however long it takes. A single job can't be split, so a job's own size is the frame it costs.
+- A Timer runs jobs every 16 ms while any are waiting, within a 12 ms budget a step (under a 60 Hz frame; the jobs are split small, so a step rarely passes 16 ms), and always at least one, however long it takes. A single job can't be split, so a job's own size is the frame it costs.
 - A job requested with `first` (`StreamedLoader.buildFirst`) goes ahead of every other, behind the `first` ones already queued: the settings sidebar, which would otherwise arrive after every card.
 - Jobs whose owner is `visible` go first: the page on screen fills in before its hidden neighbours.
+- A job can be held: `request` records its owner's holder (`BuildOrder.holderOf`: the nearest ancestor with a `buildHeld`, an `OverlayPage`), and while that is true the job waits wherever it stands (`BuildOrder.next` skips it, a held `first` one too). `pending` counts the jobs that can run (`BuildOrder.runnable`), so the timer stops while everything is held. An overlay page holds while it isn't the current page or the overlay isn't open: a neighbour builds its frame and its cards stream in when it becomes current, and a closed overlay's queued jobs wait (and go with their loaders when the pages unload). Pages outside the overlay (page windows, popouts, menus) have no holder: never held.
+- `BaseView.buildStreaming` doesn't drop while its page holds (its jobs aren't in `pending`) and drops once the page is released with nothing runnable.
 - A job is dropped from the queue once it has run, not before, so `pending` stays above 0 while the last job builds and what it makes still streams.
 - A job taking over 16 ms logs `Built <label> in X ms` (`scripts/log.sh --debug`): a hitch to look at.
 
@@ -34,8 +36,9 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 - `stream: false`: never.
 
 ### Overlay pages
-- Opening or switching builds only the page shown, and its neighbours after it has slid in (`OverlayPages._settled`): see [pages-and-grid › Loading](../overlay/pages-and-grid.md).
+- Opening or switching builds only the page shown, and its neighbours' frames after it has slid in (`OverlayPages._settled`); a neighbour's cards and panels wait until it is current (held jobs, above): see [pages-and-grid › Loading](../overlay/pages-and-grid.md).
 - A Custom page's `ModuleGrid` has `stream: true`: its modules are queued in reveal order, top left to bottom right (`GridPlacement.revealOrder`), and fade in while sliding up `Style.enterOffset` (`OverlaySlot.active` / `ready`). The grid is sized from the places, so only a module that grows (`grow`) moves the ones below it as it arrives, since its height is known once it's built. Once all have arrived, modules added later build at once (`_streamed`).
+- The slow single jobs are split so none is a frame of its own: every `x-row` settings row (`SettingsField.customRow`), the Bar style block's section forms, the Keyboard card's layout rows and input method setup, each row of a rows card (`SettingsGroupCard`, label `settings field <path>`), each group of the Outside changes card, each row of keys of `KeyboardMap`, the two boxes of the Layouts panel and the Emoji picker's grid (only built while it isn't the one-row strip).
 - Every tool page streams its parts. A page's own synchronous build (`Overlay page N built in X ms`) is what's left: the page's frame, what it calls by id, and the first frame of each loader.
   - **Settings**: the sidebar, then each card of the category, and each `SchemaPropertiesForm` field.
   - **BarEditor**: the bars panel (each field group, each field), the sections board, the widget inspector.
@@ -47,7 +50,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
   - **CalendarPage**: the month's day cells (`MonthGrid`, shared with the Clock/Calendar module).
 
 ### Editors reopening
-- Pages are rebuilt on every open, so each editor's `ensureLoaded()` used to reload its draft every time: a clone of its config section, then every binding on it evaluated again.
+- Pages are rebuilt only after `keptFor`, or after a fullscreen window drops them, so on such an open each editor's `ensureLoaded()` used to reload its draft every time: a clone of its config section, then every binding on it evaluated again.
 - `ConfigDraft.loadIfStale()` reloads only when the draft has no unsaved edits and is empty or the config isn't the object it was loaded from (`ConfigManager` makes a new config object on every change). Settings and Keybinds use it.
 - Editors that also clear their selection or history on reopening (layouts, menus, screen layouts) still `load()`.
 

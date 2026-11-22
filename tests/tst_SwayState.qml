@@ -212,6 +212,43 @@ TestCase {
     });
   }
 
+  function test_outputReservesBeforeTheTreeHasItsWorkspace() {
+    const info = SwayState.tree(fixture("get_tree"));
+    const monitor = workspace => ({
+          "name": "WL-1",
+          "x": 0,
+          "y": 0,
+          "width": 822,
+          "height": 1336,
+          "activeWorkspace": workspace
+        });
+    const known = SwayState.output(monitor({
+      "num": 3,
+      "name": "3:web"
+    }), info).reserved;
+    compare(SwayState.output(monitor({
+      "num": 9,
+      "name": "9"
+    }), info).reserved, known);
+    // An output the tree has no workspace for has nothing reserved
+    compare(SwayState.output({
+      "name": "WL-2",
+      "x": 0,
+      "y": 0,
+      "width": 800,
+      "height": 600,
+      "activeWorkspace": {
+        "num": 9,
+        "name": "9"
+      }
+    }, info).reserved, {
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0
+    });
+  }
+
   function test_outputOnANamedWorkspace() {
     const out = SwayState.output({
       "name": "WL-1",

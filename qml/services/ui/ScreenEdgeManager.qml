@@ -24,27 +24,18 @@ QtObject {
   // never on hover) reserves its space. A bar on a monitor a window
   // rule hides it on is enriched as auto-hiding (`hiddenByRule`,
   // BarEnrich). Each entry stays the same object while it is equal
-  // (Utils.keepEqual), so a pass over equal content reaches no reader;
+  // (a KeptList), so a pass over equal content reaches no reader;
   // [] until this singleton has completed.
-  readonly property var bars: root._bars
-  property var _bars: []
-  property var _barKeys: []
-  on_FreshBarsChanged: root._keepBars()
-  Component.onCompleted: root._keepBars()
-  function _keepBars() {
-    const k = Utils.keepEqual({
-      "items": root._bars,
-      "keys": root._barKeys
-    }, root._freshBars, b => b.id);
-    root._barKeys = k.keys;
-    if (k.items !== root._bars)
-      root._bars = k.items;
+  readonly property var bars: root._keptBars.items
+  property KeptList _keptBars: KeptList {
+    fresh: root._freshBars
+    idOf: b => b.id
   }
   // Reads the gaps' inputs itself, not through floatGaps/endsOptions: a
   // binding over those re-runs once per link as a gap change reaches them,
   // the first with the new gapsOut and the old float gaps (a swap of the
   // bars that is no input change)
-  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), ConfigManager.live.Bars.items, WindowRulesManager.hideBarOn)
+  readonly property var _freshBars: root._freshBarsFor(CompositorManager.gapsOut, root._floatGapsFor(CompositorManager.backend, CompositorManager.gapsOut), BarsConfig.liveBars, WindowRulesManager.hideBarOn)
   function _freshBarsFor(gapsOut, floatGaps, items, hiddenOn) {
     return BarEnds.withEnds(BarsConfig.expandBars(items).map(bar => {
       const enriched = BarsConfig.enrichBarConfig(hiddenOn.includes(bar.monitor) ? Object.assign({}, bar, {

@@ -137,7 +137,7 @@ Loader {
     target: BuildQueueManager
     enabled: root.streamsInside
     function onPendingChanged() {
-      if (BuildQueueManager.pending === 0)
+      if (BuildQueueManager.pending === 0 && root._granted)
         root.streamsInside = false;
     }
   }

@@ -74,6 +74,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
   - the backing window draws nothing there (`backingOn`), and the chrome there fills itself.
 - On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` (`Style.edgeFill`) for the bars, integrated edge menus and toasts.
 - Elsewhere they stay translucent.
+- Independent of `Overlay.reduceFullscreen`, which uses the same trigger per screen but changes the overlay window's motion and shadow, and leaves it unblurred (`axiom-overlay-reduced`, in no blur list; no region on niri); the blur windows, toasts and OSD keep theirs ([pages and grid](../overlay/pages-and-grid.md)).
 
 ### Stacking
 - The chrome's fills all live in the one backing window (Top, order 9), under every chrome window.

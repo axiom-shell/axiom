@@ -225,8 +225,11 @@ QtObject {
       "strips": CompositorManager.supports.stripsAlways === true || (CompositorManager.supports.strips === true && WorkspacesConfig.hasStrips),
       "grid": WorkspacesConfig.grid,
       "dynamic": CompositorManager.supports.dynamicWorkspaces === true,
-      "outputs": CompositorManager.outputs.map(output => output.name)
+      "outputs": root._outputsKey === "" ? [] : root._outputsKey.split("\n")
     })
+  // The connected outputs' names as a key that notifies only when they
+  // really change (a switch rebuilds CompositorManager.outputs)
+  readonly property string _outputsKey: CompositorManager.outputs.map(output => output.name).join("\n")
 
   // The saved binds bound now: not paused, their "Only when" holding (the
   // daemon binds only these)
