@@ -120,19 +120,50 @@ Singleton {
 
   // --- State (contract.md › Shapes) ---
 
+  // Each list is a KeptList: the same array and objects while its content
+  // is equal (as ScreenEdgeManager.bars), so a backend rebuilding one on a
+  // switch or an unrelated event reaches no reader. `windows` and
+  // `workspaces` are kept once per event turn (`oncePerTurn`): a backend
+  // assigns them event by event, so one switch passes through several
+  // transient states, and only the readers' redraws depend on them.
+  // `outputs` and `specials` are kept at once: the actions read `outputs`
+  // synchronously in the turn of the event, beside the at-once
+  // `focusedOutput` (`focused`, activeWorkspaceId, the workspace steps and
+  // goes), which a deferred `outputs` would pair with the old outputs for a
+  // turn; and the backends build `specials` from the outputs, so it moves in
+  // step with them.
+
   // Every mapped window: [{ id, appId, initialAppId, title, workspaceId,
   // workspaceName, output, floating, fullscreen, maximized, hidden,
   // focusRank, x, y, w, h }]
-  readonly property var windows: root.backend?.windows ?? []
+  readonly property var windows: root._keptWindows.items
+  property KeptList _keptWindows: KeptList {
+    fresh: root.backend?.windows ?? []
+    idOf: w => w.id
+    oncePerTurn: true
+  }
   // Every monitor: [{ name, description, x, y, width, height, scale,
   // focused, activeWorkspaceId, specialWorkspaceId, reserved }]
-  readonly property var outputs: root.backend?.outputs ?? []
+  readonly property var outputs: root._keptOutputs.items
+  property KeptList _keptOutputs: KeptList {
+    fresh: root.backend?.outputs ?? []
+    idOf: o => o.name
+  }
   // Every workspace: [{ id, name, output, windowCount, active, focused,
   // urgent }] (urgent: a window on it asks for attention)
-  readonly property var workspaces: root.backend?.workspaces ?? []
+  readonly property var workspaces: root._keptWorkspaces.items
+  property KeptList _keptWorkspaces: KeptList {
+    fresh: root.backend?.workspaces ?? []
+    idOf: w => w.id
+    oncePerTurn: true
+  }
   // The special workspaces (contract.md › Shapes, Special), [] without
   // namedSpecial
-  readonly property var specials: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
+  readonly property var specials: root._keptSpecials.items
+  property KeptList _keptSpecials: KeptList {
+    fresh: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
+    idOf: s => s.name
+  }
   // The fields of the config that hold a special workspace's id (the
   // schema's `x-ref`s of that kind: SchemaRefs.sites)
   readonly property var specialRefSites: SchemaRefs.sites(ConfigManager.configSchema, "specialWorkspace")
