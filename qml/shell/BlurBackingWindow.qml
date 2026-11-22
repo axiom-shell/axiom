@@ -14,8 +14,8 @@ import qs.components.reusable
 
 // One blur window (BlurBacking): click-through, drawing each of `shapes`
 // (BlurShapes) filled, at the surface opacity, with their shadows cast
-// once per look and kept outside every shape, its own and the other
-// window's (`cutBy`). `part` keeps one of the two: where the compositor
+// once per look, from the shapes' outlines (fill and stroke), and kept
+// outside every shape's outline, its own and the other window's (`cutBy`). `part` keeps one of the two: where the compositor
 // blurs every pixel that isn't clear, the shadows go to a window it
 // doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes
@@ -164,13 +164,14 @@ PanelWindow {
     visible: backing.part !== "fills"
   }
 
-  // Every shape drawn opaque (by shadow, in `groups`), then the surface
-  // opacity applied to them all at once, so where they overlap they
-  // don't stack (a layer of its own only once there are several)
+  // Each group's fills (its fill `Copies`, in `groups`), drawn where its
+  // shadow's capture was, at their own colour, then the surface opacity
+  // applied to them all at once, so where they overlap they don't stack
+  // (a layer of its own: one copy's own pieces overlap too)
   Item {
     id: fills
     anchors.fill: parent
-    layer.enabled: groups.count > 1 && visible // style-exempt: no text
+    layer.enabled: backing.shapes.length > 0 && visible // style-exempt: no text
     opacity: Style.edgeAlpha
     visible: backing.part !== "shadows"
   }
@@ -194,6 +195,7 @@ PanelWindow {
       // (none for a fills-only window, which never reads them)
       Copies {
         shapes: backing.part !== "fills" ? backing.cutBy : []
+        draws: "outline"
         onChanged: nudge.burst()
       }
     }
@@ -211,9 +213,10 @@ PanelWindow {
     keys: backing.shapes.map(shape => backing.shadowKey(shape)).filter((key, i, all) => all.indexOf(key) === i)
   }
 
-  // The shapes casting one shadow: copied once, captured (a hidden
-  // layer isn't drawn, a capture with hideSource is), drawn into
-  // `fills` and `union` from the capture, and casting from it
+  // The shapes casting one shadow: their fills copied into `fills`, their
+  // outlines copied once and captured (a hidden layer isn't drawn, a
+  // capture with hideSource is), drawn into `union` from the capture, and
+  // casting from it
   Repeater {
     id: groups
     model: groupModel.model
@@ -231,6 +234,7 @@ PanelWindow {
 
         Copies {
           shapes: group.members
+          draws: "outline"
           onChanged: nudge.burst()
         }
       }
@@ -243,10 +247,11 @@ PanelWindow {
         hideSource: true
       }
 
-      ShaderEffect {
-        property var source: copied
+      Copies {
+        shapes: group.members
+        draws: "fill"
         parent: fills
-        anchors.fill: parent
+        onChanged: nudge.burst()
       }
 
       ShaderEffect {
@@ -301,6 +306,10 @@ PanelWindow {
   component Copies: Item {
     id: copies
     required property var shapes
+    // What each copy draws: "fill", its fill in the colour it fills with,
+    // no stroke; "outline", its fill and stroke in opaque black, the shape
+    // a shadow casts from and is cut by
+    property string draws: "fill"
     // A copy moved, resized, showed or hid
     signal changed
     anchors.fill: parent
@@ -347,6 +356,8 @@ PanelWindow {
 
           AttachedSurfaceCopy {
             source: slot.shape?.source ?? null
+            fillColor: copies.draws === "outline" ? "black" : (slot.shape?.source?.fillColor ?? "transparent") // style-exempt: mask
+            mirrorStroke: copies.draws === "outline" ? "black" : "transparent" // style-exempt: mask
           }
         }
 
@@ -365,7 +376,7 @@ PanelWindow {
             topRightRadius: src?.topRightRadius ?? 0
             bottomLeftRadius: src?.bottomLeftRadius ?? 0
             bottomRightRadius: src?.bottomRightRadius ?? 0
-            color: slot.shape?.color ?? "transparent"
+            color: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
             opacity: slot.shape?.fade ?? 1
           }
         }
@@ -383,7 +394,7 @@ PanelWindow {
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-              fillColor: slot.shape?.color ?? "transparent"
+              fillColor: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
               fillRule: ShapePath.OddEvenFill
               strokeColor: "transparent"
               strokeWidth: 0
