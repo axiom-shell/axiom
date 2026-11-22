@@ -40,7 +40,7 @@ QtObject {
   // The picker is open (or an immediate capture is running)
   property bool picking: false
   // Picking, or waiting for the launcher to close first (or for grim)
-  readonly property bool busy: root.picking || root._delay.running || root._grabbing || root._stitch !== null
+  readonly property bool busy: root.picking || root._delay.running || root._grabbing
   // { kind, screen: the screen an immediate `screen` capture takes }
   property var request: null
   // Keep nothing on disk, only copy (saved in Paths.statePath screenshot.json)
@@ -109,8 +109,10 @@ QtObject {
   }
 
   // A region for another feature (the chat): saved to `path` as a PNG,
-  // with no clipboard or notification, then callback(ok). Returns false
-  // (and never calls back) when a capture is already running.
+  // with no clipboard or notification, then callback(ok), once, when its
+  // save (after any queued before it) finishes or is given up after 30 s
+  // (a picture landing after that is left at `path`, never called back).
+  // Returns false (and never calls back) when a capture is already running.
   function pick(path, callback) {
     if (root.busy)
       return false;
@@ -161,20 +163,38 @@ QtObject {
 
   // A selection over several screens (global): each screen's picker
   // crops its part from its own frame (`pieceRequest`) and hands it back
-  // (pieceDone); axiom stitches them into one picture (screenshot.stitch)
-  // that goes on as a single screen's does. Never with picker.oneScreen.
+  // (pieceDone). Every capture, one screen (finish) or several, ends the
+  // same way: its pieces are written as BMP and _stitchPieces queues them
+  // for axiom to encode (screenshot.stitch), which then goes on as a
+  // single screen's picture does. Never with picker.oneScreen.
   // { stamp, pieces: [{ screen, path, rect (global) }] } while asked
   property var pieceRequest: null
   property var _across: null
-  // The stitch running ({ ours }), until it answers or a cancel drops it
+  // The running stitch (_stitchPieces' object), until it answers or
+  // _stitchWatchdog gives up
   property var _stitch: null
+  // Stitches waiting for the running one, oldest first
+  property var _queue: []
+  // The last capture's serial (capture order, counted by _stitchPieces)
+  property int _stitchSerial: 0
+  // The serial of the newest capture put on the clipboard, so a save that
+  // lands late never covers a newer one (D8)
+  property int _copiedSerial: 0
+  // The names given out in the current second (no extension), so a capture
+  // in the same second never overwrites one still saving
+  property var _takenNames: []
+
+  // A capture's piece file: the one place it is named
+  function _piecePath(screenName, stamp) {
+    return `${root._scratchDir}/piece-${screenName}-${stamp}.bmp`;
+  }
 
   function captureAcross(area) {
     const rounded = Qt.rect(Math.round(area.x), Math.round(area.y), Math.round(area.width), Math.round(area.height));
     const stamp = Date.now();
     const pieces = ScreenRegion.covered(rounded, root.picker.screenBoxes()).map(s => ({
           "screen": s.name,
-          "path": `${root._scratchDir}/piece-${s.name}-${stamp}.png`,
+          "path": root._piecePath(s.name, stamp),
           "rect": ScreenRegion.intersect(rounded, s)
         }));
     if (pieces.length === 0) {
@@ -217,14 +237,37 @@ QtObject {
       root.fail(I18n.tr("Couldn't save the picture in {0}.", root._scratchDir));
       return;
     }
-    const path = root._outPath();
-    // pick()'s path is its caller's: never removed here
+    root._stitchPieces(across);
+  }
+
+  // The end of a capture (across = { pieces, area }, global): takes what its
+  // save needs into a stitch, so a later capture changes none of it, and
+  // queues it
+  function _stitchPieces(across) {
+    root._stitchSerial += 1;
     const stitch = {
-      "ours": root._target === null
+      "across": across,
+      "serial": root._stitchSerial,
+      "out": root._outPath(),
+      "target": root._target,
+      "copyOnly": root.copyOnly,
+      "annotate": root.annotate
     };
+    root._target = null;
+    root.annotate = false;
+    root._queue.push(stitch);
+    root._next();
+  }
+
+  // Sends the oldest queued stitch when none is running
+  function _next() {
+    if (root._stitch !== null || root._queue.length === 0)
+      return;
+    const stitch = root._queue.shift();
     root._stitch = stitch;
+    root._stitchWatchdog.restart();
     BackendManager.call("screenshot.stitch", {
-      "pieces": across.pieces.map(p => ({
+      "pieces": stitch.across.pieces.map(p => ({
             "path": p.path,
             "x": p.rect.x,
             "y": p.rect.y,
@@ -232,24 +275,31 @@ QtObject {
             "height": p.rect.height
           })),
       "area": {
-        "x": across.area.x,
-        "y": across.area.y,
-        "width": across.area.width,
-        "height": across.area.height
+        "x": stitch.across.area.x,
+        "y": stitch.across.area.y,
+        "width": stitch.across.area.width,
+        "height": stitch.across.area.height
       },
-      "out": path
+      "out": stitch.out
     }, error => {
-      root._dropPieces(across);
-      // Cancelled meanwhile (pick()'s caller was told): no picture
-      if (root._stitch !== stitch) {
-        if (!error && stitch.ours)
-          CommandManager.runDetached(["rm", "-f", path]);
-        return;
-      }
-      root._stitch = null;
+      root._dropPieces(stitch.across);
       if (error)
         console.warn("[ScreenshotManager] Couldn't stitch the screenshot:", error.message);
-      root._saved(path, !error);
+      // Given up on meanwhile (reported failed, the queue moved on): the
+      // file is kept and goes the usual way, unless it failed or was
+      // pick()'s (its caller was told)
+      if (root._stitch !== stitch) {
+        if (error)
+          return;
+        console.warn("[ScreenshotManager] A screenshot given up on was saved after all:", stitch.out);
+        if (!stitch.target)
+          root._saved(stitch, true);
+        return;
+      }
+      root._stitchWatchdog.stop();
+      root._stitch = null;
+      root._saved(stitch, !error);
+      Qt.callLater(root._next);
     });
   }
 
@@ -283,7 +333,6 @@ QtObject {
     root.request = null;
     root._delay.stop();
     root._watchdog.stop();
-    root._stitch = null;
     root._callBack(false);
   }
 
@@ -310,54 +359,77 @@ QtObject {
     });
   }
 
-  // Called by the picker with the cropped capture (a grabToImage result),
-  // or null when grabbing failed
-  function finish(result) {
-    root.picking = false;
-    root.request = null;
-    root._watchdog.stop();
-    const path = root._outPath();
-    root._saved(path, !!result && result.saveToFile(path));
+  // Called by the picker with the cropped capture (a grabToImage result, or
+  // null when grabbing failed): rect is its global logical area, whole
+  // pixels. It ends as a one-piece capture through pieceDone (written as one
+  // BMP piece, then _stitchPieces)
+  function finish(screenName, rect, result) {
+    const stamp = Date.now();
+    root._across = {
+      "stamp": stamp,
+      "area": rect,
+      "pieces": [
+        {
+          "screen": screenName,
+          "path": root._piecePath(screenName, stamp),
+          "rect": rect
+        }
+      ],
+      "pending": 1,
+      "failed": false
+    };
+    root.pieceDone(stamp, screenName, result);
   }
 
   // Where the picture goes: pick()'s path, else a new file in `folder`
-  // (or the scratch folder with copyOnly)
+  // (or the scratch folder with copyOnly); a capture in the same second as
+  // one before it gets _2, _3, …
   function _outPath() {
     if (root._target)
       return root._target.path;
-    const name = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".png"; // allowed: a file name, kept out of the language
-    return (root.copyOnly ? root._scratchDir + "/screenshot-" : root.folder + "/") + name;
+    const base = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss"); // allowed: a file name, kept out of the language
+    if (root._takenNames[0] !== base)
+      root._takenNames = [];
+    const name = Utils.freeId(base, root._takenNames, "_");
+    root._takenNames.push(name);
+    return (root.copyOnly ? root._scratchDir + "/screenshot-" : root.folder + "/") + name + ".png"; // allowed: a file name, kept out of the language
   }
 
-  // The picture is at `path` (or couldn't be written, !ok): pick()'s
-  // caller is called back; else it's copied and said or annotated
-  function _saved(path, ok) {
-    if (root._target) {
-      root._callBack(ok);
+  // A stitch is done (or failed, !ok): pick()'s caller is called back; else
+  // it's copied (unless a newer capture already was) and said or annotated
+  function _saved(stitch, ok) {
+    if (stitch.target) {
+      stitch.target.callback(ok);
       return;
     }
     if (!ok) {
-      root.fail(I18n.tr("Couldn't save the picture in {0}.", root.copyOnly ? root._scratchDir : root.folder));
+      root._sayFailed(null, I18n.tr("Couldn't save the picture in {0}.", stitch.out.replace(/\/[^/]*$/, "")));
       return;
     }
-    root._paths.screenshot = path;
-    ClipboardManager.copyFile(path, "image/png");
-    if (root.annotate && root.annotator !== "") {
-      root.annotate = false;
-      root.edit(path);
+    root._paths.screenshot = stitch.out;
+    const copied = stitch.serial > root._copiedSerial;
+    if (copied) {
+      root._copiedSerial = stitch.serial;
+      ClipboardManager.copyFile(stitch.out, "image/png");
+    }
+    if (stitch.annotate && root.annotator !== "") {
+      root.edit(stitch.out);
       return;
     }
-    root.annotate = false;
-    root._sayTaken(path);
+    // A copy-only picture that couldn't go on the clipboard has nothing to say
+    if (stitch.copyOnly && !copied)
+      return;
+    root._sayTaken(stitch.out, stitch.copyOnly, copied);
   }
 
   // A screenshot taken, where the OSD's Screenshot system (its
   // `screenshot` key) or Screenshots.notify puts it (NotificationManager.announce): its card
   // (lastShot), or a notification (a click opens it; with an annotator an
-  // "Edit in …" button, live until the notification closes), or nothing
-  function _sayTaken(path) {
+  // "Edit in …" button, live until the notification closes), or nothing.
+  // copied: false only for a save that landed late, behind a newer copy
+  function _sayTaken(path, copyOnly, copied) {
     const summary = I18n.tr("Screenshot saved");
-    const body = root.copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
+    const body = !copied ? I18n.tr("Saved in {0}. Click to open it.", path.replace(/\/[^/]*$/, "")) : copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
     // One entry: the last screenshot's
     const route = NotificationManager.announce("Screenshot", "screenshot", Screenshots.notify, summary, body, {
       "desktopEntry": root._desktopEntry,
@@ -380,7 +452,8 @@ QtObject {
     root.lastShot = {
       "path": path,
       "title": summary,
-      "folder": root.copyOnly ? "" : Paths.shortenHome(path.replace(/\/[^/]*$/, "")),
+      "folder": copyOnly ? "" : Paths.shortenHome(path.replace(/\/[^/]*$/, "")),
+      "copied": copied,
       "serial": root._shotSerial
     };
   }
@@ -388,7 +461,8 @@ QtObject {
   // The last screenshot taken, for the OSD's Screenshot system (its
   // `screenshot` key): { path,
   // title (what happened, translated), folder (where it was saved, ""
-  // when only copied), serial }, else null. Set only when the OSD says it
+  // when only copied), copied (false only for a late save not put on the
+  // clipboard), serial }, else null. Set only when the OSD says it
   // (_sayTaken)
   property var lastShot: null
   property int _shotSerial: 0
@@ -421,9 +495,16 @@ QtObject {
     root.request = null;
     root.annotate = false;
     root._watchdog.stop();
+    const target = root._target;
+    root._target = null;
+    root._sayFailed(target, reason);
+  }
+
+  // A screenshot failed: pick()'s caller is called back, else it's said
+  function _sayFailed(target, reason) {
     console.warn("[ScreenshotManager]", reason);
-    if (root._target) {
-      root._callBack(false);
+    if (target) {
+      target.callback(false);
       return;
     }
     NotificationManager.sendNotification("axiom", I18n.tr("Screenshot failed"), reason);
@@ -592,6 +673,24 @@ QtObject {
         root.fail(I18n.tr("A screen's part of the screenshot never arrived."));
       else if (root.picking)
         root.fail(I18n.tr("The compositor sent no picture of the screen."));
+    }
+  }
+
+  // A stitch that never answers (axiom hung with the socket open; a dropped
+  // connection already fails the call) gives up after 30 s, so the queue
+  // moves on (if it lands later it is still saved as usual); its pieces go
+  // (axiom has them open, or never will)
+  property Timer _stitchWatchdog: Timer {
+    interval: 30000
+    onTriggered: {
+      const stitch = root._stitch;
+      if (!stitch)
+        return;
+      root._stitch = null;
+      root._dropPieces(stitch.across);
+      console.warn("[ScreenshotManager] The stitch never answered");
+      root._saved(stitch, false);
+      Qt.callLater(root._next);
     }
   }
 
