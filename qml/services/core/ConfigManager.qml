@@ -150,8 +150,9 @@ QtObject {
       return true;
     }
     // Sections the ops leave alone stay the same objects (as for a push), so
-    // no reader of one re-runs; the root is new
-    root._config = ConfigOps.apply(root._config, ops) ?? filled;
+    // no reader of one re-runs; the root is new (diff's ops are keys-only
+    // sets and deletes, which apply always takes)
+    root._config = ConfigOps.apply(root._config, ops);
     BackendManager.call("config.set", {
       "ops": ops,
       "takeover": takeover

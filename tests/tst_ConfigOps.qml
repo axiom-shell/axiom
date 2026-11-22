@@ -139,7 +139,8 @@ TestCase {
     filled.Bars.items = [];
     const ops = ConfigOps.diff(before, filled);
     verify(ops.length > 0);
-    const next = ConfigOps.apply(before, ops) ?? filled;
+    const next = ConfigOps.apply(before, ops);
+    verify(next !== null, "diff's ops always apply");
     compare(next, filled, "applied: the saved config");
     verify(next !== before, "a new root");
     verify(next.Appearance === before.Appearance, "an untouched section is the same object");

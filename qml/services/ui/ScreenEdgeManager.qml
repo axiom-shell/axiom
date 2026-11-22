@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.components.methods
+import qs.services.core
 import qs.services.compositor
 
 /* What's on each screen edge: the running bars (`bars`, while the bar
@@ -23,21 +24,12 @@ QtObject {
   // never on hover) reserves its space. A bar on a monitor a window
   // rule hides it on is enriched as auto-hiding (`hiddenByRule`,
   // BarEnrich). Each entry stays the same object while it is equal
-  // (Utils.keepEqual), so a pass over equal content reaches no reader;
+  // (a KeptList), so a pass over equal content reaches no reader;
   // [] until this singleton has completed.
-  readonly property var bars: root._bars
-  property var _bars: []
-  property var _barKeys: []
-  on_FreshBarsChanged: root._keepBars()
-  Component.onCompleted: root._keepBars()
-  function _keepBars() {
-    const k = Utils.keepEqual({
-      "items": root._bars,
-      "keys": root._barKeys
-    }, root._freshBars, b => b.id);
-    root._barKeys = k.keys;
-    if (k.items !== root._bars)
-      root._bars = k.items;
+  readonly property var bars: root._keptBars.items
+  property KeptList _keptBars: KeptList {
+    fresh: root._freshBars
+    idOf: b => b.id
   }
   // Reads the gaps' inputs itself, not through floatGaps/endsOptions: a
   // binding over those re-runs once per link as a gap change reaches them,

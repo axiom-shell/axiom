@@ -1,13 +1,13 @@
 # Services pattern
 
-> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `qml/services/core/ConsumerRegistry.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
+> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `qml/services/core/ConsumerRegistry.qml`, `qml/services/core/KeptList.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
 > **Config:** none of its own
 > **Related:** [Config manager](config-manager.md), [Config readers](config-readers.md), [Editors pattern](editors-pattern.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 
 How `qml/services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
 
 ### Shape
-- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, …) are named for what they are.
+- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, `KeptList`, …) are named for what they are. `KeptList` keeps a list a service rebuilds the same objects while it is equal (`fresh`, `idOf`, `oncePerTurn`, `items`; CompositorManager's lists, ScreenEdgeManager.bars).
 - A service with an IPC target that nothing else references is created from `qml/shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
