@@ -120,8 +120,8 @@ Item {
   implicitHeight: (root.currentPage?.drawnHeight ?? 0) + OverlayConfig.boxPadding * 2
 
   // Only the current page and its neighbours (navigation wraps around) are
-  // loaded, and only while the overlay's window is mapped (open, or kept
-  // for a while after closing), so closed pages stop polling soon after.
+  // loaded, and only while the overlay's pages are built (`built`: open,
+  // closing or kept), so closed pages stop polling soon after.
   // Neighbours stay loaded so the slide in has something to show.
   // They follow the page the user settled on (`_settled`, a slide after
   // opening or navigating), so opening or switching builds only the page
