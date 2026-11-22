@@ -30,11 +30,13 @@ QtObject {
     {
       "namespace": "blur-backing",
       "order": 9,
+      "noAnim": true,
       "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Held (a pixel while nothing blurs) where layers stack by map order."
     },
     {
       "namespace": "shadows",
       "order": 8,
+      "noAnim": true,
       "why": "The chrome's shadows, apart from the blur window where its blur has no alpha threshold (SwayFX, no supports.blurThreshold), so they aren't blurred: over the fills (they never meet) and under the chrome. Held as the blur window is."
     },
     {

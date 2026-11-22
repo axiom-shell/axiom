@@ -23,7 +23,7 @@ TestCase {
 
   // The chrome slides itself, in every mode: no compositor animation
   function test_chrome_never_animated() {
-    const chrome = LayerStack.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications"]);
+    const chrome = LayerStack.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications", "blur-backing", "shadows"]);
     for (const ns of chrome)
       verify(LayerStack.layers.find(l => l.namespace === ns)?.noAnim === true, ns + " has noAnim");
   }
