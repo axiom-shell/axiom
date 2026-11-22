@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.config
 import qs.components.methods
 import qs.services.ui
 
@@ -14,7 +13,7 @@ import qs.services.ui
 // edge), `sink` who draws it (SurfaceContext.end's `sink`, or for the
 // surface's own edge "border"/"solidBar"):
 // - "border": the border's strip (SurfaceManager.borderOpenings), open under
-//   a translucent fill only, as an opaque one hides it anyway
+//   the surface in every mode (the backing window's copies cut it)
 // - "solidBar": with the border off, a solid bar's own inner stroke, open
 //   opaque or not (the bar and the surface are separate windows, whose
 //   stacking isn't the bar's), on whole pixels (SurfaceContext.opening)
@@ -36,7 +35,7 @@ QtObject {
   // border's strips and shadow for nothing
   readonly property var _border: BorderOpening {
     opening: {
-      if (root.sink !== "border" || !Appearance.translucent || !root.span)
+      if (root.sink !== "border" || !root.span)
         return null;
       const o = SurfaceContext.openingOrNull(root.span.start, root.span.end, root.span.startFillet ?? 0, root.span.endFillet ?? 0);
       return o ? Object.assign({}, root.span, o) : null;

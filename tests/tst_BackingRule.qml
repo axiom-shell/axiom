@@ -12,16 +12,21 @@ TestCase {
         "opaque": (i & 2) !== 0,
         "ready": (i & 4) !== 0
       };
-      compare(BackingRule.backingOn(o), o.translucent && !o.opaque && o.ready, JSON.stringify(o));
+      compare(BackingRule.backingOn(o), o.ready, JSON.stringify(o));
     }
   }
 
-  function test_backingOn_blur_off_is_backed() {
+  function test_backingOn_opaque_is_backed() {
     verify(BackingRule.backingOn({
-      "translucent": true,
-      "opaque": false,
+      "translucent": false,
+      "opaque": true,
       "ready": true
-    }), "see-through chrome is backed whatever the blur does");
+    }), "opaque chrome is backed once the windows are built");
+    verify(!BackingRule.backingOn({
+      "translucent": false,
+      "opaque": true,
+      "ready": false
+    }), "not before");
   }
 
   function test_backsOn_truth_table() {

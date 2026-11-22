@@ -54,10 +54,10 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
 - Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
-- Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down, blurred or not (the backing window draws see-through chrome with the blur off too).
+- Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down, blurred or not (the backing window draws every mode's chrome: opaque and blur off too).
 
 ### Unbacked shadows
-- Unbacked (solid for a fullscreen window, opaque chrome, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
+- Unbacked (Top-layer chrome under a fullscreen window, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
   - `AttachedSurface`'s;
   - the bar's: each pill, island and solid fill puts its copy in `shadowShape` (pills an `AttachedSurfaceCopy`).
 - The bar shadow's holes:
@@ -96,7 +96,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - `BorderPanel` leaves its stroke and the fill of the stroke's row open there (`Utils.subtractSpans`).
   - It nudges its window (`FrameNudge`) only when its own openings changed: `SurfaceManager.borderOpenings` is a new array whenever any opening on any screen moves.
   - A strip's own offset along its edge (`screenOffset`) is read through `LayerOrigin`. Until then it's taken as half what the edges across it reserve.
-- The same goes for strokes a surface is joined over. An opening is cut whenever surfaces are translucent, blurred or not, so a translucent fill doesn't show a line through it.
+- The same goes for strokes a surface is joined over. An opening is cut in every mode, opaque too (the backing window's copies cut the stroke), so no fill shows a line through it.
 - Pills publish theirs too (`BarContainer.borderOpening`, from the bar's place on screen).
 
 ### Joins on a perpendicular edge
@@ -105,7 +105,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - Bar popouts merged into the bar, or on a solid bar's inner edge, do the same.
 
 ### Border off: the solid bar's inner stroke
-- With the border off, a solid bar draws its own inner stroke, left open through the openings in its `BarContainer.setRequest`s. This holds opaque or not, as the windows' stacking isn't the bar's.
+- With the border off, a solid bar draws its own inner stroke, left open through the openings in its `BarContainer.setRequest`s, in every mode.
 - Bar popouts set their openings directly.
 - Edge popouts and docks (and bar popouts' joined ends) route the same screen-px spans through `hosts/popout/StrokeOpening`:
   - the stretch they stand on, a joined submenu's, and their joined ends' with their fillet;

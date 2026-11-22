@@ -59,7 +59,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - Turning a look part off rewrites the file (an eval can't take a setting back).
 
 ### Per screen
-Translucent with the blur off is backed too: `BlurManager.backingOn(screen)` is `BackingRule.backingOn` of `Appearance.translucent`, not `opaqueOn(screen)` and `CompositorManager.surfacesReady`, so the backing window draws the chrome wherever it is see-through and the compositor blurs it only where `active`/`regionsOn`. `shadowsApart` stays capability-only: on SwayFX the shadow windows exist with the blur off too.
+Every mode is backed: `BlurManager.backingOn(screen)` is `BackingRule.backingOn` of `CompositorManager.surfacesReady` alone, so the backing window draws the chrome opaque, translucent with the blur off, and blurred, on every compositor (plain sway too, where it only holds its place under the bars), and the compositor blurs it only where `active`/`regionsOn`. `shadowsApart` stays capability-only: on SwayFX the shadow windows exist with the blur off too.
 
 `BlurManager.backsOn(screen, onOverlay)`:
 - A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the backing window over the overlay draws it then (see [Blur window and openings › Over the overlay](blur-window-openings.md#over-the-overlay)).
@@ -72,8 +72,8 @@ Translucent with the blur off is backed too: `BlurManager.backingOn(screen)` is 
   - where the compositor's rules are compositor-wide (Hyprland's layer rules, SwayFX's `layer_effects`), on every screen: `BlurManager.paused`, and `active` is false;
     - the rules are taken back at runtime, as is Hyprland's blur where the window look kept it on for the surfaces alone (the module file keeps the saved setting);
   - where each window asks for its own blur (niri, `supports.blurRegion`), only on that screen: its windows send no region (`regionsOn`), and `active` stays on;
-  - the backing window draws nothing there (`backingOn`), and the chrome there fills itself.
-- On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` (`Style.edgeFill`) for the bars, integrated edge menus and toasts.
+  - the backing window keeps drawing the chrome (`backingOn`), and the compositor blurs nothing there.
+- On the screens showing one, surfaces fill solid (`opaqueOn`): the backing window draws them with the solid fill (`BlurManager.fillOn`, `Style.edgeFill`); `AttachedSurface.opaque` is the unbacked fallback's.
 - Elsewhere they stay translucent.
 - Independent of `Overlay.reduceFullscreen`, which uses the same trigger per screen but changes the overlay window's motion and shadow, and leaves it unblurred (`axiom-overlay-reduced`, in no blur list; no region on niri); the blur windows, toasts and OSD keep theirs ([pages and grid](../overlay/pages-and-grid.md)).
 

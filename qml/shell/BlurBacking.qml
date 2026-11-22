@@ -35,10 +35,10 @@ Scope {
   id: root
 
   Variants {
-    // On every compositor that blurs, drawing while BlurManager.backingOn
-    // its screen: kept mapped meanwhile (BlurBackingWindow.held), so it
+    // On every compositor, drawing while BlurManager.backingOn its screen
+    // (plain sway too, where it only holds the order): kept mapped meanwhile (BlurBackingWindow.held), so it
     // keeps its place where layers stack by map order
-    model: CompositorManager.supports.blur === true && CompositorManager.surfacesReady ? General.outputs : []
+    model: CompositorManager.surfacesReady ? General.outputs : []
 
     delegate: Scope {
       id: perScreen

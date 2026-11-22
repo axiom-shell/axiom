@@ -328,7 +328,7 @@ Item {
         // The parent's side stroke it covers, left open, with its
         // anti-aliased fringe a pixel either side
         readonly property var parentHole: {
-          if (!Appearance.translucent || !submenuPopup.visible)
+          if (!submenuPopup.visible)
             return null;
           const sw = Appearance.borderWidth;
           const band = EdgeAttach.strokeHoleAcross(outer.openToLeft ? root.attachRect.x : root.attachRect.x + root.attachRect.width - sw, sw);
@@ -342,7 +342,7 @@ Item {
         // joins that its end covers there (x in the parent's window): its
         // fill runs along it to the join's fillet (joinCover), from the
         // parent's side stroke
-        readonly property var joinSpan: Appearance.translucent && submenuPopup.visible && (surface.joinStart || surface.joinEnd) ? (outer.openToLeft ? {
+        readonly property var joinSpan: submenuPopup.visible && (surface.joinStart || surface.joinEnd) ? (outer.openToLeft ? {
             "start": surface.inParentX + surface.width - surface.joinCover,
             "end": surface.inParentX + surface.width
           } : {

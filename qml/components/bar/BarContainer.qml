@@ -199,9 +199,8 @@ Rectangle {
   // - opening: where a surface covers a pill's (or island's) inner stroke,
   //   { start, end } along the bar (`keepFill`: the fill inside it is
   //   painted back while the pill fills itself, for a surface joining it
-  //   end-on, which covers the stroke but nothing inside it). While
-  //   surfaces are translucent the stroke is left open there (their fill
-  //   no longer hides it).
+  //   end-on, which covers the stroke but nothing inside it). The
+  //   stroke is left open there (the copies cut it, opaque or not).
   // - endReach: a pill asked to run from an end of the bar ({ atStart, to,
   //   straight }, BarLayout.endReaches), by a surface joining this bar from
   //   the perpendicular edge: a pill bar merging into this one's corner
@@ -248,15 +247,15 @@ Rectangle {
   // A stretch along the bar (from..to, in this item's coordinates) that a
   // surface joined to the border's inner stroke covers there, as
   // SurfaceManager.setBorderOpening takes it (screen px along the edge), so
-  // the border leaves its stroke open under a translucent fill: a pill, a
-  // popout merged into the bar or on a solid bar's inner edge. Null while
-  // surfaces are solid, with the border off, on a bar the border's stroke
+  // the border leaves its stroke open under the surface (the backing window's
+  // copies cut it): a pill, a popout merged into the bar or on a solid
+  // bar's inner edge. Null with the border off, on a bar the border's stroke
   // isn't on (stacked inside another, BarEnds' offBorder), until the
   // bar's place on screen is known, or once an auto-hiding bar has slid
   // out of view (BarPanel.inView), the stroke whole again. On whole
   // pixels (SurfaceContext.opening), as StrokeOpening._border.
   function borderOpening(from, to) {
-    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
+    if (!Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
     const o = SurfaceContext.openingOrNull(at + from, at + to);
@@ -271,7 +270,7 @@ Rectangle {
   // this item, joined at its start or end): it covers the perpendicular
   // edge's stroke, from the bar's outer edge to its join's fillet
   function joinOpening(surface, atStart) {
-    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
+    if (!Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
       return null;
     const s = root._joinStretch(surface, atStart);
     const o = SurfaceContext.openingOrNull(s.start, s.end, s.startFillet ?? 0, s.endFillet ?? 0);

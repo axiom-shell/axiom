@@ -54,14 +54,11 @@ QtObject {
   }
 
   // Whether surfaces on `screen` leave their fill to the backing window:
-  // drawn wherever the chrome is see-through (the compositor blurs it only
-  // where `active`/`regionsOn`), not on a screen filling solid (opaqueOn),
-  // and its windows built (BlurBacking waits for the layer rules, as the
-  // chrome does). The rule is BackingRule's.
+  // drawn in every mode, opaque too (the compositor blurs it only where
+  // `active`/`regionsOn`), once its windows are built (BlurBacking waits for
+  // the layer rules, as the chrome does). The rule is BackingRule's.
   function backingOn(screen) {
     return BackingRule.backingOn({
-      "translucent": Appearance.translucent,
-      "opaque": root.opaqueOn(screen),
       "ready": CompositorManager.surfacesReady
     });
   }

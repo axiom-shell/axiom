@@ -507,7 +507,7 @@ QtObject {
   }
 
   // The pill (or island) stretched to carry the box's fillets while it
-  // shows, and its far stroke left open under a translucent box (or, on a
+  // shows, and its far stroke left open under the box (or, on a
   // solid bar's own stroke, StrokeOpening above), in the bar's coordinates.
   // Openings go out on whole pixels (SurfaceContext.opening)
   function _toBarSpan(start, end) {
@@ -542,7 +542,7 @@ QtObject {
     })) : null
     covered: root._covers
     opening: {
-      if (root._hollow || !root.showing || !root.onPill || !Appearance.translucent)
+      if (root._hollow || !root.showing || !root.onPill)
         return null;
       const s = root._toBarSpan(root._coverStart, root._coverEnd);
       return SurfaceContext.openingOrNull(s.start, s.end);
@@ -558,7 +558,7 @@ QtObject {
     tracks: true
     stretch: root.showing && root._submenuReach ? root._toBarStretch(root._submenuReach) : null
     opening: {
-      if (!root.showing || !root.onPill || !Appearance.translucent || !root.submenuSpan)
+      if (!root.showing || !root.onPill || !root.submenuSpan)
         return null;
       const s = root._toBarSpan(root.submenuSpan.start, root.submenuSpan.end);
       return SurfaceContext.openingOrNull(s.start, s.end);
