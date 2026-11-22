@@ -13,8 +13,10 @@ QtObject {
   id: root
 
   required property Item source
-  // A rect's fill (an AttachedSurface's is its fillColor)
-  property color color: Style.surfacePage
+  // The fill its copy draws, and the blur threshold reads: an attached
+  // surface's own fillColor unless its site sets one; a rect's or frame's
+  // what its site sets
+  property color color: root._surface?.fillColor ?? Style.surfacePage
   // How far its copy has faded in (a toast or menu tile fading), applied to the copy alone
   property real fade: 1
   property string kind: "attached"

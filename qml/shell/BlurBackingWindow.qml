@@ -79,8 +79,9 @@ PanelWindow {
       return [];
     // None while its fill is drawn under the blur threshold, fading or
     // faded out (an AttachedSurface's `fade`, a dock fading as it hides, a
-    // shape's `fade`, as a toast's or a menu tile's), as BoxBlurRegion and Hyprland's
-    // ignore_alpha compare it
+    // shape's `fade`, as a toast's or a menu tile's), or its fill's alpha,
+    // BlurShape.color (an attached surface's own fillColor): the alpha the
+    // copy draws, as BoxBlurRegion and Hyprland's ignore_alpha compare it
     if (Appearance.surfaceAlpha * shape.color.a * (shape.fade ?? 1) * (src.shownOpacity ?? 1) * (src.hostOpacity ?? 1) < Appearance.blurThreshold)
       return [];
     const clip = shape.clipRect ?? {
@@ -356,7 +357,7 @@ PanelWindow {
 
           AttachedSurfaceCopy {
             source: slot.shape?.source ?? null
-            fillColor: copies.draws === "outline" ? "black" : (slot.shape?.source?.fillColor ?? "transparent") // style-exempt: mask
+            fillColor: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
             mirrorStroke: copies.draws === "outline" ? "black" : "transparent" // style-exempt: mask
           }
         }
