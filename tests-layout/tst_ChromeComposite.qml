@@ -609,6 +609,50 @@ TestCase {
     compare(off, 0, `${off} of ${count} pixels differ from the scene with no holes (scale ${root.dpr})`);
   }
 
+  // Holes at a fractional logical edge (x 12.3) and at a half device pixel at 1.25 (x 36.4 and y 26.4: 45.5 and
+  // 33 device px), under a fractional copy origin: outside the holes (a pixel grown round each) every device
+  // pixel equals the same scene with no holes within 1/255
+  function test_fractional_holes_are_the_stroke() {
+    if (root.dpr !== 1.25)
+      skip("scale 1.25 row");
+    if (!root.gpu)
+      skip("software scene graph: a clipped Shape is drawn wrong (run under xvfb with llvmpipe)");
+    const holes = [Qt.rect(12.3, 26.4, 10, 6), Qt.rect(36.4, 26.4, 10, 6)];
+    const src = root.smallSurface();
+    const lower = (stroke, h) => ({
+          "kind": "attached",
+          "level": "bar",
+          "src": src,
+          "x": 10.3,
+          "y": 5.2,
+          "fill": root.blue,
+          "stroke": stroke,
+          "holes": h
+        });
+    const cut = root.render([lower(root.line(0.5), holes)]);
+    const whole = root.render([lower(root.line(0.5), [])]);
+    const near = (x, y) => holes.some(h => x >= 10.3 + h.x - 1 && x <= 10.3 + h.x + h.width + 1 && y >= 5.2 + h.y - 1 && y <= 5.2 + h.y + h.height + 1);
+    let off = 0, count = 0;
+    const first = [];
+    for (let yd = 6; yd < 56; yd++) {
+      for (let xd = 12; xd < 106; xd++) {
+        if (near((xd + 0.5) / root.dpr, (yd + 0.5) / root.dpr))
+          continue;
+        const c = cut.dpx(xd, yd), w = whole.dpx(xd, yd);
+        count++;
+        if (Math.max(Math.abs(c.r - w.r), Math.abs(c.g - w.g), Math.abs(c.b - w.b), Math.abs(c.a - w.a)) > 1 / 255) {
+          off++;
+          if (first.length < 8)
+            first.push(`${xd},${yd} (a ${c.a.toFixed(3)} vs ${w.a.toFixed(3)}, r ${c.r.toFixed(3)} vs ${w.r.toFixed(3)})`);
+        }
+      }
+    }
+    verify(count > 1000);
+    // (S2-u2 confirmed: the stack's review expects this to fail until the pieces are placed on device pixels)
+    expectFail("", "a device pixel outside the holes differs from the no-hole scene under a fractional copy origin");
+    compare(off, 0, `${off} of ${count} device pixels differ from the scene with no holes, first at ${first.join(" ")}`);
+  }
+
   // A fade: the copy at opacity 0.5 with its hole open: the hole shows the fill alone, whatever the opacity
   function test_cut_under_a_fade() {
     if (!root.gpu)

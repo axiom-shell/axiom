@@ -9,9 +9,8 @@ import qs.services.compositor
  * The blur behind the shell's chrome: the border's frame, bars and their
  * popouts, edge popouts, integrated edge menus and docks. Each surface
  * registers its shape (BlurShape); one click-through window per screen
- * (shell/BlurBacking) draws them all, filled, wherever the chrome is
- * see-through (blur on or off), and is the only one of them the compositor
- * blurs. Blurred in one pass, before any chrome is drawn, the
+ * (shell/BlurBacking) draws them all, filled, in every mode (opaque
+ * too), and is the only one of them the compositor blurs. Blurred in one pass, before any chrome is drawn, the
  * blur behind joined surfaces matches exactly; the surfaces themselves
  * draw their outer fill transparent (`backing`). While the overlay is open
  * on a screen, a second backing window there, over it, draws the shapes of
@@ -24,14 +23,15 @@ QtObject {
   id: root
 
   // Whether the compositor blurs axiom's surfaces now (its rules, sent to
-  // it: CompositorConfigManager): Appearance.blur where it blurs them
-  // (elsewhere they fill themselves: the backing window couldn't place their
-  // shapes without its layer positions), paused while a fullscreen window
+  // it: CompositorConfigManager): Appearance.blur where it blurs them,
+  // paused while a fullscreen window
   // is open on any screen (Appearance.blurPauseFullscreen) where its rules
   // are compositor-wide (Hyprland's layer rules, SwayFX's layer_effects).
   // Where each window asks for its own blur (supports.blurRegion: niri)
-  // it pauses per screen instead (pausedOn). The chrome then fills itself,
-  // solid on the screens showing one (opaqueOn).
+  // it pauses per screen instead (pausedOn). These decide only whether the
+  // compositor blurs; the backing window draws the chrome either way
+  // (backingOn). While paused for a fullscreen window the fill on that
+  // screen goes solid (opaqueOn).
   readonly property bool _wanted: Appearance.blur
   readonly property bool _pauses: root._wanted && Appearance.blurPauseFullscreen
   readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
@@ -59,6 +59,8 @@ QtObject {
   // the layer rules, as the chrome does). The rule is BackingRule's.
   function backingOn(screen) {
     return BackingRule.backingOn({
+      "translucent": Appearance.translucent,
+      "opaque": root.opaqueOn(screen),
       "ready": CompositorManager.surfacesReady
     });
   }
@@ -104,8 +106,9 @@ QtObject {
     return root.backingOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
   }
 
-  // Whether surfaces on `screen` fill themselves solid: blur paused for a
-  // fullscreen window shown there (elsewhere they stay translucent)
+  // Whether the fill on `screen` goes solid, whichever window draws it (the
+  // surfaces' and the copies' `fillOn`): blur paused for a fullscreen window
+  // shown there (elsewhere it stays translucent)
   function opaqueOn(screen) {
     return root.pausedOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
   }

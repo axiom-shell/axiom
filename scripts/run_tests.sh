@@ -75,8 +75,7 @@ run_one() {
     grep '^Totals' "$log" || true
   else
     QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen "${wrap[@]}" \
-      "$qt_bin/qmltestrunner" -maxwarnings 0 -import "$import" -input "$input" 2>&1 | tee "$log"
-    [ "${PIPESTATUS[0]}" -eq 0 ] || status=1
+      "$qt_bin/qmltestrunner" -maxwarnings 0 -import "$import" -input "$input" 2>&1 | tee "$log" || status=1
   fi
   # llvmpipe not loading shows as a software-graph skip: a failure in CI
   if [ $composite -eq 1 ] && [ -n "${GITHUB_ACTIONS:-}" ] && grep -q 'software scene graph:' "$log"; then
