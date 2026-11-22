@@ -5,16 +5,15 @@ import qs.config
 import qs.services.compositor
 
 /**
- * The backing behind the shell's chrome: the border's frame, bars and their
+ * The blur behind the shell's chrome: the border's frame, bars and their
  * popouts, edge popouts, integrated edge menus and docks. Each surface
  * registers its shape (BlurShape); one click-through window per screen
- * (shell/BlurBacking) draws them all, filled, wherever the chrome is
- * see-through (backingOn), and is the only one of them the compositor
- * blurs, where it blurs (active, regionsOn). Drawn in one pass, before any
- * chrome is, the blur behind joined surfaces matches exactly; the surfaces
- * themselves draw their outer fill transparent (`backing`). While the
- * overlay is open on a screen, a second backing window there, over it,
- * draws the shapes of the surfaces on the Overlay layer (aboveOverlay).
+ * (shell/BlurBacking) draws them all, filled, and is the only one of them
+ * Hyprland blurs. Blurred in one pass, before any chrome is drawn, the
+ * blur behind joined surfaces matches exactly; the surfaces themselves
+ * draw their outer fill transparent (`backing`). While the overlay is open
+ * on a screen, a second backing window there, over it, draws the shapes of
+ * the surfaces on the Overlay layer (aboveOverlay).
  * Layer-shell windows don't know where they are on screen: each shape is
  * placed from its window's origin as LayerManager works it out
  * (hosts/popout/LayerOrigin).
@@ -41,7 +40,7 @@ QtObject {
   // blur_ignore_transparent: no supports.blurThreshold, no blur region of
   // a window's own), a shadow in a blurred window would be frosted out to
   // its reach
-  readonly property bool shadowsApart: root._wanted && CompositorManager.supports.blur === true && CompositorManager.supports.blurThreshold !== true && CompositorManager.supports.blurRegion !== true
+  readonly property bool shadowsApart: CompositorManager.supports.blur === true && CompositorManager.supports.blurThreshold !== true && CompositorManager.supports.blurRegion !== true
 
   function _name(screen) {
     return typeof screen === "string" ? screen : screen?.name ?? "";
@@ -53,12 +52,10 @@ QtObject {
   }
 
   // Whether surfaces on `screen` leave their fill to the backing window:
-  // the chrome there is see-through (not solid for a fullscreen window), and
-  // its windows built (BlurBacking waits for the layer rules, as the chrome
-  // does). The compositor blurs it only where `active` (rules) and
-  // `regionsOn` (niri's regions) say so.
+  // blurring there, and its windows built (BlurBacking waits for the layer
+  // rules, as the chrome does)
   function backingOn(screen) {
-    return Appearance.translucent && !root.opaqueOn(screen) && CompositorManager.surfacesReady;
+    return root._wanted && !root.pausedOn(screen) && CompositorManager.surfacesReady;
   }
 
   // Whether a surface on `screen` that blurs itself (LayerStack.

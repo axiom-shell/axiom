@@ -30,7 +30,7 @@ QtObject {
     {
       "namespace": "blur-backing",
       "order": 9,
-      "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills while it is see-through. Held (a pixel while nothing blurs) where layers stack by map order."
+      "why": "The backing window (BlurManager, shell/BlurBacking), drawing the chrome's fills under it. Held (a pixel while nothing blurs) where layers stack by map order."
     },
     {
       "namespace": "shadows",
@@ -200,10 +200,10 @@ QtObject {
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
   readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
-  // The windows whose fill and shadow the backing window draws while
-  // see-through: not animated by the compositor while it does (they slide
-  // themselves), or their stroke and content fade or pop in and out while
-  // what the backing window draws for them doesn't
+  // The windows whose fill, blur and shadow the backing window draws: not
+  // animated by the compositor while it does (they slide themselves), or
+  // their stroke and content fade or pop in and out while what the backing
+  // window draws for them doesn't
   readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications"])
 
   // A namespace's order (with or without its "axiom-" prefix); 0 (where

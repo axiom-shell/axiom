@@ -38,7 +38,7 @@ Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones Sw
   - So a bar popout, a popup drawn transparent over the blur window, blurs only under its content.
 - `axiom-blur-over-overlay`, on the blur window over the overlay (`LayerStack.blurOverOverlay`): `blur`, `ignore_alpha` at the threshold, and always `xray = false`, since it blurs the overlay under it.
 - `axiom-blur-backdrops`, on `axiom-backdrop` and polkit (whose window holds its dim), at any alpha.
-- `axiom-blur-no-anim`: `no_anim` on `LayerStack.blurBacked`, the windows the backing window draws for, while the chrome is see-through (the fact `blur.backed`, `Appearance.translucent`), blurred or not.
+- `axiom-blur-no-anim`: `no_anim` on `LayerStack.blurBacked`, the windows the backing window draws for, while it does.
   - They slide themselves. Hyprland fading or popping one in (its `layers`/`fade` animations, read as it maps) would leave its stroke and content behind the fill, blur and shadow drawn for it, which it doesn't animate.
 - That's all it writes: the strength is Hyprland's own blur.
 - The module file holds the setting as saved (`_surfacesBlur(true)`). At runtime it's `BlurManager.active`, evaluated over the file after every reload.
@@ -71,7 +71,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
   - where the compositor's rules are compositor-wide (Hyprland's layer rules, SwayFX's `layer_effects`), on every screen: `BlurManager.paused`, and `active` is false;
     - the rules are taken back at runtime, as is Hyprland's blur where the window look kept it on for the surfaces alone (the module file keeps the saved setting);
   - where each window asks for its own blur (niri, `supports.blurRegion`), only on that screen: its windows send no region (`regionsOn`), and `active` stays on;
-  - the chrome there is solid (`opaqueOn`), so the backing window isn't asked for it (`backingOn`) and it fills itself.
+  - the backing window draws nothing there (`backingOn`), and the chrome there fills itself.
 - On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` (`Style.edgeFill`) for the bars, integrated edge menus and toasts.
 - Elsewhere they stay translucent.
 
@@ -79,8 +79,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - The chrome's fills all live in the one backing window (Top, order 9), under every chrome window.
 - A chrome surface that stood over another one in a higher layer (the attached launcher, an Overlay-layer edge popout, over a dock) no longer hides it with its fill: what's in between shows through.
 - So popouts never overlap: what one covers gives way (see [Popout registry](../popouts/registry.md)).
-- While the backing window backs surfaces (see-through chrome, blur on or off), an edge popout or a free menu slides out only once its window's origin is known (`LayerOrigin.settled`), so its first frames never fill and shadow themselves beside backed ones. The integrated edge menu takes no such wait: its window is placed before its first frame is drawn (`origin !== null` in its `backed`).
-- Translucent with the blur off is backed too: the compositor blurs nothing, and on niri no window sends a region (`regionsOn`).
+- While the backing window backs surfaces, an edge popout or a free menu slides out only once its window's origin is known (`LayerOrigin.settled`), so its first frames never fill and shadow themselves beside backed ones. The integrated edge menu takes no such wait: its window is placed before its first frame is drawn (`origin !== null` in its `backed`).
 
 ### Lock screen and greeter
 - The greeter is never translucent: in greeter mode `Appearance.compositorBlurs` is false, so its surfaces are solid and nothing frosts ([greeter runtime](../features/greeter-runtime.md)).

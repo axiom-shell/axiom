@@ -177,7 +177,7 @@ func frozenCases(t *testing.T) []frozenCase {
 		}
 		var args []any
 		for _, a := range items(raw) {
-			a = backedAsBlurred(replayed(a))
+			a = replayed(a)
 			// An action asked about by name has the name it has now
 			if name, ok := a.(string); ok && strings.HasPrefix(c.Op, "BindActions.") && renamedActions[name] != "" {
 				a = renamedActions[name]
@@ -190,26 +190,6 @@ func frozenCases(t *testing.T) []frozenCase {
 		t.Fatal(err)
 	}
 	return out
-}
-
-// backedAsBlurred gives the surfaces the cases recorded the `backed` fact
-// they predate: then the backed namespaces went unanimated while the blur
-// was on, so it is the blur
-func backedAsBlurred(v any) any {
-	switch x := v.(type) {
-	case *jsonx.Object:
-		if blur, ok := x.Value("blur").(bool); ok && !x.Has("backed") {
-			x.Set("backed", blur)
-		}
-		for _, k := range x.Keys() {
-			backedAsBlurred(x.Value(k))
-		}
-	case *jsonx.Array:
-		for _, item := range x.Items {
-			backedAsBlurred(item)
-		}
-	}
-	return v
 }
 
 // The bind actions renamed since the cases were recorded, old to new: the

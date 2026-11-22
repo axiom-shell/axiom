@@ -181,9 +181,6 @@ Singleton {
       "blur": {
         "saved": Appearance.blur,
         "now": BlurManager.active,
-        // The backed namespaces aren't animated by the compositor while the
-        // backing window draws their fill (compositor-wide, as the rules are)
-        "backed": Appearance.translucent,
         "throughWindows": Appearance.blurThroughWindows,
         "backdrops": Appearance.blurBackdrops,
         "threshold": Appearance.blurThreshold

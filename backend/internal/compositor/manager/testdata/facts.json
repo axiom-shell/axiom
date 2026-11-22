@@ -58,7 +58,6 @@
   "blur": {
     "saved": true,
     "now": true,
-    "backed": true,
     "throughWindows": true,
     "backdrops": true,
     "threshold": 0.5
