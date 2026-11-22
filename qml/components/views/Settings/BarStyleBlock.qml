@@ -207,10 +207,14 @@ ColumnLayout {
 
       // Built only while the section is edited here (and open, or still
       // folding shut). Hidden when not built: an unloaded Loader keeps
-      // its last height, which left a gap where a section's form had been
-      Loader {
+      // its last height, which left a gap where a section's form had been.
+      // Each section's form is a job of its own (the tiles' samples are
+      // too: PreviewTile)
+      StreamedLoader {
         Layout.fillWidth: true
-        active: !piece.shared && piece.shown && body.shown
+        rise: false
+        label: "bar style section"
+        wanted: !piece.shared && piece.shown && body.shown
         visible: active
         sourceComponent: SchemaPropertiesForm {
           propertiesSchema: piece.keys.reduce((schema, key) => {

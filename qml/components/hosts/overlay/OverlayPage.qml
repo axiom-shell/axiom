@@ -7,7 +7,9 @@ import qs.components.reusable
 // PageBox, shown when it's the current page, sliding in from the side the
 // navigation came from (`direction`), while the page it replaces slides out
 // the other way and fades. The content is only instantiated while `loaded`
-// (or still leaving).
+// (or still leaving). Its queued build jobs (StreamedLoaders, a module grid's
+// modules) run only while it is current and the overlay open (`buildHeld`):
+// a neighbour builds its frame and its cards when it arrives.
 Item {
   id: root
 
@@ -15,6 +17,8 @@ Item {
   required property int currentIndex
   required property int direction
   required property bool loaded
+  // The overlay is open (shown) on its screen
+  required property bool overlayOpen
   // The screen it's on and the drawn px the page may take (OverlayPages)
   required property var screen
   required property real roomWidth
@@ -33,6 +37,8 @@ Item {
   readonly property real drawnHeight: pageBox.height * pageBox.contentZoom
 
   readonly property bool current: root.currentIndex === root.pageIndex
+  // Its queued build jobs wait (BuildOrder.holderOf, BuildQueueManager)
+  readonly property bool buildHeld: !(root.current && root.overlayOpen)
   // Still on screen, sliding out after another page took its place
   property bool _leaving: false
   readonly property real _shift: Math.max(Widget.spacing * 3, Math.round(root.drawnWidth * 0.06))

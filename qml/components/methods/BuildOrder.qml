@@ -3,7 +3,9 @@ import QtQuick
 
 // The order BuildQueueManager builds in: queued order, a `first` entry ahead
 // of every other (behind the `first` ones already waiting), and among the
-// rest those whose owner is visible before the hidden ones.
+// rest those whose owner is visible before the hidden ones. An entry whose
+// holder (the nearest ancestor of its owner with a `buildHeld`, an overlay
+// page) is holding waits, wherever it is in the queue.
 QtObject {
   id: root
 
@@ -18,12 +20,35 @@ QtObject {
     return out;
   }
 
-  // The entry to build next: a `first` one, else the first whose owner is
-  // visible, else the first
+  // The nearest item from `item` up its parents that carries a `buildHeld`
+  // (an overlay page), or null
+  function holderOf(item) {
+    for (let at = item; at; at = at.parent) {
+      if ("buildHeld" in at)
+        return at;
+    }
+    return null;
+  }
+
+  // How many entries of `queue` aren't held: the jobs that can run
+  function runnable(queue) {
+    return root._ready(queue).length;
+  }
+
+  // The entry to build next: the first `first` one that isn't held, else
+  // the first not held whose owner is visible, else the first not held; null
+  // when every entry is held
   function next(queue) {
-    if (queue.length > 0 && queue[0].first)
-      return queue[0];
-    const shown = queue.findIndex(entry => entry.owner?.visible === true);
-    return queue[Math.max(0, shown)];
+    const ready = root._ready(queue);
+    if (ready.length > 0 && ready[0].first)
+      return ready[0];
+    const shown = ready.findIndex(entry => entry.owner?.visible === true);
+    return ready[Math.max(0, shown)] ?? null;
+  }
+
+  // -- Private --
+  // The entries of `queue` whose holder isn't holding
+  function _ready(queue) {
+    return queue.filter(entry => entry.holder?.buildHeld !== true);
   }
 }
