@@ -366,6 +366,48 @@ TestCase {
     compare(Utils.fromCelsius(36.6, "celsius"), 36.6);
   }
 
+  // The pieces are disjoint, inside `bounds`, none overlapping a rect, and
+  // their area is `bounds`' less the rects' union (counted per unit cell)
+  function checkRects(bounds, rects) {
+    const pieces = Utils.subtractRects(bounds, rects);
+    let area = 0;
+    for (let i = 0; i < pieces.length; i++) {
+      const p = pieces[i];
+      verify(p.x >= bounds.x && p.y >= bounds.y && p.x + p.width <= bounds.x + bounds.width && p.y + p.height <= bounds.y + bounds.height, "inside bounds");
+      for (let j = i + 1; j < pieces.length; j++) {
+        const q = pieces[j];
+        verify(p.x >= q.x + q.width || q.x >= p.x + p.width || p.y >= q.y + q.height || q.y >= p.y + p.height, "disjoint");
+      }
+      for (const r of rects)
+        verify(p.x >= r.x + r.width || r.x >= p.x + p.width || p.y >= r.y + r.height || r.y >= p.y + p.height, "outside the rects");
+      area += p.width * p.height;
+    }
+    let covered = 0;
+    for (let y = bounds.y; y < bounds.y + bounds.height; y++) {
+      for (let x = bounds.x; x < bounds.x + bounds.width; x++) {
+        if (rects.some(r => x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height))
+          covered++;
+      }
+    }
+    compare(area, bounds.width * bounds.height - covered);
+    return pieces;
+  }
+
+  function test_subtractRects() {
+    const bounds = Qt.rect(10, 10, 100, 50);
+    // None taken
+    compare(checkRects(bounds, []).length, 1);
+    compare(checkRects(bounds, [Qt.rect(200, 200, 5, 5)]).length, 1);
+    // One inside: four pieces
+    compare(checkRects(bounds, [Qt.rect(30, 20, 10, 10)]).length, 4);
+    // One reaching past an edge
+    checkRects(bounds, [Qt.rect(100, 40, 50, 50)]);
+    // Two overlapping
+    checkRects(bounds, [Qt.rect(20, 15, 40, 20), Qt.rect(40, 25, 40, 30)]);
+    // One covering all
+    compare(checkRects(bounds, [Qt.rect(0, 0, 200, 200)]), []);
+  }
+
   function test_temperatureSymbol() {
     compare(Utils.temperatureSymbol("celsius"), "°C");
     compare(Utils.temperatureSymbol("fahrenheit"), "°F");

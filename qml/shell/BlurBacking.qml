@@ -46,8 +46,23 @@ Scope {
       // The overlay open here covers the backing window: the Overlay-layer
       // surfaces' shapes go to the one over it
       readonly property bool aboveOverlay: BlurManager.aboveOverlay(perScreen.screenName)
-      readonly property var overlayShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => shape.overlayLayer) : []
-      readonly property var otherShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => !shape.overlayLayer) : perScreen.onScreen
+      // The hand-off, so some window draws those surfaces' boxes in every
+      // frame: the window over the overlay has drawn them (its first frame
+      // after it was made while the overlay was open), and the main one
+      // hasn't yet drawn them back (its first frame after the overlay
+      // closed, which has them). The main window gives them up, and erases
+      // them, only while both this and the overlay are; on close it draws
+      // them at once, while the other still does, and the window over the
+      // overlay goes once this falls
+      property bool overlayTaken: false
+      // nothing to hand back where the main window doesn't draw: the surfaces
+      // draw their own boxes
+      onAboveOverlayChanged: if (!perScreen.aboveOverlay && !BlurManager.backingOn(perScreen.screenName))
+        perScreen.overlayTaken = false
+      readonly property bool overlayWindows: perScreen.aboveOverlay || perScreen.overlayTaken
+      readonly property bool overlayGivenUp: perScreen.aboveOverlay && perScreen.overlayTaken
+      readonly property var overlayShapes: perScreen.overlayWindows ? perScreen.onScreen.filter(shape => shape.overlayLayer) : []
+      readonly property var otherShapes: perScreen.overlayGivenUp ? perScreen.onScreen.filter(shape => !shape.overlayLayer) : perScreen.onScreen
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
       // Its backing windows: the fills and the shadows apart (in that order,
@@ -61,7 +76,7 @@ Scope {
       readonly property var parts: perScreen.shadowsApart ? ["fills", "shadows"] : ["all"]
 
       Variants {
-        model: perScreen.parts.concat(perScreen.aboveOverlay ? perScreen.parts.map(part => part + "-overlay") : [])
+        model: perScreen.parts.concat(perScreen.overlayWindows ? perScreen.parts.map(part => part + "-overlay") : [])
 
         delegate: BlurBackingWindow {
           id: blurWindow
@@ -71,10 +86,30 @@ Scope {
           part: blurWindow.modelData.replace("-overlay", "")
           shapes: blurWindow.over ? perScreen.overlayShapes : BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
           cutBy: blurWindow.over ? perScreen.otherShapes : perScreen.overlayShapes
+          // Only the window under the overlay gives way (to what the one over
+          // it draws): it holds the overlay's shapes as erasers while the
+          // windows over the overlay exist, and erases each only once it
+          // leaves `shapes` (`otherShapes`, while `overlayGivenUp`), so a
+          // hand-off changes one list, never both; the one over it gives way
+          // to nothing
+          erasers: blurWindow.over ? [] : perScreen.overlayShapes
           wanted: blurWindow.over || BlurManager.backingOn(perScreen.screenName)
           held: !blurWindow.over
           stackLayer: blurWindow.over || BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
           layerNamespace: (blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (blurWindow.over ? "-overlay" : "")
+
+          // The hand-off's two edges, read from the windows that draw the shapes
+          Connections {
+            target: blurWindow.contentItem?.Window.window ?? null
+            function onFrameSwapped() {
+              if (blurWindow.part === "shadows")
+                return;
+              if (blurWindow.over && perScreen.aboveOverlay)
+                perScreen.overlayTaken = true;
+              else if (!blurWindow.over && !perScreen.aboveOverlay)
+                perScreen.overlayTaken = false;
+            }
+          }
         }
       }
     }

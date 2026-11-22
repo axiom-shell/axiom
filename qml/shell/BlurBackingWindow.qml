@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
-import QtQuick.Shapes
 
 import qs.config
 import qs.services.compositor
@@ -13,12 +12,12 @@ import qs.components.methods
 import qs.components.reusable
 
 // One backing window (BlurBacking): click-through, drawing each of
-// `shapes` (BlurShapes) filled, at the surface opacity, with their
-// shadows cast once per look, from the shapes' outlines (fill and
-// stroke), and kept outside every shape's outline, its own and the other
-// window's (`cutBy`). `part` keeps one of the two: where the compositor
-// blurs every pixel that isn't clear, the shadows go to a window it
-// doesn't blur (BlurBacking).
+// `shapes` (BlurShapes) with its fill and stroke, in painter's order
+// (PaintOrder), as one image (ChromeComposite), with their shadows cast once
+// per look, from the shapes' outlines (fill and stroke), and kept outside
+// every shape's outline, its own and the other window's (`cutBy`). `part`
+// keeps one of the two: where the compositor blurs every pixel that isn't
+// clear, the shadows go to a window it doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes
 // only its own, so the others aren't remade (and don't restart).
 // Where the compositor blurs only what a window asks (niri:
@@ -32,6 +31,10 @@ PanelWindow {
   // are cut by all the same: a shadow never falls on a surface joined to
   // the one casting it, whichever window draws that one
   property var cutBy: []
+  // Shapes another backing window may draw over this one (the overlay's):
+  // those not among `shapes` its chrome gives way to, erased where they
+  // stand, never drawn
+  property var erasers: []
   // What it draws: "all", the "fills" alone or the "shadows" alone
   property string part: "all"
   // Whether shadows are cut by `union` rather than their own group (never
@@ -56,6 +59,21 @@ PanelWindow {
   // it would land over the bars and cover their content
   property bool wanted: true
   property bool held: true
+
+  // Its watchdog has warned (once per window)
+  property bool _warned: false
+  // Chrome is backed here but this window isn't shown (a seam: the chrome
+  // shows without its fill): a moment's grace, then it says so, once
+  Timer {
+    interval: 1000
+    running: backing.wanted && backing.shapes.length > 0 && !layerSlot.shown
+    onTriggered: {
+      if (backing._warned)
+        return;
+      backing._warned = true;
+      console.warn(`${backing.layerNamespace} on ${backing.screen?.name ?? ""}: chrome is backed but its backing window isn't shown`);
+    }
+  }
 
   visible: layerSlot.shown
   LayerSlot {
@@ -168,15 +186,48 @@ PanelWindow {
     visible: backing.part !== "fills"
   }
 
-  // Each group's fills (its fill `Copies`, in `groups`), drawn where its
-  // shadow's capture was, at their own colour, then the surface opacity
-  // applied to them all at once, so where they overlap they don't stack
-  // (a layer of its own: one copy's own pieces overlap too)
-  Item {
-    id: fills
+  // Every shape's fill and stroke in painter's order, as the two captures
+  // ChromeComposite reads (a window drawing only shadows draws neither): the
+  // colour premultiplied, and the alpha in grey, each stroke blended over
+  // what is under it. Sampled 1:1: the window's buffer in device pixels
+  Copies {
+    id: colorCopies
+    screen: backing.screen
+    shapes: backing.part !== "shadows" ? backing.shapes : []
+    erasers: backing.part !== "shadows" ? backing.erasers : []
+    draws: "chrome"
+    onChanged: nudge.burst()
+  }
+  Copies {
+    id: alphaCopies
+    screen: backing.screen
+    shapes: backing.part !== "shadows" ? backing.shapes : []
+    erasers: backing.part !== "shadows" ? backing.erasers : []
+    draws: "chrome"
+    asAlpha: true
+  }
+  ShaderEffectSource {
+    id: colorCapture
     anchors.fill: parent
-    layer.enabled: backing.shapes.length > 0 && visible // style-exempt: no text
-    opacity: Style.edgeAlpha
+    visible: false
+    sourceItem: backing.part !== "shadows" && backing.shapes.length > 0 ? colorCopies : null
+    hideSource: true
+    smooth: false
+    textureSize: Qt.size(Math.ceil(backing.width * backing.devicePixelRatio), Math.ceil(backing.height * backing.devicePixelRatio))
+  }
+  ShaderEffectSource {
+    id: alphaCapture
+    anchors.fill: parent
+    visible: false
+    sourceItem: backing.part !== "shadows" && backing.shapes.length > 0 ? alphaCopies : null
+    hideSource: true
+    smooth: false
+    textureSize: colorCapture.textureSize
+  }
+  ChromeComposite {
+    anchors.fill: parent
+    colorSource: colorCapture
+    alphaSource: alphaCapture
     visible: backing.part !== "shadows"
   }
 
@@ -198,6 +249,7 @@ PanelWindow {
 
       // (none for a fills-only window, which never reads them)
       Copies {
+        screen: backing.screen
         shapes: backing.part !== "fills" ? backing.cutBy : []
         draws: "outline"
         onChanged: nudge.burst()
@@ -217,8 +269,7 @@ PanelWindow {
     keys: backing.shapes.map(shape => backing.shadowKey(shape)).filter((key, i, all) => all.indexOf(key) === i)
   }
 
-  // The shapes casting one shadow: their fills copied into `fills`, their
-  // outlines copied once and captured (a hidden layer isn't drawn, a
+  // The shapes casting one shadow: their outlines copied once and captured (a hidden layer isn't drawn, a
   // capture with hideSource is), drawn into `union` from the capture, and
   // casting from it
   Repeater {
@@ -237,6 +288,7 @@ PanelWindow {
         anchors.fill: parent
 
         Copies {
+          screen: backing.screen
           shapes: group.members
           draws: "outline"
           onChanged: nudge.burst()
@@ -249,14 +301,6 @@ PanelWindow {
         visible: false
         sourceItem: shapes
         hideSource: true
-      }
-
-      // (none for a shadows-only window, which never shows `fills`)
-      Copies {
-        shapes: backing.part !== "shadows" ? group.members : []
-        draws: "fill"
-        parent: fills
-        onChanged: nudge.burst()
       }
 
       ShaderEffect {
@@ -275,143 +319,6 @@ PanelWindow {
         cutSource: backing.cutByUnion ? union : copied
         autoPaddingEnabled: false
         look: group.lead?.shadow ?? BarStyle.look
-      }
-    }
-  }
-
-  // `model`: a ListModel of `key` rows (strings), kept to `keys` by
-  // adding and removing rows rather than resetting it, so a Repeater over
-  // it keeps the items whose keys stay
-  component KeyedModel: QtObject {
-    id: keyed
-    required property var keys
-    readonly property ListModel model: ListModel {}
-
-    function sync() {
-      const wanted = keyed.keys.map(key => String(key));
-      for (let i = keyed.model.count - 1; i >= 0; i--) {
-        if (!wanted.includes(keyed.model.get(i).key))
-          keyed.model.remove(i);
-      }
-      const have = [];
-      for (let i = 0; i < keyed.model.count; i++)
-        have.push(keyed.model.get(i).key);
-      for (const key of wanted) {
-        if (!have.includes(key))
-          keyed.model.append({
-            "key": key
-          });
-      }
-    }
-    onKeysChanged: keyed.sync()
-    Component.onCompleted: keyed.sync()
-  }
-
-  // A copy of each of `shapes`
-  component Copies: Item {
-    id: copies
-    required property var shapes
-    // What each copy draws: "fill", its fill in the colour it fills with,
-    // no stroke; "outline", its fill and stroke in opaque black, the shape
-    // a shadow casts from and is cut by
-    property string draws: "fill"
-    // A copy moved, resized, showed or hid
-    signal changed
-    anchors.fill: parent
-
-    KeyedModel {
-      id: shapeModel
-      keys: copies.shapes.map(shape => shape.uid)
-    }
-
-    Repeater {
-      model: shapeModel.model
-
-      // Cut to the shape's clipRect (its window), if it has one
-      delegate: Item {
-        id: slot
-        required property string key
-        // Fixed per key; null once it's gone, until its row goes
-        readonly property var shape: BlurManager.shapeOf(Number(slot.key))
-        readonly property var area: slot.shape?.clipRect ?? null
-        // What its copy fills with: black for the outline, else its colour
-        readonly property color fill: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
-        x: area ? area.x : 0
-        y: area ? area.y : 0
-        width: area ? area.width : copies.width
-        height: area ? area.height : copies.height
-        clip: !!area
-        // (read rather than `visible`, which is false inside a hidden layer)
-        readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source
-        visible: slot.showing
-
-        // Where and how big its copy is, as drawn: on any change the
-        // window is nudged to show its last frame
-        readonly property string drawn: [mirror.x, mirror.y, mirror.width, mirror.height, slot.showing, (mirror.item as AttachedSurface)?.slid ?? 0, (mirror.item as AttachedSurface)?.shownOpacity ?? 1, (mirror.item as Item)?.opacity ?? 1].join(",")
-        onDrawnChanged: copies.changed()
-
-        Loader {
-          id: mirror
-          x: (slot.shape?.x ?? 0) - slot.x
-          y: (slot.shape?.y ?? 0) - slot.y
-          active: slot.shape !== null
-          sourceComponent: slot.shape?.kind === "rect" ? rectMirror : slot.shape?.kind === "frame" ? frameMirror : attachedMirror
-        }
-
-        Component {
-          id: attachedMirror
-
-          AttachedSurfaceCopy {
-            source: slot.shape?.source ?? null
-            fillColor: slot.fill
-            mirrorStroke: copies.draws === "outline" ? "black" : "transparent" // style-exempt: mask
-          }
-        }
-
-        Component {
-          id: rectMirror
-
-          Rectangle {
-            // (null while its source is going, destroyed before its
-            // BlurShape leaves the list, or the window is torn down, as on
-            // a reload: it draws nothing then, as AttachedSurfaceCopy)
-            readonly property var src: slot.shape?.source ?? null
-            visible: src !== null
-            width: src?.width ?? 0
-            height: src?.height ?? 0
-            topLeftRadius: src?.topLeftRadius ?? 0
-            topRightRadius: src?.topRightRadius ?? 0
-            bottomLeftRadius: src?.bottomLeftRadius ?? 0
-            bottomRightRadius: src?.bottomRightRadius ?? 0
-            color: slot.fill
-            opacity: slot.shape?.fade ?? 1
-          }
-        }
-
-        // The screen border's frame (RoundedBorders): the screen, less its
-        // integrated menus' strips, round the stroke's inner side
-        Component {
-          id: frameMirror
-
-          Shape {
-            id: frame
-            readonly property var src: slot.shape?.source ?? null
-            width: copies.width
-            height: copies.height
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-              fillColor: slot.fill
-              fillRule: ShapePath.OddEvenFill
-              strokeColor: "transparent"
-              strokeWidth: 0
-
-              PathSvg {
-                path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
-              }
-            }
-          }
-        }
       }
     }
   }

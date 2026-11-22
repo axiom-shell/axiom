@@ -322,11 +322,18 @@ Item {
           y: (surface.parentOrigin?.y ?? 0) + surface.inParentY
           shown: surface.backed && submenuPopup.visible
           overlayLayer: surface.onOverlayLayer
+          paintLevel: PaintOrder.of("submenu")
         }
 
         // The parent's side stroke it covers, left open, with its
         // anti-aliased fringe a pixel either side
-        readonly property var parentHole: Appearance.translucent && submenuPopup.visible ? Qt.rect(outer.openToLeft ? root.attachRect.x - 1 : root.attachRect.x + root.attachRect.width - Appearance.borderWidth - 1, surface.inParentY + surface.coverStart, Appearance.borderWidth + 2, surface.coverLength) : null
+        readonly property var parentHole: {
+          if (!Appearance.translucent || !submenuPopup.visible)
+            return null;
+          const sw = Appearance.borderWidth;
+          const band = EdgeAttach.strokeHoleAcross(outer.openToLeft ? root.attachRect.x : root.attachRect.x + root.attachRect.width - sw, sw);
+          return Qt.rect(band.start, surface.inParentY + surface.coverStart, band.size, surface.coverLength);
+        }
         onParentHoleChanged: {
           if (outer.slot)
             outer.slot.submenuHole = surface.parentHole;

@@ -70,7 +70,7 @@ Each bar end's `kind`, joining rules, pill bars merging at a corner, and pills t
 - Bar popouts use `adjustment: PopupAdjustment.None`. Their placement is computed, and Hyprland would otherwise nudge one sitting flush on the screen edge a few pixels inwards.
 
 ### Border off
-- A solid bar draws its own inner stroke (`barConfig.innerStroke`) on its innermost `borderWidth` pixels, where its popouts attach.
+- A solid bar draws its own inner stroke (`barConfig.innerStroke`) on its innermost `borderWidth` pixels, where its popouts attach. While the backing window backs it, that stroke is a stroke-only `BlurShape` rect (`PaintOrder` `frame`, over the bar's own fill and under what joins it) the window draws, its openings cut by the copy; the bar's pieces draw it only unbacked. Islands' borders and pills' strokes likewise.
 - Surfaces on a bare screen edge (`ScreenEdgeManager.screenEdgeOpen(screen, location)`: no border and no bar there) run straight off it, with no fillets and no `-borderWidth` margin.
   - For pills, merged popouts and EdgePopout, that is `AttachedSurface.straight` (attach edge) / `straightJoins` (joined ends).
   - The overlay panel pushes its corners and stroke past the window on those sides.

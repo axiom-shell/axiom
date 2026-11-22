@@ -79,6 +79,9 @@ Item {
 
   // The card's box, for its blur shape (ToastStack)
   readonly property Item box: background
+  // The card's border colour, read by its border and by the stack's
+  // BlurShape (the backing window draws it while backed)
+  readonly property color strokeColor: root.critical ? Style.error : Style.borderSubtle
   // Its slide and swipe, for the blur shape to follow
   readonly property real shiftX: slide.x + swipe.x
   readonly property real shiftY: slide.y
@@ -298,7 +301,7 @@ Item {
     anchors.fill: parent
     visible: root.card
     color: root.backed ? "transparent" : Style.edgeFill(Style.surfacePage, BlurManager.opaqueOn(root.screenName))
-    border.color: root.critical ? Style.error : Style.borderSubtle
+    border.color: root.backed ? "transparent" : root.strokeColor
     border.width: Appearance.borderWidth
     radius: Appearance.borderRadius + 2
   }

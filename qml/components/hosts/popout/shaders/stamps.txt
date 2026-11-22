@@ -1,0 +1,2 @@
+# The source hash each .qsb was built from (scripts/check_shaders.py --build)
+85f07ccd3e8e1b292e5e41bcad84e0bf23a9c5ee7419c651602ba32b6d933cdf  chrome-composite.frag

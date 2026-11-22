@@ -117,6 +117,8 @@ PopoutWrapperBase {
   // No box of its own drawn, only its content (AttachedSurface.hollow: a
   // tiled edge menu, whose cards draw their own tiles)
   property bool hollow: false
+  // The level its surface's BlurShape paints at (BlurShape.paintLevel)
+  property int paintLevel: PaintOrder.of("surface")
   // Off leaves the focus grab to another window (see SurfaceGroup)
   property bool grabEnabled: true
   // Other windows the grab lets input through to
@@ -573,6 +575,7 @@ PopoutWrapperBase {
       fillColor: root.fillColor
       strokeColor: root.strokeColor
       hollow: root.hollow
+      paintLevel: root.paintLevel
 
       Loader {
         id: loader

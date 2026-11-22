@@ -62,6 +62,7 @@ Every popout host can open one submenu beside its box. This doc covers how the s
 - **No room for its fillet:** the side runs flush to a free end of the parent's side.
   - `side.freeTop`/`freeBottom` are its far edge's ends, plus its bar side too on a detached box.
   - The parent squares its corner there, and a detached box's near corner too (`AttachedSurface.startNearRadius`/`endNearRadius`).
+- **Painted over its parent:** a submenu's shape is `PaintOrder` `submenu`, over the parent's `surface`, so its fill hides the parent's side stroke it covers; the parent's copy leaves that stroke and the attach fillet open (`strokeHoles`), which keeps the tips clean.
 - **At the bar side** of a solid bar's box, a pill's, an island's or a merged box, it joins the stroke the parent grows from instead.
   - The join is `side.joinTop`/`joinBottom` at `side.attachLine`, through `AttachedSurface.joinStart`/`joinEnd`. On a bare screen edge it runs straight.
   - This works the way a popout joins the perpendicular border.

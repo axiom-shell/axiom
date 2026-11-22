@@ -1,6 +1,6 @@
 # Blur window and openings
 
-> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/reusable/HoledItem.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
+> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/Copies.qml`, `qml/components/hosts/popout/KeyedModel.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/ChromeComposite.qml`, `qml/components/reusable/HoledCopy.qml`, `qml/components/methods/PaintOrder.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/reusable/HoledItem.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
 > **Config:** `Appearance.surface.*`
 > **Related:** [Translucency and blur](translucency-blur.md), [Shadows](../popouts/shadows.md), [Surface context](../popouts/surface-context.md), [Edge attach](../popouts/edge-attach.md), [Submenus](../popouts/submenus.md)
 
@@ -15,20 +15,33 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - A shape is a `hosts/popout/BlurShape`: an `AttachedSurface`, a `Rectangle` or the border's `frame`, with its top-left on screen and its fill color.
 - `qml/shell/BlurBacking`: one click-through `axiom-blur-backing` window per screen (a `qml/shell/BlurBackingWindow`), layer order 9 (under the chrome, over the backdrop).
   - It draws a copy of each shape (`AttachedSurfaceCopy`, an `AttachedSurface` `mirror`, its geometry bound to the source's, sliding with it; a strip that slides reads `SlideAnimation.slideX`/`slideY`).
-  - All copies are drawn opaque and then at the surface opacity at once (`Style.edgeAlpha`), so overlaps never stack; a fading copy (a toast, a menu tile) fades alone through `BlurShape.fade`.
+  - It draws every shape's fill and its stroke, in painter's order and as one image: see Strokes in the backing window. A fading copy (a toast, a menu tile, a covered island) fades alone through `BlurShape.fade`.
 - It's the only one of these windows the compositor blurs, in one pass (on niri only where it sends its shapes as its blur region: [translucency](translucency-blur.md) › niri: blur regions). The overlay, the floating launcher and switcher and the other free-standing surfaces still blur themselves (notification toasts are backed by it: a card is a `BlurShape` rect, the attached box an EdgePopout).
-- The chrome draws its own outer fill transparent: `AttachedSurface.backed`, `BarContainer.backed`, `RoundedBorders.backed`.
+- The chrome draws its own outer fill and stroke transparent while backed (`AttachedSurface.backed`, `BarContainer.backed`, `RoundedBorders.backed`, `ToastItem`'s border, the integrated edge menu's border-off line): it draws its content only. The one exception is the integrated edge menu's framed box, which keeps its fill and stroke in the menu window in every mode.
 
 ### Over the overlay
 - The overlay (Overlay layer) covers the blur window. So while it's open on a screen (`BlurManager.aboveOverlay`), a second `BlurBackingWindow` there, `axiom-blur-backing-overlay`, draws the shapes of the surfaces on the Overlay layer (`BlurShape.overlayLayer`: bar popouts and their submenus, edge popouts, the OSD; a dock's preview has no origin and fills and blurs itself), and the first window drops them.
   - Its order (see `docs/dev/generated/layers.md`) puts it after the overlay and before every surface it draws for, and it maps without Hyprland's animation.
   - Its blur rule never uses xray (`LayerStack.blurOverOverlay`): what it blurs is the overlay.
 - Only the Overlay-layer shapes move up. Drawn over the Top layer, a bar's fill would cover the bar's content.
+- The window under the overlay gives way to them: it holds their shapes as `erasers` while the windows over the overlay exist and erases each (its fill path erased, half a level under the shape's, so a popout over the overlay hides the bar's fill and stroke under it, not drawn twice) once it has given the shape up (no longer among its `shapes`). The window over the overlay gives way to nothing.
+- The hand-off keeps some window drawing the popout's box in every frame (`BlurBacking`'s `overlayTaken`): the main window gives the shapes up and erases them only once the overlay's window has drawn them, and draws them back at once when the overlay closes, while the other still does; that window goes after the main one's frame has them. Both draw it for at most a frame on each switch.
 - Each window casts only its own shapes' shadows, but cuts them by every shape on the screen (`BlurBackingWindow.cutBy`, the other window's), as the one window does. So a popout's shadow never falls on the bar it's joined to.
 
 ### Copies
-- The copies are a keyed `ListModel` (`KeyedModel`, by `BlurShape.uid` through `BlurManager.shapeOf`), so a shape coming or going adds or removes only its own.
-- Any copy moving, resizing or sliding nudges the window (`FrameNudge`).
+- `Copies.qml` is one copy of each of `shapes` (and `erasers`), one slot per shape; `BlurBackingWindow` makes its colour, alpha and outline copies of it, and `tests-layout/tst_ChromeComposite` draws through the same file.
+- The copies are a keyed `ListModel` (`KeyedModel.qml`, by `BlurShape.uid` through `BlurManager.shapeOf`), so a shape coming or going adds or removes only its own.
+- Any copy moving, resizing, sliding or changing colour, or its holes changing, nudges the window (`FrameNudge`).
+
+### Strokes in the backing window
+- While backed, the backing window draws every shape's stroke with its fill (`BlurShape.strokeColor`: an attached surface's own, else what its site sets), in painter's order (`methods/PaintOrder`: base, frame, bar, merge, surface, submenu, toast; each `BlurShape.paintLevel`, a copy's `z`). A surface drawn over a bar hides the bar's stroke under its fill, so joined shapes need no cut and their strokes meet without a seam at any scale.
+- It draws into two captures, in colour (premultiplied, `BlurBackingWindow.colorCopies`) and in alpha (grey, `alphaCopies`), which `ChromeComposite` joins as `vec4(color.rgb, alpha.r)`:
+  - a fill is painted opaque (its colour times its alpha, or the alpha in grey), so a higher shape replaces what lies under it;
+  - a stroke is painted over it at its own colour and alpha with Qt's normal blending, which over those captures is exactly Porter-Duff over: the same pixel the host drew over the backed fill before, for any stroke and fill alpha;
+  - a `Rectangle` source's border is drawn the way the source draws it (on itself for a toast card, else a border-only rectangle over the fill: islands, the solid bar's inner stroke, the integrated edge menu's border-off line); a rect or frame with no fill alpha draws no fill.
+- Both captures are sampled 1:1 (`smooth: false`, the window's buffer in device pixels).
+- At a join's fillet tips only the higher shape's stroke covers the lower stroke, so the lower shape's copy leaves its stroke out where its source leaves it open (`strokeHoles`), through `reusable/HoledCopy`: its drawing outside the holes, its fill alone inside, in clipped pieces, no layer. The holes come from the openings below, in every mode, each cut across the stroke by `EdgeAttach.strokeHoleAcross`: the stroke's width and a pixel of anti-aliased fringe either side.
+- `tests-layout/tst_ChromeComposite.qml` reads the composite as pixels (at scale 1 and 1.25): [Testing](../testing.md).
 
 ### Shadows in the backing window
 - Backed surfaces' shadows are cast there too, from the same copies' outlines (fill and stroke).
@@ -53,8 +66,8 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - Where a wall runs on from one surface into another, each casts as if it carried on, then gives way to the other at the line where they meet: [Shadows › Walls that run on](../popouts/shadows.md#walls-that-run-on-into-another-surface-unbacked).
 - More on shadow looks: [Shadows](../popouts/shadows.md).
 
-### Strokes left open under backed surfaces
-- Where a surface's fill used to hide a stroke it's joined over, the stroke is left open:
+### Strokes left open under surfaces
+- Where a joined surface's stroke meets the one it stands on, the stroke it stands on is left open (while backed, by the copy's `HoledCopy`; unbacked, by the host's own `HoledItem`, `BorderPanel` pieces and corner hiding):
   - a pill's or island's far stroke under a popout (`PillStretch.opening` → `BarContainer.setRequest`);
   - a popout's side under a submenu (`BarPopouts.submenuHole`, `AttachedSurface.strokeHoles`), drawn through `reusable/HoledItem`;
   - a dock joined to the border opens it as edge popouts do.
@@ -70,7 +83,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - `LayerManager` places them all with `methods/LayerArrange`, and each `LayerOrigin` reads its own window's rect back (`LayerManager.rectOf`).
 - A window that reserves nothing has its origin before it maps, where it will go, so it's backed from its first frame. A reserving window has one only while mapped.
 - On Hyprland the result is corrected from its layer list (`CompositorManager.withLayerRects`), so other apps' layers and reserved space count too; a difference is logged as `LayerManager: corrected from the compositor` (`scripts/log.sh --debug -g LayerManager`).
-- Until its origin is known, a surface fills itself.
+- Until its origin is known, a surface fills itself. Two watchdogs say so when it goes wrong (`console.warn`, once): a `LayerOrigin` whose window drew its first frame with no origin while backed, and a backing window that has shapes but isn't shown a second after they came.
 - A bar popout's and submenu's place follows from their bar's.
 
 ### Joins: openings in the border's stroke
@@ -103,5 +116,6 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 
 ### Timing
 - Every window drawing an opening (the bar, the border strips and corners, a popout under its submenu's hole) bursts a `FrameNudge` when it changes, since the change comes from another window sliding.
+- A tiled (hollow) menu publishes no opening (`EdgePlacement._hollow`, `PillBarJoin.hollow`): the line runs on under its tiles, in every mode. A joined submenu of it publishes its own.
 - `HoledItem` keeps its layer while translucent (`keepLayer`), so its first hole is cut from its first frame.
 - A fillet's part of an opening leads the slide by a stroke's width (`AttachedSurface._filletHidden`), as the window drawing it commits a frame or so later.

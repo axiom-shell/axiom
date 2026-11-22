@@ -398,6 +398,10 @@ QtObject {
   // `origin`) and whether its openings show: out, and granted
   property var attachedSurface: null
   property bool opens: false
+  // A tiled menu draws no box (AttachedSurface.hollow): it opens none of the
+  // strokes it covers, which run on under its tiles (PX-6); its stretches and
+  // walls stay
+  readonly property bool _hollow: root.attachedSurface?.hollow ?? false
   // From the screen edge, how far in the surface's attach side is at
   // rest, and how far a joined end's far wall reaches
   // (AttachedSurface.joinWall). From the layout, not where the surface is
@@ -409,8 +413,13 @@ QtObject {
   // How far context along a slide (a pill bar's end pill under a joined
   // end, a joined submenu's pill reach) leads its surface's wall: a stroke
   // where another window's change may show a frame or so after the
-  // surface's (no supports.layerFrameSync), else none, the two moving as one
-  readonly property real _slideLead: CompositorManager.supports.layerFrameSync === true ? 0 : Appearance.borderWidth
+  // surface's (no supports.layerFrameSync), else none, the two moving as one.
+  // Backed, the pill and the surface are copies in one window, drawn in the
+  // same frame, so there is nothing to lead (unbacked, the bar's window may
+  // show its frame after the surface's); an Overlay-layer surface over the
+  // open overlay is drawn by the window over it while the bars' copies stay
+  // in the main one, two windows again, so it keeps the lead
+  readonly property real _slideLead: CompositorManager.supports.layerFrameSync === true || root.backed && !(root.onOverlayLayer && BlurManager.aboveOverlay(root.screen?.name ?? "")) ? 0 : Appearance.borderWidth
   // How much of the surface is still behind its edge as it slides, less
   // that lead: what a pill bar joined at an end follows it along by
   // (PillBarJoin.hidden, AttachedSurface.hiddenNow)
@@ -446,7 +455,7 @@ QtObject {
     owner: root.owner + ":stroke"
     barId: root.barConfig?.id ?? ""
     sink: root._layout.ownSink
-    span: root._coverSpan
+    span: root._hollow ? null : root._coverSpan
   }
   property StrokeOpening _submenuOpening: StrokeOpening {
     screen: root.screen
@@ -459,13 +468,13 @@ QtObject {
     screen: root.screen
     owner: root.owner + ":joinStartStroke"
     sink: root.startEnd.sink
-    span: root.attachedSurface?.joinStart ? root._joinSpan(true) : null
+    span: !root._hollow && root.attachedSurface?.joinStart ? root._joinSpan(true) : null
   }
   property StrokeOpening _endOpening: StrokeOpening {
     screen: root.screen
     owner: root.owner + ":joinEndStroke"
     sink: root.endEnd.sink
-    span: root.attachedSurface?.joinEnd ? root._joinSpan(false) : null
+    span: !root._hollow && root.attachedSurface?.joinEnd ? root._joinSpan(false) : null
   }
 
   // Joined ends run straight off a bare screen edge, or into a pill bar's
@@ -481,6 +490,7 @@ QtObject {
     open: root.open
     joined: root.place.joinStart && root.startEnd.sink === "pillBar"
     showing: root.showing
+    hollow: root._hollow
     joinReach: root.joinReach
     hidden: root._surfaceHidden
   }
@@ -492,6 +502,7 @@ QtObject {
     open: root.open
     joined: root.place.joinEnd && root.endEnd.sink === "pillBar"
     showing: root.showing
+    hollow: root._hollow
     joinReach: root.joinReach
     hidden: root._surfaceHidden
   }
@@ -532,7 +543,7 @@ QtObject {
     })) : null
     covered: root._covers
     opening: {
-      if (!root.showing || !root.onPill || !Appearance.translucent)
+      if (root._hollow || !root.showing || !root.onPill || !Appearance.translucent)
         return null;
       const s = root._toBarSpan(root._coverStart, root._coverEnd);
       return SurfaceContext.openingOrNull(s.start, s.end);

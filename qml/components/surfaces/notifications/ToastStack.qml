@@ -401,6 +401,8 @@ Scope {
           x: area.origin.x + toastCard.x + toastCard.shiftX
           y: area.origin.y + toastCard.y + toastCard.shiftY
           color: Style.surfacePage
+          strokeColor: toastCard.strokeColor
+          paintLevel: PaintOrder.of("toast")
           fade: toastCard.opacity
           overlayLayer: true
           // (out of sight, faded or slid, it blurs nothing: a covered
@@ -435,6 +437,7 @@ Scope {
     screen: root.screen
     edge: NotificationsConfig.edge
     position: NotificationsConfig.position
+    paintLevel: PaintOrder.of("toast")
     triggerEnabled: false
     claimKey: ""
     keyboardOnDemand: root.replyable

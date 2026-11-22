@@ -80,7 +80,7 @@ for f in "${changed[@]}"; do
   scripts/check_i18n.py | qml/config/i18n/*) i18n=1 ;;
   scripts/check_go.sh) go=1 ;;
   scripts/check_qmlformat.sh) qmlformat=1 ;;
-  qml/components/surfaces/wallpaper/shaders/* | scripts/check_shaders.py) shaders=1 ;;
+  qml/components/surfaces/wallpaper/shaders/* | qml/components/hosts/popout/shaders/* | scripts/check_shaders.py) shaders=1 ;;
   esac
   case "$f" in
   qml/components/methods/SchemaValidation.qml) schema=1 go=1 ;;

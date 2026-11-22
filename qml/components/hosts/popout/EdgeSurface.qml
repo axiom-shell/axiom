@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // An AttachedSurface growing out of a screen edge, wired from its
 // EdgePlacement (`geometry`) and, for a host with submenus, its
@@ -26,6 +27,9 @@ AttachedSurface {
   property var blurClip: null
   // Animate the corners a submenu squares (once the host has settled)
   property bool animateShape: false
+  // The level its BlurShape paints at (BlurShape.paintLevel): the toast
+  // stack's attached box sets its own
+  property int paintLevel: PaintOrder.of("surface")
 
   edge: root.geometry.edge
   castShadow: true
@@ -82,5 +86,6 @@ AttachedSurface {
     shown: root.backed && root.windowShown && !root.hollow
     overlayLayer: root.geometry.onOverlayLayer
     clipRect: root.blurClip
+    paintLevel: root.paintLevel
   }
 }

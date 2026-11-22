@@ -6,9 +6,11 @@ import qs.components.methods
 
 // A copy of an AttachedSurface's shape, its geometry bound live to the
 // source's (sliding with it: its own slide runs with the source's
-// `active`): its fill alone, or with `mirrorStroke`. The blur window draws
-// one per surface (shell/BlurBacking); a bar's pills cast their shadow
-// from black ones (BarContainer).
+// `active`): its fill in `fillColor` and its stroke in `mirrorStroke`,
+// which the backing window sets for each capture it draws one into
+// (BlurBackingWindow's Copies.draws; a stroke left out where the source
+// leaves it open, strokeHoles); `mirrorStroke` stays transparent unless it
+// does, as a bar's pills cast their shadow from black ones (BarContainer).
 AttachedSurface {
   id: root
 

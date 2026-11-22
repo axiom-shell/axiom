@@ -704,6 +704,43 @@ Rectangle {
         y: root.blurOrigin?.y ?? 0
         shown: root.backed && solidFill.visible
         shadow: root.barConfig
+        paintLevel: PaintOrder.of("base")
+        clipRect: root.blurClip
+      }
+    }
+
+    // A solid bar's inner stroke (border off) while the backing window backs
+    // it: its stroke alone, over the bar's own fill (a level above it) and
+    // under what joins it, left open where the pieces below are
+    // (strokeHoles, which its copy cuts). Not shown here: the pieces draw it
+    // while unbacked
+    Rectangle {
+      id: solidStroke
+      visible: false
+      color: "transparent"
+      width: root.isVertical ? Appearance.borderWidth : root.length
+      height: root.isVertical ? root.length : Appearance.borderWidth
+      x: root.isVertical ? (root.barConfig.left ? root.width - width : 0) : 0
+      y: root.isVertical ? 0 : (root.barConfig.top ? root.height - height : 0)
+      // The openings along it, across its whole width (the spans the pieces
+      // leave out)
+      readonly property var strokeHoles: root._openingList.map(o => {
+        const start = Math.max(0, o.start), end = Math.min(root.length, o.end);
+        if (end <= start)
+          return null;
+        return root.isVertical ? Qt.rect(0, start, Appearance.borderWidth, end - start) : Qt.rect(start, 0, end - start, Appearance.borderWidth);
+      }).filter(hole => hole !== null)
+
+      BlurShape {
+        source: solidStroke
+        kind: "rect"
+        color: "transparent"
+        strokeColor: Style.frameStroke
+        paintLevel: PaintOrder.of("frame")
+        screen: root.blurScreen
+        x: (root.blurOrigin?.x ?? 0) + solidStroke.x
+        y: (root.blurOrigin?.y ?? 0) + solidStroke.y
+        shown: root.backed && root.barConfig.innerStroke && solidFill.visible
         clipRect: root.blurClip
       }
     }
@@ -713,7 +750,7 @@ Rectangle {
     // end pill): opaque or not, as they're separate windows whose stacking
     // isn't the bar's to choose, and the bar's fill shows there as theirs
     Repeater {
-      model: root.barConfig.innerStroke ? root._strokePieces.length : 0
+      model: !root.backed && root.barConfig.innerStroke ? root._strokePieces.length : 0
 
       Rectangle {
         required property int index
@@ -767,26 +804,28 @@ Rectangle {
         color: root.backed ? "transparent" : BlurManager.fillOn(Style.surfacePage, root.blurScreen)
         // The stroke drawn by the one below, left open where a popout joins
         border.width: 0
+        // On the inner side, the stroke and its fringe under each opening: cut
+        // from its border while unbacked, and from its copy's
+        readonly property var strokeHoles: root._openingList.map(o => {
+          const along = root.isVertical ? island.y : island.x;
+          const start = Math.max(0, o.start - along);
+          const end = Math.min(root.isVertical ? island.height : island.width, o.end - along);
+          if (end <= start)
+            return null;
+          const sw = Appearance.borderWidth;
+          const band = EdgeAttach.strokeHoleAcross(root.barConfig.left || root.barConfig.top ? (root.isVertical ? island.width : island.height) - sw : 0, sw);
+          return root.isVertical ? Qt.rect(band.start, start, band.size, end - start) : Qt.rect(start, band.start, end - start, band.size);
+        }).filter(hole => hole !== null)
 
         HoledItem {
           anchors.fill: parent
           keepLayer: Appearance.translucent
-          // On the inner side, the stroke and its fringe under each opening
-          holes: root._openingList.map(o => {
-            const along = root.isVertical ? island.y : island.x;
-            const start = Math.max(0, o.start - along);
-            const end = Math.min(root.isVertical ? island.height : island.width, o.end - along);
-            if (end <= start)
-              return null;
-            const row = Appearance.borderWidth + 1;
-            const across = root.barConfig.left || root.barConfig.top ? (root.isVertical ? island.width : island.height) - row : 0;
-            return root.isVertical ? Qt.rect(across, start, row, end - start) : Qt.rect(start, across, end - start, row);
-          }).filter(hole => hole !== null)
+          holes: root.backed ? [] : island.strokeHoles
 
           Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: Style.frameStroke
+            border.color: root.backed ? "transparent" : Style.frameStroke
             border.width: Appearance.borderWidth
             topLeftRadius: island.topLeftRadius
             topRightRadius: island.topRightRadius
@@ -816,7 +855,11 @@ Rectangle {
           screen: root.blurScreen
           x: (root.blurOrigin?.x ?? 0) + island.x
           y: (root.blurOrigin?.y ?? 0) + island.y
-          shown: root.backed && !island.covered
+          // (faded with the island, covered: its border fades with it too)
+          shown: root.backed && island.opacity > 0
+          fade: island.opacity
+          strokeColor: Style.frameStroke
+          paintLevel: PaintOrder.of("bar")
           shadow: root.barConfig
           clipRect: root.blurClip
         }
@@ -933,9 +976,9 @@ Rectangle {
         // (`inner`) that fringe's row inside the pill alone, taken from the
         // pill's own far stroke (`farV`, its centre line) as drawn
         function _farHole(start, end, inner) {
-          const h = pill.half;
+          const band = EdgeAttach.strokeHoleAcross(pill.farV - pill.half, pill.strokeWidth);
           const along = root.isVertical ? pill.y : pill.x;
-          return pill._rectFrom(start - along, pill.farV - h - 1, end - start, inner ? 1 : 2 * h + 2);
+          return pill._rectFrom(start - along, band.start, end - start, inner ? 1 : band.size);
         }
         // Under a `keepFill` opening the fill row the hole took inside the
         // pill is painted back while the pill fills itself (the surface
@@ -1001,6 +1044,8 @@ Rectangle {
           y: (root.blurOrigin?.y ?? 0) + pill.y
           shown: root.backed
           shadow: root.barConfig
+          // A pill merging into another bar's (CornerMerge) stands over it
+          paintLevel: PaintOrder.of((pill.index === 0 && root.ends.start.kind === "pillBar") || (pill.index === root.pillShapes.length - 1 && root.ends.end.kind === "pillBar") ? "merge" : "bar")
           clipRect: root.blurClip
         }
       }

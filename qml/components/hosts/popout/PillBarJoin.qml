@@ -20,7 +20,7 @@ import qs.components.methods
 // It follows the surface along its slide (`hidden`): the pill runs out
 // with the surface's far wall as it slides out along it, and back with
 // it as it slides away, so the two never part; its far stroke opens
-// only where the surface has come. Whether it fillets is decided from
+// only where the surface (a boxed one's) has come. Whether it fillets is decided from
 // where the wall rests.
 PillStretch {
   id: root
@@ -32,6 +32,9 @@ PillStretch {
   // Whether the surface's end joins it, and is out (not loading or gone)
   property bool joined: false
   property bool showing: false
+  // Its surface draws no box (AttachedSurface.hollow): the pill still runs
+  // out with it, its far stroke left whole
+  property bool hollow: false
   // How far in from the surface's screen edge its joined end reaches the
   // pill bar's far stroke at its far wall (AttachedSurface.joinWall from
   // that edge), at rest; and how much of the surface is still behind its
@@ -83,7 +86,7 @@ PillStretch {
   // not, as the two are separate windows whose stacking isn't the bar's to
   // choose. Whole pixels (SurfaceContext.opening), as every opening.
   opening: {
-    if (root._reach === null)
+    if (root._reach === null || root.hollow)
       return null;
     if (!root.filleted)
       return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), {

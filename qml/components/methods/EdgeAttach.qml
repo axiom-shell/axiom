@@ -274,6 +274,21 @@ QtObject {
   }
 
   /**
+   * Where a stroke hole lies across a stroke, wherever a copy draws it
+   * (every stroke-hole publisher reads it): the stroke's own width and the
+   * anti-aliased fringe a pixel either side. `from` is the stroke's edge at
+   * the smaller coordinate across it, as px; `start` is where the hole
+   * begins across, `size` how wide it is. Along the stroke the hole is the
+   * span the covering surface runs over.
+   */
+  function strokeHoleAcross(from, strokeWidth) {
+    return {
+      "start": from - 1,
+      "size": strokeWidth + 2
+    };
+  }
+
+  /**
    * Whether a surface's end joined to a pill bar curves into its far
    * stroke with a fillet (PillBarJoin.filleted) rather than running
    * straight into a stub squared at its wall. `pills` are that bar's own
