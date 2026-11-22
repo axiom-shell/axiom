@@ -19,7 +19,7 @@ type waylandState struct {
 	// compositor offers (all off before), or the connection failed since
 	// (all off: nothing on it works)
 	Ready bool `json:"ready"`
-	// Typing: virtual keyboards (input.type)
+	// Typing: virtual keyboards (input.type, input.paste)
 	Typing bool `json:"typing"`
 	// NightLight: how the night light warms the screens, "ctm", "gamma"
 	// or "" (nightlight.set)
@@ -74,6 +74,13 @@ func (d *Daemon) waylandMethods(reg *rpc.Registry) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell types")
 		}
 		return struct{}{}, d.keyboard.Type(ctx, p.Text)
+	})
+	rpc.Handle(reg, "input.paste", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+		// Ctrl+V goes to the focused window: only the shell asks
+		if !fromShell(c) {
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell types")
+		}
+		return struct{}{}, d.keyboard.Paste(ctx)
 	})
 	rpc.Handle(reg, "nightlight.get", func(ctx context.Context, c *rpc.Conn, _ struct{}) (nightlight.State, error) {
 		return d.nightLight.State(), nil

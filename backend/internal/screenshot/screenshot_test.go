@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"golang.org/x/image/bmp"
+
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
@@ -165,6 +167,33 @@ func writePNG(t *testing.T, path string, img image.Image) {
 	}
 }
 
+func writeBMP(t *testing.T, path string, img image.Image) {
+	t.Helper()
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := bmp.Encode(f, img); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// readPNG is the picture in the PNG at path
+func readPNG(t *testing.T, path string) image.Image {
+	t.Helper()
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	img, err := png.Decode(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return img
+}
+
 func TestStitch(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -179,15 +208,7 @@ func TestStitch(t *testing.T) {
 	if size != image.Pt(40, 20) {
 		t.Fatalf("size %v", size)
 	}
-	f, err := os.Open(out)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-	img, err := png.Decode(f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	img := readPNG(t, out)
 	if img.Bounds().Size() != size {
 		t.Fatalf("written %v, said %v", img.Bounds().Size(), size)
 	}
@@ -242,5 +263,108 @@ func TestComposeSameScaleSharp(t *testing.T) {
 				t.Fatalf("at (%d, %d): %v, a blend", x, y, c)
 			}
 		}
+	}
+}
+
+// testdata/qt-grab.bmp and .png are one grab of the same item, saved by Qt
+// both ways: a scratch tst_grab.qml (not committed) run with
+// QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tst_grab.qml
+// (add QT_QUICK_BACKEND=software if the offscreen grab fails or comes back
+// empty). Its root is an opaque 64x48 Rectangle (a gradient of opaque
+// stops) with a Text on top; grabToImage, then saveToFile to each name.
+// A one-screen shot saved through the BMP piece is the PNG Qt would have
+// written, pixel for pixel
+func TestStitchQtParity(t *testing.T) {
+	t.Parallel()
+	want := readPNG(t, filepath.Join("testdata", "qt-grab.png"))
+	b := want.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			if _, _, _, a := want.At(x, y).RGBA(); a != 0xffff {
+				t.Fatalf("fixture pixel (%d, %d) is not opaque", x, y)
+			}
+		}
+	}
+	bmpPath, err := filepath.Abs(filepath.Join("testdata", "qt-grab.bmp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "out.png")
+	area := Rect{0, 0, 64, 48}
+	size, err := Stitch([]Piece{{bmpPath, area}}, area, out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := readPNG(t, out)
+	if got.Bounds() != b || size != b.Size() {
+		t.Fatalf("size %v (said %v), want %v", got.Bounds(), size, b)
+	}
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			if g, w := color.NRGBAModel.Convert(got.At(x, y)), color.NRGBAModel.Convert(want.At(x, y)); g != w {
+				t.Fatalf("at (%d, %d): %v, want %v", x, y, g, w)
+			}
+		}
+	}
+}
+
+// One piece that is the whole area is written as it is (Compose would
+// size it by the scale of its rect), and its refusals are Compose's
+func TestStitchOnePiece(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	tall, wide := filepath.Join(dir, "tall.png"), filepath.Join(dir, "wide.png")
+	writePNG(t, tall, solid(2, 1500, red))
+	writePNG(t, wide, solid(2, 40000, red))
+	out := filepath.Join(dir, "out.png")
+	area := Rect{0, 0, 1, 1000}
+	size, err := Stitch([]Piece{{tall, area}}, area, out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := readPNG(t, out).Bounds().Size(); got != image.Pt(2, 1500) || size != got {
+		t.Fatalf("written %v, said %v, want 2x1500", got, size)
+	}
+	tests := []struct {
+		name  string
+		piece string
+		area  Rect
+	}{
+		{"an empty area", tall, Rect{}},
+		{"too large", wide, Rect{0, 0, 1, 1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := Stitch([]Piece{{tt.piece, tt.area}}, tt.area, filepath.Join(dir, "o-"+tt.name+".png"))
+			var e *axerr.Error
+			if !errors.As(err, &e) || e.Kind != axerr.BadRequest {
+				t.Fatalf("err %v, want bad_request", err)
+			}
+		})
+	}
+}
+
+// A BMP piece and a PNG piece stitch together as two PNGs do
+func TestStitchBMP(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	a, b := filepath.Join(dir, "a.bmp"), filepath.Join(dir, "b.png")
+	writeBMP(t, a, solid(10, 10, red))
+	writePNG(t, b, solid(20, 20, blue))
+	out := filepath.Join(dir, "out.png")
+	size, err := Stitch([]Piece{{a, Rect{0, 0, 10, 10}}, {b, Rect{10, 0, 10, 10}}}, Rect{0, 0, 20, 10}, out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img := readPNG(t, out)
+	if size != image.Pt(40, 20) || img.Bounds().Size() != size {
+		t.Fatalf("written %v, said %v", img.Bounds().Size(), size)
+	}
+	if got := color.NRGBAModel.Convert(img.At(0, 0)); got != red {
+		t.Errorf("top left %v, want red", got)
+	}
+	if got := color.NRGBAModel.Convert(img.At(39, 19)); got != blue {
+		t.Errorf("bottom right %v, want blue", got)
 	}
 }

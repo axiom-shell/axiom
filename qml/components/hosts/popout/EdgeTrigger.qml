@@ -7,13 +7,16 @@ import qs.services.ui
 import qs.components.methods
 
 // A thin hover strip on a screen edge that fires `triggered` once the
-// pointer has rested on it for `hoverDelay`
+// pointer has rested on it for `hoverDelay`. Without `takesInput` it stays
+// mapped but inert (an unmapped window is deleted, with its GL context)
 PanelWindow {
   id: root
 
   signal triggered
 
-  readonly property alias containsMouse: mouseArea.containsMouse
+  // The pointer is on the strip (never while it takes no input: a disabled
+  // MouseArea keeps its last hover until a leave)
+  readonly property bool containsMouse: root.takesInput && mouseArea.containsMouse
 
   // A ScreenEdge value, shared with bars and popouts
   property int edge: ScreenEdge.Right
@@ -25,6 +28,8 @@ PanelWindow {
   // the edge is fixed, ScreenEdge.triggerSize)
   required property int triggerLength
   property int hoverDelay: PopoutsConfig.openDelay
+  // The strip hovers and counts; off, it is mapped with no input
+  property bool takesInput: true
 
   // Integrated edge menus' zones (ScreenEdgeManager) move the surfaces this
   // triggers inwards, so the trigger follows: past a zone on its own edge,
@@ -41,6 +46,12 @@ PanelWindow {
 
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
+  mask: root.takesInput ? null : root._noInput
+  property Region _noInput: Region {}
+  onTakesInputChanged: {
+    if (!root.takesInput)
+      hoverTimer.stop();
+  }
 
   // Anchor the attach edge, plus both sides of the perpendicular axis: a
   // wlr-layer-shell margin only takes effect on an anchored edge, and
@@ -66,6 +77,7 @@ PanelWindow {
   MouseArea {
     id: mouseArea
     anchors.fill: parent
+    enabled: root.takesInput
     hoverEnabled: true
     onEntered: hoverTimer.restart()
     onExited: hoverTimer.stop()

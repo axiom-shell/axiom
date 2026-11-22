@@ -393,7 +393,9 @@ Scope {
   EdgeTrigger {
     id: trigger
     screen: root.screen
-    visible: !root.preview && root.mode !== "always" && !root.fullscreen && !root.away && root.count > 0
+    visible: !root.preview && root.mode !== "always" && !root.fullscreen && root.count > 0
+    // Away it stays mapped, with no input: unmapping deletes its window
+    takesInput: !root.away
     edge: root.edge
     // Placed along the work area (inside the reserved zones), as the dock is
     centre: DockManager.reservedOf(root.screen)[root.vertical ? 1 : 0] + root.centre

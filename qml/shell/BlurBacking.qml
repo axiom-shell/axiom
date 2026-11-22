@@ -27,7 +27,9 @@ import qs.services.ui
 // one, over the overlay and under the surfaces on the Overlay layer (bar
 // and edge popouts, submenus, the OSD), draws those surfaces' shapes
 // (BlurShape.overlayLayer, BlurManager.aboveOverlay), blurring the overlay
-// under them. Bars' fills can't move up with them: drawn over the Top
+// under them. Each window keeps a copy of every shape on its screen; while
+// the overlay is open the one over it draws the Overlay-layer shapes and the
+// one under it the others. Bars' fills can't move up with them: drawn over the Top
 // layer, they'd cover the bars' content.
 Scope {
   id: root
@@ -46,8 +48,6 @@ Scope {
       // The overlay open here covers the blur window: the Overlay-layer
       // surfaces' shapes go to the one over it
       readonly property bool aboveOverlay: BlurManager.aboveOverlay(perScreen.screenName)
-      readonly property var overlayShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => shape.overlayLayer) : []
-      readonly property var otherShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => !shape.overlayLayer) : perScreen.onScreen
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
       // Its blur windows: the fills and the shadows apart (in that order,
@@ -56,22 +56,24 @@ Scope {
       // there, by its order) while a fullscreen window hides the Top
       // layer, for the surfaces shown over it (BlurManager.overFullscreen).
       // Over the overlay ("-overlay") and under the surfaces on the Overlay
-      // layer (by its order), while the overlay is open here: their blur is
-      // the overlay's content, not what the overlay covers
+      // layer (by its order), drawing while the overlay is open here: their
+      // blur is the overlay's content, not what the overlay covers. Always
+      // in the model (unmapped while not wanted), so an overlay opening
+      // makes no window delegates
       readonly property var parts: perScreen.shadowsApart ? ["fills", "shadows"] : ["all"]
 
       Variants {
-        model: perScreen.parts.concat(perScreen.aboveOverlay ? perScreen.parts.map(part => part + "-overlay") : [])
+        model: perScreen.parts.concat(perScreen.parts.map(part => part + "-overlay"))
 
         delegate: BlurBackingWindow {
           id: blurWindow
           required property string modelData
-          readonly property bool over: blurWindow.modelData.endsWith("-overlay")
           screen: perScreen.modelData
           part: blurWindow.modelData.replace("-overlay", "")
-          shapes: blurWindow.over ? perScreen.overlayShapes : BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
-          cutBy: blurWindow.over ? perScreen.otherShapes : perScreen.overlayShapes
-          wanted: blurWindow.over || BlurManager.backingOn(perScreen.screenName)
+          over: blurWindow.modelData.endsWith("-overlay")
+          aboveOverlay: perScreen.aboveOverlay
+          shapes: BlurManager.backingOn(perScreen.screenName) ? perScreen.onScreen : []
+          wanted: blurWindow.over ? perScreen.aboveOverlay : BlurManager.backingOn(perScreen.screenName)
           held: !blurWindow.over
           stackLayer: blurWindow.over || BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
           layerNamespace: (blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (blurWindow.over ? "-overlay" : "")

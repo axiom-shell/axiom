@@ -4,7 +4,8 @@ import qs.config
 
 // A ring gauge: a thin track with a round-capped arc over it, like a
 // StyledSlider bent into a circle, and an icon in the middle. `sweep`
-// below 360 opens it at the bottom (a gauge: 240)
+// below 360 opens it at the bottom (a gauge: 240). The fill moves in whole
+// px along the ring, so a value moving less than one repaints nothing
 Item {
   id: root
 
@@ -21,6 +22,11 @@ Item {
   property real sweep: 360
 
   readonly property real side: Math.min(root.width, root.height)
+  readonly property real _radius: root.side / 2 - root.thickness / 2
+  // Radians the track spans (sweep, 1 to 360 degrees)
+  readonly property real _trackAngle: Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180
+  // The fill's length along the ring, in px, rounded and glided
+  property int _arcLength: Math.round(Math.max(0, Math.min(1, root.percentage / 100)) * root._trackAngle * Math.max(0, root._radius))
 
   implicitWidth: Widget.px(120)
   implicitHeight: Widget.px(120)
@@ -34,13 +40,13 @@ Item {
     onPaint: {
       const ctx = getContext("2d");
       const centre = width / 2;
-      const radius = centre - root.thickness / 2;
+      const radius = root._radius;
       ctx.clearRect(0, 0, width, height);
       if (radius <= 0)
         return;
       ctx.lineWidth = root.thickness;
 
-      const span = Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180;
+      const span = root._trackAngle;
       const start = -Math.PI / 2 - span / 2 + (root.sweep >= 360 ? span / 2 : 0);
       const cap = root.sweep >= 360 ? "butt" : "round";
       ctx.beginPath();
@@ -50,11 +56,10 @@ Item {
       ctx.stroke();
 
       // A round cap would draw a dot at zero
-      const share = Math.max(0, Math.min(1, root.percentage / 100));
-      if (share <= 0)
+      if (root._arcLength <= 0)
         return;
       ctx.beginPath();
-      ctx.arc(centre, centre, radius, start, start + share * span, false);
+      ctx.arc(centre, centre, radius, start, start + root._arcLength / radius, false);
       ctx.lineCap = "round";
       ctx.strokeStyle = root.fillColor;
       ctx.stroke();
@@ -62,7 +67,7 @@ Item {
 
     Connections {
       target: root
-      function onPercentageChanged() {
+      function on_ArcLengthChanged() {
         ring.requestPaint();
       }
       function onFillColorChanged() {
@@ -87,7 +92,7 @@ Item {
     textSize: root.side * 0.3
   }
 
-  Glide on percentage {
+  Glide on _arcLength {
     duration: Appearance.animSlow
   }
 }

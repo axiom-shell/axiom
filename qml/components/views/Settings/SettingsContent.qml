@@ -418,9 +418,14 @@ Item {
                     delete root._cards[card.modelData.key];
                 }
 
-                // Its block's columns are still settling: a jump to it
-                // waits, or it would scroll to where the card was
-                readonly property bool settling: block.settling
+                // Its block's columns are still settling, or it or its rows
+                // aren't built yet: a jump to it waits, or it would scroll to
+                // where the card was
+                readonly property bool settling: block.settling || (card.item === null && card.status !== Loader.Error) || card.item?.rowsPending === true
+                onSettlingChanged: if (!card.settling)
+                  root._takeJump()
+                onLoaded: if (!columns.settling)
+                  columns.relayout()
 
                 // Outlines the card for a moment (jumped to from the
                 // sidebar)

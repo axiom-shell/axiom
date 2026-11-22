@@ -21,8 +21,14 @@ Item {
   // The drawn px a page may take inside the box's padding
   readonly property real roomWidth: root.maxWidth - OverlayConfig.boxPadding * 2
   readonly property real roomHeight: root.maxHeight - OverlayConfig.boxPadding * 2
-  // Whether the overlay window is showing; pages unload when it isn't
+  // Whether the overlay is open (shown, not closing)
   property bool open: false
+  // Whether it opened reduced (OverlayPanel.reduced): no shadow, and the
+  // pages fade between each other
+  property bool reduced: false
+  // Whether its pages stay loaded: the overlay is open, closing or kept (its
+  // window may be unmapped while kept)
+  property bool built: false
   property var viewsConfig: OverlayConfig.views || []
   // Every config change is a new views array, so the pages are keyed by
   // their JSON: a string only notifies when it really changes, and pages
@@ -117,14 +123,15 @@ Item {
   implicitHeight: (root.currentPage?.drawnHeight ?? 0) + OverlayConfig.boxPadding * 2
 
   // Only the current page and its neighbours (navigation wraps around) are
-  // loaded, and only while the overlay is open, so hidden pages don't keep
-  // polling. Neighbours stay loaded so the slide in has something to show.
+  // loaded, and only while the overlay's pages are built (`built`: open,
+  // closing or kept), so closed pages stop polling soon after.
+  // Neighbours stay loaded so the slide in has something to show.
   // They follow the page the user settled on (`_settled`, a slide after
   // opening or navigating), so opening or switching builds only the page
-  // shown, and its neighbours once it has slid in
+  // shown, and its neighbours once it has slid in: just their frame, their
+  // cards wait until they're current (OverlayPage.buildHeld)
   property int _settled: -1
   onOpenChanged: {
-    root._settled = -1;
     if (root.open) {
       settleTimer.restart();
     } else {
@@ -133,6 +140,8 @@ Item {
       ShellManager.setLinkOrigin("");
     }
   }
+  onBuiltChanged: if (!root.built)
+    root._settled = -1
   Timer {
     id: settleTimer
     interval: Appearance.animSlow
@@ -140,7 +149,7 @@ Item {
   }
 
   function isLoaded(pageIndex) {
-    if (!root.open)
+    if (!root.built)
       return false;
     if (pageIndex === root.currentIndex)
       return true;
@@ -193,10 +202,10 @@ Item {
   ShapeShadow {
     box: contentContainer
     radius: Style.radiusOuter
-    active: root.open
+    active: root.built
     shadowColor: Style.shadowSoft
     look: ({
-        "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart),
+        "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart) && !root.reduced,
         "shadowSize": Widget.px(16)
       })
   }
@@ -238,6 +247,8 @@ Item {
           currentIndex: root.currentIndex
           direction: root.direction
           loaded: root.isLoaded(index)
+          overlayOpen: root.open
+          reduced: root.reduced
           screen: root.screen
           roomWidth: root.roomWidth
           roomHeight: root.roomHeight
@@ -280,6 +291,8 @@ Item {
         currentIndex: root.currentIndex
         direction: root.direction
         loaded: root.isLoaded(root.editorIndex)
+        overlayOpen: root.open
+        reduced: root.reduced
         screen: root.screen
         roomWidth: root.roomWidth
         roomHeight: root.roomHeight
