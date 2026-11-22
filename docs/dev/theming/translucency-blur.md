@@ -59,6 +59,8 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - Turning a look part off rewrites the file (an eval can't take a setting back).
 
 ### Per screen
+Translucent with the blur off is backed too: `BlurManager.backingOn(screen)` is `BackingRule.backingOn` of `Appearance.translucent`, not `opaqueOn(screen)` and `CompositorManager.surfacesReady`, so the backing window draws the chrome wherever it is see-through and the compositor blurs it only where `active`/`regionsOn`. `shadowsApart` stays capability-only: on SwayFX the shadow windows exist with the blur off too.
+
 `BlurManager.backsOn(screen, onOverlay)`:
 - A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the backing window over the overlay draws it then (see [Blur window and openings › Over the overlay](blur-window-openings.md#over-the-overlay)).
   - It reads its host's `onOverlayLayer`, which its submenu follows (not while it slides under a bar).

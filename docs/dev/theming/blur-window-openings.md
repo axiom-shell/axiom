@@ -54,10 +54,10 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
 - Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
-- Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down.
+- Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down, blurred or not (the backing window draws see-through chrome with the blur off too).
 
 ### Unbacked shadows
-- Unbacked (translucent with the blur off, solid for a fullscreen window, opaque chrome, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
+- Unbacked (solid for a fullscreen window, opaque chrome, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
   - `AttachedSurface`'s;
   - the bar's: each pill, island and solid fill puts its copy in `shadowShape` (pills an `AttachedSurfaceCopy`).
 - The bar shadow's holes:

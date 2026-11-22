@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 
+import qs.components.methods
 import qs.config
 import qs.services.compositor
 
@@ -8,8 +9,9 @@ import qs.services.compositor
  * The blur behind the shell's chrome: the border's frame, bars and their
  * popouts, edge popouts, integrated edge menus and docks. Each surface
  * registers its shape (BlurShape); one click-through window per screen
- * (shell/BlurBacking) draws them all, filled, and is the only one of them
- * Hyprland blurs. Blurred in one pass, before any chrome is drawn, the
+ * (shell/BlurBacking) draws them all, filled, wherever the chrome is
+ * see-through (blur on or off), and is the only one of them the compositor
+ * blurs. Blurred in one pass, before any chrome is drawn, the
  * blur behind joined surfaces matches exactly; the surfaces themselves
  * draw their outer fill transparent (`backing`). While the overlay is open
  * on a screen, a second backing window there, over it, draws the shapes of
@@ -52,10 +54,16 @@ QtObject {
   }
 
   // Whether surfaces on `screen` leave their fill to the backing window:
-  // blurring there, and its windows built (BlurBacking waits for the layer
-  // rules, as the chrome does)
+  // drawn wherever the chrome is see-through (the compositor blurs it only
+  // where `active`/`regionsOn`), not on a screen filling solid (opaqueOn),
+  // and its windows built (BlurBacking waits for the layer rules, as the
+  // chrome does). The rule is BackingRule's.
   function backingOn(screen) {
-    return root._wanted && !root.pausedOn(screen) && CompositorManager.surfacesReady;
+    return BackingRule.backingOn({
+      "translucent": Appearance.translucent,
+      "opaque": root.opaqueOn(screen),
+      "ready": CompositorManager.surfacesReady
+    });
   }
 
   // Whether a surface on `screen` that blurs itself (LayerStack.
@@ -78,9 +86,11 @@ QtObject {
   // overlay draws it: aboveOverlay). Otherwise it's on Top, faded out under
   // a fullscreen window, and its copy goes with it.
   function backsOn(screen, onOverlay) {
-    if (!root.backingOn(screen))
-      return false;
-    return onOverlay || !CompositorManager.hasFullscreen(root._name(screen));
+    return BackingRule.backsOn({
+      "backing": root.backingOn(screen),
+      "fullscreen": CompositorManager.hasFullscreen(root._name(screen)),
+      "onOverlay": onOverlay
+    });
   }
 
   // Whether the overlay is open on `screen`, covering the backing window: the
