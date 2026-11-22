@@ -63,7 +63,7 @@ This doc covers the services behind the launcher's `=`, `:`, `;` and `~` rows (t
   - `recent(limit)` is also provided (the EmojiPicker's recent row).
 - **Enter / Shift+Enter:**
   - Enter `copy`s it (`ClipboardManager.copyText`).
-  - Shift+Enter also `type`s the emoji once every launcher window has unmapped (`LauncherManager.afterClose`) and 150 ms more for the compositor to give the window back the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`); an emoji with a codepoint above U+FFFF is pasted instead (`input.paste`, Ctrl+V) unless the focused window is a terminal (desktop entry category TerminalEmulator: a terminal whose app id matches no desktop entry (`DesktopEntries.heuristicLookup`) gets the paste, so ^V), since Chromium/Electron key events can't carry it. `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.
+  - Shift+Enter also `type`s the emoji once every launcher window has unmapped (`LauncherManager.afterClose`) and 150 ms more for the compositor to give the window back the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`); an emoji with a codepoint above U+FFFF is pasted instead (`input.paste`, Ctrl+V) unless the focused window is a terminal (desktop entry category TerminalEmulator: a terminal whose app id matches no desktop entry (`DesktopEntries.heuristicLookup`) gets the paste, so ^V), since Chromium/Electron key events can't carry it. The type is dropped if the launcher reopens before it fires (the emoji stays on the clipboard). `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.
 - **Binds:** a bind opens it with the `launcherSearch` action and the argument `;`.
 
 ### FileSearchManager

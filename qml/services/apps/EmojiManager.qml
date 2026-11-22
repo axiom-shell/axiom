@@ -7,6 +7,7 @@ import qs.components.methods
 import qs.services.core
 import qs.services.compositor
 import qs.services.system
+import qs.services.ui
 
 /*
  * The emoji the launcher searches (";" or /emoji), while Launcher.emoji is on.
@@ -94,7 +95,9 @@ QtObject {
 
   // Types it (or pastes it, see the header) a moment after it's called. Call
   // it once the window to type into has the keyboard back; the launcher calls
-  // it after its windows have gone (LauncherManager.afterClose)
+  // it after its windows have gone (LauncherManager.afterClose). A type is
+  // dropped if the launcher reopens before it fires (the emoji stays on the
+  // clipboard)
   function type(emoji) {
     root._typing = emoji;
     _typeLater.restart();
@@ -108,6 +111,8 @@ QtObject {
   property Timer _typeLater: Timer {
     interval: 150
     onTriggered: {
+      if (LauncherManager.shown)
+        return;
       const done = error => {
         if (error)
           console.warn("[EmojiManager] Could not type:", error.message);
@@ -122,10 +127,9 @@ QtObject {
   }
 
   // Whether text goes by Ctrl+V: the clipboard holds it, it has a codepoint
-  // above U+FFFF (a UTF-16 surrogate pair: QV4 iterates strings by UTF-16
-  // unit, so Array.from can't find it) and the focused window isn't
-  // a terminal (desktop entry category TerminalEmulator; no matching entry:
-  // not a terminal), which takes keys
+  // above U+FFFF (QV4 strings are UTF-16, so one shows as a surrogate pair)
+  // and the focused window isn't a terminal (desktop entry category
+  // TerminalEmulator; no matching entry: not a terminal), which takes keys
   function _pastes(text) {
     if (!ClipboardManager.available || !/[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(text))
       return false;
