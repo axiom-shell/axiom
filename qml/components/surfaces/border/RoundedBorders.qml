@@ -125,7 +125,8 @@ Item {
     readonly property var look: BarStyle.look
 
     // Backed, the blur window casts it, with the surfaces joined to the
-    // frame (BlurShape.shadow): the window stays mapped and draws nothing.
+    // frame (BlurShape.shadow): this one keeps its place at a pixel, no
+    // buffer, drawing nothing.
     // Hyprland puts a layer mapped while a fullscreen window is shown over
     // it (CLayerSurface::onMap), and a fullscreen window is what unbacks it.
     // Held where the compositor stacks by map order alone: turning the
@@ -133,6 +134,7 @@ Item {
     // (the backdrop, the bars, the border, docks), which all map again
     // then (docs/dev/compositor/layer-arrangement.md). Idle, it's a pixel
     // drawing nothing.
+    readonly property bool _casting: !shadowSlot.idle && !root.backed
     visible: shadowSlot.shown
     LayerSlot {
       id: shadowSlot
@@ -144,9 +146,9 @@ Item {
     screen: root.screen
     anchors {
       left: true
-      right: !shadowSlot.idle
+      right: shadowWindow._casting
       top: true
-      bottom: !shadowSlot.idle
+      bottom: shadowWindow._casting
     }
     implicitWidth: 1
     implicitHeight: 1
@@ -202,7 +204,7 @@ Item {
       id: interior
       anchors.fill: parent
       visible: false
-      layer.enabled: !shadowSlot.idle // style-exempt: no text
+      layer.enabled: shadowWindow._casting // style-exempt: no text
 
       Shape {
         anchors.fill: parent
@@ -223,7 +225,7 @@ Item {
 
     Item {
       anchors.fill: parent
-      visible: !root.backed && !shadowSlot.idle
+      visible: shadowWindow._casting
       layer.enabled: visible // style-exempt: no text
       layer.effect: MultiEffect { // style-exempt: no text
         maskEnabled: true
