@@ -344,7 +344,7 @@ Scope {
     }
 
     // Detached, each toast a card at its place, its fill drawn by the
-    // blur window while that backs it
+    // backing window while that backs it
     Repeater {
       model: ScriptModel {
         values: root.attached ? [] : root.toasts
@@ -368,7 +368,7 @@ Scope {
         visible: !SurfaceManager.captureFrozen
         screenName: root.screenName
         covered: root.covered
-        backed: BlurManager.backsOn(root.screen, true) && placeOnScreen.settled
+        backed: BlurManager.backsOn(root.screen, true) && placeOnScreen.origin !== null
 
         x: toastCard.place.x
         y: toastCard.place.y

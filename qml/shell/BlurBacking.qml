@@ -43,14 +43,14 @@ Scope {
       required property ShellScreen modelData
       readonly property string screenName: perScreen.modelData?.name ?? ""
       readonly property var onScreen: BlurManager.shapes.filter(shape => shape.screen === perScreen.screenName)
-      // The overlay open here covers the blur window: the Overlay-layer
+      // The overlay open here covers the backing window: the Overlay-layer
       // surfaces' shapes go to the one over it
       readonly property bool aboveOverlay: BlurManager.aboveOverlay(perScreen.screenName)
       readonly property var overlayShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => shape.overlayLayer) : []
       readonly property var otherShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => !shape.overlayLayer) : perScreen.onScreen
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
-      // Its blur windows: the fills and the shadows apart (in that order,
+      // Its backing windows: the fills and the shadows apart (in that order,
       // as SwayFX stacks by map order) or one drawing both. Below the
       // overlay: on Top, under the chrome; on Overlay (under every surface
       // there, by its order) while a fullscreen window hides the Top
