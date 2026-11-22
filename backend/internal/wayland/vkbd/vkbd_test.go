@@ -74,11 +74,14 @@ type event struct {
 	op      uint16
 	keymap  string
 	key     uint32
+	mods    uint32
 	pressed bool
 }
 
-func TestTypeSendsAKeymapThenKeys(t *testing.T) {
-	t.Parallel()
+// fakeKeyboard is a Keyboard bound to a fake compositor, and the requests
+// that compositor gets on the keyboard it makes.
+func fakeKeyboard(t *testing.T) (*Keyboard, chan event) {
+	t.Helper()
 	var mu sync.Mutex
 	var manager, keyboard uint32
 	events := make(chan event, 32)
@@ -111,6 +114,8 @@ func TestTypeSendsAKeymapThenKeys(t *testing.T) {
 				t.Errorf("size %d for %d bytes", size, len(data))
 			}
 			events <- event{op: opKeymap, keymap: string(data)}
+		case r.Object == keyboard && r.Opcode == opModifiers:
+			events <- event{op: opModifiers, mods: r.Args.Uint()}
 		case r.Object == keyboard && r.Opcode == opKey:
 			r.Args.Uint() // time
 			key, state := r.Args.Uint(), r.Args.Uint()
@@ -128,20 +133,25 @@ func TestTypeSendsAKeymapThenKeys(t *testing.T) {
 	if !testkit.Eventually(func() bool { return kb.Available() && st.ID() != 0 }) {
 		t.Fatal("not bound")
 	}
+	return kb, events
+}
 
-	if err := kb.Type(context.Background(), "hi"); err != nil {
-		t.Fatal(err)
-	}
+// requests reads n requests, as "keymap", "mods 4", "1 true" or "destroy";
+// keymaps are checked against wantKey, the key line the text's keymap has.
+func requests(t *testing.T, events chan event, n int, wantKey string) []string {
+	t.Helper()
 	var got []string
-	for i := 0; i < 6; i++ {
+	for i := 0; i < n; i++ {
 		select {
 		case e := <-events:
 			switch e.op {
 			case opKeymap:
-				if !strings.Contains(e.keymap, "key <K2> {[U0069]};") {
+				if !strings.Contains(e.keymap, wantKey) {
 					t.Errorf("keymap %s", e.keymap)
 				}
 				got = append(got, "keymap")
+			case opModifiers:
+				got = append(got, fmt.Sprintf("mods %d", e.mods))
 			case opKey:
 				got = append(got, fmt.Sprintf("%d %v", e.key, e.pressed))
 			case opDestroy:
@@ -151,11 +161,50 @@ func TestTypeSendsAKeymapThenKeys(t *testing.T) {
 			t.Fatalf("got %v", got)
 		}
 	}
-	if want := "[keymap 1 true 1 false 2 true 2 false destroy]"; fmt.Sprint(got) != want {
+	return got
+}
+
+func TestTypeSendsAKeymapThenKeys(t *testing.T) {
+	t.Parallel()
+	kb, events := fakeKeyboard(t)
+	if err := kb.Type(context.Background(), "hi"); err != nil {
+		t.Fatal(err)
+	}
+	// one modifiers request (none held) and none after the last key
+	got := requests(t, events, 7, "key <K2> {[U0069]};")
+	if want := "[keymap mods 0 1 true 1 false 2 true 2 false destroy]"; fmt.Sprint(got) != want {
 		t.Errorf("got %v, want %s", got, want)
 	}
 	if err := kb.Type(context.Background(), strings.Repeat("x", MaxText+1)); err == nil {
 		t.Error("an over-long text was typed")
+	}
+}
+
+func TestPasteSendsCtrlV(t *testing.T) {
+	t.Parallel()
+	kb, events := fakeKeyboard(t)
+	if err := kb.Paste(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	got := requests(t, events, 6, "{[U0076]}")
+	if want := "[keymap mods 4 1 true 1 false mods 0 destroy]"; fmt.Sprint(got) != want {
+		t.Errorf("got %v, want %s", got, want)
+	}
+}
+
+func TestPasteReleasesCtrlWhenCancelled(t *testing.T) {
+	t.Parallel()
+	kb, events := fakeKeyboard(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	kb.Paste(ctx)
+	var got []string
+	for len(got) == 0 || got[len(got)-1] != "destroy" {
+		got = append(got, requests(t, events, 1, "{[U0076]}")...)
+	}
+	// what falls between the modifiers and the release depends on the roundtrip
+	if n := len(got); n < 4 || fmt.Sprint(got[:2]) != "[keymap mods 4]" || got[n-2] != "mods 0" {
+		t.Errorf("got %v", got)
 	}
 }
 

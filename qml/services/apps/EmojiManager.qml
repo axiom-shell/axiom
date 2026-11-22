@@ -1,9 +1,11 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.compositor
 import qs.services.system
 
 /*
@@ -14,8 +16,11 @@ import qs.services.system
  * Unicode's order. `copy` puts one on the clipboard and counts it in
  * `usage` ({ emoji: { count, last } }), for LauncherManager's frecency;
  * `type` also types it into the focused window (the daemon's virtual
- * keyboard, where the compositor has one: `canType`), 150 ms after it's
- * called, so call it once that window has the keyboard back.
+ * keyboard, where the compositor has one: `canType`), or where the focused
+ * app can't take it as keys (Chromium and Electron drop characters above
+ * U+FFFF from key events) pastes it with Ctrl+V (the clipboard already holds
+ * it from copy()), 150 ms after it's called, so call it once that window has
+ * the keyboard back.
  * `search(query, limit, group)` ranks them for the launcher and the EmojiPicker
  * module (most used first with no query).
  */
@@ -87,9 +92,9 @@ QtObject {
     ClipboardManager.copyText(emoji);
   }
 
-  // Types it a moment after it's called. Call it once the window to type
-  // into has the keyboard back; the launcher calls it after its windows
-  // have gone (LauncherManager.afterClose)
+  // Types it (or pastes it, see the header) a moment after it's called. Call
+  // it once the window to type into has the keyboard back; the launcher calls
+  // it after its windows have gone (LauncherManager.afterClose)
   function type(emoji) {
     root._typing = emoji;
     _typeLater.restart();
@@ -102,12 +107,30 @@ QtObject {
 
   property Timer _typeLater: Timer {
     interval: 150
-    onTriggered: BackendManager.call("input.type", {
-      "text": root._typing
-    }, error => {
-      if (error)
-        console.warn("[EmojiManager] Could not type:", error.message);
-    })
+    onTriggered: {
+      const done = error => {
+        if (error)
+          console.warn("[EmojiManager] Could not type:", error.message);
+      };
+      if (root._pastes(root._typing))
+        BackendManager.call("input.paste", {}, done);
+      else
+        BackendManager.call("input.type", {
+          "text": root._typing
+        }, done);
+    }
+  }
+
+  // Whether text goes by Ctrl+V: the clipboard holds it, it has a codepoint
+  // above U+FFFF (Array.from walks codepoints) and the focused window isn't
+  // a terminal (desktop entry category TerminalEmulator; no matching entry:
+  // not a terminal), which takes keys
+  function _pastes(text) {
+    if (!ClipboardManager.available || !Array.from(text).some(c => c.codePointAt(0) > 0xFFFF))
+      return false;
+    const window = CompositorManager.lastFocused(CompositorManager.windows);
+    const entry = window ? DesktopEntries.heuristicLookup(window.appId) : null;
+    return !(entry?.categories ?? []).includes("TerminalEmulator");
   }
 
   property var _stateHandler: StateManager.createStateHandler("emoji")
