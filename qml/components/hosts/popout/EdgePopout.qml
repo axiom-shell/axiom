@@ -556,6 +556,7 @@ PopoutWrapperBase {
       submenu: slot
       screenName: surfaceWindow.screenName
       windowShown: surfaceWindow.visible
+      blurClip: placeOnScreen.screenRect
       animateShape: root.settled
 
       // At the attach edge of a window that may be deeper than it

@@ -40,7 +40,8 @@ QtObject {
   // Its key in BlurManager, set as it registers
   property int uid: -1
   // What of it shows, on screen: its window's rect, for a shape that moves
-  // past its window's edges (a hiding dock); null for the whole screen
+  // past its window's edges (a hiding dock, an edge popout longer than its
+  // window); null for the whole screen
   property var clipRect: null
 
   // The shadow it casts there (a SurfaceShadow look: BarStyle's or a

@@ -75,6 +75,8 @@ QtObject {
 
   readonly property var _rect: LayerManager.rectOf(root._uid, root._output)
   readonly property var origin: root._rect ? Qt.point(root._rect.x, root._rect.y) : null
+  // The window on screen: what of a surface in it shows, BlurShape.clipRect
+  readonly property rect screenRect: Qt.rect(root.origin?.x ?? 0, root.origin?.y ?? 0, root.window?.width ?? 0, root.window?.height ?? 0)
 
   // Where it is, else where it most likely is: on its edge, centred along
   // it (what's reserved at either end roughly balancing). Close enough for

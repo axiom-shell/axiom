@@ -225,7 +225,8 @@ TestCase {
       "strokeColor": root.strokeColor(spec.stroke),
       "paintLevel": PaintOrder.of(spec.level),
       "x": spec.x ?? 0,
-      "y": spec.y ?? 0
+      "y": spec.y ?? 0,
+      "clipRect": spec.clip ?? null
     });
   }
 
@@ -1187,6 +1188,41 @@ TestCase {
       root.near(tiled.px(x, 9), alone.px(x, 9), `the line unbroken in the gap, x ${x}`);
     root.near(tiled.px(40, 9), root.filled(root.solid), "under a tile, the tile's value");
     verify(Math.abs(alone.px(65, 9).a - alone.px(65, 50).a) > 0.05 || Math.abs(alone.px(65, 9).r - alone.px(65, 50).r) > 0.05, "the frame's stroke shows");
+  }
+
+  // ---- a surface cut to its window (EdgePopout and the dock: blurClip) ----
+
+  // A dock-like box whose copy is cut 20 px short of its end (its window's
+  // edge): past the cut every pixel is the frame's alone (fill and stroke),
+  // inside it the scene with no cut
+  function test_cut_to_its_window_data() {
+    const rows = [];
+    for (const sw of [1, 2])
+      rows.push({
+        "tag": `stroke ${sw}`,
+        "sw": sw
+      });
+    return rows;
+  }
+  function test_cut_to_its_window(data) {
+    root.needsGpuAtFractional();
+    root.setStroke(data.sw);
+    const frame = frameComp.createObject(sources);
+    const edge = root.frameSpec(frame, root.blue, root.line(1), []);
+    const dock = root.placed({
+      "boxWidth": 60,
+      "boxHeight": 30
+    }, 50, 10 - data.sw);
+    root.settle([dock]);
+    const box = root.attachedSpec(dock, "surface", root.green, root.line(1));
+    const clipped = Object.assign({
+      "clip": Qt.rect(0, 0, dock.x + 60 - 20, 100)
+    }, box);
+    const alone = root.render([edge]);
+    const whole = root.render([edge, box]);
+    const cut = root.render([edge, clipped]);
+    root.eachPixel(Qt.rect(dock.x + 41, 0, 30, 60), (x, y) => root.near(cut.px(x, y), alone.px(x, y), `past the cut, the frame alone at ${x},${y}`));
+    root.eachPixel(Qt.rect(0, 0, dock.x + 39, 60), (x, y) => root.near(cut.px(x, y), whole.px(x, y), `inside the cut, as uncut at ${x},${y}`));
   }
 
   // ---- a fill's anti-aliased edge, and a non-whole logical size ----
