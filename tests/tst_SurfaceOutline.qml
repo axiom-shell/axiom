@@ -40,6 +40,72 @@ TestCase {
     compare(m.farV, 99);
   }
 
+  // Stroke 1: the margin (26) is whole, where `Ra - half` was 25.5
+  function test_metrics_odd_stroke() {
+    const m = SurfaceOutline.metrics(spec({
+      "strokeWidth": 1,
+      "filletRadius": 26,
+      "cornerRadius": 25.5,
+      "connectorGap": 52
+    }));
+    compare(m.startMargin, 26);
+    compare(m.endMargin, 26);
+    compare(m.alongLength, 252);
+    compare(m.sideU, 26.5);
+    compare(m.farSideU, 225.5);
+    compare(SurfaceOutline.metrics(spec({
+      "strokeWidth": 1,
+      "filletRadius": 26,
+      "cornerRadius": 25.5,
+      "connectorGap": 52,
+      "boxDepth": 30
+    })).naturalBoxStart, 23);
+  }
+
+  function test_paths_odd_stroke() {
+    const s = spec({
+      "strokeWidth": 1,
+      "filletRadius": 26,
+      "cornerRadius": 25.5,
+      "connectorGap": 52
+    });
+    const m = SurfaceOutline.metrics(s);
+    verify(SurfaceOutline.strokePath(s, m, 252, 127).trim().startsWith("M 0 0.5 L 0.5 0.5 A 26 26"), SurfaceOutline.strokePath(s, m, 252, 127));
+  }
+
+  function test_blurRegion_odd_stroke() {
+    const s = spec({
+      "strokeWidth": 1,
+      "filletRadius": 26,
+      "cornerRadius": 25.5,
+      "connectorGap": 52
+    });
+    const m = SurfaceOutline.metrics(s);
+    const pieces = SurfaceOutline.blurRegion(s, m, 252, 127, 0, 0);
+    const c = pieces[1].cuts[0];
+    compare([c.x, c.y, c.width, c.height], [-25, 1, 51, 51]);
+    compare(pieces[2].cuts[0].x, 226);
+  }
+
+  // A fitted fractional fillet (26.2) also gets a whole margin
+  function test_blurRegion_odd_stroke_fitted() {
+    const s = spec({
+      "strokeWidth": 1,
+      "filletRadius": 28,
+      "cornerRadius": 27.5,
+      "attachFilletRadius": 26.2
+    });
+    const m = SurfaceOutline.metrics(s);
+    compare(m.startMargin, 26);
+    compare(m.sideU, 26.5);
+    compare(m.farSideU, 225.5);
+    compare(m.alongLength, 252);
+    const pieces = SurfaceOutline.blurRegion(s, m, 252, 127, 0, 0);
+    const c = pieces[1].cuts[0];
+    compare([c.x, c.y, c.width, c.height], [-25, 1, 51, 51]);
+    compare(pieces[2].cuts[0].x, 226);
+  }
+
   function test_metrics_shallow_box_pushed_back() {
     // fillet 29 + corner 27 + half 1 - depth 20 = 37, capped at half the gap
     compare(SurfaceOutline.metrics(spec({
@@ -177,7 +243,7 @@ TestCase {
       "endCornerRadius": fit.corner
     });
     const m = SurfaceOutline.withBoxStart(s, SurfaceOutline.metrics(s), 28);
-    fuzzyCompare(m.startMargin, 15.8, 1e-9);
+    compare(m.startMargin, 16);
     fuzzyCompare(m.startCornerRadius, 16.2, 1e-9);
     fuzzyCompare(m.endCornerRadius, 16.2, 1e-9);
     verify(SurfaceOutline.strokePath(s, m, 300, 70).indexOf("A 16.8 16.8") >= 0, "the fillet's arc at the fitted radius");
@@ -188,7 +254,7 @@ TestCase {
     });
     const j = SurfaceOutline.withBoxStart(joined, SurfaceOutline.metrics(joined), 28);
     compare(j.depth, 28 + 7 + 28 + 28, "the join's fillet at the full radius");
-    fuzzyCompare(j.endMargin, 15.8, 1e-9);
+    compare(j.endMargin, 16);
     // Without one, the attach fillets are filletRadius's
     compare(SurfaceOutline.metrics(spec({})).attachR, 28);
   }

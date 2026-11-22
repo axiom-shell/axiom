@@ -65,7 +65,7 @@ QtObject {
     const straightJoinEnd = !!(s.straightJoinEnd ?? s.straightJoins) || sharp;
     const joinFillet = (!!s.joinStart && !straightJoinStart) || (!!s.joinEnd && !straightJoinEnd);
     // A fillet's room along the edge: its arc's run (EdgeAttach.filletMargin)
-    const full = Ra - half;
+    const full = EdgeAttach.filletMargin(s.strokeWidth, Ra);
     const startMargin = filletStart ? full : 0;
     const endMargin = filletEnd ? full : 0;
     const alongLength = startMargin + s.boxAlong + endMargin;
@@ -76,7 +76,7 @@ QtObject {
       naturalBoxStart = lead + s.connectorGap / 2;
     } else {
       const fillet = filletStart || filletEnd ? Ra + half : 0;
-      naturalBoxStart = Math.max(0, Math.min(s.connectorGap / 2, fillet + Math.max(cs, ce) + half - s.boxDepth));
+      naturalBoxStart = Math.max(0, Math.min(s.connectorGap / 2, Math.ceil(fillet + Math.max(cs, ce) + half - s.boxDepth)));
     }
     return withBoxStart(s, {
       "half": half,
@@ -374,7 +374,7 @@ QtObject {
           "deep": half + Ra,
           "cuts": [
             {
-              "u": 0,
+              "u": m.sideU - Ra,
               "v": half + Ra,
               "r": Ra - half
             }
@@ -388,7 +388,7 @@ QtObject {
           "deep": half + Ra,
           "cuts": [
             {
-              "u": L,
+              "u": m.farSideU + Ra,
               "v": half + Ra,
               "r": Ra - half
             }

@@ -48,9 +48,12 @@ QtObject {
   // where it leaves the stroke it grows from to the wall's stroke centre
   // (SurfaceOutline), so nothing straight of its own runs on along that
   // stroke past it; 0 when the radius is too tight for one (see
-  // SurfaceOutline.metrics' `sharp`)
+  // SurfaceOutline.metrics' `sharp`). Rounded up to a whole pixel so a
+  // surface's item, fillet ends and walls sit on whole pixels with its
+  // content; the arc keeps its place, a straight run of under a pixel
+  // leading into it
   function filletMargin(stroke, radius) {
-    return radius < stroke / 2 ? 0 : radius - stroke / 2;
+    return radius < stroke / 2 ? 0 : Math.ceil(radius - stroke / 2);
   }
 
   // Whether a box wanting `start` to `start + length` joins the
