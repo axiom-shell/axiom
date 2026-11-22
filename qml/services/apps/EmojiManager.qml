@@ -122,11 +122,12 @@ QtObject {
   }
 
   // Whether text goes by Ctrl+V: the clipboard holds it, it has a codepoint
-  // above U+FFFF (Array.from walks codepoints) and the focused window isn't
+  // above U+FFFF (a UTF-16 surrogate pair: QV4 iterates strings by UTF-16
+  // unit, so Array.from can't find it) and the focused window isn't
   // a terminal (desktop entry category TerminalEmulator; no matching entry:
   // not a terminal), which takes keys
   function _pastes(text) {
-    if (!ClipboardManager.available || !Array.from(text).some(c => c.codePointAt(0) > 0xFFFF))
+    if (!ClipboardManager.available || !/[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(text))
       return false;
     const window = CompositorManager.lastFocused(CompositorManager.windows);
     const entry = window ? DesktopEntries.heuristicLookup(window.appId) : null;
