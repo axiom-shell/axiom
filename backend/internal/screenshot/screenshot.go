@@ -1,10 +1,10 @@
 // Package screenshot stitches the screenshot picker's pieces into one
-// picture (screenshot.stitch): a region dragged, or a window picked, across
-// monitors is cropped by each monitor's picker from its own frozen frame,
-// at that monitor's scale; this lays them out by their global logical
-// position, at the largest scale among them (lower-scale pieces are scaled
-// up), and writes the PNG. What no piece covers (a gap between monitors
-// of different sizes or offsets) stays transparent.
+// picture (screenshot.stitch): every screenshot's picture is cropped by each
+// monitor's picker from its own frozen frame, at that monitor's scale; this
+// lays the pieces out by their global logical position, at the largest scale
+// among them (lower-scale pieces are scaled up), and writes the PNG. One
+// piece that is the whole area is written as it is. What no piece covers
+// (a gap between monitors of different sizes or offsets) stays transparent.
 package screenshot
 
 import (
@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 
+	_ "golang.org/x/image/bmp" // decoder, registered for image.Decode
 	"golang.org/x/image/draw"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -34,8 +35,8 @@ type Rect struct {
 	Height float64 `json:"height"`
 }
 
-// Piece is one monitor's part of the picture: the PNG at Path, which
-// shows Rect.
+// Piece is one monitor's part of the picture: the PNG or BMP at Path,
+// which shows Rect.
 type Piece struct {
 	Path string `json:"path"`
 	Rect
@@ -47,29 +48,40 @@ type Placed struct {
 	Rect  Rect
 }
 
-// Compose lays pieces out over area at the largest scale among them
-// (a piece's pixels per logical pixel, by its width), each scaled to its
-// place where its own scale is lower; what none covers is transparent. A
-// piece is clipped to area.
-func Compose(pieces []Placed, area Rect) (*image.NRGBA, error) {
+// measure checks pieces and area and sizes the picture: the largest scale
+// among the pieces (pixels per logical pixel, by width or height) and the
+// area's size in pixels at it.
+func measure(pieces []Placed, area Rect) (scale float64, size image.Point, err error) {
 	if len(pieces) == 0 {
-		return nil, axerr.New(axerr.BadRequest, "screenshot.stitch: no pieces")
+		return 0, image.Point{}, axerr.New(axerr.BadRequest, "screenshot.stitch: no pieces")
 	}
 	if !(area.Width > 0 && area.Height > 0) {
-		return nil, axerr.New(axerr.BadRequest, "screenshot.stitch: an empty area")
+		return 0, image.Point{}, axerr.New(axerr.BadRequest, "screenshot.stitch: an empty area")
 	}
-	scale := 0.0
 	for _, p := range pieces {
 		b := p.Image.Bounds()
 		if !(p.Rect.Width > 0 && p.Rect.Height > 0) || b.Empty() {
-			return nil, axerr.New(axerr.BadRequest, "screenshot.stitch: an empty piece")
+			return 0, image.Point{}, axerr.New(axerr.BadRequest, "screenshot.stitch: an empty piece")
 		}
 		scale = math.Max(scale, math.Max(float64(b.Dx())/p.Rect.Width, float64(b.Dy())/p.Rect.Height))
 	}
 	w, h := int(math.Round(area.Width*scale)), int(math.Round(area.Height*scale))
 	if w < 1 || h < 1 || w > maxSide || h > maxSide {
-		return nil, axerr.New(axerr.BadRequest, "screenshot.stitch: a %dx%d picture", w, h)
+		return 0, image.Point{}, axerr.New(axerr.BadRequest, "screenshot.stitch: a %dx%d picture", w, h)
 	}
+	return scale, image.Pt(w, h), nil
+}
+
+// Compose lays pieces out over area at the largest scale among them
+// (a piece's pixels per logical pixel, by its width), each scaled to its
+// place where its own scale is lower; what none covers is transparent. A
+// piece is clipped to area.
+func Compose(pieces []Placed, area Rect) (*image.NRGBA, error) {
+	scale, size, err := measure(pieces, area)
+	if err != nil {
+		return nil, err
+	}
+	w, h := size.X, size.Y
 	out := image.NewNRGBA(image.Rect(0, 0, w, h))
 	at := func(v float64) int { return int(math.Round(v * scale)) }
 	for _, p := range pieces {
@@ -94,8 +106,10 @@ func Compose(pieces []Placed, area Rect) (*image.NRGBA, error) {
 }
 
 // Stitch decodes pieces, composes them over area (Compose) and writes the
-// PNG to out (an absolute path, replaced atomically); returns the
-// picture's size in pixels.
+// PNG to out (an absolute path, replaced atomically); returns the written
+// picture's size in pixels. One piece that is the whole area is written as
+// it is, so a one-screen shot is what was grabbed whatever its rect's
+// rounding.
 func Stitch(pieces []Piece, area Rect, out string) (image.Point, error) {
 	if !filepath.IsAbs(out) {
 		return image.Point{}, axerr.New(axerr.BadRequest, "screenshot.stitch: %q is not an absolute path", out)
@@ -108,9 +122,18 @@ func Stitch(pieces []Piece, area Rect, out string) (image.Point, error) {
 		}
 		placed = append(placed, Placed{Image: img, Rect: p.Rect})
 	}
-	img, err := Compose(placed, area)
-	if err != nil {
+	if _, _, err := measure(placed, area); err != nil {
 		return image.Point{}, err
+	}
+	var img image.Image
+	if len(placed) == 1 && placed[0].Rect == area {
+		img = placed[0].Image
+	} else {
+		composed, err := Compose(placed, area)
+		if err != nil {
+			return image.Point{}, err
+		}
+		img = composed
 	}
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
@@ -138,7 +161,7 @@ func decode(path string) (image.Image, error) {
 		return nil, axerr.Wrap(axerr.NotFound, err, "screenshot.stitch")
 	}
 	defer f.Close()
-	img, err := png.Decode(f)
+	img, _, err := image.Decode(f)
 	if err != nil {
 		return nil, axerr.Wrap(axerr.BadRequest, err, "screenshot.stitch: %s", path)
 	}
