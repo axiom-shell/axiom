@@ -17,7 +17,7 @@ import qs.services.apps
  * made elsewhere meanwhile (a theme, a wallpaper, the bar editor) survive.
  *
  * Also keeps the page's own state (category, search), since the page is
- * unloaded when the overlay's window goes (`keptFor` after a close). */
+ * unloaded when the overlay's pages unload (`keptFor` after a close). */
 QtObject {
   id: root
 

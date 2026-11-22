@@ -30,37 +30,23 @@ QtObject {
   function unregisterSurfaceWindow(group) {
     surfaceWindows = surfaceWindows.filter(e => e.group !== group);
     setSurfaceOpen(group, "", false);
-    setSurfaceKept(group, "", false);
   }
 
   // SurfaceGroups open anywhere, `{ group, kind }`: whether a launcher,
   // overlay or power menu is up (a hover-activated button won't close it)
   property var openSurfaces: []
 
-  // `list` with `group`'s entry set (`on`) or dropped; the same array when
-  // that changes nothing
-  function _withGroup(list, group, kind, on) {
-    const others = list.filter(e => e.group !== group);
-    if (on)
-      return others.concat([
+  function setSurfaceOpen(group, kind, open) {
+    const others = openSurfaces.filter(e => e.group !== group);
+    if (open)
+      openSurfaces = others.concat([
         {
           group,
           kind
         }
       ]);
-    return others.length !== list.length ? others : list;
-  }
-
-  // Whether `list` has an entry of `kind` on `screen` (a ShellScreen or its name)
-  function _anyOn(list, kind, screen) {
-    const name = typeof screen === "string" ? screen : screen?.name ?? "";
-    return list.some(e => e.kind === kind && (e.group.screen?.name ?? "") === name);
-  }
-
-  function setSurfaceOpen(group, kind, open) {
-    const next = _withGroup(openSurfaces, group, kind, open);
-    if (next !== openSurfaces)
-      openSurfaces = next;
+    else if (others.length !== openSurfaces.length)
+      openSurfaces = others;
   }
 
   function surfaceOpen(kind) {
@@ -69,23 +55,8 @@ QtObject {
 
   // Whether one is up on `screen` (a ShellScreen or its name)
   function surfaceOpenOn(kind, screen) {
-    return _anyOn(openSurfaces, kind, screen);
-  }
-
-  // SurfaceGroups kept after closing, `{ group, kind }`: the overlay while
-  // its window waits mapped and inert for the next open. Not open: nothing
-  // that reacts to an open surface sees it
-  property var keptSurfaces: []
-
-  function setSurfaceKept(group, kind, kept) {
-    const next = _withGroup(keptSurfaces, group, kind, kept);
-    if (next !== keptSurfaces)
-      keptSurfaces = next;
-  }
-
-  // Whether one is kept on `screen` (a ShellScreen or its name)
-  function surfaceKeptOn(kind, screen) {
-    return _anyOn(keptSurfaces, kind, screen);
+    const name = typeof screen === "string" ? screen : screen?.name ?? "";
+    return openSurfaces.some(e => e.kind === kind && (e.group.screen?.name ?? "") === name);
   }
 
   // `{ owner, screen, edge, start, end }` (a screen name, a ScreenEdge.name,

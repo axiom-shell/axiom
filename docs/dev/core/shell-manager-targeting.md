@@ -34,7 +34,6 @@
 ### The surface registry
 `SurfaceManager` (`qml/services/ui/SurfaceManager.qml`) keeps what the shown surfaces report:
 - `surfaceWindows` (each `SurfaceGroup`'s window), `openSurfaces` (`surfaceOpen(kind)`, `surfaceOpenOn(kind, screen)`) and `surfaceShown`, which keeps "all" instances in step.
-- `keptSurfaces` (`setSurfaceKept`, `surfaceKeptOn(kind, screen)`): a closed surface that is kept (its pages built) for the next open (the overlay, `OverlayPanel.kept`). Its own list: nothing that reacts to an open surface (the dock, popouts, blur) sees it as open.
 - `grabPartners` (`grabPartnersFor(screen)`): the bars and their popouts, which a full-screen surface's focus grab lets input through to.
 - `borderOpenings` (`setBorderOpening`): surfaces joined to the border's inner stroke, which leaves it open under them.
 - Modal windows, stepping aside and required fields, below.
@@ -50,7 +49,6 @@
 - While stepped aside, the overlay and the onboarder (`ReservedAreaWindow`):
   - stay mapped, so their pages and state survive
   - hide their content, take no input or keys (an empty `mask`) and drop their backdrop.
-- `ReservedAreaWindow.idle` is the same inertness for another reason (the overlay while kept), and the window is a pixel in its corner then (a mapped full-screen window is composited, and blurred by its layer rule, over whatever changes under it: measured on SwayFX): `takesInput` is `!steppedAside && !idle`, and `focusable`, `mask` and the keyboard focus read it.
 - The overlay's grab is off (and a click outside ignored) until the last owner ends it.
 
 #### Required fields

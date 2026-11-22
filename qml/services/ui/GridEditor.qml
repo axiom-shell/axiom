@@ -12,7 +12,7 @@ import qs.services.core
  * draft's changed() on `edited`.
  *
  * Also holds the selection, since the editor page is unloaded
- * when the overlay's window goes (`keptFor` after a close). Every edit keeps the selection on its module and shifts
+ * when the overlay's pages unload (`keptFor` after a close). Every edit keeps the selection on its module and shifts
  * the grid so its top left module sits at 0, 0: a place left of or above
  * the grid (negative x or y) makes room there. A grid with an `area` (the
  * lock screen's) is bounded instead: places are absolute, inside it,

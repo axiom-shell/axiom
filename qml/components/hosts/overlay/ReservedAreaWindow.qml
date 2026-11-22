@@ -20,35 +20,23 @@ import qs.components.hosts.popout
 // While SurfaceManager.steppedAside (another polkit agent's prompt, which
 // opens under the Overlay layer) it stays mapped, so nothing in it is
 // rebuilt, but takes no input or keys; its content hides (`content`).
-// An owner that keeps it mapped between uses sets `idle`: the same, for its
-// own reason.
 PanelWindow {
   id: root
 
   // Stepped aside: subclasses hide their content on it
   readonly property bool steppedAside: SurfaceManager.steppedAside
-  // Mapped but drawing nothing, taking no input and a pixel in size, for its
-  // owner's reason (LayerSlot.idle's meaning)
-  property bool idle: false
-  // Whether it takes input and keys now
-  readonly property bool takesInput: !root.steppedAside && !root.idle
   // Its layer-shell namespace
   required property string layerNamespace
   // Its top-left on its screen, or null while unknown (a wallpaper
   // picker's click point)
   readonly property var screenOrigin: placeOnScreen.origin
 
-  // A pixel in its corner while idle: a mapped full-screen window, even a
-  // transparent one, is composited (and blurred, by its layer rule) over
-  // whatever changes under it
   anchors {
     left: true
-    right: !root.idle
+    right: true
     top: true
-    bottom: !root.idle
+    bottom: true
   }
-  implicitWidth: 1
-  implicitHeight: 1
 
   // A transparent bar facing the windows reserves Hyprland's gaps_out
   // less than its extent (its `trim`, BarEnds.placeStack) and has no
@@ -74,15 +62,17 @@ PanelWindow {
   }
 
   color: "transparent"
-  focusable: root.takesInput
-  mask: root.takesInput ? null : root._noInput
-  WlrLayershell.keyboardFocus: root.takesInput ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+  focusable: !root.steppedAside
+  mask: root.steppedAside ? stepAsideMask : null
+  WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
   WlrLayershell.layer: WlrLayer.Overlay
   WlrLayershell.namespace: root.layerNamespace
   exclusionMode: ExclusionMode.Normal
   exclusiveZone: 0
 
-  property Region _noInput: Region {}
+  Region {
+    id: stepAsideMask
+  }
 
   LayerOrigin {
     id: placeOnScreen

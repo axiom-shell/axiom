@@ -13,7 +13,7 @@ import qs.services.session
  * untouched until saveChanges(). Mirrors BarManager.
  *
  * Also keeps the page's own state, since the page is unloaded
- * when the overlay's window goes (`keptFor` after a close): whether it's editing a page, an edge menu or the lock
+ * when the overlay's pages unload (`keptFor` after a close): whether it's editing a page, an edge menu or the lock
  * screen (`editTarget`; the menus are `menus`' (MenuEditor) and the lock
  * screen LockManager's), the selected
  * page, and each overlay's room (for the canvas's "fits" line). The
