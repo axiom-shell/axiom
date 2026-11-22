@@ -59,7 +59,8 @@ Scope {
       // layer (by its order), drawing while the overlay is open here: their
       // blur is the overlay's content, not what the overlay covers. Always
       // in the model (unmapped while not wanted, a mapped pixel while the
-      // overlay is kept), so an overlay opening makes no window delegates
+      // overlay is kept, where layers stack by map order), so an overlay
+      // opening makes no window delegates
       readonly property var parts: perScreen.shadowsApart ? ["fills", "shadows"] : ["all"]
 
       Variants {
@@ -74,8 +75,7 @@ Scope {
           aboveOverlay: perScreen.aboveOverlay
           shapes: BlurManager.backingOn(perScreen.screenName) ? perScreen.onScreen : []
           wanted: blurWindow.over ? perScreen.aboveOverlay : BlurManager.backingOn(perScreen.screenName)
-          held: !blurWindow.over
-          keepMapped: blurWindow.over && BlurManager.aboveOverlayKept(perScreen.screenName)
+          held: !blurWindow.over || BlurManager.aboveOverlayKept(perScreen.screenName)
           stackLayer: blurWindow.over || BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
           layerNamespace: (blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (blurWindow.over ? "-overlay" : "")
         }

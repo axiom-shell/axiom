@@ -16,9 +16,6 @@ QtObject {
   // Slides in with the surface (the overlay) from that edge, "top" or
   // "bottom", instead of fading in and out ("")
   property string slide: ""
-  // Its window stays mapped, a pixel, while nothing is shown (its owner
-  // is kept: the overlay waiting to open again)
-  property bool keepMapped: false
   property color fillColor: Appearance.darkMode ? Style.surfacePage : Style.text
   property real fillOpacity: 0.85 // style-exempt: the screen backdrop's default dim, not a surface's
 
@@ -27,7 +24,6 @@ QtObject {
     "screen": root.screen.name,
     "shown": root.shown,
     "slide": root.slide,
-    "keepMapped": root.keepMapped,
     "fillColor": root.fillColor,
     "fillOpacity": root.fillOpacity
   } : null

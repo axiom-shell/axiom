@@ -23,9 +23,9 @@ Item {
   readonly property real roomHeight: root.maxHeight - OverlayConfig.boxPadding * 2
   // Whether the overlay is open (shown, not closing)
   property bool open: false
-  // Whether its window is mapped (open, closing or kept): the pages stay
-  // loaded while it is, and unload when it isn't
-  property bool mapped: false
+  // Whether its pages stay loaded: the overlay is open, closing or kept (its
+  // window may be unmapped while kept)
+  property bool built: false
   property var viewsConfig: OverlayConfig.views || []
   // Every config change is a new views array, so the pages are keyed by
   // their JSON: a string only notifies when it really changes, and pages
@@ -137,7 +137,7 @@ Item {
       ShellManager.setLinkOrigin("");
     }
   }
-  onMappedChanged: if (!root.mapped)
+  onBuiltChanged: if (!root.built)
     root._settled = -1
   Timer {
     id: settleTimer
@@ -146,7 +146,7 @@ Item {
   }
 
   function isLoaded(pageIndex) {
-    if (!root.mapped)
+    if (!root.built)
       return false;
     if (pageIndex === root.currentIndex)
       return true;
@@ -199,7 +199,7 @@ Item {
   ShapeShadow {
     box: contentContainer
     radius: Style.radiusOuter
-    active: root.mapped
+    active: root.built
     shadowColor: Style.shadowSoft
     look: ({
         "shadow": BarStyle.look.shadow && !(Appearance.blur && BlurManager.shadowsApart),

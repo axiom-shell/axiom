@@ -52,7 +52,6 @@ PanelWindow {
     namespace: "axiom-backdrop"
     wanted: root._wanted || BackdropManager.catching
     held: true
-    keepMapped: BackdropManager.keepMappedOn(root.screen?.name ?? "")
   }
 
   anchors {

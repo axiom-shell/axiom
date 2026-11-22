@@ -34,7 +34,7 @@
 ### The surface registry
 `SurfaceManager` (`qml/services/ui/SurfaceManager.qml`) keeps what the shown surfaces report:
 - `surfaceWindows` (each `SurfaceGroup`'s window), `openSurfaces` (`surfaceOpen(kind)`, `surfaceOpenOn(kind, screen)`) and `surfaceShown`, which keeps "all" instances in step.
-- `keptSurfaces` (`setSurfaceKept`, `surfaceKeptOn(kind, screen)`): a closed surface whose window waits mapped and inert for the next open (the overlay, `OverlayPanel.kept`). Its own list: nothing that reacts to an open surface (the dock, popouts, blur) sees it as open.
+- `keptSurfaces` (`setSurfaceKept`, `surfaceKeptOn(kind, screen)`): a closed surface that is kept (its pages built) for the next open (the overlay, `OverlayPanel.kept`). Its own list: nothing that reacts to an open surface (the dock, popouts, blur) sees it as open.
 - `grabPartners` (`grabPartnersFor(screen)`): the bars and their popouts, which a full-screen surface's focus grab lets input through to.
 - `borderOpenings` (`setBorderOpening`): surfaces joined to the border's inner stroke, which leaves it open under them.
 - Modal windows, stepping aside and required fields, below.

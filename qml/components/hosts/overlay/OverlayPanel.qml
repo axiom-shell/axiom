@@ -19,18 +19,20 @@ import qs.components.views.Settings // qmllint disable unused-imports
 
 // The overlay's window on one screen (shell/Overlay): opens and closes the
 // sliding box that holds OverlayPages, and closes on Escape or a click outside.
-// After a close it stays mapped and inert, its pages built, for `keptFor`
-// (`kept`), so opening again is a slide, not a rebuild.
+// After a close its pages stay built for `keptFor` (`kept`), so opening
+// again is a slide, not a rebuild; its window stays mapped and inert too,
+// where the compositor stacks by map order alone.
 ReservedAreaWindow {
   id: root
 
   property bool isOpen: false
   // How long it stays kept after closing, in ms
   readonly property int keptFor: 10000
-  // Closed, its window staying mapped, its pages built: through the close
-  // slide, then inert (`idle`) until `keptFor` passes, or a fullscreen window
-  // shows on its screen. From the close on, so the windows that keep their
-  // place for it (the backdrop's, the blur window over it) never unmap between
+  // Closed, its pages built: through the close slide, then until `keptFor`
+  // passes, or a fullscreen window shows on its screen. Its window stays
+  // mapped only where `!_ordered`, inert (`idle`) after the close slide. From
+  // the close on, so the windows that keep their place for it (the
+  // backdrop's, the blur window over it) never unmap between
   property bool kept: false
   readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   onFullscreenChanged: if (root.fullscreen && root.kept) {
@@ -46,7 +48,7 @@ ReservedAreaWindow {
   // or in place, faded out
   readonly property bool _fades: OverlayConfig.animation === "fade"
   // The window's height, as last mapped full size (`pageArea.roomHeight`
-  // holds it while idle, a pixel)
+  // holds it while idle or unmapped)
   property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? pageArea.roomHeight + OverlayConfig.navigatorRoom : -(pageArea.roomHeight + OverlayConfig.navigatorRoom)
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
@@ -58,8 +60,13 @@ ReservedAreaWindow {
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
   WlrLayershell.keyboardFocus: !root.takesInput ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+  // Where the compositor orders layers by rule (Hyprland), a kept overlay's
+  // window unmaps after the close slide and its pages stay built: a mapped
+  // pixel resized there animates from its corner and moves its focus-grab
+  // box. Elsewhere it stays mapped, an idle pixel, as LayerSlot.held.
+  readonly property bool _ordered: CompositorManager.supports.layerOrder === true
   // Once the close slide is over: it keeps taking input until then
-  idle: root.kept && !hideTimer.running
+  idle: root.kept && !hideTimer.running && !root._ordered
 
   function open() {
     hideTimer.stop();
@@ -105,7 +112,7 @@ ReservedAreaWindow {
     id: hideTimer
     interval: Appearance.animSlow
     repeat: false
-    onTriggered: if (!root.kept)
+    onTriggered: if (!root.kept || root._ordered)
       root.visible = false
   }
 
@@ -271,7 +278,7 @@ ReservedAreaWindow {
         id: overlayPages
         anchors.centerIn: parent
         open: root.isOpen
-        mapped: root.visible
+        built: root.visible || root.kept
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
         maxHeight: pageArea.roomHeight - OverlayConfig.cardSpacing * 2

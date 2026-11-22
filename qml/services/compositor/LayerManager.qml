@@ -199,7 +199,7 @@ QtObject {
 
   // --- Mapping in order (LayerSlot) ---
 
-  // { slot uid: { output, layer, namespace, wanted, held, keepMapped, mapped } }
+  // { slot uid: { output, layer, namespace, wanted, held, mapped } }
   property var _slots: ({})
   property var _slotSeqs: ({})
   // Slots mapped long enough for the compositor to have mapped them
@@ -257,7 +257,6 @@ QtObject {
           "rankGroup": slot.rankGroup,
           "wanted": slot.wanted,
           "held": slot.held,
-          "keepMapped": slot.keepMapped,
           "showing": root._slotSeqs[uid] !== undefined,
           "mapped": root._slotSettled[uid] === true,
           "seq": root._slotSeqs[uid] ?? 0
