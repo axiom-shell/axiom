@@ -245,15 +245,14 @@ QtObject {
     "layerOrder": CompositorManager.supports.layerOrder === true,
     "overOverlay": root.overOverlay,
     "menuZone": root.bare ? 0 : ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName),
-    "bare": root.bare,
-    "under": root.under
+    "bare": root.bare
   }))
   // The deepest its attach edge may go from its bar's outer edge whatever
   // the box's length (SurfaceContext.contentFrom), for what is fitted
   // without it, which a box between pills would otherwise loop on: its
   // length picks how deep it attaches. Decided without the box, as
   // `atIsland` is, so it reads none of `contentLength`, `aligned`, the
-  // probe, `under` or `_layout`
+  // probe or `_layout`
   readonly property real contentFromBar: SurfaceContext.contentFrom(Object.assign({}, root._params, {
     "pills": root._pills,
     "centre": root._toScreen(root.centre),
@@ -316,7 +315,7 @@ QtObject {
   // How far back from its attach edge it starts (the screen edge or the
   // frame line), whether or not it slides from there now (the host gates
   // it on its latched slidesFromEdge)
-  readonly property real slideFrom: root._layout.slideFrom
+  readonly property real slideFrom: SurfaceContext.slideFrom(root._layout, root.under)
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property int backfill: root._layout.backfill
   // How a joined submenu meets the stroke the box grows from, from where

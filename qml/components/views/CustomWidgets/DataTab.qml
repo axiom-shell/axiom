@@ -136,7 +136,7 @@ ColumnLayout {
             iconText: "folder_open"
             tooltipText: I18n.tr("Pick a script…")
             onClicked: FilePickerManager.pick(root, I18n.tr("Pick a script"), {
-              "start": root.scriptPath !== "" ? root.scriptPath.replace(/\/[^/]*$/, "") : "~",
+              "start": root.scriptPath !== "" ? FilePaths.parentOf(root.scriptPath) : "~",
               "shortenHome": true
             }, path => root.editor.set("command", path))
           }

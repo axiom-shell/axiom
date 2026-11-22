@@ -13,10 +13,12 @@ Item {
   required property var shapes
   // The screen its fills are drawn for (BlurManager.fillOn)
   required property var screen
-  // Shapes another window may draw over this one: each not also among
-  // `shapes` is among its copies as an eraser (see `erasing`); one in both is
-  // drawn
+  // Shapes another window may draw over this one: each not also drawn here
+  // (not among `shapes`, or not among those it `drawsOnly`) is erased (see
+  // `erasing`); one drawn here is drawn
   property var erasers: []
+  // Which of `shapes` it draws now (a copy exists for each either way)
+  property var drawsOnly: shape => true
   // What each copy draws: "chrome", its fill (the colour it fills with,
   // opaque) then its stroke over it, at their own alpha, normal blending, so
   // the strokes blend over the fills in painter's order; "outline", its fill
@@ -44,10 +46,11 @@ Item {
       // Fixed per key; null once it's gone, until its row goes
       readonly property var shape: BlurManager.shapeOf(Number(slot.key))
       readonly property var area: slot.shape?.clipRect ?? null
-      // The other window draws this shape now (an eraser not among `shapes`): the slot erases its fill
+      // The other window draws this shape now (an eraser not drawn here, not
+      // among `shapes` or not among those it `drawsOnly`): the slot erases its fill
       // path (opaque black, no stroke, half a level under the shape's) and
       // goes back to drawing the shape when that window gives it up
-      readonly property bool erasing: copies.erasers.includes(slot.shape) && !copies.shapes.includes(slot.shape)
+      readonly property bool erasing: copies.erasers.includes(slot.shape) && !(copies.shapes.includes(slot.shape) && copies.drawsOnly(slot.shape))
       // Its fill's alpha on this screen, as drawn (BlurManager.fillOn)
       readonly property real fillAlpha: BlurManager.fillOn(slot.shape?.color ?? "transparent", copies.screen).a
       // What its copy fills with: black for the outline and an eraser; else
@@ -82,7 +85,7 @@ Item {
       height: area ? area.height : copies.height
       clip: !!area
       // (read rather than `visible`, which is false inside a hidden layer)
-      readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source
+      readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && (copies.drawsOnly(slot.shape) || slot.erasing)
       visible: slot.showing
 
       // Where and how big its copy is, as drawn, and in what: on any

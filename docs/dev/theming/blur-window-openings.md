@@ -22,11 +22,13 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 ### Over the overlay
 - The overlay (Overlay layer) covers the blur window. So while it's open on a screen (`BlurManager.aboveOverlay`), a second `BlurBackingWindow` there, `axiom-blur-backing-overlay`, draws the shapes of the surfaces on the Overlay layer (`BlurShape.overlayLayer`: bar popouts and their submenus, edge popouts, the OSD; a dock's preview has no origin and fills and blurs itself), and the first window drops them.
   - Its order (see `docs/dev/generated/layers.md`) puts it after the overlay and before every surface it draws for, and it maps without Hyprland's animation.
+  - Both over windows (`fills` and `shadows`, or `all`) are always in `BlurBacking`'s model, unmapped while the overlay's windows aren't wanted (`overlayWindows`: the overlay open there, or its hand-off not yet back), so an overlay opening makes no window delegates.
   - Its blur rule never uses xray (`LayerStack.blurOverOverlay`): what it blurs is the overlay.
 - Only the Overlay-layer shapes move up. Drawn over the Top layer, a bar's fill would cover the bar's content.
-- The window under the overlay gives way to them: it holds their shapes as `erasers` while the windows over the overlay exist and erases each (its fill path erased, half a level under the shape's, so a popout over the overlay hides the bar's fill and stroke under it, not drawn twice) once it has given the shape up (no longer among its `shapes`). The window over the overlay gives way to nothing.
-- The hand-off keeps some window drawing the popout's box in every frame (`BlurBacking`'s `overlayTaken`): the main window gives the shapes up and erases them only once the overlay's window has drawn them, and draws them back at once when the overlay closes, while the other still does; that window goes after the main one's frame has them. Both draw it for at most a frame on each switch.
-- Each window casts only its own shapes' shadows, but cuts them by every shape on the screen (`BlurBackingWindow.cutBy`, the other window's), as the one window does. So a popout's shadow never falls on the bar it's joined to.
+- The window under the overlay gives way to them: it holds their shapes as `erasers` while the windows over the overlay draw and erases each (its fill path erased, half a level under the shape's, so a popout over the overlay hides the bar's fill and stroke under it, not drawn twice) once it has given the shape up (it no longer `draws` it). The window over the overlay gives way to nothing.
+- The hand-off keeps some window drawing the popout's box in every frame (`BlurBacking`'s `overlayTaken`): the main window gives the shapes up and erases them only once the overlay's window has drawn them, and draws them back at once when the overlay closes, while the other still does; that window goes after the main one's frame has them. Both draw it for at most a frame on each switch. The over windows stay in the model, unmapped until `overlayWindows`, so the hand-off flips only which window `draws` a shape, never builds a copy.
+- Each window casts only its own shapes' shadows, but cuts them by every shape on the screen (the copies of the shapes the other window draws, `BlurBackingWindow.draws(shape, !over)`), as the one window does. So a popout's shadow never falls on the bar it's joined to.
+- Every blur window on a screen keeps a copy of every shape there, drawing only its own (`BlurBackingWindow.draws`, `Copies.drawsOnly`): the overlay opening or closing, or a popout's layer flipping, toggles which copies show and builds none.
 
 ### Copies
 - `Copies.qml` is one copy of each of `shapes` (and `erasers`), one slot per shape; `BlurBackingWindow` makes its colour, alpha and outline copies of it, and `tests-layout/tst_ChromeComposite` draws through the same file.
@@ -44,7 +46,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - `tests-layout/tst_ChromeComposite.qml` reads the composite as pixels (at scale 1 and 1.25): [Testing](../testing.md).
 
 ### Shadows in the backing window
-- Backed surfaces' shadows are cast there too, from the same copies' outlines (fill and stroke).
+- Backed surfaces' shadows are cast there too, from the outlines of the same shapes' copies (fill and stroke).
 - Each `BlurShape` names its `shadow` (a look: BarStyle's, or its bar's). An `AttachedSurface`'s follows `castShadow` and `shadowLook`.
 - The copies are grouped by look (`BlurBackingWindow.shadowKey`): its color and size.
 - Each group casts one `SurfaceShadow` cut by every shape on the screen:

@@ -104,103 +104,111 @@ FoldingCard {
     interactive: false
     spacing: Widget.spacing
     model: root.groups
-    delegate: ListSection {
-      id: section
+    // A job a group (its rows are the build)
+    delegate: StreamedLoader {
+      id: slot
       required property var modelData
       width: list.width
-      title: root.groupTitle(section.modelData.owner)
+      rise: false
+      label: "outside changes group"
 
-      Repeater {
-        model: section.modelData.rows
+      sourceComponent: ListSection {
+        id: section
+        readonly property var modelData: slot.modelData
+        title: root.groupTitle(section.modelData.owner)
 
-        delegate: ColumnLayout {
-          id: line
-          required property var modelData
-          readonly property var row: line.modelData
-          readonly property string note: root.outcomeText(line.row.id)
-          Layout.fillWidth: true
-          spacing: Widget.spacing / 2
+        Repeater {
+          model: section.modelData.rows
 
-          RowLayout {
+          delegate: ColumnLayout {
+            id: line
+            required property var modelData
+            readonly property var row: line.modelData
+            readonly property string note: root.outcomeText(line.row.id)
             Layout.fillWidth: true
-            spacing: Widget.spacing
+            spacing: Widget.spacing / 2
 
-            StyledText {
-              text: FootprintManager.labelOf(line.row)
-              overflow: "line"
-              elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
+            RowLayout {
               Layout.fillWidth: true
-            }
+              spacing: Widget.spacing
 
-            Loader {
-              active: line.row.inferred === true
-              visible: active
-              sourceComponent: StatusChip {
-                text: I18n.tr("Inferred")
+              StyledText {
+                text: FootprintManager.labelOf(line.row)
+                overflow: "line"
+                elide: Text.ElideMiddle // style-exempt: middle elides an identifier, keeping its end
+                Layout.fillWidth: true
+              }
+
+              Loader {
+                active: line.row.inferred === true
+                visible: active
+                sourceComponent: StatusChip {
+                  text: I18n.tr("Inferred")
+                }
+              }
+
+              Loader {
+                active: line.row.status === "changed"
+                visible: active
+                sourceComponent: StatusChip {
+                  text: I18n.tr("Changed since")
+                  tone: "warning"
+                }
+              }
+
+              Loader {
+                active: line.row.status === "gone"
+                visible: active
+                sourceComponent: StatusChip {
+                  text: I18n.tr("Gone")
+                }
+              }
+
+              Loader {
+                active: line.row.system === true
+                visible: active
+                sourceComponent: StatusChip {
+                  text: I18n.tr("System")
+                }
+              }
+
+              StyledTextButton {
+                visible: root.confirming !== line.row.id
+                text: I18n.tr("Undo")
+                onClicked: {
+                  if (line.row.inferred === true || line.row.system === true) {
+                    root.confirming = line.row.id;
+                    return;
+                  }
+                  FootprintManager.undo([line.row.id]);
+                }
               }
             }
 
             Loader {
-              active: line.row.status === "changed"
+              active: root.confirming === line.row.id
               visible: active
-              sourceComponent: StatusChip {
-                text: I18n.tr("Changed since")
+              Layout.fillWidth: true
+              sourceComponent: ConfirmLine {
+                question: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
+                keepText: I18n.tr("Cancel")
+                confirmText: I18n.tr("Undo")
+                onKept: root.confirming = ""
+                onConfirmed: {
+                  root.confirming = "";
+                  FootprintManager.undo([line.row.id], true);
+                }
+              }
+            }
+
+            Loader {
+              active: line.note !== ""
+              visible: active
+              Layout.fillWidth: true
+              sourceComponent: StatusLine {
+                text: line.note
                 tone: "warning"
               }
-            }
-
-            Loader {
-              active: line.row.status === "gone"
-              visible: active
-              sourceComponent: StatusChip {
-                text: I18n.tr("Gone")
-              }
-            }
-
-            Loader {
-              active: line.row.system === true
-              visible: active
-              sourceComponent: StatusChip {
-                text: I18n.tr("System")
-              }
-            }
-
-            StyledTextButton {
-              visible: root.confirming !== line.row.id
-              text: I18n.tr("Undo")
-              onClicked: {
-                if (line.row.inferred === true || line.row.system === true) {
-                  root.confirming = line.row.id;
-                  return;
-                }
-                FootprintManager.undo([line.row.id]);
-              }
-            }
-          }
-
-          Loader {
-            active: root.confirming === line.row.id
-            visible: active
-            Layout.fillWidth: true
-            sourceComponent: ConfirmLine {
-              question: line.row.inferred === true ? I18n.tr("axiom found this without a record of writing it. Undo anyway?") : I18n.tr("axiom changed this system default. Put it back?")
-              keepText: I18n.tr("Cancel")
-              confirmText: I18n.tr("Undo")
-              onKept: root.confirming = ""
-              onConfirmed: {
-                root.confirming = "";
-                FootprintManager.undo([line.row.id], true);
-              }
-            }
-          }
-
-          Loader {
-            active: line.note !== ""
-            visible: active
-            Layout.fillWidth: true
-            sourceComponent: StatusLine {
-              text: line.note
-              tone: "warning"
             }
           }
         }

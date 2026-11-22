@@ -11,13 +11,14 @@ import qs.components.hosts.popout
 import qs.components.methods
 import qs.components.reusable
 
-// One backing window (BlurBacking): click-through, drawing each of
-// `shapes` (BlurShapes) with its fill and stroke, in painter's order
-// (PaintOrder), as one image (ChromeComposite), with their shadows cast once
-// per look, from the shapes' outlines (fill and stroke), and kept outside
-// every shape's outline, its own and the other window's (`cutBy`). `part`
-// keeps one of the two: where the compositor blurs every pixel that isn't
-// clear, the shadows go to a window it doesn't blur (BlurBacking).
+// One backing window (BlurBacking): click-through, keeping a copy of each
+// of `shapes` (every BlurShape on its screen) and drawing those it `draws`,
+// fill and stroke in painter's order (PaintOrder), as one image
+// (ChromeComposite), with their shadows cast once per look, from the
+// shapes' outlines (fill and stroke), and kept outside every shape's
+// outline, its own and those the other backing window draws. `part` keeps
+// one of the two: where the compositor blurs every pixel that isn't clear,
+// the shadows go to a window it doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes
 // only its own, so the others aren't remade (and don't restart).
 // Where the compositor blurs only what a window asks (niri:
@@ -25,21 +26,31 @@ import qs.components.reusable
 // alpha threshold there, the whole window would blur, its shadows too.
 PanelWindow {
   id: backing
-  // The shapes it draws
+  // Every shape on its screen: it keeps a copy of each and draws its own
+  // (`draws`), so the overlay opening builds and destroys none
   required property var shapes
-  // Shapes another backing window draws on this screen, which its shadows
-  // are cut by all the same: a shadow never falls on a surface joined to
-  // the one casting it, whichever window draws that one
-  property var cutBy: []
+  // It's the window over the overlay ("-overlay")
+  property bool over: false
+  // The overlay's windows exist and draw (BlurBacking.overlayWindows), and
+  // the main window has given the Overlay-layer shapes up
+  // (BlurBacking.overlayGivenUp): which window draws a shape
+  property bool overlayWindows: false
+  property bool overlayGivenUp: false
   // Shapes another backing window may draw over this one (the overlay's):
-  // those not among `shapes` its chrome gives way to, erased where they
-  // stand, never drawn
+  // those it gives way to, erased where they stand, never drawn
   property var erasers: []
+  // Whether it draws `shape` now (the other backing window on its screen
+  // draws the rest; `over` names which window is asked about); its shadows
+  // are cut by the shapes the other one draws all the same: a shadow never
+  // falls on a surface joined to the one casting it
+  function draws(shape, over = backing.over) {
+    return over ? backing.overlayWindows && shape.overlayLayer : !(backing.overlayGivenUp && shape.overlayLayer);
+  }
   // What it draws: "all", the "fills" alone or the "shadows" alone
   property string part: "all"
   // Whether shadows are cut by `union` rather than their own group (never
   // captured while it draws no shadows)
-  readonly property bool cutByUnion: backing.part !== "fills" && (groups.count > 1 || backing.cutBy.length > 0)
+  readonly property bool cutByUnion: backing.part !== "fills" && (groups.count > 1 || backing.overlayWindows)
 
   // Which shadow a shape casts with: shapes of one look cast theirs
   // together; "none" for no shadow
@@ -91,7 +102,7 @@ PanelWindow {
   // at its place on the screen and cut to its clipRect; none while it
   // draws nothing
   readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted && BlurManager.regionsOn(backing.screen)
-  readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.map(shape => backing._piecesOf(shape))) : []
+  readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.filter(shape => backing.draws(shape)).map(shape => backing._piecesOf(shape))) : []
 
   // reads: a shape's source (AttachedSurface, Rectangle, RoundedBorders)
   function _piecesOf(shape) {
@@ -196,6 +207,7 @@ PanelWindow {
     shapes: backing.part !== "shadows" ? backing.shapes : []
     erasers: backing.part !== "shadows" ? backing.erasers : []
     draws: "chrome"
+    drawsOnly: shape => backing.draws(shape)
     onChanged: nudge.burst()
   }
   Copies {
@@ -204,6 +216,7 @@ PanelWindow {
     shapes: backing.part !== "shadows" ? backing.shapes : []
     erasers: backing.part !== "shadows" ? backing.erasers : []
     draws: "chrome"
+    drawsOnly: shape => backing.draws(shape)
     asAlpha: true
   }
   ShaderEffectSource {
@@ -245,13 +258,14 @@ PanelWindow {
     Item {
       id: cutShapes
       anchors.fill: parent
-      visible: backing.cutBy.length > 0
+      visible: backing.overlayWindows
 
       // (none for a fills-only window, which never reads them)
       Copies {
         screen: backing.screen
-        shapes: backing.part !== "fills" ? backing.cutBy : []
+        shapes: backing.part !== "fills" ? backing.shapes : []
         draws: "outline"
+        drawsOnly: shape => backing.draws(shape, !backing.over)
         onChanged: nudge.burst()
       }
     }
@@ -291,6 +305,7 @@ PanelWindow {
           screen: backing.screen
           shapes: group.members
           draws: "outline"
+          drawsOnly: shape => backing.draws(shape)
           onChanged: nudge.burst()
         }
       }

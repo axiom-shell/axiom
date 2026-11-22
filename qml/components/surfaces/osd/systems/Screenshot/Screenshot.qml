@@ -5,8 +5,8 @@ import qs.components.surfaces.osd.engine
 // Screenshots on the OSD: a screenshot taken (ScreenshotManager's
 // lastShot: not one opened in the annotator, nor one taken for a caller),
 // only ever its card: the picture in place of the icon, what happened (the
-// service's own words, already translated), Copied to the clipboard and
-// the folder. A click on it opens the picture (ScreenshotWatch's activate)
+// service's own words, already translated), Copied to the clipboard (unless
+// a late save wasn't) and the folder. A click on it opens the picture (ScreenshotWatch's activate)
 OSDSystem {
   model: "event"
   onAdd: "card"
@@ -21,7 +21,7 @@ OSDSystem {
     }
   ]
 
-  // state: { event (lastShot: { path, title, folder }), seq }
+  // state: { event (lastShot: { path, title, folder, copied }), seq }
   // I18n.tr("Copied to the clipboard")
   function card(change, state) {
     const e = state.screenshot?.event ?? null;
@@ -30,7 +30,7 @@ OSDSystem {
     return {
       "image": e.path ? "file://" + e.path : "",
       "title": e.title ?? "",
-      "role": "Copied to the clipboard",
+      "role": e.copied === false ? "" : "Copied to the clipboard",
       "detail": e.folder ?? "",
       "clickable": true
     };

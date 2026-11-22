@@ -71,6 +71,8 @@ TestCase {
   function test_parentOf() {
     compare(FilePaths.parentOf("/home/u/a.txt"), "/home/u");
     compare(FilePaths.parentOf("/a"), "/");
+    compare(FilePaths.parentOf("/home/u/Pictures/Screenshots/2026-01-01_10-00-00.png"), "/home/u/Pictures/Screenshots");
+    compare(FilePaths.parentOf("/home/u/Pictures//a.png"), "/home/u/Pictures", "a doubled slash from a folder with a trailing slash");
   }
 
   function test_thumbnailable() {

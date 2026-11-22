@@ -25,10 +25,11 @@ QtObject {
 
   // What one get_tree reply holds: { windows (the contract's windows, without
   // focusRank), counts ({ [workspace num]: windows on it }), workspaceRects
-  // and outputRects ({ [name]: { x, y, width, height } }), order (window ids
-  // in the order sway's focus stacks say they were used, most recent first),
-  // focusedId ("" with none), layouts ({ [tiled window id]: its parent's
-  // layout }, scratch (the windows in the scratchpad, in the contract's
+  // ({ [name]: { output (the Window shape's name for it), x, y, width,
+  // height } }) and outputRects ({ [name]: { x, y, width, height } }), order
+  // (window ids in the order sway's focus stacks say they were used, most
+  // recent first), focusedId ("" with none), layouts ({ [tiled window id]:
+  // its parent's layout }, scratch (the windows in the scratchpad, in the contract's
   // shape with hidden true and output "": kept out of windows, for specials
   // alone), scratchIds (the ids of every window that came from the
   // scratchpad, hidden in it or shown from it: its scratchpad_state is fresh
@@ -71,7 +72,9 @@ QtObject {
       for (const ws of output.nodes ?? []) {
         if (ws.type !== "workspace")
           continue;
-        info.workspaceRects[ws.name] = ws.rect;
+        info.workspaceRects[ws.name] = Object.assign({
+          "output": output.name
+        }, ws.rect);
         const before = info.windows.length;
         _walk(ws, {
           "output": output.name,
@@ -216,7 +219,10 @@ QtObject {
       "height": monitor?.height ?? 0
     };
     const wsName = monitor?.activeWorkspace?.name ?? ipc.current_workspace ?? "";
-    const ws = info?.workspaceRects?.[wsName];
+    // A workspace the last tree doesn't have yet (a switch creates an empty
+    // one; the tree is read 50 ms later) has its output's usable area, which
+    // every workspace on an output shares
+    const ws = info?.workspaceRects?.[wsName] ?? Object.values(info?.workspaceRects ?? {}).find(rect => rect.output === name);
     return {
       "name": name,
       "description": MonitorLayout.describe(ipc),

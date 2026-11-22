@@ -208,6 +208,11 @@ QtObject {
   // The bars as saved (Bars.items): no previews, unexpanded
   readonly property var savedBars: ConfigManager.config.Bars.items
 
+  // The running bars (Bars.items, with the bar editor's unsaved edits),
+  // unexpanded. A commit that leaves Bars.items alone keeps it the same
+  // object, so nothing reading it re-runs
+  readonly property var liveBars: ConfigManager.live.Bars.items
+
   // Each bar as one entry per screen it's on (its `screen`, a
   // ScreenTarget): the primary monitor, every monitor, or those named
   // (the primary monitor when none of them is connected). A bar whose

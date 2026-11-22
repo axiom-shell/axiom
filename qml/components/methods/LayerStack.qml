@@ -131,6 +131,11 @@ QtObject {
       "why": "The overlay's panel: after docks, inside an always-shown dock's zone and over a hover or intellihide one."
     },
     {
+      "namespace": "overlay-reduced",
+      "order": -8,
+      "why": "The overlay's panel while it draws reduced effects over a fullscreen window (Overlay.reduceFullscreen): stacked as overlay, in no blur list, so the compositor doesn't blur it."
+    },
+    {
       "namespace": "blur-backing-overlay",
       "order": -9,
       "noAnim": true,
