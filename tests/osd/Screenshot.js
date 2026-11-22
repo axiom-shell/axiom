@@ -8,14 +8,18 @@
 // State by key (ScreenshotWatch):
 //   screenshot  { event (ScreenshotManager.lastShot: { path, title (what
 //               happened, translated by the service), folder (where it was
-//               saved, shortened; "" for copy only), serial }, or null), seq }
+//               saved, shortened; "" for copy only), copied (false only for a late
+//               save not put on the clipboard; absent otherwise), serial }, or null), seq }
 //
 // decided: the card's `title` is the event's own `title`, already
 //   translated by ScreenshotManager (as today): the view must not translate
 //   it again.
 
-function shot(path, title, folder, seq) {
-  return { "event": { "path": path, "title": title, "folder": folder, "serial": seq }, "seq": seq };
+function shot(path, title, folder, seq, copied) {
+  var event = { "path": path, "title": title, "folder": folder, "serial": seq };
+  if (copied !== undefined)
+    event.copied = copied;
+  return { "event": event, "seq": seq };
 }
 
 var rows = [
@@ -41,6 +45,14 @@ var rows = [
       { "at": 0, "state": { "screenshot": { "event": null, "seq": 0 } } },
       { "at": 3000, "state": { "screenshot": shot("/tmp/axiom-shot.png", "Screenshot copied", "", 1) },
         "expect": { "key": "screenshot", "show": "card", "card": { "title": "Screenshot copied", "detail": "" } } }
+    ]
+  },
+  {
+    "name": "a late save not copied: no Copied to the clipboard",
+    "steps": [
+      { "at": 0, "state": { "screenshot": { "event": null, "seq": 0 } } },
+      { "at": 3000, "state": { "screenshot": shot("/home/u/Pictures/Screenshots/a.png", "Screenshot saved", "~/Pictures/Screenshots", 1, false) },
+        "expect": { "key": "screenshot", "show": "card", "card": { "role": "", "detail": "~/Pictures/Screenshots" } } }
     ]
   },
   {

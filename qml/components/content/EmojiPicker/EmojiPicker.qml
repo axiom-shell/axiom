@@ -92,14 +92,13 @@ Panel {
   wantsKeyboardFocus: true
   spacing: Widget.spacing
 
-  // Only while the grid is built (never in the strip, which shows `recent`)
+  // Never in the strip, which shows `recent`; the grid scrolls back once built
   function refresh() {
-    const grid = gridLoader.item as GridView;
-    if (!grid)
+    if (root.strip)
       return;
     root.noList = EmojiManager.entries().length === 0;
     root.results = EmojiManager.search(root.query, Infinity, root.query === "" ? root.group : "");
-    grid.positionViewAtBeginning();
+    (gridLoader.item as GridView)?.positionViewAtBeginning();
   }
 
   function copy(emoji) {
@@ -221,6 +220,7 @@ Panel {
   // job of its own, and only while there's room for it
   StreamedLoader {
     id: gridLoader
+    visible: !root.strip
     wanted: !root.strip
     rise: false
     label: "emoji grid"

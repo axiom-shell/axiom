@@ -51,8 +51,8 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 		o := media.Options{Dir: media.ArtDir(d.runtime.Root)}
 		return struct{}{}, media.Art(ctx, o, p.URL, p.Path)
 	})
-	// A screenshot across monitors: each picker's piece composed into one
-	// picture at the largest scale among them. It reads and writes the
+	// Every screenshot, one screen or several: each picker's piece (BMP or
+	// PNG) composed into one picture at the largest scale among them. It reads and writes the
 	// paths the shell names, so only the shell asks
 	type stitchParams struct {
 		Pieces []screenshot.Piece `json:"pieces"`

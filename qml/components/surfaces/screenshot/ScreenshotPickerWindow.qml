@@ -106,7 +106,7 @@ PanelWindow {
       ScreenshotManager.record(Qt.rect(rect.x + root.screen.x, rect.y + root.screen.y, rect.width, rect.height), whole ? root.screen.name : "");
       return;
     }
-    root._grab(rect, result => ScreenshotManager.finish(result));
+    root._grab(rect, result => ScreenshotManager.finish(root._box.name, ScreenRegion.toGlobal(rect, root._box), result));
   }
 
   // A pointer position here, in global pixels: a drag goes on past this

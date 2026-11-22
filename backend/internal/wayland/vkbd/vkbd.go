@@ -1,4 +1,4 @@
-// Package vkbd types text into the focused window over
+// Package vkbd types text (or pastes with Ctrl+V) into the focused window over
 // zwp_virtual_keyboard_v1, in place of wtype: a keyboard of its own for
 // each text, with a keymap giving each character a key (keymap.go), each
 // key pressed and released in turn, then the keyboard let go, so the
@@ -28,6 +28,7 @@ const (
 	formatXKBv1      = 1
 	pressed          = 1
 	released         = 0
+	modControl       = 1 << 2 // xkb's Control, the third real modifier
 )
 
 // MaxText is the longest text Type takes, in characters.
@@ -75,6 +76,19 @@ func (k *Keyboard) Type(ctx context.Context, text string) error {
 	if len(chunks) == 0 {
 		return nil
 	}
+	return k.send(ctx, chunks, 0)
+}
+
+// Paste presses Ctrl+V in the focused window, for what it can't take as
+// keys (Chromium drops characters above U+FFFF from key events); the
+// clipboard holds what to paste.
+func (k *Keyboard) Paste(ctx context.Context) error {
+	return k.send(ctx, Plan("v"), modControl)
+}
+
+// send presses the chunks' keys with mods held (xkb modifier bits), on a
+// keyboard of its own.
+func (k *Keyboard) send(ctx context.Context, chunks []Chunk, mods uint32) error {
 	k.typing.Lock()
 	defer k.typing.Unlock()
 	k.mu.Lock()
@@ -89,8 +103,12 @@ func (k *Keyboard) Type(ctx context.Context, text string) error {
 	if err := c.Send(manager, opCreateKeyboard, wire.Uint(seatID), wire.Uint(kb)); err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "creating a virtual keyboard")
 	}
+	held := false
 	defer func() {
-		// The last keys reach the window before the keyboard goes
+		// Ctrl never stays down, and the last keys reach the window before the keyboard goes
+		if held && mods != 0 {
+			c.Send(kb, opModifiers, wire.Uint(0), wire.Uint(0), wire.Uint(0), wire.Uint(0))
+		}
 		k.pause(ctx, 4)
 		c.Send(kb, opDestroy)
 		c.Forget(kb)
@@ -107,7 +125,8 @@ func (k *Keyboard) Type(ctx context.Context, text string) error {
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "sending the keymap")
 		}
-		c.Send(kb, opModifiers, wire.Uint(0), wire.Uint(0), wire.Uint(0), wire.Uint(0))
+		c.Send(kb, opModifiers, wire.Uint(mods), wire.Uint(0), wire.Uint(0), wire.Uint(0))
+		held = true
 		// The keymap reaches the focused window before its keys
 		if err := roundtrip(ctx, c); err != nil {
 			return err

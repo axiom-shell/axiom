@@ -77,11 +77,16 @@ QtObject {
         return done(false);
       if (img.status !== Image.Ready)
         return;
+      // the argument, not the Image's url: a url is never === the string
+      if (source !== root._sources[uid])
+        return img.destroy();
       const scale = Math.min(1, 160 / Math.max(img.implicitWidth, img.implicitHeight, 1));
       img.width = Math.max(1, Math.round(img.implicitWidth * scale));
       img.height = Math.max(1, Math.round(img.implicitHeight * scale));
       const path = root.dir + uid + ".png";
       const ok = img.grabToImage(result => {
+        if (source !== root._sources[uid])
+          return img.destroy();
         if (!result.saveToFile(path))
           return done(false);
         root.saved(uid, "file://" + path + "?" + Date.now());
@@ -131,7 +136,7 @@ QtObject {
   property Component _grabber: Component {
     id: grabber
     Image {
-      asynchronous: false
+      asynchronous: true
       cache: false
       sourceSize: Qt.size(160, 160)
       fillMode: Image.PreserveAspectFit

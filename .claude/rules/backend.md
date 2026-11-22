@@ -33,7 +33,7 @@ Standard library first. A new module must be pure Go (`CGO_ENABLED=0`) and gets 
 | `github.com/dop251/goja` | runs the frozen format-1 migrations (`migrate/legacy`, `legacy.js`) exactly as the shell did, instead of a port that could drift |
 | `github.com/yuin/gopher-lua` | runs a user's Hyprland Lua sandboxed for the bind merge (`compositor/binds`), checks edits still parse without `luac` (`compositor/luacheck`), runs `compositor/render`'s Lua in tests |
 | `github.com/fsnotify/fsnotify` | inotify without cgo: `store` watches config.json, dev mode (`daemon/dev.go`) watches the tree and binary |
-| `golang.org/x/image` | BMP and WebP decoding for theme generation and launcher thumbnails |
+| `golang.org/x/image` | BMP and WebP decoding for theme generation, launcher thumbnails and screenshot pieces (BMP) |
 | `github.com/teambition/rrule-go` | RFC 5545 recurrence for calendars (`calendar/ical`), matching the dateutil expansion it replaced |
 | `golang.org/x/sys` | Linux calls `syscall` lacks: peer credentials (`rpc`, `wayland/wire`), fd passing (`unixmsg`), `flock`/`O_NOFOLLOW` (`fsx`), memfds, close-on-exec across re-exec (`daemon`), inotify open/close (`camera`) and `IN_DONT_FOLLOW` watches (`fileindex`), scheduling and I/O priority (`procprio`), the bind merge child's memory limit |
 
