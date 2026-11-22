@@ -220,9 +220,10 @@ TestCase {
     verify(own.allowed, "but not a dock showing anew");
     compare(own.yield, []);
     // A dock that magnified into an open stack is refused; one beside is not
-    const grown = PopoutGeometry.resolve([toasts], dock);
-    compare(grown.blockedBy, toasts.id);
-    verify(PopoutGeometry.resolve([toasts], beside).allowed);
+    const grown = Object.assign({}, beside, {
+      "footprint": [rect(0, 100, 1600, 60)]
+    });
+    compare(PopoutGeometry.resolve([toasts], grown).blockedBy, toasts.id, "a dock grown into the stack");
   }
 
   // The dock waits for the stack, and the pairs with a popout stay in rank
@@ -246,7 +247,11 @@ TestCase {
       "resident": true,
       "phase": "yielded"
     });
-    compare(PopoutGeometry.resumable([pin, dock, toasts]), ["menu:pin"], "the pinned menu only");
+    compare(PopoutGeometry.resumable([pin, dock, toasts]), ["toasts:DP-1"], "the stack only");
+    const openStack = Object.assign({}, toasts, {
+      "phase": "open"
+    });
+    compare(PopoutGeometry.resumable([pin, dock, openStack]), [], "the stack shown holds the dock away, and the pinned menu with it");
     const shown = Object.assign({}, pin, {
       "phase": "open"
     });

@@ -50,8 +50,8 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
 - **Residents** (docks, pinned menus, a menu previewing from its editor) give way instead of closing:
   - `yielded`: hidden, with its pill drawn back.
   - **Coming back:** once nothing above them covers them they return (`resumable`, highest first).
-    - **Notifications over a dock:** the dock gives way, whatever its settings; it comes back once the stack has gone, not while the stack waits under a popout.
-  - **No ping-pong:** one coming back never evicts another of its rank, so two never take turns. A dock doesn't come back while a stack over it is registered, so the pinned < dock < toast cycle never takes turns.
+    - **Notifications over a dock:** the dock gives way, whatever its settings; it comes back once the stack has gone, not while the stack waits under a popout. Meanwhile what the dock outranks (a pinned menu it covered) stays hidden too: seeing the notification comes first.
+  - **No ping-pong:** one coming back never evicts another of its rank, so two never take turns. A dock doesn't come back while a stack over it is registered, and a pinned menu the dock covers waits with it, so the pinned < dock < toast cycle never takes turns.
   - **Unpinned while away:** it closes.
 - **Showing only once granted:** a host shows only once granted (`PopoutClaim.held`: granted, or closing after it was). The pill it stands on therefore draws back only after its box has slid away.
 - **Same-frame handover:** the evicted popouts start closing in the same frame the new one starts opening.

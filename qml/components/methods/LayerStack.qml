@@ -202,9 +202,8 @@ QtObject {
   readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
   // The windows whose fill and shadow the backing window draws while
   // see-through: not animated by the compositor while it does (they slide
-  // themselves), or
-  // their stroke and content fade or pop in and out while what the backing
-  // window draws for them doesn't
+  // themselves), or their stroke and content fade or pop in and out while
+  // what the backing window draws for them doesn't
   readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications"])
 
   // A namespace's order (with or without its "axiom-" prefix); 0 (where

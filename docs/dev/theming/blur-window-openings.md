@@ -30,7 +30,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - The copies are a keyed `ListModel` (`KeyedModel`, by `BlurShape.uid` through `BlurManager.shapeOf`), so a shape coming or going adds or removes only its own.
 - Any copy moving, resizing or sliding nudges the window (`FrameNudge`).
 
-### Shadows in the blur window
+### Shadows in the backing window
 - Wherever the chrome is see-through (`BlurManager.backingOn`), the backing window draws its fills and casts its shadows, blurred or not (blurred only where the compositor is asked: `BlurManager.active`, niri's `regionsOn`), from the same copies.
 - Each `BlurShape` names its `shadow` (a look: BarStyle's, or its bar's). An `AttachedSurface`'s follows `castShadow` and `shadowLook`.
 - The copies are grouped by look (`BlurBackingWindow.shadowKey`): its color and size.
@@ -38,7 +38,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - a shadow runs unbroken round joined surfaces;
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
-- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the blur windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`, only while the compositor blurs; unblurred, the one window casts them).
+- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`, only while the compositor blurs; unblurred, the one window casts them).
 - Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down.
 
 ### Unbacked shadows

@@ -12,10 +12,11 @@ import qs.components.hosts.popout
 import qs.components.methods
 import qs.components.reusable
 
-// One blur window (BlurBacking): click-through, drawing each of `shapes`
-// (BlurShapes) filled, at the surface opacity, with their shadows cast
-// once per look, from the shapes' outlines (fill and stroke), and kept
-// outside every shape's outline, its own and the other window's (`cutBy`). `part` keeps one of the two: where the compositor
+// One backing window (BlurBacking): click-through, drawing each of
+// `shapes` (BlurShapes) filled, at the surface opacity, with their
+// shadows cast once per look, from the shapes' outlines (fill and
+// stroke), and kept outside every shape's outline, its own and the other
+// window's (`cutBy`). `part` keeps one of the two: where the compositor
 // blurs every pixel that isn't clear, the shadows go to a window it
 // doesn't blur (BlurBacking).
 // The copies are keyed (KeyedModel): one coming or going adds or removes
@@ -27,7 +28,7 @@ PanelWindow {
   id: backing
   // The shapes it draws
   required property var shapes
-  // Shapes another blur window draws on this screen, which its shadows
+  // Shapes another backing window draws on this screen, which its shadows
   // are cut by all the same: a shadow never falls on a surface joined to
   // the one casting it, whichever window draws that one
   property var cutBy: []
@@ -67,9 +68,10 @@ PanelWindow {
   }
 
   // Drawn whenever backed, blurred only where the compositor is asked
-  // (regionsOn). Its shapes as its blur region, where the compositor blurs only that
-  // (supports.blurRegion): each shape's pieces as drawn, at its place on
-  // the screen and cut to its clipRect; none while it draws nothing
+  // (regionsOn). Its shapes as its blur region, where the compositor
+  // blurs only that (supports.blurRegion): each shape's pieces as drawn,
+  // at its place on the screen and cut to its clipRect; none while it
+  // draws nothing
   readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted && BlurManager.regionsOn(backing.screen)
   readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.map(shape => backing._piecesOf(shape))) : []
 
@@ -249,8 +251,9 @@ PanelWindow {
         hideSource: true
       }
 
+      // (none for a shadows-only window, which never shows `fills`)
       Copies {
-        shapes: group.members
+        shapes: backing.part !== "shadows" ? group.members : []
         draws: "fill"
         parent: fills
         onChanged: nudge.burst()
@@ -331,6 +334,8 @@ PanelWindow {
         // Fixed per key; null once it's gone, until its row goes
         readonly property var shape: BlurManager.shapeOf(Number(slot.key))
         readonly property var area: slot.shape?.clipRect ?? null
+        // What its copy fills with: black for the outline, else its colour
+        readonly property color fill: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
         x: area ? area.x : 0
         y: area ? area.y : 0
         width: area ? area.width : copies.width
@@ -358,7 +363,7 @@ PanelWindow {
 
           AttachedSurfaceCopy {
             source: slot.shape?.source ?? null
-            fillColor: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
+            fillColor: slot.fill
             mirrorStroke: copies.draws === "outline" ? "black" : "transparent" // style-exempt: mask
           }
         }
@@ -378,7 +383,7 @@ PanelWindow {
             topRightRadius: src?.topRightRadius ?? 0
             bottomLeftRadius: src?.bottomLeftRadius ?? 0
             bottomRightRadius: src?.bottomRightRadius ?? 0
-            color: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
+            color: slot.fill
             opacity: slot.shape?.fade ?? 1
           }
         }
@@ -396,7 +401,7 @@ PanelWindow {
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-              fillColor: copies.draws === "outline" ? "black" : (slot.shape?.color ?? "transparent") // style-exempt: mask
+              fillColor: slot.fill
               fillRule: ShapePath.OddEvenFill
               strokeColor: "transparent"
               strokeWidth: 0

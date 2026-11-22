@@ -24,7 +24,7 @@ QtObject {
 
   // Whether the compositor blurs axiom's surfaces now (its rules, sent to
   // it: CompositorConfigManager): Appearance.blur where it blurs them
-  // (elsewhere they fill themselves: the blur window couldn't place their
+  // (elsewhere they fill themselves: the backing window couldn't place their
   // shapes without its layer positions), paused while a fullscreen window
   // is open on any screen (Appearance.blurPauseFullscreen) where its rules
   // are compositor-wide (Hyprland's layer rules, SwayFX's layer_effects).
@@ -75,9 +75,9 @@ QtObject {
   }
 
   // Whether a chrome surface on `screen` (a ShellScreen or its name) leaves
-  // its fill to the blur window. `onOverlay`: its window is on the Overlay
-  // layer, over fullscreen windows (where the blur window rises too:
-  // overFullscreen) and over the overlay (where the blur window over the
+  // its fill to the backing window. `onOverlay`: its window is on the Overlay
+  // layer, over fullscreen windows (where the backing window rises too:
+  // overFullscreen) and over the overlay (where the backing window over the
   // overlay draws it: aboveOverlay). Otherwise it's on Top, faded out under
   // a fullscreen window, and its copy goes with it.
   function backsOn(screen, onOverlay) {
@@ -86,14 +86,14 @@ QtObject {
     return onOverlay || !CompositorManager.hasFullscreen(root._name(screen));
   }
 
-  // Whether the overlay is open on `screen`, covering the blur window: the
+  // Whether the overlay is open on `screen`, covering the backing window: the
   // Overlay-layer surfaces' shapes (BlurShape.overlayLayer) are then drawn
-  // by a second blur window, over the overlay and under them
+  // by a second backing window, over the overlay and under them
   function aboveOverlay(screen) {
     return root.backingOn(screen) && SurfaceManager.surfaceOpenOn("overlay", root._name(screen));
   }
 
-  // Whether the blur window on `screen` stands on the Overlay layer: a
+  // Whether the backing window on `screen` stands on the Overlay layer: a
   // fullscreen window shown there hides the Top layer, and the surfaces
   // over it still blur
   function overFullscreen(screen) {
@@ -113,7 +113,7 @@ QtObject {
   }
 
   // The registered BlurShapes; changes only as one comes or goes. Each
-  // gets a `uid`, which the blur window keys its copies by (shapeOf).
+  // gets a `uid`, which the backing window keys its copies by (shapeOf).
   property var shapes: []
   property int _lastUid: 0
   property var _byUid: ({})

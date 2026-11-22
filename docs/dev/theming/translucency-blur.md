@@ -45,7 +45,7 @@ Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones Sw
 
 ### niri: blur regions
 niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a rule would frost axiom's full-screen windows edge to edge. Instead each window sends what blurs through ext-background-effect (`supports.blurRegion`, Quickshell's `BackgroundEffect.blurRegion`):
-- The blur window sends its shapes as drawn (`BlurBackingWindow.regionPieces`): an `AttachedSurface`'s fill (`blurPieces()`, from `SurfaceOutline.blurRegion`: the box out to the stroke's outer edge, its far corners rounded, each fillet's square less its circle), a rect with its radii, and the border's frame (the screen less its inner rounded rect), each placed and cut to its `clipRect` (`SurfaceOutline.placeRegion`), through `reusable/BlurRegion`; a shape fading (an `AttachedSurface`'s `shownOpacity`, `hostOpacity`: a detached box's Fade, a fading dock hidden; a `BlurShape`'s `color` alpha: a toast fading; an attached shape's is its surface's `fillColor`) sends none while its fill is under `Appearance.blurThreshold`, as `BoxBlurRegion` does.
+- The backing window sends its shapes as drawn (`BlurBackingWindow.regionPieces`): an `AttachedSurface`'s fill (`blurPieces()`, from `SurfaceOutline.blurRegion`: the box out to the stroke's outer edge, its far corners rounded, each fillet's square less its circle), a rect with its radii, and the border's frame (the screen less its inner rounded rect), each placed and cut to its `clipRect` (`SurfaceOutline.placeRegion`), through `reusable/BlurRegion`; a shape fading (an `AttachedSurface`'s `shownOpacity`, `hostOpacity`: a detached box's Fade, a fading dock hidden; a `BlurShape`'s `color` alpha: a toast fading; an attached shape's is its surface's `fillColor`) sends none while its fill is under `Appearance.blurThreshold`, as `BoxBlurRegion` does.
   - Its shadows lie outside every region, so they stay in it unblurred: no `axiom-shadows` windows (`BlurManager.shadowsApart`).
 - Each surface that blurs itself (`LayerStack.blurSurfaces`: the overlay's box and navigator, the power menu, the workspace overview, the monitor prompt, the dock's preview) and the chrome's popups (tooltips, the dock's menu) sends its box (`reusable/BoxBlurRegion`), mapped as it slides, scales and fades: nothing while its fill's alpha (`Appearance.surfaceAlpha`, or a dim's color, × its opacity) is under `Appearance.blurThreshold`, as Hyprland's `ignore_alpha` compares each pixel's, so a fade starts and stops blurring at the same point on both.
 - Backdrops and polkit's dim send their whole rect while `blurBackdrops` (at any alpha, `threshold` 0.01).
@@ -61,10 +61,10 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 
 ### Per screen
 `BlurManager.backsOn(screen, onOverlay)`:
-- A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the blur window over the overlay draws it then (see [Blur window and openings › Over the overlay](blur-window-openings.md#over-the-overlay)).
+- A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the backing window over the overlay draws it then (see [Blur window and openings › Over the overlay](blur-window-openings.md#over-the-overlay)).
   - It reads its host's `onOverlayLayer`, which its submenu follows (not while it slides under a bar).
-- A surface on Top (bars, the border, docks, integrated menus) leaves the blur window while a fullscreen window shows there, since that fades the Top layer out.
-  - The blur window itself then rises to the Overlay layer on that screen (`overFullscreen`, order 9 keeping it under the surfaces there), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager.reportSlot`; [layer arrangement](../compositor/layer-arrangement.md)).
+- A surface on Top (bars, the border, docks, integrated menus) leaves the backing window while a fullscreen window shows there, since that fades the Top layer out.
+  - The backing window itself then rises to the Overlay layer on that screen (`overFullscreen`, order 9 keeping it under the surfaces there), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager.reportSlot`; [layer arrangement](../compositor/layer-arrangement.md)).
 
 ### Paused over fullscreen
 - `blur.pauseFullscreen` (on by default): while a screen shows a fullscreen window, the blur pauses (`BlurManager.pausedOn(screen)`):
@@ -76,7 +76,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - Elsewhere they stay translucent.
 
 ### Stacking
-- The chrome's fills all live in the one blur window (Top, order 9), under every chrome window.
+- The chrome's fills all live in the one backing window (Top, order 9), under every chrome window.
 - A chrome surface that stood over another one in a higher layer (the attached launcher, an Overlay-layer edge popout, over a dock) no longer hides it with its fill: what's in between shows through.
 - So popouts never overlap: what one covers gives way (see [Popout registry](../popouts/registry.md)).
 - While the backing window backs surfaces (see-through chrome, blur on or off), an edge popout or a free menu slides out only once its window's origin is known (`LayerOrigin.settled`), so its first frames never fill and shadow themselves beside backed ones. The integrated edge menu takes no such wait: its window is placed before its first frame is drawn (`origin !== null` in its `backed`).

@@ -61,7 +61,7 @@ read -r js live < <(qs log --pid "$pid" -r 'qt.qml.gc.allocatorStats.debug=true'
 # drm-total-gtt (amdgpu), or every drm-total-* region for a driver with
 # neither (i915/xe); a client's dup'd descriptors repeat its totals, so each
 # drm-pdev + drm-client-id counts once. "-" when the PID has no DRM descriptor.
-gpu=$(cat /proc/"$pid"/fdinfo/* 2>/dev/null | awk '
+gpu=$({ cat /proc/"$pid"/fdinfo/* 2>/dev/null || true; } | awk '
   function flush() {
     if (drv != "" && !((pdev SUBSEP cid) in seen)) {
       seen[pdev SUBSEP cid] = 1

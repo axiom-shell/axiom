@@ -127,8 +127,13 @@ QtObject {
   // checked against what's showing and those already coming back)
   function resumable(entries) {
     const yielded = entries.filter(e => e.phase === "yielded").sort((a, b) => rankOf(b, null) - rankOf(a, null));
-    // Yielded stacks stay: they still keep a dock from coming back
-    let showing = entries.filter(e => e.phase !== "yielded" || e.kind === "toast");
+    // Yielded stacks stay: they still keep a dock from coming back, and a
+    // dock a stack covers stays as a showing one, so what it outranks (a
+    // pinned menu) stays yielded while the stack holds it away
+    const heldAway = e => e.kind === "dock" && entries.some(s => s.kind === "toast" && s.screen === e.screen && intersects(s.footprint, e.footprint));
+    let showing = entries.filter(e => e.phase !== "yielded" || e.kind === "toast").concat(yielded.filter(heldAway).map(e => Object.assign({}, e, {
+        "phase": "open"
+      })));
     const back = [];
     for (const e of yielded) {
       const claim = Object.assign({}, e, {
