@@ -431,7 +431,7 @@ QtObject {
 
   // Recording: an area picked in the picker (kind `record`), recorded by
   // wf-recorder until stopRecording(). Kept here, since the card that
-  // starts it is gone once the overlay closes.
+  // starts it is gone `keptFor` after the overlay closes.
   // options: { mode: "pick" (the picker, the default) | "screen" (the
   // focused screen, at once), audio: "none" | "system" | "mic" }
   function startRecording(options) {

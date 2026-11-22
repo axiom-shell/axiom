@@ -11,8 +11,8 @@ import qs.services.core
  * point `modulesOf` at the live modules array in their draft and run their
  * draft's changed() on `edited`.
  *
- * Also holds the selection, since the editor page is unloaded whenever the
- * overlay closes. Every edit keeps the selection on its module and shifts
+ * Also holds the selection, since the editor page is unloaded `keptFor`
+ * after the overlay closes. Every edit keeps the selection on its module and shifts
  * the grid so its top left module sits at 0, 0: a place left of or above
  * the grid (negative x or y) makes room there. A grid with an `area` (the
  * lock screen's) is bounded instead: places are absolute, inside it,

@@ -19,10 +19,22 @@ import qs.components.views.Settings // qmllint disable unused-imports
 
 // The overlay's window on one screen (shell/Overlay): opens and closes the
 // sliding box that holds OverlayPages, and closes on Escape or a click outside.
+// After a close its pages stay built for `keptFor` (`kept`), so opening
+// again maps the window and slides, with no rebuild.
 ReservedAreaWindow {
   id: root
 
   property bool isOpen: false
+  // How long it stays kept after closing, in ms
+  readonly property int keptFor: 10000
+  // Closed, its pages built: from the close until `keptFor` passes, or a
+  // fullscreen window shows on its screen
+  property bool kept: false
+  readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screen?.name ?? "")
+  onFullscreenNowChanged: if (root.fullscreenNow && root.kept) {
+    keptTimer.stop();
+    root.kept = false;
+  }
   // What's open on its screen and would end up under it (a popout keeps
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
@@ -30,7 +42,10 @@ ReservedAreaWindow {
   // Closed, it waits off the edge it slides in from (Overlay.animation),
   // or in place, faded out
   readonly property bool _fades: OverlayConfig.animation === "fade"
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? height : -height
+  // The window's height, as last mapped full size (`pageArea.roomHeight`
+  // holds it while unmapped)
+  readonly property real _slideDistance: pageArea.roomHeight + OverlayConfig.navigatorRoom
+  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? _slideDistance : -_slideDistance
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
@@ -44,14 +59,24 @@ ReservedAreaWindow {
 
   function open() {
     hideTimer.stop();
+    keptTimer.stop();
     visible = true;
+    // After it's visible: `built` would drop between and unload the kept pages
+    root.kept = false;
     isOpen = true;
     slideContainer.forceActiveFocus();
   }
 
   function close() {
+    // (closing a closed one, kept or not, changes nothing)
+    if (!root.isOpen)
+      return;
     isOpen = false;
     hideTimer.start();
+    // Not while a fullscreen window is up: the pages would keep polling over a game
+    root.kept = !root.fullscreenNow;
+    if (root.kept)
+      keptTimer.restart();
   }
 
   function toggle() {
@@ -75,9 +100,14 @@ ReservedAreaWindow {
     id: hideTimer
     interval: Appearance.animSlow
     repeat: false
-    onTriggered: {
-      root.visible = false;
-    }
+    onTriggered: root.visible = false
+  }
+
+  Timer {
+    id: keptTimer
+    interval: root.keptFor
+    repeat: false
+    onTriggered: root.kept = false
   }
 
   Connections {
@@ -228,7 +258,8 @@ ReservedAreaWindow {
       OverlayPages {
         id: overlayPages
         anchors.centerIn: parent
-        open: root.visible
+        open: root.isOpen
+        built: root.visible || root.kept
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
         maxHeight: pageArea.roomHeight - OverlayConfig.cardSpacing * 2
@@ -257,7 +288,7 @@ ReservedAreaWindow {
       currentIndex: overlayPages.currentIndex
       pages: overlayPages.pages
       labels: OverlayConfig.navigatorLabels
-      maxWidth: slideContainer.width - Widget.padding * 4
+      maxWidth: pageArea.roomWidth - Widget.padding * 4
       onPrevious: overlayPages.step(-1)
       onNext: overlayPages.step(1)
       onSelect: index => overlayPages.goTo(index)
