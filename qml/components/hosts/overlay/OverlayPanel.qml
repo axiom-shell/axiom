@@ -8,6 +8,7 @@ import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.hosts.popout
 // Imported (though views load by URL) so qs scans what they import and
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
@@ -39,20 +40,28 @@ ReservedAreaWindow {
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
     PopoutManager.closeOn(root.screen?.name ?? "")
+  // This opening draws reduced effects (Overlay.reduceFullscreen): decided as
+  // its window maps (a namespace's rules are read only then): a window going
+  // fullscreen while it's open, or kept, changes nothing until it maps again
+  property ClosedLatch _reduced: ClosedLatch {
+    source: OverlayConfig.reduceFullscreen && root.fullscreenNow
+    closed: !root.visible
+  }
+  readonly property bool reduced: root._reduced.value ?? false
   // Closed, it waits off the edge it slides in from (Overlay.animation),
-  // or in place, faded out
-  readonly property bool _fades: OverlayConfig.animation === "fade"
+  // or in place, faded out: also reduced
+  readonly property bool fades: OverlayConfig.animation === "fade" || root.reduced
   // The window's height, as last mapped full size (`pageArea.roomHeight`
   // holds it while unmapped)
   readonly property real _slideDistance: pageArea.roomHeight + OverlayConfig.navigatorRoom
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? _slideDistance : -_slideDistance
+  property real slideOffset: isOpen || fades ? 0 : OverlayConfig.animation === "bottom" ? _slideDistance : -_slideDistance
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 
   visible: false
   // Its layer rule arranges it after docks and draws it over them
-  // (see render.LayerRulesLua)
-  layerNamespace: "axiom-overlay"
+  // (see render.LayerRulesLua); reduced, it's the unblurred twin
+  layerNamespace: root.reduced ? "axiom-overlay-reduced" : "axiom-overlay"
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
@@ -177,7 +186,7 @@ ReservedAreaWindow {
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? boxesBlur : null)
+    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) && !root.reduced ? boxesBlur : null)
   Region {
     id: boxesBlur
 
@@ -196,7 +205,7 @@ ReservedAreaWindow {
   Item {
     id: slideContainer
     anchors.fill: parent
-    opacity: root.steppedAside || (root._fades && !root.isOpen) ? 0 : 1
+    opacity: root.steppedAside || (root.fades && !root.isOpen) ? 0 : 1
     Glide on opacity {
       duration: Appearance.animNormal
     }
@@ -260,6 +269,7 @@ ReservedAreaWindow {
         anchors.centerIn: parent
         open: root.isOpen
         built: root.visible || root.kept
+        reduced: root.reduced
         screen: root.screen
         maxWidth: pageArea.roomWidth - OverlayConfig.cardSpacing * 2
         maxHeight: pageArea.roomHeight - OverlayConfig.cardSpacing * 2
