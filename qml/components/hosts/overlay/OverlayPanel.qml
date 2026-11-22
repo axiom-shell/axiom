@@ -44,7 +44,8 @@ ReservedAreaWindow {
   readonly property bool _fades: OverlayConfig.animation === "fade"
   // The window's height, as last mapped full size (`pageArea.roomHeight`
   // holds it while unmapped)
-  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? pageArea.roomHeight + OverlayConfig.navigatorRoom : -(pageArea.roomHeight + OverlayConfig.navigatorRoom)
+  readonly property real _slideDistance: pageArea.roomHeight + OverlayConfig.navigatorRoom
+  property real slideOffset: isOpen || _fades ? 0 : OverlayConfig.animation === "bottom" ? _slideDistance : -_slideDistance
   // The page switcher's on the top edge, not the bottom
   readonly property bool _navigatorTop: OverlayConfig.navigator === "top"
 

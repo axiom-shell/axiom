@@ -14,8 +14,8 @@ import qs.services.compositor
  * saves (a theme, the settings page) don't persist unsaved bar edits.
  *
  * Also keeps the page's own state (selected bar and widget), since the
- * page is unloaded when the overlay's pages unload (`keptFor` after a close), and, while the page is on
- * screen, what the running bars report back about the selected bar.
+ * page is unloaded `keptFor` after the overlay closes, and, while the page is
+ * on screen, what the running bars report back about the selected bar.
  * The running bars themselves are ScreenEdgeManager's.
  *
  * Every edit can be undone (`history`: the bars and the selection, taken
