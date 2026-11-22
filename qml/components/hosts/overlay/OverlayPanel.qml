@@ -30,8 +30,8 @@ ReservedAreaWindow {
   // Closed, its pages built: from the close until `keptFor` passes, or a
   // fullscreen window shows on its screen
   property bool kept: false
-  readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
-  onFullscreenChanged: if (root.fullscreen && root.kept) {
+  readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screen?.name ?? "")
+  onFullscreenNowChanged: if (root.fullscreenNow && root.kept) {
     keptTimer.stop();
     root.kept = false;
   }
@@ -74,7 +74,7 @@ ReservedAreaWindow {
     isOpen = false;
     hideTimer.start();
     // Not while a fullscreen window is up: the pages would keep polling over a game
-    root.kept = !root.fullscreen;
+    root.kept = !root.fullscreenNow;
     if (root.kept)
       keptTimer.restart();
   }
