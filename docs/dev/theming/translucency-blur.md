@@ -38,8 +38,7 @@ Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones Sw
   - So a bar popout, a popup drawn transparent over the blur window, blurs only under its content.
 - `axiom-blur-over-overlay`, on the blur window over the overlay (`LayerStack.blurOverOverlay`): `blur`, `ignore_alpha` at the threshold, and always `xray = false`, since it blurs the overlay under it.
 - `axiom-blur-backdrops`, on `axiom-backdrop` and polkit (whose window holds its dim), at any alpha.
-- `axiom-blur-no-anim`: `no_anim` on `LayerStack.blurBacked`, the windows the backing window draws for, while it does.
-  - They slide themselves. Hyprland fading or popping one in (its `layers`/`fade` animations, read as it maps) would leave its stroke and content behind the fill, blur and shadow drawn for it, which it doesn't animate.
+- Not a blur rule: `LayerStack.layers`' `noAnim` (`no_anim`, one layer rule per namespace, `render.LayerRulesLua`) is on every chrome namespace in every mode: the chrome slides itself.
 - That's all it writes: the strength is Hyprland's own blur.
 - The module file holds the setting as saved (`_surfacesBlur(true)`). At runtime it's `BlurManager.active`, evaluated over the file after every reload.
 
