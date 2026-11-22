@@ -61,6 +61,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - An opening spans only what's drawn over it (`AttachedSurface.coverStart`/`coverLength`):
   - the box while it slides;
   - its fillets too once it's out. Until then they're behind the edge it slides from, and an opened stroke showed as a dark gap at each corner.
+- Every opening is published on whole pixels (`SurfaceContext.opening`, ceil start, floor end): the pill's (`EdgePlacement`'s stretch and submenu openings, a pill bar's `PillBarJoin`, `CornerMerge`) and the border's (`BarContainer.borderOpening`/`joinOpening`) as `StrokeOpening`'s, so the thresholded mask cuts no pixel the wall covers less than half, and one is re-sent once per pixel, not every frame.
 - A submenu's popup takes no compositor adjustment: its window reaches past the parent's, and a nudge left its blur and the parent's opening behind.
 
 ### Where a window is (LayerOrigin)

@@ -253,27 +253,33 @@ Rectangle {
   // surfaces are solid, with the border off, on a bar the border's stroke
   // isn't on (stacked inside another, BarEnds' offBorder), until the
   // bar's place on screen is known, or once an auto-hiding bar has slid
-  // out of view (BarPanel.inView), the stroke whole again.
+  // out of view (BarPanel.inView), the stroke whole again. On whole
+  // pixels (SurfaceContext.opening), as StrokeOpening._border.
   function borderOpening(from, to) {
+    console.log("[A7] borderOpening " + from + " " + to + " guards " + JSON.stringify([Appearance.translucent, Appearance.screenBorder, root.barConfig.offBorder, !!root.blurOrigin, root._onScreen]));
     if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
-    return {
+    const o = SurfaceContext.opening(at + from, at + to);
+    return o.end > o.start ? {
       "screen": root.blurScreen,
       "edge": ScreenEdge.name(root.barConfig.location),
-      "start": at + from,
-      "end": at + to
-    };
+      "start": o.start,
+      "end": o.end
+    } : null;
   }
   // The same for a surface's joined end (`surface`, an AttachedSurface in
   // this item, joined at its start or end): it covers the perpendicular
   // edge's stroke, from the bar's outer edge to its join's fillet
   function joinOpening(surface, atStart) {
+    console.log("[A7] joinOpening " + atStart + " " + JSON.stringify(root._joinStretch(surface, atStart)) + " guards " + JSON.stringify([Appearance.translucent, Appearance.screenBorder, !!root.blurOrigin, root._onScreen]));
     if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
       return null;
-    return Object.assign({
+    const s = root._joinStretch(surface, atStart);
+    const o = SurfaceContext.opening(s.start, s.end, s.startFillet ?? 0, s.endFillet ?? 0);
+    return o.end > o.start ? Object.assign({
       "screen": root.blurScreen
-    }, root._joinStretch(surface, atStart));
+    }, s, o) : null;
   }
   // The stretch of the perpendicular edge a surface's joined end covers,
   // on screen (EdgeAttach.joinOpening, with its fillet), for the border's

@@ -81,16 +81,14 @@ PillStretch {
   // bar's shadow then follows round, BarContainer._shadowHoles; or inside
   // the wall, whose stroke carries on into the pill's there): opaque or
   // not, as the two are separate windows whose stacking isn't the bar's to
-  // choose. Whole pixels where filleted (SurfaceContext.opening).
+  // choose. Whole pixels (SurfaceContext.opening), as every opening.
   opening: {
     if (root._reach === null)
       return null;
     if (!root.filleted)
-      return {
-        "start": root._atStart ? 0 : root._reach + Appearance.borderWidth / 2,
-        "end": root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length,
+      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), {
         "keepFill": true
-      };
+      });
     return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0), {
       "keepFill": true
     });
