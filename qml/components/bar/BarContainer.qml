@@ -256,12 +256,11 @@ Rectangle {
   // out of view (BarPanel.inView), the stroke whole again. On whole
   // pixels (SurfaceContext.opening), as StrokeOpening._border.
   function borderOpening(from, to) {
-    console.log("[A7] borderOpening " + from + " " + to + " guards " + JSON.stringify([Appearance.translucent, Appearance.screenBorder, root.barConfig.offBorder, !!root.blurOrigin, root._onScreen]));
     if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
-    const o = SurfaceContext.opening(at + from, at + to);
-    return o.end > o.start ? {
+    const o = SurfaceContext.openingOrNull(at + from, at + to);
+    return o ? {
       "screen": root.blurScreen,
       "edge": ScreenEdge.name(root.barConfig.location),
       "start": o.start,
@@ -272,12 +271,11 @@ Rectangle {
   // this item, joined at its start or end): it covers the perpendicular
   // edge's stroke, from the bar's outer edge to its join's fillet
   function joinOpening(surface, atStart) {
-    console.log("[A7] joinOpening " + atStart + " " + JSON.stringify(root._joinStretch(surface, atStart)) + " guards " + JSON.stringify([Appearance.translucent, Appearance.screenBorder, !!root.blurOrigin, root._onScreen]));
     if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
       return null;
     const s = root._joinStretch(surface, atStart);
-    const o = SurfaceContext.opening(s.start, s.end, s.startFillet ?? 0, s.endFillet ?? 0);
-    return o.end > o.start ? Object.assign({
+    const o = SurfaceContext.openingOrNull(s.start, s.end, s.startFillet ?? 0, s.endFillet ?? 0);
+    return o ? Object.assign({
       "screen": root.blurScreen
     }, s, o) : null;
   }

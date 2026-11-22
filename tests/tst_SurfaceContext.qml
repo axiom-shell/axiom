@@ -332,6 +332,12 @@ TestCase {
     compare(SurfaceContext.opening(5.5, 5.2).end, 6);
   }
 
+  function test_openingOrNull() {
+    compare(SurfaceContext.openingOrNull(5.5, 5.2), null);
+    compare(SurfaceContext.openingOrNull(10, 10), null);
+    compare(SurfaceContext.openingOrNull(0.5, 100, 22.5, 22.5), SurfaceContext.opening(0.5, 100, 22.5, 22.5));
+  }
+
   // ---- frame() / layout(): one surface on an edge, any host ----
 
   // A 1000 px edge, border on (2 px stroke, radius 12, gap 24), the

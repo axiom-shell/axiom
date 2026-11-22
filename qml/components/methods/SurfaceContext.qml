@@ -179,6 +179,13 @@ QtObject {
     return o;
   }
 
+  // `opening`, or null when nothing is left of it (`end <= start`): the one
+  // step a publisher takes before handing an opening on
+  function openingOrNull(start, end, startFillet, endFillet) {
+    const o = SurfaceContext.opening(start, end, startFillet, endFillet);
+    return o.end > o.start ? o : null;
+  }
+
   // ---- One surface on an edge, whoever hosts it ----
   // Everything below is in screen px along the edge (0 at its start: the
   // top or left screen edge), across it in px from the screen edge, so a

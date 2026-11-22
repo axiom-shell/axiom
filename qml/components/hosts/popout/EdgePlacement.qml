@@ -535,8 +535,7 @@ QtObject {
       if (!root.showing || !root.onPill || !Appearance.translucent)
         return null;
       const s = root._toBarSpan(root._coverStart, root._coverEnd);
-      const o = SurfaceContext.opening(s.start, s.end);
-      return o.end > o.start ? o : null;
+      return SurfaceContext.openingOrNull(s.start, s.end);
     }
   }
   // Whether the surface is out over the stroke it stands on (none of it
@@ -552,8 +551,7 @@ QtObject {
       if (!root.showing || !root.onPill || !Appearance.translucent || !root.submenuSpan)
         return null;
       const s = root._toBarSpan(root.submenuSpan.start, root.submenuSpan.end);
-      const o = SurfaceContext.opening(s.start, s.end);
-      return o.end > o.start ? o : null;
+      return SurfaceContext.openingOrNull(s.start, s.end);
     }
   }
 }
