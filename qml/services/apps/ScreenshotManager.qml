@@ -120,7 +120,7 @@ QtObject {
       "path": path,
       "callback": callback
     };
-    CommandManager.runDetached(["mkdir", "-p", path.replace(/\/[^/]*$/, "")]);
+    CommandManager.runDetached(["mkdir", "-p", FilePaths.parentOf(path)]);
     root._start("region");
     return true;
   }
@@ -178,7 +178,7 @@ QtObject {
   // The last capture's serial (capture order, counted by _stitchPieces)
   property int _stitchSerial: 0
   // The serial of the newest capture put on the clipboard, so a save that
-  // lands late never covers a newer one (D8)
+  // lands late never covers a newer one
   property int _copiedSerial: 0
   // The names given out in the current second (no extension), so a capture
   // in the same second never overwrites one still saving
@@ -403,7 +403,7 @@ QtObject {
       return;
     }
     if (!ok) {
-      root._sayFailed(null, I18n.tr("Couldn't save the picture in {0}.", stitch.out.replace(/\/[^/]*$/, "")));
+      root._sayFailed(null, I18n.tr("Couldn't save the picture in {0}.", FilePaths.parentOf(stitch.out)));
       return;
     }
     root._paths.screenshot = stitch.out;
@@ -412,6 +412,9 @@ QtObject {
       root._copiedSerial = stitch.serial;
       ClipboardManager.copyFile(stitch.out, "image/png");
     }
+    // The watchdog already reported it failed: kept and copied, not said again
+    if (stitch.reported)
+      return;
     if (stitch.annotate && root.annotator !== "") {
       root.edit(stitch.out);
       return;
@@ -429,7 +432,7 @@ QtObject {
   // copied: false only for a save that landed late, behind a newer copy
   function _sayTaken(path, copyOnly, copied) {
     const summary = I18n.tr("Screenshot saved");
-    const body = !copied ? I18n.tr("Saved in {0}. Click to open it.", path.replace(/\/[^/]*$/, "")) : copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
+    const body = !copied ? I18n.tr("Saved in {0}. Click to open it.", FilePaths.parentOf(path)) : copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
     // One entry: the last screenshot's
     const route = NotificationManager.announce("Screenshot", "screenshot", Screenshots.notify, summary, body, {
       "desktopEntry": root._desktopEntry,
@@ -452,7 +455,7 @@ QtObject {
     root.lastShot = {
       "path": path,
       "title": summary,
-      "folder": copyOnly ? "" : Paths.shortenHome(path.replace(/\/[^/]*$/, "")),
+      "folder": copyOnly ? "" : Paths.shortenHome(FilePaths.parentOf(path)),
       "copied": copied,
       "serial": root._shotSerial
     };
@@ -678,8 +681,9 @@ QtObject {
 
   // A stitch that never answers (axiom hung with the socket open; a dropped
   // connection already fails the call) gives up after 30 s, so the queue
-  // moves on (if it lands later it is still saved as usual); its pieces go
-  // (axiom has them open, or never will)
+  // moves on (if it lands later the file is kept and copied as usual, but
+  // not said or annotated: it was reported failed, `reported`); its pieces
+  // go (axiom has them open, or never will)
   property Timer _stitchWatchdog: Timer {
     interval: 30000
     onTriggered: {
@@ -687,6 +691,7 @@ QtObject {
       if (!stitch)
         return;
       root._stitch = null;
+      stitch.reported = true;
       root._dropPieces(stitch.across);
       console.warn("[ScreenshotManager] The stitch never answered");
       root._saved(stitch, false);
@@ -720,7 +725,7 @@ QtObject {
       // If a card lists them
       if (root._listed)
         root.refreshRecordings();
-      NotificationManager.sendNotification("axiom", I18n.tr("Recording saved"), I18n.tr("Saved in {0}. Click to open it.", path.replace(/\/[^/]*$/, "")), {
+      NotificationManager.sendNotification("axiom", I18n.tr("Recording saved"), I18n.tr("Saved in {0}. Click to open it.", FilePaths.parentOf(path)), {
         "desktopEntry": root._desktopEntry,
         "key": "recording"
       });
@@ -782,6 +787,10 @@ QtObject {
     const saved = root._state.load({});
     root.copyOnly = saved.copyOnly === true;
     root.recordAudio = ["system", "mic"].includes(saved.recordAudio) ? saved.recordAudio : "none";
+    // Pieces left by a stitch a quit or reload cut short (onDestruction doesn't run at a reload); only
+    // ones over 5 minutes old, since the scratch folder is shared with any other shell on the session (a
+    // nested one, the old one during a reload) whose stitch may still need its pieces, and a stitch gives up after 30 s
+    CommandManager.runDetached(["find", root._scratchDir, "-maxdepth", "1", "-name", "piece-*.bmp", "-mmin", "+5", "-delete"]);
     DependencyManager.check(["satty", "swappy", "wf-recorder"].concat(root.grimFrames ? ["grim"] : []));
     // The pictures folder, and a recording axiom runs from before a
     // reload (only stopping it is offered)

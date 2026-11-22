@@ -36,6 +36,24 @@ func TestPlan(t *testing.T) {
 	}
 }
 
+func TestPlanKeepsEmojiSequences(t *testing.T) {
+	t.Parallel()
+	chunks := Plan("❤️👨‍👩‍👧")
+	if len(chunks) != 1 {
+		t.Fatalf("%d chunks", len(chunks))
+	}
+	c := chunks[0]
+	// 2764 FE0F 1F468 200D 1F469 200D 1F467: seven keys, the joiner's reused
+	if fmt.Sprint(c.Keys) != "[1 2 3 4 5 4 6]" {
+		t.Errorf("keys %v", c.Keys)
+	}
+	for _, want := range []string{"key <K1> {[U2764]};", "key <K2> {[UFE0F]};", "key <K4> {[U200D]};"} {
+		if !strings.Contains(c.Keymap, want) {
+			t.Errorf("keymap lacks %q:\n%s", want, c.Keymap)
+		}
+	}
+}
+
 func TestPlanSplitsPastTheKeycodes(t *testing.T) {
 	t.Parallel()
 	var b strings.Builder

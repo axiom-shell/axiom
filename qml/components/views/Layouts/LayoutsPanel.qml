@@ -70,6 +70,7 @@ Item {
     StreamedLoader {
       Layout.fillWidth: true
       rise: false
+      buildFirst: true
       label: "layouts panel list"
 
       sourceComponent: Surface {

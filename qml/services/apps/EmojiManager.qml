@@ -14,7 +14,8 @@ import qs.services.system
  * Unicode's order. `copy` puts one on the clipboard and counts it in
  * `usage` ({ emoji: { count, last } }), for LauncherManager's frecency;
  * `type` also types it into the focused window (the daemon's virtual
- * keyboard, where the compositor has one: `canType`).
+ * keyboard, where the compositor has one: `canType`), 150 ms after it's
+ * called, so call it once that window has the keyboard back.
  * `search(query, limit, group)` ranks them for the launcher and the EmojiPicker
  * module (most used first with no query).
  */
@@ -86,7 +87,9 @@ QtObject {
     ClipboardManager.copyText(emoji);
   }
 
-  // Types it once the launcher has closed and the window has the keyboard
+  // Types it a moment after it's called. Call it once the window to type
+  // into has the keyboard back; the launcher calls it after its windows
+  // have gone (LauncherManager.afterClose)
   function type(emoji) {
     root._typing = emoji;
     _typeLater.restart();

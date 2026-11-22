@@ -50,7 +50,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
   - **CalendarPage**: the month's day cells (`MonthGrid`, shared with the Clock/Calendar module).
 
 ### Editors reopening
-- Pages are rebuilt on every open, so each editor's `ensureLoaded()` used to reload its draft every time: a clone of its config section, then every binding on it evaluated again.
+- Pages are rebuilt only after `keptFor`, or after a fullscreen window drops them, so on such an open each editor's `ensureLoaded()` used to reload its draft every time: a clone of its config section, then every binding on it evaluated again.
 - `ConfigDraft.loadIfStale()` reloads only when the draft has no unsaved edits and is empty or the config isn't the object it was loaded from (`ConfigManager` makes a new config object on every change). Settings and Keybinds use it.
 - Editors that also clear their selection or history on reopening (layouts, menus, screen layouts) still `load()`.
 
