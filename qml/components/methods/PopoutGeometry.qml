@@ -20,6 +20,7 @@ QtObject {
 
   // Lowest first. A submenu takes its parent's rank; notification toasts
   // rank under them all (-1), giving way to anything that covers them
+  // but a dock (rankAgainst)
   readonly property var ranks: ["pinned", "dock", "osd", "bar", "menu", "launcher"]
 
   // An entry's rank, `parent` its parent's entry for a submenu
@@ -31,6 +32,15 @@ QtObject {
     if (entry.pinned)
       return 0;
     return Math.max(0, ranks.indexOf(entry.kind));
+  }
+
+  // An entry's rank against another: its own (`rankOf`), but a notification
+  // toast ranks one over a dock, whatever their ranks, so a dock gives way
+  // to a stack over it (seeing the notification comes first)
+  function rankAgainst(entry, parent, other) {
+    if (entry.kind === "toast" && other.kind === "dock")
+      return rankOf(other, null) + 1;
+    return rankOf(entry, parent);
   }
 
   // Whether two rects ({ x, y, width, height }) overlap by more than half a
@@ -67,27 +77,31 @@ QtObject {
   // - `claim.resuming` (a resident coming back once something closed):
   //   one of the same rank also refuses it, so two residents never take
   //   turns evicting each other
+  // - a toast and a dock: the dock goes (`rankAgainst`), and a yielded
+  //   stack still refuses a dock coming back
   function resolve(entries, claim) {
     const byId = {};
     for (const e of entries)
       byId[e.id] = e;
-    const rank = rankOf(claim, byId[claim.parentId]);
     const evict = [];
     const yields = [];
     for (const e of entries) {
       if (e.id === claim.id || e.screen !== claim.screen)
         continue;
-      if (e.phase === "yielded")
+      // A stack waiting under a popout still keeps a dock it put away from
+      // coming back (only `resuming`: a dock showing, or revealed, while a
+      // stack waits hidden isn't put away by it, so a dock's own footprint
+      // changing as it magnifies never hides it under the pointer while the
+      // stack waits hidden; grown into a shown stack it gives way, as into
+      // a popout today)
+      if (e.phase === "yielded" && !(claim.resuming && e.kind === "toast" && claim.kind === "dock"))
         continue;
       if (e.parentId === claim.id || claim.parentId === e.id)
         continue;
-      // Toasts and docks never collide: an always-shown dock would hide a
-      // stack over it for good
-      if ((e.kind === "toast" && claim.kind === "dock") || (e.kind === "dock" && claim.kind === "toast"))
-        continue;
       if (!intersects(e.footprint, claim.footprint))
         continue;
-      const other = rankOf(e, byId[e.parentId]);
+      const rank = rankAgainst(claim, byId[claim.parentId], e);
+      const other = rankAgainst(e, byId[e.parentId], claim);
       if (other > rank || (claim.resuming && other === rank))
         return {
           "allowed": false,
@@ -113,7 +127,8 @@ QtObject {
   // checked against what's showing and those already coming back)
   function resumable(entries) {
     const yielded = entries.filter(e => e.phase === "yielded").sort((a, b) => rankOf(b, null) - rankOf(a, null));
-    let showing = entries.filter(e => e.phase !== "yielded");
+    // Yielded stacks stay: they still keep a dock from coming back
+    let showing = entries.filter(e => e.phase !== "yielded" || e.kind === "toast");
     const back = [];
     for (const e of yielded) {
       const claim = Object.assign({}, e, {
@@ -122,7 +137,7 @@ QtObject {
       const r = resolve(showing, claim);
       if (r.allowed) {
         back.push(e.id);
-        showing = showing.concat([Object.assign({}, e, {
+        showing = showing.filter(s => s.id !== e.id).concat([Object.assign({}, e, {
             "phase": "opening"
           })]);
       }

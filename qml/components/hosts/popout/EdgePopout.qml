@@ -243,6 +243,13 @@ PopoutWrapperBase {
   // screen's edges (EdgePlacement.bare)
   readonly property bool bare: root._overFullscreen
 
+  // Docks reserving space inside the border don't push it in: it reaches
+  // past them, on its own edge and at both ends
+  // (Over a fullscreen window it ignores every zone: none to reach past)
+  function dockZone(edgeName) {
+    return root.bare ? 0 : DockManager.zoneOn(root.screen?.name ?? "", edgeName);
+  }
+
   // The perpendicular edges at its start and end (ScreenEdges)
   readonly property int startSide: placement.startSide
   readonly property int endSide: placement.endSide
@@ -463,19 +470,13 @@ PopoutWrapperBase {
 
     // On a bare screen edge (no border, no bar) there's no stroke to land
     // on: the surface sits at the edge and runs straight off it
-    // Docks reserving space inside the border don't push it in: it reaches
-    // past them, on its own edge and at both ends
-    // (Over a fullscreen window it ignores every zone: none to reach past)
     readonly property string screenName: root.screen?.name ?? ""
-    function _dockZone(edgeName) {
-      return root.bare ? 0 : DockManager.zoneOn(surfaceWindow.screenName, edgeName);
-    }
-    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - root.slideDistance - surfaceWindow._dockZone(ScreenEdge.name(root.edge))
+    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - root.slideDistance - root.dockZone(ScreenEdge.name(root.edge))
     margins {
-      top: root.edge === ScreenEdge.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - surfaceWindow._dockZone("top") : 0
-      bottom: root.edge === ScreenEdge.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - surfaceWindow._dockZone("bottom") : 0
-      left: root.edge === ScreenEdge.Left ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.startStrokeInset - surfaceWindow._dockZone("left")
-      right: root.edge === ScreenEdge.Right ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.endStrokeInset - surfaceWindow._dockZone("right")
+      top: root.edge === ScreenEdge.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - root.dockZone("top") : 0
+      bottom: root.edge === ScreenEdge.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - root.dockZone("bottom") : 0
+      left: root.edge === ScreenEdge.Left ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.startStrokeInset - root.dockZone("left")
+      right: root.edge === ScreenEdge.Right ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.endStrokeInset - root.dockZone("right")
     }
 
     // The surface, or room for it at the content's largest

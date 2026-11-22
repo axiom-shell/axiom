@@ -40,6 +40,15 @@ TestCase {
     }), entry("m", "menu", [])), 4);
   }
 
+  // A toast ranks one over a dock, whatever else it ranks against
+  function test_rank_against() {
+    const toast = entry("t", "toast", []);
+    const dock = entry("d", "dock", []);
+    compare(PopoutGeometry.rankAgainst(toast, null, dock), 2);
+    compare(PopoutGeometry.rankAgainst(toast, null, entry("o", "osd", [])), -1);
+    compare(PopoutGeometry.rankAgainst(dock, null, toast), 1);
+  }
+
   function test_intersects() {
     verify(PopoutGeometry.intersects([rect(0, 0, 10, 10)], [rect(5, 5, 10, 10)]));
     // Meeting along an edge isn't overlapping
@@ -185,8 +194,76 @@ TestCase {
     const dock = entry("dock:main:DP-1", "dock", [rect(1500, 100, 300, 60)], {
       "resident": true
     });
-    verify(PopoutGeometry.resolve([dock], toasts).allowed, "a dock and toasts never collide");
-    compare(PopoutGeometry.resolve([toasts], dock).yield, []);
+    const over = PopoutGeometry.resolve([dock], toasts);
+    verify(over.allowed, "a stack over an open dock is allowed");
+    compare(over.yield, [dock.id], "and puts it away");
+    const under = PopoutGeometry.resolve([toasts], dock);
+    verify(!under.allowed, "a dock claiming under a stack is refused");
+    compare(under.blockedBy, toasts.id);
+    verify(!PopoutGeometry.resolve([toasts], Object.assign({}, dock, {
+      "resuming": true
+    })).allowed, "and so is one coming back");
+    // A dock beside the stack is untouched either way
+    const beside = entry("dock:main:DP-1", "dock", [rect(0, 100, 300, 60)], {
+      "resident": true
+    });
+    compare(PopoutGeometry.resolve([beside], toasts).yield, []);
+    verify(PopoutGeometry.resolve([toasts], beside).allowed);
+    // A yielded stack refuses a dock coming back, not a dock's own claim
+    const waiting = Object.assign({}, toasts, {
+      "phase": "yielded"
+    });
+    verify(!PopoutGeometry.resolve([waiting], Object.assign({}, dock, {
+      "resuming": true
+    })).allowed, "a waiting stack keeps a dock away");
+    const own = PopoutGeometry.resolve([waiting], dock);
+    verify(own.allowed, "but not a dock showing anew");
+    compare(own.yield, []);
+    // A dock that magnified into an open stack is refused; one beside is not
+    const grown = PopoutGeometry.resolve([toasts], dock);
+    compare(grown.blockedBy, toasts.id);
+    verify(PopoutGeometry.resolve([toasts], beside).allowed);
+  }
+
+  // The dock waits for the stack, and the pairs with a popout stay in rank
+  function test_toasts_and_dock_resume() {
+    const toasts = entry("toasts:DP-1", "toast", [rect(1500, 50, 360, 200)], {
+      "resident": true,
+      "phase": "yielded"
+    });
+    const dock = entry("dock:main:DP-1", "dock", [rect(1500, 100, 300, 60)], {
+      "resident": true,
+      "phase": "yielded"
+    });
+    compare(PopoutGeometry.resumable([toasts, dock]), ["toasts:DP-1"], "the dock waits for the stack");
+    // A bar popout over both, then released
+    const bar = entry("bar:clock", "bar", [rect(1400, 40, 500, 300)]);
+    compare(PopoutGeometry.resumable([bar, toasts, dock]), [], "popout open: both wait");
+    compare(PopoutGeometry.resumable([toasts, dock]), ["toasts:DP-1"], "popout gone: the stack only");
+    // The three-way case: pinned menu, dock and stack overlapping
+    const pin = entry("menu:pin", "menu", [rect(1450, 60, 200, 200)], {
+      "pinned": true,
+      "resident": true,
+      "phase": "yielded"
+    });
+    compare(PopoutGeometry.resumable([pin, dock, toasts]), ["menu:pin"], "the pinned menu only");
+    const shown = Object.assign({}, pin, {
+      "phase": "open"
+    });
+    compare(PopoutGeometry.resumable([shown, dock, toasts]), [], "no turn-taking with the pinned menu shown");
+    // The pinned menu over a waiting stack, the dock claiming anew under both
+    const claim = PopoutGeometry.resolve([Object.assign({}, pin, {
+        "phase": "open"
+      }), toasts], Object.assign({}, dock, {
+      "phase": "open"
+    }));
+    verify(claim.allowed);
+    compare(claim.yield, ["menu:pin"], "the claim skips the waiting stack and yields the pinned menu");
+    const openDock = Object.assign({}, dock, {
+      "phase": "open"
+    });
+    compare(PopoutGeometry.resumable([pin, toasts, openDock]), ["toasts:DP-1"], "the stack shows over the yielded pinned menu and yields the dock");
+    compare(PopoutGeometry.resumable([pin, dock]), ["dock:main:DP-1"], "the stack released: the dock outranks the pinned menu");
   }
   // A free menu ranks as any popout (no underlay): unpinned, as its
   // opener's kind, so a higher popout over it (the launcher) closes it and

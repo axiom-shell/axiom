@@ -258,7 +258,8 @@ Scope {
   readonly property bool underOverlay: root.overlayOpen && !root.reserving
   // Any popout over it puts it away too (PopoutManager: it ranks lowest
   // but for pinned menus), a reserving one included: that keeps its zone,
-  // so nothing retiles. It comes back once that's gone.
+  // so nothing retiles. So does a notification stack over it, whatever its
+  // visibility (PopoutGeometry.rankAgainst). It comes back once that's gone.
   property PopoutClaim claim: PopoutClaim {
     key: "dock:" + root.dock.id + ":" + (root.screen?.name ?? "")
     kind: "dock"

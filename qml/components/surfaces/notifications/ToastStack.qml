@@ -19,7 +19,9 @@ import qs.components.reusable
 // or a bar (an EdgePopout). Newest at the stack's start, the rest gliding
 // along as toasts come and go; they slide in from and out to one edge
 // (ToastMotion.slideEdge). They rank under every popout (PopoutGeometry):
-// one shown over them hides them until it closes, their timers paused.
+// one shown over them hides them until it closes, their timers paused; and
+// over a dock: a dock under them gives way until they've gone
+// (PopoutGeometry.rankAgainst).
 Scope {
   id: root
 
@@ -171,16 +173,22 @@ Scope {
   // Over a fullscreen window (which covers the bars and the border) as if
   // the screen's edges were bare: Auto is the gap windows keep from one
   readonly property var _gaps: ScreenEdgeManager.detachedGaps(root.screen, NotificationsConfig.edge, NotificationsConfig.gap, root.fullscreen)
+  // Attached, the stack's box (and so its claim, which covers the box across
+  // the edge from the frame line out, and along it NotificationsConfig.width)
+  // grows from the frame line with no gap, and reaches past the docks' zones
+  // on its edge and at its ends (EdgePopout.dockZone); the free area sits
+  // inside them (ExclusionMode.Normal). Detached nothing changes: the cards
+  // keep the gap and stay inside every zone.
   function _inset(side) {
     const edge = NotificationsConfig.edge;
     let gap = root._gaps.end;
     if (side === edge)
-      gap = root._gaps.across;
+      gap = root.attached && !root.fullscreen ? 0 : root._gaps.across;
     else if (side === (root.vertical ? ScreenEdge.Top : ScreenEdge.Left))
       gap = root._gaps.start;
     else if (side === ScreenEdge.opposite(edge))
       gap = root._gaps.across;
-    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.fullscreen);
+    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.fullscreen) - (root.attached && side !== ScreenEdge.opposite(NotificationsConfig.edge) ? box.dockZone(ScreenEdge.name(side)) : 0);
   }
   readonly property real insetTop: root._inset(ScreenEdge.Top)
   readonly property real insetBottom: root._inset(ScreenEdge.Bottom)
@@ -211,9 +219,10 @@ Scope {
     }
   }
 
-  // Its place among the popouts (PopoutManager): under all of them, so one
-  // shown over it hides it (`covered`) until it closes, and one arriving
-  // under one waits (docks aside, PopoutGeometry.resolve). Its footprint
+  // Its place among the popouts (PopoutManager): under all of them
+  // but a dock, so one shown over it hides it (`covered`) until it closes,
+  // and one arriving under one waits (a dock under it gives way instead,
+  // PopoutGeometry.resolve). Its footprint
   // counts toasts not drawn yet at their tallest (_heightOf).
   property PopoutClaim claim: PopoutClaim {
     key: "toasts:" + root.screenName
