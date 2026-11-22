@@ -303,3 +303,37 @@ func checkWithCompositor(t *testing.T, kind string, files map[string]string) {
 		}
 	}
 }
+
+// The chrome windows go unanimated while the backing window draws their fill
+// (Blur.Backed, see-through chrome), blurred or not: Hyprland's
+// axiom-blur-no-anim rule is on for backed with the blur off, off for not
+// backed with the blur on. Sway and niri write nothing of it, so their files
+// follow the blur alone.
+func TestBackedNotBlurredIsUnanimated(t *testing.T) {
+	t.Parallel()
+	text := func(kind string, blur, backed bool) string {
+		in := goldenInputsWith(t, kind, false, func(f *Facts) { f.Blur.Saved, f.Blur.Now, f.Blur.Backed = blur, blur, backed })
+		return goldenWriter(t, kind).moduleText(in, in.get("specFile"))
+	}
+	rule := func(module string) string {
+		for _, line := range strings.Split(module, "\n") {
+			if strings.Contains(line, `"axiom-blur-no-anim"`) {
+				return line
+			}
+		}
+		return ""
+	}
+	if got := rule(text("hyprland", false, true)); !strings.HasSuffix(got, "enabled = true })") {
+		t.Errorf("backed, blur off: %q", got)
+	}
+	if got := rule(text("hyprland", true, false)); !strings.HasSuffix(got, "enabled = false })") {
+		t.Errorf("not backed, blur on: %q", got)
+	}
+	for _, kind := range []string{"sway", "niri"} {
+		for _, blur := range []bool{false, true} {
+			if text(kind, blur, true) != text(kind, blur, false) {
+				t.Errorf("%s, blur %v: the file follows backed", kind, blur)
+			}
+		}
+	}
+}

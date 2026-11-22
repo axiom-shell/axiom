@@ -3,6 +3,7 @@ package render
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -371,6 +372,49 @@ hl.dispatch(hl.dsp.submap("axiom_paused"))`},
 	} {
 		if got := HyprPauseLua(tc.paused, tc.lines, tc.keys, tc.submap); got != tc.want {
 			t.Errorf("%s: got\n%s\nwant\n%s", name, got, tc.want)
+		}
+	}
+}
+
+// The compositor leaves axiom's chrome windows unanimated while the backing
+// window draws their fill (`backed`, see-through chrome), blurred or not: the
+// axiom-blur-no-anim row follows `backed`, not the blur. Sway and niri write
+// no such row: what they write follows the blur alone.
+func TestSurfaceBlurNoAnimFollowsBacked(t *testing.T) {
+	t.Parallel()
+	tab := repoTables(t)
+	for _, c := range []struct {
+		name          string
+		blur, backed  bool
+		wantNoAnimOn  string
+		wantBlurRowOn string
+	}{
+		{"backed, blur off", false, true, "enabled = true", "enabled = false"},
+		{"not backed, blur on", true, false, "enabled = false", "enabled = true"},
+	} {
+		surfaces := parse(t, `{"blur":`+strconv.FormatBool(c.blur)+`,"backed":`+strconv.FormatBool(c.backed)+`,"threshold":0.5,"throughWindows":true,"backdrops":false}`)
+		for _, row := range tab.SurfaceBlur(surfaces) {
+			if row.Value("name") == "axiom-blur-no-anim" && isTrue(row.Value("on")) != c.backed {
+				t.Errorf("%s: no-anim row on = %v", c.name, row.Value("on"))
+			}
+			if row.Value("name") == "axiom-blur" && isTrue(row.Value("on")) != c.blur {
+				t.Errorf("%s: blur row on = %v", c.name, row.Value("on"))
+			}
+		}
+		for _, line := range tab.BlurLua(surfaces) {
+			if strings.Contains(line, `"axiom-blur-no-anim"`) && !strings.HasSuffix(line, c.wantNoAnimOn+" })") {
+				t.Errorf("%s: %s", c.name, line)
+			}
+			if strings.Contains(line, `"axiom-blur"`) && !strings.HasSuffix(line, c.wantBlurRowOn+" })") {
+				t.Errorf("%s: %s", c.name, line)
+			}
+		}
+		other := parse(t, `{"blur":`+strconv.FormatBool(c.blur)+`,"backed":`+strconv.FormatBool(!c.backed)+`,"threshold":0.5,"throughWindows":true,"backdrops":false}`)
+		if got, want := tab.SwaySurfaceBlurLines(surfaces), tab.SwaySurfaceBlurLines(other); strings.Join(got, "\n") != strings.Join(want, "\n") {
+			t.Errorf("%s: sway lines follow backed", c.name)
+		}
+		if got := tab.NiriSurfaceBlurNodes(surfaces); (len(got.Items) > 0) != c.blur {
+			t.Errorf("%s: niri nodes follow the blur alone", c.name)
 		}
 	}
 }

@@ -66,10 +66,11 @@ PanelWindow {
     held: backing.held
   }
 
-  // Its shapes as its blur region, where the compositor blurs only that
+  // Drawn whenever backed, blurred only where the compositor is asked
+  // (regionsOn). Its shapes as its blur region, where the compositor blurs only that
   // (supports.blurRegion): each shape's pieces as drawn, at its place on
   // the screen and cut to its clipRect; none while it draws nothing
-  readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted
+  readonly property bool regionBlur: CompositorManager.supports.blurRegion === true && backing.part !== "shadows" && backing.wanted && BlurManager.regionsOn(backing.screen)
   readonly property var regionPieces: backing.regionBlur ? [].concat(...backing.shapes.map(shape => backing._piecesOf(shape))) : []
 
   // reads: a shape's source (AttachedSurface, Rectangle, RoundedBorders)

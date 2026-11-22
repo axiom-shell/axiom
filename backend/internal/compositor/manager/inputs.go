@@ -88,10 +88,13 @@ type ShadowFacts struct {
 }
 
 // BlurFacts are the blur behind axiom's surfaces: as saved (for a file)
-// and now (paused over a fullscreen window).
+// and now (paused over a fullscreen window), and whether the backing window
+// draws the chrome's fills (see-through chrome, blurred or not: the compositor
+// then doesn't animate those namespaces).
 type BlurFacts struct {
 	Saved          bool    `json:"saved"`
 	Now            bool    `json:"now"`
+	Backed         bool    `json:"backed"`
 	ThroughWindows bool    `json:"throughWindows"`
 	Backdrops      bool    `json:"backdrops"`
 	Threshold      float64 `json:"threshold"`
@@ -206,7 +209,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		opts.Set("surfacesBlur", surfacesBlur)
 		return jsonx.Obj(
 			"look", render.Look(at("WindowLook"), opts),
-			"surfaces", jsonx.Obj("blur", surfacesBlur, "throughWindows", f.Blur.ThroughWindows, "backdrops", f.Blur.Backdrops, "threshold", f.Blur.Threshold),
+			"surfaces", jsonx.Obj("blur", surfacesBlur, "backed", f.Blur.Backed, "throughWindows", f.Blur.ThroughWindows, "backdrops", f.Blur.Backdrops, "threshold", f.Blur.Threshold),
 			"input", render.Input(at("Input"), f.XCursor))
 	}
 	// Compiled before layerKey, so a usable rule's change re-applies the

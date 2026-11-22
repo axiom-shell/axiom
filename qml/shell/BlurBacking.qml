@@ -33,7 +33,8 @@ Scope {
   id: root
 
   Variants {
-    // On every compositor that blurs, drawing while BlurManager.backingOn its screen:
+    // On every compositor that blurs, drawing while BlurManager.backingOn its screen (see-through), blurred while
+    // BlurManager.active:
     // kept mapped meanwhile (BlurBackingWindow.held), so it keeps its place
     // where layers stack by map order
     model: CompositorManager.supports.blur === true && CompositorManager.surfacesReady ? General.outputs : []
