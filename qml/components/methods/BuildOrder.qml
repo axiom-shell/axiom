@@ -32,17 +32,23 @@ QtObject {
 
   // How many entries of `queue` aren't held: the jobs that can run
   function runnable(queue) {
-    return queue.filter(entry => entry.holder?.buildHeld !== true).length;
+    return root._ready(queue).length;
   }
 
   // The entry to build next: the first `first` one that isn't held, else
   // the first not held whose owner is visible, else the first not held; null
   // when every entry is held
   function next(queue) {
-    const ready = queue.filter(entry => entry.holder?.buildHeld !== true);
+    const ready = root._ready(queue);
     if (ready.length > 0 && ready[0].first)
       return ready[0];
     const shown = ready.findIndex(entry => entry.owner?.visible === true);
     return ready[Math.max(0, shown)] ?? null;
+  }
+
+  // -- Private --
+  // The entries of `queue` whose holder isn't holding
+  function _ready(queue) {
+    return queue.filter(entry => entry.holder?.buildHeld !== true);
   }
 }

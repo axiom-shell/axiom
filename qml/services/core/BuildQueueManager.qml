@@ -49,10 +49,7 @@ QtObject {
 
   function _step() {
     const start = Date.now();
-    do {
-      const entry = root._next();
-      if (entry === null)
-        return;
+    for (let entry = root._next(); entry !== null; entry = root._next()) {
       const before = Date.now();
       try {
         entry.job();
@@ -65,7 +62,9 @@ QtObject {
       const took = Date.now() - before;
       if (took > 16)
         console.log(`Built ${entry.label || "a queued job"} in ${took} ms`);
-    } while (root.pending > 0 && Date.now() - start < root._budget)
+      if (Date.now() - start >= root._budget)
+        return;
+    }
   }
 
   property Timer _timer: Timer {
