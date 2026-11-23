@@ -221,13 +221,16 @@ Rectangle {
   }
   // Sets (or with null clears) `owner`'s request
   function setRequest(owner, request) {
+    // Each map is read right before it is written: a push made while another
+    // is written (a tracking stretch re-sent as an end reach reshapes
+    // pillRects) is never overwritten by a map read before it
     const stretches = root._withEntry(root._stretches, owner, request?.stretch);
-    const endReaches = root._withEntry(root._endReaches, owner, request?.endReach);
-    const openings = root._withEntry(root._openings, owner, request?.opening);
     if (stretches)
       root._stretches = stretches;
+    const endReaches = root._withEntry(root._endReaches, owner, request?.endReach);
     if (endReaches)
       root._endReaches = endReaches;
+    const openings = root._withEntry(root._openings, owner, request?.opening);
     if (openings)
       root._openings = openings;
   }
@@ -957,6 +960,11 @@ Rectangle {
         // The far stroke and its fringe under each opening (in the pill's
         // coordinates), and a joined end's fillet where one reaches it: a
         // surface joined to the same edge runs on down it, over the fillet
+        // and, at a squared end a surface joins end-on (`coverFrom`), the
+        // corner under its wall from where it covers the stroke; there the band
+        // stops a pixel (its fringe) short of the wall and the corner piece starts
+        // with it, as at a fractional scale the band's last device row would be the
+        // wall's first
         strokeHoles: [].concat(...root._openingList.map(o => {
           const along = root.isVertical ? pill.y : pill.x;
           const start = Math.max(o.start, along);
@@ -965,11 +973,27 @@ Rectangle {
             return [];
           const R = pill.filletRadius, h = pill.half, L = pill.alongLength;
           const joins = [];
+          let farStart = start, farEnd = end;
           if (pill.joinStart && start <= along + 1)
             joins.push(pill._rectFrom(0, pill.farV - h - 1, h + R + 1, R + h + 2));
           if (pill.joinEnd && end >= along + L - 1)
             joins.push(pill._rectFrom(L - h - R - 1, pill.farV - h - 1, h + R + 1, R + h + 2));
-          return [pill._farHole(start, end, false)].concat(joins);
+          if (o.coverFrom !== undefined) {
+            const at = o.coverFrom - (root.isVertical ? pill.x : pill.y);
+            const far = pill._rectFrom(0, pill.farV, 0, 0);
+            const v = pill.farV + (root.barConfig.left || root.barConfig.top ? 1 : -1) * (at - (root.isVertical ? far.x : far.y));
+            const deep = pill.farV + h + 1 - v;
+            const boxEnd = L - pill.endMargin;
+            if (span.squareEnd && end >= along + boxEnd - pill.strokeWidth - 1) {
+              farEnd = end - 1;
+              joins.push(pill._rectFrom(farEnd - along, v, boxEnd + 1 - (farEnd - along), deep));
+            }
+            if (span.squareStart && start <= along + pill.startMargin + pill.strokeWidth + 1) {
+              farStart = start + 1;
+              joins.push(pill._rectFrom(pill.startMargin - 1, v, farStart - along - pill.startMargin + 1, deep));
+            }
+          }
+          return [pill._farHole(farStart, farEnd, false)].concat(joins);
         }))
         // The stroke, with its anti-aliased fringe a pixel either side, or
         // (`inner`) that fringe's row inside the pill alone, taken from the

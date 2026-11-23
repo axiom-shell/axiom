@@ -124,26 +124,7 @@ PanelWindow {
     };
     if (shape.kind === "frame") {
       // The screen less the stroke's inner side, as frameMirror draws it
-      const w = backing.width, h = backing.height;
-      const x0 = src.innerLeft, y0 = src.innerTop, x1 = w - src.innerRight, y1 = h - src.innerBottom;
-      return SurfaceOutline.placeRegion([
-        {
-          "x": src.outerLeft,
-          "y": src.outerTop,
-          "width": w - src.outerRight - src.outerLeft,
-          "height": h - src.outerBottom - src.outerTop,
-          "cuts": [
-            {
-              "x": x0,
-              "y": y0,
-              "width": x1 - x0,
-              "height": y1 - y0,
-              "ellipse": false,
-              "radius": Math.max(0, Math.min(src.innerRadius, (x1 - x0) / 2, (y1 - y0) / 2))
-            }
-          ]
-        }
-      ], 0, 0, clip);
+      return SurfaceOutline.placeRegion(src.blurPieces(backing.width, backing.height), 0, 0, clip);
     }
     const pieces = shape.kind === "rect" ? [
       {

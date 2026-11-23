@@ -492,6 +492,7 @@ QtObject {
     hollow: root._hollow
     joinReach: root.joinReach
     hidden: root._surfaceHidden
+    drawnFrom: root.attachedSurface && root.origin ? (root.vertical ? root.origin.y + root.attachedSurface.y : root.origin.x + root.attachedSurface.x) : null
   }
   property PillBarJoin _endPill: PillBarJoin {
     screen: root.screen
@@ -504,6 +505,7 @@ QtObject {
     hollow: root._hollow
     joinReach: root.joinReach
     hidden: root._surfaceHidden
+    drawnFrom: root.attachedSurface && root.origin ? (root.vertical ? root.origin.y + root.attachedSurface.y + root.attachedSurface.height : root.origin.x + root.attachedSurface.x + root.attachedSurface.width) : null
   }
 
   // The pill (or island) stretched to carry the box's fillets while it

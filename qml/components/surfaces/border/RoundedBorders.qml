@@ -91,6 +91,10 @@ Item {
   function innerPath(w, h, out) {
     return FrameOutline.innerPath(root._spec, w, h, out);
   }
+  // Its fill as blur region pieces in a window of w × h over the screen (FrameOutline.blurRegion)
+  function blurPieces(w, h) {
+    return FrameOutline.blurRegion(root._spec, w, h);
+  }
   // Where the stroke is left open under what joins it (FrameOutline.strokeHoles)
   readonly property var strokeHoles: FrameOutline.strokeHoles(root._spec, root._openings)
   // The frame, filled odd-even, to innerPath (FrameOutline.framePath)

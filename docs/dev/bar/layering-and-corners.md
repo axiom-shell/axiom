@@ -11,7 +11,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 ### The border
 - `Appearance.screenBorder` turns the border off.
 - The border is `qml/shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
-- The frame's geometry (the stroke's inner path, the corner pieces' boxes, which corners an opening covers, the stroke holes) is `FrameOutline`, read by `RoundedBorders` and the layout test.
+- The frame's geometry (the stroke's inner path, the corner pieces' boxes, which corners an opening covers, the stroke holes, its blur region) is `FrameOutline`, read by `RoundedBorders`, `BlurBackingWindow` and the layout test.
 
 ### Solid bar (`Bars.items[].surface: "bar"`)
 - It is on the Top layer, at the screen edge.

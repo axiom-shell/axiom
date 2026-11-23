@@ -51,6 +51,35 @@ TestCase {
     }), 160, 100, 1), "M 9 9 L 151 9 A 0 0 0 0 1 151 9 L 151 91 A 0 0 0 0 1 151 91 L 9 91 A 0 0 0 0 1 9 91 L 9 9 A 0 0 0 0 1 9 9 Z");
   }
 
+  function test_blurRegion() {
+    const pieces = FrameOutline.blurRegion(spec({}), 160, 100);
+    compare(pieces.length, 1);
+    compare(r4(pieces[0]), [0, 0, 160, 100]);
+    compare(pieces[0].cuts.length, 1);
+    compare(r4(pieces[0].cuts[0]), [10, 10, 140, 80]);
+    compare(pieces[0].cuts[0].ellipse, false);
+    compare(pieces[0].cuts[0].radius, 6);
+  }
+  // The cut's radius is innerPath's at out 0 (R45)
+  function test_blurRegion_radius_0() {
+    compare(FrameOutline.blurRegion(spec({
+      "innerBorderRadius": 0
+    }), 160, 100)[0].cuts[0].radius, 0);
+  }
+  function test_blurRegion_radius_1() {
+    compare(FrameOutline.blurRegion(spec({
+      "innerBorderRadius": 1
+    }), 160, 100)[0].cuts[0].radius, 0);
+  }
+  function test_blurRegion_menus() {
+    const pieces = FrameOutline.blurRegion(spec({
+      "outerLeft": 4,
+      "innerLeft": 14
+    }), 160, 100);
+    compare(r4(pieces[0]), [4, 0, 156, 100]);
+    compare(r4(pieces[0].cuts[0]), [14, 10, 136, 80]);
+  }
+
   function test_cornerBox() {
     compare(r4(FrameOutline.cornerBox(spec({}), true, true)), [8, 8, 10, 10]);
     compare(r4(FrameOutline.cornerBox(spec({}), false, false)), [142, 82, 10, 10]);

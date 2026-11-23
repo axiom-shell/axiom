@@ -21,10 +21,44 @@ QtObject {
   // (edges, and the radius with them: the corner pieces' own arc, which at
   // half a stroke is CornerPiece.arcRadius, the stroke's centre line)
   function innerPath(f, w, h, out) {
+    const i = root._inner(f, w, h, out);
+    const x0 = i.x0, y0 = i.y0, x1 = i.x1, y1 = i.y1, r = i.r;
+    return `M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z`;
+  }
+  // The stroke's inner side's edges and corner radius, `out` px further out
+  function _inner(f, w, h, out) {
     const o = out ?? 0;
     const x0 = f.innerLeft - o, y0 = f.innerTop - o, x1 = w - f.innerRight + o, y1 = h - f.innerBottom + o;
     const r = Math.max(0, Math.min(f.innerBorderRadius - f.strokeWidth + o, (x1 - x0) / 2, (y1 - y0) / 2));
-    return `M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z`;
+    return {
+      "x0": x0,
+      "y0": y0,
+      "x1": x1,
+      "y1": y1,
+      "r": r
+    };
+  }
+  // The frame's fill as a blur region (SurfaceOutline.blurRegion's pieces): the screen inside the integrated menus' strips, less the stroke's inner side with its rounded corners (innerPath's radius at out 0)
+  function blurRegion(f, w, h) {
+    const i = root._inner(f, w, h, 0);
+    return [
+      {
+        "x": f.outerLeft,
+        "y": f.outerTop,
+        "width": w - f.outerRight - f.outerLeft,
+        "height": h - f.outerBottom - f.outerTop,
+        "cuts": [
+          {
+            "x": i.x0,
+            "y": i.y0,
+            "width": i.x1 - i.x0,
+            "height": i.y1 - i.y0,
+            "ellipse": false,
+            "radius": i.r
+          }
+        ]
+      }
+    ];
   }
   // The frame, filled odd-even: from the window's edges, or from past the
   // integrated menus' strips (`fromMenus`, as the blur window fills it),

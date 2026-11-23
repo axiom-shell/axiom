@@ -80,6 +80,9 @@ PillStretch {
     "to": root._atStart ? root._reach + Appearance.borderWidth / 2 : root._reach - Appearance.borderWidth / 2,
     "square": true
   }
+  // Where its surface's joined end is drawn from across this bar, in screen
+  // px (EdgePlacement), or null
+  property var drawnFrom: null
   // Its far stroke left open under the surface (and its fillet, which the
   // bar's shadow then follows round, BarContainer._shadowHoles; or inside
   // the wall, whose stroke carries on into the pill's there): opaque or
@@ -89,8 +92,11 @@ PillStretch {
     if (root._reach === null || root.hollow)
       return null;
     if (!root.filleted)
-      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), {
+      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), root.drawnFrom === null ? {
         "keepFill": true
+      } : {
+        "keepFill": true,
+        "coverFrom": root.drawnFrom - (root._vertical ? root._panel.container.blurOrigin.y : root._panel.container.blurOrigin.x)
       });
     return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0), {
       "keepFill": true

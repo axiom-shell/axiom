@@ -26,6 +26,34 @@ TestCase {
     }
   }
 
+  // A bar's request taker, keeping the last request it was sent
+  Component {
+    id: stubComp
+
+    QtObject {
+      property var last: null
+      // one pill at rest, which a stretch stands on
+      property var pillRects: [
+        {
+          "start": 20,
+          "length": 20
+        }
+      ]
+      function setRequest(owner, request) {
+        last = request;
+      }
+    }
+  }
+
+  Component {
+    id: stretchComp
+
+    PillStretch {
+      owner: "t"
+      open: true
+    }
+  }
+
   function initTestCase() {
     harness.configure({});
   }
@@ -125,5 +153,46 @@ TestCase {
     tryCompare(s, "slideX", 120, 1000);
     s.active = true;
     compare(s.slideX, first);
+  }
+
+  // A pill's end reach and opening are sent in the pass they change in, so
+  // the bar draws them in the frame their surface moves in
+  function test_pillRequestSentInItsPass() {
+    const stub = createTemporaryObject(stubComp, root);
+    const stretch = createTemporaryObject(stretchComp, root, {
+      "container": stub
+    });
+    stretch.endReach = {
+      "atStart": true,
+      "to": 40
+    };
+    compare(stub.last?.endReach?.to, 40);
+    stretch.endReach = {
+      "atStart": true,
+      "to": 55
+    };
+    compare(stub.last?.endReach?.to, 55);
+    stretch.opening = {
+      "start": 0,
+      "end": 30
+    };
+    compare(stub.last?.opening?.end, 30);
+  }
+
+  // A stretch that tracks its surface is sent in the pass it changes in too
+  function test_trackingStretchSentInItsPass() {
+    const stub = createTemporaryObject(stubComp, root);
+    const stretch = createTemporaryObject(stretchComp, root, {
+      "container": stub,
+      "tracks": true
+    });
+    stretch.stretch = {
+      "index": 0,
+      "start": 10,
+      "end": 50
+    };
+    verify(stub.last?.stretch);
+    compare(stub.last.stretch.start, 10);
+    compare(stub.last.stretch.end, 50);
   }
 }

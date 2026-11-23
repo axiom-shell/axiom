@@ -1018,6 +1018,100 @@ TestCase {
         ]
       };
     }
+    if (name === "popout joined at an end to a pill bar's stub") {
+      // a left bar's pill with square ends, and a top popout joined to it at
+      // its start, its far wall's outer edge on the pill's box end: the stub's
+      // square corner under that wall is cut (BarContainer's corner piece)
+      const pill = root.placed({
+        "edge": ScreenEdge.Left,
+        "boxWidth": 18,
+        "boxHeight": 70,
+        "joinStart": true,
+        "startCornerRadius": 0,
+        "endCornerRadius": 0
+      }, 0, -8);
+      const pop = root.placed({
+        "boxWidth": 60,
+        "boxHeight": 40,
+        "joinStart": true,
+        "straightJoinStart": true
+      }, pill.x + pill.farV - pill.half, 0);
+      root.settle([pill, pop]);
+      pop.y = pill.y + pill.boxRect.y + pill.boxRect.height - (pop.boxRect.y + pop.boxRect.height);
+      compare(pop.y + pop.boxRect.y + pop.boxRect.height, pill.y + pill.boxRect.y + pill.boxRect.height);
+      const wallOuter = pop.y + pop.boxRect.y + pop.boxRect.height;
+      // the far stroke's band as BarContainer's _farHole takes it, under the opening PillBarJoin gives
+      const across = EdgeAttach.strokeHoleAcross(pill.farV - pill.half, pill.strokeWidth);
+      const o = SurfaceContext.opening(0, wallOuter - sw);
+      const from = Math.max(o.start, pill.y);
+      // (it stops a pixel short of the wall: BarContainer's farEnd)
+      const band = pill._rectFrom(from - pill.y, across.start, o.end - 1 - from, across.size);
+      // the corner under the wall, from where the popout's copy begins across the stroke (the pill's strokeHoles)
+      const far = pill._rectFrom(0, pill.farV, 0, 0);
+      const v = pill.farV + (pop.x - pill.x - far.x);
+      const boxEnd = pill.alongLength - pill.endMargin;
+      const corner = pill._rectFrom(o.end - 1 - pill.y, v, boxEnd + 1 - (o.end - 1 - pill.y), pill.farV + pill.half + 1 - v);
+      // the wall's rows, from its inner edge to the row past its outer edge
+      const wallRows = Qt.rect(pill.x + corner.x, pill.y + corner.y + 1, corner.width, corner.height - 1);
+      compare(wallRows.y, wallOuter - sw);
+      return {
+        "w": 180,
+        "h": 110,
+        "specs": (sa, fa, stroke, cut) => [root.attachedSpec(pill, "bar", fills(fa).low, stroke ? root.line(sa) : null, cut ? [band, corner] : []), root.attachedSpec(pop, "surface", fills(fa).up, root.line(sa))],
+        "bands": [
+          {
+            "rect": wallRows,
+            "vertical": false,
+            "fringe": 0,
+            "ends": [true, false]
+          }
+        ]
+      };
+    }
+    if (name === "popout joined at the start of a pill bar's stub") {
+      // the mirror: a left bar's pill with square ends running off the scene's
+      // bottom, and a bottom popout joined to it at its end, its far wall's
+      // outer edge on the pill's box start
+      const pill = root.placed({
+        "edge": ScreenEdge.Left,
+        "boxWidth": 18,
+        "boxHeight": 70,
+        "joinEnd": true,
+        "startCornerRadius": 0,
+        "endCornerRadius": 0
+      }, 0, 50);
+      const pop = root.placed({
+        "edge": ScreenEdge.Bottom,
+        "boxWidth": 60,
+        "boxHeight": 40,
+        "joinStart": true,
+        "straightJoinStart": true
+      }, pill.x + pill.farV - pill.half, 0);
+      root.settle([pill, pop]);
+      pop.y = pill.y + pill.boxRect.y - pop.boxRect.y;
+      compare(pop.y + pop.boxRect.y, pill.y + pill.boxRect.y);
+      const wallOuter = pop.y + pop.boxRect.y;
+      const across = EdgeAttach.strokeHoleAcross(pill.farV - pill.half, pill.strokeWidth);
+      const o = SurfaceContext.opening(wallOuter + sw, pill.y + pill.alongLength);
+      // (it starts a pixel past the wall: BarContainer's farStart)
+      const band = pill._rectFrom(o.start + 1 - pill.y, across.start, o.end - o.start - 1, across.size);
+      const far = pill._rectFrom(0, pill.farV, 0, 0);
+      const v = pill.farV + (pop.x - pill.x - far.x);
+      const corner = pill._rectFrom(pill.startMargin - 1, v, o.start + 1 - pill.y - pill.startMargin + 1, pill.farV + pill.half + 1 - v);
+      return {
+        "w": 180,
+        "h": 110,
+        "specs": (sa, fa, stroke, cut) => [root.attachedSpec(pill, "bar", fills(fa).low, stroke ? root.line(sa) : null, cut ? [band, corner] : []), root.attachedSpec(pop, "surface", fills(fa).up, root.line(sa))],
+        "bands": [
+          {
+            "rect": Qt.rect(pill.x + corner.x, wallOuter, corner.width, sw),
+            "vertical": false,
+            "fringe": 0,
+            "ends": [true, false]
+          }
+        ]
+      };
+    }
     // the frame kinds: a fixture source, literal paths for one fixed
     // geometry (a 160 x 100 screen, a sharp 10 px border), which checks
     // `frameMirror` and `HoledCopy` on `kind: "frame"`, not RoundedBorders'
@@ -1106,6 +1200,9 @@ TestCase {
       function framePath(w, h, fromMenus) {
         return FrameOutline.framePath(spec, w, h, fromMenus);
       }
+      function blurPieces(w, h) {
+        return FrameOutline.blurRegion(spec, w, h);
+      }
       function innerPath(w, h, out) {
         return FrameOutline.innerPath(spec, w, h, out);
       }
@@ -1144,7 +1241,7 @@ TestCase {
 
   function mustNotData() {
     const rows = [];
-    for (const name of ["popout on a pill", "submenu on a popout's side", "popout on a solid bar's inner stroke", "corner merge", "dock on the frame", "pill bar joined to the frame"]) {
+    for (const name of ["popout on a pill", "submenu on a popout's side", "popout on a solid bar's inner stroke", "corner merge", "popout joined at an end to a pill bar's stub", "popout joined at the start of a pill bar's stub", "dock on the frame", "pill bar joined to the frame"]) {
       for (const sw of [1, 2]) {
         for (const sa of [1, 0.5]) {
           for (const fa of [1, 0.8])
@@ -1215,6 +1312,85 @@ TestCase {
         });
       }
     }
+  }
+
+  // The stub's corner under a wall, per device pixel (the logical-pixel rows
+  // read the middle of a pixel and miss the wall's anti-aliased row at 1.25):
+  // the cut scene equals the scene with the lower stroke transparent in the
+  // corner piece's rect grown 2 px across
+  function test_stub_corner_device_pixels_data() {
+    const rows = [];
+    for (const sw of [1, 2]) {
+      for (const sa of [1, 0.5])
+        rows.push({
+          "tag": `stroke ${sw}, a_s ${sa}`,
+          "sw": sw,
+          "sa": sa
+        });
+    }
+    return rows;
+  }
+  function test_stub_corner_device_pixels(data) {
+    if (root.dpr !== 1.25)
+      skip("scale 1.25 row");
+    if (!root.gpu)
+      skip("software scene graph: a clipped Shape is drawn wrong (run under xvfb with llvmpipe)");
+    root.setStroke(data.sw);
+    const c = root.joinCase("popout joined at an end to a pill bar's stub");
+    const opts = {
+      "w": c.w,
+      "h": c.h
+    };
+    const cut = root.render(c.specs(data.sa, 1, true, true), opts);
+    const clear = root.render(c.specs(data.sa, 1, false, true), opts);
+    const r = c.bands[0].rect;
+    let seen = 0;
+    root.eachDevicePixel(Qt.rect(r.x, r.y - 2, r.width, r.height + 4), (xd, yd) => {
+      seen++;
+      root.near(cut.dpx(xd, yd), clear.dpx(xd, yd), `no trace of the lower stroke at device pixel ${xd},${yd}`);
+    });
+    verify(seen > 0);
+  }
+
+  // The must-not rows' "the stroke just outside the span's end", per device
+  // pixel (that one reads a logical pixel's middle): every device pixel within
+  // 2 px outside a tip, across the band's stroke lines, equals the scene with
+  // no cut
+  function test_ends_device_pixels_data() {
+    return root.mustNotData().filter(d => d.fa === 1);
+  }
+  function test_ends_device_pixels(data) {
+    if (root.dpr !== 1.25)
+      skip("scale 1.25 row");
+    if (!root.gpu)
+      skip("software scene graph: a clipped Shape is drawn wrong (run under xvfb with llvmpipe)");
+    root.setStroke(data.sw);
+    const c = root.joinCase(data.name);
+    const opts = {
+      "w": c.w,
+      "h": c.h
+    };
+    const cut = root.render(c.specs(data.sa, 1, true, true), opts);
+    const whole = root.render(c.specs(data.sa, 1, true, false), opts);
+    let seen = 0;
+    for (const band of c.bands) {
+      const r = band.rect;
+      const a0 = (band.vertical ? r.x : r.y) + band.fringe;
+      const from = band.vertical ? r.y : r.x, to = from + (band.vertical ? r.height : r.width);
+      band.ends.forEach((on, end) => {
+        if (!on)
+          return;
+        const tip = end === 0 ? from : to;
+        // (a pixel whose centre is on the tip is half in the span: left out, as at end 0)
+        const along = end === 0 ? [tip - 2, tip] : [tip + 1e-6, tip + 2];
+        const box = band.vertical ? Qt.rect(a0, along[0], data.sw, 2) : Qt.rect(along[0], a0, 2, data.sw);
+        root.eachDevicePixel(box, (xd, yd) => {
+          seen++;
+          root.near(cut.dpx(xd, yd), whole.dpx(xd, yd), `the stroke outside the span's end ${end} at device pixel ${xd},${yd}`);
+        });
+      });
+    }
+    verify(seen > 0);
   }
 
   // The hollow row's frame half: a tiled menu's tiles (rect copies, gaps
