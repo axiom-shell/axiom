@@ -31,7 +31,7 @@ Layouts: every hand-off has one file in `.claude/templates/`: `brief.md`, `spec.
 - Before relaying anything, reread decisions.md and the PR comments (`gh pr view <n> --json comments`).
 - Drop a question the request's own principle answers; record it as an R quoting the principle.
 - Relay word for word, in one batch: product questions (defaults, behaviour users notice, migrations, takeovers) and every LOST Becomes row. Start nothing that depends on them.
-- Everything else you rule: an R in decisions.md with a one-line reason, restated in the PR body in plain technical terms, without R/D ids or anything quoted from a plan file.
+- Everything else you rule: an R in decisions.md with a one-line reason, restated in the PR body in plain technical terms, without R/D ids or anything quoted from a plan file (`.claude/templates/pr-body.md` › Rulings).
 - A default the request or a D already fixes goes under Defaults taken. Any other default is a question.
 - User instructions go into decisions.md as D answers (verbatim, dated, where given), never into standing rules, memory, CLAUDE.md or CLAUDE.local.md unasked.
 
@@ -60,7 +60,7 @@ Every tier has a ledger; tiers scale planning and review, never alignment.
 
 1. **Start.**
    - Slug (kebab-case, the branch name; a stack's parts get descriptive kebab-case branch names (the spec's split names them; a group run: the plan file), never `<slug>/<part>`); decisions.md (request verbatim; Scope line with what it includes and, quoted, what it excludes); tier proposed.
-   - Tree: `git -C <main checkout> fetch -q origin`; `git -C <main checkout> worktree add --no-track -b <slug | bottom part's branch> <worktrees folder>/<slug | stem | stem-s<k>> origin/main`; each later part `git -C <tree> switch -c <branch> <part below>` in the same tree (`git rebase --update-refs` skips a branch checked out in another worktree); `cd <tree> && scripts/generate.sh`.
+   - Tree: `git -C <main checkout> fetch -q origin`; `git -C <main checkout> worktree add --no-track -b <slug | bottom part's branch> <worktrees folder>/<slug | stem | stem-s<k>> origin/main`; each later part `git -C <tree> switch -c <branch> <part below>` in the same tree (a part whose parts below have all merged is the bottom part: `git -C <tree> fetch -q origin`, then `git -C <tree> switch -c <branch> origin/main`) (`git rebase --update-refs` skips a branch checked out in another worktree); `cd <tree> && scripts/generate.sh`.
    - state.md with `Tree:`, `Branch:`, `Base:` (`git -C <tree> rev-parse HEAD`), `Head:` (the same), `Tier:`.
    - `resume <slug>`: read state.md and decisions.md, `git -C <tree> status` and `log -3`, and the stack's PR comments (answers become D); continue at Next. A stack: every part's `gh pr view <n> --json state,headRefOid,baseRefName` (› Stacks › Resume).
 2. **Plan.** `/keep-order plan --state <state folder> --tree <tree>`; an alignment request runs `/align "<description>" --state <state folder> --tree <tree>` instead. Relay open questions per Questions.
@@ -77,7 +77,7 @@ Every tier has a ledger; tiers scale planning and review, never alignment.
    - Never a second full review. A round that fixed a Blocker or Major gets one more audit (now with `--since`); if that round still finds one, go to the user.
 6. **Verify.** Only if state.md's `Head:` differs from `Last reviewed:` (the review's checker ran at that sha): a `checker` (brief: `Tree:`) runs `scripts/dev/verify.sh --all` and must print `all checks passed` (a stack: › The stack rebase rule says which part).
 7. **PR.** `git -C <tree> push -u origin <branch>`; write `<state folder>/pr-body.md` (`.claude/templates/pr-body.md`); `cd <tree> && gh pr create --base main --title "<subject>" --body-file <state folder>/pr-body.md`. The subject is one line in the style of `git -C <tree> log --oneline -5 origin/main` (a stack: base and title as › Stacks › Per part).
-   - **Leak check.** When there is a leak check file (› State), before every push and every `gh pr create`/`gh pr edit` run `grep -nEf <that file>` over the lines the part adds (`git -C <tree> diff <Base>...HEAD | grep '^+'`), its commit messages (`git -C <tree> log --format=%B <Base>..HEAD`), its branch name and its `pr-body-<n>.md` (plain run: `pr-body.md`); a hit is fixed first (code or comment: a Fix round; commit message: reworded; body: rewritten). The skill names no pattern.
+   - **Leak check.** When there is a leak check file (› State), before every push and every `gh pr create`/`gh pr edit` run `grep -nEf <that file>` over the lines the part adds (`git -C <tree> diff <Base>...HEAD | grep '^+'`), its commit messages (`git -C <tree> log --format=%B <Base>..HEAD`), its branch name and its `pr-body-<n>.md` (plain run: `pr-body.md`); a hit is fixed first (code or comment: a Fix round; commit message: reworded; body: rewritten). The skill names no pattern. A blank line in that file matches every line; the lead asks the user to remove it before the check runs.
 8. **CI.** `cd <tree> && gh pr checks <n> --watch`. On a failure: a Fix round with source `ci<c>` (fix list from `gh run view <id> --log-failed | tail -60`), `--all`, commit, leak check first (step 7), push. At most twice, then stop.
 9. **Ready.** Report and stop. Never merge.
 
@@ -85,7 +85,7 @@ Bounds: hand off with `/orchestrate resume <slug>` after each ready PR, or at ab
 
 ## Stacks
 
-- **What a plan file gives** (stated once, with a fenced example whose info string is `plan-file`): per stack a public **series title** in plain words (`## Stack <k> · <series title>`); per part, bottom → top, the columns of the example: a plan-local id, a **branch** (descriptive kebab-case, never an id or a number: `bar-layout-model`), a PR **subject** (lower case), a one-line scope and the part's waits (Needs, Freeze, Blocked by) and Status; each part's **Binding** and **gate rows**; `Waits and status:` names the file holding the Needs, Freeze, Blocked by and Status columns (`this file` when it names none, or absent). The lead reads the waits there before a part starts and writes the part's status there at start, ready and merged.
+- **What a plan file gives** (stated once, with a fenced example whose info string is `plan-file`): per stack a public **series title** in plain words (`## Stack <k> · <series title>`); per part, bottom → top, the columns of the example: a plan-local id, a **branch** (descriptive kebab-case, never an id or a number: `bar-layout-model`), a PR **subject** (lower case), a one-line scope and the part's waits (Needs, Freeze, Blocked by) and Status; each part's **Binding** and **gate rows**; `Waits and status:` names the file holding the Needs, Freeze, Blocked by and Status columns (`this file` when it names none, or absent). The lead reads the waits there before a part starts and writes the part's status there at start, ready and merged. The status words are the `Parts:` row's (`.claude/templates/state.md`): `in progress` at start, `PR #<n>` when ready, `merged`.
 
 ```plan-file
 Waits and status: this file

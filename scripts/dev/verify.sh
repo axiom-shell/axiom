@@ -199,7 +199,7 @@ if [[ ${#script_tests[@]} -gt 0 ]]; then
     step "script tests (${script_tests[*]})" python3 tests/scripts/test_scripts.py "${script_tests[@]}"
   fi
 fi
-if printf '%s\n' "${changed[@]}" | grep -qE '^(\.claude/hooks/|\.claude/skills/orchestrate/|tests/scripts/test_guard\.py)'; then
+if printf '%s\n' "${changed[@]}" | grep -qE '^(\.claude/hooks/|\.claude/skills/orchestrate/|tests/scripts/test_guard\.py|\.claude/skills/keep-order/|\.claude/skills/review-branch/|\.claude/templates/)'; then
   step "guard tests" python3 tests/scripts/test_guard.py
 fi
 if [[ $fixtures -eq 1 ]]; then
