@@ -408,6 +408,21 @@ TestCase {
     compare(checkRects(bounds, [Qt.rect(0, 0, 200, 200)]), []);
   }
 
+  function test_insetUnion() {
+    const flat = rs => rs.map(r => [r.x, r.y, r.width, r.height]);
+    const bounds = Qt.rect(0, 0, 100, 100);
+    // Two meeting at x 30: the shared edge stays
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(10, 10, 20, 10), Qt.rect(30, 10, 20, 10)], 0.5)), [[10.5, 10.5, 39, 9]]);
+    // An L
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(10, 10, 40, 4), Qt.rect(46, 14, 4, 6)], 0.25)), [[10.25, 10.25, 39.5, 3.5], [46.25, 13.75, 3.5, 0.5], [46.25, 14.25, 3.5, 5.5]]);
+    // By 0: as it is
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(10, 10, 20, 10)], 0)), [[10, 10, 20, 10]]);
+    // None
+    compare(Utils.insetUnion(bounds, [], 0.5), []);
+    // One reaching past bounds: its edge on bounds stays
+    compare(flat(Utils.insetUnion(bounds, [Qt.rect(90, 40, 20, 10)], 0.5)), [[90.5, 40.5, 9.5, 9]]);
+  }
+
   function test_temperatureSymbol() {
     compare(Utils.temperatureSymbol("celsius"), "°C");
     compare(Utils.temperatureSymbol("fahrenheit"), "°F");

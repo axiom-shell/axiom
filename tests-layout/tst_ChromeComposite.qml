@@ -109,8 +109,9 @@ TestCase {
       readonly property Item colorLayer: colorLoader.item
       readonly property Item alphaLayer: alphaLoader.item
       readonly property Item hold: hold
-      width: scene.lw
-      height: scene.lh
+      // (whole device px, as a window's size is: a capture's scale is then dpr)
+      width: Math.ceil(scene.lw * root.dpr) / root.dpr
+      height: Math.ceil(scene.lh * root.dpr) / root.dpr
 
       // Where the rect sources live
       Item {
@@ -1381,9 +1382,9 @@ TestCase {
         if (!on)
           return;
         const tip = end === 0 ? from : to;
-        // (a pixel whose centre is on the tip is half in the span: left out, as at end 0)
-        const along = end === 0 ? [tip - 2, tip] : [tip + 1e-6, tip + 2];
-        const box = band.vertical ? Qt.rect(a0, along[0], data.sw, 2) : Qt.rect(along[0], a0, 2, data.sw);
+        // (each takes the pixel centred on the tip, at end 0 by a hair past the box's open end: half in the span, it is the lower copy's, HoledCopy._tieInset)
+        const along = end === 0 ? [tip - 2, tip + 1e-6] : [tip, tip + 2];
+        const box = band.vertical ? Qt.rect(a0, along[0], data.sw, along[1] - along[0]) : Qt.rect(along[0], a0, along[1] - along[0], data.sw);
         root.eachDevicePixel(box, (xd, yd) => {
           seen++;
           root.near(cut.dpx(xd, yd), whole.dpx(xd, yd), `the stroke outside the span's end ${end} at device pixel ${xd},${yd}`);

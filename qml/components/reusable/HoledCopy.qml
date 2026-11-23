@@ -4,7 +4,7 @@ import QtQuick
 import qs.components.methods
 
 // A backing-window copy with its stroke left open in `holes` (rects in its
-// coordinates, whole px) and its fill kept there: `drawing` (fill and
+// coordinates, drawn in by a 64th of a px on their outer edges (`_tieInset`)) and its fill kept there: `drawing` (fill and
 // stroke) in the pieces of its area outside the holes, `fillOnly` in the
 // pieces inside them. The pieces are disjoint, so every pixel is drawn once,
 // by one piece, with the whole drawing's coverage; each is an `Item` that
@@ -20,8 +20,17 @@ Item {
 
   readonly property real _grow: Math.max(root.width, root.height)
   readonly property rect _area: Qt.rect(-root._grow, -root._grow, root.width + root._grow * 2, root.height + root._grow * 2)
-  readonly property var _outside: root.holes.length > 0 ? Utils.subtractRects(root._area, root.holes) : []
-  readonly property var _inside: root.holes.length > 0 ? Utils.subtractRects(root._area, root._outside) : []
+  // A hole's outer edges drawn in by a 64th of a px (a power of two, exact
+  // in float): Qt's scissor rounds a clip edge to the nearest device px,
+  // .5 up, through float matrices, so an edge on a .5 device px (a whole px
+  // at 1.25) gave its pixel to the hole at an end, where the joined
+  // surface's flat stroke cap leaves it too (a pixel's gap in the stroke),
+  // and two pieces meeting there could both draw a row or neither. Off the
+  // tie, every edge rounds one way: a pixel centred on a hole's edge is the
+  // drawing's, as with no hole
+  readonly property real _tieInset: 1 / 64
+  readonly property var _inside: root.holes.length > 0 ? Utils.insetUnion(root._area, root.holes, root._tieInset) : []
+  readonly property var _outside: root.holes.length > 0 ? Utils.subtractRects(root._area, root._inside) : []
 
   Loader {
     anchors.fill: parent

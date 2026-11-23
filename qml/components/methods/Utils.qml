@@ -343,4 +343,13 @@ QtObject {
     }
     return pieces;
   }
+
+  // The part of `bounds` that `rects` cover (subtractRects' rects), drawn in
+  // by `by` on every edge it has against the rest of `bounds`; edges where
+  // two of `rects` meet stay where they are. Disjoint Qt.rects, [] when
+  // nothing is covered.
+  function insetUnion(bounds, rects, by) {
+    const rest = root.subtractRects(bounds, rects).map(r => Qt.rect(r.x - by, r.y - by, r.width + by * 2, r.height + by * 2));
+    return root.subtractRects(bounds, rest);
+  }
 }
