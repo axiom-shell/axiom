@@ -4,13 +4,15 @@ import QtQuick
 import qs.components.methods
 
 // A backing-window copy with its stroke left open in `holes` (rects in its
-// coordinates, drawn in by a 64th of a px on their outer edges (`_tieInset`)) and its fill kept there: `drawing` (fill and
-// stroke) in the pieces of its area outside the holes, `fillOnly` in the
-// pieces inside them. The pieces are disjoint, so every pixel is drawn once,
-// by one piece, with the whole drawing's coverage; each is an `Item` that
-// clips, no layer. With no holes, `drawing` once, unclipped. The area is its
-// rect grown on every side, so nothing its drawing reaches past its rect is
-// lost. (HoledItem is the same job for a host, cutting all of its children.)
+// coordinates, drawn in by a 64th of a px on their outer edges
+// (`_tieInset`)) and its fill kept there: `drawing` (fill and stroke) in
+// the pieces of its area outside the holes, `fillOnly` in the pieces inside
+// them. The pieces are disjoint, so every pixel is drawn once, by one
+// piece, with the whole drawing's coverage; each is an `Item` that clips,
+// no layer. With no holes, `drawing` once, unclipped. The area is its rect
+// grown on every side, so nothing its drawing reaches past its rect is
+// lost. (HoledItem is the same job for a host, cutting all of its
+// children.)
 Item {
   id: root
 
