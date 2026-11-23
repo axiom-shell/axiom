@@ -1658,6 +1658,12 @@ TestCase {
         "fractionalCorners": true
       },
       {
+        "tag": "radius 6 inset 7.6 (every corner window on whole device px at 1.25)",
+        "radius": 6,
+        "inset": 7.6,
+        "fractionalCorners": true
+      },
+      {
         "tag": "radius 2 inset 8",
         "radius": 2,
         "inset": 8,
