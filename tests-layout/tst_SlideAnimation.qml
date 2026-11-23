@@ -137,6 +137,42 @@ TestCase {
     compare(s.slideY, 0);
   }
 
+  function test_sideOverflow_data() {
+    return [
+      {
+        "tag": "slides down, room beside it",
+        "props": {
+          "slideFromTop": true,
+          "overflow": 2,
+          "startOverflow": 3,
+          "endOverflow": 1
+        },
+        "want": [3, 0, 2, 2]
+      },
+      {
+        "tag": "slides sideways, room above and below",
+        "props": {
+          "slideFromLeft": true,
+          "startOverflow": 1,
+          "endOverflow": 1
+        },
+        "want": [0, 1, 0, 1]
+      },
+      {
+        "tag": "no side room",
+        "props": {
+          "slideFromBottom": true,
+          "overflow": 4
+        },
+        "want": [4, 4, 4, 0]
+      }
+    ];
+  }
+  function test_sideOverflow(data) {
+    const s = make(data.props);
+    compare([s._left, s._top, s._right, s._bottom], data.want);
+  }
+
   function test_firstOpenMatchesLater() {
     const s = make({
       "slideFromRight": true,

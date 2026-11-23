@@ -40,7 +40,7 @@ Every surface with an exposed border casts the shell's shadow. It uses the bars'
 - **Only the outline casts it,** not the content.
 
 ### Room for it
-- **Overflow:** `SlideAnimation.overflow` lets the shadow draw past the surface on every side except the one it slides from.
+- **Overflow:** `SlideAnimation.overflow` lets the shadow draw past the surface on every side except the one it slides from. A copy (`AttachedSurfaceCopy`) has no shadow, so `startOverflow`/`endOverflow` give it a pixel past a wall standing on its edge, for the wall's anti-aliased fringe.
   - That side's clip still hides the surface until it's out.
   - It also keeps the shadow off the bar the surface grows from.
 - **Window room:** each window keeps its look's reach of room for the shadow (`AttachedSurface.shadowReach`):

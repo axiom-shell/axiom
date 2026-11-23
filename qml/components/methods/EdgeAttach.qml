@@ -278,13 +278,28 @@ QtObject {
    * (every stroke-hole publisher reads it): the stroke's own width and the
    * anti-aliased fringe a pixel either side. `from` is the stroke's edge at
    * the smaller coordinate across it, as px; `start` is where the hole
-   * begins across, `size` how wide it is. Along the stroke the hole is the
-   * span the covering surface runs over.
+   * begins across, `size` how wide it is. Along the stroke: strokeHoleAlong.
    */
   function strokeHoleAcross(from, strokeWidth) {
     return {
       "start": from - 1,
       "size": strokeWidth + 2
+    };
+  }
+
+  /**
+   * Where a stroke hole lies along a stroke: the span the covering
+   * surface runs over (`start`, `end`), run on a pixel past an end of the
+   * stroked box (`boxStart`, `boxEnd`) it reaches, the anti-aliased
+   * fringe strokeHoleAcross takes across: there the covering surface's
+   * wall runs on from the box's own and draws that fringe itself. An end
+   * with no wall (a joined end) passes -Infinity or Infinity. Returns
+   * { start, end }.
+   */
+  function strokeHoleAlong(start, end, boxStart, boxEnd) {
+    return {
+      "start": start <= boxStart ? Math.min(start, boxStart - 1) : start,
+      "end": end >= boxEnd ? Math.max(end, boxEnd + 1) : end
     };
   }
 

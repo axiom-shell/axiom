@@ -806,17 +806,19 @@ Rectangle {
         color: root.backed ? "transparent" : BlurManager.fillOn(Style.surfacePage, root.blurScreen)
         // The stroke drawn by the one below, left open where a popout joins
         border.width: 0
-        // On the inner side, the stroke and its fringe under each opening: cut
-        // from its border while unbacked, and from its copy's
+        // On the inner side, the stroke and its fringe under each opening (a
+        // pixel past the island's wall where the opening reaches it,
+        // EdgeAttach.strokeHoleAlong): cut from its border while unbacked, and from its copy's
         readonly property var strokeHoles: root._openingList.map(o => {
           const along = root.isVertical ? island.y : island.x;
           const start = Math.max(0, o.start - along);
           const end = Math.min(root.isVertical ? island.height : island.width, o.end - along);
           if (end <= start)
             return null;
+          const run = EdgeAttach.strokeHoleAlong(start, end, 0, root.isVertical ? island.height : island.width);
           const sw = Appearance.borderWidth;
           const band = EdgeAttach.strokeHoleAcross(root.barConfig.left || root.barConfig.top ? (root.isVertical ? island.width : island.height) - sw : 0, sw);
-          return root.isVertical ? Qt.rect(band.start, start, band.size, end - start) : Qt.rect(start, band.start, end - start, band.size);
+          return root.isVertical ? Qt.rect(band.start, run.start, band.size, run.end - run.start) : Qt.rect(run.start, band.start, run.end - run.start, band.size);
         }).filter(hole => hole !== null)
 
         HoledItem {
@@ -957,8 +959,9 @@ Rectangle {
           container: pill.joinEnd ? root.solidEnd : null
           opening: root._solidJoinOf(pill, false, container)
         }
-        // The far stroke and its fringe under each opening (in the pill's
-        // coordinates), and a joined end's fillet where one reaches it: a
+        // The far stroke and its fringe under each opening (a pixel past the
+        // pill's wall where the opening reaches it, EdgeAttach.strokeHoleAlong)
+        // (in the pill's coordinates), and a joined end's fillet where one reaches it: a
         // surface joined to the same edge runs on down it, over the fillet
         // and, at a squared end a surface joins end-on (`coverFrom`), the
         // corner under its wall from where it covers the stroke; there the band
@@ -973,7 +976,8 @@ Rectangle {
             return [];
           const R = pill.filletRadius, h = pill.half, L = pill.alongLength;
           const joins = [];
-          let farStart = start, farEnd = end;
+          const run = EdgeAttach.strokeHoleAlong(start, end, pill.joinStart ? -Infinity : along + pill.startMargin, pill.joinEnd ? Infinity : along + L - pill.endMargin);
+          let farStart = run.start, farEnd = run.end;
           if (pill.joinStart && start <= along + 1)
             joins.push(pill._rectFrom(0, pill.farV - h - 1, h + R + 1, R + h + 2));
           if (pill.joinEnd && end >= along + L - 1)

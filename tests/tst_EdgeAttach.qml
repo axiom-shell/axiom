@@ -63,6 +63,36 @@ TestCase {
     compare(band.start + band.size / 2, data.from + data.width / 2);
   }
 
+  function test_strokeHoleAlong_data() {
+    return [
+      {
+        "tag": "inside the box",
+        "args": [10, 40, 5, 60],
+        "want": [10, 40]
+      },
+      {
+        "tag": "both walls",
+        "args": [5, 60, 5, 60],
+        "want": [4, 61]
+      },
+      {
+        "tag": "past the box already",
+        "args": [0, 66, 5, 60],
+        "want": [0, 66]
+      },
+      {
+        "tag": "no wall at the start",
+        "args": [5, 60, -Infinity, 60],
+        "want": [5, 61]
+      }
+    ];
+  }
+  function test_strokeHoleAlong(data) {
+    const run = EdgeAttach.strokeHoleAlong(...data.args);
+    compare(run.start, data.want[0]);
+    compare(run.end, data.want[1]);
+  }
+
   function test_filletMargin() {
     compare(EdgeAttach.filletMargin(2, 28), 27);
     // Too tight a radius for a fillet

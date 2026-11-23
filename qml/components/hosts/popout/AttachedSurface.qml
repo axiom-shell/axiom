@@ -438,6 +438,13 @@ Item {
 
     // Room for the shadow (and the row past a joined end, joinBackfill, which it covers)
     overflow: Math.max(root.shadowReach, root.joinBackfill)
+    // A copy draws its stroke: a pixel past a wall standing on its start
+    // or end edge (no fillet or join there: flush, straight), its
+    // anti-aliased fringe, which the clip cut at a fractional scale; never
+    // past a filleted end, whose stroke's cap there is the lower shape's
+    // pixel (HoledCopy). A host keeps its window's own clip
+    startOverflow: root.mirror && !root.detached && !root._natural.filletStart && !root.joinStart ? 1 : 0
+    endOverflow: root.mirror && !root.detached && !root._natural.filletEnd && !root.joinEnd ? 1 : 0
 
     // The shadow the outline casts, only outside it (none shows
     // through a translucent fill), from a copy of it filled (its own fill
@@ -614,7 +621,8 @@ Item {
           ShapePath {
             fillColor: "transparent"
             strokeColor: root._stroke
-            strokeWidth: root.strokeWidth
+            // Drawn a 64th in on each edge (Utils.tieInset): a CurveRenderer stroke whose edge is on a device pixel's centre draws that pixel full
+            strokeWidth: root.strokeWidth - Utils.tieInset * 2
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 

@@ -5,7 +5,7 @@ import qs.components.methods
 
 // A backing-window copy with its stroke left open in `holes` (rects in its
 // coordinates, drawn in by a 64th of a px on their outer edges
-// (`_tieInset`)) and its fill kept there: `drawing` (fill and stroke) in
+// (`Utils.tieInset`)) and its fill kept there: `drawing` (fill and stroke) in
 // the pieces of its area outside the holes, `fillOnly` in the pieces inside
 // them. The pieces are disjoint, so every pixel is drawn once, by one
 // piece, with the whole drawing's coverage; each is an `Item` that clips,
@@ -29,9 +29,8 @@ Item {
   // surface's flat stroke cap leaves it too (a pixel's gap in the stroke),
   // and two pieces meeting there could both draw a row or neither. Off the
   // tie, every edge rounds one way: a pixel centred on a hole's edge is the
-  // drawing's, as with no hole
-  readonly property real _tieInset: 1 / 64
-  readonly property var _inside: root.holes.length > 0 ? Utils.insetUnion(root._area, root.holes, root._tieInset) : []
+  // drawing's, as with no hole (`Utils.tieInset`)
+  readonly property var _inside: root.holes.length > 0 ? Utils.insetUnion(root._area, root.holes, Utils.tieInset) : []
   readonly property var _outside: root.holes.length > 0 ? Utils.subtractRects(root._area, root._inside) : []
 
   Loader {

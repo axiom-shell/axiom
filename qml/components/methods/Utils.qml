@@ -221,6 +221,13 @@ QtObject {
 
   readonly property real bytesPerGiB: 1073741824
 
+  // A 64th of a px (a power of two, exact in float): how far an edge is
+  // drawn in so it never lands on a device pixel's centre at a fractional
+  // scale, where Qt rounds a clip edge .5 up (HoledCopy's holes) and a
+  // CurveRenderer stroke gives the pixel its full coverage (AttachedSurface's
+  // outline)
+  readonly property real tieInset: 1 / 64
+
   // A transfer rate as [value, unit]: "B/s" to "GB/s", one decimal under
   // 10 (past bytes), e.g. [1.5, "MB/s"], [512, "KB/s"]
   function rateParts(bytesPerSecond) {

@@ -1425,7 +1425,7 @@ TestCase {
         if (!on)
           return;
         const tip = end === 0 ? from : to;
-        // (each takes the pixel centred on the tip, at end 0 by a hair past the box's open end: half in the span, it is the lower copy's, HoledCopy._tieInset)
+        // (each takes the pixel centred on the tip, at end 0 by a hair past the box's open end: half in the span, it is the lower copy's, Utils.tieInset)
         const along = end === 0 ? [tip - 2, tip + 1e-6] : [tip, tip + 2];
         const box = band.vertical ? Qt.rect(a0, along[0], data.sw, along[1] - along[0]) : Qt.rect(along[0], a0, along[1] - along[0], data.sw);
         root.eachDevicePixel(box, (xd, yd) => {
@@ -1811,6 +1811,158 @@ TestCase {
     root.near(px.dpx(100, 251), full, "the horizontal line's device pixel");
     root.near(px.dpx(100, 250), nothing, "its upper neighbour");
     root.near(px.dpx(100, 252), nothing, "its lower neighbour");
+  }
+
+  // A straight wall whose stroke edge lands on a device pixel's centre draws its width, as one that doesn't (the CurveRenderer tie, Utils.tieInset)
+  function test_stroke_width_on_a_pixel_centre_data() {
+    return [
+      {
+        "tag": "stroke 2",
+        "sw": 2
+      },
+      {
+        "tag": "stroke 1",
+        "sw": 1
+      }
+    ];
+  }
+  function test_stroke_width_on_a_pixel_centre(data) {
+    if (root.dpr !== 1.25)
+      skip("scale 1.25 row");
+    root.needsGpuAtFractional();
+    root.setStroke(data.sw);
+    const src = root.placed({
+      "boxWidth": 61,
+      "boxHeight": 40
+    }, 0, 5);
+    root.settle([src]);
+    src.x = 21 - src.boxRect.x;
+    const left = src.x + src.boxRect.x, right = left + src.boxRect.width;
+    compare(right * 1.25 % 1, 0.5, "the right wall's outer edge is on a device pixel's centre");
+    const px = root.render([root.attachedSpec(src, "surface", {
+        "c": Qt.rgba(0, 0, 0, 1),
+        "a": 0
+      }, root.line(1))]);
+    const top = src.y + src.boxRect.y + src.filletRadius + 3, bottom = src.y + src.boxRect.y + src.boxRect.height - src.filletRadius - 3;
+    for (const wall of [left, right - data.sw]) {
+      for (let yd = Math.ceil(top * 1.25); yd < bottom * 1.25; yd++) {
+        let sum = 0;
+        for (let xd = Math.floor((wall - 1) * 1.25); xd < Math.ceil((wall + data.sw + 1) * 1.25); xd++)
+          sum += px.dpx(xd, yd).r / 0.9;
+        verify(Math.abs(sum - data.sw * 1.25) <= 0.1, `wall at ${wall}, device row ${yd}: drawn ${sum.toFixed(3)} device px wide, not ${data.sw * 1.25}`);
+      }
+    }
+  }
+
+  // A popout flush on a pill (or island) stretched to its box, its walls starting at the band's top as t2's do on Hyprland: each wall draws the same width on every device row, the pill's, the band's and the popout's (the band runs a pixel past a wall it reaches, EdgeAttach.strokeHoleAlong; a copy's clip keeps its wall's fringe, SlideAnimation.startOverflow)
+  function test_flush_walls_device_pixels_data() {
+    return [
+      {
+        "tag": "pill, stroke 2",
+        "kind": "pill",
+        "sw": 2,
+        "left": 23,
+        "w": 63
+      },
+      {
+        "tag": "pill, stroke 1",
+        "kind": "pill",
+        "sw": 1,
+        "left": 23,
+        "w": 63
+      },
+      {
+        "tag": "pill, stroke 2, start wall on a tie",
+        "kind": "pill",
+        "sw": 2,
+        "left": 22,
+        "w": 61
+      },
+      {
+        "tag": "island, stroke 2",
+        "kind": "island",
+        "sw": 2,
+        "left": 22,
+        "w": 61
+      }
+    ];
+  }
+  function test_flush_walls_device_pixels(data) {
+    if (root.dpr !== 1.25)
+      skip("scale 1.25 row");
+    root.needsGpuAtFractional();
+    root.setStroke(data.sw);
+    const black = {
+      "c": Qt.rgba(0, 0, 0, 1),
+      "a": 0
+    };
+    let pop, lower, top;
+    if (data.kind === "pill") {
+      const pill = root.placed({
+        "boxWidth": data.w,
+        "boxHeight": 18,
+        "startCornerRadius": 0,
+        "endCornerRadius": 0
+      }, 0, 4);
+      const across = EdgeAttach.strokeHoleAcross(pill.farV - pill.half, pill.strokeWidth);
+      pop = root.placed({
+        "boxWidth": data.w,
+        "boxHeight": 40,
+        "flushStart": true,
+        "flushEnd": true
+      }, 0, 4 + across.start);
+      root.settle([pill, pop]);
+      pill.x = data.left - pill.boxRect.x;
+      pop.x = data.left - pop.boxRect.x;
+      const along = EdgeAttach.strokeHoleAlong(pop.x + pop.coverStart - pill.x, pop.x + pop.coverStart + pop.coverLength - pill.x, pill.startMargin, pill.alongLength - pill.endMargin);
+      lower = root.attachedSpec(pill, "bar", black, root.line(1), [pill._rectFrom(along.start, across.start, along.end - along.start, across.size)]);
+      top = pill.y + pill.boxRect.y + pill.filletRadius + 3;
+    } else {
+      const iy = 4, ih = 18;
+      const across = EdgeAttach.strokeHoleAcross(ih - data.sw, data.sw);
+      pop = root.placed({
+        "boxWidth": data.w,
+        "boxHeight": 40,
+        "flushStart": true,
+        "flushEnd": true
+      }, 0, iy + across.start);
+      root.settle([pop]);
+      pop.x = data.left - pop.boxRect.x;
+      const along = EdgeAttach.strokeHoleAlong(0, data.w, 0, data.w);
+      lower = {
+        "kind": "rect",
+        "level": "bar",
+        "x": data.left,
+        "y": iy,
+        "w": data.w,
+        "h": ih,
+        "fill": {
+          "c": Qt.rgba(0, 0, 0, 1),
+          "a": 1
+        },
+        "stroke": root.line(1),
+        "holes": [Qt.rect(along.start, across.start, along.end - along.start, across.size)]
+      };
+      top = iy + across.start;
+    }
+    const px = root.render([lower, root.attachedSpec(pop, "surface", black, root.line(1))], {
+      "w": 120,
+      "h": 80
+    });
+    const bottom = pop.y + pop.boxRect.y + pop.boxRect.height - pop.filletRadius - 3;
+    for (const wall of [data.left, data.left + data.w - data.sw]) {
+      const sumAt = yd => {
+        let sum = 0;
+        for (let xd = Math.floor((wall - 1) * 1.25); xd < Math.ceil((wall + data.sw + 1) * 1.25); xd++)
+          sum += px.dpx(xd, yd).r / 0.9;
+        return sum;
+      };
+      const ref = sumAt(Math.floor(bottom * 1.25) - 1);
+      for (let yd = Math.ceil(top * 1.25); yd < bottom * 1.25; yd++) {
+        const sum = sumAt(yd);
+        verify(Math.abs(sum - ref) <= 0.05, `${data.kind} wall at ${wall}, device row ${yd}: drawn ${sum.toFixed(3)} device px wide, ${ref.toFixed(3)} below the band`);
+      }
+    }
   }
 
   // ---- a detached box (diag-live-1 F11) ----

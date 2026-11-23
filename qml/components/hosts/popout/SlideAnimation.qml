@@ -29,20 +29,29 @@ Item {
   // every side but the one it slides in from: only that side
   // is cut, hiding the content until it has slid out
   property real overflow: 0
+  // At least this much room past its start or end side beside its slide
+  // (left and right when it slides up or down, top and bottom when it
+  // slides sideways): a copy's wall standing on that edge, whose
+  // anti-aliased fringe lies past it (AttachedSurface)
+  property real startOverflow: 0
+  property real endOverflow: 0
   // Where the content is, from its place, as it slides (the blur window
   // draws a copy there, see BlurShape)
   readonly property real slideX: contentWrapper.slideX
   readonly property real slideY: contentWrapper.slideY
-  readonly property real _left: root.slideFromLeft ? 0 : root.overflow
-  readonly property real _top: root.slideFromTop ? 0 : root.overflow
+  readonly property bool _sideways: root.slideFromLeft || root.slideFromRight
+  readonly property real _left: root.slideFromLeft ? 0 : Math.max(root.overflow, root._sideways ? 0 : root.startOverflow)
+  readonly property real _top: root.slideFromTop ? 0 : Math.max(root.overflow, root._sideways ? root.startOverflow : 0)
+  readonly property real _right: root.slideFromRight ? 0 : Math.max(root.overflow, root._sideways ? 0 : root.endOverflow)
+  readonly property real _bottom: root.slideFromBottom ? 0 : Math.max(root.overflow, root._sideways ? root.endOverflow : 0)
 
   Item {
     id: clipper
     clip: true
     x: -root._left
     y: -root._top
-    width: root.width + root._left + (root.slideFromRight ? 0 : root.overflow)
-    height: root.height + root._top + (root.slideFromBottom ? 0 : root.overflow)
+    width: root.width + root._left + root._right
+    height: root.height + root._top + root._bottom
 
     Item {
       id: contentWrapper
