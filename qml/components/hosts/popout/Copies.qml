@@ -222,6 +222,8 @@ Item {
                 fillColor: "transparent"
                 strokeColor: slot.stroke
                 strokeWidth: frame.src?.strokeWidth ?? 0
+                capStyle: ShapePath.FlatCap
+                joinStyle: ShapePath.MiterJoin
 
                 PathSvg {
                   path: slot.stroke.a > 0 ? (frame.src?.innerPath(frame.width, frame.height, frame.src.strokeWidth / 2) ?? "") : ""

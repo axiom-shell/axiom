@@ -24,7 +24,7 @@ Item {
   property color innerStrokeColor: Style.frameStroke
   property int strokeWidth: Appearance.borderWidth
   // The corner's curve plus its stroke
-  readonly property int cornerSize: root.innerBorderRadius + root.strokeWidth
+  readonly property int cornerSize: FrameOutline.cornerSize(root._spec)
 
   // Corners sit in the space left once every edge is reserved, so bars
   // or a dock inside the border (reserving their own space) would push
@@ -69,100 +69,33 @@ Item {
   readonly property real innerTop: root.outerTop + root.innerInset("top")
   readonly property real innerRight: root.outerRight + root.innerInset("right")
   readonly property real innerBottom: root.outerBottom + root.innerInset("bottom")
-  readonly property real innerRadius: Math.max(0, root.innerBorderRadius - root.strokeWidth)
+  // What FrameOutline reads: this frame's settings, and this screen's border openings
+  readonly property var _spec: ({
+      "width": root.screen?.width ?? 0,
+      "height": root.screen?.height ?? 0,
+      "outerLeft": root.outerLeft,
+      "outerTop": root.outerTop,
+      "outerRight": root.outerRight,
+      "outerBottom": root.outerBottom,
+      "innerLeft": root.innerLeft,
+      "innerTop": root.innerTop,
+      "innerRight": root.innerRight,
+      "innerBottom": root.innerBottom,
+      "innerBorderRadius": root.innerBorderRadius,
+      "strokeWidth": root.strokeWidth
+    })
+  readonly property var _openings: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? ""))
   // The stroke's inner side, round the corner pieces' arcs, as an SVG
   // subpath in a window of w × h over the screen; or `out` px further out
-  // (edges, and the radius with them: the corner pieces' own arc, which at
-  // half a stroke is CornerPiece.arcRadius, the stroke's centre line)
+  // (FrameOutline.innerPath)
   function innerPath(w, h, out) {
-    const o = out ?? 0;
-    const x0 = root.innerLeft - o, y0 = root.innerTop - o, x1 = w - root.innerRight + o, y1 = h - root.innerBottom + o;
-    const r = Math.max(0, Math.min(root.innerBorderRadius - root.strokeWidth + o, (x1 - x0) / 2, (y1 - y0) / 2));
-    return `M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z`;
+    return FrameOutline.innerPath(root._spec, w, h, out);
   }
-  // A corner piece's box on screen: where its stroke starts out from the
-  // frame's inner side, past the integrated menus' strips
-  // (cornerMargin is taken from what they reserve)
-  function _cornerBox(isLeft, isTop) {
-    const x = isLeft ? root.innerLeft - root.strokeWidth : (root.screen?.width ?? 0) - root.innerRight + root.strokeWidth - root.cornerSize;
-    const y = isTop ? root.innerTop - root.strokeWidth : (root.screen?.height ?? 0) - root.innerBottom + root.strokeWidth - root.cornerSize;
-    return Qt.rect(x, y, root.cornerSize, root.cornerSize);
-  }
-  // Whether a border opening runs across a corner's piece, along the edge
-  // the piece is on or the perpendicular one (a surface joined to the
-  // stroke runs on into it): the piece is left open there
-  function _cornerCovered(isLeft, isTop) {
-    const name = root.screen?.name ?? "";
-    const box = root._cornerBox(isLeft, isTop);
-    return SurfaceManager.borderOpenings.some(o => o.screen === name && (o.edge === (isTop ? "top" : "bottom") && root._spans(o, box.x, isLeft) || o.edge === (isLeft ? "left" : "right") && root._spans(o, box.y, isTop)));
-  }
-  // Whether opening `o` runs across the piece (at `at` along its edge) from
-  // its stroke on, the piece being at the edge's start or not
-  function _spans(o, at, atStart) {
-    return atStart ? o.start <= at + root.strokeWidth + 1 && o.end >= at + root.cornerSize : o.end >= at + root.cornerSize - root.strokeWidth - 1 && o.start <= at;
-  }
-  // Where the stroke is left open under what joins it (screen px, the
-  // frame copy's coordinates, as AttachedSurface.strokeHoles): each border
-  // opening's band, the stroke's rows along it with their anti-aliased
-  // fringe a pixel either side (EdgeAttach.strokeHoleAcross), less the corner boxes
-  // (where the strips' strokes stop: an arc no opening spans stays), and
-  // each covered corner's box
-  readonly property var strokeHoles: {
-    const name = root.screen?.name ?? "";
-    const w = root.screen?.width ?? 0, h = root.screen?.height ?? 0;
-    const corners = [
-      {
-        "isLeft": true,
-        "isTop": true
-      },
-      {
-        "isLeft": false,
-        "isTop": true
-      },
-      {
-        "isLeft": true,
-        "isTop": false
-      },
-      {
-        "isLeft": false,
-        "isTop": false
-      }
-    ];
-    const boxes = corners.map(c => root._cornerBox(c.isLeft, c.isTop));
-    const bands = SurfaceManager.borderOpenings.filter(o => o.screen === name).map(o => {
-      const sw = root.strokeWidth, length = o.end - o.start;
-      switch (o.edge) {
-      case "top":
-        {
-          const band = EdgeAttach.strokeHoleAcross(root.innerTop - sw, sw);
-          return Qt.rect(o.start, band.start, length, band.size);
-        }
-      case "bottom":
-        {
-          const band = EdgeAttach.strokeHoleAcross(h - root.innerBottom, sw);
-          return Qt.rect(o.start, band.start, length, band.size);
-        }
-      case "left":
-        {
-          const band = EdgeAttach.strokeHoleAcross(root.innerLeft - sw, sw);
-          return Qt.rect(band.start, o.start, band.size, length);
-        }
-      default:
-        {
-          const band = EdgeAttach.strokeHoleAcross(w - root.innerRight, sw);
-          return Qt.rect(band.start, o.start, band.size, length);
-        }
-      }
-    });
-    return [].concat(...bands.map(band => Utils.subtractRects(band, boxes)), corners.filter(c => root._cornerCovered(c.isLeft, c.isTop)).map(c => root._cornerBox(c.isLeft, c.isTop)));
-  }
-  // The frame, filled odd-even: from the window's edges, or from past the
-  // integrated menus' strips (`fromMenus`, as the blur window fills it),
-  // to innerPath
+  // Where the stroke is left open under what joins it (FrameOutline.strokeHoles)
+  readonly property var strokeHoles: FrameOutline.strokeHoles(root._spec, root._openings)
+  // The frame, filled odd-even, to innerPath (FrameOutline.framePath)
   function framePath(w, h, fromMenus) {
-    const x0 = fromMenus ? root.outerLeft : 0, y0 = fromMenus ? root.outerTop : 0;
-    const x1 = w - (fromMenus ? root.outerRight : 0), y1 = h - (fromMenus ? root.outerBottom : 0);
-    return `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z ` + root.innerPath(w, h);
+    return FrameOutline.framePath(root._spec, w, h, fromMenus);
   }
 
   BlurShape {
@@ -398,12 +331,12 @@ Item {
       // Where it is on screen: a stroke out from the frame's inner side,
       // past the integrated edge menus (cornerMargin is taken from what
       // they reserve)
-      readonly property real _x: root._cornerBox(corner.isLeft, corner.isTop).x
-      readonly property real _y: root._cornerBox(corner.isLeft, corner.isTop).y
+      readonly property real _x: FrameOutline.cornerBox(root._spec, corner.isLeft, corner.isTop).x
+      readonly property real _y: FrameOutline.cornerBox(root._spec, corner.isLeft, corner.isTop).y
       // A surface joined to the stroke runs into the perpendicular edge over
       // it (a pill joined to it, SurfaceManager.borderOpenings): the corner
       // is left open there as the strips are, its fill no longer hiding it
-      readonly property bool covered: root._cornerCovered(corner.isLeft, corner.isTop)
+      readonly property bool covered: FrameOutline.cornerCovered(root._spec, root._openings, corner.isLeft, corner.isTop)
       onCoveredChanged: cornerNudge.burst()
       FrameNudge {
         id: cornerNudge

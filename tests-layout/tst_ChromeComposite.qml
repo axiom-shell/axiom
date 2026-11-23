@@ -35,7 +35,8 @@ TestCase {
   readonly property real dpr: root.Window.window?.devicePixelRatio ?? 1
   // A GPU-backed scene graph: the real ChromeComposite draws
   readonly property bool gpu: GraphicsInfo.api !== GraphicsInfo.Software
-  readonly property real tol: 2 / 255
+  // The tolerance, in 8-bit levels (a grab's unit)
+  readonly property int tol: 2
 
   Harness {
     id: harness
@@ -309,9 +310,21 @@ TestCase {
     return root.capture(root.makeScene(specs, opts));
   }
 
+  // A difference of two grabbed values (0-1) in 8-bit levels. The grabs are
+  // whole levels, and |a/255 - b/255| against n/255 in float misreads a
+  // difference of exactly n levels as more
+  function levels(d) {
+    return Math.round(Math.abs(d) * 255);
+  }
+
+  // The most any channel of two grabbed pixels differs, in levels
+  function pixelOff(c, w) {
+    return Math.max(...["r", "g", "b", "a"].map(k => root.levels(c[k] - w[k])));
+  }
+
   function near(got, want, what) {
     for (const k of ["r", "g", "b", "a"])
-      verify(Math.abs(got[k] - want[k]) <= root.tol, `${what}: ${k} ${got[k].toFixed(4)} vs ${want[k].toFixed(4)}`);
+      verify(root.levels(got[k] - want[k]) <= root.tol, `${what}: ${k} ${got[k].toFixed(4)} vs ${want[k].toFixed(4)}`);
   }
 
   // A stroke `s` (colour, alpha) over what `under` holds (premultiplied)
@@ -601,7 +614,7 @@ TestCase {
           continue;
         const c = scenes.cut.px(x, y), w = scenes.whole.px(x, y);
         count++;
-        if (Math.max(Math.abs(c.r - w.r), Math.abs(c.g - w.g), Math.abs(c.b - w.b), Math.abs(c.a - w.a)) > 1 / 255)
+        if (root.pixelOff(c, w) > 1)
           off++;
       }
     }
@@ -640,7 +653,7 @@ TestCase {
           continue;
         const c = cut.dpx(xd, yd), w = whole.dpx(xd, yd);
         count++;
-        if (Math.max(Math.abs(c.r - w.r), Math.abs(c.g - w.g), Math.abs(c.b - w.b), Math.abs(c.a - w.a)) > 1 / 255) {
+        if (root.pixelOff(c, w) > 1) {
           off++;
           if (first.length < 8)
             first.push(`${xd},${yd} (a ${c.a.toFixed(3)} vs ${w.a.toFixed(3)}, r ${c.r.toFixed(3)} vs ${w.r.toFixed(3)})`);
@@ -648,8 +661,6 @@ TestCase {
       }
     }
     verify(count > 1000);
-    // (S2-u2 confirmed: the stack's review expects this to fail until the pieces are placed on device pixels)
-    expectFail("", "a device pixel outside the holes differs from the no-hole scene under a fractional copy origin");
     compare(off, 0, `${off} of ${count} device pixels differ from the scene with no holes, first at ${first.join(" ")}`);
   }
 
@@ -1067,24 +1078,36 @@ TestCase {
     };
   }
 
-  // The frame's fixture source (RoundedBorders' contract: `strokeWidth`,
-  // `strokeHoles`, `framePath`, `innerPath`), literal for the 160 x 100 screen
-  // with a sharp 10 px border: the stroke along the inner edge, inside the frame
+  // The frame's fixture source, carrying RoundedBorders' contract
+  // (`strokeWidth`, `strokeHoles`, `framePath`, `innerPath`), its geometry
+  // FrameOutline's for a 160 x 100 screen with a 10 px border. At radius 0
+  // that is a sharp border: the stroke along the inner edge, inside the frame
   Component {
     id: frameComp
 
     Item {
       readonly property real strokeWidth: Appearance.borderWidth
       property var strokeHoles: []
-      readonly property var strokePaths: ({
-          "1": "M 9.5 9.5 H 150.5 V 90.5 H 9.5 Z",
-          "2": "M 9 9 H 151 V 91 H 9 Z"
+      property real radius: 0
+      readonly property var spec: ({
+          "width": 160,
+          "height": 100,
+          "outerLeft": 0,
+          "outerTop": 0,
+          "outerRight": 0,
+          "outerBottom": 0,
+          "innerLeft": 10,
+          "innerTop": 10,
+          "innerRight": 10,
+          "innerBottom": 10,
+          "innerBorderRadius": radius,
+          "strokeWidth": strokeWidth
         })
       function framePath(w, h, fromMenus) {
-        return "M 0 0 H 160 V 100 H 0 Z M 10 10 H 150 V 90 H 10 Z";
+        return FrameOutline.framePath(spec, w, h, fromMenus);
       }
       function innerPath(w, h, out) {
-        return strokePaths[String(strokeWidth)];
+        return FrameOutline.innerPath(spec, w, h, out);
       }
     }
   }
@@ -1114,7 +1137,7 @@ TestCase {
     for (let i = 1; i < values.length - 1; i++) {
       for (const k of ["r", "g", "b", "a"]) {
         const up = values[i][k] - values[i - 1][k], down = values[i][k] - values[i + 1][k];
-        verify(up * down <= 0 || Math.min(Math.abs(up), Math.abs(down)) <= root.tol, `${what}: ${k} ${values[i][k].toFixed(4)} between ${values[i - 1][k].toFixed(4)} and ${values[i + 1][k].toFixed(4)}`);
+        verify(up * down <= 0 || root.levels(Math.min(Math.abs(up), Math.abs(down))) <= root.tol, `${what}: ${k} ${values[i][k].toFixed(4)} between ${values[i - 1][k].toFixed(4)} and ${values[i + 1][k].toFixed(4)}`);
       }
     }
   }
@@ -1267,6 +1290,147 @@ TestCase {
     const cut = root.render([edge, clipped]);
     root.eachPixel(Qt.rect(dock.x + 41, 0, 30, 60), (x, y) => root.near(cut.px(x, y), alone.px(x, y), `past the cut, the frame alone at ${x},${y}`));
     root.eachPixel(Qt.rect(0, 0, dock.x + 39, 60), (x, y) => root.near(cut.px(x, y), whole.px(x, y), `inside the cut, as uncut at ${x},${y}`));
+  }
+
+  // ---- the frame's corner arcs (FrameOutline) ----
+
+  // Every device pixel whose centre falls in `box` (logical px)
+  function eachDevicePixel(box, visit) {
+    const first = v => Math.ceil(v * root.dpr - 0.5);
+    for (let yd = first(box.y); (yd + 0.5) / root.dpr < box.y + box.height; yd++) {
+      for (let xd = first(box.x); (xd + 0.5) / root.dpr < box.x + box.width; xd++)
+        visit(xd, yd);
+    }
+  }
+
+  // The frame's top-left corner box (8, 8, 10 x 10: radius 8, stroke 2) with
+  // an opening along the top edge. Uncovered (it starts at 14, inside the
+  // box, short of spanning it): the arc stays, as with no opening. Covered (it
+  // starts at 8, the box's start): the box is left open, no arc. The left
+  // stroke just below the box stays either way
+  function test_frame_corners_data() {
+    return [
+      {
+        "tag": "uncovered",
+        "start": 14,
+        "covered": false
+      },
+      {
+        "tag": "covered",
+        "start": 8,
+        "covered": true
+      }
+    ];
+  }
+  function test_frame_corners(data) {
+    root.needsGpuAtFractional();
+    if (!root.gpu)
+      skip("software scene graph: a clipped Shape is drawn wrong (run under xvfb with llvmpipe)");
+    root.setStroke(2);
+    const frame = frameComp.createObject(sources);
+    frame.radius = 8;
+    const holes = FrameOutline.strokeHoles(frame.spec, [
+      {
+        "edge": "top",
+        "start": data.start,
+        "end": 60
+      }
+    ]);
+    const box = FrameOutline.cornerBox(frame.spec, true, true);
+    const sceneOf = (stroke, h) => root.render([root.frameSpec(frame, root.blue, stroke, h)]);
+    const plain = sceneOf(root.line(1), []);
+    const bare = sceneOf(null, []);
+    const opened = sceneOf(root.line(1), holes);
+    let shows = false;
+    root.eachDevicePixel(box, (xd, yd) => {
+      const want = data.covered ? bare.dpx(xd, yd) : plain.dpx(xd, yd);
+      root.near(opened.dpx(xd, yd), want, `the corner box, device pixel ${xd},${yd}`);
+      if (Math.abs(plain.dpx(xd, yd).a - bare.dpx(xd, yd).a) > 0.05)
+        shows = true;
+    });
+    verify(shows, "the no-opening scene's stroke shows in the box");
+    root.near(opened.px(9, 25), plain.px(9, 25), "the left stroke below the box");
+  }
+
+  // The frame's corner is the corner piece's: at radius 0 and 1 (stroke 2),
+  // the frame copy's stroke over black equals a real CornerPiece's in the
+  // stroke's outer quarter at the corner, where the arc's radius and the join
+  // alone decide coverage. Further in, the piece's flat-capped ends stop at
+  // its box, where on screen the strips' strokes take over.
+  Component {
+    id: pieceSceneComp
+
+    Item {
+      id: pieceScene
+      property rect box
+      property color strokeColor
+      property real radius: 0
+      width: 160
+      height: 100
+      Rectangle {
+        anchors.fill: parent
+        color: "black"
+      }
+      Item {
+        x: pieceScene.box.x
+        y: pieceScene.box.y
+        width: pieceScene.box.width
+        height: pieceScene.box.height
+        CornerPiece {
+          borderRadius: pieceScene.radius
+          strokeWidth: 2
+          fillColor: "transparent"
+          strokeColor: pieceScene.strokeColor
+          isLeft: true
+          isTop: true
+        }
+      }
+    }
+  }
+  function test_frame_corner_is_the_corner_piece_data() {
+    return [
+      {
+        "tag": "radius 0",
+        "radius": 0
+      },
+      {
+        "tag": "radius 1",
+        "radius": 1
+      }
+    ];
+  }
+  function test_frame_corner_is_the_corner_piece(data) {
+    root.needsGpuAtFractional();
+    root.setStroke(2);
+    const frame = frameComp.createObject(sources);
+    frame.radius = data.radius;
+    const stroke = root.line(1);
+    const box = FrameOutline.cornerBox(frame.spec, true, true);
+    const frameScene = root.render([root.frameSpec(frame, {
+        "c": root.blue.c,
+        "a": 0
+      }, stroke, [])]);
+    const pieceScene = createTemporaryObject(pieceSceneComp, root, {
+      "box": box,
+      "strokeColor": root.strokeColor(stroke),
+      "radius": data.radius
+    });
+    waitForRendering(pieceScene);
+    const piece = grabImage(pieceScene);
+    const s = frame.strokeWidth;
+    let seen = 0;
+    root.eachDevicePixel(Qt.rect(box.x, box.y, s / 2, s / 2), (xd, yd) => {
+      seen++;
+      const want = {
+        "r": piece.red(xd, yd) / 255,
+        "g": piece.green(xd, yd) / 255,
+        "b": piece.blue(xd, yd) / 255
+      };
+      const got = frameScene.dpx(xd, yd);
+      for (const k of ["r", "g", "b"])
+        verify(root.levels(got[k] - want[k]) <= root.tol, `device pixel ${xd},${yd}: ${k} ${got[k].toFixed(4)} (frame) vs ${want[k].toFixed(4)} (corner piece)`);
+    });
+    verify(seen > 0, "no device pixel in the corner's outer quarter");
   }
 
   // ---- a fill's anti-aliased edge, and a non-whole logical size ----

@@ -341,9 +341,6 @@ func (t *Tables) BlurLua(surfaces any) []string {
 		if x := rule.Value("xray"); x != nil {
 			effects = append(effects, "xray = "+str(x))
 		}
-		if isTrue(rule.Value("noAnim")) {
-			effects = append(effects, "no_anim = true")
-		}
 		out = append(out, "hl.layer_rule({ name = "+LuaString(rule.Value("name"))+", match = { namespace = "+
 			LuaString("^axiom-("+strings.Join(stringList(rule.Value("namespaces")), "|")+")$")+" }, "+strings.Join(effects, ", ")+
 			", enabled = "+str(rule.Value("on"))+" })")

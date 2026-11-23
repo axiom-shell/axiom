@@ -1,6 +1,6 @@
 # Bars and the screen border: layering and corners
 
-> **Files:** `qml/shell/Bar.qml`, `qml/shell/ScreenBorder.qml`, `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/reusable/CornerPiece.qml`, `qml/components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/CornerMerge.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/services/ui/ScreenEdgeManager.qml`, `qml/services/compositor/HyprlandManager.qml`
+> **Files:** `qml/shell/Bar.qml`, `qml/shell/ScreenBorder.qml`, `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/methods/FrameOutline.qml`, `tests/tst_FrameOutline.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/reusable/CornerPiece.qml`, `qml/components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/CornerMerge.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/services/ui/ScreenEdgeManager.qml`, `qml/services/compositor/HyprlandManager.qml`
 > **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `BarsConfig.enrichBarConfig`, not config keys.)
 > **Related:** [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Surface context](../popouts/surface-context.md), [Widget shapes](widget-shapes-runs.md)
 
@@ -11,6 +11,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 ### The border
 - `Appearance.screenBorder` turns the border off.
 - The border is `qml/shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
+- The frame's geometry (the stroke's inner path, the corner pieces' boxes, which corners an opening covers, the stroke holes) is `FrameOutline`, read by `RoundedBorders` and the layout test.
 
 ### Solid bar (`Bars.items[].surface: "bar"`)
 - It is on the Top layer, at the screen edge.
