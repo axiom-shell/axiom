@@ -11,7 +11,7 @@ Filled by: the lead, as `pr-body.md` (`pr-body-<n>.md` per PR of a stack) in the
 ## Live checks              the LIVE: lines
 ## Not run, weak or inconclusive
 ## Changed pieces           users and the check that covered each
-## Rulings                  R<n> and defaults taken
+## Rulings                  each ruling and default taken, in plain technical terms: no R/D ids, step, plan or question ids, no plan quotes
 <the session's attribution line>
 ```
 

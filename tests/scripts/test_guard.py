@@ -786,6 +786,26 @@ class GroupModeText(unittest.TestCase):
     def test_title_rule(self):
         self.assertIn("<series> <n>/<m>: <subject>", ORCHESTRATE.read_text())
 
+    def test_generic_words(self):
+        words = ["final" + "-shape", "axiom" + "-notes", "systems" + "/", "pack" + "et"]
+        files = [
+            ORCHESTRATE,
+            REPO / ".claude/skills/keep-order/SKILL.md",
+            REPO / ".claude/skills/review-branch/SKILL.md",
+            *sorted((REPO / ".claude/templates").glob("*.md")),
+        ]
+        for path in files:
+            text = path.read_text()
+            for word in words:
+                self.assertNotIn(word, text, path.name)
+
+    def test_rulings_line(self):
+        line = next(
+            line for line in (REPO / ".claude/templates/pr-body.md").read_text().splitlines()
+            if line.startswith("## Rulings")
+        )
+        self.assertIsNone(re.search(r"\bR(<n>|\d+\b)", line), line)
+
 
 if __name__ == "__main__":
     unittest.main()
