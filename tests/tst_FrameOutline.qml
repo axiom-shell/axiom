@@ -35,20 +35,41 @@ TestCase {
   }
 
   function test_innerPath() {
-    compare(FrameOutline.innerPath(spec({}), 160, 100, 1), "M 16 9 L 144 9 A 7 7 0 0 1 151 16 L 151 84 A 7 7 0 0 1 144 91 L 16 91 A 7 7 0 0 1 9 84 L 9 16 A 7 7 0 0 1 16 9 Z");
+    compare(FrameOutline.innerPath(spec({}), 160, 100), "M 16 10 L 144 10 A 6 6 0 0 1 150 16 L 150 84 A 6 6 0 0 1 144 90 L 16 90 A 6 6 0 0 1 10 84 L 10 16 A 6 6 0 0 1 16 10 Z");
   }
 
-  // Radius 0 and 1 with stroke 2: the arc's radius is 0 at the stroke's
-  // outer side (R45)
+  // Radius 0 and 1 with stroke 2: the arc's radius is 0 (R45)
   function test_innerPath_radius_0() {
     compare(FrameOutline.innerPath(spec({
       "innerBorderRadius": 0
-    }), 160, 100, 1), "M 9 9 L 151 9 A 0 0 0 0 1 151 9 L 151 91 A 0 0 0 0 1 151 91 L 9 91 A 0 0 0 0 1 9 91 L 9 9 A 0 0 0 0 1 9 9 Z");
+    }), 160, 100), "M 10 10 L 150 10 A 0 0 0 0 1 150 10 L 150 90 A 0 0 0 0 1 150 90 L 10 90 A 0 0 0 0 1 10 90 L 10 10 A 0 0 0 0 1 10 10 Z");
   }
   function test_innerPath_radius_1() {
     compare(FrameOutline.innerPath(spec({
       "innerBorderRadius": 1
-    }), 160, 100, 1), "M 9 9 L 151 9 A 0 0 0 0 1 151 9 L 151 91 A 0 0 0 0 1 151 91 L 9 91 A 0 0 0 0 1 9 91 L 9 9 A 0 0 0 0 1 9 9 Z");
+    }), 160, 100), "M 10 10 L 150 10 A 0 0 0 0 1 150 10 L 150 90 A 0 0 0 0 1 150 90 L 10 90 A 0 0 0 0 1 10 90 L 10 10 A 0 0 0 0 1 10 10 Z");
+  }
+
+  // A non-AA Rectangle's stroke on device px (the live 1.25 numbers: the
+  // top stroke 7.5..10 fills rows 7, 8, 9; the bottom strip's at device 890
+  // fills 890, 891)
+  function test_strokePixels() {
+    compare(r4(FrameOutline.strokePixels(Qt.rect(0, 6, 1280, 2), Qt.point(0, 0), 1.25)), r4(Qt.rect(0, 7 / 1.25, 1280, 3 / 1.25)));
+    compare(r4(FrameOutline.strokePixels(Qt.rect(0, 712, 1280, 2), Qt.point(0, 712), 1.25)), r4(Qt.rect(0, 890 / 1.25, 1280, 2 / 1.25)));
+  }
+  function test_strokePixels_whole() {
+    compare(r4(FrameOutline.strokePixels(Qt.rect(6, 6, 20, 2), Qt.point(0, 0), 1)), [6, 6, 20, 2]);
+    compare(r4(FrameOutline.strokePixels(Qt.rect(0, 98, 160, 2), Qt.point(0, 98), 2)), [0, 98, 160, 2]);
+  }
+  function test_stripStroke() {
+    compare(r4(FrameOutline.stripStroke("top", 160, 8, 6, 2)), [14, 6, 132, 2]);
+    compare(r4(FrameOutline.stripStroke("bottom", 160, 8, 6, 2)), [14, 0, 132, 2]);
+    compare(r4(FrameOutline.stripStroke("left", 84, 8, 6, 2)), [6, 6, 2, 72]);
+    compare(r4(FrameOutline.stripStroke("right", 84, 8, 6, 2)), [0, 6, 2, 72]);
+  }
+  function test_windowPixels() {
+    compare(r4(FrameOutline.windowPixels(Qt.rect(6, 6, 8, 8), 1.25)), r4(Qt.rect(8 / 1.25, 8 / 1.25, 10 / 1.25, 10 / 1.25)));
+    compare(r4(FrameOutline.windowPixels(Qt.rect(6, 6, 8, 8), 1)), [6, 6, 8, 8]);
   }
 
   function test_blurRegion() {
@@ -60,7 +81,7 @@ TestCase {
     compare(pieces[0].cuts[0].ellipse, false);
     compare(pieces[0].cuts[0].radius, 6);
   }
-  // The cut's radius is innerPath's at out 0 (R45)
+  // The cut's radius is innerPath's (R45)
   function test_blurRegion_radius_0() {
     compare(FrameOutline.blurRegion(spec({
       "innerBorderRadius": 0

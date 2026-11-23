@@ -1173,10 +1173,39 @@ TestCase {
     };
   }
 
+  // The four strips of a 160 x 100 screen with an `inset` px border, as
+  // BorderPanel lays them out: the top and bottom ones across the width, the
+  // side ones between them. Each { edge, origin (its window's top-left),
+  // length }
+  function strips(inset) {
+    return [
+      {
+        "edge": "top",
+        "origin": Qt.point(0, 0),
+        "length": 160
+      },
+      {
+        "edge": "bottom",
+        "origin": Qt.point(0, 100 - inset),
+        "length": 160
+      },
+      {
+        "edge": "left",
+        "origin": Qt.point(0, inset),
+        "length": 100 - 2 * inset
+      },
+      {
+        "edge": "right",
+        "origin": Qt.point(160 - inset, inset),
+        "length": 100 - 2 * inset
+      }
+    ];
+  }
   // The frame's fixture source, carrying RoundedBorders' contract
-  // (`strokeWidth`, `strokeHoles`, `framePath`, `innerPath`), its geometry
-  // FrameOutline's for a 160 x 100 screen with a 10 px border. At radius 0
-  // that is a sharp border: the stroke along the inner edge, inside the frame
+  // (`strokeWidth`, `strokeHoles`, `framePath`, `innerPath`, `strokeRects`,
+  // `cornerBoxes`), its geometry FrameOutline's for a 160 x 100 screen with
+  // an `inset` px border. At radius 0 that is a sharp border: the stroke
+  // along the inner edge, inside the frame
   Component {
     id: frameComp
 
@@ -1184,6 +1213,20 @@ TestCase {
       readonly property real strokeWidth: Appearance.borderWidth
       property var strokeHoles: []
       property real radius: 0
+      property real inset: 10
+      readonly property real innerBorderRadius: radius
+      readonly property real cornerSize: FrameOutline.cornerSize(spec)
+      // The strips' stroke rows and the corner windows' boxes as shown at
+      // this scale (BorderPanel.screenStroke, the corner's screenBox)
+      readonly property var strokeRects: root.strips(inset).map(st => {
+        const r = FrameOutline.stripStroke(st.edge, st.length, inset, radius, strokeWidth);
+        return FrameOutline.strokePixels(Qt.rect(st.origin.x + r.x, st.origin.y + r.y, r.width, r.height), st.origin, root.dpr);
+      })
+      readonly property var cornerBoxes: FrameOutline.corners.map(c => ({
+            "box": FrameOutline.windowPixels(FrameOutline.cornerBox(spec, c.isLeft, c.isTop), root.dpr),
+            "isLeft": c.isLeft,
+            "isTop": c.isTop
+          }))
       readonly property var spec: ({
           "width": 160,
           "height": 100,
@@ -1191,10 +1234,10 @@ TestCase {
           "outerTop": 0,
           "outerRight": 0,
           "outerBottom": 0,
-          "innerLeft": 10,
-          "innerTop": 10,
-          "innerRight": 10,
-          "innerBottom": 10,
+          "innerLeft": inset,
+          "innerTop": inset,
+          "innerRight": inset,
+          "innerBottom": inset,
           "innerBorderRadius": radius,
           "strokeWidth": strokeWidth
         })
@@ -1204,8 +1247,8 @@ TestCase {
       function blurPieces(w, h) {
         return FrameOutline.blurRegion(spec, w, h);
       }
-      function innerPath(w, h, out) {
-        return FrameOutline.innerPath(spec, w, h, out);
+      function innerPath(w, h) {
+        return FrameOutline.innerPath(spec, w, h);
       }
     }
   }
@@ -1529,85 +1572,169 @@ TestCase {
     root.near(opened.px(9, 25), plain.px(9, 25), "the left stroke below the box");
   }
 
-  // The frame's corner is the corner piece's: at radius 0 and 1 (stroke 2),
-  // the frame copy's stroke over black equals a real CornerPiece's in the
-  // stroke's outer quarter at the corner, where the arc's radius and the join
-  // alone decide coverage. Further in, the piece's flat-capped ends stop at
-  // its box, where on screen the strips' strokes take over.
+  // Main's own stroke pieces over black, each at the device px its window
+  // shows on: every strip's stroke Rectangle (non-anti-aliased, in the
+  // strip's window at BorderPanel's place) and every corner's CornerPiece
+  // (in its window's rounded box), the corners over the strips
   Component {
-    id: pieceSceneComp
+    id: mainSceneComp
 
     Item {
-      id: pieceScene
-      property rect box
+      id: mainScene
+      property var spec
       property color strokeColor
-      property real radius: 0
       width: 160
       height: 100
       Rectangle {
         anchors.fill: parent
         color: "black"
       }
-      Item {
-        x: pieceScene.box.x
-        y: pieceScene.box.y
-        width: pieceScene.box.width
-        height: pieceScene.box.height
-        CornerPiece {
-          borderRadius: pieceScene.radius
-          strokeWidth: 2
-          fillColor: "transparent"
-          strokeColor: pieceScene.strokeColor
-          isLeft: true
-          isTop: true
+      Repeater {
+        model: root.strips(mainScene.spec.innerLeft)
+
+        delegate: Item {
+          id: strip
+          required property var modelData
+          readonly property rect stroke: FrameOutline.stripStroke(strip.modelData.edge, strip.modelData.length, mainScene.spec.innerLeft, mainScene.spec.innerBorderRadius, mainScene.spec.strokeWidth)
+          x: Math.round(root.dpr * strip.modelData.origin.x) / root.dpr
+          y: Math.round(root.dpr * strip.modelData.origin.y) / root.dpr
+          // A pixel is filled when its centre is in [start, end) on the
+          // compositor's GPU; the grab's rasterizer breaks a tie in y the
+          // other way (a flipped target), so the rect sits a hundredth of a
+          // device px early: a centre on its start is in, on its end out,
+          // whichever rasterizer
+          Rectangle {
+            x: strip.stroke.x - 0.01 / root.dpr
+            y: strip.stroke.y - 0.01 / root.dpr
+            width: strip.stroke.width
+            height: strip.stroke.height
+            color: mainScene.strokeColor
+          }
+        }
+      }
+      Repeater {
+        model: FrameOutline.corners
+
+        delegate: Item {
+          id: cornerWindow
+          required property var modelData
+          readonly property rect box: FrameOutline.cornerBox(mainScene.spec, cornerWindow.modelData.isLeft, cornerWindow.modelData.isTop)
+          x: Math.round(root.dpr * cornerWindow.box.x) / root.dpr
+          y: Math.round(root.dpr * cornerWindow.box.y) / root.dpr
+          width: Math.round(root.dpr * cornerWindow.box.width) / root.dpr
+          height: Math.round(root.dpr * cornerWindow.box.height) / root.dpr
+          clip: true
+          Item {
+            width: cornerWindow.box.width
+            height: cornerWindow.box.height
+            CornerPiece {
+              borderRadius: mainScene.spec.innerBorderRadius
+              strokeWidth: mainScene.spec.strokeWidth
+              fillColor: "transparent"
+              strokeColor: mainScene.strokeColor
+              isLeft: cornerWindow.modelData.isLeft
+              isTop: cornerWindow.modelData.isTop
+            }
+          }
         }
       }
     }
   }
-  function test_frame_corner_is_the_corner_piece_data() {
+  // The frame copy's stroke is main's: the same pixels as the strips'
+  // Rectangles and the corner pieces over black, along every edge's stroke
+  // and round each corner's box (grown 2 px). The live case, radius 6 inset
+  // 8 (stroke 2), puts the strokes and the corner box on half device px at
+  // 1.25. At radius 0 the corner piece is 2 px, 2.5 device px at 1.25, so
+  // its arm and its stroke's inner side end on a device pixel's centre in a
+  // window on whole device px; the grab breaks that tie differently in two
+  // equal trees, so radius 0's corners are read at scale 1 here and at 1.25
+  // live (`fractionalCorners`)
+  function test_frame_stroke_is_mains_data() {
     return [
       {
-        "tag": "radius 0",
-        "radius": 0
+        "tag": "radius 6 inset 8",
+        "radius": 6,
+        "inset": 8,
+        "fractionalCorners": true
       },
       {
-        "tag": "radius 1",
-        "radius": 1
+        "tag": "radius 2 inset 8",
+        "radius": 2,
+        "inset": 8,
+        "fractionalCorners": true
+      },
+      {
+        "tag": "radius 0 inset 8",
+        "radius": 0,
+        "inset": 8,
+        "fractionalCorners": false
+      },
+      {
+        "tag": "radius 1 inset 10",
+        "radius": 1,
+        "inset": 10,
+        "fractionalCorners": true
       }
     ];
   }
-  function test_frame_corner_is_the_corner_piece(data) {
+  function test_frame_stroke_is_mains(data) {
     root.needsGpuAtFractional();
     root.setStroke(2);
     const frame = frameComp.createObject(sources);
     frame.radius = data.radius;
+    frame.inset = data.inset;
     const stroke = root.line(1);
-    const box = FrameOutline.cornerBox(frame.spec, true, true);
     const frameScene = root.render([root.frameSpec(frame, {
         "c": root.blue.c,
         "a": 0
       }, stroke, [])]);
-    const pieceScene = createTemporaryObject(pieceSceneComp, root, {
-      "box": box,
-      "strokeColor": root.strokeColor(stroke),
-      "radius": data.radius
+    const mainScene = createTemporaryObject(mainSceneComp, root, {
+      "spec": frame.spec,
+      "strokeColor": root.strokeColor(stroke)
     });
-    waitForRendering(pieceScene);
-    const piece = grabImage(pieceScene);
-    const s = frame.strokeWidth;
-    let seen = 0;
-    root.eachDevicePixel(Qt.rect(box.x, box.y, s / 2, s / 2), (xd, yd) => {
-      seen++;
-      const want = {
-        "r": piece.red(xd, yd) / 255,
-        "g": piece.green(xd, yd) / 255,
-        "b": piece.blue(xd, yd) / 255
-      };
-      const got = frameScene.dpx(xd, yd);
-      for (const k of ["r", "g", "b"])
-        verify(root.levels(got[k] - want[k]) <= root.tol, `device pixel ${xd},${yd}: ${k} ${got[k].toFixed(4)} (frame) vs ${want[k].toFixed(4)} (corner piece)`);
-    });
-    verify(seen > 0, "no device pixel in the corner's outer quarter");
+    waitForRendering(mainScene);
+    const main = grabImage(mainScene);
+    const n = data.inset + 2;
+    const grown = c => {
+      const box = FrameOutline.cornerBox(frame.spec, c.isLeft, c.isTop);
+      return Qt.rect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+    };
+    const regions = [
+      {
+        "what": "top",
+        "rect": Qt.rect(80, 0, 1, n)
+      },
+      {
+        "what": "bottom",
+        "rect": Qt.rect(80, 100 - n, 1, n)
+      },
+      {
+        "what": "left",
+        "rect": Qt.rect(0, 50, n, 1)
+      },
+      {
+        "what": "right",
+        "rect": Qt.rect(160 - n, 50, n, 1)
+      }
+    ].concat(root.dpr === 1 || data.fractionalCorners ? FrameOutline.corners.map(c => ({
+          "what": `corner ${c.isTop ? "top" : "bottom"}-${c.isLeft ? "left" : "right"}`,
+          "rect": grown(c)
+        })) : []);
+    for (const region of regions) {
+      let seen = 0;
+      root.eachDevicePixel(region.rect, (xd, yd) => {
+        seen++;
+        const got = frameScene.dpx(xd, yd);
+        const want = {
+          "r": main.red(xd, yd) / 255,
+          "g": main.green(xd, yd) / 255,
+          "b": main.blue(xd, yd) / 255
+        };
+        for (const k of ["r", "g", "b"])
+          verify(root.levels(got[k] - want[k]) <= root.tol, `${region.what}, device pixel ${xd},${yd}: ${k} ${got[k].toFixed(4)} (frame copy) vs ${want[k].toFixed(4)} (main's pieces)`);
+      });
+      verify(seen > 0, `no device pixel in ${region.what}`);
+    }
   }
 
   // ---- a fill's anti-aliased edge, and a non-whole logical size ----

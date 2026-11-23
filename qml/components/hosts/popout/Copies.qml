@@ -183,7 +183,8 @@ Item {
 
       // The screen border's frame (RoundedBorders): the screen, less its
       // integrated menus' strips, round the stroke's inner side, and its
-      // stroke along the stroke's centre line
+      // stroke drawn as the border's strips and corner pieces draw it, on the
+      // device pixels their windows show on (RoundedBorders.strokeRects, cornerBoxes)
       Component {
         id: frameMirror
 
@@ -203,30 +204,63 @@ Item {
           Component {
             id: frameDrawing
 
-            Shape {
-              anchors.fill: parent
-              preferredRendererType: Shape.CurveRenderer
+            Item {
+              Shape {
+                anchors.fill: parent
+                preferredRendererType: Shape.CurveRenderer
 
-              ShapePath {
-                fillColor: slot.fill
-                fillRule: ShapePath.OddEvenFill
-                strokeColor: "transparent"
-                strokeWidth: 0
+                ShapePath {
+                  fillColor: slot.fill
+                  fillRule: ShapePath.OddEvenFill
+                  strokeColor: "transparent"
+                  strokeWidth: 0
 
-                PathSvg {
-                  path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
+                  PathSvg {
+                    path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
+                  }
                 }
               }
 
-              ShapePath {
-                fillColor: "transparent"
-                strokeColor: slot.stroke
-                strokeWidth: frame.src?.strokeWidth ?? 0
-                capStyle: ShapePath.FlatCap
-                joinStyle: ShapePath.MiterJoin
+              // The strips' stroke rows
+              Repeater {
+                model: slot.stroke.a > 0 ? (frame.src?.strokeRects ?? []) : []
 
-                PathSvg {
-                  path: slot.stroke.a > 0 ? (frame.src?.innerPath(frame.width, frame.height, frame.src.strokeWidth / 2) ?? "") : ""
+                delegate: Rectangle {
+                  required property rect modelData
+                  x: modelData.x
+                  y: modelData.y
+                  width: modelData.width
+                  height: modelData.height
+                  color: slot.stroke
+                }
+              }
+
+              // Then the corner pieces, over their ends, each cut at its window's box
+              Repeater {
+                model: slot.stroke.a > 0 ? (frame.src?.cornerBoxes ?? []) : []
+
+                delegate: Item {
+                  id: cornerClip
+                  required property var modelData
+                  x: modelData.box.x
+                  y: modelData.box.y
+                  width: modelData.box.width
+                  height: modelData.box.height
+                  clip: true
+
+                  Item {
+                    width: frame.src?.cornerSize ?? 0
+                    height: frame.src?.cornerSize ?? 0
+
+                    CornerPiece {
+                      borderRadius: frame.src?.innerBorderRadius ?? 0
+                      strokeWidth: frame.src?.strokeWidth ?? 0
+                      fillColor: "transparent"
+                      strokeColor: slot.stroke
+                      isLeft: cornerClip.modelData.isLeft
+                      isTop: cornerClip.modelData.isTop
+                    }
+                  }
                 }
               }
             }

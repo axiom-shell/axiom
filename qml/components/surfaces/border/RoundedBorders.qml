@@ -86,10 +86,9 @@ Item {
     })
   readonly property var _openings: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? ""))
   // The stroke's inner side, round the corner pieces' arcs, as an SVG
-  // subpath in a window of w × h over the screen; or `out` px further out
-  // (FrameOutline.innerPath)
-  function innerPath(w, h, out) {
-    return FrameOutline.innerPath(root._spec, w, h, out);
+  // subpath in a window of w × h over the screen (FrameOutline.innerPath)
+  function innerPath(w, h) {
+    return FrameOutline.innerPath(root._spec, w, h);
   }
   // Its fill as blur region pieces in a window of w × h over the screen (FrameOutline.blurRegion)
   function blurPieces(w, h) {
@@ -114,8 +113,19 @@ Item {
     shadow: BarStyle.look
   }
 
+  // What the backing window's copy strokes the frame with, as these pieces
+  // draw it on screen: the four strips' stroke rows, the four corner
+  // windows' boxes (each with the corner it is)
+  readonly property var strokeRects: Array.prototype.map.call(strips.instances, p => p.screenStroke)
+  readonly property var cornerBoxes: Array.prototype.map.call(cornerWindows.instances, c => ({
+        "box": c.screenBox,
+        "isLeft": c.isLeft,
+        "isTop": c.isTop
+      }))
+
   // An edge strip per side
   Variants {
+    id: strips
     model: ["top", "bottom", "left", "right"]
 
     delegate: BorderPanel {
@@ -278,6 +288,7 @@ Item {
 
   // A corner piece in each corner
   Variants {
+    id: cornerWindows
     model: [
       {
         "isLeft": true,
@@ -337,6 +348,8 @@ Item {
       // they reserve)
       readonly property real _x: FrameOutline.cornerBox(root._spec, corner.isLeft, corner.isTop).x
       readonly property real _y: FrameOutline.cornerBox(root._spec, corner.isLeft, corner.isTop).y
+      // Its box as the compositor shows it, on whole device px
+      readonly property rect screenBox: FrameOutline.windowPixels(Qt.rect(corner._x, corner._y, root.cornerSize, root.cornerSize), corner.devicePixelRatio)
       // A surface joined to the stroke runs into the perpendicular edge over
       // it (a pill joined to it, SurfaceManager.borderOpenings): the corner
       // is left open there as the strips are, its fill no longer hiding it

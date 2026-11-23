@@ -48,8 +48,13 @@ PanelWindow {
       }))
   // The stroke runs between the corner pieces: a horizontal strip spans
   // the screen, a vertical one the room between them
-  readonly property real strokeStart: horizontal ? frameWidth + innerBorderRadius : innerBorderRadius
+  readonly property rect stripStroke: FrameOutline.stripStroke(root.edge, root.length, root.frameWidth, root.innerBorderRadius, root.strokeWidth)
+  readonly property real strokeStart: horizontal ? stripStroke.x : stripStroke.y
   readonly property var strokePieces: Utils.subtractSpans(root.strokeStart, root.length - root.strokeStart, root.openings)
+  // Where its stroke is on screen, on the device px its Rectangles fill, for
+  // the backing window's copy: the whole row between the corner pieces,
+  // before openings
+  readonly property rect screenStroke: FrameOutline.strokePixels(Qt.rect(placeOnScreen.placed.x + stripStroke.x, placeOnScreen.placed.y + stripStroke.y, stripStroke.width, stripStroke.height), placeOnScreen.placed, root.devicePixelRatio)
   readonly property var rowPieces: Utils.subtractSpans(0, root.length, root.openings)
   // An opening follows a surface in another window (sliding, a pill
   // growing): drawn here, but shown only once this window commits again
@@ -111,10 +116,10 @@ PanelWindow {
         "start": 0,
         "end": 0
       }
-      x: root.horizontal ? piece.start : root.edge === "left" ? root.frameWidth - root.strokeWidth : 0
-      y: root.horizontal ? (root.edge === "top" ? root.frameWidth - root.strokeWidth : 0) : piece.start
-      width: root.horizontal ? piece.end - piece.start : root.strokeWidth
-      height: root.horizontal ? root.strokeWidth : piece.end - piece.start
+      x: root.horizontal ? piece.start : root.stripStroke.x
+      y: root.horizontal ? root.stripStroke.y : piece.start
+      width: root.horizontal ? piece.end - piece.start : root.stripStroke.width
+      height: root.horizontal ? root.stripStroke.height : piece.end - piece.start
       color: Style.edgeFill(root.frameColor, false)
     }
   }
@@ -149,10 +154,10 @@ PanelWindow {
         "end": 0
       }
       color: root.innerStrokeColor
-      x: root.horizontal ? piece.start : root.edge === "left" ? root.frameWidth - root.strokeWidth : 0
-      y: root.horizontal ? (root.edge === "top" ? root.frameWidth - root.strokeWidth : 0) : piece.start
-      width: root.horizontal ? piece.end - piece.start : root.strokeWidth
-      height: root.horizontal ? root.strokeWidth : piece.end - piece.start
+      x: root.horizontal ? piece.start : root.stripStroke.x
+      y: root.horizontal ? root.stripStroke.y : piece.start
+      width: root.horizontal ? piece.end - piece.start : root.stripStroke.width
+      height: root.horizontal ? root.stripStroke.height : piece.end - piece.start
     }
   }
 }
