@@ -25,7 +25,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - Both over windows (`fills` and `shadows`, or `all`) are always in `BlurBacking`'s model, unmapped while the overlay's windows aren't wanted (`overlayWindows`: the overlay open there, or its hand-off not yet back), so an overlay opening makes no window delegates.
   - Its blur rule never uses xray (`LayerStack.blurOverOverlay`): what it blurs is the overlay.
 - Only the Overlay-layer shapes move up. Drawn over the Top layer, a bar's fill would cover the bar's content.
-- The window under the overlay gives way to them: it holds their shapes as `erasers` while the windows over the overlay draw and erases each (its fill path erased, half a level under the shape's, so a popout over the overlay hides the bar's fill and stroke under it, not drawn twice) once it has given the shape up (it no longer `draws` it). The window over the overlay gives way to nothing.
+- The window under the overlay gives way to them: it holds their shapes as `erasers` while the windows over the overlay draw and erases each (its fill path erased, half a rank under the shape's, so a popout over the overlay hides the bar's fill and stroke under it, not drawn twice) once it has given the shape up (it no longer `draws` it). The window over the overlay gives way to nothing.
 - The hand-off keeps some window drawing the popout's box in every frame (`BlurBacking`'s `overlayTaken`): the main window gives the shapes up and erases them only once the overlay's window has drawn them, and draws them back at once when the overlay closes, while the other still does; that window goes after the main one's frame has them. Both draw it for at most a frame on each switch. The over windows stay in the model, unmapped until `overlayWindows`, so the hand-off flips only which window `draws` a shape, never builds a copy.
 - Each window casts only its own shapes' shadows, but cuts them by every shape on the screen (the copies of the shapes the other window draws, `BlurBackingWindow.draws(shape, !over)`), as the one window does. So a popout's shadow never falls on the bar it's joined to.
 - Every blur window on a screen keeps a copy of every shape there, drawing only its own (`BlurBackingWindow.draws`, `Copies.drawsOnly`): the overlay opening or closing, or a popout's layer flipping, toggles which copies show and builds none.
@@ -36,7 +36,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - Any copy moving, resizing, sliding or changing colour, or its holes changing, nudges the window (`FrameNudge`).
 
 ### Strokes in the backing window
-- While backed, the backing window draws every shape's stroke with its fill (`BlurShape.strokeColor`: an attached surface's own, else what its site sets), in painter's order (`methods/PaintOrder`: base, frame, bar, merge, surface, submenu, toast; each `BlurShape.paintLevel`, a copy's `z`). A surface drawn over a bar hides the bar's stroke under its fill, so joined shapes need no cut and their strokes meet without a seam at any scale.
+- While backed, the backing window draws every shape's stroke with its fill (`BlurShape.strokeColor`: an attached surface's own, else what its site sets), in painter's order (`methods/PaintOrder`: base, frame, bar, cornerJoin, surface, submenu, toast; each `BlurShape.paintRank`, a copy's `z`). A surface drawn over a bar hides the bar's stroke under its fill, so joined shapes need no cut and their strokes meet without a seam at any scale.
 - It draws into two captures, in colour (premultiplied, `BlurBackingWindow.colorCopies`) and in alpha (grey, `alphaCopies`), which `ChromeComposite` joins as `vec4(color.rgb, alpha.r)`:
   - a fill is painted opaque (its colour times its alpha, or the alpha in grey), so a higher shape replaces what lies under it;
   - a stroke is painted over it at its own colour and alpha with Qt's normal blending, which over those captures is exactly Porter-Duff over: the same pixel the host drew over the backed fill before, for any stroke and fill alpha;
@@ -74,7 +74,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - a pill's or island's far stroke under a popout (`PillStretch.opening` → `BarContainer.setRequest`);
   - a popout's side under a submenu (`BarPopouts.submenuHole`, `AttachedSurface.strokeHoles`), drawn through `reusable/HoledItem`;
   - a dock joined to the border opens it as edge popouts do.
-- An opening spans only what's drawn over it (`AttachedSurface.coverStart`/`coverLength`):
+- An opening spans only what's drawn over it (`AttachedSurface.coverStart`/`coverEnd`):
   - the box while it slides;
   - its fillets too once it's out. Until then they're behind the edge it slides from, and an opened stroke showed as a dark gap at each corner.
 - Every opening is published on whole pixels (`SurfaceContext.opening`, ceil start, floor end): the pill's (`EdgePlacement`'s stretch and submenu openings, a pill bar's `PillBarJoin`, `CornerMerge`) and the border's (`BarContainer.borderOpening`/`joinOpening`) as `StrokeOpening`'s, so the thresholded mask cuts no pixel the wall covers less than half, and one is re-sent once per pixel, not every frame.

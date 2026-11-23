@@ -192,7 +192,7 @@ PopoutWrapperBase {
             x: (placeOnScreen.origin?.x ?? 0) + slide.slideX
             y: (placeOnScreen.origin?.y ?? 0) + slide.slideY
             shown: panel.backed && panel.visible
-            paintLevel: PaintOrder.of("base")
+            paintRank: PaintOrder.rankOf("base")
           }
         }
 
@@ -228,7 +228,7 @@ PopoutWrapperBase {
             kind: "rect"
             color: "transparent"
             strokeColor: Style.frameStroke
-            paintLevel: PaintOrder.of("frame")
+            paintRank: PaintOrder.rankOf("frame")
             screen: root.screen?.name ?? ""
             x: (placeOnScreen.origin?.x ?? 0) + slide.slideX + borderOffLine.x
             y: (placeOnScreen.origin?.y ?? 0) + slide.slideY + borderOffLine.y

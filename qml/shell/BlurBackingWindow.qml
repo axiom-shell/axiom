@@ -50,7 +50,7 @@ PanelWindow {
   property string part: "all"
   // Whether shadows are cut by `union` rather than their own group (never
   // captured while it draws no shadows)
-  readonly property bool cutByUnion: backing.part !== "fills" && (groups.count > 1 || backing.overlayWindows)
+  readonly property bool holeByUnion: backing.part !== "fills" && (groups.count > 1 || backing.overlayWindows)
 
   // Which shadow a shape casts with: shapes of one look cast theirs
   // together; "none" for no shadow
@@ -233,7 +233,7 @@ PanelWindow {
   Item {
     id: unionShapes
     anchors.fill: parent
-    visible: backing.cutByUnion
+    visible: backing.holeByUnion
 
     // The other window's shapes, for the cut alone
     Item {
@@ -255,7 +255,7 @@ PanelWindow {
     id: union
     anchors.fill: parent
     visible: false
-    sourceItem: backing.cutByUnion ? unionShapes : null
+    sourceItem: backing.holeByUnion ? unionShapes : null
     hideSource: true
   }
 
@@ -303,7 +303,7 @@ PanelWindow {
         property var source: copied
         parent: unionShapes
         anchors.fill: parent
-        visible: backing.cutByUnion
+        visible: backing.holeByUnion
       }
 
       SurfaceShadow {
@@ -312,7 +312,7 @@ PanelWindow {
         visible: group.key !== "none" && group.lead !== null
         source: copied
         cut: true
-        cutSource: backing.cutByUnion ? union : copied
+        cutSource: backing.holeByUnion ? union : copied
         autoPaddingEnabled: false
         look: group.lead?.shadow ?? BarStyle.look
       }

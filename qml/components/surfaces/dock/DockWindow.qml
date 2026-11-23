@@ -133,7 +133,7 @@ Scope {
     aligned: root.centre - root.currentLength / 2
     contentLength: root.currentLength
     coverStart: surface.coverStart
-    coverLength: surface.coverLength
+    coverEnd: surface.coverEnd
     owner: "dock:" + root.dock.id + ":" + (root.screen?.name ?? "") + (root.preview ? ":preview" : "")
     // Its pill stretches as it's wanted, and draws back once it's gone
     showing: (root.wantShown || root._out) && root.count > 0

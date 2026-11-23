@@ -22,9 +22,9 @@ QtObject {
   // strokeColor unless its site sets one (as `shadow` follows its source);
   // a rect has none unless its site sets one; transparent for none
   property color strokeColor: root._surface?.strokeColor ?? "transparent"
-  // Where it stands in the backing window's painter's order (PaintOrder.of:
+  // Where it stands in the backing window's painter's order (PaintOrder.rankOf:
   // lower first; a higher shape's fill hides the stroke of one under it)
-  property int paintLevel: PaintOrder.of("base")
+  property int paintRank: PaintOrder.rankOf("base")
   // How far its copy has faded in (a toast or menu tile fading), applied to the copy alone
   property real fade: 1
   property string kind: "attached"

@@ -106,7 +106,7 @@ Item {
     kind: "frame"
     color: root.frameColor
     strokeColor: root.innerStrokeColor
-    paintLevel: PaintOrder.of("frame")
+    paintRank: PaintOrder.rankOf("frame")
     screen: root.screen?.name ?? ""
     shown: root.backed
     // Cast evenly, inward, by the blur window in place of shadowWindow's

@@ -706,13 +706,13 @@ Rectangle {
         y: root.blurOrigin?.y ?? 0
         shown: root.backed && solidFill.visible
         shadow: root.barConfig
-        paintLevel: PaintOrder.of("base")
+        paintRank: PaintOrder.rankOf("base")
         clipRect: root.blurClip
       }
     }
 
     // A solid bar's inner stroke (border off) while the backing window backs
-    // it: its stroke alone, over the bar's own fill (a level above it) and
+    // it: its stroke alone, over the bar's own fill (a rank above it) and
     // under what joins it, left open where the pieces below are
     // (strokeHoles, which its copy cuts). Not shown here: the pieces draw it
     // while unbacked
@@ -738,7 +738,7 @@ Rectangle {
         kind: "rect"
         color: "transparent"
         strokeColor: Style.frameStroke
-        paintLevel: PaintOrder.of("frame")
+        paintRank: PaintOrder.rankOf("frame")
         screen: root.blurScreen
         x: (root.blurOrigin?.x ?? 0) + solidStroke.x
         y: (root.blurOrigin?.y ?? 0) + solidStroke.y
@@ -863,7 +863,7 @@ Rectangle {
           shown: root.backed && island.opacity > 0
           fade: island.opacity
           strokeColor: Style.frameStroke
-          paintLevel: PaintOrder.of("bar")
+          paintRank: PaintOrder.rankOf("bar")
           shadow: root.barConfig
           clipRect: root.blurClip
         }
@@ -938,7 +938,7 @@ Rectangle {
         // Grown out of the border's stroke, which it covers there...
         readonly property real _along: root.isVertical ? pill.y : pill.x
         BorderOpening {
-          opening: root.borderOpening(pill._along + pill.coverStart, pill._along + pill.coverStart + pill.coverLength)
+          opening: root.borderOpening(pill._along + pill.coverStart, pill._along + pill.coverEnd)
         }
         // ...and, joined to a perpendicular edge, that edge's
         // (not a pill bar's it merges into: its pill covers that, CornerMerge)
@@ -963,7 +963,7 @@ Rectangle {
         // pill's wall where the opening reaches it, EdgeAttach.strokeHoleAlong)
         // (in the pill's coordinates), and a joined end's fillet where one reaches it: a
         // surface joined to the same edge runs on down it, over the fillet
-        // and, at a squared end a surface joins end-on (`coverFrom`), the
+        // and, at a squared end a surface joins end-on (`coverStart`), the
         // corner under its wall from where it covers the stroke; there the band
         // stops a pixel (its fringe) short of the wall and the corner piece starts
         // with it, as at a fractional scale the band's last device row would be the
@@ -982,8 +982,8 @@ Rectangle {
             joins.push(pill._rectFrom(0, pill.farV - h - 1, h + R + 1, R + h + 2));
           if (pill.joinEnd && end >= along + L - 1)
             joins.push(pill._rectFrom(L - h - R - 1, pill.farV - h - 1, h + R + 1, R + h + 2));
-          if (o.coverFrom !== undefined) {
-            const at = o.coverFrom - (root.isVertical ? pill.x : pill.y);
+          if (o.coverStart !== undefined) {
+            const at = o.coverStart - (root.isVertical ? pill.x : pill.y);
             const far = pill._rectFrom(0, pill.farV, 0, 0);
             const v = pill.farV + (root.barConfig.left || root.barConfig.top ? 1 : -1) * (at - (root.isVertical ? far.x : far.y));
             const deep = pill.farV + h + 1 - v;
@@ -1072,7 +1072,7 @@ Rectangle {
           shown: root.backed
           shadow: root.barConfig
           // A pill merging into another bar's (CornerMerge) stands over it
-          paintLevel: PaintOrder.of((pill.index === 0 && root.ends.start.kind === "pillBar") || (pill.index === root.pillShapes.length - 1 && root.ends.end.kind === "pillBar") ? "merge" : "bar")
+          paintRank: PaintOrder.rankOf((pill.index === 0 && root.ends.start.kind === "pillBar") || (pill.index === root.pillShapes.length - 1 && root.ends.end.kind === "pillBar") ? "cornerJoin" : "bar")
           clipRect: root.blurClip
         }
       }

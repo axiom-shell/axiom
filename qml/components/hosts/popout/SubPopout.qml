@@ -322,7 +322,7 @@ Item {
           y: (surface.parentOrigin?.y ?? 0) + surface.inParentY
           shown: surface.backed && submenuPopup.visible
           overlayLayer: surface.onOverlayLayer
-          paintLevel: PaintOrder.of("submenu")
+          paintRank: PaintOrder.rankOf("submenu")
         }
 
         // The parent's side stroke it covers, left open, with its
@@ -332,7 +332,7 @@ Item {
             return null;
           const sw = Appearance.borderWidth;
           const band = EdgeAttach.strokeHoleAcross(outer.openToLeft ? root.attachRect.x : root.attachRect.x + root.attachRect.width - sw, sw);
-          return Qt.rect(band.start, surface.inParentY + surface.coverStart, band.size, surface.coverLength);
+          return Qt.rect(band.start, surface.inParentY + surface.coverStart, band.size, surface.coverEnd - surface.coverStart);
         }
         onParentHoleChanged: {
           if (outer.slot)

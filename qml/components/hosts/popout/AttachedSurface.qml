@@ -249,13 +249,13 @@ Item {
   // stroke lies over the one it opens, so opening it early shows nothing.
   readonly property real _filletHidden: Math.max(0, root.hiddenNow - root.strokeWidth)
   readonly property real coverStart: root._filletIn(root.startMargin, root._filletHidden)
-  // (nothing once it's all behind the edge)
-  readonly property real coverLength: root.hiddenNow >= root.depth ? 0 : root.alongLength - root.coverStart - root._filletIn(root.endMargin, root._filletHidden)
+  // ...to where it ends (at its start, so nothing, once it's all behind the edge)
+  readonly property real coverEnd: root.hiddenNow >= root.depth ? root.coverStart : root.alongLength - root._filletIn(root.endMargin, root._filletHidden)
   // How much of that is the fillet curving up into each wall from the
   // attach edge (0 at a joined, flush or straight end): what it covers
   // shows round its curve, not across its square (a solid bar's shadow)
   readonly property real coverStartFillet: root._natural.filletStart ? Math.max(0, root.startMargin - root.coverStart) : 0
-  readonly property real coverEndFillet: root._natural.filletEnd && root.coverLength > 0 ? Math.max(0, root.endMargin - (root.alongLength - root.coverStart - root.coverLength)) : 0
+  readonly property real coverEndFillet: root._natural.filletEnd && root.coverEnd > root.coverStart ? Math.max(0, root.endMargin - (root.alongLength - root.coverEnd)) : 0
 
   readonly property bool vertical: edge === ScreenEdge.Left || edge === ScreenEdge.Right
   readonly property bool attachLeft: edge === ScreenEdge.Left
@@ -366,7 +366,7 @@ Item {
   // it curves in from)
   // (from the metrics without the joins' straightness, which a pill bar's
   // join decides from where this wall is: PillBarJoin.filleted)
-  readonly property real joinWall: root._back + root.boxStart + root.boxDepth - root._natural.half
+  readonly property real joinSide: root._back + root.boxStart + root.boxDepth - root._natural.half
   // The fillet each joined end curves into that stroke with, at the far
   // end of its cover (0 for one running straight into it)
   readonly property real joinFillet: root._straightJoinStart ? 0 : root.filletRadius

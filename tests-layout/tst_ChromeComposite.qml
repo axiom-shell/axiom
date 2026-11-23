@@ -93,8 +93,8 @@ TestCase {
 
   // The scene: both captures of `shapes`/`erasers` and, where the scene graph
   // is GPU-backed, the real ChromeComposite over `back`. The two
-  // `ShaderEffectSource`s are written as BlurBackingWindow.qml:207-224 has
-  // them: harness plumbing, not a second rule. Without a GPU the layers sit
+  // `ShaderEffectSource`s are written as BlurBackingWindow's `colorCapture` and
+  // `alphaCapture` have them: harness plumbing, not a second rule. Without a GPU the layers sit
   // one over the other, each grabbed over black.
   Component {
     id: sceneComp
@@ -201,7 +201,7 @@ TestCase {
     return s ? Qt.rgba(s.c.r, s.c.g, s.c.b, s.a) : "transparent";
   }
 
-  // The real BlurShape of `spec` { kind, level, src | w, h, radius, bw,
+  // The real BlurShape of `spec` { kind, rank, src | w, h, radius, bw,
   // onItself, x, y, fill, stroke, holes, opacity }, over its real source
   function shapeFor(spec, scene) {
     let source = spec.src;
@@ -225,7 +225,7 @@ TestCase {
         "a": 0
       }),
       "strokeColor": root.strokeColor(spec.stroke),
-      "paintLevel": PaintOrder.of(spec.level),
+      "paintRank": PaintOrder.rankOf(spec.rank),
       "x": spec.x ?? 0,
       "y": spec.y ?? 0,
       "clipRect": spec.clip ?? null
@@ -412,7 +412,7 @@ TestCase {
     const px = root.render([
       {
         "kind": "rect",
-        "level": "bar",
+        "rank": "bar",
         "x": 10,
         "y": 10,
         "w": 80,
@@ -451,7 +451,7 @@ TestCase {
       skip("scale 1 row");
     const lower = {
       "kind": "rect",
-      "level": "bar",
+      "rank": "bar",
       "x": 10,
       "y": 10,
       "w": 80,
@@ -462,7 +462,7 @@ TestCase {
     };
     const upper = {
       "kind": "rect",
-      "level": "surface",
+      "rank": "surface",
       "x": 40,
       "y": 5,
       "w": 40,
@@ -477,14 +477,14 @@ TestCase {
     root.near(px.px(20, 10), root.over(root.line(1), root.filled(root.green)), "the lower stroke where nothing covers it");
   }
 
-  // The order the shapes are registered in decides nothing: the level does
+  // The order the shapes are registered in decides nothing: the rank does
   function test_levels_not_registration() {
     if (root.dpr !== 1)
       skip("scale 1 row");
     root.setStroke(2);
     const bar = {
       "kind": "rect",
-      "level": "base",
+      "rank": "base",
       "x": 10,
       "y": 10,
       "w": 100,
@@ -494,7 +494,7 @@ TestCase {
     // A solid bar's inner stroke: a stroke-only rect over its fill
     const stroke = {
       "kind": "rect",
-      "level": "frame",
+      "rank": "frame",
       "x": 10,
       "y": 36,
       "w": 100,
@@ -512,13 +512,13 @@ TestCase {
     root.near(other, one, "the same either order");
   }
 
-  // A toast card (level toast, its own border) over a dock's copy (level surface), in both orders
+  // A toast card (rank toast, its own border) over a dock's copy (rank surface), in both orders
   function test_toast_over_dock() {
     if (root.dpr !== 1)
       skip("scale 1 row");
     const dock = {
       "kind": "attached",
-      "level": "surface",
+      "rank": "surface",
       "src": root.surface(),
       "x": 10,
       "y": 5,
@@ -527,7 +527,7 @@ TestCase {
     };
     const card = {
       "kind": "rect",
-      "level": "toast",
+      "rank": "toast",
       "x": 30,
       "y": 20,
       "w": 80,
@@ -558,7 +558,7 @@ TestCase {
     const src = root.smallSurface();
     const lower = (stroke, h) => ({
           "kind": "attached",
-          "level": "bar",
+          "rank": "bar",
           "src": src,
           "x": 10,
           "y": 5,
@@ -635,7 +635,7 @@ TestCase {
     const src = root.smallSurface();
     const lower = (stroke, h) => ({
           "kind": "attached",
-          "level": "bar",
+          "rank": "bar",
           "src": src,
           "x": 10.3,
           "y": 5.2,
@@ -674,7 +674,7 @@ TestCase {
     const src = root.smallSurface();
     const copy = (stroke, holes) => ({
           "kind": "attached",
-          "level": "surface",
+          "rank": "surface",
           "src": src,
           "x": 10,
           "y": 5,
@@ -712,7 +712,7 @@ TestCase {
     };
     const pill = {
       "kind": "attached",
-      "level": "bar",
+      "rank": "bar",
       "src": src,
       "x": 10,
       "y": 5,
@@ -721,7 +721,7 @@ TestCase {
     };
     const tile = x => ({
           "kind": "rect",
-          "level": "surface",
+          "rank": "surface",
           "x": x,
           "y": 40,
           "w": 40,
@@ -749,15 +749,15 @@ TestCase {
 
   // A shape moves from `shapes` to `erasers` and back: its slot stays (one
   // object, the same count); while erasing, where it stood is (0,0,0,0) over a
-  // lower shape's fill and stroke (erased half a level under, its stroke not
-  // drawn), and a shape at its own level keeps the window's own
+  // lower shape's fill and stroke (erased half a rank under, its stroke not
+  // drawn), and a shape at its own rank keeps the window's own
   function test_erasing_moves_not_remakes() {
     if (root.dpr !== 1)
       skip("scale 1 row");
     root.setStroke(2);
     const lower = {
       "kind": "rect",
-      "level": "bar",
+      "rank": "bar",
       "x": 10,
       "y": 10,
       "w": 80,
@@ -767,7 +767,7 @@ TestCase {
     };
     const mover = {
       "kind": "rect",
-      "level": "surface",
+      "rank": "surface",
       "x": 40,
       "y": 5,
       "w": 40,
@@ -777,7 +777,7 @@ TestCase {
     };
     const peer = {
       "kind": "rect",
-      "level": "surface",
+      "rank": "surface",
       "x": 60,
       "y": 20,
       "w": 40,
@@ -818,7 +818,7 @@ TestCase {
     root.near(erased.px(50, 20), nothing, "erased over the lower fill");
     root.near(erased.px(50, 10), nothing, "erased over the lower stroke");
     root.near(erased.px(41, 20), nothing, "the mover's stroke is not drawn");
-    root.near(erased.px(70, 30), root.filled(root.solid), "a shape at the mover's level keeps the window's own");
+    root.near(erased.px(70, 30), root.filled(root.solid), "a shape at the mover's rank keeps the window's own");
     root.near(erased.px(20, 20), root.filled(root.green), "the lower fill outside it");
     root.near(erased.px(20, 10), root.over(root.line(1), root.filled(root.green)), "the lower stroke outside it");
     scene.shapes = [low, move, other];
@@ -850,10 +850,10 @@ TestCase {
     for (const surface of surfaces)
       tryVerify(() => surface.slid === 0, 3000);
   }
-  function attachedSpec(src, level, fill, stroke, holes) {
+  function attachedSpec(src, rank, fill, stroke, holes) {
     return {
       "kind": "attached",
-      "level": level,
+      "rank": rank,
       "src": src,
       "x": src.x,
       "y": src.y,
@@ -893,7 +893,7 @@ TestCase {
       root.settle([pill, pop]);
       // the pill's far stroke and its fringe under the popout (BarContainer's _farHole)
       const across = EdgeAttach.strokeHoleAcross(pill.farV - pill.half, pill.strokeWidth);
-      const hole = pill._rectFrom(pop.x + pop.coverStart - pill.x, across.start, pop.coverLength, across.size);
+      const hole = pill._rectFrom(pop.x + pop.coverStart - pill.x, across.start, pop.coverEnd - pop.coverStart, across.size);
       return {
         "w": 180,
         "h": 110,
@@ -924,7 +924,7 @@ TestCase {
       root.settle([par, sub]);
       // the wall's stroke and its fringe where the submenu covers it (SubPopout.parentHole)
       const across = EdgeAttach.strokeHoleAcross(wall - sw, sw);
-      const win = Qt.rect(across.start, sub.y + sub.coverStart, across.size, sub.coverLength);
+      const win = Qt.rect(across.start, sub.y + sub.coverStart, across.size, sub.coverEnd - sub.coverStart);
       const holes = par.submenuHoles(win, false, false);
       return {
         "w": 180,
@@ -946,7 +946,7 @@ TestCase {
         "boxHeight": 40
       }, 50, 16 - sw);
       root.settle([pop]);
-      const start = pop.x + pop.coverStart, length = pop.coverLength;
+      const start = pop.x + pop.coverStart, length = pop.coverEnd - pop.coverStart;
       // the inner-stroke rect's own coordinates (BarContainer.solidStroke)
       const hole = Qt.rect(start, 0, length, sw);
       return {
@@ -955,7 +955,7 @@ TestCase {
         "specs": (sa, fa, stroke, cut) => [
             {
               "kind": "rect",
-              "level": "base",
+              "rank": "base",
               "x": 0,
               "y": 0,
               "w": 180,
@@ -964,7 +964,7 @@ TestCase {
             },
             {
               "kind": "rect",
-              "level": "frame",
+              "rank": "frame",
               "x": 0,
               "y": 16 - sw,
               "w": 180,
@@ -1008,7 +1008,7 @@ TestCase {
       return {
         "w": 180,
         "h": 110,
-        "specs": (sa, fa, stroke, cut) => [root.attachedSpec(left, "bar", fills(fa).low, stroke ? root.line(sa) : null, cut ? [hole] : []), root.attachedSpec(top, "merge", fills(fa).up, root.line(sa))],
+        "specs": (sa, fa, stroke, cut) => [root.attachedSpec(left, "bar", fills(fa).low, stroke ? root.line(sa) : null, cut ? [hole] : []), root.attachedSpec(top, "cornerJoin", fills(fa).up, root.line(sa))],
         "bands": [
           {
             "rect": Qt.rect(left.x + hole.x, 0, hole.width, left.y + hole.y + hole.height),
@@ -1127,7 +1127,7 @@ TestCase {
       root.settle([dock]);
       // (the band RoundedBorders.strokeHoles cuts: EdgeAttach.strokeHoleAcross)
       const edge = EdgeAttach.strokeHoleAcross(m - sw, sw);
-      const band = Qt.rect(dock.x + dock.coverStart, edge.start, dock.coverLength, edge.size);
+      const band = Qt.rect(dock.x + dock.coverStart, edge.start, dock.coverEnd - dock.coverStart, edge.size);
       return {
         "w": 160,
         "h": 100,
@@ -1150,7 +1150,7 @@ TestCase {
     }, m, m - sw);
     root.settle([pill]);
     const edge = EdgeAttach.strokeHoleAcross(m - sw, sw);
-    const top = Qt.rect(pill.x + pill.coverStart, edge.start, pill.coverLength, edge.size);
+    const top = Qt.rect(pill.x + pill.coverStart, edge.start, pill.coverEnd - pill.coverStart, edge.size);
     const side = Qt.rect(edge.start, m + 1, edge.size, Math.floor(m - sw + pill.joinCover) - (m + 1));
     return {
       "w": 160,
@@ -1257,7 +1257,7 @@ TestCase {
     frame.strokeHoles = holes;
     return {
       "kind": "frame",
-      "level": "frame",
+      "rank": "frame",
       "src": frame,
       "x": 0,
       "y": 0,
@@ -1461,7 +1461,7 @@ TestCase {
     }, root.line(1), []);
     const tile = x => ({
           "kind": "rect",
-          "level": "surface",
+          "rank": "surface",
           "x": x,
           "y": 6,
           "w": 40,
@@ -1746,7 +1746,7 @@ TestCase {
       skip("scale 1 row");
     const lower = {
       "kind": "rect",
-      "level": "bar",
+      "rank": "bar",
       "x": 10,
       "y": 10,
       "w": 100,
@@ -1755,7 +1755,7 @@ TestCase {
     };
     const upper = {
       "kind": "rect",
-      "level": "surface",
+      "rank": "surface",
       "x": 40.5,
       "y": 20,
       "w": 40,
@@ -1786,7 +1786,7 @@ TestCase {
       skip("software scene graph: the composite is read through the real shader only");
     const line = (x, y, w, h) => ({
           "kind": "rect",
-          "level": "bar",
+          "rank": "bar",
           "x": x,
           "y": y,
           "w": w,
@@ -1914,7 +1914,7 @@ TestCase {
       root.settle([pill, pop]);
       pill.x = data.left - pill.boxRect.x;
       pop.x = data.left - pop.boxRect.x;
-      const along = EdgeAttach.strokeHoleAlong(pop.x + pop.coverStart - pill.x, pop.x + pop.coverStart + pop.coverLength - pill.x, pill.startMargin, pill.alongLength - pill.endMargin);
+      const along = EdgeAttach.strokeHoleAlong(pop.x + pop.coverStart - pill.x, pop.x + pop.coverEnd - pill.x, pill.startMargin, pill.alongLength - pill.endMargin);
       lower = root.attachedSpec(pill, "bar", black, root.line(1), [pill._rectFrom(along.start, across.start, along.end - along.start, across.size)]);
       top = pill.y + pill.boxRect.y + pill.filletRadius + 3;
     } else {
@@ -1931,7 +1931,7 @@ TestCase {
       const along = EdgeAttach.strokeHoleAlong(0, data.w, 0, data.w);
       lower = {
         "kind": "rect",
-        "level": "bar",
+        "rank": "bar",
         "x": data.left,
         "y": iy,
         "w": data.w,

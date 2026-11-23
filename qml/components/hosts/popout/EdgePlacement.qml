@@ -91,10 +91,10 @@ QtObject {
   property real probeStart: 0
   property real probeLength: 0
   // The part of the surface (from its start) over the stroke it stands on,
-  // left open there (AttachedSurface.coverStart/coverLength); a negative
-  // length is the whole surface
+  // left open there (AttachedSurface.coverStart/coverEnd); the whole
+  // surface unless set
   property real coverStart: 0
-  property real coverLength: -1
+  property real coverEnd: root.place.surfaceLength
   // Where the surface is drawn, which a box gliding along its edge (a bar
   // popout switching in place) lags its place by: its openings follow it
   property real drawnSurfaceStart: root.place.surfaceStart
@@ -403,12 +403,12 @@ QtObject {
   readonly property bool _hollow: root.attachedSurface?.hollow ?? false
   // From the screen edge, how far in the surface's attach side is at
   // rest, and how far a joined end's far wall reaches
-  // (AttachedSurface.joinWall). From the layout, not where the surface is
+  // (AttachedSurface.joinSide). From the layout, not where the surface is
   // drawn: that slides in, and the join this decides (PillBarJoin.filleted)
   // resizes it and its window a frame apart, which moved the wall it was
   // decided from and flipped it back.
   readonly property real _surfaceFromEdge: root.attachAt - root.backfill
-  readonly property real joinReach: root._surfaceFromEdge + (root.attachedSurface?.joinWall ?? 0)
+  readonly property real joinReach: root._surfaceFromEdge + (root.attachedSurface?.joinSide ?? 0)
   // How far context along a slide (a pill bar's end pill under a joined
   // end, a joined submenu's pill reach) leads its surface's wall: a stroke
   // where another window's change may show a frame or so after the
@@ -432,7 +432,7 @@ QtObject {
     };
   }
   readonly property real _coverStart: root.drawnSurfaceStart + root.coverStart
-  readonly property real _coverEnd: root._coverStart + (root.coverLength < 0 ? root.place.surfaceLength : root.coverLength)
+  readonly property real _coverEnd: root.drawnSurfaceStart + root.coverEnd
   // ...with the fillets curving into it at each end
   readonly property var _coverSpan: root.opens && root.attachedSurface && root._coverEnd > root._coverStart ? Object.assign(root._edgeSpan(root._coverStart, root._coverEnd), {
     "startFillet": root.attachedSurface.coverStartFillet,
@@ -492,7 +492,7 @@ QtObject {
     hollow: root._hollow
     joinReach: root.joinReach
     hidden: root._surfaceHidden
-    drawnFrom: root.attachedSurface && root.origin ? (root.vertical ? root.origin.y + root.attachedSurface.y : root.origin.x + root.attachedSurface.x) : null
+    drawnStart: root.attachedSurface && root.origin ? (root.vertical ? root.origin.y + root.attachedSurface.y : root.origin.x + root.attachedSurface.x) : null
   }
   property PillBarJoin _endPill: PillBarJoin {
     screen: root.screen
@@ -505,7 +505,7 @@ QtObject {
     hollow: root._hollow
     joinReach: root.joinReach
     hidden: root._surfaceHidden
-    drawnFrom: root.attachedSurface && root.origin ? (root.vertical ? root.origin.y + root.attachedSurface.y + root.attachedSurface.height : root.origin.x + root.attachedSurface.x + root.attachedSurface.width) : null
+    drawnStart: root.attachedSurface && root.origin ? (root.vertical ? root.origin.y + root.attachedSurface.y + root.attachedSurface.height : root.origin.x + root.attachedSurface.x + root.attachedSurface.width) : null
   }
 
   // The pill (or island) stretched to carry the box's fillets while it

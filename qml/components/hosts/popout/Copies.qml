@@ -9,7 +9,7 @@ import qs.components.reusable
 
 // A copy of each of `shapes`
 Item {
-  id: copies
+  id: root
   required property var shapes
   // The screen its fills are drawn for (BlurManager.fillOn)
   required property var screen
@@ -33,7 +33,7 @@ Item {
 
   KeyedModel {
     id: shapeModel
-    keys: copies.shapes.concat(copies.erasers).map(shape => shape.uid).filter((key, i, all) => all.indexOf(key) === i)
+    keys: root.shapes.concat(root.erasers).map(shape => shape.uid).filter((key, i, all) => all.indexOf(key) === i)
   }
 
   Repeater {
@@ -48,51 +48,51 @@ Item {
       readonly property var area: slot.shape?.clipRect ?? null
       // The other window draws this shape now (an eraser not drawn here, not
       // among `shapes` or not among those it `drawsOnly`): the slot erases its fill
-      // path (opaque black, no stroke, half a level under the shape's) and
+      // path (opaque black, no stroke, half a rank under the shape's) and
       // goes back to drawing the shape when that window gives it up
-      readonly property bool erasing: copies.erasers.includes(slot.shape) && !(copies.shapes.includes(slot.shape) && copies.drawsOnly(slot.shape))
+      readonly property bool erasing: root.erasers.includes(slot.shape) && !(root.shapes.includes(slot.shape) && root.drawsOnly(slot.shape))
       // Its fill's alpha on this screen, as drawn (BlurManager.fillOn)
-      readonly property real fillAlpha: BlurManager.fillOn(slot.shape?.color ?? "transparent", copies.screen).a
+      readonly property real fillAlpha: BlurManager.fillOn(slot.shape?.color ?? "transparent", root.screen).a
       // What its copy fills with: black for the outline and an eraser; else
       // its colour premultiplied, or its alpha in grey. A rect's or frame's
       // with no fill alpha (a stroke-only rect) draws none, keeping what
       // lies under it; an attached copy's stays opaque at any alpha, which
       // is what hides a lower stroke at a join
       readonly property color fill: {
-        if (copies.draws === "outline" || slot.erasing)
+        if (root.draws === "outline" || slot.erasing)
           return "black"; // style-exempt: mask
         if (slot.shape?.kind !== "attached" && slot.fillAlpha <= 0)
           return "transparent";
-        return copies.asAlpha ? Qt.rgba(slot.fillAlpha, slot.fillAlpha, slot.fillAlpha, 1) : Tone.over(BlurManager.fillOn(slot.shape?.color ?? "transparent", copies.screen), "black"); // style-exempt: premultiplied
+        return root.asAlpha ? Qt.rgba(slot.fillAlpha, slot.fillAlpha, slot.fillAlpha, 1) : Tone.over(BlurManager.fillOn(slot.shape?.color ?? "transparent", root.screen), "black"); // style-exempt: premultiplied
       }
       // Its stroke over the fill, at its own colour and alpha (white at its
       // alpha for the alpha copies); none for an outline or an eraser
       readonly property color stroke: {
         const c = slot.shape?.strokeColor ?? "transparent";
-        if (copies.draws !== "chrome" || slot.erasing || c.a <= 0)
+        if (root.draws !== "chrome" || slot.erasing || c.a <= 0)
           return "transparent";
-        return copies.asAlpha ? Qt.rgba(1, 1, 1, c.a) : c; // style-exempt: alpha copy
+        return root.asAlpha ? Qt.rgba(1, 1, 1, c.a) : c; // style-exempt: alpha copy
       }
       // The stroke holes its source leaves open, which its copy cuts (none
       // for the outline copies, whose silhouette stays whole, nor while
       // erasing)
-      readonly property var strokeHoles: copies.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
-      // Painter's order: its shape's level, an eraser's half a level under
-      z: slot.erasing ? (slot.shape?.paintLevel ?? 0) - PaintOrder.eraserOffset : (slot.shape?.paintLevel ?? 0)
+      readonly property var strokeHoles: root.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
+      // Painter's order: its shape's rank, an eraser's half a rank under
+      z: slot.erasing ? (slot.shape?.paintRank ?? 0) - PaintOrder.eraserOffset : (slot.shape?.paintRank ?? 0)
       x: area ? area.x : 0
       y: area ? area.y : 0
-      width: area ? area.width : copies.width
-      height: area ? area.height : copies.height
+      width: area ? area.width : root.width
+      height: area ? area.height : root.height
       clip: !!area
       // (read rather than `visible`, which is false inside a hidden layer)
-      readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && (copies.drawsOnly(slot.shape) || slot.erasing)
+      readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && (root.drawsOnly(slot.shape) || slot.erasing)
       visible: slot.showing
 
       // Where and how big its copy is, as drawn, and in what: on any
       // change the window is nudged to show its last frame
       readonly property string drawn: [mirror.x, mirror.y, mirror.width, mirror.height, slot.showing, (mirror.item as AttachedSurface)?.slid ?? 0, (mirror.item as AttachedSurface)?.shownOpacity ?? 1, (mirror.item as Item)?.opacity ?? 1, slot.fill, slot.stroke, slot.erasing, JSON.stringify(slot.strokeHoles)].join(",")
       // (null while the copies are torn down: their slots can go after them)
-      onDrawnChanged: copies?.changed()
+      onDrawnChanged: root?.changed()
 
       Loader {
         id: mirror
@@ -108,7 +108,7 @@ Item {
         AttachedSurfaceCopy {
           source: slot.shape?.source ?? null
           fillColor: slot.fill
-          mirrorStroke: copies.draws === "outline" ? "black" : slot.stroke // style-exempt: mask
+          mirrorStroke: root.draws === "outline" ? "black" : slot.stroke // style-exempt: mask
           strokeHoles: slot.strokeHoles
         }
       }
@@ -191,8 +191,8 @@ Item {
         Item {
           id: frame
           readonly property var src: slot.shape?.source ?? null
-          width: copies.width
-          height: copies.height
+          width: root.width
+          height: root.height
 
           HoledCopy {
             anchors.fill: parent

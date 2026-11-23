@@ -346,15 +346,15 @@ QtObject {
   // may join the perpendicular edges at the bar's ends
   function _onPill(s, pills, own, isPill) {
     // Within reach: a pill bar's frame, or where islands may go
-    const reachFrom = isPill ? s.joinFrom : s.islandFrom, reachTo = isPill ? s.joinTo : s.islandTo;
+    const reachStart = isPill ? s.joinFrom : s.islandFrom, reachEnd = isPill ? s.joinTo : s.islandTo;
     const fm = root.filletMargin(s.stroke, s.radius);
     const need = fm + s.radius;
     // At a wall, the fillet inside it, and a full fillet and the pill's
     // corner inside the reach (the pill can't grow past the wall), so the
     // side never runs flush past the wall: short of room, the content
     // moves in rather than either rounding less
-    const lo = isFinite(s.wallFrom ?? NaN) ? Math.max(s.wallFrom + fm, reachFrom + need) : reachFrom;
-    const hi = isFinite(s.wallTo ?? NaN) ? Math.min(s.wallTo - fm, reachTo - need) : reachTo;
+    const lo = isFinite(s.wallFrom ?? NaN) ? Math.max(s.wallFrom + fm, reachStart + need) : reachStart;
+    const hi = isFinite(s.wallTo ?? NaN) ? Math.min(s.wallTo - fm, reachEnd - need) : reachEnd;
     const content = Math.round(Math.max(lo, Math.min(s.aligned, hi - s.length)));
     const placed = root._onPillAt(s, pills, own, isPill, content);
     // One side runs flush to the pill's end with empty box before it: try
