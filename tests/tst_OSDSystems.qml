@@ -6,14 +6,19 @@ import "osd/index.js" as Timelines
 // The OSD's timelines (tests/osd/): each row runs states through a
 // system's definition (systems/<Name>/<Name>.qml, loaded by its path) and
 // OSDEngine, step by step, and checks what each step shows and what a host
-// does with it. The row format: docs/dev/features/osd.md › Engine ›
-// Timelines. A row of a system with no folder fails
+// does with it. The timeline format: docs/dev/features/osd.md › Engine ›
+// Timelines (not runner rows; only the compare is the runner's). A row of a system with no folder fails
 TestCase {
   id: root
   name: "OSDSystems"
 
   RepoFiles {
     id: repo
+  }
+
+  EngineRows {
+    id: rows
+    testCase: root
   }
 
   // Definitions loaded, by system (null: it doesn't load)
@@ -48,16 +53,11 @@ TestCase {
     return out;
   }
 
-  // Whether `actual` holds every field of `expected` (objects compared
-  // field by field, the rest exactly)
+  // Whether `actual` holds `expected`: the runner's subset compare
+  // (EngineRows.differenceOf)
   function _holds(actual, expected, where) {
-    if (expected === null || typeof expected !== "object" || Array.isArray(expected)) {
-      compare(actual, expected, where);
-      return;
-    }
-    verify(actual !== null && actual !== undefined, where + ": missing");
-    for (const field of Object.keys(expected))
-      root._holds(actual[field], expected[field], where + "." + field);
+    const d = rows.differenceOf(actual, expected);
+    verify(d === null, d ? rows.messageOf(where, d) : "");
   }
 
   function test_timelines(data) {
