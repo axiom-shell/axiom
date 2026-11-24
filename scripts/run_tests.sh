@@ -5,7 +5,8 @@
 # services/core parts that import only QtQuick (loaded from their files), with
 # imports from a module tree of the shell's Quickshell-free files
 # (scripts/qml_modules.py --pure). tests-layout/ holds the layout harness: the
-# pieces (reusable/, forms/) at scale, font and density settings, over stubs
+# pieces (reusable/, forms/) at scale, font and density settings, and the service
+# files a test needs over stand-ins (LAYOUT_SERVICES), over stubs
 # for what imports Quickshell or the services (scripts/qml_modules.py
 # --layout); a sibling of tests/, since qmltestrunner scans its -input folder
 # recursively.

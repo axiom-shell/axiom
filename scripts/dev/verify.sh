@@ -102,7 +102,7 @@ for f in "${changed[@]}"; do
   # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)
   qml/components/methods/*.qml | qml/services/core/*.qml)
     name="$(basename "$f" .qml)"
-    [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
+    [[ -f "tests/tst_$name.qml" || -f "tests-layout/tst_$name.qml" ]] && tests+=("$name")
     ;;
   # The row runner: its own test, and OSDSystems, which uses its compare
   tests/EngineRows.qml) tests+=(EngineRows OSDSystems) ;;
@@ -114,6 +114,11 @@ for f in "${changed[@]}"; do
   tests/tst_*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "$f" ]] && tests+=("${name#tst_}")
+    ;;
+  tests-layout/tst_*.qml)
+    name="$(basename "$f" .qml)"
+    [[ -f "$f" ]] && tests+=("${name#tst_}")
+    tests+=(TextFit MenuRow Pieces)
     ;;
   # A piece, a form control or a tool-page piece runs the layout harness (tests-layout/)
   qml/components/reusable/* | qml/components/forms/* | qml/components/views/base/* | qml/components/content/base/* | qml/components/content/parts/KeyboardMap.qml | qml/config/Style.qml | qml/config/Widget.qml | tests-layout/*) tests+=(TextFit MenuRow Pieces) ;;

@@ -13,7 +13,8 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
   scripts/qml_modules.py --pure OUT  only files that don't import Quickshell
   scripts/qml_modules.py --layout OUT  the pure tree plus the layout harness's
                                      pieces (reusable/, the readers Style
-                                     needs) over the stubs in tests-layout/stubs
+                                     needs, the LAYOUT_SERVICES files) over the
+                                     stubs in tests-layout/stubs
 
 As a library it also holds the checks' shared baseline compare: `baseline_diff`
 for counted baselines, `ratchet` for symbol baselines that only shrink.
@@ -199,15 +200,20 @@ def pure(path):
 LAYOUT_STUBS = ROOT / "tests-layout" / "stubs"
 LAYOUT_CONFIG = {"Appearance", "Widget", "Theme", "Style", "StyleInk", "StyleTextRole", "BarStyle", "PopoutsConfig"}
 STUBBED_IMPORTS = {"Quickshell", "Quickshell.Widgets"}
+# Service files a layout test loads, whose imports the stubs supply
+LAYOUT_SERVICES = {"services/core/EngineTrace.qml"}
 
 
 def layout(path):
     """What the layout harness loads: the components (pure, or importing only the Quickshell modules its stubs
-    supply) and the config readers the pieces read. The services and the other readers stay out: a module's
-    singletons are all compiled on import, so one that needs a missing service would fail the import."""
+    supply), the config readers the pieces read and the service files a test needs (LAYOUT_SERVICES). The other
+    services and readers stay out: a module's singletons are all compiled on import, so one that needs a missing
+    service would fail the import."""
     rel = path.relative_to(QML_ROOT).as_posix()
     if rel.startswith("config/"):
         return path.stem in LAYOUT_CONFIG
+    if rel in LAYOUT_SERVICES:
+        return True
     if not rel.startswith("components/"):
         return False
     return all(i in STUBBED_IMPORTS for i in re.findall(r"^import (Quickshell\S*)", path.read_text(), re.M))
