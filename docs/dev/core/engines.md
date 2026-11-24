@@ -292,12 +292,16 @@ An engine's entry has these keys. Required: `prefix`, `facade`, `files`, `owners
 
 `python3 scripts/manifests.py --tests-for <path>...` prints the tests of every engine that holds one of the paths (its folder, `files`, `helpers`, `itemPaths`, `pluginPaths`, `adapters`, `owners` or rows folder): the facade's test, its `sweep`, `golden` and `pixel` names. `scripts/dev/verify.sh` runs it on the changed files, so editing a file of a listed engine runs that engine's tests.
 
+`scripts/gen_docs.py` renders the manifest (`scripts/generate.sh` runs it; built, never committed): `docs/dev/generated/engine-manifest.md` (a row per listed engine with its facade, owners, adapters, `fedBy` and `intakes`; each engine's edit points; the rules tables; and › Graph), `docs/dev/generated/engines/<Facade>.md` (a facade's `api`: each stage's or extra's `in` keys and `out` producers) and `docs/dev/generated/rules/<File>.<property>.md` (one per `tables` entry of an engine, `$flat` or `$domains`: kind, axes and rows with their `why`). With no engine listed, the manifest page says so and holds only the rules tables `$flat` and `$domains` list.
+
 ## The engine graph
 Nodes are `<engine>.<stage>`. The edges are:
 - the signature edges every engine has: `model` to `solve`, `solve` to `drawn`;
 - each `fedBy` entry: data a stage reads from another engine, naming its seam;
 - an `api` entry's `feeds`: an extra whose events a stage consumes inside one engine;
 - each `intakes` entry: a named back edge an owner or adapter builds. A cross-engine one names its seam; one whose `from` is its own engine names none.
+
+The rendered graph is `docs/dev/generated/engine-manifest.md` › Graph: every edge of the listed engines in three groups, REST (edges into a stage other than `drawn`), INTAKE (the `intakes` entries, each with its rule and seam) and DRAWN (edges into a `drawn` stage).
 
 `check_engines` › `dag` holds the manifest and this page to each other:
 - the forward graph (signature edges, `fedBy`, `feeds`) is acyclic over all stage nodes, so a loop at rest is either broken by a declared intake or fails (Timing and flow: "Loops at rest are broken only by named intake rules");
@@ -337,7 +341,7 @@ Every edit to an engine is one kind below. The table gives where the edit goes, 
 
 | Kind | Edit point (code; manifest key) | Route | Side-doc section updated | Check that catches drift |
 |---|---|---|---|---|
-| case | a row in the rules table (`tables`; `editPoints.case`) | `/engine-change` | none (Rules names the table) | `tables` (one row per cell), `contract` (rule pinned) |
+| case | a row in the rules table (`tables`; `editPoints.case`) | `/engine-change` | none (Rules links the table's page) | `tables` (one row per cell), `contract` (rule pinned) |
 | rule | a function named for the rule, or a table, in its stage's internal file, called by name from the stage (`editPoints.rule`) | `/engine-change` | Rules | `contract`, `tables` (rule literal) |
 | input | the feeder (`// reads:`) or the owner's `state`; `api.<stage>.in` (`feeder`; `editPoints.input`) | `/engine-change` | Inputs | `api` (`in` = the destructure line) |
 | output | the stage's return with its `rule`; `api.<stage>.out` with its producer (`editPoints.output`) | `/engine-change` | Outputs | `api` (the producer exists) |
@@ -345,7 +349,7 @@ Every edit to an engine is one kind below. The table gives where the edit goes, 
 | consumer | the host (`editPoints.consumer`) | `/engine-change` | Owners, adapters, hosts | `facade-only` |
 | adapter or drawing item | the item (`adapters`, `itemPaths`) | `/engine-change` | Owners, adapters, hosts | `facade-only` |
 | tuning value | `<Facade>.tuning` (`editPoints.tuning`) | `/engine-change` (a product value's row states the user's answer in its `why`) | Inputs | the engine's rows (`scripts/run_tests.sh <Facade>`); review (Readability › Named numbers) |
-| enum value | the cell table's `axes` | `/engine-change` (with the rows completeness then needs) | none (Rules names the table) | `tables` (uncovered cell) |
+| enum value | the cell table's `axes` | `/engine-change` (with the rows completeness then needs) | none (Rules links the table's page) | `tables` (uncovered cell) |
 | plug-in | its folder (`pluginPaths`) | its kind's recipe (`/bar-widget`, `/osd-system`, …) | the plug-in's area doc | `facade-only` (plug-in extras) |
 | seam change or intake rule | both engines' `api`, `fedBy`/`intakes`, the Seam register row | `/orchestrate` with an architect | Seams of both docs | `dag`, `contract` on both sides |
 | moving a stage run to another owner | `owners`; both owners | `/orchestrate` with an architect | Owners, adapters, hosts | `facade-only` |
@@ -359,6 +363,8 @@ Every edit to an engine is one kind below. The table gives where the edit goes, 
 | rule removal | the table row or function and its rows, in one change | `/engine-change` | Rules | `contract` |
 
 A facade opens with `api`, then `tuning`, the stages in order, the extras; an internal file opens with its tables.
+
+An engine's edit points are read on its section of `docs/dev/generated/engine-manifest.md` › Edit points, built from the entry's `editPoints`; a rules table's rows on `docs/dev/generated/rules/<File>.<property>.md`. Both pages are generated: an edit goes to the manifest or the table.
 
 The contract grows with the code:
 - an edit that adds a case, a rule or an output adds its row in the same change, written first;
@@ -377,12 +383,12 @@ Each listed engine has a side doc, the file its manifest `doc` names: `docs/dev/
 | 2 | Inputs | what reaches each stage and from where (the feeder), and the tuning values |
 | 3 | Stages | the stages the engine has, and its helpers and file split |
 | 4 | Outputs | the fields each stage returns, and which carry a `rule` |
-| 5 | Rules | the rules, and the tables that hold them |
+| 5 | Rules | the rules, and a link to each table's page `docs/dev/generated/rules/<File>.<property>.md` |
 | 6 | Owners, adapters, hosts | who calls each stage, the adapters, the drawing items and consumers |
 | 7 | Seams | the seams to other engines (Seam register) |
 | 8 | Tests | the rows file, the runner test and the other tests |
 | 9 | Checks | the checks that hold the engine, and any exception with its reason |
-| 10 | Edit points | the manifest entry's `editPoints` |
+| 10 | Edit points | a link to the engine's section of `docs/dev/generated/engine-manifest.md` › Edit points; never hand-written |
 | 11 | Known gaps | what the engine does not do right, stated as it stands |
 
 ## Seam register
