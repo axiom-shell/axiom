@@ -84,7 +84,7 @@ def _parsed(text):
             sections[section] = {}
         for helper, entry in sections[section].items():
             if check_keys(f"{section}.{helper}", entry, allowed):
-                for key in sorted(allowed - {"prefix"}):
+                for key in sorted(allowed - ({"prefix"} if section == "$domains" else set())):
                     if key not in entry:
                         errors.append(f"{name}: {section}.{helper}: missing key {key}")
                         entry[key] = copy.deepcopy({**REQUIRED_KEYS, **OPTIONAL_KEYS}[key])

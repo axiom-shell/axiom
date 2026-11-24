@@ -845,6 +845,7 @@ class Manifests(unittest.TestCase):
             (manifest_text(demo_entry(), **{"$flat": []}), "$flat is not an object"),
             (manifest_text(demo_entry(), **{"$domains": {"geo": {"tables": []}}}), "$domains.geo: missing key uses"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "FLAT"}}}), "$flat.Helper: missing key tables"),
+            (manifest_text(demo_entry(), **{"$flat": {"Helper": {"tables": []}}}), "$flat.Helper: missing key prefix"),
         ]
         for text, message in cases:
             errors = self.m.engines(text=text)[1]
