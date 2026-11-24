@@ -18,11 +18,6 @@ QtObject {
   // docs/dev/generated/layers.md.
   readonly property var layers: [
     {
-      "namespace": "border-shadow",
-      "order": 11,
-      "why": "The border's inward shadow window: under every other axiom surface, the overlay backdrop included."
-    },
-    {
       "namespace": "backdrop",
       "order": 10,
       "why": "Each screen's backdrop window (ScreenBackdrop: full-screen surfaces' dim background): on Top, under the bars and border. Without layer rules it stays mapped (held), so it keeps its place before them."

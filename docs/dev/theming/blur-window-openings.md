@@ -55,18 +55,10 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
 - Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the backing windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`).
-- Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down, blurred or not (the backing window draws every mode's chrome: opaque and blur off too).
+- No surface casts its own, and the border has no shadow window: the backing window draws every mode's chrome (opaque and blur off too), shadows included.
 
 ### Unbacked shadows
-- Unbacked (Top-layer chrome under a fullscreen window, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales), each surface casts its own again, from a black copy of its shape kept off screen (`OutsideShadow.hideTarget`):
-  - `AttachedSurface`'s;
-  - the bar's: each pill, island and solid fill puts its copy in `shadowShape` (pills an `AttachedSurfaceCopy`).
-- The bar shadow's holes:
-  - the bar's `openings`, where surfaces cover its far stroke, stretched or not;
-  - the fillets curving into a solid bar's stroke at either end of an opening, only up to their curve (`OutsideShadow.fillets`, from the opening's `startFillet`/`endFillet`: `SurfaceContext.opening`, in whole pixels so the fillet's cap and the stroke don't each half-cover one). That covers a pill joined to the stroke at its end, and a popout standing on the stroke, whose attach-side fillets are at both ends of its cover (`AttachedSurface.coverStartFillet`/`coverEndFillet`). Without them the bar's shadow was cut across each fillet's whole square, a hard seam where the opening ended;
-  - the solid bars its ends make way for, whose stroke its window overlaps;
-  - past a pill's or island's end squared for a surface running flush on from it, beside the wall and under the surface (`_flushEnds`).
-- Where a wall runs on from one surface into another, each casts as if it carried on, then gives way to the other at the line where they meet: [Shadows › Walls that run on](../popouts/shadows.md#walls-that-run-on-into-another-surface-unbacked).
+- A surface the backing window can't place or show (Top-layer chrome under a fullscreen window, a window not placed within `LayerOrigin`'s timeout, a `FreeMenu` while it scales) casts none: it fills and strokes itself only.
 - More on shadow looks: [Shadows](../popouts/shadows.md).
 
 ### Strokes left open under surfaces

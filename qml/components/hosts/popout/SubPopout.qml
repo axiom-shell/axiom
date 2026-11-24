@@ -43,8 +43,7 @@ Item {
   // ends we may run flush to or join at its bar side, and where that
   // stroke lies), its box at rest (attachBox), where its window is on
   // screen (popupScreenOrigin); it draws parentStretch and the holes we
-  // leave in its strokes and shadow (submenuHole, submenuBox,
-  // submenuJoinSpan)
+  // leave in its strokes (submenuHole, submenuJoinSpan)
   required property var slot
   // What the host draws its content at, which this draws its own at
   // (SubmenuHost.zoom; 1 for a host that doesn't zoom)
@@ -353,18 +352,8 @@ Item {
           if (outer.slot)
             outer.slot.submenuJoinSpan = surface.joinSpan;
         }
-        // Its box in the parent's window, which the parent's own shadow
-        // leaves out (AttachedSurface.shadowHoles)
-        readonly property var parentBox: submenuPopup.visible ? Qt.rect(surface.inParentX + surface.boxRect.x, surface.inParentY + surface.boxRect.y, surface.boxRect.width, surface.boxRect.height) : null
-        onParentBoxChanged: {
-          if (outer.slot)
-            outer.slot.submenuBox = surface.parentBox;
-        }
         // Its own hole, if still shown (rects compare by value, not ===)
         Component.onDestruction: {
-          const box = outer.slot?.submenuBox;
-          if (box && surface.parentBox && box.x === surface.parentBox.x && box.y === surface.parentBox.y)
-            outer.slot.submenuBox = null;
           const hole = outer.slot?.submenuHole;
           if (hole && surface.parentHole && hole.x === surface.parentHole.x && hole.y === surface.parentHole.y)
             outer.slot.submenuHole = null;

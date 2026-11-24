@@ -72,7 +72,7 @@
   - It is owner-keyed: `BarContainer.setRequest(owner, { stretch, opening, endReach })`. Any number can be active at once.
   - The bar keeps each part in a map of its own, so a stretch changing never re-runs what reads the end reaches (`pillRects`).
   - Stretches are combined per pill by `BarLayout.stretchOf`, and shown by `BarLayout.shownStretches`.
-  - A stretch carries the pill it stands on at rest (`pill`) and its surface's box (`box`). The bar finds the pill by that span when its index has gone stale (`BarLayout.pillIndex`: an end reach's stub came or went before the stretch was sent again), and the box bounds how far a squared end's shadow runs on under the surface (`BarLayout.flushEnds`).
+  - A stretch carries the pill it stands on at rest (`pill`). The bar finds the pill by that span when its index has gone stale (`BarLayout.pillIndex`: an end reach's stub came or went before the stretch was sent again).
 - **The owner sets the pace; the bar draws what it's sent, as sent.** The bar animates none of it, so a surface and the pill it stands on can't drift apart.
   - A `PillStretch` animates its own `progress` (animFast) and sends its stretch that far out from the pill's own span (`EdgeAttach.progressStretch`).
   - A stretch changing while it's out (a switch in place, a resize) glides there, unless `glides` is off (`EdgePlacement.stretchGlides`). `EdgePopout` turns it off, because its box follows its content's size as it eases (an OSD's length easing): the pill follows the box as sent, not chasing it with an ease of its own.

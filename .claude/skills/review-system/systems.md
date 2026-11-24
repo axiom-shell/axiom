@@ -63,7 +63,7 @@ Extra: qml/components/hosts/popout/EdgeTrigger.qml qml/components/methods/Screen
 Checks:
 - Geometry only from `SurfaceContext`/`EdgeAttach`; no host works out a rule itself (grep hosts for `vertical`, `location`, edge math).
 - Every popout holds a `PopoutClaim`; an open popout never moves.
-- Shadows only through `OutsideShadow`.
+- Shadows only through the backing window's group shadows (`BlurShape.shadow`); `ShapeShadow` for the overlay page box.
 - Each `SurfaceContext` rule has a `tst_SurfaceContext` row.
 Seams: bar widgets (`PopoutAnchor`), menus, OSD, dock, launcher.
 

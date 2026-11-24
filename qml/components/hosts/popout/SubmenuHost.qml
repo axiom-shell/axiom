@@ -9,8 +9,8 @@ import qs.components.methods
 // two share, the same for a bar popout and an edge popout: what the
 // submenu meets on the box's side (SubmenuSide), how far it stretches the
 // box past its top or bottom (parentStretch, drawn animated), the box at
-// rest it attaches to, and what it leaves open in the box's strokes and
-// shadow (submenuHole, submenuBox, submenuJoinSpan), which the host's
+// rest it attaches to, and what it leaves open in the box's strokes
+// (submenuHole, submenuJoinSpan), which the host's
 // EdgeSurface and EdgePlacement take. The submenu reads it as its `slot`.
 Item {
   id: root
@@ -121,11 +121,9 @@ Item {
   }
 
   // Set by the submenu, in the host's window: the stroke it covers on the
-  // box's side, its box (which the box's own shadow leaves out), and,
-  // joined to the box's bar side, the stretch of the stroke it joins that
-  // it covers beside the box ({ start, end }, x)
+  // box's side and, joined to the box's bar side, the stretch of the stroke
+  // it joins that it covers beside the box ({ start, end }, x)
   property var submenuHole: null
-  property var submenuBox: null
   property var submenuJoinSpan: null
   // The hole a submenu leaves in the box's side follows it sliding, in
   // its own window: shown in the host's only once that one commits again
@@ -150,8 +148,6 @@ Item {
   } : null
 
   // For the host's surface: its stroke holes (the submenu's opening in the
-  // box's side, and joined at the bar side, the fillet there) and the
-  // submenu's box, which its own shadow isn't cast on
+  // box's side, and joined at the bar side, the fillet there)
   readonly property var strokeHoles: root.popupSurface.submenuHoles(root.submenuHole, root.sideJoined, root.openToLeft)
-  readonly property var shadowHoles: root.submenuBox ? [Qt.rect(root.submenuBox.x - root.popupSurface.x, root.submenuBox.y - root.popupSurface.y, root.submenuBox.width, root.submenuBox.height)] : []
 }

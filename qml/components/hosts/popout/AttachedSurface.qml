@@ -112,10 +112,6 @@ Item {
   // Hosts take it from what the surface grows out of
   // (SurfaceContext.shadow), so joined shapes cast one shadow
   property var shadowLook: BarStyle.look
-  // Rects (in this item's coordinates) its own shadow isn't cast on
-  // either: a submenu's box beside it, whose translucent fill it would
-  // show through (the blur window's shadow, cut by every shape, needs none)
-  property var shadowHoles: []
   // How far past it the shadow reaches, which its window keeps room for
   readonly property int shadowReach: root.castShadow && root.shadowLook.shadow ? Math.ceil(root.shadowLook.shadowSize * 1.25) : 0
   // The blur window (BlurManager) draws this surface's fill and casts its
@@ -127,69 +123,6 @@ Item {
   // Draws no box (fill, stroke or shadow) of its own, only its content,
   // which keeps the room a shadow would take (a tiled menu: MenuTiles)
   property bool hollow: false
-  // Casting its own shadow, in its own window
-  readonly property bool _ownShadow: root.castShadow && !root.backed && !root.hollow
-  // Where its shape runs on past its outline, for a shadow `reach` long
-  // cast from it (rects in this item's coordinates, at rest): the shadow
-  // beside a wall that carries on past it then runs on at full strength
-  // to where it gives way to what carries it on (cut there by its holes),
-  // as that one's runs on to it from the other side, with no step where
-  // the two meet. Each is wide: a thin strip's blur is much weaker.
-  // - behind a flush end, the wall it continues (an island's or pill's
-  //   squared end, BarContainer._flushEnds), to the band hole;
-  // - past a straight joined end, its far wall running on into the pill
-  //   or island squared to meet it, or off a bare screen edge;
-  // - behind an attach edge it runs straight off (a bare screen edge): its
-  //   walls run on off screen, the shadow beside them not fading at it.
-  // A bar's pills, cast by their bar, add theirs to its shadow's source.
-  function shadowRunOn(reach) {
-    if (root.detached || reach <= 0)
-      return [];
-    const along = Math.min(root.alongLength, reach * 2), across = Math.min(root.boxDepth, reach * 2);
-    const behind = -root._back - reach, far = root.farV + root.half;
-    const m = root._m;
-    return (m.throughStart ? [root._rectFrom(0, behind, along, reach)] : []).concat(m.throughEnd ? [root._rectFrom(root.alongLength - along, behind, along, reach)] : [], root.joinStart && m.straightJoinStart ? [root._rectFrom(-reach, far - across, reach, across)] : [], root.joinEnd && m.straightJoinEnd ? [root._rectFrom(root.alongLength, far - across, reach, across)] : [], root.straight ? [root._rectFrom(0, behind, root.alongLength, reach)] : []);
-  }
-  readonly property var _shadowRunOn: root._ownShadow ? root.shadowRunOn(root.shadowReach) : []
-  // Boxes (in this item's coordinates) of surfaces running on from its
-  // box, a wall of theirs continuing one of its own (a submenu flush to a
-  // free end of its side). Its shadow casts as if that wall ran on past
-  // where the two meet (`source`), and gives way to theirs past it
-  // (`hole`), cast the same way from their side (a flush end's run-on):
-  // both at full strength where they meet, with no step
-  property var wallsRunOn: []
-  readonly property var _runsOn: {
-    const reach = root.shadowReach;
-    if (reach <= 0 || root.wallsRunOn.length === 0)
-      return [];
-    const b = root.boxRect, tol = root.strokeWidth + 2;
-    const right = b.x + b.width, bottom = b.y + b.height;
-    // Its attach side has no wall, unless it's a box of its own
-    const wall = side => root.detached || side !== root.edge;
-    const runs = [];
-    root.wallsRunOn.forEach(s => {
-      if (!s)
-        return;
-      // Beside it (submenus open to the left or right): its top or bottom
-      // wall runs on there
-      const toLeft = s.x + s.width <= b.x + tol, toRight = s.x >= right - tol;
-      if (toLeft || toRight) {
-        const x0 = toLeft ? b.x : right, w = Math.min(b.height, reach * 2);
-        const sx = toLeft ? x0 - reach : x0, hx = toLeft ? x0 - reach * 2 : x0;
-        if (wall(ScreenEdge.Top) && Math.abs(s.y - b.y) <= 1)
-          runs.push({
-            "source": Qt.rect(sx, b.y, reach, w),
-            "hole": Qt.rect(hx, b.y - reach, reach * 2, reach)
-          });
-        if (wall(ScreenEdge.Bottom) && Math.abs(s.y + s.height - bottom) <= 1)
-          runs.push({
-            "source": Qt.rect(sx, bottom - w, reach, w),
-            "hole": Qt.rect(hx, bottom, reach * 2, reach)
-          });
-      }
-    });
-    return runs;
-  }
   // A copy of a surface (AttachedSurfaceCopy): its fill in `fillColor`, its
   // stroke in `mirrorStroke`, both set per capture by the blur window
   // (Copies.draws); cut by its own `strokeHoles` through HoledCopy
@@ -442,111 +375,6 @@ Item {
     // pixel (HoledCopy). A host keeps its window's own clip
     startOverflow: root.mirror && !root.detached && !root._natural.filletStart && !root.joinStart ? 1 : 0
     endOverflow: root.mirror && !root.detached && !root._natural.filletEnd && !root.joinEnd ? 1 : 0
-
-    // The shadow the outline casts, only outside it (none shows
-    // through a translucent fill), from a copy of it filled (its own fill
-    // may be the blur window's): the content doesn't need its own
-    OutsideShadow {
-      id: ownShadow
-      target: shadowShape
-      hideTarget: true
-      active: root._ownShadow
-      look: root.shadowLook
-      // Nothing past a joined end: what it joins (the border's frame, a
-      // pill) runs on there, under this window, as the blur window's cut
-      // to every shape leaves it. Nor on the stroke it grows out of, beside
-      // it: this window is over that stroke's, so the shadow there dimmed
-      // it, darkest under this surface's soft edge, a seam where the two
-      // strokes meet (none on a bare edge, which has no stroke).
-      holes: {
-        const runs = root._runsOn.map(r => r.hole);
-        if (root.detached)
-          return runs;
-        const reach = ownShadow.reach;
-        const v = -root._back - reach, deep = root._back + root.depth + reach * 2;
-        // (to the stroke's outer edge where it is in the window, not where
-        // it is on the surface still behind its edge: there the band let a
-        // line of this shadow through over the stroke, beside its wall,
-        // doubling the shadow of what it grows from)
-        const band = root.straight ? [] : [root._rectFrom(-reach, v, root.alongLength + reach * 2, reach + root._back + root.strokeWidth + root.hiddenNow)];
-        // A straight joined end's far wall runs on into the stroke it
-        // joins (its first stroke's width of the end lies over that
-        // stroke): what it joins casts beside the wall up to its outer
-        // edge, as the band leaves a flush end's to it
-        const far = root.farV + root.half, sw = root.strokeWidth;
-        const straightStart = root.joinStart && root._straightJoinStart ? [root._rectFrom(-reach, far, reach + sw, reach)] : [];
-        const straightEnd = root.joinEnd && root._straightJoinEnd ? [root._rectFrom(root.alongLength - sw, far, reach + sw, reach)] : [];
-        return (root.joinStart ? [root._rectFrom(-reach, v, reach, deep)] : []).concat(root.joinEnd ? [root._rectFrom(root.alongLength, v, reach, deep)] : [], straightStart, straightEnd, band, root.shadowHoles, runs);
-      }
-    }
-
-    Item {
-      id: shadowShape
-      anchors.fill: parent
-      visible: root._ownShadow
-
-      Shape {
-        anchors.fill: parent
-        visible: !root.detached
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-          fillColor: "black" // style-exempt: mask
-          strokeColor: "transparent"
-          strokeWidth: 0
-
-          PathSvg {
-            path: root.fillPath
-          }
-        }
-
-        ShapePath {
-          fillColor: "transparent"
-          strokeColor: "black" // style-exempt: mask
-          strokeWidth: root.strokeWidth
-          capStyle: ShapePath.FlatCap
-          joinStyle: ShapePath.MiterJoin
-
-          PathSvg {
-            path: root.strokePath
-          }
-        }
-      }
-
-      // Where its shape runs on past its outline (shadowRunOn)
-      Repeater {
-        model: root._shadowRunOn.length
-
-        Rectangle {
-          required property int index
-          readonly property rect area: root._shadowRunOn[index] ?? Qt.rect(0, 0, 0, 0)
-          x: area.x
-          y: area.y
-          width: area.width
-          height: area.height
-          color: "black" // style-exempt: mask
-        }
-      }
-      // ...and past the walls surfaces running on from its box continue
-      Repeater {
-        model: root._runsOn.length
-
-        Rectangle {
-          required property int index
-          readonly property rect area: root._runsOn[index]?.source ?? Qt.rect(0, 0, 0, 0)
-          x: area.x
-          y: area.y
-          width: area.width
-          height: area.height
-          color: "black" // style-exempt: mask
-        }
-      }
-
-      DetachedBox {
-        visible: root.detached
-        color: "black" // style-exempt: mask
-      }
-    }
 
     // The outline (or detached box): a host draws it inside a HoledItem
     // (its stroke left open in `strokeHoles` while unbacked); a copy hands it

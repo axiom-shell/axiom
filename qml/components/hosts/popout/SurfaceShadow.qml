@@ -19,8 +19,7 @@ import qs.config
 // gap shows between the surface and its shadow.
 MultiEffect {
   property bool cut: false
-  // What it's cut by: the source, or a copy of it with more cut out
-  // (OutsideShadow's holes)
+  // What it's cut by: the source, or a copy of it
   property var cutSource: source
 
   // BarStyle's, or a bar's own (Bar.barConfig: shadow, shadowColor, shadowSize)

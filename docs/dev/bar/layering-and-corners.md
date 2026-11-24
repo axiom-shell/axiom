@@ -4,7 +4,7 @@
 > **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `BarsConfig.enrichBarConfig`, not config keys.)
 > **Related:** [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Surface context](../popouts/surface-context.md), [Widget shapes](widget-shapes-runs.md)
 
-How bars and the screen border share an edge through layer-shell ordering. Covers solid bars, bars inside the border, bars stacked on one edge, which bar gets a shared corner, transparent bars, the border being off, and the border's inward shadow window. Bar ends and pills are in [Bar ends and pills](bar-ends-pills.md).
+How bars and the screen border share an edge through layer-shell ordering. Covers solid bars, bars inside the border, bars stacked on one edge, which bar gets a shared corner, transparent bars, the border being off, and the border's inward shadow. Bar ends and pills are in [Bar ends and pills](bar-ends-pills.md).
 
 (The order lives in `LayerStack.layers`, listed in [layer stacking](../generated/layers.md).)
 
@@ -77,11 +77,7 @@ Each bar end's `kind`, joining rules, pill bars merging at a corner, and pills t
   - For pills, merged popouts and EdgePopout, that is `AttachedSurface.straight` (attach edge) / `straightJoins` (joined ends).
   - The overlay panel pushes its corners and stroke past the window on those sides.
 
-### Border shadow window
-- The screen border casts the `BarStyle` section's shadow inward, all the way round. It does this through `RoundedBorders`' shadow window:
-  - one click-through, exclusion-ignoring window over the screen
-  - the frame's shape, blurred and masked to its inside
-  - `innerInset`: inset past a solid bar reserving its edge
-  - in the `axiom-border-shadow` namespace. Its layer rule stacks it under every other axiom surface, the overlay backdrop included.
+### Border shadow
+- The screen border casts the `BarStyle` section's shadow inward, all the way round. The backing window casts it, in every mode, from the frame's shape (the `BlurShape` in `RoundedBorders`, `shadow: BarStyle.look`), with the surfaces joined to the frame in the same group: see [Blur window and openings](../theming/blur-window-openings.md#shadows-in-the-backing-window). The border has no window of its own for it.
 - A solid bar reserving its edge under the border casts no shadow of its own (`BarsConfig.enrichBarConfig`'s `borderShadowed`).
 - `Style.shadowColor` resolves the color for both the border and the bar shadows (see [Widget shapes](widget-shapes-runs.md#bar-shadow)).

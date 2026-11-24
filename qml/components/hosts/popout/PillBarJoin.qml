@@ -83,8 +83,7 @@ PillStretch {
   // Where its surface's joined end is drawn from across this bar, in screen
   // px (EdgePlacement), or null
   property var drawnStart: null
-  // Its far stroke left open under the surface (and its fillet, which the
-  // bar's shadow then follows round, BarContainer._shadowHoles; or inside
+  // Its far stroke left open under the surface (and its fillet; or inside
   // the wall, whose stroke carries on into the pill's there): opaque or
   // not, as the two are separate windows whose stacking isn't the bar's to
   // choose. Whole pixels (SurfaceContext.opening), as every opening.

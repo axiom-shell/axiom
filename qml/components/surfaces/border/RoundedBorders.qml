@@ -1,7 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Effects
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import qs.config
@@ -85,18 +83,13 @@ Item {
       "strokeWidth": root.strokeWidth
     })
   readonly property var _openings: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? ""))
-  // The stroke's inner side, round the corner pieces' arcs, as an SVG
-  // subpath in a window of w × h over the screen (FrameOutline.innerPath)
-  function innerPath(w, h) {
-    return FrameOutline.innerPath(root._spec, w, h);
-  }
   // Its fill as blur region pieces in a window of w × h over the screen (FrameOutline.blurRegion)
   function blurPieces(w, h) {
     return FrameOutline.blurRegion(root._spec, w, h);
   }
   // Where the stroke is left open under what joins it (FrameOutline.strokeHoles)
   readonly property var strokeHoles: FrameOutline.strokeHoles(root._spec, root._openings)
-  // The frame, filled odd-even, to innerPath (FrameOutline.framePath)
+  // The frame, filled odd-even (FrameOutline.framePath)
   function framePath(w, h, fromMenus) {
     return FrameOutline.framePath(root._spec, w, h, fromMenus);
   }
@@ -109,7 +102,7 @@ Item {
     paintRank: PaintOrder.rankOf("frame")
     screen: root.screen?.name ?? ""
     shown: root.backed
-    // Cast evenly, inward, by the blur window in place of shadowWindow's
+    // Cast evenly, inward, by the blur window
     shadow: BarStyle.look
   }
 
@@ -138,110 +131,6 @@ Item {
       endFillColor: root.backed ? "transparent" : root.frameColor
       innerStrokeColor: root.backed ? "transparent" : root.innerStrokeColor
       strokeWidth: root.strokeWidth
-    }
-  }
-
-  // The border's shadow (the BarStyle section's, as the bars
-  // cast): the frame's shape blurred and kept only inside it, so it falls
-  // on the windows all the way round. One window over the whole screen,
-  // so it runs unbroken past the strips and corners. Its layer rule
-  // (`order = 11`) stacks it under every other axiom surface, the overlay
-  // backdrop included, so bars inside the border stay clear of it.
-  PanelWindow {
-    id: shadowWindow
-
-    readonly property var look: BarStyle.look
-
-    // Backed, the blur window casts it, with the surfaces joined to the
-    // frame (BlurShape.shadow): this one keeps its place at a pixel, no
-    // buffer, drawing nothing.
-    // Hyprland puts a layer mapped while a fullscreen window is shown over
-    // it (CLayerSurface::onMap), and a fullscreen window is what unbacks it.
-    // Held where the compositor stacks by map order alone: turning the
-    // shadow on would otherwise map it after everything ordered under it
-    // (the backdrop, the bars, the border, docks), which all map again
-    // then (docs/dev/compositor/layer-arrangement.md). Idle, it's a pixel
-    // drawing nothing.
-    readonly property bool _casting: !shadowSlot.idle && !root.backed
-    visible: shadowSlot.shown
-    LayerSlot {
-      id: shadowSlot
-      window: shadowWindow
-      namespace: "axiom-border-shadow"
-      wanted: shadowWindow.look.shadow
-      held: true
-    }
-    screen: root.screen
-    anchors {
-      left: true
-      right: shadowWindow._casting
-      top: true
-      bottom: shadowWindow._casting
-    }
-    implicitWidth: 1
-    implicitHeight: 1
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent"
-    mask: Region {}
-    aboveWindows: true
-    WlrLayershell.namespace: "axiom-border-shadow"
-
-    // The inside of the frame
-    Item {
-      id: interior
-      anchors.fill: parent
-      visible: false
-      layer.enabled: shadowWindow._casting // style-exempt: no text
-
-      Shape {
-        anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-          fillColor: "black" // style-exempt: mask
-          fillRule: ShapePath.OddEvenFill
-          strokeColor: "transparent"
-          strokeWidth: 0
-
-          PathSvg {
-            path: root.innerPath(shadowWindow.width, shadowWindow.height)
-          }
-        }
-      }
-    }
-
-    Item {
-      anchors.fill: parent
-      visible: shadowWindow._casting
-      layer.enabled: visible // style-exempt: no text
-      layer.effect: MultiEffect { // style-exempt: no text
-        maskEnabled: true
-        maskSource: interior
-      }
-
-      // The frame, casting the shadow inward (it's cut away above)
-      Shape {
-        anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-        layer.enabled: true // style-exempt: no text
-        layer.effect: MultiEffect { // style-exempt: no text
-          shadowEnabled: true
-          shadowColor: Style.shadowColor(shadowWindow.look)
-          shadowBlur: 1
-          blurMax: shadowWindow.look.shadowSize
-        }
-
-        ShapePath {
-          fillColor: "black" // style-exempt: mask
-          fillRule: ShapePath.OddEvenFill
-          strokeColor: "transparent"
-          strokeWidth: 0
-
-          PathSvg {
-            path: root.framePath(shadowWindow.width, shadowWindow.height, false)
-          }
-        }
-      }
     }
   }
 

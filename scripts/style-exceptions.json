@@ -31,10 +31,6 @@
     "rules": ["R6"],
     "reason": "draws the shell's shadow for a look it is handed: Style.shadowColor(look), memoised per look (tokens.md › Performance 6)"
   },
-  "qml/components/surfaces/border/RoundedBorders.qml": {
-    "rules": ["R6"],
-    "reason": "draws the shell's shadow for a look it is handed: Style.shadowColor(look), memoised per look (tokens.md › Performance 6)"
-  },
   "qml/components/bar/**": {
     "rules": ["R7"],
     "reason": "colours come from the bar palette (paint, BarColors), D-24"

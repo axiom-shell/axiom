@@ -350,10 +350,7 @@ QtObject {
   readonly property var stretch: root.place.stretch
   // A joined submenu's, as its outer wall is drawn: it slides out along
   // the stroke, and the pill runs out with it (`_slideLead` ahead), never
-  // past where it rests
-  // nor back inside what the box's own stretch covers. Its `box` is the
-  // two boxes together, from the submenu's wall at rest
-  // (BarLayout.flushEnds)
+  // past where it rests nor back inside what the box's own stretch covers
   readonly property var _submenuReach: {
     const j = root.submenuJoin;
     const own = root._ownPill;
@@ -365,11 +362,6 @@ QtObject {
       "start": Math.min(own.start, tip)
     } : {
       "end": Math.max(own.end, tip)
-    }, {
-      "box": {
-        "start": Math.min(root.place.start, j.at),
-        "end": Math.max(root.place.end, j.at)
-      }
     });
   }
 
@@ -518,13 +510,12 @@ QtObject {
       "end": end + root._toBar
     };
   }
-  // A stretch (with its surface's `box`) in the bar's coordinates, with
+  // A stretch in the bar's coordinates, with
   // the pill it stands on at rest (`pill`: BarLayout.pillIndex finds it
   // again should the bar's pills change before it's sent anew)
   function _toBarStretch(stretch) {
     const pill = root.place.pill;
     return Object.assign({}, stretch, root._toBarSpan(stretch.start, stretch.end), {
-      "box": root._toBarSpan(stretch.box.start, stretch.box.end),
       "pill": pill ? {
         "start": pill.start + root._toBar,
         "length": pill.length
@@ -536,13 +527,7 @@ QtObject {
     owner: root.owner
     glides: root.stretchGlides
     open: root.open
-    stretch: root.showing && root.stretch ? root._toBarStretch(Object.assign({}, root.stretch, {
-      "box": {
-        "start": root.place.start,
-        "end": root.place.end
-      }
-    })) : null
-    covered: root._covers
+    stretch: root.showing && root.stretch ? root._toBarStretch(root.stretch) : null
     opening: {
       if (root._hollow || !root.showing || !root.onPill)
         return null;
@@ -550,10 +535,6 @@ QtObject {
       return SurfaceContext.openingOrNull(s.start, s.end);
     }
   }
-  // Whether the surface is out over the stroke it stands on (none of it
-  // while it's all behind its edge): the bar runs a wall of it on from a
-  // pill's squared end only then (BarContainer._flushEnds)
-  readonly property bool _covers: root._coverEnd > root._coverStart
   property PillStretch _submenuStretch: PillStretch {
     container: root.container
     owner: root.owner + ":submenu"

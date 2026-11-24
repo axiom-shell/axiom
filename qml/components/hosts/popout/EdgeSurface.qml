@@ -48,12 +48,9 @@ AttachedSurface {
   opaque: root.geometry.opaque
   shadowLook: root.geometry.shadowLook
 
-  // Under a submenu: its opening in the box's side, the fillet where it
-  // joins the bar side, and its box out of this one's shadow
+  // Under a submenu: its opening in the box's side, and the fillet where it
+  // joins the bar side
   strokeHoles: root.submenu?.strokeHoles ?? []
-  shadowHoles: root.submenu?.shadowHoles ?? []
-  // ...where it runs flush to the box's end, carrying on a wall of it
-  wallsRunOn: root.submenu?.shadowHoles ?? []
   // Square where a submenu runs flush to the box's end, or (a detached
   // box) its near corner
   readonly property var _side: root.submenu?.side ?? null

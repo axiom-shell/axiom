@@ -712,60 +712,6 @@ QtObject {
     }).filter(st => st !== null);
   }
 
-  // The pill and island ends squared for a surface whose wall runs on
-  // from them past the bar's inner edge (a popout flush to the end, a
-  // submenu joined straight into it, a popout on the perpendicular edge
-  // an end reach runs a pill on to), from the `stretches` as sent, where
-  // `shapes` (stretchIslands) draws them squared. Each casts as if that
-  // wall ran on (`source`, a copy of the end past the inner edge in the
-  // shadow's source, wide: a thin strip's blur is much weaker), and is cut
-  // past the inner edge beside it, where the surface's shadow, cast the
-  // same way from its side (AttachedSurface), takes over: both at full
-  // strength where they meet, with no step. It's cut under the surface too
-  // (`holes`), as far as the run-on's shadow spreads (the surface casts
-  // there), or it glows round the run-on while the surface slides. None of
-  // it reaches past the surface's box (a stretch's `box`, { start, end };
-  // without one, the stretch itself: an end reach's pill runs the length
-  // of its surface). All only while the surface is out over the stroke
-  // (a stretch's `covered`): squared before it slid out, the pill's own
-  // wall lost its shadow.
-  // `g`: { reach (the shadow's), across (the bar's depth), inner (where
-  // its inner edge is across it), near (a left or top bar) }.
-  // -> [{ source, holes }], each area { along, length, from, deep }
-  // (`from`..`from + deep` across the bar).
-  function flushEnds(stretches, shapes, g) {
-    const reach = g.reach, inner = g.inner, near = g.near;
-    const area = (along, length, from, deep) => ({
-          "along": along,
-          "length": length,
-          "from": from,
-          "deep": deep
-        });
-    // From the inner edge out, past the bar's far side
-    const outward = (along, length) => area(along, length, near ? inner : -reach, near ? g.across - inner + reach : inner + reach);
-    // `room`: how far the surface's box reaches in from the end
-    const end = (at, atStart, room) => {
-      const length = Math.min(room, reach * 2), under = Math.min(room, length + reach);
-      return {
-        "source": area(atStart ? at : at - length, length, near ? inner : inner - reach, reach),
-        "holes": [outward(atStart ? at - reach : at, reach), outward(atStart ? at : at - under, under)]
-      };
-    };
-    // ...where the pill or island is drawn ending there, squared
-    const drawn = (at, atStart) => (shapes ?? []).some(r => (atStart ? r.squareStart : r.squareEnd) && Math.abs((atStart ? r.start : r.start + r.length) - at) <= 1);
-    const ends = [];
-    (stretches ?? []).forEach(st => {
-      if (st.covered === false)
-        return;
-      const box = st.box ?? st;
-      if (st.squareStart && box.end > st.start && drawn(st.start, true))
-        ends.push(end(st.start, true, box.end - st.start));
-      if (st.squareEnd && st.end > box.start && drawn(st.end, false))
-        ends.push(end(st.end, false, st.end - box.start));
-    });
-    return ends;
-  }
-
   // The stretches on pill `index` (each { index, start, end, squareStart,
   // squareEnd, joinStart, joinEnd }: one per surface standing on it) as
   // one, or null. An end is squared (or joins the perpendicular edge) when
