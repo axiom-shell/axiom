@@ -305,7 +305,7 @@ Nodes are `<engine>.<stage>`. The edges are:
 - an owner or adapter file that calls two stages of one engine has an edge between them in that engine's graph, or the stage's `api` entry lists the other under `unfed` (the owner runs both and carries nothing from one into the other), so an owner-built feed cannot stay invisible;
 - every `fedBy` entry and every cross-engine `intakes` entry names a seam that is a row of the Seam register, and every register row between stages of two listed engines is such an entry;
 - every `intakes` rule is pinned by a row of the engine's rows file;
-- a `$domains` folder imports only the folders it `uses`, and a cycle among the `uses` of domain folders, or among the files of one engine folder, fails.
+- a cycle among the `uses` of domain folders, or among the files of one engine folder, fails.
 
 ## Checks
 `python3 scripts/check_engines.py` runs these rules over `qml/components/methods/` and the engines the manifest lists. It runs in `scripts/dev/verify.sh` and `scripts/check_all.sh`.

@@ -820,6 +820,8 @@ class Manifests(unittest.TestCase):
         self.assertEqual(self.m.flat(text=text), {})
         self.assertEqual(list(self.m.domains(text=text)), ["geo"])
         self.assertEqual(self.m.engines(text=manifest_text())[0], {})
+        short = manifest_text(demo_entry(), **{"$domains": {"geo": {"tables": []}}})
+        self.assertEqual(self.m.domains(text=short)["geo"]["uses"], [])
         bare = demo_entry()
         del bare["doc"]
         self.assertEqual(self.m.engines(text=manifest_text(bare))[0]["demo"]["doc"], "")
@@ -841,6 +843,8 @@ class Manifests(unittest.TestCase):
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "DEMO", "tables": []}}}), "prefix DEMO is used by demo and $flat.Helper"),
             (manifest_text(demo_entry(), **{"$domains": {"geo": {"uses": [], "prefix": "DEMO"}}}), "prefix DEMO is used by demo and $domains.geo"),
             (manifest_text(demo_entry(), **{"$flat": []}), "$flat is not an object"),
+            (manifest_text(demo_entry(), **{"$domains": {"geo": {"tables": []}}}), "$domains.geo: missing key uses"),
+            (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "FLAT"}}}), "$flat.Helper: missing key tables"),
         ]
         for text, message in cases:
             errors = self.m.engines(text=text)[1]
@@ -908,6 +912,8 @@ class CheckEngines(unittest.TestCase):
                 ("scripts/engines-exceptions.json", json.dumps({
                     "qml/components/methods/PurityRandom.qml": {"rules": ["purity", "dag"], "reason": "fixture"},
                     "qml/nowhere/*.qml": {"rules": ["purity"], "reason": "fixture"}})),
+                (f"{methods}/SoloRoot.qml", qml()),
+                ("qml/components/SoloEngine.qml", qml()),
                 ("qml/components/DemoItem.qml", qml("\n  onPillsChanged: f()\n  function z() { setRequest(1); }")),
             ]
             code, out = run_check(root, "check_engines.py", "--base", base, files=files)
@@ -925,6 +931,7 @@ class CheckEngines(unittest.TestCase):
             f"{mine}/PurityNow.qml: purity g:Date.now: not in the baseline",
             f"{mine}/PurityDate.qml: purity g:new Date(): not in the baseline",
             "scripts/engines.json: placed ghost.facade:GhostEngine: not in the baseline",
+            "scripts/engines.json: placed solo.facade:SoloEngine: not in the baseline",
             "scripts/engines-exceptions.json: qml/components/methods/PurityRandom.qml lists dag, which no file under it hits",
             "scripts/engines-exceptions.json: qml/nowhere/*.qml lists purity, which no file under it hits",
             f"{mine}/PurityConsole.qml: purity g:console: not in the baseline",
@@ -958,6 +965,8 @@ class CheckEngines(unittest.TestCase):
         data["demo"]["intakes"]["solve"].append({"from": "demo.model", "rule": "noRowRule", "at": "qml/components/DemoAdapter.qml"})
         data["sink"]["fedBy"] = {"model": [{"from": "demo.model", "seam": "noSuchSeam"}],
                                  "solve": [{"from": "demo.drawn", "seam": "demoFeed"}]}
+        data["solo"] = {**demo_entry(), "prefix": "SOLO", "facade": "SoloEngine", "folder": "", "files": ["qml/components/methods/SoloRoot.qml"],
+                        "helpers": [], "owners": [], "adapters": [], "itemPaths": [], "pluginPaths": [], "tests": {"rows": "tests/solo/Rows.js"}}
         data["ghost"] = {**data["sink"], "prefix": "DEMOG", "facade": "GhostEngine", "folder": "qml/components/methods/ghost",
                          "fedBy": {}, "tests": {"rows": "tests/ghost/Rows.js"}}
 
@@ -1947,7 +1956,7 @@ class NewNames(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.repo = Path(self.tmp.name)
         write(self.repo, "qml/A.qml", "Item {\n  property int oldName: 1\n  function shared() {}\n"
-                                "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
+                                      "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
         write(self.repo, "qml/config/schema/s.yaml", "A:\n  type: object\n")
         write(self.repo, "docs/dev/generated/g.py", "def keepme():\n")
         git(self.repo, self.tmp.name, "init", "-q", "-b", "main")
@@ -1966,7 +1975,7 @@ class NewNames(unittest.TestCase):
 
     def test_rows(self):
         write(self.repo, "qml/A.qml", "Item {\n  property int newName: 1\n  function shared() {}\n"
-                                "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
+                                      "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
         write(self.repo, "qml/B.qml", "Item {\n  function shared() {}\n  Text { text: I18n.tr(\"shrunk to  {0} % on {1}\") }\n}\n")
         write(self.repo, "qml/config/schema/s.yaml", "A:\n  type: object\n  newKey:\n    type: string\n    default: x\n    x-scope: machine\n")
         write(self.repo, "docs/dev/generated/g.py", "def keepme():\n\ndef skipped():\n")

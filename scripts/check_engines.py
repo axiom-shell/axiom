@@ -204,7 +204,7 @@ def _new_rules(base):
 
 def _facade(entry):
     """The facade's repo-relative path: the .qml under the engine's folder and files named for it, else None."""
-    return next((f for f in _expand([entry["folder"], *entry["files"]], ".qml") if Path(f).stem == entry["facade"]), None)
+    return next((f for f in _expand([p for p in (entry["folder"], *entry["files"]) if p], ".qml") if Path(f).stem == entry["facade"]), None)
 
 
 def _placed(hits, engines, domains):
@@ -270,7 +270,7 @@ def _dag(hits, engines, domains):
     for a, b in sorted(edges):
         if a.endswith(".drawn") and not b.endswith(".drawn"):
             hits.add(MANIFEST, "dag", f"{a}:{a}→{b}")
-    uses = {k: [u for u in d["uses"]] for k, d in domains.items()}
+    uses = {k: d["uses"] for k, d in domains.items()}
     for cycle in _cycles(uses):
         hits.add(MANIFEST, "dag", _cycle_symbol(cycle))
     for name, entry in engines.items():
