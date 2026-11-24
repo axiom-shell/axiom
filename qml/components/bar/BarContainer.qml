@@ -808,7 +808,7 @@ Rectangle {
         border.width: 0
         // On the inner side, the stroke and its fringe under each opening (a
         // pixel past the island's wall where the opening reaches it,
-        // EdgeAttach.strokeHoleAlong): cut from its border while unbacked, and from its copy's
+        // EdgeAttach.strokeHoleAlong): read by its copy
         readonly property var strokeHoles: root._openingList.map(o => {
           const along = root.isVertical ? island.y : island.x;
           const start = Math.max(0, o.start - along);
@@ -821,21 +821,15 @@ Rectangle {
           return root.isVertical ? Qt.rect(band.start, run.start, band.size, run.end - run.start) : Qt.rect(run.start, band.start, run.end - run.start, band.size);
         }).filter(hole => hole !== null)
 
-        HoledItem {
+        Rectangle {
           anchors.fill: parent
-          keepLayer: Appearance.translucent
-          holes: root.backed ? [] : island.strokeHoles
-
-          Rectangle {
-            anchors.fill: parent
-            color: "transparent"
-            border.color: root.backed ? "transparent" : Style.frameStroke
-            border.width: Appearance.borderWidth
-            topLeftRadius: island.topLeftRadius
-            topRightRadius: island.topRightRadius
-            bottomLeftRadius: island.bottomLeftRadius
-            bottomRightRadius: island.bottomRightRadius
-          }
+          color: "transparent"
+          border.color: root.backed ? "transparent" : Style.frameStroke
+          border.width: Appearance.borderWidth
+          topLeftRadius: island.topLeftRadius
+          topRightRadius: island.topRightRadius
+          bottomLeftRadius: island.bottomLeftRadius
+          bottomRightRadius: island.bottomRightRadius
         }
 
         // Its shape, for the bar's shadow

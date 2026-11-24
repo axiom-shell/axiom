@@ -70,9 +70,9 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - More on shadow looks: [Shadows](../popouts/shadows.md).
 
 ### Strokes left open under surfaces
-- Where a joined surface's stroke meets the one it stands on, the stroke it stands on is left open (while backed, by the copy's `HoledCopy`; unbacked, by the host's own `HoledItem`, `BorderPanel` pieces and corner hiding):
+- Where a joined surface's stroke meets the one it stands on, the stroke it stands on is left open by the backing window's copy (`HoledCopy`; an unbacked surface draws its stroke whole):
   - a pill's or island's far stroke under a popout (`PillStretch.opening` → `BarContainer.setRequest`);
-  - a popout's side under a submenu (`BarPopouts.submenuHole`, `AttachedSurface.strokeHoles`), drawn through `reusable/HoledItem`;
+  - a popout's side under a submenu (`BarPopouts.submenuHole`, `AttachedSurface.strokeHoles`);
   - a dock joined to the border opens it as edge popouts do.
 - An opening spans only what's drawn over it (`AttachedSurface.coverStart`/`coverEnd`):
   - the box while it slides;
@@ -94,14 +94,12 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - `SurfaceManager.setBorderOpening`, through a `hosts/popout/BorderOpening`, which takes it back as it goes;
   - in screen px along the edge; its edge coordinates start at `ScreenEdgeManager.reservedWithMenusOn(startSide)`;
   - on whole pixels (see Strokes left open under backed surfaces).
-- `BorderPanel` leaves its stroke and the fill of the stroke's row open there (`Utils.subtractSpans`).
-  - It nudges its window (`FrameNudge`) only when its own openings changed: `SurfaceManager.borderOpenings` is a new array whenever any opening on any screen moves.
-  - A strip's own offset along its edge (`screenOffset`) is read through `LayerOrigin`. Until then it's taken as half what the edges across it reserve.
+- The backing window's copy of the frame cuts the stroke there (`RoundedBorders.strokeHoles`); `BorderPanel` itself draws its stroke and its row whole.
 - The same goes for strokes a surface is joined over. An opening is cut in every mode, opaque too (the backing window's copies cut the stroke), so no fill shows a line through it.
 - Pills publish theirs too (`BarContainer.borderOpening`, from the bar's place on screen).
 
 ### Joins on a perpendicular edge
-- Any surface joined to a perpendicular edge opens that edge's stroke down to its join's fillet (`EdgeAttach.joinOpening`, `AttachedSurface.joinShown`: as much as is out past its edge), and `RoundedBorders` leaves the corner piece out there.
+- Any surface joined to a perpendicular edge opens that edge's stroke down to its join's fillet (`EdgeAttach.joinOpening`, `AttachedSurface.joinShown`: as much as is out past its edge), and `RoundedBorders`' `strokeHoles` take the corner piece's box there (`FrameOutline.cornerCovered`).
   - Such surfaces: a pill, a bar popout, an edge popout or dock running the whole edge (on a pill bar's edge too).
 - Bar popouts merged into the bar, or on a solid bar's inner edge, do the same.
 
@@ -118,7 +116,6 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - The parent's fillet on that side is opened under it (`AttachedSurface.attachFilletHole`).
 
 ### Timing
-- Every window drawing an opening (the bar, the border strips and corners, a popout under its submenu's hole) bursts a `FrameNudge` when it changes, since the change comes from another window sliding.
+- Every window drawing an opening (the bar, a popout under its submenu's hole) bursts a `FrameNudge` when it changes, since the change comes from another window sliding.
 - A tiled (hollow) menu publishes no opening (`EdgePlacement._hollow`, `PillBarJoin.hollow`): the line runs on under its tiles, in every mode. A joined submenu of it publishes its own.
-- `HoledItem` keeps its layer while translucent (`keepLayer`), so its first hole is cut from its first frame.
 - A fillet's part of an opening leads the slide by a stroke's width (`AttachedSurface._filletHidden`), as the window drawing it commits a frame or so later.

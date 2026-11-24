@@ -186,48 +186,7 @@ Item {
     aboveWindows: true
     WlrLayershell.namespace: "axiom-border-shadow"
 
-    // Surfaces joined to the frame's stroke (SurfaceManager.borderOpenings)
-    // as rects it casts nothing on, from the frame line in: their
-    // translucent fill would show (and blur) it. A fillet at either end
-    // (`startFillet`/`endFillet`) is left out only as far as its curve, not the square it
-    // sits in: past the curve the shadow runs on round it (as a solid
-    // bar's, BarContainer._shadowHoles). Each an SVG subpath.
-    readonly property var holes: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "")).map(o => shadowWindow._holePath(o))
-    function _holePath(o) {
-      const reach = look.shadowSize * 2;
-      const vertical = o.edge === "left" || o.edge === "right";
-      // Across: the frame line (past integrated menus' strips as the frame
-      // is), and which way is in from it
-      const line = o.edge === "top" ? root.innerTop : o.edge === "bottom" ? height - root.innerBottom : o.edge === "left" ? root.innerLeft : width - root.innerRight;
-      const inward = o.edge === "top" || o.edge === "left" ? 1 : -1;
-      const fs = o.startFillet ?? 0, fe = o.endFillet ?? 0;
-      const from = o.start + fs, to = o.end - fe;
-      // (along, across) to x, y
-      const pt = (u, v) => vertical ? `${v} ${u}` : `${u} ${v}`;
-      let d = "";
-      if (to > from)
-        d += ` M ${pt(from, line)} L ${pt(to, line)} L ${pt(to, line + inward * reach)} L ${pt(from, line + inward * reach)} Z`;
-      // The corner where a surface's wall meets the stroke, filled out to
-      // the quarter circle round the opposite one
-      const corner = (at, f, atEnd) => {
-        const toward = atEnd ? 1 : -1;
-        const ax = at + toward * f, bv = line + inward * f;
-        // Sweep from A (on the stroke) to B (on the wall) round the centre
-        // (each from the centre, in x, y)
-        const a = vertical ? [-inward * f, 0] : [0, -inward * f];
-        const b = vertical ? [0, -toward * f] : [-toward * f, 0];
-        const sweep = a[0] * b[1] - a[1] * b[0] > 0 ? 1 : 0;
-        return ` M ${pt(at, line)} L ${pt(ax, line)} A ${f} ${f} 0 0 ${sweep} ${pt(at, bv)} Z`;
-      };
-      if (fs > 0)
-        d += corner(o.start + fs, fs, false);
-      if (fe > 0)
-        d += corner(o.end - fe, fe, true);
-      return d;
-    }
-
-    // The inside of the frame, but for the holes (each its own subpath,
-    // left empty by the odd-even fill)
+    // The inside of the frame
     Item {
       id: interior
       anchors.fill: parent
@@ -245,7 +204,7 @@ Item {
           strokeWidth: 0
 
           PathSvg {
-            path: root.innerPath(shadowWindow.width, shadowWindow.height) + shadowWindow.holes.join("")
+            path: root.innerPath(shadowWindow.width, shadowWindow.height)
           }
         }
       }
@@ -350,17 +309,7 @@ Item {
       readonly property real _y: FrameOutline.cornerBox(root._spec, corner.isLeft, corner.isTop).y
       // Its box as the compositor shows it, on whole device px
       readonly property rect screenBox: FrameOutline.windowPixels(Qt.rect(corner._x, corner._y, root.cornerSize, root.cornerSize), corner.devicePixelRatio)
-      // A surface joined to the stroke runs into the perpendicular edge over
-      // it (a pill joined to it, SurfaceManager.borderOpenings): the corner
-      // is left open there as the strips are, its fill no longer hiding it
-      readonly property bool covered: FrameOutline.cornerCovered(root._spec, root._openings, corner.isLeft, corner.isTop)
-      onCoveredChanged: cornerNudge.burst()
-      FrameNudge {
-        id: cornerNudge
-      }
-
       CornerPiece {
-        visible: !corner.covered
         borderRadius: root.innerBorderRadius
         fillColor: root.backed ? "transparent" : root.frameColor
         strokeColor: root.backed ? "transparent" : root.innerStrokeColor

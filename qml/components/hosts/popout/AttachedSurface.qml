@@ -203,9 +203,6 @@ Item {
   // what's joined to it over them (a submenu on its side, a popout on
   // a pill's far stroke) carries on there, its fill no longer hiding it
   property var strokeHoles: []
-  // Ready to cut them from the first frame they come (HoledItem.keepLayer):
-  // while surfaces are translucent, when they can
-  readonly property bool _holesReady: Appearance.translucent && !root.mirror
 
   default property alias content: contentContainer.data
   // The pointer is on the surface (its box and fillets)
@@ -562,7 +559,6 @@ Item {
         anchors.fill: parent
         visible: !root.mirror && !root.detached
         holes: root.mirror || root.backed ? [] : root.strokeHoles
-        keepLayer: root._holesReady && !root.detached
 
         Loader {
           anchors.fill: parent
@@ -584,7 +580,6 @@ Item {
         anchors.fill: parent
         visible: !root.mirror && root.detached
         holes: root.mirror || root.backed ? [] : root.strokeHoles
-        keepLayer: root._holesReady && root.detached
 
         Loader {
           anchors.fill: parent
