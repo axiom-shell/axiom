@@ -20,7 +20,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 - The chrome draws its own outer fill and stroke transparent while backed (`AttachedSurface.backed`, `BarContainer.backed`, `RoundedBorders.backed`, `ToastItem`'s border, the integrated edge menu's border-off line): it draws its content only. The one exception is the integrated edge menu's framed box, which keeps its fill and stroke in the menu window in every mode.
 
 ### Copies
-- `Copies.qml` is one copy of each of `shapes` one slot per shape; `BlurBackingWindow` makes its colour, alpha and outline copies of it, and `tests-layout/tst_ChromeComposite` draws through the same file.
+- `Copies.qml` is one copy of each of `shapes`, one slot per shape; `BlurBackingWindow` makes its colour, alpha and outline copies of it, and `tests-layout/tst_ChromeComposite` draws through the same file.
 - The copies are a keyed `ListModel` (`KeyedModel.qml`, by `BlurShape.uid` through `BlurManager.shapeOf`), so a shape coming or going adds or removes only its own.
 - Any copy moving, resizing, sliding or changing colour, or its holes changing, nudges the window (`FrameNudge`).
 

@@ -85,8 +85,9 @@ PopoutWrapperBase {
   // (EdgePlacement.slidesFromEdge): under the bars where it can, its
   // window on their layer ordered under them (EdgePlacement.slidesUnder;
   // the daemon's layer rules, render.LayerRulesLua), else over them on the
-  // Overlay layer (no supports.layerOrder). Both follow only while closed, as BarPopouts.underBar: they
-  // change the window's layer, namespace and size. Whether it slides from
+  // Overlay layer (no supports.layerOrder). Both follow only while closed,
+  // as BarPopouts.underBar: they change the window's layer, namespace and
+  // size. Whether it slides from
   // the edge also follows as it jumps over a fullscreen window or back
   // (`_snapping`); its namespace can't change while mapped, so `_under`
   // doesn't: over a fullscreen window its window goes to the Overlay layer

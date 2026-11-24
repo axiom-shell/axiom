@@ -44,10 +44,9 @@ ReservedAreaWindow {
   // its layer while open) closes as it opens
   onIsOpenChanged: if (isOpen)
     PopoutManager.closeOn(root.screen?.name ?? "")
-  // This opening draws reduced effects (Overlay.reduceFullscreen): decided as
-  // it opens: a window going fullscreen while it's open, or kept, changes
-  // nothing until it opens again. Its blur goes the pause's way
-  // (BlurManager.reduced), not through its namespace
+  // This opening draws reduced effects (Overlay.reduceFullscreen): the page's
+  // cheaper drawing is decided as it opens; its blur follows the screen live
+  // (BlurManager.reduced), and its layer follows `fullscreenNow`
   property ClosedLatch _reduced: ClosedLatch {
     source: OverlayConfig.reduceFullscreen && root.fullscreenNow
     closed: !root._wanted
