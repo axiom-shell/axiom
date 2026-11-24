@@ -29,7 +29,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 ## Architecture rules
 
 ### Layering
-`qml/components/methods/` (pure: no files, processes or `qs.*` imports) → data owners (`ConfigManager`, `ThemeManager`, `I18n`) → `qml/config/` readers → services → UI. UI runs no polling Process or repeating Timer and never reads `ConfigManager.config`. A helper's decision (`BarEnds`, `SurfaceContext`, …) is read from its output, never re-derived in a host: a new case is a helper rule plus a test row.
+`qml/components/methods/` (pure: no files, processes, timers, clocks, randomness, logging, deferral or Quickshell; imports only `QtQuick`, `qs.components.methods` and the engine or domain folders its manifest entry `uses`; the root holds generic helpers two or more domains use, `<engine>/` an engine, `<domain>/` a domain's helpers) → data owners (`ConfigManager`, `ThemeManager`, `I18n`) → `qml/config/` readers → services → UI. UI runs no polling Process or repeating Timer and never reads `ConfigManager.config`. An engine's decision (`scripts/engines.json`) is read from its facade's output, a helper's from its own, never re-derived in a host: a new case is a rules row plus a contract row for an engine (`docs/dev/core/engines.md`), else a helper rule plus a test row.
 
 ### Services
 - One singleton `*Manager` per domain, never shadowing a Quickshell singleton.
@@ -65,4 +65,4 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ## Agents and skills
 
-Every change starts with `/orchestrate <request>`. It sizes the change into a tier (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system; every tier has a ledger), plans, builds in gated groups in a worktree, reviews and opens the PR. It keeps its state in the plans folder (`.plans/<slug>/`, gitignored). `.claude/agents/`: **architect** (opus) specs, checks plans and judges findings; **implementer** (sonnet) builds; **reviewer** (sonnet) reviews; **checker** (haiku) runs checks. Every hand-off's layout is in `.claude/templates/`. Recipe skills (`/bar-widget`, `/setting`, …), `/keep-order` (plan, gate, audit), `/review-branch`, `/review-system`, `/align` and `/verify` run inside it.
+Every change starts with `/orchestrate <request>`. It sizes the change into a tier (T0 Fix, T1 Improvement, T2 Feature, T3 Cross-system; every tier has a ledger), plans, builds in gated groups in a worktree, reviews and opens the PR. It keeps its state in the plans folder (`.plans/<slug>/`, gitignored). `.claude/agents/`: **architect** (opus) specs, checks plans and judges findings; **implementer** (sonnet) builds; **reviewer** (sonnet) reviews; **checker** (haiku) runs checks. Every hand-off's layout is in `.claude/templates/`. Recipe skills (`/bar-widget`, `/setting`, `/engine-change`, …), `/keep-order` (plan, gate, audit), `/review-branch`, `/review-system`, `/align` and `/verify` run inside it.

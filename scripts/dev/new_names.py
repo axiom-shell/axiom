@@ -9,6 +9,7 @@ only it lists what they define:
   QML     function, property, signal, id, and a component per new .qml file
   Go      func (functions and methods), type
   Python  def, class        shell  NAME() { / function NAME
+  .js under tests/  function, var (a file's top-level names only)
   schema  mapping keys under qml/config/schema/ (JSON-schema and x-* keywords
           are skipped), and every schema.yaml
   strings the first string literal of an I18n.tr( call in QML
@@ -57,6 +58,10 @@ PATTERNS = {
         ("function", re.compile(r"^\s*(?:function\s+)?(\w[\w-]*)\s*\(\)\s*\{")),
         ("function", re.compile(r"^\s*function\s+(\w[\w-]*)")),
     ],
+    "js": [
+        ("function", re.compile(r"^function\s+(\w+)\s*\(")),
+        ("var", re.compile(r"^var\s+(\w+)\b")),
+    ],
     "schema": [
         ("key", re.compile(r"^\s*(?:-\s+)?([A-Za-z_$][\w$.-]*)\s*:")),
     ],
@@ -72,6 +77,8 @@ def lang_of(path):
     if path.startswith("qml/config/schema/") and path.endswith((".yaml", ".yml")) \
             or path.endswith("/schema.yaml"):
         return "schema"
+    if path.startswith("tests/") and path.endswith(".js"):
+        return "js"
     return {".qml": "qml", ".go": "go", ".py": "py", ".sh": "sh"}.get(Path(path).suffix)
 
 

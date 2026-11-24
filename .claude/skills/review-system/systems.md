@@ -1,6 +1,6 @@
 # Systems
 
-The systems `/review-system` knows. Each `## <name>` entry: **Scope** in a line; **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member); **Checks** are what's most worth verifying, beyond the lenses; **Seams** are where the rest of axiom uses it. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
+The systems `/review-system` knows. Each `## <name>` entry: **Scope** in a line; **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member); **Checks** are what's most worth verifying, beyond the lenses; **Seams** are where the rest of axiom uses it. An engine (an entry of `scripts/engines.json`) needs no **Extra**: its files are the paths `held_paths` in `scripts/manifests.py` gives for its manifest entry. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
 
 ## compositor
 Scope: the neutral compositor layer: the contract, `supports`, layers and their order, config modes, window look.
@@ -271,11 +271,11 @@ Seams: idle, night light, clipboard, polkit and every feature using them; the da
 ## guardrails
 Scope: the checks, the tests' runners, CI and the agent rules: what stops a bad change before it merges.
 Docs: testing.md
-Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md .claude/rules/*.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
+Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/manifests.py scripts/engines.json scripts/engines-*.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md .claude/rules/*.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
 Checks:
 - Every check in `docs/dev/testing.md` › The checks runs in CI (`checks.yml`) and in `check_all.sh`, with the same arguments; the order lives in one place.
 - Each check fails on what its doc says it catches (try a bad input against it), and a check that can't fail is a finding.
-- Every baseline only shrinks (qmllint, the allowlist, sizes): growth fails CI, not only a local run.
+- Every baseline only shrinks (qmllint, the allowlist, sizes, engines): growth fails CI, not only a local run.
 - The guard covers every "Never, while testing" rule, with a test each in `test_guard.py`; a refusal can't be dodged by a trivial rewording (another flag order, `env`, a subshell).
 - verify.sh runs what a change touches (its maps from file to test or check are complete), and a skipped step says so rather than printing `verify ok`.
 - The project rules, the agents, the skills and the recipes name files, members and steps that still exist and agree with each other.

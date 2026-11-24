@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Tests for .claude/hooks/guard.py, the PreToolUse guard enforcing
-CLAUDE.md › "Never". Run: python3 tests/scripts/test_guard.py"""
+CLAUDE.md › "Never". Run: python3 tests/scripts/test_guard.py
+It also pins the orchestrate skill's text and its stack rebase rule."""
 import importlib.util
 import json
 import os
+import re
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -14,6 +17,10 @@ REPO = Path(__file__).resolve().parent.parent.parent
 spec = importlib.util.spec_from_file_location("guard", REPO / ".claude/hooks/guard.py")
 guard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(guard)
+
+spec = importlib.util.spec_from_file_location("test_scripts", REPO / "tests/scripts/test_scripts.py")
+test_scripts = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(test_scripts)
 
 HOME = str(guard.HOME)
 # The live session the tests pin: a runtime dir and display, and another display (a nested session)
@@ -31,6 +38,32 @@ def denied(command, cwd=str(REPO)):
     except guard.Denied:
         return True
     return False
+
+
+ORCHESTRATE = REPO / ".claude/skills/orchestrate/SKILL.md"
+STACK_REBASE = [
+    "git switch <top>",
+    "git rebase --update-refs <fixed part>",
+    "git fetch origin",
+    "git rebase --update-refs origin/main",
+    "git rebase --onto origin/main <merged part's old tip> <top> --update-refs",
+    "git push --force-with-lease origin <each moved branch>",
+    "gh pr edit <n> --base main",
+]
+PLACEHOLDERS = {"<top>", "<fixed part>", "<merged part's old tip>", "<each moved branch>", "<n>"}
+
+
+def fenced_block(text, info):
+    """The lines between the first line equal to "```" + info and the next "```" line, unchanged; None without that opening line"""
+    lines = text.split("\n")
+    if "```" + info not in lines:
+        return None
+    block = []
+    for line in lines[lines.index("```" + info) + 1:]:
+        if line == "```":
+            break
+        block.append(line)
+    return block
 
 
 class LiveSession:
@@ -167,13 +200,20 @@ class Bash(LiveSession, unittest.TestCase):
             self.assertFalse(denied(f"cd {feature} && git push", cwd=main))
             self.assertTrue(denied(f"cd {main} && git push", cwd=feature))
 
+    def test_stack_rebase_commands(self):
+        self.allows("git rebase --update-refs stack-part-one", "git fetch origin", "git rebase --update-refs origin/main",
+                    "git rebase --onto origin/main 1a2b3c stack-part-three --update-refs", "git switch stack-part-three",
+                    "git push --force-with-lease origin stack-part-two stack-part-three", "gh pr edit 12 --base main")
+        self.blocks("git push --force-with-lease origin main", "git push --force-with-lease origin stack-part-two main",
+                    "git push --force origin stack-part-two")
+
     def test_shell_kill(self):
         self.blocks("pkill quickshell", "pkill -x qs", "killall qs", "killall -9 quickshell", "pkill -f 'qs -c axiom'", "pkill -x '^axiom$'",
                     "pkill -f /usr/bin/qs", 'pkill -x "qs|axiom"', "pkill '^foot$|^qs$'", "kill $(pgrep -x qs)", "kill -9 $(pidof qs)", "kill `pidof quickshell`", 'kill "$(pgrep -x qs)"',
                     "pgrep -x qs | xargs kill", "pidof qs | xargs -r kill -9", "pgrep -x axiom | kill",
                     "sudo pkill qs", "true && killall qs", "pgrep -x qs; kill 12345", "for p in $(pgrep qs); do kill $p; done",
                     "xargs kill < <(pgrep -x qs)")
-        self.allows("pkill -f nested-niri", "killall foot", "pgrep -x qs", "pidof qs", "pkill -f axiom-notes",
+        self.allows("pkill -f nested-niri", "killall foot", "pgrep -x qs", "pidof qs", "pkill -f axiom-scratch",
                     "kill $(pgrep -x foot)", 'pkill -x "foot|kitty"', "pgrep -x foot | xargs kill", "kill 12345", "echo qs")
 
     def test_check_i18n_fill_prune(self):
@@ -605,6 +645,166 @@ class Hook(unittest.TestCase):
             out = subprocess.run(["python3", str(REPO / ".claude/hooks/guard.py")], capture_output=True, text=True, input=json.dumps(call)).stdout
             self.assertTrue(out, call)
             self.assertEqual(json.loads(out)["hookSpecificOutput"]["permissionDecision"], "deny", call)
+
+
+class StackRebaseRule(LiveSession, unittest.TestCase):
+    """The orchestrate skill's `bash stack-rebase` block: its text, the guard's verdict on each line, and its effect on a
+    three-part stack in a temp repo with a local bare remote"""
+
+    def setUp(self):
+        super().setUp()
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.env = test_scripts.scratch_env(self.tmp)
+        for who in ("AUTHOR", "COMMITTER"):
+            self.env.update({f"GIT_{who}_NAME": "t", f"GIT_{who}_EMAIL": "t@t"})
+        self.work = self.tmp / "work"
+        self.git("init", "-q", "-b", "main", "seed", cwd=self.tmp)
+        self.commit(self.tmp / "seed", "seed")
+        self.git("clone", "-q", "--bare", "seed", "remote.git", cwd=self.tmp)
+        self.git("clone", "-q", "remote.git", "work", cwd=self.tmp)
+        self.git("switch", "-q", "--no-track", "-c", "stack-part-one", "origin/main", cwd=self.work)
+        self.commit(self.work, "one")
+        for part, below in (("two", "one"), ("three", "two")):
+            self.git("switch", "-q", "-c", f"stack-part-{part}", f"stack-part-{below}", cwd=self.work)
+            self.commit(self.work, part)
+        self.git("push", "-q", "origin", "stack-part-one", "stack-part-two", "stack-part-three", cwd=self.work)
+
+    def git(self, *args, cwd=None):
+        return subprocess.run(["git", *args], cwd=cwd or self.work, env=self.env, check=True, capture_output=True, text=True).stdout.strip()
+
+    def commit(self, repo, name):
+        (Path(repo) / f"{name}.txt").write_text(name)
+        self.git("add", "-A", cwd=repo)
+        self.git("commit", "-q", "-m", name, cwd=repo)
+        return self.git("rev-parse", "HEAD", cwd=repo)
+
+    @staticmethod
+    def filled(line, fill):
+        for placeholder, value in fill.items():
+            line = line.replace(placeholder, value)
+        return line
+
+    def run_lines(self, numbers, **fill):
+        """Lines `numbers` (1-based) of the skill's block, placeholders filled, run in the stack's clone"""
+        for number in numbers:
+            line = self.filled(STACK_REBASE[number - 1], fill)
+            subprocess.run(shlex.split(line), cwd=self.work, env=self.env, check=True, capture_output=True, text=True)
+
+    def only_equal(self, old_base, old_head, new_base, new_head):
+        out = self.git("range-diff", f"{old_base}..{old_head}", f"{new_base}..{new_head}")
+        self.assertTrue(out)
+        for line in out.splitlines():
+            self.assertIn(" = ", line, out)
+
+    def test_block(self):
+        block = fenced_block(ORCHESTRATE.read_text(), "bash stack-rebase")
+        self.assertIsNotNone(block)
+        self.assertEqual(block, STACK_REBASE)
+        self.assertEqual(set(re.findall(r"<[^>]+>", "\n".join(block))), PLACEHOLDERS)
+        self.assertIsNone(fenced_block("no block here", "bash stack-rebase"))
+
+    def test_lines_pass_guard(self):
+        fills = {"<top>": "stack-part-three", "<fixed part>": "stack-part-one", "<merged part's old tip>": "1a2b3c",
+                 "<each moved branch>": "stack-part-two stack-part-three", "<n>": "12"}
+        for line in STACK_REBASE:
+            line = self.filled(line, fills)
+            self.assertFalse(denied(line), line)
+
+    def test_fix_on_lower_part(self):
+        self.git("switch", "-q", "stack-part-one")
+        fix = self.commit(self.work, "fix")
+        self.run_lines([1, 2], **{"<top>": "stack-part-three", "<fixed part>": "stack-part-one"})
+        for part in ("stack-part-two", "stack-part-three"):
+            self.git("merge-base", "--is-ancestor", fix, part)
+
+    def test_newer_main(self):
+        parts = ("stack-part-one", "stack-part-two", "stack-part-three")
+        old = [self.git("rev-parse", ref) for ref in ("origin/main",) + parts]
+        self.commit(self.tmp / "seed", "newer")
+        self.git("-C", "remote.git", "fetch", "-q", str(self.tmp / "seed"), "main:main", cwd=self.tmp)
+        self.run_lines([1, 3, 4], **{"<top>": "stack-part-three"})
+        self.git("merge-base", "--is-ancestor", "origin/main", "stack-part-one")
+        new = [self.git("rev-parse", ref) for ref in ("origin/main",) + parts]
+        self.assertNotEqual(old[1:], new[1:])
+        for n in range(3):
+            self.only_equal(old[n], old[n + 1], new[n], new[n + 1])
+
+    def test_squash_merge(self):
+        parts = ("stack-part-one", "stack-part-two", "stack-part-three")
+        old = [self.git("rev-parse", ref) for ref in parts]
+        squash = self.git("commit-tree", "-p", "origin/main", "-m", "squash", "stack-part-one^{tree}")
+        self.git("-C", "remote.git", "fetch", "-q", str(self.work), f"{squash}:main", cwd=self.tmp)
+        self.run_lines([3, 5], **{"<merged part's old tip>": old[0], "<top>": "stack-part-three"})
+        self.run_lines([6], **{"<each moved branch>": "stack-part-two stack-part-three"})
+        new = [self.git("rev-parse", ref) for ref in parts]
+        self.only_equal(old[0], old[1], "origin/main", new[1])
+        self.only_equal(old[1], old[2], new[1], new[2])
+        self.assertNotEqual(old[1], new[1])
+        self.assertEqual(self.git("rev-list", "origin/main..stack-part-three").splitlines(), [new[2], new[1]])
+        self.assertEqual(self.git("-C", "remote.git", "rev-parse", "stack-part-two", "stack-part-three", cwd=self.tmp).splitlines(), new[1:])
+
+    def test_second_worktree_skips_part(self):
+        self.git("worktree", "add", "-q", str(self.tmp / "other"), "stack-part-two")
+        part_two = self.git("rev-parse", "stack-part-two")
+        self.git("switch", "-q", "stack-part-one")
+        self.commit(self.work, "fix")
+        self.run_lines([1, 2], **{"<top>": "stack-part-three", "<fixed part>": "stack-part-one"})
+        self.assertEqual(self.git("rev-parse", "stack-part-two"), part_two)
+
+
+class GroupModeText(unittest.TestCase):
+    """The orchestrate skill's text rules"""
+
+    def test_plan_file_example(self):
+        block = fenced_block(ORCHESTRATE.read_text(), "plan-file")
+        self.assertIsNotNone(block)
+        stacks = parts = 0
+        columns = None
+        for line in block:
+            if line.startswith("## Stack"):
+                match = re.match(r"^## Stack \d+ · (.*)$", line)
+                self.assertTrue(match and match.group(1).strip(), line)
+                stacks += 1
+                columns = None
+            elif line.startswith("|"):
+                cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+                if columns is None:
+                    columns = cells
+                elif not line.startswith("|---"):
+                    row = dict(zip(columns, cells))
+                    self.assertTrue(row["Id"], line)
+                    self.assertRegex(row["Branch"], r"^[a-z][a-z0-9]*(-[a-z0-9]+)+$")
+                    self.assertFalse(any(part.isdigit() for part in row["Branch"].split("-")), line)
+                    self.assertEqual(row["Subject"], row["Subject"].lower(), line)
+                    self.assertTrue(row["Subject"] and row["Scope"], line)
+                    parts += 1
+        self.assertGreaterEqual(stacks, 1)
+        self.assertGreaterEqual(parts, 1)
+
+    def test_title_rule(self):
+        self.assertIn("<series> <n>/<m>: <subject>", ORCHESTRATE.read_text())
+
+    def test_generic_words(self):
+        words = ["final" + "-shape", "axiom" + "-notes", "systems" + "/", "pack" + "et"]
+        files = [
+            ORCHESTRATE,
+            REPO / ".claude/skills/keep-order/SKILL.md",
+            REPO / ".claude/skills/review-branch/SKILL.md",
+            *sorted((REPO / ".claude/templates").glob("*.md")),
+        ]
+        for path in files:
+            text = path.read_text()
+            for word in words:
+                self.assertNotIn(word, text, path.name)
+
+    def test_rulings_line(self):
+        line = next(
+            line for line in (REPO / ".claude/templates/pr-body.md").read_text().splitlines()
+            if line.startswith("## Rulings")
+        )
+        self.assertIsNone(re.search(r"\bR(<n>|\d+\b)", line), line)
 
 
 if __name__ == "__main__":
