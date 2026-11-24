@@ -2,9 +2,10 @@ import QtQuick
 import QtTest
 import qs.components.reusable
 
-// HoledCopy keeps its pieces: as its holes come and go (none, two, one, none,
-// two again) every drawing it has built stays built, so a slide that changes
-// the hole count rebuilds nothing after the most it has ever needed.
+// HoledCopy keeps its pieces: its fill is built once, and as its holes come
+// and go (none, two, one, none, two again) every stroke it has built stays
+// built, so a slide that changes the hole count rebuilds nothing after the
+// most it has ever needed.
 TestCase {
   id: root
 
@@ -18,7 +19,7 @@ TestCase {
   property int builtFill: 0
 
   Component {
-    id: drawingComp
+    id: strokeComp
 
     Rectangle {
       color: "red"
@@ -41,8 +42,8 @@ TestCase {
     HoledCopy {
       width: 100
       height: 100
-      drawing: drawingComp
       fillOnly: fillComp
+      strokeOnly: strokeComp
     }
   }
 
@@ -56,12 +57,12 @@ TestCase {
     copy.holes = two;
     wait(0);
     const builtAtMost = root.built, fillAtMost = root.builtFill;
-    verify(builtAtMost > 0, "drawn outside the holes");
-    verify(fillAtMost > 0, "the fill alone inside them");
+    verify(builtAtMost > 0, "stroke drawn outside the holes");
+    compare(fillAtMost, 1, "the fill built once, whole");
     for (const holes of [one, [], two, one, [], one, two]) {
       copy.holes = holes;
       wait(0);
-      compare(root.built, builtAtMost, "no drawing rebuilt at " + holes.length + " holes");
+      compare(root.built, builtAtMost, "no stroke rebuilt at " + holes.length + " holes");
       compare(root.builtFill, fillAtMost, "no fill rebuilt at " + holes.length + " holes");
     }
   }

@@ -553,7 +553,7 @@ Item {
 
     // The outline (or detached box): a host draws it inside a HoledItem
     // (its stroke left open in `strokeHoles` while unbacked); a copy hands it
-    // to a HoledCopy, its fill alone where the holes are
+    // to a HoledCopy, its fill whole and its stroke outside the holes
     Item {
       id: outlineLayer
       anchors.fill: parent
@@ -567,7 +567,13 @@ Item {
         Loader {
           anchors.fill: parent
           active: !root.mirror
-          sourceComponent: outlineDrawing
+          sourceComponent: outlineFill
+        }
+
+        Loader {
+          anchors.fill: parent
+          active: !root.mirror
+          sourceComponent: outlineStrokeOnly
         }
       }
 
@@ -575,8 +581,8 @@ Item {
         anchors.fill: parent
         visible: root.mirror
         holes: root.mirror ? root.strokeHoles : []
-        drawing: root.mirror ? (root.detached ? detachedDrawing : outlineDrawing) : null
         fillOnly: root.mirror ? (root.detached ? detachedFill : outlineFill) : null
+        strokeOnly: root.mirror ? (root.detached ? detachedStrokeOnly : outlineStrokeOnly) : null
       }
 
       // Detached: a box of its own, not joined to anything
@@ -590,38 +596,6 @@ Item {
           anchors.fill: parent
           active: !root.mirror
           sourceComponent: detachedDrawing
-        }
-      }
-
-      Component {
-        id: outlineDrawing
-
-        Shape {
-          anchors.fill: parent
-          preferredRendererType: Shape.CurveRenderer
-
-          ShapePath {
-            fillColor: root._fill
-            strokeColor: "transparent"
-            strokeWidth: 0
-
-            PathSvg {
-              path: root.fillPath
-            }
-          }
-
-          ShapePath {
-            fillColor: "transparent"
-            strokeColor: root._stroke
-            // Drawn a 64th in on each edge (Utils.tieInset): a CurveRenderer stroke whose edge is on a device pixel's centre draws that pixel full
-            strokeWidth: root.strokeWidth - Utils.tieInset * 2
-            capStyle: ShapePath.FlatCap
-            joinStyle: ShapePath.MiterJoin
-
-            PathSvg {
-              path: root.strokePath
-            }
-          }
         }
       }
 
@@ -645,12 +619,46 @@ Item {
       }
 
       Component {
+        id: outlineStrokeOnly
+
+        Shape {
+          anchors.fill: parent
+          preferredRendererType: Shape.CurveRenderer
+
+          ShapePath {
+            fillColor: "transparent"
+            strokeColor: root._stroke
+            // Drawn a 64th in on each edge (Utils.tieInset): a CurveRenderer stroke whose edge is on a device pixel's centre draws that pixel full
+            strokeWidth: root.strokeWidth - Utils.tieInset * 2
+            capStyle: ShapePath.FlatCap
+            joinStyle: ShapePath.MiterJoin
+
+            PathSvg {
+              path: root.strokePath
+            }
+          }
+        }
+      }
+
+      Component {
         id: detachedDrawing
 
         // (in an Item: a sized Loader would resize the box to the surface)
         Item {
           DetachedBox {
             color: root._fill
+            border.color: root._stroke
+            border.width: root.strokeWidth
+          }
+        }
+      }
+
+      Component {
+        id: detachedStrokeOnly
+
+        Item {
+          DetachedBox {
+            color: "transparent"
             border.color: root._stroke
             border.width: root.strokeWidth
           }

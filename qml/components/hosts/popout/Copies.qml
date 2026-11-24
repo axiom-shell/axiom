@@ -85,6 +85,8 @@ Item {
         if (!Utils.deepEqual(slot.strokeHoles, slot._sourceHoles))
           slot.strokeHoles = slot._sourceHoles;
       }
+      // (a change of holes nudges the window here, not through the key)
+      onStrokeHolesChanged: root?.changed()
       // Painter's order: its shape's rank, an eraser's half a rank under
       z: slot.erasing ? (slot.shape?.paintRank ?? 0) - PaintOrder.eraserOffset : (slot.shape?.paintRank ?? 0)
       x: area ? area.x : 0
@@ -98,7 +100,7 @@ Item {
 
       // Where and how big its copy is, as drawn, and in what: on any
       // change the window is nudged to show its last frame
-      readonly property string drawn: [mirror.x, mirror.y, mirror.width, mirror.height, slot.showing, (mirror.item as AttachedSurface)?.slid ?? 0, (mirror.item as AttachedSurface)?.shownOpacity ?? 1, (mirror.item as Item)?.opacity ?? 1, slot.fill, slot.stroke, slot.erasing, JSON.stringify(slot.strokeHoles)].join(",")
+      readonly property string drawn: [mirror.x, mirror.y, mirror.width, mirror.height, slot.showing, (mirror.item as AttachedSurface)?.slid ?? 0, (mirror.item as AttachedSurface)?.shownOpacity ?? 1, (mirror.item as Item)?.opacity ?? 1, slot.fill, slot.stroke, slot.erasing].join(",")
       // (null while the copies are torn down: their slots can go after them)
       onDrawnChanged: root?.changed()
 
@@ -143,34 +145,23 @@ Item {
           HoledCopy {
             anchors.fill: parent
             holes: slot.strokeHoles
-            drawing: rectDrawing
             fillOnly: rectFill
+            strokeOnly: rectStrokeOnly
           }
 
           Component {
-            id: rectDrawing
+            id: rectStrokeOnly
 
             Rectangle {
               anchors.fill: parent
+              visible: slot.stroke.a > 0
               topLeftRadius: rect.src?.topLeftRadius ?? 0
               topRightRadius: rect.src?.topRightRadius ?? 0
               bottomLeftRadius: rect.src?.bottomLeftRadius ?? 0
               bottomRightRadius: rect.src?.bottomRightRadius ?? 0
-              color: slot.fill
-              border.width: slot.stroke.a > 0 ? (rect.src?.border.width ?? 0) : 0
+              color: "transparent"
+              border.width: (rect.src?.border.width ?? 0) > 0 ? rect.src.border.width : Appearance.borderWidth
               border.color: slot.stroke
-
-              Rectangle {
-                anchors.fill: parent
-                visible: slot.stroke.a > 0 && (rect.src?.border.width ?? 0) <= 0
-                topLeftRadius: rect.src?.topLeftRadius ?? 0
-                topRightRadius: rect.src?.topRightRadius ?? 0
-                bottomLeftRadius: rect.src?.bottomLeftRadius ?? 0
-                bottomRightRadius: rect.src?.bottomRightRadius ?? 0
-                color: "transparent"
-                border.width: Appearance.borderWidth
-                border.color: slot.stroke
-              }
             }
           }
 
@@ -205,30 +196,14 @@ Item {
           HoledCopy {
             anchors.fill: parent
             holes: slot.strokeHoles
-            drawing: frameDrawing
             fillOnly: frameFill
+            strokeOnly: frameStrokeOnly
           }
 
           Component {
-            id: frameDrawing
+            id: frameStrokeOnly
 
             Item {
-              Shape {
-                anchors.fill: parent
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                  fillColor: slot.fill
-                  fillRule: ShapePath.OddEvenFill
-                  strokeColor: "transparent"
-                  strokeWidth: 0
-
-                  PathSvg {
-                    path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
-                  }
-                }
-              }
-
               // The strips' stroke rows
               Repeater {
                 model: slot.stroke.a > 0 ? (frame.src?.strokeRects ?? []) : []
