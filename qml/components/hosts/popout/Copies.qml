@@ -76,7 +76,15 @@ Item {
       // The stroke holes its source leaves open, which its copy cuts (none
       // for the outline copies, whose silhouette stays whole, nor while
       // erasing)
-      readonly property var strokeHoles: root.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
+      // (kept while the source's list is rebuilt equal, as it is many times a
+      // second: nothing downstream, the key below and the copies' pieces,
+      // is recomputed for it)
+      readonly property var _sourceHoles: root.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
+      property var strokeHoles: slot._sourceHoles
+      on_SourceHolesChanged: {
+        if (!Utils.deepEqual(slot.strokeHoles, slot._sourceHoles))
+          slot.strokeHoles = slot._sourceHoles;
+      }
       // Painter's order: its shape's rank, an eraser's half a rank under
       z: slot.erasing ? (slot.shape?.paintRank ?? 0) - PaintOrder.eraserOffset : (slot.shape?.paintRank ?? 0)
       x: area ? area.x : 0

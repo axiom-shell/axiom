@@ -9,7 +9,8 @@ import qs.components.methods
 // the pieces of its area outside the holes, `fillOnly` in the pieces inside
 // them. The pieces are disjoint, so every pixel is drawn once, by one
 // piece, with the whole drawing's coverage; each is an `Item` that clips,
-// no layer. With no holes, `drawing` once, unclipped. The area is its rect
+// no layer. With no holes, `drawing` once, unclipped. Pieces are kept
+// across changes of the hole count (see `_outsideSlots`). The area is its rect
 // grown on every side, so nothing its drawing reaches past its rect is
 // lost. (HoledItem is the same job for a host, cutting all of its
 // children.)
@@ -31,28 +32,37 @@ Item {
   // tie, every edge rounds one way: a pixel centred on a hole's edge is the
   // drawing's, as with no hole (`Utils.tieInset`)
   readonly property var _inside: root.holes.length > 0 ? Utils.insetUnion(root._area, root.holes, Utils.tieInset) : []
-  readonly property var _outside: root.holes.length > 0 ? Utils.subtractRects(root._area, root._inside) : []
+  // (no holes: the whole area, one piece)
+  readonly property var _outside: root.holes.length > 0 ? Utils.subtractRects(root._area, root._inside) : [root._area]
 
-  Loader {
-    anchors.fill: parent
-    sourceComponent: root.drawing
-    active: root.holes.length === 0
-  }
+  // The most pieces each side has needed: the Repeaters' models. A piece
+  // is built once and kept, hidden when there are fewer pieces than slots,
+  // so a hole that comes or goes while a surface slides builds and destroys
+  // no drawing (each is a whole Shape).
+  property int _outsideSlots: root._outside.length
+  property int _insideSlots: root._inside.length
+  on_OutsideChanged: root._outsideSlots = Math.max(root._outsideSlots, root._outside.length)
+  on_InsideChanged: root._insideSlots = Math.max(root._insideSlots, root._inside.length)
 
-  // (keyed by count, as HoledItem's holes are: a hole that moves or grows
-  // moves its pieces' items and rebuilds nothing)
   Repeater {
-    model: root._outside.length
+    model: root._outsideSlots
 
     Item {
       id: outsidePiece
       required property int index
-      readonly property rect piece: root._outside[outsidePiece.index] ?? Qt.rect(0, 0, 0, 0)
+      readonly property bool used: outsidePiece.index < root._outside.length
+      // (a spare slot keeps its last rect)
+      property rect piece: Qt.rect(0, 0, 0, 0)
+      Binding on piece {
+        when: outsidePiece.used
+        value: root._outside[outsidePiece.index] ?? Qt.rect(0, 0, 0, 0)
+      }
+      visible: outsidePiece.used
       x: outsidePiece.piece.x
       y: outsidePiece.piece.y
       width: outsidePiece.piece.width
       height: outsidePiece.piece.height
-      clip: true
+      clip: root.holes.length > 0
 
       Loader {
         x: -outsidePiece.piece.x
@@ -65,12 +75,18 @@ Item {
   }
 
   Repeater {
-    model: root._inside.length
+    model: root._insideSlots
 
     Item {
       id: insidePiece
       required property int index
-      readonly property rect piece: root._inside[insidePiece.index] ?? Qt.rect(0, 0, 0, 0)
+      readonly property bool used: insidePiece.index < root._inside.length
+      property rect piece: Qt.rect(0, 0, 0, 0)
+      Binding on piece {
+        when: insidePiece.used
+        value: root._inside[insidePiece.index] ?? Qt.rect(0, 0, 0, 0)
+      }
+      visible: insidePiece.used
       x: insidePiece.piece.x
       y: insidePiece.piece.y
       width: insidePiece.piece.width

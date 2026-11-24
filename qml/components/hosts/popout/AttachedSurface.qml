@@ -573,10 +573,10 @@ Item {
 
       HoledCopy {
         anchors.fill: parent
-        visible: root.mirror && !root.detached
-        holes: root.strokeHoles
-        drawing: root.mirror ? outlineDrawing : null
-        fillOnly: root.mirror ? outlineFill : null
+        visible: root.mirror
+        holes: root.mirror ? root.strokeHoles : []
+        drawing: root.mirror ? (root.detached ? detachedDrawing : outlineDrawing) : null
+        fillOnly: root.mirror ? (root.detached ? detachedFill : outlineFill) : null
       }
 
       // Detached: a box of its own, not joined to anything
@@ -591,14 +591,6 @@ Item {
           active: !root.mirror
           sourceComponent: detachedDrawing
         }
-      }
-
-      HoledCopy {
-        anchors.fill: parent
-        visible: root.mirror && root.detached
-        holes: root.strokeHoles
-        drawing: root.mirror ? detachedDrawing : null
-        fillOnly: root.mirror ? detachedFill : null
       }
 
       Component {
