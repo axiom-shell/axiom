@@ -30,13 +30,16 @@ Item {
   // tie, every edge rounds one way: a pixel centred on a hole's edge is the
   // drawing's, as with no hole (`Utils.tieInset`)
   // (no holes: the whole area, one piece)
-  readonly property var _outside: root.holes.length > 0 ? Utils.subtractRects(root._area, Utils.insetUnion(root._area, root.holes, Utils.tieInset)) : [root._area]
+  readonly property var _outside: root.holes.length > 0 ? Utils.subtractHoles(root._area, root.holes) : [root._area]
 
   // The most pieces it has needed: the Repeater's model. A piece is built
   // once and kept, hidden when there are fewer pieces than slots, so a hole
   // that comes or goes while a surface slides builds and destroys no
-  // drawing (each is a whole Shape).
-  property int _outsideSlots: root._outside.length
+  // drawing (each is a whole Shape). (starts 0, set once at completion, not
+  // bound: a binding would follow every equal rebuild until its first
+  // assignment broke it)
+  property int _outsideSlots: 0
+  Component.onCompleted: root._outsideSlots = root._outside.length
   on_OutsideChanged: root._outsideSlots = Math.max(root._outsideSlots, root._outside.length)
 
   Loader {

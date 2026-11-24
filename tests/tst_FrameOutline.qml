@@ -106,15 +106,110 @@ TestCase {
     compare(r4(FrameOutline.cornerBox(spec({}), false, false)), [142, 82, 10, 10]);
   }
 
-  function test_cornerCovered() {
-    const openings = [
-      {
-        "edge": "top",
-        "start": 8,
-        "end": 60
+  // Each corner against an opening along its own edge (covering it, or
+  // starting 6 px into its box / ending 4 px short of its end, short of
+  // spanning it), along the perpendicular edge, and along the opposite edge
+  function test_cornerCovered_data() {
+    const f = spec({});
+    const size = FrameOutline.cornerSize(f);
+    const run = (at, atStart, covers) => atStart ? {
+        "start": covers ? at : at + 6,
+        "end": at + 60
+      } : {
+        "start": at - 50,
+        "end": covers ? at + size : at + size - 4
+      };
+    const rows = [];
+    for (const c of FrameOutline.corners) {
+      const box = FrameOutline.cornerBox(f, c.isLeft, c.isTop);
+      const name = `${c.isTop ? "top" : "bottom"}-${c.isLeft ? "left" : "right"}`;
+      const along = c.isTop ? "top" : "bottom", across = c.isLeft ? "left" : "right";
+      for (const covers of [true, false]) {
+        const label = covers ? "covered" : "uncovered";
+        rows.push({
+          "tag": `${name} along ${label}`,
+          "c": c,
+          "o": Object.assign({
+            "edge": along
+          }, run(box.x, c.isLeft, covers)),
+          "covered": covers
+        });
+        rows.push({
+          "tag": `${name} perpendicular ${label}`,
+          "c": c,
+          "o": Object.assign({
+            "edge": across
+          }, run(box.y, c.isTop, covers)),
+          "covered": covers
+        });
       }
-    ];
-    verify(FrameOutline.cornerCovered(spec({}), openings, true, true));
-    verify(!FrameOutline.cornerCovered(spec({}), openings, false, true));
+      rows.push({
+        "tag": `${name} opposite edge`,
+        "c": c,
+        "o": Object.assign({
+          "edge": c.isTop ? "bottom" : "top"
+        }, run(box.x, c.isLeft, true)),
+        "covered": false
+      });
+    }
+    return rows;
+  }
+
+  function test_cornerCovered(data) {
+    compare(FrameOutline.cornerCovered(spec({}), [data.o], data.c.isLeft, data.c.isTop), data.covered);
+  }
+
+  // The stroke less an opening at 50..70 along the strip, per edge: a 160 x
+  // 100 screen, border 10, radius 8, stroke 2 (the strips' stroke rects
+  // 18, 8 / 124 x 2 for top and bottom, 8, 8 / 2 x 64 for left and right,
+  // in their windows). At 1.25 a piece's edges fall on the device px its
+  // Rectangle fills (a pixel centred on the opening's edge is the stroke's,
+  // at both ends)
+  function test_screenStrokePieces_data() {
+    const rows = [];
+    const at = {
+      "1": {
+        "top": [[18, 8, 32, 2], [70, 8, 72, 2]],
+        "bottom": [[18, 90, 32, 2], [70, 90, 72, 2]],
+        "left": [[8, 18, 2, 42], [8, 80, 2, 2]],
+        "right": [[150, 18, 2, 42], [150, 80, 2, 2]]
+      },
+      "1.25": {
+        "top": [[17.6, 8, 32.8, 1.6], [69.6, 8, 72, 1.6]],
+        "bottom": [[17.6, 90.4, 32.8, 1.6], [69.6, 90.4, 72, 1.6]],
+        "left": [[8, 18.4, 1.6, 42.4], [8, 80, 1.6, 2.4]],
+        "right": [[150.4, 18.4, 1.6, 42.4], [150.4, 80, 1.6, 2.4]]
+      }
+    };
+    const strips = {
+      "top": [160, Qt.point(0, 0)],
+      "bottom": [160, Qt.point(0, 90)],
+      "left": [80, Qt.point(0, 10)],
+      "right": [80, Qt.point(150, 10)]
+    };
+    for (const dpr of [1, 1.25]) {
+      for (const edge of ["top", "bottom", "left", "right"])
+        rows.push({
+          "tag": `${edge} at ${dpr}`,
+          "edge": edge,
+          "length": strips[edge][0],
+          "origin": strips[edge][1],
+          "dpr": dpr,
+          "want": at[String(dpr)][edge]
+        });
+    }
+    return rows;
+  }
+
+  function test_screenStrokePieces(data) {
+    const pieces = FrameOutline.screenStrokePieces(data.edge, data.length, 10, 8, 2, [
+      {
+        "start": 50,
+        "end": 70
+      }
+    ], data.origin, data.dpr);
+    compare(pieces.length, data.want.length);
+    for (let i = 0; i < pieces.length; i++)
+      compare(r4(pieces[i]), data.want[i]);
   }
 }

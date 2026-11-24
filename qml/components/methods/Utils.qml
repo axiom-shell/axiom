@@ -359,4 +359,11 @@ QtObject {
     const rest = root.subtractRects(bounds, rects).map(r => Qt.rect(r.x - by, r.y - by, r.width + by * 2, r.height + by * 2));
     return root.subtractRects(bounds, rest);
   }
+
+  // `bounds` less `holes` (rects, same coordinates), the holes' outer edges
+  // drawn in by tieInset so a pixel centred on a hole's edge stays the
+  // drawing's: subtractRects, but for that inset. Disjoint Qt.rects.
+  function subtractHoles(bounds, holes) {
+    return root.subtractRects(bounds, root.insetUnion(bounds, holes, root.tieInset));
+  }
 }

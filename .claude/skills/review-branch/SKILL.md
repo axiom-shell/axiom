@@ -21,6 +21,7 @@ Arguments: `$ARGUMENTS`
 
 - `mb=$(git -C <tree> merge-base <base> HEAD)`; `git -C <tree> diff --stat $mb` (committed and uncommitted, the same as `git diff <base>...HEAD --stat` plus the working tree), `git -C <tree> ls-files -o --exclude-standard` for new files, and `git -C <tree> log --oneline $mb..HEAD` for the commits' own account of the purpose. Nothing changed: say so and stop.
 - With `--since <sha>`: the scope is `git diff <sha>` less what a merge of the base brought in (`git diff <sha> HEAD -- $(git diff --name-only <sha>..HEAD --no-merges)` plus the merge's conflicted files); slices already reviewed and unchanged are never reviewed again. Record the reviewed sha in `<state>/state.md` after each round.
+- With `--since <sha>` where `<sha>` is not an ancestor of HEAD (a rebased stack part), the scope is `git diff <sha> HEAD -- $(git diff --name-only <base> HEAD)`: the files the part itself changes; what its new base brought into them is named to the reviewers as base changes, not the branch's.
 - Uncommitted edits under `.claude/` are tooling, not the branch, unless its commits touch them.
 - Leave out generated files (`docs/dev/generated/`, `docs/dev/config/`, `qml/config/i18n/*.json`, `qml/config/json/config.schema.json`, `qml/config/themes/template/`) and pure renames.
 - The purpose: the arguments, plus the commit subjects. Where they disagree, tell the reviewers both.
@@ -41,7 +42,7 @@ Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules
 - **Each slice:** one reviewer, `bugs`+`regressions`.
 - **Code, whole branch:** one reviewer, `consistency`+`cleanup`+`rules`+`design` (code and schema), starting from `new_names.py --base <mb>`.
 - **Words, whole branch** (only when the branch changes docs, schema descriptions or `I18n.tr` strings): one reviewer, `consistency` › User strings and docs + `design` › Docs.
-- Plus one `checker` running `scripts/dev/verify.sh --all` in the tree (a failing check is a Blocker).
+- Plus one `checker` running `scripts/dev/verify.sh --all` in the tree (a failing check is a Blocker). In a stack, this run is a lower part's verify (`/orchestrate` › The stack rebase rule).
 
 At most ~6 slice reviewers: past that, merge neighbouring slices. A ~3k-line branch is then about 5 + 2 reviewers, a checker and the judge; a small one is 1 reviewer, a checker and the judge.
 

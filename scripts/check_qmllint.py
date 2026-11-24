@@ -21,7 +21,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from qml_modules import ROOT, build_tree
+from qml_modules import ROOT, baseline_diff, build_tree
 
 
 
@@ -118,19 +118,14 @@ def lint():
 
 def against(found, lines, baseline):
     """The warnings past the baseline's counts, and the baselined ones gone."""
-    new, gone = [], []
-    for name, counts in sorted(found.items()):
-        known = baseline.get(name, {})
-        for key, n in sorted(counts.items()):
-            if n > known.get(key, 0):
-                at = ",".join(str(ln) for ln in lines[(name, key)] if ln)
-                new.append(f"{name}:{at}: {key}" + (f" ({n - known.get(key, 0)} new)" if known.get(key) else ""))
-    for name, known in baseline.items():
-        for key, n in known.items():
-            left = found.get(name, {}).get(key, 0)
-            if n > left:
-                gone.append(f"{name}: {key} ({n - left} gone)")
-    return new, gone
+    new, gone = baseline_diff(found, baseline)
+    out_new, out_gone = [], []
+    for name, key, n in new:
+        at = ",".join(str(ln) for ln in lines[(name, key)] if ln)
+        out_new.append(f"{name}:{at}: {key}" + (f" ({n} new)" if found[name][key] - n > 0 else ""))
+    for name, key, n in gone:
+        out_gone.append(f"{name}: {key} ({n} gone)")
+    return out_new, out_gone
 
 
 def main():

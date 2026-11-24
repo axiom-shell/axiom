@@ -50,8 +50,9 @@ PanelWindow {
   readonly property real strokeStart: horizontal ? stripStroke.x : stripStroke.y
   readonly property var strokePieces: Utils.subtractSpans(root.strokeStart, root.length - root.strokeStart, root.openings)
   // Where its stroke pieces are on screen, on the device px its Rectangle
-  // fills, for the backing window's copy: the stroke less its openings
-  readonly property var screenStrokePieces: root.strokePieces.map(piece => FrameOutline.strokePixels(root.horizontal ? Qt.rect(placeOnScreen.placed.x + piece.start, placeOnScreen.placed.y + root.stripStroke.y, piece.end - piece.start, root.stripStroke.height) : Qt.rect(placeOnScreen.placed.x + root.stripStroke.x, placeOnScreen.placed.y + piece.start, root.stripStroke.width, piece.end - piece.start), placeOnScreen.placed, root.devicePixelRatio))
+  // fills, for the backing window's copy: the stroke less its openings,
+  // except that a pixel centred on an opening's edge is the stroke's
+  readonly property var screenStrokePieces: FrameOutline.screenStrokePieces(root.edge, root.length, root.frameWidth, root.innerBorderRadius, root.strokeWidth, root.openings, placeOnScreen.placed, root.devicePixelRatio)
 
   anchors {
     left: root.edge !== "right"

@@ -55,6 +55,7 @@ for job in "${jobs[@]}"; do
   case "$job" in
   checks)
     step "structure" python3 scripts/check_structure.py
+    step "engines" python3 scripts/check_engines.py
     step "sizes" python3 scripts/check_sizes.py
     step "style" python3 scripts/check_style.py
     step "icons" python3 scripts/check_icons.py
