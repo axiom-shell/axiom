@@ -24,6 +24,8 @@ OPTIONAL_KEYS = {"folder": "", "helpers": [], "kits": [], "uses": [], "fedBy": {
 TESTS_KEYS = {"rows": "", "golden": {}, "timeline": "", "sweep": [], "pixel": []}
 FLAT_KEYS = {"prefix", "tables"}
 DOMAIN_KEYS = {"uses", "tables", "prefix"}
+ENGINE_DOC_HEADINGS = ["Role", "Inputs", "Stages", "Outputs", "Rules", "Owners, adapters, hosts", "Seams", "Tests",
+                       "Checks", "Edit points", "Known gaps"]
 
 
 def _parsed(text):
@@ -119,6 +121,31 @@ def held_paths(entry):
     paths = [folder, *entry["files"], *(f"{folder}/{h}.qml" for h in entry["helpers"] if folder), *entry["itemPaths"],
              *entry["pluginPaths"], *entry["adapters"], *entry["owners"], posixpath.dirname(entry["tests"]["rows"])]
     return [p for p in paths if p]
+
+
+def edit_point_rows(entry):
+    """The `(kind, symbol)` rows of a filled engine entry's `editPoints`: the kinds case, rule, input,
+    output, consumer and tuning in that order, then any other key in sorted order; a list value gives
+    one row per item, in its order."""
+    points, kinds = entry["editPoints"], ["case", "rule", "input", "output", "consumer", "tuning"]
+    if not isinstance(points, dict):
+        return []
+    keys = [*(k for k in kinds if k in points), *sorted(k for k in points if k not in kinds)]
+    return [(k, symbol) for k in keys for symbol in (points[k] if isinstance(points[k], list) else [points[k]])]
+
+
+def missing_headings(doc, headings):
+    """The names in `headings` that `doc` (a doc's text) lacks: heading `i` (0-based) must be the whole
+    line `## {i+1} {name}`, after the line of the previous heading found (a heading out of order is
+    missing)."""
+    lines, at, missing = doc.split("\n"), 0, []
+    for i, name in enumerate(headings):
+        found = next((j for j in range(at, len(lines)) if lines[j] == f"## {i + 1} {name}"), None)
+        if found is None:
+            missing.append(name)
+        else:
+            at = found + 1
+    return missing
 
 
 def tests_for(paths, text=None):
