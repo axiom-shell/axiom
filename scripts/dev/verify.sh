@@ -96,7 +96,7 @@ for f in "${changed[@]}"; do
   # The contrast pairs the Go side (palette) and tst_Tone both read
   tests/fixtures/style/contrast.json) go=1 ;;
   # The shared fixtures: both sides replay them (docs/dev/backend/README.md)
-  tests/Shared.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
+  tests/Shared.qml | tests/RepoFiles.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
   esac
   case "$f" in
   # (`*` crosses `/`: a domain helper under methods/<domain>/ matches too)

@@ -20,7 +20,8 @@ byte (docs/dev/backend/README.md › Shared fixtures).
 
 The whole directory is generated and gitignored: CI records it before the
 tests that replay it (both the JS and the Go side). Recording needs Qt 6's
-qmltestrunner.
+qmltestrunner. While it runs, tests/.recording holds "fixture"
+(RepoFiles.recording reads it).
 
 A case is <suite>/<test>/<name>.json ({op, args}) plus <name>.expected.json
 (the exact bytes the JS helper produced). Arguments larger than BLOB_SIZE
@@ -34,6 +35,7 @@ The format-1 migration's cases aren't here: they were frozen into the
 binary's own testdata (backend/internal/migrate/legacy/testdata/) when the
 shell's copy of the migrations was removed.
 """
+import contextlib
 import hashlib
 import json
 import re
@@ -44,6 +46,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SHARED = ROOT / "tests/fixtures/shared"
+# The one recording marker (gitignored): the kind of recording running now
+MARKER = ROOT / "tests/.recording"
 # Suites recorded from the JS helpers (the rest are written by Go's tests)
 # ConfigOps (config.set's ops, which the daemon's tests decode), InputSources
 # (the xkb list the renderer derives too) and the bind and layer helpers the
@@ -96,12 +100,8 @@ def record():
     # What an earlier recording left that no suite writes any more
     for stale in ("legacy", "share", "corpus", "schemas", ".corpus"):
         shutil.rmtree(SHARED / stale, ignore_errors=True)
-    marker = SHARED / ".recording"
-    marker.write_text("1\n")
-    try:
-        out = run_tests()
-    finally:
-        marker.unlink(missing_ok=True)
+    with recording("fixture"):
+        out = run_tests(RECORD_TESTS, "FIXTURE")
 
     records = [decode(line) for line in out.splitlines() if "@@FIXTURE " in line]
     if not records:
@@ -141,13 +141,23 @@ def record():
     return 0
 
 
-def run_tests():
-    """Runs the recording tests, failing if any of them fails."""
-    proc = subprocess.run([str(ROOT / "scripts/run_tests.sh"), *RECORD_TESTS],
+@contextlib.contextmanager
+def recording(kind):
+    """tests/.recording holds kind while the block runs (RepoFiles.recording reads it)."""
+    MARKER.write_text(kind + "\n")
+    try:
+        yield
+    finally:
+        MARKER.unlink(missing_ok=True)
+
+
+def run_tests(names, tag):
+    """Runs the named tests, failing if any of them fails; @@<tag> lines stay out of the failure print."""
+    proc = subprocess.run([str(ROOT / "scripts/run_tests.sh"), *names],
                           cwd=ROOT, capture_output=True, text=True, errors="surrogateescape")
     output = proc.stdout + proc.stderr
     if proc.returncode != 0:
-        print("\n".join(l for l in output.splitlines() if "@@FIXTURE" not in l)[-4000:], file=sys.stderr)
+        print("\n".join(l for l in output.splitlines() if f"@@{tag}" not in l)[-4000:], file=sys.stderr)
         raise SystemExit("the recording tests failed; nothing was written")
     return output
 
