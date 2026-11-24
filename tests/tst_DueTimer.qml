@@ -34,7 +34,58 @@ TestCase {
 
   function test_neverWhenZero() {
     const t = make({});
+    t.next = root.now + 5000;
+    compare(t.armedFor, 5000);
+    t.next = 0;
     compare(t.armedFor, 0);
+    verify(!t._dueTimeout.running);
+    wait(0);
+    compare(root.fired.length, 0);
+  }
+
+  function test_nanIsNever() {
+    const t = make({});
+    t.next = NaN;
+    compare(t.armedFor, 0);
+    verify(!t._dueTimeout.running);
+    wait(50);
+    compare(root.fired.length, 0);
+  }
+
+  function test_timerFiresAtNext() {
+    const t = make({});
+    t.next = root.now + 50;
+    compare(t.armedFor, 50);
+    root.now = 100;
+    tryCompare(root.fired, "length", 1);
+    compare(t.armedFor, 0);
+  }
+
+  function test_nextMovedEarlierWhileArmed() {
+    const t = make({});
+    t.next = root.now + 30000;
+    compare(t.armedFor, 30000);
+    t.next = root.now + 5000;
+    compare(t.armedFor, 5000);
+  }
+
+  function test_samePastNextAgainFiresAgain() {
+    const t = make({});
+    root.now = 2000;
+    t.next = 1000;
+    wait(0);
+    compare(root.fired.length, 1);
+    t.next = 7000;
+    t.next = 1000;
+    wait(0);
+    compare(root.fired.length, 2);
+  }
+
+  function test_changedAgainBeforeTheTurnIsNotStale() {
+    root.now = 1000;
+    const t = make({});
+    t.next = 500;
+    t.next = 0;
     wait(0);
     compare(root.fired.length, 0);
   }
@@ -67,6 +118,7 @@ TestCase {
     const t = make({});
     t.next = 500;
     compare(root.fired.length, 0, "not synchronously");
+    compare(t.armedFor, 0);
     wait(0);
     compare(root.fired.length, 1);
     compare(root.fired[0], 1000);

@@ -41,11 +41,12 @@ QtObject {
     const now = root.clock();
     root._dueTimeout.stop();
     root._armedFor = 0;
-    if (root.next <= 0)
+    if (!(root.next > 0))
       return;
     if (root.next <= now) {
       if (fromChange) {
-        Qt.callLater(root.check);
+        root._dueTimeout.interval = 0;
+        root._dueTimeout.start();
       } else if (root._dueFor !== root.next) {
         root._dueFor = root.next;
         root.due(now);
