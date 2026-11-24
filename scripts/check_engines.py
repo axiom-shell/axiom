@@ -280,27 +280,42 @@ def _purity(hits, engines, domains):
         hits.add_at(f, "purity", text, found + _matches(text, PURITY))
 
 
-def _dag(hits, engines, domains):
-    edges, linked, graphs = set(), set(), {}
+def _graph(engines):
+    """(edges, apis) of the listed engines. `apis` is {engine: {key: value}}, the facade `api` entries that are
+    objects. `edges` is [(kind, from, to, item)] in manifest order, nodes `<engine>.<stage>`: "signature"
+    (model to solve, solve to drawn, both stages), "feeds" (an `api` entry's `feeds`), "fedBy" (an item whose
+    `from` is set and isn't `host`) and "intakes" (an item whose `from` is set); `item` is the manifest item
+    ({} for the first two)."""
+    edges, apis = [], {}
     for name, entry in engines.items():
         facade = _facade(entry)
         api = (_api_of(facade) if facade else {}) or {}
-        stages = {s for s, v in api.items() if isinstance(v, dict) and not v.get("extra")}
-        graphs[name] = (stages, {s: v for s, v in api.items() if isinstance(v, dict)})
+        apis[name] = {s: v for s, v in api.items() if isinstance(v, dict)}
+        stages = {s for s, v in apis[name].items() if not v.get("extra")}
         node = lambda s: f"{name}.{s}"  # noqa: E731
         for a, b in (("model", "solve"), ("solve", "drawn")):
             if {a, b} <= stages:
-                edges.add((node(a), node(b)))
-        for key, value in graphs[name][1].items():
+                edges.append(("signature", node(a), node(b), {}))
+        for key, value in apis[name].items():
             if value.get("feeds"):
-                edges.add((node(key), node(value["feeds"])))
-            linked |= {frozenset((node(key), node(s))) for s in value.get("unfed", [])}
+                edges.append(("feeds", node(key), node(value["feeds"]), {}))
         for stage, items in entry["fedBy"].items():
-            for it in items:
-                if it.get("from") and it["from"] != "host":
-                    edges.add((it["from"], node(stage)))
+            edges += [("fedBy", it["from"], node(stage), it) for it in items if it.get("from") and it["from"] != "host"]
         for stage, items in entry["intakes"].items():
-            linked |= {frozenset((it["from"], node(stage))) for it in items if it.get("from", "").split(".")[0] == name}
+            edges += [("intakes", it["from"], node(stage), it) for it in items if it.get("from")]
+    return edges, apis
+
+
+def _dag(hits, engines, domains):
+    graphs, (found, apis) = {}, _graph(engines)
+    edges = {(a, b) for kind, a, b, _ in found if kind != "intakes"}
+    linked = {frozenset((a, b)) for kind, a, b, _ in found if kind == "intakes" and a.split(".")[0] == b.split(".")[0]}
+    for name, api in apis.items():
+        graphs[name] = ({s for s, v in api.items() if not v.get("extra")}, api)
+        for key, value in api.items():
+            unfed = value.get("unfed")
+            if isinstance(unfed, list) and all(isinstance(s, str) for s in unfed):
+                linked |= {frozenset((f"{name}.{key}", f"{name}.{s}")) for s in unfed}
     linked |= {frozenset(e) for e in edges}
     graph = {}
     for a, b in edges:
@@ -507,6 +522,8 @@ def _api(hits, engines):
             elif isinstance(value.get("in"), list) and all(isinstance(i, str) for i in value["in"]) \
                     and _form_keys(lines, functions[key]) not in (None, set(value["in"])):
                 hits.add(facade, "api", f"api.{key}:in")
+            if "unfed" in value and not (isinstance(value["unfed"], list) and all(isinstance(s, str) for s in value["unfed"])):
+                hits.add(facade, "api", f"api.{key}:unfed")
             for producer in value["out"].values() if isinstance(value.get("out"), dict) else []:
                 stem, _, member = str(producer).partition(".")
                 if stem not in files or member not in {m["name"] for m in gen_docs.parse_qml(ROOT / files[stem])[1]}:
@@ -546,11 +563,31 @@ def _shape(hits, engines):
             hits.add_at(f, "shape", text, found)
 
 
-def _tables(hits, engines, flat, domains):
+def _axes_of(file):
+    """A cell table file's `axes`: ({axis: [values]}, None), else (None, "no axes") when it has none or
+    (None, "axes not literal") when it isn't JSON of that shape."""
+    try:
+        axes = gen_docs.json_property(ROOT / file, "axes", default=None)
+    except ValueError:
+        return None, "axes not literal"
+    if axes is None:
+        return None, "no axes"
+    if not isinstance(axes, dict) or not all(
+            isinstance(v, list) and all(isinstance(i, (str, int, float, bool)) for i in v) for v in axes.values()):
+        return None, "axes not literal"
+    return axes, None
+
+
+def _tables_of(engines, flat, domains):
+    """[(owner, tables, files, folder, entry)] of every rules-table owner: the engines, `$flat` and `$domains`."""
     owners = [(name, e["tables"], _engine_files(e), "", e) for name, e in engines.items()]
     owners += [(f"$flat.{k}", v["tables"], None, METHODS, None) for k, v in flat.items()]
     owners += [(f"$domains.{k}", v["tables"], None, f"{METHODS}/{k}", None) for k, v in domains.items()]
-    for owner, tables, files, folder, entry in owners:
+    return owners
+
+
+def _tables(hits, engines, flat, domains):
+    for owner, tables, files, folder, entry in _tables_of(engines, flat, domains):
         if not isinstance(tables, dict):
             hits.add(MANIFEST, "tables", f"{owner}.tables:not an object")
             continue
@@ -565,17 +602,9 @@ def _tables(hits, engines, flat, domains):
             functions = {m["name"] for m in gen_docs.parse_qml(ROOT / file)[1] if m["kind"] == "function"}
             axes = None
             if kind == "cell":
-                try:
-                    axes = gen_docs.json_property(ROOT / file, "axes", default=None)
-                except ValueError:
-                    hits.add(file, "tables", f"{prop}:axes not literal")
-                else:
-                    if axes is None:
-                        hits.add(file, "tables", f"{prop}:no axes")
-                    elif not isinstance(axes, dict) or not all(
-                            isinstance(v, list) and all(isinstance(i, (str, int, float, bool)) for i in v) for v in axes.values()):
-                        hits.add(file, "tables", f"{prop}:axes not literal")
-                        axes = None
+                axes, problem = _axes_of(file)
+                if problem:
+                    hits.add(file, "tables", f"{prop}:{problem}")
             name_key = tables[key].get("id", "name")
             expected = {"id", "when", "then"} if kind != "rank" else {name_key, "rank"}
             cover = collections.Counter()

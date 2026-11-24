@@ -269,7 +269,7 @@ TestCase {
 OSD timelines (`tests/osd/`) are their own format, run by `tst_OSDSystems`, which uses only `differenceOf` and `messageOf`.
 
 ## The manifest
-`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`, `edit_point_rows()`), and it reports bad JSON, a missing or unknown key and a prefix used twice. Today the manifest lists no engine and an empty `$flat`.
+`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`, `edit_point_rows()`), and it reports bad JSON, a missing or unknown key, a prefix used twice and a `fedBy` or `intakes` that isn't `{stage: [object]}`. Today the manifest lists no engine and an empty `$flat`.
 
 An engine's entry has these keys. Required: `prefix`, `facade`, `files`, `owners`, `adapters`, `tests` and `doc`, plus `editPoints`. Optional, empty by default: `folder`, `helpers`, `kits`, `uses`, `fedBy`, `intakes`, `itemPaths`, `pluginPaths`, `feeder`, `tables` and `alone`.
 

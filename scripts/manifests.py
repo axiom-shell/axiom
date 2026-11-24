@@ -30,7 +30,8 @@ ENGINE_DOC_HEADINGS = ["Role", "Inputs", "Stages", "Outputs", "Rules", "Owners, 
 
 def _parsed(text):
     """A manifest's text -> (data, errors): the parsed object (engines, `$flat`, `$domains`) and
-    every error found in it (bad JSON, an unknown or missing key, a prefix used twice)."""
+    every error found in it (bad JSON, an unknown or missing key, a prefix used twice, a `fedBy` or `intakes`
+    that isn't `{stage: [object]}` with string `from`, `seam` and `rule`)."""
     name = "scripts/engines.json"
     if text is None:
         try:
@@ -76,6 +77,14 @@ def _parsed(text):
         tests = entry["tests"] if isinstance(entry.get("tests"), dict) else {}
         entry = {**copy.deepcopy({**REQUIRED_KEYS, **OPTIONAL_KEYS}), **entry}
         entry["tests"] = {**copy.deepcopy(TESTS_KEYS), **tests}
+        for key in ("fedBy", "intakes"):
+            if not isinstance(entry[key], dict):
+                errors.append(f"{name}: {engine}.{key} is not an object")
+                entry[key] = {}
+            bad = [s for s, items in entry[key].items() if not isinstance(items, list) or not all(
+                isinstance(it, dict) and all(isinstance(it.get(k, ""), str) for k in ("from", "seam", "rule")) for it in items)]
+            errors += [f"{name}: {engine}.{key}.{s} is not a list of objects with string from, seam and rule" for s in bad]
+            entry[key] = {s: v for s, v in entry[key].items() if s not in bad}
         out[engine] = entry
         claim_prefix(engine, entry)
     sections = {}

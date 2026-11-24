@@ -877,6 +877,8 @@ class Manifests(unittest.TestCase):
         bare = demo_entry()
         del bare["doc"]
         self.assertEqual(self.m.engines(text=manifest_text(bare))[0]["demo"]["doc"], "")
+        bad = self.m.engines(text=manifest_text(demo_entry(fedBy=[], intakes={"solve": ["x"], "model": [{"from": "demo.solve"}]})))[0]["demo"]
+        self.assertEqual((bad["fedBy"], bad["intakes"]), ({}, {"model": [{"from": "demo.solve"}]}))
 
     def test_held_paths(self):
         entry = self.m.engines(text=manifest_text(demo_entry()))[0]["demo"]
@@ -914,6 +916,12 @@ class Manifests(unittest.TestCase):
             (manifest_text(demo_entry(), **{"$domains": {"geo": {"tables": []}}}), "$domains.geo: missing key uses"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "FLAT"}}}), "$flat.Helper: missing key tables"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"tables": []}}}), "$flat.Helper: missing key prefix"),
+            (manifest_text(demo_entry(fedBy=[])), "demo.fedBy is not an object"),
+            (manifest_text(demo_entry(intakes="x")), "demo.intakes is not an object"),
+            (manifest_text(demo_entry(fedBy={"model": "x"})), "demo.fedBy.model is not a list of objects with string from, seam and rule"),
+            (manifest_text(demo_entry(intakes={"solve": ["x"]})), "demo.intakes.solve is not a list of objects"),
+            (manifest_text(demo_entry(fedBy={"model": [{"from": 5}]})), "demo.fedBy.model is not a list of objects"),
+            (manifest_text(demo_entry(fedBy={"model": [{"from": "a.b", "seam": []}]})), "demo.fedBy.model is not a list of objects"),
         ]
         for text, message in cases:
             errors = self.m.engines(text=text)[1]
@@ -1045,7 +1053,7 @@ class CheckEngines(unittest.TestCase):
                       '    "solve": {"in": ["request", "model", "tuning", "now"], "out": {"box": "DemoRules.boxOf"}},\n'
                       '    "drawn": {"in": ["result", "motion"], "out": {"": "DemoRules.nothing"}},\n'
                       '    "pick": {"in": ["spot", "more"], "out": {"": "DemoRules.boxOf"}, "extra": true},\n'
-                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}},\n'
+                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}, "unfed": 5},\n'
                       '    "drawnX": {"in": [["x"]], "out": {"": "DemoRules.boxOf"}, "extra": true}\n  })\n\n'
                       '  function stray(input) {\n    return 1;\n  }\n\n'
                       '  function model(input) {\n    const {env} = input;\n    return {};\n  }\n\n'
@@ -1106,7 +1114,7 @@ class CheckEngines(unittest.TestCase):
             "qml/components/DemoReader.qml: facade-only draw:DemoKit", "qml/components/DemoPlugin.qml: facade-only hook:DemoEngine.pick",
             "qml/services/DemoOwner.qml: facade-only draw:DemoEngine.drawn",
             f"{m}/demo/DemoEngine.qml: api api:not first", f"{m}/demo/DemoEngine.qml: api stray:no api entry",
-            f"{m}/demo/DemoEngine.qml: api api.pick:in", f"{m}/demo/DemoEngine.qml: api api.drawn:DemoRules.nothing",
+            f"{m}/demo/DemoEngine.qml: api api.pick:in", f"{m}/demo/DemoEngine.qml: api api.other:unfed", f"{m}/demo/DemoEngine.qml: api api.drawn:DemoRules.nothing",
             f"{m}/demo/DemoEngine.qml: shape api.solve:now", f"{m}/demo/DemoEngine.qml: shape api.model:needs config|state",
             f"{m}/demo/DemoEngine.qml: shape api.other:not a stage", f"{m}/demo/DemoEngine.qml: shape drawn:form",
             f"{m}/demo/DemoEngine.qml: shape DemoEngine:lines", f"{m}/lone/LoneEngine.qml: api api:not literal",
