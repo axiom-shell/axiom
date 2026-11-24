@@ -373,7 +373,7 @@ The spec of every system's behaviour.
     - `action`: a subset of the definition's `actionOf(key, state)` (`null`: none);
     - `tile` (a subset of `OSDEngine.tileOf` for the key after the step) and `card` (a subset of `OSDEngine.cardOf`; `null`: none);
     - `host`: the simulated host's decision. For a card it's `"open"`, `"replace"` or `"keep"`. For a tile it's `"ring"`, `"keep"`, `"beside"`, `"suppress"` or `"retract"`. For a bar it's `"open"`, `"beside"` or `"suppress"`.
-- A subset compares objects field by field, anything else exactly.
+- A subset is the row runner's compare ([engines](../core/engines.md) › The row format): an object by the fields given, an array by its length and each element in order, anything else exactly (`===`).
 - **Example:**
   ```js
   { "name": "turned on: its icon, lit and unusual",
