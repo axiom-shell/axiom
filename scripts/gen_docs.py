@@ -1306,20 +1306,8 @@ def json_property(path, name, default=_ABSENT):
         if default is not _ABSENT:
             return default
         sys.exit(f"{rel(path)}: no `property var {name}: [...]`")
-    depth, i, quoted = 0, match.end() - 1, False
-    start = i
-    while i < len(text):
-        c = text[i]
-        if quoted:
-            quoted = c != '"'
-            i += 2 if c == "\\" else 1
-            continue
-        quoted = c == '"'
-        depth += {"[": 1, "]": -1, "{": 1, "}": -1}.get(c, 0)
-        if depth == 0:
-            break
-        i += 1
-    return json.loads(text[start: i + 1])
+    start = match.end() - 1
+    return json.loads(text[start:_skip_balanced(text, start)])
 
 
 def layers_page():
