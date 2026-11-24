@@ -163,6 +163,7 @@ Engines never throw or log. An inconsistent input gives a safe result plus `prob
 | **Timeline** | rows with `steps` in the same rows file | each step calls the reducer with the previous output as `prev` |
 | **Unit `_data`** | `tests/tst_<Internal>.qml` | QtTest tables for big internal tables |
 | **Fixtures** | `tests/<engine>/Fixtures.js` | named builders. A file whose builders only return plain data is `.pragma library` (`tests/osd/*.js`); one whose builders use the importing test's facades and helpers is not (`tests/barstyle/Bars.js`) |
+| **Golden** | `tests.golden[<Name>]` of the manifest entry, else `GOLDENS` in `scripts/dev/fixtures.py` | the recorded data of `tst_<Name>`; written by `fixtures.py golden <Name>`, never by hand |
 
 - A helper's existing `_data` tables stay and keep passing. A kept table that pins a rule a rows file names prefixes each tag with the row id (`"DEMO-04 strip below 7 em"`); it becomes rows only when its rule changes. New rule rows for a helper go in `tests/flat/<Helper>.js`, run by an `EngineRows` inside the same `tst_<Helper>.qml`.
 - A helper that imports `qs.config`, `qs.services.*` or Quickshell gets no rows file: its decision moves into a pure helper first, or stays pinned by its existing test.

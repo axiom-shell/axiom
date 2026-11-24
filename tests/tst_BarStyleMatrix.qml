@@ -8,18 +8,14 @@ import "barstyle/Matrix.js" as Matrix
 // results, looks, cellShapes and outlines, run through the helpers and
 // recorded (barstyle/Matrix.js): main's behaviour before the style rework,
 // plus its intended changes, each re-recorded in the commit that made it.
-// The expected data is never edited by hand: otherwise only the adapters
+// The data is recorded by scripts/dev/fixtures.py golden BarStyleMatrix and
+// never edited by hand: otherwise only the adapters
 // below change, to reach the same results through a new API. What colours
 // draw is tst_BarWidgetStyle's sweep.
 TestCase {
   id: root
 
   name: "BarStyleMatrix"
-
-  // True only while recording the expected data (never committed true):
-  // each case is logged as `MATRIX <group> <key>\t<value>` instead of
-  // compared
-  readonly property bool recording: false
 
   RepoFiles {
     id: files
@@ -493,10 +489,10 @@ TestCase {
 
   function test_matrix() {
     const all = root.groups();
-    if (root.recording) {
+    if (files.recording("golden BarStyleMatrix")) {
       for (const group in all)
         for (const key in all[group])
-          console.log(`MATRIX ${group} ${key}\t${all[group][key]}`);
+          console.log(`@@MATRIX ${group} ${key}\t${all[group][key]}`);
       skip("recording");
     }
     const bad = [];

@@ -16,6 +16,7 @@
     (manifests.py), on small inputs
   - check_engines.py: each of its thirteen rules on the fixture engine `demo` (demo_engine), the base it reads
   - gen_docs.py's engine pages: the fixture engines' manifest, API and rules pages, and an empty manifest's one page
+  - fixtures.py golden: what it writes and refuses, in a fixture root with a stub test runner; record's output
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -2346,6 +2347,141 @@ class NewNames(unittest.TestCase):
         write(self.repo, "qml/x/A.js", "var a = 1;\nfunction f() {}\n")
         write(self.repo, "data/x.js", "var a = 1;\nfunction f() {}\n")
         self.assertFalse([r for r in self.run_names() if r["file"].endswith(".js")])
+
+
+class FixturesGolden(unittest.TestCase):
+    """scripts/dev/fixtures.py golden and record, in a fixture root whose run_tests.sh is a stub."""
+
+    NAME = "BarStyleMatrix"
+    PATH = "tests/barstyle/Matrix.js"
+    DATA = {"b": {"two": "2", "one": "1"}, "a": {"key": "x"}}
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = fixture_root(self.tmp.name)
+        write(self.root, "tests/.keep", "")
+        write(self.root, "scripts/run_tests.sh",
+              '#!/bin/bash\nroot="$(cd "$(dirname "$0")/.." && pwd)"\n'
+              'if [[ -e "$root/tests/.recording" ]]; then cat "$root/tests/.recording" >> "$root/marker-seen"; '
+              'else echo none >> "$root/marker-seen"; fi\n'
+              'cat "$root/log.txt"\nexit "$(cat "$root/status" 2>/dev/null || echo 0)"\n')
+        (self.root / "scripts/run_tests.sh").chmod(0o755)
+        self.fixtures = self.load()
+
+    def load(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("fixtures_under_test", self.root / "scripts/dev/fixtures.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def log(self, data):
+        write(self.root, "log.txt", "".join(f"@@MATRIX {g} {k}\t{v}\n" for g, keys in data.items() for k, v in keys.items()))
+
+    def run_fixtures(self, *args):
+        done = subprocess.run([sys.executable, str(self.root / "scripts/dev/fixtures.py"), *args],
+                              cwd=self.root, capture_output=True, text=True)
+        return done.returncode, done.stdout + done.stderr
+
+    def golden(self, *extra):
+        return self.run_fixtures("golden", self.NAME, *extra)
+
+    def seed(self, data):
+        write(self.root, self.PATH, "// hand header\nvar expected = " + json.dumps(data) + ";\n")
+
+    def allow(self, entries):
+        write(self.root, "allow.json", json.dumps(entries))
+        return ("--allow", str(self.root / "allow.json"))
+
+    def marker_seen(self):
+        return (self.root / "marker-seen").read_text().split()
+
+    def test_unchanged_data_rewrites_only_the_header(self):
+        self.seed(self.DATA)
+        self.log(self.DATA)
+        code, out = self.golden()
+        self.assertEqual(code, 0, out)
+        self.assertIn("data unchanged", out)
+        self.assertEqual((self.root / self.PATH).read_text(), self.fixtures.golden_text(self.NAME, self.DATA))
+        self.assertEqual(self.marker_seen(), ["golden", self.NAME])
+
+    def test_changed_key_without_allow_writes_nothing(self):
+        self.seed(self.DATA)
+        before = (self.root / self.PATH).read_bytes()
+        self.log({**self.DATA, "a": {"key": "y"}})
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertIn("a key: changed, not in --allow", out)
+        self.assertIn("nothing written", out)
+        self.assertEqual((self.root / self.PATH).read_bytes(), before)
+
+    def test_allowed_changed_key_is_written(self):
+        self.seed(self.DATA)
+        self.log({**self.DATA, "a": {"key": "y"}})
+        code, out = self.golden(*self.allow({"a key": {"rule": "rule-1", "reason": "meant"}}))
+        self.assertEqual(code, 0, out)
+        self.assertIn("1 changed", out)
+        self.assertEqual(self.fixtures.golden_data((self.root / self.PATH).read_text())["a"]["key"], "y")
+
+    def test_allowed_key_that_did_not_change_is_refused(self):
+        self.seed(self.DATA)
+        before = (self.root / self.PATH).read_bytes()
+        self.log(self.DATA)
+        code, out = self.golden(*self.allow({"a key": {"rule": "rule-1", "reason": "meant"}}))
+        self.assertEqual(code, 1, out)
+        self.assertIn("in --allow but unchanged", out)
+        self.assertEqual((self.root / self.PATH).read_bytes(), before)
+
+    def test_marker_is_gone_after_a_failed_run(self):
+        self.seed(self.DATA)
+        before = (self.root / self.PATH).read_bytes()
+        self.log(self.DATA)
+        write(self.root, "status", "1")
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertFalse((self.root / "tests/.recording").exists())
+        self.assertEqual((self.root / self.PATH).read_bytes(), before)
+
+    def test_first_recording_needs_no_allow(self):
+        self.log(self.DATA)
+        code, out = self.golden()
+        self.assertEqual(code, 0, out)
+        self.assertEqual((self.root / self.PATH).read_text(), self.fixtures.golden_text(self.NAME, self.DATA))
+
+    def test_unreadable_file_runs_nothing(self):
+        write(self.root, self.PATH, "var expected = {;\n")
+        self.log(self.DATA)
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"can't read {self.PATH}'s data", out)
+        self.assertEqual((self.root / self.PATH).read_text(), "var expected = {;\n")
+        self.assertFalse((self.root / "marker-seen").exists())
+
+    def test_a_name_in_both_homes_is_refused(self):
+        write(self.root, "scripts/engines.json",
+              manifest_text(demo_entry(tests={"rows": "tests/demo/Rows.js", "golden": {self.NAME: "tests/demo/golden.json"},
+                                              "sweep": [], "pixel": []})))
+        code, out = self.golden()
+        self.assertEqual(code, 2, out)
+        self.assertIn("keep one", out)
+
+    def test_record_output_is_unchanged(self):
+        rec = {"suite": "Suite", "test": "tst", "function": "fn", "label": "", "tag": "",
+               "case": '{"op": "run", "args": [1]}', "expected": "[1]"}
+        write(self.root, "log.txt", "@@FIXTURE " + json.dumps(rec).encode("utf-16-be").hex() + "\n")
+        code, out = self.run_fixtures("record")
+        self.assertEqual(code, 0, out)
+        self.assertIn("recorded 1 cases (1 calls)", out)
+        shared = self.root / "tests/fixtures/shared/Suite/tst"
+        self.assertEqual((shared / "fn.0.json").read_text(), '{\n  "op": "run",\n  "args": [\n    1\n  ]\n}\n')
+        self.assertEqual((shared / "fn.0.expected.json").read_text(), "[1]")
+        self.assertEqual((self.root / "tests/fixtures/shared/index.json").read_text(),
+                         self.fixtures.dump({"_comment": json.loads(
+                             (self.root / "tests/fixtures/shared/index.json").read_text())["_comment"],
+                             "cases": ["Suite/tst/fn.0"]}))
+        self.assertEqual(self.marker_seen(), ["fixture"])
+        self.assertFalse((self.root / "tests/.recording").exists())
 
 
 if __name__ == "__main__":

@@ -130,6 +130,7 @@ for f in "${changed[@]}"; do
   data/custom-widgets/habits.sh) script_tests+=(HabitsScript) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/dev/new_names.py) script_tests+=(NewNames) ;;
+  scripts/dev/fixtures.py) script_tests+=(FixturesGolden) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
   scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/chrome-drawing-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
   scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines) ;;
