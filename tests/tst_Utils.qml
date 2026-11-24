@@ -152,6 +152,9 @@ TestCase {
     verify(!Utils.deepEqual(null, {}));
     verify(!Utils.deepEqual("1", 1));
     verify(Utils.deepEqual("x", "x"));
+    verify(Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 4)]), "equal rects");
+    verify(!Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 5)]), "a rect's size differs");
+    verify(!Utils.deepEqual([Qt.rect(1, 2, 3, 4)], [Qt.rect(1, 2, 3, 4), Qt.rect(0, 0, 1, 1)]), "a rect more");
   }
 
   function test_withEntry() {

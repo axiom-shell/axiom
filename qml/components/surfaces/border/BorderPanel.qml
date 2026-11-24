@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.components.methods
 import qs.components.hosts.popout
+import qs.services.ui
 
 // One edge of the screen border (RoundedBorders): a strip that reserves
 // `frameWidth` and draws the frame with its inner stroke, which stops short
@@ -27,6 +28,10 @@ PanelWindow {
 
   readonly property bool horizontal: edge === "top" || edge === "bottom"
   readonly property real length: horizontal ? width : height
+  // Where the strip starts along its edge on screen (LayerOrigin); until
+  // it's mapped, as if what reserves the edges across it (the strips
+  // there, when they mapped first) reserved as much at either end
+  readonly property real screenOffset: placeOnScreen.origin ? (horizontal ? placeOnScreen.origin.x : placeOnScreen.origin.y) : ((horizontal ? screen?.width : screen?.height) ?? length) / 2 - length / 2
   LayerOrigin {
     id: placeOnScreen
     window: root
@@ -36,9 +41,17 @@ PanelWindow {
   // The stroke runs between the corner pieces: a horizontal strip spans
   // the screen, a vertical one the room between them
   readonly property rect stripStroke: FrameOutline.stripStroke(root.edge, root.length, root.frameWidth, root.innerBorderRadius, root.strokeWidth)
-  // Where its stroke is on screen, on the device px its Rectangles fill, for
-  // the backing window's copy: the whole row between the corner pieces
-  readonly property rect screenStroke: FrameOutline.strokePixels(Qt.rect(placeOnScreen.placed.x + stripStroke.x, placeOnScreen.placed.y + stripStroke.y, stripStroke.width, stripStroke.height), placeOnScreen.placed, root.devicePixelRatio)
+  // Surfaces joined to the stroke, in strip coordinates: the backing window's
+  // copy leaves the stroke open under them (this strip draws it whole)
+  readonly property var openings: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "") && o.edge === root.edge).map(o => ({
+        "start": o.start - root.screenOffset,
+        "end": o.end - root.screenOffset
+      }))
+  readonly property real strokeStart: horizontal ? stripStroke.x : stripStroke.y
+  readonly property var strokePieces: Utils.subtractSpans(root.strokeStart, root.length - root.strokeStart, root.openings)
+  // Where its stroke pieces are on screen, on the device px its Rectangle
+  // fills, for the backing window's copy: the stroke less its openings
+  readonly property var screenStrokePieces: root.strokePieces.map(piece => FrameOutline.strokePixels(root.horizontal ? Qt.rect(placeOnScreen.placed.x + piece.start, placeOnScreen.placed.y + root.stripStroke.y, piece.end - piece.start, root.stripStroke.height) : Qt.rect(placeOnScreen.placed.x + root.stripStroke.x, placeOnScreen.placed.y + piece.start, root.stripStroke.width, piece.end - piece.start), placeOnScreen.placed, root.devicePixelRatio))
 
   anchors {
     left: root.edge !== "right"

@@ -87,8 +87,6 @@ Item {
   function blurPieces(w, h) {
     return FrameOutline.blurRegion(root._spec, w, h);
   }
-  // Where the stroke is left open under what joins it (FrameOutline.strokeHoles)
-  readonly property var strokeHoles: FrameOutline.strokeHoles(root._spec, root._openings)
   // The frame, filled odd-even (FrameOutline.framePath)
   function framePath(w, h, fromMenus) {
     return FrameOutline.framePath(root._spec, w, h, fromMenus);
@@ -107,10 +105,11 @@ Item {
   }
 
   // What the backing window's copy strokes the frame with, as these pieces
-  // draw it on screen: the four strips' stroke rows, the four corner
-  // windows' boxes (each with the corner it is)
-  readonly property var strokeRects: Array.prototype.map.call(strips.instances, p => p.screenStroke)
-  readonly property var cornerBoxes: Array.prototype.map.call(cornerWindows.instances, c => ({
+  // draw it on screen: the four strips' stroke pieces, already left open
+  // under what joins them, and the boxes of the corner windows that are not
+  // covered (each with the corner it is)
+  readonly property var strokeRects: [].concat(...Array.prototype.map.call(strips.instances, p => p.screenStrokePieces))
+  readonly property var cornerBoxes: Array.prototype.filter.call(cornerWindows.instances, c => !c.covered).map(c => ({
         "box": c.screenBox,
         "isLeft": c.isLeft,
         "isTop": c.isTop
@@ -198,6 +197,10 @@ Item {
       readonly property real _y: FrameOutline.cornerBox(root._spec, corner.isLeft, corner.isTop).y
       // Its box as the compositor shows it, on whole device px
       readonly property rect screenBox: FrameOutline.windowPixels(Qt.rect(corner._x, corner._y, root.cornerSize, root.cornerSize), corner.devicePixelRatio)
+      // A surface joined to the stroke runs into the perpendicular edge over
+      // it (a pill joined to it, SurfaceManager.borderOpenings): the backing
+      // window's copy leaves the corner out there (this piece draws whole)
+      readonly property bool covered: FrameOutline.cornerCovered(root._spec, root._openings, corner.isLeft, corner.isTop)
       CornerPiece {
         borderRadius: root.innerBorderRadius
         fillColor: root.backed ? "transparent" : root.frameColor

@@ -51,4 +51,6 @@ AttachedSurface {
   startNearRadius: root.source?.startNearRadius ?? 0
   endNearRadius: root.source?.endNearRadius ?? 0
   fillColor: root.source?.fillColor ?? "transparent"
+  fillPath: root.source?.fillPath ?? ""
+  strokePath: root.source?.strokePath ?? ""
 }

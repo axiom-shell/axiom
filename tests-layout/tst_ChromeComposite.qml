@@ -188,6 +188,12 @@ TestCase {
   }
 
   Component {
+    id: copyComp
+
+    AttachedSurfaceCopy {}
+  }
+
+  Component {
     id: shapeComp
 
     BlurShape {}
@@ -1125,7 +1131,7 @@ TestCase {
         "boxHeight": 30
       }, 50, m - sw);
       root.settle([dock]);
-      // (the band RoundedBorders.strokeHoles cuts: EdgeAttach.strokeHoleAcross)
+      // (the stroke's rows the strips leave open: EdgeAttach.strokeHoleAcross)
       const edge = EdgeAttach.strokeHoleAcross(m - sw, sw);
       const band = Qt.rect(dock.x + dock.coverStart, edge.start, dock.coverEnd - dock.coverStart, edge.size);
       return {
@@ -1202,8 +1208,8 @@ TestCase {
     ];
   }
   // The frame's fixture source, carrying RoundedBorders' contract
-  // (`strokeWidth`, `strokeHoles`, `framePath`, `innerPath`, `strokeRects`,
-  // `cornerBoxes`), its geometry FrameOutline's for a 160 x 100 screen with
+  // (`strokeWidth`, `framePath`, `innerPath`, `strokeRects`, `cornerBoxes`),
+  // its `strokeHoles` what the openings cut out of both, its geometry FrameOutline's for a 160 x 100 screen with
   // an `inset` px border. At radius 0 that is a sharp border: the stroke
   // along the inner edge, inside the frame
   Component {
@@ -1216,17 +1222,23 @@ TestCase {
       property real inset: 10
       readonly property real innerBorderRadius: radius
       readonly property real cornerSize: FrameOutline.cornerSize(spec)
-      // The strips' stroke rows and the corner windows' boxes as shown at
-      // this scale (BorderPanel.screenStroke, the corner's screenBox)
-      readonly property var strokeRects: root.strips(inset).map(st => {
+      // What RoundedBorders publishes, at this scale: the strips' stroke rows
+      // less the row's `strokeHoles` (BorderPanel.screenStrokePieces), and the
+      // boxes of the corner windows no hole covers (its `cornerBoxes`)
+      readonly property var strokeRects: [].concat(...root.strips(inset).map(st => {
         const r = FrameOutline.stripStroke(st.edge, st.length, inset, radius, strokeWidth);
-        return FrameOutline.strokePixels(Qt.rect(st.origin.x + r.x, st.origin.y + r.y, r.width, r.height), st.origin, root.dpr);
-      })
+        const row = FrameOutline.strokePixels(Qt.rect(st.origin.x + r.x, st.origin.y + r.y, r.width, r.height), st.origin, root.dpr);
+        return Utils.subtractRects(row, Utils.insetUnion(row, strokeHoles, Utils.tieInset));
+      }))
       readonly property var cornerBoxes: FrameOutline.corners.map(c => ({
             "box": FrameOutline.windowPixels(FrameOutline.cornerBox(spec, c.isLeft, c.isTop), root.dpr),
             "isLeft": c.isLeft,
-            "isTop": c.isTop
-          }))
+            "isTop": c.isTop,
+            "covered": strokeHoles.some(h => {
+              const b = FrameOutline.cornerBox(spec, c.isLeft, c.isTop);
+              return h.x <= b.x && h.y <= b.y && h.x + h.width >= b.x + b.width && h.y + h.height >= b.y + b.height;
+            })
+          })).filter(c => !c.covered)
       readonly property var spec: ({
           "width": 160,
           "height": 100,
@@ -1549,14 +1561,9 @@ TestCase {
     root.setStroke(2);
     const frame = frameComp.createObject(sources);
     frame.radius = 8;
-    const holes = FrameOutline.strokeHoles(frame.spec, [
-      {
-        "edge": "top",
-        "start": data.start,
-        "end": 60
-      }
-    ]);
     const box = FrameOutline.cornerBox(frame.spec, true, true);
+    const across = EdgeAttach.strokeHoleAcross(frame.inset - frame.strokeWidth, frame.strokeWidth);
+    const holes = [Qt.rect(data.start, across.start, 60 - data.start, across.size)].concat(data.covered ? [box] : []);
     const sceneOf = (stroke, h) => root.render([root.frameSpec(frame, root.blue, stroke, h)]);
     const plain = sceneOf(root.line(1), []);
     const bare = sceneOf(null, []);
@@ -2071,5 +2078,51 @@ TestCase {
     const line = root.over(root.line(1), root.filled(root.solid));
     root.near(cut.px(Math.floor(box.x + box.width / 2), box.y + box.height - 1), line, "the bottom run");
     root.near(cut.px(box.x + 1, Math.floor(box.y + box.height / 2)), line, "the left run");
+  }
+
+  // ---- a copy reads its source's paths ----
+
+  function test_copy_paths_are_the_sources_data() {
+    return [
+      {
+        "tag": "plain",
+        "props": {}
+      },
+      {
+        "tag": "joined",
+        "props": {
+          "joinStart": true,
+          "joinEnd": true,
+          "flushStart": true
+        }
+      },
+      {
+        "tag": "straight",
+        "props": {
+          "straight": true,
+          "startCornerRadius": 6
+        }
+      },
+      {
+        "tag": "detached",
+        "props": {
+          "detached": true,
+          "detachedOffset": 10
+        }
+      }
+    ];
+  }
+
+  function test_copy_paths_are_the_sources(data) {
+    const src = root.surface(data.props);
+    root.settle([src]);
+    const copy = createTemporaryObject(copyComp, sources, {
+      "source": src
+    });
+    verify(src.fillPath.length > 0 && src.strokePath.length > 0, "the source has paths");
+    compare(copy.fillPath, src.fillPath);
+    compare(copy.strokePath, src.strokePath);
+    compare(SurfaceOutline.fillPath(copy._spec, copy._m, copy.width, copy.height), src.fillPath, "its own derivation is the source's");
+    compare(SurfaceOutline.strokePath(copy._spec, copy._m, copy.width, copy.height), src.strokePath, "its own derivation is the source's");
   }
 }

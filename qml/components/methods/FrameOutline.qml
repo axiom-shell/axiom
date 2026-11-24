@@ -127,40 +127,4 @@ QtObject {
       "isTop": false
     }
   ]
-  // Where the stroke is left open under what joins it (screen px, the
-  // frame copy's coordinates, as AttachedSurface.strokeHoles): each border
-  // opening's band, the stroke's rows along it with their anti-aliased
-  // fringe a pixel either side (EdgeAttach.strokeHoleAcross), less the corner boxes
-  // (where the strips' strokes stop: an arc no opening spans stays), and
-  // each covered corner's box
-  function strokeHoles(f, openings) {
-    const w = f.width, h = f.height;
-    const boxes = root.corners.map(c => root.cornerBox(f, c.isLeft, c.isTop));
-    const bands = openings.map(o => {
-      const sw = f.strokeWidth, length = o.end - o.start;
-      switch (o.edge) {
-      case "top":
-        {
-          const band = EdgeAttach.strokeHoleAcross(f.innerTop - sw, sw);
-          return Qt.rect(o.start, band.start, length, band.size);
-        }
-      case "bottom":
-        {
-          const band = EdgeAttach.strokeHoleAcross(h - f.innerBottom, sw);
-          return Qt.rect(o.start, band.start, length, band.size);
-        }
-      case "left":
-        {
-          const band = EdgeAttach.strokeHoleAcross(f.innerLeft - sw, sw);
-          return Qt.rect(band.start, o.start, band.size, length);
-        }
-      default:
-        {
-          const band = EdgeAttach.strokeHoleAcross(w - f.innerRight, sw);
-          return Qt.rect(band.start, o.start, band.size, length);
-        }
-      }
-    });
-    return [].concat(...bands.map(band => Utils.subtractRects(band, boxes)), root.corners.filter(c => root.cornerCovered(f, openings, c.isLeft, c.isTop)).map(c => root.cornerBox(f, c.isLeft, c.isTop)));
-  }
 }
