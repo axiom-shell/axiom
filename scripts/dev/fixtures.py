@@ -94,7 +94,8 @@ def main(argv):
         print(__doc__.strip(), file=sys.stderr)
         return 2
     if argv[1] == "ensure":
-        if (SHARED / ".stamp").exists() and (SHARED / ".stamp").read_text() == stamp():
+        # A marker still here was left by a killed run: record, which removes it
+        if not MARKER.exists() and (SHARED / ".stamp").exists() and (SHARED / ".stamp").read_text() == stamp():
             return 0
         return record()
     return record() if argv[1] == "record" else check()
@@ -282,7 +283,7 @@ def golden(name, allow):
         problems += [f"{key}: in --allow but unchanged" for key in sorted(set(allowed) - set(diff))]
         counts = (f"{len(changed)} changed, {len(added)} added, {len(removed)} removed" if diff else "data unchanged")
     if problems:
-        print("\n".join(problems) + "\nnothing written")
+        print("\n".join(problems) + "\nnothing written", file=sys.stderr)
         return 1
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(golden_text(name, data), encoding="utf-8")
@@ -298,11 +299,14 @@ def decode_matrix(line):
 
 
 def golden_data(text):
-    """A golden file's data section (`var expected = …;`) parsed; ValueError if it has none."""
+    """A golden file's data section (`var expected = …;`) parsed; ValueError if it has none or isn't groups of keys."""
     head, found, body = text.partition("var expected = ")
     if not found:
         raise ValueError("no data section")
-    return json.loads(body.rstrip().removesuffix(";"))
+    data = json.loads(body.rstrip().removesuffix(";"))
+    if not (isinstance(data, dict) and all(isinstance(keys, dict) for keys in data.values())):
+        raise ValueError("data section isn't groups of keys")
+    return data
 
 
 def golden_text(name, data):

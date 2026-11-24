@@ -2382,6 +2382,7 @@ class FixturesGolden(unittest.TestCase):
     def run_fixtures(self, *args):
         done = subprocess.run([sys.executable, str(self.root / "scripts/dev/fixtures.py"), *args],
                               cwd=self.root, capture_output=True, text=True)
+        self.err = done.stderr
         return done.returncode, done.stdout + done.stderr
 
     def golden(self, *extra):
@@ -2412,8 +2413,8 @@ class FixturesGolden(unittest.TestCase):
         self.log({**self.DATA, "a": {"key": "y"}})
         code, out = self.golden()
         self.assertEqual(code, 1, out)
-        self.assertIn("a key: changed, not in --allow", out)
-        self.assertIn("nothing written", out)
+        self.assertIn("a key: changed, not in --allow", self.err)
+        self.assertIn("nothing written", self.err)
         self.assertEqual((self.root / self.PATH).read_bytes(), before)
 
     def test_allowed_changed_key_is_written(self):
@@ -2430,7 +2431,7 @@ class FixturesGolden(unittest.TestCase):
         self.log(self.DATA)
         code, out = self.golden(*self.allow({"a key": {"rule": "rule-1", "reason": "meant"}}))
         self.assertEqual(code, 1, out)
-        self.assertIn("in --allow but unchanged", out)
+        self.assertIn("in --allow but unchanged", self.err)
         self.assertEqual((self.root / self.PATH).read_bytes(), before)
 
     def test_marker_is_gone_after_a_failed_run(self):
@@ -2457,6 +2458,70 @@ class FixturesGolden(unittest.TestCase):
         self.assertIn(f"can't read {self.PATH}'s data", out)
         self.assertEqual((self.root / self.PATH).read_text(), "var expected = {;\n")
         self.assertFalse((self.root / "marker-seen").exists())
+
+    def test_added_key_needs_allow(self):
+        self.seed(self.DATA)
+        before = (self.root / self.PATH).read_bytes()
+        self.log({**self.DATA, "a": {"key": "x", "new": "n"}})
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertIn("a new: added, not in --allow", self.err)
+        self.assertEqual((self.root / self.PATH).read_bytes(), before)
+        code, out = self.golden(*self.allow({"a new": {"rule": "rule-1", "reason": "meant"}}))
+        self.assertEqual(code, 0, out)
+        self.assertIn("1 added", out)
+        self.assertEqual(self.fixtures.golden_data((self.root / self.PATH).read_text())["a"]["new"], "n")
+
+    def test_removed_key_needs_allow(self):
+        self.seed({**self.DATA, "a": {"key": "x", "kept": "k"}})
+        before = (self.root / self.PATH).read_bytes()
+        self.log({**self.DATA, "a": {"kept": "k"}})
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertIn("a key: removed, not in --allow", self.err)
+        self.assertEqual((self.root / self.PATH).read_bytes(), before)
+        code, out = self.golden(*self.allow({"a key": {"rule": "rule-1", "reason": "meant"}}))
+        self.assertEqual(code, 0, out)
+        self.assertIn("1 removed", out)
+        self.assertNotIn("key", self.fixtures.golden_data((self.root / self.PATH).read_text())["a"])
+
+    def test_key_recorded_twice_is_refused(self):
+        write(self.root, "log.txt", "@@MATRIX a key\tx\n@@MATRIX a key\ty\n")
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertIn("a key: recorded twice", self.err)
+        self.assertFalse((self.root / self.PATH).exists())
+
+    def test_no_recorded_cases_is_refused(self):
+        write(self.root, "log.txt", "no matrix lines\n")
+        code, out = self.golden()
+        self.assertEqual(code, 1, out)
+        self.assertIn("no cases were recorded", self.err)
+        self.assertFalse((self.root / self.PATH).exists())
+
+    def test_bad_allow_file_is_refused(self):
+        self.log(self.DATA)
+        write(self.root, "allow.json", "[]")
+        code, out = self.golden("--allow", str(self.root / "allow.json"))
+        self.assertEqual(code, 2, out)
+        self.assertIn("not a JSON object", self.err)
+        self.assertFalse((self.root / "marker-seen").exists())
+
+    def test_allow_on_a_first_recording_is_refused(self):
+        self.log(self.DATA)
+        code, out = self.golden(*self.allow({"a key": {"rule": "rule-1", "reason": "meant"}}))
+        self.assertEqual(code, 1, out)
+        self.assertIn("a key: in --allow but unchanged", self.err)
+        self.assertFalse((self.root / self.PATH).exists())
+
+    def test_data_that_is_not_groups_of_keys_runs_nothing(self):
+        self.log(self.DATA)
+        for data in ("[]", '{"a": 1}'):
+            write(self.root, self.PATH, f"var expected = {data};\n")
+            code, out = self.golden()
+            self.assertEqual(code, 1, out)
+            self.assertIn(f"can't read {self.PATH}'s data", self.err)
+            self.assertFalse((self.root / "marker-seen").exists())
 
     def test_a_name_in_both_homes_is_refused(self):
         write(self.root, "scripts/engines.json",
