@@ -11,11 +11,12 @@ A helper is a singleton in `qml/components/methods/` holding pure functions: geo
 3. The callers, which `import qs.components.methods`.
 
 ## Steps
-1. Look for an existing helper first (shared UI pieces, `files.md`).
-2. Write the helper. Import only `QtQuick`; other helpers of the folder need no import. Put a comment on every function saying what goes in and what comes out, and a purpose comment above the root object.
-3. Write the test. `name` matches the helper, and there is one `test_*` function per behaviour, with a message on any `compare` whose point isn't obvious. Repo files such as the built schema come through `RepoFiles { id: files }` (`files.json("path")`, `files.text("path")`), which lives in `tests/`.
-4. Run `scripts/run_tests.sh <Name>`.
-5. Change the callers to use it.
+1. Is the helper inside an engine's `folder` or `files` (`scripts/engines.json`)? Then it's an engine edit: `/engine-change`.
+2. Look for an existing helper first (shared UI pieces, `files.md`).
+3. Write the helper. Import only `QtQuick`; other helpers of the folder need no import. Put a comment on every function saying what goes in and what comes out, and a purpose comment above the root object.
+4. Write the test. `name` matches the helper, and there is one `test_*` function per behaviour, with a message on any `compare` whose point isn't obvious. Repo files such as the built schema come through `RepoFiles { id: files }` (`files.json("path")`, `files.text("path")`), which lives in `tests/`.
+5. Run `scripts/run_tests.sh <Name>`.
+6. Change the callers to use it.
 
 ## Watch out for
 - **No Quickshell.** `run_tests.sh` builds a `--pure` module tree (`scripts/qml_modules.py --pure`) that leaves out every file importing Quickshell, so a helper importing it is left out and its test fails at import. A helper importing anything outside that list (`qs.services.*`, `qs.config`) fails `check_engines` › `purity`. Pass values in as arguments.

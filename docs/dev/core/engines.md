@@ -1,6 +1,6 @@
 # Engines
 
-> **Files:** `tests/EngineRows.qml`, `tests/tst_EngineRows.qml`, `tests/enginerows/`, `scripts/engines.json`, `scripts/manifests.py`, `scripts/check_engines.py`, `scripts/engines-baseline.json`, `scripts/engines-exceptions.json`
+> **Files:** `tests/EngineRows.qml`, `tests/tst_EngineRows.qml`, `tests/enginerows/`, `scripts/engines.json`, `scripts/manifests.py`, `scripts/check_engines.py`, `scripts/engines-baseline.json`, `scripts/engines-exceptions.json`, `.claude/skills/engine-change/SKILL.md`, `docs/recipes/engine-change.md`, `docs/recipes/new-engine.md`
 > **Config:** none
 > **Related:** [Testing](../testing.md), [Shared UI pieces](shared-ui-pieces.md) (Pure helpers)
 
@@ -269,7 +269,7 @@ TestCase {
 OSD timelines (`tests/osd/`) are their own format, run by `tst_OSDSystems`, which uses only `differenceOf` and `messageOf`.
 
 ## The manifest
-`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`), and it reports bad JSON, a missing or unknown key and a prefix used twice. Today the manifest lists no engine and an empty `$flat`.
+`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`, `edit_point_rows()`), and it reports bad JSON, a missing or unknown key and a prefix used twice. Today the manifest lists no engine and an empty `$flat`.
 
 An engine's entry has these keys. Required: `prefix`, `facade`, `files`, `owners`, `adapters`, `tests` and `doc`, plus `editPoints`. Optional, empty by default: `folder`, `helpers`, `kits`, `uses`, `fedBy`, `intakes`, `itemPaths`, `pluginPaths`, `feeder`, `tables` and `alone`.
 
@@ -314,15 +314,76 @@ Nodes are `<engine>.<stage>`. The edges are:
 |---|---|---|
 | `placed` | `methods/**` | a folder under `methods/` that is neither a listed engine's `folder` nor a `$domains` key; a listed `folder`, `files` or `helpers` path that does not exist; a listed engine whose facade file is missing |
 | `purity` | `methods/**` | an import other than `QtQuick`, `qs.components.methods` and the folders the file's engine or `$domains` entry `uses` (a root file has no `uses`, a listed engine's `files` included); `Timer {`; `Date.now(`; `new Date()`; `Math.random`; `console.`; `Qt.callLater` |
+| `facade-only` | listed engines (callers anywhere under `qml/`) | outside the engine's files: a use of an internal file; `model` or `reduce` called outside `owners`, `solve` outside `owners` and `adapters`, `drawn` outside `adapters` (Stages › Caller); a kit used outside `itemPaths`; an extra called from a file under `pluginPaths` when its `api` entry has `"extra": true` and no `"plugins": true` |
+| `api` | listed engines | in the facade: `api` not JSON; `api` not the first member; a root function no `api` key names, or an `api` key with no function; a function in the one form whose destructure keys differ from its `in`; an `out` producer that is not `<File>.<member>` of an engine file with that member |
+| `shape` | listed engines | in the facade: an `api` key that is neither a stage nor an extra; an `in` key the verb does not allow (Stages) or a required group missing; a stage or an extra not in the one form (`function <name>(input) {`, then `const {…} = input;`). In every engine file: a facade over 200 lines, another file over 500, a function over 60, an expression with two or more ternaries |
 | `dag` | listed engines, `$domains` | the graph rules above |
-| `trace` | everywhere under `qml/` | EngineTrace used in any form but `.record(`, `.forget(` or `.tracing`, or used in an engine's folder or `files` |
+| `tables` | listed engines, `$flat`, `$domains` | an owner's `tables` that is not an object; an entry that is not `<File>.<property>` of an existing file with a `kind` of `cell`, `ordered` or `rank`; a table that is not a JSON literal; a cell table with no `axes`; a row with the wrong keys, an empty or missing `why`, or a repeated id; a cell `when` outside `axes`; an ordered `when` that is not a root function of the file; a cell with no row or with two; an ordered table whose last row's `when` is not `true`; a `"rule": "<id>"` literal in an engine file that names neither a table row nor a function |
+| `alone` | listed engines (matches anywhere under `qml/`) | a match of an entry's regex in a file outside its `only` paths; a regex that does not compile; `alone` that is not a list |
+| `contract` | listed engines | in the rows file: not `var rows = <JSON array>;`; an `api` key no row calls; a rule id (a table row id or a `"rule"` literal of an engine file) no row's `expect` pins; a row whose `call` is not an `api` key; a row with `args` |
+| `edit-points` | listed engines | an `editPoints` symbol that is not an engine file's stem, or `<Stem>.<member>` of one of its root members; `editPoints` that is not an object |
+| `doc` | listed engines | the `doc` file empty or missing; a heading of The side doc missing or out of order |
 | `apply` | an engine's `adapters` and `itemPaths` | a `Qt.callLater` without `// allowed: apply <what>` or `// allowed: settle <what>` on its line; an `onContactsChanged`, `onStretchChanged`, `onCoverChanged`, `onPillsChanged` or `onRequestsChanged` handler; a `setRequest(` call |
+| `trace` | everywhere under `qml/` | EngineTrace used in any form but `.record(`, `.forget(` or `.tracing`, or used in an engine's folder or `files` |
 
 A message reads `<file>: <rule> <symbol>: <what>`. The symbol is the enclosing root member and the matched token, `<member>:<token>` (the file's name when no member encloses it); a second instance in one file is numbered `<member>:<token>#2`.
 
 **Baseline.** `scripts/engines-baseline.json` is `{file: {rule: [symbol, ...]}}`: keyed by file and symbol, never a line number. It only shrinks. The check fails on a hit not in it, on an entry whose hit is gone (the change that fixes a hit deletes the entry), and on an entry added since the base. The base is `HEAD^1` in CI, where the checks job fetches two commits, and the merge-base with `origin/main` locally; `--base REF` names another. An entry added since the base is allowed only when its rule is absent from the base's rule list or its file belongs to an engine absent from the base's manifest. `--update-baseline` writes entries only in those cases and otherwise only removes entries whose hit is gone; nobody writes the file by hand.
 
 **Exceptions.** `scripts/engines-exceptions.json` holds permanent exceptions: a file pattern, the rules it waives and the reason, quoting an architect ruling in plain words. An exception that waives nothing fails.
+
+## Editing an engine
+Every edit to an engine is one kind below. The table gives where the edit goes, who does it, the side-doc section it updates and the check that catches drift.
+
+| Kind | Edit point (code; manifest key) | Route | Side-doc section updated | Check that catches drift |
+|---|---|---|---|---|
+| case | a row in the rules table (`tables`; `editPoints.case`) | `/engine-change` | none (Rules names the table) | `tables` (one row per cell), `contract` (rule pinned) |
+| rule | a function named for the rule, or a table, in its stage's internal file, called by name from the stage (`editPoints.rule`) | `/engine-change` | Rules | `contract`, `tables` (rule literal) |
+| input | the feeder (`// reads:`) or the owner's `state`; `api.<stage>.in` (`feeder`; `editPoints.input`) | `/engine-change` | Inputs | `api` (`in` = the destructure line) |
+| output | the stage's return with its `rule`; `api.<stage>.out` with its producer (`editPoints.output`) | `/engine-change` | Outputs | `api` (the producer exists) |
+| renaming a non-seam output field | the stage's return, `api.<stage>.out`, its readers in the engine's adapters | `/engine-change` | Outputs | `api` |
+| consumer | the host (`editPoints.consumer`) | `/engine-change` | Owners, adapters, hosts | `facade-only` |
+| adapter or drawing item | the item (`adapters`, `itemPaths`) | `/engine-change` | Owners, adapters, hosts | `facade-only` |
+| tuning value | `<Facade>.tuning` (`editPoints.tuning`) | `/engine-change` (a product value's row states the user's answer in its `why`) | Inputs | the engine's rows (`scripts/run_tests.sh <Facade>`); review (Readability › Named numbers) |
+| enum value | the cell table's `axes` | `/engine-change` (with the rows completeness then needs) | none (Rules names the table) | `tables` (uncovered cell) |
+| plug-in | its folder (`pluginPaths`) | its kind's recipe (`/bar-widget`, `/osd-system`, …) | the plug-in's area doc | `facade-only` (plug-in extras) |
+| seam change or intake rule | both engines' `api`, `fedBy`/`intakes`, the Seam register row | `/orchestrate` with an architect | Seams of both docs | `dag`, `contract` on both sides |
+| moving a stage run to another owner | `owners`; both owners | `/orchestrate` with an architect | Owners, adapters, hosts | `facade-only` |
+| moving a rule between engines | the old row removed, the new added with a new id | `/orchestrate` with an architect | Rules of both docs | `contract` |
+| new stage or extra | the facade's `api` and function | `/orchestrate` with an architect | Stages | `shape`, `api` |
+| file split | split by stage or by rule family | `/engine-change` | Stages | `shape` (lines) |
+| helper | the file; `helpers` | `/methods-helper` | Stages | `placed`, `purity`, `dag` |
+| exception | a `scripts/engines-exceptions.json` entry with its reason | architect only | Checks | an exception that waives nothing fails |
+| kit change | the kit file and its `itemPaths` users (`kits`) | `/engine-change` | Owners, adapters, hosts | `facade-only` |
+| rule rename | never: a new id, the old removed with its rows | — | — | `contract` |
+| rule removal | the table row or function and its rows, in one change | `/engine-change` | Rules | `contract` |
+
+A facade opens with `api`, then `tuning`, the stages in order, the extras; an internal file opens with its tables.
+
+The contract grows with the code:
+- an edit that adds a case, a rule or an output adds its row in the same change, written first;
+- a row id is never reused: a new rule or case takes the next `<prefix>-<nn>`, and a removed one's id stays retired;
+- a row for a product answer states the user's answer in its `why`;
+- a removed rule removes its rows in the same change.
+
+The recipes: [engine-change](../../recipes/engine-change.md) (run as `/engine-change`) for the kinds routed there, [new-engine](../../recipes/new-engine.md) for a new engine, which is a cross-system change.
+
+## The side doc
+Each listed engine has a side doc, the file its manifest `doc` names: `docs/dev/<area>/<engine>-engine.md`, or an `## Engine` section in the area's doc. It describes the engine as it is, and holds the eleven headings below, in this order, each as a `## <n> <Heading>` line (`doc` checks them with `missing_headings`):
+
+| n | Heading | Holds |
+|---|---|---|
+| 1 | Role | what the engine decides, for whom |
+| 2 | Inputs | what reaches each stage and from where (the feeder), and the tuning values |
+| 3 | Stages | the stages the engine has, and its helpers and file split |
+| 4 | Outputs | the fields each stage returns, and which carry a `rule` |
+| 5 | Rules | the rules, and the tables that hold them |
+| 6 | Owners, adapters, hosts | who calls each stage, the adapters, the drawing items and consumers |
+| 7 | Seams | the seams to other engines (Seam register) |
+| 8 | Tests | the rows file, the runner test and the other tests |
+| 9 | Checks | the checks that hold the engine, and any exception with its reason |
+| 10 | Edit points | the manifest entry's `editPoints` |
+| 11 | Known gaps | what the engine does not do right, stated as it stands |
 
 ## Seam register
 Every field or flow that crosses between two listed engines is a row here; ids are lowerCamel like a rule id, and the Producer and Consumers cells name stages as backticked `<engine>.<stage>`.

@@ -97,7 +97,8 @@ ROOT_OBJECT = re.compile(r"^[A-Z][\w.]*\s*\{")
 
 def parse_qml(path):
     """The root object's header comment and its direct members:
-    [{kind, name, type, expr, comment}], kind property/signal/function."""
+    [{kind, name, type, expr, comment, line, end}], kind property/signal/function; `line` is the
+    member's 1-based first line and `end` its last non-blank line."""
     lines = path.read_text().splitlines()
     header, members = "", []
     start = next((i for i, line in enumerate(lines) if ROOT_OBJECT.match(line)), None)
@@ -135,21 +136,25 @@ def parse_qml(path):
             i += 1
             continue
         body = [match.group(4) or ""]
+        first = end = i + 1
         i += 1
         while i < len(lines) and not re.match(r"^  [^ })\]]", lines[i]) and lines[i] != "}":
             body.append(lines[i].strip())
+            if lines[i].strip():
+                end = i + 1
             i += 1
+        extent = {"line": first, "end": end}
         if match.group(3):
             members.append({"kind": "property", "name": match.group(3), "type": match.group(2),
                             "readonly": "readonly" in line.split("property")[0],
-                            "expr": " ".join(body), "comment": " ".join(comment)})
+                            "expr": " ".join(body), "comment": " ".join(comment), **extent})
         elif match.group(5):
             members.append({"kind": "signal", "name": match.group(5), "type": match.group(6) or "()",
-                            "expr": "", "comment": " ".join(comment)})
+                            "expr": "", "comment": " ".join(comment), **extent})
         else:
             members.append({"kind": "function", "name": match.group(7), "type": match.group(8)
                             + (": " + match.group(9) if match.group(9) else ""),
-                            "expr": " ".join(body), "comment": " ".join(comment)})
+                            "expr": " ".join(body), "comment": " ".join(comment), **extent})
         comment = []
     return header, members
 

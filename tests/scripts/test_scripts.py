@@ -14,7 +14,7 @@
     similar strings, .js names under tests/, generated paths skipped
   - the ratchet (qml_modules.ratchet and its helpers, in a scratch git repo) and the engine manifest reader
     (manifests.py), on small inputs
-  - check_engines.py: each of its five rules on the fixture engine `demo` (demo_engine), the base it reads
+  - check_engines.py: each of its thirteen rules on the fixture engine `demo` (demo_engine), the base it reads
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -728,7 +728,7 @@ def demo_entry(**more):
              "itemPaths": ["qml/components/DemoItem.qml"], "pluginPaths": ["qml/components/DemoPlugin.qml"],
              "tests": {"rows": "tests/demo/Rows.js", "golden": {"DemoGolden": "tests/demo/golden.json"},
                        "sweep": ["DemoSweep"], "pixel": ["tests-layout/tst_DemoPixels.qml"]},
-             "doc": "docs/dev/core/engines.md", "editPoints": {}}
+             "doc": "docs/dev/core/demo-engine.md", "editPoints": {}}
     return {**entry, **more}
 
 
@@ -739,38 +739,79 @@ def manifest_text(entry=None, **top):
 
 def demo_engine(root):
     """Write the fixture engines into a copy of the tree: `demo` (demo_entry) with a file at every
-    path it holds, and `sink`, which takes the seam `demoFeed` from it, their manifest and the seam's
-    row after the separator of engines.md's `## Seam register` table."""
+    path it holds, and `sink`, which takes the seam `demoFeed` from it, their manifest, the side doc
+    both share and the seam's row after the separator of engines.md's `## Seam register` table. The
+    unbroken fixture passes every rule of check_engines and its rows pass in the runner."""
     sys.path.insert(0, str(SCRIPTS))
     import manifests
     root = Path(root)
     methods = "qml/components/methods"
+    rows = [
+        {"id": "DEMO-01", "why": "a seed holds", "call": "solve", "input": {"request": {"seed": True}}, "expect": {"rule": "demoSeeded"}},
+        {"id": "DEMO-02", "why": "a model lists its items", "call": "model", "input": {"config": {"name": "x"}}, "expect": {"items": ["x"]}},
+        {"id": "DEMO-03", "why": "kind a is one wide", "call": "solve", "input": {"request": {"kind": "a"}},
+         "expect": {"box": {"width": 1}, "rule": "kindA"}},
+        {"id": "DEMO-04", "why": "kind b takes the tuned size", "call": "solve", "input": {"request": {"kind": "b"}},
+         "expect": {"box": {"width": 2}, "rule": "kindB"}},
+        {"id": "DEMO-05", "why": "a drawn box follows its result", "call": "drawn",
+         "input": {"result": {"kind": "a"}, "motion": {"progress": 1}}, "expect": {"box": {"width": 1}, "rule": "kindA"}},
+        {"id": "DEMO-06", "why": "a pick answers for its spot", "call": "pick", "input": {"spot": {"kind": "b"}}, "expect": {"rule": "kindB"}},
+    ]
+    docs = "\n".join(f"## {i} {h}\nThe demo's {h.lower()}." for i, h in enumerate(manifests.ENGINE_DOC_HEADINGS, 1))
     files = {
-        f"{methods}/demo/DemoEngine.qml": 'import QtQuick\n// The demo facade.\nQtObject {\n  readonly property var api: ({\n'
-            '    "model": {"in": ["request"], "out": {"items": "DemoHelper.items"}},\n'
-            '    "solve": {"in": ["model"], "out": {"box": "DemoInternal.box"}},\n'
-            '    "drawn": {"in": ["result"], "out": {"": "DemoInternal.box"}},\n'
-            '    "pick": {"in": ["spot"], "out": {"": "DemoInternal.box"}, "extra": true}\n  })\n'
-            '  property var kept: [DemoHelper, DemoInternal]\n}\n',
+        f"{methods}/demo/DemoEngine.qml": 'pragma Singleton\nimport QtQuick\n\n// The demo facade.\nQtObject {\n  id: root\n\n  readonly property var api: ({\n'
+            '    "model": {"in": ["config"], "out": {"items": "DemoRules.itemsOf"}},\n'
+            '    "solve": {"in": ["request", "model", "tuning"], "out": {"box": "DemoRules.boxOf"}},\n'
+            '    "drawn": {"in": ["result", "motion"], "out": {"": "DemoRules.boxOf"}},\n'
+            '    "pick": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}, "extra": true}\n  })\n\n'
+            '  readonly property var tuning: ({"size": 2})\n\n'
+            '  function model(input) {\n    const {config} = input;\n    return {"items": DemoRules.itemsOf({config}), "problems": []};\n  }\n\n'
+            '  function solve(input) {\n    const {request, model, tuning = root.tuning} = input;\n    return DemoRules.boxOf({request, tuning});\n  }\n\n'
+            '  function drawn(input) {\n    const {result, motion} = input;\n    return DemoRules.boxOf({"request": result, "tuning": root.tuning});\n  }\n\n'
+            '  function pick(input) {\n    const {spot} = input;\n    return DemoRules.boxOf({"request": spot, "tuning": root.tuning});\n  }\n}\n',
+        f"{methods}/demo/DemoRules.qml": 'pragma Singleton\nimport QtQuick\n\n// The demo rules: one cell table and the functions its rows name.\nQtObject {\n  id: root\n\n'
+            '  readonly property var rows: [\n    {"id": "kindA", "when": {"kind": "a"}, "then": {"width": 1}, "why": "a is one wide"},\n'
+            '    {"id": "kindB", "when": {"kind": "b"}, "then": "wideBox", "why": "b takes the tuned size"}\n  ]\n\n'
+            '  readonly property var axes: ({"kind": ["a", "b"]})\n\n'
+            '  function itemsOf(input) {\n    return [input.config.name];\n  }\n\n'
+            '  function boxOf(input) {\n    const {request} = input;\n    if (request.seed) {\n      return demoSeeded(input);\n    }\n'
+            '    const row = rows.find(r => r.when.kind === request.kind);\n'
+            '    const box = typeof row.then === "string" ? root[row.then](input) : row.then;\n    return {"box": box, "rule": row.id};\n  }\n\n'
+            '  function wideBox(input) {\n    const {tuning} = input;\n    return {"width": tuning.size};\n  }\n\n'
+            '  function demoSeeded(input) {\n    return {"box": null, "rule": "demoSeeded"};\n  }\n}\n',
         f"{methods}/demo/DemoHelper.qml": qml("property var items: []"),
         f"{methods}/demo/DemoInternal.qml": qml("property var box: null"),
         f"{methods}/DemoRoot.qml": qml("property int n: 1"),
-        f"{methods}/sink/SinkEngine.qml": 'import QtQuick\n// The sink facade.\nQtObject {\n  readonly property var api: ({\n'
-            '    "model": {"in": ["request"], "out": {"": "x"}},\n    "solve": {"in": ["model"], "out": {"": "y"}}\n  })\n}\n',
-        "qml/services/DemoOwner.qml": "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.solve({}); }\n}\n",
-        "qml/components/DemoAdapter.qml": "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.model({}); DemoEngine.solve({}); }\n"
+        f"{methods}/sink/SinkEngine.qml": 'pragma Singleton\nimport QtQuick\n\n// The sink facade.\nQtObject {\n  readonly property var api: ({\n'
+            '    "model": {"in": ["state"], "out": {"": "SinkEngine.model"}},\n'
+            '    "solve": {"in": ["request", "model"], "out": {"": "SinkEngine.solve"}}\n  })\n\n'
+            '  function model(input) {\n    const {state} = input;\n    return {};\n  }\n\n'
+            '  function solve(input) {\n    const {request, model} = input;\n    return {};\n  }\n}\n',
+        "qml/services/DemoOwner.qml": "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.model({}); DemoEngine.solve({}); }\n}\n",
+        "qml/components/DemoAdapter.qml": "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.solve({}); DemoEngine.drawn({}); }\n"
             "  function settled() { Qt.callLater(run); } // allowed: apply the demo's first turn\n}\n",
         "qml/components/DemoItem.qml": qml("property int n: 1"),
         "qml/components/DemoPlugin.qml": qml("property int n: 1"),
-        "tests/demo/Rows.js": '.pragma library\n// The demo rows.\nvar rows = [{"id": "DEMO-01", "why": "a seed holds", '
-            '"call": "solve", "input": {}, "expect": {"rule": "demoSeeded"}}];\n',
+        "tests/demo/Rows.js": ".pragma library\n// The demo rows.\nvar rows = " + json.dumps(rows, indent=2) + ";\n",
+        "tests/sink/Rows.js": ".pragma library\n// The sink rows.\nvar rows = " + json.dumps([
+            {"id": "DEMOS-01", "why": "a sink models", "call": "model", "input": {"state": {}}, "expect": {}},
+            {"id": "DEMOS-02", "why": "a sink solves", "call": "solve", "input": {"request": {}}, "expect": {}}]) + ";\n",
+        "tests/tst_DemoEngine.qml": 'import QtQuick\nimport QtTest\nimport qs.components.methods.demo\nimport "demo/Rows.js" as Rows\n\n'
+            '// The demo engine\'s contract rows (tests/demo/Rows.js)\nTestCase {\n  id: root\n  name: "DemoEngine"\n\n  EngineRows {\n'
+            '    id: rows\n    testCase: root\n    facade: DemoEngine\n    rows: Rows.rows\n  }\n\n'
+            '  function test_rows_data() {\n    return rows.data();\n  }\n  function test_rows(data) {\n    rows.run(data);\n  }\n}\n',
+        "docs/dev/core/demo-engine.md": f"# Demo engine\n\n{docs}\n",
     }
     for path, text in files.items():
         write(root, path, text)
     sink = demo_entry(prefix="DEMOS", facade="SinkEngine", folder=f"{methods}/sink", files=[], helpers=[], owners=[],
-                      adapters=[], itemPaths=[], pluginPaths=[], doc="docs/dev/core/engines.md",
-                      tests={"rows": "tests/sink/Rows.js"}, fedBy={"model": [{"from": "demo.solve", "seam": "demoFeed"}]})
-    demo = demo_entry(intakes={"solve": [{"from": "demo.model", "rule": "demoSeeded", "at": "qml/components/DemoAdapter.qml"}]})
+                      adapters=[], itemPaths=[], pluginPaths=[], tests={"rows": "tests/sink/Rows.js"},
+                      fedBy={"model": [{"from": "demo.solve", "seam": "demoFeed"}]})
+    demo = demo_entry(intakes={"solve": [{"from": "demo.model", "rule": "demoSeeded", "at": "qml/components/DemoAdapter.qml"}]},
+                      tables={"DemoRules.rows": {"kind": "cell"}},
+                      editPoints={"case": "DemoRules.rows", "rule": ["DemoRules", "DemoRules.boxOf"], "input": "DemoOwner",
+                                  "output": "DemoEngine.api", "consumer": "DemoAdapter", "tuning": "DemoEngine.tuning"},
+                      alone=[{"regex": "\\bdemoKindOf\\b", "only": [f"{methods}/demo/DemoRules.qml"], "why": "the kind lookup lives in the rules file"}])
     text = json.loads(manifest_text(demo))
     text["sink"] = sink
     (root / "scripts" / "engines.json").write_text(json.dumps(text, indent=2) + "\n")
@@ -784,6 +825,17 @@ def demo_engine(root):
     separator = next(i for i in range(at, len(lines)) if lines[i].startswith("|") and set(lines[i]) <= set("|-: "))
     lines.insert(separator + 1, "| demoFeed | The demo's box | rect | rest | `demo.solve` | `sink.model` | DemoRules |")
     doc.write_text("\n".join(lines))
+
+
+def demo_repo(tmp, *paths):
+    """The fixture engines (demo_engine) in a git copy of the tree: `qml`, engines.md and `paths`,
+    committed; (root, the commit)."""
+    root = fixture_root(tmp, "qml", "docs/dev/core/engines.md", *paths)
+    demo_engine(root)
+    git(root, tmp, "init", "-q", "-b", "main")
+    git(root, tmp, "add", "-A")
+    git(root, tmp, "commit", "-q", "-m", "base")
+    return root, git(root, tmp, "rev-parse", "HEAD")
 
 
 class Manifests(unittest.TestCase):
@@ -833,6 +885,22 @@ class Manifests(unittest.TestCase):
             "qml/components/DemoItem.qml", "qml/components/DemoPlugin.qml", "qml/components/DemoAdapter.qml",
             "qml/services/DemoOwner.qml", "tests/demo"])
 
+    def test_missing_headings(self):
+        names = self.m.ENGINE_DOC_HEADINGS
+        doc = [f"## {i} {n}" for i, n in enumerate(names, 1)]
+        self.assertEqual(self.m.missing_headings("\n".join(doc), names), [])
+        self.assertEqual(self.m.missing_headings("\n".join(doc[:3] + doc[4:]), names), ["Outputs"])
+        self.assertEqual(self.m.missing_headings("\n".join(doc[:2] + [doc[3], doc[2]] + doc[4:]), names), ["Outputs"])
+        self.assertEqual(self.m.missing_headings("\n".join(doc[:1] + ["## 3 Inputs"] + doc[2:]), names), ["Inputs"])
+        self.assertEqual(self.m.missing_headings("\n".join(["see ## 1 Role"] + doc[1:]), names), ["Role"])
+
+    def test_edit_point_rows(self):
+        entry = {"editPoints": {"tuning": "E.tuning", "other": "Z", "case": "R.rows", "rule": ["A", "B"]}}
+        self.assertEqual(self.m.edit_point_rows(entry), [("case", "R.rows"), ("rule", "A"), ("rule", "B"),
+                                                         ("tuning", "E.tuning"), ("other", "Z")])
+        self.assertEqual(self.m.edit_point_rows({"editPoints": {}}), [])
+        self.assertEqual(self.m.edit_point_rows({"editPoints": []}), [])
+
     def test_refused_manifests(self):
         gone = demo_entry()
         del gone["facade"]
@@ -877,12 +945,7 @@ class CheckEngines(unittest.TestCase):
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "qml", "docs/dev/core/engines.md")
-            demo_engine(root)
-            git(root, tmp, "init", "-q", "-b", "main")
-            git(root, tmp, "add", "-A")
-            git(root, tmp, "commit", "-q", "-m", "base")
-            base = git(root, tmp, "rev-parse", "HEAD")
+            root, base = demo_repo(tmp)
             self.assertEqual(run_check(root, "check_engines.py", "--base", base), (0, "engines ok\n"))
             code, out = run_check(root, "check_engines.py", "--base", "nosuchref")
             self.assertEqual(code, 1)
@@ -907,7 +970,7 @@ class CheckEngines(unittest.TestCase):
                 (f"{methods}/demo/DemoTraced.qml", qml("\n  function y() { EngineTrace.record(1); }")),
                 ("qml/components/Tracer.qml", qml("\n  function x() { return EngineTrace._store; }")),
                 ("qml/services/DemoOwner.qml", qml("\n  function run() { DemoEngine.model({}); DemoEngine.drawn({}); }")),
-                ("qml/components/DemoAdapter.qml", "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.model({}); DemoEngine.solve({}); }\n"
+                ("qml/components/DemoAdapter.qml", "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.solve({}); DemoEngine.drawn({}); }\n"
                  "  function settled() { Qt.callLater(run); } // allowed: apply the demo's first turn\n"
                  "  function late() { Qt.callLater(run); }\n  function other() { Qt.callLater(run); } // allowed: nothing\n}\n"),
                 ("scripts/engines-exceptions.json", json.dumps({
@@ -970,6 +1033,121 @@ class CheckEngines(unittest.TestCase):
                         "helpers": [], "owners": [], "adapters": [], "itemPaths": [], "pluginPaths": [], "tests": {"rows": "tests/solo/Rows.js"}}
         data["ghost"] = {**data["sink"], "prefix": "DEMOG", "facade": "GhostEngine", "folder": "qml/components/methods/ghost",
                          "fedBy": {}, "tests": {"rows": "tests/ghost/Rows.js"}}
+
+    def test_each_shape_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = demo_repo(tmp)
+            edit_json(root / "scripts/engines.json", self.break_shapes)
+            m = "qml/components/methods"
+            padded = ('pragma Singleton\nimport QtQuick\n\n// A broken facade.\nQtObject {\n  id: root\n\n  readonly property var tuning: ({"size": 2})\n\n'
+                      '  readonly property var api: ({\n'
+                      '    "model": {"in": ["env"], "out": {"items": "DemoRules.itemsOf"}},\n'
+                      '    "solve": {"in": ["request", "model", "tuning", "now"], "out": {"box": "DemoRules.boxOf"}},\n'
+                      '    "drawn": {"in": ["result", "motion"], "out": {"": "DemoRules.nothing"}},\n'
+                      '    "pick": {"in": ["spot", "more"], "out": {"": "DemoRules.boxOf"}, "extra": true},\n'
+                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}},\n'
+                      '    "drawnX": {"in": [["x"]], "out": {"": "DemoRules.boxOf"}, "extra": true}\n  })\n\n'
+                      '  function stray(input) {\n    return 1;\n  }\n\n'
+                      '  function model(input) {\n    const {env} = input;\n    return {};\n  }\n\n'
+                      '  function solve(input) {\n    const {request, model, tuning = root.tuning, now} = input;\n    return {};\n  }\n\n'
+                      '  function drawn(input) {\n    return {};\n  }\n\n'
+                      '  function pick(input) {\n    const {spot} = input;\n    return {};\n  }\n\n'
+                      '  function other(input) {\n    const {spot} = input;\n    return {};\n  }\n\n'
+                      '  function drawnX(input) {\n    const {spot} = input;\n    return {};\n  }\n')
+            padded += "  // padding\n" * (200 - len(padded.splitlines())) + "}\n"
+            body = lambda n: "".join(f"    const v{i} = {i};\n" for i in range(n))
+            internal = ('import QtQuick\n\n// A broken internal file.\nQtObject {\n'
+                        f'  function long() {{\n{body(59)}  }}\n\n  function atLimit() {{\n{body(58)}  }}\n\n'
+                        '  function once() {\n    /* is it open? first? "rule": "oldRule" */\n    const s = "x ? y : z ? w /*";\n'
+                        '    return a?.b ?? (c ? d : e);\n  }\n\n  function twice() {\n    return a ? b : c ? d : e;\n  }\n\n'
+                        '  /* end */\n\n'
+                        '  readonly property var cells: [{"when": {"kind": "a"}, "then": 1, "why": "a cell"}]\n\n'
+                        '  readonly property var order: [\n    {"when": "isFirst", "then": 0, "why": "no id"},\n    {"id": "first", "when": "isFirst", "then": 1, "why": "a rule"},\n'
+                        '    {"id": "first", "when": "isFirst", "then": 2, "why": "a rule again"},\n'
+                        '    {"id": "noWhy", "when": "isFirst", "then": 3},\n'
+                        '    {"id": "rest", "when": "isFirst", "then": 4, "why": "the rest"}\n  ]\n\n'
+                        '  function isFirst(input) {\n    return true;\n  }\n\n'
+                        '  readonly property var ranks: [{"name": "a", "rank": Math.max(1, 2), "why": "a rank"}]\n\n'
+                        '  readonly property var idRanks: [{"name": "a", "rank": 1, "why": "a rank"}]\n\n'
+                        '  function unnamed() {\n    return {"rule": "noSuchRule"};\n  }\n}\n')
+            rules = (root / f"{m}/demo/DemoRules.qml").read_text().replace('["a", "b"]', '["a", "b", "c"]')
+            sys.path.insert(0, str(SCRIPTS))
+            import check_engines
+            rows = check_engines._load_rows(root / "tests/demo/Rows.js")
+            kept = [r for r in rows if r["call"] != "pick" and r["id"] != "DEMO-04" and r["call"] != "drawn"]
+            kept += [{"id": "DEMO-20", "why": "a call that is no api key", "call": "nope", "input": {}, "expect": {"rule": "kindA"}},
+                     {"id": "DEMO-21", "why": "a row with args", "call": "drawn", "args": [{}], "expect": {"rule": "kindA"}}]
+            doc = (root / "docs/dev/core/demo-engine.md").read_text().split("\n")
+            doc = [l for l in doc if not l.startswith("## 9 ")]
+            at = doc.index("## 3 Stages")
+            doc[at:at + 4] = doc[at + 2:at + 4] + doc[at:at + 2]
+            files = [
+                (f"{m}/demo/DemoEngine.qml", padded), (f"{m}/demo/DemoInternal.qml", internal), (f"{m}/demo/DemoRules.qml", rules),
+                (f"{m}/demo/DemoKit.qml", qml('property int size: 1\n  property var axes: ({"kind": [["a"]]})\n  property var grid: []')),
+                (f"{m}/DemoFlat.qml", qml('property var ranks: [{"name": "a", "rank": 1}]')),
+                (f"{m}/lone/LoneEngine.qml", 'pragma Singleton\nimport QtQuick\n\n// A facade whose api is no literal.\nQtObject {\n  id: root\n'
+                 '  readonly property var api: ({"model": root.x})\n}\n'),
+                ("qml/components/DemoReader.qml", "import QtQuick\n// A fixture.\nItem {\n  function read() { DemoRules.rows; DemoEngine.model({}); }\n"
+                 "  function draw() { return DemoKit.size; }\n}\n"),
+                ("qml/services/DemoOwner.qml", "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.model({}); DemoEngine.solve({}); }\n"
+                 "  function draw() { DemoEngine.drawn({}); }\n}\n"),
+                ("qml/components/DemoItem.qml", "import QtQuick\n// A fixture.\nItem {\n  function size() { return DemoKit.size; }\n"
+                 "  function kindOf() { return demoKindOf; }\n}\n"),
+                ("qml/components/DemoPlugin.qml", "import QtQuick\n// A fixture.\nItem {\n  function hook() { DemoEngine.pick({}); }\n}\n"),
+                ("tests/demo/Rows.js", ".pragma library\n// The demo rows.\nvar rows = " + json.dumps(kept) + ";\n"),
+                ("tests/sink/Rows.js", "var rows = [{"),
+                ("docs/dev/core/demo-engine.md", "\n".join(doc)),
+            ]
+            code, out = run_check(root, "check_engines.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        end = ": not in the baseline"
+        self.assertEqual(missed(out, [line + end for line in [
+            "qml/components/DemoReader.qml: facade-only read:DemoRules", "qml/components/DemoReader.qml: facade-only read:DemoEngine.model",
+            "qml/components/DemoReader.qml: facade-only draw:DemoKit", "qml/components/DemoPlugin.qml: facade-only hook:DemoEngine.pick",
+            "qml/services/DemoOwner.qml: facade-only draw:DemoEngine.drawn",
+            f"{m}/demo/DemoEngine.qml: api api:not first", f"{m}/demo/DemoEngine.qml: api stray:no api entry",
+            f"{m}/demo/DemoEngine.qml: api api.pick:in", f"{m}/demo/DemoEngine.qml: api api.drawn:DemoRules.nothing",
+            f"{m}/demo/DemoEngine.qml: shape api.solve:now", f"{m}/demo/DemoEngine.qml: shape api.model:needs config|state",
+            f"{m}/demo/DemoEngine.qml: shape api.other:not a stage", f"{m}/demo/DemoEngine.qml: shape drawn:form",
+            f"{m}/demo/DemoEngine.qml: shape DemoEngine:lines", f"{m}/lone/LoneEngine.qml: api api:not literal",
+            f"{m}/demo/DemoInternal.qml: shape long:lines", f"{m}/demo/DemoInternal.qml: shape twice:ternary",
+            f"{m}/demo/DemoInternal.qml: tables cells:#1 bad row", f"{m}/demo/DemoInternal.qml: tables order:#1 bad row",
+            f"{m}/demo/DemoInternal.qml: tables cells:no axes", f"{m}/demo/DemoInternal.qml: tables order:first duplicate",
+            f"{m}/demo/DemoInternal.qml: tables order:noWhy no why", f"{m}/demo/DemoInternal.qml: tables order:no catch-all",
+            f"{m}/demo/DemoInternal.qml: tables ranks:not literal", f"{m}/demo/DemoInternal.qml: tables unnamed:rule noSuchRule",
+            f"{m}/demo/DemoRules.qml: tables rows:kind=c uncovered",
+            "scripts/engines.json: tables demo.tables:DemoRules.gone", "scripts/engines.json: tables sink.tables:not an object",
+            "scripts/engines.json: tables demo.tables:DemoInternal.idRanks", f"{m}/demo/DemoKit.qml: tables grid:axes not literal",
+            f"{m}/demo/DemoEngine.qml: shape api.drawnX:['x']",
+            f"{m}/DemoFlat.qml: tables ranks:a no why", "qml/components/DemoItem.qml: alone kindOf:demoKindOf",
+            "tests/demo/Rows.js: contract api.pick:no row", "tests/demo/Rows.js: contract rule.kindB:no row",
+            "tests/demo/Rows.js: contract DEMO-20:call nope", "tests/demo/Rows.js: contract DEMO-21:args",
+            "tests/sink/Rows.js: contract sink.rows:unreadable",
+            "scripts/engines.json: edit-points lone.editPoints:not an object", "scripts/engines.json: alone lone.alone:not a list",
+            "scripts/engines.json: edit-points demo.editPoints.consumer:DemoGone",
+            "scripts/engines.json: edit-points demo.editPoints.rule:DemoRules.nope",
+            "docs/dev/core/demo-engine.md: doc demo:9 Checks", "docs/dev/core/demo-engine.md: doc demo:4 Outputs",
+            "scripts/engines.json: doc lone.doc:docs/dev/core/gone.md"]]), [], out)
+        lines = out.splitlines()
+        for absent in ("once:", "oldRule", "atLimit:lines", "api api.solve:in", "api api.drawn:in", "dag api:", "api.drawn:no row",
+                       "DemoItem.qml: facade-only", "#1 duplicate", "Traceback", "api api.drawnX"):
+            self.assertEqual([l for l in lines if absent in l], [], out)
+        self.assertEqual(len([l for l in lines if "DEMO-21" in l]), 1, out)
+        self.assertEqual([l for l in lines if "lone" in l and "contract" in l], [], out)
+
+    @staticmethod
+    def break_shapes(data):
+        data["demo"]["kits"] = ["DemoKit"]
+        data["demo"]["tables"].update({"DemoRules.gone": {"kind": "cell"}, "DemoInternal.cells": {"kind": "cell"},
+                                       "DemoInternal.order": {"kind": "ordered"}, "DemoInternal.ranks": {"kind": "rank"},
+                                       "DemoInternal.idRanks": {"kind": "rank", "id": ["a"]}, "DemoKit.grid": {"kind": "cell"}})
+        data["demo"]["editPoints"]["consumer"] = "DemoGone"
+        data["demo"]["editPoints"]["rule"] = ["DemoRules", "DemoRules.nope"]
+        data["$flat"] = {"DemoFlat": {"prefix": "DEMOF", "tables": {"DemoFlat.ranks": {"kind": "rank"}}}}
+        data["lone"] = {**data["sink"], "prefix": "DEMOL", "facade": "LoneEngine", "folder": "qml/components/methods/lone", "fedBy": {},
+                        "tests": {"rows": "tests/lone/Rows.js"}, "doc": "docs/dev/core/gone.md",
+                        "editPoints": [], "alone": {}}
+        data["sink"]["tables"] = []
 
 
 class CheckPackages(unittest.TestCase):
