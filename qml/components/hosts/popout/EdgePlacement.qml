@@ -243,7 +243,6 @@ QtObject {
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
     "layerOrder": CompositorManager.supports.layerOrder === true,
-    "overOverlay": root.overOverlay,
     "menuZone": root.bare ? 0 : ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName),
     "bare": root.bare
   }))
@@ -301,12 +300,10 @@ QtObject {
   readonly property real attachBase: root._layout.attachBase
   readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
-  // Whether the overlay is open on its screen (the host latches it while
-  // open). A detached box slides in from behind its edge: from the screen
-  // edge under the bars, its window on their layer ordered under them
+  // A detached box slides in from behind its edge: from the screen edge
+  // under the bars, its window on their layer ordered under them
   // (slidesUnder), or else from the frame line, coming out of what's on
   // the edge (SurfaceContext)
-  property bool overOverlay: false
   // Whether the host's window is under the bars now, which it keeps while
   // open (undefined: slidesUnder): where slideFrom starts
   property var under: undefined

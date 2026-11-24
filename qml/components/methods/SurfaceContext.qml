@@ -363,8 +363,7 @@ QtObject {
    *     (BarsConfig.detachedPush for the followed bar), ownBar (the
    *     followed bar, else the innermost on its edge, for the shadow), across (held: the gap from the frame
    *     line across the edge), layerOrder (the compositor orders layer
-   *     windows by namespace, supports.layerOrder), overOverlay (the
-   *     overlay is open on its screen), menuZone (what integrated edge
+   *     windows by namespace, supports.layerOrder), menuZone (what integrated edge
    *     menus reserve on its edge), bare (over a fullscreen window, which
    *     covers the bars and the border: the host passes its frame and
    *     reservations as 0)
@@ -447,7 +446,7 @@ QtObject {
     // an integrated menu), nor held or detached (a box of its own)
     const plainJoin = !p.held && !detached && !onPill && (bar ? fromOuter : !ownBar) && !((p.menuZone ?? 0) > 0);
     // See slidesUnder below
-    const slidesUnder = detached && !p.bare && (p.frameLine ?? 0) > 0 && !!p.layerOrder && !p.overOverlay;
+    const slidesUnder = detached && !p.bare && (p.frameLine ?? 0) > 0 && !!p.layerOrder;
     return Object.assign({}, place, {
       "merged": merged,
       "onPill": onPill,

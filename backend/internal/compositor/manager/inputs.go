@@ -88,10 +88,12 @@ type ShadowFacts struct {
 }
 
 // BlurFacts are the blur behind axiom's surfaces: as saved (for a file)
-// and now (paused over a fullscreen window).
+// and now (paused over a fullscreen window), and the reduced surfaces'
+// blur off now (Overlay.reduceFullscreen over a fullscreen window).
 type BlurFacts struct {
 	Saved          bool    `json:"saved"`
 	Now            bool    `json:"now"`
+	Reduced        bool    `json:"reduced"`
 	ThroughWindows bool    `json:"throughWindows"`
 	Backdrops      bool    `json:"backdrops"`
 	Threshold      float64 `json:"threshold"`
@@ -198,15 +200,16 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		monitorCalls = strs(render.MonitorCalls(outputRules, render.MirrorNames(tree(outputs))))
 	}
 	spec := func(forFile bool) *jsonx.Object {
-		surfacesBlur := f.Blur.Now
+		surfacesBlur, reduced := f.Blur.Now, f.Blur.Reduced
 		if forFile {
-			surfacesBlur = f.Blur.Saved
+			// The file holds the settings as saved: never reduced
+			surfacesBlur, reduced = f.Blur.Saved, false
 		}
 		opts := lookOpts(f.Look)
 		opts.Set("surfacesBlur", surfacesBlur)
 		return jsonx.Obj(
 			"look", render.Look(at("WindowLook"), opts),
-			"surfaces", jsonx.Obj("blur", surfacesBlur, "throughWindows", f.Blur.ThroughWindows, "backdrops", f.Blur.Backdrops, "threshold", f.Blur.Threshold),
+			"surfaces", jsonx.Obj("blur", surfacesBlur, "reduced", reduced, "throughWindows", f.Blur.ThroughWindows, "backdrops", f.Blur.Backdrops, "threshold", f.Blur.Threshold),
 			"input", render.Input(at("Input"), f.XCursor))
 	}
 	// Compiled before layerKey, so a usable rule's change re-applies the
@@ -244,8 +247,9 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	in.Set("specFile", specFile)
 	in.Set("specLive", specLive)
 	in.Set("liveKey", string(jsonx.MarshalCompact(jsonx.Arr(specFile, specLive))))
-	// The live spec but for the blur now (specLive is specFile with
-	// Blur.Now): unchanged when only the blur paused or resumed
+	// The live spec but for the blur now and the reduced blur (specLive is
+	// specFile with Blur.Now and Blur.Reduced): unchanged when only the blur
+	// paused or resumed, or the overlay's reduced
 	in.Set("liveRestKey", string(jsonx.MarshalCompact(specFile)))
 	in.Set("windowRulesReport", report)
 	// After liveRestKey: a pause never rewrites a file nor reloads

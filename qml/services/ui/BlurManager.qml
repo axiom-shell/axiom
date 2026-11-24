@@ -34,7 +34,14 @@ QtObject {
   readonly property bool _wanted: Appearance.blur
   readonly property bool _pauses: root._wanted && Appearance.blurPauseFullscreen
   readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
-  readonly property bool paused: root._pauses && !root._perScreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
+  // A fullscreen window on any screen: what the compositor-wide rules follow
+  readonly property bool _anyFullscreen: General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
+  readonly property bool paused: root._pauses && !root._perScreen && root._anyFullscreen
+  // The surfaces in LayerStack.blurReduced (the overlay) unblurred over a
+  // fullscreen window (Overlay.reduceFullscreen), the way the pause unblurs
+  // all of them: compositor-wide where the rules are, per screen where each
+  // window asks (reducedOn)
+  readonly property bool reduced: root._wanted && OverlayConfig.reduceFullscreen && !root._perScreen && root._anyFullscreen
   readonly property bool active: root._wanted && !root.paused
   // Whether shadows go to windows of their own that aren't blurred: where
   // the blur reaches every pixel that isn't clear (SwayFX's
@@ -50,6 +57,12 @@ QtObject {
   // Whether the blur is paused on `screen` (a ShellScreen or its name)
   function pausedOn(screen) {
     return root._perScreen ? root._pauses && CompositorManager.hasFullscreen(root._name(screen)) : root.paused;
+  }
+
+  // Whether the blurReduced surfaces are unblurred on `screen` (a
+  // ShellScreen or its name)
+  function reducedOn(screen) {
+    return root._perScreen ? root._wanted && OverlayConfig.reduceFullscreen && CompositorManager.hasFullscreen(root._name(screen)) : root.reduced;
   }
 
   // Whether surfaces on `screen` leave their fill to the backing window:

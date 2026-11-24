@@ -52,11 +52,21 @@ TestCase {
     verify(LayerStack.layers.find(l => l.namespace === "blur-backing-overlay").noAnim);
   }
 
-  // The overlay's unblurred twin: stacked as the overlay, in no blur list
-  function test_overlay_reduced() {
-    compare(order("overlay-reduced"), order("overlay"));
+  // The overlay's page: on Top after the backdrop, before the backing
+  // window (and so under the chrome)
+  function test_overlay_under_chrome() {
+    verify(order("backdrop") > order("overlay"));
+    verify(order("overlay") > order("blur-backing"));
+  }
+
+  // The overlay blurs itself, but not reduced over a fullscreen window: in
+  // blurReduced only, and every such namespace has a row
+  function test_blur_reduced() {
+    compare(LayerStack.blurReduced, ["overlay"]);
     for (const list of [LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay, LayerStack.blurChrome])
-      verify(!list.includes("overlay-reduced"));
+      verify(!list.includes("overlay"), "only in blurReduced");
+    for (const ns of LayerStack.blurReduced)
+      verify(LayerStack.layers.some(l => l.namespace === ns), ns + " has a row");
   }
 
   // The shadows apart from the blur (no blurThreshold): where each blur
@@ -69,7 +79,7 @@ TestCase {
     for (const ns of ["osd", "dock-preview", "edge-popout", "popout"])
       verify(order("shadows-overlay") > order(ns), "under " + ns);
     for (const ns of ["shadows", "shadows-overlay"])
-      verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay).includes(ns), ns + " not blurred");
+      verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurReduced, LayerStack.blurBackdrops, LayerStack.blurOverOverlay).includes(ns), ns + " not blurred");
   }
 
   // A free menu's window: over the windows on Top, under the blur window
@@ -185,14 +195,14 @@ TestCase {
   // A window ordered before others starting to show (a backdrop, opening
   // with the overlay) doesn't take down those already showing
   function test_sequence_showing_stays() {
-    const backdrop = entry("backdrop", 10);
+    const backdrop = entry("backdrop", 11);
     const bar = entry("bar", 5, {
       "showing": true,
       "mapped": true,
       "seq": 1
     });
     const border = entry("border", 0);
-    const result = shared.calls.LayerStack.sequence([backdrop, bar, border], true);
+    const result = shared.calls.LayerStack.sequence([backdrop, bar, border], false);
     compare(result.show.sort(), ["backdrop", "bar"], "the bar stays; the border, not shown yet, still waits");
   }
 
@@ -226,5 +236,16 @@ TestCase {
     });
     compare(shared.calls.LayerStack.sequence([top, bottom], true).remap, []);
     compare(shared.calls.LayerStack.sequence([top, bottom], false).remap, []);
+  }
+
+  // Where the compositor sorts by order, a window waits only for peers of
+  // its own order: the page (10) doesn't wait for the backdrop (11)
+  function test_sequence_ordered_peers() {
+    const backdrop = entry("backdrop", 11, {
+      "wanted": true
+    });
+    const page = entry("page", 10);
+    compare(shared.calls.LayerStack.sequence([backdrop, page], true).show.sort(), ["backdrop", "page"], "ordered: at once");
+    compare(shared.calls.LayerStack.sequence([backdrop, page], false).show, ["backdrop"], "unordered: waits for the backdrop");
   }
 }

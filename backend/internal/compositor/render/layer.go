@@ -190,7 +190,7 @@ func jsCat(v any) string {
 
 // SurfaceBlur is CompositorLayer.surfaceBlur: what blurs behind axiom's
 // surfaces, by namespace, as rule groups ({ name, namespaces, on, blur,
-// popups, threshold, xray }). surfaces: { blur, throughWindows,
+// popups, threshold, xray }). surfaces: { blur, reduced, throughWindows,
 // backdrops, threshold }.
 func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 	on := isTrue(get(surfaces, "blur"))
@@ -206,6 +206,10 @@ func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 	}
 	return []*jsonx.Object{
 		row("axiom-blur", t.BlurSurfaces, on, "blur", true, "popups", true, "threshold", threshold, "xray", xray),
+		// The `axiom-blur` surfaces that Overlay.reduceFullscreen unblurs
+		// over a fullscreen window (reduced): a row of their own, so SwayFX
+		// has a `blur disable` line to take the blur back
+		row("axiom-blur-reduced", t.BlurReduced, on && !isTrue(get(surfaces, "reduced")), "blur", true, "popups", true, "threshold", threshold, "xray", xray),
 		// Hyprland never blurs a popup with xray; niri is told the same
 		row("axiom-blur-popups", t.BlurChrome, on, "popups", true, "threshold", threshold, "xray", false),
 		row("axiom-blur-backdrops", t.BlurBackdrops, on && isTrue(get(surfaces, "backdrops")), "blur", true, "threshold", 0.01, "xray", xray),

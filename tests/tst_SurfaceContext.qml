@@ -1019,22 +1019,17 @@ TestCase {
         "insideBorder": true
       })
     })), 40);
-    // Over the bars (the overlay open, or stacked by map order): from the
-    // frame line, coming out of the bar
-    compare(SurfaceContext.slideFrom(at({
-      "overOverlay": true
-    })), 0);
+    // Over the bars (stacked by map order): from the frame line, coming
+    // out of the bar
     compare(SurfaceContext.slideFrom(at({
       "layerOrder": false
     })), 0);
     // As its window is (`under`, which the host keeps while open), not as
     // it would open now: opened over a fullscreen window and still over
-    // the bars once that's gone, from the frame line; opened under them
-    // with the overlay open since, from the screen edge
+    // the bars once that's gone, from the frame line; opened under them,
+    // from the screen edge
     compare(SurfaceContext.slideFrom(at({}), false), 0);
-    compare(SurfaceContext.slideFrom(at({
-      "overOverlay": true
-    }), true), 40);
+    compare(SurfaceContext.slideFrom(at({}), true), 40);
     // A box not detached doesn't slide back at all
     compare(SurfaceContext.slideFrom({
       "detached": false,
@@ -1074,19 +1069,12 @@ TestCase {
     compare(SurfaceContext.slideFrom(at({
       "bar": solid
     })), 0);
-    // Stacked by map order, or over the overlay: from the screen edge
-    // still, over the bars
+    // Stacked by map order: from the screen edge still, over the bars
     verify(!at({
       "layerOrder": false
     }).slidesUnder);
     verify(at({
       "layerOrder": false
-    }).slidesFromEdge);
-    verify(!at({
-      "overOverlay": true
-    }).slidesUnder);
-    verify(at({
-      "overOverlay": true
     }).slidesFromEdge);
     // Held on sway or niri: from the frame line, cut there
     const close = at({

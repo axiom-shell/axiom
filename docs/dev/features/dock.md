@@ -80,8 +80,8 @@ Along the edge:
   - **`EdgePopout`s:** the OSD and floating edge menus, on the dock's own edge and at both ends.
   - **The border's corner pieces** (`RoundedBorders.cornerMargin`).
 - **Layer orders that put them over the dock:**
-  - The `axiom-edge-popout` layer rule ([layer stacking](../generated/layers.md)) draws floating edge menus over the dock, and over the overlay and the OSD.
-  - The OSD's `axiom-osd` (`overNamespace`) layer rule draws the OSD over the dock and over the overlay.
+  - The `axiom-edge-popout` layer rule ([layer stacking](../generated/layers.md)) draws floating edge menus over the dock and the OSD.
+  - The OSD's `axiom-osd` (`overNamespace`) layer rule draws the OSD over the dock; the Overlay layer is over the overlay's page, which is on Top.
 - **Retiling:** Hyprland sends no event when windows retile around a changed zone. So `refreshSoon()` re-reads monitors and windows after layer and zone changes. Layer events are only listened to while a dock is built.
 
 ### Entry points
@@ -94,7 +94,7 @@ Along the edge:
 - The settings card's Show button is a preview: `DockManager.preview(entry)`, with the entry as edited, saved or not.
 - **Why a second window:** the dock is put away under the overlay that the card sits in. So `qml/shell/Dock` builds a second `DockWindow` with `preview: true`:
   - on the screen the dock would show on (`previewScreen`, `ShellManager.targetFor`);
-  - an Overlay-layer `axiom-dock-preview`, whose layer rule orders it after the overlay's panel;
+  - an Overlay-layer `axiom-dock-preview`, which draws over the overlay's page (on Top);
   - with no trigger, zone, input or IPC;
   - reaching back past the docks' zones on its edge, to where a dock sits.
 - It slides in, holds for 2 s and slides out.

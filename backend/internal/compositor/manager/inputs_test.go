@@ -333,3 +333,22 @@ func TestWindowRulesInputs(t *testing.T) {
 		}
 	})
 }
+
+// The reduced blur is live only: the file spec never holds it, so a change
+// of it leaves liveRestKey alone and moves liveKey
+func TestReducedBlurIsLiveOnly(t *testing.T) {
+	t.Parallel()
+	of := func(reduced bool) Inputs {
+		return buildInputs(jsonx.NewObject(), &Facts{Kind: "hyprland", Blur: BlurFacts{Saved: true, Now: true, Reduced: reduced}}, nil)
+	}
+	was, now := of(false), of(true)
+	if was.str("liveRestKey") != now.str("liveRestKey") {
+		t.Error("a reduced change moved liveRestKey")
+	}
+	if was.str("liveKey") == now.str("liveKey") {
+		t.Error("a reduced change left liveKey alone")
+	}
+	if !jsonx.Equal(was.get("specFile"), now.get("specFile")) {
+		t.Error("the file spec holds reduced")
+	}
+}

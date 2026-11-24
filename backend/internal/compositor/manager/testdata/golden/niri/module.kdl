@@ -309,7 +309,13 @@ window-rule {
     opacity 0.8
 }
 layer-rule {
-    match namespace="^axiom-(blur-backing|dock-preview|overlay|powermenu|workspaces|monitor-prompt)$"
+    match namespace="^axiom-(blur-backing|dock-preview|powermenu|workspaces|monitor-prompt)$"
+    background-effect {
+        xray false
+    }
+}
+layer-rule {
+    match namespace="^axiom-(overlay)$"
     background-effect {
         xray false
     }

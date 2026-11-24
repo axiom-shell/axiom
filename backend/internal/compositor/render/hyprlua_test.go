@@ -374,3 +374,27 @@ hl.dispatch(hl.dsp.submap("axiom_paused"))`},
 		}
 	}
 }
+
+// The reduced surfaces' blur (the overlay, Overlay.reduceFullscreen) is its
+// own row, off while `reduced`; the other rows are the same either way
+func TestSurfaceBlurReduced(t *testing.T) {
+	t.Parallel()
+	tab := repoTables(t)
+	rows := func(reduced bool) map[string]bool {
+		surfaces := jsonx.Obj("blur", true, "reduced", reduced, "throughWindows", true, "backdrops", true, "threshold", 0.5)
+		out := map[string]bool{}
+		for _, r := range tab.SurfaceBlur(surfaces) {
+			out[r.Value("name").(string)] = r.Value("on").(bool)
+		}
+		return out
+	}
+	was, now := rows(false), rows(true)
+	if !was["axiom-blur-reduced"] || now["axiom-blur-reduced"] {
+		t.Errorf("axiom-blur-reduced: on %v, reduced %v", was["axiom-blur-reduced"], now["axiom-blur-reduced"])
+	}
+	for name, on := range was {
+		if name != "axiom-blur-reduced" && now[name] != on {
+			t.Errorf("%s changed with reduced: %v -> %v", name, on, now[name])
+		}
+	}
+}

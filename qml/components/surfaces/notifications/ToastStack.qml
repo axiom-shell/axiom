@@ -297,7 +297,15 @@ Scope {
     id: area
     screen: root.screen
     // Always mapped: it lends NotificationManager its image host
-    visible: true
+    // (LayerSlot: maps again if a window ordered before it, the page over a
+    // fullscreen window, lands over it)
+    visible: slot.shown
+    LayerSlot {
+      id: slot
+      window: area
+      namespace: "axiom-notifications"
+      layer: WlrLayer.Overlay
+    }
     color: "transparent"
     anchors {
       top: true

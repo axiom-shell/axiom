@@ -196,7 +196,8 @@ end
 -- Blur behind axiom's surfaces while they're translucent (on or off, so
 -- turning it off takes it back), at Hyprland's blur
 function M.blur()
-  hl.layer_rule({ name = "axiom-blur", match = { namespace = "^axiom-(blur-backing|dock-preview|overlay|powermenu|workspaces|monitor-prompt)$" }, blur = true, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
+  hl.layer_rule({ name = "axiom-blur", match = { namespace = "^axiom-(blur-backing|dock-preview|powermenu|workspaces|monitor-prompt)$" }, blur = true, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
+  hl.layer_rule({ name = "axiom-blur-reduced", match = { namespace = "^axiom-(overlay)$" }, blur = true, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
   hl.layer_rule({ name = "axiom-blur-popups", match = { namespace = "^axiom-(bar|bar-long|bar-pill|bar-pill-long|bar-floating|bar-floating-long|bar-transparent|bar-transparent-long|popout|popout-under|edge-popout|edge-menu|menu|dock)$" }, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
   hl.layer_rule({ name = "axiom-blur-backdrops", match = { namespace = "^axiom-(backdrop|polkit|screenshare)$" }, blur = true, ignore_alpha = 0.01, xray = false, enabled = true })
   hl.layer_rule({ name = "axiom-blur-over-overlay", match = { namespace = "^axiom-(blur-backing-overlay)$" }, blur = true, ignore_alpha = 0.5, xray = false, enabled = true })
@@ -204,7 +205,8 @@ end
 
 -- Stacking order of axiom's surfaces (bars, border, edge menus, backdrops)
 function M.layers()
-  hl.layer_rule({ name = "axiom-backdrop", match = { namespace = "^axiom-backdrop$" }, order = 10 })
+  hl.layer_rule({ name = "axiom-backdrop", match = { namespace = "^axiom-backdrop$" }, order = 11 })
+  hl.layer_rule({ name = "axiom-overlay", match = { namespace = "^axiom-overlay$" }, order = 10 })
   hl.layer_rule({ name = "axiom-blur-backing", match = { namespace = "^axiom-blur-backing$" }, no_anim = true, order = 9 })
   hl.layer_rule({ name = "axiom-shadows", match = { namespace = "^axiom-shadows$" }, no_anim = true, order = 8 })
   hl.layer_rule({ name = "axiom-edge-menu", match = { namespace = "^axiom-edge-menu$" }, no_anim = true, order = 7 })
@@ -220,8 +222,6 @@ function M.layers()
   hl.layer_rule({ name = "axiom-bar-transparent", match = { namespace = "^axiom-bar-transparent$" }, no_anim = true, order = -5 })
   hl.layer_rule({ name = "axiom-bar-transparent-long", match = { namespace = "^axiom-bar-transparent-long$" }, no_anim = true, order = -6 })
   hl.layer_rule({ name = "axiom-dock", match = { namespace = "^axiom-dock$" }, no_anim = true, order = -7 })
-  hl.layer_rule({ name = "axiom-overlay", match = { namespace = "^axiom-overlay$" }, order = -8 })
-  hl.layer_rule({ name = "axiom-overlay-reduced", match = { namespace = "^axiom-overlay-reduced$" }, order = -8 })
   hl.layer_rule({ name = "axiom-blur-backing-overlay", match = { namespace = "^axiom-blur-backing-overlay$" }, no_anim = true, order = -9 })
   hl.layer_rule({ name = "axiom-shadows-overlay", match = { namespace = "^axiom-shadows-overlay$" }, no_anim = true, order = -9 })
   hl.layer_rule({ name = "axiom-osd", match = { namespace = "^axiom-osd$" }, no_anim = true, order = -10 })

@@ -177,10 +177,12 @@ Singleton {
       "primaryMonitor": General.primaryMonitor,
       "look": root._look,
       // Whether axiom's surfaces blur: as saved (for a file), and now
-      // (BlurManager.active, paused over a fullscreen window)
+      // (BlurManager.active, paused over a fullscreen window), and the
+      // overlay's blur off for Overlay.reduceFullscreen now (BlurManager.reduced)
       "blur": {
         "saved": Appearance.blur,
         "now": BlurManager.active,
+        "reduced": BlurManager.reduced,
         "throughWindows": Appearance.blurThroughWindows,
         "backdrops": Appearance.blurBackdrops,
         "threshold": Appearance.blurThreshold

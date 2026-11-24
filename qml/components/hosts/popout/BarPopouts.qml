@@ -33,12 +33,11 @@ PopoutWrapperBase {
   // A detached box (a transparent bar's, a floating bar's showing no
   // islands) slides in from off the screen, its window on the bars' layer
   // ordered under them, so it comes out from beneath every bar rather than
-  // out of thin air past them; else on the Overlay layer, over the bar.
-  // That under-bar layer is also under the overlay: while that's open
-  // here, the box shows over it instead (LayerStack), coming out of the
-  // bars' inner side (the frame line, EdgePlacement.slideFrom), as it
-  // does where the compositor stacks by map order alone (no
-  // supports.layerOrder: a window mapped as it opens lands over the bar).
+  // out of thin air past them; else on the Overlay layer, over the bar,
+  // coming out of the bars' inner side (the frame line,
+  // EdgePlacement.slideFrom), as it does where the compositor stacks by
+  // map order alone (no supports.layerOrder: a window mapped as it opens
+  // lands over the bar).
   // Followed only while closed, since it changes the window's layer. (EdgePlacement.slidesUnder; a bar popout never opens over a
   // fullscreen window, which covers its bar)
   property ClosedLatch _under: ClosedLatch {
@@ -261,9 +260,8 @@ PopoutWrapperBase {
     showing: root.occupied && root.claimed
     open: still.showing && !root.isClosing && root.claimed
     onOverlayLayer: root.onOverlayLayer
-    overOverlay: SurfaceManager.surfaceOpenOn("overlay", root.screen)
     // Its window under the bars as latched, so slideFrom (and the surface
-    // reaching back to it) doesn't change as the overlay opens or closes over it
+    // reaching back to it) doesn't change while it is open
     under: root.underBar
     origin: slot.popupScreenOrigin
     attachedSurface: surface
