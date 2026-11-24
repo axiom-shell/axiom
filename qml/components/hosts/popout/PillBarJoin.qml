@@ -91,14 +91,9 @@ PillStretch {
     if (root._reach === null || root.hollow)
       return null;
     if (!root.filleted)
-      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), root.drawnStart === null ? {
-        "keepFill": true
-      } : {
-        "keepFill": true,
+      return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach + Appearance.borderWidth / 2, root._atStart ? root._reach - Appearance.borderWidth / 2 : root._panel.container.length), root.drawnStart === null ? {} : {
         "coverStart": root.drawnStart - (root._vertical ? root._panel.container.blurOrigin.y : root._panel.container.blurOrigin.x)
       });
-    return Object.assign(SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0), {
-      "keepFill": true
-    });
+    return SurfaceContext.opening(root._atStart ? 0 : root._reach, root._atStart ? root._reach : root._panel.container.length, root._atStart ? 0 : root._radius, root._atStart ? root._radius : 0);
   }
 }

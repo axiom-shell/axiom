@@ -195,10 +195,8 @@ Rectangle {
   //   ({ index, start, end, squareStart, squareEnd, joinStart, joinEnd },
   //   EdgeAttach.place's stretch). pillRects stays unstretched.
   // - opening: where a surface covers a pill's (or island's) inner stroke,
-  //   { start, end } along the bar (`keepFill`: the fill inside it is
-  //   painted back while the pill fills itself, for a surface joining it
-  //   end-on, which covers the stroke but nothing inside it). The
-  //   stroke is left open there (the copies cut it, opaque or not).
+  //   { start, end } along the bar. The stroke is left open there (the
+  //   copies cut it, opaque or not).
   // - endReach: a pill asked to run from an end of the bar ({ atStart, to,
   //   straight }, BarLayout.endReaches), by a surface joining this bar from
   //   the perpendicular edge: a pill bar merging into this one's corner
@@ -232,8 +230,6 @@ Rectangle {
     if (openings)
       root._openings = openings;
   }
-  // A solid bar's own inner stroke (border off) around the openings
-  readonly property var _strokePieces: Utils.subtractSpans(0, root.length, root._openingList)
 
   // A stretch changing while its popout is open (the calendar opening its
   // editor) was drawn but not shown: the bar's next frame was rendered,
@@ -616,27 +612,6 @@ Rectangle {
       }
     }
 
-    // With the border off nothing else draws a solid bar's inner stroke,
-    // left open under the surfaces joined to it (a popout, a pill bar's
-    // end pill): opaque or not, as they're separate windows whose stacking
-    // isn't the bar's to choose, and the bar's fill shows there as theirs
-    Repeater {
-      model: !root.backed && root.barConfig.innerStroke ? root._strokePieces.length : 0
-
-      Rectangle {
-        required property int index
-        readonly property var piece: root._strokePieces[index] ?? {
-          "start": 0,
-          "end": 0
-        }
-        color: Style.frameStroke
-        width: root.isVertical ? Appearance.borderWidth : piece.end - piece.start
-        height: root.isVertical ? piece.end - piece.start : Appearance.borderWidth
-        x: root.isVertical ? (root.barConfig.left ? root.width - width : 0) : piece.start
-        y: root.isVertical ? piece.start : (root.barConfig.top ? root.height - height : 0)
-      }
-    }
-
     // Islands: rounded boxes in from the edge, an inner corner squared
     // where a popout runs flush into that end. Modelled by count, as pills.
     Repeater {
@@ -855,28 +830,6 @@ Rectangle {
           const along = root.isVertical ? pill.y : pill.x;
           return pill._rectFrom(start - along, band.start, end - start, inner ? 1 : band.size);
         }
-        // Under a `keepFill` opening the fill row the hole took inside the
-        // pill is painted back while the pill fills itself (the surface
-        // joining end-on covers only the stroke); backed, the blur window
-        // fills it
-        Repeater {
-          model: root._openingList.filter(o => o.keepFill ?? false)
-          Rectangle {
-            required property var modelData
-            readonly property real _along: root.isVertical ? pill.y : pill.x
-            readonly property real _start: Math.max(modelData.start, _along)
-            readonly property real _end: Math.min(modelData.end, _along + pill.alongLength)
-            readonly property rect area: pill._farHole(_start, _end, true)
-            visible: !root.backed && _end > _start
-            // (in the content box, where a surface's children go)
-            x: area.x - pill.boxRect.x
-            y: area.y - pill.boxRect.y
-            width: area.width
-            height: area.height
-            color: BlurManager.fillOn(Style.surfacePage, root.blurScreen)
-          }
-        }
-
         BlurShape {
           source: pill
           screen: root.blurScreen

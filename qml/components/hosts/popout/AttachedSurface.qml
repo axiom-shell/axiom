@@ -376,23 +376,17 @@ Item {
     startOverflow: root.mirror && !root.detached && !root._natural.filletStart && !root.joinStart ? 1 : 0
     endOverflow: root.mirror && !root.detached && !root._natural.filletEnd && !root.joinEnd ? 1 : 0
 
-    // The outline (or detached box): a host draws it inside a HoledItem
-    // (its stroke left open in `strokeHoles` while unbacked); a copy hands it
-    // to a HoledCopy, its fill alone where the holes are
+    // The outline (or detached box): a host draws it plainly; a copy hands
+    // it to a HoledCopy, its fill alone where the holes are
     Item {
       id: outlineLayer
       anchors.fill: parent
 
-      HoledItem {
+      Loader {
         anchors.fill: parent
         visible: !root.mirror && !root.detached
-        holes: root.mirror || root.backed ? [] : root.strokeHoles
-
-        Loader {
-          anchors.fill: parent
-          active: !root.mirror
-          sourceComponent: outlineDrawing
-        }
+        active: !root.mirror
+        sourceComponent: outlineDrawing
       }
 
       HoledCopy {
@@ -404,16 +398,11 @@ Item {
       }
 
       // Detached: a box of its own, not joined to anything
-      HoledItem {
+      Loader {
         anchors.fill: parent
         visible: !root.mirror && root.detached
-        holes: root.mirror || root.backed ? [] : root.strokeHoles
-
-        Loader {
-          anchors.fill: parent
-          active: !root.mirror
-          sourceComponent: detachedDrawing
-        }
+        active: !root.mirror
+        sourceComponent: detachedDrawing
       }
 
       HoledCopy {

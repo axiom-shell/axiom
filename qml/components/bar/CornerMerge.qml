@@ -52,7 +52,5 @@ PillStretch {
   // Its far stroke, from where the join's fillet meets it on to its end.
   // Not past the fillet's flat cap: the stroke left open there showed
   // through as a gap in the corner.
-  opening: root._placed && root.container ? Object.assign(SurfaceContext.opening(root._right ? root._filletTip : 0, root._right ? root.container.length : root._filletTip, root._right ? root._radius - 1 : 0, root._right ? 0 : root._radius - 1), {
-    "keepFill": true
-  }) : null
+  opening: root._placed && root.container ? SurfaceContext.opening(root._right ? root._filletTip : 0, root._right ? root.container.length : root._filletTip, root._right ? root._radius - 1 : 0, root._right ? 0 : root._radius - 1) : null
 }

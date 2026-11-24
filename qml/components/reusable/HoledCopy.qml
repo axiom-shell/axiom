@@ -11,8 +11,7 @@ import qs.components.methods
 // piece, with the whole drawing's coverage; each is an `Item` that clips,
 // no layer. With no holes, `drawing` once, unclipped. The area is its rect
 // grown on every side, so nothing its drawing reaches past its rect is
-// lost. (HoledItem is the same job for a host, cutting all of its
-// children.)
+// lost.
 Item {
   id: root
 
@@ -39,8 +38,8 @@ Item {
     active: root.holes.length === 0
   }
 
-  // (keyed by count, as HoledItem's holes are: a hole that moves or grows
-  // moves its pieces' items and rebuilds nothing)
+  // (keyed by count: a hole that moves or grows moves its pieces' items
+  // and rebuilds nothing)
   Repeater {
     model: root._outside.length
 

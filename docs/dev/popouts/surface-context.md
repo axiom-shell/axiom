@@ -69,7 +69,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
 - **Bar popout:** one window per bar spanning its edge, the anchor, and switching in place ([Hosts and switching](hosts-and-switching.md)).
 - **Edge popout:** its position, held gap and fullscreen hold ([Held off an edge](held-off-edge.md)). Over a fullscreen window (taken up at once, even while open) a host passes `EdgePlacement.bare`: its frame lines and reservations are 0, so it's placed from the screen's edges.
 - **Dock:** its magnification and hide slide.
-- **Openings:** they go out through `hosts/popout/StrokeOpening`. They go to the border's strip in every mode (the backing window's copies cut it); with the border off, to a solid bar's own inner stroke (the `solidBar` sink).
+- **Openings:** they go out through `hosts/popout/StrokeOpening`. They go to the border's strip in every mode (the backing window's copies cut it); with the border off, to a solid bar's own inner stroke (the `solidBar` sink; the copies cut it too).
 - **Submenus:** what a submenu meets on its parent's side is `hosts/popout/SubmenuSide`, inside the parent's `hosts/popout/SubmenuHost`. That host is the same for both parent kinds and is the submenu's `slot` ([Submenus](submenus.md)).
 
 ### One window model

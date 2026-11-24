@@ -236,7 +236,6 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 
 ### Blur and joins
 - `reusable/CornerPiece`: a concave "inverted corner" filled up to a quarter circle, with its two edges stroked.
-- `reusable/HoledItem`: its children with rects cut out (a stroke left open where something joined to it carries on).
 - `reusable/HoledCopy`: the same for a backing-window copy, with no layer: a `drawing` outside `holes` and a `fillOnly` inside them, each in its own clipped pieces, every pixel drawn once (a pixel centred on a hole's edge is the drawing's: the holes are drawn in by a 64th of a px).
 - `hosts/popout/BlurShape` + `LayerOrigin`: a chrome surface's shape for the backing window, and where its layer window is on screen (worked out by `LayerManager`, on every compositor). `LayerSlot`: a window with a fixed place in the stack maps through it, in `LayerStack` order.
 - `hosts/popout/ChromeComposite`: the backing window's chrome from its two captures (colour and alpha) as one premultiplied image: fills and strokes in painter's order (`methods/PaintOrder`), so a joined surface hides a bar's stroke under its fill.

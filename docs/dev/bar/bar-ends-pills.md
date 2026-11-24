@@ -12,7 +12,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - **`bare`:** a bare screen edge.
   - **`solidBar`:** with the border off, a solid bar's inner stroke.
     - A pill joins it with a fillet, as it would the border (`AttachedSurface.straightJoinStart`/`straightJoinEnd`, per end).
-    - The solid bar draws that stroke in pieces around its `openings`. The stroke is left open under the joined end, and under a popout standing on it or joined to it at an end, opaque or not (`BarContainer.barAt`, `solidStart`/`solidEnd`).
+    - The solid bar draws that stroke as one rect. The stroke is left open under the joined end, and under a popout standing on it or joined to it at an end, opaque or not (`BarContainer.barAt`, `solidStart`/`solidEnd`).
   - **`bar`:** a bar it makes way for, with no stroke. This is a **held** end:
     - It is kept clear of that bar's inner edge, `over` into the window, by `gap`.
     - `gap` is a floating bar's own float gap (Automatic: `floatGaps`, the screen margin with no backend), else how far windows start past it.
