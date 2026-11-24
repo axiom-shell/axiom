@@ -66,4 +66,22 @@ TestCase {
       compare(root.builtFill, fillAtMost, "no fill rebuilt at " + holes.length + " holes");
     }
   }
+
+  // Created with two holes, the first change to one and back to two builds
+  // no stroke: the slots it began with are kept
+  function test_noRebuildAfterCreatedWithHoles() {
+    const two = [Qt.rect(10, 10, 20, 20), Qt.rect(60, 60, 20, 20)];
+    const one = [Qt.rect(10, 10, 20, 20)];
+    const copy = createTemporaryObject(copyComp, root, {
+      "holes": two
+    });
+    verify(copy);
+    wait(0);
+    root.built = 0;
+    copy.holes = one;
+    wait(0);
+    copy.holes = two;
+    wait(0);
+    compare(root.built, 0, "no stroke rebuilt");
+  }
 }

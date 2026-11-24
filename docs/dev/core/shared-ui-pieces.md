@@ -252,7 +252,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `hosts/popout/StrokeOpening`: a stroke a surface covers, left open by whatever draws it.
 - `hosts/popout/SubmenuSide`: what a submenu meets on its parent's side.
 - `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it. Its far corners are capped at the room the box has, as a Rectangle's radius is: the radius never changes a surface's size.
-- `methods/FrameOutline`: the screen border's frame as geometry (the stroke's inner path, the frame path, the corner pieces' boxes, which corners an opening covers, the stroke holes, the blur region), from `RoundedBorders`' own settings (`_spec`); `RoundedBorders` draws from it. See [Layering and corners](../bar/layering-and-corners.md).
+- `methods/FrameOutline`: the screen border's frame as geometry (the stroke's inner path, the frame path, the corner pieces' boxes, which corners an opening covers, the strip strokes `stripStroke`, `strokePixels`, `windowPixels` and `screenStrokePieces`, the blur region), from `RoundedBorders`' own settings (`_spec`); `RoundedBorders` draws from it. See [Layering and corners](../bar/layering-and-corners.md).
 - `hosts/popout/PopoutClaim`: a host's place among the popouts; what it overlaps closes, what's above refuses it. See [Popout registry](../popouts/registry.md).
 - `hosts/popout/SubPopout`: a popout's submenu.
 - `PopoutAnchor`: opens one from anything in a bar or popout; `openOnHover: false` leaves opening to its owner's click.

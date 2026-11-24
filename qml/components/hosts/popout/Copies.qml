@@ -80,7 +80,8 @@ Item {
       // second: nothing downstream, the key below and the copies' pieces,
       // is recomputed for it)
       readonly property var _sourceHoles: root.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
-      property var strokeHoles: slot._sourceHoles
+      property var strokeHoles: []
+      Component.onCompleted: slot.strokeHoles = slot._sourceHoles
       on_SourceHolesChanged: {
         if (!Utils.deepEqual(slot.strokeHoles, slot._sourceHoles))
           slot.strokeHoles = slot._sourceHoles;

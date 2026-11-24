@@ -11,7 +11,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 ### The border
 - `Appearance.screenBorder` turns the border off.
 - The border is `qml/shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
-- The frame's geometry (the stroke's inner path, the corner pieces' boxes, which corners an opening covers, the stroke holes, its blur region) is `FrameOutline`, read by `RoundedBorders`, `BlurBackingWindow` and the layout test.
+- The frame's geometry (the stroke's inner path, the corner pieces' boxes, which corners an opening covers, the strip strokes `stripStroke`, `strokePixels`, `windowPixels` and `screenStrokePieces`, its blur region) is `FrameOutline`, read by `RoundedBorders`, `BlurBackingWindow` and the layout test.
 - When the blur window backs the border, it draws the frame's stroke as the strips and corner pieces do, on the device pixels their windows show on (`BorderPanel.screenStrokePieces`, the strips' stroke cut at their openings, the corner window's `screenBox`, `FrameOutline.strokePixels`/`windowPixels`), so backed and unbacked look the same at any scale.
 
 ### Solid bar (`Bars.items[].surface: "bar"`)

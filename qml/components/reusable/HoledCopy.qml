@@ -37,7 +37,8 @@ Item {
   // once and kept, hidden when there are fewer pieces than slots, so a hole
   // that comes or goes while a surface slides builds and destroys no
   // drawing (each is a whole Shape).
-  property int _outsideSlots: root._outside.length
+  property int _outsideSlots: 0
+  Component.onCompleted: root._outsideSlots = root._outside.length
   on_OutsideChanged: root._outsideSlots = Math.max(root._outsideSlots, root._outside.length)
 
   Loader {

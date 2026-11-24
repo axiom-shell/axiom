@@ -629,6 +629,31 @@ TestCase {
     compare(off, 0, `${off} of ${count} pixels differ from the scene with no holes (scale ${root.dpr})`);
   }
 
+  Component {
+    id: changedSpyComp
+
+    SignalSpy {}
+  }
+
+  // The copy's holes follow its source's: an equal list pushed again (as the
+  // publishers do on every opening change) is no change; a different one is
+  function test_equal_holes_pushed_again_change_nothing() {
+    const src = root.smallSurface();
+    const h = [Qt.rect(20, 26, 30, 6)];
+    const scene = root.makeScene([root.attachedSpec(src, "surface", root.solid, root.line(1), h)]);
+    wait(0);
+    const spy = createTemporaryObject(changedSpyComp, root, {
+      "target": scene.colorLayer.copies,
+      "signalName": "changed"
+    });
+    src.strokeHoles = h.map(r => Qt.rect(r.x, r.y, r.width, r.height));
+    wait(0);
+    compare(spy.count, 0);
+    src.strokeHoles = [Qt.rect(20, 26, 10, 6)];
+    wait(0);
+    verify(spy.count > 0);
+  }
+
   // Holes at a fractional logical edge (x 12.3) and at a half device pixel at 1.25 (x 36.4 and y 26.4: 45.5 and
   // 33 device px), under a fractional copy origin: outside the holes (a pixel grown round each) every device
   // pixel equals the same scene with no holes within 1/255
@@ -1134,10 +1159,15 @@ TestCase {
       // (the stroke's rows the strips leave open: EdgeAttach.strokeHoleAcross)
       const edge = EdgeAttach.strokeHoleAcross(m - sw, sw);
       const band = Qt.rect(dock.x + dock.coverStart, edge.start, dock.coverEnd - dock.coverStart, edge.size);
+      const along = {
+        "edge": "top",
+        "start": band.x,
+        "end": band.x + band.width
+      };
       return {
         "w": 160,
         "h": 100,
-        "specs": (sa, fa, stroke, cut) => [root.frameSpec(frame, fills(fa).low, stroke ? root.line(sa) : null, cut ? [band] : []), root.attachedSpec(dock, "surface", fills(fa).up, root.line(sa))],
+        "specs": (sa, fa, stroke, cut) => [root.frameSpec(frame, fills(fa).low, stroke ? root.line(sa) : null, cut ? [along] : []), root.attachedSpec(dock, "surface", fills(fa).up, root.line(sa))],
         "bands": [
           {
             "rect": band,
@@ -1158,10 +1188,22 @@ TestCase {
     const edge = EdgeAttach.strokeHoleAcross(m - sw, sw);
     const top = Qt.rect(pill.x + pill.coverStart, edge.start, pill.coverEnd - pill.coverStart, edge.size);
     const side = Qt.rect(edge.start, m + 1, edge.size, Math.floor(m - sw + pill.joinCover) - (m + 1));
+    const openings = [
+      {
+        "edge": "top",
+        "start": top.x,
+        "end": top.x + top.width
+      },
+      {
+        "edge": "left",
+        "start": side.y,
+        "end": side.y + side.height
+      }
+    ];
     return {
       "w": 160,
       "h": 100,
-      "specs": (sa, fa, stroke, cut) => [root.frameSpec(frame, fills(fa).low, stroke ? root.line(sa) : null, cut ? [top, side] : []), root.attachedSpec(pill, "surface", fills(fa).up, root.line(sa))],
+      "specs": (sa, fa, stroke, cut) => [root.frameSpec(frame, fills(fa).low, stroke ? root.line(sa) : null, cut ? openings : []), root.attachedSpec(pill, "surface", fills(fa).up, root.line(sa))],
       "bands": [
         {
           "rect": top,
@@ -1209,7 +1251,9 @@ TestCase {
   }
   // The frame's fixture source, carrying RoundedBorders' contract
   // (`strokeWidth`, `framePath`, `innerPath`, `strokeRects`, `cornerBoxes`),
-  // its `strokeHoles` what the openings cut out of both, its geometry FrameOutline's for a 160 x 100 screen with
+  // with its `openings` ({ edge, start, end }, screen px), cut by the same
+  // helpers RoundedBorders uses (`FrameOutline.screenStrokePieces`,
+  // `cornerCovered`), its geometry FrameOutline's for a 160 x 100 screen with
   // an `inset` px border. At radius 0 that is a sharp border: the stroke
   // along the inner edge, inside the frame
   Component {
@@ -1217,27 +1261,27 @@ TestCase {
 
     Item {
       readonly property real strokeWidth: Appearance.borderWidth
-      property var strokeHoles: []
+      property var openings: []
       property real radius: 0
       property real inset: 10
       readonly property real innerBorderRadius: radius
       readonly property real cornerSize: FrameOutline.cornerSize(spec)
-      // What RoundedBorders publishes, at this scale: the strips' stroke rows
-      // less the row's `strokeHoles` (BorderPanel.screenStrokePieces), and the
-      // boxes of the corner windows no hole covers (its `cornerBoxes`)
+      // What RoundedBorders publishes, at this scale: the strips' stroke less
+      // the openings on their edge (in the strip's window coordinates), and
+      // the boxes of the corner windows no opening covers
       readonly property var strokeRects: [].concat(...root.strips(inset).map(st => {
-        const r = FrameOutline.stripStroke(st.edge, st.length, inset, radius, strokeWidth);
-        const row = FrameOutline.strokePixels(Qt.rect(st.origin.x + r.x, st.origin.y + r.y, r.width, r.height), st.origin, root.dpr);
-        return Utils.subtractRects(row, Utils.insetUnion(row, strokeHoles, Utils.tieInset));
+        const horizontal = st.edge === "top" || st.edge === "bottom";
+        const along = horizontal ? st.origin.x : st.origin.y;
+        return FrameOutline.screenStrokePieces(st.edge, st.length, inset, radius, strokeWidth, openings.filter(o => o.edge === st.edge).map(o => ({
+              "start": o.start - along,
+              "end": o.end - along
+            })), st.origin, root.dpr);
       }))
       readonly property var cornerBoxes: FrameOutline.corners.map(c => ({
             "box": FrameOutline.windowPixels(FrameOutline.cornerBox(spec, c.isLeft, c.isTop), root.dpr),
             "isLeft": c.isLeft,
             "isTop": c.isTop,
-            "covered": strokeHoles.some(h => {
-              const b = FrameOutline.cornerBox(spec, c.isLeft, c.isTop);
-              return h.x <= b.x && h.y <= b.y && h.x + h.width >= b.x + b.width && h.y + h.height >= b.y + b.height;
-            })
+            "covered": FrameOutline.cornerCovered(spec, openings, c.isLeft, c.isTop)
           })).filter(c => !c.covered)
       readonly property var spec: ({
           "width": 160,
@@ -1265,8 +1309,8 @@ TestCase {
     }
   }
 
-  function frameSpec(frame, fill, stroke, holes) {
-    frame.strokeHoles = holes;
+  function frameSpec(frame, fill, stroke, openings) {
+    frame.openings = openings;
     return {
       "kind": "frame",
       "rank": "frame",
@@ -1562,8 +1606,13 @@ TestCase {
     const frame = frameComp.createObject(sources);
     frame.radius = 8;
     const box = FrameOutline.cornerBox(frame.spec, true, true);
-    const across = EdgeAttach.strokeHoleAcross(frame.inset - frame.strokeWidth, frame.strokeWidth);
-    const holes = [Qt.rect(data.start, across.start, 60 - data.start, across.size)].concat(data.covered ? [box] : []);
+    const holes = [
+      {
+        "edge": "top",
+        "start": data.start,
+        "end": 60
+      }
+    ];
     const sceneOf = (stroke, h) => root.render([root.frameSpec(frame, root.blue, stroke, h)]);
     const plain = sceneOf(root.line(1), []);
     const bare = sceneOf(null, []);
