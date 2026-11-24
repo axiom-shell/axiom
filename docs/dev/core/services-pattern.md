@@ -8,6 +8,7 @@ How `qml/services/` is built: one singleton per domain, owning state and side ef
 
 ### Shape
 - Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `OwnerRegistry`, `IpcTarget`, `KeptList`, …) are named for what they are. `KeptList` keeps a list a service rebuilds the same objects while it is equal (`fresh`, `idOf`, `oncePerTurn`, `items`; CompositorManager's lists, ScreenEdgeManager.bars). `DueTimer` arms one timer at an owner's `next`, re-reads the clock at least every minute and emits `due` once per `next`, so a deadline passed during a suspend still fires.
+- `EngineTrace` is a singleton registry under `core/`, not a `*Manager`: it owns no domain, and `check_engines` › `trace` limits who calls it.
 - A service with an IPC target that nothing else references is created from `qml/shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
