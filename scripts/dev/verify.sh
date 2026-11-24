@@ -132,15 +132,16 @@ for f in "${changed[@]}"; do
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
   scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
   scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines) ;;
-  scripts/check_engines.py | docs/dev/core/engines.md | scripts/engines.json | scripts/engines-baseline.json | scripts/engines-exceptions.json) script_tests+=(CheckEngines) ;;
-  scripts/manifests.py) script_tests+=(Manifests CheckEngines) ;;
+  scripts/check_engines.py) script_tests+=(CheckEngines GenDocsEngines) ;;
+  docs/dev/core/engines.md | scripts/engines.json | scripts/engines-baseline.json | scripts/engines-exceptions.json) script_tests+=(CheckEngines) ;;
+  scripts/manifests.py) script_tests+=(Manifests CheckEngines GenDocsEngines) ;;
   scripts/check_style.py | scripts/style-exceptions.json) script_tests+=(CheckStyle) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint Ratchet) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
   scripts/check_shaders.py) script_tests+=(CheckShaders) ;;
-  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage CheckEngines) ;;
+  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage CheckEngines GenDocsEngines) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
 done
