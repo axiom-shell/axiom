@@ -909,6 +909,10 @@ class Manifests(unittest.TestCase):
         del gone["facade"]
         cases = [
             (manifest_text(demo_entry(phase="x")), "demo: unknown key phase"),
+            (manifest_text(demo_entry(owners=5)), "demo.owners is not a list of strings"),
+            (manifest_text(demo_entry(adapters=[None])), "demo.adapters is not a list of strings"),
+            (manifest_text(demo_entry(folder=5)), "demo.folder is not a string"),
+            (manifest_text(demo_entry(prefix=["DEMO"])), "demo.prefix is not a string"),
             (manifest_text(demo_entry(tests={"rows": "r.js", "phase": 1})), "demo.tests: unknown key phase"),
             (manifest_text(gone), "demo: missing key facade"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "DEMO", "tables": []}}}), "prefix DEMO is used by demo and $flat.Helper"),

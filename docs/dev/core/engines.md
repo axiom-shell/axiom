@@ -269,7 +269,7 @@ TestCase {
 OSD timelines (`tests/osd/`) are their own format, run by `tst_OSDSystems`, which uses only `differenceOf` and `messageOf`.
 
 ## The manifest
-`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`, `edit_point_rows()`), and it reports bad JSON, a missing or unknown key, a prefix used twice and a `fedBy` or `intakes` that isn't `{stage: [object]}`. Today the manifest lists no engine and an empty `$flat`.
+`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`, `edit_point_rows()`), and it reports bad JSON, a missing or unknown key, a prefix used twice, a `fedBy` or `intakes` that isn't `{stage: [object]}` and a string or list key of another type (`prefix`, `facade`, `doc`, `folder` and `feeder` are strings; `files`, `owners`, `adapters`, `helpers`, `kits`, `uses`, `itemPaths` and `pluginPaths` lists of strings). Today the manifest lists no engine and an empty `$flat`.
 
 An engine's entry has these keys. Required: `prefix`, `facade`, `files`, `owners`, `adapters`, `tests` and `doc`, plus `editPoints`. Optional, empty by default: `folder`, `helpers`, `kits`, `uses`, `fedBy`, `intakes`, `itemPaths`, `pluginPaths`, `feeder`, `tables` and `alone`.
 
@@ -292,7 +292,7 @@ An engine's entry has these keys. Required: `prefix`, `facade`, `files`, `owners
 
 `python3 scripts/manifests.py --tests-for <path>...` prints the tests of every engine that holds one of the paths (its folder, `files`, `helpers`, `itemPaths`, `pluginPaths`, `adapters`, `owners` or rows folder): the facade's test, its `sweep`, `golden` and `pixel` names. `scripts/dev/verify.sh` runs it on the changed files, so editing a file of a listed engine runs that engine's tests.
 
-`scripts/gen_docs.py` renders the manifest (`scripts/generate.sh` runs it; built, never committed): `docs/dev/generated/engine-manifest.md` (a row per listed engine with its facade, owners, adapters, `fedBy` and `intakes`; each engine's edit points; the rules tables; and › Graph), `docs/dev/generated/engines/<Facade>.md` (a facade's `api`: each stage's or extra's `in` keys and `out` producers) and `docs/dev/generated/rules/<File>.<property>.md` (one per `tables` entry of an engine, `$flat` or `$domains`: kind, axes and rows with their `why`). With no engine listed, the manifest page says so and holds only the rules tables `$flat` and `$domains` list.
+`scripts/gen_docs.py` renders the manifest (`scripts/generate.sh` runs it; built, never committed): `docs/dev/generated/engine-manifest.md` (a row per listed engine with its facade, owners, adapters, `fedBy` and `intakes`; each engine's edit points; the rules tables; and › Graph), `docs/dev/generated/engines/<Facade>.md` (a facade's `api`: each stage's or extra's `in` keys, its `extra`, `plugins`, `feeds` and `unfed`, and its `out` producers) and `docs/dev/generated/rules/<File>.<property>.md` (one per `tables` entry of an engine, `$flat` or `$domains`: kind, axes and rows with their `why`). With no engine listed, the manifest page says so and holds only the rules tables `$flat` and `$domains` list.
 
 ## The engine graph
 Nodes are `<engine>.<stage>`. The edges are:
@@ -301,7 +301,7 @@ Nodes are `<engine>.<stage>`. The edges are:
 - an `api` entry's `feeds`: an extra whose events a stage consumes inside one engine;
 - each `intakes` entry: a named back edge an owner or adapter builds. A cross-engine one names its seam; one whose `from` is its own engine names none.
 
-The rendered graph is `docs/dev/generated/engine-manifest.md` › Graph: every edge of the listed engines in three groups, REST (edges into a stage other than `drawn`), INTAKE (the `intakes` entries, each with its rule and seam) and DRAWN (edges into a `drawn` stage).
+The rendered graph is `docs/dev/generated/engine-manifest.md` › Graph: every edge of the listed engines in three groups, REST (edges into a stage other than `drawn`), INTAKE (the `intakes` entries, each with its rule and seam) and DRAWN (edges into a `drawn` stage). Each line is `<from> ──> <to>` for a forward edge (signature, `fedBy` or `feeds`), followed by ` (feeds)` for a `feeds` edge or ` (<seam>)` for a `fedBy` entry that names one, or `<from> ⇢ <to>` for an intake, followed by its rule and ` (<seam>)` when it names one.
 
 `check_engines` › `dag` holds the manifest and this page to each other:
 - the forward graph (signature edges, `fedBy`, `feeds`) is acyclic over all stage nodes, so a loop at rest is either broken by a declared intake or fails (Timing and flow: "Loops at rest are broken only by named intake rules");

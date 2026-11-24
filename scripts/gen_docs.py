@@ -85,6 +85,12 @@ def short(value, limit=90):
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+def table_cell(value):
+    """`value` as Markdown table-cell text: a newline becomes a space, a backtick `'` (it would end a code
+    span) and `|` `\\|` (it would end the cell)."""
+    return str(value).replace("\n", " ").replace("`", "'").replace("|", "\\|")
+
+
 def first_sentence(text, limit=220):
     text = " ".join(text.split())
     match = re.search(r"(?<=[.!?])\s+(?=[A-Z`(])", text)
@@ -1287,10 +1293,8 @@ def rpc_page():
             "([protocol](../backend/protocol.md#changing-the-protocol)).", "",
             "| Call site | Method | Params | Why |", "|---|---|---|---|"]
     for file, line, method, src, reason in sorted(unchecked):
-        # A | would end the cell, a backtick the code span
-        cell = src.replace("`", "'").replace("|", "\\|")
         why = reason.replace("|", "\\|")
-        out.append(f"| `{file}:{line}` | `{method}` | `{cell}` | {why} |")
+        out.append(f"| `{file}:{line}` | `{method}` | `{table_cell(src)}` | {why} |")
     out += ["", "## Types", ""]
     done = set()
     while set(types) - done:
@@ -1382,14 +1386,13 @@ def engine_pages():
     """{path: text} of the engine pages, read from the manifest (`manifests`) and the engine files
     (`check_engines`' readers): the manifest page (always), an API page per listed engine whose facade
     file exists and a rules page per resolved manifest table."""
-    cell = lambda s: str(s).replace("`", "'").replace("|", "\\|")  # noqa: E731
-    code = lambda items: ", ".join(f"`{cell(i)}`" for i in items)  # noqa: E731
+    code = lambda items: ", ".join(f"`{table_cell(i)}`" for i in items)  # noqa: E731
     engines = manifests.engines()[0]
     tables = check_engines._tables_of(engines, manifests.flat(), manifests.domains())
     pages = {}
     intro = ("Every engine `scripts/engines.json` lists: its facade and the files that call it, the edges into its stages, "
              "where each kind of edit goes ([engines](../core/engines.md) › Editing an engine), its rules tables and the stage graph "
-             "(› The engine graph). Built from the manifest and the engine files by `scripts/gen_docs.py`: edit those, never this page.")
+             "([engines](../core/engines.md) › The engine graph). Built from the manifest and the engine files by `scripts/gen_docs.py`: edit those, never this page.")
     out = [NOTICE, "# Engine manifest", "", intro, ""]
     if not engines:
         out += ["No engine is listed in `scripts/engines.json`.", ""]
@@ -1398,18 +1401,18 @@ def engine_pages():
         for name, entry in sorted(engines.items()):
             facade = check_engines._facade(entry)
             link = f"[`{entry['facade']}`](engines/{entry['facade']}.md)" if facade else f"`{entry['facade']}`"
-            fed = [(f"`{cell(it['from'])}` → `{stage}`" if it.get("from") else f"→ `{stage}`")
-                   + (f" (`{cell(it['seam'])}`)" if it.get("seam") else "")
+            fed = [(f"`{table_cell(it['from'])}` → `{stage}`" if it.get("from") else f"→ `{stage}`")
+                   + (f" (`{table_cell(it['seam'])}`)" if it.get("seam") else "")
                    for stage, items in entry["fedBy"].items() for it in items]
-            intakes = [(f"`{cell(it['from'])}` ⇢ `{stage}`" if it.get("from") else f"⇢ `{stage}`")
-                       + (f" `{cell(it['rule'])}`" if it.get("rule") else "")
+            intakes = [(f"`{table_cell(it['from'])}` ⇢ `{stage}`" if it.get("from") else f"⇢ `{stage}`")
+                       + (f" `{table_cell(it['rule'])}`" if it.get("rule") else "")
                        for stage, items in entry["intakes"].items() for it in items]
             out.append(f"| `{name}` | {link} | {code(entry['owners'])} | {code(entry['adapters'])} | {', '.join(fed)} | {', '.join(intakes)} |")
         out += ["", "## Edit points", ""]
         for name, entry in sorted(engines.items()):
             rows = manifests.edit_point_rows(entry)
             out += [f"### {name}", ""]
-            out += [f"- where {EDIT_POINT_TEXT.get(kind, '`' + kind + '`')} goes: `{cell(symbol)}`" for kind, symbol in rows] or ["- none"]
+            out += [f"- where {EDIT_POINT_TEXT.get(kind, '`' + kind + '`')} goes: `{table_cell(symbol)}`" for kind, symbol in rows] or ["- none"]
             out.append("")
     listed = []
     for owner, owned, files, folder, entry in tables:
@@ -1422,13 +1425,13 @@ def engine_pages():
             else:
                 axes = check_engines._axes_of(file)[0] if kind == "cell" else None
                 if axes is not None:
-                    page += ["Axes:", ""] + [f"- `{cell(a)}`: {code(values)}" for a, values in axes.items()] + [""]
+                    page += ["Axes:", ""] + [f"- `{table_cell(a)}`: {code(values)}" for a, values in axes.items()] + [""]
                 rows = [r for r in rows if isinstance(r, dict)]
-                value = lambda row, k: "" if k not in row else f"`{cell(short(row[k]))}`"  # noqa: E731
-                text = lambda row, k: cell(row.get(k, ""))  # noqa: E731
+                value = lambda row, k: "" if k not in row else f"`{table_cell(short(row[k]))}`"  # noqa: E731
+                text = lambda row, k: table_cell(row.get(k, ""))  # noqa: E731
                 if kind == "rank":
                     name_key = owned[key].get("id", "name")
-                    page += [f"| {cell(name_key)} | Rank | Why |", "|---|---|---|"]
+                    page += [f"| {table_cell(name_key)} | Rank | Why |", "|---|---|---|"]
                     page += [f"| {text(r, name_key)} | {text(r, 'rank')} | {text(r, 'why')} |" for r in rows]
                 else:
                     page += ["| Id | When | Then | Why |", "|---|---|---|---|"]
@@ -1456,13 +1459,13 @@ def engine_pages():
                     page.append(f"- in: {code(value['in'])}")
                 page += [f"- {flag}" for flag in ("extra", "plugins") if value.get(flag) is True]
                 if value.get("feeds"):
-                    page.append(f"- feeds: `{cell(value['feeds'])}`")
+                    page.append(f"- feeds: `{table_cell(value['feeds'])}`")
                 if value.get("unfed"):
                     unfed = value["unfed"]
-                    page.append(f"- unfed: {code(unfed) if isinstance(unfed, list) else '`' + cell(short(unfed)) + '`'}")
+                    page.append(f"- unfed: {code(unfed) if isinstance(unfed, list) else '`' + table_cell(short(unfed)) + '`'}")
                 if isinstance(value.get("out"), dict) and value["out"]:
                     page += ["", "| Output path | Produced by |", "|---|---|"]
-                    page += [f"| `{cell(path) or 'output'}` | `{cell(producer if isinstance(producer, str) else short(producer))}` |"
+                    page += [f"| `{table_cell(path) or 'output'}` | `{table_cell(producer if isinstance(producer, str) else short(producer))}` |"
                              for path, producer in value["out"].items()]
                 page.append("")
         pages[f"{GEN_OUT}/engines/{entry['facade']}.md"] = "\n".join(page).rstrip() + "\n"
@@ -1470,17 +1473,17 @@ def engine_pages():
         edges = check_engines._graph(engines)[0]
         groups = {"REST": [], "INTAKE": [], "DRAWN": []}
         for kind, a, b, item in edges:
-            seam = f" ({cell(item['seam'])})" if item.get("seam") else ""
+            seam = f" ({table_cell(item['seam'])})" if item.get("seam") else ""
             if kind == "intakes":
-                groups["INTAKE"].append(f"{a} ⇢ {b}" + (f"  {cell(item['rule'])}" if item.get("rule") else "") + seam)
+                groups["INTAKE"].append(f"{a} ⇢ {b}" + (f"  {table_cell(item['rule'])}" if item.get("rule") else "") + seam)
             else:
                 label = " (feeds)" if kind == "feeds" else seam
                 groups["DRAWN" if b.endswith(".drawn") else "REST"].append(f"{a} ──> {b}{label}")
-        out += ["## Graph", "", "The edges of the listed engines (› The engine graph): REST into rest stages, INTAKE the named back edges, "
-                "DRAWN into `drawn` stages.", "", "```"]
+        out += ["## Graph", "", "The edges of the listed engines ([engines](../core/engines.md) › The engine graph): REST the edges into a stage other than `drawn`, INTAKE the named back edges, "
+                "DRAWN the edges into a `drawn` stage.", "", "```"]
         for label, lines in groups.items():
             if lines:
-                out += [label] + [f"  {line}" for line in sorted(lines)]
+                out += [label] + [f"  {line}" for line in sorted(set(lines))]
         out += ["```"]
     pages[f"{GEN_OUT}/engine-manifest.md"] = "\n".join(out).rstrip() + "\n"
     return pages
