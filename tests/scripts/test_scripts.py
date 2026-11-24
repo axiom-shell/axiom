@@ -15,6 +15,7 @@
   - the ratchet (qml_modules.ratchet and its helpers, in a scratch git repo) and the engine manifest reader
     (manifests.py), on small inputs
   - check_engines.py: each of its thirteen rules on the fixture engine `demo` (demo_engine), the base it reads
+  - gen_docs.py's engine pages: the fixture engines' manifest, API and rules pages, and an empty manifest's one page
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -877,6 +878,8 @@ class Manifests(unittest.TestCase):
         bare = demo_entry()
         del bare["doc"]
         self.assertEqual(self.m.engines(text=manifest_text(bare))[0]["demo"]["doc"], "")
+        bad = self.m.engines(text=manifest_text(demo_entry(fedBy=[], intakes={"solve": ["x"], "model": [{"from": "demo.solve"}]})))[0]["demo"]
+        self.assertEqual((bad["fedBy"], bad["intakes"]), ({}, {"model": [{"from": "demo.solve"}]}))
 
     def test_held_paths(self):
         entry = self.m.engines(text=manifest_text(demo_entry()))[0]["demo"]
@@ -906,6 +909,10 @@ class Manifests(unittest.TestCase):
         del gone["facade"]
         cases = [
             (manifest_text(demo_entry(phase="x")), "demo: unknown key phase"),
+            (manifest_text(demo_entry(owners=5)), "demo.owners is not a list of strings"),
+            (manifest_text(demo_entry(adapters=[None])), "demo.adapters is not a list of strings"),
+            (manifest_text(demo_entry(folder=5)), "demo.folder is not a string"),
+            (manifest_text(demo_entry(prefix=["DEMO"])), "demo.prefix is not a string"),
             (manifest_text(demo_entry(tests={"rows": "r.js", "phase": 1})), "demo.tests: unknown key phase"),
             (manifest_text(gone), "demo: missing key facade"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "DEMO", "tables": []}}}), "prefix DEMO is used by demo and $flat.Helper"),
@@ -914,6 +921,12 @@ class Manifests(unittest.TestCase):
             (manifest_text(demo_entry(), **{"$domains": {"geo": {"tables": []}}}), "$domains.geo: missing key uses"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "FLAT"}}}), "$flat.Helper: missing key tables"),
             (manifest_text(demo_entry(), **{"$flat": {"Helper": {"tables": []}}}), "$flat.Helper: missing key prefix"),
+            (manifest_text(demo_entry(fedBy=[])), "demo.fedBy is not an object"),
+            (manifest_text(demo_entry(intakes="x")), "demo.intakes is not an object"),
+            (manifest_text(demo_entry(fedBy={"model": "x"})), "demo.fedBy.model is not a list of objects with string from, seam and rule"),
+            (manifest_text(demo_entry(intakes={"solve": ["x"]})), "demo.intakes.solve is not a list of objects"),
+            (manifest_text(demo_entry(fedBy={"model": [{"from": 5}]})), "demo.fedBy.model is not a list of objects"),
+            (manifest_text(demo_entry(fedBy={"model": [{"from": "a.b", "seam": []}]})), "demo.fedBy.model is not a list of objects"),
         ]
         for text, message in cases:
             errors = self.m.engines(text=text)[1]
@@ -1045,7 +1058,7 @@ class CheckEngines(unittest.TestCase):
                       '    "solve": {"in": ["request", "model", "tuning", "now"], "out": {"box": "DemoRules.boxOf"}},\n'
                       '    "drawn": {"in": ["result", "motion"], "out": {"": "DemoRules.nothing"}},\n'
                       '    "pick": {"in": ["spot", "more"], "out": {"": "DemoRules.boxOf"}, "extra": true},\n'
-                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}},\n'
+                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}, "unfed": 5},\n'
                       '    "drawnX": {"in": [["x"]], "out": {"": "DemoRules.boxOf"}, "extra": true}\n  })\n\n'
                       '  function stray(input) {\n    return 1;\n  }\n\n'
                       '  function model(input) {\n    const {env} = input;\n    return {};\n  }\n\n'
@@ -1106,7 +1119,7 @@ class CheckEngines(unittest.TestCase):
             "qml/components/DemoReader.qml: facade-only draw:DemoKit", "qml/components/DemoPlugin.qml: facade-only hook:DemoEngine.pick",
             "qml/services/DemoOwner.qml: facade-only draw:DemoEngine.drawn",
             f"{m}/demo/DemoEngine.qml: api api:not first", f"{m}/demo/DemoEngine.qml: api stray:no api entry",
-            f"{m}/demo/DemoEngine.qml: api api.pick:in", f"{m}/demo/DemoEngine.qml: api api.drawn:DemoRules.nothing",
+            f"{m}/demo/DemoEngine.qml: api api.pick:in", f"{m}/demo/DemoEngine.qml: api api.other:unfed", f"{m}/demo/DemoEngine.qml: api api.drawn:DemoRules.nothing",
             f"{m}/demo/DemoEngine.qml: shape api.solve:now", f"{m}/demo/DemoEngine.qml: shape api.model:needs config|state",
             f"{m}/demo/DemoEngine.qml: shape api.other:not a stage", f"{m}/demo/DemoEngine.qml: shape drawn:form",
             f"{m}/demo/DemoEngine.qml: shape DemoEngine:lines", f"{m}/lone/LoneEngine.qml: api api:not literal",
@@ -1148,6 +1161,57 @@ class CheckEngines(unittest.TestCase):
                         "tests": {"rows": "tests/lone/Rows.js"}, "doc": "docs/dev/core/gone.md",
                         "editPoints": [], "alone": {}}
         data["sink"]["tables"] = []
+
+
+class GenDocsEngines(unittest.TestCase):
+    """scripts/gen_docs.py renders the engine pages from the manifest: the fixture engines' manifest, API and
+    rules pages, and an empty manifest's one page."""
+
+    def engine_pages(self, root):
+        """gen_docs.engine_pages() run in a child Python on the fixture copy: its {path: text}."""
+        code = "import json, sys; sys.path.insert(0, 'scripts'); import gen_docs; print(json.dumps(gen_docs.engine_pages()))"
+        done = subprocess.run([sys.executable, "-c", code], cwd=root, capture_output=True, text=True, check=True)
+        return json.loads(done.stdout)
+
+    def test_no_engine(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp)
+            write(root, "scripts/engines.json", manifest_text())
+            pages = self.engine_pages(root)
+            self.assertEqual(set(pages), {"docs/dev/generated/engine-manifest.md"})
+            text = pages["docs/dev/generated/engine-manifest.md"]
+            self.assertTrue(text.startswith("<!-- Generated by scripts/gen_docs.py"))
+            self.assertIn("No engine is listed in `scripts/engines.json`.", text)
+            self.assertNotIn("## Graph", text)
+
+    def test_fixture_engines(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs/dev/core/engines.md")
+            demo_engine(root)
+            edit_json(root / "scripts/engines.json", lambda data: data["$flat"].update(
+                {"DemoFlat": {"prefix": "DEMOF", "tables": {"DemoFlat.ranks": {"kind": "rank"}}}}))
+            write(root, "qml/components/methods/DemoFlat.qml", qml('property var ranks: [{"name": "a", "rank": 1, "why": "a rank"}]'))
+            pages = self.engine_pages(root)
+            out = "docs/dev/generated"
+            self.assertEqual(set(pages), {f"{out}/engine-manifest.md", f"{out}/engines/DemoEngine.md", f"{out}/engines/SinkEngine.md",
+                                          f"{out}/rules/DemoRules.rows.md", f"{out}/rules/DemoFlat.ranks.md"})
+            api = pages[f"{out}/engines/DemoEngine.md"]
+            for part in ("### model", "### solve", "### drawn", "### pick", "- extra", "| `items` | `DemoRules.itemsOf` |"):
+                self.assertIn(part, api)
+            self.assertTrue(any(line.startswith("| `output` |") for line in api.splitlines()))
+            rules = pages[f"{out}/rules/DemoRules.rows.md"]
+            for part in ("kindA", "kindB", "a is one wide", "b takes the tuned size", "- `kind`: `a`, `b`"):
+                self.assertIn(part, rules)
+            self.assertIn("a rank", pages[f"{out}/rules/DemoFlat.ranks.md"])
+            text = pages[f"{out}/engine-manifest.md"]
+            for part in ("[`DemoEngine`](engines/DemoEngine.md)", "### demo", "where a case goes: `DemoRules.rows`",
+                         "where a tuning value goes: `DemoEngine.tuning`", "- [`DemoRules.rows`](rules/DemoRules.rows.md): cell table of `demo`",
+                         "- [`DemoFlat.ranks`](rules/DemoFlat.ranks.md): rank table of `$flat.DemoFlat`"):
+                self.assertIn(part, text)
+            self.assertTrue(any(line.startswith("| `demo` |") for line in text.splitlines()))
+            self.assertIn("\n".join(["REST", "  demo.model ──> demo.solve", "  demo.solve ──> sink.model (demoFeed)",
+                                     "  sink.model ──> sink.solve", "INTAKE", "  demo.model ⇢ demo.solve  demoSeeded",
+                                     "DRAWN", "  demo.solve ──> demo.drawn"]), text)
 
 
 class CheckPackages(unittest.TestCase):

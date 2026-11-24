@@ -32,7 +32,7 @@ Dependencies point one way: pure helpers (`qml/components/methods/`) at the bott
 | A feature (launcher, lockscreen, greeter, dock, OSD, chat, …) | `docs/dev/features/<feature>.md` |
 | Looking at or debugging the live shell; what each check catches | `docs/dev/testing.md` |
 | A page or panel slow to open, streaming (`StreamedLoader`), measuring it | `docs/dev/core/streamed-building.md` |
-| An engine: its stages, rows, runner, manifest, checks and how to edit one | `docs/dev/core/engines.md` |
+| An engine: its stages, rows, runner, manifest, checks and how to edit one | `docs/dev/core/engines.md`; the listed engines, their edit points and graph: `docs/dev/generated/engine-manifest.md` (generated) |
 | install.sh, AUR packages, packaged installs | `docs/dev/packaging.md` |
 | A setting: meaning, default, readers | `docs/dev/config/<Section>.md` (generated; `grep -rn 'Section.key' docs/dev/config/`) |
 | A bar widget / overlay module / view type's settings | `docs/dev/config/{BarWidgets,OverlayModules,OverlayViews}/<Type>.md` (generated) |
@@ -83,6 +83,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [generated/ipc.md](generated/ipc.md): every IPC target and its functions.
 - [generated/rpc.md](generated/rpc.md): every method, push and call between the shell and the axiom daemon, with their fields and the files on each side.
 - [generated/layers.md](generated/layers.md): every layer namespace's `order` and why, from `LayerStack.layers`.
+- [generated/engine-manifest.md](generated/engine-manifest.md): every engine `scripts/engines.json` lists, its edit points, rules tables and stage graph; one API page per engine facade in `generated/engines/` and one page per rules table in `generated/rules/`.
 
 ### Installing
 - [packaging.md](packaging.md): install.sh (distributions, compositors, `--dry-run`), the AUR packages, what a packaged shell does differently, and `check_packages.py`.
