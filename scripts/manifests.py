@@ -104,7 +104,7 @@ def domains(text=None):
     return _parsed(text)[0].get("$domains", {})
 
 
-def _within(path, held):
+def within(path, held):
     held = held.rstrip("/")
     return bool(held) and (path == held or path.startswith(held + "/"))
 
@@ -122,7 +122,7 @@ def tests_for(paths, text=None):
     and golden names, and its pixel tests' names."""
     names = set()
     for entry in engines(text)[0].values():
-        if any(_within(p, h) for h in held_paths(entry) for p in paths):
+        if any(within(p, h) for h in held_paths(entry) for p in paths):
             tests = entry["tests"]
             names.update([entry["facade"], *tests["sweep"], *tests["golden"],
                           *(posixpath.basename(p).removesuffix(".qml").removeprefix("tst_") for p in tests["pixel"])])

@@ -14,6 +14,7 @@
     similar strings, .js names under tests/, generated paths skipped
   - the ratchet (qml_modules.ratchet and its helpers, in a scratch git repo) and the engine manifest reader
     (manifests.py), on small inputs
+  - check_engines.py: each of its five rules on the fixture engine `demo` (demo_engine), the base it reads
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -736,6 +737,55 @@ def manifest_text(entry=None, **top):
     return json.dumps({"$flat": {}, **top, **({"demo": entry} if entry else {})})
 
 
+def demo_engine(root):
+    """Write the fixture engines into a copy of the tree: `demo` (demo_entry) with a file at every
+    path it holds, and `sink`, which takes the seam `demoFeed` from it, their manifest and the seam's
+    row after the separator of engines.md's `## Seam register` table."""
+    sys.path.insert(0, str(SCRIPTS))
+    import manifests
+    root = Path(root)
+    methods = "qml/components/methods"
+    files = {
+        f"{methods}/demo/DemoEngine.qml": 'import QtQuick\n// The demo facade.\nQtObject {\n  readonly property var api: ({\n'
+            '    "model": {"in": ["request"], "out": {"items": "DemoHelper.items"}},\n'
+            '    "solve": {"in": ["model"], "out": {"box": "DemoInternal.box"}},\n'
+            '    "drawn": {"in": ["result"], "out": {"": "DemoInternal.box"}},\n'
+            '    "pick": {"in": ["spot"], "out": {"": "DemoInternal.box"}, "extra": true}\n  })\n'
+            '  property var kept: [DemoHelper, DemoInternal]\n}\n',
+        f"{methods}/demo/DemoHelper.qml": qml("property var items: []"),
+        f"{methods}/demo/DemoInternal.qml": qml("property var box: null"),
+        f"{methods}/DemoRoot.qml": qml("property int n: 1"),
+        f"{methods}/sink/SinkEngine.qml": 'import QtQuick\n// The sink facade.\nQtObject {\n  readonly property var api: ({\n'
+            '    "model": {"in": ["request"], "out": {"": "x"}},\n    "solve": {"in": ["model"], "out": {"": "y"}}\n  })\n}\n',
+        "qml/services/DemoOwner.qml": "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.solve({}); }\n}\n",
+        "qml/components/DemoAdapter.qml": "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.model({}); DemoEngine.solve({}); }\n"
+            "  function settled() { Qt.callLater(run); } // allowed: apply the demo's first turn\n}\n",
+        "qml/components/DemoItem.qml": qml("property int n: 1"),
+        "qml/components/DemoPlugin.qml": qml("property int n: 1"),
+        "tests/demo/Rows.js": '.pragma library\n// The demo rows.\nvar rows = [{"id": "DEMO-01", "why": "a seed holds", '
+            '"call": "solve", "input": {}, "expect": {"rule": "demoSeeded"}}];\n',
+    }
+    for path, text in files.items():
+        write(root, path, text)
+    sink = demo_entry(prefix="DEMOS", facade="SinkEngine", folder=f"{methods}/sink", files=[], helpers=[], owners=[],
+                      adapters=[], itemPaths=[], pluginPaths=[], doc="docs/dev/core/engines.md",
+                      tests={"rows": "tests/sink/Rows.js"}, fedBy={"model": [{"from": "demo.solve", "seam": "demoFeed"}]})
+    demo = demo_entry(intakes={"solve": [{"from": "demo.model", "rule": "demoSeeded", "at": "qml/components/DemoAdapter.qml"}]})
+    text = json.loads(manifest_text(demo))
+    text["sink"] = sink
+    (root / "scripts" / "engines.json").write_text(json.dumps(text, indent=2) + "\n")
+    for entry in manifests.engines(text=json.dumps(text))[0].values():
+        for path in manifests.held_paths(entry):
+            if path.endswith(".qml") and not (root / path).exists():
+                write(root, path, qml())
+    doc = root / "docs/dev/core/engines.md"
+    lines = doc.read_text().split("\n")
+    at = lines.index("## Seam register")
+    separator = next(i for i in range(at, len(lines)) if lines[i].startswith("|") and set(lines[i]) <= set("|-: "))
+    lines.insert(separator + 1, "| demoFeed | The demo's box | rect | rest | `demo.solve` | `sink.model` | DemoRules |")
+    doc.write_text("\n".join(lines))
+
+
 class Manifests(unittest.TestCase):
     """scripts/manifests.py reads the engine manifest: `tests_for`, the keys it accepts and refuses,
     and its CLI, from fixture manifest text."""
@@ -814,6 +864,102 @@ class Manifests(unittest.TestCase):
             code, out = run_check(root, "manifests.py", "--other")
             self.assertEqual(code, 2)
             self.assertIn("--tests-for", out)
+
+
+class CheckEngines(unittest.TestCase):
+    """scripts/check_engines.py on a git copy of the tree holding the fixture engines: the unbroken
+    demo passes, the base is read on every run, and each rule fails on its breaking edit."""
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/core/engines.md")
+            demo_engine(root)
+            git(root, tmp, "init", "-q", "-b", "main")
+            git(root, tmp, "add", "-A")
+            git(root, tmp, "commit", "-q", "-m", "base")
+            base = git(root, tmp, "rev-parse", "HEAD")
+            self.assertEqual(run_check(root, "check_engines.py", "--base", base), (0, "engines ok\n"))
+            code, out = run_check(root, "check_engines.py", "--base", "nosuchref")
+            self.assertEqual(code, 1)
+            self.assertIn("can't read the base nosuchref", out)
+            self.assertNotIn("Traceback", out)
+
+            methods = "qml/components/methods"
+            edit_json(root / "scripts/engines.json", self.break_manifest)
+            files = [
+                (f"{methods}/x/X.qml", qml()),
+                (f"{methods}/PurityConfig.qml", qml(imports="import qs.config")),
+                (f"{methods}/PurityQuickshell.qml", qml(imports="import Quickshell")),
+                (f"{methods}/PurityDemoImport.qml", qml(imports="import qs.components.methods.demo")),
+                (f"{methods}/PurityTimer.qml", qml("\n  Timer {}")),
+                (f"{methods}/PurityNow.qml", qml("\n  function g() { return Date.now(); }")),
+                (f"{methods}/PurityDate.qml", qml("\n  function g() { return new Date(); }\n  function h() { return new Date(5); }")),
+                (f"{methods}/PurityRandom.qml", qml("\n  function g() { return Math.random(); }")),
+                (f"{methods}/PurityConsole.qml", qml("\n  function g() { console.log(1); }")),
+                (f"{methods}/PurityLater.qml", qml("\n  function g() { Qt.callLater(f); }")),
+                (f"{methods}/demo/DemoHelper.qml", qml("\n  property var a: DemoInternal.box")),
+                (f"{methods}/demo/DemoInternal.qml", qml("\n  property var box: DemoHelper.items")),
+                (f"{methods}/demo/DemoTraced.qml", qml("\n  function y() { EngineTrace.record(1); }")),
+                ("qml/components/Tracer.qml", qml("\n  function x() { return EngineTrace._store; }")),
+                ("qml/services/DemoOwner.qml", qml("\n  function run() { DemoEngine.model({}); DemoEngine.drawn({}); }")),
+                ("qml/components/DemoAdapter.qml", "import QtQuick\n// A fixture.\nItem {\n  function run() { DemoEngine.model({}); DemoEngine.solve({}); }\n"
+                 "  function settled() { Qt.callLater(run); } // allowed: apply the demo's first turn\n"
+                 "  function late() { Qt.callLater(run); }\n  function other() { Qt.callLater(run); } // allowed: nothing\n}\n"),
+                ("scripts/engines-exceptions.json", json.dumps({
+                    "qml/components/methods/PurityRandom.qml": {"rules": ["purity", "dag"], "reason": "fixture"},
+                    "qml/nowhere/*.qml": {"rules": ["purity"], "reason": "fixture"}})),
+                ("qml/components/DemoItem.qml", qml("\n  onPillsChanged: f()\n  function z() { setRequest(1); }")),
+            ]
+            code, out = run_check(root, "check_engines.py", "--base", base, files=files)
+        self.assertEqual(code, 1)
+        mine = "qml/components/methods"
+        self.assertEqual(missed(out, [
+            f"{mine}/x: placed x: not in the baseline",
+            "scripts/engines.json: placed ghost.folder:qml/components/methods/ghost: not in the baseline",
+            "scripts/engines.json: placed demo.files:qml/components/methods/Gone.qml: not in the baseline",
+            "scripts/engines.json: placed demo.helpers:qml/components/methods/demo/Gone.qml: not in the baseline",
+            f"{mine}/PurityConfig.qml: purity PurityConfig:qs.config: not in the baseline",
+            f"{mine}/PurityQuickshell.qml: purity PurityQuickshell:Quickshell: not in the baseline",
+            f"{mine}/PurityDemoImport.qml: purity PurityDemoImport:qs.components.methods.demo: not in the baseline",
+            f"{mine}/PurityTimer.qml: purity PurityTimer:Timer: not in the baseline",
+            f"{mine}/PurityNow.qml: purity g:Date.now: not in the baseline",
+            f"{mine}/PurityDate.qml: purity g:new Date(): not in the baseline",
+            "scripts/engines.json: placed ghost.facade:GhostEngine: not in the baseline",
+            "scripts/engines-exceptions.json: qml/components/methods/PurityRandom.qml lists dag, which no file under it hits",
+            "scripts/engines-exceptions.json: qml/nowhere/*.qml lists purity, which no file under it hits",
+            f"{mine}/PurityConsole.qml: purity g:console: not in the baseline",
+            f"{mine}/PurityLater.qml: purity g:Qt.callLater: not in the baseline",
+            "scripts/engines.json: dag demo.model:demo.model→demo.solve→demo.model: not in the baseline",
+            f"{mine}/demo/DemoHelper.qml: dag DemoHelper:DemoHelper→DemoInternal→DemoHelper: not in the baseline",
+            "scripts/engines.json: dag demo.drawn:demo.drawn→sink.solve: not in the baseline",
+            "scripts/engines.json: dag sink.model:noSuchSeam: not in the baseline",
+            "docs/dev/core/engines.md: dag demoFeed:demo.solve→sink.model: not in the baseline",
+            "tests/demo/Rows.js: dag demo.solve:noRowRule: not in the baseline",
+            "qml/services/DemoOwner.qml: dag run:drawn+model: not in the baseline",
+            f"{mine}/demo/DemoTraced.qml: trace y:EngineTrace.record: not in the baseline",
+            "qml/components/Tracer.qml: trace x:EngineTrace._store: not in the baseline",
+            "qml/components/DemoAdapter.qml: apply late:Qt.callLater: not in the baseline",
+            "qml/components/DemoAdapter.qml: apply other:Qt.callLater: not in the baseline",
+            "qml/components/DemoItem.qml: apply DemoItem:onPillsChanged: not in the baseline",
+            "qml/components/DemoItem.qml: apply z:setRequest: not in the baseline",
+        ]), [], out)
+        lines = out.splitlines()
+        self.assertEqual([l for l in lines if "PurityDemoImport" in l and "dag" in l], [], out)
+        self.assertEqual(len([l for l in lines if "PurityDemoImport" in l]), 1, out)
+        self.assertEqual([l for l in lines if "PurityRandom.qml: purity" in l], [], out)
+        self.assertEqual([l for l in lines if "settled" in l], [], out)
+        self.assertEqual([l for l in lines if "h:new Date" in l], [], out)
+
+    @staticmethod
+    def break_manifest(data):
+        data["demo"]["files"].append("qml/components/methods/Gone.qml")
+        data["demo"]["helpers"].append("Gone")
+        data["demo"]["fedBy"] = {"model": [{"from": "demo.solve"}]}
+        data["demo"]["intakes"]["solve"].append({"from": "demo.model", "rule": "noRowRule", "at": "qml/components/DemoAdapter.qml"})
+        data["sink"]["fedBy"] = {"model": [{"from": "demo.model", "seam": "noSuchSeam"}],
+                                 "solve": [{"from": "demo.drawn", "seam": "demoFeed"}]}
+        data["ghost"] = {**data["sink"], "prefix": "DEMOG", "facade": "GhostEngine", "folder": "qml/components/methods/ghost",
+                         "fedBy": {}, "tests": {"rows": "tests/ghost/Rows.js"}}
 
 
 class CheckPackages(unittest.TestCase):

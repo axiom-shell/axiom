@@ -267,3 +267,10 @@ TestCase {
 - A row calls exactly what one owner or adapter calls. A test that sequences calls with logic between them is a missing facade function. The one allowed sequence is a **declared feed**: an extra whose `api` entry says `"feeds": "<stage>"` returns `events`, and the owner hands each event unchanged to that stage. A feed is read from `api`; the runner does the same, as the feed rows above describe.
 
 OSD timelines (`tests/osd/`) are their own format, run by `tst_OSDSystems`, which uses only `differenceOf` and `messageOf`.
+
+## Seam register
+Every field or flow that crosses between two listed engines is a row here; ids are lowerCamel like a rule id, and the Producer and Consumers cells name stages as backticked `<engine>.<stage>`.
+
+| Id | Field / flow | Shape | Rate | Producer | Consumers | Rule owner |
+|---|---|---|---|---|---|---|
+
