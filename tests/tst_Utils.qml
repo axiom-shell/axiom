@@ -5,6 +5,10 @@ import qs.components.methods
 TestCase {
   name: "Utils"
 
+  RepoFiles {
+    id: files
+  }
+
   function test_valueAt() {
     const object = {
       "Bar": {
@@ -424,6 +428,31 @@ TestCase {
     compare(Utils.insetUnion(bounds, [], 0.5), []);
     // One reaching past bounds: its edge on bounds stays
     compare(flat(Utils.insetUnion(bounds, [Qt.rect(90, 40, 20, 10)], 0.5)), [[90.5, 40.5, 9.5, 9]]);
+  }
+
+  function test_subtractHoles() {
+    const flat = rs => rs.map(r => [r.x, r.y, r.width, r.height]);
+    const bounds = Qt.rect(0, 0, 100, 100);
+    const t = Utils.tieInset;
+    // No holes: bounds as it is
+    compare(flat(Utils.subtractHoles(bounds, [])), [[0, 0, 100, 100]]);
+    // One hole: its edges drawn in by tieInset
+    const one = Utils.subtractHoles(bounds, [Qt.rect(10, 10, 20, 10)]);
+    compare(flat(one), flat(Utils.subtractRects(bounds, [Qt.rect(10 + t, 10 + t, 20 - 2 * t, 10 - 2 * t)])));
+    verify(t > 0);
+    // Two meeting at x 30: the shared edge keeps its place
+    compare(flat(Utils.subtractHoles(bounds, [Qt.rect(10, 10, 20, 10), Qt.rect(30, 10, 20, 10)])), flat(Utils.subtractRects(bounds, [Qt.rect(10 + t, 10 + t, 40 - 2 * t, 10 - 2 * t)])));
+    // One past bounds: its edge on bounds stays
+    compare(flat(Utils.subtractHoles(bounds, [Qt.rect(90, 40, 20, 10)])), flat(Utils.subtractRects(bounds, [Qt.rect(90 + t, 40 + t, 10 - t, 10 - 2 * t)])));
+  }
+
+  function test_cut_rule_has_one_place() {
+    // The holes' cut is Utils.subtractHoles: no other file calls insetUnion
+    for (const path of ["qml/components/methods/FrameOutline.qml", "qml/components/reusable/HoledCopy.qml"]) {
+      const source = files.text(path);
+      verify(source.indexOf("insetUnion(") < 0, path);
+      verify(source.indexOf("Utils.subtractHoles(") >= 0, path);
+    }
   }
 
   function test_temperatureSymbol() {

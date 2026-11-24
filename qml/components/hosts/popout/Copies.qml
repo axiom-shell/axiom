@@ -80,6 +80,8 @@ Item {
       // second: nothing downstream, the key below and the copies' pieces,
       // is recomputed for it)
       readonly property var _sourceHoles: root.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
+      // (starts []/0, set once at completion, not bound: a binding would
+      // follow every equal rebuild until its first assignment broke it)
       property var strokeHoles: []
       Component.onCompleted: slot.strokeHoles = slot._sourceHoles
       on_SourceHolesChanged: {

@@ -3,12 +3,12 @@ import QtQuick
 
 // The screen border's frame (RoundedBorders) as geometry: the stroke's inner
 // side round the corner arcs, the frame's fill, the corner pieces' boxes and
-// the strip strokes left open under what joins the border. One set of rules, so the
-// border, its corner pieces and the backing window's copy of it agree. No
-// files, services or config: the caller passes `f` = { width, height (the
-// screen), outerLeft, outerTop, outerRight, outerBottom, innerLeft,
-// innerTop, innerRight, innerBottom, innerBorderRadius, strokeWidth } (screen
-// px) and one screen's border openings ({ edge, start, end }).
+// the strip strokes left open under what joins the border. One set of rules,
+// so the border, its corner pieces and the backing window's copy of it agree.
+// No files, services or config: the caller passes `f` = { width, height (the
+// screen), outerLeft, outerTop, outerRight, outerBottom, innerLeft, innerTop,
+// innerRight, innerBottom, innerBorderRadius, strokeWidth } (screen px) and
+// one screen's border openings ({ edge, start, end }).
 QtObject {
   id: root
 
@@ -96,7 +96,7 @@ QtObject {
     const horizontal = edge === "top" || edge === "bottom";
     const stroke = root.stripStroke(edge, length, frameWidth, innerBorderRadius, strokeWidth);
     const holes = openings.map(o => horizontal ? Qt.rect(o.start, stroke.y, o.end - o.start, stroke.height) : Qt.rect(stroke.x, o.start, stroke.width, o.end - o.start));
-    return Utils.subtractRects(stroke, Utils.insetUnion(stroke, holes, Utils.tieInset)).map(r => root.strokePixels(Qt.rect(origin.x + r.x, origin.y + r.y, r.width, r.height), origin, dpr));
+    return Utils.subtractHoles(stroke, holes).map(r => root.strokePixels(Qt.rect(origin.x + r.x, origin.y + r.y, r.width, r.height), origin, dpr));
   }
   // A corner piece's box on screen: where its stroke starts out from the
   // frame's inner side, past the integrated menus' strips
