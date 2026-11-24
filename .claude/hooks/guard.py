@@ -552,6 +552,7 @@ GENERATED = {
     "qml/components/surfaces/wallpaper/shaders/*.frag.qsb": "built from the .frag beside it (scripts/check_shaders.py --build)",
     "backend/internal/assets/data/*": "the binary's embedded copies (go generate writes them from the repo files)",
     "tests/fixtures/shared/*": "the shared fixtures, recorded from SchemaValidation.qml (scripts/dev/fixtures.py record)",
+    "tests/*Matrix.js": "a golden, written by scripts/dev/fixtures.py golden <Name>",
     "backend/internal/migrate/legacy/testdata/*": "the format-1 migration's frozen cases, recorded from the shell before its copy was removed",
     "docs/dev/generated/*": "the reference docs (scripts/gen_docs.py writes them; scripts/generate.sh rebuilds them)",
     "docs/dev/config/*": "the config reference (scripts/gen_docs.py writes it; scripts/generate.sh rebuilds it)",
