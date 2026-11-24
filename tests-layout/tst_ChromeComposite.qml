@@ -1125,7 +1125,7 @@ TestCase {
         "boxHeight": 30
       }, 50, m - sw);
       root.settle([dock]);
-      // (the band RoundedBorders.strokeHoles cuts: EdgeAttach.strokeHoleAcross)
+      // (the stroke's rows the strips leave open: EdgeAttach.strokeHoleAcross)
       const edge = EdgeAttach.strokeHoleAcross(m - sw, sw);
       const band = Qt.rect(dock.x + dock.coverStart, edge.start, dock.coverEnd - dock.coverStart, edge.size);
       return {
@@ -1202,8 +1202,8 @@ TestCase {
     ];
   }
   // The frame's fixture source, carrying RoundedBorders' contract
-  // (`strokeWidth`, `strokeHoles`, `framePath`, `innerPath`, `strokeRects`,
-  // `cornerBoxes`), its geometry FrameOutline's for a 160 x 100 screen with
+  // (`strokeWidth`, `framePath`, `innerPath`, `strokeRects`, `cornerBoxes`),
+  // its `strokeHoles` what the openings cut out of both, its geometry FrameOutline's for a 160 x 100 screen with
   // an `inset` px border. At radius 0 that is a sharp border: the stroke
   // along the inner edge, inside the frame
   Component {
@@ -1216,17 +1216,23 @@ TestCase {
       property real inset: 10
       readonly property real innerBorderRadius: radius
       readonly property real cornerSize: FrameOutline.cornerSize(spec)
-      // The strips' stroke rows and the corner windows' boxes as shown at
-      // this scale (BorderPanel.screenStroke, the corner's screenBox)
-      readonly property var strokeRects: root.strips(inset).map(st => {
+      // What RoundedBorders publishes, at this scale: the strips' stroke rows
+      // less the row's `strokeHoles` (BorderPanel.screenStrokePieces), and the
+      // boxes of the corner windows no hole covers (its `cornerBoxes`)
+      readonly property var strokeRects: [].concat(...root.strips(inset).map(st => {
         const r = FrameOutline.stripStroke(st.edge, st.length, inset, radius, strokeWidth);
-        return FrameOutline.strokePixels(Qt.rect(st.origin.x + r.x, st.origin.y + r.y, r.width, r.height), st.origin, root.dpr);
-      })
+        const row = FrameOutline.strokePixels(Qt.rect(st.origin.x + r.x, st.origin.y + r.y, r.width, r.height), st.origin, root.dpr);
+        return Utils.subtractRects(row, Utils.insetUnion(row, strokeHoles, Utils.tieInset));
+      }))
       readonly property var cornerBoxes: FrameOutline.corners.map(c => ({
             "box": FrameOutline.windowPixels(FrameOutline.cornerBox(spec, c.isLeft, c.isTop), root.dpr),
             "isLeft": c.isLeft,
-            "isTop": c.isTop
-          }))
+            "isTop": c.isTop,
+            "covered": strokeHoles.some(h => {
+              const b = FrameOutline.cornerBox(spec, c.isLeft, c.isTop);
+              return h.x <= b.x && h.y <= b.y && h.x + h.width >= b.x + b.width && h.y + h.height >= b.y + b.height;
+            })
+          })).filter(c => !c.covered)
       readonly property var spec: ({
           "width": 160,
           "height": 100,
@@ -1549,14 +1555,9 @@ TestCase {
     root.setStroke(2);
     const frame = frameComp.createObject(sources);
     frame.radius = 8;
-    const holes = FrameOutline.strokeHoles(frame.spec, [
-      {
-        "edge": "top",
-        "start": data.start,
-        "end": 60
-      }
-    ]);
     const box = FrameOutline.cornerBox(frame.spec, true, true);
+    const across = EdgeAttach.strokeHoleAcross(frame.inset - frame.strokeWidth, frame.strokeWidth);
+    const holes = [Qt.rect(data.start, across.start, 60 - data.start, across.size)].concat(data.covered ? [box] : []);
     const sceneOf = (stroke, h) => root.render([root.frameSpec(frame, root.blue, stroke, h)]);
     const plain = sceneOf(root.line(1), []);
     const bare = sceneOf(null, []);

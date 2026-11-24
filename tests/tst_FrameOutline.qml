@@ -105,28 +105,4 @@ TestCase {
     compare(r4(FrameOutline.cornerBox(spec({}), true, true)), [8, 8, 10, 10]);
     compare(r4(FrameOutline.cornerBox(spec({}), false, false)), [142, 82, 10, 10]);
   }
-
-  function test_strokeHoles_uncovered() {
-    const openings = [
-      {
-        "edge": "top",
-        "start": 14,
-        "end": 60
-      }
-    ];
-    compare(FrameOutline.strokeHoles(spec({}), openings).map(r => r4(r)), [[14, 7, 46, 1], [18, 8, 42, 3]]);
-    verify(!FrameOutline.cornerCovered(spec({}), openings, true, true));
-  }
-
-  function test_strokeHoles_covered() {
-    const openings = [
-      {
-        "edge": "top",
-        "start": 8,
-        "end": 60
-      }
-    ];
-    compare(FrameOutline.strokeHoles(spec({}), openings).map(r => r4(r)), [[8, 7, 52, 1], [18, 8, 42, 3], [8, 8, 10, 10]]);
-    verify(FrameOutline.cornerCovered(spec({}), openings, true, true));
-  }
 }

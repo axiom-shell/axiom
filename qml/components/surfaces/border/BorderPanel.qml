@@ -51,10 +51,9 @@ PanelWindow {
   readonly property rect stripStroke: FrameOutline.stripStroke(root.edge, root.length, root.frameWidth, root.innerBorderRadius, root.strokeWidth)
   readonly property real strokeStart: horizontal ? stripStroke.x : stripStroke.y
   readonly property var strokePieces: Utils.subtractSpans(root.strokeStart, root.length - root.strokeStart, root.openings)
-  // Where its stroke is on screen, on the device px its Rectangles fill, for
-  // the backing window's copy: the whole row between the corner pieces,
-  // before openings
-  readonly property rect screenStroke: FrameOutline.strokePixels(Qt.rect(placeOnScreen.placed.x + stripStroke.x, placeOnScreen.placed.y + stripStroke.y, stripStroke.width, stripStroke.height), placeOnScreen.placed, root.devicePixelRatio)
+  // Where its stroke pieces are on screen, on the device px its Rectangles
+  // fill, for the backing window's copy: the stroke less its openings
+  readonly property var screenStrokePieces: root.strokePieces.map(piece => FrameOutline.strokePixels(root.horizontal ? Qt.rect(placeOnScreen.placed.x + piece.start, placeOnScreen.placed.y + root.stripStroke.y, piece.end - piece.start, root.stripStroke.height) : Qt.rect(placeOnScreen.placed.x + root.stripStroke.x, placeOnScreen.placed.y + piece.start, root.stripStroke.width, piece.end - piece.start), placeOnScreen.placed, root.devicePixelRatio))
   readonly property var rowPieces: Utils.subtractSpans(0, root.length, root.openings)
   // An opening follows a surface in another window (sliding, a pill
   // growing): drawn here, but shown only once this window commits again

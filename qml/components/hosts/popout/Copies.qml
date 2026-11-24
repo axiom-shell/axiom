@@ -193,77 +193,63 @@ Item {
           width: root.width
           height: root.height
 
-          HoledCopy {
+          Shape {
             anchors.fill: parent
-            holes: slot.strokeHoles
-            fillOnly: frameFill
-            strokeOnly: frameStrokeOnly
-          }
+            preferredRendererType: Shape.CurveRenderer
 
-          Component {
-            id: frameStrokeOnly
+            ShapePath {
+              fillColor: slot.fill
+              fillRule: ShapePath.OddEvenFill
+              strokeColor: "transparent"
+              strokeWidth: 0
 
-            Item {
-              // The strips' stroke rows
-              Repeater {
-                model: slot.stroke.a > 0 ? (frame.src?.strokeRects ?? []) : []
-
-                delegate: Rectangle {
-                  required property rect modelData
-                  x: modelData.x
-                  y: modelData.y
-                  width: modelData.width
-                  height: modelData.height
-                  color: slot.stroke
-                }
-              }
-
-              // Then the corner pieces, over their ends, each cut at its window's box
-              Repeater {
-                model: slot.stroke.a > 0 ? (frame.src?.cornerBoxes ?? []) : []
-
-                delegate: Item {
-                  id: cornerClip
-                  required property var modelData
-                  x: modelData.box.x
-                  y: modelData.box.y
-                  width: modelData.box.width
-                  height: modelData.box.height
-                  clip: true
-
-                  Item {
-                    width: frame.src?.cornerSize ?? 0
-                    height: frame.src?.cornerSize ?? 0
-
-                    CornerPiece {
-                      borderRadius: frame.src?.innerBorderRadius ?? 0
-                      strokeWidth: frame.src?.strokeWidth ?? 0
-                      fillColor: "transparent"
-                      strokeColor: slot.stroke
-                      isLeft: cornerClip.modelData.isLeft
-                      isTop: cornerClip.modelData.isTop
-                    }
-                  }
-                }
+              PathSvg {
+                path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
               }
             }
           }
 
-          Component {
-            id: frameFill
+          // The frame's stroke is drawn as the border's own windows draw
+          // theirs, already left open: the strips' pieces
+          Repeater {
+            model: slot.stroke.a > 0 ? (frame.src?.strokeRects ?? []).length : 0
 
-            Shape {
-              anchors.fill: parent
-              preferredRendererType: Shape.CurveRenderer
+            delegate: Rectangle {
+              required property int index
+              readonly property rect piece: frame.src?.strokeRects[index] ?? Qt.rect(0, 0, 0, 0)
+              x: piece.x
+              y: piece.y
+              width: piece.width
+              height: piece.height
+              color: slot.stroke
+            }
+          }
 
-              ShapePath {
-                fillColor: slot.fill
-                fillRule: ShapePath.OddEvenFill
-                strokeColor: "transparent"
-                strokeWidth: 0
+          // Then the corner pieces, over their ends, each cut at its window's box
+          Repeater {
+            model: slot.stroke.a > 0 ? (frame.src?.cornerBoxes ?? []).length : 0
 
-                PathSvg {
-                  path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
+            delegate: Item {
+              id: cornerClip
+              required property int index
+              readonly property var corner: frame.src?.cornerBoxes[index]
+              x: corner?.box.x ?? 0
+              y: corner?.box.y ?? 0
+              width: corner?.box.width ?? 0
+              height: corner?.box.height ?? 0
+              clip: true
+
+              Item {
+                width: frame.src?.cornerSize ?? 0
+                height: frame.src?.cornerSize ?? 0
+
+                CornerPiece {
+                  borderRadius: frame.src?.innerBorderRadius ?? 0
+                  strokeWidth: frame.src?.strokeWidth ?? 0
+                  fillColor: "transparent"
+                  strokeColor: slot.stroke
+                  isLeft: cornerClip.corner?.isLeft ?? false
+                  isTop: cornerClip.corner?.isTop ?? false
                 }
               }
             }
