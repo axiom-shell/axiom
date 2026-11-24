@@ -7,7 +7,7 @@
 How `qml/services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
 
 ### Shape
-- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `OwnerRegistry`, `IpcTarget`, `KeptList`, …) are named for what they are. `KeptList` keeps a list a service rebuilds the same objects while it is equal (`fresh`, `idOf`, `oncePerTurn`, `items`; CompositorManager's lists, ScreenEdgeManager.bars).
+- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `OwnerRegistry`, `IpcTarget`, `KeptList`, …) are named for what they are. `KeptList` keeps a list a service rebuilds the same objects while it is equal (`fresh`, `idOf`, `oncePerTurn`, `items`; CompositorManager's lists, ScreenEdgeManager.bars). `DueTimer` arms one timer at an owner's `next`, re-reads the clock at least every minute and emits `due` once per `next`, so a deadline passed during a suspend still fires.
 - A service with an IPC target that nothing else references is created from `qml/shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
