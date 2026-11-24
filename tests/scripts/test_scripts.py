@@ -387,6 +387,11 @@ class CheckStructure(unittest.TestCase):
         # (Reach is also no OverlayView type and nothing uses it: the warning below)
         ("qml/services/core/Spawner.qml", qml("Process {}"), "qml/services/core/Spawner.qml: uses Process directly"),
         ("qml/services/Direct.qml", qml(), "qml/services/Direct.qml: directly in services/"),
+        ("qml/shell/Holed.qml", qml("// HoledItem\n    Item {}"), "qml/shell/Holed.qml:6: HoledItem or shadowHoles"),
+        ("qml/shell/Copy.qml", qml("HoledCopy {}"), "qml/shell/Copy.qml: uses HoledCopy"),
+        ("qml/shell/Shadow.qml", qml("OutsideShadow {}"), "qml/shell/Shadow.qml: uses OutsideShadow"),
+        ("qml/shell/Clear.qml", qml("property bool b: Appearance.translucent"), "qml/shell/Clear.qml: uses translucent"),
+        ("qml/shell/Blur.qml", qml("BlurShape {\n      shown: true\n    }"), "qml/shell/Blur.qml:6: a BlurShape whose `shown:` doesn't read `backed`"),
         ("qml/shell/Handler.qml", qml("IpcHandler {}"), "qml/shell/Handler.qml: an IpcHandler"),
         ("qml/shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
         ("qml/shell/FromEntries.qml", qml("function f(x) { return Object.fromEntries(x) }"), "Object.fromEntries or flatMap"),
@@ -472,6 +477,7 @@ class CheckStructure(unittest.TestCase):
     ]
     # What the check must say about the schema and the allowlist edits below (and Reach)
     EDITS = [
+        "chrome-drawing-allowlist.json: qml/services/core/Gone.qml no longer uses HoledCopy",
         "qml/components/views/Reach/: not a OverlayView type and not used anywhere",
         "BarWidget type 'Ghost' has no qml/components/bar/widgets/Ghost/Ghost.qml",
         "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
@@ -525,6 +531,7 @@ class CheckStructure(unittest.TestCase):
                 del defs["MicrophoneWidget"]["x-popoutModule"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "scripts/chrome-drawing-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["HoledCopy"]}))
             edit_json(root / "scripts/ui-local-pieces.json", lambda a: a["files"].update({
                 "qml/components/views/Gone.qml": {"rules": ["StateLayer"], "reason": "planted"},
                 "qml/components/views/NoReason.qml": {"rules": [], "reason": ""}}))
