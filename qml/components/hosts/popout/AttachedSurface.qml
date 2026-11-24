@@ -418,11 +418,13 @@ Item {
 
   // Fill: the outline, closed back along the attach edge.
   // Joined ends also cover the perpendicular stroke up to the fillet.
-  readonly property string fillPath: SurfaceOutline.fillPath(root._spec, root._m, root.width, root.height)
+  // (a copy reads its source's: AttachedSurfaceCopy)
+  property string fillPath: SurfaceOutline.fillPath(root._spec, root._m, root.width, root.height)
 
   // Stroke: the outline alone, open along the attach edge and on joined
   // ends, whose ends sit exactly on the strokes they continue
-  readonly property string strokePath: SurfaceOutline.strokePath(root._spec, root._m, root.width, root.height)
+  // (a copy reads its source's: AttachedSurfaceCopy)
+  property string strokePath: SurfaceOutline.strokePath(root._spec, root._m, root.width, root.height)
 
   SlideAnimation {
     id: slideContainer

@@ -188,6 +188,12 @@ TestCase {
   }
 
   Component {
+    id: copyComp
+
+    AttachedSurfaceCopy {}
+  }
+
+  Component {
     id: shapeComp
 
     BlurShape {}
@@ -2072,5 +2078,51 @@ TestCase {
     const line = root.over(root.line(1), root.filled(root.solid));
     root.near(cut.px(Math.floor(box.x + box.width / 2), box.y + box.height - 1), line, "the bottom run");
     root.near(cut.px(box.x + 1, Math.floor(box.y + box.height / 2)), line, "the left run");
+  }
+
+  // ---- a copy reads its source's paths ----
+
+  function test_copy_paths_are_the_sources_data() {
+    return [
+      {
+        "tag": "plain",
+        "props": {}
+      },
+      {
+        "tag": "joined",
+        "props": {
+          "joinStart": true,
+          "joinEnd": true,
+          "flushStart": true
+        }
+      },
+      {
+        "tag": "straight",
+        "props": {
+          "straight": true,
+          "startCornerRadius": 6
+        }
+      },
+      {
+        "tag": "detached",
+        "props": {
+          "detached": true,
+          "detachedOffset": 10
+        }
+      }
+    ];
+  }
+
+  function test_copy_paths_are_the_sources(data) {
+    const src = root.surface(data.props);
+    root.settle([src]);
+    const copy = createTemporaryObject(copyComp, sources, {
+      "source": src
+    });
+    verify(src.fillPath.length > 0 && src.strokePath.length > 0, "the source has paths");
+    compare(copy.fillPath, src.fillPath);
+    compare(copy.strokePath, src.strokePath);
+    compare(SurfaceOutline.fillPath(copy._spec, copy._m, copy.width, copy.height), src.fillPath, "its own derivation is the source's");
+    compare(SurfaceOutline.strokePath(copy._spec, copy._m, copy.width, copy.height), src.strokePath, "its own derivation is the source's");
   }
 }

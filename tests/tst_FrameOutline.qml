@@ -105,4 +105,16 @@ TestCase {
     compare(r4(FrameOutline.cornerBox(spec({}), true, true)), [8, 8, 10, 10]);
     compare(r4(FrameOutline.cornerBox(spec({}), false, false)), [142, 82, 10, 10]);
   }
+
+  function test_cornerCovered() {
+    const openings = [
+      {
+        "edge": "top",
+        "start": 8,
+        "end": 60
+      }
+    ];
+    verify(FrameOutline.cornerCovered(spec({}), openings, true, true));
+    verify(!FrameOutline.cornerCovered(spec({}), openings, false, true));
+  }
 }
