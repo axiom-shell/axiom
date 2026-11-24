@@ -12,6 +12,8 @@
     streaks, undo, remove, bad ids, JSON, overlapping changes
   - new_names.py lists a branch's added names: also defined, moved, components, schema keys,
     similar strings, .js names under tests/, generated paths skipped
+  - the ratchet (qml_modules.ratchet and its helpers, in a scratch git repo) and the engine manifest reader
+    (manifests.py), on small inputs
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -26,6 +28,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS = ROOT / "scripts"
@@ -52,6 +55,20 @@ def scratch_env(tmp):
     return env
 
 
+def git(repo, tmp, *args):
+    """Run git in `repo` under a scratch environment; its stdout, stripped."""
+    done = subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=repo,
+                          env=scratch_env(tmp), check=True, capture_output=True, text=True)
+    return done.stdout.strip()
+
+
+def write(root, path, text):
+    """Write `text` to `path` under `root`, making its folders."""
+    f = Path(root) / path
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(text)
+
+
 def fixture_root(tmp, *paths):
     """A copy of scripts/ and these repo paths under tmp. A check run from
     the copy checks the copy (each script finds the root from its own path),
@@ -71,8 +88,7 @@ def run_check(root, script, *args, files=()):
     """Write `files` ((path, text) pairs) into root, run scripts/<script>
     there; its exit code and output."""
     for path, text in files:
-        (root / path).parent.mkdir(parents=True, exist_ok=True)
-        (root / path).write_text(text)
+        write(root, path, text)
     done = subprocess.run([sys.executable, str(root / "scripts" / script), *args],
                           cwd=root, capture_output=True, text=True)
     return done.returncode, done.stdout + done.stderr
@@ -597,6 +613,207 @@ class CheckQmllint(unittest.TestCase):
         baseline = {"a.qml": {"k: m": 1, "j: n": 1}, "b.qml": {"x: y": 1}}
         self.assertEqual(against(found, lines, baseline), (["a.qml:3,9: k: m (1 new)", "c.qml:5: z: w"], ["b.qml: x: y (1 gone)"]))
         self.assertEqual(against(found, lines, found), ([], []))
+
+
+class Ratchet(unittest.TestCase):
+    """qml_modules' baseline compare (`baseline_diff`) and shrink-only ratchet, on small inputs
+    and a scratch git repo passed as `root`."""
+
+    PATH = "scripts/engines-baseline.json"
+    KNOWN = {"a.qml": {"purity": ["f:Date.now"]}}
+
+    def setUp(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import qml_modules
+        self.qm = qml_modules
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "repo"
+        self.root.mkdir()
+        git(self.root, self.tmp.name, "init", "-q", "-b", "main")
+        write(self.root, "README", "x\n")
+        git(self.root, self.tmp.name, "add", "-A")
+        git(self.root, self.tmp.name, "commit", "-q", "-m", "without a baseline")
+        self.bare = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+        write(self.root, self.PATH, json.dumps(self.KNOWN))
+        git(self.root, self.tmp.name, "add", "-A")
+        git(self.root, self.tmp.name, "commit", "-q", "-m", "baseline")
+        self.base = git(self.root, self.tmp.name, "rev-parse", "HEAD")
+
+    def ratchet(self, found, base=None, new_rules=()):
+        return self.qm.ratchet(found, self.PATH, base or self.base, set(new_rules), root=self.root)
+
+    def test_baseline_diff(self):
+        found = {"a.qml": {"k: m": 2, "j: n": 1}, "c.qml": {"z: w": 1}}
+        known = {"a.qml": {"k: m": 1, "j: n": 1}, "b.qml": {"x: y": 1}}
+        self.assertEqual(self.qm.baseline_diff(found, known), ([("a.qml", "k: m", 1), ("c.qml", "z: w", 1)], [("b.qml", "x: y", 1)]))
+        self.assertEqual(self.qm.baseline_diff(found, found), ([], []))
+
+    def test_numbered(self):
+        self.assertEqual(self.qm.numbered(["f:Date.now", "f:Date.now", "g:console", "f:Date.now"]),
+                         ["f:Date.now", "f:Date.now#2", "g:console", "f:Date.now#3"])
+
+    def test_new_and_fixed(self):
+        self.assertEqual(self.ratchet(self.KNOWN), [])
+        out = self.ratchet({"a.qml": {"purity": ["f:Date.now", "f:Date.now#2"]}})
+        self.assertEqual(out, ["a.qml: purity f:Date.now#2: not in the baseline (fix it, or add an exception with its reason to engines-exceptions.json)"])
+        self.assertEqual(self.ratchet({}), ["a.qml: purity f:Date.now: fixed, still baselined (delete the entry)"])
+
+    def test_malformed_baseline(self):
+        write(self.root, self.PATH, json.dumps({"f:Date.now": "tag"}))
+        self.assertEqual(self.ratchet({}), [f"{self.PATH}: not a {{file: {{rule: [symbol]}}}} baseline"])
+
+    def test_added_since_the_base(self):
+        grown = {"a.qml": {"purity": ["f:Date.now", "g:console"]}, "b.qml": {"dag": ["x:y"]}}
+        write(self.root, self.PATH, json.dumps(grown))
+        found = {"a.qml": {"purity": ["f:Date.now", "g:console"]}, "b.qml": {"dag": ["x:y"]}}
+        added = [f"a.qml: purity g:console: added to the baseline since {self.base} (a baseline only shrinks)",
+                 f"b.qml: dag x:y: added to the baseline since {self.base} (a baseline only shrinks)"]
+        self.assertEqual(self.ratchet(found), added)
+        self.assertEqual(self.ratchet(found, new_rules={"purity", "dag"}), [])
+        self.assertEqual(self.ratchet(found, new_rules={"a.qml", "b.qml"}), [])
+        self.assertEqual(self.ratchet(found, new_rules={"purity"}), added[1:])
+
+    def test_baseline_absent_at_the_base(self):
+        found = {"a.qml": {"purity": ["f:Date.now"]}}
+        self.assertEqual(self.ratchet(found, base=self.bare),
+                         [f"a.qml: purity f:Date.now: added to the baseline since {self.bare} (a baseline only shrinks)"])
+        self.assertEqual(self.ratchet(found, base=self.bare, new_rules={"purity"}), [])
+
+    def test_unreadable_base(self):
+        found = {"a.qml": {"purity": ["f:Date.now"]}}
+        for base in ("nosuchref", ""):
+            out = self.ratchet(found, base=base) if base else self.qm.ratchet(found, self.PATH, base, set(), root=self.root)
+            self.assertEqual(len(out), 1, out)
+            self.assertTrue(out[0].startswith(f"{self.PATH}: can't read the base {base}:"), out)
+        write(self.root, self.PATH, "{}")
+        self.assertIn("can't read the base nosuchref", self.ratchet({}, base="nosuchref")[0])
+
+    def test_file_at(self):
+        self.assertEqual(json.loads(self.qm.file_at(self.base, self.PATH, root=self.root)), self.KNOWN)
+        self.assertIsNone(self.qm.file_at(self.bare, self.PATH, root=self.root))
+        for base in ("nosuchref", ""):
+            with self.assertRaises(ValueError):
+                self.qm.file_at(base, self.PATH, root=self.root)
+
+    def test_add_to_baseline(self):
+        found = {"a.qml": {"purity": ["f:Date.now"], "dag": ["new:one"]}, "b.qml": {"apply": ["m:Qt.callLater"]}}
+        count = self.qm.add_to_baseline(found, self.PATH, set(), root=self.root)
+        self.assertEqual(count, 1)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), self.KNOWN)
+        count = self.qm.add_to_baseline(found, self.PATH, {"apply", "a.qml"}, root=self.root)
+        text = (self.root / self.PATH).read_text()
+        self.assertEqual(count, 3)
+        self.assertEqual(json.loads(text), {"a.qml": {"dag": ["new:one"], "purity": ["f:Date.now"]}, "b.qml": {"apply": ["m:Qt.callLater"]}})
+        self.assertTrue(text.endswith("}\n"))
+        self.qm.add_to_baseline({}, self.PATH, set(), root=self.root)
+        self.assertEqual(json.loads((self.root / self.PATH).read_text()), {})
+
+    def test_default_base(self):
+        with mock.patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}):
+            self.assertEqual(self.qm.default_base(root=self.root), "HEAD^1")
+        env = {k: v for k, v in os.environ.items() if k != "GITHUB_ACTIONS"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertEqual(self.qm.default_base(root=self.root), "origin/main")
+            git(self.root, self.tmp.name, "update-ref", "refs/remotes/origin/main", self.bare)
+            self.assertEqual(self.qm.default_base(root=self.root), self.bare)
+
+
+def demo_entry(**more):
+    """A filled manifest entry for the fixture engine `demo`."""
+    entry = {"prefix": "DEMO", "facade": "DemoEngine", "folder": "qml/components/methods/demo",
+             "files": ["qml/components/methods/DemoRoot.qml"], "helpers": ["DemoHelper"],
+             "owners": ["qml/services/DemoOwner.qml"], "adapters": ["qml/components/DemoAdapter.qml"],
+             "itemPaths": ["qml/components/DemoItem.qml"], "pluginPaths": ["qml/components/DemoPlugin.qml"],
+             "tests": {"rows": "tests/demo/Rows.js", "golden": {"DemoGolden": "tests/demo/golden.json"},
+                       "sweep": ["DemoSweep"], "pixel": ["tests-layout/tst_DemoPixels.qml"]},
+             "doc": "docs/dev/core/engines.md", "editPoints": {}}
+    return {**entry, **more}
+
+
+def manifest_text(entry=None, **top):
+    """A manifest's JSON text: `$flat`, the `top` sections and `entry` as the engine `demo`."""
+    return json.dumps({"$flat": {}, **top, **({"demo": entry} if entry else {})})
+
+
+class Manifests(unittest.TestCase):
+    """scripts/manifests.py reads the engine manifest: `tests_for`, the keys it accepts and refuses,
+    and its CLI, from fixture manifest text."""
+
+    def setUp(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import manifests
+        self.m = manifests
+
+    def test_tests_for(self):
+        text = manifest_text(demo_entry())
+        names = ["DemoEngine", "DemoGolden", "DemoPixels", "DemoSweep"]
+        for path in ("qml/components/methods/demo/Inside.qml", "qml/components/methods/DemoRoot.qml",
+                     "qml/services/DemoOwner.qml", "qml/components/DemoAdapter.qml", "qml/components/DemoItem.qml",
+                     "qml/components/DemoPlugin.qml", "qml/components/methods/demo/DemoHelper.qml", "tests/demo/Rows.js",
+                     "tests/demo/Fixtures.js"):
+            self.assertEqual(self.m.tests_for([path], text=text), names, path)
+        self.assertEqual(self.m.tests_for(["qml/components/methods/Other.qml", "qml/components/methods/demox/A.qml"], text=text), [])
+        self.assertEqual(self.m.tests_for(["qml/components/methods/Other.qml"], text=manifest_text()), [])
+
+    def test_golden_and_pixel(self):
+        text = manifest_text(demo_entry())
+        self.assertEqual(self.m.golden_file("DemoGolden", text=text), "tests/demo/golden.json")
+        self.assertIsNone(self.m.golden_file("Nope", text=text))
+        self.assertEqual(self.m.pixel_tests(text=text), ["tests-layout/tst_DemoPixels.qml"])
+        self.assertEqual(self.m.pixel_tests(text=manifest_text()), [])
+
+    def test_sections(self):
+        text = manifest_text(demo_entry(), **{"$domains": {"geo": {"uses": [], "tables": []}}})
+        self.assertEqual(list(self.m.engines(text=text)[0]), ["demo"])
+        self.assertEqual(self.m.engines(text=text)[1], [])
+        self.assertEqual(self.m.flat(text=text), {})
+        self.assertEqual(list(self.m.domains(text=text)), ["geo"])
+        self.assertEqual(self.m.engines(text=manifest_text())[0], {})
+        bare = demo_entry()
+        del bare["doc"]
+        self.assertEqual(self.m.engines(text=manifest_text(bare))[0]["demo"]["doc"], "")
+
+    def test_held_paths(self):
+        entry = self.m.engines(text=manifest_text(demo_entry()))[0]["demo"]
+        self.assertEqual(self.m.held_paths(entry), [
+            "qml/components/methods/demo", "qml/components/methods/DemoRoot.qml", "qml/components/methods/demo/DemoHelper.qml",
+            "qml/components/DemoItem.qml", "qml/components/DemoPlugin.qml", "qml/components/DemoAdapter.qml",
+            "qml/services/DemoOwner.qml", "tests/demo"])
+
+    def test_refused_manifests(self):
+        gone = demo_entry()
+        del gone["facade"]
+        cases = [
+            (manifest_text(demo_entry(phase="x")), "demo: unknown key phase"),
+            (manifest_text(demo_entry(tests={"rows": "r.js", "phase": 1})), "demo.tests: unknown key phase"),
+            (manifest_text(gone), "demo: missing key facade"),
+            (manifest_text(demo_entry(), **{"$flat": {"Helper": {"prefix": "DEMO", "tables": []}}}), "prefix DEMO is used by demo and $flat.Helper"),
+            (manifest_text(demo_entry(), **{"$domains": {"geo": {"uses": [], "prefix": "DEMO"}}}), "prefix DEMO is used by demo and $domains.geo"),
+            (manifest_text(demo_entry(), **{"$flat": []}), "$flat is not an object"),
+        ]
+        for text, message in cases:
+            errors = self.m.engines(text=text)[1]
+            self.assertTrue(any(message in e for e in errors), (message, errors))
+
+    def test_bad_json(self):
+        self.assertTrue(self.m.engines(text="{")[1][0].startswith("scripts/engines.json: not JSON"))
+        self.assertEqual(self.m.engines(text="{")[0], {})
+        self.assertEqual(self.m.flat(text="{"), {})
+        self.assertEqual(self.m.domains(text="{"), {})
+        self.assertEqual(self.m.tests_for(["qml/x.qml"], text="{"), [])
+
+    def test_cli(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp)
+            (root / "scripts" / "engines.json").write_text(manifest_text(demo_entry()))
+            code, out = run_check(root, "manifests.py", "--tests-for", "tests/demo/Rows.js", "qml/x.qml")
+            self.assertEqual((code, out.split()), (0, ["DemoEngine", "DemoGolden", "DemoPixels", "DemoSweep"]))
+            code, out = run_check(root, "manifests.py", "--tests-for", "qml/x.qml")
+            self.assertEqual((code, out), (0, ""))
+            code, out = run_check(root, "manifests.py", "--other")
+            self.assertEqual(code, 2)
+            self.assertIn("--tests-for", out)
 
 
 class CheckPackages(unittest.TestCase):
@@ -1583,21 +1800,13 @@ class NewNames(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.repo = Path(self.tmp.name)
-        self.write("qml/A.qml", "Item {\n  property int oldName: 1\n  function shared() {}\n"
+        write(self.repo, "qml/A.qml", "Item {\n  property int oldName: 1\n  function shared() {}\n"
                                 "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
-        self.write("qml/config/schema/s.yaml", "A:\n  type: object\n")
-        self.write("docs/dev/generated/g.py", "def keepme():\n")
-        self.git("init", "-q", "-b", "main")
-        self.git("add", "-A")
-        self.git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base")
-
-    def git(self, *args):
-        subprocess.run(["git", "-C", str(self.repo), *args], check=True, env=scratch_env(self.tmp.name))
-
-    def write(self, path, text):
-        f = self.repo / path
-        f.parent.mkdir(parents=True, exist_ok=True)
-        f.write_text(text)
+        write(self.repo, "qml/config/schema/s.yaml", "A:\n  type: object\n")
+        write(self.repo, "docs/dev/generated/g.py", "def keepme():\n")
+        git(self.repo, self.tmp.name, "init", "-q", "-b", "main")
+        git(self.repo, self.tmp.name, "add", "-A")
+        git(self.repo, self.tmp.name, "commit", "-q", "-m", "base")
 
     def run_names(self):
         out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py"), "--json"],
@@ -1610,11 +1819,11 @@ class NewNames(unittest.TestCase):
         return hits[0]
 
     def test_rows(self):
-        self.write("qml/A.qml", "Item {\n  property int newName: 1\n  function shared() {}\n"
+        write(self.repo, "qml/A.qml", "Item {\n  property int newName: 1\n  function shared() {}\n"
                                 "  Text { text: I18n.tr(\"Shrunk to {0}% on {1}\") }\n}\n")
-        self.write("qml/B.qml", "Item {\n  function shared() {}\n  Text { text: I18n.tr(\"shrunk to  {0} % on {1}\") }\n}\n")
-        self.write("qml/config/schema/s.yaml", "A:\n  type: object\n  newKey:\n    type: string\n    default: x\n    x-scope: machine\n")
-        self.write("docs/dev/generated/g.py", "def keepme():\n\ndef skipped():\n")
+        write(self.repo, "qml/B.qml", "Item {\n  function shared() {}\n  Text { text: I18n.tr(\"shrunk to  {0} % on {1}\") }\n}\n")
+        write(self.repo, "qml/config/schema/s.yaml", "A:\n  type: object\n  newKey:\n    type: string\n    default: x\n    x-scope: machine\n")
+        write(self.repo, "docs/dev/generated/g.py", "def keepme():\n\ndef skipped():\n")
         rows = self.run_names()
         self.assertEqual(self.find(rows, "function", "shared")["also"], ["qml/A.qml:3"])
         self.assertTrue(self.find(rows, "property", "newName")["moved"] is False)
@@ -1624,26 +1833,26 @@ class NewNames(unittest.TestCase):
         self.assertFalse([r for r in rows if r["file"].startswith("docs/dev/generated/")])
 
     def test_rename_is_moved(self):
-        self.write("qml/A.qml", "Item {\n  property string oldName: \"\"\n}\n")
+        write(self.repo, "qml/A.qml", "Item {\n  property string oldName: \"\"\n}\n")
         self.assertTrue(self.find(self.run_names(), "property", "oldName")["moved"])
 
     def test_text_summary(self):
-        self.write("qml/B.qml", "Item {}\n")
+        write(self.repo, "qml/B.qml", "Item {}\n")
         out = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "new_names.py")],
                              cwd=self.repo, capture_output=True, text=True).stdout
         self.assertIn("  component B  qml/B.qml:1", out)
         self.assertTrue(out.rstrip().endswith("1 names, 0 also defined elsewhere"))
 
     def test_js_under_tests(self):
-        self.write("tests/x/Rows.js", "var rows = [];\nfunction builder() {\n  var inner = 1;\n  return inner;\n}\n")
+        write(self.repo, "tests/x/Rows.js", "var rows = [];\nfunction builder() {\n  var inner = 1;\n  return inner;\n}\n")
         rows = self.run_names()
         self.find(rows, "var", "rows")
         self.find(rows, "function", "builder")
         self.assertFalse([r for r in rows if r["name"] == "inner"])
 
     def test_js_outside_tests_unscanned(self):
-        self.write("qml/x/A.js", "var a = 1;\nfunction f() {}\n")
-        self.write("data/x.js", "var a = 1;\nfunction f() {}\n")
+        write(self.repo, "qml/x/A.js", "var a = 1;\nfunction f() {}\n")
+        write(self.repo, "data/x.js", "var a = 1;\nfunction f() {}\n")
         self.assertFalse([r for r in self.run_names() if r["file"].endswith(".js")])
 
 
