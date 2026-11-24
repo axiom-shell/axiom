@@ -11,7 +11,7 @@
   - the Daily habits script (data/custom-widgets/habits.sh): add, check,
     streaks, undo, remove, bad ids, JSON, overlapping changes
   - new_names.py lists a branch's added names: also defined, moved, components, schema keys,
-    similar strings, generated paths skipped
+    similar strings, .js names under tests/, generated paths skipped
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -1633,6 +1633,18 @@ class NewNames(unittest.TestCase):
                              cwd=self.repo, capture_output=True, text=True).stdout
         self.assertIn("  component B  qml/B.qml:1", out)
         self.assertTrue(out.rstrip().endswith("1 names, 0 also defined elsewhere"))
+
+    def test_js_under_tests(self):
+        self.write("tests/x/Rows.js", "var rows = [];\nfunction builder() {\n  var inner = 1;\n  return inner;\n}\n")
+        rows = self.run_names()
+        self.find(rows, "var", "rows")
+        self.find(rows, "function", "builder")
+        self.assertFalse([r for r in rows if r["name"] == "inner"])
+
+    def test_js_outside_tests_unscanned(self):
+        self.write("qml/x/A.js", "var a = 1;\nfunction f() {}\n")
+        self.write("data/x.js", "var a = 1;\nfunction f() {}\n")
+        self.assertFalse([r for r in self.run_names() if r["file"].endswith(".js")])
 
 
 if __name__ == "__main__":
