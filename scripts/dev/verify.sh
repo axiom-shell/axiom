@@ -8,8 +8,9 @@
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_sizes, check_icons, check_docs and check_packages (a few
-#      seconds) on every change, then those of check_all.sh's other checks
+#   2. check_structure, check_engines, check_sizes, check_icons, check_docs
+#      and check_packages (a few seconds) on every change, then those of
+#      check_all.sh's other checks
 #      the change reaches, a deletion or a check script's own change
 #      included (a new check there gets a trigger here): qmllint, JSON
 #      validity, the unit tests the change touches (QML, and the
@@ -129,18 +130,25 @@ for f in "${changed[@]}"; do
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/dev/new_names.py) script_tests+=(NewNames) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
-  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
+  scripts/check_structure.py | scripts/quickshell-io-allowlist.json | scripts/bar-widget-exceptions.json) script_tests+=(CheckStructure CheckStyle) ;;
+  scripts/qml_modules.py) script_tests+=(CheckStructure CheckStyle Ratchet CheckQmllint CheckEngines) ;;
+  scripts/check_engines.py | docs/dev/core/engines.md | scripts/engines.json | scripts/engines-baseline.json | scripts/engines-exceptions.json) script_tests+=(CheckEngines) ;;
+  scripts/manifests.py) script_tests+=(Manifests CheckEngines) ;;
   scripts/check_style.py | scripts/style-exceptions.json) script_tests+=(CheckStyle) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
-  scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
+  scripts/check_qmllint.py) script_tests+=(CheckQmllint Ratchet) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
   scripts/check_shaders.py) script_tests+=(CheckShaders) ;;
-  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage) ;;
+  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage CheckEngines) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
 done
 [[ $schema -eq 1 ]] && tests+=(Config) i18n=1
+# The engine manifest's own mapping (scripts/manifests.py --tests-for): appended
+# through a separate array, so the loop's names stay
+mapfile -t mapped < <(python3 scripts/manifests.py --tests-for "${changed[@]}")
+tests+=("${mapped[@]}")
 
 reloads_before=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configuration" || true)
 
@@ -175,6 +183,7 @@ if [[ $qmlformat -eq 1 ]]; then
   step "qmlformat (every file)" scripts/check_qmlformat.sh
 fi
 step "structure" python3 scripts/check_structure.py
+step "engines" python3 scripts/check_engines.py
 step "sizes" python3 scripts/check_sizes.py
 step "style" python3 scripts/check_style.py
 # Warnings only (they never fail): show the size ones in the files you changed

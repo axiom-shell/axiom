@@ -1293,19 +1293,21 @@ def rpc_page():
 LAYERS_PATH = QML_ROOT / "components/methods/LayerStack.qml"
 
 
-def json_property(path, name):
-    """A QML property whose value is a plain-JSON array literal."""
+_ABSENT = object()
+
+
+def json_property(path, name, default=_ABSENT):
+    """A QML property whose value is a plain-JSON array or object literal (`property var x: [...]`,
+    `readonly property var x: ({...})`); `default` when it's absent, else exit; ValueError when the
+    literal isn't JSON."""
     text = path.read_text()
-    match = re.search(rf"property var {name}:\s*\[", text)
+    match = re.search(rf"property var {name}:\s*\(?\s*[\[{{]", text)
     if not match:
+        if default is not _ABSENT:
+            return default
         sys.exit(f"{rel(path)}: no `property var {name}: [...]`")
-    depth, i = 0, match.end() - 1
-    while i < len(text):
-        depth += {"[": 1, "]": -1}.get(text[i], 0)
-        if depth == 0:
-            break
-        i += 1
-    return json.loads(text[match.end() - 1: i + 1])
+    start = match.end() - 1
+    return json.loads(text[start:_skip_balanced(text, start)])
 
 
 def layers_page():
