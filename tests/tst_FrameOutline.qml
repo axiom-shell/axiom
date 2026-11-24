@@ -38,7 +38,7 @@ TestCase {
     compare(FrameOutline.innerPath(spec({}), 160, 100), "M 16 10 L 144 10 A 6 6 0 0 1 150 16 L 150 84 A 6 6 0 0 1 144 90 L 16 90 A 6 6 0 0 1 10 84 L 10 16 A 6 6 0 0 1 16 10 Z");
   }
 
-  // Radius 0 and 1 with stroke 2: the arc's radius is 0 (R45)
+  // Radius 0 and 1 with stroke 2: the arc's radius is 0 and the formula is clamped
   function test_innerPath_radius_0() {
     compare(FrameOutline.innerPath(spec({
       "innerBorderRadius": 0
@@ -81,7 +81,7 @@ TestCase {
     compare(pieces[0].cuts[0].ellipse, false);
     compare(pieces[0].cuts[0].radius, 6);
   }
-  // The cut's radius is innerPath's (R45)
+  // The cut's radius is innerPath's
   function test_blurRegion_radius_0() {
     compare(FrameOutline.blurRegion(spec({
       "innerBorderRadius": 0

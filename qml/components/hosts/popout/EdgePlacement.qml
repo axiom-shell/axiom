@@ -398,7 +398,7 @@ QtObject {
   property var attachedSurface: null
   property bool opens: false
   // A tiled menu draws no box (AttachedSurface.hollow): it opens none of the
-  // strokes it covers, which run on under its tiles (PX-6); its stretches and
+  // strokes it covers, which run on under its tiles; its stretches and
   // walls stay
   readonly property bool _hollow: root.attachedSurface?.hollow ?? false
   // From the screen edge, how far in the surface's attach side is at

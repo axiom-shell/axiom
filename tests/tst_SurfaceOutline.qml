@@ -133,8 +133,8 @@ TestCase {
   // A fitted fillet (a fractional arc radius, so the arc's centre is off its
   // square's corner by δ > 0) on a vertical edge, where u runs down the
   // item: blurRegion's circle round each fillet's arc is centred on the arc
-  // the stroke draws, to the half pixel its pieces are rounded to (A2's rows
-  // are the top edge's)
+  // the stroke draws, to the half pixel its pieces are rounded to (the top edge's tests
+  // do the same for the horizontal case)
   function test_blurRegion_fillet_cuts_centre_on_the_arcs_vertical() {
     for (const edge of [ScreenEdge.Left, ScreenEdge.Right]) {
       const s = spec({

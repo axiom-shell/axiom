@@ -737,7 +737,7 @@ TestCase {
     root.near(tiled.px(40, 64), root.filled(root.solid), "under a tile, the tile's value");
   }
 
-  // ---- live erasing (C16's Copies half) ----
+  // ---- live erasing of the tiles' copies ----
 
   // The slots of `copies` (a Repeater's items: those with a `key`)
   function slotsOf(copies) {
@@ -837,7 +837,7 @@ TestCase {
       root.near(after.px(p[0], p[1]), before.px(p[0], p[1]), `back as it was at ${p}`);
   }
 
-  // ---- the must-not rows (PX-7 rejected, D45, R50) ----
+  // ---- the must-not rows: no gap, line or break may show where a popout joins the bar or border ----
 
   // A real AttachedSurface placed at (x, y) in the scene, as its host would
   function placed(props, x, y) {
