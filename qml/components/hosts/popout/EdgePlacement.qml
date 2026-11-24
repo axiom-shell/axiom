@@ -224,8 +224,15 @@ QtObject {
   readonly property var _pills: root.pillBar ? (root.container?.pillRects ?? []).map(p => Object.assign({}, p, {
       "start": p.start + root.barStart
     })) : []
-  // How far a transparent bar's box moves in to line up with the windows
-  readonly property real _detachedPush: root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + (CompositorManager.gapsOut[root.edgeName] ?? 0) - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), root.connectorGap) : 0
+  // How far a transparent bar's box moves in to line up with the windows as
+  // they start past it when it reserves its space, whether it does or not
+  // (the same spot either way)
+  readonly property real _detachedPush: {
+    if (!root.barConfig)
+      return 0;
+    const gapsOut = CompositorManager.gapsOut[root.edgeName] ?? 0;
+    return BarsConfig.detachedPush(root.barConfig, Math.max(ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + gapsOut - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), gapsOut - root.barConfig.trim), root.connectorGap);
+  }
   // --- Its box (SurfaceContext.layout) ---
   readonly property var _layout: SurfaceContext.layout(root.frame, Object.assign({}, root._params, {
     "pills": root._pills,
@@ -242,7 +249,6 @@ QtObject {
     "detachedPush": root._detachedPush,
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
-    "layerOrder": CompositorManager.supports.layerOrder === true,
     "menuZone": root.bare ? 0 : ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName),
     "bare": root.bare
   }))
@@ -300,19 +306,13 @@ QtObject {
   readonly property real attachBase: root._layout.attachBase
   readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
-  // A detached box slides in from behind its edge: from the screen edge
-  // under the bars, its window on their layer ordered under them
-  // (slidesUnder), or else from the frame line, coming out of what's on
-  // the edge (SurfaceContext)
-  // Whether the host's window is under the bars now, which it keeps while
-  // open (undefined: slidesUnder): where slideFrom starts
-  property var under: undefined
-  readonly property bool slidesUnder: root._layout.slidesUnder
+  // A detached box slides in from behind its edge: from the frame line,
+  // coming out of what's on the edge (SurfaceContext)
   readonly property bool slidesFromEdge: root._layout.slidesFromEdge
-  // How far back from its attach edge it starts (the screen edge or the
-  // frame line), whether or not it slides from there now (the host gates
-  // it on its latched slidesFromEdge)
-  readonly property real slideFrom: SurfaceContext.slideFrom(root._layout, root.under)
+  // How far back from its attach edge its window edge lies (the frame line;
+  // signed, SurfaceContext.slideFrom), whether or not it slides from there
+  // now (the host gates it on its latched slidesFromEdge)
+  readonly property real slideFrom: SurfaceContext.slideFrom(root._layout)
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property int backfill: root._layout.backfill
   // How a joined submenu meets the stroke the box grows from, from where

@@ -82,36 +82,20 @@ PopoutWrapperBase {
   property real edgeOffset: root.attachAt - root.attachBase
   // A detached box (held, over a fullscreen window, or past a bar it
   // doesn't grow out of) slides in from off the screen
-  // (EdgePlacement.slidesFromEdge): under the bars where it can, its
-  // window on their layer ordered under them (EdgePlacement.slidesUnder;
-  // the daemon's layer rules, render.LayerRulesLua), else over them on the
-  // Overlay layer (no supports.layerOrder). Both follow only while closed,
-  // as BarPopouts.underBar: they change the window's layer, namespace and
-  // size. Whether it slides from
-  // the edge also follows as it jumps over a fullscreen window or back
-  // (`_snapping`); its namespace can't change while mapped, so `_under`
-  // doesn't: over a fullscreen window its window goes to the Overlay layer
-  // (windowLayer), and back under the bars after.
-  // One that fades (`fade`, a detached box only) fades in where it sits,
-  // on the Overlay layer.
-  property ClosedLatch _under: ClosedLatch {
-    source: placement.slidesUnder && !root.fades
-    closed: !root.occupied
-  }
-  readonly property bool slidesUnder: root._under.value ?? false
+  // (EdgePlacement.slidesFromEdge), out of the frame line, its window on
+  // the Overlay layer. Whether it slides from the edge follows only while
+  // closed, and as it jumps over a fullscreen window or back (`_snapping`).
+  // One that fades (`fade`, a detached box only) fades in where it sits.
   property ClosedLatch _fromEdge: ClosedLatch {
     source: placement.slidesFromEdge && !root.fades
     closed: !root.occupied || root._snapping
   }
-  // How far back from its attach edge it slides in from: the screen edge
+  // How far back from its attach edge its window edge lies: the frame line
+  // (the screen edge over a fullscreen window), signed
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
-  // Its window's layer: Overlay unless it slides under a bar (and isn't
-  // over a fullscreen window, which hides that layer: the layer of a
-  // mapped window changes in place, nothing maps)
-  readonly property int windowLayer: root.slidesUnder && !root._overFullscreen ? WlrLayer.Top : WlrLayer.Overlay
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
-  readonly property bool onOverlayLayer: root.windowLayer === WlrLayer.Overlay
+  readonly property bool onOverlayLayer: true
   property color fillColor: Style.surfacePage
   property color strokeColor: Style.frameStroke
   // No box of its own drawn, only its content (AttachedSurface.hollow: a
@@ -123,13 +107,13 @@ PopoutWrapperBase {
   property bool grabEnabled: true
   // Other windows the grab lets input through to
   property var grabWindows: []
-  // Its layer namespace unless it slides under (layer rules stack by it)
+  // Its layer namespace
   property string overNamespace: "axiom-edge-popout"
   // The surface's window, its layer namespace, and the box within it
   window: surfaceWindow
   // The hover strip's window (a focus grab's partner, see MenuSync)
   readonly property var triggerWindow: trigger
-  readonly property string layerNamespace: root.slidesUnder ? "axiom-popout-under" : root.overNamespace
+  readonly property string layerNamespace: root.overNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
   // ...its content's top-left in the window where it rests
   readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
@@ -361,7 +345,6 @@ PopoutWrapperBase {
     showing: root.occupied && root.contentItem !== null && root.claimed
     open: root.isOpen && root.claimed
     onOverlayLayer: root.onOverlayLayer
-    under: root.windowLayer === WlrLayer.Top
     origin: placeOnScreen.origin
     attachedSurface: surface
     opens: surfaceWindow.visible && root.claimed
@@ -440,9 +423,7 @@ PopoutWrapperBase {
     // the border's and bars' reserved area; the -borderWidth margin then
     // lines it up with their inner stroke, whether that's a bar or the
     // plain border.
-    // Sliding under something, on its layer, ordered under it (see the
-    // daemon's layer rules, render.LayerRulesLua)
-    WlrLayershell.layer: root.windowLayer
+    WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: root.layerNamespace
     // Its top-left on its screen, or null while unknown (a wallpaper
     // picker's click point)
@@ -543,7 +524,7 @@ PopoutWrapperBase {
       window: surfaceWindow
       namespace: root.layerNamespace
       edge: root.edge
-      layer: root.windowLayer
+      layer: WlrLayer.Overlay
     }
 
     EdgeSurface {

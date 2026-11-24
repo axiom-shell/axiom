@@ -180,7 +180,8 @@ QtObject {
   // right): `gap` on each when it's set. Automatic (null), it lines up
   // with a floating bar on that edge (its float gap across; its islands
   // end where windows start, BarEnds.windowInset), else with the windows:
-  // how far past each frame line they start. `bare` (over a fullscreen
+  // how far past each frame line they start, with the bars there reserving
+  // their space (D80). `bare` (over a fullscreen
   // window, which covers the border and the bars): the screen's edges are
   // the frame lines, and Automatic is the gap windows keep from a bare
   // edge (floatGaps).
@@ -192,7 +193,7 @@ QtObject {
         "end": gap
       };
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
+    const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side), side === location && bar ? (CompositorManager.gapsOut[ScreenEdge.name(side)] ?? 0) - bar.trim : 0);
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {
       "across": windowGap(location),

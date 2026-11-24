@@ -23,7 +23,7 @@ TestCase {
 
   // The chrome slides itself, in every mode: no compositor animation
   function test_chrome_never_animated() {
-    const chrome = LayerStack.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications", "blur-backing", "shadows"]);
+    const chrome = LayerStack.barLayers.concat(["border", "popout", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications", "blur-backing", "shadows"]);
     for (const ns of chrome)
       verify(LayerStack.layers.find(l => l.namespace === ns)?.noAnim === true, ns + " has noAnim");
   }
@@ -63,15 +63,14 @@ TestCase {
   // window sits, under the chrome it shades, and never blurred
   function test_shadows_apart_order() {
     verify(order("blur-backing") > order("shadows"));
-    for (const ns of ["edge-menu", "popout-under", "bar", "border", "dock"])
+    for (const ns of ["edge-menu", "bar", "border", "dock"])
       verify(order("shadows") > order(ns), "under " + ns);
     verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurReduced, LayerStack.blurBackdrops).includes("shadows"), "shadows not blurred");
   }
 
   // A free menu's window: over the windows on Top, under the blur window
   // and the shadows (which draw its fill and shadow), under every popout
-  // that can be on Top (those sliding out from under the bars, the dock,
-  // and the rest wherever they are); its fill drawn by the blur window
+  // that can be on Top (the dock, and the rest wherever they are); its fill drawn by the blur window
   // and its popups blurred
   function test_free_menu_order() {
     const menu = order("menu");
@@ -80,7 +79,7 @@ TestCase {
     // Every popout on Top draws over it (one opening over it closes it,
     // or it gives way, pinned: PopoutManager; meanwhile, as its box
     // slides away, the popout is on top)
-    for (const ns of ["popout-under", "dock", "popout", "edge-popout", "dock-preview", "osd"])
+    for (const ns of ["dock", "popout", "edge-popout", "dock-preview", "osd"])
       verify(menu > order(ns), "under " + ns);
     verify(LayerStack.blurChrome.includes("menu"));
     verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops).includes("menu"), "never blurred whole");

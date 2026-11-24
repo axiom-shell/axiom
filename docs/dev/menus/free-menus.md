@@ -108,7 +108,7 @@ A menu with no edge (`MenusConfig.isFree`). Opened as a bar widget's popout it s
 ### Sharing with the edge hosts
 - **`MenuSync`.** It follows `MenuManager` and reports a self-close. Its `triggerWindow` is optional: a free menu has no hover strip. `shows` (default true) is false in the free hosts on the other screens (Which screen). It reports no frame (`placementOf` is null for a free menu).
 - **`MenuBody`.** Its cards are sized on the screen it shows on (`screen`). Its `edge` is `""` for a free menu or a submenu: the pin sits at the top right and growing modules grow downward. `GridPlacement.menuFillsEdge` is false for a free menu, whatever its kept `length`.
-- **Layer stack.** `axiom-menu` has order 7, beside the integrated menus (the two never meet), under the popouts that slide out from under the bars, and below the Overlay layer (popouts, the overlay). It is in `blurChrome`.
+- **Layer stack.** `axiom-menu` has order 7, beside the integrated menus (the two never meet), under every popout (the dock on Top, and the Overlay layer's: popouts, the overlay). It is in `blurChrome`.
 
 ### Testing
 - `tst_PopoutGeometry` (`test_free_menu`), `tst_FreeMenuPlace` (the place, `spot`, `keepsDrag`, `canDrag`, `ranksPinned`, `hosts`), the `test_free` row of `tst_SurfaceContext`, `tst_LayerStack` (`test_free_menu_order`, `test_sequence_free_menu_held`) and `tst_LayerArrange` (`test_full_screen_ignore`).

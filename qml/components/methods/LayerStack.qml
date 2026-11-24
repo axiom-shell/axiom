@@ -49,13 +49,7 @@ QtObject {
       "namespace": "menu",
       "order": 7,
       "noAnim": true,
-      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: those sliding out from under the bars and the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed)."
-    },
-    {
-      "namespace": "popout-under",
-      "order": 6,
-      "noAnim": true,
-      "why": "Detached popouts and floating edge menus: drawn under the bars and border, so they slide out from beneath them."
+      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: the dock on Top, and the Overlay layer's. Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed)."
     },
     {
       "namespace": "bar",
@@ -206,7 +200,7 @@ QtObject {
   readonly property var blurBackdrops: ["backdrop", "polkit", "screenshare"]
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
-  readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
+  readonly property var blurChrome: root.barLayers.concat(["popout", "edge-popout", "edge-menu", "menu", "dock"])
 
   // A namespace's order (with or without its "axiom-" prefix); 0 for one
   // not listed or without an order
