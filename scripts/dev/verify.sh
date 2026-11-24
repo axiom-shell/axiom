@@ -102,6 +102,13 @@ for f in "${changed[@]}"; do
     name="$(basename "$f" .qml)"
     [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
     ;;
+  # The row runner: its own test, and OSDSystems, which uses its compare
+  tests/EngineRows.qml) tests+=(EngineRows OSDSystems) ;;
+  tests/enginerows/*) tests+=(EngineRows) ;;
+  tests/flat/*.js)
+    name="$(basename "$f" .js)"
+    [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
+    ;;
   tests/tst_*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "$f" ]] && tests+=("${name#tst_}")
