@@ -14,10 +14,15 @@ declared as such, which qs's own VFS leaves out). Point a tool at it with
   scripts/qml_modules.py --layout OUT  the pure tree plus the layout harness's
                                      pieces (reusable/, the readers Style
                                      needs) over the stubs in tests-layout/stubs
+
+As a library it also holds the checks' shared baseline compare: `baseline_diff`
+for counted baselines, `ratchet` for symbol baselines that only shrink.
 """
 import json
+import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -60,6 +65,113 @@ def load_exceptions(path, rules, section=None):
                 errors.append(f"{path.name}: {key} names {rule}, not a rule")
         entries[key] = dict(entry, rules=listed, reason=entry.get("reason", ""))
     return entries, errors
+
+
+
+def baseline_diff(found, known):
+    """Compare two {file: {key: count}} maps: (new, gone), lists of (file, key, n),
+    `new` where found exceeds known by n (file, then key order), `gone` where known
+    exceeds found by n (known's own order)."""
+    new, gone = [], []
+    for name, counts in sorted(found.items()):
+        for key, n in sorted(counts.items()):
+            have = known.get(name, {}).get(key, 0)
+            if n > have:
+                new.append((name, key, n - have))
+    for name, counts in known.items():
+        for key, n in counts.items():
+            left = found.get(name, {}).get(key, 0)
+            if n > left:
+                gone.append((name, key, n - left))
+    return new, gone
+
+
+def numbered(symbols):
+    """Number the repeats of a symbol: the k-th (k >= 2) gets `#k`."""
+    seen, out = {}, []
+    for symbol in symbols:
+        seen[symbol] = seen.get(symbol, 0) + 1
+        out.append(symbol if seen[symbol] == 1 else f"{symbol}#{seen[symbol]}")
+    return out
+
+
+def file_at(base, path, root=ROOT):
+    """`path`'s text at git ref `base` (`git show <base>:<path>` run in `root`), None when
+    the path is absent at a readable base; ValueError when the base can't be read."""
+    if not base:
+        raise ValueError(f"{path}: can't read the base {base}: no base given")
+    ref = subprocess.run(["git", "rev-parse", "--verify", f"{base}^{{commit}}"],
+                         cwd=root, capture_output=True, text=True)
+    if ref.returncode:
+        raise ValueError(f"{path}: can't read the base {base}: {ref.stderr.strip()}")
+    shown = subprocess.run(["git", "show", f"{base}:{path}"], cwd=root, capture_output=True, text=True)
+    return shown.stdout if shown.returncode == 0 else None
+
+
+def default_base(root=ROOT):
+    """The ref a check reads its baseline's base from: HEAD^1 in GitHub Actions (the merge
+    commit's first parent), else the merge-base with origin/main; `origin/main` when that
+    fails, so `file_at` reports it."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        return "HEAD^1"
+    done = subprocess.run(["git", "merge-base", "origin/main", "HEAD"], cwd=root, capture_output=True, text=True)
+    return done.stdout.strip() if done.returncode == 0 and done.stdout.strip() else "origin/main"
+
+
+def _baseline(text):
+    """A {file: {rule: [symbol]}} baseline's text parsed, or None when it has another shape."""
+    try:
+        data = json.loads(text)
+    except ValueError:
+        return None
+    ok = isinstance(data, dict) and all(
+        isinstance(rules, dict) and all(isinstance(syms, list) and all(isinstance(s, str) for s in syms)
+                                        for syms in rules.values())
+        for rules in data.values())
+    return data if ok else None
+
+
+def _baseline_entries(baseline):
+    return {(f, r, s) for f, rules in baseline.items() for r, syms in rules.items() for s in syms}
+
+
+def ratchet(found, path, base, new_rules, root=ROOT):
+    """Hold found {file: {rule: [symbol]}} to the baseline at `path` (repo-relative) in `root`:
+    error lines for a hit not in the baseline, a baselined one that's gone, and an entry added
+    since `base` whose rule and file aren't in `new_rules`. The base is read on every call."""
+    try:
+        at_base = file_at(base, path, root)
+    except ValueError as e:
+        return [str(e)]
+    file = Path(root) / path
+    known = _baseline(file.read_text()) if file.exists() else {}
+    if known is None:
+        return [f"{path}: not a {{file: {{rule: [symbol]}}}} baseline"]
+    before = _baseline_entries(_baseline(at_base) or {}) if at_base is not None else set()
+    hits, listed = _baseline_entries(found), _baseline_entries(known)
+    errors = []
+    for f, r, s in sorted(hits - listed):
+        errors.append(f"{f}: {r} {s}: not in the baseline (fix it, or add an exception with its reason to {Path(path).name.replace('-baseline', '-exceptions')})")
+    for f, r, s in sorted(listed - hits):
+        errors.append(f"{f}: {r} {s}: fixed, still baselined (delete the entry)")
+    for f, r, s in sorted((listed & hits) - before):
+        if r not in new_rules and f not in new_rules:
+            errors.append(f"{f}: {r} {s}: added to the baseline since {base} (a baseline only shrinks)")
+    return errors
+
+
+def add_to_baseline(found, path, new_rules, root=ROOT):
+    """Write the baseline at `path`: its entries still found, plus found ones whose rule or file
+    is in `new_rules`. Returns the entry count."""
+    file = Path(root) / path
+    old = (_baseline(file.read_text()) if file.exists() else None) or {}
+    keep = _baseline_entries(old)
+    out = {}
+    for f, r, s in sorted(_baseline_entries(found)):
+        if (f, r, s) in keep or r in new_rules or f in new_rules:
+            out.setdefault(f, {}).setdefault(r, []).append(s)
+    file.write_text(json.dumps(out, indent=2) + "\n")
+    return sum(len(syms) for rules in out.values() for syms in rules.values())
 
 
 SINGLETON = re.compile(r"^\s*pragma\s+Singleton\b", re.M)

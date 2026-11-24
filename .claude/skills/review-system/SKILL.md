@@ -16,7 +16,7 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Scope
 
-Read only the system's entry in `systems.md` (`sed -n '/^## <system>$/,/^## /p'`). Its files: each **Docs** entry's `> **Files:**` header (line 3 of the doc: `sed -n 3p`; globs and `{a,b}` allowed, a folder `dir/` means the files directly in it), plus **Extra**. Size them with `wc -l`; don't open them. A path matching nothing is a finding (a moved file or a bad pattern hides code). Note the **Mode**, **Checks** and **Seams**.
+Read only the system's entry in `systems.md` (`sed -n '/^## <system>$/,/^## /p'`). Its files: each **Docs** entry's `> **Files:**` header (line 3 of the doc: `sed -n 3p`; globs and `{a,b}` allowed, a folder `dir/` means the files directly in it), plus **Extra**, or for an engine its manifest entry's files. Size them with `wc -l`; don't open them. A path matching nothing is a finding (a moved file or a bad pattern hides code). Note the **Mode**, **Checks** and **Seams**.
 
 ## 2. Slices
 

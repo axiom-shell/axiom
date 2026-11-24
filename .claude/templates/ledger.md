@@ -5,7 +5,7 @@ Filled by: the architect, as `ledger.md` in the state folder; only an architect'
 
 ## Where to search
 
-The one home of the search-before-writing list: `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the area's readers and services, `qml/config/schema/` shared definitions, the tests' helpers, existing `I18n.tr` strings. Search by verb and by noun, not only by name. A "none" comes with the grep.
+The one home of the search-before-writing list: the engine manifest `scripts/engines.json` and `docs/dev/generated/engine-manifest.md` (for engine names), `qml/components/methods/`, `qml/components/reusable/`, `docs/dev/core/shared-ui-pieces.md`, the area's readers and services, `qml/config/schema/` shared definitions, the tests' helpers, existing `I18n.tr` strings. Search by verb and by noun, not only by name. A "none" comes with the grep.
 
 ```
 # <slug>: ledger

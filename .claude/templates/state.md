@@ -6,15 +6,22 @@ Filled by: the lead, as `state.md` in the state folder, after every step. `/orch
 ```
 # <slug>: state
 Tier: T<n> (history) · Phase: plan | check <r> | group <g> | review <r> | verify | pr | ci | ready
-Tree: · Branch: · Base: (origin/main sha at creation) · Head: (last commit) · PR (#, base) per part
+Tree: · Branch: · Base: (origin/main sha at creation) · Head: (last commit) · PR (#, base; a stack: per part in Parts:)
 Plan check: round, verdict
 Groups: G<n> | status | commit | gate (clean / fix file) | NOT RUN or weak ids
 Last reviewed: <sha>
 Open questions (asked <date>)
 LIVE: lines · What users notice · Changed pieces → users checked
 Next: <one step>
+Spec: <spec file of the active part; default spec.md>
+Stack: <k> of <plan file> · <tree> · <open | paused (<what>) | done>
+Parts: <n>/<m> · <part id> · <branch> · base <branch below | main> @ <sha> · head <sha> · tier T<n> · last reviewed <sha | —> · PR #<n> | — · <open | in progress | paused (<what>) | PR #<n> | merged>
 ```
 
-- Skills read only `Base:`, `Head:`, `Tier:` and `Last reviewed:`; `/review-branch --state` writes `Last reviewed:`.
-- `Base:` is the origin/main sha the tree was created at (a stack's later part: the previous branch's head).
+- Skills read only `Base:`, `Head:`, `Tier:`, `Last reviewed:` and `Spec:`; `/review-branch --state` writes `Last reviewed:`.
+- `Base:` is the origin/main sha the tree was created at; in a stack, the part below's head (the bottom part: its `origin/main` sha).
+- In a stack, `Branch:`, `Base:`, `Head:`, `Tier:`, `Last reviewed:` and `Spec:` describe the active part; on every `git switch` to another part the lead writes them back to the active part's `Parts:` row and copies the next part's values up.
+- A `Parts:` row's `head` is updated after each commit of its part; it is the merged part's old tip the stack rebase rule cross-checks against `headRefOid`.
+- After a rebase that moves a part, once its range-diff has read the old values, its `Parts:` row's `base` and `head` take the new values (the active part's `Base:` and `Head:` too).
+- `Spec:`, `Stack:` and `Parts:` are stack-only except `Spec:` (default `spec.md`).
 - `Next:` is one step, enough for a fresh session to continue.
