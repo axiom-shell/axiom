@@ -39,7 +39,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - Its end pill joins there with a fillet, as into a solid bar's stroke.
 - It pushes the other bar a request (`bar/CornerMerge`, an `endReach` through `BarContainer.setRequest`) to run its end pill (or a stub) straight off its end, past that fillet.
   - That end is `straight`: no fillet into the border.
-  - Its far stroke is opened from where the fillet meets it, and its shadow follows round the fillet. That is where the fillet's stroke ends (`CornerMerge._filletTip`): its centre line, half a stroke in from the pill's far edge, on whole pixels (`SurfaceContext.opening`). Open any further and a row of the corner shows through.
+  - Its far stroke is opened from where the fillet meets it. That is where the fillet's stroke ends (`CornerMerge._filletTip`): its centre line, half a stroke in from the pill's far edge, on whole pixels (`SurfaceContext.opening`). Open any further and a row of the corner shows through.
 - The result is one stroke and one concave corner, as solid bars make.
 - Surfaces inside the reserved space (edge popouts, docks) are arranged after every bar. They therefore meet whatever bar is on the perpendicular edge, whichever bar owns the corner.
 

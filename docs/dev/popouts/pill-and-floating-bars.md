@@ -43,7 +43,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - The wall is where the surface's far wall rests (`EdgePlacement.joinReach`, from the layout's `attachAt`), never where it's drawn: the decision resizes the surface and its window a frame apart, and it slides in, so a measured wall moved and flipped the decision back.
   - The end curves into its far stroke with a fillet, as it would into a solid bar's.
   - The pill carries on past the fillet by its own corner's radius.
-  - Its far stroke is left open under the box and fillet. This is an opening with a fillet at that end (`startFillet`/`endFillet`), which the bar's shadow follows round.
+  - Its far stroke is left open under the box and fillet. This is an opening with a fillet at that end (`startFillet`/`endFillet`).
 - **Straight join:** otherwise the end runs straight (`straightJoinStart`/`End`).
   - It runs into a pill or stub that goes only as far as the far wall and squares there (`square`).
   - The wall runs on into its end.

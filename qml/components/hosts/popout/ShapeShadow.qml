@@ -67,7 +67,6 @@ Item {
       id: master
       target: small
       active: root._shown
-      hideTarget: true
       look: root.look
     }
   }

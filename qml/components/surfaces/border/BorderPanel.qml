@@ -47,8 +47,6 @@ PanelWindow {
         "start": o.start - root.screenOffset,
         "end": o.end - root.screenOffset
       }))
-  readonly property real strokeStart: horizontal ? stripStroke.x : stripStroke.y
-  readonly property var strokePieces: Utils.subtractSpans(root.strokeStart, root.length - root.strokeStart, root.openings)
   // Where its stroke pieces are on screen, on the device px its Rectangle
   // fills, for the backing window's copy: the stroke less its openings,
   // except that a pixel centred on an opening's edge is the stroke's
