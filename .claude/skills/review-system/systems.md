@@ -41,7 +41,7 @@ Extra: backend/internal/compositor/takeover/kinds.go backend/internal/compositor
 Checks:
 - The event stream recovers when niri restarts or the socket drops; state rebuilt, not patched.
 - KDL is written and parsed by one module, round-trips the user's own nodes untouched, and is never loaded into the live session from a test.
-- Every contract member behaves as the Hyprland one does, or is a declared `supports` gap; known niri gaps (no `layerFrameSync`, no `outputCapture`) are gated, not special-cased by name.
+- Every contract member behaves as the Hyprland one does, or is a declared `supports` gap; known niri gaps (no `outputCapture`) are gated, not special-cased by name.
 Seams: CompositorManager.
 
 ## compositor-parity

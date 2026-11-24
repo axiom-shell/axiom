@@ -85,11 +85,9 @@ Singleton {
   // an output, and every output is a strip. A column's windows shown as
   // tabs are its window groups. No outputCapture: it has only
   // wlr-screencopy, which crashes Quickshell's own capture
-  // (ScreenshotManager.grimFrames). No layerFrameSync: another layer's
-  // change can show a frame or so after the one sliding. It blurs behind
-  // the shell's surfaces where each window says (blurRegion: no alpha
-  // threshold, a layer rule would blur the whole window), its
-  // ext-background-effect. It has an overview of its own (overview) and a
+  // (ScreenshotManager.grimFrames). It blurs behind the shell's surfaces where
+  // each window says (blurRegion: no alpha threshold, a layer rule would blur
+  // the whole window), its ext-background-effect. It has an overview of its own (overview) and a
   // window switcher its config binds (compositorSwitcher). No release
   // binds, fullscreen opacity, blur contrast or focus-on-activate switch.
   // Window rules can't match XWayland or allow tearing.

@@ -88,7 +88,7 @@ How the context a surface needs (a pill to stand on, a pill reaching along a joi
     - Once ready it holds while the surface stays open, so a switch in place or a resize never pulls the box back.
     - Who waits: bar popouts, on `surface.active`; edge popouts, on `EdgePlacement.stretchReady`; docks, on `shown`. No stretch, no wait.
   - **A parent box stretching past its end** for a submenu longer than its side: see [Submenus › Lifetime](submenus.md#lifetime).
-- **Context along the slide follows the surface.** Its tip moves with the surface's drawn far wall, never past where it rests: with it, or a stroke ahead without `supports.layerFrameSync` (niri), where the bar can commit a frame or so after the surface's window (`EdgePlacement._slideLead`). Nothing waits for it.
+- **Context along the slide follows the surface.** Its tip moves with the surface's drawn far wall, never past where it rests. Nothing waits for it.
   - **A perpendicular pill bar's end pill** under a joined end (`PillBarJoin`, from `EdgePlacement._surfaceHidden`). Its far stroke opens only as far as the surface has come.
   - **The pill reach under a submenu** joined at its parent's bar side (`EdgePlacement._submenuReach`, from `SubmenuHost.hidden`).
   - A stub grown at the bar's end for one is never longer than the reach asked (`BarLayout.endReaches`), so it grows from the corner.
