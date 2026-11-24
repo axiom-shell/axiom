@@ -1,6 +1,6 @@
 # Adding a pure helper
 
-A helper is a singleton in `qml/components/methods/` holding pure functions: geometry, parsing, formatting, layout maths, walking the schema. It has no files, processes, timers or services, so it can be unit-tested outside the shell. At the end you have the helper, a `TestCase` for it, and callers that import it. Anything with side effects belongs in a [service](service.md) instead.
+A helper is a singleton in `qml/components/methods/` holding pure functions: geometry, parsing, formatting, layout maths, walking the schema. It follows the purity list in `.claude/rules/methods.md`, which `check_engines` › `purity` checks (no files, processes, timers or services), so it can be unit-tested outside the shell. At the end you have the helper, a `TestCase` for it, and callers that import it. Anything with side effects belongs in a [service](service.md) instead.
 
 **Copy from:** `qml/components/methods/ColorTemperature.qml` + `tests/tst_ColorTemperature.qml` (the smallest pair), `qml/components/methods/TimeZones.qml` + `tests/tst_TimeZones.qml`
 **Background:** [shared UI pieces](../dev/core/shared-ui-pieces.md) › Pure helpers (check that no helper already does the job: `Utils`, `Search`, `GridPlacement`, `SurfaceContext`, …), `docs/dev/generated/files.md` (`grep` it for what a file does)
@@ -18,7 +18,7 @@ A helper is a singleton in `qml/components/methods/` holding pure functions: geo
 5. Change the callers to use it.
 
 ## Watch out for
-- **No Quickshell.** `run_tests.sh` builds a `--pure` module tree (`scripts/qml_modules.py --pure`) that leaves out every file importing Quickshell, so a helper importing it, or any `qs.services.*` or `qs.config`, silently disappears and its test fails to find it. Pass values in as arguments.
+- **No Quickshell.** `run_tests.sh` builds a `--pure` module tree (`scripts/qml_modules.py --pure`) that leaves out every file importing Quickshell, so a helper importing it is left out and its test fails at import. A helper importing anything outside that list (`qs.services.*`, `qs.config`) fails `check_engines` › `purity`. Pass values in as arguments.
 - **JS engine gaps:** no `Array.prototype.flatMap` (use `[].concat(...arr.map(...))`), no `Object.fromEntries` (use `reduce`), both refused by `check_structure`; no `Intl` (time zones go through `TimeZoneManager` and `TimeZones.shift`, dates through `I18n.formatDate`).
 - **Don't mutate arguments.** Return new objects (`Utils.clone` makes deep copies).
 - **Geometry decisions** (`SurfaceContext`, `EdgeAttach`, `PopoutGeometry`, `BarEnds`, `GridPlacement`) have one source for every host. A new case is a rule in the helper plus a test row, never a special case in a host. Read the answer from the helper's output instead of working it out again in the caller.

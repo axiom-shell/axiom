@@ -1,12 +1,12 @@
 # Engines
 
-> **Files:** `tests/EngineRows.qml`, `tests/tst_EngineRows.qml`, `tests/enginerows/`
+> **Files:** `tests/EngineRows.qml`, `tests/tst_EngineRows.qml`, `tests/enginerows/`, `scripts/engines.json`, `scripts/manifests.py`, `scripts/check_engines.py`, `scripts/engines-baseline.json`, `scripts/engines-exceptions.json`
 > **Config:** none
 > **Related:** [Testing](../testing.md), [Shared UI pieces](shared-ui-pieces.md) (Pure helpers)
 
 What an engine is, the shape every engine facade takes, the rules that keep an engine readable, and the row format and runner its contract tests are written in. Read it before adding a decision module to `qml/components/methods/`, before writing rule rows for a helper, and before changing `tests/EngineRows.qml`.
 
-No module under `qml/components/methods/` is an engine today. The sections from What an engine is through Errors and logging are the rules a new engine follows; no check reads them, and review holds an engine against this page. The row format and the runner are code: `tests/EngineRows.qml` fails a row that breaks the format (see Not a row).
+No module under `qml/components/methods/` is an engine today. The sections from What an engine is through Errors and logging are the rules a new engine follows; `scripts/check_engines.py` checks the rules listed under Checks, and review holds an engine against the rest of this page. The row format and the runner are code: `tests/EngineRows.qml` fails a row that breaks the format (see Not a row).
 
 ## What an engine is
 An **engine** is a pure QML decision module in `qml/components/methods/<engine>/`, entered through one facade `<Name>Engine`. The folder is the facade's stem minus `Engine`, lower-cased: `ExampleEngine` lives in `example/`.
@@ -39,8 +39,8 @@ In priority order; each rules out a shape that made decisions hard to follow.
 |---|---|---|
 | **Facade** | one `pragma Singleton` `<Domain>Engine` of at most 200 lines; members in this order: `api`, `tuning`, the stage functions in stage order (`model`, `solve`, `reduce`, `drawn`), then extras; each stage destructures, calls named internals, returns | `methods/<engine>/<Name>Engine.qml` |
 | **Internal file** | stage bodies and rule tables | `methods/<engine>/` |
-| **Kit** | pure per-item formulas the engine's own drawing items call per delegate | `methods/<engine>/` |
-| **Feeder** | one owner member that returns the shell values (`env`) or a reducer's `entries`, with a `// reads:` line per config read; it gathers async inputs before the owner runs the engine | in the owner |
+| **Kit** | pure per-item formulas the engine's own drawing items call per delegate; the manifest's `kits` lists them | `methods/<engine>/` |
+| **Feeder** | one owner member that returns the shell values (`env`) or a reducer's `entries`, with a `// reads:` line per config read; it gathers async inputs before the owner runs the engine; the manifest's `feeder` names it | in the owner |
 | **Owner** | runs `model` and `reduce` (and `solve` for inputs it gathers and for its own surfaces); keeps lists with `KeptList` and objects with `Utils.keepEqual`; holds a reducer's memory in one `_prev` property; applies `effects` one turn after the run; logs `problems` | an existing `*Manager`, a reader, an editor service, or a per-instance base |
 | **Adapter** | the one item per host kind that builds the `request`, calls `solve` and `drawn` in one binding each and maps the result to typed scalar properties; it holds `solve`'s `prev` | the host's folder |
 | **Host** | windows, items, focus, IPC targets and animations (`SlideAnimation`, `Glide`); reads adapter properties and owner outputs, applies them, and never calls a facade | `hosts/`, `surfaces/` |
@@ -167,7 +167,7 @@ Engines never throw or log. An inconsistent input gives a safe result plus `prob
 - A helper's existing `_data` tables stay and keep passing. A kept table that pins a rule a rows file names prefixes each tag with the row id (`"DEMO-04 strip below 7 em"`); it becomes rows only when its rule changes. New rule rows for a helper go in `tests/flat/<Helper>.js`, run by an `EngineRows` inside the same `tst_<Helper>.qml`.
 - A helper that imports `qs.config`, `qs.services.*` or Quickshell gets no rows file: its decision moves into a pure helper first, or stays pinned by its existing test.
 - Rows land in the same change as the code they pin, all green; there are no pending or expected-failure rows.
-- A row id's prefix is an upper-case abbreviation of the engine or helper the rows test.
+- A row id's prefix is the `prefix` of the manifest entry its file belongs to (an engine's, or a root helper's own `$flat` entry): an upper-case abbreviation, unique across the manifest (`manifests.engines()` reports a repeat).
 - Checks that aren't a facade call (pixel checks, harness items) are not rows.
 
 ## The row format
@@ -267,6 +267,62 @@ TestCase {
 - A row calls exactly what one owner or adapter calls. A test that sequences calls with logic between them is a missing facade function. The one allowed sequence is a **declared feed**: an extra whose `api` entry says `"feeds": "<stage>"` returns `events`, and the owner hands each event unchanged to that stage. A feed is read from `api`; the runner does the same, as the feed rows above describe.
 
 OSD timelines (`tests/osd/`) are their own format, run by `tst_OSDSystems`, which uses only `differenceOf` and `messageOf`.
+
+## The manifest
+`scripts/engines.json` is the one place tooling learns an engine. It lists only engines whose facade exists and only the domain folders that exist: an engine enters when its facade is built, a domain folder when it is created. There is no lifecycle key; an entry describes the files as they are. `scripts/manifests.py` is its only reader (`engines()`, `flat()`, `domains()`, `tests_for()`, `golden_file()`, `pixel_tests()`), and it reports bad JSON, a missing or unknown key and a prefix used twice. Today the manifest lists no engine and an empty `$flat`.
+
+An engine's entry has these keys. Required: `prefix`, `facade`, `files`, `owners`, `adapters`, `tests` and `doc`, plus `editPoints`. Optional, empty by default: `folder`, `helpers`, `kits`, `uses`, `fedBy`, `intakes`, `itemPaths`, `pluginPaths`, `feeder`, `tables` and `alone`.
+
+| Key | Holds |
+|---|---|
+| `prefix` | the engine's contract-row id prefix, an abbreviation of the engine; nothing else |
+| `facade`, `folder` | the facade's name and the engine's folder under `methods/` |
+| `files` | the engine's files outside `folder`; an engine is **aligned** when `files` is empty and it has no baseline entry |
+| `helpers`, `kits` | files in the folder that are domain helpers, not engine internals; the kits the engine's drawing items call |
+| `uses` | the engine or domain folders its files may import |
+| `fedBy`, `intakes` | per stage, the cross-engine data edges and the named back edges (The engine graph), each naming its seam |
+| `owners`, `adapters`, `itemPaths`, `pluginPaths` | the files that call the facade, by role (Roles); `pluginPaths` are plug-in folders |
+| `feeder` | the owner member that gathers a stage's input |
+| `tables` | every rules table as `<File>.<property>` with its kind |
+| `tests` | `rows`, `golden`, `timeline`, `sweep` and `pixel` |
+| `doc`, `editPoints` | the engine's side doc and where each kind of edit goes |
+| `alone` | "this decision lives here alone" patterns |
+
+`$flat` holds one entry per root helper that has rows or rules tables, `{prefix, tables}`. `$domains` holds one entry per folder under `methods/` that is not an engine, `{uses, tables}` and a `prefix` where the folder has rows. A prefix is unique across engines, `$flat` and `$domains`.
+
+`python3 scripts/manifests.py --tests-for <path>...` prints the tests of every engine that holds one of the paths (its folder, `files`, `helpers`, `itemPaths`, `pluginPaths`, `adapters`, `owners` or rows folder): the facade's test, its `sweep`, `golden` and `pixel` names. `scripts/dev/verify.sh` runs it on the changed files, so editing a file of a listed engine runs that engine's tests.
+
+## The engine graph
+Nodes are `<engine>.<stage>`. The edges are:
+- the signature edges every engine has: `model` to `solve`, `solve` to `drawn`;
+- each `fedBy` entry: data a stage reads from another engine, naming its seam;
+- an `api` entry's `feeds`: an extra whose events a stage consumes inside one engine;
+- each `intakes` entry: a named back edge an owner or adapter builds. A cross-engine one names its seam; one whose `from` is its own engine names none.
+
+`check_engines` › `dag` holds the manifest and this page to each other:
+- the forward graph (signature edges, `fedBy`, `feeds`) is acyclic over all stage nodes, so a loop at rest is either broken by a declared intake or fails (Timing and flow: "Loops at rest are broken only by named intake rules");
+- no edge runs from a `drawn` node into another stage;
+- an owner or adapter file that calls two stages of one engine has an edge between them in that engine's graph, or the stage's `api` entry lists the other under `unfed` (the owner runs both and carries nothing from one into the other), so an owner-built feed cannot stay invisible;
+- every `fedBy` entry and every cross-engine `intakes` entry names a seam that is a row of the Seam register, and every register row between stages of two listed engines is such an entry;
+- every `intakes` rule is pinned by a row of the engine's rows file;
+- a `$domains` folder imports only the folders it `uses`, and a cycle among the `uses` of domain folders, or among the files of one engine folder, fails.
+
+## Checks
+`python3 scripts/check_engines.py` runs these rules over `qml/components/methods/` and the engines the manifest lists. It runs in `scripts/dev/verify.sh` and `scripts/check_all.sh`.
+
+| Rule | Applies to | Fails |
+|---|---|---|
+| `placed` | `methods/**` | a folder under `methods/` that is neither a listed engine's `folder` nor a `$domains` key; a listed `folder`, `files` or `helpers` path that does not exist; a listed engine whose facade file is missing |
+| `purity` | `methods/**` | an import other than `QtQuick`, `qs.components.methods` and the folders the file's engine or `$domains` entry `uses` (a root file has no `uses`, a listed engine's `files` included); `Timer {`; `Date.now(`; `new Date()`; `Math.random`; `console.`; `Qt.callLater` |
+| `dag` | listed engines, `$domains` | the graph rules above |
+| `trace` | everywhere under `qml/` | EngineTrace used in any form but `.record(`, `.forget(` or `.tracing`, or used in an engine's folder or `files` |
+| `apply` | an engine's `adapters` and `itemPaths` | a `Qt.callLater` without `// allowed: apply <what>` or `// allowed: settle <what>` on its line; an `onContactsChanged`, `onStretchChanged`, `onCoverChanged`, `onPillsChanged` or `onRequestsChanged` handler; a `setRequest(` call |
+
+A message reads `<file>: <rule> <symbol>: <what>`. The symbol is the enclosing root member and the matched token, `<member>:<token>` (the file's name when no member encloses it); a second instance in one file is numbered `<member>:<token>#2`.
+
+**Baseline.** `scripts/engines-baseline.json` is `{file: {rule: [symbol, ...]}}`: keyed by file and symbol, never a line number. It only shrinks. The check fails on a hit not in it, on an entry whose hit is gone (the change that fixes a hit deletes the entry), and on an entry added since the base. The base is `HEAD^1` in CI, where the checks job fetches two commits, and the merge-base with `origin/main` locally; `--base REF` names another. An entry added since the base is allowed only when its rule is absent from the base's rule list or its file belongs to an engine absent from the base's manifest. `--update-baseline` writes entries only in those cases and otherwise only removes entries whose hit is gone; nobody writes the file by hand.
+
+**Exceptions.** `scripts/engines-exceptions.json` holds permanent exceptions: a file pattern, the rules it waives and the reason, quoting an architect ruling in plain words. An exception that waives nothing fails.
 
 ## Seam register
 Every field or flow that crosses between two listed engines is a row here; ids are lowerCamel like a rule id, and the Producer and Consumers cells name stages as backticked `<engine>.<stage>`.
