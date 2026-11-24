@@ -22,6 +22,7 @@ TestCase {
         "none": {},
         "maybe": {},
         "list": {},
+        "divide": {},
         "watch": {
           "feeds": "reduce"
         },
@@ -50,6 +51,11 @@ TestCase {
 
     function list(input) {
       return input.list;
+    }
+
+    // NaN for 0 over 0
+    function divide(input) {
+      return input.a / input.b;
     }
 
     // Answers the events its input holds, which `reduce` is fed
@@ -340,181 +346,218 @@ TestCase {
         "expect": 5
       }
     ]), ["DEMO-95 step 0: output: expected 5, got null"]);
+    compare(failuresOf([
+      {
+        "id": "DEMO-96",
+        "why": "not a number",
+        "call": "divide",
+        "input": {
+          "a": 0,
+          "b": 0
+        },
+        "expect": 1
+      }
+    ]), ["DEMO-96 step 0: output: expected 1, got NaN"]);
   }
 
-  // Each kind of row the grammar refuses: `rows` as JSON, and what the one
-  // failure's message starts with
+  // Each kind of row the grammar refuses: `rows` as JSON, and the one
+  // failure's whole message
   function test_a_malformed_row_fails_once_data() {
     return [
       {
         "tag": "a repeated id",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":1}},{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: repeated id"
       },
       {
         "tag": "call missing",
         "rows": '[{"id":"DEMO-50","why":"w","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: call is not a function of the facade"
       },
       {
         "tag": "call not a function of the facade",
         "rows": '[{"id":"DEMO-50","why":"w","call":"nothing","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: call is not a function of the facade"
       },
       {
         "tag": "call not in the api",
         "rows": '[{"id":"DEMO-50","why":"w","call":"hidden","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: call is not in the facade's api"
       },
       {
         "tag": "both fixture and input",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":1},"fixture":"withPrev"}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: a row has exactly one of fixture, input, args"
       },
       {
         "tag": "none of fixture, input, args",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: a row has exactly one of fixture, input, args"
       },
       {
         "tag": "args with with",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","expect":{"answer":1},"args":[],"with":{"value":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: args can't have with"
       },
       {
         "tag": "args with steps",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","args":[],"steps":[{"expect":{"answer":1}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: args can't have steps"
       },
       {
         "tag": "args on a facade with api",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","expect":{"answer":1},"args":[1]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: an engine facade takes one input record, not args"
       },
       {
         "tag": "five args",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","expect":{"answer":1},"args":[1,2,3,4,5]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: args holds at most 4 values"
       },
       {
         "tag": "both expect and steps",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":1},"steps":[{"expect":{"answer":1}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: a row has exactly one of expect, steps"
       },
       {
         "tag": "neither expect nor steps",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: a row has exactly one of expect, steps"
       },
       {
         "tag": "a step now that is not a number",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"steps":[{"now":"10","expect":{"answer":1}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: a step's now is a number"
       },
       {
         "tag": "no literal leaf",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$absent":true}}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: no expect holds a literal value"
       },
       {
         "tag": "an unknown row key",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":1},"expected":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: unknown key expected"
       },
       {
         "tag": "an unknown step key",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"steps":[{"expected":{"answer":1}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: unknown step key expected"
       },
       {
         "tag": "a bad $ object",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$less":2,"x":1}}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: bad $ object: a $ key can't mix with other keys"
       },
       {
         "tag": "an unknown fixture",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","expect":{"answer":1},"fixture":"nothing"}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: unknown fixture"
       },
       {
         "tag": "a bad id",
         "rows": '[{"id":"demo-1","why":"w","call":"echo","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "demo-1: "
+        "message": "demo-1: bad id"
       },
       {
         "tag": "a missing id",
         "rows": '[{"why":"w","call":"echo","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "row 0: "
+        "message": "row 0: id is missing"
       },
       {
         "tag": "an empty why",
         "rows": '[{"id":"DEMO-50","why":"","call":"echo","input":{"value":1},"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: why is empty"
       },
       {
         "tag": "prev in a steps row's with",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"steps":[{"expect":{"answer":1}}],"with":{"prev":{}}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: with can't write prev"
       },
       {
         "tag": "prev in a feed row's with.<stage>",
         "rows": '[{"id":"DEMO-50","why":"w","call":"watch","input":{},"steps":[{"with":{"watch":{"prev":{}}},"expect":{"reduce":null}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: with can't write prev"
       },
       {
         "tag": "event in a feed row's with.<fed>",
         "rows": '[{"id":"DEMO-50","why":"w","call":"watch","input":{},"steps":[{"with":{"reduce":{"event":{}}},"expect":{"reduce":null}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: with can't write event"
       },
       {
         "tag": "event in a feed row's input.<fed>",
         "rows": '[{"id":"DEMO-50","why":"w","call":"watch","input":{"reduce":{"event":{}}},"expect":{"reduce":null}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: input can't write event"
       },
       {
         "tag": "a feed row's input with a key that is no stage",
         "rows": '[{"id":"DEMO-50","why":"w","call":"watch","input":{"other":1},"expect":{"reduce":null}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: input has other, which is no stage of the feed"
       },
       {
         "tag": "a feed row's with with a key that is no stage",
         "rows": '[{"id":"DEMO-50","why":"w","call":"watch","input":{},"steps":[{"with":{"other":1},"expect":{"reduce":null}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: with has other, which is no stage of the feed"
       },
       {
         "tag": "an input that is not an object",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":5,"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: input is not an object"
       },
       {
         "tag": "args that are not an array",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","args":5,"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: args is not an array"
       },
       {
         "tag": "steps that are not an array",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"steps":{}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: steps is not an array"
       },
       {
         "tag": "a step that is not an object",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"steps":[5]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: a step is an object"
       },
       {
         "tag": "a row's with that is not an object",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"with":5,"expect":{"answer":1}}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: with is not an object"
       },
       {
         "tag": "a step's with that is not an object",
         "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"steps":[{"with":5,"expect":{"answer":1}}]}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: with is not an object"
       },
       {
         "tag": "a feed row's expect that is not an object",
         "rows": '[{"id":"DEMO-50","why":"w","call":"watch","input":{},"expect":5}]',
-        "prefix": "DEMO-50: "
+        "message": "DEMO-50: expect is keyed by stage"
+      },
+      {
+        "tag": "$count not a number",
+        "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$count":"x"}}}]',
+        "message": "DEMO-50: bad $ object: $count takes a number"
+      },
+      {
+        "tag": "$less not a number",
+        "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$less":"x"}}}]',
+        "message": "DEMO-50: bad $ object: $less takes a number"
+      },
+      {
+        "tag": "$between not two numbers",
+        "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$between":[1]}}}]',
+        "message": "DEMO-50: bad $ object: $between takes an array of two numbers"
+      },
+      {
+        "tag": "$absent not true",
+        "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$absent":1}}}]',
+        "message": "DEMO-50: bad $ object: $absent takes true"
+      },
+      {
+        "tag": "an unknown $ key",
+        "rows": '[{"id":"DEMO-50","why":"w","call":"echo","input":{"value":1},"expect":{"answer":{"$other":1}}}]',
+        "message": "DEMO-50: bad $ object: unknown key $other"
       }
     ];
   }
@@ -526,7 +569,7 @@ TestCase {
     verify(entries[entries.length - 1].error !== "");
     const failures = failuresOf(JSON.parse(data.rows));
     compare(failures.length, 1);
-    verify(failures[0].startsWith(data.prefix), failures[0]);
+    compare(failures[0], data.message);
   }
 
   function test_difference_of_returns_the_first_differing_path() {

@@ -31,21 +31,21 @@ QtObject {
   // well-formed row
   function data() {
     const out = [];
-    const ids = {};
-    const tags = {};
+    const ids = new Set();
+    const tags = new Set();
     const list = root.rows ?? [];
     for (let index = 0; index < list.length; index++) {
       const row = list[index];
-      const named = root._isObject(row) && typeof row.id === "string";
-      let tag = named ? row.id + " " + (typeof row.why === "string" ? row.why : "") : "row " + index;
-      if (tags[tag] !== undefined)
+      const id = root._rowId(row);
+      let tag = id !== "" ? id + " " + (typeof row.why === "string" ? row.why : "") : "row " + index;
+      if (tags.has(tag))
         tag += " #" + index;
-      tags[tag] = true;
+      tags.add(tag);
       let error = root._grammarError(row);
-      if (named) {
-        if (ids[row.id] !== undefined)
+      if (id !== "") {
+        if (ids.has(id))
           error = "repeated id";
-        ids[row.id] = true;
+        ids.add(id);
       }
       out.push({
         "tag": tag,
@@ -61,8 +61,8 @@ QtObject {
   function run(data) {
     const row = data.row;
     if (data.error !== "") {
-      const named = root._isObject(row) && typeof row.id === "string";
-      root.testCase.verify(false, (named ? row.id : data.tag) + ": " + data.error);
+      const id = root._rowId(row);
+      root.testCase.verify(false, (id !== "" ? id : data.tag) + ": " + data.error);
       return;
     }
     const fed = root._fedOf(row.call);
@@ -111,7 +111,29 @@ QtObject {
   }
 
   function _textOf(value) {
-    return value === undefined ? "undefined" : JSON.stringify(value);
+    if (value === undefined || typeof value === "number" && !isFinite(value))
+      return String(value);
+    try {
+      return JSON.stringify(value);
+    } catch (e) {
+      return String(value);
+    }
+  }
+
+  // The row's id when it is an object with a string id, else ""
+  function _rowId(row) {
+    const id = root._isObject(row) ? row.id : undefined;
+    return typeof id === "string" ? id : "";
+  }
+
+  // The row's `with` then each step's, `undefined` entries kept
+  function _withsOf(row) {
+    return [row.with].concat((row.steps ?? []).map(step => step.with));
+  }
+
+  // The row's `expect` then each step's, `undefined` entries kept
+  function _expectsOf(row) {
+    return [row.expect].concat((row.steps ?? []).map(step => step.expect));
   }
 
   function _isObject(value) {
@@ -269,17 +291,14 @@ QtObject {
           return "a step's now is a number";
       }
     }
-    if (row.with !== undefined && !root._isObject(row.with))
-      return "with is not an object";
-    for (const step of row.steps ?? [])
-      if (step.with !== undefined && !root._isObject(step.with))
+    for (const patch of root._withsOf(row))
+      if (patch !== undefined && !root._isObject(patch))
         return "with is not an object";
     const fed = root._fedOf(row.call);
     const stageError = fed !== "" ? root._feedKeyError(row, fed) : root._prevKeyError(row);
     if (stageError !== "")
       return stageError;
-    const expects = [row.expect].concat((row.steps ?? []).map(step => step.expect));
-    return root._expectError(expects.filter(expect => expect !== undefined));
+    return root._expectError(root._expectsOf(row).filter(expect => expect !== undefined));
   }
 
   // The facade's api, or null for a helper
@@ -300,8 +319,7 @@ QtObject {
   function _prevKeyError(row) {
     if (row.steps === undefined)
       return "";
-    const withs = [row.with].concat(row.steps.map(step => step.with));
-    for (const patch of withs)
+    for (const patch of root._withsOf(row))
       if (root._isObject(patch) && patch.prev !== undefined)
         return "with can't write prev";
     return "";
@@ -328,8 +346,7 @@ QtObject {
       if (error !== "")
         return error;
     }
-    const withs = [row.with].concat((row.steps ?? []).map(step => step.with));
-    for (const patch of withs) {
+    for (const patch of root._withsOf(row)) {
       if (patch === undefined)
         continue;
       if (root._isObject(patch) && patch.prev !== undefined)
@@ -343,8 +360,7 @@ QtObject {
       if (error !== "")
         return error;
     }
-    const expects = [row.expect].concat((row.steps ?? []).map(step => step.expect));
-    for (const expect of expects) {
+    for (const expect of root._expectsOf(row)) {
       const error = expect === undefined ? "" : keyed(expect, "expect", "");
       if (error !== "")
         return error;

@@ -6,8 +6,10 @@
 
 What an engine is, the shape every engine facade takes, the rules that keep an engine readable, and the row format and runner its contract tests are written in. Read it before adding a decision module to `qml/components/methods/`, before writing rule rows for a helper, and before changing `tests/EngineRows.qml`.
 
+No module under `qml/components/methods/` is an engine today. The sections from What an engine is through Errors and logging are the rules a new engine follows; no check reads them, and review holds an engine against this page. The row format and the runner are code: `tests/EngineRows.qml` fails a row that breaks the format (see Not a row).
+
 ## What an engine is
-An **engine** is a pure QML decision module in `qml/components/methods/<engine>/`, entered through one facade `<Name>Engine`. The folder is the facade's stem minus `Engine`, lower-cased: `WorkspaceEngine` lives in `workspace/`.
+An **engine** is a pure QML decision module in `qml/components/methods/<engine>/`, entered through one facade `<Name>Engine`. The folder is the facade's stem minus `Engine`, lower-cased: `ExampleEngine` lives in `example/`.
 
 A domain is an engine when it:
 - takes inputs from more than one owner;
@@ -39,7 +41,7 @@ In priority order; each rules out a shape that made decisions hard to follow.
 | **Internal file** | stage bodies and rule tables | `methods/<engine>/` |
 | **Kit** | pure per-item formulas the engine's own drawing items call per delegate | `methods/<engine>/` |
 | **Feeder** | one owner member that returns the shell values (`env`) or a reducer's `entries`, with a `// reads:` line per config read; it gathers async inputs before the owner runs the engine | in the owner |
-| **Owner** | runs `model` and `reduce` (and `solve` for scene inputs it gathers); keeps lists with `KeptList` and objects with `Utils.keepEqual`; holds a reducer's memory in one `_prev` property; applies `effects` one turn after the run; logs `problems` | an existing `*Manager`, a reader, an editor service, or a per-instance base |
+| **Owner** | runs `model` and `reduce` (and `solve` for inputs it gathers and for its own surfaces); keeps lists with `KeptList` and objects with `Utils.keepEqual`; holds a reducer's memory in one `_prev` property; applies `effects` one turn after the run; logs `problems` | an existing `*Manager`, a reader, an editor service, or a per-instance base |
 | **Adapter** | the one item per host kind that builds the `request`, calls `solve` and `drawn` in one binding each and maps the result to typed scalar properties; it holds `solve`'s `prev` | the host's folder |
 | **Host** | windows, items, focus, IPC targets and animations (`SlideAnimation`, `Glide`); reads adapter properties and owner outputs, applies them, and never calls a facade | `hosts/`, `surfaces/` |
 | **Plug-in** | a folder of declarations (and a watcher) found by schema `kinds`; it calls only what its folder and the facade's declared extras offer | `surfaces/<area>/systems/<Type>/`, `bar/widgets/<Type>/`, `content/<Type>/` |
@@ -57,7 +59,7 @@ In priority order; each rules out a shape that made decisions hard to follow.
 - **Output nouns** are per engine (`scene`, `result`, `outcomes`, `changes`, `board`, …). A forwarded output keeps its name on every hop.
 
 ## Stages
-Four facade verbs plus two impure steps. This table is the contract every engine conforms to.
+Four facade verbs plus two impure steps. Every engine's stages follow this table.
 
 | Verb | Allowed input keys (required in **bold**) | Output (all keys present) | Rate | Caller | Never takes |
 |---|---|---|---|---|---|
@@ -118,10 +120,9 @@ QtObject {
 A producer's name never reuses a member name another file uses for a different quantity. No comment, `why` or row in the repo cites a plan, step or ticket id: a product value's comment says what the value is.
 
 ## Timing and flow
-Each named rule below is a rule id: a function or row named so, pinned by a contract row.
 - **Rates.** Rates are the table's. `solve` results don't depend on each other, except a child on its parent (`request.parent`) and the members of one set-solved request.
 - **Drawn-rate transport is by binding.** A drawn output another adapter or item reads is read through a property binding: never `Qt.callLater`, never an `on…Changed` handler that pushes it on. Membership (which publisher feeds which consumer) changes at rest; values travel by binding.
-- **Three deferrals, each marked.** `Qt.callLater` is used only to apply reducer `effects` and window, claim or compositor changes (and log `problems`), to coalesce a burst of an owner's changes (`KeptList` with `oncePerTurn`), and for a first-frame animation gate (a `Glide` enabled one turn after creation). Each carries `// allowed: apply <what>` or `// allowed: settle <what>`.
+- **Three deferrals, each marked.** Around an engine (its owner and adapters), `Qt.callLater` is used only to apply reducer `effects` and window, claim or compositor changes (and log `problems`), to coalesce a burst of an owner's changes (`KeptList` with `oncePerTurn`), and for a first-frame animation gate (a `Glide` enabled one turn after creation). In an adapter, each carries `// allowed: apply <what>` or `// allowed: settle <what>`.
 - **No output is an input of the same stage.** `prev` is what the owner or adapter stored after the last run. A host animation's current value (`motion.gliding`) is an input: its target is a rest output, its value is the host's `Glide`, never an engine's `drawn` output.
 - **Rest in, drawn out.** `state` carries rest values; a zone never follows a claim outcome.
 - **Owner-solves for scene inputs.** An input the model needs that only items can measure reaches the owner through one registry as a rest value, and the owner runs every stage that consumes it in one pass.
@@ -130,13 +131,12 @@ Each named rule below is a rule id: a function or row named so, pinned by a cont
 - **No reader carries a service's result.** A reader's shell fact that a service decides is a declared `// set by: <Service>` property that service alone writes; an engine feeder reads the owning service, never the reader's copy.
 - **Reducers answer in the call; one assignment per run.** An owner runs `reduce` synchronously inside the call that adds an entry or delivers an event (the whole set each time). A run reads `prev` from the owner's `_prev` at its start and stores its whole output into `_prev` in one assignment, as its last write; every public output is a readonly binding on `_prev`; effects are queued at that assignment in run order. A call arriving while the notifications of that assignment run reads `_prev` from its own run and assigns in turn.
 - **Loops at rest are broken only by named intake rules.** Where an engine's output reaches an upstream stage's input through a host or owner, a named rule reads only the field it names, and its contract row shows a fixed point in one step. A back edge with no such rule is a design error.
-- **An owner runs every stage that consumes a value only items can measure**, so the measure and its consumers change in one pass.
 
 ## Reactivity and budgets
 - No memo in `methods/`; memo lives in owners, keyed by identity.
 - Owners keep lists with `KeptList` and objects with `Utils.deepEqual` or `Utils.keepEqual` before assignment.
 - Adapters expose typed scalars; a pair of related facts comes from one result object ([QML pitfalls](qml-pitfalls.md)). Arrays are consumed by count.
-- Budgets (mean over a sweep, failing at five times): `drawn` at most 0.1 ms per run; `solve` at most 1 ms; `model` at most 2 ms per screen; `reduce` at most 1 ms for 32 entries.
+- Budgets (a mean per run): `drawn` at most 0.1 ms per run; `solve` at most 1 ms; `model` at most 2 ms per screen; `reduce` at most 1 ms for 32 entries.
 
 ## Readability
 - **Rule granularity.** `rule` sits on the smallest output object one rule decides. An object whose fields come from different rules carries `rules: {field: id}`. A boolean or number decided per id is `{value, rule}`.
@@ -164,7 +164,7 @@ Engines never throw or log. An inconsistent input gives a safe result plus `prob
 | **Unit `_data`** | `tests/tst_<Internal>.qml` | QtTest tables for big internal tables |
 | **Fixtures** | `tests/<engine>/Fixtures.js` | named builders. A file whose builders only return plain data is `.pragma library` (`tests/osd/*.js`); one whose builders use the importing test's facades and helpers is not (`tests/barstyle/Bars.js`) |
 
-- A helper's existing `_data` tables stay and keep passing. A kept table that pins a rule a rows file names prefixes each tag with the row id (`"MOD-04 strip below 7 em"`); it becomes rows only when its rule changes. New rule rows for a helper go in `tests/flat/<Helper>.js`, run by an `EngineRows` inside the same `tst_<Helper>.qml`.
+- A helper's existing `_data` tables stay and keep passing. A kept table that pins a rule a rows file names prefixes each tag with the row id (`"DEMO-04 strip below 7 em"`); it becomes rows only when its rule changes. New rule rows for a helper go in `tests/flat/<Helper>.js`, run by an `EngineRows` inside the same `tst_<Helper>.qml`.
 - A helper that imports `qs.config`, `qs.services.*` or Quickshell gets no rows file: its decision moves into a pure helper first, or stays pinned by its existing test.
 - Rows land in the same change as the code they pin, all green; there are no pending or expected-failure rows.
 - A row id's prefix is an upper-case abbreviation of the engine or helper the rows test.

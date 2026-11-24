@@ -6,8 +6,9 @@ import "osd/index.js" as Timelines
 // The OSD's timelines (tests/osd/): each row runs states through a
 // system's definition (systems/<Name>/<Name>.qml, loaded by its path) and
 // OSDEngine, step by step, and checks what each step shows and what a host
-// does with it. The timeline format: docs/dev/features/osd.md › Engine ›
-// Timelines (not runner rows; only the compare is the runner's). A row of a system with no folder fails
+// does with it. The timeline format (its own, not the runner's rows; only
+// the compare is shared): docs/dev/features/osd.md › Engine › Timelines. A
+// row of a system with no folder fails
 TestCase {
   id: root
   name: "OSDSystems"
@@ -56,8 +57,8 @@ TestCase {
   // Whether `actual` holds `expected`: the runner's subset compare
   // (EngineRows.differenceOf)
   function _holds(actual, expected, where) {
-    const d = rows.differenceOf(actual, expected);
-    verify(d === null, d ? rows.messageOf(where, d) : "");
+    const difference = rows.differenceOf(actual, expected);
+    verify(difference === null, difference === null ? "" : rows.messageOf(where, difference));
   }
 
   function test_timelines(data) {
