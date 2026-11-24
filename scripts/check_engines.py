@@ -436,13 +436,14 @@ def _table_entries(tables, files=None, folder=""):
     """([(key, kind, file, property, rows, ids)], [bad keys]) of an owner's `tables` object. A table's `<File>` is
     the stem of one of `files`, else a file of `folder`; `rows` is the property's JSON literal (None when it
     isn't one); `ids` are a cell or ordered table's row ids. A key that isn't `<File>.<property>` of an existing
-    file's property, an entry that isn't an object and a `kind` other than cell, ordered or rank is bad."""
+    file's property, an entry that isn't an object, a `kind` other than cell, ordered or rank and an `id` that
+    isn't a string is bad."""
     good, bad = [], []
     for key, entry in tables.items():
         stem, _, prop = key.partition(".")
         file = next((f for f in files if Path(f).stem == stem), None) if files is not None else f"{folder}/{stem}.qml"
         if not prop or "." in prop or not file or not (ROOT / file).is_file() or not isinstance(entry, dict) \
-                or entry.get("kind") not in ("cell", "ordered", "rank"):
+                or entry.get("kind") not in ("cell", "ordered", "rank") or not isinstance(entry.get("id", "name"), str):
             bad.append(key)
             continue
         try:
@@ -503,7 +504,8 @@ def _api(hits, engines):
             value = value if isinstance(value, dict) else {}
             if key not in functions:
                 hits.add(facade, "api", f"api.{key}:no function")
-            elif isinstance(value.get("in"), list) and _form_keys(lines, functions[key]) not in (None, set(value["in"])):
+            elif isinstance(value.get("in"), list) and all(isinstance(i, str) for i in value["in"]) \
+                    and _form_keys(lines, functions[key]) not in (None, set(value["in"])):
                 hits.add(facade, "api", f"api.{key}:in")
             for producer in value["out"].values() if isinstance(value.get("out"), dict) else []:
                 stem, _, member = str(producer).partition(".")
@@ -526,10 +528,10 @@ def _shape(hits, engines):
                 if verb and isinstance(value.get("in"), list):
                     allowed, groups = STAGES[verb]
                     for item in value["in"]:
-                        if item not in allowed:
+                        if not isinstance(item, str) or item not in allowed:
                             hits.add(facade, "shape", f"api.{key}:{item}")
                     for group in groups:
-                        if not group & set(value["in"]):
+                        if not group & {i for i in value["in"] if isinstance(i, str)}:
                             hits.add(facade, "shape", f"api.{key}:needs {'|'.join(sorted(group))}")
                 if key in functions and _form_keys(lines, functions[key]) is None:
                     hits.add(facade, "shape", f"{key}:form")
@@ -570,7 +572,8 @@ def _tables(hits, engines, flat, domains):
                 else:
                     if axes is None:
                         hits.add(file, "tables", f"{prop}:no axes")
-                    elif not isinstance(axes, dict) or not all(isinstance(v, list) for v in axes.values()):
+                    elif not isinstance(axes, dict) or not all(
+                            isinstance(v, list) and all(isinstance(i, (str, int, float, bool)) for i in v) for v in axes.values()):
                         hits.add(file, "tables", f"{prop}:axes not literal")
                         axes = None
             name_key = tables[key].get("id", "name")

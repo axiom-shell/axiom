@@ -32,7 +32,7 @@ Dependencies point one way: pure helpers (`qml/components/methods/`) at the bott
 | A feature (launcher, lockscreen, greeter, dock, OSD, chat, …) | `docs/dev/features/<feature>.md` |
 | Looking at or debugging the live shell; what each check catches | `docs/dev/testing.md` |
 | A page or panel slow to open, streaming (`StreamedLoader`), measuring it | `docs/dev/core/streamed-building.md` |
-| An engine: its stages, rows, runner, manifest and checks | `docs/dev/core/engines.md` |
+| An engine: its stages, rows, runner, manifest, checks and how to edit one | `docs/dev/core/engines.md` |
 | install.sh, AUR packages, packaged installs | `docs/dev/packaging.md` |
 | A setting: meaning, default, readers | `docs/dev/config/<Section>.md` (generated; `grep -rn 'Section.key' docs/dev/config/`) |
 | A bar widget / overlay module / view type's settings | `docs/dev/config/{BarWidgets,OverlayModules,OverlayViews}/<Type>.md` (generated) |
@@ -114,7 +114,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [i18n](core/i18n.md): translation mechanics, language files, `check_i18n.py`.
 - [shared-ui-pieces](core/shared-ui-pieces.md): index of reusable widgets and helpers. Check it before drawing anything.
 - [style](core/style.md): `Style`, the one place UI reads colours, text roles, icon sizes, radii and hairlines from; the colour math (`Tone`), the tokens (`StyleTokens`), the contrast pairs every theme is tested for.
-- [engines](core/engines.md): what an engine is, the facade and stage skeleton, the readability and timing rules, the row format and runner (`EngineRows`) its contract tests use, the manifest (`scripts/engines.json`), the engine graph, the `check_engines` rules and the seam register.
+- [engines](core/engines.md): what an engine is, the facade and stage skeleton, the readability and timing rules, the row format and runner (`EngineRows`) its contract tests use, the manifest (`scripts/engines.json`), the engine graph, the `check_engines` rules, editing an engine (`/engine-change`), the side doc and the seam register.
 - [streamed-building](core/streamed-building.md): how pages show at once and fill in over frames (`BuildQueueManager`, `StreamedLoader`), what made them slow, and measuring it (`bench_overlay.sh`).
 - [memory](core/memory.md): reading the shell's memory (`mem.sh`, `bench_overlay.sh --mem`) in a nested session, and a recorded baseline.
 - [qml-pitfalls](core/qml-pitfalls.md): traps of QML, its JS engine and URL-loaded files that have each bitten. Read it before writing QML.

@@ -1045,13 +1045,15 @@ class CheckEngines(unittest.TestCase):
                       '    "solve": {"in": ["request", "model", "tuning", "now"], "out": {"box": "DemoRules.boxOf"}},\n'
                       '    "drawn": {"in": ["result", "motion"], "out": {"": "DemoRules.nothing"}},\n'
                       '    "pick": {"in": ["spot", "more"], "out": {"": "DemoRules.boxOf"}, "extra": true},\n'
-                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}}\n  })\n\n'
+                      '    "other": {"in": ["spot"], "out": {"": "DemoRules.boxOf"}},\n'
+                      '    "drawnX": {"in": [["x"]], "out": {"": "DemoRules.boxOf"}, "extra": true}\n  })\n\n'
                       '  function stray(input) {\n    return 1;\n  }\n\n'
                       '  function model(input) {\n    const {env} = input;\n    return {};\n  }\n\n'
                       '  function solve(input) {\n    const {request, model, tuning = root.tuning, now} = input;\n    return {};\n  }\n\n'
                       '  function drawn(input) {\n    return {};\n  }\n\n'
                       '  function pick(input) {\n    const {spot} = input;\n    return {};\n  }\n\n'
-                      '  function other(input) {\n    const {spot} = input;\n    return {};\n  }\n')
+                      '  function other(input) {\n    const {spot} = input;\n    return {};\n  }\n\n'
+                      '  function drawnX(input) {\n    const {spot} = input;\n    return {};\n  }\n')
             padded += "  // padding\n" * (200 - len(padded.splitlines())) + "}\n"
             body = lambda n: "".join(f"    const v{i} = {i};\n" for i in range(n))
             internal = ('import QtQuick\n\n// A broken internal file.\nQtObject {\n'
@@ -1066,6 +1068,7 @@ class CheckEngines(unittest.TestCase):
                         '    {"id": "rest", "when": "isFirst", "then": 4, "why": "the rest"}\n  ]\n\n'
                         '  function isFirst(input) {\n    return true;\n  }\n\n'
                         '  readonly property var ranks: [{"name": "a", "rank": Math.max(1, 2), "why": "a rank"}]\n\n'
+                        '  readonly property var idRanks: [{"name": "a", "rank": 1, "why": "a rank"}]\n\n'
                         '  function unnamed() {\n    return {"rule": "noSuchRule"};\n  }\n}\n')
             rules = (root / f"{m}/demo/DemoRules.qml").read_text().replace('["a", "b"]', '["a", "b", "c"]')
             sys.path.insert(0, str(SCRIPTS))
@@ -1080,7 +1083,7 @@ class CheckEngines(unittest.TestCase):
             doc[at:at + 4] = doc[at + 2:at + 4] + doc[at:at + 2]
             files = [
                 (f"{m}/demo/DemoEngine.qml", padded), (f"{m}/demo/DemoInternal.qml", internal), (f"{m}/demo/DemoRules.qml", rules),
-                (f"{m}/demo/DemoKit.qml", qml("property int size: 1")),
+                (f"{m}/demo/DemoKit.qml", qml('property int size: 1\n  property var axes: ({"kind": [["a"]]})\n  property var grid: []')),
                 (f"{m}/DemoFlat.qml", qml('property var ranks: [{"name": "a", "rank": 1}]')),
                 (f"{m}/lone/LoneEngine.qml", 'pragma Singleton\nimport QtQuick\n\n// A facade whose api is no literal.\nQtObject {\n  id: root\n'
                  '  readonly property var api: ({"model": root.x})\n}\n'),
@@ -1114,6 +1117,8 @@ class CheckEngines(unittest.TestCase):
             f"{m}/demo/DemoInternal.qml: tables ranks:not literal", f"{m}/demo/DemoInternal.qml: tables unnamed:rule noSuchRule",
             f"{m}/demo/DemoRules.qml: tables rows:kind=c uncovered",
             "scripts/engines.json: tables demo.tables:DemoRules.gone", "scripts/engines.json: tables sink.tables:not an object",
+            "scripts/engines.json: tables demo.tables:DemoInternal.idRanks", f"{m}/demo/DemoKit.qml: tables grid:axes not literal",
+            f"{m}/demo/DemoEngine.qml: shape api.drawnX:['x']",
             f"{m}/DemoFlat.qml: tables ranks:a no why", "qml/components/DemoItem.qml: alone kindOf:demoKindOf",
             "tests/demo/Rows.js: contract api.pick:no row", "tests/demo/Rows.js: contract rule.kindB:no row",
             "tests/demo/Rows.js: contract DEMO-20:call nope", "tests/demo/Rows.js: contract DEMO-21:args",
@@ -1125,7 +1130,7 @@ class CheckEngines(unittest.TestCase):
             "scripts/engines.json: doc lone.doc:docs/dev/core/gone.md"]]), [], out)
         lines = out.splitlines()
         for absent in ("once:", "oldRule", "atLimit:lines", "api api.solve:in", "api api.drawn:in", "dag api:", "api.drawn:no row",
-                       "DemoItem.qml: facade-only", "#1 duplicate", "Traceback"):
+                       "DemoItem.qml: facade-only", "#1 duplicate", "Traceback", "api api.drawnX"):
             self.assertEqual([l for l in lines if absent in l], [], out)
         self.assertEqual(len([l for l in lines if "DEMO-21" in l]), 1, out)
         self.assertEqual([l for l in lines if "lone" in l and "contract" in l], [], out)
@@ -1134,7 +1139,8 @@ class CheckEngines(unittest.TestCase):
     def break_shapes(data):
         data["demo"]["kits"] = ["DemoKit"]
         data["demo"]["tables"].update({"DemoRules.gone": {"kind": "cell"}, "DemoInternal.cells": {"kind": "cell"},
-                                       "DemoInternal.order": {"kind": "ordered"}, "DemoInternal.ranks": {"kind": "rank"}})
+                                       "DemoInternal.order": {"kind": "ordered"}, "DemoInternal.ranks": {"kind": "rank"},
+                                       "DemoInternal.idRanks": {"kind": "rank", "id": ["a"]}, "DemoKit.grid": {"kind": "cell"}})
         data["demo"]["editPoints"]["consumer"] = "DemoGone"
         data["demo"]["editPoints"]["rule"] = ["DemoRules", "DemoRules.nope"]
         data["$flat"] = {"DemoFlat": {"prefix": "DEMOF", "tables": {"DemoFlat.ranks": {"kind": "rank"}}}}
