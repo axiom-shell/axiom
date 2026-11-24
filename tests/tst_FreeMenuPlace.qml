@@ -374,13 +374,13 @@ TestCase {
     compare(FreeMenuPlace.hosts("free", false, false, true, true), {
       "edge": true,
       "strip": false,
-      "free": false
-    }, "free at a widget: the edge host alone");
+      "free": true
+    }, "free at a widget: the edge host shows it, the free host stays loaded (its held window keeps its place)");
     compare(FreeMenuPlace.hosts("free", false, false, true, false), {
       "edge": false,
       "strip": false,
-      "free": false
-    }, "free at a widget whose place is not taken yet: no host");
+      "free": true
+    }, "free at a widget whose place is not taken yet: the free host alone, showing nothing");
     compare(FreeMenuPlace.hosts("free", false, true, true, true), {
       "edge": false,
       "strip": false,

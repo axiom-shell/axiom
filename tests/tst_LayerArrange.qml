@@ -68,7 +68,7 @@ TestCase {
         "w": W,
         "h": H
       }
-    }, surfaces, false), "O");
+    }, surfaces), "O");
     compare(r.red, [0, 0, W, 30], "first mapped takes the edge and both corners");
     compare(r.green, [0, 30, W, 30]);
     compare(r.yellow, [0, 60, 40, H - 60], "below the top strips, mapped before the bottom one");
@@ -88,7 +88,6 @@ TestCase {
       "id": "menu",
       "output": "O",
       "namespace": "axiom-menu",
-      "order": LayerStack.orderOf("axiom-menu"),
       "seq": 0,
       "anchors": {
         "left": true,
@@ -101,39 +100,15 @@ TestCase {
       "h": 0,
       "zone": -1
     };
-    const bar = Object.assign(strip("bar", 1, "top", 30, 30), {
-      "order": LayerStack.orderOf("axiom-bar")
-    });
-    for (const ordered of [true, false]) {
-      const r = rectsById(LayerArrange.arrange({
-        "O": {
-          "w": 1000,
-          "h": 800
-        }
-      }, [menu, bar], ordered), "O");
-      compare(r.menu, [0, 0, 1000, 800], "the whole output");
-      compare(r.bar, [0, 0, 1000, 30], "the bar keeps its edge");
-    }
-  }
-
-  // Hyprland sorts by order first: a solid bar (5) mapped after the
-  // border (0) still reserves first
-  function test_ordered_sorts_by_order() {
-    const border = Object.assign(strip("border", 0, "top", 8, 8), {
-      "order": LayerStack.orderOf("axiom-border")
-    });
-    const bar = Object.assign(strip("bar", 1, "top", 30, 30), {
-      "order": LayerStack.orderOf("axiom-bar")
-    });
-    const out = {
+    const bar = strip("bar", 1, "top", 30, 30);
+    const r = rectsById(LayerArrange.arrange({
       "O": {
         "w": 1000,
         "h": 800
       }
-    };
-    compare(rectsById(LayerArrange.arrange(out, [border, bar], true), "O").bar, [0, 0, 1000, 30]);
-    compare(rectsById(LayerArrange.arrange(out, [border, bar], true), "O").border, [0, 30, 1000, 8]);
-    compare(rectsById(LayerArrange.arrange(out, [border, bar], false), "O").bar, [0, 8, 1000, 30], "map order alone");
+    }, [menu, bar]), "O");
+    compare(r.menu, [0, 0, 1000, 800], "the whole output");
+    compare(r.bar, [0, 0, 1000, 30], "the bar keeps its edge");
   }
 
   // A negative margin on the anchored edge reaches back over what's
@@ -149,7 +124,7 @@ TestCase {
         "w": 500,
         "h": 500
       }
-    }, [border, pill, dock], false), "O");
+    }, [border, pill, dock]), "O");
     compare(r.pill, [0, 6, 500, 32]);
     compare(r.dock, [0, 36, 500, 10]);
   }
@@ -187,7 +162,7 @@ TestCase {
       "h": 20,
       "zone": 50
     };
-    const r = rectsById(LayerArrange.arrange(out, [bar, centred, corner], false), "O");
+    const r = rectsById(LayerArrange.arrange(out, [bar, centred, corner]), "O");
     compare(r.c, [470, 275, 100, 50], "centred in the room left");
     compare(r.k, [975, 575, 20, 20]);
     compare(LayerArrange.zoneEdge(corner.anchors), "", "a corner reserves nothing");
@@ -214,7 +189,7 @@ TestCase {
         "w": 400,
         "h": 300
       }
-    }, [corner, bottom], false), "O");
+    }, [corner, bottom]), "O");
     compare(r.k, [380, 250, 20, 20], "above the strip");
     compare(r.bottom, [0, 270, 400, 30], "the strip reserves the whole edge");
   }
@@ -236,7 +211,7 @@ TestCase {
         "w": 50,
         "h": 50
       }
-    }, [top, over, other], false);
+    }, [top, over, other]);
     const r = rectsById(result, "O");
     compare(r.over, [0, 0, 100, 10], "a higher layer reserves first");
     compare(r.top, [0, 10, 100, 20]);
@@ -351,7 +326,7 @@ TestCase {
         "w": fixture.reported[name].w,
         "h": fixture.reported[name].h
       };
-    const result = LayerArrange.arrange(outputs, fixture.surfaces, true);
+    const result = LayerArrange.arrange(outputs, fixture.surfaces);
     for (const name in result)
       for (const l of result[name].layers) {
         const theirs = fixture.reported[name].layers.filter(r => r.namespace === l.namespace);

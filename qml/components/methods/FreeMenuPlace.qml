@@ -198,18 +198,20 @@ QtObject {
   // strip, free }. Its placement's, but a popped-out edge menu shows in
   // the free host; its edge host stays until the free one has shown
   // (`freeShown`), so the box hands over with no gap. A free menu at a
-  // bar widget (`atWidget`) shows in the edge host, and the other way
-  // round: its free host stays until it has finished closing
-  // (`freeShown`); the edge host waits for the widget's place
-  // (`openerKnown`). So `freeShown` means: popped out, the free box is
-  // drawn; at a widget, the free host hasn't finished closing
+  // bar widget (`atWidget`) shows in the edge host; its free host is
+  // always loaded (its held window keeps its place in map order,
+  // LayerSlot) and shows nothing there (`shownOn` is ""). The edge host
+  // shows it once the free host has finished closing (`freeShown`) and
+  // waits for the widget's place (`openerKnown`). So `freeShown` means:
+  // popped out, the free box is drawn; at a widget, the free host hasn't
+  // finished closing
   function hosts(placement, poppedOut, freeShown, atWidget, openerKnown) {
     const popped = placement === "edge" && !!poppedOut;
     const free = placement === "free";
     return {
       "edge": (placement === "edge" && (!popped || !freeShown)) || (free && !!atWidget && !!openerKnown && !freeShown),
       "strip": placement === "strip",
-      "free": (free && (!atWidget || freeShown)) || popped
+      "free": free || popped
     };
   }
 

@@ -20,7 +20,7 @@ import qs.config
  * It also maps the windows with a fixed place in the stack (bars, the
  * border, docks, integrated edge menus: hosts/popout/LayerSlot) in
  * LayerStack order, one stage at a time, and maps again any that land out
- * of place where the compositor stacks by map order alone.
+ * of place (the compositor stacks by map order alone, on every compositor).
  */
 QtObject {
   id: root
@@ -32,8 +32,6 @@ QtObject {
   property int _lastSeq: 0
   property var _seqs: ({})
 
-  // Whether the compositor stacks and arranges by LayerStack order itself
-  readonly property bool _ordered: CompositorManager.supports.layerOrder === true
   readonly property bool _restacks: CompositorManager.supports.layerRestack === true
 
   // A WlrLayershell.layer as LayerArrange.layerNames names it
@@ -106,7 +104,6 @@ QtObject {
         continue;
       out.push(Object.assign({}, spec, {
         "id": Number(uid),
-        "order": LayerStack.orderOf(spec.namespace),
         "seq": seq ?? root._lastSeq + 1
       }));
     }
@@ -125,7 +122,7 @@ QtObject {
         };
         return acc;
       }, {});
-      const next = LayerArrange.arrange(outputs, root._surfaces(), root._ordered);
+      const next = LayerArrange.arrange(outputs, root._surfaces());
       if (JSON.stringify(next) !== JSON.stringify(root.rects)) {
         root.rects = next;
         root._check.restart();
@@ -262,7 +259,7 @@ QtObject {
           "seq": root._slotSeqs[uid] ?? 0
         };
       });
-      const result = LayerStack.sequence(entries, root._ordered);
+      const result = LayerStack.sequence(entries);
       for (const uid of result.remap) {
         if (!root._remapping[uid])
           console.log(`LayerManager: mapping ${root._slots[uid].namespace} on ${root._slots[uid].output} again, in its place`);

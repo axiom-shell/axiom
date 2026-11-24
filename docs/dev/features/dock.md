@@ -37,7 +37,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 
 ### The window
 - `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box and the icons grown out of it. One that hides takes the gap to its edge too, so the pointer doesn't leave it on its way from the edge; a held one takes it only while latched by the pointer (the trigger latches it on the way in; a reveal by a bind or IPC never takes it) and until the pointer first reaches the box (`_reachedBox`, cleared again when it unlatches or the pointer comes back in from the trigger), never always shown, as `distance` can stretch that gap to half the screen, over windows and desktop modules: kept, the pointer anywhere in it would hold the dock open and its clicks would go to the dock instead of what's under it. Other popouts have no such gap: their input mask is their surface, or their box alone when detached.
-- **Layer order:** its layer rule arranges it after the border and every bar ([layer stacking](../generated/layers.md)).
+- **Layer order:** its `LayerStack` order maps it after the border and every bar ([layer stacking](../generated/layers.md)).
   - It sits inside them, and never shortens the bars on other edges.
   - It is blurred.
 - **Fullscreen:** a fullscreen window covers it, and its hover trigger is off then.
@@ -80,8 +80,8 @@ Along the edge:
   - **`EdgePopout`s:** the OSD and floating edge menus, on the dock's own edge and at both ends.
   - **The border's corner pieces** (`RoundedBorders.cornerMargin`).
 - **Layer orders that put them over the dock:**
-  - The `axiom-edge-popout` layer rule ([layer stacking](../generated/layers.md)) draws floating edge menus over the dock and the OSD.
-  - The OSD's `axiom-osd` (`overNamespace`) layer rule draws the OSD over the dock; the Overlay layer is over the overlay's page, which is on Top.
+  - The `axiom-edge-popout` order ([layer stacking](../generated/layers.md)) maps floating edge menus after the dock and the OSD, so they draw over both.
+  - The OSD's `axiom-osd` (`overNamespace`) order maps the OSD after the dock, so it draws over it; the Overlay layer is over the overlay's page, which is on Top.
 - **Retiling:** Hyprland sends no event when windows retile around a changed zone. So `refreshSoon()` re-reads monitors and windows after layer and zone changes. Layer events are only listened to while a dock is built.
 
 ### Entry points

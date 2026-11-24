@@ -97,11 +97,9 @@ QtObject {
     return bounds;
   }
 
-  // The order surfaces on one layer are arranged in: by `order` first
-  // (highest first) where the compositor sorts by it (Hyprland's layer
-  // rules), then as they mapped (`seq`)
-  function sorted(surfaces, ordered) {
-    return surfaces.slice().sort((a, b) => (ordered ? (b.order ?? 0) - (a.order ?? 0) : 0) || a.seq - b.seq);
+  // The order surfaces on one layer are arranged in: as they mapped (`seq`)
+  function sorted(surfaces) {
+    return surfaces.slice().sort((a, b) => a.seq - b.seq);
   }
 
   /**
@@ -149,7 +147,7 @@ QtObject {
    * left } } }, output-relative (the shape HyprState.layerRects gives,
    * plus what the reserving surfaces take from each edge). `outputs`
    * maps names to { w, h }; `surfaces` are { id, output, namespace,
-   * layer (layerNames), order, seq (map order), anchors { left, right,
+   * layer (layerNames), seq (map order), anchors { left, right,
    * top, bottom }, margins { left, right, top, bottom }, w, h (0 to stretch), zone (> 0
    * reserves where zoneEdge has an edge, 0 keeps out of what others
    * reserve, -1 ignores it) }.
@@ -157,7 +155,7 @@ QtObject {
    * the room the ones before it left; the rest are placed in what's left
    * at the end (the whole output with zone -1).
    */
-  function arrange(outputs, surfaces, ordered) {
+  function arrange(outputs, surfaces) {
     const result = {};
     for (const name in outputs) {
       const out = outputs[name];
@@ -168,7 +166,7 @@ QtObject {
         "h": out.h
       };
       const mine = surfaces.filter(s => s.output === name);
-      const byLayer = root.layerNames.map(layer => root.sorted(mine.filter(s => (s.layer ?? "top") === layer), ordered));
+      const byLayer = root.layerNames.map(layer => root.sorted(mine.filter(s => (s.layer ?? "top") === layer)));
       let usable = full;
       const rects = [];
       const add = (s, r) => rects.push(Object.assign({

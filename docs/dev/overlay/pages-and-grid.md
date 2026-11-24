@@ -108,7 +108,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - One overlay per screen in `General.screens` (`qml/shell/Overlay.qml`): a transparent `OverlayPanel` inside the reserved area, placed by its base `ReservedAreaWindow` (shared with the onboarder).
 - Under it, its `reusable/BackdropRequest` dims the whole monitor under the bars and border (the screen's `ScreenBackdrop` window), as dark as `Overlay.backdrop` while `Overlay.showBackdrop`.
   - It comes in as the overlay does (`Overlay.animation`): sliding from the top or bottom edge (the request's `slide`), or fading.
-  - A Top-layer surface kept under them by a Hyprland `order` layer rule that `HyprlandManager` adds at startup and on config reload.
+  - A Top-layer surface kept under them by its `LayerStack` order (`backdrop`), which `LayerManager` maps before them.
   - The workspace overview and launcher use it too.
 - Its focus grab (`HyprlandGrab`) also whitelists `SurfaceManager.grabPartnersFor(screen)`. The bars, bar popouts and submenus register themselves there (`registerGrabPartner(window, screenName)`), so they keep working while it's open.
 - The window sits on Top under the chrome (`LayerStack`: after the backdrop, before the backing window) and is held (`LayerSlot`, `OverlayPanel._wanted`): closed, a pixel drawing nothing, taking no input or keys (`slot.idle`; `slideContainer` hidden, so a kept page renders no frames); while a fullscreen window is on its screen it is on the Overlay layer (`stackLayer`, `fullscreenNow`) and goes back down once it's gone. Every Overlay-layer window (popouts, the OSD, toasts) draws over it, whatever order it mapped in.

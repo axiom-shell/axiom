@@ -8,10 +8,13 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
 
-// One menu from MenusConfig, on its screen, at its placement. Only the
-// host in use is created (FreeMenuPlace.hosts): a popped-out edge menu
-// shows in the free host, its edge host kept until the free one has
-// shown, so the box hands over with no gap. The free host is one per
+// One menu from MenusConfig, on its screen, at its placement. The
+// edge and strip hosts are created only in use (FreeMenuPlace.hosts); a
+// free menu's free hosts are built up front and stay (their held windows
+// keep their place in map order), at a widget showing nothing
+// (`freeScreen` ""). A popped-out edge menu shows in the free host, its
+// edge host kept until the free one has shown, so the box hands over with
+// no gap. The free host is one per
 // screen; only the one on the screen the menu opened on shows it
 // (FreeMenuPlace.openedOn, decided as it opens: its widget's screen, the
 // cursor's for `at: cursor`, else its `screen`), so an open menu never
@@ -61,9 +64,9 @@ Scope {
     if (root._freeShown && root.poppedOut)
       root._handedOver = true;
   }
-  // At a widget the handover waits for the free host to finish closing.
-  // `hosts` reads _freeKept, not _freeOccupied: the free loader it drives
-  // is what _freeOccupied reads, so it is set a tick later
+  // At a widget the edge host waits for the free host to finish closing:
+  // `hosts` reads _freeKept, set a tick after _freeOccupied, so the edge
+  // loader never changes inside the free host's own occupied change
   readonly property bool _freeOccupied: root._freeHosts?.occupied ?? false
   property bool _freeKept: false
   on_FreeOccupiedChanged: Qt.callLater(() => root._freeKept = root._freeOccupied)
@@ -182,8 +185,8 @@ Scope {
     }
   }
 
-  // A free host on every screen, built up front (where layers stack by
-  // map order each keeps its place: FreeMenu's LayerSlot is held)
+  // A free host on every screen, built up front (each window's
+  // LayerSlot is held, so it keeps its place in map order)
   LazyLoader {
     id: freeLoader
     active: !!root._live && !!root.screen && root.hosts.free

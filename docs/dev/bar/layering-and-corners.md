@@ -17,17 +17,17 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 ### Solid bar (`Bars.items[].surface: "bar"`)
 - It is on the Top layer, at the screen edge.
 - The border's strip on that edge is arranged after the bar and overlaps its inner part, so the strip's stroke is the bar's inner edge.
-- **Build order.** Hyprland reads a layer rule's `order` only as a surface maps.
+- **Build order.** Hyprland reads a layer rule (`no_anim`, the blur rules) only as a surface maps.
   - So the bars, border, docks and edge menus are built only once `CompositorManager.surfacesReady` is true. The daemon adds the rules when the shell starts (`compositor.layerRules`, which `HyprlandManager` waits for, at most 2 s) and again on every `configreloaded` (a reload drops rules added at runtime); they're kept across QML reloads. On sway it waits for the `get_version` reply instead (whether it's SwayFX, so the blur and shadow windows map with the rest); niri's is true at once.
-  - Why: in detached mode, hyprland.lua doesn't hold the rules. A border mapped first would land outside the bar, with its corners on the bar's outer side.
-  - Each of these windows also maps in `LayerStack.layers` order, a stage at a time, through its `hosts/popout/LayerSlot`. Where the compositor has no layer rules (sway, niri: no `supports.layerOrder`), map order is all that decides, so a window landing out of place (a bar remade after the border) makes the ones it should have come before map again ([layer arrangement](../compositor/layer-arrangement.md)).
+  - Why: in detached mode, hyprland.lua doesn't hold the rules, and a window mapped before its rules are in would play the compositor's animation.
+  - Each of these windows also maps in `LayerStack.layers` order, a stage at a time, through its `hosts/popout/LayerSlot`. Map order is all that decides on every compositor, so a window landing out of place (a bar remade after the border) makes the ones it should have come before map again ([layer arrangement](../compositor/layer-arrangement.md)).
 - **Window keying.** For the same reason, `qml/shell/Bar` keys each bar's window on whether it sits inside the border, as well as on its id.
   - Switching to or from solid changes the bar's namespace, so the window is remade and maps under the new rule.
 
 ### Bar inside the border (`barConfig.insideBorder`)
 - This applies to any background except solid, with the border on.
 - The bar is on the Top layer like the border, in the `axiom-bar-pill`, `axiom-bar-transparent` or `axiom-bar-floating` (floating bars and floating pills) namespace.
-  - Their layer rules (below the border's) make Hyprland arrange the bar after the border and draw it over the border.
+  - Their `LayerStack` orders (below the border's) map the bar after the border, so it is arranged after it and drawn over it.
 - It sits just inside the border with a `-borderWidth` margin, so its outer edge lies on the border's stroke. A pill bar on the border itself reaches back over the whole frame instead (`outerReach`, the screen margin), so it lies as a solid bar does ([Bar ends and pills](bar-ends-pills.md#pills-barcontainerpillrects)).
 - A fullscreen window covers it, as it does everything on the Top layer, so it never hides.
 - Hyprland counts that margin into the reserved space, so the bar reserves `extent`.
@@ -37,7 +37,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 - Any number of bars may share an edge on a screen. The compositor lays each out in what the ones arranged before it left, so they lie one inside the other.
 - **Order, outer first** (`stacksOn`): the reserving bars by kind (solid, then the border's strip, pills, floating, floating pills, transparent), then the bars reserving nothing, laid over what's left. Bars of one kind keep list order.
   - The kind decides, never the list: a floating bar is always inside a full one on its edge. It keeps its float gap from that bar's inner side (its frame line), as it would from the border's.
-  - Floating bars and floating pills share a layer rule, and so do two bars of one kind, so the compositor breaks the tie by map order. Each bar's `LayerSlot` maps it by its `layerRank` (`BarEnds.layerRanks`: floating before floating pills, then list order), and a bar remade later maps again in its place ([layer arrangement](../compositor/layer-arrangement.md#mapping-in-order)).
+  - Floating bars and floating pills share an order, and so do two bars of one kind, so map order breaks the tie. Each bar's `LayerSlot` maps it by its `layerRank` (`BarEnds.layerRanks`: floating before floating pills, then list order), and a bar remade later maps again in its place ([layer arrangement](../compositor/layer-arrangement.md#mapping-in-order)).
 - **Where each lies** (`placeStack`, added to every `ScreenEdgeManager.bars` entry): `outer` (its window's outer edge from the screen edge), `zone` (the exclusive zone `BarPanel` sets), `taken` (what it reserves, its outer margin counted), `frame` (its inner side), `outerReach` (that margin: `borderWidth` inside the border, the screen margin for a pill bar on the border), `stripCover`, `innermost`, `facesWindows`, `offBorder`.
   - A bar inside the border keeps its `-borderWidth` margin when stacked: its outer edge reaches back onto the far stroke of the bar outside it (a pill's or island's), as onto the border's.
   - **Trim:** only a bar facing the windows (`facesWindows`: none inside it reserves) reserves gaps_out short of a transparent edge (an inner accent line is an edge to see: no trim). Any bar with a reserving bar inside it reserves its whole extent, so the next bar never overlaps it. Transparent bars are laid last, so only another transparent bar lies inside one.
@@ -54,15 +54,15 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 
 ### Bars sharing a corner (`methods/BarEnds`, `tests/tst_BarEnds.qml`)
 - Hyprland gives a corner to the bar it arranges first. The other bar's window ends at its reserved line.
-- Which bar that is depends on the layer rule, never on which mapped first. First to last: solid bars, the border, pill bars, floating bars and floating pills, transparent bars (orders: [layer stacking](../generated/layers.md), from `LayerStack.layers`; `tst_LayerStack` holds them to this order).
+- Which bar that is depends on its `LayerStack` order, never on which mapped first. First to last: solid bars, the border, pill bars, floating bars and floating pills, transparent bars (orders: [layer stacking](../generated/layers.md), from `LayerStack.layers`; `tst_LayerStack` holds them to this order).
 
   - A transparent bar always makes way, and a floating bar for every bar but a transparent one.
   - Between bars of one kind, the bar on the screen's longer edge makes way (the `-long` namespace), so the shorter bar gets the corner: side bars on a landscape monitor, top and bottom ones on a portrait one (`shortEdge`, `BarEnds.onShortEdge`).
   - Solid bars can't tie with pill bars: a solid bar is arranged before the border, a pill bar after it.
   - Docks, the overlay, the OSD and popouts are ordered after every bar.
-  - The namespace comes from `BarsConfig.layerNamespace`. `qml/shell/Bar` keys each window on it, since `order` is read only as a surface maps: a bar changing kind, or a monitor rotating, remakes the window.
+  - The namespace comes from `BarsConfig.layerNamespace`. `qml/shell/Bar` keys each window on it, since the compositor reads a namespace only as a surface maps: a bar changing kind, or a monitor rotating, remakes the window.
 - A bar reserving nothing takes no corner.
-- **Against a stack:** an end makes way for each bar on the perpendicular edge that Hyprland arranges before it. Layer rules order kinds the same on every edge, so that's the outer part of the stack. The end meets the innermost of them (its `barId`), and its window starts past them all (`from`, `BarEnds.endsOf`). So a top pill bar on a landscape screen merges into a left pill bar's end, while the transparent bar inside that left bar makes way for the top bar.
+- **Against a stack:** an end makes way for each bar on the perpendicular edge that is arranged before it. `LayerStack` orders kinds the same on every edge, so that's the outer part of the stack. The end meets the innermost of them (its `barId`), and its window starts past them all (`from`, `BarEnds.endsOf`). So a top pill bar on a landscape screen merges into a left pill bar's end, while the transparent bar inside that left bar makes way for the top bar.
 
 ### Ends and pills
 Each bar end's `kind`, joining rules, pill bars merging at a corner, and pills themselves: see [Bar ends and pills](bar-ends-pills.md).

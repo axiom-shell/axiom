@@ -7,7 +7,7 @@
 How a menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two edge hosts, `FloatingEdgeMenu` (placement `edge`) and `IntegratedEdgeMenu` (placement `strip`). A `free` menu's host, `FreeMenu`, is in [Free menus](free-menus.md).
 
 ### Building (`surfaces/menu/`)
-- `qml/shell/Menus` builds one `MenuHosts` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement (`FreeMenuPlace.hosts`: a popped-out edge menu is in the free host, [Free menus](free-menus.md) › A popped-out edge menu). The edge and strip hosts are on the menu's screen; the free host is one per screen, shown on the one the menu opened on ([Free menus](free-menus.md) › Which screen).
+- `qml/shell/Menus` builds one `MenuHosts` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement (`FreeMenuPlace.hosts`; a free menu's free host is always loaded: a popped-out edge menu is in the free host, [Free menus](free-menus.md) › A popped-out edge menu). The edge and strip hosts are on the menu's screen; the free host is one per screen, shown on the one the menu opened on ([Free menus](free-menus.md) › Which screen).
 - `MenuHosts` keeps the last live entry, so the hosts read its (schema-defaulted) fields directly.
 
 ### The body (`MenuBody`)
@@ -65,8 +65,8 @@ How a menu is put on screen: the shared body and sync, the lattice its modules s
 ### `strip`: `IntegratedEdgeMenu`
 - A `PopoutWrapperBase` with a Top-layer `axiom-edge-menu` window along the whole edge.
 - It always takes the whole edge: its modules stretch along the strip from end to end, whatever `length` says (`GridPlacement.menuFillsEdge`), and its hover strip is centred on the edge.
-- Its layer rule (above every bar's, [layer stacking](../generated/layers.md)) arranges it first, so it sits outermost, and the border, bars and every Normal-exclusion surface move inwards (see [Layering and corners](../bar/layering-and-corners.md)).
-- Its window shows through a `LayerSlot`. With layer rules it maps only while open. Without them it's `held`: mapped from the start, a pixel deep, reserving nothing and taking no input while closed (`LayerSlot.idle`), so opening never maps it after the bars it pushes inwards ([layer arrangement](../compositor/layer-arrangement.md)).
+- Its `LayerStack` order (before every bar's, [layer stacking](../generated/layers.md)) maps it first, so it is arranged first: it sits outermost, and the border, bars and every Normal-exclusion surface move inwards (see [Layering and corners](../bar/layering-and-corners.md)).
+- Its window shows through a `LayerSlot`. It's `held`: mapped from the start, a pixel deep, reserving nothing and taking no input while closed (`LayerSlot.idle`), so opening never maps it after the bars it pushes inwards ([layer arrangement](../compositor/layer-arrangement.md)).
 - The zone is set once while it's open (windows retile in one step), and the strip slides in.
 - With `frame`, a rounded stroked box runs the strip's whole length.
   - Its stroke's inner edge is `screenMargin` in from the strip's edges (as the border's is, so the two line up: `MenusConfig.frameInsetOf`, `outerPadOf`).
