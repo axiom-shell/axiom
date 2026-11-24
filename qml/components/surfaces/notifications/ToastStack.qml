@@ -412,7 +412,6 @@ Scope {
           strokeColor: toastCard.strokeColor
           paintRank: PaintOrder.rankOf("toast")
           fade: toastCard.opacity
-          overlayLayer: true
           // (out of sight, faded or slid, it blurs nothing: a covered
           // toast draws nothing)
           shown: toastCard.backed && toastCard.visible && !toastCard.gone && toastCard.opacity > 0

@@ -13,19 +13,13 @@ Item {
   required property var shapes
   // The screen its fills are drawn for (BlurManager.fillOn)
   required property var screen
-  // Shapes another window may draw over this one: each not also drawn here
-  // (not among `shapes`, or not among those it `drawsOnly`) is erased (see
-  // `erasing`); one drawn here is drawn
-  property var erasers: []
-  // Which of `shapes` it draws now (a copy exists for each either way)
-  property var drawsOnly: shape => true
   // What each copy draws: "chrome", its fill (the colour it fills with,
   // opaque) then its stroke over it, at their own alpha, normal blending, so
   // the strokes blend over the fills in painter's order; "outline", its fill
   // and stroke in opaque black, the shape a shadow casts from and is cut by
   property string draws: "chrome"
   // With "chrome": each alpha in grey instead of the colour (the fill an
-  // opaque grey at its alpha, the stroke white at its own, erasers black)
+  // opaque grey at its alpha, the stroke white at its own)
   property bool asAlpha: false
   // A copy moved, resized, showed or hid
   signal changed
@@ -33,7 +27,7 @@ Item {
 
   KeyedModel {
     id: shapeModel
-    keys: root.shapes.concat(root.erasers).map(shape => shape.uid).filter((key, i, all) => all.indexOf(key) === i)
+    keys: root.shapes.map(shape => shape.uid).filter((key, i, all) => all.indexOf(key) === i)
   }
 
   Repeater {
@@ -46,40 +40,34 @@ Item {
       // Fixed per key; null once it's gone, until its row goes
       readonly property var shape: BlurManager.shapeOf(Number(slot.key))
       readonly property var area: slot.shape?.clipRect ?? null
-      // The other window draws this shape now (an eraser not drawn here, not
-      // among `shapes` or not among those it `drawsOnly`): the slot erases its fill
-      // path (opaque black, no stroke, half a rank under the shape's) and
-      // goes back to drawing the shape when that window gives it up
-      readonly property bool erasing: root.erasers.includes(slot.shape) && !(root.shapes.includes(slot.shape) && root.drawsOnly(slot.shape))
       // Its fill's alpha on this screen, as drawn (BlurManager.fillOn)
       readonly property real fillAlpha: BlurManager.fillOn(slot.shape?.color ?? "transparent", root.screen).a
-      // What its copy fills with: black for the outline and an eraser; else
+      // What its copy fills with: black for the outline; else
       // its colour premultiplied, or its alpha in grey. A rect's or frame's
       // with no fill alpha (a stroke-only rect) draws none, keeping what
       // lies under it; an attached copy's stays opaque at any alpha, which
       // is what hides a lower stroke at a join
       readonly property color fill: {
-        if (root.draws === "outline" || slot.erasing)
+        if (root.draws === "outline")
           return "black"; // style-exempt: mask
         if (slot.shape?.kind !== "attached" && slot.fillAlpha <= 0)
           return "transparent";
         return root.asAlpha ? Qt.rgba(slot.fillAlpha, slot.fillAlpha, slot.fillAlpha, 1) : Tone.over(BlurManager.fillOn(slot.shape?.color ?? "transparent", root.screen), "black"); // style-exempt: premultiplied
       }
       // Its stroke over the fill, at its own colour and alpha (white at its
-      // alpha for the alpha copies); none for an outline or an eraser
+      // alpha for the alpha copies); none for an outline
       readonly property color stroke: {
         const c = slot.shape?.strokeColor ?? "transparent";
-        if (root.draws !== "chrome" || slot.erasing || c.a <= 0)
+        if (root.draws !== "chrome" || c.a <= 0)
           return "transparent";
         return root.asAlpha ? Qt.rgba(1, 1, 1, c.a) : c; // style-exempt: alpha copy
       }
       // The stroke holes its source leaves open, which its copy cuts (none
-      // for the outline copies, whose silhouette stays whole, nor while
-      // erasing)
+      // for the outline copies, whose silhouette stays whole)
       // (kept while the source's list is rebuilt equal, as it is many times a
       // second: nothing downstream, the key below and the copies' pieces,
       // is recomputed for it)
-      readonly property var _sourceHoles: root.draws === "chrome" && !slot.erasing ? (slot.shape?.source?.strokeHoles ?? []) : []
+      readonly property var _sourceHoles: root.draws === "chrome" ? (slot.shape?.source?.strokeHoles ?? []) : []
       // (starts []/0, set once at completion, not bound: a binding would
       // follow every equal rebuild until its first assignment broke it)
       property var strokeHoles: []
@@ -90,20 +78,20 @@ Item {
       }
       // (a change of holes nudges the window here, not through the key)
       onStrokeHolesChanged: root?.changed()
-      // Painter's order: its shape's rank, an eraser's half a rank under
-      z: slot.erasing ? (slot.shape?.paintRank ?? 0) - PaintOrder.eraserOffset : (slot.shape?.paintRank ?? 0)
+      // Painter's order: its shape's rank
+      z: slot.shape?.paintRank ?? 0
       x: area ? area.x : 0
       y: area ? area.y : 0
       width: area ? area.width : root.width
       height: area ? area.height : root.height
       clip: !!area
       // (read rather than `visible`, which is false inside a hidden layer)
-      readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source && (root.drawsOnly(slot.shape) || slot.erasing)
+      readonly property bool showing: (slot.shape?.shown ?? false) && !!slot.shape?.source
       visible: slot.showing
 
       // Where and how big its copy is, as drawn, and in what: on any
       // change the window is nudged to show its last frame
-      readonly property string drawn: [mirror.x, mirror.y, mirror.width, mirror.height, slot.showing, (mirror.item as AttachedSurface)?.slid ?? 0, (mirror.item as AttachedSurface)?.shownOpacity ?? 1, (mirror.item as Item)?.opacity ?? 1, slot.fill, slot.stroke, slot.erasing].join(",")
+      readonly property string drawn: [mirror.x, mirror.y, mirror.width, mirror.height, slot.showing, (mirror.item as AttachedSurface)?.slid ?? 0, (mirror.item as AttachedSurface)?.shownOpacity ?? 1, (mirror.item as Item)?.opacity ?? 1, slot.fill, slot.stroke].join(",")
       // (null while the copies are torn down: their slots can go after them)
       onDrawnChanged: root?.changed()
 

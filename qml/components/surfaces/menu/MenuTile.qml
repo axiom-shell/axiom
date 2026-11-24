@@ -75,7 +75,6 @@ Item {
     fade: root.tiles?.opacity ?? 1
     shadow: root.tiles?.look ?? null
     paintRank: PaintOrder.rankOf("surface")
-    overlayLayer: root.tiles?.overlayLayer ?? false
     shown: root.backed && root.visible && root._origin !== null
     clipRect: root.tiles?.clip ?? null
   }

@@ -59,7 +59,7 @@ TestCase {
     }
   }
 
-  // One chrome capture: the real `Copies` of `shapes` (and `erasers`), over
+  // One chrome capture: the real `Copies` of `shapes`, over
   // black when read as pixels in software
   Component {
     id: layerComp
@@ -67,7 +67,6 @@ TestCase {
     Item {
       id: layer
       property var shapes: []
-      property var erasers: []
       property bool asAlpha: false
       property bool backdrop: true
       property color backColor: "black"
@@ -84,14 +83,13 @@ TestCase {
         id: copies
         screen: ""
         shapes: layer.shapes
-        erasers: layer.erasers
         draws: layer.draws
         asAlpha: layer.asAlpha
       }
     }
   }
 
-  // The scene: both captures of `shapes`/`erasers` and, where the scene graph
+  // The scene: both captures of `shapes` and, where the scene graph
   // is GPU-backed, the real ChromeComposite over `back`. The two
   // `ShaderEffectSource`s are written as BlurBackingWindow's `colorCapture` and
   // `alphaCapture` have them: harness plumbing, not a second rule. Without a GPU the layers sit
@@ -102,7 +100,6 @@ TestCase {
     Item {
       id: scene
       property var shapes: []
-      property var erasers: []
       property color back: "black"
       property real lw: 160
       property real lh: 100
@@ -130,7 +127,6 @@ TestCase {
         sourceComponent: layerComp
         onLoaded: {
           item.shapes = Qt.binding(() => scene.shapes);
-          item.erasers = Qt.binding(() => scene.erasers);
           item.backdrop = !root.gpu;
           item.asAlpha = false;
         }
@@ -143,7 +139,6 @@ TestCase {
         sourceComponent: layerComp
         onLoaded: {
           item.shapes = Qt.binding(() => scene.shapes);
-          item.erasers = Qt.binding(() => scene.erasers);
           item.backdrop = !root.gpu;
           item.asAlpha = true;
         }
@@ -290,7 +285,6 @@ TestCase {
           "width": scene.width,
           "height": scene.height,
           "shapes": scene.shapes,
-          "erasers": scene.erasers,
           "asAlpha": asAlpha,
           "y": asAlpha ? scene.height + 10 : 0
         });
@@ -766,106 +760,6 @@ TestCase {
     for (const x of [62, 65, 68])
       root.near(tiled.px(x, 64), alone.px(x, 64), `the line unbroken in the gap, x ${x}`);
     root.near(tiled.px(40, 64), root.filled(root.solid), "under a tile, the tile's value");
-  }
-
-  // ---- live erasing of the tiles' copies ----
-
-  // The slots of `copies` (a Repeater's items: those with a `key`)
-  function slotsOf(copies) {
-    return Array.from(copies.children).filter(item => item.key !== undefined);
-  }
-  function slotOf(copies, shape) {
-    return root.slotsOf(copies).find(item => item.key === String(shape.uid)) ?? null;
-  }
-
-  // A shape moves from `shapes` to `erasers` and back: its slot stays (one
-  // object, the same count); while erasing, where it stood is (0,0,0,0) over a
-  // lower shape's fill and stroke (erased half a rank under, its stroke not
-  // drawn), and a shape at its own rank keeps the window's own
-  function test_erasing_moves_not_remakes() {
-    if (root.dpr !== 1)
-      skip("scale 1 row");
-    root.setStroke(2);
-    const lower = {
-      "kind": "rect",
-      "rank": "bar",
-      "x": 10,
-      "y": 10,
-      "w": 80,
-      "h": 50,
-      "fill": root.green,
-      "stroke": root.line(1)
-    };
-    const mover = {
-      "kind": "rect",
-      "rank": "surface",
-      "x": 40,
-      "y": 5,
-      "w": 40,
-      "h": 30,
-      "fill": root.blue,
-      "stroke": root.line(1)
-    };
-    const peer = {
-      "kind": "rect",
-      "rank": "surface",
-      "x": 60,
-      "y": 20,
-      "w": 40,
-      "h": 30,
-      "fill": root.solid
-    };
-    const scene = root.makeScene([lower, mover, peer]);
-    const [low, move, other] = scene.shapes;
-    const copies = scene.colorLayer.copies;
-    const count = root.slotsOf(copies).length;
-    const slot = root.slotOf(copies, move);
-    verify(slot !== null);
-    compare(count, 3);
-    const nothing = {
-      "r": 0,
-      "g": 0,
-      "b": 0,
-      "a": 0
-    };
-    const before = root.capture(scene);
-    root.near(before.px(50, 20), root.filled(root.blue), "drawn: the mover's fill over the lower shape");
-    root.near(before.px(50, 10), root.filled(root.blue), "drawn: over the lower stroke");
-    root.near(before.px(41, 20), root.over(root.line(1), root.filled(root.blue)), "drawn: the mover's stroke");
-    // (BlurBacking's order, one list per step: the overlay's shapes join
-    // `erasers` while still drawn, then leave `shapes`)
-    scene.erasers = [move];
-    compare(root.slotsOf(copies).length, count);
-    verify(root.slotOf(copies, move) === slot, "the same slot with it in both lists");
-    verify(!slot.erasing);
-    const both = root.capture(scene);
-    for (const p of [[50, 20], [50, 10], [41, 20], [70, 30], [20, 20]])
-      root.near(both.px(p[0], p[1]), before.px(p[0], p[1]), `in both lists as it was at ${p}`);
-    scene.shapes = [low, other];
-    const erased = root.capture(scene);
-    compare(root.slotsOf(copies).length, count);
-    verify(root.slotOf(copies, move) === slot, "the same slot");
-    verify(slot.erasing);
-    root.near(erased.px(50, 20), nothing, "erased over the lower fill");
-    root.near(erased.px(50, 10), nothing, "erased over the lower stroke");
-    root.near(erased.px(41, 20), nothing, "the mover's stroke is not drawn");
-    root.near(erased.px(70, 30), root.filled(root.solid), "a shape at the mover's rank keeps the window's own");
-    root.near(erased.px(20, 20), root.filled(root.green), "the lower fill outside it");
-    root.near(erased.px(20, 10), root.over(root.line(1), root.filled(root.green)), "the lower stroke outside it");
-    scene.shapes = [low, move, other];
-    compare(root.slotsOf(copies).length, count);
-    verify(root.slotOf(copies, move) === slot, "the same slot back in shapes");
-    verify(!slot.erasing);
-    const back = root.capture(scene);
-    for (const p of [[50, 20], [50, 10], [41, 20], [70, 30], [20, 20]])
-      root.near(back.px(p[0], p[1]), before.px(p[0], p[1]), `drawn again as it was at ${p}`);
-    scene.erasers = [];
-    const after = root.capture(scene);
-    compare(root.slotsOf(copies).length, count);
-    verify(root.slotOf(copies, move) === slot, "the same slot after");
-    verify(!slot.erasing);
-    for (const p of [[50, 20], [50, 10], [41, 20], [70, 30], [20, 20]])
-      root.near(after.px(p[0], p[1]), before.px(p[0], p[1]), `back as it was at ${p}`);
   }
 
   // ---- the must-not rows: no gap, line or break may show where a popout joins the bar or border ----

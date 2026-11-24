@@ -81,7 +81,6 @@ AttachedSurface {
     x: (root.geometry.origin?.x ?? 0) + root.x
     y: (root.geometry.origin?.y ?? 0) + root.y
     shown: root.backed && root.windowShown && !root.hollow
-    overlayLayer: root.geometry.onOverlayLayer
     clipRect: root.blurClip
     paintRank: root.paintRank
   }

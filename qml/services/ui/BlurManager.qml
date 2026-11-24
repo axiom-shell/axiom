@@ -13,9 +13,7 @@ import qs.services.compositor
  * and is the only one of them the compositor blurs. Blurred in one pass,
  * before any chrome is drawn, the blur behind joined surfaces matches
  * exactly; the surfaces themselves draw their outer fill transparent
- * (`backing`). While the overlay is open on a screen, a second backing
- * window there, over it, draws the shapes of the surfaces on the Overlay
- * layer (aboveOverlay). Layer-shell windows don't know where they are on
+ * (`backing`). Layer-shell windows don't know where they are on
  * screen: each shape is placed from its window's origin as LayerManager
  * works it out (hosts/popout/LayerOrigin).
  */
@@ -89,22 +87,14 @@ QtObject {
   // Whether a chrome surface on `screen` (a ShellScreen or its name) leaves
   // its fill to the backing window. `onOverlay`: its window is on the Overlay
   // layer, over fullscreen windows (where the backing window rises too:
-  // overFullscreen) and over the overlay (where the backing window over the
-  // overlay draws it: aboveOverlay). Otherwise it's on Top, faded out under
-  // a fullscreen window, and its copy goes with it.
+  // overFullscreen). Otherwise it's on Top, faded out under a fullscreen
+  // window, and its copy goes with it.
   function backsOn(screen, onOverlay) {
     return BackingRule.backsOn({
       "backing": root.backingOn(screen),
       "fullscreen": CompositorManager.hasFullscreen(root._name(screen)),
       "onOverlay": onOverlay
     });
-  }
-
-  // Whether the overlay is open on `screen`, covering the backing window: the
-  // Overlay-layer surfaces' shapes (BlurShape.overlayLayer) are then drawn
-  // by a second backing window, over the overlay and under them
-  function aboveOverlay(screen) {
-    return root.backingOn(screen) && SurfaceManager.surfaceOpenOn("overlay", root._name(screen));
   }
 
   // Whether the backing window on `screen` stands on the Overlay layer: a

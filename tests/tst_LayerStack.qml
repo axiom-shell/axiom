@@ -42,16 +42,6 @@ TestCase {
     compare(LayerStack.barLayers.length, 8);
   }
 
-  // The blur window over the overlay sits strictly between the overlay and
-  // every Overlay-layer surface it draws fills for
-  function test_blur_over_overlay_order() {
-    const backing = order("blur-backing-overlay");
-    verify(order("overlay") > backing);
-    for (const ns of ["osd", "dock-preview", "edge-popout", "popout"])
-      verify(backing > order(ns), "under " + ns);
-    verify(LayerStack.layers.find(l => l.namespace === "blur-backing-overlay").noAnim);
-  }
-
   // The overlay's page: on Top after the backdrop, before the backing
   // window (and so under the chrome)
   function test_overlay_under_chrome() {
@@ -63,7 +53,7 @@ TestCase {
   // blurReduced only, and every such namespace has a row
   function test_blur_reduced() {
     compare(LayerStack.blurReduced, ["overlay"]);
-    for (const list of [LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay, LayerStack.blurChrome])
+    for (const list of [LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurChrome])
       verify(!list.includes("overlay"), "only in blurReduced");
     for (const ns of LayerStack.blurReduced)
       verify(LayerStack.layers.some(l => l.namespace === ns), ns + " has a row");
@@ -75,11 +65,7 @@ TestCase {
     verify(order("blur-backing") > order("shadows"));
     for (const ns of ["edge-menu", "popout-under", "bar", "border", "dock"])
       verify(order("shadows") > order(ns), "under " + ns);
-    verify(order("overlay") > order("shadows-overlay"));
-    for (const ns of ["osd", "dock-preview", "edge-popout", "popout"])
-      verify(order("shadows-overlay") > order(ns), "under " + ns);
-    for (const ns of ["shadows", "shadows-overlay"])
-      verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurReduced, LayerStack.blurBackdrops, LayerStack.blurOverOverlay).includes(ns), ns + " not blurred");
+    verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurReduced, LayerStack.blurBackdrops).includes("shadows"), "shadows not blurred");
   }
 
   // A free menu's window: over the windows on Top, under the blur window

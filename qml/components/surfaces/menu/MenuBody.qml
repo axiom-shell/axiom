@@ -42,7 +42,6 @@ Item {
   //   origin        this body's top-left on the screen as drawn (slid),
   //                 or null while unknown
   //   clip          its window on the screen (BlurShape.clipRect)
-  //   overlayLayer  its window is on the Overlay layer
   //   opacity       how far it has faded in
   //   look          the shadow's look
   // }

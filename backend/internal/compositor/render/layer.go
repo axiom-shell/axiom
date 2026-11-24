@@ -213,7 +213,6 @@ func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 		// Hyprland never blurs a popup with xray; niri is told the same
 		row("axiom-blur-popups", t.BlurChrome, on, "popups", true, "threshold", threshold, "xray", false),
 		row("axiom-blur-backdrops", t.BlurBackdrops, on && isTrue(get(surfaces, "backdrops")), "blur", true, "threshold", 0.01, "xray", xray),
-		row("axiom-blur-over-overlay", t.BlurOverOverlay, on, "blur", true, "threshold", threshold, "xray", false),
 	}
 }
 

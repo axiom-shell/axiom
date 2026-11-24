@@ -437,12 +437,6 @@ layer-rule {
     }
 }
 layer-rule {
-    match namespace="^axiom-(blur-backing-overlay)$"
-    background-effect {
-        xray false
-    }
-}
-layer-rule {
     match namespace="^axiom-wallpaper$"
     place-within-backdrop true
 }

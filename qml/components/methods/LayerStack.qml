@@ -126,18 +126,6 @@ QtObject {
       "why": "Docks: after every bar and the border on their edge, so they sit inside them."
     },
     {
-      "namespace": "blur-backing-overlay",
-      "order": -9,
-      "noAnim": true,
-      "why": "The blur window over the overlay (shell/BlurBacking, while the overlay is open on its screen), drawing the fills of the Overlay-layer surfaces above it: after the overlay, before them. Mapped at once, so the fills it draws under content already showing don't fade in."
-    },
-    {
-      "namespace": "shadows-overlay",
-      "order": -9,
-      "noAnim": true,
-      "why": "The shadows of the Overlay-layer surfaces over the overlay, apart from their blur window as `shadows` is: beside it (they never meet), before those surfaces."
-    },
-    {
       "namespace": "osd",
       "order": -10,
       "noAnim": true,
@@ -216,9 +204,6 @@ QtObject {
   // windows hold their own dim),
   // only when asked: the whole screen, at every alpha
   readonly property var blurBackdrops: ["backdrop", "polkit", "screenshare"]
-  // The blur window over the overlay: what it blurs is the overlay, so
-  // never see-through (xray would blur the wallpaper in its place)
-  readonly property var blurOverOverlay: ["blur-backing-overlay"]
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
   readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
