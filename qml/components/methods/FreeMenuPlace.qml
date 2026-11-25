@@ -204,14 +204,17 @@ QtObject {
   // shows it once the free host has finished closing (`freeShown`) and
   // waits for the widget's place (`openerKnown`). So `freeShown` means:
   // popped out, the free box is drawn; at a widget, the free host hasn't
-  // finished closing
-  function hosts(placement, poppedOut, freeShown, atWidget, openerKnown) {
+  // finished closing. An edge menu that can pop out (`canPopOut`) has its
+  // free host loaded from the start too, showing nothing until it pops out
+  // (`shownOn`), so popping out maps no window: its held window keeps its
+  // place in map order (LayerSlot)
+  function hosts(placement, poppedOut, freeShown, atWidget, openerKnown, canPopOut) {
     const popped = placement === "edge" && !!poppedOut;
     const free = placement === "free";
     return {
       "edge": (placement === "edge" && (!popped || !freeShown)) || (free && !!atWidget && !!openerKnown && !freeShown),
       "strip": placement === "strip",
-      "free": free || popped
+      "free": free || popped || !!canPopOut
     };
   }
 

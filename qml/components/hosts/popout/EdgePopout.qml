@@ -246,6 +246,9 @@ PopoutWrapperBase {
   // following a bar, as that meets it; else on what reserves the edge
   // (EdgePlacement.attachAt)
   readonly property real attachAt: placement.attachAt
+  // Its pill still carries its stretch (EdgePlacement.stretchDrawn), so
+  // its host keeps it loaded until it has drawn back (MenuHosts)
+  readonly property bool stretchDrawn: placement.stretchDrawn
 
   // Whether the overlay is open on its screen (FloatingEdgeMenu gives its
   // grab to the overlay's then)

@@ -386,6 +386,16 @@ TestCase {
       "strip": false,
       "free": true
     }, "free at a widget, its own window still shown: the free host until its box has gone");
+    compare(FreeMenuPlace.hosts("edge", false, false, false, false, true), {
+      "edge": true,
+      "strip": false,
+      "free": true
+    }, "an edge menu that can pop out: its free host is loaded from the start, so popping out maps no window");
+    compare(FreeMenuPlace.hosts("edge", true, true, false, false, true), {
+      "edge": false,
+      "strip": false,
+      "free": true
+    }, "popped out, docking keeps the free host loaded");
     compare(FreeMenuPlace.hosts("edge", false, false, true), {
       "edge": true,
       "strip": false,

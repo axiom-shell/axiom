@@ -119,6 +119,10 @@ QtObject {
   // follows as sent
   property bool stretchGlides: true
   readonly property bool stretchReady: root._stretch.ready && root._startPill.ready && root._endPill.ready
+  // Its pill still carries its stretch, grown out or drawing back after
+  // the surface has gone (PillStretch.progress); a host kept for it stays
+  // until then
+  readonly property bool stretchDrawn: root._stretch.progress > 0
 
   readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   readonly property string edgeName: ScreenEdge.name(root.edge)

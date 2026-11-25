@@ -10,8 +10,9 @@ import qs.components.hosts.popout
 
 // One menu from MenusConfig, on its screen, at its placement. The
 // edge and strip hosts are created only in use (FreeMenuPlace.hosts); a
-// free menu's free hosts are built up front and stay (their held windows
-// keep their place in map order), at a widget showing nothing
+// free menu's free hosts, and those of an edge menu that can pop out
+// (MenusConfig.canPopOut), are built up front and stay (their held windows
+// keep their place in map order), showing nothing until used
 // (`freeScreen` ""). A popped-out edge menu shows in the free host, its
 // edge host kept until the free one has shown, so the box hands over with
 // no gap. The free host is one per
@@ -76,7 +77,9 @@ Scope {
   // while that box is closed (the box in place never moves)
   readonly property var _wantedAnchor: MenuManager.widgetAnchor(root.menuId)
   readonly property var _edgeHost: edgeLoader.item
-  readonly property bool _edgeOccupied: root._edgeHost?.occupied ?? false
+  // Open, closing, or its pill still drawing back after its box has gone.
+  // Unloaded sooner, its pill's stretch went in one frame
+  readonly property bool _edgeOccupied: (root._edgeHost?.occupied || root._edgeHost?.stretchDrawn) ?? false
   // The latch's change unloads the edge host, so it must never run inside
   // that host's own occupied change: kept a tick later, as _freeKept
   property bool _edgeKept: false
@@ -106,7 +109,7 @@ Scope {
   readonly property bool _atWidget: root._openerRect !== null || (root._wantedAnchor !== null && !root._openerGone)
   // The edge host shows it while it is still the widget wanted
   readonly property bool _edgeShows: root._openerRect === null || root._wantedAnchor === root._openerAnchor.value
-  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeKept, root._atWidget, root._openerRect !== null)
+  readonly property var hosts: FreeMenuPlace.hosts(root.menu?.placement ?? "", root.poppedOut, root.poppedOut ? root._handedOver : root._freeKept, root._atWidget, root._openerRect !== null, MenusConfig.canPopOut(root.menu))
 
   // ---- The free host's screen ----
   // Where a free menu opened (FreeMenuPlace.openedOn), "" while closed or

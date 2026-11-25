@@ -173,6 +173,36 @@ TestCase {
     compare(shared.calls.LayerStack.sequence([menu, bar]).show, ["menu"]);
   }
 
+  // Held windows opening and closing, and a window on the Overlay layer
+  // mapping, never put a Top window out of place
+  function test_sequence_runtime_keeps_top() {
+    const held = ["backdrop", "overlay", "blur-backing", "menu", "edge-menu"];
+    const entries = [];
+    let seq = 1;
+    for (const ns of held.concat(["bar", "border", "dock"]))
+      entries.push(entry(ns, order(ns), {
+        "wanted": !held.includes(ns),
+        "held": held.includes(ns),
+        "showing": true,
+        "mapped": true,
+        "seq": seq++
+      }));
+    compare(shared.calls.LayerStack.sequence(entries).remap, [], "settled: nothing to map again");
+    for (const e of entries.filter(x => x.held)) {
+      e.wanted = true;
+      compare(shared.calls.LayerStack.sequence(entries).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
+      e.wanted = false;
+      compare(shared.calls.LayerStack.sequence(entries).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
+    }
+    const all = entries.concat([entry("notifications", order("notifications"), {
+        "layer": "overlay",
+        "showing": true,
+        "mapped": true,
+        "seq": seq++
+      })]);
+    compare(shared.calls.LayerStack.sequence(all).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
+  }
+
   // A window ordered before others starting to show (a backdrop, opening
   // with the overlay) doesn't take down those already showing
   function test_sequence_showing_stays() {
