@@ -119,7 +119,7 @@ QtObject {
 
   // The bar editor pages on screen (`watch`/`unwatch`). While there are
   // any, the running bars outline the selected widget and report to `live`
-  property ConsumerRegistry _watchers: ConsumerRegistry {}
+  property OwnerRegistry _watchers: OwnerRegistry {}
   readonly property bool editing: root._watchers.active
   // What each running bar reports while editing, by its id (a bar on every
   // monitor has one per screen): { source (its config entry's id), screen,
@@ -130,11 +130,11 @@ QtObject {
   property var _live: ({})
 
   function watch(owner) {
-    root._watchers.acquire(owner, true);
+    root._watchers.set(owner, true);
   }
 
   function unwatch(owner) {
-    root._watchers.release(owner);
+    root._watchers.drop(owner);
     if (!root.editing) {
       root._barHover = null;
       root.setHoveredWidget("", -1);

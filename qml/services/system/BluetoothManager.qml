@@ -65,11 +65,11 @@ QtObject {
   // Discovery runs while anything has acquireDiscovery()ed it (a
   // BluetoothDevices menu on its Discover tab) and the radio is on
   function acquireDiscovery(owner) {
-    _discoveryRegistry.acquire(owner, {});
+    _discoveryConsumers.set(owner, {});
   }
 
   function releaseDiscovery(owner) {
-    _discoveryRegistry.release(owner);
+    _discoveryConsumers.drop(owner);
   }
 
   // rpc: bluetooth.setDiscoverable
@@ -92,12 +92,12 @@ QtObject {
   }
 
   function acquireCountdown(owner) {
-    _countdownRegistry.acquire(owner, {});
+    _countdownConsumers.set(owner, {});
     root._tickCountdown();
   }
 
   function releaseCountdown(owner) {
-    _countdownRegistry.release(owner);
+    _countdownConsumers.drop(owner);
   }
 
   // rpc: bluetooth.setAlias
@@ -436,7 +436,7 @@ QtObject {
     });
   }
 
-  property ConsumerRegistry _countdownRegistry: ConsumerRegistry {}
+  property OwnerRegistry _countdownConsumers: OwnerRegistry {}
 
   function _tickCountdown() {
     root.discoverableLeft = root.discoverableUntil > 0 ? Math.max(0, Math.ceil((root.discoverableUntil - Date.now()) / 1000)) : -1;
@@ -446,12 +446,12 @@ QtObject {
   property Timer _countdown: Timer {
     interval: 1000
     repeat: true
-    running: root._countdownRegistry.active && root.discoverableUntil > 0
+    running: root._countdownConsumers.active && root.discoverableUntil > 0
     onTriggered: root._tickCountdown()
   }
 
-  property ConsumerRegistry _discoveryRegistry: ConsumerRegistry {}
-  readonly property bool _wantsDiscovery: _discoveryRegistry.active && enabled
+  property OwnerRegistry _discoveryConsumers: OwnerRegistry {}
+  readonly property bool _wantsDiscovery: _discoveryConsumers.active && enabled
 
   // The daemon's scan is a session of its own (BlueZ keeps one per
   // client): stopping it never ends another app's

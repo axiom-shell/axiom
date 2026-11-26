@@ -25,7 +25,7 @@ QtObject {
   property var states: ({})
 
   function acquire(owner, request) {
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "interval": Math.max(60000, request?.interval ?? 300000),
       "accounts": (request?.accounts ?? []).filter(a => a?.configDir).map(a => ({
             "label": a.label ?? "",
@@ -35,7 +35,7 @@ QtObject {
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   // Refetches every account now, except those still rate limited
@@ -48,15 +48,15 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
   // The merged request as one string, so axiom is asked again only when it
   // really changes. axiom ticks each minute to see which accounts are due
   // (`interval`) and fetches each at most every `every`.
   readonly property string _requestKey: {
-    if (!_registry.active)
+    if (!_consumers.active)
       return "";
-    const requests = _registry.requests;
+    const requests = _consumers.values;
     const accounts = [];
     requests.forEach(r => r.accounts.forEach(a => {
         if (!accounts.some(x => x.dir === a.dir && x.label === a.label))

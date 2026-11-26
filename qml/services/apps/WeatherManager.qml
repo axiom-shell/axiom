@@ -24,14 +24,14 @@ QtObject {
   // `request.location` '' is the Weather settings' place; `units`
   // "default" follows Weather › Units (WeatherConfig.unitsOf)
   function acquire(owner, request) {
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "location": request?.location ?? "",
       "units": request?.units ?? "default"
     });
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   // The pushed state for `request` ({ location, units }), as
@@ -129,7 +129,7 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
   // The states last pushed, one per place asked for, each carrying its
   // request
@@ -151,10 +151,10 @@ QtObject {
   // The request as one string, so axiom is asked again only when it
   // really changes: every distinct place registered
   readonly property string _requestKey: {
-    if (!_registry.active)
+    if (!_consumers.active)
       return "";
     const places = [];
-    _registry.requests.forEach(r => {
+    _consumers.values.forEach(r => {
       const p = JSON.stringify(root._settingsOf(r));
       if (!places.includes(p))
         places.push(p);

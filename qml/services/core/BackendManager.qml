@@ -78,7 +78,7 @@ QtObject {
   // interval anyone asked and pushes `<topic>.state` when it changes.
   // Called again, it replaces the request. Kept across reconnects; the
   // service owning the topic merges its consumers into one request
-  // (ConsumerRegistry) and listens to the state
+  // (OwnerRegistry) and listens to the state
   function acquire(topic, request) {
     root._acquired[topic] = request ?? {};
     root._cancelRetry(topic);

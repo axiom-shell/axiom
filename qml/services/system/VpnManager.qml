@@ -70,11 +70,11 @@ QtObject {
   // Tailscale is polled (`tailscale status`): it's listed only while
   // something showing the rows holds acquire()
   function acquire(owner) {
-    _registry.acquire(owner, {});
+    _consumers.set(owner, {});
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   function rowById(id) {
@@ -249,8 +249,8 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
-  readonly property bool _tailscaleShown: _registry.active && VpnConfig.showTailscale
+  property OwnerRegistry _consumers: OwnerRegistry {}
+  readonly property bool _tailscaleShown: _consumers.active && VpnConfig.showTailscale
   on_TailscaleShownChanged: {
     if (root._tailscaleShown)
       TailscaleManager.acquire(root);

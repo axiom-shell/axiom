@@ -22,12 +22,24 @@ QtObject {
     }, {});
   }
 
-  // Whether two pieces of plain JSON data are equal, whatever their objects'
-  // key order (JSON.stringify compares order too)
+  // Whether `value` is plain data: an object that is not null, not an array
+  // and has Object.prototype (not a Qt value type or a class), and is a plain
+  // JS object (a QObject wrapper also has Object.prototype)
+  function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype && Object.prototype.toString.call(value) === "[object Object]";
+  }
+
+  // Whether two pieces of data are equal, whatever their objects' key order
+  // (JSON.stringify compares order too). Plain JSON and value types
+  // (Qt.rect, Qt.point, colours) are walked; a QObject (a window, an Item)
+  // is equal only to itself.
   function deepEqual(a, b) {
     if (a === b)
       return true;
     if (a === null || b === null || typeof a !== "object" || typeof b !== "object")
+      return false;
+    const qobject = x => x !== null && typeof x === "object" && !Array.isArray(x) && !root.isPlainObject(x) && typeof x.objectName === "string";
+    if (qobject(a) || qobject(b))
       return false;
     if (Array.isArray(a) !== Array.isArray(b))
       return false;

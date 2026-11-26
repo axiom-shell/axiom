@@ -54,7 +54,7 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
 - Removing or duplicating a bar keeps the selection on its bar and widget; a removed or new bar's widgets start unselected.
 
 ### Live reports
-- They are active while a BarEditor page is visible (`BarManager.watch(page)`/`unwatch`, a `ConsumerRegistry`: `editing`).
+- They are active while a BarEditor page is visible (`BarManager.watch(page)`/`unwatch`, an `OwnerRegistry`: `editing`).
 - The running bars outline the selected widget (`BarManager.isSelectedWidget(source, zone, index)` → `BarWidgetHost.highlighted`).
 - They outline the widget hovered on the board the same way (`BarManager.hoveredWidget`, `isHoveredWidget` → `BarWidgetHost.hoverHighlighted`), and report the one under the pointer back (`BarWidgetHost.pointerHovered` → `WidgetGroup` → `BarManager.setBarHover`, read as `barHover` / `isBarHovered(zone, index)`), so its chip looks hovered.
 - Each `BarContainer` reports `editorReport` to `BarManager.live` (`setLive(id, report)` when it changes and once it's made, so a bar made while the editor is open reports too; `clearLive(id, screen)` on destruction). A report holds:

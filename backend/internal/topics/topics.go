@@ -5,7 +5,7 @@
 // is pushed as `<name>.state` whenever it changes, latest-wins. A request
 // asking for something no subscriber asked for yet (more than another
 // interval) is fetched at once rather than at the next interval. The Go side of the
-// shell's ConsumerRegistry contract.
+// shell's OwnerRegistry contract.
 package topics
 
 import (

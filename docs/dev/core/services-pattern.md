@@ -1,18 +1,18 @@
 # Services pattern
 
-> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `qml/services/core/ConsumerRegistry.qml`, `qml/services/core/KeptList.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
+> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `qml/services/core/OwnerRegistry.qml`, `qml/services/core/KeptList.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
 > **Config:** none of its own
 > **Related:** [Config manager](config-manager.md), [Config readers](config-readers.md), [Editors pattern](editors-pattern.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 
 How `qml/services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
 
 ### Shape
-- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, `KeptList`, …) are named for what they are. `KeptList` keeps a list a service rebuilds the same objects while it is equal (`fresh`, `idOf`, `oncePerTurn`, `items`; CompositorManager's lists, ScreenEdgeManager.bars).
+- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `OwnerRegistry`, `IpcTarget`, `KeptList`, …) are named for what they are. `KeptList` keeps a list a service rebuilds the same objects while it is equal (`fresh`, `idOf`, `oncePerTurn`, `items`; CompositorManager's lists, ScreenEdgeManager.bars).
 - A service with an IPC target that nothing else references is created from `qml/shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
 - **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/sysmon`, at the shortest interval asked; the setting's schema minimum is the only floor).
-  - Reference-counted through a `ConsumerRegistry` (shared with UpdatesManager; identical re-registrations are no-ops).
+  - Reference-counted through an `OwnerRegistry` (shared with UpdatesManager; identical re-registrations are no-ops).
   - Consumers call `acquire(owner, {interval, metrics, diskPaths, history})` / `release(owner)`.
   - Go reads only the union of requested metrics from /proc and /sys; disk usage is re-read once a minute. Each push is one sample, the metrics asked for and an `at` time, so every sample is pushed.
   - Stops entirely with no consumers: nothing is pushed and the topic isn't fetched.
@@ -32,7 +32,7 @@ How `qml/services/` is built: one singleton per domain, owning state and side ef
   - `MarketsManager`: `acquire(owner)` with no request (the watchlist is global); fetched by axiom (the `markets` topic, `backend/internal/markets`: Yahoo Finance and CoinGecko), also while a price alert waits with nothing shown. See [Markets](../features/markets.md).
   - `TailscaleManager`: `available`, `backendState`/`connected`, `tailnetName`, `ip`, polled by axiom (the `tailscale` topic, at `TailscaleConfig.interval`: `backend/internal/tailscale`).
   - `CommandManager`: `acquire(owner, { command, interval, mode, format })`, `outputs[command]` (and `values[command]` with `format: "json"`), shared by identical commands (e.g. a Button's label); watched by axiom (below).
-- **Polled by the daemon:** a service whose side effect moved to axiom keeps the same `acquire` / `release` and its `ConsumerRegistry`, but instead of a Timer it hands the merged request to `BackendManager.acquire(topic, request)` while `_registry.active` (and `release(topic)` once it isn't), and fills its properties from `BackendManager.listen("<topic>.state", …)` ([protocol](../backend/protocol.md) › Polled topics). The request is built in one binding, with the interval inside it and read from config or the consumers' requests only there (`SystemManager._requestKey` from `TopicRequest.systemRequest`; `UpdatesConfig.interval` in `UpdatesManager._request`): never an interval of its own beside it, since a half-evaluated binding once subscribed with `interval: 0` just before the right request.
+- **Polled by the daemon:** a service whose side effect moved to axiom keeps the same `acquire` / `release` and its `OwnerRegistry`, but instead of a Timer it hands the merged request to `BackendManager.acquire(topic, request)` while `_consumers.active` (and `release(topic)` once it isn't), and fills its properties from `BackendManager.listen("<topic>.state", …)` ([protocol](../backend/protocol.md) › Polled topics). The request is built in one binding, with the interval inside it and read from config or the consumers' requests only there (`SystemManager._requestKey` from `TopicRequest.systemRequest`; `UpdatesConfig.interval` in `UpdatesManager._request`): never an interval of its own beside it, since a half-evaluated binding once subscribed with `interval: 0` just before the right request.
 - **Widget side:** hold the request in a `readonly property var …Request` built from `properties`; acquire it in `Component.onCompleted` and in `on…RequestChanged`; release in `onDestruction`.
 
 ### CommandManager: services keep no Process
@@ -68,3 +68,16 @@ They follow the same pattern:
 - `qs list` / `qs kill` match the display (`WAYLAND_DISPLAY`), so a nested axiom (`scripts/dev/nested.sh`) and the live one never end each other.
 
 Feature services each have their own doc under `docs/dev/features/`, `docs/dev/hyprland/` and `docs/dev/theming/` (see the index).
+
+## Service base
+
+### Shape
+- `OwnerRegistry` (`qml/services/core/OwnerRegistry.qml`) holds what each owner holds (a request, a frame, a window), one entry per owner, for the service that owns it; not a singleton, each service has its own.
+- Members: `entries` (`[{owner, value}]`), `values` (the entries' values), `active` (any entry), `set(owner, value)` (value omitted is `true`), `drop(owner)`, `valueOf(owner)` (`undefined` when not held).
+- Order: a new owner appends, a re-`set` keeps its place, `drop` removes.
+- One equality gate: `set` with a value `Utils.deepEqual` to the held one changes nothing and notifies nobody. Plain data and value types (`Qt.rect`) are compared by content; a QObject (an `Item`, a window) only by identity.
+- The owner is the reporting object itself, never a uid.
+
+### Lifecycle
+- Created with its service.
+- An owner calls `drop` in `Component.onDestruction`; a destroyed owner that never dropped stays listed.

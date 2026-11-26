@@ -35,7 +35,7 @@ running anything:
     (an entry no longer used is an error); every BlurShape's `shown:` reads
     `backed`
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one owning a ConsumerRegistry or DeadlineTicker),
+    service's member (one owning an OwnerRegistry or DeadlineTicker),
     in the expression or through a property of the file; a model may
     count one (`.length`, `.count`)
   - the config UI and onboarding build no hover tint (StateLayer), key
@@ -893,12 +893,12 @@ def main():
     # Repeater models and acquire() requests never come from live values
     # (CLAUDE.md › UI): a model re-evaluated per sample once
     # pushed qs past 25 GB. Live means a member of a polled service (one
-    # polling through a ConsumerRegistry or DeadlineTicker, not
+    # polling through an OwnerRegistry or DeadlineTicker, not
     # BackendManager's or NotesManager's acquire()), read in the expression
     # or through one property of the same file. A model may count one
     # (`.length`, `.count`: an int notifies only when it changes); a request
     # may not read one at all
-    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:ConsumerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:OwnerRegistry|DeadlineTicker)\s*\{", f.read_text())}
     chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
 
     def live_reads(expr, props, counts, depth=0):

@@ -19,17 +19,17 @@ QtObject {
   property bool scrollLock: false
 
   function acquire(owner) {
-    _registry.acquire(owner, {});
+    _consumers.set(owner, {});
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  property OwnerRegistry _consumers: OwnerRegistry {}
 
-  readonly property bool _active: _registry.active
+  readonly property bool _active: _consumers.active
 
   on_ActiveChanged: {
     if (root._active) {

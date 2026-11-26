@@ -33,13 +33,13 @@ QtObject {
   property bool checking: false
 
   function acquire(owner, request) {
-    _registry.acquire(owner, {
+    _consumers.set(owner, {
       "aurHelper": request?.aurHelper ?? ""
     });
   }
 
   function release(owner) {
-    _registry.release(owner);
+    _consumers.drop(owner);
   }
 
   function refresh() {
@@ -72,11 +72,11 @@ QtObject {
   }
 
   // -- Private --
-  property ConsumerRegistry _registry: ConsumerRegistry {}
-  readonly property var _requests: _registry.requests
+  property OwnerRegistry _consumers: OwnerRegistry {}
+  readonly property var _requests: _consumers.values
   property bool _upgrading: false
 
-  readonly property bool _subscribed: _registry.active && root.supported
+  readonly property bool _subscribed: _consumers.active && root.supported
   readonly property string _aurHelper: root.hasAur ? (_requests.find(r => r.aurHelper !== "")?.aurHelper ?? "") : ""
   // The request as one value, so a change resubscribes once. axiom checks
   // at once for a request it hasn't seen (another AUR helper), and only
