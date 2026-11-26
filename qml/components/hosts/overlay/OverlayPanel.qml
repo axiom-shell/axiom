@@ -23,7 +23,8 @@ import qs.components.views.Settings // qmllint disable unused-imports
 // After a close its pages stay built for `keptFor` (`kept`), so opening
 // again slides, with no rebuild. On Top under the chrome (LayerStack: after
 // the backdrop, before the backing window), held while closed (a pixel
-// drawing nothing); on Overlay while a fullscreen window is on its screen.
+// drawing nothing); on Overlay over a fullscreen window while shown (its
+// slot's layer).
 ReservedAreaWindow {
   id: root
 
@@ -33,6 +34,9 @@ ReservedAreaWindow {
   // Closed, its pages built: from the close until `keptFor` passes, or a
   // fullscreen window shows on its screen
   property bool kept: false
+  // Read raw, as the layer service reads it: the keep-warm drop and the reduced
+  // latch change in the same deferred batch as LayerManager's pass (the layer
+  // service's `hasFullscreen` here would put them a batch later)
   readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   // Open or closing: its slot's `wanted`
   readonly property bool _wanted: root.isOpen || hideTimer.running
@@ -46,7 +50,7 @@ ReservedAreaWindow {
     PopoutManager.closeOn(root.screen?.name ?? "")
   // This opening draws reduced effects (Overlay.reduceFullscreen): the page's
   // cheaper drawing is decided as it opens; its blur follows the screen live
-  // (BlurManager.reduced), and its layer follows `fullscreenNow`
+  // (BlurManager.reduced)
   property ClosedLatch _reduced: ClosedLatch {
     source: OverlayConfig.reduceFullscreen && root.fullscreenNow
     closed: !root._wanted
