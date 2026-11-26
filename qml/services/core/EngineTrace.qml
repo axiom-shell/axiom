@@ -74,16 +74,16 @@ QtObject {
       return JSON.stringify(root.idsOf(engine));
     }
 
+    function toggle(): void {
+      root.setTracing(!root.tracing);
+    }
+
     function enable(): void {
       root.setTracing(true);
     }
 
     function disable(): void {
       root.setTracing(false);
-    }
-
-    function toggle(): void {
-      root.setTracing(!root.tracing);
     }
 
     function status(): bool {
