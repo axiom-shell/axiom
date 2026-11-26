@@ -81,7 +81,7 @@ Along the edge:
   - **The border's corner pieces** (`RoundedBorders.cornerMargin`).
 - **Layer orders that put them over the dock:**
   - The `axiom-edge-popout` order ([layer stacking](../generated/layers.md)) maps floating edge menus after the dock and the OSD, so they draw over both.
-  - The OSD's `axiom-osd` (`overNamespace`) row orders the OSD after the dock ([layer arrangement](../compositor/layer-arrangement.md)), so it draws over it; the Overlay layer is over the overlay's page, which is on Top.
+  - The OSD's `axiom-osd` (`layerNamespace`) row orders the OSD after the dock ([layer arrangement](../compositor/layer-arrangement.md)), so it draws over it; the Overlay layer is over the overlay's page, which is on Top.
 - **Retiling:** Hyprland sends no event when windows retile around a changed zone. So `refreshSoon()` re-reads monitors and windows after layer and zone changes. Layer events are only listened to while a dock is built.
 
 ### Entry points

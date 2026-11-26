@@ -411,7 +411,7 @@ def layer_service(sources, errors):
             continue
         code = re.sub(r"//[^\n]*", "", text)
         for n, line in enumerate(code.split("\n"), 1):
-            m = re.search(r"\b(?:layerNamespace|overNamespace|WlrLayershell\.namespace)\s*:(.*)", line)
+            m = re.search(r"\b(?:layerNamespace|WlrLayershell\.namespace)\s*:(.*)", line)
             if m:
                 for lit in re.findall(r'"axiom-([\w-]+)"', m.group(1)):
                     given.setdefault(lit, f"{path}:{n}")

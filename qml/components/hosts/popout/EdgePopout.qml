@@ -109,12 +109,11 @@ PopoutWrapperBase {
   // Other windows the grab lets input through to
   property var grabWindows: []
   // Its layer namespace
-  property string overNamespace: "axiom-edge-popout"
+  property string layerNamespace: "axiom-edge-popout"
   // The surface's window, its layer namespace, and the box within it
   window: surfaceWindow
   // The hover strip's window (a focus grab's partner, see MenuSync)
   readonly property var triggerWindow: trigger
-  readonly property string layerNamespace: surfaceWindow.layerNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
   // ...its content's top-left in the window where it rests
   readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
@@ -428,7 +427,7 @@ PopoutWrapperBase {
     // lines it up with their inner stroke, whether that's a bar or the
     // plain border.
     WlrLayershell.layer: layerSlot.layer
-    readonly property string layerNamespace: root.overNamespace
+    readonly property string layerNamespace: root.layerNamespace
     LayerSlot {
       id: layerSlot
       window: surfaceWindow

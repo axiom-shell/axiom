@@ -163,7 +163,7 @@ Each system's bar keys (`OSDLevelBar`, or the key's `design`: Audio's `VolumeBar
 - One `EdgePopout` per enabled OSD (`OSDConfig.shownIds`), on each screen its `screen` puts it on (`General.screensFor`).
 - It is keyed by id, so editing an OSD's settings updates it in place instead of rebuilding every OSD.
 - Placed at its `edge` / `position`. With `detached` it is held off the edge, `distance` across the free screen, sliding or fading in (`animation`), as a dock is (see [Held off an edge](../popouts/held-off-edge.md)).
-- **Popout claim:** it uses `overNamespace: "axiom-osd"` and claims as kind `osd` (`claimKey` `osd:<id>:<screen>`), so it closes under a higher popout and won't open under one (see [Popout registry](../popouts/registry.md)).
+- **Popout claim:** it uses `layerNamespace: "axiom-osd"` and claims as kind `osd` (`claimKey` `osd:<id>:<screen>`), so it closes under a higher popout and won't open under one (see [Popout registry](../popouts/registry.md)).
 - `keepLoaded: true`: the systems report their own changes, so their watchers must exist while the OSD is closed.
 - Hiding: the parts' own times (`OSDHost`'s `collapse` → `hide()`, see What shows › Times); the host's own countdown (`timeout`) only runs while nothing is out (opened from its hover strip with nothing to show).
 

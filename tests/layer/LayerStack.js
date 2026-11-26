@@ -197,5 +197,20 @@ var rows = [
       }
     ],
     "expect": "overlay"
+  },
+  {
+    "id": "LY-29",
+    "why": "where a move keeps its place a window that would rise does not wait for a modal",
+    "call": "layerOf",
+    "args": [
+      "blur-backing",
+      {
+        "fullscreen": true,
+        "wanted": true,
+        "movesKeepPlace": true,
+        "underModal": "top"
+      }
+    ],
+    "expect": "overlay"
   }
 ];

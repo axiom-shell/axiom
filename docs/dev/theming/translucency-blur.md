@@ -64,6 +64,7 @@ Every mode is backed: `BlurManager.backingOn(screen)` is `CompositorManager.surf
 `BlurManager.backsOn(screen, onOverlay)`:
 - A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the one backing window draws it, over the overlay's page (which is under the backing window, LayerStack).
   - It reads its host's `onOverlayLayer`, which its submenu follows (true for bar and edge popouts; false for a free menu, whose window is on Top).
+- BlurManager's fullscreen reads (backing, pause, reduce, opaque) are the layer pass's (`LayerManager.hasFullscreen`), so a surface's handover to the backing window and that window's move to Overlay happen in one turn and the move rides its first frame (a frame drawn on Top in between would never be followed by another: no frame callback under a fullscreen window).
 - A surface on Top (bars, the border, docks, integrated menus) leaves the backing window while a fullscreen window shows there, since that fades the Top layer out.
   - The backing window itself then rises to the Overlay layer on that screen (its row's `overFullscreen: "always"`, order 9 keeping it under the surfaces there, after the overlay's page), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager`'s sequence pass; [layer arrangement](../compositor/layer-arrangement.md)).
 

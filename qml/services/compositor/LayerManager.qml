@@ -215,7 +215,7 @@ QtObject {
     const same = (a, b) => a.length === b.length && a.every((o, i) => o === b[i]);
     if (!same(root._arrangedOwners, root._specs.entries.map(e => e.owner)))
       root._arrange();
-    if (!same(Array.from(root._answers.keys()), root._slots.entries.map(e => e.owner)))
+    if (!same(Array.from(root._answers.slots.keys()), root._slots.entries.map(e => e.owner)))
       root._sequence();
   }
 
@@ -281,9 +281,15 @@ QtObject {
   // Slots unmapped to map again in their place, until they've unmapped
   // (owner -> true)
   property var _remapping: new Map()
-  // The answer for each slot (owner -> { shown, layer }), read by `slotOf`
-  // and, as the previous pass's, by the next for `underModal`
-  property var _answers: new Map()
+  // The pass's answers, published in one assignment (so a reader sees the
+  // layers and the fullscreen state of one pass, never one of each): `slots`
+  // (owner -> { shown, layer }), read by `slotOf` and, as the previous
+  // pass's, by the next for `underModal`; `fullscreen` (output name -> a
+  // fullscreen window is on it), read by `hasFullscreen`
+  property var _answers: ({
+      "slots": new Map(),
+      "fullscreen": new Map()
+    })
 
   // A slot's state, again whenever it changes
   function setSlot(owner, slot) {
@@ -300,7 +306,11 @@ QtObject {
   function dropSlot(owner) {
     root._slots.drop(owner);
     root._forgetSlot(owner);
-    root._forget("_answers", owner);
+    if (root._answers.slots.has(owner))
+      root._answers = {
+        "slots": Utils.withEntry(root._answers.slots, owner, undefined),
+        "fullscreen": root._answers.fullscreen
+      };
   }
 
   // What a slot's owner remembers of its map, once it's unmapped
@@ -314,7 +324,7 @@ QtObject {
   // window may show now, and the layer it is on, a name); not answered yet:
   // not shown, on its row's layer
   function slotOf(owner) {
-    return root._answers.get(owner) ?? {
+    return root._answers.slots.get(owner) ?? {
       "shown": false,
       "layer": root._rowLayer(root._slots.valueOf(owner)?.namespace ?? "")
     };
@@ -335,7 +345,15 @@ QtObject {
   // layer there)
   function layerOn(outputName, namespace) {
     const entry = root._slots.entries.find(e => e.value.outputName === outputName && e.value.namespace === namespace);
-    return entry ? root._answers.get(entry.owner)?.layer ?? "" : "";
+    return entry ? root._answers.slots.get(entry.owner)?.layer ?? "" : "";
+  }
+
+  // Whether a fullscreen window is on that output, as the layer pass that
+  // answers `slotOf`/`layerOn` saw it, published with them (BlurManager reads
+  // this one, never CompositorManager's, so a surface's handover and the
+  // backing window's move happen in one turn)
+  function hasFullscreen(outputName) {
+    return root._answers.fullscreen.get(outputName) ?? false;
   }
 
   // A window just made visible is created at once but drawn (and mapped)
@@ -391,7 +409,7 @@ QtObject {
     const modalOutputs = new Set(items.filter(i => i.showing && LayerStack.isModal(i.namespace)).map(i => i.outputName));
     const moves = new Set();
     const entries = items.map(i => {
-      const before = root._answers.get(owners[i.id])?.layer;
+      const before = root._answers.slots.get(owners[i.id])?.layer;
       const state = {
         "fullscreen": all.find(o => o.id === "output:" + i.outputName)?.fullscreen ?? false,
         "wanted": i.wanted,
@@ -451,7 +469,11 @@ QtObject {
           "layer": entries[id].layer
         }
       ]));
-    if (!Utils.deepEqual(Array.from(answers), Array.from(root._answers)))
-      root._answers = answers;
+    const fullscreen = new Map(all.filter(i => typeof i.id === "string" && i.id.startsWith("output:")).map(i => [i.id.slice("output:".length), i.fullscreen]));
+    if (!Utils.deepEqual(Array.from(answers), Array.from(root._answers.slots)) || !Utils.deepEqual(Array.from(fullscreen), Array.from(root._answers.fullscreen)))
+      root._answers = {
+        "slots": answers,
+        "fullscreen": fullscreen
+      };
   }
 }

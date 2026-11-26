@@ -192,7 +192,7 @@ QtObject {
       "layer": "overlay",
       "modal": true,
       "noAnim": true,
-      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows"
+      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows, where a move lands on top"
     },
     {
       "namespace": "monitor-prompt",
@@ -200,7 +200,7 @@ QtObject {
       "layer": "overlay",
       "modal": true,
       "noAnim": true,
-      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows"
+      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows, where a move lands on top"
     },
     {
       "namespace": "screenshare",
@@ -208,7 +208,7 @@ QtObject {
       "layer": "overlay",
       "modal": true,
       "noAnim": true,
-      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows"
+      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows, where a move lands on top"
     },
     {
       "namespace": "polkit",
@@ -216,7 +216,7 @@ QtObject {
       "layer": "overlay",
       "modal": true,
       "noAnim": true,
-      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows"
+      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows, where a move lands on top"
     },
     {
       "namespace": "powermenu",
@@ -224,7 +224,7 @@ QtObject {
       "layer": "overlay",
       "modal": true,
       "noAnim": true,
-      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows"
+      "why": "An instant action surface: last on the Overlay layer, over everything of axiom's, never mapped again; nothing moves onto its layer on its screen while it shows, where a move lands on top"
     },
     {
       "namespace": "notifications",
@@ -373,11 +373,11 @@ QtObject {
     return row.overFullscreen === "always";
   }
 
-  // Rule: a window that would move onto the modal rows' layer keeps its
-  // layer (`underModal`) while a modal shows on its screen; a move down never
-  // waits
-  function movesWaitForModal(answer, underModal) {
-    return Boolean(underModal) && answer !== underModal && answer === "overlay";
+  // Rule: where a move lands on top, a window that would move onto the modal
+  // rows' layer keeps its layer (`underModal`) while a modal shows on its
+  // screen; a move down never waits
+  function movesWaitForModal(answer, state) {
+    return !state.movesKeepPlace && Boolean(state.underModal) && answer !== state.underModal && answer === "overlay";
   }
 
   /**
@@ -400,7 +400,7 @@ QtObject {
     if (!row)
       return "top";
     const answer = root._tableLayer(row, state);
-    return root.movesWaitForModal(answer, state.underModal) ? state.underModal : answer;
+    return root.movesWaitForModal(answer, state) ? state.underModal : answer;
   }
 
   // The table's answer, before movesWaitForModal

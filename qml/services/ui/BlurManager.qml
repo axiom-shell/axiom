@@ -33,7 +33,7 @@ QtObject {
   readonly property bool _pauses: root._wanted && Appearance.blurPauseFullscreen
   readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
   // A fullscreen window on any screen: what the compositor-wide rules follow
-  readonly property bool _anyFullscreen: General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
+  readonly property bool _anyFullscreen: General.outputs.some(screen => LayerManager.hasFullscreen(screen.name))
   readonly property bool paused: root._pauses && !root._perScreen && root._anyFullscreen
   // The surfaces in LayerStack.blurReduced (the overlay) unblurred over a
   // fullscreen window (Overlay.reduceFullscreen), the way the pause unblurs
@@ -54,13 +54,13 @@ QtObject {
 
   // Whether the blur is paused on `screen` (a ShellScreen or its name)
   function pausedOn(screen) {
-    return root._perScreen ? root._pauses && CompositorManager.hasFullscreen(root._name(screen)) : root.paused;
+    return root._perScreen ? root._pauses && LayerManager.hasFullscreen(root._name(screen)) : root.paused;
   }
 
   // Whether the blurReduced surfaces are unblurred on `screen` (a
   // ShellScreen or its name)
   function reducedOn(screen) {
-    return root._perScreen ? root._wanted && OverlayConfig.reduceFullscreen && CompositorManager.hasFullscreen(root._name(screen)) : root.reduced;
+    return root._perScreen ? root._wanted && OverlayConfig.reduceFullscreen && LayerManager.hasFullscreen(root._name(screen)) : root.reduced;
   }
 
   // Whether surfaces on `screen` leave their fill to the backing window:
@@ -92,7 +92,7 @@ QtObject {
   function backsOn(screen, onOverlay) {
     return BackingRule.backsOn({
       "backing": root.backingOn(screen),
-      "fullscreen": CompositorManager.hasFullscreen(root._name(screen)),
+      "fullscreen": LayerManager.hasFullscreen(root._name(screen)),
       "onOverlay": onOverlay,
       "backingOnOverlay": LayerManager.layerOn(root._name(screen), "axiom-blur-backing") === "overlay"
     });
@@ -102,7 +102,7 @@ QtObject {
   // surfaces' and the copies' `fillOn`): blur paused for a fullscreen window
   // shown there (elsewhere it stays translucent)
   function opaqueOn(screen) {
-    return root.pausedOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
+    return root.pausedOn(screen) && LayerManager.hasFullscreen(root._name(screen));
   }
 
   // A surface's own fill on `screen`: at the surface opacity, solid where
