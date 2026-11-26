@@ -42,7 +42,7 @@ Lenses (`lenses.md` next to this file): `bugs`, `regressions`, `cleanup`, `rules
 - **Each slice:** one reviewer, `bugs`+`regressions`.
 - **Code, whole branch:** one reviewer, `consistency`+`cleanup`+`rules`+`design` (code and schema), starting from `new_names.py --base <mb>`.
 - **Words, whole branch** (only when the branch changes docs, schema descriptions or `I18n.tr` strings): one reviewer, `consistency` › User strings and docs + `design` › Docs.
-- Plus one `checker` running `scripts/dev/verify.sh --all` in the tree (a failing check is a Blocker). In a stack, this run is a lower part's verify (`/orchestrate` › The stack rebase rule).
+- Plus one `checker` running `scripts/dev/verify.sh --all` in the tree (a failing check is a Blocker). In a stack, this run is a lower part's verify (`/orchestrate` `stacks.md` › The stack rebase rule).
 
 At most ~6 slice reviewers: past that, merge neighbouring slices. A ~3k-line branch is then about 5 + 2 reviewers, a checker and the judge; a small one is 1 reviewer, a checker and the judge.
 
