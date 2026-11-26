@@ -464,27 +464,36 @@ QtObject {
     return best;
   }
 
-  // The middle workspace of a `cols` × `rows` grid block whose first id
-  // is `base` (ids run along each row, then down the rows): the middle
-  // cell, or with an even count the one after the middle (right, down)
-  function centreWorkspace(base, cols, rows) {
-    return base + Math.floor(Math.max(1, rows) / 2) * Math.max(1, cols) + Math.floor(Math.max(1, cols) / 2);
+  // The start workspace of a `cols` × `rows` block whose first id is
+  // `base` (ids run along each row, then down the rows; a perMonitor
+  // block is one row): with `cell` "first" its first id, with "middle"
+  // its middle cell (middleOf each axis)
+  function startWorkspace(base, cols, rows, cell) {
+    if (cell === "first")
+      return base;
+    return base + (root.middleOf(rows) - 1) * Math.max(1, cols) + root.middleOf(cols) - 1;
   }
 
-  // Every monitor to its grid block's centre (centreWorkspace), for a
-  // grid's start: remapWorkspaces' { focus, changed } (focus: every
-  // monitor, the focused one last, as applyRemap takes it). With
-  // `untouched`, only monitors still where the compositor started them
-  // go: on their block's first id, or outside their block (one Hyprland
-  // numbered on); the rest keep the one they show. monitors: [{ name,
-  // block, active, focused }] (remapWorkspaces'); `size` ids a block
-  function centreFocus(monitors, size, cols, rows, untouched) {
+  // The middle of `count` columns or rows, 1-based: after the middle with
+  // an even count (right, down)
+  function middleOf(count) {
+    return Math.floor(Math.max(1, count) / 2) + 1;
+  }
+
+  // Every monitor to its block's start workspace (startWorkspace with
+  // `cell`): remapWorkspaces' { focus, changed } (focus: every monitor,
+  // the focused one last, as applyRemap takes it). With `untouched`, only
+  // monitors still where the compositor started them go: on their block's
+  // first id, or outside their block (one Hyprland numbered on); the rest
+  // keep the one they show. monitors: [{ name, block, active, focused }]
+  // (remapWorkspaces'); `size` ids a block
+  function startFocus(monitors, size, cols, rows, cell, untouched) {
     const focus = (monitors ?? []).map(m => {
       const base = m.block * size + 1;
       const fresh = m.active === base || m.active < base || m.active >= base + size;
       return {
         "monitor": m.name,
-        "id": !untouched || fresh ? root.centreWorkspace(base, cols, rows) : m.active,
+        "id": !untouched || fresh ? root.startWorkspace(base, cols, rows, cell) : m.active,
         "active": m.active,
         "focused": !!m.focused
       };

@@ -59,6 +59,17 @@ properties:
     minimum: 1
     maximum: 10
     x-showIf: {layout: grid}
+  startCell:
+    type: string
+    title: Start on
+    x-control: toggle
+    x-enabledIf: {/$supports.dynamicWorkspaces: false}
+    x-disabledNote: false
+    enum: [middle, first]
+    x-enumLabels: {middle: Middle, first: First}
+    default: middle
+    x-showIf: {layout: [perMonitor, grid]}
+    description: 'The workspace every monitor starts on: the middle of its workspaces (the middle cell of a grid), or its first.'
   wrap:
     type: boolean
     title: Wrap around
