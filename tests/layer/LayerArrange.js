@@ -1233,4 +1233,52 @@ var rows = [
     },
     "expect": false
   }
+  ,{
+    "id": "LY-46",
+    "why": "a held window not showing yet waits under a modal, and its rule says so",
+    "call": "sequence",
+    "input": {
+      "entries": [
+        {
+          "id": "polkit",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -30,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": true,
+          "held": false,
+          "showing": false,
+          "mapped": false,
+          "seq": 0,
+          "modal": true
+        },
+        {
+          "id": "menu",
+          "outputName": "DP-1",
+          "layer": "overlay",
+          "order": -10,
+          "rank": 0,
+          "rankGroup": "",
+          "wanted": false,
+          "held": true,
+          "showing": false,
+          "mapped": false,
+          "seq": 0
+        }
+      ],
+      "ordered": false,
+      "remappingIds": []
+    },
+    "expect": {
+      "show": [
+        "polkit"
+      ],
+      "remap": [],
+      "rules": {
+        "polkit": "modalShowsAtOnce",
+        "menu": "waitsUnderModal"
+      }
+    }
+  }
 ];

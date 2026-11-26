@@ -13,7 +13,7 @@ import qs.services.ui
 
 // The power menu on one screen: a card with a greeting and the uptime, a
 // row of session actions and a controls hint, over the dim backdrop. An
-// instant action surface (a prompt): on top of everything, nothing under it
+// instant action surface: on top of everything, nothing under it
 // changes; it closes with Escape, a tile or a click on its own dimmed screen.
 // Destructive actions ask for a second press (PowerMenu.confirm).
 PanelWindow {

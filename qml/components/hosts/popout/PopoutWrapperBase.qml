@@ -156,7 +156,10 @@ Item {
     parkTimer.stop();
     if (_holdsOpen) {
       dismissTimer.stop();
-      _lostCursor = null;
+      // Hovering forgets the parked cursor; an instant action surface up
+      // doesn't (the pointer hasn't moved)
+      if (contentHovered)
+        _lostCursor = null;
     } else {
       dismissTimer.restart();
     }

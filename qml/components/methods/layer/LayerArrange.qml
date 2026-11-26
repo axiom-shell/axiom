@@ -504,14 +504,14 @@ QtObject {
       return "outOfPlaceRemaps";
     if (root.orderedOnlyTiesByMapOrder(entries, e, ordered))
       return "orderedOnlyTiesByMapOrder";
+    if (root._wants(e) && root.waitsUnderModal(entries, e))
+      return "waitsUnderModal";
     if (root.heldStaysMapped(e))
       return "heldStaysMapped";
     if (!root._wants(e))
       return "";
     if (root.showingStays(e))
       return "showingStays";
-    if (root.waitsUnderModal(entries, e))
-      return "waitsUnderModal";
     if (root.modalShowsAtOnce(e))
       return "modalShowsAtOnce";
     return root.rankWithinOrder(entries, e) ? "rankWithinOrder" : "showsAfterPredecessorsMapped";
