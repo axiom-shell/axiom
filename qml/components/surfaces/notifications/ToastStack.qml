@@ -168,6 +168,18 @@ Scope {
     return first ? root._heightOf(first.key) : 0;
   }
 
+  // A detached stack slides in from off the screen, over the bars and the
+  // docks on its slide edge (as an EdgePopout does): the free area reaches
+  // back over what is reserved there, and the insets add that back so the
+  // cards rest where they would. Read from the layout, not the area's
+  // geometry, which it moves; held while a toast shows, so it never moves
+  // under one.
+  property ClosedLatch _slideReach: ClosedLatch {
+    source: root.attached || root.fullscreen ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.slideEdge) + box.dockZone(ScreenEdge.name(root.slideEdge))
+    closed: !root.showing || root._snapping
+  }
+  readonly property real slideReach: root._slideReach.value ?? 0
+
   // The free area the detached stack sits in (its window's size, on the
   // screen), and its insets there from each side
   readonly property real areaWidth: area.width
@@ -190,7 +202,7 @@ Scope {
       gap = root._gaps.start;
     else if (side === ScreenEdge.opposite(edge))
       gap = root._gaps.across;
-    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.fullscreen) - (root.attached && side !== ScreenEdge.opposite(NotificationsConfig.edge) ? box.dockZone(ScreenEdge.name(side)) : 0);
+    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.fullscreen) + (side === root.slideEdge ? root.slideReach : 0) - (root.attached && side !== ScreenEdge.opposite(NotificationsConfig.edge) ? box.dockZone(ScreenEdge.name(side)) : 0);
   }
   readonly property real insetTop: root._inset(ScreenEdge.Top)
   readonly property real insetBottom: root._inset(ScreenEdge.Bottom)
@@ -258,6 +270,33 @@ Scope {
   // The edge toasts slide from, picked while the stack is empty so it
   // stays one for all of them
   property int slideEdge: NotificationsConfig.edge
+  // Picked again while the stack is empty when what it picks from changes,
+  // so the area is reconfigured for the new edge before a toast comes
+  Connections {
+    target: NotificationsConfig
+    function onEdgeChanged() {
+      root._repick();
+    }
+    function onPositionChanged() {
+      root._repick();
+    }
+    function onDetachedChanged() {
+      root._repick();
+    }
+    function onMotionStyleChanged() {
+      root._repick();
+    }
+    function onMotionDirectionChanged() {
+      root._repick();
+    }
+  }
+  onShowingChanged: root._repick()
+  function _repick() {
+    Qt.callLater(() => {
+      if (!root.showing)
+        root._pickSlideEdge();
+    });
+  }
   function _pickSlideEdge() {
     const r = root.restRect;
     const o = area.origin;
@@ -313,6 +352,12 @@ Scope {
       left: true
       right: true
     }
+    margins {
+      top: root.slideEdge === ScreenEdge.Top ? -root.slideReach : 0
+      bottom: root.slideEdge === ScreenEdge.Bottom ? -root.slideReach : 0
+      left: root.slideEdge === ScreenEdge.Left ? -root.slideReach : 0
+      right: root.slideEdge === ScreenEdge.Right ? -root.slideReach : 0
+    }
     WlrLayershell.layer: slot.layer
     readonly property string layerNamespace: "axiom-notifications"
     WlrLayershell.namespace: area.layerNamespace
@@ -364,6 +409,21 @@ Scope {
         required property var modelData
         readonly property string key: toastCard.modelData.key
         readonly property point place: root.placeOf(toastCard.key, toastCard.height)
+        // Where its slide in from off the screen crosses the bars: the part
+        // over them it draws itself, the part past them the backing window
+        // fills (SurfaceContext.overBars)
+        readonly property var overBars: SurfaceContext.overBars({
+          "edge": root.slideEdge,
+          "frameLine": ScreenEdgeManager.frameLineOn(root.screen, root.slideEdge),
+          "width": root.screen?.width ?? 0,
+          "height": root.screen?.height ?? 0,
+          "detached": !root.attached,
+          "bare": root.fullscreen,
+          "footprint": [Qt.rect(area.origin.x + toastCard.place.x, area.origin.y + toastCard.place.y, toastCard.width, toastCard.height)],
+          "id": root.claim.key,
+          "screen": root.screenName,
+          "entries": PopoutManager.entries
+        })
 
         notification: toastCard.modelData.notification
         uid: toastCard.modelData.uid
@@ -377,6 +437,10 @@ Scope {
         screenName: root.screenName
         covered: root.covered
         backed: BlurManager.backsOn(root.screen, slot.onOverlayLayer) && placeOnScreen.origin !== null
+        ownFillRect: toastCard.overBars ? PopoutGeometry.offset([toastCard.overBars.over], {
+          "x": -(area.origin.x + toastCard.x),
+          "y": -(area.origin.y + toastCard.y)
+        })[0] : null
 
         x: toastCard.place.x
         y: toastCard.place.y
@@ -403,6 +467,7 @@ Scope {
         onUserClosed: root.userClosed(toastCard.notification)
 
         BlurShape {
+          id: shape
           source: toastCard.box
           kind: "rect"
           screen: root.screenName
@@ -416,6 +481,7 @@ Scope {
           // toast draws nothing)
           shown: toastCard.backed && toastCard.visible && !toastCard.gone && toastCard.opacity > 0
           clipRect: Qt.rect(area.origin.x, area.origin.y, area.width, area.height)
+          fillClip: toastCard.overBars ? ScreenRegion.intersect(shape.clipRect, toastCard.overBars.past) : shape.clipRect
         }
       }
     }
