@@ -61,6 +61,13 @@ running anything:
     opens, and one whose popoutName is an overlay module declares it; its
     anchors hand its values by `fromWidget` (the keys popoutModule lists),
     never `extraData`, and a widget without popoutModule has no `fromWidget`
+  - every `axiom-<x>` window namespace in qml/ (and every
+    BarsConfig.layerNamespace value) has one LayerStack.layers row, which
+    names its layer, and no namespace has two (layer-namespace-row); a
+    window binds its layer to its LayerSlot's and its namespace to its own
+    `layerNamespace`, only the layer service reads the compositor's layer
+    facts and WlrLayer, and no `backsOn(` takes a literal layer
+    (layer-slot-binding)
   - no UI switches one of the shell's actions through its service's own
     toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
     light, dark mode, the mutes, the VPN, a recording, a session action,
@@ -81,6 +88,7 @@ import re
 import sys
 from pathlib import Path
 
+import gen_docs
 import qml_modules
 from qml_modules import qml_files
 
@@ -160,6 +168,21 @@ WIDGET_OUTPUTS = ("colors drawnColors paint shownItems backgroundLevel backgroun
                   "splitPart innerSplits contentAcross leadLength minimumSize pulse box hitArea autoColors "
                   "barOffset barLength runPlace segmented pinStart fillsOnHover").split()
 WIDGET_COLOR_CALLS = qml_modules.WIDGET_COLOR_CALLS
+
+BARS_CONFIG = "qml/config/BarsConfig.qml"
+# The windows with no layer service running (no LayerSlot), each with its
+# reason: the greeter runs in its own shell, the notice shows where no
+# parent shell does
+LAYER_SLOT_EXCEPTIONS = {
+    "qml/components/surfaces/greeter/GreeterWindow.qml": "the greeter's own shell runs no layer service",
+    "qml/shell/NoParentNotice.qml": "shown where no shell runs, so no layer service",
+}
+LAYER_SERVICE = "qml/services/compositor/LayerManager.qml"
+# The backends that declare the layer facts (supports.layerOrder, layerRestack)
+LAYER_FACT_BACKENDS = ("qml/services/compositor/HyprlandManager.qml", "qml/services/compositor/SwayManager.qml",
+                       "qml/services/compositor/NiriManager.qml")
+# WlrLayer is read by the layer service, the window hosts and the excluded windows
+WLR_LAYER_SCOPES = (LAYER_SERVICE, "qml/components/hosts/window/", *LAYER_SLOT_EXCEPTIONS)
 
 errors, warnings = [], []
 
@@ -366,6 +389,61 @@ def bar_widget_template(schema, sources, errors):
         for rule, message in items:
             if rule not in skip:
                 errors.append(message)
+
+
+def layer_service(sources, errors):
+    """The layer service's structure (docs/dev/compositor/layer-arrangement.md):
+    layer-namespace-row: every "axiom-<x>" a window is given has one
+    LayerStack.layers row with a layer; layer-slot-binding: windows bind
+    the slot's layer and their own namespace, and the layer facts and
+    WlrLayer stay the service's."""
+    rows = gen_docs.json_property(gen_docs.LAYERS_PATH, "layers", default=[])
+    stack_path = rel(gen_docs.LAYERS_PATH)
+    names = [r["namespace"] for r in rows]
+    for name in sorted({n for n in names if names.count(n) > 1}):
+        errors.append(f"{stack_path}: layer-namespace-row: namespace {name} has two rows")
+    for r in rows:
+        if "layer" not in r:
+            errors.append(f"{stack_path}: layer-namespace-row: row {r['namespace']} names no layer")
+    given = {}  # namespace -> where
+    for path, text in sources.items():
+        if path.startswith("tests/"):
+            continue
+        code = re.sub(r"//[^\n]*", "", text)
+        for n, line in enumerate(code.split("\n"), 1):
+            m = re.search(r"\b(?:layerNamespace|overNamespace|WlrLayershell\.namespace)\s*:(.*)", line)
+            if m:
+                for lit in re.findall(r'"axiom-([\w-]+)"', m.group(1)):
+                    given.setdefault(lit, f"{path}:{n}")
+    bars = re.search(r"function layerNamespace\(.*?\n  \}", sources.get(BARS_CONFIG, ""), re.S)
+    for lit in re.findall(r'"axiom-([\w-]+)"', bars.group(0) if bars else ""):
+        given.setdefault(lit, BARS_CONFIG)
+        given.setdefault(lit + "-long", BARS_CONFIG)
+    for name, where in sorted(given.items()):
+        if name not in names:
+            errors.append(f"{where}: layer-namespace-row: axiom-{name} has no LayerStack.layers row ({stack_path})")
+
+    for path, text in sorted(sources.items()):
+        if path.startswith("tests/"):
+            continue
+        code = re.sub(r"//[^\n]*", "", text)
+        for n, line in enumerate(code.split("\n"), 1):
+            if path not in LAYER_SLOT_EXCEPTIONS:
+                layer = re.search(r"\bWlrLayershell\.layer\s*:\s*(.*)", line)
+                if layer:
+                    slots = [re.search(r"\bid\s*:\s*(\w+)", body).group(1) for _, body in qml_blocks(code, "LayerSlot")
+                             if re.search(r"\bid\s*:\s*(\w+)", body)]
+                    if layer.group(1).strip() not in [f"{s}.layer" for s in slots]:
+                        errors.append(f"{path}:{n}: layer-slot-binding: WlrLayershell.layer binds `{layer.group(1).strip()}`: bind <id>.layer of the window's LayerSlot")
+                name = re.search(r"\bWlrLayershell\.namespace\s*:\s*(.*)", line)
+                if name and not re.fullmatch(r"\w+\.layerNamespace", name.group(1).strip()):
+                    errors.append(f"{path}:{n}: layer-slot-binding: WlrLayershell.namespace binds `{name.group(1).strip()}`: bind <id>.layerNamespace")
+            if path != LAYER_SERVICE and not path.startswith(LAYER_FACT_BACKENDS) and re.search(r"\blayer(?:Order|Restack)\b", line):
+                errors.append(f"{path}:{n}: layer-slot-binding: reads a layer fact (layerOrder, layerRestack): only {LAYER_SERVICE} does")
+            if "WlrLayer." in line and not path.startswith(WLR_LAYER_SCOPES):
+                errors.append(f"{path}:{n}: layer-slot-binding: reads WlrLayer: only the layer service, components/hosts/window/ and the windows with no layer service do")
+            if re.search(r"\bbacksOn\([^,()]+,\s*(?:true|false)\s*\)", line):
+                errors.append(f"{path}:{n}: layer-slot-binding: backsOn takes a literal layer: pass the slot's onOverlayLayer")
 
 
 def popout_modules(schema, sources, errors):
@@ -991,6 +1069,7 @@ def main():
 
     bar_widget_template(schema, sources, errors)
     popout_modules(schema, sources, errors)
+    layer_service(sources, errors)
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

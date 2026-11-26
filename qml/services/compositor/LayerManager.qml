@@ -316,13 +316,18 @@ QtObject {
   function slotOf(owner) {
     return root._answers.get(owner) ?? {
       "shown": false,
-      "layer": LayerStack.layerOf(root._slots.valueOf(owner)?.namespace ?? "", {
-        "fullscreen": false,
-        "wanted": false,
-        "movesKeepPlace": true,
-        "underModal": ""
-      })
+      "layer": root._rowLayer(root._slots.valueOf(owner)?.namespace ?? "")
     };
+  }
+
+  // The layer its row names (its answer with no fullscreen window, not wanted, no modal)
+  function _rowLayer(namespace) {
+    return LayerStack.layerOf(namespace, {
+      "fullscreen": false,
+      "wanted": false,
+      "movesKeepPlace": true,
+      "underModal": ""
+    });
   }
 
   // The layer, a name, that the window of `namespace` on `outputName` is on
@@ -387,12 +392,16 @@ QtObject {
     const moves = new Set();
     const entries = items.map(i => {
       const before = root._answers.get(owners[i.id])?.layer;
-      const layer = LayerStack.layerOf(i.namespace, {
+      const state = {
         "fullscreen": all.find(o => o.id === "output:" + i.outputName)?.fullscreen ?? false,
         "wanted": i.wanted,
         "movesKeepPlace": pass?.movesKeepPlace ?? true,
         "underModal": modalOutputs.has(i.outputName) ? before ?? "" : ""
-      });
+      };
+      // "": not shown now (hiddenUnderFullscreen); the slot keeps its row's layer
+      const answer = LayerStack.layerOf(i.namespace, state);
+      const hidden = answer === "";
+      const layer = hidden ? root._rowLayer(i.namespace) : answer;
       if (before !== undefined && before !== layer)
         moves.add(`LayerManager: ${i.namespace} on ${i.outputName} moves from ${before} to ${layer}`);
       // A mapped window moved to another layer lands on top of it, as if it
@@ -412,8 +421,8 @@ QtObject {
         "order": i.order,
         "rank": i.rank,
         "rankGroup": i.rankGroup,
-        "wanted": i.wanted,
-        "held": i.held,
+        "wanted": hidden ? false : i.wanted,
+        "held": hidden ? false : i.held,
         "showing": i.showing,
         "mapped": moved ? false : i.settled,
         "seq": moved ? root._slotSeqs.get(owners[i.id]) : i.seq,

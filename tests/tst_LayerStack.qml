@@ -105,7 +105,7 @@ TestCase {
   function test_orderOf() {
     compare(shared.calls.LayerStack.orderOf("axiom-bar"), 5);
     compare(shared.calls.LayerStack.orderOf("dock"), -7);
-    compare(shared.calls.LayerStack.orderOf("axiom-desktop"), 0, "listed without an order");
+    compare(shared.calls.LayerStack.orderOf("axiom-desktop"), 0, "listed at 0");
     compare(shared.calls.LayerStack.orderOf("someone-else"), 0, "not listed");
   }
 
@@ -160,6 +160,13 @@ TestCase {
     compare(sequenceOf(all).remap, [], "opening and closing held windows, and an Overlay window mapping, maps no Top window again");
   }
 
+  // Every namespace has an order, and the toast stack ties with the popouts
+  function test_every_namespace_has_an_order() {
+    for (const l of LayerStack.layers)
+      verify(typeof l.order === "number", l.namespace + " has an order");
+    compare(LayerStack.orderOf("notifications"), LayerStack.orderOf("popout"));
+  }
+
   // Every row states its layer, in the four names
   function test_every_row_has_a_layer() {
     for (const l of LayerStack.layers)
@@ -170,7 +177,7 @@ TestCase {
   // or while shown
   function test_over_fullscreen_values() {
     for (const l of LayerStack.layers)
-      verify(l.overFullscreen === undefined || ["always", "whileShown"].includes(l.overFullscreen), l.namespace + " overFullscreen");
+      verify(l.overFullscreen === undefined || ["always", "whileShown", "never"].includes(l.overFullscreen), l.namespace + " overFullscreen");
   }
 
   // The instant action surfaces: five rows, one order, all on Overlay (the

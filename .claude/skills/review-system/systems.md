@@ -10,7 +10,7 @@ Checks:
 - Every consumer goes through `CompositorManager` (neutral shapes, `goToWorkspace`/`focusWindow`); no backend object leaks out of it.
 - Every `supports.<key>` read anywhere is one each backend sets (true or false), and every gated feature reads a key rather than a compositor name.
 - Nothing writes compositor config unless `supports.configModes`; leaving `included`/`managed` gives the config back.
-- Layer order only from `LayerStack.layers`; bars and the border never over fullscreen, nothing maps a Top window in response to fullscreen (a recurring regression).
+- Layer order only from `LayerStack.layers`; bars and the border never over fullscreen, nothing maps again at a fullscreen change except sway's bars at an exit with the overlay open (a recurring regression); the hot corners hide while a fullscreen window is up (their row's `overFullscreen: "never"`).
 Seams: every feature reading windows, outputs, workspaces or `supports`.
 
 ## hyprland

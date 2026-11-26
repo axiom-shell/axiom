@@ -29,7 +29,8 @@ A compositor backend lets axiom run under another compositor. Hyprland, sway and
 3. Write the `<Name>Manager` service from the contract's members, listing in `supports` only what the compositor really does.
 4. Hook it into `CompositorManager` and `CompositorKind`, add the `check_structure` row, and try it in `scripts/dev/nested.sh <kind>`.
 5. Add the daemon's writer, IPC client, takeover kind and bind merge, if config modes apply.
-6. Write the backend's doc.
+6. The layer service: declare `layerRestack` and `layerOrder` in `supports` truthfully; a compositor that can order layers itself gets it from its writer and reports `layerOrder` only while that order is in; every row's intent (`layer`, `overFullscreen`, `modal`) must hold. `LayerManager` alone reads these facts ([layer arrangement](../dev/compositor/layer-arrangement.md)).
+7. Write the backend's doc.
 
 ## Watch out for
 - **No compositor objects past the backend.** Hand out snapshots. A binding on a list of live objects re-evaluates on every event, and the next backend's objects won't have the same fields.

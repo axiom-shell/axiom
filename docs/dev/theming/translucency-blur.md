@@ -38,7 +38,7 @@ Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones Sw
   - Hyprland blurs a layer's popups whether or not the layer blurs, never with xray, and with its `ignore_alpha`. The group says `xray = false` anyway, for niri's rule (below).
   - So a bar popout, a popup drawn transparent over the blur window, blurs only under its content.
 - `axiom-blur-backdrops`, on `axiom-backdrop` and polkit (whose window holds its dim), at any alpha.
-- Not a blur rule: `LayerStack.layers`' `noAnim` (`no_anim`, one layer rule per namespace, `render.LayerRulesLua`) is on every chrome namespace in every mode: the chrome slides itself.
+- Not a blur rule: `LayerStack.layers`' `noAnim` (`no_anim`, one layer rule per namespace, `render.LayerRules`, with the rule's `order`) is on every chrome namespace in every mode: the chrome slides itself.
 - That's all it writes: the strength is Hyprland's own blur.
 - The module file holds the setting as saved (`_surfacesBlur(true)`). At runtime it's `BlurManager.active`, evaluated over the file after every reload.
 

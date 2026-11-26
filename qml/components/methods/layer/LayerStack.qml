@@ -19,12 +19,12 @@ QtObject {
   // One entry per axiom namespace (without its "axiom-" prefix), highest
   // order first; `layer` is its window's layer (top, overlay, bottom,
   // background); `overFullscreen` how it stands over a fullscreen window
-  // ("always": on Overlay there, "whileShown": on Overlay there while shown;
-  // none: stays); `modal` an instant action surface (last on Overlay, never
-  // mapped again, nothing moves onto its layer while it shows); `bar` marks
-  // a bar's (BarsConfig.layerNamespace), `noAnim` one Hyprland shouldn't
-  // animate, `why` says why it sits there. Kept as plain JSON:
-  // scripts/gen_docs.py reads it into docs/dev/generated/layers.md.
+  // ("always": on Overlay there, "whileShown": on Overlay there while shown,
+  // "never": hidden while one is up; none: stays); `modal` an instant action
+  // surface (last on Overlay, never mapped again, nothing moves onto its layer
+  // while it shows); `bar` marks a bar's (BarsConfig.layerNamespace), `noAnim`
+  // one Hyprland shouldn't animate, `why` says why it sits there. Kept as
+  // plain JSON: scripts/gen_docs.py reads it into docs/dev/generated/layers.md.
   readonly property var layers: [
     {
       "namespace": "backdrop",
@@ -181,9 +181,10 @@ QtObject {
     {
       "namespace": "hot-corner",
       "order": -12,
-      "layer": "top",
+      "layer": "overlay",
+      "overFullscreen": "never",
       "noAnim": true,
-      "why": "Hot corners' pixel windows (shell/HotCorners): after the bars, border, docks and popouts, so a corner a bar or the border sits in is still the corner's."
+      "why": "Hot corners' pixel windows (shell/HotCorners): on Overlay after the overlay's page and the -10 group, before the modals, so a corner stays live over the overlay and over popouts; never shown over a fullscreen window."
     },
     {
       "namespace": "screenshot",
@@ -227,63 +228,73 @@ QtObject {
     },
     {
       "namespace": "notifications",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
-      "why": "The toast stack (ToastStack): no fade in or out, the cards slide themselves. No order."
+      "why": "The toast stack (ToastStack): no fade in or out, the cards slide themselves. With the on-demand windows (order -10, ties by map order): nothing maps again on any compositor."
     },
     {
       "namespace": "desktop",
+      "order": 0,
       "layer": "bottom",
       "noAnim": true,
       "why": "Desktop widgets: no fade in or out."
     },
     {
       "namespace": "workspaces",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
       "why": "The workspace overview: an on-demand full-screen window on the Overlay layer, over the chrome and the overlay's page."
     },
     {
       "namespace": "onboarding",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
       "why": "The first-run guide: an on-demand full-screen window on the Overlay layer, over the chrome."
     },
     {
       "namespace": "notice",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
       "why": "The no-parent notice: an on-demand window on the Overlay layer, over the chrome."
     },
     {
       "namespace": "lock-preview",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
       "why": "The lock screen's preview (the settings card's Show): an on-demand window on the Overlay layer."
     },
     {
       "namespace": "greeter-preview",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
       "why": "The login screen's preview (the settings card's Show): an on-demand window on the Overlay layer."
     },
     {
       "namespace": "greeter",
+      "order": -10,
       "layer": "overlay",
       "noAnim": true,
       "why": "The login screen, in the greeter's own shell: on the Overlay layer, over everything. No layer service runs there."
     },
     {
       "namespace": "wallpaper",
+      "order": 0,
       "layer": "background",
       "noAnim": true,
       "why": "The wallpaper: on the Background layer, under every window."
     },
     {
       "namespace": "edge-trigger",
+      "order": -12,
       "layer": "top",
       "noAnim": true,
-      "why": "An edge's hover strip: a pixel window on Top that opens a popout, kept mapped (inert without input)."
+      "why": "An edge's hover strip: a pixel window on Top that opens a popout, mapped while its host wants it (inert without input). Last on Top: over the bars, border and docks it opens from."
     }
   ]
   // The bars' namespaces (without "axiom-")
@@ -322,6 +333,12 @@ QtObject {
   function _rowOf(namespace) {
     const name = String(namespace).replace(/^axiom-/, "");
     return root.layers.find(l => l.namespace === name);
+  }
+
+  // Rule: a window that is never over a fullscreen window: the layer service
+  // hides it while one is up on its screen
+  function hiddenUnderFullscreen(row, state) {
+    return row.overFullscreen === "never" && state.fullscreen;
   }
 
   // Rule: with no `overFullscreen`, or no fullscreen window on its screen,
@@ -368,7 +385,8 @@ QtObject {
    * fullscreen window is on its screen), wanted (its owner wants it shown),
    * movesKeepPlace (a window moved to another layer keeps its place in the
    * order), underModal (its layer while a modal shows on its screen, else
-   * "") }. The table, by row `overFullscreen` (none or `any`): no
+   * "") }. The table, by row `overFullscreen` (none or `any`): `never`,
+   * fullscreen: "" (hiddenUnderFullscreen, not shown now); no
    * fullscreen window: the row's layer (staysOnRowLayer); `always` or
    * `whileShown`, fullscreen, movesKeepPlace: overlay
    * (risesWhereMovesKeepPlace); `whileShown`, fullscreen, wanted: overlay
@@ -387,6 +405,8 @@ QtObject {
 
   // The table's answer, before movesWaitForModal
   function _tableLayer(row, state) {
+    if (root.hiddenUnderFullscreen(row, state))
+      return "";
     if (root.staysOnRowLayer(row, state))
       return row.layer;
     if (root.risesWhereMovesKeepPlace(row, state))

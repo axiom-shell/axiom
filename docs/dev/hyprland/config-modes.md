@@ -15,7 +15,7 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
   - monitor profiles ([Monitors](monitors.md))
   - strips ([Workspace strips](workspace-strips.md))
   - the user's [window rules](../features/window-rules.md) (`M.rules()`, one `hl.window_rule` per kind, the lowest priority first; last in `setup()` and in the module, so a rule in the user's config after it wins; managed runs `axiom.setup()` before `user/*.lua`, so the user's files win too)
-- The layer rules for axiom's surfaces (`render.LayerRulesLua`, from `LayerStack.layers`: `no_anim` only) are in the module's files, and in every mode the daemon also adds them at runtime: when the shell asks at its start (`compositor.layerRules`, `HyprlandManager.surfacesReady`) and on every `configreloaded` (`Manager.configReloaded`), each in its own `pcall`.
+- The layer rules for axiom's surfaces (`render.LayerRulesLua`, from `LayerStack.layers`: `order` and `no_anim`; the reply `{ ordered }` is true when Hyprland took every rule, and is `supports.layerOrder`: [layer arrangement](../compositor/layer-arrangement.md)) are in the module's files, and in every mode the daemon also adds them at runtime: when the shell asks at its start (`compositor.layerRules`, `HyprlandManager.surfacesReady`) and on every `configreloaded` (`Manager.configReloaded`), each in its own `pcall`.
 
 ### `detached`
 - It is evaluated at startup and on every `configreloaded` (the writer's runtime layer).

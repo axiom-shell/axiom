@@ -499,6 +499,29 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/bar/widgets/Tsevenb/Tsevenb.qml", widget("text: box"), "Tsevenb/Tsevenb.qml:6: T7"),
         ("qml/components/bar/widgets/Teight/Teight.qml", widget('stateColorName: "error"'), "Teight/Teight.qml:6: T8"),
     ]
+    # The layer service's structure (check_structure.layer_service): a window with no row
+    # and the ways to set a layer or namespace, read a layer fact or WlrLayer, or give backsOn a literal
+    LAYER_FILES = [
+        ("qml/shell/NoRow.qml", qml('PanelWindow {\n      readonly property string layerNamespace: "axiom-norow"\n    }'),
+         "qml/shell/NoRow.qml:7: layer-namespace-row: axiom-norow has no LayerStack.layers row"),
+        ("qml/shell/OwnLayer.qml", qml('PanelWindow {\n      WlrLayershell.layer: WlrLayer.Top\n    }'),
+         "qml/shell/OwnLayer.qml:7: layer-slot-binding: WlrLayershell.layer binds `WlrLayer.Top`"),
+        ("qml/shell/OtherSlot.qml", qml('PanelWindow {\n      WlrLayershell.layer: other.layer\n    }'),
+         "qml/shell/OtherSlot.qml:7: layer-slot-binding: WlrLayershell.layer binds `other.layer`"),
+        ("qml/shell/OwnName.qml", qml('PanelWindow {\n      WlrLayershell.namespace: "axiom-bar"\n    }'),
+         'qml/shell/OwnName.qml:7: layer-slot-binding: WlrLayershell.namespace binds `"axiom-bar"`'),
+        ("qml/shell/Fact.qml", qml("property bool o: CompositorManager.supports.layerOrder"),
+         "qml/shell/Fact.qml:6: layer-slot-binding: reads a layer fact"),
+        ("qml/shell/Wlr.qml", qml("property int l: WlrLayer.Top"),
+         "qml/shell/Wlr.qml:6: layer-slot-binding: reads WlrLayer"),
+        ("qml/shell/Backs.qml", qml("property bool b: BlurManager.backsOn(screen, true)"),
+         "qml/shell/Backs.qml:6: layer-slot-binding: backsOn takes a literal layer"),
+    ]
+    # A window on its slot with a namespace that has a row breaks neither rule
+    LAYER_GOOD = ("qml/shell/GoodWindow.qml", qml(
+        'PanelWindow {\n      id: win\n      readonly property string layerNamespace: "axiom-bar"\n'
+        '      WlrLayershell.layer: slot.layer\n      WlrLayershell.namespace: win.layerNamespace\n'
+        '      LayerSlot {\n        id: slot\n      }\n    }'))
     # What the check must say about the schema and the allowlist edits below (and Reach)
     EDITS = [
         "chrome-drawing-allowlist.json: qml/services/core/Gone.qml no longer uses HoledCopy",
@@ -567,6 +590,26 @@ class CheckStructure(unittest.TestCase):
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
+
+    def test_layer_service_rules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            stack = root / "qml/components/methods/layer/LayerStack.qml"
+            text = stack.read_text()
+            row = '    {\n      "namespace": "osd",'
+            self.assertIn(row, text)
+            stack.write_text(text.replace('"namespace": "dock",\n      "order": -7,\n      "layer": "top",',
+                                          '"namespace": "dock",\n      "order": -7,', 1)
+                             .replace(row, '    {\n      "namespace": "bar",\n      "layer": "top"\n    },\n' + row, 1))
+            code, out = run_check(root, "check_structure.py", files=[(p, t) for p, t, _ in self.LAYER_FILES])
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, [m for _, _, m in self.LAYER_FILES] + [
+                "LayerStack.qml: layer-namespace-row: namespace bar has two rows",
+                "LayerStack.qml: layer-namespace-row: row dock names no layer"]), [], out)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
+            code, out = run_check(root, "check_structure.py", files=[self.LAYER_GOOD])
+            self.assertEqual([line for line in out.splitlines() if "layer-" in line], [], out)
 
     def test_live_tree_passes(self):
         # The real widgets break no template rule, so each plant above is what fails

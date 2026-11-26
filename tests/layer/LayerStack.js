@@ -167,5 +167,35 @@ var rows = [
       }
     ],
     "expect": "overlay"
+  },
+  {
+    "id": "LY-27",
+    "why": "a window that is never over a fullscreen window is not shown while one is up on its screen",
+    "call": "layerOf",
+    "args": [
+      "hot-corner",
+      {
+        "fullscreen": true,
+        "wanted": true,
+        "movesKeepPlace": true,
+        "underModal": ""
+      }
+    ],
+    "expect": ""
+  },
+  {
+    "id": "LY-28",
+    "why": "with no fullscreen window on its screen the same window is on its row's layer",
+    "call": "layerOf",
+    "args": [
+      "hot-corner",
+      {
+        "fullscreen": false,
+        "wanted": true,
+        "movesKeepPlace": true,
+        "underModal": ""
+      }
+    ],
+    "expect": "overlay"
   }
 ];
