@@ -59,6 +59,7 @@ axiom ipc <target> <function> [args]
 | `windowSwitcher` | `next`, `previous`, `commit`, `cancel` (for scripts: the Alt+Tab bind doesn't need them) |
 | `idleInhibit` | `enable`, `disable`, `toggle`, `timer <duration>`, `status` |
 | `nightLight` | `enable`, `disable`, `toggle`, `status` |
+| `engines` | `explain <engine> <id>` (each stage's input and output as JSON), `list <engine>` (the recorded ids as JSON), `enable`, `disable`, `toggle`, `status` (recording, off by default) |
 | `darkMode` | `enable`, `disable`, `toggle` (the theme's dark or light variant) |
 | `theme` | `set <theme\|random>` (a theme by name, either variant of it, or another one by chance) |
 | `wifi` | `enable`, `disable`, `toggle` |
