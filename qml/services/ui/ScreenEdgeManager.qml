@@ -158,6 +158,16 @@ QtObject {
     return root.edgeOn(screen, location).frame;
   }
 
+  // How far past a frame line `frame` (px from the screen edge on
+  // `location`, a ScreenEdge) windows start with the bar there
+  // reserving its space, whether it does or not: past what reserves the
+  // edge, gaps_out on, and at least gaps_out less `trim` (BarEnds.placeStack's:
+  // where a reserving bar facing the windows puts them). Signed.
+  function windowsPast(screen, location, frame, trim) {
+    const gapsOut = CompositorManager.gapsOut[ScreenEdge.name(location)] ?? 0;
+    return Math.max(root.barReservedOn(screen, location) + gapsOut - frame, gapsOut - trim);
+  }
+
   // The same for one bar (a `bars` entry), wherever it lies in its edge's
   // stack (BarEnds.placeStack's `frame`), integrated menus on its edge
   // included: what its own popouts grow out of
@@ -193,7 +203,7 @@ QtObject {
         "end": gap
       };
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side), side === location && bar ? (CompositorManager.gapsOut[ScreenEdge.name(side)] ?? 0) - bar.trim : 0);
+    const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : side === location && bar ? Math.max(0, root.windowsPast(screen, side, root.frameLine(screen, side), bar.trim)) : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {
       "across": windowGap(location),

@@ -60,9 +60,9 @@ Item {
   property bool flushStartThrough: true
   property bool flushEndThrough: true
   property bool detached: false
-  // A detached box's distance from the attach edge past the connector gap.
-  // The surface starts at the attach edge, so the box slides in from
-  // there: placed under a bar, from beneath it.
+  // A detached box's distance from its surface's start (its window edge, on
+  // the frame line) past the connector gap, signed (EdgePlacement.slideFrom):
+  // the box slides in from there.
   property real detachedOffset: 0
   // A detached box fades in and out in place instead of sliding
   property bool fade: false

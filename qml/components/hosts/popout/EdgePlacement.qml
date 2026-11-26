@@ -231,12 +231,7 @@ QtObject {
   // How far a transparent bar's box moves in to line up with the windows as
   // they start past it when it reserves its space, whether it does or not
   // (the same spot either way)
-  readonly property real _detachedPush: {
-    if (!root.barConfig)
-      return 0;
-    const gapsOut = CompositorManager.gapsOut[root.edgeName] ?? 0;
-    return BarsConfig.detachedPush(root.barConfig, Math.max(ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + gapsOut - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), gapsOut - root.barConfig.trim), root.connectorGap);
-  }
+  readonly property real _detachedPush: root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.windowsPast(root.screen, root.edge, root.barConfig.frame, root.barConfig.trim), root.connectorGap) : 0
   // --- Its box (SurfaceContext.layout) ---
   readonly property var _layout: SurfaceContext.layout(root.frame, Object.assign({}, root._params, {
     "pills": root._pills,
