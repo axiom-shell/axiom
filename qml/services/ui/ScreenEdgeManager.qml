@@ -181,7 +181,7 @@ QtObject {
   // with a floating bar on that edge (its float gap across; its islands
   // end where windows start, BarEnds.windowInset), else with the windows:
   // how far past each frame line they start, with the bars there reserving
-  // their space (D80). `bare` (over a fullscreen
+  // their space. `bare` (over a fullscreen
   // window, which covers the border and the bars): the screen's edges are
   // the frame lines, and Automatic is the gap windows keep from a bare
   // edge (floatGaps).
