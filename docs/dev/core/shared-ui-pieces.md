@@ -246,7 +246,7 @@ What to reach for ([style](style.md) › Pieces); every one reads `Style` and ta
 - `methods/SurfaceContext`: what a surface growing out of an edge meets at each end, and every rule that follows (joins, walls, room, detached, shadow, openings). See [Surface context](../popouts/surface-context.md).
 - `hosts/popout/EdgePlacement`: all of it for a surface on a screen edge (bar popouts, edge popouts, docks).
 - `hosts/popout/EdgeSurface`: an `AttachedSurface` wired from an `EdgePlacement`. A host sets only where it is, its box, `active`, colours and content.
-- `hosts/popout/SubmenuHost`: a host's submenu and what it shares with it. The host sets `submenuHost`; `PopoutWrapperBase` gives it `submenu`, `openToLeft` and `childOpen`.
+- `hosts/popout/SubmenuHost`: a host's submenu and what it shares with it. The host sets `submenuHost`; `PopoutWrapperBase` gives it `submenu`, `openToLeft` and `childOpen`. `PopoutWrapperBase` keeps a popout up (`_holdsOpen`) while it is hovered (`contentHovered`) or an instant action surface is up (`SurfaceManager.modalShown`), its dismiss delay starting anew once both end.
 - `hosts/popout/ClosedLatch`: a value followed only while its host is closed (a window's layer or namespace).
 - `hosts/popout/StrokeOpening`: a stroke a surface covers, left open by whatever draws it.
 - `hosts/popout/SubmenuSide`: what a submenu meets on its parent's side.

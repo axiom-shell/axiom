@@ -43,6 +43,7 @@
   - the screenshot pickers (`captureWindows`)
   - modal prompts while visible (`registerModal` at creation, `unregisterModal` at destruction; every `ModalCard` with a `window`: the polkit and monitor prompts and the power menu), so a window created already shown counts too.
 - `modalShown`: one of them is up. A grab's `FocusGrab.exclusive` is off meanwhile, so the modal gets the keyboard.
+  - While it is true, time stops: the toasts', popouts' (`PopoutWrapperBase._holdsOpen`), OSD's (`OSD.paused`, `OSDHost._pointerHolds`) and dock's close timers wait and start again from their full time; an auto-hiding bar that is out is held (`BarRevealManager.hold` key `modal`); new shows wait (`waitsUnderModal`); and popup windows hide (`popupsHidden`: tooltips, submenus, the dock's menu, once a picker's frame is in). A modal's own timers (the monitor prompt's countdown, the power menu's confirm timeout) run.
 
 #### Stepping aside
 - `beginStepAside(owner)` / `endStepAside(owner)` (`steppedAside`) is for a prompt axiom doesn't draw: another polkit agent's window, or a file picker, which opens under the Overlay layer.

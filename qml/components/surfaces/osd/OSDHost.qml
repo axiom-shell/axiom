@@ -373,6 +373,8 @@ Item {
   // the rest). Held open by the settings page, the bars and the icons
   // wait the same way
   function _pointerHolds(part) {
+    if (SurfaceManager.modalShown)
+      return true;
     if (root.pinned && part !== "card")
       return true;
     return root.pointerIn && (part !== "card" || root.cardHovered);
@@ -432,6 +434,16 @@ Item {
     if (!root.pointerIn)
       root._renew(root.cardHovered ? OSDParts.parts : ["level", "status"]);
     root._schedule();
+  }
+  // An instant action surface up holds every part; it goes, they get their time anew
+  Connections {
+    target: SurfaceManager
+
+    function onModalShownChanged() {
+      if (!SurfaceManager.modalShown)
+        root._renew(OSDParts.parts);
+      root._schedule();
+    }
   }
   onCardHoveredChanged: {
     if (!root.cardHovered)

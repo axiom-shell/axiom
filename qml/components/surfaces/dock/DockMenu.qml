@@ -34,7 +34,7 @@ PopupWindow {
   readonly property int _edge: root.dockWindow.edge
   readonly property int _towards: _edge === ScreenEdge.Bottom ? Edges.Top : _edge === ScreenEdge.Top ? Edges.Bottom : _edge === ScreenEdge.Left ? Edges.Right : Edges.Left
 
-  visible: root.active && !!root.anchorItem?.QsWindow.window && !SurfaceManager.captureFrozen
+  visible: root.active && !!root.anchorItem?.QsWindow.window && !SurfaceManager.popupsHidden
   color: "transparent"
   implicitWidth: box.implicitWidth
   implicitHeight: box.implicitHeight
@@ -115,7 +115,7 @@ PopupWindow {
   // The small menu closes a moment after the pointer leaves the icon and it
   Timer {
     interval: 250
-    running: root.active && !root.full && !root.hovered && !(root.anchorItem?.hovered ?? false)
+    running: root.active && !root.full && !root.hovered && !(root.anchorItem?.hovered ?? false) && !SurfaceManager.modalShown
     onTriggered: root.close()
   }
 

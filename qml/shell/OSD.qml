@@ -7,6 +7,7 @@ import qs.components.hosts.popout
 import qs.components.reusable
 import qs.components.surfaces.osd
 import qs.services.compositor
+import qs.services.ui
 import qs.components.methods
 
 // Every enabled OSD (OSD.osds), each on the screens its `monitors` puts it
@@ -63,8 +64,8 @@ Scope {
             OSDHost {
               osd: entry.osd
               screen: edgeHost.screen
-              // A window rule pauses OSDs on this monitor
-              paused: WindowRulesManager.pauseOsdOn.includes(edgeHost.screen?.name ?? "")
+              // A window rule pauses OSDs on this monitor, and so does an instant action surface up
+              paused: WindowRulesManager.pauseOsdOn.includes(edgeHost.screen?.name ?? "") || SurfaceManager.modalShown
               open: edgeHost.isOpen
               gap: edgeHost.contentPadding - Appearance.borderWidth
               edgeVertical: edgeHost.vertical
