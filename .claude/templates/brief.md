@@ -1,6 +1,5 @@
 # Brief
 
-Used by: `.claude/skills/keep-order/SKILL.md`, `.claude/skills/review-branch/SKILL.md`, `.claude/skills/review-system/SKILL.md`, `.claude/skills/align/SKILL.md`, `/orchestrate`, the recipe skills.
 Filled by: the lead, for every agent it starts (fresh agent, `subagent_type: <role>`).
 
 ```
@@ -15,7 +14,7 @@ Done when: <acceptance ids, verbatim> + `verify.sh` → `verify ok` (`--all` →
 Report: <template path>; nothing it lists is dropped
 ```
 
-- Quote ledger rows; never paraphrase a name.
+- ~500 words. In a group run, Binding also quotes the plan's Binding, amendment and name rows, never the plan or amendments file. A brief that won't fit goes to the architect to split the group.
 - An agent with no `Tree:` stops (a recipe skill typed directly: › Recipe skills).
 - Add your own decisions to `Binding` only as quoted D/R ids.
 

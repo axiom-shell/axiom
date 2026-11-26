@@ -1,6 +1,5 @@
 # State
 
-Used by: `.claude/skills/keep-order/SKILL.md`, `.claude/skills/review-branch/SKILL.md`, `/orchestrate`.
 Filled by: the lead, as `state.md` in the state folder, after every step. `/orchestrate resume <slug>` reads it.
 
 ```
@@ -20,5 +19,5 @@ Parts: <n>/<m> · <part id> · <branch> · base <branch below | main> @ <sha> ·
 
 - Skills read only `Base:`, `Head:`, `Tier:`, `Last reviewed:` and `Spec:`; `/review-branch --state` writes `Last reviewed:`.
 - `Base:` is the origin/main sha the tree was created at (a stack: `stacks.md` › Per part).
-- `Spec:`, `Stack:` and `Parts:` are stack-only except `Spec:` (default `spec.md`).
+- `Stack:` and `Parts:` are stack-only; `Spec:` defaults to `spec.md`.
 - `Next:` is one step, enough for a fresh session to continue.

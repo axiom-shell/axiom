@@ -1,6 +1,5 @@
 # Verdict
 
-Used by: `.claude/agents/architect.md` (Judging findings), `.claude/skills/review-branch/SKILL.md`, `.claude/skills/review-system/SKILL.md`.
 Filled by: the architect, one reply for all findings sent to it.
 
 ## Brief
@@ -18,4 +17,3 @@ F<n>: unsure — <what would settle it>
 ```
 
 - The judging rule stays in `.claude/agents/architect.md` › Judging findings.
-- Keep the confirmed ones; list the unsure ones separately with what would settle them.

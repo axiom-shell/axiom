@@ -1,6 +1,5 @@
 # Fix list
 
-Used by: `.claude/skills/keep-order/SKILL.md` (Fix round), `.claude/skills/review-branch/SKILL.md`, `.claude/skills/review-system/SKILL.md`.
 Filled by: the lead, as `fix-<source>-<n>.md` in the state folder (inline in the brief without one), from confirmed findings and architect rulings.
 
 ```

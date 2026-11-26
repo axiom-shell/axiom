@@ -1,6 +1,5 @@
 # PR body
 
-Used by: `/orchestrate`.
 Filled by: the lead, as `pr-body.md` (`pr-body-<n>.md` per PR of a stack) in the state folder; `gh pr create --body-file`.
 
 `.github/pull_request_template.md` filled as it is, plus these sections:

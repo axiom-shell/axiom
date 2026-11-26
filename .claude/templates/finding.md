@@ -1,6 +1,5 @@
 # Finding
 
-Used by: `.claude/agents/reviewer.md`, `.claude/agents/architect.md` (Checking a plan), `.claude/skills/review-branch/lenses.md`, `.claude/skills/review-branch/SKILL.md`, `.claude/skills/review-system/SKILL.md`.
 Filled by: a reviewer, most severe first. The architect uses § Plan check for a plan.
 
 ```
